@@ -104,7 +104,7 @@ nhistogram_fill(python::tuple args, python::dict kwargs) {
 
             for (unsigned i = 0; i < dims[0]; ++i) {
                 double* v = (double*)PyArray_GETPTR1(a, i);
-                self.fill(v);
+                self.fill(self.dim(), v);
             }
 
             Py_DECREF(a);
@@ -127,7 +127,7 @@ nhistogram_fill(python::tuple args, python::dict kwargs) {
     double v[BOOST_HISTOGRAM_AXIS_LIMIT];
     for (unsigned i = 0; i < dim; ++i)
         v[i] = extract<double>(args[1 + i]);
-    self.fill(v);
+    self.fill(self.dim(), v);
     return object();
 }
 
@@ -141,7 +141,7 @@ nhistogram_getitem(const nhistogram& self, python::object oidx) {
     using namespace python;
 
     if (self.dim() == 1)
-        return self(extract<int>(oidx)());
+        return self.value(extract<int>(oidx)());
 
     const unsigned dim = len(oidx);
     if (dim != self.dim()) {
@@ -153,7 +153,7 @@ nhistogram_getitem(const nhistogram& self, python::object oidx) {
     for (unsigned i = 0; i < dim; ++i)
         idx[i] = extract<int>(oidx[i]);
 
-    return self(idx);
+    return self.value(self.dim(), idx);
 }
 
 void register_nhistogram()

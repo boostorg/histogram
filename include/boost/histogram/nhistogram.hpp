@@ -8,6 +8,8 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/assert.hpp>
+#include <boost/concept/requires.hpp>
 #include <ostream>
 #include <vector>
 
@@ -18,15 +20,14 @@ class nhistogram : public histogram_base {
 public:
   nhistogram() {}
 
-  explicit
-  nhistogram(const axes_type& axes) :
-    histogram_base(axes),
-    data_(field_count())
+  nhistogram(const nhistogram& o) :
+    histogram_base(o),
+    data_(o.data_)
   {}
 
   explicit
-  nhistogram(const axis_type& a) :
-    histogram_base(a),
+  nhistogram(const axes_type& axes) :
+    histogram_base(axes),
     data_(field_count())
   {}
 
@@ -36,46 +37,68 @@ public:
     data_(field_count())                                           \
   {}
 
-// generates constructors taking 2 to AXIS_LIMIT arguments
-BOOST_PP_REPEAT_FROM_TO(2, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_NHISTOGRAM_CTOR, nil)
+// generates constructors taking 1 to AXIS_LIMIT arguments
+BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_NHISTOGRAM_CTOR, nil)
 
   double sum() const;
 
-  template <typename Array>
+  template <typename T>
   inline
-  void fill(const Array& v)
+  void fill(const T& v)
   {
+    BOOST_ASSERT(v.size() == dim());
     const size_type k = pos(v);
     if (k != uintmax_t(-1))
       data_.increase(k);
   }
 
-  void fill(double x,
-    BOOST_PP_ENUM_PARAMS_WITH_A_DEFAULT(BOOST_PP_DEC(BOOST_HISTOGRAM_AXIS_LIMIT),
-                                        double x, 0.0))
+  // C-style call
+  inline
+  void fill(unsigned n, const double* v)
   {
-    const double buffer[BOOST_HISTOGRAM_AXIS_LIMIT] = {
-      x, BOOST_PP_ENUM_PARAMS(BOOST_PP_DEC(BOOST_HISTOGRAM_AXIS_LIMIT), x)
-    };
-    fill(buffer);
+    BOOST_ASSERT(n == dim());
+    const size_type k = pos(v);
+    if (k != uintmax_t(-1))
+      data_.increase(k);
   }
+
+#define BOOST_NHISTOGRAM_FILL(z, n, unused)                  \
+  inline                                                     \
+  void fill( BOOST_PP_ENUM_PARAMS_Z(z, n, double x) )        \
+  {                                                          \
+    const double buffer[n] = { BOOST_PP_ENUM_PARAMS(n, x) }; \
+    fill(n, buffer); /* size is checked here */              \
+  }
+
+// generates fill functions taking 1 to AXIS_LIMT arguments
+BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_NHISTOGRAM_FILL, nil)  
 
   template <typename Array>
-  inline
-  size_type operator()(const Array& idx)
-    const
-  { return data_.read(linearize(idx)); }
-
-  size_type operator()(int i,
-    BOOST_PP_ENUM_PARAMS_WITH_A_DEFAULT(BOOST_PP_DEC(BOOST_HISTOGRAM_AXIS_LIMIT),
-                                        int i, 0))
+  double value(const Array& idx)
     const
   {
-    const int32_t idx[BOOST_HISTOGRAM_AXIS_LIMIT] = {
-      i, BOOST_PP_ENUM_PARAMS(BOOST_PP_DEC(BOOST_HISTOGRAM_AXIS_LIMIT), i)
-    };
-    return operator()(idx);
+    BOOST_ASSERT(idx.size() == dim());
+    return data_.read(linearize(idx));
   }
+
+  // C-style call
+  double value(unsigned n, const int* idx)
+    const
+  {
+    BOOST_ASSERT(n == dim());
+    return data_.read(linearize(idx));
+  }
+
+#define BOOST_NHISTOGRAM_VALUE(z, n, unused)                \
+  double value( BOOST_PP_ENUM_PARAMS_Z(z, n, int i) )       \
+    const                                                   \
+  {                                                         \
+    const int idx[n] = { BOOST_PP_ENUM_PARAMS_Z(z, n, i) }; \
+    return value(n, idx); /* size is checked here */        \
+  }
+
+// generates value functions taking 1 to AXIS_LIMT arguments
+BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_NHISTOGRAM_VALUE, nil)  
 
   bool operator==(const nhistogram& o) const 
   { return histogram_base::operator==(o) &&

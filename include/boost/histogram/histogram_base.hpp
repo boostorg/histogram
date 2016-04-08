@@ -44,10 +44,7 @@ public:
 
 protected:
   histogram_base() {}
-
   explicit histogram_base(const axes_type& axes);
-
-  explicit histogram_base(const axis_type& a) : axes_(1, a) { update_buffers(); }
 
 #define BOOST_HISTOGRAM_BASE_APPEND(z, n, unused) axes_.push_back(a ## n);
 #define BOOST_HISTOGRAM_BASE_CTOR(z, n, unused)                      \
@@ -59,7 +56,7 @@ protected:
   }
 
 // generates constructors taking 2 to AXIS_LIMIT arguments
-BOOST_PP_REPEAT_FROM_TO(2, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR, nil)
+BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR, nil)
 
   bool operator==(const histogram_base&) const;
   bool operator!=(const histogram_base& o) const
@@ -68,7 +65,7 @@ BOOST_PP_REPEAT_FROM_TO(2, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR
   template <typename Array>
   inline
   size_type pos(const Array& v) const {
-    int32_t idx[BOOST_HISTOGRAM_AXIS_LIMIT];
+    int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
     for (unsigned i = 0, n = axes_.size(); i < n; ++i)
       idx[i] = apply_visitor(detail::index_visitor(v[i]), axes_[i]);
     return linearize(idx);

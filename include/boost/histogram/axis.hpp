@@ -15,6 +15,7 @@
 namespace boost {
 namespace histogram {
 
+// common base class for most axes
 class axis_base {
 public:
   inline unsigned bins() const { return size_ > 0 ? size_ : -size_; }
@@ -26,7 +27,7 @@ protected:
   axis_base(int, const std::string&, bool);
 
   axis_base() : size_(0) {}
-  explicit axis_base(const axis_base&);
+  axis_base(const axis_base&);
   axis_base& operator=(const axis_base&);
 
   bool operator==(const axis_base&) const;
@@ -45,6 +46,7 @@ private:
   }
 };
 
+// mixin for real-valued axes
 template <typename Derived>
 class real_axis {
 public:
@@ -71,7 +73,7 @@ public:
                bool uoflow = true);
 
   regular_axis() {}
-  explicit regular_axis(const regular_axis&);
+  regular_axis(const regular_axis&);
   regular_axis& operator=(const regular_axis&);
 
   inline int index(double x) const {
@@ -98,11 +100,12 @@ private:
 // real polar axis (constant bin widths, wraps around)
 class polar_axis: public axis_base, public real_axis<polar_axis> {
 public:
+  explicit 
   polar_axis(unsigned n, double start = 0.0,
              const std::string& label = std::string());
 
   polar_axis() {}
-  explicit polar_axis(const polar_axis&);
+  polar_axis(const polar_axis&);
   polar_axis& operator=(const polar_axis&);
 
   inline int index(double x) const { 
@@ -130,6 +133,7 @@ private:
 class variable_axis : public axis_base, public real_axis<variable_axis> {
 public:
   template <typename Container>
+  explicit
   variable_axis(const Container& x,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
@@ -152,7 +156,7 @@ public:
   }
 
   variable_axis() {}
-  explicit variable_axis(const variable_axis&);
+  variable_axis(const variable_axis&);
   variable_axis& operator=(const variable_axis&);
 
   inline int index(double x) const { 
@@ -180,11 +184,13 @@ class category_axis {
 public:
   typedef std::string value_type;
 
+  explicit
   category_axis(const std::string&);
+  explicit
   category_axis(const std::vector<std::string>&);
 
   category_axis() {}
-  explicit category_axis(const category_axis&);
+  category_axis(const category_axis&);
   category_axis& operator=(const category_axis&);
 
   inline unsigned bins() const { return categories_.size(); }
@@ -213,7 +219,7 @@ public:
                bool uoflow = true);
 
   integer_axis() {}
-  explicit integer_axis(const integer_axis&);
+  integer_axis(const integer_axis&);
   integer_axis& operator=(const integer_axis&);
 
   inline int index(double x) const

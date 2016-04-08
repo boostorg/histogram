@@ -1,6 +1,7 @@
 #include <boost/histogram/nhistogram.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/random.hpp>
+#include <boost/array.hpp>
 
 #include <TH1I.h>
 #include <TH3I.h>
@@ -50,7 +51,7 @@ void compare_1d(unsigned n)
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
 
-    nhistogram h(regular_axis(100, 0, 1, std::string(), true));
+    nhistogram h(regular_axis(100, 0, 1));
     t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[i]);
@@ -79,9 +80,9 @@ void compare_3d(unsigned n)
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
 
-    nhistogram h(regular_axis(100, 0, 1, "", true),
-                 regular_axis(100, 0, 1, "", true),
-                 regular_axis(100, 0, 1, "", true));
+    nhistogram h(regular_axis(100, 0, 1),
+                 regular_axis(100, 0, 1),
+                 regular_axis(100, 0, 1));
     t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
@@ -123,12 +124,13 @@ void compare_6d(unsigned n)
                  regular_axis(10, 0, 1),
                  regular_axis(10, 0, 1),
                  regular_axis(10, 0, 1));
+    boost::array<double, 6> y;
 
     t = clock();
     for (unsigned i = 0; i < n; ++i) {
       for (unsigned k = 0; k < 6; ++k)
-        x[k] = r[6 * i + k];      
-      h.fill(x);
+        y[k] = r[6 * i + k];      
+      h.fill(y);
     }
     t = clock() - t;
     best_boost = std::min(best_boost, double(t) / CLOCKS_PER_SEC);
@@ -141,6 +143,6 @@ void compare_6d(unsigned n)
 
 int main(int argc, char** argv) {
   compare_1d(1000000);
-  compare_3d(100000);
+  compare_3d(500000);
   compare_6d(100000);
 }
