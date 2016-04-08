@@ -3,8 +3,8 @@
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/array.hpp>
-#include <boost/cstdint.hpp>
 #include <boost/histogram/detail/zero_suppression.hpp>
+#include <boost/cstdint.hpp>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -14,16 +14,16 @@
 
 namespace boost {
 namespace histogram {
+namespace detail {
 
 class nstore {
 public:
-  typedef uint64_t size_type;
-  typedef unsigned depth_type;
+  typedef uintptr_t size_type;
 
 public:
   nstore();
   nstore(const nstore&);
-  nstore(size_type, depth_type d = sizeof(uint8_t));
+  nstore(size_type, unsigned d = sizeof(uint8_t));
   ~nstore() { destroy(); }
 
   nstore& operator=(const nstore&);
@@ -52,11 +52,11 @@ public:
   }
 
   const void* buffer() const { return buffer_; }
-  depth_type depth() const { return depth_; }
+  unsigned depth() const { return depth_; }
 
 private:
   size_type size_;
-  depth_type depth_;
+  unsigned depth_;
   void* buffer_;
 
   void create();
@@ -70,7 +70,7 @@ private:
   void serialize(Archive& ar, unsigned version)
   {
     const size_type s = size_;
-    const depth_type d = depth_;
+    const unsigned d = depth_;
     ar & size_;
     ar & depth_;
     if (s != size_ || d != depth_) {
@@ -82,7 +82,7 @@ private:
 
     if (Archive::is_saving::value) {
       std::vector<char> buf;
-      if (detail::zero_suppression_encode(buf, size_ * depth_,
+      if (zero_suppression_encode(buf, size_ * depth_,
                                           (char*)buffer_, size_ * depth_)) {
         bool is_zero_suppressed = true;
         ar & is_zero_suppressed;
@@ -98,7 +98,7 @@ private:
       if (is_zero_suppressed) {
         std::vector<char> buf;
         ar & buf;
-        detail::zero_suppression_decode((char*)buffer_, size_ * depth_, buf);
+        zero_suppression_decode((char*)buffer_, size_ * depth_, buf);
       } else {
         ar & serialization::make_array((char*)buffer_, size_ * depth_);
       }
@@ -106,6 +106,7 @@ private:
   }
 };
 
+}
 }
 }
 

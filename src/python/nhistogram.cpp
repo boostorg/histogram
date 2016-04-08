@@ -50,17 +50,13 @@ nhistogram_init(python::tuple args, python::dict kwargs) {
 
 python::dict
 nhistogram_array_interface(nhistogram& self) {
-    using namespace python;
-    using python::tuple;
-    using python::make_tuple;
-
-    list shape;
+    python::list shape;
     for (unsigned i = 0; i < self.dim(); ++i)
         shape.append(self.shape(i));
-    dict d;
-    d["shape"] = tuple(shape);
-    d["typestr"] = str("<u") + str(self.data().depth());
-    d["data"] = make_tuple((long long)(self.data().buffer()), false);
+    python::dict d;
+    d["shape"] = python::tuple(shape);
+    d["typestr"] = python::str("<u") + python::str(self.depth());
+    d["data"] = python::make_tuple((long long)(self.data_.buffer()), false);
     return d;
 }
 
@@ -131,11 +127,6 @@ nhistogram_fill(python::tuple args, python::dict kwargs) {
     return object();
 }
 
-unsigned
-nhistogram_depth(const nhistogram& self) {
-    return self.data().depth();
-}
-
 uint64_t
 nhistogram_getitem(const nhistogram& self, python::object oidx) {
     using namespace python;
@@ -169,7 +160,7 @@ void register_nhistogram()
         .def(init<const axes_type&>())
         .add_property("__array_interface__", nhistogram_array_interface)
         .def("fill", raw_function(nhistogram_fill))
-        .add_property("depth", nhistogram_depth)
+        .add_property("depth", &nhistogram::depth)
         .add_property("sum", &nhistogram::sum)
         .def("__getitem__", nhistogram_getitem)
         .def(self == self)

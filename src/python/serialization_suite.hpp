@@ -11,6 +11,7 @@
 #include <algorithm>
 
 namespace boost {
+namespace histogram {
 
 class str_sink : public iostreams::sink {
 public:
@@ -88,6 +89,7 @@ struct serialization_suite : python::pickle_suite
     bool getstate_manages_dict() { return true; }
 };
 
+}
 }
 
 #endif

@@ -1,10 +1,11 @@
-#include <boost/histogram/nstore.hpp>
+#include <boost/histogram/detail/nstore.hpp>
 #include <boost/cstdint.hpp>
 #include <stdexcept>
 #include <new> // for std::bad_alloc
 
 namespace boost {
 namespace histogram {
+namespace detail {
 
 nstore::nstore() :
   size_(0),
@@ -20,7 +21,7 @@ nstore::nstore(const nstore& o) :
   std::memcpy(buffer_, o.buffer_, size_ * depth_);
 }
 
-nstore::nstore(size_type n, depth_type d) :
+nstore::nstore(size_type n, unsigned d) :
   size_(n),
   depth_(d)
 {
@@ -153,5 +154,6 @@ nstore::max_count()
   return 0;
 }
 
+}
 }
 }

@@ -3,14 +3,13 @@
 
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/histogram_base.hpp>
-#include <boost/histogram/nstore.hpp>
+#include <boost/histogram/detail/nstore.hpp>
 #include <boost/preprocessor.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/assert.hpp>
-#include <ostream>
-#include <vector>
+#include <boost/python/dict.hpp>
 
 namespace boost {
 namespace histogram {
@@ -38,6 +37,8 @@ public:
 
 // generates constructors taking 1 to AXIS_LIMIT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_NHISTOGRAM_CTOR, nil)
+
+  unsigned depth() const { return data_.depth(); }
 
   double sum() const;
 
@@ -106,20 +107,18 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_NHISTOGRAM_VALUE, n
   nhistogram& operator+=(const nhistogram& o)
   { data_ += o.data_; return *this; }
 
-  // needed by boost::python interface to pass internal data to numpy
-  const nstore& data() const { return data_; }
-
 private:
-  nstore data_;
+  detail::nstore data_;
 
   friend class serialization::access;
   template <class Archive>
   void serialize(Archive& ar, unsigned version)
   {
-    using namespace serialization;
-    ar & boost::serialization::base_object<histogram_base>(*this);
+    ar & serialization::base_object<histogram_base>(*this);
     ar & data_;
   }
+
+  friend python::dict nhistogram_array_interface(nhistogram&);
 };
 
 nhistogram operator+(const nhistogram& a, const nhistogram& b) {

@@ -5,7 +5,8 @@ if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
-find_package(Boost 1.55 REQUIRED COMPONENTS python iostreams serialization unit_test_framework)
+find_package(Boost 1.55 REQUIRED
+             COMPONENTS python iostreams serialization unit_test_framework)
 find_package(PythonLibs)
 find_package(Numpy) # optional
 find_package(ROOT) # only used in one of the tests
@@ -50,10 +51,10 @@ if(Boost_PYTHON_FOUND)
   set_target_properties(pyhistogram PROPERTIES OUTPUT_NAME "histogram" PREFIX "" SUFFIX ".so")
 endif()
 
-add_executable(sizeof_axis
-  examples/sizeof_axis.cpp
+add_executable(sizeof
+  examples/sizeof.cpp
 )
-target_link_libraries(sizeof_axis ${LIBRARIES})
+target_link_libraries(sizeof ${LIBRARIES})
 
 if(ROOT_FOUND)
   add_executable(nhistogram_speed
