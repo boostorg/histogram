@@ -9,7 +9,6 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/assert.hpp>
-#include <boost/concept/requires.hpp>
 #include <ostream>
 #include <vector>
 
@@ -42,9 +41,9 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_NHISTOGRAM_CTOR, ni
 
   double sum() const;
 
-  template <typename T>
+  template <typename Container>
   inline
-  void fill(const T& v)
+  void fill(const Container& v)
   {
     BOOST_ASSERT(v.size() == dim());
     const size_type k = pos(v);
@@ -73,8 +72,8 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_NHISTOGRAM_CTOR, ni
 // generates fill functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_NHISTOGRAM_FILL, nil)  
 
-  template <typename Array>
-  double value(const Array& idx)
+  template <typename Container>
+  double value(const Container& idx)
     const
   {
     BOOST_ASSERT(idx.size() == dim());
