@@ -19,7 +19,7 @@
 namespace boost {
 namespace histogram {
 
-// holds an array of axis and computes the internal index
+// holds collection of axis instances and computes the internal index
 class histogram_base {
 public:
   typedef container::static_vector<axis_type, BOOST_HISTOGRAM_AXIS_LIMIT> axes_type;
@@ -76,8 +76,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR
   inline
   size_type linearize(const int* idx) const {
     size_type stride = 1, k = 0, i = axes_.size();
-    while (i) {
-      --i;
+    while (i--) {
       const int size = size_[i];
       const int range = size + 2 * uoflow_[i];
       int j = idx[i];
