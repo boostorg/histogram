@@ -4,6 +4,16 @@
 namespace boost {
 namespace histogram {
 
+histogram::histogram(const histogram& o) :
+    histogram_base(o),
+    data_(o.data_)
+{}
+
+histogram::histogram(const axes_type& axes) :
+    histogram_base(axes),
+    data_(field_count())
+{}
+
 double
 histogram::sum()
     const

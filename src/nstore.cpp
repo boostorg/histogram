@@ -82,7 +82,7 @@ nstore::operator+=(const nstore& o)
         BOOST_HISTOGRAM_NSTORE_ADD(uint32_t);
         BOOST_HISTOGRAM_NSTORE_ADD(uint64_t);
         #undef BOOST_HISTOGRAM_NSTORE_ADD
-        default: assert(!"invalid depth");
+        default: BOOST_ASSERT(!"invalid depth");
       }
     }
   }
@@ -120,7 +120,7 @@ nstore::variance(size_type i)
     BOOST_HISTOGRAM_NSTORE_VARIANCE(uint32_t);
     BOOST_HISTOGRAM_NSTORE_VARIANCE(uint64_t);
     #undef BOOST_HISTOGRAM_NSTORE_VARIANCE
-    default: assert(!"invalid depth");
+    default: BOOST_ASSERT(!"invalid depth");
   }
   return 0.0;
 }
@@ -141,9 +141,9 @@ nstore::destroy()
 void
 nstore::grow()
 {
-  assert(depth_ > 0);
-  assert(depth_ < sizeof(uint64_t));
-  assert(buffer_ != 0);
+  BOOST_ASSERT(depth_ > 0);
+  BOOST_ASSERT(depth_ < sizeof(uint64_t));
+  BOOST_ASSERT(buffer_ != 0);
   buffer_ = std::realloc(buffer_, size_ * 2 * depth_);
   if (!buffer_) throw std::bad_alloc();
   size_type i = size_;
@@ -164,7 +164,7 @@ nstore::grow()
 void
 nstore::wconvert()
 {
-  assert(depth_ < sizeof(wtype));
+  BOOST_ASSERT(depth_ < sizeof(wtype));
   buffer_ = std::realloc(buffer_, size_ * sizeof(wtype));
   if (!buffer_) throw std::bad_alloc();
   size_type i = size_;
@@ -196,7 +196,7 @@ nstore::ivalue(size_type i)
     BOOST_HISTOGRAM_NSTORE_IVALUE(uint32_t);
     BOOST_HISTOGRAM_NSTORE_IVALUE(uint64_t);
     #undef BOOST_HISTOGRAM_NSTORE_IVALUE
-    default: assert(!"invalid depth");
+    default: BOOST_ASSERT(!"invalid depth");
   }
   return 0;
 }
