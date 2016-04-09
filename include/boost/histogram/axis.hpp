@@ -248,8 +248,6 @@ typedef variant<
   integer_axis
 > axis_type;
 
-typedef std::vector<axis_type> axes_type;
-
 std::ostream& operator<<(std::ostream&, const axis_type&);
 
 }

@@ -29,7 +29,7 @@ histogram_init(python::tuple args, python::dict kwargs) {
     }
 
     // normal constructor
-    axes_type axes;
+    histogram_base::axes_type axes;
     for (unsigned i = 1, n = len(args); i < n; ++i) {
         object pa = args[i];
         extract<regular_axis> er(pa);
@@ -135,7 +135,7 @@ histogram_getitem(const histogram& self, python::object oidx) {
     return self.value(self.dim(), idx);
 }
 
-class buffer_access {
+class histogram_access {
 public:
     static
     python::dict
@@ -161,8 +161,8 @@ void register_histogram()
     >("histogram", no_init)
         .def("__init__", raw_function(histogram_init))
         // shadowed C++ ctors
-        .def(init<const axes_type&>())
-        .add_property("__array_interface__", &buffer_access::histogram_array_interface)
+        .def(init<const histogram_base::axes_type&>())
+        .add_property("__array_interface__", &histogram_access::histogram_array_interface)
         .def("fill", raw_function(histogram_fill))
         .add_property("depth", &histogram::depth)
         .add_property("sum", &histogram::sum)

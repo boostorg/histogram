@@ -43,7 +43,7 @@ void compare_1d(unsigned n)
 
   double best_root = std::numeric_limits<double>::max();
   double best_boost = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 3; ++k) {
+  for (unsigned k = 0; k < 10; ++k) {
     TH1I hroot("", "", 100, 0, 1);
     clock_t t = clock();
     for (unsigned i = 0; i < n; ++i)
@@ -72,7 +72,7 @@ void compare_3d(unsigned n)
 
   double best_root = std::numeric_limits<double>::max();
   double best_boost = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 3; ++k) {
+  for (unsigned k = 0; k < 10; ++k) {
     TH3I hroot("", "", 100, 0, 1, 100, 0, 1, 100, 0, 1);
     clock_t t = clock();
     for (unsigned i = 0; i < n; ++i)
@@ -102,7 +102,7 @@ void compare_6d(unsigned n)
 
   double best_root = std::numeric_limits<double>::max();
   double best_boost = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 3; ++k) {
+  for (unsigned k = 0; k < 10; ++k) {
     double x[6];
     vector<int> bin(6, 10);
     vector<double> min(6, 0);

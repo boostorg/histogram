@@ -172,7 +172,7 @@ private:
     ar & data_;
   }
 
-  friend class buffer_access;
+  friend class histogram_access;
 };
 
 histogram operator+(const histogram& a, const histogram& b) {

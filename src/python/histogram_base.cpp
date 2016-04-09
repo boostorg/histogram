@@ -275,7 +275,7 @@ void register_histogram_base() {
   // used to pass arguments from raw python init to specialized C++ constructors
   class_<std::vector<double> >("vector_double", no_init);
   class_<std::vector<std::string> >("vector_string", no_init);
-  class_<axes_type>("axes", no_init);
+  class_<histogram_base::axes_type>("axes", no_init);
 
   class_<regular_axis>("regular_axis", no_init)
     .def(init<unsigned, double, double, std::string, bool>(

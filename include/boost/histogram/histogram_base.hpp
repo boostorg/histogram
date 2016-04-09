@@ -9,6 +9,7 @@
 #include <boost/serialization/split_member.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/container/static_vector.hpp>
 #include <boost/type_traits/is_same.hpp>
 
 #include <bitset>
@@ -21,7 +22,8 @@ namespace histogram {
 // holds an array of axis and computes the internal index
 class histogram_base {
 public:
-  typedef uint64_t size_type;
+  typedef container::static_vector<axis_type, BOOST_HISTOGRAM_AXIS_LIMIT> axes_type;
+  typedef uintptr_t size_type;
 
   histogram_base(const histogram_base&);
   histogram_base& operator=(const histogram_base&);
@@ -55,7 +57,7 @@ protected:
     update_buffers();                                                \
   }
 
-// generates constructors taking 2 to AXIS_LIMIT arguments
+// generates constructors taking 1 to AXIS_LIMIT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR, nil)
 
   bool operator==(const histogram_base&) const;
@@ -106,9 +108,15 @@ private:
   void serialize(Archive& ar, unsigned version)
   {
     using namespace serialization;
-    ar & axes_;
-    if (Archive::is_loading::value)
+    unsigned size = axes_.size();
+    ar & size;
+    if (Archive::is_loading::value) {
+      axes_.resize(size);
+      ar & serialization::make_array(&axes_[0], size);
       update_buffers();
+    } else {
+      ar & serialization::make_array(&axes_[0], size);
+    }
   }
 };
 
