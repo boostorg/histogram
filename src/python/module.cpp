@@ -8,7 +8,7 @@
 namespace boost {
 namespace histogram {
   void register_histogram_base();
-  void register_nhistogram();
+  void register_histogram();
 }
 }
 
@@ -18,5 +18,5 @@ BOOST_PYTHON_MODULE(histogram)
   import_array();
 #endif
   boost::histogram::register_histogram_base();
-  boost::histogram::register_nhistogram();
+  boost::histogram::register_histogram();
 }

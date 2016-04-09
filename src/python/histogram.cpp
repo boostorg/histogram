@@ -1,10 +1,10 @@
+#include "serialization_suite.hpp"
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/nhistogram.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
-#include "serialization_suite.hpp"
 #ifdef USE_NUMPY
 # define NO_IMPORT_ARRAY
 # define PY_ARRAY_UNIQUE_SYMBOL boost_histogram_ARRAY_API
@@ -16,7 +16,7 @@ namespace boost {
 namespace histogram {
 
 python::object
-nhistogram_init(python::tuple args, python::dict kwargs) {
+histogram_init(python::tuple args, python::dict kwargs) {
     using namespace python;
     using python::tuple;
 
@@ -48,24 +48,12 @@ nhistogram_init(python::tuple args, python::dict kwargs) {
     return pyinit(axes);
 }
 
-python::dict
-nhistogram_array_interface(nhistogram& self) {
-    python::list shape;
-    for (unsigned i = 0; i < self.dim(); ++i)
-        shape.append(self.shape(i));
-    python::dict d;
-    d["shape"] = python::tuple(shape);
-    d["typestr"] = python::str("<u") + python::str(self.depth());
-    d["data"] = python::make_tuple((long long)(self.data_.buffer()), false);
-    return d;
-}
-
 python::object
-nhistogram_fill(python::tuple args, python::dict kwargs) {
+histogram_fill(python::tuple args, python::dict kwargs) {
     using namespace python;
 
     const unsigned nargs = len(args);
-    nhistogram& self = extract<nhistogram&>(args[0]);
+    histogram& self = extract<histogram&>(args[0]);
 
 #ifdef USE_NUMPY
     if (nargs == 2) {
@@ -128,7 +116,7 @@ nhistogram_fill(python::tuple args, python::dict kwargs) {
 }
 
 uint64_t
-nhistogram_getitem(const nhistogram& self, python::object oidx) {
+histogram_getitem(const histogram& self, python::object oidx) {
     using namespace python;
 
     if (self.dim() == 1)
@@ -147,26 +135,42 @@ nhistogram_getitem(const nhistogram& self, python::object oidx) {
     return self.value(self.dim(), idx);
 }
 
-void register_nhistogram()
+class buffer_access {
+public:
+    static
+    python::dict
+    histogram_array_interface(histogram& self) {
+        python::list shape;
+        for (unsigned i = 0; i < self.dim(); ++i)
+            shape.append(self.shape(i));
+        python::dict d;
+        d["shape"] = python::tuple(shape);
+        d["typestr"] = python::str("<u") + python::str(self.data_.depth());
+        d["data"] = python::make_tuple((long long)(self.data_.buffer()), false);
+        return d;
+    }
+};
+
+void register_histogram()
 {
     using namespace python;
 
     class_<
-      nhistogram, bases<histogram_base>,
-      shared_ptr<nhistogram>
-    >("nhistogram", no_init)
-        .def("__init__", raw_function(nhistogram_init))
+      histogram, bases<histogram_base>,
+      shared_ptr<histogram>
+    >("histogram", no_init)
+        .def("__init__", raw_function(histogram_init))
         // shadowed C++ ctors
         .def(init<const axes_type&>())
-        .add_property("__array_interface__", nhistogram_array_interface)
-        .def("fill", raw_function(nhistogram_fill))
-        .add_property("depth", &nhistogram::depth)
-        .add_property("sum", &nhistogram::sum)
-        .def("__getitem__", nhistogram_getitem)
+        .add_property("__array_interface__", &buffer_access::histogram_array_interface)
+        .def("fill", raw_function(histogram_fill))
+        .add_property("depth", &histogram::depth)
+        .add_property("sum", &histogram::sum)
+        .def("__getitem__", histogram_getitem)
         .def(self == self)
         .def(self += self)
         .def(self + self)
-        .def_pickle(serialization_suite<nhistogram>())
+        .def_pickle(serialization_suite<histogram>())
         ;
 }
 

@@ -9,28 +9,30 @@ find_package(Boost 1.55 REQUIRED
              COMPONENTS python iostreams serialization unit_test_framework)
 find_package(PythonLibs)
 find_package(Numpy) # optional
-find_package(ROOT) # only used in one of the tests
 
-include_directories(include ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
+include_directories(include ${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 set(LIBRARIES stdc++ ${Boost_LIBRARIES})
 
-if(Boost_PYTHON_FOUND)
+if(Boost_PYTHON_FOUND AND PYTHONLIBS_FOUND)
+  set(USE_PYTHON True)
+  include_directories(${PYTHON_INCLUDE_DIRS})
   LIST(APPEND LIBRARIES ${PYTHON_LIBRARIES})
+  add_definitions(-DUSE_PYTHON)  
+
+  if(NUMPY_FOUND)
+    include_directories(${NUMPY_INCLUDE_DIR})
+    add_definitions(-DUSE_NUMPY)
+  endif()
 endif()
 
-if(NUMPY_FOUND)
-  include_directories(${NUMPY_INCLUDE_DIR})
-  add_definitions(-DUSE_NUMPY)
-endif()
-
+# core library
 add_library(histogram SHARED
   src/axis.cpp
   src/histogram_base.cpp
-  src/nhistogram.cpp
+  src/histogram.cpp
   src/nstore.cpp
   src/zero_suppression.cpp
-  # src/whistogram.cpp
 )
 target_link_libraries(histogram ${LIBRARIES})
 
@@ -41,21 +43,24 @@ else()
   target_compile_options(histogram PUBLIC "-O3 -fomit-frame-pointer -mtune=generic")
 endif()
 
-if(Boost_PYTHON_FOUND)
+# python bindings
+if(USE_PYTHON)
   add_library(pyhistogram MODULE
     src/python/module.cpp
     src/python/histogram_base.cpp
-    src/python/nhistogram.cpp
+    src/python/histogram.cpp
   )
   target_link_libraries(pyhistogram histogram ${LIBRARIES})
   set_target_properties(pyhistogram PROPERTIES OUTPUT_NAME "histogram" PREFIX "" SUFFIX ".so")
 endif()
 
+# examples
 add_executable(sizeof
   examples/sizeof.cpp
 )
 target_link_libraries(sizeof ${LIBRARIES})
 
+find_package(ROOT) # only used in speed comparison
 if(ROOT_FOUND)
   add_executable(nhistogram_speed
                  examples/speed_vs_root.cpp)

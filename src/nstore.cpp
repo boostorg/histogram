@@ -50,8 +50,42 @@ nstore::operator+=(const nstore& o)
 {
   if (size_ != o.size_)
     throw std::logic_error("sizes do not match");
-  for (size_type i = 0; i < size_; ++i)
-    write(i, read(i) + o.read(i));
+
+  if (depth_ != o.depth_) {
+    if (o.depth_ == sizeof(wtype))
+      wconvert();
+    else
+      while (depth_ < o.depth_)
+        grow();
+  }
+
+  if (depth_ == sizeof(wtype)) {
+    for (size_type i = 0; i < size_; ++i)
+      ((wtype*)buffer_)[i] += ((wtype*)o.buffer_)[i];
+  }
+  else {
+    size_type i = 0;
+    while (i < size_) {
+      const uint64_t oi = o.ivalue(i);
+      switch (depth_) {
+        #define BOOST_HISTOGRAM_NSTORE_ADD(T)              \
+        case sizeof(T): {                                  \
+          T& b = ((T*)buffer_)[i];                         \
+          if ((std::numeric_limits<T>::max() - b) >= oi) { \
+            b += oi;                                       \
+            ++i;                                           \
+            break;                                         \
+          } else grow(); /* add fall through */            \
+        }
+        BOOST_HISTOGRAM_NSTORE_ADD(uint8_t);
+        BOOST_HISTOGRAM_NSTORE_ADD(uint16_t);
+        BOOST_HISTOGRAM_NSTORE_ADD(uint32_t);
+        BOOST_HISTOGRAM_NSTORE_ADD(uint64_t);
+        #undef BOOST_HISTOGRAM_NSTORE_ADD
+        default: assert(!"invalid depth");
+      }
+    }
+  }
   return *this;
 }
 
@@ -64,42 +98,31 @@ nstore::operator==(const nstore& o)
   return std::memcmp(buffer_, o.buffer_, size_ * depth_) == 0;
 }
 
-uint64_t
-nstore::read(size_type i)
+double
+nstore::value(size_type i)
+  const
+{
+  if (depth_ == sizeof(wtype))
+    return ((wtype*)buffer_)[i].w;
+  return ivalue(i);
+}
+
+double
+nstore::variance(size_type i)
   const
 {
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_READ(T) \
+    case sizeof(wtype): return ((wtype*)buffer_)[i].w2;
+    #define BOOST_HISTOGRAM_NSTORE_VARIANCE(T) \
     case sizeof(T): return ((T*)buffer_)[i]
-    BOOST_HISTOGRAM_NSTORE_READ(uint8_t);
-    BOOST_HISTOGRAM_NSTORE_READ(uint16_t);
-    BOOST_HISTOGRAM_NSTORE_READ(uint32_t);
-    BOOST_HISTOGRAM_NSTORE_READ(uint64_t);
-    #undef BOOST_HISTOGRAM_NSTORE_READ
+    BOOST_HISTOGRAM_NSTORE_VARIANCE(uint8_t);
+    BOOST_HISTOGRAM_NSTORE_VARIANCE(uint16_t);
+    BOOST_HISTOGRAM_NSTORE_VARIANCE(uint32_t);
+    BOOST_HISTOGRAM_NSTORE_VARIANCE(uint64_t);
+    #undef BOOST_HISTOGRAM_NSTORE_VARIANCE
     default: assert(!"invalid depth");
   }
-  return 0;
-}
-
-void
-nstore::write(size_type i, uint64_t v)
-{
-  const uint64_t vmax = max_count();
-  while (vmax < v) grow();
-
-  switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_WRITE(T) \
-    case sizeof(T): {                       \
-      ((T*)buffer_)[i] = v;                 \
-      break;                                \
-    }
-    BOOST_HISTOGRAM_NSTORE_WRITE(uint8_t);
-    BOOST_HISTOGRAM_NSTORE_WRITE(uint16_t);
-    BOOST_HISTOGRAM_NSTORE_WRITE(uint32_t);
-    BOOST_HISTOGRAM_NSTORE_WRITE(uint64_t);
-    #undef BOOST_HISTOGRAM_NSTORE_WRITE
-    default: assert(!"invalid depth");
-  }
+  return 0.0;
 }
 
 void
@@ -118,17 +141,17 @@ nstore::destroy()
 void
 nstore::grow()
 {
-  if (depth_ == sizeof(uint64_t))
-    throw std::overflow_error("depth > 64 bit is not supported");
-  if (depth_ == 0 || buffer_ == 0)
-    throw std::logic_error("cannot call grow on null buffer");
+  assert(depth_ > 0);
+  assert(depth_ < sizeof(uint64_t));
+  assert(buffer_ != 0);
   buffer_ = std::realloc(buffer_, size_ * 2 * depth_);
   if (!buffer_) throw std::bad_alloc();
+  size_type i = size_;
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_GROW(T0, T1)          \
-    case sizeof(T0):                                     \
-    for (size_type i = size_ - 1; i != size_type(-1); --i) \
-      ((T1*)buffer_)[i] = ((T0*)buffer_)[i];             \
+    #define BOOST_HISTOGRAM_NSTORE_GROW(T0, T1) \
+    case sizeof(T0):                            \
+    while (i--)                                 \
+      ((T1*)buffer_)[i] = ((T0*)buffer_)[i];    \
     break
     BOOST_HISTOGRAM_NSTORE_GROW(uint8_t, uint16_t);
     BOOST_HISTOGRAM_NSTORE_GROW(uint16_t, uint32_t);
@@ -138,17 +161,41 @@ nstore::grow()
   depth_ *= 2;
 }
 
+void
+nstore::wconvert()
+{
+  assert(depth_ < sizeof(wtype));
+  buffer_ = std::realloc(buffer_, size_ * sizeof(wtype));
+  if (!buffer_) throw std::bad_alloc();
+  size_type i = size_;
+  switch (depth_) {
+    #define BOOST_HISTOGRAM_NSTORE_CONVERT(T)  \
+    case sizeof(T):                            \
+    while (i--)                                \
+      ((wtype*)buffer_)[i] = ((T*)buffer_)[i]; \
+    break
+    BOOST_HISTOGRAM_NSTORE_CONVERT(uint8_t);
+    BOOST_HISTOGRAM_NSTORE_CONVERT(uint16_t);
+    BOOST_HISTOGRAM_NSTORE_CONVERT(uint32_t);
+    BOOST_HISTOGRAM_NSTORE_CONVERT(uint64_t);
+    #undef BOOST_HISTOGRAM_NSTORE_CONVERT
+    default: break; // no nuthin'
+  }
+  depth_ = sizeof(wtype);
+}
+
 uint64_t
-nstore::max_count()
+nstore::ivalue(size_type i)
   const
 {
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_CASE(T) \
-    case sizeof(T): return std::numeric_limits<T>::max()
-    BOOST_HISTOGRAM_NSTORE_CASE(uint8_t);
-    BOOST_HISTOGRAM_NSTORE_CASE(uint16_t);
-    BOOST_HISTOGRAM_NSTORE_CASE(uint32_t);
-    BOOST_HISTOGRAM_NSTORE_CASE(uint64_t);
+    #define BOOST_HISTOGRAM_NSTORE_IVALUE(T) \
+    case sizeof(T): return ((T*)buffer_)[i]
+    BOOST_HISTOGRAM_NSTORE_IVALUE(uint8_t);
+    BOOST_HISTOGRAM_NSTORE_IVALUE(uint16_t);
+    BOOST_HISTOGRAM_NSTORE_IVALUE(uint32_t);
+    BOOST_HISTOGRAM_NSTORE_IVALUE(uint64_t);
+    #undef BOOST_HISTOGRAM_NSTORE_IVALUE
     default: assert(!"invalid depth");
   }
   return 0;

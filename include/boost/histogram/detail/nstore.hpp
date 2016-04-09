@@ -1,10 +1,12 @@
-#ifndef _BOOST_HISTOGRAM_NSTORE_HPP_
-#define _BOOST_HISTOGRAM_NSTORE_HPP_
+#ifndef _BOOST_HISTOGRAM_DETAIL_NSTORE_HPP_
+#define _BOOST_HISTOGRAM_DETAIL_NSTORE_HPP_
 
+#include <boost/histogram/detail/wtype.hpp>
+#include <boost/histogram/detail/zero_suppression.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/array.hpp>
-#include <boost/histogram/detail/zero_suppression.hpp>
 #include <boost/cstdint.hpp>
+#include <boost/assert.hpp>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -20,7 +22,6 @@ class nstore {
 public:
   typedef uintptr_t size_type;
 
-public:
   nstore();
   nstore(const nstore&);
   nstore(size_type, unsigned d = sizeof(uint8_t));
@@ -30,11 +31,12 @@ public:
   nstore& operator+=(const nstore&);
   bool operator==(const nstore&) const;
 
-  uint64_t read(size_type) const;
-  void write(size_type, uint64_t);
-
   inline void increase(size_type i) {
     switch (depth_) {
+      case sizeof(wtype): {
+        wtype& b = ((wtype*)buffer_)[i];
+        b += 1.0;        
+      }
       #define BOOST_HISTOGRAM_NSTORE_INC(T)     \
       case sizeof(T): {                         \
         T& b = ((T*)buffer_)[i];                \
@@ -51,6 +53,14 @@ public:
     }
   }
 
+  inline void increase(size_type i, double w) {
+    assert(depth_ == sizeof(wtype));
+    ((wtype*)buffer_)[i] += w;
+  }
+
+  double value(size_type) const;
+  double variance(size_type) const;
+
   const void* buffer() const { return buffer_; }
   unsigned depth() const { return depth_; }
 
@@ -62,8 +72,24 @@ private:
   void create();
   void destroy();
   void grow();
+  void wconvert();
 
-  uint64_t max_count() const;
+  uint64_t max_count() const
+  {
+    switch (depth_) {
+      #define BOOST_HISTOGRAM_NSTORE_CASE(T) \
+      case sizeof(T): return std::numeric_limits<T>::max()
+      BOOST_HISTOGRAM_NSTORE_CASE(uint8_t);
+      BOOST_HISTOGRAM_NSTORE_CASE(uint16_t);
+      BOOST_HISTOGRAM_NSTORE_CASE(uint32_t);
+      BOOST_HISTOGRAM_NSTORE_CASE(uint64_t);
+      #undef BOOST_HISTOGRAM_NSTORE_CASE
+      default: assert(!"invalid depth");
+    }
+    return 0;
+  }
+
+  uint64_t ivalue(size_type) const;
 
   friend class serialization::access;
   template <class Archive>
@@ -81,26 +107,50 @@ private:
       throw std::bad_alloc();
 
     if (Archive::is_saving::value) {
-      std::vector<char> buf;
-      if (zero_suppression_encode(buf, size_ * depth_,
-                                          (char*)buffer_, size_ * depth_)) {
-        bool is_zero_suppressed = true;
-        ar & is_zero_suppressed;
-        ar & buf;
-      } else {
-        bool is_zero_suppressed = false;
-        ar & is_zero_suppressed;
-        ar & serialization::make_array((char*)buffer_, size_ * depth_);
+      switch (depth_) {
+        #define BOOST_HISTOGRAM_NSTORE_SAVE(T) \
+        case sizeof(T): {                      \
+          std::vector<T> buf;                  \
+          if (zero_suppression_encode<T>(buf, (T*)buffer_, size_)) { \
+            bool is_zero_suppressed = true;    \
+            ar & is_zero_suppressed;           \
+            ar & buf;                          \
+          } else {                             \
+            bool is_zero_suppressed = false;   \
+            ar & is_zero_suppressed;           \
+            ar & serialization::make_array((T*)buffer_, size_); \
+          }                                    \
+        } break
+        BOOST_HISTOGRAM_NSTORE_SAVE(uint8_t);
+        BOOST_HISTOGRAM_NSTORE_SAVE(uint16_t);
+        BOOST_HISTOGRAM_NSTORE_SAVE(uint32_t);
+        BOOST_HISTOGRAM_NSTORE_SAVE(uint64_t);
+        BOOST_HISTOGRAM_NSTORE_SAVE(wtype);
+        #undef BOOST_HISTOGRAM_NSTORE_SAVE
+        default: assert(!"invalid depth");
       }
-    } else {
+    }
+
+    if (Archive::is_loading::value) {
       bool is_zero_suppressed = false;
       ar & is_zero_suppressed;
-      if (is_zero_suppressed) {
-        std::vector<char> buf;
-        ar & buf;
-        zero_suppression_decode((char*)buffer_, size_ * depth_, buf);
-      } else {
-        ar & serialization::make_array((char*)buffer_, size_ * depth_);
+      switch (depth_) {
+        #define BOOST_HISTOGRAM_NSTORE_LOAD(T) \
+        case sizeof(T):                        \
+        if (is_zero_suppressed) {              \
+          std::vector<T> buf;                  \
+          ar & buf;                            \
+          zero_suppression_decode<T>((T*)buffer_, size_, buf); \
+        } else {                               \
+          ar & serialization::make_array((T*)buffer_, size_); \
+        } break
+        BOOST_HISTOGRAM_NSTORE_LOAD(uint8_t);
+        BOOST_HISTOGRAM_NSTORE_LOAD(uint16_t);
+        BOOST_HISTOGRAM_NSTORE_LOAD(uint32_t);
+        BOOST_HISTOGRAM_NSTORE_LOAD(uint64_t);
+        BOOST_HISTOGRAM_NSTORE_LOAD(wtype);
+        #undef BOOST_HISTOGRAM_NSTORE_LOAD
+        default: assert(!"invalid depth");
       }
     }
   }

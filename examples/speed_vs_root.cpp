@@ -1,4 +1,4 @@
-#include <boost/histogram/nhistogram.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/random.hpp>
 #include <boost/array.hpp>
@@ -51,7 +51,7 @@ void compare_1d(unsigned n)
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
 
-    nhistogram h(regular_axis(100, 0, 1));
+    histogram h(regular_axis(100, 0, 1));
     t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[i]);
@@ -80,7 +80,7 @@ void compare_3d(unsigned n)
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
 
-    nhistogram h(regular_axis(100, 0, 1),
+    histogram h(regular_axis(100, 0, 1),
                  regular_axis(100, 0, 1),
                  regular_axis(100, 0, 1));
     t = clock();
@@ -118,7 +118,7 @@ void compare_6d(unsigned n)
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
 
-    nhistogram h(regular_axis(10, 0, 1),
+    histogram h(regular_axis(10, 0, 1),
                  regular_axis(10, 0, 1),
                  regular_axis(10, 0, 1),
                  regular_axis(10, 0, 1),

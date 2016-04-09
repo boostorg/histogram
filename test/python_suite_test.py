@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import unittest
 from math import pi
-from histogram import nhistogram, regular_axis, polar_axis, \
+from histogram import histogram, regular_axis, polar_axis, \
                       variable_axis, category_axis, integer_axis
 import cPickle
 import StringIO
@@ -299,39 +299,39 @@ class test_integer_axis(unittest.TestCase):
         self.assertEqual(a.index(3), 4)
         self.assertEqual(a.index(4), 4)
 
-class nhistogram_test(unittest.TestCase):
+class histogram_test(unittest.TestCase):
 
     def test_init(self):
-        nhistogram(integer_axis(-1, 1))
+        histogram(integer_axis(-1, 1))
         with self.assertRaises(TypeError):
-            nhistogram(1)
+            histogram(1)
         with self.assertRaises(TypeError):
-            nhistogram("bla")
+            histogram("bla")
         with self.assertRaises(TypeError):
-            nhistogram([])
+            histogram([])
         with self.assertRaises(TypeError):
-            nhistogram(regular_axis)
+            histogram(regular_axis)
         with self.assertRaises(TypeError):
-            nhistogram(regular_axis())
+            histogram(regular_axis())
         with self.assertRaises(TypeError):
-            nhistogram([integer_axis(-1, 1)])
+            histogram([integer_axis(-1, 1)])
         with self.assertRaises(TypeError):
-            nhistogram(integer_axis(-1, 1), unknown_keyword="nh")
+            histogram(integer_axis(-1, 1), unknown_keyword="nh")
 
-        h = nhistogram(integer_axis(-1, 1))
+        h = histogram(integer_axis(-1, 1))
         self.assertEqual(h.dim, 1)
         self.assertEqual(h.axis(0), integer_axis(-1, 1))
         self.assertEqual(h.shape(0), 5)
         self.assertEqual(h.depth, 1)
-        self.assertEqual(nhistogram(integer_axis(-1, 1, uoflow=False)).shape(0), 3)
-        self.assertNotEqual(h, nhistogram(regular_axis(1, -1, 1)))
-        self.assertNotEqual(h, nhistogram(integer_axis(-1, 2)))
-        self.assertNotEqual(h, nhistogram(integer_axis(-1, 1, label="ia")))
-        self.assertNotEqual(h, nhistogram(integer_axis(-1, 1, uoflow=True)))
+        self.assertEqual(histogram(integer_axis(-1, 1, uoflow=False)).shape(0), 3)
+        self.assertNotEqual(h, histogram(regular_axis(1, -1, 1)))
+        self.assertNotEqual(h, histogram(integer_axis(-1, 2)))
+        self.assertNotEqual(h, histogram(integer_axis(-1, 1, label="ia")))
+        self.assertNotEqual(h, histogram(integer_axis(-1, 1, uoflow=True)))
 
     def test_fill_1d(self):
-        h0 = nhistogram(integer_axis(-1, 1, uoflow=False))
-        h1 = nhistogram(integer_axis(-1, 1, uoflow=True))
+        h0 = histogram(integer_axis(-1, 1, uoflow=False))
+        h1 = histogram(integer_axis(-1, 1, uoflow=True))
         for h in (h0, h1):
             with self.assertRaises(StandardError):
                 h.fill()
@@ -363,7 +363,7 @@ class nhistogram_test(unittest.TestCase):
         self.assertEqual(h1[3], 1)
 
     def test_growth(self):
-        h = nhistogram(integer_axis(-1, 1))
+        h = histogram(integer_axis(-1, 1))
         h.fill(-1)
         h.fill(1)
         h.fill(1)
@@ -382,7 +382,7 @@ class nhistogram_test(unittest.TestCase):
 
     def test_fill_2d(self):
         for uoflow in (False, True):
-            h = nhistogram(integer_axis(-1, 1, uoflow=uoflow),
+            h = histogram(integer_axis(-1, 1, uoflow=uoflow),
                            regular_axis(4, -2, 2, uoflow=uoflow))
             h.fill(-1, -2)
             h.fill(-1, -1)
@@ -407,7 +407,7 @@ class nhistogram_test(unittest.TestCase):
 
     def test_add_2d(self):
         for uoflow in (False, True):
-            h = nhistogram(integer_axis(-1, 1, uoflow=uoflow),
+            h = histogram(integer_axis(-1, 1, uoflow=uoflow),
                            regular_axis(4, -2, 2, uoflow=uoflow))
             h.fill(-1, -2)
             h.fill(-1, -1)
@@ -432,7 +432,7 @@ class nhistogram_test(unittest.TestCase):
                     self.assertEqual(h[i, j], 2 * m[i][j])
 
     def test_pickle(self):
-        a = nhistogram(category_axis('A', 'B', 'C'),
+        a = histogram(category_axis('A', 'B', 'C'),
                        integer_axis(0, 3, label='ia'),
                        regular_axis(4, 0.0, 4.0, uoflow=False),
                        variable_axis(0.0, 1.0, 2.0))
@@ -460,7 +460,7 @@ class nhistogram_test(unittest.TestCase):
 
     @unittest.skipUnless("numpy" in globals(), "requires numpy")
     def test_numpy_conversion(self):
-        a = nhistogram(integer_axis(0, 2, uoflow=False))
+        a = histogram(integer_axis(0, 2, uoflow=False))
         for i in xrange(100):
             a.fill(1)
         b = numpy.array(a) # a copy
@@ -481,19 +481,19 @@ class nhistogram_test(unittest.TestCase):
 
     @unittest.skipUnless("numpy" in globals(), "requires numpy")
     def test_fill_with_numpy_array(self):
-        a = nhistogram(integer_axis(0, 2, uoflow=False))
+        a = histogram(integer_axis(0, 2, uoflow=False))
         a.fill(numpy.array([-1, 0, 1, 2, 1, 4]))
         self.assertEqual(a[0], 1)
         self.assertEqual(a[1], 2)
         self.assertEqual(a[2], 1)
-        a = nhistogram(integer_axis(0, 1, uoflow=False),
+        a = histogram(integer_axis(0, 1, uoflow=False),
                        regular_axis(2, 0, 2, uoflow=False))
         a.fill(numpy.array([[-1., -1.], [0., 1.], [1., 0.1]]))
         self.assertEqual(a[0, 0], 0)
         self.assertEqual(a[0, 1], 1)
         self.assertEqual(a[1, 0], 1)
         self.assertEqual(a[1, 1], 0)
-        a = nhistogram(integer_axis(0, 2, uoflow=False))
+        a = histogram(integer_axis(0, 2, uoflow=False))
         a.fill([0, 0, 1, 2])
         a.fill((1, 0, 2, 2))
         self.assertEqual(a[0], 3)
