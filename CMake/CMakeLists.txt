@@ -12,7 +12,7 @@ find_package(Numpy) # optional
 
 include_directories(include ${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
-set(LIBRARIES stdc++ ${Boost_LIBRARIES})
+set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
 
 if(Boost_PYTHON_FOUND AND PYTHONLIBS_FOUND)
   set(USE_PYTHON True)
@@ -74,6 +74,11 @@ add_executable(zero_suppression_test
                test/zero_suppression_test.cpp)
 target_link_libraries(zero_suppression_test histogram ${LIBRARIES})
 add_test(zero_suppression_test zero_suppression_test)
+
+add_executable(histogram_test
+               test/histogram_test.cpp)
+target_link_libraries(histogram_test histogram ${LIBRARIES})
+add_test(histogram_test histogram_test)
 
 if(Boost_PYTHON_FOUND)
   add_custom_target(python_suite_test ALL

@@ -124,13 +124,13 @@ void compare_6d(unsigned n)
                  regular_axis(10, 0, 1),
                  regular_axis(10, 0, 1),
                  regular_axis(10, 0, 1));
-    boost::array<double, 6> y;
+    double y[6];
 
     t = clock();
     for (unsigned i = 0; i < n; ++i) {
       for (unsigned k = 0; k < 6; ++k)
         y[k] = r[6 * i + k];      
-      h.fill(y);
+      h.fill(6, y);
     }
     t = clock() - t;
     best_boost = std::min(best_boost, double(t) / CLOCKS_PER_SEC);

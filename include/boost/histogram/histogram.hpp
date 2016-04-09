@@ -7,6 +7,8 @@
 #include <boost/preprocessor.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
+#include <boost/utility/enable_if.hpp>
+#include <boost/type_traits.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/assert.hpp>
 
@@ -28,15 +30,16 @@ public:
 // generates constructors taking 1 to AXIS_LIMIT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil)
 
-  template <typename Container>
-  inline
-  void fill(const Container& v)
-  {
-    BOOST_ASSERT(v.size() == dim());
-    const size_type k = pos(v);
-    if (k != uintmax_t(-1))
-      data_.increase(k);
-  }
+  // template <typename C>
+  // inline
+  // void
+  // fill(const C& v)
+  // {
+  //   BOOST_ASSERT(v.size() == dim());
+  //   const size_type k = pos(v);
+  //   if (k != uintmax_t(-1))
+  //     data_.increase(k);
+  // }
 
   // C-style call
   inline
@@ -59,15 +62,15 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
 // generates fill functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil)  
 
-  template <typename Container>
-  inline
-  void wfill(const Container& v, double w)
-  {
-    BOOST_ASSERT(v.size() == dim());
-    const size_type k = pos(v);
-    if (k != uintmax_t(-1))
-      data_.increase(k, w);
-  }
+  // template <typename Container>
+  // inline
+  // void wfill(const Container& v, double w)
+  // {
+  //   BOOST_ASSERT(v.size() == dim());
+  //   const size_type k = pos(v);
+  //   if (k != uintmax_t(-1))
+  //     data_.increase(k, w);
+  // }
 
   // C-style call
   inline
@@ -90,14 +93,14 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil
 // generates wfill functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, nil)  
 
-  template <typename Container>
-  inline
-  double value(const Container& idx)
-    const
-  {
-    BOOST_ASSERT(idx.size() == dim());
-    return data_.value(linearize(idx));
-  }
+  // template <typename Container>
+  // inline
+  // double value(const Container& idx)
+  //   const
+  // {
+  //   BOOST_ASSERT(idx.size() == dim());
+  //   return data_.value(linearize(idx));
+  // }
 
   // C-style call
   inline
@@ -120,14 +123,14 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, ni
 // generates value functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, nil)  
 
-  template <typename Container>
-  inline
-  double variance(const Container& idx)
-    const
-  {
-    BOOST_ASSERT(idx.size() == dim());
-    return data_.variance(linearize(idx));
-  }
+  // template <typename Container>
+  // inline
+  // double variance(const Container& idx)
+  //   const
+  // {
+  //   BOOST_ASSERT(idx.size() == dim());
+  //   return data_.variance(linearize(idx));
+  // }
 
   // C-style call
   inline
