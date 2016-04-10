@@ -33,7 +33,7 @@ My goal is to submit this project to the [Boost](http://www.boost.org) libraries
 
 `cmake ../histogram.git/CMake`
 
-`make install` (or just `make` if you don't want to install yet)
+`make install` (or just `make` to run the tests afterwards)
 
 To run the tests, do `ctest`.
 
