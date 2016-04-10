@@ -1,7 +1,9 @@
 #include <cstdio>
 #include <boost/preprocessor.hpp>
 #include <boost/histogram/axis.hpp>
+#include <boost/histogram/detail/wtype.hpp>
 #include <boost/container/vector.hpp>
+#include <boost/container/static_vector.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <vector>
@@ -17,6 +19,7 @@ int main(int argc, char** argv) {
   SIZEOF(float);
   SIZEOF(double);
   SIZEOF(void*);
+  SIZEOF(detail::wtype);
   SIZEOF(boost::multiprecision::int128_t);
   SIZEOF(boost::multiprecision::int512_t);
   SIZEOF(boost::multiprecision::cpp_int);
@@ -24,6 +27,8 @@ int main(int argc, char** argv) {
   SIZEOF(std::vector<double>);
   SIZEOF(std::valarray<double>);
   SIZEOF(boost::container::vector<double>);
+  typedef boost::container::static_vector<axis_type,16> static_vector_a16;
+  SIZEOF(static_vector_a16);
   SIZEOF(boost::scoped_array<double>);
   SIZEOF(regular_axis);
   SIZEOF(polar_axis);

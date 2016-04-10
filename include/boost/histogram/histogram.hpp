@@ -11,6 +11,7 @@
 #include <boost/type_traits.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/assert.hpp>
+#include <stdexcept>
 
 namespace boost {
 namespace histogram {
@@ -30,22 +31,11 @@ public:
 // generates constructors taking 1 to AXIS_LIMIT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil)
 
-  // template <typename C>
-  // inline
-  // void
-  // fill(const C& v)
-  // {
-  //   BOOST_ASSERT(v.size() == dim());
-  //   const size_type k = pos(v);
-  //   if (k != uintmax_t(-1))
-  //     data_.increase(k);
-  // }
-
   // C-style call
   inline
-  void fill(unsigned n, const double* v)
+  void fill_c(unsigned n, const double* v)
   {
-    BOOST_ASSERT(n == dim());
+    BOOST_ASSERT_MSG(n == dim(), "wrong number of arguments");
     const size_type k = pos(v);
     if (k != uintmax_t(-1))
       data_.increase(k);
@@ -56,27 +46,17 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
   void fill( BOOST_PP_ENUM_PARAMS_Z(z, n, double x) )        \
   {                                                          \
     const double buffer[n] = { BOOST_PP_ENUM_PARAMS(n, x) }; \
-    fill(n, buffer); /* size is checked here */              \
+    fill_c(n, buffer); /* size is checked here */              \
   }
 
 // generates fill functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil)  
 
-  // template <typename Container>
-  // inline
-  // void wfill(const Container& v, double w)
-  // {
-  //   BOOST_ASSERT(v.size() == dim());
-  //   const size_type k = pos(v);
-  //   if (k != uintmax_t(-1))
-  //     data_.increase(k, w);
-  // }
-
   // C-style call
   inline
-  void wfill(unsigned n, const double* v, double w)
+  void wfill_c(unsigned n, const double* v, double w)
   {
-    BOOST_ASSERT(n == dim());
+    BOOST_ASSERT_MSG(n == dim(), "wrong number of arguments");
     const size_type k = pos(v);
     if (k != uintmax_t(-1))
       data_.increase(k, w);
@@ -87,27 +67,18 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil
   void wfill( BOOST_PP_ENUM_PARAMS_Z(z, n, double x), double w ) \
   {                                                              \
     const double buffer[n] = { BOOST_PP_ENUM_PARAMS(n, x) };     \
-    wfill(n, buffer, w); /* size is checked here */              \
+    wfill_c(n, buffer, w); /* size is checked here */              \
   }
 
 // generates wfill functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, nil)  
 
-  // template <typename Container>
-  // inline
-  // double value(const Container& idx)
-  //   const
-  // {
-  //   BOOST_ASSERT(idx.size() == dim());
-  //   return data_.value(linearize(idx));
-  // }
-
   // C-style call
   inline
-  double value(unsigned n, const int* idx)
+  double value_c(unsigned n, const int* idx)
     const
   {
-    BOOST_ASSERT(n == dim());
+    BOOST_ASSERT_MSG(n == dim(), "wrong number of arguments");
     return data_.value(linearize(idx));
   }
 
@@ -117,27 +88,18 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, ni
     const                                                   \
   {                                                         \
     const int idx[n] = { BOOST_PP_ENUM_PARAMS_Z(z, n, i) }; \
-    return value(n, idx); /* size is checked here */        \
+    return value_c(n, idx); /* size is checked here */        \
   }
 
 // generates value functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, nil)  
 
-  // template <typename Container>
-  // inline
-  // double variance(const Container& idx)
-  //   const
-  // {
-  //   BOOST_ASSERT(idx.size() == dim());
-  //   return data_.variance(linearize(idx));
-  // }
-
   // C-style call
   inline
-  double variance(unsigned n, const int* idx)
+  double variance_c(unsigned n, const int* idx)
     const
   {
-    BOOST_ASSERT(n == dim());
+    BOOST_ASSERT_MSG(n == dim(), "wrong number of arguments");
     return data_.variance(linearize(idx));
   }
 
@@ -147,7 +109,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, ni
     const                                                   \
   {                                                         \
     const int idx[n] = { BOOST_PP_ENUM_PARAMS_Z(z, n, i) }; \
-    return variance(n, idx); /* size is checked here */     \
+    return variance_c(n, idx); /* size is checked here */     \
   }
 
 // generates variance functions taking 1 to AXIS_LIMT arguments
@@ -162,7 +124,12 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VARIANCE,
            data_ == o.data_; }
 
   histogram& operator+=(const histogram& o)
-  { data_ += o.data_; return *this; }
+  {
+    if (!histogram_base::operator==(o))
+      throw std::logic_error("histograms have different axes");
+    data_ += o.data_;
+    return *this;
+  }
 
 private:
   detail::nstore data_;

@@ -49,12 +49,13 @@ public:
       BOOST_HISTOGRAM_NSTORE_INC(uint32_t);
       BOOST_HISTOGRAM_NSTORE_INC(uint64_t);
       #undef BOOST_HISTOGRAM_NSTORE_INC
-      default: assert(!"invalid depth");
+      default: BOOST_ASSERT(!"invalid depth");
     }
   }
 
   inline void increase(size_type i, double w) {
-    assert(depth_ == sizeof(wtype));
+    if (depth_ != sizeof(wtype))
+      wconvert();
     ((wtype*)buffer_)[i] += w;
   }
 
@@ -84,7 +85,7 @@ private:
       BOOST_HISTOGRAM_NSTORE_CASE(uint32_t);
       BOOST_HISTOGRAM_NSTORE_CASE(uint64_t);
       #undef BOOST_HISTOGRAM_NSTORE_CASE
-      default: assert(!"invalid depth");
+      default: BOOST_ASSERT(!"invalid depth");
     }
     return 0;
   }
@@ -127,7 +128,7 @@ private:
         BOOST_HISTOGRAM_NSTORE_SAVE(uint64_t);
         BOOST_HISTOGRAM_NSTORE_SAVE(wtype);
         #undef BOOST_HISTOGRAM_NSTORE_SAVE
-        default: assert(!"invalid depth");
+        default: BOOST_ASSERT(!"invalid depth");
       }
     }
 
@@ -150,7 +151,7 @@ private:
         BOOST_HISTOGRAM_NSTORE_LOAD(uint64_t);
         BOOST_HISTOGRAM_NSTORE_LOAD(wtype);
         #undef BOOST_HISTOGRAM_NSTORE_LOAD
-        default: assert(!"invalid depth");
+        default: BOOST_ASSERT(!"invalid depth");
       }
     }
   }

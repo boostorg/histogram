@@ -24,8 +24,8 @@ histogram_init(python::tuple args, python::dict kwargs) {
     object pyinit = self.attr("__init__");
 
     if (kwargs) {
-        PyErr_SetString(PyExc_TypeError, "no keyword arguments allowed");
-        throw_error_already_set();        
+        PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
+        throw_error_already_set();
     }
 
     // normal constructor
@@ -54,6 +54,10 @@ histogram_fill(python::tuple args, python::dict kwargs) {
 
     const unsigned nargs = len(args);
     histogram& self = extract<histogram&>(args[0]);
+
+    object ow;
+    if (kwargs)
+        ow = kwargs["w"];
 
 #ifdef USE_NUMPY
     if (nargs == 2) {
@@ -86,9 +90,40 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                     throw_error_already_set();
             }
 
-            for (unsigned i = 0; i < dims[0]; ++i) {
-                double* v = (double*)PyArray_GETPTR1(a, i);
-                self.fill(self.dim(), v);
+            PyArrayObject* aw = 0;
+            if (!ow.is_none()) {
+                if (PySequence_Check(ow.ptr())) {
+                    PyArrayObject* aw = (PyArrayObject*)
+                        PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+                    if (!aw) {
+                        PyErr_SetString(PyExc_ValueError, "could not convert sequence into array");
+                        throw_error_already_set();                        
+                    }
+
+                    if (PyArray_NDIM(aw) != 1) {
+                        PyErr_SetString(PyExc_ValueError, "array has to be one-dimensional");
+                        throw_error_already_set();
+                    }
+
+                    if (PyArray_DIMS(aw)[0] != dims[0]) {
+                        PyErr_SetString(PyExc_ValueError, "sizes do not match");
+                        throw_error_already_set();
+                    }
+                }
+            }            
+
+            if (aw) {
+                for (unsigned i = 0; i < dims[0]; ++i) {
+                    double* v = (double*)PyArray_GETPTR1(a, i);
+                    double* w = (double*)PyArray_GETPTR1(aw, i);
+                    self.wfill_c(self.dim(), v, *w);
+                }
+                Py_DECREF(aw);
+            } else {
+                for (unsigned i = 0; i < dims[0]; ++i) {
+                    double* v = (double*)PyArray_GETPTR1(a, i);
+                    self.fill_c(self.dim(), v);
+                }
             }
 
             Py_DECREF(a);
@@ -99,40 +134,66 @@ histogram_fill(python::tuple args, python::dict kwargs) {
 
     const unsigned dim = nargs - 1;
     if (dim != self.dim()) {
-        PyErr_SetString(PyExc_TypeError, "wrong number of arguments");
+        PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
         throw_error_already_set();            
-    }
-
-    if (kwargs) {
-        PyErr_SetString(PyExc_TypeError, "no keyword arguments allowed");
-        throw_error_already_set();        
     }
 
     double v[BOOST_HISTOGRAM_AXIS_LIMIT];
     for (unsigned i = 0; i < dim; ++i)
         v[i] = extract<double>(args[1 + i]);
-    self.fill(self.dim(), v);
+
+    if (ow.is_none()) {
+        self.fill_c(self.dim(), v);
+    } else {
+        const double w = extract<double>(ow);
+        self.wfill_c(self.dim(), v, w);
+    }
+
     return object();
 }
 
-uint64_t
-histogram_getitem(const histogram& self, python::object oidx) {
+python::object
+histogram_value(python::tuple args, python::dict kwargs) {
     using namespace python;
+    const histogram& self = extract<const histogram&>(args[0]);
 
-    if (self.dim() == 1)
-        return self.value(extract<int>(oidx)());
-
-    const unsigned dim = len(oidx);
-    if (dim != self.dim()) {
+    if (self.dim() != (len(args) - 1)) {
         PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
         throw_error_already_set();            
     }
 
-    int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
-    for (unsigned i = 0; i < dim; ++i)
-        idx[i] = extract<int>(oidx[i]);
+    if (kwargs) {
+        PyErr_SetString(PyExc_ValueError, "no keyword arguments allowed");
+        throw_error_already_set();        
+    }
 
-    return self.value(self.dim(), idx);
+    int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
+    for (unsigned i = 0; i < self.dim(); ++i)
+        idx[i] = extract<int>(args[1 + i]);
+
+    return object(self.value_c(self.dim(), idx));
+}
+
+python::object
+histogram_variance(python::tuple args, python::dict kwargs) {
+    using namespace python;
+    const histogram& self = extract<const histogram&>(args[0]);
+
+    if (self.dim() != (len(args) - 1)) {
+        PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
+        throw_error_already_set();            
+    }
+
+    if (kwargs) {
+        PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
+        throw_error_already_set();        
+    }
+
+    int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
+    for (unsigned i = 0; i < self.dim(); ++i)
+        idx[i] = extract<int>(args[1 + i]);
+
+    return object(self.variance_c(self.dim(), idx));
 }
 
 class histogram_access {
@@ -140,12 +201,17 @@ public:
     static
     python::dict
     histogram_array_interface(histogram& self) {
+        python::dict d;
         python::list shape;
         for (unsigned i = 0; i < self.dim(); ++i)
             shape.append(self.shape(i));
-        python::dict d;
+        if (self.data_.depth() == sizeof(detail::wtype)) {
+            shape.append(2);
+            d["typestr"] = python::str("<f") + python::str(sizeof(double));
+        } else {
+            d["typestr"] = python::str("<u") + python::str(self.data_.depth());
+        }
         d["shape"] = python::tuple(shape);
-        d["typestr"] = python::str("<u") + python::str(self.data_.depth());
         d["data"] = python::make_tuple((long long)(self.data_.buffer()), false);
         return d;
     }
@@ -166,7 +232,8 @@ void register_histogram()
         .def("fill", raw_function(histogram_fill))
         .add_property("depth", &histogram::depth)
         .add_property("sum", &histogram::sum)
-        .def("__getitem__", histogram_getitem)
+        .def("value", raw_function(histogram_value))
+        .def("variance", raw_function(histogram_variance))
         .def(self == self)
         .def(self += self)
         .def(self + self)
