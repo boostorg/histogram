@@ -3,38 +3,33 @@ cmake_minimum_required (VERSION 2.8)
 project(histogram)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
+option(USE_PYTHON ON)
+option(USE_NUMPY ON)
+option(BUILD_CHECKS OFF)
+
 if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
 find_package(Boost 1.55 REQUIRED
-             COMPONENTS python iostreams serialization unit_test_framework)
+             COMPONENTS iostreams serialization unit_test_framework)
+find_library(Boost_PYTHON_FOUND boost_python) # optional
 find_package(PythonLibs) # optional
 find_package(Numpy) # optional
 
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 add_definitions(-Wall)
+if(CMAKE_BUILD_TYPE STREQUAL "debug")
+  message(STATUS "debug mode: optimizations off")
+else()
+  message(STATUS "release mode: optimizations on")
+  add_definitions(-O3 -fomit-frame-pointer -mtune=generic)
+endif()
+
 include_directories(../include ${Boost_INCLUDE_DIRS})
 set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
-
-if(Boost_PYTHON_FOUND AND PYTHONLIBS_FOUND)
-  set(USE_PYTHON True)
-
-  if(USE_PYTHON)
-    include_directories(${PYTHON_INCLUDE_DIRS})
-    LIST(APPEND LIBRARIES ${PYTHON_LIBRARIES})
-    add_definitions(-DUSE_PYTHON)
-  endif()
-
-  if(NUMPY_FOUND)
-    set(USE_NUMPY True)
-  endif()
-
-  if(USE_NUMPY)
-    include_directories(${NUMPY_INCLUDE_DIR})
-    add_definitions(-DUSE_NUMPY)
-  endif()
-endif()
+list(REMOVE_ITEM LIBRARIES boost_python)
+message(${LIBRARIES})
 
 # core library
 add_library(boost_histogram SHARED
@@ -46,36 +41,41 @@ add_library(boost_histogram SHARED
 )
 target_link_libraries(boost_histogram ${LIBRARIES})
 
-if(CMAKE_BUILD_TYPE STREQUAL "debug")
-  message(STATUS "debug mode: optimizations off")
-else()
-  message(STATUS "release mode: optimizations on")
-  target_compile_options(boost_histogram PUBLIC "-O3 -fomit-frame-pointer -mtune=generic")
-endif()
-
 # python bindings
-if(USE_PYTHON)
+if(Boost_PYTHON_FOUND AND PYTHONLIBS_FOUND AND USE_PYTHON)
+
+  include_directories(${PYTHON_INCLUDE_DIRS})
+  add_definitions(-DUSE_PYTHON)
+
+  if(NUMPY_FOUND AND USE_NUMPY)
+    include_directories(${NUMPY_INCLUDE_DIR})
+    add_definitions(-DUSE_NUMPY)
+  endif()
+
   add_library(pyhistogram MODULE
     ../src/python/module.cpp
     ../src/python/histogram_base.cpp
     ../src/python/histogram.cpp
   )
-  target_link_libraries(pyhistogram boost_histogram ${LIBRARIES})
+  target_link_libraries(pyhistogram boost_histogram ${LIBRARIES} boost_python ${PYTHON_LIBRARIES})
   set_target_properties(pyhistogram PROPERTIES OUTPUT_NAME "histogram" PREFIX "" SUFFIX ".so")
+
 endif()
 
-# examples
-add_executable(sizeof
-  ../examples/sizeof.cpp
-)
-target_link_libraries(sizeof ${LIBRARIES})
+# checks
+if(BUILD_CHECKS)
+  add_executable(sizeof
+    ../test/check/sizeof.cpp
+  )
+  target_link_libraries(sizeof ${LIBRARIES})
 
-find_package(ROOT) # only used in speed comparison
-if(ROOT_FOUND)
-  add_executable(nhistogram_speed
-                 ../examples/speed_vs_root.cpp)
-  target_include_directories(nhistogram_speed PUBLIC ${ROOT_INCLUDE_DIR})
-  target_link_libraries(nhistogram_speed boost_histogram ${ROOT_LIBRARIES} ${LIBRARIES})
+  find_package(ROOT) # only used in speed comparison
+  if(ROOT_FOUND)
+    add_executable(nhistogram_speed
+                   ../test/check/speed_vs_root.cpp)
+    target_include_directories(nhistogram_speed PUBLIC ${ROOT_INCLUDE_DIR})
+    target_link_libraries(nhistogram_speed boost_histogram ${ROOT_LIBRARIES} ${LIBRARIES})
+  endif()
 endif()
 
 # tests
