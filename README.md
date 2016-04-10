@@ -19,6 +19,7 @@ My goal is to submit this project to the [Boost](http://www.boost.org) libraries
 * N-dimensional histogram
 * Intuitive and convenient interface, everything *just works*
 * Support for different binning scenarios, including binning of angles
+* Support for weighted events, with variance estimates for each bin
 * Optional underflow- and overflow-bins
 * High-performance through cache-friendly design
 * Space-efficient memory storage that dynamically grows as needed
