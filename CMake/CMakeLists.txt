@@ -91,9 +91,7 @@ target_link_libraries(histogram_test boost_histogram ${LIBRARIES})
 add_test(histogram_test histogram_test)
 
 if(USE_PYTHON)
-  add_custom_target(python_suite_test ALL
-                    ln -sf ${PROJECT_SOURCE_DIR}/../test/python_suite_test.py .)
-  add_test(python_suite_test python_suite_test.py)
+  add_test(python_suite_test ${PROJECT_SOURCE_DIR}/../test/python_suite_test.py)
   set_tests_properties(python_suite_test
     PROPERTIES ENVIRONMENT "PYTHONPATH=.:${PYTHONPATH}")
 endif()
