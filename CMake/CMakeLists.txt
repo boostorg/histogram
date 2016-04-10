@@ -28,8 +28,6 @@ endif()
 
 include_directories(../include ${Boost_INCLUDE_DIRS})
 set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
-list(REMOVE_ITEM LIBRARIES boost_python)
-message(${LIBRARIES})
 
 # core library
 add_library(boost_histogram SHARED
