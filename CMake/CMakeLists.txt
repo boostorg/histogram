@@ -3,9 +3,9 @@ cmake_minimum_required (VERSION 2.8)
 project(histogram)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
-option(USE_PYTHON ON)
-option(USE_NUMPY ON)
-option(BUILD_CHECKS OFF)
+option(USE_PYTHON "Build Python bindings" ON)
+option(USE_NUMPY "Build Numpy support" ON)
+option(BUILD_CHECKS "Build auxillary checks" OFF)
 
 if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
