@@ -19,8 +19,9 @@ My goal is to submit this project to the [Boost](http://www.boost.org) libraries
 * N-dimensional histogram
 * Intuitive and convenient interface, everything *just works*
 * Support for different binning scenarios, including binning of angles
-* High-performance, cache-friendly design
-* Space-efficient memory storage
+* Optional underflow- and overflow-bins
+* High-performance through cache-friendly design
+* Space-efficient memory storage that dynamically grows as needed
 * Serialization support with zero-suppression
 * Multi-language support: C++ and Python
 * Numpy support
@@ -50,7 +51,7 @@ I designed the histogram based on a decade of experience collected in working wi
 
 ### Interface convenience, language transparency
 
-A histogram should have the same consistent interface whatever the dimension. Like `std::vector` it should *just work*, users shouldn't be forced to make *a priori* choices among several histogram classes and options everytime they encounter a new data set. Python is a great language for data analysis, so the histogram should have Python bindings. Data analysis in Python is Numpy-based, so Numpy support is a must. The histogram should be usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python: define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting. 
+A histogram should have the same consistent interface whatever the dimension. Like `std::vector` it should *just work*, users shouldn't be forced to make *a priori* choices among several histogram classes and options everytime they encounter a new data set. Python is a great language for data analysis, so the histogram needs Python bindings. Data analysis in Python is Numpy-based, so Numpy support is a must. The histogram should be usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python: define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting. 
 
 ### Powerful binning strategies
 
