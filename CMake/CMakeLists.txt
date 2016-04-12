@@ -3,6 +3,7 @@ cmake_minimum_required (VERSION 2.8)
 project(histogram)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
+# setup build
 option(USE_PYTHON "Build Python bindings" ON)
 option(USE_NUMPY "Build Numpy support" ON)
 option(BUILD_CHECKS "Build auxillary checks" OFF)
@@ -16,9 +17,11 @@ find_package(Boost 1.55 REQUIRED
 find_library(Boost_PYTHON_FOUND boost_python) # optional
 find_package(PythonLibs) # optional
 find_package(Numpy) # optional
+find_package(Sphinx) # optional
 
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 add_definitions(-Wall)
+
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
   message(STATUS "debug mode: optimizations off")
 else()
@@ -92,6 +95,16 @@ if(USE_PYTHON)
   add_test(python_suite_test ${PROJECT_SOURCE_DIR}/../test/python_suite_test.py)
   set_tests_properties(python_suite_test
     PROPERTIES ENVIRONMENT "PYTHONPATH=.:${PYTHONPATH}")
+endif()
+
+# doc
+if(SPHINX_EXECUTABLE) 
+    add_custom_target(docs ALL
+        ${SPHINX_EXECUTABLE}
+            -q -b html
+            ${PROJECT_SOURCE_DIR}/../doc/sphinx
+            doc
+        COMMENT "Building HTML documentation with Sphinx")
 endif()
 
 # install

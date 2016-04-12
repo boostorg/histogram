@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Rationale &mdash; histogram 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="histogram 1.0 documentation" href="index.html" />
+    <link rel="next" title="References" href="references.html" />
+    <link rel="prev" title="Functions" href="functions.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="rationale">
+<h1>Rationale<a class="headerlink" href="#rationale" title="Permalink to this headline">¶</a></h1>
+<p>I designed the histogram based on a decade of experience collected in working with Big Data, more precisely in the field of particle physics and astroparticle physics. In many ways, the <a class="reference external" href="https://root.cern.ch">ROOT</a> histograms served as an example of <em>not to do it</em>.</p>
+<div class="section" id="design-principles">
+<h2>Design principles<a class="headerlink" href="#design-principles" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>&#8220;Do one thing and do it well&#8221;, Doug McIlroy</li>
+<li>The <a class="reference external" href="https://www.python.org/dev/peps/pep-0020">Zen of Python</a> (also applies to other languages).</li>
+</ul>
+</div>
+<div class="section" id="interface-convenience">
+<h2>Interface convenience<a class="headerlink" href="#interface-convenience" title="Permalink to this headline">¶</a></h2>
+<p>A histogram should have the same consistent interface whatever the dimension. Like <code class="docutils literal"><span class="pre">std::vector</span></code> it should <em>just work</em>, users shouldn&#8217;t be forced to make <em>a priori</em> choices among several histogram classes and options everytime they encounter a new data set.</p>
+</div>
+<div class="section" id="language-transparency">
+<h2>Language transparency<a class="headerlink" href="#language-transparency" title="Permalink to this headline">¶</a></h2>
+<p>Python is a great language for data analysis, so the histogram needs Python bindings. The histogram should be usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python: define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.</p>
+<p>Data analysis in Python is Numpy-based, so Numpy support is a must.</p>
+</div>
+<div class="section" id="powerful-binning-strategies">
+<h2>Powerful binning strategies<a class="headerlink" href="#powerful-binning-strategies" title="Permalink to this headline">¶</a></h2>
+<p>The histogram supports half a dozent different binning strategies, conveniently encapsulated in axis objects. There is the standard sorting of real-valued data into bins of equal or varying width, but also binning of angles or integer values.</p>
+<p>Extra bins that count over- and underflow values are added by default. This feature can be turned off individually for each axis. The extra bins do not disturb normal bin counting. On an axis with <code class="docutils literal"><span class="pre">n</span></code> bins, the first bin has the index <code class="docutils literal"><span class="pre">0</span></code>, the last bin <code class="docutils literal"><span class="pre">n-1</span></code>, while the under- and overflow bins are accessible at <code class="docutils literal"><span class="pre">-1</span></code> and <code class="docutils literal"><span class="pre">n</span></code>, respectively.</p>
+</div>
+<div class="section" id="performance-and-memory-efficiency">
+<h2>Performance and memory-efficiency<a class="headerlink" href="#performance-and-memory-efficiency" title="Permalink to this headline">¶</a></h2>
+<p>Dense storage in memory is a must for high performance. Unfortunately, the <a class="reference external" href="https://en.wikipedia.org/wiki/Curse_of_dimensionality">curse of dimensionality</a> quickly become a problem as the number of dimensions grows, leading to histograms which consume large amounts (up to GBs) of memory.</p>
+<p>Fortunately, having many dimensions typically reduces the number of counts per bin, since counts get spread over many dimensions. The histogram uses an adaptive count size per bin to be as memory-efficient as possible, by starting with the smallest integer size per bin of 1 byte and increasing as needed to up to 8 byte. A <code class="docutils literal"><span class="pre">std::vector</span></code> grows in <em>length</em> as new elements are added, while the count storage grows in <em>depth</em>.</p>
+</div>
+<div class="section" id="weighted-counts-and-variance-estimates">
+<h2>Weighted counts and variance estimates<a class="headerlink" href="#weighted-counts-and-variance-estimates" title="Permalink to this headline">¶</a></h2>
+<p>A histogram categorizes and counts, so the natural choice for the data type of the counts are integers. However, in particle physics, histograms are also often filled with weighted events, for example, to make sure that two histograms look the same in one variable, while the distribution of another, correlated variable is a subject of study.</p>
+<p>The histogram can be filled with either weighted or unweighted counts. In the weighted case, the sum of weights is stored in a <code class="docutils literal"><span class="pre">double</span></code>. The histogram provides a variance estimate is both cases. In the unweighted case, the estimate is computed from the count itself, using Poisson-theory. In the weighted case, the sum of squared weights is stored alongside the sum of weights in a second <code class="docutils literal"><span class="pre">double</span></code>, and used to compute a variance estimate.</p>
+</div>
+<div class="section" id="serialization-and-zero-suppression">
+<h2>Serialization and zero-suppression<a class="headerlink" href="#serialization-and-zero-suppression" title="Permalink to this headline">¶</a></h2>
+<p>Serialization is implemented using <code class="docutils literal"><span class="pre">boost::serialization</span></code>. Pickling in Python is implemented based on the C++ serialization code. To ensure portability of the pickled histogram, the pickle string is an ASCII representation of the histogram, generated with the <code class="docutils literal"><span class="pre">boost::archive::text_oarchive</span></code>. It would be great to switch to a portable binary representation in the future, when that becomes available. To reduce the size of the string, run-length encoding is applied (zero-suppression) to sequences of zeros. Partly filled histograms often contain large sequences of zeros.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">histogram</a></h1>
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=HDembinski&repo=histogram&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notes.html">Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="functions.html">Functions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Rationale</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#design-principles">Design principles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#interface-convenience">Interface convenience</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#language-transparency">Language transparency</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#powerful-binning-strategies">Powerful binning strategies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#performance-and-memory-efficiency">Performance and memory-efficiency</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#weighted-counts-and-variance-estimates">Weighted counts and variance estimates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#serialization-and-zero-suppression">Serialization and zero-suppression</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">CHANGELOG</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="functions.html" title="previous chapter">Functions</a></li>
+      <li>Next: <a href="references.html" title="next chapter">References</a></li>
+  </ul></li>
+</ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Hans Dembinski.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/rationale.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -10,7 +10,7 @@ zero_suppression_encode(std::vector<wtype>& output, const wtype* input,
                         uintptr_t size)
 {
     #define BOOST_HISTOGRAM_ZERO_SUPPRESSION_FILL { \
-        if ((size - output.size()) < 2) \
+        if ((size - output.size()) < 2)       \
             return false;                     \
         output.push_back(0);                  \
         output.push_back(nzero);              \

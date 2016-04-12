@@ -13,6 +13,7 @@ My goal is to submit this project to the [Boost](http://www.boost.org) libraries
 * Optional:
   [Python](http://www.python.org)
   [Numpy](http://www.numpy.org)
+  [Sphinx](http://www.sphinx-doc.org)
 
 ### Features
 
