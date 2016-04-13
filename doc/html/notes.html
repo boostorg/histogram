@@ -17,7 +17,7 @@
         VERSION:     '1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  false
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -73,6 +73,14 @@
 <h2>Checks<a class="headerlink" href="#checks" title="Permalink to this headline">¶</a></h2>
 <p>Some checks are included in <code class="docutils literal"><span class="pre">test/check</span></code>. These are not strictly tests, and not strictly examples, yet they provide useful information that belongs with the library code. They are not build by default, building can be activated with the CMake flag <code class="docutils literal"><span class="pre">BUILD_CHECKS</span></code>.</p>
 </div>
+<div class="section" id="congruence-of-c-and-python-interface">
+<h2>Congruence of C++ and Python interface<a class="headerlink" href="#congruence-of-c-and-python-interface" title="Permalink to this headline">¶</a></h2>
+<p>The Python and C++ interface are indentical - except when they are not. The exceptions are minor and concern cases where a more elegant and pythonic way of implementing exists.</p>
+<ul class="simple">
+<li>getter/setter-like functions are wrapped as properties</li>
+<li><code class="xref cpp cpp-func docutils literal"><span class="pre">histogram::fill()</span></code> and <code class="xref cpp cpp-func docutils literal"><span class="pre">histogram::wfill()</span></code></li>
+</ul>
+</div>
 </div>
 
 
@@ -105,6 +113,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#how-to-build-and-install">How to build and install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tests">Tests</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#checks">Checks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#congruence-of-c-and-python-interface">Congruence of C++ and Python interface</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
@@ -134,9 +143,6 @@
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
-      |
-      <a href="_sources/notes.txt"
-          rel="nofollow">Page source</a>
     </div>
 
     

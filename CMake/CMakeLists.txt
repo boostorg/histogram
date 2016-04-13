@@ -99,12 +99,12 @@ endif()
 
 # doc
 if(SPHINX_EXECUTABLE) 
-    add_custom_target(docs ALL
+    add_custom_target(html
         ${SPHINX_EXECUTABLE}
             -q -b html
             ${PROJECT_SOURCE_DIR}/../doc/sphinx
-            doc
-        COMMENT "Building HTML documentation with Sphinx")
+            ${PROJECT_SOURCE_DIR}/../doc/html
+        COMMENT "(Re)building HTML documentation with Sphinx")
 endif()
 
 # install

@@ -35,3 +35,11 @@ Checks
 ------
 
 Some checks are included in ``test/check``. These are not strictly tests, and not strictly examples, yet they provide useful information that belongs with the library code. They are not build by default, building can be activated with the CMake flag ``BUILD_CHECKS``.
+
+Congruence of C++ and Python interface
+--------------------------------------
+
+The Python and C++ interface are indentical - except when they are not. The exceptions are minor and concern cases where a more elegant and pythonic way of implementing exists.
+
+* getter/setter-like functions are wrapped as properties
+* :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill`

@@ -17,7 +17,7 @@
         VERSION:     '1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  false
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -75,7 +75,8 @@
 </div>
 <div class="section" id="serialization-and-zero-suppression">
 <h2>Serialization and zero-suppression<a class="headerlink" href="#serialization-and-zero-suppression" title="Permalink to this headline">¶</a></h2>
-<p>Serialization is implemented using <code class="docutils literal"><span class="pre">boost::serialization</span></code>. Pickling in Python is implemented based on the C++ serialization code. To ensure portability of the pickled histogram, the pickle string is an ASCII representation of the histogram, generated with the <code class="docutils literal"><span class="pre">boost::archive::text_oarchive</span></code>. It would be great to switch to a portable binary representation in the future, when that becomes available. To reduce the size of the string, run-length encoding is applied (zero-suppression) to sequences of zeros. Partly filled histograms often contain large sequences of zeros.</p>
+<p>Serialization is implemented using <code class="docutils literal"><span class="pre">boost::serialization</span></code>. Pickling in Python is implemented based on the C++ serialization code. To ensure portability of the pickled histogram, the pickle string is an ASCII representation of the histogram, generated with the <code class="docutils literal"><span class="pre">boost::archive::text_oarchive</span></code>. It would be great to switch to a portable binary representation in the future, when that becomes available.</p>
+<p>To reduce the size of the string, run-length encoding is applied (zero-suppression) to sequences of zeros. Partly filled histograms often contain large sequences of zeros.</p>
 </div>
 </div>
 
@@ -141,9 +142,6 @@
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
-      |
-      <a href="_sources/rationale.txt"
-          rel="nofollow">Page source</a>
     </div>
 
     
