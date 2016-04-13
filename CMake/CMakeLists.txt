@@ -35,7 +35,7 @@ set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
 # core library
 add_library(boost_histogram SHARED
   ../src/axis.cpp
-  ../src/histogram_base.cpp
+  ../src/basic_histogram.cpp
   ../src/histogram.cpp
   ../src/nstore.cpp
   ../src/zero_suppression.cpp
@@ -55,7 +55,7 @@ if(Boost_PYTHON_FOUND AND PYTHONLIBS_FOUND AND USE_PYTHON)
 
   add_library(pyhistogram MODULE
     ../src/python/module.cpp
-    ../src/python/histogram_base.cpp
+    ../src/python/basic_histogram.cpp
     ../src/python/histogram.cpp
   )
   target_link_libraries(pyhistogram boost_histogram ${LIBRARIES} boost_python ${PYTHON_LIBRARIES})

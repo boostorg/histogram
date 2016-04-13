@@ -5,12 +5,12 @@ namespace boost {
 namespace histogram {
 
 histogram::histogram(const histogram& o) :
-    histogram_base(o),
+    basic_histogram(o),
     data_(o.data_)
 {}
 
 histogram::histogram(const axes_type& axes) :
-    histogram_base(axes),
+    basic_histogram(axes),
     data_(field_count())
 {}
 

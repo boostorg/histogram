@@ -33,6 +33,7 @@ public:
 
   inline void increase(size_type i) {
     switch (depth_) {
+      case 0: depth_ = 1; create();
       case sizeof(wtype): {
         wtype& b = ((wtype*)buffer_)[i];
         b += 1.0;        

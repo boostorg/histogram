@@ -25,11 +25,13 @@ nstore::nstore(size_type n, unsigned d) :
   size_(n),
   depth_(d)
 {
-  if (d == 0)
-    throw std::invalid_argument("depth may not be zero");
-  if (d > sizeof(uint64_t))
-    throw std::invalid_argument("depth > sizeof(uint64_t) is not supported");
-  create();
+  BOOST_ASSERT(n > 0);
+  BOOST_ASSERT(d == sizeof(uint8_t) ||
+               d == sizeof(uint16_t) ||
+               d == sizeof(uint32_t) ||
+               d == sizeof(uint64_t) ||
+               d == sizeof(wtype));
+  if (d > 0) create();
 }
 
 nstore&
@@ -165,6 +167,7 @@ void
 nstore::wconvert()
 {
   BOOST_ASSERT(depth_ < sizeof(wtype));
+  // realloc is safe if buffer_ is null
   buffer_ = std::realloc(buffer_, size_ * sizeof(wtype));
   if (!buffer_) throw std::bad_alloc();
   size_type i = size_;

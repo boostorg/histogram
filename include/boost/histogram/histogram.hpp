@@ -2,7 +2,7 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_HPP_
 
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/histogram_base.hpp>
+#include <boost/histogram/basic_histogram.hpp>
 #include <boost/histogram/detail/nstore.hpp>
 #include <boost/preprocessor.hpp>
 #include <boost/serialization/access.hpp>
@@ -16,7 +16,7 @@
 namespace boost {
 namespace histogram {
 
-class histogram : public histogram_base {
+class histogram : public basic_histogram {
 public:
   histogram() {}
   histogram(const histogram& o);
@@ -24,7 +24,7 @@ public:
 
 #define BOOST_HISTOGRAM_CTOR(z, n, unused)                         \
   histogram( BOOST_PP_ENUM_PARAMS_Z(z, n, const axis_type& a) ) :  \
-    histogram_base( BOOST_PP_ENUM_PARAMS_Z(z, n, a) ),             \
+    basic_histogram( BOOST_PP_ENUM_PARAMS_Z(z, n, a) ),             \
     data_(field_count())                                           \
   {}
 
@@ -120,12 +120,12 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VARIANCE,
   double sum() const;
 
   bool operator==(const histogram& o) const 
-  { return histogram_base::operator==(o) &&
+  { return basic_histogram::operator==(o) &&
            data_ == o.data_; }
 
   histogram& operator+=(const histogram& o)
   {
-    if (!histogram_base::operator==(o))
+    if (!basic_histogram::operator==(o))
       throw std::logic_error("histograms have different axes");
     data_ += o.data_;
     return *this;
@@ -138,7 +138,7 @@ private:
   template <class Archive>
   void serialize(Archive& ar, unsigned version)
   {
-    ar & serialization::base_object<histogram_base>(*this);
+    ar & serialization::base_object<basic_histogram>(*this);
     ar & data_;
   }
 
