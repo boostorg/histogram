@@ -41,8 +41,46 @@
             
   <div class="section" id="types">
 <h1>Types<a class="headerlink" href="#types" title="Permalink to this headline">¶</a></h1>
+<p>The library consists of a single <code class="xref cpp cpp-class docutils literal"><span class="pre">histogram</span></code> and several axis types which are stored in a <code class="docutils literal"><span class="pre">boost::variant</span></code> called <code class="xref cpp cpp-type docutils literal"><span class="pre">axis_type</span></code>. The axis types are created and passed to the constructor of the histogram to define its binning scheme. All following types are embedded in the <code class="docutils literal"><span class="pre">boost::histogram</span></code> namespace, which is omitted for brevity.</p>
+<div class="section" id="the-histogram-class">
+<h2>The Histogram Class<a class="headerlink" href="#the-histogram-class" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="c-interface">
-<h2>C++ interface<a class="headerlink" href="#c-interface" title="Permalink to this headline">¶</a></h2>
+<h3>C++ interface<a class="headerlink" href="#c-interface" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="_CPPv2N5boost9histogram9histogramE">
+<span id="boost::histogram::histogram"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">histogram</code> : <em class="property">public</em> basic_histogram<a class="headerlink" href="#_CPPv2N5boost9histogram9histogramE" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class implements an n-dimensional histogram, managing counts in bins.</p>
+<p>It inherits from <code class="xref cpp cpp-class docutils literal"><span class="pre">basic_histogram</span></code>, which manages the stored axis instances and the conversion of an n-dimensional tuple or index into an internal linear offset that is used to address the bin count. How the bin count is stored is an encapsulated implementation detail.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N5boost9histogram9histogram9histogramERK9axis_typez">
+<span id="boost::histogram::histogram::histogram__axis_typeCR.z"></span><code class="descclassname">histogram::</code><code class="descname">histogram</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N5boost9histogram9axis_typeE" title="boost::histogram::axis_type">axis_type</a> &amp;<em>a0</em>, ...<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N5boost9histogram9histogram9histogramERK9axis_typez" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructors for a variable number of axis types, each defining the binning scheme for its dimension. Up to <code class="xref cpp cpp-var docutils literal"><span class="pre">BOOST_HISTOGRAM_AXIS_LIMIT</span></code> axis types can be passed to the constructor, yielding the same number of dimensions.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N5boost9histogram9histogram6fill_cEjPKd">
+<span id="boost::histogram::histogram::fill_c__unsigned.doubleCP"></span><code class="descclassname">histogram::</code><code class="descname">fill_c</code><span class="sig-paren">(</span>unsigned <em>n</em>, <em class="property">const</em> double *<em>v</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N5boost9histogram9histogram6fill_cEjPKd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fills the histogram with a c-array <code class="docutils literal"><span class="pre">v</span></code> of length <code class="docutils literal"><span class="pre">n</span></code>. A checks at run-time asserts that <code class="docutils literal"><span class="pre">n</span></code> agrees with the dimensions of the histogram.</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="axis-types">
+<h2>Axis Types<a class="headerlink" href="#axis-types" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>C++ interface<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<dl class="type">
+<dt id="_CPPv2N5boost9histogram9axis_typeE">
+<span id="boost::histogram::axis_type"></span><em class="property">type </em>boost::variant&lt;regular_axis, polar_axis, variable_axis, category_axis, integer_axis&gt; <code class="descclassname"></code><code class="descname">axis_type</code><a class="headerlink" href="#_CPPv2N5boost9histogram9axis_typeE" title="Permalink to this definition">¶</a></dt>
+<dd><p>A variant template which stores one of several axis objects.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="python-interface">
+<h3>Python interface<a class="headerlink" href="#python-interface" title="Permalink to this headline">¶</a></h3>
+</div>
 </div>
 </div>
 
@@ -73,7 +111,8 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notes.html">Notes</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Types</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#c-interface">C++ interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-histogram-class">The Histogram Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#axis-types">Axis Types</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="functions.html">Functions</a></li>

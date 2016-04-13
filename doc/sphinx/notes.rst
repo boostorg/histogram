@@ -42,4 +42,4 @@ Congruence of C++ and Python interface
 The Python and C++ interface are indentical - except when they are not. The exceptions are minor and concern cases where a more elegant and pythonic way of implementing exists.
 
 * getter/setter-like functions are wrapped as properties
-* :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill`
+* C++ functions :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill` are wrapped by the single Python function :py:func:`histogram.fill`
