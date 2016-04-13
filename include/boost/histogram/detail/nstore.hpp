@@ -33,11 +33,10 @@ public:
 
   inline void increase(size_type i) {
     switch (depth_) {
-      case 0: depth_ = 1; create();
       case sizeof(wtype): {
         wtype& b = ((wtype*)buffer_)[i];
         b += 1.0;        
-      }
+      } break;
       #define BOOST_HISTOGRAM_NSTORE_INC(T)     \
       case sizeof(T): {                         \
         T& b = ((T*)buffer_)[i];                \
@@ -45,6 +44,7 @@ public:
           grow(); /* and fall to next case */   \
         else { ++b; break; }                    \
       }
+      case 0: depth_ = sizeof(uint8_t); create();
       BOOST_HISTOGRAM_NSTORE_INC(uint8_t);
       BOOST_HISTOGRAM_NSTORE_INC(uint16_t);
       BOOST_HISTOGRAM_NSTORE_INC(uint32_t);
