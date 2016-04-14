@@ -95,6 +95,28 @@ BOOST_AUTO_TEST_CASE(d1)
     BOOST_CHECK_EQUAL(h.variance(2), 1.0);
 }
 
+BOOST_AUTO_TEST_CASE(d1w)
+{
+    histogram h(regular_axis(2, -1, 1));
+    h.fill(0);
+    h.wfill(-1.0, 2.0);
+    h.fill(-1.0);
+    h.fill(-2.0);
+    h.wfill(10.0, 5.0);
+
+    BOOST_CHECK_EQUAL(h.sum(), 10);
+
+    BOOST_CHECK_EQUAL(h.value(-1), 1.0);
+    BOOST_CHECK_EQUAL(h.value(0), 3.0);
+    BOOST_CHECK_EQUAL(h.value(1), 1.0);
+    BOOST_CHECK_EQUAL(h.value(2), 5.0);
+
+    BOOST_CHECK_EQUAL(h.variance(-1), 1.0);
+    BOOST_CHECK_EQUAL(h.variance(0), 5.0);
+    BOOST_CHECK_EQUAL(h.variance(1), 1.0);
+    BOOST_CHECK_EQUAL(h.variance(2), 25.0);
+}
+
 BOOST_AUTO_TEST_CASE(d2)
 {
     histogram h(regular_axis(2, -1, 1),
