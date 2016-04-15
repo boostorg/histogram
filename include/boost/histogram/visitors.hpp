@@ -16,16 +16,12 @@ namespace detail {
 
   struct fields_visitor : public static_visitor<unsigned> 
   {
-    unsigned operator()(const category_axis& a) const { return a.bins(); }
-
     template <typename A>
     unsigned operator()(const A& a) const { return a.bins() + 2 * a.uoflow(); }
   };
 
   struct uoflow_visitor : public static_visitor<bool> 
   {
-    bool operator()(const category_axis& a) const { return false; }
-
     template <typename A>
     bool operator()(const A& a) const { return a.uoflow(); }
   };

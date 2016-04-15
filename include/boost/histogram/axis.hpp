@@ -197,6 +197,8 @@ public:
   const std::string& operator[](int idx) const
   { return categories_[idx]; }
 
+  inline bool uoflow() const { return false; }
+
   bool operator==(const category_axis&) const;
 private:
   std::vector<std::string> categories_;

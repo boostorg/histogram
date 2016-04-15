@@ -30,6 +30,8 @@ public:
   ~basic_histogram() {}
 
   unsigned dim() const { return axes_.size(); }
+  unsigned bins(unsigned i) const { return size_[i]; }
+  unsigned shape(unsigned i) const { return size_[i] + 2 * uoflow_[i]; }
 
   template <typename T>
   T& axis(unsigned i) 
@@ -40,9 +42,6 @@ public:
   const T& axis(unsigned i) const
   { if (is_same<T, axis_type>::value) return axes_[i];
     return boost::get<const T&>(axes_[i]); }
-
-  unsigned bins(unsigned i) const { return size_[i]; }
-  unsigned shape(unsigned i) const { return size_[i] + 2 * uoflow_[i]; }
 
 protected:
   basic_histogram() {}
@@ -61,8 +60,6 @@ protected:
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR, nil)
 
   bool operator==(const basic_histogram&) const;
-  bool operator!=(const basic_histogram& o) const
-  { return !operator==(o); }
 
   template <typename Array>
   inline
