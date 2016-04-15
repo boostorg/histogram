@@ -39,10 +39,13 @@ Some checks are included in ``test/check``. These are not strictly tests, and no
 Consistency of C++ and Python interface
 ---------------------------------------
 
-The Python and C++ interface are indentical - except when they are not. The few exceptions concern cases where a more elegant and pythonic way of implementing exists.
+The Python and C++ interface are indentical - except when they are not. The exceptions concern cases where a more elegant and pythonic way of implementing things exists. In a few cases, the C++ classes have extra member functions for convenience, which are not needed on the Python side.
 
 Properties
     Getter/setter-like functions are wrapped as properties.
 
 Keyword-based parameters
-    C++ functions :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill` are wrapped by the single Python function :py:func:`histogram.fill`
+    C++ member functions :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill` are wrapped by the single Python member function :py:func:`histogram.fill`
+
+C++ convenience
+    C++ member function :cpp:func:`histogram::bins` is omitted on the Python side, since it is very easy to just query this directly from the axis object in Python. On the C++ side, this would require a extra type cast or applying a visitor.

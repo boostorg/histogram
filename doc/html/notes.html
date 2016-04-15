@@ -73,13 +73,17 @@
 <h2>Checks<a class="headerlink" href="#checks" title="Permalink to this headline">¶</a></h2>
 <p>Some checks are included in <code class="docutils literal"><span class="pre">test/check</span></code>. These are not strictly tests, and not strictly examples, yet they provide useful information that belongs with the library code. They are not build by default, building can be activated with the CMake flag <code class="docutils literal"><span class="pre">BUILD_CHECKS</span></code>.</p>
 </div>
-<div class="section" id="congruence-of-c-and-python-interface">
-<h2>Congruence of C++ and Python interface<a class="headerlink" href="#congruence-of-c-and-python-interface" title="Permalink to this headline">¶</a></h2>
-<p>The Python and C++ interface are indentical - except when they are not. The exceptions are minor and concern cases where a more elegant and pythonic way of implementing exists.</p>
-<ul class="simple">
-<li>getter/setter-like functions are wrapped as properties</li>
-<li>C++ functions <code class="xref cpp cpp-func docutils literal"><span class="pre">histogram::fill()</span></code> and <code class="xref cpp cpp-func docutils literal"><span class="pre">histogram::wfill()</span></code> are wrapped by the single Python function <code class="xref py py-func docutils literal"><span class="pre">histogram.fill()</span></code></li>
-</ul>
+<div class="section" id="consistency-of-c-and-python-interface">
+<h2>Consistency of C++ and Python interface<a class="headerlink" href="#consistency-of-c-and-python-interface" title="Permalink to this headline">¶</a></h2>
+<p>The Python and C++ interface are indentical - except when they are not. The exceptions concern cases where a more elegant and pythonic way of implementing things exists. In a few cases, the C++ classes have extra member functions for convenience, which are not needed on the Python side.</p>
+<dl class="docutils">
+<dt>Properties</dt>
+<dd>Getter/setter-like functions are wrapped as properties.</dd>
+<dt>Keyword-based parameters</dt>
+<dd>C++ member functions <a class="reference internal" href="types.html#_CPPv2N9histogram4fillEdz" title="histogram::fill"><code class="xref cpp cpp-func docutils literal"><span class="pre">histogram::fill()</span></code></a> and <a class="reference internal" href="types.html#_CPPv2N9histogram5wfillEjPKdd" title="histogram::wfill"><code class="xref cpp cpp-func docutils literal"><span class="pre">histogram::wfill()</span></code></a> are wrapped by the single Python member function <code class="xref py py-func docutils literal"><span class="pre">histogram.fill()</span></code></dd>
+<dt>C++ convenience</dt>
+<dd>C++ member function <a class="reference internal" href="types.html#_CPPv2NK9histogram4binsEj" title="histogram::bins"><code class="xref cpp cpp-func docutils literal"><span class="pre">histogram::bins()</span></code></a> is omitted on the Python side, since it is very easy to just query this directly from the axis object in Python. On the C++ side, this would require a extra type cast or applying a visitor.</dd>
+</dl>
 </div>
 </div>
 
@@ -113,7 +117,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#how-to-build-and-install">How to build and install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tests">Tests</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#checks">Checks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#congruence-of-c-and-python-interface">Congruence of C++ and Python interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#consistency-of-c-and-python-interface">Consistency of C++ and Python interface</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
@@ -140,7 +144,7 @@
       &copy;2016, Hans Dembinski.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>

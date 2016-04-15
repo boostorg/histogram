@@ -41,45 +41,418 @@
             
   <div class="section" id="types">
 <h1>Types<a class="headerlink" href="#types" title="Permalink to this headline">¶</a></h1>
-<p>The library consists of a single <code class="xref cpp cpp-class docutils literal"><span class="pre">histogram</span></code> and several axis types which are stored in a <code class="docutils literal"><span class="pre">boost::variant</span></code> called <code class="xref cpp cpp-type docutils literal"><span class="pre">axis_type</span></code>. The axis types are created and passed to the constructor of the histogram to define its binning scheme. All following types are embedded in the <code class="docutils literal"><span class="pre">boost::histogram</span></code> namespace, which is omitted for brevity.</p>
+<p>The library consists of a single <a class="reference internal" href="#_CPPv29histogram" title="histogram"><code class="xref cpp cpp-class docutils literal"><span class="pre">histogram</span></code></a> and several axis types which are stored in a <code class="docutils literal"><span class="pre">boost::variant</span></code> called <a class="reference internal" href="#_CPPv29axis_type" title="axis_type"><code class="xref cpp cpp-type docutils literal"><span class="pre">axis_type</span></code></a>. The axis types are created and passed to the constructor of the histogram to define its binning scheme. All following types are embedded in the <code class="docutils literal"><span class="pre">boost::histogram</span></code> namespace, which is omitted for brevity.</p>
 <div class="section" id="the-histogram-class">
 <h2>The Histogram Class<a class="headerlink" href="#the-histogram-class" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">#include</span> <span class="pre">&lt;boost/histogram/histogram.hpp&gt;</span></code></p>
 <div class="section" id="c-interface">
 <h3>C++ interface<a class="headerlink" href="#c-interface" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="_CPPv2N5boost9histogram9histogramE">
-<span id="boost::histogram::histogram"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">histogram</code> : <em class="property">public</em> basic_histogram<a class="headerlink" href="#_CPPv2N5boost9histogram9histogramE" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv29histogram">
+<span id="histogram"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">histogram</code> : <em class="property">public</em> basic_histogram<a class="headerlink" href="#_CPPv29histogram" title="Permalink to this definition">¶</a></dt>
 <dd><p>The class implements an n-dimensional histogram, managing counts in bins.</p>
 <p>It inherits from <code class="xref cpp cpp-class docutils literal"><span class="pre">basic_histogram</span></code>, which manages the stored axis instances and the conversion of an n-dimensional tuple or index into an internal linear offset that is used to address the bin count. How the bin count is stored is an encapsulated implementation detail.</p>
-</dd></dl>
-
 <dl class="function">
-<dt id="_CPPv2N5boost9histogram9histogram9histogramERK9axis_typez">
-<span id="boost::histogram::histogram::histogram__axis_typeCR.z"></span><code class="descclassname">histogram::</code><code class="descname">histogram</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N5boost9histogram9axis_typeE" title="boost::histogram::axis_type">axis_type</a> &amp;<em>a0</em>, ...<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N5boost9histogram9histogram9histogramERK9axis_typez" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9histogram9histogramERK9axis_typez">
+<span id="histogram::histogram__axis_typeCR.z"></span><code class="descclassname"></code><code class="descname">histogram</code><span class="sig-paren">(</span><em class="property">const</em> axis_type &amp;<em>a0</em>, ...<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9histogram9histogramERK9axis_typez" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructors for a variable number of axis types, each defining the binning scheme for its dimension. Up to <code class="xref cpp cpp-var docutils literal"><span class="pre">BOOST_HISTOGRAM_AXIS_LIMIT</span></code> axis types can be passed to the constructor, yielding the same number of dimensions.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N5boost9histogram9histogram6fill_cEjPKd">
-<span id="boost::histogram::histogram::fill_c__unsigned.doubleCP"></span><code class="descclassname">histogram::</code><code class="descname">fill_c</code><span class="sig-paren">(</span>unsigned <em>n</em>, <em class="property">const</em> double *<em>v</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N5boost9histogram9histogram6fill_cEjPKd" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fills the histogram with a c-array <code class="docutils literal"><span class="pre">v</span></code> of length <code class="docutils literal"><span class="pre">n</span></code>. A checks at run-time asserts that <code class="docutils literal"><span class="pre">n</span></code> agrees with the dimensions of the histogram.</p>
+<dt id="_CPPv2N9histogram6fill_cEjPKd">
+<span id="histogram::fill_c__unsigned.doubleCP"></span>void <code class="descclassname"></code><code class="descname">fill_c</code><span class="sig-paren">(</span>unsigned <em>n</em>, <em class="property">const</em> double *<em>v</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9histogram6fill_cEjPKd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fills the histogram with a c-array <code class="xref cpp cpp-var docutils literal"><span class="pre">v</span></code> of length <code class="xref cpp cpp-var docutils literal"><span class="pre">n</span></code>. A checks at run-time asserts that <code class="xref cpp cpp-var docutils literal"><span class="pre">n</span></code> agrees with the dimensions of the histogram.</p>
+<p>Allocation of internal memory is delayed until the first call to this function.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9histogram4fillEdz">
+<span id="histogram::fill__double.z"></span>void <code class="descclassname"></code><code class="descname">fill</code><span class="sig-paren">(</span>double <em>x0</em>, ...<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9histogram4fillEdz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <a class="reference internal" href="#_CPPv2N9histogram6fill_cEjPKd" title="histogram::fill_c"><code class="xref cpp cpp-func docutils literal"><span class="pre">fill_c()</span></code></a>, but passing the values of the tuple directly.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9histogram7wfill_cEjPKdd">
+<span id="histogram::wfill_c__unsigned.doubleCP.double"></span>void <code class="descclassname"></code><code class="descname">wfill_c</code><span class="sig-paren">(</span>unsigned <em>n</em>, <em class="property">const</em> double *<em>v</em>, double <em>w</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9histogram7wfill_cEjPKdd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fills the histogram with a c-array <code class="xref cpp cpp-var docutils literal"><span class="pre">v</span></code> of length <code class="xref cpp cpp-var docutils literal"><span class="pre">n</span></code>, using weight <code class="xref cpp cpp-var docutils literal"><span class="pre">w</span></code>. A checks at run-time asserts that <cite>n</cite> agrees with the dimensions of the histogram.</p>
+<p>Allocation of internal memory is delayed until the first call to this function. If the histogram was filled with <a class="reference internal" href="#_CPPv2N9histogram6fill_cEjPKd" title="histogram::fill_c"><code class="xref cpp cpp-func docutils literal"><span class="pre">fill_c()</span></code></a> before, the internal memory is converted to the wide format used for storing weighted counts.</p>
+<p>If the data is not weighted (all weights are 1.0), using <a class="reference internal" href="#_CPPv2N9histogram4fillEdz" title="histogram::fill"><code class="xref cpp cpp-func docutils literal"><span class="pre">fill()</span></code></a> is much more space-efficient. In the most extreme case, storing of weighted counts consumes 16x more memory.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9histogram5wfillEjPKdd">
+<span id="histogram::wfill__unsigned.doubleCP.double"></span>void <code class="descclassname"></code><code class="descname">wfill</code><span class="sig-paren">(</span>unsigned <em>n</em>, <em class="property">const</em> double *<em>v</em>, double <em>w</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9histogram5wfillEjPKdd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <a class="reference internal" href="#_CPPv2N9histogram7wfill_cEjPKdd" title="histogram::wfill_c"><code class="xref cpp cpp-func docutils literal"><span class="pre">wfill_c()</span></code></a>, but passing the values of the tuple directly.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogram7value_cEjPKi">
+<span id="histogram::value_c__unsigned.iCPC"></span>double <code class="descclassname"></code><code class="descname">value_c</code><span class="sig-paren">(</span>unsigned <em>n</em>, <em class="property">const</em> int *<em>idx</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram7value_cEjPKi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the count of the bin addressed by the supplied index. Just like in Python, negative indices like <code class="docutils literal"><span class="pre">-1</span></code> are allowed and count from the end. So if an axis has <code class="docutils literal"><span class="pre">k</span></code> bins, <code class="docutils literal"><span class="pre">-1</span></code> points to <code class="docutils literal"><span class="pre">k-1</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogram5valueEiz">
+<span id="histogram::value__i.zC"></span>double <code class="descclassname"></code><code class="descname">value</code><span class="sig-paren">(</span>int <em>i0</em>, ...<span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram5valueEiz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <a class="reference internal" href="#_CPPv2NK9histogram7value_cEjPKi" title="histogram::value_c"><code class="xref cpp cpp-func docutils literal"><span class="pre">value_c()</span></code></a>, but passing the values of the index directly.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogram10variance_cEjPKi">
+<span id="histogram::variance_c__unsigned.iCPC"></span>double <code class="descclassname"></code><code class="descname">variance_c</code><span class="sig-paren">(</span>unsigned <em>n</em>, <em class="property">const</em> int *<em>idx</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram10variance_cEjPKi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the variance estimate for the count of the bin addressed by the supplied index. Negative indices are allowed just like in case of <a class="reference internal" href="#_CPPv2NK9histogram7value_cEjPKi" title="histogram::value_c"><code class="xref cpp cpp-func docutils literal"><span class="pre">value_c()</span></code></a>.</p>
+<p>Note that it does not return the standard deviation <span class="math">\(\sigma\)</span>, commonly called &#8220;error&#8221;, but the variance <span class="math">\(\sigma^2\)</span>.</p>
+<p>In case of unweighted counts, the variance estimate returned is <span class="math">\(n\)</span>, if the count is <span class="math">\(n\)</span>. This is a common estimate for the variance based on the theory of the <a class="reference external" href="https://en.wikipedia.org/wiki/Poisson_distribution">Poisson distribution</a>.</p>
+<p>In case of weighted counts, the variance estimate returned is <span class="math">\(\sum_i w_i^2\)</span>, if the individual weights are <span class="math">\(w_i\)</span>. This estimate can be derived from the estimate above using <a class="reference external" href="https://en.wikipedia.org/wiki/Propagation_of_uncertainty">uncertainty propagation</a>. The extra storage needed for keeping track of the this sum is the reason why a histogram with weighted counts consumes more memory.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogram8varianceEiz">
+<span id="histogram::variance__i.zC"></span>double <code class="descclassname"></code><code class="descname">variance</code><span class="sig-paren">(</span>int <em>i0</em>, ...<span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram8varianceEiz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <a class="reference internal" href="#_CPPv2NK9histogram10variance_cEjPKi" title="histogram::variance_c"><code class="xref cpp cpp-func docutils literal"><span class="pre">variance_c()</span></code></a>, but passing the values of the index directly.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogram5depthEv">
+<span id="histogram::depthC"></span>unsigned <code class="descclassname"></code><code class="descname">depth</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram5depthEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current size of a count in the internal memory buffer in number of bytes.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogram3sumEv">
+<span id="histogram::sumC"></span>double <code class="descclassname"></code><code class="descname">sum</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram3sumEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the sum of bin counts, including overflow and underflow bins. This could be implemented as a free function.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogrameqERK9histogram">
+<span id="histogram::eq-operator__histogramCRC"></span>bool <code class="descclassname"></code><code class="descname">operator==</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv29histogram" title="histogram">histogram</a> &amp;<em>other</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogrameqERK9histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if the two histograms have the dimension, same axis types, and same data content. Two otherwise identical histograms are not considered equal, if they do not have the same depth, even if counts and variances are the same. This case only occurs if one histogram is filled using <a class="reference internal" href="#_CPPv2N9histogram4fillEdz" title="histogram::fill"><code class="xref cpp cpp-func docutils literal"><span class="pre">fill()</span></code></a> and the other with <a class="reference internal" href="#_CPPv2N9histogram5wfillEjPKdd" title="histogram::wfill"><code class="xref cpp cpp-func docutils literal"><span class="pre">wfill()</span></code></a>, using weights of 1.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogrampLERK9histogram">
+<span id="histogram::add-assign-operator__histogramCRC"></span><a class="reference internal" href="#_CPPv29histogram" title="histogram">histogram</a> &amp;<code class="descclassname"></code><code class="descname">operator+=</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv29histogram" title="histogram">histogram</a> &amp;<em>other</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogrampLERK9histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds the counts of the histogram on the right hand side to this histogram, if the two histograms have the same signature. Otherwise, a <code class="xref cpp cpp-type docutils literal"><span class="pre">std::logic_error</span></code> is thrown. Returns itself.</p>
+</dd></dl>
+
+<p>The following member functions are inherited from <code class="xref cpp cpp-class docutils literal"><span class="pre">basic_histogram</span></code>:</p>
+<dl class="function">
+<dt id="_CPPv2NK9histogram3dimEv">
+<span id="histogram::dimC"></span>unsigned <code class="descclassname"></code><code class="descname">dim</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram3dimEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of dimensions of the histogram, how many axis it has.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogram4binsEj">
+<span id="histogram::bins__unsignedC"></span>unsigned <code class="descclassname"></code><code class="descname">bins</code><span class="sig-paren">(</span>unsigned <em>i</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram4binsEj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of bins for axis <code class="xref cpp cpp-var docutils literal"><span class="pre">i</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK9histogram5shapeEj">
+<span id="histogram::shape__unsignedC"></span>unsigned <code class="descclassname"></code><code class="descname">shape</code><span class="sig-paren">(</span>unsigned <em>i</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram5shapeEj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the actual number of fields used by the axis. If the axis has underflow and overflow bins disabled, this is equal to <a class="reference internal" href="#_CPPv2NK9histogram4binsEj" title="histogram::bins"><code class="xref cpp cpp-func docutils literal"><span class="pre">bins()</span></code></a>. Otherwise, the number is larger by 2.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+template&lt;typename <code class="descname">T</code>&gt;</dt>
+<dt id="_CPPv2I0EN9histogram4axisEj">
+T &amp;<code class="descclassname"></code><code class="descname">axis</code><span class="sig-paren">(</span>unsigned <em>i</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2I0EN9histogram4axisEj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the axis object at index <code class="xref cpp cpp-var docutils literal"><span class="pre">i</span></code>, casted to type <code class="xref cpp cpp-type docutils literal"><span class="pre">T</span></code>. A runtime exception is thrown if the type cast is invalid.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+template&lt;typename <code class="descname">T</code>&gt;</dt>
+<dt id="_CPPv2I0ENK9histogram4axisEj">
+<em class="property">const</em> T &amp;<code class="descclassname"></code><code class="descname">axis</code><span class="sig-paren">(</span>unsigned <em>i</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2I0ENK9histogram4axisEj" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <code class="docutils literal"><span class="pre">const</span></code>-version of the previous member function.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-histogram">
+<span id="python-interface"></span><h3>Python interface<a class="headerlink" href="#module-histogram" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="histogram.histogram">
+<em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">histogram</code><a class="headerlink" href="#histogram.histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>N-dimensional histogram for real-valued data.</p>
+<dl class="method">
+<dt id="histogram.histogram.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>*axes</em><span class="sig-paren">)</span><a class="headerlink" href="#histogram.histogram.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pass one or more axis objects to define the dimensions of the histogram.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="histogram.histogram.dim">
+<code class="descname">dim</code><a class="headerlink" href="#histogram.histogram.dim" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">dimensions of the histogram</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="histogram.histogram.shape">
+<code class="descname">shape</code><span class="sig-paren">(</span><em>(basic_histogram)self</em>, <em>(int)i</em><span class="sig-paren">)</span> &rarr; int :<a class="headerlink" href="#histogram.histogram.shape" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>i</strong> (<em>int</em>) &#8211; index of the axis</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">number of count fields for axis i
+(bins + 2 if underflow and overflow bins are enabled, otherwise equal to bins</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="histogram.histogram.axis">
+<code class="descname">axis</code><span class="sig-paren">(</span><em>(basic_histogram)self</em>, <em>(int)i</em><span class="sig-paren">)</span> &rarr; object :<a class="headerlink" href="#histogram.histogram.axis" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>i</strong> (<em>int</em>) &#8211; index of the axis</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">axis object for axis i</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="histogram.histogram.fill">
+<code class="descname">fill</code><span class="sig-paren">(</span><em>*values</em>, <em>w=None</em><span class="sig-paren">)</span><a class="headerlink" href="#histogram.histogram.fill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pass a sequence of values with a length <code class="docutils literal"><span class="pre">n</span></code> is equal to the dimensions of the histogram, and optionally a weight <code class="xref py py-obj docutils literal"><span class="pre">w</span></code> for this fill (<em>int</em> or <em>float</em>).</p>
+<p>If Numpy support is enabled, values my also be a 2d-array of shape (<code class="docutils literal"><span class="pre">m</span></code>, <code class="docutils literal"><span class="pre">n</span></code>), where <code class="docutils literal"><span class="pre">m</span></code> is the number of tuples, and optionally another a second 1d-array <code class="xref py py-obj docutils literal"><span class="pre">w</span></code> of shape (<code class="docutils literal"><span class="pre">n</span></code>,).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="histogram.histogram.value">
+<code class="descname">value</code><span class="sig-paren">(</span><em>*indices</em><span class="sig-paren">)</span><a class="headerlink" href="#histogram.histogram.value" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>indices</strong> (<em>int</em>) &#8211; indices of the bin</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">value for the bin</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="histogram.histogram.variance">
+<code class="descname">variance</code><span class="sig-paren">(</span><em>*indices</em><span class="sig-paren">)</span><a class="headerlink" href="#histogram.histogram.variance" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>indices</strong> (<em>int</em>) &#8211; indices of the bin</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">variance estimate for the bin</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>The operators <code class="docutils literal"><span class="pre">==</span></code>, <code class="docutils literal"><span class="pre">+=</span></code>, and <code class="docutils literal"><span class="pre">+</span></code> are defined for histograms. They are also pickable.</p>
 </dd></dl>
 
 </div>
 </div>
 <div class="section" id="axis-types">
 <h2>Axis Types<a class="headerlink" href="#axis-types" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">#include</span> <span class="pre">&lt;boost/histogram/axis.hpp&gt;</span></code></p>
 <div class="section" id="id1">
 <h3>C++ interface<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="type">
-<dt id="_CPPv2N5boost9histogram9axis_typeE">
-<span id="boost::histogram::axis_type"></span><em class="property">type </em>boost::variant&lt;regular_axis, polar_axis, variable_axis, category_axis, integer_axis&gt; <code class="descclassname"></code><code class="descname">axis_type</code><a class="headerlink" href="#_CPPv2N5boost9histogram9axis_typeE" title="Permalink to this definition">¶</a></dt>
-<dd><p>A variant template which stores one of several axis objects.</p>
+<dt id="_CPPv29axis_type">
+<span id="axis_type"></span><em class="property">typedef </em>boost::variant&lt;<a class="reference internal" href="#_CPPv212regular_axis" title="regular_axis">regular_axis</a>, <a class="reference internal" href="#_CPPv210polar_axis" title="polar_axis">polar_axis</a>, <a class="reference internal" href="#_CPPv213variable_axis" title="variable_axis">variable_axis</a>, <a class="reference internal" href="#_CPPv213category_axis" title="category_axis">category_axis</a>, <a class="reference internal" href="#_CPPv212integer_axis" title="integer_axis">integer_axis</a>&gt; <code class="descclassname"></code><code class="descname">axis_type</code><a class="headerlink" href="#_CPPv29axis_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>A variant template which stores one of several axis objects. It needs to be cast to the type it currently holds to be useful.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv212regular_axis">
+<span id="regular_axis"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">regular_axis</code><a class="headerlink" href="#_CPPv212regular_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>An axis for real-valued data and bins of equal width. Binning is a O(1) operation.</p>
+<dl class="function">
+<dt id="_CPPv2N12regular_axis12regular_axisEjddRKNSt6stringEb">
+<span id="regular_axis::regular_axis__unsigned.double.double.ssCR.b"></span><code class="descclassname"></code><code class="descname">regular_axis</code><span class="sig-paren">(</span>unsigned <em>n</em>, double <em>min</em>, double <em>max</em>, <em class="property">const</em> std::string &amp;<em>label</em> = std::string(), bool <em>uoflow</em> = true<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N12regular_axis12regular_axisEjddRKNSt6stringEb" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n</strong> &#8211; number of bins</li>
+<li><strong>min</strong> &#8211; low edge of first bin</li>
+<li><strong>max</strong> &#8211; high edge of last bin</li>
+<li><strong>label</strong> &#8211; description of the axis</li>
+<li><strong>uoflow</strong> &#8211; add underflow and overflow bins to the histogram for this axis or not</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv210polar_axis">
+<span id="polar_axis"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">polar_axis</code><a class="headerlink" href="#_CPPv210polar_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>An axis for real-valued angles where the angles wrap around after <span class="math">\(2 \pi\)</span>. Binning is a O(1) operation. There are no overflow/underflow bins for this axis, since the axis is circular and has no end.</p>
+<dl class="function">
+<dt id="_CPPv2N10polar_axis10polar_axisEjdRKNSt6stringE">
+<span id="polar_axis::polar_axis__unsigned.double.ssCR"></span><code class="descclassname"></code><code class="descname">polar_axis</code><span class="sig-paren">(</span>unsigned <em>n</em>, double <em>start</em>, <em class="property">const</em> std::string &amp;<em>label</em> = std::string()<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N10polar_axis10polar_axisEjdRKNSt6stringE" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n</strong> &#8211; number of bins</li>
+<li><strong>start</strong> &#8211; starting phase of the angle</li>
+<li><strong>label</strong> &#8211; description of the axis</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv213variable_axis">
+<span id="variable_axis"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">variable_axis</code><a class="headerlink" href="#_CPPv213variable_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>An axis for real-valued data and bins of varying width. Binning is a O(log(N)) operation. If speed matters and the problem domain allows it, prefer a regular_axis.</p>
+<dl class="function">
+<dt id="_CPPv2N13variable_axis13variable_axisERKNSt6vectorIdEERKNSt6stringEb">
+<span id="variable_axis::variable_axis__std::vector:double:CR.ssCR.b"></span><code class="descclassname"></code><code class="descname">variable_axis</code><span class="sig-paren">(</span><em class="property">const</em> std::vector&lt;double&gt; &amp;<em>x</em>, <em class="property">const</em> std::string &amp;<em>label</em> = std::string(), bool <em>uoflow</em> = true<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N13variable_axis13variable_axisERKNSt6vectorIdEERKNSt6stringEb" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong> &#8211; bin edges, the number of bins is one less the size of this vector</li>
+<li><strong>label</strong> &#8211; description of the axis</li>
+<li><strong>uoflow</strong> &#8211; add underflow and overflow bins to the histogram for this axis or not</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv213category_axis">
+<span id="category_axis"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">category_axis</code><a class="headerlink" href="#_CPPv213category_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from <code class="docutils literal"><span class="pre">0</span></code> to <code class="docutils literal"><span class="pre">n-1</span></code> following their order. Binning is a O(1) operation. There are no underflow/overflow bins for this axis.</p>
+<dl class="function">
+<dt id="_CPPv2N13category_axis13category_axisERKNSt6vectorINSt6stringEEE">
+<span id="category_axis::category_axis__std::vector:ss:CR"></span><code class="descclassname"></code><code class="descname">category_axis</code><span class="sig-paren">(</span><em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>categories</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N13category_axis13category_axisERKNSt6vectorINSt6stringEEE" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>categories</strong> &#8211; an ordered sequence of categories that this axis discriminates</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N13category_axis13category_axisERKNSt6stringE">
+<span id="category_axis::category_axis__ssCR"></span><code class="descclassname"></code><code class="descname">category_axis</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>categories</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N13category_axis13category_axisERKNSt6stringE" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>categories</strong> &#8211; a string of categories separated by the character <code class="docutils literal"><span class="pre">;</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv212integer_axis">
+<span id="integer_axis"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">integer_axis</code><a class="headerlink" href="#_CPPv212integer_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>An axis for a contiguous range of integers. Binning is a O(1) operation.</p>
+<dl class="function">
+<dt id="_CPPv2N12integer_axis12integer_axisEiiRKNSt6stringEb">
+<span id="integer_axis::integer_axis__i.i.ssCR.b"></span><code class="descclassname"></code><code class="descname">integer_axis</code><span class="sig-paren">(</span>int <em>min</em>, int <em>max</em>, <em class="property">const</em> std::string &amp;<em>label</em> = std:string(), bool <em>uoflow</em> = true<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N12integer_axis12integer_axisEiiRKNSt6stringEb" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<p>Common interface among axis classes:</p>
+<dl class="function">
+<dt id="_CPPv2NK4binsEv">
+<span id="binsC"></span>unsigned <code class="descclassname"></code><code class="descname">bins</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK4binsEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of bins.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK6uoflowEv">
+<span id="uoflowC"></span>bool <code class="descclassname"></code><code class="descname">uoflow</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK6uoflowEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether overflow and underflow bins will be added in the histogram.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NK5labelEv">
+<span id="labelC"></span><em class="property">const</em> std::string &amp;<code class="descclassname"></code><code class="descname">label</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK5labelEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the axis label (not implemented for category_axis).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv25labelRKNSt6stringE">
+<span id="label__ssCR"></span>void <code class="descclassname"></code><code class="descname">label</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>label</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv25labelRKNSt6stringE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the label of an axis (not implemented for category_axis).</p>
 </dd></dl>
 
 </div>
-<div class="section" id="python-interface">
-<h3>Python interface<a class="headerlink" href="#python-interface" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h3>Python interface<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="histogram.regular_axis">
+<em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">regular_axis</code><a class="headerlink" href="#histogram.regular_axis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="histogram.polar_axis">
+<em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">polar_axis</code><a class="headerlink" href="#histogram.polar_axis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="histogram.variable_axis">
+<em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">variable_axis</code><a class="headerlink" href="#histogram.variable_axis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="histogram.category_axis">
+<em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">category_axis</code><a class="headerlink" href="#histogram.category_axis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="histogram.integer_axis">
+<em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">integer_axis</code><a class="headerlink" href="#histogram.integer_axis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 </div>
 </div>
@@ -138,7 +511,7 @@
       &copy;2016, Hans Dembinski.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
