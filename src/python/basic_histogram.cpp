@@ -271,6 +271,7 @@ basic_histogram_axis(const basic_histogram& self, unsigned i)
 void register_basic_histogram() {
   using namespace python;
   using python::arg;
+  docstring_options dopt(true, true, false);
 
   // used to pass arguments from raw python init to specialized C++ constructors
   class_<std::vector<double> >("vector_double", no_init);
@@ -314,10 +315,18 @@ void register_basic_histogram() {
     ;
 
   class_<basic_histogram>("basic_histogram", no_init)
-    .add_property("dim", &basic_histogram::dim)
-    .def("bins", &basic_histogram::bins)
-    .def("shape", &basic_histogram::shape)
-    .def("axis", basic_histogram_axis)
+    .add_property("dim", &basic_histogram::dim,
+                  ":return: dimensions of the histogram")
+    .def("shape", &basic_histogram::shape,
+         ":param int i: index of the axis\n"
+         ":return: number of count fields for axis i\n"
+         "  (bins + 2 if underflow and overflow"
+         " bins are enabled, otherwise equal to bins",
+         args("self", "i"))
+    .def("axis", basic_histogram_axis,
+         ":param int i: index of the axis\n"
+         ":return: axis object for axis i",
+         args("self", "i"))
     ;
 }
 

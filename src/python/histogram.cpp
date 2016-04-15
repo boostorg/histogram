@@ -220,20 +220,40 @@ public:
 void register_histogram()
 {
     using namespace python;
+    docstring_options dopt(true, true, false);
 
     class_<
       histogram, bases<basic_histogram>,
       shared_ptr<histogram>
-    >("histogram", no_init)
-        .def("__init__", raw_function(histogram_init))
+    >("histogram",
+      "N-dimensional histogram for real-valued data.",
+      no_init)
+        .def("__init__", raw_function(histogram_init),
+             ":param axis args: axis objects"
+             "\nPass one or more axis objects to define"
+             "\nthe dimensions of the histogram.")
         // shadowed C++ ctors
         .def(init<const basic_histogram::axes_type&>())
-        .add_property("__array_interface__", &histogram_access::histogram_array_interface)
-        .def("fill", raw_function(histogram_fill))
+        .add_property("__array_interface__",
+                      &histogram_access::histogram_array_interface)
+        .def("fill", raw_function(histogram_fill),
+             "Pass a sequence of values with a length n is"
+             "\nequal to the dimensions of the histogram,"
+             "\nand optionally a weight w for this fill"
+             "\n(*int* or *float*)."
+             "\n"
+             "\nIf Numpy support is enabled, values my also"
+             "\nbe a 2d-array of shape (m, n), where m is"
+             "\nthe number of tuples, and optionally"
+             "\nanother a second 1d-array w of shape (n,).")
         .add_property("depth", &histogram::depth)
         .add_property("sum", &histogram::sum)
-        .def("value", raw_function(histogram_value))
-        .def("variance", raw_function(histogram_variance))
+        .def("value", raw_function(histogram_value),
+             ":param int args: indices of the bin"
+             "\n:return: value for the bin")
+        .def("variance", raw_function(histogram_variance),
+             ":param int args: indices of the bin"
+             "\n:return: variance estimate for the bin")
         .def(self == self)
         .def(self += self)
         .def(self + self)
