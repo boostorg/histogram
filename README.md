@@ -21,7 +21,7 @@ My goal is to submit this project to the [Boost](http://www.boost.org) libraries
 * Intuitive and convenient interface, everything *just works*
 * Support for different binning schemes, including binning of angles
 * Support for weighted events, with variance estimates for each bin
-* Optional underflow- and overflow-bins
+* Optional underflow- and overflow-bins for each dimension
 * High-performance through cache-friendly design
 * Space-efficient memory storage that dynamically grows as needed
 * Serialization support with zero-suppression
