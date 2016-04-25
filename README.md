@@ -34,7 +34,7 @@ My goal is to submit this project to the [Boost](http://www.boost.org) libraries
 
 `mkdir build; cd build`
 
-`cmake ../histogram.git/CMake`
+`cmake ../histogram.git/build`
 
 `make install` (or just `make` to run the tests)
 
