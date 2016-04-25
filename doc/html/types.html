@@ -42,8 +42,8 @@
   <div class="section" id="types">
 <h1>Types<a class="headerlink" href="#types" title="Permalink to this headline">¶</a></h1>
 <p>The library consists of a single <a class="reference internal" href="#_CPPv29histogram" title="histogram"><code class="xref cpp cpp-class docutils literal"><span class="pre">histogram</span></code></a> and several axis types which are stored in a <code class="docutils literal"><span class="pre">boost::variant</span></code> called <a class="reference internal" href="#_CPPv29axis_type" title="axis_type"><code class="xref cpp cpp-type docutils literal"><span class="pre">axis_type</span></code></a>. The axis types are created and passed to the constructor of the histogram to define its binning scheme. All following types are embedded in the <code class="docutils literal"><span class="pre">boost::histogram</span></code> namespace, which is omitted for brevity.</p>
-<div class="section" id="the-histogram-class">
-<h2>The Histogram Class<a class="headerlink" href="#the-histogram-class" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="histogram-type">
+<h2>Histogram type<a class="headerlink" href="#histogram-type" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal"><span class="pre">#include</span> <span class="pre">&lt;boost/histogram/histogram.hpp&gt;</span></code></p>
 <div class="section" id="c-interface">
 <h3>C++ interface<a class="headerlink" href="#c-interface" title="Permalink to this headline">¶</a></h3>
@@ -152,7 +152,7 @@
 <dl class="function">
 <dt id="_CPPv2NK9histogram5shapeEj">
 <span id="histogram::shape__unsignedC"></span>unsigned <code class="descclassname"></code><code class="descname">shape</code><span class="sig-paren">(</span>unsigned <em>i</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK9histogram5shapeEj" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the actual number of fields used by the axis. If the axis has underflow and overflow bins disabled, this is equal to <a class="reference internal" href="#_CPPv2NK9histogram4binsEj" title="histogram::bins"><code class="xref cpp cpp-func docutils literal"><span class="pre">bins()</span></code></a>. Otherwise, the number is larger by 2.</p>
+<dd><p>Returns the actual number of fields used by the axis. If the axis has no underflow and overflow bins, this is equal to <a class="reference internal" href="#_CPPv2NK9histogram4binsEj" title="histogram::bins"><code class="xref cpp cpp-func docutils literal"><span class="pre">bins()</span></code></a>. Otherwise, the number is larger by 2.</p>
 </dd></dl>
 
 <dl class="function">
@@ -183,7 +183,7 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <dl class="method">
 <dt id="histogram.histogram.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>*axes</em><span class="sig-paren">)</span><a class="headerlink" href="#histogram.histogram.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pass one or more axis objects to define the dimensions of the histogram.</p>
+<dd><p>Pass one or more axis objects as arguments to define the dimensions of the histogram.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -234,7 +234,7 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <dt id="histogram.histogram.fill">
 <code class="descname">fill</code><span class="sig-paren">(</span><em>*values</em>, <em>w=None</em><span class="sig-paren">)</span><a class="headerlink" href="#histogram.histogram.fill" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pass a sequence of values with a length <code class="docutils literal"><span class="pre">n</span></code> is equal to the dimensions of the histogram, and optionally a weight <code class="xref py py-obj docutils literal"><span class="pre">w</span></code> for this fill (<em>int</em> or <em>float</em>).</p>
-<p>If Numpy support is enabled, values my also be a 2d-array of shape (<code class="docutils literal"><span class="pre">m</span></code>, <code class="docutils literal"><span class="pre">n</span></code>), where <code class="docutils literal"><span class="pre">m</span></code> is the number of tuples, and optionally another a second 1d-array <code class="xref py py-obj docutils literal"><span class="pre">w</span></code> of shape (<code class="docutils literal"><span class="pre">n</span></code>,).</p>
+<p>If Numpy support is enabled, <code class="xref py py-obj docutils literal"><span class="pre">values</span></code> my also be a 2d-array of shape <code class="docutils literal"><span class="pre">(m,</span> <span class="pre">n)</span></code>, where <code class="docutils literal"><span class="pre">m</span></code> is the number of tuples to pass at once, and optionally another a second 1d-array <code class="xref py py-obj docutils literal"><span class="pre">w</span></code> of shape <code class="docutils literal"><span class="pre">(m,)</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -484,7 +484,7 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notes.html">Notes</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Types</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#the-histogram-class">The Histogram Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#histogram-type">Histogram type</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#axis-types">Axis Types</a></li>
 </ul>
 </li>

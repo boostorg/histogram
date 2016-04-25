@@ -45,7 +45,7 @@ Properties
     Getter/setter-like functions are wrapped as properties.
 
 Keyword-based parameters
-    C++ member functions :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill` are wrapped by the single Python member function :py:func:`histogram.fill`
+    C++ member functions :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill` are wrapped by the single Python member function :py:func:`histogram.fill` with an optional keyword parameter :py:obj:`w` to pass a weight.
 
 C++ convenience
     C++ member function :cpp:func:`histogram::bins` is omitted on the Python side, since it is very easy to just query this directly from the axis object in Python. On the C++ side, this would require a extra type cast or applying a visitor.

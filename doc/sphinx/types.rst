@@ -3,8 +3,8 @@ Types
 
 The library consists of a single :cpp:class:`histogram` and several axis types which are stored in a ``boost::variant`` called :cpp:type:`axis_type`. The axis types are created and passed to the constructor of the histogram to define its binning scheme. All following types are embedded in the ``boost::histogram`` namespace, which is omitted for brevity.
 
-The Histogram Class
--------------------
+Histogram type
+--------------
 
 ``#include <boost/histogram/histogram.hpp>``
 
@@ -93,7 +93,7 @@ C++ interface
 
     .. cpp:function:: unsigned shape(unsigned i) const
 
-        Returns the actual number of fields used by the axis. If the axis has underflow and overflow bins disabled, this is equal to :cpp:func:`bins`. Otherwise, the number is larger by 2.
+        Returns the actual number of fields used by the axis. If the axis has no underflow and overflow bins, this is equal to :cpp:func:`bins`. Otherwise, the number is larger by 2.
 
     .. cpp:function:: template <typename T> T& axis(unsigned i)
 
@@ -112,7 +112,7 @@ Python interface
 
     .. py:method:: __init__(*axes)
 
-        Pass one or more axis objects to define the dimensions of the histogram.
+        Pass one or more axis objects as arguments to define the dimensions of the histogram.
 
     .. autoattribute:: dim
 
@@ -124,12 +124,12 @@ Python interface
 
         Pass a sequence of values with a length ``n`` is equal to the dimensions of the histogram, and optionally a weight :py:obj:`w` for this fill (*int* or *float*).
 
-        If Numpy support is enabled, values my also be a 2d-array of shape (``m``, ``n``), where ``m`` is the number of tuples, and optionally another a second 1d-array :py:obj:`w` of shape (``n``,).
+        If Numpy support is enabled, :py:obj:`values` my also be a 2d-array of shape ``(m, n)``, where ``m`` is the number of tuples to pass at once, and optionally another a second 1d-array :py:obj:`w` of shape ``(m,)``.
 
     .. py:method:: value(*indices)
 
         :param int indices: indices of the bin
-        :return: value for the bin
+        :return: count for the bin
 
     .. py:method:: variance(*indices)
 
