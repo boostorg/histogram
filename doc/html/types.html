@@ -174,9 +174,10 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 </dd></dl>
 
 </div>
-<div class="section" id="module-histogram">
-<span id="python-interface"></span><h3>Python interface<a class="headerlink" href="#module-histogram" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
+<div class="section" id="python-interface">
+<h3>Python interface<a class="headerlink" href="#python-interface" title="Permalink to this headline">¶</a></h3>
+<p>The operators <code class="docutils literal"><span class="pre">==</span></code>, <code class="docutils literal"><span class="pre">+=</span></code>, and <code class="docutils literal"><span class="pre">+</span></code> are defined for histograms. They are also pickable.</p>
+<span class="target" id="module-histogram"></span><dl class="class">
 <dt id="histogram.histogram">
 <em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">histogram</code><a class="headerlink" href="#histogram.histogram" title="Permalink to this definition">¶</a></dt>
 <dd><p>N-dimensional histogram for real-valued data.</p>
@@ -260,7 +261,6 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 </table>
 </dd></dl>
 
-<p>The operators <code class="docutils literal"><span class="pre">==</span></code>, <code class="docutils literal"><span class="pre">+=</span></code>, and <code class="docutils literal"><span class="pre">+</span></code> are defined for histograms. They are also pickable.</p>
 </dd></dl>
 
 </div>
@@ -270,12 +270,14 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <p><code class="docutils literal"><span class="pre">#include</span> <span class="pre">&lt;boost/histogram/axis.hpp&gt;</span></code></p>
 <div class="section" id="id1">
 <h3>C++ interface<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Axis types have a similar and often common interface, but have no common base type. To increase performance, axis types are internally stored by <code class="xref cpp cpp-class docutils literal"><span class="pre">basic_histogram</span></code> in a <code class="xref cpp cpp-class docutils literal"><span class="pre">boost::variant</span></code>.</p>
 <dl class="type">
 <dt id="_CPPv29axis_type">
 <span id="axis_type"></span><em class="property">typedef </em>boost::variant&lt;<a class="reference internal" href="#_CPPv212regular_axis" title="regular_axis">regular_axis</a>, <a class="reference internal" href="#_CPPv210polar_axis" title="polar_axis">polar_axis</a>, <a class="reference internal" href="#_CPPv213variable_axis" title="variable_axis">variable_axis</a>, <a class="reference internal" href="#_CPPv213category_axis" title="category_axis">category_axis</a>, <a class="reference internal" href="#_CPPv212integer_axis" title="integer_axis">integer_axis</a>&gt; <code class="descclassname"></code><code class="descname">axis_type</code><a class="headerlink" href="#_CPPv29axis_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>A variant template which stores one of several axis objects. It needs to be cast to the type it currently holds to be useful.</p>
+<dd><p>A variant which stores one of several axis objects. It needs to be cast to the type it currently holds to be useful or passed to a visitor.</p>
 </dd></dl>
 
+<p>All axis types support the <code class="docutils literal"><span class="pre">==</span></code> operator.</p>
 <dl class="class">
 <dt id="_CPPv212regular_axis">
 <span id="regular_axis"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">regular_axis</code><a class="headerlink" href="#_CPPv212regular_axis" title="Permalink to this definition">¶</a></dt>
@@ -442,10 +444,10 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <dd><p>Returns the low edge of the bin (not implemented for category_axis and integer_axis).</p>
 </dd></dl>
 
-<p>All axis types support the <code class="docutils literal"><span class="pre">==</span></code> operator.</p>
 </div>
 <div class="section" id="id2">
 <h3>Python interface<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>All axis types support the operators <code class="docutils literal"><span class="pre">==</span></code> and <code class="docutils literal"><span class="pre">[]</span></code>. They support the <code class="xref py py-func docutils literal"><span class="pre">len()</span></code> and <code class="xref py py-func docutils literal"><span class="pre">repr()</span></code> calls, and the iterator protocol.</p>
 <dl class="class">
 <dt id="histogram.regular_axis">
 <em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">regular_axis</code><a class="headerlink" href="#histogram.regular_axis" title="Permalink to this definition">¶</a></dt>
@@ -572,7 +574,6 @@ Binning is a O(1) operation.</p>
 
 </dd></dl>
 
-<p>All axis types support the operators <code class="docutils literal"><span class="pre">==</span></code> and <code class="docutils literal"><span class="pre">[]</span></code>. They support the <code class="xref py py-func docutils literal"><span class="pre">len()</span></code> and <code class="xref py py-func docutils literal"><span class="pre">repr()</span></code> calls, and the iterator protocol.</p>
 </div>
 </div>
 </div>

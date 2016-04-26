@@ -106,6 +106,8 @@ C++ interface
 Python interface
 ^^^^^^^^^^^^^^^^
 
+The operators ``==``, ``+=``, and ``+`` are defined for histograms. They are also pickable.
+
 .. py:module:: histogram
 
 .. autoclass:: histogram
@@ -136,8 +138,6 @@ Python interface
         :param int indices: indices of the bin
         :return: variance estimate for the bin
 
-    The operators ``==``, ``+=``, and ``+`` are defined for histograms. They are also pickable.
-
 Axis Types
 ----------
 
@@ -146,10 +146,14 @@ Axis Types
 C++ interface
 ^^^^^^^^^^^^^
 
+Axis types have a similar and often common interface, but have no common base type. To increase performance, axis types are internally stored by :cpp:class:`basic_histogram` in a :cpp:class:`boost::variant`.
+
 .. cpp:type:: boost::variant\<regular_axis, polar_axis, variable_axis, \
                               category_axis, integer_axis> axis_type
 
-    A variant template which stores one of several axis objects. It needs to be cast to the type it currently holds to be useful.
+    A variant which stores one of several axis objects. It needs to be cast to the type it currently holds to be useful or passed to a visitor.
+
+All axis types support the ``==`` operator.
 
 .. cpp:class:: regular_axis
 
@@ -239,10 +243,10 @@ Common interface among axis types:
 
     Returns the low edge of the bin (not implemented for category_axis and integer_axis).
 
-All axis types support the ``==`` operator.
-
 Python interface
 ^^^^^^^^^^^^^^^^
+
+All axis types support the operators ``==`` and ``[]``. They support the :py:func:`len` and :py:func:`repr` calls, and the iterator protocol.
 
 .. autoclass:: regular_axis
     :members:
@@ -258,5 +262,3 @@ Python interface
 
 .. autoclass:: integer_axis
     :members:
-
-All axis types support the operators ``==`` and ``[]``. They support the :py:func:`len` and :py:func:`repr` calls, and the iterator protocol.
