@@ -99,13 +99,16 @@ if(USE_PYTHON)
 endif()
 
 # doc
-if(SPHINX_EXECUTABLE) 
-    add_custom_target(html
-        ${SPHINX_EXECUTABLE}
-            -q -b html
-            ${PROJECT_SOURCE_DIR}/../doc/sphinx
-            ${PROJECT_SOURCE_DIR}/../doc/html
-        COMMENT "(Re)building HTML documentation with Sphinx")
+if(SPHINX_EXECUTABLE)
+  configure_file(${PROJECT_SOURCE_DIR}/../doc/sphinx/conf.py.in
+      conf.py)
+  add_custom_target(html
+      ${SPHINX_EXECUTABLE}
+          -b html -d . -c .
+          ${PROJECT_SOURCE_DIR}/../doc/sphinx
+          ${PROJECT_SOURCE_DIR}/../doc/html
+      COMMENT "(Re)building HTML documentation with Sphinx")
+  add_dependencies(html pyhistogram)
 endif()
 
 # install
