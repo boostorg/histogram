@@ -30,7 +30,7 @@ public:
   ~basic_histogram() {}
 
   unsigned dim() const { return axes_.size(); }
-  unsigned bins(unsigned i) const { return size_[i]; }
+  int bins(unsigned i) const { return size_[i]; }
   unsigned shape(unsigned i) const { return size_[i] + 2 * uoflow_[i]; }
 
   template <typename T>
@@ -94,7 +94,7 @@ private:
   axes_type axes_;
 
   // internal buffers
-  int32_t size_[BOOST_HISTOGRAM_AXIS_LIMIT];
+  int size_[BOOST_HISTOGRAM_AXIS_LIMIT];
   std::bitset<BOOST_HISTOGRAM_AXIS_LIMIT> uoflow_;
 
   void update_buffers(); ///< fills size_ and uoflow_

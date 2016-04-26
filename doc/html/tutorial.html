@@ -43,10 +43,62 @@
 <h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="example-1-1d-histogram-in-c">
 <h2>Example 1: 1d-histogram in C++<a class="headerlink" href="#example-1-1d-histogram-in-c" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt>An example on how to make a 1d-histogram in C++ and to fill it::</dt>
-<dd>#include &lt;boost/histogram/histogram.hpp&gt;</dd>
-</dl>
+<p>How to make a 1d-histogram in C++ and to fill it:</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;boost/histogram/histogram.hpp&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;boost/histogram/axis.hpp&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;cmath&gt;</span><span class="cp"></span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">namespace</span> <span class="n">bh</span> <span class="o">=</span> <span class="n">boost</span><span class="o">::</span><span class="n">histogram</span><span class="p">;</span>
+
+    <span class="c1">// create histogram</span>
+    <span class="n">bh</span><span class="o">::</span><span class="n">histogram</span> <span class="n">h</span><span class="p">(</span><span class="n">bh</span><span class="o">::</span><span class="n">regular_axis</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s">&quot;x&quot;</span><span class="p">));</span>
+
+    <span class="c1">// fill histogram</span>
+    <span class="n">h</span><span class="p">.</span><span class="n">fill</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">);</span>
+    <span class="n">h</span><span class="p">.</span><span class="n">fill</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">);</span>
+    <span class="n">h</span><span class="p">.</span><span class="n">fill</span><span class="p">(</span><span class="mf">1.1</span><span class="p">);</span>
+
+    <span class="c1">// fill histogram with weighted count</span>
+    <span class="n">h</span><span class="p">.</span><span class="n">wfill</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">);</span>
+
+    <span class="c1">// print counts and variance estimate to stdout,</span>
+    <span class="c1">// including underflow and overflow bins</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">h</span><span class="p">.</span><span class="n">bins</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;bin &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">i</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">h</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                  <span class="o">&lt;&lt;</span> <span class="s">&quot; +/- &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">sqrt</span><span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">variance</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                  <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2-2d-histogram-in-python">
+<h2>Example 2: 2d-histogram in Python<a class="headerlink" href="#example-2-2d-histogram-in-python" title="Permalink to this headline">¶</a></h2>
+<p>How to make a 2d-histogram in Python and to fill it using a Numpy array:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">histogram</span> <span class="kn">as</span> <span class="nn">bh</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c1"># create histogram</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">bh</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">bh</span><span class="o">.</span><span class="n">regular_axis</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="s2">&quot;radius&quot;</span><span class="p">,</span>
+                                 <span class="n">uoflow</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                 <span class="n">bh</span><span class="o">.</span><span class="n">polar_axis</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">))</span>
+
+<span class="c1"># fill histogram</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">rphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">rphi</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">y</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+<span class="n">rphi</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">h</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">rphi</span><span class="p">)</span>
+
+<span class="c1"># access counts as a numpy array (no data is copied)</span>
+<span class="n">count_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="n">count_matrix</span>
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -76,6 +128,7 @@
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorial</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#example-1-1d-histogram-in-c">Example 1: 1d-histogram in C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-2-2d-histogram-in-python">Example 2: 2d-histogram in Python</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="notes.html">Notes</a></li>
