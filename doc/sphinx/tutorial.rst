@@ -1,4 +1,8 @@
 Tutorial
 ========
 
-One more annotated examples on how the library can be helpful to solve real problems.
+Example 1: 1d-histogram in C++
+------------------------------
+
+An example on how to make a 1d-histogram in C++ and to fill it::
+    #include <boost/histogram/histogram.hpp>

@@ -222,6 +222,9 @@ void register_histogram()
     using namespace python;
     docstring_options dopt(true, true, false);
 
+    // used to pass arguments from raw python init to specialized C++ constructor
+    class_<basic_histogram::axes_type>("axes", no_init);
+
     class_<
       histogram, bases<basic_histogram>,
       shared_ptr<histogram>
@@ -242,7 +245,7 @@ void register_histogram()
              "\nand optionally a weight w for this fill"
              "\n(*int* or *float*)."
              "\n"
-             "\nIf Numpy support is enabled, values my also"
+             "\nIf Numpy support is enabled, values may also"
              "\nbe a 2d-array of shape (m, n), where m is"
              "\nthe number of tuples, and optionally"
              "\nanother a second 1d-array w of shape (n,).")
@@ -250,7 +253,7 @@ void register_histogram()
         .add_property("sum", &histogram::sum)
         .def("value", raw_function(histogram_value),
              ":param int args: indices of the bin"
-             "\n:return: value for the bin")
+             "\n:return: count for the bin")
         .def("variance", raw_function(histogram_variance),
              ":param int args: indices of the bin"
              "\n:return: variance estimate for the bin")

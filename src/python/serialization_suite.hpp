@@ -44,8 +44,7 @@ public:
 
 private:
     PyObject** pstr_;
-    std::streamsize len_;
-    std::streamsize pos_;
+    std::streamsize len_, pos_;
 };
 
 template<class T>

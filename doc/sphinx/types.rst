@@ -166,7 +166,7 @@ C++ interface
 
 .. cpp:class:: polar_axis
 
-    An axis for real-valued angles where the angles wrap around after :math:`2 \pi`. Binning is a O(1) operation. There are no overflow/underflow bins for this axis, since the axis is circular and has no end.
+    An axis for real-valued angles. There are no overflow/underflow bins for this axis, since the axis is circular and wraps around after :math:`2 \pi`. Binning is a O(1) operation.
 
     .. cpp:function:: polar_axis(unsigned n, double start, \
                                  const std::string& label=std::string())
@@ -188,7 +188,7 @@ C++ interface
 
 .. cpp:class:: category_axis
 
-    An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from ``0`` to ``n-1`` following their order. Binning is a O(1) operation. There are no underflow/overflow bins for this axis.
+    An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from ``0`` to ``n-1``. There are no underflow/overflow bins for this axis.  Binning is a O(1) operation.
 
     .. cpp:function:: category_axis(const std::vector<std::string>& categories)
 
@@ -198,14 +198,22 @@ C++ interface
 
         :param categories: a string of categories separated by the character ``;``
 
+    .. cpp:function:: const std::string& operator[](int index) const
+
+        Returns the category for the bin index.
+
 .. cpp:class:: integer_axis
 
-    An axis for a contiguous range of integers. Binning is a O(1) operation.
+    An axis for a contiguous range of integers. There are no underflow/overflow bins for this axis. Binning is a O(1) operation.
 
     .. cpp:function:: integer_axis(int min, int max, \
                                    const std::string& label=std:string(), bool uoflow=true)
 
-Common interface among axis classes:
+    .. cpp:function:: int operator[](int index) const
+
+        Returns the integer that is mapped to the bin index.
+
+Common interface among axis types:
 
 .. cpp:function:: unsigned bins() const
 
@@ -217,17 +225,38 @@ Common interface among axis classes:
 
 .. cpp:function:: const std::string& label() const
 
-    Returns the axis label (not implemented for category_axis).
+    Returns the axis label, which is a name or description (not implemented for category_axis).
 
 .. cpp:function:: void label(const std::string& label)
 
     Change the label of an axis (not implemented for category_axis).
 
+.. cpp:function:: int index(const double x) const
+
+    Returns the bin index for the passed argument.
+
+.. cpp:function:: double operator[](int index) const
+
+    Returns the low edge of the bin (not implemented for category_axis and integer_axis).
+
+All axis types support the ``==`` operator.
+
 Python interface
 ^^^^^^^^^^^^^^^^
 
 .. autoclass:: regular_axis
+    :members:
+
 .. autoclass:: polar_axis
+    :members:
+
 .. autoclass:: variable_axis
+    :members:
+
 .. autoclass:: category_axis
+    :members:
+
 .. autoclass:: integer_axis
+    :members:
+
+All axis types support the operators ``==`` and ``[]``. They support the :py:func:`len` and :py:func:`repr` calls, and the iterator protocol.

@@ -25,7 +25,6 @@ Contents
    tutorial
    notes
    types
-   functions
    rationale
    references
    changelog

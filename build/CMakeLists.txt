@@ -55,6 +55,7 @@ if(Boost_PYTHON_FOUND AND PYTHONLIBS_FOUND AND USE_PYTHON)
 
   add_library(pyhistogram MODULE
     ../src/python/module.cpp
+    ../src/python/axis.cpp
     ../src/python/basic_histogram.cpp
     ../src/python/histogram.cpp
   )

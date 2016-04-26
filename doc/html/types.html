@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="histogram 1.0 documentation" href="index.html" />
-    <link rel="next" title="Functions" href="functions.html" />
+    <link rel="next" title="Rationale" href="rationale.html" />
     <link rel="prev" title="Notes" href="notes.html" />
    
   
@@ -189,14 +189,7 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <dl class="attribute">
 <dt id="histogram.histogram.dim">
 <code class="descname">dim</code><a class="headerlink" href="#histogram.histogram.dim" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">dimensions of the histogram</td>
-</tr>
-</tbody>
-</table>
+<dd><p>dimensions of the histogram</p>
 </dd></dl>
 
 <dl class="method">
@@ -246,7 +239,7 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>indices</strong> (<em>int</em>) &#8211; indices of the bin</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">value for the bin</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">count for the bin</td>
 </tr>
 </tbody>
 </table>
@@ -312,7 +305,7 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <dl class="class">
 <dt id="_CPPv210polar_axis">
 <span id="polar_axis"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">polar_axis</code><a class="headerlink" href="#_CPPv210polar_axis" title="Permalink to this definition">¶</a></dt>
-<dd><p>An axis for real-valued angles where the angles wrap around after <span class="math">\(2 \pi\)</span>. Binning is a O(1) operation. There are no overflow/underflow bins for this axis, since the axis is circular and has no end.</p>
+<dd><p>An axis for real-valued angles. There are no overflow/underflow bins for this axis, since the axis is circular and wraps around after <span class="math">\(2 \pi\)</span>. Binning is a O(1) operation.</p>
 <dl class="function">
 <dt id="_CPPv2N10polar_axis10polar_axisEjdRKNSt6stringE">
 <span id="polar_axis::polar_axis__unsigned.double.ssCR"></span><code class="descclassname"></code><code class="descname">polar_axis</code><span class="sig-paren">(</span>unsigned <em>n</em>, double <em>start</em>, <em class="property">const</em> std::string &amp;<em>label</em> = std::string()<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N10polar_axis10polar_axisEjdRKNSt6stringE" title="Permalink to this definition">¶</a></dt>
@@ -360,7 +353,7 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <dl class="class">
 <dt id="_CPPv213category_axis">
 <span id="category_axis"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">category_axis</code><a class="headerlink" href="#_CPPv213category_axis" title="Permalink to this definition">¶</a></dt>
-<dd><p>An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from <code class="docutils literal"><span class="pre">0</span></code> to <code class="docutils literal"><span class="pre">n-1</span></code> following their order. Binning is a O(1) operation. There are no underflow/overflow bins for this axis.</p>
+<dd><p>An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from <code class="docutils literal"><span class="pre">0</span></code> to <code class="docutils literal"><span class="pre">n-1</span></code>. There are no underflow/overflow bins for this axis.  Binning is a O(1) operation.</p>
 <dl class="function">
 <dt id="_CPPv2N13category_axis13category_axisERKNSt6vectorINSt6stringEEE">
 <span id="category_axis::category_axis__std::vector:ss:CR"></span><code class="descclassname"></code><code class="descname">category_axis</code><span class="sig-paren">(</span><em class="property">const</em> std::vector&lt;std::string&gt; &amp;<em>categories</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N13category_axis13category_axisERKNSt6vectorINSt6stringEEE" title="Permalink to this definition">¶</a></dt>
@@ -387,20 +380,32 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="_CPPv2NK13category_axisixEi">
+<span id="category_axis::subscript-operator__iC"></span><em class="property">const</em> std::string &amp;<code class="descclassname"></code><code class="descname">operator[]</code><span class="sig-paren">(</span>int <em>index</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK13category_axisixEi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the category for the bin index.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
 <dt id="_CPPv212integer_axis">
 <span id="integer_axis"></span><em class="property">class </em><code class="descclassname"></code><code class="descname">integer_axis</code><a class="headerlink" href="#_CPPv212integer_axis" title="Permalink to this definition">¶</a></dt>
-<dd><p>An axis for a contiguous range of integers. Binning is a O(1) operation.</p>
+<dd><p>An axis for a contiguous range of integers. There are no underflow/overflow bins for this axis. Binning is a O(1) operation.</p>
 <dl class="function">
 <dt id="_CPPv2N12integer_axis12integer_axisEiiRKNSt6stringEb">
 <span id="integer_axis::integer_axis__i.i.ssCR.b"></span><code class="descclassname"></code><code class="descname">integer_axis</code><span class="sig-paren">(</span>int <em>min</em>, int <em>max</em>, <em class="property">const</em> std::string &amp;<em>label</em> = std:string(), bool <em>uoflow</em> = true<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N12integer_axis12integer_axisEiiRKNSt6stringEb" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="_CPPv2NK12integer_axisixEi">
+<span id="integer_axis::subscript-operator__iC"></span>int <code class="descclassname"></code><code class="descname">operator[]</code><span class="sig-paren">(</span>int <em>index</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK12integer_axisixEi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the integer that is mapped to the bin index.</p>
 </dd></dl>
 
-<p>Common interface among axis classes:</p>
+</dd></dl>
+
+<p>Common interface among axis types:</p>
 <dl class="function">
 <dt id="_CPPv2NK4binsEv">
 <span id="binsC"></span>unsigned <code class="descclassname"></code><code class="descname">bins</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK4binsEv" title="Permalink to this definition">¶</a></dt>
@@ -416,7 +421,7 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <dl class="function">
 <dt id="_CPPv2NK5labelEv">
 <span id="labelC"></span><em class="property">const</em> std::string &amp;<code class="descclassname"></code><code class="descname">label</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK5labelEv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the axis label (not implemented for category_axis).</p>
+<dd><p>Returns the axis label, which is a name or description (not implemented for category_axis).</p>
 </dd></dl>
 
 <dl class="function">
@@ -425,34 +430,149 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <dd><p>Change the label of an axis (not implemented for category_axis).</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="_CPPv2NK5indexEKd">
+<span id="index__doubleCC"></span>int <code class="descclassname"></code><code class="descname">index</code><span class="sig-paren">(</span><em class="property">const</em> double <em>x</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NK5indexEKd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the bin index for the passed argument.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2NKixEi">
+<span id="subscript-operator__iC"></span>double <code class="descclassname"></code><code class="descname">operator[]</code><span class="sig-paren">(</span>int <em>index</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv2NKixEi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the low edge of the bin (not implemented for category_axis and integer_axis).</p>
+</dd></dl>
+
+<p>All axis types support the <code class="docutils literal"><span class="pre">==</span></code> operator.</p>
 </div>
 <div class="section" id="id2">
 <h3>Python interface<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="histogram.regular_axis">
 <em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">regular_axis</code><a class="headerlink" href="#histogram.regular_axis" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An axis for real-valued data and bins of equal width.
+Binning is a O(1) operation.</p>
+<dl class="method">
+<dt id="histogram.regular_axis.index">
+<code class="descname">index</code><span class="sig-paren">(</span><em>(regular_axis)self</em>, <em>(float)x</em><span class="sig-paren">)</span> &rarr; int :<a class="headerlink" href="#histogram.regular_axis.index" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>double</em>) &#8211; value</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bin index for the passed value</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="histogram.regular_axis.label">
+<code class="descname">label</code><a class="headerlink" href="#histogram.regular_axis.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>A name for or description of the axis.</p>
+</dd></dl>
+
+</dd></dl>
 
 <dl class="class">
 <dt id="histogram.polar_axis">
 <em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">polar_axis</code><a class="headerlink" href="#histogram.polar_axis" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An axis for real-valued angles where the angles
+wrap around after 2pi. Binning is a O(1) operation.
+There are no overflow/underflow bins for this axis,
+since the axis is circular and has no end.</p>
+<dl class="method">
+<dt id="histogram.polar_axis.index">
+<code class="descname">index</code><span class="sig-paren">(</span><em>(polar_axis)self</em>, <em>(float)x</em><span class="sig-paren">)</span> &rarr; int :<a class="headerlink" href="#histogram.polar_axis.index" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>double</em>) &#8211; value</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bin index for the passed value</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="histogram.polar_axis.label">
+<code class="descname">label</code><a class="headerlink" href="#histogram.polar_axis.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>A name for or description of the axis.</p>
+</dd></dl>
+
+</dd></dl>
 
 <dl class="class">
 <dt id="histogram.variable_axis">
 <em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">variable_axis</code><a class="headerlink" href="#histogram.variable_axis" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An axis for real-valued data and bins of varying width.
+Binning is a O(log(N)) operation. If speed matters and
+the problem domain allows it, prefer a regular_axis.</p>
+<dl class="method">
+<dt id="histogram.variable_axis.index">
+<code class="descname">index</code><span class="sig-paren">(</span><em>(variable_axis)self</em>, <em>(float)x</em><span class="sig-paren">)</span> &rarr; int :<a class="headerlink" href="#histogram.variable_axis.index" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>double</em>) &#8211; value</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bin index for the passed value</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="histogram.variable_axis.label">
+<code class="descname">label</code><a class="headerlink" href="#histogram.variable_axis.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>A name for or description of the axis.</p>
+</dd></dl>
+
+</dd></dl>
 
 <dl class="class">
 <dt id="histogram.category_axis">
 <em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">category_axis</code><a class="headerlink" href="#histogram.category_axis" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An axis for enumerated categories. The axis stores the
+category labels, and expects that they are addressed
+using an integer from 0 to n-1 following their order.
+Binning is a O(1) operation. There are no
+underflow/overflow bins for this axis.</p>
+</dd></dl>
 
 <dl class="class">
 <dt id="histogram.integer_axis">
 <em class="property">class </em><code class="descclassname">histogram.</code><code class="descname">integer_axis</code><a class="headerlink" href="#histogram.integer_axis" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An axis for a contiguous range of integers.
+Binning is a O(1) operation. There are no
+underflow/overflow bins for this axis.</p>
+<dl class="method">
+<dt id="histogram.integer_axis.index">
+<code class="descname">index</code><span class="sig-paren">(</span><em>(integer_axis)self</em>, <em>(float)x</em><span class="sig-paren">)</span> &rarr; int :<a class="headerlink" href="#histogram.integer_axis.index" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>double</em>) &#8211; value</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bin index for the passed value</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
+<dl class="attribute">
+<dt id="histogram.integer_axis.label">
+<code class="descname">label</code><a class="headerlink" href="#histogram.integer_axis.label" title="Permalink to this definition">¶</a></dt>
+<dd><p>A name for or description of the axis.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>All axis types support the operators <code class="docutils literal"><span class="pre">==</span></code> and <code class="docutils literal"><span class="pre">[]</span></code>. They support the <code class="xref py py-func docutils literal"><span class="pre">len()</span></code> and <code class="xref py py-func docutils literal"><span class="pre">repr()</span></code> calls, and the iterator protocol.</p>
 </div>
 </div>
 </div>
@@ -488,7 +608,6 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <li class="toctree-l2"><a class="reference internal" href="#axis-types">Axis Types</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="functions.html">Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rationale.html">Rationale</a></li>
 <li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">CHANGELOG</a></li>
@@ -499,7 +618,7 @@ template&lt;typename <code class="descname">T</code>&gt;</dt>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="notes.html" title="previous chapter">Notes</a></li>
-      <li>Next: <a href="functions.html" title="next chapter">Functions</a></li>
+      <li>Next: <a href="rationale.html" title="next chapter">Rationale</a></li>
   </ul></li>
 </ul>
 </div>
