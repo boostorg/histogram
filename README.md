@@ -2,7 +2,7 @@
 
 Fast n-dimensional histogram with convenient interface for C++ and Python
 
-This project contains an easy-to-use powerful n-dimensional histogram class implemented in `C++0x`, optimized for convenience and excellent performance under heavy duty. The histogram has a complete C++ and a [Python](http://www.python.org) interface, and can be moved over the language boundary with ease. [Numpy](http://www.numpy.org) is fully supported; histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data. Histograms can be streamed from/to files and pickled in Python.
+This project contains an easy-to-use powerful n-dimensional histogram class implemented in `C++0x`, optimized for convenience and excellent performance under heavy duty. The histogram has a complete C++ and [Python](http://www.python.org) interface. Histogram instances can be moved over the language boundary with ease. [Numpy](http://www.numpy.org) is fully supported; histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data. Histograms can be streamed from/to files and pickled in Python.
 
 My goal is to submit this project to the [Boost](http://www.boost.org) libraries, that's why it uses the boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
