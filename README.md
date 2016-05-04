@@ -77,4 +77,4 @@ This histogram can be filled with either weighted or unweighted counts. In the w
 
 ## State of project
 
-The histogram is feature-complete for 1.0 version. More than 300 individual tests make sure that the implementation works as expected. Writing comprehensive documentation is currently ongoing. To grow further, the project needs test users, code review, and feedback.
+The histogram is feature-complete for 1.0 version. More than 300 individual tests make sure that the implementation works as expected. Writing comprehensive documentation is available. To grow further, the project needs test users, code review, and feedback.
