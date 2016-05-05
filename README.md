@@ -30,13 +30,12 @@ My goal is to submit this project to the [Boost](http://www.boost.org) libraries
 
 ### Build instructions
 
-`git clone git@github.com:HDembinski/histogram.git`
-
-`mkdir build; cd build`
-
-`cmake ../histogram.git/build`
-
-`make install` (or just `make` to run the tests)
+```sh
+git clone https://github.com/HDembinski/histogram.git
+mkdir build && cd build
+cmake ../histogram/build
+make install # (or just 'make' to run the tests)
+```
 
 To run the tests, do `make test` or `ctest -V` for more output.
 
