@@ -18,7 +18,7 @@ My goal is to submit this project to the [Boost](http://www.boost.org) libraries
 ### Features
 
 * N-dimensional histogram
-* Intuitive and convenient interface, everything *just works*
+* Intuitive and convenient interface
 * Support for different binning schemes, including binning of angles
 * Support for weighted events, with variance estimates for each bin
 * Optional underflow- and overflow-bins for each dimension
@@ -49,19 +49,19 @@ There is a lack of a widely-used free histogram class. While it is easy to write
 I designed the histogram based on a decade of experience collected in working with Big Data, more precisely in the field of particle physics and astroparticle physics. I follow these principles:
 
 * "Do one thing and do it well", Doug McIlroy
-* The [Zen of Python](https://www.python.org/dev/peps/pep-0020) (also applies to other languages).
+* The [Zen of Python](https://www.python.org/dev/peps/pep-0020) (also applies to other languages)
 
 ### Interface convenience, language transparency
 
-A histogram should have the same consistent interface whatever the dimension. Like `std::vector` it should *just work*, users shouldn't be forced to make *a priori* choices among several histogram classes and options everytime they encounter a new data set. Python is a great language for data analysis, so the histogram needs Python bindings.
+A histogram should have the same consistent interface whatever the dimension. Like `std::vector` it should *just work*, users shouldn't be forced to make *a priori* choices among several histogram classes and options everytime they encounter a new data set.
 
-Data analysis in Python is Numpy-based, so Numpy support is a must. The histogram should be usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python: define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting. 
+Python is a great language for data analysis, so the histogram needs Python bindings. Data analysis in Python is Numpy-based, so Numpy support is a must. The histogram should be usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python: define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting. 
 
 ### Powerful binning strategies
 
-The histogram supports half a dozent different binning strategies, conveniently encapsulated in axis objects. There is the standard sorting of real-valued data into bins of equal or varying width, but also binning of angles or integer values.
+The histogram supports about half a dozent different binning strategies, conveniently encapsulated in axis objects. There is the standard sorting of real-valued data into bins of equal or varying width, but also binning of angles or integer values.
 
-Extra bins that count over- and underflow values are added by default. This feature can be turned off individually for each dimension. The extra bins do not disturb normal counting. On an axis with n-bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at `-1` and `n`, respectively.
+Extra bins that count over- and underflow values are added by default. This feature can be turned off individually for each dimension to conserve memory. The extra bins do not disturb normal counting. On an axis with n-bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at `-1` and `n`, respectively.
 
 ### Performance, cache-friendliness and memory-efficiency
 
@@ -77,4 +77,4 @@ This histogram can be filled with either weighted or unweighted counts. In the w
 
 ## State of project
 
-The histogram is feature-complete for 1.0 version. More than 300 individual tests make sure that the implementation works as expected. Writing comprehensive documentation is available. To grow further, the project needs test users, code review, and feedback.
+The histogram is feature-complete for a 1.0 version. More than 300 individual tests make sure that the implementation works as expected. Comprehensive documentation is available. To grow further, the project needs test users, code review, and feedback.
