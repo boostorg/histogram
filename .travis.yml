@@ -1,5 +1,5 @@
-language: cpp
 sudo: false
+language: cpp
 compiler:
   - clang
   - g++
@@ -17,10 +17,11 @@ addons:
       - cmake
       - gcc-4.9
       - g++-4.9
-      - python-numpy
       - libboost1.55-all-dev
-install:
-  - pip install numpy
+before_script:
+  - export PATH=$HOME/.local/bin:$PATH
+  - pip install numpy --user `whoami`
+  - composer --prefer-source install
 
 script:
   cd build && cmake . && make -j2 && make test
