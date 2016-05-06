@@ -88,19 +88,29 @@
 <div class="section" id="benchmarks">
 <h2>Benchmarks<a class="headerlink" href="#benchmarks" title="Permalink to this headline">¶</a></h2>
 <p>One design goal of this project is to be fast. The act of filling the histogram with a number should be insignificant compared to the CPU cycles spend to retrieve/generate that number. Naturally, we also want to beat the competition.</p>
-<p>The following shows the results of a simple benchmark against the histogram classes TH1I, TH3I and THnI of the ROOT framework. The comparison is not fair, since TH1I and TH3I are specialized classes for 1 dimension and 3 dimensions. In addition, all ROOT histograms lack a comparable system to define different binning schemes for each axis.</p>
-<p>Large vectors are pre-allocated and with random numbers drawn from a uniform or normal distribution for all tests.
-In the timed part, these numbers are read from the vector and put into the histograms. This reduces the overhead to memory access. All tests are run 10 times, the minimum is shown.</p>
+<p>The following table shows results of a simple benchmark against</p>
+<ul class="simple">
+<li><code class="xref cpp cpp-type docutils literal"><span class="pre">TH1I</span></code>, <code class="xref cpp cpp-type docutils literal"><span class="pre">TH3I</span></code> and <code class="xref cpp cpp-type docutils literal"><span class="pre">THnI</span></code> of the <a class="reference external" href="https://root.cern.ch">ROOT framework</a></li>
+<li><a class="reference internal" href="types.html#module-histogram" title="histogram"><code class="xref py py-func docutils literal"><span class="pre">histogram()</span></code></a> and <code class="xref py py-func docutils literal"><span class="pre">histogramdd()</span></code> from the Python module <code class="xref py py-mod docutils literal"><span class="pre">numpy</span></code></li>
+</ul>
+<p>The benchmark against ROOT is implemented in C++, the benchmark against numpy in Python.</p>
+<p>Remarks:</p>
+<ul class="simple">
+<li>The comparison with ROOT puts ROOT at the advantage, since <code class="xref cpp cpp-type docutils literal"><span class="pre">TH1I</span></code> and <code class="xref cpp cpp-type docutils literal"><span class="pre">TH3I</span></code> are specialized classes for 1 dimension and 3 dimensions, not a general class for N-dimensions like <code class="xref cpp cpp-class docutils literal"><span class="pre">boost::histogram</span></code>. ROOT histograms also lack a comparably flexible system to define different binning schemes for each axis.</li>
+<li>Large vectors are pre-allocated and with random numbers drawn from a uniform or normal distribution for all tests. In the timed part, these numbers are read from the vector and put into the histograms. This reduces the overhead merely to memory access.</li>
+<li>The test with uniform random numbers never fills the overflow and underflow bins, while the test with random numbers from a normal distribution does. This explains some of the differences between the two distributions.</li>
+<li>All tests are repeated 10 times, the minimum is shown.</li>
+</ul>
 <p>Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="22%" />
-<col width="13%" />
-<col width="13%" />
-<col width="13%" />
-<col width="13%" />
-<col width="13%" />
-<col width="13%" />
+<col width="29%" />
+<col width="12%" />
+<col width="12%" />
+<col width="12%" />
+<col width="12%" />
+<col width="12%" />
+<col width="12%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">distribution</th>
@@ -117,24 +127,49 @@ In the timed part, these numbers are read from the vector and put into the histo
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>ROOT</td>
-<td>0.01046</td>
-<td>0.02453</td>
-<td>0.01050</td>
-<td>0.01406</td>
-<td>0.01766</td>
-<td>0.01028</td>
+<tr class="row-odd"><td>No. of fills</td>
+<td>12M</td>
+<td>4M</td>
+<td>2M</td>
+<td>12M</td>
+<td>4M</td>
+<td>2M</td>
 </tr>
-<tr class="row-even"><td>boost</td>
-<td>0.01603</td>
-<td>0.01922</td>
-<td>0.00662</td>
-<td>0.01604</td>
-<td>0.01836</td>
-<td>0.00750</td>
+<tr class="row-even"><td>C++: ROOT  [t/s]</td>
+<td>0.127</td>
+<td>0.199</td>
+<td>0.185</td>
+<td>0.168</td>
+<td>0.143</td>
+<td>0.179</td>
+</tr>
+<tr class="row-odd"><td>C++: boost [t/s]</td>
+<td>0.172</td>
+<td>0.177</td>
+<td>0.155</td>
+<td>0.172</td>
+<td>0.171</td>
+<td>0.150</td>
+</tr>
+<tr class="row-even"><td>Py: numpy [t/s]</td>
+<td>0.825</td>
+<td>0.727</td>
+<td>0.436</td>
+<td>0.824</td>
+<td>0.426</td>
+<td>0.401</td>
+</tr>
+<tr class="row-odd"><td>Py: boost [t/s]</td>
+<td>0.209</td>
+<td>0.229</td>
+<td>0.192</td>
+<td>0.207</td>
+<td>0.194</td>
+<td>0.168</td>
 </tr>
 </tbody>
 </table>
+<p><code class="xref cpp cpp-class docutils literal"><span class="pre">boost::histogram</span></code> shows consistent performance comparable to the specialized ROOT histograms. It is faster than ROOT&#8217;s implementation of a N-dimensional histogram <code class="xref cpp cpp-type docutils literal"><span class="pre">THnI</span></code>. The performance of <code class="xref cpp cpp-class docutils literal"><span class="pre">boost::histogram</span></code> is similar in C++ and Python, showing only a small overhead in Python. It is consistently faster than numpy&#8217;s histogram functions.</p>
 </div>
 </div>
 

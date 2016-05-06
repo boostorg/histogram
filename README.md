@@ -2,9 +2,9 @@
 
 Fast n-dimensional histogram with convenient interface for C++ and Python
 
-This project contains an easy-to-use powerful n-dimensional histogram class implemented in `C++0x`, optimized for convenience and excellent performance under heavy duty. The histogram has a complete [C++](http://yosefk.com/c++fqa/defective.html) and [Python](http://www.python.org) interface. Histogram instances can be moved over the language boundary with ease. [Numpy](http://www.numpy.org) is fully supported; histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data. Histograms can be streamed from/to files and pickled in Python.
+This project contains an easy-to-use powerful n-dimensional histogram class implemented in `C++03`, optimized for convenience and excellent performance under heavy duty. Move semantics are supported using `boost::move`. The histogram has a complete [C++](http://yosefk.com/c++fqa/defective.html) and [Python](http://www.python.org) interface, and can be passed over the language boundary with ease. [Numpy](http://www.numpy.org) is fully supported; histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data. Histograms can be streamed from/to files and pickled in Python.
 
-My goal is to submit this project to the [Boost](http://www.boost.org) libraries, that's why it uses the boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
+My goal is to submit this project to [Boost](http://www.boost.org), that's why it uses the Boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
 ### Dependencies
 
@@ -21,8 +21,9 @@ My goal is to submit this project to the [Boost](http://www.boost.org) libraries
 * Intuitive and convenient interface
 * Support for different binning schemes, including binning of angles
 * Support for weighted events, with variance estimates for each bin
+* Support for move semantics using `boost::move`
 * Optional underflow- and overflow-bins for each dimension
-* High-performance through cache-friendly design
+* High performance through cache-friendly design
 * Space-efficient memory storage that dynamically grows as needed
 * Serialization support with zero-suppression
 * Multi-language support: C++ and Python
@@ -38,6 +39,32 @@ make install # (or just 'make' to run the tests)
 ```
 
 To run the tests, do `make test` or `ctest -V` for more output.
+
+## Benchmarks
+
+The following table shows results of a simple benchmark against
+
+* `TH1I`, `TH3I` and `THnI` of the [ROOT framework](https://root.cern.ch>)
+
+* `histogram` and `histogramdd` from the Python module `numpy`
+
+The benchmark against ROOT is implemented in C++, the benchmark against numpy in Python. For a full discussion of the benchmark, see `docs/html/notes.html`.
+
+Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM
+
+=================  =======  =======  =======  =======  =======  =======
+distribution                uniform                    normal
+-----------------  -------------------------  -------------------------
+dimension          1D       3D       6D       1D       3D       6D
+=================  =======  =======  =======  =======  =======  =======
+No. of fills       12M      4M       2M       12M      4M       2M
+C++: ROOT  [t/s]   0.127    0.199    0.185    0.168    0.143    0.179
+C++: boost [t/s]   0.172    0.177    0.155    0.172    0.171    0.150
+Py: numpy [t/s]    0.825    0.727    0.436    0.824    0.426    0.401
+Py: boost [t/s]    0.209    0.229    0.192    0.207    0.194    0.168
+=================  =======  =======  =======  =======  =======  =======
+
+`boost::histogram` shows consistent performance comparable to the specialized ROOT histograms. It is faster than ROOT's implementation of a N-dimensional histogram `THnI`. The performance of `boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is consistently faster than numpy's histogram functions.
 
 ## Rationale
 

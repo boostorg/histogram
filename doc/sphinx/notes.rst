@@ -55,18 +55,36 @@ Benchmarks
 
 One design goal of this project is to be fast. The act of filling the histogram with a number should be insignificant compared to the CPU cycles spend to retrieve/generate that number. Naturally, we also want to beat the competition.
 
-The following shows the results of a simple benchmark against the histogram classes TH1I, TH3I and THnI of the ROOT framework. The comparison is not fair, since TH1I and TH3I are specialized classes for 1 dimension and 3 dimensions. In addition, all ROOT histograms lack a comparable system to define different binning schemes for each axis.
+The following table shows results of a simple benchmark against
 
-Large vectors are pre-allocated and with random numbers drawn from a uniform or normal distribution for all tests.
-In the timed part, these numbers are read from the vector and put into the histograms. This reduces the overhead to memory access. All tests are run 10 times, the minimum is shown.
+* :cpp:type:`TH1I`, :cpp:type:`TH3I` and :cpp:type:`THnI` of the `ROOT framework <https://root.cern.ch>`_
+
+* :py:func:`histogram` and :py:func:`histogramdd` from the Python module :py:mod:`numpy`
+
+The benchmark against ROOT is implemented in C++, the benchmark against numpy in Python.
+
+Remarks:
+
+* The comparison with ROOT puts ROOT at the advantage, since :cpp:type:`TH1I` and :cpp:type:`TH3I` are specialized classes for 1 dimension and 3 dimensions, not a general class for N-dimensions like :cpp:class:`boost::histogram`. ROOT histograms also lack a comparably flexible system to define different binning schemes for each axis.
+
+* Large vectors are pre-allocated and with random numbers drawn from a uniform or normal distribution for all tests. In the timed part, these numbers are read from the vector and put into the histograms. This reduces the overhead merely to memory access.
+
+* The test with uniform random numbers never fills the overflow and underflow bins, while the test with random numbers from a normal distribution does. This explains some of the differences between the two distributions.
+
+* All tests are repeated 10 times, the minimum is shown.
 
 Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM
 
-============  =======  =======  =======  =======  =======  =======
-distribution           uniform                    normal
-------------  -------------------------  -------------------------
-dimension       1D       3D       6D       1D       3D       6D
-============  =======  =======  =======  =======  =======  =======
-ROOT          0.01046  0.02453  0.01050  0.01406  0.01766  0.01028
-boost         0.01603  0.01922  0.00662  0.01604  0.01836  0.00750
-============  =======  =======  =======  =======  =======  =======
+=================  =======  =======  =======  =======  =======  =======
+distribution                uniform                    normal
+-----------------  -------------------------  -------------------------
+dimension          1D       3D       6D       1D       3D       6D
+=================  =======  =======  =======  =======  =======  =======
+No. of fills       12M      4M       2M       12M      4M       2M
+C++: ROOT  [t/s]   0.127    0.199    0.185    0.168    0.143    0.179
+C++: boost [t/s]   0.172    0.177    0.155    0.172    0.171    0.150
+Py: numpy [t/s]    0.825    0.727    0.436    0.824    0.426    0.401
+Py: boost [t/s]    0.209    0.229    0.192    0.207    0.194    0.168
+=================  =======  =======  =======  =======  =======  =======
+
+:cpp:class:`boost::histogram` shows consistent performance comparable to the specialized ROOT histograms. It is faster than ROOT's implementation of a N-dimensional histogram :cpp:type:`THnI`. The performance of :cpp:class:`boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is consistently faster than numpy's histogram functions.
