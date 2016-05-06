@@ -18,7 +18,7 @@ namespace histogram {
 // common base class for most axes
 class axis_base {
 public:
-  inline unsigned bins() const { return size_ > 0 ? size_ : -size_; }
+  inline int bins() const { return size_ > 0 ? size_ : -size_; }
   inline bool uoflow() const { return size_ > 0; }
   const std::string& label() const { return label_; }
   void label(const std::string& label) { label_ = label; }
@@ -193,7 +193,7 @@ public:
   category_axis(const category_axis&);
   category_axis& operator=(const category_axis&);
 
-  inline unsigned bins() const { return categories_.size(); }
+  inline int bins() const { return categories_.size(); }
   const std::string& operator[](int idx) const
   { return categories_[idx]; }
 
