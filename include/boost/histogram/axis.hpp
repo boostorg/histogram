@@ -250,8 +250,10 @@ namespace detail {
     double x;
     int j;
     size_type k, stride;
+
     linearize(bool b) :
       use_x(b),
+      x(0.0),
       j(0),
       k(0),
       stride(1)
