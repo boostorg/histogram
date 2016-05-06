@@ -14,8 +14,6 @@ addons:
       - boost-latest
     packages:
       - cmake
-      - gcc-4.9
-      - g++-4.9
       - python-numpy
       - libboost1.55-all-dev
 # before_install:
