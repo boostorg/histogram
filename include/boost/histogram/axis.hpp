@@ -242,6 +242,58 @@ private:
   }
 };
 
+namespace detail {
+  struct linearize : public static_visitor<void>
+  {
+    typedef uintptr_t size_type;
+    bool use_x;
+    double x;
+    int j;
+    size_type k, stride;
+    linearize(bool b) :
+      use_x(b),
+      j(0),
+      k(0),
+      stride(1)
+    {}
+
+    template <typename A>
+    void operator()(const A& a) {
+      if (k < size_type(-1)) {
+        if (use_x)
+          j = a.index(x);
+        const int bins = a.bins();
+        const int range = bins + 2 * a.uoflow();
+        // the following three lines work for any overflow setting
+        j += (j < 0) * (bins + 2); // wrap around if j < 0
+        if (j < range) {
+          k += j * stride;
+          stride *= range;
+        }
+        else {
+          k = size_type(-1); // indicate out of range
+        }
+      }
+    }
+
+    void operator()(const category_axis& a) {
+      if (k < size_type(-1)) {
+        if (use_x)
+          j = int(x + 0.5);
+        const int bins = a.bins();
+        j += (j < 0) * bins; // wrap around if j < 0
+        if (j < bins) {
+          k += j * stride;
+          stride *= bins;
+        }
+        else {
+          k = size_type(-1); // indicate out of range
+        }
+      }
+    }
+  };
+}
+
 typedef variant<
   regular_axis, // most common type
   polar_axis,

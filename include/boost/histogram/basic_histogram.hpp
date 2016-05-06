@@ -11,6 +11,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <boost/move/move.hpp>
 
 #include <bitset>
 
@@ -21,17 +22,24 @@ namespace histogram {
 
 // holds collection of axis instances and computes the internal index
 class basic_histogram {
+  BOOST_COPYABLE_AND_MOVABLE(basic_histogram)
 public:
   typedef container::static_vector<axis_type, BOOST_HISTOGRAM_AXIS_LIMIT> axes_type;
   typedef uintptr_t size_type;
 
+  // copy semantics
   basic_histogram(const basic_histogram&);
-  basic_histogram& operator=(const basic_histogram&);
+  basic_histogram& operator=(BOOST_COPY_ASSIGN_REF(basic_histogram));
+
+  // move semantics
+  basic_histogram(BOOST_RV_REF(basic_histogram));
+  basic_histogram& operator=(BOOST_RV_REF(basic_histogram));
+
   ~basic_histogram() {}
 
   unsigned dim() const { return axes_.size(); }
-  int bins(unsigned i) const { return size_[i]; }
-  unsigned shape(unsigned i) const { return size_[i] + 2 * uoflow_[i]; }
+  int bins(unsigned i) const { return apply_visitor(visitor::bins(), axes_[i]); }
+  unsigned shape(unsigned i) const { return apply_visitor(visitor::shape(), axes_[i]); }
 
   template <typename T>
   T& axis(unsigned i) 
@@ -48,12 +56,11 @@ protected:
   explicit basic_histogram(const axes_type& axes);
 
 #define BOOST_HISTOGRAM_BASE_APPEND(z, n, unused) axes_.push_back(a ## n);
-#define BOOST_HISTOGRAM_BASE_CTOR(z, n, unused)                      \
+#define BOOST_HISTOGRAM_BASE_CTOR(z, n, unused)                       \
   basic_histogram( BOOST_PP_ENUM_PARAMS_Z(z, n, const axis_type& a) ) \
-  {                                                                  \
-    axes_.reserve(n);                                                \
-    BOOST_PP_REPEAT(n, BOOST_HISTOGRAM_BASE_APPEND, unused)          \
-    update_buffers();                                                \
+  {                                                                   \
+    axes_.reserve(n);                                                 \
+    BOOST_PP_REPEAT(n, BOOST_HISTOGRAM_BASE_APPEND, unused)           \
   }
 
 // generates constructors taking 1 to AXIS_LIMIT arguments
@@ -64,27 +71,24 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR
   template <typename Array>
   inline
   size_type pos(const Array& v) const {
-    int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
-    for (unsigned i = 0, n = axes_.size(); i < n; ++i)
-      idx[i] = apply_visitor(detail::index_visitor(v[i]), axes_[i]);
-    return linearize(idx);
+    detail::linearize lin(true);
+    int i = axes_.size();
+    while (i--) {
+      lin.x = v[i];
+      apply_visitor(lin, axes_[i]);
+    }
+    return lin.k;
   }
 
   inline
   size_type linearize(const int* idx) const {
-    size_type stride = 1, k = 0, i = axes_.size();
+    detail::linearize lin(false);
+    int i = axes_.size();
     while (i--) {
-      const int size = size_[i];
-      const int range = size + 2 * uoflow_[i];
-      int j = idx[i];
-      // the following three lines work for any overflow setting
-      j += (j < 0) * (size + 2); // wrap around if j < 0
-      if (j >= range)
-        return size_type(-1); // indicate out of range
-      k += j * stride;
-      stride *= range;
+      lin.j = idx[i];
+      apply_visitor(lin, axes_[i]);
     }
-    return k;
+    return lin.k;
   }
 
   // compute the number of fields needed for storage
@@ -92,12 +96,6 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR
 
 private:
   axes_type axes_;
-
-  // internal buffers
-  int size_[BOOST_HISTOGRAM_AXIS_LIMIT];
-  std::bitset<BOOST_HISTOGRAM_AXIS_LIMIT> uoflow_;
-
-  void update_buffers(); ///< fills size_ and uoflow_
 
   friend class serialization::access;
   template <class Archive>
@@ -109,7 +107,6 @@ private:
     if (Archive::is_loading::value) {
       axes_.resize(size);
       ar & serialization::make_array(&axes_[0], size);
-      update_buffers();
     } else {
       ar & serialization::make_array(&axes_[0], size);
     }
