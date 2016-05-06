@@ -10,7 +10,13 @@ python: 2.7.10
 before_install:
   # - pip install --upgrade --user pip
   # - pip install --user numpy
-  - sudo apt-get install python-numpy
-  - sudo apt-get install libboost-all-dev
+  - sudo apt-get install
+    python-numpy
+    libboost-serialization1.55-dev
+    libboost-serialization1.55.0
+    libboost-iostreams1.55-dev
+    libboost-iostreams1.55.0
+    libboost-python1.55-dev
+    libboost-python1.55.0    
 script:
   cd build && cmake . && make -j2 && make test
