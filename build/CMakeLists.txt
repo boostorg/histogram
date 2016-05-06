@@ -73,10 +73,14 @@ if(BUILD_CHECKS)
 
   find_package(ROOT) # only used in speed comparison
   if(ROOT_FOUND)
-    add_executable(nhistogram_speed
+    add_executable(speed_vs_root
                    ../test/check/speed_vs_root.cpp)
-    target_include_directories(nhistogram_speed PUBLIC ${ROOT_INCLUDE_DIR})
-    target_link_libraries(nhistogram_speed boost_histogram ${ROOT_LIBRARIES} ${LIBRARIES})
+    target_include_directories(speed_vs_root PUBLIC ${ROOT_INCLUDE_DIR})
+    target_link_libraries(speed_vs_root boost_histogram ${ROOT_LIBRARIES} ${LIBRARIES})
+  endif()
+  if(NUMPY_FOUND AND USE_NUMPY)
+    # ugly hack to copy python script into build
+    configure_file(../test/check/speed_vs_numpy.py speed_vs_numpy.py COPY_ONLY)
   endif()
 endif()
 

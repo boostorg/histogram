@@ -62,8 +62,8 @@ void compare_1d(unsigned n, int distrib)
   }
 
   printf("1D\n");
-  printf("t[root]  = %g\n", best_root);
-  printf("t[boost] = %g\n", best_boost);
+  printf("t[root]  = %.3f\n", best_root);
+  printf("t[boost] = %.3f\n", best_boost);
 }
 
 void compare_3d(unsigned n, int distrib)
@@ -92,8 +92,8 @@ void compare_3d(unsigned n, int distrib)
   } 
 
   printf("3D\n");
-  printf("t[root]  = %g\n", best_root);
-  printf("t[boost] = %g\n", best_boost);
+  printf("t[root]  = %.3f\n", best_root);
+  printf("t[boost] = %.3f\n", best_boost);
 }
 
 void compare_6d(unsigned n, int distrib)
@@ -119,11 +119,11 @@ void compare_6d(unsigned n, int distrib)
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
 
     histogram h(regular_axis(10, 0, 1),
-                 regular_axis(10, 0, 1),
-                 regular_axis(10, 0, 1),
-                 regular_axis(10, 0, 1),
-                 regular_axis(10, 0, 1),
-                 regular_axis(10, 0, 1));
+                regular_axis(10, 0, 1),
+                regular_axis(10, 0, 1),
+                regular_axis(10, 0, 1),
+                regular_axis(10, 0, 1),
+                regular_axis(10, 0, 1));
 
     t = clock();
     for (unsigned i = 0; i < n; ++i) {
@@ -136,17 +136,17 @@ void compare_6d(unsigned n, int distrib)
   } 
 
   printf("6D\n");
-  printf("t[root]  = %g\n", best_root);
-  printf("t[boost] = %g\n", best_boost);
+  printf("t[root]  = %.3f\n", best_root);
+  printf("t[boost] = %.3f\n", best_boost);
 }
 
 int main(int argc, char** argv) {
   printf("uniform distribution\n");
-  compare_1d(1000000, 0);
-  compare_3d(500000, 0);
-  compare_6d(100000, 0);
+  compare_1d(12000000, 0);
+  compare_3d(4000000, 0);
+  compare_6d(2000000, 0);
   printf("normal distribution\n");
-  compare_1d(1000000, 1);
-  compare_3d(500000, 1);
-  compare_6d(100000, 1);
+  compare_1d(12000000, 1);
+  compare_3d(4000000, 1);
+  compare_6d(2000000, 1);
 }
