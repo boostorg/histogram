@@ -80,7 +80,7 @@
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">histogram</span> <span class="kn">as</span> <span class="nn">bh</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
-<span class="c1"># create histogram</span>
+<span class="c1"># create histogram without underflow and overflow bins</span>
 <span class="n">h</span> <span class="o">=</span> <span class="n">bh</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">bh</span><span class="o">.</span><span class="n">regular_axis</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="s2">&quot;radius&quot;</span><span class="p">,</span>
                                  <span class="n">uoflow</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
                  <span class="n">bh</span><span class="o">.</span><span class="n">polar_axis</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">))</span>
@@ -90,7 +90,7 @@
 <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
 <span class="n">rphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 <span class="n">rphi</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">y</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
-<span class="n">rphi</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">rphi</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 <span class="n">h</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">rphi</span><span class="p">)</span>
 
 <span class="c1"># access counts as a numpy array (no data is copied)</span>

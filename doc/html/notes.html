@@ -56,9 +56,9 @@
 </div>
 <div class="section" id="how-to-build-and-install">
 <h2>How to build and install<a class="headerlink" href="#how-to-build-and-install" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">HDembinski</span><span class="o">/</span><span class="n">histogram</span><span class="o">.</span><span class="n">git</span>
-<span class="n">mkdir</span> <span class="n">build</span><span class="p">;</span> <span class="n">cd</span> <span class="n">build</span>
-<span class="n">cmake</span> <span class="o">../</span><span class="n">histogram</span><span class="o">.</span><span class="n">git</span><span class="o">/</span><span class="n">CMake</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">HDembinski</span><span class="o">/</span><span class="n">histogram</span><span class="o">.</span><span class="n">git</span>
+<span class="n">mkdir</span> <span class="n">build</span> <span class="o">&amp;&amp;</span> <span class="n">cd</span> <span class="n">build</span>
+<span class="n">cmake</span> <span class="o">../</span><span class="n">histogram</span><span class="o">/</span><span class="n">build</span>
 <span class="n">make</span> <span class="n">install</span>
 </pre></div>
 </div>
@@ -84,6 +84,57 @@
 <dt>C++ convenience</dt>
 <dd>C++ member function <a class="reference internal" href="types.html#_CPPv2NK9histogram4binsEj" title="histogram::bins"><code class="xref cpp cpp-func docutils literal"><span class="pre">histogram::bins()</span></code></a> is omitted on the Python side, since it is very easy to just query this directly from the axis object in Python. On the C++ side, this would require a extra type cast or applying a visitor.</dd>
 </dl>
+</div>
+<div class="section" id="benchmarks">
+<h2>Benchmarks<a class="headerlink" href="#benchmarks" title="Permalink to this headline">¶</a></h2>
+<p>One design goal of this project is to be fast. The act of filling the histogram with a number should be insignificant compared to the CPU cycles spend to retrieve/generate that number. Naturally, we also want to beat the competition.</p>
+<p>The following shows the results of a simple benchmark against the histogram classes TH1I, TH3I and THnI of the ROOT framework. The comparison is not fair, since TH1I and TH3I are specialized classes for 1 dimension and 3 dimensions. In addition, all ROOT histograms lack a comparable system to define different binning schemes for each axis.</p>
+<p>Large vectors are pre-allocated and with random numbers drawn from a uniform or normal distribution for all tests.
+In the timed part, these numbers are read from the vector and put into the histograms. This reduces the overhead to memory access. All tests are run 10 times, the minimum is shown.</p>
+<p>Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="13%" />
+<col width="13%" />
+<col width="13%" />
+<col width="13%" />
+<col width="13%" />
+<col width="13%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">distribution</th>
+<th class="head" colspan="3">uniform</th>
+<th class="head" colspan="3">normal</th>
+</tr>
+<tr class="row-even"><th class="head">dimension</th>
+<th class="head">1D</th>
+<th class="head">3D</th>
+<th class="head">6D</th>
+<th class="head">1D</th>
+<th class="head">3D</th>
+<th class="head">6D</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>ROOT</td>
+<td>0.01046</td>
+<td>0.02453</td>
+<td>0.01050</td>
+<td>0.01406</td>
+<td>0.01766</td>
+<td>0.01028</td>
+</tr>
+<tr class="row-even"><td>boost</td>
+<td>0.01603</td>
+<td>0.01922</td>
+<td>0.00662</td>
+<td>0.01604</td>
+<td>0.01836</td>
+<td>0.00750</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -118,6 +169,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#tests">Tests</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#checks">Checks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#consistency-of-c-and-python-interface">Consistency of C++ and Python interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#benchmarks">Benchmarks</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
