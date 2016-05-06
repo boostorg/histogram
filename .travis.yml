@@ -11,6 +11,6 @@ before_install:
   # - pip install --upgrade --user pip
   # - pip install --user numpy
   - sudo apt-get install python-numpy
-  - sudo apt-get install libboost-all-dev libboost-all
+  - sudo apt-get install libboost-all-dev
 script:
   cd build && cmake . && make -j2 && make test
