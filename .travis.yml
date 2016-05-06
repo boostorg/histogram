@@ -12,8 +12,12 @@ addons:
   apt:
     sources:
       - boost-latest
+      - ubuntu-toolchain-r-test
+      - pythonxy-devel
     packages:
       - cmake
+      - gcc-4.9
+      - g++-4.9
       - python-numpy
       - libboost1.55-all-dev
 # before_install:
