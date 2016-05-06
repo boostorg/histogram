@@ -7,10 +7,10 @@
 #include <boost/serialization/array.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/assert.hpp>
+#include <boost/move/move.hpp>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
-#include <stdexcept>
 #include <vector>
 #include <new> // for bad:alloc
 
@@ -19,15 +19,22 @@ namespace histogram {
 namespace detail {
 
 class nstore {
+  BOOST_COPYABLE_AND_MOVABLE(nstore)
 public:
   typedef uintptr_t size_type;
 
   nstore();
-  nstore(const nstore&);
   nstore(size_type, unsigned d = sizeof(uint8_t));
   ~nstore() { destroy(); }
 
-  nstore& operator=(const nstore&);
+  // copy semantics
+  nstore(const nstore&);
+  nstore& operator=(BOOST_COPY_ASSIGN_REF(nstore));
+
+  // move semantics
+  nstore(BOOST_RV_REF(nstore));
+  nstore& operator=(BOOST_RV_REF(nstore));
+
   nstore& operator+=(const nstore&);
   bool operator==(const nstore&) const;
 

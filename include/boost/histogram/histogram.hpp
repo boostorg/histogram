@@ -11,21 +11,31 @@
 #include <boost/type_traits.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/assert.hpp>
+#include <boost/move/move.hpp>
 #include <stdexcept>
 
 namespace boost {
 namespace histogram {
 
 class histogram : public basic_histogram {
+  BOOST_COPYABLE_AND_MOVABLE(histogram)
 public:
   histogram() {}
-  histogram(const histogram& o);
+
+  // copy semantics
+  histogram(const histogram&);
+  histogram& operator=(BOOST_COPY_ASSIGN_REF(histogram));
+
+  // move semantics
+  histogram(BOOST_RV_REF(histogram));
+  histogram& operator=(BOOST_RV_REF(histogram));
+
   explicit histogram(const axes_type& axes);
 
-#define BOOST_HISTOGRAM_CTOR(z, n, unused)                         \
-  histogram( BOOST_PP_ENUM_PARAMS_Z(z, n, const axis_type& a) ) :  \
-    basic_histogram( BOOST_PP_ENUM_PARAMS_Z(z, n, a) ),             \
-    data_(field_count())                                           \
+#define BOOST_HISTOGRAM_CTOR(z, n, unused)                                 \
+  explicit histogram( BOOST_PP_ENUM_PARAMS_Z(z, n, const axis_type& a) ) : \
+    basic_histogram( BOOST_PP_ENUM_PARAMS_Z(z, n, a) ),                    \
+    data_(field_count())                                                   \
   {}
 
 // generates constructors taking 1 to AXIS_LIMIT arguments

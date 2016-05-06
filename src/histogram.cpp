@@ -9,6 +9,29 @@ histogram::histogram(const histogram& o) :
     data_(o.data_)
 {}
 
+histogram& histogram::operator=(BOOST_COPY_ASSIGN_REF(histogram) o)
+{
+    if (this != &o) {
+        basic_histogram::operator=(static_cast<const basic_histogram&>(o));
+        data_ = o.data_;
+    }
+    return *this;
+}
+
+histogram::histogram(BOOST_RV_REF(histogram) o) :
+    basic_histogram(::boost::move(static_cast<basic_histogram&>(o))),
+    data_(::boost::move(o.data_))
+{}
+
+histogram& histogram::operator=(BOOST_RV_REF(histogram) o)
+{
+    if (this != &o) {
+        basic_histogram::operator=(::boost::move(static_cast<basic_histogram&>(o)));
+        data_ = ::boost::move(o.data_);
+    }
+    return *this;
+}
+
 histogram::histogram(const axes_type& axes) :
     basic_histogram(axes),
     data_(field_count())
