@@ -37,9 +37,9 @@ vector<double> random_array(unsigned n, int type) {
   return result;
 }
 
-void compare_1d(unsigned n)
+void compare_1d(unsigned n, int distrib)
 {
-  vector<double> r = random_array(1000000, 1);
+  vector<double> r = random_array(n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
   double best_boost = std::numeric_limits<double>::max();
@@ -66,9 +66,9 @@ void compare_1d(unsigned n)
   printf("t[boost] = %g\n", best_boost);
 }
 
-void compare_3d(unsigned n)
+void compare_3d(unsigned n, int distrib)
 {
-  vector<double> r = random_array(3 * n, 1);
+  vector<double> r = random_array(3 * n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
   double best_boost = std::numeric_limits<double>::max();
@@ -96,9 +96,9 @@ void compare_3d(unsigned n)
   printf("t[boost] = %g\n", best_boost);
 }
 
-void compare_6d(unsigned n)
+void compare_6d(unsigned n, int distrib)
 {
-  vector<double> r = random_array(6 * n, 1);
+  vector<double> r = random_array(6 * n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
   double best_boost = std::numeric_limits<double>::max();
@@ -141,7 +141,12 @@ void compare_6d(unsigned n)
 }
 
 int main(int argc, char** argv) {
-  compare_1d(1000000);
-  compare_3d(500000);
-  compare_6d(100000);
+  printf("uniform distribution\n");
+  compare_1d(1000000, 0);
+  compare_3d(500000, 0);
+  compare_6d(100000, 0);
+  printf("normal distribution\n");
+  compare_1d(1000000, 1);
+  compare_3d(500000, 1);
+  compare_6d(100000, 1);
 }
