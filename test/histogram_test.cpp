@@ -3,9 +3,9 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
 #include <boost/assign/std/vector.hpp>
+#include <boost/move/move.hpp>
 using namespace boost::assign;
 using namespace boost::histogram;
-namespace tt = boost::test_tools;
 
 BOOST_AUTO_TEST_CASE(init_0)
 {
@@ -72,6 +72,57 @@ BOOST_AUTO_TEST_CASE(init_15)
               regular_axis(1, -1, 1),
               regular_axis(1, -1, 1),
               regular_axis(1, -1, 1));
+}
+
+BOOST_AUTO_TEST_CASE(copy_ctor)
+{
+    histogram h(regular_axis(1, -1, 1),
+                regular_axis(2, -2, 2));
+    h.fill(0.0, 0.0);
+    histogram h2(h);
+    BOOST_CHECK(h == h2);
+}
+
+BOOST_AUTO_TEST_CASE(copy_assign)
+{
+    histogram h(regular_axis(1, -1, 1),
+                regular_axis(2, -2, 2));
+    h.fill(0.0, 0.0);
+    histogram h2;
+    BOOST_CHECK(!(h == h2));
+    h2 = h;
+    BOOST_CHECK(h == h2);
+}
+
+BOOST_AUTO_TEST_CASE(copy_assign_self)
+{
+    histogram h(regular_axis(1, -1, 1),
+                regular_axis(2, -2, 2));
+    h.fill(0.0, 0.0);
+    h = h;
+    BOOST_CHECK_EQUAL(h.sum(), 1);
+    BOOST_CHECK_EQUAL(h.dim(), 2);
+}
+
+BOOST_AUTO_TEST_CASE(move_ctor)
+{
+    histogram h(regular_axis(1, -1, 1),
+                regular_axis(2, -2, 2));
+    h.fill(0.0, 0.0);
+    histogram h2(::boost::move(h));
+    BOOST_CHECK_EQUAL(h2.sum(), 1);
+    BOOST_CHECK_EQUAL(h2.dim(), 2);
+}
+
+BOOST_AUTO_TEST_CASE(move_assign)
+{
+    histogram h(regular_axis(1, -1, 1),
+                regular_axis(2, -2, 2));
+    h.fill(0.0, 0.0);
+    histogram h2;
+    h2 = ::boost::move(h);
+    BOOST_CHECK_EQUAL(h2.sum(), 1);
+    BOOST_CHECK_EQUAL(h2.dim(), 2);
 }
 
 BOOST_AUTO_TEST_CASE(d1)
