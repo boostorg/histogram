@@ -2,7 +2,6 @@ language: cpp
 sudo: false
 compiler:
   - clang
-  - g++
 os:
   - linux
 git:
