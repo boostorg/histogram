@@ -52,6 +52,7 @@ The benchmark against ROOT is implemented in C++, the benchmark against numpy in
 
 Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM
 
+```
 =================  =======  =======  =======  =======  =======  =======
 distribution                uniform                    normal
 -----------------  -------------------------  -------------------------
@@ -63,6 +64,7 @@ C++: boost [t/s]   0.172    0.177    0.155    0.172    0.171    0.150
 Py: numpy [t/s]    0.825    0.727    0.436    0.824    0.426    0.401
 Py: boost [t/s]    0.209    0.229    0.192    0.207    0.194    0.168
 =================  =======  =======  =======  =======  =======  =======
+```
 
 `boost::histogram` shows consistent performance comparable to the specialized ROOT histograms. It is faster than ROOT's implementation of a N-dimensional histogram `THnI`. The performance of `boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is consistently faster than numpy's histogram functions.
 
