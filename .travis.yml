@@ -19,9 +19,8 @@ addons:
       - g++-4.9
       - python-numpy
       - libboost1.55-all-dev
-before_install:
-  - pip install --upgrade pip
-  - pip install --user numpy
+install:
+  - pip install numpy
 
 script:
   cd build && cmake . && make -j2 && make test
