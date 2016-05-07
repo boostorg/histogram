@@ -5,8 +5,11 @@ from histogram import histogram, regular_axis, polar_axis, \
                       variable_axis, category_axis, integer_axis
 import cPickle
 import StringIO
-try: import numpy # optional, for tests that need numpy
-except ImportError: pass
+import os
+
+use_numpy = "@USE_NUMPY@" == "ON"
+if use_numpy:
+    import numpy
 
 class test_regular_axis(unittest.TestCase):
 
@@ -523,7 +526,7 @@ class histogram_test(unittest.TestCase):
         self.assertEqual(a.sum, b.sum)
         self.assertEqual(a, b)
 
-    @unittest.skipUnless("numpy" in globals(), "requires numpy")
+    @unittest.skipUnless(use_numpy, "requires build with numpy-support")
     def test_numpy_conversion_0(self):
         a = histogram(integer_axis(0, 2, uoflow=False))
         for i in xrange(100):
@@ -544,7 +547,7 @@ class histogram_test(unittest.TestCase):
         # view does not follow underlying switch in word size
         self.assertFalse(numpy.all(v == b))
 
-    @unittest.skipUnless("numpy" in globals(), "requires numpy")
+    @unittest.skipUnless(use_numpy, "requires build with numpy-support")
     def test_numpy_conversion_1(self):
         a = histogram(integer_axis(0, 2, uoflow=False))
         for i in xrange(10):
@@ -555,7 +558,7 @@ class histogram_test(unittest.TestCase):
         self.assertTrue(numpy.all(b == numpy.array(((0, 0), (30, 90), (0, 0)))))
         self.assertTrue(numpy.all(v == b))
 
-    @unittest.skipUnless("numpy" in globals(), "requires numpy")
+    @unittest.skipUnless(use_numpy, "requires build with numpy-support")
     def test_fill_with_numpy_array_0(self):
         a = histogram(integer_axis(0, 2, uoflow=False))
         a.fill(numpy.array([-1, 0, 1, 2, 1, 4]))
@@ -581,7 +584,7 @@ class histogram_test(unittest.TestCase):
         self.assertEqual(a.value(1), 2)
         self.assertEqual(a.value(2), 3)
 
-    @unittest.skipUnless("numpy" in globals(), "requires numpy")
+    @unittest.skipUnless(use_numpy, "requires build with numpy-support")
     def test_fill_with_numpy_array_1(self):
         a = histogram(integer_axis(0, 2, uoflow=False))
         a.fill(numpy.array([-1, 0, 1, 2, 1, 4]),

@@ -23,9 +23,9 @@ add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 add_definitions(-Wall)
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
-  message(STATUS "debug mode: optimizations off")
+  message(STATUS "Build type: DEBUG [optimizations off]")
 else()
-  message(STATUS "release mode: optimizations on")
+  message(STATUS "Build type: RELEASE [optimizations on]")
   add_definitions(-O3 -fomit-frame-pointer -mtune=generic)
 endif()
 
@@ -97,15 +97,13 @@ target_link_libraries(histogram_test boost_histogram ${LIBRARIES})
 add_test(histogram_test histogram_test)
 
 if(USE_PYTHON)
-  add_test(python_suite_test ${PROJECT_SOURCE_DIR}/../test/python_suite_test.py)
-  set_tests_properties(python_suite_test
-    PROPERTIES ENVIRONMENT "PYTHONPATH=.:${PYTHONPATH}")
+  configure_file(../test/python_suite_test.py.in python_suite_test.py)
+  add_test(python_suite_test python_suite_test.py)
 endif()
 
 # doc
 if(SPHINX_EXECUTABLE)
-  configure_file(${PROJECT_SOURCE_DIR}/../doc/sphinx/conf.py.in
-      conf.py)
+  configure_file(${PROJECT_SOURCE_DIR}/../doc/sphinx/conf.py.in conf.py)
   add_custom_target(html
       ${SPHINX_EXECUTABLE}
           -b html -d . -c .
