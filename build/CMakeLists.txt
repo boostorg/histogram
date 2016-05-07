@@ -7,6 +7,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 option(USE_PYTHON "Build Python bindings" ON)
 option(USE_NUMPY "Build Numpy support" ON)
 option(BUILD_CHECKS "Build auxillary checks" OFF)
+option(COVERAGE "Build with coverage instrumentation" OFF)
 
 if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
@@ -15,18 +16,21 @@ endif()
 find_package(Boost 1.55 REQUIRED
              COMPONENTS iostreams serialization unit_test_framework)
 find_library(Boost_PYTHON_FOUND boost_python) # optional
-find_package(PythonLibs) # optional
-find_package(Numpy 1.7) # optional
-find_package(Sphinx) # optional
 
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 add_definitions(-Wall)
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
   message(STATUS "Build type: DEBUG [optimizations off]")
+  add_definitions(-O0 -g)
 else()
   message(STATUS "Build type: RELEASE [optimizations on]")
   add_definitions(-O3 -fomit-frame-pointer -mtune=generic)
+endif()
+
+if(COVERAGE)
+  message(STATUS "Coverage build enabled")
+  add_definitions(-coverage)
 endif()
 
 include_directories(../include ${Boost_INCLUDE_DIRS})
@@ -43,26 +47,40 @@ add_library(boost_histogram SHARED
 target_link_libraries(boost_histogram ${LIBRARIES})
 
 # python bindings
-if(Boost_PYTHON_FOUND AND PYTHONLIBS_FOUND AND USE_PYTHON)
+if(USE_PYTHON AND Boost_PYTHON_FOUND)
+  execute_process(COMMAND python -c "import sys; sys.stdout.write(\"%i.%i\" % (sys.version_info.major, sys.version_info.minor))"
+                  OUTPUT_VARIABLE PYTHON_VERSION)
+  find_package(PythonLibs ${PYTHON_VERSION} EXACT)
 
-  include_directories(${PYTHON_INCLUDE_DIRS})
-  add_definitions(-DUSE_PYTHON)
+  if(PYTHONLIBS_FOUND AND ${PYTHON_VERSION} VERSION_LESS 3)
+    # Python3 is currently not supported
+    set(HAVE_PYTHON 1)
 
-  if(NUMPY_FOUND AND USE_NUMPY)
-    set(HAVE_NUMPY 1)
-    include_directories(${NUMPY_INCLUDE_DIR})
-    add_definitions(-DHAVE_NUMPY)
+    include_directories(${PYTHON_INCLUDE_DIRS})
+
+    if(${PYTHON_VERSION} VERSION_GREATER 3.0)
+      add_definitions(-DHAVE_PYTHON3)
+    endif()
+
+    if(USE_NUMPY)
+      find_package(Numpy 1.7)
+    endif()
+
+    if(NUMPY_FOUND)
+      set(HAVE_NUMPY 1)
+      include_directories(${NUMPY_INCLUDE_DIR})
+      add_definitions(-DHAVE_NUMPY)
+    endif()
+
+    add_library(pyhistogram MODULE
+      ../src/python/module.cpp
+      ../src/python/axis.cpp
+      ../src/python/basic_histogram.cpp
+      ../src/python/histogram.cpp
+    )
+    target_link_libraries(pyhistogram boost_histogram ${LIBRARIES} boost_python ${PYTHON_LIBRARIES})
+    set_target_properties(pyhistogram PROPERTIES OUTPUT_NAME "histogram" PREFIX "" SUFFIX ".so")
   endif()
-
-  add_library(pyhistogram MODULE
-    ../src/python/module.cpp
-    ../src/python/axis.cpp
-    ../src/python/basic_histogram.cpp
-    ../src/python/histogram.cpp
-  )
-  target_link_libraries(pyhistogram boost_histogram ${LIBRARIES} boost_python ${PYTHON_LIBRARIES})
-  set_target_properties(pyhistogram PROPERTIES OUTPUT_NAME "histogram" PREFIX "" SUFFIX ".so")
-
 endif()
 
 # checks
@@ -97,21 +115,24 @@ add_executable(histogram_test
 target_link_libraries(histogram_test boost_histogram ${LIBRARIES})
 add_test(histogram_test histogram_test)
 
-if(USE_PYTHON)
+if(HAVE_PYTHON)
   configure_file(../test/python_suite_test.py.in python_suite_test.py)
   add_test(python_suite_test python_suite_test.py)
 endif()
 
 # doc
-if(SPHINX_EXECUTABLE)
-  configure_file(${PROJECT_SOURCE_DIR}/../doc/sphinx/conf.py.in conf.py)
-  add_custom_target(html
-      ${SPHINX_EXECUTABLE}
-          -b html -d . -c .
-          ${PROJECT_SOURCE_DIR}/../doc/sphinx
-          ${PROJECT_SOURCE_DIR}/../doc/html
-      COMMENT "(Re)building HTML documentation with Sphinx")
-  add_dependencies(html pyhistogram)
+if(HAVE_PYTHON)
+  find_package(Sphinx) # optional
+  if(SPHINX_EXECUTABLE)
+    configure_file(${PROJECT_SOURCE_DIR}/../doc/sphinx/conf.py.in conf.py)
+    add_custom_target(html
+        ${SPHINX_EXECUTABLE}
+            -b html -d . -c .
+            ${PROJECT_SOURCE_DIR}/../doc/sphinx
+            ${PROJECT_SOURCE_DIR}/../doc/html
+        COMMENT "(Re)building HTML documentation with Sphinx")
+    add_dependencies(html pyhistogram)
+  endif()
 endif()
 
 # install
@@ -122,7 +143,5 @@ if (USE_PYTHON)
                   OUTPUT_VARIABLE PYTHON_MODULE_DIRS) 
   set(PYTHON_MODULE_DIRS "${PYTHON_MODULE_DIRS}:$ENV{PYTHONPATH}")
   string(REPLACE ":" "\n  " PYTHON_MODULE_DIRS ${PYTHON_MODULE_DIRS})
-  get_target_property(PYTHON_MODULE pyhistogram LOCATION)
-
-  install(CODE "message(\"= How-to install Python module =\\nCopy\\n  ${PYTHON_MODULE}\\ninto one of these paths:\\n  ${PYTHON_MODULE_DIRS}\")")
+  install(CODE "message(\"= How-to install Python module =\\nCopy\\n  histogram.so\\ninto one of these paths:\\n  ${PYTHON_MODULE_DIRS}\")")
 endif()
