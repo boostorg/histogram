@@ -3,6 +3,7 @@ language: cpp
 compiler:
   - clang
   - g++
+  - g++-4.9
 os:
   - linux
 git:
@@ -18,12 +19,27 @@ addons:
       - g++-4.9
       - libboost1.55-all-dev
 
+# Setup anaconda
 before_install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
+  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+  # - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
 
-before_script:
-  - export PATH=$HOME/.local/bin:$PATH
-  - pip install numpy --user `whoami`
+# Install packages
+install:
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose
+  # Coverage packages are on my binstar channel
+  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+
+# before_script:
+#   - export PATH=$HOME/.local/bin:$PATH
+#   - pip install numpy --user `whoami`
 
 script:
   cd build && cmake . && make -j2 && make test
