@@ -20,7 +20,7 @@ find_library(Boost_PYTHON_FOUND boost_python) # optional
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 add_definitions(-Wall)
 
-if(CMAKE_BUILD_TYPE STREQUAL "debug")
+if(CMAKE_BUILD_TYPE STREQUAL "debug" OR COVERAGE)
   message(STATUS "Build type: DEBUG [optimizations off]")
   add_definitions(-O0 -g)
 else()
@@ -33,9 +33,7 @@ set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
 
 if(COVERAGE)
   message(STATUS "Coverage build enabled")
-  add_definitions(--coverage)
-  set(CMAKE_EXE_LINKER_FLAGS --coverage)
-  set(CMAKE_SHARED_LINKER_FLAGS --coverage)
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage)
   # set(LIBRARIES ${LIBRARIES} gcov)
 endif()
 

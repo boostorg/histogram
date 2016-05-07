@@ -2,8 +2,8 @@ sudo: false
 language: cpp
 compiler:
   - clang
-  - g++
-  - g++-4.9
+  # - g++
+  # - g++-4.9
 os:
   - linux
 git:
@@ -14,9 +14,9 @@ addons:
       - boost-latest
       - ubuntu-toolchain-r-test
     packages:
-      - cmake
-      - gcc-4.9
-      - g++-4.9
+      # - cmake
+      # - gcc-4.9
+      # - g++-4.9
       - libboost1.55-all-dev
 
 # Setup anaconda
@@ -38,4 +38,4 @@ script:
 
 # Calculate coverage
 after_success:
-  - coveralls --gcov-options '\-lp'
+  - coveralls
