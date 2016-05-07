@@ -26,18 +26,21 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda2/bin:$PATH
   - conda update --yes conda
-  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-  # - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
 
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy nose
+  - conda install --yes numpy nose
   # Coverage packages are on my binstar channel
-  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  # - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  - pip install --user cpp-coveralls
 
 # before_script:
 #   - export PATH=$HOME/.local/bin:$PATH
 #   - pip install numpy --user `whoami`
 
 script:
-  cd build && cmake . && make -j2 && make test
+  cd build && cmake . -DCOVERAGE=ON && make -j2 && make test
+
+# Calculate coverage
+after_success:
+  - coveralls --gcov-options '\-lp'
