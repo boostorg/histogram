@@ -51,7 +51,7 @@ nstore::operator+=(const nstore& o)
         #define BOOST_HISTOGRAM_NSTORE_ADD(T)              \
         case sizeof(T): {                                  \
           T& b = ((T*)buffer_)[i];                         \
-          if ((std::numeric_limits<T>::max() - b) >= oi) { \
+          if (T(std::numeric_limits<T>::max() - b) >= oi) { \
             b += oi;                                       \
             ++i;                                           \
             break;                                         \
