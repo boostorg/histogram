@@ -30,41 +30,44 @@ public:
   // copy semantics
   nstore(const nstore& o) :
     size_(o.size_),
-    depth_(o.depth_)
-  {
-    create();
-    std::memcpy(buffer_, o.buffer_, size_ * depth_);
-  }
+    depth_(o.depth_),
+    buffer_(create(o.buffer_))
+  {}
 
   nstore& operator=(BOOST_COPY_ASSIGN_REF(nstore) o)
   {
     if (this != &o) {
-      if (size_ != o.size_ || depth_ != o.depth_) {
+      if (size_ == o.size_ && depth_ == o.depth_) {
+        std::memcpy(buffer_, o.buffer_, size_ * depth_);
+      } else {
         destroy();
         size_ = o.size_;
         depth_ = o.depth_;
-        create();
+        buffer_ = create(o.buffer_);
       }
-      std::memcpy(buffer_, o.buffer_, size_ * depth_);
     }
     return *this;
   }
 
   // move semantics
   nstore(BOOST_RV_REF(nstore) o) :
-    size_(o.size_),
-    depth_(o.depth_),
+    size_(0),
+    depth_(0),
     buffer_(0)
   {
+    std::swap(size_, o.size_);
+    std::swap(depth_, o.depth_);
     std::swap(buffer_, o.buffer_);
   }
 
   nstore& operator=(BOOST_RV_REF(nstore) o)
   {
     if (this != &o) {
+      size_ = 0;
+      depth_ = 0;
       destroy();
-      size_ = o.size_;
-      depth_ = o.depth_;
+      std::swap(size_, o.size_);
+      std::swap(depth_, o.depth_);
       std::swap(buffer_, o.buffer_);
     }
     return *this;
@@ -86,7 +89,7 @@ public:
           grow(); /* and fall to next case */   \
         else { ++b; break; }                    \
       }
-      case 0: depth_ = sizeof(uint8_t); create();
+      case 0: buffer_ = create(0);
       BOOST_HISTOGRAM_NSTORE_INC(uint8_t);
       BOOST_HISTOGRAM_NSTORE_INC(uint16_t);
       BOOST_HISTOGRAM_NSTORE_INC(uint32_t);
@@ -113,7 +116,7 @@ private:
   unsigned depth_;
   void* buffer_;
 
-  void create();
+  void* create(void*);
   void destroy();
   void grow();
   void wconvert();

@@ -29,6 +29,8 @@ basic_histogram::size_type
 basic_histogram::field_count()
   const
 {
+  if (axes_.empty())
+    return 0;
   size_type fc = 1;
   for (unsigned i = 0, n = axes_.size(); i < n; ++i)
     fc *= shape(i);

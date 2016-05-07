@@ -38,10 +38,11 @@ public:
 
   // move semantics (implementation needs to be here, workaround for gcc-bug)
   basic_histogram(BOOST_RV_REF(basic_histogram) o) :
-    axes_(::boost::move(o.axes_)) {}
+    axes_()
+  { std::swap(axes_, o.axes_); }
 
   basic_histogram& operator=(BOOST_RV_REF(basic_histogram) o)
-  { if (this != &o) axes_ = ::boost::move(o.axes_); return *this; }
+  { if (this != &o) std::swap(axes_, o.axes_); return *this; }
 
   unsigned dim() const { return axes_.size(); }
   int bins(unsigned i) const { return apply_visitor(visitor::bins(), axes_[i]); }

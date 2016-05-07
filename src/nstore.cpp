@@ -12,17 +12,16 @@ nstore::nstore() :
   buffer_(0)
 {}
 
-nstore::nstore(size_type n, unsigned d) :
-  size_(n),
-  depth_(d)
+nstore::nstore(size_type s, unsigned d) :
+  size_(s),
+  depth_(d),
+  buffer_(create(0))
 {
-  BOOST_ASSERT(n > 0);
   BOOST_ASSERT(d == sizeof(uint8_t) ||
                d == sizeof(uint16_t) ||
                d == sizeof(uint32_t) ||
                d == sizeof(uint64_t) ||
                d == sizeof(wtype));
-  if (d > 0) create();
 }
 
 nstore&
@@ -105,11 +104,18 @@ nstore::variance(size_type i)
   return 0.0;
 }
 
-void
-nstore::create()
+void*
+nstore::create(void* buffer)
 {
-  buffer_ = std::calloc(size_, depth_);
-  if (!buffer_) throw std::bad_alloc();
+  if (size_ * depth_ == 0)
+    return 0;
+  void* b = buffer ? std::malloc(size_ * depth_) :
+                     std::calloc(size_, depth_);
+  if (!b)
+    throw std::bad_alloc();
+  if (buffer)
+    std::memcpy(b, buffer, size_ * depth_);
+  return b;
 }
 
 void

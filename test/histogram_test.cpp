@@ -53,8 +53,6 @@ BOOST_AUTO_TEST_CASE(init_5)
 
 BOOST_AUTO_TEST_CASE(init_15)
 {
-    std::vector<double> x;
-    x += -1, 0, 1, 2, 3;
     histogram(regular_axis(1, -1, 1),
               regular_axis(1, -1, 1),
               regular_axis(1, -1, 1),
@@ -92,16 +90,9 @@ BOOST_AUTO_TEST_CASE(copy_assign)
     BOOST_CHECK(!(h == h2));
     h2 = h;
     BOOST_CHECK(h == h2);
-}
-
-BOOST_AUTO_TEST_CASE(copy_assign_self)
-{
-    histogram h(regular_axis(1, -1, 1),
-                regular_axis(2, -2, 2));
-    h.fill(0.0, 0.0);
-    h = h;
-    BOOST_CHECK_EQUAL(h.sum(), 1);
-    BOOST_CHECK_EQUAL(h.dim(), 2);
+    // test self-assign
+    h2 = h2;
+    BOOST_CHECK(h == h2);
 }
 
 BOOST_AUTO_TEST_CASE(move_ctor)
@@ -112,6 +103,8 @@ BOOST_AUTO_TEST_CASE(move_ctor)
     histogram h2(::boost::move(h));
     BOOST_CHECK_EQUAL(h2.sum(), 1);
     BOOST_CHECK_EQUAL(h2.dim(), 2);
+    BOOST_CHECK_EQUAL(h.sum(), 0);
+    BOOST_CHECK_EQUAL(h.dim(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(move_assign)
@@ -121,6 +114,12 @@ BOOST_AUTO_TEST_CASE(move_assign)
     h.fill(0.0, 0.0);
     histogram h2;
     h2 = ::boost::move(h);
+    BOOST_CHECK_EQUAL(h2.sum(), 1);
+    BOOST_CHECK_EQUAL(h2.dim(), 2);
+    BOOST_CHECK_EQUAL(h.sum(), 0);
+    BOOST_CHECK_EQUAL(h.dim(), 0);
+    // test self-move
+    h2 = ::boost::move(h2);
     BOOST_CHECK_EQUAL(h2.sum(), 1);
     BOOST_CHECK_EQUAL(h2.dim(), 2);
 }
