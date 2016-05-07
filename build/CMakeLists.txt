@@ -16,7 +16,7 @@ find_package(Boost 1.55 REQUIRED
              COMPONENTS iostreams serialization unit_test_framework)
 find_library(Boost_PYTHON_FOUND boost_python) # optional
 find_package(PythonLibs) # optional
-find_package(Numpy 11.7) # optional
+find_package(Numpy 1.7) # optional
 find_package(Sphinx) # optional
 
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
