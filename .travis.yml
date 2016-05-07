@@ -1,8 +1,16 @@
-sudo: false
 language: cpp
+env:
+  - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
+  - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
+  - USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
+  - USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
+matrix:
+  exclude:
+    - compiler: clang
+      env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
 compiler:
   - clang
-  - g++
+  - gcc
 os:
   - linux
 git:
@@ -32,8 +40,14 @@ install:
   # - conda install --yes -c dan_blanchard python-coveralls nose-cov
 
 script:
-  cd build && cmake . -DCOVERAGE=ON && make -j2 && make test
+  - cd build
+  - cmake . \
+    -DUSE_PYTHON=${USE_PYTHON} \
+    -DUSE_NUMPY=${USE_NUMPY} \
+    -DCOVERAGE=${COVERAGE} 
+  - make -j2
+  - make test
 
 # Calculate coverage
 after_success:
-  - coveralls
+  - if [ "${COVERAGE}" = "ON" ]; then coveralls; fi
