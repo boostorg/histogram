@@ -2,7 +2,7 @@ sudo: false
 language: cpp
 compiler:
   - clang
-  # - g++
+  - g++
 os:
   - linux
 git:
@@ -17,6 +17,10 @@ addons:
       - gcc-4.9
       - g++-4.9
       - libboost1.55-all-dev
+
+before_install:
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
+
 before_script:
   - export PATH=$HOME/.local/bin:$PATH
   - pip install numpy --user `whoami`
