@@ -7,7 +7,6 @@ os:
   - linux
 git:
   depth: 3
-python: 2.7.10
 addons:
   apt:
     sources:
@@ -21,7 +20,6 @@ addons:
 before_script:
   - export PATH=$HOME/.local/bin:$PATH
   - pip install numpy --user `whoami`
-  - composer --prefer-source install
 
 script:
   cd build && cmake . && make -j2 && make test
