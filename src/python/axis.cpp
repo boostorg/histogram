@@ -85,19 +85,19 @@ category_axis_init(python::tuple args, python::dict kwargs) {
 }
 
 template <typename T>
-unsigned
+int
 axis_len(const T& t) {
     return t.bins() + 1;
 }
 
 template <>
-unsigned
+int
 axis_len(const category_axis& t) {
     return t.bins();
 }
 
 template <>
-unsigned
+int
 axis_len(const integer_axis& t) {
     return t.bins();
 }
