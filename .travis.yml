@@ -12,13 +12,11 @@ addons:
     sources:
       - boost-latest
       - ubuntu-toolchain-r-test
-      - pythonxy-devel
     packages:
       - cmake
       - gcc-4.9
       - g++-4.9
       - libboost1.55-all-dev
-      - python-numpy
 before_script:
   - export PATH=$HOME/.local/bin:$PATH
   - pip install numpy --user `whoami`
