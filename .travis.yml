@@ -2,8 +2,7 @@ sudo: false
 language: cpp
 compiler:
   - clang
-  # - g++
-  # - g++-4.9
+  - g++
 os:
   - linux
 git:
@@ -14,7 +13,6 @@ addons:
       - boost-latest
       - ubuntu-toolchain-r-test
     packages:
-      # - cmake
       # - gcc-4.9
       # - g++-4.9
       - libboost1.55-all-dev
@@ -29,7 +27,7 @@ before_install:
 
 # Install packages
 install:
-  - conda install --yes numpy nose
+  - conda install --yes numpy
   - pip install --user cpp-coveralls
   # - conda install --yes -c dan_blanchard python-coveralls nose-cov
 

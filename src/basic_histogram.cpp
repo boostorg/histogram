@@ -5,32 +5,6 @@
 namespace boost {
 namespace histogram {
 
-basic_histogram::basic_histogram(const basic_histogram& o) :
-  axes_(o.axes_)
-{}
-
-basic_histogram&
-basic_histogram::operator=(BOOST_COPY_ASSIGN_REF(basic_histogram) o)
-{
-  if (this != &o) {
-    axes_ = o.axes_;
-  }
-  return *this;
-}
-
-basic_histogram::basic_histogram(BOOST_RV_REF(basic_histogram) o) :
-  axes_(::boost::move(o.axes_))
-{}
-
-basic_histogram&
-basic_histogram::operator=(BOOST_RV_REF(basic_histogram) o)
-{
-  if (this != &o) {
-    axes_ = ::boost::move(o.axes_);
-  }
-  return *this;
-}
-
 basic_histogram::basic_histogram(const axes_type& axes) :
   axes_(axes)
 {

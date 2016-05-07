@@ -22,14 +22,6 @@ class histogram : public basic_histogram {
 public:
   histogram() {}
 
-  // copy semantics
-  histogram(const histogram&);
-  histogram& operator=(BOOST_COPY_ASSIGN_REF(histogram));
-
-  // move semantics
-  histogram(BOOST_RV_REF(histogram));
-  histogram& operator=(BOOST_RV_REF(histogram));
-
   explicit histogram(const axes_type& axes);
 
 #define BOOST_HISTOGRAM_CTOR(z, n, unused)                                 \
@@ -40,6 +32,36 @@ public:
 
 // generates constructors taking 1 to AXIS_LIMIT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil)
+
+  // copy semantics (implementation needs to be here, workaround for gcc-bug)
+  histogram(const histogram& o) :
+    basic_histogram(o),
+    data_(o.data_)
+  {}
+
+  histogram& operator=(BOOST_COPY_ASSIGN_REF(histogram) o)
+  {
+    if (this != &o) {
+      basic_histogram::operator=(static_cast<const basic_histogram&>(o));
+      data_ = o.data_;
+    }
+    return *this;
+  }
+
+  // move semantics (implementation needs to be here, workaround for gcc-bug)
+  histogram(BOOST_RV_REF(histogram) o) :
+    basic_histogram(::boost::move(static_cast<basic_histogram&>(o))),
+    data_(::boost::move(o.data_))
+  {}
+
+  histogram& operator=(BOOST_RV_REF(histogram) o)
+  {
+    if (this != &o) {
+      basic_histogram::operator=(::boost::move(static_cast<basic_histogram&>(o)));
+      data_ = ::boost::move(o.data_);
+    }
+    return *this;
+  }
 
   // C-style call
   inline

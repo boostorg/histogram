@@ -27,15 +27,21 @@ public:
   typedef container::static_vector<axis_type, BOOST_HISTOGRAM_AXIS_LIMIT> axes_type;
   typedef uintptr_t size_type;
 
-  // copy semantics
-  basic_histogram(const basic_histogram&);
-  basic_histogram& operator=(BOOST_COPY_ASSIGN_REF(basic_histogram));
-
-  // move semantics
-  basic_histogram(BOOST_RV_REF(basic_histogram));
-  basic_histogram& operator=(BOOST_RV_REF(basic_histogram));
-
   ~basic_histogram() {}
+
+  // copy semantics (implementation needs to be here, workaround for gcc-bug)
+  basic_histogram(const basic_histogram& o) :
+    axes_(o.axes_) {}
+
+  basic_histogram& operator=(BOOST_COPY_ASSIGN_REF(basic_histogram) o)
+  { if (this != &o) axes_ = o.axes_; return *this; }
+
+  // move semantics (implementation needs to be here, workaround for gcc-bug)
+  basic_histogram(BOOST_RV_REF(basic_histogram) o) :
+    axes_(::boost::move(o.axes_)) {}
+
+  basic_histogram& operator=(BOOST_RV_REF(basic_histogram) o)
+  { if (this != &o) axes_ = ::boost::move(o.axes_); return *this; }
 
   unsigned dim() const { return axes_.size(); }
   int bins(unsigned i) const { return apply_visitor(visitor::bins(), axes_[i]); }
@@ -104,12 +110,9 @@ private:
     using namespace serialization;
     unsigned size = axes_.size();
     ar & size;
-    if (Archive::is_loading::value) {
+    if (Archive::is_loading::value)
       axes_.resize(size);
-      ar & serialization::make_array(&axes_[0], size);
-    } else {
-      ar & serialization::make_array(&axes_[0], size);
-    }
+    ar & serialization::make_array(&axes_[0], size);
   }
 };
 

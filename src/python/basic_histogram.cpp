@@ -10,14 +10,14 @@ namespace {
 
 struct axis_visitor : public static_visitor<python::object>
 {
-    template <typename T>
-    python::object operator()(const T& t) const { return python::object(T(t)); }
+  template <typename T>
+  python::object operator()(const T& t) const { return python::object(T(t)); }
 };
 
 python::object
 basic_histogram_axis(const basic_histogram& self, unsigned i)
 {
-    return apply_visitor(axis_visitor(), self.axis<axis_type>(i));
+  return apply_visitor(axis_visitor(), self.axis<axis_type>(i));
 }
 
 } // namespace

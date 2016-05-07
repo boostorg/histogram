@@ -28,12 +28,47 @@ public:
   ~nstore() { destroy(); }
 
   // copy semantics
-  nstore(const nstore&);
-  nstore& operator=(BOOST_COPY_ASSIGN_REF(nstore));
+  nstore(const nstore& o) :
+    size_(o.size_),
+    depth_(o.depth_)
+  {
+    create();
+    std::memcpy(buffer_, o.buffer_, size_ * depth_);
+  }
+
+  nstore& operator=(BOOST_COPY_ASSIGN_REF(nstore) o)
+  {
+    if (this != &o) {
+      if (size_ != o.size_ || depth_ != o.depth_) {
+        destroy();
+        size_ = o.size_;
+        depth_ = o.depth_;
+        create();
+      }
+      std::memcpy(buffer_, o.buffer_, size_ * depth_);
+    }
+    return *this;
+  }
 
   // move semantics
-  nstore(BOOST_RV_REF(nstore));
-  nstore& operator=(BOOST_RV_REF(nstore));
+  nstore(BOOST_RV_REF(nstore) o) :
+    size_(o.size_),
+    depth_(o.depth_),
+    buffer_(0)
+  {
+    std::swap(buffer_, o.buffer_);
+  }
+
+  nstore& operator=(BOOST_RV_REF(nstore) o)
+  {
+    if (this != &o) {
+      destroy();
+      size_ = o.size_;
+      depth_ = o.depth_;
+      std::swap(buffer_, o.buffer_);
+    }
+    return *this;
+  }
 
   nstore& operator+=(const nstore&);
   bool operator==(const nstore&) const;
