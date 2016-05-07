@@ -2,7 +2,7 @@ sudo: false
 language: cpp
 compiler:
   - clang
-  - g++
+  # - g++
 os:
   - linux
 git:
@@ -12,6 +12,7 @@ addons:
     sources:
       - boost-latest
       - ubuntu-toolchain-r-test
+      - pythonxy-devel
     packages:
       - cmake
       - gcc-4.9
