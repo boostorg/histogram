@@ -18,9 +18,9 @@ addons:
       - gcc-4.9
       - g++-4.9
       - libboost1.55-all-dev
-before_script:
-  - export PATH=$HOME/.local/bin:$PATH
-  - pip install numpy --user `whoami`
+# before_script:
+  # - export PATH=$HOME/.local/bin:$PATH
+  # - pip install numpy --user `whoami`
 
 script:
   cd build && cmake . && make -j2 && make test
