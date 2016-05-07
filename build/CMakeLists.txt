@@ -28,13 +28,16 @@ else()
   add_definitions(-O3 -fomit-frame-pointer -mtune=generic)
 endif()
 
-if(COVERAGE)
-  message(STATUS "Coverage build enabled")
-  add_definitions(-coverage)
-endif()
-
 include_directories(../include ${Boost_INCLUDE_DIRS})
 set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
+
+if(COVERAGE)
+  message(STATUS "Coverage build enabled")
+  add_definitions(--coverage)
+  set(CMAKE_EXE_LINKER_FLAGS --coverage)
+  set(CMAKE_SHARED_LINKER_FLAGS --coverage)
+  # set(LIBRARIES ${LIBRARIES} gcov)
+endif()
 
 # core library
 add_library(boost_histogram SHARED

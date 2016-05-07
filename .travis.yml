@@ -30,13 +30,8 @@ before_install:
 # Install packages
 install:
   - conda install --yes numpy nose
-  # Coverage packages are on my binstar channel
-  # - conda install --yes -c dan_blanchard python-coveralls nose-cov
   - pip install --user cpp-coveralls
-
-# before_script:
-#   - export PATH=$HOME/.local/bin:$PATH
-#   - pip install numpy --user `whoami`
+  # - conda install --yes -c dan_blanchard python-coveralls nose-cov
 
 script:
   cd build && cmake . -DCOVERAGE=ON && make -j2 && make test
