@@ -5,7 +5,7 @@
 #include <boost/python/raw_function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
-#ifdef USE_NUMPY
+#ifdef HAVE_NUMPY
 # define NO_IMPORT_ARRAY
 # define PY_ARRAY_UNIQUE_SYMBOL boost_histogram_ARRAY_API
 # define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -59,7 +59,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
     if (kwargs)
         ow = kwargs["w"];
 
-#ifdef USE_NUMPY
+#ifdef HAVE_NUMPY
     if (nargs == 2) {
         object o = args[1];
         if (PySequence_Check(o.ptr())) {

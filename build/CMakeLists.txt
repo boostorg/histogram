@@ -16,7 +16,7 @@ find_package(Boost 1.55 REQUIRED
              COMPONENTS iostreams serialization unit_test_framework)
 find_library(Boost_PYTHON_FOUND boost_python) # optional
 find_package(PythonLibs) # optional
-find_package(Numpy 1.9) # optional
+find_package(Numpy 11.7) # optional
 find_package(Sphinx) # optional
 
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
@@ -49,8 +49,9 @@ if(Boost_PYTHON_FOUND AND PYTHONLIBS_FOUND AND USE_PYTHON)
   add_definitions(-DUSE_PYTHON)
 
   if(NUMPY_FOUND AND USE_NUMPY)
+    set(HAVE_NUMPY 1)
     include_directories(${NUMPY_INCLUDE_DIR})
-    add_definitions(-DUSE_NUMPY)
+    add_definitions(-DHAVE_NUMPY)
   endif()
 
   add_library(pyhistogram MODULE
@@ -78,7 +79,7 @@ if(BUILD_CHECKS)
     target_include_directories(speed_vs_root PUBLIC ${ROOT_INCLUDE_DIR})
     target_link_libraries(speed_vs_root boost_histogram ${ROOT_LIBRARIES} ${LIBRARIES})
   endif()
-  if(NUMPY_FOUND AND USE_NUMPY)
+  if(HAVE_NUMPY)
     # ugly hack to copy python script into build
     configure_file(../test/check/speed_vs_numpy.py speed_vs_numpy.py COPY_ONLY)
   endif()
