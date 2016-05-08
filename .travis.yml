@@ -8,6 +8,10 @@ matrix:
   include:
     - compiler: gcc
       env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
+      addons:
+        apt:
+          sources: boost-latest
+          packages: libboost1.55-all-dev
 compiler:
   - clang
 os:
