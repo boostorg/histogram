@@ -6,7 +6,7 @@ env:
   - USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
 matrix:
   include:
-  - compiler: gcc
+    - compiler: gcc
       env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
 compiler:
   - clang
