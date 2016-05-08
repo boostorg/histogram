@@ -1,17 +1,18 @@
 language: cpp
 env:
-  - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
   - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
   - USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
   - USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
 matrix:
   include:
-    - compiler: gcc
-      env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
+    - env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
+      compiler: gcc
       addons:
         apt:
-          sources: boost-latest
-          packages: libboost1.55-all-dev
+          sources:
+            - boost-latest
+          packages:
+            - libboost1.55-all-dev
 compiler:
   - clang
 os:
