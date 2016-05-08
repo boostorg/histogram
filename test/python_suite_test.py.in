@@ -305,6 +305,7 @@ class test_integer_axis(unittest.TestCase):
 class histogram_test(unittest.TestCase):
 
     def test_init(self):
+        histogram()
         histogram(integer_axis(-1, 1))
         with self.assertRaises(TypeError):
             histogram(1)
@@ -331,6 +332,16 @@ class histogram_test(unittest.TestCase):
         self.assertNotEqual(h, histogram(integer_axis(-1, 2)))
         self.assertNotEqual(h, histogram(integer_axis(-1, 1, label="ia")))
         self.assertNotEqual(h, histogram(integer_axis(-1, 1, uoflow=True)))
+
+    def test_copy(self):
+        a = histogram(integer_axis(-1, 1))
+        import copy
+        b = copy.copy(a)
+        self.assertEqual(a, b)
+        self.assertNotEqual(id(a), id(b))
+        c = copy.deepcopy(b)
+        self.assertEqual(b, c)
+        self.assertNotEqual(id(b), id(c))
 
     def test_fill_1d(self):
         h0 = histogram(integer_axis(-1, 1, uoflow=False))
