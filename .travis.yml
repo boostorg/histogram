@@ -7,11 +7,11 @@ env:
 matrix:
   exclude:
     - compiler: gcc
-      env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
-      env: USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
-      env: USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
+        env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
+        env: USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
+        env: USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
     - compiler: clang
-      env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
+        env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
 compiler:
   - clang
   - gcc
