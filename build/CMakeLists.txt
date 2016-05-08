@@ -21,8 +21,14 @@ add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 add_definitions(-Wall)
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug" OR COVERAGE)
-  message(STATUS "Build type: DEBUG [optimizations off]")
   add_definitions(-O0 -g)
+  if(COVERAGE)
+    message(STATUS "Coverage build enabled")
+    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage)
+    message(STATUS "Build type: COVERAGE [optimizations off]")
+  else()
+    message(STATUS "Build type: DEBUG [optimizations off]")
+  endif()
 else()
   message(STATUS "Build type: RELEASE [optimizations on]")
   add_definitions(-O3 -fomit-frame-pointer -mtune=generic)
@@ -31,11 +37,6 @@ endif()
 include_directories(../include ${Boost_INCLUDE_DIRS})
 set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
 
-if(COVERAGE)
-  message(STATUS "Coverage build enabled")
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage)
-  # set(LIBRARIES ${LIBRARIES} gcov)
-endif()
 
 # core library
 add_library(boost_histogram SHARED
