@@ -4,8 +4,15 @@ env:
   - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
   - USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
   - USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
+matrix:
+  exclude:
+    - compiler: gcc
+      env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
+      env: USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
+      env: USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
 compiler:
   - clang
+  - gcc
 os:
   - linux
 git:
