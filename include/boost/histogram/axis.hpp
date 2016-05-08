@@ -7,6 +7,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/array.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <string>
 #include <vector>
 #include <cmath>
@@ -109,7 +110,8 @@ public:
   polar_axis& operator=(const polar_axis&);
 
   inline int index(double x) const { 
-    const double z = (x - start_) / 6.283185307179586;
+    using namespace boost::math::double_constants;
+    const double z = (x - start_) / two_pi;
     const int i = int(floor(z * bins())) % bins();
     return i + (i < 0) * bins();
   }
