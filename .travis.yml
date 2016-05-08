@@ -1,20 +1,11 @@
 language: cpp
 env:
-  - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
+  - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON CC=gcc CXX=g++
   - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
   - USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
   - USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
-matrix:
-  exclude:
-    - compiler: gcc
-        env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
-        env: USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
-        env: USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
-    - compiler: clang
-        env: USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
 compiler:
   - clang
-  - gcc
 os:
   - linux
 git:
@@ -23,7 +14,6 @@ addons:
   apt:
     sources:
       - boost-latest
-      # - ubuntu-toolchain-r-test
     packages:
       - libboost1.55-all-dev
 
@@ -50,3 +40,7 @@ script:
 # Calculate coverage
 after_success:
   - if [ "${COVERAGE}" = "ON" ]; then coveralls -r .. -b . --verbose; fi
+
+notifications:
+  email:
+    on_success: change
