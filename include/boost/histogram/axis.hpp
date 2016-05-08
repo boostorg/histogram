@@ -68,7 +68,7 @@ public:
 // real regular axis (constant bin widths)
 class regular_axis: public axis_base, public real_axis<regular_axis> {
 public:
-  regular_axis(unsigned n, double min, double max,
+  regular_axis(int n, double min, double max,
                const std::string& label = std::string(),
                bool uoflow = true);
 
@@ -101,7 +101,7 @@ private:
 class polar_axis: public axis_base, public real_axis<polar_axis> {
 public:
   explicit 
-  polar_axis(unsigned n, double start = 0.0,
+  polar_axis(int n, double start = 0.0,
              const std::string& label = std::string());
 
   polar_axis() {}

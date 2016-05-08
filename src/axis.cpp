@@ -33,7 +33,7 @@ axis_base::operator=(const axis_base& o)
 bool axis_base::operator==(const axis_base& o) const
 { return size_ == o.size_ && label_ == o.label_; }
 
-regular_axis::regular_axis(unsigned n, double min, double max,
+regular_axis::regular_axis(int n, double min, double max,
                            const std::string& label, bool uoflow):
     axis_base(n, label, uoflow),
     min_(min),
@@ -78,7 +78,7 @@ regular_axis::operator==(const regular_axis& o) const
            range_ == o.range_;
 }
 
-polar_axis::polar_axis(unsigned n, double start,
+polar_axis::polar_axis(int n, double start,
                        const std::string& label) :
     axis_base(n, label, false),
     start_(start)

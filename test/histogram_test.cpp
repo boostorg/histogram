@@ -4,6 +4,7 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/assign/std/vector.hpp>
 #include <boost/move/move.hpp>
+#include <limits>
 using namespace boost::assign;
 using namespace boost::histogram;
 
@@ -70,6 +71,28 @@ BOOST_AUTO_TEST_CASE(init_15)
               regular_axis(1, -1, 1),
               regular_axis(1, -1, 1),
               regular_axis(1, -1, 1));
+
+    histogram(histogram::axes_type(15,
+                regular_axis(1, -1, 1)));
+}
+
+BOOST_AUTO_TEST_CASE(too_many_axes)
+{
+    BOOST_CHECK_THROW(
+        histogram(
+            histogram::axes_type(16, regular_axis(1, -1, 1))
+        ),
+        std::logic_error
+    );
+}
+
+BOOST_AUTO_TEST_CASE(bad_alloc)
+{
+    BOOST_CHECK_THROW(
+        histogram(histogram::axes_type(15,
+            regular_axis(std::numeric_limits<int>::max(), 0, 1))),
+        std::bad_alloc
+    );
 }
 
 BOOST_AUTO_TEST_CASE(copy_ctor)
