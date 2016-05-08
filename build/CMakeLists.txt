@@ -111,6 +111,11 @@ add_executable(zero_suppression_test
 target_link_libraries(zero_suppression_test boost_histogram ${LIBRARIES})
 add_test(zero_suppression_test zero_suppression_test)
 
+add_executable(axis_test
+               ../test/axis_test.cpp)
+target_link_libraries(axis_test boost_histogram ${LIBRARIES})
+add_test(axis_test axis_test)
+
 add_executable(histogram_test
                ../test/histogram_test.cpp)
 target_link_libraries(histogram_test boost_histogram ${LIBRARIES})

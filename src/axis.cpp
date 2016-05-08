@@ -25,8 +25,10 @@ axis_base::axis_base(const axis_base& o) :
 axis_base&
 axis_base::operator=(const axis_base& o)
 {
-    size_ = o.size_;
-    label_ = o.label_;
+    if (this != &o) {
+        size_ = o.size_;
+        label_ = o.label_;
+    }
     return *this;
 }
 
@@ -52,9 +54,11 @@ regular_axis::regular_axis(const regular_axis& o) :
 regular_axis&
 regular_axis::operator=(const regular_axis& o)
 {
-    axis_base::operator=(o);
-    min_ = o.min_;
-    range_ = o.range_;
+    if (this != &o) {
+        axis_base::operator=(o);
+        min_ = o.min_;
+        range_ = o.range_;
+    }
     return *this;
 }
 
@@ -92,8 +96,10 @@ polar_axis::polar_axis(const polar_axis& o) :
 polar_axis&
 polar_axis::operator=(const polar_axis& o)
 {
-    axis_base::operator=(o);
-    start_ = o.start_;
+    if (this != &o) {
+        axis_base::operator=(o);
+        start_ = o.start_;
+    }
     return *this;
 }
 
@@ -122,15 +128,17 @@ variable_axis::variable_axis(const variable_axis& o) :
 variable_axis&
 variable_axis::operator=(const variable_axis& o)
 {
-    axis_base::operator=(o);
-    x_.reset(new double[bins() + 1]);
-    std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
+    if (this != &o) {
+        axis_base::operator=(o);
+        x_.reset(new double[bins() + 1]);
+        std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
+    }
     return *this;
 }
 
 double
 variable_axis::operator[](int idx)
-    const 
+    const
 {
     if (idx < 0)
         return -std::numeric_limits<double>::infinity();
@@ -172,7 +180,8 @@ category_axis::category_axis(const category_axis& o) :
 category_axis&
 category_axis::operator=(const category_axis& o)
 {
-    categories_ = o.categories_;
+    if (this != &o)
+        categories_ = o.categories_;
     return *this;
 }
 
@@ -195,8 +204,10 @@ integer_axis::integer_axis(const integer_axis& a) :
 integer_axis&
 integer_axis::operator=(const integer_axis& o)
 {
-    axis_base::operator=(o);
-    min_ = o.min_;
+    if (this != &o) {
+        axis_base::operator=(o);
+        min_ = o.min_;
+    }
     return *this;
 }
 
@@ -233,7 +244,7 @@ struct stream_visitor : public static_visitor<std::string>
             line << a.label() << ", ";
         line << a.bins() << ":";
         for (int i = 0; i <= a.bins(); ++i)
-            line << " " << a.left(i);        
+            line << " " << a.left(i);
         return line.str();
     }
 
