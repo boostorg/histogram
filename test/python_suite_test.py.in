@@ -485,17 +485,20 @@ class histogram_test(unittest.TestCase):
 
     def test_pickle_0(self):
         a = histogram(category_axis('A', 'B', 'C'),
-                       integer_axis(0, 3, label='ia'),
-                       regular_axis(4, 0.0, 4.0, uoflow=False),
-                       variable_axis(0.0, 1.0, 2.0))
+                      integer_axis(0, 20, label='ia'),
+                      regular_axis(20, 0.0, 20.0, uoflow=False),
+                      variable_axis(0.0, 1.0, 2.0),
+                      polar_axis(4, label='pa'))
         for i in xrange(a.axis(0).bins):
-            a.fill(i, 0, 0, 0)
+            a.fill(i, 0, 0, 0, 0)
             for j in xrange(a.axis(1).bins):
-                a.fill(i, j, 0, 0)
+                a.fill(i, j, 0, 0, 0)
                 for k in xrange(a.axis(2).bins):
-                    a.fill(i, j, k, 0)
+                    a.fill(i, j, k, 0, 0)
                     for l in xrange(a.axis(3).bins):
-                        a.fill(i, j, k, l)
+                        a.fill(i, j, k, l, 0)
+                        for m in xrange(a.axis(4).bins):
+                            a.fill(i, j, k, l, m * 0.5 * pi)
 
         io = StringIO.StringIO()
         cPickle.dump(a, io)
@@ -507,6 +510,7 @@ class histogram_test(unittest.TestCase):
         self.assertEqual(a.axis(1), b.axis(1))
         self.assertEqual(a.axis(2), b.axis(2))
         self.assertEqual(a.axis(3), b.axis(3))
+        self.assertEqual(a.axis(4), b.axis(4))
         self.assertEqual(a.sum, b.sum)
         self.assertEqual(a, b)
 

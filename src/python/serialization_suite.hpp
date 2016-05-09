@@ -29,6 +29,7 @@ public:
                 PyErr_SetString(PyExc_RuntimeError, "cannot allocate memory");
                 python::throw_error_already_set();
             }
+            len_ = n;
         } else {
             if (pos_ + n > len_) {
                 len_ = pos_ + n; 
