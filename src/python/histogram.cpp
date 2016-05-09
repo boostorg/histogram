@@ -56,8 +56,13 @@ histogram_fill(python::tuple args, python::dict kwargs) {
     histogram& self = extract<histogram&>(args[0]);
 
     object ow;
-    if (kwargs)
-        ow = kwargs["w"];
+    if (kwargs) {
+        if (len(kwargs) > 1 || !kwargs.has_key("w")) {
+            PyErr_SetString(PyExc_RuntimeError, "only keyword w allowed");
+            throw_error_already_set();
+        }
+        ow = kwargs.get("w");
+    }
 
 #ifdef HAVE_NUMPY
     if (nargs == 2) {
@@ -90,7 +95,6 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                     throw_error_already_set();
             }
 
-            PyArrayObject* aw = 0;
             if (!ow.is_none()) {
                 if (PySequence_Check(ow.ptr())) {
                     PyArrayObject* aw = (PyArrayObject*)
@@ -109,16 +113,18 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                         PyErr_SetString(PyExc_ValueError, "sizes do not match");
                         throw_error_already_set();
                     }
-                }
-            }            
 
-            if (aw) {
-                for (unsigned i = 0; i < dims[0]; ++i) {
-                    double* v = (double*)PyArray_GETPTR1(a, i);
-                    double* w = (double*)PyArray_GETPTR1(aw, i);
-                    self.wfill_c(self.dim(), v, *w);
+                    for (unsigned i = 0; i < dims[0]; ++i) {
+                        double* v = (double*)PyArray_GETPTR1(a, i);
+                        double* w = (double*)PyArray_GETPTR1(aw, i);
+                        self.wfill_c(self.dim(), v, *w);
+                    }
+
+                    Py_DECREF(aw);
+                } else {
+                    PyErr_SetString(PyExc_ValueError, "w is not a sequence");
+                    throw_error_already_set();
                 }
-                Py_DECREF(aw);
             } else {
                 for (unsigned i = 0; i < dims[0]; ++i) {
                     double* v = (double*)PyArray_GETPTR1(a, i);
