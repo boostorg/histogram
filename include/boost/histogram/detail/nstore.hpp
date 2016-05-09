@@ -95,7 +95,7 @@ public:
       BOOST_HISTOGRAM_NSTORE_INC(uint32_t);
       BOOST_HISTOGRAM_NSTORE_INC(uint64_t);
       #undef BOOST_HISTOGRAM_NSTORE_INC
-      default: BOOST_ASSERT(!"invalid depth");
+      default: increase(i, 1.0);
     }
   }
 

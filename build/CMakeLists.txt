@@ -107,20 +107,25 @@ endif()
 
 # tests
 enable_testing()
-add_executable(zero_suppression_test
-               ../test/zero_suppression_test.cpp)
-target_link_libraries(zero_suppression_test boost_histogram ${LIBRARIES})
-add_test(zero_suppression_test zero_suppression_test)
+add_executable(histogram_test
+               ../test/histogram_test.cpp)
+target_link_libraries(histogram_test boost_histogram ${LIBRARIES})
+add_test(histogram_test histogram_test)
 
 add_executable(axis_test
                ../test/axis_test.cpp)
 target_link_libraries(axis_test boost_histogram ${LIBRARIES})
 add_test(axis_test axis_test)
 
-add_executable(histogram_test
-               ../test/histogram_test.cpp)
-target_link_libraries(histogram_test boost_histogram ${LIBRARIES})
-add_test(histogram_test histogram_test)
+add_executable(zero_suppression_test
+               ../test/zero_suppression_test.cpp)
+target_link_libraries(zero_suppression_test boost_histogram ${LIBRARIES})
+add_test(zero_suppression_test zero_suppression_test)
+
+add_executable(nstore_test
+               ../test/nstore_test.cpp)
+target_link_libraries(nstore_test boost_histogram ${LIBRARIES})
+add_test(nstore_test nstore_test)
 
 if(HAVE_PYTHON)
   configure_file(../test/python_suite_test.py.in python_suite_test.py)

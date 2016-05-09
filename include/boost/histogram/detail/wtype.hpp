@@ -17,8 +17,6 @@ struct wtype {
   { w += o.w; w2 += o.w2; return *this; }
   wtype& operator+=(double v)
   { w += v; w2 += v*v; return *this; }
-  wtype& operator=(uint64_t i)
-  { w = i; w2 = i; return *this; }
   bool operator==(uint64_t i) const
   { return w == i; }
   bool operator!=(uint64_t i) const
