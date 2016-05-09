@@ -306,7 +306,12 @@ typedef variant<
   integer_axis
 > axis_type;
 
-std::ostream& operator<<(std::ostream&, const axis_type&);
+std::ostream& operator<<(std::ostream&, const regular_axis&);
+std::ostream& operator<<(std::ostream&, const polar_axis&);
+std::ostream& operator<<(std::ostream&, const variable_axis&);
+std::ostream& operator<<(std::ostream&, const category_axis&);
+std::ostream& operator<<(std::ostream&, const integer_axis&);
+// axis_type is automatically output-streamable if all its bounded types are 
 
 }
 }

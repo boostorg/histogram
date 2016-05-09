@@ -112,6 +112,14 @@ axis_getitem(const T& t, int i) {
     return t[i];
 }
 
+template <typename T>
+std::string
+axis_repr(const T& t) {
+    std::ostringstream os;
+    os << t;
+    return os.str();
+}
+
 template<typename T>
 struct has_index_method
 {
@@ -122,74 +130,6 @@ struct has_index_method
     template<typename U> static no  test( ... );
     enum { value = sizeof(test<T>(0)) == sizeof(yes) };
 };
-
-std::string escape(const std::string& s) {
-    std::ostringstream os;
-    os << '\'';
-    for (unsigned i = 0; i < s.size(); ++i) {
-        const char c = s[i];
-        if (c == '\'' && (i == 0 || s[i - 1] != '\\'))
-            os << "\\\'";
-        else
-            os << c;
-    }
-    os << '\'';
-    return os.str();
-}
-
-std::string axis_repr(const regular_axis& a) {
-    std::stringstream s;
-    s << "regular_axis(" << a.bins() << ", " << a[0] << ", " << a[a.bins()];
-    if (!a.label().empty())
-        s << ", label=" << escape(a.label());
-    if (!a.uoflow())
-        s << ", uoflow=False";
-    s << ")";
-    return s.str();
-}
-
-std::string axis_repr(const polar_axis& a) {
-    std::stringstream s;
-    s << "polar_axis(" << a.bins();
-    if (a[0] != 0.0)
-        s << ", " << a[0];
-    if (!a.label().empty())
-        s << ", label=" << escape(a.label());
-    s << ")";
-    return s.str();
-}
-
-std::string axis_repr(const variable_axis& a) {
-    std::stringstream s;
-    s << "variable_axis(" << a[0];
-    for (int i = 1; i <= a.bins(); ++i)
-        s << ", " << a.left(i);
-    if (!a.label().empty())
-        s << ", label=" << escape(a.label());
-    if (!a.uoflow())
-        s << ", uoflow=False";
-    s << ")";
-    return s.str();
-}
-
-std::string axis_repr(const category_axis& a) {
-    std::stringstream s;
-    s << "category_axis(";
-    for (int i = 0; i < a.bins(); ++i)
-        s << escape(a[i])  << (i == (a.bins() - 1)? ")" : ", ");
-    return s.str();
-}
-
-std::string axis_repr(const integer_axis& a) {
-    std::stringstream s;
-    s << "integer_axis(" << a[0] << ", " << a[a.bins() - 1];
-    if (!a.label().empty())
-        s << ", label=" << escape(a.label());
-    if (!a.uoflow())
-        s << ", uoflow=False";
-    s << ")";
-    return s.str();
-}
 
 template <class T>
 struct axis_suite : public python::def_visitor<axis_suite<T> > {    
@@ -242,7 +182,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T> > {
                    ":returns: category mapped to passed bin index" :
                    ":returns: low edge of the bin",
                python::args("self", "index"));
-        cl.def("__repr__", (std::string (*)(const T&)) &axis_repr,
+        cl.def("__repr__", axis_repr<T>,
                ":returns: string representation of this axis",
                python::arg("self"));
         cl.def(python::self == python::self);

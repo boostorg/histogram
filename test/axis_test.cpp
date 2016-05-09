@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(integer_axis_operators) {
     BOOST_CHECK_EQUAL(a, b);
 }
 
-BOOST_AUTO_TEST_CASE(stream_operator) {
+BOOST_AUTO_TEST_CASE(axis_type_streamable) {
     std::vector<double> x;
     x += -1, 0, 1;
     std::vector<axis_type> axes;

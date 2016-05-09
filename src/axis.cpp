@@ -1,10 +1,27 @@
 #include <boost/histogram/axis.hpp>
 #include <limits>
 #include <sstream>
+#include <string>
 #include <stdexcept>
 
 namespace boost {
 namespace histogram {
+
+namespace {
+    std::string escape(const std::string& s) {
+        std::ostringstream os;
+        os << '\'';
+        for (unsigned i = 0; i < s.size(); ++i) {
+            const char c = s[i];
+            if (c == '\'' && (i == 0 || s[i - 1] != '\\'))
+                os << "\\\'";
+            else
+                os << c;
+        }
+        os << '\'';
+        return os.str();
+    }
+}
 
 axis_base::axis_base(int size,
                      const std::string& label,
@@ -107,8 +124,9 @@ double
 polar_axis::operator[](int idx)
     const
 {
+    using namespace boost::math::double_constants;
     const double z = double(idx) / bins();
-    return z * 6.283185307179586 + start_;
+    return z * two_pi + start_;
 }
 
 bool
@@ -218,61 +236,57 @@ integer_axis::operator==(const integer_axis& o) const
            min_ == o.min_;
 }
 
-struct stream_visitor : public static_visitor<std::string>
+std::ostream& operator<<(std::ostream& os, const regular_axis& a)
 {
-    std::string operator()(const category_axis& a) const {
-        std::stringstream line;
-        line << "category_axis(";
-        for (int i = 0; i < a.bins(); ++i)
-            line << a[i] << (i == (a.bins() - 1)? ")" : ", ");
-        return line.str();
-    }
+    os << "regular_axis(" << a.bins() << ", " << a[0] << ", " << a[a.bins()];
+    if (!a.label().empty())
+        os << ", label=" << escape(a.label());
+    if (!a.uoflow())
+        os << ", uoflow=False";
+    os << ")";
+    return os;
+}
 
-    std::string operator()(const integer_axis& a) const {
-        std::stringstream line;
-        line << "integer_axis(";
-        if (a.bins())
-            line << a[0] << "," << a[a.bins() - 1];
-        line << ")";
-        return line.str();
-    }
+std::ostream& operator<<(std::ostream& os, const polar_axis& a)
+{
+    os << "polar_axis(" << a.bins();
+    if (a[0] != 0.0)
+        os << ", " << a[0];
+    if (!a.label().empty())
+        os << ", label=" << escape(a.label());
+    os << ")";
+    return os;
+}
 
-    std::string operator()(const polar_axis& a) const {
-        std::stringstream line;
-        line << "polar_axis(";
-        if (!a.label().empty())
-            line << a.label() << ", ";
-        line << a.bins() << ":";
-        for (int i = 0; i <= a.bins(); ++i)
-            line << " " << a.left(i);
-        return line.str();
-    }
+std::ostream& operator<<(std::ostream& os, const variable_axis& a)
+{
+    os << "variable_axis(" << a[0];
+    for (int i = 1; i <= a.bins(); ++i)
+        os << ", " << a.left(i);
+    if (!a.label().empty())
+        os << ", label=" << escape(a.label());
+    if (!a.uoflow())
+        os << ", uoflow=False";
+    os << ")";
+    return os;
+}
 
-    std::string operator()(const regular_axis& a) const {
-        std::stringstream line;
-        line << "regular_axis[";
-        if (!a.label().empty())
-            line << a.label() << ", ";
-        line << a.bins() << ":";
-        for (int i = 0; i <= a.bins(); ++i)
-            line << " " << a.left(i);
-        return line.str();
-    }
+std::ostream& operator<<(std::ostream& os, const integer_axis& a)
+{
+    os << "integer_axis(" << a[0] << ", " << a[a.bins() - 1];
+    if (!a.label().empty())
+        os << ", label=" << escape(a.label());
+    if (!a.uoflow())
+        os << ", uoflow=False";
+    os << ")";
+    return os;
+}
 
-    std::string operator()(const variable_axis& a) const {
-        std::stringstream line;
-        line << "variable_axis[";
-        if (!a.label().empty())
-            line << a.label() << ", ";
-        line << a.bins() << ":";
-        for (int i = 0; i <= a.bins(); ++i)
-            line << " " << a.left(i);
-        return line.str();
-    }
-};
-
-std::ostream& operator<<(std::ostream& os, const axis_type& a) {
-    os << apply_visitor(stream_visitor(), a);
+std::ostream& operator<<(std::ostream& os, const category_axis& a)
+{
+    os << "category_axis(";
+    for (int i = 0; i < a.bins(); ++i)
+        os << escape(a[i])  << (i == (a.bins() - 1)? ")" : ", ");
     return os;
 }
 
