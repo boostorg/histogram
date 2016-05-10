@@ -33,9 +33,10 @@ install:
 script:
   cd build && 
   cmake . -DUSE_PYTHON=${USE_PYTHON}
-          -DUSE_NUMPY=${USE_NUMPY} -DCOVERAGE=${COVERAGE} &&
+          -DUSE_NUMPY=${USE_NUMPY}
+          -DCOVERAGE=${COVERAGE} &&
   make -j2 &&
-  make test
+  ctest -V
 
 # Calculate coverage
 after_success:
