@@ -13,15 +13,50 @@ if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
+set(LIBRARIES stdc++ m)
+
 if(USE_PYTHON)
   find_package(Boost 1.55
                COMPONENTS iostreams serialization unit_test_framework python)
+
+  if(Boost_PYTHON_FOUND)
+    execute_process(COMMAND python -c "import sys; sys.stdout.write(\"%i.%i\" % (sys.version_info.major, sys.version_info.minor))"
+                    OUTPUT_VARIABLE PYTHON_VERSION)
+    find_package(PythonLibs ${PYTHON_VERSION} EXACT)
+
+    if(PYTHONLIBS_FOUND AND ${PYTHON_VERSION} VERSION_LESS 3)
+      # Python3 is currently not supported
+      set(HAVE_PYTHON 1)
+
+      message(STATUS "Python version: ${PYTHON_VERSION}")
+
+      include_directories(${PYTHON_INCLUDE_DIRS})
+
+      if(${PYTHON_VERSION} VERSION_GREATER 3.0)
+        add_definitions(-DHAVE_PYTHON3)
+      endif()
+
+      if(USE_NUMPY)
+        find_package(Numpy 1.7)
+      endif()
+
+      if(NUMPY_FOUND)
+        set(HAVE_NUMPY 1)
+        include_directories(${NUMPY_INCLUDE_DIR})
+        add_definitions(-DHAVE_NUMPY)
+      endif()
+    endif()
+    set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+  endif()
 endif()
 if(NOT ${Boost_PYTHON_FOUND})
   # try again without boost.python
   find_package(Boost 1.55 REQUIRED
                COMPONENTS iostreams serialization unit_test_framework)
+  set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
 endif()
+
+include_directories(../include ${Boost_INCLUDE_DIRS})
 
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 add_definitions(-Wall)
@@ -40,10 +75,6 @@ else()
   add_definitions(-O3 -fomit-frame-pointer -mtune=generic)
 endif()
 
-include_directories(../include ${Boost_INCLUDE_DIRS})
-set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
-
-
 # core library
 add_library(boost_histogram SHARED
   ../src/axis.cpp
@@ -56,32 +87,6 @@ target_link_libraries(boost_histogram ${LIBRARIES})
 
 # python bindings
 if(USE_PYTHON AND Boost_PYTHON_FOUND)
-  execute_process(COMMAND python -c "import sys; sys.stdout.write(\"%i.%i\" % (sys.version_info.major, sys.version_info.minor))"
-                  OUTPUT_VARIABLE PYTHON_VERSION)
-  find_package(PythonLibs ${PYTHON_VERSION} EXACT)
-
-  if(PYTHONLIBS_FOUND AND ${PYTHON_VERSION} VERSION_LESS 3)
-    # Python3 is currently not supported
-    set(HAVE_PYTHON 1)
-
-    message(STATUS "Python version: ${PYTHON_VERSION}")
-
-    include_directories(${PYTHON_INCLUDE_DIRS})
-
-    if(${PYTHON_VERSION} VERSION_GREATER 3.0)
-      add_definitions(-DHAVE_PYTHON3)
-    endif()
-
-    if(USE_NUMPY)
-      find_package(Numpy 1.7)
-    endif()
-
-    if(NUMPY_FOUND)
-      set(HAVE_NUMPY 1)
-      include_directories(${NUMPY_INCLUDE_DIR})
-      add_definitions(-DHAVE_NUMPY)
-    endif()
-
     add_library(pyhistogram MODULE
       ../src/python/module.cpp
       ../src/python/axis.cpp
