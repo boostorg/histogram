@@ -86,16 +86,15 @@ add_library(boost_histogram SHARED
 target_link_libraries(boost_histogram ${LIBRARIES})
 
 # python bindings
-if(USE_PYTHON AND Boost_PYTHON_FOUND)
-    add_library(pyhistogram MODULE
-      ../src/python/module.cpp
-      ../src/python/axis.cpp
-      ../src/python/basic_histogram.cpp
-      ../src/python/histogram.cpp
-    )
-    target_link_libraries(pyhistogram boost_histogram ${LIBRARIES} ${PYTHON_LIBRARIES})
-    set_target_properties(pyhistogram PROPERTIES OUTPUT_NAME "histogram" PREFIX "" SUFFIX ".so")
-  endif()
+if(Boost_PYTHON_FOUND)
+  add_library(pyhistogram MODULE
+    ../src/python/module.cpp
+    ../src/python/axis.cpp
+    ../src/python/basic_histogram.cpp
+    ../src/python/histogram.cpp
+  )
+  target_link_libraries(pyhistogram boost_histogram ${LIBRARIES})
+  set_target_properties(pyhistogram PROPERTIES OUTPUT_NAME "histogram" PREFIX "" SUFFIX ".so")
 endif()
 
 # checks
