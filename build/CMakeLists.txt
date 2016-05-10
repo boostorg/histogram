@@ -14,8 +14,12 @@ if(${CMAKE_BUILD_TYPE})
 endif()
 
 find_package(Boost 1.55 REQUIRED
-             COMPONENTS iostreams serialization unit_test_framework)
-find_library(Boost_PYTHON_FOUND boost_python) # optional
+             COMPONENTS iostreams serialization unit_test_framework python)
+if(NOT ${Boost_FOUND})
+  # try again without boost.python
+  find_package(Boost 1.55 REQUIRED
+               COMPONENTS iostreams serialization unit_test_framework)
+endif()
 
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 add_definitions(-Wall)
@@ -58,6 +62,8 @@ if(USE_PYTHON AND Boost_PYTHON_FOUND)
     # Python3 is currently not supported
     set(HAVE_PYTHON 1)
 
+    message(STATUS "Python version: ${PYTHON_VERSION}")
+
     include_directories(${PYTHON_INCLUDE_DIRS})
 
     if(${PYTHON_VERSION} VERSION_GREATER 3.0)
@@ -80,7 +86,7 @@ if(USE_PYTHON AND Boost_PYTHON_FOUND)
       ../src/python/basic_histogram.cpp
       ../src/python/histogram.cpp
     )
-    target_link_libraries(pyhistogram boost_histogram ${LIBRARIES} boost_python ${PYTHON_LIBRARIES})
+    target_link_libraries(pyhistogram boost_histogram ${LIBRARIES} ${PYTHON_LIBRARIES})
     set_target_properties(pyhistogram PROPERTIES OUTPUT_NAME "histogram" PREFIX "" SUFFIX ".so")
   endif()
 endif()

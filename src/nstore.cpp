@@ -136,22 +136,20 @@ void
 nstore::grow()
 {
   BOOST_ASSERT(size_ > 0);
-  if (depth_ == 0) {
-    depth_ = sizeof(uint8_t);
-    create(0);
-    return;
-  }
-  // realloc is safe if buffer_ is null
-  buffer_ = std::realloc(buffer_, size_ * 2 * depth_);
-  if (!buffer_) throw std::bad_alloc();
   size_type i = size_;
   switch (depth_) {
+    case 0:
+      depth_ = sizeof(uint8_t);
+      create(0);
+      return;
     #define BOOST_HISTOGRAM_NSTORE_GROW(T0, T1)   \
     case sizeof(T0):                              \
+      depth_ = sizeof(T1);                        \
+      buffer_ = std::realloc(buffer_, size_ * depth_); \
+      if (!buffer_) throw std::bad_alloc();       \
       while (i--)                                 \
         ((T1*)buffer_)[i] = ((T0*)buffer_)[i];    \
-      depth_ = sizeof(T1);                        \
-    break
+      return
     BOOST_HISTOGRAM_NSTORE_GROW(uint8_t, uint16_t);
     BOOST_HISTOGRAM_NSTORE_GROW(uint16_t, uint32_t);
     BOOST_HISTOGRAM_NSTORE_GROW(uint32_t, uint64_t);
