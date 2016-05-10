@@ -31,6 +31,7 @@ nstore::operator+=(const nstore& o)
   if (size_ != o.size_)
     throw std::logic_error("sizes do not match");
 
+  // make depth of lhs at least as large as rhs
   if (depth_ != o.depth_) {
     if (o.depth_ == sizeof(wtype))
       wconvert();
@@ -39,6 +40,7 @@ nstore::operator+=(const nstore& o)
         grow();
   }
 
+  // now add the content of lhs, grow as needed
   if (depth_ == sizeof(wtype)) {
     for (size_type i = 0; i < size_; ++i)
       ((wtype*)buffer_)[i] += ((wtype*)o.buffer_)[i];
@@ -55,7 +57,7 @@ nstore::operator+=(const nstore& o)
             b += oi;                                       \
             ++i;                                           \
             break;                                         \
-          } else grow(); /* add fall through */            \
+          } else grow(); /* and fall through */            \
         }
         BOOST_HISTOGRAM_NSTORE_ADD(uint8_t);
         BOOST_HISTOGRAM_NSTORE_ADD(uint16_t);
