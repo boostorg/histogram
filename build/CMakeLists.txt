@@ -13,9 +13,11 @@ if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
-find_package(Boost 1.55 REQUIRED
-             COMPONENTS iostreams serialization unit_test_framework python)
-if(NOT ${Boost_FOUND})
+if(USE_PYTHON)
+  find_package(Boost 1.55
+               COMPONENTS iostreams serialization unit_test_framework python)
+endif()
+if(NOT ${Boost_PYTHON_FOUND})
   # try again without boost.python
   find_package(Boost 1.55 REQUIRED
                COMPONENTS iostreams serialization unit_test_framework)
