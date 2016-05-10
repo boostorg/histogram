@@ -618,16 +618,21 @@ class histogram_test(unittest.TestCase):
         w = numpy.array([ 2, 3, 4, 5, 6, 7])
         a.fill(v, w=w)
         a.fill([0, 1], w=[2.0, 3.0])
+        self.assertEqual(a.value(-1), 2)
         self.assertEqual(a.value(0), 5)
         self.assertEqual(a.value(1), 7)
         self.assertEqual(a.value(2), 5)
+        self.assertEqual(a.variance(-1), 4)
+        self.assertEqual(a.variance(0), 13)
+        self.assertEqual(a.variance(1), 25)
+        self.assertEqual(a.variance(2), 25)
 
         with self.assertRaises(RuntimeError):
             a.fill([1, 2], foo=1)
-        with self.assertRaises(ValueError):
-            a.fill([1, 2], w=1)
         with self.assertRaises(RuntimeError):
             a.fill([1, 2], w=[1], foo=1)
+        with self.assertRaises(ValueError):
+            a.fill([1, 2], w=1)
         with self.assertRaises(ValueError):
             a.fill([1, 2], w=[[1, 1], [2, 2]])
 

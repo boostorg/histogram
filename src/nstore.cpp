@@ -8,7 +8,7 @@ namespace detail {
 
 nstore::nstore() :
   size_(0),
-  depth_(0),
+  depth_(sizeof(uint8_t)),
   buffer_(0)
 {}
 
@@ -68,7 +68,7 @@ nstore::operator+=(const nstore& o)
           ++i;
           break;
         }
-        default: BOOST_ASSERT(!"invalid depth");
+        default: BOOST_ASSERT(!"never arrive here");
       }
     }
   }
@@ -98,7 +98,6 @@ nstore::variance(size_type i)
   const
 {
   switch (depth_) {
-    case sizeof(wtype): return ((wtype*)buffer_)[i].w2;
     #define BOOST_HISTOGRAM_NSTORE_VARIANCE(T) \
     case sizeof(T): return ((T*)buffer_)[i]
     BOOST_HISTOGRAM_NSTORE_VARIANCE(uint8_t);
@@ -106,7 +105,8 @@ nstore::variance(size_type i)
     BOOST_HISTOGRAM_NSTORE_VARIANCE(uint32_t);
     BOOST_HISTOGRAM_NSTORE_VARIANCE(uint64_t);
     #undef BOOST_HISTOGRAM_NSTORE_VARIANCE
-    default: BOOST_ASSERT(!"invalid depth");
+    case sizeof(wtype): return ((wtype*)buffer_)[i].w2;
+    default: BOOST_ASSERT(!"never arrive here");
   }
   return 0.0;
 }
@@ -134,9 +134,9 @@ nstore::destroy()
 void
 nstore::grow()
 {
-  BOOST_ASSERT(depth_ > 0);
-  BOOST_ASSERT(depth_ < sizeof(wtype));
-  BOOST_ASSERT(buffer_ != 0);
+  BOOST_ASSERT(size_ > 0);
+  depth_ = std::max(depth_, unsigned(sizeof(uint8_t)));
+  // realloc is safe if buffer_ is null
   buffer_ = std::realloc(buffer_, size_ * 2 * depth_);
   if (!buffer_) throw std::bad_alloc();
   size_type i = size_;
@@ -152,6 +152,7 @@ nstore::grow()
     BOOST_HISTOGRAM_NSTORE_GROW(uint32_t, uint64_t);
     BOOST_HISTOGRAM_NSTORE_GROW(uint64_t, wtype);
     #undef BOOST_HISTOGRAM_NSTORE_GROW
+    default: BOOST_ASSERT(!"never arrive here");
   }
 }
 
@@ -174,7 +175,7 @@ nstore::wconvert()
     BOOST_HISTOGRAM_NSTORE_CONVERT(uint32_t);
     BOOST_HISTOGRAM_NSTORE_CONVERT(uint64_t);
     #undef BOOST_HISTOGRAM_NSTORE_CONVERT
-    default: break; // no nuthin'
+    default: BOOST_ASSERT(!"never arrive here");
   }
   depth_ = sizeof(wtype);
 }
@@ -191,7 +192,7 @@ nstore::ivalue(size_type i)
     BOOST_HISTOGRAM_NSTORE_IVALUE(uint32_t);
     BOOST_HISTOGRAM_NSTORE_IVALUE(uint64_t);
     #undef BOOST_HISTOGRAM_NSTORE_IVALUE
-    default: BOOST_ASSERT(!"invalid depth");
+    default: BOOST_ASSERT(!"never arrive here");
   }
   return 0;
 }
