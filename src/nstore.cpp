@@ -8,7 +8,7 @@ namespace detail {
 
 nstore::nstore() :
   size_(0),
-  depth_(sizeof(uint8_t)),
+  depth_(0),
   buffer_(0)
 {}
 
@@ -17,7 +17,8 @@ nstore::nstore(size_type s, unsigned d) :
   depth_(d),
   buffer_(create(0))
 {
-  BOOST_ASSERT(d == sizeof(uint8_t) ||
+  BOOST_ASSERT(d == 0 ||
+               d == sizeof(uint8_t) ||
                d == sizeof(uint16_t) ||
                d == sizeof(uint32_t) ||
                d == sizeof(uint64_t) ||
@@ -135,7 +136,11 @@ void
 nstore::grow()
 {
   BOOST_ASSERT(size_ > 0);
-  depth_ = std::max(depth_, unsigned(sizeof(uint8_t)));
+  if (depth_ == 0) {
+    depth_ = sizeof(uint8_t);
+    create(0);
+    return;
+  }
   // realloc is safe if buffer_ is null
   buffer_ = std::realloc(buffer_, size_ * 2 * depth_);
   if (!buffer_) throw std::bad_alloc();

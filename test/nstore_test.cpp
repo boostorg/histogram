@@ -47,19 +47,22 @@ BOOST_AUTO_TEST_CASE(nstore_bad_add)
 
 BOOST_AUTO_TEST_CASE(nstore_add_with_growth)
 {
-    nstore a(1), b(1);
+    nstore a(1), b(1), c(1, 0);
     a.increase(0);
     for (unsigned i = 0; i < 10; ++i)
         a += a;
     b.increase(0);
     b += a;
     BOOST_CHECK_EQUAL(b.value(0), a.value(0) + 1.0);
+    c += a;
+    BOOST_CHECK_EQUAL(c.value(0), a.value(0));
 }
 
 BOOST_AUTO_TEST_CASE(nstore_equality)
 {
-    nstore a(1), b(1);
+    nstore a(1), b(1), c(2);
     BOOST_CHECK(a == b);
     a.increase(0);
     BOOST_CHECK(!(a == b));
+    BOOST_CHECK(!(b == c));
 }
