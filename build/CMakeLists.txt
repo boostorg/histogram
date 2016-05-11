@@ -52,7 +52,7 @@ if(USE_PYTHON)
   endif()
 endif()
 
-if(NOT ${Boost_PYTHON_FOUND})
+if(NOT USE_PYTHON OR NOT ${Boost_PYTHON_FOUND})
   # try again without boost.python
   find_package(Boost 1.55 REQUIRED
                COMPONENTS iostreams serialization unit_test_framework)
