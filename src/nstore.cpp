@@ -8,7 +8,7 @@ namespace detail {
 
 nstore::nstore() :
   size_(0),
-  depth_(0),
+  depth_(sizeof(uint8_t)),
   buffer_(0)
 {}
 
@@ -17,8 +17,7 @@ nstore::nstore(size_type s, unsigned d) :
   depth_(d),
   buffer_(create(0))
 {
-  BOOST_ASSERT(d == 0 ||
-               d == sizeof(uint8_t) ||
+  BOOST_ASSERT(d == sizeof(uint8_t) ||
                d == sizeof(uint16_t) ||
                d == sizeof(uint32_t) ||
                d == sizeof(uint64_t) ||
@@ -117,8 +116,6 @@ nstore::variance(size_type i)
 void*
 nstore::create(void* buffer)
 {
-  if (size_ * depth_ == 0)
-    return 0;
   void* b = buffer ? std::malloc(size_ * depth_) :
                      std::calloc(size_, depth_);
   if (!b)
@@ -140,10 +137,6 @@ nstore::grow()
   BOOST_ASSERT(size_ > 0);
   size_type i = size_;
   switch (depth_) {
-    case 0:
-      depth_ = sizeof(uint8_t);
-      create(0);
-      return;
     #define BOOST_HISTOGRAM_NSTORE_GROW(T0, T1)   \
     case sizeof(T0):                              \
       depth_ = sizeof(T1);                        \
