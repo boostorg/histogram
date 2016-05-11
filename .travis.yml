@@ -35,7 +35,7 @@ script:
   cmake . -DUSE_PYTHON=${USE_PYTHON}
           -DUSE_NUMPY=${USE_NUMPY}
           -DCOVERAGE=${COVERAGE} &&
-  make -j2 &&
+  { make -j2 || VERBOSE=1 make; } &&
   ctest -V
 
 # Calculate coverage

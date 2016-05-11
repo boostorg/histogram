@@ -13,6 +13,8 @@ if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
+add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
+add_definitions(-Wall)
 set(LIBRARIES stdc++ m)
 
 if(USE_PYTHON)
@@ -49,6 +51,7 @@ if(USE_PYTHON)
     set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
   endif()
 endif()
+
 if(NOT ${Boost_PYTHON_FOUND})
   # try again without boost.python
   find_package(Boost 1.55 REQUIRED
@@ -57,9 +60,6 @@ if(NOT ${Boost_PYTHON_FOUND})
 endif()
 
 include_directories(../include ${Boost_INCLUDE_DIRS})
-
-add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
-add_definitions(-Wall)
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug" OR COVERAGE)
   add_definitions(-O0 -g)
