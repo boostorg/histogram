@@ -30,7 +30,7 @@ nstore::operator+=(const nstore& o)
   if (size_ != o.size_)
     throw std::logic_error("sizes do not match");
 
-  // make depth of lhs at least as large as rhs
+  // make depth of lhs as large as rhs
   if (depth_ != o.depth_) {
     if (o.depth_ == sizeof(wtype))
       wconvert();

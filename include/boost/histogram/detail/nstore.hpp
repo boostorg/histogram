@@ -52,7 +52,7 @@ public:
   // move semantics
   nstore(BOOST_RV_REF(nstore) o) :
     size_(0),
-    depth_(0),
+    depth_(sizeof(uint8_t)),
     buffer_(0)
   {
     std::swap(size_, o.size_);
@@ -64,7 +64,7 @@ public:
   {
     if (this != &o) {
       size_ = 0;
-      depth_ = 0;
+      depth_ = sizeof(uint8_t);
       destroy();
       std::swap(size_, o.size_);
       std::swap(depth_, o.depth_);
@@ -89,7 +89,6 @@ public:
           grow(); /* and fall to next case */   \
         else { ++b; break; }                    \
       }
-      case 0: buffer_ = create(0);
       BOOST_HISTOGRAM_NSTORE_INC(uint8_t);
       BOOST_HISTOGRAM_NSTORE_INC(uint16_t);
       BOOST_HISTOGRAM_NSTORE_INC(uint32_t);

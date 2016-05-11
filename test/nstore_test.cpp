@@ -35,6 +35,8 @@ BOOST_AUTO_TEST_CASE(nstore_grow)
         x += x;
         BOOST_CHECK_EQUAL(n.value(0), x);
         BOOST_CHECK_EQUAL(n.variance(0), x);
+        nstore w(1);
+        w = n;
     }
     BOOST_CHECK_EQUAL(n.variance(0), x);
 }
