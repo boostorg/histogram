@@ -35,12 +35,15 @@ script:
   cmake . -DUSE_PYTHON=${USE_PYTHON}
           -DUSE_NUMPY=${USE_NUMPY}
           -DCOVERAGE=${COVERAGE} &&
-  { make -j2 || VERBOSE=1 make; } &&
+  make -j2 &&
   ctest -V
 
 # Calculate coverage
 after_success:
   - if [ "${COVERAGE}" = "ON" ]; then coveralls -r .. -b . --verbose; fi
+
+after_failure:
+  - make clean && VERBOSE=1 make
 
 notifications:
   email:
