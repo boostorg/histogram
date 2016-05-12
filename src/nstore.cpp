@@ -100,6 +100,7 @@ nstore::variance(size_type i)
     #undef BOOST_HISTOGRAM_NSTORE_VARIANCE
     case dw: return ((wtype*)buffer_)[i].w2;
   }
+  BOOST_ASSERT(!"never arrive here");
   return 0.0;
 }
 

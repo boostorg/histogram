@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(nstore_bad_alloc)
                       std::bad_alloc);
 }
 
-BOOST_AUTO_TEST_CASE(nstore_grow)
+BOOST_AUTO_TEST_CASE(nstore_grow_1)
 {
     double x = 1.0;
     nstore n(1);
@@ -35,17 +35,35 @@ BOOST_AUTO_TEST_CASE(nstore_grow)
         x += x;
         BOOST_CHECK_EQUAL(n.value(0), x);
         BOOST_CHECK_EQUAL(n.variance(0), x);
-        nstore w(1);
-        w.increase(0, 0.0);
-        w = n;
-        BOOST_CHECK_EQUAL(w.value(0), x);
-        nstore m(1);
-        m = n;
-        m.increase(0);
-        BOOST_CHECK_EQUAL(m.value(0), x + 1.0);
-        BOOST_CHECK_EQUAL(m.variance(0), x + 1.0);
     }
-    BOOST_CHECK_EQUAL(n.variance(0), x);
+}
+
+BOOST_AUTO_TEST_CASE(nstore_grow_2)
+{
+    nstore n(1);
+    n.increase(0);
+    for (unsigned i = 0; i < 64; ++i) {
+        n += n;
+        nstore a(1);
+        a.increase(0, 0.0); // converts to wtype
+        a = n;
+        BOOST_CHECK_EQUAL(a.value(0), n.value(0));
+        BOOST_CHECK_EQUAL(a.variance(0), n.variance(0));
+    }
+}
+
+BOOST_AUTO_TEST_CASE(nstore_grow_3)
+{
+    nstore n(1);
+    n.increase(0);
+    for (unsigned i = 0; i < 64; ++i) {
+        n += n;
+        nstore a(1);
+        a += n;
+        a.increase(0, 0.0); // converts to wtype
+        BOOST_CHECK_EQUAL(a.value(0), n.value(0));
+        BOOST_CHECK_EQUAL(a.variance(0), n.variance(0));
+    }
 }
 
 BOOST_AUTO_TEST_CASE(nstore_bad_add)
