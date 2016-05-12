@@ -11,6 +11,8 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <boost/utility/enable_if.hpp>
+#include <boost/mpl/not.hpp>
 #include <boost/move/move.hpp>
 
 #include <bitset>
@@ -49,14 +51,20 @@ public:
   unsigned shape(unsigned i) const { return apply_visitor(visitor::shape(), axes_[i]); }
 
   template <typename T>
-  T& axis(unsigned i) 
-  { if (is_same<T, axis_type>::value) return axes_[i];
-    return boost::get<T&>(axes_[i]); }
+  typename enable_if<is_same<T, axis_type>, T&>::type
+  axis(unsigned i) { return axes_[i]; }
 
   template <typename T>
-  const T& axis(unsigned i) const
-  { if (is_same<T, axis_type>::value) return axes_[i];
-    return boost::get<const T&>(axes_[i]); }
+  typename enable_if<mpl::not_<is_same<T, axis_type> >, T&>::type
+  axis(unsigned i) { return boost::get<T&>(axes_[i]); }
+
+  template <typename T>
+  typename enable_if<is_same<T, axis_type>, const T&>::type
+  axis(unsigned i) const { return axes_[i]; }
+
+  template <typename T>
+  typename enable_if<mpl::not_<is_same<T, axis_type> >, const T&>::type
+  axis(unsigned i) const { return boost::get<const T&>(axes_[i]); }
 
 protected:
   basic_histogram() {}
