@@ -49,9 +49,6 @@ To run the tests, do `make test` or `ctest -V` for more output.
 Generate a 2d-histogram in Python and fill it with data in Numpy arrays.
 
 ```python
----------------------------------
-
-.. code-block:: python
 
     import histogram as bh
     import numpy as np
