@@ -4,22 +4,13 @@
 
 [![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master)](https://coveralls.io/github/HDembinski/histogram?branch=master)
 
-This project contains an easy-to-use powerful n-dimensional histogram class implemented in `C++03`, optimized for convenience and excellent performance under heavy duty. Move semantics are supported using `boost::move`. The histogram has a complete [C++](http://yosefk.com/c++fqa/defective.html) and [Python](http://www.python.org) interface, and can be passed over the language boundary with ease. [Numpy](http://www.numpy.org) is fully supported; histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data. Histograms can be streamed from/to files and pickled in Python.
+This project contains an easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class implemented in `C++03`-compatible code, optimized for convenience and excellent performance under heavy duty. Move semantics are supported using `boost::move`. The histogram has a complete [C++](http://yosefk.com/c++fqa/defective.html) and [Python](http://www.python.org) interface, and can be passed over the language boundary with ease. [Numpy](http://www.numpy.org) is fully supported; histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data. Histograms can be streamed from/to files and pickled in Python.
 
 My goal is to submit this project to [Boost](http://www.boost.org), that's why it uses the Boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
 [Full documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/master/doc/html/index.html) is available, a summary is given below.
 
-### Dependencies
-
-* [Boost](http://www.boost.org)
-* [CMake](https://cmake.org)
-* Optional:
-  [Python](http://www.python.org)
-  [Numpy](http://www.numpy.org)
-  [Sphinx](http://www.sphinx-doc.org)
-
-### Features
+## Features
 
 * N-dimensional histogram
 * Intuitive and convenient interface
@@ -33,7 +24,16 @@ My goal is to submit this project to [Boost](http://www.boost.org), that's why i
 * Multi-language support: C++ and Python
 * Numpy support
 
-### Build instructions
+## Dependencies
+
+* [Boost](http://www.boost.org)
+* [CMake](https://cmake.org)
+* Optional:
+  [Python](http://www.python.org)
+  [Numpy](http://www.numpy.org)
+  [Sphinx](http://www.sphinx-doc.org)
+
+## Build instructions
 
 ```sh
 git clone https://github.com/HDembinski/histogram.git
@@ -43,6 +43,53 @@ make install # (or just 'make' to run the tests)
 ```
 
 To run the tests, do `make test` or `ctest -V` for more output.
+
+## Code example
+
+Generate a 2d-histogram in Python and fill it with data in Numpy arrays.
+
+```python
+---------------------------------
+
+.. code-block:: python
+
+    import histogram as bh
+    import numpy as np
+
+    # create a 2d-histogram without underflow and overflow bins
+    # for polar coordinates, using a specialized polar_axis for
+    # the binning of the angle 'phi'
+    h = bh.histogram(bh.regular_axis(10, 0.0, 5.0, "radius",
+                                     uoflow=False),
+                     bh.polar_axis(4, 0.0, "phi"))
+
+    # fill histogram with random values, using numpy to make 
+    # a two-dimensional normal distribution in cartesian coordinates
+    x = np.random.randn(1000)             # generate x
+    y = np.random.randn(1000)             # generate y
+    rphi = np.empty((1000, 2))
+    rphi[:, 0] = (x ** 2 + y ** 2) ** 0.5 # compute radius
+    rphi[:, 1] = np.arctan2(y, x)         # compute phi
+    h.fill(rphi)
+
+    # access counts as a numpy array (no data is copied)
+    count_matrix = np.asarray(h)
+
+    print count_matrix
+
+    # program output:
+    #
+    # [[37 26 33 37]
+    #  [60 69 76 62]
+    #  [48 80 80 77]
+    #  [38 49 45 49]
+    #  [22 24 20 23]
+    #  [ 7  9  9  8]
+    #  [ 3  2  3  3]
+    #  [ 0  0  0  0]
+    #  [ 0  1  0  0]
+    #  [ 0  0  0  0]]
+```
 
 ## Benchmarks
 
