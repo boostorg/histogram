@@ -7,19 +7,21 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/python.hpp>
+#include <boost/assert.hpp>
 #include <iosfwd>
 #include <algorithm>
 
 namespace boost {
 namespace histogram {
+namespace detail {
 
-class str_sink : public iostreams::sink {
+class python_str_sink : public iostreams::sink {
 public:
-    str_sink(PyObject** pstr) :
+    python_str_sink(PyObject** pstr) :
         pstr_(pstr),
         len_(0),
         pos_(0)
-    { assert(*pstr == 0); }
+    { BOOST_ASSERT(*pstr == 0); }
 
     std::streamsize write(const char* s, std::streamsize n)
     {
@@ -48,6 +50,8 @@ private:
     std::streamsize len_, pos_;
 };
 
+}
+
 template<class T>
 struct serialization_suite : python::pickle_suite
 {
@@ -55,7 +59,7 @@ struct serialization_suite : python::pickle_suite
     python::tuple getstate(python::object obj)
     {
         PyObject* pobj = 0;
-        iostreams::stream<str_sink> os(&pobj);
+        iostreams::stream<detail::python_str_sink> os(&pobj);
         archive::text_oarchive oa(os);
         oa << python::extract<const T&>(obj)();
         os.flush();
