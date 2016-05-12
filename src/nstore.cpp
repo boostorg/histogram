@@ -1,4 +1,6 @@
 #include <boost/histogram/detail/nstore.hpp>
+#include <boost/mpl/map.hpp>
+#include <boost/mpl/int.hpp>
 #include <stdexcept>
 #include <new> // for std::bad_alloc
 
@@ -8,21 +10,15 @@ namespace detail {
 
 nstore::nstore() :
   size_(0),
-  depth_(sizeof(uint8_t)),
+  depth_(d1),
   buffer_(0)
 {}
 
-nstore::nstore(size_type s, unsigned d) :
+nstore::nstore(size_type s, depth_type d) :
   size_(s),
   depth_(d),
   buffer_(create(0))
-{
-  BOOST_ASSERT(d == sizeof(uint8_t) ||
-               d == sizeof(uint16_t) ||
-               d == sizeof(uint32_t) ||
-               d == sizeof(uint64_t) ||
-               d == sizeof(wtype));
-}
+{}
 
 nstore&
 nstore::operator+=(const nstore& o)
@@ -32,7 +28,7 @@ nstore::operator+=(const nstore& o)
 
   // make depth of lhs as large as rhs
   if (depth_ != o.depth_) {
-    if (o.depth_ == sizeof(wtype))
+    if (o.depth_ == dw)
       wconvert();
     else
       while (depth_ < o.depth_)
@@ -40,37 +36,32 @@ nstore::operator+=(const nstore& o)
   }
 
   // now add the content of lhs, grow as needed
-  if (depth_ == sizeof(wtype)) {
+  if (depth_ == dw) {
     for (size_type i = 0; i < size_; ++i)
       ((wtype*)buffer_)[i] += ((wtype*)o.buffer_)[i];
   }
   else {
-    size_type i = 0;
-    while (i < size_) {
+    size_type i = size_;
+    while (i--) {
       const uint64_t oi = o.ivalue(i);
-      switch (depth_) {
-        #define BOOST_HISTOGRAM_NSTORE_ADD(T)              \
-        case sizeof(T): {                                  \
-          T& b = ((T*)buffer_)[i];                         \
+      switch (int(depth_)) {
+        #define BOOST_HISTOGRAM_NSTORE_ADD(D, T)            \
+        case D: {                                           \
+          T& b = ((T*)buffer_)[i];                          \
           if (T(std::numeric_limits<T>::max() - b) >= oi) { \
-            b += oi;                                       \
-            ++i;                                           \
-            break;                                         \
-          } else grow(); /* and fall through */            \
+            b += oi;                                        \
+            break;                                          \
+          } else grow(); /* and fall through */             \
         }
-        BOOST_HISTOGRAM_NSTORE_ADD(uint8_t);
-        BOOST_HISTOGRAM_NSTORE_ADD(uint16_t);
-        BOOST_HISTOGRAM_NSTORE_ADD(uint32_t);
-        BOOST_HISTOGRAM_NSTORE_ADD(uint64_t);
+        BOOST_HISTOGRAM_NSTORE_ADD(d1, uint8_t);
+        BOOST_HISTOGRAM_NSTORE_ADD(d2, uint16_t);
+        BOOST_HISTOGRAM_NSTORE_ADD(d4, uint32_t);
+        BOOST_HISTOGRAM_NSTORE_ADD(d8, uint64_t);
         #undef BOOST_HISTOGRAM_NSTORE_ADD
-        case sizeof(wtype): {
-          wtype& b = ((wtype*)buffer_)[i];
-          b.w += oi;
-          b.w2 += oi;
-          ++i;
+        case dw: {
+          ((wtype*)buffer_)[i] += wtype(oi);
           break;
         }
-        default: BOOST_ASSERT(!"never arrive here");
       }
     }
   }
@@ -90,7 +81,7 @@ double
 nstore::value(size_type i)
   const
 {
-  if (depth_ == sizeof(wtype))
+  if (depth_ == dw)
     return ((wtype*)buffer_)[i].w;
   return ivalue(i);
 }
@@ -100,15 +91,14 @@ nstore::variance(size_type i)
   const
 {
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_VARIANCE(T) \
-    case sizeof(T): return ((T*)buffer_)[i]
-    BOOST_HISTOGRAM_NSTORE_VARIANCE(uint8_t);
-    BOOST_HISTOGRAM_NSTORE_VARIANCE(uint16_t);
-    BOOST_HISTOGRAM_NSTORE_VARIANCE(uint32_t);
-    BOOST_HISTOGRAM_NSTORE_VARIANCE(uint64_t);
+    #define BOOST_HISTOGRAM_NSTORE_VARIANCE(D, T) \
+    case D: return ((T*)buffer_)[i]
+    BOOST_HISTOGRAM_NSTORE_VARIANCE(d1, uint8_t);
+    BOOST_HISTOGRAM_NSTORE_VARIANCE(d2, uint16_t);
+    BOOST_HISTOGRAM_NSTORE_VARIANCE(d4, uint32_t);
+    BOOST_HISTOGRAM_NSTORE_VARIANCE(d8, uint64_t);
     #undef BOOST_HISTOGRAM_NSTORE_VARIANCE
-    case sizeof(wtype): return ((wtype*)buffer_)[i].w2;
-    default: BOOST_ASSERT(!"never arrive here");
+    case dw: return ((wtype*)buffer_)[i].w2;
   }
   return 0.0;
 }
@@ -116,12 +106,12 @@ nstore::variance(size_type i)
 void*
 nstore::create(void* buffer)
 {
-  void* b = buffer ? std::malloc(size_ * depth_) :
-                     std::calloc(size_, depth_);
+  void* b = buffer ? std::malloc(size_ * int(depth_)) :
+                     std::calloc(size_, int(depth_));
   if (!b)
     throw std::bad_alloc();
   if (buffer)
-    std::memcpy(b, buffer, size_ * depth_);
+    std::memcpy(b, buffer, size_ * int(depth_));
   return b;
 }
 
@@ -137,45 +127,46 @@ nstore::grow()
   BOOST_ASSERT(size_ > 0);
   size_type i = size_;
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_GROW(T0, T1)   \
-    case sizeof(T0):                              \
-      depth_ = sizeof(T1);                        \
-      buffer_ = std::realloc(buffer_, size_ * depth_); \
-      if (!buffer_) throw std::bad_alloc();       \
-      while (i--)                                 \
-        ((T1*)buffer_)[i] = ((T0*)buffer_)[i];    \
+    #define BOOST_HISTOGRAM_NSTORE_GROW(D0, T0, D1, T1) \
+    case D0:                                            \
+      depth_ = D1;                                      \
+      buffer_ = std::realloc(buffer_, size_ * int(depth_)); \
+      if (!buffer_) throw std::bad_alloc();             \
+      while (i--)                                       \
+        ((T1*)buffer_)[i] = ((T0*)buffer_)[i];          \
       return
-    BOOST_HISTOGRAM_NSTORE_GROW(uint8_t, uint16_t);
-    BOOST_HISTOGRAM_NSTORE_GROW(uint16_t, uint32_t);
-    BOOST_HISTOGRAM_NSTORE_GROW(uint32_t, uint64_t);
-    BOOST_HISTOGRAM_NSTORE_GROW(uint64_t, wtype);
+    BOOST_HISTOGRAM_NSTORE_GROW(d1, uint8_t, d2, uint16_t);
+    BOOST_HISTOGRAM_NSTORE_GROW(d2, uint16_t, d4, uint32_t);
+    BOOST_HISTOGRAM_NSTORE_GROW(d4, uint32_t, d8, uint64_t);
+    BOOST_HISTOGRAM_NSTORE_GROW(d8, uint64_t, dw, wtype);
     #undef BOOST_HISTOGRAM_NSTORE_GROW
-    default: BOOST_ASSERT(!"never arrive here");
+    case dw: BOOST_ASSERT(!"never arrive here");
   }
 }
 
 void
 nstore::wconvert()
 {
-  BOOST_ASSERT(depth_ < sizeof(wtype));
+  BOOST_ASSERT(size_ > 0);
+  BOOST_ASSERT(depth_ < dw);
   // realloc is safe if buffer_ is null
-  buffer_ = std::realloc(buffer_, size_ * sizeof(wtype));
+  buffer_ = std::realloc(buffer_, size_ * int(dw));
   if (!buffer_) throw std::bad_alloc();
   size_type i = size_;
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_CONVERT(T)  \
-    case sizeof(T):                            \
-    while (i--)                                \
-      ((wtype*)buffer_)[i] = ((T*)buffer_)[i]; \
+    #define BOOST_HISTOGRAM_NSTORE_CONVERT(D, T) \
+    case D:                                      \
+    while (i--)                                  \
+      ((wtype*)buffer_)[i] = ((T*)buffer_)[i];   \
     break
-    BOOST_HISTOGRAM_NSTORE_CONVERT(uint8_t);
-    BOOST_HISTOGRAM_NSTORE_CONVERT(uint16_t);
-    BOOST_HISTOGRAM_NSTORE_CONVERT(uint32_t);
-    BOOST_HISTOGRAM_NSTORE_CONVERT(uint64_t);
+    BOOST_HISTOGRAM_NSTORE_CONVERT(d1, uint8_t);
+    BOOST_HISTOGRAM_NSTORE_CONVERT(d2, uint16_t);
+    BOOST_HISTOGRAM_NSTORE_CONVERT(d4, uint32_t);
+    BOOST_HISTOGRAM_NSTORE_CONVERT(d8, uint64_t);
     #undef BOOST_HISTOGRAM_NSTORE_CONVERT
-    default: BOOST_ASSERT(!"never arrive here");
+    case dw: BOOST_ASSERT(!"never arrive here");
   }
-  depth_ = sizeof(wtype);
+  depth_ = dw;
 }
 
 uint64_t
@@ -183,14 +174,14 @@ nstore::ivalue(size_type i)
   const
 {
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_IVALUE(T) \
-    case sizeof(T): return ((T*)buffer_)[i]
-    BOOST_HISTOGRAM_NSTORE_IVALUE(uint8_t);
-    BOOST_HISTOGRAM_NSTORE_IVALUE(uint16_t);
-    BOOST_HISTOGRAM_NSTORE_IVALUE(uint32_t);
-    BOOST_HISTOGRAM_NSTORE_IVALUE(uint64_t);
+    #define BOOST_HISTOGRAM_NSTORE_IVALUE(D, T) \
+    case D: return ((T*)buffer_)[i]
+    BOOST_HISTOGRAM_NSTORE_IVALUE(d1, uint8_t);
+    BOOST_HISTOGRAM_NSTORE_IVALUE(d2, uint16_t);
+    BOOST_HISTOGRAM_NSTORE_IVALUE(d4, uint32_t);
+    BOOST_HISTOGRAM_NSTORE_IVALUE(d8, uint64_t);
     #undef BOOST_HISTOGRAM_NSTORE_IVALUE
-    default: BOOST_ASSERT(!"never arrive here");
+    case dw: BOOST_ASSERT(!"never arrive here");
   }
   return 0;
 }
