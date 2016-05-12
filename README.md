@@ -56,12 +56,17 @@ Generate a 2d-histogram in Python and fill it with data in Numpy arrays.
     # create a 2d-histogram without underflow and overflow bins
     # for polar coordinates, using a specialized polar_axis for
     # the binning of the angle 'phi'
+    #
+    # radial axis with label 'radius' has 10 bins from 0.0 to 5.0
+    # polar axis with label 'phi' has 4 bins and a phase of 0.0
+
     h = bh.histogram(bh.regular_axis(10, 0.0, 5.0, "radius",
                                      uoflow=False),
                      bh.polar_axis(4, 0.0, "phi"))
 
     # fill histogram with random values, using numpy to make 
     # a two-dimensional normal distribution in cartesian coordinates
+
     x = np.random.randn(1000)             # generate x
     y = np.random.randn(1000)             # generate y
     rphi = np.empty((1000, 2))
@@ -70,6 +75,7 @@ Generate a 2d-histogram in Python and fill it with data in Numpy arrays.
     h.fill(rphi)
 
     # access counts as a numpy array (no data is copied)
+
     count_matrix = np.asarray(h)
 
     print count_matrix
