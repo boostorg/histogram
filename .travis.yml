@@ -9,7 +9,7 @@ compiler:
 os:
   - linux
 git:
-  depth: 3
+  depth: 100
 addons:
   apt:
     sources:
