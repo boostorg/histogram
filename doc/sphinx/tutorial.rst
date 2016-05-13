@@ -94,6 +94,9 @@ How to make a 2d-histogram in Python and to fill it using a Numpy array:
     # create a 2d-histogram without underflow and overflow bins
     # for polar coordinates, using a specialized polar_axis for
     # the binning of the angle 'phi'
+    #
+    # radial axis with label 'radius' has 10 bins from 0.0 to 5.0
+    # polar axis with label 'phi' has 4 bins and a phase of 0.0
     h = bh.histogram(bh.regular_axis(10, 0.0, 5.0, "radius",
                                      uoflow=False),
                      bh.polar_axis(4, 0.0, "phi"))

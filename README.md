@@ -44,28 +44,70 @@ make install # (or just 'make' to run the tests)
 
 To run the tests, do `make test` or `ctest -V` for more output.
 
-## Code example
+## Code examples
 
-Generate a 2d-histogram in Python and fill it with data in Numpy arrays.
+For the full version of the following examples with explanations, see
+[Tutorial](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/master/doc/html/tutorial.html)).
+
+Example 1: Fill a 1d-histogram in C++ 
+
+```cpp
+    #include <boost/histogram/histogram.hpp>
+    #include <boost/histogram/axis.hpp>
+    #include <iostream>
+    #include <cmath>
+
+    int main(int, char**) {
+        namespace bh = boost::histogram;
+
+        bh::histogram h(bh::regular_axis(10, -1.0, 2.0, "x"));
+
+        h.fill(-1.5); // put in underflow bin
+        h.fill(-0.5);
+        h.fill(1.1);
+        h.fill(-1.0); // included, interval is semi-open
+        h.fill(0.3);
+        h.fill(1.7);
+        h.fill(2.0);  // put in overflow bin, interval is semi-open
+        h.fill(20.0); // put in overflow bin
+        h.wfill(0.1, 5.0);
+
+        for (int i = -1; i <= h.bins(0); ++i) {
+            const bh::regular_axis& a = h.axis<bh::regular_axis>(0);
+            std::cout << "bin " << i
+                      << " x in [" << a[i] << ", " << a[i+1] << "): "
+                      << h.value(i) << " +/- " << std::sqrt(h.variance(i))
+                      << std::endl;
+        }
+
+        /* program output:
+
+        bin -1 x in [-inf, -1): 1 +/- 1
+        bin 0 x in [-1, -0.7): 1 +/- 1
+        bin 1 x in [-0.7, -0.4): 1 +/- 1
+        bin 2 x in [-0.4, -0.1): 0 +/- 0
+        bin 3 x in [-0.1, 0.2): 5 +/- 5
+        bin 4 x in [0.2, 0.5): 1 +/- 1
+        bin 5 x in [0.5, 0.8): 0 +/- 0
+        bin 6 x in [0.8, 1.1): 0 +/- 0
+        bin 7 x in [1.1, 1.4): 1 +/- 1
+        bin 8 x in [1.4, 1.7): 0 +/- 0
+        bin 9 x in [1.7, 2): 1 +/- 1
+        bin 10 x in [2, inf): 2 +/- 1.41421
+        */
+    }
+```
+
+Example 2: Fill a 2d-histogram in Python with data in Numpy arrays.
 
 ```python
 
     import histogram as bh
     import numpy as np
 
-    # create a 2d-histogram without underflow and overflow bins
-    # for polar coordinates, using a specialized polar_axis for
-    # the binning of the angle 'phi'
-    #
-    # radial axis with label 'radius' has 10 bins from 0.0 to 5.0
-    # polar axis with label 'phi' has 4 bins and a phase of 0.0
-
     h = bh.histogram(bh.regular_axis(10, 0.0, 5.0, "radius",
                                      uoflow=False),
                      bh.polar_axis(4, 0.0, "phi"))
-
-    # fill histogram with random values, using numpy to make 
-    # a two-dimensional normal distribution in cartesian coordinates
 
     x = np.random.randn(1000)             # generate x
     y = np.random.randn(1000)             # generate y
@@ -73,8 +115,6 @@ Generate a 2d-histogram in Python and fill it with data in Numpy arrays.
     rphi[:, 0] = (x ** 2 + y ** 2) ** 0.5 # compute radius
     rphi[:, 1] = np.arctan2(y, x)         # compute phi
     h.fill(rphi)
-
-    # access counts as a numpy array (no data is copied)
 
     count_matrix = np.asarray(h)
 
