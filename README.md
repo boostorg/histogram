@@ -47,7 +47,7 @@ To run the tests, do `make test` or `ctest -V` for more output.
 ## Code examples
 
 For the full version of the following examples with explanations, see
-[Tutorial](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/master/doc/html/tutorial.html)).
+[Tutorial](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/master/doc/html/tutorial.html).
 
 Example 1: Fill a 1d-histogram in C++ 
 
@@ -98,7 +98,7 @@ Example 1: Fill a 1d-histogram in C++
     }
 ```
 
-Example 2: Fill a 2d-histogram in Python with data in Numpy arrays.
+Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
 ```python
 
