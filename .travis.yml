@@ -1,15 +1,17 @@
 language: cpp
 env:
-  - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON CC=gcc CXX=g++
-  - USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
-  - USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
-  - USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
+  - PYTHON_VERSION=3 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON CC=gcc CXX=g++
+  - PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON CC=gcc CXX=g++
+  - PYTHON_VERSION=3 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
+  - PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
+  - PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
+  - PYTHON_VERSION=2 USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
 compiler:
   - clang
 os:
   - linux
 git:
-  depth: 100
+  depth: 10
 addons:
   apt:
     sources:
@@ -20,14 +22,14 @@ addons:
 # Setup anaconda
 before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda2/bin:$PATH
+  - bash miniconda.sh -b
+  - export PATH=$HOME/miniconda2/bin:$PATH
   - conda update --yes conda
 
 # Install packages
 install:
-  - conda install --yes numpy
+  - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
+  - source activate pyenv
   - pip install --user cpp-coveralls
 
 script:
