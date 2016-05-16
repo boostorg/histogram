@@ -30,8 +30,7 @@ if(USE_PYTHON)
                NAMES
                  boost_python-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
                  boost_python
-               PATHS ${Boost_LIBRARY_DIR}
-               NO_DEFAULT_PATH)
+               PATHS ${Boost_LIBRARY_DIR})
   message(STATUS "Found boost.python: ${Boost_PYTHON_LIBRARY}")
   if(Boost_PYTHON_LIBRARY AND PYTHONLIBS_FOUND)
     set(HAVE_PYTHON 1)
