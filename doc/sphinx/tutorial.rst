@@ -101,8 +101,8 @@ How to make a 2d-histogram in Python and to fill it using a Numpy array:
                                      uoflow=False),
                      bh.polar_axis(4, 0.0, "phi"))
 
-    # fill histogram with random values, using a two-dimensional
-    # normal distribution in cartesian coordinates as a source
+    # fill histogram with random values, using numpy to make 
+    # a two-dimensional normal distribution in cartesian coordinates
     x = np.random.randn(1000)             # generate x
     y = np.random.randn(1000)             # generate y
     rphi = np.empty((1000, 2))
