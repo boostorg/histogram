@@ -22,7 +22,12 @@ addons:
 # Setup anaconda
 before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+<<<<<<< HEAD
   - bash miniconda.sh -b
+=======
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+>>>>>>> 15d21e6e908df0b526dd419d73094944e97cbf0e
   - export PATH=$HOME/miniconda2/bin:$PATH
   - conda update --yes conda
 
