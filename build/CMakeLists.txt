@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-cmake_policy(SET CMP0042 NEW)
+# cmake_policy(SET CMP0042 NEW)
 
 project(histogram)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
@@ -25,11 +25,12 @@ set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
 if(USE_PYTHON)
   find_package(PythonInterp)
   find_package(PythonLibs ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH} EXACT)
+  message(STATUS "boost lib dir ${Boost_LIBRARY_DIR}")
   find_library(Boost_PYTHON_LIBRARY
                NAMES
                  boost_python-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
                  boost_python
-               HINTS ${Boost_LIBRARY_DIR}
+               PATHS ${Boost_LIBRARY_DIR}
                NO_DEFAULT_PATH)
   message(STATUS "Found boost.python: ${Boost_PYTHON_LIBRARY}")
   if(Boost_PYTHON_LIBRARY AND PYTHONLIBS_FOUND)
