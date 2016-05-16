@@ -5,10 +5,10 @@
 set(NUMPY_FOUND FALSE)
 
 execute_process(
-  COMMAND python -c "import numpy, sys; sys.stdout.write(numpy.get_include())"
+  COMMAND ${PYTHON_EXECUTABLE} -c "import numpy, sys; sys.stdout.write(numpy.get_include())"
   OUTPUT_VARIABLE NUMPY_INCLUDE_DIR)
 execute_process(
-  COMMAND python -c "import numpy, sys; sys.stdout.write(numpy.version.version)"
+  COMMAND ${PYTHON_EXECUTABLE} -c "import numpy, sys; sys.stdout.write(numpy.version.version)"
   OUTPUT_VARIABLE NUMPY_VERSION
 )
 

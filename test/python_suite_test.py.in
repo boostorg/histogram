@@ -1,11 +1,14 @@
-#!/usr/bin/env python
+#!@PYTHON_EXECUTABLE@
 import unittest
 from math import pi
 from histogram import histogram, regular_axis, polar_axis, \
                       variable_axis, category_axis, integer_axis
-import cPickle
-import StringIO
+import pickle
 import os
+if @PYTHON_VERSION_MAJOR@ == 3:
+    from io import BytesIO
+else:
+    from StringIO import StringIO as BytesIO
 
 have_numpy = "@HAVE_NUMPY@"
 if have_numpy:
@@ -28,7 +31,7 @@ class test_regular_axis(unittest.TestCase):
             regular_axis(0, 1.0, 2.0)
         with self.assertRaises(TypeError):
             regular_axis("1", 1.0, 2.0)
-        with self.assertRaises(StandardError):
+        with self.assertRaises(Exception):
             regular_axis(-1, 1.0, 2.0)
         with self.assertRaises(RuntimeError):
             regular_axis(1, 2.0, 1.0)
@@ -58,7 +61,7 @@ class test_regular_axis(unittest.TestCase):
     def test_getitem(self):
         v = [1.0, 1.25, 1.5, 1.75, 2.0]
         a = regular_axis(4, 1.0, 2.0)
-        for i in xrange(5):
+        for i in range(5):
             self.assertEqual(a[i], v[i])
 
     def test_iter(self):
@@ -91,7 +94,7 @@ class test_polar_axis(unittest.TestCase):
         polar_axis(4, 1.0, label="pa")
         with self.assertRaises(TypeError):
             polar_axis()
-        with self.assertRaises(StandardError):
+        with self.assertRaises(Exception):
             polar_axis(-1)
         with self.assertRaises(TypeError):
             polar_axis(4, 1.0, uoflow=True)
@@ -120,7 +123,7 @@ class test_polar_axis(unittest.TestCase):
     def test_getitem(self):
         v = [1.0, 1.0 + 0.5 * pi, 1.0 + pi, 1.0 + 1.5 *pi, 1.0 + 2.0 * pi]
         a = polar_axis(4, 1.0)
-        for i in xrange(5):
+        for i in range(5):
             self.assertEqual(a[i], v[i])
 
     def test_iter(self):
@@ -182,7 +185,7 @@ class test_variable_axis(unittest.TestCase):
     def test_getitem(self):
         v = [-0.1, 0.2, 0.3]
         a = variable_axis(*v)
-        for i in xrange(3):
+        for i in range(3):
             self.assertEqual(a[i], v[i])
 
     def test_iter(self):
@@ -243,7 +246,7 @@ class test_category_axis(unittest.TestCase):
     def test_getitem(self):
         c = "A", "B", "C"
         a = category_axis(*c)
-        for i in xrange(3):
+        for i in range(3):
             self.assertEqual(a[i], c[i])
 
     def test_iter(self):
@@ -266,7 +269,8 @@ class test_integer_axis(unittest.TestCase):
             integer_axis(1, 2, 3)
         self.assertEqual(integer_axis(-1, 2), integer_axis(-1, 2))
         self.assertNotEqual(integer_axis(-1, 2), integer_axis(-1, 2, label="ia"))
-        self.assertNotEqual(integer_axis(-1, 2), integer_axis(-1, 2, uoflow=True))
+        self.assertNotEqual(integer_axis(-1, 2, uoflow=False),
+                            integer_axis(-1, 2, uoflow=True))
 
     def test_len(self):
         self.assertEqual(len(integer_axis(-1, 2)), 4)
@@ -284,7 +288,7 @@ class test_integer_axis(unittest.TestCase):
     def test_getitem(self):
         v = [-1, 0, 1, 2]
         a = integer_axis(-1, 2)
-        for i in xrange(4):
+        for i in range(4):
             self.assertEqual(a[i], v[i])
 
     def test_iter(self):
@@ -331,7 +335,6 @@ class histogram_test(unittest.TestCase):
         self.assertNotEqual(h, histogram(regular_axis(1, -1, 1)))
         self.assertNotEqual(h, histogram(integer_axis(-1, 2)))
         self.assertNotEqual(h, histogram(integer_axis(-1, 1, label="ia")))
-        self.assertNotEqual(h, histogram(integer_axis(-1, 1, uoflow=True)))
 
     def test_copy(self):
         a = histogram(integer_axis(-1, 1))
@@ -347,9 +350,9 @@ class histogram_test(unittest.TestCase):
         h0 = histogram(integer_axis(-1, 1, uoflow=False))
         h1 = histogram(integer_axis(-1, 1, uoflow=True))
         for h in (h0, h1):
-            with self.assertRaises(StandardError):
+            with self.assertRaises(Exception):
                 h.fill()
-            with self.assertRaises(StandardError):
+            with self.assertRaises(Exception):
                 h.fill(1, 2)
             h.fill(-10)
             h.fill(-1)
@@ -381,12 +384,12 @@ class histogram_test(unittest.TestCase):
         h.fill(-1)
         h.fill(1)
         h.fill(1)
-        for i in xrange(255):
+        for i in range(255):
             h.fill(0)
         self.assertEqual(h.depth, 1)
         h.fill(0)
         self.assertEqual(h.depth, 2)
-        for i in xrange(1000-256):
+        for i in range(1000-256):
             h.fill(0)
         self.assertEqual(h.value(-1), 0)
         self.assertEqual(h.value(0), 1)
@@ -405,9 +408,9 @@ class histogram_test(unittest.TestCase):
             h.fill(1, 0)
             h.fill(3, -1)
             h.fill(0, -3)
-            with self.assertRaises(StandardError):
+            with self.assertRaises(Exception):
                 h.fill(1)
-            with self.assertRaises(StandardError):
+            with self.assertRaises(Exception):
                 h.fill(1, 2, 3)
 
             m = [[1, 1, 0, 0, 0, 0],
@@ -415,8 +418,8 @@ class histogram_test(unittest.TestCase):
                  [0, 0, 1, 0, 0, 0],
                  [0, 1, 0, 0, 0, 0],
                  [0, 0, 0, 0, 0, 0]]
-            for i in xrange(h.axis(0).bins + 2*uoflow):
-                for j in xrange(h.axis(1).bins + 2*uoflow):
+            for i in range(h.axis(0).bins + 2*uoflow):
+                for j in range(h.axis(1).bins + 2*uoflow):
                     self.assertEqual(h.value(i, j), m[i][j])
 
     def test_add_2d(self):
@@ -441,8 +444,8 @@ class histogram_test(unittest.TestCase):
             h += h
             self.assertEqual(h, h2)
 
-            for i in xrange(h.axis(0).bins + 2*uoflow):
-                for j in xrange(h.axis(1).bins + 2*uoflow):
+            for i in range(h.axis(0).bins + 2*uoflow):
+                for j in range(h.axis(1).bins + 2*uoflow):
                     self.assertEqual(h.value(i, j), 2 * m[i][j])
                     self.assertEqual(h.variance(i, j), 2 * m[i][j])
 
@@ -478,8 +481,8 @@ class histogram_test(unittest.TestCase):
             h += h
             self.assertNotEqual(h, h2)
 
-            for i in xrange(h.axis(0).bins + 2*uoflow):
-                for j in xrange(h.axis(1).bins + 2*uoflow):
+            for i in range(h.axis(0).bins + 2*uoflow):
+                for j in range(h.axis(1).bins + 2*uoflow):
                     self.assertEqual(h.value(i, j), 2 * m[i][j])
                     self.assertEqual(h.variance(i, j), 2 * m[i][j])
 
@@ -489,21 +492,21 @@ class histogram_test(unittest.TestCase):
                       regular_axis(20, 0.0, 20.0, uoflow=False),
                       variable_axis(0.0, 1.0, 2.0),
                       polar_axis(4, label='pa'))
-        for i in xrange(a.axis(0).bins):
+        for i in range(a.axis(0).bins):
             a.fill(i, 0, 0, 0, 0)
-            for j in xrange(a.axis(1).bins):
+            for j in range(a.axis(1).bins):
                 a.fill(i, j, 0, 0, 0)
-                for k in xrange(a.axis(2).bins):
+                for k in range(a.axis(2).bins):
                     a.fill(i, j, k, 0, 0)
-                    for l in xrange(a.axis(3).bins):
+                    for l in range(a.axis(3).bins):
                         a.fill(i, j, k, l, 0)
-                        for m in xrange(a.axis(4).bins):
+                        for m in range(a.axis(4).bins):
                             a.fill(i, j, k, l, m * 0.5 * pi)
 
-        io = StringIO.StringIO()
-        cPickle.dump(a, io)
+        io = BytesIO()
+        pickle.dump(a, io)
         io.seek(0)
-        b = cPickle.load(io)
+        b = pickle.load(io)
         self.assertNotEqual(id(a), id(b))
         self.assertEqual(a.dim, b.dim)
         self.assertEqual(a.axis(0), b.axis(0))
@@ -519,19 +522,19 @@ class histogram_test(unittest.TestCase):
                        integer_axis(0, 3, label='ia'),
                        regular_axis(4, 0.0, 4.0, uoflow=False),
                        variable_axis(0.0, 1.0, 2.0))
-        for i in xrange(a.axis(0).bins):
+        for i in range(a.axis(0).bins):
             a.fill(i, 0, 0, 0, w=3)
-            for j in xrange(a.axis(1).bins):
+            for j in range(a.axis(1).bins):
                 a.fill(i, j, 0, 0, w=10)
-                for k in xrange(a.axis(2).bins):
+                for k in range(a.axis(2).bins):
                     a.fill(i, j, k, 0, w=2)
-                    for l in xrange(a.axis(3).bins):
+                    for l in range(a.axis(3).bins):
                         a.fill(i, j, k, l, w=5)
 
-        io = StringIO.StringIO()
-        cPickle.dump(a, io)
+        io = BytesIO()
+        pickle.dump(a, io)
         io.seek(0)
-        b = cPickle.load(io)
+        b = pickle.load(io)
         self.assertNotEqual(id(a), id(b))
         self.assertEqual(a.dim, b.dim)
         self.assertEqual(a.axis(0), b.axis(0))
@@ -544,17 +547,17 @@ class histogram_test(unittest.TestCase):
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_numpy_conversion_0(self):
         a = histogram(integer_axis(0, 2, uoflow=False))
-        for i in xrange(100):
+        for i in range(100):
             a.fill(1)
         b = numpy.array(a) # a copy
         v = numpy.asarray(a) # a view
         self.assertEqual(b.dtype, numpy.uint8)
         self.assertTrue(numpy.all(b == numpy.array((0, 100, 0))))
-        for i in xrange(100):
+        for i in range(100):
             a.fill(1)
         self.assertTrue(numpy.all(b == numpy.array((0, 100, 0))))
         self.assertTrue(numpy.all(v == numpy.array((0, 200, 0))))
-        for i in xrange(100):
+        for i in range(100):
             a.fill(1)
         b = numpy.array(a)
         self.assertEqual(b.dtype, numpy.uint16)
@@ -565,7 +568,7 @@ class histogram_test(unittest.TestCase):
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_numpy_conversion_1(self):
         a = histogram(integer_axis(0, 2, uoflow=False))
-        for i in xrange(10):
+        for i in range(10):
             a.fill(1, w=3)
         b = numpy.array(a) # a copy
         v = numpy.asarray(a) # a view

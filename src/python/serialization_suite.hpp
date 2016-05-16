@@ -15,9 +15,16 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-class python_str_sink : public iostreams::sink {
+#if PY_MAJOR_VERSION < 3
+# define PyBytes_FromStringAndSize PyString_FromStringAndSize
+# define PyBytes_AS_STRING PyString_AS_STRING
+# define PyBytes_Size PyString_Size
+# define _PyBytes_Resize _PyString_Resize
+#endif
+
+class python_bytes_sink : public iostreams::sink {
 public:
-    python_str_sink(PyObject** pstr) :
+    python_bytes_sink(PyObject** pstr) :
         pstr_(pstr),
         len_(0),
         pos_(0)
@@ -26,7 +33,7 @@ public:
     std::streamsize write(const char* s, std::streamsize n)
     {
         if (len_ == 0) {
-            *pstr_ = PyString_FromStringAndSize(s, n);
+            *pstr_ = PyBytes_FromStringAndSize(s, n);
             if (*pstr_ == 0) {
                 PyErr_SetString(PyExc_RuntimeError, "cannot allocate memory");
                 python::throw_error_already_set();
@@ -35,10 +42,10 @@ public:
         } else {
             if (pos_ + n > len_) {
                 len_ = pos_ + n; 
-                if (_PyString_Resize(pstr_, len_) == -1)
+                if (_PyBytes_Resize(pstr_, len_) == -1)
                     python::throw_error_already_set();
             }
-            char* b = PyString_AS_STRING(*pstr_);
+            char* b = PyBytes_AS_STRING(*pstr_);
             std::copy(s, s + n, b + pos_);
         }
         pos_ += n;
@@ -59,7 +66,7 @@ struct serialization_suite : python::pickle_suite
     python::tuple getstate(python::object obj)
     {
         PyObject* pobj = 0;
-        iostreams::stream<detail::python_str_sink> os(&pobj);
+        iostreams::stream<detail::python_bytes_sink> os(&pobj);
         archive::text_oarchive oa(os);
         oa << python::extract<const T&>(obj)();
         os.flush();
@@ -84,7 +91,7 @@ struct serialization_suite : python::pickle_suite
         // restore the C++ object
         python::object o = state[1];
         iostreams::stream<iostreams::array_source>
-            is(python::extract<const char*>(o)(), python::len(o));
+            is(PyBytes_AS_STRING(o.ptr()), PyBytes_Size(o.ptr()));
         archive::text_iarchive ia(is);
         ia >> python::extract<T&>(obj)();
     }
@@ -92,6 +99,11 @@ struct serialization_suite : python::pickle_suite
     static
     bool getstate_manages_dict() { return true; }
 };
+
+#undef PyBytes_FromStringAndSize
+#undef PyBytes_AS_STRING
+#undef PyBytes_Size
+#undef _PyBytes_Resize
 
 }
 }

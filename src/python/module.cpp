@@ -3,6 +3,11 @@
 # define PY_ARRAY_UNIQUE_SYMBOL boost_histogram_ARRAY_API
 # define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 # include <numpy/arrayobject.h>
+# if PY_MAJOR_VERSION >= 3
+static void* init_numpy() { import_array(); return NULL; }
+# else
+static void init_numpy() { import_array(); }
+# endif
 #endif
 
 namespace boost {
@@ -16,7 +21,7 @@ namespace histogram {
 BOOST_PYTHON_MODULE(histogram)
 {
 #ifdef HAVE_NUMPY
-  import_array();
+  init_numpy();
 #endif
   boost::histogram::register_axis_types();
   boost::histogram::register_basic_histogram();

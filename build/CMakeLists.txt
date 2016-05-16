@@ -19,26 +19,21 @@ add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 find_package(Boost 1.55 REQUIRED
              COMPONENTS iostreams serialization unit_test_framework)
 
+set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
+
 if(USE_PYTHON)
-  # try to find boost.python
-  find_package(Boost 1.55
-               COMPONENTS iostreams serialization unit_test_framework python)
-
-  execute_process(COMMAND python -c "import sys; sys.stdout.write(\"%i.%i\" % (sys.version_info.major, sys.version_info.minor))"
-                  OUTPUT_VARIABLE PYTHON_VERSION)
-  find_package(PythonLibs ${PYTHON_VERSION} EXACT)
-
-  if(Boost_PYTHON_FOUND AND PYTHONLIBS_FOUND
-     AND ${PYTHON_VERSION} VERSION_LESS 3)
-    # Python3 is not yet supported
-
+  find_package(PythonInterp)
+  find_package(PythonLibs ${PYTHON_VERSION_STRING} EXACT)
+  find_library(Boost_PYTHON_LIBRARY
+               NAMES
+                 boost_python-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
+                 boost_python
+               HINTS ${Boost_LIBRARY_DIR}
+               NO_DEFAULT_PATH)
+  message(STATUS "Found boost.python: ${Boost_PYTHON_LIBRARY}")
+  if(Boost_PYTHON_LIBRARY AND PYTHONLIBS_FOUND)
     set(HAVE_PYTHON 1)
-    message(STATUS "Python version: ${PYTHON_VERSION}")
     include_directories(${PYTHON_INCLUDE_DIRS})
-
-    if(${PYTHON_VERSION} VERSION_GREATER 3.0)
-      add_definitions(-DHAVE_PYTHON3)
-    endif()
 
     if(USE_NUMPY)
       find_package(Numpy 1.7)
@@ -49,10 +44,11 @@ if(USE_PYTHON)
       include_directories(${NUMPY_INCLUDE_DIR})
       add_definitions(-DHAVE_NUMPY)
     endif()
+
+    set(LIBRARIES ${LIBRARIES} ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARIES})
   endif()
 endif()
 
-set(LIBRARIES stdc++ m ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
 include_directories(../include ${Boost_INCLUDE_DIRS})
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug" OR COVERAGE)
@@ -80,7 +76,7 @@ add_library(boost_histogram SHARED
 target_link_libraries(boost_histogram ${LIBRARIES})
 
 # python bindings
-if(Boost_PYTHON_FOUND)
+if(HAVE_PYTHON)
   add_library(pyhistogram MODULE
     ../src/python/module.cpp
     ../src/python/axis.cpp
