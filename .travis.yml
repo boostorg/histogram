@@ -16,10 +16,8 @@ addons:
   apt:
     sources:
       - boost-latest
-      - kalakris-cmake
     packages:
       - libboost1.55-all-dev
-      - cmake
 
 # Setup anaconda
 before_install:
@@ -48,7 +46,8 @@ after_success:
 
 after_failure:
   - make clean && VERBOSE=1 make
-  - ls /usr/lib
+  - dpkg -L libboost-python1.55.0
+  - dpkg -L libboost1.55-all-dev
 
 notifications:
   email:
