@@ -24,17 +24,41 @@ set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
 
 if(USE_PYTHON)
   find_package(PythonInterp)
-  find_package(PythonLibs ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH} EXACT)
-  message(STATUS "boost lib dir ${Boost_LIBRARY_DIR}")
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; sys.stdout.write(sys.prefix)"
+                  OUTPUT_VARIABLE PYTHON_ROOT)
+  set(_VERSION ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR})
+  string(REPLACE "." "" _VERSION_NO_DOTS ${_VERSION})
+  find_library(PYTHON_LIBRARY 
+               PATHS ${PYTHON_ROOT}/lib
+               NAMES
+                 python${_VERSION_NO_DOTS}
+                 python${_VERSION}mu
+                 python${_VERSION}m
+                 python${_VERSION}u
+                 python${_VERSION}
+  )
+  find_path(PYTHON_INCLUDE_DIR
+    NAMES Python.h
+    PATHS ${PYTHON_ROOT}/include
+    PATH_SUFFIXES
+      python${_VERSION}mu
+      python${_VERSION}m
+      python${_VERSION}u
+      python${_VERSION}
+  )
+  message(STATUS "Python lib: ${PYTHON_LIBRARY}")
+  message(STATUS "Python include: ${PYTHON_INCLUDE_DIR}")
   find_library(Boost_PYTHON_LIBRARY
                NAMES
-                 boost_python-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
+                 boost_python-py${_VERSION_NO_DOTS}
                  boost_python
-               PATHS ${Boost_LIBRARY_DIR})
+               PATHS ${Boost_LIBRARY_DIR}
+               NO_DEFAULT_PATHS
+  )
   message(STATUS "Found boost.python: ${Boost_PYTHON_LIBRARY}")
-  if(Boost_PYTHON_LIBRARY AND PYTHONLIBS_FOUND)
+  if(Boost_PYTHON_LIBRARY AND PYTHON_LIBRARY)
     set(HAVE_PYTHON 1)
-    include_directories(${PYTHON_INCLUDE_DIRS})
+    include_directories(${PYTHON_INCLUDE_DIR})
 
     if(USE_NUMPY)
       find_package(Numpy 1.7)
@@ -46,7 +70,7 @@ if(USE_PYTHON)
       add_definitions(-DHAVE_NUMPY)
     endif()
 
-    set(LIBRARIES ${LIBRARIES} ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARIES})
+    set(LIBRARIES ${LIBRARIES} ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARY})
   endif()
 endif()
 

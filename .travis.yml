@@ -1,8 +1,8 @@
 language: cpp
 env:
-  - PYTHON_VERSION=3 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON CC=gcc CXX=g++
+  - PYTHON_VERSION=3.4 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON CC=gcc CXX=g++
   - PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON CC=gcc CXX=g++
-  - PYTHON_VERSION=3 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
+  - PYTHON_VERSION=3.4 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
   - PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
   - PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
   - PYTHON_VERSION=2 USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
@@ -16,8 +16,10 @@ addons:
   apt:
     sources:
       - boost-latest
+      - kalakris-cmake
     packages:
       - libboost1.55-all-dev
+      - cmake
 
 # Setup anaconda
 before_install:
@@ -46,6 +48,7 @@ after_success:
 
 after_failure:
   - make clean && VERBOSE=1 make
+  - ls /usr/lib
 
 notifications:
   email:
