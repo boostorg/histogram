@@ -15,9 +15,9 @@ My goal is to submit this project to [Boost](http://www.boost.org), that's why i
 * N-dimensional histogram
 * Intuitive and convenient interface
 * Support for different binning schemes, including binning of angles
+* Optional underflow- and overflow-bins for each dimension
 * Support for weighted events, with variance estimates for each bin
 * Support for move semantics using `boost::move` in `C++03` and `C++0x`
-* Optional underflow- and overflow-bins for each dimension
 * High performance through cache-friendly design
 * Space-efficient memory storage that dynamically grows as needed
 * Serialization support with zero-suppression
@@ -52,8 +52,8 @@ For the full version of the following examples with explanations, see
 Example 1: Fill a 1d-histogram in C++ 
 
 ```cpp
-    #include <boost/histogram/histogram.hpp>
-    #include <boost/histogram/axis.hpp>
+    #include <boost/histogram/histogram.hpp> // proposed for inclusion in Boost
+    #include <boost/histogram/axis.hpp> // proposed for inclusion in Boost
     #include <iostream>
     #include <cmath>
 
@@ -63,14 +63,14 @@ Example 1: Fill a 1d-histogram in C++
         bh::histogram h(bh::regular_axis(10, -1.0, 2.0, "x"));
 
         h.fill(-1.5); // put in underflow bin
+        h.fill(-1.0); // included, interval is semi-open
         h.fill(-0.5);
         h.fill(1.1);
-        h.fill(-1.0); // included, interval is semi-open
         h.fill(0.3);
         h.fill(1.7);
         h.fill(2.0);  // put in overflow bin, interval is semi-open
         h.fill(20.0); // put in overflow bin
-        h.wfill(0.1, 5.0);
+        h.wfill(0.1, 5.0); // fill with a weighted entry
 
         for (int i = -1; i <= h.bins(0); ++i) {
             const bh::regular_axis& a = h.axis<bh::regular_axis>(0);
