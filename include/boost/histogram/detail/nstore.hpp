@@ -51,7 +51,7 @@ public:
   {
     if (this != &o) {
       if (size_ == o.size_ && depth_ == o.depth_) {
-        std::memcpy(buffer_, o.buffer_, size_ * int(depth_));
+        std::memcpy(buffer_, o.buffer_, size_ * static_cast<int>(depth_));
       } else {
         destroy();
         size_ = o.size_;

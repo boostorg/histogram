@@ -44,7 +44,7 @@ nstore::operator+=(const nstore& o)
     size_type i = size_;
     while (i--) {
       const uint64_t oi = o.ivalue(i);
-      switch (int(depth_)) {
+      switch (static_cast<int>(depth_)) {
         #define BOOST_HISTOGRAM_NSTORE_ADD(D, T)            \
         case D: {                                           \
           T& b = ((T*)buffer_)[i];                          \
@@ -107,12 +107,12 @@ nstore::variance(size_type i)
 void*
 nstore::create(void* buffer)
 {
-  void* b = buffer ? std::malloc(size_ * int(depth_)) :
-                     std::calloc(size_, int(depth_));
+  void* b = buffer ? std::malloc(size_ * static_cast<int>(depth_)) :
+                     std::calloc(size_,  static_cast<int>(depth_));
   if (!b)
     throw std::bad_alloc();
   if (buffer)
-    std::memcpy(b, buffer, size_ * int(depth_));
+    std::memcpy(b, buffer, size_ * static_cast<int>(depth_));
   return b;
 }
 
@@ -131,7 +131,7 @@ nstore::grow()
     #define BOOST_HISTOGRAM_NSTORE_GROW(D0, T0, D1, T1) \
     case D0:                                            \
       depth_ = D1;                                      \
-      buffer_ = std::realloc(buffer_, size_ * int(depth_)); \
+      buffer_ = std::realloc(buffer_, size_ * static_cast<int>(depth_)); \
       if (!buffer_) throw std::bad_alloc();             \
       while (i--)                                       \
         ((T1*)buffer_)[i] = ((T0*)buffer_)[i];          \
@@ -151,7 +151,7 @@ nstore::wconvert()
   BOOST_ASSERT(size_ > 0);
   BOOST_ASSERT(depth_ < dw);
   // realloc is safe if buffer_ is null
-  buffer_ = std::realloc(buffer_, size_ * int(dw));
+  buffer_ = std::realloc(buffer_, size_ * static_cast<int>(dw));
   if (!buffer_) throw std::bad_alloc();
   size_type i = size_;
   switch (depth_) {

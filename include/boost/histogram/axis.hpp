@@ -79,7 +79,7 @@ public:
 
   inline int index(double x) const {
     const double z = (x - min_) / range_;
-    return algorithm::clamp(int(floor(z * bins())), -1, bins());
+    return algorithm::clamp(static_cast<int>(floor(z * bins())), -1, bins());
   }
 
   double operator[](int idx) const;
@@ -112,7 +112,7 @@ public:
   inline int index(double x) const { 
     using namespace boost::math::double_constants;
     const double z = (x - start_) / two_pi;
-    const int i = int(floor(z * bins())) % bins();
+    const int i = static_cast<int>(floor(z * bins())) % bins();
     return i + (i < 0) * bins();
   }
 
@@ -283,7 +283,7 @@ namespace detail {
     void operator()(const category_axis& a) {
       if (k < size_type(-1)) {
         if (use_x)
-          j = int(x + 0.5);
+          j = static_cast<int>(x + 0.5);
         const int bins = a.bins();
         j += (j < 0) * bins; // wrap around if j < 0
         if (j < bins) {

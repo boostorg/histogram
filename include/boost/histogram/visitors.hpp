@@ -34,7 +34,7 @@ namespace visitor {
     template <typename A>
     int operator()(const A& a) const { return a.index(x); }
 
-    int operator()(const category_axis& a) const { return int(x + 0.5); }
+    int operator()(const category_axis& a) const { return static_cast<int>(x + 0.5); }
   };
 
   struct cmp : public static_visitor<bool>
