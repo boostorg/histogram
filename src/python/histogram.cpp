@@ -74,8 +74,8 @@ histogram_fill(python::tuple args, python::dict kwargs) {
     if (nargs == 2) {
         object o = args[1];
         if (PySequence_Check(o.ptr())) {
-            PyArrayObject* a = (PyArrayObject*)
-                PyArray_FROM_OTF(o.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+            PyArrayObject* a = static_caste<PyArrayObject*>
+                (PyArray_FROM_OTF(o.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
             if (!a) {
                 PyErr_SetString(PyExc_ValueError, "could not convert sequence into array");
                 throw_error_already_set();
@@ -103,8 +103,8 @@ histogram_fill(python::tuple args, python::dict kwargs) {
 
             if (!ow.is_none()) {
                 if (PySequence_Check(ow.ptr())) {
-                    PyArrayObject* aw = (PyArrayObject*)
-                        PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+                    PyArrayObject* aw = static_cast<PyArrayObject*>
+                        (PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
                     if (!aw) {
                         PyErr_SetString(PyExc_ValueError, "could not convert sequence into array");
                         throw_error_already_set();                        
@@ -121,9 +121,9 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                     }
 
                     for (unsigned i = 0; i < dims[0]; ++i) {
-                        double* v = (double*)PyArray_GETPTR1(a, i);
-                        double* w = (double*)PyArray_GETPTR1(aw, i);
-                        self.wfill_c(self.dim(), v, *w);
+                        double* v = static_cast<double*>(PyArray_GETPTR1(a, i) );
+                        double* w = static_cast<double*>(PyArray_GETPTR1(aw, i));
+                        self.wfill(boost::make_iterator_range(v, v+self.dim()), *w);
                     }
 
                     Py_DECREF(aw);
@@ -133,8 +133,8 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                 }
             } else {
                 for (unsigned i = 0; i < dims[0]; ++i) {
-                    double* v = (double*)PyArray_GETPTR1(a, i);
-                    self.fill_c(self.dim(), v);
+                    double* v = static_cast<double*>(PyArray_GETPTR1(a, i));
+                    self.fill(boost::make_iterator_range(v, v+self.dim()));
                 }
             }
 
