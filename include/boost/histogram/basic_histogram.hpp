@@ -19,7 +19,9 @@
 
 #include <bitset>
 
+#if !defined(BOOST_HISTOGRAM_AXIS_LIMIT)
 #define BOOST_HISTOGRAM_AXIS_LIMIT 16
+#endif
 
 namespace boost {
 namespace histogram {
