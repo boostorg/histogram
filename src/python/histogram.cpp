@@ -74,7 +74,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
     if (nargs == 2) {
         object o = args[1];
         if (PySequence_Check(o.ptr())) {
-            PyArrayObject* a = static_caste<PyArrayObject*>
+            PyArrayObject* a = reinterpret_cast<PyArrayObject*>
                 (PyArray_FROM_OTF(o.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
             if (!a) {
                 PyErr_SetString(PyExc_ValueError, "could not convert sequence into array");
@@ -103,7 +103,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
 
             if (!ow.is_none()) {
                 if (PySequence_Check(ow.ptr())) {
-                    PyArrayObject* aw = static_cast<PyArrayObject*>
+                    PyArrayObject* aw = reinterpret_cast<PyArrayObject*>
                         (PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
                     if (!aw) {
                         PyErr_SetString(PyExc_ValueError, "could not convert sequence into array");
@@ -121,8 +121,8 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                     }
 
                     for (unsigned i = 0; i < dims[0]; ++i) {
-                        double* v = static_cast<double*>(PyArray_GETPTR1(a, i) );
-                        double* w = static_cast<double*>(PyArray_GETPTR1(aw, i));
+                        double* v = reinterpret_cast<double*>(PyArray_GETPTR1(a, i) );
+                        double* w = reinterpret_cast<double*>(PyArray_GETPTR1(aw, i));
                         self.wfill(boost::make_iterator_range(v, v+self.dim()), *w);
                     }
 
@@ -133,7 +133,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                 }
             } else {
                 for (unsigned i = 0; i < dims[0]; ++i) {
-                    double* v = static_cast<double*>(PyArray_GETPTR1(a, i));
+                    double* v = reinterpret_cast<double*>(PyArray_GETPTR1(a, i));
                     self.fill(boost::make_iterator_range(v, v+self.dim()));
                 }
             }
