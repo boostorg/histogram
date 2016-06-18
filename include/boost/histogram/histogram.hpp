@@ -11,8 +11,6 @@
 #include <boost/histogram/basic_histogram.hpp>
 #include <boost/histogram/detail/nstore.hpp>
 #include <boost/preprocessor.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/shared_ptr.hpp>
