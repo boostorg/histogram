@@ -173,7 +173,6 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VARIANCE,
 private:
   detail::nstore data_;
 
-  friend class serialization::access;
   template <class Archive>
   friend void serialize(Archive& ar, histogram & h, unsigned version);
 };

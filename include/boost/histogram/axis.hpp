@@ -194,7 +194,7 @@ public:
                const std::string& label = std::string(),
                bool uoflow = true);
 
-  integer_axis() {}
+  integer_axis() : min_(0) {}
   integer_axis(const integer_axis&);
   integer_axis& operator=(const integer_axis&);
 
