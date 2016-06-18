@@ -13,6 +13,7 @@
 #include <cstring>
 #include <limits>
 #include <vector>
+#include <algorithm>
 #include <new> // for bad:alloc
 
 namespace boost {
@@ -64,13 +65,13 @@ public:
 
   // move semantics
   nstore(BOOST_RV_REF(nstore) o) :
-    size_(0),
-    depth_(d1),
-    buffer_(0)
+    size_(o.size_),
+    depth_(o.depth_),
+    buffer_(o.buffer_)
   {
-    std::swap(size_, o.size_);
-    std::swap(depth_, o.depth_);
-    std::swap(buffer_, o.buffer_);
+	o.depth_ = d1;
+	o.size_ = 0;
+	o.buffer_ = static_cast<void*>(0);
   }
 
   nstore& operator=(BOOST_RV_REF(nstore) o)
@@ -89,31 +90,23 @@ public:
   nstore& operator+=(const nstore&);
   bool operator==(const nstore&) const;
 
-  inline void increase(size_type i) {
+  void increase(size_type i) {
     switch (depth_) {
-      #define BOOST_HISTOGRAM_NSTORE_INC(D, T)  \
-      case D: {                                 \
-        T& b = ((T*)buffer_)[i];                \
-        if (b == std::numeric_limits<T>::max()) \
-          grow(); /* and fall to next case */   \
-        else { ++b; break; }                    \
-      }
-      BOOST_HISTOGRAM_NSTORE_INC(d1, uint8_t);
-      BOOST_HISTOGRAM_NSTORE_INC(d2, uint16_t);
-      BOOST_HISTOGRAM_NSTORE_INC(d4, uint32_t);
-      BOOST_HISTOGRAM_NSTORE_INC(d8, uint64_t);
-      #undef BOOST_HISTOGRAM_NSTORE_INC
+      case d1: if (increase_impl_<uint8_t> (i)) break;
+      case d2: if (increase_impl_<uint16_t>(i)) break;
+      case d4: if (increase_impl_<uint32_t>(i)) break;
+      case d8: if (increase_impl_<uint64_t>(i)) break;
       case dw: {
-        wtype& b = ((wtype*)buffer_)[i];
+        wtype& b = static_cast<wtype*>(buffer_)[i];
         b += 1.0;
       } break;
     }
   }
 
-  inline void increase(size_type i, double w) {
+  void increase(size_type i, double w) {
     if (depth_ != dw)
       wconvert();
-    ((wtype*)buffer_)[i] += w;
+    static_cast<wtype*>(buffer_)[i] += w;
   }
 
   double value(size_type) const;
@@ -123,6 +116,56 @@ public:
   unsigned depth() const { return unsigned(depth_); }
 
 private:
+
+  template<class T>
+  bool increase_impl_(size_type i)
+  {
+      T& b = static_cast<T*>(buffer_)[i];
+      if (b == std::numeric_limits<T>::max())
+      {
+        grow(); /* and fall to next case */
+        return false;
+      }
+      else {
+    	  ++b;
+    	  return true;
+      }
+  }
+
+  template<typename T>
+  bool add_impl_(size_type i, const uint64_t & oi)
+  {
+    T& b = ((T*)buffer_)[i];
+    if (T(std::numeric_limits<T>::max() - b) >= oi) {
+  	b += oi;
+  	return true;
+    } else grow(); /* and fall through */
+    return false;
+  }
+
+  template<typename T, typename U>
+  void grow_impl()
+  {
+      depth_ = static_cast<depth_type>(sizeof(U));
+      buffer_ = std::realloc(buffer_, size_ * static_cast<int>(depth_));
+      if (!buffer_) throw std::bad_alloc();
+
+
+      T* buf_in = static_cast<T*>(buffer_);
+      U* buf_out = static_cast<U*>(buffer_);
+
+      std::copy_backward(buf_in, buf_in + size_, buf_out + size_);
+   }
+
+  template<typename T>
+  void wconvert_impl()
+  {
+      T*     buf_in = static_cast<T*>(buffer_);
+      wtype* buf_out = static_cast<wtype*>(buffer_);
+      std::copy_backward(buf_in, buf_in + size_, buf_out + size_);
+
+  }
+
   size_type size_;
   depth_type depth_;
   void* buffer_;
@@ -134,6 +177,32 @@ private:
 
   uint64_t ivalue(size_type) const;
 
+  template<class T, class Archive>
+  void serialize_save_impl(Archive & ar, unsigned version)
+  {
+      std::vector<T> buf;
+      if (zero_suppression_encode<T>(buf, (T*)buffer_, size_)) {
+        bool is_zero_suppressed = true;
+        ar & is_zero_suppressed;
+        ar & buf;
+      } else {
+        bool is_zero_suppressed = false;
+        ar & is_zero_suppressed;
+        ar & serialization::make_array((T*)buffer_, size_);
+      }
+  }
+
+  template<class T, class Archive>
+  void serialize_load_impl(Archive & ar, bool is_zero_suppressed, unsigned version)
+  {
+	  if (is_zero_suppressed) {
+		std::vector<T> buf;
+		ar & buf;
+		zero_suppression_decode<T>((T*)buffer_, size_, buf);
+	  } else {
+		ar & serialization::make_array((T*)buffer_, size_);
+	  }
+  }
   friend class serialization::access;
   template <class Archive>
   void serialize(Archive& ar, unsigned version)
@@ -151,25 +220,11 @@ private:
 
     if (Archive::is_saving::value) {
       switch (depth_) {
-        #define BOOST_HISTOGRAM_NSTORE_SAVE(D, T) \
-        case D: {                              \
-          std::vector<T> buf;                  \
-          if (zero_suppression_encode<T>(buf, (T*)buffer_, size_)) { \
-            bool is_zero_suppressed = true;    \
-            ar & is_zero_suppressed;           \
-            ar & buf;                          \
-          } else {                             \
-            bool is_zero_suppressed = false;   \
-            ar & is_zero_suppressed;           \
-            ar & serialization::make_array((T*)buffer_, size_); \
-          }                                    \
-        } break
-        BOOST_HISTOGRAM_NSTORE_SAVE(d1, uint8_t);
-        BOOST_HISTOGRAM_NSTORE_SAVE(d2, uint16_t);
-        BOOST_HISTOGRAM_NSTORE_SAVE(d4, uint32_t);
-        BOOST_HISTOGRAM_NSTORE_SAVE(d8, uint64_t);
-        BOOST_HISTOGRAM_NSTORE_SAVE(dw, wtype);
-        #undef BOOST_HISTOGRAM_NSTORE_SAVE
+      case d1: serialize_save_impl<uint8_t> (ar, version); break;
+      case d2: serialize_save_impl<uint16_t>(ar, version); break;
+      case d4: serialize_save_impl<uint32_t>(ar, version); break;
+      case d8: serialize_save_impl<uint64_t>(ar, version); break;
+      case dw: serialize_save_impl<wtype>   (ar, version); break;
       }
     }
 
@@ -177,21 +232,11 @@ private:
       bool is_zero_suppressed = false;
       ar & is_zero_suppressed;
       switch (depth_) {
-        #define BOOST_HISTOGRAM_NSTORE_LOAD(D, T) \
-        case D:                        \
-        if (is_zero_suppressed) {              \
-          std::vector<T> buf;                  \
-          ar & buf;                            \
-          zero_suppression_decode<T>((T*)buffer_, size_, buf); \
-        } else {                               \
-          ar & serialization::make_array((T*)buffer_, size_); \
-        } break
-        BOOST_HISTOGRAM_NSTORE_LOAD(d1, uint8_t);
-        BOOST_HISTOGRAM_NSTORE_LOAD(d2, uint16_t);
-        BOOST_HISTOGRAM_NSTORE_LOAD(d4, uint32_t);
-        BOOST_HISTOGRAM_NSTORE_LOAD(d8, uint64_t);
-        BOOST_HISTOGRAM_NSTORE_LOAD(dw, wtype);
-        #undef BOOST_HISTOGRAM_NSTORE_LOAD
+      case d1 : serialize_load_impl<uint8_t> (ar, is_zero_suppressed, version); break;
+      case d2 : serialize_load_impl<uint16_t>(ar, is_zero_suppressed, version); break;
+      case d4 : serialize_load_impl<uint32_t>(ar, is_zero_suppressed, version); break;
+      case d8 : serialize_load_impl<uint64_t>(ar, is_zero_suppressed, version); break;
+      case dw : serialize_load_impl<wtype>   (ar, is_zero_suppressed, version); break;
       }
     }
   }

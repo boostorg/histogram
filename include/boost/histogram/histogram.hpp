@@ -12,7 +12,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/assert.hpp>
 #include <boost/move/move.hpp>
+#include <boost/range.hpp>
+#include <boost/config.hpp>
 #include <stdexcept>
+#include <iterator>
 
 namespace boost {
 namespace histogram {
@@ -64,11 +67,11 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
   }
 
   // C-style call
-  inline
-  void fill_c(unsigned n, const double* v)
+  template<typename Iterator>
+  inline void fill(boost::iterator_range<Iterator> range)
   {
-    BOOST_ASSERT_MSG(n == dim(), "wrong number of arguments");
-    const size_type k = pos(v);
+	BOOST_ASSERT_MSG(range.size() == dim(), "wrong number of arguments");
+    const size_type k = pos(range);
     if (k != uintmax_t(-1))
       data_.increase(k);
   }
@@ -78,18 +81,18 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
   void fill( BOOST_PP_ENUM_PARAMS_Z(z, n, double x) )        \
   {                                                          \
     const double buffer[n] = { BOOST_PP_ENUM_PARAMS(n, x) }; \
-    fill_c(n, buffer); /* size is checked here */              \
+    fill(boost::make_iterator_range(boost::begin(buffer), boost::end(buffer)));\
   }
 
 // generates fill functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil)  
 
-  // C-style call
-  inline
-  void wfill_c(unsigned n, const double* v, double w)
+  // Iterator-style call
+  template<typename Iterator>
+  inline void wfill(boost::iterator_range<Iterator> range, double w)
   {
-    BOOST_ASSERT_MSG(n == dim(), "wrong number of arguments");
-    const size_type k = pos(v);
+    BOOST_ASSERT_MSG(range.size() == dim(), "wrong number of arguments");
+    const size_type k = pos(range);
     if (k != uintmax_t(-1))
       data_.increase(k, w);
   }
@@ -99,7 +102,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil
   void wfill( BOOST_PP_ENUM_PARAMS_Z(z, n, double x), double w ) \
   {                                                              \
     const double buffer[n] = { BOOST_PP_ENUM_PARAMS(n, x) };     \
-    wfill_c(n, buffer, w); /* size is checked here */              \
+    wfill(boost::make_iterator_range(boost::begin(buffer), boost::end(buffer)), w); \
   }
 
 // generates wfill functions taking 1 to AXIS_LIMT arguments
