@@ -139,8 +139,8 @@ private:
   template<typename T>
   bool add_impl_(size_type i, const uint64_t & oi)
   {
-    T& b = ((T*)buffer_)[i];
-    if (T(std::numeric_limits<T>::max() - b) >= oi) {
+    T& b = static_cast<T*>(buffer_)[i];
+    if (static_cast<T>(std::numeric_limits<T>::max() - b) >= oi) {
   	b += oi;
   	return true;
     } else grow(); /* and fall through */
