@@ -100,7 +100,8 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
   template<typename Iterator>
   inline void fill(boost::iterator_range<Iterator> range)
   {
-	BOOST_ASSERT_MSG(range.size() == dim(), "wrong number of arguments");
+	if(range.size() != dim())
+		throw std::range_error("wrong number of arguments at fill");
     const size_type k = pos(range);
     if (k != uintmax_t(-1))
       data_.increase(k);
@@ -142,7 +143,8 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil
   template<typename Iterator>
   inline void wfill(boost::iterator_range<Iterator> range, double w)
   {
-    BOOST_ASSERT_MSG(range.size() == dim(), "wrong number of arguments");
+    if (range.size() != dim())
+    	throw std::range_error("wrong number of arguments");
     const size_type k = pos(range);
     if (k != uintmax_t(-1))
       data_.increase(k, w);
@@ -171,7 +173,8 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, ni
   double value_c(unsigned n, const int* idx)
     const
   {
-    BOOST_ASSERT_MSG(n == dim(), "wrong number of arguments");
+    if (n != dim())
+    	throw std::range_error("wrong number of arguments");
     return data_.value(linearize(idx));
   }
 
@@ -192,7 +195,8 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, ni
   double variance_c(unsigned n, const int* idx)
     const
   {
-    BOOST_ASSERT_MSG(n == dim(), "wrong number of arguments");
+    if (n != dim())
+    	throw std::runtime_error("wrong number of arguments");
     return data_.variance(linearize(idx));
   }
 
@@ -224,6 +228,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VARIANCE,
     return *this;
   }
 
+  const void* buffer() const {return data_.buffer();};
 private:
   detail::nstore data_;
 
