@@ -184,7 +184,7 @@ histogram_value(python::tuple args, python::dict kwargs) {
     for (unsigned i = 0; i < self.dim(); ++i)
         idx[i] = extract<int>(args[1 + i]);
 
-    return object(self.value_c(self.dim(), idx));
+    return object(self.value(boost::make_iterator_range(idx, idx + self.dim())));
 }
 
 python::object
@@ -206,7 +206,7 @@ histogram_variance(python::tuple args, python::dict kwargs) {
     for (unsigned i = 0; i < self.dim(); ++i)
         idx[i] = extract<int>(args[1 + i]);
 
-    return object(self.variance_c(self.dim(), idx));
+    return object(self.variance(boost::make_iterator_range(idx, idx + self.dim())));
 }
 
 class histogram_access {

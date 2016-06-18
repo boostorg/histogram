@@ -99,12 +99,13 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR
     return lin.k;
   }
 
+  template<typename Range>
   inline
-  size_type linearize(const int* idx) const {
+  size_type linearize(const Range &r) const {
     detail::linearize lin(false);
     int i = axes_.size();
     while (i--) {
-      lin.j = idx[i];
+      lin.j = r[i];
       apply_visitor(lin, axes_[i]);
     }
     return lin.k;

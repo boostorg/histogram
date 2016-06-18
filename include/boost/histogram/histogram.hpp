@@ -115,13 +115,12 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, nil)  
 
   // C-style call
-  inline
-  double value_c(unsigned n, const int* idx)
-    const
+  template<typename Iterator>
+  inline double value(boost::iterator_range<Iterator> range) const
   {
-    if (n != dim())
+    if (range.size() != dim())
     	throw std::range_error("wrong number of arguments");
-    return data_.value(linearize(idx));
+    return data_.value(linearize(range));
   }
 
 #define BOOST_HISTOGRAM_VALUE(z, n, unused)                 \
@@ -130,20 +129,20 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, ni
     const                                                   \
   {                                                         \
     const int idx[n] = { BOOST_PP_ENUM_PARAMS_Z(z, n, i) }; \
-    return value_c(n, idx); /* size is checked here */        \
+    return value(boost::make_iterator_range(                \
+						boost::begin(idx), boost::end(idx)  \
+			 	 	 	 )); /* size is checked here */      \
   }
 
 // generates value functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, nil)  
 
-  // C-style call
-  inline
-  double variance_c(unsigned n, const int* idx)
-    const
+  template<typename Iterator>
+  inline double variance(boost::iterator_range<Iterator> range) const
   {
-    if (n != dim())
+    if (range.size() != dim())
     	throw std::runtime_error("wrong number of arguments");
-    return data_.variance(linearize(idx));
+    return data_.variance(linearize(range));
   }
 
 #define BOOST_HISTOGRAM_VARIANCE(z, n, unused)              \
@@ -152,7 +151,9 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, ni
     const                                                   \
   {                                                         \
     const int idx[n] = { BOOST_PP_ENUM_PARAMS_Z(z, n, i) }; \
-    return variance_c(n, idx); /* size is checked here */     \
+    return variance(boost::make_iterator_range(             \
+						boost::begin(idx), boost::end(idx)  \
+						 )); /* size is checked here */     \
   }
 
 // generates variance functions taking 1 to AXIS_LIMT arguments
