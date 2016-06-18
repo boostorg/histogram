@@ -155,10 +155,11 @@ histogram_fill(python::tuple args, python::dict kwargs) {
         v[i] = extract<double>(args[1 + i]);
 
     if (ow.is_none()) {
-        self.fill_c(self.dim(), v);
+        self.fill(boost::make_iterator_range(v, v+self.dim()));
+
     } else {
         const double w = extract<double>(ow);
-        self.wfill_c(self.dim(), v, w);
+        self.wfill(boost::make_iterator_range(v, v+self.dim()), w);
     }
 
     return object();
@@ -217,14 +218,14 @@ public:
         python::list shape;
         for (unsigned i = 0; i < self.dim(); ++i)
             shape.append(self.shape(i));
-        if (self.data_.depth() == sizeof(detail::wtype)) {
+        if (self.depth() == sizeof(detail::wtype)) {
             shape.append(2);
             d["typestr"] = python::str("<f") + python::str(sizeof(double));
         } else {
-            d["typestr"] = python::str("<u") + python::str(self.data_.depth());
+            d["typestr"] = python::str("<u") + python::str(self.depth());
         }
         d["shape"] = python::tuple(shape);
-        d["data"] = python::make_tuple((long long)(self.data_.buffer()), false);
+        d["data"] = python::make_tuple(reinterpret_cast<boost::uintptr_t>(self.buffer()), false);
         return d;
     }
 };

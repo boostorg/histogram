@@ -174,6 +174,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VARIANCE,
     return *this;
   }
 
+  const void* buffer() const {data_.buffer();};
 private:
   detail::nstore data_;
 
