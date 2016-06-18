@@ -1,12 +1,15 @@
+// Copyright 2015-2016 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef _BOOST_HISTOGRAM_AXIS_HPP_
 #define _BOOST_HISTOGRAM_AXIS_HPP_
 
 #include <boost/algorithm/clamp.hpp>
 #include <boost/variant.hpp>
 #include <boost/scoped_array.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/array.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <string>
 #include <vector>
@@ -37,14 +40,8 @@ private:
   int size_;
   std::string label_;
 
-  friend class serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, unsigned version)
-  {
-    using namespace serialization;
-    ar & size_;
-    ar & label_;
-  }
+  friend void serialize(Archive& ar, axis_base & base, unsigned version);
 };
 
 // mixin for real-valued axes
@@ -73,7 +70,7 @@ public:
                const std::string& label = std::string(),
                bool uoflow = true);
 
-  regular_axis() {}
+  regular_axis() : min_(0), range_(0) {}
   regular_axis(const regular_axis&);
   regular_axis& operator=(const regular_axis&);
 
@@ -87,15 +84,8 @@ public:
 private:
   double min_, range_;
 
-  friend class serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, unsigned version)
-  {
-    using namespace serialization;
-    ar & boost::serialization::base_object<axis_base>(*this);
-    ar & min_;
-    ar & range_;
-  }
+  friend void serialize(Archive& ar, regular_axis & axis ,unsigned version);
 };
 
 // real polar axis (constant bin widths, wraps around)
@@ -105,7 +95,7 @@ public:
   polar_axis(int n, double start = 0.0,
              const std::string& label = std::string());
 
-  polar_axis() {}
+  polar_axis() : start_(0) {}
   polar_axis(const polar_axis&);
   polar_axis& operator=(const polar_axis&);
 
@@ -121,14 +111,8 @@ public:
 private:
   double start_;
 
-  friend class serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, unsigned version)
-  {
-    using namespace serialization;
-    ar & boost::serialization::base_object<axis_base>(*this);
-    ar & start_;
-  }
+  friend void serialize(Archive& ar, polar_axis & axis, unsigned version);
 };
 
 // real variable axis (varying bin widths)
@@ -171,15 +155,8 @@ public:
 private:
   boost::scoped_array<double> x_;
 
-  friend class serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, unsigned version)
-  {
-    ar & boost::serialization::base_object<axis_base>(*this);
-    if (Archive::is_loading::value)
-      x_.reset(new double[bins() + 1]);
-    ar & serialization::make_array(x_.get(), bins() + 1);
-  }
+  friend void serialize(Archive& ar, variable_axis & axis, unsigned version);
 };
 
 class category_axis {
@@ -205,13 +182,8 @@ public:
 private:
   std::vector<std::string> categories_;
 
-  friend class serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, unsigned version)
-  {
-    using namespace serialization;
-    ar & categories_;
-  }
+  friend void serialize(Archive& ar, category_axis & axis, unsigned version);
 };
 
 class integer_axis: public axis_base {
@@ -234,14 +206,8 @@ public:
 private:
   int min_;
 
-  friend class serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, unsigned version)
-  {
-    using namespace serialization;
-    ar & boost::serialization::base_object<axis_base>(*this);
-    ar & min_;
-  }
+  friend void serialize(Archive& ar, integer_axis & axis, unsigned version);
 };
 
 namespace detail {

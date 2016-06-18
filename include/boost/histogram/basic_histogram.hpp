@@ -1,3 +1,9 @@
+// Copyright 2015-2016 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef _BOOST_HISTOGRAM_BASE_HPP_
 #define _BOOST_HISTOGRAM_BASE_HPP_
 
@@ -5,10 +11,6 @@
 #include <boost/histogram/visitors.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/preprocessor.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/split_member.hpp>
-#include <boost/serialization/variant.hpp>
-#include <boost/serialization/vector.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -112,17 +114,8 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR
 private:
   axes_type axes_;
 
-  friend class serialization::access;
   template <class Archive>
-  void serialize(Archive& ar, unsigned version)
-  {
-    using namespace serialization;
-    unsigned size = axes_.size();
-    ar & size;
-    if (Archive::is_loading::value)
-      axes_.resize(size);
-    ar & serialization::make_array(&axes_[0], size);
-  }
+  friend void serialize(Archive& ar, basic_histogram & h, unsigned version);
 };
 
 }

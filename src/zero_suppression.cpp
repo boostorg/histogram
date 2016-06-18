@@ -1,3 +1,9 @@
+// Copyright 2015-2016 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #include <boost/histogram/detail/zero_suppression.hpp>
 
 namespace boost {
@@ -9,20 +15,18 @@ bool
 zero_suppression_encode(std::vector<wtype>& output, const wtype* input,
                         uintptr_t size)
 {
-    #define BOOST_HISTOGRAM_ZERO_SUPPRESSION_FILL { \
-        if ((size - output.size()) < 2)       \
-            return false;                     \
-        output.push_back(0);                  \
-        output.push_back(nzero);              \
-        nzero = 0;                            \
-    }
 
     const wtype* input_end = input + size;
     uint32_t nzero = 0;
     for (; input != input_end; ++input) {
         if (*input != 0) {
-            if (nzero)
-                BOOST_HISTOGRAM_ZERO_SUPPRESSION_FILL
+            if (nzero) {
+                if ((size - output.size()) < 2)
+                    return false;
+                output.push_back(0);
+                output.push_back(nzero);
+                nzero = 0;
+            }
             if (output.size() == size)
                 return false;
             output.push_back(*input);
@@ -30,11 +34,22 @@ zero_suppression_encode(std::vector<wtype>& output, const wtype* input,
         else {
             ++nzero;
             if (nzero == 0) // overflowed to zero
-                BOOST_HISTOGRAM_ZERO_SUPPRESSION_FILL
+            {
+				if ((size - output.size()) < 2)
+					return false;
+				output.push_back(0);
+				output.push_back(nzero);
+				nzero = 0;
+			}
         }
     }
-    if (nzero)
-        BOOST_HISTOGRAM_ZERO_SUPPRESSION_FILL
+    if (nzero){
+            if ((size - output.size()) < 2)
+                return false;
+            output.push_back(0);
+            output.push_back(nzero);
+            nzero = 0;
+        }
     return true;
 }
 

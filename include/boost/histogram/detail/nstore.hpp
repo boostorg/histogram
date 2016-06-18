@@ -1,10 +1,14 @@
+// Copyright 2015-2016 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef _BOOST_HISTOGRAM_DETAIL_NSTORE_HPP_
 #define _BOOST_HISTOGRAM_DETAIL_NSTORE_HPP_
 
 #include <boost/histogram/detail/wtype.hpp>
 #include <boost/histogram/detail/zero_suppression.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/array.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
@@ -178,68 +182,12 @@ private:
   uint64_t ivalue(size_type) const;
 
   template<class T, class Archive>
-  void serialize_save_impl(Archive & ar, unsigned version)
-  {
-      std::vector<T> buf;
-      if (zero_suppression_encode<T>(buf, (T*)buffer_, size_)) {
-        bool is_zero_suppressed = true;
-        ar & is_zero_suppressed;
-        ar & buf;
-      } else {
-        bool is_zero_suppressed = false;
-        ar & is_zero_suppressed;
-        ar & serialization::make_array((T*)buffer_, size_);
-      }
-  }
-
+  friend void serialize_save_impl(Archive & ar, const nstore &, unsigned version);
   template<class T, class Archive>
-  void serialize_load_impl(Archive & ar, bool is_zero_suppressed, unsigned version)
-  {
-	  if (is_zero_suppressed) {
-		std::vector<T> buf;
-		ar & buf;
-		zero_suppression_decode<T>((T*)buffer_, size_, buf);
-	  } else {
-		ar & serialization::make_array((T*)buffer_, size_);
-	  }
-  }
-  friend class serialization::access;
+  friend void serialize_load_impl(Archive & ar, nstore &,
+		                          bool is_zero_suppressed, unsigned version);
   template <class Archive>
-  void serialize(Archive& ar, unsigned version)
-  {
-    const size_type s = size_;
-    const unsigned d = depth_;
-    ar & size_;
-    ar & depth_;
-    if (s != size_ || d != depth_) {
-      // realloc is safe if buffer_ is null
-      buffer_ = std::realloc(buffer_, size_ * depth_);
-    }
-    if (buffer_ == 0 && size_ > 0)
-      throw std::bad_alloc();
-
-    if (Archive::is_saving::value) {
-      switch (depth_) {
-      case d1: serialize_save_impl<uint8_t> (ar, version); break;
-      case d2: serialize_save_impl<uint16_t>(ar, version); break;
-      case d4: serialize_save_impl<uint32_t>(ar, version); break;
-      case d8: serialize_save_impl<uint64_t>(ar, version); break;
-      case dw: serialize_save_impl<wtype>   (ar, version); break;
-      }
-    }
-
-    if (Archive::is_loading::value) {
-      bool is_zero_suppressed = false;
-      ar & is_zero_suppressed;
-      switch (depth_) {
-      case d1 : serialize_load_impl<uint8_t> (ar, is_zero_suppressed, version); break;
-      case d2 : serialize_load_impl<uint16_t>(ar, is_zero_suppressed, version); break;
-      case d4 : serialize_load_impl<uint32_t>(ar, is_zero_suppressed, version); break;
-      case d8 : serialize_load_impl<uint64_t>(ar, is_zero_suppressed, version); break;
-      case dw : serialize_load_impl<wtype>   (ar, is_zero_suppressed, version); break;
-      }
-    }
-  }
+  friend void serialize(Archive& ar, nstore &, unsigned version);
 };
 
 }
