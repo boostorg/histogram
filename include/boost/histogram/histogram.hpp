@@ -21,9 +21,22 @@
 #include <stdexcept>
 #include <iterator>
 
+/** \file boost/histogram/histogram.hpp
+ *  \brief Defines the core class of this library, \ref boost::histogram::histogram .
+ *
+ */
+
 namespace boost {
 namespace histogram {
 
+/** The class implements an n-dimensional histogram, managing counts in bins.
+
+    It inherits from \ref boost::histogram::basic_histogram "basic_histogram",
+    which manages the stored axis
+    instances and the conversion of an n-dimensional tuple or index into an
+    internal linear offset that is used to address the bin count. How the bin
+    count is stored is an encapsulated implementation detail.
+ */
 class histogram : public basic_histogram {
   BOOST_COPYABLE_AND_MOVABLE(histogram)
 public:
@@ -40,6 +53,14 @@ public:
 // generates constructors taking 1 to AXIS_LIMIT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil)
 
+#if defined(BOOST_HISTOGRAM_DOXYGEN)
+  /**Constructors for a variable number of axis types, each defining the binning
+     scheme for its dimension. Up to \ref BOOST_HISTOGRAM_AXIS_LIMIT axis types
+     can be passed to the constructor, yielding the same number of dimensions.
+
+  */
+  explicit histogram(const axis_type& a0, ...);
+#endif
   // copy semantics (implementation needs to be here, workaround for gcc-bug)
   histogram(const histogram& o) :
     basic_histogram(o),
@@ -70,7 +91,12 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
     return *this;
   }
 
-  // C-style call
+  /** Fills the histogram with a range. It checks at run-time
+   *  that the size agrees with the dimensions of the histogram.
+
+      Allocation of internal memory is delayed until the first call to this function.
+   *
+   */
   template<typename Iterator>
   inline void fill(boost::iterator_range<Iterator> range)
   {
@@ -91,7 +117,28 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
 // generates fill functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil)  
 
-  // Iterator-style call
+#if defined(BOOST_HISTOGRAM_DOXYGEN)
+/**\overload void fill(boost::iterator_range<Iterator> range)
+	Overload taking a variadic sequence.
+*/
+   void fill(double x0, ...);
+#endif
+
+
+  /** Fills the histogram from a iterator range,
+   * using a weight. It checks at run-time that the length agrees with the
+   * dimensions of the histogram.
+
+     Allocation of internal memory is delayed until the first call to this function.
+     If the histogram was filled with :cpp:func:`fill_c` before, the internal
+     memory is converted to the wide format used for storing weighted counts.
+
+     If the data is not weighted (all weights are 1.0), using \ref fill is much
+     more space-efficient. In the most extreme case, storing of weighted counts
+     consumes 16x more memory.
+   *
+   *
+   */
   template<typename Iterator>
   inline void wfill(boost::iterator_range<Iterator> range, double w)
   {
@@ -112,6 +159,13 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil
 // generates wfill functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, nil)  
 
+
+#if defined(BOOST_HISTOGRAM_DOXYGEN)
+/**\overload void wfill(boost::iterator_range<Iterator> range, double weight)
+	Overload taking a variadic sequence.
+*/
+   void fill(double x0, ...);
+#endif
   // C-style call
   inline
   double value_c(unsigned n, const int* idx)
