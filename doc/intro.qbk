@@ -6,6 +6,9 @@ This library implements a single histogram class with a simple interface, which 
 
 The histogram is implemented in C++ and has Python-bindings. It passes the language barrier without copying its internal (possibly large) data buffer. The language transparency allows users who do data analysis in Python to create an empty histogram instance in Python, pass it over to a complex C++ code for filling, then analyse the results::
 
+[python]
+``
+
     import histogram as hg
     import complex_cpp_module
 
@@ -15,6 +18,8 @@ The histogram is implemented in C++ and has Python-bindings. It passes the langu
 
     # h is now filled with data,
     # continue with statistical analysis of h
+
+``
 
 Histograms can be added if they have the same signature. This is convenient if histograms are filled in parallel on a cluster and then merged (added).
 

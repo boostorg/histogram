@@ -96,6 +96,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
 
       Allocation of internal memory is delayed until the first call to this function.
    *
+   * \throws std::range_error If the range doesn't fit the dimension of the histogram.
    */
   template<typename Iterator>
   inline void fill(boost::iterator_range<Iterator> range)
@@ -138,6 +139,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil
      more space-efficient. In the most extreme case, storing of weighted counts
      consumes 16x more memory.
    *
+   * \throws std::range_error If the range doesn't fit the dimension of the histogram.
    *
    */
   template<typename Iterator>
@@ -168,7 +170,13 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, ni
 */
    void fill(double x0, ...);
 #endif
-  // C-style call
+  /**
+   * Returns the count of the bin addressed by the supplied index.
+   * Just like in Python, negative indices like ``-1`` are allowed and count
+   * from the end. So if an axis has ``k`` bins, ``-1`` points to ``k-1``.
+   *
+   * \throws std::range_error if the length does not match the dimension
+   */
   template<typename Iterator>
   inline double value(boost::iterator_range<Iterator> range) const
   {
@@ -190,6 +198,33 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, ni
 
 // generates value functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, nil)  
+
+#if defined(BOOST_HISTOGRAM_DOXYGEN)
+/**\overload void value(boost::iterator_range<Iterator> range)
+	Overload taking a variadic sequence.
+*/
+   void value(double x0, ...);
+#endif
+
+/**
+ * Returns the variance estimate for the count of the bin addressed by the supplied
+ * index. Negative indices are allowed just like in case of @ref histogram::value
+ *
+ * Note that it does not return the standard deviation :math:`\sigma`, commonly
+ * called "error", but the variance \f$\sigma^2\f$.
+ *
+ * In case of unweighted counts, the variance estimate returned is \f$n\f$,
+ * if the count is \f$n\f$. This is a common estimate for the variance based on
+ * the theory of the Poisson distribution.
+ * In case of weighted counts, the variance estimate returned is \f$\sum_i w_i^2\f$,
+ * if the individual weights are \f$w_i\f$. This estimate can be derived from
+ * the estimate above using uncertainty propagation.
+ * The extra storage needed for keeping track of the this sum is the reason why
+ * a histogram with weighted counts consumes more memory.
+ *
+ * \throws std::range_error if the length does not match the dimension
+ *
+ */
 
   template<typename Iterator>
   inline double variance(boost::iterator_range<Iterator> range) const
@@ -213,14 +248,25 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, ni
 // generates variance functions taking 1 to AXIS_LIMT arguments
 BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VARIANCE, nil)  
 
+#if defined(BOOST_HISTOGRAM_DOXYGEN)
+/**\overload void variance(boost::iterator_range<Iterator> range)
+	Overload taking a variadic sequence.
+*/
+   void variance(double x0, ...);
+#endif
+
+  ///Returns the current size of a count in the internal memory buffer in number of bytes.
   unsigned depth() const { return data_.depth(); }
 
+  ///Returns the sum of bin counts, including overflow and underflow bins. This could be implemented as a free function.
   double sum() const;
 
+  ///Returns true if the two histograms have the dimension, same axis types, and same data content. Two otherwise identical histograms are not considered equal, if they do not have the same depth, even if counts and variances are the same. This case only occurs if one histogram is filled using :cpp:func:`fill` and the other with :cpp:func:`wfill`, using weights of 1.
   bool operator==(const histogram& o) const 
   { return basic_histogram::operator==(o) &&
            data_ == o.data_; }
 
+  ///Adds the counts of the histogram on the right hand side to this histogram, if the two histograms have the same signature. Otherwise, a :cpp:type:`std::logic_error` is thrown. Returns itself.
   histogram& operator+=(const histogram& o)
   {
     if (!basic_histogram::operator==(o))

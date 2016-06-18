@@ -26,7 +26,7 @@
 namespace boost {
 namespace histogram {
 
-// holds collection of axis instances and computes the internal index
+/// This class holds collection of axis instances and computes the internal index
 class basic_histogram {
   BOOST_COPYABLE_AND_MOVABLE(basic_histogram)
 public:
@@ -50,8 +50,13 @@ public:
   basic_histogram& operator=(BOOST_RV_REF(basic_histogram) o)
   { if (this != &o) std::swap(axes_, o.axes_); return *this; }
 
+  ///Returns the number of dimensions of the histogram, how many axis it has
   unsigned dim() const { return axes_.size(); }
+  ///Returns the number of bins for axis \a i.
   int bins(unsigned i) const { return apply_visitor(visitor::bins(), axes_[i]); }
+  /**Returns the actual number of fields used by the axis. If the axis has no
+   * underflow and overflow bins, this is equal to \a bins. Otherwise, the number is larger by 2.
+   */
   unsigned shape(unsigned i) const { return apply_visitor(visitor::shape(), axes_[i]); }
 
   template <typename T>
@@ -69,6 +74,15 @@ public:
   template <typename T>
   typename enable_if<mpl::not_<is_same<T, axis_type> >, const T&>::type
   axis(unsigned i) const { return boost::get<const T&>(axes_[i]); }
+
+#if defined(BOOST_HISTOGRAM_DOXYGEN)
+  /** Returns the axis object at index \a i, casted to type \a T.
+   *  A runtime exception is thrown if the type cast is invalid.
+   */
+  template <typename T> T& axis(unsigned i);
+  /** The ``const``-version of the previous member function. */
+  template <typename T> const T& axis(unsigned i) const
+#endif
 
 protected:
   basic_histogram() {}
