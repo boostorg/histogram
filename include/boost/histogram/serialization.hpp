@@ -13,6 +13,12 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
+
+/** \file boost/histogram/serialization.hpp
+ *  \brief Defines the serialization functions, to use with boost.serialize.
+ *
+ */
+
 namespace boost {
 namespace histogram {
 

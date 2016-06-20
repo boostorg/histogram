@@ -16,15 +16,24 @@
 #include <cmath>
 #include <ostream>
 
+/** \file boost/histogram/axis
+ *  \brief Defines the axis classes.
+ *
+ */
+
 namespace boost {
 namespace histogram {
 
-// common base class for most axes
+/// common base class for most axes
 class axis_base {
 public:
+  ///Returns the number of bins.
   inline int bins() const { return size_ > 0 ? size_ : -size_; }
+  ///Returns whether overflow and underflow bins will be added in the histogram.
   inline bool uoflow() const { return size_ > 0; }
+  ///Change the label of an axis (not implemented for category_axis).
   const std::string& label() const { return label_; }
+  ///Returns the axis label, which is a name or description (not implemented for category_axis).
   void label(const std::string& label) { label_ = label; }
 
 protected:
@@ -63,9 +72,17 @@ public:
   }
 };
 
-// real regular axis (constant bin widths)
+///An axis for real-valued data and bins of equal width. Binning is a O(1) operation.
 class regular_axis: public axis_base, public real_axis<regular_axis> {
 public:
+  /** Constructor
+   *
+   * \param n number of bins
+   * \param min low edge of first bin
+   * \param max high edge of last bin
+   * \param label description of the axis
+   * \param uoflow add underflow and overflow bins to the histogram for this axis or not
+   */
   regular_axis(int n, double min, double max,
                const std::string& label = std::string(),
                bool uoflow = true);
@@ -74,6 +91,7 @@ public:
   regular_axis(const regular_axis&);
   regular_axis& operator=(const regular_axis&);
 
+  ///Returns the bin index for the passed argument.
   inline int index(double x) const {
     const double z = (x - min_) / range_;
     return algorithm::clamp(static_cast<int>(floor(z * bins())), -1, bins());
@@ -88,9 +106,14 @@ private:
   friend void serialize(Archive& ar, regular_axis & axis ,unsigned version);
 };
 
-// real polar axis (constant bin widths, wraps around)
+///An axis for real-valued angles. There are no overflow/underflow bins for this axis, since the axis is circular and wraps around after :math:`2 \pi`. Binning is a O(1) operation.
 class polar_axis: public axis_base, public real_axis<polar_axis> {
 public:
+  /** Constructor
+    \param n  number of bins
+	\param start  starting phase of the angle
+	\param label  description of the axis
+	*/
   explicit 
   polar_axis(int n, double start = 0.0,
              const std::string& label = std::string());
@@ -99,6 +122,7 @@ public:
   polar_axis(const polar_axis&);
   polar_axis& operator=(const polar_axis&);
 
+  ///Returns the bin index for the passed argument.
   inline int index(double x) const { 
     using namespace boost::math::double_constants;
     const double z = (x - start_) / two_pi;
@@ -115,9 +139,15 @@ private:
   friend void serialize(Archive& ar, polar_axis & axis, unsigned version);
 };
 
-// real variable axis (varying bin widths)
+///An axis for real-valued data and bins of varying width. Binning is a O(log(N)) operation. If speed matters and the problem domain allows it, prefer a regular_axis.
 class variable_axis : public axis_base, public real_axis<variable_axis> {
 public:
+	/** Constructor
+	 *
+	 * \param x     An axis for real-valued data and bins of varying width. Binning is a O(log(N)) operation. If speed matters and the problem domain allows it, prefer a regular_axis.
+	 * \param label description of the axis
+	 * \param uoflow add underflow and overflow bins to the histogram for this axis or not
+	 */
   template <typename Container>
   explicit
   variable_axis(const Container& x,
@@ -159,20 +189,30 @@ private:
   friend void serialize(Archive& ar, variable_axis & axis, unsigned version);
 };
 
+
+///An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from ``0`` to ``n-1``. There are no underflow/overflow bins for this axis.  Binning is a O(1) operation.
 class category_axis {
 public:
   typedef std::string value_type;
-
+  /**Construct from a single string
+   *
+   * @param categories a string of categories separated by the character \a ;
+   */
   explicit
-  category_axis(const std::string&);
+  category_axis(const std::string& categories);
+  /**Construct from a single string
+   *
+   * @param categories an ordered sequence of categories that this axis discriminates
+   */
   explicit
-  category_axis(const std::vector<std::string>&);
+  category_axis(const std::vector<std::string>& categories);
 
   category_axis() {}
   category_axis(const category_axis&);
   category_axis& operator=(const category_axis&);
 
   inline int bins() const { return categories_.size(); }
+  ///Returns the category for the bin index.
   const std::string& operator[](int idx) const
   { return categories_[idx]; }
 
@@ -186,10 +226,13 @@ private:
   friend void serialize(Archive& ar, category_axis & axis, unsigned version);
 };
 
+/** An axis for a contiguous range of integers. There are no underflow/overflow
+ *  bins for this axis. Binning is a O(1) operation.
+ */
 class integer_axis: public axis_base {
 public:
   typedef int value_type;
-
+  ///Constructor
   integer_axis(int min, int max,
                const std::string& label = std::string(),
                bool uoflow = true);
@@ -198,8 +241,10 @@ public:
   integer_axis(const integer_axis&);
   integer_axis& operator=(const integer_axis&);
 
+  ///Returns the bin index for the passed argument.
   inline int index(double x) const
   { return algorithm::clamp(rint(x) - min_, -1, bins()); }
+  ///Returns the integer that is mapped to the bin index.
   int operator[](int idx) const { return min_ + idx; }
 
   bool operator==(const integer_axis&) const;

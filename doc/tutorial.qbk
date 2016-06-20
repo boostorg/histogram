@@ -1,12 +1,10 @@
-Tutorial
-========
+[section Tutorial]
 
-Example 1: 1d-histogram in C++
-------------------------------
+[section Example 1: 1d-histogram in C++]
 
 How to make a 1d-histogram in C++ and to fill it:
-
-.. code-block:: cpp
+[c++]
+`` 
 
     #include <boost/histogram/histogram.hpp>
     #include <boost/histogram/axis.hpp>
@@ -63,9 +61,13 @@ How to make a 1d-histogram in C++ and to fill it:
         }
     }
 
+`` 
+
 The program output is:
 
-.. code-block:: none
+[teletype]
+
+`` 
 
     bin -1 x in [-inf, -1): 1 +/- 1
     bin 0 x in [-1, -0.7): 1 +/- 1
@@ -79,15 +81,16 @@ The program output is:
     bin 8 x in [1.4, 1.7): 0 +/- 0
     bin 9 x in [1.7, 2): 1 +/- 1
     bin 10 x in [2, inf): 2 +/- 1.41421
+`` 
 
-
-Example 2: 2d-histogram in Python
----------------------------------
+[endsect]
+[section Example 2: 2d-histogram in Python]
 
 How to make a 2d-histogram in Python and to fill it using a Numpy array:
 
-.. code-block:: python
+[python]
 
+`` 
     import histogram as bh
     import numpy as np
 
@@ -115,10 +118,10 @@ How to make a 2d-histogram in Python and to fill it using a Numpy array:
 
     print count_matrix
 
+``
 The program output are the counts per bin as a 2d-array:
 
-.. code-block:: python
-
+``
     [[37 26 33 37]
      [60 69 76 62]
      [48 80 80 77]
@@ -129,3 +132,7 @@ The program output are the counts per bin as a 2d-array:
      [ 0  0  0  0]
      [ 0  1  0  0]
      [ 0  0  0  0]]
+
+``
+[endsect]
+[endsect]
