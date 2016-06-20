@@ -101,25 +101,27 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR
 
   bool operator==(const basic_histogram&) const;
 
-  template <typename Array>
+  template <typename Iterator>
   inline
-  size_type pos(const Array& v) const {
+  size_type pos(const Iterator& begin, const Iterator & end) const {
     detail::linearize lin(true);
     int i = axes_.size();
-    while (i--) {
-      lin.x = v[i];
+    Iterator itr = end;
+    while (i-- && (itr-- != begin)) {
+      lin.x = *itr;
       apply_visitor(lin, axes_[i]);
     }
     return lin.k;
   }
 
-  template<typename Range>
+  template<typename Iterator>
   inline
-  size_type linearize(const Range &r) const {
+  size_type linearize(const Iterator &begin, const Iterator & end) const {
     detail::linearize lin(false);
     int i = axes_.size();
-    while (i--) {
-      lin.j = r[i];
+    Iterator itr = end;
+    while (i-- && (itr-- != begin)) {
+      lin.j = *itr;
       apply_visitor(lin, axes_[i]);
     }
     return lin.k;

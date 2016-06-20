@@ -18,6 +18,9 @@ python-extension histogram :
                         python/basic_histogram.cpp 
                         python/histogram.cpp 
                         python/module.cpp 
+                        /boost//serialization
+                        /boost//python
+                        boost_histogram
                         : <variant>release <link>shared ;
                                                   
 boost-install boost_histogram histogram  ;
