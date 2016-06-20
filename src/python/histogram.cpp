@@ -1,3 +1,9 @@
+// Copyright 2015-2016 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #include "serialization_suite.hpp"
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/histogram.hpp>
@@ -68,8 +74,8 @@ histogram_fill(python::tuple args, python::dict kwargs) {
     if (nargs == 2) {
         object o = args[1];
         if (PySequence_Check(o.ptr())) {
-            PyArrayObject* a = (PyArrayObject*)
-                PyArray_FROM_OTF(o.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+            PyArrayObject* a = reinterpret_cast<PyArrayObject*>
+                (PyArray_FROM_OTF(o.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
             if (!a) {
                 PyErr_SetString(PyExc_ValueError, "could not convert sequence into array");
                 throw_error_already_set();
@@ -97,8 +103,8 @@ histogram_fill(python::tuple args, python::dict kwargs) {
 
             if (!ow.is_none()) {
                 if (PySequence_Check(ow.ptr())) {
-                    PyArrayObject* aw = (PyArrayObject*)
-                        PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+                    PyArrayObject* aw = reinterpret_cast<PyArrayObject*>
+                        (PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
                     if (!aw) {
                         PyErr_SetString(PyExc_ValueError, "could not convert sequence into array");
                         throw_error_already_set();                        
@@ -115,9 +121,9 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                     }
 
                     for (unsigned i = 0; i < dims[0]; ++i) {
-                        double* v = (double*)PyArray_GETPTR1(a, i);
-                        double* w = (double*)PyArray_GETPTR1(aw, i);
-                        self.wfill_c(self.dim(), v, *w);
+                        double* v = reinterpret_cast<double*>(PyArray_GETPTR1(a, i) );
+                        double* w = reinterpret_cast<double*>(PyArray_GETPTR1(aw, i));
+                        self.wfill(boost::make_iterator_range(v, v+self.dim()), *w);
                     }
 
                     Py_DECREF(aw);
@@ -127,8 +133,8 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                 }
             } else {
                 for (unsigned i = 0; i < dims[0]; ++i) {
-                    double* v = (double*)PyArray_GETPTR1(a, i);
-                    self.fill_c(self.dim(), v);
+                    double* v = reinterpret_cast<double*>(PyArray_GETPTR1(a, i));
+                    self.fill(boost::make_iterator_range(v, v+self.dim()));
                 }
             }
 
@@ -149,10 +155,11 @@ histogram_fill(python::tuple args, python::dict kwargs) {
         v[i] = extract<double>(args[1 + i]);
 
     if (ow.is_none()) {
-        self.fill_c(self.dim(), v);
+        self.fill(boost::make_iterator_range(v, v+self.dim()));
+
     } else {
         const double w = extract<double>(ow);
-        self.wfill_c(self.dim(), v, w);
+        self.wfill(boost::make_iterator_range(v, v+self.dim()), w);
     }
 
     return object();
@@ -177,7 +184,7 @@ histogram_value(python::tuple args, python::dict kwargs) {
     for (unsigned i = 0; i < self.dim(); ++i)
         idx[i] = extract<int>(args[1 + i]);
 
-    return object(self.value_c(self.dim(), idx));
+    return object(self.value(boost::make_iterator_range(idx, idx + self.dim())));
 }
 
 python::object
@@ -199,7 +206,7 @@ histogram_variance(python::tuple args, python::dict kwargs) {
     for (unsigned i = 0; i < self.dim(); ++i)
         idx[i] = extract<int>(args[1 + i]);
 
-    return object(self.variance_c(self.dim(), idx));
+    return object(self.variance(boost::make_iterator_range(idx, idx + self.dim())));
 }
 
 class histogram_access {
@@ -211,14 +218,14 @@ public:
         python::list shape;
         for (unsigned i = 0; i < self.dim(); ++i)
             shape.append(self.shape(i));
-        if (self.data_.depth() == sizeof(detail::wtype)) {
+        if (self.depth() == sizeof(detail::wtype)) {
             shape.append(2);
             d["typestr"] = python::str("<f") + python::str(sizeof(double));
         } else {
-            d["typestr"] = python::str("<u") + python::str(self.data_.depth());
+            d["typestr"] = python::str("<u") + python::str(self.depth());
         }
         d["shape"] = python::tuple(shape);
-        d["data"] = python::make_tuple((long long)(self.data_.buffer()), false);
+        d["data"] = python::make_tuple(reinterpret_cast<boost::uintptr_t>(self.buffer()), false);
         return d;
     }
 };

@@ -1,3 +1,9 @@
+// Copyright 2015-2016 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #include <boost/histogram/detail/nstore.hpp>
 #include <boost/mpl/map.hpp>
 #include <boost/mpl/int.hpp>
@@ -38,26 +44,17 @@ nstore::operator+=(const nstore& o)
   // now add the content of lhs, grow as needed
   if (depth_ == dw) {
     for (size_type i = 0; i < size_; ++i)
-      ((wtype*)buffer_)[i] += ((wtype*)o.buffer_)[i];
+    	static_cast<wtype*>(buffer_)[i] += static_cast<wtype*>(o.buffer_)[i];
   }
   else {
     size_type i = size_;
     while (i--) {
       const uint64_t oi = o.ivalue(i);
-      switch (int(depth_)) {
-        #define BOOST_HISTOGRAM_NSTORE_ADD(D, T)            \
-        case D: {                                           \
-          T& b = ((T*)buffer_)[i];                          \
-          if (T(std::numeric_limits<T>::max() - b) >= oi) { \
-            b += oi;                                        \
-            break;                                          \
-          } else grow(); /* and fall through */             \
-        }
-        BOOST_HISTOGRAM_NSTORE_ADD(d1, uint8_t);
-        BOOST_HISTOGRAM_NSTORE_ADD(d2, uint16_t);
-        BOOST_HISTOGRAM_NSTORE_ADD(d4, uint32_t);
-        BOOST_HISTOGRAM_NSTORE_ADD(d8, uint64_t);
-        #undef BOOST_HISTOGRAM_NSTORE_ADD
+      switch (static_cast<int>(depth_)) {
+        case d1: if (add_impl_<uint8_t> (i, oi)) break;
+        case d2: if (add_impl_<uint16_t> (i, oi)) break;
+        case d4: if (add_impl_<uint32_t> (i, oi)) break;
+        case d8: if (add_impl_<uint64_t> (i, oi)) break;
         case dw: {
           ((wtype*)buffer_)[i] += wtype(oi);
           break;
@@ -91,14 +88,11 @@ nstore::variance(size_type i)
   const
 {
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_VARIANCE(D, T) \
-    case D: return ((T*)buffer_)[i]
-    BOOST_HISTOGRAM_NSTORE_VARIANCE(d1, uint8_t);
-    BOOST_HISTOGRAM_NSTORE_VARIANCE(d2, uint16_t);
-    BOOST_HISTOGRAM_NSTORE_VARIANCE(d4, uint32_t);
-    BOOST_HISTOGRAM_NSTORE_VARIANCE(d8, uint64_t);
-    #undef BOOST_HISTOGRAM_NSTORE_VARIANCE
-    case dw: return ((wtype*)buffer_)[i].w2;
+    case d1: return static_cast<uint8_t *>(buffer_)[i];
+    case d2: return static_cast<uint16_t*>(buffer_)[i];
+    case d4: return static_cast<uint32_t*>(buffer_)[i];
+    case d8: return static_cast<uint64_t*>(buffer_)[i];
+    case dw: return static_cast<wtype*>(buffer_)[i].w2;
   }
   BOOST_ASSERT(!"never arrive here");
   return 0.0;
@@ -107,12 +101,12 @@ nstore::variance(size_type i)
 void*
 nstore::create(void* buffer)
 {
-  void* b = buffer ? std::malloc(size_ * int(depth_)) :
-                     std::calloc(size_, int(depth_));
+  void* b = buffer ? std::malloc(size_ * static_cast<int>(depth_)) :
+                     std::calloc(size_,  static_cast<int>(depth_));
   if (!b)
     throw std::bad_alloc();
   if (buffer)
-    std::memcpy(b, buffer, size_ * int(depth_));
+    std::memcpy(b, buffer, size_ * static_cast<int>(depth_));
   return b;
 }
 
@@ -126,24 +120,16 @@ void
 nstore::grow()
 {
   BOOST_ASSERT(size_ > 0);
-  size_type i = size_;
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_GROW(D0, T0, D1, T1) \
-    case D0:                                            \
-      depth_ = D1;                                      \
-      buffer_ = std::realloc(buffer_, size_ * int(depth_)); \
-      if (!buffer_) throw std::bad_alloc();             \
-      while (i--)                                       \
-        ((T1*)buffer_)[i] = ((T0*)buffer_)[i];          \
-      return
-    BOOST_HISTOGRAM_NSTORE_GROW(d1, uint8_t, d2, uint16_t);
-    BOOST_HISTOGRAM_NSTORE_GROW(d2, uint16_t, d4, uint32_t);
-    BOOST_HISTOGRAM_NSTORE_GROW(d4, uint32_t, d8, uint64_t);
-    BOOST_HISTOGRAM_NSTORE_GROW(d8, uint64_t, dw, wtype);
-    #undef BOOST_HISTOGRAM_NSTORE_GROW
+    case d1: grow_impl<uint8_t,  uint16_t>(); break;
+    case d2: grow_impl<uint16_t, uint32_t>(); break;
+    case d4: grow_impl<uint32_t, uint64_t>(); break;
+    case d8: grow_impl<uint64_t, wtype>();    break;
     case dw: BOOST_ASSERT(!"never arrive here");
   }
 }
+
+
 
 void
 nstore::wconvert()
@@ -151,20 +137,13 @@ nstore::wconvert()
   BOOST_ASSERT(size_ > 0);
   BOOST_ASSERT(depth_ < dw);
   // realloc is safe if buffer_ is null
-  buffer_ = std::realloc(buffer_, size_ * int(dw));
+  buffer_ = std::realloc(buffer_, size_ * static_cast<int>(dw));
   if (!buffer_) throw std::bad_alloc();
-  size_type i = size_;
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_CONVERT(D, T) \
-    case D:                                      \
-    while (i--)                                  \
-      ((wtype*)buffer_)[i] = ((T*)buffer_)[i];   \
-    break
-    BOOST_HISTOGRAM_NSTORE_CONVERT(d1, uint8_t);
-    BOOST_HISTOGRAM_NSTORE_CONVERT(d2, uint16_t);
-    BOOST_HISTOGRAM_NSTORE_CONVERT(d4, uint32_t);
-    BOOST_HISTOGRAM_NSTORE_CONVERT(d8, uint64_t);
-    #undef BOOST_HISTOGRAM_NSTORE_CONVERT
+    case d1: wconvert_impl<uint8_t> (); break;
+    case d2: wconvert_impl<uint16_t>(); break;
+    case d4: wconvert_impl<uint32_t>(); break;
+    case d8: wconvert_impl<uint64_t>(); break;
     case dw: BOOST_ASSERT(!"never arrive here");
   }
   depth_ = dw;
@@ -175,13 +154,10 @@ nstore::ivalue(size_type i)
   const
 {
   switch (depth_) {
-    #define BOOST_HISTOGRAM_NSTORE_IVALUE(D, T) \
-    case D: return ((T*)buffer_)[i]
-    BOOST_HISTOGRAM_NSTORE_IVALUE(d1, uint8_t);
-    BOOST_HISTOGRAM_NSTORE_IVALUE(d2, uint16_t);
-    BOOST_HISTOGRAM_NSTORE_IVALUE(d4, uint32_t);
-    BOOST_HISTOGRAM_NSTORE_IVALUE(d8, uint64_t);
-    #undef BOOST_HISTOGRAM_NSTORE_IVALUE
+    case d1: return static_cast<uint8_t *>(buffer_)[i];
+    case d2: return static_cast<uint16_t*>(buffer_)[i];
+    case d4: return static_cast<uint32_t*>(buffer_)[i];
+    case d8: return static_cast<uint64_t*>(buffer_)[i];
     case dw: BOOST_ASSERT(!"never arrive here");
   }
   return 0;

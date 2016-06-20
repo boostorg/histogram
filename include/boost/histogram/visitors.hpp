@@ -1,3 +1,9 @@
+// Copyright 2015-2016 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef _BOOST_HISTOGARM_VISITORS_HPP_
 #define _BOOST_HISTOGARM_VISITORS_HPP_
 
@@ -34,7 +40,7 @@ namespace visitor {
     template <typename A>
     int operator()(const A& a) const { return a.index(x); }
 
-    int operator()(const category_axis& a) const { return int(x + 0.5); }
+    int operator()(const category_axis& a) const { return static_cast<int>(x + 0.5); }
   };
 
   struct cmp : public static_visitor<bool>
