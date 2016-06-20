@@ -9,16 +9,16 @@ project /boost/histogram : source-location ../src ;
 # For each library with either link to existing binary, or build
 # a library from th
 
-import python ;
-
 lib boost_histogram : axis.cpp basic_histogram.cpp histogram.cpp nstore.cpp zero_suppression.cpp ;
 
-lib boost_pyhistogram : 
+import python ;
+
+python-extension histogram : 
                         python/axis.cpp 
                         python/basic_histogram.cpp 
                         python/histogram.cpp 
                         python/module.cpp 
-                        /python//python_for_extensions  ;
-                        
-boost-install boost_histogram boost_pyhistogram  ;
+                        : <variant>release <link>shared ;
+                                                  
+boost-install boost_histogram histogram  ;
 
