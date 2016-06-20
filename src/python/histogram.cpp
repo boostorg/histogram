@@ -7,6 +7,7 @@
 #include "serialization_suite.hpp"
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/histogram.hpp>
+#include <boost/histogram/serialization.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/foreach.hpp>
