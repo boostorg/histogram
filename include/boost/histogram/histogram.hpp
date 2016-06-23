@@ -51,7 +51,7 @@ public:
   {}
 
 // generates constructors taking 1 to AXIS_LIMIT arguments
-BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil)
+BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(BOOST_HISTOGRAM_AXIS_LIMIT), BOOST_HISTOGRAM_CTOR, nil)
 
 #if defined(BOOST_HISTOGRAM_DOXYGEN)
   /**Constructors for a variable number of axis types, each defining the binning

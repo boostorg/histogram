@@ -10,6 +10,7 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/assign/std/vector.hpp>
 #include <boost/move/move.hpp>
+#include <boost/preprocessor.hpp>
 #include <limits>
 using namespace boost::assign;
 using namespace boost::histogram;
@@ -58,35 +59,23 @@ BOOST_AUTO_TEST_CASE(init_5)
               category_axis("A;B;C"));    
 }
 
-BOOST_AUTO_TEST_CASE(init_15)
+BOOST_AUTO_TEST_CASE(init_max)
 {
-    histogram(regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
+    #define ARG(z, n, data) regular_axis(1, -1, 1)
+    histogram( BOOST_PP_ENUM( BOOST_HISTOGRAM_AXIS_LIMIT, ARG, nil ) );
 
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1),
-              regular_axis(1, -1, 1));
-
-    histogram(histogram::axes_type(15,
-                regular_axis(1, -1, 1)));
+    histogram(
+        histogram::axes_type( BOOST_HISTOGRAM_AXIS_LIMIT,
+                              regular_axis(1, -1, 1) )
+    );
 }
 
 BOOST_AUTO_TEST_CASE(too_many_axes)
 {
     BOOST_CHECK_THROW(
         histogram(
-            histogram::axes_type(16, regular_axis(1, -1, 1))
+            histogram::axes_type( BOOST_PP_INC(BOOST_HISTOGRAM_AXIS_LIMIT),
+                                  regular_axis(1, -1, 1) )
         ),
         std::logic_error
     );
@@ -95,7 +84,7 @@ BOOST_AUTO_TEST_CASE(too_many_axes)
 BOOST_AUTO_TEST_CASE(bad_alloc)
 {
     BOOST_CHECK_THROW(
-        histogram(histogram::axes_type(15,
+        histogram(histogram::axes_type( BOOST_HISTOGRAM_AXIS_LIMIT,
             regular_axis(std::numeric_limits<int>::max(), 0, 1))),
         std::bad_alloc
     );

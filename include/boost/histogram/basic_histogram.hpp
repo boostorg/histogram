@@ -11,7 +11,7 @@
 #include <boost/histogram/visitors.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/preprocessor.hpp>
-#include <boost/container/static_vector.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/move/move.hpp>
@@ -29,7 +29,7 @@ namespace histogram {
 class basic_histogram {
   BOOST_COPYABLE_AND_MOVABLE(basic_histogram)
 public:
-  typedef container::static_vector<axis_type, BOOST_HISTOGRAM_AXIS_LIMIT> axes_type;
+  typedef container::vector<axis_type> axes_type;
   typedef uintptr_t size_type;
 
   ~basic_histogram() {}
@@ -96,7 +96,7 @@ protected:
   }
 
 // generates constructors taking 1 to AXIS_LIMIT arguments
-BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR, nil)
+BOOST_PP_REPEAT_FROM_TO(1, BOOST_PP_INC(BOOST_HISTOGRAM_AXIS_LIMIT), BOOST_HISTOGRAM_BASE_CTOR, nil)
 
   bool operator==(const basic_histogram&) const;
 

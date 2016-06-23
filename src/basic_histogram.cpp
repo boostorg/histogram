@@ -14,7 +14,7 @@ namespace histogram {
 basic_histogram::basic_histogram(const axes_type& axes) :
   axes_(axes)
 {
-  if (axes_.size() >= BOOST_HISTOGRAM_AXIS_LIMIT)
+  if (axes_.size() > BOOST_HISTOGRAM_AXIS_LIMIT)
     throw std::invalid_argument("too many axes");
 }
 
