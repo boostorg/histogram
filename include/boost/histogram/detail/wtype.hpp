@@ -14,6 +14,7 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+/// Used by nstore to hold a sum of weighted counts and a variance estimate
 struct wtype {
   double w, w2;
   wtype() : w(0), w2(0) {}  
