@@ -81,14 +81,16 @@ BOOST_AUTO_TEST_CASE(too_many_axes)
     );
 }
 
-BOOST_AUTO_TEST_CASE(bad_alloc)
-{
-    BOOST_CHECK_THROW(
-        histogram(histogram::axes_type( BOOST_HISTOGRAM_AXIS_LIMIT,
-            regular_axis(std::numeric_limits<int>::max(), 0, 1))),
-        std::bad_alloc
-    );
-}
+// BOOST_AUTO_TEST_CASE(bad_alloc)
+// {
+//     BOOST_CHECK_THROW(
+//         histogram(
+//             histogram::axes_type( BOOST_HISTOGRAM_AXIS_LIMIT,
+//                 regular_axis(std::numeric_limits<int>::max(), 0, 1))
+//         ),
+//         std::bad_alloc
+//     );
+// }
 
 BOOST_AUTO_TEST_CASE(copy_ctor)
 {
