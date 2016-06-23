@@ -31,8 +31,7 @@ namespace detail {
 // has a size of exactly X bits, so we only check wtype
 BOOST_STATIC_ASSERT(sizeof(wtype) >= (2 * sizeof(uint64_t)));
 
-template <typename T>
-struct next_storage_type;
+template <typename T> struct next_storage_type;
 template <> struct next_storage_type<uint8_t>  { typedef uint16_t type; };
 template <> struct next_storage_type<uint16_t> { typedef uint32_t type; };
 template <> struct next_storage_type<uint32_t> { typedef uint64_t type; };
