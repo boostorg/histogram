@@ -23,7 +23,7 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-//nstore
+
 template<class T, class Archive>
 inline void serialize_save_impl(Archive & ar, const nstore & store, unsigned version)
 {
@@ -95,13 +95,11 @@ inline void serialize(Archive& ar, wtype & wt, unsigned version)
 	ar & wt.w; ar & wt.w2;
 }
 
-
-}
+} // ns:detail
 
 template <class Archive>
 inline void serialize(Archive& ar, axis_base & base, unsigned version)
 {
-  using namespace serialization;
   ar & base.size_;
   ar & base.label_;
 }
@@ -109,7 +107,6 @@ inline void serialize(Archive& ar, axis_base & base, unsigned version)
 template <class Archive>
 inline void serialize(Archive& ar, regular_axis & axis ,unsigned version)
 {
-  using namespace serialization;
   ar & boost::serialization::base_object<axis_base>(axis);
   ar & axis.min_;
   ar & axis.range_;
@@ -118,7 +115,6 @@ inline void serialize(Archive& ar, regular_axis & axis ,unsigned version)
 template <class Archive>
 inline void serialize(Archive& ar, polar_axis & axis, unsigned version)
 {
-  using namespace serialization;
   ar & boost::serialization::base_object<axis_base>(axis);
   ar & axis.start_;
 }
@@ -129,21 +125,18 @@ inline void serialize(Archive& ar, variable_axis & axis, unsigned version)
   ar & boost::serialization::base_object<axis_base>(axis);
   if (Archive::is_loading::value)
 	  axis.x_.reset(new double[axis.bins() + 1]);
-  ar & serialization::make_array(axis.x_.get(), axis.bins() + 1);
+  ar & boost::serialization::make_array(axis.x_.get(), axis.bins() + 1);
 }
-
 
 template <class Archive>
 inline void serialize(Archive& ar, category_axis & axis, unsigned version)
 {
-  using namespace serialization;
   ar & axis.categories_;
 }
 
 template <class Archive>
 inline void serialize(Archive& ar, integer_axis & axis, unsigned version)
 {
-  using namespace serialization;
   ar & boost::serialization::base_object<axis_base>(axis);
   ar & axis.min_;
 }
@@ -151,24 +144,21 @@ inline void serialize(Archive& ar, integer_axis & axis, unsigned version)
 template <class Archive>
 inline void serialize(Archive& ar, basic_histogram & h, unsigned version)
 {
-  using namespace serialization;
   unsigned size = h.axes_.size();
   ar & size;
   if (Archive::is_loading::value)
     h.axes_.resize(size);
-  ar & serialization::make_array(&h.axes_[0], size);
+  ar & boost::serialization::make_array(&h.axes_[0], size);
 }
-
 
 template <class Archive>
 inline void serialize(Archive& ar, histogram & h, unsigned version)
 {
-  ar & serialization::base_object<basic_histogram>(h);
+  ar & boost::serialization::base_object<basic_histogram>(h);
   ar & h.data_;
 }
 
-
-}
-}
+} // ns:histogram
+} // ns:boost
 
 #endif
