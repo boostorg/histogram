@@ -7,17 +7,16 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_HPP_
 
+#include <boost/config.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/basic_histogram.hpp>
 #include <boost/histogram/detail/nstore.hpp>
 #include <boost/preprocessor.hpp>
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/assert.hpp>
 #include <boost/move/move.hpp>
-#include <boost/config.hpp>
-#include <boost/core/enable_if.hpp>
+#include <boost/utility/enable_if.hpp>
+#include <boost/type_traits.hpp>
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <stdexcept>
 #include <iterator>
