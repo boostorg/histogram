@@ -16,8 +16,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/assert.hpp>
 #include <boost/move/move.hpp>
-#include <boost/range.hpp>
 #include <boost/config.hpp>
+#include <boost/core/enable_if.hpp>
+#include <boost/type_traits/is_arithmetic.hpp>
 #include <stdexcept>
 #include <iterator>
 
@@ -99,11 +100,13 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
    * \throws std::range_error If the range doesn't fit the dimension of the histogram.
    */
   template<typename Iterator>
-  inline void fill(boost::iterator_range<Iterator> range)
+  inline
+  typename boost::disable_if<boost::is_arithmetic<Iterator>, void>::type
+  	  fill(Iterator begin, Iterator end)
   {
-	if(range.size() != dim())
+	if(std::distance(begin, end) != dim())
 		throw std::range_error("wrong number of arguments at fill");
-    const size_type k = pos(range);
+    const size_type k = pos(begin, end);
     if (k != uintmax_t(-1))
       data_.increase(k);
   }
@@ -113,7 +116,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_CTOR, nil
   void fill( BOOST_PP_ENUM_PARAMS_Z(z, n, double x) )        \
   {                                                          \
     const double buffer[n] = { BOOST_PP_ENUM_PARAMS(n, x) }; \
-    fill(boost::make_iterator_range(boost::begin(buffer), boost::end(buffer)));\
+    fill(boost::begin(buffer), boost::end(buffer));          \
   }
 
 // generates fill functions taking 1 to AXIS_LIMT arguments
@@ -143,11 +146,13 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil
    *
    */
   template<typename Iterator>
-  inline void wfill(boost::iterator_range<Iterator> range, double w)
+  inline
+  typename boost::disable_if<boost::is_arithmetic<Iterator>, void>::type
+  	  wfill(Iterator begin, Iterator end, double w)
   {
-    if (range.size() != dim())
+    if (std::distance(begin, end) != dim())
     	throw std::range_error("wrong number of arguments");
-    const size_type k = pos(range);
+    const size_type k = pos(begin, end);
     if (k != uintmax_t(-1))
       data_.increase(k, w);
   }
@@ -157,7 +162,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_FILL, nil
   void wfill( BOOST_PP_ENUM_PARAMS_Z(z, n, double x), double w ) \
   {                                                              \
     const double buffer[n] = { BOOST_PP_ENUM_PARAMS(n, x) };     \
-    wfill(boost::make_iterator_range(boost::begin(buffer), boost::end(buffer)), w); \
+    wfill(boost::begin(buffer), boost::end(buffer), w); \
   }
 
 // generates wfill functions taking 1 to AXIS_LIMT arguments
@@ -178,11 +183,13 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, ni
    * \throws std::range_error if the length does not match the dimension
    */
   template<typename Iterator>
-  inline double value(boost::iterator_range<Iterator> range) const
+  inline
+  typename boost::disable_if<boost::is_arithmetic<Iterator>, double>::type
+      value(Iterator begin, Iterator end) const
   {
-    if (range.size() != dim())
+    if (std::distance(begin, end) != dim())
     	throw std::range_error("wrong number of arguments");
-    return data_.value(linearize(range));
+    return data_.value(linearize(begin, end));
   }
 
 #define BOOST_HISTOGRAM_VALUE(z, n, unused)                 \
@@ -191,9 +198,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_WFILL, ni
     const                                                   \
   {                                                         \
     const int idx[n] = { BOOST_PP_ENUM_PARAMS_Z(z, n, i) }; \
-    return value(boost::make_iterator_range(                \
-						boost::begin(idx), boost::end(idx)  \
-			 	 	 	 )); /* size is checked here */      \
+    return value(boost::begin(idx), boost::end(idx)); /* size is checked here */      \
   }
 
 // generates value functions taking 1 to AXIS_LIMT arguments
@@ -225,13 +230,14 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, ni
  * \throws std::range_error if the length does not match the dimension
  *
  */
-
   template<typename Iterator>
-  inline double variance(boost::iterator_range<Iterator> range) const
+  inline
+  typename boost::disable_if<boost::is_arithmetic<Iterator>, double>::type
+      variance(Iterator begin, Iterator end) const
   {
-    if (range.size() != dim())
+    if (std::distance(begin, end) != dim())
     	throw std::runtime_error("wrong number of arguments");
-    return data_.variance(linearize(range));
+    return data_.variance(linearize(begin, end));
   }
 
 #define BOOST_HISTOGRAM_VARIANCE(z, n, unused)              \
@@ -240,9 +246,7 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_VALUE, ni
     const                                                   \
   {                                                         \
     const int idx[n] = { BOOST_PP_ENUM_PARAMS_Z(z, n, i) }; \
-    return variance(boost::make_iterator_range(             \
-						boost::begin(idx), boost::end(idx)  \
-						 )); /* size is checked here */     \
+    return variance(boost::begin(idx), boost::end(idx)); /* size is checked here */     \
   }
 
 // generates variance functions taking 1 to AXIS_LIMT arguments

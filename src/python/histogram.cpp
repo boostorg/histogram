@@ -124,7 +124,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
                     for (unsigned i = 0; i < dims[0]; ++i) {
                         double* v = reinterpret_cast<double*>(PyArray_GETPTR1(a, i) );
                         double* w = reinterpret_cast<double*>(PyArray_GETPTR1(aw, i));
-                        self.wfill(boost::make_iterator_range(v, v+self.dim()), *w);
+                        self.wfill(v, v+self.dim(), *w);
                     }
 
                     Py_DECREF(aw);
@@ -135,7 +135,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
             } else {
                 for (unsigned i = 0; i < dims[0]; ++i) {
                     double* v = reinterpret_cast<double*>(PyArray_GETPTR1(a, i));
-                    self.fill(boost::make_iterator_range(v, v+self.dim()));
+                    self.fill(v, v+self.dim());
                 }
             }
 
@@ -156,11 +156,11 @@ histogram_fill(python::tuple args, python::dict kwargs) {
         v[i] = extract<double>(args[1 + i]);
 
     if (ow.is_none()) {
-        self.fill(boost::make_iterator_range(v, v+self.dim()));
+        self.fill(v, v+self.dim());
 
     } else {
         const double w = extract<double>(ow);
-        self.wfill(boost::make_iterator_range(v, v+self.dim()), w);
+        self.wfill(v, v+self.dim(), w);
     }
 
     return object();
@@ -185,7 +185,7 @@ histogram_value(python::tuple args, python::dict kwargs) {
     for (unsigned i = 0; i < self.dim(); ++i)
         idx[i] = extract<int>(args[1 + i]);
 
-    return object(self.value(boost::make_iterator_range(idx, idx + self.dim())));
+    return object(self.value(idx, idx + self.dim()));
 }
 
 python::object
@@ -207,7 +207,7 @@ histogram_variance(python::tuple args, python::dict kwargs) {
     for (unsigned i = 0; i < self.dim(); ++i)
         idx[i] = extract<int>(args[1 + i]);
 
-    return object(self.variance(boost::make_iterator_range(idx, idx + self.dim())));
+    return object(self.variance(idx, idx + self.dim()));
 }
 
 class histogram_access {
