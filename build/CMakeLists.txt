@@ -88,6 +88,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "debug" OR COVERAGE)
 else()
   message(STATUS "Build type: RELEASE [optimizations on]")
   add_definitions(-O3 -fomit-frame-pointer -mtune=generic)
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -DBOOST_DISABLE_ASSERTS)
 endif()
 
 # core library
