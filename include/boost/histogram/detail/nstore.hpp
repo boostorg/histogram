@@ -15,7 +15,6 @@
 #include <boost/move/move.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
-#include <boost/mpl/not.hpp>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
