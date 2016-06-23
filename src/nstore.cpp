@@ -50,12 +50,12 @@ nstore::operator+=(const nstore& o)
     size_type i = size_;
     while (i--) {
       const uint64_t oi = o.ivalue(i);
-      switch (static_cast<int>(depth_)) {
-        case d1: if (add_impl<uint8_t> (i, oi)) break;
-        case d2: if (add_impl<uint16_t> (i, oi)) break;
-        case d4: if (add_impl<uint32_t> (i, oi)) break;
-        case d8: if (add_impl<uint64_t> (i, oi)) break;
-        case dw: ((wtype*)buffer_)[i] += wtype(oi); break;
+      switch (depth_) {
+        case d1: add_impl<uint8_t> (i, oi); break;
+        case d2: add_impl<uint16_t> (i, oi); break;
+        case d4: add_impl<uint32_t> (i, oi); break;
+        case d8: add_impl<uint64_t> (i, oi); break;
+        case dw: add_impl<wtype> (i, oi); break;
       }
     }
   }

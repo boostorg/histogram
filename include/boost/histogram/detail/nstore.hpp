@@ -137,7 +137,9 @@ private:
     if (b == std::numeric_limits<T>::max())
     {
       grow_impl<T>();
-      increase_impl<typename next_storage_type<T>::type>(i);
+      typedef typename  next_storage_type<T>::type U;
+      U& b = static_cast<U*>(buffer_)[i];
+      ++b;
     }
     else {
       ++b;
@@ -149,19 +151,27 @@ private:
   typename enable_if<is_same<T, wtype>, void>::type
   increase_impl(size_type i)
   {
-    T& b = static_cast<T*>(buffer_)[i];
-    b += 1.0;
+    ++(static_cast<wtype*>(buffer_)[i]);
   }
 
-  template<typename T>
-  bool add_impl(size_type i, const uint64_t & oi)
+  template<class T>
+  typename disable_if<is_same<T, wtype>, void>::type
+  add_impl(size_type i, const uint64_t & oi)
   {
     T& b = static_cast<T*>(buffer_)[i];
     if (static_cast<T>(std::numeric_limits<T>::max() - b) >= oi) {
       b += oi;
-      return true;
-    } else grow_impl<T>(); /* and fall through */
-    return false;
+    } else {
+      grow_impl<T>();
+      add_impl<typename next_storage_type<T>::type>(i, oi);
+    }
+  }
+
+  template<class T>
+  typename enable_if<is_same<T, wtype>, void>::type
+  add_impl(size_type i, const uint64_t & oi)
+  {
+    static_cast<wtype*>(buffer_)[i] += wtype(oi);
   }
 
   template<typename T>
