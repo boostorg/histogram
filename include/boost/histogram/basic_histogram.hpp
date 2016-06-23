@@ -104,11 +104,11 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR
   template <typename Iterator>
   inline
   size_type pos(const Iterator& begin, const Iterator & end) const {
-    detail::linearize lin(true);
+    detail::linearize lin;
     int i = axes_.size();
     Iterator itr = end;
-    while (i-- && (itr-- != begin)) {
-      lin.x = *itr;
+    while (i--) {
+      lin.x = *(--itr);
       apply_visitor(lin, axes_[i]);
     }
     return lin.k;
@@ -117,17 +117,17 @@ BOOST_PP_REPEAT_FROM_TO(1, BOOST_HISTOGRAM_AXIS_LIMIT, BOOST_HISTOGRAM_BASE_CTOR
   template<typename Iterator>
   inline
   size_type linearize(const Iterator &begin, const Iterator & end) const {
-    detail::linearize lin(false);
+    detail::linearize lin;
     int i = axes_.size();
     Iterator itr = end;
-    while (i-- && (itr-- != begin)) {
-      lin.j = *itr;
+    while (i--) {
+      lin.j = *(--itr);
       apply_visitor(lin, axes_[i]);
     }
     return lin.k;
   }
 
-  // compute the number of fields needed for storage
+  /// Returns the number of fields needed for storage
   size_type field_count() const;
 
 private:

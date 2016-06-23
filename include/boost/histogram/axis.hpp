@@ -11,9 +11,11 @@
 #include <boost/variant.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/math/constants/constants.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <string>
 #include <vector>
 #include <cmath>
+#include <limits>
 #include <ostream>
 
 /** \file boost/histogram/axis
@@ -212,6 +214,9 @@ public:
   category_axis& operator=(const category_axis&);
 
   inline int bins() const { return categories_.size(); }
+
+  ///Returns the bin index for the passed argument.
+  inline int index(double x) const { return static_cast<int>(x + 0.5); }
   ///Returns the category for the bin index.
   const std::string& operator[](int idx) const
   { return categories_[idx]; }
@@ -259,14 +264,12 @@ namespace detail {
   struct linearize : public static_visitor<void>
   {
     typedef uintptr_t size_type;
-    bool use_x;
     double x;
     int j;
     size_type k, stride;
 
-    linearize(bool b) :
-      use_x(b),
-      x(0.0),
+    linearize() :
+      x(std::numeric_limits<double>::quiet_NaN()),
       j(0),
       k(0),
       stride(1)
@@ -275,7 +278,7 @@ namespace detail {
     template <typename A>
     void operator()(const A& a) {
       if (k < size_type(-1)) {
-        if (use_x)
+        if (!std::isnan(x))
           j = a.index(x);
         const int bins = a.bins();
         const int range = bins + 2 * a.uoflow();
@@ -284,22 +287,6 @@ namespace detail {
         if (j < range) {
           k += j * stride;
           stride *= range;
-        }
-        else {
-          k = size_type(-1); // indicate out of range
-        }
-      }
-    }
-
-    void operator()(const category_axis& a) {
-      if (k < size_type(-1)) {
-        if (use_x)
-          j = static_cast<int>(x + 0.5);
-        const int bins = a.bins();
-        j += (j < 0) * bins; // wrap around if j < 0
-        if (j < bins) {
-          k += j * stride;
-          stride *= bins;
         }
         else {
           k = size_type(-1); // indicate out of range
