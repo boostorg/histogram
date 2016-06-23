@@ -51,14 +51,11 @@ nstore::operator+=(const nstore& o)
     while (i--) {
       const uint64_t oi = o.ivalue(i);
       switch (static_cast<int>(depth_)) {
-        case d1: if (add_impl_<uint8_t> (i, oi)) break;
-        case d2: if (add_impl_<uint16_t> (i, oi)) break;
-        case d4: if (add_impl_<uint32_t> (i, oi)) break;
-        case d8: if (add_impl_<uint64_t> (i, oi)) break;
-        case dw: {
-          ((wtype*)buffer_)[i] += wtype(oi);
-          break;
-        }
+        case d1: if (add_impl<uint8_t> (i, oi)) break;
+        case d2: if (add_impl<uint16_t> (i, oi)) break;
+        case d4: if (add_impl<uint32_t> (i, oi)) break;
+        case d8: if (add_impl<uint64_t> (i, oi)) break;
+        case dw: ((wtype*)buffer_)[i] += wtype(oi); break;
       }
     }
   }
@@ -119,17 +116,14 @@ nstore::destroy()
 void
 nstore::grow()
 {
-  BOOST_ASSERT(size_ > 0);
   switch (depth_) {
-    case d1: grow_impl<uint8_t,  uint16_t>(); break;
-    case d2: grow_impl<uint16_t, uint32_t>(); break;
-    case d4: grow_impl<uint32_t, uint64_t>(); break;
-    case d8: grow_impl<uint64_t, wtype>();    break;
+    case d1: grow_impl<uint8_t>(); break;
+    case d2: grow_impl<uint16_t>(); break;
+    case d4: grow_impl<uint32_t>(); break;
+    case d8: grow_impl<uint64_t>(); break;
     case dw: BOOST_ASSERT(!"never arrive here");
   }
 }
-
-
 
 void
 nstore::wconvert()

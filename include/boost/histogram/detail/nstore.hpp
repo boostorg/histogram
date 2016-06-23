@@ -13,12 +13,15 @@
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/move/move.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/utility/enable_if.hpp>
+#include <boost/mpl/not.hpp>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <vector>
 #include <algorithm>
-#include <new> // for bad:alloc
+#include <new> // for bad_alloc
 
 namespace boost {
 namespace histogram {
@@ -27,6 +30,13 @@ namespace detail {
 // we rely on boost to guarantee that boost::uintX_t
 // has a size of exactly X bits, so we only check wtype
 BOOST_STATIC_ASSERT(sizeof(wtype) >= (2 * sizeof(uint64_t)));
+
+template <typename T>
+struct next_storage_type;
+template <> struct next_storage_type<uint8_t>  { typedef uint16_t type; };
+template <> struct next_storage_type<uint16_t> { typedef uint32_t type; };
+template <> struct next_storage_type<uint32_t> { typedef uint64_t type; };
+template <> struct next_storage_type<uint64_t> { typedef wtype type; };
 
 class nstore {
   BOOST_COPYABLE_AND_MOVABLE(nstore)
@@ -73,9 +83,9 @@ public:
     depth_(o.depth_),
     buffer_(o.buffer_)
   {
-	o.depth_ = d1;
-	o.size_ = 0;
-	o.buffer_ = static_cast<void*>(0);
+    o.depth_ = d1;
+    o.size_ = 0;
+    o.buffer_ = static_cast<void*>(0);
   }
 
   nstore& operator=(BOOST_RV_REF(nstore) o)
@@ -94,19 +104,18 @@ public:
   nstore& operator+=(const nstore&);
   bool operator==(const nstore&) const;
 
+  inline
   void increase(size_type i) {
     switch (depth_) {
-      case d1: if (increase_impl_<uint8_t> (i)) break;
-      case d2: if (increase_impl_<uint16_t>(i)) break;
-      case d4: if (increase_impl_<uint32_t>(i)) break;
-      case d8: if (increase_impl_<uint64_t>(i)) break;
-      case dw: {
-        wtype& b = static_cast<wtype*>(buffer_)[i];
-        b += 1.0;
-      } break;
+      case d1: increase_impl<uint8_t> (i); break;
+      case d2: increase_impl<uint16_t>(i); break;
+      case d4: increase_impl<uint32_t>(i); break;
+      case d8: increase_impl<uint64_t>(i); break;
+      case dw: increase_impl<wtype>(i); break;
     }
   }
 
+  inline
   void increase(size_type i, double w) {
     if (depth_ != dw)
       wconvert();
@@ -122,52 +131,64 @@ public:
 private:
 
   template<class T>
-  bool increase_impl_(size_type i)
+  inline
+  typename disable_if<is_same<T, wtype>, void>::type
+  increase_impl(size_type i)
   {
-      T& b = static_cast<T*>(buffer_)[i];
-      if (b == std::numeric_limits<T>::max())
-      {
-        grow(); /* and fall to next case */
-        return false;
-      }
-      else {
-    	  ++b;
-    	  return true;
-      }
+    typedef typename next_storage_type<T>::type U;
+    T& b = static_cast<T*>(buffer_)[i];
+    if (b == std::numeric_limits<T>::max())
+    {
+      grow_impl<T>();
+      increase_impl<U>(i);
+    }
+    else {
+      ++b;
+    }
+  }
+
+  template<class T>
+  inline
+  typename enable_if<is_same<T, wtype>, void>::type
+  increase_impl(size_type i)
+  {
+    T& b = static_cast<T*>(buffer_)[i];
+    b += 1.0;
   }
 
   template<typename T>
-  bool add_impl_(size_type i, const uint64_t & oi)
+  bool add_impl(size_type i, const uint64_t & oi)
   {
     T& b = static_cast<T*>(buffer_)[i];
     if (static_cast<T>(std::numeric_limits<T>::max() - b) >= oi) {
-  	b += oi;
-  	return true;
-    } else grow(); /* and fall through */
+      b += oi;
+      return true;
+    } else grow_impl<T>(); /* and fall through */
     return false;
   }
 
-  template<typename T, typename U>
+  template<typename T>
   void grow_impl()
   {
-      depth_ = static_cast<depth_type>(sizeof(U));
-      buffer_ = std::realloc(buffer_, size_ * static_cast<int>(depth_));
-      if (!buffer_) throw std::bad_alloc();
+    BOOST_ASSERT(size_ > 0);
 
+    typedef typename next_storage_type<T>::type U;
+    depth_ = static_cast<depth_type>(sizeof(U));
+    buffer_ = std::realloc(buffer_, size_ * static_cast<int>(depth_));
+    if (!buffer_) throw std::bad_alloc();
 
-      T* buf_in = static_cast<T*>(buffer_);
-      U* buf_out = static_cast<U*>(buffer_);
+    T* buf_in = static_cast<T*>(buffer_);
+    U* buf_out = static_cast<U*>(buffer_);
 
-      std::copy_backward(buf_in, buf_in + size_, buf_out + size_);
+    std::copy_backward(buf_in, buf_in + size_, buf_out + size_);
    }
 
   template<typename T>
   void wconvert_impl()
   {
-      T*     buf_in = static_cast<T*>(buffer_);
-      wtype* buf_out = static_cast<wtype*>(buffer_);
-      std::copy_backward(buf_in, buf_in + size_, buf_out + size_);
-
+    T*     buf_in = static_cast<T*>(buffer_);
+    wtype* buf_out = static_cast<wtype*>(buffer_);
+    std::copy_backward(buf_in, buf_in + size_, buf_out + size_);
   }
 
   size_type size_;
@@ -182,10 +203,11 @@ private:
   uint64_t ivalue(size_type) const;
 
   template<class T, class Archive>
-  friend void serialize_save_impl(Archive & ar, const nstore &, unsigned version);
+  friend void serialize_save_impl(Archive & ar, const nstore &,
+                                  unsigned version);
   template<class T, class Archive>
   friend void serialize_load_impl(Archive & ar, nstore &,
-		                          bool is_zero_suppressed, unsigned version);
+                                  bool is_zero_suppressed, unsigned version);
   template <class Archive>
   friend void serialize(Archive& ar, nstore &, unsigned version);
 };
