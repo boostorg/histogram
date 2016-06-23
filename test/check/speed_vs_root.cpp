@@ -135,7 +135,7 @@ void compare_6d(unsigned n, int distrib)
     for (unsigned i = 0; i < n; ++i) {
       for (unsigned k = 0; k < 6; ++k)
         x[k] = r[6 * i + k];      
-      h.fill_c(6, x);
+      h.fill(x, x+6);
     }
     t = clock() - t;
     best_boost = std::min(best_boost, double(t) / CLOCKS_PER_SEC);
