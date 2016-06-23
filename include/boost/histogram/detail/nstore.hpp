@@ -133,12 +133,11 @@ private:
   typename disable_if<is_same<T, wtype>, void>::type
   increase_impl(size_type i)
   {
-    typedef typename next_storage_type<T>::type U;
     T& b = static_cast<T*>(buffer_)[i];
     if (b == std::numeric_limits<T>::max())
     {
       grow_impl<T>();
-      increase_impl<U>(i);
+      increase_impl<typename next_storage_type<T>::type>(i);
     }
     else {
       ++b;
