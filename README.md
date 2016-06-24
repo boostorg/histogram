@@ -60,18 +60,22 @@ Example 1: Fill a 1d-histogram in C++
     int main(int, char**) {
         namespace bh = boost::histogram;
 
+        // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
+        // with axis of histogram labeled as "x"
         bh::histogram h(bh::regular_axis(10, -1.0, 2.0, "x"));
 
+        // fill histogram with data
         h.fill(-1.5); // put in underflow bin
-        h.fill(-1.0); // included, interval is semi-open
+        h.fill(-1.0); // included in first bin, bin interval is semi-open
         h.fill(-0.5);
         h.fill(1.1);
         h.fill(0.3);
         h.fill(1.7);
-        h.fill(2.0);  // put in overflow bin, interval is semi-open
+        h.fill(2.0);  // put in overflow bin, bin interval is semi-open
         h.fill(20.0); // put in overflow bin
-        h.wfill(0.1, 5.0); // fill with a weighted entry
+        h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
 
+        // access histogram counts
         for (int i = -1; i <= h.bins(0); ++i) {
             const bh::regular_axis& a = h.axis<bh::regular_axis>(0);
             std::cout << "bin " << i
@@ -105,18 +109,27 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
     import histogram as bh
     import numpy as np
 
+    # create 2d-histogram over polar coordinates, with
+    # 10 equidistant bins in radius from 0 to 5 and
+    # 4 equidistant bins in polar angle
     h = bh.histogram(bh.regular_axis(10, 0.0, 5.0, "radius",
                                      uoflow=False),
                      bh.polar_axis(4, 0.0, "phi"))
 
+    # generate some numpy arrays with data to fill into histogram,
+    # in this case normal distributed random numbers in x and y,
+    # converted into polar coordinates
     x = np.random.randn(1000)             # generate x
     y = np.random.randn(1000)             # generate y
     rphi = np.empty((1000, 2))
     rphi[:, 0] = (x ** 2 + y ** 2) ** 0.5 # compute radius
     rphi[:, 1] = np.arctan2(y, x)         # compute phi
-    h.fill(rphi)
 
-    count_matrix = np.asarray(h)
+    # fill histogram with numpy array
+    h.fill(rphi)                          
+
+    # access histogram counts (no copy)
+    count_matrix = np.asarray(h)          
 
     print count_matrix
 
