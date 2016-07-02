@@ -17,7 +17,7 @@ My goal is to submit this project to [Boost](http://www.boost.org), that's why i
 * Support for different binning schemes, including binning of angles
 * Optional underflow- and overflow-bins for each dimension
 * Support for weighted events, with variance estimates for each bin
-* Support for move semantics using `boost::move` in `C++03` and `C++0x`
+* Support for move semantics using `boost::move` (works even in `C++03`)
 * High performance through cache-friendly design
 * Space-efficient memory storage that dynamically grows as needed
 * Serialization support with zero-suppression
