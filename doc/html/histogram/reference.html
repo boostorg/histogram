@@ -1,0 +1,150 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Reference</title>
+<link rel="stylesheet" href="../../../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="prev" href="../boost_histogram/references.html" title="References">
+<link rel="next" href="../boost/histogram/histogram.html" title="Class histogram">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../../../boost.png"></td>
+<td align="center"><a href="../../../../../index.html">Home</a></td>
+<td align="center"><a href="../../../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../boost_histogram/references.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../boost/histogram/histogram.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="histogram.reference"></a>Reference</h2></div></div></div>
+<div class="toc"><dl class="toc">
+<dt><span class="section"><a href="reference.html#header.boost.histogram_hpp">Header &lt;boost/histogram.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference.html#header.boost.histogram.histogram_hpp">Header &lt;boost/histogram/histogram.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference.html#header.boost.histogram.axis_hpp">Header &lt;boost/histogram/axis.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference.html#header.boost.histogram.basic_histogram_hpp">Header &lt;boost/histogram/basic_histogram.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference.html#header.boost.histogram.serialization_hpp">Header &lt;boost/histogram/serialization.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference.html#header.boost.histogram.visitors_hpp">Header &lt;boost/histogram/visitors.hpp&gt;</a></span></dt>
+</dl></div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="header.boost.histogram_hpp"></a>Header &lt;<a href="../../../../../boost/histogram.hpp" target="_top">boost/histogram.hpp</a>&gt;</h3></div></div></div>
+<p>Includes all the non-experimental headers of the Boost.histogram library. </p>
+<p>The library consists of a single <a class="link" href="../boost/histogram/histogram.html" title="Class histogram">histogram</a> and several axis types which are stored in a boost::variant called axis_type The axis types are created and passed to the constructor of the histogram to define its binning scheme. All following types are embedded in the boost::histogram namespace, which is omitted for brevity. </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="header.boost.histogram.histogram_hpp"></a>Header &lt;<a href="../../../../../boost/histogram/histogram.hpp" target="_top">boost/histogram/histogram.hpp</a>&gt;</h3></div></div></div>
+<p>Defines the core class of this library, <a class="link" href="../boost/histogram/histogram.html" title="Class histogram">boost::histogram::histogram</a> . </p>
+<pre class="synopsis">
+
+<a class="link" href="../BOOST_HISTOGRAM_CTOR.html" title="Macro BOOST_HISTOGRAM_CTOR">BOOST_HISTOGRAM_CTOR</a>(z, n, unused)
+<a class="link" href="../BOOST_HISTOGRAM_FILL.html" title="Macro BOOST_HISTOGRAM_FILL">BOOST_HISTOGRAM_FILL</a>(z, n, unused)
+<a class="link" href="../BOOST_HISTOGRAM_WFILL.html" title="Macro BOOST_HISTOGRAM_WFILL">BOOST_HISTOGRAM_WFILL</a>(z, n, unused)
+<a class="link" href="../BOOST_HISTOGRAM_VALUE.html" title="Macro BOOST_HISTOGRAM_VALUE">BOOST_HISTOGRAM_VALUE</a>(z, n, unused)
+<a class="link" href="../BOOST_HISTOGRAM_VARIANCE.html" title="Macro BOOST_HISTOGRAM_VARIANCE">BOOST_HISTOGRAM_VARIANCE</a>(z, n, unused)</pre>
+<pre class="synopsis"><span class="keyword">namespace</span> <span class="identifier">boost</span> <span class="special">{</span>
+  <span class="keyword">namespace</span> <span class="identifier">histogram</span> <span class="special">{</span>
+    <span class="keyword">class</span> <a class="link" href="../boost/histogram/histogram.html" title="Class histogram">histogram</a><span class="special">;</span>
+    <a class="link" href="../boost/histogram/histogram.html" title="Class histogram">histogram</a> <a name="boost.histogram.operator+"></a><span class="keyword">operator</span><span class="special">+</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="../boost/histogram/histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> a<span class="special">,</span> <span class="keyword">const</span> <a class="link" href="../boost/histogram/histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> b<span class="special">)</span><span class="special">;</span>
+  <span class="special">}</span>
+<span class="special">}</span></pre>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="header.boost.histogram.axis_hpp"></a>Header &lt;<a href="../../../../../boost/histogram/axis.hpp" target="_top">boost/histogram/axis.hpp</a>&gt;</h3></div></div></div>
+<pre class="synopsis"><span class="keyword">namespace</span> <span class="identifier">boost</span> <span class="special">{</span>
+  <span class="keyword">namespace</span> <span class="identifier">histogram</span> <span class="special">{</span>
+    <span class="keyword">class</span> <a class="link" href="../boost/histogram/axis_base.html" title="Class axis_base">axis_base</a><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Derived<span class="special">&gt;</span> <span class="keyword">class</span> <a class="link" href="../boost/histogram/real_axis.html" title="Class template real_axis">real_axis</a><span class="special">;</span>
+    <span class="keyword">class</span> <a class="link" href="../boost/histogram/regular_axis.html" title="Class regular_axis">regular_axis</a><span class="special">;</span>
+    <span class="keyword">class</span> <a class="link" href="../boost/histogram/polar_axis.html" title="Class polar_axis">polar_axis</a><span class="special">;</span>
+    <span class="keyword">class</span> <a class="link" href="../boost/histogram/variable_axis.html" title="Class variable_axis">variable_axis</a><span class="special">;</span>
+    <span class="keyword">class</span> <a class="link" href="../boost/histogram/category_axis.html" title="Class category_axis">category_axis</a><span class="special">;</span>
+    <span class="keyword">class</span> <a class="link" href="../boost/histogram/integer_axis.html" title="Class integer_axis">integer_axis</a><span class="special">;</span>
+
+    <span class="keyword">typedef</span> <span class="identifier">variant</span><span class="special">&lt;</span> <a class="link" href="../boost/histogram/regular_axis.html" title="Class regular_axis">regular_axis</a><span class="special">,</span> <a class="link" href="../boost/histogram/polar_axis.html" title="Class polar_axis">polar_axis</a><span class="special">,</span> <a class="link" href="../boost/histogram/variable_axis.html" title="Class variable_axis">variable_axis</a><span class="special">,</span> <a class="link" href="../boost/histogram/category_axis.html" title="Class category_axis">category_axis</a><span class="special">,</span> <a class="link" href="../boost/histogram/integer_axis.html" title="Class integer_axis">integer_axis</a> <span class="special">&gt;</span> <a name="boost.histogram.axis_type"></a><span class="identifier">axis_type</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span> <a name="boost.histogram.operator_idp20135232"></a><span class="keyword">operator</span><span class="special">&lt;&lt;</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">const</span> <a class="link" href="../boost/histogram/regular_axis.html" title="Class regular_axis">regular_axis</a> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span> <a name="boost.histogram.operator_idp20137616"></a><span class="keyword">operator</span><span class="special">&lt;&lt;</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">const</span> <a class="link" href="../boost/histogram/polar_axis.html" title="Class polar_axis">polar_axis</a> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span> <a name="boost.histogram.operator_idp20140000"></a><span class="keyword">operator</span><span class="special">&lt;&lt;</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">const</span> <a class="link" href="../boost/histogram/variable_axis.html" title="Class variable_axis">variable_axis</a> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span> <a name="boost.histogram.operator_idp20142384"></a><span class="keyword">operator</span><span class="special">&lt;&lt;</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">const</span> <a class="link" href="../boost/histogram/category_axis.html" title="Class category_axis">category_axis</a> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span> <a name="boost.histogram.operator_idp20144768"></a><span class="keyword">operator</span><span class="special">&lt;&lt;</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">const</span> <a class="link" href="../boost/histogram/integer_axis.html" title="Class integer_axis">integer_axis</a> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+  <span class="special">}</span>
+<span class="special">}</span></pre>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="header.boost.histogram.basic_histogram_hpp"></a>Header &lt;<a href="../../../../../boost/histogram/basic_histogram.hpp" target="_top">boost/histogram/basic_histogram.hpp</a>&gt;</h3></div></div></div>
+<pre class="synopsis">
+
+<a class="link" href="../BOOST_HISTOGRAM_AXIS_LIMIT.html" title="Macro BOOST_HISTOGRAM_AXIS_LIMIT">BOOST_HISTOGRAM_AXIS_LIMIT</a>
+<a class="link" href="../BOOST_HISTOGRAM_BASE_APPEND.html" title="Macro BOOST_HISTOGRAM_BASE_APPEND">BOOST_HISTOGRAM_BASE_APPEND</a>(z, n, unused)
+<a class="link" href="../BOOST_HISTOGRAM_BASE_CTOR.html" title="Macro BOOST_HISTOGRAM_BASE_CTOR">BOOST_HISTOGRAM_BASE_CTOR</a>(z, n, unused)</pre>
+<pre class="synopsis"><span class="keyword">namespace</span> <span class="identifier">boost</span> <span class="special">{</span>
+  <span class="keyword">namespace</span> <span class="identifier">histogram</span> <span class="special">{</span>
+    <span class="keyword">class</span> <a class="link" href="../boost/histogram/basic_histogram.html" title="Class basic_histogram">basic_histogram</a><span class="special">;</span>
+  <span class="special">}</span>
+<span class="special">}</span></pre>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="header.boost.histogram.serialization_hpp"></a>Header &lt;<a href="../../../../../boost/histogram/serialization.hpp" target="_top">boost/histogram/serialization.hpp</a>&gt;</h3></div></div></div>
+<p>Defines the serialization functions, to use with boost.serialize. </p>
+<pre class="synopsis"><span class="keyword">namespace</span> <span class="identifier">boost</span> <span class="special">{</span>
+  <span class="keyword">namespace</span> <span class="identifier">histogram</span> <span class="special">{</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> 
+      <span class="keyword">void</span> <a name="boost.histogram.serialize_idp20196672"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span> ar<span class="special">,</span> <a class="link" href="../boost/histogram/axis_base.html" title="Class axis_base">axis_base</a> <span class="special">&amp;</span> base<span class="special">,</span> <span class="keyword">unsigned</span> version<span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> 
+      <span class="keyword">void</span> <a name="boost.histogram.serialize_idp20200304"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span> ar<span class="special">,</span> <a class="link" href="../boost/histogram/regular_axis.html" title="Class regular_axis">regular_axis</a> <span class="special">&amp;</span> axis<span class="special">,</span> <span class="keyword">unsigned</span> version<span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> 
+      <span class="keyword">void</span> <a name="boost.histogram.serialize_idp20203936"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span> ar<span class="special">,</span> <a class="link" href="../boost/histogram/polar_axis.html" title="Class polar_axis">polar_axis</a> <span class="special">&amp;</span> axis<span class="special">,</span> <span class="keyword">unsigned</span> version<span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> 
+      <span class="keyword">void</span> <a name="boost.histogram.serialize_idp20207568"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span> ar<span class="special">,</span> <a class="link" href="../boost/histogram/variable_axis.html" title="Class variable_axis">variable_axis</a> <span class="special">&amp;</span> axis<span class="special">,</span> <span class="keyword">unsigned</span> version<span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> 
+      <span class="keyword">void</span> <a name="boost.histogram.serialize_idp20211200"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span> ar<span class="special">,</span> <a class="link" href="../boost/histogram/category_axis.html" title="Class category_axis">category_axis</a> <span class="special">&amp;</span> axis<span class="special">,</span> <span class="keyword">unsigned</span> version<span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> 
+      <span class="keyword">void</span> <a name="boost.histogram.serialize_idp20214832"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span> ar<span class="special">,</span> <a class="link" href="../boost/histogram/integer_axis.html" title="Class integer_axis">integer_axis</a> <span class="special">&amp;</span> axis<span class="special">,</span> <span class="keyword">unsigned</span> version<span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> 
+      <span class="keyword">void</span> <a name="boost.histogram.serialize_idp20218464"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span> ar<span class="special">,</span> <a class="link" href="../boost/histogram/basic_histogram.html" title="Class basic_histogram">basic_histogram</a> <span class="special">&amp;</span> h<span class="special">,</span> <span class="keyword">unsigned</span> version<span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> 
+      <span class="keyword">void</span> <a name="boost.histogram.serialize_idp20222096"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span> ar<span class="special">,</span> <a class="link" href="../boost/histogram/histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> h<span class="special">,</span> <span class="keyword">unsigned</span> version<span class="special">)</span><span class="special">;</span>
+  <span class="special">}</span>
+<span class="special">}</span></pre>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="header.boost.histogram.visitors_hpp"></a>Header &lt;<a href="../../../../../boost/histogram/visitors.hpp" target="_top">boost/histogram/visitors.hpp</a>&gt;</h3></div></div></div>
+<pre class="synopsis"><span class="keyword">namespace</span> <span class="identifier">boost</span> <span class="special">{</span>
+  <span class="keyword">namespace</span> <span class="identifier">histogram</span> <span class="special">{</span>
+    <span class="keyword">namespace</span> <span class="identifier">visitor</span> <span class="special">{</span>
+      <span class="keyword">struct</span> <a class="link" href="../boost/histogram/visitor/bins.html" title="Struct bins">bins</a><span class="special">;</span>
+      <span class="keyword">struct</span> <a class="link" href="../boost/histogram/visitor/shape.html" title="Struct shape">shape</a><span class="special">;</span>
+      <span class="keyword">struct</span> <a class="link" href="../boost/histogram/visitor/uoflow.html" title="Struct uoflow">uoflow</a><span class="special">;</span>
+      <span class="keyword">struct</span> <a class="link" href="../boost/histogram/visitor/index.html" title="Struct index">index</a><span class="special">;</span>
+      <span class="keyword">struct</span> <a class="link" href="../boost/histogram/visitor/cmp.html" title="Struct cmp">cmp</a><span class="special">;</span>
+    <span class="special">}</span>
+  <span class="special">}</span>
+<span class="special">}</span></pre>
+</div>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2016 Hand Dembinski<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../boost_histogram/references.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../boost/histogram/histogram.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

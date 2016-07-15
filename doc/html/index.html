@@ -1,0 +1,115 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Chapter&#160;1.&#160;Boost.Histogram</title>
+<link rel="stylesheet" href="../../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="next" href="boost_histogram/motivation.html" title="Motivation">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../../boost.png"></td>
+<td align="center"><a href="../../../../index.html">Home</a></td>
+<td align="center"><a href="../../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav"><a accesskey="n" href="boost_histogram/motivation.html"><img src="../../../../doc/src/images/next.png" alt="Next"></a></div>
+<div class="chapter">
+<div class="titlepage"><div>
+<div><h2 class="title">
+<a name="histogram"></a>Chapter&#160;1.&#160;Boost.Histogram</h2></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Hans</span> <span class="surname">Dembinski</span>
+</h3></div></div>
+<div><p class="copyright">Copyright &#169; 2016 Hand Dembinski</p></div>
+<div><div class="legalnotice">
+<a name="histogram.legal"></a><p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+      </p>
+</div></div>
+</div></div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl class="toc">
+<dt><span class="section"><a href="index.html#histogram.descr">Description</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/motivation.html">Motivation</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/introduction.html">Introduction</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/tutorial.html">Tutorial</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="boost_histogram/tutorial.html#boost_histogram.tutorial.example_1__1d_histogram_in_c__">Example
+      1: 1d-histogram in C++</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/tutorial.html#boost_histogram.tutorial.example_2__2d_histogram_in_python">Example
+      2: 2d-histogram in Python</a></span></dt>
+</dl></dd>
+<dt><span class="section"><a href="boost_histogram/notes.html">Notes</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="boost_histogram/notes.html#boost_histogram.notes.dependencies">Dependencies</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/notes.html#boost_histogram.notes.setup">How to build and install</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/notes.html#boost_histogram.notes.tests">Tests</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/notes.html#boost_histogram.notes.checks">Checks</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/notes.html#boost_histogram.notes.consistency">Consistency of C++
+      and Python interface</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/notes.html#boost_histogram.notes.benchmarks">Benchmarks</a></span></dt>
+</dl></dd>
+<dt><span class="section"><a href="boost_histogram/rationale.html">Rationale</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="boost_histogram/rationale.html#boost_histogram.rationale.design_principles">Design principles</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/rationale.html#boost_histogram.rationale.interface_convenience">Interface
+      convenience</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/rationale.html#boost_histogram.rationale.language_transparency">Language
+      transparency</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/rationale.html#boost_histogram.rationale.powerful_binning_strategies">Powerful
+      binning strategies</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/rationale.html#boost_histogram.rationale.performance_and_memory_efficiency">Performance
+      and memory-efficiency</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/rationale.html#boost_histogram.rationale.weighted_counts_and_variance_estimates">Weighted
+      counts and variance estimates</a></span></dt>
+<dt><span class="section"><a href="boost_histogram/rationale.html#boost_histogram.rationale.serialization_and_zero_suppression">Serialization
+      and zero-suppression</a></span></dt>
+</dl></dd>
+<dt><span class="section"><a href="boost_histogram/references.html">References</a></span></dt>
+<dt><span class="section"><a href="histogram/reference.html">Reference</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="histogram/reference.html#header.boost.histogram_hpp">Header &lt;boost/histogram.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="histogram/reference.html#header.boost.histogram.histogram_hpp">Header &lt;boost/histogram/histogram.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="histogram/reference.html#header.boost.histogram.axis_hpp">Header &lt;boost/histogram/axis.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="histogram/reference.html#header.boost.histogram.basic_histogram_hpp">Header &lt;boost/histogram/basic_histogram.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="histogram/reference.html#header.boost.histogram.serialization_hpp">Header &lt;boost/histogram/serialization.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="histogram/reference.html#header.boost.histogram.visitors_hpp">Header &lt;boost/histogram/visitors.hpp&gt;</a></span></dt>
+</dl></dd>
+<dt><span class="section"><a href="boost_histogram/changelog.html">Changelog</a></span></dt>
+</dl>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="histogram.descr"></a><a class="link" href="index.html#histogram.descr" title="Description">Description</a>
+</h2></div></div></div>
+<p>
+      This project contains an easy-to-use powerful n-dimensional histogram class
+      implemented in C++03, optimized for convenience and excellent performance under
+      heavy duty. Move semantics are supported using <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">move</span></code>. The
+      histogram has a complete C++ and a <a href="http://www.python.org" target="_top">Python</a>
+      interface, and can be passed over the language boundary with ease. <a href="http://www.numpy.org" target="_top">Numpy</a>
+      is fully supported; histograms can be filled with Numpy arrays at C speeds
+      and are convertible into Numpy arrays without copying data. Histograms can
+      be streamed from/to files and pickled in Python.
+    </p>
+<p>
+      My goal is to submit this project to the <a href="http://www.boost.org" target="_top">Boost
+      Libraries</a>
+    </p>
+</div>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"><p><small>Last revised: July 12, 2016 at 22:56:41 GMT</small></p></td>
+<td align="right"><div class="copyright-footer"></div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav"><a accesskey="n" href="boost_histogram/motivation.html"><img src="../../../../doc/src/images/next.png" alt="Next"></a></div>
+</body>
+</html>

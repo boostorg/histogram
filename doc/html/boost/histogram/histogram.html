@@ -1,0 +1,203 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Class histogram</title>
+<link rel="stylesheet" href="../../../../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="up" href="../../histogram/reference.html#header.boost.histogram.histogram_hpp" title="Header &lt;boost/histogram/histogram.hpp&gt;">
+<link rel="prev" href="../../histogram/reference.html" title="Reference">
+<link rel="next" href="../../BOOST_HISTOGRAM_CTOR.html" title="Macro BOOST_HISTOGRAM_CTOR">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../../../../boost.png"></td>
+<td align="center"><a href="../../../../../../index.html">Home</a></td>
+<td align="center"><a href="../../../../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../../histogram/reference.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../histogram/reference.html#header.boost.histogram.histogram_hpp"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../../BOOST_HISTOGRAM_CTOR.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="refentry">
+<a name="boost.histogram.histogram"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2><span class="refentrytitle">Class histogram</span></h2>
+<p>boost::histogram::histogram</p>
+</div>
+<h2 xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="refsynopsisdiv-title">Synopsis</h2>
+<div xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../../histogram/reference.html#header.boost.histogram.histogram_hpp" title="Header &lt;boost/histogram/histogram.hpp&gt;">boost/histogram/histogram.hpp</a>&gt;
+
+</span>
+<span class="keyword">class</span> <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">:</span> <span class="keyword">public</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">histogram</span><span class="special">::</span><span class="identifier">basic_histogram</span> <span class="special">{</span>
+<span class="keyword">public</span><span class="special">:</span>
+  <span class="comment">// <a class="link" href="histogram.html#boost.histogram.histogramconstruct-copy-destruct">construct/copy/destruct</a></span>
+  <a class="link" href="histogram.html#idp19995792-bb"><span class="identifier">histogram</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">explicit</span> <a class="link" href="histogram.html#idp19996048-bb"><span class="identifier">histogram</span></a><span class="special">(</span><span class="keyword">const</span> <span class="identifier">axes_type</span> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">explicit</span> <a class="link" href="histogram.html#idp19997168-bb"><span class="identifier">histogram</span></a><span class="special">(</span><span class="keyword">const</span> <span class="identifier">axis_type</span> <span class="special">&amp;</span><span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="histogram.html#idp19999536-bb"><span class="identifier">histogram</span></a><span class="special">(</span><span class="keyword">const</span> <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="histogram.html#idp20002576-bb"><span class="identifier">histogram</span></a><span class="special">(</span><span class="identifier">BOOST_RV_REF</span><span class="special">(</span><a class="link" href="histogram.html" title="Class histogram">histogram</a><span class="special">)</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> <a class="link" href="histogram.html#idp20000800-bb"><span class="keyword">operator</span><span class="special">=</span></a><span class="special">(</span><span class="identifier">BOOST_COPY_ASSIGN_REF</span><span class="special">(</span><a class="link" href="histogram.html" title="Class histogram">histogram</a><span class="special">)</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> <a class="link" href="histogram.html#idp20003840-bb"><span class="keyword">operator</span><span class="special">=</span></a><span class="special">(</span><span class="identifier">BOOST_RV_REF</span><span class="special">(</span><a class="link" href="histogram.html" title="Class histogram">histogram</a><span class="special">)</span><span class="special">)</span><span class="special">;</span>
+
+  <span class="comment">// <a class="link" href="histogram.html#idp13957424-bb">public member functions</a></span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iterator<span class="special">&gt;</span> 
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">disable_if</span><span class="special">&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">is_arithmetic</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;</span><span class="special">,</span> <span class="keyword">void</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">type</span> 
+    <a class="link" href="histogram.html#idp13957984-bb"><span class="identifier">fill</span></a><span class="special">(</span><span class="identifier">Iterator</span><span class="special">,</span> <span class="identifier">Iterator</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">void</span> <a class="link" href="histogram.html#idp19637680-bb"><span class="identifier">fill</span></a><span class="special">(</span><span class="keyword">double</span><span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iterator<span class="special">&gt;</span> 
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">disable_if</span><span class="special">&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">is_arithmetic</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;</span><span class="special">,</span> <span class="keyword">void</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">type</span> 
+    <a class="link" href="histogram.html#idp19639904-bb"><span class="identifier">wfill</span></a><span class="special">(</span><span class="identifier">Iterator</span><span class="special">,</span> <span class="identifier">Iterator</span><span class="special">,</span> <span class="keyword">double</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">void</span> <a class="link" href="histogram.html#idp13932000-bb"><span class="identifier">fill</span></a><span class="special">(</span><span class="keyword">double</span><span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iterator<span class="special">&gt;</span> 
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">disable_if</span><span class="special">&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">is_arithmetic</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;</span><span class="special">,</span> <span class="keyword">double</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">type</span> 
+    <a class="link" href="histogram.html#idp13934224-bb"><span class="identifier">value</span></a><span class="special">(</span><span class="identifier">Iterator</span><span class="special">,</span> <span class="identifier">Iterator</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">void</span> <a class="link" href="histogram.html#idp13940848-bb"><span class="identifier">value</span></a><span class="special">(</span><span class="keyword">double</span><span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iterator<span class="special">&gt;</span> 
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">disable_if</span><span class="special">&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">is_arithmetic</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;</span><span class="special">,</span> <span class="keyword">double</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">type</span> 
+    <a class="link" href="histogram.html#idp13943072-bb"><span class="identifier">variance</span></a><span class="special">(</span><span class="identifier">Iterator</span><span class="special">,</span> <span class="identifier">Iterator</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">void</span> <a class="link" href="histogram.html#idp19983888-bb"><span class="identifier">variance</span></a><span class="special">(</span><span class="keyword">double</span><span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">unsigned</span> <a class="link" href="histogram.html#idp19985888-bb"><span class="identifier">depth</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">double</span> <a class="link" href="histogram.html#idp19987136-bb"><span class="identifier">sum</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">bool</span> <a class="link" href="histogram.html#idp19988512-bb"><span class="keyword">operator</span><span class="special">==</span></a><span class="special">(</span><span class="keyword">const</span> <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> <a class="link" href="histogram.html#idp19991856-bb"><span class="keyword">operator</span><span class="special">+=</span></a><span class="special">(</span><span class="keyword">const</span> <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">const</span> <span class="keyword">void</span> <span class="special">*</span> <a class="link" href="histogram.html#idp19994672-bb"><span class="identifier">buffer</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+<span class="special">}</span><span class="special">;</span></pre></div>
+<div class="refsect1">
+<a name="idp97816032"></a><h2>Description</h2>
+<p>The class implements an n-dimensional histogram, managing counts in bins.</p>
+<p>It inherits from <a class="link" href="basic_histogram.html" title="Class basic_histogram">basic_histogram</a>, which manages the stored axis instances and the conversion of an n-dimensional tuple or index into an internal linear offset that is used to address the bin count. How the bin count is stored is an encapsulated implementation detail. </p>
+<div class="refsect2">
+<a name="idp97817808"></a><h3>
+<a name="boost.histogram.histogramconstruct-copy-destruct"></a><code class="computeroutput">histogram</code> 
+        public
+       construct/copy/destruct</h3>
+<div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem"><pre class="literallayout"><a name="idp19995792-bb"></a><span class="identifier">histogram</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">explicit</span> <a name="idp19996048-bb"></a><span class="identifier">histogram</span><span class="special">(</span><span class="keyword">const</span> <span class="identifier">axes_type</span> <span class="special">&amp;</span> axes<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem">
+<pre class="literallayout"><span class="keyword">explicit</span> <a name="idp19997168-bb"></a><span class="identifier">histogram</span><span class="special">(</span><span class="keyword">const</span> <span class="identifier">axis_type</span> <span class="special">&amp;</span> a0<span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span></pre>
+<p>Constructors for a variable number of axis types, each defining the binning scheme for its dimension. Up to BOOST_HISTOGRAM_AXIS_LIMIT axis types can be passed to the constructor, yielding the same number of dimensions. </p>
+</li>
+<li class="listitem"><pre class="literallayout"><a name="idp19999536-bb"></a><span class="identifier">histogram</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> o<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="idp20002576-bb"></a><span class="identifier">histogram</span><span class="special">(</span><span class="identifier">BOOST_RV_REF</span><span class="special">(</span><a class="link" href="histogram.html" title="Class histogram">histogram</a><span class="special">)</span> o<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> <a name="idp20000800-bb"></a><span class="keyword">operator</span><span class="special">=</span><span class="special">(</span><span class="identifier">BOOST_COPY_ASSIGN_REF</span><span class="special">(</span><a class="link" href="histogram.html" title="Class histogram">histogram</a><span class="special">)</span> o<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> <a name="idp20003840-bb"></a><span class="keyword">operator</span><span class="special">=</span><span class="special">(</span><span class="identifier">BOOST_RV_REF</span><span class="special">(</span><a class="link" href="histogram.html" title="Class histogram">histogram</a><span class="special">)</span> o<span class="special">)</span><span class="special">;</span></pre></li>
+</ol></div>
+</div>
+<div class="refsect2">
+<a name="idp97860480"></a><h3>
+<a name="idp13957424-bb"></a><code class="computeroutput">histogram</code> public member functions</h3>
+<div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem">
+<pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iterator<span class="special">&gt;</span> 
+  <span class="identifier">boost</span><span class="special">::</span><span class="identifier">disable_if</span><span class="special">&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">is_arithmetic</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;</span><span class="special">,</span> <span class="keyword">void</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">type</span> 
+  <a name="idp13957984-bb"></a><span class="identifier">fill</span><span class="special">(</span><span class="identifier">Iterator</span> begin<span class="special">,</span> <span class="identifier">Iterator</span> end<span class="special">)</span><span class="special">;</span></pre>
+<p>Fills the histogram with a range. It checks at run-time that the size agrees with the dimensions of the histogram.</p>
+<p>Allocation of internal memory is delayed until the first call to this function.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0" class="variablelist compact">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody><tr>
+<td><p><span class="term">Throws:</span></p></td>
+<td>std::range_error If the range doesn't fit the dimension of the histogram. </td>
+</tr></tbody>
+</table></div>
+</li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idp19637680-bb"></a><span class="identifier">fill</span><span class="special">(</span><span class="keyword">double</span> x0<span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem">
+<pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iterator<span class="special">&gt;</span> 
+  <span class="identifier">boost</span><span class="special">::</span><span class="identifier">disable_if</span><span class="special">&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">is_arithmetic</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;</span><span class="special">,</span> <span class="keyword">void</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">type</span> 
+  <a name="idp19639904-bb"></a><span class="identifier">wfill</span><span class="special">(</span><span class="identifier">Iterator</span> begin<span class="special">,</span> <span class="identifier">Iterator</span> end<span class="special">,</span> <span class="keyword">double</span> w<span class="special">)</span><span class="special">;</span></pre>
+<p>Fills the histogram from a iterator range, using a weight. It checks at run-time that the length agrees with the dimensions of the histogram.</p>
+<p>Allocation of internal memory is delayed until the first call to this function. If the histogram was filled with :cpp:func:<code class="computeroutput">fill_c</code> before, the internal memory is converted to the wide format used for storing weighted counts.</p>
+<p>If the data is not weighted (all weights are 1.0), using fill is much more space-efficient. In the most extreme case, storing of weighted counts consumes 16x more memory.</p>
+<p>
+This is an overloaded member function, provided for convenience. It differs from the above function only in what argument(s) it accepts.</p>
+<p>Overload taking a variadic sequence. </p>
+<div class="variablelist"><table border="0" class="variablelist compact">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody><tr>
+<td><p><span class="term">Throws:</span></p></td>
+<td>std::range_error If the range doesn't fit the dimension of the histogram.</td>
+</tr></tbody>
+</table></div>
+</li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idp13932000-bb"></a><span class="identifier">fill</span><span class="special">(</span><span class="keyword">double</span> x0<span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem">
+<pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iterator<span class="special">&gt;</span> 
+  <span class="identifier">boost</span><span class="special">::</span><span class="identifier">disable_if</span><span class="special">&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">is_arithmetic</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;</span><span class="special">,</span> <span class="keyword">double</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">type</span> 
+  <a name="idp13934224-bb"></a><span class="identifier">value</span><span class="special">(</span><span class="identifier">Iterator</span> begin<span class="special">,</span> <span class="identifier">Iterator</span> end<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>
+<p>Returns the count of the bin addressed by the supplied index. Just like in Python, negative indices like <code class="computeroutput">-1</code> are allowed and count from the end. So if an axis has <code class="computeroutput">k</code> bins, <code class="computeroutput">-1</code> points to <code class="computeroutput">k-1</code>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0" class="variablelist compact">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody><tr>
+<td><p><span class="term">Throws:</span></p></td>
+<td>std::range_error if the length does not match the dimension </td>
+</tr></tbody>
+</table></div>
+</li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idp13940848-bb"></a><span class="identifier">value</span><span class="special">(</span><span class="keyword">double</span> x0<span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem">
+<pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iterator<span class="special">&gt;</span> 
+  <span class="identifier">boost</span><span class="special">::</span><span class="identifier">disable_if</span><span class="special">&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">is_arithmetic</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;</span><span class="special">,</span> <span class="keyword">double</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">type</span> 
+  <a name="idp13943072-bb"></a><span class="identifier">variance</span><span class="special">(</span><span class="identifier">Iterator</span> begin<span class="special">,</span> <span class="identifier">Iterator</span> end<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>
+<p>Returns the variance estimate for the count of the bin addressed by the supplied index. Negative indices are allowed just like in case of histogram::value</p>
+<p>Note that it does not return the standard deviation :math:<code class="computeroutput">\sigma</code>, commonly called "error", but the variance <span class="inlinemediaobject"><img src="../../images//form_0.png"></span>.</p>
+<p>In case of unweighted counts, the variance estimate returned is <span class="inlinemediaobject"><img src="../../images//form_1.png"></span>, if the count is <span class="inlinemediaobject"><img src="../../images//form_1.png"></span>. This is a common estimate for the variance based on the theory of the Poisson distribution. In case of weighted counts, the variance estimate returned is <span class="inlinemediaobject"><img src="../../images//form_2.png"></span>, if the individual weights are <span class="inlinemediaobject"><img src="../../images//form_3.png"></span>. This estimate can be derived from the estimate above using uncertainty propagation. The extra storage needed for keeping track of the this sum is the reason why a histogram with weighted counts consumes more memory.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0" class="variablelist compact">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody><tr>
+<td><p><span class="term">Throws:</span></p></td>
+<td>std::range_error if the length does not match the dimension </td>
+</tr></tbody>
+</table></div>
+</li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idp19983888-bb"></a><span class="identifier">variance</span><span class="special">(</span><span class="keyword">double</span> x0<span class="special">,</span> <span class="special">...</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem">
+<pre class="literallayout"><span class="keyword">unsigned</span> <a name="idp19985888-bb"></a><span class="identifier">depth</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>Returns the current size of a count in the internal memory buffer in number of bytes. </li>
+<li class="listitem">
+<pre class="literallayout"><span class="keyword">double</span> <a name="idp19987136-bb"></a><span class="identifier">sum</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>Returns the sum of bin counts, including overflow and underflow bins. This could be implemented as a free function. </li>
+<li class="listitem">
+<pre class="literallayout"><span class="keyword">bool</span> <a name="idp19988512-bb"></a><span class="keyword">operator</span><span class="special">==</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> o<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>Returns true if the two histograms have the dimension, same axis types, and same data content. Two otherwise identical histograms are not considered equal, if they do not have the same depth, even if counts and variances are the same. This case only occurs if one histogram is filled using :cpp:func:<code class="computeroutput">fill</code> and the other with :cpp:func:<code class="computeroutput">wfill</code>, using weights of 1. </li>
+<li class="listitem">
+<pre class="literallayout"><a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> <a name="idp19991856-bb"></a><span class="keyword">operator</span><span class="special">+=</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="histogram.html" title="Class histogram">histogram</a> <span class="special">&amp;</span> o<span class="special">)</span><span class="special">;</span></pre>Adds the counts of the histogram on the right hand side to this histogram, if the two histograms have the same signature. Otherwise, a :cpp:type:<code class="computeroutput">std::logic_error</code> is thrown. Returns itself. </li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">const</span> <span class="keyword">void</span> <span class="special">*</span> <a name="idp19994672-bb"></a><span class="identifier">buffer</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+</ol></div>
+</div>
+</div>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2016 Hand Dembinski<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../../histogram/reference.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../histogram/reference.html#header.boost.histogram.histogram_hpp"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../../BOOST_HISTOGRAM_CTOR.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>
