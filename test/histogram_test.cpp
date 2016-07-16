@@ -192,44 +192,44 @@ BOOST_AUTO_TEST_CASE(d2)
     h.fill(-1, -10);
     h.fill(-10, 0);
 
-    // BOOST_CHECK_EQUAL(h.dim(), 2);
-    // BOOST_CHECK_EQUAL(h.bins(0), 2);
-    // BOOST_CHECK_EQUAL(h.shape(0), 4);
-    // BOOST_CHECK_EQUAL(h.bins(1), 3);
-    // BOOST_CHECK_EQUAL(h.shape(1), 3);
-    // BOOST_CHECK_EQUAL(h.sum(), 3);
+    BOOST_CHECK_EQUAL(h.dim(), 2);
+    BOOST_CHECK_EQUAL(h.bins(0), 2);
+    BOOST_CHECK_EQUAL(h.shape(0), 4);
+    BOOST_CHECK_EQUAL(h.bins(1), 3);
+    BOOST_CHECK_EQUAL(h.shape(1), 3);
+    BOOST_CHECK_EQUAL(h.sum(), 3);
 
-    // BOOST_CHECK_EQUAL(h.value(-1, 0), 0.0);
-    // BOOST_CHECK_EQUAL(h.value(-1, 1), 1.0);
-    // BOOST_CHECK_EQUAL(h.value(-1, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.value(-1, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.value(-1, 1), 1.0);
+    BOOST_CHECK_EQUAL(h.value(-1, 2), 0.0);
 
-    // BOOST_CHECK_EQUAL(h.value(0, 0), 1.0);
-    // BOOST_CHECK_EQUAL(h.value(0, 1), 1.0);
-    // BOOST_CHECK_EQUAL(h.value(0, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.value(0, 0), 1.0);
+    BOOST_CHECK_EQUAL(h.value(0, 1), 1.0);
+    BOOST_CHECK_EQUAL(h.value(0, 2), 0.0);
 
-    // BOOST_CHECK_EQUAL(h.value(1, 0), 0.0);
-    // BOOST_CHECK_EQUAL(h.value(1, 1), 0.0);
-    // BOOST_CHECK_EQUAL(h.value(1, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.value(1, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.value(1, 1), 0.0);
+    BOOST_CHECK_EQUAL(h.value(1, 2), 0.0);
 
-    // BOOST_CHECK_EQUAL(h.value(2, 0), 0.0);
-    // BOOST_CHECK_EQUAL(h.value(2, 1), 0.0);
-    // BOOST_CHECK_EQUAL(h.value(2, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.value(2, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.value(2, 1), 0.0);
+    BOOST_CHECK_EQUAL(h.value(2, 2), 0.0);
 
-    // BOOST_CHECK_EQUAL(h.variance(-1, 0), 0.0);
-    // BOOST_CHECK_EQUAL(h.variance(-1, 1), 1.0);
-    // BOOST_CHECK_EQUAL(h.variance(-1, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(-1, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(-1, 1), 1.0);
+    BOOST_CHECK_EQUAL(h.variance(-1, 2), 0.0);
 
-    // BOOST_CHECK_EQUAL(h.variance(0, 0), 1.0);
-    // BOOST_CHECK_EQUAL(h.variance(0, 1), 1.0);
-    // BOOST_CHECK_EQUAL(h.variance(0, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(0, 0), 1.0);
+    BOOST_CHECK_EQUAL(h.variance(0, 1), 1.0);
+    BOOST_CHECK_EQUAL(h.variance(0, 2), 0.0);
 
-    // BOOST_CHECK_EQUAL(h.variance(1, 0), 0.0);
-    // BOOST_CHECK_EQUAL(h.variance(1, 1), 0.0);
-    // BOOST_CHECK_EQUAL(h.variance(1, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(1, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(1, 1), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(1, 2), 0.0);
 
-    // BOOST_CHECK_EQUAL(h.variance(2, 0), 0.0);
-    // BOOST_CHECK_EQUAL(h.variance(2, 1), 0.0);
-    // BOOST_CHECK_EQUAL(h.variance(2, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(2, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(2, 1), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(2, 2), 0.0);
 }
 
 // BOOST_AUTO_TEST_CASE(d2w)
@@ -276,28 +276,28 @@ BOOST_AUTO_TEST_CASE(d2)
 //     BOOST_CHECK_EQUAL(h.variance(2, 2), 0.0);
 // }
 
-// BOOST_AUTO_TEST_CASE(add_0)
-// {
-//     histogram a(integer_axis(-1, 1));
-//     histogram b(regular_axis(3, -1, 1));
-//     BOOST_CHECK_THROW(a + b, std::logic_error);
-// }
+BOOST_AUTO_TEST_CASE(add_0)
+{
+    auto a = histogram(integer_axis(-1, 1));
+    auto b = histogram(regular_axis(3, -1, 1));
+    BOOST_CHECK_THROW(a + b, std::logic_error);
+}
 
-// BOOST_AUTO_TEST_CASE(add_1)
-// {
-//     histogram a(integer_axis(-1, 1));
-//     histogram b(integer_axis(-1, 1));
-//     a.fill(0);
-//     b.fill(-1);
-//     histogram c = a + b;
-//     BOOST_CHECK_EQUAL(c.value(-1), 0);
-//     BOOST_CHECK_EQUAL(c.value(0), 1);
-//     BOOST_CHECK_EQUAL(c.value(1), 1);
-//     BOOST_CHECK_EQUAL(c.value(2), 0);
-//     BOOST_CHECK_EQUAL(c.value(3), 0);
-// }
+BOOST_AUTO_TEST_CASE(add_1)
+{
+    auto a = histogram(integer_axis(-1, 1));
+    auto b = histogram(integer_axis(-1, 1));
+    a.fill(0);
+    b.fill(-1);
+    auto c = a + b;
+    BOOST_CHECK_EQUAL(c.value(-1), 0);
+    BOOST_CHECK_EQUAL(c.value(0), 1);
+    BOOST_CHECK_EQUAL(c.value(1), 1);
+    BOOST_CHECK_EQUAL(c.value(2), 0);
+    BOOST_CHECK_EQUAL(c.value(3), 0);
+}
 
-// BOOST_AUTO_TEST_CASE(add_2)
+// BOOST_AUTO_TEST_CASE(add_2w)
 // {
 //     histogram a(integer_axis(-1, 1));
 //     histogram b(integer_axis(-1, 1));

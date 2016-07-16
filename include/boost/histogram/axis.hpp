@@ -11,12 +11,13 @@
 #include <boost/variant.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/math/constants/constants.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
 #include <string>
 #include <vector>
 #include <cmath>
 #include <limits>
 #include <ostream>
+
 
 /** \file boost/histogram/axis
  *  \brief Defines the axis classes.
@@ -264,52 +265,31 @@ private:
 };
 
 namespace detail {
-  struct linearize : public static_visitor<void>
+  template <typename T>
+  struct linearize_t : public static_visitor<void>
   {
-    int in;
+    T in;
     std::size_t out = 0, stride = 1;
 
     template <typename A>
     void operator()(const A& a) {
-      if (out < std::size_t(-1)) {
-        const int bins = a.bins();
-        const int range = bins + 2 * a.uoflow();
-        // the following three lines worout for any overflow setting
-        in += (in < 0) * (bins + 2); // wrap around if in < 0
-        if (in < range) {
-          out += in * stride;
-          stride *= range;
-        }
-        else {
-          out = std::size_t(-1); // indicate out of range
-        }
+      int j = std::is_same<T, double>::value ? a.index(in) : in;
+      const int bins = a.bins();
+      const int range = bins + 2 * a.uoflow();
+      // the following three lines worout for any overflow setting
+      j += (j < 0) * (bins + 2); // wrap around if in < 0
+      if (j < range) {
+        out += j * stride;
+        stride *= range;        
+      } else {
+        out = std::size_t(-1);
+        stride = 0;
       }
     }
   };
 
-  struct linearize_x : public static_visitor<void>
-  {
-    double in;
-    std::size_t out = 0, stride = 1;
-
-    template <typename A>
-    void operator()(const A& a) {
-      if (out < std::size_t(-1)) {
-        int j = a.index(in);
-        const int bins = a.bins();
-        const int range = bins + 2 * a.uoflow();
-        // the following three lines worout for any overflow setting
-        j += (j < 0) * (bins + 2); // wrap around if j < 0
-        if (j < range) {
-          out += j * stride;
-          stride *= range;
-        }
-        else {
-          out = std::size_t(-1); // indicate out of range
-        }
-      }
-    }
-  };
+  typedef linearize_t<int> linearize;
+  typedef linearize_t<double> linearize_x;
 }
 
 typedef variant<

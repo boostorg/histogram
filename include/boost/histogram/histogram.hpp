@@ -28,11 +28,16 @@ namespace histogram {
     typedef T variance_t;
     std::size_t size() const { return data_.size(); }
     void allocate(std::size_t n) { data_.resize(n, 0); }
-    void increase(std::size_t i) { ++data_.at(i); }
+    void increase(std::size_t i) { ++data_[i]; }
+    value_t value(std::size_t i) const { return data_[i]; }
+    variance_t variance(std::size_t i) const { return data_[i]; }
     bool operator==(const static_storage_policy& other) const
     { return data_ == other.data_; }
-    value_t value(std::size_t i) const { return data_.at(i); }
-    variance_t variance(std::size_t i) const { return data_.at(i); }
+    void operator+=(const static_storage_policy& other)
+    {
+      for (std::size_t i = 0, n = size(); i < n; ++i)
+        data_[i] += other.data_[i];
+    }
   };
 
   ///Use dynamic dimension
@@ -90,7 +95,8 @@ namespace histogram {
                     "number of arguments does not match histogram dimension");
       detail::linearize_x lin;
       fill_impl(lin, std::forward<Args>(args)...);
-      StoragePolicy::increase(lin.out);
+      if (lin.out < size())
+        StoragePolicy::increase(lin.out);
     }
 
     template <typename... Args>
@@ -100,6 +106,8 @@ namespace histogram {
                     "number of arguments does not match histogram dimension");
       detail::linearize lin;
       index_impl(lin, std::forward<Args>(args)...);
+      if (lin.out >= size())
+        throw std::out_of_range("invalid index");
       return StoragePolicy::value(lin.out);
     }
 
@@ -110,6 +118,8 @@ namespace histogram {
                     "number of arguments does not match histogram dimension");
       detail::linearize lin;
       index_impl(lin, std::forward<Args>(args)...);
+      if (lin.out >= size())
+        throw std::out_of_range("invalid index");
       return StoragePolicy::variance(lin.out);
     }
 
@@ -131,6 +141,21 @@ namespace histogram {
     template <unsigned OtherDim, typename OtherStoragePolicy>
     bool operator==(const histogram_t<OtherDim, OtherStoragePolicy>&) const
     { return false; }
+
+    template <unsigned OtherDim, typename OtherStoragePolicy>
+    histogram_t& operator+=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
+    {
+      static_assert(std::is_same<StoragePolicy, OtherStoragePolicy>::value,
+                    "dimensions or storage policies incompatible"); 
+      if (dim() != other.dim())
+        throw std::logic_error("dimensions of histograms differ");
+      if (size() != other.size())
+        throw std::logic_error("sizes of histograms differ");
+      if (axes_ != other.axes_)
+        throw std::logic_error("axes of histograms differ");
+      StoragePolicy::operator+=(static_cast<const StoragePolicy&>(other));
+      return *this;
+    }
 
   private:
     std::array<axis_t, Dim> axes_; 
@@ -169,6 +194,23 @@ namespace histogram {
     }
     void index_impl(detail::linearize&) {} // stop recursion
   };
+
+  template <unsigned DimA, typename StoragePolicyA,
+            unsigned DimB, typename StoragePolicyB>
+  typename std::common_type<
+    histogram_t<DimA, StoragePolicyA>,
+    histogram_t<DimB, StoragePolicyB>
+  >::type
+  operator+(const histogram_t<DimA, StoragePolicyA>& a,
+            const histogram_t<DimB, StoragePolicyB>& b)
+  {
+    typename std::common_type<
+      histogram_t<DimA, StoragePolicyA>,
+      histogram_t<DimB, StoragePolicyB>
+    >::type tmp = a;
+    tmp += b;
+    return tmp;
+  }
 
   /// Type factory
   template <typename... Axes>
