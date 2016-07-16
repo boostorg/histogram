@@ -1,23 +1,52 @@
 language: cpp
-env:
-  # - PYTHON_VERSION=3.2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON CC=gcc CXX=g++
-  - PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON CC=gcc CXX=g++
-  # - PYTHON_VERSION=3.2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
-  - PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
-  - PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
-  - PYTHON_VERSION=2 USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
-compiler:
-  - clang
-os:
-  - linux
+os: linux
+matrix:
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - boost-latest
+          packages:
+            - g++-4.9
+            - libboost1.55-all-dev
+      env: COMPILER=g++-4.9 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+            - boost-latest
+          packages:
+            - clang-3.7
+            - libboost1.55-all-dev
+      env: COMPILER=clang++-3.7 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+            - boost-latest
+          packages:
+            - clang-3.7
+            - libboost1.55-all-dev
+      env: COMPILER=clang++-3.7 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+            - boost-latest
+          packages:
+            - clang-3.7
+            - libboost1.55-all-dev
+      env: COMPILER=clang++-3.7 PYTHON_VERSION=2 USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
 git:
   depth: 10
-addons:
-  apt:
-    sources:
-      - boost-latest
-    packages:
-      - libboost1.55-all-dev
 
 # Setup anaconda
 before_install:
