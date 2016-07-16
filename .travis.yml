@@ -1,5 +1,5 @@
+sudo: false
 language: cpp
-os: linux
 matrix:
   include:
     - compiler: gcc
@@ -9,14 +9,13 @@ matrix:
             - ubuntu-toolchain-r-test
             - boost-latest
           packages:
-            - g++-4.9
+            - g++-4.8
             - libboost1.55-all-dev
-      env: COMPILER=g++-4.9 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
+      env: COMPILER=g++-4.8 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
     - compiler: clang
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.7
             - boost-latest
           packages:
@@ -27,7 +26,6 @@ matrix:
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.7
             - boost-latest
           packages:
@@ -38,7 +36,6 @@ matrix:
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.7
             - boost-latest
           packages:
@@ -57,6 +54,8 @@ before_install:
 
 # Install packages
 install:
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+  - if [ "$CXX" = "clang" ]; then export CXX="clang++-3.7" CC="clang-3.7"; fi
   - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
   - source activate pyenv
   - pip install --user cpp-coveralls
