@@ -16,6 +16,7 @@ matrix:
       addons:
         apt:
           sources:
+            - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.6
             - boost-latest
           packages:
@@ -26,6 +27,7 @@ matrix:
       addons:
         apt:
           sources:
+            - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.6
             - boost-latest
           packages:
@@ -36,6 +38,7 @@ matrix:
       addons:
         apt:
           sources:
+            - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.6
             - boost-latest
           packages:
