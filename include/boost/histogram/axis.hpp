@@ -150,9 +150,8 @@ public:
 	 * \param label description of the axis
 	 * \param uoflow add underflow and overflow bins to the histogram for this axis or not
 	 */
-  template <typename Container>
   explicit
-  variable_axis(const Container& x,
+  variable_axis(const std::initializer_list<double>& x,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
       axis_base(x.size() - 1, label, uoflow),
@@ -173,9 +172,11 @@ public:
       std::sort(x_.get(), x_.get() + bins() + 1);
   }
 
-  variable_axis() {}
+  variable_axis() = default;
   variable_axis(const variable_axis&);
+  variable_axis(variable_axis&&) = default;
   variable_axis& operator=(const variable_axis&);
+  variable_axis& operator=(variable_axis&&) = default;
 
   inline int index(double x) const { 
     return std::upper_bound(x_.get(), x_.get() + bins() + 1, x)
@@ -196,22 +197,19 @@ private:
 class category_axis {
 public:
   typedef std::string value_type;
-  /**Construct from a single string
-   *
-   * @param categories a string of categories separated by the character \a ;
-   */
-  explicit
-  category_axis(const std::string& categories);
-  /**Construct from a single string
+
+  /**Construct from initializer list of strings
    *
    * @param categories an ordered sequence of categories that this axis discriminates
    */
   explicit
-  category_axis(const std::vector<std::string>& categories);
+  category_axis(const std::initializer_list<std::string>& categories);
 
   category_axis() {}
   category_axis(const category_axis&);
+  category_axis(category_axis&&) = default;
   category_axis& operator=(const category_axis&);
+  category_axis& operator=(category_axis&&) = default;
 
   inline int bins() const { return categories_.size(); }
 
@@ -237,7 +235,12 @@ private:
 class integer_axis: public axis_base {
 public:
   typedef int value_type;
-  ///Constructor
+
+  /**Construct axis over consecutive sequence of integers
+   * 
+   * @param min smallest integer of the covered range
+   * @param max largest integer of the covered range
+   */
   integer_axis(int min, int max,
                const std::string& label = std::string(),
                bool uoflow = true);
@@ -263,33 +266,46 @@ private:
 namespace detail {
   struct linearize : public static_visitor<void>
   {
-    typedef uintptr_t size_type;
-    double x;
-    int j;
-    size_type k, stride;
-
-    linearize() :
-      x(std::numeric_limits<double>::quiet_NaN()),
-      j(0),
-      k(0),
-      stride(1)
-    {}
+    int in;
+    std::size_t out = 0, stride = 1;
 
     template <typename A>
     void operator()(const A& a) {
-      if (k < size_type(-1)) {
-        if (!std::isnan(x))
-          j = a.index(x);
+      if (out < std::size_t(-1)) {
         const int bins = a.bins();
         const int range = bins + 2 * a.uoflow();
-        // the following three lines work for any overflow setting
-        j += (j < 0) * (bins + 2); // wrap around if j < 0
-        if (j < range) {
-          k += j * stride;
+        // the following three lines worout for any overflow setting
+        in += (in < 0) * (bins + 2); // wrap around if in < 0
+        if (in < range) {
+          out += in * stride;
           stride *= range;
         }
         else {
-          k = size_type(-1); // indicate out of range
+          out = std::size_t(-1); // indicate out of range
+        }
+      }
+    }
+  };
+
+  struct linearize_x : public static_visitor<void>
+  {
+    double in;
+    std::size_t out = 0, stride = 1;
+
+    template <typename A>
+    void operator()(const A& a) {
+      if (out < std::size_t(-1)) {
+        int j = a.index(in);
+        const int bins = a.bins();
+        const int range = bins + 2 * a.uoflow();
+        // the following three lines worout for any overflow setting
+        j += (j < 0) * (bins + 2); // wrap around if j < 0
+        if (j < range) {
+          out += j * stride;
+          stride *= range;
+        }
+        else {
+          out = std::size_t(-1); // indicate out of range
         }
       }
     }
@@ -302,14 +318,14 @@ typedef variant<
   variable_axis,
   category_axis,
   integer_axis
-> axis_type;
+> axis_t;
 
+// axis_t is automatically output-streamable if all its bounded types are 
 std::ostream& operator<<(std::ostream&, const regular_axis&);
 std::ostream& operator<<(std::ostream&, const polar_axis&);
 std::ostream& operator<<(std::ostream&, const variable_axis&);
 std::ostream& operator<<(std::ostream&, const category_axis&);
 std::ostream& operator<<(std::ostream&, const integer_axis&);
-// axis_type is automatically output-streamable if all its bounded types are 
 
 }
 }

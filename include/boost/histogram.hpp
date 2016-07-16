@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_HPP_
 
 #include <boost/histogram/histogram.hpp>
-#include <boost/histogram/serialization.hpp>
 
 /**
  * \file boost/histogram.hpp

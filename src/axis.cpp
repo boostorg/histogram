@@ -182,18 +182,7 @@ variable_axis::operator==(const variable_axis& o) const
     return true;
 }
 
-category_axis::category_axis(const std::string& s)
-{
-    std::size_t i = s.find(';');
-    categories_.push_back(s.substr(0, i));
-    while (i != std::string::npos) {
-        const std::size_t p = i + 1;
-        i = s.find(';', p);
-        categories_.push_back(s.substr(p, i - p));
-    }
-}
-
-category_axis::category_axis(const std::vector<std::string>& c) :
+category_axis::category_axis(const std::initializer_list<std::string>& c) :
     categories_(c)
 {}
 
