@@ -73,7 +73,7 @@ script:
 
 # Calculate coverage
 after_success:
-  - if [ "${COVERAGE}" = "ON" ]; then coveralls -r .. -b . --verbose; fi
+  - if [ "${COVERAGE}" = "ON" ]; then coveralls -r .. -b . --verbose --gcov=`which gcov-${COMPILER_VERSION}`; fi
 
 after_failure:
   - make clean && VERBOSE=1 make
