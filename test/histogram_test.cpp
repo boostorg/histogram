@@ -129,10 +129,6 @@ BOOST_AUTO_TEST_CASE(move_assign)
     BOOST_CHECK_EQUAL(h2.dim(), 2);
     BOOST_CHECK_EQUAL(h.sum(), 0);
     BOOST_CHECK_EQUAL(h.dim(), 2);
-    // test self-move
-    h2 = std::move(h2);
-    BOOST_CHECK_EQUAL(h2.sum(), 1);
-    BOOST_CHECK_EQUAL(h2.dim(), 2);
     // auto h3 = histogram_t<Dynamic>();
     // h3 = std::move(h2);
     // BOOST_CHECK_EQUAL(h3.sum(), 1);

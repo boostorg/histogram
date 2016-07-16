@@ -2,7 +2,7 @@
 
 **Fast n-dimensional histogram with convenient interface for C++ and Python**
 
-[![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master)](https://coveralls.io/github/HDembinski/histogram?branch=master)
+[![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=static)](https://travis-ci.org/HDembinski/histogram?branch=static) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=static)](https://coveralls.io/github/HDembinski/histogram?branch=static)
 
 This project contains an easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class implemented in `C++03`-compatible code, optimized for convenience and excellent performance under heavy duty. Move semantics are supported using `boost::move`. The histogram has a complete [C++](http://yosefk.com/c++fqa/defective.html) and [Python](http://www.python.org) interface, and can be passed over the language boundary with ease. [Numpy](http://www.numpy.org) is fully supported; histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data. Histograms can be streamed from/to files and pickled in Python.
 
