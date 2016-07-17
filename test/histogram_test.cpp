@@ -9,6 +9,7 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <limits>
+#include <sstream>
 using namespace boost::histogram;
 
 BOOST_AUTO_TEST_CASE(init_0)
@@ -311,3 +312,49 @@ BOOST_AUTO_TEST_CASE(add_1)
 //     BOOST_CHECK_EQUAL(c.value(2), 0);
 //     BOOST_CHECK_EQUAL(c.value(3), 0);    
 // }
+
+BOOST_AUTO_TEST_CASE(doc_example_0)
+{
+    namespace bh = boost::histogram;
+
+    // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
+    // with axis of histogram labeled as "x"
+    auto h = bh::histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
+
+    // fill histogram with data
+    h.fill(-1.5); // put in underflow bin
+    h.fill(-1.0); // included in first bin, bin interval is semi-open
+    h.fill(-0.5);
+    h.fill(1.1);
+    h.fill(0.3);
+    h.fill(1.7);
+    h.fill(2.0);  // put in overflow bin, bin interval is semi-open
+    h.fill(20.0); // put in overflow bin
+    // h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
+
+    std::ostringstream os1;
+    // access histogram counts
+    for (int i = -1; i <= h.bins(0); ++i) {
+        const bh::regular_axis& a = h.axis<bh::regular_axis>(0);
+        os1 << "bin " << i
+            << " x in [" << a[i] << ", " << a[i+1] << "): "
+            << h.value(i) << " +/- " << std::sqrt(h.variance(i))
+            << "\n";
+    }
+
+    std::ostringstream os2;
+    os2 << "bin -1 x in [-inf, -1): 1 +/- 1\n"
+           "bin 0 x in [-1, -0.7): 1 +/- 1\n"
+           "bin 1 x in [-0.7, -0.4): 1 +/- 1\n"
+           "bin 2 x in [-0.4, -0.1): 0 +/- 0\n"
+           "bin 3 x in [-0.1, 0.2): 0 +/- 0\n"
+           "bin 4 x in [0.2, 0.5): 1 +/- 1\n"
+           "bin 5 x in [0.5, 0.8): 0 +/- 0\n"
+           "bin 6 x in [0.8, 1.1): 0 +/- 0\n"
+           "bin 7 x in [1.1, 1.4): 1 +/- 1\n"
+           "bin 8 x in [1.4, 1.7): 0 +/- 0\n"
+           "bin 9 x in [1.7, 2): 1 +/- 1\n"
+           "bin 10 x in [2, inf): 2 +/- 1.41421\n";
+
+    BOOST_CHECK_EQUAL(os1.str(), os2.str());
+}

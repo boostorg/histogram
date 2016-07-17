@@ -66,7 +66,7 @@ namespace histogram {
     }
 
     // for convenience
-    std::size_t bins(unsigned i) const
+    int bins(unsigned i) const
     {
       BOOST_ASSERT(i < Dim);
       return apply_visitor(visitor::bins(), axes_[i]);
@@ -107,7 +107,30 @@ namespace histogram {
       return StoragePolicy::variance(lin.out);
     }
 
+    template <typename T>
+    typename std::enable_if<std::is_same<T, axis_t>::value, T&>::type
+    axis(unsigned i) { return axes_[i]; }
 
+    template <typename T>
+    typename std::enable_if<!std::is_same<T, axis_t>::value, T&>::type
+    axis(unsigned i) { return boost::get<T&>(axes_[i]); }
+
+    template <typename T>
+    typename std::enable_if<std::is_same<T, axis_t>::value, const T&>::type
+    axis(unsigned i) const { return axes_[i]; }
+
+    template <typename T>
+    typename std::enable_if<!std::is_same<T, axis_t>::value, const T&>::type
+    axis(unsigned i) const { return boost::get<const T&>(axes_[i]); }
+
+#if defined(BOOST_HISTOGRAM_DOXYGEN)
+    /** Returns the axis object at index \a i, casted to type \a T.
+     *  A runtime exception is thrown if the type cast is invalid.
+     */
+    template <typename T> T& axis(unsigned i);
+    /** The ``const``-version of the previous member function. */
+    template <typename T> const T& axis(unsigned i) const
+#endif
 
     double sum() const
     {

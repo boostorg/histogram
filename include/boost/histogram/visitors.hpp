@@ -17,13 +17,13 @@ namespace visitor {
   struct bins : public static_visitor<unsigned>
   {
     template <typename A>
-    unsigned operator()(const A& a) const { return a.bins(); }
+    int operator()(const A& a) const { return a.bins(); }
   };
 
   struct shape : public static_visitor<unsigned>
   {
     template <typename A>
-    unsigned operator()(const A& a) const { return a.bins() + 2 * a.uoflow(); }
+    int operator()(const A& a) const { return a.bins() + 2 * a.uoflow(); }
   };
 
   struct uoflow : public static_visitor<bool>
