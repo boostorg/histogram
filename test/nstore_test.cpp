@@ -24,11 +24,11 @@ BOOST_AUTO_TEST_CASE(wtype_streamer)
     BOOST_CHECK_EQUAL(os.str(), std::string("(1.2,2.3)"));
 }
 
-BOOST_AUTO_TEST_CASE(nstore_bad_alloc)
-{
-    BOOST_CHECK_THROW(nstore(nstore::size_type(-1)),
-                      std::bad_alloc);
-}
+// BOOST_AUTO_TEST_CASE(nstore_bad_alloc)
+// {
+//     BOOST_CHECK_THROW(nstore(nstore::size_type(-1)),
+//                       std::bad_alloc);
+// }
 
 BOOST_AUTO_TEST_CASE(nstore_grow_1)
 {
