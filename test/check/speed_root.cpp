@@ -19,7 +19,7 @@ std::vector<double> random_array(unsigned n, int type) {
   std::vector<double> result(n);
   std::default_random_engine gen(1);
   if (type) { // type == 1
-    std::normal_distribution<> d(0.0, 0.3);
+    std::normal_distribution<> d(0.5, 0.3);
     for (auto& x : result)
       x = d(gen);
   }

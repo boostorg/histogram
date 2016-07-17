@@ -7,6 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_HPP_
 #define _BOOST_HISTOGRAM_AXIS_HPP_
 
+#include <boost/histogram/detail/utility.hpp>
 #include <boost/variant.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <type_traits>
@@ -25,7 +26,7 @@
 namespace boost {
 namespace histogram {
 
-/// common base class for most axes
+/// Common base class for most axes
 class axis_base {
 public:
   ///Returns the number of bins.
@@ -60,7 +61,7 @@ private:
   friend void serialize(Archive& ar, axis_base & base, unsigned version);
 };
 
-// mixin for real-valued axes
+/// Mixin for real-valued axes
 template <typename Derived>
 class real_axis {
 public:
@@ -79,7 +80,12 @@ public:
   }
 };
 
-///An axis for real-valued data and bins of equal width. Binning is a O(1) operation.
+/** Axis for binning real-valued data into equidistant bins
+  *
+  * This is the simplest and common binning strategy. The code
+  * was optimized with a profiled benchmark. 
+  * Binning is a O(1) operation.
+  */
 class regular_axis: public axis_base, public real_axis<regular_axis> {
 public:
   /** Constructor
@@ -107,11 +113,14 @@ public:
   regular_axis& operator=(const regular_axis&) = default;
   regular_axis& operator=(regular_axis&&) = default;
 
-  ///Returns the bin index for the passed argument (optimized code).
+  /// Returns the bin index for the passed argument (optimized code).
   inline int index(double x) const 
   {
     const double z = (x - min_) / delta_;
-    return std::signbit(z) ? -1 : z < bins() ? static_cast<int>(z) : bins();
+    const int i = static_cast<int>(z);
+    if (i > bins())
+      return bins();
+    return z >= 0.0 ? i : -1;
   }
 
   double operator[](int idx) const
@@ -138,7 +147,12 @@ private:
   friend void serialize(Archive& ar, regular_axis & axis ,unsigned version);
 };
 
-///An axis for real-valued angles. There are no overflow/underflow bins for this axis, since the axis is circular and wraps around after :math:`2 \pi`. Binning is a O(1) operation.
+/** Axis for real-valued angles
+  *
+  * There are no overflow/underflow bins for this axis,
+  * since the axis is circular and wraps around after :math:`2 \pi`.
+  * Binning is a O(1) operation.
+  */
 class polar_axis: public axis_base, public real_axis<polar_axis> {
 public:
   /** Constructor
