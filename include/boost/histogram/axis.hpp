@@ -102,7 +102,7 @@ public:
   inline int index(double x) const 
   {
     const double z = (x - min_) / delta_;
-    return z >= 0.0 ? std::min(static_cast<int>(z), bins()) : -1;
+    return std::signbit(z) ? -1 : z < bins() ? static_cast<int>(z) : bins();
   }
 
   double operator[](int idx) const;
