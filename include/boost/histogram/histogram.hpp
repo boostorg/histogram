@@ -107,6 +107,8 @@ namespace histogram {
       return StoragePolicy::variance(lin.out);
     }
 
+
+
     double sum() const
     {
       double result = 0.0;

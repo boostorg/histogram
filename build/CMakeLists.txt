@@ -39,39 +39,31 @@ else()
   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -DBOOST_DISABLE_ASSERTS)
 endif()
 
-# core library
-add_library(boost_histogram SHARED
-  ../src/axis.cpp
-  ../src/nstore.cpp
-  ../src/zero_suppression.cpp
-)
-target_link_libraries(boost_histogram ${LIBRARIES})
-
 # checks
 if(BUILD_CHECKS)
   add_executable(speed_cpp
                  ../test/check/speed_cpp.cpp)
-  target_link_libraries(speed_cpp boost_histogram ${LIBRARIES})
+  target_link_libraries(speed_cpp ${LIBRARIES})
 endif()
 
 # tests
 enable_testing()
 add_executable(histogram_test
                ../test/histogram_test.cpp)
-target_link_libraries(histogram_test boost_histogram ${LIBRARIES})
+target_link_libraries(histogram_test ${LIBRARIES})
 add_test(histogram_test histogram_test)
 
 add_executable(axis_test
                ../test/axis_test.cpp)
-target_link_libraries(axis_test boost_histogram ${LIBRARIES})
+target_link_libraries(axis_test ${LIBRARIES})
 add_test(axis_test axis_test)
 
 add_executable(zero_suppression_test
                ../test/zero_suppression_test.cpp)
-target_link_libraries(zero_suppression_test boost_histogram ${LIBRARIES})
+target_link_libraries(zero_suppression_test ${LIBRARIES})
 add_test(zero_suppression_test zero_suppression_test)
 
 add_executable(nstore_test
                ../test/nstore_test.cpp)
-target_link_libraries(nstore_test boost_histogram ${LIBRARIES})
+target_link_libraries(nstore_test ${LIBRARIES})
 add_test(nstore_test nstore_test)

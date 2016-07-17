@@ -15,7 +15,7 @@
 #include <vector>
 #include <cmath>
 #include <limits>
-#include <ostream>
+#include <stdexcept>
 
 
 /** \file boost/histogram/axis
@@ -39,7 +39,9 @@ public:
   void label(const std::string& label) { label_ = label; }
 
 protected:
-  axis_base(unsigned, const std::string&, bool);
+  axis_base(unsigned n, const std::string& label, bool uoflow) :
+    size_(n), uoflow_(uoflow), label_(label)
+  {}
 
   axis_base() = default;
   axis_base(const axis_base&) = default;
@@ -47,7 +49,8 @@ protected:
   axis_base& operator=(const axis_base&) = default;
   axis_base& operator=(axis_base&&) = default;
 
-  bool operator==(const axis_base&) const;
+  bool operator==(const axis_base& o) const
+  { return size_ == o.size_ && uoflow_ && o.uoflow_ && label_ == o.label_; }
 
 private:
   int size_;
@@ -90,7 +93,14 @@ public:
    */
   regular_axis(unsigned n, double min, double max,
                const std::string& label = std::string(),
-               bool uoflow = true);
+               bool uoflow = true) :
+    axis_base(n, label, uoflow),
+    min_(min),
+    delta_((max - min) / n)
+  {
+      if (min >= max)
+          throw std::logic_error("regular_axis: min must be less than max");
+  }
 
   regular_axis() : min_(0), delta_(0) {}
   regular_axis(const regular_axis&) = default;
@@ -105,8 +115,23 @@ public:
     return std::signbit(z) ? -1 : z < bins() ? static_cast<int>(z) : bins();
   }
 
-  double operator[](int idx) const;
-  bool operator==(const regular_axis&) const;
+  double operator[](int idx) const
+  {
+    if (idx < 0)
+        return -std::numeric_limits<double>::infinity();
+    if (idx > bins())
+        return std::numeric_limits<double>::infinity();
+    const double z = double(idx) / bins();
+    return (1.0 - z) * min_ + z * (min_ + delta_ * bins());
+  }
+
+  bool operator==(const regular_axis& o) const
+  {
+    return axis_base::operator==(o) &&
+           min_ == o.min_ &&
+           delta_ == o.delta_;
+  }
+
 private:
   double min_, delta_;
 
@@ -124,7 +149,10 @@ public:
 	 */ 
   explicit
   polar_axis(unsigned n, double start = 0.0,
-             const std::string& label = std::string());
+             const std::string& label = std::string()) :
+    axis_base(n, label, false),
+    start_(start)
+  {}
 
   polar_axis() : start_(0) {}
   polar_axis(const polar_axis&) = default;
@@ -140,8 +168,16 @@ public:
     return i + (i < 0) * bins();
   }
 
-  double operator[](int idx) const;
-  bool operator==(const polar_axis&) const;
+  double operator[](int idx) const
+  {
+    using namespace boost::math::double_constants;
+    const double z = double(idx) / bins();
+    return z * two_pi + start_;
+  }
+
+  bool operator==(const polar_axis& o) const
+  { return axis_base::operator==(o) && start_ == o.start_; }
+
 private:
   double start_;
 
@@ -181,9 +217,22 @@ public:
   }
 
   variable_axis() = default;
-  variable_axis(const variable_axis&);
+  variable_axis(const variable_axis& o) :
+    axis_base(o),
+    x_(new double[bins() + 1])
+  {
+    std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
+  }
   variable_axis(variable_axis&&) = default;
-  variable_axis& operator=(const variable_axis&);
+  variable_axis& operator=(const variable_axis& o)
+  {
+    if (this != &o) {
+        axis_base::operator=(o);
+        x_.reset(new double[bins() + 1]);
+        std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
+    }
+    return *this;
+  }
   variable_axis& operator=(variable_axis&&) = default;
 
   inline int index(double x) const { 
@@ -191,8 +240,25 @@ public:
            - x_.get() - 1;
   }
 
-  double operator[](int idx) const;
-  bool operator==(const variable_axis&) const;
+  double operator[](int idx) const
+  {
+    if (idx < 0)
+        return -std::numeric_limits<double>::infinity();
+    if (idx > bins())
+        return std::numeric_limits<double>::infinity();
+    return x_[idx];
+  }
+
+  bool operator==(const variable_axis& o) const
+  {
+    if (!axis_base::operator==(o))
+        return false;
+    for (unsigned i = 0, n = bins() + 1; i < n; ++i)
+        if (x_[i] != o.x_[i])
+            return false;
+    return true;
+  }
+
 private:
   std::unique_ptr<double[]> x_; // smaller size compared to std::vector
 
@@ -211,7 +277,9 @@ public:
    * @param categories an ordered sequence of categories that this axis discriminates
    */
   explicit
-  category_axis(const std::initializer_list<std::string>& categories);
+  category_axis(const std::initializer_list<std::string>& categories)
+    : categories_(categories)
+  {}
 
   category_axis() {}
   category_axis(const category_axis&) = default;
@@ -230,7 +298,9 @@ public:
 
   inline bool uoflow() const { return false; }
 
-  bool operator==(const category_axis&) const;
+  bool operator==(const category_axis& o) const
+  { return categories_ == o.categories_; }
+
 private:
   std::vector<std::string> categories_;
 
@@ -252,7 +322,10 @@ public:
    */
   integer_axis(int min, int max,
                const std::string& label = std::string(),
-               bool uoflow = true);
+               bool uoflow = true) :
+    axis_base(max + 1 - min, label, uoflow),
+    min_(min)
+  {}
 
   integer_axis() : min_(0) {}
   integer_axis(const integer_axis&) = default;
@@ -266,7 +339,11 @@ public:
   ///Returns the integer that is mapped to the bin index.
   int operator[](int idx) const { return min_ + idx; }
 
-  bool operator==(const integer_axis&) const;
+  bool operator==(const integer_axis& o) const
+  {
+    return axis_base::operator==(o) && min_ == o.min_;    
+  }
+
 private:
   int min_;
 
@@ -304,11 +381,6 @@ typedef variant<
 > axis_t;
 
 // axis_t is automatically output-streamable if all its bounded types are 
-std::ostream& operator<<(std::ostream&, const regular_axis&);
-std::ostream& operator<<(std::ostream&, const polar_axis&);
-std::ostream& operator<<(std::ostream&, const variable_axis&);
-std::ostream& operator<<(std::ostream&, const category_axis&);
-std::ostream& operator<<(std::ostream&, const integer_axis&);
 
 }
 }
