@@ -11,7 +11,7 @@ matrix:
           packages:
             - g++-4.8
             - libboost1.55-all-dev
-      env: COMPILER_VERSION=4.8 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=ON
+      env: COMPILER_VERSION=4.8 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON CMAKE_BUILD_TYPE=cov
     - compiler: clang
       addons:
         apt:
@@ -22,7 +22,7 @@ matrix:
           packages:
             - clang-3.6
             - libboost1.55-all-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON COVERAGE=OFF
+      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON
     - compiler: clang
       addons:
         apt:
@@ -33,7 +33,7 @@ matrix:
           packages:
             - clang-3.6
             - libboost1.55-all-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=OFF COVERAGE=OFF
+      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=OFF
     - compiler: clang
       addons:
         apt:
@@ -44,7 +44,7 @@ matrix:
           packages:
             - clang-3.6
             - libboost1.55-all-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2 USE_PYTHON=OFF USE_NUMPY=OFF COVERAGE=OFF
+      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2 USE_PYTHON=OFF USE_NUMPY=OFF
 git:
   depth: 10
 
@@ -64,16 +64,18 @@ install:
   - pip install --user cpp-coveralls
 
 script:
-  cd build && 
+  cd build &&
   cmake . -DUSE_PYTHON=${USE_PYTHON}
           -DUSE_NUMPY=${USE_NUMPY}
-          -DCOVERAGE=${COVERAGE} &&
+          -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
   make -j2 &&
   ctest -V
 
 # Calculate coverage
 after_success:
-  - if [ "${COVERAGE}" = "ON" ]; then coveralls -r .. -b . --verbose --gcov=`which gcov-${COMPILER_VERSION}`; fi
+  if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+    coveralls -r .. -b . --verbose --gcov=`which gcov-${COMPILER_VERSION}`;
+  fi
 
 after_failure:
   - make clean && VERBOSE=1 make
