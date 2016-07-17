@@ -7,7 +7,6 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_HPP_
 #define _BOOST_HISTOGRAM_AXIS_HPP_
 
-#include <boost/algorithm/clamp.hpp>
 #include <boost/variant.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <type_traits>
@@ -50,7 +49,7 @@ protected:
   axis_base& operator=(axis_base&&) = default;
 
   bool operator==(const axis_base& o) const
-  { return size_ == o.size_ && uoflow_ && o.uoflow_ && label_ == o.label_; }
+  { return size_ == o.size_ && uoflow_ == o.uoflow_ && label_ == o.label_; }
 
 private:
   int size_;
@@ -335,7 +334,8 @@ public:
 
   ///Returns the bin index for the passed argument.
   inline int index(double x) const
-  { return algorithm::clamp(rint(x) - min_, -1, bins()); }
+  { const int i = rint(x) - min_;
+    return i < 0 ? -1 : std::min(i, bins()); }
   ///Returns the integer that is mapped to the bin index.
   int operator[](int idx) const { return min_ + idx; }
 

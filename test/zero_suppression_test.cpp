@@ -4,10 +4,10 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/histogram/detail/zero_suppression.hpp>
 #define BOOST_TEST_MODULE zero_suppression_test
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
+#include <boost/histogram/detail/zero_suppression.hpp>
 #include <boost/assign/std/vector.hpp>
 #include <iostream>
 using namespace boost::assign;
@@ -24,7 +24,8 @@ print(const std::vector<T>& v) {
     std::cerr << "\n";
 }
 
-#define EQUAL_VECTORS(a, b) BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end())
+#define EQUAL_VECTORS(a, b) \
+    BOOST_CHECK_EQUAL_COLLECTIONS(a.begin(), a.end(), b.begin(), b.end())
 
 BOOST_AUTO_TEST_CASE( codec_no_zero )
 {

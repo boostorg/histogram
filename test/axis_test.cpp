@@ -5,12 +5,11 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #define BOOST_TEST_MODULE axis_test
-#include <boost/histogram/axis.hpp>
-#include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
+#include <boost/histogram/axis.hpp>
+#include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/math/constants/constants.hpp>
-#include <sstream>
 #include <limits>
 using namespace boost::histogram;
 

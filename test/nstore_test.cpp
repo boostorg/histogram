@@ -4,12 +4,11 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/histogram/detail/nstore.hpp>
-#include <boost/histogram/detail/wtype.hpp>
 #define BOOST_TEST_MODULE nstore_test
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
-#include <boost/move/move.hpp>
+#include <boost/histogram/detail/nstore.hpp>
+#include <boost/histogram/detail/wtype.hpp>
 #include <sstream>
 #include <string>
 #include <limits>

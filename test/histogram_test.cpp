@@ -5,9 +5,9 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #define BOOST_TEST_MODULE histogram_test
-#include <boost/histogram/histogram.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <limits>
 using namespace boost::histogram;
 
