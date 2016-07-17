@@ -112,13 +112,6 @@ BOOST_AUTO_TEST_CASE(move_ctor)
     // BOOST_CHECK_EQUAL(h2.dim(), 0);
 }
 
-BOOST_AUTO_TEST_CASE(self_move_assign)
-{
-    auto h = histogram(regular_axis(1, -1, 1),
-                       regular_axis(2, -2, 2));
-    h = std::move(h);  
-}
-
 BOOST_AUTO_TEST_CASE(move_assign)
 {
     auto h = histogram(regular_axis(1, -1, 1),
