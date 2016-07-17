@@ -6,54 +6,44 @@
 
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/axis.hpp>
-#include <boost/random.hpp>
-#include <boost/array.hpp>
+#include <random>
 
 #include <algorithm>
 #include <limits>
-#include <vector>
+#include <array>
 #include <ctime>
 #include <cstdio>
 
-using namespace std;
 using namespace boost::histogram;
 
-template <typename D>
-struct rng {
-  boost::random::mt19937 r;
-  D d;
-  rng(double a, double b) : d(a, b) {}
-  double operator()() { return d(r); }
-};
-
-vector<double> random_array(unsigned n, int type) {
-  using namespace boost::random;
-  std::vector<double> result;
-  switch (type) {
-    case 0:
-      std::generate_n(std::back_inserter(result), n, rng<uniform_real_distribution<> >(0.0, 1.0));
-      break;
-    case 1:
-      std::generate_n(std::back_inserter(result), n, rng<normal_distribution<> >(0.0, 0.3));
-      break;
+std::vector<double> random_array(unsigned n, int type) {
+  std::vector<double> result(n);
+  std::default_random_engine gen(1);
+  if (type) { // type == 1
+    std::normal_distribution<> d(0.0, 0.3);
+    for (auto& x : result)
+      x = d(gen);
+  }
+  else { // type == 0
+    std::uniform_real_distribution<> d(0.0, 1.0);
+    for (auto& x: result)
+      x = d(gen);
   }
   return result;
 }
 
 void compare_1d(unsigned n, int distrib)
 {
-  vector<double> r = random_array(n, distrib);
+  auto r = random_array(n, distrib);
 
-  double best_boost = std::numeric_limits<double>::max();
+  auto best_boost = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 10; ++k) {
-    histogram h(regular_axis(100, 0, 1));
-    t = clock();
+    auto h = histogram(regular_axis(100, 0, 1));
+    auto t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[i]);
     t = clock() - t;
     best_boost = std::min(best_boost, double(t) / CLOCKS_PER_SEC);
-    // printf("root %g this %g\n", hroot.GetSum(), h.sum());
-    assert(hroot.GetSum() == h.sum());
   }
 
   printf("1D\n");
@@ -62,19 +52,18 @@ void compare_1d(unsigned n, int distrib)
 
 void compare_3d(unsigned n, int distrib)
 {
-  vector<double> r = random_array(3 * n, distrib);
+  auto r = random_array(3 * n, distrib);
 
-  double best_boost = std::numeric_limits<double>::max();
+  auto best_boost = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 10; ++k) {
-    histogram h(regular_axis(100, 0, 1),
-                 regular_axis(100, 0, 1),
-                 regular_axis(100, 0, 1));
-    t = clock();
+    auto h = histogram(regular_axis(100, 0, 1),
+                       regular_axis(100, 0, 1),
+                       regular_axis(100, 0, 1));
+    auto t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
     t = clock() - t;
     best_boost = std::min(best_boost, double(t) / CLOCKS_PER_SEC);
-    assert(hroot.GetSum() == h.sum());
   } 
 
   printf("3D\n");
@@ -83,24 +72,24 @@ void compare_3d(unsigned n, int distrib)
 
 void compare_6d(unsigned n, int distrib)
 {
-  vector<double> r = random_array(6 * n, distrib);
+  auto r = random_array(6 * n, distrib);
 
-  double best_boost = std::numeric_limits<double>::max();
+  auto best_boost = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 10; ++k) {
     double x[6];
 
-    histogram h(regular_axis(10, 0, 1),
-                regular_axis(10, 0, 1),
-                regular_axis(10, 0, 1),
-                regular_axis(10, 0, 1),
-                regular_axis(10, 0, 1),
-                regular_axis(10, 0, 1));
+    auto h = histogram(regular_axis(10, 0, 1),
+                       regular_axis(10, 0, 1),
+                       regular_axis(10, 0, 1),
+                       regular_axis(10, 0, 1),
+                       regular_axis(10, 0, 1),
+                       regular_axis(10, 0, 1));
 
-    t = clock();
+    auto t = clock();
     for (unsigned i = 0; i < n; ++i) {
       for (unsigned k = 0; k < 6; ++k)
         x[k] = r[6 * i + k];      
-      h.fill(x, x+6);
+      h.fill(x[0], x[1], x[2], x[3], x[4], x[5]);
     }
     t = clock() - t;
     best_boost = std::min(best_boost, double(t) / CLOCKS_PER_SEC);

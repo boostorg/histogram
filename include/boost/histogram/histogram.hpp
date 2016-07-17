@@ -10,7 +10,10 @@
 #include <boost/config.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/visitors.hpp>
+#include <boost/histogram/storage.hpp>
 #include <type_traits>
+#include <array>
+#include <vector>
 #include <stdexcept>
 #include <iterator>
 #include <iostream>
@@ -21,29 +24,10 @@
 namespace boost {
 namespace histogram {
 
-  template <typename T>
-  struct static_storage_policy {
-    std::vector<T> data_;
-    typedef T value_t;
-    typedef T variance_t;
-    std::size_t size() const { return data_.size(); }
-    void allocate(std::size_t n) { data_.resize(n, 0); }
-    void increase(std::size_t i) { ++data_[i]; }
-    value_t value(std::size_t i) const { return data_[i]; }
-    variance_t variance(std::size_t i) const { return data_[i]; }
-    bool operator==(const static_storage_policy& other) const
-    { return data_ == other.data_; }
-    void operator+=(const static_storage_policy& other)
-    {
-      for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_[i] += other.data_[i];
-    }
-  };
-
   ///Use dynamic dimension
   constexpr unsigned Dynamic = 0;
 
-  template <unsigned Dim, typename StoragePolicy = static_storage_policy<unsigned> >
+  template <unsigned Dim, typename StoragePolicy = static_storage<unsigned> >
   class histogram_t : private StoragePolicy
   {
   public:
@@ -95,7 +79,7 @@ namespace histogram {
                     "number of arguments does not match histogram dimension");
       detail::linearize_x lin;
       fill_impl(lin, std::forward<Args>(args)...);
-      if (lin.out < size())
+      if (lin.stride)
         StoragePolicy::increase(lin.out);
     }
 
@@ -106,7 +90,7 @@ namespace histogram {
                     "number of arguments does not match histogram dimension");
       detail::linearize lin;
       index_impl(lin, std::forward<Args>(args)...);
-      if (lin.out >= size())
+      if (lin.stride == 0)
         throw std::out_of_range("invalid index");
       return StoragePolicy::value(lin.out);
     }
@@ -118,7 +102,7 @@ namespace histogram {
                     "number of arguments does not match histogram dimension");
       detail::linearize lin;
       index_impl(lin, std::forward<Args>(args)...);
-      if (lin.out >= size())
+      if (lin.stride == 0)
         throw std::out_of_range("invalid index");
       return StoragePolicy::variance(lin.out);
     }
@@ -158,7 +142,7 @@ namespace histogram {
     }
 
   private:
-    std::array<axis_t, Dim> axes_; 
+    std::array<axis_t, Dim> axes_;
 
     std::size_t field_count() const
     {

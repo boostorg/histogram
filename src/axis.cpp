@@ -29,60 +29,25 @@ namespace {
     }
 }
 
-axis_base::axis_base(int size,
+axis_base::axis_base(unsigned size,
                      const std::string& label,
                      bool uoflow) :
     size_(size),
+    uoflow_(uoflow),
     label_(label)
-{
-    if (size <= 0)
-        throw std::logic_error("size must be positive");
-    if (!uoflow) size_ = -size_;
-}
-
-axis_base::axis_base(const axis_base& o) :
-    size_(o.size_),
-    label_(o.label_)
 {}
-
-axis_base&
-axis_base::operator=(const axis_base& o)
-{
-    if (this != &o) {
-        size_ = o.size_;
-        label_ = o.label_;
-    }
-    return *this;
-}
 
 bool axis_base::operator==(const axis_base& o) const
 { return size_ == o.size_ && label_ == o.label_; }
 
-regular_axis::regular_axis(int n, double min, double max,
+regular_axis::regular_axis(unsigned n, double min, double max,
                            const std::string& label, bool uoflow):
     axis_base(n, label, uoflow),
     min_(min),
-    range_(max - min)
+    delta_((max - min) / n)
 {
     if (min >= max)
         throw std::logic_error("regular_axis: min must be less than max");
-}
-
-regular_axis::regular_axis(const regular_axis& o) :
-    axis_base(o),
-    min_(o.min_),
-    range_(o.range_)
-{}
-
-regular_axis&
-regular_axis::operator=(const regular_axis& o)
-{
-    if (this != &o) {
-        axis_base::operator=(o);
-        min_ = o.min_;
-        range_ = o.range_;
-    }
-    return *this;
 }
 
 double
@@ -94,7 +59,7 @@ regular_axis::operator[](int idx)
     if (idx > bins())
         return std::numeric_limits<double>::infinity();
     const double z = double(idx) / bins();
-    return (1.0 - z) * min_ + z * (min_ + range_);
+    return (1.0 - z) * min_ + z * (min_ + delta_ * bins());
 }
 
 bool
@@ -102,29 +67,14 @@ regular_axis::operator==(const regular_axis& o) const
 {
     return axis_base::operator==(o) &&
            min_ == o.min_ &&
-           range_ == o.range_;
+           delta_ == o.delta_;
 }
 
-polar_axis::polar_axis(int n, double start,
+polar_axis::polar_axis(unsigned n, double start,
                        const std::string& label) :
     axis_base(n, label, false),
     start_(start)
 {}
-
-polar_axis::polar_axis(const polar_axis& o) :
-    axis_base(o),
-    start_(o.start_)
-{}
-
-polar_axis&
-polar_axis::operator=(const polar_axis& o)
-{
-    if (this != &o) {
-        axis_base::operator=(o);
-        start_ = o.start_;
-    }
-    return *this;
-}
 
 double
 polar_axis::operator[](int idx)
@@ -186,18 +136,6 @@ category_axis::category_axis(const std::initializer_list<std::string>& c) :
     categories_(c)
 {}
 
-category_axis::category_axis(const category_axis& o) :
-    categories_(o.categories_)
-{}
-
-category_axis&
-category_axis::operator=(const category_axis& o)
-{
-    if (this != &o)
-        categories_ = o.categories_;
-    return *this;
-}
-
 bool
 category_axis::operator==(const category_axis& o) const
 { return categories_ == o.categories_; }
@@ -208,21 +146,6 @@ integer_axis::integer_axis(int min, int max,
     axis_base(max + 1 - min, label, uoflow),
     min_(min)
 {}
-
-integer_axis::integer_axis(const integer_axis& a) :
-    axis_base(a),
-    min_(a.min_)
-{}
-
-integer_axis&
-integer_axis::operator=(const integer_axis& o)
-{
-    if (this != &o) {
-        axis_base::operator=(o);
-        min_ = o.min_;
-    }
-    return *this;
-}
 
 bool
 integer_axis::operator==(const integer_axis& o) const

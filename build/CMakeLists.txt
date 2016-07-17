@@ -6,7 +6,6 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
 # setup build
 option(BUILD_CHECKS "Build auxillary checks" OFF)
-option(COVERAGE "Build with coverage instrumentation" OFF)
 
 if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
@@ -24,11 +23,11 @@ include_directories(../include ${Boost_INCLUDE_DIRS})
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
   add_definitions(-O0 -g)
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage)
-  message(STATUS "Build type: COVERAGE [optimizations off]")
+  message(STATUS "Build type: DEBUG [optimizations off]")
 elseif(CMAKE_BUILD_TYPE STREQUAL "cov")
   add_definitions(-O0 -g)
-  message(STATUS "Build type: DEBUG [optimizations off]")
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage)
+  message(STATUS "Build type: COVERAGE [optimizations off]")
 elseif(CMAKE_BUILD_TYPE STREQUAL "perf")
   message(STATUS "Build type: PERF [optimizations on]")
   add_definitions(-O3 -g -fno-omit-frame-pointer)
