@@ -6,11 +6,11 @@
 
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/axis.hpp>
-#include <random>
 
+#include <random>
 #include <algorithm>
 #include <limits>
-#include <array>
+#include <vector>
 #include <ctime>
 #include <cstdio>
 
