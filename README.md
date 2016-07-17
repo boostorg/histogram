@@ -14,14 +14,14 @@ My goal is to submit this project to [Boost](http://www.boost.org), that's why i
 
 * N-dimensional histogram
 * Intuitive and convenient interface
+* Full value semantics (efficient move operations)
 * Support for different binning schemes, including binning of angles
-* Optional underflow- and overflow-bins for each dimension
+* Optional underflow/overflow bins for each dimension
 * Support for weighted events, with variance estimates for each bin
-* Support for move semantics using `boost::move` (works even in `C++03`)
-* High performance through cache-friendly design
+* High performance through cache-friendly design and benchmark-based tuning
 * Space-efficient memory storage that dynamically grows as needed
 * Serialization support with zero-suppression
-* Multi-language support: C++ (C++03 and higher) and Python (2.x and 3.x)
+* Multi-language support: C++ (C++11 and higher) and Python (2.x and 3.x)
 * Numpy support
 
 ## Dependencies
@@ -31,7 +31,6 @@ My goal is to submit this project to [Boost](http://www.boost.org), that's why i
 * Optional:
   [Python](http://www.python.org)
   [Numpy](http://www.numpy.org)
-  [Sphinx](http://www.sphinx-doc.org)
 
 ## Build instructions
 
@@ -62,7 +61,7 @@ Example 1: Fill a 1d-histogram in C++
 
         // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
         // with axis of histogram labeled as "x"
-        bh::histogram h(bh::regular_axis(10, -1.0, 2.0, "x"));
+        auto h = bh::histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
 
         // fill histogram with data
         h.fill(-1.5); // put in underflow bin
@@ -160,17 +159,17 @@ The benchmark against ROOT is implemented in C++, the benchmark against numpy in
 Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM
 
 ```
-=================  =======  =======  =======  =======  =======  =======
-distribution                uniform                    normal
------------------  -------------------------  -------------------------
-dimension          1D       3D       6D       1D       3D       6D
-=================  =======  =======  =======  =======  =======  =======
-No. of fills       12M      4M       2M       12M      4M       2M
-C++: ROOT  [t/s]   0.127    0.199    0.185    0.168    0.143    0.179
-C++: boost [t/s]   0.172    0.177    0.155    0.172    0.171    0.150
-Py: numpy [t/s]    0.825    0.727    0.436    0.824    0.426    0.401
-Py: boost [t/s]    0.209    0.229    0.192    0.207    0.194    0.168
-=================  =======  =======  =======  =======  =======  =======
+==========================================  =======  =======  =======  =======  =======  =======
+distribution                                         uniform                    normal
+------------------------------------------  -------------------------  -------------------------
+dimension                                    1D       3D       6D       1D       3D       6D
+==========================================  =======  =======  =======  =======  =======  =======
+No. of fills                                12M      4M       2M       12M      4M       2M
+C++: ROOT  [t/s]                            0.127    0.199    0.185    0.168    0.143    0.179
+C++: boost/static_storage<unsigned> [t/s]   0.073    0.160    0.178    0.159    0.182    0.187
+Py: numpy [t/s]                             0.825    0.727    0.436    0.824    0.426    0.401
+Py: boost [t/s]                             0.209    0.229    0.192    0.207    0.194    0.168
+==========================================  =======  =======  =======  =======  =======  =======
 ```
 
 `boost::histogram` shows consistent performance comparable to the specialized ROOT histograms. It is faster than ROOT's implementation of a N-dimensional histogram `THnI`. The performance of `boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is consistently faster than numpy's histogram functions.
