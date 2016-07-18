@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_HISTOGRAM_STORAGE_HPP_
-#define _BOOST_HISTOGRAM_STORAGE_HPP_
+#ifndef _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
+#define _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
 
 #include <vector>
 
@@ -13,11 +13,12 @@ namespace boost {
 namespace histogram {
 
   template <typename T>
-  struct static_storage {
-    std::vector<T> data_;
+  class static_storage {
+  public:
     typedef T value_t;
     typedef T variance_t;
     std::size_t size() const { return data_.size(); }
+    constexpr unsigned depth() const { return sizeof(T); }
     void allocate(std::size_t n) { data_.resize(n, 0); }
     void increase(std::size_t i) { ++(data_[i]); }
     value_t value(std::size_t i) const { return data_[i]; }
@@ -29,6 +30,8 @@ namespace histogram {
       for (std::size_t i = 0, n = size(); i < n; ++i)
         data_[i] += other.data_[i];
     }
+  private:
+    std::vector<T> data_;
   };
 
 }

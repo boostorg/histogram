@@ -18,18 +18,23 @@ namespace detail {
 struct wtype {
   double w, w2;
   wtype() : w(0), w2(0) {}  
-  wtype(const wtype& o) : w(o.w), w2(o.w2) {}
+  wtype(const wtype&) = default;
+  wtype(wtype&&) = default;
+  wtype& operator=(const wtype&) = default;
+  wtype& operator=(wtype&&) = default;
   wtype(uint64_t i) : w(i), w2(i) {}
   wtype& operator+=(const wtype& o)
   { w += o.w; w2 += o.w2; return *this; }
   wtype& operator+=(double v)
   { w += v; w2 += v*v; return *this; }
+  wtype& operator+=(uint64_t i)
+  { w += i; w2 += i; return *this; }
   wtype& operator++()
   { ++w; ++w2; return *this; }
   bool operator==(uint64_t i) const
-  { return w == i; }
+  { return w == i && w2 == i; }
   bool operator!=(uint64_t i) const
-  { return w != i; }
+  { return w != i || w2 != i; }
   bool operator==(const wtype& o) const
   { return w == o.w && w2 == o.w2; }
   bool operator!=(const wtype& o) const
