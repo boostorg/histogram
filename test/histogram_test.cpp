@@ -155,27 +155,27 @@ BOOST_AUTO_TEST_CASE(d1)
     BOOST_CHECK_EQUAL(h.variance(2), 1.0);
 }
 
-// BOOST_AUTO_TEST_CASE(d1w)
-// {
-//     histogram h(regular_axis(2, -1, 1));
-//     h.fill(0);
-//     h.wfill(-1.0, 2.0);
-//     h.fill(-1.0);
-//     h.fill(-2.0);
-//     h.wfill(10.0, 5.0);
+BOOST_AUTO_TEST_CASE(d1w)
+{
+    auto h = histogram(regular_axis(2, -1, 1));
+    h.fill(0);
+    h.wfill(-1.0, 2.0);
+    h.fill(-1.0);
+    h.fill(-2.0);
+    h.wfill(10.0, 5.0);
 
-//     BOOST_CHECK_EQUAL(h.sum(), 10);
+    BOOST_CHECK_EQUAL(h.sum(), 10);
 
-//     BOOST_CHECK_EQUAL(h.value(-1), 1.0);
-//     BOOST_CHECK_EQUAL(h.value(0), 3.0);
-//     BOOST_CHECK_EQUAL(h.value(1), 1.0);
-//     BOOST_CHECK_EQUAL(h.value(2), 5.0);
+    BOOST_CHECK_EQUAL(h.value(-1), 1.0);
+    BOOST_CHECK_EQUAL(h.value(0), 3.0);
+    BOOST_CHECK_EQUAL(h.value(1), 1.0);
+    BOOST_CHECK_EQUAL(h.value(2), 5.0);
 
-//     BOOST_CHECK_EQUAL(h.variance(-1), 1.0);
-//     BOOST_CHECK_EQUAL(h.variance(0), 5.0);
-//     BOOST_CHECK_EQUAL(h.variance(1), 1.0);
-//     BOOST_CHECK_EQUAL(h.variance(2), 25.0);
-// }
+    BOOST_CHECK_EQUAL(h.variance(-1), 1.0);
+    BOOST_CHECK_EQUAL(h.variance(0), 5.0);
+    BOOST_CHECK_EQUAL(h.variance(1), 1.0);
+    BOOST_CHECK_EQUAL(h.variance(2), 25.0);
+}
 
 BOOST_AUTO_TEST_CASE(d2)
 {
@@ -226,49 +226,49 @@ BOOST_AUTO_TEST_CASE(d2)
     BOOST_CHECK_EQUAL(h.variance(2, 2), 0.0);
 }
 
-// BOOST_AUTO_TEST_CASE(d2w)
-// {
-//     histogram h(regular_axis(2, -1, 1),
-//                 integer_axis(-1, 1, std::string(), false));
-//     h.fill(-1, 0);       // -> 0, 1
-//     h.wfill(-1, -1, 10); // -> 0, 0
-//     h.wfill(-1, -10, 5); // is ignored
-//     h.wfill(-10, 0, 7);  // -> -1, 1
+BOOST_AUTO_TEST_CASE(d2w)
+{
+    auto h = histogram(regular_axis(2, -1, 1),
+                       integer_axis(-1, 1, std::string(), false));
+    h.fill(-1, 0);       // -> 0, 1
+    h.wfill(-1, -1, 10); // -> 0, 0
+    h.wfill(-1, -10, 5); // is ignored
+    h.wfill(-10, 0, 7);  // -> -1, 1
 
-//     BOOST_CHECK_EQUAL(h.sum(), 18);
+    BOOST_CHECK_EQUAL(h.sum(), 18);
 
-//     BOOST_CHECK_EQUAL(h.value(-1, 0), 0.0);
-//     BOOST_CHECK_EQUAL(h.value(-1, 1), 7.0);
-//     BOOST_CHECK_EQUAL(h.value(-1, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.value(-1, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.value(-1, 1), 7.0);
+    BOOST_CHECK_EQUAL(h.value(-1, 2), 0.0);
 
-//     BOOST_CHECK_EQUAL(h.value(0, 0), 10.0);
-//     BOOST_CHECK_EQUAL(h.value(0, 1), 1.0);
-//     BOOST_CHECK_EQUAL(h.value(0, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.value(0, 0), 10.0);
+    BOOST_CHECK_EQUAL(h.value(0, 1), 1.0);
+    BOOST_CHECK_EQUAL(h.value(0, 2), 0.0);
 
-//     BOOST_CHECK_EQUAL(h.value(1, 0), 0.0);
-//     BOOST_CHECK_EQUAL(h.value(1, 1), 0.0);
-//     BOOST_CHECK_EQUAL(h.value(1, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.value(1, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.value(1, 1), 0.0);
+    BOOST_CHECK_EQUAL(h.value(1, 2), 0.0);
 
-//     BOOST_CHECK_EQUAL(h.value(2, 0), 0.0);
-//     BOOST_CHECK_EQUAL(h.value(2, 1), 0.0);
-//     BOOST_CHECK_EQUAL(h.value(2, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.value(2, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.value(2, 1), 0.0);
+    BOOST_CHECK_EQUAL(h.value(2, 2), 0.0);
 
-//     BOOST_CHECK_EQUAL(h.variance(-1, 0), 0.0);
-//     BOOST_CHECK_EQUAL(h.variance(-1, 1), 49.0);
-//     BOOST_CHECK_EQUAL(h.variance(-1, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(-1, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(-1, 1), 49.0);
+    BOOST_CHECK_EQUAL(h.variance(-1, 2), 0.0);
 
-//     BOOST_CHECK_EQUAL(h.variance(0, 0), 100.0);
-//     BOOST_CHECK_EQUAL(h.variance(0, 1), 1.0);
-//     BOOST_CHECK_EQUAL(h.variance(0, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(0, 0), 100.0);
+    BOOST_CHECK_EQUAL(h.variance(0, 1), 1.0);
+    BOOST_CHECK_EQUAL(h.variance(0, 2), 0.0);
 
-//     BOOST_CHECK_EQUAL(h.variance(1, 0), 0.0);
-//     BOOST_CHECK_EQUAL(h.variance(1, 1), 0.0);
-//     BOOST_CHECK_EQUAL(h.variance(1, 2), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(1, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(1, 1), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(1, 2), 0.0);
 
-//     BOOST_CHECK_EQUAL(h.variance(2, 0), 0.0);
-//     BOOST_CHECK_EQUAL(h.variance(2, 1), 0.0);
-//     BOOST_CHECK_EQUAL(h.variance(2, 2), 0.0);
-// }
+    BOOST_CHECK_EQUAL(h.variance(2, 0), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(2, 1), 0.0);
+    BOOST_CHECK_EQUAL(h.variance(2, 2), 0.0);
+}
 
 BOOST_AUTO_TEST_CASE(add_0)
 {
@@ -291,20 +291,20 @@ BOOST_AUTO_TEST_CASE(add_1)
     BOOST_CHECK_EQUAL(c.value(3), 0);
 }
 
-// BOOST_AUTO_TEST_CASE(add_2w)
-// {
-//     histogram a(integer_axis(-1, 1));
-//     histogram b(integer_axis(-1, 1));
+BOOST_AUTO_TEST_CASE(add_2w)
+{
+    auto a = histogram(integer_axis(-1, 1));
+    auto b = histogram(integer_axis(-1, 1));
 
-//     a.fill(0);
-//     b.wfill(-1, 3);
-//     histogram c = a + b;
-//     BOOST_CHECK_EQUAL(c.value(-1), 0);
-//     BOOST_CHECK_EQUAL(c.value(0), 3);
-//     BOOST_CHECK_EQUAL(c.value(1), 1);
-//     BOOST_CHECK_EQUAL(c.value(2), 0);
-//     BOOST_CHECK_EQUAL(c.value(3), 0);    
-// }
+    a.fill(0);
+    b.wfill(-1, 3);
+    auto c = a + b;
+    BOOST_CHECK_EQUAL(c.value(-1), 0);
+    BOOST_CHECK_EQUAL(c.value(0), 3);
+    BOOST_CHECK_EQUAL(c.value(1), 1);
+    BOOST_CHECK_EQUAL(c.value(2), 0);
+    BOOST_CHECK_EQUAL(c.value(3), 0);    
+}
 
 BOOST_AUTO_TEST_CASE(doc_example_0)
 {
@@ -323,7 +323,7 @@ BOOST_AUTO_TEST_CASE(doc_example_0)
     h.fill(1.7);
     h.fill(2.0);  // put in overflow bin, bin interval is semi-open
     h.fill(20.0); // put in overflow bin
-    // h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
+    h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
 
     std::ostringstream os1;
     // access histogram counts
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(doc_example_0)
            "bin 0 x in [-1, -0.7): 1 +/- 1\n"
            "bin 1 x in [-0.7, -0.4): 1 +/- 1\n"
            "bin 2 x in [-0.4, -0.1): 0 +/- 0\n"
-           "bin 3 x in [-0.1, 0.2): 0 +/- 0\n"
+           "bin 3 x in [-0.1, 0.2): 5 +/- 5\n"
            "bin 4 x in [0.2, 0.5): 1 +/- 1\n"
            "bin 5 x in [0.5, 0.8): 0 +/- 0\n"
            "bin 6 x in [0.8, 1.1): 0 +/- 0\n"

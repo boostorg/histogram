@@ -33,92 +33,92 @@ namespace detail {
 
     class buffer_t {
     public:
+        buffer_t(std::size_t nbytes) :
+            memory_(std::calloc(nbytes, sizeof(char))),
+            nbytes_(nbytes)
+        {
+            if (!memory_)
+                throw std::bad_alloc();
+        }
+
         buffer_t() :
-            data_(nullptr),
-            size_(0)
+            memory_(nullptr),
+            nbytes_(0)
         {}
 
         buffer_t(const buffer_t& o) :
-            data_(std::malloc(o.size_)),
-            size_(o.size_)
+            memory_(std::malloc(o.nbytes_)),
+            nbytes_(o.nbytes_)
         {
-            if (!data_)
+            if (!memory_)
                 throw std::bad_alloc();
-            std::copy(static_cast<unsigned char*>(o.data_),
-                      static_cast<unsigned char*>(o.data_) + size_,
-                      static_cast<unsigned char*>(data_));
+            std::copy(static_cast<char*>(o.memory_),
+                      static_cast<char*>(o.memory_) + nbytes_,
+                      static_cast<char*>(memory_));
         }
 
         buffer_t(buffer_t&& o) :
-            data_(o.data_),
-            size_(o.size_)
+            memory_(o.memory_),
+            nbytes_(o.nbytes_)
         {
-            o.data_ = nullptr;
-            o.size_ = 0;
+            o.memory_ = nullptr;
+            o.nbytes_ = 0;
         }
 
-        ~buffer_t() { std::free(data_); }
+        ~buffer_t() { std::free(memory_); }
 
         buffer_t& operator=(const buffer_t& o)
         {
             if (this != &o) {
-                if (size_ != o.size_) {
-                    std::free(data_);
-                    data_ = std::malloc(o.size_);
-                    size_ = o.size_;
-                    if (!data_)
+                if (nbytes_ != o.nbytes_) {
+                    std::free(memory_);
+                    memory_ = std::malloc(o.nbytes_);
+                    nbytes_ = o.nbytes_;
+                    if (!memory_)
                         throw std::bad_alloc();
                 }
-                std::copy(static_cast<unsigned char*>(o.data_),
-                          static_cast<unsigned char*>(o.data_) + size_,
-                          static_cast<unsigned char*>(data_));
+                std::copy(static_cast<char*>(o.memory_),
+                          static_cast<char*>(o.memory_) + nbytes_,
+                          static_cast<char*>(memory_));
             }
             return *this;
         }
 
         buffer_t& operator=(buffer_t&& o)
         {
-            if (data_)
-                std::free(data_);
-            data_ = o.data_;
-            size_ = o.size_;
-            o.data_ = nullptr;
-            o.size_ = 0;
+            if (nbytes_)
+                std::free(memory_);
+            memory_ = o.memory_;
+            nbytes_ = o.nbytes_;
+            o.memory_ = nullptr;
+            o.nbytes_ = 0;
             return *this;
         }
 
-        buffer_t(std::size_t n) :
-            data_(std::calloc(n, 1)),
-            size_(n)
+        void resize(std::size_t nbytes)
         {
-            if (!data_)
-                throw std::bad_alloc();
-        }
-
-        void realloc(std::size_t n)
-        {
-            data_ = std::realloc(data_, n);
-            size_ = n;
-            if (!data_)
+            memory_ = std::realloc(memory_, nbytes);
+            nbytes_ = nbytes;
+            if (!memory_ && nbytes > 0)
                 throw std::bad_alloc();
         }
 
     template <typename T>
-    T& get(std::size_t i) { return static_cast<T*>(data_)[i]; }
+    T& get(std::size_t i) { return static_cast<T*>(memory_)[i]; }
 
     template <typename T>
-    const T& get(std::size_t i) const { return static_cast<T*>(data_)[i]; }
+    const T& get(std::size_t i) const { return static_cast<T*>(memory_)[i]; }
 
     bool operator==(const buffer_t& o) const {
-        return size_ == o.size_ &&
-               std::memcmp(data_, o.data_, size_) == 0;
+        return nbytes_ == o.nbytes_ &&
+               std::memcmp(memory_, o.memory_, nbytes_) == 0;
     }
 
-    std::size_t size() const { return size_; }
+    std::size_t nbytes() const { return nbytes_; }
 
     private:
-        void* data_;
-        std::size_t size_;
+        void* memory_;
+        std::size_t nbytes_;
     };
 }
 }

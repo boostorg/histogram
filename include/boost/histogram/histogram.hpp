@@ -29,9 +29,8 @@ namespace histogram {
 ///Use dynamic dimension
 constexpr unsigned Dynamic = 0;
 
-// template <unsigned Dim, typename StoragePolicy = static_storage<unsigned> >
-template <unsigned Dim, typename StoragePolicy = dynamic_storage >
-class histogram_t : private StoragePolicy
+template <unsigned Dim, typename StoragePolicy = dynamic_storage>
+class histogram_t
 {
 public:
   using value_t = typename StoragePolicy::value_t;
@@ -41,34 +40,28 @@ public:
   histogram_t(const histogram_t& other) = default;
   histogram_t(histogram_t&& other) = default;
   histogram_t& operator=(const histogram_t& other) = default;
-  histogram_t& operator=(histogram_t&& other)
-  {
-    if (this != &other) {
-      axes_ = std::move(other.axes_);
-      StoragePolicy::operator=(std::move(other));        
-    }
-    return *this;
-  }
+  histogram_t& operator=(histogram_t&& other) = default;
 
   template <typename... Axes>
   histogram_t(axis_t a, Axes... axes)
   {
     assign_axis(a, axes...);
-    StoragePolicy::allocate(field_count());
+    storage_ = StoragePolicy(field_count());
   }
 
   constexpr unsigned dim() const { return Dim; }
 
-  std::size_t size() const { return StoragePolicy::size(); }
+  /// Total number of bins in the histogram (including underflow/overflow)
+  std::size_t size() const { return storage_.size(); }
 
-  // for convenience
+  /// Number of bins along axis \a i, including underflow/overflow
   std::size_t shape(unsigned i) const
   {
     BOOST_ASSERT(i < Dim);
     return apply_visitor(visitor::shape(), axes_[i]);
   }
 
-  // for convenience
+  /// Number of bins along axis \a i, excluding underflow/overflow
   int bins(unsigned i) const
   {
     BOOST_ASSERT(i < Dim);
@@ -81,9 +74,20 @@ public:
     static_assert(sizeof...(args) == Dim,
                   "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
-    fill_impl(lin, std::forward<Args>(args)...);
+    index_impl(lin, args...);
     if (lin.stride)
-      StoragePolicy::increase(lin.out);
+      storage_.increase(lin.out);
+  }
+
+  template <typename... Args>
+  void wfill(Args... args)
+  {
+    static_assert(sizeof...(args) == (Dim + 1),
+                  "number of arguments does not match histogram dimension");
+    detail::linearize_x lin;
+    const double w = windex_impl(lin, args...);
+    if (lin.stride)
+      storage_.increase(lin.out, w);
   }
 
   template <typename... Args>
@@ -92,10 +96,10 @@ public:
     static_assert(sizeof...(args) == Dim,
                   "number of arguments does not match histogram dimension");
     detail::linearize lin;
-    index_impl(lin, std::forward<Args>(args)...);
+    index_impl(lin, args...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
-    return StoragePolicy::value(lin.out);
+    return storage_.value(lin.out);
   }
 
   template <typename... Args>
@@ -107,7 +111,7 @@ public:
     index_impl(lin, std::forward<Args>(args)...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
-    return StoragePolicy::variance(lin.out);
+    return storage_.variance(lin.out);
   }
 
   template <typename T>
@@ -139,15 +143,15 @@ public:
   {
     double result = 0.0;
     for (std::size_t i = 0, n = size(); i < n; ++i)
-      result += StoragePolicy::value(i);
+      result += storage_.value(i);
     return result;
   }
 
   template <unsigned OtherDim>
   bool operator==(const histogram_t<OtherDim, StoragePolicy>& other) const
   {
-    return dim() == other.dim() && axes_ == other.axes_ && 
-           StoragePolicy::operator==(static_cast<const StoragePolicy&>(other));
+    return dim() == other.dim() && axes_ == other.axes_ &&
+           storage_ == other.storage_;
   }
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
@@ -157,7 +161,7 @@ public:
   template <unsigned OtherDim, typename OtherStoragePolicy>
   histogram_t& operator+=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
   {
-    static_assert(std::is_same<StoragePolicy, OtherStoragePolicy>::value,
+    static_assert(std::is_convertible<OtherStoragePolicy, StoragePolicy>::value,
                   "dimensions or storage policies incompatible"); 
     if (dim() != other.dim())
       throw std::logic_error("dimensions of histograms differ");
@@ -165,12 +169,13 @@ public:
       throw std::logic_error("sizes of histograms differ");
     if (axes_ != other.axes_)
       throw std::logic_error("axes of histograms differ");
-    StoragePolicy::operator+=(static_cast<const StoragePolicy&>(other));
+    storage_ += other.storage_;
     return *this;
   }
 
 private:
   std::array<axis_t, Dim> axes_;
+  StoragePolicy storage_;
 
   std::size_t field_count() const
   {
@@ -184,28 +189,45 @@ private:
   void assign_axis(First a, Rest... rest)
   {
     static_assert(std::is_convertible<First, axis_t>::value,
-                  "not an axis type");
+                  "argument must be axis type");
     axes_[dim() - sizeof...(Rest) - 1] = a;
     assign_axis(rest...);
   }
   void assign_axis() {} // stop recursion
 
   template <typename First, typename... Rest>
-  void fill_impl(detail::linearize_x& lin, First first, Rest... rest)
+  void index_impl(detail::linearize_x& lin, First first, Rest... rest)
   {
     static_assert(std::is_convertible<First, double>::value,
-                  "not convertible to double");
+                  "argument not convertible to double");
     lin.in = first;
     apply_visitor(lin, axes_[dim() - sizeof...(Rest) - 1]);
-    fill_impl(lin, rest...);
+    index_impl(lin, rest...);
   }
-  void fill_impl(detail::linearize_x&) {} // stop recursion
+  void index_impl(detail::linearize_x&) {} // stop recursion
+
+  template <typename First, typename... Rest>
+  double windex_impl(detail::linearize_x& lin, First first, Rest... rest)
+  {
+    static_assert(std::is_convertible<First, double>::value,
+                  "argument not convertible to double");
+    lin.in = first;
+    apply_visitor(lin, axes_[dim() - sizeof...(Rest)]);
+    return windex_impl(lin, rest...);
+  }
+  template <typename Last>
+  double windex_impl(detail::linearize_x&, Last w)
+  { 
+    static_assert(std::is_convertible<Last, double>::value,
+                  "argument not convertible to double");
+    return w; 
+  } // stop recursion
 
   template <typename First, typename... Rest>
   void index_impl(detail::linearize& lin, First first, Rest... rest)
   {
     static_assert(std::is_convertible<First, int>::value,
-                  "not convertible to integer");
+                  "argument not convertible to integer");
     lin.in = first;
     apply_visitor(lin, axes_[dim() - sizeof...(Rest) - 1]);
     index_impl(lin, rest...);      

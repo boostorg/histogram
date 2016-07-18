@@ -7,31 +7,36 @@
 #ifndef _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
 #define _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
 
-#include <vector>
+#include <boost/histogram/detail/utility.hpp>
 
 namespace boost {
 namespace histogram {
 
   template <typename T>
   class static_storage {
+    using buffer_t = detail::buffer_t;
+
   public:
-    typedef T value_t;
-    typedef T variance_t;
-    std::size_t size() const { return data_.size(); }
+    using value_t = T;
+    using variance_t = T;
+
+    static_storage(std::size_t n=0) : data_(n * sizeof(T)) {}
+
+    std::size_t size() const { return data_.nbytes() / sizeof(T); }
     constexpr unsigned depth() const { return sizeof(T); }
-    void allocate(std::size_t n) { data_.resize(n, 0); }
-    void increase(std::size_t i) { ++(data_[i]); }
-    value_t value(std::size_t i) const { return data_[i]; }
-    variance_t variance(std::size_t i) const { return data_[i]; }
+    void increase(std::size_t i) { ++(data_.get<T>(i)); }
+    value_t value(std::size_t i) const { return data_.get<T>(i); }
+    variance_t variance(std::size_t i) const { return data_.get<T>(i); }
     bool operator==(const static_storage& other) const
     { return data_ == other.data_; }
     void operator+=(const static_storage& other)
     {
       for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_[i] += other.data_[i];
+        data_.get<T>(i) += other.data_.get<T>(i);
     }
+
   private:
-    std::vector<T> data_;
+    buffer_t data_;
   };
 
 }
