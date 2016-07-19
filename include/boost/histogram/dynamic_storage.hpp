@@ -120,6 +120,16 @@ public:
   bool operator==(const dynamic_storage&) const;
   dynamic_storage& operator+=(const dynamic_storage&);
 
+  template <typename T>
+  bool operator==(const static_storage<T>& o) const
+  {
+    if (size() != o.size()) return false;
+    for (std::size_t i = 0, n = size(); i < n; ++i)
+      if (value(i) != o.value(i))
+        return false;
+    return true;
+  }
+
 private:
   buffer_t data_;
   unsigned depth_ = sizeof(uint8_t);
@@ -212,6 +222,15 @@ void dynamic_storage::increase(std::size_t i, double w)
   data_.get<wtype>(i) += w;
 }
 
+bool dynamic_storage::operator==(const dynamic_storage& o) const 
+{
+  if (size() != o.size()) return false;
+  for (std::size_t i = 0, n = size(); i < n; ++i)
+    if (value(i) != o.value(i))
+      return false;
+  return true;
+}
+
 dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
 {
   // make depth of lhs as large as rhs
@@ -243,11 +262,6 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
     }
   }
   return *this;
-}
-
-bool dynamic_storage::operator==(const dynamic_storage& o) const
-{
-  return depth_ == o.depth_ && data_ == o.data_;
 }
 
 dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
