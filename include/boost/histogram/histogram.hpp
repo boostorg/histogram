@@ -8,20 +8,16 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_HPP_
 
 #include <boost/config.hpp>
+#include <boost/assert.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/visitors.hpp>
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
 #include <cstddef>
-#include <type_traits>
 #include <array>
-#include <vector>
+#include <type_traits>
 #include <stdexcept>
 #include <iterator>
-#include <iostream>
-
-#define DEBUG(x) std::cout << #x << " " << x << std::endl
-#define TRACE(msg) std::cout << __LINE__ << " " msg << std::endl
 
 namespace boost {
 namespace histogram {
@@ -37,10 +33,36 @@ public:
   using variance_t = typename StoragePolicy::variance_t;
 
   histogram_t() = default;
-  histogram_t(const histogram_t& other) = default;
-  histogram_t(histogram_t&& other) = default;
-  histogram_t& operator=(const histogram_t& other) = default;
-  histogram_t& operator=(histogram_t&& other) = default;
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  histogram_t(const histogram_t<OtherDim, OtherStoragePolicy>& other) :
+    axes_(other.axes_),
+    storage_(other.storage_)
+  {}
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  histogram_t(histogram_t<OtherDim, OtherStoragePolicy>&& other) :
+    axes_(std::move(other.axes_)),
+    storage_(std::move(other.storage_))
+  {}
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  histogram_t& operator=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
+  {
+    if (this != &other) {
+      axes_ = other.axes_;
+      storage_ = other.storage_;
+    }
+    return *this;
+  }
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  histogram_t& operator=(histogram_t<OtherDim, OtherStoragePolicy>&& other)
+  {
+    axes_ = std::move(other.axes_);
+    storage_ = std::move(other.storage_);
+    return *this;
+  } 
 
   template <typename... Axes>
   histogram_t(axis_t a, Axes... axes)
@@ -147,22 +169,18 @@ public:
     return result;
   }
 
-  template <unsigned OtherDim>
-  bool operator==(const histogram_t<OtherDim, StoragePolicy>& other) const
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  bool operator==(const histogram_t<OtherDim, OtherStoragePolicy>& other) const
   {
     return dim() == other.dim() && axes_ == other.axes_ &&
            storage_ == other.storage_;
   }
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  bool operator==(const histogram_t<OtherDim, OtherStoragePolicy>&) const
-  { return false; }
-
-  template <unsigned OtherDim, typename OtherStoragePolicy>
   histogram_t& operator+=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
   {
-    static_assert(std::is_convertible<OtherStoragePolicy, StoragePolicy>::value,
-                  "dimensions or storage policies incompatible"); 
+    static_assert((OtherDim == Dim) || OtherDim == Dynamic,
+                  "dimensions incompatible"); 
     if (dim() != other.dim())
       throw std::logic_error("dimensions of histograms differ");
     if (size() != other.size())
@@ -233,21 +251,29 @@ private:
     index_impl(lin, rest...);      
   }
   void index_impl(detail::linearize&) {} // stop recursion
+
+  // all histogram types are friends to share access of private members
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  friend class histogram_t;
 };
 
 template <unsigned DimA, typename StoragePolicyA,
           unsigned DimB, typename StoragePolicyB>
-typename std::common_type<
-  histogram_t<DimA, StoragePolicyA>,
-  histogram_t<DimB, StoragePolicyB>
->::type
+histogram_t<
+  (DimA > DimB ? DimA : DimB),
+  typename std::conditional<(sizeof(typename StoragePolicyA::value_t) >
+                             sizeof(typename StoragePolicyB::value_t)),
+    StoragePolicyA, StoragePolicyB>::type
+>
 operator+(const histogram_t<DimA, StoragePolicyA>& a,
           const histogram_t<DimB, StoragePolicyB>& b)
 {
-  typename std::common_type<
-    histogram_t<DimA, StoragePolicyA>,
-    histogram_t<DimB, StoragePolicyB>
-  >::type tmp = a;
+  histogram_t<
+    (DimA > DimB ? DimA : DimB),
+    typename std::conditional<(sizeof(typename StoragePolicyA::value_t) >
+                               sizeof(typename StoragePolicyB::value_t)),
+      StoragePolicyA, StoragePolicyB>::type
+  > tmp = a;
   tmp += b;
   return tmp;
 }

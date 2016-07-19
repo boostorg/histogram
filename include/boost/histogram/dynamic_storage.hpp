@@ -9,6 +9,7 @@
 
 #include <boost/histogram/detail/wtype.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/static_storage.hpp>
 #include <cstdint>
 #include <cstddef>
 #include <type_traits>
@@ -24,11 +25,18 @@ namespace {
   template <> struct next_storage_type<uint16_t> { typedef uint32_t type; };
   template <> struct next_storage_type<uint32_t> { typedef uint64_t type; };
   template <> struct next_storage_type<uint64_t> { typedef detail::wtype type; };
+
+  template <unsigned Depth> struct depth_to_type;
+  template <> struct depth_to_type<sizeof(uint8_t)> { typedef uint8_t type; };
+  template <> struct depth_to_type<sizeof(uint16_t)> { typedef uint16_t type; };
+  template <> struct depth_to_type<sizeof(uint32_t)> { typedef uint32_t type; };
+  template <> struct depth_to_type<sizeof(uint64_t)> { typedef uint64_t type; };
+
   // we rely on C++11 to guarantee that uintX_t has a size of exactly X bits,
   // so we only check size of wtype
-  static_assert(sizeof(detail::wtype) >= (2 * sizeof(uint64_t)),
+  static_assert((sizeof(detail::wtype) >= (2 * sizeof(uint64_t))),
                 "wtype is too narrow");
-  static_assert(std::is_pod<detail::wtype>::value, "wtype is not POD");
+  static_assert(std::is_pod<detail::wtype>::value, "wtype must be POD");
 }
 
 class dynamic_storage {
@@ -43,6 +51,65 @@ public:
     data_(n * sizeof(uint8_t)),
     depth_(sizeof(uint8_t))
   {}
+
+  dynamic_storage(const dynamic_storage&) = default;
+  dynamic_storage(dynamic_storage&&) = default;
+  dynamic_storage& operator=(const dynamic_storage&) = default;
+  dynamic_storage& operator=(dynamic_storage&&) = default;
+
+  template <typename T>
+  dynamic_storage(const static_storage<T>& o) :
+    data_(o.data_),
+    depth_(sizeof(T))
+  {
+    static_assert(std::is_integral<T>::value,
+                  "storage type of source must be an integer");
+    static_assert((sizeof(T) & (sizeof(T) - 1)) == 0,
+                  "source depth of storage type has to be power of 2");
+    static_assert(sizeof(T) < sizeof(uint64_t),
+                  "source depth of storage type must be less than 64 bits");
+  }
+
+  template <typename T>
+  dynamic_storage(static_storage<T>&& o) :
+    data_(std::move(o.data_)),
+    depth_(sizeof(T))
+  {
+    static_assert(std::is_integral<T>::value,
+                  "storage type of source must be an integer");
+    static_assert((sizeof(T) & (sizeof(T) - 1)) == 0,
+                  "source depth of storage type has to be power of 2");
+    static_assert(sizeof(T) < sizeof(uint64_t),
+                  "source depth of storage type must be less than 64 bits");
+  }
+
+  template <typename T>
+  dynamic_storage& operator=(const static_storage<T>& o)
+  {
+    static_assert(std::is_integral<T>::value,
+                  "storage type is required to be an integer");
+    static_assert((sizeof(T) & (sizeof(T) - 1)) == 0,
+                  "depth of storage type has to be power of 2");
+    static_assert(sizeof(T) < sizeof(uint64_t),
+                  "depth of storage type must be less than 64 bits");
+    data_ = o.data_;
+    depth_ = sizeof(T);
+    return *this;
+  }
+
+  template <typename T>
+  dynamic_storage& operator=(static_storage<T>&& o)
+  {
+    static_assert(std::is_integral<T>::value,
+                  "storage type is required to be an integer");
+    static_assert((sizeof(T) & (sizeof(T) - 1)) == 0,
+                  "depth of storage type has to be power of 2");
+    static_assert(sizeof(T) < sizeof(uint64_t),
+                  "depth of storage type must be less than 64 bits");
+    data_ = std::move(o.data_);
+    depth_ = sizeof(T);
+    return *this;
+  }
 
   std::size_t size() const { return data_.nbytes() / depth_; }
   unsigned depth() const { return depth_; }
@@ -134,6 +201,7 @@ void dynamic_storage::increase(std::size_t i)
     case sizeof(uint32_t): increase_impl<uint32_t>(i); break;
     case sizeof(uint64_t): increase_impl<uint64_t>(i); break;
     case sizeof(wtype): increase_impl<wtype>(i); break;
+    default: BOOST_ASSERT(!"never arrive here");
   }
 }
 
@@ -146,11 +214,8 @@ void dynamic_storage::increase(std::size_t i, double w)
 
 dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
 {
-  if (size() != o.size())
-    throw std::logic_error("sizes do not match");
-
   // make depth of lhs as large as rhs
-  if (depth_ != o.depth_) {
+  if (depth_ < o.depth_) {
     if (o.depth_ == sizeof(wtype))
       wconvert();
     else
@@ -158,7 +223,7 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
         grow();
   }
 
-  // now add the content of lhs, grow as needed
+  // now add the content of lhs
   if (depth_ == sizeof(wtype)) {
     for (std::size_t i = 0, n = size(); i < n; ++i)
       data_.get<wtype>(i) += o.data_.get<wtype>(i);
@@ -173,6 +238,7 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
         case sizeof(uint32_t): add_impl<uint32_t>(i, oi); break;
         case sizeof(uint64_t): add_impl<uint64_t>(i, oi); break;
         case sizeof(wtype): add_impl<wtype>(i, oi); break;
+        default: BOOST_ASSERT(!"never arrive here");
       }
     }
   }
@@ -199,8 +265,8 @@ dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
     case sizeof(uint32_t): return data_.get<uint32_t>(i);
     case sizeof(uint64_t): return data_.get<uint64_t>(i);
     case sizeof(wtype): return data_.get<wtype>(i).w2;
+    default: BOOST_ASSERT(!"never arrive here");
   }
-  BOOST_ASSERT(!"never arrive here");
   return 0.0;
 }
 
@@ -211,7 +277,7 @@ void dynamic_storage::grow()
     case sizeof(uint16_t): grow_impl<uint16_t>(); break;
     case sizeof(uint32_t): grow_impl<uint32_t>(); break;
     case sizeof(uint64_t): grow_impl<uint64_t>(); break;
-    case sizeof(wtype): BOOST_ASSERT(!"never arrive here");
+    default: BOOST_ASSERT(!"never arrive here");
   }
 }
 
@@ -227,7 +293,7 @@ void dynamic_storage::wconvert()
     case sizeof(uint16_t): wconvert_copy_impl<uint16_t>(n); break;
     case sizeof(uint32_t): wconvert_copy_impl<uint32_t>(n); break;
     case sizeof(uint64_t): wconvert_copy_impl<uint64_t>(n); break;
-    case sizeof(wtype): BOOST_ASSERT(!"never arrive here");
+    default: BOOST_ASSERT(!"never arrive here");
   }
 }
 
@@ -239,7 +305,7 @@ uint64_t dynamic_storage::ivalue(std::size_t i)
     case sizeof(uint16_t): return data_.get<uint16_t>(i);
     case sizeof(uint32_t): return data_.get<uint32_t>(i);
     case sizeof(uint64_t): return data_.get<uint64_t>(i);
-    case sizeof(wtype): BOOST_ASSERT(!"never arrive here");
+    default: BOOST_ASSERT(!"never arrive here");
   }
   return 0;
 }

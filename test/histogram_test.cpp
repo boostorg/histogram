@@ -8,6 +8,8 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
 #include <boost/histogram/histogram.hpp>
+#include <boost/histogram/static_storage.hpp>
+#include <boost/histogram/dynamic_storage.hpp>
 #include <limits>
 #include <sstream>
 using namespace boost::histogram;
@@ -281,14 +283,21 @@ BOOST_AUTO_TEST_CASE(add_1)
 {
     auto a = histogram(integer_axis(-1, 1));
     auto b = histogram(integer_axis(-1, 1));
-    a.fill(0);
-    b.fill(-1);
-    auto c = a + b;
+    a.fill(-1);
+    b.fill(1);
+    auto c = a;
+    c += b;
     BOOST_CHECK_EQUAL(c.value(-1), 0);
     BOOST_CHECK_EQUAL(c.value(0), 1);
-    BOOST_CHECK_EQUAL(c.value(1), 1);
-    BOOST_CHECK_EQUAL(c.value(2), 0);
+    BOOST_CHECK_EQUAL(c.value(1), 0);
+    BOOST_CHECK_EQUAL(c.value(2), 1);
     BOOST_CHECK_EQUAL(c.value(3), 0);
+    auto d = a + b;
+    BOOST_CHECK_EQUAL(d.value(-1), 0);
+    BOOST_CHECK_EQUAL(d.value(0), 1);
+    BOOST_CHECK_EQUAL(d.value(1), 0);
+    BOOST_CHECK_EQUAL(d.value(2), 1);
+    BOOST_CHECK_EQUAL(d.value(3), 0);
 }
 
 BOOST_AUTO_TEST_CASE(add_2w)
@@ -298,12 +307,61 @@ BOOST_AUTO_TEST_CASE(add_2w)
 
     a.fill(0);
     b.wfill(-1, 3);
-    auto c = a + b;
+    auto c = a;
+    c += b;
     BOOST_CHECK_EQUAL(c.value(-1), 0);
     BOOST_CHECK_EQUAL(c.value(0), 3);
     BOOST_CHECK_EQUAL(c.value(1), 1);
     BOOST_CHECK_EQUAL(c.value(2), 0);
     BOOST_CHECK_EQUAL(c.value(3), 0);    
+    auto d = a + b;
+    BOOST_CHECK_EQUAL(d.value(-1), 0);
+    BOOST_CHECK_EQUAL(d.value(0), 3);
+    BOOST_CHECK_EQUAL(d.value(1), 1);
+    BOOST_CHECK_EQUAL(d.value(2), 0);
+    BOOST_CHECK_EQUAL(d.value(3), 0);
+}
+
+BOOST_AUTO_TEST_CASE(add_3)
+{
+    auto a = histogram_t<1, dynamic_storage>(integer_axis(-1, 1));
+    auto b = histogram_t<1, static_storage<int>>(integer_axis(-1, 1));
+    a.fill(-1);
+    b.fill(1);
+    auto c = a;
+    c += b;
+    BOOST_CHECK_EQUAL(c.value(-1), 0);
+    BOOST_CHECK_EQUAL(c.value(0), 1);
+    BOOST_CHECK_EQUAL(c.value(1), 0);
+    BOOST_CHECK_EQUAL(c.value(2), 1);
+    BOOST_CHECK_EQUAL(c.value(3), 0);
+    auto d = a + b;
+    BOOST_CHECK_EQUAL(d.value(-1), 0);
+    BOOST_CHECK_EQUAL(d.value(0), 1);
+    BOOST_CHECK_EQUAL(d.value(1), 0);
+    BOOST_CHECK_EQUAL(d.value(2), 1);
+    BOOST_CHECK_EQUAL(d.value(3), 0);
+}
+
+BOOST_AUTO_TEST_CASE(add_4)
+{
+    auto a = histogram_t<1, static_storage<char>>(integer_axis(-1, 1));
+    auto b = histogram_t<1, static_storage<int>>(integer_axis(-1, 1));
+    a.fill(-1);
+    b.fill(1);
+    auto c = a;
+    c += b;
+    BOOST_CHECK_EQUAL(c.value(-1), 0);
+    BOOST_CHECK_EQUAL(c.value(0), 1);
+    BOOST_CHECK_EQUAL(c.value(1), 0);
+    BOOST_CHECK_EQUAL(c.value(2), 1);
+    BOOST_CHECK_EQUAL(c.value(3), 0);
+    auto d = a + b;
+    BOOST_CHECK_EQUAL(d.value(-1), 0);
+    BOOST_CHECK_EQUAL(d.value(0), 1);
+    BOOST_CHECK_EQUAL(d.value(1), 0);
+    BOOST_CHECK_EQUAL(d.value(2), 1);
+    BOOST_CHECK_EQUAL(d.value(3), 0);
 }
 
 BOOST_AUTO_TEST_CASE(doc_example_0)

@@ -22,21 +22,54 @@ namespace histogram {
 
     static_storage(std::size_t n=0) : data_(n * sizeof(T)) {}
 
+    template <typename U>
+    static_storage(const static_storage<U>& other) :
+      data_(other.size() * sizeof(T))
+    {
+      for (std::size_t i = 0, n = size(); i < n; ++i)
+        data_.get<T>(i) = other.data_.get<U>(i);
+    }
+
+    template <typename U, typename = std::enable_if<std::is_same<T, U>::value>>
+    static_storage(static_storage<U>&& other) :
+      data_(std::move(other.data_))
+    {}
+
+    template <typename U>
+    static_storage& operator=(const static_storage<U>& other)
+    {
+      data_ = buffer_t(other.size() * sizeof(T));
+      for (std::size_t i = 0, n = size(); i < n; ++i)
+        data_.get<T>(i) = other.data_.get<U>(i);
+    }
+
+    template <typename U, typename = std::enable_if<std::is_same<T, U>::value>>
+    static_storage& operator=(static_storage<U>&& other)
+    {
+      data_ = std::move(other.data_);
+    }
+
     std::size_t size() const { return data_.nbytes() / sizeof(T); }
     constexpr unsigned depth() const { return sizeof(T); }
     void increase(std::size_t i) { ++(data_.get<T>(i)); }
     value_t value(std::size_t i) const { return data_.get<T>(i); }
     variance_t variance(std::size_t i) const { return data_.get<T>(i); }
+
+    
     bool operator==(const static_storage& other) const
     { return data_ == other.data_; }
-    void operator+=(const static_storage& other)
+    template <typename U>
+    void operator+=(const static_storage<U>& other)
     {
       for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.get<T>(i) += other.data_.get<T>(i);
+        data_.get<T>(i) += other.data_.get<U>(i);
     }
 
   private:
     buffer_t data_;
+
+    template <typename U> friend class static_storage;
+    friend class dynamic_storage;
   };
 
 }
