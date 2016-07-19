@@ -27,7 +27,7 @@ namespace histogram {
       data_(other.size() * sizeof(T))
     {
       for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.get<T>(i) = other.data_.get<U>(i);
+        data_.get<T>(i) = other.data_.template get<U>(i);
     }
 
     template <typename U, typename = std::enable_if<std::is_same<T, U>::value>>
@@ -40,7 +40,7 @@ namespace histogram {
     {
       data_ = buffer_t(other.size() * sizeof(T));
       for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.get<T>(i) = other.data_.get<U>(i);
+        data_.get<T>(i) = other.data_.template get<U>(i);
     }
 
     template <typename U, typename = std::enable_if<std::is_same<T, U>::value>>
@@ -55,14 +55,14 @@ namespace histogram {
     value_t value(std::size_t i) const { return data_.get<T>(i); }
     variance_t variance(std::size_t i) const { return data_.get<T>(i); }
 
-    
+
     bool operator==(const static_storage& other) const
     { return data_ == other.data_; }
     template <typename U>
     void operator+=(const static_storage<U>& other)
     {
       for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.get<T>(i) += other.data_.get<U>(i);
+        data_.get<T>(i) += other.data_.template get<U>(i);
     }
 
   private:
