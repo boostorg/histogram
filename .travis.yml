@@ -11,7 +11,7 @@ matrix:
           packages:
             - g++-4.8
             - libboost1.55-all-dev
-      env: COMPILER_VERSION=4.8 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON CMAKE_BUILD_TYPE=cov
+      env: COMPILER_VERSION=4.8 CMAKE_BUILD_TYPE=cov
     - compiler: clang
       addons:
         apt:
@@ -22,29 +22,7 @@ matrix:
           packages:
             - clang-3.6
             - libboost1.55-all-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=ON
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.6
-            - boost-latest
-          packages:
-            - clang-3.6
-            - libboost1.55-all-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2 USE_PYTHON=ON USE_NUMPY=OFF
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.6
-            - boost-latest
-          packages:
-            - clang-3.6
-            - libboost1.55-all-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2 USE_PYTHON=OFF USE_NUMPY=OFF
+      env: COMPILER_VERSION=3.6
 git:
   depth: 10
 
@@ -64,12 +42,22 @@ install:
   - pip install --user cpp-coveralls
 
 script:
-  cd build &&
-  cmake . -DUSE_PYTHON=${USE_PYTHON}
-          -DUSE_NUMPY=${USE_NUMPY}
-          -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
-  make -j2 &&
-  ctest -V
+  - cd build
+  - cmake . -DUSE_PYTHON=OFF
+            -DUSE_NUMPY=OFF
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+    make -j2 &&
+    ctest -V
+  - cmake . -DUSE_PYTHON=ON
+            -DUSE_NUMPY=OFF
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+    make -j2 &&
+    ctest -V
+  - cmake . -DUSE_PYTHON=ON
+            -DUSE_NUMPY=ON
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+    make -j2 &&
+    ctest -V
 
 # Calculate coverage
 after_success:
