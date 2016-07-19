@@ -11,7 +11,7 @@ matrix:
           packages:
             - g++-4.8
             - libboost1.55-all-dev
-      env: COMPILER_VERSION=4.8 CMAKE_BUILD_TYPE=cov
+      env: COMPILER_VERSION=4.8 PYTHON_VERSION=2 CMAKE_BUILD_TYPE=cov
     - compiler: clang
       addons:
         apt:
@@ -22,7 +22,7 @@ matrix:
           packages:
             - clang-3.6
             - libboost1.55-all-dev
-      env: COMPILER_VERSION=3.6
+      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2
 git:
   depth: 10
 
