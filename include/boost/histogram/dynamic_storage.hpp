@@ -226,17 +226,11 @@ bool dynamic_storage::operator==(const dynamic_storage& o) const
 
 dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
 {
-  // make depth of lhs as large as rhs
-  if (depth_ < o.depth_) {
-    if (o.depth_ == sizeof(wtype))
-      wconvert();
-    else
-      while (depth_ < o.depth_)
-        grow();
-  }
+  BOOST_ASSERT(size() == o.size());
 
-  // now add the content of lhs
-  if (depth_ == sizeof(wtype)) {
+  if (o.depth_ == sizeof(wtype)) {
+    if (depth_ != sizeof(wtype))
+      wconvert();
     for (std::size_t i = 0, n = size(); i < n; ++i)
       data_.get<wtype>(i) += o.data_.get<wtype>(i);
   }
@@ -275,17 +269,6 @@ dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
     default: BOOST_ASSERT(!"never arrive here");
   }
   return 0.0;
-}
-
-void dynamic_storage::grow()
-{
-  switch (depth_) {
-    case sizeof(uint8_t): grow_impl<uint8_t>(); break;
-    case sizeof(uint16_t): grow_impl<uint16_t>(); break;
-    case sizeof(uint32_t): grow_impl<uint32_t>(); break;
-    case sizeof(uint64_t): grow_impl<uint64_t>(); break;
-    default: BOOST_ASSERT(!"never arrive here");
-  }
 }
 
 void dynamic_storage::wconvert()
