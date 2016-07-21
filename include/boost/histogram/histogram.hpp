@@ -219,7 +219,7 @@ public:
     if (base_t::dim() != other.dim())
       return false;
     for (unsigned i = 0, n = base_t::dim(); i < n; ++i)
-      if (!(axis<axis_t>(i) == other.axis<axis_t>(i)))
+      if (!(base_t::axes_[i] == other.axes_[i]))
         return false;
     return base_t::storage_ == other.storage_;
   }
@@ -418,7 +418,7 @@ public:
     if (base_t::dim() != other.dim())
       return false;
     for (unsigned i = 0, n = base_t::dim(); i < n; ++i)
-      if (!(axis<axis_t>(i) == other.axis<axis_t>(i)))
+      if (!(base_t::axes_[i] == other.axes_[i]))
         return false;
     return base_t::storage_ == other.storage_;
   }

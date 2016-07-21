@@ -27,10 +27,11 @@ BOOST_AUTO_TEST_CASE(wtype_streamer)
 BOOST_AUTO_TEST_CASE(dynamic_storage_grow_1)
 {
     double x = 1.0;
-    dynamic_storage n(1);
+    dynamic_storage n(1), p(1);
     n.increase(0);
     for (unsigned i = 0; i < 100; ++i) {
-        n += n;
+        p = n;
+        n += p;
         x += x;
         n.increase(0);
         ++x;
@@ -41,10 +42,11 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_grow_1)
 
 BOOST_AUTO_TEST_CASE(dynamic_storage_grow_2)
 {
-    dynamic_storage n(1);
+    dynamic_storage n(1), p(1);
     n.increase(0);
     for (unsigned i = 0; i < 100; ++i) {
-        n += n;
+        p = n;
+        n += p;
         dynamic_storage a(1);
         a.increase(0, 0.0); // converts to wtype
         a = n;
@@ -55,10 +57,11 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_grow_2)
 
 BOOST_AUTO_TEST_CASE(dynamic_storage_grow_3)
 {
-    dynamic_storage n(1);
+    dynamic_storage n(1), p(1);
     n.increase(0);
     for (unsigned i = 0; i < 100; ++i) {
-        n += n;
+        p = n;
+        n += p;
         dynamic_storage a(1);
         a += n;
         a.increase(0, 0.0); // converts to wtype
