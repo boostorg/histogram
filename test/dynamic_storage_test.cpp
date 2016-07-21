@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_add_with_growth)
 {
     dynamic_storage a(1), b(1);
     a.increase(0);
-    for (unsigned i = 0; i < 10; ++i)
+    for (unsigned i = 0; i < 64; ++i)
         a += a;
     b.increase(0);
     b += a;
@@ -79,8 +79,10 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_add_with_growth)
 
 BOOST_AUTO_TEST_CASE(dynamic_storage_equality)
 {
-    dynamic_storage a(1), b(1);
+    dynamic_storage a(1), b(1), c(1);
     BOOST_CHECK(a == b);
     a.increase(0);
     BOOST_CHECK(!(a == b));
+    c.increase(0, 1.0);
+    BOOST_CHECK(a == c);
 }
