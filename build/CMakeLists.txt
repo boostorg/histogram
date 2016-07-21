@@ -63,7 +63,7 @@ add_executable(zero_suppression_test
 target_link_libraries(zero_suppression_test ${LIBRARIES})
 add_test(zero_suppression_test zero_suppression_test)
 
-add_executable(nstore_test
-               ../test/nstore_test.cpp)
-target_link_libraries(nstore_test ${LIBRARIES})
-add_test(nstore_test nstore_test)
+add_executable(dynamic_storage_test
+               ../test/dynamic_storage_test.cpp)
+target_link_libraries(dynamic_storage_test ${LIBRARIES})
+add_test(dynamic_storage_test dynamic_storage_test)

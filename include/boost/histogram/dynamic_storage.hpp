@@ -59,53 +59,47 @@ public:
 
   template <typename T>
   dynamic_storage(const static_storage<T>& o) :
-    data_(o.data_),
-    depth_(sizeof(T))
+    dynamic_storage(o.size())
   {
-    static_assert(std::is_integral<T>::value,
-                  "storage type of source must be an integer");
-    static_assert((sizeof(T) & (sizeof(T) - 1)) == 0,
-                  "source depth of storage type has to be power of 2");
-    static_assert(sizeof(T) < sizeof(uint64_t),
-                  "source depth of storage type must be less than 64 bits");
+    for (std::size_t i = 0, n = size(); i < n; ++i) {
+      switch (depth_) {
+        case sizeof(uint8_t): add_impl<uint8_t>(i, o.data_.template get<T>(i)); break;
+        case sizeof(uint16_t): add_impl<uint16_t>(i, o.data_.template get<T>(i)); break;
+        case sizeof(uint32_t): add_impl<uint32_t>(i, o.data_.template get<T>(i)); break;
+        case sizeof(uint64_t): add_impl<uint64_t>(i, o.data_.template get<T>(i)); break;
+        case sizeof(wtype): add_impl<wtype>(i, o.data_.template get<T>(i)); break;
+      }
+    }
   }
 
-  template <typename T>
+  template <typename T,
+            typename = std::enable_if<
+      (std::is_integral<T>::value &&
+       (sizeof(T) & (sizeof(T) - 1)) == 0 && // size is one of 1,2,4,8
+       sizeof(T) < sizeof(uint64_t))
+    >
+  >
   dynamic_storage(static_storage<T>&& o) :
     data_(std::move(o.data_)),
     depth_(sizeof(T))
-  {
-    static_assert(std::is_integral<T>::value,
-                  "storage type of source must be an integer");
-    static_assert((sizeof(T) & (sizeof(T) - 1)) == 0,
-                  "source depth of storage type has to be power of 2");
-    static_assert(sizeof(T) < sizeof(uint64_t),
-                  "source depth of storage type must be less than 64 bits");
-  }
+  {}
 
   template <typename T>
   dynamic_storage& operator=(const static_storage<T>& o)
   {
-    static_assert(std::is_integral<T>::value,
-                  "storage type is required to be an integer");
-    static_assert((sizeof(T) & (sizeof(T) - 1)) == 0,
-                  "depth of storage type has to be power of 2");
-    static_assert(sizeof(T) < sizeof(uint64_t),
-                  "depth of storage type must be less than 64 bits");
-    data_ = o.data_;
-    depth_ = sizeof(T);
+    *this = std::move(dynamic_storage(o)); // leverage copy ctor
     return *this;
   }
 
-  template <typename T>
+  template <typename T,
+            typename = std::enable_if<
+      (std::is_integral<T>::value &&
+       (sizeof(T) & (sizeof(T) - 1)) == 0 && // size is one of 1,2,4,8
+       sizeof(T) < sizeof(uint64_t))
+    >
+  >
   dynamic_storage& operator=(static_storage<T>&& o)
   {
-    static_assert(std::is_integral<T>::value,
-                  "storage type is required to be an integer");
-    static_assert((sizeof(T) & (sizeof(T) - 1)) == 0,
-                  "depth of storage type has to be power of 2");
-    static_assert(sizeof(T) < sizeof(uint64_t),
-                  "depth of storage type must be less than 64 bits");
     data_ = std::move(o.data_);
     depth_ = sizeof(T);
     return *this;
@@ -224,7 +218,6 @@ void dynamic_storage::increase(std::size_t i, double w)
 
 bool dynamic_storage::operator==(const dynamic_storage& o) const 
 {
-  if (size() != o.size()) return false;
   for (std::size_t i = 0, n = size(); i < n; ++i)
     if (value(i) != o.value(i))
       return false;

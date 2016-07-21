@@ -55,9 +55,15 @@ namespace histogram {
     value_t value(std::size_t i) const { return data_.get<T>(i); }
     variance_t variance(std::size_t i) const { return data_.get<T>(i); }
 
+    template <typename U>
+    bool operator==(const static_storage<U>& other) const
+    {
+      for (std::size_t i = 0, n = size(); i < n; ++i)
+        if (data_.template get<T>(i) != other.data_.template get<U>(i))
+          return false;
+      return true;
+    }
 
-    bool operator==(const static_storage& other) const
-    { return data_ == other.data_; }
     template <typename U>
     void operator+=(const static_storage<U>& other)
     {
