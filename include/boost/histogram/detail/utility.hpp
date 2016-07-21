@@ -33,6 +33,11 @@ namespace detail {
 
     class buffer_t {
     public:
+        buffer_t() :
+            memory_(nullptr),
+            nbytes_(0)
+        {}
+
         buffer_t(std::size_t nbytes) :
             memory_(std::calloc(nbytes, sizeof(char))),
             nbytes_(nbytes)
@@ -41,10 +46,6 @@ namespace detail {
                 throw std::bad_alloc();
         }
 
-        buffer_t() :
-            memory_(nullptr),
-            nbytes_(0)
-        {}
 
         buffer_t(const buffer_t& o) :
             memory_(std::malloc(o.nbytes_)),
@@ -70,16 +71,12 @@ namespace detail {
         buffer_t& operator=(const buffer_t& o)
         {
             if (this != &o) {
-                if (nbytes_ != o.nbytes_) {
-                    std::free(memory_);
-                    memory_ = std::malloc(o.nbytes_);
-                    nbytes_ = o.nbytes_;
-                    if (!memory_)
-                        throw std::bad_alloc();
-                }
-                std::copy(static_cast<char*>(o.memory_),
-                          static_cast<char*>(o.memory_) + nbytes_,
-                          static_cast<char*>(memory_));
+                if (nbytes_ != o.nbytes_)
+                    *this = std::move(buffer_t(o));
+                else
+                    std::copy(static_cast<char*>(o.memory_),
+                              static_cast<char*>(o.memory_) + nbytes_,
+                              static_cast<char*>(memory_));
             }
             return *this;
         }
@@ -120,6 +117,7 @@ namespace detail {
         void* memory_;
         std::size_t nbytes_;
     };
+
 }
 }
 }

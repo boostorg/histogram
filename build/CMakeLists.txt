@@ -62,3 +62,8 @@ add_executable(dynamic_storage_test
                ../test/dynamic_storage_test.cpp)
 target_link_libraries(dynamic_storage_test ${LIBRARIES})
 add_test(dynamic_storage_test dynamic_storage_test)
+
+add_executable(utility_test
+               ../test/utility_test.cpp)
+target_link_libraries(utility_test ${LIBRARIES})
+add_test(utility_test utility_test)
