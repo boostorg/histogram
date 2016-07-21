@@ -72,7 +72,7 @@ namespace detail {
         {
             if (this != &o) {
                 if (nbytes_ != o.nbytes_)
-                    *this = std::move(buffer_t(o));
+                    *this = buffer_t(o); // clang says: don't move here
                 else
                     std::copy(static_cast<char*>(o.memory_),
                               static_cast<char*>(o.memory_) + nbytes_,

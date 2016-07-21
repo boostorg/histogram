@@ -88,7 +88,7 @@ public:
   template <typename T>
   dynamic_storage& operator=(const static_storage<T>& o)
   {
-    *this = std::move(dynamic_storage(o)); // leverage copy ctor
+    *this = dynamic_storage(o); // leverage copy ctor, clang says: don't move
     return *this;
   }
 
@@ -113,18 +113,7 @@ public:
   void increase(std::size_t i, double w);
   value_t value(std::size_t i) const;
   variance_t variance(std::size_t i) const;
-  bool operator==(const dynamic_storage&) const;
   dynamic_storage& operator+=(const dynamic_storage&);
-
-  template <typename T>
-  bool operator==(const static_storage<T>& o) const
-  {
-    if (size() != o.size()) return false;
-    for (std::size_t i = 0, n = size(); i < n; ++i)
-      if (value(i) != o.value(i))
-        return false;
-    return true;
-  }
 
 private:
   buffer_t data_;
@@ -216,14 +205,6 @@ void dynamic_storage::increase(std::size_t i, double w)
   if (depth_ != sizeof(wtype))
     wconvert();
   data_.get<wtype>(i) += w;
-}
-
-bool dynamic_storage::operator==(const dynamic_storage& o) const 
-{
-  for (std::size_t i = 0, n = size(); i < n; ++i)
-    if (value(i) != o.value(i))
-      return false;
-  return true;
 }
 
 dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)

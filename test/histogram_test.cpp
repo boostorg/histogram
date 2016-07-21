@@ -10,6 +10,7 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
+#include <boost/histogram/axis_ostream_operators.hpp>
 #include <limits>
 #include <sstream>
 using namespace boost::histogram;
@@ -93,9 +94,9 @@ BOOST_AUTO_TEST_CASE(init_5)
 
 BOOST_AUTO_TEST_CASE(copy_ctor)
 {
-    auto h = histogram(regular_axis(1, -1, 1),
-                       regular_axis(2, -2, 2));
-    h.fill(0.0, 0.0);
+    auto h = histogram(integer_axis(0, 1),
+                       integer_axis(0, 1));
+    h.fill(0, 0);
     auto h2 = histogram_t<2>(h);
     BOOST_CHECK(h2 == h);
     auto h3 = histogram_t<Dynamic>(h);
@@ -114,9 +115,9 @@ BOOST_AUTO_TEST_CASE(copy_assign)
     // test self-assign
     h2 = h2;
     BOOST_CHECK(h == h2);
-    // auto h3 = histogram_t<Dynamic>();
-    // h3 = h;
-    // BOOST_CHECK(h == h3);
+    auto h3 = histogram_t<Dynamic>();
+    h3 = h;
+    BOOST_CHECK(h == h3);
 }
 
 BOOST_AUTO_TEST_CASE(move_ctor)
@@ -124,16 +125,17 @@ BOOST_AUTO_TEST_CASE(move_ctor)
     auto h = histogram(regular_axis(1, -1, 1),
                        regular_axis(2, -2, 2));
     h.fill(0.0, 0.0);
+    const auto href = h;
     auto h2 = histogram_t<2>(std::move(h));
-    BOOST_CHECK_EQUAL(h2.sum(), 1);
-    BOOST_CHECK_EQUAL(h2.dim(), 2);
-    BOOST_CHECK_EQUAL(h.sum(), 0);
     BOOST_CHECK_EQUAL(h.dim(), 2);
-    // auto h3 = histogram_t<Dynamic>(std::move(h2));
-    // BOOST_CHECK_EQUAL(h3.sum(), 1);
-    // BOOST_CHECK_EQUAL(h3.dim(), 2);
-    // BOOST_CHECK_EQUAL(h2.sum(), 0);
-    // BOOST_CHECK_EQUAL(h2.dim(), 0);
+    BOOST_CHECK_EQUAL(h.sum(), 0);
+    BOOST_CHECK_EQUAL(h.size(), 0);
+    BOOST_CHECK(h2 == href);
+    auto h3 = histogram_t<Dynamic>(std::move(h2));
+    BOOST_CHECK_EQUAL(h2.dim(), 2);
+    BOOST_CHECK_EQUAL(h2.sum(), 0);
+    BOOST_CHECK_EQUAL(h2.size(), 0);
+    BOOST_CHECK(h3 == href);
 }
 
 BOOST_AUTO_TEST_CASE(move_assign)
@@ -141,18 +143,19 @@ BOOST_AUTO_TEST_CASE(move_assign)
     auto h = histogram(regular_axis(1, -1, 1),
                        regular_axis(2, -2, 2));
     h.fill(0.0, 0.0);
+    auto href = h;
     auto h2 = histogram_t<2>();
     h2 = std::move(h);
-    BOOST_CHECK_EQUAL(h2.sum(), 1);
-    BOOST_CHECK_EQUAL(h2.dim(), 2);
-    BOOST_CHECK_EQUAL(h.sum(), 0);
+    BOOST_CHECK(h2 == href);
     BOOST_CHECK_EQUAL(h.dim(), 2);
-    // auto h3 = histogram_t<Dynamic>();
-    // h3 = std::move(h2);
-    // BOOST_CHECK_EQUAL(h3.sum(), 1);
-    // BOOST_CHECK_EQUAL(h3.dim(), 2);
-    // BOOST_CHECK_EQUAL(h2.sum(), 0);
-    // BOOST_CHECK_EQUAL(h2.dim(), 0);
+    BOOST_CHECK_EQUAL(h.sum(), 0);
+    BOOST_CHECK_EQUAL(h.size(), 0);
+    auto h3 = histogram_t<Dynamic>();
+    h3 = std::move(h2);
+    BOOST_CHECK_EQUAL(h2.dim(), 2);
+    BOOST_CHECK_EQUAL(h2.sum(), 0);
+    BOOST_CHECK_EQUAL(h2.size(), 0);
+    BOOST_CHECK(h3 == href);
 }
 
 BOOST_AUTO_TEST_CASE(d1)

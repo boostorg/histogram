@@ -11,7 +11,7 @@ if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
-add_definitions(-Wall -std=c++11)
+add_definitions(-Wall -std=c++11 -pedantic)
 add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 
 find_package(Boost 1.55 REQUIRED
