@@ -19,6 +19,8 @@ BOOST_AUTO_TEST_CASE(init_0)
     auto h = histogram();
     BOOST_CHECK_EQUAL(h.dim(), 0);
     BOOST_CHECK_EQUAL(h.size(), 0);
+    auto h2 = histogram_t<Dynamic>();
+    BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_1)
@@ -27,6 +29,8 @@ BOOST_AUTO_TEST_CASE(init_1)
     BOOST_CHECK_EQUAL(h.dim(), 1);
     BOOST_CHECK_EQUAL(h.size(), 5);
     BOOST_CHECK_EQUAL(h.shape(0), 5);
+    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1});
+    BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_2)
@@ -37,6 +41,9 @@ BOOST_AUTO_TEST_CASE(init_2)
     BOOST_CHECK_EQUAL(h.size(), 25);
     BOOST_CHECK_EQUAL(h.shape(0), 5);
     BOOST_CHECK_EQUAL(h.shape(1), 5);
+    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1},
+                                   integer_axis{-1, 1});
+    BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_3)
@@ -46,6 +53,10 @@ BOOST_AUTO_TEST_CASE(init_3)
                        polar_axis{3});
     BOOST_CHECK_EQUAL(h.dim(), 3);
     BOOST_CHECK_EQUAL(h.size(), 75);
+    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1},
+                                   integer_axis{-1, 1},
+                                   polar_axis{3});
+    BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_4)
@@ -56,6 +67,11 @@ BOOST_AUTO_TEST_CASE(init_4)
                        variable_axis{-1, 0, 1});
     BOOST_CHECK_EQUAL(h.dim(), 4);
     BOOST_CHECK_EQUAL(h.size(), 300);
+    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1},
+                                   integer_axis{-1, 1},
+                                   polar_axis{3},
+                                   variable_axis{-1, 0, 1});
+    BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_5)
@@ -67,6 +83,12 @@ BOOST_AUTO_TEST_CASE(init_5)
                        category_axis{"A", "B", "C"});
     BOOST_CHECK_EQUAL(h.dim(), 5);
     BOOST_CHECK_EQUAL(h.size(), 900);
+    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1},
+                                   integer_axis{-1, 1},
+                                   polar_axis{3},
+                                   variable_axis{-1, 0, 1},
+                                   category_axis{"A", "B", "C"});
+    BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(copy_ctor)
@@ -76,8 +98,8 @@ BOOST_AUTO_TEST_CASE(copy_ctor)
     h.fill(0.0, 0.0);
     auto h2 = histogram_t<2>(h);
     BOOST_CHECK(h2 == h);
-    // auto h3 = histogram_t<Dynamic>(h);
-    // BOOST_CHECK(h3 == h);
+    auto h3 = histogram_t<Dynamic>(h);
+    BOOST_CHECK(h3 == h);
 }
 
 BOOST_AUTO_TEST_CASE(copy_assign)

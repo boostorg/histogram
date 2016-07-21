@@ -15,43 +15,114 @@
 #include <boost/histogram/dynamic_storage.hpp>
 #include <cstddef>
 #include <array>
+#include <vector>
 #include <type_traits>
 #include <stdexcept>
-#include <iterator>
+#include <algorithm>
 
 namespace boost {
 namespace histogram {
 
-///Use dynamic dimension
+/// Use dynamic dimensions
 constexpr unsigned Dynamic = 0;
 
-template <unsigned Dim, typename StoragePolicy = dynamic_storage>
-class histogram_t
+namespace {
+
+  template <typename Axes>
+  void axes_init(Axes&, unsigned) {}
+
+  template <>
+  void axes_init(std::vector<axis_t>& axes, unsigned n) {
+    axes.resize(n);
+  }
+
+  /// Histogram interface and data structures common to any dimension
+  template <typename Axes, typename Storage = dynamic_storage>
+  class histogram_common {
+  public:
+    histogram_common() = default;
+    histogram_common(unsigned naxis) : axes_(naxis) {}
+    template <typename OtherAxes, typename OtherStorage>
+    histogram_common(const OtherAxes& axes, const OtherStorage& storage) :
+      storage_(storage)
+    {
+      axes_init(axes_, axes.size());
+      std::copy(axes.begin(), axes.end(), axes_.begin());
+    }
+
+    /// Number of axes (dimensions) of histogram
+    unsigned dim() const { return axes_.size(); }
+
+    /// Total number of bins in the histogram (including underflow/overflow)
+    std::size_t size() const { return storage_.size(); }
+
+    /// Access to internal data (used by Python bindings)
+    const char* data() const { return storage_.data(); }
+
+    /// Number of bins along axis \a i, including underflow/overflow
+    std::size_t shape(unsigned i) const
+    {
+      BOOST_ASSERT(i < dim());
+      return apply_visitor(visitor::shape(), axes_[i]);
+    }
+
+    /// Number of bins along axis \a i, excluding underflow/overflow
+    int bins(unsigned i) const
+    {
+      BOOST_ASSERT(i < dim());
+      return apply_visitor(visitor::bins(), axes_[i]);
+    }
+
+    /// Sum of all counts in the histogram
+    double sum() const
+    {
+      double result = 0.0;
+      for (std::size_t i = 0, n = size(); i < n; ++i)
+        result += storage_.value(i);
+      return result;
+    }
+
+  protected:
+    Axes axes_;
+    Storage storage_;
+
+    std::size_t field_count() const
+    {
+      std::size_t fc = 1;
+      for (auto& a : axes_)
+        fc *= apply_visitor(visitor::shape(), a);
+      return fc;
+    }
+  };
+
+}
+
+template <unsigned Dim, typename Storage = dynamic_storage>
+class histogram_t: public histogram_common<std::array<axis_t, Dim>, Storage>
 {
+  using base_t = histogram_common<std::array<axis_t, Dim>, Storage>;
 public:
-  using value_t = typename StoragePolicy::value_t;
-  using variance_t = typename StoragePolicy::variance_t;
+  using value_t = typename Storage::value_t;
+  using variance_t = typename Storage::variance_t;
 
   histogram_t() = default;
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
   histogram_t(const histogram_t<OtherDim, OtherStoragePolicy>& other) :
-    axes_(other.axes_),
-    storage_(other.storage_)
+    base_t(other.axes_, other.storage_)
   {}
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
   histogram_t(histogram_t<OtherDim, OtherStoragePolicy>&& other) :
-    axes_(std::move(other.axes_)),
-    storage_(std::move(other.storage_))
+    base_t(std::move(other))
   {}
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
   histogram_t& operator=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
   {
     if (this != &other) {
-      axes_ = other.axes_;
-      storage_ = other.storage_;
+      base_t::axes_ = other.axes_;
+      base_t::storage_ = other.storage_;
     }
     return *this;
   }
@@ -59,35 +130,16 @@ public:
   template <unsigned OtherDim, typename OtherStoragePolicy>
   histogram_t& operator=(histogram_t<OtherDim, OtherStoragePolicy>&& other)
   {
-    axes_ = std::move(other.axes_);
-    storage_ = std::move(other.storage_);
+    base_t::axes_ = std::move(other.axes_);
+    base_t::storage_ = std::move(other.storage_);
     return *this;
   } 
 
   template <typename... Axes>
   histogram_t(axis_t a, Axes... axes)
   {
-    assign_axis(a, axes...);
-    storage_ = StoragePolicy(field_count());
-  }
-
-  constexpr unsigned dim() const { return Dim; }
-
-  /// Total number of bins in the histogram (including underflow/overflow)
-  std::size_t size() const { return storage_.size(); }
-
-  /// Number of bins along axis \a i, including underflow/overflow
-  std::size_t shape(unsigned i) const
-  {
-    BOOST_ASSERT(i < Dim);
-    return apply_visitor(visitor::shape(), axes_[i]);
-  }
-
-  /// Number of bins along axis \a i, excluding underflow/overflow
-  int bins(unsigned i) const
-  {
-    BOOST_ASSERT(i < Dim);
-    return apply_visitor(visitor::bins(), axes_[i]);
+    axis_assign(a, axes...);
+    base_t::storage_ = Storage(base_t::field_count());
   }
 
   template <typename... Args>
@@ -98,7 +150,7 @@ public:
     detail::linearize_x lin;
     index_impl(lin, args...);
     if (lin.stride)
-      storage_.increase(lin.out);
+      base_t::storage_.increase(lin.out);
   }
 
   template <typename... Args>
@@ -109,7 +161,7 @@ public:
     detail::linearize_x lin;
     const double w = windex_impl(lin, args...);
     if (lin.stride)
-      storage_.increase(lin.out, w);
+      base_t::storage_.increase(lin.out, w);
   }
 
   template <typename... Args>
@@ -121,7 +173,7 @@ public:
     index_impl(lin, args...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
-    return storage_.value(lin.out);
+    return base_t::storage_.value(lin.out);
   }
 
   template <typename... Args>
@@ -130,27 +182,27 @@ public:
     static_assert(sizeof...(args) == Dim,
                   "number of arguments does not match histogram dimension");
     detail::linearize lin;
-    index_impl(lin, std::forward<Args>(args)...);
+    index_impl(lin, args...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
-    return storage_.variance(lin.out);
+    return base_t::storage_.variance(lin.out);
   }
 
   template <typename T>
   typename std::enable_if<std::is_same<T, axis_t>::value, T&>::type
-  axis(unsigned i) { return axes_[i]; }
+  axis(unsigned i) { return base_t::axes_[i]; }
 
   template <typename T>
   typename std::enable_if<!std::is_same<T, axis_t>::value, T&>::type
-  axis(unsigned i) { return boost::get<T&>(axes_[i]); }
+  axis(unsigned i) { return boost::get<T&>(base_t::axes_[i]); }
 
   template <typename T>
   typename std::enable_if<std::is_same<T, axis_t>::value, const T&>::type
-  axis(unsigned i) const { return axes_[i]; }
+  axis(unsigned i) const { return base_t::axes_[i]; }
 
   template <typename T>
   typename std::enable_if<!std::is_same<T, axis_t>::value, const T&>::type
-  axis(unsigned i) const { return boost::get<const T&>(axes_[i]); }
+  axis(unsigned i) const { return boost::get<const T&>(base_t::axes_[i]); }
 
 #if defined(BOOST_HISTOGRAM_DOXYGEN)
   /** Returns the axis object at index \a i, casted to type \a T.
@@ -161,19 +213,15 @@ public:
   template <typename T> const T& axis(unsigned i) const
 #endif
 
-  double sum() const
-  {
-    double result = 0.0;
-    for (std::size_t i = 0, n = size(); i < n; ++i)
-      result += storage_.value(i);
-    return result;
-  }
-
   template <unsigned OtherDim, typename OtherStoragePolicy>
   bool operator==(const histogram_t<OtherDim, OtherStoragePolicy>& other) const
   {
-    return dim() == other.dim() && axes_ == other.axes_ &&
-           storage_ == other.storage_;
+    if (base_t::dim() != other.dim())
+      return false;
+    for (unsigned i = 0, n = base_t::dim(); i < n; ++i)
+      if (!(axis<axis_t>(i) == other.axis<axis_t>(i)))
+        return false;
+    return base_t::storage_ == other.storage_;
   }
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
@@ -181,37 +229,26 @@ public:
   {
     static_assert((OtherDim == Dim) || OtherDim == Dynamic,
                   "dimensions incompatible"); 
-    if (dim() != other.dim())
+    if (base_t::dim() != other.dim())
       throw std::logic_error("dimensions of histograms differ");
-    if (size() != other.size())
+    if (base_t::size() != other.size())
       throw std::logic_error("sizes of histograms differ");
-    if (axes_ != other.axes_)
+    if (base_t::axes_ != other.axes_)
       throw std::logic_error("axes of histograms differ");
-    storage_ += other.storage_;
+    base_t::storage_ += other.storage_;
     return *this;
   }
 
 private:
-  std::array<axis_t, Dim> axes_;
-  StoragePolicy storage_;
-
-  std::size_t field_count() const
-  {
-    std::size_t fc = 1;
-    for (auto& a : axes_)
-      fc *= apply_visitor(visitor::shape(), a);
-    return fc;
-  }
-
   template <typename First, typename... Rest>
-  void assign_axis(First a, Rest... rest)
+  void axis_assign(First a, Rest... rest)
   {
     static_assert(std::is_convertible<First, axis_t>::value,
                   "argument must be axis type");
-    axes_[dim() - sizeof...(Rest) - 1] = a;
-    assign_axis(rest...);
+    base_t::axes_[Dim - sizeof...(Rest) - 1] = a;
+    axis_assign(rest...);
   }
-  void assign_axis() {} // stop recursion
+  void axis_assign() {} // stop recursion
 
   template <typename First, typename... Rest>
   void index_impl(detail::linearize_x& lin, First first, Rest... rest)
@@ -219,7 +256,7 @@ private:
     static_assert(std::is_convertible<First, double>::value,
                   "argument not convertible to double");
     lin.in = first;
-    apply_visitor(lin, axes_[dim() - sizeof...(Rest) - 1]);
+    apply_visitor(lin, base_t::axes_[Dim - sizeof...(Rest) - 1]);
     index_impl(lin, rest...);
   }
   void index_impl(detail::linearize_x&) {} // stop recursion
@@ -230,7 +267,7 @@ private:
     static_assert(std::is_convertible<First, double>::value,
                   "argument not convertible to double");
     lin.in = first;
-    apply_visitor(lin, axes_[dim() - sizeof...(Rest)]);
+    apply_visitor(lin, base_t::axes_[Dim - sizeof...(Rest)]);
     return windex_impl(lin, rest...);
   }
   template <typename Last>
@@ -247,7 +284,7 @@ private:
     static_assert(std::is_convertible<First, int>::value,
                   "argument not convertible to integer");
     lin.in = first;
-    apply_visitor(lin, axes_[dim() - sizeof...(Rest) - 1]);
+    apply_visitor(lin, base_t::axes_[Dim - sizeof...(Rest) - 1]);
     index_impl(lin, rest...);      
   }
   void index_impl(detail::linearize&) {} // stop recursion
@@ -256,6 +293,204 @@ private:
   template <unsigned OtherDim, typename OtherStoragePolicy>
   friend class histogram_t;
 };
+
+
+template <typename Storage>
+class histogram_t<Dynamic, Storage>: public histogram_common<std::vector<axis_t>, Storage>
+{
+  using base_t = histogram_common<std::vector<axis_t>, Storage>;
+public:
+  using value_t = typename Storage::value_t;
+  using variance_t = typename Storage::variance_t;
+
+  histogram_t() = default;
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  histogram_t(const histogram_t<OtherDim, OtherStoragePolicy>& other) :
+    base_t(other.axes_, other.storage_)
+  {}
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  histogram_t(histogram_t<OtherDim, OtherStoragePolicy>&& other) :
+    base_t(std::move(other))
+  {}
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  histogram_t& operator=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
+  {
+    if (this != &other) {
+      base_t::axes_ = other.axes_;
+      base_t::storage_ = other.storage_;
+    }
+    return *this;
+  }
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  histogram_t& operator=(histogram_t<OtherDim, OtherStoragePolicy>&& other)
+  {
+    base_t::axes_ = std::move(other.axes_);
+    base_t::storage_ = std::move(other.storage_);
+    return *this;
+  } 
+
+  template <typename... Axes>
+  histogram_t(axis_t a, Axes... axes)
+    : base_t(1 + sizeof...(axes))
+  {
+    axis_assign(a, axes...);
+    base_t::storage_ = Storage(base_t::field_count());
+  }
+
+  template <typename... Args>
+  void fill(Args... args)
+  {
+    BOOST_ASSERT_MSG(sizeof...(args) == base_t::dim(),
+                     "number of arguments does not match histogram dimension");
+    detail::linearize_x lin;
+    index_impl(lin, args...);
+    if (lin.stride)
+      base_t::storage_.increase(lin.out);
+  }
+
+  template <typename... Args>
+  void wfill(Args... args)
+  {
+    BOOST_ASSERT_MSG(sizeof...(args) == (base_t::dim() + 1),
+                     "number of arguments does not match histogram dimension");
+    detail::linearize_x lin;
+    const double w = windex_impl(lin, args...);
+    if (lin.stride)
+      base_t::storage_.increase(lin.out, w);
+  }
+
+  template <typename... Args>
+  value_t value(Args... args)
+  {
+    BOOST_ASSERT_MSG(sizeof...(args) == base_t::dim(),
+                     "number of arguments does not match histogram dimension");
+    detail::linearize lin;
+    index_impl(lin, args...);
+    if (lin.stride == 0)
+      throw std::out_of_range("invalid index");
+    return base_t::storage_.value(lin.out);
+  }
+
+  template <typename... Args>
+  variance_t variance(Args... args)
+  {
+    BOOST_ASSERT_MSG(sizeof...(args) == base_t::dim(),
+                     "number of arguments does not match histogram dimension");
+    detail::linearize lin;
+    index_impl(lin, args...);
+    if (lin.stride == 0)
+      throw std::out_of_range("invalid index");
+    return base_t::storage_.variance(lin.out);
+  }
+
+  template <typename T>
+  typename std::enable_if<std::is_same<T, axis_t>::value, T&>::type
+  axis(unsigned i) { return base_t::axes_[i]; }
+
+  template <typename T>
+  typename std::enable_if<!std::is_same<T, axis_t>::value, T&>::type
+  axis(unsigned i) { return boost::get<T&>(base_t::axes_[i]); }
+
+  template <typename T>
+  typename std::enable_if<std::is_same<T, axis_t>::value, const T&>::type
+  axis(unsigned i) const { return base_t::axes_[i]; }
+
+  template <typename T>
+  typename std::enable_if<!std::is_same<T, axis_t>::value, const T&>::type
+  axis(unsigned i) const { return boost::get<const T&>(base_t::axes_[i]); }
+
+#if defined(BOOST_HISTOGRAM_DOXYGEN)
+  /** Returns the axis object at index \a i, casted to type \a T.
+   *  A runtime exception is thrown if the type cast is invalid.
+   */
+  template <typename T> T& axis(unsigned i);
+  /** The ``const``-version of the previous member function. */
+  template <typename T> const T& axis(unsigned i) const
+#endif
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  bool operator==(const histogram_t<OtherDim, OtherStoragePolicy>& other) const
+  {
+    if (base_t::dim() != other.dim())
+      return false;
+    for (unsigned i = 0, n = base_t::dim(); i < n; ++i)
+      if (!(axis<axis_t>(i) == other.axis<axis_t>(i)))
+        return false;
+    return base_t::storage_ == other.storage_;
+  }
+
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  histogram_t& operator+=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
+  {
+    if (base_t::dim() != other.dim())
+      throw std::logic_error("dimensions of histograms differ");
+    if (base_t::size() != other.size())
+      throw std::logic_error("sizes of histograms differ");
+    if (base_t::axes_ != other.axes_)
+      throw std::logic_error("axes of histograms differ");
+    base_t::storage_ += other.storage_;
+    return *this;
+  }
+
+private:
+  template <typename First, typename... Rest>
+  void axis_assign(First a, Rest... rest)
+  {
+    static_assert(std::is_convertible<First, axis_t>::value,
+                  "argument must be axis type");
+    base_t::axes_[base_t::dim() - sizeof...(Rest) - 1] = a;
+    axis_assign(rest...);
+  }
+  void axis_assign() {} // stop recursion
+
+  template <typename First, typename... Rest>
+  void index_impl(detail::linearize_x& lin, First first, Rest... rest)
+  {
+    static_assert(std::is_convertible<First, double>::value,
+                  "argument not convertible to double");
+    lin.in = first;
+    apply_visitor(lin, base_t::axes_[base_t::dim() - sizeof...(Rest) - 1]);
+    index_impl(lin, rest...);
+  }
+  void index_impl(detail::linearize_x&) {} // stop recursion
+
+  template <typename First, typename... Rest>
+  double windex_impl(detail::linearize_x& lin, First first, Rest... rest)
+  {
+    static_assert(std::is_convertible<First, double>::value,
+                  "argument not convertible to double");
+    lin.in = first;
+    apply_visitor(lin, base_t::axes_[base_t::dim() - sizeof...(Rest)]);
+    return windex_impl(lin, rest...);
+  }
+  template <typename Last>
+  double windex_impl(detail::linearize_x&, Last w)
+  { 
+    static_assert(std::is_convertible<Last, double>::value,
+                  "argument not convertible to double");
+    return w; 
+  } // stop recursion
+
+  template <typename First, typename... Rest>
+  void index_impl(detail::linearize& lin, First first, Rest... rest)
+  {
+    static_assert(std::is_convertible<First, int>::value,
+                  "argument not convertible to integer");
+    lin.in = first;
+    apply_visitor(lin, base_t::axes_[base_t::dim() - sizeof...(Rest) - 1]);
+    index_impl(lin, rest...);      
+  }
+  void index_impl(detail::linearize&) {} // stop recursion
+
+  // all histogram types are friends to share access of private members
+  template <unsigned OtherDim, typename OtherStoragePolicy>
+  friend class histogram_t;
+};
+
 
 template <unsigned DimA, typename StoragePolicyA,
           unsigned DimB, typename StoragePolicyB>
@@ -278,6 +513,7 @@ operator+(const histogram_t<DimA, StoragePolicyA>& a,
   return tmp;
 }
 
+
 /// Type factory
 template <typename... Axes>
 histogram_t<sizeof...(Axes)>
@@ -285,6 +521,7 @@ histogram(Axes... axes)
 {
   return histogram_t<sizeof...(Axes)>(std::forward<Axes>(axes)...);
 }
+
 
 }
 }

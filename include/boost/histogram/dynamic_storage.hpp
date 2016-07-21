@@ -108,6 +108,7 @@ public:
 
   std::size_t size() const { return data_.nbytes() / depth_; }
   unsigned depth() const { return depth_; }
+  const char* data() const { return &data_.get<char>(0); }
   void increase(std::size_t i);
   void increase(std::size_t i, double w);
   value_t value(std::size_t i) const;
