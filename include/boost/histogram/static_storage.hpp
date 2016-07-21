@@ -30,7 +30,10 @@ namespace histogram {
         data_.get<T>(i) = other.data_.template get<U>(i);
     }
 
-    template <typename U, typename = std::enable_if<std::is_same<T, U>::value>>
+    template <typename U,
+              typename std::enable_if<
+                std::is_same<T, U>::value,
+              int>::type = 0>
     static_storage(static_storage<U>&& other) :
       data_(std::move(other.data_))
     {}
@@ -43,8 +46,9 @@ namespace histogram {
         data_.get<T>(i) = other.data_.template get<U>(i);
     }
 
-    template <typename U, typename = std::enable_if<std::is_same<T, U>::value>>
-    static_storage& operator=(static_storage<U>&& other)
+    template <typename U>
+    typename std::enable_if<std::is_same<T, U>::value, static_storage&>::type
+    operator=(static_storage<U>&& other)
     {
       data_ = std::move(other.data_);
     }

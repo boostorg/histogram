@@ -73,11 +73,12 @@ public:
   }
 
   template <typename T,
-            typename = std::enable_if<
-      (std::is_integral<T>::value &&
-       (sizeof(T) & (sizeof(T) - 1)) == 0 && // size is one of 1,2,4,8
-       sizeof(T) < sizeof(uint64_t))
-    >
+            typename std::enable_if<
+              (std::is_integral<T>::value &&
+               (sizeof(T) & (sizeof(T) - 1)) == 0 && // size in 1,2,4,8
+               sizeof(T) < sizeof(uint64_t)),
+              int
+            >::type = 0
   >
   dynamic_storage(static_storage<T>&& o) :
     data_(std::move(o.data_)),
@@ -91,14 +92,14 @@ public:
     return *this;
   }
 
-  template <typename T,
-            typename = std::enable_if<
-      (std::is_integral<T>::value &&
-       (sizeof(T) & (sizeof(T) - 1)) == 0 && // size is one of 1,2,4,8
-       sizeof(T) < sizeof(uint64_t))
-    >
-  >
-  dynamic_storage& operator=(static_storage<T>&& o)
+  template <typename T>
+  typename std::enable_if<
+    (std::is_integral<T>::value &&
+     (sizeof(T) & (sizeof(T) - 1)) == 0 && // size in 1,2,4,8
+     sizeof(T) < sizeof(uint64_t)),
+    dynamic_storage&
+  >::type
+  operator=(static_storage<T>&& o)
   {
     data_ = std::move(o.data_);
     depth_ = sizeof(T);

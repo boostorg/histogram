@@ -8,6 +8,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
+#include <boost/histogram/static_storage.hpp>
 #include <sstream>
 #include <string>
 #include <limits>
@@ -85,4 +86,81 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_equality)
     BOOST_CHECK(!(a == b));
     c.increase(0, 1.0);
     BOOST_CHECK(a == c);
+}
+
+BOOST_AUTO_TEST_CASE(convert_static_storage_1)
+{
+    dynamic_storage a(2), b(2);
+    static_storage<uint8_t> c(2);
+    c.increase(0);
+    for (unsigned i = 0; i < 7; ++i)
+        c += c;
+    a = c;
+    BOOST_CHECK(a == c);
+    BOOST_CHECK_EQUAL(a.value(0), 128);
+    BOOST_CHECK_EQUAL(a.value(1), 0);
+    b = std::move(c);
+    BOOST_CHECK(a == b);
+}
+
+BOOST_AUTO_TEST_CASE(convert_static_storage_2)
+{
+    dynamic_storage a(2), b(2);
+    static_storage<uint16_t> c(2);
+    c.increase(0);
+    for (unsigned i = 0; i < 15; ++i)
+        c += c;
+    a = c;
+    BOOST_CHECK(a == c);
+    BOOST_CHECK_EQUAL(a.value(0), 32768);
+    BOOST_CHECK_EQUAL(a.value(1), 0);
+    b = std::move(c);
+    BOOST_CHECK(a == b);
+}
+
+BOOST_AUTO_TEST_CASE(convert_static_storage_3)
+{
+    dynamic_storage a(2), b(2);
+    static_storage<uint32_t> c(2);
+    c.increase(0);
+    for (unsigned i = 0; i < 31; ++i)
+        c += c;
+    a = c;
+    BOOST_CHECK(a == c);
+    BOOST_CHECK_EQUAL(a.value(0), 2147483648);
+    BOOST_CHECK_EQUAL(a.value(1), 0);
+    b = std::move(c);
+    BOOST_CHECK(a == b);
+}
+
+BOOST_AUTO_TEST_CASE(convert_static_storage_4)
+{
+    dynamic_storage a(2), b(2);
+    static_storage<uint64_t> c(2);
+    c.increase(0);
+    for (unsigned i = 0; i < 63; ++i)
+        c += c;
+    a = c;
+    BOOST_CHECK(a == c);
+    BOOST_CHECK_EQUAL(a.value(0), 9223372036854775808lu);
+    BOOST_CHECK_EQUAL(a.value(1), 0);
+    b = std::move(c);
+    BOOST_CHECK(a == b);
+}
+
+
+BOOST_AUTO_TEST_CASE(convert_static_storage_5)
+{
+    dynamic_storage a(2), b(2);
+    static_storage<float> c(2);
+    c.increase(0);
+    for (unsigned i = 0; i < 15; ++i)
+        c += c;
+    a = c;
+    BOOST_CHECK(a == c);
+    BOOST_CHECK_EQUAL(a.value(0), 32768);
+    BOOST_CHECK_EQUAL(a.value(1), 0);
+    b = std::move(c);
+    BOOST_CHECK_EQUAL(b.value(0), 32768);
+    BOOST_CHECK_EQUAL(b.value(1), 0);
 }
