@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_grow_1)
     double x = 1.0;
     dynamic_storage n(1);
     n.increase(0);
-    for (unsigned i = 0; i < 64; ++i) {
+    for (unsigned i = 0; i < 100; ++i) {
         n += n;
         x += x;
         n.increase(0);
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_grow_2)
 {
     dynamic_storage n(1);
     n.increase(0);
-    for (unsigned i = 0; i < 64; ++i) {
+    for (unsigned i = 0; i < 100; ++i) {
         n += n;
         dynamic_storage a(1);
         a.increase(0, 0.0); // converts to wtype
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_grow_3)
 {
     dynamic_storage n(1);
     n.increase(0);
-    for (unsigned i = 0; i < 64; ++i) {
+    for (unsigned i = 0; i < 100; ++i) {
         n += n;
         dynamic_storage a(1);
         a += n;
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_add_with_growth)
 {
     dynamic_storage a(1), b(1);
     a.increase(0);
-    for (unsigned i = 0; i < 64; ++i)
+    for (unsigned i = 0; i < 100; ++i)
         a += a;
     b.increase(0);
     b += a;
