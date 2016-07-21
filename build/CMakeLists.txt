@@ -58,11 +58,6 @@ add_executable(axis_test
 target_link_libraries(axis_test ${LIBRARIES})
 add_test(axis_test axis_test)
 
-add_executable(zero_suppression_test
-               ../test/zero_suppression_test.cpp)
-target_link_libraries(zero_suppression_test ${LIBRARIES})
-add_test(zero_suppression_test zero_suppression_test)
-
 add_executable(dynamic_storage_test
                ../test/dynamic_storage_test.cpp)
 target_link_libraries(dynamic_storage_test ${LIBRARIES})
