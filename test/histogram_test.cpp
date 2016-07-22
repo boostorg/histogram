@@ -160,10 +160,10 @@ BOOST_AUTO_TEST_CASE(move_assign)
 
 BOOST_AUTO_TEST_CASE(d1)
 {
-    auto h = histogram(regular_axis(2, -1, 1));
-    h.fill(-1);
+    auto h = histogram(integer_axis(0, 1));
+    h.fill(0);
+    h.fill(-0.0);
     h.fill(-1.0);
-    h.fill(-2.0);
     h.fill(10.0);
 
     BOOST_CHECK_EQUAL(h.dim(), 1);
@@ -171,15 +171,43 @@ BOOST_AUTO_TEST_CASE(d1)
     BOOST_CHECK_EQUAL(h.shape(0), 4);
     BOOST_CHECK_EQUAL(h.sum(), 4);
 
+    BOOST_CHECK_THROW(h.value(-2), std::out_of_range);
     BOOST_CHECK_EQUAL(h.value(-1), 1.0);
     BOOST_CHECK_EQUAL(h.value(0), 2.0);
     BOOST_CHECK_EQUAL(h.value(1), 0.0);
     BOOST_CHECK_EQUAL(h.value(2), 1.0);
+    BOOST_CHECK_THROW(h.value(3), std::out_of_range);
 
+    BOOST_CHECK_THROW(h.variance(-2), std::out_of_range);
     BOOST_CHECK_EQUAL(h.variance(-1), 1.0);
     BOOST_CHECK_EQUAL(h.variance(0), 2.0);
     BOOST_CHECK_EQUAL(h.variance(1), 0.0);
     BOOST_CHECK_EQUAL(h.variance(2), 1.0);
+    BOOST_CHECK_THROW(h.variance(3), std::out_of_range);
+}
+
+BOOST_AUTO_TEST_CASE(d1_2)
+{
+    auto h = histogram(integer_axis(0, 1, "", false));
+    h.fill(0);
+    h.fill(-0.0);
+    h.fill(-1.0);
+    h.fill(10.0);
+
+    BOOST_CHECK_EQUAL(h.dim(), 1);
+    BOOST_CHECK_EQUAL(h.bins(0), 2);
+    BOOST_CHECK_EQUAL(h.shape(0), 2);
+    BOOST_CHECK_EQUAL(h.sum(), 2);
+
+    BOOST_CHECK_THROW(h.value(-1), std::out_of_range);
+    BOOST_CHECK_EQUAL(h.value(0), 2.0);
+    BOOST_CHECK_EQUAL(h.value(1), 0.0);
+    BOOST_CHECK_THROW(h.value(2), std::out_of_range);
+
+    BOOST_CHECK_THROW(h.variance(-1), std::out_of_range);
+    BOOST_CHECK_EQUAL(h.variance(0), 2.0);
+    BOOST_CHECK_EQUAL(h.variance(1), 0.0);
+    BOOST_CHECK_THROW(h.variance(2), std::out_of_range);
 }
 
 BOOST_AUTO_TEST_CASE(d1w)

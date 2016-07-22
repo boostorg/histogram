@@ -32,53 +32,54 @@ std::vector<double> random_array(unsigned n, int type) {
   return result;
 }
 
-void compare_1d(unsigned n, int distrib)
+template <typename Histogram>
+double compare_1d(unsigned n, int distrib)
 {
   auto r = random_array(n, distrib);
 
-  auto best_boost = std::numeric_limits<double>::max();
+  auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 10; ++k) {
-    auto h = histogram(regular_axis(100, 0, 1));
+    auto h = Histogram(regular_axis(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[i]);
     t = clock() - t;
-    best_boost = std::min(best_boost, double(t) / CLOCKS_PER_SEC);
+    best = std::min(best, double(t) / CLOCKS_PER_SEC);
   }
 
-  printf("1D\n");
-  printf("t[boost] = %.3f\n", best_boost);
+  return best;
 }
 
-void compare_3d(unsigned n, int distrib)
+template <typename Histogram>
+double compare_3d(unsigned n, int distrib)
 {
   auto r = random_array(3 * n, distrib);
 
-  auto best_boost = std::numeric_limits<double>::max();
+  auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 10; ++k) {
-    auto h = histogram(regular_axis(100, 0, 1),
+    auto h = Histogram(regular_axis(100, 0, 1),
                        regular_axis(100, 0, 1),
                        regular_axis(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
     t = clock() - t;
-    best_boost = std::min(best_boost, double(t) / CLOCKS_PER_SEC);
+    best = std::min(best, double(t) / CLOCKS_PER_SEC);
   } 
 
-  printf("3D\n");
-  printf("t[boost] = %.3f\n", best_boost);
+  return best;
 }
 
-void compare_6d(unsigned n, int distrib)
+template <typename Histogram>
+double compare_6d(unsigned n, int distrib)
 {
   auto r = random_array(6 * n, distrib);
 
-  auto best_boost = std::numeric_limits<double>::max();
+  auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 10; ++k) {
     double x[6];
 
-    auto h = histogram(regular_axis(10, 0, 1),
+    auto h = Histogram(regular_axis(10, 0, 1),
                        regular_axis(10, 0, 1),
                        regular_axis(10, 0, 1),
                        regular_axis(10, 0, 1),
@@ -92,20 +93,50 @@ void compare_6d(unsigned n, int distrib)
       h.fill(x[0], x[1], x[2], x[3], x[4], x[5]);
     }
     t = clock() - t;
-    best_boost = std::min(best_boost, double(t) / CLOCKS_PER_SEC);
+    best = std::min(best, double(t) / CLOCKS_PER_SEC);
   } 
 
-  printf("6D\n");
-  printf("t[boost] = %.3f\n", best_boost);
+  return best;
 }
 
 int main() {
-  printf("uniform distribution\n");
-  compare_1d(12000000, 0);
-  compare_3d(4000000, 0);
-  compare_6d(2000000, 0);
-  printf("normal distribution\n");
-  compare_1d(12000000, 1);
-  compare_3d(4000000, 1);
-  compare_6d(2000000, 1);
+  for (int itype = 0; itype < 2; ++itype) {
+    if (itype == 0)
+      printf("uniform distribution\n");
+    else
+      printf("normal distribution\n");
+
+    printf("1D\n");
+    printf("t[boost]   = %.3f\n",
+#if HISTOGRAM_TYPE == 1
+           compare_1d<histogram_t<1, static_storage<int>>>(12000000, itype)
+#elif HISTOGRAM_TYPE == 2
+           compare_1d<histogram_t<1, dynamic_storage>>(12000000, itype)
+#elif HISTOGRAM_TYPE == 3
+           compare_1d<histogram_t<Dynamic, dynamic_storage>>(12000000, itype)
+#endif
+    );
+
+    printf("3D\n");
+    printf("t[boost]   = %.3f\n",
+#if HISTOGRAM_TYPE == 1
+           compare_3d<histogram_t<3, static_storage<int>>>(4000000, itype)
+#elif HISTOGRAM_TYPE == 2
+           compare_3d<histogram_t<3, dynamic_storage>>(4000000, itype)
+#elif HISTOGRAM_TYPE == 3
+           compare_3d<histogram_t<Dynamic, dynamic_storage>>(4000000, itype)
+#endif
+    );
+
+    printf("6D\n");
+    printf("t[boost]   = %.3f\n",
+#if HISTOGRAM_TYPE == 1
+           compare_6d<histogram_t<6, static_storage<int>>>(2000000, itype)
+#elif HISTOGRAM_TYPE == 2
+           compare_6d<histogram_t<6, dynamic_storage>>(2000000, itype)
+#elif HISTOGRAM_TYPE == 3
+           compare_6d<histogram_t<Dynamic, dynamic_storage>>(2000000, itype)
+#endif
+    );
+  }
 }

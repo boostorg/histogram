@@ -29,18 +29,20 @@ namespace histogram {
 /// Common base class for most axes
 class axis_base {
 public:
-  ///Returns the number of bins.
+  /// Returns the number of bins, excluding overflow/underflow.
   inline int bins() const { return size_ ; }
-  ///Returns whether overflow and underflow bins will be added in the histogram.
-  inline bool uoflow() const { return uoflow_; }
-  ///Change the label of an axis (not implemented for category_axis).
+  /// Returns the number of bins, including overflow/underflow.
+  inline int shape() const { return shape_; }
+  /// Returns whether axis has extra overflow and underflow bins.
+  inline bool uoflow() const { return shape_ > size_; }
+  /// Change the label of an axis (not implemented for category_axis).
   const std::string& label() const { return label_; }
-  ///Returns the axis label, which is a name or description (not implemented for category_axis).
+  /// Returns the axis label, which is a name or description (not implemented for category_axis).
   void label(const std::string& label) { label_ = label; }
 
 protected:
   axis_base(unsigned n, const std::string& label, bool uoflow) :
-    size_(n), uoflow_(uoflow), label_(label)
+    size_(n), shape_(size_ + 2 * uoflow), label_(label)
   {}
 
   axis_base() = default;
@@ -50,11 +52,11 @@ protected:
   axis_base& operator=(axis_base&&) = default;
 
   bool operator==(const axis_base& o) const
-  { return size_ == o.size_ && uoflow_ == o.uoflow_ && label_ == o.label_; }
+  { return size_ == o.size_ && shape_ == o.shape_ && label_ == o.label_; }
 
 private:
   int size_;
-  bool uoflow_;
+  int shape_;
   std::string label_;
 
   template <class Archive>
@@ -279,48 +281,6 @@ private:
   friend void serialize(Archive& ar, variable_axis & axis, unsigned version);
 };
 
-
-///An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from ``0`` to ``n-1``. There are no underflow/overflow bins for this axis.  Binning is a O(1) operation.
-class category_axis {
-public:
-  typedef std::string value_type;
-
-  /**Construct from initializer list of strings
-   *
-   * @param categories an ordered sequence of categories that this axis discriminates
-   */
-  explicit
-  category_axis(const std::initializer_list<std::string>& categories)
-    : categories_(categories)
-  {}
-
-  category_axis() {}
-  category_axis(const category_axis&) = default;
-  category_axis(category_axis&&) = default;
-  category_axis& operator=(const category_axis&) = default;
-  category_axis& operator=(category_axis&&) = default;
-
-  inline int bins() const { return categories_.size(); }
-
-  ///Returns the bin index for the passed argument.
-  inline int index(double x) const
-  { return static_cast<int>(x + 0.5); }
-  ///Returns the category for the bin index.
-  const std::string& operator[](int idx) const
-  { return categories_[idx]; }
-
-  inline bool uoflow() const { return false; }
-
-  bool operator==(const category_axis& o) const
-  { return categories_ == o.categories_; }
-
-private:
-  std::vector<std::string> categories_;
-
-  template <class Archive>
-  friend void serialize(Archive& ar, category_axis & axis, unsigned version);
-};
-
 /** An axis for a contiguous range of integers. There are no underflow/overflow
  *  bins for this axis. Binning is a O(1) operation.
  */
@@ -365,26 +325,46 @@ private:
   friend void serialize(Archive& ar, integer_axis & axis, unsigned version);
 };
 
-namespace detail {
-  template <typename T>
-  struct linearize_t : public static_visitor<void>
-  {
-    T in;
-    std::size_t out = 0, stride = 1;
+///An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from ``0`` to ``n-1``. There are no underflow/overflow bins for this axis.  Binning is a O(1) operation.
+class category_axis {
+public:
+  typedef std::string value_type;
 
-    template <typename A>
-    void operator()(const A& a) {
-      int j = std::is_same<T, double>::value ? a.index(in) : in;
-      const int shape = a.bins() + 2 * a.uoflow();
-      j += (j < 0) * (a.bins() + 2); // wrap around if j < 0
-      out += j * stride;
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-      stride *= (j < shape) * shape; // stride == 0 indicates out-of-range
-    }
-  };
-  typedef linearize_t<int> linearize;
-  typedef linearize_t<double> linearize_x;
-}
+  /**Construct from initializer list of strings
+   *
+   * @param categories an ordered sequence of categories that this axis discriminates
+   */
+  explicit
+  category_axis(const std::initializer_list<std::string>& categories)
+    : categories_(categories)
+  {}
+
+  category_axis() {}
+  category_axis(const category_axis&) = default;
+  category_axis(category_axis&&) = default;
+  category_axis& operator=(const category_axis&) = default;
+  category_axis& operator=(category_axis&&) = default;
+
+  inline int bins() const { return categories_.size(); }
+  inline int shape() const { return categories_.size(); }
+  inline bool uoflow() const { return false; }
+
+  ///Returns the bin index for the passed argument.
+  inline int index(double x) const
+  { return static_cast<int>(x + 0.5); }
+  ///Returns the category for the bin index.
+  const std::string& operator[](int idx) const
+  { return categories_[idx]; }
+
+  bool operator==(const category_axis& o) const
+  { return categories_ == o.categories_; }
+
+private:
+  std::vector<std::string> categories_;
+
+  template <class Archive>
+  friend void serialize(Archive& ar, category_axis & axis, unsigned version);
+};
 
 typedef variant<
   regular_axis, // most common type

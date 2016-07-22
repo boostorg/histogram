@@ -9,6 +9,7 @@
 
 #include <boost/config.hpp>
 #include <boost/assert.hpp>
+#include <boost/variant/static_visitor.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/visitors.hpp>
 #include <boost/histogram/static_storage.hpp>
@@ -41,6 +42,38 @@ namespace {
       axes_init(dst, src.size());
       std::copy(src.begin(), src.end(), dst.begin());    
   }
+
+  struct linearize : public static_visitor<void>
+  {
+    int in;
+    std::size_t out = 0, stride = 1;
+
+    template <typename A>
+    void operator()(const A& a) {
+      int j = in;
+      const int uoflow = a.uoflow();
+      stride *= (j >= -uoflow) * (j < (a.bins() + uoflow));
+      j += (j < 0) * (a.bins() + 2); // wrap around if j < 0
+      out += j * stride;
+      #pragma GCC diagnostic ignored "-Wstrict-overflow"
+      stride *= a.shape(); // stride == 0 indicates out-of-range
+    }
+  };
+
+  struct linearize_x : public static_visitor<void>
+  {
+    double in;
+    std::size_t out = 0, stride = 1;
+
+    template <typename A>
+    void operator()(const A& a) {
+      int j = a.index(in); // j is guaranteed to be in range [-1, bins]
+      j += (j < 0) * (a.bins() + 2); // wrap around if j < 0
+      out += j * stride;
+      #pragma GCC diagnostic ignored "-Wstrict-overflow"
+      stride *= (j < a.shape()) * a.shape(); // stride == 0 indicates out-of-range
+    }
+  };
 
   /// Histogram interface and data structures common to any dimension
   template <typename Axes, typename Storage = dynamic_storage>
@@ -154,7 +187,7 @@ namespace {
     void axis_assign() {} // stop recursion
 
     template <typename First, typename... Rest>
-    void index_impl(detail::linearize_x& lin, First first, Rest... rest)
+    void index_impl(linearize_x& lin, First first, Rest... rest)
     {
       static_assert(std::is_convertible<First, double>::value,
                     "argument not convertible to double");
@@ -162,10 +195,10 @@ namespace {
       apply_visitor(lin, axes_[dim() - sizeof...(Rest) - 1]);
       index_impl(lin, rest...);
     }
-    void index_impl(detail::linearize_x&) {} // stop recursion
+    void index_impl(linearize_x&) {} // stop recursion
 
     template <typename First, typename... Rest>
-    double windex_impl(detail::linearize_x& lin, First first, Rest... rest)
+    double windex_impl(linearize_x& lin, First first, Rest... rest)
     {
       static_assert(std::is_convertible<First, double>::value,
                     "argument not convertible to double");
@@ -174,7 +207,7 @@ namespace {
       return windex_impl(lin, rest...);
     }
     template <typename Last>
-    double windex_impl(detail::linearize_x&, Last w)
+    double windex_impl(linearize_x&, Last w)
     { 
       static_assert(std::is_convertible<Last, double>::value,
                     "argument not convertible to double");
@@ -182,7 +215,7 @@ namespace {
     } // stop recursion
 
     template <typename First, typename... Rest>
-    void index_impl(detail::linearize& lin, First first, Rest... rest)
+    void index_impl(linearize& lin, First first, Rest... rest)
     {
       static_assert(std::is_convertible<First, int>::value,
                     "argument not convertible to integer");
@@ -190,8 +223,7 @@ namespace {
       apply_visitor(lin, axes_[dim() - sizeof...(Rest) - 1]);
       index_impl(lin, rest...);      
     }
-    void index_impl(detail::linearize&) {} // stop recursion
-
+    void index_impl(linearize&) {} // stop recursion
   };
 }
 
@@ -267,7 +299,7 @@ public:
   {
     static_assert(sizeof...(args) == Dim,
                   "number of arguments does not match histogram dimension");
-    detail::linearize_x lin;
+    linearize_x lin;
     base_t::index_impl(lin, args...);
     if (lin.stride)
       base_t::storage_.increase(lin.out);
@@ -278,7 +310,7 @@ public:
   {
     static_assert(sizeof...(args) == (Dim + 1),
                   "number of arguments does not match histogram dimension");
-    detail::linearize_x lin;
+    linearize_x lin;
     const double w = base_t::windex_impl(lin, args...);
     if (lin.stride)
       base_t::storage_.increase(lin.out, w);
@@ -289,7 +321,7 @@ public:
   {
     static_assert(sizeof...(args) == Dim,
                   "number of arguments does not match histogram dimension");
-    detail::linearize lin;
+    linearize lin;
     base_t::index_impl(lin, args...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
@@ -301,7 +333,7 @@ public:
   {
     static_assert(sizeof...(args) == Dim,
                   "number of arguments does not match histogram dimension");
-    detail::linearize lin;
+    linearize lin;
     base_t::index_impl(lin, args...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
@@ -401,8 +433,8 @@ public:
   {
     BOOST_ASSERT_MSG(sizeof...(args) == base_t::dim(),
                      "number of arguments does not match histogram dimension");
-    detail::linearize_x lin;
-    index_impl(lin, args...);
+    linearize_x lin;
+    base_t::index_impl(lin, args...);
     if (lin.stride)
       base_t::storage_.increase(lin.out);
   }
@@ -412,8 +444,8 @@ public:
   {
     BOOST_ASSERT_MSG(sizeof...(args) == (base_t::dim() + 1),
                      "number of arguments does not match histogram dimension");
-    detail::linearize_x lin;
-    const double w = windex_impl(lin, args...);
+    linearize_x lin;
+    const double w = base_t::windex_impl(lin, args...);
     if (lin.stride)
       base_t::storage_.increase(lin.out, w);
   }
@@ -423,8 +455,8 @@ public:
   {
     BOOST_ASSERT_MSG(sizeof...(args) == base_t::dim(),
                      "number of arguments does not match histogram dimension");
-    detail::linearize lin;
-    index_impl(lin, args...);
+    linearize lin;
+    base_t::index_impl(lin, args...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
     return base_t::storage_.value(lin.out);
@@ -435,8 +467,8 @@ public:
   {
     BOOST_ASSERT_MSG(sizeof...(args) == base_t::dim(),
                      "number of arguments does not match histogram dimension");
-    detail::linearize lin;
-    index_impl(lin, args...);
+    linearize lin;
+    base_t::index_impl(lin, args...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
     return base_t::storage_.variance(lin.out);

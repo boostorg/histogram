@@ -159,21 +159,24 @@ The benchmark against ROOT is implemented in C++, the benchmark against numpy in
 Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM
 
 ```
-==========================================  =======  =======  =======  =======  =======  =======
-distribution                                         uniform                    normal
-------------------------------------------  -------------------------  -------------------------
+======================================  =======  =======  =======  =======  =======  =======
+distribution                                     uniform                    normal
+--------------------------------------  -------------------------  -------------------------
 dimension                                    1D       3D       6D       1D       3D       6D
-==========================================  =======  =======  =======  =======  =======  =======
-No. of fills                                12M      4M       2M       12M      4M       2M
-C++: ROOT  [t/s]                            0.13     0.19     0.18     0.14     0.18     0.20
-C++: boost/static_storage<unsigned> [t/s]   0.07     0.16     0.18     0.08     0.15     0.19
-C++: boost/dynamic_storage [t/s]            0.13     0.14     0.13     0.13     0.15     0.16
-Py: numpy [t/s]                             0.83     0.73     0.44     0.82     0.43     0.40
-Py: boost [t/s]                             0.21     0.23     0.19     0.21     0.19     0.17
-==========================================  =======  =======  =======  =======  =======  =======
+======================================  =======  =======  =======  =======  =======  =======
+No. of fills                                12M       4M       2M       12M      4M       2M
+C++: ROOT  [t/s]                           0.13     0.21     0.19     0.17     0.14     0.18
+C++: boost/static_storage<int> [t/s]       0.07     0.13     0.15     0.08     0.13     0.17
+C++: boost/dynamic_storage [t/s]           0.11     0.10     0.09     0.12     0.11     0.11
+C++: boost/dynamic_storage* [t/s]          0.14     0.11     0.10     0.15     0.12     0.12
+Py: numpy [t/s]                            0.83     0.73     0.44     0.82     0.43     0.40
+Py: boost [t/s]                            0.21     0.23     0.19     0.21     0.19     0.17
+======================================  =======  =======  =======  =======  =======  =======
+
+*) histogram type with dynamic instead of static number of dimensions
 ```
 
-`boost::histogram` is faster than the respective ROOT histograms, while having more features and being easier to use. The performance of `boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is by a factor 3-4 faster than numpy's histogram functions.
+`boost::histogram` is faster than the respective ROOT histograms, while being richer in core features and easier to use. The performance of `boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is by a factor 3-4 faster than numpy's histogram functions.
 
 ## Rationale
 
