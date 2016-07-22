@@ -92,6 +92,15 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_add_with_growth)
     BOOST_CHECK_EQUAL(b.value(0), a.value(0) + 1.0);
 }
 
+BOOST_AUTO_TEST_CASE(dynamic_storage_add_wtype)
+{
+    dynamic_storage a(1), b(1);
+    a.increase(0, 1.0);
+    b.increase(0);
+    a += b;
+    BOOST_CHECK_EQUAL(a.value(0), b.value(0) + 1.0);
+}
+
 BOOST_AUTO_TEST_CASE(dynamic_storage_equality)
 {
     dynamic_storage a(1), b(1), c(1);
@@ -111,6 +120,7 @@ BOOST_AUTO_TEST_CASE(convert_static_storage_1)
         c += c;
     a = c;
     BOOST_CHECK(a == c);
+    BOOST_CHECK(c == a);
     BOOST_CHECK_EQUAL(a.value(0), 128);
     BOOST_CHECK_EQUAL(a.value(1), 0);
     b = std::move(c);
@@ -126,6 +136,7 @@ BOOST_AUTO_TEST_CASE(convert_static_storage_2)
         c += c;
     a = c;
     BOOST_CHECK(a == c);
+    BOOST_CHECK(c == a);
     BOOST_CHECK_EQUAL(a.value(0), 32768);
     BOOST_CHECK_EQUAL(a.value(1), 0);
     b = std::move(c);
@@ -162,8 +173,24 @@ BOOST_AUTO_TEST_CASE(convert_static_storage_4)
     BOOST_CHECK(a == b);
 }
 
-
 BOOST_AUTO_TEST_CASE(convert_static_storage_5)
+{
+    dynamic_storage a(2), b(2);
+    a.increase(0, 0.0);
+    b.increase(0, 0.0);
+    static_storage<uint64_t> c(2);
+    c.increase(0);
+    for (unsigned i = 0; i < 63; ++i)
+        c += c;
+    a = c;
+    BOOST_CHECK(a == c);
+    BOOST_CHECK_EQUAL(a.value(0), 9223372036854775808lu);
+    BOOST_CHECK_EQUAL(a.value(1), 0);
+    b = std::move(c);
+    BOOST_CHECK(a == b);
+}
+
+BOOST_AUTO_TEST_CASE(convert_static_storage_6)
 {
     dynamic_storage a(2), b(2);
     static_storage<float> c(2);
