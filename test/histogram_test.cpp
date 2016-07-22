@@ -158,20 +158,29 @@ BOOST_AUTO_TEST_CASE(move_assign)
     BOOST_CHECK(h3 == href);
 }
 
-BOOST_AUTO_TEST_CASE(bad_compare)
+BOOST_AUTO_TEST_CASE(equal_compare)
 {
     auto a = histogram_t<1>(integer_axis(0, 1));
     auto b = histogram_t<2>(integer_axis(0, 1), integer_axis(0, 1));
     BOOST_CHECK(!(a == b));
+    BOOST_CHECK(!(b == a));
     auto c = histogram_t<Dynamic>(integer_axis(0, 1));
     BOOST_CHECK(!(b == c));
+    BOOST_CHECK(!(c == b));
     BOOST_CHECK(a == c);
+    BOOST_CHECK(c == a);
+    auto d = histogram_t<Dynamic>(regular_axis(2, 0, 1));
+    BOOST_CHECK(!(c == d));
+    BOOST_CHECK(!(d == c));
     c.fill(0);
     BOOST_CHECK(!(a == c));
+    BOOST_CHECK(!(c == a));
     a.fill(0);
     BOOST_CHECK(a == c);
+    BOOST_CHECK(c == a);
     a.fill(0);
     BOOST_CHECK(!(a == c));
+    BOOST_CHECK(!(c == a));
 }
 
 BOOST_AUTO_TEST_CASE(d1)
