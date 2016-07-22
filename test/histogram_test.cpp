@@ -166,6 +166,12 @@ BOOST_AUTO_TEST_CASE(bad_compare)
     auto c = histogram_t<Dynamic>(integer_axis(0, 1));
     BOOST_CHECK(!(b == c));
     BOOST_CHECK(a == c);
+    c.fill(0);
+    BOOST_CHECK(!(a == c));
+    a.fill(0);
+    BOOST_CHECK(a == c);
+    a.fill(0);
+    BOOST_CHECK(!(a == c));
 }
 
 BOOST_AUTO_TEST_CASE(d1)
