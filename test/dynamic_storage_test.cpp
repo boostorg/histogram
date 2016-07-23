@@ -38,10 +38,9 @@ BOOST_AUTO_TEST_CASE(wtype_streamer)
 BOOST_AUTO_TEST_CASE(dynamic_storage_increase_and_grow)
 {
     dynamic_storage n(1);
-    double v = 0;
     for (unsigned b = 1; b <= 8; b *= 2) {
         uint64_t x = 0;
-        for (unsigned t = 0; t < (8 * b); ++t) { x <<= 1; ++x; }
+        for (unsigned t = 1; t < (8 * b); ++t) { ++x; x <<= 1; }
         void* buf = const_cast<void*>(n.data());
         switch (b) {
             case 1: (static_cast<uint8_t*>(buf))[0] = x;
@@ -49,15 +48,17 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_increase_and_grow)
             case 4: (static_cast<uint32_t*>(buf))[0] = x;
             case 8: (static_cast<uint64_t*>(buf))[0] = x;
         }
-        v = x;
+        ++x;
+        n.increase(0);
+        double v = x;
         BOOST_CHECK_EQUAL(n.value(0), v);
         n.increase(0);
         ++v;
         BOOST_CHECK_EQUAL(n.value(0), v);
+        n.increase(0);
+        ++v;
+        BOOST_CHECK_EQUAL(n.value(0), v);        
     }
-    n.increase(0);
-    ++v;
-    BOOST_CHECK_EQUAL(n.value(0), v);
 }
 
 BOOST_AUTO_TEST_CASE(dynamic_storage_add_and_grow)
