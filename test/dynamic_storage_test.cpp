@@ -63,11 +63,12 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_increase_and_grow)
 
 BOOST_AUTO_TEST_CASE(dynamic_storage_add_and_grow)
 {
-    dynamic_storage a(1), b(1);
+    dynamic_storage a(1);
     a.increase(0);
-    b.increase(0, 1.0);
     double x = 1.0;
     for (unsigned i = 0; i < 100; ++i) {
+        dynamic_storage b(1);
+        b.increase(0, 0.0);
         b += a;
         a += a;
         x += x;
@@ -99,7 +100,7 @@ void convert_static_storage_test() {
     a.increase(0);
     b.increase(0, 1.0);
     s.increase(0);
-    for (unsigned i = 0; i < (sizeof(T) - 1); ++i)
+    for (unsigned i = 0; i < (8 * sizeof(T) - 1); ++i)
         s += s;
     a = s;
     b = s;
