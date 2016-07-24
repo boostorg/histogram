@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_increase_and_grow)
         BOOST_CHECK_EQUAL(n.value(0), v);
         n.increase(0);
         ++v;
-        BOOST_CHECK_EQUAL(n.value(0), v);        
+        BOOST_CHECK_EQUAL(n.value(0), v);
     }
 }
 
@@ -74,12 +74,15 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_add_and_grow)
         BOOST_CHECK_EQUAL(a.value(0), x);
         BOOST_CHECK_EQUAL(a.variance(0), x);
         BOOST_CHECK_EQUAL(b.value(0), x);
-        BOOST_CHECK_EQUAL(b.variance(0), x);        
+        BOOST_CHECK_EQUAL(b.variance(0), x);
+        b.increase(0, 0.0);
+        BOOST_CHECK_EQUAL(b.value(0), x);
+        BOOST_CHECK_EQUAL(b.variance(0), x);
         dynamic_storage c(1);
         c.increase(0, 0.0);
         c += a;
         BOOST_CHECK_EQUAL(c.value(0), x);
-        BOOST_CHECK_EQUAL(c.variance(0), x);        
+        BOOST_CHECK_EQUAL(c.variance(0), x);
     }
 }
 
@@ -115,7 +118,7 @@ void convert_static_storage_test() {
     BOOST_CHECK(a == s);
     BOOST_CHECK(s == a);
     BOOST_CHECK(b == s);
-    BOOST_CHECK(s == b);    
+    BOOST_CHECK(s == b);
     dynamic_storage d;
     d = std::move(s);
     BOOST_CHECK(a == d);
