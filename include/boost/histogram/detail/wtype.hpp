@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_DETAIL_WTYPE_HPP_
 
 #include <boost/cstdint.hpp>
+#include <type_traits>
 #include <ostream>
 
 namespace boost {
@@ -22,24 +23,23 @@ struct wtype {
   wtype(wtype&&) = default;
   wtype& operator=(const wtype&) = default;
   wtype& operator=(wtype&&) = default;
-  wtype(uint64_t i) : w(i), w2(i) {}
+  wtype(double v) : w(v), w2(v) {}
+  wtype& add_weight(double v)
+  { w += v; w2 += v*v; return *this; }
+  wtype& operator+=(double v)
+  { w += v; w2 += v; return *this; }
   wtype& operator+=(const wtype& o)
   { w += o.w; w2 += o.w2; return *this; }
-  wtype& operator+=(double v)
-  { w += v; w2 += v*v; return *this; }
-  wtype& operator+=(uint64_t i)
-  { w += i; w2 += i; return *this; }
   wtype& operator++()
   { ++w; ++w2; return *this; }
-  bool operator==(uint64_t i) const
-  { return w == i && w2 == i; }
-  bool operator!=(uint64_t i) const
-  { return w != i || w2 != i; }
+  bool operator==(double v) const
+  { return w == v && w2 == v; }
+  bool operator!=(double v) const
+  { return w != v || w2 != v; }
   bool operator==(const wtype& o) const
   { return w == o.w && w2 == o.w2; }
   bool operator!=(const wtype& o) const
   { return w != o.w || w2 != o.w2; }
-
 };
 
 static

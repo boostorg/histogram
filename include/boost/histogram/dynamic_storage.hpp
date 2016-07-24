@@ -63,11 +63,11 @@ public:
   {
     for (std::size_t i = 0, n = size(); i < n; ++i) {
       switch (depth_) {
-        case sizeof(uint8_t): add_impl<uint8_t>(i, o.data_.template get<T>(i)); break;
-        case sizeof(uint16_t): add_impl<uint16_t>(i, o.data_.template get<T>(i)); break;
-        case sizeof(uint32_t): add_impl<uint32_t>(i, o.data_.template get<T>(i)); break;
-        case sizeof(uint64_t): add_impl<uint64_t>(i, o.data_.template get<T>(i)); break;
-        case sizeof(wtype): add_impl<wtype>(i, o.data_.template get<T>(i)); break;
+        case sizeof(uint8_t): add_impl<uint8_t, T>(i, o.data_.template get<T>(i)); break;
+        case sizeof(uint16_t): add_impl<uint16_t, T>(i, o.data_.template get<T>(i)); break;
+        case sizeof(uint32_t): add_impl<uint32_t, T>(i, o.data_.template get<T>(i)); break;
+        case sizeof(uint64_t): add_impl<uint64_t, T>(i, o.data_.template get<T>(i)); break;
+        case sizeof(wtype): add_impl<wtype, T>(i, o.data_.template get<T>(i)); break;
       }
     }
   }
@@ -143,24 +143,24 @@ private:
     ++(data_.get<wtype>(i));
   }
 
-  template <typename T>
+  template <typename T, typename O = uint64_t>
   typename std::enable_if<!std::is_same<T, wtype>::value, void>::type
-  add_impl(std::size_t i, uint64_t oi)
+  add_impl(std::size_t i, O o)
   {
     auto& b = data_.get<T>(i);
-    if ((std::numeric_limits<T>::max() - b) >= oi) {
-      b += oi;
+    if ((std::numeric_limits<T>::max() - b) >= o) {
+      b += o;
     } else {
       grow_impl<T>();
-      add_impl<typename next_storage_type<T>::type>(i, oi);
+      add_impl<typename next_storage_type<T>::type, O>(i, o);
     }
   }
 
-  template <typename T>
+  template <typename T, typename O = uint64_t>
   typename std::enable_if<std::is_same<T, wtype>::value, void>::type
-  add_impl(std::size_t i, uint64_t oi)
+  add_impl(std::size_t i, O o)
   {
-    data_.get<wtype>(i) += oi;
+    data_.get<wtype>(i) += o;
   }
 
   template <typename T>
@@ -200,7 +200,7 @@ void dynamic_storage::increase(std::size_t i, double w)
 {
   if (depth_ != sizeof(wtype))
     wconvert();
-  data_.get<wtype>(i) += w;
+  data_.get<wtype>(i).add_weight(w);
 }
 
 dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)

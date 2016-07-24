@@ -146,18 +146,21 @@ BOOST_AUTO_TEST_CASE(convert_static_storage)
     convert_static_storage_test<uint64_t>();
 }
 
-BOOST_AUTO_TEST_CASE(convert_static_storage_6)
+BOOST_AUTO_TEST_CASE(convert_static_storage_1)
 {
     dynamic_storage a(2), b(2);
-    static_storage<float> c(2);
-    c.increase(0);
-    for (unsigned i = 0; i < 15; ++i)
-        c += c;
-    a = c;
-    BOOST_CHECK(a == c);
-    BOOST_CHECK_EQUAL(a.value(0), 32768);
-    BOOST_CHECK_EQUAL(a.value(1), 0);
-    b = std::move(c);
-    BOOST_CHECK_EQUAL(b.value(0), 32768);
-    BOOST_CHECK_EQUAL(b.value(1), 0);
+    static_storage<double> s(2);
+    s.increase(0);
+    for (unsigned i = 0; i < 100; ++i)
+        s += s;
+    a = s;
+    BOOST_CHECK(a == s);
+    BOOST_CHECK(s == a);
+    BOOST_CHECK_EQUAL(a.value(0), 1.2676506002282294e+30);
+    BOOST_CHECK_EQUAL(a.value(1), 0.);
+    BOOST_CHECK_EQUAL(a.variance(0), 1.2676506002282294e+30);
+    BOOST_CHECK_EQUAL(a.variance(1), 0.);
+    b = std::move(s);
+    BOOST_CHECK(b == s);
+    BOOST_CHECK(s == b);
 }
