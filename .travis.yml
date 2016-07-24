@@ -1,4 +1,6 @@
 sudo: false
+cache:
+  pip: true
 language: cpp
 matrix:
   include:
@@ -27,19 +29,19 @@ git:
   depth: 10
 
 # Setup anaconda
-before_install:
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - bash miniconda.sh -b
-  - export PATH=$HOME/miniconda2/bin:$PATH
-  - conda update --yes conda
+# before_install:
+#   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+#   - bash miniconda.sh -b
+#   - export PATH=$HOME/miniconda2/bin:$PATH
+#   - conda update --yes conda
 
 # Install packages
 install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
-  - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
-  - source activate pyenv
-  - pip install --user cpp-coveralls
+  # - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
+  # - source activate pyenv
+  - pip install --user numpy cpp-coveralls
 
 script:
   - cd build

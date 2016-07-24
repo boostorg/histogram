@@ -126,13 +126,12 @@ private:
   increase_impl(std::size_t i)
   {
     auto& b = data_.get<T>(i);
-    if (b == std::numeric_limits<T>::max()) {
+    if (b < std::numeric_limits<T>::max())
+      ++b;
+    else {
       grow_impl<T>();
       using U = typename next_storage_type<T>::type;
       auto& b = data_.get<U>(i);
-      ++b;
-    }
-    else {
       ++b;
     }
   }
