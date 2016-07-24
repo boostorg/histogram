@@ -25,6 +25,20 @@ bool operator==(const Storage1& s1, const Storage2& s2)
     return true;
 }
 
+BOOST_AUTO_TEST_CASE(equal_operator)
+{
+    dynamic_storage a(1), b(1), c(1), d(2);
+    a.increase(0);
+    b.increase(0);
+    c.increase(0);
+    c.increase(0);
+    d.increase(0);
+    BOOST_CHECK(a == a);
+    BOOST_CHECK(a == b);
+    BOOST_CHECK(!(a == c));
+    BOOST_CHECK(!(a == d));
+}
+
 BOOST_AUTO_TEST_CASE(wtype_streamer)
 {
     std::ostringstream os;
