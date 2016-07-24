@@ -101,11 +101,11 @@ BOOST_AUTO_TEST_CASE(integer_axis_operators) {
 
 BOOST_AUTO_TEST_CASE(axis_t_streamable) {
     std::vector<axis_t> axes;
-    axes.push_back(regular_axis{2, -1, 1});
-    axes.push_back(polar_axis{4});
-    axes.push_back(variable_axis{-1, 0, 1});
+    axes.push_back(regular_axis{2, -1, 1, std::string{"regular"}});
+    axes.push_back(polar_axis{4, 0.0, std::string{"polar"}});
+    axes.push_back(variable_axis{{-1, 0, 1}, std::string{"variable"}});
     axes.push_back(category_axis{"A", "B", "C"});
-    axes.push_back(integer_axis{-1, 1});
+    axes.push_back(integer_axis{-1, 1, std::string{"integer"}});
     std::ostringstream os;
     for(const auto& a : axes)
         os << a;
