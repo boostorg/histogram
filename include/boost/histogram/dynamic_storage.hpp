@@ -108,7 +108,7 @@ public:
 
   std::size_t size() const { return data_.nbytes() / depth_; }
   unsigned depth() const { return depth_; }
-  const void* data() const { return &data_.get<char>(0); }
+  const void* data() const { return data_.data(); }
   void increase(std::size_t i);
   void increase(std::size_t i, double w);
   value_t value(std::size_t i) const;
@@ -118,6 +118,9 @@ public:
 private:
   buffer_t data_;
   unsigned depth_ = sizeof(uint8_t);
+
+  template <class Archive>
+  friend void serialize(Archive&, dynamic_storage&, unsigned);
 
   void wconvert();
 

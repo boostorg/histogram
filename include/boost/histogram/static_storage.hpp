@@ -55,7 +55,7 @@ namespace histogram {
 
     std::size_t size() const { return data_.nbytes() / sizeof(T); }
     constexpr unsigned depth() const { return sizeof(T); }
-    const char* data() const { return &data_.get<char>(0); }
+    const void* data() const { return data_.data(); }
     void increase(std::size_t i) { ++(data_.get<T>(i)); }
     value_t value(std::size_t i) const { return data_.get<T>(i); }
     variance_t variance(std::size_t i) const { return data_.get<T>(i); }

@@ -5,6 +5,7 @@ project(histogram)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
 # setup build
+option(BUILD_PYTHON "Build python bindings" ON)
 option(BUILD_CHECKS "Build auxillary checks" OFF)
 
 if(${CMAKE_BUILD_TYPE})
@@ -18,6 +19,68 @@ find_package(Boost 1.55 REQUIRED
              COMPONENTS iostreams serialization unit_test_framework)
 
 set(LIBRARIES stdc++ m ${Boost_LIBRARIES})
+
+if(BUILD_PYTHON)
+  find_package(PythonInterp)
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; sys.stdout.write(sys.prefix)"
+                  OUTPUT_VARIABLE PYTHON_ROOT)
+  set(_VERSION ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR})
+  string(REPLACE "." "" _VERSION_NO_DOTS ${_VERSION})
+  find_library(PYTHON_LIBRARY 
+               PATHS ${PYTHON_ROOT}/lib
+               NAMES
+                 python${_VERSION_NO_DOTS}
+                 python${_VERSION}mu
+                 python${_VERSION}m
+                 python${_VERSION}u
+                 python${_VERSION}
+  )
+  find_path(PYTHON_INCLUDE_DIR
+    NAMES Python.h
+    PATHS ${PYTHON_ROOT}/include
+    PATH_SUFFIXES
+      python${_VERSION}mu
+      python${_VERSION}m
+      python${_VERSION}u
+      python${_VERSION}
+  )
+  message(STATUS "Python lib: ${PYTHON_LIBRARY}")
+  message(STATUS "Python include: ${PYTHON_INCLUDE_DIR}")
+  find_library(Boost_PYTHON_LIBRARY
+               NAMES
+                 boost_python-py${_VERSION_NO_DOTS}
+                 boost_python
+               PATHS ${Boost_LIBRARY_DIR}
+               NO_DEFAULT_PATHS
+  )
+  message(STATUS "Found boost.python: ${Boost_PYTHON_LIBRARY}")
+  if(Boost_PYTHON_LIBRARY AND PYTHON_LIBRARY)
+    set(HAVE_PYTHON 1)
+    include_directories(${PYTHON_INCLUDE_DIR})
+
+    if(USE_NUMPY)
+      find_package(Numpy 1.7)
+    endif()
+
+    if(NUMPY_FOUND)
+      set(HAVE_NUMPY 1)
+      include_directories(${NUMPY_INCLUDE_DIR})
+      add_definitions(-DHAVE_NUMPY)
+    endif()
+
+    set(LIBRARIES ${LIBRARIES} ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARY})
+  endif()
+
+  if(HAVE_PYTHON)
+    add_library(pyhistogram MODULE
+      ../src/module.cpp
+      ../src/axis.cpp
+      ../src/histogram.cpp
+    )
+    target_link_libraries(pyhistogram ${LIBRARIES})
+    set_target_properties(pyhistogram PROPERTIES OUTPUT_NAME "histogram" PREFIX "" SUFFIX ".so")
+  endif()
+endif()
 
 include_directories(../include ${Boost_INCLUDE_DIRS})
 
@@ -78,3 +141,8 @@ add_executable(utility_test
                ../test/utility_test.cpp)
 target_link_libraries(utility_test ${LIBRARIES})
 add_test(utility_test utility_test)
+
+if(HAVE_PYTHON)
+  configure_file(../test/python_suite_test.py.in python_suite_test.py)
+  add_test(python_suite_test python_suite_test.py)
+endif()

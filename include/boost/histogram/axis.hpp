@@ -43,7 +43,10 @@ public:
 protected:
   axis_base(unsigned n, const std::string& label, bool uoflow) :
     size_(n), shape_(size_ + 2 * uoflow), label_(label)
-  {}
+  {
+    if (n == 0)
+      throw std::logic_error("bins > 0 required");
+  }
 
   axis_base() = default;
   axis_base(const axis_base&) = default;
@@ -60,7 +63,7 @@ private:
   std::string label_;
 
   template <class Archive>
-  friend void serialize(Archive& ar, axis_base & base, unsigned version);
+  friend void serialize(Archive&, axis_base&, unsigned);
 };
 
 /// Mixin for real-valued axes
@@ -105,8 +108,8 @@ public:
     min_(min),
     delta_((max - min) / n)
   {
-      if (min >= max)
-          throw std::logic_error("regular_axis: min must be less than max");
+    if (min >= max)
+      throw std::logic_error("min < max required");
   }
 
   regular_axis() : min_(0), delta_(0) {}
@@ -146,7 +149,7 @@ private:
   double min_, delta_;
 
   template <class Archive>
-  friend void serialize(Archive& ar, regular_axis & axis ,unsigned version);
+  friend void serialize(Archive&, regular_axis&, unsigned);
 };
 
 /** Axis for real-valued angles
@@ -197,7 +200,7 @@ private:
   double start_;
 
   template <class Archive>
-  friend void serialize(Archive& ar, polar_axis & axis, unsigned version);
+  friend void serialize(Archive&, polar_axis&, unsigned);
 };
 
 ///An axis for real-valued data and bins of varying width. Binning is a O(log(N)) operation. If speed matters and the problem domain allows it, prefer a regular_axis.
@@ -220,12 +223,22 @@ public:
       std::sort(x_.get(), x_.get() + bins() + 1);
   }
 
-  template <typename Iterator>
-  variable_axis(const Iterator& begin, const Iterator& end,
+  variable_axis(const std::vector<double>& v,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
-      axis_base(end - begin - 1, label, uoflow),
-      x_(new double[end - begin])
+      axis_base(v.size() - 1, label, uoflow),
+      x_(new double[v.size()])
+  {
+      std::copy(v.begin(), v.end(), x_.get());
+      std::sort(x_.get(), x_.get() + bins() + 1);
+  }
+
+  template <typename Iterator>
+  variable_axis(Iterator begin, Iterator end,
+                const std::string& label = std::string(),
+                bool uoflow = true) :
+      axis_base(std::distance(begin, end) - 1, label, uoflow),
+      x_(new double[std::distance(begin, end)])
   {
       std::copy(begin, end, x_.get());
       std::sort(x_.get(), x_.get() + bins() + 1);
@@ -278,7 +291,7 @@ private:
   std::unique_ptr<double[]> x_; // smaller size compared to std::vector
 
   template <class Archive>
-  friend void serialize(Archive& ar, variable_axis & axis, unsigned version);
+  friend void serialize(Archive&, variable_axis&, unsigned);
 };
 
 /** An axis for a contiguous range of integers. There are no underflow/overflow
@@ -298,7 +311,10 @@ public:
                bool uoflow = true) :
     axis_base(max + 1 - min, label, uoflow),
     min_(min)
-  {}
+  {
+    if (min >= max)
+      throw std::logic_error("min < max required");
+  }
 
   integer_axis() : min_(0) {}
   integer_axis(const integer_axis&) = default;
@@ -322,7 +338,7 @@ private:
   int min_;
 
   template <class Archive>
-  friend void serialize(Archive& ar, integer_axis & axis, unsigned version);
+  friend void serialize(Archive&, integer_axis&, unsigned);
 };
 
 ///An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from ``0`` to ``n-1``. There are no underflow/overflow bins for this axis.  Binning is a O(1) operation.
@@ -335,8 +351,23 @@ public:
    * @param categories an ordered sequence of categories that this axis discriminates
    */
   explicit
-  category_axis(const std::initializer_list<std::string>& categories)
-    : categories_(categories)
+  category_axis(const std::initializer_list<std::string>& categories) :
+    categories_(categories)
+  {}
+
+  template <typename Iterator>
+  category_axis(Iterator cat_begin, Iterator cat_end) :
+    categories_(std::distance(cat_begin, cat_end))
+  {
+    std::copy(cat_begin, cat_end, categories_.begin());
+  }
+
+  category_axis(const std::vector<std::string>& cat) :
+    categories_(cat)
+  {}
+
+  category_axis(std::vector<std::string>&& cat) :
+    categories_(std::move(cat))
   {}
 
   category_axis() {}
@@ -363,16 +394,16 @@ private:
   std::vector<std::string> categories_;
 
   template <class Archive>
-  friend void serialize(Archive& ar, category_axis & axis, unsigned version);
+  friend void serialize(Archive&, category_axis&, unsigned);
 };
 
-typedef variant<
-  regular_axis, // most common type
-  polar_axis,
-  variable_axis,
-  category_axis,
-  integer_axis
-> axis_t;
+using axis_t = variant<
+                 regular_axis, // most common type
+                 polar_axis,
+                 variable_axis,
+                 category_axis,
+                 integer_axis
+               >;
 
 // axis_t is automatically output-streamable if all its bounded types are 
 

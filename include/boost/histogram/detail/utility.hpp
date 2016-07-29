@@ -17,6 +17,7 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+    inline
     std::string escape(const std::string& s) {
         std::string os;
         os += '\'';
@@ -45,7 +46,6 @@ namespace detail {
             if (!memory_)
                 throw std::bad_alloc();
         }
-
 
         buffer_t(const buffer_t& o) :
             memory_(std::malloc(o.nbytes_)),
@@ -100,22 +100,27 @@ namespace detail {
                 throw std::bad_alloc();
         }
 
-    template <typename T>
-    T& get(std::size_t i) { return static_cast<T*>(memory_)[i]; }
+        template <typename T>
+        T& get(std::size_t i) { return static_cast<T*>(memory_)[i]; }
 
-    template <typename T>
-    const T& get(std::size_t i) const { return static_cast<T*>(memory_)[i]; }
+        template <typename T>
+        const T& get(std::size_t i) const { return static_cast<T*>(memory_)[i]; }
 
-    bool operator==(const buffer_t& o) const {
-        return nbytes_ == o.nbytes_ &&
-               std::memcmp(memory_, o.memory_, nbytes_) == 0;
-    }
+        bool operator==(const buffer_t& o) const {
+            return nbytes_ == o.nbytes_ &&
+                   std::memcmp(memory_, o.memory_, nbytes_) == 0;
+        }
 
-    std::size_t nbytes() const { return nbytes_; }
+        std::size_t nbytes() const { return nbytes_; }
+
+        const void* data() const { return memory_; }
 
     private:
         void* memory_;
         std::size_t nbytes_;
+
+        template <class T, class Archive>
+        friend void serialize_impl(Archive&, buffer_t&, unsigned);
     };
 
 }
