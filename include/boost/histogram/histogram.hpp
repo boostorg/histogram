@@ -30,15 +30,15 @@ constexpr unsigned Dynamic = 0;
 namespace {
 
   template <typename Axes>
-  void axes_init(Axes&, unsigned) {}
+  inline void axes_init(Axes&, unsigned) {}
 
   template <>
-  void axes_init(std::vector<axis_t>& axes, unsigned n) {
+  inline void axes_init(std::vector<axis_t>& axes, unsigned n) {
     axes.resize(n);
   }
 
   template <typename Axes1, typename Axes2>
-  void copy_axes(const Axes1 src, Axes2& dst) {
+  inline void copy_axes(const Axes1 src, Axes2& dst) {
       axes_init(dst, src.size());
       std::copy(src.begin(), src.end(), dst.begin());    
   }
@@ -50,13 +50,17 @@ namespace {
 
     template <typename A>
     void operator()(const A& a) {
+      // The following is highly optimized code that runs in a hot loop.
+      // If you change it, please also measure the performance impact.
       int j = in;
       const int uoflow = a.uoflow();
+      // set stride to zero if j is not in range,
+      // this communicates the out-of-range condition to the caller
       stride *= (j >= -uoflow) * (j < (a.bins() + uoflow));
       j += (j < 0) * (a.bins() + 2); // wrap around if j < 0
       out += j * stride;
       #pragma GCC diagnostic ignored "-Wstrict-overflow"
-      stride *= a.shape(); // stride == 0 indicates out-of-range
+      stride *= a.shape();
     }
   };
 
@@ -122,7 +126,7 @@ public:
 
   template <typename T>
   typename std::enable_if<!std::is_same<T, axis_t>::value, T&>::type
-  axis(unsigned i) { return boost::get<T&>(axes_[i]); }
+  axis(unsigned i) { return boost::get<T>(axes_[i]); }
 
   template <typename T = axis_t>
   typename std::enable_if<std::is_same<T, axis_t>::value, const T&>::type
@@ -607,6 +611,7 @@ public:
 
 template <unsigned DimA, typename StoragePolicyA,
           unsigned DimB, typename StoragePolicyB>
+inline
 histogram_t<
   (DimA > DimB ? DimA : DimB),
   typename std::conditional<(sizeof(typename StoragePolicyA::value_t) >
@@ -629,6 +634,7 @@ operator+(const histogram_t<DimA, StoragePolicyA>& a,
 
 /// Standard type factory
 template <typename... Axes>
+inline
 histogram_t<sizeof...(Axes)>
 histogram(Axes... axes)
 {

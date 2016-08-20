@@ -15,7 +15,7 @@
 namespace boost {
 namespace histogram {
 
-std::ostream& operator<<(std::ostream& os, const regular_axis& a)
+inline std::ostream& operator<<(std::ostream& os, const regular_axis& a)
 {
     os << "regular_axis(" << a.bins() << ", " << a[0] << ", " << a[a.bins()];
     if (!a.label().empty())
@@ -26,7 +26,7 @@ std::ostream& operator<<(std::ostream& os, const regular_axis& a)
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const polar_axis& a)
+inline std::ostream& operator<<(std::ostream& os, const polar_axis& a)
 {
     os << "polar_axis(" << a.bins();
     if (a[0] != 0.0)
@@ -37,7 +37,7 @@ std::ostream& operator<<(std::ostream& os, const polar_axis& a)
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const variable_axis& a)
+inline std::ostream& operator<<(std::ostream& os, const variable_axis& a)
 {
     os << "variable_axis(" << a[0];
     for (int i = 1; i <= a.bins(); ++i)
@@ -50,7 +50,7 @@ std::ostream& operator<<(std::ostream& os, const variable_axis& a)
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const integer_axis& a)
+inline std::ostream& operator<<(std::ostream& os, const integer_axis& a)
 {
     os << "integer_axis(" << a[0] << ", " << a[a.bins() - 1];
     if (!a.label().empty())
@@ -61,7 +61,7 @@ std::ostream& operator<<(std::ostream& os, const integer_axis& a)
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const category_axis& a)
+inline std::ostream& operator<<(std::ostream& os, const category_axis& a)
 {
     os << "category_axis(";
     for (int i = 0; i < a.bins(); ++i)

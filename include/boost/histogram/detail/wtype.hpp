@@ -42,7 +42,6 @@ struct wtype {
   { return w != o.w || w2 != o.w2; }
 };
 
-static
 inline
 std::ostream& operator<<(std::ostream& os, const wtype& w)
 {

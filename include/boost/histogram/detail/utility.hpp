@@ -20,13 +20,13 @@ namespace detail {
     inline
     std::string escape(const std::string& s) {
         std::string os;
+        os.reserve(s.size() + 2);
         os += '\'';
-        for (unsigned i = 0, n = s.size(); i < n; ++i) {
-            const char c = s[i];
-            if (c == '\'' && (i == 0 || s[i - 1] != '\\'))
+        for (auto sit = s.begin(); sit != s.end(); ++sit) {
+            if (*sit == '\'' && (sit == s.begin() || *(sit-1) != '\\'))
                 os += "\\\'";
             else
-                os += c;
+                os += *sit;
         }
         os += '\'';
         return os;
@@ -101,10 +101,22 @@ namespace detail {
         }
 
         template <typename T>
-        T& get(std::size_t i) { return static_cast<T*>(memory_)[i]; }
+        T* begin() { return static_cast<T*>(memory_); }
 
         template <typename T>
-        const T& get(std::size_t i) const { return static_cast<T*>(memory_)[i]; }
+        T* end() { return static_cast<T*>(memory_ + nbytes_); }
+
+        template <typename T>
+        const T* cbegin() const { return static_cast<const T*>(memory_); }
+
+        template <typename T>
+        const T* cend() const { return static_cast<const T*>(memory_ + nbytes_); }
+
+        template <typename T>
+        T& get(std::size_t i) { return begin<T>()[i]; }
+
+        template <typename T>
+        const T& get(std::size_t i) const { return cbegin<T>()[i]; }
 
         bool operator==(const buffer_t& o) const {
             return nbytes_ == o.nbytes_ &&

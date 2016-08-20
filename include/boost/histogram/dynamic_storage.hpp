@@ -32,6 +32,14 @@ namespace {
   template <> struct depth_to_type<sizeof(uint32_t)> { typedef uint32_t type; };
   template <> struct depth_to_type<sizeof(uint64_t)> { typedef uint64_t type; };
 
+  template <typename T, bool> struct convert_sign;
+  template <typename T> struct convert_sign<T, true> { using type = typename std::make_unsigned<T>::type; };
+  template <typename T> struct convert_sign<T, false> { using type = typename std::make_signed<T>::type; };
+
+  template <typename U, typename T> struct sign_of {
+    using type = typename convert_sign<T, std::is_unsigned<U>::value>::type;
+  };
+
   // we rely on C++11 to guarantee that uintX_t has a size of exactly X bits,
   // so we only check size of wtype
   static_assert((sizeof(detail::wtype) >= (2 * sizeof(uint64_t))),
@@ -151,7 +159,7 @@ private:
   add_impl(std::size_t i, O o)
   {
     auto& b = data_.get<T>(i);
-    if ((std::numeric_limits<T>::max() - b) >= o) {
+    if (static_cast<typename sign_of<O, T>::type>(std::numeric_limits<T>::max() - b) >= o) {
       b += o;
     } else {
       grow_impl<T>();
