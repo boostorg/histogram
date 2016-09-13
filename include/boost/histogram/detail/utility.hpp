@@ -104,13 +104,13 @@ namespace detail {
         T* begin() { return static_cast<T*>(memory_); }
 
         template <typename T>
-        T* end() { return static_cast<T*>(memory_ + nbytes_); }
+        T* end() { return static_cast<T*>(memory_) + nbytes_ / sizeof(T); }
 
         template <typename T>
         const T* cbegin() const { return static_cast<const T*>(memory_); }
 
         template <typename T>
-        const T* cend() const { return static_cast<const T*>(memory_ + nbytes_); }
+        const T* cend() const { return static_cast<const T*>(memory_) + nbytes_ / sizeof(T); }
 
         template <typename T>
         T& get(std::size_t i) { return begin<T>()[i]; }

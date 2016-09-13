@@ -251,7 +251,7 @@ public:
   template <typename... Axes>
   histogram_t(Axes... axes)
   {
-    base_t::axes_ = {std::forward<Axes>(axes)...};
+    base_t::axes_ = {{std::forward<Axes>(axes)...}};
     base_t::storage_ = Storage(base_t::field_count());
   }
 
@@ -388,8 +388,8 @@ public:
 template <typename Storage>
 class histogram_t<Dynamic, Storage>: public histogram_common<std::vector<axis_t>, Storage>
 {
-  using base_t = histogram_common<std::vector<axis_t>, Storage>;
 public:
+  using base_t = histogram_common<std::vector<axis_t>, Storage>;
   using value_t = typename Storage::value_t;
   using variance_t = typename Storage::variance_t;
 
@@ -454,8 +454,8 @@ public:
   template <typename... Axes>
   histogram_t(Axes... axes)
   {
-    base_t::axes_ = {std::forward<Axes>(axes)...};
-    base_t::storage_ = Storage(base_t::field_count());
+    base_t::axes_ = {{std::forward<Axes>(axes)...}};
+    base_t::storage_ = Storage{base_t::field_count()};
   }
 
   template <typename... Args>
