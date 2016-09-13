@@ -4,7 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#define BOOST_TEST_MODULE histogram_test
+#define BOOST_TEST_MODULE histogramest
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
 #include <boost/histogram/histogram.hpp>
@@ -17,44 +17,44 @@ using namespace boost::histogram;
 
 BOOST_AUTO_TEST_CASE(init_0)
 {
-    auto h = histogram();
+    auto h = make_histogram();
     BOOST_CHECK_EQUAL(h.dim(), 0);
     BOOST_CHECK_EQUAL(h.size(), 0);
-    auto h2 = histogram_t<Dynamic>();
+    auto h2 = histogram<Dynamic>();
     BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_1)
 {
-    auto h = histogram(regular_axis{3, -1, 1});
+    auto h = make_histogram(regular_axis{3, -1, 1});
     BOOST_CHECK_EQUAL(h.dim(), 1);
     BOOST_CHECK_EQUAL(h.size(), 5);
     BOOST_CHECK_EQUAL(h.shape(0), 5);
-    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1});
+    auto h2 = histogram<Dynamic>(regular_axis{3, -1, 1});
     BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_2)
 {
-    auto h = histogram(regular_axis{3, -1, 1},
-                       integer_axis{-1, 1});
+    auto h = make_histogram(regular_axis{3, -1, 1},
+                            integer_axis{-1, 1});
     BOOST_CHECK_EQUAL(h.dim(), 2);
     BOOST_CHECK_EQUAL(h.size(), 25);
     BOOST_CHECK_EQUAL(h.shape(0), 5);
     BOOST_CHECK_EQUAL(h.shape(1), 5);
-    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1},
+    auto h2 = histogram<Dynamic>(regular_axis{3, -1, 1},
                                    integer_axis{-1, 1});
     BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_3)
 {
-    auto h = histogram(regular_axis{3, -1, 1},
-                       integer_axis{-1, 1},
-                       polar_axis{3});
+    auto h = make_histogram(regular_axis{3, -1, 1},
+                            integer_axis{-1, 1},
+                            polar_axis{3});
     BOOST_CHECK_EQUAL(h.dim(), 3);
     BOOST_CHECK_EQUAL(h.size(), 75);
-    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1},
+    auto h2 = histogram<Dynamic>(regular_axis{3, -1, 1},
                                    integer_axis{-1, 1},
                                    polar_axis{3});
     BOOST_CHECK(h2 == h);
@@ -62,13 +62,13 @@ BOOST_AUTO_TEST_CASE(init_3)
 
 BOOST_AUTO_TEST_CASE(init_4)
 {
-    auto h = histogram(regular_axis{3, -1, 1},
-                       integer_axis{-1, 1},
-                       polar_axis{3},
-                       variable_axis{-1, 0, 1});
+    auto h = make_histogram(regular_axis{3, -1, 1},
+                            integer_axis{-1, 1},
+                            polar_axis{3},
+                            variable_axis{-1, 0, 1});
     BOOST_CHECK_EQUAL(h.dim(), 4);
     BOOST_CHECK_EQUAL(h.size(), 300);
-    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1},
+    auto h2 = histogram<Dynamic>(regular_axis{3, -1, 1},
                                    integer_axis{-1, 1},
                                    polar_axis{3},
                                    variable_axis{-1, 0, 1});
@@ -77,14 +77,14 @@ BOOST_AUTO_TEST_CASE(init_4)
 
 BOOST_AUTO_TEST_CASE(init_5)
 {
-    auto h = histogram(regular_axis{3, -1, 1},
-                       integer_axis{-1, 1},
-                       polar_axis{3},
-                       variable_axis{-1, 0, 1},
-                       category_axis{"A", "B", "C"});
+    auto h = make_histogram(regular_axis{3, -1, 1},
+                            integer_axis{-1, 1},
+                            polar_axis{3},
+                            variable_axis{-1, 0, 1},
+                            category_axis{"A", "B", "C"});
     BOOST_CHECK_EQUAL(h.dim(), 5);
     BOOST_CHECK_EQUAL(h.size(), 900);
-    auto h2 = histogram_t<Dynamic>(regular_axis{3, -1, 1},
+    auto h2 = histogram<Dynamic>(regular_axis{3, -1, 1},
                                    integer_axis{-1, 1},
                                    polar_axis{3},
                                    variable_axis{-1, 0, 1},
@@ -94,44 +94,44 @@ BOOST_AUTO_TEST_CASE(init_5)
 
 BOOST_AUTO_TEST_CASE(copy_ctor)
 {
-    auto h = histogram(integer_axis(0, 1),
-                       integer_axis(0, 1));
+    auto h = make_histogram(integer_axis(0, 1),
+                            integer_axis(0, 1));
     h.fill(0, 0);
-    auto h2 = histogram_t<2>(h);
+    auto h2 = histogram<2>(h);
     BOOST_CHECK(h2 == h);
-    auto h3 = histogram_t<Dynamic>(h);
+    auto h3 = histogram<Dynamic>(h);
     BOOST_CHECK(h3 == h);
 }
 
 BOOST_AUTO_TEST_CASE(copy_assign)
 {
-    auto h = histogram(regular_axis(1, -1, 1),
-                       regular_axis(2, -2, 2));
+    auto h = make_histogram(regular_axis(1, -1, 1),
+                            regular_axis(2, -2, 2));
     h.fill(0.0, 0.0);
-    auto h2 = histogram_t<2>();
+    auto h2 = histogram<2>();
     BOOST_CHECK(!(h == h2));
     h2 = h;
     BOOST_CHECK(h == h2);
     // test self-assign
     h2 = h2;
     BOOST_CHECK(h == h2);
-    auto h3 = histogram_t<Dynamic>();
+    auto h3 = histogram<Dynamic>();
     h3 = h;
     BOOST_CHECK(h == h3);
 }
 
 BOOST_AUTO_TEST_CASE(move_ctor)
 {
-    auto h = histogram(regular_axis(1, -1, 1),
-                       regular_axis(2, -2, 2));
+    auto h = make_histogram(regular_axis(1, -1, 1),
+                            regular_axis(2, -2, 2));
     h.fill(0.0, 0.0);
     const auto href = h;
-    auto h2 = histogram_t<2>(std::move(h));
+    auto h2 = histogram<2>(std::move(h));
     BOOST_CHECK_EQUAL(h.dim(), 2);
     BOOST_CHECK_EQUAL(h.sum(), 0);
     BOOST_CHECK_EQUAL(h.size(), 0);
     BOOST_CHECK(h2 == href);
-    auto h3 = histogram_t<Dynamic>(std::move(h2));
+    auto h3 = histogram<Dynamic>(std::move(h2));
     BOOST_CHECK_EQUAL(h2.dim(), 2);
     BOOST_CHECK_EQUAL(h2.sum(), 0);
     BOOST_CHECK_EQUAL(h2.size(), 0);
@@ -140,17 +140,17 @@ BOOST_AUTO_TEST_CASE(move_ctor)
 
 BOOST_AUTO_TEST_CASE(move_assign)
 {
-    auto h = histogram(regular_axis(1, -1, 1),
-                       regular_axis(2, -2, 2));
+    auto h = make_histogram(regular_axis(1, -1, 1),
+                            regular_axis(2, -2, 2));
     h.fill(0.0, 0.0);
     auto href = h;
-    auto h2 = histogram_t<2>();
+    auto h2 = histogram<2>();
     h2 = std::move(h);
     BOOST_CHECK(h2 == href);
     BOOST_CHECK_EQUAL(h.dim(), 2);
     BOOST_CHECK_EQUAL(h.sum(), 0);
     BOOST_CHECK_EQUAL(h.size(), 0);
-    auto h3 = histogram_t<Dynamic>();
+    auto h3 = histogram<Dynamic>();
     h3 = std::move(h2);
     BOOST_CHECK_EQUAL(h2.dim(), 2);
     BOOST_CHECK_EQUAL(h2.sum(), 0);
@@ -160,16 +160,16 @@ BOOST_AUTO_TEST_CASE(move_assign)
 
 BOOST_AUTO_TEST_CASE(equal_compare)
 {
-    auto a = histogram_t<1>(integer_axis(0, 1));
-    auto b = histogram_t<2>(integer_axis(0, 1), integer_axis(0, 1));
+    auto a = histogram<1>(integer_axis(0, 1));
+    auto b = histogram<2>(integer_axis(0, 1), integer_axis(0, 1));
     BOOST_CHECK(!(a == b));
     BOOST_CHECK(!(b == a));
-    auto c = histogram_t<Dynamic>(integer_axis(0, 1));
+    auto c = histogram<Dynamic>(integer_axis(0, 1));
     BOOST_CHECK(!(b == c));
     BOOST_CHECK(!(c == b));
     BOOST_CHECK(a == c);
     BOOST_CHECK(c == a);
-    auto d = histogram_t<Dynamic>(regular_axis(2, 0, 1));
+    auto d = histogram<Dynamic>(regular_axis(2, 0, 1));
     BOOST_CHECK(!(c == d));
     BOOST_CHECK(!(d == c));
     c.fill(0);
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(equal_compare)
 
 BOOST_AUTO_TEST_CASE(d1)
 {
-    auto h = histogram(integer_axis(0, 1));
+    auto h = make_histogram(integer_axis(0, 1));
     h.fill(0);
     h.fill(-0.0);
     h.fill(-1.0);
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(d1)
 
 BOOST_AUTO_TEST_CASE(d1_2)
 {
-    auto h = histogram(integer_axis(0, 1, "", false));
+    auto h = make_histogram(integer_axis(0, 1, "", false));
     h.fill(0);
     h.fill(-0.0);
     h.fill(-1.0);
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(d1_2)
 
 BOOST_AUTO_TEST_CASE(d1w)
 {
-    auto h = histogram(regular_axis(2, -1, 1));
+    auto h = make_histogram(regular_axis(2, -1, 1));
     h.fill(0);
     h.wfill(-1.0, 2.0);
     h.fill(-1.0);
@@ -259,8 +259,8 @@ BOOST_AUTO_TEST_CASE(d1w)
 
 BOOST_AUTO_TEST_CASE(d2)
 {
-    auto h = histogram(regular_axis(2, -1, 1),
-                       integer_axis(-1, 1, std::string(), false));
+    auto h = make_histogram(regular_axis(2, -1, 1),
+                            integer_axis(-1, 1, std::string(), false));
     h.fill(-1, -1);
     h.fill(-1, 0);
     h.fill(-1, -10);
@@ -308,8 +308,8 @@ BOOST_AUTO_TEST_CASE(d2)
 
 BOOST_AUTO_TEST_CASE(d2w)
 {
-    auto h = histogram(regular_axis(2, -1, 1),
-                       integer_axis(-1, 1, std::string(), false));
+    auto h = make_histogram(regular_axis(2, -1, 1),
+                            integer_axis(-1, 1, std::string(), false));
     h.fill(-1, 0);       // -> 0, 1
     h.wfill(-1, -1, 10); // -> 0, 0
     h.wfill(-1, -10, 5); // is ignored
@@ -352,15 +352,15 @@ BOOST_AUTO_TEST_CASE(d2w)
 
 BOOST_AUTO_TEST_CASE(add_0)
 {
-    auto a = histogram(integer_axis(-1, 1));
-    auto b = histogram(regular_axis(3, -1, 1));
+    auto a = make_histogram(integer_axis(-1, 1));
+    auto b = make_histogram(regular_axis(3, -1, 1));
     BOOST_CHECK_THROW(a + b, std::logic_error);
 }
 
 BOOST_AUTO_TEST_CASE(add_1)
 {
-    auto a = histogram(integer_axis(-1, 1));
-    auto b = histogram(integer_axis(-1, 1));
+    auto a = make_histogram(integer_axis(-1, 1));
+    auto b = make_histogram(integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
     auto c = a;
@@ -380,8 +380,8 @@ BOOST_AUTO_TEST_CASE(add_1)
 
 BOOST_AUTO_TEST_CASE(add_2w)
 {
-    auto a = histogram(integer_axis(-1, 1));
-    auto b = histogram(integer_axis(-1, 1));
+    auto a = make_histogram(integer_axis(-1, 1));
+    auto b = make_histogram(integer_axis(-1, 1));
 
     a.fill(0);
     b.wfill(-1, 3);
@@ -402,8 +402,8 @@ BOOST_AUTO_TEST_CASE(add_2w)
 
 BOOST_AUTO_TEST_CASE(add_3)
 {
-    auto a = histogram_t<1, dynamic_storage>(integer_axis(-1, 1));
-    auto b = histogram_t<1, static_storage<int>>(integer_axis(-1, 1));
+    auto a = histogram<1, dynamic_storage>(integer_axis(-1, 1));
+    auto b = histogram<1, static_storage<int>>(integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
     auto c = a;
@@ -423,8 +423,8 @@ BOOST_AUTO_TEST_CASE(add_3)
 
 BOOST_AUTO_TEST_CASE(add_4)
 {
-    auto a = histogram_t<1, static_storage<char>>(integer_axis(-1, 1));
-    auto b = histogram_t<1, static_storage<int>>(integer_axis(-1, 1));
+    auto a = histogram<1, static_storage<char>>(integer_axis(-1, 1));
+    auto b = histogram<1, static_storage<int>>(integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
     auto c = a;
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(doc_example_0)
 
     // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
     // with axis of histogram labeled as "x"
-    auto h = bh::histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
+    auto h = bh::make_histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
 
     // fill histogram with data
     h.fill(-1.5); // put in underflow bin

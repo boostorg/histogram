@@ -110,9 +110,9 @@ inline void serialize(Archive& ar, histogram_common<Axes, Storage> & h, unsigned
 }
 
 template <class Archive, unsigned Dim, class Storage>
-inline void serialize(Archive& ar, histogram_t<Dim, Storage> & h, unsigned version)
+inline void serialize(Archive& ar, histogram<Dim, Storage> & h, unsigned version)
 {
-  ar & boost::serialization::base_object<typename histogram_t<Dim, Storage>::base_t>(h);
+  ar & boost::serialization::base_object<typename histogram<Dim, Storage>::base_t>(h);
 }
 
 } // ns:histogram

@@ -23,7 +23,7 @@ namespace boost {
 namespace histogram {
 
 constexpr unsigned boost_histogram_axis_limit = 10;
-using dhistogram = histogram_t<Dynamic>;
+using dhistogram = histogram<Dynamic>;
 using axes_t = std::vector<axis_t>;
 
 struct axis_visitor : public static_visitor<python::object>

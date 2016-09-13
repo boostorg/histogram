@@ -108,34 +108,34 @@ int main() {
 
     printf("1D\n");
     printf("t[boost]   = %.3f\n",
-#if HISTOGRAM_TYPE == 1
-           compare_1d<histogram_t<1, static_storage<int>>>(12000000, itype)
-#elif HISTOGRAM_TYPE == 2
-           compare_1d<histogram_t<1, dynamic_storage>>(12000000, itype)
-#elif HISTOGRAM_TYPE == 3
-           compare_1d<histogram_t<Dynamic, dynamic_storage>>(12000000, itype)
+#if histogramYPE == 1
+           compare_1d<histogram<1, static_storage<int>>>(12000000, itype)
+#elif histogramYPE == 2
+           compare_1d<histogram<1, dynamic_storage>>(12000000, itype)
+#elif histogramYPE == 3
+           compare_1d<histogram<Dynamic, dynamic_storage>>(12000000, itype)
 #endif
     );
 
     printf("3D\n");
     printf("t[boost]   = %.3f\n",
-#if HISTOGRAM_TYPE == 1
-           compare_3d<histogram_t<3, static_storage<int>>>(4000000, itype)
-#elif HISTOGRAM_TYPE == 2
-           compare_3d<histogram_t<3, dynamic_storage>>(4000000, itype)
-#elif HISTOGRAM_TYPE == 3
-           compare_3d<histogram_t<Dynamic, dynamic_storage>>(4000000, itype)
+#if histogramYPE == 1
+           compare_3d<histogram<3, static_storage<int>>>(4000000, itype)
+#elif histogramYPE == 2
+           compare_3d<histogram<3, dynamic_storage>>(4000000, itype)
+#elif histogramYPE == 3
+           compare_3d<histogram<Dynamic, dynamic_storage>>(4000000, itype)
 #endif
     );
 
     printf("6D\n");
     printf("t[boost]   = %.3f\n",
-#if HISTOGRAM_TYPE == 1
-           compare_6d<histogram_t<6, static_storage<int>>>(2000000, itype)
-#elif HISTOGRAM_TYPE == 2
-           compare_6d<histogram_t<6, dynamic_storage>>(2000000, itype)
-#elif HISTOGRAM_TYPE == 3
-           compare_6d<histogram_t<Dynamic, dynamic_storage>>(2000000, itype)
+#if histogramYPE == 1
+           compare_6d<histogram<6, static_storage<int>>>(2000000, itype)
+#elif histogramYPE == 2
+           compare_6d<histogram<6, dynamic_storage>>(2000000, itype)
+#elif histogramYPE == 3
+           compare_6d<histogram<Dynamic, dynamic_storage>>(2000000, itype)
 #endif
     );
   }

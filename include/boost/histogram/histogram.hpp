@@ -229,27 +229,27 @@ protected:
 };
 
 template <unsigned Dim, typename Storage = dynamic_storage>
-class histogram_t: public histogram_common<std::array<axis_t, Dim>, Storage>
+class histogram: public histogram_common<std::array<axis_t, Dim>, Storage>
 {
   using base_t = histogram_common<std::array<axis_t, Dim>, Storage>;
 public:
   using value_t = typename Storage::value_t;
   using variance_t = typename Storage::variance_t;
 
-  histogram_t() = default;
+  histogram() = default;
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  histogram_t(const histogram_t<OtherDim, OtherStoragePolicy>& other) :
+  histogram(const histogram<OtherDim, OtherStoragePolicy>& other) :
     base_t(other.axes_, other.storage_)
   {}
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  histogram_t(histogram_t<OtherDim, OtherStoragePolicy>&& other) :
+  histogram(histogram<OtherDim, OtherStoragePolicy>&& other) :
     base_t(std::move(other.axes_), std::move(other.storage_))
   {}
 
   template <typename... Axes>
-  histogram_t(Axes... axes)
+  histogram(Axes... axes)
   {
     base_t::axes_ = {{std::forward<Axes>(axes)...}};
     base_t::storage_ = Storage(base_t::field_count());
@@ -257,14 +257,14 @@ public:
 
   template <typename Iterator,
             typename = decltype(*std::declval<Iterator&>(), void(), ++std::declval<Iterator&>(), void())>
-  histogram_t(Iterator axes_begin, Iterator axes_end)
+  histogram(Iterator axes_begin, Iterator axes_end)
   {
     std::copy(axes_begin, axes_end, base_t::axes_.begin());
     base_t::storage_ = Storage(base_t::field_count());
   }
 
   template <typename OtherStoragePolicy>
-  histogram_t& operator=(const histogram_t<Dim, OtherStoragePolicy>& other)
+  histogram& operator=(const histogram<Dim, OtherStoragePolicy>& other)
   {
     if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
       base_t::axes_ = other.axes_;
@@ -274,7 +274,7 @@ public:
   }
 
   template <typename OtherStoragePolicy>
-  histogram_t& operator=(const histogram_t<Dynamic, OtherStoragePolicy>& other)
+  histogram& operator=(const histogram<Dynamic, OtherStoragePolicy>& other)
   {
     if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
       if (base_t::dim() != other.dim())
@@ -286,7 +286,7 @@ public:
   }
 
   template <typename OtherStoragePolicy>
-  histogram_t& operator=(histogram_t<Dim, OtherStoragePolicy>&& other)
+  histogram& operator=(histogram<Dim, OtherStoragePolicy>&& other)
   {
     base_t::axes_ = std::move(other.axes_);
     base_t::storage_ = std::move(other.storage_);
@@ -294,7 +294,7 @@ public:
   } 
 
   template <typename OtherStoragePolicy>
-  histogram_t& operator=(histogram_t<Dynamic, OtherStoragePolicy>&& other)
+  histogram& operator=(histogram<Dynamic, OtherStoragePolicy>&& other)
   {
     if (base_t::dim() != other.dim())
       throw std::logic_error("dimensions do not match");
@@ -350,7 +350,7 @@ public:
   }
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  bool operator==(const histogram_t<OtherDim, OtherStoragePolicy>& other) const
+  bool operator==(const histogram<OtherDim, OtherStoragePolicy>& other) const
   {
     if (base_t::dim() != other.dim())
       return false;
@@ -364,7 +364,7 @@ public:
   }
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  histogram_t& operator+=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
+  histogram& operator+=(const histogram<OtherDim, OtherStoragePolicy>& other)
   {
     static_assert((OtherDim == Dim) || OtherDim == Dynamic,
                   "dimensions incompatible"); 
@@ -379,29 +379,29 @@ public:
   }
 
   template <unsigned OtherDim, typename OtherStorage>
-  friend class histogram_t;
+  friend class histogram;
   template <class Archive>
-  friend void serialize(Archive&, histogram_t&, unsigned);
+  friend void serialize(Archive&, histogram&, unsigned);
 };
 
 
 template <typename Storage>
-class histogram_t<Dynamic, Storage>: public histogram_common<std::vector<axis_t>, Storage>
+class histogram<Dynamic, Storage>: public histogram_common<std::vector<axis_t>, Storage>
 {
 public:
   using base_t = histogram_common<std::vector<axis_t>, Storage>;
   using value_t = typename Storage::value_t;
   using variance_t = typename Storage::variance_t;
 
-  histogram_t() = default;
+  histogram() = default;
 
-  histogram_t(const std::vector<axis_t>& axes)
+  histogram(const std::vector<axis_t>& axes)
   {
     base_t::axes_ = axes;
     base_t::storage_ = Storage(base_t::field_count());
   }
 
-  histogram_t(std::vector<axis_t>&& axes)
+  histogram(std::vector<axis_t>&& axes)
   {
     base_t::axes_ = std::move(axes);
     base_t::storage_ = Storage(base_t::field_count());
@@ -409,24 +409,24 @@ public:
 
   template <typename Iterator,
             typename = decltype(*std::declval<Iterator&>(), void(), ++std::declval<Iterator&>(), void())>
-  histogram_t(Iterator axes_begin, Iterator axes_end)
+  histogram(Iterator axes_begin, Iterator axes_end)
   {
     std::copy(axes_begin, axes_end, base_t::axes_.begin());
     base_t::storage_ = Storage(base_t::field_count());
   }
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  histogram_t(const histogram_t<OtherDim, OtherStoragePolicy>& other) :
+  histogram(const histogram<OtherDim, OtherStoragePolicy>& other) :
     base_t(other.axes_, other.storage_)
   {}
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  histogram_t(histogram_t<OtherDim, OtherStoragePolicy>&& other) :
+  histogram(histogram<OtherDim, OtherStoragePolicy>&& other) :
     base_t(std::move(other.axes_), std::move(other.storage_))
   {}
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  histogram_t& operator=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
+  histogram& operator=(const histogram<OtherDim, OtherStoragePolicy>& other)
   {
     if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
       copy_axes(other.axes_, base_t::axes_);
@@ -436,7 +436,7 @@ public:
   }
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  histogram_t& operator=(histogram_t<OtherDim, OtherStoragePolicy>&& other)
+  histogram& operator=(histogram<OtherDim, OtherStoragePolicy>&& other)
   {
     copy_axes(other.axes_, base_t::axes_);
     base_t::storage_ = std::move(other.storage_);
@@ -444,7 +444,7 @@ public:
   } 
 
   template <typename OtherStoragePolicy>
-  histogram_t& operator=(histogram_t<Dynamic, OtherStoragePolicy>&& other)
+  histogram& operator=(histogram<Dynamic, OtherStoragePolicy>&& other)
   {
     base_t::axes_ = std::move(other.axes_);
     base_t::storage_ = std::move(other.storage_);
@@ -452,7 +452,7 @@ public:
   } 
 
   template <typename... Axes>
-  histogram_t(Axes... axes)
+  histogram(Axes... axes)
   {
     base_t::axes_ = {{std::forward<Axes>(axes)...}};
     base_t::storage_ = Storage{base_t::field_count()};
@@ -575,7 +575,7 @@ public:
   }
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  bool operator==(const histogram_t<OtherDim, OtherStoragePolicy>& other) const
+  bool operator==(const histogram<OtherDim, OtherStoragePolicy>& other) const
   {
     if (base_t::dim() != other.dim())
       return false;
@@ -589,7 +589,7 @@ public:
   }
 
   template <unsigned OtherDim, typename OtherStoragePolicy>
-  histogram_t& operator+=(const histogram_t<OtherDim, OtherStoragePolicy>& other)
+  histogram& operator+=(const histogram<OtherDim, OtherStoragePolicy>& other)
   {
     if (base_t::dim() != other.dim())
       throw std::logic_error("dimensions of histograms differ");
@@ -603,25 +603,25 @@ public:
 
   // all histogram types are friends to share access of private members
   template <unsigned OtherDim, typename OtherStorage>
-  friend class histogram_t;
+  friend class histogram;
   template <class Archive>
-  friend void serialize(Archive&, histogram_t&, unsigned);
+  friend void serialize(Archive&, histogram&, unsigned);
 };
 
 
 template <unsigned DimA, typename StoragePolicyA,
           unsigned DimB, typename StoragePolicyB>
 inline
-histogram_t<
+histogram<
   (DimA > DimB ? DimA : DimB),
   typename std::conditional<(sizeof(typename StoragePolicyA::value_t) >
                              sizeof(typename StoragePolicyB::value_t)),
     StoragePolicyA, StoragePolicyB>::type
 >
-operator+(const histogram_t<DimA, StoragePolicyA>& a,
-          const histogram_t<DimB, StoragePolicyB>& b)
+operator+(const histogram<DimA, StoragePolicyA>& a,
+          const histogram<DimB, StoragePolicyB>& b)
 {
-  histogram_t<
+  histogram<
     (DimA > DimB ? DimA : DimB),
     typename std::conditional<(sizeof(typename StoragePolicyA::value_t) >
                                sizeof(typename StoragePolicyB::value_t)),
@@ -635,10 +635,10 @@ operator+(const histogram_t<DimA, StoragePolicyA>& a,
 /// Standard type factory
 template <typename... Axes>
 inline
-histogram_t<sizeof...(Axes)>
-histogram(Axes... axes)
+histogram<sizeof...(Axes)>
+make_histogram(Axes... axes)
 {
-  return histogram_t<sizeof...(Axes)>(std::forward<Axes>(axes)...);
+  return histogram<sizeof...(Axes)>(std::forward<Axes>(axes)...);
 }
 
 

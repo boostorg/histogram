@@ -297,7 +297,7 @@ class test_integer_axis(unittest.TestCase):
         self.assertEqual(a.index(3), 4)
         self.assertEqual(a.index(4), 4)
 
-class histogram_test(unittest.TestCase):
+class histogramest(unittest.TestCase):
 
     def test_init(self):
         histogram()

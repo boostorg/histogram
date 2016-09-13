@@ -23,5 +23,6 @@
 
 */
 
+typedef histogram<Dynamic, dynamic_storage> histogram;
 
 #endif
