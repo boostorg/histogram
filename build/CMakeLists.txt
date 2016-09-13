@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.4)
 # cmake_policy(SET CMP0042 NEW)
 
 project(histogram)
@@ -50,7 +50,7 @@ if(BUILD_PYTHON)
                NAMES
                  boost_python-py${_VERSION_NO_DOTS}
                  boost_python
-               PATHS ${Boost_LIBRARY_DIR}
+               PATHS ${Boost_LIBRARY_DIRS}
                NO_DEFAULT_PATHS
   )
   message(STATUS "Found boost.python: ${Boost_PYTHON_LIBRARY}")
