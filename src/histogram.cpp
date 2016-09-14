@@ -22,9 +22,9 @@
 namespace boost {
 namespace histogram {
 
-constexpr unsigned boost_histogram_axis_limit = 10;
-using dhistogram = histogram<>;
-using axes_t = std::vector<axis_t>;
+constexpr unsigned boost_histogram_axis_limit = 32;
+typedef histogram<Dynamic, dynamic_storage> dynamic_histogram;
+typedef std::vector<axis_t> axes_t;
 
 struct axis_visitor : public static_visitor<python::object>
 {
@@ -33,7 +33,7 @@ struct axis_visitor : public static_visitor<python::object>
 };
 
 python::object
-histogram_axis(const dhistogram& self, unsigned i)
+histogram_axis(const dynamic_histogram& self, unsigned i)
 {
   return apply_visitor(axis_visitor(), self.axis<axis_t>(i));
 }
@@ -78,7 +78,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
   using namespace python;
 
   const unsigned nargs = len(args);
-  dhistogram& self = extract<dhistogram&>(args[0]);
+  dynamic_histogram& self = extract<dynamic_histogram&>(args[0]);
 
   object ow;
   if (kwargs) {
@@ -187,7 +187,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
 python::object
 histogram_value(python::tuple args, python::dict kwargs) {
   using namespace python;
-  const dhistogram& self = extract<const dhistogram&>(args[0]);
+  const dynamic_histogram& self = extract<const dynamic_histogram&>(args[0]);
 
   if (self.dim() != (len(args) - 1)) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
@@ -209,7 +209,7 @@ histogram_value(python::tuple args, python::dict kwargs) {
 python::object
 histogram_variance(python::tuple args, python::dict kwargs) {
   using namespace python;
-  const dhistogram& self = extract<const dhistogram&>(args[0]);
+  const dynamic_histogram& self = extract<const dynamic_histogram&>(args[0]);
 
   if (self.dim() != (len(args) - 1)) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
@@ -232,7 +232,7 @@ class histogram_access {
 public:
   static
   python::dict
-  histogram_array_interface(dhistogram& self) {
+  histogram_array_interface(dynamic_histogram& self) {
     python::dict d;
     python::list shape;
     for (unsigned i = 0; i < self.dim(); ++i)
@@ -250,12 +250,12 @@ public:
 };
 
 template <class Archive>
-inline void serialize(Archive& ar, dhistogram& h, unsigned) {
-  ar & boost::serialization::base_object<dhistogram::base_t>(h);
+inline void serialize(Archive& ar, dynamic_histogram& h, unsigned) {
+  ar & boost::serialization::base_object<dynamic_histogram::base_t>(h);
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, dhistogram::base_t& h, unsigned) {
+inline void serialize(Archive& ar, dynamic_histogram::base_t& h, unsigned) {
   ar & h.axes_;
   ar & h.storage_;
 }
@@ -270,7 +270,7 @@ void register_histogram()
   class_<axes_t>("axes_t", no_init);
   class_<axes_t::const_iterator>("axes_const_iterator", no_init);
 
-  class_<dhistogram, boost::shared_ptr<dhistogram>>("histogram",
+  class_<dynamic_histogram, boost::shared_ptr<dynamic_histogram>>("histogram",
     "N-dimensional histogram for real-valued data.",
     no_init)
     .def("__init__", raw_function(histogram_init),
@@ -281,9 +281,9 @@ void register_histogram()
     .def(init<axes_t>())
     .add_property("__array_interface__",
             &histogram_access::histogram_array_interface)
-    .add_property("dim", &dhistogram::dim,
+    .add_property("dim", &dynamic_histogram::dim,
             "dimensions of the histogram")
-    .def("shape", &dhistogram::shape,
+    .def("shape", &dynamic_histogram::shape,
        ":param int i: index of the axis\n"
        ":returns: number of count fields for axis i\n"
        "  (bins + 2 if underflow and overflow"
@@ -303,8 +303,8 @@ void register_histogram()
        "\nbe a 2d-array of shape (m, n), where m is"
        "\nthe number of tuples, and optionally"
        "\nanother a second 1d-array w of shape (n,).")
-    .add_property("depth", &dhistogram::depth)
-    .add_property("sum", &dhistogram::sum)
+    .add_property("depth", &dynamic_histogram::depth)
+    .add_property("sum", &dynamic_histogram::sum)
     .def("value", raw_function(histogram_value),
        ":param int args: indices of the bin"
        "\n:return: count for the bin")
@@ -314,7 +314,7 @@ void register_histogram()
     .def(self == self)
     .def(self += self)
     .def(self + self)
-    .def_pickle(serialization_suite<dhistogram>())
+    .def_pickle(serialization_suite<dynamic_histogram>())
     ;
 }
 

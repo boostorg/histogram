@@ -25,7 +25,7 @@ namespace boost {
 namespace histogram {
 
 /// Use dynamic dimensions
-constexpr unsigned Dynamic = 0;
+static constexpr unsigned Dynamic = 0;
 
 namespace {
 
@@ -632,7 +632,7 @@ operator+(const histogram<DimA, StoragePolicyA>& a,
 }
 
 
-/// Standard type factory
+/// static type factory
 template <typename... Axes>
 inline
 histogram<sizeof...(Axes)>
