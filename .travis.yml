@@ -45,18 +45,18 @@ install:
 
 script:
   - cd build
-  - cmake . -DUSE_PYTHON=OFF
-            -DUSE_NUMPY=OFF
+  - cmake . -DBUILD_PYTHON=OFF
+            -DBUILD_NUMPY_SUPPORT=OFF
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
     make -j2 &&
     ctest -V
-  - cmake . -DUSE_PYTHON=ON
-            -DUSE_NUMPY=OFF
+  - cmake . -DBUILD_PYTHON=ON
+            -DBUILD_NUMPY_SUPPORT=OFF
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
     make -j2 &&
     ctest -V
-  - cmake . -DUSE_PYTHON=ON
-            -DUSE_NUMPY=ON
+  - cmake . -DBUILD_PYTHON=ON
+            -DBUILD_NUMPY_SUPPORT=ON
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
     make -j2 &&
     ctest -V
