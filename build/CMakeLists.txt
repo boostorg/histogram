@@ -6,6 +6,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
 # setup build
 option(BUILD_PYTHON "Build python bindings" ON)
+option(BUILD_NUMPY_SUPPORT "Build numpy support" ON)
 option(BUILD_CHECKS "Build auxillary checks" OFF)
 
 if(${CMAKE_BUILD_TYPE})
@@ -27,15 +28,11 @@ if(BUILD_PYTHON)
   set(HAVE_PYTHON 1)
   include_directories(${PYTHON_INCLUDE_DIRS})
 
-  if(USE_NUMPY)
-    find_package(Numpy 1.7)
-  endif()
-
-  if(NUMPY_FOUND)
+  if(BUILD_NUMPY_SUPPORT)
+    find_package(Numpy 1.7 REQUIRED)
     set(HAVE_NUMPY 1)
     include_directories(${NUMPY_INCLUDE_DIR})
     add_definitions(-DHAVE_NUMPY)
-    message(STATUS "Found numpy")
   endif()
 
   add_library(histogram SHARED
@@ -43,11 +40,14 @@ if(BUILD_PYTHON)
     ../src/axis.cpp
     ../src/histogram.cpp
   )
-  target_link_libraries(histogram ${STD_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+
+  set(LIBRARIES ${STD_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+  target_link_libraries(histogram ${LIBRARIES})
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
 else()
   find_package(Boost 1.55 REQUIRED
              COMPONENTS iostreams serialization unit_test_framework)
+  set(LIBRARIES ${STD_LIBRARIES} ${Boost_LIBRARIES})
 endif()
 
 include_directories(../include ${Boost_INCLUDE_DIRS})
@@ -74,17 +74,17 @@ endif()
 if(BUILD_CHECKS)
   add_executable(speed_cpp_static
                  ../test/check/speed_cpp.cpp)
-  target_link_libraries(speed_cpp_static ${STD_LIBRARIES} ${Boost_LIBRARIES})
+  target_link_libraries(speed_cpp_static ${LIBRARIES})
   target_compile_definitions(speed_cpp_static PUBLIC histogramYPE=1)
 
   add_executable(speed_cpp_dynamic1
                  ../test/check/speed_cpp.cpp)
-  target_link_libraries(speed_cpp_dynamic1 ${STD_LIBRARIES} ${Boost_LIBRARIES})
+  target_link_libraries(speed_cpp_dynamic1 ${LIBRARIES})
   target_compile_definitions(speed_cpp_dynamic1 PUBLIC histogramYPE=2)
 
   add_executable(speed_cpp_dynamic2
                  ../test/check/speed_cpp.cpp)
-  target_link_libraries(speed_cpp_dynamic2 ${STD_LIBRARIES} ${Boost_LIBRARIES})
+  target_link_libraries(speed_cpp_dynamic2 ${LIBRARIES})
   target_compile_definitions(speed_cpp_dynamic2 PUBLIC histogramYPE=3)
 endif()
 
@@ -92,22 +92,22 @@ endif()
 enable_testing()
 add_executable(histogram_test
                ../test/histogram_test.cpp)
-target_link_libraries(histogram_test ${STD_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(histogram_test ${LIBRARIES})
 add_test(histogram_test histogram_test)
 
 add_executable(axis_test
                ../test/axis_test.cpp)
-target_link_libraries(axis_test ${STD_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(axis_test ${LIBRARIES})
 add_test(axis_test axis_test)
 
 add_executable(dynamic_storage_test
                ../test/dynamic_storage_test.cpp)
-target_link_libraries(dynamic_storage_test ${STD_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(dynamic_storage_test ${LIBRARIES})
 add_test(dynamic_storage_test dynamic_storage_test)
 
 add_executable(utility_test
                ../test/utility_test.cpp)
-target_link_libraries(utility_test ${STD_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(utility_test ${LIBRARIES})
 add_test(utility_test utility_test)
 
 if(HAVE_PYTHON)

@@ -4,6 +4,8 @@
 # - NUMPY_FOUND
 set(NUMPY_FOUND FALSE)
 
+find_package(PythonInterp REQUIRED)
+
 execute_process(
   COMMAND ${PYTHON_EXECUTABLE} -c "import numpy, sys; sys.stdout.write(numpy.get_include())"
   OUTPUT_VARIABLE NUMPY_INCLUDE_DIR)
