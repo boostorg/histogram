@@ -32,6 +32,8 @@ BOOST_AUTO_TEST_CASE(regular_axis_operators) {
     BOOST_CHECK_EQUAL(a.index(0.99), 2);
     BOOST_CHECK_EQUAL(a.index(1.0), 3);
     BOOST_CHECK_EQUAL(a.index(10.), 3);
+    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::infinity()), 3);
+    BOOST_CHECK_EQUAL(a.index(-std::numeric_limits<double>::infinity()), -1);
 }
 
 BOOST_AUTO_TEST_CASE(polar_axis_operators) {
