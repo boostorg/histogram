@@ -8,6 +8,10 @@
 #define BOOST_HISTOGRAM_HPP_
 
 #include <boost/histogram/histogram.hpp>
+#include <boost/histogram/axis.hpp>
+#include <boost/histogram/visitors.hpp>
+#include <boost/histogram/dynamic_storage.hpp>
+#include <boost/histogram/static_storage.hpp>
 
 /**
  * \file boost/histogram.hpp
@@ -22,7 +26,5 @@
    \ref boost::histogram  namespace, which is omitted for brevity.
 
 */
-
-typedef histogram<Dynamic, dynamic_storage> histogram;
 
 #endif

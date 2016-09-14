@@ -228,7 +228,7 @@ protected:
   void index_impl(linearize&) const {} // stop recursion
 };
 
-template <unsigned Dim, typename Storage = dynamic_storage>
+template <unsigned Dim = Dynamic, typename Storage = dynamic_storage>
 class histogram: public histogram_common<std::array<axis_t, Dim>, Storage>
 {
   using base_t = histogram_common<std::array<axis_t, Dim>, Storage>;

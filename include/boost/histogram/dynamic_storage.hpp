@@ -52,7 +52,7 @@ class dynamic_storage {
   using buffer_t = detail::buffer_t;
 
 public:
-  using value_t = double ;
+  using value_t = double;
   using variance_t = double;
 
   dynamic_storage(std::size_t n = 0) :
@@ -104,7 +104,7 @@ public:
   typename std::enable_if<
     (std::is_integral<T>::value &&
      (sizeof(T) & (sizeof(T) - 1)) == 0 && // size in 1,2,4,8
-     sizeof(T) < sizeof(uint64_t)),
+     sizeof(T) <= sizeof(uint64_t)),
     dynamic_storage&
   >::type
   operator=(static_storage<T>&& o)

@@ -23,7 +23,7 @@ namespace boost {
 namespace histogram {
 
 constexpr unsigned boost_histogram_axis_limit = 10;
-using dhistogram = histogram<Dynamic>;
+using dhistogram = histogram<>;
 using axes_t = std::vector<axis_t>;
 
 struct axis_visitor : public static_visitor<python::object>
@@ -270,7 +270,7 @@ void register_histogram()
   class_<axes_t>("axes_t", no_init);
   class_<axes_t::const_iterator>("axes_const_iterator", no_init);
 
-  class_<dhistogram, shared_ptr<dhistogram>>("histogram",
+  class_<dhistogram, boost::shared_ptr<dhistogram>>("histogram",
     "N-dimensional histogram for real-valued data.",
     no_init)
     .def("__init__", raw_function(histogram_init),

@@ -72,7 +72,7 @@ if(BUILD_PYTHON)
   endif()
 
   if(HAVE_PYTHON)
-    add_library(pyhistogram MODULE
+    add_library(pyhistogram SHARED
       ../src/module.cpp
       ../src/axis.cpp
       ../src/histogram.cpp
