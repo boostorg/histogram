@@ -21,6 +21,7 @@ if(BUILD_PYTHON)
   find_package(Boost 1.55 REQUIRED
                COMPONENTS iostreams serialization python unit_test_framework)
   find_package(PythonLibs REQUIRED)
+  find_package(PythonInterp REQUIRED) # used by python_suite_test and FindNumpy
 
   message(STATUS "Python lib: ${PYTHON_LIBRARIES}")
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
