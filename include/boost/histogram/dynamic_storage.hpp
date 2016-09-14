@@ -195,6 +195,7 @@ private:
   }
 };
 
+inline
 void dynamic_storage::increase(std::size_t i)
 {
   switch (depth_) {
@@ -207,6 +208,7 @@ void dynamic_storage::increase(std::size_t i)
   }
 }
 
+inline
 void dynamic_storage::increase(std::size_t i, double w)
 {
   if (depth_ != sizeof(wtype))
@@ -214,6 +216,7 @@ void dynamic_storage::increase(std::size_t i, double w)
   data_.get<wtype>(i).add_weight(w);
 }
 
+inline
 dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
 {
   BOOST_ASSERT(size() == o.size());
@@ -248,6 +251,7 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
   return *this;
 }
 
+inline
 dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
 {
   switch (depth_) {
@@ -261,6 +265,7 @@ dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
   return 0.0;
 }
 
+inline
 dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
 {
   switch (depth_) {
@@ -274,6 +279,7 @@ dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
   return 0.0;
 }
 
+inline
 void dynamic_storage::wconvert()
 {
   BOOST_ASSERT(depth_ < sizeof(wtype));
