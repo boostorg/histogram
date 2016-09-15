@@ -122,7 +122,7 @@ public:
   inline int index(double x) const 
   {
     const double z = (x - min_) / delta_;
-    return z < 0.0 ? -1 : (z > bins() ? bins() : static_cast<int>(z));
+    return z >= 0.0 ? (z > bins() ? bins() : static_cast<int>(z)) : -1;
   }
 
   double operator[](int idx) const

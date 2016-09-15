@@ -51,7 +51,7 @@ namespace {
     template <typename A>
     void operator()(const A& a) {
       // The following is highly optimized code that runs in a hot loop.
-      // If you change it, please also measure the performance impact.
+      // If you change it, please measure the performance impact.
       int j = in;
       const int uoflow = a.uoflow();
       // set stride to zero if j is not in range,
