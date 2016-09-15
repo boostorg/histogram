@@ -179,7 +179,7 @@ public:
   inline int index(double x) const { 
     using namespace boost::math::double_constants;
     const double z = (x - start_) / two_pi;
-    const int i = static_cast<int>(floor(z * bins())) % bins();
+    const int i = static_cast<int>(std::floor(z * bins())) % bins();
     return i + (i < 0) * bins();
   }
 
@@ -321,8 +321,8 @@ public:
 
   ///Returns the bin index for the passed argument.
   inline int index(double x) const
-  { const int i = rint(x) - min_;
-    return i < 0 ? -1 : std::min(i, bins()); }
+  { const int i = std::rint(x) - min_;
+    return i >= 0 ? (i < bins() ? i : bins()) : -1; }
   ///Returns the integer that is mapped to the bin index.
   int operator[](int idx) const { return min_ + idx; }
 
@@ -379,7 +379,9 @@ public:
 
   ///Returns the bin index for the passed argument.
   inline int index(double x) const
-  { return static_cast<int>(x + 0.5); }
+  { if (!(0.0 <= x && x < bins()))
+      throw std::out_of_range("category index is out of range");
+    return std::rint(x); }
   ///Returns the category for the bin index.
   const std::string& operator[](int idx) const
   { return categories_[idx]; }

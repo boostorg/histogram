@@ -47,12 +47,15 @@ BOOST_AUTO_TEST_CASE(polar_axis_operators) {
     BOOST_CHECK_EQUAL(a, b);
     b = b;
     BOOST_CHECK_EQUAL(a, b);
-    BOOST_CHECK_EQUAL(a.index(-1.0 * two_pi), 0);    
+    BOOST_CHECK_EQUAL(a.index(-1.0 * two_pi), 0);
     BOOST_CHECK_EQUAL(a.index(0.0), 0);
-    BOOST_CHECK_EQUAL(a.index(0.25 * two_pi), 1);    
-    BOOST_CHECK_EQUAL(a.index(0.5 * two_pi), 2);    
-    BOOST_CHECK_EQUAL(a.index(0.75 * two_pi), 3);    
-    BOOST_CHECK_EQUAL(a.index(1.00 * two_pi), 0);    
+    BOOST_CHECK_EQUAL(a.index(0.25 * two_pi), 1);
+    BOOST_CHECK_EQUAL(a.index(0.5 * two_pi), 2);
+    BOOST_CHECK_EQUAL(a.index(0.75 * two_pi), 3);
+    BOOST_CHECK_EQUAL(a.index(1.00 * two_pi), 0);
+    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::infinity()), 0);
+    BOOST_CHECK_EQUAL(a.index(-std::numeric_limits<double>::infinity()), 0);
+    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::quiet_NaN()), 0);
 }
 
 BOOST_AUTO_TEST_CASE(variable_axis_operators) {
@@ -70,6 +73,9 @@ BOOST_AUTO_TEST_CASE(variable_axis_operators) {
     BOOST_CHECK_EQUAL(a.index(0.), 1);
     BOOST_CHECK_EQUAL(a.index(1.), 2);
     BOOST_CHECK_EQUAL(a.index(10.), 2);
+    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::infinity()), 2);
+    BOOST_CHECK_EQUAL(a.index(-std::numeric_limits<double>::infinity()), -1);
+    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
 }
 
 BOOST_AUTO_TEST_CASE(category_axis_operators) {
@@ -83,6 +89,10 @@ BOOST_AUTO_TEST_CASE(category_axis_operators) {
     BOOST_CHECK_EQUAL(a.index(0.0), 0);
     BOOST_CHECK_EQUAL(a.index(1.0), 1);
     BOOST_CHECK_EQUAL(a.index(2.0), 2);
+
+    BOOST_CHECK_THROW(a.index(std::numeric_limits<double>::infinity()), std::out_of_range);
+    BOOST_CHECK_THROW(a.index(-std::numeric_limits<double>::infinity()), std::out_of_range);
+    BOOST_CHECK_THROW(a.index(std::numeric_limits<double>::quiet_NaN()), std::out_of_range);
 }
 
 BOOST_AUTO_TEST_CASE(integer_axis_operators) {
