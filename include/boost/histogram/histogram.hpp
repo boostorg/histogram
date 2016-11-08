@@ -50,8 +50,8 @@ namespace {
 
     template <typename A>
     void operator()(const A& a) {
-      // The following is highly optimized code that runs in a hot loop.
-      // If you change it, please measure the performance impact.
+      // the following is highly optimized code that runs in a hot loop;
+      // please measure the performance impact of changes
       int j = in;
       const int uoflow = a.uoflow();
       // set stride to zero if j is not in range,
@@ -604,11 +604,13 @@ public:
   // all histogram types are friends to share access of private members
   template <unsigned OtherDim, typename OtherStorage>
   friend class histogram;
+
   template <class Archive>
   friend void serialize(Archive&, histogram&, unsigned);
 };
 
 
+// when adding different types, use the more flexible type as return type
 template <unsigned DimA, typename StoragePolicyA,
           unsigned DimB, typename StoragePolicyB>
 inline
