@@ -235,16 +235,26 @@ public:
   histogram_array_interface(dynamic_histogram& self) {
     python::dict d;
     python::list shape;
-    for (unsigned i = 0; i < self.dim(); ++i)
-      shape.append(self.shape(i));
+    python::list strides;
+    std::size_t stride = 1;
     if (self.depth() == sizeof(detail::wtype)) {
+      stride *= sizeof(double);
+      d["typestr"] = python::str("|f") + python::str(stride);
+      strides.append(stride);
+      stride *= 2;
       shape.append(2);
-      d["typestr"] = python::str("<f") + python::str(sizeof(double));
     } else {
-      d["typestr"] = python::str("<u") + python::str(self.depth());
+      stride *= self.depth();
+      d["typestr"] = python::str("|u") + python::str(stride);
+    }
+    for (unsigned i = 0; i < self.dim(); ++i) {
+      shape.append(self.shape(i));
+      strides.append(stride);
+      stride *= self.shape(i);
     }
     d["shape"] = python::tuple(shape);
     d["data"] = python::make_tuple(reinterpret_cast<uintptr_t>(self.data()), false);
+    d["strides"] = python::tuple(strides);
     return d;
   }
 };
@@ -283,6 +293,10 @@ void register_histogram()
             &histogram_access::histogram_array_interface)
     .add_property("dim", &dynamic_histogram::dim,
             "dimensions of the histogram")
+    .def("bins", &dynamic_histogram::bins,
+       ":param int i: index of the axis\n"
+       ":returns: number of bins for axis i",
+       args("self", "i"))
     .def("shape", &dynamic_histogram::shape,
        ":param int i: index of the axis\n"
        ":returns: number of count fields for axis i\n"
