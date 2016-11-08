@@ -350,6 +350,24 @@ BOOST_AUTO_TEST_CASE(d2w)
     BOOST_CHECK_EQUAL(h.variance(2, 2), 0.0);
 }
 
+BOOST_AUTO_TEST_CASE(d3w)
+{
+    auto h = make_histogram(integer_axis(0, 3),
+                            integer_axis(0, 4),
+                            integer_axis(0, 5));
+    for (auto i = 0u; i < h.bins(0); ++i)
+        for (auto j = 0u; j < h.bins(1); ++j)
+            for (auto k = 0u; k < h.bins(2); ++k)
+    {
+        h.wfill(i, j, k, i+j+k);
+    }
+
+    for (auto i = 0u; i < h.bins(0); ++i)
+        for (auto j = 0u; j < h.bins(1); ++j)
+            for (auto k = 0u; k < h.bins(2); ++k)
+        BOOST_CHECK_EQUAL(h.value(i, j, k), i+j+k);
+}
+
 BOOST_AUTO_TEST_CASE(add_0)
 {
     auto a = make_histogram(integer_axis(-1, 1));
@@ -429,12 +447,14 @@ BOOST_AUTO_TEST_CASE(add_4)
     b.fill(1);
     auto c = a;
     c += b;
+    BOOST_CHECK_EQUAL(c.depth(), 1);
     BOOST_CHECK_EQUAL(c.value(-1), 0);
     BOOST_CHECK_EQUAL(c.value(0), 1);
     BOOST_CHECK_EQUAL(c.value(1), 0);
     BOOST_CHECK_EQUAL(c.value(2), 1);
     BOOST_CHECK_EQUAL(c.value(3), 0);
     auto d = a + b;
+    BOOST_CHECK_EQUAL(d.depth(), 4);
     BOOST_CHECK_EQUAL(d.value(-1), 0);
     BOOST_CHECK_EQUAL(d.value(0), 1);
     BOOST_CHECK_EQUAL(d.value(1), 0);

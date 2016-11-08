@@ -540,32 +540,87 @@ class histogramest(unittest.TestCase):
         a = histogram(integer_axis(0, 2, uoflow=False))
         for i in range(100):
             a.fill(1)
-        b = numpy.array(a) # a copy
+        c = numpy.array(a) # a copy
         v = numpy.asarray(a) # a view
-        self.assertEqual(b.dtype, numpy.uint8)
-        self.assertTrue(numpy.all(b == numpy.array((0, 100, 0))))
+
+        for t in (c, v):
+            self.assertEqual(t.dtype, numpy.uint8)
+            self.assertTrue(numpy.all(t == numpy.array((0, 100, 0))))
+
         for i in range(100):
             a.fill(1)
-        self.assertTrue(numpy.all(b == numpy.array((0, 100, 0))))
+        self.assertTrue(numpy.all(c == numpy.array((0, 100, 0))))
         self.assertTrue(numpy.all(v == numpy.array((0, 200, 0))))
+
         for i in range(100):
             a.fill(1)
-        b = numpy.array(a)
-        self.assertEqual(b.dtype, numpy.uint16)
-        self.assertTrue(numpy.all(b == numpy.array((0, 300, 0))))
+        c = numpy.array(a)
+        self.assertEqual(c.dtype, numpy.uint16)
+        self.assertTrue(numpy.all(c == numpy.array((0, 300, 0))))
         # view does not follow underlying switch in word size
-        self.assertFalse(numpy.all(v == b))
+        self.assertFalse(numpy.all(c == v))
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_numpy_conversion_1(self):
-        a = histogram(integer_axis(0, 2, uoflow=False))
+        a = histogram(integer_axis(0, 2))
         for i in range(10):
             a.fill(1, w=3)
-        b = numpy.array(a) # a copy
+        c = numpy.array(a) # a copy
         v = numpy.asarray(a) # a view
-        self.assertEqual(b.dtype, numpy.float64)
-        self.assertTrue(numpy.all(b == numpy.array(((0, 0), (30, 90), (0, 0)))))
-        self.assertTrue(numpy.all(v == b))
+        self.assertEqual(c.dtype, numpy.float64)
+        self.assertTrue(numpy.all(c == numpy.array(((0, 30, 0, 0, 0), (0, 90, 0, 0, 0)))))
+        self.assertTrue(numpy.all(v == c))
+
+    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    def test_numpy_conversion_2(self):
+        a = histogram(integer_axis(0, 1, uoflow=False),
+                      integer_axis(0, 2, uoflow=False),
+                      integer_axis(0, 3, uoflow=False))
+        r = numpy.zeros((2, 3, 4), dtype=numpy.int8)
+        for i in range(a.bins(0)):
+            for j in range(a.bins(1)):
+                for k in range(a.bins(2)):
+                    for m in range(i+j+k):
+                        a.fill(i, j, k)
+                    r[i,j,k] = i+j+k
+        c = numpy.array(a) # a copy
+        v = numpy.asarray(a) # a view
+
+        c2 = numpy.zeros((2, 3, 4), dtype=numpy.int8)
+        for i in range(a.bins(0)):
+            for j in range(a.bins(1)):
+                for k in range(a.bins(2)):
+                    c2[i,j,k] = a.value(i,j,k)
+
+        self.assertTrue(numpy.all(c == c2))
+        self.assertTrue(numpy.all(c == r))
+        self.assertTrue(numpy.all(v == r))
+
+    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    def test_numpy_conversion_3(self):
+        a = histogram(integer_axis(0, 1),
+                      integer_axis(0, 2),
+                      integer_axis(0, 3))
+        r = numpy.zeros((2, 4, 5, 6))
+        for i in range(a.bins(0)):
+            for j in range(a.bins(1)):
+                for k in range(a.bins(2)):
+                    a.fill(i, j, k, w=i+j+k)
+                    r[0, i, j, k] = i+j+k
+                    r[1, i, j, k] = (i+j+k)**2
+        c = numpy.array(a) # a copy
+        v = numpy.asarray(a) # a view
+
+        c2 = numpy.zeros((2, 4, 5, 6))
+        for i in range(a.bins(0)):
+            for j in range(a.bins(1)):
+                for k in range(a.bins(2)):
+                    c2[0, i, j, k] = a.value(i,j,k)
+                    c2[1, i, j, k] = a.variance(i,j,k)
+
+        self.assertTrue(numpy.all(c == c2))
+        self.assertTrue(numpy.all(c == r))
+        self.assertTrue(numpy.all(v == r))
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_fill_with_numpy_array_0(self):
