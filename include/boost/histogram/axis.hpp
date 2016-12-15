@@ -10,6 +10,7 @@
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/variant.hpp>
 #include <boost/math/constants/constants.hpp>
+#include <boost/algorithm/clamp.hpp>
 #include <type_traits>
 #include <string>
 #include <vector>
@@ -88,7 +89,7 @@ public:
 /** Axis for binning real-valued data into equidistant bins
   *
   * This is the simplest and common binning strategy. The code
-  * was optimized with a profiled benchmark. 
+  * was optimized with a profiled benchmark.
   * Binning is a O(1) operation.
   */
 class regular_axis: public axis_base, public real_axis<regular_axis> {
@@ -119,7 +120,7 @@ public:
   regular_axis& operator=(regular_axis&&) = default;
 
   /// Returns the bin index for the passed argument (optimized code).
-  inline int index(double x) const 
+  inline int index(double x) const
   {
     const double z = (x - min_) / delta_;
     return z >= 0.0 ? (z > bins() ? bins() : static_cast<int>(z)) : -1;
@@ -161,7 +162,7 @@ public:
    * \param n  number of bins
    * \param start  starting phase of the angle
    * \param label  description of the axis
-	 */ 
+	 */
   explicit
   polar_axis(unsigned n, double start = 0.0,
              const std::string& label = std::string()) :
@@ -176,7 +177,7 @@ public:
   polar_axis& operator=(polar_axis&&) = default;
 
   ///Returns the bin index for the passed argument.
-  inline int index(double x) const { 
+  inline int index(double x) const {
     using namespace boost::math::double_constants;
     const double z = (x - start_) / two_pi;
     const int i = static_cast<int>(std::floor(z * bins())) % bins();
@@ -260,7 +261,7 @@ public:
   }
   variable_axis& operator=(variable_axis&&) = default;
 
-  inline int index(double x) const { 
+  inline int index(double x) const {
     return std::upper_bound(x_.get(), x_.get() + bins() + 1, x)
            - x_.get() - 1;
   }
@@ -299,7 +300,7 @@ public:
   typedef int value_type;
 
   /**Construct axis over consecutive sequence of integers
-   * 
+   *
    * @param min smallest integer of the covered range
    * @param max largest integer of the covered range
    */
@@ -321,14 +322,14 @@ public:
 
   ///Returns the bin index for the passed argument.
   inline int index(double x) const
-  { const int i = std::rint(x) - min_;
-    return i >= 0 ? (i < bins() ? i : bins()) : -1; }
+  { const int i = static_cast<int>(std::floor(x)) - min_;
+    return algorithm::clamp(i, -1, bins()); }
   ///Returns the integer that is mapped to the bin index.
   int operator[](int idx) const { return min_ + idx; }
 
   bool operator==(const integer_axis& o) const
   {
-    return axis_base::operator==(o) && min_ == o.min_;    
+    return axis_base::operator==(o) && min_ == o.min_;
   }
 
 private:
@@ -404,7 +405,7 @@ using axis_t = variant<
                  integer_axis
                >;
 
-// axis_t is automatically output-streamable if all its bounded types are 
+// axis_t is automatically output-streamable if all its bounded types are
 
 }
 }

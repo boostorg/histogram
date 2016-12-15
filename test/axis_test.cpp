@@ -103,10 +103,13 @@ BOOST_AUTO_TEST_CASE(integer_axis_operators) {
     BOOST_CHECK_EQUAL(a, b);
     b = b;
     BOOST_CHECK_EQUAL(a, b);
-    BOOST_CHECK_EQUAL(a.index(-10), -1);    
+    BOOST_CHECK_EQUAL(a.index(-10), -1);
     BOOST_CHECK_EQUAL(a.index(-2), -1);
     BOOST_CHECK_EQUAL(a.index(-1), 0);
+    BOOST_CHECK_EQUAL(a.index(-0.1), 0);
     BOOST_CHECK_EQUAL(a.index(0), 1);
+    BOOST_CHECK_EQUAL(a.index(0.1), 1);
+    BOOST_CHECK_EQUAL(a.index(0.9), 1);
     BOOST_CHECK_EQUAL(a.index(1), 2);
     BOOST_CHECK_EQUAL(a.index(2), 3);
     BOOST_CHECK_EQUAL(a.index(10), 3);
