@@ -26,6 +26,13 @@ namespace {
   template <> struct next_storage_type<uint32_t> { typedef uint64_t type; };
   template <> struct next_storage_type<uint64_t> { typedef detail::wtype type; };
 
+  // std::make_unsigned does not work for float and double
+  template <typename T> struct make_unsigned { using type = T; };
+  template <> struct make_unsigned<int8_t> { using type = uint8_t; };
+  template <> struct make_unsigned<int16_t> { using type = uint16_t; };
+  template <> struct make_unsigned<int32_t> { using type = uint32_t; };
+  template <> struct make_unsigned<int64_t> { using type = uint64_t; };
+
   // we rely on C++11 to guarantee that uintX_t has a size of exactly X bits,
   // so we only check size of wtype
   static_assert((sizeof(detail::wtype) >= (2 * sizeof(uint64_t))),
@@ -145,7 +152,8 @@ private:
   add_impl(std::size_t i, O o)
   {
     auto& b = data_.get<T>(i);
-    if (static_cast<typename sign_of<O, T>::type>(std::numeric_limits<T>::max() - b) >= o) {
+    if (static_cast<typename make_unsigned<T>::type>(std::numeric_limits<T>::max() - b) >=
+        static_cast<typename make_unsigned<O>::type>(o)) {
       b += o;
     } else {
       grow_impl<T>();
