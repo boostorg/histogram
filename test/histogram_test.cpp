@@ -355,16 +355,16 @@ BOOST_AUTO_TEST_CASE(d3w)
     auto h = make_histogram(integer_axis(0, 3),
                             integer_axis(0, 4),
                             integer_axis(0, 5));
-    for (auto i = 0u; i < h.bins(0); ++i)
-        for (auto j = 0u; j < h.bins(1); ++j)
-            for (auto k = 0u; k < h.bins(2); ++k)
+    for (auto i = 0; i < h.bins(0); ++i)
+        for (auto j = 0; j < h.bins(1); ++j)
+            for (auto k = 0; k < h.bins(2); ++k)
     {
         h.wfill(i, j, k, i+j+k);
     }
 
-    for (auto i = 0u; i < h.bins(0); ++i)
-        for (auto j = 0u; j < h.bins(1); ++j)
-            for (auto k = 0u; k < h.bins(2); ++k)
+    for (auto i = 0; i < h.bins(0); ++i)
+        for (auto j = 0; j < h.bins(1); ++j)
+            for (auto k = 0; k < h.bins(2); ++k)
         BOOST_CHECK_EQUAL(h.value(i, j, k), i+j+k);
 }
 

@@ -36,9 +36,9 @@ public:
   inline int shape() const { return shape_; }
   /// Returns whether axis has extra overflow and underflow bins.
   inline bool uoflow() const { return shape_ > size_; }
-  /// Change the label of an axis (not implemented for category_axis).
-  const std::string& label() const { return label_; }
   /// Returns the axis label, which is a name or description (not implemented for category_axis).
+  const std::string& label() const { return label_; }
+  /// Change the label of an axis (not implemented for category_axis).
   void label(const std::string& label) { label_ = label; }
 
 protected:
@@ -88,8 +88,7 @@ public:
 
 /** Axis for binning real-valued data into equidistant bins
   *
-  * This is the simplest and common binning strategy. The code
-  * was optimized with a profiled benchmark.
+  * This is the simplest and common binning strategy.
   * Binning is a O(1) operation.
   */
 class regular_axis: public axis_base, public real_axis<regular_axis> {
@@ -201,12 +200,16 @@ private:
   friend void serialize(Archive&, polar_axis&, unsigned);
 };
 
-///An axis for real-valued data and bins of varying width. Binning is a O(log(N)) operation. If speed matters and the problem domain allows it, prefer a regular_axis.
+/** An axis for real-valued data and bins of varying width.
+  *
+  * Binning is a O(log(N)) operation. If speed matters and the problem domain
+  * allows it, prefer a regular_axis.
+  */
 class variable_axis : public axis_base, public real_axis<variable_axis> {
 public:
 	/** Constructor
 	 *
-	 * \param x An axis for real-valued data and bins of varying width. Binning is a O(log(N)) operation. If speed matters and the problem domain allows it, prefer a regular_axis.
+	 * \param x sequence of bin edges
 	 * \param label description of the axis
 	 * \param uoflow add under-/overflow bins for this axis or not
 	 */
@@ -221,13 +224,13 @@ public:
       std::sort(x_.get(), x_.get() + bins() + 1);
   }
 
-  variable_axis(const std::vector<double>& v,
+  variable_axis(const std::vector<double>& x,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
-      axis_base(v.size() - 1, label, uoflow),
-      x_(new double[v.size()])
+      axis_base(x.size() - 1, label, uoflow),
+      x_(new double[x.size()])
   {
-      std::copy(v.begin(), v.end(), x_.get());
+      std::copy(x.begin(), x.end(), x_.get());
       std::sort(x_.get(), x_.get() + bins() + 1);
   }
 
@@ -301,8 +304,8 @@ public:
 
   /**Construct axis over consecutive sequence of integers
    *
-   * @param min smallest integer of the covered range
-   * @param max largest integer of the covered range
+   * \param min smallest integer of the covered range
+   * \param max largest integer of the covered range
    */
   integer_axis(int min, int max,
                const std::string& label = std::string(),
@@ -346,7 +349,7 @@ public:
 
   /**Construct from initializer list of strings
    *
-   * @param categories an ordered sequence of categories that this axis discriminates
+   * \param categories ordered sequence of categories that this axis discriminates
    */
   explicit
   category_axis(const std::initializer_list<std::string>& categories) :

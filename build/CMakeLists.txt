@@ -75,17 +75,17 @@ if(BUILD_CHECKS)
   add_executable(speed_cpp_static
                  ../test/check/speed_cpp.cpp)
   target_link_libraries(speed_cpp_static ${LIBRARIES})
-  target_compile_definitions(speed_cpp_static PUBLIC histogramYPE=1)
+  target_compile_definitions(speed_cpp_static PUBLIC HISTOGRAM_TYPE=1)
 
   add_executable(speed_cpp_dynamic1
                  ../test/check/speed_cpp.cpp)
   target_link_libraries(speed_cpp_dynamic1 ${LIBRARIES})
-  target_compile_definitions(speed_cpp_dynamic1 PUBLIC histogramYPE=2)
+  target_compile_definitions(speed_cpp_dynamic1 PUBLIC HISTOGRAM_TYPE=2)
 
   add_executable(speed_cpp_dynamic2
                  ../test/check/speed_cpp.cpp)
   target_link_libraries(speed_cpp_dynamic2 ${LIBRARIES})
-  target_compile_definitions(speed_cpp_dynamic2 PUBLIC histogramYPE=3)
+  target_compile_definitions(speed_cpp_dynamic2 PUBLIC HISTOGRAM_TYPE=3)
 endif()
 
 # tests

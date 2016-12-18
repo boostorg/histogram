@@ -26,20 +26,6 @@ namespace {
   template <> struct next_storage_type<uint32_t> { typedef uint64_t type; };
   template <> struct next_storage_type<uint64_t> { typedef detail::wtype type; };
 
-  template <unsigned Depth> struct depth_to_type;
-  template <> struct depth_to_type<sizeof(uint8_t)> { typedef uint8_t type; };
-  template <> struct depth_to_type<sizeof(uint16_t)> { typedef uint16_t type; };
-  template <> struct depth_to_type<sizeof(uint32_t)> { typedef uint32_t type; };
-  template <> struct depth_to_type<sizeof(uint64_t)> { typedef uint64_t type; };
-
-  template <typename T, bool> struct convert_sign;
-  template <typename T> struct convert_sign<T, true> { using type = typename std::make_unsigned<T>::type; };
-  template <typename T> struct convert_sign<T, false> { using type = typename std::make_signed<T>::type; };
-
-  template <typename U, typename T> struct sign_of {
-    using type = typename convert_sign<T, std::is_unsigned<U>::value>::type;
-  };
-
   // we rely on C++11 to guarantee that uintX_t has a size of exactly X bits,
   // so we only check size of wtype
   static_assert((sizeof(detail::wtype) >= (2 * sizeof(uint64_t))),
