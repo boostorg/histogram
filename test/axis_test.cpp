@@ -16,7 +16,7 @@ using namespace boost::histogram;
 // only test things not already covered by python_test_suite
 
 BOOST_AUTO_TEST_CASE(regular_axis_operators) {
-    regular_axis a{3, -1, 1};
+    regular_axis a{4, -2, 2};
     BOOST_CHECK_EQUAL(a[-1], -std::numeric_limits<double>::infinity());
     BOOST_CHECK_EQUAL(a[a.bins() + 1], std::numeric_limits<double>::infinity());
     regular_axis b;
@@ -26,13 +26,14 @@ BOOST_AUTO_TEST_CASE(regular_axis_operators) {
     b = b;
     BOOST_CHECK_EQUAL(a, b);
     BOOST_CHECK_EQUAL(a.index(-10.), -1);
-    BOOST_CHECK_EQUAL(a.index(-1.1), -1);
-    BOOST_CHECK_EQUAL(a.index(-1.0), 0);
-    BOOST_CHECK_EQUAL(a.index(0.0), 1);
-    BOOST_CHECK_EQUAL(a.index(0.99), 2);
+    BOOST_CHECK_EQUAL(a.index(-2.1), -1);
+    BOOST_CHECK_EQUAL(a.index(-2.0), 0);
+    BOOST_CHECK_EQUAL(a.index(-1.1), 0);
+    BOOST_CHECK_EQUAL(a.index(0.0), 2);
+    BOOST_CHECK_EQUAL(a.index(0.9), 2);
     BOOST_CHECK_EQUAL(a.index(1.0), 3);
-    BOOST_CHECK_EQUAL(a.index(10.), 3);
-    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::infinity()), 3);
+    BOOST_CHECK_EQUAL(a.index(10.), 4);
+    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::infinity()), 4);
     BOOST_CHECK_EQUAL(a.index(-std::numeric_limits<double>::infinity()), -1);
     BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::quiet_NaN()), -1);
 }
@@ -113,6 +114,9 @@ BOOST_AUTO_TEST_CASE(integer_axis_operators) {
     BOOST_CHECK_EQUAL(a.index(1), 2);
     BOOST_CHECK_EQUAL(a.index(2), 3);
     BOOST_CHECK_EQUAL(a.index(10), 3);
+    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::infinity()), 3);
+    BOOST_CHECK_EQUAL(a.index(-std::numeric_limits<double>::infinity()), -1);
+    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::quiet_NaN()), -1);
 }
 
 BOOST_AUTO_TEST_CASE(axis_t_streamable) {

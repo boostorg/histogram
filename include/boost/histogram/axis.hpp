@@ -10,7 +10,6 @@
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/variant.hpp>
 #include <boost/math/constants/constants.hpp>
-#include <boost/algorithm/clamp.hpp>
 #include <type_traits>
 #include <string>
 #include <vector>
@@ -325,8 +324,10 @@ public:
 
   ///Returns the bin index for the passed argument.
   inline int index(double x) const
-  { const int i = static_cast<int>(std::floor(x)) - min_;
-    return algorithm::clamp(i, -1, bins()); }
+  {
+    const double z = x - min_;
+    return z >= 0.0 ? (z > bins() ? bins() : static_cast<int>(z)) : -1;
+  }
   ///Returns the integer that is mapped to the bin index.
   int operator[](int idx) const { return min_ + idx; }
 
