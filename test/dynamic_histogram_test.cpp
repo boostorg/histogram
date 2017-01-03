@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(move_ctor)
 BOOST_AUTO_TEST_CASE(move_assign)
 {
     auto h = histogram<dynamic_storage>(integer_axis(0, 1),
-                                               integer_axis(0, 2));
+                                        integer_axis(0, 2));
     h.fill(0.0, 0.0);
     auto href = h;
     auto h2 = decltype(h)();
@@ -192,9 +192,9 @@ BOOST_AUTO_TEST_CASE(d1)
 {
     auto h = histogram<dynamic_storage>(integer_axis(0, 1));
     h.fill(0);
-    h.fill(-0.0);
-    h.fill(-1.0);
-    h.fill(10.0);
+    h.fill(0);
+    h.fill(-1);
+    h.fill(10);
 
     BOOST_CHECK_EQUAL(h.dim(), 1);
     BOOST_CHECK_EQUAL(bins(h.axis(0)), 2);
@@ -220,9 +220,9 @@ BOOST_AUTO_TEST_CASE(d1_2)
 {
     auto h = histogram<dynamic_storage>(integer_axis(0, 1, "", false));
     h.fill(0);
-    h.fill(-0.0);
-    h.fill(-1.0);
-    h.fill(10.0);
+    h.fill(-0);
+    h.fill(-1);
+    h.fill(10);
 
     BOOST_CHECK_EQUAL(h.dim(), 1);
     BOOST_CHECK_EQUAL(bins(h.axis(0)), 2);
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(d1w)
 BOOST_AUTO_TEST_CASE(d2)
 {
     auto h = histogram<dynamic_storage>(regular_axis(2, -1, 1),
-                                               integer_axis(-1, 1, std::string(), false));
+                                        integer_axis(-1, 1, std::string(), false));
     h.fill(-1, -1);
     h.fill(-1, 0);
     h.fill(-1, -10);
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(d2)
 BOOST_AUTO_TEST_CASE(d2w)
 {
     auto h = histogram<dynamic_storage>(regular_axis(2, -1, 1),
-                                               integer_axis(-1, 1, std::string(), false));
+                                        integer_axis(-1, 1, std::string(), false));
     h.fill(-1, 0);       // -> 0, 1
     h.wfill(-1, -1, 10); // -> 0, 0
     h.wfill(-1, -10, 5); // is ignored
@@ -358,8 +358,8 @@ BOOST_AUTO_TEST_CASE(d2w)
 BOOST_AUTO_TEST_CASE(d3w)
 {
     auto h = histogram<dynamic_storage>(integer_axis(0, 3),
-                                               integer_axis(0, 4),
-                                               integer_axis(0, 5));
+                                        integer_axis(0, 4),
+                                        integer_axis(0, 5));
     for (auto i = 0; i < bins(h.axis(0)); ++i)
         for (auto j = 0; j < bins(h.axis(1)); ++j)
             for (auto k = 0; k < bins(h.axis(2)); ++k)
@@ -433,14 +433,14 @@ BOOST_AUTO_TEST_CASE(add_3)
     b.fill(1);
     auto c = a;
     c += b;
-    BOOST_CHECK_EQUAL(c.depth(), 1);
+    BOOST_CHECK_EQUAL(c.depth(), sizeof(char));
     BOOST_CHECK_EQUAL(c.value(-1), 0);
     BOOST_CHECK_EQUAL(c.value(0), 1);
     BOOST_CHECK_EQUAL(c.value(1), 0);
     BOOST_CHECK_EQUAL(c.value(2), 1);
     BOOST_CHECK_EQUAL(c.value(3), 0);
     auto d = a + b;
-    BOOST_CHECK_EQUAL(d.depth(), 4);
+    BOOST_CHECK_EQUAL(d.depth(), sizeof(int));
     BOOST_CHECK_EQUAL(d.value(-1), 0);
     BOOST_CHECK_EQUAL(d.value(0), 1);
     BOOST_CHECK_EQUAL(d.value(1), 0);
@@ -448,46 +448,47 @@ BOOST_AUTO_TEST_CASE(add_3)
     BOOST_CHECK_EQUAL(d.value(3), 0);
 }
 
-// BOOST_AUTO_TEST_CASE(doc_example_0)
-// {
-//     // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
-//     // with axis of histogram labeled as "x"
-//     auto h = bh::histogram<dynamic_storage>(bh::regular_axis(10, -1.0, 2.0, "x"));
+BOOST_AUTO_TEST_CASE(doc_example_0)
+{
+    namespace bh = boost::histogram;
+    // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
+    // with axis of histogram labeled as "x"
+    auto h = bh::dynamic::histogram<>(bh::regular_axis(10, -1.0, 2.0, "x"));
 
-//     // fill histogram with data
-//     h.fill(-1.5); // put in underflow bin
-//     h.fill(-1.0); // included in first bin, bin interval is semi-open
-//     h.fill(-0.5);
-//     h.fill(1.1);
-//     h.fill(0.3);
-//     h.fill(1.7);
-//     h.fill(2.0);  // put in overflow bin, bin interval is semi-open
-//     h.fill(20.0); // put in overflow bin
-//     h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
+    // fill histogram with data
+    h.fill(-1.5); // put in underflow bin
+    h.fill(-1.0); // included in first bin, bin interval is semi-open
+    h.fill(-0.5);
+    h.fill(1.1);
+    h.fill(0.3);
+    h.fill(1.7);
+    h.fill(2.0);  // put in overflow bin, bin interval is semi-open
+    h.fill(20.0); // put in overflow bin
+    h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
 
-//     std::ostringstream os1;
-//     // access histogram counts
-//     for (int i = -1; i <= bins(h.axis(0)); ++i) {
-//         const bh::regular_axis& a = h.axis<bh::regular_axis>(0);
-//         os1 << "bin " << i
-//             << " x in [" << a[i] << ", " << a[i+1] << "): "
-//             << h.value(i) << " +/- " << std::sqrt(h.variance(i))
-//             << "\n";
-//     }
+    std::ostringstream os1;
+    // access histogram counts
+    for (int i = -1; i <= bins(h.axis(0)); ++i) {
+        const auto& a = boost::get<bh::regular_axis>(h.axis(0));
+        os1 << "bin " << i
+            << " x in [" << a[i] << ", " << a[i+1] << "): "
+            << h.value(i) << " +/- " << std::sqrt(h.variance(i))
+            << "\n";
+    }
 
-//     std::ostringstream os2;
-//     os2 << "bin -1 x in [-inf, -1): 1 +/- 1\n"
-//            "bin 0 x in [-1, -0.7): 1 +/- 1\n"
-//            "bin 1 x in [-0.7, -0.4): 1 +/- 1\n"
-//            "bin 2 x in [-0.4, -0.1): 0 +/- 0\n"
-//            "bin 3 x in [-0.1, 0.2): 5 +/- 5\n"
-//            "bin 4 x in [0.2, 0.5): 1 +/- 1\n"
-//            "bin 5 x in [0.5, 0.8): 0 +/- 0\n"
-//            "bin 6 x in [0.8, 1.1): 0 +/- 0\n"
-//            "bin 7 x in [1.1, 1.4): 1 +/- 1\n"
-//            "bin 8 x in [1.4, 1.7): 0 +/- 0\n"
-//            "bin 9 x in [1.7, 2): 1 +/- 1\n"
-//            "bin 10 x in [2, inf): 2 +/- 1.41421\n";
+    std::ostringstream os2;
+    os2 << "bin -1 x in [-inf, -1): 1 +/- 1\n"
+           "bin 0 x in [-1, -0.7): 1 +/- 1\n"
+           "bin 1 x in [-0.7, -0.4): 1 +/- 1\n"
+           "bin 2 x in [-0.4, -0.1): 0 +/- 0\n"
+           "bin 3 x in [-0.1, 0.2): 5 +/- 5\n"
+           "bin 4 x in [0.2, 0.5): 1 +/- 1\n"
+           "bin 5 x in [0.5, 0.8): 0 +/- 0\n"
+           "bin 6 x in [0.8, 1.1): 0 +/- 0\n"
+           "bin 7 x in [1.1, 1.4): 1 +/- 1\n"
+           "bin 8 x in [1.4, 1.7): 0 +/- 0\n"
+           "bin 9 x in [1.7, 2): 1 +/- 1\n"
+           "bin 10 x in [2, inf): 2 +/- 1.41421\n";
 
-//     BOOST_CHECK_EQUAL(os1.str(), os2.str());
-// }
+    BOOST_CHECK_EQUAL(os1.str(), os2.str());
+}

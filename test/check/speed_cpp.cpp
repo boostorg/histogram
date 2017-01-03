@@ -4,7 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/dynamic_histogram.hpp>
 #include <boost/histogram/axis.hpp>
 
 #include <random>
@@ -109,33 +109,39 @@ int main() {
     printf("1D\n");
     printf("t[boost]   = %.3f\n",
 #if HISTOGRAM_TYPE == 1
-      compare_1d<histogram<1, static_storage<int>>>(12000000, itype)
+      compare_1d<dynamic::histogram<static_storage<int>>>(12000000, itype)
 #elif HISTOGRAM_TYPE == 2
-      compare_1d<histogram<1, dynamic_storage>>(12000000, itype)
+      compare_1d<dynamic::histogram<dynamic_storage>>(12000000, itype)
 #elif HISTOGRAM_TYPE == 3
-      compare_1d<histogram<Dynamic, dynamic_storage>>(12000000, itype)
+      compare_1d<dynamic::histogram<static_storage<int>>>(12000000, itype)
+#elif HISTOGRAM_TYPE == 4
+      compare_1d<dynamic::histogram<dynamic_storage>>(12000000, itype)
 #endif
     );
 
     printf("3D\n");
     printf("t[boost]   = %.3f\n",
 #if HISTOGRAM_TYPE == 1
-      compare_3d<histogram<3, static_storage<int>>>(4000000, itype)
+      compare_3d<dynamic::histogram<static_storage<int>>>(4000000, itype)
 #elif HISTOGRAM_TYPE == 2
-      compare_3d<histogram<3, dynamic_storage>>(4000000, itype)
+      compare_3d<dynamic::histogram<dynamic_storage>>(4000000, itype)
 #elif HISTOGRAM_TYPE == 3
-      compare_3d<histogram<Dynamic, dynamic_storage>>(4000000, itype)
+      compare_3d<dynamic::histogram<static_storage<int>>>(4000000, itype)
+#elif HISTOGRAM_TYPE == 4
+      compare_3d<dynamic::histogram<dynamic_storage>>(4000000, itype)
 #endif
     );
 
     printf("6D\n");
     printf("t[boost]   = %.3f\n",
 #if HISTOGRAM_TYPE == 1
-      compare_6d<histogram<6, static_storage<int>>>(2000000, itype)
+      compare_6d<dynamic::histogram<static_storage<int>>>(2000000, itype)
 #elif HISTOGRAM_TYPE == 2
-      compare_6d<histogram<6, dynamic_storage>>(2000000, itype)
+      compare_6d<dynamic::histogram<dynamic_storage>>(2000000, itype)
 #elif HISTOGRAM_TYPE == 3
-      compare_6d<histogram<Dynamic, dynamic_storage>>(2000000, itype)
+      compare_6d<dynamic::histogram<static_storage<int>>>(2000000, itype)
+#elif HISTOGRAM_TYPE == 4
+      compare_6d<dynamic::histogram<dynamic_storage>>(2000000, itype)
 #endif
     );
   }

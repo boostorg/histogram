@@ -15,8 +15,7 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
-#include <boost/histogram/visitors.hpp>
-#include <boost/serialization/access.hpp>
+#include <boost/histogram/utility.hpp>
 #include <cstddef>
 #include <array>
 #include <vector>
@@ -112,8 +111,7 @@ public:
     for (decltype(dim()) i = 0, n = dim(); i < n; ++i)
       if (!(axes_[i] == other.axes_[i]))
         return false;
-    for (decltype(size()) i = 0, n = size(); i < n; ++i)
-      if (storage_.value(i) != other.storage_.value(i))
+    if (!(storage_ == other.storage_))
         return false;
     return true;
   }
@@ -256,16 +254,14 @@ private:
   std::size_t field_count() const
   {
     std::size_t fc = 1;
-    visitor::shape s;
-    for (auto& a : axes_)
-      fc *= apply_visitor(s, a);
+    for (auto& a : axes_) fc *= shape(a);
     return fc;
   }
 
   template <typename Linearize, typename First, typename... Rest>
   void index_impl(Linearize& lin, First first, Rest... rest) const
   {
-    lin.in = first;
+    lin.set(first);
     apply_visitor(lin, axes_[dim() - sizeof...(Rest) - 1]);
     index_impl(lin, rest...);
   }
@@ -276,7 +272,7 @@ private:
   template <typename Linearize, typename First, typename... Rest>
   double windex_impl(Linearize& lin, First first, Rest... rest) const
   {
-    lin.in = first;
+    lin.set(first);
     apply_visitor(lin, axes_[dim() - sizeof...(Rest)]);
     return windex_impl(lin, rest...);
   }
@@ -293,7 +289,7 @@ private:
                       const Iterator& args_end) const {
     auto axes_iter = axes_.begin();
     while (args_begin != args_end) {
-      lin.in = *args_begin;
+      lin.set(*args_begin);
       apply_visitor(lin, *axes_iter);
       ++args_begin;
       ++axes_iter;

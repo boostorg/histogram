@@ -58,10 +58,10 @@ endif()
 include_directories(../include ${Boost_INCLUDE_DIRS})
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
-  add_definitions(-O0 -g)
+  add_definitions(-Og -g)
   message(STATUS "Build type: DEBUG [optimizations off]")
 elseif(CMAKE_BUILD_TYPE STREQUAL "cov")
-  add_definitions(-O0 -g)
+  add_definitions(-Og -g)
   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage)
   message(STATUS "Build type: COVERAGE [optimizations off]")
 elseif(CMAKE_BUILD_TYPE STREQUAL "perf")
@@ -77,20 +77,25 @@ endif()
 
 # checks
 if(BUILD_CHECKS)
-  add_executable(speed_cpp_static
+  add_executable(speed_cpp_hs_ss
                  ../test/check/speed_cpp.cpp)
-  target_link_libraries(speed_cpp_static ${LIBRARIES})
-  target_compile_definitions(speed_cpp_static PUBLIC HISTOGRAM_TYPE=1)
+  target_link_libraries(speed_cpp_hs_ss ${LIBRARIES})
+  target_compile_definitions(speed_cpp_hs_ss PUBLIC HISTOGRAM_TYPE=1)
 
-  add_executable(speed_cpp_dynamic1
+  add_executable(speed_cpp_hs_ds
                  ../test/check/speed_cpp.cpp)
-  target_link_libraries(speed_cpp_dynamic1 ${LIBRARIES})
-  target_compile_definitions(speed_cpp_dynamic1 PUBLIC HISTOGRAM_TYPE=2)
+  target_link_libraries(speed_cpp_hs_ds ${LIBRARIES})
+  target_compile_definitions(speed_cpp_hs_ds PUBLIC HISTOGRAM_TYPE=2)
 
-  add_executable(speed_cpp_dynamic2
+  add_executable(speed_cpp_hd_ss
                  ../test/check/speed_cpp.cpp)
-  target_link_libraries(speed_cpp_dynamic2 ${LIBRARIES})
-  target_compile_definitions(speed_cpp_dynamic2 PUBLIC HISTOGRAM_TYPE=3)
+  target_link_libraries(speed_cpp_hd_ss ${LIBRARIES})
+  target_compile_definitions(speed_cpp_hd_ss PUBLIC HISTOGRAM_TYPE=3)
+
+  add_executable(speed_cpp_hd_sd
+                 ../test/check/speed_cpp.cpp)
+  target_link_libraries(speed_cpp_hd_sd ${LIBRARIES})
+  target_compile_definitions(speed_cpp_hd_sd PUBLIC HISTOGRAM_TYPE=4)
 endif()
 
 # tests
