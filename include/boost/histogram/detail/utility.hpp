@@ -12,10 +12,55 @@
 #include <cstddef>
 #include <cstring>
 #include <new> // for bad_alloc exception
+#include <boost/variant/static_visitor.hpp>
 
 namespace boost {
 namespace histogram {
 namespace detail {
+
+    template <typename T,
+              typename = decltype(*std::declval<T&>()),
+              typename = decltype(++std::declval<T&>())>
+    struct is_iterator {};
+
+    template <typename T,
+              typename = decltype(T::axes_),
+              typename = decltype(T::storage_)>
+    struct is_histogram {};
+
+    struct linearize : public static_visitor<void> {
+        int in = 0;
+        std::size_t out = 0, stride = 1;
+
+        template <typename A>
+        void operator()(const A& a) {
+          // the following is highly optimized code that runs in a hot loop;
+          // please measure the performance impact of changes
+          int j = in;
+          const int uoflow = a.uoflow();
+          // set stride to zero if j is not in range,
+          // this communicates the out-of-range condition to the caller
+          stride *= (j >= -uoflow) * (j < (a.bins() + uoflow));
+          j += (j < 0) * (a.bins() + 2); // wrap around if j < 0
+          out += j * stride;
+          #pragma GCC diagnostic ignored "-Wstrict-overflow"
+          stride *= a.shape();
+        }
+    };
+
+    struct linearize_x : public static_visitor<void> {
+        double in = 0.0;
+        std::size_t out = 0, stride = 1;
+
+        template <typename A>
+        void operator()(const A& a) {
+          int j = a.index(in); // j is guaranteed to be in range [-1, bins]
+          j += (j < 0) * (a.bins() + 2); // wrap around if j < 0
+          out += j * stride;
+          #pragma GCC diagnostic ignored "-Wstrict-overflow"
+          stride *= (j < a.shape()) * a.shape(); // stride == 0 indicates out-of-range
+        }
+    };
 
     inline
     std::string escape(const std::string& s) {

@@ -8,7 +8,6 @@
 #define _BOOST_HISTOGRAM_AXIS_HPP_
 
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/variant.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <type_traits>
 #include <string>
@@ -27,7 +26,7 @@ namespace boost {
 namespace histogram {
 
 /// Common base class for most axes
-class axis_base {
+class axis_with_label {
 public:
   /// Returns the number of bins, excluding overflow/underflow.
   inline int bins() const { return size_ ; }
@@ -41,20 +40,20 @@ public:
   void label(const std::string& label) { label_ = label; }
 
 protected:
-  axis_base(unsigned n, const std::string& label, bool uoflow) :
+  axis_with_label(unsigned n, const std::string& label, bool uoflow) :
     size_(n), shape_(size_ + 2 * uoflow), label_(label)
   {
     if (n == 0)
       throw std::logic_error("bins > 0 required");
   }
 
-  axis_base() = default;
-  axis_base(const axis_base&) = default;
-  axis_base(axis_base&&) = default;
-  axis_base& operator=(const axis_base&) = default;
-  axis_base& operator=(axis_base&&) = default;
+  axis_with_label() = default;
+  axis_with_label(const axis_with_label&) = default;
+  axis_with_label(axis_with_label&&) = default;
+  axis_with_label& operator=(const axis_with_label&) = default;
+  axis_with_label& operator=(axis_with_label&&) = default;
 
-  bool operator==(const axis_base& o) const
+  bool operator==(const axis_with_label& o) const
   { return size_ == o.size_ && shape_ == o.shape_ && label_ == o.label_; }
 
 private:
@@ -63,7 +62,7 @@ private:
   std::string label_;
 
   template <class Archive>
-  friend void serialize(Archive&, axis_base&, unsigned);
+  friend void serialize(Archive&, axis_with_label&, unsigned);
 };
 
 /// Mixin for real-valued axes
@@ -90,7 +89,7 @@ public:
   * This is the simplest and common binning strategy.
   * Binning is a O(1) operation.
   */
-class regular_axis: public axis_base, public real_axis<regular_axis> {
+class regular_axis: public axis_with_label, public real_axis<regular_axis> {
 public:
   /** Constructor
    *
@@ -103,7 +102,7 @@ public:
   regular_axis(unsigned n, double min, double max,
                const std::string& label = std::string(),
                bool uoflow = true) :
-    axis_base(n, label, uoflow),
+    axis_with_label(n, label, uoflow),
     min_(min),
     delta_((max - min) / n)
   {
@@ -136,7 +135,7 @@ public:
 
   bool operator==(const regular_axis& o) const
   {
-    return axis_base::operator==(o) &&
+    return axis_with_label::operator==(o) &&
            min_ == o.min_ &&
            delta_ == o.delta_;
   }
@@ -154,7 +153,7 @@ private:
   * since the axis is circular and wraps around after :math:`2 \pi`.
   * Binning is a O(1) operation.
   */
-class polar_axis: public axis_base, public real_axis<polar_axis> {
+class polar_axis: public axis_with_label, public real_axis<polar_axis> {
 public:
   /** Constructor
    * \param n  number of bins
@@ -164,7 +163,7 @@ public:
   explicit
   polar_axis(unsigned n, double start = 0.0,
              const std::string& label = std::string()) :
-    axis_base(n, label, false),
+    axis_with_label(n, label, false),
     start_(start)
   {}
 
@@ -190,7 +189,7 @@ public:
   }
 
   bool operator==(const polar_axis& o) const
-  { return axis_base::operator==(o) && start_ == o.start_; }
+  { return axis_with_label::operator==(o) && start_ == o.start_; }
 
 private:
   double start_;
@@ -204,7 +203,7 @@ private:
   * Binning is a O(log(N)) operation. If speed matters and the problem domain
   * allows it, prefer a regular_axis.
   */
-class variable_axis : public axis_base, public real_axis<variable_axis> {
+class variable_axis : public axis_with_label, public real_axis<variable_axis> {
 public:
 	/** Constructor
 	 *
@@ -216,7 +215,7 @@ public:
   variable_axis(const std::initializer_list<double>& x,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
-      axis_base(x.size() - 1, label, uoflow),
+      axis_with_label(x.size() - 1, label, uoflow),
       x_(new double[x.size()])
   {
       std::copy(x.begin(), x.end(), x_.get());
@@ -226,7 +225,7 @@ public:
   variable_axis(const std::vector<double>& x,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
-      axis_base(x.size() - 1, label, uoflow),
+      axis_with_label(x.size() - 1, label, uoflow),
       x_(new double[x.size()])
   {
       std::copy(x.begin(), x.end(), x_.get());
@@ -237,7 +236,7 @@ public:
   variable_axis(Iterator begin, Iterator end,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
-      axis_base(std::distance(begin, end) - 1, label, uoflow),
+      axis_with_label(std::distance(begin, end) - 1, label, uoflow),
       x_(new double[std::distance(begin, end)])
   {
       std::copy(begin, end, x_.get());
@@ -246,7 +245,7 @@ public:
 
   variable_axis() = default;
   variable_axis(const variable_axis& o) :
-    axis_base(o),
+    axis_with_label(o),
     x_(new double[bins() + 1])
   {
     std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
@@ -255,7 +254,7 @@ public:
   variable_axis& operator=(const variable_axis& o)
   {
     if (this != &o) {
-        axis_base::operator=(o);
+        axis_with_label::operator=(o);
         x_.reset(new double[bins() + 1]);
         std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
     }
@@ -279,7 +278,7 @@ public:
 
   bool operator==(const variable_axis& o) const
   {
-    if (!axis_base::operator==(o))
+    if (!axis_with_label::operator==(o))
         return false;
     for (unsigned i = 0, n = bins() + 1; i < n; ++i)
         if (x_[i] != o.x_[i])
@@ -297,7 +296,7 @@ private:
 /** An axis for a contiguous range of integers. There are no underflow/overflow
  *  bins for this axis. Binning is a O(1) operation.
  */
-class integer_axis: public axis_base {
+class integer_axis: public axis_with_label {
 public:
   typedef int value_type;
 
@@ -309,7 +308,7 @@ public:
   integer_axis(int min, int max,
                const std::string& label = std::string(),
                bool uoflow = true) :
-    axis_base(max + 1 - min, label, uoflow),
+    axis_with_label(max + 1 - min, label, uoflow),
     min_(min)
   {
     if (min >= max)
@@ -323,17 +322,17 @@ public:
   integer_axis& operator=(integer_axis&&) = default;
 
   ///Returns the bin index for the passed argument.
-  inline int index(double x) const
+  inline int index(int x) const
   {
-    const double z = x - min_;
-    return z >= 0.0 ? (z > bins() ? bins() : static_cast<int>(z)) : -1;
+    const int z = x - min_;
+    return z >= 0 ? (z > bins() ? bins() : z) : -1;
   }
   ///Returns the integer that is mapped to the bin index.
   int operator[](int idx) const { return min_ + idx; }
 
   bool operator==(const integer_axis& o) const
   {
-    return axis_base::operator==(o) && min_ == o.min_;
+    return axis_with_label::operator==(o) && min_ == o.min_;
   }
 
 private:
@@ -383,10 +382,10 @@ public:
   inline bool uoflow() const { return false; }
 
   ///Returns the bin index for the passed argument.
-  inline int index(double x) const
-  { if (!(0.0 <= x && x < bins()))
+  inline int index(int x) const
+  { if (!(0 <= x && x < bins()))
       throw std::out_of_range("category index is out of range");
-    return std::rint(x); }
+    return x; }
   ///Returns the category for the bin index.
   const std::string& operator[](int idx) const
   { return categories_[idx]; }
@@ -400,16 +399,6 @@ private:
   template <class Archive>
   friend void serialize(Archive&, category_axis&, unsigned);
 };
-
-using axis_t = variant<
-                 regular_axis, // most common type
-                 polar_axis,
-                 variable_axis,
-                 category_axis,
-                 integer_axis
-               >;
-
-// axis_t is automatically output-streamable if all its bounded types are
 
 }
 }

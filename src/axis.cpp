@@ -132,7 +132,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T> > {
 
     template <typename Class, typename U>
     static
-    typename std::enable_if<std::is_base_of<axis_base, U>::value, void>::type
+    typename std::enable_if<std::is_base_of<axis_with_label, U>::value, void>::type
     add_axis_label(Class& cl) {
         cl.add_property("label",
                         python::make_function((const std::string&(U::*)() const) &U::label,
@@ -143,7 +143,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T> > {
 
     template <typename Class, typename U>
     static
-    typename std::enable_if<!std::is_base_of<axis_base, U>::value, void>::type
+    typename std::enable_if<!std::is_base_of<axis_with_label, U>::value, void>::type
     add_axis_label(Class& cl) {}
 
     template <class Class>
@@ -152,6 +152,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T> > {
     {
         add_axis_label<Class, T>(cl);
         cl.add_property("bins", &T::bins);
+        cl.add_property("shape", &T::shape);
         cl.def("index", &T::index,
                ":param float x: value"
                "\n:returns: bin index for the passed value",

@@ -320,9 +320,9 @@ class histogramest(unittest.TestCase):
         h = histogram(integer_axis(-1, 1))
         self.assertEqual(h.dim, 1)
         self.assertEqual(h.axis(0), integer_axis(-1, 1))
-        self.assertEqual(h.shape(0), 5)
+        self.assertEqual(h.axis(0).shape, 5)
         self.assertEqual(h.depth, 1)
-        self.assertEqual(histogram(integer_axis(-1, 1, uoflow=False)).shape(0), 3)
+        self.assertEqual(histogram(integer_axis(-1, 1, uoflow=False)).axis(0).shape, 3)
         self.assertNotEqual(h, histogram(regular_axis(1, -1, 1)))
         self.assertNotEqual(h, histogram(integer_axis(-1, 2)))
         self.assertNotEqual(h, histogram(integer_axis(-1, 1, label="ia")))
@@ -355,10 +355,10 @@ class histogramest(unittest.TestCase):
             h.fill(10)
         self.assertEqual(h0.sum, 6)
         self.assertEqual(h0.depth, 1)
-        self.assertEqual(h0.shape(0), 3)
+        self.assertEqual(h0.axis(0).shape, 3)
         self.assertEqual(h1.sum, 8)
         self.assertEqual(h1.depth, 1)
-        self.assertEqual(h1.shape(0), 5)
+        self.assertEqual(h1.axis(0).shape, 5)
 
         for h in (h0, h1):
             self.assertEqual(h.value(0), 2)
@@ -577,9 +577,9 @@ class histogramest(unittest.TestCase):
                       integer_axis(0, 2, uoflow=False),
                       integer_axis(0, 3, uoflow=False))
         r = numpy.zeros((2, 3, 4), dtype=numpy.int8)
-        for i in range(a.bins(0)):
-            for j in range(a.bins(1)):
-                for k in range(a.bins(2)):
+        for i in range(a.axis(0).bins):
+            for j in range(a.axis(1).bins):
+                for k in range(a.axis(2).bins):
                     for m in range(i+j+k):
                         a.fill(i, j, k)
                     r[i,j,k] = i+j+k
@@ -587,9 +587,9 @@ class histogramest(unittest.TestCase):
         v = numpy.asarray(a) # a view
 
         c2 = numpy.zeros((2, 3, 4), dtype=numpy.int8)
-        for i in range(a.bins(0)):
-            for j in range(a.bins(1)):
-                for k in range(a.bins(2)):
+        for i in range(a.axis(0).bins):
+            for j in range(a.axis(1).bins):
+                for k in range(a.axis(2).bins):
                     c2[i,j,k] = a.value(i,j,k)
 
         self.assertTrue(numpy.all(c == c2))
@@ -602,9 +602,9 @@ class histogramest(unittest.TestCase):
                       integer_axis(0, 2),
                       integer_axis(0, 3))
         r = numpy.zeros((2, 4, 5, 6))
-        for i in range(a.bins(0)):
-            for j in range(a.bins(1)):
-                for k in range(a.bins(2)):
+        for i in range(a.axis(0).bins):
+            for j in range(a.axis(1).bins):
+                for k in range(a.axis(2).bins):
                     a.fill(i, j, k, w=i+j+k)
                     r[0, i, j, k] = i+j+k
                     r[1, i, j, k] = (i+j+k)**2
@@ -612,9 +612,9 @@ class histogramest(unittest.TestCase):
         v = numpy.asarray(a) # a view
 
         c2 = numpy.zeros((2, 4, 5, 6))
-        for i in range(a.bins(0)):
-            for j in range(a.bins(1)):
-                for k in range(a.bins(2)):
+        for i in range(a.axis(0).bins):
+            for j in range(a.axis(1).bins):
+                for k in range(a.axis(2).bins):
                     c2[0, i, j, k] = a.value(i,j,k)
                     c2[1, i, j, k] = a.variance(i,j,k)
 

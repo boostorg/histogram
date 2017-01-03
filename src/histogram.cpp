@@ -5,9 +5,10 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include "serialization_suite.hpp"
-#include <boost/histogram/serialization.hpp>
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/utility.hpp>
+#include <boost/histogram/serialization.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/foreach.hpp>
@@ -19,12 +20,17 @@
 # include <numpy/arrayobject.h>
 #endif
 
+#ifndef BOOST_HISTOGRAM_AXIS_LIMIT
+  #define BOOST_HISTOGRAM_AXIS_LIMIT 32
+#endif
+
 namespace boost {
 namespace histogram {
 
-constexpr unsigned boost_histogram_axis_limit = 32;
-typedef histogram<Dynamic, dynamic_storage> dynamic_histogram;
-typedef std::vector<axis_t> axes_t;
+using dynamic_histogram = dynamic::histogram<
+  dynamic_storage, regular_axis, polar_axis,
+  variable_axis, integer_axis, category_axis
+>;
 
 struct axis_visitor : public static_visitor<python::object>
 {
@@ -35,7 +41,7 @@ struct axis_visitor : public static_visitor<python::object>
 python::object
 histogram_axis(const dynamic_histogram& self, unsigned i)
 {
-  return apply_visitor(axis_visitor(), self.axis<axis_t>(i));
+  return apply_visitor(axis_visitor(), self.axis(i));
 }
 
 python::object
@@ -52,7 +58,7 @@ histogram_init(python::tuple args, python::dict kwargs) {
   }
 
   // normal constructor
-  axes_t axes;
+  dynamic_histogram::axes_t axes;
   for (unsigned i = 1, n = len(args); i < n; ++i) {
     object pa = args[i];
     extract<regular_axis> er(pa);
@@ -70,7 +76,7 @@ histogram_init(python::tuple args, python::dict kwargs) {
     PyErr_SetString(PyExc_TypeError, msg.c_str());
     throw_error_already_set();
   }
-  return pyinit(axes);
+  return pyinit(std::move(axes));
 }
 
 python::object
@@ -169,7 +175,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
     throw_error_already_set();      
   }
 
-  double v[boost_histogram_axis_limit];
+  double v[BOOST_HISTOGRAM_AXIS_LIMIT];
   for (unsigned i = 0; i < dim; ++i)
     v[i] = extract<double>(args[1 + i]);
 
@@ -199,7 +205,7 @@ histogram_value(python::tuple args, python::dict kwargs) {
     throw_error_already_set();    
   }
 
-  int idx[boost_histogram_axis_limit];
+  int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
   for (unsigned i = 0; i < self.dim(); ++i)
     idx[i] = extract<int>(args[1 + i]);
 
@@ -221,7 +227,7 @@ histogram_variance(python::tuple args, python::dict kwargs) {
     throw_error_already_set();    
   }
 
-  int idx[boost_histogram_axis_limit];
+  int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
   for (unsigned i = 0; i < self.dim(); ++i)
     idx[i] = extract<int>(args[1 + i]);
 
@@ -234,7 +240,7 @@ public:
   python::dict
   histogram_array_interface(dynamic_histogram& self) {
     python::dict d;
-    python::list shape;
+    python::list shapes;
     python::list strides;
     std::size_t stride = 1;
     if (self.depth() == sizeof(detail::wtype)) {
@@ -242,32 +248,29 @@ public:
       d["typestr"] = python::str("|f") + python::str(stride);
       strides.append(stride);
       stride *= 2;
-      shape.append(2);
+      shapes.append(2);
     } else {
       stride *= self.depth();
       d["typestr"] = python::str("|u") + python::str(stride);
     }
     for (unsigned i = 0; i < self.dim(); ++i) {
-      shape.append(self.shape(i));
+      shapes.append(shape(self.axis(i)));
       strides.append(stride);
-      stride *= self.shape(i);
+      stride *= shape(self.axis(i));
     }
-    d["shape"] = python::tuple(shape);
+    d["shape"] = python::tuple(shapes);
     d["data"] = python::make_tuple(reinterpret_cast<uintptr_t>(self.data()), false);
     d["strides"] = python::tuple(strides);
     return d;
   }
 };
 
-template <class Archive>
-inline void serialize(Archive& ar, dynamic_histogram& h, unsigned) {
-  ar & boost::serialization::base_object<dynamic_histogram::base_t>(h);
-}
-
-template <class Archive>
-inline void serialize(Archive& ar, dynamic_histogram::base_t& h, unsigned) {
-  ar & h.axes_;
-  ar & h.storage_;
+namespace dynamic {
+  template <typename Archiv>
+  void serialize(Archiv& ar, dynamic_histogram& h, unsigned version) {
+    ar & h.axes_;
+    ar & h.storage_;
+  }    
 }
 
 void register_histogram()
@@ -277,8 +280,7 @@ void register_histogram()
   docstring_options dopt(true, true, false);
 
   // used to pass arguments from raw python init to specialized C++ constructor
-  class_<axes_t>("axes_t", no_init);
-  class_<axes_t::const_iterator>("axes_const_iterator", no_init);
+  class_<dynamic_histogram::axes_t>("axes_t", no_init);
 
   class_<dynamic_histogram, boost::shared_ptr<dynamic_histogram>>("histogram",
     "N-dimensional histogram for real-valued data.",
@@ -286,23 +288,23 @@ void register_histogram()
     .def("__init__", raw_function(histogram_init),
        ":param axis args: axis objects"
        "\nPass one or more axis objects to define"
-       "\nthe dimensions of the histogram.")
+       "\nthe dimensions of the dynamic_histogram.")
     // shadowed C++ ctors
-    .def(init<axes_t>())
+    .def(init<const dynamic_histogram::axes_t&>())
     .add_property("__array_interface__",
             &histogram_access::histogram_array_interface)
     .add_property("dim", &dynamic_histogram::dim,
-            "dimensions of the histogram")
-    .def("bins", &dynamic_histogram::bins,
-       ":param int i: index of the axis\n"
-       ":returns: number of bins for axis i",
-       args("self", "i"))
-    .def("shape", &dynamic_histogram::shape,
-       ":param int i: index of the axis\n"
-       ":returns: number of count fields for axis i\n"
-       "  (bins + 2 if underflow and overflow"
-       " bins are enabled, otherwise equal to bins",
-       args("self", "i"))
+            "dimensions of the histogram (number of axes)")
+    // .def("bins", &histogram_bins,
+    //    ":param int i: index of the axis\n"
+    //    ":returns: number of bins for axis i",
+    //    args("self", "i"))
+    // .def("shape", &histogram_shape,
+    //    ":param int i: index of the axis\n"
+    //    ":returns: number of count fields for axis i\n"
+    //    "  (bins + 2 if underflow and overflow"
+    //    " bins are enabled, otherwise equal to bins",
+    //    args("self", "i"))
     .def("axis", histogram_axis,
        ":param int i: index of the axis\n"
        ":returns: axis object for axis i",

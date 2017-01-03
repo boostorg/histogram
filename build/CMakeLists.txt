@@ -95,10 +95,10 @@ endif()
 
 # tests
 enable_testing()
-add_executable(histogram_test
-               ../test/histogram_test.cpp)
-target_link_libraries(histogram_test ${LIBRARIES})
-add_test(histogram_test histogram_test)
+add_executable(dynamic_histogram_test
+               ../test/dynamic_histogram_test.cpp)
+target_link_libraries(dynamic_histogram_test ${LIBRARIES})
+add_test(dynamic_histogram_test dynamic_histogram_test)
 
 add_executable(axis_test
                ../test/axis_test.cpp)

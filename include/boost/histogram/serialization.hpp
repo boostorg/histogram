@@ -7,7 +7,7 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP_
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP_
 
-#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/dynamic_histogram.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
@@ -58,7 +58,7 @@ inline void serialize(Archive& ar, dynamic_storage & store, unsigned version)
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, axis_base & base, unsigned version)
+inline void serialize(Archive& ar, axis_with_label & base, unsigned version)
 {
   ar & base.size_;
   ar & base.shape_;
@@ -68,7 +68,7 @@ inline void serialize(Archive& ar, axis_base & base, unsigned version)
 template <class Archive>
 inline void serialize(Archive& ar, regular_axis & axis ,unsigned version)
 {
-  ar & boost::serialization::base_object<axis_base>(axis);
+  ar & boost::serialization::base_object<axis_with_label>(axis);
   ar & axis.min_;
   ar & axis.delta_;
 }
@@ -76,14 +76,14 @@ inline void serialize(Archive& ar, regular_axis & axis ,unsigned version)
 template <class Archive>
 inline void serialize(Archive& ar, polar_axis & axis, unsigned version)
 {
-  ar & boost::serialization::base_object<axis_base>(axis);
+  ar & boost::serialization::base_object<axis_with_label>(axis);
   ar & axis.start_;
 }
 
 template <class Archive>
 inline void serialize(Archive& ar, variable_axis & axis, unsigned version)
 {
-  ar & boost::serialization::base_object<axis_base>(axis);
+  ar & boost::serialization::base_object<axis_with_label>(axis);
   if (Archive::is_loading::value)
 	  axis.x_.reset(new double[axis.bins() + 1]);
   ar & boost::serialization::make_array(axis.x_.get(), axis.bins() + 1);
@@ -92,7 +92,7 @@ inline void serialize(Archive& ar, variable_axis & axis, unsigned version)
 template <class Archive>
 inline void serialize(Archive& ar, integer_axis & axis, unsigned version)
 {
-  ar & boost::serialization::base_object<axis_base>(axis);
+  ar & boost::serialization::base_object<axis_with_label>(axis);
   ar & axis.min_;
 }
 
@@ -102,17 +102,15 @@ inline void serialize(Archive& ar, category_axis & axis, unsigned version)
   ar & axis.categories_;
 }
 
-template <class Archive, class Axes, class Storage>
-inline void serialize(Archive& ar, histogram_common<Axes, Storage> & h, unsigned version)
-{
-  ar & h.axes_;
-  ar & h.storage_;
-}
+namespace dynamic {
 
-template <class Archive, unsigned Dim, class Storage>
-inline void serialize(Archive& ar, histogram<Dim, Storage> & h, unsigned version)
-{
-  ar & boost::serialization::base_object<typename histogram<Dim, Storage>::base_t>(h);
+  template <class Archive, class Storage, class... Axes>
+  inline void serialize(Archive& ar, histogram<Storage, Axes...>& h, unsigned version)
+  {
+    ar & h.axes_;
+    ar & h.storage_;
+  }
+
 }
 
 } // ns:histogram

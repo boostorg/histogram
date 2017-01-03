@@ -7,11 +7,17 @@
 #define BOOST_TEST_MODULE axis_test
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
+#include <boost/variant.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <limits>
 using namespace boost::histogram;
+
+using axis_t = boost::variant<
+    regular_axis, polar_axis, variable_axis,
+    category_axis, integer_axis
+>;
 
 // only test things not already covered by python_test_suite
 
@@ -87,13 +93,12 @@ BOOST_AUTO_TEST_CASE(category_axis_operators) {
     BOOST_CHECK_EQUAL(a, b);
     b = b;
     BOOST_CHECK_EQUAL(a, b);
-    BOOST_CHECK_EQUAL(a.index(0.0), 0);
-    BOOST_CHECK_EQUAL(a.index(1.0), 1);
-    BOOST_CHECK_EQUAL(a.index(2.0), 2);
+    BOOST_CHECK_EQUAL(a.index(0), 0);
+    BOOST_CHECK_EQUAL(a.index(1), 1);
+    BOOST_CHECK_EQUAL(a.index(2), 2);
 
-    BOOST_CHECK_THROW(a.index(std::numeric_limits<double>::infinity()), std::out_of_range);
-    BOOST_CHECK_THROW(a.index(-std::numeric_limits<double>::infinity()), std::out_of_range);
-    BOOST_CHECK_THROW(a.index(std::numeric_limits<double>::quiet_NaN()), std::out_of_range);
+    BOOST_CHECK_THROW(a.index(-1), std::out_of_range);
+    BOOST_CHECK_THROW(a.index(3), std::out_of_range);
 }
 
 BOOST_AUTO_TEST_CASE(integer_axis_operators) {
@@ -107,16 +112,10 @@ BOOST_AUTO_TEST_CASE(integer_axis_operators) {
     BOOST_CHECK_EQUAL(a.index(-10), -1);
     BOOST_CHECK_EQUAL(a.index(-2), -1);
     BOOST_CHECK_EQUAL(a.index(-1), 0);
-    BOOST_CHECK_EQUAL(a.index(-0.1), 0);
     BOOST_CHECK_EQUAL(a.index(0), 1);
-    BOOST_CHECK_EQUAL(a.index(0.1), 1);
-    BOOST_CHECK_EQUAL(a.index(0.9), 1);
     BOOST_CHECK_EQUAL(a.index(1), 2);
     BOOST_CHECK_EQUAL(a.index(2), 3);
     BOOST_CHECK_EQUAL(a.index(10), 3);
-    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::infinity()), 3);
-    BOOST_CHECK_EQUAL(a.index(-std::numeric_limits<double>::infinity()), -1);
-    BOOST_CHECK_EQUAL(a.index(std::numeric_limits<double>::quiet_NaN()), -1);
 }
 
 BOOST_AUTO_TEST_CASE(axis_t_streamable) {
