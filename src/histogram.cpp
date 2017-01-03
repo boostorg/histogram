@@ -27,10 +27,7 @@
 namespace boost {
 namespace histogram {
 
-using dynamic_histogram = dynamic::histogram<
-  dynamic_storage, regular_axis, polar_axis,
-  variable_axis, integer_axis, category_axis
->;
+using dynamic_histogram = dynamic::histogram<>;
 
 struct axis_visitor : public static_visitor<python::object>
 {

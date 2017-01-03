@@ -9,21 +9,11 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/static_storage.hpp>
+#include <boost/histogram/utility.hpp>
 #include <sstream>
 #include <string>
 #include <limits>
 using namespace boost::histogram;
-
-template <typename Storage1, typename Storage2>
-bool operator==(const Storage1& s1, const Storage2& s2)
-{
-    if (s1.size() != s2.size())
-        return false;
-    for (std::size_t i = 0, n = s1.size(); i < n; ++i)
-        if (s1.value(i) != s2.value(i) || s1.variance(i) != s2.variance(i))
-            return false;
-    return true;
-}
 
 BOOST_AUTO_TEST_CASE(equal_operator)
 {

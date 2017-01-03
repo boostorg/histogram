@@ -45,10 +45,11 @@ class dynamic_storage {
   using buffer_t = detail::buffer_t;
 
 public:
+  struct storage_tag {};
   using value_t = double;
   using variance_t = double;
 
-  dynamic_storage(std::size_t n = 0) :
+  explicit dynamic_storage(std::size_t n = 0) :
     data_(n * sizeof(uint8_t)),
     depth_(sizeof(uint8_t))
   {}
@@ -64,11 +65,11 @@ public:
   {
     for (std::size_t i = 0, n = size(); i < n; ++i) {
       switch (depth_) {
-        case sizeof(uint8_t): add_impl<uint8_t, T>(i, o.data_.template get<T>(i)); break;
-        case sizeof(uint16_t): add_impl<uint16_t, T>(i, o.data_.template get<T>(i)); break;
-        case sizeof(uint32_t): add_impl<uint32_t, T>(i, o.data_.template get<T>(i)); break;
-        case sizeof(uint64_t): add_impl<uint64_t, T>(i, o.data_.template get<T>(i)); break;
-        case sizeof(wtype): add_impl<wtype, T>(i, o.data_.template get<T>(i)); break;
+        case sizeof(uint8_t): add_impl<uint8_t, T>(i, o.value(i)); break;
+        case sizeof(uint16_t): add_impl<uint16_t, T>(i, o.value(i)); break;
+        case sizeof(uint32_t): add_impl<uint32_t, T>(i, o.value(i)); break;
+        case sizeof(uint64_t): add_impl<uint64_t, T>(i, o.value(i)); break;
+        case sizeof(wtype): add_impl<wtype, T>(i, o.value(i)); break;
       }
     }
   }
@@ -129,13 +130,13 @@ private:
   typename std::enable_if<!std::is_same<T, wtype>::value, void>::type
   increase_impl(std::size_t i)
   {
-    auto& b = data_.get<T>(i);
+    auto& b = data_.at<T>(i);
     if (b < std::numeric_limits<T>::max())
       ++b;
     else {
       grow_impl<T>();
       using U = typename next_storage_type<T>::type;
-      auto& b = data_.get<U>(i);
+      auto& b = data_.at<U>(i);
       ++b;
     }
   }
@@ -144,14 +145,14 @@ private:
   typename std::enable_if<std::is_same<T, wtype>::value, void>::type
   increase_impl(std::size_t i)
   {
-    ++(data_.get<wtype>(i));
+    ++(data_.at<wtype>(i));
   }
 
   template <typename T, typename O = uint64_t>
   typename std::enable_if<!std::is_same<T, wtype>::value, void>::type
   add_impl(std::size_t i, O o)
   {
-    auto& b = data_.get<T>(i);
+    auto& b = data_.at<T>(i);
     if (static_cast<typename make_unsigned<T>::type>(std::numeric_limits<T>::max() - b) >=
         static_cast<typename make_unsigned<O>::type>(o)) {
       b += o;
@@ -165,7 +166,7 @@ private:
   typename std::enable_if<std::is_same<T, wtype>::value, void>::type
   add_impl(std::size_t i, O o)
   {
-    data_.get<wtype>(i) += o;
+    data_.at<wtype>(i) += o;
   }
 
   template <typename T>
@@ -175,16 +176,16 @@ private:
     const auto n = size();
     depth_ = sizeof(U);
     data_.resize(n * depth_);
-    auto buf_in = &(data_.get<T>(0));
-    auto buf_out = &(data_.get<U>(0));
+    auto buf_in = &(data_.at<T>(0));
+    auto buf_out = &(data_.at<U>(0));
     std::copy_backward(buf_in, buf_in + n, buf_out + n);
    }
 
   template <typename T>
   void wconvert_copy_impl(std::size_t n)
   {
-    auto buf_in = &(data_.get<T>(0));
-    auto buf_out = &(data_.get<wtype>(0));
+    auto buf_in = &(data_.at<T>(0));
+    auto buf_out = &(data_.at<wtype>(0));
     std::copy_backward(buf_in, buf_in + n, buf_out + n);
   }
 };
@@ -207,7 +208,7 @@ void dynamic_storage::increase(std::size_t i, double w)
 {
   if (depth_ != sizeof(wtype))
     wconvert();
-  data_.get<wtype>(i).add_weight(w);
+  data_.at<wtype>(i).add_weight(w);
 }
 
 inline
@@ -219,17 +220,17 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
     if (depth_ != sizeof(wtype))
       wconvert();
     for (std::size_t i = 0, n = size(); i < n; ++i)
-      data_.get<wtype>(i) += o.data_.get<wtype>(i);
+      data_.at<wtype>(i) += o.data_.at<wtype>(i);
   }
   else {
     std::size_t i = size();
     while (i--) {
       uint64_t n = 0;
       switch (o.depth_) {
-        case sizeof(uint8_t): n = o.data_.get<uint8_t>(i); break;
-        case sizeof(uint16_t): n = o.data_.get<uint16_t>(i); break;
-        case sizeof(uint32_t): n = o.data_.get<uint32_t>(i); break;
-        case sizeof(uint64_t): n = o.data_.get<uint64_t>(i); break;
+        case sizeof(uint8_t): n = o.data_.at<uint8_t>(i); break;
+        case sizeof(uint16_t): n = o.data_.at<uint16_t>(i); break;
+        case sizeof(uint32_t): n = o.data_.at<uint32_t>(i); break;
+        case sizeof(uint64_t): n = o.data_.at<uint64_t>(i); break;
         default: BOOST_ASSERT(!"never arrive here");
       }
       switch (depth_) {
@@ -249,11 +250,11 @@ inline
 dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
 {
   switch (depth_) {
-    case sizeof(uint8_t): return data_.get<uint8_t>(i);
-    case sizeof(uint16_t): return data_.get<uint16_t>(i);
-    case sizeof(uint32_t): return data_.get<uint32_t>(i);
-    case sizeof(uint64_t): return data_.get<uint64_t>(i);
-    case sizeof(wtype): return data_.get<wtype>(i).w;
+    case sizeof(uint8_t): return data_.at<uint8_t>(i);
+    case sizeof(uint16_t): return data_.at<uint16_t>(i);
+    case sizeof(uint32_t): return data_.at<uint32_t>(i);
+    case sizeof(uint64_t): return data_.at<uint64_t>(i);
+    case sizeof(wtype): return data_.at<wtype>(i).w;
     default: BOOST_ASSERT(!"never arrive here");
   }
   return 0.0;
@@ -263,11 +264,11 @@ inline
 dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
 {
   switch (depth_) {
-    case sizeof(uint8_t): return data_.get<uint8_t>(i);
-    case sizeof(uint16_t): return data_.get<uint16_t>(i);
-    case sizeof(uint32_t): return data_.get<uint32_t>(i);
-    case sizeof(uint64_t): return data_.get<uint64_t>(i);
-    case sizeof(wtype): return data_.get<wtype>(i).w2;
+    case sizeof(uint8_t): return data_.at<uint8_t>(i);
+    case sizeof(uint16_t): return data_.at<uint16_t>(i);
+    case sizeof(uint32_t): return data_.at<uint32_t>(i);
+    case sizeof(uint64_t): return data_.at<uint64_t>(i);
+    case sizeof(wtype): return data_.at<wtype>(i).w2;
     default: BOOST_ASSERT(!"never arrive here");
   }
   return 0.0;

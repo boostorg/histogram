@@ -9,6 +9,7 @@
 
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/math/constants/constants.hpp>
+#include <boost/mpl/vector.hpp>
 #include <type_traits>
 #include <string>
 #include <vector>
@@ -399,6 +400,10 @@ private:
   template <class Archive>
   friend void serialize(Archive&, category_axis&, unsigned);
 };
+
+using default_axes = mpl::vector<
+  regular_axis, polar_axis, variable_axis, category_axis, integer_axis
+>::type;
 
 }
 }

@@ -7,7 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
 #define _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
 
-#include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/detail/buffer.hpp>
 
 namespace boost {
 namespace histogram {
@@ -17,69 +17,90 @@ namespace histogram {
     using buffer_t = detail::buffer_t;
 
   public:
+    struct storage_tag {};
     using value_t = T;
     using variance_t = T;
 
-    static_storage(std::size_t n=0) : data_(n * sizeof(T)) {}
+    explicit static_storage(std::size_t n=0) : data_(n * sizeof(T)) {}
 
-    template <typename U>
-    static_storage(const static_storage<U>& other) :
-      data_(other.size() * sizeof(T))
-    {
-      for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.get<T>(i) = other.data_.template get<U>(i);
-    }
+    static_storage(const static_storage<T>& other) :
+      data_(other.data_)
+    {}
 
-    template <typename U,
-              typename std::enable_if<
-                std::is_same<T, U>::value,
-              int>::type = 0>
-    static_storage(static_storage<U>&& other) :
+    static_storage(static_storage<T>&& other) :
       data_(std::move(other.data_))
     {}
 
-    template <typename U>
-    static_storage& operator=(const static_storage<U>& other)
+    static_storage& operator=(static_storage<T>&& other)
     {
-      data_ = buffer_t(other.size() * sizeof(T));
-      for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.get<T>(i) = other.data_.template get<U>(i);
+      if (this != &other) {
+        data_ = std::move(other.data_);
+      }
+      return *this;
     }
 
-    template <typename U>
-    typename std::enable_if<std::is_same<T, U>::value, static_storage&>::type
-    operator=(static_storage<U>&& other)
+    template <typename OtherStorage,
+              typename = typename OtherStorage::storage_tag>
+    static_storage(const OtherStorage& other) :
+      data_(other.size() * sizeof(T))
     {
-      data_ = std::move(other.data_);
+      for (std::size_t i = 0, n = size(); i < n; ++i)
+        data_.at<T>(i) = other.value(i);
+    }
+
+    template <typename OtherStorage,
+              typename = typename OtherStorage::storage_tag>
+    static_storage(OtherStorage&& other) :
+      data_(other.size() * sizeof(T))
+    {
+      for (std::size_t i = 0, n = size(); i < n; ++i)
+        data_.at<T>(i) = other.value(i);
+      other = OtherStorage();
+    }
+
+    template <typename OtherStorage,
+              typename = typename OtherStorage::storage_tag>
+    static_storage& operator=(const OtherStorage& other)
+    {
+      if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
+        data_.resize(other.size() * sizeof(T));
+        for (std::size_t i = 0, n = size(); i < n; ++i)
+          data_.at<T>(i) = other.value(i);        
+      }
+      return *this;
+    }
+
+    template <typename OtherStorage,
+              typename = typename OtherStorage::storage_tag>
+    static_storage& operator=(OtherStorage&& other)
+    {
+      if (static_cast<void*>(this) != static_cast<void*>(&other)) {
+        data_.resize(other.size() * sizeof(T));
+        for (std::size_t i = 0, n = size(); i < n; ++i)
+          data_.at<T>(i) = other.value(i);        
+        other = OtherStorage();
+      }
+      return *this;
     }
 
     std::size_t size() const { return data_.nbytes() / sizeof(T); }
     constexpr unsigned depth() const { return sizeof(T); }
     const void* data() const { return data_.data(); }
-    void increase(std::size_t i) { ++(data_.get<T>(i)); }
-    value_t value(std::size_t i) const { return data_.get<T>(i); }
-    variance_t variance(std::size_t i) const { return data_.get<T>(i); }
+    void increase(std::size_t i) { ++(data_.at<T>(i)); }
+    value_t value(std::size_t i) const { return data_.at<T>(i); }
+    variance_t variance(std::size_t i) const { return data_.at<T>(i); }
 
-    template <typename U>
-    bool operator==(const static_storage<U>& other) const
+    template <typename OtherStorage,
+              typename = typename OtherStorage::storage_tag>
+    void operator+=(const OtherStorage& other)
     {
       for (std::size_t i = 0, n = size(); i < n; ++i)
-        if (data_.template get<T>(i) != other.data_.template get<U>(i))
-          return false;
-      return true;
-    }
-
-    template <typename U>
-    void operator+=(const static_storage<U>& other)
-    {
-      for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.get<T>(i) += other.data_.template get<U>(i);
+        data_.at<T>(i) += other.value(i);
     }
 
   private:
     buffer_t data_;
-
-    template <typename U> friend class static_storage;
+ 
     friend class dynamic_storage;
   };
 

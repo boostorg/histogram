@@ -16,15 +16,13 @@ namespace visitor {
   struct bins : public static_visitor<int>
   {
     template <typename A>
-    int operator()(const A& a) const
-    { return a.bins(); }
+    int operator()(const A& a) const { return a.bins(); }
   };
 
   struct shape : public static_visitor<int>
   {
     template <typename A>
-    int operator()(const A& a) const
-    { return a.shape(); }
+    int operator()(const A& a) const { return a.shape(); }
   };
 
   struct uoflow : public static_visitor<bool>
@@ -42,8 +40,7 @@ namespace visitor {
   struct cmp : public static_visitor<bool>
   {
     template <typename T>
-    bool operator()(const T& a, const T& b) const
-    { return a == b; }
+    bool operator()(const T& a, const T& b) const { return a == b; }
 
     template <typename T, typename U>
     bool operator()(const T&, const U&) const { return false; }
