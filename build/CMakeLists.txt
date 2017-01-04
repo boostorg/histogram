@@ -51,7 +51,7 @@ if(BUILD_PYTHON)
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
 else()
   find_package(Boost 1.55 REQUIRED
-             COMPONENTS iostreams serialization unit_test_framework)
+               COMPONENTS iostreams serialization unit_test_framework)
   set(LIBRARIES ${STD_LIBRARIES} ${Boost_LIBRARIES})
 endif()
 
@@ -104,6 +104,11 @@ add_executable(dynamic_histogram_test
                ../test/dynamic_histogram_test.cpp)
 target_link_libraries(dynamic_histogram_test ${LIBRARIES})
 add_test(dynamic_histogram_test dynamic_histogram_test)
+
+add_executable(static_histogram_test
+               ../test/static_histogram_test.cpp)
+target_link_libraries(static_histogram_test ${LIBRARIES})
+add_test(static_histogram_test static_histogram_test)
 
 add_executable(axis_test
                ../test/axis_test.cpp)

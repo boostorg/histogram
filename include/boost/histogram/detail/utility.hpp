@@ -21,7 +21,7 @@ namespace detail {
     struct is_iterator {};
 
     struct linearize : public static_visitor<void> {
-        int j = 0;
+        int j;
         std::size_t out = 0, stride = 1;
 
         void set(int in) { j = in; }
@@ -42,7 +42,7 @@ namespace detail {
     };
 
     struct linearize_x : public static_visitor<void> {
-        double x = 0.0;
+        double x;
         std::size_t out = 0, stride = 1;
 
         void set(double in) { x = in; }

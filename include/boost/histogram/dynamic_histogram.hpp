@@ -32,7 +32,6 @@ template <typename Storage=dynamic_storage, typename Axes=default_axes>
 class histogram
 {
 public:
-  struct histogram_tag {};
   using axis_t = typename make_variant_over<Axes>::type;
   using axes_t = std::vector<axis_t>;
   using value_t = typename Storage::value_t;
@@ -70,21 +69,18 @@ public:
     storage_ = Storage(field_count());
   }
 
-  template <typename Histogram,
-            typename = typename Histogram::histogram_tag>
-  histogram(const Histogram& other) :
+  template <typename OtherStorage>
+  histogram(const histogram<OtherStorage, Axes>& other) :
     axes_(other.axes_), storage_(other.storage_)
   {}
 
-  template <typename Histogram,
-            typename = typename Histogram::histogram_tag>
-  histogram(Histogram&& other) :
+  template <typename OtherStorage>
+  histogram(histogram<OtherStorage, Axes>&& other) :
     axes_(std::move(other.axes_)), storage_(std::move(other.storage_))
   {}
 
-  template <typename Histogram,
-            typename = typename Histogram::histogram_tag>
-  histogram& operator=(const Histogram& other)
+  template <typename OtherStorage>
+  histogram& operator=(const histogram<OtherStorage, Axes>& other)
   {
     if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
       axes_ = other.axes_;
@@ -93,18 +89,16 @@ public:
     return *this;
   }
 
-  template <typename Histogram,
-            typename = typename Histogram::histogram_tag>
-  histogram& operator=(Histogram&& other)
+  template <typename OtherStorage>
+  histogram& operator=(histogram<OtherStorage, Axes>&& other)
   {
     axes_ = std::move(other.axes_);
     storage_ = std::move(other.storage_);
     return *this;
   } 
 
-  template <typename Histogram,
-            typename = typename Histogram::histogram_tag>
-  bool operator==(const Histogram& other) const
+  template <typename OtherStorage>
+  bool operator==(const histogram<OtherStorage, Axes>& other) const
   {
     if (dim() != other.dim())
       return false;
@@ -116,9 +110,8 @@ public:
     return true;
   }
 
-  template <typename Histogram,
-            typename = typename Histogram::histogram_tag>
-  histogram& operator+=(const Histogram& other)
+  template <typename OtherStorage>
+  histogram& operator+=(const histogram<OtherStorage, Axes>& other)
   {
     if (dim() != other.dim())
       throw std::logic_error("dimensions of histograms differ");
