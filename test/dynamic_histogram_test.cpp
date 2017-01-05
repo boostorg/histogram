@@ -357,8 +357,8 @@ BOOST_AUTO_TEST_CASE(d2w)
 BOOST_AUTO_TEST_CASE(d3w)
 {
     auto h = dynamic_histogram<dynamic_storage>(integer_axis(0, 3),
-                                        integer_axis(0, 4),
-                                        integer_axis(0, 5));
+                                                integer_axis(0, 4),
+                                                integer_axis(0, 5));
     for (auto i = 0; i < bins(h.axis(0)); ++i)
         for (auto j = 0; j < bins(h.axis(1)); ++j)
             for (auto k = 0; k < bins(h.axis(2)); ++k)
@@ -450,7 +450,7 @@ BOOST_AUTO_TEST_CASE(add_3)
 BOOST_AUTO_TEST_CASE(doc_example_0)
 {
     namespace bh = boost::histogram;
-    // create 1d-dynamic_histogram with 10 equidistant bins from -1.0 to 2.0,
+    // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
     // with axis of histogram labeled as "x"
     auto h = bh::dynamic_histogram<>(bh::regular_axis(10, -1.0, 2.0, "x"));
 
