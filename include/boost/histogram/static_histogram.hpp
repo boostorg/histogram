@@ -8,10 +8,16 @@
 #define _BOOST_HISTOGRAM_STATIC_HISTOGRAM_HPP_
 
 #include <boost/config.hpp>
+#include <boost/mpl/vector.hpp>
+#include <boost/mpl/empty.hpp>
+#include <boost/fusion/adapted/mpl.hpp>
+#include <boost/fusion/include/mpl.hpp>
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/include/sequence.hpp>
 #include <boost/fusion/algorithm.hpp>
 #include <boost/fusion/include/algorithm.hpp>
+#include <boost/fusion/container/vector/convert.hpp>
+#include <boost/fusion/include/as_vector.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
@@ -21,18 +27,25 @@
 namespace boost {
 namespace histogram {
 
-template <typename Storage, typename Axis, typename... Axes>
+template <typename Storage, typename Axes>
 class static_histogram
 {
+  static_assert(!mpl::empty<Axes>::value, "at least one axis required");
+
 public:
-  using axes_t = fusion::vector<const Axis, const Axes...>;
+  using axes_t = typename mpl::transform<
+      typename fusion::result_of::as_vector<Axes>::type,
+      std::add_const<mpl::_1>
+    >::type;
   using value_t = typename Storage::value_t;
   using variance_t = typename Storage::variance_t;
 
-  static_histogram() = delete;
+  static_histogram() = delete; // makes no sense
 
-  static_histogram(Axis axis, Axes... axes) :
-    axes_(axis, axes...)
+  template <typename... Axes1>
+  explicit
+  static_histogram(const Axes1&... axes) :
+    axes_(axes...)
   {
     storage_ = Storage(field_count());
   }
@@ -63,7 +76,7 @@ public:
   } 
 
   template <typename OtherStorage>
-  bool operator==(const static_histogram<OtherStorage, Axis, Axes...>& other) const
+  bool operator==(const static_histogram<OtherStorage, Axes>& other) const
   {
     if (axes_ != other.axes_)
       return false;
@@ -73,14 +86,14 @@ public:
     return true;
   }
 
-  template <typename OtherStorage, typename OtherAxis, typename... OtherAxes>
-  bool operator==(const static_histogram<OtherStorage, OtherAxis, OtherAxes...>& other) const
+  template <typename OtherStorage, typename OtherAxes>
+  bool operator==(const static_histogram<OtherStorage, OtherAxes>& other) const
   {
     return false;
   }
 
   template <typename OtherStorage>
-  static_histogram& operator+=(const static_histogram<OtherStorage, Axis, Axes...>& other)
+  static_histogram& operator+=(const static_histogram<OtherStorage, Axes>& other)
   {
     if (axes_ != other.axes_)
       throw std::logic_error("axes of histograms differ");
@@ -156,7 +169,8 @@ public:
   }
 
   template <unsigned N>
-  typename fusion::result_of::at_c<axes_t, N>::type& axis() const
+  typename fusion::result_of::at_c<axes_t, N>::type&
+  axis() const
   { return fusion::at_c<N>(axes_); }
 
 private:
@@ -187,7 +201,7 @@ private:
   // template <typename Linearize>
   // void index_impl(Linearize&) const {} // stop recursion
 
-  template <typename OtherStorage, typename OtherAxis, typename... OtherAxes>
+  template <typename OtherStorage, typename OtherAxes>
   friend class static_histogram;
 
   template <class Archive>
@@ -195,22 +209,22 @@ private:
 };
 
 
-/// static type factory
-template <typename Axis, typename... Axes>
+/// default static type factory
+template <typename... Axes>
 inline
-static_histogram<dynamic_storage, Axis, Axes...>
-make_static_histogram(const Axis& axis, const Axes&... axes)
+static_histogram<dynamic_storage, mpl::vector<Axes...>>
+make_static_histogram(const Axes&... axes)
 {
-  return static_histogram<dynamic_storage, Axis, Axes...>(axis, axes...);
+  return static_histogram<dynamic_storage, mpl::vector<Axes...>>(axes...);
 }
 
-/// static type factory
-template <typename Storage, typename Axis, typename... Axes>
+/// static type factory with variable storage type
+template <typename Storage, typename... Axes>
 inline
-static_histogram<Storage, Axis, Axes...>
-make_static_histogram_with(const Axis& axis, const Axes&... axes)
+static_histogram<Storage, mpl::vector<Axes...>>
+make_static_histogram_with(const Axes&... axes)
 {
-  return static_histogram<Storage, Axis, Axes...>(axis, axes...);
+  return static_histogram<Storage, mpl::vector<Axes...>>(axes...);
 }
 
 }

@@ -7,14 +7,14 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP_
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP_
 
+#include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
-#include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/static_storage.hpp>
+#include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/wtype.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
-
 
 /** \file boost/histogram/serialization.hpp
  *  \brief Defines the serialization functions, to use with boost.serialize.
@@ -102,15 +102,18 @@ inline void serialize(Archive& ar, category_axis & axis, unsigned version)
   ar & axis.categories_;
 }
 
-namespace dynamic {
+template <class Archive, class Storage, class Axes>
+inline void serialize(Archive& ar, static_histogram<Storage, Axes>& h, unsigned version)
+{
+  ar & h.axes_;
+  ar & h.storage_;
+}
 
-  template <class Archive, class Storage, class... Axes>
-  inline void serialize(Archive& ar, histogram<Storage, Axes...>& h, unsigned version)
-  {
-    ar & h.axes_;
-    ar & h.storage_;
-  }
-
+template <class Archive, class Storage, class Axes>
+inline void serialize(Archive& ar, dynamic_histogram<Storage, Axes>& h, unsigned version)
+{
+  ar & h.axes_;
+  ar & h.storage_;
 }
 
 } // ns:histogram

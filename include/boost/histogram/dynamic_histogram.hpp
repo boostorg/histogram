@@ -10,6 +10,7 @@
 #include <boost/config.hpp>
 #include <boost/assert.hpp>
 #include <boost/mpl/vector.hpp>
+#include <boost/mpl/empty.hpp>
 #include <boost/variant.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include <boost/histogram/axis.hpp>
@@ -26,22 +27,23 @@
 
 namespace boost {
 namespace histogram {
-namespace dynamic {
 
 template <typename Storage=dynamic_storage, typename Axes=default_axes>
-class histogram
+class dynamic_histogram
 {
+  static_assert(!mpl::empty<Axes>::value, "at least one axis required");
+
 public:
   using axis_t = typename make_variant_over<Axes>::type;
   using axes_t = std::vector<axis_t>;
   using value_t = typename Storage::value_t;
   using variance_t = typename Storage::variance_t;
 
-  histogram() = default;
+  dynamic_histogram() = default;
 
   template <typename... Axes1>
   explicit
-  histogram(Axes1... axes) :
+  dynamic_histogram(const Axes1&... axes) :
     axes_({axis_t(axes)...})
   {
     storage_ = Storage(field_count());
@@ -49,38 +51,38 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  histogram(Iterator axes_begin, Iterator axes_end)
+  dynamic_histogram(Iterator axes_begin, Iterator axes_end)
   {
     std::copy(axes_begin, axes_end, axes_.begin());
     storage_ = Storage(field_count());
   }
 
   explicit
-  histogram(const axes_t& axes) :
+  dynamic_histogram(const axes_t& axes) :
     axes_(axes)
   {
     storage_ = Storage(field_count());
   }
 
   explicit
-  histogram(axes_t&& axes) :
+  dynamic_histogram(axes_t&& axes) :
     axes_(std::move(axes))
   {
     storage_ = Storage(field_count());
   }
 
   template <typename OtherStorage>
-  histogram(const histogram<OtherStorage, Axes>& other) :
+  dynamic_histogram(const dynamic_histogram<OtherStorage, Axes>& other) :
     axes_(other.axes_), storage_(other.storage_)
   {}
 
   template <typename OtherStorage>
-  histogram(histogram<OtherStorage, Axes>&& other) :
+  dynamic_histogram(dynamic_histogram<OtherStorage, Axes>&& other) :
     axes_(std::move(other.axes_)), storage_(std::move(other.storage_))
   {}
 
   template <typename OtherStorage>
-  histogram& operator=(const histogram<OtherStorage, Axes>& other)
+  dynamic_histogram& operator=(const dynamic_histogram<OtherStorage, Axes>& other)
   {
     if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
       axes_ = other.axes_;
@@ -90,7 +92,7 @@ public:
   }
 
   template <typename OtherStorage>
-  histogram& operator=(histogram<OtherStorage, Axes>&& other)
+  dynamic_histogram& operator=(dynamic_histogram<OtherStorage, Axes>&& other)
   {
     axes_ = std::move(other.axes_);
     storage_ = std::move(other.storage_);
@@ -98,7 +100,7 @@ public:
   } 
 
   template <typename OtherStorage>
-  bool operator==(const histogram<OtherStorage, Axes>& other) const
+  bool operator==(const dynamic_histogram<OtherStorage, Axes>& other) const
   {
     if (dim() != other.dim())
       return false;
@@ -111,7 +113,7 @@ public:
   }
 
   template <typename OtherStorage>
-  histogram& operator+=(const histogram<OtherStorage, Axes>& other)
+  dynamic_histogram& operator+=(const dynamic_histogram<OtherStorage, Axes>& other)
   {
     if (dim() != other.dim())
       throw std::logic_error("dimensions of histograms differ");
@@ -290,10 +292,10 @@ private:
   }
 
   template <typename OtherStorage, typename OtherAxes>
-  friend class histogram;
+  friend class dynamic_histogram;
 
   template <typename Archiv>
-  friend void serialize(Archiv&, histogram&, unsigned);
+  friend void serialize(Archiv&, dynamic_histogram&, unsigned);
 };
 
 
@@ -302,7 +304,7 @@ template <typename StoragePolicyA,
           typename StoragePolicyB,
           typename Axes>
 inline
-histogram<
+dynamic_histogram<
   typename std::conditional<
     (std::numeric_limits<typename StoragePolicyA::value_t>::max() >
      std::numeric_limits<typename StoragePolicyB::value_t>::max()),
@@ -310,10 +312,10 @@ histogram<
   >::type,
   Axes
 >
-operator+(const histogram<StoragePolicyA, Axes>& a,
-          const histogram<StoragePolicyB, Axes>& b)
+operator+(const dynamic_histogram<StoragePolicyA, Axes>& a,
+          const dynamic_histogram<StoragePolicyB, Axes>& b)
 {
-  histogram<
+  dynamic_histogram<
     typename std::conditional<
       (std::numeric_limits<typename StoragePolicyA::value_t>::max() >
        std::numeric_limits<typename StoragePolicyB::value_t>::max()),
@@ -324,16 +326,6 @@ operator+(const histogram<StoragePolicyA, Axes>& a,
   return tmp;
 }
 
-/// standard type factory
-template <typename... Axes>
-histogram<>
-make_histogram(Axes... axes)
-{
-  return histogram<>(std::forward<Axes>(axes)...);
-}
-
-
-}
 }
 }
 
