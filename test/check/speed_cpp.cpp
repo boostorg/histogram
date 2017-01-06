@@ -4,6 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
 #include <boost/histogram/axis.hpp>
 
@@ -15,6 +16,7 @@
 #include <cstdio>
 
 using namespace boost::histogram;
+namespace mpl = boost::mpl; 
 
 std::vector<double> random_array(unsigned n, int type) {
   std::vector<double> result(n);
@@ -109,39 +111,95 @@ int main() {
     printf("1D\n");
     printf("t[boost]   = %.3f\n",
 #if HISTOGRAM_TYPE == 1
-      compare_1d<dynamic::histogram<static_storage<int>>>(12000000, itype)
+      compare_1d<
+        static_histogram<
+          static_storage<int>,
+          mpl::vector<regular_axis>
+        >
+      >(12000000, itype)
 #elif HISTOGRAM_TYPE == 2
-      compare_1d<dynamic::histogram<dynamic_storage>>(12000000, itype)
+      compare_1d<
+        static_histogram<
+          dynamic_storage,
+          mpl::vector<regular_axis>
+        >
+      >(12000000, itype)
 #elif HISTOGRAM_TYPE == 3
-      compare_1d<dynamic::histogram<static_storage<int>>>(12000000, itype)
+      compare_1d<
+        dynamic_histogram<
+          static_storage<int>
+        >
+      >(12000000, itype)
 #elif HISTOGRAM_TYPE == 4
-      compare_1d<dynamic::histogram<dynamic_storage>>(12000000, itype)
+      compare_1d<
+        dynamic_histogram<
+          dynamic_storage
+        >
+      >(12000000, itype)
 #endif
     );
 
     printf("3D\n");
     printf("t[boost]   = %.3f\n",
 #if HISTOGRAM_TYPE == 1
-      compare_3d<dynamic::histogram<static_storage<int>>>(4000000, itype)
+      compare_3d<
+        static_histogram<
+          static_storage<int>,
+          mpl::vector<regular_axis, regular_axis, regular_axis>
+        >
+      >(4000000, itype)
 #elif HISTOGRAM_TYPE == 2
-      compare_3d<dynamic::histogram<dynamic_storage>>(4000000, itype)
+      compare_3d<
+        static_histogram<
+          dynamic_storage,
+          mpl::vector<regular_axis, regular_axis, regular_axis>
+        >
+      >(4000000, itype)
 #elif HISTOGRAM_TYPE == 3
-      compare_3d<dynamic::histogram<static_storage<int>>>(4000000, itype)
+      compare_3d<
+        dynamic_histogram<
+          static_storage<int>
+        >
+      >(4000000, itype)
 #elif HISTOGRAM_TYPE == 4
-      compare_3d<dynamic::histogram<dynamic_storage>>(4000000, itype)
+      compare_3d<
+        dynamic_histogram<
+          dynamic_storage
+        >
+      >(4000000, itype)
 #endif
     );
 
     printf("6D\n");
     printf("t[boost]   = %.3f\n",
 #if HISTOGRAM_TYPE == 1
-      compare_6d<dynamic::histogram<static_storage<int>>>(2000000, itype)
+      compare_6d<
+        static_histogram<
+          static_storage<int>,
+          mpl::vector<regular_axis, regular_axis, regular_axis,
+                      regular_axis, regular_axis, regular_axis>
+        >
+      >(2000000, itype)
 #elif HISTOGRAM_TYPE == 2
-      compare_6d<dynamic::histogram<dynamic_storage>>(2000000, itype)
+      compare_6d<
+        static_histogram<
+          dynamic_storage,
+          mpl::vector<regular_axis, regular_axis, regular_axis,
+                      regular_axis, regular_axis, regular_axis>
+        >
+      >(2000000, itype)
 #elif HISTOGRAM_TYPE == 3
-      compare_6d<dynamic::histogram<static_storage<int>>>(2000000, itype)
+      compare_6d<
+        dynamic_histogram<
+          static_storage<int>
+        >
+      >(2000000, itype)
 #elif HISTOGRAM_TYPE == 4
-      compare_6d<dynamic::histogram<dynamic_storage>>(2000000, itype)
+      compare_6d<
+        dynamic_histogram<
+          dynamic_storage
+        >
+      >(2000000, itype)
 #endif
     );
   }

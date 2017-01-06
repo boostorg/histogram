@@ -80,25 +80,25 @@ BOOST_AUTO_TEST_CASE(init_4)
 
 BOOST_AUTO_TEST_CASE(init_5)
 {
-    auto h = dynamic_histogram<dynamic_storage>(regular_axis{3, -1, 1},
-                                        integer_axis{-1, 1},
-                                        polar_axis{3},
-                                        variable_axis{-1, 0, 1},
-                                        category_axis{"A", "B", "C"});
+    auto h = make_dynamic_histogram(regular_axis{3, -1, 1},
+                                    integer_axis{-1, 1},
+                                    polar_axis{3},
+                                    variable_axis{-1, 0, 1},
+                                    category_axis{"A", "B", "C"});
     BOOST_CHECK_EQUAL(h.dim(), 5);
     BOOST_CHECK_EQUAL(h.size(), 900);
-    auto h2 = dynamic_histogram<dynamic_storage>(regular_axis{3, -1, 1},
-                                         integer_axis{-1, 1},
-                                         polar_axis{3},
-                                         variable_axis{-1, 0, 1},
-                                         category_axis{"A", "B", "C"});
+    auto h2 = make_dynamic_histogram(regular_axis{3, -1, 1},
+                                     integer_axis{-1, 1},
+                                     polar_axis{3},
+                                     variable_axis{-1, 0, 1},
+                                     category_axis{"A", "B", "C"});
     BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(copy_ctor)
 {
-    auto h = dynamic_histogram<dynamic_storage>(integer_axis(0, 1),
-                                        integer_axis(0, 2));
+    auto h = make_dynamic_histogram_with<dynamic_storage>(integer_axis(0, 1),
+                                                          integer_axis(0, 2));
     h.fill(0, 0);
     auto h2 = decltype(h)(h);
     BOOST_CHECK(h2 == h);
@@ -108,8 +108,8 @@ BOOST_AUTO_TEST_CASE(copy_ctor)
 
 BOOST_AUTO_TEST_CASE(copy_assign)
 {
-    auto h = dynamic_histogram<dynamic_storage>(integer_axis(0, 1),
-                                        integer_axis(0, 2));
+    auto h = make_dynamic_histogram_with<dynamic_storage>(integer_axis(0, 1),
+                                                          integer_axis(0, 2));
     h.fill(0, 0);
     auto h2 = decltype(h)();
     BOOST_CHECK(!(h == h2));
@@ -125,8 +125,8 @@ BOOST_AUTO_TEST_CASE(copy_assign)
 
 BOOST_AUTO_TEST_CASE(move_ctor)
 {
-    auto h = dynamic_histogram<dynamic_storage>(integer_axis(0, 1),
-                                        integer_axis(0, 2));
+    auto h = make_dynamic_histogram(integer_axis(0, 1),
+                                    integer_axis(0, 2));
     h.fill(0, 0);
     const auto href = h;
     auto h2 = decltype(h)(std::move(h));
@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE(move_ctor)
 
 BOOST_AUTO_TEST_CASE(move_assign)
 {
-    auto h = dynamic_histogram<dynamic_storage>(integer_axis(0, 1),
-                                        integer_axis(0, 2));
+    auto h = make_dynamic_histogram(integer_axis(0, 1),
+                                    integer_axis(0, 2));
     h.fill(0.0, 0.0);
     auto href = h;
     auto h2 = decltype(h)();
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(equal_compare)
 
 BOOST_AUTO_TEST_CASE(d1)
 {
-    auto h = dynamic_histogram<dynamic_storage>(integer_axis(0, 1));
+    auto h = make_dynamic_histogram(integer_axis(0, 1));
     h.fill(0);
     h.fill(0);
     h.fill(-1);
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(d1)
 
 BOOST_AUTO_TEST_CASE(d1_2)
 {
-    auto h = dynamic_histogram<dynamic_storage>(integer_axis(0, 1, "", false));
+    auto h = make_dynamic_histogram(integer_axis(0, 1, "", false));
     h.fill(0);
     h.fill(-0);
     h.fill(-1);
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(d1_2)
 
 BOOST_AUTO_TEST_CASE(d1w)
 {
-    auto h = dynamic_histogram<dynamic_storage>(regular_axis(2, -1, 1));
+    auto h = make_dynamic_histogram(regular_axis(2, -1, 1));
     h.fill(0);
     h.wfill(-1.0, 2.0);
     h.fill(-1.0);
@@ -263,8 +263,8 @@ BOOST_AUTO_TEST_CASE(d1w)
 
 BOOST_AUTO_TEST_CASE(d2)
 {
-    auto h = dynamic_histogram<dynamic_storage>(regular_axis(2, -1, 1),
-                                        integer_axis(-1, 1, std::string(), false));
+    auto h = make_dynamic_histogram(regular_axis(2, -1, 1),
+                                    integer_axis(-1, 1, std::string(), false));
     h.fill(-1, -1);
     h.fill(-1, 0);
     h.fill(-1, -10);
@@ -312,8 +312,8 @@ BOOST_AUTO_TEST_CASE(d2)
 
 BOOST_AUTO_TEST_CASE(d2w)
 {
-    auto h = dynamic_histogram<dynamic_storage>(regular_axis(2, -1, 1),
-                                        integer_axis(-1, 1, std::string(), false));
+    auto h = make_dynamic_histogram(regular_axis(2, -1, 1),
+                                    integer_axis(-1, 1, std::string(), false));
     h.fill(-1, 0);       // -> 0, 1
     h.wfill(-1, -1, 10); // -> 0, 0
     h.wfill(-1, -10, 5); // is ignored
@@ -356,9 +356,9 @@ BOOST_AUTO_TEST_CASE(d2w)
 
 BOOST_AUTO_TEST_CASE(d3w)
 {
-    auto h = dynamic_histogram<dynamic_storage>(integer_axis(0, 3),
-                                                integer_axis(0, 4),
-                                                integer_axis(0, 5));
+    auto h = make_dynamic_histogram(integer_axis(0, 3),
+                                    integer_axis(0, 4),
+                                    integer_axis(0, 5));
     for (auto i = 0; i < bins(h.axis(0)); ++i)
         for (auto j = 0; j < bins(h.axis(1)); ++j)
             for (auto k = 0; k < bins(h.axis(2)); ++k)
@@ -374,17 +374,17 @@ BOOST_AUTO_TEST_CASE(d3w)
 
 BOOST_AUTO_TEST_CASE(add_0)
 {
-    auto a = dynamic_histogram<dynamic_storage>(integer_axis(-1, 1));
-    auto b = dynamic_histogram<dynamic_storage>(regular_axis(3, -1, 1));
-    auto c = dynamic_histogram<dynamic_storage>(regular_axis(3, -1.1, 1));
+    auto a = make_dynamic_histogram(integer_axis(-1, 1));
+    auto b = make_dynamic_histogram(regular_axis(3, -1, 1));
+    auto c = make_dynamic_histogram(regular_axis(3, -1.1, 1));
     BOOST_CHECK_THROW(a + b, std::logic_error);
     BOOST_CHECK_THROW(b + c, std::logic_error);
 }
 
 BOOST_AUTO_TEST_CASE(add_1)
 {
-    auto a = dynamic_histogram<dynamic_storage>(integer_axis(-1, 1));
-    auto b = dynamic_histogram<static_storage<int>>(integer_axis(-1, 1));
+    auto a = make_dynamic_histogram(integer_axis(-1, 1));
+    auto b = make_dynamic_histogram_with<static_storage<int>>(integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
     auto c = a;
@@ -404,8 +404,8 @@ BOOST_AUTO_TEST_CASE(add_1)
 
 BOOST_AUTO_TEST_CASE(add_2)
 {
-    auto a = dynamic_histogram<dynamic_storage>(integer_axis(-1, 1));
-    auto b = dynamic_histogram<dynamic_storage>(integer_axis(-1, 1));
+    auto a = make_dynamic_histogram(integer_axis(-1, 1));
+    auto b = make_dynamic_histogram(integer_axis(-1, 1));
 
     a.fill(0);
     b.wfill(-1, 3);
@@ -426,8 +426,8 @@ BOOST_AUTO_TEST_CASE(add_2)
 
 BOOST_AUTO_TEST_CASE(add_3)
 {
-    auto a = dynamic_histogram<static_storage<char>>(integer_axis(-1, 1));
-    auto b = dynamic_histogram<static_storage<int>>(integer_axis(-1, 1));
+    auto a = make_dynamic_histogram_with<static_storage<char>>(integer_axis(-1, 1));
+    auto b = make_dynamic_histogram_with<static_storage<int>>(integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
     auto c = a;
@@ -452,7 +452,7 @@ BOOST_AUTO_TEST_CASE(doc_example_0)
     namespace bh = boost::histogram;
     // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
     // with axis of histogram labeled as "x"
-    auto h = bh::dynamic_histogram<>(bh::regular_axis(10, -1.0, 2.0, "x"));
+    auto h = bh::make_dynamic_histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
 
     // fill histogram with data
     h.fill(-1.5); // put in underflow bin
@@ -467,8 +467,8 @@ BOOST_AUTO_TEST_CASE(doc_example_0)
 
     std::ostringstream os1;
     // access histogram counts
-    for (int i = -1; i <= bins(h.axis(0)); ++i) {
-        const auto& a = boost::get<bh::regular_axis>(h.axis(0));
+    const auto& a = boost::get<bh::regular_axis>(h.axis(0));
+    for (int i = -1, n = bins(h.axis(0)) + 1; i < n; ++i) {
         os1 << "bin " << i
             << " x in [" << a[i] << ", " << a[i+1] << "): "
             << h.value(i) << " +/- " << std::sqrt(h.variance(i))

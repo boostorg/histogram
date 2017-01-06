@@ -82,10 +82,10 @@ if(BUILD_CHECKS)
   target_link_libraries(speed_cpp_hs_ss ${LIBRARIES})
   target_compile_definitions(speed_cpp_hs_ss PUBLIC HISTOGRAM_TYPE=1)
 
-  add_executable(speed_cpp_hs_ds
+  add_executable(speed_cpp_hs_sd
                  ../test/check/speed_cpp.cpp)
-  target_link_libraries(speed_cpp_hs_ds ${LIBRARIES})
-  target_compile_definitions(speed_cpp_hs_ds PUBLIC HISTOGRAM_TYPE=2)
+  target_link_libraries(speed_cpp_hs_sd ${LIBRARIES})
+  target_compile_definitions(speed_cpp_hs_sd PUBLIC HISTOGRAM_TYPE=2)
 
   add_executable(speed_cpp_hd_ss
                  ../test/check/speed_cpp.cpp)

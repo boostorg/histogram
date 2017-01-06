@@ -45,7 +45,6 @@ class dynamic_storage {
   using buffer_t = detail::buffer_t;
 
 public:
-  struct storage_tag {};
   using value_t = double;
   using variance_t = double;
 

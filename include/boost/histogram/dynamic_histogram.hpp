@@ -12,11 +12,12 @@
 #include <boost/mpl/vector.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/variant.hpp>
-#include <boost/variant/static_visitor.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/utility.hpp>
+#include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/detail/axis_visitor.hpp>
 #include <cstddef>
 #include <array>
 #include <vector>
@@ -99,16 +100,15 @@ public:
     return *this;
   } 
 
-  template <typename OtherStorage>
-  bool operator==(const dynamic_histogram<OtherStorage, Axes>& other) const
+  template <typename OtherStorage, typename OtherAxes>
+  bool operator==(const dynamic_histogram<OtherStorage, OtherAxes>& other) const
   {
     if (dim() != other.dim())
       return false;
-    for (decltype(dim()) i = 0, n = dim(); i < n; ++i)
-      if (!(axes_[i] == other.axes_[i]))
-        return false;
-    if (!(storage_ == other.storage_))
-        return false;
+    if (!axes_equal_to(other.axes_))
+      return false;
+    if (!detail::storage_content_equal(storage_, other.storage_))
+      return false;
     return true;
   }
 
@@ -119,7 +119,7 @@ public:
       throw std::logic_error("dimensions of histograms differ");
     if (size() != other.size())
       throw std::logic_error("sizes of histograms differ");
-    if (axes_ != other.axes_)
+    if (!axes_equal_to(other.axes_))
       throw std::logic_error("axes of histograms differ");
     storage_ += other.storage_;
     return *this;
@@ -136,8 +136,9 @@ public:
       storage_.increase(lin.out);
   }
 
-  template <typename Iterator>
-  void fill_iter(Iterator values_begin, Iterator values_end)
+  template <typename Iterator,
+            typename = detail::is_iterator<Iterator>>
+  void fill(Iterator values_begin, Iterator values_end)
   {
     BOOST_ASSERT_MSG(std::distance(values_begin, values_end) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -150,6 +151,8 @@ public:
   template <typename... Args>
   void wfill(Args... args)
   {
+    static_assert(std::is_same<Storage, dynamic_storage>::value,
+                  "wfill only supported for dynamic_storage");
     BOOST_ASSERT_MSG((sizeof...(args) - 1) == dim(),
                      "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
@@ -158,9 +161,12 @@ public:
       storage_.increase(lin.out, w);
   }
 
-  template <typename Iterator>
-  void wfill_iter(Iterator values_begin, Iterator values_end, double w)
+  template <typename Iterator,
+            typename = detail::is_iterator<Iterator>>
+  void wfill(Iterator values_begin, Iterator values_end, double w)
   {
+    static_assert(std::is_same<Storage, dynamic_storage>::value,
+                  "wfill only supported for dynamic_storage");
     BOOST_ASSERT_MSG(std::distance(values_begin, values_end) == dim(),
                      "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
@@ -181,8 +187,9 @@ public:
     return storage_.value(lin.out);
   }
 
-  template <typename Iterator>
-  value_t value_iter(Iterator indices_begin, Iterator indices_end) const
+  template <typename Iterator,
+            typename = detail::is_iterator<Iterator>>
+  value_t value(Iterator indices_begin, Iterator indices_end) const
   {
     BOOST_ASSERT_MSG(std::distance(indices_begin, indices_end) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -206,8 +213,9 @@ public:
     return storage_.variance(lin.out);
   }
 
-  template <typename Iterator>
-  value_t variance_iter(Iterator indices_begin, Iterator indices_end) const
+  template <typename Iterator,
+            typename = detail::is_iterator<Iterator>>
+  value_t variance(Iterator indices_begin, Iterator indices_end) const
   {
     BOOST_ASSERT_MSG(std::distance(indices_begin, indices_end) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -251,6 +259,16 @@ private:
     std::size_t fc = 1;
     for (auto& a : axes_) fc *= shape(a);
     return fc;
+  }
+
+  template <typename OtherAxes>
+  bool axes_equal_to(const OtherAxes& other_axes) const
+  {
+    detail::cmp_axis ca;
+    for (unsigned i = 0; i < dim(); ++i)
+      if (!apply_visitor(ca, axes_[i], other_axes[i]))
+        return false;
+    return true;
   }
 
   template <typename Linearize, typename First, typename... Rest>
@@ -325,6 +343,25 @@ operator+(const dynamic_histogram<StoragePolicyA, Axes>& a,
   tmp += b;
   return tmp;
 }
+
+
+template <typename... Axes>
+inline
+dynamic_histogram<>
+make_dynamic_histogram(const Axes&... axes)
+{
+  return dynamic_histogram<>(axes...);
+}
+
+
+template <typename Storage, typename... Axes>
+inline
+dynamic_histogram<Storage>
+make_dynamic_histogram_with(const Axes&... axes)
+{
+  return dynamic_histogram<Storage>(axes...);
+}
+
 
 }
 }

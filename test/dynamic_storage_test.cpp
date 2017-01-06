@@ -10,10 +10,19 @@
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/utility.hpp>
+#include <boost/histogram/detail/utility.hpp>
 #include <sstream>
 #include <string>
 #include <limits>
 using namespace boost::histogram;
+
+template <typename Storage1, typename Storage2>
+bool operator==(const Storage1& a, const Storage2& b)
+{
+    if (a.size() != b.size())
+        return false;
+    return boost::histogram::detail::storage_content_equal(a, b);
+}
 
 BOOST_AUTO_TEST_CASE(equal_operator)
 {

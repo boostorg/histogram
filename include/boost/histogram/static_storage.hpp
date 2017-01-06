@@ -17,11 +17,12 @@ namespace histogram {
     using buffer_t = detail::buffer_t;
 
   public:
-    struct storage_tag {};
     using value_t = T;
     using variance_t = T;
 
-    explicit static_storage(std::size_t n=0) : data_(n * sizeof(T)) {}
+    static_storage() = default;
+
+    explicit static_storage(std::size_t n) : data_(n * sizeof(T)) {}
 
     static_storage(const static_storage<T>& other) :
       data_(other.data_)
@@ -40,7 +41,7 @@ namespace histogram {
     }
 
     template <typename OtherStorage,
-              typename = typename OtherStorage::storage_tag>
+              typename = typename OtherStorage::value_t>
     static_storage(const OtherStorage& other) :
       data_(other.size() * sizeof(T))
     {
@@ -49,7 +50,7 @@ namespace histogram {
     }
 
     template <typename OtherStorage,
-              typename = typename OtherStorage::storage_tag>
+              typename = typename OtherStorage::value_t>
     static_storage(OtherStorage&& other) :
       data_(other.size() * sizeof(T))
     {
@@ -58,8 +59,7 @@ namespace histogram {
       other = OtherStorage();
     }
 
-    template <typename OtherStorage,
-              typename = typename OtherStorage::storage_tag>
+    template <typename OtherStorage>
     static_storage& operator=(const OtherStorage& other)
     {
       if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
@@ -70,8 +70,7 @@ namespace histogram {
       return *this;
     }
 
-    template <typename OtherStorage,
-              typename = typename OtherStorage::storage_tag>
+    template <typename OtherStorage>
     static_storage& operator=(OtherStorage&& other)
     {
       if (static_cast<void*>(this) != static_cast<void*>(&other)) {
@@ -90,8 +89,7 @@ namespace histogram {
     value_t value(std::size_t i) const { return data_.at<T>(i); }
     variance_t variance(std::size_t i) const { return data_.at<T>(i); }
 
-    template <typename OtherStorage,
-              typename = typename OtherStorage::storage_tag>
+    template <typename OtherStorage>
     void operator+=(const OtherStorage& other)
     {
       for (std::size_t i = 0, n = size(); i < n; ++i)
