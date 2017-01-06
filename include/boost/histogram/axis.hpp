@@ -79,10 +79,6 @@ public:
   double right(int idx) const {
     return static_cast<const Derived&>(*this)[idx + 1];
   }
-
-  double center(int idx) const {
-    return 0.5 * (left(idx) + right(idx));
-  }
 };
 
 /** Axis for binning real-valued data into equidistant bins

@@ -1,5 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+##
+## Copyright 2015-2016 Hans Dembinski
+##
+## Distributed under the Boost Software License, Version 1.0.
+## (See accompanying file LICENSE_1_0.txt
+## or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 import numpy as np
 from timeit import default_timer as timer
 from histogram import histogram, regular_axis
@@ -23,6 +29,7 @@ def compare_1d(n, distrib):
         h.fill(r)
         t = timer() - t
         best_boost = min(t, best_boost)
+    assert(np.all(w == np.array(h)[:-2]))
 
     print "1D"
     print "t[numpy] = %.3f" % best_numpy
@@ -53,6 +60,7 @@ def compare_3d(n, distrib):
         h.fill(r)
         t = timer() - t
         best_boost = min(t, best_boost)
+    assert(np.all(w == np.array(h)[:-2,:-2,:-2]))
 
     print "3D"
     print "t[numpy] = %.3f" % best_numpy
@@ -90,6 +98,7 @@ def compare_6d(n, distrib):
         h.fill(r)
         t = timer() - t
         best_boost = min(t, best_boost)
+    assert(np.all(w == np.array(h)[:-2,:-2,:-2,:-2,:-2,:-2]))
 
     print "6D"
     print "t[numpy] = %.3f" % best_numpy

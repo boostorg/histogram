@@ -1,10 +1,14 @@
 # Histogram
 
-**Fast n-dimensional histogram with convenient interface for C++ and Python**
+**Fast n-dimensional histogram with convenient interface for C++11 and Python**
 
 [![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=static)](https://travis-ci.org/HDembinski/histogram?branch=static) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=static)](https://coveralls.io/github/HDembinski/histogram?branch=static)
 
-This project contains an easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class implemented in `C++03`-compatible code, optimized for convenience and excellent performance under heavy duty. Move semantics are supported using `boost::move`. The histogram has a complete [C++](http://yosefk.com/c++fqa/defective.html) and [Python](http://www.python.org) interface, and can be passed over the language boundary with ease. [Numpy](http://www.numpy.org) is fully supported; histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data. Histograms can be streamed from/to files and pickled in Python.
+This `C++11` library implements two easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) classes, using a policy-based design, optimized for extensibility, convenience and highest performance.
+
+Two histogram implementations in C++ are included. `static_histogram` exploits compile-time information as much as possible to provide maximum performance, at the cost of larger binaries and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
+
+The histograms have value semantics. Move operations and trips over the language boundary from C++ to Python are cheap. Histograms can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data.
 
 My goal is to submit this project to [Boost](http://www.boost.org), that's why it uses the Boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
@@ -14,14 +18,15 @@ My goal is to submit this project to [Boost](http://www.boost.org), that's why i
 
 * N-dimensional histogram
 * Intuitive and convenient interface
-* Full value semantics (efficient move operations)
-* Support for different binning schemes, including binning of angles
+* Value semantics with efficient move operations
+* Support for different binning schemes (user-extensible)
 * Optional underflow/overflow bins for each dimension
-* Support for weighted events, with variance estimates for each bin
-* High performance through cache-friendly design and benchmark-based tuning
-* Space-efficient memory storage that dynamically grows as needed
-* Serialization support with zero-suppression
-* Multi-language support: C++ (C++11 and higher) and Python (2.x and 3.x)
+* Support for counting weighted events
+* Statistical variance can be queried for each bin
+* High performance (cache-friendly design, benchmark-based tuning, use of compile-time information)
+* Space-efficient use of memory, memory dynamically grows as needed
+* Serialization support using `boost.serialization`
+* Language support: C++11, Python (2.x and 3.x)
 * Numpy support
 
 ## Dependencies
@@ -38,7 +43,7 @@ My goal is to submit this project to [Boost](http://www.boost.org), that's why i
 git clone https://github.com/HDembinski/histogram.git
 mkdir build && cd build
 cmake ../histogram/build
-make install # (or just 'make' to run the tests)
+make # or 'make install'
 ```
 
 To run the tests, do `make test` or `ctest -V` for more output.
@@ -51,8 +56,9 @@ For the full version of the following examples with explanations, see
 Example 1: Fill a 1d-histogram in C++ 
 
 ```cpp
-    #include <boost/histogram/histogram.hpp> // proposed for inclusion in Boost
+    #include <boost/histogram/static_histogram.hpp> // proposed for inclusion in Boost
     #include <boost/histogram/axis.hpp> // proposed for inclusion in Boost
+    #include <boost/histogram/utility.hpp> // proposed for inclusion in Boost
     #include <iostream>
     #include <cmath>
 
@@ -61,7 +67,7 @@ Example 1: Fill a 1d-histogram in C++
 
         // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
         // with axis of histogram labeled as "x"
-        auto h = bh::make_histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
+        auto h = bh::make_static_histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
 
         // fill histogram with data
         h.fill(-1.5); // put in underflow bin
@@ -74,11 +80,11 @@ Example 1: Fill a 1d-histogram in C++
         h.fill(20.0); // put in overflow bin
         h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
 
-        // access histogram counts
-        for (int i = -1; i <= h.bins(0); ++i) {
-            const bh::regular_axis& a = h.axis<bh::regular_axis>(0);
+        // access histogram counts, loop includes under- and overflow bin
+        const auto& a = h.axis<0>();
+        for (int i = -1, n = bh::bins(a) + 1; i < n; ++i) {
             std::cout << "bin " << i
-                      << " x in [" << a[i] << ", " << a[i+1] << "): "
+                      << " x in [" << bh::left(a, i) << ", " << bh::right(a, i) << "): "
                       << h.value(i) << " +/- " << std::sqrt(h.variance(i))
                       << std::endl;
         }

@@ -40,6 +40,30 @@ namespace detail {
     int operator()(const A& a) const { return a.index(v); }
   };
 
+  struct left : public static_visitor<double>
+  {
+    const int i;
+    left(const int x) : i(x) {}
+    template <typename A>
+    double operator()(const A& a) const { return a.left(i); }
+  };
+
+  struct right : public static_visitor<double>
+  {
+    const int i;
+    right(const int x) : i(x) {}
+    template <typename A>
+    double operator()(const A& a) const { return a.right(i); }
+  };
+
+  struct center : public static_visitor<double>
+  {
+    const int i;
+    center(const int x) : i(x) {}
+    template <typename A>
+    double operator()(const A& a) const { return 0.5 * (a.left(i) + a.right(i)); }
+  };
+
   struct cmp_axis : public static_visitor<bool>
   {
     template <typename T>

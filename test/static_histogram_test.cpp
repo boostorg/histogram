@@ -495,7 +495,7 @@ BOOST_AUTO_TEST_CASE(doc_example_0)
     const auto& a = h.axis<0>();
     for (int i = -1, n = bins(a) + 1; i < n; ++i) {
         os1 << "bin " << i
-            << " x in [" << a[i] << ", " << a[i+1] << "): "
+            << " x in [" << left(a, i) << ", " << right(a ,i) << "): "
             << h.value(i) << " +/- " << std::sqrt(h.variance(i))
             << "\n";
     }
