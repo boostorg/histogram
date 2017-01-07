@@ -10,6 +10,7 @@
 #include <boost/histogram/detail/wtype.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/static_storage.hpp>
+#include <boost/assert.hpp>
 #include <cstdint>
 #include <cstddef>
 #include <type_traits>

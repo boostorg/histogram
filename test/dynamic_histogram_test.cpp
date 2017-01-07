@@ -17,6 +17,7 @@
 #include <sstream>
 
 using namespace boost::histogram;
+namespace mpl = boost::mpl;
 
 BOOST_AUTO_TEST_CASE(init_0)
 {
@@ -163,17 +164,20 @@ BOOST_AUTO_TEST_CASE(move_assign)
 
 BOOST_AUTO_TEST_CASE(equal_compare)
 {
-    using H = dynamic_histogram<dynamic_storage>;
-    auto a = H(integer_axis(0, 1));
-    auto b = H(integer_axis(0, 1), integer_axis(0, 2));
+    auto a = dynamic_histogram<dynamic_storage>(integer_axis(0, 1));
+    auto b = dynamic_histogram<dynamic_storage>(integer_axis(0, 1),
+                                                integer_axis(0, 2));
     BOOST_CHECK(!(a == b));
     BOOST_CHECK(!(b == a));
-    auto c = H(integer_axis(0, 1));
+    auto c = dynamic_histogram<
+            static_storage<int>,
+            mpl::vector<integer_axis>
+        >(integer_axis(0, 1));
     BOOST_CHECK(!(b == c));
     BOOST_CHECK(!(c == b));
     BOOST_CHECK(a == c);
     BOOST_CHECK(c == a);
-    auto d = H(regular_axis(2, 0, 1));
+    auto d = dynamic_histogram<dynamic_storage>(regular_axis(2, 0, 1));
     BOOST_CHECK(!(c == d));
     BOOST_CHECK(!(d == c));
     c.fill(0);
@@ -383,8 +387,14 @@ BOOST_AUTO_TEST_CASE(add_0)
 
 BOOST_AUTO_TEST_CASE(add_1)
 {
-    auto a = make_dynamic_histogram(integer_axis(-1, 1));
-    auto b = make_dynamic_histogram_with<static_storage<int>>(integer_axis(-1, 1));
+    auto a = dynamic_histogram<
+            dynamic_storage,
+            mpl::vector<integer_axis>
+        >(integer_axis(-1, 1));
+    auto b = dynamic_histogram<
+            static_storage<int>,
+            mpl::vector<integer_axis, regular_axis>
+        >(integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
     auto c = a;

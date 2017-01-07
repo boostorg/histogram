@@ -15,8 +15,7 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
-#include <boost/histogram/utility.hpp>
-#include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/detail/mpl.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <cstddef>
 #include <array>
@@ -72,18 +71,18 @@ public:
     storage_ = Storage(field_count());
   }
 
-  template <typename OtherStorage>
-  dynamic_histogram(const dynamic_histogram<OtherStorage, Axes>& other) :
-    axes_(other.axes_), storage_(other.storage_)
+  template <typename OtherStorage, typename OtherAxes>
+  dynamic_histogram(const dynamic_histogram<OtherStorage, OtherAxes>& other) :
+    axes_(other.axes_.begin(), other.axes_.end()), storage_(other.storage_)
   {}
 
-  template <typename OtherStorage>
-  dynamic_histogram(dynamic_histogram<OtherStorage, Axes>&& other) :
+  template <typename OtherStorage, typename OtherAxes>
+  dynamic_histogram(dynamic_histogram<OtherStorage, OtherAxes>&& other) :
     axes_(std::move(other.axes_)), storage_(std::move(other.storage_))
   {}
 
-  template <typename OtherStorage>
-  dynamic_histogram& operator=(const dynamic_histogram<OtherStorage, Axes>& other)
+  template <typename OtherStorage, typename OtherAxes>
+  dynamic_histogram& operator=(const dynamic_histogram<OtherStorage, OtherAxes>& other)
   {
     if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
       axes_ = other.axes_;
@@ -92,8 +91,8 @@ public:
     return *this;
   }
 
-  template <typename OtherStorage>
-  dynamic_histogram& operator=(dynamic_histogram<OtherStorage, Axes>&& other)
+  template <typename OtherStorage, typename OtherAxes>
+  dynamic_histogram& operator=(dynamic_histogram<OtherStorage, OtherAxes>&& other)
   {
     axes_ = std::move(other.axes_);
     storage_ = std::move(other.storage_);
@@ -103,6 +102,10 @@ public:
   template <typename OtherStorage, typename OtherAxes>
   bool operator==(const dynamic_histogram<OtherStorage, OtherAxes>& other) const
   {
+    if (mpl::empty<
+          typename detail::intersection<Axes, OtherAxes>::type
+        >::value)
+      return false;
     if (dim() != other.dim())
       return false;
     if (!axes_equal_to(other.axes_))
@@ -112,9 +115,11 @@ public:
     return true;
   }
 
-  template <typename OtherStorage>
-  dynamic_histogram& operator+=(const dynamic_histogram<OtherStorage, Axes>& other)
+  template <typename OtherStorage, typename OtherAxes>
+  dynamic_histogram& operator+=(const dynamic_histogram<OtherStorage, OtherAxes>& other)
   {
+    static_assert(!mpl::empty<typename detail::intersection<Axes, OtherAxes>::type>::value,
+                  "histograms lack common axes types");
     if (dim() != other.dim())
       throw std::logic_error("dimensions of histograms differ");
     if (size() != other.size())
@@ -317,28 +322,22 @@ private:
 };
 
 
-// when adding histograms with different storage, use storage with more capacity as return type
-template <typename StoragePolicyA,
-          typename StoragePolicyB,
-          typename Axes>
+// when adding different histogram types, use a safe return type
+template <typename Storage1,
+          typename Storage2,
+          typename Axes1,
+          typename Axes2>
 inline
 dynamic_histogram<
-  typename std::conditional<
-    (std::numeric_limits<typename StoragePolicyA::value_t>::max() >
-     std::numeric_limits<typename StoragePolicyB::value_t>::max()),
-    StoragePolicyA, StoragePolicyB
-  >::type,
-  Axes
+  typename detail::select_storage<Storage1, Storage2>::type,
+  typename detail::intersection<Axes1, Axes2>::type
 >
-operator+(const dynamic_histogram<StoragePolicyA, Axes>& a,
-          const dynamic_histogram<StoragePolicyB, Axes>& b)
+operator+(const dynamic_histogram<Storage1, Axes1>& a,
+          const dynamic_histogram<Storage2, Axes2>& b)
 {
   dynamic_histogram<
-    typename std::conditional<
-      (std::numeric_limits<typename StoragePolicyA::value_t>::max() >
-       std::numeric_limits<typename StoragePolicyB::value_t>::max()),
-      StoragePolicyA, StoragePolicyB>::type,
-    Axes
+    typename detail::select_storage<Storage1, Storage2>::type,
+    typename detail::intersection<Axes1, Axes2>::type
   > tmp = a;
   tmp += b;
   return tmp;

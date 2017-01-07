@@ -9,25 +9,28 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/buffer.hpp>
-#include <string>
+#include <sstream>
 using namespace boost::histogram::detail;
 
 BOOST_AUTO_TEST_CASE(escape_0)
 {
-    std::string s = escape("abc");
-    BOOST_CHECK_EQUAL(s, std::string("'abc'"));
+    std::ostringstream os;
+    escape(os, "abc");
+    BOOST_CHECK_EQUAL(os.str(), std::string("'abc'"));
 }
 
 BOOST_AUTO_TEST_CASE(escape_1)
 {
-    std::string s = escape("abc\n");
-    BOOST_CHECK_EQUAL(s, std::string("'abc\n'"));
+    std::ostringstream os;
+    escape(os, "abc\n");
+    BOOST_CHECK_EQUAL(os.str(), std::string("'abc\n'"));
 }
 
 BOOST_AUTO_TEST_CASE(escape_2)
 {
-    std::string s = escape("'abc'");
-    BOOST_CHECK_EQUAL(s, std::string("'\\\'abc\\\''"));
+    std::ostringstream os;
+    escape(os, "'abc'");
+    BOOST_CHECK_EQUAL(os.str(), std::string("'\\\'abc\\\''"));
 }
 
 BOOST_AUTO_TEST_CASE(buffer_ctor_and_get)

@@ -25,6 +25,7 @@
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
+#include <boost/histogram/detail/mpl.hpp>
 #include <type_traits>
 
 namespace boost {
@@ -50,30 +51,10 @@ public:
     storage_ = Storage(field_count());
   }
 
-  static_histogram(const static_histogram& other) :
-    axes_(other.axes_), storage_(other.storage_)
-  {}
-
-  static_histogram(static_histogram&& other) :
-    axes_(std::move(other.axes_)),
-    storage_(std::move(other.storage_))
-  {}
-
-  static_histogram& operator=(const static_histogram& other)
-  {
-    if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
-      axes_ = other.axes_;
-      storage_ = other.storage_;
-    }
-    return *this;
-  } 
-
-  static_histogram& operator=(static_histogram&& other)
-  {
-    axes_ = std::move(other.axes_);
-    storage_ = std::move(other.storage_);
-    return *this;
-  } 
+  static_histogram(const static_histogram& other) = default;
+  static_histogram(static_histogram&& other) = default;
+  static_histogram& operator=(const static_histogram& other) = default;
+  static_histogram& operator=(static_histogram&& other) = default;
 
   template <typename OtherStorage>
   static_histogram(const static_histogram<OtherStorage, Axes>& other) :
@@ -276,28 +257,19 @@ private:
 };
 
 
-// when adding histograms with different storage, use storage with more capacity as return type
-template <typename StoragePolicyA,
-          typename StoragePolicyB,
+// when adding different histogram types, use a safe return type
+template <typename Storage1,
+          typename Storage2,
           typename Axes>
 inline
 static_histogram<
-  typename std::conditional<
-    (std::numeric_limits<typename StoragePolicyA::value_t>::max() >
-     std::numeric_limits<typename StoragePolicyB::value_t>::max()),
-    StoragePolicyA, StoragePolicyB
-  >::type,
-  Axes
+  typename detail::select_storage<Storage1, Storage2>::type, Axes
 >
-operator+(const static_histogram<StoragePolicyA, Axes>& a,
-          const static_histogram<StoragePolicyB, Axes>& b)
+operator+(const static_histogram<Storage1, Axes>& a,
+          const static_histogram<Storage2, Axes>& b)
 {
   static_histogram<
-    typename std::conditional<
-      (std::numeric_limits<typename StoragePolicyA::value_t>::max() >
-       std::numeric_limits<typename StoragePolicyB::value_t>::max()),
-      StoragePolicyA, StoragePolicyB>::type,
-    Axes
+    typename detail::select_storage<Storage1, Storage2>::type, Axes
   > tmp = a;
   tmp += b;
   return tmp;

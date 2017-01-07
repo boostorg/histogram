@@ -13,6 +13,7 @@
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/wtype.hpp>
+// #include <boost/histogram/detail/light_string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -27,7 +28,7 @@ namespace histogram {
 namespace detail {
 
 template <class Archive>
-inline void serialize(Archive& ar, wtype & wt, unsigned version)
+inline void serialize(Archive& ar, wtype& wt, unsigned version)
 {
   ar & wt.w;
   ar & wt.w2;
@@ -41,6 +42,19 @@ inline void serialize_impl(Archive& ar, buffer_t& buf, unsigned version)
     buf.resize(buf.nbytes_);
   ar & serialization::make_array(static_cast<T*>(buf.memory_), buf.nbytes_ / sizeof(T));
 }
+
+// template <class Archive>
+// inline void serialize(Archive& ar, light_string& s, unsigned version)
+// {
+//   if (Archive::is_saving::value) {
+//     const char* ptr = s.ptr_.get();
+//     ar & ptr;
+//   } else {
+//     char* ptr;
+//     ar & ptr;
+//     s.ptr_.reset(ptr);
+//   }
+// }
 
 }
 

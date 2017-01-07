@@ -86,7 +86,8 @@ public:
   * This is the simplest and common binning strategy.
   * Binning is a O(1) operation.
   */
-class regular_axis: public axis_with_label, public real_axis<regular_axis> {
+class regular_axis: public axis_with_label,
+                    public real_axis<regular_axis> {
 public:
   /** Constructor
    *
@@ -103,7 +104,7 @@ public:
     min_(min),
     delta_((max - min) / n)
   {
-    if (min >= max)
+    if (!(min < max))
       throw std::logic_error("min < max required");
   }
 
@@ -150,7 +151,8 @@ private:
   * since the axis is circular and wraps around after :math:`2 \pi`.
   * Binning is a O(1) operation.
   */
-class polar_axis: public axis_with_label, public real_axis<polar_axis> {
+class polar_axis: public axis_with_label,
+                  public real_axis<polar_axis> {
 public:
   /** Constructor
    * \param n  number of bins
@@ -200,7 +202,8 @@ private:
   * Binning is a O(log(N)) operation. If speed matters and the problem domain
   * allows it, prefer a regular_axis.
   */
-class variable_axis : public axis_with_label, public real_axis<variable_axis> {
+class variable_axis : public axis_with_label,
+                      public real_axis<variable_axis> {
 public:
 	/** Constructor
 	 *
