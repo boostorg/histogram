@@ -121,12 +121,12 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  void fill(Iterator values_begin, Iterator values_end)
+  void fill(Iterator begin, Iterator end)
   {
-    BOOST_ASSERT_MSG(std::distance(values_begin, values_end) == dim(),
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize_x lin;
-    iter_args_impl<detail::linearize_x, Iterator>::apply(lin, axes_, values_begin);
+    iter_args_impl<detail::linearize_x, Iterator>::apply(lin, axes_, begin);
     if (lin.stride)
       storage_.increase(lin.out);
   }
@@ -153,14 +153,14 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  void wfill(Iterator values_begin, Iterator values_end, double w)
+  void wfill(Iterator begin, Iterator end, double w)
   {
     static_assert(std::is_same<Storage, dynamic_storage>::value,
                   "wfill only supported for dynamic_storage");
-    BOOST_ASSERT_MSG(std::distance(values_begin, values_end) == dim(),
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize_x lin;
-    iter_args_impl<detail::linearize_x, Iterator>::apply(lin, axes_, values_begin);
+    iter_args_impl<detail::linearize_x, Iterator>::apply(lin, axes_, begin);
     if (lin.stride)
       storage_.increase(lin.out, w);
   }
@@ -188,7 +188,7 @@ public:
             typename = detail::is_iterator<Iterator>>
   value_t value(Iterator begin, Iterator end) const
   {
-    BOOST_ASSERT_MSG(std::distance(values_begin, values_end) == dim(),
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
     iter_args_impl<detail::linearize, Iterator>::apply(lin, axes_, begin);
@@ -219,7 +219,7 @@ public:
             typename = detail::is_iterator<Iterator>>
   variance_t variance(Iterator begin, Iterator end) const
   {
-    BOOST_ASSERT_MSG(std::distance(values_begin, values_end) == dim(),
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
     iter_args_impl<detail::linearize, Iterator>::apply(lin, axes_, begin);

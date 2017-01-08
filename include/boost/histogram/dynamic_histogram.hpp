@@ -145,12 +145,12 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  void fill(Iterator values_begin, Iterator values_end)
+  void fill(Iterator begin, Iterator end)
   {
-    BOOST_ASSERT_MSG(std::distance(values_begin, values_end) == dim(),
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
-    iter_args_impl(lin, values_begin, values_end);
+    iter_args_impl(lin, begin, end);
     if (lin.stride)
       storage_.increase(lin.out);
   }
@@ -177,14 +177,14 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  void wfill(Iterator values_begin, Iterator values_end, double w)
+  void wfill(Iterator begin, Iterator end, double w)
   {
     static_assert(std::is_same<Storage, dynamic_storage>::value,
                   "wfill only supported for dynamic_storage");
-    BOOST_ASSERT_MSG(std::distance(values_begin, values_end) == dim(),
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize_x lin;
-    iter_args_impl(lin, values_begin, values_end);
+    iter_args_impl(lin, begin, end);
     if (lin.stride)
       storage_.increase(lin.out, w);
   }
@@ -210,12 +210,12 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  value_t value(Iterator indices_begin, Iterator indices_end) const
+  value_t value(Iterator begin, Iterator end) const
   {
-    BOOST_ASSERT_MSG(std::distance(indices_begin, indices_end) == dim(),
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
-    iter_args_impl(lin, indices_begin, indices_end);
+    iter_args_impl(lin, begin, end);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
     return storage_.value(lin.out);
@@ -243,12 +243,12 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  variance_t variance(Iterator indices_begin, Iterator indices_end) const
+  variance_t variance(Iterator begin, Iterator end) const
   {
-    BOOST_ASSERT_MSG(std::distance(indices_begin, indices_end) == dim(),
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
-    iter_args_impl(lin, indices_begin, indices_end);
+    iter_args_impl(lin, begin, end);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
     return storage_.variance(lin.out);
@@ -343,13 +343,13 @@ private:
 
   template <typename Linearize, typename Iterator>
   void iter_args_impl(Linearize& lin,
-                      Iterator args_begin,
-                      Iterator args_end) const {
+                      Iterator begin,
+                      Iterator end) const {
     auto axes_iter = axes_.begin();
-    while (args_begin != args_end) {
-      lin.set(*args_begin);
+    while (begin != end) {
+      lin.set(*begin);
       apply_visitor(lin, *axes_iter);
-      ++args_begin;
+      ++begin;
       ++axes_iter;
     }
   }
