@@ -16,7 +16,6 @@
 #include <boost/histogram/detail/tiny_string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/serialization/unique_ptr.hpp>
 
 /** \file boost/histogram/serialization.hpp
  *  \brief Defines the serialization functions, to use with boost.serialize.

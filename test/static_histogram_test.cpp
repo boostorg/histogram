@@ -289,8 +289,10 @@ BOOST_AUTO_TEST_CASE(d2)
                                    integer_axis(-1, 1, nullptr, false));
     h.fill(-1, -1);
     h.fill(-1, 0);
-    h.fill(-1, -10);
-    h.fill(-10, 0);
+    std::array<double, 2> ai{-1., -10.};
+    h.fill(ai);
+    double in[2] = {-10., 0.};
+    h.fill(in, in+2);
 
     BOOST_CHECK_EQUAL(h.dim(), 2);
     BOOST_CHECK_EQUAL(bins(h.axis<0>()), 2);

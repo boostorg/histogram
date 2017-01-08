@@ -4,11 +4,12 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#define BOOST_TEST_MODULE utility_test
+#define BOOST_TEST_MODULE detail_test
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/buffer.hpp>
+#include <boost/histogram/detail/tiny_string.hpp>
 #include <sstream>
 using namespace boost::histogram::detail;
 
@@ -116,4 +117,23 @@ BOOST_AUTO_TEST_CASE(buffer_resize)
     a.resize(1);
     BOOST_CHECK_EQUAL(a.at<char>(0), 1);
     BOOST_CHECK_EQUAL(a.nbytes(), 1);
+}
+
+BOOST_AUTO_TEST_CASE(tiny_string_test)
+{
+    auto a = tiny_string();
+    BOOST_CHECK_EQUAL(a.size(), 0u);
+    BOOST_CHECK_EQUAL(a.c_str(), static_cast<const char*>(nullptr));
+    auto b = tiny_string("abc");
+    BOOST_CHECK_EQUAL(b.c_str(), "abc");
+    BOOST_CHECK_EQUAL(b.size(), 3u);
+    auto c = b;
+    BOOST_CHECK_EQUAL(c, b);
+    auto d = std::move(c);
+    BOOST_CHECK_EQUAL(c.c_str(), static_cast<const char*>(nullptr));
+    BOOST_CHECK_EQUAL(d, b);
+    c = d;
+    BOOST_CHECK_EQUAL(c, d);
+    d = std::move(c);
+    BOOST_CHECK_EQUAL(c.c_str(), static_cast<const char*>(nullptr));
 }

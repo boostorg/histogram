@@ -18,6 +18,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <limits>
 #include <sstream>
+#include <array>
 
 using namespace boost::histogram;
 namespace mpl = boost::mpl;

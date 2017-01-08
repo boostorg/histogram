@@ -9,6 +9,7 @@
 
 #include <cstring>
 #include <memory>
+#include <ostream>
 
 namespace boost {
 namespace histogram {
@@ -59,9 +60,10 @@ private:
     friend void serialize(Archiv&, tiny_string&, unsigned);
 };
 
-inline void swap(tiny_string& a, tiny_string& b) {
-    a.swap(b);
-}
+inline void swap(tiny_string& a, tiny_string& b) { a.swap(b); }
+
+inline std::ostream& operator<<(std::ostream& os, const tiny_string& s)
+{ os << s.c_str(); return os; }
 
 }
 }

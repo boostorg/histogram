@@ -285,7 +285,7 @@ void register_histogram()
     .def("axis", histogram_axis,
        ":param int i: index of the axis\n"
        ":returns: axis object for axis i",
-       args("self", "i"))
+       (arg("self"), arg("i") = 0))
     .def("fill", raw_function(histogram_fill),
        "Pass a sequence of values with a length n is"
        "\nequal to the dimensions of the histogram,"

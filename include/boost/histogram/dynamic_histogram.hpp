@@ -99,7 +99,7 @@ public:
     axes_ = std::move(other.axes_);
     storage_ = std::move(other.storage_);
     return *this;
-  } 
+  }
 
   template <typename OtherStorage, typename OtherAxes>
   bool operator==(const dynamic_histogram<OtherStorage, OtherAxes>& other) const
@@ -182,7 +182,7 @@ public:
     static_assert(std::is_same<Storage, dynamic_storage>::value,
                   "wfill only supported for dynamic_storage");
     BOOST_ASSERT_MSG(std::distance(values_begin, values_end) == dim(),
-                     "number of arguments does not match histogram dimension");
+                     "iterator range does not match histogram dimension");
     detail::linearize_x lin;
     iter_args_impl(lin, values_begin, values_end);
     if (lin.stride)
@@ -213,9 +213,9 @@ public:
   value_t value(Iterator indices_begin, Iterator indices_end) const
   {
     BOOST_ASSERT_MSG(std::distance(indices_begin, indices_end) == dim(),
-                     "number of arguments does not match histogram dimension");
+                     "iterator range does not match histogram dimension");
     detail::linearize lin;
-    iter_args_impl(lin, indices_begin, indices_end);    
+    iter_args_impl(lin, indices_begin, indices_end);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
     return storage_.value(lin.out);
@@ -246,7 +246,7 @@ public:
   variance_t variance(Iterator indices_begin, Iterator indices_end) const
   {
     BOOST_ASSERT_MSG(std::distance(indices_begin, indices_end) == dim(),
-                     "number of arguments does not match histogram dimension");
+                     "iterator range does not match histogram dimension");
     detail::linearize lin;
     iter_args_impl(lin, indices_begin, indices_end);
     if (lin.stride == 0)
@@ -283,7 +283,17 @@ public:
   }
 
   /// Return axis \a i
-  const axis_t& axis(unsigned i) const { return axes_[i]; }
+  const axis_t& axis(unsigned i = 0) const {
+    BOOST_ASSERT_MSG(i < dim(), "axis index out of range");
+    return axes_[i];
+  }
+
+  /// Return axis \a i (added for conformity with static_histogram interface)
+  template <unsigned N = 0u>
+  const axis_t& axis() const {
+    BOOST_ASSERT_MSG(N < dim(), "axis index out of range");
+    return axes_[N];
+  }
 
 private:
   axes_t axes_;
@@ -333,8 +343,8 @@ private:
 
   template <typename Linearize, typename Iterator>
   void iter_args_impl(Linearize& lin,
-                      Iterator& args_begin,
-                      const Iterator& args_end) const {
+                      Iterator args_begin,
+                      Iterator args_end) const {
     auto axes_iter = axes_.begin();
     while (args_begin != args_end) {
       lin.set(*args_begin);
