@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(d1w)
 BOOST_AUTO_TEST_CASE(d2)
 {
     auto h = make_static_histogram(regular_axis(2, -1, 1),
-                                   integer_axis(-1, 1, std::string(), false));
+                                   integer_axis(-1, 1, nullptr, false));
     h.fill(-1, -1);
     h.fill(-1, 0);
     h.fill(-1, -10);
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE(d2)
 BOOST_AUTO_TEST_CASE(d2w)
 {
     auto h = make_static_histogram(regular_axis(2, -1, 1),
-                                   integer_axis(-1, 1, std::string(), false));
+                                   integer_axis(-1, 1, nullptr, false));
     h.fill(-1, 0);       // -> 0, 1
     h.wfill(-1, -1, 10); // -> 0, 0
     h.wfill(-1, -10, 5); // is ignored

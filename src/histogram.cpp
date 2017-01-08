@@ -260,12 +260,6 @@ public:
   }
 };
 
-template <typename Archiv>
-void serialize(Archiv& ar, dynamic_histogram<>& h, unsigned version) {
-  ar & h.axes_;
-  ar & h.storage_;
-}
-
 void register_histogram()
 {
   using namespace python;
@@ -288,16 +282,6 @@ void register_histogram()
             &histogram_access::histogram_array_interface)
     .add_property("dim", &dynamic_histogram<>::dim,
             "dimensions of the histogram (number of axes)")
-    // .def("bins", &histogram_bins,
-    //    ":param int i: index of the axis\n"
-    //    ":returns: number of bins for axis i",
-    //    args("self", "i"))
-    // .def("shape", &histogram_shape,
-    //    ":param int i: index of the axis\n"
-    //    ":returns: number of count fields for axis i\n"
-    //    "  (bins + 2 if underflow and overflow"
-    //    " bins are enabled, otherwise equal to bins",
-    //    args("self", "i"))
     .def("axis", histogram_axis,
        ":param int i: index of the axis\n"
        ":returns: axis object for axis i",

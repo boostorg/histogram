@@ -15,6 +15,7 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
+#include <boost/histogram/utility.hpp>
 #include <boost/histogram/detail/mpl.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <cstddef>
@@ -24,6 +25,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <utility>
+#include <iterator>
 
 namespace boost {
 namespace histogram {
@@ -153,6 +155,13 @@ public:
       storage_.increase(lin.out);
   }
 
+  template <typename Sequence,
+            typename = detail::is_sequence<Sequence>>
+  void fill(const Sequence& values)
+  {
+    fill(std::begin(values), std::end(values));
+  }
+
   template <typename... Args>
   void wfill(Args... args)
   {
@@ -178,6 +187,13 @@ public:
     iter_args_impl(lin, values_begin, values_end);
     if (lin.stride)
       storage_.increase(lin.out, w);
+  }
+
+  template <typename Sequence,
+            typename = detail::is_sequence<Sequence>>
+  void wfill(const Sequence& values, double w)
+  {
+    wfill(std::begin(values), std::end(values), w);
   }
 
   template <typename... Indices>
@@ -206,6 +222,13 @@ public:
     return 0;
   }
 
+  template <typename Sequence,
+            typename = detail::is_sequence<Sequence>>
+  value_t value(const Sequence& indices) const
+  {
+    return value(std::begin(indices), std::end(indices));
+  }
+
   template <typename... Indices>
   variance_t variance(Indices... indices) const
   {
@@ -220,7 +243,7 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  value_t variance(Iterator indices_begin, Iterator indices_end) const
+  variance_t variance(Iterator indices_begin, Iterator indices_end) const
   {
     BOOST_ASSERT_MSG(std::distance(indices_begin, indices_end) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -229,6 +252,13 @@ public:
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
     return storage_.variance(lin.out);
+  }
+
+  template <typename Sequence,
+            typename = detail::is_sequence<Sequence>>
+  variance_t variance(const Sequence& indices) const
+  {
+    return variance(std::begin(indices), std::end(indices));
   }
 
   /// Number of axes (dimensions) of histogram
@@ -317,8 +347,8 @@ private:
   template <typename OtherStorage, typename OtherAxes>
   friend class dynamic_histogram;
 
-  template <typename Archiv>
-  friend void serialize(Archiv&, dynamic_histogram&, unsigned);
+  template <typename Archiv, typename OtherStorage, typename OtherAxes>
+  friend void serialize(Archiv&, dynamic_histogram<OtherStorage, OtherAxes>&, unsigned);
 };
 
 

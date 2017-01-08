@@ -37,14 +37,14 @@ variable_axis_init(python::tuple args, python::dict kwargs) {
         v.push_back(extract<double>(args[i]));
     }
 
-    std::string label;
+    const char* label = nullptr;
     bool uoflow = true;
     while (len(kwargs) > 0) {
         tuple kv = kwargs.popitem();
         std::string k = extract<std::string>(kv[0]);
         object v = kv[1];
         if (k == "label")
-            label = extract<std::string>(v);
+            label = extract<const char*>(v);
         else if (k == "uoflow")
             uoflow = extract<bool>(v);
         else {
@@ -84,9 +84,9 @@ category_axis_init(python::tuple args, python::dict kwargs) {
     //     }
     // }
 
-    std::vector<std::string> c;
+    std::vector<const char*> c;
     for (int i = 1, n = len(args); i < n; ++i)
-        c.push_back(extract<std::string>(args[i]));
+        c.push_back(extract<const char*>(args[i]));
 
     return pyinit(c);
 }
@@ -135,9 +135,8 @@ struct axis_suite : public python::def_visitor<axis_suite<T> > {
     typename std::enable_if<std::is_base_of<axis_with_label, U>::value, void>::type
     add_axis_label(Class& cl) {
         cl.add_property("label",
-                        python::make_function((const std::string&(U::*)() const) &U::label,
-                                              python::return_value_policy<python::copy_const_reference>()),
-                        (void(U::*)(const std::string&)) &U::label,
+                        (const char*(U::*)() const) &U::label,
+                        (void(U::*)(const char*)) &U::label,
                         "Name or description for the axis.");
     }
 
@@ -184,17 +183,17 @@ void register_axis_types()
 
   // used to pass arguments from raw python init to specialized C++ constructors
   class_<std::vector<double>>("vector_double", no_init);
-  class_<std::vector<std::string>>("vector_string", no_init);
+  class_<std::vector<const char*>>("vector_cstring", no_init);
   class_<std::vector<double>::const_iterator>("vector_double_iterator", no_init);
-  class_<std::vector<std::string>::const_iterator>("vector_string_iterator", no_init);
+  class_<std::vector<const char*>::const_iterator>("vector_cstring_iterator", no_init);
 
   class_<regular_axis>("regular_axis",
     "An axis for real-valued data and bins of equal width."
     "\nBinning is a O(1) operation.",
     no_init)
-    .def(init<unsigned, double, double, std::string, bool>(
+    .def(init<unsigned, double, double, const char*, bool>(
          (arg("self"), arg("bin"), arg("min"), arg("max"),
-          arg("label") = std::string(),
+          arg("label") = static_cast<const char*>(nullptr),
           arg("uoflow") = true)))
     .def(axis_suite<regular_axis>())
     ;
@@ -205,9 +204,9 @@ void register_axis_types()
     "\nsince the axis is circular and wraps around after 2pi."
     "\nBinning is a O(1) operation.",
     no_init)
-    .def(init<unsigned, double, std::string>(
+    .def(init<unsigned, double, const char*>(
          (arg("self"), arg("bin"), arg("start") = 0.0,
-          arg("label") = std::string())))
+          arg("label") = static_cast<const char*>(nullptr))))
     .def(axis_suite<polar_axis>())
     ;
 
@@ -217,7 +216,7 @@ void register_axis_types()
     "\nthe problem domain allows it, prefer a regular_axis.",
     no_init)
     .def("__init__", raw_function(variable_axis_init))
-    .def(init<std::vector<double>, std::string, bool>())
+    .def(init<std::vector<double>, const char*, bool>())
     .def(axis_suite<variable_axis>())
     ;
 
@@ -229,7 +228,7 @@ void register_axis_types()
     "\nBinning is a O(1) operation.",
     no_init)
     .def("__init__", raw_function(category_axis_init))
-    .def(init<std::vector<std::string>>())
+    .def(init<std::vector<const char*>>())
     .def(axis_suite<category_axis>())
     ;
 
@@ -238,9 +237,9 @@ void register_axis_types()
     "\nThere are no underflow/overflow bins for this axis."
     "\nBinning is a O(1) operation.",
     no_init)
-    .def(init<int, int, std::string, bool>(
+    .def(init<int, int, const char*, bool>(
          (arg("self"), arg("min"), arg("max"),
-          arg("label") = std::string(),
+          arg("label") = static_cast<const char*>(nullptr),
           arg("uoflow") = true)))
     .def(axis_suite<integer_axis>())
     ;

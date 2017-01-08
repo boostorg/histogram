@@ -7,7 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_HPP_
 #define _BOOST_HISTOGRAM_AXIS_HPP_
 
-#include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/detail/tiny_string.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/mpl/vector.hpp>
 #include <type_traits>
@@ -36,12 +36,12 @@ public:
   /// Returns whether axis has extra overflow and underflow bins.
   inline bool uoflow() const { return shape_ > size_; }
   /// Returns the axis label, which is a name or description (not implemented for category_axis).
-  const std::string& label() const { return label_; }
+  const char* label() const { return label_.c_str(); }
   /// Change the label of an axis (not implemented for category_axis).
-  void label(const std::string& label) { label_ = label; }
+  void label(const char* label) { label_ = detail::tiny_string(label); }
 
 protected:
-  axis_with_label(unsigned n, const std::string& label, bool uoflow) :
+  axis_with_label(unsigned n, const char* label, bool uoflow) :
     size_(n), shape_(size_ + 2 * uoflow), label_(label)
   {
     if (n == 0)
@@ -60,7 +60,7 @@ protected:
 private:
   int size_;
   int shape_;
-  std::string label_;
+  detail::tiny_string label_;
 
   template <class Archive>
   friend void serialize(Archive&, axis_with_label&, unsigned);
@@ -98,7 +98,7 @@ public:
    * \param uoflow add underflow and overflow bins to the histogram for this axis or not
    */
   regular_axis(unsigned n, double min, double max,
-               const std::string& label = std::string(),
+               const char* label = nullptr,
                bool uoflow = true) :
     axis_with_label(n, label, uoflow),
     min_(min),
@@ -161,7 +161,7 @@ public:
 	 */
   explicit
   polar_axis(unsigned n, double start = 0.0,
-             const std::string& label = std::string()) :
+             const char* label = nullptr) :
     axis_with_label(n, label, false),
     start_(start)
   {}
@@ -213,7 +213,7 @@ public:
 	 */
   explicit
   variable_axis(const std::initializer_list<double>& x,
-                const std::string& label = std::string(),
+                const char* label = nullptr,
                 bool uoflow = true) :
       axis_with_label(x.size() - 1, label, uoflow),
       x_(new double[x.size()])
@@ -223,7 +223,7 @@ public:
   }
 
   variable_axis(const std::vector<double>& x,
-                const std::string& label = std::string(),
+                const char* label = nullptr,
                 bool uoflow = true) :
       axis_with_label(x.size() - 1, label, uoflow),
       x_(new double[x.size()])
@@ -234,7 +234,7 @@ public:
 
   template <typename Iterator>
   variable_axis(Iterator begin, Iterator end,
-                const std::string& label = std::string(),
+                const char* label = nullptr,
                 bool uoflow = true) :
       axis_with_label(std::distance(begin, end) - 1, label, uoflow),
       x_(new double[std::distance(begin, end)])
@@ -306,7 +306,7 @@ public:
    * \param max largest integer of the covered range
    */
   integer_axis(int min, int max,
-               const std::string& label = std::string(),
+               const char* label = nullptr,
                bool uoflow = true) :
     axis_with_label(max + 1 - min, label, uoflow),
     min_(min)
@@ -345,56 +345,66 @@ private:
 ///An axis for enumerated categories. The axis stores the category labels, and expects that they are addressed using an integer from ``0`` to ``n-1``. There are no underflow/overflow bins for this axis.  Binning is a O(1) operation.
 class category_axis {
 public:
-  typedef std::string value_type;
+  using value_type = const char*;
+
+  template <typename Iterator>
+  category_axis(Iterator begin, Iterator end) :
+    size_(std::distance(begin, end)),
+    ptr_(new detail::tiny_string[size_])
+  {
+    std::copy(begin, end, ptr_.get());
+  }
 
   /**Construct from initializer list of strings
    *
    * \param categories ordered sequence of categories that this axis discriminates
    */
   explicit
-  category_axis(const std::initializer_list<std::string>& categories) :
-    categories_(categories)
+  category_axis(const std::initializer_list<const char*>& categories) :
+    category_axis(categories.begin(), categories.end())
   {}
 
-  template <typename Iterator>
-  category_axis(Iterator cat_begin, Iterator cat_end) :
-    categories_(std::distance(cat_begin, cat_end))
-  {
-    std::copy(cat_begin, cat_end, categories_.begin());
-  }
-
-  category_axis(const std::vector<std::string>& cat) :
-    categories_(cat)
-  {}
-
-  category_axis(std::vector<std::string>&& cat) :
-    categories_(std::move(cat))
+  explicit
+  category_axis(const std::vector<const char*>& categories) :
+    category_axis(categories.begin(), categories.end())
   {}
 
   category_axis() {}
-  category_axis(const category_axis&) = default;
+  category_axis(const category_axis& other) :
+    category_axis(other.ptr_.get(),
+                  other.ptr_.get() + other.size_)
+  {}
   category_axis(category_axis&&) = default;
-  category_axis& operator=(const category_axis&) = default;
+  category_axis& operator=(const category_axis& other) {
+    category_axis tmp = other;
+    *this = std::move(tmp);
+    return *this;
+  }
   category_axis& operator=(category_axis&&) = default;
 
-  inline int bins() const { return categories_.size(); }
-  inline int shape() const { return categories_.size(); }
+  inline int bins() const { return size_; }
+  inline int shape() const { return size_; }
   inline bool uoflow() const { return false; }
 
   ///Returns the bin index for the passed argument.
   inline int index(int x) const
-  { if (!(0 <= x && x < bins()))
+  { if (!(0 <= x && x < size_))
       throw std::out_of_range("category index is out of range");
     return x; }
   ///Returns the category for the bin index.
-  const std::string& operator[](int idx) const
-  { return categories_[idx]; }
+  const char* operator[](int idx) const
+  { return ptr_.get()[idx].c_str(); }
 
-  bool operator==(const category_axis& o) const
-  { return categories_ == o.categories_; }
+  bool operator==(const category_axis& other) const
+  {
+    if (size_ != other.size_)
+      return false;
+    return std::equal(ptr_.get(), ptr_.get() + size_, other.ptr_.get());
+  }
 
 private:
-  std::vector<std::string> categories_;
+  int size_;
+  std::unique_ptr<detail::tiny_string[]> ptr_;
 
   template <class Archive>
   friend void serialize(Archive&, category_axis&, unsigned);

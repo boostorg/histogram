@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_DETAIL_MPL_HPP_
 
 #include <type_traits>
+#include <iterator>
 #include <limits>
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/mpl/equal.hpp>
@@ -17,7 +18,6 @@
 #include <boost/mpl/vector.hpp>
 #include <boost/mpl/back_inserter.hpp>
 
-#include <boost/mpl/bool.hpp>
 
 namespace boost {
 namespace histogram {
@@ -27,6 +27,11 @@ namespace detail {
               typename = decltype(*std::declval<T&>()),
               typename = decltype(++std::declval<T&>())>
     struct is_iterator {};
+
+    template <typename T,
+              typename = decltype(std::begin(std::declval<T&>())),
+              typename = decltype(std::end(std::declval<T&>()))>
+    struct is_sequence {};
 
     // prefer dynamic over static storage, choose 
     // static_storage with larger capacity

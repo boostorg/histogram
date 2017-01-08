@@ -13,9 +13,10 @@
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/wtype.hpp>
-// #include <boost/histogram/detail/light_string.hpp>
+#include <boost/histogram/detail/tiny_string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/unique_ptr.hpp>
 
 /** \file boost/histogram/serialization.hpp
  *  \brief Defines the serialization functions, to use with boost.serialize.
@@ -43,18 +44,16 @@ inline void serialize_impl(Archive& ar, buffer_t& buf, unsigned version)
   ar & serialization::make_array(static_cast<T*>(buf.memory_), buf.nbytes_ / sizeof(T));
 }
 
-// template <class Archive>
-// inline void serialize(Archive& ar, light_string& s, unsigned version)
-// {
-//   if (Archive::is_saving::value) {
-//     const char* ptr = s.ptr_.get();
-//     ar & ptr;
-//   } else {
-//     char* ptr;
-//     ar & ptr;
-//     s.ptr_.reset(ptr);
-//   }
-// }
+template <class Archive>
+inline void serialize(Archive& ar, tiny_string& s, unsigned version)
+{
+  auto n = s.size();
+  ar & n;
+  if (Archive::is_loading::value) {
+    s.ptr_.reset(n ? new char[n+1] : nullptr);
+  }
+  ar & serialization::make_array(s.ptr_.get(), s.ptr_ ? n+1 : 0u);
+}
 
 }
 
@@ -113,7 +112,12 @@ inline void serialize(Archive& ar, integer_axis & axis, unsigned version)
 template <class Archive>
 inline void serialize(Archive& ar, category_axis & axis, unsigned version)
 {
-  ar & axis.categories_;
+  ar & axis.size_;
+  if (Archive::is_loading::value) {
+    axis.ptr_.reset(axis.size_ ?
+                    new detail::tiny_string[axis.size_] : nullptr);
+  }
+  ar & boost::serialization::make_array(axis.ptr_.get(), axis.size_);
 }
 
 template <class Archive, class Storage, class Axes>

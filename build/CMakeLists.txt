@@ -96,6 +96,9 @@ if(BUILD_CHECKS)
                  ../test/check/speed_cpp.cpp)
   target_link_libraries(speed_cpp_hd_sd ${LIBRARIES})
   target_compile_definitions(speed_cpp_hd_sd PUBLIC HISTOGRAM_TYPE=4)
+
+  add_executable(axis_size
+                 ../test/check/axis_size.cpp)
 endif()
 
 # tests

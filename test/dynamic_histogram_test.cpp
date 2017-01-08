@@ -13,6 +13,9 @@
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/utility.hpp>
 #include <boost/histogram/axis_ostream_operators.hpp>
+#include <boost/histogram/serialization.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 #include <limits>
 #include <sstream>
 
@@ -268,11 +271,13 @@ BOOST_AUTO_TEST_CASE(d1w)
 BOOST_AUTO_TEST_CASE(d2)
 {
     auto h = make_dynamic_histogram(regular_axis(2, -1, 1),
-                                    integer_axis(-1, 1, std::string(), false));
+                                    integer_axis(-1, 1, nullptr, false));
     h.fill(-1, -1);
     h.fill(-1, 0);
-    h.fill(-1, -10);
-    h.fill(-10, 0);
+    std::array<double, 2> ai{-1., -10.};
+    h.fill(ai);
+    double in[2] = {-10., 0.};
+    h.fill(in, in+2);
 
     BOOST_CHECK_EQUAL(h.dim(), 2);
     BOOST_CHECK_EQUAL(bins(h.axis(0)), 2);
@@ -317,7 +322,7 @@ BOOST_AUTO_TEST_CASE(d2)
 BOOST_AUTO_TEST_CASE(d2w)
 {
     auto h = make_dynamic_histogram(regular_axis(2, -1, 1),
-                                    integer_axis(-1, 1, std::string(), false));
+                                    integer_axis(-1, 1, nullptr, false));
     h.fill(-1, 0);       // -> 0, 1
     h.wfill(-1, -1, 10); // -> 0, 0
     h.wfill(-1, -10, 5); // is ignored
@@ -455,4 +460,30 @@ BOOST_AUTO_TEST_CASE(add_3)
     BOOST_CHECK_EQUAL(d.value(1), 0);
     BOOST_CHECK_EQUAL(d.value(2), 1);
     BOOST_CHECK_EQUAL(d.value(3), 0);
+}
+
+BOOST_AUTO_TEST_CASE(histogram_serialization)
+{
+    auto a = make_dynamic_histogram(regular_axis(3, -1, 1, "r"),
+                                    polar_axis(4, 0.0, "p"),
+                                    variable_axis({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
+                                    category_axis{"A", "B", "C"},
+                                    integer_axis(0, 1, "i"));
+    a.fill(0, -1.0);
+    a.fill(1,  0.9);
+    std::string buf;
+    {
+        std::ostringstream os;
+        boost::archive::text_oarchive oa(os);
+        oa << a;
+        buf = os.str();
+    }
+    auto b = make_dynamic_histogram();
+    BOOST_CHECK(!(a == b));
+    {
+        std::istringstream is(buf);
+        boost::archive::text_iarchive ia(is);
+        ia >> b;
+    }
+    BOOST_CHECK(a == b);
 }
