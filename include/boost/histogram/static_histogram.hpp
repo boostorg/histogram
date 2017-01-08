@@ -94,7 +94,7 @@ public:
   }
 
   template <typename OtherStorage, typename OtherAxes>
-  constexpr bool operator==(const static_histogram<OtherStorage, OtherAxes>& other)
+  bool operator==(const static_histogram<OtherStorage, OtherAxes>& other) const
   {
     return false;
   }
