@@ -41,7 +41,7 @@ install:
   - export CC=${CC}-${COMPILER_VERSION}
   # - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
   # - source activate pyenv
-  - pip install --user numpy cpp-coveralls
+  - pip install --user numpy cpp-coveralls urllib3[secure]
 
 script:
   - cd build
