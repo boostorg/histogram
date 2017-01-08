@@ -16,6 +16,8 @@
 #include <boost/histogram/detail/tiny_string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/fusion/algorithm/iteration/for_each.hpp>
+#include <boost/fusion/include/for_each.hpp>
 
 /** \file boost/histogram/serialization.hpp
  *  \brief Defines the serialization functions, to use with boost.serialize.
@@ -78,7 +80,7 @@ inline void serialize(Archive& ar, axis_with_label & base, unsigned version)
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, regular_axis & axis ,unsigned version)
+inline void serialize(Archive& ar, regular_axis & axis, unsigned version)
 {
   ar & boost::serialization::base_object<axis_with_label>(axis);
   ar & axis.min_;
@@ -119,10 +121,21 @@ inline void serialize(Archive& ar, category_axis & axis, unsigned version)
   ar & boost::serialization::make_array(axis.ptr_.get(), axis.size_);
 }
 
+namespace {
+  template <typename Archive>
+  struct serialize_helper {
+    Archive& ar_;
+    serialize_helper(Archive& ar) : ar_(ar) {}
+    template <typename T>
+    void operator()(T& t) const { ar_ & t; }
+  };  
+}
+
 template <class Archive, class Storage, class Axes>
 inline void serialize(Archive& ar, static_histogram<Storage, Axes>& h, unsigned version)
 {
-  ar & h.axes_;
+  serialize_helper<Archive> sh(ar);
+  fusion::for_each(h.axes_, sh);
   ar & h.storage_;
 }
 

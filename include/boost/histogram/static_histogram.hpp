@@ -328,8 +328,8 @@ private:
   template <typename OtherStorage, typename OtherAxes>
   friend class static_histogram;
 
-  template <class Archive>
-  friend void serialize(Archive&, static_histogram&, unsigned);
+  template <class Archive, class OtherStorage, class OtherAxes>
+  friend void serialize(Archive&, static_histogram<OtherStorage, OtherAxes>&, unsigned);
 };
 
 

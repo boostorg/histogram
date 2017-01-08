@@ -470,8 +470,7 @@ BOOST_AUTO_TEST_CASE(histogram_serialization)
                                     variable_axis({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
                                     category_axis{"A", "B", "C"},
                                     integer_axis(0, 1, "i"));
-    a.fill(0, -1.0);
-    a.fill(1,  0.9);
+    a.fill(0.5, 0.1, 0.25, 1, 0);
     std::string buf;
     {
         std::ostringstream os;

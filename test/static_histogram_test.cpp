@@ -12,6 +12,9 @@
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/utility.hpp>
 #include <boost/histogram/axis_ostream_operators.hpp>
+#include <boost/histogram/serialization.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 #include <limits>
 #include <sstream>
 
@@ -517,4 +520,29 @@ BOOST_AUTO_TEST_CASE(doc_example_0)
            "bin 10 x in [2, inf): 2 +/- 1.41421\n";
 
     BOOST_CHECK_EQUAL(os1.str(), os2.str());
+}
+
+BOOST_AUTO_TEST_CASE(histogram_serialization)
+{
+    auto a = make_static_histogram(regular_axis(3, -1, 1, "r"),
+                                   polar_axis(4, 0.0, "p"),
+                                   variable_axis({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
+                                   category_axis{"A", "B", "C"},
+                                   integer_axis(0, 1, "i"));
+    a.fill(0.5, 0.1, 0.25, 1, 0);
+    std::string buf;
+    {
+        std::ostringstream os;
+        boost::archive::text_oarchive oa(os);
+        oa << a;
+        buf = os.str();
+    }
+    auto b = decltype(a)();
+    BOOST_CHECK(!(a == b));
+    {
+        std::istringstream is(buf);
+        boost::archive::text_iarchive ia(is);
+        ia >> b;
+    }
+    BOOST_CHECK(a == b);
 }
