@@ -36,13 +36,24 @@ inline void serialize(Archive& ar, wtype& wt, unsigned version)
   ar & wt.w2;
 }
 
-template<class T, class Archive>
-inline void serialize_impl(Archive& ar, buffer_t& buf, unsigned version)
+template<class Archive>
+inline void serialize(Archive& ar, buffer& buf, unsigned version)
 {
-  ar & buf.nbytes_;
+  ar & buf.size_;
+  ar & buf.depth_;
   if (Archive::is_loading::value)
-    buf.resize(buf.nbytes_);
-  ar & serialization::make_array(static_cast<T*>(buf.memory_), buf.nbytes_ / sizeof(T));
+    buf.realloc();
+  switch (buf.depth_) {
+    case 0: /* no nothing */ break;
+    #define BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(T) \
+      case sizeof(T): ar & serialization::make_array(       \
+        static_cast<T*>(buf.memory_), buf.size_); break;
+    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint8_t)
+    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint16_t)
+    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint32_t)
+    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint64_t)
+    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(wtype)
+  }
 }
 
 template <class Archive>
@@ -58,17 +69,21 @@ inline void serialize(Archive& ar, tiny_string& s, unsigned version)
 
 }
 
+template <class Archive, typename T>
+inline void serialize(Archive& ar, static_storage<T> & store, unsigned version)
+{
+  ar & store.size_;
+  if (Archive::is_loading::value) {
+    delete [] store.data_;
+    store.data_ = new T[store.size_];
+  }
+  ar & serialization::make_array(store.data_, store.size_);
+}
+
 template <class Archive>
 inline void serialize(Archive& ar, dynamic_storage & store, unsigned version)
 {
-  ar & store.depth_;
-  switch (store.depth_) {
-  case sizeof(uint8_t) : detail::serialize_impl<uint8_t> (ar, store.data_, version); break;
-  case sizeof(uint16_t): detail::serialize_impl<uint16_t>(ar, store.data_, version); break;
-  case sizeof(uint32_t): detail::serialize_impl<uint32_t>(ar, store.data_, version); break;
-  case sizeof(uint64_t): detail::serialize_impl<uint64_t>(ar, store.data_, version); break;
-  case sizeof(detail::wtype): detail::serialize_impl<detail::wtype>(ar, store.data_, version); break;
-  }
+  ar & store.buffer_;
 }
 
 template <class Archive>

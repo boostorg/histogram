@@ -329,7 +329,7 @@ class histogramest(unittest.TestCase):
         self.assertEqual(h.dim, 1)
         self.assertEqual(h.axis(0), integer_axis(-1, 1))
         self.assertEqual(h.axis(0).shape, 5)
-        self.assertEqual(h.depth, 1)
+        self.assertEqual(h.depth, 0)
         self.assertEqual(histogram(integer_axis(-1, 1, uoflow=False)).axis(0).shape, 3)
         self.assertNotEqual(h, histogram(regular_axis(1, -1, 1)))
         self.assertNotEqual(h, histogram(integer_axis(-1, 2)))

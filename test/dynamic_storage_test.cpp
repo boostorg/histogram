@@ -51,7 +51,8 @@ BOOST_AUTO_TEST_CASE(wtype_streamer)
 BOOST_AUTO_TEST_CASE(dynamic_storage_increase_and_grow)
 {
     dynamic_storage n(1);
-    for (unsigned b = 1; b <= 8; b *= 2) {
+    n.increase(0); // allocate first memory
+    for (unsigned b = 1; b < 8; b *= 2) {
         uint64_t x = 0;
         for (unsigned t = 1; t < (8 * b); ++t) { ++x; x <<= 1; }
         void* buf = const_cast<void*>(n.data());
@@ -79,7 +80,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_add_and_grow)
     dynamic_storage a(1);
     a.increase(0);
     double x = 1.0;
-    for (unsigned i = 0; i < 100; ++i) {
+    for (unsigned i = 0; i < 63; ++i) {
         a += a;
         x += x;
         dynamic_storage b(1);
@@ -143,23 +144,4 @@ BOOST_AUTO_TEST_CASE(convert_static_storage)
     convert_static_storage_test<uint16_t>();
     convert_static_storage_test<uint32_t>();
     convert_static_storage_test<uint64_t>();
-}
-
-BOOST_AUTO_TEST_CASE(convert_static_storage_1)
-{
-    dynamic_storage a(2), b(2);
-    static_storage<double> s(2);
-    s.increase(0);
-    for (unsigned i = 0; i < 100; ++i)
-        s += s;
-    a = s;
-    BOOST_CHECK(a == s);
-    BOOST_CHECK(s == a);
-    BOOST_CHECK_EQUAL(a.value(0), 1.2676506002282294e+30);
-    BOOST_CHECK_EQUAL(a.value(1), 0.);
-    BOOST_CHECK_EQUAL(a.variance(0), 1.2676506002282294e+30);
-    BOOST_CHECK_EQUAL(a.variance(1), 0.);
-    b = std::move(s);
-    BOOST_CHECK(b == s);
-    BOOST_CHECK(s == b);
 }

@@ -7,99 +7,120 @@
 #ifndef _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
 #define _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
 
-#include <boost/histogram/detail/buffer.hpp>
+#include <cstdlib>
 
 namespace boost {
 namespace histogram {
 
+  namespace detail { class buffer; }
+
   template <typename T>
   class static_storage {
-    using buffer_t = detail::buffer_t;
-
   public:
     using value_t = T;
     using variance_t = T;
 
-    static_storage() = default;
+    ~static_storage() { std::free(data_); }
 
-    explicit static_storage(std::size_t n) : data_(n * sizeof(T)) {}
+    explicit static_storage(std::size_t n = 0) :
+      size_(n),
+      data_(n > 0 ? static_cast<T*>(std::calloc(n, sizeof(T))) : nullptr)
+    {}
 
     static_storage(const static_storage<T>& other) :
-      data_(other.data_)
-    {}
-
-    static_storage(static_storage<T>&& other) :
-      data_(std::move(other.data_))
-    {}
-
-    static_storage& operator=(static_storage<T>&& other)
+      size_(other.size_),
+      data_(static_cast<T*>(std::malloc(size_ * sizeof(T))))
     {
-      if (this != &other) {
-        data_ = std::move(other.data_);
-      }
-      return *this;
+      std::copy(other.data_, other.data_ + size_, data_);
     }
 
     template <typename OtherStorage,
               typename = typename OtherStorage::value_t>
     static_storage(const OtherStorage& other) :
-      data_(other.size() * sizeof(T))
+      size_(other.size()),
+      data_(static_cast<T*>(std::malloc(size_ * sizeof(T))))
     {
-      for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.at<T>(i) = other.value(i);
+      for (std::size_t i = 0; i < size_; ++i)
+        data_[i] = other.value(i);
+    }
+
+    template <typename OtherStorage,
+              typename = typename OtherStorage::value_t>
+    static_storage& operator=(const OtherStorage& other)
+    {
+      if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
+        std::free(data_);
+        size_ = other.size();
+        data_ = static_cast<T*>(std::malloc(size_ * sizeof(T)));
+        for (std::size_t i = 0; i < size_; ++i)
+          data_[i] = other.value(i);        
+      }
+      return *this;
+    }
+
+    static_storage(static_storage<T>&& other) :
+      static_storage()
+    {
+      std::swap(size_, other.size_);
+      std::swap(data_, other.data_);
+    }
+
+    static_storage& operator=(static_storage<T>&& other)
+    {
+      if (this != &other) {
+        std::free(data_);
+        size_ = other.size_;
+        data_ = other.data_;
+        other.size_ = 0;
+        other.data_ = nullptr;
+      }
+      return *this;
     }
 
     template <typename OtherStorage,
               typename = typename OtherStorage::value_t>
     static_storage(OtherStorage&& other) :
-      data_(other.size() * sizeof(T))
+      static_storage(static_cast<const OtherStorage&>(other))
     {
-      for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.at<T>(i) = other.value(i);
       other = OtherStorage();
     }
 
-    template <typename OtherStorage>
-    static_storage& operator=(const OtherStorage& other)
-    {
-      if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
-        data_.resize(other.size() * sizeof(T));
-        for (std::size_t i = 0, n = size(); i < n; ++i)
-          data_.at<T>(i) = other.value(i);        
-      }
-      return *this;
-    }
-
-    template <typename OtherStorage>
+    template <typename OtherStorage,
+              typename = typename OtherStorage::value_t>
     static_storage& operator=(OtherStorage&& other)
     {
-      if (static_cast<void*>(this) != static_cast<void*>(&other)) {
-        data_.resize(other.size() * sizeof(T));
-        for (std::size_t i = 0, n = size(); i < n; ++i)
-          data_.at<T>(i) = other.value(i);        
-        other = OtherStorage();
-      }
+      std::free(data_);
+      size_ = other.size();
+      data_ = static_cast<T*>(std::malloc(size_ * sizeof(T)));
+      for (std::size_t i = 0, n = size(); i < n; ++i)
+        data_[i] = other.value(i);        
+      other = OtherStorage();
       return *this;
     }
 
-    std::size_t size() const { return data_.nbytes() / sizeof(T); }
+    std::size_t size() const { return size_; }
     constexpr unsigned depth() const { return sizeof(T); }
-    const void* data() const { return data_.data(); }
-    void increase(std::size_t i) { ++(data_.at<T>(i)); }
-    value_t value(std::size_t i) const { return data_.at<T>(i); }
-    variance_t variance(std::size_t i) const { return data_.at<T>(i); }
+    const void* data() const { return static_cast<const void*>(data_); }
+    void increase(std::size_t i) { ++(data_[i]); }
+    value_t value(std::size_t i) const { return data_[i]; }
+    variance_t variance(std::size_t i) const { return data_[i]; }
 
-    template <typename OtherStorage>
+    template <typename OtherStorage,
+              typename = typename OtherStorage::value_t>
     void operator+=(const OtherStorage& other)
     {
       for (std::size_t i = 0, n = size(); i < n; ++i)
-        data_.at<T>(i) += other.value(i);
+        data_[i] += other.value(i);
     }
 
   private:
-    buffer_t data_;
- 
-    friend class dynamic_storage;
+    std::size_t size_;
+    T* data_;
+
+    friend detail::buffer;
+
+    template <typename Archive, typename U>
+    friend void serialize(Archive&, U&, unsigned);
   };
 
 }

@@ -17,6 +17,7 @@
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/utility.hpp>
 #include <boost/histogram/detail/mpl.hpp>
+#include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <cstddef>
 #include <array>
