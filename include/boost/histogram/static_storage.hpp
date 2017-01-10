@@ -122,7 +122,7 @@ namespace histogram {
     friend detail::buffer;
 
     template <typename Archive, typename U>
-    friend void serialize(Archive&, U&, unsigned);
+    friend void serialize(Archive&, static_storage<U>&, unsigned);
   };
 
 }
