@@ -55,16 +55,26 @@ void dynamic_storage_increase_and_grow_impl()
     BOOST_CHECK_EQUAL(n.value(0), 0.0);
     void* buf = const_cast<void*>(n.data());
     const auto tmax = std::numeric_limits<T>::max();
-    static_cast<T*>(buf)[0] = tmax;
-    BOOST_CHECK_EQUAL(n.value(0), double(tmax));
+    static_cast<T*>(buf)[0] = tmax - 1;
+    auto n2 = n;
+    BOOST_CHECK_EQUAL(n.value(0), double(tmax - 1));
+    BOOST_CHECK_EQUAL(n2.value(0), double(tmax - 1));
+    dynamic_storage x(1);
+    x.increase(0);
+    n.increase(0);
+    n2 += x;
     if (sizeof(T) == sizeof(uint64_t)) {
         BOOST_CHECK_THROW(n.increase(0), std::overflow_error);
+        BOOST_CHECK_THROW(n2 += x, std::overflow_error);
     } else {
         n.increase(0);
+        n2 += x;
         double v = tmax;
         ++v;
         BOOST_CHECK_EQUAL(n.value(0), v);
+        BOOST_CHECK_EQUAL(n2.value(0), v);
         BOOST_CHECK(!(n.value(0) == double(tmax)));
+        BOOST_CHECK(!(n2.value(0) == double(tmax)));
     }
 }
 
