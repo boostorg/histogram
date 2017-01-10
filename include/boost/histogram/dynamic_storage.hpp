@@ -10,7 +10,6 @@
 #include <boost/histogram/detail/wtype.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/mpl.hpp>
-#include <boost/histogram/static_storage.hpp>
 #include <boost/assert.hpp>
 #include <cstdint>
 #include <cstddef>
@@ -26,21 +25,13 @@ namespace {
   template <> struct next_storage_type<uint8_t>  { typedef uint16_t type; };
   template <> struct next_storage_type<uint16_t> { typedef uint32_t type; };
   template <> struct next_storage_type<uint32_t> { typedef uint64_t type; };
-  template <> struct next_storage_type<uint64_t> { typedef uint64_t type; };
-
-  // std::make_unsigned does not work for float and double
-  template <typename T> struct make_unsigned { using type = T; };
-  template <> struct make_unsigned<int8_t> { using type = uint8_t; };
-  template <> struct make_unsigned<int16_t> { using type = uint16_t; };
-  template <> struct make_unsigned<int32_t> { using type = uint32_t; };
-  template <> struct make_unsigned<int64_t> { using type = uint64_t; };
 
   static_assert(std::is_pod<detail::wtype>::value, "wtype must be POD");
 
   template <typename T,
             typename U = typename next_storage_type<T>::type>
   void grow_impl(detail::buffer& buf) {
-    static_assert(sizeof(U) >= 2 * sizeof(T), "U must have larger size than T");
+    static_assert(sizeof(U) >= sizeof(T), "U must be as large or larger than T");
     buf.depth(sizeof(U));
     std::copy_backward(buf.begin<T>(), buf.end<T>(), buf.end<U>());
   }
@@ -61,18 +52,18 @@ namespace {
   template <>
   void increase_impl<uint64_t>(detail::buffer& buf, std::size_t i) {
     auto& b = buf.at<uint64_t>(i);
-    if (b == std::numeric_limits<uint64_t>::max())
-      throw std::overflow_error("overflow in dynamic_storage");
-    ++b;
+    if (b < std::numeric_limits<uint64_t>::max())
+      ++b;
+    else
+      throw std::overflow_error("histogram overflow");
   }
 
   template <typename T>
   void add_impl(detail::buffer& buf, std::size_t i, uint64_t o) {
     auto& b = buf.at<T>(i);
-    if (static_cast<typename std::make_unsigned<T>::type>
-          (std::numeric_limits<T>::max() - b) >= o) {
+    if (static_cast<T>(std::numeric_limits<T>::max() - b) >= o)
       b += o;
-    } else {
+    else {
       grow_impl<T>(buf);
       add_impl<typename next_storage_type<T>::type>(buf, i, o);
     }
@@ -81,15 +72,10 @@ namespace {
   template <>
   void add_impl<uint64_t>(detail::buffer& buf, std::size_t i, uint64_t o) {
     auto& b = buf.at<uint64_t>(i);
-    if ((std::numeric_limits<uint64_t>::max() - b) < o)
-      throw std::overflow_error("overflow in dynamic_storage");
-    b += o;
-  }
-
-  template <>
-  void add_impl<detail::wtype>(detail::buffer& buf, std::size_t i, uint64_t o) {
-    auto& b = buf.at<detail::wtype>(i);
-    b += o;
+    if (static_cast<uint64_t>(std::numeric_limits<uint64_t>::max() - b) >= o)
+      b += o;
+    else
+      throw std::overflow_error("histogram overflow");
   }
 }
 
@@ -100,38 +86,44 @@ public:
   using value_t = double;
   using variance_t = double;
 
-  explicit dynamic_storage(std::size_t n = 0) :
-    buffer_(n, 0)
+  explicit
+  dynamic_storage(std::size_t s) :
+    buffer_(s, 0)
   {}
 
+  dynamic_storage() = default;
   dynamic_storage(const dynamic_storage&) = default;
   dynamic_storage(dynamic_storage&&) = default;
   dynamic_storage& operator=(const dynamic_storage&) = default;
   dynamic_storage& operator=(dynamic_storage&&) = default;
 
   template <typename T,
+            template <typename> class Storage,
             typename = detail::is_standard_integral<T>>
-  dynamic_storage(const static_storage<T>& o) :
+  dynamic_storage(const Storage<T>& o) :
     buffer_(o)
   {}
 
   template <typename T,
+            template <typename> class Storage,
             typename = detail::is_standard_integral<T>>
-  dynamic_storage& operator=(const static_storage<T>& o)
+  dynamic_storage& operator=(const Storage<T>& o)
   {
     buffer_ = o;
     return *this;
   }
 
   template <typename T,
+            template <typename> class Storage,
             typename = detail::is_standard_integral<T>>
-  dynamic_storage(static_storage<T>&& o) :
+  dynamic_storage(Storage<T>&& o) :
     buffer_(std::move(o))
   {}
 
   template <typename T,
+            template <typename> class Storage,
             typename = detail::is_standard_integral<T>>
-  dynamic_storage& operator=(static_storage<T>&& o)
+  dynamic_storage& operator=(Storage<T>&& o)
   {
     buffer_ = std::move(o);
     return *this;
@@ -189,21 +181,21 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
       while (i--) {
         uint64_t n = 0;
         switch (o.depth()) {
-          case sizeof(uint8_t): n = o.buffer_.at<uint8_t>(i); break;
+          case sizeof(uint8_t) : n = o.buffer_.at<uint8_t> (i); break;
           case sizeof(uint16_t): n = o.buffer_.at<uint16_t>(i); break;
           case sizeof(uint32_t): n = o.buffer_.at<uint32_t>(i); break;
           case sizeof(uint64_t): n = o.buffer_.at<uint64_t>(i); break;
         }
         switch (buffer_.depth()) {
           case 0: buffer_.depth(sizeof(uint8_t)); // fall through
-          case sizeof(uint8_t): add_impl<uint8_t>(buffer_, i, n); break;
+          case sizeof(uint8_t) : add_impl<uint8_t> (buffer_, i, n); break;
           case sizeof(uint16_t): add_impl<uint16_t>(buffer_, i, n); break;
           case sizeof(uint32_t): add_impl<uint32_t>(buffer_, i, n); break;
           case sizeof(uint64_t): add_impl<uint64_t>(buffer_, i, n); break;
-          case sizeof(wtype): add_impl<wtype>(buffer_, i, n);
+          case sizeof(wtype): buffer_.at<wtype>(i) += n; break;
         }
       }
-    }    
+    }
   }
   return *this;
 }
@@ -213,7 +205,7 @@ dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
 {
   switch (buffer_.depth()) {
     case 0: break;
-    case sizeof(uint8_t): return buffer_.at<uint8_t>(i);
+    case sizeof(uint8_t) : return buffer_.at<uint8_t> (i);
     case sizeof(uint16_t): return buffer_.at<uint16_t>(i);
     case sizeof(uint32_t): return buffer_.at<uint32_t>(i);
     case sizeof(uint64_t): return buffer_.at<uint64_t>(i);
@@ -227,7 +219,7 @@ dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
 {
   switch (buffer_.depth()) {
     case 0: break;
-    case sizeof(uint8_t): return buffer_.at<uint8_t>(i);
+    case sizeof(uint8_t) : return buffer_.at<uint8_t> (i);
     case sizeof(uint16_t): return buffer_.at<uint16_t>(i);
     case sizeof(uint32_t): return buffer_.at<uint32_t>(i);
     case sizeof(uint64_t): return buffer_.at<uint64_t>(i);

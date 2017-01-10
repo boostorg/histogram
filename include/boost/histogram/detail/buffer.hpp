@@ -17,11 +17,6 @@ namespace detail {
 
     class buffer {
     public:
-        buffer() :
-            size_(0),
-            depth_(0),
-            memory_(nullptr)
-        {}
 
         buffer(std::size_t s, unsigned d) :
             size_(s),
@@ -34,6 +29,12 @@ namespace detail {
                     throw std::bad_alloc();                
             }
         }
+
+        buffer() :
+            size_(0),
+            depth_(0),
+            memory_(nullptr)
+        {}
 
         buffer(const buffer& o) :
             size_(o.size_), depth_(o.depth_), memory_(nullptr)

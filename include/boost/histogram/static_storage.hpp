@@ -20,8 +20,6 @@ namespace histogram {
     using value_t = T;
     using variance_t = T;
 
-    ~static_storage() { std::free(data_); }
-
     static_storage() : size_(0), data_(nullptr) {}
 
     explicit static_storage(std::size_t n) :
@@ -99,6 +97,8 @@ namespace histogram {
       other = OtherStorage();
       return *this;
     }
+
+    ~static_storage() { std::free(data_); }
 
     std::size_t size() const { return size_; }
     constexpr unsigned depth() const { return sizeof(T); }
