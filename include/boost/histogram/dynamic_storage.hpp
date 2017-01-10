@@ -151,7 +151,7 @@ inline
 void dynamic_storage::increase(std::size_t i)
 {
   switch (buffer_.depth()) {
-    case 0: buffer_.depth(sizeof(uint8_t)); // fall through
+    case 0: buffer_.depth(sizeof(uint8_t)); // and fall through
     case sizeof(uint8_t) : increase_impl<uint8_t> (buffer_, i); break;
     case sizeof(uint16_t): increase_impl<uint16_t>(buffer_, i); break;
     case sizeof(uint32_t): increase_impl<uint32_t>(buffer_, i); break;
@@ -181,7 +181,7 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
       while (i--) {
         uint64_t n = 0;
         switch (o.depth()) {
-          case 0: /* nothing to do */ break;
+          /* case 0 is already excluded by the initial if statement */
           case sizeof(uint8_t) : n = o.buffer_.at<uint8_t> (i); break;
           case sizeof(uint16_t): n = o.buffer_.at<uint16_t>(i); break;
           case sizeof(uint32_t): n = o.buffer_.at<uint32_t>(i); break;
