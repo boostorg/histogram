@@ -87,8 +87,8 @@ public:
   using variance_t = double;
 
   explicit
-  dynamic_storage(std::size_t s) :
-    buffer_(s, 0)
+  dynamic_storage(std::size_t s, unsigned d = 0) :
+    buffer_(s, d)
   {}
 
   dynamic_storage() = default;

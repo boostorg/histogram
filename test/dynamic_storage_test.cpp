@@ -48,31 +48,32 @@ BOOST_AUTO_TEST_CASE(wtype_streamer)
     BOOST_CHECK_EQUAL(os.str(), std::string("(1.2,2.3)"));
 }
 
+template <typename T>
+void dynamic_storage_increase_and_grow_impl()
+{
+    dynamic_storage n(1, sizeof(T));
+    BOOST_CHECK_EQUAL(n.value(0), 0.0);
+    void* buf = const_cast<void*>(n.data());
+    const auto tmax = std::numeric_limits<T>::max();
+    static_cast<T*>(buf)[0] = tmax;
+    BOOST_CHECK_EQUAL(n.value(0), double(tmax));
+    if (sizeof(T) == sizeof(uint64_t)) {
+        BOOST_CHECK_THROW(n.increase(0), std::overflow_error);
+    } else {
+        n.increase(0);
+        double v = tmax;
+        ++v;
+        BOOST_CHECK_EQUAL(n.value(0), v);
+        BOOST_CHECK(!(n.value(0) == double(tmax)));
+    }
+}
+
 BOOST_AUTO_TEST_CASE(dynamic_storage_increase_and_grow)
 {
-    dynamic_storage n(1);
-    n.increase(0); // allocate first memory
-    for (unsigned b = 1; b < 8; b *= 2) {
-        uint64_t x = 0;
-        for (unsigned t = 1; t < (8 * b); ++t) { ++x; x <<= 1; }
-        void* buf = const_cast<void*>(n.data());
-        switch (b) {
-            case 1: (static_cast<uint8_t*>(buf))[0] = x;
-            case 2: (static_cast<uint16_t*>(buf))[0] = x;
-            case 4: (static_cast<uint32_t*>(buf))[0] = x;
-            case 8: (static_cast<uint64_t*>(buf))[0] = x;
-        }
-        ++x;
-        n.increase(0);
-        double v = x;
-        BOOST_CHECK_EQUAL(n.value(0), v);
-        n.increase(0);
-        ++v;
-        BOOST_CHECK_EQUAL(n.value(0), v);
-        n.increase(0);
-        ++v;
-        BOOST_CHECK_EQUAL(n.value(0), v);
-    }
+    dynamic_storage_increase_and_grow_impl<uint8_t>();
+    dynamic_storage_increase_and_grow_impl<uint16_t>();
+    dynamic_storage_increase_and_grow_impl<uint32_t>();
+    dynamic_storage_increase_and_grow_impl<uint64_t>();
 }
 
 BOOST_AUTO_TEST_CASE(dynamic_storage_add_and_grow)
@@ -111,7 +112,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_equality)
 }
 
 template <typename T>
-void convert_static_storage_test() {
+void convert_static_storage_impl() {
     dynamic_storage a(2), b(2), c(2);
     static_storage<T> s(2);
     a.increase(0);
@@ -140,8 +141,8 @@ void convert_static_storage_test() {
 
 BOOST_AUTO_TEST_CASE(convert_static_storage)
 {
-    convert_static_storage_test<uint8_t>();
-    convert_static_storage_test<uint16_t>();
-    convert_static_storage_test<uint32_t>();
-    convert_static_storage_test<uint64_t>();
+    convert_static_storage_impl<uint8_t>();
+    convert_static_storage_impl<uint16_t>();
+    convert_static_storage_impl<uint32_t>();
+    convert_static_storage_impl<uint64_t>();
 }
