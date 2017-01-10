@@ -22,7 +22,9 @@ namespace histogram {
 
     ~static_storage() { std::free(data_); }
 
-    explicit static_storage(std::size_t n = 0) :
+    static_storage() : size_(0), data_(nullptr) {}
+
+    explicit static_storage(std::size_t n) :
       size_(n),
       data_(n > 0 ? static_cast<T*>(std::calloc(n, sizeof(T))) : nullptr)
     {}
