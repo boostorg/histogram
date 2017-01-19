@@ -7,7 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
 #define _BOOST_HISTOGRAM_STATIC_STORAGE_HPP_
 
-#include <cstdlib>
+#include <algorithm>
 
 namespace boost {
 namespace histogram {
@@ -23,24 +23,26 @@ namespace histogram {
     static_storage() : size_(0), data_(nullptr) {}
 
     explicit static_storage(std::size_t n) :
-      size_(n),
-      data_(n > 0 ? static_cast<T*>(std::calloc(n, sizeof(T))) : nullptr)
-    {}
+      size_(n)
+    {
+      alloc();
+      std::fill(data_, data_ + size_, T(0));
+    }
 
     static_storage(const static_storage<T>& other) :
-      size_(other.size_),
-      data_(static_cast<T*>(std::malloc(size_ * sizeof(T))))
+      size_(other.size_)
     {
+      alloc();
       std::copy(other.data_, other.data_ + size_, data_);
     }
 
     template <typename OtherStorage,
               typename = typename OtherStorage::value_t>
     static_storage(const OtherStorage& other) :
-      size_(other.size()),
-      data_(static_cast<T*>(std::malloc(size_ * sizeof(T))))
+      size_(other.size())
     {
-      for (std::size_t i = 0; i < size_; ++i)
+      alloc();
+      for (decltype(size_) i = 0; i < size_; ++i)
         data_[i] = other.value(i);
     }
 
@@ -49,10 +51,10 @@ namespace histogram {
     static_storage& operator=(const OtherStorage& other)
     {
       if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
-        std::free(data_);
+        delete [] data_;
         size_ = other.size();
-        data_ = static_cast<T*>(std::malloc(size_ * sizeof(T)));
-        for (std::size_t i = 0; i < size_; ++i)
+        alloc();
+        for (decltype(size_) i = 0; i < size_; ++i)
           data_[i] = other.value(i);        
       }
       return *this;
@@ -68,7 +70,7 @@ namespace histogram {
     static_storage& operator=(static_storage<T>&& other)
     {
       if (this != &other) {
-        std::free(data_);
+        delete [] data_;
         size_ = other.size_;
         data_ = other.data_;
         other.size_ = 0;
@@ -89,16 +91,16 @@ namespace histogram {
               typename = typename OtherStorage::value_t>
     static_storage& operator=(OtherStorage&& other)
     {
-      std::free(data_);
+      delete [] data_;
       size_ = other.size();
-      data_ = static_cast<T*>(std::malloc(size_ * sizeof(T)));
-      for (std::size_t i = 0, n = size(); i < n; ++i)
+      alloc();
+      for (decltype(size_) i = 0, n = size(); i < n; ++i)
         data_[i] = other.value(i);        
       other = OtherStorage();
       return *this;
     }
 
-    ~static_storage() { std::free(data_); }
+    ~static_storage() { delete [] data_; }
 
     std::size_t size() const { return size_; }
     constexpr unsigned depth() const { return sizeof(T); }
@@ -111,13 +113,20 @@ namespace histogram {
               typename = typename OtherStorage::value_t>
     void operator+=(const OtherStorage& other)
     {
-      for (std::size_t i = 0, n = size(); i < n; ++i)
+      for (decltype(size_) i = 0, n = size(); i < n; ++i)
         data_[i] += other.value(i);
     }
 
   private:
     std::size_t size_;
     T* data_;
+
+    inline void alloc() {
+      if (size_ == 0)
+        data_ = nullptr;
+      else
+        data_ = new T[size_];
+    }
 
     friend detail::buffer;
 
