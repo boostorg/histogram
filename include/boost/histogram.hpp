@@ -7,9 +7,12 @@
 #ifndef BOOST_HISTOGRAM_HPP_
 #define BOOST_HISTOGRAM_HPP_
 
-#include <boost/histogram/dynamic_histogram.hpp>
-#include <boost/histogram/static_histogram.hpp>
+#include <boost/histogram/axis.hpp>
 #include <boost/histogram/utility.hpp>
+#include <boost/histogram/static_storage.hpp>
+#include <boost/histogram/dynamic_storage.hpp>
+#include <boost/histogram/static_histogram.hpp>
+#include <boost/histogram/dynamic_histogram.hpp>
 
 /**
  * \file boost/histogram.hpp
