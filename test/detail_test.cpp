@@ -36,7 +36,8 @@ BOOST_AUTO_TEST_CASE(escape_2)
 
 BOOST_AUTO_TEST_CASE(buffer_ctor_and_get)
 {
-    auto a = buffer(3, 1);
+    auto a = buffer(3);
+    a.initialize<char>();
     BOOST_CHECK_EQUAL(a.size(), 3);
     BOOST_CHECK_EQUAL(a.depth(), 1);
     a.at<char>(0) = 0;
@@ -46,9 +47,11 @@ BOOST_AUTO_TEST_CASE(buffer_ctor_and_get)
     BOOST_CHECK_EQUAL(a.at<char>(1), 1);
     BOOST_CHECK_EQUAL(a.at<char>(2), 0);
     BOOST_CHECK(a == a);
-    auto b = buffer(3, 1);
+    auto b = buffer(3);
+    b.initialize<char>();
     BOOST_CHECK(!(a == b));
-    auto c = buffer(1, 1);
+    auto c = buffer(1);
+    c.initialize<char>();
     BOOST_CHECK(!(a == c));
     auto d = buffer();
     BOOST_CHECK(!(a == d));    
@@ -56,7 +59,8 @@ BOOST_AUTO_TEST_CASE(buffer_ctor_and_get)
 
 BOOST_AUTO_TEST_CASE(buffer_copy_ctor)
 {
-    auto a = buffer(3, 1);
+    auto a = buffer(3);
+    a.initialize<char>();
     a.at<char>(1) = 1;
     auto b = a;
     BOOST_CHECK_EQUAL(b.at<char>(0), 0);
@@ -67,7 +71,8 @@ BOOST_AUTO_TEST_CASE(buffer_copy_ctor)
 
 BOOST_AUTO_TEST_CASE(buffer_move_ctor)
 {
-    auto a = buffer(3, 1);
+    auto a = buffer(3);
+    a.initialize<char>();
     a.at<char>(1) = 1;
     auto b = std::move(a);
     BOOST_CHECK_EQUAL(a.size(), 0);
@@ -80,9 +85,11 @@ BOOST_AUTO_TEST_CASE(buffer_move_ctor)
 
 BOOST_AUTO_TEST_CASE(buffer_copy_assign)
 {
-    auto a = buffer(3, 1);
+    auto a = buffer(3);
+    a.initialize<char>();
     a.at<char>(1) = 1;
-    auto b = buffer(3, 1);
+    auto b = buffer(3);
+    b.initialize<char>();
     b = a;
     BOOST_CHECK_EQUAL(b.at<char>(0), 0);
     BOOST_CHECK_EQUAL(b.at<char>(1), 1);
@@ -92,9 +99,11 @@ BOOST_AUTO_TEST_CASE(buffer_copy_assign)
 
 BOOST_AUTO_TEST_CASE(buffer_move_assign)
 {
-    auto a = buffer(3, 1);
+    auto a = buffer(3);
+    a.initialize<char>();
     a.at<char>(1) = 1;
-    auto b = buffer(3, 1);
+    auto b = buffer(3);
+    b.initialize<char>();
     b = std::move(a);
     BOOST_CHECK_EQUAL(a.size(), 0);
     BOOST_CHECK_EQUAL(b.at<char>(0), 0);
@@ -103,9 +112,10 @@ BOOST_AUTO_TEST_CASE(buffer_move_assign)
     BOOST_CHECK(!(a == b));
 }
 
-BOOST_AUTO_TEST_CASE(buffer_resize)
+BOOST_AUTO_TEST_CASE(buffer_realloc)
 {
-    auto a = buffer(3, 1);
+    auto a = buffer(3);
+    a.initialize<char>();
     BOOST_CHECK_EQUAL(a.size(), 3);
     a.at<char>(0) = 1;
     a.at<char>(1) = 2;

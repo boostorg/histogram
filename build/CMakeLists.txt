@@ -41,9 +41,9 @@ if(BUILD_PYTHON)
   endif()
 
   add_library(histogram SHARED
-    ../src/module.cpp
-    ../src/axis.cpp
-    ../src/histogram.cpp
+    ../src/python/module.cpp
+    ../src/python/axis.cpp
+    ../src/python/histogram.cpp
   )
 
   set(LIBRARIES ${STD_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})

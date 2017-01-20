@@ -12,10 +12,11 @@
 #include <boost/histogram/static_storage.hpp>
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/detail/wtype.hpp>
+#include <boost/histogram/detail/weight.hpp>
 #include <boost/histogram/detail/tiny_string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/array.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/include/for_each.hpp>
 
@@ -30,7 +31,7 @@ namespace histogram {
 namespace detail {
 
 template <class Archive>
-inline void serialize(Archive& ar, wtype& wt, unsigned version)
+inline void serialize(Archive& ar, weight_t& wt, unsigned version)
 {
   ar & wt.w;
   ar & wt.w2;
@@ -52,7 +53,7 @@ inline void serialize(Archive& ar, buffer& buf, unsigned version)
     BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint16_t)
     BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint32_t)
     BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint64_t)
-    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(wtype)
+    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(weight_t)
   }
 }
 

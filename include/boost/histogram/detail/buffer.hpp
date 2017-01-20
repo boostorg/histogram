@@ -18,20 +18,9 @@ namespace detail {
     class buffer {
     public:
 
-        buffer(std::size_t s, unsigned d) :
+        explicit
+        buffer(std::size_t s = 0) :
             size_(s),
-            depth_(d),
-            memory_(nullptr)
-        {
-            if (size_ * depth_) {
-                memory_ = std::calloc(size_, depth_);        
-                if (!memory_)
-                    throw std::bad_alloc();                
-            }
-        }
-
-        buffer() :
-            size_(0),
             depth_(0),
             memory_(nullptr)
         {}
@@ -148,15 +137,15 @@ namespace detail {
             realloc();
         }
 
+        template <typename T>
+        void initialize() {
+            depth(sizeof(T));
+            std::fill(begin<T>(), end<T>(), T(0));
+        }
+
         void realloc()
         {
-            if (!memory_) {
-                if (size_ * depth_ > 0)
-                    memory_ = std::calloc(size_, depth_);
-            }
-            else {
-                memory_ = std::realloc(memory_, size_ * depth_);
-            }
+            memory_ = std::realloc(memory_, size_ * depth_);
             if (!memory_ && (size_ * depth_ > 0))            
                 throw std::bad_alloc();
         }

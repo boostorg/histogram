@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_DETAIL_WEIGHT_HPP_
 
 #include <boost/cstdint.hpp>
+#include <boost/histogram/detail/mpl.hpp>
 #include <type_traits>
 #include <ostream>
 
@@ -23,32 +24,32 @@ struct weight_t {
   weight_t(weight_t&&) = default;
   weight_t& operator=(const weight_t&) = default;
   weight_t& operator=(weight_t&&) = default;
-  weight_t(double v) : w(v), w2(v) {}
-  weight_t& add_weight(double v)
-  { w += v; w2 += v*v; return *this; }
-  template <typename T>
-  weight_t& add_count(T v)
-  { w += v; w2 += v; return *this; }
   weight_t& operator+=(const weight_t& o)
   { w += o.w; w2 += o.w2; return *this; }
   weight_t& operator++()
   { ++w; ++w2; return *this; }
-  bool operator==(double v) const
-  { return w == v && w2 == v; }
-  bool operator!=(double v) const
-  { return w != v || w2 != v; }
   bool operator==(const weight_t& o) const
   { return w == o.w && w2 == o.w2; }
   bool operator!=(const weight_t& o) const
-  { return w != o.w || w2 != o.w2; }
-};
+  { return !operator==(o); }
+  weight_t& add_weight(double v)
+  { w += v; w2 += v*v; return *this; }
 
-// inline
-// std::ostream& operator<<(std::ostream& os, const weight_t& w)
-// {
-//   os << '(' << w.w << ',' << w.w2 << ')';
-//   return os;
-// }
+  explicit weight_t(int v) : w(v), w2(v) {}
+
+  template <typename T, typename = is_standard_integral<T>>
+  weight_t& operator=(T v)
+  { w = v; w2 = v;  return *this; }
+  template <typename T, typename = is_standard_integral<T>>
+  weight_t& operator+=(T v)
+  { w += v; w2 += v; return *this; }
+  template <typename T, typename = is_standard_integral<T>>
+  bool operator==(T v) const
+  { return w == v && w2 == v; }
+  template <typename T, typename = is_standard_integral<T>>
+  bool operator!=(T v) const
+  { return !operator==(v); }
+};
 
 }
 }

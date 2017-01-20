@@ -1,0 +1,189 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Rationale</title>
+<link rel="stylesheet" href="../../../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="prev" href="notes.html" title="Notes">
+<link rel="next" href="references.html" title="References">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../../../boost.png"></td>
+<td align="center"><a href="../../../../../index.html">Home</a></td>
+<td align="center"><a href="../../../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="notes.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="references.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="boost_histogram.rationale"></a><a class="link" href="rationale.html" title="Rationale">Rationale</a>
+</h2></div></div></div>
+<div class="toc"><dl class="toc">
+<dt><span class="section"><a href="rationale.html#boost_histogram.rationale.design_principles">Design principles</a></span></dt>
+<dt><span class="section"><a href="rationale.html#boost_histogram.rationale.interface_convenience">Interface
+      convenience</a></span></dt>
+<dt><span class="section"><a href="rationale.html#boost_histogram.rationale.language_transparency">Language
+      transparency</a></span></dt>
+<dt><span class="section"><a href="rationale.html#boost_histogram.rationale.powerful_binning_strategies">Powerful
+      binning strategies</a></span></dt>
+<dt><span class="section"><a href="rationale.html#boost_histogram.rationale.performance_and_memory_efficiency">Performance
+      and memory-efficiency</a></span></dt>
+<dt><span class="section"><a href="rationale.html#boost_histogram.rationale.weighted_counts_and_variance_estimates">Weighted
+      counts and variance estimates</a></span></dt>
+<dt><span class="section"><a href="rationale.html#boost_histogram.rationale.serialization_and_zero_suppression">Serialization
+      and zero-suppression</a></span></dt>
+</dl></div>
+<p>
+      I designed the histogram based on a decade of experience collected in working
+      with Big Data, more precisely in the field of particle physics and astroparticle
+      physics. In many ways, the <code class="computeroutput"><span class="identifier">ROOT</span> <span class="special">&lt;</span><span class="identifier">https</span><span class="special">://</span><span class="identifier">root</span><span class="special">.</span><span class="identifier">cern</span><span class="special">.</span><span class="identifier">ch</span><span class="special">&gt;</span></code>_ histograms served as an example of <span class="bold"><strong>not to do it</strong></span>.
+    </p>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.rationale.design_principles"></a><a class="link" href="rationale.html#boost_histogram.rationale.design_principles" title="Design principles">Design principles</a>
+</h3></div></div></div>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            "Do one thing and do it well", Doug McIlroy
+          </li>
+<li class="listitem">
+            The <a href="https://www.python.org/dev/peps/pep-0020" target="_top">Zen of Python</a>
+            (also applies to other languages).
+          </li>
+</ul></div>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.rationale.interface_convenience"></a><a class="link" href="rationale.html#boost_histogram.rationale.interface_convenience" title="Interface convenience">Interface
+      convenience</a>
+</h3></div></div></div>
+<p>
+        A histogram should have the same consistent interface whatever the dimension.
+        Like <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span></code> it should <span class="bold"><strong>just
+        work</strong></span>, users shouldn't be forced to make <span class="bold"><strong>a
+        priori</strong></span> choices among several histogram classes and options everytime
+        they encounter a new data set.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.rationale.language_transparency"></a><a class="link" href="rationale.html#boost_histogram.rationale.language_transparency" title="Language transparency">Language
+      transparency</a>
+</h3></div></div></div>
+<p>
+        Python is a great language for data analysis, so the histogram needs Python
+        bindings. The histogram should be usable as an interface between a complex
+        simulation or data-storage system written in C++ and data-analysis/plotting
+        in Python: define the histogram in Python, let it be filled on the C++ side,
+        and then get it back for further data analysis or plotting.
+      </p>
+<p>
+        Data analysis in Python is Numpy-based, so Numpy support is a must.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.rationale.powerful_binning_strategies"></a><a class="link" href="rationale.html#boost_histogram.rationale.powerful_binning_strategies" title="Powerful binning strategies">Powerful
+      binning strategies</a>
+</h3></div></div></div>
+<p>
+        The histogram supports half a dozent different binning strategies, conveniently
+        encapsulated in axis objects. There is the standard sorting of real-valued
+        data into bins of equal or varying width, but also binning of angles or integer
+        values.
+      </p>
+<p>
+        Extra bins that count over- and underflow values are added by default. This
+        feature can be turned off individually for each axis. The extra bins do not
+        disturb normal bin counting. On an axis with <code class="computeroutput"><span class="identifier">n</span></code>
+        bins, the first bin has the index <code class="computeroutput"><span class="number">0</span></code>,
+        the last bin <code class="computeroutput"><span class="identifier">n</span><span class="special">-</span><span class="number">1</span></code>, while the under- and overflow bins are accessible
+        at <code class="computeroutput"><span class="special">-</span><span class="number">1</span></code>
+        and <code class="computeroutput"><span class="identifier">n</span></code>, respectively.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.rationale.performance_and_memory_efficiency"></a><a class="link" href="rationale.html#boost_histogram.rationale.performance_and_memory_efficiency" title="Performance and memory-efficiency">Performance
+      and memory-efficiency</a>
+</h3></div></div></div>
+<p>
+        Dense storage in memory is a must for high performance. Unfortunately, the
+        <a href="https://en.wikipedia.org/wiki/Curse_of_dimensionality" target="_top">curse
+        of dimensionality</a> quickly become a problem as the number of dimensions
+        grows, leading to histograms which consume large amounts (up to GBs) of memory.
+      </p>
+<p>
+        Fortunately, having many dimensions typically reduces the number of counts
+        per bin, since counts get spread over many dimensions. The histogram uses
+        an adaptive count size per bin to be as memory-efficient as possible, by
+        starting with the smallest integer size per bin of 1 byte and increasing
+        as needed to up to 8 byte. A <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span></code>
+        grows in <span class="bold"><strong>length</strong></span> as new elements are added,
+        while the count storage grows in <span class="bold"><strong>depth</strong></span>.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.rationale.weighted_counts_and_variance_estimates"></a><a class="link" href="rationale.html#boost_histogram.rationale.weighted_counts_and_variance_estimates" title="Weighted counts and variance estimates">Weighted
+      counts and variance estimates</a>
+</h3></div></div></div>
+<p>
+        A histogram categorizes and counts, so the natural choice for the data type
+        of the counts are integers. However, in particle physics, histograms are
+        also often filled with weighted events, for example, to make sure that two
+        histograms look the same in one variable, while the distribution of another,
+        correlated variable is a subject of study.
+      </p>
+<p>
+        The histogram can be filled with either weighted or unweighted counts. In
+        the weighted case, the sum of weights is stored in a <code class="computeroutput"><span class="identifier">double</span></code>.
+        The histogram provides a variance estimate is both cases. In the unweighted
+        case, the estimate is computed from the count itself, using Poisson-theory.
+        In the weighted case, the sum of squared weights is stored alongside the
+        sum of weights in a second <code class="computeroutput"><span class="identifier">double</span></code>,
+        and used to compute a variance estimate.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.rationale.serialization_and_zero_suppression"></a><a class="link" href="rationale.html#boost_histogram.rationale.serialization_and_zero_suppression" title="Serialization and zero-suppression">Serialization
+      and zero-suppression</a>
+</h3></div></div></div>
+<p>
+        Serialization is implemented using <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">serialization</span></code>.
+        Pickling in Python is implemented based on the C++ serialization code. To
+        ensure portability of the pickled histogram, the pickle string is an ASCII
+        representation of the histogram, generated with the <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">archive</span><span class="special">::</span><span class="identifier">text_oarchive</span></code>.
+        It would be great to switch to a portable binary representation in the future,
+        when that becomes available.
+      </p>
+<p>
+        To reduce the size of the string, run-length encoding is applied (zero-suppression)
+        to sequences of zeros. Partly filled histograms often contain large sequences
+        of zeros.
+      </p>
+</div>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2016 Hand Dembinski<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="notes.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="references.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

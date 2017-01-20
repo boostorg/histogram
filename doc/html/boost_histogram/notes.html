@@ -1,0 +1,526 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Notes</title>
+<link rel="stylesheet" href="../../../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="prev" href="tutorial.html" title="Tutorial">
+<link rel="next" href="rationale.html" title="Rationale">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../../../boost.png"></td>
+<td align="center"><a href="../../../../../index.html">Home</a></td>
+<td align="center"><a href="../../../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="tutorial.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="rationale.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="boost_histogram.notes"></a><a class="link" href="notes.html" title="Notes">Notes</a>
+</h2></div></div></div>
+<div class="toc"><dl class="toc">
+<dt><span class="section"><a href="notes.html#boost_histogram.notes.dependencies">Dependencies</a></span></dt>
+<dt><span class="section"><a href="notes.html#boost_histogram.notes.setup">How to build and install</a></span></dt>
+<dt><span class="section"><a href="notes.html#boost_histogram.notes.tests">Tests</a></span></dt>
+<dt><span class="section"><a href="notes.html#boost_histogram.notes.checks">Checks</a></span></dt>
+<dt><span class="section"><a href="notes.html#boost_histogram.notes.consistency">Consistency of C++
+      and Python interface</a></span></dt>
+<dt><span class="section"><a href="notes.html#boost_histogram.notes.benchmarks">Benchmarks</a></span></dt>
+</dl></div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.notes.dependencies"></a><a class="link" href="notes.html#boost_histogram.notes.dependencies" title="Dependencies">Dependencies</a>
+</h3></div></div></div>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            <a href="http://www.boost.org" target="_top">Boost</a>
+          </li>
+<li class="listitem">
+            <a href="https://cmake.org" target="_top">CMake</a>
+          </li>
+<li class="listitem">
+            <span class="bold"><strong>Optional dependencies*</strong></span>
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; ">
+<li class="listitem">
+                  <a href="%3chttp://www.python.org" target="_top">Python </a> for Python
+                  bindings
+                </li>
+<li class="listitem">
+                  <a href="%3chttp://www.numpy.org" target="_top">Numpy </a> for Numpy support
+                </li>
+<li class="listitem">
+                  <a href="%3chttp://www.sphinx-doc.org" target="_top">Sphinx</a> to (re)build
+                  this documentation
+                </li>
+</ul></div>
+          </li>
+</ul></div>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.notes.setup"></a><a class="link" href="notes.html#boost_histogram.notes.setup" title="How to build and install">How to build and install</a>
+</h3></div></div></div>
+<p>
+</p>
+<pre class="programlisting"><span class="identifier">git</span> <span class="identifier">clone</span> <span class="identifier">https</span><span class="special">://</span><span class="identifier">github</span><span class="special">.</span><span class="identifier">com</span><span class="special">/</span><span class="identifier">HDembinski</span><span class="special">/</span><span class="identifier">histogram</span><span class="special">.</span><span class="identifier">git</span>
+<span class="identifier">mkdir</span> <span class="identifier">build</span> <span class="special">&amp;&amp;</span> <span class="identifier">cd</span> <span class="identifier">build</span>
+<span class="identifier">cmake</span> <span class="special">../</span><span class="identifier">histogram</span><span class="special">/</span><span class="identifier">build</span>
+<span class="identifier">make</span> <span class="identifier">install</span>
+</pre>
+<p>
+      </p>
+<p>
+        Do <code class="computeroutput"><span class="identifier">make</span> <span class="identifier">test</span></code>
+        to run the tests, or <code class="computeroutput"><span class="identifier">ctest</span> <span class="special">-</span><span class="identifier">V</span></code> for
+        more output.
+      </p>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          I couldn't figure out a proper way to install the Python module with CMake,
+          so for the time being, CMake will print a message with manual instructions
+          instead. The main problem is how to pick the right dist-packages path in
+          a platform-independent way, and such that it respects the <code class="computeroutput"><span class="identifier">CMAKE_INSTALL_PREFIX</span></code>
+        </p></td></tr>
+</table></div>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.notes.tests"></a><a class="link" href="notes.html#boost_histogram.notes.tests" title="Tests">Tests</a>
+</h3></div></div></div>
+<p>
+        Most of the C++ interface is implicitly tested in the tests of the Python
+        interface, which in turn calls the C++ interface.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.notes.checks"></a><a class="link" href="notes.html#boost_histogram.notes.checks" title="Checks">Checks</a>
+</h3></div></div></div>
+<p>
+        Some checks are included in <code class="computeroutput"><span class="identifier">test</span><span class="special">/</span><span class="identifier">check</span></code>.
+        These are not strictly tests, and not strictly examples, yet they provide
+        useful information that belongs with the library code. They are not build
+        by default, building can be activated with the CMake flag <code class="computeroutput"><span class="identifier">BUILD_CHECKS</span></code>.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.notes.consistency"></a><a class="link" href="notes.html#boost_histogram.notes.consistency" title="Consistency of C++ and Python interface">Consistency of C++
+      and Python interface</a>
+</h3></div></div></div>
+<p>
+        The Python and C++ interface are indentical - except when they are not. The
+        exceptions concern cases where a more elegant and pythonic way of implementing
+        things exists. In a few cases, the C++ classes have extra member functions
+        for convenience, which are not needed on the Python side.
+      </p>
+<p>
+        Properties Getter/setter-like functions are wrapped as properties.
+      </p>
+<p>
+        Keyword-based parameters C++ member functions :cpp:func:<code class="computeroutput"><span class="identifier">histogram</span><span class="special">::</span><span class="identifier">fill</span></code>
+        and :cpp:func:<code class="computeroutput"><span class="identifier">histogram</span><span class="special">::</span><span class="identifier">wfill</span></code> are wrapped by the single Python
+        member function :py:func:<code class="computeroutput"><span class="identifier">histogram</span><span class="special">.</span><span class="identifier">fill</span></code> with
+        an optional keyword parameter <code class="computeroutput"><span class="identifier">w</span></code>
+        to pass a weight.
+      </p>
+<p>
+        C++ convenience C++ member function :cpp:func:<code class="computeroutput"><span class="identifier">histogram</span><span class="special">::</span><span class="identifier">bins</span></code>
+        is omitted on the Python side, since it is very easy to just query this directly
+        from the axis object in Python. On the C++ side, this would require a extra
+        type cast or applying a visitor.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_histogram.notes.benchmarks"></a><a class="link" href="notes.html#boost_histogram.notes.benchmarks" title="Benchmarks">Benchmarks</a>
+</h3></div></div></div>
+<p>
+        One design goal of this project is to be fast. The act of filling the histogram
+        with a number should be insignificant compared to the CPU cycles spend to
+        retrieve/generate that number. Naturally, we also want to beat the competition.
+      </p>
+<p>
+        The following table shows results of a simple benchmark against
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            <code class="computeroutput"><span class="identifier">TH1I</span></code>, <code class="computeroutput"><span class="identifier">TH3I</span></code>
+            and <code class="computeroutput"><span class="identifier">THnI</span></code> of the <a href="https://root.cern.ch" target="_top">ROOT framework</a>
+          </li>
+<li class="listitem">
+            <code class="computeroutput"><span class="identifier">histogram</span></code> and <code class="computeroutput"><span class="identifier">histogramdd</span></code> from the Python module
+            <code class="computeroutput"><span class="identifier">numpy</span></code>
+          </li>
+</ul></div>
+<p>
+        The benchmark against ROOT is implemented in C++, the benchmark against numpy
+        in Python.
+      </p>
+<p>
+        Remarks:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            The comparison with ROOT puts ROOT at the advantage, since <code class="computeroutput"><span class="identifier">TH1I</span></code> and <code class="computeroutput"><span class="identifier">TH3I</span></code>
+            are specialized classes for 1 dimension and 3 dimensions, not a general
+            class for N-dimensions like <code class="computeroutput">boost::histogram</code>.
+            ROOT histograms also lack a comparably flexible system to define different
+            binning schemes for each axis.
+          </li>
+<li class="listitem">
+            Large vectors are pre-allocated and with random numbers drawn from a
+            uniform or normal distribution for all tests. In the timed part, these
+            numbers are read from the vector and put into the histograms. This reduces
+            the overhead merely to memory access.
+          </li>
+<li class="listitem">
+            The test with uniform random numbers never fills the overflow and underflow
+            bins, while the test with random numbers from a normal distribution does.
+            This explains some of the differences between the two distributions.
+          </li>
+<li class="listitem">
+            All tests are repeated 10 times, the minimum is shown.
+          </li>
+</ul></div>
+<div class="table">
+<a name="boost_histogram.notes.benchmarks.benchmark_res"></a><p class="title"><b>Table&#160;1.1.&#160;Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3
+        RAM</b></p>
+<div class="table-contents"><table class="table" summary="Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3
+        RAM">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                <p>
+                  distribution
+                </p>
+              </th>
+<th>
+                <p>
+                  uniform
+                </p>
+              </th>
+<th>
+                <p>
+                  normal
+                </p>
+              </th>
+</tr></thead>
+<tbody><tr>
+<td>
+                <div class="table">
+<a name="boost_histogram.notes.benchmarks.distribution"></a><p class="title"><b>Table&#160;1.2.&#160;distribution</b></p>
+<div class="table-contents"><table class="table" summary="distribution">
+<colgroup><col></colgroup>
+<thead><tr><th>
+                          <p>
+                            dimension
+                          </p>
+                        </th></tr></thead>
+<tbody>
+<tr><td>
+                          <p>
+                            No. of fills
+                          </p>
+                        </td></tr>
+<tr><td>
+                          <p>
+                            C++: ROOT [t/s]
+                          </p>
+                        </td></tr>
+<tr><td>
+                          <p>
+                            C++: boost [t/s]
+                          </p>
+                        </td></tr>
+<tr><td>
+                          <p>
+                            Py: numpy [t/s]
+                          </p>
+                        </td></tr>
+<tr><td>
+                          <p>
+                            Py: boost [t/s]
+                          </p>
+                        </td></tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+              </td>
+<td>
+                <div class="table">
+<a name="boost_histogram.notes.benchmarks.uniform"></a><p class="title"><b>Table&#160;1.3.&#160;uniform</b></p>
+<div class="table-contents"><table class="table" summary="uniform">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                          <p>
+                            1D
+                          </p>
+                        </th>
+<th>
+                          <p>
+                            3D
+                          </p>
+                        </th>
+<th>
+                          <p>
+                            6D
+                          </p>
+                        </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                          <p>
+                            12M
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            4M
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            2M
+                          </p>
+                        </td>
+</tr>
+<tr>
+<td>
+                          <p>
+                            0.127
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.199
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.185
+                          </p>
+                        </td>
+</tr>
+<tr>
+<td>
+                          <p>
+                            0.172
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.177
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.155
+                          </p>
+                        </td>
+</tr>
+<tr>
+<td>
+                          <p>
+                            0.825
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.727
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.436
+                          </p>
+                        </td>
+</tr>
+<tr>
+<td>
+                          <p>
+                            0.209
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.229
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.192
+                          </p>
+                        </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+              </td>
+<td>
+                <div class="table">
+<a name="boost_histogram.notes.benchmarks.normal"></a><p class="title"><b>Table&#160;1.4.&#160;normal</b></p>
+<div class="table-contents"><table class="table" summary="normal">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                          <p>
+                            1D
+                          </p>
+                        </th>
+<th>
+                          <p>
+                            3D
+                          </p>
+                        </th>
+<th>
+                          <p>
+                            6D
+                          </p>
+                        </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                          <p>
+                            12M
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            4M
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            2M
+                          </p>
+                        </td>
+</tr>
+<tr>
+<td>
+                          <p>
+                            0.168
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.143
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.179
+                          </p>
+                        </td>
+</tr>
+<tr>
+<td>
+                          <p>
+                            0.172
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.171
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.150
+                          </p>
+                        </td>
+</tr>
+<tr>
+<td>
+                          <p>
+                            0.824
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.426
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.401
+                          </p>
+                        </td>
+</tr>
+<tr>
+<td>
+                          <p>
+                            0.207
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.194
+                          </p>
+                        </td>
+<td>
+                          <p>
+                            0.168
+                          </p>
+                        </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break">
+              </td>
+</tr></tbody>
+</table></div>
+</div>
+<br class="table-break"><p>
+        <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class histogram">boost::histogram::histogram</a></code>
+        shows consistent performance comparable to the specialized ROOT histograms.
+        It is faster than ROOT's implementation of a N-dimensional histogram <code class="computeroutput"><span class="identifier">THnI</span></code>. The performance of <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class histogram">boost::histogram::histogram</a></code>
+        is similar in C++ and Python, showing only a small overhead in Python. It
+        is consistently faster than numpy's histogram functions.
+      </p>
+</div>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2016 Hand Dembinski<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="tutorial.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="rationale.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

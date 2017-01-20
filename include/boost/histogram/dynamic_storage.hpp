@@ -7,7 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_DYNAMIC_STORAGE_HPP_
 #define _BOOST_HISTOGRAM_DYNAMIC_STORAGE_HPP_
 
-#include <boost/histogram/detail/wtype.hpp>
+#include <boost/histogram/detail/weight.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/mpl.hpp>
 #include <boost/assert.hpp>
@@ -26,7 +26,7 @@ namespace {
   template <> struct next_storage_type<uint16_t> { typedef uint32_t type; };
   template <> struct next_storage_type<uint32_t> { typedef uint64_t type; };
 
-  static_assert(std::is_pod<detail::wtype>::value, "wtype must be POD");
+  static_assert(std::is_pod<detail::weight_t>::value, "weight_t must be POD");
 
   template <typename T,
             typename U = typename next_storage_type<T>::type>
@@ -80,15 +80,15 @@ namespace {
 }
 
 class dynamic_storage {
-  using wtype = detail::wtype;
+  using weight_t = detail::weight_t;
 
 public:
   using value_t = double;
   using variance_t = double;
 
   explicit
-  dynamic_storage(std::size_t s, unsigned d = 0) :
-    buffer_(s, d)
+  dynamic_storage(std::size_t s) :
+    buffer_(s)
   {}
 
   dynamic_storage() = default;
@@ -151,12 +151,12 @@ inline
 void dynamic_storage::increase(std::size_t i)
 {
   switch (buffer_.depth()) {
-    case 0: buffer_.depth(sizeof(uint8_t)); // and fall through
+    case 0: buffer_.initialize<uint8_t>(); // and fall through
     case sizeof(uint8_t) : increase_impl<uint8_t> (buffer_, i); break;
     case sizeof(uint16_t): increase_impl<uint16_t>(buffer_, i); break;
     case sizeof(uint32_t): increase_impl<uint32_t>(buffer_, i); break;
     case sizeof(uint64_t): increase_impl<uint64_t>(buffer_, i); break;
-    case sizeof(wtype): ++(buffer_.at<wtype>(i)); break;
+    case sizeof(weight_t): ++(buffer_.at<weight_t>(i)); break;
   }
 }
 
@@ -164,17 +164,17 @@ inline
 void dynamic_storage::increase(std::size_t i, double w)
 {
   wconvert();
-  buffer_.at<wtype>(i).add_weight(w);
+  buffer_.at<weight_t>(i).add_weight(w);
 }
 
 inline
 dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
 {
   if (o.depth()) {
-    if (o.depth() == sizeof(wtype)) {
+    if (o.depth() == sizeof(weight_t)) {
       wconvert();
       for (std::size_t i = 0; i < size(); ++i)
-        buffer_.at<wtype>(i) += o.buffer_.at<wtype>(i);
+        buffer_.at<weight_t>(i) += o.buffer_.at<weight_t>(i);
     }
     else {
       auto i = size();
@@ -188,12 +188,12 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
           case sizeof(uint64_t): n = o.buffer_.at<uint64_t>(i); break;
         }
         switch (buffer_.depth()) {
-          case 0: buffer_.depth(sizeof(uint8_t)); // and fall through
+          case 0: buffer_.initialize<uint8_t>(); // and fall through
           case sizeof(uint8_t) : add_impl<uint8_t> (buffer_, i, n); break;
           case sizeof(uint16_t): add_impl<uint16_t>(buffer_, i, n); break;
           case sizeof(uint32_t): add_impl<uint32_t>(buffer_, i, n); break;
           case sizeof(uint64_t): add_impl<uint64_t>(buffer_, i, n); break;
-          case sizeof(wtype): buffer_.at<wtype>(i) += n; break;
+          case sizeof(weight_t): buffer_.at<weight_t>(i) += n; break;
         }
       }
     }
@@ -210,7 +210,7 @@ dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
     case sizeof(uint16_t): return buffer_.at<uint16_t>(i);
     case sizeof(uint32_t): return buffer_.at<uint32_t>(i);
     case sizeof(uint64_t): return buffer_.at<uint64_t>(i);
-    case sizeof(wtype): return buffer_.at<wtype>(i).w;
+    case sizeof(weight_t): return buffer_.at<weight_t>(i).w;
   }
   return 0.0;
 }
@@ -224,7 +224,7 @@ dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
     case sizeof(uint16_t): return buffer_.at<uint16_t>(i);
     case sizeof(uint32_t): return buffer_.at<uint32_t>(i);
     case sizeof(uint64_t): return buffer_.at<uint64_t>(i);
-    case sizeof(wtype): return buffer_.at<wtype>(i).w2;
+    case sizeof(weight_t): return buffer_.at<weight_t>(i).w2;
   }
   return 0.0;
 }
@@ -233,12 +233,12 @@ inline
 void dynamic_storage::wconvert()
 {
   switch (buffer_.depth()) {
-    case 0: buffer_.depth(sizeof(wtype)); break;
-    case sizeof(uint8_t) : grow_impl<uint8_t, wtype> (buffer_); break;
-    case sizeof(uint16_t): grow_impl<uint16_t, wtype>(buffer_); break;
-    case sizeof(uint32_t): grow_impl<uint32_t, wtype>(buffer_); break;
-    case sizeof(uint64_t): grow_impl<uint64_t, wtype>(buffer_); break;
-    case sizeof(wtype): /* do nothing */ break;
+    case 0: buffer_.initialize<weight_t>(); break;
+    case sizeof(uint8_t) : grow_impl<uint8_t, weight_t> (buffer_); break;
+    case sizeof(uint16_t): grow_impl<uint16_t, weight_t>(buffer_); break;
+    case sizeof(uint32_t): grow_impl<uint32_t, weight_t>(buffer_); break;
+    case sizeof(uint64_t): grow_impl<uint64_t, weight_t>(buffer_); break;
+    case sizeof(weight_t): /* do nothing */ break;
   }
 }
 

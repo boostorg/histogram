@@ -38,23 +38,16 @@ BOOST_AUTO_TEST_CASE(equal_operator)
     BOOST_CHECK(!(a == d));
 }
 
-BOOST_AUTO_TEST_CASE(wtype_streamer)
-{
-    std::ostringstream os;
-    detail::wtype w;
-    w.w = 1.2;
-    w.w2 = 2.3;
-    os << w;
-    BOOST_CHECK_EQUAL(os.str(), std::string("(1.2,2.3)"));
-}
-
 template <typename T>
 void dynamic_storage_increase_and_grow_impl()
 {
-    dynamic_storage n(1, sizeof(T));
+    dynamic_storage n(1);
     BOOST_CHECK_EQUAL(n.value(0), 0.0);
-    void* buf = const_cast<void*>(n.data());
+    n.increase(0);
+    while (n.depth() != sizeof(T))
+        n += n;
     const auto tmax = std::numeric_limits<T>::max();
+    void* buf = const_cast<void*>(n.data());
     static_cast<T*>(buf)[0] = tmax - 1;
     auto n2 = n;
     BOOST_CHECK_EQUAL(n.value(0), double(tmax - 1));

@@ -238,7 +238,7 @@ public:
     python::list shapes;
     python::list strides;
     std::size_t stride = 1;
-    if (self.depth() == sizeof(detail::wtype)) {
+    if (self.depth() == sizeof(detail::weight_t)) {
       stride *= sizeof(double);
       d["typestr"] = python::str("|f") + python::str(stride);
       strides.append(stride);
