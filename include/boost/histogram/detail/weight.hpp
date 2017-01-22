@@ -7,11 +7,6 @@
 #ifndef _BOOST_HISTOGRAM_DETAIL_WEIGHT_HPP_
 #define _BOOST_HISTOGRAM_DETAIL_WEIGHT_HPP_
 
-#include <boost/cstdint.hpp>
-#include <boost/histogram/detail/mpl.hpp>
-#include <type_traits>
-#include <ostream>
-
 namespace boost {
 namespace histogram {
 namespace detail {
@@ -37,16 +32,16 @@ struct weight_t {
 
   explicit weight_t(int v) : w(v), w2(v) {}
 
-  template <typename T, typename = is_standard_integral<T>>
+  template <typename T>
   weight_t& operator=(T v)
-  { w = v; w2 = v;  return *this; }
-  template <typename T, typename = is_standard_integral<T>>
+  { w = static_cast<double>(v); w2 = static_cast<double>(v);  return *this; }
+  template <typename T>
   weight_t& operator+=(T v)
-  { w += v; w2 += v; return *this; }
-  template <typename T, typename = is_standard_integral<T>>
+  { w += static_cast<double>(v); w2 += static_cast<double>(v); return *this; }
+  template <typename T>
   bool operator==(T v) const
-  { return w == v && w2 == v; }
-  template <typename T, typename = is_standard_integral<T>>
+  { return w == static_cast<double>(v) && w2 == static_cast<double>(v); }
+  template <typename T>
   bool operator!=(T v) const
   { return !operator==(v); }
 };
