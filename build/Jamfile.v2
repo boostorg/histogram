@@ -21,12 +21,12 @@ if [ python.configured ]
       <link>shared
     : <variant>release
     [ requires cxx11_auto_declarations
+               cxx11_defaulted_functions
                cxx11_constexpr
                cxx11_noexcept
                cxx11_nullptr
                cxx11_rvalue_references
                cxx11_template_aliases
-               cxx11_thread_local
                cxx11_variadic_templates ] ]
     ;
 
