@@ -13,6 +13,7 @@
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/weight.hpp>
+#include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/tiny_string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
@@ -41,19 +42,24 @@ template<class Archive>
 inline void serialize(Archive& ar, buffer& buf, unsigned version)
 {
   ar & buf.size_;
-  ar & buf.depth_;
-  if (Archive::is_loading::value)
-    buf.realloc();
-  switch (buf.depth_) {
-    case 0: /* no nothing */ break;
-    #define BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(T) \
-      case sizeof(T): ar & serialization::make_array(       \
-        static_cast<T*>(buf.memory_), buf.size_); break;
-    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint8_t)
-    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint16_t)
-    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint32_t)
-    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(uint64_t)
-    BOOST_HISTOGRAM_DETAIL_SERIALIZE_BUFFER_CASE(weight_t)
+  ar & buf.type_;
+  if (Archive::is_loading::value) {
+    buf.realloc(buf.depth());
+    // switch (buf.type_) {
+    //   case 1: buf.create<uint8_t>(); break;
+    //   case 2: buf.create<uint16_t>(); break;
+    //   case 3: buf.create<uint32_t>(); break;
+    //   case 4: buf.create<uint64_t>(); break;
+    //   case 6: buf.create<weight_t>(); break;
+    // }
+  }
+  switch (buf.type_) {
+    case 0: buf.ptr_ = nullptr; break;
+    case 1: ar & serialization::make_array(&buf.at<uint8_t>(0), buf.size_); break;
+    case 2: ar & serialization::make_array(&buf.at<uint16_t>(0), buf.size_); break;
+    case 3: ar & serialization::make_array(&buf.at<uint32_t>(0), buf.size_); break;
+    case 4: ar & serialization::make_array(&buf.at<uint64_t>(0), buf.size_); break;
+    case 6: ar & serialization::make_array(&buf.at<weight_t>(0), buf.size_); break;
   }
 }
 

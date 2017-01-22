@@ -10,172 +10,216 @@
 #include <cstdlib>
 #include <algorithm>
 #include <new> // for bad_alloc exception
+#include <boost/mpl/map.hpp>
+#include <boost/mpl/pair.hpp>
+#include <boost/mpl/int.hpp>
+#include <boost/mpl/at.hpp>
+#include <boost/histogram/detail/weight.hpp>
 
 namespace boost {
 namespace histogram {
 namespace detail {
 
-    class buffer {
-    public:
+  using type_to_int = mpl::map<
+    mpl::pair<int8_t, mpl::int_<1>>,
+    mpl::pair<int16_t, mpl::int_<2>>,
+    mpl::pair<int32_t, mpl::int_<3>>,
+    mpl::pair<int64_t, mpl::int_<4>>,
+    mpl::pair<uint8_t, mpl::int_<1>>,
+    mpl::pair<uint16_t, mpl::int_<2>>,
+    mpl::pair<uint32_t, mpl::int_<3>>,
+    mpl::pair<uint64_t, mpl::int_<4>>,
+    mpl::pair<weight_t, mpl::int_<6>>
+  >;
 
-        explicit
-        buffer(std::size_t s = 0) :
-            size_(s),
-            depth_(0),
-            memory_(nullptr)
-        {}
+  using int_to_type = mpl::map<
+    mpl::pair<mpl::int_<1>, uint8_t>,
+    mpl::pair<mpl::int_<2>, uint16_t>,
+    mpl::pair<mpl::int_<3>, uint32_t>,
+    mpl::pair<mpl::int_<4>, uint64_t>,
+    mpl::pair<mpl::int_<6>, weight_t>
+  >;
 
-        buffer(const buffer& o) :
-            size_(o.size_), depth_(o.depth_), memory_(nullptr)
-        {
-            realloc();
-            std::copy(static_cast<char*>(o.memory_),
-                      static_cast<char*>(o.memory_) + size_ * depth_,
-                      static_cast<char*>(memory_));
+  template <typename T>
+  using next_storage_type =
+    typename mpl::at<int_to_type,
+      typename mpl::next<
+        typename mpl::at<type_to_int, T>::type
+      >::type
+    >::type;
+
+  class buffer {
+  public:
+
+    explicit
+    buffer(std::size_t s = 0) :
+      size_(s),
+      type_(0),
+      ptr_(nullptr)
+    {}
+
+    buffer(const buffer& o) :
+      size_(o.size_), type_(o.type_), ptr_(nullptr)
+    {
+      realloc(depth());
+      std::copy(static_cast<const char*>(o.ptr_),
+                static_cast<const char*>(o.ptr_) + size_ * depth(),
+                static_cast<char*>(ptr_));
+    }
+
+    buffer& operator=(const buffer& o)
+    {
+      if (this != &o) {
+        if (size_ != o.size_ || type_ != o.type_) {
+          size_ = o.size_;
+          type_ = o.type_;
+          realloc(depth());
         }
+        std::copy(static_cast<const char*>(o.ptr_),
+                  static_cast<const char*>(o.ptr_) + size_ * depth(),
+                  static_cast<char*>(ptr_));
+      }
+      return *this;
+    }
 
-        buffer& operator=(const buffer& o)
-        {
-            if (this != &o) {
-                if ((size_ * depth_) != (o.size_ * o.depth_)) {
-                    size_ = o.size_;
-                    depth_ = o.depth_;
-                    realloc();
-                }
-                std::copy(static_cast<const char*>(o.memory_),
-                          static_cast<const char*>(o.memory_) + size_,
-                          static_cast<char*>(memory_));
-            }
-            return *this;
-        }
+    template <typename T, template<typename> class Storage>
+    buffer(const Storage<T>& o) :
+      size_(o.size()),
+      type_(mpl::at<type_to_int, T>::type::value),
+      ptr_(nullptr)
+    {
+      using U = typename mpl::at<
+          int_to_type,
+          typename mpl::at<type_to_int, T>::type
+        >::type;
+      realloc(sizeof(U));
+      std::copy(o.data_, o.data_ + size_, &at<U>(0));
+    }
 
-        template <typename T, template<typename> class Storage>
-        buffer(const Storage<T>& o) :
-            size_(o.size()), depth_(sizeof(T)), memory_(nullptr)
-        {
-            realloc();
-            std::copy(static_cast<const T*>(o.data()),
-                      static_cast<const T*>(o.data()) + size_,
-                      static_cast<T*>(memory_));
-        }
+    template <typename T, template<typename> class Storage>
+    buffer& operator=(const Storage<T>& o) {
+      size_ = o.size();
+      type_ = mpl::at<type_to_int, T>::type::value;
+      using U = typename mpl::at<
+          int_to_type,
+          typename mpl::at<type_to_int, T>::type
+        >::type;
+      realloc(sizeof(U));
+      std::copy(o.data_, o.data_ + size_, &at<T>(0));
+      return *this;
+    }
 
-        template <typename T, template<typename> class Storage>
-        buffer& operator=(const Storage<T>& o) {
-            size_ = o.size();
-            depth_ = sizeof(T);
-            realloc();
-            std::copy(o.data_, o.data_ + size_,
-                      static_cast<T*>(memory_));
-            return *this;
-        }
+    buffer(buffer&& o) :
+      size_(o.size_),
+      type_(o.type_),
+      ptr_(o.ptr_)
+    {
+      o.size_ = 0;
+      o.type_ = 0;
+      o.ptr_ = nullptr;
+    }
 
-        buffer(buffer&& o) :
-            size_(o.size_),
-            depth_(o.depth_),
-            memory_(o.memory_)
-        {
-            o.size_ = 0;
-            o.depth_ = 0;
-            o.memory_ = nullptr;
-        }
+    buffer& operator=(buffer&& o)
+    {
+      if (this != &o) {
+        std::free(ptr_);
+        size_ = o.size_;
+        type_ = o.type_;
+        ptr_ = o.ptr_;
+        o.size_ = 0;
+        o.type_ = 0;
+        o.ptr_ = nullptr;
+      }
+      return *this;
+    }
 
-        buffer& operator=(buffer&& o)
-        {
-            if (this != &o) {
-                std::free(memory_);
-                size_ = o.size_;
-                depth_ = o.depth_;
-                memory_ = o.memory_;
-                o.size_ = 0;
-                o.depth_ = 0;
-                o.memory_ = nullptr;
-            }
-            return *this;
-        }
+    template <typename T, template<typename> class Storage>
+    buffer(Storage<T>&& o) :
+      size_(o.size_),
+      type_(mpl::at<type_to_int, T>::type::value),
+      ptr_(const_cast<void*>(o.data_))
+    {
+      o.size_ = 0;
+      o.data_ = nullptr;
+    }
 
-        template <typename T, template<typename> class Storage>
-        buffer(Storage<T>&& o) :
-            size_(o.size_),
-            depth_(sizeof(T)),
-            memory_(const_cast<void*>(o.data_))
-        {
-            o.size_ = 0;
-            o.data_ = nullptr;
-        }
+    template <typename T, template<typename> class Storage>
+    buffer& operator=(Storage<T>&& o)
+    {
+      std::free(ptr_);
+      size_ = o.size_;
+      type_ = mpl::at<type_to_int, T>::type::value;
+      ptr_ = static_cast<void*>(o.data_);
+      o.size_ = 0;
+      o.data_ = nullptr;
+      return *this;
+    }
 
-        template <typename T, template<typename> class Storage>
-        buffer& operator=(Storage<T>&& o)
-        {
-            std::free(memory_);
-            size_ = o.size_;
-            depth_ = sizeof(T);
-            memory_ = static_cast<void*>(o.data_);
-            o.size_ = 0;
-            o.data_ = nullptr;
-            return *this;
-        }
+    ~buffer() { std::free(ptr_); }
 
-        ~buffer() { std::free(memory_); }
+    std::size_t size() const { return size_; }
 
-        std::size_t size() const { return size_; }
+    unsigned type() const { return type_; }
 
-        unsigned depth() const { return depth_; }
+    unsigned depth() const {
+      switch (type_) {
+        case 1: return sizeof(uint8_t);
+        case 2: return sizeof(uint16_t);
+        case 3: return sizeof(uint32_t);
+        case 4: return sizeof(uint64_t);
+        case 6: return sizeof(weight_t);
+      }
+      return 0;
+    }
 
-        const void* data() const { return memory_; }
+    const void* data() const { return ptr_; }
 
-        bool operator==(const buffer& o) const {
-            return size_ == o.size_ &&
-                   depth_ == o.depth_ &&
-                   std::equal(static_cast<char*>(memory_),
-                              static_cast<char*>(memory_) + size_ * depth_,
-                              static_cast<char*>(o.memory_));
-        }
+    bool operator==(const buffer& o) const {
+      return size_ == o.size_ &&
+             type_ == o.type_ &&
+             std::equal(static_cast<char*>(ptr_),
+                        static_cast<char*>(ptr_) + size_ * depth(),
+                        static_cast<char*>(o.ptr_));
+    }
 
-        void depth(unsigned d)
-        {
-            depth_ = d;
-            realloc();
-        }
+    template <typename T,
+              typename U = next_storage_type<T>>
+    void grow() {
+      static_assert(sizeof(U) >= sizeof(T), "U must be as large or larger than T");
+      type_ = mpl::at<type_to_int, U>::type::value;
+      realloc(sizeof(U));
+      std::copy_backward(&at<T>(0), &at<T>(size_), &at<U>(size_));
+    }
 
-        template <typename T>
-        void initialize() {
-            depth(sizeof(T));
-            std::fill(begin<T>(), end<T>(), T(0));
-        }
+    template <typename T>
+    void initialize() {
+      type_ = mpl::at<type_to_int, T>::type::value;
+      ptr_ = nullptr;
+      realloc(sizeof(T));
+      std::fill(&at<T>(0), &at<T>(size_), T(0));
+    }
 
-        void realloc()
-        {
-            memory_ = std::realloc(memory_, size_ * depth_);
-            if (!memory_ && (size_ * depth_ > 0))            
-                throw std::bad_alloc();
-        }
+    void realloc(unsigned d)
+    {
+      ptr_ = std::realloc(ptr_, size_ * d);
+      if (!ptr_ && (size_ * d > 0))
+        throw std::bad_alloc();
+    }
 
-        template <typename T>
-        T* begin() { return static_cast<T*>(memory_); }
+    template <typename T>
+    T& at(std::size_t i) { return static_cast<T*>(ptr_)[i]; }
 
-        template <typename T>
-        T* end() { return static_cast<T*>(memory_) + size_; }
+    template <typename T>
+    const T& at(std::size_t i) const { return static_cast<const T*>(ptr_)[i]; }
 
-        template <typename T>
-        const T* cbegin() const { return static_cast<const T*>(memory_); }
+  private:
+    std::size_t size_;
+    unsigned type_;
+    void* ptr_;
 
-        template <typename T>
-        const T* cend() const { return static_cast<const T*>(memory_) + size_; }
-
-        template <typename T>
-        T& at(std::size_t i) { return begin<T>()[i]; }
-
-        template <typename T>
-        const T& at(std::size_t i) const { return cbegin<T>()[i]; }
-
-    private:
-        std::size_t size_;
-        unsigned depth_;
-        void* memory_;
-
-        template <class Archive>
-        friend void serialize(Archive&, buffer&, unsigned);
-    };
+    template <class Archive>
+    friend void serialize(Archive&, buffer&, unsigned);
+  };
 
 }
 }
