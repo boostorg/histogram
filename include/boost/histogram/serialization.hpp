@@ -42,7 +42,8 @@ template<class Archive>
 inline void serialize(Archive& ar, buffer& buf, unsigned version)
 {
   ar & buf.size_;
-  ar & buf.type_;
+  ar & buf.type_.id_;
+  ar & buf.type_.depth_;
   if (Archive::is_loading::value) {
     buf.realloc(buf.depth());
     // switch (buf.type_) {
@@ -53,7 +54,7 @@ inline void serialize(Archive& ar, buffer& buf, unsigned version)
     //   case 6: buf.create<weight_t>(); break;
     // }
   }
-  switch (buf.type_) {
+  switch (buf.type_.id_) {
     case 0: buf.ptr_ = nullptr; break;
     case 1: ar & serialization::make_array(&buf.at<uint8_t>(0), buf.size_); break;
     case 2: ar & serialization::make_array(&buf.at<uint16_t>(0), buf.size_); break;

@@ -53,17 +53,17 @@ namespace detail {
 
     explicit
     buffer(std::size_t s = 0) :
+      type_(),
       size_(s),
-      type_(0),
       ptr_(nullptr)
     {}
 
     buffer(const buffer& o) :
-      size_(o.size_), type_(o.type_), ptr_(nullptr)
+      type_(o.type_), size_(o.size_), ptr_(nullptr)
     {
       realloc(depth());
       std::copy(static_cast<const char*>(o.ptr_),
-                static_cast<const char*>(o.ptr_) + size_ * depth(),
+                static_cast<const char*>(o.ptr_) + size() * depth(),
                 static_cast<char*>(ptr_));
     }
 
@@ -76,8 +76,32 @@ namespace detail {
           realloc(depth());
         }
         std::copy(static_cast<const char*>(o.ptr_),
-                  static_cast<const char*>(o.ptr_) + size_ * depth(),
+                  static_cast<const char*>(o.ptr_) + size() * depth(),
                   static_cast<char*>(ptr_));
+      }
+      return *this;
+    }
+
+    buffer(buffer&& o) :
+      type_(o.type_),
+      size_(o.size_),
+      ptr_(o.ptr_)
+    {
+      o.size_ = 0;
+      o.type_ = type();
+      o.ptr_ = nullptr;
+    }
+
+    buffer& operator=(buffer&& o)
+    {
+      if (this != &o) {
+        std::free(ptr_);
+        type_ = o.type_;
+        size_ = o.size_;
+        ptr_ = o.ptr_;
+        o.type_ = type();
+        o.size_ = 0;
+        o.ptr_ = nullptr;
       }
       return *this;
     }
@@ -85,7 +109,6 @@ namespace detail {
     template <typename T, template<typename> class Storage>
     buffer(const Storage<T>& o) :
       size_(o.size()),
-      type_(mpl::at<type_to_int, T>::type::value),
       ptr_(nullptr)
     {
       using U = typename mpl::at<
@@ -94,51 +117,32 @@ namespace detail {
         >::type;
       realloc(sizeof(U));
       std::copy(o.data_, o.data_ + size_, &at<U>(0));
+      type_.set<U>();
     }
 
     template <typename T, template<typename> class Storage>
     buffer& operator=(const Storage<T>& o) {
       size_ = o.size();
-      type_ = mpl::at<type_to_int, T>::type::value;
       using U = typename mpl::at<
           int_to_type,
           typename mpl::at<type_to_int, T>::type
         >::type;
       realloc(sizeof(U));
       std::copy(o.data_, o.data_ + size_, &at<T>(0));
-      return *this;
-    }
-
-    buffer(buffer&& o) :
-      size_(o.size_),
-      type_(o.type_),
-      ptr_(o.ptr_)
-    {
-      o.size_ = 0;
-      o.type_ = 0;
-      o.ptr_ = nullptr;
-    }
-
-    buffer& operator=(buffer&& o)
-    {
-      if (this != &o) {
-        std::free(ptr_);
-        size_ = o.size_;
-        type_ = o.type_;
-        ptr_ = o.ptr_;
-        o.size_ = 0;
-        o.type_ = 0;
-        o.ptr_ = nullptr;
-      }
+      type_.set<U>();
       return *this;
     }
 
     template <typename T, template<typename> class Storage>
     buffer(Storage<T>&& o) :
       size_(o.size_),
-      type_(mpl::at<type_to_int, T>::type::value),
       ptr_(const_cast<void*>(o.data_))
     {
+      using U = typename mpl::at<
+          int_to_type,
+          typename mpl::at<type_to_int, T>::type
+        >::type;
+      type_.set<U>();
       o.size_ = 0;
       o.data_ = nullptr;
     }
@@ -146,10 +150,14 @@ namespace detail {
     template <typename T, template<typename> class Storage>
     buffer& operator=(Storage<T>&& o)
     {
+      using U = typename mpl::at<
+          int_to_type,
+          typename mpl::at<type_to_int, T>::type
+        >::type;
       std::free(ptr_);
       size_ = o.size_;
-      type_ = mpl::at<type_to_int, T>::type::value;
       ptr_ = static_cast<void*>(o.data_);
+      type_.set<U>();
       o.size_ = 0;
       o.data_ = nullptr;
       return *this;
@@ -158,25 +166,13 @@ namespace detail {
     ~buffer() { std::free(ptr_); }
 
     std::size_t size() const { return size_; }
-
-    unsigned type() const { return type_; }
-
-    unsigned depth() const {
-      switch (type_) {
-        case 1: return sizeof(uint8_t);
-        case 2: return sizeof(uint16_t);
-        case 3: return sizeof(uint32_t);
-        case 4: return sizeof(uint64_t);
-        case 6: return sizeof(weight_t);
-      }
-      return 0;
-    }
-
+    unsigned id() const { return type_.id_; }
+    unsigned depth() const { return type_.depth_; }
     const void* data() const { return ptr_; }
 
     bool operator==(const buffer& o) const {
       return size_ == o.size_ &&
-             type_ == o.type_ &&
+             type_.id_ == o.type_.id_ &&
              std::equal(static_cast<char*>(ptr_),
                         static_cast<char*>(ptr_) + size_ * depth(),
                         static_cast<char*>(o.ptr_));
@@ -186,14 +182,26 @@ namespace detail {
               typename U = next_storage_type<T>>
     void grow() {
       static_assert(sizeof(U) >= sizeof(T), "U must be as large or larger than T");
-      type_ = mpl::at<type_to_int, U>::type::value;
       realloc(sizeof(U));
       std::copy_backward(&at<T>(0), &at<T>(size_), &at<U>(size_));
+      type_.set<U>();
+    }
+
+    void wconvert()
+    {
+      switch (type_.id_) {
+        case 0: initialize<weight_t>(); break;
+        case 1: grow<uint8_t, weight_t> (); break;
+        case 2: grow<uint16_t, weight_t>(); break;
+        case 3: grow<uint32_t, weight_t>(); break;
+        case 4: grow<uint64_t, weight_t>(); break;
+        case 6: /* do nothing */ break;
+      }
     }
 
     template <typename T>
     void initialize() {
-      type_ = mpl::at<type_to_int, T>::type::value;
+      type_.set<T>();
       ptr_ = nullptr;
       realloc(sizeof(T));
       std::fill(&at<T>(0), &at<T>(size_), T(0));
@@ -213,8 +221,22 @@ namespace detail {
     const T& at(std::size_t i) const { return static_cast<const T*>(ptr_)[i]; }
 
   private:
+    struct type {
+      char id_, depth_;
+      type() : id_(0), depth_(0) {}
+      type(const type&) = default;
+      type& operator=(const type&) = default;
+      template <typename T>
+      void set() {
+        id_ = mpl::at<type_to_int, T>::type::value;
+        depth_ = sizeof(T);
+      }
+      bool operator==(const type& o) const { return id_ == o.id_; }
+      bool operator!=(const type& o) const { return id_ != o.id_; }
+    };
+
+    type type_;
     std::size_t size_;
-    unsigned type_;
     void* ptr_;
 
     template <class Archive>

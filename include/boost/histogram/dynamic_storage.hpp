@@ -131,14 +131,12 @@ private:
 
   template <class Archive>
   friend void serialize(Archive&, dynamic_storage&, unsigned);
-
-  void wconvert();
 };
 
 inline
 void dynamic_storage::increase(std::size_t i)
 {
-  switch (buffer_.type()) {
+  switch (buffer_.id()) {
     case 0: buffer_.initialize<uint8_t>(); // and fall through
     case 1: increase_impl<uint8_t> (buffer_, i); break;
     case 2: increase_impl<uint16_t>(buffer_, i); break;
@@ -151,7 +149,7 @@ void dynamic_storage::increase(std::size_t i)
 inline
 void dynamic_storage::increase(std::size_t i, double w)
 {
-  wconvert();
+  buffer_.wconvert();
   buffer_.at<weight_t>(i).add_weight(w);
 }
 
@@ -159,8 +157,8 @@ inline
 dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
 {
   if (o.depth()) {
-    if (o.buffer_.type() == 6) {
-      wconvert();
+    if (o.buffer_.id() == 6) {
+      buffer_.wconvert();
       for (std::size_t i = 0; i < size(); ++i)
         buffer_.at<weight_t>(i) += o.buffer_.at<weight_t>(i);
     }
@@ -168,14 +166,14 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
       auto i = size();
       while (i--) {
         uint64_t n = 0;
-        switch (o.buffer_.type()) {
+        switch (o.buffer_.id()) {
           /* case 0 is already excluded by the initial if statement */
           case 1: n = o.buffer_.at<uint8_t> (i); break;
           case 2: n = o.buffer_.at<uint16_t>(i); break;
           case 3: n = o.buffer_.at<uint32_t>(i); break;
           case 4: n = o.buffer_.at<uint64_t>(i); break;
         }
-        switch (buffer_.type()) {
+        switch (buffer_.id()) {
           case 0: buffer_.initialize<uint8_t>(); // and fall through
           case 1: add_impl<uint8_t> (buffer_, i, n); break;
           case 2: add_impl<uint16_t>(buffer_, i, n); break;
@@ -192,7 +190,7 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
 inline
 dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
 {
-  switch (buffer_.type()) {
+  switch (buffer_.id()) {
     case 0: break;
     case 1: return buffer_.at<uint8_t> (i);
     case 2: return buffer_.at<uint16_t>(i);
@@ -206,7 +204,7 @@ dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
 inline
 dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
 {
-  switch (buffer_.type()) {
+  switch (buffer_.id()) {
     case 0: break;
     case 1: return buffer_.at<uint8_t> (i);
     case 2: return buffer_.at<uint16_t>(i);
@@ -215,19 +213,6 @@ dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
     case 6: return buffer_.at<weight_t>(i).w2;
   }
   return 0.0;
-}
-
-inline
-void dynamic_storage::wconvert()
-{
-  switch (buffer_.type()) {
-    case 0: buffer_.initialize<weight_t>(); break;
-    case 1: buffer_.grow<uint8_t, weight_t> (); break;
-    case 2: buffer_.grow<uint16_t, weight_t>(); break;
-    case 3: buffer_.grow<uint32_t, weight_t>(); break;
-    case 4: buffer_.grow<uint64_t, weight_t>(); break;
-    case 6: /* do nothing */ break;
-  }
 }
 
 }
