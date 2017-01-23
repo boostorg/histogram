@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_equality)
 
 template <typename T>
 void convert_static_storage_impl() {
-    dynamic_storage a(2), b(2), c(2);
+    dynamic_storage a(2), b(2);
     static_storage<T> s(2);
     a.increase(0);
     b.increase(0, 1.0);
@@ -136,15 +136,17 @@ void convert_static_storage_impl() {
     BOOST_CHECK(s == b);
     a = dynamic_storage(2);
     b = dynamic_storage(2);
+    BOOST_CHECK(a == b);
     a += s;
-    b += s;
     BOOST_CHECK(a == s);
     BOOST_CHECK(s == a);
-    BOOST_CHECK(b == s);
-    BOOST_CHECK(s == b);
+    dynamic_storage c(s);
+    BOOST_CHECK(c == s);
+    BOOST_CHECK(s == c);
     dynamic_storage d;
-    d = std::move(s);
-    BOOST_CHECK(a == d);
+    d = std::move(s); // cannot move, uses copy
+    BOOST_CHECK(d == s);
+    BOOST_CHECK(s == d);
 }
 
 BOOST_AUTO_TEST_CASE(convert_static_storage)

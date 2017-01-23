@@ -13,7 +13,6 @@
 #include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/weight.hpp>
-#include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/tiny_string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
@@ -36,32 +35,6 @@ inline void serialize(Archive& ar, weight_t& wt, unsigned version)
 {
   ar & wt.w;
   ar & wt.w2;
-}
-
-template<class Archive>
-inline void serialize(Archive& ar, buffer& buf, unsigned version)
-{
-  ar & buf.size_;
-  ar & buf.type_.id_;
-  ar & buf.type_.depth_;
-  if (Archive::is_loading::value) {
-    buf.realloc(buf.depth());
-    // switch (buf.type_) {
-    //   case 1: buf.create<uint8_t>(); break;
-    //   case 2: buf.create<uint16_t>(); break;
-    //   case 3: buf.create<uint32_t>(); break;
-    //   case 4: buf.create<uint64_t>(); break;
-    //   case 6: buf.create<weight_t>(); break;
-    // }
-  }
-  switch (buf.type_.id_) {
-    case 0: buf.ptr_ = nullptr; break;
-    case 1: ar & serialization::make_array(&buf.at<uint8_t>(0), buf.size_); break;
-    case 2: ar & serialization::make_array(&buf.at<uint16_t>(0), buf.size_); break;
-    case 3: ar & serialization::make_array(&buf.at<uint32_t>(0), buf.size_); break;
-    case 4: ar & serialization::make_array(&buf.at<uint64_t>(0), buf.size_); break;
-    case 6: ar & serialization::make_array(&buf.at<weight_t>(0), buf.size_); break;
-  }
 }
 
 template <class Archive>
@@ -91,7 +64,30 @@ inline void serialize(Archive& ar, static_storage<T> & store, unsigned version)
 template <class Archive>
 inline void serialize(Archive& ar, dynamic_storage & store, unsigned version)
 {
-  ar & store.buffer_;
+  auto& b = store.buffer_;
+  if (Archive::is_loading::value)
+    b.destroy_any();
+  ar & b.size_;
+  ar & b.type_.id_;
+  ar & b.type_.depth_;
+  if (Archive::is_loading::value) {
+    switch (b.type_.id_) {
+      case -1: b.create<detail::weight_t>(); break;
+      case 0: b.ptr_ = nullptr; break;
+      case 1: b.create<uint8_t>(); break;
+      case 2: b.create<uint16_t>(); break;
+      case 3: b.create<uint32_t>(); break;
+      case 4: b.create<uint64_t>(); break;
+    }
+  }
+  switch (b.type_.id_) {
+    case -1: ar & serialization::make_array(&b.at<detail::weight_t>(0), b.size_); break;
+    case 0: /* nothing to do */ break;
+    case 1: ar & serialization::make_array(&b.at<uint8_t>(0), b.size_); break;
+    case 2: ar & serialization::make_array(&b.at<uint16_t>(0), b.size_); break;
+    case 3: ar & serialization::make_array(&b.at<uint32_t>(0), b.size_); break;
+    case 4: ar & serialization::make_array(&b.at<uint64_t>(0), b.size_); break;
+  }
 }
 
 template <class Archive>

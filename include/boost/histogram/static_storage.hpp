@@ -12,8 +12,6 @@
 namespace boost {
 namespace histogram {
 
-  namespace detail { class buffer; }
-
   template <typename T>
   class static_storage {
   public:
@@ -104,7 +102,7 @@ namespace histogram {
 
     std::size_t size() const { return size_; }
     constexpr unsigned depth() const { return sizeof(T); }
-    const void* data() const { return static_cast<const void*>(data_); }
+    const T* data() const { return data_; }
     void increase(std::size_t i) { ++(data_[i]); }
     value_t value(std::size_t i) const { return data_[i]; }
     variance_t variance(std::size_t i) const { return data_[i]; }
@@ -127,8 +125,6 @@ namespace histogram {
       else
         data_ = new T[size_];
     }
-
-    friend detail::buffer;
 
     template <typename Archive, typename U>
     friend void serialize(Archive&, static_storage<U>&, unsigned);
