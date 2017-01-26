@@ -52,23 +52,16 @@ void dynamic_storage_increase_and_grow_impl()
     auto n2 = n;
     BOOST_CHECK_EQUAL(n.value(0), double(tmax - 1));
     BOOST_CHECK_EQUAL(n2.value(0), double(tmax - 1));
+    n.increase(0);
+    n.increase(0);
     dynamic_storage x(1);
     x.increase(0);
-    n.increase(0);
     n2 += x;
-    if (sizeof(T) == sizeof(uint64_t)) {
-        BOOST_CHECK_THROW(n.increase(0), std::overflow_error);
-        BOOST_CHECK_THROW(n2 += x, std::overflow_error);
-    } else {
-        n.increase(0);
-        n2 += x;
-        double v = tmax;
-        ++v;
-        BOOST_CHECK_EQUAL(n.value(0), v);
-        BOOST_CHECK_EQUAL(n2.value(0), v);
-        BOOST_CHECK(!(n.value(0) == double(tmax)));
-        BOOST_CHECK(!(n2.value(0) == double(tmax)));
-    }
+    n2 += x;
+    double v = tmax;
+    ++v;
+    BOOST_CHECK_EQUAL(n.value(0), v);
+    BOOST_CHECK_EQUAL(n2.value(0), v);
 }
 
 BOOST_AUTO_TEST_CASE(dynamic_storage_increase_and_grow)
@@ -89,7 +82,7 @@ BOOST_AUTO_TEST_CASE(dynamic_storage_add_and_grow)
     BOOST_CHECK_EQUAL(y.value(0), 0.0);
     a += y;
     BOOST_CHECK_EQUAL(a.value(0), x);
-    for (unsigned i = 0; i < 63; ++i) {
+    for (unsigned i = 0; i < 80; ++i) {
         a += a;
         x += x;
         dynamic_storage b(1);

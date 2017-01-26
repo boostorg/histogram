@@ -229,23 +229,28 @@ histogram_variance(python::tuple args, python::dict kwargs) {
   return object(self.variance(idx + 0, idx + self.dim()));
 }
 
-class histogram_access {
-public:
+struct python_access {
   static
   python::dict
-  histogram_array_interface(dynamic_histogram<>& self) {
+  array_interface(dynamic_histogram<>& self) {
+    const auto& b = self.storage_.buffer_;
+    if (b.type_.id_ == 5) {
+      PyErr_SetString(PyExc_RuntimeError, "cannot convert multiprecision storage to numpy array");
+      boost::python::throw_error_already_set();
+    }
+
     python::dict d;
     python::list shapes;
     python::list strides;
     std::size_t stride = 1;
-    if (self.depth() == sizeof(detail::weight_t)) {
+    if (b.type_.id_ == -1) {
       stride *= sizeof(double);
       d["typestr"] = python::str("|f") + python::str(stride);
       strides.append(stride);
       stride *= 2;
       shapes.append(2);
     } else {
-      stride *= self.depth();
+      stride *= b.type_.depth_;
       d["typestr"] = python::str("|u") + python::str(stride);
     }
     for (unsigned i = 0; i < self.dim(); ++i) {
@@ -254,7 +259,7 @@ public:
       stride *= shape(self.axis(i));
     }
     d["shape"] = python::tuple(shapes);
-    d["data"] = python::make_tuple(reinterpret_cast<uintptr_t>(self.data()), false);
+    d["data"] = python::make_tuple(reinterpret_cast<uintptr_t>(b.ptr_), false);
     d["strides"] = python::tuple(strides);
     return d;
   }
@@ -279,9 +284,9 @@ void register_histogram()
     // shadowed C++ ctors
     .def(init<const dynamic_histogram<>::axes_t&>())
     .add_property("__array_interface__",
-            &histogram_access::histogram_array_interface)
+        &python_access::array_interface)
     .add_property("dim", &dynamic_histogram<>::dim,
-            "dimensions of the histogram (number of axes)")
+       "dimensions of the histogram (number of axes)")
     .def("axis", histogram_axis,
        ":param int i: index of the axis\n"
        ":returns: axis object for axis i",

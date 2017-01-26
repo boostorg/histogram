@@ -15,13 +15,11 @@
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/at.hpp>
 #include <boost/cstdint.hpp>
-#include <cstdint>
-#include <cstddef>
-#include <cstdlib> // malloc/free
-#include <new> // for bad_alloc exception
+#include <boost/multiprecision/cpp_int.hpp>
 #include <type_traits>
 #include <algorithm>
 #include <limits>
+#include <cstddef>
 
 namespace boost {
 namespace histogram {
@@ -29,6 +27,8 @@ namespace histogram {
 namespace detail {
 
   static_assert(std::is_pod<weight_t>::value, "weight_t must be POD");
+
+  using mp_int = multiprecision::cpp_int;
 
   using type_to_int = mpl::map<
     mpl::pair<weight_t, mpl::int_<-1>>,
@@ -41,7 +41,9 @@ namespace detail {
     mpl::pair<uint8_t, mpl::int_<1>>,
     mpl::pair<uint16_t, mpl::int_<2>>,
     mpl::pair<uint32_t, mpl::int_<3>>,
-    mpl::pair<uint64_t, mpl::int_<4>>
+    mpl::pair<uint64_t, mpl::int_<4>>,
+
+    mpl::pair<mp_int, mpl::int_<5>>
   >;
 
   using int_to_type = mpl::map<
@@ -49,16 +51,15 @@ namespace detail {
     mpl::pair<mpl::int_<1>, uint8_t>,
     mpl::pair<mpl::int_<2>, uint16_t>,
     mpl::pair<mpl::int_<3>, uint32_t>,
-    mpl::pair<mpl::int_<4>, uint64_t>
+    mpl::pair<mpl::int_<4>, uint64_t>,
+    mpl::pair<mpl::int_<5>, mp_int>
   >;
 
   template <typename T>
   using storage_type =
     typename mpl::at<
       detail::int_to_type,
-      typename mpl::at<
-        detail::type_to_int, T
-      >::type
+      typename mpl::at<detail::type_to_int, T>::type
     >::type;
 
   template <typename T>
@@ -79,23 +80,44 @@ namespace detail {
     buffer(const buffer& o) :
       type_(o.type_), size_(o.size_), ptr_(nullptr)
     {
-      realloc(type_.depth_);
-      std::copy(static_cast<const char*>(o.ptr_),
-                static_cast<const char*>(o.ptr_) + size_ * type_.depth_,
-                static_cast<char*>(ptr_));
+      switch (type_.id_) {
+        case -1: ptr_ = create<weight_t>(); copy_from<weight_t>(o.ptr_); break;
+        case 0: break;
+        case 1: ptr_ = create<uint8_t>(); copy_from<uint8_t>(o.ptr_); break;
+        case 2: ptr_ = create<uint16_t>(); copy_from<uint16_t>(o.ptr_); break;
+        case 3: ptr_ = create<uint32_t>(); copy_from<uint32_t>(o.ptr_); break;
+        case 4: ptr_ = create<uint64_t>(); copy_from<uint64_t>(o.ptr_); break;
+        case 5: ptr_ = create<mp_int>(); copy_from<mp_int>(o.ptr_); break;
+      }
     }
 
     buffer& operator=(const buffer& o)
     {
       if (this != &o) {
         if (size_ != o.size_ || type_.id_ != o.type_.id_) {
+          destroy_any();
           size_ = o.size_;
           type_ = o.type_;
-          realloc(type_.depth_);
+          switch (type_.id_) {
+            case -1: ptr_ = create<weight_t>(); copy_from<weight_t>(o.ptr_); break;
+            case 0: break;
+            case 1: ptr_ = create<uint8_t>(); copy_from<uint8_t>(o.ptr_); break;
+            case 2: ptr_ = create<uint16_t>(); copy_from<uint16_t>(o.ptr_); break;
+            case 3: ptr_ = create<uint32_t>(); copy_from<uint32_t>(o.ptr_); break;
+            case 4: ptr_ = create<uint64_t>(); copy_from<uint64_t>(o.ptr_); break;
+            case 5: ptr_ = create<mp_int>(); copy_from<mp_int>(o.ptr_); break;
+          }
+        } else {
+          switch (type_.id_) {
+            case -1: copy_from<weight_t>(o.ptr_); break;
+            case 0: break;
+            case 1: copy_from<uint8_t>(o.ptr_); break;
+            case 2: copy_from<uint16_t>(o.ptr_); break;
+            case 3: copy_from<uint32_t>(o.ptr_); break;
+            case 4: copy_from<uint64_t>(o.ptr_); break;
+            case 5: copy_from<mp_int>(o.ptr_); break;
+          }
         }
-        std::copy(static_cast<const char*>(o.ptr_),
-                  static_cast<const char*>(o.ptr_) + size_ * type_.depth_,
-                  static_cast<char*>(ptr_));
       }
       return *this;
     }
@@ -127,63 +149,66 @@ namespace detail {
     ~buffer() { destroy_any(); }
 
     template <typename T>
-    void create() {
-      type_.set<T>();
-      ptr_ = std::malloc(size_ * sizeof(T));
-      new (ptr_) T[size_];
+    T* create() {
+      std::allocator<T> a;
+      T* ptr = a.allocate(size_);
+      new (ptr) T[size_];
+      return ptr;
     }
 
     template <typename T>
     void destroy() {
-      std::free(ptr_);
+      std::allocator<T> a;
+      a.deallocate(static_cast<T*>(ptr_), size_);
       ptr_ = nullptr;
     }
 
     void destroy_any() {
       switch (type_.id_) {
         case -1: destroy<weight_t>(); break;
-        case 0: /* do nothing */ break;
+        case 0: break;
         case 1: destroy<uint8_t>(); break;
         case 2: destroy<uint16_t>(); break;
         case 3: destroy<uint32_t>(); break;
         case 4: destroy<uint64_t>(); break;
+        case 5: destroy<mp_int>(); break;
       }
+    }
+
+    template <typename T>
+    void copy_from(const void* p) {
+      std::copy(static_cast<const T*>(p), static_cast<const T*>(p) + size_,
+                static_cast<T*>(ptr_));
     }
 
     template <typename T,
               typename U = next_storage_type<T>>
     void grow() {
-      static_assert(sizeof(U) >= sizeof(T), "U must be as large or larger than T");
-      realloc(sizeof(U));
-      std::copy_backward(&at<T>(0), &at<T>(size_), &at<U>(size_));
+      U* u = create<U>();
+      std::copy(&at<T>(0), &at<T>(size_), u);
+      destroy_any();
       type_.set<U>();
+      ptr_ = u;
     }
 
     void wconvert()
     {
       switch (type_.id_) {
-        case -1: /* do nothing */ break;
+        case -1: break;
         case 0: initialize<weight_t>(); break;
         case 1: grow<uint8_t, weight_t> (); break;
         case 2: grow<uint16_t, weight_t>(); break;
         case 3: grow<uint32_t, weight_t>(); break;
         case 4: grow<uint64_t, weight_t>(); break;
+        case 5: grow<mp_int, weight_t>(); break;
       }
     }
 
     template <typename T>
     void initialize() {
       type_.set<T>();
-      ptr_ = nullptr;
-      realloc(sizeof(T));
+      ptr_ = create<T>();
       std::fill(&at<T>(0), &at<T>(size_), T(0));
-    }
-
-    void realloc(unsigned d)
-    {
-      ptr_ = std::realloc(ptr_, size_ * d);
-      if (!ptr_ && (size_ * d > 0))
-        throw std::bad_alloc();
     }
 
     template <typename T>
@@ -217,12 +242,8 @@ namespace detail {
   }
 
   template <>
-  void increase_impl<uint64_t>(buffer& b, std::size_t i) {
-    auto& bi = b.at<uint64_t>(i);
-    if (bi < std::numeric_limits<uint64_t>::max())
-      ++bi;
-    else
-      throw std::overflow_error("histogram overflow");
+  void increase_impl<mp_int>(buffer& b, std::size_t i) {
+    ++b.at<mp_int>(i);
   }
 
   template <typename T, typename TO>
@@ -230,7 +251,7 @@ namespace detail {
     static void apply(buffer& b, std::size_t i, const TO& o) {
       auto& bi = b.at<T>(i);
       if (static_cast<T>(std::numeric_limits<T>::max() - bi) >= o)
-        bi += o;
+        bi += static_cast<T>(o);
       else {
         b.grow<T>();
         add_one_impl<detail::next_storage_type<T>, TO>::apply(b, i, o);
@@ -239,27 +260,26 @@ namespace detail {
   };
 
   template <typename TO>
-  struct add_one_impl<uint64_t, TO> {
+  struct add_one_impl<mp_int, TO> {
     static void apply(buffer& b, std::size_t i, const TO& o) {
-      auto& bi = b.at<uint64_t>(i);
-      if (static_cast<uint64_t>(std::numeric_limits<uint64_t>::max() - bi) >= o)
-        bi += o;
-      else
-        throw std::overflow_error("histogram overflow");
+      b.at<mp_int>(i) += o;
     }
   };
 
   template <typename TO>
   void add_impl(buffer& b, const buffer& o) {
-    for (decltype(b.size_) i = 0; i < b.size_; ++i)
+    for (decltype(b.size_) i = 0; i < b.size_; ++i) {
+      const auto oi = o.at<TO>(i);
       switch (b.type_.id_) {
-        case -1: b.at<weight_t>(i) += o.at<TO>(i); break;
+        case -1: b.at<weight_t>(i) += oi; break;
         case 0: b.initialize<uint8_t>(); // fall through
-        case 1: add_one_impl<uint8_t, TO>::apply(b, i, o.at<TO>(i)); break;
-        case 2: add_one_impl<uint16_t, TO>::apply(b, i, o.at<TO>(i)); break;
-        case 3: add_one_impl<uint32_t, TO>::apply(b, i, o.at<TO>(i)); break;
-        case 4: add_one_impl<uint64_t, TO>::apply(b, i, o.at<TO>(i)); break;
+        case 1: add_one_impl<uint8_t, TO>::apply(b, i, oi); break;
+        case 2: add_one_impl<uint16_t, TO>::apply(b, i, oi); break;
+        case 3: add_one_impl<uint32_t, TO>::apply(b, i, oi); break;
+        case 4: add_one_impl<uint64_t, TO>::apply(b, i, oi); break;
+        case 5: add_one_impl<mp_int, TO>::apply(b, i, oi); break;
       }
+    }
   }
 
   template <>
@@ -295,8 +315,9 @@ public:
     buffer_(o.size())
   {
     using U = detail::storage_type<T>;
-    buffer_.create<U>();
-    std::copy(o.data(), o.data() + buffer_.size_, &buffer_.at<U>(0));
+    buffer_.ptr_ = buffer_.create<U>();
+    buffer_.type_.set<U>();
+    std::copy(o.data(), o.data() + o.size(), &buffer_.at<U>(0));
   }
 
   template <typename T,
@@ -307,8 +328,9 @@ public:
     buffer_.destroy_any();
     buffer_.size_ = o.size();
     using U = detail::storage_type<T>;
-    buffer_.create<U>();
-    std::copy(o.data(), o.data() + buffer_.size_, &buffer_.at<U>(0));
+    buffer_.ptr_ = buffer_.create<U>();
+    buffer_.type_.set<U>();
+    std::copy(o.data(), o.data() + o.size(), &buffer_.at<U>(0));
     return *this;
   }
 
@@ -324,6 +346,8 @@ public:
 private:
   detail::buffer buffer_;
 
+  friend struct python_access;
+
   template <class Archive>
   friend void serialize(Archive&, dynamic_storage&, unsigned);
 };
@@ -338,6 +362,7 @@ void dynamic_storage::increase(std::size_t i)
     case 2: detail::increase_impl<uint16_t>(buffer_, i); break;
     case 3: detail::increase_impl<uint32_t>(buffer_, i); break;
     case 4: detail::increase_impl<uint64_t>(buffer_, i); break;
+    case 5: detail::increase_impl<detail::mp_int>(buffer_, i); break;
   }
 }
 
@@ -353,11 +378,12 @@ dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
 {
   switch (o.buffer_.type_.id_) {
     case -1: detail::add_impl<detail::weight_t>(buffer_, o.buffer_); break;
-    case 0: /* do nothing */ break;
+    case 0: break;
     case 1: detail::add_impl<uint8_t>(buffer_, o.buffer_); break;
     case 2: detail::add_impl<uint16_t>(buffer_, o.buffer_); break;
     case 3: detail::add_impl<uint32_t>(buffer_, o.buffer_); break;
     case 4: detail::add_impl<uint64_t>(buffer_, o.buffer_); break;
+    case 5: detail::add_impl<detail::mp_int>(buffer_, o.buffer_); break;
   }
   return *this;
 }
@@ -367,11 +393,12 @@ dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
 {
   switch (buffer_.type_.id_) {
     case -1: return buffer_.at<detail::weight_t>(i).w;
-    case 0: /* do nothing */ break;
+    case 0: break;
     case 1: return buffer_.at<uint8_t> (i);
     case 2: return buffer_.at<uint16_t>(i);
     case 3: return buffer_.at<uint32_t>(i);
     case 4: return buffer_.at<uint64_t>(i);
+    case 5: return static_cast<double>(buffer_.at<detail::mp_int>(i));
   }
   return 0.0;
 }
@@ -381,11 +408,12 @@ dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
 {
   switch (buffer_.type_.id_) {
     case -1: return buffer_.at<detail::weight_t>(i).w2;
-    case 0: /* do nothing */ break;
+    case 0: break;
     case 1: return buffer_.at<uint8_t> (i);
     case 2: return buffer_.at<uint16_t>(i);
     case 3: return buffer_.at<uint32_t>(i);
     case 4: return buffer_.at<uint64_t>(i);
+    case 5: return static_cast<double>(buffer_.at<detail::mp_int>(i));
   }
   return 0.0;
 }

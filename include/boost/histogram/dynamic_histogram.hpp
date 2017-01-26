@@ -358,6 +358,8 @@ private:
   template <typename OtherStorage, typename OtherAxes>
   friend class dynamic_histogram;
 
+  friend struct python_access;
+
   template <typename Archiv, typename OtherStorage, typename OtherAxes>
   friend void serialize(Archiv&, dynamic_histogram<OtherStorage, OtherAxes>&, unsigned);
 };
