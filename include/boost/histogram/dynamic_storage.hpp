@@ -118,6 +118,7 @@ namespace detail {
     }
   };
 
+  template <template<class> class Allocator>
   struct buffer
   {
     explicit buffer(std::size_t s = 0) :
@@ -200,7 +201,7 @@ namespace detail {
       std::allocator<T> a;
       ptr_ = a.allocate(size_);
       new (ptr_) T[size_];
-      type_.set<T>();
+      type_.template set<T>();
     }
 
     template <typename T>
@@ -239,7 +240,7 @@ namespace detail {
       std::copy(&at<T>(0), &at<T>(size_), u);
       destroy<T>();
       ptr_ = u;
-      type_.set<U>();
+      type_.template set<U>();
     }
 
     void wconvert()
@@ -343,7 +344,7 @@ public:
   dynamic_storage& operator+=(const dynamic_storage&);
 
 private:
-  detail::buffer buffer_;
+  detail::buffer<std::allocator> buffer_;
 
   friend struct python_access;
 
