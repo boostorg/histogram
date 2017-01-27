@@ -72,13 +72,13 @@ inline void serialize(Archive& ar, dynamic_storage & store, unsigned version)
   ar & b.type_.depth_;
   if (Archive::is_loading::value) {
     switch (b.type_.id_) {
-      case -1: b.ptr_ = b.create<detail::weight_t>(); break;
+      case -1: b.create<detail::weight_t>(); break;
       case 0: b.ptr_ = nullptr; break;
-      case 1: b.ptr_ = b.create<uint8_t>(); break;
-      case 2: b.ptr_ = b.create<uint16_t>(); break;
-      case 3: b.ptr_ = b.create<uint32_t>(); break;
-      case 4: b.ptr_ = b.create<uint64_t>(); break;
-      case 5: b.ptr_ = b.create<detail::mp_int>(); break;
+      case 1: b.create<uint8_t>(); break;
+      case 2: b.create<uint16_t>(); break;
+      case 3: b.create<uint32_t>(); break;
+      case 4: b.create<uint64_t>(); break;
+      case 5: b.create<detail::mp_int>(); break;
     }
   }
   switch (b.type_.id_) {
