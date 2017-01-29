@@ -65,16 +65,17 @@ void increase_and_grow_impl()
     std::tie(s, v) = storage_access::max_minus_one<T>();
 
     auto n = s;
+    auto n2 = s;
+
     n.increase(0);
     n.increase(0);
 
-    auto n2 = n;
     adaptive_storage x(1);
     x.increase(0);
     n2 += x;
     n2 += x;
 
-    ++v;
+    v += 2;
     BOOST_CHECK_EQUAL(n.value(0), v);
     BOOST_CHECK_EQUAL(n2.value(0), v);
 }
