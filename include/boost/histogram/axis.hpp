@@ -218,6 +218,8 @@ public:
       axis_with_label(x.size() - 1, label, uoflow),
       x_(new double[x.size()])
   {
+      if (x.size() < 2)
+          throw std::logic_error("at least two values required");
       std::copy(x.begin(), x.end(), x_.get());
       std::sort(x_.get(), x_.get() + bins() + 1);
   }
@@ -352,6 +354,8 @@ public:
     size_(std::distance(begin, end)),
     ptr_(new detail::tiny_string[size_])
   {
+    if (size_ == 0)
+      throw std::logic_error("at least one argument required");
     std::copy(begin, end, ptr_.get());
   }
 

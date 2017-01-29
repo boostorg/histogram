@@ -19,7 +19,14 @@ using axis_t = boost::variant<
     category_axis, integer_axis
 >;
 
-// only test things not already covered by python_test_suite
+BOOST_AUTO_TEST_CASE(bad_ctors) {
+    BOOST_CHECK_THROW(regular_axis(0, 0, 1), std::logic_error);
+    BOOST_CHECK_THROW(polar_axis(0), std::logic_error);
+    BOOST_CHECK_THROW(variable_axis({}), std::logic_error);
+    BOOST_CHECK_THROW(variable_axis({1.0}), std::logic_error);
+    BOOST_CHECK_THROW(integer_axis(1, -1), std::logic_error);
+    BOOST_CHECK_THROW(category_axis({}), std::logic_error);
+}
 
 BOOST_AUTO_TEST_CASE(regular_axis_operators) {
     regular_axis a{4, -2, 2};

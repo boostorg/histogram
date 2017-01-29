@@ -165,6 +165,9 @@ BOOST_AUTO_TEST_CASE(tiny_string_test)
     auto b = tiny_string("abc");
     BOOST_CHECK_EQUAL(b.c_str(), "abc");
     BOOST_CHECK_EQUAL(b.size(), 3u);
+    std::ostringstream os;
+    os << b;
+    BOOST_CHECK_EQUAL(os.str(), std::string("abc"));
     auto c = b;
     BOOST_CHECK_EQUAL(c, b);
     auto d = std::move(c);

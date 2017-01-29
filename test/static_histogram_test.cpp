@@ -454,6 +454,22 @@ BOOST_AUTO_TEST_CASE(add_3)
     BOOST_CHECK_EQUAL(d.value(3), 0);
 }
 
+BOOST_AUTO_TEST_CASE(bad_add)
+{
+    auto a = make_static_histogram(integer_axis(0, 1));
+    auto b = make_static_histogram(integer_axis(0, 2));
+    BOOST_CHECK_THROW(a += b, std::logic_error);
+}
+
+BOOST_AUTO_TEST_CASE(bad_index)
+{
+    auto a = make_static_histogram(integer_axis(0, 1));
+    BOOST_CHECK_THROW(a.value(5), std::out_of_range);
+    BOOST_CHECK_THROW(a.value(-5), std::out_of_range);
+    BOOST_CHECK_THROW(a.variance(5), std::out_of_range);
+    BOOST_CHECK_THROW(a.variance(-5), std::out_of_range);
+}
+
 BOOST_AUTO_TEST_CASE(doc_example_0)
 {
     namespace bh = boost::histogram;
