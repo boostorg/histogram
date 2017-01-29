@@ -190,8 +190,9 @@ public:
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
     iter_args_impl<detail::linearize, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride)
-      storage_.value(lin.out);
+    if (lin.stride == 0)
+      throw std::out_of_range("invalid index");
+    return storage_.value(lin.out);
   }
 
   template <typename Sequence,
@@ -221,8 +222,16 @@ public:
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
     iter_args_impl<detail::linearize, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride)
-      storage_.variance(lin.out);
+    if (lin.stride == 0)
+      throw std::out_of_range("invalid index");
+    return storage_.variance(lin.out);
+  }
+
+  template <typename Sequence,
+            typename = detail::is_sequence<Sequence>>
+  value_type variance(const Sequence& indices) const
+  {
+    return variance(std::begin(indices), std::end(indices));
   }
 
   /// Number of axes (dimensions) of histogram

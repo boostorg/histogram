@@ -216,7 +216,6 @@ public:
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
     return storage_.value(lin.out);
-    return 0;
   }
 
   template <typename Sequence,

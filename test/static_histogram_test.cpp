@@ -463,11 +463,12 @@ BOOST_AUTO_TEST_CASE(bad_add)
 
 BOOST_AUTO_TEST_CASE(bad_index)
 {
+    std::vector<int> index(1, 5);
     auto a = make_static_histogram(integer_axis(0, 1));
     BOOST_CHECK_THROW(a.value(5), std::out_of_range);
-    BOOST_CHECK_THROW(a.value(-5), std::out_of_range);
+    BOOST_CHECK_THROW(a.value(index), std::out_of_range);
     BOOST_CHECK_THROW(a.variance(5), std::out_of_range);
-    BOOST_CHECK_THROW(a.variance(-5), std::out_of_range);
+    BOOST_CHECK_THROW(a.variance(index), std::out_of_range);
 }
 
 BOOST_AUTO_TEST_CASE(doc_example_0)

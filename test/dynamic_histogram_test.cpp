@@ -480,16 +480,19 @@ BOOST_AUTO_TEST_CASE(bad_add)
 {
     auto a = make_dynamic_histogram(integer_axis(0, 1));
     auto b = make_dynamic_histogram(integer_axis(0, 2));
+    auto c = make_dynamic_histogram(integer_axis(0, 1), integer_axis(0, 2));
     BOOST_CHECK_THROW(a += b, std::logic_error);
+    BOOST_CHECK_THROW(a += c, std::logic_error);
 }
 
 BOOST_AUTO_TEST_CASE(bad_index)
 {
+    std::vector<int> index(1, 5);
     auto a = make_dynamic_histogram(integer_axis(0, 1));
     BOOST_CHECK_THROW(a.value(5), std::out_of_range);
-    BOOST_CHECK_THROW(a.value(-5), std::out_of_range);
+    BOOST_CHECK_THROW(a.value(index), std::out_of_range);
     BOOST_CHECK_THROW(a.variance(5), std::out_of_range);
-    BOOST_CHECK_THROW(a.variance(-5), std::out_of_range);
+    BOOST_CHECK_THROW(a.variance(index), std::out_of_range);
 }
 
 BOOST_AUTO_TEST_CASE(histogram_serialization)

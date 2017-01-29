@@ -25,23 +25,111 @@ bool operator==(const Storage1& a, const Storage2& b)
 namespace boost {
 namespace histogram {
 
+template <typename T>
+adaptive_storage prepare(unsigned n=1) {
+    adaptive_storage s(n);
+    s.increase(0);
+    const auto tmax = std::numeric_limits<T>::max();
+    while (s.value(0) < 0.1 * tmax)
+        s += s;
+    return s;
+}
+
+template <>
+adaptive_storage prepare<void>(unsigned n) {
+    adaptive_storage s(n);
+    return s;
+}
+
+template <>
+adaptive_storage prepare<detail::weight_t>(unsigned n) {
+    adaptive_storage s(n);
+    s.increase(0, 1.0);
+    return s;
+}
+
+template <>
+adaptive_storage prepare<detail::mp_int>(unsigned n) {
+    adaptive_storage s(n);
+    s.increase(0);
+    const auto tmax = std::numeric_limits<uint64_t>::max();
+    while (s.value(0) <= tmax)
+        s += s;
+    return s;
+}
+
 struct storage_access {
     template <typename T>
-    static std::tuple<adaptive_storage, double>
-    max_minus_one() {
+    static adaptive_storage
+    max_minus_one(unsigned n=1) {
+        adaptive_storage s = prepare<T>(n);
         const auto tmax = std::numeric_limits<T>::max();
-        adaptive_storage s(1);
-        s.increase(0);
-        while (s.value(0) < 0.1 * tmax)
-            s += s;
         static_cast<T*>(s.buffer_.ptr_)[0] = tmax - 1;
         const double v = tmax - 1;
         BOOST_CHECK_EQUAL(s.value(0), v);
-        return std::tie(s, v);
+        return s;
     }
 };
 
 }
+}
+
+template <typename T>
+void copy_impl() {
+    adaptive_storage a;
+    a = prepare<T>();
+    a = prepare<void>();
+    BOOST_CHECK(a == prepare<void>());
+    a = prepare<T>(2);
+    a = prepare<void>();
+    BOOST_CHECK(a == prepare<void>());
+    a = prepare<T>();
+    a = prepare<uint8_t>();
+    BOOST_CHECK(a == prepare<uint8_t>());
+    a = prepare<T>(2);
+    a = prepare<uint8_t>();
+    BOOST_CHECK(a == prepare<uint8_t>());
+    a = prepare<T>();
+    a = prepare<uint16_t>();
+    BOOST_CHECK(a == prepare<uint16_t>());
+    a = prepare<T>(2);
+    a = prepare<uint16_t>();
+    BOOST_CHECK(a == prepare<uint16_t>());
+    a = prepare<T>();
+    a = prepare<uint32_t>();
+    BOOST_CHECK(a == prepare<uint32_t>());
+    a = prepare<T>(2);
+    a = prepare<uint32_t>();
+    BOOST_CHECK(a == prepare<uint32_t>());
+    a = prepare<T>();
+    a = prepare<uint64_t>();
+    BOOST_CHECK(a == prepare<uint64_t>());
+    a = prepare<T>(2);
+    a = prepare<uint64_t>();
+    BOOST_CHECK(a == prepare<uint64_t>());
+    a = prepare<T>();
+    a = prepare<detail::mp_int>();
+    BOOST_CHECK(a == prepare<detail::mp_int>());
+    a = prepare<T>(2);
+    a = prepare<detail::mp_int>();
+    BOOST_CHECK(a == prepare<detail::mp_int>());
+    a = prepare<T>();
+    a = prepare<detail::weight_t>();
+    BOOST_CHECK(a == prepare<detail::weight_t>());
+    a = prepare<T>(2);
+    a = prepare<detail::weight_t>();
+    BOOST_CHECK(a == prepare<detail::weight_t>());
+}
+
+BOOST_AUTO_TEST_CASE(copy)
+{
+    copy_impl<void>();
+    copy_impl<uint8_t>();
+    copy_impl<uint16_t>();
+    copy_impl<uint32_t>();
+    copy_impl<uint64_t>();
+    copy_impl<detail::weight_t>();
+    copy_impl<detail::mp_int>();
 }
 
 BOOST_AUTO_TEST_CASE(equal_operator)
@@ -61,8 +149,7 @@ BOOST_AUTO_TEST_CASE(equal_operator)
 template <typename T>
 void increase_and_grow_impl()
 {
-    adaptive_storage s; double v;
-    std::tie(s, v) = storage_access::max_minus_one<T>();
+    adaptive_storage s = storage_access::max_minus_one<T>();
 
     auto n = s;
     auto n2 = s;
@@ -75,17 +162,35 @@ void increase_and_grow_impl()
     n2 += x;
     n2 += x;
 
-    v += 2;
+    double v = std::numeric_limits<T>::max();
+    ++v;
     BOOST_CHECK_EQUAL(n.value(0), v);
     BOOST_CHECK_EQUAL(n2.value(0), v);
 }
 
+template <>
+void increase_and_grow_impl<void>()
+{
+    adaptive_storage s(1);
+    s.increase(0);
+    BOOST_CHECK_EQUAL(s.value(0), 1.0);    
+}
+
 BOOST_AUTO_TEST_CASE(increase_and_grow)
 {
+    increase_and_grow_impl<void>();
     increase_and_grow_impl<uint8_t>();
     increase_and_grow_impl<uint16_t>();
     increase_and_grow_impl<uint32_t>();
     increase_and_grow_impl<uint64_t>();
+    // only increase
+    auto a = prepare<detail::mp_int>(1);
+    const double aref = a.value(0);
+    while (a.value(0) == aref)
+        a.increase(0);
+    auto b = prepare<detail::weight_t>(1);
+    b.increase(0);
+    BOOST_CHECK_EQUAL(b.value(0), 2.0);
 }
 
 BOOST_AUTO_TEST_CASE(add_and_grow)

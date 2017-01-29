@@ -21,6 +21,7 @@ using axis_t = boost::variant<
 
 BOOST_AUTO_TEST_CASE(bad_ctors) {
     BOOST_CHECK_THROW(regular_axis(0, 0, 1), std::logic_error);
+    BOOST_CHECK_THROW(regular_axis(1, 1, -1), std::logic_error);
     BOOST_CHECK_THROW(polar_axis(0), std::logic_error);
     BOOST_CHECK_THROW(variable_axis({}), std::logic_error);
     BOOST_CHECK_THROW(variable_axis({1.0}), std::logic_error);
@@ -82,6 +83,8 @@ BOOST_AUTO_TEST_CASE(variable_axis_operators) {
     BOOST_CHECK_EQUAL(a, b);
     b = b;
     BOOST_CHECK_EQUAL(a, b);
+    variable_axis c{-2, 0, 2};
+    BOOST_CHECK_NE(a, c);
     BOOST_CHECK_EQUAL(a.index(-10.), -1);
     BOOST_CHECK_EQUAL(a.index(-1.), 0);
     BOOST_CHECK_EQUAL(a.index(0.), 1);

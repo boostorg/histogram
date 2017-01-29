@@ -16,6 +16,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <algorithm>
 
 
 /** \file boost/histogram/axis
@@ -282,10 +283,7 @@ public:
   {
     if (!axis_with_label::operator==(o))
         return false;
-    for (unsigned i = 0, n = bins() + 1; i < n; ++i)
-        if (x_[i] != o.x_[i])
-            return false;
-    return true;
+    return std::equal(x_.get(), x_.get() + bins() + 1, o.x_.get());
   }
 
 private:
