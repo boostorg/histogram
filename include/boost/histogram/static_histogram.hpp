@@ -21,25 +21,23 @@
 #include <boost/fusion/container/vector/convert.hpp>
 #include <boost/fusion/include/as_vector.hpp>
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/static_storage.hpp>
-#include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
-#include <boost/histogram/detail/mpl.hpp>
+#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <type_traits>
 
 namespace boost {
 namespace histogram {
 
-template <typename Storage, typename Axes>
+template <typename Axes, typename Storage>
 class static_histogram
 {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
 
 public:
-  using axes_t = typename fusion::result_of::as_vector<Axes>::type;
-  using value_t = typename Storage::value_t;
-  using variance_t = typename Storage::variance_t;
+  using axes_type = typename fusion::result_of::as_vector<Axes>::type;
+  using value_type = typename Storage::value_type;
 
   static_histogram() = default;
 
@@ -57,18 +55,18 @@ public:
   static_histogram& operator=(static_histogram&& other) = default;
 
   template <typename OtherStorage>
-  static_histogram(const static_histogram<OtherStorage, Axes>& other) :
+  static_histogram(const static_histogram<Axes, OtherStorage>& other) :
     axes_(other.axes_), storage_(other.storage_)
   {}
 
   template <typename OtherStorage>
-  static_histogram(static_histogram<OtherStorage, Axes>&& other) :
+  static_histogram(static_histogram<Axes, OtherStorage>&& other) :
     axes_(std::move(other.axes_)),
     storage_(std::move(other.storage_))
   {}
 
   template <typename OtherStorage>
-  static_histogram& operator=(const static_histogram<OtherStorage, Axes>& other)
+  static_histogram& operator=(const static_histogram<Axes, OtherStorage>& other)
   {
     if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
       axes_ = other.axes_;
@@ -78,7 +76,7 @@ public:
   }
 
   template <typename OtherStorage>
-  static_histogram& operator=(static_histogram<OtherStorage, Axes>&& other)
+  static_histogram& operator=(static_histogram<Axes, OtherStorage>&& other)
   {
     axes_ = std::move(other.axes_);
     storage_ = std::move(other.storage_);
@@ -86,7 +84,7 @@ public:
   }
 
   template <typename OtherStorage>
-  bool operator==(const static_histogram<OtherStorage, Axes>& other) const
+  bool operator==(const static_histogram<Axes, OtherStorage>& other) const
   {
     if (!axes_equal_to(other.axes_))
       return false;
@@ -100,7 +98,7 @@ public:
   }
 
   template <typename OtherStorage>
-  static_histogram& operator+=(const static_histogram<OtherStorage, Axes>& other)
+  static_histogram& operator+=(const static_histogram<Axes, OtherStorage>& other)
   {
     if (!axes_equal_to(other.axes_))
       throw std::logic_error("axes of histograms differ");
@@ -108,8 +106,8 @@ public:
     return *this;
   }
 
-  template <typename... Vs>
-  void fill(Vs... values)
+  template <typename... Values>
+  void fill(Values... values)
   {
     static_assert(sizeof...(values) == dim(),
                   "number of arguments does not match histogram dimension");
@@ -138,25 +136,25 @@ public:
     fill(std::begin(values), std::end(values));
   }
 
-  template <typename... Args>
-  void wfill(Args... args)
+  template <typename... Values>
+  void wfill(double w, Values... values)
   {
-    static_assert(std::is_same<Storage, dynamic_storage>::value,
-                  "wfill only supported for dynamic_storage");
-    static_assert(sizeof...(args) == (dim() + 1),
+    static_assert(std::is_same<Storage, adaptive_storage>::value,
+                  "wfill only supported for adaptive_storage");
+    static_assert(sizeof...(values) == dim(),
                   "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
-    const double w = windex_impl(lin, args...);
+    index_impl(lin, values...);
     if (lin.stride)
       storage_.increase(lin.out, w);
   }
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  void wfill(Iterator begin, Iterator end, double w)
+  void wfill(double w, Iterator begin, Iterator end)
   {
-    static_assert(std::is_same<Storage, dynamic_storage>::value,
-                  "wfill only supported for dynamic_storage");
+    static_assert(std::is_same<Storage, adaptive_storage>::value,
+                  "wfill only supported for adaptive_storage");
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize_x lin;
@@ -167,13 +165,13 @@ public:
 
   template <typename Sequence,
             typename = detail::is_sequence<Sequence>>
-  void wfill(const Sequence& values, double w)
+  void wfill(double w, const Sequence& values)
   {
-    wfill(std::begin(values), std::end(values), w);
+    wfill(w, std::begin(values), std::end(values));
   }
 
   template <typename... Args>
-  value_t value(Args... args) const
+  value_type value(Args... args) const
   {
     static_assert(sizeof...(args) == dim(),
                   "number of arguments does not match histogram dimension");
@@ -186,7 +184,7 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  value_t value(Iterator begin, Iterator end) const
+  value_type value(Iterator begin, Iterator end) const
   {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
@@ -198,18 +196,18 @@ public:
 
   template <typename Sequence,
             typename = detail::is_sequence<Sequence>>
-  value_t value(const Sequence& indices) const
+  value_type value(const Sequence& indices) const
   {
     return value(std::begin(indices), std::end(indices));
   }
 
-  template <typename... Args>
-  variance_t variance(Args... args) const
+  template <typename... Indices>
+  value_type variance(Indices... indices) const
   {
-    static_assert(sizeof...(args) == dim(),
+    static_assert(sizeof...(indices) == dim(),
                   "number of arguments does not match histogram dimension");
     detail::linearize lin;
-    index_impl(lin, args...);
+    index_impl(lin, indices...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
     return storage_.variance(lin.out);
@@ -217,7 +215,7 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  variance_t variance(Iterator begin, Iterator end) const
+  value_type variance(Iterator begin, Iterator end) const
   {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
@@ -234,34 +232,28 @@ public:
   /// Total number of bins in the histogram (including underflow/overflow)
   std::size_t size() const { return storage_.size(); }
 
-  /// Access to internal data (used by Python bindings)
-  const void* data() const { return storage_.data(); }
-
-  /// Memory used by a bin in bytes
-  unsigned depth() const { return storage_.depth(); }
-
   /// Sum of all counts in the histogram
   double sum() const
   {
     double result = 0.0;
-    for (decltype(size()) i = 0, n = size(); i < n; ++i)
+    for (std::size_t i = 0, n = size(); i < n; ++i)
       result += storage_.value(i);
     return result;
   }
 
   template <unsigned N = 0>
   typename std::add_const<
-    typename fusion::result_of::value_at_c<axes_t, N>::type
+    typename fusion::result_of::value_at_c<axes_type, N>::type
   >::type&
   axis() const
   {
-    static_assert(N < fusion::result_of::size<axes_t>::value,
+    static_assert(N < fusion::result_of::size<axes_type>::value,
                   "axis index out of range");
     return fusion::at_c<N>(axes_);
   }
 
 private:
-  axes_t axes_;
+  axes_type axes_;
   Storage storage_;
 
   struct field_counter {
@@ -282,7 +274,7 @@ private:
     return false;
   }
 
-  bool axes_equal_to(const axes_t& other_axes) const {
+  bool axes_equal_to(const axes_type& other_axes) const {
     return axes_ == other_axes;
   }
 
@@ -297,23 +289,9 @@ private:
   template <typename Linearize>
   void index_impl(Linearize&) const {} // stop recursion
 
-  template <typename Linearize, typename First, typename... Rest>
-  double windex_impl(Linearize& lin, First first, Rest... rest) const
-  {
-    lin.set(first);
-    lin(fusion::at_c<(dim() - sizeof...(Rest))>(axes_));
-    return windex_impl(lin, rest...);
-  }
-
-  template <typename Linearize, typename Last>
-  double windex_impl(Linearize& lin, Last last) const
-  {
-    return last;
-  }
-
   template <typename Linearize, typename Iterator, unsigned N=0>
   struct iter_args_impl {
-    static void apply(Linearize& lin, const axes_t& axes, Iterator iter) {
+    static void apply(Linearize& lin, const axes_type& axes, Iterator iter) {
       lin.set(*iter);
       lin(fusion::at_c<N>(axes));
       iter_args_impl<Linearize, Iterator, N+1>::apply(lin, axes, ++iter);
@@ -322,10 +300,10 @@ private:
 
   template <typename Linearize, typename Iterator>
   struct iter_args_impl<Linearize, Iterator, dim()> {
-    static void apply(Linearize&, const axes_t&, Iterator) {}
+    static void apply(Linearize&, const axes_type&, Iterator) {}
   };
 
-  template <typename OtherStorage, typename OtherAxes>
+  template <typename OtherAxes, typename OtherStorage>
   friend class static_histogram;
 
   template <class Archive, class OtherStorage, class OtherAxes>
@@ -333,42 +311,23 @@ private:
 };
 
 
-// when adding different histogram types, use a safe return type
-template <typename Storage1,
-          typename Storage2,
-          typename Axes>
-inline
-static_histogram<
-  typename detail::select_storage<Storage1, Storage2>::type, Axes
->
-operator+(const static_histogram<Storage1, Axes>& a,
-          const static_histogram<Storage2, Axes>& b)
-{
-  static_histogram<
-    typename detail::select_storage<Storage1, Storage2>::type, Axes
-  > tmp = a;
-  tmp += b;
-  return tmp;
-}
-
-
 /// default static type factory
 template <typename... Axes>
 inline
-static_histogram<dynamic_storage, mpl::vector<Axes...>>
+static_histogram<mpl::vector<Axes...>, adaptive_storage>
 make_static_histogram(const Axes&... axes)
 {
-  return static_histogram<dynamic_storage, mpl::vector<Axes...>>(axes...);
+  return static_histogram<mpl::vector<Axes...>, adaptive_storage>(axes...);
 }
 
 
 /// static type factory with variable storage type
 template <typename Storage, typename... Axes>
 inline
-static_histogram<Storage, mpl::vector<Axes...>>
+static_histogram<mpl::vector<Axes...>, Storage>
 make_static_histogram_with(const Axes&... axes)
 {
-  return static_histogram<Storage, mpl::vector<Axes...>>(axes...);
+  return static_histogram<mpl::vector<Axes...>, Storage>(axes...);
 }
 
 }

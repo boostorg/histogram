@@ -119,10 +119,15 @@ add_executable(axis_test
 target_link_libraries(axis_test ${LIBRARIES})
 add_test(axis_test axis_test)
 
-add_executable(dynamic_storage_test
-               ../test/dynamic_storage_test.cpp)
-target_link_libraries(dynamic_storage_test ${LIBRARIES})
-add_test(dynamic_storage_test dynamic_storage_test)
+add_executable(adaptive_storage_test
+               ../test/adaptive_storage_test.cpp)
+target_link_libraries(adaptive_storage_test ${LIBRARIES})
+add_test(adaptive_storage_test dynamic_storage_test)
+
+add_executable(container_storage_test
+               ../test/container_storage_test.cpp)
+target_link_libraries(container_storage_test ${LIBRARIES})
+add_test(container_storage_test dynamic_storage_test)
 
 add_executable(detail_test
                ../test/detail_test.cpp)

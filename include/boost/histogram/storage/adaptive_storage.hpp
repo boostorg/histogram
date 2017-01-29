@@ -4,11 +4,11 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_HISTOGRAM_DYNAMIC_STORAGE_HPP_
-#define _BOOST_HISTOGRAM_DYNAMIC_STORAGE_HPP_
+#ifndef _BOOST_HISTOGRAM_STORAGE_ADAPTIVE_HPP_
+#define _BOOST_HISTOGRAM_STORAGE_ADAPTIVE_HPP_
 
 #include <boost/histogram/detail/weight.hpp>
-#include <boost/histogram/detail/mpl.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/assert.hpp>
 #include <boost/mpl/map.hpp>
 #include <boost/mpl/pair.hpp>
@@ -94,7 +94,7 @@ namespace detail {
   template <typename Buffer, typename TO>
   struct add_impl {
     static void apply(Buffer& b, const Buffer& o) {
-      for (decltype(b.size_) i = 0; i < b.size_; ++i) {
+      for (std::size_t i = 0; i < b.size_; ++i) {
         const auto oi = o.template at<TO>(i);
         switch (b.type_.id_) {
           case -1: b.template at<weight_t>(i) += oi; break;
@@ -113,7 +113,7 @@ namespace detail {
   struct add_impl<Buffer, weight_t> {
     static void apply(Buffer& b, const Buffer& o) {
       b.wconvert();
-      for (decltype(b.size_) i = 0; i < b.size_; ++i)
+      for (std::size_t i = 0; i < b.size_; ++i)
         b.template at<weight_t>(i) += o.template at<weight_t>(i);
     }
   };
@@ -122,8 +122,7 @@ namespace detail {
   struct buffer
   {
     explicit buffer(std::size_t s = 0) :
-      size_(s),
-      ptr_(nullptr)
+      size_(s), ptr_(nullptr)
     {}
 
     buffer(const buffer& o) :
@@ -293,67 +292,85 @@ namespace detail {
 
 } // NS detail
 
-class dynamic_storage
+class adaptive_storage
 {
 public:
-  using value_t = double;
-  using variance_t = double;
+  using value_type = double;
 
   explicit
-  dynamic_storage(std::size_t s) :
+  adaptive_storage(std::size_t s) :
     buffer_(s)
   {}
 
-  dynamic_storage() = default;
-  dynamic_storage(const dynamic_storage&) = default;
-  dynamic_storage& operator=(const dynamic_storage&) = default;
-  dynamic_storage(dynamic_storage&&) = default;
-  dynamic_storage& operator=(dynamic_storage&&) = default;
+  adaptive_storage() = default;
+  adaptive_storage(const adaptive_storage&) = default;
+  adaptive_storage& operator=(const adaptive_storage&) = default;
+  adaptive_storage(adaptive_storage&&) = default;
+  adaptive_storage& operator=(adaptive_storage&&) = default;
 
-  template <typename T,
-            template <typename> class Storage,
-            typename = detail::is_standard_integral<T>>
-  dynamic_storage(const Storage<T>& o) :
+  template <typename OtherStorage,
+            typename = detail::is_standard_integral<typename OtherStorage::value_type>>
+  adaptive_storage(const OtherStorage& o) :
     buffer_(o.size())
   {
+    using T = typename OtherStorage::value_type;
     using U = detail::storage_type<T>;
     buffer_.create<U>();
-    std::copy(o.data(), o.data() + o.size(), &buffer_.at<U>(0));
+    for (std::size_t i = 0; i < buffer_.size_; ++i)
+      buffer_.at<U>(i) = o.value(i);
   }
 
-  template <typename T,
-            template <typename> class Storage,
-            typename = detail::is_standard_integral<T>>
-  dynamic_storage& operator=(const Storage<T>& o)
+  template <typename OtherStorage,
+            typename = detail::is_standard_integral<typename OtherStorage::value_type>>
+  adaptive_storage& operator=(const OtherStorage& o)
   {
+    using T = typename OtherStorage::value_type;
     buffer_.destroy_any();
     buffer_.size_ = o.size();
     using U = detail::storage_type<T>;
     buffer_.create<U>();
-    std::copy(o.data(), o.data() + o.size(), &buffer_.at<U>(0));
+    for (std::size_t i = 0; i < buffer_.size_; ++i)
+      buffer_.at<U>(i) = o.value(i);
     return *this;
   }
 
   std::size_t size() const { return buffer_.size_; }
-  unsigned depth() const { return buffer_.type_.depth_; }
-  const void* data() const { return buffer_.ptr_; }
   void increase(std::size_t i);
   void increase(std::size_t i, double w);
-  value_t value(std::size_t i) const;
-  variance_t variance(std::size_t i) const;
-  dynamic_storage& operator+=(const dynamic_storage&);
+  value_type value(std::size_t i) const;
+  value_type variance(std::size_t i) const;
+  adaptive_storage& operator+=(const adaptive_storage&);
+  template <typename OtherStorage,
+            typename = detail::is_storage<OtherStorage>>
+  void operator+=(const OtherStorage& other)
+  {
+    using B = decltype(buffer_);
+    using TO = typename OtherStorage::value_type;
+    for (std::size_t i = 0; i < buffer_.size_; ++i) {
+      const auto oi = other.value(i);
+      switch (buffer_.type_.id_) {
+        case -1: buffer_.template at<detail::weight_t>(i) += oi; break;
+        case 0: buffer_.template initialize<uint8_t>(); // fall through
+        case 1: detail::add_one_impl<B, uint8_t, TO>::apply(buffer_, i, oi); break;
+        case 2: detail::add_one_impl<B, uint16_t, TO>::apply(buffer_, i, oi); break;
+        case 3: detail::add_one_impl<B, uint32_t, TO>::apply(buffer_, i, oi); break;
+        case 4: detail::add_one_impl<B, uint64_t, TO>::apply(buffer_, i, oi); break;
+        case 5: detail::add_one_impl<B, detail::mp_int, TO>::apply(buffer_, i, oi); break;
+      }
+    }
+  }
 
 private:
   detail::buffer<std::allocator> buffer_;
 
-  friend struct python_access;
+  friend struct storage_access;
 
   template <class Archive>
-  friend void serialize(Archive&, dynamic_storage&, unsigned);
+  friend void serialize(Archive&, adaptive_storage&, unsigned);
 };
 
 inline
-void dynamic_storage::increase(std::size_t i)
+void adaptive_storage::increase(std::size_t i)
 {
   switch (buffer_.type_.id_) {
     case -1: ++(buffer_.at<detail::weight_t>(i)); break;
@@ -367,29 +384,30 @@ void dynamic_storage::increase(std::size_t i)
 }
 
 inline
-void dynamic_storage::increase(std::size_t i, double w)
+void adaptive_storage::increase(std::size_t i, double w)
 {
   buffer_.wconvert();
   buffer_.at<detail::weight_t>(i).add_weight(w);
 }
 
 inline
-dynamic_storage& dynamic_storage::operator+=(const dynamic_storage& o)
+adaptive_storage& adaptive_storage::operator+=(const adaptive_storage& o)
 {
+  using B = decltype(buffer_);
   switch (o.buffer_.type_.id_) {
-    case -1: detail::add_impl<decltype(buffer_), detail::weight_t>::apply(buffer_, o.buffer_); break;
+    case -1: detail::add_impl<B, detail::weight_t>::apply(buffer_, o.buffer_); break;
     case 0: break;
-    case 1: detail::add_impl<decltype(buffer_), uint8_t>::apply(buffer_, o.buffer_); break;
-    case 2: detail::add_impl<decltype(buffer_), uint16_t>::apply(buffer_, o.buffer_); break;
-    case 3: detail::add_impl<decltype(buffer_), uint32_t>::apply(buffer_, o.buffer_); break;
-    case 4: detail::add_impl<decltype(buffer_), uint64_t>::apply(buffer_, o.buffer_); break;
-    case 5: detail::add_impl<decltype(buffer_), detail::mp_int>::apply(buffer_, o.buffer_); break;
+    case 1: detail::add_impl<B, uint8_t>::apply(buffer_, o.buffer_); break;
+    case 2: detail::add_impl<B, uint16_t>::apply(buffer_, o.buffer_); break;
+    case 3: detail::add_impl<B, uint32_t>::apply(buffer_, o.buffer_); break;
+    case 4: detail::add_impl<B, uint64_t>::apply(buffer_, o.buffer_); break;
+    case 5: detail::add_impl<B, detail::mp_int>::apply(buffer_, o.buffer_); break;
   }
   return *this;
 }
 
 inline
-dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
+adaptive_storage::value_type adaptive_storage::value(std::size_t i) const
 {
   switch (buffer_.type_.id_) {
     case -1: return buffer_.at<detail::weight_t>(i).w;
@@ -404,7 +422,7 @@ dynamic_storage::value_t dynamic_storage::value(std::size_t i) const
 }
 
 inline
-dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
+adaptive_storage::value_type adaptive_storage::variance(std::size_t i) const
 {
   switch (buffer_.type_.id_) {
     case -1: return buffer_.at<detail::weight_t>(i).w2;
@@ -418,7 +436,7 @@ dynamic_storage::variance_t dynamic_storage::variance(std::size_t i) const
   return 0.0;
 }
 
-}
-}
+} // NS histogram
+} // NS boost
 
 #endif

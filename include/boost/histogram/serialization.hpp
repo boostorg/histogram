@@ -9,8 +9,8 @@
 
 #include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
-#include <boost/histogram/static_storage.hpp>
-#include <boost/histogram/dynamic_storage.hpp>
+#include <boost/histogram/storage/container_storage.hpp>
+#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/weight.hpp>
 #include <boost/histogram/detail/tiny_string.hpp>
@@ -50,19 +50,14 @@ inline void serialize(Archive& ar, tiny_string& s, unsigned version)
 
 }
 
-template <class Archive, typename T>
-inline void serialize(Archive& ar, static_storage<T> & store, unsigned version)
+template <class Archive, typename Container>
+inline void serialize(Archive& ar, container_storage<Container> & store, unsigned version)
 {
-  ar & store.size_;
-  if (Archive::is_loading::value) {
-    delete [] store.data_;
-    store.data_ = new T[store.size_];
-  }
-  ar & serialization::make_array(store.data_, store.size_);
+  ar & store.c_;
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, dynamic_storage & store, unsigned version)
+inline void serialize(Archive& ar, adaptive_storage & store, unsigned version)
 {
   auto& b = store.buffer_;
   if (Archive::is_loading::value)

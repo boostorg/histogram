@@ -53,7 +53,7 @@ histogram_init(python::tuple args, python::dict kwargs) {
   }
 
   // normal constructor
-  dynamic_histogram<>::axes_t axes;
+  dynamic_histogram<>::axes_type axes;
   for (unsigned i = 1, n = len(args); i < n; ++i) {
     object pa = args[i];
     extract<regular_axis> er(pa);
@@ -143,7 +143,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
           for (unsigned i = 0; i < dims[0]; ++i) {
             double* v = reinterpret_cast<double*>(PyArray_GETPTR1(a, i) );
             double* w = reinterpret_cast<double*>(PyArray_GETPTR1(aw, i));
-            self.wfill(v, v+self.dim(), *w);
+            self.wfill(*w, v, v+self.dim());
           }
 
           Py_DECREF(aw);
@@ -179,7 +179,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
 
   } else {
     const double w = extract<double>(ow);
-    self.wfill(v, v+self.dim(), w);
+    self.wfill(w, v, v+self.dim());
   }
 
   return object();
@@ -229,7 +229,7 @@ histogram_variance(python::tuple args, python::dict kwargs) {
   return object(self.variance(idx + 0, idx + self.dim()));
 }
 
-struct python_access {
+struct storage_access {
   static
   python::dict
   array_interface(dynamic_histogram<>& self) {
@@ -272,7 +272,7 @@ void register_histogram()
   docstring_options dopt(true, true, false);
 
   // used to pass arguments from raw python init to specialized C++ constructor
-  class_<dynamic_histogram<>::axes_t>("axes_t", no_init);
+  class_<dynamic_histogram<>::axes_type>("axes", no_init);
 
   class_<dynamic_histogram<>, boost::shared_ptr<dynamic_histogram<>>>("histogram",
     "N-dimensional histogram for real-valued data.",
@@ -282,9 +282,9 @@ void register_histogram()
        "\nPass one or more axis objects to define"
        "\nthe dimensions of the dynamic_histogram<>.")
     // shadowed C++ ctors
-    .def(init<const dynamic_histogram<>::axes_t&>())
+    .def(init<const dynamic_histogram<>::axes_type&>())
     .add_property("__array_interface__",
-        &python_access::array_interface)
+        &storage_access::array_interface)
     .add_property("dim", &dynamic_histogram<>::dim,
        "dimensions of the histogram (number of axes)")
     .def("axis", histogram_axis,
@@ -301,7 +301,6 @@ void register_histogram()
        "\nbe a 2d-array of shape (m, n), where m is"
        "\nthe number of tuples, and optionally"
        "\nanother a second 1d-array w of shape (n,).")
-    .add_property("depth", &dynamic_histogram<>::depth)
     .add_property("sum", &dynamic_histogram<>::sum)
     .def("value", raw_function(histogram_value),
        ":param int args: indices of the bin"
@@ -311,10 +310,9 @@ void register_histogram()
        "\n:return: variance estimate for the bin")
     .def(self == self)
     .def(self += self)
-    .def(self + self)
     .def_pickle(serialization_suite<dynamic_histogram<>>())
     ;
 }
 
-}
-}
+} // NS histogram
+} // NS boost

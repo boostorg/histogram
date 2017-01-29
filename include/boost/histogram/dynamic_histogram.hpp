@@ -13,41 +13,37 @@
 #include <boost/mpl/empty.hpp>
 #include <boost/variant.hpp>
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/static_storage.hpp>
-#include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/utility.hpp>
-#include <boost/histogram/detail/mpl.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
+#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <cstddef>
-#include <array>
 #include <vector>
 #include <type_traits>
 #include <stdexcept>
 #include <algorithm>
-#include <utility>
 #include <iterator>
 
 namespace boost {
 namespace histogram {
 
-template <typename Storage=dynamic_storage, typename Axes=default_axes>
+template <typename Axes=default_axes, typename Storage=adaptive_storage>
 class dynamic_histogram
 {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
 
 public:
-  using axis_t = typename make_variant_over<Axes>::type;
-  using axes_t = std::vector<axis_t>;
-  using value_t = typename Storage::value_t;
-  using variance_t = typename Storage::variance_t;
+  using axis_type = typename make_variant_over<Axes>::type;
+  using axes_type = std::vector<axis_type>;
+  using value_type = typename Storage::value_type;
 
   dynamic_histogram() = default;
 
   template <typename... Axes1>
   explicit
   dynamic_histogram(const Axes1&... axes) :
-    axes_({axis_t(axes)...})
+    axes_({axis_type(axes)...})
   {
     storage_ = Storage(field_count());
   }
@@ -61,31 +57,31 @@ public:
   }
 
   explicit
-  dynamic_histogram(const axes_t& axes) :
+  dynamic_histogram(const axes_type& axes) :
     axes_(axes)
   {
     storage_ = Storage(field_count());
   }
 
   explicit
-  dynamic_histogram(axes_t&& axes) :
+  dynamic_histogram(axes_type&& axes) :
     axes_(std::move(axes))
   {
     storage_ = Storage(field_count());
   }
 
-  template <typename OtherStorage, typename OtherAxes>
-  dynamic_histogram(const dynamic_histogram<OtherStorage, OtherAxes>& other) :
+  template <typename OtherAxes, typename OtherStorage>
+  dynamic_histogram(const dynamic_histogram<OtherAxes, OtherStorage>& other) :
     axes_(other.axes_.begin(), other.axes_.end()), storage_(other.storage_)
   {}
 
-  template <typename OtherStorage, typename OtherAxes>
-  dynamic_histogram(dynamic_histogram<OtherStorage, OtherAxes>&& other) :
+  template <typename OtherAxes, typename OtherStorage>
+  dynamic_histogram(dynamic_histogram<OtherAxes, OtherStorage>&& other) :
     axes_(std::move(other.axes_)), storage_(std::move(other.storage_))
   {}
 
-  template <typename OtherStorage, typename OtherAxes>
-  dynamic_histogram& operator=(const dynamic_histogram<OtherStorage, OtherAxes>& other)
+  template <typename OtherAxes, typename OtherStorage>
+  dynamic_histogram& operator=(const dynamic_histogram<OtherAxes, OtherStorage>& other)
   {
     if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
       axes_ = other.axes_;
@@ -94,16 +90,16 @@ public:
     return *this;
   }
 
-  template <typename OtherStorage, typename OtherAxes>
-  dynamic_histogram& operator=(dynamic_histogram<OtherStorage, OtherAxes>&& other)
+  template <typename OtherAxes, typename OtherStorage>
+  dynamic_histogram& operator=(dynamic_histogram<OtherAxes, OtherStorage>&& other)
   {
     axes_ = std::move(other.axes_);
     storage_ = std::move(other.storage_);
     return *this;
   }
 
-  template <typename OtherStorage, typename OtherAxes>
-  bool operator==(const dynamic_histogram<OtherStorage, OtherAxes>& other) const
+  template <typename OtherAxes, typename OtherStorage>
+  bool operator==(const dynamic_histogram<OtherAxes, OtherStorage>& other) const
   {
     if (mpl::empty<
           typename detail::intersection<Axes, OtherAxes>::type
@@ -118,8 +114,8 @@ public:
     return true;
   }
 
-  template <typename OtherStorage, typename OtherAxes>
-  dynamic_histogram& operator+=(const dynamic_histogram<OtherStorage, OtherAxes>& other)
+  template <template <class, class> class Histogram, typename OtherAxes, typename OtherStorage>
+  dynamic_histogram& operator+=(const Histogram<OtherAxes, OtherStorage>& other)
   {
     static_assert(!mpl::empty<typename detail::intersection<Axes, OtherAxes>::type>::value,
                   "histograms lack common axes types");
@@ -133,8 +129,8 @@ public:
     return *this;
   }
 
-  template <typename... Vs>
-  void fill(Vs... values)
+  template <typename... Values>
+  void fill(Values... values)
   {
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -163,25 +159,25 @@ public:
     fill(std::begin(values), std::end(values));
   }
 
-  template <typename... Args>
-  void wfill(Args... args)
+  template <typename... Values>
+  void wfill(double w, Values... values)
   {
-    static_assert(std::is_same<Storage, dynamic_storage>::value,
-                  "wfill only supported for dynamic_storage");
-    BOOST_ASSERT_MSG((sizeof...(args) - 1) == dim(),
+    static_assert(std::is_same<Storage, adaptive_storage>::value,
+                  "wfill only supported for adaptive_storage");
+    BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
-    const double w = windex_impl(lin, args...);
+    index_impl(lin, values...);
     if (lin.stride)
       storage_.increase(lin.out, w);
   }
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  void wfill(Iterator begin, Iterator end, double w)
+  void wfill(double w, Iterator begin, Iterator end)
   {
-    static_assert(std::is_same<Storage, dynamic_storage>::value,
-                  "wfill only supported for dynamic_storage");
+    static_assert(std::is_same<Storage, adaptive_storage>::value,
+                  "wfill only supported for adaptive_storage");
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize_x lin;
@@ -192,13 +188,13 @@ public:
 
   template <typename Sequence,
             typename = detail::is_sequence<Sequence>>
-  void wfill(const Sequence& values, double w)
+  void wfill(double w, const Sequence& values)
   {
-    wfill(std::begin(values), std::end(values), w);
+    wfill(w, std::begin(values), std::end(values));
   }
 
   template <typename... Indices>
-  value_t value(Indices... indices) const
+  value_type value(Indices... indices) const
   {
     BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -211,7 +207,7 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  value_t value(Iterator begin, Iterator end) const
+  value_type value(Iterator begin, Iterator end) const
   {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
@@ -225,13 +221,13 @@ public:
 
   template <typename Sequence,
             typename = detail::is_sequence<Sequence>>
-  value_t value(const Sequence& indices) const
+  value_type value(const Sequence& indices) const
   {
     return value(std::begin(indices), std::end(indices));
   }
 
   template <typename... Indices>
-  variance_t variance(Indices... indices) const
+  value_type variance(Indices... indices) const
   {
     BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -244,7 +240,7 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  variance_t variance(Iterator begin, Iterator end) const
+  value_type variance(Iterator begin, Iterator end) const
   {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
@@ -257,7 +253,7 @@ public:
 
   template <typename Sequence,
             typename = detail::is_sequence<Sequence>>
-  variance_t variance(const Sequence& indices) const
+  value_type variance(const Sequence& indices) const
   {
     return variance(std::begin(indices), std::end(indices));
   }
@@ -267,12 +263,6 @@ public:
 
   /// Total number of bins in the histogram (including underflow/overflow)
   std::size_t size() const { return storage_.size(); }
-
-  /// Access to internal data (used by Python bindings)
-  const void* data() const { return storage_.data(); }
-
-  /// Memory used by a bin in bytes
-  unsigned depth() const { return storage_.depth(); }
 
   /// Sum of all counts in the histogram
   double sum() const
@@ -284,20 +274,20 @@ public:
   }
 
   /// Return axis \a i
-  const axis_t& axis(unsigned i = 0) const {
+  const axis_type& axis(unsigned i = 0) const {
     BOOST_ASSERT_MSG(i < dim(), "axis index out of range");
     return axes_[i];
   }
 
   /// Return axis \a i (added for conformity with static_histogram interface)
   template <unsigned N = 0u>
-  const axis_t& axis() const {
+  const axis_type& axis() const {
     BOOST_ASSERT_MSG(N < dim(), "axis index out of range");
     return axes_[N];
   }
 
 private:
-  axes_t axes_;
+  axes_type axes_;
   Storage storage_;
 
   std::size_t field_count() const
@@ -328,20 +318,6 @@ private:
   template <typename Linearize>
   void index_impl(Linearize& lin) const {}
 
-  template <typename Linearize, typename First, typename... Rest>
-  double windex_impl(Linearize& lin, First first, Rest... rest) const
-  {
-    lin.set(first);
-    apply_visitor(lin, axes_[dim() - sizeof...(Rest)]);
-    return windex_impl(lin, rest...);
-  }
-
-  template <typename Linearize, typename Last>
-  double windex_impl(Linearize& lin, Last last) const
-  {
-    return last;
-  }
-
   template <typename Linearize, typename Iterator>
   void iter_args_impl(Linearize& lin,
                       Iterator begin,
@@ -355,36 +331,14 @@ private:
     }
   }
 
-  template <typename OtherStorage, typename OtherAxes>
+  template <typename OtherAxes, typename OtherStorage>
   friend class dynamic_histogram;
 
-  friend struct python_access;
+  friend struct storage_access;
 
-  template <typename Archiv, typename OtherStorage, typename OtherAxes>
-  friend void serialize(Archiv&, dynamic_histogram<OtherStorage, OtherAxes>&, unsigned);
+  template <typename Archiv, typename OtherAxes, typename OtherStorage>
+  friend void serialize(Archiv&, dynamic_histogram<OtherAxes, OtherStorage>&, unsigned);
 };
-
-
-// when adding different histogram types, use a safe return type
-template <typename Storage1,
-          typename Storage2,
-          typename Axes1,
-          typename Axes2>
-inline
-dynamic_histogram<
-  typename detail::select_storage<Storage1, Storage2>::type,
-  typename detail::intersection<Axes1, Axes2>::type
->
-operator+(const dynamic_histogram<Storage1, Axes1>& a,
-          const dynamic_histogram<Storage2, Axes2>& b)
-{
-  dynamic_histogram<
-    typename detail::select_storage<Storage1, Storage2>::type,
-    typename detail::intersection<Axes1, Axes2>::type
-  > tmp = a;
-  tmp += b;
-  return tmp;
-}
 
 
 template <typename... Axes>
@@ -398,10 +352,10 @@ make_dynamic_histogram(const Axes&... axes)
 
 template <typename Storage, typename... Axes>
 inline
-dynamic_histogram<Storage>
+dynamic_histogram<default_axes, Storage>
 make_dynamic_histogram_with(const Axes&... axes)
 {
-  return dynamic_histogram<Storage>(axes...);
+  return dynamic_histogram<default_axes, Storage>(axes...);
 }
 
 

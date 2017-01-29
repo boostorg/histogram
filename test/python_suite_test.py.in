@@ -329,7 +329,6 @@ class histogramest(unittest.TestCase):
         self.assertEqual(h.dim, 1)
         self.assertEqual(h.axis(0), integer_axis(-1, 1))
         self.assertEqual(h.axis(0).shape, 5)
-        self.assertEqual(h.depth, 0)
         self.assertEqual(histogram(integer_axis(-1, 1, uoflow=False)).axis(0).shape, 3)
         self.assertNotEqual(h, histogram(regular_axis(1, -1, 1)))
         self.assertNotEqual(h, histogram(integer_axis(-1, 2)))
@@ -362,10 +361,8 @@ class histogramest(unittest.TestCase):
             h.fill(1)
             h.fill(10)
         self.assertEqual(h0.sum, 6)
-        self.assertEqual(h0.depth, 1)
         self.assertEqual(h0.axis(0).shape, 3)
         self.assertEqual(h1.sum, 8)
-        self.assertEqual(h1.depth, 1)
         self.assertEqual(h1.axis(0).shape, 5)
 
         for h in (h0, h1):
@@ -385,9 +382,7 @@ class histogramest(unittest.TestCase):
         h.fill(1)
         for i in range(255):
             h.fill(0)
-        self.assertEqual(h.depth, 1)
         h.fill(0)
-        self.assertEqual(h.depth, 2)
         for i in range(1000-256):
             h.fill(0)
         self.assertEqual(h.value(-1), 0)
@@ -439,9 +434,7 @@ class histogramest(unittest.TestCase):
                  [0, 1, 0, 0, 0, 0],
                  [0, 0, 0, 0, 0, 0]]
 
-            h2 = h + h
             h += h
-            self.assertEqual(h, h2)
 
             for i in range(-uoflow, h.axis(0).bins + uoflow):
                 for j in range(-uoflow, h.axis(1).bins + uoflow):
@@ -472,13 +465,14 @@ class histogramest(unittest.TestCase):
                  [0, 1, 0, 0, 0, 0],
                  [0, 0, 0, 0, 0, 0]]
 
-            hw = histogram(integer_axis(-1, 1, uoflow=uoflow),
+            h2 = histogram(integer_axis(-1, 1, uoflow=uoflow),
                            regular_axis(4, -2, 2, uoflow=uoflow))
-            hw.fill(0, 0, w=0)
+            h2.fill(0, 0, w=0)
 
-            h2 = h + hw
+            h2 += h
+            h2 += h
             h += h
-            self.assertNotEqual(h, h2)
+            self.assertEqual(h, h2)
 
             for i in range(-uoflow, h.axis(0).bins + uoflow):
                 for j in range(-uoflow, h.axis(1).bins + uoflow):

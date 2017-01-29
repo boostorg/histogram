@@ -8,8 +8,8 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_tools.hpp>
 #include <boost/histogram/static_histogram.hpp>
-#include <boost/histogram/dynamic_storage.hpp>
-#include <boost/histogram/static_storage.hpp>
+#include <boost/histogram/storage/container_storage.hpp>
+#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/utility.hpp>
 #include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
@@ -17,6 +17,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <limits>
 #include <sstream>
+#include <vector>
 
 using namespace boost::histogram;
 namespace mpl = boost::mpl;
@@ -24,54 +25,54 @@ namespace mpl = boost::mpl;
 BOOST_AUTO_TEST_CASE(init_0)
 {
     auto h = static_histogram<
-      dynamic_storage,
-      mpl::vector<integer_axis>
+      mpl::vector<integer_axis>,
+      adaptive_storage
     >();
     BOOST_CHECK_EQUAL(h.dim(), 1);
     BOOST_CHECK_EQUAL(h.size(), 0);
     auto h2 = static_histogram<
-      static_storage<int>,
-      mpl::vector<integer_axis>
+      mpl::vector<integer_axis>,
+      container_storage<std::vector<unsigned>>
     >();
     BOOST_CHECK(h2 == h);
     auto h3 = static_histogram<
-      dynamic_storage,
-      mpl::vector<regular_axis>
+      mpl::vector<regular_axis>,
+      adaptive_storage
     >();
     BOOST_CHECK(!(h3 == h));
 }
 
 BOOST_AUTO_TEST_CASE(init_1)
 {
-    auto h = make_static_histogram_with<dynamic_storage>(regular_axis{3, -1, 1});
+    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1});
     BOOST_CHECK_EQUAL(h.dim(), 1);
     BOOST_CHECK_EQUAL(h.size(), 5);
     BOOST_CHECK_EQUAL(shape(h.axis<0>()), 5);
-    auto h2 = make_static_histogram_with<static_storage<int>>(regular_axis{3, -1, 1});
+    auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1});
     BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_2)
 {
-    auto h = make_static_histogram_with<dynamic_storage>(regular_axis{3, -1, 1},
+    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1},
                                                          integer_axis{-1, 1});
     BOOST_CHECK_EQUAL(h.dim(), 2);
     BOOST_CHECK_EQUAL(h.size(), 25);
     BOOST_CHECK_EQUAL(shape(h.axis<0>()), 5);
     BOOST_CHECK_EQUAL(shape(h.axis<1>()), 5);
-    auto h2 = make_static_histogram_with<static_storage<int>>(regular_axis{3, -1, 1},
+    auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1},
                                                               integer_axis{-1, 1});
     BOOST_CHECK(h2 == h);
 }
 
 BOOST_AUTO_TEST_CASE(init_3)
 {
-    auto h = make_static_histogram_with<dynamic_storage>(regular_axis{3, -1, 1},
+    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1},
                                                          integer_axis{-1, 1},
                                                          polar_axis{3});
     BOOST_CHECK_EQUAL(h.dim(), 3);
     BOOST_CHECK_EQUAL(h.size(), 75);
-    auto h2 = make_static_histogram_with<static_storage<int>>(regular_axis{3, -1, 1},
+    auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1},
                                                               integer_axis{-1, 1},
                                                               polar_axis{3});
     BOOST_CHECK(h2 == h);
@@ -79,13 +80,13 @@ BOOST_AUTO_TEST_CASE(init_3)
 
 BOOST_AUTO_TEST_CASE(init_4)
 {
-    auto h = make_static_histogram_with<dynamic_storage>(regular_axis{3, -1, 1},
+    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1},
                                                          integer_axis{-1, 1},
                                                          polar_axis{3},
                                                          variable_axis{-1, 0, 1});
     BOOST_CHECK_EQUAL(h.dim(), 4);
     BOOST_CHECK_EQUAL(h.size(), 300);
-    auto h2 = make_static_histogram_with<static_storage<int>>(regular_axis{3, -1, 1},
+    auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1},
                                                               integer_axis{-1, 1},
                                                               polar_axis{3},
                                                               variable_axis{-1, 0, 1});
@@ -94,14 +95,14 @@ BOOST_AUTO_TEST_CASE(init_4)
 
 BOOST_AUTO_TEST_CASE(init_5)
 {
-    auto h = make_static_histogram_with<dynamic_storage>(regular_axis{3, -1, 1},
+    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1},
                                                          integer_axis{-1, 1},
                                                          polar_axis{3},
                                                          variable_axis{-1, 0, 1},
                                                          category_axis{"A", "B", "C"});
     BOOST_CHECK_EQUAL(h.dim(), 5);
     BOOST_CHECK_EQUAL(h.size(), 900);
-    auto h2 = make_static_histogram_with<static_storage<int>>(regular_axis{3, -1, 1},
+    auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1},
                                                               integer_axis{-1, 1},
                                                               polar_axis{3},
                                                               variable_axis{-1, 0, 1},
@@ -117,8 +118,8 @@ BOOST_AUTO_TEST_CASE(copy_ctor)
     auto h2 = decltype(h)(h);
     BOOST_CHECK(h2 == h);
     auto h3 = static_histogram<
-      static_storage<int>,
-      mpl::vector<integer_axis, integer_axis>
+      mpl::vector<integer_axis, integer_axis>,
+      container_storage<std::vector<unsigned>>
     >(h);
     BOOST_CHECK(h3 == h);
 }
@@ -136,50 +137,25 @@ BOOST_AUTO_TEST_CASE(copy_assign)
     h2 = h2;
     BOOST_CHECK(h == h2);
     auto h3 = static_histogram<
-      static_storage<int>,
-      mpl::vector<integer_axis, integer_axis>
+      mpl::vector<integer_axis, integer_axis>,
+      container_storage<std::vector<unsigned>>
     >();
     h3 = h;
     BOOST_CHECK(h == h3);
 }
 
-BOOST_AUTO_TEST_CASE(move_ctor)
+BOOST_AUTO_TEST_CASE(move)
 {
     auto h = make_static_histogram(integer_axis(0, 1),
                                    integer_axis(0, 2));
     h.fill(0, 0);
     const auto href = h;
-    auto h2 = decltype(h)(std::move(h));
+    decltype(h) h2(std::move(h));
     BOOST_CHECK_EQUAL(h.dim(), 2);
     BOOST_CHECK_EQUAL(h.sum(), 0);
     BOOST_CHECK_EQUAL(h.size(), 0);
     BOOST_CHECK(h2 == href);
-    auto h3 = static_histogram<
-      static_storage<int>,
-      mpl::vector<integer_axis, integer_axis>
-    >(std::move(h2));
-    BOOST_CHECK_EQUAL(h2.dim(), 2);
-    BOOST_CHECK_EQUAL(h2.sum(), 0);
-    BOOST_CHECK_EQUAL(h2.size(), 0);
-    BOOST_CHECK(h3 == href);
-}
-
-BOOST_AUTO_TEST_CASE(move_assign)
-{
-    auto h = make_static_histogram(integer_axis(0, 1),
-                                   integer_axis(0, 2));
-    h.fill(0.0, 0.0);
-    auto href = h;
-    auto h2 = decltype(h)();
-    h2 = std::move(h);
-    BOOST_CHECK(h2 == href);
-    BOOST_CHECK_EQUAL(h.dim(), 2);
-    BOOST_CHECK_EQUAL(h.sum(), 0);
-    BOOST_CHECK_EQUAL(h.size(), 0);
-    auto h3 = static_histogram<
-      static_storage<int>,
-      mpl::vector<integer_axis, integer_axis>
-    >();
+    decltype(h) h3;
     h3 = std::move(h2);
     BOOST_CHECK_EQUAL(h2.dim(), 2);
     BOOST_CHECK_EQUAL(h2.sum(), 0);
@@ -268,10 +244,10 @@ BOOST_AUTO_TEST_CASE(d1w)
 {
     auto h = make_static_histogram(regular_axis(2, -1, 1));
     h.fill(0);
-    h.wfill(-1.0, 2.0);
+    h.wfill(2.0, -1.0);
     h.fill(-1.0);
     h.fill(-2.0);
-    h.wfill(10.0, 5.0);
+    h.wfill(5.0, 10.0);
 
     BOOST_CHECK_EQUAL(h.sum(), 10);
 
@@ -342,9 +318,9 @@ BOOST_AUTO_TEST_CASE(d2w)
     auto h = make_static_histogram(regular_axis(2, -1, 1),
                                    integer_axis(-1, 1, nullptr, false));
     h.fill(-1, 0);       // -> 0, 1
-    h.wfill(-1, -1, 10); // -> 0, 0
-    h.wfill(-1, -10, 5); // is ignored
-    h.wfill(-10, 0, 7);  // -> -1, 1
+    h.wfill(10, -1, -1); // -> 0, 0
+    h.wfill(5, -1, -10); // is ignored
+    h.wfill(7, -10, 0);  // -> -1, 1
 
     BOOST_CHECK_EQUAL(h.sum(), 18);
 
@@ -390,7 +366,7 @@ BOOST_AUTO_TEST_CASE(d3w)
         for (auto j = 0; j < bins(h.axis<1>()); ++j)
             for (auto k = 0; k < bins(h.axis<2>()); ++k)
     {
-        h.wfill(i, j, k, i+j+k);
+        h.wfill(i+j+k, i, j, k);
     }
 
     for (auto i = 0; i < bins(h.axis<0>()); ++i)
@@ -402,10 +378,10 @@ BOOST_AUTO_TEST_CASE(d3w)
 BOOST_AUTO_TEST_CASE(add_1)
 {
     auto a = make_static_histogram_with<
-      dynamic_storage
+      adaptive_storage
     >(integer_axis(-1, 1));
     auto b = make_static_histogram_with<
-      static_storage<int>
+      container_storage<std::vector<unsigned>>
     >(integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
@@ -416,7 +392,8 @@ BOOST_AUTO_TEST_CASE(add_1)
     BOOST_CHECK_EQUAL(c.value(1), 0);
     BOOST_CHECK_EQUAL(c.value(2), 1);
     BOOST_CHECK_EQUAL(c.value(3), 0);
-    auto d = a + b;
+    auto d = a;
+    d += b;
     BOOST_CHECK_EQUAL(d.value(-1), 0);
     BOOST_CHECK_EQUAL(d.value(0), 1);
     BOOST_CHECK_EQUAL(d.value(1), 0);
@@ -427,14 +404,14 @@ BOOST_AUTO_TEST_CASE(add_1)
 BOOST_AUTO_TEST_CASE(add_2)
 {
     auto a = make_static_histogram_with<
-      dynamic_storage
+      adaptive_storage
     >(integer_axis(-1, 1));
     auto b = make_static_histogram_with<
-      dynamic_storage
+      adaptive_storage
     >(integer_axis(-1, 1));
 
     a.fill(0);
-    b.wfill(-1, 3);
+    b.wfill(3, -1);
     auto c = a;
     c += b;
     BOOST_CHECK_EQUAL(c.value(-1), 0);
@@ -442,7 +419,8 @@ BOOST_AUTO_TEST_CASE(add_2)
     BOOST_CHECK_EQUAL(c.value(1), 1);
     BOOST_CHECK_EQUAL(c.value(2), 0);
     BOOST_CHECK_EQUAL(c.value(3), 0);    
-    auto d = a + b;
+    auto d = a;
+    d += b;
     BOOST_CHECK_EQUAL(d.value(-1), 0);
     BOOST_CHECK_EQUAL(d.value(0), 3);
     BOOST_CHECK_EQUAL(d.value(1), 1);
@@ -453,23 +431,22 @@ BOOST_AUTO_TEST_CASE(add_2)
 BOOST_AUTO_TEST_CASE(add_3)
 {
     auto a = make_static_histogram_with<
-      static_storage<char>
+      container_storage<std::vector<char>>
     >(integer_axis(-1, 1));
     auto b = make_static_histogram_with<
-      static_storage<int>
+      container_storage<std::vector<unsigned>>
     >(integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
     auto c = a;
     c += b;
-    BOOST_CHECK_EQUAL(c.depth(), sizeof(char));
     BOOST_CHECK_EQUAL(c.value(-1), 0);
     BOOST_CHECK_EQUAL(c.value(0), 1);
     BOOST_CHECK_EQUAL(c.value(1), 0);
     BOOST_CHECK_EQUAL(c.value(2), 1);
     BOOST_CHECK_EQUAL(c.value(3), 0);
-    auto d = a + b;
-    BOOST_CHECK_EQUAL(d.depth(), sizeof(int));
+    auto d = a;
+    d += b;
     BOOST_CHECK_EQUAL(d.value(-1), 0);
     BOOST_CHECK_EQUAL(d.value(0), 1);
     BOOST_CHECK_EQUAL(d.value(1), 0);
@@ -493,7 +470,7 @@ BOOST_AUTO_TEST_CASE(doc_example_0)
     h.fill(1.7);
     h.fill(2.0);  // put in overflow bin, bin interval is semi-open
     h.fill(20.0); // put in overflow bin
-    h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
+    h.wfill(5.0, 0.1); // fill with a weighted entry, weight is 5.0
 
     std::ostringstream os1;
     // access histogram counts

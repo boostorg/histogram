@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_HISTOGRAM_DETAIL_MPL_HPP_
-#define _BOOST_HISTOGRAM_DETAIL_MPL_HPP_
+#ifndef _BOOST_HISTOGRAM_DETAIL_META_HPP_
+#define _BOOST_HISTOGRAM_DETAIL_META_HPP_
 
 #include <type_traits>
 #include <iterator>
@@ -18,6 +18,13 @@
 namespace boost {
 namespace histogram {
 namespace detail {
+
+template <typename T,
+          typename = decltype(std::declval<T&>().size()),
+          typename = decltype(std::declval<T&>().increase(0)),
+          typename = decltype(std::declval<T&>().value(0)),
+          typename = decltype(std::declval<T&>().variance(0))>
+struct is_storage {};
 
 template <typename T,
           typename = decltype(*std::declval<T&>()),
@@ -50,38 +57,25 @@ struct intersection {
     >::type;
 };
 
-template <typename T>
-struct is_dynamic_storage {
-    typedef char one;
-    typedef long two;
-
-    template<typename U,
-             typename = decltype(std::declval<U&>().increase(0, 0.0))>
-    struct BetterMatch {};
-    template<typename U> static one Test(BetterMatch<U>*);
-    template<typename U> static two Test(...);
-    static constexpr bool value = sizeof(Test<T>(0)) == sizeof(one);
-};
-
-// prefer dynamic over static storage, choose 
-// static_storage with larger capacity
-template <typename Storage1,
-          typename Storage2>
-struct select_storage {
-    using type = typename std::conditional<
-        (is_dynamic_storage<Storage1>::value ||
-         is_dynamic_storage<Storage2>::value),
-        typename std::conditional<
-            is_dynamic_storage<Storage1>::value,
-            Storage1, Storage2
-        >::type,
-        typename std::conditional<
-            (std::numeric_limits<typename Storage1::value_t>::max() >
-             std::numeric_limits<typename Storage2::value_t>::max()),
-            Storage1, Storage2
-        >::type
-    >::type;
-};
+// // prefer dynamic over static storage, choose 
+// // static_storage with larger capacity
+// template <typename Storage1,
+//           typename Storage2>
+// struct select_storage {
+//     using type = typename std::conditional<
+//         (is_dynamic_storage<Storage1>::value ||
+//          is_dynamic_storage<Storage2>::value),
+//         typename std::conditional<
+//             is_dynamic_storage<Storage1>::value,
+//             Storage1, Storage2
+//         >::type,
+//         typename std::conditional<
+//             (std::numeric_limits<typename Storage1::value_t>::max() >
+//              std::numeric_limits<typename Storage2::value_t>::max()),
+//             Storage1, Storage2
+//         >::type
+//     >::type;
+// };
 
 }
 }

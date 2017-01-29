@@ -6,6 +6,8 @@
 
 #include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/storage/container_storage.hpp>
+#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/axis.hpp>
 
 #include <random>
@@ -113,27 +115,29 @@ int main() {
 #if HISTOGRAM_TYPE == 1
       compare_1d<
         static_histogram<
-          static_storage<int>,
-          mpl::vector<regular_axis>
+          mpl::vector<regular_axis>,
+          container_storage<std::vector<int>>
         >
       >(12000000, itype)
 #elif HISTOGRAM_TYPE == 2
       compare_1d<
         static_histogram<
-          dynamic_storage,
-          mpl::vector<regular_axis>
+          mpl::vector<regular_axis>,
+          adaptive_storage
         >
       >(12000000, itype)
 #elif HISTOGRAM_TYPE == 3
       compare_1d<
         dynamic_histogram<
-          static_storage<int>
+          default_axes,
+          container_storage<std::vector<int>>
         >
       >(12000000, itype)
 #elif HISTOGRAM_TYPE == 4
       compare_1d<
         dynamic_histogram<
-          dynamic_storage
+          default_axes,
+          adaptive_storage
         >
       >(12000000, itype)
 #endif
@@ -144,27 +148,29 @@ int main() {
 #if HISTOGRAM_TYPE == 1
       compare_3d<
         static_histogram<
-          static_storage<int>,
-          mpl::vector<regular_axis, regular_axis, regular_axis>
+          mpl::vector<regular_axis, regular_axis, regular_axis>,
+          container_storage<std::vector<int>>
         >
       >(4000000, itype)
 #elif HISTOGRAM_TYPE == 2
       compare_3d<
         static_histogram<
-          dynamic_storage,
-          mpl::vector<regular_axis, regular_axis, regular_axis>
+          mpl::vector<regular_axis, regular_axis, regular_axis>,
+          adaptive_storage
         >
       >(4000000, itype)
 #elif HISTOGRAM_TYPE == 3
       compare_3d<
         dynamic_histogram<
-          static_storage<int>
+          default_axes,
+          container_storage<std::vector<int>>
         >
       >(4000000, itype)
 #elif HISTOGRAM_TYPE == 4
       compare_3d<
         dynamic_histogram<
-          dynamic_storage
+          default_axes,
+          adaptive_storage
         >
       >(4000000, itype)
 #endif
@@ -175,29 +181,31 @@ int main() {
 #if HISTOGRAM_TYPE == 1
       compare_6d<
         static_histogram<
-          static_storage<int>,
           mpl::vector<regular_axis, regular_axis, regular_axis,
-                      regular_axis, regular_axis, regular_axis>
+                      regular_axis, regular_axis, regular_axis>,
+          container_storage<std::vector<int>>
         >
       >(2000000, itype)
 #elif HISTOGRAM_TYPE == 2
       compare_6d<
         static_histogram<
-          dynamic_storage,
           mpl::vector<regular_axis, regular_axis, regular_axis,
-                      regular_axis, regular_axis, regular_axis>
+                      regular_axis, regular_axis, regular_axis>,
+          adaptive_storage
         >
       >(2000000, itype)
 #elif HISTOGRAM_TYPE == 3
       compare_6d<
         dynamic_histogram<
-          static_storage<int>
+          default_axes,
+          container_storage<std::vector<int>>
         >
       >(2000000, itype)
 #elif HISTOGRAM_TYPE == 4
       compare_6d<
         dynamic_histogram<
-          dynamic_storage
+          default_axes,
+          adaptive_storage
         >
       >(2000000, itype)
 #endif
