@@ -26,8 +26,8 @@ namespace boost {
 namespace histogram {
 
 template <typename T>
-adaptive_storage prepare(unsigned n=1) {
-    adaptive_storage s(n);
+adaptive_storage<> prepare(unsigned n=1) {
+    adaptive_storage<> s(n);
     s.increase(0);
     const auto tmax = std::numeric_limits<T>::max();
     while (s.value(0) < 0.1 * tmax)
@@ -36,21 +36,21 @@ adaptive_storage prepare(unsigned n=1) {
 }
 
 template <>
-adaptive_storage prepare<void>(unsigned n) {
-    adaptive_storage s(n);
+adaptive_storage<> prepare<void>(unsigned n) {
+    adaptive_storage<> s(n);
     return s;
 }
 
 template <>
-adaptive_storage prepare<detail::weight_t>(unsigned n) {
-    adaptive_storage s(n);
+adaptive_storage<> prepare<detail::weight_t>(unsigned n) {
+    adaptive_storage<> s(n);
     s.increase(0, 1.0);
     return s;
 }
 
 template <>
-adaptive_storage prepare<detail::mp_int>(unsigned n) {
-    adaptive_storage s(n);
+adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
+    adaptive_storage<> s(n);
     s.increase(0);
     const auto tmax = std::numeric_limits<uint64_t>::max();
     while (s.value(0) <= tmax)
@@ -60,9 +60,9 @@ adaptive_storage prepare<detail::mp_int>(unsigned n) {
 
 struct storage_access {
     template <typename T>
-    static adaptive_storage
+    static adaptive_storage<>
     max_minus_one(unsigned n=1) {
-        adaptive_storage s = prepare<T>(n);
+        adaptive_storage<> s = prepare<T>(n);
         const auto tmax = std::numeric_limits<T>::max();
         static_cast<T*>(s.buffer_.ptr_)[0] = tmax - 1;
         const double v = tmax - 1;
@@ -76,7 +76,7 @@ struct storage_access {
 
 template <typename T>
 void copy_impl() {
-    adaptive_storage a;
+    adaptive_storage<> a;
     a = prepare<T>();
     a = prepare<void>();
     BOOST_CHECK(a == prepare<void>());
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(copy)
 
 BOOST_AUTO_TEST_CASE(equal_operator)
 {
-    adaptive_storage a(1), b(1), c(1), d(2);
+    adaptive_storage<> a(1), b(1), c(1), d(2);
     a.increase(0);
     b.increase(0);
     c.increase(0);
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(equal_operator)
 template <typename T>
 void increase_and_grow_impl()
 {
-    adaptive_storage s = storage_access::max_minus_one<T>();
+    adaptive_storage<> s = storage_access::max_minus_one<T>();
 
     auto n = s;
     auto n2 = s;
@@ -157,7 +157,7 @@ void increase_and_grow_impl()
     n.increase(0);
     n.increase(0);
 
-    adaptive_storage x(1);
+    adaptive_storage<> x(1);
     x.increase(0);
     n2 += x;
     n2 += x;
@@ -171,9 +171,9 @@ void increase_and_grow_impl()
 template <>
 void increase_and_grow_impl<void>()
 {
-    adaptive_storage s(1);
+    adaptive_storage<> s(1);
     s.increase(0);
-    BOOST_CHECK_EQUAL(s.value(0), 1.0);    
+    BOOST_CHECK_EQUAL(s.value(0), 1.0);
 }
 
 BOOST_AUTO_TEST_CASE(increase_and_grow)
@@ -195,17 +195,17 @@ BOOST_AUTO_TEST_CASE(increase_and_grow)
 
 BOOST_AUTO_TEST_CASE(add_and_grow)
 {
-    adaptive_storage a(1);
+    adaptive_storage<> a(1);
     a.increase(0);
     double x = 1.0;
-    adaptive_storage y(1);
+    adaptive_storage<> y(1);
     BOOST_CHECK_EQUAL(y.value(0), 0.0);
     a += y;
     BOOST_CHECK_EQUAL(a.value(0), x);
     for (unsigned i = 0; i < 80; ++i) {
         a += a;
         x += x;
-        adaptive_storage b(1);
+        adaptive_storage<> b(1);
         b += a;
         BOOST_CHECK_EQUAL(a.value(0), x);
         BOOST_CHECK_EQUAL(a.variance(0), x);
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(add_and_grow)
         b.increase(0, 0.0);
         BOOST_CHECK_EQUAL(b.value(0), x);
         BOOST_CHECK_EQUAL(b.variance(0), x);
-        adaptive_storage c(1);
+        adaptive_storage<> c(1);
         c.increase(0, 0.0);
         c += a;
         BOOST_CHECK_EQUAL(c.value(0), x);
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE(add_and_grow)
 
 BOOST_AUTO_TEST_CASE(equality)
 {
-    adaptive_storage a(2), b(2), c(2);
+    adaptive_storage<> a(2), b(2), c(2);
     BOOST_CHECK(a == b);
     a.increase(0);
     BOOST_CHECK(!(a == b));
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(equality)
 
 template <typename T>
 void convert_container_storage_impl() {
-    adaptive_storage a(2), b(2), c(2);
+    adaptive_storage<> a(2), b(2), c(2);
     container_storage<std::vector<T>> s(2);
     a.increase(0);
     c.increase(0, 1.0);
@@ -247,14 +247,14 @@ void convert_container_storage_impl() {
     BOOST_CHECK(a == s);
     BOOST_CHECK(b == s);
     BOOST_CHECK(c == s);
-    a = adaptive_storage(2);
-    b = adaptive_storage(2);
+    a = adaptive_storage<>(2);
+    b = adaptive_storage<>(2);
     BOOST_CHECK(a == b);
     a += s;
     BOOST_CHECK(a == s);
-    adaptive_storage d(s);
+    adaptive_storage<> d(s);
     BOOST_CHECK(d == s);
-    adaptive_storage e;
+    adaptive_storage<> e;
     e = s;
     BOOST_CHECK(e == s);
 }

@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(tiny_string_test)
 {
     auto a = tiny_string();
     BOOST_CHECK_EQUAL(a.size(), 0u);
-    BOOST_CHECK_EQUAL(a.c_str(), static_cast<const char*>(nullptr));
+    BOOST_CHECK_EQUAL(a.c_str(), "");
     auto b = tiny_string("abc");
     BOOST_CHECK_EQUAL(b.c_str(), "abc");
     BOOST_CHECK_EQUAL(b.size(), 3u);
@@ -171,10 +171,10 @@ BOOST_AUTO_TEST_CASE(tiny_string_test)
     auto c = b;
     BOOST_CHECK_EQUAL(c, b);
     auto d = std::move(c);
-    BOOST_CHECK_EQUAL(c.c_str(), static_cast<const char*>(nullptr));
+    BOOST_CHECK_EQUAL(c.c_str(), "");
     BOOST_CHECK_EQUAL(d, b);
     c = d;
     BOOST_CHECK_EQUAL(c, d);
     d = std::move(c);
-    BOOST_CHECK_EQUAL(c.c_str(), static_cast<const char*>(nullptr));
+    BOOST_CHECK_EQUAL(c.c_str(), "");
 }

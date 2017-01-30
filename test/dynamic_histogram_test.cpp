@@ -26,7 +26,7 @@ namespace mpl = boost::mpl;
 
 BOOST_AUTO_TEST_CASE(init_0)
 {
-    auto h = dynamic_histogram<default_axes, adaptive_storage>();
+    auto h = dynamic_histogram<default_axes, adaptive_storage<>>();
     BOOST_CHECK_EQUAL(h.dim(), 0);
     BOOST_CHECK_EQUAL(h.size(), 0);
     auto h2 = dynamic_histogram<
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(init_1)
 {
     auto h = dynamic_histogram<
         default_axes,
-        adaptive_storage
+        adaptive_storage<>
     >(regular_axis{3, -1, 1});
     BOOST_CHECK_EQUAL(h.dim(), 1);
     BOOST_CHECK_EQUAL(h.size(), 5);
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(init_2)
 {
     auto h = dynamic_histogram<
         default_axes,
-        adaptive_storage
+        adaptive_storage<>
     >(regular_axis{3, -1, 1}, integer_axis{-1, 1});
     BOOST_CHECK_EQUAL(h.dim(), 2);
     BOOST_CHECK_EQUAL(h.size(), 25);
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(init_3)
 {
     auto h = dynamic_histogram<
         default_axes,
-        adaptive_storage
+        adaptive_storage<>
     >(regular_axis{3, -1, 1}, integer_axis{-1, 1}, polar_axis{3});
     BOOST_CHECK_EQUAL(h.dim(), 3);
     BOOST_CHECK_EQUAL(h.size(), 75);
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(init_4)
 {
     auto h = dynamic_histogram<
         default_axes,
-        adaptive_storage
+        adaptive_storage<>
     >(regular_axis{3, -1, 1},
       integer_axis{-1, 1},
       polar_axis{3},
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(init_5)
 
 BOOST_AUTO_TEST_CASE(copy_ctor)
 {
-    auto h = make_dynamic_histogram_with<adaptive_storage>(integer_axis(0, 1),
+    auto h = make_dynamic_histogram_with<adaptive_storage<>>(integer_axis(0, 1),
                                                           integer_axis(0, 2));
     h.fill(0, 0);
     auto h2 = decltype(h)(h);
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(copy_ctor)
 
 BOOST_AUTO_TEST_CASE(copy_assign)
 {
-    auto h = make_dynamic_histogram_with<adaptive_storage>(integer_axis(0, 1),
+    auto h = make_dynamic_histogram_with<adaptive_storage<>>(integer_axis(0, 1),
                                                            integer_axis(0, 2));
     h.fill(0, 0);
     auto h2 = decltype(h)();
@@ -178,11 +178,11 @@ BOOST_AUTO_TEST_CASE(equal_compare)
 {
     auto a = dynamic_histogram<
         default_axes,
-        adaptive_storage
+        adaptive_storage<>
     >(integer_axis(0, 1));
     auto b = dynamic_histogram<
         default_axes,
-        adaptive_storage>(integer_axis(0, 1), integer_axis(0, 2));
+        adaptive_storage<>>(integer_axis(0, 1), integer_axis(0, 2));
     BOOST_CHECK(!(a == b));
     BOOST_CHECK(!(b == a));
     auto c = dynamic_histogram<
@@ -407,7 +407,7 @@ BOOST_AUTO_TEST_CASE(add_1)
 {
     auto a = dynamic_histogram<
             mpl::vector<integer_axis>,
-            adaptive_storage
+            adaptive_storage<>
         >(integer_axis(-1, 1));
     auto b = dynamic_histogram<
             mpl::vector<integer_axis, regular_axis>,

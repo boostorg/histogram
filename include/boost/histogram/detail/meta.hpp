@@ -20,20 +20,20 @@ namespace histogram {
 namespace detail {
 
 template <typename T,
-          typename = decltype(std::declval<T&>().size()),
-          typename = decltype(std::declval<T&>().increase(0)),
-          typename = decltype(std::declval<T&>().value(0)),
-          typename = decltype(std::declval<T&>().variance(0))>
+          typename = decltype(std::declval<T&>().size(),
+                              std::declval<T&>().increase(0),
+                              std::declval<T&>().value(0),
+                              std::declval<T&>().variance(0))>
 struct is_storage {};
 
 template <typename T,
-          typename = decltype(*std::declval<T&>()),
-          typename = decltype(++std::declval<T&>())>
+          typename = decltype(*std::declval<T&>(),
+                              ++std::declval<T&>())>
 struct is_iterator {};
 
 template <typename T,
-          typename = decltype(std::begin(std::declval<T&>())),
-          typename = decltype(std::end(std::declval<T&>()))>
+          typename = decltype(std::begin(std::declval<T&>()),
+                              std::end(std::declval<T&>()))>
 struct is_sequence {};
 
 template <typename T,
@@ -43,6 +43,18 @@ template <typename T,
              sizeof(T) <= sizeof(uint64_t))
           >::type>
 struct is_standard_integral {};
+
+template <typename T>
+struct has_weight_support
+{
+  template <typename>
+  static std::false_type test(...);
+
+  template <typename C>
+  static decltype((std::declval<C&>().increase(0, 0.0)), std::true_type{}) test(int);
+
+  static bool const value = decltype(test<T>(0))::value;
+};
 
 template <typename S1,
           typename S2>
@@ -57,7 +69,7 @@ struct intersection {
     >::type;
 };
 
-// // prefer dynamic over static storage, choose 
+// // prefer dynamic over static storage, choose
 // // static_storage with larger capacity
 // template <typename Storage1,
 //           typename Storage2>

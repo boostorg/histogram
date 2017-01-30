@@ -171,8 +171,8 @@ class test_variable_axis(unittest.TestCase):
             variable_axis(1.0)
         with self.assertRaises(TypeError):
             variable_axis("1", 2)
-        with self.assertRaises(TypeError):
-            regular_axis(1, 1.0, 2.0, bad_keyword="ra")
+        with self.assertRaises(KeyError):
+            variable_axis(0.0, 1.0, 2.0, bad_keyword="ra")
         a = variable_axis(-0.1, 0.2, 0.3)
         self.assertEqual(a, variable_axis(-0.1, 0.2, 0.3))
         self.assertNotEqual(a, variable_axis(0, 0.2, 0.3))
@@ -207,7 +207,7 @@ class test_variable_axis(unittest.TestCase):
         self.assertEqual(a.index(-0.11), -1)
         self.assertEqual(a.index(-0.1), 0)
         self.assertEqual(a.index(0.0), 0)
-        self.assertEqual(a.index(0.19), 0)        
+        self.assertEqual(a.index(0.19), 0)
         self.assertEqual(a.index(0.2), 1)
         self.assertEqual(a.index(0.21), 1)
         self.assertEqual(a.index(0.29), 1)
@@ -228,7 +228,7 @@ class test_category_axis(unittest.TestCase):
         with self.assertRaises(TypeError):
             category_axis("A", "B", "C", label="ca")
         with self.assertRaises(TypeError):
-            category_axis("A", "B", "C", uoflow=True)        
+            category_axis("A", "B", "C", uoflow=True)
         self.assertEqual(category_axis("A", "B", "C"),
                          category_axis("A", "B", "C"))
 
@@ -348,9 +348,9 @@ class histogramest(unittest.TestCase):
         h0 = histogram(integer_axis(-1, 1, uoflow=False))
         h1 = histogram(integer_axis(-1, 1, uoflow=True))
         for h in (h0, h1):
-            with self.assertRaises(Exception):
+            with self.assertRaises(RuntimeError):
                 h.fill()
-            with self.assertRaises(Exception):
+            with self.assertRaises(RuntimeError):
                 h.fill(1, 2)
             h.fill(-10)
             h.fill(-1)
@@ -371,6 +371,15 @@ class histogramest(unittest.TestCase):
             self.assertEqual(h.value(2), 3)
             with self.assertRaises(RuntimeError):
                 h.value(0, 1)
+            with self.assertRaises(RuntimeError):
+                h.value(0, foo=None)
+            self.assertEqual(h.variance(0), 2)
+            self.assertEqual(h.variance(1), 1)
+            self.assertEqual(h.variance(2), 3)
+            with self.assertRaises(RuntimeError):
+                h.variance(0, 1)
+            with self.assertRaises(RuntimeError):
+                h.variance(0, foo=None)
 
         self.assertEqual(h1.value(-1), 1)
         self.assertEqual(h1.value(3), 1)
@@ -679,11 +688,13 @@ class histogramest(unittest.TestCase):
         self.assertEqual(a.variance(2), 25)
 
         with self.assertRaises(RuntimeError):
-            a.fill([1, 2], foo=1)
-        with self.assertRaises(RuntimeError):
-            a.fill([1, 2], w=[1], foo=1)
+            a.fill([1, 2], foo=[1, 1])
         with self.assertRaises(ValueError):
-            a.fill([1, 2], w=1)
+            a.fill([1, 2], w=[1])
+        with self.assertRaises(RuntimeError):
+            a.fill([1, 2], w=[1, 1], foo=1)
+        with self.assertRaises(ValueError):
+            a.fill([1, 2], w="ab")
         with self.assertRaises(ValueError):
             a.fill([1, 2], w=[[1, 1], [2, 2]])
 

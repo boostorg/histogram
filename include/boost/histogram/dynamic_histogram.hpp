@@ -28,7 +28,7 @@
 namespace boost {
 namespace histogram {
 
-template <typename Axes=default_axes, typename Storage=adaptive_storage>
+template <typename Axes=default_axes, typename Storage=adaptive_storage<>>
 class dynamic_histogram
 {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
@@ -93,8 +93,10 @@ public:
   template <typename OtherAxes, typename OtherStorage>
   dynamic_histogram& operator=(dynamic_histogram<OtherAxes, OtherStorage>&& other)
   {
-    axes_ = std::move(other.axes_);
-    storage_ = std::move(other.storage_);
+    if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
+      axes_ = std::move(other.axes_);
+      storage_ = std::move(other.storage_);
+    }
     return *this;
   }
 
@@ -162,7 +164,7 @@ public:
   template <typename... Values>
   void wfill(double w, Values... values)
   {
-    static_assert(std::is_same<Storage, adaptive_storage>::value,
+    static_assert(detail::has_weight_support<Storage>::value,
                   "wfill only supported for adaptive_storage");
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -176,7 +178,7 @@ public:
             typename = detail::is_iterator<Iterator>>
   void wfill(double w, Iterator begin, Iterator end)
   {
-    static_assert(std::is_same<Storage, adaptive_storage>::value,
+    static_assert(detail::has_weight_support<Storage>::value,
                   "wfill only supported for adaptive_storage");
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");

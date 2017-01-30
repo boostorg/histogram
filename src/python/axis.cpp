@@ -71,7 +71,7 @@ category_axis_init(python::tuple args, python::dict kwargs) {
 
     if (len(kwargs) > 0) {
         PyErr_SetString(PyExc_TypeError, "unknown keyword argument");
-        throw_error_already_set();        
+        throw_error_already_set();
     }
 
     // if (len(args) == 2) {
@@ -128,7 +128,7 @@ axis_repr(const T& t) {
 }
 
 template <class T>
-struct axis_suite : public python::def_visitor<axis_suite<T> > {    
+struct axis_suite : public python::def_visitor<axis_suite<T> > {
 
     template <typename Class, typename U>
     static

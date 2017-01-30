@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(init_0)
 {
     auto h = static_histogram<
       mpl::vector<integer_axis>,
-      adaptive_storage
+      adaptive_storage<>
     >();
     BOOST_CHECK_EQUAL(h.dim(), 1);
     BOOST_CHECK_EQUAL(h.size(), 0);
@@ -37,14 +37,14 @@ BOOST_AUTO_TEST_CASE(init_0)
     BOOST_CHECK(h2 == h);
     auto h3 = static_histogram<
       mpl::vector<regular_axis>,
-      adaptive_storage
+      adaptive_storage<>
     >();
     BOOST_CHECK(!(h3 == h));
 }
 
 BOOST_AUTO_TEST_CASE(init_1)
 {
-    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1});
+    auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1});
     BOOST_CHECK_EQUAL(h.dim(), 1);
     BOOST_CHECK_EQUAL(h.size(), 5);
     BOOST_CHECK_EQUAL(shape(h.axis<0>()), 5);
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(init_1)
 
 BOOST_AUTO_TEST_CASE(init_2)
 {
-    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1},
+    auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1},
                                                          integer_axis{-1, 1});
     BOOST_CHECK_EQUAL(h.dim(), 2);
     BOOST_CHECK_EQUAL(h.size(), 25);
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(init_2)
 
 BOOST_AUTO_TEST_CASE(init_3)
 {
-    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1},
+    auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1},
                                                          integer_axis{-1, 1},
                                                          polar_axis{3});
     BOOST_CHECK_EQUAL(h.dim(), 3);
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(init_3)
 
 BOOST_AUTO_TEST_CASE(init_4)
 {
-    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1},
+    auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1},
                                                          integer_axis{-1, 1},
                                                          polar_axis{3},
                                                          variable_axis{-1, 0, 1});
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(init_4)
 
 BOOST_AUTO_TEST_CASE(init_5)
 {
-    auto h = make_static_histogram_with<adaptive_storage>(regular_axis{3, -1, 1},
+    auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1},
                                                          integer_axis{-1, 1},
                                                          polar_axis{3},
                                                          variable_axis{-1, 0, 1},
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(d1w)
 BOOST_AUTO_TEST_CASE(d2)
 {
     auto h = make_static_histogram(regular_axis(2, -1, 1),
-                                   integer_axis(-1, 1, nullptr, false));
+                                   integer_axis(-1, 1, "", false));
     h.fill(-1, -1);
     h.fill(-1, 0);
     std::array<double, 2> ai = {{-1., -10.}};
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(d2)
 BOOST_AUTO_TEST_CASE(d2w)
 {
     auto h = make_static_histogram(regular_axis(2, -1, 1),
-                                   integer_axis(-1, 1, nullptr, false));
+                                   integer_axis(-1, 1, "", false));
     h.fill(-1, 0);       // -> 0, 1
     h.wfill(10, -1, -1); // -> 0, 0
     h.wfill(5, -1, -10); // is ignored
@@ -378,7 +378,7 @@ BOOST_AUTO_TEST_CASE(d3w)
 BOOST_AUTO_TEST_CASE(add_1)
 {
     auto a = make_static_histogram_with<
-      adaptive_storage
+      adaptive_storage<>
     >(integer_axis(-1, 1));
     auto b = make_static_histogram_with<
       container_storage<std::vector<unsigned>>
@@ -404,10 +404,10 @@ BOOST_AUTO_TEST_CASE(add_1)
 BOOST_AUTO_TEST_CASE(add_2)
 {
     auto a = make_static_histogram_with<
-      adaptive_storage
+      adaptive_storage<>
     >(integer_axis(-1, 1));
     auto b = make_static_histogram_with<
-      adaptive_storage
+      adaptive_storage<>
     >(integer_axis(-1, 1));
 
     a.fill(0);
@@ -418,7 +418,7 @@ BOOST_AUTO_TEST_CASE(add_2)
     BOOST_CHECK_EQUAL(c.value(0), 3);
     BOOST_CHECK_EQUAL(c.value(1), 1);
     BOOST_CHECK_EQUAL(c.value(2), 0);
-    BOOST_CHECK_EQUAL(c.value(3), 0);    
+    BOOST_CHECK_EQUAL(c.value(3), 0);
     auto d = a;
     d += b;
     BOOST_CHECK_EQUAL(d.value(-1), 0);

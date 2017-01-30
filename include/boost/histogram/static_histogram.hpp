@@ -30,7 +30,7 @@
 namespace boost {
 namespace histogram {
 
-template <typename Axes, typename Storage>
+template <typename Axes, typename Storage=adaptive_storage<>>
 class static_histogram
 {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
@@ -78,23 +78,19 @@ public:
   template <typename OtherStorage>
   static_histogram& operator=(static_histogram<Axes, OtherStorage>&& other)
   {
-    axes_ = std::move(other.axes_);
-    storage_ = std::move(other.storage_);
+    if (static_cast<const void*>(this) != static_cast<const void*>(&other)) {
+      axes_ = std::move(other.axes_);
+      storage_ = std::move(other.storage_);
+    }
     return *this;
   }
 
-  template <typename OtherStorage>
-  bool operator==(const static_histogram<Axes, OtherStorage>& other) const
+  template <typename OtherAxes, typename OtherStorage>
+  bool operator==(const static_histogram<OtherAxes, OtherStorage>& other) const
   {
     if (!axes_equal_to(other.axes_))
       return false;
     return detail::storage_content_equal(storage_, other.storage_);
-  }
-
-  template <typename OtherStorage, typename OtherAxes>
-  bool operator==(const static_histogram<OtherStorage, OtherAxes>& other) const
-  {
-    return false;
   }
 
   template <typename OtherStorage>
@@ -139,7 +135,7 @@ public:
   template <typename... Values>
   void wfill(double w, Values... values)
   {
-    static_assert(std::is_same<Storage, adaptive_storage>::value,
+    static_assert(detail::has_weight_support<Storage>::value,
                   "wfill only supported for adaptive_storage");
     static_assert(sizeof...(values) == dim(),
                   "number of arguments does not match histogram dimension");
@@ -153,7 +149,7 @@ public:
             typename = detail::is_iterator<Iterator>>
   void wfill(double w, Iterator begin, Iterator end)
   {
-    static_assert(std::is_same<Storage, adaptive_storage>::value,
+    static_assert(detail::has_weight_support<Storage>::value,
                   "wfill only supported for adaptive_storage");
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
@@ -323,10 +319,10 @@ private:
 /// default static type factory
 template <typename... Axes>
 inline
-static_histogram<mpl::vector<Axes...>, adaptive_storage>
+static_histogram<mpl::vector<Axes...>>
 make_static_histogram(const Axes&... axes)
 {
-  return static_histogram<mpl::vector<Axes...>, adaptive_storage>(axes...);
+  return static_histogram<mpl::vector<Axes...>>(axes...);
 }
 
 

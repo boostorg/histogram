@@ -21,8 +21,11 @@ public:
     {
         if (s) {
             const auto n = std::strlen(s) + 1;
-            ptr_.reset(new char[n]);
-            std::strcpy(ptr_.get(), s);            
+            if (n > 1) {
+                ptr_.reset(new char[n]);
+                std::strcpy(ptr_.get(), s);
+            } else
+                ptr_.reset();
         }
     }
 
@@ -52,7 +55,7 @@ public:
     }
 
     std::size_t size() const { return ptr_ ? std::strlen(ptr_.get()) : 0; }
-    const char* c_str() const { return ptr_.get(); }
+    const char* c_str() const { return ptr_ ? ptr_.get() : ""; }
 private:
     std::unique_ptr<char[]> ptr_;
 

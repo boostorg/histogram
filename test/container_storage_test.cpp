@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(copy)
     BOOST_CHECK_EQUAL(c.size(), 1);
     BOOST_CHECK_EQUAL(c.value(0), 1.0);
 
-    container_storage<std::vector<unsigned char>> d(2);
+    container_storage<std::vector<unsigned char>> d(1);
     BOOST_CHECK(!(a == d));
     d = a;
     BOOST_CHECK(a == d);

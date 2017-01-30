@@ -103,7 +103,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
 
       npy_intp* dims = PyArray_DIMS(a);
       switch (PyArray_NDIM(a)) {
-        case 1: 
+        case 1:
         if (self.dim() > 1) {
           PyErr_SetString(PyExc_ValueError, "array has to be two-dimensional");
           throw_error_already_set();
@@ -127,7 +127,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
             (PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
           if (!aw) {
             PyErr_SetString(PyExc_ValueError, "could not convert sequence into array");
-            throw_error_already_set();            
+            throw_error_already_set();
           }
 
           if (PyArray_NDIM(aw) != 1) {
@@ -167,7 +167,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
   const unsigned dim = nargs - 1;
   if (dim != self.dim()) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
-    throw_error_already_set();      
+    throw_error_already_set();
   }
 
   double v[BOOST_HISTOGRAM_AXIS_LIMIT];
@@ -192,12 +192,12 @@ histogram_value(python::tuple args, python::dict kwargs) {
 
   if (self.dim() != (len(args) - 1)) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
-    throw_error_already_set();      
+    throw_error_already_set();
   }
 
   if (kwargs) {
-    PyErr_SetString(PyExc_ValueError, "no keyword arguments allowed");
-    throw_error_already_set();    
+    PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
+    throw_error_already_set();
   }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
@@ -214,12 +214,12 @@ histogram_variance(python::tuple args, python::dict kwargs) {
 
   if (self.dim() != (len(args) - 1)) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
-    throw_error_already_set();      
+    throw_error_already_set();
   }
 
   if (kwargs) {
     PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
-    throw_error_already_set();    
+    throw_error_already_set();
   }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
