@@ -10,6 +10,7 @@
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/container_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <type_traits>
 #include <limits>
 #include <tuple>
 using namespace boost::histogram;

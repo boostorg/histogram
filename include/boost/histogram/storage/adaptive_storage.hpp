@@ -429,7 +429,7 @@ private:
   friend bool operator==(const adaptive_storage<Allocator1>&,
                          const OtherStorage& other);
 
-  template <template <class> class Allocator1, typename OtherStorage>
+  template <typename OtherStorage, template <class> class Allocator1>
   friend bool operator==(const OtherStorage& other,
                          const adaptive_storage<Allocator1>&);
 
@@ -580,8 +580,8 @@ bool operator==(const adaptive_storage<Allocator1>& a,
   return false;
 }
 
-template <template <class> class Allocator, typename OtherStorage>
-bool operator==(const adaptive_storage<Allocator>& a, const OtherStorage& b)
+template <template <class> class Allocator1, typename OtherStorage>
+bool operator==(const adaptive_storage<Allocator1>& a, const OtherStorage& b)
 {
   if (a.buffer_.size_ != b.size())
     return false;
@@ -631,8 +631,9 @@ bool operator==(const adaptive_storage<Allocator>& a, const OtherStorage& b)
   return true;
 }
 
-template <template <class> class Allocator, typename OtherStorage>
-bool operator==(const OtherStorage& a, const adaptive_storage<Allocator>& b)
+template <typename OtherStorage,
+          template <class> class Allocator1>
+bool operator==(const OtherStorage& a, const adaptive_storage<Allocator1>& b)
 {
   return b == a;
 }
