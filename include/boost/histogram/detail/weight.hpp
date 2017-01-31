@@ -1,6 +1,6 @@
 // Copyright 2015-2016 Hans Dembinski
 //
-// Distributed under the Boost Software License, Version 1.0.
+// Distributed under the Boost Software License, version 1.0.
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -14,42 +14,52 @@ namespace histogram {
 namespace detail {
 
 /// Used by nstore to hold a sum of weighted counts and a variance estimate
-struct weight_t
-  : boost::operators<weight_t>
+struct weight
+  : boost::operators<weight>
 {
   double w, w2;
-  weight_t() = default;
-  weight_t(const weight_t&) = default;
-  weight_t(weight_t&&) = default;
-  weight_t& operator=(const weight_t&) = default;
-  weight_t& operator=(weight_t&&) = default;
+  weight() = default;
+  weight(const weight&) = default;
+  weight(weight&&) = default;
+  weight& operator=(const weight&) = default;
+  weight& operator=(weight&&) = default;
 
-  weight_t& operator+=(const weight_t& o)
+  weight& operator+=(const weight& o)
   { w += o.w; w2 += o.w2; return *this; }
-  weight_t& operator++()
+  weight& operator++()
   { ++w; ++w2; return *this; }
-  bool operator==(const weight_t& o) const
+  bool operator==(const weight& o) const
   { return w == o.w && w2 == o.w2; }
 
-  weight_t& add_weight(double v)
-  { w += v; w2 += v*v; return *this; }
+  weight& add_weight(double t)
+  { w += t; w2 += t*t; return *this; }
 
   template <typename T>
-  explicit weight_t(const T& t) : w(static_cast<double>(t)), w2(w) {}
+  explicit weight(const T& t) : w(static_cast<double>(t)), w2(w) {}
 
   template <typename T>
-  weight_t& operator=(T v)
-  { w = static_cast<double>(v); w2 = static_cast<double>(v);  return *this; }
+  weight& operator=(const T& t)
+  { w = static_cast<double>(t); w2 = static_cast<double>(t);  return *this; }
   template <typename T>
-  weight_t& operator+=(T v)
-  { w += static_cast<double>(v); w2 += static_cast<double>(v); return *this; }
-  template <typename T>
-  bool operator==(T v) const
-  { return w == static_cast<double>(v) && w2 == static_cast<double>(v); }
-  template <typename T>
-  bool operator!=(T v) const
-  { return !operator==(v); }
+  weight& operator+=(const T& t)
+  { w += static_cast<double>(t); w2 += static_cast<double>(t); return *this; }
 };
+
+template <typename T>
+bool operator==(const weight& w, const T& t)
+{ return w.w == static_cast<double>(t) && w.w2 == static_cast<double>(t); }
+
+template <typename T>
+bool operator==(const T& t, const weight& w)
+{ return w == t; }
+
+template <typename T>
+bool operator!=(const weight& w, const T& t)
+{ return !(w == t); }
+
+template <typename T>
+bool operator!=(const T& t, const weight& w)
+{ return !(w == t); }
 
 }
 }

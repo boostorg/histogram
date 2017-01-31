@@ -31,7 +31,7 @@ namespace histogram {
 namespace detail {
 
 template <class Archive>
-inline void serialize(Archive& ar, weight_t& wt, unsigned version)
+inline void serialize(Archive& ar, weight& wt, unsigned version)
 {
   ar & wt.w;
   ar & wt.w2;
@@ -67,7 +67,7 @@ inline void serialize(Archive& ar, adaptive_storage<Allocator> & store, unsigned
   ar & b.type_.depth_;
   if (Archive::is_loading::value) {
     switch (b.type_.id_) {
-      case -1: b.template create<detail::weight_t>(); break;
+      case -1: b.template create<detail::weight>(); break;
       case 0: b.ptr_ = nullptr; break;
       case 1: b.template create<uint8_t>(); break;
       case 2: b.template create<uint16_t>(); break;
@@ -77,7 +77,7 @@ inline void serialize(Archive& ar, adaptive_storage<Allocator> & store, unsigned
     }
   }
   switch (b.type_.id_) {
-    case -1: ar & serialization::make_array(&b.template at<detail::weight_t>(0), b.size_); break;
+    case -1: ar & serialization::make_array(&b.template at<detail::weight>(0), b.size_); break;
     case 0: break;
     case 1: ar & serialization::make_array(&b.template at<uint8_t>(0), b.size_); break;
     case 2: ar & serialization::make_array(&b.template at<uint16_t>(0), b.size_); break;

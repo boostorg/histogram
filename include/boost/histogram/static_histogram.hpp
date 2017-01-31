@@ -21,9 +21,8 @@
 #include <boost/fusion/container/vector/convert.hpp>
 #include <boost/fusion/include/as_vector.hpp>
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <type_traits>
 
@@ -90,7 +89,7 @@ public:
   {
     if (!axes_equal_to(other.axes_))
       return false;
-    return detail::storage_content_equal(storage_, other.storage_);
+    return storage_ == other.storage_;
   }
 
   template <typename OtherStorage>

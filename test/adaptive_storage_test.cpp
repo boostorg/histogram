@@ -14,14 +14,6 @@
 #include <tuple>
 using namespace boost::histogram;
 
-template <typename Storage1, typename Storage2>
-bool operator==(const Storage1& a, const Storage2& b)
-{
-    if (a.size() != b.size())
-        return false;
-    return detail::storage_content_equal(a, b);
-}
-
 namespace boost {
 namespace histogram {
 
@@ -42,7 +34,7 @@ adaptive_storage<> prepare<void>(unsigned n) {
 }
 
 template <>
-adaptive_storage<> prepare<detail::weight_t>(unsigned n) {
+adaptive_storage<> prepare<detail::weight>(unsigned n) {
     adaptive_storage<> s(n);
     s.increase(0, 1.0);
     return s;
@@ -76,59 +68,30 @@ struct storage_access {
 
 template <typename T>
 void copy_impl() {
-    adaptive_storage<> a;
-    a = prepare<T>();
-    a = prepare<void>();
-    BOOST_CHECK(a == prepare<void>());
+    const auto b = prepare<T>(1);
+    adaptive_storage<> a(b);
+    BOOST_CHECK(a == b);
+    if (!std::is_same<T, void>::value &&
+        !std::is_same<T, detail::mp_int>::value) {
+        a.increase(0);
+        BOOST_CHECK(!(a == b));
+    }
+    a = b;
+    BOOST_CHECK(a == b);
     a = prepare<T>(2);
-    a = prepare<void>();
-    BOOST_CHECK(a == prepare<void>());
-    a = prepare<T>();
-    a = prepare<uint8_t>();
-    BOOST_CHECK(a == prepare<uint8_t>());
-    a = prepare<T>(2);
-    a = prepare<uint8_t>();
-    BOOST_CHECK(a == prepare<uint8_t>());
-    a = prepare<T>();
-    a = prepare<uint16_t>();
-    BOOST_CHECK(a == prepare<uint16_t>());
-    a = prepare<T>(2);
-    a = prepare<uint16_t>();
-    BOOST_CHECK(a == prepare<uint16_t>());
-    a = prepare<T>();
-    a = prepare<uint32_t>();
-    BOOST_CHECK(a == prepare<uint32_t>());
-    a = prepare<T>(2);
-    a = prepare<uint32_t>();
-    BOOST_CHECK(a == prepare<uint32_t>());
-    a = prepare<T>();
-    a = prepare<uint64_t>();
-    BOOST_CHECK(a == prepare<uint64_t>());
-    a = prepare<T>(2);
-    a = prepare<uint64_t>();
-    BOOST_CHECK(a == prepare<uint64_t>());
-    a = prepare<T>();
-    a = prepare<detail::mp_int>();
-    BOOST_CHECK(a == prepare<detail::mp_int>());
-    a = prepare<T>(2);
-    a = prepare<detail::mp_int>();
-    BOOST_CHECK(a == prepare<detail::mp_int>());
-    a = prepare<T>();
-    a = prepare<detail::weight_t>();
-    BOOST_CHECK(a == prepare<detail::weight_t>());
-    a = prepare<T>(2);
-    a = prepare<detail::weight_t>();
-    BOOST_CHECK(a == prepare<detail::weight_t>());
+    BOOST_CHECK(!(a == b));
+    a = b;
+    BOOST_CHECK(a == b);
 }
 
 BOOST_AUTO_TEST_CASE(copy)
 {
+    copy_impl<detail::weight>();
     copy_impl<void>();
     copy_impl<uint8_t>();
     copy_impl<uint16_t>();
     copy_impl<uint32_t>();
     copy_impl<uint64_t>();
-    copy_impl<detail::weight_t>();
     copy_impl<detail::mp_int>();
 }
 
@@ -188,7 +151,7 @@ BOOST_AUTO_TEST_CASE(increase_and_grow)
     const double aref = a.value(0);
     while (a.value(0) == aref)
         a.increase(0);
-    auto b = prepare<detail::weight_t>(1);
+    auto b = prepare<detail::weight>(1);
     b.increase(0);
     BOOST_CHECK_EQUAL(b.value(0), 2.0);
 }

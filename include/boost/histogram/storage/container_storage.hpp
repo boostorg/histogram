@@ -19,7 +19,7 @@ namespace detail {
     if (c.size() != s) {
       c = Container(s, typename Container::value_type(0));
     } else {
-      std::fill(c.begin(), c.end(), typename Container::value_type(0));      
+      std::fill(c.begin(), c.end(), typename Container::value_type(0));
     }
   }
 
@@ -82,9 +82,22 @@ public:
 private:
   Container c_;
 
+  template <typename Container1, typename Container2>
+  friend bool operator==(const container_storage<Container1>&,
+                         const container_storage<Container2>&);
+
   template <typename Archive, typename C>
   friend void serialize(Archive&, container_storage<C>&, unsigned);
 };
+
+template <typename Container1, typename Container2>
+bool operator==(const container_storage<Container1>& a,
+                const container_storage<Container2>& b)
+{
+  if (a.c_.size() != b.c_.size())
+    return false;
+  return std::equal(a.c_.begin(), a.c_.end(), b.c_.begin());
+}
 
 } // NS histogram
 } // NS boost

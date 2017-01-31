@@ -21,9 +21,9 @@ using namespace boost::histogram::detail;
 //           a.depth() == b.depth()))
 //         return false;
 //     switch (a.id()) {
-//         case -1: return std::equal(&a.at<weight_t>(0),
-//                                    &a.at<weight_t>(a.size()),
-//                                    &b.at<weight_t>(0));
+//         case -1: return std::equal(&a.at<weight>(0),
+//                                    &a.at<weight>(a.size()),
+//                                    &b.at<weight>(0));
 //         case 0: return true;
 //         case 1: return std::equal(&a.at<uint8_t>(0),
 //                                   &a.at<uint8_t>(a.size()),

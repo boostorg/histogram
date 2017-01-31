@@ -18,14 +18,6 @@
 #include <boost/array.hpp>
 using namespace boost::histogram;
 
-template <typename Storage1, typename Storage2>
-bool operator==(const Storage1& a, const Storage2& b)
-{
-    if (a.size() != b.size())
-        return false;
-    return detail::storage_content_equal(a, b);
-}
-
 BOOST_AUTO_TEST_CASE(ctor)
 {
     container_storage<std::vector<unsigned>> a(1);

@@ -13,16 +13,6 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-    // assumes that Storage1 and Storage2 have equal size
-    template <typename Storage1, typename Storage2>
-    bool storage_content_equal(const Storage1& s1, const Storage2& s2)
-    {
-      for (unsigned i = 0, n = s1.size(); i < n; ++i)
-        if (s1.value(i) != s2.value(i) || s1.variance(i) != s2.variance(i))
-          return false;
-      return true;
-    }
-
     inline
     void escape(std::ostream& os, const char* s) {
         os << '\'';

@@ -111,7 +111,7 @@ public:
       return false;
     if (!axes_equal_to(other.axes_))
       return false;
-    if (!detail::storage_content_equal(storage_, other.storage_))
+    if (!(storage_ == other.storage_))
       return false;
     return true;
   }
