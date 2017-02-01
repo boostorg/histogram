@@ -22,6 +22,9 @@
 #include <cstddef>
 #include <memory>
 
+// forward declaration
+namespace boost { namespace serialization { class access; }}
+
 namespace boost {
 namespace histogram {
 
@@ -425,10 +428,12 @@ public:
 private:
   detail::buffer<Allocator> buffer_;
 
-  friend struct storage_access;
+  // workaround for gcc-4.8
+  friend class ::boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 
-  template <class Archive, template <class> class Allocator1>
-  friend void serialize(Archive&, adaptive_storage<Allocator1>&, unsigned);
+  friend struct storage_access;
 };
 
 template <template <class> class Allocator>

@@ -56,34 +56,34 @@ inline void serialize(Archive& ar, container_storage<Container> & store, unsigne
   ar & store.c_;
 }
 
-template <class Archive, template <class> class Allocator>
-inline void serialize(Archive& ar, adaptive_storage<Allocator> & store, unsigned version)
+template <template <class> class Allocator>
+template <class Archive>
+void adaptive_storage<Allocator>::serialize(Archive& ar, unsigned version)
 {
-  auto& b = store.buffer_;
   if (Archive::is_loading::value)
-    b.destroy_any();
-  ar & b.size_;
-  ar & b.type_.id_;
-  ar & b.type_.depth_;
+    buffer_.destroy_any();
+  ar & buffer_.size_;
+  ar & buffer_.type_.id_;
+  ar & buffer_.type_.depth_;
   if (Archive::is_loading::value) {
-    switch (b.type_.id_) {
-      case -1: b.template create<detail::weight>(); break;
-      case 0: b.ptr_ = nullptr; break;
-      case 1: b.template create<uint8_t>(); break;
-      case 2: b.template create<uint16_t>(); break;
-      case 3: b.template create<uint32_t>(); break;
-      case 4: b.template create<uint64_t>(); break;
-      case 5: b.template create<detail::mp_int>(); break;
+    switch (buffer_.type_.id_) {
+      case -1: buffer_.template create<detail::weight>(); break;
+      case 0: buffer_.ptr_ = nullptr; break;
+      case 1: buffer_.template create<uint8_t>(); break;
+      case 2: buffer_.template create<uint16_t>(); break;
+      case 3: buffer_.template create<uint32_t>(); break;
+      case 4: buffer_.template create<uint64_t>(); break;
+      case 5: buffer_.template create<detail::mp_int>(); break;
     }
   }
-  switch (b.type_.id_) {
-    case -1: ar & serialization::make_array(&b.template at<detail::weight>(0), b.size_); break;
+  switch (buffer_.type_.id_) {
+    case -1: ar & serialization::make_array(&buffer_.template at<detail::weight>(0), buffer_.size_); break;
     case 0: break;
-    case 1: ar & serialization::make_array(&b.template at<uint8_t>(0), b.size_); break;
-    case 2: ar & serialization::make_array(&b.template at<uint16_t>(0), b.size_); break;
-    case 3: ar & serialization::make_array(&b.template at<uint32_t>(0), b.size_); break;
-    case 4: ar & serialization::make_array(&b.template at<uint64_t>(0), b.size_); break;
-    case 5: ar & serialization::make_array(&b.template at<detail::mp_int>(0), b.size_); break;
+    case 1: ar & serialization::make_array(&buffer_.template at<uint8_t>(0), buffer_.size_); break;
+    case 2: ar & serialization::make_array(&buffer_.template at<uint16_t>(0), buffer_.size_); break;
+    case 3: ar & serialization::make_array(&buffer_.template at<uint32_t>(0), buffer_.size_); break;
+    case 4: ar & serialization::make_array(&buffer_.template at<uint64_t>(0), buffer_.size_); break;
+    case 5: ar & serialization::make_array(&buffer_.template at<detail::mp_int>(0), buffer_.size_); break;
   }
 }
 
