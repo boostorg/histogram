@@ -524,7 +524,6 @@ adaptive_storage<Allocator>::variance(std::size_t i) const
 
 template <template <class> class Allocator>
 template <template <class> class OtherAllocator>
-inline
 adaptive_storage<Allocator>&
 adaptive_storage<Allocator>::operator+=(const adaptive_storage<OtherAllocator>& o)
 {
@@ -544,7 +543,6 @@ adaptive_storage<Allocator>::operator+=(const adaptive_storage<OtherAllocator>& 
 
 template <template <class> class Allocator>
 template <typename OtherStorage, typename>
-inline
 adaptive_storage<Allocator>&
 adaptive_storage<Allocator>::operator+=(const OtherStorage& other)
 {
