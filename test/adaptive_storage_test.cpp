@@ -123,17 +123,6 @@ void equal_impl<void>() {
 
 BOOST_AUTO_TEST_CASE(equal_operator)
 {
-    adaptive_storage<> a(1), b(1), c(1), d(2);
-    a.increase(0);
-    b.increase(0);
-    c.increase(0);
-    c.increase(0);
-    d.increase(0);
-    BOOST_CHECK(a == a);
-    BOOST_CHECK(a == b);
-    BOOST_CHECK(!(a == c));
-    BOOST_CHECK(!(a == d));
-
     equal_impl<detail::weight>();
     equal_impl<void>();
     equal_impl<uint8_t>();
@@ -141,6 +130,10 @@ BOOST_AUTO_TEST_CASE(equal_operator)
     equal_impl<uint32_t>();
     equal_impl<uint64_t>();
     equal_impl<detail::mp_int>();
+
+    // special case
+    adaptive_storage<> a = storage_access::set_value(1, unsigned(0));
+    adaptive_storage<> b(1);
 }
 
 template <typename T>
@@ -217,16 +210,6 @@ BOOST_AUTO_TEST_CASE(add_and_grow)
         BOOST_CHECK_EQUAL(c.value(0), x);
         BOOST_CHECK_EQUAL(c.variance(0), x);
     }
-}
-
-BOOST_AUTO_TEST_CASE(equality)
-{
-    adaptive_storage<> a(2), b(2), c(2);
-    BOOST_CHECK(a == b);
-    a.increase(0);
-    BOOST_CHECK(!(a == b));
-    c.increase(0, 1.0);
-    BOOST_CHECK(a == c);
 }
 
 template <typename T>
