@@ -97,6 +97,12 @@ void equal_impl() {
     BOOST_CHECK(a == b);
     b.increase(0);
     BOOST_CHECK(!(a == b));
+
+    container_storage<std::vector<unsigned>> c(1);
+    auto d = storage_access::set_value<T>(1, T(0));
+    BOOST_CHECK(c == d);
+    c.increase(0);
+    BOOST_CHECK(!(c == d));
 }
 
 template <>
