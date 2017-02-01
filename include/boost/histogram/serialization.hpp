@@ -48,7 +48,7 @@ inline void serialize(Archive& ar, tiny_string& s, unsigned version)
   ar & serialization::make_array(s.ptr_.get(), s.ptr_ ? n+1 : 0u);
 }
 
-}
+} // NS detail
 
 template <class Archive, typename Container>
 inline void serialize(Archive& ar, container_storage<Container> & store, unsigned version)
