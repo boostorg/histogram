@@ -691,10 +691,12 @@ class histogramest(unittest.TestCase):
             a.fill([1, 2], foo=[1, 1])
         with self.assertRaises(ValueError):
             a.fill([1, 2], w=[1])
-        with self.assertRaises(RuntimeError):
-            a.fill([1, 2], w=[1, 1], foo=1)
         with self.assertRaises(ValueError):
             a.fill([1, 2], w="ab")
+        with self.assertRaises(ValueError):
+            a.fill([1, 2], w=1)
+        with self.assertRaises(RuntimeError):
+            a.fill([1, 2], w=[1, 1], foo=1)
         with self.assertRaises(ValueError):
             a.fill([1, 2], w=[[1, 1], [2, 2]])
 
