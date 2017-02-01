@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(convert_container_storage)
     convert_container_storage_impl<uint16_t>();
     convert_container_storage_impl<uint32_t>();
     convert_container_storage_impl<uint64_t>();
-    convert_container_storage_impl<detail::weight>();
+    convert_container_storage_impl<detail::mp_int>();
 }
 
 template <typename T>
