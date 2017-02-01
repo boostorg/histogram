@@ -19,31 +19,6 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <typename T,
-          typename = decltype(std::declval<T&>().size(),
-                              std::declval<T&>().increase(0),
-                              std::declval<T&>().value(0),
-                              std::declval<T&>().variance(0))>
-struct is_storage {};
-
-template <typename T,
-          typename = decltype(*std::declval<T&>(),
-                              ++std::declval<T&>())>
-struct is_iterator {};
-
-template <typename T,
-          typename = decltype(std::begin(std::declval<T&>()),
-                              std::end(std::declval<T&>()))>
-struct is_sequence {};
-
-template <typename T,
-          typename = typename std::enable_if<
-            (std::is_integral<T>::value &&
-             (sizeof(T) & (sizeof(T) - 1)) == 0 && // size in 1,2,4,8
-             sizeof(T) <= sizeof(uint64_t))
-          >::type>
-struct is_standard_integral {};
-
 template <typename T>
 struct has_weight_support
 {
@@ -55,6 +30,38 @@ struct has_weight_support
 
   static bool const value = decltype(test<T>(0))::value;
 };
+
+template <typename T,
+          typename = typename std::enable_if<
+            (std::is_integral<T>::value &&
+             (sizeof(T) & (sizeof(T) - 1)) == 0 && // size in 1,2,4,8
+             sizeof(T) <= sizeof(uint64_t))
+          >::type>
+struct is_standard_integral {};
+
+template <typename T,
+          typename = decltype(std::declval<T&>().size(),
+                              std::declval<T&>().increase(0),
+                              std::declval<T&>().value(0),
+                              std::declval<T&>().variance(0))>
+struct is_storage {};
+
+template <typename T,
+          typename = is_storage<T>,
+          typename = typename std::enable_if<
+            !has_weight_support<T>::value
+          >::type>
+struct is_not_adaptive_storage {};
+
+template <typename T,
+          typename = decltype(*std::declval<T&>(),
+                              ++std::declval<T&>())>
+struct is_iterator {};
+
+template <typename T,
+          typename = decltype(std::begin(std::declval<T&>()),
+                              std::end(std::declval<T&>()))>
+struct is_sequence {};
 
 template <typename S1,
           typename S2>
