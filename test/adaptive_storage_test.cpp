@@ -72,11 +72,8 @@ void copy_impl() {
     const auto b = prepare<T>(1);
     adaptive_storage<> a(b);
     BOOST_CHECK(a == b);
-    if (!std::is_same<T, void>::value &&
-        !std::is_same<T, detail::mp_int>::value) {
-        a.increase(0);
-        BOOST_CHECK(!(a == b));
-    }
+    a.increase(0);
+    BOOST_CHECK(!(a == b));
     a = b;
     BOOST_CHECK(a == b);
     a = prepare<T>(2);

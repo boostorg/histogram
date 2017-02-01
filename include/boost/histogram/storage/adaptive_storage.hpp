@@ -22,7 +22,7 @@
 #include <cstddef>
 #include <memory>
 
-// forward declaration
+// forward declaration for serialization workaround
 namespace boost { namespace serialization { class access; }}
 
 namespace boost {
@@ -215,7 +215,7 @@ namespace detail {
     {
       switch (o.type_.id_) {
         case -1: create<weight>(); copy_from<weight>(o.ptr_); break;
-        case 0: ptr_ = nullptr; break;
+        case 0: type_ = type(); ptr_ = nullptr; break;
         case 1: create<uint8_t>(); copy_from<uint8_t>(o.ptr_); break;
         case 2: create<uint16_t>(); copy_from<uint16_t>(o.ptr_); break;
         case 3: create<uint32_t>(); copy_from<uint32_t>(o.ptr_); break;
@@ -232,7 +232,7 @@ namespace detail {
           size_ = o.size_;
           switch (o.type_.id_) {
             case -1: create<weight>(); copy_from<weight>(o.ptr_); break;
-            case 0: ptr_ = nullptr; break;
+            case 0: type_ = type(); ptr_ = nullptr; break;
             case 1: create<uint8_t>(); copy_from<uint8_t>(o.ptr_); break;
             case 2: create<uint16_t>(); copy_from<uint16_t>(o.ptr_); break;
             case 3: create<uint32_t>(); copy_from<uint32_t>(o.ptr_); break;
@@ -242,7 +242,7 @@ namespace detail {
         } else {
           switch (o.type_.id_) {
             case -1: copy_from<weight>(o.ptr_); break;
-            case 0: ptr_ = nullptr; break;
+            case 0: type_ = type(); ptr_ = nullptr; break;
             case 1: copy_from<uint8_t>(o.ptr_); break;
             case 2: copy_from<uint16_t>(o.ptr_); break;
             case 3: copy_from<uint32_t>(o.ptr_); break;
