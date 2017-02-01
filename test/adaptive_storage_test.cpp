@@ -69,6 +69,8 @@ void copy_impl() {
     const auto b = prepare<T>(1);
     auto a(b);
     BOOST_CHECK(a == b);
+    a = b;
+    BOOST_CHECK(a == b);
     a.increase(0);
     BOOST_CHECK(!(a == b));
     a = b;
@@ -93,13 +95,15 @@ BOOST_AUTO_TEST_CASE(copy)
 template <typename T>
 void equal_impl() {
     adaptive_storage<> a(1);
-    auto b = storage_access::set_value<T>(1, T(0));
+    auto b = storage_access::set_value(1, T(0));
+    BOOST_CHECK_EQUAL(a.value(0), 0.0);
+    BOOST_CHECK_EQUAL(a.variance(0), 0.0);
     BOOST_CHECK(a == b);
     b.increase(0);
     BOOST_CHECK(!(a == b));
 
     container_storage<std::vector<unsigned>> c(1);
-    auto d = storage_access::set_value<T>(1, T(0));
+    auto d = storage_access::set_value(1, T(0));
     BOOST_CHECK(c == d);
     c.increase(0);
     BOOST_CHECK(!(c == d));
@@ -109,6 +113,8 @@ template <>
 void equal_impl<void>() {
     adaptive_storage<> a(1);
     adaptive_storage<> b(1);
+    BOOST_CHECK_EQUAL(a.value(0), 0.0);
+    BOOST_CHECK_EQUAL(a.variance(0), 0.0);
     BOOST_CHECK(a == b);
     b.increase(0);
     BOOST_CHECK(!(a == b));
@@ -224,35 +230,62 @@ BOOST_AUTO_TEST_CASE(equality)
 
 template <typename T>
 void convert_container_storage_impl() {
-    adaptive_storage<> a(2), b(2), c(2);
-    container_storage<std::vector<T>> s(2);
-    a.increase(0);
-    c.increase(0, 1.0);
+    const auto aref = storage_access::set_value(1, T(0));
+    BOOST_CHECK_EQUAL(aref.value(0), 0.0);
+    container_storage<std::vector<unsigned>> s(1);
     s.increase(0);
-    for (unsigned i = 0; i < (8 * sizeof(T) - 1); ++i)
-        s += s;
+
+    auto a = aref;
     a = s;
-    b = s;
-    c = s;
+    BOOST_CHECK_EQUAL(a.value(0), 1.0);
     BOOST_CHECK(a == s);
+    a.increase(0);
+    BOOST_CHECK(!(a == s));
+
+    adaptive_storage<> b(s);
+    BOOST_CHECK_EQUAL(b.value(0), 1.0);
     BOOST_CHECK(b == s);
+    b.increase(0);
+    BOOST_CHECK(!(b == s));
+
+    auto c = aref;
+    c += s;
+    BOOST_CHECK_EQUAL(c.value(0), 1.0);
     BOOST_CHECK(c == s);
-    a = adaptive_storage<>(2);
-    b = adaptive_storage<>(2);
-    BOOST_CHECK(a == b);
-    a += s;
+    BOOST_CHECK(s == c);
+
+    container_storage<std::vector<unsigned>> t(2);
+    t.increase(0);
+    BOOST_CHECK(!(c == t));
+}
+
+template <>
+void convert_container_storage_impl<void>() {
+    adaptive_storage<> aref(1);
+    BOOST_CHECK_EQUAL(aref.value(0), 0.0);
+    container_storage<std::vector<unsigned>> s(1);
+    s.increase(0);
+
+    auto a = aref;
+    a = s;
+    BOOST_CHECK_EQUAL(a.value(0), 1.0);
     BOOST_CHECK(a == s);
-    adaptive_storage<> d(s);
-    BOOST_CHECK(d == s);
-    adaptive_storage<> e;
-    e = s;
-    BOOST_CHECK(e == s);
+    a.increase(0);
+    BOOST_CHECK(!(a == s));
+
+    auto c = aref;
+    c += s;
+    BOOST_CHECK_EQUAL(c.value(0), 1.0);
+    BOOST_CHECK(c == s);
 }
 
 BOOST_AUTO_TEST_CASE(convert_container_storage)
 {
+    convert_container_storage_impl<detail::weight>();
+    convert_container_storage_impl<void>();
     convert_container_storage_impl<uint8_t>();
     convert_container_storage_impl<uint16_t>();
     convert_container_storage_impl<uint32_t>();
     convert_container_storage_impl<uint64_t>();
+    convert_container_storage_impl<detail::weight>();
 }
