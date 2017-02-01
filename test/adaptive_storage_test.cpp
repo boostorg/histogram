@@ -9,10 +9,11 @@
 #include <boost/test/test_tools.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/container_storage.hpp>
-#include <boost/histogram/detail/utility.hpp>
-#include <type_traits>
+#include <boost/histogram/serialization.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <sstream>
 #include <limits>
-#include <tuple>
 using namespace boost::histogram;
 
 namespace boost {
@@ -288,4 +289,59 @@ BOOST_AUTO_TEST_CASE(convert_container_storage)
     convert_container_storage_impl<uint32_t>();
     convert_container_storage_impl<uint64_t>();
     convert_container_storage_impl<detail::weight>();
+}
+
+template <typename T>
+void serialization_impl()
+{
+    const auto a = storage_access::set_value(1, T(1));
+    std::ostringstream os;
+    std::string buf;
+    {
+        std::ostringstream os;
+        boost::archive::text_oarchive oa(os);
+        oa << a;
+        buf = os.str();
+    }
+    adaptive_storage<> b;
+    BOOST_CHECK(!(a == b));
+    {
+        std::istringstream is(buf);
+        boost::archive::text_iarchive ia(is);
+        ia >> b;
+    }
+    BOOST_CHECK(a == b);
+}
+
+template <>
+void serialization_impl<void>()
+{
+    adaptive_storage<> a(1);
+    std::ostringstream os;
+    std::string buf;
+    {
+        std::ostringstream os;
+        boost::archive::text_oarchive oa(os);
+        oa << a;
+        buf = os.str();
+    }
+    adaptive_storage<> b;
+    BOOST_CHECK(!(a == b));
+    {
+        std::istringstream is(buf);
+        boost::archive::text_iarchive ia(is);
+        ia >> b;
+    }
+    BOOST_CHECK(a == b);
+}
+
+BOOST_AUTO_TEST_CASE(serialization_test)
+{
+    serialization_impl<detail::weight>();
+    serialization_impl<void>();
+    serialization_impl<uint8_t>();
+    serialization_impl<uint16_t>();
+    serialization_impl<uint32_t>();
+    serialization_impl<uint64_t>();
+    serialization_impl<detail::weight>();
 }

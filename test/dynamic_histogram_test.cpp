@@ -16,10 +16,10 @@
 #include <boost/histogram/storage/container_storage.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
-#include <limits>
 #include <sstream>
-#include <array>
+#include <limits>
 #include <vector>
+#include <array>
 
 using namespace boost::histogram;
 namespace mpl = boost::mpl;
@@ -444,7 +444,7 @@ BOOST_AUTO_TEST_CASE(add_2)
     BOOST_CHECK_EQUAL(c.value(0), 3);
     BOOST_CHECK_EQUAL(c.value(1), 1);
     BOOST_CHECK_EQUAL(c.value(2), 0);
-    BOOST_CHECK_EQUAL(c.value(3), 0);    
+    BOOST_CHECK_EQUAL(c.value(3), 0);
     auto d = b;
     d += a;
     BOOST_CHECK_EQUAL(d.value(-1), 0);
