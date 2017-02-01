@@ -54,12 +54,9 @@ adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
 struct storage_access {
     template <typename T>
     static adaptive_storage<>
-    max_minus_one(unsigned n=1) {
+    set_value(unsigned n, T x) {
         adaptive_storage<> s = prepare<T>(n);
-        const auto tmax = std::numeric_limits<T>::max();
-        static_cast<T*>(s.buffer_.ptr_)[0] = tmax - 1;
-        const double v = tmax - 1;
-        BOOST_CHECK_EQUAL(s.value(0), v);
+        static_cast<T*>(s.buffer_.ptr_)[0] = x;
         return s;
     }
 };
@@ -70,7 +67,7 @@ struct storage_access {
 template <typename T>
 void copy_impl() {
     const auto b = prepare<T>(1);
-    adaptive_storage<> a(b);
+    auto a(b);
     BOOST_CHECK(a == b);
     a.increase(0);
     BOOST_CHECK(!(a == b));
@@ -93,6 +90,24 @@ BOOST_AUTO_TEST_CASE(copy)
     copy_impl<detail::mp_int>();
 }
 
+template <typename T>
+void equal_impl() {
+    adaptive_storage<> a(1);
+    auto b = storage_access::set_value<T>(1, T(0));
+    BOOST_CHECK(a == b);
+    b.increase(0);
+    BOOST_CHECK(!(a == b));
+}
+
+template <>
+void equal_impl<void>() {
+    adaptive_storage<> a(1);
+    adaptive_storage<> b(1);
+    BOOST_CHECK(a == b);
+    b.increase(0);
+    BOOST_CHECK(!(a == b));
+}
+
 BOOST_AUTO_TEST_CASE(equal_operator)
 {
     adaptive_storage<> a(1), b(1), c(1), d(2);
@@ -105,13 +120,21 @@ BOOST_AUTO_TEST_CASE(equal_operator)
     BOOST_CHECK(a == b);
     BOOST_CHECK(!(a == c));
     BOOST_CHECK(!(a == d));
+
+    equal_impl<detail::weight>();
+    equal_impl<void>();
+    equal_impl<uint8_t>();
+    equal_impl<uint16_t>();
+    equal_impl<uint32_t>();
+    equal_impl<uint64_t>();
+    equal_impl<detail::mp_int>();
 }
 
 template <typename T>
 void increase_and_grow_impl()
 {
-    adaptive_storage<> s = storage_access::max_minus_one<T>();
-
+    auto tmax = std::numeric_limits<T>::max();
+    adaptive_storage<> s = storage_access::set_value<T>(1, tmax - 1);
     auto n = s;
     auto n2 = s;
 
@@ -123,7 +146,7 @@ void increase_and_grow_impl()
     n2 += x;
     n2 += x;
 
-    double v = std::numeric_limits<T>::max();
+    double v = tmax;
     ++v;
     BOOST_CHECK_EQUAL(n.value(0), v);
     BOOST_CHECK_EQUAL(n2.value(0), v);
