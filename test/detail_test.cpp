@@ -22,6 +22,8 @@ BOOST_AUTO_TEST_CASE(weight_test)
     BOOST_CHECK(w != weight());
     BOOST_CHECK(1 == w);
     BOOST_CHECK(w == 1);
+    BOOST_CHECK(2 != w);
+    BOOST_CHECK(w != 2);
 }
 
 BOOST_AUTO_TEST_CASE(escape_0)
