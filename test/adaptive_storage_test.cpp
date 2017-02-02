@@ -119,17 +119,19 @@ void equal_impl<void>() {
     BOOST_CHECK(a == b);
     b.increase(0);
     BOOST_CHECK(!(a == b));
+    adaptive_storage<> c = storage_access::set_value(1, unsigned(0));
+    BOOST_CHECK(c == a);
 }
 
 BOOST_AUTO_TEST_CASE(equal_operator)
 {
-    equal_impl<detail::weight>();
     equal_impl<void>();
     equal_impl<uint8_t>();
     equal_impl<uint16_t>();
     equal_impl<uint32_t>();
     equal_impl<uint64_t>();
     equal_impl<detail::mp_int>();
+    equal_impl<detail::weight>();
 
     // special case
     adaptive_storage<> a = storage_access::set_value(1, unsigned(0));
@@ -219,7 +221,7 @@ template <typename T>
 void convert_container_storage_impl() {
     const auto aref = storage_access::set_value(1, T(0));
     BOOST_CHECK_EQUAL(aref.value(0), 0.0);
-    container_storage<std::vector<unsigned>> s(1);
+    container_storage<std::vector<uint8_t>> s(1);
     s.increase(0);
 
     auto a = aref;
@@ -241,7 +243,7 @@ void convert_container_storage_impl() {
     BOOST_CHECK(c == s);
     BOOST_CHECK(s == c);
 
-    container_storage<std::vector<unsigned>> t(2);
+    container_storage<std::vector<uint8_t>> t(2);
     t.increase(0);
     BOOST_CHECK(!(c == t));
 }

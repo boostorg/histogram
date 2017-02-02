@@ -564,7 +564,7 @@ adaptive_storage<Allocator>::operator+=(const OtherStorage& other)
   for (std::size_t i = 0; i < buffer_.size_; ++i) {
     const T& x = other.value(i);
     switch (buffer_.type_.id_) {
-      // case 0 already covered above
+      // case 0 not possible due to convert<U>()
       case 1: detail::add_impl<B, uint8_t, detail::mp_int>::apply(buffer_, i, x); break;
       case 2: detail::add_impl<B, uint16_t, detail::mp_int>::apply(buffer_, i, x); break;
       case 3: detail::add_impl<B, uint32_t, detail::mp_int>::apply(buffer_, i, x); break;
@@ -586,7 +586,7 @@ adaptive_storage<Allocator1>::operator==(const adaptive_storage<Allocator2>& o) 
   using TB = decltype(buffer_);
   using OB = decltype(o.buffer_);
   switch (buffer_.type_.id_) {
-    case 0: break;
+    case 0: break; // handled in return
     case 1: return detail::cmp_impl<TB, OB, uint8_t>::apply(buffer_, o.buffer_);
     case 2: return detail::cmp_impl<TB, OB, uint16_t>::apply(buffer_, o.buffer_);
     case 3: return detail::cmp_impl<TB, OB, uint32_t>::apply(buffer_, o.buffer_);
