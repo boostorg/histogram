@@ -67,23 +67,23 @@ void adaptive_storage<Allocator>::serialize(Archive& ar, unsigned version)
   ar & buffer_.type_.depth_;
   if (Archive::is_loading::value) {
     switch (buffer_.type_.id_) {
-      case -1: buffer_.template create<detail::weight>(); break;
       case 0: buffer_.ptr_ = nullptr; break;
       case 1: buffer_.template create<uint8_t>(); break;
       case 2: buffer_.template create<uint16_t>(); break;
       case 3: buffer_.template create<uint32_t>(); break;
       case 4: buffer_.template create<uint64_t>(); break;
       case 5: buffer_.template create<detail::mp_int>(); break;
+      case 6: buffer_.template create<detail::weight>(); break;
     }
   }
   switch (buffer_.type_.id_) {
-    case -1: ar & serialization::make_array(&buffer_.template at<detail::weight>(0), buffer_.size_); break;
     case 0: break;
     case 1: ar & serialization::make_array(&buffer_.template at<uint8_t>(0), buffer_.size_); break;
     case 2: ar & serialization::make_array(&buffer_.template at<uint16_t>(0), buffer_.size_); break;
     case 3: ar & serialization::make_array(&buffer_.template at<uint32_t>(0), buffer_.size_); break;
     case 4: ar & serialization::make_array(&buffer_.template at<uint64_t>(0), buffer_.size_); break;
     case 5: ar & serialization::make_array(&buffer_.template at<detail::mp_int>(0), buffer_.size_); break;
+    case 6: ar & serialization::make_array(&buffer_.template at<detail::weight>(0), buffer_.size_); break;
   }
 }
 

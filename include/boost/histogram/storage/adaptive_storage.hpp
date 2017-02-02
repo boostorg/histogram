@@ -16,11 +16,11 @@
 #include <boost/mpl/at.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
-#include <type_traits>
 #include <algorithm>
 #include <limits>
 #include <cstddef>
 #include <memory>
+#include <type_traits>
 
 // forward declaration for serialization workaround
 namespace boost { namespace serialization { class access; }}
@@ -33,8 +33,6 @@ namespace detail {
   using mp_int = multiprecision::cpp_int;
 
   using type_to_int = mpl::map<
-    mpl::pair<weight, mpl::int_<-1>>,
-
     mpl::pair<int8_t, mpl::int_<1>>,
     mpl::pair<int16_t, mpl::int_<2>>,
     mpl::pair<int32_t, mpl::int_<3>>,
@@ -45,77 +43,55 @@ namespace detail {
     mpl::pair<uint32_t, mpl::int_<3>>,
     mpl::pair<uint64_t, mpl::int_<4>>,
 
-    mpl::pair<mp_int, mpl::int_<5>>
+    mpl::pair<mp_int, mpl::int_<5>>,
+    mpl::pair<weight, mpl::int_<6>>
   >;
 
   using int_to_type = mpl::map<
-    mpl::pair<mpl::int_<-1>, weight>,
     mpl::pair<mpl::int_<1>, uint8_t>,
     mpl::pair<mpl::int_<2>, uint16_t>,
     mpl::pair<mpl::int_<3>, uint32_t>,
     mpl::pair<mpl::int_<4>, uint64_t>,
-    mpl::pair<mpl::int_<5>, mp_int>
+    mpl::pair<mpl::int_<5>, mp_int>,
+    mpl::pair<mpl::int_<6>, weight>
   >;
 
   template <typename T>
-  using storage_type =
-    typename mpl::at<
-      detail::int_to_type,
-      typename mpl::at<detail::type_to_int, T>::type
-    >::type;
+  using to_int = typename mpl::at<type_to_int, T>::type;
 
   template <typename T>
-  using next_storage_type =
-    typename mpl::at<int_to_type,
-      typename mpl::next<
-        typename mpl::at<type_to_int, T>::type
-      >::type
+  using storage_type = typename mpl::at<int_to_type, to_int<T>>::type;
+
+  template <typename T>
+  using next_storage_type = typename mpl::at<int_to_type,
+      typename mpl::next<to_int<T>>::type
     >::type;
 
-  template <typename Buffer, typename T, typename TO>
-  struct add_one_impl {
-    static void apply(Buffer& b, const std::size_t i, const TO o) {
+  template <typename Buffer, typename T, typename O>
+  struct add_impl {
+    static void apply(Buffer& b, const std::size_t i, const O& o) {
       auto& bi = b.template at<T>(i);
       if (static_cast<T>(std::numeric_limits<T>::max() - bi) >= o)
         bi += static_cast<T>(o);
       else {
         b.template grow<T>();
-        add_one_impl<Buffer, next_storage_type<T>, TO>::apply(b, i, o);
+        using U = next_storage_type<T>;
+        b.template at<U>(i) += static_cast<U>(o);
       }
     }
   };
 
-  template <typename Buffer, typename TO>
-  struct add_one_impl<Buffer, mp_int, TO> {
-    static void apply(Buffer& b, const std::size_t i, const TO& o) {
+  template <typename Buffer, typename O>
+  struct add_impl<Buffer, mp_int, O> {
+    static void apply(Buffer& b, const std::size_t i, const O& o) {
       b.template at<mp_int>(i) += o;
     }
   };
 
-  template <typename Buffer, typename OtherBuffer, typename TO>
-  struct add_impl {
-    static void apply(Buffer& b, const OtherBuffer& o) {
-      for (std::size_t i = 0; i < b.size_; ++i) {
-        const TO oi = o.template at<TO>(i);
-        switch (b.type_.id_) {
-          case -1: b.template at<weight>(i) += oi; break;
-          case 0: b.template initialize<uint8_t>(); // fall through
-          case 1: add_one_impl<Buffer, uint8_t, TO>::apply(b, i, oi); break;
-          case 2: add_one_impl<Buffer, uint16_t, TO>::apply(b, i, oi); break;
-          case 3: add_one_impl<Buffer, uint32_t, TO>::apply(b, i, oi); break;
-          case 4: add_one_impl<Buffer, uint64_t, TO>::apply(b, i, oi); break;
-          case 5: add_one_impl<Buffer, mp_int, TO>::apply(b, i, oi); break;
-        }
-      }
-    }
-  };
-
-  template <typename Buffer, typename OtherBuffer>
-  struct add_impl<Buffer, OtherBuffer, weight> {
-    static void apply(Buffer& b, const OtherBuffer& o) {
-      b.wconvert();
-      for (std::size_t i = 0; i < b.size_; ++i)
-        b.template at<weight>(i) += o.template at<weight>(i);
+  template <typename Buffer, typename O>
+  struct add_impl<Buffer, weight, O> {
+    static void apply(Buffer& b, const std::size_t i, const O& o) {
+      b.template at<weight>(i) += o;
     }
   };
 
@@ -123,11 +99,6 @@ namespace detail {
   struct cmp_impl {
     static bool apply(const Buffer& b, const OtherBuffer& o) {
       switch (o.type_.id_) {
-        case -1:
-          for (std::size_t i = 0; i < b.size_; ++i)
-            if (b.template at<T>(i) != o.template at<weight>(i))
-              return false;
-          break;
         case 0:
           for (std::size_t i = 0; i < b.size_; ++i)
             if (b.template at<T>(i) != 0)
@@ -158,6 +129,11 @@ namespace detail {
             if (b.template at<T>(i) != o.template at<mp_int>(i))
               return false;
           break;
+        case 6:
+          for (std::size_t i = 0; i < b.size_; ++i)
+            if (b.template at<T>(i) != o.template at<weight>(i))
+              return false;
+          break;
       }
       return true;
     }
@@ -167,11 +143,6 @@ namespace detail {
   struct cmp_impl<Buffer, OtherBuffer, void> {
     static bool apply(const Buffer& b, const OtherBuffer& o) {
       switch (o.type_.id_) {
-        case -1:
-          for (std::size_t i = 0; i < b.size_; ++i)
-            if (0 != o.template at<weight>(i))
-              return false;
-          break;
         case 0: break;
         case 1:
           for (std::size_t i = 0; i < b.size_; ++i)
@@ -198,6 +169,11 @@ namespace detail {
             if (0 != o.template at<mp_int>(i))
               return false;
           break;
+        case 6:
+          for (std::size_t i = 0; i < b.size_; ++i)
+            if (0 != o.template at<weight>(i))
+              return false;
+          break;
       }
       return true;
     }
@@ -214,13 +190,13 @@ namespace detail {
       size_(o.size_)
     {
       switch (o.type_.id_) {
-        case -1: create<weight>(); copy_from<weight>(o.ptr_); break;
         case 0: type_ = type(); ptr_ = nullptr; break;
         case 1: create<uint8_t>(); copy_from<uint8_t>(o.ptr_); break;
         case 2: create<uint16_t>(); copy_from<uint16_t>(o.ptr_); break;
         case 3: create<uint32_t>(); copy_from<uint32_t>(o.ptr_); break;
         case 4: create<uint64_t>(); copy_from<uint64_t>(o.ptr_); break;
         case 5: create<mp_int>(); copy_from<mp_int>(o.ptr_); break;
+        case 6: create<weight>(); copy_from<weight>(o.ptr_); break;
       }
     }
 
@@ -231,23 +207,23 @@ namespace detail {
           destroy_any();
           size_ = o.size_;
           switch (o.type_.id_) {
-            case -1: create<weight>(); copy_from<weight>(o.ptr_); break;
             case 0: type_ = type(); ptr_ = nullptr; break;
             case 1: create<uint8_t>(); copy_from<uint8_t>(o.ptr_); break;
             case 2: create<uint16_t>(); copy_from<uint16_t>(o.ptr_); break;
             case 3: create<uint32_t>(); copy_from<uint32_t>(o.ptr_); break;
             case 4: create<uint64_t>(); copy_from<uint64_t>(o.ptr_); break;
             case 5: create<mp_int>(); copy_from<mp_int>(o.ptr_); break;
+            case 6: create<weight>(); copy_from<weight>(o.ptr_); break;
           }
         } else {
           switch (o.type_.id_) {
-            case -1: copy_from<weight>(o.ptr_); break;
             case 0: type_ = type(); ptr_ = nullptr; break;
             case 1: copy_from<uint8_t>(o.ptr_); break;
             case 2: copy_from<uint16_t>(o.ptr_); break;
             case 3: copy_from<uint32_t>(o.ptr_); break;
             case 4: copy_from<uint64_t>(o.ptr_); break;
             case 5: copy_from<mp_int>(o.ptr_); break;
+            case 6: copy_from<weight>(o.ptr_); break;
           }
         }
       }
@@ -295,17 +271,18 @@ namespace detail {
       Allocator<T> a;
       a.deallocate(static_cast<T*>(ptr_), size_);
       ptr_ = nullptr;
+      type_ = type();
     }
 
     void destroy_any() {
       switch (type_.id_) {
-        case -1: destroy<weight>(); break;
         case 0: ptr_ = nullptr; break;
         case 1: destroy<uint8_t>(); break;
         case 2: destroy<uint16_t>(); break;
         case 3: destroy<uint32_t>(); break;
         case 4: destroy<uint64_t>(); break;
         case 5: destroy<mp_int>(); break;
+        case 6: destroy<weight>(); break;
       }
     }
 
@@ -317,7 +294,8 @@ namespace detail {
 
     template <typename T,
               typename U = next_storage_type<T>>
-    void grow() {
+    typename std::enable_if<(to_int<T>::value < to_int<U>::value)>::type
+    grow() {
       Allocator<U> a;
       U* u = a.allocate(size_);
       new (u) U[size_];
@@ -327,16 +305,22 @@ namespace detail {
       type_.template set<U>();
     }
 
-    void wconvert()
+    template <typename T,
+              typename U = next_storage_type<T>>
+    typename std::enable_if<(to_int<T>::value >= to_int<U>::value)>::type
+    grow() {}
+
+    template <typename T>
+    void convert()
     {
       switch (type_.id_) {
-        case -1: break;
-        case 0: initialize<weight>(); break;
-        case 1: grow<uint8_t, weight> (); break;
-        case 2: grow<uint16_t, weight>(); break;
-        case 3: grow<uint32_t, weight>(); break;
-        case 4: grow<uint64_t, weight>(); break;
-        case 5: grow<mp_int, weight>(); break;
+        case 0: initialize<T>(); break;
+        case 1: grow<uint8_t, T>(); break;
+        case 2: grow<uint16_t, T>(); break;
+        case 3: grow<uint32_t, T>(); break;
+        case 4: grow<uint64_t, T>(); break;
+        case 5: grow<mp_int, T>(); break;
+        case 6: break;
       }
     }
 
@@ -469,13 +453,13 @@ void
 adaptive_storage<Allocator>::increase(std::size_t i)
 {
   switch (buffer_.type_.id_) {
-    case -1: ++(buffer_.template at<detail::weight>(i)); break;
     case 0: buffer_.template initialize<uint8_t>(); // and fall through
     case 1: buffer_.template increase<uint8_t>(i); break;
     case 2: buffer_.template increase<uint16_t>(i); break;
     case 3: buffer_.template increase<uint32_t>(i); break;
     case 4: buffer_.template increase<uint64_t>(i); break;
     case 5: ++(buffer_.template at<detail::mp_int>(i)); break;
+    case 6: ++(buffer_.template at<detail::weight>(i)); break;
   }
 }
 
@@ -484,7 +468,7 @@ inline
 void
 adaptive_storage<Allocator>::increase(std::size_t i, double w)
 {
-  buffer_.wconvert();
+  buffer_.template convert<detail::weight>();
   buffer_.template at<detail::weight>(i).add_weight(w);
 }
 
@@ -494,13 +478,13 @@ typename adaptive_storage<Allocator>::value_type
 adaptive_storage<Allocator>::value(std::size_t i) const
 {
   switch (buffer_.type_.id_) {
-    case -1: return buffer_.template at<detail::weight>(i).w;
     case 0: break;
     case 1: return buffer_.template at<uint8_t> (i);
     case 2: return buffer_.template at<uint16_t>(i);
     case 3: return buffer_.template at<uint32_t>(i);
     case 4: return buffer_.template at<uint64_t>(i);
     case 5: return static_cast<double>(buffer_.template at<detail::mp_int>(i));
+    case 6: return buffer_.template at<detail::weight>(i).w;
   }
   return 0.0;
 }
@@ -511,13 +495,13 @@ typename adaptive_storage<Allocator>::value_type
 adaptive_storage<Allocator>::variance(std::size_t i) const
 {
   switch (buffer_.type_.id_) {
-    case -1: return buffer_.template at<detail::weight>(i).w2;
     case 0: break;
     case 1: return buffer_.template at<uint8_t> (i);
     case 2: return buffer_.template at<uint16_t>(i);
     case 3: return buffer_.template at<uint32_t>(i);
     case 4: return buffer_.template at<uint64_t>(i);
     case 5: return static_cast<double>(buffer_.template at<detail::mp_int>(i));
+    case 6: return buffer_.template at<detail::weight>(i).w2;
   }
   return 0.0;
 }
@@ -527,56 +511,42 @@ template <template <class> class OtherAllocator>
 adaptive_storage<Allocator>&
 adaptive_storage<Allocator>::operator+=(const adaptive_storage<OtherAllocator>& o)
 {
-  if (static_cast<void*>(this) == static_cast<const void*>(&o)) {
-    // specialization needed, standard code assumes constant memory layout for "o"
-    for (std::size_t i = 0; i < buffer_.size_; ++i) {
-      switch (buffer_.type_.id_) {
-        case -1:
-          buffer_.template at<detail::weight>(i).w *= 2.0;
-          buffer_.template at<detail::weight>(i).w2 *= 2.0;
-          break;
-        case 0:
-          break;
-        case 1:
-          if (buffer_.template at<uint8_t>(i) < (std::numeric_limits<uint8_t>::max() / 2)) {
-            buffer_.template at<uint8_t>(i) *= 2;
-            break;
-          }
-          buffer_.template grow<uint8_t>(); // fall through
-        case 2:
-          if (buffer_.template at<uint16_t>(i) < (std::numeric_limits<uint16_t>::max() / 2)) {
-            buffer_.template at<uint16_t>(i) *= 2;
-            break;
-          }
-          buffer_.template grow<uint16_t>();
-        case 3:
-          if (buffer_.template at<uint32_t>(i) < (std::numeric_limits<uint32_t>::max() / 2)) {
-            buffer_.template at<uint32_t>(i) *= 2;
-            break;
-          }
-          buffer_.template grow<uint32_t>();
-        case 4:
-          if (buffer_.template at<uint64_t>(i) < (std::numeric_limits<uint64_t>::max() / 2)) {
-            buffer_.template at<uint64_t>(i) *= 2;
-            break;
-          }
-          buffer_.template grow<uint64_t>();
-        case 5:
-          buffer_.template at<detail::mp_int>(i) *= 2;
-          break;
-      }
-    }
-  } else {
-    using B = decltype(buffer_);
-    using OB = decltype(o.buffer_);
+  using B = decltype(buffer_);
+  // convert and handle special simple cases
+  switch (o.buffer_.type_.id_) {
+    case 0: return *this;
+    case 1: buffer_.template convert<uint8_t>(); break;
+    case 2: buffer_.template convert<uint16_t>(); break;
+    case 3: buffer_.template convert<uint32_t>(); break;
+    case 4: buffer_.template convert<uint64_t>(); break;
+    case 5: buffer_.template convert<detail::mp_int>(); break;
+    case 6:
+      buffer_.template convert<detail::weight>();
+      for (std::size_t i = 0; i < o.buffer_.size_; ++i)
+        detail::add_impl<B, detail::weight, detail::weight>::apply(
+          buffer_, i, o.buffer_.template at<detail::weight>(i));
+      return *this;
+  }
+  // handle other cases, beware: this and other could be the same
+  detail::mp_int x = 0;
+  for (std::size_t i = 0; i < buffer_.size_; ++i) {
     switch (o.buffer_.type_.id_) {
-      case -1: detail::add_impl<B, OB, detail::weight>::apply(buffer_, o.buffer_); break;
-      case 0: break;
-      case 1: detail::add_impl<B, OB, uint8_t>::apply(buffer_, o.buffer_); break;
-      case 2: detail::add_impl<B, OB, uint16_t>::apply(buffer_, o.buffer_); break;
-      case 3: detail::add_impl<B, OB, uint32_t>::apply(buffer_, o.buffer_); break;
-      case 4: detail::add_impl<B, OB, uint64_t>::apply(buffer_, o.buffer_); break;
-      case 5: detail::add_impl<B, OB, detail::mp_int>::apply(buffer_, o.buffer_); break;
+      // case 0 already covered above
+      case 1: x = o.buffer_.template at<uint8_t>(i); break;
+      case 2: x = o.buffer_.template at<uint16_t>(i); break;
+      case 3: x = o.buffer_.template at<uint32_t>(i); break;
+      case 4: x = o.buffer_.template at<uint64_t>(i); break;
+      case 5: x = o.buffer_.template at<detail::mp_int>(i); break;
+      // case 6 already covered above
+    }
+    switch (buffer_.type_.id_) {
+      // case 0 already covered above
+      case 1: detail::add_impl<B, uint8_t, detail::mp_int>::apply(buffer_, i, x); break;
+      case 2: detail::add_impl<B, uint16_t, detail::mp_int>::apply(buffer_, i, x); break;
+      case 3: detail::add_impl<B, uint32_t, detail::mp_int>::apply(buffer_, i, x); break;
+      case 4: detail::add_impl<B, uint64_t, detail::mp_int>::apply(buffer_, i, x); break;
+      case 5: detail::add_impl<B, detail::mp_int, detail::mp_int>::apply(buffer_, i, x); break;
+      case 6: detail::add_impl<B, detail::weight, detail::mp_int>::apply(buffer_, i, x); break;
     }
   }
   return *this;
@@ -588,17 +558,19 @@ adaptive_storage<Allocator>&
 adaptive_storage<Allocator>::operator+=(const OtherStorage& other)
 {
   using B = decltype(buffer_);
-  using TO = typename OtherStorage::value_type;
+  using T = typename OtherStorage::value_type;
+  using U = detail::storage_type<T>;
+  buffer_.template convert<U>();
   for (std::size_t i = 0; i < buffer_.size_; ++i) {
-    const auto oi = other.value(i);
+    const T& x = other.value(i);
     switch (buffer_.type_.id_) {
-      case -1: buffer_.template at<detail::weight>(i) += oi; break;
-      case 0: buffer_.template initialize<uint8_t>(); // fall through
-      case 1: detail::add_one_impl<B, uint8_t, TO>::apply(buffer_, i, oi); break;
-      case 2: detail::add_one_impl<B, uint16_t, TO>::apply(buffer_, i, oi); break;
-      case 3: detail::add_one_impl<B, uint32_t, TO>::apply(buffer_, i, oi); break;
-      case 4: detail::add_one_impl<B, uint64_t, TO>::apply(buffer_, i, oi); break;
-      case 5: detail::add_one_impl<B, detail::mp_int, TO>::apply(buffer_, i, oi); break;
+      // case 0 already covered above
+      case 1: detail::add_impl<B, uint8_t, detail::mp_int>::apply(buffer_, i, x); break;
+      case 2: detail::add_impl<B, uint16_t, detail::mp_int>::apply(buffer_, i, x); break;
+      case 3: detail::add_impl<B, uint32_t, detail::mp_int>::apply(buffer_, i, x); break;
+      case 4: detail::add_impl<B, uint64_t, detail::mp_int>::apply(buffer_, i, x); break;
+      case 5: detail::add_impl<B, detail::mp_int, detail::mp_int>::apply(buffer_, i, x); break;
+      case 6: detail::add_impl<B, detail::weight, detail::mp_int>::apply(buffer_, i, x); break;
     }
   }
   return *this;
@@ -614,15 +586,15 @@ adaptive_storage<Allocator1>::operator==(const adaptive_storage<Allocator2>& o) 
   using TB = decltype(buffer_);
   using OB = decltype(o.buffer_);
   switch (buffer_.type_.id_) {
-    case -1: return detail::cmp_impl<TB, OB, detail::weight>::apply(buffer_, o.buffer_);
-    case 0: return detail::cmp_impl<TB, OB, void>::apply(buffer_, o.buffer_);
+    case 0: break;
     case 1: return detail::cmp_impl<TB, OB, uint8_t>::apply(buffer_, o.buffer_);
     case 2: return detail::cmp_impl<TB, OB, uint16_t>::apply(buffer_, o.buffer_);
     case 3: return detail::cmp_impl<TB, OB, uint32_t>::apply(buffer_, o.buffer_);
     case 4: return detail::cmp_impl<TB, OB, uint64_t>::apply(buffer_, o.buffer_);
     case 5: return detail::cmp_impl<TB, OB, detail::mp_int>::apply(buffer_, o.buffer_);
+    case 6: return detail::cmp_impl<TB, OB, detail::weight>::apply(buffer_, o.buffer_);
   }
-  return false;
+  return detail::cmp_impl<TB, OB, void>::apply(buffer_, o.buffer_);
 }
 
 template <template <class> class Allocator>
@@ -633,12 +605,6 @@ adaptive_storage<Allocator>::operator==(const OtherStorage& o) const
   if (buffer_.size_ != o.size())
     return false;
   switch (buffer_.type_.id_) {
-    case -1:
-      for (std::size_t i = 0; i < buffer_.size_; ++i)
-        if (buffer_.template at<detail::weight>(i).w != o.value(i) ||
-            buffer_.template at<detail::weight>(i).w2 != o.variance(i))
-          return false;
-      break;
     case 0:
       for (std::size_t i = 0; i < buffer_.size_; ++i)
         if (0 != o.value(i) || 0 != o.variance(i))
@@ -672,6 +638,12 @@ adaptive_storage<Allocator>::operator==(const OtherStorage& o) const
       for (std::size_t i = 0; i < buffer_.size_; ++i)
         if (buffer_.template at<detail::mp_int>(i) != o.value(i) ||
             buffer_.template at<detail::mp_int>(i) != o.variance(i))
+          return false;
+      break;
+    case 6:
+      for (std::size_t i = 0; i < buffer_.size_; ++i)
+        if (buffer_.template at<detail::weight>(i).w != o.value(i) ||
+            buffer_.template at<detail::weight>(i).w2 != o.variance(i))
           return false;
       break;
   }

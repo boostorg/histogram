@@ -323,11 +323,11 @@ void serialization_impl<void>()
 
 BOOST_AUTO_TEST_CASE(serialization_test)
 {
-    serialization_impl<detail::weight>();
     serialization_impl<void>();
     serialization_impl<uint8_t>();
     serialization_impl<uint16_t>();
     serialization_impl<uint32_t>();
     serialization_impl<uint64_t>();
     serialization_impl<detail::mp_int>();
+    serialization_impl<detail::weight>();
 }

@@ -245,7 +245,7 @@ struct storage_access {
     python::list shapes;
     python::list strides;
     std::size_t stride = 1;
-    if (b.type_.id_ == -1) {
+    if (b.type_.id_ == 6) {
       stride *= sizeof(double);
       d["typestr"] = python::str("|f") + python::str(stride);
       strides.append(stride);
