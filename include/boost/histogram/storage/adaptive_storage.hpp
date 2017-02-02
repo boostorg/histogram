@@ -74,7 +74,7 @@ namespace detail {
 
   template <typename Buffer, typename T, typename TO>
   struct add_one_impl {
-    static void apply(Buffer& b, const std::size_t i, const TO& o) {
+    static void apply(Buffer& b, const std::size_t i, const TO o) {
       auto& bi = b.template at<T>(i);
       if (static_cast<T>(std::numeric_limits<T>::max() - bi) >= o)
         bi += static_cast<T>(o);
@@ -96,7 +96,7 @@ namespace detail {
   struct add_impl {
     static void apply(Buffer& b, const OtherBuffer& o) {
       for (std::size_t i = 0; i < b.size_; ++i) {
-        const auto oi = o.template at<TO>(i);
+        const TO oi = o.template at<TO>(i);
         switch (b.type_.id_) {
           case -1: b.template at<weight>(i) += oi; break;
           case 0: b.template initialize<uint8_t>(); // fall through
@@ -362,7 +362,7 @@ namespace detail {
         ++bi;
       else {
         grow<T>();
-        ++at<next_storage_type<T>>(i);
+        ++(at<next_storage_type<T>>(i));
       }
     }
 
@@ -527,16 +527,57 @@ template <template <class> class OtherAllocator>
 adaptive_storage<Allocator>&
 adaptive_storage<Allocator>::operator+=(const adaptive_storage<OtherAllocator>& o)
 {
-  using B = decltype(buffer_);
-  using OB = decltype(o.buffer_);
-  switch (o.buffer_.type_.id_) {
-    case -1: detail::add_impl<B, OB, detail::weight>::apply(buffer_, o.buffer_); break;
-    case 0: break;
-    case 1: detail::add_impl<B, OB, uint8_t>::apply(buffer_, o.buffer_); break;
-    case 2: detail::add_impl<B, OB, uint16_t>::apply(buffer_, o.buffer_); break;
-    case 3: detail::add_impl<B, OB, uint32_t>::apply(buffer_, o.buffer_); break;
-    case 4: detail::add_impl<B, OB, uint64_t>::apply(buffer_, o.buffer_); break;
-    case 5: detail::add_impl<B, OB, detail::mp_int>::apply(buffer_, o.buffer_); break;
+  if (static_cast<void*>(this) == static_cast<const void*>(&o)) {
+    // specialization needed, standard code assumes constant memory layout for "o"
+    for (std::size_t i = 0; i < buffer_.size_; ++i) {
+      switch (buffer_.type_.id_) {
+        case -1:
+          buffer_.template at<detail::weight>(i).w *= 2.0;
+          buffer_.template at<detail::weight>(i).w2 *= 2.0;
+          break;
+        case 0:
+          break;
+        case 1:
+          if (buffer_.template at<uint8_t>(i) < (std::numeric_limits<uint8_t>::max() / 2)) {
+            buffer_.template at<uint8_t>(i) *= 2;
+            break;
+          }
+          buffer_.template grow<uint8_t>(); // fall through
+        case 2:
+          if (buffer_.template at<uint16_t>(i) < (std::numeric_limits<uint16_t>::max() / 2)) {
+            buffer_.template at<uint16_t>(i) *= 2;
+            break;
+          }
+          buffer_.template grow<uint16_t>();
+        case 3:
+          if (buffer_.template at<uint32_t>(i) < (std::numeric_limits<uint32_t>::max() / 2)) {
+            buffer_.template at<uint32_t>(i) *= 2;
+            break;
+          }
+          buffer_.template grow<uint32_t>();
+        case 4:
+          if (buffer_.template at<uint64_t>(i) < (std::numeric_limits<uint64_t>::max() / 2)) {
+            buffer_.template at<uint64_t>(i) *= 2;
+            break;
+          }
+          buffer_.template grow<uint64_t>();
+        case 5:
+          buffer_.template at<detail::mp_int>(i) *= 2;
+          break;
+      }
+    }
+  } else {
+    using B = decltype(buffer_);
+    using OB = decltype(o.buffer_);
+    switch (o.buffer_.type_.id_) {
+      case -1: detail::add_impl<B, OB, detail::weight>::apply(buffer_, o.buffer_); break;
+      case 0: break;
+      case 1: detail::add_impl<B, OB, uint8_t>::apply(buffer_, o.buffer_); break;
+      case 2: detail::add_impl<B, OB, uint16_t>::apply(buffer_, o.buffer_); break;
+      case 3: detail::add_impl<B, OB, uint32_t>::apply(buffer_, o.buffer_); break;
+      case 4: detail::add_impl<B, OB, uint64_t>::apply(buffer_, o.buffer_); break;
+      case 5: detail::add_impl<B, OB, detail::mp_int>::apply(buffer_, o.buffer_); break;
+    }
   }
   return *this;
 }

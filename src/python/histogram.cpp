@@ -231,12 +231,14 @@ histogram_variance(python::tuple args, python::dict kwargs) {
 
 struct storage_access {
   static
-  python::dict
+  python::object
   array_interface(dynamic_histogram<>& self) {
     const auto& b = self.storage_.buffer_;
     if (b.type_.id_ == 5) {
-      PyErr_SetString(PyExc_RuntimeError, "cannot convert multiprecision storage to numpy array");
-      boost::python::throw_error_already_set();
+      // PyErr_SetString(PyExc_KeyError, "cannot convert multiprecision storage to numpy array");
+      // python::throw_error_already_set();
+      // workaround: for some reason, exception is ignored here
+      return python::object();
     }
 
     python::dict d;

@@ -311,8 +311,8 @@ public:
     axis_with_label(max + 1 - min, label, uoflow),
     min_(min)
   {
-    if (min >= max)
-      throw std::logic_error("min < max required");
+    if (min > max)
+      throw std::logic_error("min <= max required");
   }
 
   integer_axis() : min_(0) {}

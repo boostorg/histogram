@@ -140,14 +140,14 @@ template <typename T>
 void increase_and_grow_impl()
 {
     auto tmax = std::numeric_limits<T>::max();
-    adaptive_storage<> s = storage_access::set_value<T>(1, tmax - 1);
+    adaptive_storage<> s = storage_access::set_value<T>(2, tmax - 1);
     auto n = s;
     auto n2 = s;
 
     n.increase(0);
     n.increase(0);
 
-    adaptive_storage<> x(1);
+    adaptive_storage<> x(2);
     x.increase(0);
     n2 += x;
     n2 += x;
@@ -156,14 +156,17 @@ void increase_and_grow_impl()
     ++v;
     BOOST_CHECK_EQUAL(n.value(0), v);
     BOOST_CHECK_EQUAL(n2.value(0), v);
+    BOOST_CHECK_EQUAL(n.value(1), 0.0);
+    BOOST_CHECK_EQUAL(n2.value(1), 0.0);
 }
 
 template <>
 void increase_and_grow_impl<void>()
 {
-    adaptive_storage<> s(1);
+    adaptive_storage<> s(2);
     s.increase(0);
     BOOST_CHECK_EQUAL(s.value(0), 1.0);
+    BOOST_CHECK_EQUAL(s.value(1), 0.0);
 }
 
 BOOST_AUTO_TEST_CASE(increase_and_grow)
@@ -173,14 +176,14 @@ BOOST_AUTO_TEST_CASE(increase_and_grow)
     increase_and_grow_impl<uint16_t>();
     increase_and_grow_impl<uint32_t>();
     increase_and_grow_impl<uint64_t>();
-    // only increase
-    auto a = prepare<detail::mp_int>(1);
-    const double aref = a.value(0);
-    while (a.value(0) == aref)
-        a.increase(0);
-    auto b = prepare<detail::weight>(1);
-    b.increase(0);
-    BOOST_CHECK_EQUAL(b.value(0), 2.0);
+
+    // only increase for mp_int
+    auto a = storage_access::set_value(2, detail::mp_int(1));
+    BOOST_CHECK_EQUAL(a.value(0), 1.0);
+    BOOST_CHECK_EQUAL(a.value(1), 0.0);
+    a.increase(0);
+    BOOST_CHECK_EQUAL(a.value(0), 2.0);
+    BOOST_CHECK_EQUAL(a.value(1), 0.0);
 }
 
 BOOST_AUTO_TEST_CASE(add_and_grow)

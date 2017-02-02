@@ -634,6 +634,16 @@ class histogramest(unittest.TestCase):
         self.assertTrue(numpy.all(v == r))
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    def test_bad_numpy_conversion(self):
+        a = histogram(integer_axis(0, 0))
+        a.fill(0)
+        for i in xrange(80):
+            a += a
+        # a now holds a multiprecision type
+        with self.assertRaises(ValueError):
+            numpy.asarray(a)
+
+    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_fill_with_numpy_array_0(self):
         a = histogram(integer_axis(0, 2, uoflow=False))
         a.fill(numpy.array([-1, 0, 1, 2, 1, 4]))
