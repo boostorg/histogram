@@ -8,11 +8,11 @@ This `C++11` library implements two easy-to-use powerful n-dimensional [histogra
 
 Two histogram implementations in C++ are included. `static_histogram` exploits compile-time information as much as possible to provide maximum performance, at the cost of larger binaries and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
 
-The histograms have value semantics. Move operations and trips over the language boundary from C++ to Python are cheap. Histograms can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at C speeds and are convertible into Numpy arrays without copying data.
+The histograms have value semantics. Move operations and trips over the language boundary from C++ to Python are cheap. Histograms can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (faster than numpy's own histogram functions) and are convertible into Numpy arrays without copying data.
 
 My goal is to submit this project to [Boost](http://www.boost.org), that's why it uses the Boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
-[Full documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/master/doc/html/index.html) is available, a summary is given below.
+[Full documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/master/doc/html/index.html) is available, a summary is given below (WARNING: the documentation is outdated and will be updated in the future).
 
 ## Features
 
@@ -23,9 +23,10 @@ My goal is to submit this project to [Boost](http://www.boost.org), that's why i
 * Optional underflow/overflow bins for each dimension
 * Support for counting weighted events
 * Statistical variance can be queried for each bin
-* High performance (cache-friendly design, benchmark-based tuning, use of compile-time information)
+* High performance (cache-friendly design, tuned code, use of compile-time information to avoid conversions and to unroll loops)
 * Space-efficient use of memory, memory dynamically grows as needed
 * Serialization support using `boost.serialization`
+* Histograms cannot overflow (counts are only limited by available memory)
 * Language support: C++11, Python (2.x and 3.x)
 * Numpy support
 
@@ -53,7 +54,7 @@ To run the tests, do `make test` or `ctest -V` for more output.
 For the full version of the following examples with explanations, see
 [Tutorial](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/master/doc/html/tutorial.html).
 
-Example 1: Fill a 1d-histogram in C++ 
+Example 1: Fill a 1d-histogram in C++
 
 ```cpp
     #include <boost/histogram/static_histogram.hpp> // proposed for inclusion in Boost
@@ -131,10 +132,10 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
     rphi[:, 1] = np.arctan2(y, x)         # compute phi
 
     # fill histogram with numpy array
-    h.fill(rphi)                          
+    h.fill(rphi)
 
     # access histogram counts (no copy)
-    count_matrix = np.asarray(h)          
+    count_matrix = np.asarray(h)
 
     print count_matrix
 
@@ -179,7 +180,7 @@ Py: boost [t/s]                            0.21     0.23     0.19     0.21     0
 ======================================  =======  =======  =======  =======  =======  =======
 ```
 
-`boost::histogram` is faster than the respective ROOT histograms, while being richer in core features and easier to use. The performance of `boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is by a factor 3-4 faster than numpy's histogram functions.
+`boost::histogram` is faster than the respective ROOT histograms, while being richer in core features and easier to use. The performance of `boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is by a factor 2-4 faster than numpy's histogram functions.
 
 ## Rationale
 
@@ -192,30 +193,36 @@ I designed the histogram based on a decade of experience collected in working wi
 * "Do one thing and do it well", Doug McIlroy
 * The [Zen of Python](https://www.python.org/dev/peps/pep-0020) (also applies to other languages)
 
-### Interface convenience, language transparency
+### Interface convenience
 
-A histogram should have the same consistent interface whatever the dimension. Like `std::vector` it should *just work*, users shouldn't be forced to make *a priori* choices among several histogram classes and options everytime they encounter a new data set.
+The histogram has the same consistent interface whatever the dimension. Like `std::vector` it *just works*, users are not forced to make an *a priori* choice among several histogram classes and options everytime they encounter a new data set.
 
-Python is a great language for data analysis, so the histogram needs Python bindings. Data analysis in Python is Numpy-based, so Numpy support is a must. The histogram should be usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python: define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting. 
+### Language transparency
+
+Python is a great language for data analysis, so the histogram has Python bindings. Data analysis in Python is Numpy-based, so Numpy is supported as well. The histogram can be used as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python: define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
 
 ### Specialized binning strategies
 
-The histogram supports about half a dozent different binning strategies, conveniently encapsulated in axis objects. There is the standard sorting of real-valued data into bins of equal or varying width, but also binning of angles or integer values.
+The histogram supports about half a dozent different binning strategies, conveniently encapsulated in axis objects. There is the standard sorting of real-valued data into bins of equal or varying width, but also special support for binning of angles or integer values.
 
-Extra bins that count over- and underflow values are added by default. This feature can be turned off individually for each dimension to conserve memory. The extra bins do not disturb normal counting. On an axis with n-bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at `-1` and `n`, respectively.
+Extra bins that count events with fall outside of the axis range are added by default. This useful feature is activated by default, but can be turned off individually for each axis to conserve memory. The extra bins do not disturb normal counting. On an axis with n-bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at `-1` and `n`, respectively.
 
 ### Performance, cache-friendliness and memory-efficiency
 
-Dense storage in memory is a must for high performance. Unfortunately, the [curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality) quickly become a problem as the number of dimensions grows, leading to histograms which consume large amounts (up to GBs) of memory.
+Dense storage in memory is a must both for high performance. In the standard configuration, the histograms use a special class which stores the counts in a continuous memory area which grows automatically as needed to hold the largest counts in the histogram. While `std::vector` grows in *length* as new elements are added, while the count storage grows in *depth*.
 
-Fortunately, having many dimensions typically reduces the number of counts per bin, which is the other consequence of the rapid increase in volume in an n-dimensional hyper-cube. The histogram uses an adaptive count size per bin to exploit this, which starts with the smallest size per bin of 1 byte and increases transparently as needed up to 8 byte per bin. A `std::vector` grows in *length* as new elements are added, while the count storage grows in *depth*.
+This scheme is both fast and memory efficient. It is fast, because random access of counts is fast. It is memory efficient, because for small counts only one byte of memory is used per count. Keeping the memory footprint as small as possible also helps to utilitize the CPU cache efficiently.
+
+The scheme works particularly well in light of the [curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality). On the one hand, as the number of histogram axes increases, the number of bins grows exponentially. On the other hand, having many bins reduces the number of counts per bin, which is the other consequence of the rapid increase in volume in an n-dimensional hyper-cube. The smaller memory footprint per bin somewhat compensates the growth of bin numbers.
+
+While the standard configuration is highly recommended, other configurations can be chosen at compile-time. Counts can also be stored in any containers that supports the STL interface and operator[].
 
 ### Support for weighted counts and variance estimates
 
-A histogram categorizes and counts, so the natural choice for the data type of the counts are integers. However, in particle physics, histograms are often filled with weighted events, for example, to make sure that two histograms look the same in one variable, while the distribution of another, correlated variable is a subject of study.
+A histogram categorizes and counts, so the natural choice for the data type of the counts are integers. However, in science, histograms are sometimes filled with weighted events, for example, to make sure that two histograms look the same in one variable, while the distribution of another, correlated variable is the subject of study.
 
-This histogram can be filled with either weighted or unweighted counts. In the weighted case, the sum of weights is stored in a double. The histogram provides a variance estimate is both cases. In the unweighted case, the estimate is computed from the count itself, using Poisson-theory. In the weighted case, the sum of squared weights is stored alongside the sum of weights, and used to compute a variance estimate.
+In the standard configuration, histogram can be filled with either weighted or unweighted counts. In the weighted case, the sum of weights is stored in a double. The histogram provides a variance estimate is both cases. In the unweighted case, the estimate is computed from the count itself, using a common estimate derived from Poisson-theory. In the weighted case, the sum of squared weights is stored alongside the sum of weights, and used to compute a variance estimate.
 
 ## State of project
 
-The histogram is feature-complete for a 1.0 version. More than 300 individual tests make sure that the implementation works as expected. Comprehensive documentation is available. To grow further, the project needs test users, code review, and feedback.
+The histogram is feature-complete. More than 300 individual tests make sure that the implementation works as expected. Comprehensive documentation is available. To grow further, the project needs test users, code review, and feedback.
