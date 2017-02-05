@@ -44,6 +44,8 @@ install:
   - pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure]
 
 script:
+  - git clone --depth 1 git@github.com:HDembinski/core.git core
+  - mv core/include/boost/* include/boost
   - cd build
   - cmake . -DBUILD_PYTHON=OFF
             -DBUILD_NUMPY_SUPPORT=OFF
