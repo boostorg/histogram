@@ -44,7 +44,7 @@ install:
   - pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure]
 
 script:
-  - travis_retry git clone --depth 1 git@github.com:HDembinski/core.git core || exit 1
+  - travis_retry git clone --depth 1 https://github.com/HDembinski/core.git core || exit 1
   - mv core/include/boost/* include/boost
   - cd build
   - cmake . -DBUILD_PYTHON=OFF
