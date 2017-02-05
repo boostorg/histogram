@@ -1,7 +1,16 @@
+# Copyright Hans P. Dembinski 2016-2017
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
+# A lot of code taken from hana's travis.yml by L. Dionne
+
 sudo: false
+language: c++
+
 cache:
   pip: true
-language: cpp
+  directories:
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.62.0
+
 matrix:
   include:
     - compiler: gcc
@@ -9,10 +18,8 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - boost-latest
           packages:
             - g++-4.8
-            - libboost1.55-all-dev
       env: COMPILER_VERSION=4.8 PYTHON_VERSION=2 CMAKE_BUILD_TYPE=cov
     - compiler: clang
       addons:
@@ -20,11 +27,10 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.6
-            - boost-latest
           packages:
             - clang-3.6
-            - libboost1.55-all-dev
       env: COMPILER_VERSION=3.6 PYTHON_VERSION=2
+
 git:
   depth: 1
 
@@ -39,27 +45,50 @@ git:
 install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
-  # - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
-  # - source activate pyenv
+  - export BOOST_VERSION=1.62.0
   - pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure]
 
+  ############################################################################
+  # All the dependencies are installed in ${TRAVIS_BUILD_DIR}/deps/
+  ############################################################################
+  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
+
+  ############################################################################
+  # Install Boost headers
+  ############################################################################
+  - |
+    if [[ "${BOOST_VERSION}" != "" ]]; then
+      BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
+      if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
+        if [[ "${BOOST_VERSION}" == "trunk" ]]; then
+          BOOST_URL="http://github.com/boostorg/boost.git"
+          travis_retry git clone --depth 1 --recursive --quiet ${BOOST_URL} ${BOOST_DIR} || exit 1
+          (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 headers ./b2 --with=serialization --with=python)
+        else
+          BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
+          mkdir -p ${BOOST_DIR}
+          { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
+        fi
+      fi
+      CMAKE_OPTIONS+=" -DBOOST_ROOT=${BOOST_DIR}"
+    fi
+
 script:
-  - travis_retry git clone --depth 1 https://github.com/HDembinski/core.git core || exit 1
-  - mv core/include/boost/* include/boost
-  - cd build
+  - cd ${TRAVIS_BUILD_DIR}/build
   - cmake . -DBUILD_PYTHON=OFF
             -DBUILD_NUMPY_SUPPORT=OFF
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${CMAKE_OPTIONS} &&
     make -j2 &&
     ctest -V
   - cmake . -DBUILD_PYTHON=ON
             -DBUILD_NUMPY_SUPPORT=OFF
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${CMAKE_OPTIONS} &&
     make -j2 &&
     ctest -V
   - cmake . -DBUILD_PYTHON=ON
             -DBUILD_NUMPY_SUPPORT=ON
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${CMAKE_OPTIONS} &&
     make -j2 &&
     ctest -V
 
@@ -71,7 +100,6 @@ after_success:
 
 after_failure:
   - make clean && VERBOSE=1 make
-  - dpkg -L libboost-python1.55.0
 
 notifications:
   email: false
