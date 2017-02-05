@@ -26,7 +26,7 @@ matrix:
             - libboost1.55-all-dev
       env: COMPILER_VERSION=3.6 PYTHON_VERSION=2
 git:
-  depth: 10
+  depth: 1
 
 # Setup anaconda
 # before_install:
@@ -44,7 +44,7 @@ install:
   - pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure]
 
 script:
-  - git clone --depth 1 git@github.com:HDembinski/core.git core
+  - travis_retry git clone --depth 1 git@github.com:HDembinski/core.git core || exit 1
   - mv core/include/boost/* include/boost
   - cd build
   - cmake . -DBUILD_PYTHON=OFF
