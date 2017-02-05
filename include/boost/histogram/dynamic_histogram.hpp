@@ -317,7 +317,7 @@ private:
   }
 
   template <typename Linearize>
-  void index_impl(Linearize& lin) const {}
+  void index_impl(Linearize&) const {}
 
   template <typename Linearize, typename Iterator>
   void iter_args_impl(Linearize& lin,

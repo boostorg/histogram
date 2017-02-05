@@ -274,7 +274,7 @@ private:
   }
 
   template <typename OtherAxes>
-  bool axes_equal_to(const OtherAxes& other_axes) const {
+  bool axes_equal_to(const OtherAxes&) const {
     return false;
   }
 

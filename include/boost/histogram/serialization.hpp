@@ -31,14 +31,14 @@ namespace histogram {
 namespace detail {
 
 template <class Archive>
-inline void serialize(Archive& ar, weight& wt, unsigned version)
+inline void serialize(Archive& ar, weight& wt, unsigned /* version */)
 {
   ar & wt.w;
   ar & wt.w2;
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, tiny_string& s, unsigned version)
+inline void serialize(Archive& ar, tiny_string& s, unsigned /* version */)
 {
   auto n = s.size();
   ar & n;
@@ -51,14 +51,14 @@ inline void serialize(Archive& ar, tiny_string& s, unsigned version)
 } // NS detail
 
 template <class Archive, typename Container>
-inline void serialize(Archive& ar, container_storage<Container> & store, unsigned version)
+inline void serialize(Archive& ar, container_storage<Container> & store, unsigned /* version */)
 {
   ar & store.c_;
 }
 
 template <template <class> class Allocator>
 template <class Archive>
-void adaptive_storage<Allocator>::serialize(Archive& ar, unsigned version)
+void adaptive_storage<Allocator>::serialize(Archive& ar, unsigned /* version */)
 {
   if (Archive::is_loading::value)
     buffer_.destroy_any();
@@ -88,7 +88,7 @@ void adaptive_storage<Allocator>::serialize(Archive& ar, unsigned version)
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, axis_with_label & base, unsigned version)
+inline void serialize(Archive& ar, axis_with_label & base, unsigned /* version */)
 {
   ar & base.size_;
   ar & base.shape_;
@@ -96,7 +96,7 @@ inline void serialize(Archive& ar, axis_with_label & base, unsigned version)
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, regular_axis & axis, unsigned version)
+inline void serialize(Archive& ar, regular_axis & axis, unsigned /* version */)
 {
   ar & boost::serialization::base_object<axis_with_label>(axis);
   ar & axis.min_;
@@ -104,14 +104,14 @@ inline void serialize(Archive& ar, regular_axis & axis, unsigned version)
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, polar_axis & axis, unsigned version)
+inline void serialize(Archive& ar, polar_axis & axis, unsigned /* version */)
 {
   ar & boost::serialization::base_object<axis_with_label>(axis);
   ar & axis.start_;
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, variable_axis & axis, unsigned version)
+inline void serialize(Archive& ar, variable_axis & axis, unsigned /* version */)
 {
   ar & boost::serialization::base_object<axis_with_label>(axis);
   if (Archive::is_loading::value)
@@ -120,14 +120,14 @@ inline void serialize(Archive& ar, variable_axis & axis, unsigned version)
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, integer_axis & axis, unsigned version)
+inline void serialize(Archive& ar, integer_axis & axis, unsigned /* version */)
 {
   ar & boost::serialization::base_object<axis_with_label>(axis);
   ar & axis.min_;
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, category_axis & axis, unsigned version)
+inline void serialize(Archive& ar, category_axis & axis, unsigned /* version */)
 {
   ar & axis.size_;
   if (Archive::is_loading::value) {
@@ -148,7 +148,7 @@ namespace {
 }
 
 template <class Archive, class Storage, class Axes>
-inline void serialize(Archive& ar, static_histogram<Storage, Axes>& h, unsigned version)
+inline void serialize(Archive& ar, static_histogram<Storage, Axes>& h, unsigned /* version */)
 {
   serialize_helper<Archive> sh(ar);
   fusion::for_each(h.axes_, sh);
@@ -156,7 +156,7 @@ inline void serialize(Archive& ar, static_histogram<Storage, Axes>& h, unsigned 
 }
 
 template <class Archive, class Storage, class Axes>
-inline void serialize(Archive& ar, dynamic_histogram<Storage, Axes>& h, unsigned version)
+inline void serialize(Archive& ar, dynamic_histogram<Storage, Axes>& h, unsigned /* version */)
 {
   ar & h.axes_;
   ar & h.storage_;
