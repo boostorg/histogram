@@ -8,7 +8,6 @@ import regex ;
 
 project
     : requirements
-      <library>/boost/test//boost_unit_test_framework
       <library>/boost/serialization//boost_serialization
       <link>static
 ;

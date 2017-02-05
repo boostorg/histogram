@@ -13,13 +13,12 @@ if(${CMAKE_BUILD_TYPE})
 endif()
 
 add_definitions(-Wall -pedantic -std=c++11)
-add_definitions(-DBOOST_TEST_DYN_LINK) # for unit_test_framework
 
 set(STD_LIBRARIES stdc++ m)
 
 if(BUILD_PYTHON)
   find_package(Boost 1.55 REQUIRED
-               COMPONENTS iostreams serialization python unit_test_framework)
+               COMPONENTS iostreams serialization python)
   if(PYTHON_VERSION)
     find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
     find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test and FindNumpy
@@ -51,7 +50,7 @@ if(BUILD_PYTHON)
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
 else()
   find_package(Boost 1.55 REQUIRED
-               COMPONENTS iostreams serialization unit_test_framework)
+               COMPONENTS iostreams serialization)
   set(LIBRARIES ${STD_LIBRARIES} ${Boost_LIBRARIES})
 endif()
 
