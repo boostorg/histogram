@@ -12,26 +12,6 @@
 #include <cstring>
 using namespace boost::histogram::detail;
 
-// hotfix for cstring comparison
-namespace boost { namespace detail {
-inline void test_eq_impl( char const * expr1, char const * expr2,
-  char const * file, int line, char const * function, const char* t, const char* u )
-{
-    if( std::strcmp(t, u) == 0 )
-    {
-        report_errors_remind();
-    }
-    else
-    {
-        BOOST_LIGHTWEIGHT_TEST_OSTREAM
-            << file << "(" << line << "): test '" << expr1 << " == " << expr2
-            << "' failed in function '" << function << "': "
-            << "'" << t << "' != '" << u << "'" << std::endl;
-        ++test_errors();
-    }
-}
-}}
-
 int main ()
 {
     {
