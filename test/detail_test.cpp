@@ -14,6 +14,7 @@ using namespace boost::histogram::detail;
 
 int main ()
 {
+    // weight
     {
         BOOST_TEST(weight(0) == weight());
         weight w(1);
@@ -25,24 +26,28 @@ int main ()
         BOOST_TEST(w != 2);
     }
 
+    // escape0
     {
         std::ostringstream os;
         escape(os, "abc");
         BOOST_TEST_EQ(os.str(), std::string("'abc'"));
     }
 
+    // escape1
     {
         std::ostringstream os;
         escape(os, "abc\n");
         BOOST_TEST_EQ(os.str(), std::string("'abc\n'"));
     }
 
+    // escape2
     {
         std::ostringstream os;
         escape(os, "'abc'");
         BOOST_TEST_EQ(os.str(), std::string("'\\\'abc\\\''"));
     }
 
+    // tiny_string
     {
         auto a = tiny_string();
         BOOST_TEST_EQ(a.size(), 0u);
