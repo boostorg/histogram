@@ -27,8 +27,8 @@ namespace mpl = boost::mpl;
 BOOST_AUTO_TEST_CASE(init_0)
 {
     auto h = dynamic_histogram<default_axes, adaptive_storage<>>();
-    BOOST_CHECK_EQUAL(h.dim(), 0);
-    BOOST_CHECK_EQUAL(h.size(), 0);
+    BOOST_CHECK_EQUAL(h.dim(), 0u);
+    BOOST_CHECK_EQUAL(h.size(), 0u);
     auto h2 = dynamic_histogram<
         default_axes,
         container_storage<std::vector<unsigned>>
@@ -42,8 +42,8 @@ BOOST_AUTO_TEST_CASE(init_1)
         default_axes,
         adaptive_storage<>
     >(regular_axis{3, -1, 1});
-    BOOST_CHECK_EQUAL(h.dim(), 1);
-    BOOST_CHECK_EQUAL(h.size(), 5);
+    BOOST_CHECK_EQUAL(h.dim(), 1u);
+    BOOST_CHECK_EQUAL(h.size(), 5u);
     BOOST_CHECK_EQUAL(shape(h.axis(0)), 5);
     auto h2 = dynamic_histogram<
         default_axes,
@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE(init_2)
         default_axes,
         adaptive_storage<>
     >(regular_axis{3, -1, 1}, integer_axis{-1, 1});
-    BOOST_CHECK_EQUAL(h.dim(), 2);
-    BOOST_CHECK_EQUAL(h.size(), 25);
+    BOOST_CHECK_EQUAL(h.dim(), 2u);
+    BOOST_CHECK_EQUAL(h.size(), 25u);
     BOOST_CHECK_EQUAL(shape(h.axis(0)), 5);
     BOOST_CHECK_EQUAL(shape(h.axis(1)), 5);
     auto h2 = dynamic_histogram<
@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(init_3)
         default_axes,
         adaptive_storage<>
     >(regular_axis{3, -1, 1}, integer_axis{-1, 1}, polar_axis{3});
-    BOOST_CHECK_EQUAL(h.dim(), 3);
-    BOOST_CHECK_EQUAL(h.size(), 75);
+    BOOST_CHECK_EQUAL(h.dim(), 3u);
+    BOOST_CHECK_EQUAL(h.size(), 75u);
     auto h2 = dynamic_histogram<
         default_axes,
         container_storage<std::vector<unsigned>>
@@ -93,8 +93,8 @@ BOOST_AUTO_TEST_CASE(init_4)
       integer_axis{-1, 1},
       polar_axis{3},
       variable_axis{-1, 0, 1});
-    BOOST_CHECK_EQUAL(h.dim(), 4);
-    BOOST_CHECK_EQUAL(h.size(), 300);
+    BOOST_CHECK_EQUAL(h.dim(), 4u);
+    BOOST_CHECK_EQUAL(h.size(), 300u);
     auto h2 = dynamic_histogram<
         default_axes,
         container_storage<std::vector<unsigned>>
@@ -112,8 +112,8 @@ BOOST_AUTO_TEST_CASE(init_5)
                                     polar_axis{3},
                                     variable_axis{-1, 0, 1},
                                     category_axis{"A", "B", "C"});
-    BOOST_CHECK_EQUAL(h.dim(), 5);
-    BOOST_CHECK_EQUAL(h.size(), 900);
+    BOOST_CHECK_EQUAL(h.dim(), 5u);
+    BOOST_CHECK_EQUAL(h.size(), 900u);
     auto h2 = make_dynamic_histogram(regular_axis{3, -1, 1},
                                      integer_axis{-1, 1},
                                      polar_axis{3},
@@ -163,14 +163,14 @@ BOOST_AUTO_TEST_CASE(move)
     h.fill(0, 0);
     const auto href = h;
     decltype(h) h2(std::move(h));
-    BOOST_CHECK_EQUAL(h.dim(), 0);
-    BOOST_CHECK_EQUAL(h.sum(), 0);
-    BOOST_CHECK_EQUAL(h.size(), 0);
+    BOOST_CHECK_EQUAL(h.dim(), 0u);
+    BOOST_CHECK_EQUAL(h.sum(), 0.0);
+    BOOST_CHECK_EQUAL(h.size(), 0u);
     BOOST_CHECK(h2 == href);
     decltype(h) h3 = std::move(h2);
-    BOOST_CHECK_EQUAL(h2.dim(), 0);
-    BOOST_CHECK_EQUAL(h2.sum(), 0);
-    BOOST_CHECK_EQUAL(h2.size(), 0);
+    BOOST_CHECK_EQUAL(h2.dim(), 0u);
+    BOOST_CHECK_EQUAL(h2.sum(), 0.0);
+    BOOST_CHECK_EQUAL(h2.size(), 0u);
     BOOST_CHECK(h3 == href);
 }
 
@@ -215,10 +215,10 @@ BOOST_AUTO_TEST_CASE(d1)
     h.fill(-1);
     h.fill(10);
 
-    BOOST_CHECK_EQUAL(h.dim(), 1);
+    BOOST_CHECK_EQUAL(h.dim(), 1u);
     BOOST_CHECK_EQUAL(bins(h.axis(0)), 2);
     BOOST_CHECK_EQUAL(shape(h.axis(0)), 4);
-    BOOST_CHECK_EQUAL(h.sum(), 4);
+    BOOST_CHECK_EQUAL(h.sum(), 4.0);
 
     BOOST_CHECK_THROW(h.value(-2), std::out_of_range);
     BOOST_CHECK_EQUAL(h.value(-1), 1.0);
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(d1_2)
     h.fill(-1);
     h.fill(10);
 
-    BOOST_CHECK_EQUAL(h.dim(), 1);
+    BOOST_CHECK_EQUAL(h.dim(), 1u);
     BOOST_CHECK_EQUAL(bins(h.axis(0)), 2);
     BOOST_CHECK_EQUAL(shape(h.axis(0)), 2);
     BOOST_CHECK_EQUAL(h.sum(), 2);
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(d1w)
     h.fill(-2.0);
     h.wfill(5, 10);
 
-    BOOST_CHECK_EQUAL(h.sum(), 10);
+    BOOST_CHECK_EQUAL(h.sum(), 10.0);
 
     BOOST_CHECK_EQUAL(h.value(-1), 1.0);
     BOOST_CHECK_EQUAL(h.value(0), 3.0);
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(d2)
     double in[2] = {-10., 0.};
     h.fill(in, in+2);
 
-    BOOST_CHECK_EQUAL(h.dim(), 2);
+    BOOST_CHECK_EQUAL(h.dim(), 2u);
     BOOST_CHECK_EQUAL(bins(h.axis(0)), 2);
     BOOST_CHECK_EQUAL(shape(h.axis(0)), 4);
     BOOST_CHECK_EQUAL(bins(h.axis(1)), 3);
@@ -341,7 +341,7 @@ BOOST_AUTO_TEST_CASE(d2w)
     h.wfill(5, -1, -10); // is ignored
     h.wfill(7, -10, 0);  // -> -1, 1
 
-    BOOST_CHECK_EQUAL(h.sum(), 18);
+    BOOST_CHECK_EQUAL(h.sum(), 18.0);
 
     BOOST_CHECK_EQUAL(h.value(-1, 0), 0.0);
     BOOST_CHECK_EQUAL(h.value(-1, 1), 7.0);
@@ -424,11 +424,11 @@ BOOST_AUTO_TEST_CASE(add_1)
     BOOST_CHECK_EQUAL(c.value(3), 0);
     auto d = b;
     d += a;
-    BOOST_CHECK_EQUAL(d.value(-1), 0);
-    BOOST_CHECK_EQUAL(d.value(0), 1);
-    BOOST_CHECK_EQUAL(d.value(1), 0);
-    BOOST_CHECK_EQUAL(d.value(2), 1);
-    BOOST_CHECK_EQUAL(d.value(3), 0);
+    BOOST_CHECK_EQUAL(d.value(-1), 0u);
+    BOOST_CHECK_EQUAL(d.value(0), 1u);
+    BOOST_CHECK_EQUAL(d.value(1), 0u);
+    BOOST_CHECK_EQUAL(d.value(2), 1u);
+    BOOST_CHECK_EQUAL(d.value(3), 0u);
 }
 
 BOOST_AUTO_TEST_CASE(add_2)
@@ -456,24 +456,24 @@ BOOST_AUTO_TEST_CASE(add_2)
 
 BOOST_AUTO_TEST_CASE(add_3)
 {
-    auto a = make_dynamic_histogram_with<container_storage<std::vector<char>>>(integer_axis(-1, 1));
+    auto a = make_dynamic_histogram_with<container_storage<std::vector<unsigned char>>>(integer_axis(-1, 1));
     auto b = make_dynamic_histogram_with<container_storage<std::vector<unsigned>>>(integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
     auto c = a;
     c += b;
-    BOOST_CHECK_EQUAL(c.value(-1), 0);
-    BOOST_CHECK_EQUAL(c.value(0), 1);
-    BOOST_CHECK_EQUAL(c.value(1), 0);
-    BOOST_CHECK_EQUAL(c.value(2), 1);
-    BOOST_CHECK_EQUAL(c.value(3), 0);
+    BOOST_CHECK_EQUAL(c.value(-1), 0u);
+    BOOST_CHECK_EQUAL(c.value(0), 1u);
+    BOOST_CHECK_EQUAL(c.value(1), 0u);
+    BOOST_CHECK_EQUAL(c.value(2), 1u);
+    BOOST_CHECK_EQUAL(c.value(3), 0u);
     auto d = b;
     d += a;
-    BOOST_CHECK_EQUAL(d.value(-1), 0);
-    BOOST_CHECK_EQUAL(d.value(0), 1);
-    BOOST_CHECK_EQUAL(d.value(1), 0);
-    BOOST_CHECK_EQUAL(d.value(2), 1);
-    BOOST_CHECK_EQUAL(d.value(3), 0);
+    BOOST_CHECK_EQUAL(d.value(-1), 0u);
+    BOOST_CHECK_EQUAL(d.value(0), 1u);
+    BOOST_CHECK_EQUAL(d.value(1), 0u);
+    BOOST_CHECK_EQUAL(d.value(2), 1u);
+    BOOST_CHECK_EQUAL(d.value(3), 0u);
 }
 
 BOOST_AUTO_TEST_CASE(bad_add)

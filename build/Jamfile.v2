@@ -2,11 +2,12 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
+import python ;
+import ../../config/checks/config : requires ;
+
 project boost/histogram
   : source-location ../src
   ;
-
-import python ;
 
 if [ python.configured ]
 {
@@ -19,16 +20,16 @@ if [ python.configured ]
       <library>/boost/python//boost_python
       <library>/boost/serialization//boost_serialization
       <link>shared
+      [ requires
+          cxx11_auto_declarations
+          cxx11_defaulted_functions
+          cxx11_constexpr
+          cxx11_noexcept
+          cxx11_nullptr
+          cxx11_rvalue_references
+          cxx11_template_aliases
+          cxx11_variadic_templates
+      ]
     : <variant>release
-    [ requires cxx11_auto_declarations
-               cxx11_defaulted_functions
-               cxx11_constexpr
-               cxx11_noexcept
-               cxx11_nullptr
-               cxx11_rvalue_references
-               cxx11_template_aliases
-               cxx11_variadic_templates ] ]
     ;
-
-  boost-install boost_histogram_python ;
 }

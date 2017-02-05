@@ -21,17 +21,17 @@ using namespace boost::histogram;
 BOOST_AUTO_TEST_CASE(ctor)
 {
     container_storage<std::vector<unsigned>> a(1);
-    BOOST_CHECK_EQUAL(a.size(), 1);
-    BOOST_CHECK_EQUAL(a.value(0), 0);
+    BOOST_CHECK_EQUAL(a.size(), 1u);
+    BOOST_CHECK_EQUAL(a.value(0), 0u);
     container_storage<std::deque<unsigned>> b(1);
-    BOOST_CHECK_EQUAL(b.size(), 1);
-    BOOST_CHECK_EQUAL(b.value(0), 0);
+    BOOST_CHECK_EQUAL(b.size(), 1u);
+    BOOST_CHECK_EQUAL(b.value(0), 0u);
     container_storage<std::array<unsigned, 1>> c(1);
-    BOOST_CHECK_EQUAL(c.size(), 1);
-    BOOST_CHECK_EQUAL(c.value(0), 0);
+    BOOST_CHECK_EQUAL(c.size(), 1u);
+    BOOST_CHECK_EQUAL(c.value(0), 0u);
     container_storage<boost::array<unsigned, 1>> d(1);
-    BOOST_CHECK_EQUAL(d.size(), 1);
-    BOOST_CHECK_EQUAL(d.value(0), 0);
+    BOOST_CHECK_EQUAL(d.size(), 1u);
+    BOOST_CHECK_EQUAL(d.value(0), 0u);
 }
 
 BOOST_AUTO_TEST_CASE(increase)
@@ -42,11 +42,11 @@ BOOST_AUTO_TEST_CASE(increase)
     b.increase(0);
     c.increase(0); c.increase(0);
     d.increase(0);
-    BOOST_CHECK_EQUAL(a.value(0), 1.0);
-    BOOST_CHECK_EQUAL(b.value(0), 1.0);
-    BOOST_CHECK_EQUAL(c.value(0), 2.0);
-    BOOST_CHECK_EQUAL(d.value(0), 1.0);
-    BOOST_CHECK_EQUAL(d.value(1), 0.0);
+    BOOST_CHECK_EQUAL(a.value(0), 1u);
+    BOOST_CHECK_EQUAL(b.value(0), 1u);
+    BOOST_CHECK_EQUAL(c.value(0), 2u);
+    BOOST_CHECK_EQUAL(d.value(0), 1u);
+    BOOST_CHECK_EQUAL(d.value(1), 0u);
     BOOST_CHECK(a == a);
     BOOST_CHECK(a == b);
     BOOST_CHECK(!(a == c));
@@ -67,13 +67,13 @@ BOOST_AUTO_TEST_CASE(copy)
     BOOST_CHECK(!(a == b));
     b = a;
     BOOST_CHECK(a == b);
-    BOOST_CHECK_EQUAL(b.size(), 1);
-    BOOST_CHECK_EQUAL(b.value(0), 1.0);
+    BOOST_CHECK_EQUAL(b.size(), 1u);
+    BOOST_CHECK_EQUAL(b.value(0), 1u);
 
     decltype(a) c(a);
     BOOST_CHECK(a == c);
-    BOOST_CHECK_EQUAL(c.size(), 1);
-    BOOST_CHECK_EQUAL(c.value(0), 1.0);
+    BOOST_CHECK_EQUAL(c.size(), 1u);
+    BOOST_CHECK_EQUAL(c.value(0), 1u);
 
     container_storage<std::vector<unsigned char>> d(1);
     BOOST_CHECK(!(a == d));
@@ -104,10 +104,11 @@ BOOST_AUTO_TEST_CASE(move)
     decltype(a) b;
     BOOST_CHECK(!(a == b));
     b = std::move(a);
-    BOOST_CHECK_EQUAL(a.size(), 0);
-    BOOST_CHECK_EQUAL(b.size(), 1);
-    BOOST_CHECK_EQUAL(b.value(0), 1.0);
+    BOOST_CHECK_EQUAL(a.size(), 0u);
+    BOOST_CHECK_EQUAL(b.size(), 1u);
+    BOOST_CHECK_EQUAL(b.value(0), 1u);
     decltype(a) c(std::move(b));
-    BOOST_CHECK_EQUAL(c.size(), 1);
-    BOOST_CHECK_EQUAL(c.value(0), 1.0);
+    BOOST_CHECK_EQUAL(c.size(), 1u);
+    BOOST_CHECK_EQUAL(c.value(0), 1u);
+    BOOST_CHECK_EQUAL(b.size(), 0u);
 }

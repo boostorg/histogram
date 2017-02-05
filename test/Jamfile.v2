@@ -1,0 +1,45 @@
+# Copyright Klemens David Morgenstern, Hans P. Dembinski 2016-2017. Distributed under the Boost
+# Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+import testing ;
+import regex ;
+# import python ;
+
+project
+    : requirements
+      <library>/boost/test//boost_unit_test_framework
+      <library>/boost/serialization//boost_serialization
+      <link>static
+;
+
+rule histogram-all-tests {
+    local toolset =
+        <toolset>clang:<cxxflags>"-std=c++11 -pedantic -Wall -Wextra -ftemplate-depth=256"
+        <toolset>darwin:<cxxflags>"-std=c++11 -pedantic -Wall -Wextra -ftemplate-depth=256"
+    ;
+
+    local result ;
+
+    local sources = [ glob-tree *_test.cpp ] ;
+    for local source in $(sources)
+    {
+        local target = [ regex.replace $(source) "\_test.cpp" "" ] ;
+        target = [ regex.replace $(target) "/" "." ] ;
+        result += [ run $(source) : : : $(toolset) : test.$(target) ] ;
+    }
+
+    return $(result) ;
+}
+
+test-suite histogram : [ histogram-all-tests ] ;
+
+# how to make python_suite_test.py?
+
+test-suite minimal : histogram ;
+test-suite full    : histogram ;
+test-suite extra   : histogram ;
+
+explicit histogram ;
+explicit minimal ;
+explicit extra ;
