@@ -1,6 +1,6 @@
 # Histogram
 
-**Fast n-dimensional histogram with convenient interface for C++11 and Python**
+**Fast multi-dimensional histogram with convenient interface for C++11 and Python**
 
 [![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=static)](https://travis-ci.org/HDembinski/histogram?branch=static) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=static)](https://coveralls.io/github/HDembinski/histogram?branch=static)
 
