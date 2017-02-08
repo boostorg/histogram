@@ -18,14 +18,14 @@
  * \file boost/histogram.hpp
    \brief Includes all the non-experimental headers of the Boost.histogram library.
 
-   The library consists of a single \ref boost::histogram::histogram "histogram"
-   and several axis types which are stored in a
-   boost::variant called \ref boost::histogram::axis_type "axis_type"
-   The axis types are created and passed to the constructor of the
-   histogram to define its binning scheme.
-   All following types are embedded in the
-   \ref boost::histogram  namespace, which is omitted for brevity.
-
+   The library consists of two histogram implementations
+   \ref boost::histogram::static_histogram "static_histogram"
+   and \ref boost::histogram::dynamic_histogram "dynamic_histogram"
+   which share the same interface. The first is faster, but lacks run-time
+   polymorphism, the second makes the opposite trade-off.
+   Several axis types are included, which implement different binning algorithms.
+   The axis types are passed in the constructor of the histogram to configure
+   its binning.
 */
 
 #endif

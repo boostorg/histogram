@@ -1,0 +1,38 @@
+# Copyright (c) 2016-2017 Klemens D. Morgenstern, Hans P. Dembinski
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+using boostbook ;
+using doxygen ;
+using quickbook ;
+
+doxygen autodoc
+:
+  ../../../boost/histogram.hpp
+  [ glob ../../../boost/histogram/*.hpp ]
+  [ glob ../../../boost/histogram/storage/*.hpp ]
+:
+  <doxygen:param>PREDEFINED=BOOST_HISTOGRAM_DOXYGEN
+  <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+  <doxygen:param>EXTRACT_PRIVATE=NO
+  <doxygen:param>ENABLE_PREPROCESSING=YES
+  <doxygen:param>MACRO_EXPANSION=YES
+  <doxygen:param>EXPAND_ONLY_PREDEF=YES
+  <doxygen:param>SEARCH_INCLUDES=NO
+;
+
+boostbook standalone
+:
+  histogram.qbk
+:
+  <dependency>autodoc
+
+  <xsl:param>toc.max.depth=2
+  <xsl:param>toc.section.depth=2
+  <xsl:param>chunk.section.depth=1
+  <xsl:param>boost.root=../../../..
+  <xsl:param>navig.graphics=1
+  <xsl:param>boost.mathjax=1
+  <xsl:path>$(images_location)/..
+;

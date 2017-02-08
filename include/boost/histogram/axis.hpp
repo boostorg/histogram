@@ -18,12 +18,6 @@
 #include <stdexcept>
 #include <algorithm>
 
-
-/** \file boost/histogram/axis
- *  \brief Defines the axis classes.
- *
- */
-
 namespace boost {
 namespace histogram {
 
@@ -73,10 +67,12 @@ class real_axis {
 public:
   typedef double value_type;
 
+  /// Lower edge of the bin (left side)
   double left(int idx) const {
     return static_cast<const Derived&>(*this)[idx];
   }
 
+  /// Upper edge of the bin (right side)
   double right(int idx) const {
     return static_cast<const Derived&>(*this)[idx + 1];
   }

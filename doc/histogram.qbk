@@ -1,7 +1,7 @@
 [library Boost.Histogram
-    [quickbook 1.5]
+    [quickbook 1.6]
     [authors [Dembinski, Hans]]
-    [copyright 2016 Hand Dembinski]
+    [copyright 2016-2017 Hans Dembinski]
     [id histogram]
     [dirname histogram]
     [license
@@ -11,28 +11,27 @@
     ]
 ]
 
+[section Abstract]
 
-[section:descr Description]
+This C++11 library implements two easy-to-use and powerful n-dimensional [@https://en.wikipedia.org/wiki/Histogram histogram] classes, using a policy-based design, optimized for convenience, customizability, and highest performance.
 
-This project contains an easy-to-use powerful n-dimensional histogram class implemented in C++03, 
-optimized for convenience and excellent performance under heavy duty. 
-Move semantics are supported using `boost::move`. 
-The histogram has a complete C++ and a [@http://www.python.org Python] interface, 
-and can be passed over the language boundary with ease. [@http://www.numpy.org Numpy] 
-is fully supported; histograms can be filled with Numpy arrays at C speeds and 
-are convertible into Numpy arrays without copying data. Histograms can be streamed 
-from/to files and pickled in Python.
+Two histogram implementations in C++ are included. [classref boost::histogram::static_histogram static_histogram] exploits compile-time information as much as possible to provide the maximum performance, but has no run-time flexibility. [classref boost::histogram::dynamic_histogram dynamic_histogram] makes the opposite trade-off. The two classes share an interface. Optional Python bindings for the [classref boost::histogram::dynamic_histogram dynamic_histogram] are included, based on [@boost:/libs/python/index.html Boost.Python]. Optional serialization support is implemented, based on [@boost:/libs/serialization/index.html Boost.Serialization].
 
-My goal is to submit this project to the [@http://www.boost.org Boost Libraries]
+The histograms have value semantics. Move operations and trips over the language boundary from C++ to Python and back are cheap. Histograms can be streamed from/to files and pickled in Python. [@http://www.numpy.org Numpy] is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (*faster* than Numpy's own histogram functions) and are convertible into Numpy arrays without copying data.
+
+My goal is to submit this project to [@http://www.boost.org Boost], that's why it uses the Boost directory structure and namespace. The code is released under the [@http://www.boost.org/LICENSE_1_0.txt Boost Software License].
+
+Special thanks go to *Klemens Morgenstern*, who contributed a lot of code and helped to shape this library.
 
 [endsect]
 
 [include motivation.qbk]
-[include intro.qbk]
-[include tutorial.qbk]   
-[include notes.qbk]      
-[include rationale.qbk]  
-[include references.qbk] 
-
+[include build.qbk]
+[include tutorial.qbk]
+[include guide.qbk]
+[include benchmarks.qbk]
+[include rationale.qbk]
+[include concepts.qbk]
 [xinclude autodoc.xml]
 [include changelog.qbk]
+[include references.qbk]

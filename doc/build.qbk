@@ -1,0 +1,38 @@
+[section:setup How to build and install]
+
+[section:cmake With CMake]
+
+If you build this library outside of the Boost distribution, you can use CMake.
+
+[teletype]
+``
+    git clone https://github.com/HDembinski/histogram.git
+    mkdir build && cd build
+    cmake ../histogram/build
+    make
+``
+
+Do `make test` to run the tests, or `ctest -V` for more output.
+
+To install the python module, move `histogram.so` into a path that is accessible to Python.
+
+[endsect]
+
+[section:b2 With Boost.Build]
+
+If you want to build this library as part of the Boost distribution, do this.
+
+[teletype]
+``
+    git clone https://github.com/HDembinski/histogram.git
+    mv histogram $BOOST_ROOT/libs
+    cd $BOOST_ROOT
+    b2 headers # for the header-only part
+    b2 --with-python # for the Python bindings
+``
+
+Only the Python bindings need building, the rest of the library is header only.
+
+[endsect]
+
+[endsect]

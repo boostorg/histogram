@@ -1,4 +1,4 @@
-[section Introduction]
+[section User guide]
 
 Histograms are a basic tool in every statistical analysis. They compactly represent a data set of one or several random variables with acceptable loss of information. It is often more convenient to work with a histogram of a data distribution, instead of the original distribution which may consume a lot of memory or disc space. Interesting quantities like the mean, variance, or mode may be extracted from the histogram instead of the original data set.
 
