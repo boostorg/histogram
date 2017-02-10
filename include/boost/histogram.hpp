@@ -9,10 +9,10 @@
 
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/utility.hpp>
-#include <boost/histogram/static_storage.hpp>
-#include <boost/histogram/dynamic_storage.hpp>
 #include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/storage/adaptive_storage.hpp>
+#include <boost/histogram/storage/container_storage.hpp>
 
 /**
  * \file boost/histogram.hpp
@@ -21,8 +21,8 @@
    The library consists of two histogram implementations
    \ref boost::histogram::static_histogram "static_histogram"
    and \ref boost::histogram::dynamic_histogram "dynamic_histogram"
-   which share the same interface. The first is faster, but lacks run-time
-   polymorphism, the second makes the opposite trade-off.
+   which share a common interface. The first is faster, but lacks run-time
+   polymorphism, the second implements the opposite trade-off.
    Several axis types are included, which implement different binning algorithms.
    The axis types are passed in the constructor of the histogram to configure
    its binning.
