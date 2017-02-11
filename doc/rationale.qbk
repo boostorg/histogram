@@ -21,7 +21,7 @@ Properties
     Getter/setter-like functions are wrapped as properties.
 
 Keyword-based parameters
-    C++ member functions :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill` are wrapped by the single Python member function :py:func:`histogram.fill` with an optional keyword parameter `w` to pass a weight.
+    C++ member functions :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill` are wrapped by the single Python member function :py:func:`histogram.increment` with an optional keyword parameter `w` to pass a weight.
 
 [endsect]
 

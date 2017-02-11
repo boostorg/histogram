@@ -71,15 +71,15 @@ Example 1: Fill a 1d-histogram in C++
         auto h = bh::make_static_histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
 
         // fill histogram with data
-        h.fill(-1.5); // put in underflow bin
-        h.fill(-1.0); // included in first bin, bin interval is semi-open
-        h.fill(-0.5);
-        h.fill(1.1);
-        h.fill(0.3);
-        h.fill(1.7);
-        h.fill(2.0);  // put in overflow bin, bin interval is semi-open
-        h.fill(20.0); // put in overflow bin
-        h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
+        h.increment(-1.5); // put in underflow bin
+        h.increment(-1.0); // included in first bin, bin interval is semi-open
+        h.increment(-0.5);
+        h.increment(1.1);
+        h.increment(0.3);
+        h.increment(1.7);
+        h.increment(2.0);  // put in overflow bin, bin interval is semi-open
+        h.increment(20.0); // put in overflow bin
+        h.wincrement(0.1, 5.0); // fill with a weighted entry, weight is 5.0
 
         // access histogram counts, loop includes under- and overflow bin
         const auto& a = h.axis<0>();
@@ -132,7 +132,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
     rphi[:, 1] = np.arctan2(y, x)         # compute phi
 
     # fill histogram with numpy array
-    h.fill(rphi)
+    h.increment(rphi)
 
     # access histogram counts (no copy)
     count_matrix = np.asarray(h)

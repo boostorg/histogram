@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 h = hg.histogram(hg.regular_axis(10, -3, 3))
-h.fill(np.random.randn(1000))
+h.increment(np.random.randn(1000))
 
 bins = h.axis(0).bins
 

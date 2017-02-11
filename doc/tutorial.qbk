@@ -26,14 +26,14 @@ How to make a 1d-histogram in C++ and to fill it:
          * axis are placed in the overflow and underflow bins.
          * Normally you would loop over a source of values.
          */
-        h.fill(-1.5); // put in underflow bin
-        h.fill(-0.5);
-        h.fill(1.1);
-        h.fill(-1.0); // included, interval is semi-open
-        h.fill(0.3);
-        h.fill(1.7);
-        h.fill(2.0);  // put in overflow bin, interval is semi-open
-        h.fill(20.0); // put in overflow bin
+        h.increment(-1.5); // put in underflow bin
+        h.increment(-0.5);
+        h.increment(1.1);
+        h.increment(-1.0); // included, interval is semi-open
+        h.increment(0.3);
+        h.increment(1.7);
+        h.increment(2.0);  // put in overflow bin, interval is semi-open
+        h.increment(20.0); // put in overflow bin
 
         /* Fill histogram with a weighted count. This increases the
          * bin counter not by one, but by the specified weight.
@@ -46,7 +46,7 @@ How to make a 1d-histogram in C++ and to fill it:
          *
          * Use wfill(...) if you have to, else prefer fill(...).
          */
-        h.wfill(0.1, 5.0);
+        h.wincrement(0.1, 5.0);
 
         /* Print a table representation of the histogram showing the bin
          * value and a estimate of the standard deviation. Overflow and
@@ -111,7 +111,7 @@ How to make a 2d-histogram in Python and to fill it using a Numpy array:
     rphi = np.empty((1000, 2))
     rphi[:, 0] = (x ** 2 + y ** 2) ** 0.5 # compute radius
     rphi[:, 1] = np.arctan2(y, x)         # compute phi
-    h.fill(rphi)
+    h.increment(rphi)
 
     # access counts as a numpy array (no data is copied)
     count_matrix = np.asarray(h)

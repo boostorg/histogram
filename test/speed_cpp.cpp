@@ -46,7 +46,7 @@ double compare_1d(unsigned n, int distrib)
     auto h = Histogram(regular_axis(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
-      h.fill(r[i]);
+      h.increment(r[i]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   }
@@ -66,7 +66,7 @@ double compare_3d(unsigned n, int distrib)
                        regular_axis(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
-      h.fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
+      h.increment(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   } 
@@ -94,7 +94,7 @@ double compare_6d(unsigned n, int distrib)
     for (unsigned i = 0; i < n; ++i) {
       for (unsigned k = 0; k < 6; ++k)
         x[k] = r[6 * i + k];      
-      h.fill(x[0], x[1], x[2], x[3], x[4], x[5]);
+      h.increment(x[0], x[1], x[2], x[3], x[4], x[5]);
     }
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
