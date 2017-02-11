@@ -7,19 +7,20 @@
 #ifndef _BOOST_HISTOGRAM_STORAGE_ADAPTIVE_HPP_
 #define _BOOST_HISTOGRAM_STORAGE_ADAPTIVE_HPP_
 
-#include <boost/histogram/detail/weight.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/assert.hpp>
+#include <boost/cstdint.hpp>
 #include <boost/mpl/map.hpp>
 #include <boost/mpl/pair.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/at.hpp>
-#include <boost/cstdint.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
-#include <algorithm>
+#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/weight.hpp>
+#include <boost/histogram/detail/variance.hpp>
 #include <limits>
-#include <cstddef>
 #include <memory>
+#include <cstddef>
+#include <algorithm>
 #include <type_traits>
 
 // forward declaration for serialization workaround
@@ -391,22 +392,24 @@ public:
 
   std::size_t size() const { return buffer_.size_; }
   void increase(std::size_t i);
-  void increase(std::size_t i, double w);
+  void increase(std::size_t i, value_type w);
   value_type value(std::size_t i) const;
   value_type variance(std::size_t i) const;
 
-  template <template <class> class Allocator1>
-  adaptive_storage& operator+=(const adaptive_storage<Allocator1>&);
+  template <template <class> class OtherAllocator>
+  adaptive_storage& operator+=(const adaptive_storage<OtherAllocator>&);
 
   template <typename OtherStorage,
             typename = detail::is_storage<OtherStorage>>
   adaptive_storage& operator+=(const OtherStorage& other);
 
-  template <template <class> class Allocator1>
-  bool operator==(const adaptive_storage<Allocator1>&) const;
+  template <template <class> class OtherAllocator>
+  bool operator==(const adaptive_storage<OtherAllocator>&) const;
 
   template <typename OtherStorage,
-            typename = detail::is_not_adaptive_storage<OtherStorage>>
+            typename = typename std::enable_if<
+              !(detail::has_weight_support<OtherStorage>::value)
+            >::type>
   bool operator==(const OtherStorage& other) const;
 
 private:
@@ -466,7 +469,7 @@ adaptive_storage<Allocator>::increase(std::size_t i)
 template <template <class> class Allocator>
 inline
 void
-adaptive_storage<Allocator>::increase(std::size_t i, double w)
+adaptive_storage<Allocator>::increase(std::size_t i, value_type w)
 {
   buffer_.template convert<detail::weight>();
   buffer_.template at<detail::weight>(i).add_weight(w);
@@ -483,7 +486,7 @@ adaptive_storage<Allocator>::value(std::size_t i) const
     case 2: return buffer_.template at<uint16_t>(i);
     case 3: return buffer_.template at<uint32_t>(i);
     case 4: return buffer_.template at<uint64_t>(i);
-    case 5: return static_cast<double>(buffer_.template at<detail::mp_int>(i));
+    case 5: return static_cast<value_type>(buffer_.template at<detail::mp_int>(i));
     case 6: return buffer_.template at<detail::weight>(i).w;
   }
   return 0.0;
@@ -496,11 +499,13 @@ adaptive_storage<Allocator>::variance(std::size_t i) const
 {
   switch (buffer_.type_.id_) {
     case 0: break;
-    case 1: return buffer_.template at<uint8_t> (i);
-    case 2: return buffer_.template at<uint16_t>(i);
-    case 3: return buffer_.template at<uint32_t>(i);
-    case 4: return buffer_.template at<uint64_t>(i);
-    case 5: return static_cast<double>(buffer_.template at<detail::mp_int>(i));
+    case 1: return detail::variance(buffer_.template at<uint8_t> (i));
+    case 2: return detail::variance(buffer_.template at<uint16_t>(i));
+    case 3: return detail::variance(buffer_.template at<uint32_t>(i));
+    case 4: return detail::variance(buffer_.template at<uint64_t>(i));
+    case 5: return static_cast<value_type>(
+      detail::variance(buffer_.template at<detail::mp_int>(i))
+    );
     case 6: return buffer_.template at<detail::weight>(i).w2;
   }
   return 0.0;
@@ -576,10 +581,10 @@ adaptive_storage<Allocator>::operator+=(const OtherStorage& other)
   return *this;
 }
 
-template <template <class> class Allocator1>
-template <template <class> class Allocator2>
+template <template <class> class Allocator>
+template <template <class> class OtherAllocator>
 bool
-adaptive_storage<Allocator1>::operator==(const adaptive_storage<Allocator2>& o) const
+adaptive_storage<Allocator>::operator==(const adaptive_storage<OtherAllocator>& o) const
 {
   if (buffer_.size_ != o.buffer_.size_)
     return false;
@@ -607,43 +612,38 @@ adaptive_storage<Allocator>::operator==(const OtherStorage& o) const
   switch (buffer_.type_.id_) {
     case 0:
       for (std::size_t i = 0; i < buffer_.size_; ++i)
-        if (0 != o.value(i) || 0 != o.variance(i))
+        if (0 != o.value(i))
           return false;
       break;
     case 1:
       for (std::size_t i = 0; i < buffer_.size_; ++i)
-        if (buffer_.template at<uint8_t>(i) != o.value(i) ||
-            buffer_.template at<uint8_t>(i) != o.variance(i))
+        if (buffer_.template at<uint8_t>(i) != o.value(i))
           return false;
       break;
     case 2:
       for (std::size_t i = 0; i < buffer_.size_; ++i)
-        if (buffer_.template at<uint16_t>(i) != o.value(i) ||
-            buffer_.template at<uint16_t>(i) != o.variance(i))
+        if (buffer_.template at<uint16_t>(i) != o.value(i))
           return false;
       break;
     case 3:
       for (std::size_t i = 0; i < buffer_.size_; ++i)
-        if (buffer_.template at<uint32_t>(i) != o.value(i) ||
-            buffer_.template at<uint32_t>(i) != o.variance(i))
+        if (buffer_.template at<uint32_t>(i) != o.value(i))
           return false;
       break;
     case 4:
       for (std::size_t i = 0; i < buffer_.size_; ++i)
-        if (buffer_.template at<uint64_t>(i) != o.value(i) ||
-            buffer_.template at<uint64_t>(i) != o.variance(i))
+        if (buffer_.template at<uint64_t>(i) != o.value(i))
           return false;
       break;
     case 5:
       for (std::size_t i = 0; i < buffer_.size_; ++i)
-        if (buffer_.template at<detail::mp_int>(i) != o.value(i) ||
-            buffer_.template at<detail::mp_int>(i) != o.variance(i))
+        if (buffer_.template at<detail::mp_int>(i) != o.value(i))
           return false;
       break;
     case 6:
       for (std::size_t i = 0; i < buffer_.size_; ++i)
         if (buffer_.template at<detail::weight>(i).w != o.value(i) ||
-            buffer_.template at<detail::weight>(i).w2 != o.variance(i))
+            buffer_.template at<detail::weight>(i).w2 != detail::variance(o, i))
           return false;
       break;
   }
@@ -652,7 +652,9 @@ adaptive_storage<Allocator>::operator==(const OtherStorage& o) const
 
 template <template <class> class Allocator,
           typename OtherStorage,
-          typename = detail::is_not_adaptive_storage<OtherStorage>>
+          typename = typename std::enable_if<
+            !(detail::has_weight_support<OtherStorage>::value)
+          >::type>
 inline
 bool
 operator==(const OtherStorage& a, const adaptive_storage<Allocator>& b)

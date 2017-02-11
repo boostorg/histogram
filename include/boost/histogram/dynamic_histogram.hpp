@@ -16,6 +16,7 @@
 #include <boost/histogram/utility.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/detail/variance.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <cstddef>
@@ -162,7 +163,7 @@ public:
   }
 
   template <typename... Values>
-  void wfill(double w, Values... values)
+  void wfill(value_type w, Values... values)
   {
     static_assert(detail::has_weight_support<Storage>::value,
                   "wfill only supported for adaptive_storage");
@@ -176,7 +177,7 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  void wfill(double w, Iterator begin, Iterator end)
+  void wfill(value_type w, Iterator begin, Iterator end)
   {
     static_assert(detail::has_weight_support<Storage>::value,
                   "wfill only supported for adaptive_storage");
@@ -190,7 +191,7 @@ public:
 
   template <typename Sequence,
             typename = detail::is_sequence<Sequence>>
-  void wfill(double w, const Sequence& values)
+  void wfill(value_type w, const Sequence& values)
   {
     wfill(w, std::begin(values), std::end(values));
   }
@@ -236,7 +237,7 @@ public:
     index_impl(lin, indices...);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
-    return storage_.variance(lin.out);
+    return detail::variance(storage_, lin.out);
   }
 
   template <typename Iterator,
@@ -249,7 +250,7 @@ public:
     iter_args_impl(lin, begin, end);
     if (lin.stride == 0)
       throw std::out_of_range("invalid index");
-    return storage_.variance(lin.out);
+    return detail::variance(storage_, lin.out);
   }
 
   template <typename Sequence,

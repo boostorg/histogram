@@ -69,7 +69,6 @@ public:
   std::size_t size() const { return c_.size(); }
   void increase(std::size_t i) { ++(c_[i]); }
   value_type value(std::size_t i) const { return c_[i]; }
-  value_type variance(std::size_t i) const { return c_[i]; }
 
   template <typename OtherStorage,
             typename = detail::is_storage<OtherStorage>>

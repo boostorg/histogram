@@ -26,7 +26,9 @@ struct has_weight_support
   static std::false_type test(...);
 
   template <typename C>
-  static decltype((std::declval<C&>().increase(0, 0.0)), std::true_type{}) test(int);
+  static decltype(std::declval<C&>().increase(0, 0.0),
+                  std::declval<C&>().variance(0),
+                  std::true_type{}) test(int);
 
   static bool const value = decltype(test<T>(0))::value;
 };
@@ -42,16 +44,8 @@ struct is_standard_integral {};
 template <typename T,
           typename = decltype(std::declval<T&>().size(),
                               std::declval<T&>().increase(0),
-                              std::declval<T&>().value(0),
-                              std::declval<T&>().variance(0))>
+                              std::declval<T&>().value(0))>
 struct is_storage {};
-
-template <typename T,
-          typename = is_storage<T>,
-          typename = typename std::enable_if<
-            !has_weight_support<T>::value
-          >::type>
-struct is_not_adaptive_storage {};
 
 template <typename T,
           typename = decltype(*std::declval<T&>(),
