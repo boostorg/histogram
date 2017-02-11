@@ -2,7 +2,7 @@
 
 **Fast multi-dimensional histogram with convenient interface for C++11 and Python**
 
-[![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=static)](https://travis-ci.org/HDembinski/histogram?branch=static) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=static)](https://coveralls.io/github/HDembinski/histogram?branch=static)
+[![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=develop)](https://travis-ci.org/HDembinski/histogram?branch=develop) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
 
 This `C++11` library implements two easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) classes, using a policy-based design, optimized for extensibility, convenience and highest performance.
 
