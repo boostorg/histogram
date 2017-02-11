@@ -6,7 +6,7 @@ h = hg.histogram(hg.regular_axis(10, -3, 3, uoflow=False),
                  hg.regular_axis(10, -3, 3, uoflow=False))
 xy = np.random.randn(2000).reshape((1000, 2))
 xy[:,1] *= 0.5
-h.increment(xy)
+h.fill(xy)
 
 bins = h.axis(0).bins
 

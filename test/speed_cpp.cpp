@@ -46,7 +46,7 @@ double compare_1d(unsigned n, int distrib)
     auto h = Histogram(regular_axis(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
-      h.increment(r[i]);
+      h.fill(r[i]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   }
@@ -66,7 +66,7 @@ double compare_3d(unsigned n, int distrib)
                        regular_axis(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
-      h.increment(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
+      h.fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   } 
@@ -94,7 +94,7 @@ double compare_6d(unsigned n, int distrib)
     for (unsigned i = 0; i < n; ++i) {
       for (unsigned k = 0; k < 6; ++k)
         x[k] = r[6 * i + k];      
-      h.increment(x[0], x[1], x[2], x[3], x[4], x[5]);
+      h.fill(x[0], x[1], x[2], x[3], x[4], x[5]);
     }
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
@@ -123,7 +123,7 @@ int main() {
       compare_1d<
         static_histogram<
           mpl::vector<regular_axis>,
-          adaptive_storage
+          adaptive_storage<>
         >
       >(12000000, itype)
 #elif HISTOGRAM_TYPE == 3
@@ -137,7 +137,7 @@ int main() {
       compare_1d<
         dynamic_histogram<
           default_axes,
-          adaptive_storage
+          adaptive_storage<>
         >
       >(12000000, itype)
 #endif
@@ -156,7 +156,7 @@ int main() {
       compare_3d<
         static_histogram<
           mpl::vector<regular_axis, regular_axis, regular_axis>,
-          adaptive_storage
+          adaptive_storage<>
         >
       >(4000000, itype)
 #elif HISTOGRAM_TYPE == 3
@@ -170,7 +170,7 @@ int main() {
       compare_3d<
         dynamic_histogram<
           default_axes,
-          adaptive_storage
+          adaptive_storage<>
         >
       >(4000000, itype)
 #endif
@@ -191,7 +191,7 @@ int main() {
         static_histogram<
           mpl::vector<regular_axis, regular_axis, regular_axis,
                       regular_axis, regular_axis, regular_axis>,
-          adaptive_storage
+          adaptive_storage<>
         >
       >(2000000, itype)
 #elif HISTOGRAM_TYPE == 3
@@ -205,7 +205,7 @@ int main() {
       compare_6d<
         dynamic_histogram<
           default_axes,
-          adaptive_storage
+          adaptive_storage<>
         >
       >(2000000, itype)
 #endif

@@ -3,94 +3,113 @@
 [section Example 1: 1d-histogram in C++]
 
 How to make a 1d-histogram in C++ and to fill it:
-[c++]
-`` 
 
-    #include <boost/histogram/histogram.hpp>
-    #include <boost/histogram/axis.hpp>
+[c++]
+```
+    #include <boost/histogram/static_histogram.hpp> // proposed for inclusion in Boost
+    #include <boost/histogram/axis.hpp> // proposed for inclusion in Boost
+    #include <boost/histogram/utility.hpp> // proposed for inclusion in Boost
     #include <iostream>
     #include <cmath>
 
     int main(int, char**) {
         namespace bh = boost::histogram;
 
-        /* Create a 1-d histogram with an axis that has 10 bins
-         * of equal width, covering the real line in the interval
-         * [-1.0, 2.0), label it 'x'.
-         * Several other binning strategies are supported, see
-         * documentation of axis_types.
-         */
-        bh::histogram h(bh::regular_axis(10, -1.0, 2.0, "x"));
+        // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
+        // with axis of histogram labeled as "x"
+        auto h = bh::make_static_histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
 
-        /* Fill histogram with a few entries. Values outside of
-         * axis are placed in the overflow and underflow bins.
-         * Normally you would loop over a source of values.
-         */
-        h.increment(-1.5); // put in underflow bin
-        h.increment(-0.5);
-        h.increment(1.1);
-        h.increment(-1.0); // included, interval is semi-open
-        h.increment(0.3);
-        h.increment(1.7);
-        h.increment(2.0);  // put in overflow bin, interval is semi-open
-        h.increment(20.0); // put in overflow bin
+        // fill histogram with data
+        h.fill(-1.5); // put in underflow bin
+        h.fill(-1.0); // included in first bin, bin interval is semi-open
+        h.fill(-0.5);
+        h.fill(1.1);
+        h.fill(0.3);
+        h.fill(1.7);
+        h.fill(2.0);  // put in overflow bin, bin interval is semi-open
+        h.fill(20.0); // put in overflow bin
+        h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
 
-        /* Fill histogram with a weighted count. This increases the
-         * bin counter not by one, but by the specified weight.
-         *
-         * This call transparently causes histogram to change it memory
-         * layout to store counts as doubles instead of integers. The
-         * layout for weighted counts requires up to 16x more memory
-         * and will cause inaccuracies of the type a + 1 == a if a is
-         * sufficiently large.
-         *
-         * Use wfill(...) if you have to, else prefer fill(...).
-         */
-        h.wincrement(0.1, 5.0);
-
-        /* Print a table representation of the histogram showing the bin
-         * value and a estimate of the standard deviation. Overflow and
-         * Underflow bins are accessed naturally as the bins -1 and 10.
-         */
-        for (int i = -1; i <= h.bins(0); ++i) {
-            const bh::regular_axis& a = h.axis<bh::regular_axis>(0);
+        // access histogram counts, loop includes under- and overflow bin
+        const auto& a = h.axis<0>();
+        for (int i = -1, n = bh::bins(a) + 1; i < n; ++i) {
             std::cout << "bin " << i
-                      << " x in [" << a[i] << ", " << a[i+1] << "): "
+                      << " x in [" << bh::left(a, i) << ", " << bh::right(a, i) << "): "
                       << h.value(i) << " +/- " << std::sqrt(h.variance(i))
                       << std::endl;
         }
+
+        /* program output:
+
+        bin -1 x in [-inf, -1): 1 +/- 1
+        bin 0 x in [-1, -0.7): 1 +/- 1
+        bin 1 x in [-0.7, -0.4): 1 +/- 1
+        bin 2 x in [-0.4, -0.1): 0 +/- 0
+        bin 3 x in [-0.1, 0.2): 5 +/- 5
+        bin 4 x in [0.2, 0.5): 1 +/- 1
+        bin 5 x in [0.5, 0.8): 0 +/- 0
+        bin 6 x in [0.8, 1.1): 0 +/- 0
+        bin 7 x in [1.1, 1.4): 1 +/- 1
+        bin 8 x in [1.4, 1.7): 0 +/- 0
+        bin 9 x in [1.7, 2): 1 +/- 1
+        bin 10 x in [2, inf): 2 +/- 1.41421
+        */
     }
+```
 
-`` 
+Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
-The program output is:
+[python]
+```
+    import histogram as bh
+    import numpy as np
 
-[teletype]
+    # create 2d-histogram over polar coordinates, with
+    # 10 equidistant bins in radius from 0 to 5 and
+    # 4 equidistant bins in polar angle
+    h = bh.histogram(bh.regular_axis(10, 0.0, 5.0, "radius",
+                                     uoflow=False),
+                     bh.polar_axis(4, 0.0, "phi"))
 
-`` 
+    # generate some numpy arrays with data to fill into histogram,
+    # in this case normal distributed random numbers in x and y,
+    # converted into polar coordinates
+    x = np.random.randn(1000)             # generate x
+    y = np.random.randn(1000)             # generate y
+    rphi = np.empty((1000, 2))
+    rphi[:, 0] = (x ** 2 + y ** 2) ** 0.5 # compute radius
+    rphi[:, 1] = np.arctan2(y, x)         # compute phi
 
-    bin -1 x in [-inf, -1): 1 +/- 1
-    bin 0 x in [-1, -0.7): 1 +/- 1
-    bin 1 x in [-0.7, -0.4): 1 +/- 1
-    bin 2 x in [-0.4, -0.1): 0 +/- 0
-    bin 3 x in [-0.1, 0.2): 5 +/- 5
-    bin 4 x in [0.2, 0.5): 1 +/- 1
-    bin 5 x in [0.5, 0.8): 0 +/- 0
-    bin 6 x in [0.8, 1.1): 0 +/- 0
-    bin 7 x in [1.1, 1.4): 1 +/- 1
-    bin 8 x in [1.4, 1.7): 0 +/- 0
-    bin 9 x in [1.7, 2): 1 +/- 1
-    bin 10 x in [2, inf): 2 +/- 1.41421
-`` 
+    # fill histogram with numpy array
+    h.fill(rphi)
+
+    # access histogram counts (no copy)
+    count_matrix = np.asarray(h)
+
+    print count_matrix
+
+    # program output:
+    #
+    # [[37 26 33 37]
+    #  [60 69 76 62]
+    #  [48 80 80 77]
+    #  [38 49 45 49]
+    #  [22 24 20 23]
+    #  [ 7  9  9  8]
+    #  [ 3  2  3  3]
+    #  [ 0  0  0  0]
+    #  [ 0  1  0  0]
+    #  [ 0  0  0  0]]
+```
 
 [endsect]
+
 [section Example 2: 2d-histogram in Python]
 
 How to make a 2d-histogram in Python and to fill it using a Numpy array:
 
 [python]
-
-`` 
+``
     import histogram as bh
     import numpy as np
 
@@ -104,14 +123,14 @@ How to make a 2d-histogram in Python and to fill it using a Numpy array:
                                      uoflow=False),
                      bh.polar_axis(4, 0.0, "phi"))
 
-    # fill histogram with random values, using numpy to make 
+    # fill histogram with random values, using numpy to make
     # a two-dimensional normal distribution in cartesian coordinates
     x = np.random.randn(1000)             # generate x
     y = np.random.randn(1000)             # generate y
     rphi = np.empty((1000, 2))
     rphi[:, 0] = (x ** 2 + y ** 2) ** 0.5 # compute radius
     rphi[:, 1] = np.arctan2(y, x)         # compute phi
-    h.increment(rphi)
+    h.fill(rphi)
 
     # access counts as a numpy array (no data is copied)
     count_matrix = np.asarray(h)
@@ -119,8 +138,10 @@ How to make a 2d-histogram in Python and to fill it using a Numpy array:
     print count_matrix
 
 ``
+
 The program output are the counts per bin as a 2d-array:
 
+[python]
 ``
     [[37 26 33 37]
      [60 69 76 62]

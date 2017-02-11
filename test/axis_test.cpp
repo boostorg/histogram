@@ -99,7 +99,7 @@ int main() {
 
     // category_axis_operators
     {
-        category_axis a{"A", "B", "C"};
+        category_axis a{{"A", "B", "C"}};
         category_axis b;
         BOOST_TEST_NOT(a == b);
         b = a;

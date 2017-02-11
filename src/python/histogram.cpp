@@ -75,7 +75,7 @@ histogram_init(python::tuple args, python::dict kwargs) {
 }
 
 python::object
-histogram_increment(python::tuple args, python::dict kwargs) {
+histogram_fill(python::tuple args, python::dict kwargs) {
   using namespace python;
 
   const unsigned nargs = len(args);
@@ -143,7 +143,7 @@ histogram_increment(python::tuple args, python::dict kwargs) {
           for (unsigned i = 0; i < dims[0]; ++i) {
             double* v = reinterpret_cast<double*>(PyArray_GETPTR1(a, i) );
             double* w = reinterpret_cast<double*>(PyArray_GETPTR1(aw, i));
-            self.wincrement(*w, v, v+self.dim());
+            self.wfill(*w, v, v+self.dim());
           }
 
           Py_DECREF(aw);
@@ -154,7 +154,7 @@ histogram_increment(python::tuple args, python::dict kwargs) {
       } else {
         for (unsigned i = 0; i < dims[0]; ++i) {
           double* v = reinterpret_cast<double*>(PyArray_GETPTR1(a, i));
-          self.increment(v, v+self.dim());
+          self.fill(v, v+self.dim());
         }
       }
 
@@ -175,11 +175,11 @@ histogram_increment(python::tuple args, python::dict kwargs) {
     v[i] = extract<double>(args[1 + i]);
 
   if (ow.is_none()) {
-    self.increment(v, v+self.dim());
+    self.fill(v, v+self.dim());
 
   } else {
     const double w = extract<double>(ow);
-    self.wincrement(w, v, v+self.dim());
+    self.wfill(w, v, v+self.dim());
   }
 
   return object();
@@ -293,10 +293,10 @@ void register_histogram()
        ":param int i: index of the axis\n"
        ":returns: axis object for axis i",
        (arg("self"), arg("i") = 0))
-    .def("increment", raw_function(histogram_increment),
+    .def("fill", raw_function(histogram_fill),
        "Pass a sequence of values with a length n is"
        "\nequal to the dimensions of the histogram,"
-       "\nand optionally a weight w for this increment"
+       "\nand optionally a weight w for this fill"
        "\n(*int* or *float*)."
        "\n"
        "\nIf Numpy support is enabled, values may also"

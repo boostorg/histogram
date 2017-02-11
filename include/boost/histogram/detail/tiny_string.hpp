@@ -10,25 +10,16 @@
 #include <cstring>
 #include <memory>
 #include <ostream>
+#include <boost/operators.hpp>
 
 namespace boost {
 namespace histogram {
 namespace detail {
 
-class tiny_string {
+class tiny_string :
+    boost::operators<tiny_string>
+{
 public:
-    tiny_string(const char* s)
-    {
-        if (s) {
-            const auto n = std::strlen(s) + 1;
-            if (n > 1) {
-                ptr_.reset(new char[n]);
-                std::strcpy(ptr_.get(), s);
-            } else
-                ptr_.reset();
-        }
-    }
-
     tiny_string() = default;
 
     tiny_string(const tiny_string& other) :
@@ -44,10 +35,35 @@ public:
     tiny_string(tiny_string&& other) noexcept = default;
     tiny_string& operator=(tiny_string&& other) = default;
 
+    tiny_string(const std::string& other) :
+        tiny_string(other.c_str())
+    {}
+
+    tiny_string& operator=(const std::string& other) {
+        tiny_string tmp(other.c_str());
+        swap(tmp);
+        return *this;
+    }
+
+    tiny_string(const char* other)
+    {
+        if (other) {
+            const auto n = std::strlen(other) + 1;
+            if (n > 1) {
+                ptr_.reset(new char[n]);
+                std::strcpy(ptr_.get(), other);
+            }
+        }
+    }
+
+    tiny_string& operator=(const char* other) {
+        tiny_string tmp(other);
+        swap(tmp);
+        return *this;
+    }
+
     bool operator==(const tiny_string& other) const {
-        if (ptr_ && other.ptr_)
-            return std::strcmp(ptr_.get(), other.ptr_.get()) == 0;
-        return ptr_ == other.ptr_;
+        return std::strcmp(c_str(), other.c_str()) == 0;
     }
 
     void swap(tiny_string& other) noexcept {

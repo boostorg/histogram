@@ -84,9 +84,9 @@ category_axis_init(python::tuple args, python::dict kwargs) {
     //     }
     // }
 
-    std::vector<const char*> c;
+    std::vector<std::string> c;
     for (int i = 1, n = len(args); i < n; ++i)
-        c.push_back(extract<const char*>(args[i]));
+        c.push_back(extract<std::string>(args[i]));
 
     return pyinit(c);
 }
@@ -183,9 +183,9 @@ void register_axis_types()
 
   // used to pass arguments from raw python init to specialized C++ constructors
   class_<std::vector<double>>("vector_double", no_init);
-  class_<std::vector<const char*>>("vector_cstring", no_init);
+  class_<std::vector<std::string>>("vector_string", no_init);
   class_<std::vector<double>::const_iterator>("vector_double_iterator", no_init);
-  class_<std::vector<const char*>::const_iterator>("vector_cstring_iterator", no_init);
+  class_<std::vector<std::string>::const_iterator>("vector_string_iterator", no_init);
 
   class_<regular_axis>("regular_axis",
     "An axis for real-valued data and bins of equal width."
@@ -228,7 +228,7 @@ void register_axis_types()
     "\nBinning is a O(1) operation.",
     no_init)
     .def("__init__", raw_function(category_axis_init))
-    .def(init<std::vector<const char*>>())
+    .def(init<std::vector<std::string>>())
     .def(axis_suite<category_axis>())
     ;
 

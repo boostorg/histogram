@@ -78,27 +78,27 @@ endif()
 # checks
 if(BUILD_CHECKS)
   add_executable(speed_cpp_hs_ss
-                 ../test/check/speed_cpp.cpp)
+                 ../test/speed_cpp.cpp)
   target_link_libraries(speed_cpp_hs_ss ${LIBRARIES})
   target_compile_definitions(speed_cpp_hs_ss PUBLIC HISTOGRAM_TYPE=1)
 
   add_executable(speed_cpp_hs_sd
-                 ../test/check/speed_cpp.cpp)
+                 ../test/speed_cpp.cpp)
   target_link_libraries(speed_cpp_hs_sd ${LIBRARIES})
   target_compile_definitions(speed_cpp_hs_sd PUBLIC HISTOGRAM_TYPE=2)
 
   add_executable(speed_cpp_hd_ss
-                 ../test/check/speed_cpp.cpp)
+                 ../test/speed_cpp.cpp)
   target_link_libraries(speed_cpp_hd_ss ${LIBRARIES})
   target_compile_definitions(speed_cpp_hd_ss PUBLIC HISTOGRAM_TYPE=3)
 
   add_executable(speed_cpp_hd_sd
-                 ../test/check/speed_cpp.cpp)
+                 ../test/speed_cpp.cpp)
   target_link_libraries(speed_cpp_hd_sd ${LIBRARIES})
   target_compile_definitions(speed_cpp_hd_sd PUBLIC HISTOGRAM_TYPE=4)
 
   add_executable(axis_size
-                 ../test/check/axis_size.cpp)
+                 ../test/axis_size.cpp)
 endif()
 
 # tests

@@ -133,7 +133,7 @@ public:
   }
 
   template <typename... Values>
-  void increment(Values... values)
+  void fill(Values... values)
   {
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -145,7 +145,7 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  void increment(Iterator begin, Iterator end)
+  void fill(Iterator begin, Iterator end)
   {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
@@ -157,16 +157,16 @@ public:
 
   template <typename Sequence,
             typename = detail::is_sequence<Sequence>>
-  void increment(const Sequence& values)
+  void fill(const Sequence& values)
   {
-    increment(std::begin(values), std::end(values));
+    fill(std::begin(values), std::end(values));
   }
 
   template <typename... Values>
-  void wincrement(value_type w, Values... values)
+  void wfill(value_type w, Values... values)
   {
     static_assert(detail::has_weight_support<Storage>::value,
-                  "wincrement only supported for adaptive_storage");
+                  "wfill only supported for adaptive_storage");
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
@@ -177,10 +177,10 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  void wincrement(value_type w, Iterator begin, Iterator end)
+  void wfill(value_type w, Iterator begin, Iterator end)
   {
     static_assert(detail::has_weight_support<Storage>::value,
-                  "wincrement only supported for adaptive_storage");
+                  "wfill only supported for adaptive_storage");
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "iterator range does not match histogram dimension");
     detail::linearize_x lin;
@@ -191,9 +191,9 @@ public:
 
   template <typename Sequence,
             typename = detail::is_sequence<Sequence>>
-  void wincrement(value_type w, const Sequence& values)
+  void wfill(value_type w, const Sequence& values)
   {
-    wincrement(w, std::begin(values), std::end(values));
+    wfill(w, std::begin(values), std::end(values));
   }
 
   template <typename... Indices>

@@ -125,7 +125,7 @@ int main() {
     {
         auto h = make_dynamic_histogram_with<adaptive_storage<>>(integer_axis(0, 1),
                                                               integer_axis(0, 2));
-        h.increment(0, 0);
+        h.fill(0, 0);
         auto h2 = decltype(h)(h);
         BOOST_TEST(h2 == h);
         auto h3 = dynamic_histogram<
@@ -139,7 +139,7 @@ int main() {
     {
         auto h = make_dynamic_histogram_with<adaptive_storage<>>(integer_axis(0, 1),
                                                                integer_axis(0, 2));
-        h.increment(0, 0);
+        h.fill(0, 0);
         auto h2 = decltype(h)();
         BOOST_TEST(!(h == h2));
         h2 = h;
@@ -159,7 +159,7 @@ int main() {
     {
         auto h = make_dynamic_histogram(integer_axis(0, 1),
                                         integer_axis(0, 2));
-        h.increment(0, 0);
+        h.fill(0, 0);
         const auto href = h;
         decltype(h) h2(std::move(h));
         BOOST_TEST_EQ(h.dim(), 0u);
@@ -195,13 +195,13 @@ int main() {
         auto d = make_dynamic_histogram(regular_axis(2, 0, 1));
         BOOST_TEST(!(c == d));
         BOOST_TEST(!(d == c));
-        c.increment(0);
+        c.fill(0);
         BOOST_TEST(!(a == c));
         BOOST_TEST(!(c == a));
-        a.increment(0);
+        a.fill(0);
         BOOST_TEST(a == c);
         BOOST_TEST(c == a);
-        a.increment(0);
+        a.fill(0);
         BOOST_TEST(!(a == c));
         BOOST_TEST(!(c == a));
     }
@@ -209,10 +209,10 @@ int main() {
     // d1
     {
         auto h = make_dynamic_histogram(integer_axis(0, 1));
-        h.increment(0);
-        h.increment(0);
-        h.increment(-1);
-        h.increment(10);
+        h.fill(0);
+        h.fill(0);
+        h.fill(-1);
+        h.fill(10);
 
         BOOST_TEST_EQ(h.dim(), 1u);
         BOOST_TEST_EQ(bins(h.axis(0)), 2);
@@ -237,10 +237,10 @@ int main() {
     // d1_2
     {
         auto h = make_dynamic_histogram(integer_axis(0, 1, "", false));
-        h.increment(0);
-        h.increment(-0);
-        h.increment(-1);
-        h.increment(10);
+        h.fill(0);
+        h.fill(-0);
+        h.fill(-1);
+        h.fill(10);
 
         BOOST_TEST_EQ(h.dim(), 1u);
         BOOST_TEST_EQ(bins(h.axis(0)), 2);
@@ -261,11 +261,11 @@ int main() {
     // d1w
     {
         auto h = make_dynamic_histogram(regular_axis(2, -1, 1));
-        h.increment(0);
-        h.wincrement(2, -1.0);
-        h.increment(-1.0);
-        h.increment(-2.0);
-        h.wincrement(5, 10);
+        h.fill(0);
+        h.wfill(2, -1.0);
+        h.fill(-1.0);
+        h.fill(-2.0);
+        h.wfill(5, 10);
 
         BOOST_TEST_EQ(h.sum(), 10.0);
 
@@ -284,12 +284,12 @@ int main() {
     {
         auto h = make_dynamic_histogram(regular_axis(2, -1, 1),
                                         integer_axis(-1, 1, nullptr, false));
-        h.increment(-1, -1);
-        h.increment(-1, 0);
+        h.fill(-1, -1);
+        h.fill(-1, 0);
         std::array<double, 2> ai = {{-1., -10.}};
-        h.increment(ai);
+        h.fill(ai);
         double in[2] = {-10., 0.};
-        h.increment(in, in+2);
+        h.fill(in, in+2);
 
         BOOST_TEST_EQ(h.dim(), 2u);
         BOOST_TEST_EQ(bins(h.axis(0)), 2);
@@ -335,10 +335,10 @@ int main() {
     {
         auto h = make_dynamic_histogram(regular_axis(2, -1, 1),
                                         integer_axis(-1, 1, nullptr, false));
-        h.increment(-1, 0);       // -> 0, 1
-        h.wincrement(10, -1, -1); // -> 0, 0
-        h.wincrement(5, -1, -10); // is ignored
-        h.wincrement(7, -10, 0);  // -> -1, 1
+        h.fill(-1, 0);       // -> 0, 1
+        h.wfill(10, -1, -1); // -> 0, 0
+        h.wfill(5, -1, -10); // is ignored
+        h.wfill(7, -10, 0);  // -> -1, 1
 
         BOOST_TEST_EQ(h.sum(), 18.0);
 
@@ -384,7 +384,7 @@ int main() {
             for (auto j = 0; j < bins(h.axis(1)); ++j)
                 for (auto k = 0; k < bins(h.axis(2)); ++k)
         {
-            h.wincrement(i+j+k, i, j, k);
+            h.wfill(i+j+k, i, j, k);
         }
 
         for (auto i = 0; i < bins(h.axis(0)); ++i)
@@ -412,8 +412,8 @@ int main() {
                 mpl::vector<integer_axis, regular_axis>,
                 container_storage<std::vector<unsigned>>
             >(integer_axis(-1, 1));
-        a.increment(-1);
-        b.increment(1);
+        a.fill(-1);
+        b.fill(1);
         auto c = a;
         c += b;
         BOOST_TEST_EQ(c.value(-1), 0);
@@ -435,8 +435,8 @@ int main() {
         auto a = make_dynamic_histogram(integer_axis(-1, 1));
         auto b = make_dynamic_histogram(integer_axis(-1, 1));
 
-        a.increment(0);
-        b.wincrement(3, -1);
+        a.fill(0);
+        b.wfill(3, -1);
         auto c = a;
         c += b;
         BOOST_TEST_EQ(c.value(-1), 0);
@@ -457,8 +457,8 @@ int main() {
     {
         auto a = make_dynamic_histogram_with<container_storage<std::vector<unsigned char>>>(integer_axis(-1, 1));
         auto b = make_dynamic_histogram_with<container_storage<std::vector<unsigned>>>(integer_axis(-1, 1));
-        a.increment(-1);
-        b.increment(1);
+        a.fill(-1);
+        b.fill(1);
         auto c = a;
         c += b;
         BOOST_TEST_EQ(c.value(-1), 0u);
@@ -501,7 +501,7 @@ int main() {
                                         variable_axis({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
                                         category_axis{"A", "B", "C"},
                                         integer_axis(0, 1, "i"));
-        a.increment(0.5, 0.1, 0.25, 1, 0);
+        a.fill(0.5, 0.1, 0.25, 1, 0);
         std::string buf;
         {
             std::ostringstream os;

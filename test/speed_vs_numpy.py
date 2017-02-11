@@ -26,7 +26,7 @@ def compare_1d(n, distrib):
 
         h = histogram(regular_axis(100, 0, 1))
         t = timer()
-        h.increment(r)
+        h.fill(r)
         t = timer() - t
         best_boost = min(t, best_boost)
     assert(np.all(w == np.array(h)[:-2]))
@@ -57,7 +57,7 @@ def compare_3d(n, distrib):
                       regular_axis(100, 0, 1),
                       regular_axis(100, 0, 1))
         t = timer()
-        h.increment(r)
+        h.fill(r)
         t = timer() - t
         best_boost = min(t, best_boost)
     assert(np.all(w == np.array(h)[:-2,:-2,:-2]))
@@ -95,7 +95,7 @@ def compare_6d(n, distrib):
                       regular_axis(10, 0, 1),
                       regular_axis(10, 0, 1))
         t = timer()
-        h.increment(r)
+        h.fill(r)
         t = timer() - t
         best_boost = min(t, best_boost)
     assert(np.all(w == np.array(h)[:-2,:-2,:-2,:-2,:-2,:-2]))

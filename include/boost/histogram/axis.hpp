@@ -379,7 +379,7 @@ public:
   {}
 
   explicit
-  category_axis(const std::vector<const char*>& categories) :
+  category_axis(const std::vector<std::string>& categories) :
     category_axis(categories.begin(), categories.end())
   {}
 
