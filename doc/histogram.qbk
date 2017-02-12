@@ -1,6 +1,6 @@
 [library Boost.Histogram
     [quickbook 1.6]
-    [authors [Dembinski, Hans]]
+    [authors [Dembinski, Hans] [Morgenstern, Klemens]]
     [copyright 2016-2017 Hans Dembinski]
     [id histogram]
     [dirname histogram]
@@ -20,8 +20,6 @@ Two histogram implementations in C++ are included. [classref boost::histogram::s
 The histograms have value semantics. Move operations and trips over the language boundary from C++ to Python and back are cheap. Histograms can be streamed from/to files and pickled in Python. [@http://www.numpy.org Numpy] is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (*faster* than Numpy's own histogram functions) and are convertible into Numpy arrays without copying data.
 
 My goal is to submit this project to [@http://www.boost.org Boost], that's why it uses the Boost directory structure and namespace. The code is released under the [@http://www.boost.org/LICENSE_1_0.txt Boost Software License].
-
-Special thanks go to *Klemens Morgenstern*, who contributed a lot of code and helped to shape this library.
 
 [endsect]
 

@@ -11,33 +11,35 @@ I also follow advice of popular C++ experts: Bjarne Stroustrup, Scott Meyers, He
 
 [section Language transparency]
 
-Python is a great language for data analysis, so the histogram needs Python bindings. The histogram should be usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python: define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
+Python is a great language for data analysis, so the histogram needs Python bindings. The histogram should be usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. This means users should be able to define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
 
-Data analysis in Python is Numpy-based, so Numpy support is a must.
+Data analysis in Python is Numpy-based, so Numpy support is a must. It also turned out that this histogram is faster than the Numpy histograms.
 
 The Python and C++ interface try to be consistent, but sometimes Python offers more elegant and pythonic ways of implementing things. Where possible, the more pythonic interface is used.
 
-Properties
-    Getter/setter-like functions are wrapped as properties.
+Properties: Getter/setter-like functions are wrapped as properties.
 
-Keyword-based parameters
-    C++ member functions :cpp:func:`histogram::fill` and :cpp:func:`histogram::wfill` are wrapped by the single Python member function :py:func:`histogram.fill` with an optional keyword parameter `w` to pass a weight.
+Keyword-based parameters: C++ member functions `fill(...)` and `wfill(...)` are wrapped by the single Python member function `fill(...)` with an optional keyword parameter `w` to pass a weight.
 
 [endsect]
 
-[section Powerful binning strategies]
+[section Multiple binning strategies]
 
-The histogram supports five different binning strategies, conveniently encapsulated in axis objects. There is the standard sorting of real-valued data into bins of equal or varying width, but also binning of angles or integer values.
+The library comes with five different binning strategies, encapsulated in axis objects. There is the standard sorting of real-valued data into bins of equal or varying width, but also binning of angles or integer values. The user can use custom axis objects with the library. Any class that implements the axis concept is allowed.
 
 Extra bins that count over- and underflow values are added by default. This feature can be turned off individually for each axis. The extra bins do not disturb normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at `-1` and `n`, respectively.
 
 [endsect]
 
-[section Performance and memory-efficiency]
+[section Performance and memory-efficiency of count storage]
 
-Dense storage in memory is a must for high performance. Unfortunately, the [@https://en.wikipedia.org/wiki/Curse_of_dimensionality curse of dimensionality] quickly become a problem as the number of dimensions grows, leading to histograms which consume large amounts (up to GBs) of memory.
+Dense storage in memory is a must for high performance. Unfortunately, the [@https://en.wikipedia.org/wiki/Curse_of_dimensionality curse of dimensionality] quickly become a problem as the number of dimensions grows, leading to an exponentially growing number of bins. High-dimensional histograms can consume GBs of memory.
 
-Fortunately, having many dimensions typically reduces the number of counts per bin, since counts get spread over many dimensions. The histogram uses an adaptive count size per bin to be as memory-efficient as possible, by starting with the smallest integer size per bin of 1 byte and increasing as needed to up to 8 byte. A `std::vector` grows in *length* as new elements are added, while the count storage grows in *depth*.
+Fortunately, having many dimensions typically reduces the number of counts per bin, since counts are spread over many dimensions. This suggests an adaptive solution: start by allocating a minimum amount memory for a bin cell, and only grow the cell size if the cell would overflow otherwise.
+
+This strategy is implemented by the default `adaptive_storage` class. It starts with the smallest integer of 1 byte per cell, and increases the cell size up to 8 byte. When even that is not enough, the integers are replaced by the [@boost:/libs/multiprecision/index.html Boost.Multiprecision] type `cpp_int`, whose capacity is limited only by available memory. In other words, a `std::vector` keeps the size of the stored type constant, but grows to hold a larger number of elements. The `adaptive_storage` does the opposite.
+
+It turns out that even low dimensional histograms profit from this scheme, because a small storage size also reduces cache-misses and page reloads. This leads to better performance, despite the extra instructions needed to implement the polymorphic nature of the adaptive storage.
 
 [endsect]
 
@@ -45,13 +47,13 @@ Fortunately, having many dimensions typically reduces the number of counts per b
 
 A histogram categorizes and counts, so the natural choice for the data type of the counts are integers. However, in particle physics, histograms are also often filled with weighted events, for example, to make sure that two histograms look the same in one variable, while the distribution of another, correlated variable is a subject of study.
 
-The histogram can be filled with either weighted or unweighted counts. In the weighted case, the sum of weights is stored in a `double`. The histogram provides a variance estimate is both cases. In the unweighted case, the estimate is computed from the count itself, using Poisson-theory. In the weighted case, the sum of squared weights is stored alongside the sum of weights in a second `double`, and used to compute a variance estimate.
+The histogram can be filled with either weighted or unweighted counts. In the weighted case, the sum of weights is stored. The histogram provides a variance estimate is both cases. In the unweighted case, the estimate is computed from the count itself, using Poisson-theory. In the weighted case, the sum of squared weights is stored alongside the sum of weights, and used to compute a variance estimate.
 
 [endsect]
 
 [section Serialization]
 
-Serialization is implemented using `boost::serialization`. Pickling in Python is implemented based on the C++ serialization code. In the current implementation, the pickled stream is *not* portable, since it uses `boost::archive::binary_archive`. It would be great to switch to a portable binary representation in the future, when that becomes available.
+Serialization is implemented using [@boost:/libs/serialization/index.html Boost.Serialization]. Pickling in Python is implemented based on the C++ serialization code. In the current implementation, the pickled stream is *not* portable, since it uses `boost::archive::binary_archive`. It would be great to switch to a portable binary representation in the future, when that becomes available.
 
 [endsect]
 
