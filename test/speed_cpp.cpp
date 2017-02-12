@@ -4,12 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/histogram/static_histogram.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
-#include <boost/histogram/storage/container_storage.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/axis.hpp>
-
+#include <boost/histogram.hpp>
 #include <random>
 #include <algorithm>
 #include <limits>
@@ -18,7 +13,7 @@
 #include <cstdio>
 
 using namespace boost::histogram;
-namespace mpl = boost::mpl; 
+namespace mpl = boost::mpl;
 
 std::vector<double> random_array(unsigned n, int type) {
   std::vector<double> result(n);
@@ -42,7 +37,7 @@ double compare_1d(unsigned n, int distrib)
   auto r = random_array(n, distrib);
 
   auto best = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 10; ++k) {
+  for (unsigned k = 0; k < 50; ++k) {
     auto h = Histogram(regular_axis(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
@@ -60,7 +55,7 @@ double compare_3d(unsigned n, int distrib)
   auto r = random_array(3 * n, distrib);
 
   auto best = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 10; ++k) {
+  for (unsigned k = 0; k < 50; ++k) {
     auto h = Histogram(regular_axis(100, 0, 1),
                        regular_axis(100, 0, 1),
                        regular_axis(100, 0, 1));
@@ -69,7 +64,7 @@ double compare_3d(unsigned n, int distrib)
       h.fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
-  } 
+  }
 
   return best;
 }
@@ -80,7 +75,7 @@ double compare_6d(unsigned n, int distrib)
   auto r = random_array(6 * n, distrib);
 
   auto best = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 10; ++k) {
+  for (unsigned k = 0; k < 50; ++k) {
     double x[6];
 
     auto h = Histogram(regular_axis(10, 0, 1),
@@ -93,92 +88,104 @@ double compare_6d(unsigned n, int distrib)
     auto t = clock();
     for (unsigned i = 0; i < n; ++i) {
       for (unsigned k = 0; k < 6; ++k)
-        x[k] = r[6 * i + k];      
+        x[k] = r[6 * i + k];
       h.fill(x[0], x[1], x[2], x[3], x[4], x[5]);
     }
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
-  } 
+  }
 
   return best;
 }
 
 int main() {
+  printf("1D\n");
   for (int itype = 0; itype < 2; ++itype) {
     if (itype == 0)
       printf("uniform distribution\n");
     else
       printf("normal distribution\n");
-
-    printf("1D\n");
-    printf("t[boost]   = %.3f\n",
-#if HISTOGRAM_TYPE == 1
+    printf("t[hs_ss] %.3f\n",
       compare_1d<
         static_histogram<
           mpl::vector<regular_axis>,
           container_storage<std::vector<int>>
         >
       >(12000000, itype)
-#elif HISTOGRAM_TYPE == 2
+    );
+    printf("t[hs_sd] %.3f\n",
       compare_1d<
         static_histogram<
           mpl::vector<regular_axis>,
           adaptive_storage<>
         >
       >(12000000, itype)
-#elif HISTOGRAM_TYPE == 3
+    );
+    printf("t[hd_ss] %.3f\n",
       compare_1d<
         dynamic_histogram<
           default_axes,
           container_storage<std::vector<int>>
         >
       >(12000000, itype)
-#elif HISTOGRAM_TYPE == 4
+    );
+    printf("t[hd_sd] %.3f\n",
       compare_1d<
         dynamic_histogram<
           default_axes,
           adaptive_storage<>
         >
       >(12000000, itype)
-#endif
     );
+  }
 
-    printf("3D\n");
-    printf("t[boost]   = %.3f\n",
-#if HISTOGRAM_TYPE == 1
+  printf("3D\n");
+  for (int itype = 0; itype < 2; ++itype) {
+    if (itype == 0)
+      printf("uniform distribution\n");
+    else
+      printf("normal distribution\n");
+    printf("t[hs_ss] %.3f\n",
       compare_3d<
         static_histogram<
           mpl::vector<regular_axis, regular_axis, regular_axis>,
           container_storage<std::vector<int>>
         >
       >(4000000, itype)
-#elif HISTOGRAM_TYPE == 2
+    );
+    printf("t[hs_sd] %.3f\n",
       compare_3d<
         static_histogram<
           mpl::vector<regular_axis, regular_axis, regular_axis>,
           adaptive_storage<>
         >
       >(4000000, itype)
-#elif HISTOGRAM_TYPE == 3
+    );
+    printf("t[hd_ss] %.3f\n",
       compare_3d<
         dynamic_histogram<
           default_axes,
           container_storage<std::vector<int>>
         >
       >(4000000, itype)
-#elif HISTOGRAM_TYPE == 4
+    );
+    printf("t[hd_sd] %.3f\n",
       compare_3d<
         dynamic_histogram<
           default_axes,
           adaptive_storage<>
         >
       >(4000000, itype)
-#endif
     );
+  }
 
-    printf("6D\n");
-    printf("t[boost]   = %.3f\n",
-#if HISTOGRAM_TYPE == 1
+  printf("6D\n");
+  for (int itype = 0; itype < 2; ++itype) {
+    if (itype == 0)
+      printf("uniform distribution\n");
+    else
+      printf("normal distribution\n");
+    printf("t[hs_ss] %.3f\n",
       compare_6d<
         static_histogram<
           mpl::vector<regular_axis, regular_axis, regular_axis,
@@ -186,7 +193,8 @@ int main() {
           container_storage<std::vector<int>>
         >
       >(2000000, itype)
-#elif HISTOGRAM_TYPE == 2
+    );
+    printf("t[hs_sd] %.3f\n",
       compare_6d<
         static_histogram<
           mpl::vector<regular_axis, regular_axis, regular_axis,
@@ -194,21 +202,22 @@ int main() {
           adaptive_storage<>
         >
       >(2000000, itype)
-#elif HISTOGRAM_TYPE == 3
+    );
+    printf("t[hd_ss] %.3f\n",
       compare_6d<
         dynamic_histogram<
           default_axes,
           container_storage<std::vector<int>>
         >
       >(2000000, itype)
-#elif HISTOGRAM_TYPE == 4
+    );
+    printf("t[hd_sd] %.3f\n",
       compare_6d<
         dynamic_histogram<
           default_axes,
           adaptive_storage<>
         >
       >(2000000, itype)
-#endif
     );
   }
 }

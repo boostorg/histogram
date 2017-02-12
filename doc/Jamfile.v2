@@ -23,6 +23,13 @@ doxygen autodoc
   <doxygen:param>USE_MATHJAX=YES
 ;
 
+exe speed
+  : ../test/speed_cpp.cpp
+  : <variant>release
+    <c++-template-depth>256
+    <cxxflags>"-std=c++11"
+  ;
+
 boostbook standalone
 :
   histogram.qbk
