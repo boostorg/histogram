@@ -14,7 +14,6 @@ The following plot shows results of a benchmark on a 9 GHz Macbook Pro. Random n
 	[[hs_sd] [[classref boost::histogram::static_histogram static_histogram] with [classref boost::histogram::adaptive_storage adaptive_storage]]]
 	[[hd_ss] [[classref boost::histogram::dynamic_histogram dynamic_histogram] with [classref boost::histogram::container_storage<std::vector<int>> container_storage<std::vector<int>>]]]
 	[[hd_sd] [[classref boost::histogram::dynamic_histogram dynamic_histogram] with [classref boost::histogram::adaptive_storage adaptive_storage]]]
-
 ]
 
 [classref boost::histogram::static_histogram static_histogram] is always faster than [classref boost::histogram::dynamic_histogram dynamic_histogram] and safer to use, as more checks are done at compile time. It is recommended when working in C++ only. [classref boost::histogram::adaptive_storage adaptive_storage] is faster than [classref boost::histogram::container_storage container_storage] for larger histograms, because it uses the cache more effectively due to its smaller memory consumption per bin.

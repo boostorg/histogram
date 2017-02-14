@@ -1,8 +1,6 @@
 [section Tutorial]
 
-[section Example 1: 1d-histogram in C++]
-
-How to make a 1d-histogram in C++ and to fill it:
+Example 1: How to make a 1d-histogram in C++ and to fill it.
 
 [c++]
 ```
@@ -55,7 +53,7 @@ How to make a 1d-histogram in C++ and to fill it:
     }
 ```
 
-Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
+Example 2: How to make, fill, and use a 2d-histogram in Python.
 
 [python]
 ```
