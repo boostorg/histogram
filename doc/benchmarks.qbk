@@ -2,58 +2,23 @@
 
 The library is designed to be fast. While it is unlikely that the time spend in the histogram is limiting an application, we cannot predict how the library is used.
 
-The following table shows results of a simple benchmark against
+The following plot shows results of a benchmark on a 9 GHz Macbook Pro. Random numbers from a uniform and a normal distribution are filled into the histograms of 1, 3, and 6 dimensions. 100 bins are used for 1D, 100x100x100=10^6 for 3D, and 10x10x10x10x10x10=10^6 for 6D. Each test is repeated 50 times and the minimum time is taken.
 
-* `TH1I`, `TH3I` and `THnI` of the [@https://root.cern.ch ROOT framework]
+[$benchmark.png [width 5in] [height 5in]]
 
-* `histogram` and `histogramdd` from the Python module `numpy`
+[variablelist Plot legend:
+	[[root] [[@https://root.cern.ch ROOT classes] (`TH1I` for 1D, `TH3I` for 3D and `THnI` for 6D)]]
+	[[py:numpy] [numpy functions ([python]`numpy.histogram1d` for 1D, `numpy.histogramdd` for 3D and 6D)]]
+	[[py:hd_sd] [[classref boost::histogram::dynamic_histogram dynamic_histogram] with [classref boost::histogram::adaptive_storage adaptive_storage] called from Python]]
+	[[hs_ss] [[classref boost::histogram::static_histogram static_histogram] with [classref boost::histogram::container_storage<std::vector<int>> container_storage<std::vector<int>>]]]
+	[[hs_sd] [[classref boost::histogram::static_histogram static_histogram] with [classref boost::histogram::adaptive_storage adaptive_storage]]]
+	[[hd_ss] [[classref boost::histogram::dynamic_histogram dynamic_histogram] with [classref boost::histogram::container_storage<std::vector<int>> container_storage<std::vector<int>>]]]
+	[[hd_sd] [[classref boost::histogram::dynamic_histogram dynamic_histogram] with [classref boost::histogram::adaptive_storage adaptive_storage]]]
 
-The benchmark against ROOT is implemented in C++, the benchmark against numpy in Python.
-
-[table:benchmark_res Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM
-
-    [[distribution] [uniform] [normal]]
-    [[
-      [table distribution
-      [[dimension]]
-      [[No. of fills    ]]
-      [[C++: ROOT  \[t/s\]]]
-      [[C++: boost \[t/s\]]]
-      [[Py: numpy \[t/s\] ]]
-      [[Py: boost \[t/s\] ]]
-      ]
-    ]
-    [[table uniform
-    [[1D   ]   [3D   ]   [6D   ]]
-    [[12M  ]   [4M   ]   [2M   ]]
-    [[0.127]   [0.199]   [0.185]]
-    [[0.172]   [0.177]   [0.155]]
-    [[0.825]   [0.727]   [0.436]]
-    [[0.209]   [0.229]   [0.192]]
-    ]]
-    [[table normal
-    [[1D   ]   [3D   ]   [6D   ]]
-    [[12M  ]   [4M   ]   [2M   ]]
-    [[0.168]   [0.143]   [0.179]]
-    [[0.172]   [0.171]   [0.150]]
-    [[0.824]   [0.426]   [0.401]]
-    [[0.207]   [0.194]   [0.168]]
-    ]]]
 ]
 
+[classref boost::histogram::static_histogram static_histogram] is always faster than [classref boost::histogram::dynamic_histogram dynamic_histogram] and safer to use, as more checks are done at compile time. It is recommended when working in C++ only. [classref boost::histogram::adaptive_storage adaptive_storage] is faster than [classref boost::histogram::container_storage container_storage] for larger histograms, because it uses the cache more effectively due to its smaller memory consumption per bin.
 
-
-Remarks:
-
-* The comparison with ROOT puts ROOT at the advantage, since `TH1I` and `TH3I` are specialized classes for 1 dimension and 3 dimensions, not a general class for N dimensions. ROOT histograms also lack a comparably flexible system to define different binning schemes for each axis.
-
-* Large vectors are pre-allocated and with random numbers drawn from a uniform or normal distribution for all tests. In the timed part, these numbers are read from the vector and put into the histograms. This reduces the overhead merely to memory access.
-
-* The test with uniform random numbers never fills the overflow and underflow bins, while the test with random numbers from a normal distribution does. This explains some of the differences between the two distributions.
-
-* All tests are repeated 10 times, the minimum is shown.
-
-
-TODO
+The histograms in this library are mostly faster than the competition, in some cases by a factor of 2. Simultaneously they are more flexible, since binning strategies can be exchanged. The Python-wrapped histogram is slower than numpy's own specialized function for 1D, but beats numpy's general multi-dimensional function by a factor 2 to 3.
 
 [endsect]

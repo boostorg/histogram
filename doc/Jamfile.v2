@@ -13,14 +13,17 @@ doxygen autodoc
   [ glob ../../../boost/histogram/storage/*.hpp ]
 :
   <doxygen:param>PREDEFINED=BOOST_HISTOGRAM_DOXYGEN
-  <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+  <doxygen:param>EXTRACT_ALL=NO
   <doxygen:param>EXTRACT_PRIVATE=NO
+  <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+  <doxygen:param>HIDE_UNDOC_CLASSES=YES
   <doxygen:param>ENABLE_PREPROCESSING=YES
   <doxygen:param>MACRO_EXPANSION=YES
   <doxygen:param>EXPAND_ONLY_PREDEF=YES
   <doxygen:param>SEARCH_INCLUDES=NO
   <doxygen:param>JAVADOC_AUTOBRIEF=YES
   <doxygen:param>USE_MATHJAX=YES
+  <doxygen:param>SORT_MEMBER_DOCS=NO
 ;
 
 exe speed
@@ -30,17 +33,16 @@ exe speed
     <cxxflags>"-std=c++11"
   ;
 
-boostbook standalone
+boostbook histogram
 :
   histogram.qbk
 :
   <dependency>autodoc
 
-  <xsl:param>toc.max.depth=2
-  <xsl:param>toc.section.depth=2
-  <xsl:param>chunk.section.depth=1
-  <xsl:param>boost.root=../../../..
-  <xsl:param>navig.graphics=1
+  <format>html:<xsl:param>boost.root=../../../..
+  <format>html:<xsl:param>boost.libraries=../../../../libs/libraries.htm
+  <xsl:param>generate.section.toc.level=3
+  <xsl:param>chunk.first.sections=1
   <xsl:param>boost.mathjax=1
-  <xsl:path>$(images_location)/..
+
 ;
