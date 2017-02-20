@@ -1,33 +1,61 @@
 [section Rationale]
 
-I designed the histogram based on a decade of experience collected in working with Big Data, more precisely in the field of particle physics and astroparticle physics. In many ways, the [@https://root.cern.ch ROOT] histograms served as an example of *not to do it*, and my annoyance with them led to this library.
+This library was designed based on a decade of experience collected in working with big data, more precisely in the field of particle physics and astroparticle physics.
 
-All work should be guided by principles. Mine are:
+Everything should be guided by principles.
 
 * "Do one thing and do it well", Doug McIlroy
 * The [@https://www.python.org/dev/peps/pep-0020 Zen of Python] (also applies to other languages).
 
-I also follow advice of popular C++ experts: Bjarne Stroustrup, Scott Meyers, Herb Sutter, and Andrei Alexandrescu, and Chandler Carruth.
+The implementation is build on advice from C++ experts, like Bjarne Stroustrup, Scott Meyers, Herb Sutter, and Andrei Alexandrescu, and Chandler Carruth.
 
-[section Language transparency]
+[section Static and dynamic histograms]
 
-Python is a great language for data analysis, so the histogram needs Python bindings. The histogram should be usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. This means users should be able to define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
+Histograms have a number of axes. An axis defines which range of input values is mapped to which bin. The number of axes may be known at compile time or runtime, depending on how the library is used. The library supports several [link histogram.rationale.axis_types axis specializations]. The axis type can also be known at compile time or runtime.
 
-Data analysis in Python is Numpy-based, so Numpy support is a must. It also turned out that this histogram is faster than the Numpy histograms.
+The library therefore provides two histogram implementations, a [classref boost::histogram::static_histogram static] and [classref boost::histogram::dynamic_histogram dynamic] one. The static implementation is faster if the number of axes is small (see [link histogram.benchmarks benchmark]), because compiler is able to inline more code. The static approach does not work when you want to create histograms at runtime, for example, from Python. Therefore a second implementation is included in which the number of axes and their types may be defined at runtime.
 
+[endsect]
+
+[section Python support]
+
+Python is a great language for data analysis and very popular in the data science community. Thus, the library includes Python bindings. The histogram is usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. Users are able to define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
+
+Data analysis in Python is Numpy-based, so Numpy support is included. If number of dimensions is larger than one, this implementation is faster than the equivalent Numpy functions (while being more flexible), see [link histogram.benchmarks benchmark].
+
+[note
 The Python and C++ interface try to be consistent, but sometimes Python offers more elegant and pythonic ways of implementing things. Where possible, the more pythonic interface is used.
 
 Properties: Getter/setter-like functions are wrapped as properties.
 
 Keyword-based parameters: C++ member functions `fill(...)` and `wfill(...)` are wrapped by the single Python member function `fill(...)` with an optional keyword parameter `w` to pass a weight.
+]
 
 [endsect]
 
-[section Multiple binning strategies]
+[section Axis types]
 
-The library comes with five different binning strategies, encapsulated in axis objects. There is the standard sorting of real-valued data into bins of equal or varying width, but also binning of angles or integer values. The user can use custom axis objects with the library. Any class that implements the axis concept is allowed.
+An axis defines which range of input values is mapped to which bin. The library encapsulates the logic in an axis type. The library comes with five axis types, which implement different specializations.
 
-Extra bins that count over- and underflow values are added by default. This feature can be turned off individually for each axis. The extra bins do not disturb normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at `-1` and `n`, respectively.
+* [classref boost::histogram::regular_axis] sorts real numbers into bins with equal width.
+* [classref boost::histogram::variable_axis] sorts real numbers into bins with varying width.
+* [classref boost::histogram::polar_axis] is a specialization for angles, which wrap around after 2pi.
+* [classref boost::histogram::integer_axis] is a specialization for covering a continuous range of integers.
+* [classref boost::histogram::category_axis] is a specialization for categorial data.
+
+Library users can create their own axis classes and use them with the library, by providing an implementation compatible with the axis concept.
+
+[endsect]
+
+[section Overflow and underflow bins]
+
+The library supports extra bins that count values with fall below or above the range covered by the axis. These extra bins are called overflow and underflow bins, respectively. The extra bins can be turned off individually for each axis at runtime to conserve memory, but are turned on by default. The extra bins do not disturb normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
+
+Under- and overflow bins are useful in one-dimensional histograms, and nearly essential in multi-dimensional histograms.
+
+* No loss: The total sum over all bins is equal to the number of times `fill(...)` was called. Even NaN values are counted (they end up in the underflow bin by convention).
+* Diagnosis: Unexpected extreme values will show up in the extra bins, which otherwise might be overlooked.
+* Projections: In multi-dimensional histograms, an extreme value along one axis may be paired with a normal value along another axis. If under- and overflow bins are missing, the whole pair is lost. This distorts the histogram even along the axis where the value was in range. The extra bins allow one to project (projecting means summing up along the other axes) the histogram to any axis and get the same result as if one had filled a histogram with only that axis.
 
 [endsect]
 
