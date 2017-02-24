@@ -61,7 +61,7 @@ namespace detail {
   using to_int = typename mpl::at<type_to_int, T>::type;
 
   template <typename T>
-  using storage_type = typename mpl::at<int_to_type, to_int<T>>::type;
+  using to_storage_type = typename mpl::at<int_to_type, to_int<T>>::type;
 
   template <typename T>
   using next_storage_type = typename mpl::at<int_to_type,
@@ -341,7 +341,7 @@ namespace detail {
 
     template <typename T>
     inline
-    void increase(const std::size_t i) {
+    void increase(std::size_t i) {
       auto& bi = at<T>(i);
       if (bi < std::numeric_limits<T>::max())
         ++bi;
@@ -359,8 +359,8 @@ namespace detail {
         depth_ = sizeof(T);
       }
     } type_;
-    std::size_t size_;
-    void* ptr_;
+    std::size_t size_ = 0;
+    void* ptr_ = nullptr;
   };
 
 } // NS detail
@@ -383,11 +383,11 @@ public:
   adaptive_storage& operator=(adaptive_storage&&) = default;
 
   template <typename OtherStorage,
-            typename = detail::is_standard_integral<typename OtherStorage::value_type>>
+            typename = detail::is_storage<OtherStorage>>
   adaptive_storage(const OtherStorage& o);
 
   template <typename OtherStorage,
-            typename = detail::is_standard_integral<typename OtherStorage::value_type>>
+            typename = detail::is_storage<OtherStorage>>
   adaptive_storage& operator=(const OtherStorage& o);
 
   std::size_t size() const { return buffer_.size_; }
@@ -429,7 +429,7 @@ adaptive_storage<Allocator>::adaptive_storage(const OtherStorage& o) :
   buffer_(o.size())
 {
   using T = typename OtherStorage::value_type;
-  using U = detail::storage_type<T>;
+  using U = detail::to_storage_type<T>;
   buffer_.template create<U>();
   for (std::size_t i = 0; i < buffer_.size_; ++i)
     buffer_.template at<U>(i) = o.value(i);
@@ -443,7 +443,7 @@ adaptive_storage<Allocator>::operator=(const OtherStorage& o)
   using T = typename OtherStorage::value_type;
   buffer_.destroy_any();
   buffer_.size_ = o.size();
-  using U = detail::storage_type<T>;
+  using U = detail::to_storage_type<T>;
   buffer_.template create<U>();
   for (std::size_t i = 0; i < buffer_.size_; ++i)
     buffer_.template at<U>(i) = o.value(i);
@@ -564,7 +564,7 @@ adaptive_storage<Allocator>::operator+=(const OtherStorage& other)
 {
   using B = decltype(buffer_);
   using T = typename OtherStorage::value_type;
-  using U = detail::storage_type<T>;
+  using U = detail::to_storage_type<T>;
   buffer_.template convert<U>();
   for (std::size_t i = 0; i < buffer_.size_; ++i) {
     const T& x = other.value(i);

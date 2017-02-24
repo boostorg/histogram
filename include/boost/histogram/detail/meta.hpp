@@ -34,14 +34,6 @@ struct has_weight_support
 };
 
 template <typename T,
-          typename = typename std::enable_if<
-            (std::is_integral<T>::value &&
-             (sizeof(T) & (sizeof(T) - 1)) == 0 && // size in 1,2,4,8
-             sizeof(T) <= sizeof(uint64_t))
-          >::type>
-struct is_standard_integral {};
-
-template <typename T,
           typename = decltype(std::declval<T&>().size(),
                               std::declval<T&>().increase(0),
                               std::declval<T&>().value(0))>
