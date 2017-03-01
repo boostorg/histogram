@@ -2,33 +2,60 @@
 
 Histograms are a basic tool in statistical analysis. They compactly represent a data set of one or several random variables with acceptable loss of information. It is often more convenient to work with a histogram of input values, rather than with the input values directly, which may consume a lot of memory or disc space and may be slow to process. Quantities of interest, like the mean, variance, or mode may be extracted from the histogram instead of the original data set, often with negligible loss in precision. You may think of a histogram as a lossy compression of statistical data.
 
-This library provides a histogram class with a simple interface, which implements a general multi-dimensional histogram for multi-dimensional input values. Actually, there are two histogram classes with nearly identical interfaces, see the [link histogram.rationale.histogram_types rationale] for more information. If you are unsure, pick the [classref boost::histogram::static_histogram static version]. You need the [classref boost::histogram::dynamic_histogram dynamic version] only if
+[section Create a histogram]
+
+This library provides a histogram class with a simple interface, which implements a general multi-dimensional histogram for multi-dimensional input values. Actually, there are two histogram classes with nearly identical interfaces, see the [link histogram.rationale.histogram_types rationale] for more information. If you are unsure, pick the [classref boost::histogram::static_histogram static version]. You need the [classref boost::histogram::dynamic_histogram dynamic version] only if...
+
 * you want to interoperate with Python, or
+
 * you need a very flexible way to create various histogram configurations at runtime.
 
-To create histograms in default configuration, use the factory function [funcref boost::histogram::make_static_histogram] (or [funcref boost::histogram::make_dynamic_histogram], respectively). The default configuration makes sure that the histogram *just works*, that it is fast and memory conservative and most importantly safe to use.
+To create histograms in default configuration, use the factory function [funcref boost::histogram::make_static_histogram] (or [funcref boost::histogram::make_dynamic_histogram], respectively). The default configuration makes sure that the histogram *just works*. It is fast and memory-efficient and, most importantly, safe to use.
 
-The histogram (either one) supports normal fills (increment a bin counter by one when a value in the bin range) and weighted fills (increment a bin counter by a weight when a value in the bin range). It further provides a non-parametric variance estimate for the bin content in either case.
+[c++]``
+#include <boost/histogram/histogram.hpp>
 
-The histogram is implemented in C++ and has Python-bindings. It passes the language barrier without copying its internal (possibly large) data buffer. The language transparency allows users who do data analysis in Python to create an empty histogram instance in Python, pass it over to a complex C++ code for filling, then analyse the results::
+namespace bh = boost::histogram;
 
-[python]
+int main() {
+	// create a 1d-histogram in default configuration which
+	// covers the real line from -1 to 1 in 100 bins
+	auto h = bh::make_static_histogram(bh::regular_axis(100, -1, 1));
+}
+
 ``
+
+The histogram has Python-bindings. It passes the language barrier without copying its internal (possibly large) data buffer. The language transparency allows users who do data analysis in Python to create an empty histogram instance in Python, pass it over to a complex C++ code for filling, then analyse the results:
+
+[python]``
 
     import histogram as hg
     import complex_cpp_module
 
-    h = hg.histogram(hg.regular_axis(100, 0, 1))
+    h = hg.histogram(hg.regular_axis(100, -1, 1))
 
     complex_cpp_module.run_filling(h)
 
     # h is now filled with data,
     # continue with statistical analysis of h
-
 ``
+
+TODO: talk about axis objects.
+
+[endsect]
+
+[section Fill it]
+
+The histogram (either one) supports normal fills (increment a bin counter by one when a value in the bin range) and weighted fills (increment a bin counter by a weight when a value in the bin range). It further provides a non-parametric variance estimate for the bin content in either case.
+
+[endsect]
+
+[section Work with it]
 
 Histograms can be added if they have the same signature. This is convenient if histograms are filled in parallel on a cluster and then merged (added).
 
 The histogram can be serialized to disk for persistent storage from C++ and pickled in Python. It comes with Numpy support, too. The histogram can be fast-filled with Numpy arrays for maximum performance, and viewed as a Numpy array without copying its memory buffer.
+
+[endsect]
 
 [endsect]
