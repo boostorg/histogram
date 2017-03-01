@@ -2,16 +2,16 @@
 
 This library was designed based on a decade of experience collected in working with big data, more precisely in the field of particle physics and astroparticle physics.
 
-Everything should be guided by principles.
+The design is guided by these principles.
 
 * "Do one thing and do it well", Doug McIlroy
 * The [@https://www.python.org/dev/peps/pep-0020 Zen of Python] (also applies to other languages).
 
-The implementation is build on advice from C++ experts, like Bjarne Stroustrup, Scott Meyers, Herb Sutter, and Andrei Alexandrescu, and Chandler Carruth.
+The library is build on advice from C++ experts, like Bjarne Stroustrup, Scott Meyers, Herb Sutter, and Andrei Alexandrescu, and Chandler Carruth.
 
 [section Structure]
 
-Alexandrescu recommends to split a library into orthogonal components for a maximum of flexibility and extensibility. The library consists of three orthogonal components:
+The library consists of three orthogonal components:
 
 * histogram: Host class which defines the user interface and responsible for holding axis objects. The two implementions differ in the way axis objects are stored, see the [link histogram.rationale.histogram_types histogram section].
 
@@ -23,9 +23,9 @@ Alexandrescu recommends to split a library into orthogonal components for a maxi
 
 [section:histogram_types Histograms types]
 
-Histograms have a number of axes. An axis defines which range of input values is mapped to which bin. The number of axes may be known at compile time or runtime, depending on how the library is used. The library supports several [link histogram.rationale.axis_types axis specializations]. The axis type may be known at compile time or runtime.
+Histograms have a number of axes. An axis defines a mapping of ranges of input values to bin indices. The library supports several [link histogram.rationale.axis_types axis specializations]. The number of axes may be known at compile time or runtime, depending on how the library is used. The axis type may be known at compile time or runtime.
 
-The library therefore provides two histogram implementations, a [classref boost::histogram::static_histogram static] and [classref boost::histogram::dynamic_histogram dynamic] one. The static implementation is faster, if the number of axes is small (see [link histogram.benchmarks benchmark]), because compiler is able to inline more code. It is also able to catch many user errors at compile time rather than runtime.
+The library provides two histogram implementations, a [classref boost::histogram::static_histogram static] and [classref boost::histogram::dynamic_histogram dynamic] one. The static implementation is faster, if the number of axes is small (see [link histogram.benchmarks benchmark]), because the compiler is able to inline more code. It is also able to catch many user errors at compile time rather than runtime.
 
 The static approach is unpractical when the user wants to create histograms at runtime, for example, from Python or from a graphical user interface. Therefore a second implementation is included in which the number of axes and their types may be set at runtime.
 
@@ -33,7 +33,7 @@ The static approach is unpractical when the user wants to create histograms at r
 
 [section:axis_types Axis types]
 
-An axis defines which range of input values is mapped to which bin. The library encapsulates the logic in an axis type. The library comes with five axis types, which implement different specializations.
+An axis defines which range of input values is mapped to which bin. The logic is encapsulated in an axis type. The library comes with five axis types, which implement different specializations.
 
 * [classref boost::histogram::regular_axis] sorts real numbers into bins with equal width.
 * [classref boost::histogram::variable_axis] sorts real numbers into bins with varying width.
@@ -41,21 +41,21 @@ An axis defines which range of input values is mapped to which bin. The library 
 * [classref boost::histogram::integer_axis] is a specialization of a regular axis for covering a continuous range of integers.
 * [classref boost::histogram::category_axis] is a specialization of an integer axis for categorial data.
 
-Library users can create their own axis classes and use them with the library, by providing an implementation compatible with the axis concept.
+Library users can create their own axis classes and use them with the library, by providing a class compatible with the axis concept.
 
 [endsect]
 
 [section:storage_types Storage types]
 
-Dense storage in memory is a must for fast bin lookup, which is a very frequent operation in histogramming data. It also keeps the overhead per bin to a minimum, since no extra memory per bin is needed to store pointers to other bins.
+Dense storage in memory is needed for fast bin lookup, which is a very frequent operation. Dense storage also avoids memory overhead per bin which is otherwise needed to find the next block of memory.
 
-The [@https://en.wikipedia.org/wiki/Curse_of_dimensionality curse of dimensionality] quickly become a problem when the number of histogram axes grows, since the number of bins grows exponentially. High-dimensional histograms can consume GBs of memory.
+The [@https://en.wikipedia.org/wiki/Curse_of_dimensionality curse of dimensionality] quickly becomes a problem when the number of histogram axes grows, since the number of bins grows exponentially. High-dimensional histograms can consume GBs of memory.
 
-Fortunately, splitting a space along many axes typically reduces the number of counts per bin, since counts are spread over many more bins now. This suggests an adaptive solution: start with a minimum amount memory per bin by using the smallest integer type to hold a count. If the bin counter is about to overflow, switch to the next larger integer type to hold the count for the bin.
+However, having many bins typically reduces the number of counts per bin, since the input values are spread over many more bins now. This suggests an adaptive solution: start with a minimum amount of memory per bin by using the smallest integer type to hold a count. If the bin counter is about to overflow, switch to the next larger integer type to hold the count for the bin.
 
 This strategy is implemented by the default [classref boost::histogram::adaptive_storage adaptive_storage] class. It starts with 1 byte per cell and increases up to 8 byte per cell. When even that is not enough, it switches to the [@boost:/libs/multiprecision/index.html Boost.Multiprecision] type `cpp_int`, whose capacity is limited only by available memory. In a sense, [classref boost::histogram::adaptive_storage adaptive_storage] is the opposite of a `std::vector`, which keeps the size of the stored type constant, but grows to hold a larger number of elements. Here, the number of elements remains the same, but the storage grows to hold larger and larger elements.
 
-This approach, while being ultimately safe and memory conservative, also makes the bin access faster in many cases, because compact storage reduces cache-misses. This leads to better performance, despite the instruction overhead needed to implement the polymorphic nature of the adaptive storage.
+This approach is ultimately safe and memory conservative. It also makes bin access faster in many cases, because compact storage reduces cache-misses. This leads to better performance despite the instruction overhead needed to implement the polymorphic nature of the adaptive storage.
 
 [endsect]
 
@@ -63,25 +63,53 @@ This approach, while being ultimately safe and memory conservative, also makes t
 
 The library supports extra bins that count values with fall below or above the range covered by the axis. These extra bins are called overflow and underflow bins, respectively. The extra bins can be turned off individually for each axis at runtime to conserve memory, but are turned on by default. The extra bins do not disturb normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
 
-Under- and overflow bins are useful in one-dimensional histograms, and nearly essential in multi-dimensional histograms.
+Under- and overflow bins are useful in one-dimensional histograms, and nearly essential in multi-dimensional histograms. Here are the advantages:
 
-* No loss: The total sum over all bins is equal to the number of times `fill(...)` was called. Even NaN values are counted (they end up in the underflow bin by convention).
-* Diagnosis: Unexpected extreme values will show up in the extra bins, which otherwise might be overlooked.
-* Projections: In multi-dimensional histograms, an extreme value along one axis may be paired with a normal value along another axis. If under- and overflow bins are missing, the whole pair is lost. This distorts the histogram even along the axis where the value was in range. The extra bins allow one to project (projecting means summing up along the other axes) the histogram to any axis and get the same result as if one had filled a histogram with only that axis.
+* No loss: The total sum over all bin counts is strictly equal to the number of times `fill(...)` was called. Even NaN values are counted, they end up in the underflow bin by convention.
+* Diagnosis: Unexpected extreme values show up in the extra bins, which otherwise might have been overlooked.
+* Projectability: In multi-dimensional histograms, an extreme value along one axis may be paired with a normal value along another axis. If under- and overflow bins are missing, such a value pair is lost. This distorts the histogram even along the axis where the value was in range. When under- and overflow bins are present, it is possible to project (projecting means summing up along the other axes) the histogram onto any axis and get the same result as if one had filled a histogram with only that axis.
 
 [endsect]
 
-[section Weighted counts and variance estimates]
+[section Variance estimates and weighted counts]
 
-A histogram categorizes and counts, so the natural choice for the data type of the counts are integers. However, in particle physics, histograms are also often filled with weighted events, for example, to make sure that two histograms look the same in one variable, while the distribution of another, correlated variable is a subject of study.
+Once a histogram is filled, the count ['k] in a bin can be queried with the `value(...)` method. The histogram also offers a `variance(...)` method, which returns an estimate of the [@https://en.wikipedia.org/wiki/Variance variance] ['s^2] of that count.
 
-The histogram can be filled with either weighted or unweighted counts. In the weighted case, the sum of weights is stored. The histogram provides a variance estimate is both cases. In the unweighted case, the estimate is computed from the count itself, using Poisson-theory. In the weighted case, the sum of squared weights is stored alongside the sum of weights, and used to compute a variance estimate.
+If the input values for the histogram come from a [@https://en.wikipedia.org/wiki/Stochastic_process stochastic process], the variance provides useful additional information. Examples for a stochastic process are a physics experiment or a random person filling out a questionaire (the choices of the person are most likely not random, but if we pick a random person from a group, we randomly sample from a pool of opinions). The variance estimate in a bin tells us how much we can expect the observed value to fluctuate around the [@https://en.wikipedia.org/wiki/Expected_value expected] number of counts ['lambda = p N], where ['p] the probability for a random input value to fall into the range covered by the bin, and ['N] is the total number of input values sampled.
+
+The variance ['s^2] is the square of the standard deviation ['s]. Both are useful in varity of contexts:
+
+* Error bars: Drawing a line (so-called [@https://en.wikipedia.org/wiki/Error_bar error bar]) over the interval ['(k - s, k + s)] is a simple visualisation the expected random scatter of the bin value ['k], if the histogram was cleared and filled again with another independent sample of the same size (e.g. by repeating the physics experiment or asking more people to fill a questionaire). If you compare the result with a fitted model (see next item), about 2/3 of the error bars should overlap with the model.
+* Least-squares fitting: Often you have a model of the expected number of counts ['lambda] per bin, which is a function of parameters with unknown values. A simple method to find good (sometimes the best) estimates for those parameter values is to vary them until the sum of squared residuals ['(k - lambda)^2/s^2] is minimized. This is the [@https://en.wikipedia.org/wiki/Least_squares method of least squares], in which both the bin values ['k] and variance estimates ['s^2] enter.
+* Pull distributions: If you have two histograms filled with the same number of samples and you want to know whether they are in agreement, you can compare the so-called pull distribution. It is formed by subtracting the counts and dividing by the square root of their variances ['(k1 - k2)/sqrt(s1^2 + s2^2)]. If the histograms are identical, the pull distribution randomly scatters around zero, and about 2/3 of the values are in the interval ['[ -1, 1 ]].
+
+Why return the variance ['s^2] and not the standard deviation ['s]? There are two reasons:
+
+* Additivity: [@https://en.wikipedia.org/wiki/Variance#Properties Variances of independent samples can be added] like normal numbers ['Var3 = Var1 + Var2]. This is not true for standard deviations, where the addition law is more complex ['s3 = sqrt(s1^2 + s2^2)]. In that sense, the variance is the more fundamental quantity.
+* Efficiency: Computing the variance requires fewer instructions. Therefore we return the variance and let the user optionally take the square-root to obtain the standard deviation as needed.
+
+How is the variance estimate computed? If we know the expected number of counts ['lambda] per bin, we could compute the variance as ['s^2 = lambda], because counts in a histogram follow the [@https://en.wikipedia.org/wiki/Poisson_distribution Poisson distribution].
+[note
+The Poisson distribution is correct as far as the counts ['k] themselves are of interest. If the fractions per bin ['p = k / N] are of interest, where ['N] is the total number of counts, then the correct distribution to describe the fractions is the [@https://en.wikipedia.org/wiki/Multinomial_distribution multinomial distribution].
+]
+After filling a histogram, we do not know the expected number of counts ['lambda] for any particular bin, but we know the observed count ['k], which is not too far from ['lambda]. We therefore might be tempted to just replace ['lambda] with ['k] in the formula ['s^2 = lambda]. This is in fact the so-called non-parameteric estimate for the variance based on the [@https://en.wikipedia.org/wiki/Plug-in_principle plug-in principle]. Therefore, ['k] is the best (and only) estimate for the variance, if we know nothing more about the underlying stochastic process which generated the inputs (or want to feign ignorance about it).
+
+Now, if the value returned by the method `variance(...)` is just the same as the value return by `value(...)`, why bother with adding a `variance(...)` method, except perhaps for convenience? There is another reason, which becomes apparent if the histograms are filled with weighted counts, which is discussed next.
+
+A histogram categorizes input values and counts how often an input value falls into some range mapped to a bin. The [classref boost::histogram::adaptive_storage standard storage] uses integer types to store these count, see the [link histogram.rationale.storage_types storage section] how integer overflow is avoided. However, sometimes histograms need to be filled with values that have a weight ['w] attached to them. In this case, the corresponding bin counter is not increased by one, but by the passed weight ['w].
+[note
+There are many use cases for weighted fills. Here is an example from particle physics. Let us say the value to be histogrammed is the recorded energy of some particle that hit a detector. Let us further say that if the energy of the particle is small, it is sometimes missed by the detector. If the efficiency of the detector is known as a function of the energy, one can correct for the expected loss by weighting each energy with the inverse of the efficiency to compensate the loss.
+]
+When the [classref boost::histogram::adaptive_storage adaptive_storage] is used, histograms may also be filled with weighted values. The choice of using weighted fills can be made at run-time. If the function `wfill(...)` is used, two doubles per bin are stored (previous counts are automatically converted). The first double keeps track of the sum of weights. The second double keeps track of the sum of weights squared. The latter is the variance estimate in this case and returned by a call to `variance(...)`.
+[note
+This variance estimate can be derived from the [@https://en.wikipedia.org/wiki/Variance#Properties mathematical properties of the variance]. Let us say a bin is filled ['k1] times with weight ['w1]. The sum of weights is then ['w1 k1]. It then follows from the variance properties that ['Var(w1 k1) = w1^2 Var(k1)]. Using the reasoning from before, the estimated variance for ['k1] is ['k1], so that ['Var(w1 k1) = w1^2 Var(k1) = w1^2 k1]. Variances of independent samples are additive. If the bin is further filled ['k2] times with weight ['w2], the sum of weights is ['w1 k1 + w2 k2] with variance ['w1^2 k1 + w2^2 k2]. This also holds for ['k1 = k2 = 1]. Therefore, to incrementally keep track of the variance of the sum of weights, we need to keep track of the sum of weights squared.
+]
 
 [endsect]
 
 [section Python support]
 
-Python is a great language for data analysis and very popular in the data science community. Thus, the library includes Python bindings. The histogram is usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. Users are able to define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
+Python is a popular scripting language in the data science community. Thus, the library provides Python bindings. The histogram may be used as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. Users are able to define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
 
 Data analysis in Python is Numpy-based, so Numpy support is included. If number of dimensions is larger than one, this implementation is faster than the equivalent Numpy functions (while being more flexible), see [link histogram.benchmarks benchmark].
 
