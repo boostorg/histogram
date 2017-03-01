@@ -1,8 +1,14 @@
 [section User guide]
 
-Histograms are a basic tool in every statistical analysis. They compactly represent a data set of one or several random variables with acceptable loss of information. It is often more convenient to work with a histogram of a data distribution, instead of the original distribution which may consume a lot of memory or disc space. Interesting quantities like the mean, variance, or mode may be extracted from the histogram instead of the original data set.
+Histograms are a basic tool in statistical analysis. They compactly represent a data set of one or several random variables with acceptable loss of information. It is often more convenient to work with a histogram of input values, rather than with the input values directly, which may consume a lot of memory or disc space and may be slow to process. Quantities of interest, like the mean, variance, or mode may be extracted from the histogram instead of the original data set, often with negligible loss in precision. You may think of a histogram as a lossy compression of statistical data.
 
-This library implements a single histogram class with a simple interface, which can be used with 1, 2, 3 or N-dimensional data sets (the internal limit is set to 16 dimensions). It supports normal counting and weighted counting, and its provides a data-driven variance estimate for the sum of the counts in either case. The histogram was written so that it *just works*, to be efficient and safe to use in its application domain, completely hiding the implementation details on how it does its counting (*you*, the user, have more important things to worry about).
+This library provides a histogram class with a simple interface, which implements a general multi-dimensional histogram for multi-dimensional input values. Actually, there are two histogram classes with nearly identical interfaces, see the [link histogram.rationale.histogram_types rationale] for more information. If you are unsure, pick the [classref boost::histogram::static_histogram static version]. You need the [classref boost::histogram::dynamic_histogram dynamic version] only if
+* you want to interoperate with Python, or
+* you need a very flexible way to create various histogram configurations at runtime.
+
+To create histograms in default configuration, use the factory function [funcref boost::histogram::make_static_histogram] (or [funcref boost::histogram::make_dynamic_histogram], respectively). The default configuration makes sure that the histogram *just works*, that it is fast and memory conservative and most importantly safe to use.
+
+The histogram (either one) supports normal fills (increment a bin counter by one when a value in the bin range) and weighted fills (increment a bin counter by a weight when a value in the bin range). It further provides a non-parametric variance estimate for the bin content in either case.
 
 The histogram is implemented in C++ and has Python-bindings. It passes the language barrier without copying its internal (possibly large) data buffer. The language transparency allows users who do data analysis in Python to create an empty histogram instance in Python, pass it over to a complex C++ code for filling, then analyse the results::
 

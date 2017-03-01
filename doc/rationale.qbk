@@ -5,9 +5,16 @@ This library was designed based on a decade of experience collected in working w
 The design is guided by these principles.
 
 * "Do one thing and do it well", Doug McIlroy
+
 * The [@https://www.python.org/dev/peps/pep-0020 Zen of Python] (also applies to other languages).
 
 The library is build on advice from C++ experts, like Bjarne Stroustrup, Scott Meyers, Herb Sutter, and Andrei Alexandrescu, and Chandler Carruth.
+
+The library was written with two major goals in mind:
+
+* Provide the same interface for one-dimensional and multi-dimensional histograms. In practice it often happens that the dimenions of a histogram grow as the analysis becomes more complex. The one-dimensional case can be conveniently treated as a special case of the multi-dimensional one.
+
+* Completely hide the details of how the counting is done. Other implementations, notably those in the [@https://root.cern.ch ROOT framework] expose this, which forces the user to make a choice which is potentially faulty. At best, the choice is merely inefficient, but it can lead to serious information loss in form of overflowing or capped counters.
 
 [section Structure]
 
@@ -86,11 +93,10 @@ Why return the variance ['v] and not the standard deviation ['s = sqrt(v)]? Ther
 * Additivity: [@https://en.wikipedia.org/wiki/Variance#Properties Variances of independent samples can be added] like normal numbers ['v3 = v1 + v2]. This is not true for standard deviations, where the addition law is more complex ['s3 = sqrt(s1^2 + s2^2)]. In that sense, the variance is the more fundamental quantity.
 * Efficiency: Computing the variance requires fewer instructions. Therefore we return the variance and let the user optionally take the square-root to obtain the standard deviation as needed.
 
-How is the variance estimate ['v] computed? If we know the expected number of counts ['lambda] per bin, we could compute the variance as ['v = lambda], because counts in a histogram follow the [@https://en.wikipedia.org/wiki/Poisson_distribution Poisson distribution].
-[note
+How is the variance estimate ['v] computed? If we know the expected number of counts ['lambda] per bin, we could compute the variance as ['v = lambda], because counts in a histogram follow the [@https://en.wikipedia.org/wiki/Poisson_distribution Poisson distribution]
+[footnote
 The Poisson distribution is correct as far as the counts ['k] themselves are of interest. If the fractions per bin ['p = k / N] are of interest, where ['N] is the total number of counts, then the correct distribution to describe the fractions is the [@https://en.wikipedia.org/wiki/Multinomial_distribution multinomial distribution].
-]
-After filling a histogram, we do not know the expected number of counts ['lambda] for any particular bin, but we know the observed count ['k], which is not too far from ['lambda]. We therefore might be tempted to just replace ['lambda] with ['k] in the formula ['v = lambda = k]. This is in fact the so-called non-parameteric estimate for the variance based on the [@https://en.wikipedia.org/wiki/Plug-in_principle plug-in principle]. It is the best (and only) estimate for the variance, if we know nothing more about the underlying stochastic process which generated the inputs (or want to feign ignorance about it).
+]. After filling a histogram, we do not know the expected number of counts ['lambda] for any particular bin, but we know the observed count ['k], which is not too far from ['lambda]. We therefore might be tempted to just replace ['lambda] with ['k] in the formula ['v = lambda = k]. This is in fact the so-called non-parameteric estimate for the variance based on the [@https://en.wikipedia.org/wiki/Plug-in_principle plug-in principle]. It is the best (and only) estimate for the variance, if we know nothing more about the underlying stochastic process which generated the inputs (or want to feign ignorance about it).
 
 Now, if the value returned by the method `variance(...)` is just the same as the value return by `value(...)`, why bother with adding a `variance(...)` method, except perhaps for convenience? There is another reason, which becomes apparent if the histograms are filled with weighted counts, which is discussed next.
 
