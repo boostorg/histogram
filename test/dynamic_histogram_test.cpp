@@ -18,6 +18,7 @@
 #include <limits>
 #include <vector>
 #include <array>
+#include <algorithm>
 
 int main() {
     using namespace boost::histogram;
@@ -502,6 +503,16 @@ int main() {
         BOOST_TEST_THROWS(a.value(index), std::out_of_range);
         BOOST_TEST_THROWS(a.variance(5), std::out_of_range);
         BOOST_TEST_THROWS(a.variance(index), std::out_of_range);
+    }
+
+    // functional programming
+    {
+        auto v = std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        auto h = make_dynamic_histogram(integer_axis(0, 9));
+        std::for_each(v.begin(), v.end(),
+            [&h](int x) { h.wfill(2.0, x); }
+        );
+        BOOST_TEST_EQ(h.sum(), 20.0);
     }
 
     // histogram_serialization

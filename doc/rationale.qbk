@@ -12,19 +12,19 @@ The library is build on advice from C++ experts, like Bjarne Stroustrup, Scott M
 
 The library was written with two major goals in mind:
 
-* Provide the same interface for one-dimensional and multi-dimensional histograms. In practice it often happens that the dimenions of a histogram grow as the analysis becomes more complex. The one-dimensional case can be conveniently treated as a special case of the multi-dimensional one.
+* Provide the same interface for one-dimensional and multi-dimensional histograms. This makes the interface easier to learn. A consistent multi-dimensional interface makes it also easier to change the code, if a histogram is revised to have more axes. The one-dimensional case can be conveniently treated as a special case of the multi-dimensional one. Thanks to template metaprogramming, the compiler can emit optimised code for the one-dimensional case.
 
-* Completely hide the details of how the counting is done. Other implementations, notably those in the [@https://root.cern.ch ROOT framework] expose this, which forces the user to make a choice which is potentially faulty. At best, the choice is merely inefficient, but it can lead to serious information loss in form of overflowing or capped counters.
+* Completely hide the details of how the counting is done. Other implementations, notably those in the [@https://root.cern.ch ROOT framework] expose this, which forces the user to make a choice which is potentially dangerous. At best, the choice is merely inefficient, but it can lead to information loss in form of overflowing or capped counters.
 
 [section Structure]
 
 The library consists of three orthogonal components:
 
-* histogram: Host class which defines the user interface and responsible for holding axis objects. The two implementions differ in the way axis objects are stored, see the [link histogram.rationale.histogram_types histogram section].
+* [link histogram.rationale.histogram_types histogram types]: Host class which defines the user interface and responsible for holding axis objects. The two implementions differ in the way axis objects are stored.
 
-* axis: Defines which value range is mapped to which bin. Several axis types are provided which implement different specializations, see the [link histogram.rationale.axis_types axis section].
+* [link histogram.rationale.axis_types axis types]: Defines how value ranges are mapped to bins. Several axis types are provided which implement different specializations.
 
-* storage: Manages memory to hold bin counts. The requirements for a storage differ from those of an STL container. Two implementations are provided, see the [link histogram.rationale.storage_types storage section].
+* [link histogram.rationale.storage_types storage types]: Manages memory to hold bin counts. The requirements for a storage differ from those of an STL container. Two implementations are provided.
 
 [endsect]
 
@@ -66,26 +66,30 @@ This approach is ultimately safe and memory conservative. It also makes bin acce
 
 [endsect]
 
-[section Overflow and underflow bins]
+[section:uoflow Overflow and underflow bins]
 
-The library supports extra bins that count values which fall below or above the range covered by the axis. These extra bins are called under- and overflow bins, respectively. The extra bins can be turned off individually for each axis at runtime to conserve memory, but are turned on by default. The extra bins do not disturb normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
+The library supports extra bins that count values which fall below or above the range covered by the axis. These extra bins are called under- and overflow bins, respectively. The extra bins can be turned off individually for each axis at runtime to conserve memory, but are turned on by default. The extra bins do not interfere with normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
 
 Under- and overflow bins are useful in one-dimensional histograms, and nearly essential in multi-dimensional histograms. Here are the advantages:
 
 * No loss: The total sum over all bin counts is strictly equal to the number of times `fill(...)` was called. Even NaN values are counted, they end up in the underflow bin by convention.
+
 * Diagnosis: Unexpected extreme values show up in the extra bins, which otherwise might have been overlooked.
+
 * Projectability: In multi-dimensional histograms, an out-of-range value along one axis may be paired with an in-range value along another axis. If under- and overflow bins are missing, such a value pair is lost. This distorts the histogram even along the axis where the value was in range. When under- and overflow bins are present, it is possible to project (projecting means summing up along all other axes) the histogram onto any axis and get the same result as if one had filled a histogram with only that axis.
 
 [endsect]
 
-[section Variance estimates and weighted counts]
+[section:weights Variance estimates]
 
 Once a histogram is filled, the count ['k] in a bin can be queried with the `value(...)` method. The histogram also offers a `variance(...)` method, which returns an estimate of the [@https://en.wikipedia.org/wiki/Variance variance] ['v] of that count.
 
-If the input values for the histogram come from a [@https://en.wikipedia.org/wiki/Stochastic_process stochastic process], the variance provides useful additional information. Examples for a stochastic process are a physics experiment or a random person filling out a questionaire (the choices of the person are most likely not random, but if we pick a random person from a group, we randomly sample from a pool of opinions). The variance ['v] is the square of the standard deviation. The standard deviation in a bin tells us how much we can expect the observed value to fluctuate around the [@https://en.wikipedia.org/wiki/Expected_value expected] number of counts ['lambda = p N], where ['p] the probability for a random input value to fall into the range covered by the bin, and ['N] is the total number of input values sampled. Some examples how these two are used:
+If the input values for the histogram come from a [@https://en.wikipedia.org/wiki/Stochastic_process stochastic process], the variance provides useful additional information. Examples for a stochastic process are a physics experiment or a random person filling out a questionaire[footnote The choices of the person are most likely not random, but if we pick a random person from a group, we randomly sample from a pool of opinions]. The variance ['v] is the square of the standard deviation. The standard deviation in a bin tells us how much we can expect the observed value to fluctuate around the [@https://en.wikipedia.org/wiki/Expected_value expected] number of counts ['lambda = p N], where ['p] the probability for a random input value to fall into the range covered by the bin, and ['N] is the total number of input values sampled. Some examples how these two are used:
 
-* Error bars: Drawing a line (so-called [@https://en.wikipedia.org/wiki/Error_bar error bar]) over the interval ['(k - sqrt(v), k + sqrt(v))] is a simple visualisation the expected random scatter of the bin value ['k], if the histogram was cleared and filled again with another independent sample of the same size (e.g. by repeating the physics experiment or asking more people to fill a questionaire). If you compare the result with a fitted model (see next item), about 2/3 of the error bars should overlap with the model.
+* Error bars: Drawing a line (so-called [@https://en.wikipedia.org/wiki/Error_bar error bar]) over the interval ['(k - sqrt(v), k + sqrt(v))] is a simple visualisation of the expected random scatter of the bin value ['k], if the histogram was cleared and filled again with another independent sample of the same size (e.g. by repeating the physics experiment or asking more people to fill a questionaire). If you compare the result with a fitted model (see next item), about 2/3 of the error bars should overlap with the model.
+
 * Least-squares fitting: Often you have a model of the expected number of counts ['lambda] per bin, which is a function of parameters with unknown values. A simple method to find good (sometimes the best) estimates for those parameter values is to vary them until the sum of squared residuals ['(k - lambda)^2/v] is minimized. This is the [@https://en.wikipedia.org/wiki/Least_squares method of least squares], in which both the bin values ['k] and variance estimates ['v] enter.
+
 * Pull distributions: If you have two histograms filled with the same number of samples and you want to know whether they are in agreement, you can compare the so-called pull distribution. It is formed by subtracting the counts and dividing by the square root of their variances ['(k1 - k2)/sqrt(v1 + v2)]. If the histograms are identical, the pull distribution randomly scatters around zero, and about 2/3 of the values are in the interval ['[ -1, 1 ]].
 
 Why return the variance ['v] and not the standard deviation ['s = sqrt(v)]? There are two reasons:
@@ -100,13 +104,17 @@ The Poisson distribution is correct as far as the counts ['k] themselves are of 
 
 Now, if the value returned by the method `variance(...)` is just the same as the value return by `value(...)`, why bother with adding a `variance(...)` method, except perhaps for convenience? There is another reason, which becomes apparent if the histograms are filled with weighted counts, which is discussed next.
 
+[endsect]
+
+[section:weigths Support of weights]
+
 A histogram categorizes input values and increments a bin counter if an input value falls into the value range covered by that bin. The [classref boost::histogram::adaptive_storage standard storage] uses integer types to store these counts, see the [link histogram.rationale.storage_types storage section] how integer overflow is avoided. However, sometimes histograms need to be filled with values that have a weight ['w] attached to them. In this case, the corresponding bin counter is not increased by one, but by the passed weight ['w].
 [note
 There are many use cases for weighted fills. Here is an example from particle physics. Let us say the value to be histogrammed is the recorded energy of some particle that hit a detector. Let us further say that the detector sometimes misses the particle, if its energy is small (because it does not generate enough signal to be notice above the noise level). If the efficiency of the detector is known as a function of the energy, one can correct for the expected loss by weighting each energy with the inverse of the efficiency to on average compensate the loss.
 ]
 When the [classref boost::histogram::adaptive_storage adaptive_storage] is used, histograms may also be filled with weighted values. The choice of using weighted fills can be made at run-time. If the function `wfill(...)` is used, two doubles per bin are stored (previous integer counts are automatically converted). The first double keeps track of the sum of weights. The second double keeps track of the sum of weights squared. The latter is the variance estimate in this case and returned by a call to `variance(...)`.
 [note
-This variance estimate can be derived from the [@https://en.wikipedia.org/wiki/Variance#Properties mathematical properties of the variance]. Let us say a bin is filled ['k1] times with weight ['w1]. The sum of weights is then ['w1 k1]. It then follows from the variance properties that ['Var(w1 k1) = w1^2 Var(k1)]. Using the reasoning from before, the estimated variance of ['k1] is ['k1], so that ['Var(w1 k1) = w1^2 Var(k1) = w1^2 k1]. Variances of independent samples are additive. If the bin is further filled ['k2] times with weight ['w2], the sum of weights is ['w1 k1 + w2 k2], with variance ['w1^2 k1 + w2^2 k2]. This also holds for ['k1 = k2 = 1]. Therefore, to incrementally keep track of the variance of the sum of weights, we need to keep track of the sum of weights squared.
+This variance estimate can be derived from the [@https://en.wikipedia.org/wiki/Variance#Properties mathematical properties of the variance]. Let us say a bin is filled ['k1] times with weight ['w1]. The sum of weights is then ['w1 k1]. It then follows from the variance properties that ['Var(w1 k1) = w1^2 Var(k1)]. Using the reasoning from before, the estimated variance of ['k1] is ['k1], so that ['Var(w1 k1) = w1^2 Var(k1) = w1^2 k1]. Variances of independent samples are additive. If the bin is further filled ['k2] times with weight ['w2], the sum of weights is ['w1 k1 + w2 k2], with variance ['w1^2 k1 + w2^2 k2]. This also holds for ['k1 = k2 = 1]. Therefore, the sum of weights ['w[i]] has variance sum of ['w[i]^2]. In other words, to incrementally keep track of the variance of the sum of weights, we need to keep track of the sum of weights squared.
 ]
 
 [endsect]

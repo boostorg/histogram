@@ -60,20 +60,20 @@ int main() {
 	// do something with h
 ``
 
-We used an [classref boost::histogram::integer_axis integer_axis] here, because the input values are integers and we want to have one bin for each eye value. Note, the specialised [classref boost::histogram::polar_axis polar_axis] never creates under- and overflow bins, because the axis is circular. The highest bin is attached to the lowest bin, so to say.
+Using a [classref boost::histogram::integer_axis integer_axis] here is convenient, because the input values are integers and we want one bin for each eye value.
+[note The specialised [classref boost::histogram::polar_axis polar_axis] never creates under- and overflow bins, because the axis is circular. The highest bin wrapps around to the lowest bin and vice versa, so there is no need for extra bins.]
 
 The histogram has Python-bindings, and you can also create histograms in Python. In fact, it is quite useful workflow to create histograms in a flexible way in Python and then pass them to some C++ code which fills them. You rarely want to change the way the histogram is filled, but you probably want to interactively iterate on how the axes are defined. Here is an example:
 
 [python]``
 
-import histogram as hg
+import histogram as bh
 import complex_cpp_module
 
-h = hg.histogram(hg.regular_axis(100, -1, 1))
+h = bh.histogram(bh.regular_axis(100, -1, 1))
 
 complex_cpp_module.run_filling(h)
 
-# h is now filled with data,
 # continue with statistical analysis of h
 ``
 
@@ -92,17 +92,80 @@ int main() {
 	v.push_back(bh::integer_axis(1, 6));
 	auto h = bh::dynamic_histogram<>(v.begin(), v.end());
 	// do something with h
+}
+``
+
+[note In all these examples, memory for bin counters is allocated lazily. Allocation is deferred to the first call to `fill(...)` or `wfill(...)`, which are described in the next section. This means that memory allocation exceptions are possibly thrown later.]
+
+[endsect]
+
+[section Fill a histogram with data]
+
+The histogram (either type) supports two kinds of fills.
+
+* `fill(...)` initiates a normal fill, which increments a bin counter by one when a value is in the bin range
+
+* `wfill(...)` initiates a weighted fill, which increment a bin counter by a weight when a value is in the bin range.
+
+Arguments for supporting weighted fills are given [link histogram.rationale.weights in the rationale]. Do not use `wfill(...)` if all your weights are equal to 1. Use `fill(...)` in this case, because it is more efficient. You are free to mix the two calls.
+
+Here is an example which fills a 2d-histogram with 1000 pairs of normal distributed numbers in C++:
+[c++]``
+#include <boost/histogram/histogram.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/normal_distribution.hpp>
+
+int main() {
+	using namespace boost;
+	random::mt19937 gen;
+	random::normal_distribution<> norm();
+	auto h = histogram::make_static_histogram(
+		histogram::regular_axis(100, -5, 5, "x"),
+		histogram::regular_axis(100, -5, 5, "y")
+	);
+	for (int i = 0; i < 1000; ++i)
+		h.fill(norm(gen), norm(gen));
+	// h is now filled
+}
+``
+
+Here is a second example which using wfill and a functional programming style:
+[c++]``
+#include <boost/histogram/histogram.hpp>
+#include <algorithm>
+
+int main() {
+	namespace bh = boost::histogram;
+	auto h = bh::make_static_histogram(bh::integer_axis(0, 9));
+	std::vector<int> v{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+	std::for_each(v.begin(), v.end(), [&h](int x) { h.wfill(2.0, x); });
+	// h is now filled
+}
+``
+
+You can also fill the histogram from Python. If you use pass the input values as numpy arrays, this is efficient. Looping over a collection in Python, however, is very slow and should be avoided:
+[python]``
+import histogram as bh
+import numpy as np
+
+h = bh.histogram(bh.integer_axis(0, 9))
+
+# don't do this, it is very slow
+for i in range(10):
+	h.fill(i)
+
+# do this instead, it is very fast
+v = np.arange(10)
+h.fill(v) # fills the histogram with each value in the array
 ``
 
 [endsect]
 
-[section Fill it]
+[section Work with a filled histogram]
 
-The histogram (either one) supports normal fills (increment a bin counter by one when a value in the bin range) and weighted fills (increment a bin counter by a weight when a value in the bin range). It further provides a non-parametric variance estimate for the bin content in either case.
+TODO: explain how to access values and variances, operators
 
-[endsect]
-
-[section Work with it]
+The histogram provides a non-parametric variance estimate for the bin count in either case.
 
 Histograms can be added if they have the same signature. This is convenient if histograms are filled in parallel on a cluster and then merged (added).
 
