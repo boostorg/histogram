@@ -121,6 +121,16 @@ int main() {
         BOOST_TEST(h2 == h);
     }
 
+    // init_6
+    {
+        auto v = std::vector<dynamic_histogram<>::axis_type>();
+        v.push_back(regular_axis(100, -1, 1));
+        v.push_back(integer_axis(1, 6));
+        auto h = dynamic_histogram<>(v.begin(), v.end());
+        BOOST_TEST_EQ(h.axis(0), v[0]);
+        BOOST_TEST_EQ(h.axis(1), v[1]);
+    }
+
     // copy_ctor
     {
         auto h = make_dynamic_histogram_with<adaptive_storage<>>(integer_axis(0, 1),

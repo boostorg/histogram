@@ -51,23 +51,10 @@ public:
 
   template <typename Iterator,
             typename = detail::is_iterator<Iterator>>
-  dynamic_histogram(Iterator axes_begin, Iterator axes_end)
+  dynamic_histogram(Iterator axes_begin, Iterator axes_end) :
+    axes_(std::distance(axes_begin, axes_end))
   {
     std::copy(axes_begin, axes_end, axes_.begin());
-    storage_ = Storage(field_count());
-  }
-
-  explicit
-  dynamic_histogram(const axes_type& axes) :
-    axes_(axes)
-  {
-    storage_ = Storage(field_count());
-  }
-
-  explicit
-  dynamic_histogram(axes_type&& axes) :
-    axes_(std::move(axes))
-  {
     storage_ = Storage(field_count());
   }
 
@@ -346,18 +333,18 @@ private:
 template <typename... Axes>
 inline
 dynamic_histogram<>
-make_dynamic_histogram(const Axes&... axes)
+make_dynamic_histogram(Axes&&... axes)
 {
-  return dynamic_histogram<>(axes...);
+  return dynamic_histogram<>(std::forward<Axes>(axes)...);
 }
 
 
 template <typename Storage, typename... Axes>
 inline
 dynamic_histogram<default_axes, Storage>
-make_dynamic_histogram_with(const Axes&... axes)
+make_dynamic_histogram_with(Axes&&... axes)
 {
-  return dynamic_histogram<default_axes, Storage>(axes...);
+  return dynamic_histogram<default_axes, Storage>(std::forward<Axes>(axes)...);
 }
 
 

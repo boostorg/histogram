@@ -52,10 +52,18 @@ histogram_init(python::tuple args, python::dict kwargs) {
     throw_error_already_set();
   }
 
+  const unsigned dim = len(args) - 1;
+  if (dim >= BOOST_HISTOGRAM_AXIS_LIMIT) {
+    std::ostringstream os;
+    os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
+    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
+    throw_error_already_set();
+  }
+
   // normal constructor
   dynamic_histogram<>::axes_type axes;
-  for (unsigned i = 1, n = len(args); i < n; ++i) {
-    object pa = args[i];
+  for (unsigned i = 0; i < dim; ++i) {
+    object pa = args[i + 1];
     extract<regular_axis> er(pa);
     if (er.check()) { axes.push_back(er()); continue; }
     extract<polar_axis> ep(pa);
@@ -71,7 +79,7 @@ histogram_init(python::tuple args, python::dict kwargs) {
     PyErr_SetString(PyExc_TypeError, msg.c_str());
     throw_error_already_set();
   }
-  return pyinit(std::move(axes));
+  return pyinit(axes.begin(), axes.end());
 }
 
 python::object
@@ -170,13 +178,19 @@ histogram_fill(python::tuple args, python::dict kwargs) {
     throw_error_already_set();
   }
 
+  if (dim >= BOOST_HISTOGRAM_AXIS_LIMIT) {
+    std::ostringstream os;
+    os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
+    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
+    throw_error_already_set();
+  }
+
   double v[BOOST_HISTOGRAM_AXIS_LIMIT];
   for (unsigned i = 0; i < dim; ++i)
     v[i] = extract<double>(args[1 + i]);
 
   if (ow.is_none()) {
     self.fill(v, v+self.dim());
-
   } else {
     const double w = extract<double>(ow);
     self.wfill(w, v, v+self.dim());
@@ -274,7 +288,7 @@ void register_histogram()
   docstring_options dopt(true, true, false);
 
   // used to pass arguments from raw python init to specialized C++ constructor
-  class_<dynamic_histogram<>::axes_type>("axes", no_init);
+  class_<dynamic_histogram<>::axes_type::iterator>("axes_iterator", no_init);
 
   class_<dynamic_histogram<>, boost::shared_ptr<dynamic_histogram<>>>("histogram",
     "N-dimensional histogram for real-valued data.",
@@ -284,7 +298,8 @@ void register_histogram()
        "\nPass one or more axis objects to define"
        "\nthe dimensions of the dynamic_histogram<>.")
     // shadowed C++ ctors
-    .def(init<const dynamic_histogram<>::axes_type&>())
+    .def(init<dynamic_histogram<>::axes_type::iterator,
+              dynamic_histogram<>::axes_type::iterator>())
     .add_property("__array_interface__",
         &storage_access::array_interface)
     .add_property("dim", &dynamic_histogram<>::dim,

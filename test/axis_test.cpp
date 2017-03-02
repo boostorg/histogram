@@ -158,7 +158,7 @@ int main() {
             BOOST_TEST(!(a == axis_t()));
             BOOST_TEST_EQ(a, a);
         }
-        BOOST_TEST(!(axes == std::vector<axis_t>()));
+        BOOST_TEST_NOT(axes == std::vector<axis_t>());
         BOOST_TEST(axes == std::vector<axis_t>(axes));
     }
 
