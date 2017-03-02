@@ -4,13 +4,13 @@ Histograms are a basic tool in statistical analysis. They compactly represent a 
 
 [section Create a histogram]
 
-This library provides a histogram class with a simple interface, which implements a general multi-dimensional histogram for multi-dimensional input values. Actually, there are two histogram classes with nearly identical interfaces, see the [link histogram.rationale.histogram_types rationale] for more information. If you are unsure, pick the [classref boost::histogram::static_histogram static version]. You need the [classref boost::histogram::dynamic_histogram dynamic version] only if...
+This library provides a class with a simple interface, which implements a general multi-dimensional histogram for multi-dimensional input values. Actually, there are two histogram classes with nearly identical interfaces, see the [link histogram.rationale.histogram_types rationale] for more information. If you are unsure, pick the [classref boost::histogram::static_histogram static_histogram]. You need the [classref boost::histogram::dynamic_histogram dynamic_histogram] if...
 
 * you want to interoperate with Python, or
 
 * you need a very flexible way to create various histogram configurations at runtime.
 
-To create histograms in default configuration, use the factory function [funcref boost::histogram::make_static_histogram] (or [funcref boost::histogram::make_dynamic_histogram], respectively). The default configuration makes sure that the histogram *just works*. It is fast and memory-efficient and, most importantly, safe to use.
+To create histograms in default configuration, use the factory function [funcref boost::histogram::make_static_histogram] (or [funcref boost::histogram::make_dynamic_histogram], respectively). The default configuration makes sure that the histogram just works. It is fast, memory-efficient, and safe to use.
 
 [c++]``
 #include <boost/histogram/histogram.hpp>
@@ -21,26 +21,78 @@ int main() {
 	// create a 1d-histogram in default configuration which
 	// covers the real line from -1 to 1 in 100 bins
 	auto h = bh::make_static_histogram(bh::regular_axis(100, -1, 1));
+	// do something with h
 }
-
 ``
 
-The histogram has Python-bindings. It passes the language barrier without copying its internal (possibly large) data buffer. The language transparency allows users who do data analysis in Python to create an empty histogram instance in Python, pass it over to a complex C++ code for filling, then analyse the results:
+The function `make_static_histogram(...)` takes a variable number of axis objects as arguments. Axis objects define how input values are mapped to bins. If you provide one axis, the histogram is one-dimensional. If you provide two, it is two-dimensional, and so on.
+
+Which axis class should I use? Check the class descriptions of [classref boost::histogram::regular_axis regular_axis], [classref boost::histogram::variable_axis variable_axis], [classref boost::histogram::polar_axis polar_axis], [classref boost::histogram::integer_axis integer_axis], and [classref boost::histogram::category_axis category_axis] for advice. Also see the [link histogram.rationale.axis_types rationale about axis types] for more information. The [classref boost::histogram::regular_axis regular_axis] should be your default choice, because it is easy to use and provides fast mapping. If you have a continous range of integers, the [classref boost::histogram::integer_axis integer_axis] is faster.
+
+Optionally, you can attach a label to an axis, to help you remember what the axis is categorising. For example, you have census data and you want to investigate how yearly income correlates with age, you could do:
+
+[c++]``
+#include <boost/histogram/histogram.hpp>
+
+namespace bh = boost::histogram;
+
+int main() {
+	// create a 2d-histogram in default configuration with an "age" axis
+	// and an "income" axis
+	auto h = bh::make_static_histogram(bh::regular_axis(20, 0, 100, "age in years"),
+	                                   bh::regular_axis(20, 0, 100, "yearly income in $1000"));
+	// do something with h
+}
+``
+
+Without the labels it would be difficult to remember which axis was covering which quantity. To avoid errors, labels cannot be changed once the axis is passed in the constructor of the histogram.
+
+By default, axis objects add under- and overflow bins to the covered range. Therefore, if you create an axis with 20 bins, it will actually have 22 bins. These extra bins are often very useful and in most cases you want to have them. However, if you know for sure that the input is strictly bounded, you can disable the extra bins:
+
+[c++]``
+#include <boost/histogram/histogram.hpp>
+
+namespace bh = boost::histogram;
+
+int main() {
+	// create a 1d-histogram for dice throws, eyes are always between 1 and 6
+	auto h = bh::make_static_histogram(bh::integer_axis(1, 6, "eyes", false));
+	// do something with h
+``
+
+We used an [classref boost::histogram::integer_axis integer_axis] here, because the input values are integers and we want to have one bin for each eye value. Note, the specialised [classref boost::histogram::polar_axis polar_axis] never creates under- and overflow bins, because the axis is circular. The highest bin is attached to the lowest bin, so to say.
+
+The histogram has Python-bindings, and you can also create histograms in Python. In fact, it is quite useful workflow to create histograms in a flexible way in Python and then pass them to some C++ code which fills them. You rarely want to change the way the histogram is filled, but you probably want to interactively iterate on how the axes are defined. Here is an example:
 
 [python]``
 
-    import histogram as hg
-    import complex_cpp_module
+import histogram as hg
+import complex_cpp_module
 
-    h = hg.histogram(hg.regular_axis(100, -1, 1))
+h = hg.histogram(hg.regular_axis(100, -1, 1))
 
-    complex_cpp_module.run_filling(h)
+complex_cpp_module.run_filling(h)
 
-    # h is now filled with data,
-    # continue with statistical analysis of h
+# h is now filled with data,
+# continue with statistical analysis of h
 ``
 
-TODO: talk about axis objects.
+You do not need the factory functions in Python, you can straight-forwardly create a histogram object with a variable number of axis arguments. The histogram object passes the language barrier without copying its internal (possibly large) data buffer, so this workflow is efficient.
+
+When you work with the [classref boost::histogram::dynamic_histogram dynamic_histogram], you can also create a histogram from a runtime collection of axis objects:
+
+[c++]``
+#include <boost/histogram/histogram.hpp>
+
+namespace bh = boost::histogram;
+
+int main() {
+	auto v = std::vector<bh::dynamic_histogram<>::axis_type>();
+	v.push_back(bh::regular_axis(100, -1, 1));
+	v.push_back(bh::integer_axis(1, 6));
+	auto h = bh::dynamic_histogram<>(v.begin(), v.end());
+	// do something with h
+``
 
 [endsect]
 
