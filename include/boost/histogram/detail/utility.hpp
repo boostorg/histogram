@@ -8,7 +8,6 @@
 #define _BOOST_HISTOGRAM_DETAIL_UTILITY_HPP_
 
 #include <ostream>
-#include <boost/utility/string_view.hpp>
 
 namespace boost {
 namespace histogram {
