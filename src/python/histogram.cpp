@@ -11,7 +11,6 @@
 #include <boost/histogram/serialization.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
-#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #ifdef HAVE_NUMPY
 # define NO_IMPORT_ARRAY
@@ -204,8 +203,16 @@ histogram_value(python::tuple args, python::dict kwargs) {
   using namespace python;
   const dynamic_histogram<>& self = extract<const dynamic_histogram<>&>(args[0]);
 
-  if (self.dim() != (len(args) - 1)) {
+  const unsigned dim = len(args) - 1;
+  if (self.dim() != dim) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
+    throw_error_already_set();
+  }
+
+  if (dim >= BOOST_HISTOGRAM_AXIS_LIMIT) {
+    std::ostringstream os;
+    os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
+    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
     throw_error_already_set();
   }
 
@@ -226,8 +233,16 @@ histogram_variance(python::tuple args, python::dict kwargs) {
   using namespace python;
   const dynamic_histogram<>& self = extract<const dynamic_histogram<>&>(args[0]);
 
-  if (self.dim() != (len(args) - 1)) {
+  const unsigned dim = len(args) - 1;
+  if (self.dim() != dim) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
+    throw_error_already_set();
+  }
+
+  if (dim >= BOOST_HISTOGRAM_AXIS_LIMIT) {
+    std::ostringstream os;
+    os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
+    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
     throw_error_already_set();
   }
 
