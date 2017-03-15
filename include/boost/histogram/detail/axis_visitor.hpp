@@ -86,7 +86,7 @@ namespace detail {
       const int uoflow = a.uoflow();
       // set stride to zero if 'j' is not in range,
       // this communicates the out-of-range condition to the caller
-      stride *= (j >= -uoflow) * (j < (a.bins() + uoflow));
+      stride *= (j >= -uoflow) & (j < (a.bins() + uoflow));
       j += (j < 0) * (a.bins() + 2); // wrap around if in < 0
       out += j * stride;
       #pragma GCC diagnostic ignored "-Wstrict-overflow"
@@ -103,6 +103,8 @@ namespace detail {
     template <typename A>
     void
     operator()(const A& a) {
+      // the following is highly optimized code that runs in a hot loop;
+      // please measure the performance impact of changes
       // j is guaranteed to be in range [-1, bins]
       int j = a.index(x);
       j += (j < 0) * (a.bins() + 2); // wrap around if j < 0

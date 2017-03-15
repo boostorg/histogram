@@ -37,17 +37,6 @@ inline void serialize(Archive& ar, weight& wt, unsigned /* version */)
   ar & wt.w2;
 }
 
-template <class Archive>
-inline void serialize(Archive& ar, tiny_string& s, unsigned /* version */)
-{
-  auto n = s.size();
-  ar & n;
-  if (Archive::is_loading::value) {
-    s.ptr_.reset(n ? new char[n+1] : nullptr);
-  }
-  ar & serialization::make_array(s.ptr_.get(), s.ptr_ ? n+1 : 0u);
-}
-
 } // NS detail
 
 template <class Archive, typename Container>
@@ -131,8 +120,7 @@ inline void serialize(Archive& ar, category_axis & axis, unsigned /* version */)
 {
   ar & axis.size_;
   if (Archive::is_loading::value) {
-    axis.ptr_.reset(axis.size_ ?
-                    new detail::tiny_string[axis.size_] : nullptr);
+    axis.ptr_.reset(new std::string[axis.size_]);
   }
   ar & boost::serialization::make_array(axis.ptr_.get(), axis.size_);
 }

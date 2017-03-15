@@ -12,12 +12,12 @@ if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
-add_definitions(-Wall -pedantic -std=c++11)
+add_definitions(-Wall -std=c++11)
 
 set(STD_LIBRARIES stdc++ m)
 
 if(BUILD_PYTHON)
-  find_package(Boost 1.55 REQUIRED
+  find_package(Boost 1.61 REQUIRED
                COMPONENTS iostreams serialization python)
   if(PYTHON_VERSION)
     find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
@@ -57,8 +57,8 @@ endif()
 include_directories(../include ${Boost_INCLUDE_DIRS})
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
-  add_definitions(-O0 -g -fno-sanitize-recover=undefined,integer)
-  set(CMAKE_LD_FLAGS ${CMAKE_LD_FLAGS} -fno-sanitize-recover=undefined,integer)
+  add_definitions(-O0 -g -fno-sanitize-recover=undefined)
+  set(CMAKE_LD_FLAGS ${CMAKE_LD_FLAGS} -fno-sanitize-recover=undefined)
   message(STATUS "Build type: DEBUG [optimizations off]")
 elseif(CMAKE_BUILD_TYPE STREQUAL "cov")
   add_definitions(-O0 -g)

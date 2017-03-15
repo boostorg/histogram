@@ -37,14 +37,14 @@ variable_axis_init(python::tuple args, python::dict kwargs) {
         v.push_back(extract<double>(args[i]));
     }
 
-    const char* label = nullptr;
+    std::string label;
     bool uoflow = true;
     while (len(kwargs) > 0) {
         tuple kv = kwargs.popitem();
         std::string k = extract<std::string>(kv[0]);
         object v = kv[1];
         if (k == "label")
-            label = extract<const char*>(v);
+            label = extract<std::string>(v);
         else if (k == "uoflow")
             uoflow = extract<bool>(v);
         else {
@@ -110,13 +110,13 @@ axis_len(const integer_axis& t) {
 }
 
 template <typename T>
-typename T::value_type
+python::object
 axis_getitem(const T& t, int i) {
     if (i == axis_len(t)) {
         PyErr_SetString(PyExc_StopIteration, "no more");
         python::throw_error_already_set();
     }
-    return t[i];
+    return python::object(t[i]);
 }
 
 template <typename T>
@@ -133,23 +133,24 @@ struct axis_suite : public python::def_visitor<axis_suite<T> > {
     template <typename Class, typename U>
     static
     typename std::enable_if<std::is_base_of<axis_with_label, U>::value, void>::type
-    add_axis_label(Class& cl) {
+    label(Class& cl) {
         cl.add_property("label",
-                        (const char*(U::*)() const) &U::label,
-                        (void(U::*)(const char*)) &U::label,
+                        make_function((const std::string&(U::*)() const) &U::label,
+                                      python::return_value_policy<python::copy_const_reference>()),
+                        (void(U::*)(const std::string&)) &U::label,
                         "Name or description for the axis.");
     }
 
     template <typename Class, typename U>
     static
     typename std::enable_if<!std::is_base_of<axis_with_label, U>::value, void>::type
-    add_axis_label(Class& cl) {}
+    label(Class& cl) {}
 
     template <class Class>
     static void
     visit(Class& cl)
     {
-        add_axis_label<Class, T>(cl);
+        label<Class, T>(cl);
         cl.add_property("bins", &T::bins);
         cl.add_property("shape", &T::shape);
         cl.def("index", &T::index,
@@ -191,9 +192,9 @@ void register_axis_types()
     "An axis for real-valued data and bins of equal width."
     "\nBinning is a O(1) operation.",
     no_init)
-    .def(init<unsigned, double, double, const char*, bool>(
+    .def(init<unsigned, double, double, const std::string&, bool>(
          (arg("self"), arg("bin"), arg("min"), arg("max"),
-          arg("label") = static_cast<const char*>(nullptr),
+          arg("label") = std::string(),
           arg("uoflow") = true)))
     .def(axis_suite<regular_axis>())
     ;
@@ -204,9 +205,9 @@ void register_axis_types()
     "\nsince the axis is circular and wraps around after 2pi."
     "\nBinning is a O(1) operation.",
     no_init)
-    .def(init<unsigned, double, const char*>(
+    .def(init<unsigned, double, const std::string&>(
          (arg("self"), arg("bin"), arg("start") = 0.0,
-          arg("label") = static_cast<const char*>(nullptr))))
+          arg("label") = std::string())))
     .def(axis_suite<polar_axis>())
     ;
 
@@ -216,8 +217,20 @@ void register_axis_types()
     "\nthe problem domain allows it, prefer a regular_axis.",
     no_init)
     .def("__init__", raw_function(variable_axis_init))
-    .def(init<std::vector<double>, const char*, bool>())
+    .def(init<std::vector<double>, const std::string&, bool>())
     .def(axis_suite<variable_axis>())
+    ;
+
+  class_<integer_axis>("integer_axis",
+    "An axis for a contiguous range of integers."
+    "\nThere are no underflow/overflow bins for this axis."
+    "\nBinning is a O(1) operation.",
+    no_init)
+    .def(init<int, int, const std::string&, bool>(
+         (arg("self"), arg("min"), arg("max"),
+          arg("label") = std::string(),
+          arg("uoflow") = true)))
+    .def(axis_suite<integer_axis>())
     ;
 
   class_<category_axis>("category_axis",
@@ -230,18 +243,6 @@ void register_axis_types()
     .def("__init__", raw_function(category_axis_init))
     .def(init<std::vector<std::string>>())
     .def(axis_suite<category_axis>())
-    ;
-
-  class_<integer_axis>("integer_axis",
-    "An axis for a contiguous range of integers."
-    "\nThere are no underflow/overflow bins for this axis."
-    "\nBinning is a O(1) operation.",
-    no_init)
-    .def(init<int, int, const char*, bool>(
-         (arg("self"), arg("min"), arg("max"),
-          arg("label") = static_cast<const char*>(nullptr),
-          arg("uoflow") = true)))
-    .def(axis_suite<integer_axis>())
     ;
 }
 

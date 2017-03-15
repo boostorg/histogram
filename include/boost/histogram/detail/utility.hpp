@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_DETAIL_UTILITY_HPP_
 
 #include <ostream>
+#include <boost/utility/string_view.hpp>
 
 namespace boost {
 namespace histogram {
@@ -29,9 +30,6 @@ namespace detail {
     void escape(std::ostream& os, const std::string& s) {
         escape(os, s.c_str());
     }
-
-    inline
-    bool empty(const char* s) { return !s || s[0] == 0; }
 
     inline
     bool empty(const std::string& s) { return s.empty(); }

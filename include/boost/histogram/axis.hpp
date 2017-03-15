@@ -7,7 +7,6 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_HPP_
 #define _BOOST_HISTOGRAM_AXIS_HPP_
 
-#include <boost/histogram/detail/tiny_string.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/mpl/vector.hpp>
 #include <type_traits>
@@ -31,12 +30,12 @@ public:
   /// Returns whether axis has extra overflow and underflow bins.
   inline bool uoflow() const { return shape_ > size_; }
   /// Returns the axis label, which is a name or description (not implemented for category_axis).
-  const char* label() const { return label_.c_str(); }
+  const std::string& label() const { return label_; }
   /// Change the label of an axis (not implemented for category_axis).
-  void label(const char* label) { label_ = detail::tiny_string(label); }
+  void label(const std::string& label) { label_ = label; }
 
 protected:
-  axis_with_label(unsigned n, const char* label, bool uoflow) :
+  axis_with_label(unsigned n, const std::string& label, bool uoflow) :
     size_(n), shape_(size_ + 2 * uoflow), label_(label)
   {
     if (n == 0)
@@ -55,7 +54,7 @@ protected:
 private:
   int size_;
   int shape_;
-  detail::tiny_string label_;
+  std::string label_;
 
   template <class Archive>
   friend void serialize(Archive&, axis_with_label&, unsigned);
@@ -95,7 +94,7 @@ public:
     * \param uoflow whether to add under-/overflow bins.
     */
   regular_axis(unsigned n, double min, double max,
-               const char* label = nullptr,
+               const std::string& label = std::string(),
                bool uoflow = true) :
     axis_with_label(n, label, uoflow),
     min_(min),
@@ -162,7 +161,7 @@ public:
  	  */
   explicit
   polar_axis(unsigned n, double start = 0.0,
-             const char* label = nullptr) :
+             const std::string& label = std::string()) :
     axis_with_label(n, label, false),
     start_(start)
   {}
@@ -215,7 +214,7 @@ public:
 	  */
   explicit
   variable_axis(const std::initializer_list<double>& x,
-                const char* label = nullptr,
+                const std::string& label = std::string(),
                 bool uoflow = true) :
       axis_with_label(x.size() - 1, label, uoflow),
       x_(new double[x.size()])
@@ -227,7 +226,7 @@ public:
   }
 
   variable_axis(const std::vector<double>& x,
-                const char* label = nullptr,
+                const std::string& label = std::string(),
                 bool uoflow = true) :
       axis_with_label(x.size() - 1, label, uoflow),
       x_(new double[x.size()])
@@ -238,7 +237,7 @@ public:
 
   template <typename Iterator>
   variable_axis(Iterator begin, Iterator end,
-                const char* label = nullptr,
+                const std::string& label = std::string(),
                 bool uoflow = true) :
       axis_with_label(std::distance(begin, end) - 1, label, uoflow),
       x_(new double[std::distance(begin, end)])
@@ -311,7 +310,7 @@ public:
     * \param max largest integer of the covered range.
     */
   integer_axis(int min, int max,
-               const char* label = nullptr,
+               const std::string& label = std::string(),
                bool uoflow = true) :
     axis_with_label(max + 1 - min, label, uoflow),
     min_(min)
@@ -357,12 +356,12 @@ private:
   */
 class category_axis {
 public:
-  using value_type = const char*;
+  using value_type = const std::string&;
 
   template <typename Iterator>
   category_axis(Iterator begin, Iterator end) :
     size_(std::distance(begin, end)),
-    ptr_(new detail::tiny_string[size_])
+    ptr_(new std::string[size_])
   {
     if (size_ == 0)
       throw std::logic_error("at least one argument required");
@@ -374,7 +373,7 @@ public:
     * \param categories sequence of labeled categories.
     */
   explicit
-  category_axis(const std::initializer_list<const char*>& categories) :
+  category_axis(const std::initializer_list<std::string>& categories) :
     category_axis(categories.begin(), categories.end())
   {}
 
@@ -390,8 +389,11 @@ public:
   {}
   category_axis(category_axis&&) = default;
   category_axis& operator=(const category_axis& other) {
-    category_axis tmp = other;
-    *this = std::move(tmp);
+    if (this != &other) {
+      size_ = other.size_;
+      ptr_.reset(new std::string[other.size_]);
+      std::copy(other.ptr_.get(), other.ptr_.get() + other.size_, ptr_.get());
+    }
     return *this;
   }
   category_axis& operator=(category_axis&&) = default;
@@ -408,19 +410,18 @@ public:
     return x; }
 
   /// Returns the category for the bin index.
-  const char* operator[](int idx) const
-  { return ptr_.get()[idx].c_str(); }
+  value_type operator[](int idx) const
+  { return ptr_.get()[idx]; }
 
   bool operator==(const category_axis& other) const
   {
-    if (size_ != other.size_)
-      return false;
-    return std::equal(ptr_.get(), ptr_.get() + size_, other.ptr_.get());
+    return size_ == other.size_ &&
+      std::equal(ptr_.get(), ptr_.get() + size_, other.ptr_.get());
   }
 
 private:
   int size_;
-  std::unique_ptr<detail::tiny_string[]> ptr_;
+  std::unique_ptr<std::string[]> ptr_;
 
   template <class Archive>
   friend void serialize(Archive&, category_axis&, unsigned);

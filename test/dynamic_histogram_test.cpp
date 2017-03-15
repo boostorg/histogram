@@ -294,7 +294,7 @@ int main() {
     // d2
     {
         auto h = make_dynamic_histogram(regular_axis(2, -1, 1),
-                                        integer_axis(-1, 1, nullptr, false));
+                                        integer_axis(-1, 1, "", false));
         h.fill(-1, -1);
         h.fill(-1, 0);
         std::array<double, 2> ai = {{-1., -10.}};
@@ -345,7 +345,7 @@ int main() {
     // d2w
     {
         auto h = make_dynamic_histogram(regular_axis(2, -1, 1),
-                                        integer_axis(-1, 1, nullptr, false));
+                                        integer_axis(-1, 1, "", false));
         h.fill(-1, 0);       // -> 0, 1
         h.wfill(10, -1, -1); // -> 0, 0
         h.wfill(5, -1, -10); // is ignored
