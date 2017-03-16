@@ -132,7 +132,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T> > {
 
     template <typename Class, typename U>
     static
-    typename std::enable_if<std::is_base_of<axis_with_label, U>::value, void>::type
+    typename std::enable_if<std::is_base_of<axis_base, U>::value>::type
     label(Class& cl) {
         cl.add_property("label",
                         make_function((const std::string&(U::*)() const) &U::label,
@@ -143,7 +143,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T> > {
 
     template <typename Class, typename U>
     static
-    typename std::enable_if<!std::is_base_of<axis_with_label, U>::value, void>::type
+    typename std::enable_if<!std::is_base_of<axis_base, U>::value>::type
     label(Class& cl) {}
 
     template <class Class>
@@ -188,7 +188,7 @@ void register_axis_types()
   class_<std::vector<double>::const_iterator>("vector_double_iterator", no_init);
   class_<std::vector<std::string>::const_iterator>("vector_string_iterator", no_init);
 
-  class_<regular_axis>("regular_axis",
+  class_<regular_axis<>>("regular_axis",
     "An axis for real-valued data and bins of equal width."
     "\nBinning is a O(1) operation.",
     no_init)
@@ -196,10 +196,10 @@ void register_axis_types()
          (arg("self"), arg("bin"), arg("min"), arg("max"),
           arg("label") = std::string(),
           arg("uoflow") = true)))
-    .def(axis_suite<regular_axis>())
+    .def(axis_suite<regular_axis<>>())
     ;
 
-  class_<polar_axis>("polar_axis",
+  class_<polar_axis<>>("polar_axis",
     "An axis for real-valued angles."
     "\nThere are no overflow/underflow bins for this axis,"
     "\nsince the axis is circular and wraps around after 2pi."
@@ -208,17 +208,17 @@ void register_axis_types()
     .def(init<unsigned, double, const std::string&>(
          (arg("self"), arg("bin"), arg("start") = 0.0,
           arg("label") = std::string())))
-    .def(axis_suite<polar_axis>())
+    .def(axis_suite<polar_axis<>>())
     ;
 
-  class_<variable_axis>("variable_axis",
+  class_<variable_axis<>>("variable_axis",
     "An axis for real-valued data and bins of varying width."
     "\nBinning is a O(log(N)) operation. If speed matters and"
-    "\nthe problem domain allows it, prefer a regular_axis.",
+    "\nthe problem domain allows it, prefer a regular_axis<>.",
     no_init)
     .def("__init__", raw_function(variable_axis_init))
     .def(init<std::vector<double>, const std::string&, bool>())
-    .def(axis_suite<variable_axis>())
+    .def(axis_suite<variable_axis<>>())
     ;
 
   class_<integer_axis>("integer_axis",

@@ -20,7 +20,7 @@ namespace bh = boost::histogram;
 int main() {
 	// create a 1d-histogram in default configuration which
 	// covers the real line from -1 to 1 in 100 bins
-	auto h = bh::make_static_histogram(bh::regular_axis(100, -1, 1));
+	auto h = bh::make_static_histogram(bh::regular_axis<>(100, -1, 1));
 	// do something with h
 }
 ``
@@ -39,8 +39,8 @@ namespace bh = boost::histogram;
 int main() {
 	// create a 2d-histogram in default configuration with an "age" axis
 	// and an "income" axis
-	auto h = bh::make_static_histogram(bh::regular_axis(20, 0, 100, "age in years"),
-	                                   bh::regular_axis(20, 0, 100, "yearly income in $1000"));
+	auto h = bh::make_static_histogram(bh::regular_axis<>(20, 0, 100, "age in years"),
+	                                   bh::regular_axis<>(20, 0, 100, "yearly income in $1000"));
 	// do something with h
 }
 ``
@@ -88,7 +88,7 @@ namespace bh = boost::histogram;
 
 int main() {
 	auto v = std::vector<bh::dynamic_histogram<>::axis_type>();
-	v.push_back(bh::regular_axis(100, -1, 1));
+	v.push_back(bh::regular_axis<>(100, -1, 1));
 	v.push_back(bh::integer_axis(1, 6));
 	auto h = bh::dynamic_histogram<>(v.begin(), v.end());
 	// do something with h
@@ -120,8 +120,8 @@ int main() {
 	random::mt19937 gen;
 	random::normal_distribution<> norm();
 	auto h = histogram::make_static_histogram(
-		histogram::regular_axis(100, -5, 5, "x"),
-		histogram::regular_axis(100, -5, 5, "y")
+		histogram::regular_axis<>(100, -5, 5, "x"),
+		histogram::regular_axis<>(100, -5, 5, "y")
 	);
 	for (int i = 0; i < 1000; ++i)
 		h.fill(norm(gen), norm(gen));

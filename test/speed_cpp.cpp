@@ -38,7 +38,7 @@ double compare_1d(unsigned n, int distrib)
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
-    auto h = Histogram(regular_axis(100, 0, 1));
+    auto h = Histogram(regular_axis<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[i]);
@@ -56,9 +56,9 @@ double compare_3d(unsigned n, int distrib)
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
-    auto h = Histogram(regular_axis(100, 0, 1),
-                       regular_axis(100, 0, 1),
-                       regular_axis(100, 0, 1));
+    auto h = Histogram(regular_axis<>(100, 0, 1),
+                       regular_axis<>(100, 0, 1),
+                       regular_axis<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
@@ -78,12 +78,12 @@ double compare_6d(unsigned n, int distrib)
   for (unsigned k = 0; k < 50; ++k) {
     double x[6];
 
-    auto h = Histogram(regular_axis(10, 0, 1),
-                       regular_axis(10, 0, 1),
-                       regular_axis(10, 0, 1),
-                       regular_axis(10, 0, 1),
-                       regular_axis(10, 0, 1),
-                       regular_axis(10, 0, 1));
+    auto h = Histogram(regular_axis<>(10, 0, 1),
+                       regular_axis<>(10, 0, 1),
+                       regular_axis<>(10, 0, 1),
+                       regular_axis<>(10, 0, 1),
+                       regular_axis<>(10, 0, 1),
+                       regular_axis<>(10, 0, 1));
 
     auto t = clock();
     for (unsigned i = 0; i < n; ++i) {
@@ -108,7 +108,7 @@ int main() {
     printf("hs_ss %.3f\n",
       compare_1d<
         static_histogram<
-          mpl::vector<regular_axis>,
+          mpl::vector<regular_axis<>>,
           container_storage<std::vector<int>>
         >
       >(12000000, itype)
@@ -116,7 +116,7 @@ int main() {
     printf("hs_sd %.3f\n",
       compare_1d<
         static_histogram<
-          mpl::vector<regular_axis>,
+          mpl::vector<regular_axis<>>,
           adaptive_storage<>
         >
       >(12000000, itype)
@@ -148,7 +148,7 @@ int main() {
     printf("hs_ss %.3f\n",
       compare_3d<
         static_histogram<
-          mpl::vector<regular_axis, regular_axis, regular_axis>,
+          mpl::vector<regular_axis<>, regular_axis<>, regular_axis<>>,
           container_storage<std::vector<int>>
         >
       >(4000000, itype)
@@ -156,7 +156,7 @@ int main() {
     printf("hs_sd %.3f\n",
       compare_3d<
         static_histogram<
-          mpl::vector<regular_axis, regular_axis, regular_axis>,
+          mpl::vector<regular_axis<>, regular_axis<>, regular_axis<>>,
           adaptive_storage<>
         >
       >(4000000, itype)
@@ -188,8 +188,8 @@ int main() {
     printf("hs_ss %.3f\n",
       compare_6d<
         static_histogram<
-          mpl::vector<regular_axis, regular_axis, regular_axis,
-                      regular_axis, regular_axis, regular_axis>,
+          mpl::vector<regular_axis<>, regular_axis<>, regular_axis<>,
+                      regular_axis<>, regular_axis<>, regular_axis<>>,
           container_storage<std::vector<int>>
         >
       >(2000000, itype)
@@ -197,8 +197,8 @@ int main() {
     printf("hs_sd %.3f\n",
       compare_6d<
         static_histogram<
-          mpl::vector<regular_axis, regular_axis, regular_axis,
-                      regular_axis, regular_axis, regular_axis>,
+          mpl::vector<regular_axis<>, regular_axis<>, regular_axis<>,
+                      regular_axis<>, regular_axis<>, regular_axis<>>,
           adaptive_storage<>
         >
       >(2000000, itype)

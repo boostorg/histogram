@@ -15,7 +15,8 @@
 namespace boost {
 namespace histogram {
 
-inline std::ostream& operator<<(std::ostream& os, const regular_axis& a)
+template <typename RealType>
+inline std::ostream& operator<<(std::ostream& os, const regular_axis<RealType>& a)
 {
     os << "regular_axis(" << a.bins() << ", " << a[0] << ", " << a[a.bins()];
     if (!detail::empty(a.label())) {
@@ -28,7 +29,8 @@ inline std::ostream& operator<<(std::ostream& os, const regular_axis& a)
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const polar_axis& a)
+template <typename RealType>
+inline std::ostream& operator<<(std::ostream& os, const polar_axis<RealType>& a)
 {
     os << "polar_axis(" << a.bins();
     if (a[0] != 0.0)
@@ -41,7 +43,8 @@ inline std::ostream& operator<<(std::ostream& os, const polar_axis& a)
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const variable_axis& a)
+template <typename RealType>
+inline std::ostream& operator<<(std::ostream& os, const variable_axis<RealType>& a)
 {
     os << "variable_axis(" << a[0];
     for (int i = 1; i <= a.bins(); ++i)

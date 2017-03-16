@@ -76,41 +76,41 @@ void adaptive_storage<Allocator>::serialize(Archive& ar, unsigned /* version */)
 }
 
 template <class Archive>
-inline void serialize(Archive& ar, axis_with_label & base, unsigned /* version */)
+inline void serialize(Archive& ar, axis_base & base, unsigned /* version */)
 {
   ar & base.size_;
   ar & base.shape_;
   ar & base.label_;
 }
 
-template <class Archive>
-inline void serialize(Archive& ar, regular_axis & axis, unsigned /* version */)
+template <class Archive, typename RealType>
+inline void serialize(Archive& ar, regular_axis<RealType> & axis, unsigned /* version */)
 {
-  ar & boost::serialization::base_object<axis_with_label>(axis);
+  ar & boost::serialization::base_object<axis_base>(axis);
   ar & axis.min_;
   ar & axis.delta_;
 }
 
-template <class Archive>
-inline void serialize(Archive& ar, polar_axis & axis, unsigned /* version */)
+template <class Archive, typename RealType>
+inline void serialize(Archive& ar, polar_axis<RealType> & axis, unsigned /* version */)
 {
-  ar & boost::serialization::base_object<axis_with_label>(axis);
+  ar & boost::serialization::base_object<axis_base>(axis);
   ar & axis.start_;
 }
 
-template <class Archive>
-inline void serialize(Archive& ar, variable_axis & axis, unsigned /* version */)
+template <class Archive, typename RealType>
+inline void serialize(Archive& ar, variable_axis<RealType> & axis, unsigned /* version */)
 {
-  ar & boost::serialization::base_object<axis_with_label>(axis);
+  ar & boost::serialization::base_object<axis_base>(axis);
   if (Archive::is_loading::value)
-	  axis.x_.reset(new double[axis.bins() + 1]);
+	  axis.x_.reset(new RealType[axis.bins() + 1]);
   ar & boost::serialization::make_array(axis.x_.get(), axis.bins() + 1);
 }
 
 template <class Archive>
 inline void serialize(Archive& ar, integer_axis & axis, unsigned /* version */)
 {
-  ar & boost::serialization::base_object<axis_with_label>(axis);
+  ar & boost::serialization::base_object<axis_base>(axis);
   ar & axis.min_;
 }
 

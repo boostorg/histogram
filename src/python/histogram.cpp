@@ -63,11 +63,11 @@ histogram_init(python::tuple args, python::dict kwargs) {
   dynamic_histogram<>::axes_type axes;
   for (unsigned i = 0; i < dim; ++i) {
     object pa = args[i + 1];
-    extract<regular_axis> er(pa);
+    extract<regular_axis<>> er(pa);
     if (er.check()) { axes.push_back(er()); continue; }
-    extract<polar_axis> ep(pa);
+    extract<polar_axis<>> ep(pa);
     if (ep.check()) { axes.push_back(ep()); continue; }
-    extract<variable_axis> ev(pa);
+    extract<variable_axis<>> ev(pa);
     if (ev.check()) { axes.push_back(ev()); continue; }
     extract<category_axis> ec(pa);
     if (ec.check()) { axes.push_back(ec()); continue; }

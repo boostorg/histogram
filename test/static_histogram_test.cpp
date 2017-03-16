@@ -35,7 +35,7 @@ int main() {
         >();
         BOOST_TEST(h2 == h);
         auto h3 = static_histogram<
-          mpl::vector<regular_axis>,
+          mpl::vector<regular_axis<>>,
           adaptive_storage<>
         >();
         BOOST_TEST(!(h3 == h));
@@ -43,68 +43,68 @@ int main() {
 
     // init_1
     {
-        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1});
+        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis<>{3, -1, 1});
         BOOST_TEST_EQ(h.dim(), 1);
         BOOST_TEST_EQ(h.size(), 5);
         BOOST_TEST_EQ(shape(h.axis<0>()), 5);
-        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1});
+        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis<>{3, -1, 1});
         BOOST_TEST(h2 == h);
     }
 
     // init_2
     {
-        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1},
+        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis<>{3, -1, 1},
                                                              integer_axis{-1, 1});
         BOOST_TEST_EQ(h.dim(), 2);
         BOOST_TEST_EQ(h.size(), 25);
         BOOST_TEST_EQ(shape(h.axis<0>()), 5);
         BOOST_TEST_EQ(shape(h.axis<1>()), 5);
-        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1},
+        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis<>{3, -1, 1},
                                                                   integer_axis{-1, 1});
         BOOST_TEST(h2 == h);
     }
 
     // init_3
     {
-        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1},
+        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis<>{3, -1, 1},
                                                              integer_axis{-1, 1},
-                                                             polar_axis{3});
+                                                             polar_axis<>{3});
         BOOST_TEST_EQ(h.dim(), 3);
         BOOST_TEST_EQ(h.size(), 75);
-        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1},
+        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis<>{3, -1, 1},
                                                                   integer_axis{-1, 1},
-                                                                  polar_axis{3});
+                                                                  polar_axis<>{3});
         BOOST_TEST(h2 == h);
     }
 
     // init_4
     {
-        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1},
+        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis<>{3, -1, 1},
                                                              integer_axis{-1, 1},
-                                                             polar_axis{3},
-                                                             variable_axis{-1, 0, 1});
+                                                             polar_axis<>{3},
+                                                             variable_axis<>{-1, 0, 1});
         BOOST_TEST_EQ(h.dim(), 4);
         BOOST_TEST_EQ(h.size(), 300);
-        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1},
+        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis<>{3, -1, 1},
                                                                   integer_axis{-1, 1},
-                                                                  polar_axis{3},
-                                                                  variable_axis{-1, 0, 1});
+                                                                  polar_axis<>{3},
+                                                                  variable_axis<>{-1, 0, 1});
         BOOST_TEST(h2 == h);
     }
 
     // init_5
     {
-        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis{3, -1, 1},
+        auto h = make_static_histogram_with<adaptive_storage<>>(regular_axis<>{3, -1, 1},
                                                              integer_axis{-1, 1},
-                                                             polar_axis{3},
-                                                             variable_axis{-1, 0, 1},
+                                                             polar_axis<>{3},
+                                                             variable_axis<>{-1, 0, 1},
                                                              category_axis{"A", "B", "C"});
         BOOST_TEST_EQ(h.dim(), 5);
         BOOST_TEST_EQ(h.size(), 900);
-        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis{3, -1, 1},
+        auto h2 = make_static_histogram_with<container_storage<std::vector<unsigned>>>(regular_axis<>{3, -1, 1},
                                                                   integer_axis{-1, 1},
-                                                                  polar_axis{3},
-                                                                  variable_axis{-1, 0, 1},
+                                                                  polar_axis<>{3},
+                                                                  variable_axis<>{-1, 0, 1},
                                                                   category_axis{"A", "B", "C"});
         BOOST_TEST(h2 == h);
     }
@@ -173,7 +173,7 @@ int main() {
         BOOST_TEST(!(c == b));
         BOOST_TEST(a == c);
         BOOST_TEST(c == a);
-        auto d = make_static_histogram(regular_axis(2, 0, 1));
+        auto d = make_static_histogram(regular_axis<>(2, 0, 1));
         BOOST_TEST(!(c == d));
         BOOST_TEST(!(d == c));
         c.fill(0);
@@ -241,7 +241,7 @@ int main() {
 
     // d1w
     {
-        auto h = make_static_histogram(regular_axis(2, -1, 1));
+        auto h = make_static_histogram(regular_axis<>(2, -1, 1));
         h.fill(0);
         h.wfill(2.0, -1.0);
         h.fill(-1.0);
@@ -263,7 +263,7 @@ int main() {
 
     // d2
     {
-        auto h = make_static_histogram(regular_axis(2, -1, 1),
+        auto h = make_static_histogram(regular_axis<>(2, -1, 1),
                                        integer_axis(-1, 1, "", false));
         h.fill(-1, -1);
         h.fill(-1, 0);
@@ -314,7 +314,7 @@ int main() {
 
     // d2w
     {
-        auto h = make_static_histogram(regular_axis(2, -1, 1),
+        auto h = make_static_histogram(regular_axis<>(2, -1, 1),
                                        integer_axis(-1, 1, "", false));
         h.fill(-1, 0);       // -> 0, 1
         h.wfill(10, -1, -1); // -> 0, 0
@@ -475,7 +475,7 @@ int main() {
         namespace bh = boost::histogram;
         // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
         // with axis of histogram labeled as "x"
-        auto h = bh::make_static_histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
+        auto h = bh::make_static_histogram(bh::regular_axis<>(10, -1.0, 2.0, "x"));
 
         // fill histogram with data
         h.fill(-1.5); // put in underflow bin
@@ -517,9 +517,9 @@ int main() {
 
     // histogram_serialization
     {
-        auto a = make_static_histogram(regular_axis(3, -1, 1, "r"),
-                                       polar_axis(4, 0.0, "p"),
-                                       variable_axis({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
+        auto a = make_static_histogram(regular_axis<>(3, -1, 1, "r"),
+                                       polar_axis<>(4, 0.0, "p"),
+                                       variable_axis<>({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
                                        category_axis{"A", "B", "C"},
                                        integer_axis(0, 1, "i"));
         a.fill(0.5, 0.1, 0.25, 1, 0);

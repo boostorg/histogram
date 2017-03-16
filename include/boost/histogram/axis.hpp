@@ -21,7 +21,7 @@ namespace boost {
 namespace histogram {
 
 /// Common base class for most axes.
-class axis_with_label {
+class axis_base {
 public:
   /// Returns the number of bins, excluding overflow/underflow.
   inline int bins() const { return size_ ; }
@@ -35,20 +35,20 @@ public:
   void label(const std::string& label) { label_ = label; }
 
 protected:
-  axis_with_label(unsigned n, const std::string& label, bool uoflow) :
+  axis_base(unsigned n, const std::string& label, bool uoflow) :
     size_(n), shape_(size_ + 2 * uoflow), label_(label)
   {
     if (n == 0)
       throw std::logic_error("bins > 0 required");
   }
 
-  axis_with_label() = default;
-  axis_with_label(const axis_with_label&) = default;
-  axis_with_label(axis_with_label&&) = default;
-  axis_with_label& operator=(const axis_with_label&) = default;
-  axis_with_label& operator=(axis_with_label&&) = default;
+  axis_base() = default;
+  axis_base(const axis_base&) = default;
+  axis_base(axis_base&&) = default;
+  axis_base& operator=(const axis_base&) = default;
+  axis_base& operator=(axis_base&&) = default;
 
-  bool operator==(const axis_with_label& o) const
+  bool operator==(const axis_base& o) const
   { return size_ == o.size_ && shape_ == o.shape_ && label_ == o.label_; }
 
 private:
@@ -57,22 +57,20 @@ private:
   std::string label_;
 
   template <class Archive>
-  friend void serialize(Archive&, axis_with_label&, unsigned);
+  friend void serialize(Archive&, axis_base&, unsigned);
 };
 
 /// Mixin for real-valued axes.
-template <typename Derived>
+template <typename RealType, typename Derived>
 class real_axis {
 public:
-  typedef double value_type;
-
   /// Lower edge of the bin (left side).
-  double left(int idx) const {
+  RealType left(int idx) const {
     return static_cast<const Derived&>(*this)[idx];
   }
 
   /// Upper edge of the bin (right side).
-  double right(int idx) const {
+  RealType right(int idx) const {
     return static_cast<const Derived&>(*this)[idx + 1];
   }
 };
@@ -82,9 +80,12 @@ public:
   * The simplest and common binning strategy.
   * Very fast. Binning is a O(1) operation.
   */
-class regular_axis: public axis_with_label,
-                    public real_axis<regular_axis> {
+template <typename RealType=double>
+class regular_axis: public axis_base,
+                    public real_axis<RealType, regular_axis<RealType>> {
 public:
+  using value_type = RealType;
+
   /** Construct axis with n bins over range [min, max).
     *
     * \param n number of bins.
@@ -93,10 +94,10 @@ public:
     * \param label description of the axis.
     * \param uoflow whether to add under-/overflow bins.
     */
-  regular_axis(unsigned n, double min, double max,
+  regular_axis(unsigned n, value_type min, value_type max,
                const std::string& label = std::string(),
                bool uoflow = true) :
-    axis_with_label(n, label, uoflow),
+    axis_base(n, label, uoflow),
     min_(min),
     delta_((max - min) / n)
   {
@@ -111,36 +112,36 @@ public:
   regular_axis& operator=(regular_axis&&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(double x) const
+  inline int index(value_type x) const
   {
     // Optimized code
-    const double z = (x - min_) / delta_;
+    const value_type z = (x - min_) / delta_;
     return z >= 0.0 ? (z > bins() ? bins() : static_cast<int>(z)) : -1;
   }
 
   /// Returns the starting edge of the bin.
-  double operator[](int idx) const
+  value_type operator[](int idx) const
   {
     if (idx < 0)
-        return -std::numeric_limits<double>::infinity();
+        return -std::numeric_limits<value_type>::infinity();
     if (idx > bins())
-        return std::numeric_limits<double>::infinity();
-    const double z = double(idx) / bins();
+        return std::numeric_limits<value_type>::infinity();
+    const value_type z = value_type(idx) / bins();
     return (1.0 - z) * min_ + z * (min_ + delta_ * bins());
   }
 
   bool operator==(const regular_axis& o) const
   {
-    return axis_with_label::operator==(o) &&
+    return axis_base::operator==(o) &&
            min_ == o.min_ &&
            delta_ == o.delta_;
   }
 
 private:
-  double min_, delta_;
+  value_type min_, delta_;
 
-  template <class Archive>
-  friend void serialize(Archive&, regular_axis&, unsigned);
+  template <class Archive, typename RealType1>
+  friend void serialize(Archive&, regular_axis<RealType1>&, unsigned);
 };
 
 /** Axis for real-valued angles.
@@ -150,9 +151,12 @@ private:
   * \f$2 \pi\f$.
   * Binning is a O(1) operation.
   */
-class polar_axis: public axis_with_label,
-                  public real_axis<polar_axis> {
+template <typename RealType=double>
+class polar_axis: public axis_base,
+                  public real_axis<RealType, polar_axis<RealType>> {
 public:
+  using value_type = RealType;
+
   /** Constructor for n bins with an optional offset.
     *
     * \param n      number of bins.
@@ -160,9 +164,9 @@ public:
     * \param label  description of the axis.
  	  */
   explicit
-  polar_axis(unsigned n, double start = 0.0,
+  polar_axis(unsigned n, value_type start = 0.0,
              const std::string& label = std::string()) :
-    axis_with_label(n, label, false),
+    axis_base(n, label, false),
     start_(start)
   {}
 
@@ -173,29 +177,29 @@ public:
   polar_axis& operator=(polar_axis&&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(double x) const {
+  inline int index(value_type x) const {
     using namespace boost::math::double_constants;
-    const double z = (x - start_) / two_pi;
+    const value_type z = (x - start_) / two_pi;
     const int i = static_cast<int>(std::floor(z * bins())) % bins();
     return i + (i < 0) * bins();
   }
 
   /// Returns the starting edge of the bin.
-  double operator[](int idx) const
+  value_type operator[](int idx) const
   {
     using namespace boost::math::double_constants;
-    const double z = double(idx) / bins();
+    const value_type z = value_type(idx) / bins();
     return z * two_pi + start_;
   }
 
   bool operator==(const polar_axis& o) const
-  { return axis_with_label::operator==(o) && start_ == o.start_; }
+  { return axis_base::operator==(o) && start_ == o.start_; }
 
 private:
-  double start_;
+  value_type start_;
 
-  template <class Archive>
-  friend void serialize(Archive&, polar_axis&, unsigned);
+  template <class Archive, typename RealType1>
+  friend void serialize(Archive&, polar_axis<RealType1>&, unsigned);
 };
 
 /** An axis for real-valued data and bins of varying width.
@@ -203,9 +207,12 @@ private:
   * Binning is a O(log(N)) operation. If speed matters
   * and the problem domain allows it, prefer a regular_axis.
   */
-class variable_axis : public axis_with_label,
-                      public real_axis<variable_axis> {
+template <typename RealType=double>
+class variable_axis : public axis_base,
+                      public real_axis<RealType, variable_axis<RealType>> {
 public:
+  using value_type = RealType;
+
 	/** Construct an axis from bin edges.
 	  *
 	  * \param x sequence of bin edges.
@@ -213,11 +220,11 @@ public:
 	  * \param uoflow whether to add under-/overflow bins.
 	  */
   explicit
-  variable_axis(const std::initializer_list<double>& x,
+  variable_axis(const std::initializer_list<value_type>& x,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
-      axis_with_label(x.size() - 1, label, uoflow),
-      x_(new double[x.size()])
+      axis_base(x.size() - 1, label, uoflow),
+      x_(new value_type[x.size()])
   {
       if (x.size() < 2)
           throw std::logic_error("at least two values required");
@@ -225,11 +232,11 @@ public:
       std::sort(x_.get(), x_.get() + bins() + 1);
   }
 
-  variable_axis(const std::vector<double>& x,
+  variable_axis(const std::vector<value_type>& x,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
-      axis_with_label(x.size() - 1, label, uoflow),
-      x_(new double[x.size()])
+      axis_base(x.size() - 1, label, uoflow),
+      x_(new value_type[x.size()])
   {
       std::copy(x.begin(), x.end(), x_.get());
       std::sort(x_.get(), x_.get() + bins() + 1);
@@ -239,8 +246,8 @@ public:
   variable_axis(Iterator begin, Iterator end,
                 const std::string& label = std::string(),
                 bool uoflow = true) :
-      axis_with_label(std::distance(begin, end) - 1, label, uoflow),
-      x_(new double[std::distance(begin, end)])
+      axis_base(std::distance(begin, end) - 1, label, uoflow),
+      x_(new value_type[std::distance(begin, end)])
   {
       std::copy(begin, end, x_.get());
       std::sort(x_.get(), x_.get() + bins() + 1);
@@ -248,8 +255,8 @@ public:
 
   variable_axis() = default;
   variable_axis(const variable_axis& o) :
-    axis_with_label(o),
-    x_(new double[bins() + 1])
+    axis_base(o),
+    x_(new value_type[bins() + 1])
   {
     std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
   }
@@ -257,8 +264,8 @@ public:
   variable_axis& operator=(const variable_axis& o)
   {
     if (this != &o) {
-        axis_with_label::operator=(o);
-        x_.reset(new double[bins() + 1]);
+        axis_base::operator=(o);
+        x_.reset(new value_type[bins() + 1]);
         std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
     }
     return *this;
@@ -266,33 +273,33 @@ public:
   variable_axis& operator=(variable_axis&&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(double x) const {
+  inline int index(value_type x) const {
     return std::upper_bound(x_.get(), x_.get() + bins() + 1, x)
            - x_.get() - 1;
   }
 
   /// Returns the starting edge of the bin.
-  double operator[](int idx) const
+  value_type operator[](int idx) const
   {
     if (idx < 0)
-        return -std::numeric_limits<double>::infinity();
+        return -std::numeric_limits<value_type>::infinity();
     if (idx > bins())
-        return std::numeric_limits<double>::infinity();
+        return std::numeric_limits<value_type>::infinity();
     return x_[idx];
   }
 
   bool operator==(const variable_axis& o) const
   {
-    if (!axis_with_label::operator==(o))
+    if (!axis_base::operator==(o))
         return false;
     return std::equal(x_.get(), x_.get() + bins() + 1, o.x_.get());
   }
 
 private:
-  std::unique_ptr<double[]> x_; // smaller size compared to std::vector
+  std::unique_ptr<value_type[]> x_; // smaller size compared to std::vector
 
-  template <class Archive>
-  friend void serialize(Archive&, variable_axis&, unsigned);
+  template <class Archive, typename RealType1>
+  friend void serialize(Archive&, variable_axis<RealType1>&, unsigned);
 };
 
 /** An axis for a contiguous range of integers.
@@ -300,19 +307,19 @@ private:
   * There are no underflow/overflow bins for this axis.
   * Binning is a O(1) operation.
   */
-class integer_axis: public axis_with_label {
+class integer_axis: public axis_base {
 public:
-  typedef int value_type;
+  using value_type = int;
 
   /** Construct axis over integer range [min, max].
     *
     * \param min smallest integer of the covered range.
     * \param max largest integer of the covered range.
     */
-  integer_axis(int min, int max,
+  integer_axis(value_type min, value_type max,
                const std::string& label = std::string(),
                bool uoflow = true) :
-    axis_with_label(max + 1 - min, label, uoflow),
+    axis_base(max + 1 - min, label, uoflow),
     min_(min)
   {
     if (min > max)
@@ -326,22 +333,22 @@ public:
   integer_axis& operator=(integer_axis&&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(int x) const
+  inline int index(value_type x) const
   {
     const int z = x - min_;
     return z >= 0 ? (z > bins() ? bins() : z) : -1;
   }
 
   /// Returns the integer that is mapped to the bin index.
-  int operator[](int idx) const { return min_ + idx; }
+  value_type operator[](int idx) const { return min_ + idx; }
 
   bool operator==(const integer_axis& o) const
   {
-    return axis_with_label::operator==(o) && min_ == o.min_;
+    return axis_base::operator==(o) && min_ == o.min_;
   }
 
 private:
-  int min_;
+  value_type min_;
 
   template <class Archive>
   friend void serialize(Archive&, integer_axis&, unsigned);
@@ -428,7 +435,10 @@ private:
 };
 
 using default_axes = mpl::vector<
-  regular_axis, polar_axis, variable_axis, category_axis, integer_axis
+  regular_axis<double>, regular_axis<float>,
+  polar_axis<double>, polar_axis<float>,
+  variable_axis<double>, variable_axis<float>,
+  integer_axis, category_axis
 >::type;
 
 }
