@@ -305,7 +305,7 @@ class test_integer_axis(unittest.TestCase):
         self.assertEqual(a.index(3), 4)
         self.assertEqual(a.index(4), 4)
 
-class histogramest(unittest.TestCase):
+class histogramtest(unittest.TestCase):
 
     def test_init(self):
         histogram()
@@ -489,15 +489,15 @@ class histogramest(unittest.TestCase):
                     self.assertEqual(h.variance(i, j), 2 * m[i][j])
 
     def test_axis_overflow(self):
+        h = histogram(*[regular_axis(1, 0, 1) for i in range(50)])
         with self.assertRaises(RuntimeError):
-            histogram(*[regular_axis(1, 0, 1) for i in range(50)])
-
-        h = histogram(regular_axis(1, 0, 1))
-        with self.assertRaises(RuntimeError):
-            h.fill(*range(100))
+            h.fill(*range(50))
 
         with self.assertRaises(RuntimeError):
-            h.value(*range(100))
+            h.value(*range(50))
+
+        with self.assertRaises(RuntimeError):
+            h.variance(*range(50))
 
     def test_pickle_0(self):
         a = histogram(category_axis('A', 'B', 'C'),

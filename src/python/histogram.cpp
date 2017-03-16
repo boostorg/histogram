@@ -52,12 +52,6 @@ histogram_init(python::tuple args, python::dict kwargs) {
   }
 
   const unsigned dim = len(args) - 1;
-  if (dim >= BOOST_HISTOGRAM_AXIS_LIMIT) {
-    std::ostringstream os;
-    os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
-    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
-    throw_error_already_set();
-  }
 
   // normal constructor
   dynamic_histogram<>::axes_type axes;
@@ -69,10 +63,10 @@ histogram_init(python::tuple args, python::dict kwargs) {
     if (ep.check()) { axes.push_back(ep()); continue; }
     extract<variable_axis<>> ev(pa);
     if (ev.check()) { axes.push_back(ev()); continue; }
-    extract<category_axis> ec(pa);
-    if (ec.check()) { axes.push_back(ec()); continue; }
     extract<integer_axis> ei(pa);
     if (ei.check()) { axes.push_back(ei()); continue; }
+    extract<category_axis> ec(pa);
+    if (ec.check()) { axes.push_back(ec()); continue; }
     std::string msg = "require an axis object, got ";
     msg += extract<std::string>(pa.attr("__class__").attr("__name__"))();
     PyErr_SetString(PyExc_TypeError, msg.c_str());
@@ -177,7 +171,7 @@ histogram_fill(python::tuple args, python::dict kwargs) {
     throw_error_already_set();
   }
 
-  if (dim >= BOOST_HISTOGRAM_AXIS_LIMIT) {
+  if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
     std::ostringstream os;
     os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
     PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
@@ -209,7 +203,7 @@ histogram_value(python::tuple args, python::dict kwargs) {
     throw_error_already_set();
   }
 
-  if (dim >= BOOST_HISTOGRAM_AXIS_LIMIT) {
+  if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
     std::ostringstream os;
     os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
     PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
@@ -239,7 +233,7 @@ histogram_variance(python::tuple args, python::dict kwargs) {
     throw_error_already_set();
   }
 
-  if (dim >= BOOST_HISTOGRAM_AXIS_LIMIT) {
+  if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
     std::ostringstream os;
     os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
     PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
