@@ -16,6 +16,7 @@
 #include <boost/assert.hpp>
 #include <iosfwd>
 #include <algorithm>
+#include <cstdlib>
 
 namespace boost {
 namespace histogram {
@@ -40,16 +41,14 @@ public:
     {
         if (len_ == 0) {
             *pstr_ = PyBytes_FromStringAndSize(s, n);
-            if (*pstr_ == 0) {
-                PyErr_SetString(PyExc_RuntimeError, "cannot allocate memory");
-                python::throw_error_already_set();
-            }
+            if (*pstr_ == 0) // no point trying to recover from allocation error
+                std::abort();
             len_ = n;
         } else {
             if (pos_ + n > len_) {
                 len_ = pos_ + n; 
                 if (_PyBytes_Resize(pstr_, len_) == -1)
-                    python::throw_error_already_set();
+                    std::abort(); // no point trying to recover from allocation error
             }
             char* b = PyBytes_AS_STRING(*pstr_);
             std::copy(s, s + n, b + pos_);
@@ -83,13 +82,6 @@ struct serialization_suite : python::pickle_suite
     static
     void setstate(python::object obj, python::tuple state)
     {
-        if (python::len(state) != 2) {
-            PyErr_SetObject(PyExc_ValueError,
-                            ("expected 2-item tuple in call to __setstate__; got %s"
-                             % state).ptr());
-            python::throw_error_already_set();
-        }
-
         // restore the object's __dict__
         python::dict d = python::extract<python::dict>(obj.attr("__dict__"));
         d.update(state[0]);
