@@ -28,7 +28,7 @@ int main() {
         BOOST_TEST_THROWS(category_axis({}), std::logic_error);
     }
 
-    // regular_axis<>_operators
+    // regular_axis_operators
     {
         regular_axis<> a{4, -2, 2};
         BOOST_TEST_EQ(a[-1], -std::numeric_limits<double>::infinity());
@@ -52,7 +52,7 @@ int main() {
         BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), -1);
     }
 
-    // polar_axis<>_operators
+    // polar_axis_operators
     {
         using namespace boost::math::double_constants;
         polar_axis<> a{4};
@@ -74,7 +74,7 @@ int main() {
         BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 0);
     }
 
-    // variable_axis<>_operators
+    // variable_axis_operators
     {
         variable_axis<> a{-1, 0, 1};
         BOOST_TEST_EQ(a[-1], -std::numeric_limits<double>::infinity());
@@ -97,23 +97,6 @@ int main() {
         BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
     }
 
-    // category_axis_operators
-    {
-        category_axis a{{"A", "B", "C"}};
-        category_axis b;
-        BOOST_TEST_NOT(a == b);
-        b = a;
-        BOOST_TEST_EQ(a, b);
-        b = b;
-        BOOST_TEST_EQ(a, b);
-        BOOST_TEST_EQ(a.index(0), 0);
-        BOOST_TEST_EQ(a.index(1), 1);
-        BOOST_TEST_EQ(a.index(2), 2);
-
-        BOOST_TEST_THROWS(a.index(-1), std::out_of_range);
-        BOOST_TEST_THROWS(a.index(3), std::out_of_range);
-    }
-
     // integer_axis_operators
     {
         integer_axis a{-1, 1};
@@ -130,6 +113,49 @@ int main() {
         BOOST_TEST_EQ(a.index(1), 2);
         BOOST_TEST_EQ(a.index(2), 3);
         BOOST_TEST_EQ(a.index(10), 3);
+    }
+
+    // category_axis_operators
+    {
+        category_axis a{{"A", "B", "C"}};
+        category_axis b;
+        BOOST_TEST_NOT(a == b);
+        b = a;
+        BOOST_TEST_EQ(a, b);
+        b = b;
+        BOOST_TEST_EQ(a, b);
+        category_axis c = std::move(b);
+        BOOST_TEST(c == a);
+        BOOST_TEST_NOT(b == a);
+        BOOST_TEST_EQ(a.index(0), 0);
+        BOOST_TEST_EQ(a.index(1), 1);
+        BOOST_TEST_EQ(a.index(2), 2);
+
+        BOOST_TEST_THROWS(a.index(-1), std::out_of_range);
+        BOOST_TEST_THROWS(a.index(3), std::out_of_range);
+    }
+
+    // axis_t_copyable
+    {
+        axis_t a(regular_axis<>(2, -1, 1));
+        axis_t b(a);
+        BOOST_TEST(a == b);
+        axis_t c;
+        BOOST_TEST_NOT(a == c);
+        c = a;
+        BOOST_TEST(a == c);
+    }
+
+    // axis_t_movable
+    {
+        axis_t a(regular_axis<>(2, -1, 1));
+        axis_t r(a);
+        axis_t b(std::move(a));
+        BOOST_TEST(b == r);
+        axis_t c;
+        BOOST_TEST_NOT(a == c);
+        c = std::move(b);
+        BOOST_TEST(c == r);
     }
 
     // axis_t_streamable

@@ -44,8 +44,8 @@ protected:
 
   axis_base() = default;
   axis_base(const axis_base&) = default;
-  axis_base(axis_base&&) = default;
   axis_base& operator=(const axis_base&) = default;
+  axis_base(axis_base&&) = default;
   axis_base& operator=(axis_base&&) = default;
 
   bool operator==(const axis_base& o) const
@@ -105,10 +105,10 @@ public:
       throw std::logic_error("min < max required");
   }
 
-  regular_axis() : min_(0), delta_(0) {}
+  regular_axis() = default;
   regular_axis(const regular_axis&) = default;
-  regular_axis(regular_axis&&) = default;
   regular_axis& operator=(const regular_axis&) = default;
+  regular_axis(regular_axis&&) = default;
   regular_axis& operator=(regular_axis&&) = default;
 
   /// Returns the bin index for the passed argument.
@@ -138,7 +138,7 @@ public:
   }
 
 private:
-  value_type min_, delta_;
+  value_type min_ = 0.0, delta_ = 1.0;
 
   template <class Archive, typename RealType1>
   friend void serialize(Archive&, regular_axis<RealType1>&, unsigned);
@@ -170,10 +170,10 @@ public:
     start_(start)
   {}
 
-  polar_axis() : start_(0) {}
+  polar_axis() = default;
   polar_axis(const polar_axis&) = default;
-  polar_axis(polar_axis&&) = default;
   polar_axis& operator=(const polar_axis&) = default;
+  polar_axis(polar_axis&&) = default;
   polar_axis& operator=(polar_axis&&) = default;
 
   /// Returns the bin index for the passed argument.
@@ -196,7 +196,7 @@ public:
   { return axis_base::operator==(o) && start_ == o.start_; }
 
 private:
-  value_type start_;
+  value_type start_ = 0.0;
 
   template <class Archive, typename RealType1>
   friend void serialize(Archive&, polar_axis<RealType1>&, unsigned);
@@ -260,7 +260,6 @@ public:
   {
     std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
   }
-  variable_axis(variable_axis&&) = default;
   variable_axis& operator=(const variable_axis& o)
   {
     if (this != &o) {
@@ -270,6 +269,7 @@ public:
     }
     return *this;
   }
+  variable_axis(variable_axis&&) = default;
   variable_axis& operator=(variable_axis&&) = default;
 
   /// Returns the bin index for the passed argument.
@@ -326,10 +326,10 @@ public:
       throw std::logic_error("min <= max required");
   }
 
-  integer_axis() : min_(0) {}
+  integer_axis() = default;
   integer_axis(const integer_axis&) = default;
-  integer_axis(integer_axis&&) = default;
   integer_axis& operator=(const integer_axis&) = default;
+  integer_axis(integer_axis&&) = default;
   integer_axis& operator=(integer_axis&&) = default;
 
   /// Returns the bin index for the passed argument.
@@ -348,7 +348,7 @@ public:
   }
 
 private:
-  value_type min_;
+  value_type min_ = 0;
 
   template <class Archive>
   friend void serialize(Archive&, integer_axis&, unsigned);
@@ -389,12 +389,12 @@ public:
     category_axis(categories.begin(), categories.end())
   {}
 
-  category_axis() {}
+  category_axis() = default;
+
   category_axis(const category_axis& other) :
     category_axis(other.ptr_.get(),
                   other.ptr_.get() + other.size_)
   {}
-  category_axis(category_axis&&) = default;
   category_axis& operator=(const category_axis& other) {
     if (this != &other) {
       size_ = other.size_;
@@ -403,7 +403,22 @@ public:
     }
     return *this;
   }
-  category_axis& operator=(category_axis&&) = default;
+
+  category_axis(category_axis&& other) :
+    size_(other.size_),
+    ptr_(std::move(other.ptr_))
+  {
+    other.size_ = 0;
+  }
+
+  category_axis& operator=(category_axis&& other) {
+    if (this != &other) {
+      size_ = other.size_;
+      ptr_ = std::move(other.ptr_);
+      other.size_ = 0;
+    }
+    return *this;
+  }
 
   inline int bins() const { return size_; }
   inline int shape() const { return size_; }
@@ -427,7 +442,7 @@ public:
   }
 
 private:
-  int size_;
+  int size_ = 0;
   std::unique_ptr<std::string[]> ptr_;
 
   template <class Archive>
