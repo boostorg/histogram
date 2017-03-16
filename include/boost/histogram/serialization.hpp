@@ -13,7 +13,6 @@
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/weight.hpp>
-#include <boost/histogram/detail/tiny_string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/array.hpp>
