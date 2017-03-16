@@ -7,7 +7,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/weight.hpp>
-#include <boost/histogram/detail/tiny_string.hpp>
 #include <sstream>
 #include <cstring>
 using namespace boost::histogram::detail;
@@ -51,26 +50,5 @@ int main ()
         BOOST_TEST_EQ(os.str(), std::string("'\\\'abc\\\''"));
     }
 
-    // tiny_string
-    {
-        auto a = tiny_string();
-        BOOST_TEST_EQ(a.size(), 0u);
-        BOOST_TEST_CSTR_EQ(a.c_str(), "");
-        auto b = tiny_string("abc");
-        BOOST_TEST_CSTR_EQ(b.c_str(), "abc");
-        BOOST_TEST_EQ(b.size(), 3u);
-        std::ostringstream os;
-        os << b;
-        BOOST_TEST_EQ(os.str(), std::string("abc"));
-        auto c = b;
-        BOOST_TEST_EQ(c, b);
-        auto d = std::move(c);
-        BOOST_TEST_CSTR_EQ(c.c_str(), "");
-        BOOST_TEST_EQ(d, b);
-        c = d;
-        BOOST_TEST_EQ(c, d);
-        d = std::move(c);
-        BOOST_TEST_CSTR_EQ(c.c_str(), "");
-    }
     return boost::report_errors();
 }
