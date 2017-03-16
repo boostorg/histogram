@@ -17,7 +17,7 @@ add_definitions(-Wall -std=c++11)
 set(STD_LIBRARIES stdc++ m)
 
 if(BUILD_PYTHON)
-  find_package(Boost 1.61 REQUIRED
+  find_package(Boost 1.55 REQUIRED
                COMPONENTS iostreams serialization python)
   if(PYTHON_VERSION)
     find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
