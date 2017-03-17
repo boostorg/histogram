@@ -74,13 +74,13 @@ int main() {
         auto h = dynamic_histogram<
             default_axes,
             adaptive_storage<>
-        >(regular_axis<>{3, -1, 1}, integer_axis{-1, 1}, polar_axis<>{3});
+        >(regular_axis<>{3, -1, 1}, integer_axis{-1, 1}, circular_axis<>{3});
         BOOST_TEST_EQ(h.dim(), 3u);
         BOOST_TEST_EQ(h.size(), 75u);
         auto h2 = dynamic_histogram<
             default_axes,
             container_storage<std::vector<unsigned>>
-        >(regular_axis<>{3, -1, 1}, integer_axis{-1, 1}, polar_axis<>{3});
+        >(regular_axis<>{3, -1, 1}, integer_axis{-1, 1}, circular_axis<>{3});
         BOOST_TEST(h2 == h);
     }
 
@@ -91,7 +91,7 @@ int main() {
             adaptive_storage<>
         >(regular_axis<>{3, -1, 1},
           integer_axis{-1, 1},
-          polar_axis<>{3},
+          circular_axis<>{3},
           variable_axis<>{-1, 0, 1});
         BOOST_TEST_EQ(h.dim(), 4u);
         BOOST_TEST_EQ(h.size(), 300u);
@@ -100,7 +100,7 @@ int main() {
             container_storage<std::vector<unsigned>>
         >(regular_axis<>{3, -1, 1},
           integer_axis{-1, 1},
-          polar_axis<>{3},
+          circular_axis<>{3},
           variable_axis<>{-1, 0, 1});
         BOOST_TEST(h2 == h);
     }
@@ -109,14 +109,14 @@ int main() {
     {
         auto h = make_dynamic_histogram(regular_axis<>{3, -1, 1},
                                         integer_axis{-1, 1},
-                                        polar_axis<>{3},
+                                        circular_axis<>{3},
                                         variable_axis<>{-1, 0, 1},
                                         category_axis{"A", "B", "C"});
         BOOST_TEST_EQ(h.dim(), 5u);
         BOOST_TEST_EQ(h.size(), 900u);
         auto h2 = make_dynamic_histogram(regular_axis<>{3, -1, 1},
                                          integer_axis{-1, 1},
-                                         polar_axis<>{3},
+                                         circular_axis<>{3},
                                          variable_axis<>{-1, 0, 1},
                                          category_axis{"A", "B", "C"});
         BOOST_TEST(h2 == h);
@@ -518,7 +518,7 @@ int main() {
     // histogram_serialization
     {
         auto a = make_dynamic_histogram(regular_axis<>(3, -1, 1, "r"),
-                                        polar_axis<>(4, 0.0, "p"),
+                                        circular_axis<>(4, 0.0, 1.0, "p"),
                                         variable_axis<>({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
                                         category_axis{"A", "B", "C"},
                                         integer_axis(0, 1, "i"));

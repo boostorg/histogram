@@ -152,34 +152,35 @@ private:
   * Binning is a O(1) operation.
   */
 template <typename RealType=double>
-class polar_axis: public axis_base,
-                  public real_axis<RealType, polar_axis<RealType>> {
+class circular_axis: public axis_base,
+                     public real_axis<RealType, circular_axis<RealType>> {
 public:
   using value_type = RealType;
 
   /** Constructor for n bins with an optional offset.
     *
-    * \param n      number of bins.
-    * \param start  starting phase of the angle.
-    * \param label  description of the axis.
+    * \param n         number of bins.
+    * \param phase     starting phase.
+    * \param perimeter range after which value wraps around.
+    * \param label     description of the axis.
  	  */
   explicit
-  polar_axis(unsigned n, value_type start = 0.0,
-             const std::string& label = std::string()) :
+  circular_axis(unsigned n, value_type phase = 0.0,
+                value_type perimeter = math::double_constants::two_pi,
+                const std::string& label = std::string()) :
     axis_base(n, label, false),
-    start_(start)
+    phase_(phase), perimeter_(perimeter)
   {}
 
-  polar_axis() = default;
-  polar_axis(const polar_axis&) = default;
-  polar_axis& operator=(const polar_axis&) = default;
-  polar_axis(polar_axis&&) = default;
-  polar_axis& operator=(polar_axis&&) = default;
+  circular_axis() = default;
+  circular_axis(const circular_axis&) = default;
+  circular_axis& operator=(const circular_axis&) = default;
+  circular_axis(circular_axis&&) = default;
+  circular_axis& operator=(circular_axis&&) = default;
 
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const {
-    using namespace boost::math::double_constants;
-    const value_type z = (x - start_) / two_pi;
+    const value_type z = (x - phase_) / perimeter_;
     const int i = static_cast<int>(std::floor(z * bins())) % bins();
     return i + (i < 0) * bins();
   }
@@ -187,19 +188,25 @@ public:
   /// Returns the starting edge of the bin.
   value_type operator[](int idx) const
   {
-    using namespace boost::math::double_constants;
     const value_type z = value_type(idx) / bins();
-    return z * two_pi + start_;
+    return z * perimeter_ + phase_;
   }
 
-  bool operator==(const polar_axis& o) const
-  { return axis_base::operator==(o) && start_ == o.start_; }
+  bool operator==(const circular_axis& o) const
+  {
+    return axis_base::operator==(o) &&
+           phase_ == o.phase_ &&
+           perimeter_ == o.perimeter_;
+  }
+
+  value_type perimeter() const { return perimeter_; }
+  value_type phase() const { return phase_; }
 
 private:
-  value_type start_ = 0.0;
+  value_type phase_ = 0.0, perimeter_ = 1.0;
 
   template <class Archive, typename RealType1>
-  friend void serialize(Archive&, polar_axis<RealType1>&, unsigned);
+  friend void serialize(Archive&, circular_axis<RealType1>&, unsigned);
 };
 
 /** An axis for real-valued data and bins of varying width.
@@ -451,7 +458,7 @@ private:
 
 using default_axes = mpl::vector<
   regular_axis<double>, regular_axis<float>,
-  polar_axis<double>, polar_axis<float>,
+  circular_axis<double>, circular_axis<float>,
   variable_axis<double>, variable_axis<float>,
   integer_axis, category_axis
 >::type;

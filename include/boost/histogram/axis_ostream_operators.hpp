@@ -9,6 +9,7 @@
 
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <ostream>
 #include <string>
 
@@ -30,11 +31,13 @@ inline std::ostream& operator<<(std::ostream& os, const regular_axis<RealType>& 
 }
 
 template <typename RealType>
-inline std::ostream& operator<<(std::ostream& os, const polar_axis<RealType>& a)
+inline std::ostream& operator<<(std::ostream& os, const circular_axis<RealType>& a)
 {
-    os << "polar_axis(" << a.bins();
-    if (a[0] != 0.0)
-        os << ", " << a[0];
+    os << "circular_axis(" << a.bins();
+    if (a.phase() != 0.0)
+        os << ", phase=" << a.phase();
+    if (a.perimeter() != RealType(math::double_constants::two_pi))
+        os << ", perimeter=" << a.perimeter();
     if (!detail::empty(a.label())) {
         os << ", label=";
         detail::escape(os, a.label());

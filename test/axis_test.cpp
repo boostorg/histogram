@@ -21,7 +21,7 @@ int main() {
     {
         BOOST_TEST_THROWS(regular_axis<>(0, 0, 1), std::logic_error);
         BOOST_TEST_THROWS(regular_axis<>(1, 1, -1), std::logic_error);
-        BOOST_TEST_THROWS(polar_axis<>(0), std::logic_error);
+        BOOST_TEST_THROWS(circular_axis<>(0), std::logic_error);
         BOOST_TEST_THROWS(variable_axis<>({}), std::logic_error);
         BOOST_TEST_THROWS(variable_axis<>({1.0}), std::logic_error);
         BOOST_TEST_THROWS(integer_axis(1, -1), std::logic_error);
@@ -52,23 +52,22 @@ int main() {
         BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), -1);
     }
 
-    // polar_axis_operators
+    // circular_axis_operators
     {
-        using namespace boost::math::double_constants;
-        polar_axis<> a{4};
-        BOOST_TEST_EQ(a[-1], a[a.bins() - 1] - two_pi);
-        polar_axis<> b;
+        circular_axis<> a{4};
+        BOOST_TEST_EQ(a[-1], a[a.bins() - 1] - a.perimeter());
+        circular_axis<> b;
         BOOST_TEST_NOT(a == b);
         b = a;
         BOOST_TEST_EQ(a, b);
         b = b;
         BOOST_TEST_EQ(a, b);
-        BOOST_TEST_EQ(a.index(-1.0 * two_pi), 0);
+        BOOST_TEST_EQ(a.index(-1.0 * a.perimeter()), 0);
         BOOST_TEST_EQ(a.index(0.0), 0);
-        BOOST_TEST_EQ(a.index(0.25 * two_pi), 1);
-        BOOST_TEST_EQ(a.index(0.5 * two_pi), 2);
-        BOOST_TEST_EQ(a.index(0.75 * two_pi), 3);
-        BOOST_TEST_EQ(a.index(1.00 * two_pi), 0);
+        BOOST_TEST_EQ(a.index(0.25 * a.perimeter()), 1);
+        BOOST_TEST_EQ(a.index(0.5 * a.perimeter()), 2);
+        BOOST_TEST_EQ(a.index(0.75 * a.perimeter()), 3);
+        BOOST_TEST_EQ(a.index(1.00 * a.perimeter()), 0);
         BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 0);
         BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), 0);
         BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 0);
@@ -162,7 +161,7 @@ int main() {
     {
         std::vector<axis_t> axes;
         axes.push_back(regular_axis<>{2, -1, 1, "regular", false});
-        axes.push_back(polar_axis<>{4, 0.1, "polar"});
+        axes.push_back(circular_axis<>{4, 0.1, 1.0, "polar"});
         axes.push_back(variable_axis<>{{-1, 0, 1}, "variable", false});
         axes.push_back(category_axis{"A", "B", "C"});
         axes.push_back(integer_axis{-1, 1, "integer", false});
@@ -176,7 +175,7 @@ int main() {
     {
         std::vector<axis_t> axes;
         axes.push_back(regular_axis<>{2, -1, 1});
-        axes.push_back(polar_axis<>{4});
+        axes.push_back(circular_axis<>{4});
         axes.push_back(variable_axis<>{-1, 0, 1});
         axes.push_back(category_axis{"A", "B", "C"});
         axes.push_back(integer_axis{-1, 1});

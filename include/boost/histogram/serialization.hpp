@@ -92,10 +92,11 @@ inline void serialize(Archive& ar, regular_axis<RealType> & axis, unsigned /* ve
 }
 
 template <class Archive, typename RealType>
-inline void serialize(Archive& ar, polar_axis<RealType> & axis, unsigned /* version */)
+inline void serialize(Archive& ar, circular_axis<RealType> & axis, unsigned /* version */)
 {
   ar & boost::serialization::base_object<axis_base>(axis);
-  ar & axis.start_;
+  ar & axis.phase_;
+  ar & axis.perimeter_;
 }
 
 template <class Archive, typename RealType>

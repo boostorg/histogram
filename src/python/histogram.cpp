@@ -59,7 +59,7 @@ histogram_init(python::tuple args, python::dict kwargs) {
     object pa = args[i + 1];
     extract<regular_axis<>> er(pa);
     if (er.check()) { axes.push_back(er()); continue; }
-    extract<polar_axis<>> ep(pa);
+    extract<circular_axis<>> ep(pa);
     if (ep.check()) { axes.push_back(ep()); continue; }
     extract<variable_axis<>> ev(pa);
     if (ev.check()) { axes.push_back(ev()); continue; }

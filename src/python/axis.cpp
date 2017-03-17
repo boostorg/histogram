@@ -9,6 +9,7 @@
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/python/def_visitor.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <type_traits>
 #include <sstream>
 #include <string>
@@ -199,16 +200,17 @@ void register_axis_types()
     .def(axis_suite<regular_axis<>>())
     ;
 
-  class_<polar_axis<>>("polar_axis",
+  class_<circular_axis<>>("circular_axis",
     "An axis for real-valued angles."
     "\nThere are no overflow/underflow bins for this axis,"
-    "\nsince the axis is circular and wraps around after 2pi."
-    "\nBinning is a O(1) operation.",
+    "\nsince the axis is circular and wraps around after reaching"
+    "\nthe perimeter value. Binning is a O(1) operation.",
     no_init)
-    .def(init<unsigned, double, const std::string&>(
-         (arg("self"), arg("bin"), arg("start") = 0.0,
+    .def(init<unsigned, double, double, const std::string&>(
+         (arg("self"), arg("bin"), arg("phase") = 0.0,
+          arg("perimeter") = math::double_constants::two_pi,
           arg("label") = std::string())))
-    .def(axis_suite<polar_axis<>>())
+    .def(axis_suite<circular_axis<>>())
     ;
 
   class_<variable_axis<>>("variable_axis",

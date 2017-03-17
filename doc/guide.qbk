@@ -27,7 +27,7 @@ int main() {
 
 The function `make_static_histogram(...)` takes a variable number of axis objects as arguments. Axis objects define how input values are mapped to bins. If you provide one axis, the histogram is one-dimensional. If you provide two, it is two-dimensional, and so on.
 
-Which axis class should I use? Check the class descriptions of [classref boost::histogram::regular_axis regular_axis], [classref boost::histogram::variable_axis variable_axis], [classref boost::histogram::polar_axis polar_axis], [classref boost::histogram::integer_axis integer_axis], and [classref boost::histogram::category_axis category_axis] for advice. Also see the [link histogram.rationale.axis_types rationale about axis types] for more information. The [classref boost::histogram::regular_axis regular_axis] should be your default choice, because it is easy to use and provides fast mapping. If you have a continous range of integers, the [classref boost::histogram::integer_axis integer_axis] is faster.
+Which axis class should I use? Check the class descriptions of [classref boost::histogram::regular_axis regular_axis], [classref boost::histogram::variable_axis variable_axis], [classref boost::histogram::circular_axis circular_axis], [classref boost::histogram::integer_axis integer_axis], and [classref boost::histogram::category_axis category_axis] for advice. Also see the [link histogram.rationale.axis_types rationale about axis types] for more information. The [classref boost::histogram::regular_axis regular_axis] should be your default choice, because it is easy to use and provides fast mapping. If you have a continous range of integers, the [classref boost::histogram::integer_axis integer_axis] is faster.
 
 Optionally, you can attach a label to an axis, to help you remember what the axis is categorising. For example, you have census data and you want to investigate how yearly income correlates with age, you could do:
 
@@ -61,7 +61,7 @@ int main() {
 ``
 
 Using a [classref boost::histogram::integer_axis integer_axis] here is convenient, because the input values are integers and we want one bin for each eye value.
-[note The specialised [classref boost::histogram::polar_axis polar_axis] never creates under- and overflow bins, because the axis is circular. The highest bin wrapps around to the lowest bin and vice versa, so there is no need for extra bins.]
+[note The specialised [classref boost::histogram::circular_axis circular_axis] never creates under- and overflow bins, because the axis is circular. The highest bin wrapps around to the lowest bin and vice versa, so there is no need for extra bins.]
 
 The histogram has Python-bindings, and you can also create histograms in Python. In fact, it is quite useful workflow to create histograms in a flexible way in Python and then pass them to some C++ code which fills them. You rarely want to change the way the histogram is filled, but you probably want to interactively iterate on how the axes are defined. Here is an example:
 

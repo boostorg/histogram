@@ -9,7 +9,7 @@
 
 import unittest
 from math import pi
-from histogram import histogram, regular_axis, polar_axis, \
+from histogram import histogram, regular_axis, circular_axis, \
                       variable_axis, category_axis, integer_axis
 import pickle
 import os
@@ -94,53 +94,53 @@ class test_regular_axis(unittest.TestCase):
         self.assertEqual(a.index(2.1), 4)
         self.assertEqual(a.index(20), 4)
 
-class test_polar_axis(unittest.TestCase):
+class test_circular_axis(unittest.TestCase):
 
     def test_init(self):
-        polar_axis(1)
-        polar_axis(4, 1.0)
-        polar_axis(4, 1.0, label="pa")
+        circular_axis(1)
+        circular_axis(4, 1.0)
+        circular_axis(4, 1.0, label="pa")
         with self.assertRaises(TypeError):
-            polar_axis()
+            circular_axis()
         with self.assertRaises(Exception):
-            polar_axis(-1)
+            circular_axis(-1)
         with self.assertRaises(TypeError):
-            polar_axis(4, 1.0, uoflow=True)
+            circular_axis(4, 1.0, uoflow=True)
         with self.assertRaises(TypeError):
-            polar_axis(1, 1.0, 2.0)
+            circular_axis(1, 1.0, 2.0, 3.0)
         with self.assertRaises(TypeError):
-            polar_axis(1, 1.0, label=1)
+            circular_axis(1, 1.0, label=1)
         with self.assertRaises(TypeError):
-            polar_axis("1")
-        a = polar_axis(4, 1.0)
-        self.assertEqual(a, polar_axis(4, 1.0))
-        self.assertNotEqual(a, polar_axis(2, 1.0))
-        self.assertNotEqual(a, polar_axis(4, 0.0))
+            circular_axis("1")
+        a = circular_axis(4, 1.0)
+        self.assertEqual(a, circular_axis(4, 1.0))
+        self.assertNotEqual(a, circular_axis(2, 1.0))
+        self.assertNotEqual(a, circular_axis(4, 0.0))
 
     def test_len(self):
-        self.assertEqual(len(polar_axis(4)), 5)
-        self.assertEqual(len(polar_axis(4, 1.0)), 5)
+        self.assertEqual(len(circular_axis(4)), 5)
+        self.assertEqual(len(circular_axis(4, 1.0)), 5)
 
     def test_repr(self):
-        for s in ("polar_axis(4)",
-                  "polar_axis(4, 1)",
-                  "polar_axis(4, 1, label='x')",
-                  "polar_axis(4, label='x')"):
+        for s in ("circular_axis(4)",
+                  "circular_axis(4, phase=1)",
+                  "circular_axis(4, phase=1, label='x')",
+                  "circular_axis(4, label='x')"):
             self.assertEqual(str(eval(s)), s)
 
     def test_getitem(self):
         v = [1.0, 1.0 + 0.5 * pi, 1.0 + pi, 1.0 + 1.5 *pi, 1.0 + 2.0 * pi]
-        a = polar_axis(4, 1.0)
+        a = circular_axis(4, 1.0)
         for i in range(5):
             self.assertEqual(a[i], v[i])
 
     def test_iter(self):
-        a = polar_axis(4, 1.0)
+        a = circular_axis(4, 1.0)
         v = [1.0, 1.0 + 0.5 * pi, 1.0 + pi, 1.0 + 1.5 *pi, 1.0 + 2.0 * pi]
         self.assertEqual([x for x in a], v)
 
     def test_index(self):
-        a = polar_axis(4, 1.0)
+        a = circular_axis(4, 1.0)
         d = 0.5 * pi
         self.assertEqual(a.index(0.99 - 4*d), 3)
         self.assertEqual(a.index(0.99 - 3*d), 0)
@@ -504,7 +504,7 @@ class histogramtest(unittest.TestCase):
                       integer_axis(0, 20, label='ia'),
                       regular_axis(20, 0.0, 20.0, uoflow=False),
                       variable_axis(0.0, 1.0, 2.0),
-                      polar_axis(4, label='pa'))
+                      circular_axis(4, label='pa'))
         for i in range(a.axis(0).bins):
             a.fill(i, 0, 0, 0, 0)
             for j in range(a.axis(1).bins):

@@ -120,7 +120,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
     # 4 equidistant bins in polar angle
     h = bh.histogram(bh.regular_axis(10, 0.0, 5.0, "radius",
                                      uoflow=False),
-                     bh.polar_axis(4, 0.0, "phi"))
+                     bh.circular_axis(4, 0.0, 2*np.pi, "phi"))
 
     # generate some numpy arrays with data to fill into histogram,
     # in this case normal distributed random numbers in x and y,
