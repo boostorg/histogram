@@ -13,6 +13,27 @@
 
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
 
+template <typename Axis>
+void test_real_axis_iterator(const Axis& a, int begin, int end) {
+    for (const auto& bin : a) {
+        BOOST_TEST_EQ(bin.idx, begin);
+        BOOST_TEST_EQ(bin.left, a.left(begin));
+        BOOST_TEST_EQ(bin.right, a.right(begin));
+        ++begin;
+    }
+    BOOST_TEST_EQ(begin, end);
+}
+
+template <typename Axis>
+void test_axis_iterator(const Axis& a, int begin, int end) {
+    for (const auto& bin : a) {
+        BOOST_TEST_EQ(bin.idx, begin);
+        BOOST_TEST_EQ(bin.value, a[begin]);
+        ++begin;
+    }
+    BOOST_TEST_EQ(begin, end);
+}
+
 int main() {
     using namespace boost::histogram;
     using axis_t = typename boost::make_variant_over<default_axes>::type;
@@ -164,6 +185,18 @@ int main() {
 
         BOOST_TEST_THROWS(a.index(-1), std::out_of_range);
         BOOST_TEST_THROWS(a.index(3), std::out_of_range);
+    }
+
+    // iterators
+    {
+        test_real_axis_iterator(regular_axis<>(5, 0, 1, "", false), 0, 5);
+        test_real_axis_iterator(regular_axis<>(5, 0, 1, "", true), -1, 6);
+        test_real_axis_iterator(circular_axis<>(5, 0, 1, ""), 0, 5);
+        test_real_axis_iterator(variable_axis<>({1, 2, 3}, "", false), 0, 2);
+        test_real_axis_iterator(variable_axis<>({1, 2, 3}, "", true), -1, 3);
+        test_axis_iterator(integer_axis(0, 4, "", false), 0, 5);
+        test_axis_iterator(integer_axis(0, 4, "", true), -1, 6);
+        test_axis_iterator(category_axis({"A", "B", "C"}), 0, 3);
     }
 
     // axis_t_copyable

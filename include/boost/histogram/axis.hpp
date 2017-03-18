@@ -263,6 +263,9 @@ public:
   const_iterator end() const
   { return const_iterator(*this, uoflow() ? bins() + 1 : bins()); }
 
+  value_type left(int idx) const { return operator[](idx); }
+  value_type right(int idx) const { return operator[](idx+1); }
+
 private:
   value_type min_ = 0.0, delta_ = 1.0;
 
@@ -334,6 +337,8 @@ public:
   const_iterator end() const
   { return const_iterator(*this, bins()); }
 
+  value_type left(int idx) const { return operator[](idx); }
+  value_type right(int idx) const { return operator[](idx+1); }
 
 private:
   value_type phase_ = 0.0, perimeter_ = 1.0;
