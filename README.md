@@ -59,7 +59,6 @@ Example 1: Fill a 1d-histogram in C++
 ```cpp
     #include <boost/histogram/static_histogram.hpp> // proposed for inclusion in Boost
     #include <boost/histogram/axis.hpp> // proposed for inclusion in Boost
-    #include <boost/histogram/utility.hpp> // proposed for inclusion in Boost
     #include <iostream>
     #include <cmath>
 
@@ -82,11 +81,10 @@ Example 1: Fill a 1d-histogram in C++
         h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
 
         // access histogram counts, loop includes under- and overflow bin
-        const auto& a = h.axis<0>();
-        for (int i = -1, n = bh::bins(a) + 1; i < n; ++i) {
-            std::cout << "bin " << i
-                      << " x in [" << bh::left(a, i) << ", " << bh::right(a, i) << "): "
-                      << h.value(i) << " +/- " << std::sqrt(h.variance(i))
+        for (const auto& b : h.axis<0>()) {
+            std::cout << "bin " << b.idx
+                      << " x in [" << b.left << ", " << b.right << "): "
+                      << h.value(b.idx) << " +/- " << std::sqrt(h.variance(b.idx))
                       << std::endl;
         }
 
@@ -165,20 +163,7 @@ The benchmark against ROOT is implemented in C++, the benchmark against numpy in
 
 Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM
 
-```
-======================================  =======  =======  =======  =======  =======  =======
-distribution                                     uniform                    normal
---------------------------------------  -------------------------  -------------------------
-dimension                                    1D       3D       6D       1D       3D       6D
-======================================  =======  =======  =======  =======  =======  =======
-No. of fills                                12M       4M       2M      12M       4M       2M
-C++: ROOT  [t/s]                           0.13     0.21     0.19     0.17     0.14     0.18
-C++: boost/static_storage<int> [t/s]       0.07     0.14     0.15     0.09     0.13     0.17
-C++: boost/dynamic_storage [t/s]           0.12     0.10     0.09     0.13     0.12     0.12
-Py: numpy [t/s]                            0.83     0.73     0.44     0.82     0.43     0.40
-Py: boost [t/s]                            0.21     0.23     0.19     0.21     0.19     0.17
-======================================  =======  =======  =======  =======  =======  =======
-```
+![alt benchmark](https://github.com/hdembinski/doc/benchmark.png "")
 
 `boost::histogram` is faster than the respective ROOT histograms, while being richer in core features and easier to use. The performance of `boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is by a factor 2-4 faster than numpy's histogram functions.
 

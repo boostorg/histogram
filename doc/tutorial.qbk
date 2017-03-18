@@ -27,11 +27,10 @@ Example 1: How to make a 1d-histogram in C++ and to fill it.
         h.wfill(5.0, 0.1); // fill with a weighted entry, weight is 5.0
 
         // access histogram counts, loop includes under- and overflow bin
-        const auto& a = h.axis<0>();
-        for (int i = -1, n = bh::bins(a) + 1; i < n; ++i) {
-            std::cout << "bin " << i
-                      << " x in [" << bh::left(a, i) << ", " << bh::right(a, i) << "): "
-                      << h.value(i) << " +/- " << std::sqrt(h.variance(i))
+        for (const auto& b : h.axis<0>()) {
+            std::cout << "bin " << b.idx
+                      << " x in [" << b.left << ", " << b.right << "): "
+                      << h.value(b.idx) << " +/- " << std::sqrt(h.variance(b.idx))
                       << std::endl;
         }
 

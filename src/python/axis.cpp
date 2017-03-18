@@ -130,30 +130,17 @@ axis_repr(const T& t) {
 
 template <class T>
 struct axis_suite : public python::def_visitor<axis_suite<T> > {
-
-    template <typename Class, typename U>
-    static
-    typename std::enable_if<std::is_base_of<axis_base, U>::value>::type
-    label(Class& cl) {
-        cl.add_property("label",
-                        make_function((const std::string&(U::*)() const) &U::label,
-                                      python::return_value_policy<python::copy_const_reference>()),
-                        (void(U::*)(const std::string&)) &U::label,
-                        "Name or description for the axis.");
-    }
-
-    template <typename Class, typename U>
-    static
-    typename std::enable_if<!std::is_base_of<axis_base, U>::value>::type
-    label(Class& cl) {}
-
     template <class Class>
     static void
     visit(Class& cl)
     {
-        label<Class, T>(cl);
-        cl.add_property("bins", &T::bins);
-        cl.add_property("shape", &T::shape);
+        cl.add_property("bins", &T::bins, "Number of bins.");
+        cl.add_property("shape", &T::shape, "Number of bins, including possible over- and underflow bins.");
+        cl.add_property("label",
+                        make_function((const std::string&(T::*)() const) &T::label,
+                                      python::return_value_policy<python::copy_const_reference>()),
+                        (void(T::*)(const std::string&)) &T::label,
+                        "Name or description for the axis.");
         cl.def("index", &T::index,
                ":param float x: value"
                "\n:returns: bin index for the passed value",

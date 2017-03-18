@@ -490,11 +490,10 @@ int main() {
 
         std::ostringstream os1;
         // access histogram counts
-        const auto& a = h.axis<0>();
-        for (int i = -1, n = bins(a) + 1; i < n; ++i) {
-            os1 << "bin " << i
-                << " x in [" << left(a, i) << ", " << right(a ,i) << "): "
-                << h.value(i) << " +/- " << std::sqrt(h.variance(i))
+        for (const auto& b : h.axis<0>()) {
+            os1 << "bin " << b.idx
+                << " x in [" << b.left << ", " << b.right << "): "
+                << h.value(b.idx) << " +/- " << std::sqrt(h.variance(b.idx))
                 << "\n";
         }
 

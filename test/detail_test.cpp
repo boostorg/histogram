@@ -32,21 +32,21 @@ int main ()
     // escape0
     {
         std::ostringstream os;
-        escape(os, "abc");
+        escape(os, std::string("abc"));
         BOOST_TEST_EQ(os.str(), std::string("'abc'"));
     }
 
     // escape1
     {
         std::ostringstream os;
-        escape(os, "abc\n");
+        escape(os, std::string("abc\n"));
         BOOST_TEST_EQ(os.str(), std::string("'abc\n'"));
     }
 
     // escape2
     {
         std::ostringstream os;
-        escape(os, "'abc'");
+        escape(os, std::string("'abc'"));
         BOOST_TEST_EQ(os.str(), std::string("'\\\'abc\\\''"));
     }
 
