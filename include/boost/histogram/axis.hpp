@@ -533,8 +533,6 @@ public:
     axis_base<false>(std::distance(begin, end), label),
     ptr_(new std::string[bins()])
   {
-    if (bins() == 0)
-      throw std::logic_error("at least one argument required");
     std::copy(begin, end, ptr_.get());
   }
 
