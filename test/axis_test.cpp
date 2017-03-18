@@ -28,7 +28,7 @@ int main() {
         BOOST_TEST_THROWS(category_axis({}), std::logic_error);
     }
 
-    // regular_axis_operators
+    // regular_axis
     {
         regular_axis<> a{4, -2, 2};
         BOOST_TEST_EQ(a[-1], -std::numeric_limits<double>::infinity());
@@ -39,6 +39,13 @@ int main() {
         BOOST_TEST_EQ(a, b);
         b = b;
         BOOST_TEST_EQ(a, b);
+        regular_axis<> c = std::move(b);
+        BOOST_TEST(c == a);
+        BOOST_TEST_NOT(b == a);
+        regular_axis<> d;
+        BOOST_TEST_NOT(c == d);
+        d = std::move(c);
+        BOOST_TEST_EQ(d, a);
         BOOST_TEST_EQ(a.index(-10.), -1);
         BOOST_TEST_EQ(a.index(-2.1), -1);
         BOOST_TEST_EQ(a.index(-2.0), 0);
@@ -52,7 +59,7 @@ int main() {
         BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), -1);
     }
 
-    // circular_axis_operators
+    // circular_axis
     {
         circular_axis<> a{4};
         BOOST_TEST_EQ(a[-1], a[a.bins() - 1] - a.perimeter());
@@ -62,6 +69,13 @@ int main() {
         BOOST_TEST_EQ(a, b);
         b = b;
         BOOST_TEST_EQ(a, b);
+        circular_axis<> c = std::move(b);
+        BOOST_TEST(c == a);
+        BOOST_TEST_NOT(b == a);
+        circular_axis<> d;
+        BOOST_TEST_NOT(c == d);
+        d = std::move(c);
+        BOOST_TEST_EQ(d, a);
         BOOST_TEST_EQ(a.index(-1.0 * a.perimeter()), 0);
         BOOST_TEST_EQ(a.index(0.0), 0);
         BOOST_TEST_EQ(a.index(0.25 * a.perimeter()), 1);
@@ -73,7 +87,7 @@ int main() {
         BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 0);
     }
 
-    // variable_axis_operators
+    // variable_axis
     {
         variable_axis<> a{-1, 0, 1};
         BOOST_TEST_EQ(a[-1], -std::numeric_limits<double>::infinity());
@@ -84,8 +98,15 @@ int main() {
         BOOST_TEST_EQ(a, b);
         b = b;
         BOOST_TEST_EQ(a, b);
-        variable_axis<> c{-2, 0, 2};
-        BOOST_TEST_NOT(a == c);
+        variable_axis<> c = std::move(b);
+        BOOST_TEST(c == a);
+        BOOST_TEST_NOT(b == a);
+        variable_axis<> d;
+        BOOST_TEST_NOT(c == d);
+        d = std::move(c);
+        BOOST_TEST_EQ(d, a);
+        variable_axis<> e{-2, 0, 2};
+        BOOST_TEST_NOT(a == e);
         BOOST_TEST_EQ(a.index(-10.), -1);
         BOOST_TEST_EQ(a.index(-1.), 0);
         BOOST_TEST_EQ(a.index(0.), 1);
@@ -96,7 +117,7 @@ int main() {
         BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
     }
 
-    // integer_axis_operators
+    // integer_axis
     {
         integer_axis a{-1, 1};
         integer_axis b;
@@ -105,6 +126,13 @@ int main() {
         BOOST_TEST_EQ(a, b);
         b = b;
         BOOST_TEST_EQ(a, b);
+        integer_axis c = std::move(b);
+        BOOST_TEST(c == a);
+        BOOST_TEST_NOT(b == a);
+        integer_axis d;
+        BOOST_TEST_NOT(c == d);
+        d = std::move(c);
+        BOOST_TEST_EQ(d, a);
         BOOST_TEST_EQ(a.index(-10), -1);
         BOOST_TEST_EQ(a.index(-2), -1);
         BOOST_TEST_EQ(a.index(-1), 0);
@@ -114,7 +142,7 @@ int main() {
         BOOST_TEST_EQ(a.index(10), 3);
     }
 
-    // category_axis_operators
+    // category_axis
     {
         category_axis a{{"A", "B", "C"}};
         category_axis b;
@@ -126,6 +154,10 @@ int main() {
         category_axis c = std::move(b);
         BOOST_TEST(c == a);
         BOOST_TEST_NOT(b == a);
+        category_axis d;
+        BOOST_TEST_NOT(c == d);
+        d = std::move(c);
+        BOOST_TEST_EQ(d, a);
         BOOST_TEST_EQ(a.index(0), 0);
         BOOST_TEST_EQ(a.index(1), 1);
         BOOST_TEST_EQ(a.index(2), 2);
