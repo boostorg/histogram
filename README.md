@@ -6,7 +6,7 @@
 
 This `C++11` library implements two easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) classes, using a policy-based design, optimized for extensibility, convenience and highest performance. If the standard configuration is used, bin counts *cannot overflow* or *loose precision*.
 
-Two histogram implementations in C++ are included. `static_histogram` uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
+Two histogram implementations with identical interface are included. `static_histogram` uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
 
 The histograms have value semantics. Move operations and trips over the language boundary from C++ to Python are cheap. Histograms can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (faster than numpy's own histogram functions) and are convertible into Numpy arrays without copying data.
 
@@ -82,7 +82,7 @@ Example 1: Fill a 1d-histogram in C++
         h.fill(1.7);
         h.fill(2.0);  // put in overflow bin, bin interval is semi-open
         h.fill(20.0); // put in overflow bin
-        h.wfill(0.1, 5.0); // fill with a weighted entry, weight is 5.0
+        h.wfill(5.0, 0.1); // fill with a weighted entry, weight is 5.0
 
         // access histogram counts, loop includes under- and overflow bin
         for (const auto& b : h.axis<0>()) {
@@ -157,9 +157,9 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
 ## Benchmarks
 
-Thanks to modern meta-programming and memory management, this library is not only more flexible and convenient to use, but also very fast. In the plot below, its speed is compared to classes from the [ROOT framework](https://root.cern.ch) and to [Numpy](http://www.numpy.org).
+Thanks to modern meta-programming and intelligent memory management, this library is not only more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [ROOT framework](https://root.cern.ch) and to [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library.
 
-![alt benchmark](https://github.com/hdembinski/master/doc/benchmark.png "")
+![alt benchmark](doc/benchmark.png)
 
 ## Rationale
 
