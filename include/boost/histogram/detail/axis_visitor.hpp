@@ -45,7 +45,7 @@ namespace detail {
     const int i;
     left(const int x) : i(x) {}
     template <typename A>
-    double operator()(const A& a) const { return a.left(i); }
+    double operator()(const A& a) const { return a[i]; }
   };
 
   struct right : public static_visitor<double>
@@ -53,7 +53,7 @@ namespace detail {
     const int i;
     right(const int x) : i(x) {}
     template <typename A>
-    double operator()(const A& a) const { return a.right(i); }
+    double operator()(const A& a) const { return a[i+1]; }
   };
 
   struct center : public static_visitor<double>
@@ -61,7 +61,7 @@ namespace detail {
     const int i;
     center(const int x) : i(x) {}
     template <typename A>
-    double operator()(const A& a) const { return 0.5 * (a.left(i) + a.right(i)); }
+    double operator()(const A& a) const { return 0.5 * (a[i] + a[i+1]); }
   };
 
   struct cmp_axis : public static_visitor<bool>

@@ -35,21 +35,22 @@ int index(const boost::variant<Axes...>& a, const V v)
 { return apply_visitor(detail::index<V>(v), a); }
 
 template <typename A>
-double left(const A& a, const int i) { return a.left(i); }
+typename A::value_type left(const A& a, const int i) { return a[i]; }
 
 template <typename... Axes>
 double left(const boost::variant<Axes...>& a, const int i)
 { return apply_visitor(detail::left(i), a); }
 
 template <typename A>
-double right(const A& a, const int i) { return a.right(i); }
+typename A::value_type right(const A& a, const int i) { return a[i+1]; }
 
 template <typename... Axes>
 double right(const boost::variant<Axes...>& a, const int i)
 { return apply_visitor(detail::right(i), a); }
 
 template <typename A>
-double center(const A& a, const int i) { return 0.5 * (a.left(i) + a.right(i)); }
+typename A::value_type center(const A& a, const int i)
+{ return 0.5 * (a[i] + a[i+1]); }
 
 template <typename... Axes>
 double center(const boost::variant<Axes...>& a, const int i)

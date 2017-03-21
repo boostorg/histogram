@@ -9,6 +9,7 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/math/constants/constants.hpp>
+#include <boost/histogram/utility.hpp>
 #include <limits>
 
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
@@ -17,8 +18,8 @@ template <typename Axis>
 void test_real_axis_iterator(const Axis& a, int begin, int end) {
     for (const auto& bin : a) {
         BOOST_TEST_EQ(bin.idx, begin);
-        BOOST_TEST_EQ(bin.left, a.left(begin));
-        BOOST_TEST_EQ(bin.right, a.right(begin));
+        BOOST_TEST_EQ(bin.left, left(a, begin));
+        BOOST_TEST_EQ(bin.right, right(a, begin));
         ++begin;
     }
     BOOST_TEST_EQ(begin, end);

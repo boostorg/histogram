@@ -23,10 +23,8 @@ namespace {
 python::object
 variable_axis_init(python::tuple args, python::dict kwargs) {
     using namespace python;
-    using python::tuple;
 
     object self = args[0];
-    object pyinit = self.attr("__init__");
 
     if (len(args) < 2) {
         PyErr_SetString(PyExc_TypeError, "require at least two arguments");
@@ -41,7 +39,7 @@ variable_axis_init(python::tuple args, python::dict kwargs) {
     std::string label;
     bool uoflow = true;
     while (len(kwargs) > 0) {
-        tuple kv = kwargs.popitem();
+        python::tuple kv = kwargs.popitem();
         std::string k = extract<std::string>(kv[0]);
         object v = kv[1];
         if (k == "label")
@@ -55,7 +53,8 @@ variable_axis_init(python::tuple args, python::dict kwargs) {
             throw_error_already_set();
         }
     }
-    return pyinit(v, label, uoflow);
+
+    return self.attr("__init__")(variable_axis<>(v.begin(), v.end(), label, uoflow));
 }
 
 python::object
@@ -63,33 +62,32 @@ category_axis_init(python::tuple args, python::dict kwargs) {
     using namespace python;
 
     object self = args[0];
-    object pyinit = self.attr("__init__");
 
     if (len(args) == 1) {
         PyErr_SetString(PyExc_TypeError, "require at least one argument");
         throw_error_already_set();
     }
 
-    if (len(kwargs) > 0) {
-        PyErr_SetString(PyExc_TypeError, "unknown keyword argument");
-        throw_error_already_set();
+    std::string label;
+    while (len(kwargs) > 0) {
+        python::tuple kv = kwargs.popitem();
+        std::string k = extract<std::string>(kv[0]);
+        object v = kv[1];
+        if (k == "label")
+            label = extract<std::string>(v);
+        else {
+            std::stringstream s;
+            s << "keyword " << k << " not recognized";
+            PyErr_SetString(PyExc_KeyError, s.str().c_str());
+            throw_error_already_set();
+        }
     }
-
-    // if (len(args) == 2) {
-    //     extract<std::string> es(args[1]);
-    //     if (es.check())
-    //         pyinit(es);
-    //     else {
-    //         PyErr_SetString(PyExc_TypeError, "require one or several string arguments");
-    //         throw_error_already_set();
-    //     }
-    // }
 
     std::vector<std::string> c;
     for (int i = 1, n = len(args); i < n; ++i)
         c.push_back(extract<std::string>(args[i]));
 
-    return pyinit(c);
+    return self.attr("__init__")(category_axis(c.begin(), c.end(), label));
 }
 
 template <typename T>
@@ -170,12 +168,6 @@ void register_axis_types()
   using python::arg;
   docstring_options dopt(true, true, false);
 
-  // used to pass arguments from raw python init to specialized C++ constructors
-  class_<std::vector<double>>("vector_double", no_init);
-  class_<std::vector<std::string>>("vector_string", no_init);
-  class_<std::vector<double>::const_iterator>("vector_double_iterator", no_init);
-  class_<std::vector<std::string>::const_iterator>("vector_string_iterator", no_init);
-
   class_<regular_axis<>>("regular_axis",
     "An axis for real-valued data and bins of equal width."
     "\nBinning is a O(1) operation.",
@@ -206,7 +198,7 @@ void register_axis_types()
     "\nthe problem domain allows it, prefer a regular_axis<>.",
     no_init)
     .def("__init__", raw_function(variable_axis_init))
-    .def(init<std::vector<double>, const std::string&, bool>())
+    .def(init<const variable_axis<>&>())
     .def(axis_suite<variable_axis<>>())
     ;
 
@@ -230,7 +222,7 @@ void register_axis_types()
     "\nBinning is a O(1) operation.",
     no_init)
     .def("__init__", raw_function(category_axis_init))
-    .def(init<std::vector<std::string>>())
+    .def(init<const category_axis&>())
     .def(axis_suite<category_axis>())
     ;
 }

@@ -20,7 +20,7 @@ template <typename RealType>
 inline std::ostream& operator<<(std::ostream& os, const regular_axis<RealType>& a)
 {
     os << "regular_axis(" << a.bins() << ", " << a[0] << ", " << a[a.bins()];
-    if (!detail::empty(a.label())) {
+    if (!a.label().empty()) {
         os << ", label=";
         detail::escape(os, a.label());
     }
@@ -38,7 +38,7 @@ inline std::ostream& operator<<(std::ostream& os, const circular_axis<RealType>&
         os << ", phase=" << a.phase();
     if (a.perimeter() != RealType(math::double_constants::two_pi))
         os << ", perimeter=" << a.perimeter();
-    if (!detail::empty(a.label())) {
+    if (!a.label().empty()) {
         os << ", label=";
         detail::escape(os, a.label());
     }
@@ -51,8 +51,8 @@ inline std::ostream& operator<<(std::ostream& os, const variable_axis<RealType>&
 {
     os << "variable_axis(" << a[0];
     for (int i = 1; i <= a.bins(); ++i)
-        os << ", " << a.left(i);
-    if (!detail::empty(a.label())) {
+        os << ", " << a[i];
+    if (!a.label().empty()) {
         os << ", label=";
         detail::escape(os, a.label());
     }
@@ -65,7 +65,7 @@ inline std::ostream& operator<<(std::ostream& os, const variable_axis<RealType>&
 inline std::ostream& operator<<(std::ostream& os, const integer_axis& a)
 {
     os << "integer_axis(" << a[0] << ", " << a[a.bins() - 1];
-    if (!detail::empty(a.label())) {
+    if (!a.label().empty()) {
         os << ", label=";
         detail::escape(os, a.label());
     }
@@ -80,8 +80,13 @@ inline std::ostream& operator<<(std::ostream& os, const category_axis& a)
     os << "category_axis(";
     for (int i = 0; i < a.bins(); ++i) {
         detail::escape(os, a[i]);
-        os << (i == (a.bins() - 1)? ")" : ", ");
+        os << (i == (a.bins() - 1)? "" : ", ");
     }
+    if (!a.label().empty()) {
+        os << ", label=";
+        detail::escape(os, a.label());
+    }
+    os << ")";
     return os;
 }
 
