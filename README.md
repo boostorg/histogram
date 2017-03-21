@@ -27,7 +27,6 @@ Check out the [full documentation](https://htmlpreview.github.io/?https://raw.gi
 * High performance (cache-friendly design, tuned code, use of compile-time information to avoid conversions and to unroll loops)
 * Space-efficient use of memory, memory dynamically grows as needed
 * Serialization support using `boost.serialization`
-* Histograms cannot overflow (counts are only limited by available memory)
 * Language support: C++11, Python (2.x and 3.x)
 * Numpy support
 
@@ -43,7 +42,7 @@ Check out the [full documentation](https://htmlpreview.github.io/?https://raw.gi
 
 ## Build instructions
 
-The library can be build with `b2` within the boost directory structure, but if you are not a boost developer, use CMake instead.
+The library can be build with `b2` within the boost directory structure, but if you are not a boost developer, use `cmake` instead.
 
 ```sh
 git clone https://github.com/HDembinski/histogram.git
