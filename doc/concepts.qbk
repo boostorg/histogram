@@ -1,0 +1,23 @@
+[section concepts]
+
+Users can extend the library with new axis and storage types.
+
+[section Axis type]
+
+An axis type is:
+* default/copy/move constructable
+* copy/move assignable
+* equal comparablint index] ce
+* provides a nexted type `value_type`
+* has the following methods:
+  * `int index(value_type x) const`
+  * `value_type operator[](int index) const`
+  * `const std::string& label() const`
+  * `int bin() const`
+  * `int shape() const`
+  * `bool uoflow() const`
+Optionally, the type is also
+* streamable
+* serializable
+
+[endsect]
