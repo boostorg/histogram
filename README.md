@@ -12,7 +12,7 @@ The histograms have value semantics. Move operations and trips over the language
 
 My goal is to submit this project to [Boost](http://www.boost.org), that's why it uses the Boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
-Check out the [full documentation](https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/index.html). Highlights are given below.
+Check out the [full documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/index.html). Highlights are given below.
 
 ## Features
 
@@ -157,7 +157,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
 ## Benchmarks
 
-Thanks to modern meta-programming and intelligent memory management, this library is not only more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [ROOT framework](https://root.cern.ch) and to [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. [Read more about the benchmark in the documentation](https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/benchmarks.html).
+Thanks to modern meta-programming and intelligent memory management, this library is not only more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [ROOT framework](https://root.cern.ch) and to [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. More details on the benchmark are given in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/benchmarks.html)
 
 ![alt benchmark](doc/benchmark.png)
 
@@ -165,42 +165,7 @@ Thanks to modern meta-programming and intelligent memory management, this librar
 
 There is a lack of a widely-used free histogram class. While it is easy to write an 1-dimensional histogram, writing an n-dimensional histogram poses more of a challenge. If you add serialization and Python/Numpy support onto the wish-list, the air becomes thin. The main competitor is the [ROOT framework](https://root.cern.ch). This histogram class is designed to be more convenient to use, and as fast or faster than the equivalent ROOT histograms. It comes without heavy baggage, instead it has a clean and modern C++ design which follows the advice given in popular C++ books, like those of [Meyers](http://www.aristeia.com/books.html) and [Sutter and Alexandrescu](http://www.gotw.ca/publications/c++cs.htm).
 
-## Design choices
-
-I designed the histogram based on a decade of experience collected in working with Big Data, more precisely in the field of particle physics and astroparticle physics. I follow these principles:
-
-* "Do one thing and do it well", Doug McIlroy
-* The [Zen of Python](https://www.python.org/dev/peps/pep-0020) (also applies to other languages)
-
-### Interface convenience
-
-The histogram has the same consistent interface whatever the dimension. Like `std::vector` it *just works*, users are not forced to make an *a priori* choice among several histogram classes and options everytime they encounter a new data set.
-
-### Language transparency
-
-Python is a great language for data analysis, so the histogram has Python bindings. Data analysis in Python is Numpy-based, so Numpy is supported as well. The histogram can be used as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python: define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
-
-### Specialized binning strategies
-
-The histogram supports about half a dozent different binning strategies, conveniently encapsulated in axis objects. There is the standard sorting of real-valued data into bins of equal or varying width, but also special support for binning of angles or integer values.
-
-Extra bins that count events with fall outside of the axis range are added by default. This useful feature is activated by default, but can be turned off individually for each axis to conserve memory. The extra bins do not disturb normal counting. On an axis with n-bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at `-1` and `n`, respectively.
-
-### Performance, cache-friendliness and memory-efficiency
-
-Dense storage in memory is a must both for high performance. In the standard configuration, the histograms use a special class which stores the counts in a continuous memory area which grows automatically as needed to hold the largest counts in the histogram. While `std::vector` grows in *length* as new elements are added, while the count storage grows in *depth*.
-
-This scheme is both fast and memory efficient. It is fast, because random access of counts is fast. It is memory efficient, because for small counts only one byte of memory is used per count. Keeping the memory footprint as small as possible also helps to utilitize the CPU cache efficiently.
-
-The scheme works particularly well in light of the [curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality). On the one hand, as the number of histogram axes increases, the number of bins grows exponentially. On the other hand, having many bins reduces the number of counts per bin, which is the other consequence of the rapid increase in volume in an n-dimensional hyper-cube. The smaller memory footprint per bin somewhat compensates the growth of bin numbers.
-
-While the standard configuration is highly recommended, other configurations can be chosen at compile-time. Counts can also be stored in any containers that supports the STL interface and operator[].
-
-### Support for weighted counts and variance estimates
-
-A histogram categorizes and counts, so the natural choice for the data type of the counts are integers. However, in science, histograms are sometimes filled with weighted events, for example, to make sure that two histograms look the same in one variable, while the distribution of another, correlated variable is the subject of study.
-
-In the standard configuration, histogram can be filled with either weighted or unweighted counts. In the weighted case, the sum of weights is stored in a double. The histogram provides a variance estimate is both cases. In the unweighted case, the estimate is computed from the count itself, using a common estimate derived from Poisson-theory. In the weighted case, the sum of squared weights is stored alongside the sum of weights, and used to compute a variance estimate.
+Read more about the rationale of the design choices in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/rationale.html)
 
 ## State of project
 

@@ -26,8 +26,6 @@ namespace detail {
         os << '\'';
     }
 
-    inline
-    bool empty(const std::string& s) { return s.empty(); }
 }
 }
 }

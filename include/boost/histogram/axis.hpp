@@ -38,7 +38,7 @@ namespace detail {
     boost::string_ref value;
   };
 
-  template <typename Value> 
+  template <typename Value>
   struct real_bin
   {
     int idx;
@@ -263,9 +263,6 @@ public:
   const_iterator end() const
   { return const_iterator(*this, uoflow() ? bins() + 1 : bins()); }
 
-  value_type left(int idx) const { return operator[](idx); }
-  value_type right(int idx) const { return operator[](idx+1); }
-
 private:
   value_type min_ = 0.0, delta_ = 1.0;
 
@@ -275,10 +272,9 @@ private:
 
 /** Axis for real-valued angles.
   *
-  * There are no overflow/underflow bins for this axis,
-  * since the axis is circular and wraps around after
-  * \f$2 \pi\f$.
-  * Binning is a O(1) operation.
+  * The axis is circular and wraps around reaching the
+  * perimeter value. Therefore, there are no overflow/underflow
+  * bins for this axis. Binning is a O(1) operation.
   */
 template <typename RealType=double>
 class circular_axis: public axis_base<false> {
@@ -336,9 +332,6 @@ public:
 
   const_iterator end() const
   { return const_iterator(*this, bins()); }
-
-  value_type left(int idx) const { return operator[](idx); }
-  value_type right(int idx) const { return operator[](idx+1); }
 
 private:
   value_type phase_ = 0.0, perimeter_ = 1.0;
@@ -445,9 +438,6 @@ public:
 
   const_iterator end() const
   { return const_iterator(*this, uoflow() ? bins() + 1 : bins()); }
-
-  value_type left(int idx) const { return operator[](idx); }
-  value_type right(int idx) const { return operator[](idx+1); }
 
 private:
   std::unique_ptr<value_type[]> x_; // smaller size compared to std::vector

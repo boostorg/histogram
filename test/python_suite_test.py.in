@@ -219,6 +219,7 @@ class test_category_axis(unittest.TestCase):
 
     def test_init(self):
         category_axis("A", "B", "C")
+        category_axis("A", "B", "C", label="ca")
         with self.assertRaises(TypeError):
             category_axis()
         with self.assertRaises(TypeError):
@@ -226,8 +227,8 @@ class test_category_axis(unittest.TestCase):
         with self.assertRaises(TypeError):
             category_axis("1", 2)
         with self.assertRaises(TypeError):
-            category_axis("A", "B", "C", label="ca")
-        with self.assertRaises(TypeError):
+            category_axis("A", "B", label=1)
+        with self.assertRaises(KeyError):
             category_axis("A", "B", "C", uoflow=True)
         self.assertEqual(category_axis("A", "B", "C"),
                          category_axis("A", "B", "C"))
