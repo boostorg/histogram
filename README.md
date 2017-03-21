@@ -4,24 +4,25 @@
 
 [![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=develop)](https://travis-ci.org/HDembinski/histogram?branch=develop) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
 
-This `C++11` library implements two easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) classes, using a policy-based design, optimized for extensibility, convenience and highest performance.
+This `C++11` library implements two easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) classes, using a policy-based design, optimized for extensibility, convenience and highest performance. Bin counts in this librabry *cannot overflow* or *loose precision*.
 
-Two histogram implementations in C++ are included. `static_histogram` exploits compile-time information as much as possible to provide maximum performance, at the cost of larger binaries and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
+Two histogram implementations in C++ are included. `static_histogram` uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
 
 The histograms have value semantics. Move operations and trips over the language boundary from C++ to Python are cheap. Histograms can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (faster than numpy's own histogram functions) and are convertible into Numpy arrays without copying data.
 
 My goal is to submit this project to [Boost](http://www.boost.org), that's why it uses the Boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
-[Full documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/master/doc/html/index.html) is available, a summary is given below (WARNING: the documentation is outdated and will be updated in the future).
+Check out the [full documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/index.html). Highlights are given below.
 
 ## Features
 
 * N-dimensional histogram
 * Intuitive and convenient interface
 * Value semantics with efficient move operations
-* Support for different binning schemes (user-extensible)
+* Support for various binning schemes (user-extensible)
 * Optional underflow/overflow bins for each dimension
-* Support for counting weighted events
+* Bin counts cannot overflow or loose precision (*)
+* Support for weighted input
 * Statistical variance can be queried for each bin
 * High performance (cache-friendly design, tuned code, use of compile-time information to avoid conversions and to unroll loops)
 * Space-efficient use of memory, memory dynamically grows as needed
@@ -30,15 +31,19 @@ My goal is to submit this project to [Boost](http://www.boost.org), that's why i
 * Language support: C++11, Python (2.x and 3.x)
 * Numpy support
 
+(*) In the standard configuration and if you don't use weighted input.
+
 ## Dependencies
 
 * [Boost](http://www.boost.org)
-* [CMake](https://cmake.org)
 * Optional:
+* [CMake](https://cmake.org)
   [Python](http://www.python.org)
   [Numpy](http://www.numpy.org)
 
 ## Build instructions
+
+The library can be build with `b2` within the boost directory structure, but if you are not a boost developer, use CMake instead.
 
 ```sh
 git clone https://github.com/HDembinski/histogram.git
@@ -47,18 +52,17 @@ cmake ../histogram/build
 make # or 'make install'
 ```
 
-To run the tests, do `make test` or `ctest -V` for more output.
+To run the tests, do `make test`.
 
 ## Code examples
 
 For the full version of the following examples with explanations, see
-[Tutorial](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/master/doc/html/tutorial.html).
+[Tutorial](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/tutorial.html).
 
 Example 1: Fill a 1d-histogram in C++
 
 ```cpp
-    #include <boost/histogram/static_histogram.hpp> // proposed for inclusion in Boost
-    #include <boost/histogram/axis.hpp> // proposed for inclusion in Boost
+    #include <boost/histogram/histogram.hpp> // proposed for inclusion in Boost
     #include <iostream>
     #include <cmath>
 
@@ -67,7 +71,7 @@ Example 1: Fill a 1d-histogram in C++
 
         // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
         // with axis of histogram labeled as "x"
-        auto h = bh::make_static_histogram(bh::regular_axis(10, -1.0, 2.0, "x"));
+        auto h = bh::make_static_histogram(bh::regular_axis<>(10, -1.0, 2.0, "x"));
 
         // fill histogram with data
         h.fill(-1.5); // put in underflow bin
@@ -153,19 +157,9 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
 ## Benchmarks
 
-The following table shows results of a simple benchmark against
+Thanks to modern meta-programming and memory management, this library is not only more flexible and convenient to use, but also very fast. In the plot below, its speed is compared to classes from the [ROOT framework](https://root.cern.ch) and to [Numpy](http://www.numpy.org).
 
-* `TH1I`, `TH3I` and `THnI` of the [ROOT framework](https://root.cern.ch>)
-
-* `histogram` and `histogramdd` from the Python module `numpy`
-
-The benchmark against ROOT is implemented in C++, the benchmark against numpy in Python. For a full discussion of the benchmark, see the section *Notes* in the documentation.
-
-Test system: Intel Core i7-4500U CPU clocked at 1.8 GHz, 8 GB of DDR3 RAM
-
-![alt benchmark](https://github.com/hdembinski/doc/benchmark.png "")
-
-`boost::histogram` is faster than the respective ROOT histograms, while being richer in core features and easier to use. The performance of `boost::histogram` is similar in C++ and Python, showing only a small overhead in Python. It is by a factor 2-4 faster than numpy's histogram functions.
+![alt benchmark](https://github.com/hdembinski/html/doc/benchmark.png "")
 
 ## Rationale
 

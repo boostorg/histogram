@@ -4,7 +4,7 @@ The library is designed to be fast. While it is unlikely that the time spend in 
 
 The following plot shows results of a benchmark on a 9 GHz Macbook Pro. Random numbers from a uniform and a normal distribution are filled into histograms with 1, 3, and 6 axes. 100 bins are used in the first case, 100x100x100=10^6 in the second, and 10x10x10x10x10x10=10^6 in the third. Each test is repeated 50 times and the minimum time is taken.
 
-[$benchmark.png [width 5in] [height 5in]]
+[$../benchmark.png [width 5in] [height 5in]]
 
 [variablelist Plot legend:
 	[[root] [[@https://root.cern.ch ROOT classes] (`TH1I` for 1D, `TH3I` for 3D and `THnI` for 6D)]]
