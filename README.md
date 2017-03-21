@@ -4,9 +4,9 @@
 
 [![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=develop)](https://travis-ci.org/HDembinski/histogram?branch=develop) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
 
-This `C++11` library implements two easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) classes, using a policy-based design, optimized for extensibility, convenience and highest performance. If the standard configuration is used, bin counts *cannot overflow* or *loose precision*.
+This `C++11` library provides an easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. It is very customisable through a policy-based design, and yet the default policies were designed very carefully so that most users won't ever need anything else. The library is very fast, memory efficient, has a convenient uniform interface. If the default policies are used, bin counts *cannot overflow* or *loose precision*.
 
-Two histogram implementations with identical interface are included. `static_histogram` uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
+The histogram class comes in two variants with almost identical interface. `static_histogram` uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
 
 The histograms have value semantics. Move operations and trips over the language boundary from C++ to Python are cheap. Histograms can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (faster than numpy's own histogram functions) and are convertible into Numpy arrays without copying data.
 
@@ -17,11 +17,11 @@ Check out the [full documentation](https://htmlpreview.github.io/?https://raw.gi
 ## Features
 
 * N-dimensional histogram
-* Intuitive and convenient interface
+* Simple and convenient interface
 * Value semantics with efficient move operations
 * Support for various binning schemes (user-extensible)
 * Optional underflow/overflow bins for each dimension
-* Bin counts cannot overflow or loose precision (*)
+* Counts cannot overflow or loose precision (+)
 * Support for weighted input
 * Statistical variance can be queried for each bin
 * High performance (cache-friendly design, tuned code, use of compile-time information to avoid conversions and to unroll loops)
@@ -30,7 +30,7 @@ Check out the [full documentation](https://htmlpreview.github.io/?https://raw.gi
 * Language support: C++11, Python (2.x and 3.x)
 * Numpy support
 
-(*) In the standard configuration and if you don't use weighted input.
+(+) In the standard configuration and if you don't use weighted input.
 
 ## Dependencies
 
