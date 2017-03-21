@@ -12,7 +12,7 @@ The histograms have value semantics. Move operations and trips over the language
 
 My goal is to submit this project to [Boost](http://www.boost.org), that's why it uses the Boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
-Check out the [full documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/index.html). Highlights are given below.
+Check out the [full documentation](https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/index.html). Highlights are given below.
 
 ## Features
 
@@ -157,7 +157,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
 ## Benchmarks
 
-Thanks to modern meta-programming and intelligent memory management, this library is not only more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [ROOT framework](https://root.cern.ch) and to [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library.
+Thanks to modern meta-programming and intelligent memory management, this library is not only more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [ROOT framework](https://root.cern.ch) and to [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. [Read more about the benchmark in the documentation](https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/benchmarks.html).
 
 ![alt benchmark](doc/benchmark.png)
 
