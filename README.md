@@ -4,7 +4,7 @@
 
 [![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=develop)](https://travis-ci.org/HDembinski/histogram?branch=develop) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
 
-This `C++11` library implements two easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) classes, using a policy-based design, optimized for extensibility, convenience and highest performance. Bin counts in this librabry *cannot overflow* or *loose precision*.
+This `C++11` library implements two easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) classes, using a policy-based design, optimized for extensibility, convenience and highest performance. If the standard configuration is used, bin counts *cannot overflow* or *loose precision*.
 
 Two histogram implementations in C++ are included. `static_histogram` uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
 
@@ -159,7 +159,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
 Thanks to modern meta-programming and memory management, this library is not only more flexible and convenient to use, but also very fast. In the plot below, its speed is compared to classes from the [ROOT framework](https://root.cern.ch) and to [Numpy](http://www.numpy.org).
 
-![alt benchmark](https://github.com/hdembinski/html/doc/benchmark.png "")
+![alt benchmark](https://github.com/hdembinski/master/doc/benchmark.png "")
 
 ## Rationale
 
