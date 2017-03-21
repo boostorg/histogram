@@ -9,6 +9,8 @@ from matplotlib.font_manager import FontProperties
 
 data = defaultdict(lambda:[])
 for line in open("perf.dat"):
+	if line and line[0] == "#": continue
+	if line.isspace(): continue
 	r = re.search("([0-9])D\n", line)
 	if r:
 		dim = int(r.group(1))
@@ -63,4 +65,4 @@ plt.xlim(0, 0.701)
 plt.tick_params("y", left="off", labelleft="off")
 plt.xlabel("time (smaller is better)")
 
-plt.savefig("html/benchmark.png")
+plt.savefig("benchmark.png")
