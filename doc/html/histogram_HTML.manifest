@@ -8,8 +8,8 @@ histogram/benchmarks.html
 histogram/rationale.html
 histogram/reference.html
 boost/histogram/axis_base.html
-boost/histogram/axis_base__idm405596836176.html
-boost/histogram/axis_base__idm405596816032.html
+boost/histogram/axis_base__idm540191980816.html
+boost/histogram/axis_base__idm540191960544.html
 boost/histogram/category_axis.html
 boost/histogram/circular_axis.html
 boost/histogram/integer_axis.html
@@ -19,7 +19,7 @@ boost/histogram/dynamic_histogram.html
 boost/histogram/static_histogram.html
 boost/histogram/static_histogram/field_counter.html
 boost/histogram/static_histogram/iter_args_impl.html
-boost/histogram/static_histogram/iter_args__idm405588087488.html
+boost/histogram/static_histogram/iter_args__idm540174843424.html
 boost/histogram/adaptive_storage.html
 boost/histogram/container_storage.html
 histogram/changelog.html
