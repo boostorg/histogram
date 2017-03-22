@@ -229,12 +229,18 @@ int main() {
         axes.push_back(regular_axis<>{2, -1, 1, "regular", false});
         axes.push_back(circular_axis<>{4, 0.1, 1.0, "polar"});
         axes.push_back(variable_axis<>{{-1, 0, 1}, "variable", false});
-        axes.push_back(category_axis{"A", "B", "C"});
+        axes.push_back(category_axis{{"A", "B", "C"}, "category"});
         axes.push_back(integer_axis{-1, 1, "integer", false});
         std::ostringstream os;
         for(const auto& a : axes)
             os << a;
-        BOOST_TEST(!os.str().empty());
+        const std::string ref =
+            "regular_axis(2, -1, 1, label='regular', uoflow=False)"
+            "circular_axis(4, phase=0.1, perimeter=1, label='polar')"
+            "variable_axis(-1, 0, 1, label='variable', uoflow=False)"
+            "category_axis('A', 'B', 'C', label='category')"
+            "integer_axis(-1, 1, label='integer', uoflow=False)";
+        BOOST_TEST_EQ(os.str(), ref);
     }
 
     // axis_t_equal_comparable

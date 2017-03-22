@@ -93,19 +93,7 @@ category_axis_init(python::tuple args, python::dict kwargs) {
 template <typename T>
 int
 axis_len(const T& t) {
-    return t.bins() + 1;
-}
-
-template <>
-int
-axis_len(const category_axis& t) {
-    return t.bins();
-}
-
-template <>
-int
-axis_len(const integer_axis& t) {
-    return t.bins();
+    return t.bins() + int(std::is_floating_point<typename T::value_type>::value);
 }
 
 template <typename T>

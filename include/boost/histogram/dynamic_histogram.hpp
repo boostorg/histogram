@@ -275,6 +275,8 @@ public:
     return axes_[N];
   }
 
+  const axes_type& axes() const { return axes_; }
+
 private:
   axes_type axes_;
   Storage storage_;
