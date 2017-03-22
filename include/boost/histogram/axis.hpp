@@ -10,7 +10,7 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/iterator/iterator_facade.hpp>
-#include <boost/utility/string_ref.hpp>
+#include <boost/utility/string_view.hpp>
 #include <type_traits>
 #include <string>
 #include <vector>
@@ -33,8 +33,8 @@ template <>
 struct bin<const std::string&>
 {
   int idx;
-  // boost::string_ref value;
-  std::string value;
+  boost::string_view value;
+  // std::string value;
 };
 
 template <typename Value>

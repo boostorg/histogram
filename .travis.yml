@@ -67,6 +67,8 @@ install:
 script:
   - travis_retry git clone --depth 1 -b bug_fix_support_for_c_string https://github.com/HDembinski/core.git core || exit 1
   - mv core/include/boost/* include/boost
+  - travis_retry git clone --depth 1 https://github.com/boostorg/utility.git utility || exit 1
+  - mv utility/include/boost/* include/boost
 
   - cd build
   - cmake . -DBUILD_PYTHON=OFF
