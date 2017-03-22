@@ -40,7 +40,13 @@ matrix:
             - boost-latest
           packages:
             - clang-3.6
-            - libboost1.55-all-dev
+            - libboost1.55-dev
+            - libboost-iostreams1.55
+            - libboost-iostreams1.55-dev
+            - libboost-python1.55
+            - libboost-python1.55-dev
+            - libboost-serialization1.55.0
+            - libboost-serialization1.55-dev
       env: COMPILER_VERSION=3.6 PYTHON_VERSION=2
 
 git:
@@ -52,6 +58,7 @@ install:
   - export CC=${CC}-${COMPILER_VERSION}
   # - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
   # - source activate pyenv
+  - pip install --user pip
   - pip install --user --only-binary=numpy numpy==1.11.1 cpp-coveralls urllib3[secure]
 
 script:
