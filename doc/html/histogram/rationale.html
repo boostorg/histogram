@@ -7,7 +7,7 @@
 <link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
 <link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
 <link rel="prev" href="benchmarks.html" title="Benchmarks">
-<link rel="next" href="reference.html" title="Reference">
+<link rel="next" href="concepts.html" title="Concepts">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -20,7 +20,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="benchmarks.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="reference.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="benchmarks.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="concepts.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
@@ -150,8 +150,8 @@
           </li>
 <li class="listitem">
             <code class="computeroutput"><a class="link" href="../boost/histogram/circular_axis.html" title="Class template circular_axis">boost::histogram::circular_axis</a></code>
-            is a specialization of a regular axis for angles, which wrap around after
-            2pi.
+            is a specialization of a regular axis for angles and other input that
+            wraps around.
           </li>
 <li class="listitem">
             <code class="computeroutput"><a class="link" href="../boost/histogram/integer_axis.html" title="Class integer_axis">boost::histogram::integer_axis</a></code>
@@ -159,7 +159,8 @@
           </li>
 <li class="listitem">
             <code class="computeroutput"><a class="link" href="../boost/histogram/category_axis.html" title="Class category_axis">boost::histogram::category_axis</a></code>
-            is a specialization of an integer axis for categorial data.
+            is a specialization of an integer axis for categorical data, like "men"
+            and "women".
           </li>
 </ul></div>
 <p>
@@ -172,40 +173,59 @@
 <a name="histogram.rationale.storage_types"></a><a class="link" href="rationale.html#histogram.rationale.storage_types" title="Storage types">Storage types</a>
 </h3></div></div></div>
 <p>
-        Dense storage in memory is needed for fast bin lookup, which is a very frequent
-        operation. Dense storage also avoids memory overhead per bin which is otherwise
-        needed to find the next block of memory.
+        Dense (aka contiguous) storage in memory is needed for fast bin lookup, which
+        is of the random-access variety and may be happening in a tight loop. All
+        storage types therefore implement dense storage of bin counters. <code class="computeroutput"><a class="link" href="../boost/histogram/container_storage.html" title="Class template container_storage">boost::histogram::container_storage</a></code>
+        implements a storage based on an STL-conforming container and that could
+        be the end of story, but there are several issues with this approach. For
+        one, it is not convenient, because the user has to decide what type to use
+        to hold the bin counts and it is not an obvious choice. The integer needs
+        to be large enough to avoid counter overflow, but if it is too large and
+        only a fraction of the bits are used, then it is a waste of memory. Using
+        floating point numbers is even more dangerous. They don't overflow, but cap
+        the bin count when the bits in the mantissa are used up.
+      </p>
+<p>
+        The standard storage used in the library is <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">boost::histogram::adaptive_storage</a></code>,
+        which solves these issues in an effective way, based on the following insight.
       </p>
 <p>
         The <a href="https://en.wikipedia.org/wiki/Curse_of_dimensionality" target="_top">curse
-        of dimensionality</a> quickly becomes a problem when the number of histogram
+        of dimensionality</a> becomes a problem when the number of histogram
         axes grows, since the number of bins grows exponentially. High-dimensional
-        histograms can consume GBs of memory.
+        histograms can consume GBs of memory. However, having many bins typically
+        reduces the number of counts per bin, since the input values are spread over
+        many more bins now. This suggests an adaptive solution: start with a minimum
+        amount of memory per bin by using the smallest integer type to hold a count.
+        If the bin counter is about to overflow, switch to the next larger integer
+        type.
       </p>
 <p>
-        However, having many bins typically reduces the number of counts per bin,
-        since the input values are spread over many more bins now. This suggests
-        an adaptive solution: start with a minimum amount of memory per bin by using
-        the smallest integer type to hold a count. If the bin counter is about to
-        overflow, switch to the next larger integer type to hold the count for the
-        bin.
-      </p>
-<p>
-        This strategy is implemented by the default <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage</a></code>
-        class. It starts with 1 byte per cell and increases up to 8 byte per cell.
-        When even that is not enough, it switches to the <a href="../../../../../libs/multiprecision/index.html" target="_top">Boost.Multiprecision</a>
+        We start with 1 byte per bin counter and then double the size as needed,
+        until 8 byte per bin are reached. When even that is not enough, we switch
+        to the <a href="../../../../../libs/multiprecision/index.html" target="_top">Boost.Multiprecision</a>
         type <code class="computeroutput"><span class="identifier">cpp_int</span></code>, whose capacity
-        is limited only by available memory. In a sense, <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage</a></code>
+        is limited only by available memory. This approach is not only memory conserving,
+        but also ultimately safe, because bin counters cannot overflow.
+      </p>
+<p>
+        And now comes the best part: it is even often faster despite several overheads.
+        We require dense storage and so need to resize all bin counters to the new
+        size whenever any one counter is about to overflow. A new memory block is
+        allocated with a uniformly larger cell size, then the content of the old
+        memory is copied, and finally the old memory block is deallocated. This is
+        a slow operation, but happens only O(logN) times for N bin increments. There
+        is an runtime overhead involved in addressing bin counters of varying size.
+        Nevertheless, the benchmarks show that this approach is faster for larger
+        histograms than using fixed but large cell size, because the more compact
+        size leads to better utilization of the CPU cache.
+      </p>
+<p>
+        In a sense, <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage</a></code>
         is the opposite of a <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span></code>,
         which keeps the size of the stored type constant, but grows to hold a larger
         number of elements. Here, the number of elements remains the same, but the
-        storage grows to hold larger and larger elements.
-      </p>
-<p>
-        This approach is ultimately safe and memory conservative. It also makes bin
-        access faster in many cases, because compact storage reduces cache-misses.
-        This leads to better performance despite the instruction overhead needed
-        to implement the polymorphic nature of the adaptive storage.
+        storage grows to hold a uniform collection of larger and larger elements.
       </p>
 </div>
 <div class="section">
@@ -483,7 +503,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="benchmarks.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="reference.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="benchmarks.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="concepts.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

@@ -40,8 +40,34 @@
 <copy-assignment cv="= default"><type><classname>axis_base</classname> &amp;</type><parameter name=""><paramtype>const <classname>axis_base</classname> &amp;</paramtype></parameter></copy-assignment>
 <constructor><parameter name="other"><paramtype><classname>axis_base</classname> &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment><type><classname>axis_base</classname> &amp;</type><parameter name="other"><paramtype><classname>axis_base</classname> &amp;&amp;</paramtype></parameter></copy-assignment>
-</class-specialization><class name="category_axis"><inherit access="public">boost::histogram::axis_base&lt; false &gt;</inherit><purpose>An axis for enumerated categories. </purpose><description><para>The axis stores the category labels, and expects that they are addressed using an integer from <computeroutput>0</computeroutput> to <computeroutput>n-1</computeroutput>. There are no underflow/overflow bins for this axis. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>const std::string &amp;</type></typedef>
-<typedef name="const_iterator"><type><emphasis>unspecified</emphasis></type></typedef>
+</class-specialization><class name="axis_iterator"><template>
+      <template-type-parameter name="Axis"/>
+    </template><inherit access="public">iterator_facade&lt; axis_iterator&lt; Axis &gt;, const axis_bin&lt; Axis::value_type &gt;, random_access_traversal_tag &gt;</inherit><method-group name="public member functions">
+</method-group>
+<constructor specifiers="explicit"><parameter name="axis"><paramtype>const Axis &amp;</paramtype></parameter><parameter name="idx"><paramtype>int</paramtype></parameter></constructor>
+<method-group name="private member functions">
+<method name="increment"><type>void</type></method>
+<method name="decrement"><type>void</type></method>
+<method name="advance"><type>void</type><parameter name="n"><paramtype>int</paramtype></parameter></method>
+<method name="distance_to" cv="const"><type>int</type><parameter name="other"><paramtype>const axis_iterator &amp;</paramtype></parameter></method>
+<method name="equal" cv="const"><type>bool</type><parameter name="other"><paramtype>const axis_iterator &amp;</paramtype></parameter></method>
+<method name="dereference" cv="const"><type>const bin_type &amp;</type></method>
+<method name="set_impl"><type>void</type><template>
+          <template-type-parameter name="Value"/>
+        </template><parameter name="v"><paramtype>bin&lt; Value &gt; &amp;</paramtype></parameter></method>
+<method name="set_impl"><type>void</type><template>
+          <template-type-parameter name="Value"/>
+        </template><parameter name="v"><paramtype>real_bin&lt; Value &gt; &amp;</paramtype></parameter></method>
+</method-group>
+</class><struct name="bin"><template>
+      <template-type-parameter name="Value"/>
+    </template><data-member name="idx"><type>int</type></data-member>
+<data-member name="value"><type>Value</type></data-member>
+</struct><struct-specialization name="bin"><template>
+    </template><specialization><template-arg>const std::string &amp;</template-arg></specialization><data-member name="idx"><type>int</type></data-member>
+<data-member name="value"><type>boost::string_ref</type></data-member>
+</struct-specialization><class name="category_axis"><inherit access="public">boost::histogram::axis_base&lt; false &gt;</inherit><purpose>An axis for enumerated categories. </purpose><description><para>The axis stores the category labels, and expects that they are addressed using an integer from <computeroutput>0</computeroutput> to <computeroutput>n-1</computeroutput>. There are no underflow/overflow bins for this axis. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>const std::string &amp;</type></typedef>
+<typedef name="const_iterator"><type>axis_iterator&lt; <classname>category_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
 <method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>int</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose><description><para>Performs a range check. </para></description></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the category for the bin index. </purpose></method>
@@ -63,7 +89,7 @@
 </class><class name="circular_axis"><template>
       <template-type-parameter name="RealType"><default>double</default></template-type-parameter>
     </template><inherit access="public">boost::histogram::axis_base&lt; false &gt;</inherit><purpose>Axis for real-valued angles. </purpose><description><para>The axis is circular and wraps around reaching the perimeter value. Therefore, there are no overflow/underflow bins for this axis. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>RealType</type></typedef>
-<typedef name="const_iterator"><type><emphasis>unspecified</emphasis></type></typedef>
+<typedef name="const_iterator"><type>axis_iterator&lt; <classname>circular_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
 <method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the starting edge of the bin. </purpose></method>
@@ -81,7 +107,7 @@
 <constructor cv="= default"><parameter name=""><paramtype><classname>circular_axis</classname> &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type><classname>circular_axis</classname> &amp;</type><parameter name=""><paramtype><classname>circular_axis</classname> &amp;&amp;</paramtype></parameter></copy-assignment>
 </class><class name="integer_axis"><inherit access="public">boost::histogram::axis_base&lt; true &gt;</inherit><purpose>An axis for a contiguous range of integers. </purpose><description><para>Binning is a O(1) operation. This axis operates faster than a <classname alt="boost::histogram::regular_axis">regular_axis</classname>. </para></description><typedef name="value_type"><type>int</type></typedef>
-<typedef name="const_iterator"><type><emphasis>unspecified</emphasis></type></typedef>
+<typedef name="const_iterator"><type>axis_iterator&lt; <classname>integer_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
 <method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the integer that is mapped to the bin index. </purpose></method>
@@ -96,10 +122,15 @@
 <copy-assignment cv="= default"><type><classname>integer_axis</classname> &amp;</type><parameter name=""><paramtype>const <classname>integer_axis</classname> &amp;</paramtype></parameter></copy-assignment>
 <constructor cv="= default"><parameter name=""><paramtype><classname>integer_axis</classname> &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type><classname>integer_axis</classname> &amp;</type><parameter name=""><paramtype><classname>integer_axis</classname> &amp;&amp;</paramtype></parameter></copy-assignment>
-</class><class name="regular_axis"><template>
+</class><struct name="real_bin"><template>
+      <template-type-parameter name="Value"/>
+    </template><data-member name="idx"><type>int</type></data-member>
+<data-member name="left"><type>Value</type></data-member>
+<data-member name="right"><type>Value</type></data-member>
+</struct><class name="regular_axis"><template>
       <template-type-parameter name="RealType"><default>double</default></template-type-parameter>
     </template><inherit access="public">boost::histogram::axis_base&lt; true &gt;</inherit><purpose>Axis for binning real-valued data into equidistant bins. </purpose><description><para>The simplest and common binning strategy. Very fast. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>RealType</type></typedef>
-<typedef name="const_iterator"><type><emphasis>unspecified</emphasis></type></typedef>
+<typedef name="const_iterator"><type>axis_iterator&lt; <classname>regular_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
 <method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the starting edge of the bin. </purpose></method>
@@ -117,7 +148,7 @@
 </class><class name="variable_axis"><template>
       <template-type-parameter name="RealType"><default>double</default></template-type-parameter>
     </template><inherit access="public">boost::histogram::axis_base&lt; true &gt;</inherit><purpose>An axis for real-valued data and bins of varying width. </purpose><description><para>Binning is a O(log(N)) operation. If speed matters and the problem domain allows it, prefer a <classname alt="boost::histogram::regular_axis">regular_axis</classname>. </para></description><typedef name="value_type"><type>RealType</type></typedef>
-<typedef name="const_iterator"><type><emphasis>unspecified</emphasis></type></typedef>
+<typedef name="const_iterator"><type>axis_iterator&lt; <classname>variable_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
 <method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the starting edge of the bin. </purpose></method>
@@ -136,7 +167,10 @@
 <copy-assignment><type><classname>variable_axis</classname> &amp;</type><parameter name="o"><paramtype>const <classname>variable_axis</classname> &amp;</paramtype></parameter></copy-assignment>
 <constructor cv="= default"><parameter name=""><paramtype><classname>variable_axis</classname> &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type><classname>variable_axis</classname> &amp;</type><parameter name=""><paramtype><classname>variable_axis</classname> &amp;&amp;</paramtype></parameter></copy-assignment>
-</class><typedef name="default_axes"><type>mpl::vector&lt; <classname>regular_axis</classname>&lt; double &gt;, <classname>regular_axis</classname>&lt; float &gt;, <classname>circular_axis</classname>&lt; double &gt;, <classname>circular_axis</classname>&lt; float &gt;, <classname>variable_axis</classname>&lt; double &gt;, <classname>variable_axis</classname>&lt; float &gt;, <classname>integer_axis</classname>, <classname>category_axis</classname> &gt;::type</type></typedef>
+</class><typedef name="axis_bin"><type>typename std::conditional&lt; std::is_floating_point&lt; Value &gt;::value, real_bin&lt; Value &gt;, bin&lt; Value &gt; &gt;::type</type></typedef>
+<typedef name="default_axes"><type>mpl::vector&lt; <classname>regular_axis</classname>&lt; double &gt;, <classname>regular_axis</classname>&lt; float &gt;, <classname>circular_axis</classname>&lt; double &gt;, <classname>circular_axis</classname>&lt; float &gt;, <classname>variable_axis</classname>&lt; double &gt;, <classname>variable_axis</classname>&lt; float &gt;, <classname>integer_axis</classname>, <classname>category_axis</classname> &gt;::type</type></typedef>
+
+
 
 
 
@@ -187,6 +221,8 @@
         </template><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="a"><paramtype>const <classname>variable_axis</classname>&lt; RealType &gt; &amp;</paramtype></parameter></function>
 <function name="operator&lt;&lt;"><type>std::ostream &amp;</type><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="a"><paramtype>const <classname>integer_axis</classname> &amp;</paramtype></parameter></function>
 <function name="operator&lt;&lt;"><type>std::ostream &amp;</type><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="a"><paramtype>const <classname>category_axis</classname> &amp;</paramtype></parameter></function>
+
+
 
 
 
@@ -288,6 +324,7 @@
 <method name="axis" cv="const"><type>const axis_type &amp;</type><template>
           <template-nontype-parameter name="N"><type>unsigned</type><default>0u</default></template-nontype-parameter>
         </template><purpose>Return axis <emphasis>i</emphasis> (added for conformity with static_histogram interface) </purpose></method>
+<method name="axes" cv="const"><type>const axes_type &amp;</type></method>
 </method-group>
 <constructor cv="= default"/>
 <constructor specifiers="explicit"><template>
@@ -369,12 +406,63 @@
 
 
 
+
+
+</namespace>
+</namespace>
+</header>
+<header name="boost/histogram/histogram_ostream_operators.hpp">
+<namespace name="boost">
+<namespace name="histogram">
+
+
+
+
+
+
+
+<function name="operator&lt;&lt;"><type>std::ostream &amp;</type><template>
+          <template-type-parameter name="Axes"/>
+          <template-type-parameter name="Storage"/>
+        </template><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="h"><paramtype>const static_histogram&lt; Axes, Storage &gt; &amp;</paramtype></parameter></function>
+<function name="operator&lt;&lt;"><type>std::ostream &amp;</type><template>
+          <template-type-parameter name="Axes"/>
+          <template-type-parameter name="Storage"/>
+        </template><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="h"><paramtype>const dynamic_histogram&lt; Axes, Storage &gt; &amp;</paramtype></parameter></function>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </namespace>
 </namespace>
 </header>
 <header name="boost/histogram/serialization.hpp">
 <para>Defines the serialization functions, to use with boost.serialize. </para><namespace name="boost">
 <namespace name="histogram">
+
+
 
 
 
@@ -523,6 +611,7 @@
 <method name="axis" cv="const"><type>std::add_const&lt; typename fusion::result_of::value_at_c&lt; axes_type, N &gt;::type &gt;::type &amp;</type><template>
           <template-nontype-parameter name="N"><type>unsigned</type><default>0</default></template-nontype-parameter>
         </template></method>
+<method name="axes" cv="const"><type>const axes_type &amp;</type></method>
 </method-group>
 <constructor cv="= default"/>
 <constructor specifiers="explicit"><template>
@@ -563,6 +652,8 @@
         </template><parameter name=""><paramtype>Linearize &amp;</paramtype></parameter></method>
 </method-group>
 </class>
+
+
 
 
 
@@ -691,6 +782,8 @@
 
 
 
+
+
 <function name="operator=="><type>bool</type><template>
           <template-nontype-parameter name="Allocator"><type>template&lt; class &gt; class</type></template-nontype-parameter>
           <template-type-parameter name="OtherStorage"/>
@@ -763,6 +856,8 @@
 
 
 
+
+
 <function name="operator=="><type>bool</type><template>
           <template-type-parameter name="Container1"/>
           <template-type-parameter name="Container2"/>
@@ -773,6 +868,8 @@
 <header name="boost/histogram/utility.hpp">
 <namespace name="boost">
 <namespace name="histogram">
+
+
 
 
 
