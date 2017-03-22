@@ -21,10 +21,10 @@
 #include <boost/fusion/container/vector/convert.hpp>
 #include <boost/fusion/include/as_vector.hpp>
 #include <boost/histogram/axis.hpp>
+#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/variance.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <type_traits>
 
 namespace boost {
@@ -36,8 +36,11 @@ class static_histogram
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
 
 public:
-  using axes_type = typename fusion::result_of::as_vector<Axes>::type;
+  using histogram_tag = detail::histogram_tag;
   using value_type = typename Storage::value_type;
+private:
+  using axes_type = typename fusion::result_of::as_vector<Axes>::type;
+public:
 
   static_histogram() = default;
 
@@ -257,8 +260,6 @@ public:
     return fusion::at_c<N>(axes_);
   }
 
-  const axes_type& axes() const { return axes_; }
-
 private:
   axes_type axes_;
   Storage storage_;
@@ -309,6 +310,9 @@ private:
   struct iter_args_impl<Linearize, Iterator, dim()> {
     static void apply(Linearize&, const axes_type&, Iterator) {}
   };
+
+  template <class OtherStorage, class OtherAxes, class Visitor>
+  friend void for_each_axis(const static_histogram<OtherStorage, OtherAxes>&, Visitor&);
 
   template <typename OtherAxes, typename OtherStorage>
   friend class static_histogram;

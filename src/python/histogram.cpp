@@ -57,7 +57,7 @@ histogram_init(python::tuple args, python::dict kwargs) {
   const unsigned dim = len(args) - 1;
 
   // normal constructor
-  dynamic_histogram<>::axes_type axes;
+  std::vector<dynamic_histogram<>::axis_type> axes;
   for (unsigned i = 0; i < dim; ++i) {
     object pa = args[i + 1];
     extract<regular_axis<>> er(pa);
@@ -75,7 +75,8 @@ histogram_init(python::tuple args, python::dict kwargs) {
     PyErr_SetString(PyExc_TypeError, msg.c_str());
     throw_error_already_set();
   }
-  return pyinit(axes.begin(), axes.end());
+  dynamic_histogram<> h(axes.begin(), axes.end());
+  return pyinit(h);
 }
 
 python::object
@@ -306,9 +307,6 @@ void register_histogram()
   using python::arg;
   docstring_options dopt(true, true, false);
 
-  // used to pass arguments from raw python init to specialized C++ constructor
-  class_<dynamic_histogram<>::axes_type::iterator>("axes_iterator", no_init);
-
   class_<dynamic_histogram<>, boost::shared_ptr<dynamic_histogram<>>>("histogram",
     "N-dimensional histogram for real-valued data.",
     no_init)
@@ -317,8 +315,7 @@ void register_histogram()
        "\nPass one or more axis objects to define"
        "\nthe dimensions of the dynamic_histogram<>.")
     // shadowed C++ ctors
-    .def(init<dynamic_histogram<>::axes_type::iterator,
-              dynamic_histogram<>::axes_type::iterator>())
+    .def(init<const dynamic_histogram<>&>())
     .add_property("__array_interface__",
         &storage_access::array_interface)
     .add_property("dim", &dynamic_histogram<>::dim,

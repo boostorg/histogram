@@ -49,6 +49,12 @@ template <typename T,
                               std::end(std::declval<T&>()))>
 struct is_sequence {};
 
+struct histogram_tag {};
+
+template <typename T,
+          typename = typename T::histogram_tag>
+struct is_histogram {};
+
 template <typename S1,
           typename S2>
 struct intersection {

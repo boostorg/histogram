@@ -13,12 +13,11 @@
 #include <boost/mpl/empty.hpp>
 #include <boost/variant.hpp>
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/utility.hpp>
+#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/variance.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <cstddef>
 #include <vector>
 #include <type_traits>
@@ -35,9 +34,12 @@ class dynamic_histogram
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
 
 public:
+  using histogram_tag = detail::histogram_tag;
   using axis_type = typename make_variant_over<Axes>::type;
-  using axes_type = std::vector<axis_type>;
   using value_type = typename Storage::value_type;
+private:
+  using axes_type = std::vector<axis_type>;
+public:
 
   dynamic_histogram() = default;
 
@@ -275,8 +277,6 @@ public:
     return axes_[N];
   }
 
-  const axes_type& axes() const { return axes_; }
-
 private:
   axes_type axes_;
   Storage storage_;
@@ -322,10 +322,13 @@ private:
     }
   }
 
+  friend struct storage_access;
+
+  template <class OtherStorage, class OtherAxes, class Visitor>
+  friend void for_each_axis(const dynamic_histogram<OtherStorage, OtherAxes>&, Visitor&);
+
   template <typename OtherAxes, typename OtherStorage>
   friend class dynamic_histogram;
-
-  friend struct storage_access;
 
   template <typename Archiv, typename OtherAxes, typename OtherStorage>
   friend void serialize(Archiv&, dynamic_histogram<OtherAxes, OtherStorage>&, unsigned);

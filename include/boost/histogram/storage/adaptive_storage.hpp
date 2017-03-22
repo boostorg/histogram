@@ -499,12 +499,12 @@ adaptive_storage<Allocator>::variance(std::size_t i) const
 {
   switch (buffer_.type_.id_) {
     case 0: break;
-    case 1: return detail::variance(buffer_.template at<uint8_t> (i));
-    case 2: return detail::variance(buffer_.template at<uint16_t>(i));
-    case 3: return detail::variance(buffer_.template at<uint32_t>(i));
-    case 4: return detail::variance(buffer_.template at<uint64_t>(i));
+    case 1: return buffer_.template at<uint8_t> (i);
+    case 2: return buffer_.template at<uint16_t>(i);
+    case 3: return buffer_.template at<uint32_t>(i);
+    case 4: return buffer_.template at<uint64_t>(i);
     case 5: return static_cast<value_type>(
-      detail::variance(buffer_.template at<detail::mp_int>(i))
+      buffer_.template at<detail::mp_int>(i)
     );
     case 6: return buffer_.template at<detail::weight>(i).w2;
   }

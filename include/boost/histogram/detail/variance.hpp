@@ -13,14 +13,10 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-// standard Poisson estimate
-template <typename Value>
-Value variance(Value k) { return k; }
-
 namespace {
   template <typename Storage>
   typename std::enable_if<
-    (has_weight_support<Storage>::value),
+    has_weight_support<Storage>::value,
     typename Storage::value_type
   >::type
   variance_impl(const Storage& s, std::size_t i)
@@ -32,7 +28,7 @@ namespace {
     typename Storage::value_type
   >::type
   variance_impl(const Storage& s, std::size_t i)
-  { return variance(s.value(i)); }
+  { return s.value(i); } // standard Poisson estimate
 }
 
 template <typename Storage>
