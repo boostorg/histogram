@@ -49,14 +49,10 @@ install:
   - pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure]
 
 script:
-  # cheating to get lightweight_test.hpp
-  - travis_retry git clone --depth 1 -b bug_fix_support_for_c_string https://github.com/HDembinski/core.git core || exit 1
-
   - mv core/include/boost/* include/boost
 
   - cd build
   - cmake . -DBUILD_PYTHON=OFF
-            -DBUILD_NUMPY_SUPPORT=OFF
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
     make -j2 &&
     ctest -V
@@ -74,7 +70,7 @@ script:
 # Calculate coverage
 after_success:
   if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-    coveralls -r .. -b . --verbose --gcov=`which gcov-${COMPILER_VERSION}`;
+    coveralls -r .. -b . -e ../include/boost/core --gcov=`which gcov-${COMPILER_VERSION}`;
   fi
 
 after_failure:

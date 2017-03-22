@@ -11,10 +11,6 @@
 #include <cstring>
 using namespace boost::histogram::detail;
 
-#ifndef BOOST_TEST_CSTR_EQ
-    #define BOOST_TEST_CSTR_EQ(x,y) BOOST_TEST(std::strcmp(x,y) == 0)
-#endif
-
 int main ()
 {
     // weight
