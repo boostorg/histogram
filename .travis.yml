@@ -60,7 +60,8 @@ install:
   # - source activate pyenv
   - pip install --upgrade --user pip
   - export PYTHON_PATH=${HOME}/.local/lib/python2.7/site-packages:$PYTHON_PATH
-  - ${HOME}/.local/bin/pip install --user --only-binary=numpy numpy==1.11.1 cpp-coveralls urllib3[secure]
+  - ${HOME}/.local/bin/pip --version
+  - ${HOME}/.local/bin/pip install --only-binary=numpy --user numpy==1.11.1 cpp-coveralls urllib3[secure]
 
 script:
   - travis_retry git clone --depth 1 -b bug_fix_support_for_c_string https://github.com/HDembinski/core.git core || exit 1
