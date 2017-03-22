@@ -23,7 +23,13 @@ matrix:
             - boost-latest
           packages:
             - g++-4.8
-            - libboost1.55-all-dev
+            - libboost1.55-dev
+            - libboost-iostreams1.55
+            - libboost-iostreams1.55-dev
+            - libboost-python1.55
+            - libboost-python1.55-dev
+            - libboost-serialization1.55.0
+            - libboost-serialization1.55-dev
       env: COMPILER_VERSION=4.8 PYTHON_VERSION=2 CMAKE_BUILD_TYPE=cov
     - compiler: clang
       addons:
@@ -46,7 +52,7 @@ install:
   - export CC=${CC}-${COMPILER_VERSION}
   # - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
   # - source activate pyenv
-  - pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure]
+  - pip install --user --only-binary=numpy numpy==1.11.1 cpp-coveralls urllib3[secure]
 
 script:
   - travis_retry git clone --depth 1 -b bug_fix_support_for_c_string https://github.com/HDembinski/core.git core || exit 1
