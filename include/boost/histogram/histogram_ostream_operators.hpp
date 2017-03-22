@@ -26,7 +26,7 @@ namespace detail {
   };
 }
 
-template <template <typename, typename> typename Histogram, typename Axes, typename Storage,
+template <template <typename, typename> class Histogram, typename Axes, typename Storage,
           typename = detail::is_histogram<Histogram<Axes, Storage>>>
 inline std::ostream& operator<<(std::ostream& os, const Histogram<Axes, Storage>& h)
 {
