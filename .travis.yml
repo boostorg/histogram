@@ -58,7 +58,7 @@ install:
   - export CC=${CC}-${COMPILER_VERSION}
   # - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
   # - source activate pyenv
-  - pip install --user --upgrade pip
+  - pip install --upgrade pip
   - pip install --user --only-binary=numpy numpy==1.11.1 cpp-coveralls urllib3[secure]
 
 script:
