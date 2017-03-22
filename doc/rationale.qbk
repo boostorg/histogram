@@ -44,9 +44,9 @@ An axis defines which range of input values is mapped to which bin. The logic is
 
 * [classref boost::histogram::regular_axis] sorts real numbers into bins with equal width.
 * [classref boost::histogram::variable_axis] sorts real numbers into bins with varying width.
-* [classref boost::histogram::circular_axis] is a specialization of a regular axis for angles, which wrap around after 2pi.
+* [classref boost::histogram::circular_axis] is a specialization of a regular axis for angles and other input that wraps around.
 * [classref boost::histogram::integer_axis] is a specialization of a regular axis for a continuous range of integers.
-* [classref boost::histogram::category_axis] is a specialization of an integer axis for categorial data.
+* [classref boost::histogram::category_axis] is a specialization of an integer axis for categorical data, like "men" and "women".
 
 Library users can create their own axis classes and use them with the library, by providing a class compatible with the axis concept.
 
@@ -54,15 +54,17 @@ Library users can create their own axis classes and use them with the library, b
 
 [section:storage_types Storage types]
 
-Dense storage in memory is needed for fast bin lookup, which is a very frequent operation. Dense storage also avoids memory overhead per bin which is otherwise needed to find the next block of memory.
+Dense (aka contiguous) storage in memory is needed for fast bin lookup, which is of the random-access variety and may be happening in a tight loop. All storage types therefore implement dense storage of bin counters. [classref boost::histogram::container_storage] implements a storage based on an STL-conforming container and that could be the end of story, but there are several issues with this approach. For one, it is not convenient, because the user has to decide what type to use to hold the bin counts and it is not an obvious choice. The integer needs to be large enough to avoid counter overflow, but if it is too large and only a fraction of the bits are used, then it is a waste of memory. Using floating point numbers is even more dangerous. They don't overflow, but cap the bin count when the bits in the mantissa are used up.
 
-The [@https://en.wikipedia.org/wiki/Curse_of_dimensionality curse of dimensionality] quickly becomes a problem when the number of histogram axes grows, since the number of bins grows exponentially. High-dimensional histograms can consume GBs of memory.
+The standard storage used in the library is [classref boost::histogram::adaptive_storage], which solves these issues in an effective way, based on the following insight.
 
-However, having many bins typically reduces the number of counts per bin, since the input values are spread over many more bins now. This suggests an adaptive solution: start with a minimum amount of memory per bin by using the smallest integer type to hold a count. If the bin counter is about to overflow, switch to the next larger integer type to hold the count for the bin.
+The [@https://en.wikipedia.org/wiki/Curse_of_dimensionality curse of dimensionality] becomes a problem when the number of histogram axes grows, since the number of bins grows exponentially. High-dimensional histograms can consume GBs of memory. However, having many bins typically reduces the number of counts per bin, since the input values are spread over many more bins now. This suggests an adaptive solution: start with a minimum amount of memory per bin by using the smallest integer type to hold a count. If the bin counter is about to overflow, switch to the next larger integer type.
 
-This strategy is implemented by the default [classref boost::histogram::adaptive_storage adaptive_storage] class. It starts with 1 byte per cell and increases up to 8 byte per cell. When even that is not enough, it switches to the [@boost:/libs/multiprecision/index.html Boost.Multiprecision] type `cpp_int`, whose capacity is limited only by available memory. In a sense, [classref boost::histogram::adaptive_storage adaptive_storage] is the opposite of a `std::vector`, which keeps the size of the stored type constant, but grows to hold a larger number of elements. Here, the number of elements remains the same, but the storage grows to hold larger and larger elements.
+We start with 1 byte per bin counter and then double the size as needed, until 8 byte per bin are reached. When even that is not enough, we switch to the [@boost:/libs/multiprecision/index.html Boost.Multiprecision] type `cpp_int`, whose capacity is limited only by available memory. This approach is not only memory conserving, but also ultimately safe, because bin counters cannot overflow.
 
-This approach is ultimately safe and memory conservative. It also makes bin access faster in many cases, because compact storage reduces cache-misses. This leads to better performance despite the instruction overhead needed to implement the polymorphic nature of the adaptive storage.
+And now comes the best part: it is even often faster despite several overheads. We require dense storage and so need to resize all bin counters to the new size whenever any one counter is about to overflow. A new memory block is allocated with a uniformly larger cell size, then the content of the old memory is copied, and finally the old memory block is deallocated. This is a slow operation, but happens only O(logN) times for N bin increments. There is an runtime overhead involved in addressing bin counters of varying size. Nevertheless, the benchmarks show that this approach is faster for larger histograms than using fixed but large cell size, because the more compact size leads to better utilization of the CPU cache.
+
+In a sense, [classref boost::histogram::adaptive_storage adaptive_storage] is the opposite of a `std::vector`, which keeps the size of the stored type constant, but grows to hold a larger number of elements. Here, the number of elements remains the same, but the storage grows to hold a uniform collection of larger and larger elements.
 
 [endsect]
 

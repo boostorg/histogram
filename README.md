@@ -4,7 +4,7 @@
 
 [![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=develop)](https://travis-ci.org/HDembinski/histogram?branch=develop) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
 
-This `C++11` library provides an easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. It is very customisable through a policy-based design, and yet the default policies were designed very carefully so that most users won't ever need anything else. The library is very fast, memory efficient, has a convenient uniform interface. If the default policies are used, bin counts *cannot overflow* or *loose precision*.
+This `C++11` library provides an easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. It is very customisable through a policy-based design, but the default policies were carefully designed so that most users won't need to customize anything. The library is very fast, memory efficient, has a convenient uniform interface. If the default policies are used, bin counts *cannot overflow* or *loose precision*.
 
 The histogram class comes in two variants with almost identical interface. `static_histogram` uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
 
