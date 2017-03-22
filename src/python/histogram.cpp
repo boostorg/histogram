@@ -9,9 +9,12 @@
 #include <boost/histogram/dynamic_histogram.hpp>
 #include <boost/histogram/utility.hpp>
 #include <boost/histogram/serialization.hpp>
+#include <boost/histogram/histogram_ostream_operators.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/variant/static_visitor.hpp>
+#include <boost/variant/apply_visitor.hpp>
 #ifdef HAVE_NUMPY
 # define NO_IMPORT_ARRAY
 # define PY_ARRAY_UNIQUE_SYMBOL boost_histogram_ARRAY_API
@@ -29,7 +32,7 @@ namespace histogram {
 struct axis_visitor : public static_visitor<python::object>
 {
   template <typename T>
-  python::object operator()(const T& t) const { return python::object(T(t)); }
+  python::object operator()(const T& t) const { return python::object(t); }
 };
 
 python::object
@@ -252,6 +255,13 @@ histogram_variance(python::tuple args, python::dict kwargs) {
   return object(self.variance(idx + 0, idx + self.dim()));
 }
 
+std::string
+histogram_repr(const dynamic_histogram<>& h) {
+    std::ostringstream os;
+    os << h;
+    return os.str();
+}
+
 struct storage_access {
   static
   python::object
@@ -334,6 +344,8 @@ void register_histogram()
     .def("variance", raw_function(histogram_variance),
        ":param int args: indices of the bin"
        "\n:return: variance estimate for the bin")
+    .def("__repr__", histogram_repr,
+       ":returns: string representation of the histogram")
     .def(self == self)
     .def(self += self)
     .def_pickle(serialization_suite<dynamic_histogram<>>())

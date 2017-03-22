@@ -9,6 +9,7 @@
 #include <boost/histogram/storage/container_storage.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/utility.hpp>
+#include <boost/histogram/histogram_ostream_operators.hpp>
 #include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -537,6 +538,20 @@ int main() {
             ia >> b;
         }
         BOOST_TEST(a == b);
+    }
+
+    // histogram_ostream
+    {
+        auto a = make_static_histogram(regular_axis<>(3, -1, 1, "r"),
+                                       integer_axis(0, 1, "i"));
+        std::ostringstream os;
+        os << a;
+        BOOST_TEST_EQ(os.str(),
+            "histogram("
+            "\n  regular_axis(3, -1, 1, label='r'),"
+            "\n  integer_axis(0, 1, label='i'),"
+            "\n)"
+        );
     }
 
     return boost::report_errors();

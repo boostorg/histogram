@@ -22,70 +22,67 @@
 namespace boost {
 namespace histogram {
 
-namespace detail {
+template <typename Value>
+struct bin
+{
+  int idx;
+  Value value;
+};
 
+template <>
+struct bin<const std::string&>
+{
+  int idx;
+  boost::string_ref value;
+};
+
+template <typename Value>
+struct real_bin
+{
+  int idx;
+  Value left, right;
+};
+
+template <typename Value>
+using axis_bin = typename std::conditional<
+  std::is_floating_point<Value>::value,
+  real_bin<Value>,
+  bin<Value>
+>::type;
+
+template <typename Axis>
+class axis_iterator : public iterator_facade<
+    axis_iterator<Axis>,
+    const axis_bin<typename Axis::value_type>,
+    random_access_traversal_tag
+  >
+{
+  using bin_type = axis_bin<typename Axis::value_type>;
+
+public:
+  explicit axis_iterator(const Axis& axis, int idx) :
+    axis_(axis), value_()
+  { value_.idx = idx; set_impl(value_); }
+
+private:
+  void increment() { ++value_.idx; set_impl(value_); }
+  void decrement() { --value_.idx; set_impl(value_); }
+  void advance(int n) { value_.idx += n; set_impl(value_); }
+  int distance_to(const axis_iterator& other) const
+  { return other.value_.idx - value_.idx; }
+  bool equal(const axis_iterator& other) const
+  { return value_.idx == other.value_.idx; }
+  const bin_type& dereference() const { return value_; }
   template <typename Value>
-  struct bin
-  {
-    int idx;
-    Value value;
-  };
-
-  template <>
-  struct bin<const std::string&>
-  {
-    int idx;
-    boost::string_ref value;
-  };
-
+  void set_impl(bin<Value>& v)
+  { v.value = axis_[v.idx]; }
   template <typename Value>
-  struct real_bin
-  {
-    int idx;
-    Value left, right;
-  };
-
-  template <typename Value>
-  using axis_bin = typename std::conditional<
-    std::is_floating_point<Value>::value,
-    real_bin<Value>,
-    bin<Value>
-  >::type;
-
-  template <typename Axis>
-  class axis_iterator : public iterator_facade<
-      axis_iterator<Axis>,
-      const axis_bin<typename Axis::value_type>,
-      random_access_traversal_tag
-    >
-  {
-    using bin_type = axis_bin<typename Axis::value_type>;
-
-  public:
-    explicit axis_iterator(const Axis& axis, int idx) :
-      axis_(axis), value_()
-    { value_.idx = idx; set_impl(value_); }
-
-  private:
-    void increment() { ++value_.idx; set_impl(value_); }
-    void decrement() { --value_.idx; set_impl(value_); }
-    void advance(int n) { value_.idx += n; set_impl(value_); }
-    int distance_to(const axis_iterator& other) const
-    { return other.value_.idx - value_.idx; }
-    bool equal(const axis_iterator& other) const
-    { return value_.idx == other.value_.idx; }
-    const bin_type& dereference() const { return value_; }
-    template <typename Value>
-    void set_impl(bin<Value>& v)
-    { v.value = axis_[v.idx]; }
-    template <typename Value>
-    void set_impl(real_bin<Value>& v)
-    { v.left = axis_[v.idx]; v.right = axis_[v.idx + 1]; }
-    const Axis& axis_;
-    bin_type value_;
-    friend class boost::iterator_core_access;
-  };
-} // NS detail
+  void set_impl(real_bin<Value>& v)
+  { v.left = axis_[v.idx]; v.right = axis_[v.idx + 1]; }
+  const Axis& axis_;
+  bin_type value_;
+  friend class boost::iterator_core_access;
+};
 
 /// Common base class for axes.
 template <bool UOFlow>
@@ -204,7 +201,7 @@ template <typename RealType=double>
 class regular_axis: public axis_base<true> {
 public:
   using value_type = RealType;
-  using const_iterator = detail::axis_iterator<regular_axis>;
+  using const_iterator = axis_iterator<regular_axis>;
 
   /** Construct axis with n bins over range [min, max).
     *
@@ -280,7 +277,7 @@ template <typename RealType=double>
 class circular_axis: public axis_base<false> {
 public:
   using value_type = RealType;
-  using const_iterator = detail::axis_iterator<circular_axis>;
+  using const_iterator = axis_iterator<circular_axis>;
 
   /** Constructor for n bins with an optional offset.
     *
@@ -349,7 +346,7 @@ template <typename RealType=double>
 class variable_axis : public axis_base<true> {
 public:
   using value_type = RealType;
-  using const_iterator = detail::axis_iterator<variable_axis>;
+  using const_iterator = axis_iterator<variable_axis>;
 
 	/** Construct an axis from bin edges.
 	  *
@@ -454,7 +451,7 @@ private:
 class integer_axis: public axis_base<true> {
 public:
   using value_type = int;
-  using const_iterator = detail::axis_iterator<integer_axis>;
+  using const_iterator = axis_iterator<integer_axis>;
 
   /** Construct axis over integer range [min, max].
     *
@@ -515,7 +512,7 @@ private:
 class category_axis : public axis_base<false> {
 public:
   using value_type = const std::string&;
-  using const_iterator = detail::axis_iterator<category_axis>;
+  using const_iterator = axis_iterator<category_axis>;
 
   template <typename Iterator>
   category_axis(Iterator begin, Iterator end,
