@@ -34,7 +34,7 @@ Finally, it is not required, but convenient for users if the axis comes with an 
   * `const_iterator begin() const`
   * `const_iterator end() const`
 
-It is recommended to take a look at [classref boost::histogram::axis_base] and [classref boost::histogram::axis_iterator], which provide part of aforementioned infrastructure for axis types.
+It is recommended to take a look at [classref boost::histogram::axis_base] and [classref boost::histogram::axis_iterator], which provide part of the aforementioned infrastructure for axis types.
 
 [endsect]
 
@@ -53,11 +53,11 @@ A `storage_type` is required to:
   * `std::size_t size() const`
   * `void increase(std::size_t index)`
   * `value_type value(std::size_t index) const`
-  * `value_type variance(std::size_t index) const`
   * `storage_type& operator+=(const storage_type& rhs)`
 
-If the `storage_type` should support weighted fills, it needs an additional method:
+To support weighted fills, the `storage_type` needs two additional methods:
 
+* `value_type variance(std::size_t index) const`
 * `void increase(std::size_t index, value_type weight)`
 
 [classref boost::histogram::container_storage] provides a comparably simple example of a storage type which does not support weighted fills.
