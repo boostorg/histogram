@@ -284,7 +284,8 @@ private:
   std::size_t field_count() const
   {
     std::size_t fc = 1;
-    for (auto& a : axes_) fc *= shape(a);
+    for (const auto& a : axes_)
+      fc *= apply_visitor(detail::shape(), a);
     return fc;
   }
 
