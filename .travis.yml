@@ -75,8 +75,6 @@ script:
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
     make -j2 &&
     ctest -V
-  - printf "r\nbt" > gdb.cmd
-  - gdb axis_test --batch -x gdb.cmd
   - cmake . -DBUILD_PYTHON=ON -DPYTHON_VERSION=${PYTHON_VERSION}
             -DBUILD_NUMPY_SUPPORT=OFF
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
@@ -95,6 +93,10 @@ after_success:
   fi
 
 after_failure:
+  - sudo apt-get install -y gdb  # install gdb
+  - printf "r\nbt" > gdb.cmd
+  - gdb axis_test --batch -x gdb.cmd
+
   - make clean && VERBOSE=1 make
   - dpkg -L libboost-python1.55.0
 

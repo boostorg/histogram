@@ -33,8 +33,8 @@ template <>
 struct bin<const std::string&>
 {
   int idx;
-  boost::string_ref value;
-  // std::string value;
+  // boost::string_ref value;
+  std::string value;
 };
 
 template <typename Value>
