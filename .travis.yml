@@ -23,7 +23,6 @@ matrix:
             - ubuntu-toolchain-r-test
             - boost-latest
           packages:
-            - gdb
             - g++-4.8
             - libboost1.55-dev
             - libboost-iostreams1.55
@@ -32,7 +31,24 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=4.8 PYTHON_VERSION=2.7 CMAKE_BUILD_TYPE=cov
+      env: COMPILER_VERSION=4.8 CMAKE_BUILD_TYPE=cov
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - boost-latest
+          packages:
+            - g++-4.8
+            - libboost1.55-dev
+            - libboost-iostreams1.55
+            - libboost-iostreams1.55-dev
+            - libboost-python1.55
+            - libboost-python1.55-dev
+            - libboost-serialization1.55.0
+            - libboost-serialization1.55-dev
+      env: COMPILER_VERSION=3.6
     - os: linux
       compiler: clang
       addons:
@@ -42,7 +58,6 @@ matrix:
             - llvm-toolchain-precise-3.6
             - boost-latest
           packages:
-            - gdb
             - clang-3.6
             - libboost1.55-dev
             - libboost-iostreams1.55
@@ -51,7 +66,25 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2.7
+      env: COMPILER_VERSION=3.6 BUILD_PYTHON=ON PYTHON_VERSION=2.7 BUILD_NUMPY_SUPPORT=OFF
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.6
+            - boost-latest
+          packages:
+            - clang-3.6
+            - libboost1.55-dev
+            - libboost-iostreams1.55
+            - libboost-iostreams1.55-dev
+            - libboost-python1.55
+            - libboost-python1.55-dev
+            - libboost-serialization1.55.0
+            - libboost-serialization1.55-dev
+      env: COMPILER_VERSION=3.6 BUILD_PYTHON=ON PYTHON_VERSION=2.7 BUILD_NUMPY_SUPPORT=ON
 
 git:
   depth: 1
@@ -60,33 +93,41 @@ git:
 install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
-  # - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
-  # - source activate pyenv
-  # - pip install --upgrade --user pip
-  # - export PYTHON_PATH=${HOME}/.local/lib/python2.7/site-packages:$PYTHON_PATH
-  # - ${HOME}/.local/bin/pip --version
-  # - ${HOME}/.local/bin/pip install --only-binary=numpy --user numpy==1.11.1 cpp-coveralls urllib3[secure]
-  # - pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure]
+  - if [ "${BUILD_NUMPY_SUPPORT}" = "ON" ]; then
+      pip install --user numpy==1.11.1;
+    fi
+  - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+      pip install cpp-coveralls urllib3[secure];
+    fi
 
 script:
   - travis_retry git clone --depth 1 https://github.com/boostorg/core.git core || exit 1
   - rsync --recursive core/include/boost/* include/boost/
 
   - cd build
-  - cmake . -DBUILD_PYTHON=OFF
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
-    make -j2 &&
-    ctest -V
-  # - cmake . -DBUILD_PYTHON=ON -DPYTHON_VERSION=${PYTHON_VERSION}
-  #           -DBUILD_NUMPY_SUPPORT=OFF
-  #           -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
-  #   make -j2 &&
-  #   ctest -V
-  # - cmake . -DBUILD_PYTHON=ON -DPYTHON_VERSION=${PYTHON_VERSION}
-  #           -DBUILD_NUMPY_SUPPORT=ON
-  #           -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
-  #   make -j2 &&
-  #   ctest -V
+  - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+      cmake . -DBUILD_PYTHON=OFF
+              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+      make -j2 &&
+      ctest -V;
+      cmake . -DBUILD_PYTHON=ON
+              -DBUILD_NUMPY_SUPPORT=OFF
+              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+      make -j2 &&
+      ctest -V;
+      cmake . -DBUILD_PYTHON=ON
+              -DBUILD_NUMPY_SUPPORT=ON
+              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+      make -j2 &&
+      ctest -V;
+    else
+      cmake . -DBUILD_PYTHON=${BUILD_PYTHON}
+              -DPYTHON_VERSION=${PYTHON_VERSION}
+              -DBUILD_NUMPY_SUPPORT=${BUILD_NUMPY_SUPPORT}
+              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+      make -j2 &&
+      ctest -V;
+    fi
 
 # Calculate coverage
 after_success:
@@ -95,8 +136,8 @@ after_success:
   fi
 
 after_failure:
-  - printf "r\nbt" > gdb.cmd
-  - gdb axis_test --batch -x gdb.cmd
+  # - printf "r\nbt" > gdb.cmd
+  # - gdb axis_test --batch -x gdb.cmd
 
 notifications:
   email: false
