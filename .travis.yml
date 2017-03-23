@@ -15,7 +15,8 @@ branches:
 
 matrix:
   include:
-    - compiler: gcc
+    - os: linux
+      compiler: gcc
       addons:
         apt:
           sources:
@@ -31,7 +32,8 @@ matrix:
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
       env: COMPILER_VERSION=4.8 PYTHON_VERSION=2 CMAKE_BUILD_TYPE=cov
-    - compiler: clang
+    - os: linux
+      compiler: clang
       addons:
         apt:
           sources:
@@ -65,12 +67,10 @@ install:
   - pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure]
 
 script:
-  - travis_retry git clone --depth 1 -b bug_fix_support_for_c_string https://github.com/HDembinski/core.git core || exit 1
+  - travis_retry git clone --depth 1 https://github.com/boostorg/core.git core || exit 1
   - travis_retry git clone --depth 1 https://github.com/boostorg/utility.git utility || exit 1
-  - mkdir include/boost/core
-  - mkdir include/boost/utility
-  - mv core/include/boost/* include/boost/core
-  - mv utility/include/boost/* include/boost/utility
+  - rsync core/include/boost/* include/boost/
+  - rsync utility/include/boost/* include/boost/
 
   - cd build
   - cmake . -DBUILD_PYTHON=OFF
