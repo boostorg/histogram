@@ -87,7 +87,7 @@ install:
   - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
       pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
     fi
-  - if [ "${BUILD_NUMPY_SUPPORT}" = "ON" ]; then
+  - if [ "${NUMPY_SUPPORT}" = "ON" ]; then
       pip install --user numpy==1.11.1;
     fi
 
@@ -114,7 +114,7 @@ script:
     else
       cmake . -DBUILD_PYTHON=${BUILD_PYTHON}
               -DPYTHON_VERSION=${PYTHON_VERSION}
-              -DBUILD_NUMPY_SUPPORT=${BUILD_NUMPY_SUPPORT}
+              -DBUILD_NUMPY_SUPPORT=${NUMPY_SUPPORT}
               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
       make -j2 &&
       ctest -V;
