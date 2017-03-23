@@ -33,8 +33,7 @@ template <>
 struct bin<const std::string&>
 {
   int idx;
-  // boost::string_ref value;
-  std::string value;
+  boost::string_ref value;
 };
 
 template <typename Value>
@@ -63,25 +62,26 @@ class axis_iterator : public iterator_facade<
 public:
   explicit axis_iterator(const Axis& axis, int idx) :
     axis_(axis), value_()
-  { value_.idx = idx; set_impl(value_); }
+  { value_.idx = idx; }
 
 private:
-  void increment() { ++value_.idx; set_impl(value_); }
-  void decrement() { --value_.idx; set_impl(value_); }
-  void advance(int n) { value_.idx += n; set_impl(value_); }
+  void increment() { ++value_.idx; }
+  void decrement() { --value_.idx; }
+  void advance(int n) { value_.idx += n; }
   int distance_to(const axis_iterator& other) const
   { return other.value_.idx - value_.idx; }
   bool equal(const axis_iterator& other) const
   { return value_.idx == other.value_.idx; }
-  const bin_type& dereference() const { return value_; }
-  template <typename Value>
-  void set_impl(bin<Value>& v)
+  const bin_type& dereference() const
+  { assign_impl(value_); return value_; }
+  template <typename U>
+  void assign_impl(bin<U>& v) const
   { v.value = axis_[v.idx]; }
-  template <typename Value>
-  void set_impl(real_bin<Value>& v)
+  template <typename U>
+  void assign_impl(real_bin<U>& v) const
   { v.left = axis_[v.idx]; v.right = axis_[v.idx + 1]; }
   const Axis& axis_;
-  bin_type value_;
+  mutable bin_type value_;
   friend class boost::iterator_core_access;
 };
 
