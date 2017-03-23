@@ -368,16 +368,6 @@ public:
       std::sort(x_.get(), x_.get() + bins() + 1);
   }
 
-  variable_axis(const std::vector<value_type>& x,
-                const std::string& label = std::string(),
-                bool uoflow = true) :
-      axis_base<true>(x.size() - 1, label, uoflow),
-      x_(new value_type[x.size()])
-  {
-      std::copy(x.begin(), x.end(), x_.get());
-      std::sort(x_.get(), x_.get() + bins() + 1);
-  }
-
   template <typename Iterator>
   variable_axis(Iterator begin, Iterator end,
                 const std::string& label = std::string(),
@@ -512,7 +502,7 @@ private:
   */
 class category_axis : public axis_base<false> {
 public:
-  using value_type = boost::string_ref;
+  using value_type = const std::string&;
   using const_iterator = axis_iterator<category_axis>;
 
   template <typename Iterator>
@@ -530,12 +520,6 @@ public:
     */
   explicit
   category_axis(const std::initializer_list<std::string>& categories,
-                const std::string& label = std::string()) :
-    category_axis(categories.begin(), categories.end(), label)
-  {}
-
-  explicit
-  category_axis(const std::vector<std::string>& categories,
                 const std::string& label = std::string()) :
     category_axis(categories.begin(), categories.end(), label)
   {}

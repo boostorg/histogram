@@ -20,7 +20,7 @@ if(BUILD_PYTHON)
   find_package(Boost 1.55 REQUIRED
                COMPONENTS iostreams serialization python)
   if(NOT DEFINED PYTHON_VERSION)
-    execute_process(COMMAND python -c "import sys; sys.stdout.write('%i' % sys.version_info.major)"
+    execute_process(COMMAND python -c "import sys; sys.stdout.write('%i.%i' % (sys.version_info.major,sys.version_info.minor))"
                     OUTPUT_VARIABLE PYTHON_VERSION)
   endif()
   find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)

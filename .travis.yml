@@ -31,7 +31,7 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=4.8 PYTHON_VERSION=2 CMAKE_BUILD_TYPE=cov
+      env: COMPILER_VERSION=4.8 PYTHON_VERSION=2.7 CMAKE_BUILD_TYPE=cov
     - os: linux
       compiler: clang
       addons:
@@ -49,7 +49,7 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2
+      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2.7
 
 git:
   depth: 1
@@ -75,12 +75,12 @@ script:
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
     make -j2 &&
     ctest -V
-  - cmake . -DBUILD_PYTHON=ON
+  - cmake . -DBUILD_PYTHON=ON -DPYTHON_VERSION=${PYTHON_VERSION}
             -DBUILD_NUMPY_SUPPORT=OFF
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
     make -j2 &&
     ctest -V
-  - cmake . -DBUILD_PYTHON=ON
+  - cmake . -DBUILD_PYTHON=ON -DPYTHON_VERSION=${PYTHON_VERSION}
             -DBUILD_NUMPY_SUPPORT=ON
             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
     make -j2 &&
