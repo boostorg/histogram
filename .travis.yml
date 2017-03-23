@@ -69,8 +69,10 @@ install:
 script:
   - travis_retry git clone --depth 1 https://github.com/boostorg/core.git core || exit 1
   - travis_retry git clone --depth 1 https://github.com/boostorg/utility.git utility || exit 1
+  - travis_retry git clone --depth 1 https://github.com/boostorg/config.git config || exit 1
   - rsync --recursive core/include/boost/* include/boost/
   - rsync --recursive utility/include/boost/* include/boost/
+  - rsync --recursive config/include/boost/* include/boost/
 
   - cd build
   - cmake . -DBUILD_PYTHON=OFF
