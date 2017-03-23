@@ -75,11 +75,11 @@ git:
 install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
+  - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+      pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
+    fi
   - if [ "${BUILD_NUMPY_SUPPORT}" = "ON" ]; then
       pip install --user numpy==1.11.1;
-    fi
-  - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-      pip install cpp-coveralls urllib3[secure];
     fi
 
 script:
