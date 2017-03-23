@@ -40,7 +40,7 @@ matrix:
             - ubuntu-toolchain-r-test
             - boost-latest
           packages:
-            - g++-4.8
+            - clang-3.6
             - libboost1.55-dev
             - libboost-iostreams1.55
             - libboost-iostreams1.55-dev
@@ -48,7 +48,7 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=3.6
+      env: COMPILER_VERSION=3.6 BUILD_PYTHON=OFF PYTHON_VERSION=2.7.3 BUILD_NUMPY_SUPPORT=OFF
     - os: linux
       compiler: clang
       addons:
@@ -66,25 +66,7 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=3.6 BUILD_PYTHON=ON PYTHON_VERSION=2.7 BUILD_NUMPY_SUPPORT=OFF
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.6
-            - boost-latest
-          packages:
-            - clang-3.6
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=3.6 BUILD_PYTHON=ON PYTHON_VERSION=2.7 BUILD_NUMPY_SUPPORT=ON
+      env: COMPILER_VERSION=3.6 BUILD_PYTHON=ON PYTHON_VERSION=2.7.3 BUILD_NUMPY_SUPPORT=ON
 
 git:
   depth: 1
