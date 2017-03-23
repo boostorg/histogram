@@ -48,7 +48,7 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=3.6 BUILD_PYTHON=OFF PYTHON_VERSION=2.7.3 BUILD_NUMPY_SUPPORT=OFF
+      env: COMPILER_VERSION=3.6
     - os: linux
       compiler: clang
       addons:
@@ -66,7 +66,7 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=3.6 BUILD_PYTHON=ON PYTHON_VERSION=2.7.3 BUILD_NUMPY_SUPPORT=ON
+      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2.7.3 NUMPY_SUPPORT=ON
 
 git:
   depth: 1
@@ -75,6 +75,14 @@ git:
 install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
+  - if [ -z ${PYTHON_VERSION} ]; then
+      export BUILD_PYTHON=OFF;
+    else
+      export BUILD_PYTHON=ON;
+    fi
+  - if [ -z ${NUMPY_SUPPORT} ]; then
+      export NUMPY_SUPPORT=OFF;
+    fi
   - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
       pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
     fi
