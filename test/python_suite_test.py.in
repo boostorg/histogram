@@ -489,6 +489,19 @@ class histogramtest(unittest.TestCase):
                     self.assertEqual(h.value(i, j), 2 * m[i][j])
                     self.assertEqual(h.variance(i, j), 2 * m[i][j])
 
+    def test_repr(self):
+        h = histogram(regular_axis(10, 0, 1), integer_axis(0, 1))
+        h2 = eval(repr(h))
+        self.assertEqual(h, h2)
+
+    def test_loop_axis(self):
+        axes = (regular_axis(10, 0, 1), integer_axis(0, 1))
+        h = histogram(*axes)
+        for a1, a2 in zip(h, axes):
+            self.assertEqual(a1, a2)
+        with self.assertRaises(IndexError):
+            h[3]
+
     def test_axis_overflow(self):
         h = histogram(*[regular_axis(1, 0, 1) for i in range(50)])
         with self.assertRaises(RuntimeError):

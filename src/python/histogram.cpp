@@ -36,10 +36,10 @@ struct axis_visitor : public static_visitor<python::object>
 };
 
 python::object
-histogram_axis(const dynamic_histogram<>& self, unsigned i)
+histogram_axis(const dynamic_histogram<>& self, int i)
 {
   if (i < 0) i += self.dim();
-  if (i < 0 || i >= self.dim()) {
+  if (i < 0 || i >= int(self.dim())) {
     PyErr_SetString(PyExc_IndexError, "axis index out of range");
     python::throw_error_already_set();
   }
