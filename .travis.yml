@@ -84,6 +84,8 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
+            - python-numpy
+            - python-numpy-dev
       env: COMPILER_VERSION=6 CMAKE_BUILD_TYPE=cov
 
 git:
