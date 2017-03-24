@@ -284,23 +284,25 @@ struct storage_access {
     python::list strides;
     std::size_t stride = 1;
     if (b.type_.id_ == 5) {
-      // cannot pass cpp_int to numpy, so make
-      // a double array, fill it, and pass that to python
+      // cannot pass cpp_int to numpy; make new
+      // double array, fill it and pass it
       npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
-      npy_intp strides2[BOOST_HISTOGRAM_AXIS_LIMIT];
       stride = sizeof(double);
       d["typestr"] = python::str("|f") + python::str(stride);
       for (unsigned i = 0; i < self.dim(); ++i) {
         const auto s = shape(self.axis(i));
         shapes2[i] = s;
-        strides2[i] = s;
         shapes.append(s);
         strides.append(stride);
         stride *= s;
       }
       PyObject* ptr = PyArray_SimpleNew(self.dim(), shapes2, NPY_DOUBLE);
-      for (unsigned i = 0; i < self.dim(); ++i)
-        PyArray_STRIDES((PyArrayObject*)ptr)[i] = strides2[i];
+      stride = sizeof(double);
+      for (unsigned i = 0; i < self.dim(); ++i) {
+        const auto s = shape(self.axis(i));
+        PyArray_STRIDES((PyArrayObject*)ptr)[i] = stride;
+        stride *= s;
+      }
       double* buf = (double*)PyArray_DATA((PyArrayObject*)ptr);
       for (unsigned i = 0; i < b.size_; ++i)
         buf[i] = static_cast<double>(b.template at<detail::mp_int>(i));

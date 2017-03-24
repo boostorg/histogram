@@ -647,10 +647,11 @@ class histogramtest(unittest.TestCase):
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_numpy_conversion_4(self):
-        a = histogram(integer_axis(0, 1, uoflow=False))
+        a = histogram(integer_axis(0, 1, uoflow=False),
+                      integer_axis(0, 3, uoflow=False))
         a1 = numpy.asarray(a)
         self.assertEqual(a1.dtype, numpy.uint8)
-        self.assertEqual(a1.shape, (2,))
+        self.assertEqual(a1.shape, (2, 4))
 
         b = histogram()
         b1 = numpy.asarray(b)
