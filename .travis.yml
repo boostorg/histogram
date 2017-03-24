@@ -128,7 +128,9 @@ after_success:
 
 after_failure:
   # - printf "r\nbt" > gdb.cmd
-  # - gdb axis_test --batch -x gdb.cmd
+  # - for x in *_test; do
+  #     $x || gdb $x --batch -x gdb.cmd;
+  #   done
 
 notifications:
   email: false
