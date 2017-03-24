@@ -273,12 +273,6 @@ struct storage_access {
   python::object
   array_interface(dynamic_histogram<>& self) {
     auto& b = self.storage_.buffer_;
-    if (b.type_.id_ == 5) {
-      // PyErr_SetString(PyExc_KeyError, "cannot convert multiprecision storage to numpy array");
-      // python::throw_error_already_set();
-      // workaround: for some reason, exception is ignored here
-      return python::object();
-    }
 
     if (b.type_.id_ == 0) {
       // buffer not created yet, do that now
@@ -289,6 +283,33 @@ struct storage_access {
     python::list shapes;
     python::list strides;
     std::size_t stride = 1;
+    if (b.type_.id_ == 5) {
+      // cannot pass cpp_int to numpy, so make
+      // a double array, fill it, and pass that to python
+      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
+      npy_intp strides2[BOOST_HISTOGRAM_AXIS_LIMIT];
+      stride = sizeof(double);
+      d["typestr"] = python::str("|f") + python::str(stride);
+      for (unsigned i = 0; i < self.dim(); ++i) {
+        const auto s = shape(self.axis(i));
+        shapes2[i] = s;
+        strides2[i] = s;
+        shapes.append(s);
+        strides.append(stride);
+        stride *= s;
+      }
+      PyObject* ptr = PyArray_SimpleNew(self.dim(), shapes2, NPY_DOUBLE);
+      for (unsigned i = 0; i < self.dim(); ++i)
+        PyArray_STRIDES((PyArrayObject*)ptr)[i] = strides2[i];
+      double* buf = (double*)PyArray_DATA((PyArrayObject*)ptr);
+      for (unsigned i = 0; i < b.size_; ++i)
+        buf[i] = static_cast<double>(b.template at<detail::mp_int>(i));
+      d["shape"] = python::tuple(shapes);
+      d["strides"] = python::tuple(strides);
+      d["data"] = python::object(python::handle<>(ptr));
+      return d;
+    }
+
     if (b.type_.id_ == 6) {
       stride *= sizeof(double);
       d["typestr"] = python::str("|f") + python::str(stride);
@@ -300,13 +321,14 @@ struct storage_access {
       d["typestr"] = python::str("|u") + python::str(stride);
     }
     for (unsigned i = 0; i < self.dim(); ++i) {
-      shapes.append(shape(self.axis(i)));
+      const auto s = shape(self.axis(i));
+      shapes.append(s);
       strides.append(stride);
-      stride *= shape(self.axis(i));
+      stride *= s;
     }
     d["shape"] = python::tuple(shapes);
-    d["data"] = python::make_tuple(reinterpret_cast<uintptr_t>(b.ptr_), false);
     d["strides"] = python::tuple(strides);
+    d["data"] = python::make_tuple(reinterpret_cast<uintptr_t>(b.ptr_), false);
     return d;
   }
 };
