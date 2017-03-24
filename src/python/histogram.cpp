@@ -38,6 +38,11 @@ struct axis_visitor : public static_visitor<python::object>
 python::object
 histogram_axis(const dynamic_histogram<>& self, unsigned i)
 {
+  if (i < 0) i += self.dim();
+  if (i < 0 || i >= self.dim()) {
+    PyErr_SetString(PyExc_IndexError, "axis index out of range");
+    python::throw_error_already_set();
+  }
   return apply_visitor(axis_visitor(), self.axis(i));
 }
 
@@ -275,6 +280,13 @@ struct storage_access {
       return python::object();
     }
 
+    if (!b.ptr_) {
+      // PyErr_SetString(PyExc_KeyError, "cannot convert empty histogram");
+      // python::throw_error_already_set();
+      // workaround: for some reason, exception is ignored here
+      return python::object();
+    }
+
     python::dict d;
     python::list shapes;
     python::list strides;
@@ -318,8 +330,8 @@ void register_histogram()
     .def(init<const dynamic_histogram<>&>())
     .add_property("__array_interface__",
         &storage_access::array_interface)
-    .add_property("dim", &dynamic_histogram<>::dim,
-       "dimensions of the histogram (number of axes)")
+    .def("__len__", &dynamic_histogram<>::dim)
+    .def("__getitem__", histogram_axis)
     .def("axis", histogram_axis,
        ":param int i: index of the axis\n"
        ":returns: axis object for axis i",
