@@ -272,7 +272,7 @@ struct storage_access {
   static
   python::object
   array_interface(dynamic_histogram<>& self) {
-    const auto& b = self.storage_.buffer_;
+    auto& b = self.storage_.buffer_;
     if (b.type_.id_ == 5) {
       // PyErr_SetString(PyExc_KeyError, "cannot convert multiprecision storage to numpy array");
       // python::throw_error_already_set();
@@ -280,11 +280,9 @@ struct storage_access {
       return python::object();
     }
 
-    if (!b.ptr_) {
-      // PyErr_SetString(PyExc_KeyError, "cannot convert empty histogram");
-      // python::throw_error_already_set();
-      // workaround: for some reason, exception is ignored here
-      return python::object();
+    if (b.type_.id_ == 0) {
+      // buffer not created yet, do that now
+      b.template initialize<uint8_t>();
     }
 
     python::dict d;
