@@ -98,17 +98,17 @@ script:
   - cd build
   - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
       cmake . -DBUILD_PYTHON=OFF
-              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+              -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
       cmake . -DBUILD_PYTHON=ON
               -DBUILD_NUMPY_SUPPORT=OFF
-              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+              -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
       cmake . -DBUILD_PYTHON=ON
               -DBUILD_NUMPY_SUPPORT=ON
-              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+              -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
     else
@@ -123,7 +123,7 @@ script:
 # Calculate coverage
 after_success:
   if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-    coveralls -r .. -b . --gcov=`which gcov-${COMPILER_VERSION}`;
+    coveralls -r .. -b . --verbose -e ../include/boost/core --gcov=`which gcov-${COMPILER_VERSION}`;
   fi
 
 after_failure:
