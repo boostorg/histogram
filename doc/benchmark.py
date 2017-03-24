@@ -35,7 +35,7 @@ for k in sorted(data):
 		continue
 	v = data[k]
 	j = 0
-	for label, t in sorted(v):
+	for label, t in v:
 		x.append(t)
 		i -= 1
 		y.append(i)
@@ -45,7 +45,9 @@ for k in sorted(data):
 		if label == "root":
 			col = "k"
 		if "numpy" in label:
-			col = "0.5"
+			col = "0.6"
+		if "gsl" in label:
+			col = "0.3"
 		r = Rectangle((0, i), t, 1, facecolor=col)
 		tx = Text(-0.01, i+0.5, "%s" % label,
 			      fontsize=17, va="center", ha="right", clip_on=False)
