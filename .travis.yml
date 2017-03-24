@@ -50,7 +50,7 @@ matrix:
             - libboost-python1.55-dev
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2.7.3 NUMPY_SUPPORT=OFF
+      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2.7.3
     - os: linux
       compiler: gcc
       addons:
