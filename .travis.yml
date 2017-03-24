@@ -123,7 +123,7 @@ script:
 # Calculate coverage
 after_success:
   if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-    coveralls -r .. -b . --verbose -e ../include/boost/core --gcov=`which gcov-${COMPILER_VERSION}`;
+    coveralls -r .. -b . --verbose --exclude ../include/boost/core/lightweight_test.hpp --gcov=`which gcov-${COMPILER_VERSION}`;
   fi
 
 after_failure:
