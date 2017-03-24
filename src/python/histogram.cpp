@@ -269,6 +269,7 @@ histogram_repr(const dynamic_histogram<>& h) {
 }
 
 struct storage_access {
+#ifdef HAVE_NUMPY
   static
   python::object
   array_interface(dynamic_histogram<>& self) {
@@ -333,6 +334,7 @@ struct storage_access {
     d["data"] = python::make_tuple(reinterpret_cast<uintptr_t>(b.ptr_), false);
     return d;
   }
+#endif
 };
 
 void register_histogram()
@@ -350,8 +352,10 @@ void register_histogram()
        "\nthe dimensions of the dynamic_histogram<>.")
     // shadowed C++ ctors
     .def(init<const dynamic_histogram<>&>())
+#ifdef HAVE_NUMPY
     .add_property("__array_interface__",
         &storage_access::array_interface)
+#endif
     .def("__len__", &dynamic_histogram<>::dim)
     .def("__getitem__", histogram_axis)
     .def("axis", histogram_axis,
