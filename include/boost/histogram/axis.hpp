@@ -96,10 +96,12 @@ public:
   void label(const std::string &label) { label_ = label; }
 
 protected:
-  axis_base(unsigned n, const std::string &label, bool uoflow)
-      : size_(n), shape_(size_ + 2 * uoflow), label_(label) {
-    if (n == 0)
+  axis_base(unsigned n, std::string label, bool uoflow)
+      : size_(n), shape_(size_ + 2 * static_cast<int>(uoflow)),
+        label_(std::move(label)) {
+    if (n == 0) {
       throw std::logic_error("bins > 0 required");
+    }
   }
 
   axis_base() = default;
@@ -149,9 +151,11 @@ public:
   void label(const std::string &label) { label_ = label; }
 
 protected:
-  axis_base(unsigned n, const std::string &label) : size_(n), label_(label) {
-    if (n == 0)
+  axis_base(unsigned n, std::string label)
+      : size_(n), label_(std::move(label)) {
+    if (n == 0) {
       throw std::logic_error("bins > 0 required");
+    }
   }
 
   axis_base() = default;
@@ -204,8 +208,9 @@ public:
   regular_axis(unsigned n, value_type min, value_type max,
                const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(n, label, uoflow), min_(min), delta_((max - min) / n) {
-    if (!(min < max))
+    if (!(min < max)) {
       throw std::logic_error("min < max required");
+    }
   }
 
   regular_axis() = default;
@@ -223,10 +228,12 @@ public:
 
   /// Returns the starting edge of the bin.
   value_type operator[](int idx) const {
-    if (idx < 0)
+    if (idx < 0) {
       return -std::numeric_limits<value_type>::infinity();
-    if (idx > bins())
+    }
+    if (idx > bins()) {
       return std::numeric_limits<value_type>::infinity();
+    }
     const value_type z = value_type(idx) / bins();
     return (1.0 - z) * min_ + z * (min_ + delta_ * bins());
   }
@@ -330,13 +337,13 @@ public:
     * \param label description of the axis.
     * \param uoflow whether to add under-/overflow bins.
     */
-  explicit variable_axis(const std::initializer_list<value_type> &x,
-                         const std::string &label = std::string(),
-                         bool uoflow = true)
+  variable_axis(const std::initializer_list<value_type> &x,
+                const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(x.size() - 1, label, uoflow),
         x_(new value_type[x.size()]) {
-    if (x.size() < 2)
+    if (x.size() < 2) {
       throw std::logic_error("at least two values required");
+    }
     std::copy(x.begin(), x.end(), x_.get());
     std::sort(x_.get(), x_.get() + bins() + 1);
   }
@@ -373,16 +380,19 @@ public:
 
   /// Returns the starting edge of the bin.
   value_type operator[](int idx) const {
-    if (idx < 0)
+    if (idx < 0) {
       return -std::numeric_limits<value_type>::infinity();
-    if (idx > bins())
+    }
+    if (idx > bins()) {
       return std::numeric_limits<value_type>::infinity();
+    }
     return x_[idx];
   }
 
   bool operator==(const variable_axis &o) const {
-    if (!axis_base<true>::operator==(o))
+    if (!axis_base<true>::operator==(o)) {
       return false;
+    }
     return std::equal(x_.get(), x_.get() + bins() + 1, o.x_.get());
   }
 
@@ -419,8 +429,9 @@ public:
   integer_axis(value_type min, value_type max,
                const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(max + 1 - min, label, uoflow), min_(min) {
-    if (min > max)
+    if (min > max) {
       throw std::logic_error("min <= max required");
+    }
   }
 
   integer_axis() = default;
@@ -481,8 +492,8 @@ public:
     *
     * \param categories sequence of labeled categories.
     */
-  explicit category_axis(const std::initializer_list<std::string> &categories,
-                         const std::string &label = std::string())
+  category_axis(const std::initializer_list<std::string> &categories,
+                const std::string &label = std::string())
       : category_axis(categories.begin(), categories.end(), label) {}
 
   category_axis() = default;
@@ -513,8 +524,9 @@ public:
   /// Returns the bin index for the passed argument.
   /// Performs a range check.
   inline int index(int x) const {
-    if (!(0 <= x && x < bins()))
+    if (!(0 <= x && x < bins())) {
       throw std::out_of_range("category index is out of range");
+    }
     return x;
   }
 
@@ -541,7 +553,7 @@ using default_axes = mpl::vector<regular_axis<double>, regular_axis<float>,
                                  circular_axis<double>, circular_axis<float>,
                                  variable_axis<double>, variable_axis<float>,
                                  integer_axis, category_axis>::type;
-}
-}
+} // namespace histogram
+} // namespace boost
 
 #endif

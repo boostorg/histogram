@@ -232,8 +232,9 @@ int main() {
     axes.push_back(category_axis{{"A", "B", "C"}, "category"});
     axes.push_back(integer_axis{-1, 1, "integer", false});
     std::ostringstream os;
-    for (const auto &a : axes)
+    for (const auto &a : axes) {
       os << a;
+    }
     const std::string ref =
         "regular_axis(2, -1, 1, label='regular', uoflow=False)"
         "circular_axis(4, phase=0.1, perimeter=1, label='polar')"

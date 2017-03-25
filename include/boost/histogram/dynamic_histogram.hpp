@@ -57,12 +57,13 @@ public:
   }
 
   template <typename OtherAxes, typename OtherStorage>
-  dynamic_histogram(const dynamic_histogram<OtherAxes, OtherStorage> &other)
+  explicit dynamic_histogram(
+      const dynamic_histogram<OtherAxes, OtherStorage> &other)
       : axes_(other.axes_.begin(), other.axes_.end()),
         storage_(other.storage_) {}
 
   template <typename OtherAxes, typename OtherStorage>
-  dynamic_histogram(dynamic_histogram<OtherAxes, OtherStorage> &&other)
+  explicit dynamic_histogram(dynamic_histogram<OtherAxes, OtherStorage> &&other)
       : axes_(std::move(other.axes_)), storage_(std::move(other.storage_)) {}
 
   template <typename OtherAxes, typename OtherStorage>
@@ -88,14 +89,19 @@ public:
   template <typename OtherAxes, typename OtherStorage>
   bool
   operator==(const dynamic_histogram<OtherAxes, OtherStorage> &other) const {
-    if (mpl::empty<typename detail::intersection<Axes, OtherAxes>::type>::value)
+    if (mpl::empty<
+            typename detail::intersection<Axes, OtherAxes>::type>::value) {
       return false;
-    if (dim() != other.dim())
+    }
+    if (dim() != other.dim()) {
       return false;
-    if (!axes_equal_to(other.axes_))
+    }
+    if (!axes_equal_to(other.axes_)) {
       return false;
-    if (!(storage_ == other.storage_))
+    }
+    if (!(storage_ == other.storage_)) {
       return false;
+    }
     return true;
   }
 
@@ -107,12 +113,15 @@ public:
         !mpl::empty<
             typename detail::intersection<Axes, OtherAxes>::type>::value,
         "histograms lack common axes types");
-    if (dim() != other.dim())
+    if (dim() != other.dim()) {
       throw std::logic_error("dimensions of histograms differ");
-    if (size() != other.size())
+    }
+    if (size() != other.size()) {
       throw std::logic_error("sizes of histograms differ");
-    if (!axes_equal_to(other.axes_))
+    }
+    if (!axes_equal_to(other.axes_)) {
       throw std::logic_error("axes of histograms differ");
+    }
     storage_ += other.storage_;
     return *this;
   }
@@ -122,8 +131,9 @@ public:
                      "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
     index_impl(lin, values...);
-    if (lin.stride)
+    if (lin.stride) {
       storage_.increase(lin.out);
+    }
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
@@ -132,8 +142,9 @@ public:
                      "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
     iter_args_impl(lin, begin, end);
-    if (lin.stride)
+    if (lin.stride) {
       storage_.increase(lin.out);
+    }
   }
 
   template <typename Sequence, typename = detail::is_sequence<Sequence>>
@@ -148,8 +159,9 @@ public:
                      "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
     index_impl(lin, values...);
-    if (lin.stride)
+    if (lin.stride) {
       storage_.increase(lin.out, w);
+    }
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
@@ -160,8 +172,9 @@ public:
                      "iterator range does not match histogram dimension");
     detail::linearize_x lin;
     iter_args_impl(lin, begin, end);
-    if (lin.stride)
+    if (lin.stride) {
       storage_.increase(lin.out, w);
+    }
   }
 
   template <typename Sequence, typename = detail::is_sequence<Sequence>>
@@ -174,8 +187,9 @@ public:
                      "number of arguments does not match histogram dimension");
     detail::linearize lin;
     index_impl(lin, indices...);
-    if (lin.stride == 0)
+    if (lin.stride == 0) {
       throw std::out_of_range("invalid index");
+    }
     return storage_.value(lin.out);
   }
 
@@ -185,8 +199,9 @@ public:
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
     iter_args_impl(lin, begin, end);
-    if (lin.stride == 0)
+    if (lin.stride == 0) {
       throw std::out_of_range("invalid index");
+    }
     return storage_.value(lin.out);
   }
 
@@ -200,8 +215,9 @@ public:
                      "number of arguments does not match histogram dimension");
     detail::linearize lin;
     index_impl(lin, indices...);
-    if (lin.stride == 0)
+    if (lin.stride == 0) {
       throw std::out_of_range("invalid index");
+    }
     return detail::variance(storage_, lin.out);
   }
 
@@ -211,8 +227,9 @@ public:
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
     iter_args_impl(lin, begin, end);
-    if (lin.stride == 0)
+    if (lin.stride == 0) {
       throw std::out_of_range("invalid index");
+    }
     return detail::variance(storage_, lin.out);
   }
 
@@ -230,8 +247,9 @@ public:
   /// Sum of all counts in the histogram
   double sum() const {
     double result = 0.0;
-    for (std::size_t i = 0, n = size(); i < n; ++i)
+    for (std::size_t i = 0, n = size(); i < n; ++i) {
       result += storage_.value(i);
+    }
     return result;
   }
 
@@ -253,17 +271,20 @@ private:
 
   std::size_t field_count() const {
     std::size_t fc = 1;
-    for (const auto &a : axes_)
+    for (const auto &a : axes_) {
       fc *= apply_visitor(detail::shape(), a);
+    }
     return fc;
   }
 
   template <typename OtherAxes>
   bool axes_equal_to(const OtherAxes &other_axes) const {
     detail::cmp_axis ca;
-    for (unsigned i = 0; i < dim(); ++i)
-      if (!apply_visitor(ca, axes_[i], other_axes[i]))
+    for (unsigned i = 0; i < dim(); ++i) {
+      if (!apply_visitor(ca, axes_[i], other_axes[i])) {
         return false;
+      }
+    }
     return true;
   }
 
@@ -274,7 +295,7 @@ private:
     index_impl(lin, rest...);
   }
 
-  template <typename Linearize> void index_impl(Linearize &) const {}
+  template <typename Linearize> void index_impl(Linearize & /*unused*/) const {}
 
   template <typename Linearize, typename Iterator>
   void iter_args_impl(Linearize &lin, Iterator begin, Iterator end) const {
@@ -311,7 +332,7 @@ inline dynamic_histogram<default_axes, Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
   return dynamic_histogram<default_axes, Storage>(std::forward<Axes>(axes)...);
 }
-}
-}
+} // namespace histogram
+} // namespace boost
 
 #endif

@@ -17,15 +17,16 @@ template <typename String>
 inline void escape(std::ostream &os, const String &s) {
   os << '\'';
   for (auto sit = s.begin(); sit != s.end(); ++sit) {
-    if (*sit == '\'' && (sit == s.begin() || *(sit - 1) != '\\'))
+    if (*sit == '\'' && (sit == s.begin() || *(sit - 1) != '\\')) {
       os << "\\\'";
-    else
+    } else {
       os << *sit;
+    }
   }
   os << '\'';
 }
-}
-}
-}
+} // namespace detail
+} // namespace histogram
+} // namespace boost
 
 #endif

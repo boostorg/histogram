@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_HISTOGRAM_HISTOGRAM_STREAMER_HPP_
-#define _BOOST_HISTOGRAM_HISTOGRAM_STREAMER_HPP_
+#ifndef _BOOST_HISTOGRAM_HISTOGRAM_OSTREAM_OPERATORS_HPP_
+#define _BOOST_HISTOGRAM_HISTOGRAM_OSTREAM_OPERATORS_HPP_
 
 #include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
@@ -19,12 +19,12 @@ namespace histogram {
 namespace detail {
 struct axis_ostream_visitor : public static_visitor<void> {
   std::ostream &os_;
-  axis_ostream_visitor(std::ostream &os) : os_(os) {}
+  explicit axis_ostream_visitor(std::ostream &os) : os_(os) {}
   template <typename Axis> void operator()(const Axis &a) const {
     os_ << "\n  " << a << ",";
   }
 };
-}
+} // namespace detail
 
 template <template <typename, typename> class Histogram, typename Axes,
           typename Storage,
@@ -38,7 +38,7 @@ inline std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
-} // NS histogram
-} // NS boost
+} // namespace histogram
+} // namespace boost
 
 #endif

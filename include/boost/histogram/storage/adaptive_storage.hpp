@@ -27,8 +27,8 @@
 namespace boost {
 namespace serialization {
 class access;
-}
-}
+} // namespace serialization
+} // namespace boost
 
 namespace boost {
 namespace histogram {
@@ -63,9 +63,9 @@ using next_storage_type =
 template <typename Buffer, typename T, typename O> struct add_impl {
   static void apply(Buffer &b, const std::size_t i, const O &o) {
     auto &bi = b.template at<T>(i);
-    if (static_cast<T>(std::numeric_limits<T>::max() - bi) >= o)
+    if (static_cast<T>(std::numeric_limits<T>::max() - bi) >= o) {
       bi += static_cast<T>(o);
-    else {
+    } else {
       b.template grow<T>();
       using U = next_storage_type<T>;
       b.template at<U>(i) += static_cast<U>(o);
@@ -89,39 +89,53 @@ template <typename Buffer, typename OtherBuffer, typename T> struct cmp_impl {
   static bool apply(const Buffer &b, const OtherBuffer &o) {
     switch (o.type_.id_) {
     case 0:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (b.template at<T>(i) != 0)
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (b.template at<T>(i) != 0) {
           return false;
+        }
+      }
       break;
     case 1:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (b.template at<T>(i) != o.template at<uint8_t>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (b.template at<T>(i) != o.template at<uint8_t>(i)) {
           return false;
+        }
+      }
       break;
     case 2:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (b.template at<T>(i) != o.template at<uint16_t>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (b.template at<T>(i) != o.template at<uint16_t>(i)) {
           return false;
+        }
+      }
       break;
     case 3:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (b.template at<T>(i) != o.template at<uint32_t>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (b.template at<T>(i) != o.template at<uint32_t>(i)) {
           return false;
+        }
+      }
       break;
     case 4:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (b.template at<T>(i) != o.template at<uint64_t>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (b.template at<T>(i) != o.template at<uint64_t>(i)) {
           return false;
+        }
+      }
       break;
     case 5:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (b.template at<T>(i) != o.template at<mp_int>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (b.template at<T>(i) != o.template at<mp_int>(i)) {
           return false;
+        }
+      }
       break;
     case 6:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (b.template at<T>(i) != o.template at<weight>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (b.template at<T>(i) != o.template at<weight>(i)) {
           return false;
+        }
+      }
       break;
     }
     return true;
@@ -135,34 +149,46 @@ struct cmp_impl<Buffer, OtherBuffer, void> {
     case 0:
       break;
     case 1:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (0 != o.template at<uint8_t>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (0 != o.template at<uint8_t>(i)) {
           return false;
+        }
+      }
       break;
     case 2:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (0 != o.template at<uint16_t>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (0 != o.template at<uint16_t>(i)) {
           return false;
+        }
+      }
       break;
     case 3:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (0 != o.template at<uint32_t>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (0 != o.template at<uint32_t>(i)) {
           return false;
+        }
+      }
       break;
     case 4:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (0 != o.template at<uint64_t>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (0 != o.template at<uint64_t>(i)) {
           return false;
+        }
+      }
       break;
     case 5:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (0 != o.template at<mp_int>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (0 != o.template at<mp_int>(i)) {
           return false;
+        }
+      }
       break;
     case 6:
-      for (std::size_t i = 0; i < b.size_; ++i)
-        if (0 != o.template at<weight>(i))
+      for (std::size_t i = 0; i < b.size_; ++i) {
+        if (0 != o.template at<weight>(i)) {
           return false;
+        }
+      }
       break;
     }
     return true;
@@ -299,8 +325,9 @@ template <template <class> class Allocator> struct buffer {
   }
 
   template <typename T> void destroy() {
-    for (T *iter = &at<T>(0); iter != &at<T>(size_); ++iter)
+    for (T *iter = &at<T>(0); iter != &at<T>(size_); ++iter) {
       iter->~T();
+    }
     Allocator<T> a;
     a.deallocate(static_cast<T *>(ptr_), size_);
     ptr_ = nullptr;
@@ -393,9 +420,9 @@ template <template <class> class Allocator> struct buffer {
 
   template <typename T> inline void increase(std::size_t i) {
     auto &bi = at<T>(i);
-    if (bi < std::numeric_limits<T>::max())
+    if (bi < std::numeric_limits<T>::max()) {
       ++bi;
-    else {
+    } else {
       grow<T>();
       ++(at<next_storage_type<T>>(i));
     }
@@ -412,7 +439,7 @@ template <template <class> class Allocator> struct buffer {
   void *ptr_ = nullptr;
 };
 
-} // NS detail
+} // namespace detail
 
 template <template <class> class Allocator = std::allocator>
 class adaptive_storage {
@@ -428,7 +455,7 @@ public:
   adaptive_storage &operator=(adaptive_storage &&) = default;
 
   template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
-  adaptive_storage(const OtherStorage &o);
+  explicit adaptive_storage(const OtherStorage &o);
 
   template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
   adaptive_storage &operator=(const OtherStorage &o);
@@ -440,18 +467,18 @@ public:
   value_type variance(std::size_t i) const;
 
   template <template <class> class OtherAllocator>
-  adaptive_storage &operator+=(const adaptive_storage<OtherAllocator> &);
+  adaptive_storage &operator+=(const adaptive_storage<OtherAllocator> & /*o*/);
 
   template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
   adaptive_storage &operator+=(const OtherStorage &other);
 
   template <template <class> class OtherAllocator>
-  bool operator==(const adaptive_storage<OtherAllocator> &) const;
+  bool operator==(const adaptive_storage<OtherAllocator> & /*o*/) const;
 
   template <typename OtherStorage,
             typename = typename std::enable_if<
                 !(detail::has_weight_support<OtherStorage>::value)>::type>
-  bool operator==(const OtherStorage &other) const;
+  bool operator==(const OtherStorage &o) const;
 
 private:
   detail::buffer<Allocator> buffer_;
@@ -470,8 +497,9 @@ adaptive_storage<Allocator>::adaptive_storage(const OtherStorage &o)
   using T = typename OtherStorage::value_type;
   using U = detail::to_storage_type<T>;
   buffer_.template create<U>();
-  for (std::size_t i = 0; i < buffer_.size_; ++i)
+  for (std::size_t i = 0; i < buffer_.size_; ++i) {
     buffer_.template at<U>(i) = o.value(i);
+  }
 }
 
 template <template <class> class Allocator>
@@ -483,8 +511,9 @@ operator=(const OtherStorage &o) {
   buffer_.size_ = o.size();
   using U = detail::to_storage_type<T>;
   buffer_.template create<U>();
-  for (std::size_t i = 0; i < buffer_.size_; ++i)
+  for (std::size_t i = 0; i < buffer_.size_; ++i) {
     buffer_.template at<U>(i) = o.value(i);
+  }
   return *this;
 }
 
@@ -590,9 +619,10 @@ operator+=(const adaptive_storage<OtherAllocator> &o) {
     break;
   case 6:
     buffer_.template convert<detail::weight>();
-    for (std::size_t i = 0; i < o.buffer_.size_; ++i)
+    for (std::size_t i = 0; i < o.buffer_.size_; ++i) {
       detail::add_impl<B, detail::weight, detail::weight>::apply(
           buffer_, i, o.buffer_.template at<detail::weight>(i));
+    }
     return *this;
   }
   // handle other cases, beware: this and other could be the same
@@ -681,8 +711,9 @@ template <template <class> class Allocator>
 template <template <class> class OtherAllocator>
 bool adaptive_storage<Allocator>::
 operator==(const adaptive_storage<OtherAllocator> &o) const {
-  if (buffer_.size_ != o.buffer_.size_)
+  if (buffer_.size_ != o.buffer_.size_) {
     return false;
+  }
   using TB = decltype(buffer_);
   using OB = decltype(o.buffer_);
   switch (buffer_.type_.id_) {
@@ -707,44 +738,59 @@ operator==(const adaptive_storage<OtherAllocator> &o) const {
 template <template <class> class Allocator>
 template <typename OtherStorage, typename>
 bool adaptive_storage<Allocator>::operator==(const OtherStorage &o) const {
-  if (buffer_.size_ != o.size())
+  if (buffer_.size_ != o.size()) {
     return false;
+  }
   switch (buffer_.type_.id_) {
   case 0:
-    for (std::size_t i = 0; i < buffer_.size_; ++i)
-      if (0 != o.value(i))
+    for (std::size_t i = 0; i < buffer_.size_; ++i) {
+      if (0 != o.value(i)) {
         return false;
+      }
+    }
     break;
   case 1:
-    for (std::size_t i = 0; i < buffer_.size_; ++i)
-      if (buffer_.template at<uint8_t>(i) != o.value(i))
+    for (std::size_t i = 0; i < buffer_.size_; ++i) {
+      if (buffer_.template at<uint8_t>(i) != o.value(i)) {
         return false;
+      }
+    }
     break;
   case 2:
-    for (std::size_t i = 0; i < buffer_.size_; ++i)
-      if (buffer_.template at<uint16_t>(i) != o.value(i))
+    for (std::size_t i = 0; i < buffer_.size_; ++i) {
+      if (buffer_.template at<uint16_t>(i) != o.value(i)) {
         return false;
+      }
+    }
     break;
   case 3:
-    for (std::size_t i = 0; i < buffer_.size_; ++i)
-      if (buffer_.template at<uint32_t>(i) != o.value(i))
+    for (std::size_t i = 0; i < buffer_.size_; ++i) {
+      if (buffer_.template at<uint32_t>(i) != o.value(i)) {
         return false;
+      }
+    }
     break;
   case 4:
-    for (std::size_t i = 0; i < buffer_.size_; ++i)
-      if (buffer_.template at<uint64_t>(i) != o.value(i))
+    for (std::size_t i = 0; i < buffer_.size_; ++i) {
+      if (buffer_.template at<uint64_t>(i) != o.value(i)) {
         return false;
+      }
+    }
     break;
   case 5:
-    for (std::size_t i = 0; i < buffer_.size_; ++i)
-      if (buffer_.template at<detail::mp_int>(i) != o.value(i))
+    for (std::size_t i = 0; i < buffer_.size_; ++i) {
+      if (buffer_.template at<detail::mp_int>(i) != o.value(i)) {
         return false;
+      }
+    }
     break;
   case 6:
-    for (std::size_t i = 0; i < buffer_.size_; ++i)
+    for (std::size_t i = 0; i < buffer_.size_; ++i) {
       if (buffer_.template at<detail::weight>(i).w != o.value(i) ||
-          buffer_.template at<detail::weight>(i).w2 != detail::variance(o, i))
+          buffer_.template at<detail::weight>(i).w2 != detail::variance(o, i)) {
         return false;
+      }
+    }
     break;
   }
   return true;
@@ -758,7 +804,7 @@ inline bool operator==(const OtherStorage &a,
   return b == a;
 }
 
-} // NS histogram
-} // NS boost
+} // namespace histogram
+} // namespace boost
 
 #endif

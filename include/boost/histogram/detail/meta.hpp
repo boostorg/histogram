@@ -74,8 +74,8 @@ template <typename S1, typename S2> struct intersection {
 //         >::type
 //     >::type;
 // };
-}
-}
-}
+} // namespace detail
+} // namespace histogram
+} // namespace boost
 
 #endif

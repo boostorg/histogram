@@ -7,8 +7,8 @@
 #ifndef _BOOST_HISTOGRAM_STORAGE_CONTAINER_HPP_
 #define _BOOST_HISTOGRAM_STORAGE_CONTAINER_HPP_
 
-#include <boost/histogram/detail/meta.hpp>
 #include <algorithm>
+#include <boost/histogram/detail/meta.hpp>
 #include <cstddef>
 
 namespace boost {
@@ -25,10 +25,10 @@ template <typename Container> void init(Container &c, unsigned s) {
 
 // template signature of both std::array and boost::array
 template <template <class, std::size_t> class Array, typename T, std::size_t N>
-void init(Array<T, N> &c, unsigned) {
+void init(Array<T, N> &c, unsigned /*unused*/) {
   std::fill(c.begin(), c.end(), typename Array<T, N>::value_type(0));
 }
-}
+} // namespace detail
 
 template <typename Container> class container_storage {
 public:
@@ -36,24 +36,26 @@ public:
 
   explicit container_storage(std::size_t s) { detail::init(container_, s); }
 
-  container_storage() = default;
+  container_storage() : container_() {} // cannot be defaulted
   container_storage(const container_storage &) = default;
   container_storage &operator=(const container_storage &) = default;
   container_storage(container_storage &&) = default;
   container_storage &operator=(container_storage &&) = default;
 
   template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
-  container_storage(const OtherStorage &other) {
+  explicit container_storage(const OtherStorage &other) {
     detail::init(container_, other.size());
-    for (std::size_t i = 0; i < container_.size(); ++i)
+    for (std::size_t i = 0; i < container_.size(); ++i) {
       container_[i] = other.value(i);
+    }
   }
 
   template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
   container_storage &operator=(const OtherStorage &other) {
     detail::init(container_, other.size());
-    for (std::size_t i = 0; i < container_.size(); ++i)
+    for (std::size_t i = 0; i < container_.size(); ++i) {
       container_[i] = other.value(i);
+    }
     return *this;
   }
 
@@ -63,8 +65,9 @@ public:
 
   template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
   void operator+=(const OtherStorage &other) {
-    for (std::size_t i = 0; i < container_.size(); ++i)
+    for (std::size_t i = 0; i < container_.size(); ++i) {
       container_[i] += other.value(i);
+    }
   }
 
 private:
@@ -81,12 +84,14 @@ private:
 template <typename Container1, typename Container2>
 bool operator==(const container_storage<Container1> &a,
                 const container_storage<Container2> &b) {
-  if (a.container_.size() != b.container_.size())
+  if (a.container_.size() != b.container_.size()) {
     return false;
-  return std::equal(a.container_.begin(), a.container_.end(), b.container_.begin());
+  }
+  return std::equal(a.container_.begin(), a.container_.end(),
+                    b.container_.begin());
 }
 
-} // NS histogram
-} // NS boost
+} // namespace histogram
+} // namespace boost
 
 #endif

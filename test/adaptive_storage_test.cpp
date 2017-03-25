@@ -20,8 +20,9 @@ template <typename T> adaptive_storage<> prepare(unsigned n = 1) {
   adaptive_storage<> s(n);
   s.increase(0);
   const auto tmax = std::numeric_limits<T>::max();
-  while (s.value(0) < 0.1 * tmax)
+  while (s.value(0) < 0.1 * tmax) {
     s += s;
+  }
   return s;
 }
 
@@ -40,8 +41,9 @@ template <> adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
   adaptive_storage<> s(n);
   s.increase(0);
   const auto tmax = std::numeric_limits<uint64_t>::max();
-  while (s.value(0) <= tmax)
+  while (s.value(0) <= tmax) {
     s += s;
+  }
   return s;
 }
 
@@ -215,8 +217,8 @@ template <> void convert_container_storage_impl<void>() {
   BOOST_TEST(c == s);
 }
 
-} // NS histogram
-} // NS boost
+} // namespace histogram
+} // namespace boost
 
 int main() {
   using namespace boost::histogram;

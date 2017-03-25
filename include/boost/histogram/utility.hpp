@@ -73,8 +73,9 @@ void for_each_axis(const static_histogram<Storage, Axes> &h, Visitor &visitor) {
 template <typename Storage, typename Axes, typename Visitor>
 void for_each_axis(const dynamic_histogram<Storage, Axes> &h,
                    Visitor &visitor) {
-  for (const auto &a : h.axes_)
+  for (const auto &a : h.axes_) {
     apply_visitor(visitor, a);
+  }
 }
 
 } // namespace histogram

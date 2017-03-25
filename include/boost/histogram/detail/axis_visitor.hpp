@@ -27,25 +27,25 @@ struct uoflow : public static_visitor<bool> {
 
 template <typename V> struct index : public static_visitor<int> {
   const V v;
-  index(const V x) : v(x) {}
+  explicit index(const V x) : v(x) {}
   template <typename A> int operator()(const A &a) const { return a.index(v); }
 };
 
 struct left : public static_visitor<double> {
   const int i;
-  left(const int x) : i(x) {}
+  explicit left(const int x) : i(x) {}
   template <typename A> double operator()(const A &a) const { return a[i]; }
 };
 
 struct right : public static_visitor<double> {
   const int i;
-  right(const int x) : i(x) {}
+  explicit right(const int x) : i(x) {}
   template <typename A> double operator()(const A &a) const { return a[i + 1]; }
 };
 
 struct center : public static_visitor<double> {
   const int i;
-  center(const int x) : i(x) {}
+  explicit center(const int x) : i(x) {}
   template <typename A> double operator()(const A &a) const {
     return 0.5 * (a[i] + a[i + 1]);
   }
@@ -57,7 +57,7 @@ struct cmp_axis : public static_visitor<bool> {
   }
 
   template <typename T, typename U>
-  bool operator()(const T &, const U &) const {
+  bool operator()(const T & /*unused*/, const U & /*unused*/) const {
     return false;
   }
 };
@@ -99,8 +99,8 @@ struct linearize_x : public static_visitor<void> {
     stride *= (j < a.shape()) * a.shape(); // stride == 0 indicates out-of-range
   }
 };
-}
-}
-}
+} // namespace detail
+} // namespace histogram
+} // namespace boost
 
 #endif

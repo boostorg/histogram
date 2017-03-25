@@ -118,42 +118,31 @@ if(HAVE_PYTHON)
   configure_file(../test/speed_numpy.py.in speed_numpy.py)
 endif()
 
-# Additional targets to perform clang-format/clang-tidy
-# Get all project files
+# for clang format and clang tidy
 file(GLOB_RECURSE
-     ALL_CXX_SOURCE_FILES
+     ALL_SOURCE_FILES
      LIST_DIRECTORIES false
      ../test/*_test.cpp ../include/*.hpp
      )
 
-# Adding clang-format target if executable is found
-find_program(CLANG_FORMAT "clang-format")
-if(CLANG_FORMAT)
-  add_custom_target(
-    clang-format
-    COMMAND /usr/bin/clang-format
-    -i
-    -style=file
-    ${ALL_CXX_SOURCE_FILES}
-    )
-endif()
+add_custom_target(
+  clang-format
+  COMMAND /usr/bin/clang-format
+  -i
+  -style=file
+  ${ALL_SOURCE_FILES}
+  )
 
-# Adding clang-tidy target if executable is found
-find_program(CLANG_TIDY "clang-tidy")
-if(CLANG_TIDY)
-  get_property(INCS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-  set(IINCS)
-  foreach(x ${INCS})
-    set(IINCS ${IINCS} -I${x})
-  endforeach()
-  MESSAGE(include ${IINC})
-  add_custom_target(
-    clang-tidy
-    COMMAND /usr/bin/clang-tidy
-    ${ALL_CXX_SOURCE_FILES}
-    -checks=*
-    --
-    -std=c++11
-    ${IINCS}
-    )
-endif()
+get_property(INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+set(TIDY_INCLUDE)
+foreach(x ${INCLUDE_DIRS})
+  LIST(APPEND TIDY_INCLUDE -I${x})
+endforeach()
+add_custom_target(
+  clang-tidy
+  COMMAND /usr/bin/clang-tidy
+  ${ALL_SOURCE_FILES}
+  --
+  -std=c++11
+  ${TIDY_INCLUDE}
+  )

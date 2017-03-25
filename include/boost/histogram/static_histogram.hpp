@@ -55,11 +55,11 @@ public:
   static_histogram &operator=(static_histogram &&other) = default;
 
   template <typename OtherStorage>
-  static_histogram(const static_histogram<Axes, OtherStorage> &other)
+  explicit static_histogram(const static_histogram<Axes, OtherStorage> &other)
       : axes_(other.axes_), storage_(other.storage_) {}
 
   template <typename OtherStorage>
-  static_histogram(static_histogram<Axes, OtherStorage> &&other)
+  explicit static_histogram(static_histogram<Axes, OtherStorage> &&other)
       : axes_(std::move(other.axes_)), storage_(std::move(other.storage_)) {}
 
   template <typename OtherStorage>
@@ -84,16 +84,18 @@ public:
   template <typename OtherAxes, typename OtherStorage>
   bool
   operator==(const static_histogram<OtherAxes, OtherStorage> &other) const {
-    if (!axes_equal_to(other.axes_))
+    if (!axes_equal_to(other.axes_)) {
       return false;
+    }
     return storage_ == other.storage_;
   }
 
   template <typename OtherStorage>
   static_histogram &
   operator+=(const static_histogram<Axes, OtherStorage> &other) {
-    if (!axes_equal_to(other.axes_))
+    if (!axes_equal_to(other.axes_)) {
       throw std::logic_error("axes of histograms differ");
+    }
     storage_ += other.storage_;
     return *this;
   }
@@ -103,8 +105,9 @@ public:
                   "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
     index_impl(lin, values...);
-    if (lin.stride)
+    if (lin.stride) {
       storage_.increase(lin.out);
+    }
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
@@ -113,8 +116,9 @@ public:
                      "iterator range does not match histogram dimension");
     detail::linearize_x lin;
     iter_args_impl<detail::linearize_x, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride)
+    if (lin.stride) {
       storage_.increase(lin.out);
+    }
   }
 
   template <typename Sequence, typename = detail::is_sequence<Sequence>>
@@ -129,8 +133,9 @@ public:
                   "number of arguments does not match histogram dimension");
     detail::linearize_x lin;
     index_impl(lin, values...);
-    if (lin.stride)
+    if (lin.stride) {
       storage_.increase(lin.out, w);
+    }
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
@@ -141,8 +146,9 @@ public:
                      "iterator range does not match histogram dimension");
     detail::linearize_x lin;
     iter_args_impl<detail::linearize_x, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride)
+    if (lin.stride) {
       storage_.increase(lin.out, w);
+    }
   }
 
   template <typename Sequence, typename = detail::is_sequence<Sequence>>
@@ -155,8 +161,9 @@ public:
                   "number of arguments does not match histogram dimension");
     detail::linearize lin;
     index_impl(lin, indices...);
-    if (lin.stride == 0)
+    if (lin.stride == 0) {
       throw std::out_of_range("invalid index");
+    }
     return storage_.value(lin.out);
   }
 
@@ -166,8 +173,9 @@ public:
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
     iter_args_impl<detail::linearize, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride == 0)
+    if (lin.stride == 0) {
       throw std::out_of_range("invalid index");
+    }
     return storage_.value(lin.out);
   }
 
@@ -181,8 +189,9 @@ public:
                   "number of arguments does not match histogram dimension");
     detail::linearize lin;
     index_impl(lin, indices...);
-    if (lin.stride == 0)
+    if (lin.stride == 0) {
       throw std::out_of_range("invalid index");
+    }
     return detail::variance(storage_, lin.out);
   }
 
@@ -192,8 +201,9 @@ public:
                      "iterator range does not match histogram dimension");
     detail::linearize lin;
     iter_args_impl<detail::linearize, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride == 0)
+    if (lin.stride == 0) {
       throw std::out_of_range("invalid index");
+    }
     return detail::variance(storage_, lin.out);
   }
 
@@ -213,8 +223,9 @@ public:
   /// Sum of all counts in the histogram
   double sum() const {
     double result = 0.0;
-    for (std::size_t i = 0, n = size(); i < n; ++i)
+    for (std::size_t i = 0, n = size(); i < n; ++i) {
       result += storage_.value(i);
+    }
     return result;
   }
 
@@ -244,7 +255,8 @@ private:
     return fc.value;
   }
 
-  template <typename OtherAxes> bool axes_equal_to(const OtherAxes &) const {
+  template <typename OtherAxes>
+  bool axes_equal_to(const OtherAxes & /*unused*/) const {
     return false;
   }
 
@@ -260,7 +272,7 @@ private:
   }
 
   template <typename Linearize>
-  void index_impl(Linearize &) const {} // stop recursion
+  void index_impl(Linearize & /*unused*/) const {} // stop recursion
 
   template <typename Linearize, typename Iterator, unsigned N = 0>
   struct iter_args_impl {
@@ -273,7 +285,8 @@ private:
 
   template <typename Linearize, typename Iterator>
   struct iter_args_impl<Linearize, Iterator, dim()> {
-    static void apply(Linearize &, const axes_type &, Iterator) {}
+    static void apply(Linearize & /*unused*/, const axes_type & /*unused*/,
+                      Iterator /*unused*/) {}
   };
 
   template <class OtherStorage, class OtherAxes, class Visitor>
@@ -301,7 +314,7 @@ inline static_histogram<mpl::vector<Axes...>, Storage>
 make_static_histogram_with(const Axes &... axes) {
   return static_histogram<mpl::vector<Axes...>, Storage>(axes...);
 }
-}
-}
+} // namespace histogram
+} // namespace boost
 
 #endif

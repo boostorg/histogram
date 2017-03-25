@@ -35,7 +35,7 @@ inline void serialize(Archive &ar, weight &wt, unsigned /* version */) {
   ar &wt.w2;
 }
 
-} // NS detail
+} // namespace detail
 
 template <class Archive, typename Container>
 inline void serialize(Archive &ar, container_storage<Container> &store,
@@ -47,8 +47,9 @@ template <template <class> class Allocator>
 template <class Archive>
 void adaptive_storage<Allocator>::serialize(Archive &ar,
                                             unsigned /* version */) {
-  if (Archive::is_loading::value)
+  if (Archive::is_loading::value) {
     buffer_.destroy_any();
+  }
   ar &buffer_.size_;
   ar &buffer_.type_.id_;
   ar &buffer_.type_.depth_;
@@ -142,8 +143,9 @@ template <class Archive, typename RealType>
 inline void serialize(Archive &ar, variable_axis<RealType> &axis,
                       unsigned /* version */) {
   ar &boost::serialization::base_object<axis_base<true>>(axis);
-  if (Archive::is_loading::value)
+  if (Archive::is_loading::value) {
     axis.x_.reset(new RealType[axis.bins() + 1]);
+  }
   ar &boost::serialization::make_array(axis.x_.get(), axis.bins() + 1);
 }
 
@@ -166,10 +168,10 @@ inline void serialize(Archive &ar, category_axis &axis,
 namespace {
 template <typename Archive> struct serialize_helper {
   Archive &ar_;
-  serialize_helper(Archive &ar) : ar_(ar) {}
+  explicit serialize_helper(Archive &ar) : ar_(ar) {}
   template <typename T> void operator()(T &t) const { ar_ &t; }
 };
-}
+} // namespace
 
 template <class Archive, class Storage, class Axes>
 inline void serialize(Archive &ar, static_histogram<Storage, Axes> &h,
@@ -186,7 +188,7 @@ inline void serialize(Archive &ar, dynamic_histogram<Storage, Axes> &h,
   ar &h.storage_;
 }
 
-} // ns:histogram
-} // ns:boost
+} // namespace histogram
+} // namespace boost
 
 #endif

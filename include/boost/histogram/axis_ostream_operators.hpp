@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_HISTOGRAM_AXIS_STREAMER_HPP_
-#define _BOOST_HISTOGRAM_AXIS_STREAMER_HPP_
+#ifndef _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
+#define _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
 
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/utility.hpp>
@@ -24,8 +24,9 @@ inline std::ostream &operator<<(std::ostream &os,
     os << ", label=";
     detail::escape(os, a.label());
   }
-  if (!a.uoflow())
+  if (!a.uoflow()) {
     os << ", uoflow=False";
+  }
   os << ")";
   return os;
 }
@@ -34,10 +35,12 @@ template <typename RealType>
 inline std::ostream &operator<<(std::ostream &os,
                                 const circular_axis<RealType> &a) {
   os << "circular_axis(" << a.bins();
-  if (a.phase() != 0.0)
+  if (a.phase() != 0.0) {
     os << ", phase=" << a.phase();
-  if (a.perimeter() != RealType(math::double_constants::two_pi))
+  }
+  if (a.perimeter() != RealType(math::double_constants::two_pi)) {
     os << ", perimeter=" << a.perimeter();
+  }
   if (!a.label().empty()) {
     os << ", label=";
     detail::escape(os, a.label());
@@ -50,14 +53,16 @@ template <typename RealType>
 inline std::ostream &operator<<(std::ostream &os,
                                 const variable_axis<RealType> &a) {
   os << "variable_axis(" << a[0];
-  for (int i = 1; i <= a.bins(); ++i)
+  for (int i = 1; i <= a.bins(); ++i) {
     os << ", " << a[i];
+  }
   if (!a.label().empty()) {
     os << ", label=";
     detail::escape(os, a.label());
   }
-  if (!a.uoflow())
+  if (!a.uoflow()) {
     os << ", uoflow=False";
+  }
   os << ")";
   return os;
 }
@@ -68,8 +73,9 @@ inline std::ostream &operator<<(std::ostream &os, const integer_axis &a) {
     os << ", label=";
     detail::escape(os, a.label());
   }
-  if (!a.uoflow())
+  if (!a.uoflow()) {
     os << ", uoflow=False";
+  }
   os << ")";
   return os;
 }
@@ -87,7 +93,7 @@ inline std::ostream &operator<<(std::ostream &os, const category_axis &a) {
   os << ")";
   return os;
 }
-}
-}
+} // namespace histogram
+} // namespace boost
 
 #endif

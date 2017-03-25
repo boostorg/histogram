@@ -70,8 +70,8 @@ template <typename T> bool operator!=(const weight &w, const T &t) {
 template <typename T> bool operator!=(const T &t, const weight &w) {
   return !(w == t);
 }
-}
-}
-}
+} // namespace detail
+} // namespace histogram
+} // namespace boost
 
 #endif

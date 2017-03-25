@@ -346,16 +346,21 @@ int main() {
   {
     auto h = make_static_histogram(integer_axis(0, 3), integer_axis(0, 4),
                                    integer_axis(0, 5));
-    for (auto i = 0; i < bins(h.axis<0>()); ++i)
-      for (auto j = 0; j < bins(h.axis<1>()); ++j)
+    for (auto i = 0; i < bins(h.axis<0>()); ++i) {
+      for (auto j = 0; j < bins(h.axis<1>()); ++j) {
         for (auto k = 0; k < bins(h.axis<2>()); ++k) {
           h.wfill(i + j + k, i, j, k);
         }
+      }
+    }
 
-    for (auto i = 0; i < bins(h.axis<0>()); ++i)
-      for (auto j = 0; j < bins(h.axis<1>()); ++j)
-        for (auto k = 0; k < bins(h.axis<2>()); ++k)
+    for (auto i = 0; i < bins(h.axis<0>()); ++i) {
+      for (auto j = 0; j < bins(h.axis<1>()); ++j) {
+        for (auto k = 0; k < bins(h.axis<2>()); ++k) {
           BOOST_TEST_EQ(h.value(i, j, k), i + j + k);
+        }
+      }
+    }
   }
 
   // add_1
