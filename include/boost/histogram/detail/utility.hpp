@@ -13,19 +13,17 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-    template <typename String>
-    inline
-    void escape(std::ostream& os, const String& s) {
-        os << '\'';
-        for (auto sit = s.begin(); sit != s.end(); ++sit) {
-            if (*sit == '\'' && (sit == s.begin() || *(sit-1) != '\\'))
-                os << "\\\'";
-            else
-                os << *sit;
-        }
-        os << '\'';
-    }
-
+template <typename String>
+inline void escape(std::ostream &os, const String &s) {
+  os << '\'';
+  for (auto sit = s.begin(); sit != s.end(); ++sit) {
+    if (*sit == '\'' && (sit == s.begin() || *(sit - 1) != '\\'))
+      os << "\\\'";
+    else
+      os << *sit;
+  }
+  os << '\'';
+}
 }
 }
 }
