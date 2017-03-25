@@ -27,27 +27,20 @@ For full support of all library features, the `axis_type` should also be:
 
 The latter two are not needed, if the histogram that uses the custom axis type is never serialized or ostreamed.
 
-Finally, it is not required, but convenient for users if the axis comes with an iterator. It then needs:
-
-* a nested type `const_iterator`
-* the following methods:
-  * `const_iterator begin() const`
-  * `const_iterator end() const`
-
-It is recommended to take a look at [classref boost::histogram::axis_base] and [classref boost::histogram::axis_iterator], which provide part of the aforementioned infrastructure for axis types.
+It is recommended to take a look at [classref boost::histogram::axis_base], which provides part of the aforementioned infrastructure for axis types.
 
 [endsect]
 
 [section Storage type]
 
-A `storage_type` handles the memory for the bin counters and provides a uniform interface for incrementing bin counters and reading their values.
+A `storage_type` handles memory for the bin counters and provides a uniform interface for incrementing bin counters and reading their values.
 
 A `storage_type` is required to:
 
 * be default/copy/move constructable
 * be copy/move assignable
 * be equal comparable
-* have a nested type `value_type`, which is the type of the bin count that's returned to the outside world (internally it may be a different type)
+* have a nested type `value_type`, the uniform external type of the bin count (internally it may be a different type)
 * have a constructor `storage_type(std::size_t n)`, which prepares the storage for `n` bins.
 * have the following methods:
   * `std::size_t size() const`
@@ -55,12 +48,12 @@ A `storage_type` is required to:
   * `value_type value(std::size_t index) const`
   * `storage_type& operator+=(const storage_type& rhs)`
 
-To support weighted fills, the `storage_type` needs two additional methods:
+To support weighted fills, two additional methods are required:
 
 * `value_type variance(std::size_t index) const`
 * `void increase(std::size_t index, value_type weight)`
 
-[classref boost::histogram::container_storage] provides a comparably simple example of a storage type which does not support weighted fills.
+[classref boost::histogram::container_storage] is a simple example of a storage type which does not support weighted fills.
 
 [endsect]
 
