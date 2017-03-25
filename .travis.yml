@@ -34,23 +34,6 @@ matrix:
             - libboost-serialization1.55-dev
       env: COMPILER_VERSION=3.6
     - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - boost-latest
-          packages:
-            - g++-4.8
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=4.8
-    - os: linux
       compiler: clang
       addons:
         apt:
@@ -68,6 +51,23 @@ matrix:
             - libboost-serialization1.55.0
             - libboost-serialization1.55-dev
       env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7.3
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - boost-latest
+          packages:
+            - g++-4.8
+            - libboost1.55-dev
+            - libboost-iostreams1.55
+            - libboost-iostreams1.55-dev
+            - libboost-python1.55
+            - libboost-python1.55-dev
+            - libboost-serialization1.55.0
+            - libboost-serialization1.55-dev
+      env: COMPILER_VERSION=4.8
     - os: linux
       compiler: gcc
       addons:
