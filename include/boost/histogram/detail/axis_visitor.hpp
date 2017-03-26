@@ -7,6 +7,7 @@
 #ifndef _BOOST_HISTOGARM_AXIS_VISITOR_HPP_
 #define _BOOST_HISTOGARM_AXIS_VISITOR_HPP_
 
+#include <boost/histogram/detail/utility.hpp>
 #include <boost/variant/static_visitor.hpp>
 
 namespace boost {
@@ -62,43 +63,19 @@ struct cmp_axis : public static_visitor<bool> {
   }
 };
 
-struct linearize : public static_visitor<void> {
-  int j;
-  std::size_t out = 0, stride = 1;
-
-  void set(int in) { j = in; }
-
-  template <typename A> void operator()(const A &a) {
-    // the following is highly optimized code that runs in a hot loop;
-    // please measure the performance impact of changes
-    const int uoflow = a.uoflow();
-    // set stride to zero if 'j' is not in range,
-    // this communicates the out-of-range condition to the caller
-    stride *= (j >= -uoflow) & (j < (a.bins() + uoflow));
-    j += (j < 0) * (a.bins() + 2); // wrap around if in < 0
-    out += j * stride;
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-    stride *= a.shape();
+struct field_count : public static_visitor<void> {
+  mutable std::size_t value = 1;
+  template <typename T> void operator()(const T &t) const {
+    value *= t.shape();
   }
 };
 
-struct linearize_x : public static_visitor<void> {
-  double x;
-  std::size_t out = 0, stride = 1;
-
-  void set(double in) { x = in; }
-
-  template <typename A> void operator()(const A &a) {
-    // the following is highly optimized code that runs in a hot loop;
-    // please measure the performance impact of changes
-    // j is guaranteed to be in range [-1, bins]
-    int j = a.index(x);
-    j += (j < 0) * (a.bins() + 2); // wrap around if j < 0
-    out += j * stride;
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-    stride *= (j < a.shape()) * a.shape(); // stride == 0 indicates out-of-range
-  }
+template <typename Unary> struct unary_visitor : public static_visitor<void> {
+  Unary &unary;
+  unary_visitor(Unary &u) : unary(u) {}
+  template <typename Axis> void operator()(const Axis &a) const { unary(a); }
 };
+
 } // namespace detail
 } // namespace histogram
 } // namespace boost

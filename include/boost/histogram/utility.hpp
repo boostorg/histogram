@@ -10,8 +10,6 @@
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
-#include <boost/histogram/static_histogram.hpp>
 #include <boost/variant.hpp>
 
 namespace boost {
@@ -63,19 +61,6 @@ template <typename A> typename A::value_type center(const A &a, const int i) {
 template <typename... Axes>
 double center(const boost::variant<Axes...> &a, const int i) {
   return apply_visitor(detail::center(i), a);
-}
-
-template <typename Storage, typename Axes, typename Visitor>
-void for_each_axis(const static_histogram<Storage, Axes> &h, Visitor &visitor) {
-  fusion::for_each(h.axes_, visitor);
-}
-
-template <typename Storage, typename Axes, typename Visitor>
-void for_each_axis(const dynamic_histogram<Storage, Axes> &h,
-                   Visitor &visitor) {
-  for (const auto &a : h.axes_) {
-    apply_visitor(visitor, a);
-  }
 }
 
 } // namespace histogram

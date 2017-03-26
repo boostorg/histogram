@@ -142,6 +142,7 @@ add_custom_target(
   clang-tidy
   COMMAND /usr/bin/clang-tidy
   ${ALL_SOURCE_FILES}
+  -checks=*,-*alpha*
   --
   -std=c++11
   ${TIDY_INCLUDE}

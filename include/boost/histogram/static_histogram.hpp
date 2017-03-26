@@ -21,6 +21,7 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/variance.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/mpl/empty.hpp>
@@ -103,113 +104,47 @@ public:
   template <typename... Values> void fill(Values... values) {
     static_assert(sizeof...(values) == dim(),
                   "number of arguments does not match histogram dimension");
-    detail::linearize_x lin;
-    index_impl(lin, values...);
-    if (lin.stride) {
-      storage_.increase(lin.out);
+    std::size_t out = 0, stride = 1;
+    apply_lin<detail::xlin, Values...>(out, stride, values...);
+    if (stride) {
+      storage_.increase(out);
     }
   }
 
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end) {
-    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
-                     "iterator range does not match histogram dimension");
-    detail::linearize_x lin;
-    iter_args_impl<detail::linearize_x, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride) {
-      storage_.increase(lin.out);
-    }
-  }
-
-  template <typename Sequence, typename = detail::is_sequence<Sequence>>
-  void fill(const Sequence &values) {
-    fill(std::begin(values), std::end(values));
-  }
-
-  template <typename... Values> void wfill(value_type w, Values... values) {
-    static_assert(detail::has_weight_support<Storage>::value,
-                  "wfill only supported for adaptive_storage");
+  template <
+      bool has_weight_support = detail::has_weight_support<Storage>::value,
+      typename... Values>
+  typename std::enable_if<has_weight_support>::type wfill(value_type w,
+                                                          Values... values) {
     static_assert(sizeof...(values) == dim(),
                   "number of arguments does not match histogram dimension");
-    detail::linearize_x lin;
-    index_impl(lin, values...);
-    if (lin.stride) {
-      storage_.increase(lin.out, w);
+    std::size_t out = 0, stride = 1;
+    apply_lin<detail::xlin, Values...>(out, stride, values...);
+    if (stride) {
+      storage_.increase(out, w);
     }
-  }
-
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void wfill(value_type w, Iterator begin, Iterator end) {
-    static_assert(detail::has_weight_support<Storage>::value,
-                  "wfill only supported for adaptive_storage");
-    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
-                     "iterator range does not match histogram dimension");
-    detail::linearize_x lin;
-    iter_args_impl<detail::linearize_x, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride) {
-      storage_.increase(lin.out, w);
-    }
-  }
-
-  template <typename Sequence, typename = detail::is_sequence<Sequence>>
-  void wfill(value_type w, const Sequence &values) {
-    wfill(w, std::begin(values), std::end(values));
   }
 
   template <typename... Indices> value_type value(Indices... indices) const {
     static_assert(sizeof...(indices) == dim(),
                   "number of arguments does not match histogram dimension");
-    detail::linearize lin;
-    index_impl(lin, indices...);
-    if (lin.stride == 0) {
+    std::size_t out = 0, stride = 1;
+    apply_lin<detail::lin, Indices...>(out, stride, indices...);
+    if (stride == 0) {
       throw std::out_of_range("invalid index");
     }
-    return storage_.value(lin.out);
-  }
-
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  value_type value(Iterator begin, Iterator end) const {
-    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
-                     "iterator range does not match histogram dimension");
-    detail::linearize lin;
-    iter_args_impl<detail::linearize, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride == 0) {
-      throw std::out_of_range("invalid index");
-    }
-    return storage_.value(lin.out);
-  }
-
-  template <typename Sequence, typename = detail::is_sequence<Sequence>>
-  value_type value(const Sequence &indices) const {
-    return value(std::begin(indices), std::end(indices));
+    return storage_.value(out);
   }
 
   template <typename... Indices> value_type variance(Indices... indices) const {
     static_assert(sizeof...(indices) == dim(),
                   "number of arguments does not match histogram dimension");
-    detail::linearize lin;
-    index_impl(lin, indices...);
-    if (lin.stride == 0) {
+    std::size_t out = 0, stride = 1;
+    apply_lin<detail::lin, Indices...>(out, stride, indices...);
+    if (stride == 0) {
       throw std::out_of_range("invalid index");
     }
-    return detail::variance(storage_, lin.out);
-  }
-
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  value_type variance(Iterator begin, Iterator end) const {
-    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
-                     "iterator range does not match histogram dimension");
-    detail::linearize lin;
-    iter_args_impl<detail::linearize, Iterator>::apply(lin, axes_, begin);
-    if (lin.stride == 0) {
-      throw std::out_of_range("invalid index");
-    }
-    return detail::variance(storage_, lin.out);
-  }
-
-  template <typename Sequence, typename = detail::is_sequence<Sequence>>
-  value_type variance(const Sequence &indices) const {
-    return variance(std::begin(indices), std::end(indices));
+    return detail::variance(storage_, out);
   }
 
   /// Number of axes (dimensions) of histogram
@@ -238,19 +173,17 @@ public:
     return fusion::at_c<N>(axes_);
   }
 
+  /// Apply unary functor/function to each axis
+  template <typename Unary> void for_each_axis(Unary &unary) const {
+    fusion::for_each(axes_, unary);
+  }
+
 private:
   axes_type axes_;
   Storage storage_;
 
-  struct field_counter {
-    mutable std::size_t value = 1;
-    template <typename T> void operator()(const T &t) const {
-      value *= t.shape();
-    }
-  };
-
   std::size_t field_count() const {
-    field_counter fc;
+    detail::field_count fc;
     fusion::for_each(axes_, fc);
     return fc.value;
   }
@@ -264,34 +197,18 @@ private:
     return axes_ == other_axes;
   }
 
-  template <typename Linearize, typename First, typename... Rest>
-  void index_impl(Linearize &lin, First first, Rest... rest) const {
-    lin.set(first);
-    lin(fusion::at_c<(dim() - sizeof...(Rest)-1)>(axes_));
-    index_impl(lin, rest...);
+  template <template <class, class> class Lin, typename First, typename... Rest>
+  void apply_lin(std::size_t &out, std::size_t &stride, const First &x,
+                 const Rest &... rest) const {
+    Lin<typename fusion::result_of::value_at_c<
+            axes_type, (dim() - 1 - sizeof...(Rest))>::type,
+        First>()(out, stride,
+                 fusion::at_c<(dim() - 1 - sizeof...(Rest))>(axes_), x);
+    apply_lin<Lin, Rest...>(out, stride, rest...);
   }
 
-  template <typename Linearize>
-  void index_impl(Linearize & /*unused*/) const {} // stop recursion
-
-  template <typename Linearize, typename Iterator, unsigned N = 0>
-  struct iter_args_impl {
-    static void apply(Linearize &lin, const axes_type &axes, Iterator iter) {
-      lin.set(*iter);
-      lin(fusion::at_c<N>(axes));
-      iter_args_impl<Linearize, Iterator, N + 1>::apply(lin, axes, ++iter);
-    }
-  };
-
-  template <typename Linearize, typename Iterator>
-  struct iter_args_impl<Linearize, Iterator, dim()> {
-    static void apply(Linearize & /*unused*/, const axes_type & /*unused*/,
-                      Iterator /*unused*/) {}
-  };
-
-  template <class OtherStorage, class OtherAxes, class Visitor>
-  friend void for_each_axis(const static_histogram<OtherStorage, OtherAxes> &,
-                            Visitor &);
+  template <template <class, class> class Lin>
+  void apply_lin(std::size_t &out, std::size_t &stride) const {}
 
   template <typename OtherAxes, typename OtherStorage>
   friend class static_histogram;

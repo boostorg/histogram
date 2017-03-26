@@ -267,10 +267,8 @@ int main() {
                                     integer_axis(-1, 1, "", false));
     h.fill(-1, -1);
     h.fill(-1, 0);
-    std::array<double, 2> ai = {{-1., -10.}};
-    h.fill(ai);
-    double in[2] = {-10., 0.};
-    h.fill(in, in + 2);
+    h.fill(-1, -10);
+    h.fill(-10, 0);
 
     BOOST_TEST_EQ(h.dim(), 2u);
     BOOST_TEST_EQ(bins(h.axis(0)), 2);
@@ -470,12 +468,9 @@ int main() {
 
   // bad_index
   {
-    std::vector<int> index(1, 5);
     auto a = make_dynamic_histogram(integer_axis(0, 1));
     BOOST_TEST_THROWS(a.value(5), std::out_of_range);
-    BOOST_TEST_THROWS(a.value(index), std::out_of_range);
     BOOST_TEST_THROWS(a.variance(5), std::out_of_range);
-    BOOST_TEST_THROWS(a.variance(index), std::out_of_range);
   }
 
   // functional programming

@@ -8,8 +8,7 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_OSTREAM_OPERATORS_HPP_
 
 #include <boost/histogram/axis_ostream_operators.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
-#include <boost/histogram/static_histogram.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/utility.hpp>
 #include <ostream>
 
@@ -17,7 +16,7 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-struct axis_ostream_visitor : public static_visitor<void> {
+struct axis_ostream_visitor {
   std::ostream &os_;
   explicit axis_ostream_visitor(std::ostream &os) : os_(os) {}
   template <typename Axis> void operator()(const Axis &a) const {
@@ -33,7 +32,7 @@ inline std::ostream &operator<<(std::ostream &os,
                                 const Histogram<Axes, Storage> &h) {
   os << "histogram(";
   detail::axis_ostream_visitor sh(os);
-  for_each_axis(h, sh);
+  h.for_each_axis(sh);
   os << (h.dim() ? "\n)" : ")");
   return os;
 }
