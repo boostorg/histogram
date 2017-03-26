@@ -102,6 +102,11 @@ add_executable(adaptive_storage_test
 target_link_libraries(adaptive_storage_test ${LIBRARIES})
 add_test(adaptive_storage_test adaptive_storage_test)
 
+add_executable(adaptive_storage2_test
+               ../test/adaptive_storage2_test.cpp)
+target_link_libraries(adaptive_storage2_test ${LIBRARIES})
+add_test(adaptive_storage2_test adaptive_storage2_test)
+
 add_executable(container_storage_test
                ../test/container_storage_test.cpp)
 target_link_libraries(container_storage_test ${LIBRARIES})
