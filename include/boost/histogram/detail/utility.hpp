@@ -27,7 +27,7 @@ inline void escape(std::ostream &os, const String &s) {
 }
 
 template <typename A, typename> struct lin {
-  void operator()(std::size_t &out, std::size_t &stride, const A &a, int j) {
+  static inline void apply(std::size_t &out, std::size_t &stride, const A &a, int j) {
     // the following is highly optimized code that runs in a hot loop;
     // please measure the performance impact of changes
     const int uoflow = a.uoflow();
@@ -42,7 +42,7 @@ template <typename A, typename> struct lin {
 };
 
 template <typename A, typename T> struct xlin {
-  void operator()(std::size_t &out, std::size_t &stride, const A &a,
+  static inline void apply(std::size_t &out, std::size_t &stride, const A &a,
                   const T &x) {
     // the following is highly optimized code that runs in a hot loop;
     // please measure the performance impact of changes

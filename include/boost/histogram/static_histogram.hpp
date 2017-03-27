@@ -34,6 +34,7 @@ namespace histogram {
 template <typename Axes, typename Storage = adaptive_storage<>>
 class static_histogram {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
+  using pairs = std::pair<std::size_t, std::size_t>;
 
 public:
   using histogram_tag = detail::histogram_tag;
@@ -104,10 +105,9 @@ public:
   template <typename... Values> void fill(Values... values) {
     static_assert(sizeof...(values) == dim(),
                   "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin<detail::xlin, Values...>(out, stride, values...);
-    if (stride) {
-      storage_.increase(out);
+    const auto p = apply_lin<detail::xlin, Values...>(pairs(0, 1), values...);
+    if (p.second) {
+      storage_.increase(p.first);
     }
   }
 
@@ -118,33 +118,30 @@ public:
                                                           Values... values) {
     static_assert(sizeof...(values) == dim(),
                   "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin<detail::xlin, Values...>(out, stride, values...);
-    if (stride) {
-      storage_.increase(out, w);
+    const auto p = apply_lin<detail::xlin, Values...>(pairs(0, 1), values...);
+    if (p.second) {
+      storage_.increase(p.first, w);
     }
   }
 
   template <typename... Indices> value_type value(Indices... indices) const {
     static_assert(sizeof...(indices) == dim(),
                   "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin<detail::lin, Indices...>(out, stride, indices...);
-    if (stride == 0) {
+    const auto p = apply_lin<detail::lin, Indices...>(pairs(0, 1), indices...);
+    if (p.second == 0) {
       throw std::out_of_range("invalid index");
     }
-    return storage_.value(out);
+    return storage_.value(p.first);
   }
 
   template <typename... Indices> value_type variance(Indices... indices) const {
     static_assert(sizeof...(indices) == dim(),
                   "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin<detail::lin, Indices...>(out, stride, indices...);
-    if (stride == 0) {
+    const auto p = apply_lin<detail::lin, Indices...>(pairs(0, 1), indices...);
+    if (p.second == 0) {
       throw std::out_of_range("invalid index");
     }
-    return detail::variance(storage_, out);
+    return detail::variance(storage_, p.first);
   }
 
   /// Number of axes (dimensions) of histogram
@@ -198,17 +195,17 @@ private:
   }
 
   template <template <class, class> class Lin, typename First, typename... Rest>
-  void apply_lin(std::size_t &out, std::size_t &stride, const First &x,
+  pairs apply_lin(pairs&& p, const First &x,
                  const Rest &... rest) const {
     Lin<typename fusion::result_of::value_at_c<
             axes_type, (dim() - 1 - sizeof...(Rest))>::type,
-        First>()(out, stride,
-                 fusion::at_c<(dim() - 1 - sizeof...(Rest))>(axes_), x);
-    apply_lin<Lin, Rest...>(out, stride, rest...);
+        First>::apply(p.first, p.second,
+                      fusion::at_c<(dim() - 1 - sizeof...(Rest))>(axes_), x);
+    return apply_lin<Lin, Rest...>(std::move(p), rest...);
   }
 
   template <template <class, class> class Lin>
-  void apply_lin(std::size_t &out, std::size_t &stride) const {}
+  pairs apply_lin(pairs&& p) const { return p; }
 
   template <typename OtherAxes, typename OtherStorage>
   friend class static_histogram;

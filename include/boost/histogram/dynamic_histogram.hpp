@@ -31,7 +31,7 @@ namespace histogram {
 template <typename Axes = default_axes, typename Storage = adaptive_storage<>>
 class dynamic_histogram {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
-
+  using pairs = std::pair<std::size_t, std::size_t>;
 public:
   using histogram_tag = detail::histogram_tag;
   using axis_type = typename make_variant_over<Axes>::type;
@@ -129,10 +129,9 @@ public:
   template <typename... Values> void fill(Values... values) {
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin<detail::xlin, Values...>(out, stride, values...);
-    if (stride) {
-      storage_.increase(out);
+    const auto p = apply_lin<detail::xlin, Values...>(pairs(0, 1), values...);
+    if (p.second) {
+      storage_.increase(p.first);
     }
   }
 
@@ -140,10 +139,9 @@ public:
   void fill(Iterator begin, Iterator end) {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin_iter<detail::xlin>(out, stride, begin);
-    if (stride) {
-      storage_.increase(out);
+    const auto p = apply_lin_iter<detail::xlin>(pairs(0, 1), begin);
+    if (p.second) {
+      storage_.increase(p.first);
     }
   }
 
@@ -154,10 +152,9 @@ public:
                                                           Values... values) {
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin<detail::xlin, Values...>(out, stride, values...);
-    if (stride) {
-      storage_.increase(out, w);
+    const auto p = apply_lin<detail::xlin, Values...>(pairs(0, 1), values...);
+    if (p.second) {
+      storage_.increase(p.first, w);
     }
   }
 
@@ -168,57 +165,52 @@ public:
   wfill(value_type w, Iterator begin, Iterator end) {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin_iter<detail::xlin>(out, stride, begin);
-    if (stride) {
-      storage_.increase(out, w);
+    const auto p = apply_lin_iter<detail::xlin>(pairs(0, 1), begin);
+    if (p.second) {
+      storage_.increase(p.first, w);
     }
   }
 
   template <typename... Indices> value_type value(Indices... indices) const {
     BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
                      "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin<detail::lin, Indices...>(out, stride, indices...);
-    if (stride == 0) {
+    const auto p = apply_lin<detail::lin, Indices...>(pairs(0, 1), indices...);
+    if (p.second == 0) {
       throw std::out_of_range("invalid index");
     }
-    return storage_.value(out);
+    return storage_.value(p.first);
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   value_type value(Iterator begin, Iterator end) const {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin_iter<detail::lin>(out, stride, begin);
-    if (stride == 0) {
+    const auto p = apply_lin_iter<detail::lin>(pairs(0, 1), begin);
+    if (p.second == 0) {
       throw std::out_of_range("invalid index");
     }
-    return storage_.value(out);
+    return storage_.value(p.first);
   }
 
   template <typename... Indices> value_type variance(Indices... indices) const {
     BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
                      "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin<detail::lin, Indices...>(out, stride, indices...);
-    if (stride == 0) {
+    const auto p = apply_lin<detail::lin, Indices...>(pairs(0, 1), indices...);
+    if (p.second == 0) {
       throw std::out_of_range("invalid index");
     }
-    return detail::variance(storage_, out);
+    return detail::variance(storage_, p.first);
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   value_type variance(Iterator begin, Iterator end) const {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
-    std::size_t out = 0, stride = 1;
-    apply_lin_iter<detail::lin>(out, stride, begin);
-    if (stride == 0) {
+    const auto p = apply_lin_iter<detail::lin>(pairs(0, 1), begin);
+    if (p.second == 0) {
       throw std::out_of_range("invalid index");
     }
-    return detail::variance(storage_, out);
+    return detail::variance(storage_, p.first);
   }
 
   /// Number of axes (dimensions) of histogram
@@ -279,34 +271,35 @@ private:
   }
 
   template <template <class, class> class Lin, typename Value>
-  struct lin_visitor : public static_visitor<void> {
-    std::size_t &out, &stride;
+  struct lin_visitor : public static_visitor<pairs> {
+    mutable pairs pa;
     const Value &val;
-    lin_visitor(std::size_t &o, std::size_t &s, const Value &v)
-        : out(o), stride(s), val(v) {}
-    template <typename A> void operator()(const A &a) const {
-      Lin<A, Value>()(out, stride, a, val);
+    lin_visitor(const pairs& p, const Value &v)
+        : pa(p), val(v) {}
+    template <typename A> pairs operator()(const A &a) const {
+      Lin<A, Value>::apply(pa.first, pa.second, a, val);
+      return pa;
     }
   };
 
   template <template <class, class> class Lin, typename First, typename... Rest>
-  void apply_lin(std::size_t &out, std::size_t &stride, const First &first,
+  pairs apply_lin(pairs&& p, const First &first,
                  const Rest &... rest) const {
-    apply_visitor(lin_visitor<Lin, First>(out, stride, first),
-                  axes_[dim() - 1 - sizeof...(Rest)]);
-    apply_lin<Lin, Rest...>(out, stride, rest...);
+    p = apply_visitor(lin_visitor<Lin, First>(p, first),
+                      axes_[dim() - 1 - sizeof...(Rest)]);
+    return apply_lin<Lin, Rest...>(std::move(p), rest...);
   }
 
   template <template <class, class> class Lin>
-  void apply_lin(std::size_t & /*out*/, std::size_t & /*stride*/) const {}
+  pairs apply_lin(pairs&& p) const { return p; }
 
   template <template <class, class> class Lin, typename Iterator>
-  void apply_lin_iter(std::size_t &out, std::size_t &stride,
-                      Iterator iter) const {
+  pairs apply_lin_iter(pairs&& p, Iterator iter) const {
     for (const auto &a : axes_) {
-      apply_visitor(lin_visitor<Lin, decltype(*iter)>(out, stride, *iter), a);
+      p = apply_visitor(lin_visitor<Lin, decltype(*iter)>(p, *iter), a);
       ++iter;
     }
+    return p;
   }
 
   friend struct storage_access;
