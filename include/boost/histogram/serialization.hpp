@@ -47,64 +47,81 @@ template <template <class> class Allocator>
 template <class Archive>
 void adaptive_storage<Allocator>::serialize(Archive &ar,
                                             unsigned /* version */) {
+  std::size_t size = this->size();
+  ar & size;
   if (Archive::is_loading::value) {
-    buffer_.destroy_any();
-  }
-  ar &buffer_.size_;
-  ar &buffer_.type_.id_;
-  ar &buffer_.type_.depth_;
-  if (Archive::is_loading::value) {
-    switch (buffer_.type_.id_) {
-    case 0:
-      buffer_.ptr_ = nullptr;
-      break;
-    case 1:
-      buffer_.template create<uint8_t>();
-      break;
-    case 2:
-      buffer_.template create<uint16_t>();
-      break;
-    case 3:
-      buffer_.template create<uint32_t>();
-      break;
-    case 4:
-      buffer_.template create<uint64_t>();
-      break;
-    case 5:
-      buffer_.template create<detail::mp_int>();
-      break;
-    case 6:
-      buffer_.template create<detail::weight>();
-      break;
+    unsigned tid = 0;
+    ar & tid;
+    if (tid == 0) {
+      buffer_ = array<void>(size);
+    } else
+    if (tid == 1) {
+      array<uint8_t> a(size);
+      ar & serialization::make_array(a.begin(), size);
+      buffer_ = std::move(a);
+    } else
+    if (tid == 2) {
+      array<uint16_t> a(size);
+      ar & serialization::make_array(a.begin(), size);
+      buffer_ = std::move(a);
+    } else
+    if (tid == 3) {
+      array<uint32_t> a(size);
+      ar & serialization::make_array(a.begin(), size);
+      buffer_ = std::move(a);
+    }  else
+    if (tid == 4) {
+      array<uint64_t> a(size);
+      ar & serialization::make_array(a.begin(), size);
+      buffer_ = std::move(a);
+    }  else
+    if (tid == 5) {
+      array<mp_int> a(size);
+      ar & serialization::make_array(a.begin(), size);
+      buffer_ = std::move(a);
+    }  else
+    if (tid == 6) {
+      array<weight> a(size);
+      ar & serialization::make_array(a.begin(), size);
+      buffer_ = std::move(a);
     }
   }
-  switch (buffer_.type_.id_) {
-  case 0:
-    break;
-  case 1:
-    ar &serialization::make_array(&buffer_.template at<uint8_t>(0),
-                                  buffer_.size_);
-    break;
-  case 2:
-    ar &serialization::make_array(&buffer_.template at<uint16_t>(0),
-                                  buffer_.size_);
-    break;
-  case 3:
-    ar &serialization::make_array(&buffer_.template at<uint32_t>(0),
-                                  buffer_.size_);
-    break;
-  case 4:
-    ar &serialization::make_array(&buffer_.template at<uint64_t>(0),
-                                  buffer_.size_);
-    break;
-  case 5:
-    ar &serialization::make_array(&buffer_.template at<detail::mp_int>(0),
-                                  buffer_.size_);
-    break;
-  case 6:
-    ar &serialization::make_array(&buffer_.template at<detail::weight>(0),
-                                  buffer_.size_);
-    break;
+  else {
+    unsigned tid = 0;
+    if (array<void>* a = get<array<void>>(&buffer_)) {
+      tid = 0;
+      ar & tid;
+    } else
+    if (array<uint8_t>* a = get<array<uint8_t>>(&buffer_)) {
+      tid = 1;
+      ar & tid;
+      ar & serialization::make_array(a->begin(), size);
+    } else
+    if (array<uint16_t>* a = get<array<uint16_t>>(&buffer_)) {
+      tid = 2;
+      ar & tid;
+      ar & serialization::make_array(a->begin(), size);
+    } else
+    if (array<uint32_t>* a = get<array<uint32_t>>(&buffer_)) {
+      tid = 3;
+      ar & tid;
+      ar & serialization::make_array(a->begin(), size);
+    } else
+    if (array<uint64_t>* a = get<array<uint64_t>>(&buffer_)) {
+      tid = 4;
+      ar & tid;
+      ar & serialization::make_array(a->begin(), size);
+    } else
+    if (array<mp_int>* a = get<array<mp_int>>(&buffer_)) {
+      tid = 5;
+      ar & tid;
+      ar & serialization::make_array(a->begin(), size);
+    } else
+    if (array<weight>* a = get<array<weight>>(&buffer_)) {
+      tid = 6;
+      ar & tid;
+      ar & serialization::make_array(a->begin(), size);
+    }
   }
 }
 

@@ -7,9 +7,9 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/container_storage.hpp>
+#include <boost/histogram/serialization.hpp>
 #include <limits>
 #include <sstream>
 
@@ -40,8 +40,9 @@ template <> adaptive_storage<> prepare<detail::weight>(unsigned n) {
 template <> adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
   adaptive_storage<> s(n);
   s.increase(0);
-  const auto tmax = std::numeric_limits<uint64_t>::max();
-  while (s.value(0) <= tmax) {
+  double tmax = std::numeric_limits<uint64_t>::max();
+  tmax *= 2.0;
+  while (s.value(0) < tmax) {
     s += s;
   }
   return s;
@@ -50,7 +51,7 @@ template <> adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
 struct storage_access {
   template <typename T> static adaptive_storage<> set_value(unsigned n, T x) {
     adaptive_storage<> s = prepare<T>(n);
-    static_cast<T *>(s.buffer_.ptr_)[0] = x;
+    get<adaptive_storage<>::array<T>>(s.buffer_)[0] = x;
     return s;
   }
 };
@@ -59,12 +60,13 @@ template <typename T> void copy_impl() {
   const auto b = prepare<T>(1);
   auto a(b);
   BOOST_TEST(a == b);
+  a.increase(0);
+  BOOST_TEST(!(a == b));
   a = b;
   BOOST_TEST(a == b);
   a.increase(0);
   BOOST_TEST(!(a == b));
   a = b;
-  BOOST_TEST(a == b);
   a = prepare<T>(2);
   BOOST_TEST(!(a == b));
   a = b;
@@ -135,7 +137,7 @@ template <> void equal_impl<void>() {
   BOOST_TEST(a == b);
   b.increase(0);
   BOOST_TEST(!(a == b));
-  adaptive_storage<> c = storage_access::set_value(1, unsigned(0));
+  adaptive_storage<> c(1);
   BOOST_TEST(c == a);
 }
 
@@ -243,10 +245,6 @@ int main() {
     equal_impl<uint64_t>();
     equal_impl<detail::mp_int>();
     equal_impl<detail::weight>();
-
-    // special case
-    adaptive_storage<> a = storage_access::set_value(1, unsigned(0));
-    adaptive_storage<> b(1);
   }
 
   // increase_and_grow
