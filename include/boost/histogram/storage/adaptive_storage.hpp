@@ -163,7 +163,9 @@ public:
   template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
   adaptive_storage &operator=(const OtherStorage &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
-      buffer_ = array<void>(rhs.size());
+      if (size() != rhs.size()) {
+        buffer_ = array<void>(rhs.size());
+      }
       for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
         apply_visitor(assign_visitor<typename OtherStorage::value_type>(
                           i, rhs.value(i), buffer_),

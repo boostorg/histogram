@@ -180,9 +180,11 @@ template <> void increase_and_grow_impl<void>() {
 }
 
 template <typename T> void convert_container_storage_impl() {
+  const auto aref = storage_access::set_value(1, T(0));
   container_storage<std::vector<uint8_t>> s(1);
   s.increase(0);
-  auto a = prepare<T>(1);
+
+  auto a = aref;
   a = s;
   BOOST_TEST_EQ(a.value(0), 1.0);
   BOOST_TEST(a == s);
@@ -195,7 +197,7 @@ template <typename T> void convert_container_storage_impl() {
   b.increase(0);
   BOOST_TEST(!(b == s));
 
-  auto c = prepare<T>(1);
+  auto c = aref;
   c += s;
   BOOST_TEST_EQ(c.value(0), 1.0);
   BOOST_TEST(c == s);
@@ -206,7 +208,7 @@ template <typename T> void convert_container_storage_impl() {
   while (t.value(0) < 1e20)
     t += t;
 
-  auto d = prepare<T>(1);
+  auto d = aref;
   d = s;
   BOOST_TEST_EQ(d.value(0), 1.0);
   BOOST_TEST(d == s);
@@ -219,7 +221,7 @@ template <typename T> void convert_container_storage_impl() {
   e.increase(0);
   BOOST_TEST(!(e == s));
 
-  auto f = prepare<T>(1);
+  auto f = aref;
   f += s;
   BOOST_TEST_EQ(f.value(0), 1.0);
   BOOST_TEST(c == s);
