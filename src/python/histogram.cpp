@@ -282,7 +282,6 @@ std::string histogram_repr(const dynamic_histogram<> &h) {
   return os.str();
 }
 
-
 struct storage_access {
 #ifdef HAVE_NUMPY
   using mp_int = adaptive_storage<>::mp_int;
@@ -341,8 +340,8 @@ struct storage_access {
       for (int i = 0; i < dim; ++i) {
         PyArray_STRIDES((PyArrayObject *)ptr)[i] = python::extract<npy_intp>(strides[i]);
       }
-      auto *buf = (double *)PyArray_DATA((PyArrayObject *)ptr);
-      for (int i = 0; i < b.size; ++i) {
+      auto *buf = static_cast<double *>(PyArray_DATA((PyArrayObject *)ptr));
+      for (std::size_t i = 0; i < b.size; ++i) {
         buf[i] = static_cast<double>(b[i]);
       }
       return python::object(python::handle<>(ptr));
