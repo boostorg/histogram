@@ -328,9 +328,9 @@ class test_histogram(unittest.TestCase):
 
         h = histogram(integer_axis(-1, 1))
         self.assertEqual(len(h), 1)
-        self.assertEqual(h.axis(0), integer_axis(-1, 1))
-        self.assertEqual(h.axis(0).shape, 5)
-        self.assertEqual(histogram(integer_axis(-1, 1, uoflow=False)).axis(0).shape, 3)
+        self.assertEqual(h[0], integer_axis(-1, 1))
+        self.assertEqual(h[0].shape, 5)
+        self.assertEqual(histogram(integer_axis(-1, 1, uoflow=False))[0].shape, 3)
         self.assertNotEqual(h, histogram(regular_axis(1, -1, 1)))
         self.assertNotEqual(h, histogram(integer_axis(-1, 2)))
         self.assertNotEqual(h, histogram(integer_axis(-1, 1, label="ia")))
@@ -362,9 +362,9 @@ class test_histogram(unittest.TestCase):
             h.fill(1)
             h.fill(10)
         self.assertEqual(h0.sum, 6)
-        self.assertEqual(h0.axis(0).shape, 3)
+        self.assertEqual(h0[0].shape, 3)
         self.assertEqual(h1.sum, 8)
-        self.assertEqual(h1.axis(0).shape, 5)
+        self.assertEqual(h1[0].shape, 5)
 
         for h in (h0, h1):
             self.assertEqual(h.value(0), 2)
@@ -422,8 +422,8 @@ class test_histogram(unittest.TestCase):
                  [0, 0, 1, 0, 0, 0],
                  [0, 1, 0, 0, 0, 0],
                  [0, 0, 0, 0, 0, 0]]
-            for i in range(-uoflow, h.axis(0).bins + uoflow):
-                for j in range(-uoflow, h.axis(1).bins + uoflow):
+            for i in range(-uoflow, h[0].bins + uoflow):
+                for j in range(-uoflow, h[1].bins + uoflow):
                     self.assertEqual(h.value(i, j), m[i][j])
 
     def test_add_2d(self):
@@ -446,8 +446,8 @@ class test_histogram(unittest.TestCase):
 
             h += h
 
-            for i in range(-uoflow, h.axis(0).bins + uoflow):
-                for j in range(-uoflow, h.axis(1).bins + uoflow):
+            for i in range(-uoflow, h[0].bins + uoflow):
+                for j in range(-uoflow, h[1].bins + uoflow):
                     self.assertEqual(h.value(i, j), 2 * m[i][j])
                     self.assertEqual(h.variance(i, j), 2 * m[i][j])
 
@@ -484,8 +484,8 @@ class test_histogram(unittest.TestCase):
             h += h
             self.assertEqual(h, h2)
 
-            for i in range(-uoflow, h.axis(0).bins + uoflow):
-                for j in range(-uoflow, h.axis(1).bins + uoflow):
+            for i in range(-uoflow, h[0].bins + uoflow):
+                for j in range(-uoflow, h[1].bins + uoflow):
                     self.assertEqual(h.value(i, j), 2 * m[i][j])
                     self.assertEqual(h.variance(i, j), 2 * m[i][j])
 
@@ -494,13 +494,17 @@ class test_histogram(unittest.TestCase):
         h2 = eval(repr(h))
         self.assertEqual(h, h2)
 
-    def test_loop_axis(self):
+    def test_axis(self):
         axes = (regular_axis(10, 0, 1), integer_axis(0, 1))
         h = histogram(*axes)
         for a1, a2 in zip(h, axes):
             self.assertEqual(a1, a2)
         with self.assertRaises(IndexError):
-            h[3]
+            h[2]
+        self.assertEqual(h[-1], axes[-1])
+        self.assertEqual(h[-2], axes[-2])
+        with self.assertRaises(IndexError):
+            h[-3]
 
     def test_axis_overflow(self):
         h = histogram(*[regular_axis(1, 0, 1) for i in range(50)])
@@ -534,15 +538,15 @@ class test_histogram(unittest.TestCase):
                       regular_axis(20, 0.0, 20.0, uoflow=False),
                       variable_axis(0.0, 1.0, 2.0),
                       circular_axis(4, label='pa'))
-        for i in range(a.axis(0).bins):
+        for i in range(a[0].bins):
             a.fill(i, 0, 0, 0, 0)
-            for j in range(a.axis(1).bins):
+            for j in range(a[1].bins):
                 a.fill(i, j, 0, 0, 0)
-                for k in range(a.axis(2).bins):
+                for k in range(a[2].bins):
                     a.fill(i, j, k, 0, 0)
-                    for l in range(a.axis(3).bins):
+                    for l in range(a[3].bins):
                         a.fill(i, j, k, l, 0)
-                        for m in range(a.axis(4).bins):
+                        for m in range(a[4].bins):
                             a.fill(i, j, k, l, m * 0.5 * pi)
 
         io = BytesIO()
@@ -551,11 +555,11 @@ class test_histogram(unittest.TestCase):
         b = pickle.load(io)
         self.assertNotEqual(id(a), id(b))
         self.assertEqual(len(a), len(b))
-        self.assertEqual(a.axis(0), b.axis(0))
-        self.assertEqual(a.axis(1), b.axis(1))
-        self.assertEqual(a.axis(2), b.axis(2))
-        self.assertEqual(a.axis(3), b.axis(3))
-        self.assertEqual(a.axis(4), b.axis(4))
+        self.assertEqual(a[0], b[0])
+        self.assertEqual(a[1], b[1])
+        self.assertEqual(a[2], b[2])
+        self.assertEqual(a[3], b[3])
+        self.assertEqual(a[4], b[4])
         self.assertEqual(a.sum, b.sum)
         self.assertEqual(a, b)
 
@@ -564,13 +568,13 @@ class test_histogram(unittest.TestCase):
                        integer_axis(0, 3, label='ia'),
                        regular_axis(4, 0.0, 4.0, uoflow=False),
                        variable_axis(0.0, 1.0, 2.0))
-        for i in range(a.axis(0).bins):
+        for i in range(a[0].bins):
             a.fill(i, 0, 0, 0, w=3)
-            for j in range(a.axis(1).bins):
+            for j in range(a[1].bins):
                 a.fill(i, j, 0, 0, w=10)
-                for k in range(a.axis(2).bins):
+                for k in range(a[2].bins):
                     a.fill(i, j, k, 0, w=2)
-                    for l in range(a.axis(3).bins):
+                    for l in range(a[3].bins):
                         a.fill(i, j, k, l, w=5)
 
         io = BytesIO()
@@ -579,10 +583,10 @@ class test_histogram(unittest.TestCase):
         b = pickle.load(io)
         self.assertNotEqual(id(a), id(b))
         self.assertEqual(len(a), len(b))
-        self.assertEqual(a.axis(0), b.axis(0))
-        self.assertEqual(a.axis(1), b.axis(1))
-        self.assertEqual(a.axis(2), b.axis(2))
-        self.assertEqual(a.axis(3), b.axis(3))
+        self.assertEqual(a[0], b[0])
+        self.assertEqual(a[1], b[1])
+        self.assertEqual(a[2], b[2])
+        self.assertEqual(a[3], b[3])
         self.assertEqual(a.sum, b.sum)
         self.assertEqual(a, b)
 
@@ -628,9 +632,9 @@ class test_histogram(unittest.TestCase):
                       integer_axis(0, 2, uoflow=False),
                       integer_axis(0, 3, uoflow=False))
         r = numpy.zeros((2, 3, 4), dtype=numpy.int8)
-        for i in range(a.axis(0).bins):
-            for j in range(a.axis(1).bins):
-                for k in range(a.axis(2).bins):
+        for i in range(a[0].bins):
+            for j in range(a[1].bins):
+                for k in range(a[2].bins):
                     for m in range(i+j+k):
                         a.fill(i, j, k)
                     r[i,j,k] = i+j+k
@@ -638,9 +642,9 @@ class test_histogram(unittest.TestCase):
         v = numpy.asarray(a) # a view
 
         c2 = numpy.zeros((2, 3, 4), dtype=numpy.int8)
-        for i in range(a.axis(0).bins):
-            for j in range(a.axis(1).bins):
-                for k in range(a.axis(2).bins):
+        for i in range(a[0].bins):
+            for j in range(a[1].bins):
+                for k in range(a[2].bins):
                     c2[i,j,k] = a.value(i,j,k)
 
         self.assertTrue(numpy.all(c == c2))
@@ -653,9 +657,9 @@ class test_histogram(unittest.TestCase):
                       integer_axis(0, 2),
                       integer_axis(0, 3))
         r = numpy.zeros((2, 4, 5, 6))
-        for i in range(a.axis(0).bins):
-            for j in range(a.axis(1).bins):
-                for k in range(a.axis(2).bins):
+        for i in range(a[0].bins):
+            for j in range(a[1].bins):
+                for k in range(a[2].bins):
                     a.fill(i, j, k, w=i+j+k)
                     r[0, i, j, k] = i+j+k
                     r[1, i, j, k] = (i+j+k)**2
@@ -663,9 +667,9 @@ class test_histogram(unittest.TestCase):
         v = numpy.asarray(a) # a view
 
         c2 = numpy.zeros((2, 4, 5, 6))
-        for i in range(a.axis(0).bins):
-            for j in range(a.axis(1).bins):
-                for k in range(a.axis(2).bins):
+        for i in range(a[0].bins):
+            for j in range(a[1].bins):
+                for k in range(a[2].bins):
                     c2[0, i, j, k] = a.value(i,j,k)
                     c2[1, i, j, k] = a.variance(i,j,k)
 
