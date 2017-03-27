@@ -226,7 +226,7 @@ private:
 
     template <typename Array> void operator()(Array &b) const {
       using T = typename Array::value_type;
-      if (std::numeric_limits<T>::max() <= value) {
+      if (value <= std::numeric_limits<T>::max()) {
         b[idx] = value;
       } else {
         buffer = array<next<T>>(b, idx);

@@ -306,7 +306,7 @@ class test_integer_axis(unittest.TestCase):
         self.assertEqual(a.index(3), 4)
         self.assertEqual(a.index(4), 4)
 
-class histogramtest(unittest.TestCase):
+class test_histogram(unittest.TestCase):
 
     def test_init(self):
         histogram()
@@ -512,6 +512,21 @@ class histogramtest(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             h.variance(*range(50))
+
+    def test_out_of_range(self):
+        h = histogram(regular_axis(3, 0, 1))
+        h.fill(-1)
+        h.fill(2)
+        self.assertEqual(h.value(-1), 1)
+        self.assertEqual(h.value(3), 1)
+        with self.assertRaises(IndexError):
+            h.value(-2)
+        with self.assertRaises(IndexError):
+            h.value(4)
+        with self.assertRaises(IndexError):
+            h.variance(-2)
+        with self.assertRaises(IndexError):
+            h.variance(4)
 
     def test_pickle_0(self):
         a = histogram(category_axis('A', 'B', 'C'),

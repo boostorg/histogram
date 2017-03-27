@@ -131,14 +131,23 @@ template <typename T> void equal_impl() {
 
 template <> void equal_impl<void>() {
   adaptive_storage<> a(1);
-  adaptive_storage<> b(1);
+  auto b = storage_access::set_value(1, uint8_t(0));
+  auto c = storage_access::set_value(2, uint8_t(0));
+  auto d = container_storage<std::vector<unsigned>>(1);
   BOOST_TEST_EQ(a.value(0), 0.0);
   BOOST_TEST_EQ(a.variance(0), 0.0);
   BOOST_TEST(a == b);
+  BOOST_TEST(b == a);
+  BOOST_TEST(a == d);
+  BOOST_TEST(d == a);  
+  BOOST_TEST(!(a == c));
+  BOOST_TEST(!(c == a));
   b.increase(0);
   BOOST_TEST(!(a == b));
-  adaptive_storage<> c(1);
-  BOOST_TEST(c == a);
+  BOOST_TEST(!(b == a));
+  d.increase(0);
+  BOOST_TEST(!(a == d));
+  BOOST_TEST(!(d == a));  
 }
 
 template <typename T> void increase_and_grow_impl() {
@@ -201,9 +210,9 @@ template <typename T> void convert_container_storage_impl() {
 }
 
 template <> void convert_container_storage_impl<void>() {
-  adaptive_storage<> aref(1);
+  const auto aref = adaptive_storage<>(1);
   BOOST_TEST_EQ(aref.value(0), 0.0);
-  container_storage<std::vector<unsigned>> s(1);
+  container_storage<std::vector<uint8_t>> s(1);
   s.increase(0);
 
   auto a = aref;
@@ -217,6 +226,11 @@ template <> void convert_container_storage_impl<void>() {
   c += s;
   BOOST_TEST_EQ(c.value(0), 1.0);
   BOOST_TEST(c == s);
+  BOOST_TEST(s == c);
+
+  container_storage<std::vector<uint8_t>> t(2);
+  t.increase(0);
+  BOOST_TEST(!(c == t));
 }
 
 } // namespace histogram
@@ -295,13 +309,13 @@ int main() {
 
   // convert_container_storage
   {
-    convert_container_storage_impl<detail::weight>();
     convert_container_storage_impl<void>();
     convert_container_storage_impl<uint8_t>();
     convert_container_storage_impl<uint16_t>();
     convert_container_storage_impl<uint32_t>();
     convert_container_storage_impl<uint64_t>();
     convert_container_storage_impl<detail::mp_int>();
+    convert_container_storage_impl<detail::weight>();
   }
 
   // serialization_test
