@@ -9,29 +9,10 @@ branches:
     - master
     - develop
 
-install:
-  - cd ..
-  - git clone --depth 1 -b %APPVEYOR_REPO_BRANCH% https://github.com/boostorg/boost.git boost-root
-  - cd boost-root
-  - git submodule init libs/core
-  - git submodule init libs/assert
-  - git submodule init libs/config
-  - git submodule init libs/predef
-  - git submodule init libs/io
-  - git submodule init libs/integer
-  - git submodule init libs/static_assert
-  - git submodule init libs/type_traits
-  - git submodule init libs/math
-  - git submodule init libs/python
-  - git submodule init libs/serialization
-  - git submodule init tools/build
-  - git submodule update --depth 1
-  - mkdir libs\histogram
-  - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram
-  - bootstrap
-  - b2 headers
-
 build: off
 
 test_script:
-  - b2 libs/histogram/test toolset=msvc-9.0,msvc-10.0,msvc-11.0,msvc-14.0
+  - cd build
+  - cmake . -DCMAKE_BUILD_TYPE=debug
+  - make -j2
+  - ctest -V
