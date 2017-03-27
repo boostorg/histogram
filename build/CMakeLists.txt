@@ -50,7 +50,7 @@ if(BUILD_PYTHON)
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
 else()
   find_package(Boost 1.55 REQUIRED
-               COMPONENTS iostreams serialization)
+               COMPONENTS serialization)
   set(LIBRARIES ${STD_LIBRARIES} ${Boost_LIBRARIES})
 endif()
 
