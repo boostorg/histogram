@@ -31,8 +31,8 @@ def compare_1d(n, distrib):
         best_boost = min(t, best_boost)
     assert(np.all(w == np.array(h)[:-2]))
 
-    print "python:numpy %.3f" % best_numpy
-    print "python:hd_sd %.3f" % best_boost
+    print "py:numpy %.3f" % best_numpy
+    print "py:hd_sd %.3f" % best_boost
 
 def compare_3d(n, distrib):
     if distrib == 0:
@@ -61,8 +61,8 @@ def compare_3d(n, distrib):
         best_boost = min(t, best_boost)
     assert(np.all(w == np.array(h)[:-2,:-2,:-2]))
 
-    print "python:numpy %.3f" % best_numpy
-    print "python:hd_sd %.3f" % best_boost
+    print "py:numpy %.3f" % best_numpy
+    print "py:hd_sd %.3f" % best_boost
 
 def compare_6d(n, distrib):
     if distrib == 0:
@@ -98,8 +98,8 @@ def compare_6d(n, distrib):
         best_boost = min(t, best_boost)
     assert(np.all(w == np.array(h)[:-2,:-2,:-2,:-2,:-2,:-2]))
 
-    print "python:numpy %.3f" % best_numpy
-    print "python:hd_sd %.3f" % best_boost
+    print "py:numpy %.3f" % best_numpy
+    print "py:hd_sd %.3f" % best_boost
 
 print "1D"
 print "uniform distribution"

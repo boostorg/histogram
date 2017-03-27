@@ -18,58 +18,59 @@ uniform distribution
 root 0.290
 normal distribution
 root 0.325
-1D
-uniform distribution
-py:numpy 0.159
-py:hd_sd 0.162
-normal distribution
-py:numpy 0.161
-py:hd_sd 0.243
-3D
-uniform distribution
-py:numpy 0.887
-py:hd_sd 0.132
-normal distribution
-py:numpy 0.632
-py:hd_sd 0.209
-6D
-uniform distribution
-py:numpy 0.697
-py:hd_sd 0.126
-normal distribution
-py:numpy 0.578
-py:hd_sd 0.186
 
 1D
 uniform distribution
-hs_ss 0.039
-hs_sd 0.075
-hd_ss 0.092
-hd_sd 0.156
+py:numpy 0.205
+py:hd_sd 0.238
 normal distribution
-hs_ss 0.052
-hs_sd 0.090
-hd_ss 0.108
-hd_sd 0.168
+py:numpy 0.188
+py:hd_sd 0.317
 3D
 uniform distribution
-hs_ss 0.175
-hs_sd 0.075
-hd_ss 0.250
-hd_sd 0.127
+py:numpy 1.021
+py:hd_sd 0.210
 normal distribution
-hs_ss 0.153
-hs_sd 0.097
-hd_ss 0.219
-hd_sd 0.158
+py:numpy 0.659
+py:hd_sd 0.245
 6D
 uniform distribution
-hs_ss 0.171
-hs_sd 0.082
-hd_ss 0.224
-hd_sd 0.136
+py:numpy 0.717
+py:hd_sd 0.140
 normal distribution
-hs_ss 0.181
+py:numpy 0.584
+py:hd_sd 0.222
+
+1D
+uniform distribution
+hs_ss 0.043
 hs_sd 0.112
-hd_ss 0.255
-hd_sd 0.170
+hd_ss 0.119
+hd_sd 0.208
+normal distribution
+hs_ss 0.056
+hs_sd 0.133
+hd_ss 0.134
+hd_sd 0.226
+3D
+uniform distribution
+hs_ss 0.204
+hs_sd 0.105
+hd_ss 0.368
+hd_sd 0.189
+normal distribution
+hs_ss 0.193
+hs_sd 0.144
+hd_ss 0.327
+hd_sd 0.238
+6D
+uniform distribution
+hs_ss 0.202
+hs_sd 0.120
+hd_ss 0.296
+hd_sd 0.211
+normal distribution
+hs_ss 0.215
+hs_sd 0.156
+hd_ss 0.312
+hd_sd 0.245
