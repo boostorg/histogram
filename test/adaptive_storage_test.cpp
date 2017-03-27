@@ -204,9 +204,33 @@ template <typename T> void convert_container_storage_impl() {
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
 
-  container_storage<std::vector<uint8_t>> t(2);
+  container_storage<std::vector<float>> t(1);
   t.increase(0);
-  BOOST_TEST(!(c == t));
+  while (t.value(0) < 1e20)
+    t += t;
+
+  auto d = aref;
+  d = s;
+  BOOST_TEST_EQ(d.value(0), 1.0);
+  BOOST_TEST(d == s);
+  d.increase(0);
+  BOOST_TEST(!(d == s));
+
+  adaptive_storage<> e(s);
+  BOOST_TEST_EQ(e.value(0), 1.0);
+  BOOST_TEST(e == s);
+  e.increase(0);
+  BOOST_TEST(!(e == s));
+
+  auto f = aref;
+  f += s;
+  BOOST_TEST_EQ(f.value(0), 1.0);
+  BOOST_TEST(c == s);
+  BOOST_TEST(s == c);
+
+  container_storage<std::vector<uint8_t>> u(2);
+  u.increase(0);
+  BOOST_TEST(!(c == u));
 }
 
 template <> void convert_container_storage_impl<void>() {
