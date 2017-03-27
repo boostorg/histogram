@@ -11,8 +11,9 @@ branches:
 
 install:
   - cd ..
-  - git clone -b %APPVEYOR_REPO_BRANCH% https://github.com/boostorg/boost.git boost-root
+  - git clone --depth 1 -b %APPVEYOR_REPO_BRANCH% https://github.com/boostorg/boost.git boost-root
   - cd boost-root
+  - git submodule init libs/core
   - git submodule init libs/assert
   - git submodule init libs/config
   - git submodule init libs/predef
