@@ -10,8 +10,9 @@ cache:
 language: cpp
 
 branches:
-  except:
-    - html
+  only:
+    - master
+    - develop
 
 matrix:
   include:

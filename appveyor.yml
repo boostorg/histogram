@@ -1,0 +1,35 @@
+# Copyright 2017 Hans Dembinski
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at http://boost.org/LICENSE_1_0.txt)
+
+
+
+shallow_clone: true
+
+branches:
+  only:
+    - master
+    - develop
+
+install:
+  - cd ..
+  - git clone -b %APPVEYOR_REPO_BRANCH% https://github.com/boostorg/boost.git boost-root
+  - cd boost-root
+  - git submodule init libs/assert
+  - git submodule init libs/config
+  - git submodule init libs/predef
+  - git submodule init libs/static_assert
+  - git submodule init libs/type_traits
+  - git submodule init libs/serialization
+  - git submodule init libs/python
+  - git submodule init libs/iostreams
+  - git submodule init tools/build
+  - git submodule update
+  - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram
+  - bootstrap
+  - b2 headers
+
+build: off
+
+test_script:
+  - b2 libs/histogram/test toolset=msvc-9.0,msvc-10.0,msvc-11.0,msvc-14.0
