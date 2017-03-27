@@ -11,8 +11,15 @@ branches:
 
 build: off
 
+environment:
+  MSVC_DEFAULT_OPTIONS: ON
+  BOOST_ROOT: C:\Libraries\boost_1_63_0
+  # BOOST_LIBRARYDIR: C:\Libraries\boost_1_63_0\lib64-msvc-14.0
+
 test_script:
   - cd build
-  - cmake . -DCMAKE_BUILD_TYPE=debug
+  - export BOOST_ROOT=
+  - cmake . -DCMAKE_BUILD_TYPE=debug -DBUILD_NUMPY_SUPPORT=OFF 
+    -DBOOST_ROOT="%BOOST_ROOT%" -DBoost_USE_STATIC_LIBS="ON"
   - make -j2
   - ctest -V
