@@ -27,8 +27,6 @@ for line in open("perf.dat"):
 
 plt.figure(figsize=(10, 8))
 plt.subplots_adjust(left=0.12, right=0.92, top=0.95, bottom=0.1)
-x = []
-y = []
 i = 0
 for dim in sorted(data):
 	v = data[dim]
