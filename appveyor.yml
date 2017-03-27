@@ -18,7 +18,6 @@ environment:
 
 test_script:
   - cd build
-  - export BOOST_ROOT=
   - cmake . -DCMAKE_BUILD_TYPE=debug -DBUILD_NUMPY_SUPPORT=OFF 
     -DBOOST_ROOT="%BOOST_ROOT%" -DBoost_USE_STATIC_LIBS="ON"
   - make -j2
