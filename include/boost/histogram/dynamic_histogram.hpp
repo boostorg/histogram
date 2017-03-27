@@ -294,8 +294,7 @@ private:
                  const Rest &... rest) const {
     apply_visitor(lin_visitor<Lin, First>(out, stride, first),
                   axes_[dim() - 1 - sizeof...(Rest)]);
-    if (sizeof...(Rest))
-      apply_lin<Lin, Rest...>(out, stride, rest...);
+    apply_lin<Lin, Rest...>(out, stride, rest...);
   }
 
   template <template <class, class> class Lin>
