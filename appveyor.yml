@@ -17,13 +17,15 @@ install:
   - git submodule init libs/assert
   - git submodule init libs/config
   - git submodule init libs/predef
+  - git submodule init libs/io
+  - git submodule init libs/integer
   - git submodule init libs/static_assert
   - git submodule init libs/type_traits
   - git submodule init libs/math
   - git submodule init libs/python
   - git submodule init libs/serialization
   - git submodule init tools/build
-  - git submodule update
+  - git submodule update --depth 1
   - mkdir libs\histogram
   - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram
   - bootstrap
