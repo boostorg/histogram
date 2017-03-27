@@ -36,12 +36,12 @@ template <template <class> class Allocator, typename T>
 class array : public Allocator<T> {
 public:
   using value_type = T;
-  array(const std::size_t& s) : size(s) {
+  array(const std::size_t &s) : size(s) {
     create();
     std::fill(begin(), end(), T(0));
   }
   array() = default;
-  array(const array &rhs) : size(rhs.size) {
+  array(const array &rhs) : Allocator<T>(rhs), size(rhs.size) {
     create();
     std::copy(rhs.begin(), rhs.end(), begin());
   }
@@ -49,6 +49,7 @@ public:
     if (this != &rhs) {
       if (size != rhs.size) {
         destroy();
+        Allocator<T>::operator=(rhs);
         size = rhs.size;
         create();
       }
@@ -56,9 +57,13 @@ public:
     }
     return *this;
   }
-  array(array &&rhs) : size(rhs.size), ptr(rhs.ptr) { rhs.size = 0; }
+  array(array &&rhs)
+      : Allocator<T>(std::move(rhs)), size(rhs.size), ptr(rhs.ptr) {
+    rhs.size = 0;
+  }
   array &operator=(array &&rhs) {
     if (this != &rhs) {
+      Allocator<T>::operator=(std::move(rhs));
       size = rhs.size;
       ptr = rhs.ptr;
       rhs.size = 0;
@@ -107,7 +112,7 @@ private:
 template <template <class> class Allocator> class array<Allocator, void> {
 public:
   using value_type = void;
-  array(const std::size_t& s) : size(s) {}
+  array(const std::size_t &s) : size(s) {}
   array() = default;
   array(const array &) = default;
   array &operator=(const array &) = default;
@@ -159,7 +164,7 @@ public:
   adaptive_storage &operator=(const OtherStorage &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       buffer_ = array<void>(rhs.size());
-      for (unsigned i = 0, n = rhs.size(); i < n; ++i) {
+      for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
         apply_visitor(assign_visitor<typename OtherStorage::value_type>(
                           i, rhs.value(i), buffer_),
                       buffer_);
@@ -189,9 +194,9 @@ public:
   template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
   adaptive_storage &operator+=(const OtherStorage &rhs) {
     for (std::size_t i = 0, n = rhs.size(); i < n; ++i)
-      apply_visitor(
-          add_visitor<typename OtherStorage::value_type>(i, rhs.value(i), buffer_),
-          buffer_);
+      apply_visitor(add_visitor<typename OtherStorage::value_type>(
+                        i, rhs.value(i), buffer_),
+                    buffer_);
     return *this;
   }
 
@@ -324,18 +329,16 @@ private:
     }
   };
 
-  template <typename Value>
-  struct add_visitor : public static_visitor<void> {
-    const std::size_t& idx;
-    const Value& value;
-    buffer_type& buffer;
-    add_visitor(const std::size_t& i,
-                const Value& v,
-                buffer_type& b) : idx(i), value(v), buffer(b) {}
+  template <typename Value> struct add_visitor : public static_visitor<void> {
+    const std::size_t &idx;
+    const Value &value;
+    buffer_type &buffer;
+    add_visitor(const std::size_t &i, const Value &v, buffer_type &b)
+        : idx(i), value(v), buffer(b) {}
 
-    template <typename Array> void operator()(Array& b) const {
+    template <typename Array> void operator()(Array &b) const {
       using T = typename Array::value_type;
-      T& x = b[idx];
+      T &x = b[idx];
       if (static_cast<T>(std::numeric_limits<T>::max() - x) > value) {
         x += value;
       } else {
@@ -344,25 +347,23 @@ private:
       }
     }
 
-    void operator()(array<void>& b) const {
+    void operator()(array<void> &b) const {
       if (value > 0) {
         buffer = array<uint8_t>(b.size);
         (*this)(get<array<uint8_t>>(buffer));
       }
     }
 
-    void operator()(array<mp_int>& b) const {
+    void operator()(array<mp_int> &b) const {
       b[idx] += static_cast<mp_int>(value);
     }
 
-    void operator()(array<weight>& b) const {
-      b[idx] += value;
-    }
+    void operator()(array<weight> &b) const { b[idx] += value; }
   };
 
   struct bicmp_visitor : public static_visitor<bool> {
     template <typename Array1, typename Array2>
-    bool operator()(const Array1& b1, const Array2& b2) const {
+    bool operator()(const Array1 &b1, const Array2 &b2) const {
       if (b1.size != b2.size)
         return false;
       for (std::size_t i = 0; i < b1.size; ++i) {
@@ -373,7 +374,7 @@ private:
     }
 
     template <typename Array>
-    bool operator()(const Array& b1, const array<void>& b2) const {
+    bool operator()(const Array &b1, const array<void> &b2) const {
       if (b1.size != b2.size)
         return false;
       for (std::size_t i = 0; i < b1.size; ++i) {
@@ -384,7 +385,7 @@ private:
     }
 
     template <typename Array>
-    bool operator()(const array<void>& b1, const Array& b2) const {
+    bool operator()(const array<void> &b1, const Array &b2) const {
       if (b1.size != b2.size)
         return false;
       for (std::size_t i = 0; i < b1.size; ++i) {
@@ -394,7 +395,7 @@ private:
       return true;
     }
 
-    bool operator()(const array<void>& b1, const array<void>& b2) const {
+    bool operator()(const array<void> &b1, const array<void> &b2) const {
       return b1.size == b2.size;
     }
   };

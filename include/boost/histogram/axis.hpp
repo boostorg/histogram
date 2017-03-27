@@ -187,10 +187,10 @@ private:
 };
 
 /** Axis for binning real-valued data into equidistant bins.
-  *
-  * The simplest and common binning strategy.
-  * Very fast. Binning is a O(1) operation.
-  */
+ *
+ * The simplest and common binning strategy.
+ * Very fast. Binning is a O(1) operation.
+ */
 template <typename RealType = double>
 class regular_axis : public axis_base<true> {
 public:
@@ -198,13 +198,13 @@ public:
   using const_iterator = axis_iterator<regular_axis>;
 
   /** Construct axis with n bins over range [min, max).
-    *
-    * \param n number of bins.
-    * \param min low edge of first bin.
-    * \param max high edge of last bin.
-    * \param label description of the axis.
-    * \param uoflow whether to add under-/overflow bins.
-    */
+   *
+   * \param n number of bins.
+   * \param min low edge of first bin.
+   * \param max high edge of last bin.
+   * \param label description of the axis.
+   * \param uoflow whether to add under-/overflow bins.
+   */
   regular_axis(unsigned n, value_type min, value_type max,
                const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(n, label, uoflow), min_(min), delta_((max - min) / n) {
@@ -259,11 +259,11 @@ private:
 };
 
 /** Axis for real-valued angles.
-  *
-  * The axis is circular and wraps around reaching the
-  * perimeter value. Therefore, there are no overflow/underflow
-  * bins for this axis. Binning is a O(1) operation.
-  */
+ *
+ * The axis is circular and wraps around reaching the
+ * perimeter value. Therefore, there are no overflow/underflow
+ * bins for this axis. Binning is a O(1) operation.
+ */
 template <typename RealType = double>
 class circular_axis : public axis_base<false> {
 public:
@@ -271,12 +271,12 @@ public:
   using const_iterator = axis_iterator<circular_axis>;
 
   /** Constructor for n bins with an optional offset.
-    *
-    * \param n         number of bins.
-    * \param phase     starting phase.
-    * \param perimeter range after which value wraps around.
-    * \param label     description of the axis.
-          */
+   *
+   * \param n         number of bins.
+   * \param phase     starting phase.
+   * \param perimeter range after which value wraps around.
+   * \param label     description of the axis.
+   */
   explicit circular_axis(unsigned n, value_type phase = 0.0,
                          value_type perimeter = math::double_constants::two_pi,
                          const std::string &label = std::string())
@@ -321,10 +321,10 @@ private:
 };
 
 /** An axis for real-valued data and bins of varying width.
-  *
-  * Binning is a O(log(N)) operation. If speed matters
-  * and the problem domain allows it, prefer a regular_axis.
-  */
+ *
+ * Binning is a O(log(N)) operation. If speed matters
+ * and the problem domain allows it, prefer a regular_axis.
+ */
 template <typename RealType = double>
 class variable_axis : public axis_base<true> {
 public:
@@ -332,11 +332,11 @@ public:
   using const_iterator = axis_iterator<variable_axis>;
 
   /** Construct an axis from bin edges.
-    *
-    * \param x sequence of bin edges.
-    * \param label description of the axis.
-    * \param uoflow whether to add under-/overflow bins.
-    */
+   *
+   * \param x sequence of bin edges.
+   * \param label description of the axis.
+   * \param uoflow whether to add under-/overflow bins.
+   */
   variable_axis(const std::initializer_list<value_type> &x,
                 const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(x.size() - 1, label, uoflow),
@@ -412,20 +412,20 @@ private:
 };
 
 /** An axis for a contiguous range of integers.
-  *
-  * Binning is a O(1) operation. This axis operates
-  * faster than a regular_axis.
-  */
+ *
+ * Binning is a O(1) operation. This axis operates
+ * faster than a regular_axis.
+ */
 class integer_axis : public axis_base<true> {
 public:
   using value_type = int;
   using const_iterator = axis_iterator<integer_axis>;
 
   /** Construct axis over integer range [min, max].
-    *
-    * \param min smallest integer of the covered range.
-    * \param max largest integer of the covered range.
-    */
+   *
+   * \param min smallest integer of the covered range.
+   * \param max largest integer of the covered range.
+   */
   integer_axis(value_type min, value_type max,
                const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(max + 1 - min, label, uoflow), min_(min) {
@@ -469,12 +469,12 @@ private:
 };
 
 /** An axis for enumerated categories.
-  *
-  * The axis stores the category labels, and expects that they
-  * are addressed using an integer from ``0`` to ``n-1``.
-  * There are no underflow/overflow bins for this axis.
-  * Binning is a O(1) operation.
-  */
+ *
+ * The axis stores the category labels, and expects that they
+ * are addressed using an integer from ``0`` to ``n-1``.
+ * There are no underflow/overflow bins for this axis.
+ * Binning is a O(1) operation.
+ */
 class category_axis : public axis_base<false> {
 public:
   using value_type = const std::string &;
@@ -489,9 +489,9 @@ public:
   }
 
   /** Construct from a list of strings.
-    *
-    * \param categories sequence of labeled categories.
-    */
+   *
+   * \param categories sequence of labeled categories.
+   */
   category_axis(const std::initializer_list<std::string> &categories,
                 const std::string &label = std::string())
       : category_axis(categories.begin(), categories.end(), label) {}

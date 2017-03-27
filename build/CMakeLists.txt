@@ -127,7 +127,7 @@ file(GLOB_RECURSE
 
 add_custom_target(
   clang-format
-  COMMAND /usr/bin/clang-format
+  COMMAND clang-format
   -i
   -style=file
   ${ALL_SOURCE_FILES}
@@ -140,7 +140,7 @@ foreach(x ${INCLUDE_DIRS})
 endforeach()
 add_custom_target(
   clang-tidy
-  COMMAND /usr/bin/clang-tidy
+  COMMAND clang-tidy
   ${ALL_SOURCE_FILES}
   -checks=*,-*alpha*
   --
