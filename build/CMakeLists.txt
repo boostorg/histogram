@@ -13,7 +13,7 @@ if(${CMAKE_BUILD_TYPE})
 endif()
 
 # -fpermissive needed for cpp_int in gcc-6
-add_definitions(-Wall -std=c++11 -fpermissive)
+add_definitions(-W3 -std=c++11 -fpermissive)
 
 set(STD_LIBRARIES stdc++ m)
 
