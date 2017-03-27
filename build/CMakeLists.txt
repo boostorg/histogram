@@ -12,8 +12,12 @@ if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
-# -fpermissive needed for cpp_int in gcc-6
-add_definitions(-W3 -std=c++11 -fpermissive)
+if(MSVC)
+  add_definitions(/W3 /std:c++11)
+else()
+  # -fpermissive needed for cpp_int in gcc-6
+  add_definitions(-Wall -std=c++11 -fpermissive)
+endif()
 
 set(STD_LIBRARIES stdc++ m)
 
