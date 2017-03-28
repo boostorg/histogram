@@ -128,9 +128,11 @@ Python is a popular scripting language in the data science community. Thus, the 
 Data analysis in Python is Numpy-based, so Numpy support is included. If number of dimensions is larger than one, this implementation is faster than the equivalent Numpy functions (while being more flexible), see [link histogram.benchmarks benchmark].
 
 [note
-The Python and C++ interface try to be consistent, but sometimes Python offers more elegant and pythonic ways of implementing things. Where possible, the more pythonic interface is used.
+The Python and C++ interface use consistent naming, but sometimes Python offers more elegant and pythonic ways of implementing things. Where possible, the more pythonic interface is used.
 
-Properties: Getter/setter-like functions are wrapped as properties.
+Properties: Getter/setter-like functions are wrapped as properties. Examples: `histogram.dim`, `regular_axis.bins`.
+
+Axis access: The `histogram` object implements the sequence protocol and behaves like an immutable sequence of axes. Examples: `len(histogram)` returns the number of axes, `histogram[0]` accesses the first axis, `for axis in histogram: [...]` iterates.
 
 Keyword-based parameters: C++ member functions `fill(...)` and `wfill(...)` are wrapped by the single Python member function `fill(...)` with an optional keyword parameter `w` to pass a weight.
 ]

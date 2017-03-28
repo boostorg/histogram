@@ -7,56 +7,63 @@
 #ifndef BOOST_HISTOGRAM_UTILITY_HPP_
 #define BOOST_HISTOGRAM_UTILITY_HPP_
 
-#include <boost/variant.hpp>
+#include <boost/fusion/algorithm/iteration/for_each.hpp>
+#include <boost/fusion/include/for_each.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
+#include <boost/variant.hpp>
 
 namespace boost {
 namespace histogram {
 
-template <typename A>
-int bins(const A& a) { return a.bins(); }
+template <typename A> int bins(const A &a) { return a.bins(); }
 
-template <typename... Axes>
-int bins(const boost::variant<Axes...>& a)
-{ return apply_visitor(detail::bins(), a); }
+template <typename... Axes> int bins(const boost::variant<Axes...> &a) {
+  return apply_visitor(detail::bins(), a);
+}
 
-template <typename A>
-int shape(const A& a) { return a.shape(); }
+template <typename A> int shape(const A &a) { return a.shape(); }
 
-template <typename... Axes>
-int shape(const boost::variant<Axes...>& a)
-{ return apply_visitor(detail::shape(), a); }
+template <typename... Axes> int shape(const boost::variant<Axes...> &a) {
+  return apply_visitor(detail::shape(), a);
+}
 
-template <typename A, typename V>
-int index(const A& a, const V v) { return a.index(v); }
+template <typename A, typename V> int index(const A &a, const V v) {
+  return a.index(v);
+}
 
 template <typename... Axes, typename V>
-int index(const boost::variant<Axes...>& a, const V v)
-{ return apply_visitor(detail::index<V>(v), a); }
-
-template <typename A>
-typename A::value_type left(const A& a, const int i) { return a[i]; }
-
-template <typename... Axes>
-double left(const boost::variant<Axes...>& a, const int i)
-{ return apply_visitor(detail::left(i), a); }
-
-template <typename A>
-typename A::value_type right(const A& a, const int i) { return a[i+1]; }
-
-template <typename... Axes>
-double right(const boost::variant<Axes...>& a, const int i)
-{ return apply_visitor(detail::right(i), a); }
-
-template <typename A>
-typename A::value_type center(const A& a, const int i)
-{ return 0.5 * (a[i] + a[i+1]); }
-
-template <typename... Axes>
-double center(const boost::variant<Axes...>& a, const int i)
-{ return apply_visitor(detail::center(i), a); }
-
+int index(const boost::variant<Axes...> &a, const V v) {
+  return apply_visitor(detail::index<V>(v), a);
 }
+
+template <typename A> typename A::value_type left(const A &a, const int i) {
+  return a[i];
 }
+
+template <typename... Axes>
+double left(const boost::variant<Axes...> &a, const int i) {
+  return apply_visitor(detail::left(i), a);
+}
+
+template <typename A> typename A::value_type right(const A &a, const int i) {
+  return a[i + 1];
+}
+
+template <typename... Axes>
+double right(const boost::variant<Axes...> &a, const int i) {
+  return apply_visitor(detail::right(i), a);
+}
+
+template <typename A> typename A::value_type center(const A &a, const int i) {
+  return 0.5 * (a[i] + a[i + 1]);
+}
+
+template <typename... Axes>
+double center(const boost::variant<Axes...> &a, const int i) {
+  return apply_visitor(detail::center(i), a);
+}
+
+} // namespace histogram
+} // namespace boost
 
 #endif

@@ -12,20 +12,24 @@ if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
-add_definitions(-Wall -std=c++11)
+if(MSVC)
+  add_definitions(/W3)
+else()
+  # -fpermissive needed for cpp_int in gcc-6
+  add_definitions(-Wall -std=c++11 -fpermissive)
+endif()
 
 set(STD_LIBRARIES stdc++ m)
 
 if(BUILD_PYTHON)
   find_package(Boost 1.55 REQUIRED
                COMPONENTS iostreams serialization python)
-  if(PYTHON_VERSION)
-    find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
-    find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test and FindNumpy
-  else()
-    find_package(PythonLibs REQUIRED)
-    find_package(PythonInterp REQUIRED) # used by python_suite_test and FindNumpy
+  if(NOT DEFINED PYTHON_VERSION)
+    execute_process(COMMAND python -c "import sys; sys.stdout.write('%i.%i.%i' % (sys.version_info.major,sys.version_info.minor,sys.version_info.micro))"
+                    OUTPUT_VARIABLE PYTHON_VERSION)
   endif()
+  find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
+  find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test and FindNumpy
 
   message(STATUS "Python lib: ${PYTHON_LIBRARIES}")
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
@@ -50,7 +54,7 @@ if(BUILD_PYTHON)
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
 else()
   find_package(Boost 1.55 REQUIRED
-               COMPONENTS iostreams serialization)
+               COMPONENTS serialization)
   set(LIBRARIES ${STD_LIBRARIES} ${Boost_LIBRARIES})
 endif()
 
@@ -117,3 +121,33 @@ if(HAVE_PYTHON)
   add_test(python_suite_test python_suite_test.py)
   configure_file(../test/speed_numpy.py.in speed_numpy.py)
 endif()
+
+# for clang format and clang tidy
+file(GLOB_RECURSE
+     ALL_SOURCE_FILES
+     LIST_DIRECTORIES false
+     ../test/*_test.cpp ../include/*.hpp
+     )
+
+add_custom_target(
+  clang-format
+  COMMAND clang-format
+  -i
+  -style=file
+  ${ALL_SOURCE_FILES}
+  )
+
+get_property(INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+set(TIDY_INCLUDE)
+foreach(x ${INCLUDE_DIRS})
+  LIST(APPEND TIDY_INCLUDE -I${x})
+endforeach()
+add_custom_target(
+  clang-tidy
+  COMMAND clang-tidy
+  ${ALL_SOURCE_FILES}
+  -checks=*,-*alpha*
+  --
+  -std=c++11
+  ${TIDY_INCLUDE}
+  )

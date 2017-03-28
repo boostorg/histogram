@@ -7,44 +7,43 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/weight.hpp>
-#include <sstream>
 #include <cstring>
+#include <sstream>
 using namespace boost::histogram::detail;
 
-int main ()
-{
-    // weight
-    {
-        BOOST_TEST(weight(0) == weight());
-        weight w(1);
-        BOOST_TEST(w == weight(1));
-        BOOST_TEST(w != weight());
-        BOOST_TEST(1 == w);
-        BOOST_TEST(w == 1);
-        BOOST_TEST(2 != w);
-        BOOST_TEST(w != 2);
-    }
+int main() {
+  // weight
+  {
+    BOOST_TEST(weight(0) == weight());
+    weight w(1);
+    BOOST_TEST(w == weight(1));
+    BOOST_TEST(w != weight());
+    BOOST_TEST(1 == w);
+    BOOST_TEST(w == 1);
+    BOOST_TEST(2 != w);
+    BOOST_TEST(w != 2);
+  }
 
-    // escape0
-    {
-        std::ostringstream os;
-        escape(os, std::string("abc"));
-        BOOST_TEST_EQ(os.str(), std::string("'abc'"));
-    }
+  // escape0
+  {
+    std::ostringstream os;
+    escape(os, std::string("abc"));
+    BOOST_TEST_EQ(os.str(), std::string("'abc'"));
+  }
 
-    // escape1
-    {
-        std::ostringstream os;
-        escape(os, std::string("abc\n"));
-        BOOST_TEST_EQ(os.str(), std::string("'abc\n'"));
-    }
+  // escape1
+  {
+    std::ostringstream os;
+    escape(os, std::string("abc\n"));
+    BOOST_TEST_EQ(os.str(), std::string("'abc\n'"));
+  }
 
-    // escape2
-    {
-        std::ostringstream os;
-        escape(os, std::string("'abc'"));
-        BOOST_TEST_EQ(os.str(), std::string("'\\\'abc\\\''"));
-    }
+  // escape2
+  {
+    std::ostringstream os;
+    escape(os, std::string("'abc'"));
+    BOOST_TEST_EQ(os.str(), std::string("'\\\'abc\\\''"));
+  }
 
-    return boost::report_errors();
+  return boost::report_errors();
 }

@@ -10,22 +10,14 @@ cache:
 language: cpp
 
 branches:
-  except:
-    - html
+  only:
+    - master
+    - develop
 
 matrix:
   include:
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - boost-latest
-          packages:
-            - g++-4.8
-            - libboost1.55-all-dev
-      env: COMPILER_VERSION=4.8 PYTHON_VERSION=2 CMAKE_BUILD_TYPE=cov
-    - compiler: clang
+    - os: linux
+      compiler: clang
       addons:
         apt:
           sources:
@@ -34,8 +26,66 @@ matrix:
             - boost-latest
           packages:
             - clang-3.6
-            - libboost1.55-all-dev
-      env: COMPILER_VERSION=3.6 PYTHON_VERSION=2
+            - libboost1.55-dev
+            - libboost-iostreams1.55
+            - libboost-iostreams1.55-dev
+            - libboost-python1.55
+            - libboost-python1.55-dev
+            - libboost-serialization1.55.0
+            - libboost-serialization1.55-dev
+      env: COMPILER_VERSION=3.6
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.8
+            - boost-latest
+          packages:
+            - clang-3.8
+            - libboost1.55-dev
+            - libboost-iostreams1.55
+            - libboost-iostreams1.55-dev
+            - libboost-python1.55
+            - libboost-python1.55-dev
+            - libboost-serialization1.55.0
+            - libboost-serialization1.55-dev
+      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7.3
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - boost-latest
+          packages:
+            - g++-4.8
+            - libboost1.55-dev
+            - libboost-iostreams1.55
+            - libboost-iostreams1.55-dev
+            - libboost-python1.55
+            - libboost-python1.55-dev
+            - libboost-serialization1.55.0
+            - libboost-serialization1.55-dev
+      env: COMPILER_VERSION=4.8
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - boost-latest
+          packages:
+            - g++-6
+            - libboost1.55-dev
+            - libboost-iostreams1.55
+            - libboost-iostreams1.55-dev
+            - libboost-python1.55
+            - libboost-python1.55-dev
+            - libboost-serialization1.55.0
+            - libboost-serialization1.55-dev
+      env: COMPILER_VERSION=6 CMAKE_BUILD_TYPE=cov
 
 git:
   depth: 1
@@ -44,39 +94,61 @@ git:
 install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
-  # - conda create --name pyenv --yes python=${PYTHON_VERSION} numpy
-  # - source activate pyenv
-  - pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure]
+  - if [ -z ${PYTHON_VERSION} ]; then
+      export BUILD_PYTHON=OFF;
+    else
+      export BUILD_PYTHON=ON;
+    fi
+  - if [ -z ${NUMPY_SUPPORT} ]; then
+      export NUMPY_SUPPORT=OFF;
+    fi
+  - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+      pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
+    fi
+  - if [ "${NUMPY_SUPPORT}" = "ON" ]; then
+      pip install --user numpy==1.11.1;
+    fi
 
 script:
-  - travis_retry git clone --depth 1 -b bug_fix_support_for_c_string https://github.com/HDembinski/core.git core || exit 1
-  - mv core/include/boost/* include/boost
+  - travis_retry git clone --depth 1 https://github.com/boostorg/core.git core || exit 1
+  - rsync --recursive core/include/boost/* include/boost/
 
   - cd build
-  - cmake . -DBUILD_PYTHON=OFF
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
-    make -j2 &&
-    ctest -V
-  - cmake . -DBUILD_PYTHON=ON
-            -DBUILD_NUMPY_SUPPORT=OFF
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
-    make -j2 &&
-    ctest -V
-  - cmake . -DBUILD_PYTHON=ON
-            -DBUILD_NUMPY_SUPPORT=ON
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
-    make -j2 &&
-    ctest -V
+  - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+      cmake . -DBUILD_PYTHON=OFF
+              -DCMAKE_BUILD_TYPE=cov &&
+      make -j2 &&
+      ctest -V;
+      cmake . -DBUILD_PYTHON=ON
+              -DBUILD_NUMPY_SUPPORT=OFF
+              -DCMAKE_BUILD_TYPE=cov &&
+      make -j2 &&
+      ctest -V;
+      cmake . -DBUILD_PYTHON=ON
+              -DBUILD_NUMPY_SUPPORT=ON
+              -DCMAKE_BUILD_TYPE=cov &&
+      make -j2 &&
+      ctest -V;
+    else
+      cmake . -DBUILD_PYTHON=${BUILD_PYTHON}
+              -DPYTHON_VERSION=${PYTHON_VERSION}
+              -DBUILD_NUMPY_SUPPORT=${NUMPY_SUPPORT}
+              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
+      make -j2 &&
+      ctest -V;
+    fi
 
 # Calculate coverage
 after_success:
   if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-    coveralls -r .. -b . -e ../include/boost/core --gcov=`which gcov-${COMPILER_VERSION}`;
+    coveralls -r .. -b . --verbose --exclude ../include/boost/core/lightweight_test.hpp --gcov=`which gcov-${COMPILER_VERSION}`;
   fi
 
 after_failure:
-  - make clean && VERBOSE=1 make
-  - dpkg -L libboost-python1.55.0
+  # - printf "r\nbt" > gdb.cmd
+  # - for x in *_test; do
+  #     $x || gdb $x --batch -x gdb.cmd;
+  #   done
 
 notifications:
   email: false
