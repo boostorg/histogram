@@ -34,6 +34,32 @@ def compare_1d(n, distrib):
     print "py:numpy %.3f" % best_numpy
     print "py:hd_sd %.3f" % best_boost
 
+def compare_2d(n, distrib):
+    if distrib == 0:
+        r = np.random.rand(2 * n)
+    else:
+        r = 0.3 * np.random.randn(2 * n)
+    r = r.reshape(n, 2)
+
+    best_numpy = float("infinity")
+    best_boost = float("infinity")
+    for k in xrange(50):
+        t = timer()
+        w, xe, ye = np.histogram2d(r[:,0], r[:,1], bins=(100, 100),
+                                   range=((0.0, 1.0), (0.0, 1.0)))
+        t = timer() - t
+        best_numpy = min(t, best_numpy)
+
+        h = histogram(regular_axis(100, 0, 1), regular_axis(100, 0, 1))
+        t = timer()
+        h.fill(r)
+        t = timer() - t
+        best_boost = min(t, best_boost)
+    assert(np.all(w == np.array(h)[:-2,:-2]))
+
+    print "py:numpy %.3f" % best_numpy
+    print "py:hd_sd %.3f" % best_boost
+
 def compare_3d(n, distrib):
     if distrib == 0:
         r = np.random.rand(3 * n)
@@ -106,6 +132,12 @@ print "uniform distribution"
 compare_1d(12000000, 0)
 print "normal distribution"
 compare_1d(12000000, 1)
+
+print "2D"
+print "uniform distribution"
+compare_2d(6000000, 0)
+print "normal distribution"
+compare_2d(6000000, 1)
 
 print "3D"
 print "uniform distribution"

@@ -50,7 +50,7 @@ public:
     }
   }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
+  template <typename OtherStorage>
   container_storage &operator=(const OtherStorage &other) {
     detail::init(container_, other.size());
     for (std::size_t i = 0; i < container_.size(); ++i) {
@@ -61,9 +61,10 @@ public:
 
   std::size_t size() const { return container_.size(); }
   void increase(std::size_t i) { ++(container_[i]); }
+  void increase(std::size_t i, value_type w) { container_[i] += w; }
   value_type value(std::size_t i) const { return container_[i]; }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
+  template <typename OtherStorage>
   void operator+=(const OtherStorage &other) {
     for (std::size_t i = 0; i < container_.size(); ++i) {
       container_[i] += other.value(i);

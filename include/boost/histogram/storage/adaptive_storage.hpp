@@ -160,7 +160,7 @@ public:
     }
   }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
+  template <typename OtherStorage>
   adaptive_storage &operator=(const OtherStorage &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       if (size() != rhs.size()) {
@@ -193,7 +193,7 @@ public:
     return apply_visitor(variance_visitor(i), buffer_);
   }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
+  template <typename OtherStorage>
   adaptive_storage &operator+=(const OtherStorage &rhs) {
     for (std::size_t i = 0, n = rhs.size(); i < n; ++i)
       apply_visitor(add_visitor<typename OtherStorage::value_type>(
@@ -206,7 +206,7 @@ public:
     return apply_visitor(bicmp_visitor(), buffer_, o.buffer_);
   }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
+  template <typename OtherStorage>
   bool operator==(const OtherStorage &o) const {
     return apply_visitor(cmp_visitor<OtherStorage>(o), buffer_);
   }

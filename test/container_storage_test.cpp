@@ -43,11 +43,12 @@ int main() {
     c.increase(0);
     c.increase(0);
     d.increase(0);
+    d.increase(1, 5);
     BOOST_TEST_EQ(a.value(0), 1u);
     BOOST_TEST_EQ(b.value(0), 1u);
     BOOST_TEST_EQ(c.value(0), 2u);
     BOOST_TEST_EQ(d.value(0), 1u);
-    BOOST_TEST_EQ(d.value(1), 0u);
+    BOOST_TEST_EQ(d.value(1), 5u);
     BOOST_TEST(a == a);
     BOOST_TEST(a == b);
     BOOST_TEST(!(a == c));
@@ -55,6 +56,8 @@ int main() {
 
     container_storage<std::array<unsigned, 2>> e;
     e.increase(0);
+    for (int i = 0; i < 5; ++i)
+        e.increase(1);
     BOOST_TEST(d == e);
     e.increase(1);
     BOOST_TEST(!(d == e));

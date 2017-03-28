@@ -5,6 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <TH1I.h>
+#include <TH2I.h>
 #include <TH3I.h>
 #include <THn.h>
 
@@ -39,6 +40,21 @@ void compare_1d(unsigned n, int distrib) {
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
       hroot.Fill(r[i]);
+    t = clock() - t;
+    best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
+  }
+  printf("root %.3f\n", best_root);
+}
+
+void compare_2d(unsigned n, int distrib) {
+  auto r = random_array(2 * n, distrib);
+
+  double best_root = std::numeric_limits<double>::max();
+  for (unsigned k = 0; k < 50; ++k) {
+    TH2I hroot("", "", 100, 0, 1, 100, 0, 1);
+    auto t = clock();
+    for (unsigned i = 0; i < n; ++i)
+      hroot.Fill(r[2 * i], r[2 * i + 1]);
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
   }
@@ -89,6 +105,12 @@ int main(int argc, char **argv) {
   compare_1d(12000000, 0);
   printf("normal distribution\n");
   compare_1d(12000000, 1);
+
+  printf("2D\n");
+  printf("uniform distribution\n");
+  compare_2d(6000000, 0);
+  printf("normal distribution\n");
+  compare_2d(6000000, 1);
 
   printf("3D\n");
   printf("uniform distribution\n");

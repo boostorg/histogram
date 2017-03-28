@@ -15,14 +15,14 @@ namespace detail {
 
 namespace {
 template <typename Storage>
-typename std::enable_if<has_weight_support<Storage>::value,
+typename std::enable_if<has_variance<Storage>::value,
                         typename Storage::value_type>::type
 variance_impl(const Storage &s, std::size_t i) {
   return s.variance(i);
 } // delegate to Storage implementation
 
 template <typename Storage>
-typename std::enable_if<!(has_weight_support<Storage>::value),
+typename std::enable_if<!(has_variance<Storage>::value),
                         typename Storage::value_type>::type
 variance_impl(const Storage &s, std::size_t i) {
   return s.value(i);

@@ -19,12 +19,11 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <typename T> struct has_weight_support {
+template <typename T> struct has_variance {
   template <typename> static std::false_type test(...);
 
   template <typename C>
-  static decltype(std::declval<C &>().increase(0, 0.0),
-                  std::declval<C &>().variance(0), std::true_type{})
+  static decltype(std::declval<C &>().variance(0), std::true_type{})
   test(int);
 
   static bool const value = decltype(test<T>(0))::value;
@@ -43,11 +42,6 @@ template <typename T, typename = decltype(std::begin(std::declval<T &>()),
                                           std::end(std::declval<T &>()))>
 struct is_sequence {};
 
-struct histogram_tag {};
-
-template <typename T, typename = typename T::histogram_tag>
-struct is_histogram {};
-
 template <typename S1, typename S2> struct intersection {
   using type = typename std::conditional<
       mpl::equal<S1, S2>::value, S1,
@@ -55,25 +49,6 @@ template <typename S1, typename S2> struct intersection {
       type;
 };
 
-// // prefer dynamic over static storage, choose
-// // static_storage with larger capacity
-// template <typename Storage1,
-//           typename Storage2>
-// struct select_storage {
-//     using type = typename std::conditional<
-//         (is_dynamic_storage<Storage1>::value ||
-//          is_dynamic_storage<Storage2>::value),
-//         typename std::conditional<
-//             is_dynamic_storage<Storage1>::value,
-//             Storage1, Storage2
-//         >::type,
-//         typename std::conditional<
-//             (std::numeric_limits<typename Storage1::value_t>::max() >
-//              std::numeric_limits<typename Storage2::value_t>::max()),
-//             Storage1, Storage2
-//         >::type
-//     >::type;
-// };
 } // namespace detail
 } // namespace histogram
 } // namespace boost

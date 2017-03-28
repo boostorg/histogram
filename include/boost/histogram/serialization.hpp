@@ -11,8 +11,7 @@
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/detail/weight.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
-#include <boost/histogram/static_histogram.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/container_storage.hpp>
 #include <boost/serialization/array.hpp>
@@ -177,16 +176,16 @@ template <typename Archive> struct serialize_helper {
 };
 } // namespace
 
-template <class Archive, class Storage, class Axes>
-inline void serialize(Archive &ar, static_histogram<Storage, Axes> &h,
+template <class Archive, class S, class A>
+inline void serialize(Archive &ar, histogram<false, S, A> &h,
                       unsigned /* version */) {
   serialize_helper<Archive> sh(ar);
   fusion::for_each(h.axes_, sh);
   ar &h.storage_;
 }
 
-template <class Archive, class Storage, class Axes>
-inline void serialize(Archive &ar, dynamic_histogram<Storage, Axes> &h,
+template <class Archive, class S, class A>
+inline void serialize(Archive &ar, histogram<true, S, A> &h,
                       unsigned /* version */) {
   ar &h.axes_;
   ar &h.storage_;

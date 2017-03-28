@@ -11,7 +11,6 @@
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <ostream>
-#include <string>
 
 namespace boost {
 namespace histogram {
