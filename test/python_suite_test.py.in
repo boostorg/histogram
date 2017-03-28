@@ -687,7 +687,8 @@ class test_histogram(unittest.TestCase):
 
         b = histogram()
         b1 = numpy.asarray(b)
-        self.assertEqual(b1, 0)
+        self.assertEqual(b1.shape, (0,))
+        self.assertEqual(numpy.sum(b1), 0)
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_numpy_conversion_5(self):

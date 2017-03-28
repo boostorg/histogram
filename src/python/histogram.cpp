@@ -299,7 +299,8 @@ struct storage_access {
     }
     std::pair<int, python::object> operator()(const array<void>& /*unused*/) const {
       std::pair<int, python::object> p;
-      p.first = 0; // communicate that the type was array<void>
+      p.first = sizeof(uint8_t);
+      p.second = python::str("|u") + python::str(p.first);
       return p;
     }
     std::pair<int, python::object> operator()(const array<mp_int>& /*unused*/) const {
@@ -310,9 +311,8 @@ struct storage_access {
     }
     std::pair<int, python::object> operator()(const array<weight>& /*unused*/) const {
       std::pair<int, python::object> p;
-      p.first = sizeof(double);
-      p.second = python::str("|f") + python::str(p.first);
-      p.first *= -1; // communicate that the type was array<weight>
+      p.first = 0; // communicate that the type was array<weight>
+      p.second = python::str("|f") + python::str(sizeof(double));
       return p;
     }
   };
@@ -323,10 +323,24 @@ struct storage_access {
     data_visitor(const python::list& sh, const python::list& st) : shapes(sh), strides(st) {}
     template <typename Array>
     python::object operator()(const Array& b) const {
-      return python::make_tuple(reinterpret_cast<uintptr_t>(b.begin()), false);
+      return python::make_tuple(reinterpret_cast<uintptr_t>(b.begin()), true);
     }
-    python::object operator()(const array<void>& /*unused*/) const {
-      return python::object(); // is never called
+    python::object operator()(const array<void>& b) const {
+      // cannot pass non-existent memory to numpy; make new
+      // zero-initialized uint8 array, and pass it
+      int dim = python::len(shapes);
+      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
+      for (int i = 0; i < dim; ++i) {
+        shapes2[i] = python::extract<npy_intp>(shapes[i]);
+      }
+      PyObject *ptr = PyArray_SimpleNew(dim, shapes2, NPY_UINT8);
+      for (int i = 0; i < dim; ++i) {
+        PyArray_STRIDES((PyArrayObject *)ptr)[i] = python::extract<npy_intp>(strides[i]);
+      }
+      auto *buf = static_cast<uint8_t *>(PyArray_DATA((PyArrayObject *)ptr));
+      std::fill(buf, buf + b.size, uint8_t(0));
+      PyArray_CLEARFLAGS((PyArrayObject*)ptr, NPY_ARRAY_WRITEABLE);
+      return python::object(python::handle<>(ptr));
     }
     python::object operator()(const array<mp_int>& b) const {
       // cannot pass cpp_int to numpy; make new
@@ -344,27 +358,21 @@ struct storage_access {
       for (std::size_t i = 0; i < b.size; ++i) {
         buf[i] = static_cast<double>(b[i]);
       }
+      PyArray_CLEARFLAGS((PyArrayObject*)ptr, NPY_ARRAY_WRITEABLE);
       return python::object(python::handle<>(ptr));
     }
   };
 
-  static python::object array_interface(dynamic_histogram<> &self) {
-    auto &b = self.storage_.buffer_;
+  static python::object array_interface(const dynamic_histogram<> &self) {
     python::dict d;
+
     python::list shapes;
     python::list strides;
+    auto &b = self.storage_.buffer_;
     auto dtype = apply_visitor(dtype_visitor(), b);
     auto stride = dtype.first;
-    if (stride == 0) {
-      // buffer not created yet, do that now
-      auto a = array<uint8_t>(self.storage_.size());
-      dtype = dtype_visitor()(a);
-      b = std::move(a);
-      stride = dtype.first;
-    } else
-    if (stride < 0) {
-      // buffer is weight, needs special treatment
-      stride *= -1;
+    if (stride == 0) { // buffer is weight, needs special treatment
+      stride = sizeof(double);
       strides.append(stride);
       stride *= 2;
       shapes.append(2);
@@ -374,6 +382,10 @@ struct storage_access {
       shapes.append(s);
       strides.append(stride);
       stride *= s;
+    }
+    if (self.dim() == 0) {
+      shapes.append(0);
+      strides.append(stride);
     }
     d["shape"] = python::tuple(shapes);
     d["strides"] = python::tuple(strides);

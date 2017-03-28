@@ -13,7 +13,7 @@ if(${CMAKE_BUILD_TYPE})
 endif()
 
 if(MSVC)
-  add_definitions(/W3 /std:c++11)
+  add_definitions(/W3)
 else()
   # -fpermissive needed for cpp_int in gcc-6
   add_definitions(-Wall -std=c++11 -fpermissive)

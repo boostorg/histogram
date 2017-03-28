@@ -262,6 +262,12 @@ template <> void convert_container_storage_impl<void>() {
 int main() {
   using namespace boost::histogram;
 
+  // empty state
+  {
+    adaptive_storage<> a;
+    BOOST_TEST_EQ(a.size(), 0);
+  }
+
   // copy
   {
     copy_impl<detail::weight>();
