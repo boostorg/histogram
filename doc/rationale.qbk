@@ -78,7 +78,7 @@ Under- and overflow bins are useful in one-dimensional histograms, and nearly es
 
 * Diagnosis: Unexpected extreme values show up in the extra bins, which otherwise might have been overlooked.
 
-* Projectability: In multi-dimensional histograms, an out-of-range value along one axis may be paired with an in-range value along another axis. If under- and overflow bins are missing, such a value pair is lost. This distorts the histogram even along the axis where the value was in range. When under- and overflow bins are present, it is possible to project (projecting means summing up along all other axes) the histogram onto any axis and get the same result as if one had filled a histogram with only that axis.
+* Reducability: In multi-dimensional histograms, an out-of-range value along one axis may be paired with an in-range value along another axis. If under- and overflow bins are missing, such a value pair is lost. This distorts the histogram even along the axis where the value was in range. When under- and overflow bins are present, it is possible to reduce (summing up along other axes) the histogram into a lower-dimensional version and get the same result as if one had filled the latter histogram.
 
 [endsect]
 
@@ -132,7 +132,7 @@ The Python and C++ interface use consistent naming, but sometimes Python offers 
 
 Properties: Getter/setter-like functions are wrapped as properties. Examples: `histogram.dim`, `regular_axis.bins`.
 
-Axis access: The `histogram` object implements the sequence protocol and behaves like an immutable sequence of axes. Examples: `len(histogram)` returns the number of axes, `histogram[0]` accesses the first axis, `for axis in histogram: [...]` iterates.
+Axis access: The `histogram` object implements the sequence protocol and behaves like an immutable sequence of axes. Examples: `len(histogram)` returns the number of axes, `histogram[0]` accesses the first axis, `for axis in histogram: [...]`.
 
 Keyword-based parameters: C++ member functions `fill(...)` and `wfill(...)` are wrapped by the single Python member function `fill(...)` with an optional keyword parameter `w` to pass a weight.
 ]

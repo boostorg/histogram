@@ -116,31 +116,8 @@
         type is never serialized or ostreamed.
       </p>
 <p>
-        Finally, it is not required, but convenient for users if the axis comes with
-        an iterator. It then needs:
-      </p>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
-<li class="listitem">
-            a nested type <code class="computeroutput"><span class="identifier">const_iterator</span></code>
-          </li>
-<li class="listitem">
-            the following methods:
-            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; ">
-<li class="listitem">
-                  <code class="computeroutput"><span class="identifier">const_iterator</span> <span class="identifier">begin</span><span class="special">()</span>
-                  <span class="keyword">const</span></code>
-                </li>
-<li class="listitem">
-                  <code class="computeroutput"><span class="identifier">const_iterator</span> <span class="identifier">end</span><span class="special">()</span>
-                  <span class="keyword">const</span></code>
-                </li>
-</ul></div>
-          </li>
-</ul></div>
-<p>
-        It is recommended to take a look at <code class="computeroutput"><a class="link" href="../boost/histogram/axis_base.html" title="Class template axis_base">boost::histogram::axis_base</a></code>
-        and <code class="computeroutput"><a class="link" href="../boost/histogram/axis_iterator.html" title="Class template axis_iterator">boost::histogram::axis_iterator</a></code>,
-        which provide part of aforementioned infrastructure for axis types.
+        It is recommended to take a look at <code class="computeroutput"><a class="link" href="../boost/histogram/axis_base.html" title="Class template axis_base">boost::histogram::axis_base</a></code>,
+        which provides part of the aforementioned infrastructure for axis types.
       </p>
 </div>
 <div class="section">
@@ -148,9 +125,9 @@
 <a name="histogram.concepts.storage_type"></a><a class="link" href="concepts.html#histogram.concepts.storage_type" title="Storage type">Storage type</a>
 </h3></div></div></div>
 <p>
-        A <code class="computeroutput"><span class="identifier">storage_type</span></code> handles the
-        memory for the bin counters and provides a uniform interface for incrementing
-        bin counters and reading their values.
+        A <code class="computeroutput"><span class="identifier">storage_type</span></code> handles memory
+        for the bin counters and provides a uniform interface for incrementing bin
+        counters and reading their values.
       </p>
 <p>
         A <code class="computeroutput"><span class="identifier">storage_type</span></code> is required
@@ -168,8 +145,8 @@
           </li>
 <li class="listitem">
             have a nested type <code class="computeroutput"><span class="identifier">value_type</span></code>,
-            which is the type of the bin count that's returned to the outside world
-            (internally it may be a different type)
+            the uniform external type of the bin count (internally it may be a different
+            type)
           </li>
 <li class="listitem">
             have a constructor <code class="computeroutput"><span class="identifier">storage_type</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
@@ -193,11 +170,6 @@
                   <span class="keyword">const</span></code>
                 </li>
 <li class="listitem">
-                  <code class="computeroutput"><span class="identifier">value_type</span> <span class="identifier">variance</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
-                  <span class="identifier">index</span><span class="special">)</span>
-                  <span class="keyword">const</span></code>
-                </li>
-<li class="listitem">
                   <code class="computeroutput"><span class="identifier">storage_type</span><span class="special">&amp;</span>
                   <span class="keyword">operator</span><span class="special">+=(</span><span class="keyword">const</span> <span class="identifier">storage_type</span><span class="special">&amp;</span> <span class="identifier">rhs</span><span class="special">)</span></code>
                 </li>
@@ -205,18 +177,23 @@
           </li>
 </ul></div>
 <p>
-        If the <code class="computeroutput"><span class="identifier">storage_type</span></code> should
-        support weighted fills, it needs an additional method:
+        To support weighted fills, two additional methods are required:
       </p>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            <code class="computeroutput"><span class="identifier">value_type</span> <span class="identifier">variance</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+            <span class="identifier">index</span><span class="special">)</span>
+            <span class="keyword">const</span></code>
+          </li>
+<li class="listitem">
             <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">increase</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
             <span class="identifier">index</span><span class="special">,</span>
             <span class="identifier">value_type</span> <span class="identifier">weight</span><span class="special">)</span></code>
-          </li></ul></div>
+          </li>
+</ul></div>
 <p>
         <code class="computeroutput"><a class="link" href="../boost/histogram/container_storage.html" title="Class template container_storage">boost::histogram::container_storage</a></code>
-        provides a comparably simple example of a storage type which does not support
-        weighted fills.
+        is a simple example of a storage type which does not support weighted fills.
       </p>
 </div>
 </div>

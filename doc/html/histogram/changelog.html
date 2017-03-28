@@ -43,7 +43,7 @@
         </li>
 <li class="listitem">
           Replaced static_storage with container_storage, which may use any STL-compatible
-          container with random access iterators as a backend (including std::array).
+          container with random access iterators as a backend, including std::array.
         </li>
 <li class="listitem">
           Replaced dynamic_storage with adaptive_storage, which adds the capability
@@ -53,6 +53,9 @@
 <li class="listitem">
           Serialization uses binary_archive instead of text_archive. The latter is
           portable, but the performance is terrible.
+        </li>
+<li class="listitem">
+          Python interface changed: histograms are now iterable, returning axis classes
         </li>
 </ul></div>
 <h4>

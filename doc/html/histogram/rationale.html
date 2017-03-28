@@ -448,12 +448,21 @@
 </tr>
 <tr><td align="left" valign="top">
 <p>
-          The Python and C++ interface try to be consistent, but sometimes Python
+          The Python and C++ interface use consistent naming, but sometimes Python
           offers more elegant and pythonic ways of implementing things. Where possible,
           the more pythonic interface is used.
         </p>
 <p>
-          Properties: Getter/setter-like functions are wrapped as properties.
+          Properties: Getter/setter-like functions are wrapped as properties. Examples:
+          <code class="computeroutput"><span class="identifier">histogram</span><span class="special">.</span><span class="identifier">dim</span></code>, <code class="computeroutput"><span class="identifier">regular_axis</span><span class="special">.</span><span class="identifier">bins</span></code>.
+        </p>
+<p>
+          Axis access: The <code class="computeroutput"><span class="identifier">histogram</span></code>
+          object implements the sequence protocol and behaves like an immutable sequence
+          of axes. Examples: <code class="computeroutput"><span class="identifier">len</span><span class="special">(</span><span class="identifier">histogram</span><span class="special">)</span></code> returns the number of axes, <code class="computeroutput"><span class="identifier">histogram</span><span class="special">[</span><span class="number">0</span><span class="special">]</span></code> accesses
+          the first axis, <code class="computeroutput"><span class="keyword">for</span> <span class="identifier">axis</span>
+          <span class="identifier">in</span> <span class="identifier">histogram</span><span class="special">:</span> <span class="special">[...]</span></code>
+          iterates.
         </p>
 <p>
           Keyword-based parameters: C++ member functions <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code> and <code class="computeroutput"><span class="identifier">wfill</span><span class="special">(...)</span></code> are wrapped by the single Python member

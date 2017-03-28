@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes"?>
 <library-reference><header name="boost/histogram.hpp">
-<para>Includes all the non-experimental headers of the Boost.histogram library. </para><para>The library consists of two histogram implementations static_histogram and dynamic_histogram which share a common interface. The first is faster, but lacks run-time polymorphism, the second implements the opposite trade-off. Several axis types are included, which implement different binning algorithms. The axis types are passed in the constructor of the histogram to configure its binning. </para></header>
+<para>Includes all standard headers of the Boost.histogram library. </para><para>The library consists of two histogram implementations static_histogram and dynamic_histogram which share a common interface. The first is faster, but lacks run-time polymorphism, the second implements the opposite trade-off. Several axis types are included, which implement different binning algorithms. The axis types are passed in the constructor of the histogram to configure its binning. </para></header>
 <header name="boost/histogram/axis.hpp">
 <namespace name="boost">
 <namespace name="histogram">
@@ -11,13 +11,13 @@
 <method name="bins" cv="const"><type>int</type><purpose>Returns the number of bins, excluding overflow/underflow. </purpose></method>
 <method name="shape" cv="const"><type>int</type><purpose>Returns the number of bins, including overflow/underflow. </purpose></method>
 <method name="uoflow" cv="const"><type>bool</type><purpose>Returns whether axis has extra overflow and underflow bins. </purpose></method>
-<method name="label" cv="const"><type>const std::string &amp;</type><purpose>Returns the axis label, which is a name or description (not implemented for <classname alt="boost::histogram::category_axis">category_axis</classname>). </purpose></method>
-<method name="label"><type>void</type><parameter name="label"><paramtype>const std::string &amp;</paramtype></parameter><purpose>Change the label of an axis (not implemented for <classname alt="boost::histogram::category_axis">category_axis</classname>). </purpose></method>
+<method name="label" cv="const"><type>const std::string &amp;</type><purpose>Returns the axis label, which is a name or description. </purpose></method>
+<method name="label"><type>void</type><parameter name="label"><paramtype>const std::string &amp;</paramtype></parameter><purpose>Change the label of an axis. </purpose></method>
 </method-group>
 <method-group name="protected member functions">
 <method name="operator==" cv="const"><type>bool</type><parameter name="other"><paramtype>const <classname>axis_base</classname> &amp;</paramtype></parameter></method>
 </method-group>
-<constructor><parameter name="n"><paramtype>unsigned</paramtype></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype></parameter></constructor>
+<constructor><parameter name="n"><paramtype>unsigned</paramtype></parameter><parameter name="label"><paramtype>std::string</paramtype></parameter></constructor>
 <constructor cv="= default"/>
 <constructor cv="= default"><parameter name=""><paramtype>const <classname>axis_base</classname> &amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type><classname>axis_base</classname> &amp;</type><parameter name=""><paramtype>const <classname>axis_base</classname> &amp;</paramtype></parameter></copy-assignment>
@@ -28,13 +28,13 @@
 <method name="bins" cv="const"><type>int</type><purpose>Returns the number of bins, excluding overflow/underflow. </purpose></method>
 <method name="shape" cv="const"><type>int</type><purpose>Returns the number of bins, including overflow/underflow. </purpose></method>
 <method name="uoflow" cv="const"><type>bool</type><purpose>Returns whether axis has extra overflow and underflow bins. </purpose></method>
-<method name="label" cv="const"><type>const std::string &amp;</type><purpose>Returns the axis label, which is a name or description (not implemented for <classname alt="boost::histogram::category_axis">category_axis</classname>). </purpose></method>
-<method name="label"><type>void</type><parameter name="label"><paramtype>const std::string &amp;</paramtype></parameter><purpose>Change the label of an axis (not implemented for <classname alt="boost::histogram::category_axis">category_axis</classname>). </purpose></method>
+<method name="label" cv="const"><type>const std::string &amp;</type><purpose>Returns the axis label, which is a name or description. </purpose></method>
+<method name="label"><type>void</type><parameter name="label"><paramtype>const std::string &amp;</paramtype></parameter><purpose>Change the label of an axis. </purpose></method>
 </method-group>
 <method-group name="protected member functions">
 <method name="operator==" cv="const"><type>bool</type><parameter name="o"><paramtype>const <classname>axis_base</classname> &amp;</paramtype></parameter></method>
 </method-group>
-<constructor><parameter name="n"><paramtype>unsigned</paramtype></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype></parameter><parameter name="uoflow"><paramtype>bool</paramtype></parameter></constructor>
+<constructor><parameter name="n"><paramtype>unsigned</paramtype></parameter><parameter name="label"><paramtype>std::string</paramtype></parameter><parameter name="uoflow"><paramtype>bool</paramtype></parameter></constructor>
 <constructor cv="= default"/>
 <constructor cv="= default"><parameter name=""><paramtype>const <classname>axis_base</classname> &amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type><classname>axis_base</classname> &amp;</type><parameter name=""><paramtype>const <classname>axis_base</classname> &amp;</paramtype></parameter></copy-assignment>
@@ -52,12 +52,12 @@
 <method name="distance_to" cv="const"><type>int</type><parameter name="other"><paramtype>const axis_iterator &amp;</paramtype></parameter></method>
 <method name="equal" cv="const"><type>bool</type><parameter name="other"><paramtype>const axis_iterator &amp;</paramtype></parameter></method>
 <method name="dereference" cv="const"><type>const bin_type &amp;</type></method>
-<method name="set_impl"><type>void</type><template>
-          <template-type-parameter name="Value"/>
-        </template><parameter name="v"><paramtype>bin&lt; Value &gt; &amp;</paramtype></parameter></method>
-<method name="set_impl"><type>void</type><template>
-          <template-type-parameter name="Value"/>
-        </template><parameter name="v"><paramtype>real_bin&lt; Value &gt; &amp;</paramtype></parameter></method>
+<method name="assign_impl" cv="const"><type>void</type><template>
+          <template-type-parameter name="U"/>
+        </template><parameter name="v"><paramtype>bin&lt; U &gt; &amp;</paramtype></parameter></method>
+<method name="assign_impl" cv="const"><type>void</type><template>
+          <template-type-parameter name="U"/>
+        </template><parameter name="v"><paramtype>real_bin&lt; U &gt; &amp;</paramtype></parameter></method>
 </method-group>
 </class><struct name="bin"><template>
       <template-type-parameter name="Value"/>
@@ -78,9 +78,8 @@
 <constructor><template>
           <template-type-parameter name="Iterator"/>
         </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype><default>std::string()</default></parameter></constructor>
-<constructor specifiers="explicit"><parameter name="categories"><paramtype>const std::initializer_list&lt; std::string &gt; &amp;</paramtype><description><para>sequence of labeled categories. </para></description></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype><default>std::string()</default></parameter><purpose>Construct from a list of strings. </purpose><description><para>
+<constructor><parameter name="categories"><paramtype>const std::initializer_list&lt; std::string &gt; &amp;</paramtype><description><para>sequence of labeled categories. </para></description></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype><default>std::string()</default></parameter><purpose>Construct from a list of strings. </purpose><description><para>
 </para></description></constructor>
-<constructor specifiers="explicit"><parameter name="categories"><paramtype>const std::vector&lt; std::string &gt; &amp;</paramtype></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype><default>std::string()</default></parameter></constructor>
 <constructor cv="= default"/>
 <constructor><parameter name="other"><paramtype>const <classname>category_axis</classname> &amp;</paramtype></parameter></constructor>
 <copy-assignment><type><classname>category_axis</classname> &amp;</type><parameter name="other"><paramtype>const <classname>category_axis</classname> &amp;</paramtype></parameter></copy-assignment>
@@ -156,9 +155,8 @@
 <method name="begin" cv="const"><type>const_iterator</type></method>
 <method name="end" cv="const"><type>const_iterator</type></method>
 </method-group>
-<constructor specifiers="explicit"><parameter name="x"><paramtype>const std::initializer_list&lt; value_type &gt; &amp;</paramtype><description><para>sequence of bin edges. </para></description></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype><default>std::string()</default><description><para>description of the axis. </para></description></parameter><parameter name="uoflow"><paramtype>bool</paramtype><default>true</default><description><para>whether to add under-/overflow bins. </para></description></parameter><purpose>Construct an axis from bin edges. </purpose><description><para>
+<constructor><parameter name="x"><paramtype>const std::initializer_list&lt; value_type &gt; &amp;</paramtype><description><para>sequence of bin edges. </para></description></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype><default>std::string()</default><description><para>description of the axis. </para></description></parameter><parameter name="uoflow"><paramtype>bool</paramtype><default>true</default><description><para>whether to add under-/overflow bins. </para></description></parameter><purpose>Construct an axis from bin edges. </purpose><description><para>
 </para></description></constructor>
-<constructor><parameter name="x"><paramtype>const std::vector&lt; value_type &gt; &amp;</paramtype></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype><default>std::string()</default></parameter><parameter name="uoflow"><paramtype>bool</paramtype><default>true</default></parameter></constructor>
 <constructor><template>
           <template-type-parameter name="Iterator"/>
         </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter><parameter name="label"><paramtype>const std::string &amp;</paramtype><default>std::string()</default></parameter><parameter name="uoflow"><paramtype>bool</paramtype><default>true</default></parameter></constructor>
@@ -169,7 +167,6 @@
 <copy-assignment cv="= default"><type><classname>variable_axis</classname> &amp;</type><parameter name=""><paramtype><classname>variable_axis</classname> &amp;&amp;</paramtype></parameter></copy-assignment>
 </class><typedef name="axis_bin"><type>typename std::conditional&lt; std::is_floating_point&lt; Value &gt;::value, real_bin&lt; Value &gt;, bin&lt; Value &gt; &gt;::type</type></typedef>
 <typedef name="default_axes"><type>mpl::vector&lt; <classname>regular_axis</classname>&lt; double &gt;, <classname>regular_axis</classname>&lt; float &gt;, <classname>circular_axis</classname>&lt; double &gt;, <classname>circular_axis</classname>&lt; float &gt;, <classname>variable_axis</classname>&lt; double &gt;, <classname>variable_axis</classname>&lt; float &gt;, <classname>integer_axis</classname>, <classname>category_axis</classname> &gt;::type</type></typedef>
-
 
 
 
@@ -250,7 +247,6 @@
 
 
 
-
 </namespace>
 </namespace>
 </header>
@@ -260,8 +256,19 @@
 <class name="dynamic_histogram"><template>
       <template-type-parameter name="Axes"><default>default_axes</default></template-type-parameter>
       <template-type-parameter name="Storage"><default>adaptive_storage&lt;&gt;</default></template-type-parameter>
-    </template><typedef name="axis_type"><type>typename make_variant_over&lt; Axes &gt;::type</type></typedef>
-<typedef name="axes_type"><type>std::vector&lt; axis_type &gt;</type></typedef>
+    </template><struct name="lin_visitor"><template>
+      <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
+      <template-type-parameter name="Value"/>
+    </template><inherit access="public">static_visitor&lt; pairs &gt;</inherit><data-member name="pa" specifiers="mutable"><type>pairs</type></data-member>
+<data-member name="val"><type>const Value &amp;</type></data-member>
+<method-group name="public member functions">
+<method name="operator()" cv="const"><type>pairs</type><template>
+          <template-type-parameter name="A"/>
+        </template><parameter name="a"><paramtype>const A &amp;</paramtype></parameter></method>
+</method-group>
+<constructor><parameter name="p"><paramtype>const pairs &amp;</paramtype></parameter><parameter name="v"><paramtype>const Value &amp;</paramtype></parameter></constructor>
+</struct><typedef name="histogram_tag"><type><emphasis>unspecified</emphasis></type></typedef>
+<typedef name="axis_type"><type>typename make_variant_over&lt; Axes &gt;::type</type></typedef>
 <typedef name="value_type"><type>typename Storage::value_type</type></typedef>
 <method-group name="public member functions">
 <method name="operator==" cv="const"><type>bool</type><template>
@@ -280,21 +287,15 @@
           <template-type-parameter name="Iterator"/>
           <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
         </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="fill"><type>void</type><template>
-          <template-type-parameter name="Sequence"/>
-          <template-type-parameter name=""><default>detail::is_sequence&lt;Sequence&gt;</default></template-type-parameter>
-        </template><parameter name="values"><paramtype>const Sequence &amp;</paramtype></parameter></method>
-<method name="wfill"><type>void</type><template>
+<method name="wfill"><type>std::enable_if&lt; has_weight_support &gt;::type</type><template>
+          <template-nontype-parameter name="has_weight_support"><type>bool</type><default>detail::has_weight_support&lt;Storage&gt;::value</default></template-nontype-parameter>
           <template-nontype-parameter name="Values"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="values"><paramtype>Values...</paramtype></parameter></method>
-<method name="wfill"><type>void</type><template>
+<method name="wfill"><type>std::enable_if&lt; has_weight_support &gt;::type</type><template>
+          <template-nontype-parameter name="has_weight_support"><type>bool</type><default>detail::has_weight_support&lt;Storage&gt;::value</default></template-nontype-parameter>
           <template-type-parameter name="Iterator"/>
           <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
         </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="wfill"><type>void</type><template>
-          <template-type-parameter name="Sequence"/>
-          <template-type-parameter name=""><default>detail::is_sequence&lt;Sequence&gt;</default></template-type-parameter>
-        </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="values"><paramtype>const Sequence &amp;</paramtype></parameter></method>
 <method name="value" cv="const"><type>value_type</type><template>
           <template-nontype-parameter name="Indices"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="indices"><paramtype>Indices...</paramtype></parameter></method>
@@ -302,10 +303,6 @@
           <template-type-parameter name="Iterator"/>
           <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
         </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="value" cv="const"><type>value_type</type><template>
-          <template-type-parameter name="Sequence"/>
-          <template-type-parameter name=""><default>detail::is_sequence&lt;Sequence&gt;</default></template-type-parameter>
-        </template><parameter name="indices"><paramtype>const Sequence &amp;</paramtype></parameter></method>
 <method name="variance" cv="const"><type>value_type</type><template>
           <template-nontype-parameter name="Indices"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="indices"><paramtype>Indices...</paramtype></parameter></method>
@@ -313,10 +310,6 @@
           <template-type-parameter name="Iterator"/>
           <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
         </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="variance" cv="const"><type>value_type</type><template>
-          <template-type-parameter name="Sequence"/>
-          <template-type-parameter name=""><default>detail::is_sequence&lt;Sequence&gt;</default></template-type-parameter>
-        </template><parameter name="indices"><paramtype>const Sequence &amp;</paramtype></parameter></method>
 <method name="dim" cv="const"><type>unsigned</type><purpose>Number of axes (dimensions) of histogram. </purpose></method>
 <method name="size" cv="const"><type>std::size_t</type><purpose>Total number of bins in the histogram (including underflow/overflow) </purpose></method>
 <method name="sum" cv="const"><type>double</type><purpose>Sum of all counts in the histogram. </purpose></method>
@@ -324,7 +317,9 @@
 <method name="axis" cv="const"><type>const axis_type &amp;</type><template>
           <template-nontype-parameter name="N"><type>unsigned</type><default>0u</default></template-nontype-parameter>
         </template><purpose>Return axis <emphasis>i</emphasis> (added for conformity with static_histogram interface) </purpose></method>
-<method name="axes" cv="const"><type>const axes_type &amp;</type></method>
+<method name="for_each_axis" cv="const"><type>void</type><template>
+          <template-type-parameter name="Unary"/>
+        </template><parameter name="unary"><paramtype>Unary &amp;</paramtype></parameter><purpose>Apply unary functor/function to each axis. </purpose></method>
 </method-group>
 <constructor cv="= default"/>
 <constructor specifiers="explicit"><template>
@@ -334,11 +329,11 @@
           <template-type-parameter name="Iterator"/>
           <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
         </template><parameter name="axes_begin"><paramtype>Iterator</paramtype></parameter><parameter name="axes_end"><paramtype>Iterator</paramtype></parameter></constructor>
-<constructor><template>
+<constructor specifiers="explicit"><template>
           <template-type-parameter name="OtherAxes"/>
           <template-type-parameter name="OtherStorage"/>
         </template><parameter name="other"><paramtype>const dynamic_histogram&lt; OtherAxes, OtherStorage &gt; &amp;</paramtype></parameter></constructor>
-<constructor><template>
+<constructor specifiers="explicit"><template>
           <template-type-parameter name="OtherAxes"/>
           <template-type-parameter name="OtherStorage"/>
         </template><parameter name="other"><paramtype>dynamic_histogram&lt; OtherAxes, OtherStorage &gt; &amp;&amp;</paramtype></parameter></constructor>
@@ -355,18 +350,18 @@
 <method name="axes_equal_to" cv="const"><type>bool</type><template>
           <template-type-parameter name="OtherAxes"/>
         </template><parameter name="other_axes"><paramtype>const OtherAxes &amp;</paramtype></parameter></method>
-<method name="index_impl" cv="const"><type>void</type><template>
-          <template-type-parameter name="Linearize"/>
+<method name="apply_lin" cv="const"><type>pairs</type><template>
+          <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
           <template-type-parameter name="First"/>
           <template-nontype-parameter name="Rest"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="lin"><paramtype>Linearize &amp;</paramtype></parameter><parameter name="first"><paramtype>First</paramtype></parameter><parameter name="rest"><paramtype>Rest...</paramtype></parameter></method>
-<method name="index_impl" cv="const"><type>void</type><template>
-          <template-type-parameter name="Linearize"/>
-        </template><parameter name=""><paramtype>Linearize &amp;</paramtype></parameter></method>
-<method name="iter_args_impl" cv="const"><type>void</type><template>
-          <template-type-parameter name="Linearize"/>
+        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter><parameter name="first"><paramtype>const First &amp;</paramtype></parameter><parameter name="rest"><paramtype>const Rest &amp;...</paramtype></parameter></method>
+<method name="apply_lin" cv="const"><type>pairs</type><template>
+          <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
+        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter></method>
+<method name="apply_lin_iter" cv="const"><type>pairs</type><template>
+          <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
           <template-type-parameter name="Iterator"/>
-        </template><parameter name="lin"><paramtype>Linearize &amp;</paramtype></parameter><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
+        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter><parameter name="iter"><paramtype>Iterator</paramtype></parameter></method>
 </method-group>
 </class>
 
@@ -380,7 +375,6 @@
           <template-type-parameter name="Storage"/>
           <template-nontype-parameter name="Axes"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="axes"><paramtype>Axes &amp;&amp;...</paramtype></parameter></function>
-
 
 
 
@@ -422,13 +416,11 @@
 
 
 <function name="operator&lt;&lt;"><type>std::ostream &amp;</type><template>
+          <template-nontype-parameter name="Histogram"><type>template&lt; typename, typename &gt; class</type></template-nontype-parameter>
           <template-type-parameter name="Axes"/>
           <template-type-parameter name="Storage"/>
-        </template><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="h"><paramtype>const static_histogram&lt; Axes, Storage &gt; &amp;</paramtype></parameter></function>
-<function name="operator&lt;&lt;"><type>std::ostream &amp;</type><template>
-          <template-type-parameter name="Axes"/>
-          <template-type-parameter name="Storage"/>
-        </template><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="h"><paramtype>const dynamic_histogram&lt; Axes, Storage &gt; &amp;</paramtype></parameter></function>
+          <template-type-parameter name=""><default>detail::is_histogram&lt;Histogram&lt;Axes, Storage&gt;&gt;</default></template-type-parameter>
+        </template><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="h"><paramtype>const Histogram&lt; Axes, Storage &gt; &amp;</paramtype></parameter></function>
 
 
 
@@ -461,7 +453,6 @@
 <header name="boost/histogram/serialization.hpp">
 <para>Defines the serialization functions, to use with boost.serialize. </para><namespace name="boost">
 <namespace name="histogram">
-
 
 
 
@@ -533,26 +524,7 @@
 <class name="static_histogram"><template>
       <template-type-parameter name="Axes"/>
       <template-type-parameter name="Storage"><default>adaptive_storage&lt;&gt;</default></template-type-parameter>
-    </template><struct name="field_counter"><data-member name="value" specifiers="mutable"><type>std::size_t</type></data-member>
-<method-group name="public member functions">
-<method name="operator()" cv="const"><type>void</type><template>
-          <template-type-parameter name="T"/>
-        </template><parameter name="t"><paramtype>const T &amp;</paramtype></parameter></method>
-</method-group>
-</struct><struct name="iter_args_impl"><template>
-      <template-type-parameter name="Linearize"/>
-      <template-type-parameter name="Iterator"/>
-      <template-nontype-parameter name="N"><type>unsigned</type><default>0</default></template-nontype-parameter>
-    </template><method-group name="public static functions">
-<method name="apply" specifiers="static"><type>void</type><parameter name="lin"><paramtype>Linearize &amp;</paramtype></parameter><parameter name="axes"><paramtype>const axes_type &amp;</paramtype></parameter><parameter name="iter"><paramtype>Iterator</paramtype></parameter></method>
-</method-group>
-</struct><struct-specialization name="iter_args_impl"><template>
-      <template-type-parameter name="Linearize"/>
-      <template-type-parameter name="Iterator"/>
-    </template><specialization><template-arg>Linearize</template-arg><template-arg>Iterator</template-arg><template-arg>dim()</template-arg></specialization><method-group name="public static functions">
-<method name="apply" specifiers="static"><type>void</type><parameter name=""><paramtype>Linearize &amp;</paramtype></parameter><parameter name=""><paramtype>const axes_type &amp;</paramtype></parameter><parameter name=""><paramtype>Iterator</paramtype></parameter></method>
-</method-group>
-</struct-specialization><typedef name="axes_type"><type>typename fusion::result_of::as_vector&lt; Axes &gt;::type</type></typedef>
+    </template><typedef name="histogram_tag"><type><emphasis>unspecified</emphasis></type></typedef>
 <typedef name="value_type"><type>typename Storage::value_type</type></typedef>
 <method-group name="public member functions">
 <method name="operator==" cv="const"><type>bool</type><template>
@@ -565,53 +537,24 @@
 <method name="fill"><type>void</type><template>
           <template-nontype-parameter name="Values"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="values"><paramtype>Values...</paramtype></parameter></method>
-<method name="fill"><type>void</type><template>
-          <template-type-parameter name="Iterator"/>
-          <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
-        </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="fill"><type>void</type><template>
-          <template-type-parameter name="Sequence"/>
-          <template-type-parameter name=""><default>detail::is_sequence&lt;Sequence&gt;</default></template-type-parameter>
-        </template><parameter name="values"><paramtype>const Sequence &amp;</paramtype></parameter></method>
-<method name="wfill"><type>void</type><template>
+<method name="wfill"><type>std::enable_if&lt; has_weight_support &gt;::type</type><template>
+          <template-nontype-parameter name="has_weight_support"><type>bool</type><default>detail::has_weight_support&lt;Storage&gt;::value</default></template-nontype-parameter>
           <template-nontype-parameter name="Values"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="values"><paramtype>Values...</paramtype></parameter></method>
-<method name="wfill"><type>void</type><template>
-          <template-type-parameter name="Iterator"/>
-          <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
-        </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="wfill"><type>void</type><template>
-          <template-type-parameter name="Sequence"/>
-          <template-type-parameter name=""><default>detail::is_sequence&lt;Sequence&gt;</default></template-type-parameter>
-        </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="values"><paramtype>const Sequence &amp;</paramtype></parameter></method>
 <method name="value" cv="const"><type>value_type</type><template>
           <template-nontype-parameter name="Indices"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="indices"><paramtype>Indices...</paramtype></parameter></method>
-<method name="value" cv="const"><type>value_type</type><template>
-          <template-type-parameter name="Iterator"/>
-          <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
-        </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="value" cv="const"><type>value_type</type><template>
-          <template-type-parameter name="Sequence"/>
-          <template-type-parameter name=""><default>detail::is_sequence&lt;Sequence&gt;</default></template-type-parameter>
-        </template><parameter name="indices"><paramtype>const Sequence &amp;</paramtype></parameter></method>
 <method name="variance" cv="const"><type>value_type</type><template>
           <template-nontype-parameter name="Indices"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="indices"><paramtype>Indices...</paramtype></parameter></method>
-<method name="variance" cv="const"><type>value_type</type><template>
-          <template-type-parameter name="Iterator"/>
-          <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
-        </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="variance" cv="const"><type>value_type</type><template>
-          <template-type-parameter name="Sequence"/>
-          <template-type-parameter name=""><default>detail::is_sequence&lt;Sequence&gt;</default></template-type-parameter>
-        </template><parameter name="indices"><paramtype>const Sequence &amp;</paramtype></parameter></method>
 <method name="size" cv="const"><type>std::size_t</type><purpose>Total number of bins in the histogram (including underflow/overflow) </purpose></method>
 <method name="sum" cv="const"><type>double</type><purpose>Sum of all counts in the histogram. </purpose></method>
 <method name="axis" cv="const"><type>std::add_const&lt; typename fusion::result_of::value_at_c&lt; axes_type, N &gt;::type &gt;::type &amp;</type><template>
           <template-nontype-parameter name="N"><type>unsigned</type><default>0</default></template-nontype-parameter>
         </template></method>
-<method name="axes" cv="const"><type>const axes_type &amp;</type></method>
+<method name="for_each_axis" cv="const"><type>void</type><template>
+          <template-type-parameter name="Unary"/>
+        </template><parameter name="unary"><paramtype>Unary &amp;</paramtype></parameter><purpose>Apply unary functor/function to each axis. </purpose></method>
 </method-group>
 <constructor cv="= default"/>
 <constructor specifiers="explicit"><template>
@@ -621,10 +564,10 @@
 <constructor cv="= default"><parameter name="other"><paramtype>static_histogram &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type>static_histogram &amp;</type><parameter name="other"><paramtype>const static_histogram &amp;</paramtype></parameter></copy-assignment>
 <copy-assignment cv="= default"><type>static_histogram &amp;</type><parameter name="other"><paramtype>static_histogram &amp;&amp;</paramtype></parameter></copy-assignment>
-<constructor><template>
+<constructor specifiers="explicit"><template>
           <template-type-parameter name="OtherStorage"/>
         </template><parameter name="other"><paramtype>const static_histogram&lt; Axes, OtherStorage &gt; &amp;</paramtype></parameter></constructor>
-<constructor><template>
+<constructor specifiers="explicit"><template>
           <template-type-parameter name="OtherStorage"/>
         </template><parameter name="other"><paramtype>static_histogram&lt; Axes, OtherStorage &gt; &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment><type>static_histogram &amp;</type><template>
@@ -642,17 +585,16 @@
           <template-type-parameter name="OtherAxes"/>
         </template><parameter name=""><paramtype>const OtherAxes &amp;</paramtype></parameter></method>
 <method name="axes_equal_to" cv="const"><type>bool</type><parameter name="other_axes"><paramtype>const axes_type &amp;</paramtype></parameter></method>
-<method name="index_impl" cv="const"><type>void</type><template>
-          <template-type-parameter name="Linearize"/>
+<method name="apply_lin" cv="const"><type>pairs</type><template>
+          <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
           <template-type-parameter name="First"/>
           <template-nontype-parameter name="Rest"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="lin"><paramtype>Linearize &amp;</paramtype></parameter><parameter name="first"><paramtype>First</paramtype></parameter><parameter name="rest"><paramtype>Rest...</paramtype></parameter></method>
-<method name="index_impl" cv="const"><type>void</type><template>
-          <template-type-parameter name="Linearize"/>
-        </template><parameter name=""><paramtype>Linearize &amp;</paramtype></parameter></method>
+        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter><parameter name="x"><paramtype>const First &amp;</paramtype></parameter><parameter name="rest"><paramtype>const Rest &amp;...</paramtype></parameter></method>
+<method name="apply_lin" cv="const"><type>pairs</type><template>
+          <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
+        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter></method>
 </method-group>
 </class>
-
 
 
 
@@ -699,7 +641,105 @@
 <namespace name="histogram">
 <class name="adaptive_storage"><template>
       <template-nontype-parameter name="Allocator"><type>template&lt; class &gt; class</type><default>std::allocator</default></template-nontype-parameter>
-    </template><typedef name="value_type"><type>double</type></typedef>
+    </template><struct name="add_visitor"><template>
+      <template-type-parameter name="Value"/>
+    </template><inherit access="public">static_visitor&lt; void &gt;</inherit><data-member name="idx"><type>const std::size_t &amp;</type></data-member>
+<data-member name="value"><type>const Value &amp;</type></data-member>
+<data-member name="buffer"><type>buffer_type &amp;</type></data-member>
+<method-group name="public member functions">
+<method name="operator()" cv="const"><type>void</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b"><paramtype>Array &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; void &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; mp_int &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; weight &gt; &amp;</paramtype></parameter></method>
+</method-group>
+<constructor><parameter name="i"><paramtype>const std::size_t &amp;</paramtype></parameter><parameter name="v"><paramtype>const Value &amp;</paramtype></parameter><parameter name="b"><paramtype>buffer_type &amp;</paramtype></parameter></constructor>
+</struct><struct name="assign_visitor"><template>
+      <template-type-parameter name="Value"/>
+    </template><inherit access="public">static_visitor&lt; void &gt;</inherit><data-member name="idx"><type>const std::size_t &amp;</type></data-member>
+<data-member name="value"><type>const Value &amp;</type></data-member>
+<data-member name="buffer"><type>buffer_type &amp;</type></data-member>
+<method-group name="public member functions">
+<method name="operator()" cv="const"><type>void</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b"><paramtype>Array &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; void &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; mp_int &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; weight &gt; &amp;</paramtype></parameter></method>
+</method-group>
+<constructor><parameter name="i"><paramtype>const std::size_t &amp;</paramtype></parameter><parameter name="v"><paramtype>const Value &amp;</paramtype></parameter><parameter name="b"><paramtype>buffer_type &amp;</paramtype></parameter></constructor>
+</struct><struct name="bicmp_visitor"><inherit access="public">static_visitor&lt; bool &gt;</inherit><method-group name="public member functions">
+<method name="operator()" cv="const"><type>bool</type><template>
+          <template-type-parameter name="Array1"/>
+          <template-type-parameter name="Array2"/>
+        </template><parameter name="b1"><paramtype>const Array1 &amp;</paramtype></parameter><parameter name="b2"><paramtype>const Array2 &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>bool</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b1"><paramtype>const Array &amp;</paramtype></parameter><parameter name="b2"><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>bool</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b1"><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter><parameter name="b2"><paramtype>const Array &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>bool</type><parameter name="b1"><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter><parameter name="b2"><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter></method>
+</method-group>
+</struct><struct name="cmp_visitor"><template>
+      <template-type-parameter name="OtherStorage"/>
+    </template><inherit access="public">static_visitor&lt; bool &gt;</inherit><data-member name="os"><type>const OtherStorage &amp;</type></data-member>
+<method-group name="public member functions">
+<method name="operator()" cv="const"><type>bool</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b"><paramtype>const Array &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>bool</type><parameter name="b"><paramtype>const array&lt; mp_int &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>bool</type><parameter name="b"><paramtype>const array&lt; weight &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>bool</type><parameter name="b"><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter></method>
+</method-group>
+<constructor><parameter name="o"><paramtype>const OtherStorage &amp;</paramtype></parameter></constructor>
+</struct><struct name="increase_visitor"><inherit access="public">static_visitor&lt; void &gt;</inherit><data-member name="idx"><type>const std::size_t &amp;</type></data-member>
+<data-member name="buffer"><type>buffer_type &amp;</type></data-member>
+<method-group name="public member functions">
+<method name="operator()" cv="const"><type>void</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b"><paramtype>Array &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; void &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; mp_int &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; weight &gt; &amp;</paramtype></parameter></method>
+</method-group>
+<constructor><parameter name="i"><paramtype>const std::size_t &amp;</paramtype></parameter><parameter name="b"><paramtype>buffer_type &amp;</paramtype></parameter></constructor>
+</struct><struct name="size_visitor"><inherit access="public">static_visitor&lt; std::size_t &gt;</inherit><method-group name="public member functions">
+<method name="operator()" cv="const"><type>std::size_t</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b"><paramtype>const Array &amp;</paramtype></parameter></method>
+</method-group>
+</struct><struct name="value_visitor"><inherit access="public">static_visitor&lt; value_type &gt;</inherit><data-member name="idx"><type>const std::size_t &amp;</type></data-member>
+<method-group name="public member functions">
+<method name="operator()" cv="const"><type>value_type</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b"><paramtype>const Array &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>value_type</type><parameter name=""><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>value_type</type><parameter name="b"><paramtype>const array&lt; weight &gt; &amp;</paramtype></parameter></method>
+</method-group>
+<constructor><parameter name="i"><paramtype>const std::size_t &amp;</paramtype></parameter></constructor>
+</struct><struct name="variance_visitor"><inherit access="public">static_visitor&lt; value_type &gt;</inherit><data-member name="idx"><type>const std::size_t &amp;</type></data-member>
+<method-group name="public member functions">
+<method name="operator()" cv="const"><type>value_type</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b"><paramtype>const Array &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>value_type</type><parameter name=""><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>value_type</type><parameter name="b"><paramtype>const array&lt; weight &gt; &amp;</paramtype></parameter></method>
+</method-group>
+<constructor><parameter name="i"><paramtype>const std::size_t &amp;</paramtype></parameter></constructor>
+</struct><struct name="wincrease_visitor"><inherit access="public">static_visitor&lt; void &gt;</inherit><data-member name="idx"><type>const std::size_t &amp;</type></data-member>
+<data-member name="w"><type>const value_type &amp;</type></data-member>
+<data-member name="buffer"><type>buffer_type &amp;</type></data-member>
+<method-group name="public member functions">
+<method name="operator()" cv="const"><type>void</type><template>
+          <template-type-parameter name="Array"/>
+        </template><parameter name="b"><paramtype>Array &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; void &gt; &amp;</paramtype></parameter></method>
+<method name="operator()" cv="const"><type>void</type><parameter name="b"><paramtype>array&lt; weight &gt; &amp;</paramtype></parameter></method>
+</method-group>
+<constructor><parameter name="i"><paramtype>const std::size_t &amp;</paramtype></parameter><parameter name="v"><paramtype>const value_type &amp;</paramtype></parameter><parameter name="b"><paramtype>buffer_type &amp;</paramtype></parameter></constructor>
+</struct><typedef name="value_type"><type>double</type></typedef>
 <method-group name="public member functions">
 <method name="size" cv="const"><type>std::size_t</type></method>
 <method name="increase"><type>void</type><parameter name="i"><paramtype>std::size_t</paramtype></parameter></method>
@@ -707,26 +747,14 @@
 <method name="value" cv="const"><type>value_type</type><parameter name="i"><paramtype>std::size_t</paramtype></parameter></method>
 <method name="variance" cv="const"><type>value_type</type><parameter name="i"><paramtype>std::size_t</paramtype></parameter></method>
 <method name="operator+="><type>adaptive_storage &amp;</type><template>
-          <template-nontype-parameter name="OtherAllocator"><type>template&lt; class &gt; class</type></template-nontype-parameter>
-        </template><parameter name=""><paramtype>const adaptive_storage&lt; OtherAllocator &gt; &amp;</paramtype></parameter></method>
-<method name="operator+="><type>adaptive_storage &amp;</type><template>
           <template-type-parameter name="OtherStorage"/>
           <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
-        </template><parameter name="other"><paramtype>const OtherStorage &amp;</paramtype></parameter></method>
-<method name="operator==" cv="const"><type>bool</type><template>
-          <template-nontype-parameter name="OtherAllocator"><type>template&lt; class &gt; class</type></template-nontype-parameter>
-        </template><parameter name=""><paramtype>const adaptive_storage&lt; OtherAllocator &gt; &amp;</paramtype></parameter></method>
+        </template><parameter name="rhs"><paramtype>const OtherStorage &amp;</paramtype></parameter></method>
+<method name="operator==" cv="const"><type>bool</type><parameter name="o"><paramtype>const adaptive_storage &amp;</paramtype></parameter></method>
 <method name="operator==" cv="const"><type>bool</type><template>
           <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""><default>typename std::enable_if&lt;              !(detail::has_weight_support&lt;OtherStorage&gt;::value)            &gt;::type</default></template-type-parameter>
-        </template><parameter name="other"><paramtype>const OtherStorage &amp;</paramtype></parameter></method>
-<method name="operator+="><type>adaptive_storage&lt; Allocator &gt; &amp;</type><template>
-          <template-nontype-parameter name="OtherAllocator"><type>template&lt; class &gt; class</type></template-nontype-parameter>
-        </template><parameter name="o"><paramtype>const adaptive_storage&lt; OtherAllocator &gt; &amp;</paramtype></parameter></method>
-<method name="operator+="><type>adaptive_storage&lt; Allocator &gt; &amp;</type><template>
-          <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""/>
-        </template><parameter name="other"><paramtype>const OtherStorage &amp;</paramtype></parameter></method>
+          <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
+        </template><parameter name="o"><paramtype>const OtherStorage &amp;</paramtype></parameter></method>
 </method-group>
 <constructor specifiers="explicit"><parameter name="s"><paramtype>std::size_t</paramtype></parameter></constructor>
 <constructor cv="= default"/>
@@ -734,18 +762,14 @@
 <copy-assignment cv="= default"><type>adaptive_storage &amp;</type><parameter name=""><paramtype>const adaptive_storage &amp;</paramtype></parameter></copy-assignment>
 <constructor cv="= default"><parameter name=""><paramtype>adaptive_storage &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type>adaptive_storage &amp;</type><parameter name=""><paramtype>adaptive_storage &amp;&amp;</paramtype></parameter></copy-assignment>
-<constructor><template>
+<constructor specifiers="explicit"><template>
           <template-type-parameter name="OtherStorage"/>
           <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
-        </template><parameter name="o"><paramtype>const OtherStorage &amp;</paramtype></parameter></constructor>
+        </template><parameter name="rhs"><paramtype>const OtherStorage &amp;</paramtype></parameter></constructor>
 <copy-assignment><type>adaptive_storage &amp;</type><template>
           <template-type-parameter name="OtherStorage"/>
           <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
-        </template><parameter name="o"><paramtype>const OtherStorage &amp;</paramtype></parameter></copy-assignment>
-<copy-assignment><type>adaptive_storage&lt; Allocator &gt; &amp;</type><template>
-          <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""/>
-        </template><parameter name="o"><paramtype>const OtherStorage &amp;</paramtype></parameter></copy-assignment>
+        </template><parameter name="rhs"><paramtype>const OtherStorage &amp;</paramtype></parameter></copy-assignment>
 <method-group name="private member functions">
 <method name="serialize"><type>void</type><template>
           <template-type-parameter name="Archive"/>
@@ -783,11 +807,9 @@
 
 
 
-
 <function name="operator=="><type>bool</type><template>
           <template-nontype-parameter name="Allocator"><type>template&lt; class &gt; class</type></template-nontype-parameter>
           <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""><default>typename std::enable_if&lt;            !(detail::has_weight_support&lt;OtherStorage&gt;::value)          &gt;::type</default></template-type-parameter>
         </template><parameter name="a"><paramtype>const OtherStorage &amp;</paramtype></parameter><parameter name="b"><paramtype>const adaptive_storage&lt; Allocator &gt; &amp;</paramtype></parameter></function>
 
 </namespace>
@@ -810,13 +832,13 @@
           <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
         </template><parameter name="other"><paramtype>const OtherStorage &amp;</paramtype></parameter></method>
 </method-group>
-<constructor/>
 <constructor specifiers="explicit"><parameter name="s"><paramtype>std::size_t</paramtype></parameter></constructor>
+<constructor/>
 <constructor cv="= default"><parameter name=""><paramtype>const container_storage &amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type>container_storage &amp;</type><parameter name=""><paramtype>const container_storage &amp;</paramtype></parameter></copy-assignment>
 <constructor cv="= default"><parameter name=""><paramtype>container_storage &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type>container_storage &amp;</type><parameter name=""><paramtype>container_storage &amp;&amp;</paramtype></parameter></copy-assignment>
-<constructor><template>
+<constructor specifiers="explicit"><template>
           <template-type-parameter name="OtherStorage"/>
           <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
         </template><parameter name="other"><paramtype>const OtherStorage &amp;</paramtype></parameter></constructor>
@@ -825,7 +847,6 @@
           <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
         </template><parameter name="other"><paramtype>const OtherStorage &amp;</paramtype></parameter></copy-assignment>
 </class>
-
 
 
 
@@ -868,7 +889,6 @@
 <header name="boost/histogram/utility.hpp">
 <namespace name="boost">
 <namespace name="histogram">
-
 
 
 
