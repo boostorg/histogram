@@ -207,29 +207,31 @@ template <typename T> void convert_container_storage_impl() {
   t.increase(0);
   while (t.value(0) < 1e20)
     t += t;
-
   auto d = aref;
-  d = s;
-  BOOST_TEST_EQ(d.value(0), 1.0);
-  BOOST_TEST(d == s);
-  d.increase(0);
-  BOOST_TEST(!(d == s));
+  d = t;
 
-  adaptive_storage<> e(s);
+  auto e = aref;
+  e = s;
   BOOST_TEST_EQ(e.value(0), 1.0);
   BOOST_TEST(e == s);
   e.increase(0);
   BOOST_TEST(!(e == s));
 
-  auto f = aref;
-  f += s;
+  adaptive_storage<> f(s);
   BOOST_TEST_EQ(f.value(0), 1.0);
-  BOOST_TEST(c == s);
-  BOOST_TEST(s == c);
+  BOOST_TEST(f == s);
+  f.increase(0);
+  BOOST_TEST(!(f == s));
+
+  auto g = aref;
+  g += s;
+  BOOST_TEST_EQ(g.value(0), 1.0);
+  BOOST_TEST(g == s);
+  BOOST_TEST(s == g);
 
   container_storage<std::vector<uint8_t>> u(2);
   u.increase(0);
-  BOOST_TEST(!(c == u));
+  BOOST_TEST(!(aref == u));
 }
 
 template <> void convert_container_storage_impl<void>() {
@@ -253,7 +255,8 @@ template <> void convert_container_storage_impl<void>() {
 
   container_storage<std::vector<uint8_t>> t(2);
   t.increase(0);
-  BOOST_TEST(!(c == t));
+  auto d = aref;
+  BOOST_TEST(!(d == t));
 }
 
 } // namespace histogram

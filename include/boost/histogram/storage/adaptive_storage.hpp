@@ -241,7 +241,7 @@ private:
       (*this)(get<array<uint8_t>>(buffer));
     }
 
-    void operator()(array<mp_int> &b) const { b[idx] = value; }
+    void operator()(array<mp_int> &b) const { b[idx] = static_cast<mp_int>(value); }
 
     void operator()(array<weight> &b) const { b[idx] = value; }
   };
