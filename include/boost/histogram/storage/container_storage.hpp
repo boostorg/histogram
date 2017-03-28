@@ -64,8 +64,7 @@ public:
   void increase(std::size_t i, value_type w) { container_[i] += w; }
   value_type value(std::size_t i) const { return container_[i]; }
 
-  template <typename OtherStorage>
-  void operator+=(const OtherStorage &other) {
+  template <typename OtherStorage> void operator+=(const OtherStorage &other) {
     for (std::size_t i = 0; i < container_.size(); ++i) {
       container_[i] += other.value(i);
     }

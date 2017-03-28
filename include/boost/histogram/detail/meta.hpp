@@ -23,8 +23,7 @@ template <typename T> struct has_variance {
   template <typename> static std::false_type test(...);
 
   template <typename C>
-  static decltype(std::declval<C &>().variance(0), std::true_type{})
-  test(int);
+  static decltype(std::declval<C &>().variance(0), std::true_type{}) test(int);
 
   static bool const value = decltype(test<T>(0))::value;
 };

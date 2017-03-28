@@ -8,7 +8,7 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_HPP_
 
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/histogram/histogram_static_impl.hpp>
 #include <boost/histogram/histogram_dynamic_impl.hpp>
+#include <boost/histogram/histogram_static_impl.hpp>
 
 #endif

@@ -10,11 +10,11 @@
 #include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/variant.hpp>
@@ -31,6 +31,7 @@ template <typename Axes, typename Storage>
 class histogram<true, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
   using size_pair = std::pair<std::size_t, std::size_t>;
+
 public:
   using axis_type = typename make_variant_over<Axes>::type;
   using value_type = typename Storage::value_type;
@@ -42,8 +43,7 @@ public:
   histogram() = default;
 
   template <typename... Axes1>
-  explicit histogram(const Axes1 &... axes)
-      : axes_({axis_type(axes)...}) {
+  explicit histogram(const Axes1 &... axes) : axes_({axis_type(axes)...}) {
     storage_ = Storage(field_count());
   }
 
@@ -54,19 +54,17 @@ public:
     storage_ = Storage(field_count());
   }
 
-  template <typename OtherAxes, typename OtherStorage>
-  explicit histogram(
-      const histogram<true, OtherAxes, OtherStorage> &other)
+  template <typename A, typename S>
+  explicit histogram(const histogram<true, A, S> &other)
       : axes_(other.axes_.begin(), other.axes_.end()),
         storage_(other.storage_) {}
 
-  template <typename OtherAxes, typename OtherStorage>
-  explicit histogram(histogram<true, OtherAxes, OtherStorage> &&other)
+  template <typename A, typename S>
+  explicit histogram(histogram<true, A, S> &&other)
       : axes_(std::move(other.axes_)), storage_(std::move(other.storage_)) {}
 
-  template <typename OtherAxes, typename OtherStorage>
-  histogram &
-  operator=(const histogram<true, OtherAxes, OtherStorage> &other) {
+  template <typename A, typename S>
+  histogram &operator=(const histogram<true, A, S> &other) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&other)) {
       axes_ = other.axes_;
       storage_ = other.storage_;
@@ -74,9 +72,8 @@ public:
     return *this;
   }
 
-  template <typename OtherAxes, typename OtherStorage>
-  histogram &
-  operator=(histogram<true, OtherAxes, OtherStorage> &&other) {
+  template <typename A, typename S>
+  histogram &operator=(histogram<true, A, S> &&other) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&other)) {
       axes_ = std::move(other.axes_);
       storage_ = std::move(other.storage_);
@@ -84,11 +81,10 @@ public:
     return *this;
   }
 
-  template <typename OtherAxes, typename OtherStorage>
-  bool
-  operator==(const histogram<true, OtherAxes, OtherStorage> &other) const {
+  template <typename A, typename S>
+  bool operator==(const histogram<true, A, S> &other) const {
     if (mpl::empty<
-            typename detail::intersection<Axes, OtherAxes>::type>::value) {
+            typename detail::intersection<Axes, A>::type>::value) {
       return false;
     }
     if (dim() != other.dim()) {
@@ -104,11 +100,9 @@ public:
   }
 
   template <bool D, typename A, typename S>
-  histogram &
-  operator+=(const histogram<D, A, S> &other) {
+  histogram &operator+=(const histogram<D, A, S> &other) {
     static_assert(
-        !mpl::empty<
-            typename detail::intersection<Axes, A>::type>::value,
+        !mpl::empty<typename detail::intersection<Axes, A>::type>::value,
         "histograms lack common axes types");
     if (dim() != other.dim()) {
       throw std::logic_error("dimensions of histograms differ");
@@ -126,7 +120,8 @@ public:
   template <typename... Values> void fill(Values... values) {
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
-    const auto p = apply_lin<detail::xlin, Values...>(size_pair(0, 1), values...);
+    const auto p =
+        apply_lin<detail::xlin, Values...>(size_pair(0, 1), values...);
     if (p.second) {
       storage_.increase(p.first);
     }
@@ -142,11 +137,11 @@ public:
     }
   }
 
-  template <typename... Values>
-  void wfill(value_type w, Values... values) {
+  template <typename... Values> void wfill(value_type w, Values... values) {
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
-    const auto p = apply_lin<detail::xlin, Values...>(size_pair(0, 1), values...);
+    const auto p =
+        apply_lin<detail::xlin, Values...>(size_pair(0, 1), values...);
     if (p.second) {
       storage_.increase(p.first, w);
     }
@@ -165,7 +160,8 @@ public:
   template <typename... Indices> value_type value(Indices... indices) const {
     BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
                      "number of arguments does not match histogram dimension");
-    const auto p = apply_lin<detail::lin, Indices...>(size_pair(0, 1), indices...);
+    const auto p =
+        apply_lin<detail::lin, Indices...>(size_pair(0, 1), indices...);
     if (p.second == 0) {
       throw std::out_of_range("invalid index");
     }
@@ -184,10 +180,12 @@ public:
   }
 
   template <typename... Indices> value_type variance(Indices... indices) const {
-    static_assert(detail::has_variance<Storage>::value, "Storage lacks variance support");
+    static_assert(detail::has_variance<Storage>::value,
+                  "Storage lacks variance support");
     BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
                      "number of arguments does not match histogram dimension");
-    const auto p = apply_lin<detail::lin, Indices...>(size_pair(0, 1), indices...);
+    const auto p =
+        apply_lin<detail::lin, Indices...>(size_pair(0, 1), indices...);
     if (p.second == 0) {
       throw std::out_of_range("invalid index");
     }
@@ -196,7 +194,8 @@ public:
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   value_type variance(Iterator begin, Iterator end) const {
-    static_assert(detail::has_variance<Storage>::value, "Storage lacks variance support");
+    static_assert(detail::has_variance<Storage>::value,
+                  "Storage lacks variance support");
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     const auto p = apply_lin_iter<detail::lin>(size_pair(0, 1), begin);
@@ -252,8 +251,8 @@ private:
     return fc.value;
   }
 
-  template <typename OtherAxes>
-  bool axes_equal_to(const OtherAxes &other_axes) const {
+  template <typename A>
+  bool axes_equal_to(const A &other_axes) const {
     detail::cmp_axis ca;
     for (unsigned i = 0; i < dim(); ++i) {
       if (!apply_visitor(ca, axes_[i], other_axes[i])) {
@@ -267,8 +266,7 @@ private:
   struct lin_visitor : public static_visitor<size_pair> {
     mutable size_pair pa;
     const Value &val;
-    lin_visitor(const size_pair& p, const Value &v)
-        : pa(p), val(v) {}
+    lin_visitor(const size_pair &p, const Value &v) : pa(p), val(v) {}
     template <typename A> size_pair operator()(const A &a) const {
       Lin<A, Value>::apply(pa.first, pa.second, a, val);
       return pa;
@@ -276,18 +274,20 @@ private:
   };
 
   template <template <class, class> class Lin, typename First, typename... Rest>
-  size_pair apply_lin(size_pair&& p, const First &first,
-                 const Rest &... rest) const {
+  size_pair apply_lin(size_pair &&p, const First &first,
+                      const Rest &... rest) const {
     p = apply_visitor(lin_visitor<Lin, First>(p, first),
                       axes_[dim() - 1 - sizeof...(Rest)]);
     return apply_lin<Lin, Rest...>(std::move(p), rest...);
   }
 
   template <template <class, class> class Lin>
-  size_pair apply_lin(size_pair&& p) const { return p; }
+  size_pair apply_lin(size_pair &&p) const {
+    return p;
+  }
 
   template <template <class, class> class Lin, typename Iterator>
-  size_pair apply_lin_iter(size_pair&& p, Iterator iter) const {
+  size_pair apply_lin_iter(size_pair &&p, Iterator iter) const {
     for (const auto &a : axes_) {
       p = apply_visitor(lin_visitor<Lin, decltype(*iter)>(p, *iter), a);
       ++iter;
@@ -297,12 +297,10 @@ private:
 
   friend struct storage_access;
 
-  template <bool D, typename A, typename S>
-  friend class histogram;
+  template <bool D, typename A, typename S> friend class histogram;
 
   template <typename Archiv, typename A, typename S>
-  friend void serialize(Archiv &, histogram<true, A, S> &,
-                        unsigned);
+  friend void serialize(Archiv &, histogram<true, A, S> &, unsigned);
 };
 
 template <typename... Axes>

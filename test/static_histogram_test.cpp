@@ -8,9 +8,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis_ostream_operators.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/histogram_ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
-#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/container_storage.hpp>
 #include <boost/histogram/utility.hpp>
@@ -28,7 +28,7 @@ int main() {
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(h.size(), 0);
     auto h2 = histogram<false, mpl::vector<integer_axis>,
-                               container_storage<std::vector<unsigned>>>();
+                        container_storage<std::vector<unsigned>>>();
     BOOST_TEST(h2 == h);
     auto h3 =
         histogram<false, mpl::vector<regular_axis<>>, adaptive_storage<>>();
@@ -109,7 +109,7 @@ int main() {
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
     auto h3 = histogram<false, mpl::vector<integer_axis, integer_axis>,
-                               container_storage<std::vector<unsigned>>>(h);
+                        container_storage<std::vector<unsigned>>>(h);
     BOOST_TEST(h3 == h);
   }
 
@@ -125,7 +125,7 @@ int main() {
     h2 = h2;
     BOOST_TEST(h == h2);
     auto h3 = histogram<false, mpl::vector<integer_axis, integer_axis>,
-                               container_storage<std::vector<unsigned>>>();
+                        container_storage<std::vector<unsigned>>>();
     h3 = h;
     BOOST_TEST(h == h3);
   }
@@ -249,7 +249,8 @@ int main() {
 
   // d1w2
   {
-    auto h = make_static_histogram_with<container_storage<std::vector<float>>>(regular_axis<>(2, -1, 1));
+    auto h = make_static_histogram_with<container_storage<std::vector<float>>>(
+        regular_axis<>(2, -1, 1));
     h.fill(0);
     h.wfill(2.0, -1.0);
     h.fill(-1.0);

@@ -10,11 +10,10 @@
 #include <boost/histogram/storage/adaptive_storage.hpp>
 
 namespace boost {
-namespace histogram { 
+namespace histogram {
 
-template <bool Dynamic,
-          class Axes,
-          class Storage = adaptive_storage<> > class histogram;
+template <bool Dynamic, class Axes, class Storage = adaptive_storage<>>
+class histogram;
 
 } // namespace histogram
 } // namespace boost

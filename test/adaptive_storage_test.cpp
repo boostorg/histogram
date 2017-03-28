@@ -139,7 +139,7 @@ template <> void equal_impl<void>() {
   BOOST_TEST(a == b);
   BOOST_TEST(b == a);
   BOOST_TEST(a == d);
-  BOOST_TEST(d == a);  
+  BOOST_TEST(d == a);
   BOOST_TEST(!(a == c));
   BOOST_TEST(!(c == a));
   b.increase(0);
@@ -147,7 +147,7 @@ template <> void equal_impl<void>() {
   BOOST_TEST(!(b == a));
   d.increase(0);
   BOOST_TEST(!(a == d));
-  BOOST_TEST(!(d == a));  
+  BOOST_TEST(!(d == a));
 }
 
 template <typename T> void increase_and_grow_impl() {

@@ -57,7 +57,7 @@ int main() {
     container_storage<std::array<unsigned, 2>> e;
     e.increase(0);
     for (int i = 0; i < 5; ++i)
-        e.increase(1);
+      e.increase(1);
     BOOST_TEST(d == e);
     e.increase(1);
     BOOST_TEST(!(d == e));
