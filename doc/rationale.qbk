@@ -32,9 +32,9 @@ The library consists of three orthogonal components:
 
 Histograms have a number of axes. An axis defines a mapping of ranges of input values to bin indices. The library supports several [link histogram.rationale.axis_types axis specializations]. The number of axes may be known at compile time or runtime, depending on how the library is used. The axis types may be known at compile time or runtime.
 
-The library provides two histogram implementations, a [classref boost::histogram::static_histogram static] and [classref boost::histogram::dynamic_histogram dynamic] one. The static implementation is faster, if the number of axes is small (see [link histogram.benchmarks benchmark]), because the compiler is able to inline more code. It is also able to catch many user errors at compile time rather than runtime.
+Users can chose between two histogram implementations. The implementation is selected with the first template argument, see [classref boost::histogram::histogram]. The static implementation is faster (see [link histogram.benchmarks benchmark]), because the compiler is able to inline more code and some bookkeeping and type casting at run-time is avoided. It is also able to catch many user errors at compile time rather than runtime.
 
-The static approach is unpractical when the user wants to create histograms at runtime, for example, from Python or from a graphical user interface. Therefore a second implementation is included in which the number of axes and their types may be set at runtime.
+The static approach is unpractical when the user wants to create histograms at runtime, for example, from Python or from a graphical user interface. The second implementation addresses this and allows one to set the number of axes and their types at runtime. The interface of the dynamic implementation is a superset of the static implementation. With the help of included utility functions it is possible to write code which works transparently with either implementation, thus allowing users to switch the implementation in their code at any point in time.
 
 [endsect]
 

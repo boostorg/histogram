@@ -4,7 +4,7 @@ Histograms are a basic tool in statistical analysis. They compactly represent a 
 
 [section Create a histogram]
 
-This library provides a class with a simple interface, which implements a general multi-dimensional histogram for multi-dimensional input values. Actually, there are two histogram classes with nearly identical interfaces, see the [link histogram.rationale.histogram_types rationale] for more information. If you are unsure, pick the [classref boost::histogram::static_histogram static_histogram]. You need the [classref boost::histogram::dynamic_histogram dynamic_histogram] if...
+This library provides a class with a simple interface, which implements a general multi-dimensional histogram for multi-dimensional input values. The histogram class comes in two variants with a common interface, see the [link histogram.rationale.histogram_types rationale] for more information. If you are unsure, pick the [classref boost::histogram::histogram<Static, Axes, Storage>]. You need the [classref boost::histogram::histogram<Dynamic, Axes, Storage>] if...
 
 * you want to interoperate with Python, or
 
@@ -27,9 +27,11 @@ int main() {
 
 The function `make_static_histogram(...)` takes a variable number of axis objects as arguments. Axis objects define how input values are mapped to bins. If you provide one axis, the histogram is one-dimensional. If you provide two, it is two-dimensional, and so on.
 
-Which axis class should I use? Check the class descriptions of [classref boost::histogram::regular_axis regular_axis], [classref boost::histogram::variable_axis variable_axis], [classref boost::histogram::circular_axis circular_axis], [classref boost::histogram::integer_axis integer_axis], and [classref boost::histogram::category_axis category_axis] for advice. Also see the [link histogram.rationale.axis_types rationale about axis types] for more information. The [classref boost::histogram::regular_axis regular_axis] should be your default choice, because it is easy to use and provides fast mapping. If you have a continous range of integers, the [classref boost::histogram::integer_axis integer_axis] is faster.
+Which axis class should you use? The [classref boost::histogram::regular_axis regular_axis] should be your default choice, because it is easy to use and provides fast mapping. If you have a continous range of integers, the [classref boost::histogram::integer_axis integer_axis] is faster.
 
-Optionally, you can attach a label to an axis, to help you remember what the axis is categorising. For example, you have census data and you want to investigate how yearly income correlates with age, you could do:
+Check the class descriptions of [classref boost::histogram::regular_axis regular_axis], [classref boost::histogram::variable_axis variable_axis], [classref boost::histogram::circular_axis circular_axis], [classref boost::histogram::integer_axis integer_axis], and [classref boost::histogram::category_axis category_axis] for advice. See the [link histogram.rationale.axis_types rationale about axis types] for more information.
+
+You can attach a label to any axis, which helps to remember what the axis is categorising. Example: you have census data and you want to investigate how yearly income correlates with age, you could do:
 
 [c++]``
 #include <boost/histogram/histogram.hpp>
@@ -45,9 +47,9 @@ int main() {
 }
 ``
 
-Without the labels it would be difficult to remember which axis was covering which quantity. To avoid errors, labels cannot be changed once the axis is passed in the constructor of the histogram.
+Without the labels it would be difficult to remember which axis was covering which quantity, as they or otherwise identical. To avoid errors, labels cannot be changed once the axis is passed in the constructor of the histogram. Axes objects which differ in their label do not compare equal with `operator==`.
 
-By default, axis objects add under- and overflow bins to the covered range. Therefore, if you create an axis with 20 bins, it will actually have 22 bins. These extra bins are often very useful and in most cases you want to have them. However, if you know for sure that the input is strictly bounded, you can disable the extra bins:
+By default, axis objects add under- and overflow bins to the covered range. Therefore, if you create an axis with 20 bins, it will actually get 22 bins. The two extra bins are very useful and in most cases you want to have them. However, if you know for sure that the input is strictly covered by the axis, you can disable the extra bins:
 
 [c++]``
 #include <boost/histogram/histogram.hpp>
@@ -60,10 +62,10 @@ int main() {
 	// do something with h
 ``
 
-Using a [classref boost::histogram::integer_axis integer_axis] here is convenient, because the input values are integers and we want one bin for each eye value.
+Using a [classref boost::histogram::integer_axis integer_axis] in this example is convenient, because the input values are integers and we want one bin for each eye value.
 [note The specialised [classref boost::histogram::circular_axis circular_axis] never creates under- and overflow bins, because the axis is circular. The highest bin wrapps around to the lowest bin and vice versa, so there is no need for extra bins.]
 
-The histogram has Python-bindings, and you can also create histograms in Python. In fact, it is quite useful workflow to create histograms in a flexible way in Python and then pass them to some C++ code which fills them. You rarely want to change the way the histogram is filled, but you probably want to interactively iterate on how the axes are defined. Here is an example:
+Since the histogram has Python-bindings, and you can also create histograms in Python. In fact, it is quite a useful workflow to create histograms in a flexible way in Python and then pass them to some C++ code which fills them. You rarely need to change the way the histogram is filled, but you likely want to iterate the range and binning of the axis after seeing the data. Hybrid programming in C++ and Python fits the bill. Here is a conceptual example:
 
 [python]``
 
@@ -72,14 +74,14 @@ import complex_cpp_module
 
 h = bh.histogram(bh.regular_axis(100, -1, 1))
 
-complex_cpp_module.run_filling(h)
+complex_cpp_module.process(h) # histogram is filled with input values
 
 # continue with statistical analysis of h
 ``
 
-You do not need the factory functions in Python, you can straight-forwardly create a histogram object with a variable number of axis arguments. The histogram object passes the language barrier without copying its internal (possibly large) data buffer, so this workflow is efficient.
+In Python, you can straight-forwardly create a histogram object with a variable number of axis arguments. The histogram instance passes the language barrier without copying its internal (possibly large) data buffer, so this workflow is efficient.
 
-When you work with the [classref boost::histogram::dynamic_histogram dynamic_histogram], you can also create a histogram from a runtime collection of axis objects:
+When you work with [classref boost::histogram::histogram<Dynamic, Axes, Storage>], you can also create a histogram from a run-time compiled collection of axis objects:
 
 [c++]``
 #include <boost/histogram/histogram.hpp>
@@ -87,15 +89,16 @@ When you work with the [classref boost::histogram::dynamic_histogram dynamic_his
 namespace bh = boost::histogram;
 
 int main() {
-	auto v = std::vector<bh::dynamic_histogram<>::axis_type>();
+	using dhist = bh::histogram<bh::Dynamic, bh::default_axes>;
+	auto v = std::vector<dhist::axis_type>();
 	v.push_back(bh::regular_axis<>(100, -1, 1));
 	v.push_back(bh::integer_axis(1, 6));
-	auto h = bh::dynamic_histogram<>(v.begin(), v.end());
+	auto h = bh::dhist(v.begin(), v.end());
 	// do something with h
 }
 ``
 
-[note In all these examples, memory for bin counters is allocated lazily. Allocation is deferred to the first call to `fill(...)` or `wfill(...)`, which are described in the next section. This means that memory allocation exceptions are possibly thrown later.]
+[note In all these examples, memory for bin counters is allocated lazily, because [classref boost::histogram::adaptive_storage<>] is used. Allocation is deferred to the first call to `fill(...)` or `wfill(...)`, which are described in the next section. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later.]
 
 [endsect]
 
@@ -105,11 +108,11 @@ The histogram (either type) supports two kinds of fills.
 
 * `fill(...)` initiates a normal fill, which increments a bin counter by one when a value is in the bin range
 
-* `wfill(...)` initiates a weighted fill, which increment a bin counter by a weight when a value is in the bin range.
+* `wfill(weight, ...)` initiates a weighted fill, which increment a bin counter by a `weight` when a value is in the bin range.
 
-Arguments for supporting weighted fills are given [link histogram.rationale.weights in the rationale]. Do not use `wfill(...)` if all your weights are equal to 1. Use `fill(...)` in this case, because it is more efficient. You are free to mix the two calls.
+Why would like to do weighted fills is explained [link histogram.rationale.weights in the rationale]. Do not use `wfill(...)` if all your weights are equal to 1. Use `fill(...)` in this case, because it is way more efficient. You are free to mix the two calls, meaning, you can start calling `fill(...)` and later switch to `wfill(weight, ...)` on the same histogram or vice versa.
 
-Here is an example which fills a 2d-histogram with 1000 pairs of normal distributed numbers in C++:
+Here is an example which fills a 2d-histogram with 1000 pairs of normal distributed numbers taken from a generator:
 [c++]``
 #include <boost/histogram/histogram.hpp>
 #include <boost/random/mersenne_twister.hpp>
@@ -129,7 +132,7 @@ int main() {
 }
 ``
 
-Here is a second example which using wfill and a functional programming style:
+Here is a second example which using wfill in a functional programming style. The input values are taken from a container:
 [c++]``
 #include <boost/histogram/histogram.hpp>
 #include <algorithm>
@@ -143,7 +146,7 @@ int main() {
 }
 ``
 
-You can also fill the histogram from Python. If you use pass the input values as numpy arrays, this is efficient. Looping over a collection in Python, however, is very slow and should be avoided:
+You can also fill the histogram in Python. If you pass the input values as numpy arrays, this is quite efficient and almost as fast as using C++, see the [link histogram.benchmarks benchmark]. Looping over a collection in Python, however, is very slow and should be avoided. Here is an example to illustrate:
 [python]``
 import histogram as bh
 import numpy as np

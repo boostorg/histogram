@@ -6,9 +6,9 @@
 
 This `C++11` library provides an easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. It is very customisable through policy classes, but the default policies were carefully designed so that most users won't need to customize anything. The library has a convenient uniform interface, is memory efficient, and very fast. If the default policies are used, bin counts *cannot overflow* or *loose precision*.
 
-The histogram class comes in two variants with identical interface. `static_histogram` uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. `dynamic_histogram` makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
+The histogram class comes in two implementations with a common interface. The *static* variant uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. The *dynamic* variant makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
 
-The histograms have value semantics. Move operations and trips over the language boundary from C++ to Python are cheap. Histograms can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (faster than numpy's own histogram functions) and are convertible into Numpy arrays without copying data.
+The histogram supports value semantics. Move operations and trips over the language boundary from C++ to Python are cheap. Histogram instances can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (faster than numpy's own histogram functions) and are convertible into Numpy arrays without copying data.
 
 My goal is to submit this project to [Boost](http://www.boost.org), that's why it uses the Boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
