@@ -10,11 +10,11 @@
 #include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/variant.hpp>
@@ -306,7 +306,8 @@ private:
 };
 
 template <typename... Axes>
-inline histogram<Dynamic, default_axes> make_dynamic_histogram(Axes &&... axes) {
+inline histogram<Dynamic, default_axes>
+make_dynamic_histogram(Axes &&... axes) {
   return histogram<Dynamic, default_axes>(std::forward<Axes>(axes)...);
 }
 

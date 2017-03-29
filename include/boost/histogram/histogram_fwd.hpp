@@ -13,12 +13,11 @@ namespace boost {
 namespace histogram {
 
 enum type {
-    Static,
-    Dynamic,
+  Static,
+  Dynamic,
 };
 
-template <type, class Axes, class Storage = adaptive_storage<>>
-class histogram;
+template <type, class Axes, class Storage = adaptive_storage<>> class histogram;
 
 } // namespace histogram
 } // namespace boost

@@ -7,7 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_HPP_
 
-#include <boost/histogram/histogram_impl_static.hpp>
 #include <boost/histogram/histogram_impl_dynamic.hpp>
+#include <boost/histogram/histogram_impl_static.hpp>
 
 #endif

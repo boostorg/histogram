@@ -18,11 +18,11 @@
 #include <boost/fusion/include/sequence.hpp>
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/sequence/comparison.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/vector.hpp>
