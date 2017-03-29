@@ -209,6 +209,7 @@ template <typename T> void convert_container_storage_impl() {
     t += t;
   auto d = aref;
   d = t;
+  BOOST_TEST(d == t);
 
   auto e = aref;
   e = s;
@@ -231,7 +232,10 @@ template <typename T> void convert_container_storage_impl() {
 
   container_storage<std::vector<uint8_t>> u(2);
   u.increase(0);
-  BOOST_TEST(!(aref == u));
+  auto h = aref;
+  BOOST_TEST(!(h == u));
+  h = u;
+  BOOST_TEST(h == u);
 }
 
 template <> void convert_container_storage_impl<void>() {

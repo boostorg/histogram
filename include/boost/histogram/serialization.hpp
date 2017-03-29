@@ -177,7 +177,7 @@ template <typename Archive> struct serialize_helper {
 } // namespace
 
 template <class Archive, class S, class A>
-inline void serialize(Archive &ar, histogram<false, S, A> &h,
+inline void serialize(Archive &ar, histogram<Static, S, A> &h,
                       unsigned /* version */) {
   serialize_helper<Archive> sh(ar);
   fusion::for_each(h.axes_, sh);
@@ -185,7 +185,7 @@ inline void serialize(Archive &ar, histogram<false, S, A> &h,
 }
 
 template <class Archive, class S, class A>
-inline void serialize(Archive &ar, histogram<true, S, A> &h,
+inline void serialize(Archive &ar, histogram<Dynamic, S, A> &h,
                       unsigned /* version */) {
   ar &h.axes_;
   ar &h.storage_;

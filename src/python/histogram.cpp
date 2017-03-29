@@ -29,7 +29,7 @@
 namespace boost {
 namespace histogram {
 
-using dynamic_histogram = histogram<true, default_axes, adaptive_storage<>>;
+using dynamic_histogram = histogram<Dynamic, default_axes, adaptive_storage<>>;
 
 #ifdef HAVE_NUMPY
 auto array_cast = [](python::handle<>& h) {

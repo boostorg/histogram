@@ -24,15 +24,15 @@ int main() {
 
   // init_0
   {
-    auto h = histogram<false, mpl::vector<integer_axis>, adaptive_storage<>>();
+    auto h = histogram<Static, mpl::vector<integer_axis>, adaptive_storage<>>();
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(h.size(), 0);
-    auto h2 = histogram<false, mpl::vector<integer_axis>,
+    auto h2 = histogram<Static, mpl::vector<integer_axis>,
                         container_storage<std::vector<unsigned>>>();
     BOOST_TEST(h2 == h);
     auto h3 =
-        histogram<false, mpl::vector<regular_axis<>>, adaptive_storage<>>();
-    BOOST_TEST(!(h3 == h));
+        histogram<Static, mpl::vector<regular_axis<>>, adaptive_storage<>>();
+    BOOST_TEST(h3 != h);
   }
 
   // init_1
@@ -108,7 +108,7 @@ int main() {
     h.fill(0, 0);
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
-    auto h3 = histogram<false, mpl::vector<integer_axis, integer_axis>,
+    auto h3 = histogram<Static, mpl::vector<integer_axis, integer_axis>,
                         container_storage<std::vector<unsigned>>>(h);
     BOOST_TEST(h3 == h);
   }
@@ -118,13 +118,13 @@ int main() {
     auto h = make_static_histogram(integer_axis(0, 1), integer_axis(0, 2));
     h.fill(0, 0);
     auto h2 = decltype(h)();
-    BOOST_TEST(!(h == h2));
+    BOOST_TEST(h != h2);
     h2 = h;
     BOOST_TEST(h == h2);
     // test self-assign
     h2 = h2;
     BOOST_TEST(h == h2);
-    auto h3 = histogram<false, mpl::vector<integer_axis, integer_axis>,
+    auto h3 = histogram<Static, mpl::vector<integer_axis, integer_axis>,
                         container_storage<std::vector<unsigned>>>();
     h3 = h;
     BOOST_TEST(h == h3);
@@ -152,25 +152,25 @@ int main() {
   {
     auto a = make_static_histogram(integer_axis(0, 1));
     auto b = make_static_histogram(integer_axis(0, 1), integer_axis(0, 2));
-    BOOST_TEST(!(a == b));
-    BOOST_TEST(!(b == a));
+    BOOST_TEST(a != b);
+    BOOST_TEST(b != a);
     auto c = make_static_histogram(integer_axis(0, 1));
-    BOOST_TEST(!(b == c));
-    BOOST_TEST(!(c == b));
+    BOOST_TEST(b != c);
+    BOOST_TEST(c != b);
     BOOST_TEST(a == c);
     BOOST_TEST(c == a);
     auto d = make_static_histogram(regular_axis<>(2, 0, 1));
-    BOOST_TEST(!(c == d));
-    BOOST_TEST(!(d == c));
+    BOOST_TEST(c != d);
+    BOOST_TEST(d != c);
     c.fill(0);
-    BOOST_TEST(!(a == c));
-    BOOST_TEST(!(c == a));
+    BOOST_TEST(a != c);
+    BOOST_TEST(c != a);
     a.fill(0);
     BOOST_TEST(a == c);
     BOOST_TEST(c == a);
     a.fill(0);
-    BOOST_TEST(!(a == c));
-    BOOST_TEST(!(c == a));
+    BOOST_TEST(a != c);
+    BOOST_TEST(c != a);
   }
 
   // d1
@@ -526,7 +526,7 @@ int main() {
       buf = os.str();
     }
     auto b = decltype(a)();
-    BOOST_TEST(!(a == b));
+    BOOST_TEST(a != b);
     {
       std::istringstream is(buf);
       boost::archive::text_iarchive ia(is);

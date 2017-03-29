@@ -11,6 +11,7 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/mpl/vector.hpp>
+#include <boost/operators.hpp>
 #include <boost/utility/string_ref.hpp>
 #include <cmath>
 #include <limits>
@@ -192,7 +193,8 @@ private:
  * Very fast. Binning is a O(1) operation.
  */
 template <typename RealType = double>
-class regular_axis : public axis_base<true> {
+class regular_axis : public axis_base<true>,
+                     boost::operators<regular_axis<RealType>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<regular_axis>;
@@ -265,7 +267,8 @@ private:
  * bins for this axis. Binning is a O(1) operation.
  */
 template <typename RealType = double>
-class circular_axis : public axis_base<false> {
+class circular_axis : public axis_base<false>,
+                      boost::operators<regular_axis<RealType>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<circular_axis>;
@@ -326,7 +329,8 @@ private:
  * and the problem domain allows it, prefer a regular_axis.
  */
 template <typename RealType = double>
-class variable_axis : public axis_base<true> {
+class variable_axis : public axis_base<true>,
+                      boost::operators<variable_axis<RealType>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<variable_axis>;
@@ -416,7 +420,7 @@ private:
  * Binning is a O(1) operation. This axis operates
  * faster than a regular_axis.
  */
-class integer_axis : public axis_base<true> {
+class integer_axis : public axis_base<true>, boost::operators<integer_axis> {
 public:
   using value_type = int;
   using const_iterator = axis_iterator<integer_axis>;
@@ -475,7 +479,7 @@ private:
  * There are no underflow/overflow bins for this axis.
  * Binning is a O(1) operation.
  */
-class category_axis : public axis_base<false> {
+class category_axis : public axis_base<false>, boost::operators<category_axis> {
 public:
   using value_type = const std::string &;
   using const_iterator = axis_iterator<category_axis>;
