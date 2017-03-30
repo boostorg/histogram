@@ -7,10 +7,10 @@
 #ifndef _BOOST_HISTOGRAM_DETAIL_META_HPP_
 #define _BOOST_HISTOGRAM_DETAIL_META_HPP_
 
+#include <boost/mpl/not.hpp>
 #include <boost/mpl/contains.hpp>
-#include <boost/mpl/equal.hpp>
-#include <boost/mpl/logical.hpp>
-#include <boost/mpl/remove_if.hpp>
+#include <boost/mpl/copy_if.hpp>
+#include <boost/mpl/back_inserter.hpp>
 #include <iterator>
 #include <limits>
 #include <type_traits>
@@ -41,11 +41,12 @@ template <typename T, typename = decltype(std::begin(std::declval<T &>()),
                                           std::end(std::declval<T &>()))>
 struct is_sequence {};
 
-template <typename S1, typename S2> struct intersection {
-  using type = typename std::conditional<
-      mpl::equal<S1, S2>::value, S1,
-      typename mpl::remove_if<S1, mpl::not_<mpl::contains<S2, mpl::_>>>::type>::
-      type;
+template <typename MainVector, typename AuxVector> struct combine {
+  using type = typename mpl::copy_if<
+      AuxVector,
+      mpl::not_<mpl::contains<MainVector, mpl::_1>>,
+      mpl::back_inserter<MainVector>
+    >::type;
 };
 
 } // namespace detail

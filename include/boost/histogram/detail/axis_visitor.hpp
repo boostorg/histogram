@@ -52,7 +52,7 @@ struct center : public static_visitor<double> {
   }
 };
 
-struct cmp_axis : public static_visitor<bool> {
+struct bicmp_axis : public static_visitor<bool> {
   template <typename T> bool operator()(const T &a, const T &b) const {
     return a == b;
   }
@@ -60,6 +60,15 @@ struct cmp_axis : public static_visitor<bool> {
   template <typename T, typename U>
   bool operator()(const T & /*unused*/, const U & /*unused*/) const {
     return false;
+  }
+};
+
+template <typename Variant>
+struct assign_axis : public static_visitor<void> {
+  Variant& variant;
+  assign_axis(Variant& v) : variant(v) {}
+  template <typename T> void operator()(const T& a) const {
+    variant = a;
   }
 };
 
@@ -75,6 +84,27 @@ template <typename Unary> struct unary_visitor : public static_visitor<void> {
   unary_visitor(Unary &u) : unary(u) {}
   template <typename Axis> void operator()(const Axis &a) const { unary(a); }
 };
+
+template <typename A, typename B> bool axes_equal(const A &a, const B& b) {
+  const unsigned dim = b.size();
+  if (a.size() != dim) {
+    return false;
+  }
+  for (unsigned i = 0; i < dim; ++i) {
+    if (!apply_visitor(bicmp_axis(), a[i], b[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+template <typename A, typename B> void axes_assign(A &a, const B& b) {
+  const unsigned dim = b.size();
+  a.resize(dim);
+  for (unsigned i = 0; i < dim; ++i) {
+    apply_visitor(assign_axis<typename A::value_type>(a[i]), b[i]);
+  }
+}
 
 } // namespace detail
 } // namespace histogram

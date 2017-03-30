@@ -65,7 +65,7 @@ public:
   template <typename A, typename S>
   histogram &operator=(const histogram<Dynamic, A, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
-      axes_ = rhs.axes_;
+      detail::axes_assign(axes_, rhs.axes_);
       storage_ = rhs.storage_;
     }
     return *this;
@@ -82,13 +82,7 @@ public:
 
   template <typename A, typename S>
   bool operator==(const histogram<Dynamic, A, S> &rhs) const {
-    if (mpl::empty<typename detail::intersection<Axes, A>::type>::value) {
-      return false;
-    }
-    if (dim() != rhs.dim()) {
-      return false;
-    }
-    if (!axes_equal_to(rhs.axes_)) {
+    if (!detail::axes_equal(axes_, rhs.axes_)) {
       return false;
     }
     if (!(storage_ == rhs.storage_)) {
@@ -104,23 +98,14 @@ public:
 
   template <type D, typename A, typename S>
   histogram &operator+=(const histogram<D, A, S> &rhs) {
-    static_assert(
-        !mpl::empty<typename detail::intersection<Axes, A>::type>::value,
-        "histograms lack common axes types");
-    if (dim() != rhs.dim()) {
-      throw std::logic_error("dimensions of histograms differ");
-    }
-    if (size() != rhs.size()) {
-      throw std::logic_error("sizes of histograms differ");
-    }
-    if (!axes_equal_to(rhs.axes_)) {
+    if (!detail::axes_equal(axes_, rhs.axes_)) {
       throw std::logic_error("axes of histograms differ");
     }
     storage_ += rhs.storage_;
     return *this;
   }
 
-  template <typename... Values> void fill(Values... values) {
+  template <typename... Values> void fill(Values... values) noexcept {
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
     const auto p =
@@ -131,7 +116,7 @@ public:
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end) {
+  void fill(Iterator begin, Iterator end) noexcept {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     const auto p = apply_lin_iter<detail::xlin>(size_pair(0, 1), begin);
@@ -140,7 +125,7 @@ public:
     }
   }
 
-  template <typename... Values> void wfill(value_type w, Values... values) {
+  template <typename... Values> void wfill(value_type w, Values... values) noexcept {
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
     const auto p =
@@ -151,7 +136,7 @@ public:
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void wfill(value_type w, Iterator begin, Iterator end) {
+  void wfill(value_type w, Iterator begin, Iterator end) noexcept {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     const auto p = apply_lin_iter<detail::xlin>(size_pair(0, 1), begin);
@@ -209,13 +194,13 @@ public:
   }
 
   /// Number of axes (dimensions) of histogram
-  unsigned dim() const { return axes_.size(); }
+  unsigned dim() const noexcept { return axes_.size(); }
 
   /// Total number of bins in the histogram (including underflow/overflow)
-  std::size_t size() const { return storage_.size(); }
+  std::size_t size() const noexcept { return storage_.size(); }
 
   /// Sum of all counts in the histogram
-  double sum() const {
+  double sum() const noexcept {
     double result = 0.0;
     for (std::size_t i = 0, n = size(); i < n; ++i) {
       result += storage_.value(i);
@@ -252,16 +237,6 @@ private:
       apply_visitor(fc, a);
     }
     return fc.value;
-  }
-
-  template <typename A> bool axes_equal_to(const A &rhs) const {
-    detail::cmp_axis ca;
-    for (unsigned i = 0; i < dim(); ++i) {
-      if (!apply_visitor(ca, axes_[i], rhs[i])) {
-        return false;
-      }
-    }
-    return true;
   }
 
   template <template <class, class> class Lin, typename Value>
@@ -306,15 +281,24 @@ private:
 };
 
 template <typename... Axes>
-inline histogram<Dynamic, default_axes>
+inline histogram<Dynamic,
+  typename detail::combine<default_axes, mpl::vector<Axes...>>::type>
 make_dynamic_histogram(Axes &&... axes) {
-  return histogram<Dynamic, default_axes>(std::forward<Axes>(axes)...);
+
+  return histogram<Dynamic,
+      typename detail::combine<default_axes, mpl::vector<Axes...>>::type
+    >(std::forward<Axes>(axes)...);
 }
 
 template <typename Storage, typename... Axes>
-inline histogram<Dynamic, default_axes, Storage>
+inline histogram<Dynamic,
+  typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
+  Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
-  return histogram<Dynamic, default_axes, Storage>(std::forward<Axes>(axes)...);
+  return histogram<Dynamic,
+      typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
+      Storage
+    >(std::forward<Axes>(axes)...);
 }
 } // namespace histogram
 } // namespace boost

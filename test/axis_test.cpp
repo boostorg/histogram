@@ -183,9 +183,6 @@ int main() {
     BOOST_TEST_EQ(a.index(0), 0);
     BOOST_TEST_EQ(a.index(1), 1);
     BOOST_TEST_EQ(a.index(2), 2);
-
-    BOOST_TEST_THROWS(a.index(-1), std::out_of_range);
-    BOOST_TEST_THROWS(a.index(3), std::out_of_range);
   }
 
   // iterators

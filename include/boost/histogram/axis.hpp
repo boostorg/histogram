@@ -222,7 +222,7 @@ public:
   regular_axis &operator=(regular_axis &&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(value_type x) const {
+  inline int index(value_type x) const noexcept {
     // Optimized code
     const value_type z = (x - min_) / delta_;
     return z >= 0.0 ? (z > bins() ? bins() : static_cast<int>(z)) : -1;
@@ -292,7 +292,7 @@ public:
   circular_axis &operator=(circular_axis &&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(value_type x) const {
+  inline int index(value_type x) const noexcept {
     const value_type z = (x - phase_) / perimeter_;
     const int i = static_cast<int>(std::floor(z * bins())) % bins();
     return i + (i < 0) * bins();
@@ -378,7 +378,7 @@ public:
   variable_axis &operator=(variable_axis &&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(value_type x) const {
+  inline int index(value_type x) const noexcept {
     return std::upper_bound(x_.get(), x_.get() + bins() + 1, x) - x_.get() - 1;
   }
 
@@ -445,7 +445,7 @@ public:
   integer_axis &operator=(integer_axis &&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(value_type x) const {
+  inline int index(value_type x) const noexcept {
     const int z = x - min_;
     return z >= 0 ? (z > bins() ? bins() : z) : -1;
   }
@@ -527,15 +527,18 @@ public:
 
   /// Returns the bin index for the passed argument.
   /// Performs a range check.
-  inline int index(int x) const {
-    if (!(0 <= x && x < bins())) {
-      throw std::out_of_range("category index is out of range");
-    }
+  inline int index(int x) const noexcept {
+    BOOST_ASSERT_MSG(0 <= x && x < bins(),
+                     "category index is out of range");
     return x;
   }
 
   /// Returns the category for the bin index.
-  value_type operator[](int idx) const { return ptr_.get()[idx]; }
+  value_type operator[](int idx) const {
+    BOOST_ASSERT_MSG(0 <= idx && idx < bins(),
+                     "category index is out of range");
+    return ptr_.get()[idx];
+  }
 
   bool operator==(const category_axis &other) const {
     return axis_base<false>::operator==(other) &&

@@ -61,22 +61,10 @@ public:
       : axes_(rhs.axes_), storage_(rhs.storage_) {}
 
   template <typename S>
-  explicit histogram(histogram<Static, Axes, S> &&rhs)
-      : axes_(std::move(rhs.axes_)), storage_(std::move(rhs.storage_)) {}
-
-  template <typename S>
   histogram &operator=(const histogram<Static, Axes, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       axes_ = rhs.axes_;
       storage_ = rhs.storage_;
-    }
-    return *this;
-  }
-
-  template <typename S> histogram &operator=(histogram<Static, Axes, S> &&rhs) {
-    if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
-      axes_ = std::move(rhs.axes_);
-      storage_ = std::move(rhs.storage_);
     }
     return *this;
   }
