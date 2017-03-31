@@ -47,14 +47,14 @@ void compare_1d(unsigned n, int distrib) {
 }
 
 void compare_2d(unsigned n, int distrib) {
-  auto r = random_array(2 * n, distrib);
+  auto r = random_array(n, distrib);
 
   double best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
     gsl_histogram2d *h = gsl_histogram2d_alloc(100, 100);
     gsl_histogram2d_set_ranges_uniform(h, 0, 1, 0, 1);
     auto t = clock();
-    for (unsigned i = 0; i < n; ++i)
+    for (unsigned i = 0; i < n/2; ++i)
       gsl_histogram2d_increment(h, r[2 * i], r[2 * i + 1]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
@@ -66,9 +66,9 @@ void compare_2d(unsigned n, int distrib) {
 int main(int argc, char **argv) {
   printf("1D\n");
   printf("uniform distribution\n");
-  compare_1d(12000000, 0);
+  compare_1d(6000000, 0);
   printf("normal distribution\n");
-  compare_1d(12000000, 1);
+  compare_1d(6000000, 1);
 
   printf("2D\n");
   printf("uniform distribution\n");

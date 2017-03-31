@@ -47,13 +47,13 @@ void compare_1d(unsigned n, int distrib) {
 }
 
 void compare_2d(unsigned n, int distrib) {
-  auto r = random_array(2 * n, distrib);
+  auto r = random_array(n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
     TH2I hroot("", "", 100, 0, 1, 100, 0, 1);
     auto t = clock();
-    for (unsigned i = 0; i < n; ++i)
+    for (unsigned i = 0; i < n/2; ++i)
       hroot.Fill(r[2 * i], r[2 * i + 1]);
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
@@ -62,13 +62,13 @@ void compare_2d(unsigned n, int distrib) {
 }
 
 void compare_3d(unsigned n, int distrib) {
-  auto r = random_array(3 * n, distrib);
+  auto r = random_array(n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
     TH3I hroot("", "", 100, 0, 1, 100, 0, 1, 100, 0, 1);
     auto t = clock();
-    for (unsigned i = 0; i < n; ++i)
+    for (unsigned i = 0; i < n/3; ++i)
       hroot.Fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
@@ -77,21 +77,18 @@ void compare_3d(unsigned n, int distrib) {
 }
 
 void compare_6d(unsigned n, int distrib) {
-  auto r = random_array(6 * n, distrib);
+  auto r = random_array(n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
-    double x[6];
     std::vector<int> bin(6, 10);
     std::vector<double> min(6, 0);
     std::vector<double> max(6, 1);
     THnI hroot("", "", 6, &bin.front(), &min.front(), &max.front());
 
     auto t = clock();
-    for (unsigned i = 0; i < n; ++i) {
-      for (unsigned k = 0; k < 6; ++k)
-        x[k] = r[6 * i + k];
-      hroot.Fill(x);
+    for (unsigned i = 0; i < n/6; ++i) {
+      hroot.Fill(&r.front() + 6 * i);
     }
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
@@ -102,9 +99,9 @@ void compare_6d(unsigned n, int distrib) {
 int main(int argc, char **argv) {
   printf("1D\n");
   printf("uniform distribution\n");
-  compare_1d(12000000, 0);
+  compare_1d(6000000, 0);
   printf("normal distribution\n");
-  compare_1d(12000000, 1);
+  compare_1d(6000000, 1);
 
   printf("2D\n");
   printf("uniform distribution\n");
@@ -114,13 +111,13 @@ int main(int argc, char **argv) {
 
   printf("3D\n");
   printf("uniform distribution\n");
-  compare_3d(4000000, 0);
+  compare_3d(6000000, 0);
   printf("normal distribution\n");
-  compare_3d(4000000, 1);
+  compare_3d(6000000, 1);
 
   printf("6D\n");
   printf("uniform distribution\n");
-  compare_6d(2000000, 0);
+  compare_6d(6000000, 0);
   printf("normal distribution\n");
-  compare_6d(2000000, 1);
+  compare_6d(6000000, 1);
 }
