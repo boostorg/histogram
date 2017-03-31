@@ -14,7 +14,7 @@ def compare_1d(n, distrib):
     if distrib == 0:
         r = np.random.rand(n)
     else:
-        r = 0.3 * np.random.randn(n)
+        r = 0.5 + 0.3 * np.random.randn(n)
 
     best_numpy = float("infinity")
     best_boost = float("infinity")
@@ -36,10 +36,10 @@ def compare_1d(n, distrib):
 
 def compare_2d(n, distrib):
     if distrib == 0:
-        r = np.random.rand(2 * n)
+        r = np.random.rand(n)
     else:
-        r = 0.3 * np.random.randn(2 * n)
-    r = r.reshape(n, 2)
+        r = 0.5 + 0.3 * np.random.randn(n)
+    r = r.reshape(n/2, 2)
 
     best_numpy = float("infinity")
     best_boost = float("infinity")
@@ -62,10 +62,10 @@ def compare_2d(n, distrib):
 
 def compare_3d(n, distrib):
     if distrib == 0:
-        r = np.random.rand(3 * n)
+        r = np.random.rand(n)
     else:
-        r = 0.3 * np.random.randn(3 * n)
-    r = r.reshape(n, 3)
+        r = 0.3 * np.random.randn(n)
+    r = r.reshape(n/3, 3)
 
     best_numpy = float("infinity")
     best_boost = float("infinity")
@@ -92,10 +92,10 @@ def compare_3d(n, distrib):
 
 def compare_6d(n, distrib):
     if distrib == 0:
-        r = np.random.rand(6 * n)
+        r = np.random.rand(n)
     else:
-        r = 0.3 * np.random.randn(6 * n)
-    r = r.reshape(n, 6)
+        r = 0.3 * np.random.randn(n)
+    r = r.reshape(n/6, 6)
 
     best_numpy = float("infinity")
     best_boost = float("infinity")
@@ -129,9 +129,9 @@ def compare_6d(n, distrib):
 
 print "1D"
 print "uniform distribution"
-compare_1d(12000000, 0)
+compare_1d(6000000, 0)
 print "normal distribution"
-compare_1d(12000000, 1)
+compare_1d(6000000, 1)
 
 print "2D"
 print "uniform distribution"
@@ -141,12 +141,12 @@ compare_2d(6000000, 1)
 
 print "3D"
 print "uniform distribution"
-compare_3d(4000000, 0)
+compare_3d(6000000, 0)
 print "normal distribution"
-compare_3d(4000000, 1)
+compare_3d(6000000, 1)
 
 print "6D"
 print "uniform distribution"
-compare_6d(2000000, 0)
+compare_6d(6000000, 0)
 print "normal distribution"
-compare_6d(2000000, 1)
+compare_6d(6000000, 1)
