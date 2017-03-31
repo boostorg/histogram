@@ -10,20 +10,21 @@
 #include <boost/config.hpp>
 #include <boost/fusion/adapted/mpl.hpp>
 #include <boost/fusion/algorithm.hpp>
+#include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/container/vector/convert.hpp>
 #include <boost/fusion/include/algorithm.hpp>
+#include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/include/as_vector.hpp>
 #include <boost/fusion/include/comparison.hpp>
 #include <boost/fusion/include/mpl.hpp>
 #include <boost/fusion/include/sequence.hpp>
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/sequence/comparison.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/vector.hpp>
 #include <type_traits>
@@ -217,6 +218,7 @@ inline histogram<Static, mpl::vector<Axes...>, Storage>
 make_static_histogram_with(const Axes &... axes) {
   return histogram<Static, mpl::vector<Axes...>, Storage>(axes...);
 }
+
 } // namespace histogram
 } // namespace boost
 

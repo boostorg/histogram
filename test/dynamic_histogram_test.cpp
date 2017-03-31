@@ -40,7 +40,7 @@ int main() {
     auto h = histogram<Dynamic, default_axes>(regular_axis<>{3, -1, 1});
     BOOST_TEST_EQ(h.dim(), 1u);
     BOOST_TEST_EQ(h.size(), 5u);
-    BOOST_TEST_EQ(shape(h.axis(0)), 5);
+    BOOST_TEST_EQ(shape(h.axis<0>()), 5);
     auto h2 = histogram<Dynamic, default_axes,
                         container_storage<std::vector<unsigned>>>(
         regular_axis<>{3, -1, 1});

@@ -59,10 +59,6 @@ public:
       : axes_(rhs.axes_.begin(), rhs.axes_.end()), storage_(rhs.storage_) {}
 
   template <typename A, typename S>
-  explicit histogram(histogram<Dynamic, A, S> &&rhs)
-      : axes_(std::move(rhs.axes_)), storage_(std::move(rhs.storage_)) {}
-
-  template <typename A, typename S>
   histogram &operator=(const histogram<Dynamic, A, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       detail::axes_assign(axes_, rhs.axes_);
@@ -70,6 +66,10 @@ public:
     }
     return *this;
   }
+
+  template <typename A, typename S>
+  explicit histogram(histogram<Dynamic, A, S> &&rhs)
+      : axes_(std::move(rhs.axes_)), storage_(std::move(rhs.storage_)) {}
 
   template <typename A, typename S>
   histogram &operator=(histogram<Dynamic, A, S> &&rhs) {
@@ -81,18 +81,12 @@ public:
   }
 
   template <typename A, typename S>
-  bool operator==(const histogram<Dynamic, A, S> &rhs) const {
-    if (!detail::axes_equal(axes_, rhs.axes_)) {
-      return false;
-    }
-    if (!(storage_ == rhs.storage_)) {
-      return false;
-    }
-    return true;
+  bool operator==(const histogram<Dynamic, A, S> &rhs) const noexcept {
+    return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
   template <typename A, typename S>
-  bool operator!=(const histogram<Dynamic, A, S> &rhs) const {
+  bool operator!=(const histogram<Dynamic, A, S> &rhs) const noexcept {
     return !operator==(rhs);
   }
 
@@ -214,8 +208,8 @@ public:
     return axes_[i];
   }
 
-  /// Return axis \a i (added for conformity with static_histogram interface)
-  template <unsigned N = 0u> const axis_type &axis() const {
+  /// Return axis \a i (for conformity with histogram<Static, ...> interface)
+  template <unsigned N = 0> const axis_type &axis() const {
     BOOST_ASSERT_MSG(N < dim(), "axis index out of range");
     return axes_[N];
   }
@@ -300,6 +294,7 @@ make_dynamic_histogram_with(Axes &&... axes) {
       Storage
     >(std::forward<Axes>(axes)...);
 }
+
 } // namespace histogram
 } // namespace boost
 
