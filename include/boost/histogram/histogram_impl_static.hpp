@@ -57,35 +57,35 @@ public:
   histogram &operator=(const histogram &rhs) = default;
   histogram &operator=(histogram &&rhs) = default;
 
-  template <typename S>
-  explicit histogram(const histogram<Static, Axes, S> &rhs)
-      : axes_(rhs.axes_), storage_(rhs.storage_) {}
+  template <type D, typename A, typename S>
+  explicit histogram(const histogram<D, A, S> &rhs)
+      : storage_(rhs.storage_)
+  {
+    detail::axes_assign(axes_, rhs.axes_);
+  }
 
-  template <typename S>
-  histogram &operator=(const histogram<Static, Axes, S> &rhs) {
+  template <type D, typename A, typename S>
+  histogram &operator=(const histogram<D, A, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
-      axes_ = rhs.axes_;
+      detail::axes_assign(axes_, rhs.axes_);
       storage_ = rhs.storage_;
     }
     return *this;
   }
 
-  template <typename A, typename S>
-  bool operator==(const histogram<Static, A, S> &rhs) const {
-    if (!axes_equal_to(rhs.axes_)) {
-      return false;
-    }
-    return storage_ == rhs.storage_;
+  template <type D, typename A, typename S>
+  bool operator==(const histogram<D, A, S> &rhs) const {
+    return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <typename A, typename S>
-  bool operator!=(const histogram<Static, A, S> &rhs) const {
+  template <type D, typename A, typename S>
+  bool operator!=(const histogram<D, A, S> &rhs) const {
     return !operator==(rhs);
   }
 
-  template <typename S>
-  histogram &operator+=(const histogram<Static, Axes, S> &rhs) {
-    if (!axes_equal_to(rhs.axes_)) {
+  template <type D, typename A, typename S>
+  histogram &operator+=(const histogram<D, A, S> &rhs) {
+    if (!detail::axes_equal(axes_, rhs.axes_)) {
       throw std::logic_error("axes of histograms differ");
     }
     storage_ += rhs.storage_;
@@ -172,14 +172,6 @@ private:
     detail::field_count fc;
     fusion::for_each(axes_, fc);
     return fc.value;
-  }
-
-  template <typename A> bool axes_equal_to(const A & /*unused*/) const {
-    return false;
-  }
-
-  bool axes_equal_to(const axes_type &other_axes) const {
-    return axes_ == other_axes;
   }
 
   template <template <class, class> class Lin, typename First, typename... Rest>

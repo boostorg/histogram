@@ -54,12 +54,15 @@ public:
     storage_ = Storage(field_count());
   }
 
-  template <typename A, typename S>
-  explicit histogram(const histogram<Dynamic, A, S> &rhs)
-      : axes_(rhs.axes_.begin(), rhs.axes_.end()), storage_(rhs.storage_) {}
+  template <type D, typename A, typename S>
+  explicit histogram(const histogram<D, A, S> &rhs)
+      : storage_(rhs.storage_)
+  {
+    detail::axes_assign(axes_, rhs.axes_);
+  }
 
-  template <typename A, typename S>
-  histogram &operator=(const histogram<Dynamic, A, S> &rhs) {
+  template <type D, typename A, typename S>
+  histogram &operator=(const histogram<D, A, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       detail::axes_assign(axes_, rhs.axes_);
       storage_ = rhs.storage_;
@@ -67,12 +70,12 @@ public:
     return *this;
   }
 
-  template <typename A, typename S>
-  explicit histogram(histogram<Dynamic, A, S> &&rhs)
+  template <typename S>
+  explicit histogram(histogram<Dynamic, Axes, S> &&rhs)
       : axes_(std::move(rhs.axes_)), storage_(std::move(rhs.storage_)) {}
 
-  template <typename A, typename S>
-  histogram &operator=(histogram<Dynamic, A, S> &&rhs) {
+  template <typename S>
+  histogram &operator=(histogram<Dynamic, Axes, S> &&rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       axes_ = std::move(rhs.axes_);
       storage_ = std::move(rhs.storage_);
@@ -80,13 +83,13 @@ public:
     return *this;
   }
 
-  template <typename A, typename S>
-  bool operator==(const histogram<Dynamic, A, S> &rhs) const noexcept {
+  template <type D, typename A, typename S>
+  bool operator==(const histogram<D, A, S> &rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <typename A, typename S>
-  bool operator!=(const histogram<Dynamic, A, S> &rhs) const noexcept {
+  template <type D, typename A, typename S>
+  bool operator!=(const histogram<D, A, S> &rhs) const noexcept {
     return !operator==(rhs);
   }
 
