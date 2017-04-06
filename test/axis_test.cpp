@@ -327,7 +327,7 @@ int main() {
     };
 
     detail::axes_assign(std_vector2, std_vector1);
-    // BOOST_TEST(detail::axes_equal(std_vector2, std_vector1));
+    BOOST_TEST(detail::axes_equal(std_vector2, std_vector1));
 
     boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector1 = {
       regular_axis<>{2, -3, 3},
