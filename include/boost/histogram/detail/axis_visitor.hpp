@@ -89,7 +89,9 @@ template <typename V> struct assign_axis : public static_visitor<void> {
 
   template <typename U> void impl(mpl::true_, const U &rhs) const { lhs = rhs; }
 
-  template <typename U> void impl(mpl::false_, const U &) const {}
+  template <typename U> void impl(mpl::false_, const U &) const {
+    // never called: cannot assign to variant if U is not a bounded type
+  }
 };
 
 template <typename Iterator> struct fusion_cmp_axis {
