@@ -13,6 +13,8 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/variant.hpp>
 #include <boost/fusion/include/vector.hpp>
+#include <boost/fusion/container/generation/make_vector.hpp>
+#include <boost/fusion/include/make_vector.hpp>
 #include <limits>
 
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
@@ -289,22 +291,22 @@ int main() {
     BOOST_TEST_NOT(detail::axes_equal(std_vector2, std_vector3));
     BOOST_TEST_NOT(detail::axes_equal(std_vector3, std_vector4));
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector1{
+    auto fusion_vector1 = boost::fusion::make_vector(
       regular_axis<>{2, -1, 1},
       variable_axis<>{-1, 0, 1},
       category_axis{"A", "B", "C"}
-    };
+    );
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector2{
+    auto fusion_vector2 = boost::fusion::make_vector(
       regular_axis<>{2, -1, 1},
       variable_axis<>{-1, 0, 1},
       category_axis{"A", "B"}
-    };
+    );
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>> fusion_vector3{
+    auto fusion_vector3 = boost::fusion::make_vector(
       regular_axis<>{2, -1, 1},
       variable_axis<>{-1, 0, 1}
-    };
+    );
 
     BOOST_TEST(detail::axes_equal(std_vector1, fusion_vector1));
     BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
@@ -329,20 +331,20 @@ int main() {
     detail::axes_assign(std_vector2, std_vector1);
     BOOST_TEST(detail::axes_equal(std_vector2, std_vector1));
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector1{
+    auto fusion_vector1 = boost::fusion::make_vector(
       regular_axis<>{2, -3, 3},
       variable_axis<>{-3, 0, 3},
       category_axis{"A", "B", "C", "D"}
-    };
+    );
 
     detail::axes_assign(fusion_vector1, std_vector1);
     BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector2{
+    auto fusion_vector2 = boost::fusion::make_vector(
       regular_axis<>{2, -1, 1},
       variable_axis<>{-1, 0, 1},
       category_axis{"A", "B"}
-    };
+    );
 
     detail::axes_assign(fusion_vector2, fusion_vector1);
     BOOST_TEST(detail::axes_equal(fusion_vector2, fusion_vector1));

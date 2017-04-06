@@ -14,6 +14,8 @@
 #include <boost/fusion/include/comparison.hpp>
 #include <boost/fusion/include/size.hpp>
 #include <boost/fusion/include/for_each.hpp>
+#include <boost/fusion/support/is_sequence.hpp>
+#include <boost/fusion/include/is_sequence.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/mpl/bool.hpp>
 #include <type_traits>
@@ -147,79 +149,96 @@ template <typename Unary> struct unary_visitor : public static_visitor<void> {
   template <typename Axis> void operator()(const Axis &a) const { unary(a); }
 };
 
-template <typename... A, typename... B>
-inline bool axes_equal(
-  const std::vector<boost::variant<A...>> &a,
-  const std::vector<boost::variant<B...>> &b)
+template <typename A, typename B>
+inline bool axes_equal_impl(mpl::false_, mpl::false_, const A& a, const B& b)
 {
   auto n = b.size();
   if (a.size() != n) {
     return false;
   }
   for (decltype(n) i = 0; i < n; ++i) {
-    if (!apply_visitor(cmp_axis<boost::variant<A...>>(a[i]), b[i])) {
+    if (!apply_visitor(cmp_axis<typename A::value_type>(a[i]), b[i])) {
       return false;
     }
   }
   return true;
 }
 
-template <typename... A>
-inline bool axes_equal(const fusion::vector<A...>& a, const fusion::vector<A...>& b) {
-  return a == b;
-}
-
-template <typename... A, typename... B>
-constexpr bool axes_equal(const fusion::vector<A...>& a, const fusion::vector<B...>& b) {
-  return false;
-}
-
-template <typename... A, typename... B>
-inline bool axes_equal(const std::vector<boost::variant<A...>>& a,
-                const fusion::vector<B...>& b)
+template <typename A, typename B>
+inline bool axes_equal_impl(mpl::false_, mpl::true_, const A& a, const B& b)
 {
   if (a.size() != fusion::size(b))
     return false;
-  fusion_cmp_axis<typename std::vector<boost::variant<A...>>::const_iterator> cmp(a.begin());
+  fusion_cmp_axis<typename A::const_iterator> cmp(a.begin());
   fusion::for_each(b, cmp);
   return cmp.is_equal;
 }
 
-template <typename... A, typename... B>
-inline bool axes_equal(const fusion::vector<B...>& a,
-                const std::vector<boost::variant<A...>>& b)
+template <typename A, typename B>
+inline bool axes_equal_impl(mpl::true_, mpl::false_, const A& a, const B& b)
 {
-  return axes_equal(b, a);
+  return axes_equal_impl(mpl::false_(), mpl::true_(), b, a);
 }
 
-template <typename... A, typename... B>
-inline void axes_assign(std::vector<boost::variant<A...>> &a, const std::vector<boost::variant<B...>> &b) {
+template <typename A>
+inline bool axes_equal_impl(mpl::true_, mpl::true_, const A& a, const A& b) {
+  return a == b;
+}
+
+template <typename A, typename B>
+constexpr bool axes_equal_impl(mpl::true_, mpl::true_, const A&, const B&) {
+  return false;
+}
+
+template <typename A, typename B>
+constexpr bool axes_equal(const A& a, const B& b) {
+  return axes_equal_impl(typename fusion::traits::is_sequence<A>::type(),
+                         typename fusion::traits::is_sequence<B>::type(),
+                         a, b);
+}
+
+template <typename A, typename B>
+inline void axes_assign_impl(mpl::false_, mpl::false_, A &a, const B &b) {
   const unsigned n = b.size();
   a.resize(n);
   for (unsigned i = 0; i < n; ++i) {
-    apply_visitor(assign_axis<boost::variant<A...>>(a[i]), b[i]);
+    apply_visitor(assign_axis<typename A::value_type>(a[i]), b[i]);
   }
 }
 
-template <typename... A>
-inline void axes_assign(fusion::vector<A...>& a, const fusion::vector<A...>& b)
+template <typename A, typename B>
+inline void axes_assign_impl(mpl::false_, mpl::true_, A& a, const B& b)
+{
+  a.resize(fusion::size(b));
+  fusion::for_each(b, fusion_assign_axis2<typename A::iterator>(b.begin()));
+}
+
+template <typename A, typename B>
+inline void axes_assign_impl(mpl::true_, mpl::false_, A& a, const B& b)
+{
+  BOOST_ASSERT_MSG(fusion::size(a) == b.size(),
+                   "cannot assign to static axes vector: number of axes does not match");
+  fusion::for_each(a, fusion_assign_axis<typename B::const_iterator>(b.begin()));
+}
+
+template <typename A>
+inline void axes_assign_impl(mpl::true_, mpl::true_, A& a, const A& b)
 {
   a = b;
 }
 
-template <typename... A, typename... B>
-inline void axes_assign(fusion::vector<A...>& a, const std::vector<boost::variant<B...>>& b)
+template <typename A, typename B>
+inline void axes_assign_impl(mpl::true_, mpl::true_, A& a, const B& b)
 {
-  const unsigned n = b.size();
-  BOOST_ASSERT_MSG(fusion::size(a) == n, "cannot assign to static axes vector: number of axes does not match");
-  fusion::for_each(a, fusion_assign_axis<typename std::vector<boost::variant<B...>>::const_iterator>(b.begin()));
+  static_assert(std::is_same<A, B>::type::value, "cannot assign different static axes vectors");
 }
 
-template <typename... A, typename... B>
-inline void axes_assign(std::vector<boost::variant<B...>>& a, const fusion::vector<A...>& b)
+template <typename A, typename B>
+constexpr void axes_assign(A& a, const B& b)
 {
-  a.resize(fusion::size(b));
-  fusion::for_each(b, fusion_assign_axis2<typename std::vector<boost::variant<B...>>::iterator>(b.begin()));
+  return axes_assign_impl(typename fusion::traits::is_sequence<A>::type(),
+                          typename fusion::traits::is_sequence<B>::type(),
+                          a, b);
 }
 
 } // namespace detail

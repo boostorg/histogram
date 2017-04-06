@@ -37,12 +37,10 @@ class histogram<Static, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
   using size_pair = std::pair<std::size_t, std::size_t>;
   using axes_size = typename fusion::result_of::size<Axes>::type;
+  using axes_type = typename fusion::result_of::as_vector<Axes>::type;
 
 public:
   using value_type = typename Storage::value_type;
-
-private:
-  using axes_type = typename fusion::result_of::as_vector<Axes>::type;
 
 public:
   histogram() = default;
