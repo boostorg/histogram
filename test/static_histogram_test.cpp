@@ -547,5 +547,17 @@ int main() {
                             "\n)");
   }
 
+  // histogram_reset
+  {
+    auto a = make_static_histogram(integer_axis(0, 1, "", false));
+    a.fill(0);
+    a.fill(1);
+    BOOST_TEST_EQ(a.value(0), 1);
+    BOOST_TEST_EQ(a.value(1), 1);
+    a.reset();
+    BOOST_TEST_EQ(a.value(0), 0);
+    BOOST_TEST_EQ(a.value(1), 0);
+  }
+
   return boost::report_errors();
 }

@@ -55,9 +55,7 @@ public:
   }
 
   template <type D, typename A, typename S>
-  explicit histogram(const histogram<D, A, S> &rhs)
-      : storage_(rhs.storage_)
-  {
+  explicit histogram(const histogram<D, A, S> &rhs) : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
@@ -122,7 +120,8 @@ public:
     }
   }
 
-  template <typename... Values> void wfill(value_type w, Values... values) noexcept {
+  template <typename... Values>
+  void wfill(value_type w, Values... values) noexcept {
     BOOST_ASSERT_MSG(sizeof...(values) == dim(),
                      "number of arguments does not match histogram dimension");
     const auto p =
@@ -205,6 +204,9 @@ public:
     return result;
   }
 
+  /// Reset bin counters to zero
+  void reset() { storage_ = std::move(Storage(storage_.size())); }
+
   /// Return axis \a i
   const axis_type &axis(unsigned i = 0) const {
     BOOST_ASSERT_MSG(i < dim(), "axis index out of range");
@@ -278,24 +280,23 @@ private:
 };
 
 template <typename... Axes>
-inline histogram<Dynamic,
-  typename detail::combine<default_axes, mpl::vector<Axes...>>::type>
+inline histogram<
+    Dynamic, typename detail::combine<default_axes, mpl::vector<Axes...>>::type>
 make_dynamic_histogram(Axes &&... axes) {
 
-  return histogram<Dynamic,
-      typename detail::combine<default_axes, mpl::vector<Axes...>>::type
-    >(std::forward<Axes>(axes)...);
+  return histogram<Dynamic, typename detail::combine<
+                                default_axes, mpl::vector<Axes...>>::type>(
+      std::forward<Axes>(axes)...);
 }
 
 template <typename Storage, typename... Axes>
-inline histogram<Dynamic,
-  typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
-  Storage>
+inline histogram<
+    Dynamic, typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
+    Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
-  return histogram<Dynamic,
-      typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
-      Storage
-    >(std::forward<Axes>(axes)...);
+  return histogram<Dynamic, typename detail::combine<
+                                default_axes, mpl::vector<Axes...>>::type,
+                   Storage>(std::forward<Axes>(axes)...);
 }
 
 } // namespace histogram

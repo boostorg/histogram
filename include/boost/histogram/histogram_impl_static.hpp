@@ -13,18 +13,18 @@
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/container/vector/convert.hpp>
 #include <boost/fusion/include/algorithm.hpp>
-#include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/include/as_vector.hpp>
 #include <boost/fusion/include/comparison.hpp>
+#include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/include/mpl.hpp>
 #include <boost/fusion/include/sequence.hpp>
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/sequence/comparison.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/vector.hpp>
 #include <type_traits>
@@ -56,9 +56,7 @@ public:
   histogram &operator=(histogram &&rhs) = default;
 
   template <type D, typename A, typename S>
-  explicit histogram(const histogram<D, A, S> &rhs)
-      : storage_(rhs.storage_)
-  {
+  explicit histogram(const histogram<D, A, S> &rhs) : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
@@ -148,6 +146,9 @@ public:
     }
     return result;
   }
+
+  /// Reset bin counters to zero
+  void reset() { storage_ = std::move(Storage(storage_.size())); }
 
   template <unsigned N = 0>
   typename std::add_const<

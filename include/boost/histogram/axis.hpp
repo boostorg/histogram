@@ -528,8 +528,7 @@ public:
   /// Returns the bin index for the passed argument.
   /// Performs a range check.
   inline int index(int x) const noexcept {
-    BOOST_ASSERT_MSG(0 <= x && x < bins(),
-                     "category index is out of range");
+    BOOST_ASSERT_MSG(0 <= x && x < bins(), "category index is out of range");
     return x;
   }
 

@@ -21,8 +21,7 @@ template <typename... Axes> int bins(const boost::variant<Axes...> &a) {
 
 template <typename A> int shape(const A &a) { return a.shape(); }
 
-template <typename... Axes>
-int shape(const boost::variant<Axes...> &a) {
+template <typename... Axes> int shape(const boost::variant<Axes...> &a) {
   return apply_visitor(detail::shape(), a);
 }
 

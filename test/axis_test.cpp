@@ -5,16 +5,16 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/axis.hpp>
-#include <boost/histogram/axis_ostream_operators.hpp>
-#include <boost/histogram/utility.hpp>
-#include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/detail/axis_visitor.hpp>
-#include <boost/math/constants/constants.hpp>
-#include <boost/variant.hpp>
-#include <boost/fusion/include/vector.hpp>
 #include <boost/fusion/container/generation/make_vector.hpp>
 #include <boost/fusion/include/make_vector.hpp>
+#include <boost/fusion/include/vector.hpp>
+#include <boost/histogram/axis.hpp>
+#include <boost/histogram/axis_ostream_operators.hpp>
+#include <boost/histogram/detail/axis_visitor.hpp>
+#include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/utility.hpp>
+#include <boost/math/constants/constants.hpp>
+#include <boost/variant.hpp>
 #include <limits>
 
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
@@ -264,27 +264,21 @@ int main() {
 
   // sequence equality
   {
-    std::vector<boost::variant<regular_axis<>, variable_axis<>, category_axis, integer_axis>> std_vector1 = {
-      regular_axis<>{2, -1, 1},
-      variable_axis<>{-1, 0, 1},
-      category_axis{"A", "B", "C"}
-    };
+    std::vector<boost::variant<regular_axis<>, variable_axis<>, category_axis,
+                               integer_axis>>
+        std_vector1 = {regular_axis<>{2, -1, 1}, variable_axis<>{-1, 0, 1},
+                       category_axis{"A", "B", "C"}};
 
-    std::vector<boost::variant<regular_axis<>, variable_axis<>, category_axis>> std_vector2 = {
-      regular_axis<>{2, -1, 1},
-      variable_axis<>{-1, 0, 1},
-      category_axis{"A", "B", "C"}
-    };
+    std::vector<boost::variant<regular_axis<>, variable_axis<>, category_axis>>
+        std_vector2 = {regular_axis<>{2, -1, 1}, variable_axis<>{-1, 0, 1},
+                       category_axis{"A", "B", "C"}};
 
     std::vector<boost::variant<regular_axis<>, variable_axis<>>> std_vector3 = {
-      variable_axis<>{-1, 0, 1},
-      regular_axis<>{2, -1, 1},
-      variable_axis<>{-1, 0, 1}
-    };
+        variable_axis<>{-1, 0, 1}, regular_axis<>{2, -1, 1},
+        variable_axis<>{-1, 0, 1}};
 
     std::vector<boost::variant<regular_axis<>, variable_axis<>>> std_vector4 = {
-      regular_axis<>{2, -1, 1},
-      variable_axis<>{-1, 0, 1},
+        regular_axis<>{2, -1, 1}, variable_axis<>{-1, 0, 1},
     };
 
     BOOST_TEST(detail::axes_equal(std_vector1, std_vector2));
@@ -292,59 +286,47 @@ int main() {
     BOOST_TEST_NOT(detail::axes_equal(std_vector3, std_vector4));
 
     auto fusion_vector1 = boost::fusion::make_vector(
-      regular_axis<>{2, -1, 1},
-      variable_axis<>{-1, 0, 1},
-      category_axis{"A", "B", "C"}
-    );
+        regular_axis<>{2, -1, 1}, variable_axis<>{-1, 0, 1},
+        category_axis{"A", "B", "C"});
 
-    auto fusion_vector2 = boost::fusion::make_vector(
-      regular_axis<>{2, -1, 1},
-      variable_axis<>{-1, 0, 1},
-      category_axis{"A", "B"}
-    );
+    auto fusion_vector2 = boost::fusion::make_vector(regular_axis<>{2, -1, 1},
+                                                     variable_axis<>{-1, 0, 1},
+                                                     category_axis{"A", "B"});
 
-    auto fusion_vector3 = boost::fusion::make_vector(
-      regular_axis<>{2, -1, 1},
-      variable_axis<>{-1, 0, 1}
-    );
+    auto fusion_vector3 = boost::fusion::make_vector(regular_axis<>{2, -1, 1},
+                                                     variable_axis<>{-1, 0, 1});
 
     BOOST_TEST(detail::axes_equal(std_vector1, fusion_vector1));
     BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
     BOOST_TEST_NOT(detail::axes_equal(fusion_vector1, fusion_vector2));
     BOOST_TEST_NOT(detail::axes_equal(fusion_vector2, fusion_vector3));
+    BOOST_TEST_NOT(detail::axes_equal(std_vector3, fusion_vector3));
   }
 
   // sequence assign
   {
-    std::vector<boost::variant<regular_axis<>, variable_axis<>, category_axis, integer_axis>> std_vector1 = {
-      regular_axis<>{2, -1, 1},
-      variable_axis<>{-1, 0, 1},
-      category_axis{"A", "B", "C"}
-    };
+    std::vector<boost::variant<regular_axis<>, variable_axis<>, category_axis,
+                               integer_axis>>
+        std_vector1 = {regular_axis<>{2, -1, 1}, variable_axis<>{-1, 0, 1},
+                       category_axis{"A", "B", "C"}};
 
-    std::vector<boost::variant<regular_axis<>, variable_axis<>, category_axis>> std_vector2 = {
-      regular_axis<>{2, -2, 2},
-      variable_axis<>{-2, 0, 2},
-      category_axis{"A", "B"}
-    };
+    std::vector<boost::variant<regular_axis<>, variable_axis<>, category_axis>>
+        std_vector2 = {regular_axis<>{2, -2, 2}, variable_axis<>{-2, 0, 2},
+                       category_axis{"A", "B"}};
 
     detail::axes_assign(std_vector2, std_vector1);
     BOOST_TEST(detail::axes_equal(std_vector2, std_vector1));
 
     auto fusion_vector1 = boost::fusion::make_vector(
-      regular_axis<>{2, -3, 3},
-      variable_axis<>{-3, 0, 3},
-      category_axis{"A", "B", "C", "D"}
-    );
+        regular_axis<>{2, -3, 3}, variable_axis<>{-3, 0, 3},
+        category_axis{"A", "B", "C", "D"});
 
     detail::axes_assign(fusion_vector1, std_vector1);
     BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
 
-    auto fusion_vector2 = boost::fusion::make_vector(
-      regular_axis<>{2, -1, 1},
-      variable_axis<>{-1, 0, 1},
-      category_axis{"A", "B"}
-    );
+    auto fusion_vector2 = boost::fusion::make_vector(regular_axis<>{2, -1, 1},
+                                                     variable_axis<>{-1, 0, 1},
+                                                     category_axis{"A", "B"});
 
     detail::axes_assign(fusion_vector2, fusion_vector1);
     BOOST_TEST(detail::axes_equal(fusion_vector2, fusion_vector1));
