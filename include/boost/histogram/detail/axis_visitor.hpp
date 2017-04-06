@@ -186,12 +186,12 @@ inline bool axes_equal_impl(mpl::true_, mpl::true_, const A& a, const A& b) {
 }
 
 template <typename A, typename B>
-constexpr bool axes_equal_impl(mpl::true_, mpl::true_, const A&, const B&) {
+inline bool axes_equal_impl(mpl::true_, mpl::true_, const A&, const B&) {
   return false;
 }
 
 template <typename A, typename B>
-constexpr bool axes_equal(const A& a, const B& b) {
+inline bool axes_equal(const A& a, const B& b) {
   return axes_equal_impl(typename fusion::traits::is_sequence<A>::type(),
                          typename fusion::traits::is_sequence<B>::type(),
                          a, b);
@@ -234,7 +234,7 @@ inline void axes_assign_impl(mpl::true_, mpl::true_, A& a, const B& b)
 }
 
 template <typename A, typename B>
-constexpr void axes_assign(A& a, const B& b)
+inline void axes_assign(A& a, const B& b)
 {
   return axes_assign_impl(typename fusion::traits::is_sequence<A>::type(),
                           typename fusion::traits::is_sequence<B>::type(),
