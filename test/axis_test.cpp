@@ -289,19 +289,19 @@ int main() {
     BOOST_TEST_NOT(detail::axes_equal(std_vector2, std_vector3));
     BOOST_TEST_NOT(detail::axes_equal(std_vector3, std_vector4));
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector1 = {
+    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector1{
       regular_axis<>{2, -1, 1},
       variable_axis<>{-1, 0, 1},
       category_axis{"A", "B", "C"}
     };
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector2 = {
+    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector2{
       regular_axis<>{2, -1, 1},
       variable_axis<>{-1, 0, 1},
       category_axis{"A", "B"}
     };
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>> fusion_vector3 = {
+    boost::fusion::vector<regular_axis<>, variable_axis<>> fusion_vector3{
       regular_axis<>{2, -1, 1},
       variable_axis<>{-1, 0, 1}
     };
@@ -329,7 +329,7 @@ int main() {
     detail::axes_assign(std_vector2, std_vector1);
     BOOST_TEST(detail::axes_equal(std_vector2, std_vector1));
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector1 = {
+    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector1{
       regular_axis<>{2, -3, 3},
       variable_axis<>{-3, 0, 3},
       category_axis{"A", "B", "C", "D"}
@@ -338,7 +338,7 @@ int main() {
     detail::axes_assign(fusion_vector1, std_vector1);
     BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
 
-    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector2 = {
+    boost::fusion::vector<regular_axis<>, variable_axis<>, category_axis> fusion_vector2{
       regular_axis<>{2, -1, 1},
       variable_axis<>{-1, 0, 1},
       category_axis{"A", "B"}
