@@ -18,7 +18,7 @@ environment:
 
 test_script:
   - cd build
-  - cmake . -DCMAKE_BUILD_TYPE=release -DBUILD_NUMPY_SUPPORT=OFF 
+  - cmake . -DBUILD_NUMPY_SUPPORT=OFF 
     -DBOOST_ROOT="%BOOST_ROOT%" -DBoost_USE_STATIC_LIBS="ON"
   - cmake --build .
   - ctest -V
