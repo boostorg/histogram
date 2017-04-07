@@ -40,7 +40,7 @@ template <> adaptive_storage<> prepare<detail::weight>(unsigned n) {
 template <> adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
   adaptive_storage<> s(n);
   s.increase(0);
-  double tmax = std::numeric_limits<uint64_t>::max();
+  auto tmax = static_cast<double>(std::numeric_limits<uint64_t>::max());
   tmax *= 2.0;
   while (s.value(0) < tmax) {
     s += s;

@@ -25,6 +25,7 @@ matrix:
             - llvm-toolchain-precise-3.6
             - boost-latest
           packages:
+            - cmake
             - clang-3.6
             - libboost1.55-dev
             - libboost-iostreams1.55
@@ -43,6 +44,7 @@ matrix:
             - llvm-toolchain-precise-3.8
             - boost-latest
           packages:
+            - cmake
             - clang-3.8
             - libboost1.55-dev
             - libboost-iostreams1.55
@@ -60,6 +62,7 @@ matrix:
             - ubuntu-toolchain-r-test
             - boost-latest
           packages:
+            - cmake
             - g++-4.8
             - libboost1.55-dev
             - libboost-iostreams1.55
@@ -77,6 +80,7 @@ matrix:
             - ubuntu-toolchain-r-test
             - boost-latest
           packages:
+            - cmake
             - g++-6
             - libboost1.55-dev
             - libboost-iostreams1.55
