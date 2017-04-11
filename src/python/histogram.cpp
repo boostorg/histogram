@@ -6,7 +6,7 @@
 
 #include "serialization_suite.hpp"
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/histogram_ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/utility.hpp>
@@ -29,13 +29,21 @@
 namespace boost {
 namespace histogram {
 
+using dynamic_histogram = histogram<Dynamic, default_axes, adaptive_storage<>>;
+
+#ifdef HAVE_NUMPY
+auto array_cast = [](python::handle<>& h) {
+  return python::downcast<PyArrayObject>(h.get());
+};
+#endif
+
 struct axis_visitor : public static_visitor<python::object> {
   template <typename T> python::object operator()(const T &t) const {
     return python::object(t);
   }
 };
 
-python::object histogram_axis(const dynamic_histogram<> &self, int i) {
+python::object histogram_axis(const dynamic_histogram &self, int i) {
   if (i < 0)
     i += self.dim();
   if (i < 0 || i >= int(self.dim())) {
@@ -46,145 +54,131 @@ python::object histogram_axis(const dynamic_histogram<> &self, int i) {
 }
 
 python::object histogram_init(python::tuple args, python::dict kwargs) {
-  using namespace python;
-  using python::tuple;
 
-  object self = args[0];
-  object pyinit = self.attr("__init__");
+  python::object self = args[0];
+  python::object pyinit = self.attr("__init__");
 
   if (kwargs) {
     PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
 
   const unsigned dim = len(args) - 1;
 
   // normal constructor
-  std::vector<dynamic_histogram<>::axis_type> axes;
+  std::vector<dynamic_histogram::axis_type> axes;
   for (unsigned i = 0; i < dim; ++i) {
-    object pa = args[i + 1];
-    extract<regular_axis<>> er(pa);
+    python::object pa = args[i + 1];
+    python::extract<regular_axis<>> er(pa);
     if (er.check()) {
       axes.push_back(er());
       continue;
     }
-    extract<circular_axis<>> ep(pa);
+    python::extract<circular_axis<>> ep(pa);
     if (ep.check()) {
       axes.push_back(ep());
       continue;
     }
-    extract<variable_axis<>> ev(pa);
+    python::extract<variable_axis<>> ev(pa);
     if (ev.check()) {
       axes.push_back(ev());
       continue;
     }
-    extract<integer_axis> ei(pa);
+    python::extract<integer_axis> ei(pa);
     if (ei.check()) {
       axes.push_back(ei());
       continue;
     }
-    extract<category_axis> ec(pa);
+    python::extract<category_axis> ec(pa);
     if (ec.check()) {
       axes.push_back(ec());
       continue;
     }
     std::string msg = "require an axis object, got ";
-    msg += extract<std::string>(pa.attr("__class__").attr("__name__"))();
+    msg += python::extract<std::string>(pa.attr("__class__").attr("__name__"))();
     PyErr_SetString(PyExc_TypeError, msg.c_str());
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
-  dynamic_histogram<> h(axes.begin(), axes.end());
+  dynamic_histogram h(axes.begin(), axes.end());
   return pyinit(h);
 }
 
 python::object histogram_fill(python::tuple args, python::dict kwargs) {
-  using namespace python;
+  const unsigned nargs = python::len(args);
+  dynamic_histogram &self = python::extract<dynamic_histogram &>(args[0]);
 
-  const unsigned nargs = len(args);
-  dynamic_histogram<> &self = extract<dynamic_histogram<> &>(args[0]);
-
-  object ow;
+  python::object ow;
   if (kwargs) {
     if (len(kwargs) > 1 || !kwargs.has_key("w")) {
       PyErr_SetString(PyExc_RuntimeError, "only keyword w allowed");
-      throw_error_already_set();
+      python::throw_error_already_set();
     }
     ow = kwargs.get("w");
   }
 
 #ifdef HAVE_NUMPY
   if (nargs == 2) {
-    object o = args[1];
+    python::object o = args[1];
     if (PySequence_Check(o.ptr())) {
-      PyArrayObject *a = reinterpret_cast<PyArrayObject *>(
-          PyArray_FROM_OTF(o.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
-      if (!a) {
-        PyErr_SetString(PyExc_ValueError,
-                        "could not convert sequence into array");
-        throw_error_already_set();
-      }
+      // exception is thrown automatically if
+      python::handle<> a(PyArray_FROM_OTF(o.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
 
-      npy_intp *dims = PyArray_DIMS(a);
-      switch (PyArray_NDIM(a)) {
+      npy_intp *dims = PyArray_DIMS(array_cast(a));
+      switch (PyArray_NDIM(array_cast(a))) {
       case 1:
         if (self.dim() > 1) {
           PyErr_SetString(PyExc_ValueError, "array has to be two-dimensional");
-          throw_error_already_set();
+          python::throw_error_already_set();
         }
         break;
       case 2:
         if (self.dim() != dims[1]) {
           PyErr_SetString(PyExc_ValueError,
                           "size of second dimension does not match");
-          throw_error_already_set();
+          python::throw_error_already_set();
         }
         break;
       default:
         PyErr_SetString(PyExc_ValueError, "array has wrong dimension");
-        throw_error_already_set();
+        python::throw_error_already_set();
       }
 
       if (!ow.is_none()) {
         if (PySequence_Check(ow.ptr())) {
-          PyArrayObject *aw = reinterpret_cast<PyArrayObject *>(
-              PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
-          if (!aw) {
-            PyErr_SetString(PyExc_ValueError,
-                            "could not convert sequence into array");
-            throw_error_already_set();
-          }
 
-          if (PyArray_NDIM(aw) != 1) {
+          // exception is thrown automatically if handle below receives null
+          python::handle<> aw(
+              PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
+
+          if (PyArray_NDIM(array_cast(aw)) != 1) {
             PyErr_SetString(PyExc_ValueError,
                             "array has to be one-dimensional");
-            throw_error_already_set();
+            python::throw_error_already_set();
           }
 
-          if (PyArray_DIMS(aw)[0] != dims[0]) {
+          if (PyArray_DIMS(array_cast(aw))[0] != dims[0]) {
             PyErr_SetString(PyExc_ValueError, "sizes do not match");
-            throw_error_already_set();
+            python::throw_error_already_set();
           }
 
           for (unsigned i = 0; i < dims[0]; ++i) {
-            double *v = reinterpret_cast<double *>(PyArray_GETPTR1(a, i));
-            double *w = reinterpret_cast<double *>(PyArray_GETPTR1(aw, i));
+            double *v = reinterpret_cast<double *>(PyArray_GETPTR1(array_cast(a), i));
+            double *w = reinterpret_cast<double *>(PyArray_GETPTR1(array_cast(aw), i));
             self.wfill(*w, v, v + self.dim());
           }
 
-          Py_DECREF(aw);
         } else {
           PyErr_SetString(PyExc_ValueError, "w is not a sequence");
-          throw_error_already_set();
+          python::throw_error_already_set();
         }
       } else {
         for (unsigned i = 0; i < dims[0]; ++i) {
-          double *v = reinterpret_cast<double *>(PyArray_GETPTR1(a, i));
+          double *v = reinterpret_cast<double *>(PyArray_GETPTR1(array_cast(a), i));
           self.fill(v, v + self.dim());
         }
       }
 
-      Py_DECREF(a);
-      return object();
+      return python::object();
     }
   }
 #endif
@@ -192,98 +186,95 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
   const unsigned dim = nargs - 1;
   if (dim != self.dim()) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
 
   if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
     std::ostringstream os;
     os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
     PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
 
   double v[BOOST_HISTOGRAM_AXIS_LIMIT];
   for (unsigned i = 0; i < dim; ++i)
-    v[i] = extract<double>(args[1 + i]);
+    v[i] = python::extract<double>(args[1 + i]);
 
   if (ow.is_none()) {
     self.fill(v, v + self.dim());
   } else {
-    const double w = extract<double>(ow);
+    const double w = python::extract<double>(ow);
     self.wfill(w, v, v + self.dim());
   }
 
-  return object();
+  return python::object();
 }
 
 python::object histogram_value(python::tuple args, python::dict kwargs) {
-  using namespace python;
-  const dynamic_histogram<> &self =
-      extract<const dynamic_histogram<> &>(args[0]);
+  const dynamic_histogram & self = python::extract<const dynamic_histogram &>(args[0]);
 
   const unsigned dim = len(args) - 1;
   if (self.dim() != dim) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
 
   if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
     std::ostringstream os;
     os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
     PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
 
   if (kwargs) {
     PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
   for (unsigned i = 0; i < self.dim(); ++i)
-    idx[i] = extract<int>(args[1 + i]);
+    idx[i] = python::extract<int>(args[1 + i]);
 
-  return object(self.value(idx + 0, idx + self.dim()));
+  return python::object(self.value(idx + 0, idx + self.dim()));
 }
 
 python::object histogram_variance(python::tuple args, python::dict kwargs) {
-  using namespace python;
-  const dynamic_histogram<> &self =
-      extract<const dynamic_histogram<> &>(args[0]);
+  const dynamic_histogram &self =
+      python::extract<const dynamic_histogram &>(args[0]);
 
   const unsigned dim = len(args) - 1;
   if (self.dim() != dim) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
 
   if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
     std::ostringstream os;
     os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
     PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
 
   if (kwargs) {
     PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
-    throw_error_already_set();
+    python::throw_error_already_set();
   }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
   for (unsigned i = 0; i < self.dim(); ++i)
-    idx[i] = extract<int>(args[1 + i]);
+    idx[i] = python::extract<int>(args[1 + i]);
 
-  return object(self.variance(idx + 0, idx + self.dim()));
+  return python::object(self.variance(idx + 0, idx + self.dim()));
 }
 
-std::string histogram_repr(const dynamic_histogram<> &h) {
+std::string histogram_repr(const dynamic_histogram &h) {
   std::ostringstream os;
   os << h;
   return os.str();
 }
 
-struct storage_access {
 #ifdef HAVE_NUMPY
+struct storage_access {
   using mp_int = adaptive_storage<>::mp_int;
   using weight = adaptive_storage<>::weight;
   template <typename T>
@@ -333,14 +324,14 @@ struct storage_access {
       for (int i = 0; i < dim; ++i) {
         shapes2[i] = python::extract<npy_intp>(shapes[i]);
       }
-      PyObject *ptr = PyArray_SimpleNew(dim, shapes2, NPY_UINT8);
+      python::handle<> a(PyArray_SimpleNew(dim, shapes2, NPY_UINT8));
       for (int i = 0; i < dim; ++i) {
-        PyArray_STRIDES((PyArrayObject *)ptr)[i] = python::extract<npy_intp>(strides[i]);
+        PyArray_STRIDES(array_cast(a))[i] = python::extract<npy_intp>(strides[i]);
       }
-      auto *buf = static_cast<uint8_t *>(PyArray_DATA((PyArrayObject *)ptr));
+      auto *buf = static_cast<uint8_t *>(PyArray_DATA(array_cast(a)));
       std::fill(buf, buf + b.size, uint8_t(0));
-      PyArray_CLEARFLAGS((PyArrayObject*)ptr, NPY_ARRAY_WRITEABLE);
-      return python::object(python::handle<>(ptr));
+      PyArray_CLEARFLAGS(array_cast(a), NPY_ARRAY_WRITEABLE);
+      return python::object(a);
     }
     python::object operator()(const array<mp_int>& b) const {
       // cannot pass cpp_int to numpy; make new
@@ -350,20 +341,20 @@ struct storage_access {
       for (int i = 0; i < dim; ++i) {
         shapes2[i] = python::extract<npy_intp>(shapes[i]);
       }
-      PyObject *ptr = PyArray_SimpleNew(dim, shapes2, NPY_DOUBLE);
+      python::handle<> a(PyArray_SimpleNew(dim, shapes2, NPY_DOUBLE));
       for (int i = 0; i < dim; ++i) {
-        PyArray_STRIDES((PyArrayObject *)ptr)[i] = python::extract<npy_intp>(strides[i]);
+        PyArray_STRIDES(array_cast(a))[i] = python::extract<npy_intp>(strides[i]);
       }
-      auto *buf = static_cast<double *>(PyArray_DATA((PyArrayObject *)ptr));
+      auto *buf = static_cast<double *>(PyArray_DATA(array_cast(a)));
       for (std::size_t i = 0; i < b.size; ++i) {
         buf[i] = static_cast<double>(b[i]);
       }
-      PyArray_CLEARFLAGS((PyArrayObject*)ptr, NPY_ARRAY_WRITEABLE);
-      return python::object(python::handle<>(ptr));
+      PyArray_CLEARFLAGS(array_cast(a), NPY_ARRAY_WRITEABLE);
+      return python::object(a);
     }
   };
 
-  static python::object array_interface(const dynamic_histogram<> &self) {
+  static python::object array_interface(const dynamic_histogram &self) {
     python::dict d;
 
     python::list shapes;
@@ -393,28 +384,26 @@ struct storage_access {
     d["data"] = apply_visitor(data_visitor(shapes, strides), b);
     return d;
   }
-#endif
 };
+#endif
 
 void register_histogram() {
-  using namespace python;
-  using python::arg;
-  docstring_options dopt(true, true, false);
+  python::docstring_options dopt(true, true, false);
 
-  class_<dynamic_histogram<>, boost::shared_ptr<dynamic_histogram<>>>(
-      "histogram", "N-dimensional histogram for real-valued data.", no_init)
-      .def("__init__", raw_function(histogram_init),
+  python::class_<dynamic_histogram, boost::shared_ptr<dynamic_histogram>>(
+      "histogram", "N-dimensional histogram for real-valued data.", python::no_init)
+      .def("__init__", python::raw_function(histogram_init),
            ":param axis args: axis objects"
            "\nPass one or more axis objects to define"
-           "\nthe dimensions of the dynamic_histogram<>.")
+           "\nthe dimensions of the dynamic_histogram.")
       // shadowed C++ ctors
-      .def(init<const dynamic_histogram<> &>())
+      .def(python::init<const dynamic_histogram &>())
 #ifdef HAVE_NUMPY
       .add_property("__array_interface__", &storage_access::array_interface)
 #endif
-      .def("__len__", &dynamic_histogram<>::dim)
+      .def("__len__", &dynamic_histogram::dim)
       .def("__getitem__", histogram_axis)
-      .def("fill", raw_function(histogram_fill),
+      .def("fill", python::raw_function(histogram_fill),
            "Pass a sequence of values with a length n is"
            "\nequal to the dimensions of the histogram,"
            "\nand optionally a weight w for this fill"
@@ -424,18 +413,18 @@ void register_histogram() {
            "\nbe a 2d-array of shape (m, n), where m is"
            "\nthe number of tuples, and optionally"
            "\nanother a second 1d-array w of shape (n,).")
-      .add_property("sum", &dynamic_histogram<>::sum)
-      .def("value", raw_function(histogram_value),
+      .add_property("sum", &dynamic_histogram::sum)
+      .def("value", python::raw_function(histogram_value),
            ":param int args: indices of the bin"
            "\n:return: count for the bin")
-      .def("variance", raw_function(histogram_variance),
+      .def("variance", python::raw_function(histogram_variance),
            ":param int args: indices of the bin"
            "\n:return: variance estimate for the bin")
       .def("__repr__", histogram_repr,
            ":returns: string representation of the histogram")
-      .def(self == self)
-      .def(self += self)
-      .def_pickle(serialization_suite<dynamic_histogram<>>());
+      .def(python::self == python::self)
+      .def(python::self += python::self)
+      .def_pickle(serialization_suite<dynamic_histogram>());
 }
 
 } // NS histogram

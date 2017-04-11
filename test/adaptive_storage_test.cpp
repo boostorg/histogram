@@ -40,7 +40,7 @@ template <> adaptive_storage<> prepare<detail::weight>(unsigned n) {
 template <> adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
   adaptive_storage<> s(n);
   s.increase(0);
-  double tmax = std::numeric_limits<uint64_t>::max();
+  auto tmax = static_cast<double>(std::numeric_limits<uint64_t>::max());
   tmax *= 2.0;
   while (s.value(0) < tmax) {
     s += s;
@@ -139,7 +139,7 @@ template <> void equal_impl<void>() {
   BOOST_TEST(a == b);
   BOOST_TEST(b == a);
   BOOST_TEST(a == d);
-  BOOST_TEST(d == a);  
+  BOOST_TEST(d == a);
   BOOST_TEST(!(a == c));
   BOOST_TEST(!(c == a));
   b.increase(0);
@@ -147,7 +147,7 @@ template <> void equal_impl<void>() {
   BOOST_TEST(!(b == a));
   d.increase(0);
   BOOST_TEST(!(a == d));
-  BOOST_TEST(!(d == a));  
+  BOOST_TEST(!(d == a));
 }
 
 template <typename T> void increase_and_grow_impl() {
@@ -207,29 +207,35 @@ template <typename T> void convert_container_storage_impl() {
   t.increase(0);
   while (t.value(0) < 1e20)
     t += t;
-
   auto d = aref;
-  d = s;
-  BOOST_TEST_EQ(d.value(0), 1.0);
-  BOOST_TEST(d == s);
-  d.increase(0);
-  BOOST_TEST(!(d == s));
+  d = t;
+  BOOST_TEST(d == t);
 
-  adaptive_storage<> e(s);
+  auto e = aref;
+  e = s;
   BOOST_TEST_EQ(e.value(0), 1.0);
   BOOST_TEST(e == s);
   e.increase(0);
   BOOST_TEST(!(e == s));
 
-  auto f = aref;
-  f += s;
+  adaptive_storage<> f(s);
   BOOST_TEST_EQ(f.value(0), 1.0);
-  BOOST_TEST(c == s);
-  BOOST_TEST(s == c);
+  BOOST_TEST(f == s);
+  f.increase(0);
+  BOOST_TEST(!(f == s));
+
+  auto g = aref;
+  g += s;
+  BOOST_TEST_EQ(g.value(0), 1.0);
+  BOOST_TEST(g == s);
+  BOOST_TEST(s == g);
 
   container_storage<std::vector<uint8_t>> u(2);
   u.increase(0);
-  BOOST_TEST(!(c == u));
+  auto h = aref;
+  BOOST_TEST(!(h == u));
+  h = u;
+  BOOST_TEST(h == u);
 }
 
 template <> void convert_container_storage_impl<void>() {
@@ -253,7 +259,8 @@ template <> void convert_container_storage_impl<void>() {
 
   container_storage<std::vector<uint8_t>> t(2);
   t.increase(0);
-  BOOST_TEST(!(c == t));
+  auto d = aref;
+  BOOST_TEST(!(d == t));
 }
 
 } // namespace histogram

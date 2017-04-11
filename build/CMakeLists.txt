@@ -1,7 +1,10 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.2)
 
 project(histogram CXX)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # setup build
 option(BUILD_PYTHON "Build python bindings" ON)
@@ -16,10 +19,8 @@ if(MSVC)
   add_definitions(/W3)
 else()
   # -fpermissive needed for cpp_int in gcc-6
-  add_definitions(-Wall -std=c++11 -fpermissive)
+  add_definitions(-Wall -fpermissive)
 endif()
-
-set(STD_LIBRARIES stdc++ m)
 
 if(BUILD_PYTHON)
   find_package(Boost 1.55 REQUIRED
@@ -49,34 +50,37 @@ if(BUILD_PYTHON)
     ../src/python/histogram.cpp
   )
 
-  set(LIBRARIES ${STD_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+  set(LIBRARIES ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
   target_link_libraries(histogram ${LIBRARIES})
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
 else()
   find_package(Boost 1.55 REQUIRED
                COMPONENTS serialization)
-  set(LIBRARIES ${STD_LIBRARIES} ${Boost_LIBRARIES})
+  set(LIBRARIES ${Boost_LIBRARIES})
 endif()
 
 include_directories(../include ${Boost_INCLUDE_DIRS})
 
-if(CMAKE_BUILD_TYPE STREQUAL "debug")
+if(CMAKE_BUILD_TYPE MATCHES debug)
   add_definitions(-O0 -g -fno-sanitize-recover=undefined)
   set(CMAKE_LD_FLAGS ${CMAKE_LD_FLAGS} -fno-sanitize-recover=undefined)
   message(STATUS "Build type: DEBUG [optimizations off]")
-elseif(CMAKE_BUILD_TYPE STREQUAL "cov")
+elseif(CMAKE_BUILD_TYPE MATCHES cov)
   add_definitions(-O0 -g)
   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage)
   message(STATUS "Build type: COVERAGE [optimizations off]")
-elseif(CMAKE_BUILD_TYPE STREQUAL "perf")
+elseif(CMAKE_BUILD_TYPE MATCHES perf)
   message(STATUS "Build type: PERF [optimizations on]")
-  add_definitions(-O3 -g -fno-omit-frame-pointer)
+  add_definitions(-O3)
   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -DBOOST_DISABLE_ASSERTS)
   set(BUILD_CHECKS ON)
 else()
   message(STATUS "Build type: RELEASE [optimizations on]")
-  add_definitions(-O3 -fomit-frame-pointer)
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -DBOOST_DISABLE_ASSERTS)
+  if(MSVC)
+    add_definitions(/DBOOST_DISABLE_ASSERTS)
+  else()
+    add_definitions(-O3 -DBOOST_DISABLE_ASSERTS)
+  endif()
 endif()
 
 # checks

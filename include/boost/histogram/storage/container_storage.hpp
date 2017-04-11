@@ -50,7 +50,7 @@ public:
     }
   }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
+  template <typename OtherStorage>
   container_storage &operator=(const OtherStorage &other) {
     detail::init(container_, other.size());
     for (std::size_t i = 0; i < container_.size(); ++i) {
@@ -61,35 +61,29 @@ public:
 
   std::size_t size() const { return container_.size(); }
   void increase(std::size_t i) { ++(container_[i]); }
+  void increase(std::size_t i, value_type w) { container_[i] += w; }
   value_type value(std::size_t i) const { return container_[i]; }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
-  void operator+=(const OtherStorage &other) {
+  template <typename OtherStorage> void operator+=(const OtherStorage &other) {
     for (std::size_t i = 0; i < container_.size(); ++i) {
       container_[i] += other.value(i);
     }
   }
 
+  template <typename C> bool operator==(const container_storage<C> &rhs) {
+    return container_.size() == rhs.container_.size() &&
+           std::equal(container_.begin(), container_.end(),
+                      rhs.container_.begin());
+  }
+
 private:
   Container container_;
 
-  template <typename Container1, typename Container2>
-  friend bool operator==(const container_storage<Container1> &,
-                         const container_storage<Container2> &);
+  template <typename C> friend class container_storage;
 
   template <typename Archive, typename C>
   friend void serialize(Archive &, container_storage<C> &, unsigned);
 };
-
-template <typename Container1, typename Container2>
-bool operator==(const container_storage<Container1> &a,
-                const container_storage<Container2> &b) {
-  if (a.container_.size() != b.container_.size()) {
-    return false;
-  }
-  return std::equal(a.container_.begin(), a.container_.end(),
-                    b.container_.begin());
-}
 
 } // namespace histogram
 } // namespace boost

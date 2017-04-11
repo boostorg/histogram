@@ -10,7 +10,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis_ostream_operators.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/histogram_ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
@@ -27,62 +27,61 @@ int main() {
 
   // init_0
   {
-    auto h = dynamic_histogram<default_axes, adaptive_storage<>>();
+    auto h = histogram<Dynamic, default_axes>();
     BOOST_TEST_EQ(h.dim(), 0u);
     BOOST_TEST_EQ(h.size(), 0u);
-    auto h2 = dynamic_histogram<default_axes,
-                                container_storage<std::vector<unsigned>>>();
+    auto h2 = histogram<Dynamic, default_axes,
+                        container_storage<std::vector<unsigned>>>();
     BOOST_TEST(h2 == h);
   }
 
   // init_1
   {
-    auto h = dynamic_histogram<default_axes, adaptive_storage<>>(
-        regular_axis<>{3, -1, 1});
+    auto h = histogram<Dynamic, default_axes>(regular_axis<>{3, -1, 1});
     BOOST_TEST_EQ(h.dim(), 1u);
     BOOST_TEST_EQ(h.size(), 5u);
-    BOOST_TEST_EQ(shape(h.axis(0)), 5);
-    auto h2 = dynamic_histogram<default_axes,
-                                container_storage<std::vector<unsigned>>>(
+    BOOST_TEST_EQ(shape(h.axis<0>()), 5);
+    auto h2 = histogram<Dynamic, default_axes,
+                        container_storage<std::vector<unsigned>>>(
         regular_axis<>{3, -1, 1});
     BOOST_TEST(h2 == h);
   }
 
   // init_2
   {
-    auto h = dynamic_histogram<default_axes, adaptive_storage<>>(
-        regular_axis<>{3, -1, 1}, integer_axis{-1, 1});
+    auto h = histogram<Dynamic, default_axes>(regular_axis<>{3, -1, 1},
+                                              integer_axis{-1, 1});
     BOOST_TEST_EQ(h.dim(), 2u);
     BOOST_TEST_EQ(h.size(), 25u);
-    BOOST_TEST_EQ(shape(h.axis(0)), 5);
-    BOOST_TEST_EQ(shape(h.axis(1)), 5);
-    auto h2 = dynamic_histogram<default_axes,
-                                container_storage<std::vector<unsigned>>>(
+    BOOST_TEST_EQ(shape(h.axis<0>()), 5);
+    BOOST_TEST_EQ(shape(h.axis<1>()), 5);
+    auto h2 = histogram<Dynamic, default_axes,
+                        container_storage<std::vector<unsigned>>>(
         regular_axis<>{3, -1, 1}, integer_axis{-1, 1});
     BOOST_TEST(h2 == h);
   }
 
   // init_3
   {
-    auto h = dynamic_histogram<default_axes, adaptive_storage<>>(
+    auto h = histogram<Dynamic, default_axes>(
         regular_axis<>{3, -1, 1}, integer_axis{-1, 1}, circular_axis<>{3});
     BOOST_TEST_EQ(h.dim(), 3u);
     BOOST_TEST_EQ(h.size(), 75u);
-    auto h2 = dynamic_histogram<default_axes,
-                                container_storage<std::vector<unsigned>>>(
+    auto h2 = histogram<Dynamic, default_axes,
+                        container_storage<std::vector<unsigned>>>(
         regular_axis<>{3, -1, 1}, integer_axis{-1, 1}, circular_axis<>{3});
     BOOST_TEST(h2 == h);
   }
 
   // init_4
   {
-    auto h = dynamic_histogram<default_axes, adaptive_storage<>>(
+    auto h = histogram<Dynamic, default_axes>(
         regular_axis<>{3, -1, 1}, integer_axis{-1, 1}, circular_axis<>{3},
         variable_axis<>{-1, 0, 1});
     BOOST_TEST_EQ(h.dim(), 4u);
     BOOST_TEST_EQ(h.size(), 300u);
-    auto h2 = dynamic_histogram<default_axes,
-                                container_storage<std::vector<unsigned>>>(
+    auto h2 = histogram<Dynamic, default_axes,
+                        container_storage<std::vector<unsigned>>>(
         regular_axis<>{3, -1, 1}, integer_axis{-1, 1}, circular_axis<>{3},
         variable_axis<>{-1, 0, 1});
     BOOST_TEST(h2 == h);
@@ -103,10 +102,12 @@ int main() {
 
   // init_6
   {
-    auto v = std::vector<dynamic_histogram<>::axis_type>();
+    auto v = std::vector<histogram<Dynamic, default_axes>::axis_type>();
     v.push_back(regular_axis<>(100, -1, 1));
     v.push_back(integer_axis(1, 6));
-    auto h = dynamic_histogram<>(v.begin(), v.end());
+    auto h = histogram<Dynamic, default_axes>(v.begin(), v.end());
+    BOOST_TEST_EQ(h.axis<0>(), v[0]);
+    BOOST_TEST_EQ(h.axis<1>(), v[1]);
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
   }
@@ -118,8 +119,8 @@ int main() {
     h.fill(0, 0);
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
-    auto h3 = dynamic_histogram<default_axes,
-                                container_storage<std::vector<unsigned>>>(h);
+    auto h3 = histogram<Dynamic, default_axes,
+                        container_storage<std::vector<unsigned>>>(h);
     BOOST_TEST(h3 == h);
   }
 
@@ -129,14 +130,14 @@ int main() {
         integer_axis(0, 1), integer_axis(0, 2));
     h.fill(0, 0);
     auto h2 = decltype(h)();
-    BOOST_TEST(!(h == h2));
+    BOOST_TEST(h != h2);
     h2 = h;
     BOOST_TEST(h == h2);
     // test self-assign
     h2 = h2;
     BOOST_TEST(h == h2);
-    auto h3 = dynamic_histogram<default_axes,
-                                container_storage<std::vector<unsigned>>>();
+    auto h3 = histogram<Dynamic, default_axes,
+                        container_storage<std::vector<unsigned>>>();
     h3 = h;
     BOOST_TEST(h == h3);
   }
@@ -160,31 +161,30 @@ int main() {
 
   // equal_compare
   {
-    auto a =
-        dynamic_histogram<default_axes, adaptive_storage<>>(integer_axis(0, 1));
-    auto b = dynamic_histogram<default_axes, adaptive_storage<>>(
-        integer_axis(0, 1), integer_axis(0, 2));
-    BOOST_TEST(!(a == b));
-    BOOST_TEST(!(b == a));
-    auto c = dynamic_histogram<mpl::vector<integer_axis>,
-                               container_storage<std::vector<unsigned>>>(
-        integer_axis(0, 1));
-    BOOST_TEST(!(b == c));
-    BOOST_TEST(!(c == b));
+    auto a = histogram<Dynamic, default_axes>(integer_axis(0, 1));
+    auto b = histogram<Dynamic, default_axes>(integer_axis(0, 1),
+                                              integer_axis(0, 2));
+    BOOST_TEST(a != b);
+    BOOST_TEST(b != a);
+    auto c =
+        histogram<Dynamic, mpl::vector<integer_axis>,
+                  container_storage<std::vector<unsigned>>>(integer_axis(0, 1));
+    BOOST_TEST(b != c);
+    BOOST_TEST(c != b);
     BOOST_TEST(a == c);
     BOOST_TEST(c == a);
     auto d = make_dynamic_histogram(regular_axis<>(2, 0, 1));
-    BOOST_TEST(!(c == d));
-    BOOST_TEST(!(d == c));
+    BOOST_TEST(c != d);
+    BOOST_TEST(d != c);
     c.fill(0);
-    BOOST_TEST(!(a == c));
-    BOOST_TEST(!(c == a));
+    BOOST_TEST(a != c);
+    BOOST_TEST(c != a);
     a.fill(0);
     BOOST_TEST(a == c);
     BOOST_TEST(c == a);
     a.fill(0);
-    BOOST_TEST(!(a == c));
-    BOOST_TEST(!(c == a));
+    BOOST_TEST(a != c);
+    BOOST_TEST(c != a);
   }
 
   // d1
@@ -196,8 +196,8 @@ int main() {
     h.fill(10);
 
     BOOST_TEST_EQ(h.dim(), 1u);
-    BOOST_TEST_EQ(bins(h.axis(0)), 2);
-    BOOST_TEST_EQ(shape(h.axis(0)), 4);
+    BOOST_TEST_EQ(bins(h.axis<>()), 2);
+    BOOST_TEST_EQ(shape(h.axis<>()), 4);
     BOOST_TEST_EQ(h.sum(), 4.0);
 
     BOOST_TEST_THROWS(h.value(-2), std::out_of_range);
@@ -224,8 +224,8 @@ int main() {
     h.fill(10);
 
     BOOST_TEST_EQ(h.dim(), 1u);
-    BOOST_TEST_EQ(bins(h.axis(0)), 2);
-    BOOST_TEST_EQ(shape(h.axis(0)), 2);
+    BOOST_TEST_EQ(bins(h.axis<>()), 2);
+    BOOST_TEST_EQ(shape(h.axis<>()), 2);
     BOOST_TEST_EQ(h.sum(), 2);
 
     BOOST_TEST_THROWS(h.value(-1), std::out_of_range);
@@ -271,10 +271,10 @@ int main() {
     h.fill(-10, 0);
 
     BOOST_TEST_EQ(h.dim(), 2u);
-    BOOST_TEST_EQ(bins(h.axis(0)), 2);
-    BOOST_TEST_EQ(shape(h.axis(0)), 4);
-    BOOST_TEST_EQ(bins(h.axis(1)), 3);
-    BOOST_TEST_EQ(shape(h.axis(1)), 3);
+    BOOST_TEST_EQ(bins(h.axis<0>()), 2);
+    BOOST_TEST_EQ(shape(h.axis<0>()), 4);
+    BOOST_TEST_EQ(bins(h.axis<1>()), 3);
+    BOOST_TEST_EQ(shape(h.axis<1>()), 3);
     BOOST_TEST_EQ(h.sum(), 3);
 
     BOOST_TEST_EQ(h.value(-1, 0), 0.0);
@@ -358,17 +358,17 @@ int main() {
   {
     auto h = make_dynamic_histogram(integer_axis(0, 3), integer_axis(0, 4),
                                     integer_axis(0, 5));
-    for (auto i = 0; i < bins(h.axis(0)); ++i) {
-      for (auto j = 0; j < bins(h.axis(1)); ++j) {
-        for (auto k = 0; k < bins(h.axis(2)); ++k) {
+    for (auto i = 0; i < bins(h.axis<0>()); ++i) {
+      for (auto j = 0; j < bins(h.axis<1>()); ++j) {
+        for (auto k = 0; k < bins(h.axis<2>()); ++k) {
           h.wfill(i + j + k, i, j, k);
         }
       }
     }
 
-    for (auto i = 0; i < bins(h.axis(0)); ++i) {
-      for (auto j = 0; j < bins(h.axis(1)); ++j) {
-        for (auto k = 0; k < bins(h.axis(2)); ++k) {
+    for (auto i = 0; i < bins(h.axis<0>()); ++i) {
+      for (auto j = 0; j < bins(h.axis<1>()); ++j) {
+        for (auto k = 0; k < bins(h.axis<2>()); ++k) {
           BOOST_TEST_EQ(h.value(i, j, k), i + j + k);
         }
       }
@@ -386,10 +386,9 @@ int main() {
 
   // add_1
   {
-    auto a = dynamic_histogram<mpl::vector<integer_axis>, adaptive_storage<>>(
-        integer_axis(-1, 1));
-    auto b = dynamic_histogram<mpl::vector<integer_axis, regular_axis<>>,
-                               container_storage<std::vector<unsigned>>>(
+    auto a = histogram<Dynamic, mpl::vector<integer_axis>>(integer_axis(-1, 1));
+    auto b = histogram<Dynamic, mpl::vector<integer_axis, regular_axis<>>,
+                       container_storage<std::vector<unsigned>>>(
         integer_axis(-1, 1));
     a.fill(-1);
     b.fill(1);
@@ -496,7 +495,7 @@ int main() {
       buf = os.str();
     }
     auto b = make_dynamic_histogram();
-    BOOST_TEST(!(a == b));
+    BOOST_TEST(a != b);
     {
       std::istringstream is(buf);
       boost::archive::text_iarchive ia(is);
@@ -515,6 +514,18 @@ int main() {
                             "\n  regular_axis(3, -1, 1, label='r'),"
                             "\n  integer_axis(0, 1, label='i'),"
                             "\n)");
+  }
+
+  // histogram_reset
+  {
+    auto a = make_dynamic_histogram(integer_axis(0, 1, "", false));
+    a.fill(0);
+    a.fill(1);
+    BOOST_TEST_EQ(a.value(0), 1);
+    BOOST_TEST_EQ(a.value(1), 1);
+    a.reset();
+    BOOST_TEST_EQ(a.value(0), 0);
+    BOOST_TEST_EQ(a.value(1), 0);
   }
 
   return boost::report_errors();

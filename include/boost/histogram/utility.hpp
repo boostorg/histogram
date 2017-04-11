@@ -7,10 +7,8 @@
 #ifndef BOOST_HISTOGRAM_UTILITY_HPP_
 #define BOOST_HISTOGRAM_UTILITY_HPP_
 
-#include <boost/fusion/algorithm/iteration/for_each.hpp>
-#include <boost/fusion/include/for_each.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
-#include <boost/variant.hpp>
+#include <boost/variant/variant_fwd.hpp>
 
 namespace boost {
 namespace histogram {

@@ -1,76 +1,105 @@
 1D
 uniform distribution
-root 0.115
+root 0.053
 normal distribution
-root 0.126
-1D
+root 0.057
+2D
 uniform distribution
-gsl 0.086
+root 0.045
 normal distribution
-gsl 0.093
+root 0.050
 3D
 uniform distribution
-root 0.386
+root 0.128
 normal distribution
-root 0.337
+root 0.107
 6D
 uniform distribution
-root 0.290
+root 0.112
 normal distribution
-root 0.325
+root 0.124
 
 1D
 uniform distribution
-py:numpy 0.165
-py:hd_sd 0.214
+gsl 0.043
 normal distribution
-py:numpy 0.159
-py:hd_sd 0.299
-3D
+gsl 0.047
+2D
 uniform distribution
-py:numpy 0.906
-py:hd_sd 0.154
+gsl 0.049
 normal distribution
-py:numpy 0.651
-py:hd_sd 0.240
-6D
-uniform distribution
-py:numpy 0.717
-py:hd_sd 0.140
-normal distribution
-py:numpy 0.584
-py:hd_sd 0.222
+gsl 0.051
 
 1D
 uniform distribution
-hs_ss 0.039
-hs_sd 0.106
-hd_ss 0.104
-hd_sd 0.190
+py:numpy 0.077
+py:hd_sd 0.103
 normal distribution
-hs_ss 0.052
-hs_sd 0.124
-hd_ss 0.121
-hd_sd 0.209
+py:numpy 0.084
+py:hd_sd 0.112
+2D
+uniform distribution
+py:numpy 0.398
+py:hd_sd 0.075
+normal distribution
+py:numpy 0.392
+py:hd_sd 0.084
 3D
 uniform distribution
-hs_ss 0.184
-hs_sd 0.090
-hd_ss 0.306
-hd_sd 0.164
+py:numpy 0.450
+py:hd_sd 0.076
 normal distribution
-hs_ss 0.170
-hs_sd 0.124
-hd_ss 0.283
-hd_sd 0.201
+py:numpy 0.326
+py:hd_sd 0.117
 6D
 uniform distribution
-hs_ss 0.177
-hs_sd 0.092
-hd_ss 0.278
-hd_sd 0.189
+py:numpy 0.361
+py:hd_sd 0.076
 normal distribution
-hs_ss 0.190
-hs_sd 0.132
-hd_ss 0.295
-hd_sd 0.229
+py:numpy 0.305
+py:hd_sd 0.116
+
+1D
+uniform distribution
+hs_ss 0.020
+hs_sd 0.081
+hd_ss 0.051
+hd_sd 0.093
+normal distribution
+hs_ss 0.026
+hs_sd 0.066
+hd_ss 0.059
+hd_sd 0.103
+2D
+uniform distribution
+hs_ss 0.021
+hs_sd 0.040
+hd_ss 0.051
+hd_sd 0.075
+normal distribution
+hs_ss 0.027
+hs_sd 0.048
+hd_ss 0.058
+hd_sd 0.083
+3D
+uniform distribution
+hs_ss 0.085
+hs_sd 0.043
+hd_ss 0.144
+hd_sd 0.075
+normal distribution
+hs_ss 0.077
+hs_sd 0.050
+hd_ss 0.129
+hd_sd 0.083
+6D
+uniform distribution
+hs_ss 0.085
+hs_sd 0.044
+hd_ss 0.131
+hd_sd 0.084
+normal distribution
+hs_ss 0.092
+hs_sd 0.061
+hd_ss 0.144
+hd_sd 0.107

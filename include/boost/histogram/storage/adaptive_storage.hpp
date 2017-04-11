@@ -15,7 +15,6 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/variant.hpp>
 #include <limits>
-#include <memory>
 #include <type_traits>
 
 // forward declaration for serialization workaround
@@ -94,15 +93,18 @@ private:
   void create() {
     if (size) {
       ptr = Allocator<T>::allocate(size);
-      if (!std::is_pod<T>::value)
+      if (!std::is_pod<T>::value) {
         new (ptr) T[size];
+      }
     }
   }
   void destroy() {
     if (size) {
-      if (!std::is_pod<T>::value)
-        for (auto it = begin(); it != end(); ++it)
+      if (!std::is_pod<T>::value) {
+        for (auto it = begin(); it != end(); ++it) {
           it->~T();
+        }
+      }
       Allocator<T>::deallocate(ptr, size);
     }
   }
@@ -150,26 +152,24 @@ public:
   adaptive_storage(adaptive_storage &&) = default;
   adaptive_storage &operator=(adaptive_storage &&) = default;
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
-  explicit adaptive_storage(const OtherStorage &rhs)
-      : buffer_(array<void>(rhs.size())) {
+  template <typename S, typename = detail::is_storage<S>>
+  explicit adaptive_storage(const S &rhs) : buffer_(array<void>(rhs.size())) {
     for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
-      apply_visitor(assign_visitor<typename OtherStorage::value_type>(
-                        i, rhs.value(i), buffer_),
-                    buffer_);
+      apply_visitor(
+          assign_visitor<typename S::value_type>(i, rhs.value(i), buffer_),
+          buffer_);
     }
   }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
-  adaptive_storage &operator=(const OtherStorage &rhs) {
+  template <typename S> adaptive_storage &operator=(const S &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       if (size() != rhs.size()) {
         buffer_ = array<void>(rhs.size());
       }
       for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
-        apply_visitor(assign_visitor<typename OtherStorage::value_type>(
-                          i, rhs.value(i), buffer_),
-                      buffer_);
+        apply_visitor(
+            assign_visitor<typename S::value_type>(i, rhs.value(i), buffer_),
+            buffer_);
       }
     }
     return *this;
@@ -193,22 +193,20 @@ public:
     return apply_visitor(variance_visitor(i), buffer_);
   }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
-  adaptive_storage &operator+=(const OtherStorage &rhs) {
+  template <typename S> adaptive_storage &operator+=(const S &rhs) {
     for (std::size_t i = 0, n = rhs.size(); i < n; ++i)
-      apply_visitor(add_visitor<typename OtherStorage::value_type>(
-                        i, rhs.value(i), buffer_),
-                    buffer_);
+      apply_visitor(
+          add_visitor<typename S::value_type>(i, rhs.value(i), buffer_),
+          buffer_);
     return *this;
   }
 
-  bool operator==(const adaptive_storage &o) const {
-    return apply_visitor(bicmp_visitor(), buffer_, o.buffer_);
+  bool operator==(const adaptive_storage &rhs) const {
+    return apply_visitor(bicmp_visitor(), buffer_, rhs.buffer_);
   }
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
-  bool operator==(const OtherStorage &o) const {
-    return apply_visitor(cmp_visitor<OtherStorage>(o), buffer_);
+  template <typename S> bool operator==(const S &rhs) const {
+    return apply_visitor(cmp_visitor<S>(rhs), buffer_);
   }
 
 private:
@@ -241,7 +239,9 @@ private:
       (*this)(get<array<uint8_t>>(buffer));
     }
 
-    void operator()(array<mp_int> &b) const { b[idx] = value; }
+    void operator()(array<mp_int> &b) const {
+      b[idx] = static_cast<mp_int>(value);
+    }
 
     void operator()(array<weight> &b) const { b[idx] = value; }
   };
@@ -402,10 +402,9 @@ private:
     }
   };
 
-  template <typename OtherStorage>
-  struct cmp_visitor : public static_visitor<bool> {
-    const OtherStorage &os;
-    cmp_visitor(const OtherStorage &o) : os(o) {}
+  template <typename S> struct cmp_visitor : public static_visitor<bool> {
+    const S &os;
+    cmp_visitor(const S &o) : os(o) {}
 
     template <typename Array> bool operator()(const Array &b) const {
       if (b.size != os.size())
@@ -457,8 +456,8 @@ private:
   template <class Archive> void serialize(Archive &, unsigned);
 };
 
-template <template <class> class Allocator, typename OtherStorage>
-bool operator==(const OtherStorage &a, const adaptive_storage<Allocator> &b) {
+template <template <class> class Allocator, typename S>
+bool operator==(const S &a, const adaptive_storage<Allocator> &b) {
   return b == a;
 }
 

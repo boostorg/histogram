@@ -7,6 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_DETAIL_UTILITY_HPP_
 #define _BOOST_HISTOGRAM_DETAIL_UTILITY_HPP_
 
+#include <boost/call_traits.hpp>
 #include <ostream>
 
 namespace boost {
@@ -27,7 +28,8 @@ inline void escape(std::ostream &os, const String &s) {
 }
 
 template <typename A, typename> struct lin {
-  static inline void apply(std::size_t &out, std::size_t &stride, const A &a, int j) {
+  static inline void apply(std::size_t &out, std::size_t &stride, const A &a,
+                           int j) noexcept {
     // the following is highly optimized code that runs in a hot loop;
     // please measure the performance impact of changes
     const int uoflow = a.uoflow();
@@ -43,7 +45,7 @@ template <typename A, typename> struct lin {
 
 template <typename A, typename T> struct xlin {
   static inline void apply(std::size_t &out, std::size_t &stride, const A &a,
-                  const T &x) {
+                           typename call_traits<T>::param_type x) noexcept {
     // the following is highly optimized code that runs in a hot loop;
     // please measure the performance impact of changes
     int j = a.index(x);
