@@ -27,27 +27,29 @@
 <a name="histogram.abstract"></a><a class="link" href="abstract.html" title="Abstract">Abstract</a>
 </h2></div></div></div>
 <p>
-      This C++11 library implements two easy-to-use and powerful n-dimensional <a href="https://en.wikipedia.org/wiki/Histogram" target="_top">histogram</a> classes, using
-      a policy-based design, optimized for convenience, customizability, and highest
-      performance.
+      This <code class="computeroutput"><span class="identifier">C</span><span class="special">++</span><span class="number">11</span></code> library provides an easy-to-use powerful n-dimensional
+      <a href="https://en.wikipedia.org/wiki/Histogram" target="_top">histogram</a> class
+      for your statistics needs. It is very customisable through policy classes,
+      but the default policies were carefully designed so that most users won't need
+      to customize anything. The library has a convenient uniform interface, is memory
+      efficient, and very fast. If the default policies are used, bin counts <span class="bold"><strong>cannot overflow</strong></span> or <span class="bold"><strong>loose precision</strong></span>.
     </p>
 <p>
-      Two histogram implementations in C++ are included. <code class="computeroutput"><a class="link" href="../boost/histogram/static_histogram.html" title="Class template static_histogram">static_histogram</a></code>
-      exploits compile-time information as much as possible to provide the maximum
-      performance, but has no run-time flexibility. <code class="computeroutput"><a class="link" href="../boost/histogram/dynamic_histogram.html" title="Class template dynamic_histogram">dynamic_histogram</a></code>
-      makes the opposite trade-off. The two classes share an interface. Optional
-      Python bindings for the <code class="computeroutput"><a class="link" href="../boost/histogram/dynamic_histogram.html" title="Class template dynamic_histogram">dynamic_histogram</a></code>
-      are included, based on <a href="../../../../../libs/python/index.html" target="_top">Boost.Python</a>.
-      Optional serialization support is implemented, based on <a href="../../../../../libs/serialization/index.html" target="_top">Boost.Serialization</a>.
+      The histogram class comes in two implementations with a common interface. The
+      <span class="bold"><strong>static</strong></span> variant uses compile-time information
+      to provide maximum performance, at the cost of potentially larger executables
+      and reduced runtime flexibility. The <span class="bold"><strong>dynamic</strong></span>
+      variant makes the opposite trade-off. Python bindings for the latter are included,
+      implemented with <a href="../../../../../libs/python/index.html" target="_top">Boost.Python</a>.
+      Optional serialization support is implemented with <a href="../../../../../libs/serialization/index.html" target="_top">Boost.Serialization</a>.
     </p>
 <p>
-      The histograms have value semantics. Move operations and trips over the language
-      boundary from C++ to Python and back are cheap. Histograms can be streamed
-      from/to files and pickled in Python. <a href="http://www.numpy.org" target="_top">Numpy</a>
+      The histogram supports value semantics. Move operations and trips over the
+      language boundary from C++ to Python are cheap. Histogram instances can be
+      streamed from/to files and pickled in Python. <a href="http://www.numpy.org" target="_top">Numpy</a>
       is supported to speed up operations in Python: histograms can be filled with
-      Numpy arrays at high speed (<span class="bold"><strong>faster</strong></span> than Numpy's
-      own histogram functions) and are convertible into Numpy arrays without copying
-      data.
+      Numpy arrays at high speed (faster than numpy's own histogram functions) and
+      are convertible into Numpy arrays without copying data.
     </p>
 <p>
       My goal is to submit this project to <a href="http://www.boost.org" target="_top">Boost</a>,

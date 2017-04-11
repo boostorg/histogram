@@ -1,6 +1,8 @@
 <?xml version="1.0" standalone="yes"?>
 <library-reference><header name="boost/histogram.hpp">
 <para>Includes all standard headers of the Boost.histogram library. </para><para>The library consists of two histogram implementations static_histogram and dynamic_histogram which share a common interface. The first is faster, but lacks run-time polymorphism, the second implements the opposite trade-off. Several axis types are included, which implement different binning algorithms. The axis types are passed in the constructor of the histogram to configure its binning. </para></header>
+<header name="boost/histogram/histogram.hpp">
+</header>
 <header name="boost/histogram/axis.hpp">
 <namespace name="boost">
 <namespace name="histogram">
@@ -66,10 +68,10 @@
 </struct><struct-specialization name="bin"><template>
     </template><specialization><template-arg>const std::string &amp;</template-arg></specialization><data-member name="idx"><type>int</type></data-member>
 <data-member name="value"><type>boost::string_ref</type></data-member>
-</struct-specialization><class name="category_axis"><inherit access="public">boost::histogram::axis_base&lt; false &gt;</inherit><purpose>An axis for enumerated categories. </purpose><description><para>The axis stores the category labels, and expects that they are addressed using an integer from <computeroutput>0</computeroutput> to <computeroutput>n-1</computeroutput>. There are no underflow/overflow bins for this axis. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>const std::string &amp;</type></typedef>
+</struct-specialization><class name="category_axis"><inherit access="public">boost::histogram::axis_base&lt; false &gt;</inherit><inherit access="private">boost::operators&lt; category_axis &gt;</inherit><purpose>An axis for enumerated categories. </purpose><description><para>The axis stores the category labels, and expects that they are addressed using an integer from <computeroutput>0</computeroutput> to <computeroutput>n-1</computeroutput>. There are no underflow/overflow bins for this axis. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>const std::string &amp;</type></typedef>
 <typedef name="const_iterator"><type>axis_iterator&lt; <classname>category_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
-<method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>int</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose><description><para>Performs a range check. </para></description></method>
+<method name="index" cv="const noexcept"><type>int</type><parameter name="x"><paramtype>int</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose><description><para>Performs a range check. </para></description></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the category for the bin index. </purpose></method>
 <method name="operator==" cv="const"><type>bool</type><parameter name="other"><paramtype>const <classname>category_axis</classname> &amp;</paramtype></parameter></method>
 <method name="begin" cv="const"><type>const_iterator</type></method>
@@ -87,10 +89,10 @@
 <copy-assignment><type><classname>category_axis</classname> &amp;</type><parameter name="other"><paramtype><classname>category_axis</classname> &amp;&amp;</paramtype></parameter></copy-assignment>
 </class><class name="circular_axis"><template>
       <template-type-parameter name="RealType"><default>double</default></template-type-parameter>
-    </template><inherit access="public">boost::histogram::axis_base&lt; false &gt;</inherit><purpose>Axis for real-valued angles. </purpose><description><para>The axis is circular and wraps around reaching the perimeter value. Therefore, there are no overflow/underflow bins for this axis. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>RealType</type></typedef>
+    </template><inherit access="public">boost::histogram::axis_base&lt; false &gt;</inherit><inherit access="private">boost::operators&lt; regular_axis&lt; RealType &gt; &gt;</inherit><purpose>Axis for real-valued angles. </purpose><description><para>The axis is circular and wraps around reaching the perimeter value. Therefore, there are no overflow/underflow bins for this axis. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>RealType</type></typedef>
 <typedef name="const_iterator"><type>axis_iterator&lt; <classname>circular_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
-<method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
+<method name="index" cv="const noexcept"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the starting edge of the bin. </purpose></method>
 <method name="operator==" cv="const"><type>bool</type><parameter name="o"><paramtype>const <classname>circular_axis</classname> &amp;</paramtype></parameter></method>
 <method name="perimeter" cv="const"><type>value_type</type></method>
@@ -105,10 +107,10 @@
 <copy-assignment cv="= default"><type><classname>circular_axis</classname> &amp;</type><parameter name=""><paramtype>const <classname>circular_axis</classname> &amp;</paramtype></parameter></copy-assignment>
 <constructor cv="= default"><parameter name=""><paramtype><classname>circular_axis</classname> &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type><classname>circular_axis</classname> &amp;</type><parameter name=""><paramtype><classname>circular_axis</classname> &amp;&amp;</paramtype></parameter></copy-assignment>
-</class><class name="integer_axis"><inherit access="public">boost::histogram::axis_base&lt; true &gt;</inherit><purpose>An axis for a contiguous range of integers. </purpose><description><para>Binning is a O(1) operation. This axis operates faster than a <classname alt="boost::histogram::regular_axis">regular_axis</classname>. </para></description><typedef name="value_type"><type>int</type></typedef>
+</class><class name="integer_axis"><inherit access="public">boost::histogram::axis_base&lt; true &gt;</inherit><inherit access="private">boost::operators&lt; integer_axis &gt;</inherit><purpose>An axis for a contiguous range of integers. </purpose><description><para>Binning is a O(1) operation. This axis operates faster than a <classname alt="boost::histogram::regular_axis">regular_axis</classname>. </para></description><typedef name="value_type"><type>int</type></typedef>
 <typedef name="const_iterator"><type>axis_iterator&lt; <classname>integer_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
-<method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
+<method name="index" cv="const noexcept"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the integer that is mapped to the bin index. </purpose></method>
 <method name="operator==" cv="const"><type>bool</type><parameter name="o"><paramtype>const <classname>integer_axis</classname> &amp;</paramtype></parameter></method>
 <method name="begin" cv="const"><type>const_iterator</type></method>
@@ -128,10 +130,10 @@
 <data-member name="right"><type>Value</type></data-member>
 </struct><class name="regular_axis"><template>
       <template-type-parameter name="RealType"><default>double</default></template-type-parameter>
-    </template><inherit access="public">boost::histogram::axis_base&lt; true &gt;</inherit><purpose>Axis for binning real-valued data into equidistant bins. </purpose><description><para>The simplest and common binning strategy. Very fast. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>RealType</type></typedef>
+    </template><inherit access="public">boost::histogram::axis_base&lt; true &gt;</inherit><inherit access="private">boost::operators&lt; regular_axis&lt; RealType &gt; &gt;</inherit><purpose>Axis for binning real-valued data into equidistant bins. </purpose><description><para>The simplest and common binning strategy. Very fast. Binning is a O(1) operation. </para></description><typedef name="value_type"><type>RealType</type></typedef>
 <typedef name="const_iterator"><type>axis_iterator&lt; <classname>regular_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
-<method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
+<method name="index" cv="const noexcept"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the starting edge of the bin. </purpose></method>
 <method name="operator==" cv="const"><type>bool</type><parameter name="o"><paramtype>const <classname>regular_axis</classname> &amp;</paramtype></parameter></method>
 <method name="begin" cv="const"><type>const_iterator</type></method>
@@ -146,10 +148,10 @@
 <copy-assignment cv="= default"><type><classname>regular_axis</classname> &amp;</type><parameter name=""><paramtype><classname>regular_axis</classname> &amp;&amp;</paramtype></parameter></copy-assignment>
 </class><class name="variable_axis"><template>
       <template-type-parameter name="RealType"><default>double</default></template-type-parameter>
-    </template><inherit access="public">boost::histogram::axis_base&lt; true &gt;</inherit><purpose>An axis for real-valued data and bins of varying width. </purpose><description><para>Binning is a O(log(N)) operation. If speed matters and the problem domain allows it, prefer a <classname alt="boost::histogram::regular_axis">regular_axis</classname>. </para></description><typedef name="value_type"><type>RealType</type></typedef>
+    </template><inherit access="public">boost::histogram::axis_base&lt; true &gt;</inherit><inherit access="private">boost::operators&lt; variable_axis&lt; RealType &gt; &gt;</inherit><purpose>An axis for real-valued data and bins of varying width. </purpose><description><para>Binning is a O(log(N)) operation. If speed matters and the problem domain allows it, prefer a <classname alt="boost::histogram::regular_axis">regular_axis</classname>. </para></description><typedef name="value_type"><type>RealType</type></typedef>
 <typedef name="const_iterator"><type>axis_iterator&lt; <classname>variable_axis</classname> &gt;</type></typedef>
 <method-group name="public member functions">
-<method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
+<method name="index" cv="const noexcept"><type>int</type><parameter name="x"><paramtype>value_type</paramtype></parameter><purpose>Returns the bin index for the passed argument. </purpose></method>
 <method name="operator[]" cv="const"><type>value_type</type><parameter name="idx"><paramtype>int</paramtype></parameter><purpose>Returns the starting edge of the bin. </purpose></method>
 <method name="operator==" cv="const"><type>bool</type><parameter name="o"><paramtype>const <classname>variable_axis</classname> &amp;</paramtype></parameter></method>
 <method name="begin" cv="const"><type>const_iterator</type></method>
@@ -167,7 +169,6 @@
 <copy-assignment cv="= default"><type><classname>variable_axis</classname> &amp;</type><parameter name=""><paramtype><classname>variable_axis</classname> &amp;&amp;</paramtype></parameter></copy-assignment>
 </class><typedef name="axis_bin"><type>typename std::conditional&lt; std::is_floating_point&lt; Value &gt;::value, real_bin&lt; Value &gt;, bin&lt; Value &gt; &gt;::type</type></typedef>
 <typedef name="default_axes"><type>mpl::vector&lt; <classname>regular_axis</classname>&lt; double &gt;, <classname>regular_axis</classname>&lt; float &gt;, <classname>circular_axis</classname>&lt; double &gt;, <classname>circular_axis</classname>&lt; float &gt;, <classname>variable_axis</classname>&lt; double &gt;, <classname>variable_axis</classname>&lt; float &gt;, <classname>integer_axis</classname>, <classname>category_axis</classname> &gt;::type</type></typedef>
-
 
 
 
@@ -246,53 +247,99 @@
 
 
 
+</namespace>
+</namespace>
+</header>
+<header name="boost/histogram/histogram_fwd.hpp">
+<namespace name="boost">
+<namespace name="histogram">
+<class name="histogram"><template>
+      <template-nontype-parameter name=""><type>type</type></template-nontype-parameter>
+      <template-type-parameter name="Axes"/>
+      <template-type-parameter name="Storage"><default>adaptive_storage&lt;&gt;</default></template-type-parameter>
+    </template></class><enum name="type"><enumvalue name="Static"/><enumvalue name="Dynamic"/></enum>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </namespace>
 </namespace>
 </header>
-<header name="boost/histogram/dynamic_histogram.hpp">
+<header name="boost/histogram/histogram_impl_dynamic.hpp">
 <namespace name="boost">
 <namespace name="histogram">
-<class name="dynamic_histogram"><template>
-      <template-type-parameter name="Axes"><default>default_axes</default></template-type-parameter>
-      <template-type-parameter name="Storage"><default>adaptive_storage&lt;&gt;</default></template-type-parameter>
-    </template><struct name="lin_visitor"><template>
+<class-specialization name="histogram"><template>
+      <template-type-parameter name="Axes"/>
+      <template-type-parameter name="Storage"/>
+    </template><specialization><template-arg>Dynamic</template-arg><template-arg>Axes</template-arg><template-arg>Storage</template-arg></specialization><struct name="lin_visitor"><template>
       <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
       <template-type-parameter name="Value"/>
-    </template><inherit access="public">static_visitor&lt; pairs &gt;</inherit><data-member name="pa" specifiers="mutable"><type>pairs</type></data-member>
+    </template><inherit access="public">static_visitor&lt; size_pair &gt;</inherit><data-member name="pa" specifiers="mutable"><type>size_pair</type></data-member>
 <data-member name="val"><type>const Value &amp;</type></data-member>
 <method-group name="public member functions">
-<method name="operator()" cv="const"><type>pairs</type><template>
+<method name="operator()" cv="const"><type>size_pair</type><template>
           <template-type-parameter name="A"/>
         </template><parameter name="a"><paramtype>const A &amp;</paramtype></parameter></method>
 </method-group>
-<constructor><parameter name="p"><paramtype>const pairs &amp;</paramtype></parameter><parameter name="v"><paramtype>const Value &amp;</paramtype></parameter></constructor>
-</struct><typedef name="histogram_tag"><type><emphasis>unspecified</emphasis></type></typedef>
-<typedef name="axis_type"><type>typename make_variant_over&lt; Axes &gt;::type</type></typedef>
+<constructor><parameter name="p"><paramtype>const size_pair &amp;</paramtype></parameter><parameter name="v"><paramtype>const Value &amp;</paramtype></parameter></constructor>
+</struct><typedef name="axis_type"><type>typename make_variant_over&lt; Axes &gt;::type</type></typedef>
 <typedef name="value_type"><type>typename Storage::value_type</type></typedef>
 <method-group name="public member functions">
-<method name="operator==" cv="const"><type>bool</type><template>
-          <template-type-parameter name="OtherAxes"/>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>const dynamic_histogram&lt; OtherAxes, OtherStorage &gt; &amp;</paramtype></parameter></method>
-<method name="operator+="><type>dynamic_histogram &amp;</type><template>
-          <template-nontype-parameter name="Histogram"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
-          <template-type-parameter name="OtherAxes"/>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>const Histogram&lt; OtherAxes, OtherStorage &gt; &amp;</paramtype></parameter></method>
-<method name="fill"><type>void</type><template>
+<method name="operator==" cv="const noexcept"><type>bool</type><template>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></method>
+<method name="operator!=" cv="const noexcept"><type>bool</type><template>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></method>
+<method name="operator+="><type>histogram &amp;</type><template>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></method>
+<method name="fill" cv="noexcept"><type>void</type><template>
           <template-nontype-parameter name="Values"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="values"><paramtype>Values...</paramtype></parameter></method>
-<method name="fill"><type>void</type><template>
+<method name="fill" cv="noexcept"><type>void</type><template>
           <template-type-parameter name="Iterator"/>
           <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
         </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="wfill"><type>std::enable_if&lt; has_weight_support &gt;::type</type><template>
-          <template-nontype-parameter name="has_weight_support"><type>bool</type><default>detail::has_weight_support&lt;Storage&gt;::value</default></template-nontype-parameter>
+<method name="wfill" cv="noexcept"><type>void</type><template>
           <template-nontype-parameter name="Values"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="values"><paramtype>Values...</paramtype></parameter></method>
-<method name="wfill"><type>std::enable_if&lt; has_weight_support &gt;::type</type><template>
-          <template-nontype-parameter name="has_weight_support"><type>bool</type><default>detail::has_weight_support&lt;Storage&gt;::value</default></template-nontype-parameter>
+<method name="wfill" cv="noexcept"><type>void</type><template>
           <template-type-parameter name="Iterator"/>
           <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
         </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
@@ -310,13 +357,14 @@
           <template-type-parameter name="Iterator"/>
           <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
         </template><parameter name="begin"><paramtype>Iterator</paramtype></parameter><parameter name="end"><paramtype>Iterator</paramtype></parameter></method>
-<method name="dim" cv="const"><type>unsigned</type><purpose>Number of axes (dimensions) of histogram. </purpose></method>
-<method name="size" cv="const"><type>std::size_t</type><purpose>Total number of bins in the histogram (including underflow/overflow) </purpose></method>
-<method name="sum" cv="const"><type>double</type><purpose>Sum of all counts in the histogram. </purpose></method>
+<method name="dim" cv="const noexcept"><type>unsigned</type><purpose>Number of axes (dimensions) of histogram. </purpose></method>
+<method name="size" cv="const noexcept"><type>std::size_t</type><purpose>Total number of bins in the histogram (including underflow/overflow) </purpose></method>
+<method name="sum" cv="const noexcept"><type>double</type><purpose>Sum of all counts in the histogram. </purpose></method>
+<method name="reset"><type>void</type><purpose>Reset bin counters to zero. </purpose></method>
 <method name="axis" cv="const"><type>const axis_type &amp;</type><parameter name="i"><paramtype>unsigned</paramtype><default>0</default></parameter><purpose>Return axis <emphasis>i</emphasis>. </purpose></method>
 <method name="axis" cv="const"><type>const axis_type &amp;</type><template>
-          <template-nontype-parameter name="N"><type>unsigned</type><default>0u</default></template-nontype-parameter>
-        </template><purpose>Return axis <emphasis>i</emphasis> (added for conformity with static_histogram interface) </purpose></method>
+          <template-nontype-parameter name="N"><type>unsigned</type><default>0</default></template-nontype-parameter>
+        </template><purpose>Return axis <emphasis>i</emphasis> (for conformity with histogram&lt;Static, ...&gt; interface) </purpose></method>
 <method name="for_each_axis" cv="const"><type>void</type><template>
           <template-type-parameter name="Unary"/>
         </template><parameter name="unary"><paramtype>Unary &amp;</paramtype></parameter><purpose>Apply unary functor/function to each axis. </purpose></method>
@@ -330,54 +378,166 @@
           <template-type-parameter name=""><default>detail::is_iterator&lt;Iterator&gt;</default></template-type-parameter>
         </template><parameter name="axes_begin"><paramtype>Iterator</paramtype></parameter><parameter name="axes_end"><paramtype>Iterator</paramtype></parameter></constructor>
 <constructor specifiers="explicit"><template>
-          <template-type-parameter name="OtherAxes"/>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>const dynamic_histogram&lt; OtherAxes, OtherStorage &gt; &amp;</paramtype></parameter></constructor>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></constructor>
+<copy-assignment><type>histogram &amp;</type><template>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></copy-assignment>
 <constructor specifiers="explicit"><template>
-          <template-type-parameter name="OtherAxes"/>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>dynamic_histogram&lt; OtherAxes, OtherStorage &gt; &amp;&amp;</paramtype></parameter></constructor>
-<copy-assignment><type>dynamic_histogram &amp;</type><template>
-          <template-type-parameter name="OtherAxes"/>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>const dynamic_histogram&lt; OtherAxes, OtherStorage &gt; &amp;</paramtype></parameter></copy-assignment>
-<copy-assignment><type>dynamic_histogram &amp;</type><template>
-          <template-type-parameter name="OtherAxes"/>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>dynamic_histogram&lt; OtherAxes, OtherStorage &gt; &amp;&amp;</paramtype></parameter></copy-assignment>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>histogram&lt; Dynamic, Axes, S &gt; &amp;&amp;</paramtype></parameter></constructor>
+<copy-assignment><type>histogram &amp;</type><template>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>histogram&lt; Dynamic, Axes, S &gt; &amp;&amp;</paramtype></parameter></copy-assignment>
 <method-group name="private member functions">
 <method name="field_count" cv="const"><type>std::size_t</type></method>
-<method name="axes_equal_to" cv="const"><type>bool</type><template>
-          <template-type-parameter name="OtherAxes"/>
-        </template><parameter name="other_axes"><paramtype>const OtherAxes &amp;</paramtype></parameter></method>
-<method name="apply_lin" cv="const"><type>pairs</type><template>
+<method name="apply_lin" cv="const"><type>size_pair</type><template>
           <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
           <template-type-parameter name="First"/>
           <template-nontype-parameter name="Rest"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter><parameter name="first"><paramtype>const First &amp;</paramtype></parameter><parameter name="rest"><paramtype>const Rest &amp;...</paramtype></parameter></method>
-<method name="apply_lin" cv="const"><type>pairs</type><template>
+        </template><parameter name="p"><paramtype>size_pair &amp;&amp;</paramtype></parameter><parameter name="first"><paramtype>const First &amp;</paramtype></parameter><parameter name="rest"><paramtype>const Rest &amp;...</paramtype></parameter></method>
+<method name="apply_lin" cv="const"><type>size_pair</type><template>
           <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
-        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter></method>
-<method name="apply_lin_iter" cv="const"><type>pairs</type><template>
+        </template><parameter name="p"><paramtype>size_pair &amp;&amp;</paramtype></parameter></method>
+<method name="apply_lin_iter" cv="const"><type>size_pair</type><template>
           <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
           <template-type-parameter name="Iterator"/>
-        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter><parameter name="iter"><paramtype>Iterator</paramtype></parameter></method>
+        </template><parameter name="p"><paramtype>size_pair &amp;&amp;</paramtype></parameter><parameter name="iter"><paramtype>Iterator</paramtype></parameter></method>
 </method-group>
-</class>
+</class-specialization>
 
 
 
 
-<function name="make_dynamic_histogram"><type>dynamic_histogram</type><template>
+<function name="make_dynamic_histogram"><type><emphasis>unspecified</emphasis></type><template>
           <template-nontype-parameter name="Axes"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="axes"><paramtype>Axes &amp;&amp;...</paramtype></parameter></function>
-<function name="make_dynamic_histogram_with"><type>dynamic_histogram&lt; default_axes, Storage &gt;</type><template>
+<function name="make_dynamic_histogram_with"><type><emphasis>unspecified</emphasis></type><template>
           <template-type-parameter name="Storage"/>
           <template-nontype-parameter name="Axes"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="axes"><paramtype>Axes &amp;&amp;...</paramtype></parameter></function>
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</namespace>
+</namespace>
+</header>
+<header name="boost/histogram/histogram_impl_static.hpp">
+<namespace name="boost">
+<namespace name="histogram">
+<class-specialization name="histogram"><template>
+      <template-type-parameter name="Axes"/>
+      <template-type-parameter name="Storage"/>
+    </template><specialization><template-arg>Static</template-arg><template-arg>Axes</template-arg><template-arg>Storage</template-arg></specialization><typedef name="value_type"><type>typename Storage::value_type</type></typedef>
+<method-group name="public member functions">
+<method name="operator==" cv="const"><type>bool</type><template>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></method>
+<method name="operator!=" cv="const"><type>bool</type><template>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></method>
+<method name="operator+="><type>histogram &amp;</type><template>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></method>
+<method name="fill"><type>void</type><template>
+          <template-nontype-parameter name="Values"><type>typename...</type></template-nontype-parameter>
+        </template><parameter name="values"><paramtype>Values...</paramtype></parameter></method>
+<method name="wfill"><type>void</type><template>
+          <template-nontype-parameter name="Values"><type>typename...</type></template-nontype-parameter>
+        </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="values"><paramtype>Values...</paramtype></parameter></method>
+<method name="value" cv="const"><type>value_type</type><template>
+          <template-nontype-parameter name="Indices"><type>typename...</type></template-nontype-parameter>
+        </template><parameter name="indices"><paramtype>Indices...</paramtype></parameter></method>
+<method name="variance" cv="const"><type>value_type</type><template>
+          <template-nontype-parameter name="Indices"><type>typename...</type></template-nontype-parameter>
+        </template><parameter name="indices"><paramtype>Indices...</paramtype></parameter></method>
+<method name="dim" cv="const"><type>constexpr unsigned</type><purpose>Number of axes (dimensions) of histogram. </purpose></method>
+<method name="size" cv="const"><type>std::size_t</type><purpose>Total number of bins in the histogram (including underflow/overflow) </purpose></method>
+<method name="sum" cv="const"><type>double</type><purpose>Sum of all counts in the histogram. </purpose></method>
+<method name="reset"><type>void</type><purpose>Reset bin counters to zero. </purpose></method>
+<method name="axis" cv="const"><type>std::add_const&lt; typename fusion::result_of::value_at_c&lt; axes_type, N &gt;::type &gt;::type &amp;</type><template>
+          <template-nontype-parameter name="N"><type>unsigned</type><default>0</default></template-nontype-parameter>
+        </template></method>
+<method name="for_each_axis" cv="const"><type>void</type><template>
+          <template-type-parameter name="Unary"/>
+        </template><parameter name="unary"><paramtype>Unary &amp;</paramtype></parameter><purpose>Apply unary functor/function to each axis. </purpose></method>
+</method-group>
+<constructor cv="= default"/>
+<constructor specifiers="explicit"><template>
+          <template-nontype-parameter name="Axes1"><type>typename...</type></template-nontype-parameter>
+        </template><parameter name="axes"><paramtype>const Axes1 &amp;...</paramtype></parameter></constructor>
+<constructor cv="= default"><parameter name="rhs"><paramtype>const histogram &amp;</paramtype></parameter></constructor>
+<constructor cv="= default"><parameter name="rhs"><paramtype>histogram &amp;&amp;</paramtype></parameter></constructor>
+<copy-assignment cv="= default"><type>histogram &amp;</type><parameter name="rhs"><paramtype>const histogram &amp;</paramtype></parameter></copy-assignment>
+<copy-assignment cv="= default"><type>histogram &amp;</type><parameter name="rhs"><paramtype>histogram &amp;&amp;</paramtype></parameter></copy-assignment>
+<constructor specifiers="explicit"><template>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></constructor>
+<copy-assignment><type>histogram &amp;</type><template>
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></copy-assignment>
+<method-group name="private member functions">
+<method name="field_count" cv="const"><type>std::size_t</type></method>
+<method name="apply_lin" cv="const"><type>size_pair</type><template>
+          <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
+          <template-type-parameter name="First"/>
+          <template-nontype-parameter name="Rest"><type>typename...</type></template-nontype-parameter>
+        </template><parameter name="p"><paramtype>size_pair &amp;&amp;</paramtype></parameter><parameter name="x"><paramtype>const First &amp;</paramtype></parameter><parameter name="rest"><paramtype>const Rest &amp;...</paramtype></parameter></method>
+<method name="apply_lin" cv="const"><type>size_pair</type><template>
+          <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
+        </template><parameter name="p"><paramtype>size_pair &amp;&amp;</paramtype></parameter></method>
+</method-group>
+</class-specialization>
+
+
+
+
+
+
+<function name="make_static_histogram"><type>histogram&lt; Static, mpl::vector&lt; Axes... &gt; &gt;</type><template>
+          <template-nontype-parameter name="Axes"><type>typename...</type></template-nontype-parameter>
+        </template><parameter name="axes"><paramtype>const Axes &amp;...</paramtype></parameter><purpose>default static type factory </purpose></function>
+<function name="make_static_histogram_with"><type>histogram&lt; Static, mpl::vector&lt; Axes... &gt;, Storage &gt;</type><template>
+          <template-type-parameter name="Storage"/>
+          <template-nontype-parameter name="Axes"><type>typename...</type></template-nontype-parameter>
+        </template><parameter name="axes"><paramtype>const Axes &amp;...</paramtype></parameter><purpose>static type factory with variable storage type </purpose></function>
 
 
 
@@ -415,15 +575,13 @@
 
 
 
+
+
 <function name="operator&lt;&lt;"><type>std::ostream &amp;</type><template>
-          <template-nontype-parameter name="Histogram"><type>template&lt; typename, typename &gt; class</type></template-nontype-parameter>
-          <template-type-parameter name="Axes"/>
-          <template-type-parameter name="Storage"/>
-          <template-type-parameter name=""><default>detail::is_histogram&lt;Histogram&lt;Axes, Storage&gt;&gt;</default></template-type-parameter>
-        </template><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="h"><paramtype>const Histogram&lt; Axes, Storage &gt; &amp;</paramtype></parameter></function>
-
-
-
+          <template-nontype-parameter name="D"><type>type</type></template-nontype-parameter>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="os"><paramtype>std::ostream &amp;</paramtype></parameter><parameter name="h"><paramtype>const histogram&lt; D, A, S &gt; &amp;</paramtype></parameter></function>
 
 
 
@@ -453,6 +611,8 @@
 <header name="boost/histogram/serialization.hpp">
 <para>Defines the serialization functions, to use with boost.serialize. </para><namespace name="boost">
 <namespace name="histogram">
+
+
 
 
 
@@ -491,135 +651,14 @@
         </template><parameter name="ar"><paramtype>Archive &amp;</paramtype></parameter><parameter name="axis"><paramtype><classname>category_axis</classname> &amp;</paramtype></parameter><parameter name=""><paramtype>unsigned</paramtype></parameter></function>
 <function name="serialize"><type>void</type><template>
           <template-type-parameter name="Archive"/>
-          <template-type-parameter name="Storage"/>
-          <template-type-parameter name="Axes"/>
-        </template><parameter name="ar"><paramtype>Archive &amp;</paramtype></parameter><parameter name="h"><paramtype>static_histogram&lt; Storage, Axes &gt; &amp;</paramtype></parameter><parameter name=""><paramtype>unsigned</paramtype></parameter></function>
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="ar"><paramtype>Archive &amp;</paramtype></parameter><parameter name="h"><paramtype>histogram&lt; Static, A, S &gt; &amp;</paramtype></parameter><parameter name=""><paramtype>unsigned</paramtype></parameter></function>
 <function name="serialize"><type>void</type><template>
           <template-type-parameter name="Archive"/>
-          <template-type-parameter name="Storage"/>
-          <template-type-parameter name="Axes"/>
-        </template><parameter name="ar"><paramtype>Archive &amp;</paramtype></parameter><parameter name="h"><paramtype>dynamic_histogram&lt; Storage, Axes &gt; &amp;</paramtype></parameter><parameter name=""><paramtype>unsigned</paramtype></parameter></function>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</namespace>
-</namespace>
-</header>
-<header name="boost/histogram/static_histogram.hpp">
-<namespace name="boost">
-<namespace name="histogram">
-<class name="static_histogram"><template>
-      <template-type-parameter name="Axes"/>
-      <template-type-parameter name="Storage"><default>adaptive_storage&lt;&gt;</default></template-type-parameter>
-    </template><typedef name="histogram_tag"><type><emphasis>unspecified</emphasis></type></typedef>
-<typedef name="value_type"><type>typename Storage::value_type</type></typedef>
-<method-group name="public member functions">
-<method name="operator==" cv="const"><type>bool</type><template>
-          <template-type-parameter name="OtherAxes"/>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>const static_histogram&lt; OtherAxes, OtherStorage &gt; &amp;</paramtype></parameter></method>
-<method name="operator+="><type>static_histogram &amp;</type><template>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>const static_histogram&lt; Axes, OtherStorage &gt; &amp;</paramtype></parameter></method>
-<method name="fill"><type>void</type><template>
-          <template-nontype-parameter name="Values"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="values"><paramtype>Values...</paramtype></parameter></method>
-<method name="wfill"><type>std::enable_if&lt; has_weight_support &gt;::type</type><template>
-          <template-nontype-parameter name="has_weight_support"><type>bool</type><default>detail::has_weight_support&lt;Storage&gt;::value</default></template-nontype-parameter>
-          <template-nontype-parameter name="Values"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="w"><paramtype>value_type</paramtype></parameter><parameter name="values"><paramtype>Values...</paramtype></parameter></method>
-<method name="value" cv="const"><type>value_type</type><template>
-          <template-nontype-parameter name="Indices"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="indices"><paramtype>Indices...</paramtype></parameter></method>
-<method name="variance" cv="const"><type>value_type</type><template>
-          <template-nontype-parameter name="Indices"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="indices"><paramtype>Indices...</paramtype></parameter></method>
-<method name="size" cv="const"><type>std::size_t</type><purpose>Total number of bins in the histogram (including underflow/overflow) </purpose></method>
-<method name="sum" cv="const"><type>double</type><purpose>Sum of all counts in the histogram. </purpose></method>
-<method name="axis" cv="const"><type>std::add_const&lt; typename fusion::result_of::value_at_c&lt; axes_type, N &gt;::type &gt;::type &amp;</type><template>
-          <template-nontype-parameter name="N"><type>unsigned</type><default>0</default></template-nontype-parameter>
-        </template></method>
-<method name="for_each_axis" cv="const"><type>void</type><template>
-          <template-type-parameter name="Unary"/>
-        </template><parameter name="unary"><paramtype>Unary &amp;</paramtype></parameter><purpose>Apply unary functor/function to each axis. </purpose></method>
-</method-group>
-<constructor cv="= default"/>
-<constructor specifiers="explicit"><template>
-          <template-nontype-parameter name="Axes1"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="axes"><paramtype>const Axes1 &amp;...</paramtype></parameter></constructor>
-<constructor cv="= default"><parameter name="other"><paramtype>const static_histogram &amp;</paramtype></parameter></constructor>
-<constructor cv="= default"><parameter name="other"><paramtype>static_histogram &amp;&amp;</paramtype></parameter></constructor>
-<copy-assignment cv="= default"><type>static_histogram &amp;</type><parameter name="other"><paramtype>const static_histogram &amp;</paramtype></parameter></copy-assignment>
-<copy-assignment cv="= default"><type>static_histogram &amp;</type><parameter name="other"><paramtype>static_histogram &amp;&amp;</paramtype></parameter></copy-assignment>
-<constructor specifiers="explicit"><template>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>const static_histogram&lt; Axes, OtherStorage &gt; &amp;</paramtype></parameter></constructor>
-<constructor specifiers="explicit"><template>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>static_histogram&lt; Axes, OtherStorage &gt; &amp;&amp;</paramtype></parameter></constructor>
-<copy-assignment><type>static_histogram &amp;</type><template>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>const static_histogram&lt; Axes, OtherStorage &gt; &amp;</paramtype></parameter></copy-assignment>
-<copy-assignment><type>static_histogram &amp;</type><template>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="other"><paramtype>static_histogram&lt; Axes, OtherStorage &gt; &amp;&amp;</paramtype></parameter></copy-assignment>
-<method-group name="public static functions">
-<method name="dim" specifiers="static"><type>constexpr unsigned</type><purpose>Number of axes (dimensions) of histogram. </purpose></method>
-</method-group>
-<method-group name="private member functions">
-<method name="field_count" cv="const"><type>std::size_t</type></method>
-<method name="axes_equal_to" cv="const"><type>bool</type><template>
-          <template-type-parameter name="OtherAxes"/>
-        </template><parameter name=""><paramtype>const OtherAxes &amp;</paramtype></parameter></method>
-<method name="axes_equal_to" cv="const"><type>bool</type><parameter name="other_axes"><paramtype>const axes_type &amp;</paramtype></parameter></method>
-<method name="apply_lin" cv="const"><type>pairs</type><template>
-          <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
-          <template-type-parameter name="First"/>
-          <template-nontype-parameter name="Rest"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter><parameter name="x"><paramtype>const First &amp;</paramtype></parameter><parameter name="rest"><paramtype>const Rest &amp;...</paramtype></parameter></method>
-<method name="apply_lin" cv="const"><type>pairs</type><template>
-          <template-nontype-parameter name="Lin"><type>template&lt; class, class &gt; class</type></template-nontype-parameter>
-        </template><parameter name="p"><paramtype>pairs &amp;&amp;</paramtype></parameter></method>
-</method-group>
-</class>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<function name="make_static_histogram"><type>static_histogram&lt; mpl::vector&lt; Axes... &gt; &gt;</type><template>
-          <template-nontype-parameter name="Axes"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="axes"><paramtype>const Axes &amp;...</paramtype></parameter><purpose>default static type factory </purpose></function>
-<function name="make_static_histogram_with"><type>static_histogram&lt; mpl::vector&lt; Axes... &gt;, Storage &gt;</type><template>
-          <template-type-parameter name="Storage"/>
-          <template-nontype-parameter name="Axes"><type>typename...</type></template-nontype-parameter>
-        </template><parameter name="axes"><paramtype>const Axes &amp;...</paramtype></parameter><purpose>static type factory with variable storage type </purpose></function>
-
+          <template-type-parameter name="A"/>
+          <template-type-parameter name="S"/>
+        </template><parameter name="ar"><paramtype>Archive &amp;</paramtype></parameter><parameter name="h"><paramtype>histogram&lt; Dynamic, A, S &gt; &amp;</paramtype></parameter><parameter name=""><paramtype>unsigned</paramtype></parameter></function>
 
 
 
@@ -683,8 +722,8 @@
 <method name="operator()" cv="const"><type>bool</type><parameter name="b1"><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter><parameter name="b2"><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter></method>
 </method-group>
 </struct><struct name="cmp_visitor"><template>
-      <template-type-parameter name="OtherStorage"/>
-    </template><inherit access="public">static_visitor&lt; bool &gt;</inherit><data-member name="os"><type>const OtherStorage &amp;</type></data-member>
+      <template-type-parameter name="S"/>
+    </template><inherit access="public">static_visitor&lt; bool &gt;</inherit><data-member name="os"><type>const S &amp;</type></data-member>
 <method-group name="public member functions">
 <method name="operator()" cv="const"><type>bool</type><template>
           <template-type-parameter name="Array"/>
@@ -693,7 +732,7 @@
 <method name="operator()" cv="const"><type>bool</type><parameter name="b"><paramtype>const array&lt; weight &gt; &amp;</paramtype></parameter></method>
 <method name="operator()" cv="const"><type>bool</type><parameter name="b"><paramtype>const array&lt; void &gt; &amp;</paramtype></parameter></method>
 </method-group>
-<constructor><parameter name="o"><paramtype>const OtherStorage &amp;</paramtype></parameter></constructor>
+<constructor><parameter name="o"><paramtype>const S &amp;</paramtype></parameter></constructor>
 </struct><struct name="increase_visitor"><inherit access="public">static_visitor&lt; void &gt;</inherit><data-member name="idx"><type>const std::size_t &amp;</type></data-member>
 <data-member name="buffer"><type>buffer_type &amp;</type></data-member>
 <method-group name="public member functions">
@@ -747,14 +786,12 @@
 <method name="value" cv="const"><type>value_type</type><parameter name="i"><paramtype>std::size_t</paramtype></parameter></method>
 <method name="variance" cv="const"><type>value_type</type><parameter name="i"><paramtype>std::size_t</paramtype></parameter></method>
 <method name="operator+="><type>adaptive_storage &amp;</type><template>
-          <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
-        </template><parameter name="rhs"><paramtype>const OtherStorage &amp;</paramtype></parameter></method>
-<method name="operator==" cv="const"><type>bool</type><parameter name="o"><paramtype>const adaptive_storage &amp;</paramtype></parameter></method>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const S &amp;</paramtype></parameter></method>
+<method name="operator==" cv="const"><type>bool</type><parameter name="rhs"><paramtype>const adaptive_storage &amp;</paramtype></parameter></method>
 <method name="operator==" cv="const"><type>bool</type><template>
-          <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
-        </template><parameter name="o"><paramtype>const OtherStorage &amp;</paramtype></parameter></method>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const S &amp;</paramtype></parameter></method>
 </method-group>
 <constructor specifiers="explicit"><parameter name="s"><paramtype>std::size_t</paramtype></parameter></constructor>
 <constructor cv="= default"/>
@@ -763,13 +800,12 @@
 <constructor cv="= default"><parameter name=""><paramtype>adaptive_storage &amp;&amp;</paramtype></parameter></constructor>
 <copy-assignment cv="= default"><type>adaptive_storage &amp;</type><parameter name=""><paramtype>adaptive_storage &amp;&amp;</paramtype></parameter></copy-assignment>
 <constructor specifiers="explicit"><template>
-          <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
-        </template><parameter name="rhs"><paramtype>const OtherStorage &amp;</paramtype></parameter></constructor>
+          <template-type-parameter name="S"/>
+          <template-type-parameter name=""><default>detail::is_storage&lt;S&gt;</default></template-type-parameter>
+        </template><parameter name="rhs"><paramtype>const S &amp;</paramtype></parameter></constructor>
 <copy-assignment><type>adaptive_storage &amp;</type><template>
-          <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
-        </template><parameter name="rhs"><paramtype>const OtherStorage &amp;</paramtype></parameter></copy-assignment>
+          <template-type-parameter name="S"/>
+        </template><parameter name="rhs"><paramtype>const S &amp;</paramtype></parameter></copy-assignment>
 <method-group name="private member functions">
 <method name="serialize"><type>void</type><template>
           <template-type-parameter name="Archive"/>
@@ -809,9 +845,8 @@
 
 <function name="operator=="><type>bool</type><template>
           <template-nontype-parameter name="Allocator"><type>template&lt; class &gt; class</type></template-nontype-parameter>
-          <template-type-parameter name="OtherStorage"/>
-        </template><parameter name="a"><paramtype>const OtherStorage &amp;</paramtype></parameter><parameter name="b"><paramtype>const adaptive_storage&lt; Allocator &gt; &amp;</paramtype></parameter></function>
-
+          <template-type-parameter name="S"/>
+        </template><parameter name="a"><paramtype>const S &amp;</paramtype></parameter><parameter name="b"><paramtype>const adaptive_storage&lt; Allocator &gt; &amp;</paramtype></parameter></function>
 </namespace>
 <namespace name="serialization">
 </namespace>
@@ -826,11 +861,14 @@
 <method-group name="public member functions">
 <method name="size" cv="const"><type>std::size_t</type></method>
 <method name="increase"><type>void</type><parameter name="i"><paramtype>std::size_t</paramtype></parameter></method>
+<method name="increase"><type>void</type><parameter name="i"><paramtype>std::size_t</paramtype></parameter><parameter name="w"><paramtype>value_type</paramtype></parameter></method>
 <method name="value" cv="const"><type>value_type</type><parameter name="i"><paramtype>std::size_t</paramtype></parameter></method>
 <method name="operator+="><type>void</type><template>
           <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
         </template><parameter name="other"><paramtype>const OtherStorage &amp;</paramtype></parameter></method>
+<method name="operator=="><type>bool</type><template>
+          <template-type-parameter name="C"/>
+        </template><parameter name="rhs"><paramtype>const container_storage&lt; C &gt; &amp;</paramtype></parameter></method>
 </method-group>
 <constructor specifiers="explicit"><parameter name="s"><paramtype>std::size_t</paramtype></parameter></constructor>
 <constructor/>
@@ -844,7 +882,6 @@
         </template><parameter name="other"><paramtype>const OtherStorage &amp;</paramtype></parameter></constructor>
 <copy-assignment><type>container_storage &amp;</type><template>
           <template-type-parameter name="OtherStorage"/>
-          <template-type-parameter name=""><default>detail::is_storage&lt;OtherStorage&gt;</default></template-type-parameter>
         </template><parameter name="other"><paramtype>const OtherStorage &amp;</paramtype></parameter></copy-assignment>
 </class>
 
@@ -879,10 +916,6 @@
 
 
 
-<function name="operator=="><type>bool</type><template>
-          <template-type-parameter name="Container1"/>
-          <template-type-parameter name="Container2"/>
-        </template><parameter name="a"><paramtype>const container_storage&lt; Container1 &gt; &amp;</paramtype></parameter><parameter name="b"><paramtype>const container_storage&lt; Container2 &gt; &amp;</paramtype></parameter></function>
 </namespace>
 </namespace>
 </header>
@@ -947,7 +980,6 @@
 <function name="center"><type>double</type><template>
           <template-nontype-parameter name="Axes"><type>typename...</type></template-nontype-parameter>
         </template><parameter name="a"><paramtype>const boost::variant&lt; Axes... &gt; &amp;</paramtype></parameter><parameter name="i"><paramtype>const int</paramtype></parameter></function>
-
 
 </namespace>
 </namespace>

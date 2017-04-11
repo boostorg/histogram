@@ -56,38 +56,33 @@
           </p></dd>
 <dt><span class="term">py:hd_sd</span></dt>
 <dd><p>
-            <code class="computeroutput"><a class="link" href="../boost/histogram/dynamic_histogram.html" title="Class template dynamic_histogram">dynamic_histogram</a></code>
-            with <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage&lt;&gt;</a></code>
-            called from Python
+            <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class template histogram">histogram&lt;Dynamic, Axes,
+            adaptive_storage&lt;&gt;&gt;</a></code> called from Python
           </p></dd>
 <dt><span class="term">hs_ss</span></dt>
 <dd><p>
-            <code class="computeroutput"><a class="link" href="../boost/histogram/static_histogram.html" title="Class template static_histogram">static_histogram</a></code>
-            with <code class="computeroutput"><a class="link" href="../boost/histogram/container_storage.html" title="Class template container_storage">container_storage&lt;std::vector&lt;int&gt;&gt;</a></code>
+            <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class template histogram">Axes, container_storage&lt;std::vector&lt;int&gt;&gt;&gt;</a></code>
           </p></dd>
 <dt><span class="term">hs_sd</span></dt>
 <dd><p>
-            <code class="computeroutput"><a class="link" href="../boost/histogram/static_histogram.html" title="Class template static_histogram">static_histogram</a></code>
-            with <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage&lt;&gt;</a></code>
+            <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class template histogram">Axes, adaptive_storage&lt;&gt;</a></code>
           </p></dd>
 <dt><span class="term">hd_ss</span></dt>
 <dd><p>
-            <code class="computeroutput"><a class="link" href="../boost/histogram/dynamic_histogram.html" title="Class template dynamic_histogram">dynamic_histogram</a></code>
-            with <code class="computeroutput"><a class="link" href="../boost/histogram/container_storage.html" title="Class template container_storage">container_storage&lt;std::vector&lt;int&gt;&gt;</a></code>
+            <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class template histogram">Axes, container_storage&lt;std::vector&lt;int&gt;&gt;</a></code>
           </p></dd>
 <dt><span class="term">hd_sd</span></dt>
 <dd><p>
-            <code class="computeroutput"><a class="link" href="../boost/histogram/dynamic_histogram.html" title="Class template dynamic_histogram">dynamic_histogram</a></code>
-            with <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage&lt;&gt;</a></code>
+            <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class template histogram">Axes, adaptive_storage&lt;&gt;</a></code>
           </p></dd>
 </dl>
 </div>
 <p>
-      <code class="computeroutput"><a class="link" href="../boost/histogram/static_histogram.html" title="Class template static_histogram">static_histogram</a></code>
-      is always faster than <code class="computeroutput"><a class="link" href="../boost/histogram/dynamic_histogram.html" title="Class template dynamic_histogram">dynamic_histogram</a></code>
-      and safer to use, as more checks are done at compile time. It is recommended
-      when working in C++ only. <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage</a></code>
-      is faster than <code class="computeroutput"><a class="link" href="../boost/histogram/container_storage.html" title="Class template container_storage">container_storage</a></code>
+      <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class template histogram">Axes, Storage&gt;</a></code>
+      is always faster than <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class template histogram">Axes,
+      Storage&gt;</a></code> and safer to use, as more checks are done at compile
+      time. It is recommended when working in C++ only. <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">boost::histogram::adaptive_storage</a></code>
+      is faster than <code class="computeroutput"><a class="link" href="../boost/histogram/container_storage.html" title="Class template container_storage">boost::histogram::container_storage</a></code>
       for histograms with many bins, because it uses the cache more effectively due
       to its smaller memory consumption per bin. If the number of bins is small,
       the latter is faster since it does not reallocate memory to increase the element

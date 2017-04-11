@@ -116,18 +116,22 @@
         at compile time or runtime.
       </p>
 <p>
-        The library provides two histogram implementations, a <code class="computeroutput"><a class="link" href="../boost/histogram/static_histogram.html" title="Class template static_histogram">static</a></code>
-        and <code class="computeroutput"><a class="link" href="../boost/histogram/dynamic_histogram.html" title="Class template dynamic_histogram">dynamic</a></code>
-        one. The static implementation is faster, if the number of axes is small
-        (see <a class="link" href="benchmarks.html" title="Benchmarks">benchmark</a>), because the
-        compiler is able to inline more code. It is also able to catch many user
-        errors at compile time rather than runtime.
+        Users can chose between two histogram implementations. The implementation
+        is selected with the first template argument, see <code class="computeroutput"><a class="link" href="../boost/histogram/histogram.html" title="Class template histogram">boost::histogram::histogram</a></code>.
+        The static implementation is faster (see <a class="link" href="benchmarks.html" title="Benchmarks">benchmark</a>),
+        because the compiler is able to inline more code and some bookkeeping and
+        type casting at run-time is avoided. It is also able to catch many user errors
+        at compile time rather than runtime.
       </p>
 <p>
         The static approach is unpractical when the user wants to create histograms
         at runtime, for example, from Python or from a graphical user interface.
-        Therefore a second implementation is included in which the number of axes
-        and their types may be set at runtime.
+        The second implementation addresses this and allows one to set the number
+        of axes and their types at runtime. The interface of the dynamic implementation
+        is a superset of the static implementation. With the help of included utility
+        functions it is possible to write code which works transparently with either
+        implementation, thus allowing users to switch the implementation in their
+        code at any point in time.
       </p>
 </div>
 <div class="section">
