@@ -68,7 +68,7 @@ for dim in sorted(data):
 			  fontproperties=font0, va="center", ha="right", clip_on=False)
 	plt.gca().add_artist(tx)
 plt.ylim(0, i)
-plt.xlim(0, 1.0)
+plt.xlim(0, 0.5)
 
 plt.tick_params("y", left="off", labelleft="off")
 plt.xlabel("time (smaller is better)")

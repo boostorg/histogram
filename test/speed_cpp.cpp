@@ -85,8 +85,6 @@ template <typename Histogram> double compare_6d(unsigned n, int distrib) {
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
-    double x[6];
-
     auto h = Histogram(regular_axis<>(10, 0, 1), regular_axis<>(10, 0, 1),
                        regular_axis<>(10, 0, 1), regular_axis<>(10, 0, 1),
                        regular_axis<>(10, 0, 1), regular_axis<>(10, 0, 1));
