@@ -4,7 +4,7 @@
 
 [![Build Status](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram?branch=master) [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master)](https://coveralls.io/github/HDembinski/histogram?branch=master)
 
-This `C++11` library provides an easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. It is very customisable through policy classes, but the default policies were carefully designed so that most users won't need to customize anything. The library has a convenient uniform interface, is memory efficient, and very fast. If the default policies are used, bin counts *cannot overflow* or *loose precision*.
+This `C++11` library provides an easy-to-use powerful n-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. It is very customisable through policy classes, but the default policies were carefully designed so that most users won't need to customize anything. The library has a convenient uniform interface, is memory efficient, and very fast. If the default policies are used, bin counts *cannot overflow* or *be capped*.
 
 The histogram class comes in two implementations with a common interface. The *static* variant uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. The *dynamic* variant makes the opposite trade-off. Python bindings for the latter are included, implemented with `boost.python`.
 
@@ -16,12 +16,12 @@ Check out the [full documentation](https://htmlpreview.github.io/?https://raw.gi
 
 ## Features
 
-* N-dimensional histogram
+* Multi-dimensional histogram
 * Simple and convenient interface
 * Value semantics with efficient move operations
 * Support for various binning schemes (user-extensible)
 * Optional underflow/overflow bins for each dimension
-* Counts cannot overflow or loose precision (+)
+* Counts cannot overflow or be capped (+)
 * Support for weighted input
 * Statistical variance can be queried for each bin
 * High performance (see benchmarks)
