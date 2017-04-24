@@ -187,12 +187,33 @@ private:
   friend void serialize(Archive &, axis_base<false> &, unsigned);
 };
 
+namespace transform {
+  template <typename Value>
+  struct identity {
+    static Value forward(Value v) { return v; }
+    static Value inverse(Value v) { return v; }
+  };
+
+  template <typename Value>
+  struct log {
+    static Value forward(Value v) { return std::log(v); }
+    static Value inverse(Value v) { return std::exp(v); }
+  };
+
+  template <typename Value>
+  struct sqrt {
+    static Value forward(Value v) { return std::sqrt(v); }
+    static Value inverse(Value v) { return v*v; }
+  };
+}
+
 /** Axis for binning real-valued data into equidistant bins.
  *
  * The simplest and common binning strategy.
  * Very fast. Binning is a O(1) operation.
  */
-template <typename RealType = double>
+template <typename RealType = double,
+          template<class> class Transform = transform::identity>
 class regular_axis : public axis_base<true>,
                      boost::operators<regular_axis<RealType>> {
 public:
@@ -209,7 +230,9 @@ public:
    */
   regular_axis(unsigned n, value_type min, value_type max,
                const std::string &label = std::string(), bool uoflow = true)
-      : axis_base<true>(n, label, uoflow), min_(min), delta_((max - min) / n) {
+      : axis_base<true>(n, label, uoflow),
+        min_(Transform<value_type>::forward(min)),
+        delta_((Transform<value_type>::forward(max) - min_) / n) {
     if (!(min < max)) {
       throw std::logic_error("min < max required");
     }
@@ -224,20 +247,20 @@ public:
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
     // Optimized code
-    const value_type z = (x - min_) / delta_;
+    const value_type z = (Transform<value_type>::forward(x) - min_) / delta_;
     return z >= 0.0 ? (z > bins() ? bins() : static_cast<int>(z)) : -1;
   }
 
   /// Returns the starting edge of the bin.
   value_type operator[](int idx) const {
     if (idx < 0) {
-      return -std::numeric_limits<value_type>::infinity();
+      return Transform<value_type>::inverse(-std::numeric_limits<value_type>::infinity());
     }
     if (idx > bins()) {
-      return std::numeric_limits<value_type>::infinity();
+      return Transform<value_type>::inverse(std::numeric_limits<value_type>::infinity());
     }
     const value_type z = value_type(idx) / bins();
-    return (1.0 - z) * min_ + z * (min_ + delta_ * bins());
+    return Transform<value_type>::inverse((1.0 - z) * min_ + z * (min_ + delta_ * bins()));
   }
 
   bool operator==(const regular_axis &o) const {
@@ -256,8 +279,8 @@ public:
 private:
   value_type min_ = 0.0, delta_ = 1.0;
 
-  template <class Archive, typename RealType1>
-  friend void serialize(Archive &, regular_axis<RealType1> &, unsigned);
+  template <class Archive, typename RealType1, template<class> class Transform1>
+  friend void serialize(Archive &, regular_axis<RealType1, Transform1> &, unsigned);
 };
 
 /** Axis for real-valued angles.

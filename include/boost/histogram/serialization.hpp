@@ -132,8 +132,8 @@ inline void serialize(Archive &ar, axis_base<true> &base,
   ar &base.label_;
 }
 
-template <class Archive, typename RealType>
-inline void serialize(Archive &ar, regular_axis<RealType> &axis,
+template <class Archive, typename RealType, template<class> class Transform>
+inline void serialize(Archive &ar, regular_axis<RealType, Transform> &axis,
                       unsigned /* version */) {
   ar &boost::serialization::base_object<axis_base<true>>(axis);
   ar &axis.min_;
