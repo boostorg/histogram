@@ -28,11 +28,6 @@ template <typename Value> struct bin {
   Value value;
 };
 
-template <> struct bin<const std::string &> {
-  int idx;
-  boost::string_ref value;
-};
-
 template <typename Value> struct real_bin {
   int idx;
   Value left, right;
@@ -510,7 +505,7 @@ private:
  */
 class category_axis : public axis_base<false>, boost::operators<category_axis> {
 public:
-  using value_type = const std::string &;
+  using value_type = boost::string_ref;
   using const_iterator = axis_iterator<category_axis>;
 
   template <typename Iterator>
