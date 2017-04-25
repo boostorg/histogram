@@ -12,7 +12,14 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/operators.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION < 106100
 #include <boost/utility/string_ref.hpp>
+#define BOOST_HISTOGRAM_STRING_VIEW boost::string_ref
+#else
+#include <boost/utility/string_view.hpp>
+#define BOOST_HISTOGRAM_STRING_VIEW boost::string_view
+#endif
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -505,7 +512,7 @@ private:
  */
 class category_axis : public axis_base<false>, boost::operators<category_axis> {
 public:
-  using value_type = boost::string_ref;
+  using value_type = BOOST_HISTOGRAM_STRING_VIEW;
   using const_iterator = axis_iterator<category_axis>;
 
   template <typename Iterator>
