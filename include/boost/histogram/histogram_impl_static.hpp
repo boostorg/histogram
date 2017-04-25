@@ -152,8 +152,7 @@ public:
 
   /// Get N-th axis
   template <unsigned N>
-  constexpr
-  typename std::add_const<
+  constexpr typename std::add_const<
       typename fusion::result_of::value_at_c<axes_type, N>::type>::type &
   axis(std::integral_constant<unsigned, N>) const {
     static_assert(N < axes_size::value, "axis index out of range");
@@ -161,8 +160,7 @@ public:
   }
 
   // Get first axis (convenience for 1-d histograms)
-  constexpr
-  typename std::add_const<
+  constexpr typename std::add_const<
       typename fusion::result_of::value_at_c<axes_type, 0>::type>::type &
   axis() const {
     return fusion::at_c<0>(axes_);

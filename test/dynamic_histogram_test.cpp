@@ -12,11 +12,11 @@
 #include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/histogram_ostream_operators.hpp>
+#include <boost/histogram/literals.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/container_storage.hpp>
 #include <boost/histogram/utility.hpp>
-#include <boost/histogram/literals.hpp>
 #include <boost/mpl/vector.hpp>
 #include <limits>
 #include <sstream>

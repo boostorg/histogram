@@ -288,9 +288,10 @@ inline histogram<
     Dynamic, typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
     Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
-  return histogram<Dynamic, typename detail::combine<
-                                default_axes, mpl::vector<Axes...>>::type,
-                   Storage>(std::forward<Axes>(axes)...);
+  return histogram<
+      Dynamic,
+      typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
+      Storage>(std::forward<Axes>(axes)...);
 }
 
 } // namespace histogram

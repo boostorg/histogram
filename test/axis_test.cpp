@@ -18,7 +18,7 @@
 #include <limits>
 
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
-#define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a-b) < eps)
+#define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
 template <typename Axis>
 void test_real_axis_iterator(Axis &&a, int begin, int end) {
