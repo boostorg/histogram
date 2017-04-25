@@ -150,12 +150,22 @@ public:
   /// Reset bin counters to zero
   void reset() { storage_ = std::move(Storage(storage_.size())); }
 
-  template <unsigned N = 0>
+  /// Get N-th axis
+  template <unsigned N>
+  constexpr
   typename std::add_const<
       typename fusion::result_of::value_at_c<axes_type, N>::type>::type &
-  axis() const {
+  axis(std::integral_constant<unsigned, N>) const {
     static_assert(N < axes_size::value, "axis index out of range");
     return fusion::at_c<N>(axes_);
+  }
+
+  // Get first axis (convenience for 1-d histograms)
+  constexpr
+  typename std::add_const<
+      typename fusion::result_of::value_at_c<axes_type, 0>::type>::type &
+  axis() const {
+    return fusion::at_c<0>(axes_);
   }
 
   /// Apply unary functor/function to each axis

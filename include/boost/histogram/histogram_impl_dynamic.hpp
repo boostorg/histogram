@@ -213,12 +213,6 @@ public:
     return axes_[i];
   }
 
-  /// Return axis \a i (for conformity with histogram<Static, ...> interface)
-  template <unsigned N = 0> const axis_type &axis() const {
-    BOOST_ASSERT_MSG(N < dim(), "axis index out of range");
-    return axes_[N];
-  }
-
   /// Apply unary functor/function to each axis
   template <typename Unary> void for_each_axis(Unary &unary) const {
     for (const auto &a : axes_) {
