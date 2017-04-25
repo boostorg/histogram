@@ -215,7 +215,7 @@ namespace transform {
 template <typename RealType = double,
           template<class> class Transform = transform::identity>
 class regular_axis : public axis_base<true>,
-                     boost::operators<regular_axis<RealType>> {
+                     boost::operators<regular_axis<RealType, Transform>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<regular_axis>;
