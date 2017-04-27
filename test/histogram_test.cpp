@@ -545,6 +545,37 @@ void run_tests() {
   }
 }
 
+template <typename T1, typename T2>
+void run_mixed_tests() {
+
+  // compare
+  {
+    auto a = make_histogram<adaptive_storage<>>(
+      T1{}, regular_axis<>{3, 0, 3}, integer_axis(0, 1));
+    auto b = make_histogram<adaptive_storage<>>(
+      T2{}, regular_axis<>{3, 0, 3}, integer_axis(0, 1));
+    BOOST_TEST_EQ(a, b);
+    auto b2 = make_histogram<adaptive_storage<>>(
+      T2{}, integer_axis{0, 3}, integer_axis(0, 1));
+    BOOST_TEST_NE(a, b2);
+    auto b3 = make_histogram<adaptive_storage<>>(
+      T2{}, regular_axis<>(3, 0, 4), integer_axis(0, 1));
+    BOOST_TEST_NE(a, b3);
+  }
+
+  // copy_assign
+  {
+    auto a = make_histogram<adaptive_storage<>>(
+      T1{}, regular_axis<>{3, 0, 3}, integer_axis(0, 1));
+    auto b = make_histogram<adaptive_storage<>>(
+      T2{}, regular_axis<>{3, 0, 3}, integer_axis(0, 1));
+    a.fill(1, 1);
+    BOOST_TEST_NE(a, b);
+    b = a;
+    BOOST_TEST_EQ(a, b);
+  }
+}
+
 int main() {
 
   // common interface
@@ -563,6 +594,8 @@ int main() {
     BOOST_TEST_EQ(h.axis(1), v[1]);
   }
 
+  run_mixed_tests<boost::histogram::Static, boost::histogram::Dynamic>();
+  run_mixed_tests<boost::histogram::Dynamic, boost::histogram::Static>();
 
   return boost::report_errors();
 }

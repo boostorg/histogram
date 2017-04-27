@@ -344,6 +344,11 @@ int main() {
     detail::axes_assign(fusion_vector1, std_vector1);
     BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
 
+    decltype(std_vector1) std_vector3;
+    BOOST_TEST_NOT(detail::axes_equal(std_vector3, fusion_vector1));
+    detail::axes_assign(std_vector3, fusion_vector1);
+    BOOST_TEST(detail::axes_equal(std_vector3, fusion_vector1));
+
     auto fusion_vector2 = boost::fusion::make_vector(regular_axis<>{2, -1, 1},
                                                      variable_axis<>{-1, 0, 1},
                                                      category_axis{"A", "B"});

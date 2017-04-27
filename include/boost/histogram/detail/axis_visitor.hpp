@@ -116,7 +116,7 @@ template <typename Iterator> struct fusion_assign_axis {
 template <typename Iterator> struct fusion_assign_axis2 {
   mutable Iterator iter;
   fusion_assign_axis2(Iterator it) : iter(it) {}
-  template <typename T> void operator()(const T &t) const { *(iter++) == t; }
+  template <typename T> void operator()(const T &t) const { *(iter++) = t; }
 };
 
 struct field_count : public static_visitor<void> {
@@ -148,7 +148,7 @@ inline bool axes_equal_impl(mpl::false_, mpl::false_, const A &a, const B &b) {
 
 template <typename A, typename B>
 inline bool axes_equal_impl(mpl::false_, mpl::true_, const A &a, const B &b) {
-  if (a.size() != fusion::size(b))
+  if (a.size() != static_cast<int>(fusion::size(b)))
     return false;
   fusion_cmp_axis<typename A::const_iterator> cmp(a.begin());
   fusion::for_each(b, cmp);
@@ -188,13 +188,13 @@ inline void axes_assign_impl(mpl::false_, mpl::false_, A &a, const B &b) {
 template <typename A, typename B>
 inline void axes_assign_impl(mpl::false_, mpl::true_, A &a, const B &b) {
   a.resize(fusion::size(b));
-  fusion::for_each(b, fusion_assign_axis2<typename A::iterator>(b.begin()));
+  fusion::for_each(b, fusion_assign_axis2<typename A::iterator>(a.begin()));
 }
 
 template <typename A, typename B>
 inline void axes_assign_impl(mpl::true_, mpl::false_, A &a, const B &b) {
   BOOST_ASSERT_MSG(
-      fusion::size(a) == b.size(),
+      static_cast<int>(fusion::size(a)) == b.size(),
       "cannot assign to static axes vector: number of axes does not match");
   fusion::for_each(a,
                    fusion_assign_axis<typename B::const_iterator>(b.begin()));
