@@ -44,23 +44,27 @@ public:
 
 public:
   histogram() = default;
+  histogram(const histogram &rhs) = default;
+  histogram(histogram &&rhs) = default;
+  histogram &operator=(const histogram &rhs) = default;
+  histogram &operator=(histogram &&rhs) = default;
 
   template <typename... Axes1>
   explicit histogram(const Axes1 &... axes) : axes_(axes...) {
     storage_ = Storage(field_count());
   }
 
-  histogram(const histogram &rhs) = default;
-  histogram(histogram &&rhs) = default;
-  histogram &operator=(const histogram &rhs) = default;
-  histogram &operator=(histogram &&rhs) = default;
+  // template <typename... Axes1>
+  // explicit histogram(Axes1 &&... axes) : axes_(std::move(axes)...) {
+  //   storage_ = Storage(field_count());
+  // }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   explicit histogram(const histogram<D, A, S> &rhs) : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   histogram &operator=(const histogram<D, A, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       detail::axes_assign(axes_, rhs.axes_);
@@ -69,17 +73,17 @@ public:
     return *this;
   }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   bool operator==(const histogram<D, A, S> &rhs) const {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   bool operator!=(const histogram<D, A, S> &rhs) const {
     return !operator==(rhs);
   }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   histogram &operator+=(const histogram<D, A, S> &rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_)) {
       throw std::logic_error("axes of histograms differ");
@@ -198,7 +202,7 @@ private:
     return p;
   }
 
-  template <type D, typename A, typename S> friend class histogram;
+  template <typename D, typename A, typename S> friend class histogram;
 
   template <class Archive, class S, class A>
   friend void serialize(Archive &, histogram<Static, S, A> &, unsigned);
@@ -207,15 +211,15 @@ private:
 /// default static type factory
 template <typename... Axes>
 inline histogram<Static, mpl::vector<Axes...>>
-make_static_histogram(const Axes &... axes) {
-  return histogram<Static, mpl::vector<Axes...>>(axes...);
+make_static_histogram(Axes &&... axes) {
+  return histogram<Static, mpl::vector<Axes...>>(std::forward<Axes>(axes)...);
 }
 
 /// static type factory with variable storage type
 template <typename Storage, typename... Axes>
 inline histogram<Static, mpl::vector<Axes...>, Storage>
-make_static_histogram_with(const Axes &... axes) {
-  return histogram<Static, mpl::vector<Axes...>, Storage>(axes...);
+make_static_histogram_with(Axes &&... axes) {
+  return histogram<Static, mpl::vector<Axes...>, Storage>(std::forward<Axes>(axes)...);
 }
 
 } // namespace histogram

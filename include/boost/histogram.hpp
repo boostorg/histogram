@@ -12,19 +12,22 @@
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/container_storage.hpp>
 #include <boost/histogram/utility.hpp>
+#include <boost/histogram/literals.hpp>
 
 /**
  * \file boost/histogram.hpp
    \brief Includes all standard headers of the Boost.histogram library.
 
-   The library consists of two histogram implementations
-   \ref boost::histogram::static_histogram "static_histogram"
-   and \ref boost::histogram::dynamic_histogram "dynamic_histogram"
-   which share a common interface. The first is faster, but lacks run-time
-   polymorphism, the second implements the opposite trade-off.
-   Several axis types are included, which implement different binning
-   algorithms. The axis types are passed in the constructor of the histogram
-   to configure its binning.
+   The library consists of two histogram implementations, a static and a
+   dynamic one. If you need to configure histograms at runtime, choose the
+   dynamic one, otherwise use the static one. The static one is faster,
+   and a little more convenient, since some errors can be caught at compile
+   time and you don't need to worry about type conversions.
+
+   You can freely mix the implementations in your code, they are convertible
+   into each other, and there is a common interface for both. To the extend
+   of what is technically possible, the library has been designed to allow
+   you to write code that is agnostic of the implementation variant.
 */
 
 #endif

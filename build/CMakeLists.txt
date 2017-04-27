@@ -90,16 +90,6 @@ endif()
 
 # tests
 enable_testing()
-add_executable(dynamic_histogram_test
-               ../test/dynamic_histogram_test.cpp)
-target_link_libraries(dynamic_histogram_test ${LIBRARIES})
-add_test(dynamic_histogram_test dynamic_histogram_test)
-
-add_executable(static_histogram_test
-               ../test/static_histogram_test.cpp)
-target_link_libraries(static_histogram_test ${LIBRARIES})
-add_test(static_histogram_test static_histogram_test)
-
 add_executable(axis_test
                ../test/axis_test.cpp)
 target_link_libraries(axis_test ${LIBRARIES})
@@ -119,6 +109,11 @@ add_executable(detail_test
                ../test/detail_test.cpp)
 target_link_libraries(detail_test ${LIBRARIES})
 add_test(detail_test detail_test)
+
+add_executable(histogram_test
+               ../test/histogram_test.cpp)
+target_link_libraries(histogram_test ${LIBRARIES})
+add_test(histogram_test histogram_test)
 
 if(HAVE_PYTHON)
   configure_file(../test/python_suite_test.py.in python_suite_test.py)

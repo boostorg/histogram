@@ -41,6 +41,15 @@ private:
 
 public:
   histogram() = default;
+  histogram(const histogram &rhs) = default;
+  histogram(histogram &&rhs) = default;
+  histogram &operator=(const histogram &rhs) = default;
+  histogram &operator=(histogram &&rhs) = default;
+
+  // template <typename... Axes1>
+  // explicit histogram(Axes1 &&... axes) : axes_({axis_type(std::move(axes))...}) {
+  //   storage_ = Storage(field_count());
+  // }
 
   template <typename... Axes1>
   explicit histogram(const Axes1 &... axes) : axes_({axis_type(axes)...}) {
@@ -54,12 +63,12 @@ public:
     storage_ = Storage(field_count());
   }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   explicit histogram(const histogram<D, A, S> &rhs) : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   histogram &operator=(const histogram<D, A, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       detail::axes_assign(axes_, rhs.axes_);
@@ -81,17 +90,17 @@ public:
     return *this;
   }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   bool operator==(const histogram<D, A, S> &rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   bool operator!=(const histogram<D, A, S> &rhs) const noexcept {
     return !operator==(rhs);
   }
 
-  template <type D, typename A, typename S>
+  template <typename D, typename A, typename S>
   histogram &operator+=(const histogram<D, A, S> &rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_)) {
       throw std::logic_error("axes of histograms differ");
@@ -267,7 +276,7 @@ private:
 
   friend struct storage_access;
 
-  template <type D, typename A, typename S> friend class histogram;
+  template <typename D, typename A, typename S> friend class histogram;
 
   template <typename Archiv, typename A, typename S>
   friend void serialize(Archiv &, histogram<Dynamic, A, S> &, unsigned);

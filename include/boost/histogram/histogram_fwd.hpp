@@ -8,16 +8,15 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
 #include <boost/histogram/storage/adaptive_storage.hpp>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
 
-enum type {
-  Static,
-  Dynamic,
-};
+using Static = std::integral_constant<int, 0>;
+using Dynamic = std::integral_constant<int, 1>;
 
-template <type, class Axes, class Storage = adaptive_storage<>> class histogram;
+template <class Variant, class Axes, class Storage = adaptive_storage<>> class histogram;
 
 } // namespace histogram
 } // namespace boost
