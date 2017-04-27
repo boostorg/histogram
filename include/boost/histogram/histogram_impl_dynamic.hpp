@@ -24,6 +24,12 @@
 #include <type_traits>
 #include <vector>
 
+// forward declaration for serialization
+namespace boost { namespace serialization { class access; }}
+
+// forward declaration for python
+namespace boost { namespace python { class access; }}
+
 namespace boost {
 namespace histogram {
 
@@ -274,12 +280,11 @@ private:
     return p;
   }
 
-  friend struct storage_access;
-
   template <typename D, typename A, typename S> friend class histogram;
 
-  template <typename Archiv, typename A, typename S>
-  friend void serialize(Archiv &, histogram<Dynamic, A, S> &, unsigned);
+  friend class ::boost::python::access;
+  friend class ::boost::serialization::access;
+  template <typename Archive> void serialize(Archive &, unsigned);
 };
 
 template <typename... Axes>

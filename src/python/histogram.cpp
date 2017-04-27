@@ -27,15 +27,137 @@
 #endif
 
 namespace boost {
-namespace histogram {
 
+namespace histogram {
 using dynamic_histogram = histogram<Dynamic, default_axes, adaptive_storage<>>;
+} // namespace histogram
+
+namespace python {
 
 #ifdef HAVE_NUMPY
-auto array_cast = [](python::handle<>& h) {
-  return python::downcast<PyArrayObject>(h.get());
+auto array_cast = [](handle<>& h) {
+  return downcast<PyArrayObject>(h.get());
 };
 #endif
+
+#ifdef HAVE_NUMPY
+class access {
+public:
+  using mp_int = histogram::adaptive_storage<>::mp_int;
+  using weight = histogram::adaptive_storage<>::weight;
+  template <typename T>
+  using array = histogram::adaptive_storage<>::array<T>;
+
+  struct dtype_visitor : public static_visitor<std::pair<int, object>> {
+    template <typename Array>
+    std::pair<int, object> operator()(const Array& /*unused*/) const {
+      std::pair<int, object> p;
+      p.first = sizeof(typename Array::value_type);
+      p.second = str("|u") + str(p.first);
+      return p;
+    }
+    std::pair<int, object> operator()(const array<void>& /*unused*/) const {
+      std::pair<int, object> p;
+      p.first = sizeof(uint8_t);
+      p.second = str("|u") + str(p.first);
+      return p;
+    }
+    std::pair<int, object> operator()(const array<mp_int>& /*unused*/) const {
+      std::pair<int, object> p;
+      p.first = sizeof(double);
+      p.second = str("|f") + str(p.first);
+      return p;
+    }
+    std::pair<int, object> operator()(const array<weight>& /*unused*/) const {
+      std::pair<int, object> p;
+      p.first = 0; // communicate that the type was array<weight>
+      p.second = str("|f") + str(sizeof(double));
+      return p;
+    }
+  };
+
+  struct data_visitor : public static_visitor<object> {
+    const list& shapes;
+    const list& strides;
+    data_visitor(const list& sh, const list& st) : shapes(sh), strides(st) {}
+    template <typename Array>
+    object operator()(const Array& b) const {
+      return make_tuple(reinterpret_cast<uintptr_t>(b.begin()), true);
+    }
+    object operator()(const array<void>& b) const {
+      // cannot pass non-existent memory to numpy; make new
+      // zero-initialized uint8 array, and pass it
+      int dim = len(shapes);
+      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
+      for (int i = 0; i < dim; ++i) {
+        shapes2[i] = extract<npy_intp>(shapes[i]);
+      }
+      handle<> a(PyArray_SimpleNew(dim, shapes2, NPY_UINT8));
+      for (int i = 0; i < dim; ++i) {
+        PyArray_STRIDES(array_cast(a))[i] = extract<npy_intp>(strides[i]);
+      }
+      auto *buf = static_cast<uint8_t *>(PyArray_DATA(array_cast(a)));
+      std::fill(buf, buf + b.size, uint8_t(0));
+      PyArray_CLEARFLAGS(array_cast(a), NPY_ARRAY_WRITEABLE);
+      return object(a);
+    }
+    object operator()(const array<mp_int>& b) const {
+      // cannot pass cpp_int to numpy; make new
+      // double array, fill it and pass it
+      int dim = len(shapes);
+      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
+      for (int i = 0; i < dim; ++i) {
+        shapes2[i] = extract<npy_intp>(shapes[i]);
+      }
+      handle<> a(PyArray_SimpleNew(dim, shapes2, NPY_DOUBLE));
+      for (int i = 0; i < dim; ++i) {
+        PyArray_STRIDES(array_cast(a))[i] = extract<npy_intp>(strides[i]);
+      }
+      auto *buf = static_cast<double *>(PyArray_DATA(array_cast(a)));
+      for (std::size_t i = 0; i < b.size; ++i) {
+        buf[i] = static_cast<double>(b[i]);
+      }
+      PyArray_CLEARFLAGS(array_cast(a), NPY_ARRAY_WRITEABLE);
+      return object(a);
+    }
+  };
+
+  static object array_interface(const histogram::dynamic_histogram &self) {
+    dict d;
+
+    list shapes;
+    list strides;
+    auto &b = self.storage_.buffer_;
+    auto dtype = apply_visitor(dtype_visitor(), b);
+    auto stride = dtype.first;
+    if (stride == 0) { // buffer is weight, needs special treatment
+      stride = sizeof(double);
+      strides.append(stride);
+      stride *= 2;
+      shapes.append(2);
+    }
+    for (unsigned i = 0; i < self.dim(); ++i) {
+      const auto s = shape(self.axis(i));
+      shapes.append(s);
+      strides.append(stride);
+      stride *= s;
+    }
+    if (self.dim() == 0) {
+      shapes.append(0);
+      strides.append(stride);
+    }
+    d["shape"] = tuple(shapes);
+    d["strides"] = tuple(strides);
+    d["typestr"] = dtype.second;
+    d["data"] = apply_visitor(data_visitor(shapes, strides), b);
+    return d;
+  }
+};
+#endif
+
+} // namespace python
+
+namespace histogram {
 
 struct axis_visitor : public static_visitor<python::object> {
   template <typename T> python::object operator()(const T &t) const {
@@ -123,8 +245,8 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
       // exception is thrown automatically if
       python::handle<> a(PyArray_FROM_OTF(o.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
 
-      npy_intp *dims = PyArray_DIMS(array_cast(a));
-      switch (PyArray_NDIM(array_cast(a))) {
+      npy_intp *dims = PyArray_DIMS(python::array_cast(a));
+      switch (PyArray_NDIM(python::array_cast(a))) {
       case 1:
         if (self.dim() > 1) {
           PyErr_SetString(PyExc_ValueError, "array has to be two-dimensional");
@@ -150,20 +272,20 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
           python::handle<> aw(
               PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
 
-          if (PyArray_NDIM(array_cast(aw)) != 1) {
+          if (PyArray_NDIM(python::array_cast(aw)) != 1) {
             PyErr_SetString(PyExc_ValueError,
                             "array has to be one-dimensional");
             python::throw_error_already_set();
           }
 
-          if (PyArray_DIMS(array_cast(aw))[0] != dims[0]) {
+          if (PyArray_DIMS(python::array_cast(aw))[0] != dims[0]) {
             PyErr_SetString(PyExc_ValueError, "sizes do not match");
             python::throw_error_already_set();
           }
 
           for (unsigned i = 0; i < dims[0]; ++i) {
-            double *v = reinterpret_cast<double *>(PyArray_GETPTR1(array_cast(a), i));
-            double *w = reinterpret_cast<double *>(PyArray_GETPTR1(array_cast(aw), i));
+            double *v = reinterpret_cast<double *>(PyArray_GETPTR1(python::array_cast(a), i));
+            double *w = reinterpret_cast<double *>(PyArray_GETPTR1(python::array_cast(aw), i));
             self.wfill(*w, v, v + self.dim());
           }
 
@@ -173,7 +295,7 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
         }
       } else {
         for (unsigned i = 0; i < dims[0]; ++i) {
-          double *v = reinterpret_cast<double *>(PyArray_GETPTR1(array_cast(a), i));
+          double *v = reinterpret_cast<double *>(PyArray_GETPTR1(python::array_cast(a), i));
           self.fill(v, v + self.dim());
         }
       }
@@ -273,120 +395,6 @@ std::string histogram_repr(const dynamic_histogram &h) {
   return os.str();
 }
 
-#ifdef HAVE_NUMPY
-struct storage_access {
-  using mp_int = adaptive_storage<>::mp_int;
-  using weight = adaptive_storage<>::weight;
-  template <typename T>
-  using array = adaptive_storage<>::array<T>;
-
-  struct dtype_visitor : public static_visitor<std::pair<int, python::object>> {
-    template <typename Array>
-    std::pair<int, python::object> operator()(const Array& /*unused*/) const {
-      std::pair<int, python::object> p;
-      p.first = sizeof(typename Array::value_type);
-      p.second = python::str("|u") + python::str(p.first);
-      return p;
-    }
-    std::pair<int, python::object> operator()(const array<void>& /*unused*/) const {
-      std::pair<int, python::object> p;
-      p.first = sizeof(uint8_t);
-      p.second = python::str("|u") + python::str(p.first);
-      return p;
-    }
-    std::pair<int, python::object> operator()(const array<mp_int>& /*unused*/) const {
-      std::pair<int, python::object> p;
-      p.first = sizeof(double);
-      p.second = python::str("|f") + python::str(p.first);
-      return p;
-    }
-    std::pair<int, python::object> operator()(const array<weight>& /*unused*/) const {
-      std::pair<int, python::object> p;
-      p.first = 0; // communicate that the type was array<weight>
-      p.second = python::str("|f") + python::str(sizeof(double));
-      return p;
-    }
-  };
-
-  struct data_visitor : public static_visitor<python::object> {
-    const python::list& shapes;
-    const python::list& strides;
-    data_visitor(const python::list& sh, const python::list& st) : shapes(sh), strides(st) {}
-    template <typename Array>
-    python::object operator()(const Array& b) const {
-      return python::make_tuple(reinterpret_cast<uintptr_t>(b.begin()), true);
-    }
-    python::object operator()(const array<void>& b) const {
-      // cannot pass non-existent memory to numpy; make new
-      // zero-initialized uint8 array, and pass it
-      int dim = python::len(shapes);
-      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
-      for (int i = 0; i < dim; ++i) {
-        shapes2[i] = python::extract<npy_intp>(shapes[i]);
-      }
-      python::handle<> a(PyArray_SimpleNew(dim, shapes2, NPY_UINT8));
-      for (int i = 0; i < dim; ++i) {
-        PyArray_STRIDES(array_cast(a))[i] = python::extract<npy_intp>(strides[i]);
-      }
-      auto *buf = static_cast<uint8_t *>(PyArray_DATA(array_cast(a)));
-      std::fill(buf, buf + b.size, uint8_t(0));
-      PyArray_CLEARFLAGS(array_cast(a), NPY_ARRAY_WRITEABLE);
-      return python::object(a);
-    }
-    python::object operator()(const array<mp_int>& b) const {
-      // cannot pass cpp_int to numpy; make new
-      // double array, fill it and pass it
-      int dim = python::len(shapes);
-      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
-      for (int i = 0; i < dim; ++i) {
-        shapes2[i] = python::extract<npy_intp>(shapes[i]);
-      }
-      python::handle<> a(PyArray_SimpleNew(dim, shapes2, NPY_DOUBLE));
-      for (int i = 0; i < dim; ++i) {
-        PyArray_STRIDES(array_cast(a))[i] = python::extract<npy_intp>(strides[i]);
-      }
-      auto *buf = static_cast<double *>(PyArray_DATA(array_cast(a)));
-      for (std::size_t i = 0; i < b.size; ++i) {
-        buf[i] = static_cast<double>(b[i]);
-      }
-      PyArray_CLEARFLAGS(array_cast(a), NPY_ARRAY_WRITEABLE);
-      return python::object(a);
-    }
-  };
-
-  static python::object array_interface(const dynamic_histogram &self) {
-    python::dict d;
-
-    python::list shapes;
-    python::list strides;
-    auto &b = self.storage_.buffer_;
-    auto dtype = apply_visitor(dtype_visitor(), b);
-    auto stride = dtype.first;
-    if (stride == 0) { // buffer is weight, needs special treatment
-      stride = sizeof(double);
-      strides.append(stride);
-      stride *= 2;
-      shapes.append(2);
-    }
-    for (unsigned i = 0; i < self.dim(); ++i) {
-      const auto s = shape(self.axis(i));
-      shapes.append(s);
-      strides.append(stride);
-      stride *= s;
-    }
-    if (self.dim() == 0) {
-      shapes.append(0);
-      strides.append(stride);
-    }
-    d["shape"] = python::tuple(shapes);
-    d["strides"] = python::tuple(strides);
-    d["typestr"] = dtype.second;
-    d["data"] = apply_visitor(data_visitor(shapes, strides), b);
-    return d;
-  }
-};
-#endif
-
 void register_histogram() {
   python::docstring_options dopt(true, true, false);
 
@@ -399,7 +407,7 @@ void register_histogram() {
       // shadowed C++ ctors
       .def(python::init<const dynamic_histogram &>())
 #ifdef HAVE_NUMPY
-      .add_property("__array_interface__", &storage_access::array_interface)
+      .add_property("__array_interface__", &python::access::array_interface)
 #endif
       .def("__len__", &dynamic_histogram::dim)
       .def("__getitem__", histogram_axis)

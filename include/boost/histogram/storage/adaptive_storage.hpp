@@ -17,12 +17,11 @@
 #include <limits>
 #include <type_traits>
 
-// forward declaration for serialization workaround
-namespace boost {
-namespace serialization {
-class access;
-} // namespace serialization
-} // namespace boost
+// forward declaration for serialization
+namespace boost { namespace serialization { class access; }}
+
+// forward declaration for python
+namespace boost { namespace python { class access; }}
 
 namespace boost {
 namespace histogram {
@@ -450,8 +449,7 @@ private:
 
   buffer_type buffer_;
 
-  friend struct storage_access;
-  // workaround for gcc-4.8
+  friend class ::boost::python::access;
   friend class ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);
 };

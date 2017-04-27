@@ -29,6 +29,9 @@
 #include <boost/mpl/vector.hpp>
 #include <type_traits>
 
+// forward declaration for serialization
+namespace boost { namespace serialization { class access; }}
+
 namespace boost {
 namespace histogram {
 
@@ -204,8 +207,8 @@ private:
 
   template <typename D, typename A, typename S> friend class histogram;
 
-  template <class Archive, class S, class A>
-  friend void serialize(Archive &, histogram<Static, S, A> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <typename Archive> void serialize(Archive &, unsigned);
 };
 
 /// default static type factory

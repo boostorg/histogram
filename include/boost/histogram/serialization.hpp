@@ -29,7 +29,7 @@ namespace histogram {
 namespace detail {
 
 template <class Archive>
-inline void serialize(Archive &ar, weight &wt, unsigned /* version */) {
+void serialize(Archive &ar, weight &wt, unsigned /* version */) {
   ar &wt.w;
   ar &wt.w2;
 }
@@ -43,7 +43,7 @@ template <typename Archive> struct serialize_helper {
 } // namespace detail
 
 template <class Archive, typename Container>
-inline void serialize(Archive &ar, container_storage<Container> &store,
+void serialize(Archive &ar, container_storage<Container> &store,
                       unsigned /* version */) {
   ar &store.c_;
 }
@@ -118,84 +118,79 @@ void adaptive_storage<Allocator>::serialize(Archive &ar,
 }
 
 template <class Archive>
-inline void serialize(Archive &ar, axis_base<false> &base,
-                      unsigned /* version */) {
-  ar &base.size_;
-  ar &base.label_;
+void axis_base<false>::serialize(Archive &ar,
+                          unsigned /* version */) {
+  ar &size_;
+  ar &label_;
 }
 
 template <class Archive>
-inline void serialize(Archive &ar, axis_base<true> &base,
+void axis_base<true>::serialize(Archive &ar,
                       unsigned /* version */) {
-  ar &base.size_;
-  ar &base.shape_;
-  ar &base.label_;
+  ar &size_;
+  ar &shape_;
+  ar &label_;
 }
 
-template <class Archive, typename RealType, template <class> class Transform>
-inline void serialize(Archive &ar, regular_axis<RealType, Transform> &axis,
-                      unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<true>>(axis);
-  ar &axis.min_;
-  ar &axis.delta_;
+template <typename RealType, template <class> class Transform>
+template <class Archive>
+void regular_axis<RealType, Transform>::serialize(Archive &ar,
+                                                  unsigned /* version */) {
+  ar &boost::serialization::base_object<axis_base<true>>(*this);
+  ar &min_;
+  ar &delta_;
 }
 
-// workaround for gcc-4.8
-template <class Archive, typename RealType>
-inline void serialize(Archive &ar, regular_axis<RealType> &axis,
+template <typename RealType>
+template <class Archive>
+void circular_axis<RealType>::serialize(Archive &ar,
                       unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<true>>(axis);
-  ar &axis.min_;
-  ar &axis.delta_;
+  ar &boost::serialization::base_object<axis_base<false>>(*this);
+  ar &phase_;
+  ar &perimeter_;
 }
 
-template <class Archive, typename RealType>
-inline void serialize(Archive &ar, circular_axis<RealType> &axis,
+template <typename RealType>
+template <class Archive>
+void variable_axis<RealType>::serialize(Archive &ar,
                       unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<false>>(axis);
-  ar &axis.phase_;
-  ar &axis.perimeter_;
-}
-
-template <class Archive, typename RealType>
-inline void serialize(Archive &ar, variable_axis<RealType> &axis,
-                      unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<true>>(axis);
+  ar &boost::serialization::base_object<axis_base<true>>(*this);
   if (Archive::is_loading::value) {
-    axis.x_.reset(new RealType[axis.bins() + 1]);
+    x_.reset(new RealType[bins() + 1]);
   }
-  ar &boost::serialization::make_array(axis.x_.get(), axis.bins() + 1);
+  ar &boost::serialization::make_array(x_.get(), bins() + 1);
 }
 
 template <class Archive>
-inline void serialize(Archive &ar, integer_axis &axis, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<true>>(axis);
-  ar &axis.min_;
+void integer_axis::serialize(Archive &ar, unsigned /* version */) {
+  ar &boost::serialization::base_object<axis_base<true>>(*this);
+  ar &min_;
 }
 
 template <class Archive>
-inline void serialize(Archive &ar, category_axis &axis,
+void category_axis::serialize(Archive &ar,
                       unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<false>>(axis);
+  ar &boost::serialization::base_object<axis_base<false>>(*this);
   if (Archive::is_loading::value) {
-    axis.ptr_.reset(new std::string[axis.bins()]);
+    ptr_.reset(new std::string[bins()]);
   }
-  ar &boost::serialization::make_array(axis.ptr_.get(), axis.bins());
+  ar &boost::serialization::make_array(ptr_.get(), bins());
 }
 
-template <class Archive, class A, class S>
-inline void serialize(Archive &ar, histogram<Static, A, S> &h,
-                      unsigned /* version */) {
+template <class A, class S>
+template <class Archive>
+void histogram<Static, A, S>::serialize(Archive &ar, unsigned /* version */) {
   detail::serialize_helper<Archive> sh(ar);
-  fusion::for_each(h.axes_, sh);
-  ar &h.storage_;
+  fusion::for_each(axes_, sh);
+  ar &storage_;
 }
 
-template <class Archive, class A, class S>
-inline void serialize(Archive &ar, histogram<Dynamic, A, S> &h,
+template <class A, class S>
+template <class Archive>
+void histogram<Dynamic, A, S>::serialize(Archive &ar,
                       unsigned /* version */) {
-  ar &h.axes_;
-  ar &h.storage_;
+  ar &axes_;
+  ar &storage_;
 }
 
 } // namespace histogram

@@ -27,6 +27,9 @@
 #include <type_traits>
 #include <vector>
 
+// forward declaration for serialization
+namespace boost { namespace serialization { class access; }}
+
 namespace boost {
 namespace histogram {
 
@@ -136,8 +139,9 @@ private:
   int shape_ = 0;
   std::string label_;
 
+  friend class ::boost::serialization::access;
   template <class Archive>
-  friend void serialize(Archive &, axis_base<true> &, unsigned);
+  void serialize(Archive &, unsigned);
 };
 
 template <> class axis_base<false> {
@@ -185,8 +189,9 @@ private:
   int size_ = 0;
   std::string label_;
 
+  friend class ::boost::serialization::access;
   template <class Archive>
-  friend void serialize(Archive &, axis_base<false> &, unsigned);
+  void serialize(Archive &, unsigned);
 };
 
 namespace transform {
@@ -281,14 +286,9 @@ public:
 private:
   value_type min_ = 0.0, delta_ = 1.0;
 
-  template <class Archive, typename RealType1,
-            template <class> class Transform1>
-  friend void serialize(Archive &, regular_axis<RealType1, Transform1> &,
-                        unsigned);
-
-  // workaround for gcc-4.8
-  template <class Archive, typename RealType1>
-  friend void serialize(Archive &, regular_axis<RealType1> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &, unsigned);
 };
 
 /** Axis for real-valued angles.
@@ -350,8 +350,9 @@ public:
 private:
   value_type phase_ = 0.0, perimeter_ = 1.0;
 
-  template <class Archive, typename RealType1>
-  friend void serialize(Archive &, circular_axis<RealType1> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &, unsigned);
 };
 
 /** An axis for real-valued data and bins of varying width.
@@ -442,8 +443,9 @@ public:
 private:
   std::unique_ptr<value_type[]> x_; // smaller size compared to std::vector
 
-  template <class Archive, typename RealType1>
-  friend void serialize(Archive &, variable_axis<RealType1> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive &, unsigned);
 };
 
 /** An axis for a contiguous range of integers.
@@ -499,8 +501,9 @@ public:
 private:
   value_type min_ = 0;
 
+  friend class ::boost::serialization::access;
   template <class Archive>
-  friend void serialize(Archive &, integer_axis &, unsigned);
+  void serialize(Archive &, unsigned);
 };
 
 /** An axis for enumerated categories.
@@ -582,8 +585,9 @@ public:
 private:
   std::unique_ptr<std::string[]> ptr_;
 
+  friend class ::boost::serialization::access;
   template <class Archive>
-  friend void serialize(Archive &, category_axis &, unsigned);
+  void serialize(Archive &, unsigned);
 };
 
 using default_axes = mpl::vector<regular_axis<double>, regular_axis<float>,

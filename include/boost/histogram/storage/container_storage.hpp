@@ -11,6 +11,9 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <cstddef>
 
+// forward declaration for serialization
+namespace boost { namespace serialization { class access; }}
+
 namespace boost {
 namespace histogram {
 
@@ -81,8 +84,9 @@ private:
 
   template <typename C> friend class container_storage;
 
-  template <typename Archive, typename C>
-  friend void serialize(Archive &, container_storage<C> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &, unsigned);
 };
 
 } // namespace histogram
