@@ -101,6 +101,14 @@ template <typename T> python::object axis_getitem(const T &t, int i) {
   return python::object(t[i]);
 }
 
+template <> python::object axis_getitem(const category_axis &t, int i) {
+  if (i == axis_len(t)) {
+    PyErr_SetString(PyExc_StopIteration, "no more");
+    python::throw_error_already_set();
+  }
+  return python::object(t[i].data());
+}
+
 template <typename T> std::string axis_repr(const T &t) {
   std::ostringstream os;
   os << t;

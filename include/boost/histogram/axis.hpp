@@ -12,7 +12,14 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/operators.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION < 106100
 #include <boost/utility/string_ref.hpp>
+#define BOOST_HISTOGRAM_STRING_VIEW boost::string_ref
+#else
+#include <boost/utility/string_view.hpp>
+#define BOOST_HISTOGRAM_STRING_VIEW boost::string_view
+#endif
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -20,17 +27,19 @@
 #include <type_traits>
 #include <vector>
 
+// forward declaration for serialization
+namespace boost {
+namespace serialization {
+class access;
+}
+} // namespace boost
+
 namespace boost {
 namespace histogram {
 
 template <typename Value> struct bin {
   int idx;
   Value value;
-};
-
-template <> struct bin<const std::string &> {
-  int idx;
-  boost::string_ref value;
 };
 
 template <typename Value> struct real_bin {
@@ -134,8 +143,8 @@ private:
   int shape_ = 0;
   std::string label_;
 
-  template <class Archive>
-  friend void serialize(Archive &, axis_base<true> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 template <> class axis_base<false> {
@@ -183,18 +192,36 @@ private:
   int size_ = 0;
   std::string label_;
 
-  template <class Archive>
-  friend void serialize(Archive &, axis_base<false> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive> void serialize(Archive &, unsigned);
 };
+
+namespace transform {
+template <typename Value> struct identity {
+  static Value forward(Value v) { return v; }
+  static Value inverse(Value v) { return v; }
+};
+
+template <typename Value> struct log {
+  static Value forward(Value v) { return std::log(v); }
+  static Value inverse(Value v) { return std::exp(v); }
+};
+
+template <typename Value> struct sqrt {
+  static Value forward(Value v) { return std::sqrt(v); }
+  static Value inverse(Value v) { return v * v; }
+};
+} // namespace transform
 
 /** Axis for binning real-valued data into equidistant bins.
  *
  * The simplest and common binning strategy.
  * Very fast. Binning is a O(1) operation.
  */
-template <typename RealType = double>
+template <typename RealType = double,
+          template <class> class Transform = transform::identity>
 class regular_axis : public axis_base<true>,
-                     boost::operators<regular_axis<RealType>> {
+                     boost::operators<regular_axis<RealType, Transform>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<regular_axis>;
@@ -209,7 +236,9 @@ public:
    */
   regular_axis(unsigned n, value_type min, value_type max,
                const std::string &label = std::string(), bool uoflow = true)
-      : axis_base<true>(n, label, uoflow), min_(min), delta_((max - min) / n) {
+      : axis_base<true>(n, label, uoflow),
+        min_(Transform<value_type>::forward(min)),
+        delta_((Transform<value_type>::forward(max) - min_) / n) {
     if (!(min < max)) {
       throw std::logic_error("min < max required");
     }
@@ -224,20 +253,23 @@ public:
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
     // Optimized code
-    const value_type z = (x - min_) / delta_;
+    const value_type z = (Transform<value_type>::forward(x) - min_) / delta_;
     return z >= 0.0 ? (z > bins() ? bins() : static_cast<int>(z)) : -1;
   }
 
   /// Returns the starting edge of the bin.
   value_type operator[](int idx) const {
     if (idx < 0) {
-      return -std::numeric_limits<value_type>::infinity();
+      return Transform<value_type>::inverse(
+          -std::numeric_limits<value_type>::infinity());
     }
     if (idx > bins()) {
-      return std::numeric_limits<value_type>::infinity();
+      return Transform<value_type>::inverse(
+          std::numeric_limits<value_type>::infinity());
     }
     const value_type z = value_type(idx) / bins();
-    return (1.0 - z) * min_ + z * (min_ + delta_ * bins());
+    return Transform<value_type>::inverse((1.0 - z) * min_ +
+                                          z * (min_ + delta_ * bins()));
   }
 
   bool operator==(const regular_axis &o) const {
@@ -256,8 +288,8 @@ public:
 private:
   value_type min_ = 0.0, delta_ = 1.0;
 
-  template <class Archive, typename RealType1>
-  friend void serialize(Archive &, regular_axis<RealType1> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 /** Axis for real-valued angles.
@@ -319,8 +351,8 @@ public:
 private:
   value_type phase_ = 0.0, perimeter_ = 1.0;
 
-  template <class Archive, typename RealType1>
-  friend void serialize(Archive &, circular_axis<RealType1> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 /** An axis for real-valued data and bins of varying width.
@@ -411,8 +443,8 @@ public:
 private:
   std::unique_ptr<value_type[]> x_; // smaller size compared to std::vector
 
-  template <class Archive, typename RealType1>
-  friend void serialize(Archive &, variable_axis<RealType1> &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 /** An axis for a contiguous range of integers.
@@ -468,8 +500,8 @@ public:
 private:
   value_type min_ = 0;
 
-  template <class Archive>
-  friend void serialize(Archive &, integer_axis &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 /** An axis for enumerated categories.
@@ -481,7 +513,7 @@ private:
  */
 class category_axis : public axis_base<false>, boost::operators<category_axis> {
 public:
-  using value_type = const std::string &;
+  using value_type = BOOST_HISTOGRAM_STRING_VIEW;
   using const_iterator = axis_iterator<category_axis>;
 
   template <typename Iterator>
@@ -551,8 +583,8 @@ public:
 private:
   std::unique_ptr<std::string[]> ptr_;
 
-  template <class Archive>
-  friend void serialize(Archive &, category_axis &, unsigned);
+  friend class ::boost::serialization::access;
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 using default_axes = mpl::vector<regular_axis<double>, regular_axis<float>,

@@ -3,7 +3,7 @@
 [heading 2.0 (not in boost)]
 
 * Added static_histogram (v1.0 only had dynamic_histogram).
-* Change of wfill(...) interface, weight comes first.
+* Merged wfill(...) and fill(...) interface.
 * Support custom allocators in storage classes.
 * Replaced static_storage with container_storage, which may use any STL-compatible container with random access iterators as a backend, including std::array.
 * Replaced dynamic_storage with adaptive_storage, which adds the capability to grow the bin counter into a cpp_int, thus avoiding integer overflow completely.

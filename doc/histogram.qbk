@@ -13,7 +13,7 @@
 
 [section Abstract]
 
-This `C++11` library provides an easy-to-use powerful n-dimensional [@https://en.wikipedia.org/wiki/Histogram histogram] class for your statistics needs. It is very customisable through policy classes, but the default policies were carefully designed so that most users won't need to customize anything. The library has a convenient uniform interface, is memory efficient, and very fast. If the default policies are used, bin counts *cannot overflow* or *loose precision*.
+This `C++11` library provides an easy-to-use powerful n-dimensional [@https://en.wikipedia.org/wiki/Histogram histogram] class for your statistics needs. It is very customisable through policy classes, but the default policies were carefully designed so that most users won't need to customize anything. The library has a convenient uniform interface, is memory efficient, and very fast. If the default policies are used, bin counts *cannot overflow* or *be capped*.
 
 The histogram class comes in two implementations with a common interface. The *static* variant uses compile-time information to provide maximum performance, at the cost of potentially larger executables and reduced runtime flexibility. The *dynamic* variant makes the opposite trade-off. Python bindings for the latter are included, implemented with [@boost:/libs/python/index.html Boost.Python]. Optional serialization support is implemented with [@boost:/libs/serialization/index.html Boost.Serialization].
 

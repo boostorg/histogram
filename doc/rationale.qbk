@@ -114,7 +114,7 @@ A histogram categorizes input values and increments a bin counter if an input va
 [note
 There are many use cases for weighted fills. Here is an example from particle physics. Let us say the value to be histogrammed is the recorded energy of some particle that hit a detector. Let us further say that the detector sometimes misses the particle, if its energy is small (because it does not generate enough signal to be notice above the noise level). If the efficiency of the detector is known as a function of the energy, one can correct for the expected loss by weighting each energy with the inverse of the efficiency to on average compensate the loss.
 ]
-When the [classref boost::histogram::adaptive_storage adaptive_storage] is used, histograms may also be filled with weighted values. The choice of using weighted fills can be made at run-time. If the function `wfill(...)` is used, two doubles per bin are stored (previous integer counts are automatically converted). The first double keeps track of the sum of weights. The second double keeps track of the sum of weights squared. The latter is the variance estimate in this case and returned by a call to `variance(...)`.
+When the [classref boost::histogram::adaptive_storage adaptive_storage] is used, histograms may also be filled with weighted values. The choice of using weighted fills can be made at run-time. If the call `fill(..., weight(x))` is used, two doubles per bin are stored (previous integer counts are automatically converted). The first double keeps track of the sum of weights. The second double keeps track of the sum of weights squared. The latter is the variance estimate in this case and returned by a call to `variance(...)`.
 [note
 This variance estimate can be derived from the [@https://en.wikipedia.org/wiki/Variance#Properties mathematical properties of the variance]. Let us say a bin is filled ['k1] times with weight ['w1]. The sum of weights is then ['w1 k1]. It then follows from the variance properties that ['Var(w1 k1) = w1^2 Var(k1)]. Using the reasoning from before, the estimated variance of ['k1] is ['k1], so that ['Var(w1 k1) = w1^2 Var(k1) = w1^2 k1]. Variances of independent samples are additive. If the bin is further filled ['k2] times with weight ['w2], the sum of weights is ['w1 k1 + w2 k2], with variance ['w1^2 k1 + w2^2 k2]. This also holds for ['k1 = k2 = 1]. Therefore, the sum of weights ['w[i]] has variance sum of ['w[i]^2]. In other words, to incrementally keep track of the variance of the sum of weights, we need to keep track of the sum of weights squared.
 ]
@@ -134,7 +134,7 @@ Properties: Getter/setter-like functions are wrapped as properties. Examples: `h
 
 Axis access: The `histogram` object implements the sequence protocol and behaves like an immutable sequence of axes. Examples: `len(histogram)` returns the number of axes, `histogram[0]` accesses the first axis, `for axis in histogram: [...]`.
 
-Keyword-based parameters: C++ member functions `fill(...)` and `wfill(...)` are wrapped by the single Python member function `fill(...)` with an optional keyword parameter `w` to pass a weight.
+Keyword-based parameters: the member function call `fill(..., weight(x))` in C++ is translated into a Python member function call `fill(..., weight=x)`.
 ]
 
 [endsect]

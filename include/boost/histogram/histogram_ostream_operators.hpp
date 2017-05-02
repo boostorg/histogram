@@ -24,7 +24,7 @@ struct axis_ostream_visitor {
 };
 } // namespace detail
 
-template <type D, typename A, typename S>
+template <typename D, typename A, typename S>
 inline std::ostream &operator<<(std::ostream &os, const histogram<D, A, S> &h) {
   os << "histogram(";
   detail::axis_ostream_visitor sh(os);

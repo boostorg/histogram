@@ -18,6 +18,7 @@
 #include <limits>
 
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
+#define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
 template <typename Axis>
 void test_real_axis_iterator(Axis &&a, int begin, int end) {
@@ -84,6 +85,25 @@ int main() {
     BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 4);
     BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
     BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), -1);
+  }
+
+  // regular_axis with transform
+  {
+    regular_axis<double, transform::log> b{2, 1e0, 1e2};
+    BOOST_TEST_EQ(b[-1], 0.0);
+    BOOST_TEST_IS_CLOSE(b[0], 1.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(b[1], 10.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(b[2], 100.0, 1e-9);
+    BOOST_TEST_EQ(b[3], std::numeric_limits<double>::infinity());
+
+    BOOST_TEST_EQ(b.index(-1), -1);
+    BOOST_TEST_EQ(b.index(0), -1);
+    BOOST_TEST_EQ(b.index(1), 0);
+    BOOST_TEST_EQ(b.index(9), 0);
+    BOOST_TEST_EQ(b.index(10), 1);
+    BOOST_TEST_EQ(b.index(90), 1);
+    BOOST_TEST_EQ(b.index(100), 2);
+    BOOST_TEST_EQ(b.index(std::numeric_limits<double>::infinity()), 2);
   }
 
   // circular_axis
@@ -323,6 +343,11 @@ int main() {
 
     detail::axes_assign(fusion_vector1, std_vector1);
     BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
+
+    decltype(std_vector1) std_vector3;
+    BOOST_TEST_NOT(detail::axes_equal(std_vector3, fusion_vector1));
+    detail::axes_assign(std_vector3, fusion_vector1);
+    BOOST_TEST(detail::axes_equal(std_vector3, fusion_vector1));
 
     auto fusion_vector2 = boost::fusion::make_vector(regular_axis<>{2, -1, 1},
                                                      variable_axis<>{-1, 0, 1},

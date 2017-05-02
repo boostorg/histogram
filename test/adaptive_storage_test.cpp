@@ -14,6 +14,7 @@
 #include <sstream>
 
 namespace boost {
+
 namespace histogram {
 
 template <typename T> adaptive_storage<> prepare(unsigned n = 1) {
@@ -48,13 +49,21 @@ template <> adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
   return s;
 }
 
-struct storage_access {
-  template <typename T> static adaptive_storage<> set_value(unsigned n, T x) {
-    adaptive_storage<> s = prepare<T>(n);
-    get<adaptive_storage<>::array<T>>(s.buffer_)[0] = x;
+} // namespace histogram
+
+namespace python { // cheating to get access
+class access {
+public:
+  template <typename T>
+  static histogram::adaptive_storage<> set_value(unsigned n, T x) {
+    histogram::adaptive_storage<> s = histogram::prepare<T>(n);
+    get<histogram::adaptive_storage<>::array<T>>(s.buffer_)[0] = x;
     return s;
   }
 };
+} // namespace python
+
+namespace histogram {
 
 template <typename T> void copy_impl() {
   const auto b = prepare<T>(1);
@@ -74,7 +83,7 @@ template <typename T> void copy_impl() {
 }
 
 template <typename T> void serialization_impl() {
-  const auto a = storage_access::set_value(1, T(1));
+  const auto a = python::access::set_value(1, T(1));
   std::ostringstream os;
   std::string buf;
   {
@@ -115,7 +124,7 @@ template <> void serialization_impl<void>() {
 
 template <typename T> void equal_impl() {
   adaptive_storage<> a(1);
-  auto b = storage_access::set_value(1, T(0));
+  auto b = python::access::set_value(1, T(0));
   BOOST_TEST_EQ(a.value(0), 0.0);
   BOOST_TEST_EQ(a.variance(0), 0.0);
   BOOST_TEST(a == b);
@@ -123,7 +132,7 @@ template <typename T> void equal_impl() {
   BOOST_TEST(!(a == b));
 
   container_storage<std::vector<unsigned>> c(1);
-  auto d = storage_access::set_value(1, T(0));
+  auto d = python::access::set_value(1, T(0));
   BOOST_TEST(c == d);
   c.increase(0);
   BOOST_TEST(!(c == d));
@@ -131,8 +140,8 @@ template <typename T> void equal_impl() {
 
 template <> void equal_impl<void>() {
   adaptive_storage<> a(1);
-  auto b = storage_access::set_value(1, uint8_t(0));
-  auto c = storage_access::set_value(2, uint8_t(0));
+  auto b = python::access::set_value(1, uint8_t(0));
+  auto c = python::access::set_value(2, uint8_t(0));
   auto d = container_storage<std::vector<unsigned>>(1);
   BOOST_TEST_EQ(a.value(0), 0.0);
   BOOST_TEST_EQ(a.variance(0), 0.0);
@@ -152,7 +161,7 @@ template <> void equal_impl<void>() {
 
 template <typename T> void increase_and_grow_impl() {
   auto tmax = std::numeric_limits<T>::max();
-  auto s = storage_access::set_value<T>(2, tmax - 1);
+  auto s = python::access::set_value<T>(2, tmax - 1);
   auto n = s;
   auto n2 = s;
 
@@ -180,7 +189,7 @@ template <> void increase_and_grow_impl<void>() {
 }
 
 template <typename T> void convert_container_storage_impl() {
-  const auto aref = storage_access::set_value(1, T(0));
+  const auto aref = python::access::set_value(1, T(0));
   container_storage<std::vector<uint8_t>> s(1);
   s.increase(0);
 
@@ -306,7 +315,7 @@ int main() {
     increase_and_grow_impl<uint64_t>();
 
     // only increase for mp_int
-    auto a = storage_access::set_value(2, detail::mp_int(1));
+    auto a = boost::python::access::set_value(2, detail::mp_int(1));
     BOOST_TEST_EQ(a.value(0), 1.0);
     BOOST_TEST_EQ(a.value(1), 0.0);
     a.increase(0);
