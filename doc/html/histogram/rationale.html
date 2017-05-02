@@ -207,7 +207,7 @@
 <p>
         We start with 1 byte per bin counter and then double the size as needed,
         until 8 byte per bin are reached. When even that is not enough, we switch
-        to the <a href="../../libs/multiprecision/index.html" target="_top">Boost.Multiprecision</a>
+        to the <a href="../../../libs/multiprecision/index.html" target="_top">Boost.Multiprecision</a>
         type <code class="computeroutput"><span class="identifier">cpp_int</span></code>, whose capacity
         is limited only by available memory. This approach is not only memory conserving,
         but also ultimately safe, because bin counters cannot overflow.
@@ -478,7 +478,7 @@
 <a name="histogram.rationale.serialization"></a><a class="link" href="rationale.html#histogram.rationale.serialization" title="Serialization">Serialization</a>
 </h3></div></div></div>
 <p>
-        Serialization is implemented using <a href="../../libs/serialization/index.html" target="_top">Boost.Serialization</a>.
+        Serialization is implemented using <a href="../../../libs/serialization/index.html" target="_top">Boost.Serialization</a>.
         Pickling in Python is implemented based on the C++ serialization code. In
         the current implementation, the pickled stream is <span class="bold"><strong>not</strong></span>
         portable, since it uses <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">archive</span><span class="special">::</span><span class="identifier">binary_archive</span></code>.
