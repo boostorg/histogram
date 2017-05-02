@@ -15,6 +15,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/mpl/bool.hpp>
 #include <boost/mpl/count.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/vector.hpp>
@@ -130,15 +131,7 @@ public:
                   "arguments may contain at most one instance of type weight");
     BOOST_ASSERT_MSG(sizeof...(args) == dim() + n_weight::value,
                      "number of arguments does not match histogram dimension");
-    std::size_t idx = 0, stride = 1;
-    double w = 0.0;
-    apply_lin<detail::xlin, 0, Args...>(idx, stride, w, args...);
-    if (stride) {
-      if (n_weight::value)
-        storage_.increase(idx, w);
-      else
-        storage_.increase(idx);
-    }
+    fill_impl(mpl::bool_<(n_weight::value > 0)>(), args...);
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
@@ -256,6 +249,25 @@ private:
     return fc.value;
   }
 
+  template <typename... Args>
+  inline void fill_impl(mpl::true_, const Args &... args) {
+    std::size_t idx = 0, stride = 1;
+    double w = 0.0;
+    apply_lin_w<detail::xlin, 0, Args...>(idx, stride, w, args...);
+    if (stride) {
+      storage_.increase(idx, w);
+    }
+  }
+
+  template <typename... Args>
+  inline void fill_impl(mpl::false_, const Args &... args) {
+    std::size_t idx = 0, stride = 1;
+    apply_lin<detail::xlin, 0, Args...>(idx, stride, args...);
+    if (stride) {
+      storage_.increase(idx);
+    }
+  }
+
   template <template <class, class> class Lin, typename Value>
   struct lin_visitor : public static_visitor<void> {
     std::size_t &idx;
@@ -270,33 +282,35 @@ private:
 
   template <template <class, class> class Lin, unsigned D, typename First,
             typename... Rest>
-  void apply_lin(std::size_t &idx, std::size_t &stride, const First &x,
-                 const Rest &... rest) const {
+  inline void apply_lin(std::size_t &idx, std::size_t &stride, const First &x,
+                        const Rest &... rest) const {
     apply_visitor(lin_visitor<Lin, First>(idx, stride, x), axes_[D]);
     return apply_lin<Lin, D + 1, Rest...>(idx, stride, rest...);
   }
 
   template <template <class, class> class Lin, unsigned D>
-  void apply_lin(std::size_t &idx, std::size_t &stride) const {}
+  inline void apply_lin(std::size_t &idx, std::size_t &stride) const {}
 
   template <template <class, class> class Lin, unsigned D, typename First,
             typename... Rest>
-  void apply_lin(std::size_t &idx, std::size_t &stride, double &w,
-                 const First &x, const Rest &... rest) const {
+  inline typename std::enable_if<!(std::is_same<First, weight>::value)>::type
+  apply_lin_w(std::size_t &idx, std::size_t &stride, double &w, const First &x,
+              const Rest &... rest) const {
     apply_visitor(lin_visitor<Lin, First>(idx, stride, x), axes_[D]);
-    return apply_lin<Lin, D + 1, Rest...>(idx, stride, w, rest...);
+    return apply_lin_w<Lin, D + 1, Rest...>(idx, stride, w, rest...);
   }
 
   template <template <class, class> class Lin, unsigned D, typename,
             typename... Rest>
-  void apply_lin(std::size_t &idx, std::size_t &stride, double &w,
-                 const weight &x, const Rest &... rest) const {
+  inline void apply_lin_w(std::size_t &idx, std::size_t &stride, double &w,
+                          const weight &x, const Rest &... rest) const {
     w = static_cast<double>(x);
-    return apply_lin<Lin, D, Rest...>(idx, stride, w, rest...);
+    return apply_lin_w<Lin, D, Rest...>(idx, stride, w, rest...);
   }
 
   template <template <class, class> class Lin, unsigned D>
-  void apply_lin(std::size_t &idx, std::size_t &stride, double &w) const {}
+  inline void apply_lin_w(std::size_t &idx, std::size_t &stride,
+                          double &w) const {}
 
   template <template <class, class> class Lin, typename Iterator>
   void apply_lin_iter(std::size_t &idx, std::size_t &stride,
@@ -329,10 +343,9 @@ inline histogram<
     Dynamic, typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
     Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
-  return histogram<
-      Dynamic,
-      typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
-      Storage>(std::forward<Axes>(axes)...);
+  return histogram<Dynamic, typename detail::combine<
+                                default_axes, mpl::vector<Axes...>>::type,
+                   Storage>(std::forward<Axes>(axes)...);
 }
 
 } // namespace histogram
