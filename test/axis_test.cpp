@@ -294,11 +294,11 @@ int main() {
                        category_axis{"A", "B", "C"}};
 
     std::vector<boost::variant<regular_axis<>, variable_axis<>>> std_vector3 = {
-        variable_axis<>{-1, 0, 1}, regular_axis<>{2, -1, 1},
-        variable_axis<>{-1, 0, 1}};
+        variable_axis<>{-1, 0, 1}, regular_axis<>{2, -1, 1}
+    };
 
-    std::vector<boost::variant<regular_axis<>, variable_axis<>>> std_vector4 = {
-        regular_axis<>{2, -1, 1}, variable_axis<>{-1, 0, 1},
+    std::vector<boost::variant<variable_axis<>,regular_axis<>>> std_vector4 = {
+        regular_axis<>{2, -1, 1}, variable_axis<>{-1, 0, 1}
     };
 
     BOOST_TEST(detail::axes_equal(std_vector1, std_vector2));
