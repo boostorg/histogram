@@ -18,10 +18,18 @@
 #include <type_traits>
 
 // forward declaration for serialization
-namespace boost { namespace serialization { class access; }}
+namespace boost {
+namespace serialization {
+class access;
+}
+} // namespace boost
 
 // forward declaration for python
-namespace boost { namespace python { class access; }}
+namespace boost {
+namespace python {
+class access;
+}
+} // namespace boost
 
 namespace boost {
 namespace histogram {

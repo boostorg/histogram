@@ -98,7 +98,7 @@ int main() {
 }
 ``
 
-[note In all these examples, memory for bin counters is allocated lazily, because [classref boost::histogram::adaptive_storage<>] is used. Allocation is deferred to the first call to `fill(...)` or `wfill(...)`, which are described in the next section. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later.]
+[note In all these examples, memory for bin counters is allocated lazily, because [classref boost::histogram::adaptive_storage<>] is used. Allocation is deferred to the first call to `fill(...)`, which are described in the next section. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later.]
 
 [endsect]
 
@@ -108,9 +108,9 @@ The histogram (either type) supports two kinds of fills.
 
 * `fill(...)` initiates a normal fill, which increments a bin counter by one when a value is in the bin range
 
-* `wfill(weight, ...)` initiates a weighted fill, which increment a bin counter by a `weight` when a value is in the bin range.
+* `fill(..., weight(x))` initiates a weighted fill, which increment a bin counter by a weight `x` when a value is in the bin range.
 
-Why would like to do weighted fills is explained [link histogram.rationale.weights in the rationale]. Do not use `wfill(...)` if all your weights are equal to 1. Use `fill(...)` in this case, because it is way more efficient. You are free to mix the two calls, meaning, you can start calling `fill(...)` and later switch to `wfill(weight, ...)` on the same histogram or vice versa.
+The need to support weighted fills is explained [link histogram.rationale.weights in the rationale]. Do not use the form `fill(..., weight(x))` if all your weights are equal to 1. Use `fill(...)` in this case, because it is way more efficient. You are free to mix the two calls, meaning, you can start calling `fill(...)` and later switch to `fill(..., weight(x))` on the same histogram or vice versa.
 
 Here is an example which fills a 2d-histogram with 1000 pairs of normal distributed numbers taken from a generator:
 [c++]``
@@ -132,7 +132,7 @@ int main() {
 }
 ``
 
-Here is a second example which using wfill in a functional programming style. The input values are taken from a container:
+Here is a second example which using a weighted fill in a functional programming style. The input values are taken from a container:
 [c++]``
 #include <boost/histogram/histogram.hpp>
 #include <algorithm>
@@ -141,7 +141,7 @@ int main() {
 	namespace bh = boost::histogram;
 	auto h = bh::make_static_histogram(bh::integer_axis(0, 9));
 	std::vector<int> v{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-	std::for_each(v.begin(), v.end(), [&h](int x) { h.wfill(2.0, x); });
+	std::for_each(v.begin(), v.end(), [&h](int x) { h.fill(x, bh::weight(2.0)); });
 	// h is now filled
 }
 ``

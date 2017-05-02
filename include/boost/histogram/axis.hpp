@@ -28,7 +28,11 @@
 #include <vector>
 
 // forward declaration for serialization
-namespace boost { namespace serialization { class access; }}
+namespace boost {
+namespace serialization {
+class access;
+}
+} // namespace boost
 
 namespace boost {
 namespace histogram {
@@ -140,8 +144,7 @@ private:
   std::string label_;
 
   friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &, unsigned);
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 template <> class axis_base<false> {
@@ -190,8 +193,7 @@ private:
   std::string label_;
 
   friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &, unsigned);
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 namespace transform {
@@ -287,8 +289,7 @@ private:
   value_type min_ = 0.0, delta_ = 1.0;
 
   friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &, unsigned);
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 /** Axis for real-valued angles.
@@ -351,8 +352,7 @@ private:
   value_type phase_ = 0.0, perimeter_ = 1.0;
 
   friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &, unsigned);
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 /** An axis for real-valued data and bins of varying width.
@@ -444,8 +444,7 @@ private:
   std::unique_ptr<value_type[]> x_; // smaller size compared to std::vector
 
   friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &, unsigned);
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 /** An axis for a contiguous range of integers.
@@ -502,8 +501,7 @@ private:
   value_type min_ = 0;
 
   friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &, unsigned);
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 /** An axis for enumerated categories.
@@ -586,8 +584,7 @@ private:
   std::unique_ptr<std::string[]> ptr_;
 
   friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive &, unsigned);
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 
 using default_axes = mpl::vector<regular_axis<double>, regular_axis<float>,

@@ -16,7 +16,17 @@ namespace histogram {
 using Static = std::integral_constant<int, 0>;
 using Dynamic = std::integral_constant<int, 1>;
 
-template <class Variant, class Axes, class Storage = adaptive_storage<>> class histogram;
+template <class Variant, class Axes, class Storage = adaptive_storage<>>
+class histogram;
+
+class weight {
+public:
+  explicit weight(double v) : value(v) {}
+  explicit operator double() const { return value; }
+
+private:
+  double value;
+};
 
 } // namespace histogram
 } // namespace boost

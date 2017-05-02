@@ -49,12 +49,13 @@ template <> adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
   return s;
 }
 
-} // namespace prepare
+} // namespace histogram
 
 namespace python { // cheating to get access
 class access {
 public:
-  template <typename T> static histogram::adaptive_storage<> set_value(unsigned n, T x) {
+  template <typename T>
+  static histogram::adaptive_storage<> set_value(unsigned n, T x) {
     histogram::adaptive_storage<> s = histogram::prepare<T>(n);
     get<histogram::adaptive_storage<>::array<T>>(s.buffer_)[0] = x;
     return s;

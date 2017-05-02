@@ -231,11 +231,11 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
 
   python::object ow;
   if (kwargs) {
-    if (len(kwargs) > 1 || !kwargs.has_key("w")) {
+    if (len(kwargs) > 1 || !kwargs.has_key("weight")) {
       PyErr_SetString(PyExc_RuntimeError, "only keyword w allowed");
       python::throw_error_already_set();
     }
-    ow = kwargs.get("w");
+    ow = kwargs.get("weight");
   }
 
 #ifdef HAVE_NUMPY
@@ -286,11 +286,11 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
           for (unsigned i = 0; i < dims[0]; ++i) {
             double *v = reinterpret_cast<double *>(PyArray_GETPTR1(python::array_cast(a), i));
             double *w = reinterpret_cast<double *>(PyArray_GETPTR1(python::array_cast(aw), i));
-            self.wfill(*w, v, v + self.dim());
+            self.fill(v, v + self.dim(), weight(*w));
           }
 
         } else {
-          PyErr_SetString(PyExc_ValueError, "w is not a sequence");
+          PyErr_SetString(PyExc_ValueError, "weight is not a sequence");
           python::throw_error_already_set();
         }
       } else {
@@ -326,7 +326,7 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
     self.fill(v, v + self.dim());
   } else {
     const double w = python::extract<double>(ow);
-    self.wfill(w, v, v + self.dim());
+    self.fill(v, v + self.dim(), weight(w));
   }
 
   return python::object();

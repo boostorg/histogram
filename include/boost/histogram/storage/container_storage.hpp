@@ -12,7 +12,11 @@
 #include <cstddef>
 
 // forward declaration for serialization
-namespace boost { namespace serialization { class access; }}
+namespace boost {
+namespace serialization {
+class access;
+}
+} // namespace boost
 
 namespace boost {
 namespace histogram {
@@ -85,8 +89,7 @@ private:
   template <typename C> friend class container_storage;
 
   friend class ::boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &, unsigned);
+  template <typename Archive> void serialize(Archive &, unsigned);
 };
 
 } // namespace histogram
