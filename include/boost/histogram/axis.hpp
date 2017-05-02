@@ -587,7 +587,7 @@ private:
   template <class Archive> void serialize(Archive &, unsigned);
 };
 
-using default_axes = mpl::vector<regular_axis<double>, regular_axis<float>,
+using builtin_axes = mpl::vector<regular_axis<double>, regular_axis<float>,
                                  circular_axis<double>, circular_axis<float>,
                                  variable_axis<double>, variable_axis<float>,
                                  integer_axis, category_axis>::type;

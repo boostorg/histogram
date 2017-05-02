@@ -330,21 +330,21 @@ private:
 
 template <typename... Axes>
 inline histogram<
-    Dynamic, typename detail::combine<default_axes, mpl::vector<Axes...>>::type>
+    Dynamic, typename detail::combine<builtin_axes, mpl::vector<Axes...>>::type>
 make_dynamic_histogram(Axes &&... axes) {
 
   return histogram<Dynamic, typename detail::combine<
-                                default_axes, mpl::vector<Axes...>>::type>(
+                                builtin_axes, mpl::vector<Axes...>>::type>(
       std::forward<Axes>(axes)...);
 }
 
 template <typename Storage, typename... Axes>
 inline histogram<
-    Dynamic, typename detail::combine<default_axes, mpl::vector<Axes...>>::type,
+    Dynamic, typename detail::combine<builtin_axes, mpl::vector<Axes...>>::type,
     Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
   return histogram<Dynamic, typename detail::combine<
-                                default_axes, mpl::vector<Axes...>>::type,
+                                builtin_axes, mpl::vector<Axes...>>::type,
                    Storage>(std::forward<Axes>(axes)...);
 }
 

@@ -43,7 +43,7 @@ void test_axis_iterator(const Axis &a, int begin, int end) {
 
 int main() {
   using namespace boost::histogram;
-  using axis_t = typename boost::make_variant_over<default_axes>::type;
+  using axis_t = typename boost::make_variant_over<builtin_axes>::type;
 
   // bad_ctors
   {
@@ -294,12 +294,10 @@ int main() {
                        category_axis{"A", "B", "C"}};
 
     std::vector<boost::variant<regular_axis<>, variable_axis<>>> std_vector3 = {
-        variable_axis<>{-1, 0, 1}, regular_axis<>{2, -1, 1}
-    };
+        variable_axis<>{-1, 0, 1}, regular_axis<>{2, -1, 1}};
 
-    std::vector<boost::variant<variable_axis<>,regular_axis<>>> std_vector4 = {
-        regular_axis<>{2, -1, 1}, variable_axis<>{-1, 0, 1}
-    };
+    std::vector<boost::variant<variable_axis<>, regular_axis<>>> std_vector4 = {
+        regular_axis<>{2, -1, 1}, variable_axis<>{-1, 0, 1}};
 
     BOOST_TEST(detail::axes_equal(std_vector1, std_vector2));
     BOOST_TEST_NOT(detail::axes_equal(std_vector2, std_vector3));

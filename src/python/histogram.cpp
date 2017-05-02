@@ -29,7 +29,7 @@
 namespace boost {
 
 namespace histogram {
-using dynamic_histogram = histogram<Dynamic, default_axes, adaptive_storage<>>;
+using dynamic_histogram = histogram<Dynamic, builtin_axes, adaptive_storage<>>;
 } // namespace histogram
 
 namespace python {

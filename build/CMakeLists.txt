@@ -115,6 +115,21 @@ add_executable(histogram_test
 target_link_libraries(histogram_test ${LIBRARIES})
 add_test(histogram_test histogram_test)
 
+add_executable(example_1d
+               ../examples/example_1d.cpp)
+target_link_libraries(example_1d ${LIBRARIES})
+add_test(example_1d example_1d)
+
+add_executable(example_2d
+               ../examples/example_2d.cpp)
+target_link_libraries(example_2d ${LIBRARIES})
+add_test(example_2d example_2d)
+
+add_executable(dynamic_axes
+               ../examples/dynamic_axes.cpp)
+target_link_libraries(dynamic_axes ${LIBRARIES})
+add_test(dynamic_axes dynamic_axes)
+
 if(HAVE_PYTHON)
   configure_file(../test/python_suite_test.py.in python_suite_test.py)
   add_test(python_suite_test python_suite_test.py)

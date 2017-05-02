@@ -585,10 +585,10 @@ int main() {
 
   // init_6: special stuff that only works with Dynamic
   {
-    auto v = std::vector<histogram<Dynamic, default_axes>::axis_type>();
+    auto v = std::vector<histogram<Dynamic, builtin_axes>::axis_type>();
     v.push_back(regular_axis<>(100, -1, 1));
     v.push_back(integer_axis(1, 6));
-    auto h = histogram<Dynamic, default_axes>(v.begin(), v.end());
+    auto h = histogram<Dynamic, builtin_axes>(v.begin(), v.end());
     BOOST_TEST_EQ(h.axis(0_c), v[0]);
     BOOST_TEST_EQ(h.axis(1_c), v[1]);
     BOOST_TEST_EQ(h.axis(0), v[0]);

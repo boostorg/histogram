@@ -67,7 +67,7 @@ Example 1: Fill a 1d-histogram in C++
 
     int main(int, char**) {
         namespace bh = boost::histogram;
-        using boost::histogram::literals; // enables _c suffix
+        using namespace boost::histogram::literals; // enables _c suffix
 
         // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
         // with axis of histogram labeled as "x"
