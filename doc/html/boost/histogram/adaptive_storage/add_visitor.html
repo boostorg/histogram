@@ -2,25 +2,25 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <title>Struct template add_visitor</title>
-<link rel="stylesheet" href="../../../../../../../doc/src/boostbook.css" type="text/css">
+<link rel="stylesheet" href="../../../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../../../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
-<link rel="up" href="../adaptive_storage.html#idm514244090832" title="Description">
+<link rel="up" href="../adaptive_storage.html#idm437076190576" title="Description">
 <link rel="prev" href="../adaptive_storage.html" title="Class template adaptive_storage">
 <link rel="next" href="assign_visitor.html" title="Struct template assign_visitor">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
-<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../../../../../boost.png"></td>
-<td align="center"><a href="../../../../../../../index.html">Home</a></td>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../../../boost.png"></td>
+<td align="center"><a href="../../../../../index.html">Home</a></td>
 <td align="center"><a href="../../../../../../../libs/libraries.htm">Libraries</a></td>
 <td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
 <td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
-<td align="center"><a href="../../../../../../../more/index.htm">More</a></td>
+<td align="center"><a href="../../../../../more/index.htm">More</a></td>
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="../adaptive_storage.html"><img src="../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../adaptive_storage.html#idm514244090832"><img src="../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="assign_visitor.html"><img src="../../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="../adaptive_storage.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../adaptive_storage.html#idm437076190576"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="assign_visitor.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="refentry">
 <a name="boost.histogram.adaptive_storage.add_visitor"></a><div class="titlepage"></div>
@@ -35,13 +35,13 @@
 <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Value<span class="special">&gt;</span> 
 <span class="keyword">struct</span> <a class="link" href="add_visitor.html" title="Struct template add_visitor">add_visitor</a> <span class="special">:</span> <span class="keyword">public</span> <span class="identifier">static_visitor</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="special">{</span>
   <span class="comment">// <a class="link" href="add_visitor.html#boost.histogram.adaptive_storage.add_visitorconstruct-copy-destruct">construct/copy/destruct</a></span>
-  <a class="link" href="add_visitor.html#idm267991492544-bb"><span class="identifier">add_visitor</span></a><span class="special">(</span><span class="keyword">const</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">const</span> <span class="identifier">Value</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">buffer_type</span> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="add_visitor.html#idm307895390624-bb"><span class="identifier">add_visitor</span></a><span class="special">(</span><span class="keyword">const</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">const</span> <span class="identifier">Value</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">buffer_type</span> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
 
-  <span class="comment">// <a class="link" href="add_visitor.html#idm267991500688-bb">public member functions</a></span>
-  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Array<span class="special">&gt;</span> <span class="keyword">void</span> <a class="link" href="add_visitor.html#idm267991500160-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">Array</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
-  <span class="keyword">void</span> <a class="link" href="add_visitor.html#idm267991497712-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
-  <span class="keyword">void</span> <a class="link" href="add_visitor.html#idm267991496048-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="identifier">mp_int</span> <span class="special">&gt;</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
-  <span class="keyword">void</span> <a class="link" href="add_visitor.html#idm267991494368-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="identifier">weight</span> <span class="special">&gt;</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="comment">// <a class="link" href="add_visitor.html#idm307895398768-bb">public member functions</a></span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Array<span class="special">&gt;</span> <span class="keyword">void</span> <a class="link" href="add_visitor.html#idm307895398240-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">Array</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">void</span> <a class="link" href="add_visitor.html#idm307895395792-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">void</span> <a class="link" href="add_visitor.html#idm307895394128-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="identifier">mp_int</span> <span class="special">&gt;</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">void</span> <a class="link" href="add_visitor.html#idm307895392448-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="identifier">weight</span> <span class="special">&gt;</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 
   <span class="comment">// public data members</span>
   <span class="keyword">const</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="special">&amp;</span> <span class="identifier">idx</span><span class="special">;</span>
@@ -49,22 +49,22 @@
   <span class="identifier">buffer_type</span> <span class="special">&amp;</span> <span class="identifier">buffer</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm514243890912"></a><h2>Description</h2>
+<a name="idm437076003488"></a><h2>Description</h2>
 <div class="refsect2">
-<a name="idm514243890512"></a><h3>
+<a name="idm437076003104"></a><h3>
 <a name="boost.histogram.adaptive_storage.add_visitorconstruct-copy-destruct"></a><code class="computeroutput">add_visitor</code> 
         public
        construct/copy/destruct</h3>
-<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><a name="idm267991492544-bb"></a><span class="identifier">add_visitor</span><span class="special">(</span><span class="keyword">const</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="special">&amp;</span> i<span class="special">,</span> <span class="keyword">const</span> <span class="identifier">Value</span> <span class="special">&amp;</span> v<span class="special">,</span> <span class="identifier">buffer_type</span> <span class="special">&amp;</span> b<span class="special">)</span><span class="special">;</span></pre></li></ol></div>
+<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><a name="idm307895390624-bb"></a><span class="identifier">add_visitor</span><span class="special">(</span><span class="keyword">const</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="special">&amp;</span> i<span class="special">,</span> <span class="keyword">const</span> <span class="identifier">Value</span> <span class="special">&amp;</span> v<span class="special">,</span> <span class="identifier">buffer_type</span> <span class="special">&amp;</span> b<span class="special">)</span><span class="special">;</span></pre></li></ol></div>
 </div>
 <div class="refsect2">
-<a name="idm514243877584"></a><h3>
-<a name="idm267991500688-bb"></a><code class="computeroutput">add_visitor</code> public member functions</h3>
+<a name="idm437075991008"></a><h3>
+<a name="idm307895398768-bb"></a><code class="computeroutput">add_visitor</code> public member functions</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
-<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Array<span class="special">&gt;</span> <span class="keyword">void</span> <a name="idm267991500160-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">Array</span> <span class="special">&amp;</span> b<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idm267991497712-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="special">&amp;</span> b<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idm267991496048-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="identifier">mp_int</span> <span class="special">&gt;</span> <span class="special">&amp;</span> b<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idm267991494368-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="identifier">weight</span> <span class="special">&gt;</span> <span class="special">&amp;</span> b<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Array<span class="special">&gt;</span> <span class="keyword">void</span> <a name="idm307895398240-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">Array</span> <span class="special">&amp;</span> b<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idm307895395792-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="keyword">void</span> <span class="special">&gt;</span> <span class="special">&amp;</span> b<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idm307895394128-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="identifier">mp_int</span> <span class="special">&gt;</span> <span class="special">&amp;</span> b<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">void</span> <a name="idm307895392448-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">array</span><span class="special">&lt;</span> <span class="identifier">weight</span> <span class="special">&gt;</span> <span class="special">&amp;</span> b<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 </div>
@@ -79,7 +79,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="../adaptive_storage.html"><img src="../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../adaptive_storage.html#idm514244090832"><img src="../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="assign_visitor.html"><img src="../../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="../adaptive_storage.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../adaptive_storage.html#idm437076190576"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="assign_visitor.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

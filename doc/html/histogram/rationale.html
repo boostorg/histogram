@@ -2,7 +2,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <title>Rationale</title>
-<link rel="stylesheet" href="../../../../../doc/src/boostbook.css" type="text/css">
+<link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
 <link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
@@ -11,16 +11,16 @@
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
-<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../../../boost.png"></td>
-<td align="center"><a href="../../../../../index.html">Home</a></td>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../boost.png"></td>
+<td align="center"><a href="../../../index.html">Home</a></td>
 <td align="center"><a href="../../../../../libs/libraries.htm">Libraries</a></td>
 <td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
 <td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
-<td align="center"><a href="../../../../../more/index.htm">More</a></td>
+<td align="center"><a href="../../../more/index.htm">More</a></td>
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="benchmarks.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="concepts.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="benchmarks.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="concepts.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
@@ -207,7 +207,7 @@
 <p>
         We start with 1 byte per bin counter and then double the size as needed,
         until 8 byte per bin are reached. When even that is not enough, we switch
-        to the <a href="../../../../../libs/multiprecision/index.html" target="_top">Boost.Multiprecision</a>
+        to the <a href="../../libs/multiprecision/index.html" target="_top">Boost.Multiprecision</a>
         type <code class="computeroutput"><span class="identifier">cpp_int</span></code>, whose capacity
         is limited only by available memory. This approach is not only memory conserving,
         but also ultimately safe, because bin counters cannot overflow.
@@ -261,14 +261,13 @@
             otherwise might have been overlooked.
           </li>
 <li class="listitem">
-            Projectability: In multi-dimensional histograms, an out-of-range value
+            Reducability: In multi-dimensional histograms, an out-of-range value
             along one axis may be paired with an in-range value along another axis.
             If under- and overflow bins are missing, such a value pair is lost. This
             distorts the histogram even along the axis where the value was in range.
-            When under- and overflow bins are present, it is possible to project
-            (projecting means summing up along all other axes) the histogram onto
-            any axis and get the same result as if one had filled a histogram with
-            only that axis.
+            When under- and overflow bins are present, it is possible to reduce (summing
+            up along other axes) the histogram into a lower-dimensional version and
+            get the same result as if one had filled the latter histogram.
           </li>
 </ul></div>
 </div>
@@ -383,7 +382,7 @@
       </p>
 <div class="note"><table border="0" summary="Note">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
 <th align="left">Note</th>
 </tr>
 <tr><td align="left" valign="top"><p>
@@ -400,7 +399,7 @@
 <p>
         When the <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage</a></code>
         is used, histograms may also be filled with weighted values. The choice of
-        using weighted fills can be made at run-time. If the function <code class="computeroutput"><span class="identifier">wfill</span><span class="special">(...)</span></code>
+        using weighted fills can be made at run-time. If the call <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">(</span><span class="identifier">x</span><span class="special">))</span></code>
         is used, two doubles per bin are stored (previous integer counts are automatically
         converted). The first double keeps track of the sum of weights. The second
         double keeps track of the sum of weights squared. The latter is the variance
@@ -408,7 +407,7 @@
       </p>
 <div class="note"><table border="0" summary="Note">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
 <th align="left">Note</th>
 </tr>
 <tr><td align="left" valign="top"><p>
@@ -447,7 +446,7 @@
       </p>
 <div class="note"><table border="0" summary="Note">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
 <th align="left">Note</th>
 </tr>
 <tr><td align="left" valign="top">
@@ -465,14 +464,11 @@
           object implements the sequence protocol and behaves like an immutable sequence
           of axes. Examples: <code class="computeroutput"><span class="identifier">len</span><span class="special">(</span><span class="identifier">histogram</span><span class="special">)</span></code> returns the number of axes, <code class="computeroutput"><span class="identifier">histogram</span><span class="special">[</span><span class="number">0</span><span class="special">]</span></code> accesses
           the first axis, <code class="computeroutput"><span class="keyword">for</span> <span class="identifier">axis</span>
-          <span class="identifier">in</span> <span class="identifier">histogram</span><span class="special">:</span> <span class="special">[...]</span></code>
-          iterates.
+          <span class="identifier">in</span> <span class="identifier">histogram</span><span class="special">:</span> <span class="special">[...]</span></code>.
         </p>
 <p>
-          Keyword-based parameters: C++ member functions <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code> and <code class="computeroutput"><span class="identifier">wfill</span><span class="special">(...)</span></code> are wrapped by the single Python member
-          function <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code>
-          with an optional keyword parameter <code class="computeroutput"><span class="identifier">w</span></code>
-          to pass a weight.
+          Keyword-based parameters: the member function call <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">(</span><span class="identifier">x</span><span class="special">))</span></code>
+          in C++ is translated into a Python member function call <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">=</span><span class="identifier">x</span><span class="special">)</span></code>.
         </p>
 </td></tr>
 </table></div>
@@ -482,7 +478,7 @@
 <a name="histogram.rationale.serialization"></a><a class="link" href="rationale.html#histogram.rationale.serialization" title="Serialization">Serialization</a>
 </h3></div></div></div>
 <p>
-        Serialization is implemented using <a href="../../../../../libs/serialization/index.html" target="_top">Boost.Serialization</a>.
+        Serialization is implemented using <a href="../../libs/serialization/index.html" target="_top">Boost.Serialization</a>.
         Pickling in Python is implemented based on the C++ serialization code. In
         the current implementation, the pickled stream is <span class="bold"><strong>not</strong></span>
         portable, since it uses <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">archive</span><span class="special">::</span><span class="identifier">binary_archive</span></code>.
@@ -516,7 +512,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="benchmarks.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="concepts.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="benchmarks.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="concepts.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

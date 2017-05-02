@@ -24,7 +24,7 @@ Example 1: How to make a 1d-histogram in C++ and to fill it.
         h.fill(1.7);
         h.fill(2.0);  // put in overflow bin, bin interval is semi-open
         h.fill(20.0); // put in overflow bin
-        h.wfill(5.0, 0.1); // fill with a weighted entry, weight is 5.0
+        h.fill(0.1, bh::weight(5.0)); // fill with a weighted entry, weight is 5
 
         // iterate over bins, loop includes under- and overflow bin
         for (const auto& bin : h.axis<0>()) {

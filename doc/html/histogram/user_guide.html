@@ -2,7 +2,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <title>User guide</title>
-<link rel="stylesheet" href="../../../../../doc/src/boostbook.css" type="text/css">
+<link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
 <link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
@@ -11,16 +11,16 @@
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
-<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../../../boost.png"></td>
-<td align="center"><a href="../../../../../index.html">Home</a></td>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../boost.png"></td>
+<td align="center"><a href="../../../index.html">Home</a></td>
 <td align="center"><a href="../../../../../libs/libraries.htm">Libraries</a></td>
 <td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
 <td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
-<td align="center"><a href="../../../../../more/index.htm">More</a></td>
+<td align="center"><a href="../../../more/index.htm">More</a></td>
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="tutorial.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="benchmarks.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="tutorial.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="benchmarks.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
@@ -149,7 +149,7 @@
       </p>
 <div class="note"><table border="0" summary="Note">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
 <th align="left">Note</th>
 </tr>
 <tr><td align="left" valign="top"><p>
@@ -203,13 +203,13 @@
 </pre>
 <div class="note"><table border="0" summary="Note">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../../../doc/src/images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
 <th align="left">Note</th>
 </tr>
 <tr><td align="left" valign="top"><p>
           In all these examples, memory for bin counters is allocated lazily, because
           <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">boost::histogram::adaptive_storage&lt;&gt;</a></code>
-          is used. Allocation is deferred to the first call to <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code> or <code class="computeroutput"><span class="identifier">wfill</span><span class="special">(...)</span></code>, which are described in the next section.
+          is used. Allocation is deferred to the first call to <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code>, which are described in the next section.
           Therefore memory allocation exceptions are not thrown when the histogram
           is created, but possibly later.
         </p></td></tr>
@@ -230,18 +230,21 @@
             value is in the bin range
           </li>
 <li class="listitem">
-            <code class="computeroutput"><span class="identifier">wfill</span><span class="special">(</span><span class="identifier">weight</span><span class="special">,</span> <span class="special">...)</span></code> initiates a weighted fill, which
-            increment a bin counter by a <code class="computeroutput"><span class="identifier">weight</span></code>
-            when a value is in the bin range.
+            <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span>
+            <span class="identifier">weight</span><span class="special">(</span><span class="identifier">x</span><span class="special">))</span></code>
+            initiates a weighted fill, which increment a bin counter by a weight
+            <code class="computeroutput"><span class="identifier">x</span></code> when a value is in
+            the bin range.
           </li>
 </ul></div>
 <p>
-        Why would like to do weighted fills is explained <a class="link" href="rationale.html#histogram.rationale.weights" title="Variance estimates">in
-        the rationale</a>. Do not use <code class="computeroutput"><span class="identifier">wfill</span><span class="special">(...)</span></code> if all your weights are equal to 1.
-        Use <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code>
-        in this case, because it is way more efficient. You are free to mix the two
-        calls, meaning, you can start calling <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code> and later switch to <code class="computeroutput"><span class="identifier">wfill</span><span class="special">(</span><span class="identifier">weight</span><span class="special">,</span> <span class="special">...)</span></code> on
-        the same histogram or vice versa.
+        The need to support weighted fills is explained <a class="link" href="rationale.html#histogram.rationale.weights" title="Variance estimates">in
+        the rationale</a>. Do not use the form <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">(</span><span class="identifier">x</span><span class="special">))</span></code>
+        if all your weights are equal to 1. Use <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code> in this case, because it is way more
+        efficient. You are free to mix the two calls, meaning, you can start calling
+        <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code>
+        and later switch to <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">(</span><span class="identifier">x</span><span class="special">))</span></code>
+        on the same histogram or vice versa.
       </p>
 <p>
         Here is an example which fills a 2d-histogram with 1000 pairs of normal distributed
@@ -265,8 +268,8 @@
 <span class="special">}</span>
 </pre>
 <p>
-        Here is a second example which using wfill in a functional programming style.
-        The input values are taken from a container:
+        Here is a second example which using a weighted fill in a functional programming
+        style. The input values are taken from a container:
       </p>
 <pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">histogram</span><span class="special">/</span><span class="identifier">histogram</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 <span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">algorithm</span><span class="special">&gt;</span>
@@ -275,7 +278,7 @@
 	<span class="keyword">namespace</span> <span class="identifier">bh</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">histogram</span><span class="special">;</span>
 	<span class="keyword">auto</span> <span class="identifier">h</span> <span class="special">=</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">make_static_histogram</span><span class="special">(</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">integer_axis</span><span class="special">(</span><span class="number">0</span><span class="special">,</span> <span class="number">9</span><span class="special">));</span>
 	<span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">v</span><span class="special">{</span><span class="number">0</span><span class="special">,</span> <span class="number">1</span><span class="special">,</span> <span class="number">2</span><span class="special">,</span> <span class="number">3</span><span class="special">,</span> <span class="number">4</span><span class="special">,</span> <span class="number">5</span><span class="special">,</span> <span class="number">6</span><span class="special">,</span> <span class="number">7</span><span class="special">,</span> <span class="number">8</span><span class="special">,</span> <span class="number">9</span><span class="special">};</span>
-	<span class="identifier">std</span><span class="special">::</span><span class="identifier">for_each</span><span class="special">(</span><span class="identifier">v</span><span class="special">.</span><span class="identifier">begin</span><span class="special">(),</span> <span class="identifier">v</span><span class="special">.</span><span class="identifier">end</span><span class="special">(),</span> <span class="special">[&amp;</span><span class="identifier">h</span><span class="special">](</span><span class="keyword">int</span> <span class="identifier">x</span><span class="special">)</span> <span class="special">{</span> <span class="identifier">h</span><span class="special">.</span><span class="identifier">wfill</span><span class="special">(</span><span class="number">2.0</span><span class="special">,</span> <span class="identifier">x</span><span class="special">);</span> <span class="special">});</span>
+	<span class="identifier">std</span><span class="special">::</span><span class="identifier">for_each</span><span class="special">(</span><span class="identifier">v</span><span class="special">.</span><span class="identifier">begin</span><span class="special">(),</span> <span class="identifier">v</span><span class="special">.</span><span class="identifier">end</span><span class="special">(),</span> <span class="special">[&amp;</span><span class="identifier">h</span><span class="special">](</span><span class="keyword">int</span> <span class="identifier">x</span><span class="special">)</span> <span class="special">{</span> <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="identifier">x</span><span class="special">,</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">weight</span><span class="special">(</span><span class="number">2.0</span><span class="special">));</span> <span class="special">});</span>
 	<span class="comment">// h is now filled</span>
 <span class="special">}</span>
 </pre>
@@ -334,7 +337,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="tutorial.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="benchmarks.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="tutorial.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="benchmarks.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>
