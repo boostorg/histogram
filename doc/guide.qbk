@@ -82,7 +82,7 @@ complex_cpp_module.process(h) # histogram is filled with input values
 
 In Python, you can straight-forwardly create a histogram object with a variable number of axis arguments. The histogram instance passes the language barrier without copying its internal (possibly large) data buffer, so this workflow is efficient.
 
-When you work with [classref boost::histogram::histogram<Dynamic, Axes, Storage>], you can also create a histogram from a run-time compiled collection of axis objects:
+When you work with [classref boost::histogram::histogram<Dynamic,...>], you can also create a histogram from a run-time compiled collection of axis objects:
 
 [c++]``
 #include <boost/histogram.hpp>
@@ -91,11 +91,11 @@ When you work with [classref boost::histogram::histogram<Dynamic, Axes, Storage>
 namespace bh = boost::histogram;
 
 int main() {
-	using dhist = decltype(bh::make_dynamic_histogram());
-	auto v = std::vector<dhist::axis_type>();
+	using H = bh::histogram<bh::Dynamic, bh::builtin_axes>;
+	auto v = std::vector<H::axis_type>();
 	v.push_back(bh::regular_axis<>(100, -1, 1));
 	v.push_back(bh::integer_axis(1, 6));
-	auto h = dhist(v.begin(), v.end());
+	auto h = H(v.begin(), v.end());
 	// do something with h
 }
 ``
