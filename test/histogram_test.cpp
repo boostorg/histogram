@@ -201,25 +201,25 @@ template <typename Type> void run_tests() {
     h.fill(0);
     h.fill(0);
     h.fill(-1);
-    h.fill(10);
+    h.fill(10, count(10));
 
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(bins(h.axis(0_c)), 2);
     BOOST_TEST_EQ(shape(h.axis(0_c)), 4);
-    BOOST_TEST_EQ(h.sum(), 4);
+    BOOST_TEST_EQ(h.sum(), 13);
 
     BOOST_TEST_THROWS(h.value(-2), std::out_of_range);
     BOOST_TEST_EQ(h.value(-1), 1.0);
     BOOST_TEST_EQ(h.value(0), 2.0);
     BOOST_TEST_EQ(h.value(1), 0.0);
-    BOOST_TEST_EQ(h.value(2), 1.0);
+    BOOST_TEST_EQ(h.value(2), 10.0);
     BOOST_TEST_THROWS(h.value(3), std::out_of_range);
 
     BOOST_TEST_THROWS(h.variance(-2), std::out_of_range);
     BOOST_TEST_EQ(h.variance(-1), 1.0);
     BOOST_TEST_EQ(h.variance(0), 2.0);
     BOOST_TEST_EQ(h.variance(1), 0.0);
-    BOOST_TEST_EQ(h.variance(2), 1.0);
+    BOOST_TEST_EQ(h.variance(2), 10.0);
     BOOST_TEST_THROWS(h.variance(3), std::out_of_range);
   }
 
@@ -230,7 +230,7 @@ template <typename Type> void run_tests() {
     h.fill(0);
     h.fill(-0);
     h.fill(-1);
-    h.fill(10);
+    h.fill(10, count(10));
 
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(bins(h.axis(0_c)), 2);
@@ -276,10 +276,10 @@ template <typename Type> void run_tests() {
     auto h = make_histogram<container_storage<std::vector<float>>>(
         Type(), regular_axis<>(2, -1, 1));
     h.fill(0);
-    h.fill(weight(2.0), -1.0);
+    h.fill(count(2.0), -1.0);
     h.fill(-1.0);
     h.fill(-2.0);
-    h.fill(weight(5.0), 10.0);
+    h.fill(count(5.0), 10.0);
 
     BOOST_TEST_EQ(h.sum(), 10);
 

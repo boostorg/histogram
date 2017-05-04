@@ -23,9 +23,16 @@ class weight {
 public:
   explicit weight(double v) : value(v) {}
   explicit operator double() const { return value; }
-
 private:
   double value;
+};
+
+class count {
+public:
+  explicit count(unsigned v) : value(v) {}
+  explicit operator unsigned() const { return value; }
+private:
+  unsigned value;
 };
 
 } // namespace histogram

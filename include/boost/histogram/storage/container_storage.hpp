@@ -49,16 +49,16 @@ public:
   container_storage(container_storage &&) = default;
   container_storage &operator=(container_storage &&) = default;
 
-  template <typename OtherStorage, typename = detail::is_storage<OtherStorage>>
-  explicit container_storage(const OtherStorage &other) {
+  template <typename S, typename = detail::is_storage<S>>
+  explicit container_storage(const S &other) {
     detail::init(container_, other.size());
     for (std::size_t i = 0; i < container_.size(); ++i) {
       container_[i] = other.value(i);
     }
   }
 
-  template <typename OtherStorage>
-  container_storage &operator=(const OtherStorage &other) {
+  template <typename S>
+  container_storage &operator=(const S &other) {
     detail::init(container_, other.size());
     for (std::size_t i = 0; i < container_.size(); ++i) {
       container_[i] = other.value(i);
@@ -68,14 +68,9 @@ public:
 
   std::size_t size() const { return container_.size(); }
   void increase(std::size_t i) { ++(container_[i]); }
-  void increase(std::size_t i, value_type w) { container_[i] += w; }
+  template <typename Value>
+  void increase(std::size_t i, const Value& n) { container_[i] += n; }
   value_type value(std::size_t i) const { return container_[i]; }
-
-  template <typename OtherStorage> void operator+=(const OtherStorage &other) {
-    for (std::size_t i = 0; i < container_.size(); ++i) {
-      container_[i] += other.value(i);
-    }
-  }
 
   template <typename C> bool operator==(const container_storage<C> &rhs) {
     return container_.size() == rhs.container_.size() &&

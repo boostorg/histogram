@@ -188,8 +188,15 @@ public:
     apply_visitor(increase_visitor(i, buffer_), buffer_);
   }
 
-  void increase(std::size_t i, value_type w) {
-    apply_visitor(wincrease_visitor(i, w, buffer_), buffer_);
+  template <typename Value>
+  void increase(std::size_t i, const Value& n) {
+    apply_visitor(
+        add_visitor<Value>(i, n, buffer_),
+        buffer_);
+  }
+
+  void weighted_increase(std::size_t i, value_type weight) {
+    apply_visitor(wincrease_visitor(i, weight, buffer_), buffer_);
   }
 
   value_type value(std::size_t i) const {
@@ -198,14 +205,6 @@ public:
 
   value_type variance(std::size_t i) const {
     return apply_visitor(variance_visitor(i), buffer_);
-  }
-
-  template <typename S> adaptive_storage &operator+=(const S &rhs) {
-    for (std::size_t i = 0, n = rhs.size(); i < n; ++i)
-      apply_visitor(
-          add_visitor<typename S::value_type>(i, rhs.value(i), buffer_),
-          buffer_);
-    return *this;
   }
 
   bool operator==(const adaptive_storage &rhs) const {
@@ -359,7 +358,7 @@ private:
     void operator()(array<void> &b) const {
       if (value > 0) {
         buffer = array<uint8_t>(b.size);
-        (*this)(get<array<uint8_t>>(buffer));
+        operator()(get<array<uint8_t>>(buffer));
       }
     }
 
