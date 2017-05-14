@@ -56,10 +56,10 @@ private:
 
 public:
   histogram() = default;
-  histogram(const histogram &rhs) = default;
-  histogram(histogram &&rhs) = default;
-  histogram &operator=(const histogram &rhs) = default;
-  histogram &operator=(histogram &&rhs) = default;
+  histogram(const histogram &) = default;
+  histogram(histogram &&) = default;
+  histogram &operator=(const histogram &) = default;
+  histogram &operator=(histogram &&) = default;
 
   // template <typename... Axes1>
   // explicit histogram(Axes1 &&... axes) :
@@ -245,9 +245,7 @@ private:
 
   std::size_t field_count() const {
     detail::field_count fc;
-    for (const auto &a : axes_) {
-      apply_visitor(fc, a);
-    }
+    for_each_axis(fc);
     return fc.value;
   }
 
@@ -340,9 +338,42 @@ private:
     }
   }
 
+  histogram reduce_impl(std::vector<bool>&& b) const
+  {
+    axes_type axes;
+    std::vector<unsigned> n(b.size());
+    auto axes_iter = axes_.begin();
+    auto n_iter = n.begin();
+    for (const auto& bi : b) {
+      if (bi)
+        axes.emplace_back(*axes_iter);
+      *n_iter = apply_visitor(detail::shape(), *axes_iter);
+      ++axes_iter;
+      ++n_iter;
+    }
+    histogram h(axes.begin(), axes.end());
+    detail::index_mapper m(std::move(n), std::move(b));
+    do {
+      h.storage_.increase(m.second, storage_.value(m.first));      
+    } while (m.next());
+    return h;
+  }
+
+  friend histogram reduce(const histogram& h, const keep& k) {
+    std::vector<bool> b(h.dim(), false);
+    for (const auto& i : k)
+      b[i] = true;
+    return h.reduce_impl(std::move(b));
+  }
+
+  friend histogram reduce(const histogram& h, const remove& r) {
+    std::vector<bool> b(h.dim(), true);
+    for (const auto& i : r)
+      b[i] = false;
+    return h.reduce_impl(std::move(b));
+  }
+
   template <typename D, typename A, typename S> friend class histogram;
-  template <typename K>
-  friend histogram reduce(const histogram&, const K&);
   friend class ::boost::python::access;
   friend class ::boost::serialization::access;
   template <typename Archive> void serialize(Archive &, unsigned);

@@ -9,6 +9,7 @@
 
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <type_traits>
+#include <set>
 
 namespace boost {
 namespace histogram {
@@ -34,6 +35,16 @@ public:
 private:
   unsigned value;
 };
+
+namespace detail {
+template <unsigned>
+struct keep_remove : std::set<unsigned> {
+  keep_remove(const std::initializer_list<unsigned>& l) : std::set<unsigned>(l) {}
+};
+} // namespace detail
+
+using keep = detail::keep_remove<0>;
+using remove = detail::keep_remove<1>;
 
 } // namespace histogram
 } // namespace boost

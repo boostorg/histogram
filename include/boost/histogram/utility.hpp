@@ -8,9 +8,7 @@
 #define BOOST_HISTOGRAM_UTILITY_HPP_
 
 #include <boost/histogram/detail/axis_visitor.hpp>
-#include <boost/histogram/histogram.hpp>
 #include <boost/variant/variant_fwd.hpp>
-#include <set>
 
 namespace boost {
 namespace histogram {
@@ -61,42 +59,6 @@ template <typename A> typename A::value_type center(const A &a, const int i) {
 template <typename... Axes>
 double center(const boost::variant<Axes...> &a, const int i) {
   return apply_visitor(detail::center(i), a);
-}
-
-namespace detail {
-template <unsigned N>
-class keep_or_remove  : public std::set<unsigned> {
-public:
-  keep_or_remove(const std::initializer_list<unsigned>& l) : std::set<unsigned>(l) {}
-  keep_or_remove(const std::set<unsigned>& l) : std::set<unsigned>(l) {}
-};
-} // namespace detail
-
-using keep = detail::keep_or_remove<0>;
-using remove = detail::keep_or_remove<1>;
-
-template <typename Axes, typename Storage>
-histogram<Dynamic, Axes, Storage> reduce(const histogram<Dynamic, Axes, Storage>& hin, const keep& k) {
-  using H = decltype(hin);
-  typename H::axes_type aout;
-  aout.reserve(k.size());
-  for (auto ki : k) {
-    aout.emplace_back(hin.axes_[ki]);
-  }
-  H hout(aout);
-  // now the difficult part: sum over other axes
-  // TODO
-  return std::move(hout);
-}
-
-template <typename Axes, typename Storage>
-histogram<Dynamic, Axes, Storage> reduce(const histogram<Dynamic, Axes, Storage>& hin, const remove& r) {
-  keep k;
-  for (unsigned ki = 0; ki < hin.dim(); ++ki) {
-    if (r.find(ki) == r.end())
-      k.insert(ki);
-  }
-  return reduce(hin, k);
 }
 
 } // namespace histogram

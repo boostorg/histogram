@@ -259,7 +259,6 @@ private:
   }
 
   template <typename D, typename A, typename S> friend class histogram;
-
   friend class ::boost::serialization::access;
   template <typename Archive> void serialize(Archive &, unsigned);
 };

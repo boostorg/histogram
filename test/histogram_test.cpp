@@ -583,7 +583,9 @@ int main() {
   run_tests<boost::histogram::Static>();
   run_tests<boost::histogram::Dynamic>();
 
-  // init_6: special stuff that only works with Dynamic
+  // special stuff that only works with Dynamic
+
+  // init_6
   {
     auto v = std::vector<histogram<Dynamic, builtin_axes>::axis_type>();
     v.push_back(regular_axis<>(100, -1, 1));
@@ -593,6 +595,21 @@ int main() {
     BOOST_TEST_EQ(h.axis(1_c), v[1]);
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
+  }
+
+  // reduce
+  {
+    auto h1 = histogram<Dynamic, builtin_axes>(integer_axis(0, 1), integer_axis(2, 3));
+    h1.fill(0, 2);
+    h1.fill(0, 3);
+    h1.fill(1, 2);
+    h1.fill(1, 3);
+    auto h2 = reduce(h1, keep({0}));
+    // BOOST_TEST_EQ(h2.dim(), 1);
+    // BOOST_TEST_EQ(h2.sum(), h1.sum());
+    // BOOST_TEST_EQ(h2.value(0), 2);
+    // BOOST_TEST_EQ(h2.value(1), 2);
+    // BOOST_TEST_EQ(h2.axis(), decltype(h2)::axis_type{integer_axis(0, 1)});
   }
 
   run_mixed_tests<boost::histogram::Static, boost::histogram::Dynamic>();
