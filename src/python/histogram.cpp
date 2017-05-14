@@ -232,7 +232,7 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
   python::object ow;
   if (kwargs) {
     if (len(kwargs) > 1 || !kwargs.has_key("weight")) {
-      PyErr_SetString(PyExc_RuntimeError, "only keyword w allowed");
+      PyErr_SetString(PyExc_RuntimeError, "only keyword weight allowed");
       python::throw_error_already_set();
     }
     ow = kwargs.get("weight");
@@ -303,7 +303,7 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
       return python::object();
     }
   }
-#endif
+#endif /* HAVE_NUMPY */
 
   const unsigned dim = nargs - 1;
   if (dim != self.dim()) {
