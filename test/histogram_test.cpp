@@ -428,25 +428,29 @@ template <typename Type> void run_tests() {
 
   // add_2
   {
-    auto a = make_histogram<adaptive_storage<>>(Type(), integer_axis(-1, 1));
-    auto b = make_histogram<adaptive_storage<>>(Type(), integer_axis(-1, 1));
+    auto a = make_histogram<adaptive_storage<>>(Type(), integer_axis(0, 1));
+    auto b = make_histogram<adaptive_storage<>>(Type(), integer_axis(0, 1));
 
     a.fill(0);
-    b.fill(weight(3), -1);
+    BOOST_TEST_EQ(a.variance(0), 1);
+    b.fill(1, weight(3));
+    BOOST_TEST_EQ(b.variance(1), 9);
     auto c = a;
     c += b;
     BOOST_TEST_EQ(c.value(-1), 0);
-    BOOST_TEST_EQ(c.value(0), 3);
-    BOOST_TEST_EQ(c.value(1), 1);
+    BOOST_TEST_EQ(c.value(0), 1);
+    BOOST_TEST_EQ(c.variance(0), 1);
+    BOOST_TEST_EQ(c.value(1), 3);
+    BOOST_TEST_EQ(c.variance(1), 9);
     BOOST_TEST_EQ(c.value(2), 0);
-    BOOST_TEST_EQ(c.value(3), 0);
     auto d = a;
     d += b;
     BOOST_TEST_EQ(d.value(-1), 0);
-    BOOST_TEST_EQ(d.value(0), 3);
-    BOOST_TEST_EQ(d.value(1), 1);
+    BOOST_TEST_EQ(d.value(0), 1);
+    BOOST_TEST_EQ(d.variance(0), 1);
+    BOOST_TEST_EQ(d.value(1), 3);
+    BOOST_TEST_EQ(d.variance(1), 9);
     BOOST_TEST_EQ(d.value(2), 0);
-    BOOST_TEST_EQ(d.value(3), 0);
   }
 
   // add_3

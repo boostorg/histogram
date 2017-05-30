@@ -70,7 +70,13 @@ public:
   void increase(std::size_t i) { ++(container_[i]); }
   template <typename Value>
   void increase(std::size_t i, const Value& n) { container_[i] += n; }
+
+  void add(std::size_t i, const value_type& val, const value_type& /* var */) {
+    container_[i] += val;
+  }
+
   value_type value(std::size_t i) const { return container_[i]; }
+  value_type variance(std::size_t i) const { return container_[i]; }
 
   template <typename C> bool operator==(const container_storage<C> &rhs) {
     return container_.size() == rhs.container_.size() &&
