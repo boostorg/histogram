@@ -99,7 +99,7 @@ public:
       throw std::logic_error("axes of histograms differ");
     }
     for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
-      storage_.increase(i, rhs.storage_.value(i));
+      storage_.add(i, rhs.storage_.value(i), rhs.storage_.variance(i));
     return *this;
   }
 
@@ -127,8 +127,6 @@ public:
 
   template <typename... Indices>
   value_type variance(const Indices &... indices) const {
-    static_assert(detail::has_variance<Storage>::value,
-                  "Storage lacks variance support");
     static_assert(sizeof...(indices) == axes_size::value,
                   "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;

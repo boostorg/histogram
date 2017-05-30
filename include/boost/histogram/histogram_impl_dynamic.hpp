@@ -122,7 +122,7 @@ public:
       throw std::logic_error("axes of histograms differ");
     }
     for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
-      storage_.increase(i, rhs.storage_.value(i));
+      storage_.add(i, rhs.storage_.value(i), rhs.storage_.variance(i));
     return *this;
   }
 
@@ -144,6 +144,17 @@ public:
     apply_lin_iter<detail::xlin>(idx, stride, begin);
     if (stride) {
       storage_.increase(idx);
+    }
+  }
+
+  template <typename Iterator, typename = detail::is_iterator<Iterator>>
+  void fill(Iterator begin, Iterator end, const count &n) noexcept {
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
+                     "number of arguments does not match histogram dimension");
+    std::size_t idx = 0, stride = 1;
+    apply_lin_iter<detail::xlin>(idx, stride, begin);
+    if (stride) {
+      storage_.increase(idx, n);
     }
   }
 
@@ -182,8 +193,6 @@ public:
   }
 
   template <typename... Indices> value_type variance(Indices... indices) const {
-    static_assert(detail::has_variance<Storage>::value,
-                  "Storage lacks variance support");
     BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
                      "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -196,8 +205,6 @@ public:
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   value_type variance(Iterator begin, Iterator end) const {
-    static_assert(detail::has_variance<Storage>::value,
-                  "Storage lacks variance support");
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;

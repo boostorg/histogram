@@ -46,11 +46,12 @@ A `storage_type` is required to:
   * `std::size_t size() const`
   * `void increase(std::size_t index)`
   * `void increase(std::size_t index, value_type n)`
+  * `void add(std::size_t index, const value_type& val, const value_type& var)`
   * `value_type value(std::size_t index) const`
+  * `value_type variance(std::size_t index) const`
 
-To support weighted fills, two additional methods are required:
+To support weighted fills, an additional method is required:
 
-* `value_type variance(std::size_t index) const`
 * `void weighted_increase(std::size_t index, value_type weight)`
 
 [classref boost::histogram::container_storage] is a simple example of a storage type which does not support weighted fills.

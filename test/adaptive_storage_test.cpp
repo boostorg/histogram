@@ -345,10 +345,9 @@ int main() {
       BOOST_TEST_EQ(b.value(0), x);
       BOOST_TEST_EQ(b.variance(0), x);
       adaptive_storage<> c(1);
-      c.weighted_increase(0, 0.0);
-      c.increase(0, a.value(0));
+      c.weighted_increase(0, a.value(0));
       BOOST_TEST_EQ(c.value(0), x);
-      BOOST_TEST_EQ(c.variance(0), x);
+      BOOST_TEST_EQ(c.variance(0), x*x);
     }
   }
 
