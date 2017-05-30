@@ -19,15 +19,6 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <typename T> struct supports_weights {
-  template <typename> static std::false_type test(...);
-
-  template <typename C>
-  static decltype(std::declval<C &>().weighted_increase(0, 0.0), std::true_type{}) test(int);
-
-  static bool const value = decltype(test<T>(0))::value;
-};
-
 template <typename T, typename = decltype(std::declval<T &>().size(),
                                           std::declval<T &>().increase(0),
                                           std::declval<T &>().value(0))>

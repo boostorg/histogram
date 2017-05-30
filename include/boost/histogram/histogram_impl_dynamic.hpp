@@ -15,9 +15,9 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/mpl/int.hpp>
 #include <boost/mpl/count.hpp>
 #include <boost/mpl/empty.hpp>
+#include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/variant.hpp>
 #include <cstddef>
@@ -129,9 +129,11 @@ public:
   template <typename... Args> void fill(Args... args) noexcept {
     using n_count = typename mpl::count<mpl::vector<Args...>, count>;
     using n_weight = typename mpl::count<mpl::vector<Args...>, weight>;
-    static_assert((n_count::value + n_weight::value) <= 1,
-                  "arguments may contain at most one instance of type count or weight");
-    BOOST_ASSERT_MSG(sizeof...(args) == (dim() + n_count::value + n_weight::value),
+    static_assert(
+        (n_count::value + n_weight::value) <= 1,
+        "arguments may contain at most one instance of type count or weight");
+    BOOST_ASSERT_MSG(sizeof...(args) ==
+                         (dim() + n_count::value + n_weight::value),
                      "number of arguments does not match histogram dimension");
     fill_impl(mpl::int_<(n_count::value + 2 * n_weight::value)>(), args...);
   }
@@ -311,9 +313,10 @@ private:
   template <template <class, class> class Lin, unsigned D, typename X>
   inline void apply_lin_x(std::size_t &, std::size_t &, X &) const {}
 
-  template <template <class, class> class Lin, unsigned D, typename X, typename First,
-            typename... Rest>
-  inline typename std::enable_if<!(std::is_same<First, weight>::value || std::is_same<First, count>::value)>::type
+  template <template <class, class> class Lin, unsigned D, typename X,
+            typename First, typename... Rest>
+  inline typename std::enable_if<!(std::is_same<First, weight>::value ||
+                                   std::is_same<First, count>::value)>::type
   apply_lin_x(std::size_t &idx, std::size_t &stride, X &x, const First &first,
               const Rest &... rest) const {
     apply_visitor(lin_visitor<Lin, First>(idx, stride, first), axes_[D]);
@@ -345,13 +348,12 @@ private:
     }
   }
 
-  histogram reduce_impl(std::vector<bool>&& b) const
-  {
+  histogram reduce_impl(std::vector<bool> &&b) const {
     axes_type axes;
     std::vector<unsigned> n(b.size());
     auto axes_iter = axes_.begin();
     auto n_iter = n.begin();
-    for (const auto& bi : b) {
+    for (const auto &bi : b) {
       if (bi)
         axes.emplace_back(*axes_iter);
       *n_iter = apply_visitor(detail::shape(), *axes_iter);
@@ -361,21 +363,22 @@ private:
     histogram h(axes.begin(), axes.end());
     detail::index_mapper m(std::move(n), std::move(b));
     do {
-      h.storage_.increase(m.second, storage_.value(m.first));      
+      h.storage_.add(m.second, storage_.value(m.first),
+                     storage_.variance(m.first));
     } while (m.next());
     return h;
   }
 
-  friend histogram reduce(const histogram& h, const keep& k) {
+  friend histogram reduce(const histogram &h, const keep &k) {
     std::vector<bool> b(h.dim(), false);
-    for (const auto& i : k)
+    for (const auto &i : k)
       b[i] = true;
     return h.reduce_impl(std::move(b));
   }
 
-  friend histogram reduce(const histogram& h, const remove& r) {
+  friend histogram reduce(const histogram &h, const remove &r) {
     std::vector<bool> b(h.dim(), true);
-    for (const auto& i : r)
+    for (const auto &i : r)
       b[i] = false;
     return h.reduce_impl(std::move(b));
   }
@@ -401,9 +404,10 @@ inline histogram<
     Dynamic, typename detail::combine<builtin_axes, mpl::vector<Axes...>>::type,
     Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
-  return histogram<Dynamic, typename detail::combine<
-                                builtin_axes, mpl::vector<Axes...>>::type,
-                   Storage>(std::forward<Axes>(axes)...);
+  return histogram<
+      Dynamic,
+      typename detail::combine<builtin_axes, mpl::vector<Axes...>>::type,
+      Storage>(std::forward<Axes>(axes)...);
 }
 
 } // namespace histogram

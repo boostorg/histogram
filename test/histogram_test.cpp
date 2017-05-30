@@ -603,7 +603,8 @@ int main() {
 
   // reduce
   {
-    auto h1 = histogram<Dynamic, builtin_axes>(integer_axis(0, 1), integer_axis(2, 3));
+    auto h1 = histogram<Dynamic, builtin_axes>(integer_axis(0, 1),
+                                               integer_axis(2, 3));
     h1.fill(0, 2);
     h1.fill(0, 3);
     h1.fill(1, 2);

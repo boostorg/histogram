@@ -11,9 +11,9 @@
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/weight.hpp>
+#include <boost/mpl/int.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/variant.hpp>
-#include <boost/mpl/int.hpp>
 #include <limits>
 #include <type_traits>
 
@@ -188,25 +188,22 @@ public:
     apply_visitor(increase_visitor(i, buffer_), buffer_);
   }
 
-  template <typename Value>
-  void increase(std::size_t i, const Value& n) {
-    apply_visitor(
-        add_visitor<Value>(i, n, buffer_),
-        buffer_);
+  template <typename Value> void increase(std::size_t i, const Value &n) {
+    apply_visitor(add_visitor<Value>(i, n, buffer_), buffer_);
   }
 
   void weighted_increase(std::size_t i, value_type weight) {
     apply_visitor(wincrease_visitor(i, weight, buffer_), buffer_);
   }
 
-  void add(std::size_t i, const value_type& val, const value_type& var) {
+  void add(std::size_t i, const value_type &val, const value_type &var) {
     if (val == var) {
       apply_visitor(add_visitor<value_type>(i, val, buffer_), buffer_);
     } else {
       if (!boost::get<array<weight>>(&buffer_)) {
         apply_visitor(wincrease_visitor(0, 0.0, buffer_), buffer_);
       }
-      auto& b = boost::get<array<weight>>(buffer_);
+      auto &b = boost::get<array<weight>>(buffer_);
       b[i].w += val;
       b[i].w2 += var;
     }

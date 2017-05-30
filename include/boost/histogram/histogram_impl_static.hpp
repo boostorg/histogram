@@ -26,9 +26,9 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/mpl/int.hpp>
 #include <boost/mpl/count.hpp>
 #include <boost/mpl/empty.hpp>
+#include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
 #include <type_traits>
 
@@ -106,9 +106,11 @@ public:
   template <typename... Args> void fill(const Args &... args) {
     using n_count = typename mpl::count<mpl::vector<Args...>, count>;
     using n_weight = typename mpl::count<mpl::vector<Args...>, weight>;
-    static_assert((n_count::value + n_weight::value) <= 1,
-                  "arguments may contain at most one instance of type count or weight");
-    static_assert(sizeof...(args) == (axes_size::value + n_count::value + n_weight::value),
+    static_assert(
+        (n_count::value + n_weight::value) <= 1,
+        "arguments may contain at most one instance of type count or weight");
+    static_assert(sizeof...(args) ==
+                      (axes_size::value + n_count::value + n_weight::value),
                   "number of arguments does not match histogram dimension");
     fill_impl(mpl::int_<(n_count::value + 2 * n_weight::value)>(), args...);
   }
@@ -232,7 +234,8 @@ private:
 
   template <template <class, class> class Lin, unsigned D, typename X,
             typename First, typename... Rest>
-  inline typename std::enable_if<!(std::is_same<First, weight>::value || std::is_same<First, count>::value)>::type
+  inline typename std::enable_if<!(std::is_same<First, weight>::value ||
+                                   std::is_same<First, count>::value)>::type
   apply_lin_x(std::size_t &idx, std::size_t &stride, X &x, const First &first,
               const Rest &... rest) const {
     Lin<typename fusion::result_of::value_at_c<axes_type, D>::type,

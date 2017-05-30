@@ -8,8 +8,8 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
 #include <boost/histogram/storage/adaptive_storage.hpp>
-#include <type_traits>
 #include <set>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -24,6 +24,7 @@ class weight {
 public:
   explicit weight(double v) : value(v) {}
   explicit operator double() const { return value; }
+
 private:
   double value;
 };
@@ -32,14 +33,15 @@ class count {
 public:
   explicit count(unsigned v) : value(v) {}
   explicit operator unsigned() const { return value; }
+
 private:
   unsigned value;
 };
 
 namespace detail {
-template <unsigned>
-struct keep_remove : std::set<unsigned> {
-  keep_remove(const std::initializer_list<unsigned>& l) : std::set<unsigned>(l) {}
+template <unsigned> struct keep_remove : std::set<unsigned> {
+  keep_remove(const std::initializer_list<unsigned> &l)
+      : std::set<unsigned>(l) {}
 };
 } // namespace detail
 

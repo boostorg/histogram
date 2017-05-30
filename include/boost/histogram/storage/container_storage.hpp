@@ -57,8 +57,7 @@ public:
     }
   }
 
-  template <typename S>
-  container_storage &operator=(const S &other) {
+  template <typename S> container_storage &operator=(const S &other) {
     detail::init(container_, other.size());
     for (std::size_t i = 0; i < container_.size(); ++i) {
       container_[i] = other.value(i);
@@ -68,10 +67,11 @@ public:
 
   std::size_t size() const { return container_.size(); }
   void increase(std::size_t i) { ++(container_[i]); }
-  template <typename Value>
-  void increase(std::size_t i, const Value& n) { container_[i] += n; }
+  template <typename Value> void increase(std::size_t i, const Value &n) {
+    container_[i] += n;
+  }
 
-  void add(std::size_t i, const value_type& val, const value_type& /* var */) {
+  void add(std::size_t i, const value_type &val, const value_type & /* var */) {
     container_[i] += val;
   }
 
