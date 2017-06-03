@@ -61,12 +61,6 @@ public:
   histogram &operator=(const histogram &) = default;
   histogram &operator=(histogram &&) = default;
 
-  // template <typename... Axes1>
-  // explicit histogram(Axes1 &&... axes) :
-  // axes_({axis_type(std::move(axes))...}) {
-  //   storage_ = Storage(field_count());
-  // }
-
   template <typename... Axes1>
   explicit histogram(const Axes1 &... axes) : axes_({axis_type(axes)...}) {
     storage_ = Storage(field_count());

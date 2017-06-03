@@ -25,7 +25,6 @@
 #include <limits>
 #include <type_traits>
 #include <vector>
-#include <algorithm>
 
 namespace boost {
 namespace histogram {
@@ -54,7 +53,7 @@ template <typename MainVector, typename AuxVector> struct combine {
 struct bool_mask_helper {
   std::vector<bool> &b;
   bool v;
-  template <typename N> void operator()(N) const { b[N::value] = v; }
+  template <typename N> void operator()(const N &) const { b[N::value] = v; }
 };
 
 template <typename Ns> std::vector<bool> bool_mask(std::size_t n, bool v) {

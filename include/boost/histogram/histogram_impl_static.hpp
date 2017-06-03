@@ -57,6 +57,11 @@ public:
   histogram &operator=(const histogram &rhs) = default;
   histogram &operator=(histogram &&rhs) = default;
 
+  template <typename... Axis>
+  explicit histogram(const Axis &... axis) : axes_(axis...) {
+    storage_ = Storage(field_count());
+  }
+
   explicit histogram(axes_type &&axes) : axes_(std::move(axes)) {
     storage_ = Storage(field_count());
   }
@@ -259,7 +264,8 @@ private:
     }
   };
 
-  template <typename H> void reduce_impl(H &h, const std::vector<bool> &b) const {
+  template <typename H>
+  void reduce_impl(H &h, const std::vector<bool> &b) const {
     std::vector<unsigned> n(dim());
     auto helper = shape_assign_helper{n.begin()};
     for_each_axis(helper);

@@ -44,7 +44,7 @@ double left(const boost::variant<Axes...> &a, const int i) {
 }
 
 template <typename A> typename A::value_type right(const A &a, const int i) {
-  return a[i + 1];
+  return left(a, i + 1);
 }
 
 template <typename... Axes>
@@ -52,8 +52,8 @@ double right(const boost::variant<Axes...> &a, const int i) {
   return apply_visitor(detail::right(i), a);
 }
 
-template <typename A> typename A::value_type center(const A &a, const int i) {
-  return 0.5 * (a[i] + a[i + 1]);
+template <typename A> double center(const A &a, const int i) {
+  return 0.5 * (left(a, i) + right(a, i));
 }
 
 template <typename... Axes>

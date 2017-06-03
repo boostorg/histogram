@@ -13,11 +13,11 @@
 #include <boost/fusion/include/is_sequence.hpp>
 #include <boost/fusion/include/size.hpp>
 #include <boost/fusion/support/is_sequence.hpp>
-#include <boost/histogram/detail/utility.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/contains.hpp>
-#include <boost/variant.hpp>
+#include <boost/variant/get.hpp>
 #include <boost/variant/static_visitor.hpp>
+#include <boost/variant/variant.hpp>
 #include <type_traits>
 
 namespace boost {
@@ -37,28 +37,39 @@ struct uoflow : public static_visitor<bool> {
 };
 
 template <typename V> struct index : public static_visitor<int> {
-  const V v;
-  explicit index(const V x) : v(x) {}
+  const V &v;
+  explicit index(const V &x) : v(x) {}
   template <typename A> int operator()(const A &a) const { return a.index(v); }
 };
 
 struct left : public static_visitor<double> {
   const int i;
   explicit left(const int x) : i(x) {}
-  template <typename A> double operator()(const A &a) const { return a[i]; }
+  template <typename A> double operator()(const A &a) const {
+    return impl(typename std::is_arithmetic<typename A::value_type>::type(),
+                a[i]);
+  }
+  template <typename V> double impl(std::true_type, const V &v) const {
+    return v;
+  }
+  template <typename V> double impl(std::false_type, const V &) const {
+    throw std::runtime_error("cannot convert non-arithmetic type to double");
+  }
 };
 
 struct right : public static_visitor<double> {
   const int i;
   explicit right(const int x) : i(x) {}
-  template <typename A> double operator()(const A &a) const { return a[i + 1]; }
+  template <typename A> double operator()(const A &a) const {
+    return left(i + 1)(a);
+  }
 };
 
 struct center : public static_visitor<double> {
   const int i;
   explicit center(const int x) : i(x) {}
   template <typename A> double operator()(const A &a) const {
-    return 0.5 * (a[i] + a[i + 1]);
+    return 0.5 * (left(i)(a) + right(i)(a));
   }
 };
 

@@ -168,6 +168,26 @@ template <typename Type> void run_tests() {
     BOOST_TEST(h3 == href);
   }
 
+  // utility
+  {
+    auto a =
+        make_histogram<adaptive_storage<>>(Type(), regular_axis<>(1, 1, 2));
+    BOOST_TEST_EQ(bins(a.axis()), 1);
+    BOOST_TEST_EQ(shape(a.axis()), 3);
+    BOOST_TEST_EQ(index(a.axis(), 1.0), 0);
+    BOOST_TEST_EQ(left(a.axis(), 0), 1.0);
+    BOOST_TEST_EQ(right(a.axis(), 0), 2.0);
+    BOOST_TEST_EQ(center(a.axis(), 0), 1.5);
+
+    auto b = make_histogram<adaptive_storage<>>(Type(), integer_axis(1, 2));
+    BOOST_TEST_EQ(bins(a.axis()), 1);
+    BOOST_TEST_EQ(shape(a.axis()), 3);
+    BOOST_TEST_EQ(index(a.axis(), 1.0), 0);
+    BOOST_TEST_EQ(left(b.axis(), 0), 1.0);
+    BOOST_TEST_EQ(right(b.axis(), 0), 2.0);
+    BOOST_TEST_EQ(center(b.axis(), 0), 1.5);
+  }
+
   // equal_compare
   {
     auto a = make_histogram<adaptive_storage<>>(Type(), integer_axis(0, 1));
@@ -566,8 +586,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2.sum(), 5);
     BOOST_TEST_EQ(h2.value(0), 2);
     BOOST_TEST_EQ(h2.value(1), 3);
-    // BOOST_TEST_EQ(left(h2.axis(), 0), 2.0);
-    // BOOST_TEST_EQ(left(h2.axis(), 1), 3.0);
+    BOOST_TEST_EQ(left(h2.axis(), 0), 2.0);
+    BOOST_TEST_EQ(left(h2.axis(), 1), 3.0);
   }
 }
 
@@ -609,7 +629,7 @@ int main() {
 
   // special stuff that only works with Dynamic
 
-  // init_6
+  // init
   {
     auto v = std::vector<histogram<Dynamic, builtin_axes>::axis_type>();
     v.push_back(regular_axis<>(100, -1, 1));
@@ -619,6 +639,14 @@ int main() {
     BOOST_TEST_EQ(h.axis(1_c), v[1]);
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
+  }
+
+  // utility
+  {
+    auto c = histogram<Dynamic, builtin_axes>(category_axis({"A", "B"}));
+    BOOST_TEST_THROWS(left(c.axis(), 0), std::runtime_error);
+    BOOST_TEST_THROWS(right(c.axis(), 0), std::runtime_error);
+    BOOST_TEST_THROWS(center(c.axis(), 0), std::runtime_error);
   }
 
   run_mixed_tests<boost::histogram::Static, boost::histogram::Dynamic>();
