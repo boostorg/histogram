@@ -549,6 +549,26 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(a.value(0), 0);
     BOOST_TEST_EQ(a.value(1), 0);
   }
+
+  // reduce
+  {
+    auto h1 = make_histogram<adaptive_storage<>>(Type(), integer_axis(0, 1),
+                                                 integer_axis(2, 3));
+    h1.fill(0, 2);
+    h1.fill(0, 3);
+    h1.fill(1, 2);
+    h1.fill(1, 3);
+    h1.fill(1, 3);
+    BOOST_TEST_EQ(h1.dim(), 2);
+    BOOST_TEST_EQ(h1.sum(), 5);
+    auto h2 = reduce(h1, keep(1_c));
+    BOOST_TEST_EQ(h2.dim(), 1);
+    BOOST_TEST_EQ(h2.sum(), 5);
+    BOOST_TEST_EQ(h2.value(0), 2);
+    BOOST_TEST_EQ(h2.value(1), 3);
+    // BOOST_TEST_EQ(left(h2.axis(), 0), 2.0);
+    // BOOST_TEST_EQ(left(h2.axis(), 1), 3.0);
+  }
 }
 
 template <typename T1, typename T2> void run_mixed_tests() {
@@ -599,22 +619,6 @@ int main() {
     BOOST_TEST_EQ(h.axis(1_c), v[1]);
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
-  }
-
-  // reduce
-  {
-    auto h1 = histogram<Dynamic, builtin_axes>(integer_axis(0, 1),
-                                               integer_axis(2, 3));
-    h1.fill(0, 2);
-    h1.fill(0, 3);
-    h1.fill(1, 2);
-    h1.fill(1, 3);
-    auto h2 = reduce(h1, keep({0}));
-    // BOOST_TEST_EQ(h2.dim(), 1);
-    // BOOST_TEST_EQ(h2.sum(), h1.sum());
-    // BOOST_TEST_EQ(h2.value(0), 2);
-    // BOOST_TEST_EQ(h2.value(1), 2);
-    // BOOST_TEST_EQ(h2.axis(), decltype(h2)::axis_type{integer_axis(0, 1)});
   }
 
   run_mixed_tests<boost::histogram::Static, boost::histogram::Dynamic>();

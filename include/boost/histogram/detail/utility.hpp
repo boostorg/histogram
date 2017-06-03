@@ -60,10 +60,10 @@ template <typename A, typename T> struct xlin {
 };
 
 struct index_mapper {
-  std::size_t first, second;
+  std::size_t first = 0, second = 0;
 
-  index_mapper(std::vector<unsigned> &&nvec, std::vector<bool> &&bvec)
-      : first(0), second(0) {
+  index_mapper(const std::vector<unsigned> &nvec,
+               const std::vector<bool> &bvec) {
     dims.reserve(nvec.size());
     std::size_t s1 = 1, s2 = 1;
     auto bi = bvec.begin();

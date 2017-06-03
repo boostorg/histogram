@@ -348,7 +348,7 @@ private:
     }
   }
 
-  histogram reduce_impl(std::vector<bool> &&b) const {
+  histogram reduce_impl(const std::vector<bool> &b) const {
     axes_type axes;
     std::vector<unsigned> n(b.size());
     auto axes_iter = axes_.begin();
@@ -361,7 +361,7 @@ private:
       ++n_iter;
     }
     histogram h(axes.begin(), axes.end());
-    detail::index_mapper m(std::move(n), std::move(b));
+    detail::index_mapper m(n, b);
     do {
       h.storage_.add(m.second, storage_.value(m.first),
                      storage_.variance(m.first));
@@ -369,19 +369,25 @@ private:
     return h;
   }
 
-  friend histogram reduce(const histogram &h, const keep &k) {
+  template <typename Ns>
+  friend histogram reduce(const histogram &h, const detail::keep_static<Ns> &) {
+    const auto b = detail::bool_mask<Ns>(h.dim(), true);
+    return h.reduce_impl(b);
+  }
+
+  friend histogram reduce(const histogram &h, const detail::keep_dynamic &k) {
     std::vector<bool> b(h.dim(), false);
     for (const auto &i : k)
       b[i] = true;
-    return h.reduce_impl(std::move(b));
+    return h.reduce_impl(b);
   }
 
-  friend histogram reduce(const histogram &h, const remove &r) {
-    std::vector<bool> b(h.dim(), true);
-    for (const auto &i : r)
-      b[i] = false;
-    return h.reduce_impl(std::move(b));
-  }
+  // friend histogram reduce(const histogram &h, const remove &r) {
+  //   std::vector<bool> b(h.dim(), true);
+  //   for (const auto &i : r)
+  //     b[i] = false;
+  //   return h.reduce_impl(std::move(b));
+  // }
 
   template <typename D, typename A, typename S> friend class histogram;
   friend class ::boost::python::access;

@@ -45,29 +45,21 @@ namespace histogram {
 template <typename Axes, typename Storage>
 class histogram<Static, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
-  using size_pair = std::pair<std::size_t, std::size_t>;
+
+public:
   using axes_size = typename fusion::result_of::size<Axes>::type;
   using axes_type = typename fusion::result_of::as_vector<Axes>::type;
-
-public:
   using value_type = typename Storage::value_type;
 
-public:
   histogram() = default;
   histogram(const histogram &rhs) = default;
   histogram(histogram &&rhs) = default;
   histogram &operator=(const histogram &rhs) = default;
   histogram &operator=(histogram &&rhs) = default;
 
-  template <typename... Axes1>
-  explicit histogram(const Axes1 &... axes) : axes_(axes...) {
+  explicit histogram(axes_type &&axes) : axes_(std::move(axes)) {
     storage_ = Storage(field_count());
   }
-
-  // template <typename... Axes1>
-  // explicit histogram(Axes1 &&... axes) : axes_(std::move(axes)...) {
-  //   storage_ = Storage(field_count());
-  // }
 
   template <typename D, typename A, typename S>
   explicit histogram(const histogram<D, A, S> &rhs) : storage_(rhs.storage_) {
@@ -259,24 +251,60 @@ private:
     return apply_lin_x<Lin, D, X, Rest...>(idx, stride, x, rest...);
   }
 
+  struct shape_assign_helper {
+    mutable std::vector<unsigned>::iterator ni;
+    template <typename Axis> void operator()(const Axis &a) const {
+      *ni = a.shape();
+      ++ni;
+    }
+  };
+
+  template <typename H> void reduce_impl(H &h, const std::vector<bool> &b) const {
+    std::vector<unsigned> n(dim());
+    auto helper = shape_assign_helper{n.begin()};
+    for_each_axis(helper);
+    detail::index_mapper m(n, b);
+    do {
+      h.storage_.add(m.second, storage_.value(m.first),
+                     storage_.variance(m.first));
+    } while (m.next());
+  }
+
+  template <typename Ns>
+  friend auto reduce(const histogram &h, const detail::keep_static<Ns> &)
+      -> histogram<Static, typename detail::axes_select<Axes, Ns>::type,
+                   Storage> {
+    using HR = histogram<Static, typename detail::axes_select<Axes, Ns>::type,
+                         Storage>;
+    typename HR::axes_type axes;
+    detail::axes_assign_subset<Ns>(axes, h.axes_);
+    auto hr = HR(std::move(axes));
+    const auto b = detail::bool_mask<Ns>(h.dim(), true);
+    h.reduce_impl(hr, b);
+    return hr;
+  }
+
   template <typename D, typename A, typename S> friend class histogram;
   friend class ::boost::serialization::access;
   template <typename Archive> void serialize(Archive &, unsigned);
 };
 
 /// default static type factory
-template <typename... Axes>
-inline histogram<Static, mpl::vector<Axes...>>
-make_static_histogram(Axes &&... axes) {
-  return histogram<Static, mpl::vector<Axes...>>(std::forward<Axes>(axes)...);
+template <typename... Axis>
+inline histogram<Static, mpl::vector<Axis...>>
+make_static_histogram(Axis &&... axis) {
+  using h = histogram<Static, mpl::vector<Axis...>>;
+  auto axes = typename h::axes_type(std::forward<Axis>(axis)...);
+  return h(std::move(axes));
 }
 
 /// static type factory with variable storage type
-template <typename Storage, typename... Axes>
-inline histogram<Static, mpl::vector<Axes...>, Storage>
-make_static_histogram_with(Axes &&... axes) {
-  return histogram<Static, mpl::vector<Axes...>, Storage>(
-      std::forward<Axes>(axes)...);
+template <typename Storage, typename... Axis>
+inline histogram<Static, mpl::vector<Axis...>, Storage>
+make_static_histogram_with(Axis &&... axis) {
+  using h = histogram<Static, mpl::vector<Axis...>, Storage>;
+  auto axes = typename h::axes_type(std::forward<Axis>(axis)...);
+  return h(std::move(axes));
 }
 
 } // namespace histogram
