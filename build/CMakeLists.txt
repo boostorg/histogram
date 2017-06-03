@@ -147,7 +147,6 @@ add_custom_target(
   clang-format
   COMMAND clang-format
   -i
-  -style=file
   ${ALL_SOURCE_FILES}
   )
 
