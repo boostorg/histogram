@@ -144,7 +144,7 @@ file(GLOB_RECURSE
      )
 
 add_custom_target(
-  clang-format
+  clf
   COMMAND clang-format
   -i
   ${ALL_SOURCE_FILES}
