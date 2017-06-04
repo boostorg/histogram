@@ -2,7 +2,7 @@
 
 Users can extend the library with new axis and storage types.
 
-[section Axis type]
+[section:axis_type Axis type]
 
 An `axis_type` converts input values into bin indices.
 
@@ -31,7 +31,7 @@ It is recommended to take a look at [classref boost::histogram::axis_base], whic
 
 [endsect]
 
-[section Storage type]
+[section:storage_type Storage type]
 
 A `storage_type` handles memory for the bin counters and provides a uniform interface for incrementing bin counters and reading their values.
 
