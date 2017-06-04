@@ -5,6 +5,8 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/python/module.hpp>
+#include <boost/python/scope.hpp>
+#include <boost/python/object.hpp>
 #ifdef HAVE_NUMPY
 #define PY_ARRAY_UNIQUE_SYMBOL boost_histogram_ARRAY_API
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -32,6 +34,15 @@ BOOST_PYTHON_MODULE(histogram) {
 #ifdef HAVE_NUMPY
   init_numpy();
 #endif
-  boost::histogram::register_axis_types();
+  using namespace boost::python;
+  scope current;
+  object axis_module = object(
+    borrowed(PyImport_AddModule("histogram.axis"))
+  );
+  current.attr("axis") = axis_module;
+  {
+    scope scope = axis_module;
+    boost::histogram::register_axis_types();
+  }
   boost::histogram::register_histogram();
 }

@@ -8,7 +8,7 @@ int main(int, char**) {
 
     // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
     // with axis of histogram labeled as "x"
-    auto h = bh::make_static_histogram(bh::regular_axis<>(10, -1.0, 2.0, "x"));
+    auto h = bh::make_static_histogram(bh::axis::regular<>(10, -1.0, 2.0, "x"));
 
     // fill histogram with data
     h.fill(-1.5); // put in underflow bin

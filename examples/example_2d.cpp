@@ -7,8 +7,8 @@ int main() {
     random::mt19937 gen;
     random::normal_distribution<> norm;
     auto h = histogram::make_static_histogram(
-        histogram::regular_axis<>(100, -5, 5, "x"),
-        histogram::regular_axis<>(100, -5, 5, "y")
+        histogram::axis::regular<>(100, -5, 5, "x"),
+        histogram::axis::regular<>(100, -5, 5, "y")
     );
     for (int i = 0; i < 1000; ++i)
         h.fill(norm(gen), norm(gen));

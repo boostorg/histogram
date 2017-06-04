@@ -11,9 +11,9 @@ int main() {
 
 #define SIZEOF(axis)                                                           \
   std::cout << #axis << " " << sizeof(boost::histogram::axis) << std::endl
-  SIZEOF(regular_axis<>);
-  SIZEOF(circular_axis<>);
-  SIZEOF(variable_axis<>);
-  SIZEOF(integer_axis);
-  SIZEOF(category_axis);
+  SIZEOF(axis::regular<>);
+  SIZEOF(axis::circular<>);
+  SIZEOF(axis::variable<>);
+  SIZEOF(axis::integer);
+  SIZEOF(axis::category);
 }

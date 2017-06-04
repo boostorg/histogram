@@ -2,8 +2,8 @@ import histogram as hg
 import numpy as np
 import matplotlib.pyplot as plt
 
-h = hg.histogram(hg.regular_axis(10, -3, 3, uoflow=False),
-                 hg.regular_axis(10, -3, 3, uoflow=False))
+h = hg.histogram(hg.axis.regular(10, -3, 3, uoflow=False),
+                 hg.axis.regular(10, -3, 3, uoflow=False))
 xy = np.random.randn(2000).reshape((1000, 2))
 xy[:,1] *= 0.5
 h.fill(xy)

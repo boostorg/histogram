@@ -137,7 +137,7 @@ public:
       shapes.append(2);
     }
     for (unsigned i = 0; i < self.dim(); ++i) {
-      const auto s = shape(self.axis(i));
+      const auto s = histogram::shape(self.axis(i));
       shapes.append(s);
       strides.append(stride);
       stride *= s;
@@ -191,27 +191,27 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
   std::vector<dynamic_histogram::axis_type> axes;
   for (unsigned i = 0; i < dim; ++i) {
     python::object pa = args[i + 1];
-    python::extract<regular_axis<>> er(pa);
+    python::extract<axis::regular<>> er(pa);
     if (er.check()) {
       axes.push_back(er());
       continue;
     }
-    python::extract<circular_axis<>> ep(pa);
+    python::extract<axis::circular<>> ep(pa);
     if (ep.check()) {
       axes.push_back(ep());
       continue;
     }
-    python::extract<variable_axis<>> ev(pa);
+    python::extract<axis::variable<>> ev(pa);
     if (ev.check()) {
       axes.push_back(ev());
       continue;
     }
-    python::extract<integer_axis> ei(pa);
+    python::extract<axis::integer> ei(pa);
     if (ei.check()) {
       axes.push_back(ei());
       continue;
     }
-    python::extract<category_axis> ec(pa);
+    python::extract<axis::category> ec(pa);
     if (ec.check()) {
       axes.push_back(ec());
       continue;
