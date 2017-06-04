@@ -41,7 +41,7 @@ BOOST_PYTHON_MODULE(histogram) {
   );
   current.attr("axis") = axis_module;
   {
-    scope scope = axis_module;
+    scope current = axis_module;
     boost::histogram::register_axis_types();
   }
   boost::histogram::register_histogram();
