@@ -36,7 +36,7 @@ template <typename Histogram> double compare_1d(unsigned n, int distrib) {
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
-    auto h = Histogram(regular_axis<>(100, 0, 1));
+    auto h = Histogram(axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
       h.fill(r[i]);
@@ -52,7 +52,7 @@ template <typename Histogram> double compare_2d(unsigned n, int distrib) {
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
-    auto h = Histogram(regular_axis<>(100, 0, 1), regular_axis<>(100, 0, 1));
+    auto h = Histogram(axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n/2; ++i)
       h.fill(r[2 * i], r[2 * i + 1]);
@@ -68,8 +68,8 @@ template <typename Histogram> double compare_3d(unsigned n, int distrib) {
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
-    auto h = Histogram(regular_axis<>(100, 0, 1), regular_axis<>(100, 0, 1),
-                       regular_axis<>(100, 0, 1));
+    auto h = Histogram(axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1),
+                       axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n/3; ++i)
       h.fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
@@ -85,9 +85,9 @@ template <typename Histogram> double compare_6d(unsigned n, int distrib) {
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 50; ++k) {
-    auto h = Histogram(regular_axis<>(10, 0, 1), regular_axis<>(10, 0, 1),
-                       regular_axis<>(10, 0, 1), regular_axis<>(10, 0, 1),
-                       regular_axis<>(10, 0, 1), regular_axis<>(10, 0, 1));
+    auto h = Histogram(axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1),
+                       axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1),
+                       axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1));
 
     auto t = clock();
     for (unsigned i = 0; i < n/6; ++i) {
@@ -109,11 +109,11 @@ int main() {
     else
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
-           compare_1d<histogram<Static,mpl::vector<regular_axis<>>,
+           compare_1d<histogram<Static,mpl::vector<axis::regular<>>,
                                        container_storage<std::vector<int>>>>(
                6000000, itype));
     printf("hs_sd %.3f\n",
-           compare_1d<histogram<Static,mpl::vector<regular_axis<>>,
+           compare_1d<histogram<Static,mpl::vector<axis::regular<>>,
                                        adaptive_storage<>>>(6000000, itype));
     printf("hd_ss %.3f\n",
            compare_1d<histogram<Dynamic, builtin_axes,
@@ -132,11 +132,11 @@ int main() {
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
            compare_2d<histogram<Static,
-               mpl::vector<regular_axis<>, regular_axis<>>,
+               mpl::vector<axis::regular<>, axis::regular<>>,
                container_storage<std::vector<int>>>>(6000000, itype));
     printf("hs_sd %.3f\n",
            compare_2d<histogram<Static,
-               mpl::vector<regular_axis<>, regular_axis<>>,
+               mpl::vector<axis::regular<>, axis::regular<>>,
                adaptive_storage<>>>(6000000, itype));
     printf("hd_ss %.3f\n",
            compare_2d<histogram<Dynamic, builtin_axes,
@@ -155,11 +155,11 @@ int main() {
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
            compare_3d<histogram<Static,
-               mpl::vector<regular_axis<>, regular_axis<>, regular_axis<>>,
+               mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>>,
                container_storage<std::vector<int>>>>(6000000, itype));
     printf("hs_sd %.3f\n",
            compare_3d<histogram<Static,
-               mpl::vector<regular_axis<>, regular_axis<>, regular_axis<>>,
+               mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>>,
                adaptive_storage<>>>(6000000, itype));
     printf("hd_ss %.3f\n",
            compare_3d<histogram<Dynamic, builtin_axes,
@@ -178,13 +178,13 @@ int main() {
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
            compare_6d<histogram<Static,
-               mpl::vector<regular_axis<>, regular_axis<>, regular_axis<>,
-                           regular_axis<>, regular_axis<>, regular_axis<>>,
+               mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>,
+                           axis::regular<>, axis::regular<>, axis::regular<>>,
                container_storage<std::vector<int>>>>(6000000, itype));
     printf("hs_sd %.3f\n",
            compare_6d<histogram<Static,
-               mpl::vector<regular_axis<>, regular_axis<>, regular_axis<>,
-                           regular_axis<>, regular_axis<>, regular_axis<>>,
+               mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>,
+                           axis::regular<>, axis::regular<>, axis::regular<>>,
                adaptive_storage<>>>(6000000, itype));
     printf("hd_ss %.3f\n",
            compare_6d<histogram<Dynamic, builtin_axes,
