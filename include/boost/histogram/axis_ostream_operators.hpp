@@ -17,8 +17,7 @@ namespace histogram {
 namespace axis {
 
 template <typename RealType>
-inline std::ostream &operator<<(std::ostream &os,
-                                const regular<RealType> &a) {
+inline std::ostream &operator<<(std::ostream &os, const regular<RealType> &a) {
   os << "regular(" << a.bins() << ", " << a[0] << ", " << a[a.bins()];
   if (!a.label().empty()) {
     os << ", label=";
@@ -32,8 +31,7 @@ inline std::ostream &operator<<(std::ostream &os,
 }
 
 template <typename RealType>
-inline std::ostream &operator<<(std::ostream &os,
-                                const circular<RealType> &a) {
+inline std::ostream &operator<<(std::ostream &os, const circular<RealType> &a) {
   os << "circular(" << a.bins();
   if (a.phase() != 0.0) {
     os << ", phase=" << a.phase();
@@ -50,8 +48,7 @@ inline std::ostream &operator<<(std::ostream &os,
 }
 
 template <typename RealType>
-inline std::ostream &operator<<(std::ostream &os,
-                                const variable<RealType> &a) {
+inline std::ostream &operator<<(std::ostream &os, const variable<RealType> &a) {
   os << "variable(" << a[0];
   for (int i = 1; i <= a.bins(); ++i) {
     os << ", " << a[i];

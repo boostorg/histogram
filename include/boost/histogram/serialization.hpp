@@ -135,7 +135,7 @@ void axis_base<true>::serialize(Archive &ar, unsigned /* version */) {
 template <typename RealType, template <class> class Transform>
 template <class Archive>
 void regular<RealType, Transform>::serialize(Archive &ar,
-                                                  unsigned /* version */) {
+                                             unsigned /* version */) {
   ar &boost::serialization::base_object<axis_base<true>>(*this);
   ar &min_;
   ar &delta_;

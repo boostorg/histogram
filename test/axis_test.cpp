@@ -257,12 +257,11 @@ int main() {
     for (const auto &a : axes) {
       os << a;
     }
-    const std::string ref =
-        "regular(2, -1, 1, label='regular', uoflow=False)"
-        "circular(4, phase=0.1, perimeter=1, label='polar')"
-        "variable(-1, 0, 1, label='variable', uoflow=False)"
-        "category('A', 'B', 'C', label='category')"
-        "integer(-1, 1, label='integer', uoflow=False)";
+    const std::string ref = "regular(2, -1, 1, label='regular', uoflow=False)"
+                            "circular(4, phase=0.1, perimeter=1, label='polar')"
+                            "variable(-1, 0, 1, label='variable', uoflow=False)"
+                            "category('A', 'B', 'C', label='category')"
+                            "integer(-1, 1, label='integer', uoflow=False)";
     BOOST_TEST_EQ(os.str(), ref);
   }
 
@@ -284,20 +283,21 @@ int main() {
 
   // sequence equality
   {
-    std::vector<boost::variant<axis::regular<>, axis::variable<>, axis::category,
-                               axis::integer>>
+    std::vector<boost::variant<axis::regular<>, axis::variable<>,
+                               axis::category, axis::integer>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category{"A", "B", "C"}};
 
-    std::vector<boost::variant<axis::regular<>, axis::variable<>, axis::category>>
+    std::vector<
+        boost::variant<axis::regular<>, axis::variable<>, axis::category>>
         std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category{"A", "B", "C"}};
 
-    std::vector<boost::variant<axis::regular<>, axis::variable<>>> std_vector3 = {
-        axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
+    std::vector<boost::variant<axis::regular<>, axis::variable<>>> std_vector3 =
+        {axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
 
-    std::vector<boost::variant<axis::variable<>, axis::regular<>>> std_vector4 = {
-        axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1}};
+    std::vector<boost::variant<axis::variable<>, axis::regular<>>> std_vector4 =
+        {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1}};
 
     BOOST_TEST(detail::axes_equal(std_vector1, std_vector2));
     BOOST_TEST_NOT(detail::axes_equal(std_vector2, std_vector3));
@@ -311,8 +311,8 @@ int main() {
                                                      axis::variable<>{-1, 0, 1},
                                                      axis::category{"A", "B"});
 
-    auto fusion_vector3 = boost::fusion::make_vector(axis::regular<>{2, -1, 1},
-                                                     axis::variable<>{-1, 0, 1});
+    auto fusion_vector3 = boost::fusion::make_vector(
+        axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1});
 
     BOOST_TEST(detail::axes_equal(std_vector1, fusion_vector1));
     BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
@@ -323,12 +323,13 @@ int main() {
 
   // sequence assign
   {
-    std::vector<boost::variant<axis::regular<>, axis::variable<>, axis::category,
-                               axis::integer>>
+    std::vector<boost::variant<axis::regular<>, axis::variable<>,
+                               axis::category, axis::integer>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category{"A", "B", "C"}};
 
-    std::vector<boost::variant<axis::regular<>, axis::variable<>, axis::category>>
+    std::vector<
+        boost::variant<axis::regular<>, axis::variable<>, axis::category>>
         std_vector2 = {axis::regular<>{2, -2, 2}, axis::variable<>{-2, 0, 2},
                        axis::category{"A", "B"}};
 

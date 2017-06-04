@@ -39,7 +39,8 @@ template <typename Type> void run_tests() {
 
   // init_0
   {
-    auto h = histogram<Static, mpl::vector<axis::integer>, adaptive_storage<>>();
+    auto h =
+        histogram<Static, mpl::vector<axis::integer>, adaptive_storage<>>();
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(h.size(), 0);
     auto h2 = histogram<Static, mpl::vector<axis::integer>,

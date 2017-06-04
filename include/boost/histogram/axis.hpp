@@ -222,7 +222,7 @@ template <typename Value> struct sqrt {
 template <typename RealType = double,
           template <class> class Transform = transform::identity>
 class regular : public axis_base<true>,
-                     boost::operators<regular<RealType, Transform>> {
+                boost::operators<regular<RealType, Transform>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<regular>;
@@ -236,7 +236,7 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   regular(unsigned n, value_type min, value_type max,
-               const std::string &label = std::string(), bool uoflow = true)
+          const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(n, label, uoflow),
         min_(Transform<value_type>::forward(min)),
         delta_((Transform<value_type>::forward(max) - min_) / n) {
@@ -300,8 +300,7 @@ private:
  * bins for this axis. Binning is a O(1) operation.
  */
 template <typename RealType = double>
-class circular : public axis_base<false>,
-                      boost::operators<regular<RealType>> {
+class circular : public axis_base<false>, boost::operators<regular<RealType>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<circular>;
@@ -314,8 +313,8 @@ public:
    * \param label     description of the axis.
    */
   explicit circular(unsigned n, value_type phase = 0.0,
-                         value_type perimeter = math::double_constants::two_pi,
-                         const std::string &label = std::string())
+                    value_type perimeter = math::double_constants::two_pi,
+                    const std::string &label = std::string())
       : axis_base<false>(n, label), phase_(phase), perimeter_(perimeter) {}
 
   circular() = default;
@@ -362,8 +361,7 @@ private:
  * and the problem domain allows it, prefer a regular.
  */
 template <typename RealType = double>
-class variable : public axis_base<true>,
-                      boost::operators<variable<RealType>> {
+class variable : public axis_base<true>, boost::operators<variable<RealType>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<variable>;
@@ -375,7 +373,7 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   variable(const std::initializer_list<value_type> &x,
-                const std::string &label = std::string(), bool uoflow = true)
+           const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(x.size() - 1, label, uoflow),
         x_(new value_type[x.size()]) {
     if (x.size() < 2) {
@@ -387,7 +385,7 @@ public:
 
   template <typename Iterator>
   variable(Iterator begin, Iterator end,
-                const std::string &label = std::string(), bool uoflow = true)
+           const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(std::distance(begin, end) - 1, label, uoflow),
         x_(new value_type[std::distance(begin, end)]) {
     std::copy(begin, end, x_.get());
@@ -464,7 +462,7 @@ public:
    * \param max largest integer of the covered range.
    */
   integer(value_type min, value_type max,
-               const std::string &label = std::string(), bool uoflow = true)
+          const std::string &label = std::string(), bool uoflow = true)
       : axis_base<true>(max + 1 - min, label, uoflow), min_(min) {
     if (min > max) {
       throw std::logic_error("min <= max required");
@@ -519,7 +517,7 @@ public:
 
   template <typename Iterator>
   category(Iterator begin, Iterator end,
-                const std::string &label = std::string())
+           const std::string &label = std::string())
       : axis_base<false>(std::distance(begin, end), label),
         ptr_(new std::string[bins()]) {
     std::copy(begin, end, ptr_.get());
@@ -530,14 +528,14 @@ public:
    * \param categories sequence of labeled categories.
    */
   category(const std::initializer_list<std::string> &categories,
-                const std::string &label = std::string())
+           const std::string &label = std::string())
       : category(categories.begin(), categories.end(), label) {}
 
   category() = default;
 
   category(const category &other)
       : category(other.ptr_.get(), other.ptr_.get() + other.bins(),
-                      other.label()) {}
+                 other.label()) {}
   category &operator=(const category &other) {
     if (this != &other) {
       axis_base<false>::operator=(other);
@@ -590,11 +588,9 @@ private:
 
 } // namespace axis
 
-using builtin_axes = mpl::vector<axis::regular<double>,
-                                 axis::circular<double>,
-                                 axis::variable<double>,
-                                 axis::integer,
-                                 axis::category>;
+using builtin_axes =
+    mpl::vector<axis::regular<double>, axis::circular<double>,
+                axis::variable<double>, axis::integer, axis::category>;
 
 } // namespace histogram
 } // namespace boost
