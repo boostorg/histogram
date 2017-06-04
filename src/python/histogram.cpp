@@ -410,7 +410,7 @@ void register_histogram() {
       .add_property("__array_interface__", &python::access::array_interface)
 #endif
       .def("__len__", &dynamic_histogram::dim)
-      .def("__getitem__", histogram_axis)
+      .def("axis", histogram_axis)
       .def("fill", python::raw_function(histogram_fill),
            "Pass a sequence of values with a length n is"
            "\nequal to the dimensions of the histogram,"
