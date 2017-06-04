@@ -86,55 +86,39 @@ endif()
 # checks
 if(BUILD_CHECKS)
   add_executable(speed_cpp ../test/speed_cpp.cpp)
+  if (HAVE_PYTHON)
+    configure_file(../test/speed_numpy.py speed_numpy.py)
+  endif()
 endif()
 
 # tests
 enable_testing()
-add_executable(axis_test
-               ../test/axis_test.cpp)
-target_link_libraries(axis_test ${LIBRARIES})
-add_test(axis_test axis_test)
 
-add_executable(adaptive_storage_test
-               ../test/adaptive_storage_test.cpp)
-target_link_libraries(adaptive_storage_test ${LIBRARIES})
-add_test(adaptive_storage_test adaptive_storage_test)
-
-add_executable(container_storage_test
-               ../test/container_storage_test.cpp)
-target_link_libraries(container_storage_test ${LIBRARIES})
-add_test(container_storage_test container_storage_test)
-
-add_executable(detail_test
-               ../test/detail_test.cpp)
-target_link_libraries(detail_test ${LIBRARIES})
-add_test(detail_test detail_test)
-
-add_executable(histogram_test
-               ../test/histogram_test.cpp)
-target_link_libraries(histogram_test ${LIBRARIES})
-add_test(histogram_test histogram_test)
-
-add_executable(example_1d
-               ../examples/example_1d.cpp)
-target_link_libraries(example_1d ${LIBRARIES})
-add_test(example_1d example_1d)
-
-add_executable(example_2d
-               ../examples/example_2d.cpp)
-target_link_libraries(example_2d ${LIBRARIES})
-add_test(example_2d example_2d)
-
-add_executable(dynamic_axes
-               ../examples/dynamic_axes.cpp)
-target_link_libraries(dynamic_axes ${LIBRARIES})
-add_test(dynamic_axes dynamic_axes)
-
+# run python ../doc/extract_code.py manually to make doc_test/ directory
 if(HAVE_PYTHON)
-  configure_file(../test/python_suite_test.py.in python_suite_test.py)
-  add_test(python_suite_test python_suite_test.py)
-  configure_file(../test/speed_numpy.py.in speed_numpy.py)
+  file(GLOB TEST_SOURCES ../test/*_test.py ../examples/*.py ${CMAKE_BINARY_DIR}/doc_test/*.py)
+  foreach(SRC IN ITEMS ${TEST_SOURCES})
+    if (SRC MATCHES "/([_a-zA-Z0-9]+)\\.py")
+      configure_file(${SRC} ${CMAKE_MATCH_1}.py)
+      add_test(${CMAKE_MATCH_1} ${PYTHON_EXECUTABLE} ${CMAKE_MATCH_1}.py)
+    endif()
+  endforeach()
 endif()
+
+file(GLOB TEST_SOURCES ../test/*_test.cpp ../examples/*.cpp ${CMAKE_BINARY_DIR}/doc_test/*.cpp)
+foreach(SRC IN ITEMS ${TEST_SOURCES})
+  if(SRC MATCHES "/module_([_a-zA-Z0-9]+)\\.cpp")
+    add_library(${CMAKE_MATCH_1} SHARED ${SRC})
+    set_target_properties(${CMAKE_MATCH_1} PROPERTIES PREFIX "" SUFFIX ".so")
+    target_link_libraries(${CMAKE_MATCH_1} ${LIBRARIES})
+  else()
+    if(SRC MATCHES "/([_a-zA-Z0-9]+)\\.cpp")
+      add_executable(${CMAKE_MATCH_1} ${SRC})
+      target_link_libraries(${CMAKE_MATCH_1} ${LIBRARIES})
+      add_test(${CMAKE_MATCH_1} ${CMAKE_MATCH_1})
+    endif()
+  endif()
+endforeach()
 
 # for clang format and clang tidy
 file(GLOB_RECURSE
@@ -143,8 +127,7 @@ file(GLOB_RECURSE
      ../test/*_test.cpp ../include/*.hpp
      )
 
-add_custom_target(
-  clf
+add_custom_target(clf
   COMMAND clang-format
   -i
   ${ALL_SOURCE_FILES}

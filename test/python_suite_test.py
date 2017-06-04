@@ -1,4 +1,3 @@
-#!@PYTHON_EXECUTABLE@
 # -*- coding: utf-8 -*-
 ##
 ## Copyright 2015-2016 Hans Dembinski
@@ -13,7 +12,8 @@ from histogram import histogram
 from histogram.axis import regular, circular, variable, category, integer
 import pickle
 import os
-if @PYTHON_VERSION_MAJOR@ == 3:
+import sys
+if sys.version_info.major == 3:
     from io import BytesIO
 else:
     from StringIO import StringIO as BytesIO

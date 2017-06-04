@@ -1,6 +1,7 @@
 import histogram as hg
+if not "@HAVE_NUMPY@":
+    raise SystemExit
 import numpy as np
-import matplotlib.pyplot as plt
 
 h = hg.histogram(hg.axis.regular(10, -3, 3, uoflow=False),
                  hg.axis.regular(10, -3, 3, uoflow=False))
@@ -14,7 +15,11 @@ x = np.array(h.axis(0)) # axis instances behave like sequences
 y = np.array(h.axis(1))
 z = np.asarray(h)       # creates a view (no copy involved)
 
-plt.pcolor(x, y, z.T)
-plt.xlabel("x")
-plt.ylabel("y")
-plt.show()
+try:
+    import matplotlib.pyplot as plt
+    plt.pcolor(x, y, z.T)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.show()
+except ImportError:
+    pass
