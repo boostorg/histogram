@@ -10,7 +10,7 @@
 
 int main(int, char**) {
     namespace bh = boost::histogram;
-    using namespace boost::histogram::literals; // enables _c suffix
+    using namespace bh::literals; // enables _c suffix
 
     // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
     // with axis of histogram labeled as "x"
@@ -49,5 +49,6 @@ int main(int, char**) {
     bin 8 x in [1.4, 1.7): 0 +/- 0
     bin 9 x in [1.7, 2): 1 +/- 1
     bin 10 x in [2, inf): 2 +/- 1.41421
+
     */
 }
