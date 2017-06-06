@@ -159,7 +159,7 @@ inline bool axes_equal_impl(mpl::false_, mpl::false_, const A &a, const B &b) {
 
 template <typename A, typename B>
 inline bool axes_equal_impl(mpl::false_, mpl::true_, const A &a, const B &b) {
-  if (a.size() != static_cast<int>(fusion::size(b)))
+  if (a.size() != fusion::size(b))
     return false;
   fusion_cmp_axis<typename A::const_iterator> cmp(a.begin());
   fusion::for_each(b, cmp);
@@ -189,9 +189,9 @@ inline bool axes_equal(const A &a, const B &b) {
 
 template <typename A, typename B>
 inline void axes_assign_impl(mpl::false_, mpl::false_, A &a, const B &b) {
-  const unsigned n = b.size();
+  auto n = b.size();
   a.resize(n);
-  for (unsigned i = 0; i < n; ++i) {
+  for (decltype(n) i = 0; i < n; ++i) {
     apply_visitor(assign_axis<typename A::value_type>(a[i]), b[i]);
   }
 }

@@ -142,6 +142,7 @@ script:
       make -j2 &&
       ctest -V;
     else
+      python ../doc/extract_code.py;
       cmake . -DBUILD_PYTHON=${BUILD_PYTHON}
               -DPYTHON_VERSION=${PYTHON_VERSION}
               -DBUILD_NUMPY_SUPPORT=${NUMPY_SUPPORT}
