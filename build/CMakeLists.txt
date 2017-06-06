@@ -107,7 +107,7 @@ endif()
 
 file(GLOB TEST_SOURCES ../test/*_test.cpp ../examples/*.cpp ${CMAKE_BINARY_DIR}/doc_test/*.cpp)
 foreach(SRC IN ITEMS ${TEST_SOURCES})
-  if(SRC MATCHES "/module_([_a-zA-Z0-9]+)\\.cpp")
+  if(SRC MATCHES "/module_([_a-zA-Z0-9]+)\\.cpp" AND HAVE_PYTHON)
     add_library(${CMAKE_MATCH_1} SHARED ${SRC})
     set_target_properties(${CMAKE_MATCH_1} PROPERTIES PREFIX "" SUFFIX ".so")
     target_link_libraries(${CMAKE_MATCH_1} ${LIBRARIES})
