@@ -83,15 +83,14 @@ install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
 
-  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
-    mkdir -p ${DEPS_DIR}
-
   - BOOST_VERSION=1.63.0
-    BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
+  - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}
+  - mkdir -p ${BOOST_DIR}
+  - |
     if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
-      BOOST_URL="http://github.com/boostorg/boost.git"
-      travis_retry git clone --depth 1 --recursive --quiet ${BOOST_URL} ${BOOST_DIR} || exit 1
-      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${DEPS_DIR}/boost-${BOOST_VERSION})
+      BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
+      { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
+      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR})
     fi
 
   - if [ -z ${PYTHON_VERSION} ]; then
@@ -112,23 +111,27 @@ install:
 script:
   - cd build
   - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-      cmake . -DBUILD_PYTHON=OFF
+      cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DBUILD_PYTHON=OFF
               -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
-      cmake . -DBUILD_PYTHON=ON
+      cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DBUILD_PYTHON=ON
               -DBUILD_NUMPY_SUPPORT=OFF
               -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
-      cmake . -DBUILD_PYTHON=ON
+      cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DBUILD_PYTHON=ON
               -DBUILD_NUMPY_SUPPORT=ON
               -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
     else
       python ../doc/extract_code.py;
-      cmake . -DBUILD_PYTHON=${BUILD_PYTHON}
+      cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DBUILD_PYTHON=${BUILD_PYTHON}
               -DPYTHON_VERSION=${PYTHON_VERSION}
               -DBUILD_NUMPY_SUPPORT=${NUMPY_SUPPORT}
               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
