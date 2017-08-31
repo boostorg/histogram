@@ -349,9 +349,9 @@ class test_histogram(unittest.TestCase):
         h0 = histogram(integer(-1, 1, uoflow=False))
         h1 = histogram(integer(-1, 1, uoflow=True))
         for h in (h0, h1):
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(ValueError):
                 h.fill()
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(ValueError):
                 h.fill(1, 2)
             h.fill(-10)
             h.fill(-1)
@@ -704,8 +704,9 @@ class test_histogram(unittest.TestCase):
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_fill_with_numpy_array_0(self):
+        ar = lambda *args: numpy.array(args)
         a = histogram(integer(0, 2, uoflow=False))
-        a.fill(numpy.array([-1, 0, 1, 2, 1, 4]))
+        a.fill(ar(-1, 0, 1, 2, 1, 4))
         a.fill((-1, 0))
         a.fill([1, 2])
         self.assertEqual(a.value(0), 2)
@@ -715,15 +716,14 @@ class test_histogram(unittest.TestCase):
         with self.assertRaises(ValueError):
             a.fill(numpy.empty((2, 2)))
         with self.assertRaises(ValueError):
-            a.fill(numpy.empty((1, 2, 2)))
-        with self.assertRaises(RuntimeError):
-            a.fill(numpy.empty((2, 1)), 1)
+            a.fill(numpy.empty(2), 1)
         with self.assertRaises(ValueError):
             a.fill("abc")
 
         a = histogram(integer(0, 1, uoflow=False),
                       regular(2, 0, 2, uoflow=False))
-        a.fill(numpy.array([[-1., -1.], [0., 1.], [1., 0.1]]))
+        a.fill(ar(-1, 0, 1),
+               ar(-1., 1., 0.1))
         self.assertEqual(a.value(0, 0), 0)
         self.assertEqual(a.value(0, 1), 1)
         self.assertEqual(a.value(1, 0), 1)
@@ -742,11 +742,12 @@ class test_histogram(unittest.TestCase):
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_fill_with_numpy_array_1(self):
+        ar = lambda *args: numpy.array(args)
         a = histogram(integer(0, 2, uoflow=True))
         v = numpy.array([-1, 0, 1, 2, 3, 4])
         w = numpy.array([ 2, 3, 4, 5, 6, 7])
         a.fill(v, weight=w)
-        a.fill([0, 1], weight=[2.0, 3.0])
+        a.fill([0, 1], weight=[2, 3])
         self.assertEqual(a.value(-1), 2)
         self.assertEqual(a.value(0), 5)
         self.assertEqual(a.value(1), 7)
@@ -755,6 +756,11 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(a.variance(0), 13)
         self.assertEqual(a.variance(1), 25)
         self.assertEqual(a.variance(2), 25)
+        a.fill([1, 2], weight=1)
+        a.fill(0, weight=[1, 2])
+        self.assertEqual(a.value(0), 8)
+        self.assertEqual(a.value(1), 8)
+        self.assertEqual(a.value(2), 6)
 
         with self.assertRaises(RuntimeError):
             a.fill([1, 2], foo=[1, 1])
@@ -762,8 +768,6 @@ class test_histogram(unittest.TestCase):
             a.fill([1, 2], weight=[1])
         with self.assertRaises(ValueError):
             a.fill([1, 2], weight="ab")
-        with self.assertRaises(ValueError):
-            a.fill([1, 2], weight=1)
         with self.assertRaises(RuntimeError):
             a.fill([1, 2], weight=[1, 1], foo=1)
         with self.assertRaises(ValueError):
@@ -771,7 +775,7 @@ class test_histogram(unittest.TestCase):
 
         a = histogram(integer(0, 1, uoflow=False),
                       regular(2, 0, 2, uoflow=False))
-        a.fill(numpy.array([[-1., -1.], [0., 1.], [1., 0.1]]))
+        a.fill(ar(-1, 0, 1), ar(-1, 1, 0.1))
         self.assertEqual(a.value(0, 0), 0)
         self.assertEqual(a.value(0, 1), 1)
         self.assertEqual(a.value(1, 0), 1)

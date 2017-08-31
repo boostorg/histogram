@@ -35,12 +35,6 @@ using dynamic_histogram = histogram<Dynamic, builtin_axes, adaptive_storage<>>;
 namespace python {
 
 #ifdef HAVE_NUMPY
-auto array_cast = [](handle<>& h) {
-  return downcast<PyArrayObject>(h.get());
-};
-#endif
-
-#ifdef HAVE_NUMPY
 class access {
 public:
   using mp_int = histogram::adaptive_storage<>::mp_int;
@@ -87,38 +81,38 @@ public:
     object operator()(const array<void>& b) const {
       // cannot pass non-existent memory to numpy; make new
       // zero-initialized uint8 array, and pass it
-      int dim = len(shapes);
+      auto dim = len(shapes);
       npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
-      for (int i = 0; i < dim; ++i) {
+      for (auto i = 0; i < dim; ++i) {
         shapes2[i] = extract<npy_intp>(shapes[i]);
       }
-      handle<> a(PyArray_SimpleNew(dim, shapes2, NPY_UINT8));
-      for (int i = 0; i < dim; ++i) {
-        PyArray_STRIDES(array_cast(a))[i] = extract<npy_intp>(strides[i]);
+      auto *a = (PyArrayObject*)PyArray_SimpleNew(dim, shapes2, NPY_UINT8);
+      for (auto i = 0; i < dim; ++i) {
+        PyArray_STRIDES(a)[i] = extract<npy_intp>(strides[i]);
       }
-      auto *buf = static_cast<uint8_t *>(PyArray_DATA(array_cast(a)));
+      auto *buf = (uint8_t *)PyArray_DATA(a);
       std::fill(buf, buf + b.size, uint8_t(0));
-      PyArray_CLEARFLAGS(array_cast(a), NPY_ARRAY_WRITEABLE);
-      return object(a);
+      PyArray_CLEARFLAGS(a, NPY_ARRAY_WRITEABLE);
+      return object(handle<>((PyObject*)a));
     }
     object operator()(const array<mp_int>& b) const {
       // cannot pass cpp_int to numpy; make new
       // double array, fill it and pass it
-      int dim = len(shapes);
+      auto dim = len(shapes);
       npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
-      for (int i = 0; i < dim; ++i) {
+      for (auto i = 0; i < dim; ++i) {
         shapes2[i] = extract<npy_intp>(shapes[i]);
       }
-      handle<> a(PyArray_SimpleNew(dim, shapes2, NPY_DOUBLE));
-      for (int i = 0; i < dim; ++i) {
-        PyArray_STRIDES(array_cast(a))[i] = extract<npy_intp>(strides[i]);
+      auto *a = (PyArrayObject*)PyArray_SimpleNew(dim, shapes2, NPY_DOUBLE);
+      for (auto i = 0; i < dim; ++i) {
+        PyArray_STRIDES(a)[i] = extract<npy_intp>(strides[i]);
       }
-      auto *buf = static_cast<double *>(PyArray_DATA(array_cast(a)));
-      for (std::size_t i = 0; i < b.size; ++i) {
+      auto *buf = (double *)PyArray_DATA(a);
+      for (auto i = 0ul; i < b.size; ++i) {
         buf[i] = static_cast<double>(b[i]);
       }
-      PyArray_CLEARFLAGS(array_cast(a), NPY_ARRAY_WRITEABLE);
-      return object(a);
+      PyArray_CLEARFLAGS(a, NPY_ARRAY_WRITEABLE);
+      return object(handle<>((PyObject*)a));
     }
   };
 
@@ -225,89 +219,55 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
   return pyinit(h);
 }
 
-python::object histogram_fill(python::tuple args, python::dict kwargs) {
-  const unsigned nargs = python::len(args);
-  dynamic_histogram &self = python::extract<dynamic_histogram &>(args[0]);
+struct fetcher {
+  char type = 0;
+  union {
+    PyArrayObject* a;
+    double value;
+  };
 
-  python::object ow;
-  if (kwargs) {
-    if (len(kwargs) > 1 || !kwargs.has_key("weight")) {
-      PyErr_SetString(PyExc_RuntimeError, "only keyword weight allowed");
-      python::throw_error_already_set();
-    }
-    ow = kwargs.get("weight");
+  ~fetcher() {
+    if (type == 2) Py_DECREF((PyObject*)a);
   }
 
+  long connect(python::object o) {
+    python::extract<double> get_double(o);
+    if (get_double.check()) {
+      type = 1;
+      value = get_double();
+      return 0;
+    }
 #ifdef HAVE_NUMPY
-  if (nargs == 2) {
-    python::object o = args[1];
-    if (PySequence_Check(o.ptr())) {
-      // exception is thrown automatically if
-      python::handle<> a(PyArray_FROM_OTF(o.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
-
-      npy_intp *dims = PyArray_DIMS(python::array_cast(a));
-      switch (PyArray_NDIM(python::array_cast(a))) {
-      case 1:
-        if (self.dim() > 1) {
-          PyErr_SetString(PyExc_ValueError, "array has to be two-dimensional");
-          python::throw_error_already_set();
-        }
-        break;
-      case 2:
-        if (self.dim() != dims[1]) {
-          PyErr_SetString(PyExc_ValueError,
-                          "size of second dimension does not match");
-          python::throw_error_already_set();
-        }
-        break;
-      default:
-        PyErr_SetString(PyExc_ValueError, "array has wrong dimension");
-        python::throw_error_already_set();
-      }
-
-      if (!ow.is_none()) {
-        if (PySequence_Check(ow.ptr())) {
-
-          // exception is thrown automatically if handle below receives null
-          python::handle<> aw(
-              PyArray_FROM_OTF(ow.ptr(), NPY_DOUBLE, NPY_ARRAY_IN_ARRAY));
-
-          if (PyArray_NDIM(python::array_cast(aw)) != 1) {
-            PyErr_SetString(PyExc_ValueError,
-                            "array has to be one-dimensional");
-            python::throw_error_already_set();
-          }
-
-          if (PyArray_DIMS(python::array_cast(aw))[0] != dims[0]) {
-            PyErr_SetString(PyExc_ValueError, "sizes do not match");
-            python::throw_error_already_set();
-          }
-
-          for (unsigned i = 0; i < dims[0]; ++i) {
-            double *v = reinterpret_cast<double *>(PyArray_GETPTR1(python::array_cast(a), i));
-            double *w = reinterpret_cast<double *>(PyArray_GETPTR1(python::array_cast(aw), i));
-            self.fill(v, v + self.dim(), weight(*w));
-          }
-
-        } else {
-          PyErr_SetString(PyExc_ValueError, "weight is not a sequence");
-          python::throw_error_already_set();
-        }
-      } else {
-        for (unsigned i = 0; i < dims[0]; ++i) {
-          double *v = reinterpret_cast<double *>(PyArray_GETPTR1(python::array_cast(a), i));
-          self.fill(v, v + self.dim());
-        }
-      }
-
-      return python::object();
+    a = (PyArrayObject*)PyArray_FROMANY(o.ptr(), NPY_DOUBLE, 1, 1, NPY_ARRAY_CARRAY);
+    if (a) {
+      type = 2;
+      return PyArray_SHAPE(a)[0];
     }
+#endif
+    PyErr_SetString(PyExc_ValueError, "cannot convert argument");
+    python::throw_error_already_set();
+    return 0;
   }
-#endif /* HAVE_NUMPY */
+
+  bool empty() const { return type == 0; }
+
+  double operator()(long i) const {
+#ifdef HAVE_NUMPY
+    if (type == 2) {
+      return *static_cast<double*>(PyArray_GETPTR1(a, i));
+    }
+#endif
+    return value;
+  };
+};
+
+python::object histogram_fill(python::tuple args, python::dict kwargs) {
+  const auto nargs = python::len(args);
+  dynamic_histogram &self = python::extract<dynamic_histogram &>(args[0]);
 
   const unsigned dim = nargs - 1;
   if (dim != self.dim()) {
-    PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
+    PyErr_SetString(PyExc_ValueError, "number of arguments and dimension do not match");
     python::throw_error_already_set();
   }
 
@@ -318,15 +278,48 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
     python::throw_error_already_set();
   }
 
-  double v[BOOST_HISTOGRAM_AXIS_LIMIT];
-  for (unsigned i = 0; i < dim; ++i)
-    v[i] = python::extract<double>(args[1 + i]);
+  fetcher fetch[BOOST_HISTOGRAM_AXIS_LIMIT];
+  long n = 0;
+  for (auto d = 0u; d < dim; ++d) {
+    python::object o = python::extract<python::object>(args[1 + d]);
+    const auto on = fetch[d].connect(o);
+    if (on > 0) {
+      if (n && on != n) {
+        PyErr_SetString(PyExc_ValueError, "lengths of sequences do not match");
+        python::throw_error_already_set();
+      }
+      n = on;
+    }
+  }
 
-  if (ow.is_none()) {
-    self.fill(v, v + self.dim());
-  } else {
-    const double w = python::extract<double>(ow);
-    self.fill(v, v + self.dim(), weight(w));
+  double v[BOOST_HISTOGRAM_AXIS_LIMIT];
+  fetcher fetch_weight;
+  const auto nkwargs = python::len(kwargs);
+  if (nkwargs > 0) {
+    if (nkwargs > 1 || !kwargs.has_key("weight")) {
+      PyErr_SetString(PyExc_RuntimeError, "only keyword weight allowed");
+      python::throw_error_already_set();
+    }
+    python::object o = kwargs.get("weight");
+    const auto on = fetch_weight.connect(o);
+    if (on > 0) {
+      if (n && on != n) {
+        PyErr_SetString(PyExc_ValueError, "lengths of argument sequences do not match");
+        python::throw_error_already_set();
+      }
+      n = on;
+    }
+  }
+
+  if (!n) ++n;
+  for (auto i = 0l; i < n; ++i) {
+    for (auto d = 0u; d < dim; ++d)
+      v[d] = fetch[d](i);
+    if (fetch_weight.empty()) {
+      self.fill(v, v + dim);
+    } else {
+      self.fill(v, v + dim, weight(fetch_weight(i)));
+    }
   }
 
   return python::object();
