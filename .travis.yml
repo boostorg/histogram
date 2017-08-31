@@ -39,7 +39,7 @@ matrix:
             - cmake
             - cmake-data
             - clang-3.8
-      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7.6
+      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7
     - os: linux
       compiler: gcc
       addons:
@@ -99,6 +99,7 @@ install:
 script:
   - cd build
   - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=OFF
               -DCMAKE_BUILD_TYPE=cov &&
@@ -106,12 +107,14 @@ script:
       ctest -V;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
+              -DPYTHON_VERSION=2
               -DBUILD_NUMPY_SUPPORT=OFF
               -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
+              -DPYTHON_VERSION=2
               -DBUILD_NUMPY_SUPPORT=ON
               -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&

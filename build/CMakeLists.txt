@@ -25,12 +25,13 @@ endif()
 if(BUILD_PYTHON)
   find_package(Boost 1.55 REQUIRED
                COMPONENTS iostreams serialization python)
-  if(NOT DEFINED PYTHON_VERSION)
-    execute_process(COMMAND python -c "import sys; sys.stdout.write('%i.%i.%i' % (sys.version_info.major,sys.version_info.minor,sys.version_info.micro))"
-                    OUTPUT_VARIABLE PYTHON_VERSION)
+  if(DEFINED PYTHON_VERSION)
+    find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
+    find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test and FindNumpy
+  else()
+    find_package(PythonLibs REQUIRED)
+    find_package(PythonInterp REQUIRED) # used by python_suite_test and FindNumpy
   endif()
-  find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
-  find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test and FindNumpy
 
   message(STATUS "Python lib: ${PYTHON_LIBRARIES}")
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
