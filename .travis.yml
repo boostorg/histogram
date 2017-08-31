@@ -24,7 +24,6 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-3.6
           packages:
             - cmake
             - cmake-data
@@ -36,12 +35,11 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-3.8
           packages:
             - cmake
             - cmake-data
             - clang-3.8
-      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7.3
+      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7
     - os: linux
       compiler: gcc
       addons:
