@@ -222,13 +222,17 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
 struct fetcher {
   char type = 0;
   union {
+#ifdef HAVE_NUMPY
     PyArrayObject* a;
+#endif
     double value;
   };
 
-  ~fetcher() {
+#ifdef HAVE_NUMPY
+  ~fetcher() {    
     if (type == 2) Py_DECREF((PyObject*)a);
   }
+#endif
 
   long connect(python::object o) {
     python::extract<double> get_double(o);
