@@ -29,13 +29,6 @@ matrix:
             - cmake
             - cmake-data
             - clang-3.6
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
       env: COMPILER_VERSION=3.6
     - os: linux
       compiler: clang
@@ -50,13 +43,6 @@ matrix:
             - cmake
             - cmake-data
             - clang-3.8
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
       env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7.3
     - os: linux
       compiler: gcc
@@ -70,13 +56,6 @@ matrix:
             - cmake
             - cmake-data
             - g++-4.8
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
       env: COMPILER_VERSION=4.8
     - os: linux
       compiler: gcc
@@ -90,22 +69,31 @@ matrix:
             - cmake
             - cmake-data
             - g++-6
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
       env: COMPILER_VERSION=6 CMAKE_BUILD_TYPE=cov
 
 git:
   depth: 1
 
+cache:
+  directories:
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.63.0
+
 # Install packages
 install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
+
+  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+    mkdir -p ${DEPS_DIR}
+
+  - BOOST_VERSION=1.63.0
+    BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
+    if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
+      BOOST_URL="http://github.com/boostorg/boost.git"
+      travis_retry git clone --depth 1 --recursive --quiet ${BOOST_URL} ${BOOST_DIR} || exit 1
+      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${DEPS_DIR}/boost-${BOOST_VERSION})
+    fi
+
   - if [ -z ${PYTHON_VERSION} ]; then
       export BUILD_PYTHON=OFF;
     else
@@ -122,9 +110,6 @@ install:
     fi
 
 script:
-  - travis_retry git clone --depth 1 https://github.com/boostorg/core.git core || exit 1
-  - rsync --recursive core/include/boost/* include/boost/
-
   - cd build
   - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
       cmake . -DBUILD_PYTHON=OFF
@@ -154,7 +139,7 @@ script:
 # Calculate coverage
 after_success:
   if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-    coveralls -r .. -b . --verbose --exclude ../include/boost/core/lightweight_test.hpp --gcov=`which gcov-${COMPILER_VERSION}`;
+    coveralls -r .. -b . --verbose --gcov=`which gcov-${COMPILER_VERSION}`;
   fi
 
 after_failure:
