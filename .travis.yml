@@ -6,6 +6,8 @@ sudo: false
 
 cache:
   pip: true
+  directories:
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.63.0
 
 language: cpp
 
@@ -22,9 +24,7 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.6
-            - boost-latest
-            - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
+            - llvm-toolchain-trusty-3.6
           packages:
             - cmake
             - cmake-data
@@ -36,9 +36,7 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.8
-            - boost-latest
-            - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
+            - llvm-toolchain-trusty-3.8
           packages:
             - cmake
             - cmake-data
@@ -50,8 +48,6 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - boost-latest
-            - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
           packages:
             - cmake
             - cmake-data
@@ -63,8 +59,6 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - boost-latest
-            - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
           packages:
             - cmake
             - cmake-data
@@ -73,10 +67,6 @@ matrix:
 
 git:
   depth: 1
-
-cache:
-  directories:
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.63.0
 
 # Install packages
 install:

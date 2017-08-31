@@ -26,6 +26,7 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <memory>
 
 // forward declaration for serialization
 namespace boost {
