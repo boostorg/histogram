@@ -39,7 +39,7 @@ matrix:
             - cmake
             - cmake-data
             - clang-3.8
-      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7
+      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7.6
     - os: linux
       compiler: gcc
       addons:
