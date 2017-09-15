@@ -39,10 +39,7 @@ Check out the [full documentation](https://htmlpreview.github.io/?https://raw.gi
 ## Dependencies
 
 * [Boost](http://www.boost.org)
-* Optional:
-* [CMake](https://cmake.org)
-  [Python](http://www.python.org)
-  [Numpy](http://www.numpy.org)
+* Optional: [CMake](https://cmake.org) [Python](http://www.python.org) [Numpy](http://www.numpy.org)
 
 ## Build instructions
 
