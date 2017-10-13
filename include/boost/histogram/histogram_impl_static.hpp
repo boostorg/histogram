@@ -156,10 +156,10 @@ public:
   void reset() { storage_ = std::move(Storage(storage_.size())); }
 
   /// Get N-th axis
-  template <unsigned N>
+  template <int N>
   constexpr typename std::add_const<
       typename fusion::result_of::value_at_c<axes_type, N>::type>::type &
-  axis(std::integral_constant<unsigned, N>) const {
+  axis(mpl::int_<N>) const {
     static_assert(N < axes_size::value, "axis index out of range");
     return fusion::at_c<N>(axes_);
   }
@@ -277,16 +277,14 @@ private:
     } while (m.next());
   }
 
-  template <typename Ns>
-  friend auto reduce(const histogram &h, const detail::keep_static<Ns> &)
-      -> histogram<Static, typename detail::axes_select<Axes, Ns>::type,
-                   Storage> {
-    using HR = histogram<Static, typename detail::axes_select<Axes, Ns>::type,
-                         Storage>;
+  template <typename Keep>
+  friend auto reduce(const histogram &h, Keep)
+      -> histogram<Static, detail::axes_select<Axes, Keep>, Storage> {
+    using HR = histogram<Static, detail::axes_select<Axes, Keep>, Storage>;
     typename HR::axes_type axes;
-    detail::axes_assign_subset<Ns>(axes, h.axes_);
+    detail::axes_assign_subset<Keep>(axes, h.axes_);
     auto hr = HR(std::move(axes));
-    const auto b = detail::bool_mask<Ns>(h.dim(), true);
+    const auto b = detail::bool_mask<Keep>(h.dim(), true);
     h.reduce_impl(hr, b);
     return hr;
   }

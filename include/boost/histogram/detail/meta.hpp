@@ -50,23 +50,23 @@ template <typename MainVector, typename AuxVector> struct combine {
                             mpl::back_inserter<MainVector>>::type;
 };
 
-struct bool_mask_helper {
+struct bool_mask_op {
   std::vector<bool> &b;
   bool v;
   template <typename N> void operator()(const N &) const { b[N::value] = v; }
 };
 
-template <typename Ns> std::vector<bool> bool_mask(std::size_t n, bool v) {
+template <typename Ns> std::vector<bool> bool_mask(unsigned n, bool v) {
   std::vector<bool> b(n, !v);
-  mpl::for_each<Ns>(bool_mask_helper{b, v});
+  mpl::for_each<Ns>(bool_mask_op{b, v});
   return b;
 }
 
-template <typename Axes, typename Ns> struct axes_assign_subset_helper {
+template <typename Axes, typename Ns> struct axes_assign_subset_op {
   const Axes &axes_;
-  template <typename I, typename R>
-  auto operator()(const I &, R &r) const -> typename mpl::next<I>::type {
-    using I2 = typename mpl::at_c<Ns, I::value>::type;
+  template <int N, typename R>
+  auto operator()(mpl::int_<N>, R &r) const -> mpl::int_<N+1> {
+    using I2 = typename mpl::at_c<Ns, N>::type;
     r = fusion::at_c<I2::value>(axes_);
     return {};
   }
@@ -75,17 +75,17 @@ template <typename Axes, typename Ns> struct axes_assign_subset_helper {
 template <typename Ns, typename Axes1, typename Axes>
 void axes_assign_subset(Axes1 &axes1, const Axes &axes) {
   fusion::fold(axes1, mpl::int_<0>(),
-               axes_assign_subset_helper<Axes, Ns>{axes});
+               axes_assign_subset_op<Axes, Ns>{axes});
 }
 
-template <typename... Ns> struct unique_sorted {
-  using type = typename mpl::unique<
-      typename mpl::sort<typename mpl::vector<Ns...>::type>::type>::type;
-};
+template <typename Ns>
+using unique_sorted =
+    typename mpl::unique<typename mpl::sort<Ns>::type,
+                         std::is_same<mpl::_1, mpl::_2>>::type;
 
-template <typename Axes, typename Numbers> struct axes_select {
-  using type = typename mpl::transform<Numbers, mpl::at<Axes, mpl::_1>>::type;
-};
+template <typename Axes, typename Numbers>
+using axes_select =
+    typename mpl::transform<Numbers, mpl::at<Axes, mpl::_1>>::type;
 
 } // namespace detail
 } // namespace histogram

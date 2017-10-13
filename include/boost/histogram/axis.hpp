@@ -91,9 +91,10 @@ private:
   friend class boost::iterator_core_access;
 };
 
-/// Common base class for axes.
+/// Common base class for all axes.
 template <bool UOFlow> class axis_base;
 
+/// Specialization with overflow/underflow bins.
 template <> class axis_base<true> {
 public:
   /// Returns the number of bins, excluding overflow/underflow.
@@ -149,6 +150,7 @@ private:
   template <class Archive> void serialize(Archive &, unsigned);
 };
 
+/// Specialization without overflow/underflow bins.
 template <> class axis_base<false> {
 public:
   /// Returns the number of bins, excluding overflow/underflow.

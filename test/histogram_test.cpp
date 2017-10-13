@@ -35,6 +35,16 @@ auto make_histogram(Dynamic, Axes &&... axes)
   return make_dynamic_histogram_with<S>(std::forward<Axes>(axes)...);
 }
 
+template <typename T, typename U>
+bool axis_equal(Static, const T& t, const U& u) {
+    return t == u;
+}
+
+template <typename T, typename U>
+bool axis_equal(Dynamic, const T& t, const U& u) {
+    return t == T(u);
+}
+
 template <typename Type> void run_tests() {
 
   // init_0
@@ -573,21 +583,88 @@ template <typename Type> void run_tests() {
   // reduce
   {
     auto h1 = make_histogram<adaptive_storage<>>(Type(), axis::integer(0, 1),
-                                                 axis::integer(2, 3));
-    h1.fill(0, 2);
-    h1.fill(0, 3);
+                                                 axis::integer(0, 2));
+    h1.fill(0, 0);
+    h1.fill(0, 1);
+    h1.fill(1, 0);
+    h1.fill(1, 1);
     h1.fill(1, 2);
-    h1.fill(1, 3);
-    h1.fill(1, 3);
-    BOOST_TEST_EQ(h1.dim(), 2);
-    BOOST_TEST_EQ(h1.sum(), 5);
-    auto h2 = reduce(h1, keep(1_c));
-    BOOST_TEST_EQ(h2.dim(), 1);
-    BOOST_TEST_EQ(h2.sum(), 5);
-    BOOST_TEST_EQ(h2.value(0), 2);
-    BOOST_TEST_EQ(h2.value(1), 3);
-    BOOST_TEST_EQ(left(h2.axis(), 0), 2.0);
-    BOOST_TEST_EQ(left(h2.axis(), 1), 3.0);
+
+    auto h1_0 = reduce(h1, keep(0_c));
+    BOOST_TEST_EQ(h1_0.dim(), 1);
+    BOOST_TEST_EQ(h1_0.sum(), 5);
+    BOOST_TEST_EQ(h1_0.value(0), 2);
+    BOOST_TEST_EQ(h1_0.value(1), 3);
+    BOOST_TEST_EQ(left(h1_0.axis(), 0), 0.0);
+    BOOST_TEST_EQ(left(h1_0.axis(), 1), 1.0);
+    BOOST_TEST(axis_equal(Type(), h1_0.axis(), axis::integer(0, 1)));
+
+    auto h1_1 = reduce(h1, keep(1_c));
+    BOOST_TEST_EQ(h1_1.dim(), 1);
+    BOOST_TEST_EQ(h1_1.sum(), 5);
+    BOOST_TEST_EQ(h1_1.value(0), 2);
+    BOOST_TEST_EQ(h1_1.value(1), 2);
+    BOOST_TEST_EQ(h1_1.value(2), 1);
+    BOOST_TEST(axis_equal(Type(), h1_1.axis(), axis::integer(0, 2)));
+
+    auto h2 = make_histogram<adaptive_storage<>>(
+        Type(), axis::integer(0, 1), axis::integer(0, 2), axis::integer(0, 3));
+    h2.fill(0, 0, 0);
+    h2.fill(0, 1, 0);
+    h2.fill(0, 1, 1);
+    h2.fill(0, 0, 2);
+    h2.fill(1, 0, 2);
+
+    auto h2_0 = reduce(h2, keep(0_c));
+    BOOST_TEST_EQ(h2_0.dim(), 1);
+    BOOST_TEST_EQ(h2_0.sum(), 5);
+    BOOST_TEST_EQ(h2_0.value(0), 4);
+    BOOST_TEST_EQ(h2_0.value(1), 1);
+    BOOST_TEST(axis_equal(Type(), h2_0.axis(), axis::integer(0, 1)));
+
+    auto h2_1 = reduce(h2, keep(1_c));
+    BOOST_TEST_EQ(h2_1.dim(), 1);
+    BOOST_TEST_EQ(h2_1.sum(), 5);
+    BOOST_TEST_EQ(h2_1.value(0), 3);
+    BOOST_TEST_EQ(h2_1.value(1), 2);
+    BOOST_TEST(axis_equal(Type(), h2_1.axis(), axis::integer(0, 2)));
+
+    auto h2_2 = reduce(h2, keep(2_c));
+    BOOST_TEST_EQ(h2_2.dim(), 1);
+    BOOST_TEST_EQ(h2_2.sum(), 5);
+    BOOST_TEST_EQ(h2_2.value(0), 2);
+    BOOST_TEST_EQ(h2_2.value(1), 1);
+    BOOST_TEST_EQ(h2_2.value(2), 2);
+    BOOST_TEST(axis_equal(Type(), h2_2.axis(), axis::integer(0, 3)));
+
+    auto h2_01 = reduce(h2, keep(0_c, 1_c));
+    BOOST_TEST_EQ(h2_01.dim(), 2);
+    BOOST_TEST_EQ(h2_01.sum(), 5);
+    BOOST_TEST_EQ(h2_01.value(0, 0), 2);
+    BOOST_TEST_EQ(h2_01.value(0, 1), 2);
+    BOOST_TEST_EQ(h2_01.value(1, 0), 1);
+    BOOST_TEST(axis_equal(Type(), h2_01.axis(0_c), axis::integer(0, 1)));
+    BOOST_TEST(axis_equal(Type(), h2_01.axis(1_c), axis::integer(0, 2)));
+
+    auto h2_02 = reduce(h2, keep(0_c, 2_c));
+    BOOST_TEST_EQ(h2_02.dim(), 2);
+    BOOST_TEST_EQ(h2_02.sum(), 5);
+    BOOST_TEST_EQ(h2_02.value(0, 0), 2);
+    BOOST_TEST_EQ(h2_02.value(0, 1), 1);
+    BOOST_TEST_EQ(h2_02.value(0, 2), 1);
+    BOOST_TEST_EQ(h2_02.value(1, 2), 1);
+    BOOST_TEST(axis_equal(Type(), h2_02.axis(0_c), axis::integer(0, 1)));
+    BOOST_TEST(axis_equal(Type(), h2_02.axis(1_c), axis::integer(0, 3)));
+
+    auto h2_12 = reduce(h2, keep(1_c, 2_c));
+    BOOST_TEST_EQ(h2_12.dim(), 2);
+    BOOST_TEST_EQ(h2_12.sum(), 5);
+    BOOST_TEST_EQ(h2_12.value(0, 0), 1);
+    BOOST_TEST_EQ(h2_12.value(1, 0), 1);
+    BOOST_TEST_EQ(h2_12.value(1, 1), 1);
+    BOOST_TEST_EQ(h2_12.value(0, 2), 2);
+    BOOST_TEST(axis_equal(Type(), h2_12.axis(0_c), axis::integer(0, 2)));
+    BOOST_TEST(axis_equal(Type(), h2_12.axis(1_c), axis::integer(0, 3)));
   }
 }
 

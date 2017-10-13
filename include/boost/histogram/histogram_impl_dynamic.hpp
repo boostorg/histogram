@@ -364,9 +364,8 @@ private:
     return h;
   }
 
-  template <typename Ns>
-  friend histogram reduce(const histogram &h, const detail::keep_static<Ns> &) {
-    const auto b = detail::bool_mask<Ns>(h.dim(), true);
+  template <typename Keep> friend histogram reduce(const histogram &h, Keep) {
+    const auto b = detail::bool_mask<Keep>(h.dim(), true);
     return h.reduce_impl(b);
   }
 

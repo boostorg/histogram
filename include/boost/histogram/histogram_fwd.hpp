@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/mpl/vector.hpp>
 #include <set>
 #include <type_traits>
 
@@ -41,19 +42,17 @@ private:
   unsigned value;
 };
 
-namespace detail {
-template <typename Ns> struct keep_static { using type = Ns; };
-struct keep_dynamic : std::set<unsigned> {};
-} // namespace detail
-
 template <typename... Ns>
-auto keep(Ns...)
-    -> detail::keep_static<typename detail::unique_sorted<Ns...>::type> {
+inline auto keep(Ns...) -> detail::unique_sorted<mpl::vector<Ns...>> {
   return {};
 }
 
+namespace detail {
+using keep_dynamic = std::set<unsigned>;
+} // namespace detail
+
 template <typename Iterator, typename = detail::is_iterator<Iterator>>
-detail::keep_dynamic keep(Iterator begin, Iterator end) {
+inline detail::keep_dynamic keep(Iterator begin, Iterator end) {
   detail::keep_dynamic s;
   std::copy(begin, end, s.begin());
   return s;

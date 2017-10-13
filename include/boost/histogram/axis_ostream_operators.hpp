@@ -21,7 +21,7 @@ inline std::ostream &operator<<(std::ostream &os, const regular<RealType> &a) {
   os << "regular(" << a.bins() << ", " << a[0] << ", " << a[a.bins()];
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   if (!a.uoflow()) {
     os << ", uoflow=False";
@@ -41,7 +41,7 @@ inline std::ostream &operator<<(std::ostream &os, const circular<RealType> &a) {
   }
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   os << ")";
   return os;
@@ -55,7 +55,7 @@ inline std::ostream &operator<<(std::ostream &os, const variable<RealType> &a) {
   }
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   if (!a.uoflow()) {
     os << ", uoflow=False";
@@ -68,7 +68,7 @@ inline std::ostream &operator<<(std::ostream &os, const integer &a) {
   os << "integer(" << a[0] << ", " << a[a.bins() - 1];
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   if (!a.uoflow()) {
     os << ", uoflow=False";
@@ -80,12 +80,12 @@ inline std::ostream &operator<<(std::ostream &os, const integer &a) {
 inline std::ostream &operator<<(std::ostream &os, const category &a) {
   os << "category(";
   for (int i = 0; i < a.bins(); ++i) {
-    detail::escape(os, a[i]);
+    ::boost::histogram::detail::escape(os, a[i]);
     os << (i == (a.bins() - 1) ? "" : ", ");
   }
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   os << ")";
   return os;
