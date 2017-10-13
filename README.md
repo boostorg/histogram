@@ -27,14 +27,14 @@ Check out the [full documentation](https://htmlpreview.github.io/?https://raw.gi
 * Support for many binning schemes (user-extensible)
 * Support for weighted input
 * Support for underflow/overflow bins for each dimension (can be disabled)
-* Support for statistical variance queries with zero overhead (++)
+* Support for statistical variance queries (++)
 * Support for addition of histograms
 * Support for serialization using `boost.serialization`
 * Support for Python 2.x and 3.x
 * Support for Numpy in Python
 
 (+) In the standard configuration and if you don't use weighted input.
-(++) Overhead only occurs if you use weighted input.
+(++) Variance estimates are trivial if you don't have weighted input. If you don't fill a histogram with weighted input, variance queries come at zero cost. Only when you fill a histogram with weighted input, extra space is reserved internally to keep track of a variance counter per bin.
 
 ## Dependencies
 
