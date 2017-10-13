@@ -27,6 +27,20 @@
 <a name="histogram.motivation"></a><a class="link" href="motivation.html" title="Motivation">Motivation</a>
 </h2></div></div></div>
 <p>
+      Histograms are a basic tool in statistical analysis. When analysing large data
+      sets, it is usually more convenient to work with a histogram of input values,
+      which may consume a lot of memory or disc space and may be slow to process.
+      Histograms can compactly represent a data set of one or several random variables
+      with acceptable loss of information. One can imagine histograms as a lossy
+      compression of statistical data.
+    </p>
+<p>
+      Parameters of interest, like the center of a distribution, can be extracted
+      from the histogram instead of the original data set; statistical models can
+      be fitted to histograms to the same end. Finally, histograms help to visualize
+      complex data sets.
+    </p>
+<p>
       C++ lacks a widely-used, free histogram class. While it is easy to write a
       one-dimensional histogram, writing a general multi-dimensional histogram poses
       more of a challenge. If you add serialization and Python/Numpy support onto
@@ -42,32 +56,32 @@
       ROOT has implementations for one, two, three, and general n-dimensional histograms.
       However, the interfaces are unnecessarily complex and inconsistent, and mix
       many different responsibilities. They are also not well designed to prevent
-      user errors. For example, the design forces users to make an educated decision
-      on which data type to use that holds the counts, an aspect that the library
-      should encapsulate. The ROOT implementations are also slow and inefficient
-      due to heavy use of virtual inheritance. They are also not customizable.
+      user errors. For example, the ROOT design forces users to make an educated
+      decision on which data type for the counters, an aspect that the library should
+      encapsulate.
     </p>
 <p>
       The two histogram classes in this project share an interface which we believe
       to be as elegant as the GSL implementations. In addition, they are customizable
       through exchangable policies and user-supplied binning algorithms. Thanks to
       variadic templates, the interface is consistent for any number of dimensions.
-      The implementations are also very fast. They use of compile-time information
-      wherever possible and <a href="../../../libs/variant/index.html" target="_top">Boost.Variant</a>
-      rather than virtual inheritance to achieve faster run-time polymorphism.
+      The implementations are also very fast, using compile-time information wherever
+      possible and <a href="../../../libs/variant/index.html" target="_top">Boost.Variant</a>
+      rather than virtual inheritance to achieve more flexible polymorphism.
     </p>
 <p>
-      A central design goal was to completely encapsulate the counting details. The
-      internal counting mechanism is independent of the external histogram interface
-      and encapsulated in an exchangable storage policy. The standard policy implements
-      a smart counting approach which is very fast, memory-efficient, and safe, since
-      counts can neither overflow nor lose precision. In the standard configuration,
-      the histogram <span class="bold"><strong>just works</strong></span> under any circumstance.
+      A central design goal is to completely encapsulate details on the internal
+      counters. The internal counting mechanism is independent of the external histogram
+      interface and encapsulated in a storage policy, which can be replaced at compile
+      time.
     </p>
 <p>
-      Users with unusual requirements can implement their own custom storage policy
-      or use the alternative container-based storage policy. With the latter, for
-      example, and in conjunction with a <a href="../../../libs/array/index.html" target="_top">Boost.Array</a>,
+      The standard policy implements a smart counting approach which is very fast,
+      memory-efficient, and safe, since counts can neither overflow nor lose precision.
+      In the standard configuration, the histogram <span class="bold"><strong>just works</strong></span>
+      under any circumstance. Users with unusual requirements can implement their
+      own custom storage policy or use the alternative container-based storage policy.
+      With the latter, for example, and in conjunction with a <a href="../../../libs/array/index.html" target="_top">Boost.Array</a>,
       it is possible to construct a histogram entirely on the stack.
     </p>
 </div>

@@ -27,7 +27,7 @@ For full support of all library features, the `axis_type` should also be:
 
 The latter two are not needed, if the histogram that uses the custom axis type is never serialized or ostreamed.
 
-It is recommended to take a look at [classref boost::histogram::axis_base], which provides part of the aforementioned infrastructure for axis types.
+It is recommended to take a look at [classref boost::histogram::axis::axis_base], which provides part of the aforementioned infrastructure for axis types.
 
 [endsect]
 

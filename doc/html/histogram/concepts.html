@@ -116,7 +116,7 @@
         type is never serialized or ostreamed.
       </p>
 <p>
-        It is recommended to take a look at <code class="computeroutput"><a class="link" href="../boost/histogram/axis_base.html" title="Class template axis_base">boost::histogram::axis_base</a></code>,
+        It is recommended to take a look at <code class="computeroutput"><a class="link" href="../boost/histogram/axis/axis_base.html" title="Class template axis_base">boost::histogram::axis::axis_base</a></code>,
         which provides part of the aforementioned infrastructure for axis types.
       </p>
 </div>
@@ -165,34 +165,40 @@
                   <span class="identifier">index</span><span class="special">)</span></code>
                 </li>
 <li class="listitem">
+                  <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">increase</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">,</span>
+                  <span class="identifier">value_type</span> <span class="identifier">n</span><span class="special">)</span></code>
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">add</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">,</span>
+                  <span class="keyword">const</span> <span class="identifier">value_type</span><span class="special">&amp;</span> <span class="identifier">val</span><span class="special">,</span> <span class="keyword">const</span>
+                  <span class="identifier">value_type</span><span class="special">&amp;</span>
+                  <span class="identifier">var</span><span class="special">)</span></code>
+                </li>
+<li class="listitem">
                   <code class="computeroutput"><span class="identifier">value_type</span> <span class="identifier">value</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
                   <span class="identifier">index</span><span class="special">)</span>
                   <span class="keyword">const</span></code>
                 </li>
 <li class="listitem">
-                  <code class="computeroutput"><span class="identifier">storage_type</span><span class="special">&amp;</span>
-                  <span class="keyword">operator</span><span class="special">+=(</span><span class="keyword">const</span> <span class="identifier">storage_type</span><span class="special">&amp;</span> <span class="identifier">rhs</span><span class="special">)</span></code>
+                  <code class="computeroutput"><span class="identifier">value_type</span> <span class="identifier">variance</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">)</span>
+                  <span class="keyword">const</span></code>
                 </li>
 </ul></div>
           </li>
 </ul></div>
 <p>
-        To support weighted fills, two additional methods are required:
+        To support weighted fills, an additional method is required:
       </p>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
-<li class="listitem">
-            <code class="computeroutput"><span class="identifier">value_type</span> <span class="identifier">variance</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
-            <span class="identifier">index</span><span class="special">)</span>
-            <span class="keyword">const</span></code>
-          </li>
-<li class="listitem">
-            <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">increase</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+            <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">weighted_increase</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
             <span class="identifier">index</span><span class="special">,</span>
             <span class="identifier">value_type</span> <span class="identifier">weight</span><span class="special">)</span></code>
-          </li>
-</ul></div>
+          </li></ul></div>
 <p>
-        <code class="computeroutput"><a class="link" href="../boost/histogram/container_storage.html" title="Class template container_storage">boost::histogram::container_storage</a></code>
+        <code class="computeroutput"><a class="link" href="../boost/histogram/array_storage.html" title="Class template array_storage">boost::histogram::array_storage</a></code>
         is a simple example of a storage type which does not support weighted fills.
       </p>
 </div>
