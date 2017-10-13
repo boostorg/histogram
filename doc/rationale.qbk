@@ -42,11 +42,11 @@ The static approach is unpractical when the user wants to create histograms at r
 
 An axis defines which range of input values is mapped to which bin. The logic is encapsulated in an axis type. The library comes with five axis types, which implement different specializations.
 
-* [classref boost::histogram::regular_axis] sorts real numbers into bins with equal width.
-* [classref boost::histogram::variable_axis] sorts real numbers into bins with varying width.
-* [classref boost::histogram::circular_axis] is a specialization of a regular axis for angles and other input that wraps around.
-* [classref boost::histogram::integer_axis] is a specialization of a regular axis for a continuous range of integers.
-* [classref boost::histogram::category_axis] is a specialization of an integer axis for categorical data, like "men" and "women".
+* [classref boost::histogram::axis::regular] sorts real numbers into bins with equal width.
+* [classref boost::histogram::axis::variable] sorts real numbers into bins with varying width.
+* [classref boost::histogram::axis::circular] is a specialization of a regular axis for angles and other input that wraps around.
+* [classref boost::histogram::axis::integer] is a specialization of a regular axis for a continuous range of integers.
+* [classref boost::histogram::axis::category] is a specialization of an integer axis for categorical data, like "men" and "women".
 
 Library users can create their own axis classes and use them with the library, by providing a class compatible with the axis concept.
 
