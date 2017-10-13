@@ -15,10 +15,9 @@
 #include <boost/version.hpp>
 #if BOOST_VERSION < 106100
 #include <boost/utility/string_ref.hpp>
-#define BOOST_HISTOGRAM_STRING_VIEW boost::string_ref
+namespace boost { using string_view = string_ref; }
 #else
 #include <boost/utility/string_view.hpp>
-#define BOOST_HISTOGRAM_STRING_VIEW boost::string_view
 #endif
 #include <cmath>
 #include <limits>
@@ -104,14 +103,14 @@ public:
   /// Returns whether axis has extra overflow and underflow bins.
   inline bool uoflow() const { return shape_ > size_; }
   /// Returns the axis label, which is a name or description.
-  const std::string &label() const { return label_; }
+  string_view label() const { return label_; }
   /// Change the label of an axis.
-  void label(const std::string &label) { label_ = label; }
+  void label(string_view label) { label_.assign(label.begin(), label.end()); }
 
 protected:
-  axis_base(unsigned n, std::string label, bool uoflow)
+  axis_base(unsigned n, string_view label, bool uoflow)
       : size_(n), shape_(size_ + 2 * static_cast<int>(uoflow)),
-        label_(std::move(label)) {
+        label_(label.begin(), label.end()) {
     if (n == 0) {
       throw std::logic_error("bins > 0 required");
     }
@@ -160,16 +159,17 @@ public:
   /// Returns whether axis has extra overflow and underflow bins.
   inline bool uoflow() const { return false; }
   /// Returns the axis label, which is a name or description.
-  const std::string &label() const { return label_; }
+  string_view label() const { return label_; }
   /// Change the label of an axis.
-  void label(const std::string &label) { label_ = label; }
+  void label(string_view label) { label_.assign(label.begin(), label.end()); }
 
 protected:
-  axis_base(unsigned n, std::string label)
-      : size_(n), label_(std::move(label)) {
+  axis_base(unsigned n, string_view label)
+      : size_(n), label_(label.begin(), label.end()) {
     if (n == 0) {
       throw std::logic_error("bins > 0 required");
     }
+    std::copy(label.begin(), label.end(), label_.begin());
   }
 
   axis_base() = default;
@@ -239,7 +239,7 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   regular(unsigned n, value_type min, value_type max,
-          const std::string &label = std::string(), bool uoflow = true)
+          string_view label = string_view(), bool uoflow = true)
       : axis_base<true>(n, label, uoflow),
         min_(Transform<value_type>::forward(min)),
         delta_((Transform<value_type>::forward(max) - min_) / n) {
@@ -317,7 +317,7 @@ public:
    */
   explicit circular(unsigned n, value_type phase = 0.0,
                     value_type perimeter = math::double_constants::two_pi,
-                    const std::string &label = std::string())
+                    string_view label = string_view())
       : axis_base<false>(n, label), phase_(phase), perimeter_(perimeter) {}
 
   circular() = default;
@@ -376,7 +376,7 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   variable(const std::initializer_list<value_type> &x,
-           const std::string &label = std::string(), bool uoflow = true)
+           string_view label = string_view(), bool uoflow = true)
       : axis_base<true>(x.size() - 1, label, uoflow),
         x_(new value_type[x.size()]) {
     if (x.size() < 2) {
@@ -388,7 +388,7 @@ public:
 
   template <typename Iterator>
   variable(Iterator begin, Iterator end,
-           const std::string &label = std::string(), bool uoflow = true)
+           string_view label = string_view(), bool uoflow = true)
       : axis_base<true>(std::distance(begin, end) - 1, label, uoflow),
         x_(new value_type[std::distance(begin, end)]) {
     std::copy(begin, end, x_.get());
@@ -465,7 +465,7 @@ public:
    * \param max largest integer of the covered range.
    */
   integer(value_type min, value_type max,
-          const std::string &label = std::string(), bool uoflow = true)
+          string_view label = string_view(), bool uoflow = true)
       : axis_base<true>(max + 1 - min, label, uoflow), min_(min) {
     if (min > max) {
       throw std::logic_error("min <= max required");
@@ -515,12 +515,12 @@ private:
  */
 class category : public axis_base<false>, boost::operators<category> {
 public:
-  using value_type = BOOST_HISTOGRAM_STRING_VIEW;
+  using value_type = string_view;
   using const_iterator = axis_iterator<category>;
 
   template <typename Iterator>
   category(Iterator begin, Iterator end,
-           const std::string &label = std::string())
+           string_view label = string_view())
       : axis_base<false>(std::distance(begin, end), label),
         ptr_(new std::string[bins()]) {
     std::copy(begin, end, ptr_.get());
@@ -531,7 +531,7 @@ public:
    * \param categories sequence of labeled categories.
    */
   category(const std::initializer_list<std::string> &categories,
-           const std::string &label = std::string())
+           string_view label = string_view())
       : category(categories.begin(), categories.end(), label) {}
 
   category() = default;

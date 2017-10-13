@@ -115,6 +115,17 @@ template <typename T> std::string axis_repr(const T &t) {
   return os.str();
 }
 
+template <typename T> void axis_set_label(T& t, python::str s) {
+  const char* d = python::extract<const char*>(s);
+  const auto n = python::len(s);
+  t.label(string_view(d, n));
+}
+
+template <typename T> python::str axis_get_label(const T& t) {
+  auto s = t.label();
+  return {s.data(), s.size()};
+}
+
 template <class T>
 struct axis_suite : public python::def_visitor<axis_suite<T>> {
   template <class Class> static void visit(Class &cl) {
@@ -123,11 +134,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T>> {
         "shape", &T::shape,
         "Number of bins, including possible over- and underflow bins.");
     cl.add_property(
-        "label",
-        make_function(
-            (const std::string &(T::*)() const) & T::label,
-            python::return_value_policy<python::copy_const_reference>()),
-        (void (T::*)(const std::string &)) & T::label,
+        "label", axis_get_label<T>, axis_set_label<T>,
         "Name or description for the axis.");
     cl.def("index", &T::index, ":param float x: value"
                                "\n:returns: bin index for the passed value",
