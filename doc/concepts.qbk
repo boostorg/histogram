@@ -54,7 +54,7 @@ To support weighted fills, an additional method is required:
 
 * `void weighted_increase(std::size_t index, value_type weight)`
 
-[classref boost::histogram::container_storage] is a simple example of a storage type which does not support weighted fills.
+[classref boost::histogram::array_storage] is a simple example of a storage type which does not support weighted fills.
 
 [endsect]
 

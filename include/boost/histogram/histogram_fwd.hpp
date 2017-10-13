@@ -8,7 +8,6 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <set>
 #include <type_traits>
 
@@ -17,6 +16,9 @@ namespace histogram {
 
 using Static = std::integral_constant<int, 0>;
 using Dynamic = std::integral_constant<int, 1>;
+
+template <template <class> class Allocator = std::allocator>
+class adaptive_storage;
 
 template <class Variant, class Axes, class Storage = adaptive_storage<>>
 class histogram;

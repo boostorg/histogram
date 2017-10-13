@@ -22,11 +22,11 @@
 #endif
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <vector>
-#include <memory>
 
 // forward declaration for serialization
 namespace boost {

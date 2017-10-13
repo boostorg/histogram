@@ -13,7 +13,7 @@
 #include <boost/histogram/detail/weight.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/storage/container_storage.hpp>
+#include <boost/histogram/storage/array_storage.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
@@ -43,9 +43,9 @@ template <typename Archive> struct serialize_helper {
 } // namespace detail
 
 template <class Archive, typename Container>
-void serialize(Archive &ar, container_storage<Container> &store,
+void serialize(Archive &ar, array_storage<Container> &store,
                unsigned /* version */) {
-  ar &store.c_;
+  ar &store.array_;
 }
 
 template <template <class> class Allocator>

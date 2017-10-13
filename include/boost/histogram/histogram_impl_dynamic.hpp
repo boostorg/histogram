@@ -15,6 +15,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/storage/operators.hpp>
 #include <boost/mpl/count.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/int.hpp>
