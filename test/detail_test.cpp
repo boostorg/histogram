@@ -58,5 +58,43 @@ int main() {
     BOOST_TEST_EQ(v2, V2(2));
   }
 
+  // index_mapper 1
+  {
+    std::vector<unsigned> n{{2, 2}};
+    std::vector<bool> b{{true, false}};
+    index_mapper m(std::move(n), std::move(b));
+    BOOST_TEST_EQ(m.first, 0);
+    BOOST_TEST_EQ(m.second, 0);
+    BOOST_TEST_EQ(m.next(), true);
+    BOOST_TEST_EQ(m.first, 1);
+    BOOST_TEST_EQ(m.second, 1);
+    BOOST_TEST_EQ(m.next(), true);
+    BOOST_TEST_EQ(m.first, 2);
+    BOOST_TEST_EQ(m.second, 0);
+    BOOST_TEST_EQ(m.next(), true);
+    BOOST_TEST_EQ(m.first, 3);
+    BOOST_TEST_EQ(m.second, 1);
+    BOOST_TEST_EQ(m.next(), false);
+  }
+
+  // index_mapper 2
+  {
+    std::vector<unsigned> n{{2, 2}};
+    std::vector<bool> b{{false, true}};
+    index_mapper m(std::move(n), std::move(b));
+    BOOST_TEST_EQ(m.first, 0);
+    BOOST_TEST_EQ(m.second, 0);
+    BOOST_TEST_EQ(m.next(), true);
+    BOOST_TEST_EQ(m.first, 1);
+    BOOST_TEST_EQ(m.second, 0);
+    BOOST_TEST_EQ(m.next(), true);
+    BOOST_TEST_EQ(m.first, 2);
+    BOOST_TEST_EQ(m.second, 1);
+    BOOST_TEST_EQ(m.next(), true);
+    BOOST_TEST_EQ(m.first, 3);
+    BOOST_TEST_EQ(m.second, 1);
+    BOOST_TEST_EQ(m.next(), false);
+  }
+
   return boost::report_errors();
 }

@@ -8,7 +8,8 @@
 
 import numpy as np
 from timeit import default_timer as timer
-from histogram import histogram, regular_axis
+from histogram import histogram
+from histogram.axis import regular
 
 def compare_1d(n, distrib):
     if distrib == 0:
@@ -24,7 +25,7 @@ def compare_1d(n, distrib):
         t = timer() - t
         best_numpy = min(t, best_numpy)
 
-        h = histogram(regular_axis(100, 0, 1))
+        h = histogram(regular(100, 0, 1))
         t = timer()
         h.fill(r)
         t = timer() - t
@@ -50,9 +51,9 @@ def compare_2d(n, distrib):
         t = timer() - t
         best_numpy = min(t, best_numpy)
 
-        h = histogram(regular_axis(100, 0, 1), regular_axis(100, 0, 1))
+        h = histogram(regular(100, 0, 1), regular(100, 0, 1))
         t = timer()
-        h.fill(r)
+        h.fill(r[:,0], r[:,1])
         t = timer() - t
         best_boost = min(t, best_boost)
     assert(np.all(w == np.array(h)[:-2,:-2]))
@@ -78,11 +79,11 @@ def compare_3d(n, distrib):
         t = timer() - t
         best_numpy = min(t, best_numpy)
 
-        h = histogram(regular_axis(100, 0, 1),
-                      regular_axis(100, 0, 1),
-                      regular_axis(100, 0, 1))
+        h = histogram(regular(100, 0, 1),
+                      regular(100, 0, 1),
+                      regular(100, 0, 1))
         t = timer()
-        h.fill(r)
+        h.fill(r[:,0], r[:,1], r[:,2])
         t = timer() - t
         best_boost = min(t, best_boost)
     assert(np.all(w == np.array(h)[:-2,:-2,:-2]))
@@ -112,14 +113,14 @@ def compare_6d(n, distrib):
         t = timer() - t
         best_numpy = min(t, best_numpy)
 
-        h = histogram(regular_axis(10, 0, 1),
-                      regular_axis(10, 0, 1),
-                      regular_axis(10, 0, 1),
-                      regular_axis(10, 0, 1),
-                      regular_axis(10, 0, 1),
-                      regular_axis(10, 0, 1))
+        h = histogram(regular(10, 0, 1),
+                      regular(10, 0, 1),
+                      regular(10, 0, 1),
+                      regular(10, 0, 1),
+                      regular(10, 0, 1),
+                      regular(10, 0, 1))
         t = timer()
-        h.fill(r)
+        h.fill(r[:,0], r[:,1], r[:,2], r[:,3], r[:,4], r[:,5])
         t = timer() - t
         best_boost = min(t, best_boost)
     assert(np.all(w == np.array(h)[:-2,:-2,:-2,:-2,:-2,:-2]))

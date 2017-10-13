@@ -17,28 +17,29 @@ Check out the [full documentation](https://htmlpreview.github.io/?https://raw.gi
 ## Features
 
 * Multi-dimensional histogram
-* Simple and convenient interface
-* Value semantics with efficient move operations
-* Support for various binning schemes (e.g. regular steps in log-scale), user-extensible
-* Optional underflow/overflow bins for each dimension
-* Counts cannot overflow or be capped (+)
+* Simple and convenient interface in C++11 and Python
+* Static and dynamic implementation in C++ with unified interface
+* Counters cannot overflow or be capped (+)
+* Higher performance than other libraries (see benchmarks for details)
+* Efficient move operations
+* Efficient conversion between static and dynamic implementation
+* Efficient use of memory (counter size dynamically grows as needed)
+* Support for many binning schemes (user-extensible)
 * Support for weighted input
-* Statistical variance can be queried for each bin
-* High performance (see benchmarks)
-* Efficient use of memory for counters (dynamically grows as needed)
-* Serialization support using `boost.serialization`
-* Language support: C++11, Python 2.x and 3.x
-* Numpy support
+* Support for underflow/overflow bins for each dimension (can be disabled)
+* Support for statistical variance queries (++)
+* Support for addition of histograms
+* Support for serialization using `boost.serialization`
+* Support for Python 2.x and 3.x
+* Support for Numpy in Python
 
 (+) In the standard configuration and if you don't use weighted input.
+(++) Variance estimates are trivial if you don't have weighted input. If you don't fill a histogram with weighted input, variance queries come at zero cost. Only when you fill a histogram with weighted input, extra space is reserved internally to keep track of a variance counter per bin.
 
 ## Dependencies
 
 * [Boost](http://www.boost.org)
-* Optional:
-* [CMake](https://cmake.org)
-  [Python](http://www.python.org)
-  [Numpy](http://www.numpy.org)
+* Optional: [CMake](https://cmake.org) [Python](http://www.python.org) [Numpy](http://www.numpy.org)
 
 ## Build instructions
 
@@ -71,7 +72,7 @@ Example 1: Fill a 1d-histogram in C++
 
         // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
         // with axis of histogram labeled as "x"
-        auto h = bh::make_static_histogram(bh::regular_axis<>(10, -1.0, 2.0, "x"));
+        auto h = bh::make_static_histogram(bh::axis::regular<>(10, -1.0, 2.0, "x"));
 
         // fill histogram with data
         h.fill(-1.5); // put in underflow bin
@@ -119,21 +120,20 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
     # create 2d-histogram over polar coordinates, with
     # 10 equidistant bins in radius from 0 to 5 and
     # 4 equidistant bins in polar angle
-    h = bh.histogram(bh.regular_axis(10, 0.0, 5.0, "radius",
-                                     uoflow=False),
-                     bh.circular_axis(4, 0.0, 2*np.pi, "phi"))
+    h = bh.histogram(bh.axis.regular(10, 0.0, 5.0, "radius", uoflow=False),
+                     bh.axis.circular(4, 0.0, 2*np.pi, "phi"))
 
     # generate some numpy arrays with data to fill into histogram,
     # in this case normal distributed random numbers in x and y,
     # converted into polar coordinates
     x = np.random.randn(1000)             # generate x
     y = np.random.randn(1000)             # generate y
-    rphi = np.empty((1000, 2))
-    rphi[:, 0] = (x ** 2 + y ** 2) ** 0.5 # compute radius
-    rphi[:, 1] = np.arctan2(y, x)         # compute phi
+    radius = (x ** 2 + y ** 2) ** 0.5
+    phi = np.arctan2(y, x)
 
-    # fill histogram with numpy array
-    h.fill(rphi)
+    # fill histogram with numpy arrays; the call looks the
+    # if radius and phi are numbers instead of arrays
+    h.fill(radius, phi)
 
     # access histogram counts (no copy)
     count_matrix = np.asarray(h)
@@ -156,7 +156,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
 ## Benchmarks
 
-Thanks to modern meta-programming and intelligent memory management, this library is not only more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [GNU Scientific Librarz](https://www.gnu.org/software/gsl), the [ROOT framework](https://root.cern.ch), and to the histogram functions in [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. More details on the benchmark are given in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/benchmarks.html)
+Thanks to modern meta-programming and intelligent memory management, this library is not only more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [GNU Scientific Library](https://www.gnu.org/software/gsl), the [ROOT framework from CERN](https://root.cern.ch), and to the histogram functions in [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. More details on the benchmark are given in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/benchmarks.html)
 
 ![alt benchmark](doc/benchmark.png)
 

@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/variance.hpp>
 #include <boost/histogram/detail/weight.hpp>
+#include <boost/mpl/int.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/variant.hpp>
 #include <limits>
@@ -138,8 +138,7 @@ template <> struct next_type<uint64_t> { using type = mp_int; };
 
 } // namespace detail
 
-template <template <class> class Allocator = std::allocator>
-class adaptive_storage {
+template <template <class> class Allocator> class adaptive_storage {
   template <typename T> using array = detail::array<Allocator, T>;
   template <typename T> using next = typename detail::next_type<T>::type;
   using weight = detail::weight;
@@ -188,8 +187,25 @@ public:
     apply_visitor(increase_visitor(i, buffer_), buffer_);
   }
 
-  void increase(std::size_t i, value_type w) {
-    apply_visitor(wincrease_visitor(i, w, buffer_), buffer_);
+  template <typename Value> void increase(std::size_t i, const Value &n) {
+    apply_visitor(add_visitor<Value>(i, n, buffer_), buffer_);
+  }
+
+  void weighted_increase(std::size_t i, value_type weight) {
+    apply_visitor(wincrease_visitor(i, weight, buffer_), buffer_);
+  }
+
+  void add(std::size_t i, const value_type &val, const value_type &var) {
+    if (val == var) {
+      apply_visitor(add_visitor<value_type>(i, val, buffer_), buffer_);
+    } else {
+      if (!boost::get<array<weight>>(&buffer_)) {
+        apply_visitor(wincrease_visitor(0, 0.0, buffer_), buffer_);
+      }
+      auto &b = boost::get<array<weight>>(buffer_);
+      b[i].w += val;
+      b[i].w2 += var;
+    }
   }
 
   value_type value(std::size_t i) const {
@@ -200,20 +216,8 @@ public:
     return apply_visitor(variance_visitor(i), buffer_);
   }
 
-  template <typename S> adaptive_storage &operator+=(const S &rhs) {
-    for (std::size_t i = 0, n = rhs.size(); i < n; ++i)
-      apply_visitor(
-          add_visitor<typename S::value_type>(i, rhs.value(i), buffer_),
-          buffer_);
-    return *this;
-  }
-
   bool operator==(const adaptive_storage &rhs) const {
     return apply_visitor(bicmp_visitor(), buffer_, rhs.buffer_);
-  }
-
-  template <typename S> bool operator==(const S &rhs) const {
-    return apply_visitor(cmp_visitor<S>(rhs), buffer_);
   }
 
 private:
@@ -359,7 +363,7 @@ private:
     void operator()(array<void> &b) const {
       if (value > 0) {
         buffer = array<uint8_t>(b.size);
-        (*this)(get<array<uint8_t>>(buffer));
+        operator()(get<array<uint8_t>>(buffer));
       }
     }
 
@@ -409,63 +413,12 @@ private:
     }
   };
 
-  template <typename S> struct cmp_visitor : public static_visitor<bool> {
-    const S &os;
-    cmp_visitor(const S &o) : os(o) {}
-
-    template <typename Array> bool operator()(const Array &b) const {
-      if (b.size != os.size())
-        return false;
-      for (std::size_t i = 0; i < b.size; ++i) {
-        if (b[i] != os.value(i))
-          return false;
-      }
-      return true;
-    }
-
-    bool operator()(const array<mp_int> &b) const {
-      if (b.size != os.size())
-        return false;
-      for (std::size_t i = 0; i < b.size; ++i) {
-        if (static_cast<value_type>(b[i]) != os.value(i))
-          return false;
-      }
-      return true;
-    }
-
-    bool operator()(const array<weight> &b) const {
-      if (b.size != os.size())
-        return false;
-      for (std::size_t i = 0; i < b.size; ++i) {
-        auto &x = b[i];
-        if (x.w != os.value(i) || x.w2 != detail::variance(os, i))
-          return false;
-      }
-      return true;
-    }
-
-    bool operator()(const array<void> &b) const {
-      if (b.size != os.size())
-        return false;
-      for (std::size_t i = 0; i < b.size; ++i) {
-        if (os.value(i) != 0)
-          return false;
-      }
-      return true;
-    }
-  };
-
   buffer_type buffer_;
 
   friend class ::boost::python::access;
   friend class ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);
 };
-
-template <template <class> class Allocator, typename S>
-bool operator==(const S &a, const adaptive_storage<Allocator> &b) {
-  return b == a;
-}
 
 } // namespace histogram
 } // namespace boost

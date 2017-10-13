@@ -15,9 +15,10 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/mpl/bool.hpp>
+#include <boost/histogram/storage/operators.hpp>
 #include <boost/mpl/count.hpp>
 #include <boost/mpl/empty.hpp>
+#include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/variant.hpp>
 #include <cstddef>
@@ -56,16 +57,10 @@ private:
 
 public:
   histogram() = default;
-  histogram(const histogram &rhs) = default;
-  histogram(histogram &&rhs) = default;
-  histogram &operator=(const histogram &rhs) = default;
-  histogram &operator=(histogram &&rhs) = default;
-
-  // template <typename... Axes1>
-  // explicit histogram(Axes1 &&... axes) :
-  // axes_({axis_type(std::move(axes))...}) {
-  //   storage_ = Storage(field_count());
-  // }
+  histogram(const histogram &) = default;
+  histogram(histogram &&) = default;
+  histogram &operator=(const histogram &) = default;
+  histogram &operator=(histogram &&) = default;
 
   template <typename... Axes1>
   explicit histogram(const Axes1 &... axes) : axes_({axis_type(axes)...}) {
@@ -121,17 +116,21 @@ public:
     if (!detail::axes_equal(axes_, rhs.axes_)) {
       throw std::logic_error("axes of histograms differ");
     }
-    storage_ += rhs.storage_;
+    for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
+      storage_.add(i, rhs.storage_.value(i), rhs.storage_.variance(i));
     return *this;
   }
 
   template <typename... Args> void fill(Args... args) noexcept {
+    using n_count = typename mpl::count<mpl::vector<Args...>, count>;
     using n_weight = typename mpl::count<mpl::vector<Args...>, weight>;
-    static_assert(n_weight::value <= 1,
-                  "arguments may contain at most one instance of type weight");
-    BOOST_ASSERT_MSG(sizeof...(args) == dim() + n_weight::value,
+    static_assert(
+        (n_count::value + n_weight::value) <= 1,
+        "arguments may contain at most one instance of type count or weight");
+    BOOST_ASSERT_MSG(sizeof...(args) ==
+                         (dim() + n_count::value + n_weight::value),
                      "number of arguments does not match histogram dimension");
-    fill_impl(mpl::bool_<(n_weight::value > 0)>(), args...);
+    fill_impl(mpl::int_<(n_count::value + 2 * n_weight::value)>(), args...);
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
@@ -146,13 +145,24 @@ public:
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
+  void fill(Iterator begin, Iterator end, const count &n) noexcept {
+    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
+                     "number of arguments does not match histogram dimension");
+    std::size_t idx = 0, stride = 1;
+    apply_lin_iter<detail::xlin>(idx, stride, begin);
+    if (stride) {
+      storage_.increase(idx, n);
+    }
+  }
+
+  template <typename Iterator, typename = detail::is_iterator<Iterator>>
   void fill(Iterator begin, Iterator end, const weight &w) noexcept {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     apply_lin_iter<detail::xlin>(idx, stride, begin);
     if (stride) {
-      storage_.increase(idx, static_cast<double>(w));
+      storage_.weighted_increase(idx, static_cast<double>(w));
     }
   }
 
@@ -180,8 +190,6 @@ public:
   }
 
   template <typename... Indices> value_type variance(Indices... indices) const {
-    static_assert(detail::has_variance<Storage>::value,
-                  "Storage lacks variance support");
     BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
                      "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -194,8 +202,6 @@ public:
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   value_type variance(Iterator begin, Iterator end) const {
-    static_assert(detail::has_variance<Storage>::value,
-                  "Storage lacks variance support");
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -243,28 +249,36 @@ private:
 
   std::size_t field_count() const {
     detail::field_count fc;
-    for (const auto &a : axes_) {
-      apply_visitor(fc, a);
-    }
+    for_each_axis(fc);
     return fc.value;
   }
 
   template <typename... Args>
-  inline void fill_impl(mpl::true_, const Args &... args) {
-    std::size_t idx = 0, stride = 1;
-    double w = 0.0;
-    apply_lin_w<detail::xlin, 0, Args...>(idx, stride, w, args...);
-    if (stride) {
-      storage_.increase(idx, w);
-    }
-  }
-
-  template <typename... Args>
-  inline void fill_impl(mpl::false_, const Args &... args) {
+  inline void fill_impl(mpl::int_<0>, const Args &... args) {
     std::size_t idx = 0, stride = 1;
     apply_lin<detail::xlin, 0, Args...>(idx, stride, args...);
     if (stride) {
       storage_.increase(idx);
+    }
+  }
+
+  template <typename... Args>
+  inline void fill_impl(mpl::int_<1>, const Args &... args) {
+    std::size_t idx = 0, stride = 1;
+    unsigned n = 0;
+    apply_lin_x<detail::xlin, 0, unsigned, Args...>(idx, stride, n, args...);
+    if (stride) {
+      storage_.increase(idx, n);
+    }
+  }
+
+  template <typename... Args>
+  inline void fill_impl(mpl::int_<2>, const Args &... args) {
+    std::size_t idx = 0, stride = 1;
+    double w = 0.0;
+    apply_lin_x<detail::xlin, 0, double, Args...>(idx, stride, w, args...);
+    if (stride) {
+      storage_.weighted_increase(idx, w);
     }
   }
 
@@ -280,6 +294,9 @@ private:
     }
   };
 
+  template <template <class, class> class Lin, unsigned D>
+  inline void apply_lin(std::size_t &, std::size_t &) const {}
+
   template <template <class, class> class Lin, unsigned D, typename First,
             typename... Rest>
   inline void apply_lin(std::size_t &idx, std::size_t &stride, const First &x,
@@ -288,29 +305,34 @@ private:
     return apply_lin<Lin, D + 1, Rest...>(idx, stride, rest...);
   }
 
-  template <template <class, class> class Lin, unsigned D>
-  inline void apply_lin(std::size_t &idx, std::size_t &stride) const {}
+  template <template <class, class> class Lin, unsigned D, typename X>
+  inline void apply_lin_x(std::size_t &, std::size_t &, X &) const {}
 
-  template <template <class, class> class Lin, unsigned D, typename First,
-            typename... Rest>
-  inline typename std::enable_if<!(std::is_same<First, weight>::value)>::type
-  apply_lin_w(std::size_t &idx, std::size_t &stride, double &w, const First &x,
+  template <template <class, class> class Lin, unsigned D, typename X,
+            typename First, typename... Rest>
+  inline typename std::enable_if<!(std::is_same<First, weight>::value ||
+                                   std::is_same<First, count>::value)>::type
+  apply_lin_x(std::size_t &idx, std::size_t &stride, X &x, const First &first,
               const Rest &... rest) const {
-    apply_visitor(lin_visitor<Lin, First>(idx, stride, x), axes_[D]);
-    return apply_lin_w<Lin, D + 1, Rest...>(idx, stride, w, rest...);
+    apply_visitor(lin_visitor<Lin, First>(idx, stride, first), axes_[D]);
+    return apply_lin_x<Lin, D + 1, X, Rest...>(idx, stride, x, rest...);
   }
 
-  template <template <class, class> class Lin, unsigned D, typename,
+  template <template <class, class> class Lin, unsigned D, typename X, typename,
             typename... Rest>
-  inline void apply_lin_w(std::size_t &idx, std::size_t &stride, double &w,
-                          const weight &x, const Rest &... rest) const {
-    w = static_cast<double>(x);
-    return apply_lin_w<Lin, D, Rest...>(idx, stride, w, rest...);
+  inline void apply_lin_x(std::size_t &idx, std::size_t &stride, X &x,
+                          const weight &first, const Rest &... rest) const {
+    x = static_cast<X>(first);
+    return apply_lin_x<Lin, D, X, Rest...>(idx, stride, x, rest...);
   }
 
-  template <template <class, class> class Lin, unsigned D>
-  inline void apply_lin_w(std::size_t &idx, std::size_t &stride,
-                          double &w) const {}
+  template <template <class, class> class Lin, unsigned D, typename X, typename,
+            typename... Rest>
+  inline void apply_lin_x(std::size_t &idx, std::size_t &stride, X &x,
+                          const count &first, const Rest &... rest) const {
+    x = static_cast<X>(first);
+    return apply_lin_x<Lin, D, X, Rest...>(idx, stride, x, rest...);
+  }
 
   template <template <class, class> class Lin, typename Iterator>
   void apply_lin_iter(std::size_t &idx, std::size_t &stride,
@@ -321,8 +343,47 @@ private:
     }
   }
 
-  template <typename D, typename A, typename S> friend class histogram;
+  histogram reduce_impl(const std::vector<bool> &b) const {
+    axes_type axes;
+    std::vector<unsigned> n(b.size());
+    auto axes_iter = axes_.begin();
+    auto n_iter = n.begin();
+    for (const auto &bi : b) {
+      if (bi)
+        axes.emplace_back(*axes_iter);
+      *n_iter = apply_visitor(detail::shape(), *axes_iter);
+      ++axes_iter;
+      ++n_iter;
+    }
+    histogram h(axes.begin(), axes.end());
+    detail::index_mapper m(n, b);
+    do {
+      h.storage_.add(m.second, storage_.value(m.first),
+                     storage_.variance(m.first));
+    } while (m.next());
+    return h;
+  }
 
+  template <typename Keep> friend histogram reduce(const histogram &h, Keep) {
+    const auto b = detail::bool_mask<Keep>(h.dim(), true);
+    return h.reduce_impl(b);
+  }
+
+  friend histogram reduce(const histogram &h, const detail::keep_dynamic &k) {
+    std::vector<bool> b(h.dim(), false);
+    for (const auto &i : k)
+      b[i] = true;
+    return h.reduce_impl(b);
+  }
+
+  // friend histogram reduce(const histogram &h, const remove &r) {
+  //   std::vector<bool> b(h.dim(), true);
+  //   for (const auto &i : r)
+  //     b[i] = false;
+  //   return h.reduce_impl(std::move(b));
+  // }
+
+  template <typename D, typename A, typename S> friend class histogram;
   friend class ::boost::python::access;
   friend class ::boost::serialization::access;
   template <typename Archive> void serialize(Archive &, unsigned);
@@ -343,9 +404,10 @@ inline histogram<
     Dynamic, typename detail::combine<builtin_axes, mpl::vector<Axes...>>::type,
     Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
-  return histogram<Dynamic, typename detail::combine<
-                                builtin_axes, mpl::vector<Axes...>>::type,
-                   Storage>(std::forward<Axes>(axes)...);
+  return histogram<
+      Dynamic,
+      typename detail::combine<builtin_axes, mpl::vector<Axes...>>::type,
+      Storage>(std::forward<Axes>(axes)...);
 }
 
 } // namespace histogram

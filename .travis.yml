@@ -6,6 +6,8 @@ sudo: false
 
 cache:
   pip: true
+  directories:
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.63.0
 
 language: cpp
 
@@ -22,20 +24,10 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.6
-            - boost-latest
-            - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
           packages:
             - cmake
             - cmake-data
             - clang-3.6
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
       env: COMPILER_VERSION=3.6
     - os: linux
       compiler: clang
@@ -43,40 +35,21 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.8
-            - boost-latest
-            - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
           packages:
             - cmake
             - cmake-data
             - clang-3.8
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
-      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7.3
+      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7
     - os: linux
       compiler: gcc
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - boost-latest
-            - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
           packages:
             - cmake
             - cmake-data
             - g++-4.8
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
       env: COMPILER_VERSION=4.8
     - os: linux
       compiler: gcc
@@ -84,19 +57,10 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - boost-latest
-            - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
           packages:
             - cmake
             - cmake-data
             - g++-6
-            - libboost1.55-dev
-            - libboost-iostreams1.55
-            - libboost-iostreams1.55-dev
-            - libboost-python1.55
-            - libboost-python1.55-dev
-            - libboost-serialization1.55.0
-            - libboost-serialization1.55-dev
       env: COMPILER_VERSION=6 CMAKE_BUILD_TYPE=cov
 
 git:
@@ -106,6 +70,17 @@ git:
 install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
+
+  - BOOST_VERSION=1.63.0
+  - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}
+  - mkdir -p ${BOOST_DIR}
+  - |
+    if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
+      BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
+      { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
+      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR})
+    fi
+
   - if [ -z ${PYTHON_VERSION} ]; then
       export BUILD_PYTHON=OFF;
     else
@@ -122,27 +97,32 @@ install:
     fi
 
 script:
-  - travis_retry git clone --depth 1 https://github.com/boostorg/core.git core || exit 1
-  - rsync --recursive core/include/boost/* include/boost/
-
   - cd build
   - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-      cmake . -DBUILD_PYTHON=OFF
+
+      cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DBUILD_PYTHON=OFF
               -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
-      cmake . -DBUILD_PYTHON=ON
+      cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DBUILD_PYTHON=ON
+              -DPYTHON_VERSION=2
               -DBUILD_NUMPY_SUPPORT=OFF
               -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
-      cmake . -DBUILD_PYTHON=ON
+      cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DBUILD_PYTHON=ON
+              -DPYTHON_VERSION=2
               -DBUILD_NUMPY_SUPPORT=ON
               -DCMAKE_BUILD_TYPE=cov &&
       make -j2 &&
       ctest -V;
     else
-      cmake . -DBUILD_PYTHON=${BUILD_PYTHON}
+      python ../doc/extract_code.py;
+      cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DBUILD_PYTHON=${BUILD_PYTHON}
               -DPYTHON_VERSION=${PYTHON_VERSION}
               -DBUILD_NUMPY_SUPPORT=${NUMPY_SUPPORT}
               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
@@ -153,7 +133,7 @@ script:
 # Calculate coverage
 after_success:
   if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-    coveralls -r .. -b . --verbose --exclude ../include/boost/core/lightweight_test.hpp --gcov=`which gcov-${COMPILER_VERSION}`;
+    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which gcov-${COMPILER_VERSION}`;
   fi
 
 after_failure:

@@ -1,14 +1,20 @@
+// Copyright 2015-2016 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #include <boost/histogram.hpp> // proposed for inclusion in Boost
 #include <iostream>
 #include <cmath>
 
 int main(int, char**) {
     namespace bh = boost::histogram;
-    using namespace boost::histogram::literals; // enables _c suffix
+    using namespace bh::literals; // enables _c suffix
 
     // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
     // with axis of histogram labeled as "x"
-    auto h = bh::make_static_histogram(bh::regular_axis<>(10, -1.0, 2.0, "x"));
+    auto h = bh::make_static_histogram(bh::axis::regular<>(10, -1.0, 2.0, "x"));
 
     // fill histogram with data
     h.fill(-1.5); // put in underflow bin
@@ -43,5 +49,6 @@ int main(int, char**) {
     bin 8 x in [1.4, 1.7): 0 +/- 0
     bin 9 x in [1.7, 2): 1 +/- 1
     bin 10 x in [2, inf): 2 +/- 1.41421
+
     */
 }

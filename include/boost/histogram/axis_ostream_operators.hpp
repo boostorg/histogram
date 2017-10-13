@@ -14,14 +14,14 @@
 
 namespace boost {
 namespace histogram {
+namespace axis {
 
 template <typename RealType>
-inline std::ostream &operator<<(std::ostream &os,
-                                const regular_axis<RealType> &a) {
-  os << "regular_axis(" << a.bins() << ", " << a[0] << ", " << a[a.bins()];
+inline std::ostream &operator<<(std::ostream &os, const regular<RealType> &a) {
+  os << "regular(" << a.bins() << ", " << a[0] << ", " << a[a.bins()];
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   if (!a.uoflow()) {
     os << ", uoflow=False";
@@ -31,9 +31,8 @@ inline std::ostream &operator<<(std::ostream &os,
 }
 
 template <typename RealType>
-inline std::ostream &operator<<(std::ostream &os,
-                                const circular_axis<RealType> &a) {
-  os << "circular_axis(" << a.bins();
+inline std::ostream &operator<<(std::ostream &os, const circular<RealType> &a) {
+  os << "circular(" << a.bins();
   if (a.phase() != 0.0) {
     os << ", phase=" << a.phase();
   }
@@ -42,22 +41,21 @@ inline std::ostream &operator<<(std::ostream &os,
   }
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   os << ")";
   return os;
 }
 
 template <typename RealType>
-inline std::ostream &operator<<(std::ostream &os,
-                                const variable_axis<RealType> &a) {
-  os << "variable_axis(" << a[0];
+inline std::ostream &operator<<(std::ostream &os, const variable<RealType> &a) {
+  os << "variable(" << a[0];
   for (int i = 1; i <= a.bins(); ++i) {
     os << ", " << a[i];
   }
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   if (!a.uoflow()) {
     os << ", uoflow=False";
@@ -66,11 +64,11 @@ inline std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
-inline std::ostream &operator<<(std::ostream &os, const integer_axis &a) {
-  os << "integer_axis(" << a[0] << ", " << a[a.bins() - 1];
+inline std::ostream &operator<<(std::ostream &os, const integer &a) {
+  os << "integer(" << a[0] << ", " << a[a.bins() - 1];
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   if (!a.uoflow()) {
     os << ", uoflow=False";
@@ -79,19 +77,21 @@ inline std::ostream &operator<<(std::ostream &os, const integer_axis &a) {
   return os;
 }
 
-inline std::ostream &operator<<(std::ostream &os, const category_axis &a) {
-  os << "category_axis(";
+inline std::ostream &operator<<(std::ostream &os, const category &a) {
+  os << "category(";
   for (int i = 0; i < a.bins(); ++i) {
-    detail::escape(os, a[i]);
+    ::boost::histogram::detail::escape(os, a[i]);
     os << (i == (a.bins() - 1) ? "" : ", ");
   }
   if (!a.label().empty()) {
     os << ", label=";
-    detail::escape(os, a.label());
+    ::boost::histogram::detail::escape(os, a.label());
   }
   os << ")";
   return os;
 }
+
+} // namespace axis
 } // namespace histogram
 } // namespace boost
 

@@ -25,12 +25,13 @@ endif()
 if(BUILD_PYTHON)
   find_package(Boost 1.55 REQUIRED
                COMPONENTS iostreams serialization python)
-  if(NOT DEFINED PYTHON_VERSION)
-    execute_process(COMMAND python -c "import sys; sys.stdout.write('%i.%i.%i' % (sys.version_info.major,sys.version_info.minor,sys.version_info.micro))"
-                    OUTPUT_VARIABLE PYTHON_VERSION)
+  if(DEFINED PYTHON_VERSION)
+    find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
+    find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test and FindNumpy
+  else()
+    find_package(PythonLibs REQUIRED)
+    find_package(PythonInterp REQUIRED) # used by python_suite_test and FindNumpy
   endif()
-  find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
-  find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test and FindNumpy
 
   message(STATUS "Python lib: ${PYTHON_LIBRARIES}")
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
@@ -86,55 +87,46 @@ endif()
 # checks
 if(BUILD_CHECKS)
   add_executable(speed_cpp ../test/speed_cpp.cpp)
+  if (HAVE_PYTHON)
+    configure_file(../test/speed_numpy.py speed_numpy.py)
+  endif()
 endif()
 
 # tests
 enable_testing()
-add_executable(axis_test
-               ../test/axis_test.cpp)
-target_link_libraries(axis_test ${LIBRARIES})
-add_test(axis_test axis_test)
 
-add_executable(adaptive_storage_test
-               ../test/adaptive_storage_test.cpp)
-target_link_libraries(adaptive_storage_test ${LIBRARIES})
-add_test(adaptive_storage_test adaptive_storage_test)
-
-add_executable(container_storage_test
-               ../test/container_storage_test.cpp)
-target_link_libraries(container_storage_test ${LIBRARIES})
-add_test(container_storage_test container_storage_test)
-
-add_executable(detail_test
-               ../test/detail_test.cpp)
-target_link_libraries(detail_test ${LIBRARIES})
-add_test(detail_test detail_test)
-
-add_executable(histogram_test
-               ../test/histogram_test.cpp)
-target_link_libraries(histogram_test ${LIBRARIES})
-add_test(histogram_test histogram_test)
-
-add_executable(example_1d
-               ../examples/example_1d.cpp)
-target_link_libraries(example_1d ${LIBRARIES})
-add_test(example_1d example_1d)
-
-add_executable(example_2d
-               ../examples/example_2d.cpp)
-target_link_libraries(example_2d ${LIBRARIES})
-add_test(example_2d example_2d)
-
-add_executable(dynamic_axes
-               ../examples/dynamic_axes.cpp)
-target_link_libraries(dynamic_axes ${LIBRARIES})
-add_test(dynamic_axes dynamic_axes)
-
+# run python ../doc/extract_code.py manually to make doc_test/ directory
 if(HAVE_PYTHON)
-  configure_file(../test/python_suite_test.py.in python_suite_test.py)
-  add_test(python_suite_test python_suite_test.py)
-  configure_file(../test/speed_numpy.py.in speed_numpy.py)
+  file(GLOB TEST_SOURCES ../test/*_test.py ../examples/*.py ${CMAKE_BINARY_DIR}/doc_test/*.py)
+  foreach(SRC IN ITEMS ${TEST_SOURCES})
+    if (SRC MATCHES "/([_a-zA-Z0-9]+)\\.py")
+      set(TESTNAME ${CMAKE_MATCH_1})
+      file(READ ${SRC} SRC_CONTENT)
+      if (HAVE_NUMPY OR
+          (NOT HAVE_NUMPY AND NOT SRC_CONTENT MATCHES "^import numpy|\nimport numpy"))
+        configure_file(${SRC} ${TESTNAME}.py)
+        add_test(${TESTNAME} ${PYTHON_EXECUTABLE} ${TESTNAME}.py)
+      endif()
+    endif()
+  endforeach()
 endif()
+
+file(GLOB TEST_SOURCES ../test/*_test.cpp ../examples/*.cpp ${CMAKE_BINARY_DIR}/doc_test/*.cpp)
+foreach(SRC IN ITEMS ${TEST_SOURCES})
+  if(SRC MATCHES "/module_([_a-zA-Z0-9]+)\\.cpp")
+    if(HAVE_PYTHON)
+      add_library(${CMAKE_MATCH_1} SHARED ${SRC})
+      set_target_properties(${CMAKE_MATCH_1} PROPERTIES PREFIX "" SUFFIX ".so")
+      target_link_libraries(${CMAKE_MATCH_1} ${LIBRARIES})
+    endif()
+  else()
+    if(SRC MATCHES "/([_a-zA-Z0-9]+)\\.cpp")
+      add_executable(${CMAKE_MATCH_1} ${SRC})
+      target_link_libraries(${CMAKE_MATCH_1} ${LIBRARIES})
+      add_test(${CMAKE_MATCH_1} ${CMAKE_MATCH_1})
+    endif()
+  endif()
+endforeach()
 
 # for clang format and clang tidy
 file(GLOB_RECURSE
@@ -143,11 +135,9 @@ file(GLOB_RECURSE
      ../test/*_test.cpp ../include/*.hpp
      )
 
-add_custom_target(
-  clang-format
+add_custom_target(clf
   COMMAND clang-format
   -i
-  -style=file
   ${ALL_SOURCE_FILES}
   )
 

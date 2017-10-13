@@ -7,26 +7,28 @@
 #ifndef _BOOST_HISTOGRAM_DETAIL_META_HPP_
 #define _BOOST_HISTOGRAM_DETAIL_META_HPP_
 
+#include <boost/fusion/algorithm/iteration/fold.hpp>
+#include <boost/fusion/include/fold.hpp>
+#include <boost/mpl/at.hpp>
 #include <boost/mpl/back_inserter.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/mpl/copy_if.hpp>
+#include <boost/mpl/for_each.hpp>
+#include <boost/mpl/next.hpp>
 #include <boost/mpl/not.hpp>
+#include <boost/mpl/sort.hpp>
+#include <boost/mpl/transform.hpp>
+#include <boost/mpl/unique.hpp>
+#include <boost/mpl/vector.hpp>
+
 #include <iterator>
 #include <limits>
 #include <type_traits>
+#include <vector>
 
 namespace boost {
 namespace histogram {
 namespace detail {
-
-template <typename T> struct has_variance {
-  template <typename> static std::false_type test(...);
-
-  template <typename C>
-  static decltype(std::declval<C &>().variance(0), std::true_type{}) test(int);
-
-  static bool const value = decltype(test<T>(0))::value;
-};
 
 template <typename T, typename = decltype(std::declval<T &>().size(),
                                           std::declval<T &>().increase(0),
@@ -47,6 +49,43 @@ template <typename MainVector, typename AuxVector> struct combine {
                             mpl::not_<mpl::contains<MainVector, mpl::_1>>,
                             mpl::back_inserter<MainVector>>::type;
 };
+
+struct bool_mask_op {
+  std::vector<bool> &b;
+  bool v;
+  template <typename N> void operator()(const N &) const { b[N::value] = v; }
+};
+
+template <typename Ns> std::vector<bool> bool_mask(unsigned n, bool v) {
+  std::vector<bool> b(n, !v);
+  mpl::for_each<Ns>(bool_mask_op{b, v});
+  return b;
+}
+
+template <typename Axes, typename Ns> struct axes_assign_subset_op {
+  const Axes &axes_;
+  template <int N, typename R>
+  auto operator()(mpl::int_<N>, R &r) const -> mpl::int_<N+1> {
+    using I2 = typename mpl::at_c<Ns, N>::type;
+    r = fusion::at_c<I2::value>(axes_);
+    return {};
+  }
+};
+
+template <typename Ns, typename Axes1, typename Axes>
+void axes_assign_subset(Axes1 &axes1, const Axes &axes) {
+  fusion::fold(axes1, mpl::int_<0>(),
+               axes_assign_subset_op<Axes, Ns>{axes});
+}
+
+template <typename Ns>
+using unique_sorted =
+    typename mpl::unique<typename mpl::sort<Ns>::type,
+                         std::is_same<mpl::_1, mpl::_2>>::type;
+
+template <typename Axes, typename Numbers>
+using axes_select =
+    typename mpl::transform<Numbers, mpl::at<Axes, mpl::_1>>::type;
 
 } // namespace detail
 } // namespace histogram

@@ -26,9 +26,10 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/mpl/bool.hpp>
+#include <boost/histogram/storage/operators.hpp>
 #include <boost/mpl/count.hpp>
 #include <boost/mpl/empty.hpp>
+#include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
 #include <type_traits>
 
@@ -45,29 +46,26 @@ namespace histogram {
 template <typename Axes, typename Storage>
 class histogram<Static, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
-  using size_pair = std::pair<std::size_t, std::size_t>;
+
+public:
   using axes_size = typename fusion::result_of::size<Axes>::type;
   using axes_type = typename fusion::result_of::as_vector<Axes>::type;
-
-public:
   using value_type = typename Storage::value_type;
 
-public:
   histogram() = default;
   histogram(const histogram &rhs) = default;
   histogram(histogram &&rhs) = default;
   histogram &operator=(const histogram &rhs) = default;
   histogram &operator=(histogram &&rhs) = default;
 
-  template <typename... Axes1>
-  explicit histogram(const Axes1 &... axes) : axes_(axes...) {
+  template <typename... Axis>
+  explicit histogram(const Axis &... axis) : axes_(axis...) {
     storage_ = Storage(field_count());
   }
 
-  // template <typename... Axes1>
-  // explicit histogram(Axes1 &&... axes) : axes_(std::move(axes)...) {
-  //   storage_ = Storage(field_count());
-  // }
+  explicit histogram(axes_type &&axes) : axes_(std::move(axes)) {
+    storage_ = Storage(field_count());
+  }
 
   template <typename D, typename A, typename S>
   explicit histogram(const histogram<D, A, S> &rhs) : storage_(rhs.storage_) {
@@ -98,17 +96,21 @@ public:
     if (!detail::axes_equal(axes_, rhs.axes_)) {
       throw std::logic_error("axes of histograms differ");
     }
-    storage_ += rhs.storage_;
+    for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
+      storage_.add(i, rhs.storage_.value(i), rhs.storage_.variance(i));
     return *this;
   }
 
   template <typename... Args> void fill(const Args &... args) {
+    using n_count = typename mpl::count<mpl::vector<Args...>, count>;
     using n_weight = typename mpl::count<mpl::vector<Args...>, weight>;
-    static_assert(n_weight::value <= 1,
-                  "arguments may contain at most one instance of type weight");
-    static_assert(sizeof...(args) == axes_size::value + n_weight::value,
+    static_assert(
+        (n_count::value + n_weight::value) <= 1,
+        "arguments may contain at most one instance of type count or weight");
+    static_assert(sizeof...(args) ==
+                      (axes_size::value + n_count::value + n_weight::value),
                   "number of arguments does not match histogram dimension");
-    fill_impl(mpl::bool_<(n_weight::value > 0)>(), args...);
+    fill_impl(mpl::int_<(n_count::value + 2 * n_weight::value)>(), args...);
   }
 
   template <typename... Indices>
@@ -125,8 +127,6 @@ public:
 
   template <typename... Indices>
   value_type variance(const Indices &... indices) const {
-    static_assert(detail::has_variance<Storage>::value,
-                  "Storage lacks variance support");
     static_assert(sizeof...(indices) == axes_size::value,
                   "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -156,10 +156,10 @@ public:
   void reset() { storage_ = std::move(Storage(storage_.size())); }
 
   /// Get N-th axis
-  template <unsigned N>
+  template <int N>
   constexpr typename std::add_const<
       typename fusion::result_of::value_at_c<axes_type, N>::type>::type &
-  axis(std::integral_constant<unsigned, N>) const {
+  axis(mpl::int_<N>) const {
     static_assert(N < axes_size::value, "axis index out of range");
     return fusion::at_c<N>(axes_);
   }
@@ -187,7 +187,7 @@ private:
   }
 
   template <typename... Args>
-  inline void fill_impl(mpl::false_, const Args &... args) {
+  inline void fill_impl(mpl::int_<0>, const Args &... args) {
     std::size_t idx = 0, stride = 1;
     apply_lin<detail::xlin, 0, Args...>(idx, stride, args...);
     if (stride) {
@@ -196,14 +196,27 @@ private:
   }
 
   template <typename... Args>
-  inline void fill_impl(mpl::true_, const Args &... args) {
+  inline void fill_impl(mpl::int_<1>, const Args &... args) {
     std::size_t idx = 0, stride = 1;
-    double w = 0.0;
-    apply_lin_w<detail::xlin, 0, Args...>(idx, stride, w, args...);
+    unsigned n = 0;
+    apply_lin_x<detail::xlin, 0, unsigned, Args...>(idx, stride, n, args...);
     if (stride) {
-      storage_.increase(idx, w);
+      storage_.increase(idx, n);
     }
   }
+
+  template <typename... Args>
+  inline void fill_impl(mpl::int_<2>, const Args &... args) {
+    std::size_t idx = 0, stride = 1;
+    double w = 0.0;
+    apply_lin_x<detail::xlin, 0, double, Args...>(idx, stride, w, args...);
+    if (stride) {
+      storage_.weighted_increase(idx, w);
+    }
+  }
+
+  template <template <class, class> class Lin, unsigned D>
+  inline void apply_lin(std::size_t &, std::size_t &) const {}
 
   template <template <class, class> class Lin, unsigned D, typename First,
             typename... Rest>
@@ -214,50 +227,89 @@ private:
     return apply_lin<Lin, D + 1, Rest...>(idx, stride, rest...);
   }
 
-  template <template <class, class> class Lin, unsigned D>
-  inline void apply_lin(std::size_t &idx, std::size_t &stride) const {}
+  template <template <class, class> class Lin, unsigned D, typename X>
+  inline void apply_lin_x(std::size_t &, std::size_t &, X &) const {}
 
-  template <template <class, class> class Lin, unsigned D, typename First,
-            typename... Rest>
-  inline typename std::enable_if<!(std::is_same<First, weight>::value)>::type
-  apply_lin_w(std::size_t &idx, std::size_t &stride, double &w, const First &x,
+  template <template <class, class> class Lin, unsigned D, typename X,
+            typename First, typename... Rest>
+  inline typename std::enable_if<!(std::is_same<First, weight>::value ||
+                                   std::is_same<First, count>::value)>::type
+  apply_lin_x(std::size_t &idx, std::size_t &stride, X &x, const First &first,
               const Rest &... rest) const {
     Lin<typename fusion::result_of::value_at_c<axes_type, D>::type,
-        First>::apply(idx, stride, fusion::at_c<D>(axes_), x);
-    return apply_lin_w<Lin, D + 1, Rest...>(idx, stride, w, rest...);
+        First>::apply(idx, stride, fusion::at_c<D>(axes_), first);
+    return apply_lin_x<Lin, D + 1, X, Rest...>(idx, stride, x, rest...);
   }
 
-  template <template <class, class> class Lin, unsigned D, typename,
+  template <template <class, class> class Lin, unsigned D, typename X, typename,
             typename... Rest>
-  inline void apply_lin_w(std::size_t &idx, std::size_t &stride, double &w,
-                          const weight &x, const Rest &... rest) const {
-    w = static_cast<double>(x);
-    return apply_lin_w<Lin, D, Rest...>(idx, stride, w, rest...);
+  inline void apply_lin_x(std::size_t &idx, std::size_t &stride, X &x,
+                          const weight &first, const Rest &... rest) const {
+    x = static_cast<X>(first);
+    return apply_lin_x<Lin, D, X, Rest...>(idx, stride, x, rest...);
   }
 
-  template <template <class, class> class Lin, unsigned D>
-  inline void apply_lin_w(std::size_t &idx, std::size_t &stride,
-                          double &w) const {}
+  template <template <class, class> class Lin, unsigned D, typename X, typename,
+            typename... Rest>
+  inline void apply_lin_x(std::size_t &idx, std::size_t &stride, X &x,
+                          const count &first, const Rest &... rest) const {
+    x = static_cast<X>(first);
+    return apply_lin_x<Lin, D, X, Rest...>(idx, stride, x, rest...);
+  }
+
+  struct shape_assign_helper {
+    mutable std::vector<unsigned>::iterator ni;
+    template <typename Axis> void operator()(const Axis &a) const {
+      *ni = a.shape();
+      ++ni;
+    }
+  };
+
+  template <typename H>
+  void reduce_impl(H &h, const std::vector<bool> &b) const {
+    std::vector<unsigned> n(dim());
+    auto helper = shape_assign_helper{n.begin()};
+    for_each_axis(helper);
+    detail::index_mapper m(n, b);
+    do {
+      h.storage_.add(m.second, storage_.value(m.first),
+                     storage_.variance(m.first));
+    } while (m.next());
+  }
+
+  template <typename Keep>
+  friend auto reduce(const histogram &h, Keep)
+      -> histogram<Static, detail::axes_select<Axes, Keep>, Storage> {
+    using HR = histogram<Static, detail::axes_select<Axes, Keep>, Storage>;
+    typename HR::axes_type axes;
+    detail::axes_assign_subset<Keep>(axes, h.axes_);
+    auto hr = HR(std::move(axes));
+    const auto b = detail::bool_mask<Keep>(h.dim(), true);
+    h.reduce_impl(hr, b);
+    return hr;
+  }
 
   template <typename D, typename A, typename S> friend class histogram;
-
   friend class ::boost::serialization::access;
   template <typename Archive> void serialize(Archive &, unsigned);
 };
 
 /// default static type factory
-template <typename... Axes>
-inline histogram<Static, mpl::vector<Axes...>>
-make_static_histogram(Axes &&... axes) {
-  return histogram<Static, mpl::vector<Axes...>>(std::forward<Axes>(axes)...);
+template <typename... Axis>
+inline histogram<Static, mpl::vector<Axis...>>
+make_static_histogram(Axis &&... axis) {
+  using h = histogram<Static, mpl::vector<Axis...>>;
+  auto axes = typename h::axes_type(std::forward<Axis>(axis)...);
+  return h(std::move(axes));
 }
 
 /// static type factory with variable storage type
-template <typename Storage, typename... Axes>
-inline histogram<Static, mpl::vector<Axes...>, Storage>
-make_static_histogram_with(Axes &&... axes) {
-  return histogram<Static, mpl::vector<Axes...>, Storage>(
-      std::forward<Axes>(axes)...);
+template <typename Storage, typename... Axis>
+inline histogram<Static, mpl::vector<Axis...>, Storage>
+make_static_histogram_with(Axis &&... axis) {
+  using h = histogram<Static, mpl::vector<Axis...>, Storage>;
+  auto axes = typename h::axes_type(std::forward<Axis>(axis)...);
+  return h(std::move(axes));
 }
 
 } // namespace histogram
