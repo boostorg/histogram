@@ -2,6 +2,8 @@
 
 How to create and work with histograms is described here. This library is designed to make simple things simple, yet complex things possible. For a quick start, you don't need to read the complete user guide; have a look into the tutorial and the examples instead. This guide covers the basic and more advanced usage of the library.
 
+[section C++ usage]
+
 [section Create a histogram]
 
 This library provides a class with a simple interface, which implements a general multi-dimensional histogram for multi-dimensional input values. The histogram class comes in two variants with a common interface, see the [link histogram.rationale.histogram_types rationale] for more information. Using [classref boost::histogram::histogram<Static,...>] is recommended whenever possible. You need [classref boost::histogram::histogram<Dynamic,...>] if:
@@ -65,23 +67,6 @@ int main() {
 
 Using a [classref boost::histogram::axis::integer integer axis] in this example is convenient, because the input values are integers and we want one bin for each eye value.
 [note The specialised [classref boost::histogram::axis::circular circular axis] never creates under- and overflow bins, because the axis is circular. The highest bin wrapps around to the lowest bin and vice versa, so there is no need for extra bins.]
-
-Since the histogram has Python-bindings, and you can also create histograms in Python. In fact, it is quite a useful workflow to create histograms in a flexible way in Python and then pass them to some C++ code which fills them. You rarely need to change the way the histogram is filled, but you likely want to iterate the range and binning of the axis after seeing the data. Hybrid programming in C++ and Python fits the bill. Here is a conceptual example:
-
-[python]``
-# also see examples/create_python_fill_cpp.py and examples/module_cpp_filler.cpp
-import histogram as bh
-import cpp_filler
-
-h = bh.histogram(bh.axis.regular(100, -1, 1),
-                 bh.axis.integer(0, 10))
-
-cpp_filler.process(h) # histogram is filled with input values
-
-# continue with statistical analysis of h
-``
-
-In Python, you can straight-forwardly create a histogram object with a variable number of axis arguments. The histogram instance passes the language barrier without copying its internal (possibly large) data buffer, so this workflow is efficient.
 
 When you work with [classref boost::histogram::histogram<Dynamic,...>], you can also create a histogram from a run-time compiled collection of axis objects:
 
@@ -160,23 +145,6 @@ int main() {
 }
 ``
 
-You can also fill the histogram in Python. If you pass the input values as numpy arrays, this is quite efficient and almost as fast as using C++, see the [link histogram.benchmarks benchmark]. Looping over a collection in Python, however, is very slow and should be avoided. Here is an example to illustrate:
-
-[python]``
-import histogram as bh
-import numpy as np
-
-h = bh.histogram(bh.axis.integer(0, 9))
-
-# don't do this, it is very slow
-for i in range(10):
-	h.fill(i)
-
-# do this instead, it is very fast
-v = np.arange(10)
-h.fill(v) # fills the histogram with each value in the array
-``
-
 [endsect]
 
 [section Work with a filled histogram]
@@ -194,6 +162,48 @@ The histogram can be serialized to disk for persistent storage from C++ and pick
 [section Expert usage]
 
 TODO
+
+[endsect]
+
+[endsect]
+
+[section Python usage]
+
+The C++ histogram has Python-bindings, so you can create histograms in Python. It is a useful workflow to create and configure histograms in Python and then pass them to some C++ code which fills them at maximum speed. You rarely need to change the way the histogram is filled, but you likely want to iterate the range and binning of the axis after seeing the data.
+
+Here is a conceptual example:
+
+[python]``
+# also see examples/create_python_fill_cpp.py and examples/module_cpp_filler.cpp
+import histogram as bh
+import cpp_filler
+
+h = bh.histogram(bh.axis.regular(100, -1, 1),
+                 bh.axis.integer(0, 10))
+
+cpp_filler.process(h) # histogram is filled with input values
+
+# continue with statistical analysis of h
+``
+
+In Python, you can straight-forwardly create a histogram object with a variable number of axis arguments. The histogram instance passes the language barrier without copying its internal (possibly large) data buffer, so this workflow is efficient.
+
+You can also fill the histogram in Python. If you pass the input values as numpy arrays, this is quite efficient and almost as fast as using C++, see the [link histogram.benchmarks benchmark]. Looping over a collection in Python, however, is very slow and should be avoided. Here is an example to illustrate:
+
+[python]``
+import histogram as bh
+import numpy as np
+
+h = bh.histogram(bh.axis.integer(0, 9))
+
+# don't do this, it is very slow
+for i in range(10):
+	h.fill(i)
+
+# do this instead, it is very fast
+v = np.arange(10)
+h.fill(v) # fills the histogram with each value in the array
+``
 
 [endsect]
 
