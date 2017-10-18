@@ -597,7 +597,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h1_0.value(1), 3);
     BOOST_TEST_EQ(left(h1_0.axis(), 0), 0.0);
     BOOST_TEST_EQ(left(h1_0.axis(), 1), 1.0);
-    BOOST_TEST(axis_equal(Type(), h1_0.axis(), axis::integer(0, 1)));
+    BOOST_TEST(axis_equal(Type(), h1_0.axis(), h1.axis(0_c)));
 
     auto h1_1 = reduce(h1, keep(1_c));
     BOOST_TEST_EQ(h1_1.dim(), 1);
@@ -605,7 +605,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h1_1.value(0), 2);
     BOOST_TEST_EQ(h1_1.value(1), 2);
     BOOST_TEST_EQ(h1_1.value(2), 1);
-    BOOST_TEST(axis_equal(Type(), h1_1.axis(), axis::integer(0, 2)));
+    BOOST_TEST(axis_equal(Type(), h1_1.axis(), h1.axis(1_c)));
 
     auto h2 = make_histogram<adaptive_storage<>>(
         Type(), axis::integer(0, 1), axis::integer(0, 2), axis::integer(0, 3));
@@ -720,10 +720,29 @@ int main() {
 
   // utility
   {
-    auto c = histogram<Dynamic, builtin_axes>(axis::category({"A", "B"}));
+    auto c = make_dynamic_histogram(axis::category({"A", "B"}));
     BOOST_TEST_THROWS(left(c.axis(), 0), std::runtime_error);
     BOOST_TEST_THROWS(right(c.axis(), 0), std::runtime_error);
     BOOST_TEST_THROWS(center(c.axis(), 0), std::runtime_error);
+  }
+
+  // reduce
+  {
+    auto h1 = make_dynamic_histogram(axis::integer(0, 1),
+                                     axis::integer(0, 2));
+    h1.fill(0, 0);
+    h1.fill(0, 1);
+    h1.fill(1, 0);
+    h1.fill(1, 1);
+    h1.fill(1, 2);
+
+    auto h1_1 = reduce(h1, keep(1));
+    BOOST_TEST_EQ(h1_1.dim(), 1);
+    BOOST_TEST_EQ(h1_1.sum(), 5);
+    BOOST_TEST_EQ(h1_1.value(0), 2);
+    BOOST_TEST_EQ(h1_1.value(1), 2);
+    BOOST_TEST_EQ(h1_1.value(2), 1);
+    BOOST_TEST(axis_equal(Dynamic(), h1_1.axis(), h1.axis(1_c)));
   }
 
   run_mixed_tests<boost::histogram::Static, boost::histogram::Dynamic>();

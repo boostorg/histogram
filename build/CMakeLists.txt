@@ -84,6 +84,9 @@ else()
   endif()
 endif()
 
+# sync examples in documentation with example folder
+add_custom_target(sync_examples ALL COMMAND python ../doc/sync_code.py)
+
 # checks
 if(BUILD_CHECKS)
   add_executable(speed_cpp ../test/speed_cpp.cpp)
@@ -95,7 +98,6 @@ endif()
 # tests
 enable_testing()
 
-# run python ../doc/extract_code.py manually to make doc_test/ directory
 if(HAVE_PYTHON)
   file(GLOB TEST_SOURCES ../test/*_test.py ../examples/*.py ${CMAKE_BINARY_DIR}/doc_test/*.py)
   foreach(SRC IN ITEMS ${TEST_SOURCES})
@@ -111,7 +113,7 @@ if(HAVE_PYTHON)
   endforeach()
 endif()
 
-file(GLOB TEST_SOURCES ../test/*_test.cpp ../examples/*.cpp ${CMAKE_BINARY_DIR}/doc_test/*.cpp)
+file(GLOB TEST_SOURCES ../test/*_test.cpp ../examples/*.cpp)
 foreach(SRC IN ITEMS ${TEST_SOURCES})
   if(SRC MATCHES "/module_([_a-zA-Z0-9]+)\\.cpp")
     if(HAVE_PYTHON)

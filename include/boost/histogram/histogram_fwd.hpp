@@ -9,8 +9,10 @@
 
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/mpl/vector.hpp>
+#include <boost/mpl/int.hpp>
 #include <set>
 #include <type_traits>
+#include <initializer_list>
 
 namespace boost {
 namespace histogram {
@@ -42,19 +44,32 @@ private:
   unsigned value;
 };
 
-template <typename... Ns>
-inline auto keep(Ns...) -> detail::unique_sorted<mpl::vector<Ns...>> {
+// for static and dynamic histogram
+template <int N, typename... Rest>
+inline auto keep(mpl::int_<N>, Rest...) -> detail::unique_sorted<mpl::vector<mpl::int_<N>, Rest...>> {
   return {};
 }
 
+// for dynamic histogram only
 namespace detail {
 using keep_dynamic = std::set<unsigned>;
+inline void insert(std::set<unsigned>&) {} // end recursion
+template <typename First, typename... Rest>
+inline void insert(std::set<unsigned>& s, First f, Rest... rest) {
+  s.insert(static_cast<unsigned>(f));
+  insert(s, rest...);
+}
 } // namespace detail
 
 template <typename Iterator, typename = detail::is_iterator<Iterator>>
 inline detail::keep_dynamic keep(Iterator begin, Iterator end) {
+  return {begin, end};
+}
+
+template <typename... Rest>
+inline detail::keep_dynamic keep(unsigned dim, Rest... rest) {
   detail::keep_dynamic s;
-  std::copy(begin, end, s.begin());
+  detail::insert(s, dim, rest...);
   return s;
 }
 
