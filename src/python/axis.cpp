@@ -142,7 +142,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T>> {
     cl.def("__len__", axis_len<T>, ":returns: number of bins for this axis",
            python::arg("self"));
     cl.def("__getitem__", axis_getitem<T>,
-           is_same<T, axis::integer>::value
+           is_same<T, axis::integer<>>::value
                ? ":returns: integer mapped to passed bin index"
                : is_same<T, axis::category>::value
                      ? ":returns: category mapped to passed bin index"
@@ -193,7 +193,7 @@ void register_axis_types() {
       .def(init<const axis::variable<> &>())
       .def(axis_suite<axis::variable<>>());
 
-  class_<axis::integer>("integer",
+  class_<axis::integer<>>("integer",
                        "An axis for a contiguous range of integers."
                        "\nThere are no underflow/overflow bins for this axis."
                        "\nBinning is a O(1) operation.",
@@ -201,7 +201,7 @@ void register_axis_types() {
       .def(init<int, int, const std::string &, bool>(
           (arg("self"), arg("min"), arg("max"), arg("label") = std::string(),
            arg("uoflow") = true)))
-      .def(axis_suite<axis::integer>());
+      .def(axis_suite<axis::integer<>>());
 
   class_<axis::category>("category",
                         "An axis for enumerated categories. The axis stores the"

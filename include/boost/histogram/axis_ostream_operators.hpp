@@ -64,7 +64,8 @@ inline std::ostream &operator<<(std::ostream &os, const variable<RealType> &a) {
   return os;
 }
 
-inline std::ostream &operator<<(std::ostream &os, const integer &a) {
+template <typename IntType>
+inline std::ostream &operator<<(std::ostream &os, const integer<IntType> &a) {
   os << "integer(" << a[0] << ", " << a[a.bins() - 1];
   if (!a.label().empty()) {
     os << ", label=";

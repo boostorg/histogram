@@ -52,7 +52,7 @@ int main() {
     BOOST_TEST_THROWS(axis::circular<>(0), std::logic_error);
     BOOST_TEST_THROWS(axis::variable<>({}), std::logic_error);
     BOOST_TEST_THROWS(axis::variable<>({1.0}), std::logic_error);
-    BOOST_TEST_THROWS(axis::integer(1, -1), std::logic_error);
+    BOOST_TEST_THROWS(axis::integer<>(1, -1), std::logic_error);
     BOOST_TEST_THROWS(axis::category({}), std::logic_error);
   }
 
@@ -166,17 +166,17 @@ int main() {
 
   // axis::integer
   {
-    axis::integer a{-1, 1};
-    axis::integer b;
+    axis::integer<> a{-1, 1};
+    axis::integer<> b;
     BOOST_TEST_NOT(a == b);
     b = a;
     BOOST_TEST_EQ(a, b);
     b = b;
     BOOST_TEST_EQ(a, b);
-    axis::integer c = std::move(b);
+    axis::integer<> c = std::move(b);
     BOOST_TEST(c == a);
     BOOST_TEST_NOT(b == a);
-    axis::integer d;
+    axis::integer<> d;
     BOOST_TEST_NOT(c == d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
@@ -217,8 +217,8 @@ int main() {
     test_real_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5);
     test_real_axis_iterator(axis::variable<>({1, 2, 3}, "", false), 0, 2);
     test_real_axis_iterator(axis::variable<>({1, 2, 3}, "", true), -1, 3);
-    test_axis_iterator(axis::integer(0, 4, "", false), 0, 5);
-    test_axis_iterator(axis::integer(0, 4, "", true), -1, 6);
+    test_axis_iterator(axis::integer<>(0, 4, "", false), 0, 5);
+    test_axis_iterator(axis::integer<>(0, 4, "", true), -1, 6);
     test_axis_iterator(axis::category({"A", "B", "C"}), 0, 3);
   }
 
@@ -252,7 +252,7 @@ int main() {
     axes.push_back(axis::circular<>{4, 0.1, 1.0, "polar"});
     axes.push_back(axis::variable<>{{-1, 0, 1}, "variable", false});
     axes.push_back(axis::category{{"A", "B", "C"}, "category"});
-    axes.push_back(axis::integer{-1, 1, "integer", false});
+    axes.push_back(axis::integer<>{-1, 1, "integer", false});
     std::ostringstream os;
     for (const auto &a : axes) {
       os << a;
@@ -272,7 +272,7 @@ int main() {
     axes.push_back(axis::circular<>{4});
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category{"A", "B", "C"});
-    axes.push_back(axis::integer{-1, 1});
+    axes.push_back(axis::integer<>{-1, 1});
     for (const auto &a : axes) {
       BOOST_TEST(!(a == axis_t()));
       BOOST_TEST_EQ(a, a);
@@ -284,7 +284,7 @@ int main() {
   // sequence equality
   {
     std::vector<boost::variant<axis::regular<>, axis::variable<>,
-                               axis::category, axis::integer>>
+                               axis::category, axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category{"A", "B", "C"}};
 
@@ -324,7 +324,7 @@ int main() {
   // sequence assign
   {
     std::vector<boost::variant<axis::regular<>, axis::variable<>,
-                               axis::category, axis::integer>>
+                               axis::category, axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category{"A", "B", "C"}};
 

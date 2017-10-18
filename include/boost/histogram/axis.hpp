@@ -38,6 +38,11 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
+enum {
+  with_uoflow = true,
+  without_uoflow = false
+};
+
 template <typename Value> struct bin {
   int idx;
   Value value;
@@ -94,7 +99,7 @@ private:
 template <bool UOFlow> class axis_base;
 
 /// Specialization with overflow/underflow bins.
-template <> class axis_base<true> {
+template <> class axis_base<with_uoflow> {
 public:
   /// Returns the number of bins, excluding overflow/underflow.
   inline int bins() const { return size_; }
@@ -150,7 +155,7 @@ private:
 };
 
 /// Specialization without overflow/underflow bins.
-template <> class axis_base<false> {
+template <> class axis_base<without_uoflow> {
 public:
   /// Returns the number of bins, excluding overflow/underflow.
   inline int bins() const { return size_; }
@@ -224,7 +229,7 @@ template <typename Value> struct sqrt {
  */
 template <typename RealType = double,
           template <class> class Transform = transform::identity>
-class regular : public axis_base<true>,
+class regular : public axis_base<with_uoflow>,
                 boost::operators<regular<RealType, Transform>> {
 public:
   using value_type = RealType;
@@ -240,7 +245,7 @@ public:
    */
   regular(unsigned n, value_type min, value_type max,
           string_view label = string_view(), bool uoflow = true)
-      : axis_base<true>(n, label, uoflow),
+      : axis_base<with_uoflow>(n, label, uoflow),
         min_(Transform<value_type>::forward(min)),
         delta_((Transform<value_type>::forward(max) - min_) / n) {
     if (!(min < max)) {
@@ -277,7 +282,7 @@ public:
   }
 
   bool operator==(const regular &o) const {
-    return axis_base<true>::operator==(o) && min_ == o.min_ &&
+    return axis_base<with_uoflow>::operator==(o) && min_ == o.min_ &&
            delta_ == o.delta_;
   }
 
@@ -303,7 +308,7 @@ private:
  * bins for this axis. Binning is a O(1) operation.
  */
 template <typename RealType = double>
-class circular : public axis_base<false>, boost::operators<regular<RealType>> {
+class circular : public axis_base<without_uoflow>, boost::operators<regular<RealType>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<circular>;
@@ -318,7 +323,7 @@ public:
   explicit circular(unsigned n, value_type phase = 0.0,
                     value_type perimeter = math::double_constants::two_pi,
                     string_view label = string_view())
-      : axis_base<false>(n, label), phase_(phase), perimeter_(perimeter) {}
+      : axis_base<without_uoflow>(n, label), phase_(phase), perimeter_(perimeter) {}
 
   circular() = default;
   circular(const circular &) = default;
@@ -340,7 +345,7 @@ public:
   }
 
   bool operator==(const circular &o) const {
-    return axis_base<false>::operator==(o) && phase_ == o.phase_ &&
+    return axis_base<without_uoflow>::operator==(o) && phase_ == o.phase_ &&
            perimeter_ == o.perimeter_;
   }
 
@@ -364,7 +369,7 @@ private:
  * and the problem domain allows it, prefer a regular.
  */
 template <typename RealType = double>
-class variable : public axis_base<true>, boost::operators<variable<RealType>> {
+class variable : public axis_base<with_uoflow>, boost::operators<variable<RealType>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<variable>;
@@ -377,7 +382,7 @@ public:
    */
   variable(const std::initializer_list<value_type> &x,
            string_view label = string_view(), bool uoflow = true)
-      : axis_base<true>(x.size() - 1, label, uoflow),
+      : axis_base<with_uoflow>(x.size() - 1, label, uoflow),
         x_(new value_type[x.size()]) {
     if (x.size() < 2) {
       throw std::logic_error("at least two values required");
@@ -389,7 +394,7 @@ public:
   template <typename Iterator>
   variable(Iterator begin, Iterator end,
            string_view label = string_view(), bool uoflow = true)
-      : axis_base<true>(std::distance(begin, end) - 1, label, uoflow),
+      : axis_base<with_uoflow>(std::distance(begin, end) - 1, label, uoflow),
         x_(new value_type[std::distance(begin, end)]) {
     std::copy(begin, end, x_.get());
     std::sort(x_.get(), x_.get() + bins() + 1);
@@ -397,12 +402,12 @@ public:
 
   variable() = default;
   variable(const variable &o)
-      : axis_base<true>(o), x_(new value_type[bins() + 1]) {
+      : axis_base<with_uoflow>(o), x_(new value_type[bins() + 1]) {
     std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
   }
   variable &operator=(const variable &o) {
     if (this != &o) {
-      axis_base<true>::operator=(o);
+      axis_base<with_uoflow>::operator=(o);
       x_.reset(new value_type[bins() + 1]);
       std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
     }
@@ -428,7 +433,7 @@ public:
   }
 
   bool operator==(const variable &o) const {
-    if (!axis_base<true>::operator==(o)) {
+    if (!axis_base<with_uoflow>::operator==(o)) {
       return false;
     }
     return std::equal(x_.get(), x_.get() + bins() + 1, o.x_.get());
@@ -454,9 +459,10 @@ private:
  * Binning is a O(1) operation. This axis operates
  * faster than a regular.
  */
-class integer : public axis_base<true>, boost::operators<integer> {
+template <typename IntType = int>
+class integer : public axis_base<with_uoflow>, boost::operators<integer<IntType>> {
 public:
-  using value_type = int;
+  using value_type = IntType;
   using const_iterator = axis_iterator<integer>;
 
   /** Construct axis over integer range [min, max].
@@ -466,7 +472,7 @@ public:
    */
   integer(value_type min, value_type max,
           string_view label = string_view(), bool uoflow = true)
-      : axis_base<true>(max + 1 - min, label, uoflow), min_(min) {
+      : axis_base<with_uoflow>(max + 1 - min, label, uoflow), min_(min) {
     if (min > max) {
       throw std::logic_error("min <= max required");
     }
@@ -488,7 +494,7 @@ public:
   value_type operator[](int idx) const { return min_ + idx; }
 
   bool operator==(const integer &o) const {
-    return axis_base<true>::operator==(o) && min_ == o.min_;
+    return axis_base<with_uoflow>::operator==(o) && min_ == o.min_;
   }
 
   const_iterator begin() const {
@@ -513,7 +519,7 @@ private:
  * There are no underflow/overflow bins for this axis.
  * Binning is a O(1) operation.
  */
-class category : public axis_base<false>, boost::operators<category> {
+class category : public axis_base<without_uoflow>, boost::operators<category> {
 public:
   using value_type = string_view;
   using const_iterator = axis_iterator<category>;
@@ -521,7 +527,7 @@ public:
   template <typename Iterator>
   category(Iterator begin, Iterator end,
            string_view label = string_view())
-      : axis_base<false>(std::distance(begin, end), label),
+      : axis_base<without_uoflow>(std::distance(begin, end), label),
         ptr_(new std::string[bins()]) {
     std::copy(begin, end, ptr_.get());
   }
@@ -541,7 +547,7 @@ public:
                  other.label()) {}
   category &operator=(const category &other) {
     if (this != &other) {
-      axis_base<false>::operator=(other);
+      axis_base<without_uoflow>::operator=(other);
       ptr_.reset(new std::string[other.bins()]);
       std::copy(other.ptr_.get(), other.ptr_.get() + other.bins(), ptr_.get());
     }
@@ -549,11 +555,11 @@ public:
   }
 
   category(category &&other)
-      : axis_base<false>(std::move(other)), ptr_(std::move(other.ptr_)) {}
+      : axis_base<without_uoflow>(std::move(other)), ptr_(std::move(other.ptr_)) {}
 
   category &operator=(category &&other) {
     if (this != &other) {
-      axis_base<false>::operator=(std::move(other));
+      axis_base<without_uoflow>::operator=(std::move(other));
       ptr_ = std::move(other.ptr_);
     }
     return *this;
@@ -574,7 +580,7 @@ public:
   }
 
   bool operator==(const category &other) const {
-    return axis_base<false>::operator==(other) &&
+    return axis_base<without_uoflow>::operator==(other) &&
            std::equal(ptr_.get(), ptr_.get() + bins(), other.ptr_.get());
   }
 
@@ -592,8 +598,8 @@ private:
 } // namespace axis
 
 using builtin_axes =
-    mpl::vector<axis::regular<double>, axis::circular<double>,
-                axis::variable<double>, axis::integer, axis::category>;
+    mpl::vector<axis::regular<>, axis::circular<>,
+                axis::variable<>, axis::integer<>, axis::category>;
 
 } // namespace histogram
 } // namespace boost

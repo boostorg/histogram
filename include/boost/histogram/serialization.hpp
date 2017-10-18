@@ -159,8 +159,9 @@ void variable<RealType>::serialize(Archive &ar, unsigned /* version */) {
   ar &boost::serialization::make_array(x_.get(), bins() + 1);
 }
 
+template <typename IntType>
 template <class Archive>
-void integer::serialize(Archive &ar, unsigned /* version */) {
+void integer<IntType>::serialize(Archive &ar, unsigned /* version */) {
   ar &boost::serialization::base_object<axis_base<true>>(*this);
   ar &min_;
 }

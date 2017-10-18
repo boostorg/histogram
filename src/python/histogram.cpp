@@ -200,7 +200,7 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
       axes.push_back(ev());
       continue;
     }
-    python::extract<axis::integer> ei(pa);
+    python::extract<axis::integer<>> ei(pa);
     if (ei.check()) {
       axes.push_back(ei());
       continue;

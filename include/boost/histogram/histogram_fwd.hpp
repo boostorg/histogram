@@ -53,9 +53,9 @@ inline auto keep(mpl::int_<N>, Rest...) -> detail::unique_sorted<mpl::vector<mpl
 // for dynamic histogram only
 namespace detail {
 using keep_dynamic = std::set<unsigned>;
-inline void insert(std::set<unsigned>&) {} // end recursion
+inline void insert(keep_dynamic&) {} // end recursion
 template <typename First, typename... Rest>
-inline void insert(std::set<unsigned>& s, First f, Rest... rest) {
+inline void insert(keep_dynamic& s, First f, Rest... rest) {
   s.insert(static_cast<unsigned>(f));
   insert(s, rest...);
 }

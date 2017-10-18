@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
                 ++argi;
                 auto b = std::atoi(argv[argi]);
                 ++argi;
-                v.push_back(bh::axis::integer(a, b));
+                v.push_back(bh::axis::integer<>(a, b));
             }
             break;
             case 'r': {
