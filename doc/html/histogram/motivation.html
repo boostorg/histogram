@@ -1,0 +1,101 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Motivation</title>
+<link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="prev" href="acknowledgments.html" title="Acknowledgments">
+<link rel="next" href="setup.html" title="How to build and install">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../boost.png"></td>
+<td align="center"><a href="../../../index.html">Home</a></td>
+<td align="center"><a href="../../../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="acknowledgments.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="setup.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="histogram.motivation"></a><a class="link" href="motivation.html" title="Motivation">Motivation</a>
+</h2></div></div></div>
+<p>
+      Histograms are a basic tool in statistical analysis. When analysing large data
+      sets, it is usually more convenient to work with a histogram of input values,
+      which may consume a lot of memory or disc space and may be slow to process.
+      Histograms can compactly represent a data set of one or several random variables
+      with acceptable loss of information. One can imagine histograms as a lossy
+      compression of statistical data.
+    </p>
+<p>
+      Parameters of interest, like the center of a distribution, can be extracted
+      from the histogram instead of the original data set; statistical models can
+      be fitted to histograms to the same end. Finally, histograms help to visualize
+      complex data sets.
+    </p>
+<p>
+      C++ lacks a widely-used, free histogram class. While it is easy to write a
+      one-dimensional histogram, writing a general multi-dimensional histogram poses
+      more of a challenge. If you add serialization and Python/Numpy support onto
+      the wish-list, then the implementation becomes non-trivial and a well-tested
+      library solution desirable.
+    </p>
+<p>
+      The <a href="https://www.gnu.org/software/gsl" target="_top">GNU Scientific Library (GSL)</a>
+      and in the <a href="https://root.cern.ch" target="_top">ROOT framework</a> from CERN
+      have histogram implementations. The C implementations of the GSL are object
+      oriented and elegant, but only support one and two dimensions. The implementations
+      are not customizable, you have to live with the trade-offs chosen by the implementors.
+      ROOT has implementations for one, two, three, and general n-dimensional histograms.
+      However, the interfaces are unnecessarily complex and inconsistent, and mix
+      many different responsibilities. They are also not well designed to prevent
+      user errors. For example, the ROOT design forces users to make an educated
+      decision on which data type for the counters, an aspect that the library should
+      encapsulate.
+    </p>
+<p>
+      The two histogram classes in this project share an interface which we believe
+      to be as elegant as the GSL implementations. In addition, they are customizable
+      through exchangable policies and user-supplied binning algorithms. Thanks to
+      variadic templates, the interface is consistent for any number of dimensions.
+      The implementations are also very fast, using compile-time information wherever
+      possible and <a href="../../../libs/variant/index.html" target="_top">Boost.Variant</a>
+      rather than virtual inheritance to achieve more flexible polymorphism.
+    </p>
+<p>
+      A central design goal is to completely encapsulate details on the internal
+      counters. The internal counting mechanism is independent of the external histogram
+      interface and encapsulated in a storage policy, which can be replaced at compile
+      time.
+    </p>
+<p>
+      The standard policy implements a smart counting approach which is very fast,
+      memory-efficient, and safe, since counts can neither overflow nor lose precision.
+      In the standard configuration, the histogram <span class="bold"><strong>just works</strong></span>
+      under any circumstance. Users with unusual requirements can implement their
+      own custom storage policy or use the alternative container-based storage policy.
+      With the latter, for example, and in conjunction with a <a href="../../../libs/array/index.html" target="_top">Boost.Array</a>,
+      it is possible to construct a histogram entirely on the stack.
+    </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2016, 2017 Hans Dembinski<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="acknowledgments.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="setup.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>
