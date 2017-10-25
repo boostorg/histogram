@@ -229,7 +229,7 @@ struct fetcher {
   };
 
 #ifdef HAVE_NUMPY
-  ~fetcher() {    
+  ~fetcher() {
     if (type == 2) Py_DECREF((PyObject*)a);
   }
 #endif
@@ -255,7 +255,7 @@ struct fetcher {
 
   bool empty() const { return type == 0; }
 
-  double operator()(long i) const {
+  double operator[](long i) const {
 #ifdef HAVE_NUMPY
     if (type == 2) {
       return *static_cast<double*>(PyArray_GETPTR1(a, i));
@@ -296,7 +296,6 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
     }
   }
 
-  double v[BOOST_HISTOGRAM_AXIS_LIMIT];
   fetcher fetch_weight;
   const auto nkwargs = python::len(kwargs);
   if (nkwargs > 0) {
@@ -308,21 +307,22 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
     const auto on = fetch_weight.connect(o);
     if (on > 0) {
       if (n && on != n) {
-        PyErr_SetString(PyExc_ValueError, "lengths of argument sequences do not match");
+        PyErr_SetString(PyExc_ValueError, "length of weight sequence does not match");
         python::throw_error_already_set();
       }
       n = on;
     }
   }
 
+  double v[BOOST_HISTOGRAM_AXIS_LIMIT];
   if (!n) ++n;
   for (auto i = 0l; i < n; ++i) {
     for (auto d = 0u; d < dim; ++d)
-      v[d] = fetch[d](i);
+      v[d] = fetch[d][i];
     if (fetch_weight.empty()) {
       self.fill(v, v + dim);
     } else {
-      self.fill(v, v + dim, weight(fetch_weight(i)));
+      self.fill(v, v + dim, weight(fetch_weight[i]));
     }
   }
 
@@ -399,26 +399,26 @@ void register_histogram() {
       "histogram", "N-dimensional histogram for real-valued data.", python::no_init)
       .def("__init__", python::raw_function(histogram_init),
            ":param axis args: axis objects"
-           "\nPass one or more axis objects to define"
-           "\nthe dimensions of the dynamic_histogram.")
+           "\nPass one or more axis objects to configure the histogram.")
       // shadowed C++ ctors
       .def(python::init<const dynamic_histogram &>())
 #ifdef HAVE_NUMPY
       .add_property("__array_interface__", &python::access::array_interface)
 #endif
       .def("__len__", &dynamic_histogram::dim)
-      .def("axis", histogram_axis)
+      .def("axis", histogram_axis, python::arg("i")=0,
+           ":param index: integer"
+           "\nAccess axis object as index.")
       .def("fill", python::raw_function(histogram_fill),
-           "Pass a sequence of values with a length n is"
-           "\nequal to the dimensions of the histogram,"
-           "\nand optionally a weight w for this fill"
-           "\n(*int* or *float*)."
+           "Pass N values where N is equal to the dimensions"
+           "\nof the histogram, and optionally another value with the keyword"
+           "\n*weight*. All values must be convertible to double."
            "\n"
-           "\nIf Numpy support is enabled, values may also"
-           "\nbe a 2d-array of shape (m, n), where m is"
-           "\nthe number of tuples, and optionally"
-           "\nanother a second 1d-array w of shape (n,).")
-      .add_property("sum", &dynamic_histogram::sum)
+           "\nIf Numpy support is enabled, 1d-arrays can be passed instead of"
+           "\nvalues, which must be equal in lenght. Arrays and values can"
+           "\nbe mixed in the same call.")
+      .add_property("sum", &dynamic_histogram::sum,
+           "Returns sum of all entries, including under- and overflow bins.")
       .def("value", python::raw_function(histogram_value),
            ":param int args: indices of the bin"
            "\n:return: count for the bin")
