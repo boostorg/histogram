@@ -7,8 +7,8 @@
 #ifndef BOOST_HISTOGRAM_UTILITY_HPP_
 #define BOOST_HISTOGRAM_UTILITY_HPP_
 
-#include <boost/variant/variant_fwd.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
+#include <boost/variant/variant_fwd.hpp>
 
 namespace boost {
 namespace histogram {
@@ -34,7 +34,8 @@ inline int index(const boost::variant<Axes...> &a, const V v) {
   return apply_visitor(detail::index<V>(v), a);
 }
 
-template <typename A> inline typename A::value_type left(const A &a, const int i) {
+template <typename A>
+inline typename A::value_type left(const A &a, const int i) {
   return a[i];
 }
 
@@ -43,7 +44,8 @@ inline double left(const boost::variant<Axes...> &a, const int i) {
   return apply_visitor(detail::left(i), a);
 }
 
-template <typename A> inline typename A::value_type right(const A &a, const int i) {
+template <typename A>
+inline typename A::value_type right(const A &a, const int i) {
   return left(a, i + 1);
 }
 

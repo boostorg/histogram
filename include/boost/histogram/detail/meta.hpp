@@ -65,7 +65,7 @@ template <typename Ns> std::vector<bool> bool_mask(unsigned n, bool v) {
 template <typename Axes, typename Ns> struct axes_assign_subset_op {
   const Axes &axes_;
   template <int N, typename R>
-  auto operator()(mpl::int_<N>, R &r) const -> mpl::int_<N+1> {
+  auto operator()(mpl::int_<N>, R &r) const -> mpl::int_<N + 1> {
     using I2 = typename mpl::at_c<Ns, N>::type;
     r = fusion::at_c<I2::value>(axes_);
     return {};
@@ -74,8 +74,7 @@ template <typename Axes, typename Ns> struct axes_assign_subset_op {
 
 template <typename Ns, typename Axes1, typename Axes>
 void axes_assign_subset(Axes1 &axes1, const Axes &axes) {
-  fusion::fold(axes1, mpl::int_<0>(),
-               axes_assign_subset_op<Axes, Ns>{axes});
+  fusion::fold(axes1, mpl::int_<0>(), axes_assign_subset_op<Axes, Ns>{axes});
 }
 
 template <typename Ns>

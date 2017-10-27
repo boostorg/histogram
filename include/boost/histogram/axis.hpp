@@ -15,7 +15,9 @@
 #include <boost/version.hpp>
 #if BOOST_VERSION < 106100
 #include <boost/utility/string_ref.hpp>
-namespace boost { using string_view = string_ref; }
+namespace boost {
+using string_view = string_ref;
+}
 #else
 #include <boost/utility/string_view.hpp>
 #endif
@@ -38,10 +40,7 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
-enum {
-  with_uoflow = true,
-  without_uoflow = false
-};
+enum { with_uoflow = true, without_uoflow = false };
 
 template <typename Value> struct bin {
   int idx;
@@ -308,7 +307,8 @@ private:
  * bins for this axis. Binning is a O(1) operation.
  */
 template <typename RealType = double>
-class circular : public axis_base<without_uoflow>, boost::operators<regular<RealType>> {
+class circular : public axis_base<without_uoflow>,
+                 boost::operators<regular<RealType>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<circular>;
@@ -323,7 +323,8 @@ public:
   explicit circular(unsigned n, value_type phase = 0.0,
                     value_type perimeter = math::double_constants::two_pi,
                     string_view label = string_view())
-      : axis_base<without_uoflow>(n, label), phase_(phase), perimeter_(perimeter) {}
+      : axis_base<without_uoflow>(n, label), phase_(phase),
+        perimeter_(perimeter) {}
 
   circular() = default;
   circular(const circular &) = default;
@@ -369,7 +370,8 @@ private:
  * and the problem domain allows it, prefer a regular.
  */
 template <typename RealType = double>
-class variable : public axis_base<with_uoflow>, boost::operators<variable<RealType>> {
+class variable : public axis_base<with_uoflow>,
+                 boost::operators<variable<RealType>> {
 public:
   using value_type = RealType;
   using const_iterator = axis_iterator<variable>;
@@ -392,8 +394,8 @@ public:
   }
 
   template <typename Iterator>
-  variable(Iterator begin, Iterator end,
-           string_view label = string_view(), bool uoflow = true)
+  variable(Iterator begin, Iterator end, string_view label = string_view(),
+           bool uoflow = true)
       : axis_base<with_uoflow>(std::distance(begin, end) - 1, label, uoflow),
         x_(new value_type[std::distance(begin, end)]) {
     std::copy(begin, end, x_.get());
@@ -460,7 +462,8 @@ private:
  * faster than a regular.
  */
 template <typename IntType = int>
-class integer : public axis_base<with_uoflow>, boost::operators<integer<IntType>> {
+class integer : public axis_base<with_uoflow>,
+                boost::operators<integer<IntType>> {
 public:
   using value_type = IntType;
   using const_iterator = axis_iterator<integer>;
@@ -470,8 +473,8 @@ public:
    * \param min smallest integer of the covered range.
    * \param max largest integer of the covered range.
    */
-  integer(value_type min, value_type max,
-          string_view label = string_view(), bool uoflow = true)
+  integer(value_type min, value_type max, string_view label = string_view(),
+          bool uoflow = true)
       : axis_base<with_uoflow>(max + 1 - min, label, uoflow), min_(min) {
     if (min > max) {
       throw std::logic_error("min <= max required");
@@ -525,8 +528,7 @@ public:
   using const_iterator = axis_iterator<category>;
 
   template <typename Iterator>
-  category(Iterator begin, Iterator end,
-           string_view label = string_view())
+  category(Iterator begin, Iterator end, string_view label = string_view())
       : axis_base<without_uoflow>(std::distance(begin, end), label),
         ptr_(new std::string[bins()]) {
     std::copy(begin, end, ptr_.get());
@@ -555,7 +557,8 @@ public:
   }
 
   category(category &&other)
-      : axis_base<without_uoflow>(std::move(other)), ptr_(std::move(other.ptr_)) {}
+      : axis_base<without_uoflow>(std::move(other)),
+        ptr_(std::move(other.ptr_)) {}
 
   category &operator=(category &&other) {
     if (this != &other) {
@@ -598,8 +601,8 @@ private:
 } // namespace axis
 
 using builtin_axes =
-    mpl::vector<axis::regular<>, axis::circular<>,
-                axis::variable<>, axis::integer<>, axis::category>;
+    mpl::vector<axis::regular<>, axis::circular<>, axis::variable<>,
+                axis::integer<>, axis::category>;
 
 } // namespace histogram
 } // namespace boost
