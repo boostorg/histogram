@@ -238,20 +238,18 @@ private:
   inline void xlin_w(std::size_t &, std::size_t &, double &) const {}
 
   template <unsigned D, typename First, typename... Rest>
-  inline
-  typename disable_if<is_same<First, weight>>::type
-  xlin_w(std::size_t &idx, std::size_t &stride, double &x,
-                     First &&first, Rest &&... rest) const {
+  inline typename disable_if<is_same<First, weight>>::type
+  xlin_w(std::size_t &idx, std::size_t &stride, double &x, First &&first,
+         Rest &&... rest) const {
     detail::xlin(idx, stride, fusion::at_c<D>(axes_),
                  std::forward<First>(first));
     return xlin_w<D + 1>(idx, stride, x, std::forward<Rest>(rest)...);
   }
 
   template <unsigned D, typename First, typename... Rest>
-  inline
-  typename enable_if<is_same<First, weight>>::type
-  xlin_w(std::size_t &idx, std::size_t &stride, double &x,
-                     First &&first, Rest &&... rest) const {
+  inline typename enable_if<is_same<First, weight>>::type
+  xlin_w(std::size_t &idx, std::size_t &stride, double &x, First &&first,
+         Rest &&... rest) const {
     x = first.value;
     return xlin_w<D>(idx, stride, x, std::forward<Rest>(rest)...);
   }
@@ -260,20 +258,18 @@ private:
   inline void xlin_n(std::size_t &, std::size_t &, unsigned &) const {}
 
   template <unsigned D, typename First, typename... Rest>
-  inline
-  typename disable_if<is_same<First, count>>::type
-  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x,
-                     First &&first, Rest &&... rest) const {
+  inline typename disable_if<is_same<First, count>>::type
+  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, First &&first,
+         Rest &&... rest) const {
     detail::xlin(idx, stride, fusion::at_c<D>(axes_),
                  std::forward<First>(first));
     return xlin_n<D + 1>(idx, stride, x, std::forward<Rest>(rest)...);
   }
 
   template <unsigned D, typename First, typename... Rest>
-  inline
-  typename enable_if<is_same<First, count>>::type
-  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x,
-         First&& first, Rest &&... rest) const {
+  inline typename enable_if<is_same<First, count>>::type
+  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, First &&first,
+         Rest &&... rest) const {
     x = first.value;
     return xlin_n<D>(idx, stride, x, std::forward<Rest>(rest)...);
   }
