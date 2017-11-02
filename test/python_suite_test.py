@@ -701,15 +701,25 @@ class test_histogram(unittest.TestCase):
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_numpy_conversion_5(self):
-        a = histogram(integer(0, 2, uoflow=False))
-        a.fill(0)
-        for i in xrange(80):
+        a = histogram(integer(0, 3, uoflow=False),
+                      integer(0, 2, uoflow=False))
+        a.fill(0, 0)
+        for i in range(80):
             a += a
         # a now holds a multiprecision type
+        a.fill(1, 0)
+        for i in range(2): a.fill(2, 0)
+        for i in range(3): a.fill(0, 1)
+        for i in range(4): a.fill(1, 1)
+        for i in range(5): a.fill(2, 1)
         a1 = numpy.asarray(a)
-        self.assertEqual(a1.shape, (2,))
-        self.assertEqual(a1[0], float(2 ** 80))
-        self.assertEqual(a1[1], 0)
+        self.assertEqual(a1.shape, (3, 2))
+        self.assertEqual(a1[0, 0], float(2 ** 80))
+        self.assertEqual(a1[1, 0], 1)
+        self.assertEqual(a1[2, 0], 2)
+        self.assertEqual(a1[0, 1], 3)
+        self.assertEqual(a1[1, 1], 4)
+        self.assertEqual(a1[2, 1], 5)
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_numpy_conversion_6(self):

@@ -12,16 +12,15 @@
 #include <boost/python/def_visitor.hpp>
 #include <boost/python/raw_function.hpp>
 #ifdef HAVE_NUMPY
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL boost_histogram_ARRAY_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+#include <boost/python/numpy.hpp>
 #endif
 #include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
 #include <utility>
+
+namespace np = boost::python::numpy;
 
 namespace boost {
 namespace histogram {
@@ -132,22 +131,17 @@ template <typename T> python::str axis_get_label(const T& t) {
 
 #ifdef HAVE_NUMPY
 template <typename Axis> python::object axis_array_interface(const Axis& axis) {
+  using T = typename decay<decltype(axis[0].lower())>::type;
   python::dict d;
   auto shape = python::make_tuple(axis.size()+1);
   d["shape"] = shape;
-  // d["typestr"] = dtype_typestr<typename Axis::bin_type>();
-  d["typestr"] = "|f8";
+  d["typestr"] = python::dtype_typestr<T>();
   // make new array, and pass it to Python
-  auto dim = 1;
-  npy_intp shapes2[1] = { axis.size()+1 };
-  auto *a = (PyArrayObject*)PyArray_SimpleNew(dim, shapes2, NPY_DOUBLE);
-  auto *buf = (double *)PyArray_DATA(a);
-  PyArray_CLEARFLAGS(a, NPY_ARRAY_WRITEABLE);
-  // auto a = python::numpy::empty(shape, python::numpy::dtype::get_builtin<typename Axis::bin_type>());
-  // auto buf = reinterpret_cast<typename Axis::bin_type*>(axis.get_data());
+  auto a = np::empty(shape, np::dtype::get_builtin<T>());
+  auto buf = reinterpret_cast<T*>(a.get_data());
   for (auto i = 0; i < axis.size()+1; ++i)
     buf[i] = axis[i].lower();
-  d["data"] = python::object(python::handle<>((PyObject*)a));
+  d["data"] = a;
   d["version"] = 3;
   return d;
 }
@@ -158,16 +152,11 @@ template <> python::object axis_array_interface<axis::category<>>(const axis::ca
   d["shape"] = shape;
   d["typestr"] = python::dtype_typestr<int>();
   // make new array, and pass it to Python
-  auto dim = 1;
-  npy_intp shapes2[1] = { axis.size() };
-  auto *a = (PyArrayObject*)PyArray_SimpleNew(dim, shapes2, NPY_INT);
-  auto *buf = (int *)PyArray_DATA(a);
-  PyArray_CLEARFLAGS(a, NPY_ARRAY_WRITEABLE);
-  // auto a = python::numpy::empty(shape, python::numpy::dtype::get_builtin<typename Axis::bin_type>());
-  // auto buf = reinterpret_cast<typename Axis::bin_type*>(axis.get_data());
+  auto a = np::empty(shape, np::dtype::get_builtin<int>());
+  auto buf = reinterpret_cast<int*>(a.get_data());
   for (auto i = 0; i < axis.size(); ++i)
     buf[i] = axis[i];
-  d["data"] = python::object(python::handle<>((PyObject*)a));
+  d["data"] = a;
   d["version"] = 3;
   return d;
 }

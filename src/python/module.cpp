@@ -8,19 +8,7 @@
 #include <boost/python/scope.hpp>
 #include <boost/python/object.hpp>
 #ifdef HAVE_NUMPY
-#define PY_ARRAY_UNIQUE_SYMBOL boost_histogram_ARRAY_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-extern "C" {
-#include <numpy/arrayobject.h>
-#if PY_MAJOR_VERSION >= 3
-static void *init_numpy() {
-  import_array();
-  return NULL;
-}
-#else
-static void init_numpy() { import_array(); }
-#endif
-}
+#include <boost/python/numpy.hpp>
 #endif
 
 namespace boost {
@@ -31,10 +19,10 @@ void register_histogram();
 }
 
 BOOST_PYTHON_MODULE(histogram) {
-#ifdef HAVE_NUMPY
-  init_numpy();
-#endif
   using namespace boost::python;
+#ifdef HAVE_NUMPY
+  numpy::initialize();
+#endif
   scope current;
   object axis_module = object(
     borrowed(PyImport_AddModule("histogram.axis"))

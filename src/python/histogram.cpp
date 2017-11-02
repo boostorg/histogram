@@ -17,15 +17,15 @@
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
 #ifdef HAVE_NUMPY
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL boost_histogram_ARRAY_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+#include <boost/python/numpy.hpp>
 #endif
+#include <memory>
 
 #ifndef BOOST_HISTOGRAM_AXIS_LIMIT
 #define BOOST_HISTOGRAM_AXIS_LIMIT 32
 #endif
+
+namespace np = boost::python::numpy;
 
 namespace boost {
 
@@ -78,38 +78,18 @@ public:
     object operator()(const array<void>& b) const {
       // cannot pass non-existent memory to numpy; make new
       // zero-initialized uint8 array, and pass it
-      auto dim = len(shapes);
-      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
-      for (auto i = 0; i < dim; ++i) {
-        shapes2[i] = extract<npy_intp>(shapes[i]);
-      }
-      auto *a = (PyArrayObject*)PyArray_SimpleNew(dim, shapes2, NPY_UINT8);
-      for (auto i = 0; i < dim; ++i) {
-        PyArray_STRIDES(a)[i] = extract<npy_intp>(strides[i]);
-      }
-      auto *buf = (uint8_t *)PyArray_DATA(a);
-      std::fill(buf, buf + b.size, uint8_t(0));
-      PyArray_CLEARFLAGS(a, NPY_ARRAY_WRITEABLE);
-      return object(handle<>((PyObject*)a));
+      return np::zeros(tuple(shapes), np::dtype::get_builtin<uint8_t>());
     }
     object operator()(const array<mp_int>& b) const {
       // cannot pass cpp_int to numpy; make new
       // double array, fill it and pass it
-      auto dim = len(shapes);
-      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
-      for (auto i = 0; i < dim; ++i) {
-        shapes2[i] = extract<npy_intp>(shapes[i]);
-      }
-      auto *a = (PyArrayObject*)PyArray_SimpleNew(dim, shapes2, NPY_DOUBLE);
-      for (auto i = 0; i < dim; ++i) {
-        PyArray_STRIDES(a)[i] = extract<npy_intp>(strides[i]);
-      }
-      auto *buf = (double *)PyArray_DATA(a);
-      for (auto i = 0ul; i < b.size; ++i) {
+      auto a = np::empty(tuple(shapes), np::dtype::get_builtin<double>());
+      for (auto i = 0l, n = len(shapes); i < n; ++i)
+        const_cast<Py_intptr_t*>(a.get_strides())[i] = python::extract<int>(strides[i]);
+      auto *buf = (double *)a.get_data();
+      for (auto i = 0ul; i < b.size; ++i)
         buf[i] = static_cast<double>(b[i]);
-      }
-      PyArray_CLEARFLAGS(a, NPY_ARRAY_WRITEABLE);
-      return object(handle<>((PyObject*)a));
+      return a;
     }
   };
 
@@ -204,50 +184,41 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
 }
 
 struct fetcher {
-  char type = 0;
-  union {
-#ifdef HAVE_NUMPY
-    PyArrayObject* a;
-#endif
-    double value;
-  };
-
-#ifdef HAVE_NUMPY
-  ~fetcher() {
-    if (type == 2) Py_DECREF((PyObject*)a);
-  }
-#endif
-
-  long connect(python::object o) {
-    python::extract<double> get_double(o);
-    if (get_double.check()) {
-      type = 1;
-      value = get_double();
-      return 0;
-    }
-#ifdef HAVE_NUMPY
-    a = (PyArrayObject*)PyArray_FROMANY(o.ptr(), NPY_DOUBLE, 1, 1, NPY_ARRAY_CARRAY);
-    if (a) {
-      type = 2;
-      return PyArray_SHAPE(a)[0];
-    }
-#endif
-    PyErr_SetString(PyExc_ValueError, "cannot convert argument");
-    python::throw_error_already_set();
-    return 0;
-  }
-
-  bool empty() const { return type == 0; }
-
-  double operator[](long i) const {
-#ifdef HAVE_NUMPY
-    if (type == 2) {
-      return *static_cast<double*>(PyArray_GETPTR1(a, i));
-    }
-#endif
-    return value;
-  };
+  virtual ~fetcher() {}
+  virtual double at(long) const = 0;
+  long n = 0;
 };
+
+#ifdef HAVE_NUMPY
+struct fetcher_seq : public fetcher {
+  fetcher_seq(python::object o)
+    : array(np::from_object(o, np::dtype::get_builtin<double>(), 1)) {
+      fetcher::n = array.shape(0);
+    }
+  ~fetcher_seq() {}
+  double at(long i) const {
+    return reinterpret_cast<const double*>(array.get_data())[i];
+  }
+  np::ndarray array;
+};
+#endif
+
+struct fetcher_val : public fetcher {
+  fetcher_val(double val)
+    : value(val) {}
+  double at(long) const { return value; }
+  double value;
+};
+
+std::unique_ptr<fetcher> make_fetcher(python::object o) {
+  python::extract<double> get_double(o);
+  if (get_double.check())
+    return std::unique_ptr<fetcher>(new fetcher_val(get_double()));
+#ifdef HAVE_NUMPY
+  return std::unique_ptr<fetcher>(new fetcher_seq(o));
+#endif
+  throw std::invalid_argument("python object is neither sequence nor number");
+}
 
 python::object histogram_fill(python::tuple args, python::dict kwargs) {
   const auto nargs = python::len(args);
@@ -266,11 +237,11 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
     python::throw_error_already_set();
   }
 
-  fetcher fetch[BOOST_HISTOGRAM_AXIS_LIMIT];
+  std::unique_ptr<fetcher> fetch[BOOST_HISTOGRAM_AXIS_LIMIT];
   long n = 0;
   for (auto d = 0u; d < dim; ++d) {
-    python::object o = python::extract<python::object>(args[1 + d]);
-    const auto on = fetch[d].connect(o);
+    fetch[d] = make_fetcher(args[1 + d]);
+    const auto on = fetch[d]->n;
     if (on > 0) {
       if (n && on != n) {
         PyErr_SetString(PyExc_ValueError, "lengths of sequences do not match");
@@ -280,15 +251,15 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
     }
   }
 
-  fetcher fetch_weight;
+  std::unique_ptr<fetcher> fetch_weight;
   const auto nkwargs = python::len(kwargs);
   if (nkwargs > 0) {
     if (nkwargs > 1 || !kwargs.has_key("weight")) {
       PyErr_SetString(PyExc_RuntimeError, "only keyword weight allowed");
       python::throw_error_already_set();
     }
-    python::object o = kwargs.get("weight");
-    const auto on = fetch_weight.connect(o);
+    fetch_weight = make_fetcher(kwargs.get("weight"));
+    const auto on = fetch_weight->n;
     if (on > 0) {
       if (n && on != n) {
         PyErr_SetString(PyExc_ValueError, "length of weight sequence does not match");
@@ -302,11 +273,11 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
   if (!n) ++n;
   for (auto i = 0l; i < n; ++i) {
     for (auto d = 0u; d < dim; ++d)
-      v[d] = fetch[d][i];
-    if (fetch_weight.empty()) {
-      self.fill(v, v + dim);
+      v[d] = fetch[d]->at(i);
+    if (fetch_weight) {
+      self.fill(v, v + dim, weight(fetch_weight->at(i)));
     } else {
-      self.fill(v, v + dim, weight(fetch_weight[i]));
+      self.fill(v, v + dim);
     }
   }
 
