@@ -18,14 +18,13 @@
 #include <boost/variant/static_visitor.hpp>
 #ifdef HAVE_NUMPY
 #include <boost/python/numpy.hpp>
+namespace np = boost::python::numpy;
 #endif
 #include <memory>
 
 #ifndef BOOST_HISTOGRAM_AXIS_LIMIT
 #define BOOST_HISTOGRAM_AXIS_LIMIT 32
 #endif
-
-namespace np = boost::python::numpy;
 
 namespace boost {
 
@@ -99,7 +98,7 @@ public:
     list strides;
     auto &b = self.storage_.buffer_;
     d["typestr"] = apply_visitor(dtype_visitor(shapes, strides), b);
-    for (unsigned i = 0; i < self.dim(); ++i) {
+    for (auto i = 0u; i < self.dim(); ++i) {
       if (i) strides.append(strides[-1] * shapes[-1]);
       shapes.append(histogram::shape(self.axis(i)));
     }

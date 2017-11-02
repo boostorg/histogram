@@ -13,6 +13,7 @@
 #include <boost/python/raw_function.hpp>
 #ifdef HAVE_NUMPY
 #include <boost/python/numpy.hpp>
+namespace np = boost::python::numpy;
 #endif
 #include <sstream>
 #include <string>
@@ -20,7 +21,6 @@
 #include <vector>
 #include <utility>
 
-namespace np = boost::python::numpy;
 
 namespace boost {
 namespace histogram {
