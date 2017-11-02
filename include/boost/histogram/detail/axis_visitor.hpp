@@ -1,4 +1,4 @@
-// Copyright 2015-2016 Hans Dembinski
+// Copyright 2015-2016 Hans Demsizeki
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -7,6 +7,7 @@
 #ifndef _BOOST_HISTOGARM_AXIS_VISITOR_HPP_
 #define _BOOST_HISTOGARM_AXIS_VISITOR_HPP_
 
+#include <boost/histogram/interval.hpp>
 #include <boost/fusion/container/vector.hpp>
 #include <boost/fusion/include/comparison.hpp>
 #include <boost/fusion/include/for_each.hpp>
@@ -18,14 +19,14 @@
 #include <boost/variant/get.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/variant.hpp>
-#include <type_traits>
+#include <boost/type_traits.hpp>
 
 namespace boost {
 namespace histogram {
 namespace detail {
 
-struct bins : public static_visitor<int> {
-  template <typename A> int operator()(const A &a) const { return a.bins(); }
+struct size : public static_visitor<int> {
+  template <typename A> int operator()(const A &a) const { return a.size(); }
 };
 
 struct shape : public static_visitor<int> {
@@ -42,34 +43,19 @@ template <typename V> struct index : public static_visitor<int> {
   template <typename A> int operator()(const A &a) const { return a.index(v); }
 };
 
-struct left : public static_visitor<double> {
+struct bin : public static_visitor<interval<double>> {
+  using double_interval = interval<double>;
   const int i;
-  explicit left(const int x) : i(x) {}
-  template <typename A> double operator()(const A &a) const {
-    return impl(typename std::is_arithmetic<typename A::value_type>::type(),
-                a[i]);
-  }
-  template <typename V> double impl(std::true_type, const V &v) const {
-    return v;
-  }
-  template <typename V> double impl(std::false_type, const V &) const {
-    throw std::runtime_error("cannot convert non-arithmetic type to double");
-  }
-};
-
-struct right : public static_visitor<double> {
-  const int i;
-  explicit right(const int x) : i(x) {}
-  template <typename A> double operator()(const A &a) const {
-    return left(i + 1)(a);
-  }
-};
-
-struct center : public static_visitor<double> {
-  const int i;
-  explicit center(const int x) : i(x) {}
-  template <typename A> double operator()(const A &a) const {
-    return 0.5 * (left(i)(a) + right(i)(a));
+  bin(const int v) : i(v) {}
+  template <typename A>
+  double_interval operator()(const A &a) const {
+    return impl(is_convertible<typename A::bin_type, double_interval>(),
+                std::forward<typename A::bin_type>(a[i])); }
+  template<typename B>
+  double_interval impl(true_type, B && b) const { return b; }
+  template<typename B>
+  double_interval impl(false_type, B &&) const {
+    throw std::runtime_error("cannot convert bin_type to interval<double>");
   }
 };
 
@@ -218,7 +204,7 @@ inline void axes_assign_impl(mpl::true_, mpl::true_, A &a, const A &b) {
 
 template <typename A, typename B>
 inline void axes_assign_impl(mpl::true_, mpl::true_, A &a, const B &b) {
-  static_assert(std::is_same<A, B>::type::value,
+  static_assert(is_same<A, B>::type::value,
                 "cannot assign different static axes vectors");
 }
 

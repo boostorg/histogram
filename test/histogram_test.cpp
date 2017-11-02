@@ -77,25 +77,25 @@ template <typename Type> void run_tests() {
   // init_2
   {
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 1});
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2});
     BOOST_TEST_EQ(h.dim(), 2);
     BOOST_TEST_EQ(h.size(), 25);
     BOOST_TEST_EQ(shape(h.axis(0_c)), 5);
     BOOST_TEST_EQ(shape(h.axis(1_c)), 5);
     auto h2 = make_histogram<array_storage<unsigned>>(
-        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 1});
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2});
     BOOST_TEST(h2 == h);
   }
 
   // init_3
   {
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 1},
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3});
     BOOST_TEST_EQ(h.dim(), 3);
     BOOST_TEST_EQ(h.size(), 75);
     auto h2 = make_histogram<array_storage<unsigned>>(
-        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 1},
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3});
     BOOST_TEST(h2 == h);
   }
@@ -103,35 +103,36 @@ template <typename Type> void run_tests() {
   // init_4
   {
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 1},
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1});
     BOOST_TEST_EQ(h.dim(), 4);
     BOOST_TEST_EQ(h.size(), 300);
     auto h2 = make_histogram<array_storage<unsigned>>(
-        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 1},
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1});
     BOOST_TEST(h2 == h);
   }
 
   // init_5
   {
+    enum {A, B, C};
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 1},
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},
-        axis::category{"A", "B", "C"});
+        axis::category<>{{A, B, C}});
     BOOST_TEST_EQ(h.dim(), 5);
     BOOST_TEST_EQ(h.size(), 900);
     auto h2 = make_histogram<array_storage<unsigned>>(
-        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 1},
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},
-        axis::category{"A", "B", "C"});
+        axis::category<>{{A, B, C}});
     BOOST_TEST(h2 == h);
   }
 
   // copy_ctor
   {
-    auto h = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1),
-                                                axis::integer<>(0, 2));
+    auto h = make_histogram<adaptive_storage<>>(Type(), axis::integer<>{0, 2},
+                                                axis::integer<>{0, 3});
     h.fill(0, 0);
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
@@ -183,30 +184,28 @@ template <typename Type> void run_tests() {
   {
     auto a =
         make_histogram<adaptive_storage<>>(Type(), axis::regular<>(1, 1, 2));
-    BOOST_TEST_EQ(bins(a.axis()), 1);
+    BOOST_TEST_EQ(size(a.axis()), 1);
     BOOST_TEST_EQ(shape(a.axis()), 3);
     BOOST_TEST_EQ(index(a.axis(), 1.0), 0);
-    BOOST_TEST_EQ(left(a.axis(), 0), 1.0);
-    BOOST_TEST_EQ(right(a.axis(), 0), 2.0);
-    BOOST_TEST_EQ(center(a.axis(), 0), 1.5);
+    BOOST_TEST_EQ(bin(a.axis(), 0).lower(), 1.0);
+    BOOST_TEST_EQ(bin(a.axis(), 0).upper(), 2.0);
 
     auto b = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(1, 2));
-    BOOST_TEST_EQ(bins(a.axis()), 1);
+    BOOST_TEST_EQ(size(a.axis()), 1);
     BOOST_TEST_EQ(shape(a.axis()), 3);
     BOOST_TEST_EQ(index(a.axis(), 1.0), 0);
-    BOOST_TEST_EQ(left(b.axis(), 0), 1.0);
-    BOOST_TEST_EQ(right(b.axis(), 0), 2.0);
-    BOOST_TEST_EQ(center(b.axis(), 0), 1.5);
+    BOOST_TEST_EQ(bin(b.axis(), 0).lower(), 1.0);
+    BOOST_TEST_EQ(bin(b.axis(), 0).upper(), 2.0);
   }
 
   // equal_compare
   {
-    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1));
-    auto b = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1),
-                                                axis::integer<>(0, 2));
+    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2));
+    auto b = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2),
+                                                axis::integer<>(0, 3));
     BOOST_TEST(a != b);
     BOOST_TEST(b != a);
-    auto c = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1));
+    auto c = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2));
     BOOST_TEST(b != c);
     BOOST_TEST(c != b);
     BOOST_TEST(a == c);
@@ -228,14 +227,14 @@ template <typename Type> void run_tests() {
 
   // d1
   {
-    auto h = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1));
+    auto h = make_histogram<adaptive_storage<>>(Type(), axis::integer<>{0, 2});
     h.fill(0);
     h.fill(0);
     h.fill(-1);
     h.fill(10, count(10));
 
     BOOST_TEST_EQ(h.dim(), 1);
-    BOOST_TEST_EQ(bins(h.axis(0_c)), 2);
+    BOOST_TEST_EQ(size(h.axis(0_c)), 2);
     BOOST_TEST_EQ(shape(h.axis(0_c)), 4);
     BOOST_TEST_EQ(h.sum(), 13);
 
@@ -257,14 +256,14 @@ template <typename Type> void run_tests() {
   // d1_2
   {
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::integer<>(0, 1, "", false));
+        Type(), axis::integer<>(0, 2, "", false));
     h.fill(0);
     h.fill(-0);
     h.fill(-1);
     h.fill(10, count(10));
 
     BOOST_TEST_EQ(h.dim(), 1);
-    BOOST_TEST_EQ(bins(h.axis(0_c)), 2);
+    BOOST_TEST_EQ(size(h.axis(0_c)), 2);
     BOOST_TEST_EQ(shape(h.axis(0_c)), 2);
     BOOST_TEST_EQ(h.sum(), 2);
 
@@ -323,16 +322,16 @@ template <typename Type> void run_tests() {
   // d2
   {
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::regular<>(2, -1, 1), axis::integer<>(-1, 1, "", false));
+        Type(), axis::regular<>(2, -1, 1), axis::integer<>(-1, 2, "", false));
     h.fill(-1, -1);
     h.fill(-1, 0);
     h.fill(-1, -10);
     h.fill(-10, 0);
 
     BOOST_TEST_EQ(h.dim(), 2);
-    BOOST_TEST_EQ(bins(h.axis(0_c)), 2);
+    BOOST_TEST_EQ(size(h.axis(0_c)), 2);
     BOOST_TEST_EQ(shape(h.axis(0_c)), 4);
-    BOOST_TEST_EQ(bins(h.axis(1_c)), 3);
+    BOOST_TEST_EQ(size(h.axis(1_c)), 3);
     BOOST_TEST_EQ(shape(h.axis(1_c)), 3);
     BOOST_TEST_EQ(h.sum(), 3);
 
@@ -372,7 +371,7 @@ template <typename Type> void run_tests() {
   // d2w
   {
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::regular<>(2, -1, 1), axis::integer<>(-1, 1, "", false));
+        Type(), axis::regular<>(2, -1, 1), axis::integer<>(-1, 2, "", false));
     h.fill(-1, 0);              // -> 0, 1
     h.fill(weight(10), -1, -1); // -> 0, 0
     h.fill(weight(5), -1, -10); // is ignored
@@ -418,17 +417,17 @@ template <typename Type> void run_tests() {
     auto h = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 3),
                                                 axis::integer<>(0, 4),
                                                 axis::integer<>(0, 5));
-    for (auto i = 0; i < bins(h.axis(0_c)); ++i) {
-      for (auto j = 0; j < bins(h.axis(1_c)); ++j) {
-        for (auto k = 0; k < bins(h.axis(2_c)); ++k) {
+    for (auto i = 0; i < size(h.axis(0_c)); ++i) {
+      for (auto j = 0; j < size(h.axis(1_c)); ++j) {
+        for (auto k = 0; k < size(h.axis(2_c)); ++k) {
           h.fill(weight(i + j + k), i, j, k);
         }
       }
     }
 
-    for (auto i = 0; i < bins(h.axis(0_c)); ++i) {
-      for (auto j = 0; j < bins(h.axis(1_c)); ++j) {
-        for (auto k = 0; k < bins(h.axis(2_c)); ++k) {
+    for (auto i = 0; i < size(h.axis(0_c)); ++i) {
+      for (auto j = 0; j < size(h.axis(1_c)); ++j) {
+        for (auto k = 0; k < size(h.axis(2_c)); ++k) {
           BOOST_TEST_EQ(h.value(i, j, k), i + j + k);
         }
       }
@@ -437,9 +436,9 @@ template <typename Type> void run_tests() {
 
   // add_1
   {
-    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(-1, 1));
+    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(-1, 2));
     auto b =
-        make_histogram<array_storage<unsigned>>(Type(), axis::integer<>(-1, 1));
+        make_histogram<array_storage<unsigned>>(Type(), axis::integer<>(-1, 2));
     a.fill(-1);
     b.fill(1);
     auto c = a;
@@ -460,8 +459,8 @@ template <typename Type> void run_tests() {
 
   // add_2
   {
-    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1));
-    auto b = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1));
+    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2));
+    auto b = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2));
 
     a.fill(0);
     BOOST_TEST_EQ(a.variance(0), 1);
@@ -488,9 +487,9 @@ template <typename Type> void run_tests() {
   // add_3
   {
     auto a =
-        make_histogram<array_storage<char>>(Type(), axis::integer<>(-1, 1));
+        make_histogram<array_storage<char>>(Type(), axis::integer<>(-1, 2));
     auto b =
-        make_histogram<array_storage<unsigned>>(Type(), axis::integer<>(-1, 1));
+        make_histogram<array_storage<unsigned>>(Type(), axis::integer<>(-1, 2));
     a.fill(-1);
     b.fill(1);
     auto c = a;
@@ -511,14 +510,14 @@ template <typename Type> void run_tests() {
 
   // bad_add
   {
-    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1));
-    auto b = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2));
+    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2));
+    auto b = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 3));
     BOOST_TEST_THROWS(a += b, std::logic_error);
   }
 
   // bad_index
   {
-    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1));
+    auto a = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2));
     BOOST_TEST_THROWS(a.value(5), std::out_of_range);
     BOOST_TEST_THROWS(a.variance(5), std::out_of_range);
   }
@@ -526,19 +525,20 @@ template <typename Type> void run_tests() {
   // functional programming
   {
     auto v = std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    auto h = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 9));
+    auto h = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 10));
     std::for_each(v.begin(), v.end(), [&h](int x) { h.fill(weight(2.0), x); });
     BOOST_TEST_EQ(h.sum(), 20.0);
   }
 
   // histogram_serialization
   {
+    enum { A, B, C };
     auto a = make_histogram<adaptive_storage<>>(
         Type(), axis::regular<>(3, -1, 1, "r"),
         axis::circular<>(4, 0.0, 1.0, "p"),
         axis::regular<double, axis::transform::log>(3, 1, 100, "lr"),
         axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
-        axis::category{"A", "B", "C"}, axis::integer<>(0, 1, "i"));
+        axis::category<>{A, B, C}, axis::integer<>(0, 2, "i"));
     a.fill(0.5, 20, 0.1, 0.25, 1, 0);
     std::string buf;
     {
@@ -560,19 +560,19 @@ template <typename Type> void run_tests() {
   // histogram_ostream
   {
     auto a = make_histogram<adaptive_storage<>>(
-        Type(), axis::regular<>(3, -1, 1, "r"), axis::integer<>(0, 1, "i"));
+        Type(), axis::regular<>(3, -1, 1, "r"), axis::integer<>(0, 2, "i"));
     std::ostringstream os;
     os << a;
     BOOST_TEST_EQ(os.str(), "histogram("
                             "\n  regular(3, -1, 1, label='r'),"
-                            "\n  integer(0, 1, label='i'),"
+                            "\n  integer(0, 2, label='i'),"
                             "\n)");
   }
 
   // histogram_reset
   {
     auto a = make_histogram<adaptive_storage<>>(
-        Type(), axis::integer<>(0, 1, "", false));
+        Type(), axis::integer<>(0, 2, "", false));
     a.fill(0);
     a.fill(1);
     BOOST_TEST_EQ(a.value(0), 1);
@@ -584,8 +584,8 @@ template <typename Type> void run_tests() {
 
   // reduce
   {
-    auto h1 = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1),
-                                                 axis::integer<>(0, 2));
+    auto h1 = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2),
+                                                 axis::integer<>(0, 3));
     h1.fill(0, 0);
     h1.fill(0, 1);
     h1.fill(1, 0);
@@ -597,8 +597,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h1_0.sum(), 5);
     BOOST_TEST_EQ(h1_0.value(0), 2);
     BOOST_TEST_EQ(h1_0.value(1), 3);
-    BOOST_TEST_EQ(left(h1_0.axis(), 0), 0.0);
-    BOOST_TEST_EQ(left(h1_0.axis(), 1), 1.0);
+    BOOST_TEST_EQ(bin(h1_0.axis(), 0).lower(), 0.0);
+    BOOST_TEST_EQ(bin(h1_0.axis(), 1).lower(), 1.0);
     BOOST_TEST(axis_equal(Type(), h1_0.axis(), h1.axis(0_c)));
 
     auto h1_1 = reduce(h1, keep(1_c));
@@ -609,9 +609,9 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h1_1.value(2), 1);
     BOOST_TEST(axis_equal(Type(), h1_1.axis(), h1.axis(1_c)));
 
-    auto h2 = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 1),
-                                                 axis::integer<>(0, 2),
-                                                 axis::integer<>(0, 3));
+    auto h2 = make_histogram<adaptive_storage<>>(Type(), axis::integer<>(0, 2),
+                                                 axis::integer<>(0, 3),
+                                                 axis::integer<>(0, 4));
     h2.fill(0, 0, 0);
     h2.fill(0, 1, 0);
     h2.fill(0, 1, 1);
@@ -623,14 +623,14 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_0.sum(), 5);
     BOOST_TEST_EQ(h2_0.value(0), 4);
     BOOST_TEST_EQ(h2_0.value(1), 1);
-    BOOST_TEST(axis_equal(Type(), h2_0.axis(), axis::integer<>(0, 1)));
+    BOOST_TEST(axis_equal(Type(), h2_0.axis(), axis::integer<>(0, 2)));
 
     auto h2_1 = reduce(h2, keep(1_c));
     BOOST_TEST_EQ(h2_1.dim(), 1);
     BOOST_TEST_EQ(h2_1.sum(), 5);
     BOOST_TEST_EQ(h2_1.value(0), 3);
     BOOST_TEST_EQ(h2_1.value(1), 2);
-    BOOST_TEST(axis_equal(Type(), h2_1.axis(), axis::integer<>(0, 2)));
+    BOOST_TEST(axis_equal(Type(), h2_1.axis(), axis::integer<>(0, 3)));
 
     auto h2_2 = reduce(h2, keep(2_c));
     BOOST_TEST_EQ(h2_2.dim(), 1);
@@ -638,7 +638,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_2.value(0), 2);
     BOOST_TEST_EQ(h2_2.value(1), 1);
     BOOST_TEST_EQ(h2_2.value(2), 2);
-    BOOST_TEST(axis_equal(Type(), h2_2.axis(), axis::integer<>(0, 3)));
+    BOOST_TEST(axis_equal(Type(), h2_2.axis(), axis::integer<>(0, 4)));
 
     auto h2_01 = reduce(h2, keep(0_c, 1_c));
     BOOST_TEST_EQ(h2_01.dim(), 2);
@@ -646,8 +646,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_01.value(0, 0), 2);
     BOOST_TEST_EQ(h2_01.value(0, 1), 2);
     BOOST_TEST_EQ(h2_01.value(1, 0), 1);
-    BOOST_TEST(axis_equal(Type(), h2_01.axis(0_c), axis::integer<>(0, 1)));
-    BOOST_TEST(axis_equal(Type(), h2_01.axis(1_c), axis::integer<>(0, 2)));
+    BOOST_TEST(axis_equal(Type(), h2_01.axis(0_c), axis::integer<>(0, 2)));
+    BOOST_TEST(axis_equal(Type(), h2_01.axis(1_c), axis::integer<>(0, 3)));
 
     auto h2_02 = reduce(h2, keep(0_c, 2_c));
     BOOST_TEST_EQ(h2_02.dim(), 2);
@@ -656,8 +656,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_02.value(0, 1), 1);
     BOOST_TEST_EQ(h2_02.value(0, 2), 1);
     BOOST_TEST_EQ(h2_02.value(1, 2), 1);
-    BOOST_TEST(axis_equal(Type(), h2_02.axis(0_c), axis::integer<>(0, 1)));
-    BOOST_TEST(axis_equal(Type(), h2_02.axis(1_c), axis::integer<>(0, 3)));
+    BOOST_TEST(axis_equal(Type(), h2_02.axis(0_c), axis::integer<>(0, 2)));
+    BOOST_TEST(axis_equal(Type(), h2_02.axis(1_c), axis::integer<>(0, 4)));
 
     auto h2_12 = reduce(h2, keep(1_c, 2_c));
     BOOST_TEST_EQ(h2_12.dim(), 2);
@@ -666,8 +666,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_12.value(1, 0), 1);
     BOOST_TEST_EQ(h2_12.value(1, 1), 1);
     BOOST_TEST_EQ(h2_12.value(0, 2), 2);
-    BOOST_TEST(axis_equal(Type(), h2_12.axis(0_c), axis::integer<>(0, 2)));
-    BOOST_TEST(axis_equal(Type(), h2_12.axis(1_c), axis::integer<>(0, 3)));
+    BOOST_TEST(axis_equal(Type(), h2_12.axis(0_c), axis::integer<>(0, 3)));
+    BOOST_TEST(axis_equal(Type(), h2_12.axis(1_c), axis::integer<>(0, 4)));
   }
 }
 
@@ -676,24 +676,24 @@ template <typename T1, typename T2> void run_mixed_tests() {
   // compare
   {
     auto a = make_histogram<adaptive_storage<>>(T1{}, axis::regular<>{3, 0, 3},
-                                                axis::integer<>(0, 1));
+                                                axis::integer<>(0, 2));
     auto b = make_histogram<adaptive_storage<>>(T2{}, axis::regular<>{3, 0, 3},
-                                                axis::integer<>(0, 1));
+                                                axis::integer<>(0, 2));
     BOOST_TEST_EQ(a, b);
     auto b2 = make_histogram<adaptive_storage<>>(T2{}, axis::integer<>{0, 3},
-                                                 axis::integer<>(0, 1));
+                                                 axis::integer<>(0, 2));
     BOOST_TEST_NE(a, b2);
     auto b3 = make_histogram<adaptive_storage<>>(T2{}, axis::regular<>(3, 0, 4),
-                                                 axis::integer<>(0, 1));
+                                                 axis::integer<>(0, 2));
     BOOST_TEST_NE(a, b3);
   }
 
   // copy_assign
   {
     auto a = make_histogram<adaptive_storage<>>(T1{}, axis::regular<>{3, 0, 3},
-                                                axis::integer<>(0, 1));
+                                                axis::integer<>(0, 2));
     auto b = make_histogram<adaptive_storage<>>(T2{}, axis::regular<>{3, 0, 3},
-                                                axis::integer<>(0, 1));
+                                                axis::integer<>(0, 2));
     a.fill(1, 1);
     BOOST_TEST_NE(a, b);
     b = a;
@@ -713,7 +713,7 @@ int main() {
   {
     auto v = std::vector<histogram<Dynamic, builtin_axes>::axis_type>();
     v.push_back(axis::regular<>(100, -1, 1));
-    v.push_back(axis::integer<>(1, 6));
+    v.push_back(axis::integer<>(1, 7));
     auto h = histogram<Dynamic, builtin_axes>(v.begin(), v.end());
     BOOST_TEST_EQ(h.axis(0_c), v[0]);
     BOOST_TEST_EQ(h.axis(1_c), v[1]);
@@ -723,16 +723,16 @@ int main() {
 
   // utility
   {
-    auto c = make_dynamic_histogram(axis::category({"A", "B"}));
-    BOOST_TEST_THROWS(left(c.axis(), 0), std::runtime_error);
-    BOOST_TEST_THROWS(right(c.axis(), 0), std::runtime_error);
-    BOOST_TEST_THROWS(center(c.axis(), 0), std::runtime_error);
+    enum { A, B };
+    auto c = make_dynamic_histogram(axis::category<>({A, B}));
+    BOOST_TEST_THROWS(bin(c.axis(), 0).lower(), std::runtime_error);
+    BOOST_TEST_THROWS(bin(c.axis(), 0).upper(), std::runtime_error);
   }
 
   // reduce
   {
     auto h1 =
-        make_dynamic_histogram(axis::integer<>(0, 1), axis::integer<>(0, 2));
+        make_dynamic_histogram(axis::integer<>(0, 2), axis::integer<>(0, 3));
     h1.fill(0, 0);
     h1.fill(0, 1);
     h1.fill(1, 0);

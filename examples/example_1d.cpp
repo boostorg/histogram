@@ -29,9 +29,9 @@ int main(int, char**) {
 
     // iterate over bins, loop includes under- and overflow bin
     for (const auto& bin : h.axis(0_c)) {
-        std::cout << "bin " << bin.idx
-                  << " x in [" << bin.left << ", " << bin.right << "): "
-                  << h.value(bin.idx) << " +/- " << std::sqrt(h.variance(bin.idx))
+        std::cout << "bin " << bin.first
+                  << " x in [" << bin.second.lower() << ", " << bin.second.upper() << "): "
+                  << h.value(bin.first) << " +/- " << std::sqrt(h.variance(bin.first))
                   << std::endl;
     }
 

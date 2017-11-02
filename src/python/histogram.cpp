@@ -205,7 +205,7 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
       axes.push_back(ei());
       continue;
     }
-    python::extract<axis::category> ec(pa);
+    python::extract<axis::category<>> ec(pa);
     if (ec.check()) {
       axes.push_back(ec());
       continue;
@@ -354,7 +354,7 @@ python::object histogram_value(python::tuple args, python::dict kwargs) {
   for (unsigned i = 0; i < self.dim(); ++i)
     idx[i] = python::extract<int>(args[1 + i]);
 
-  return python::object(self.value(idx + 0, idx + self.dim()));
+  return python::object(self.value(idx, idx + self.dim()));
 }
 
 python::object histogram_variance(python::tuple args, python::dict kwargs) {
@@ -383,7 +383,7 @@ python::object histogram_variance(python::tuple args, python::dict kwargs) {
   for (unsigned i = 0; i < self.dim(); ++i)
     idx[i] = python::extract<int>(args[1 + i]);
 
-  return python::object(self.variance(idx + 0, idx + self.dim()));
+  return python::object(self.variance(idx, idx + self.dim()));
 }
 
 std::string histogram_repr(const dynamic_histogram &h) {

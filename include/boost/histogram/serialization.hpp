@@ -120,13 +120,13 @@ void adaptive_storage<Allocator>::serialize(Archive &ar,
 namespace axis {
 
 template <class Archive>
-void axis_base<false>::serialize(Archive &ar, unsigned /* version */) {
+void axis_base<without_uoflow>::serialize(Archive &ar, unsigned /* version */) {
   ar &size_;
   ar &label_;
 }
 
 template <class Archive>
-void axis_base<true>::serialize(Archive &ar, unsigned /* version */) {
+void axis_base<with_uoflow>::serialize(Archive &ar, unsigned /* version */) {
   ar &size_;
   ar &shape_;
   ar &label_;
@@ -136,7 +136,7 @@ template <typename RealType, template <class> class Transform>
 template <class Archive>
 void regular<RealType, Transform>::serialize(Archive &ar,
                                              unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<true>>(*this);
+  ar &boost::serialization::base_object<axis_base<with_uoflow>>(*this);
   ar &min_;
   ar &delta_;
 }
@@ -144,7 +144,7 @@ void regular<RealType, Transform>::serialize(Archive &ar,
 template <typename RealType>
 template <class Archive>
 void circular<RealType>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<false>>(*this);
+  ar &boost::serialization::base_object<axis_base<without_uoflow>>(*this);
   ar &phase_;
   ar &perimeter_;
 }
@@ -152,27 +152,25 @@ void circular<RealType>::serialize(Archive &ar, unsigned /* version */) {
 template <typename RealType>
 template <class Archive>
 void variable<RealType>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<true>>(*this);
+  ar &boost::serialization::base_object<axis_base<with_uoflow>>(*this);
   if (Archive::is_loading::value) {
-    x_.reset(new RealType[bins() + 1]);
+    x_.reset(new RealType[size() + 1]);
   }
-  ar &boost::serialization::make_array(x_.get(), bins() + 1);
+  ar &boost::serialization::make_array(x_.get(), size() + 1);
 }
 
 template <typename IntType>
 template <class Archive>
 void integer<IntType>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<true>>(*this);
+  ar &boost::serialization::base_object<axis_base<with_uoflow>>(*this);
   ar &min_;
 }
 
+template <typename T>
 template <class Archive>
-void category::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<false>>(*this);
-  if (Archive::is_loading::value) {
-    ptr_.reset(new std::string[bins()]);
-  }
-  ar &boost::serialization::make_array(ptr_.get(), bins());
+void category<T>::serialize(Archive &ar, unsigned /* version */) {
+  ar &boost::serialization::base_object<axis_base<without_uoflow>>(*this);
+  ar &map_;
 }
 
 } // namespace axis

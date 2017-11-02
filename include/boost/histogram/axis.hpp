@@ -7,20 +7,14 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_HPP_
 #define _BOOST_HISTOGRAM_AXIS_HPP_
 
+#include <boost/histogram/interval.hpp>
 #include <algorithm>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/operators.hpp>
-#include <boost/version.hpp>
-#if BOOST_VERSION < 106100
-#include <boost/utility/string_ref.hpp>
-namespace boost {
-using string_view = string_ref;
-}
-#else
+#include <boost/bimap.hpp>
 #include <boost/utility/string_view.hpp>
-#endif
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -28,69 +22,74 @@ using string_view = string_ref;
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <utility>
+#include <unordered_map>
 
 // forward declaration for serialization
 namespace boost {
 namespace serialization {
 class access;
-}
+} // namespace serialization
 } // namespace boost
 
 namespace boost {
 namespace histogram {
+
 namespace axis {
 
 enum { with_uoflow = true, without_uoflow = false };
 
-template <typename Value> struct bin {
-  int idx;
-  Value value;
-};
+namespace detail {
+  // similar to boost::reference_wrapper, but with default ctor
+  template <typename T>
+  class cref {
+  public:
+    cref() = default;
+    cref(const T& t) : ptr_(&t) {}
+    operator const T&() const { return *ptr_; }
+  private:
+    const T* ptr_ = nullptr;
+  };
 
-template <typename Value> struct real_bin {
-  int idx;
-  Value left, right;
-};
-
-template <typename Value>
-using axis_bin = typename std::conditional<std::is_floating_point<Value>::value,
-                                           real_bin<Value>, bin<Value>>::type;
+  template <typename Axis>
+  using axis_iterator_value =
+    std::pair<int,
+      typename conditional<
+        is_reference<typename Axis::bin_type>::value,
+        cref<
+          typename remove_reference<typename Axis::bin_type>::type
+        >,
+        typename Axis::bin_type
+      >::type
+    >;
+}
 
 template <typename Axis>
 class axis_iterator
     : public iterator_facade<axis_iterator<Axis>,
-                             const axis_bin<typename Axis::value_type>,
+                             detail::axis_iterator_value<Axis>,
                              random_access_traversal_tag> {
-  using bin_type = axis_bin<typename Axis::value_type>;
-
+  using value_type = detail::axis_iterator_value<Axis>;
 public:
-  explicit axis_iterator(const Axis &axis, int idx) : axis_(axis), value_() {
-    value_.idx = idx;
-  }
+  explicit axis_iterator(const Axis &axis, int idx)
+    : axis_(axis) { value_.first = idx; }
 
 private:
-  void increment() { ++value_.idx; }
-  void decrement() { --value_.idx; }
-  void advance(int n) { value_.idx += n; }
-  int distance_to(const axis_iterator &other) const {
-    return other.value_.idx - value_.idx;
+  void increment() noexcept { ++value_.first; }
+  void decrement() noexcept { --value_.first; }
+  void advance(int n) noexcept { value_.first += n; }
+  int distance_to(const axis_iterator &other) const noexcept {
+    return other.value_.first - value_.first;
   }
-  bool equal(const axis_iterator &other) const {
-    return value_.idx == other.value_.idx;
+  bool equal(const axis_iterator &other) const noexcept {
+    return value_.first == other.value_.first;
   }
-  const bin_type &dereference() const {
-    assign_impl(value_);
+  value_type& dereference() const {
+    value_.second = axis_[value_.first];
     return value_;
   }
-  template <typename U> void assign_impl(bin<U> &v) const {
-    v.value = axis_[v.idx];
-  }
-  template <typename U> void assign_impl(real_bin<U> &v) const {
-    v.left = axis_[v.idx];
-    v.right = axis_[v.idx + 1];
-  }
   const Axis &axis_;
-  mutable bin_type value_;
+  mutable value_type value_;
   friend class boost::iterator_core_access;
 };
 
@@ -101,7 +100,7 @@ template <bool UOFlow> class axis_base;
 template <> class axis_base<with_uoflow> {
 public:
   /// Returns the number of bins, excluding overflow/underflow.
-  inline int bins() const { return size_; }
+  inline int size() const { return size_; }
   /// Returns the number of bins, including overflow/underflow.
   inline int shape() const { return shape_; }
   /// Returns whether axis has extra overflow and underflow bins.
@@ -157,7 +156,7 @@ private:
 template <> class axis_base<without_uoflow> {
 public:
   /// Returns the number of bins, excluding overflow/underflow.
-  inline int bins() const { return size_; }
+  inline int size() const { return size_; }
   /// Returns the number of bins, including overflow/underflow.
   inline int shape() const { return size_; }
   /// Returns whether axis has extra overflow and underflow bins.
@@ -230,8 +229,10 @@ template <typename RealType = double,
           template <class> class Transform = transform::identity>
 class regular : public axis_base<with_uoflow>,
                 boost::operators<regular<RealType, Transform>> {
+  using transform = Transform<RealType>;
 public:
   using value_type = RealType;
+  using bin_type = interval<value_type>;
   using const_iterator = axis_iterator<regular>;
 
   /** Construct axis with n bins over range [min, max).
@@ -245,8 +246,8 @@ public:
   regular(unsigned n, value_type min, value_type max,
           string_view label = string_view(), bool uoflow = true)
       : axis_base<with_uoflow>(n, label, uoflow),
-        min_(Transform<value_type>::forward(min)),
-        delta_((Transform<value_type>::forward(max) - min_) / n) {
+        min_(transform::forward(min)),
+        delta_((transform::forward(max) - min_) / n) {
     if (!(min < max)) {
       throw std::logic_error("min < max required");
     }
@@ -261,23 +262,23 @@ public:
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
     // Optimized code
-    const value_type z = (Transform<value_type>::forward(x) - min_) / delta_;
-    return z >= 0.0 ? (z > bins() ? bins() : static_cast<int>(z)) : -1;
+    const value_type z = (transform::forward(x) - min_) / delta_;
+    return z >= 0.0 ? (z > size() ? size() : static_cast<int>(z)) : -1;
   }
 
   /// Returns the starting edge of the bin.
-  value_type operator[](int idx) const {
-    if (idx < 0) {
-      return Transform<value_type>::inverse(
-          -std::numeric_limits<value_type>::infinity());
-    }
-    if (idx > bins()) {
-      return Transform<value_type>::inverse(
-          std::numeric_limits<value_type>::infinity());
-    }
-    const value_type z = value_type(idx) / bins();
-    return Transform<value_type>::inverse((1.0 - z) * min_ +
-                                          z * (min_ + delta_ * bins()));
+  bin_type operator[](int idx) const {
+    auto eval = [this](int i) {
+      const auto n = size();
+      if (i < 0)
+        return transform::inverse(-std::numeric_limits<value_type>::infinity());
+      if (i > n)
+        return transform::inverse(std::numeric_limits<value_type>::infinity());
+      const auto z = value_type(i) / n;
+      return transform::inverse((1.0 - z) * min_ +
+                                            z * (min_ + delta_ * n));
+    };
+    return {eval(idx), eval(idx+1)};
   }
 
   bool operator==(const regular &o) const {
@@ -290,7 +291,7 @@ public:
   }
 
   const_iterator end() const {
-    return const_iterator(*this, uoflow() ? bins() + 1 : bins());
+    return const_iterator(*this, uoflow() ? size() + 1 : size());
   }
 
 private:
@@ -311,6 +312,7 @@ class circular : public axis_base<without_uoflow>,
                  boost::operators<regular<RealType>> {
 public:
   using value_type = RealType;
+  using bin_type = interval<value_type>;
   using const_iterator = axis_iterator<circular>;
 
   /** Constructor for n bins with an optional offset.
@@ -335,14 +337,17 @@ public:
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
     const value_type z = (x - phase_) / perimeter_;
-    const int i = static_cast<int>(std::floor(z * bins())) % bins();
-    return i + (i < 0) * bins();
+    const int i = static_cast<int>(std::floor(z * size())) % size();
+    return i + (i < 0) * size();
   }
 
   /// Returns the starting edge of the bin.
-  value_type operator[](int idx) const {
-    const value_type z = value_type(idx) / bins();
-    return z * perimeter_ + phase_;
+  bin_type operator[](int idx) const {
+    auto eval = [this](int i) {
+      const value_type z = value_type(i) / size();
+      return z * perimeter_ + phase_;
+    };
+    return {eval(idx), eval(idx+1)};
   }
 
   bool operator==(const circular &o) const {
@@ -355,7 +360,7 @@ public:
 
   const_iterator begin() const { return const_iterator(*this, 0); }
 
-  const_iterator end() const { return const_iterator(*this, bins()); }
+  const_iterator end() const { return const_iterator(*this, size()); }
 
 private:
   value_type phase_ = 0.0, perimeter_ = 1.0;
@@ -374,6 +379,7 @@ class variable : public axis_base<with_uoflow>,
                  boost::operators<variable<RealType>> {
 public:
   using value_type = RealType;
+  using bin_type = interval<value_type>;
   using const_iterator = axis_iterator<variable>;
 
   /** Construct an axis from bin edges.
@@ -382,7 +388,7 @@ public:
    * \param label description of the axis.
    * \param uoflow whether to add under-/overflow bins.
    */
-  variable(const std::initializer_list<value_type> &x,
+  variable(std::initializer_list<value_type> x,
            string_view label = string_view(), bool uoflow = true)
       : axis_base<with_uoflow>(x.size() - 1, label, uoflow),
         x_(new value_type[x.size()]) {
@@ -390,7 +396,7 @@ public:
       throw std::logic_error("at least two values required");
     }
     std::copy(x.begin(), x.end(), x_.get());
-    std::sort(x_.get(), x_.get() + bins() + 1);
+    std::sort(x_.get(), x_.get() + size() + 1);
   }
 
   template <typename Iterator>
@@ -399,19 +405,19 @@ public:
       : axis_base<with_uoflow>(std::distance(begin, end) - 1, label, uoflow),
         x_(new value_type[std::distance(begin, end)]) {
     std::copy(begin, end, x_.get());
-    std::sort(x_.get(), x_.get() + bins() + 1);
+    std::sort(x_.get(), x_.get() + size() + 1);
   }
 
   variable() = default;
   variable(const variable &o)
-      : axis_base<with_uoflow>(o), x_(new value_type[bins() + 1]) {
-    std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
+      : axis_base<with_uoflow>(o), x_(new value_type[size() + 1]) {
+    std::copy(o.x_.get(), o.x_.get() + size() + 1, x_.get());
   }
   variable &operator=(const variable &o) {
     if (this != &o) {
       axis_base<with_uoflow>::operator=(o);
-      x_.reset(new value_type[bins() + 1]);
-      std::copy(o.x_.get(), o.x_.get() + bins() + 1, x_.get());
+      x_.reset(new value_type[size() + 1]);
+      std::copy(o.x_.get(), o.x_.get() + size() + 1, x_.get());
     }
     return *this;
   }
@@ -420,25 +426,28 @@ public:
 
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
-    return std::upper_bound(x_.get(), x_.get() + bins() + 1, x) - x_.get() - 1;
+    return std::upper_bound(x_.get(), x_.get() + size() + 1, x) - x_.get() - 1;
   }
 
   /// Returns the starting edge of the bin.
-  value_type operator[](int idx) const {
-    if (idx < 0) {
-      return -std::numeric_limits<value_type>::infinity();
-    }
-    if (idx > bins()) {
-      return std::numeric_limits<value_type>::infinity();
-    }
-    return x_[idx];
+  bin_type operator[](int idx) const {
+    auto eval = [this](int i) {
+      if (i < 0) {
+        return -std::numeric_limits<value_type>::infinity();
+      }
+      if (i > size()) {
+        return std::numeric_limits<value_type>::infinity();
+      }
+      return x_[i];
+    };
+    return {eval(idx), eval(idx+1)};
   }
 
   bool operator==(const variable &o) const {
     if (!axis_base<with_uoflow>::operator==(o)) {
       return false;
     }
-    return std::equal(x_.get(), x_.get() + bins() + 1, o.x_.get());
+    return std::equal(x_.get(), x_.get() + size() + 1, o.x_.get());
   }
 
   const_iterator begin() const {
@@ -446,7 +455,7 @@ public:
   }
 
   const_iterator end() const {
-    return const_iterator(*this, uoflow() ? bins() + 1 : bins());
+    return const_iterator(*this, uoflow() ? size() + 1 : size());
   }
 
 private:
@@ -466,6 +475,7 @@ class integer : public axis_base<with_uoflow>,
                 boost::operators<integer<IntType>> {
 public:
   using value_type = IntType;
+  using bin_type = interval<value_type>;
   using const_iterator = axis_iterator<integer>;
 
   /** Construct axis over integer range [min, max].
@@ -475,7 +485,7 @@ public:
    */
   integer(value_type min, value_type max, string_view label = string_view(),
           bool uoflow = true)
-      : axis_base<with_uoflow>(max + 1 - min, label, uoflow), min_(min) {
+      : axis_base<with_uoflow>(max - min, label, uoflow), min_(min) {
     if (min > max) {
       throw std::logic_error("min <= max required");
     }
@@ -490,11 +500,13 @@ public:
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
     const int z = x - min_;
-    return z >= 0 ? (z > bins() ? bins() : z) : -1;
+    return z >= 0 ? (z > size() ? size() : z) : -1;
   }
 
   /// Returns the integer that is mapped to the bin index.
-  value_type operator[](int idx) const { return min_ + idx; }
+  bin_type operator[](int idx) const {
+    return {min_ + idx, min_ + idx + 1};
+  }
 
   bool operator==(const integer &o) const {
     return axis_base<with_uoflow>::operator==(o) && min_ == o.min_;
@@ -505,7 +517,7 @@ public:
   }
 
   const_iterator end() const {
-    return const_iterator(*this, uoflow() ? bins() + 1 : bins());
+    return const_iterator(*this, uoflow() ? size() + 1 : size());
   }
 
 private:
@@ -515,84 +527,77 @@ private:
   template <class Archive> void serialize(Archive &, unsigned);
 };
 
-/** An axis for enumerated categories.
+/** An axis for a set of unique values.
  *
- * The axis stores the category labels, and expects that they
- * are addressed using an integer from ``0`` to ``n-1``.
- * There are no underflow/overflow bins for this axis.
- * Binning is a O(1) operation.
+ * The axis maps a set of values to bins, following the order of
+ * arguments in the constructor. There is an optional overflow bin
+ * for this axis, which counts values that are not part of the set.
+ * Binning is a O(1) operation. The value type must be hashable.
  */
-class category : public axis_base<without_uoflow>, boost::operators<category> {
+template <typename T = int>
+class category : public axis_base<without_uoflow>, boost::operators<category<T>> {
+  using map_type = bimap<T, int>;
 public:
-  using value_type = string_view;
-  using const_iterator = axis_iterator<category>;
-
-  template <typename Iterator>
-  category(Iterator begin, Iterator end, string_view label = string_view())
-      : axis_base<without_uoflow>(std::distance(begin, end), label),
-        ptr_(new std::string[bins()]) {
-    std::copy(begin, end, ptr_.get());
-  }
-
-  /** Construct from a list of strings.
-   *
-   * \param categories sequence of labeled categories.
-   */
-  category(const std::initializer_list<std::string> &categories,
-           string_view label = string_view())
-      : category(categories.begin(), categories.end(), label) {}
+  using value_type = T;
+  using bin_type = const value_type&;
+  using const_iterator = axis_iterator<category<T>>;
 
   category() = default;
 
-  category(const category &other)
-      : category(other.ptr_.get(), other.ptr_.get() + other.bins(),
-                 other.label()) {}
-  category &operator=(const category &other) {
-    if (this != &other) {
-      axis_base<without_uoflow>::operator=(other);
-      ptr_.reset(new std::string[other.bins()]);
-      std::copy(other.ptr_.get(), other.ptr_.get() + other.bins(), ptr_.get());
-    }
-    return *this;
+  /** Construct from an initializer list of strings.
+   *
+   * \param seq sequence of unique values.
+   */
+  category(std::initializer_list<T> seq,
+           string_view label = string_view())
+    : axis_base<without_uoflow>(seq.size(), label)
+  {
+    int index = 0;
+    for (const auto& x : seq)
+      map_.insert({x, index++});
+    if (index == 0)
+      throw std::logic_error("sequence is empty");
   }
 
-  category(category &&other)
-      : axis_base<without_uoflow>(std::move(other)),
-        ptr_(std::move(other.ptr_)) {}
-
-  category &operator=(category &&other) {
-    if (this != &other) {
-      axis_base<without_uoflow>::operator=(std::move(other));
-      ptr_ = std::move(other.ptr_);
-    }
-    return *this;
+  template <typename Iterator>
+  category(Iterator begin, Iterator end,
+           string_view label = string_view())
+    : axis_base<without_uoflow>(std::distance(begin, end), label)
+  {
+    int index = 0;
+    while (begin != end)
+      map_.insert({*begin++, index++});
+    if (index == 0)
+      throw std::logic_error("iterator range is empty");
   }
 
   /// Returns the bin index for the passed argument.
   /// Performs a range check.
-  inline int index(int x) const noexcept {
-    BOOST_ASSERT_MSG(0 <= x && x < bins(), "category index is out of range");
-    return x;
+  inline int index(const value_type& x) const noexcept {
+    auto it = map_.left.find(x);
+    if (it == map_.left.end())
+      return size();
+    return it->second;
   }
 
-  /// Returns the category for the bin index.
-  value_type operator[](int idx) const {
-    BOOST_ASSERT_MSG(0 <= idx && idx < bins(),
-                     "category index is out of range");
-    return ptr_.get()[idx];
+  /// Returns the value for the bin index.
+  bin_type operator[](int idx) const {
+    auto it = map_.right.find(idx);
+    BOOST_ASSERT_MSG(it != map_.right.end(), "category index out of range");
+    return it->second;
   }
 
   bool operator==(const category &other) const {
     return axis_base<without_uoflow>::operator==(other) &&
-           std::equal(ptr_.get(), ptr_.get() + bins(), other.ptr_.get());
+           std::equal(map_.begin(), map_.end(), other.map_.begin());
   }
 
   const_iterator begin() const { return const_iterator(*this, 0); }
 
-  const_iterator end() const { return const_iterator(*this, bins()); }
+  const_iterator end() const { return const_iterator(*this, size()); }
 
 private:
-  std::unique_ptr<std::string[]> ptr_;
+  map_type map_;
 
   friend class ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);
@@ -602,7 +607,7 @@ private:
 
 using builtin_axes =
     mpl::vector<axis::regular<>, axis::circular<>, axis::variable<>,
-                axis::integer<>, axis::category>;
+                axis::integer<>, axis::category<int>>;
 
 } // namespace histogram
 } // namespace boost

@@ -23,8 +23,18 @@ else()
 endif()
 
 if(BUILD_PYTHON)
-  find_package(Boost 1.55 REQUIRED
-               COMPONENTS iostreams serialization python)
+  if(BUILD_NUMPY_SUPPORT)
+    find_package(Boost 1.55 REQUIRED
+                 COMPONENTS iostreams serialization python numpy)
+    find_package(Numpy 1.7 REQUIRED)
+    set(HAVE_NUMPY 1)
+    include_directories(${NUMPY_INCLUDE_DIR})
+    add_definitions(-DHAVE_NUMPY)
+  else()
+    find_package(Boost 1.55 REQUIRED
+                 COMPONENTS iostreams serialization python)
+  endif()
+
   if(DEFINED PYTHON_VERSION)
     find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
     find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test and FindNumpy
@@ -37,13 +47,6 @@ if(BUILD_PYTHON)
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
   set(HAVE_PYTHON 1)
   include_directories(${PYTHON_INCLUDE_DIRS})
-
-  if(BUILD_NUMPY_SUPPORT)
-    find_package(Numpy 1.7 REQUIRED)
-    set(HAVE_NUMPY 1)
-    include_directories(${NUMPY_INCLUDE_DIR})
-    add_definitions(-DHAVE_NUMPY)
-  endif()
 
   add_library(histogram SHARED
     ../src/python/module.cpp
