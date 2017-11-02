@@ -97,7 +97,6 @@ install:
     fi
 
 script:
-  - python doc/extract_code.py
   - cd build
   - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
 
