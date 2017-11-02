@@ -5,6 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include "serialization_suite.hpp"
+#include "utility.hpp"
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/histogram_ostream_operators.hpp>
@@ -47,25 +48,25 @@ public:
     std::pair<int, object> operator()(const Array& /*unused*/) const {
       std::pair<int, object> p;
       p.first = sizeof(typename Array::value_type);
-      p.second = str("|u") + str(p.first);
+      p.second = dtype_typestr<typename Array::value_type>();
       return p;
     }
     std::pair<int, object> operator()(const array<void>& /*unused*/) const {
       std::pair<int, object> p;
       p.first = sizeof(uint8_t);
-      p.second = str("|u") + str(p.first);
+      p.second = dtype_typestr<uint8_t>();
       return p;
     }
     std::pair<int, object> operator()(const array<mp_int>& /*unused*/) const {
       std::pair<int, object> p;
       p.first = sizeof(double);
-      p.second = str("|f") + str(p.first);
+      p.second = dtype_typestr<double>();
       return p;
     }
     std::pair<int, object> operator()(const array<weight>& /*unused*/) const {
       std::pair<int, object> p;
       p.first = 0; // communicate that the type was array<weight>
-      p.second = str("|f") + str(sizeof(double));
+      p.second = dtype_typestr<double>();
       return p;
     }
   };

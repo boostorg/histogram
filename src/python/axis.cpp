@@ -4,6 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include "utility.hpp"
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/math/constants/constants.hpp>
@@ -155,8 +156,7 @@ template <> python::object axis_array_interface<axis::category<>>(const axis::ca
   python::dict d;
   auto shape = python::make_tuple(axis.size());
   d["shape"] = shape;
-  // d["typestr"] = dtype_typestr<typename Axis::bin_type>();
-  d["typestr"] = "|i4";
+  d["typestr"] = python::dtype_typestr<int>();
   // make new array, and pass it to Python
   auto dim = 1;
   npy_intp shapes2[1] = { axis.size() };
