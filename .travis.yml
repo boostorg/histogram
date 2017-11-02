@@ -97,6 +97,7 @@ install:
     fi
 
 script:
+  - python doc/extract_code.py
   - cd build
   - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
 
@@ -120,7 +121,6 @@ script:
       make -j2 &&
       ctest -V;
     else
-      python ../doc/extract_code.py;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=${BUILD_PYTHON}
               -DPYTHON_VERSION=${PYTHON_VERSION}

@@ -43,31 +43,27 @@ public:
   template <typename T>
   using array = histogram::adaptive_storage<>::array<T>;
 
-  struct dtype_visitor : public static_visitor<std::pair<int, object>> {
+  struct dtype_visitor : public static_visitor<str> {
+    list & shapes, & strides;
+    dtype_visitor(list &sh, list &st) : shapes(sh), strides(st) {}
     template <typename Array>
-    std::pair<int, object> operator()(const Array& /*unused*/) const {
-      std::pair<int, object> p;
-      p.first = sizeof(typename Array::value_type);
-      p.second = dtype_typestr<typename Array::value_type>();
-      return p;
+    str operator()(const Array& /*unused*/) const {
+      strides.append(sizeof(typename Array::value_type));
+      return dtype_typestr<typename Array::value_type>();
     }
-    std::pair<int, object> operator()(const array<void>& /*unused*/) const {
-      std::pair<int, object> p;
-      p.first = sizeof(uint8_t);
-      p.second = dtype_typestr<uint8_t>();
-      return p;
+    str operator()(const array<void>& /*unused*/) const {
+      strides.append(sizeof(uint8_t));
+      return dtype_typestr<uint8_t>();
     }
-    std::pair<int, object> operator()(const array<mp_int>& /*unused*/) const {
-      std::pair<int, object> p;
-      p.first = sizeof(double);
-      p.second = dtype_typestr<double>();
-      return p;
+    str operator()(const array<mp_int>& /*unused*/) const {
+      strides.append(sizeof(double));
+      return dtype_typestr<double>();
     }
-    std::pair<int, object> operator()(const array<weight>& /*unused*/) const {
-      std::pair<int, object> p;
-      p.first = 0; // communicate that the type was array<weight>
-      p.second = dtype_typestr<double>();
-      return p;
+    str operator()(const array<weight>& /*unused*/) const {
+      strides.append(sizeof(double));
+      strides.append(strides[-1] * 2);
+      shapes.append(2);
+      return dtype_typestr<double>();
     }
   };
 
@@ -119,31 +115,18 @@ public:
 
   static object array_interface(const histogram::dynamic_histogram &self) {
     dict d;
-
     list shapes;
     list strides;
     auto &b = self.storage_.buffer_;
-    auto dtype = apply_visitor(dtype_visitor(), b);
-    auto stride = dtype.first;
-    if (stride == 0) { // buffer is weight, needs special treatment
-      stride = sizeof(double);
-      strides.append(stride);
-      stride *= 2;
-      shapes.append(2);
-    }
+    d["typestr"] = apply_visitor(dtype_visitor(shapes, strides), b);
     for (unsigned i = 0; i < self.dim(); ++i) {
-      const auto s = histogram::shape(self.axis(i));
-      shapes.append(s);
-      strides.append(stride);
-      stride *= s;
+      if (i) strides.append(strides[-1] * shapes[-1]);
+      shapes.append(histogram::shape(self.axis(i)));
     }
-    if (self.dim() == 0) {
+    if (self.dim() == 0)
       shapes.append(0);
-      strides.append(stride);
-    }
     d["shape"] = tuple(shapes);
     d["strides"] = tuple(strides);
-    d["typestr"] = dtype.second;
     d["data"] = apply_visitor(data_visitor(shapes, strides), b);
     return d;
   }

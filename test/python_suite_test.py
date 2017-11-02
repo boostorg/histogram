@@ -645,16 +645,18 @@ class test_histogram(unittest.TestCase):
                     for m in range(i+j+k):
                         a.fill(i, j, k)
                     r[i,j,k] = i+j+k
-        c = numpy.array(a) # a copy
-        v = numpy.asarray(a) # a view
 
-        c2 = numpy.zeros((2, 3, 4), dtype=numpy.int8)
+        d = numpy.zeros((2, 3, 4), dtype=numpy.int8)
         for i in range(len(a.axis(0))):
             for j in range(len(a.axis(1))):
                 for k in range(len(a.axis(2))):
-                    c2[i,j,k] = a.value(i,j,k)
+                    d[i,j,k] = a.value(i,j,k)
 
-        self.assertTrue(numpy.all(c == c2))
+        self.assertTrue(numpy.all(d == r))
+
+        c = numpy.array(a) # a copy
+        v = numpy.asarray(a) # a view
+
         self.assertTrue(numpy.all(c == r))
         self.assertTrue(numpy.all(v == r))
 
