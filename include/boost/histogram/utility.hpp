@@ -34,13 +34,13 @@ inline int index(const boost::variant<Axes...> &a, const V v) {
   return apply_visitor(detail::index<V>(v), a);
 }
 
-template <typename A>
-inline typename A::bin_type bin(const A &a, const int i) {
+template <typename A> inline typename A::bin_type bin(const A &a, const int i) {
   return a[i];
 }
 
 template <typename... Axes>
-inline interval<double> bin(const boost::variant<Axes...> &a, const int i) {
+inline axis::interval<double> bin(const boost::variant<Axes...> &a,
+                                  const int i) {
   return apply_visitor(detail::bin(i), a);
 }
 

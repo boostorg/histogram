@@ -7,13 +7,13 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_HPP_
 #define _BOOST_HISTOGRAM_AXIS_HPP_
 
-#include <boost/histogram/interval.hpp>
 #include <algorithm>
+#include <boost/bimap.hpp>
+#include <boost/histogram/interval.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/operators.hpp>
-#include <boost/bimap.hpp>
 #include <boost/utility/string_view.hpp>
 #include <cmath>
 #include <limits>
@@ -21,9 +21,9 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
-#include <vector>
-#include <utility>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 // forward declaration for serialization
 namespace boost {
@@ -40,39 +40,35 @@ namespace axis {
 enum { with_uoflow = true, without_uoflow = false };
 
 namespace detail {
-  // similar to boost::reference_wrapper, but with default ctor
-  template <typename T>
-  class cref {
-  public:
-    cref() = default;
-    cref(const T& t) : ptr_(&t) {}
-    operator const T&() const { return *ptr_; }
-  private:
-    const T* ptr_ = nullptr;
-  };
+// similar to boost::reference_wrapper, but with default ctor
+template <typename T> class cref {
+public:
+  cref() = default;
+  cref(const T &t) : ptr_(&t) {}
+  operator const T &() const { return *ptr_; }
 
-  template <typename Axis>
-  using axis_iterator_value =
-    std::pair<int,
-      typename conditional<
-        is_reference<typename Axis::bin_type>::value,
-        cref<
-          typename remove_reference<typename Axis::bin_type>::type
-        >,
-        typename Axis::bin_type
-      >::type
-    >;
-}
+private:
+  const T *ptr_ = nullptr;
+};
 
 template <typename Axis>
-class axis_iterator
-    : public iterator_facade<axis_iterator<Axis>,
-                             detail::axis_iterator_value<Axis>,
-                             random_access_traversal_tag> {
+using axis_iterator_value = std::pair<
+    int, typename conditional<
+             is_reference<typename Axis::bin_type>::value,
+             cref<typename remove_reference<typename Axis::bin_type>::type>,
+             typename Axis::bin_type>::type>;
+} // namespace detail
+
+template <typename Axis>
+class axis_iterator : public iterator_facade<axis_iterator<Axis>,
+                                             detail::axis_iterator_value<Axis>,
+                                             random_access_traversal_tag> {
   using value_type = detail::axis_iterator_value<Axis>;
+
 public:
-  explicit axis_iterator(const Axis &axis, int idx)
-    : axis_(axis) { value_.first = idx; }
+  explicit axis_iterator(const Axis &axis, int idx) : axis_(axis) {
+    value_.first = idx;
+  }
 
 private:
   void increment() noexcept { ++value_.first; }
@@ -84,7 +80,7 @@ private:
   bool equal(const axis_iterator &other) const noexcept {
     return value_.first == other.value_.first;
   }
-  value_type& dereference() const {
+  value_type &dereference() const {
     value_.second = axis_[value_.first];
     return value_;
   }
@@ -204,40 +200,43 @@ private:
 };
 
 namespace transform {
-template <typename Value> struct identity {
-  static Value forward(Value v) { return v; }
-  static Value inverse(Value v) { return v; }
-  bool operator==(const identity&) const { return true; }
+struct identity {
+  template <typename T> static T forward(T v) { return v; }
+  template <typename T> static T inverse(T v) { return v; }
+  bool operator==(const identity &) const { return true; }
   template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
-template <typename Value> struct log {
-  static Value forward(Value v) { return std::log(v); }
-  static Value inverse(Value v) { return std::exp(v); }
-  bool operator==(const log&) const { return true; }
+struct log {
+  template <typename T> static T forward(T v) { return std::log(v); }
+  template <typename T> static T inverse(T v) { return std::exp(v); }
+  bool operator==(const log &) const { return true; }
   template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
-template <typename Value> struct sqrt {
-  static Value forward(Value v) { return std::sqrt(v); }
-  static Value inverse(Value v) { return v * v; }
-  bool operator==(const sqrt&) const { return true; }
+struct sqrt {
+  template <typename T> static T forward(T v) { return std::sqrt(v); }
+  template <typename T> static T inverse(T v) { return v * v; }
+  bool operator==(const sqrt &) const { return true; }
   template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
-template <typename Value> struct cos {
-  static Value forward(Value v) { return std::cos(v); }
-  static Value inverse(Value v) { return std::acos(v); }
-  bool operator==(const cos&) const { return true; }
+struct cos {
+  template <typename T> static T forward(T v) { return std::cos(v); }
+  template <typename T> static T inverse(T v) { return std::acos(v); }
+  bool operator==(const cos &) const { return true; }
   template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
-template <typename Value> struct pow {
+struct pow {
+  pow() = default;
   pow(double exponent) : value(exponent) {}
-  Value forward(Value v) const { return std::pow(v, value); }
-  Value inverse(Value v) const { return std::pow(v, 1.0/value); }
+  template <typename T> T forward(T v) const { return std::pow(v, value); }
+  template <typename T> T inverse(T v) const {
+    return std::pow(v, 1.0 / value);
+  }
   double value = 1.0;
-  bool operator==(const pow& other) const { return value == other.value; }
+  bool operator==(const pow &other) const { return value == other.value; }
   template <class Archive> void serialize(Archive &, unsigned);
 };
 } // namespace transform
@@ -247,14 +246,13 @@ template <typename Value> struct pow {
  * The simplest and common binning strategy.
  * Very fast. Binning is a O(1) operation.
  */
-template <typename RealType = double,
-          template <class> class Transform = transform::identity>
+template <typename RealType = double, typename Transform = transform::identity>
 class regular : public axis_base<with_uoflow>,
                 boost::operators<regular<RealType, Transform>> {
-  using transform = Transform<RealType>;
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
+  using transform_type = Transform;
   using const_iterator = axis_iterator<regular>;
 
   /** Construct axis with n bins over range [min, max).
@@ -267,16 +265,15 @@ public:
    * \param trans arguments passed to the transform.
    */
   regular(unsigned n, value_type min, value_type max,
-          string_view label = string_view(),
-          bool uoflow = true, transform trans = transform())
-      : axis_base<with_uoflow>(n, label, uoflow),
-        min_(trans.forward(min)),
-        delta_((trans.forward(max) - trans.forward(min)) / n),
-        trans_(trans)
-  {
+          string_view label = string_view(), bool uoflow = true,
+          transform_type trans = transform_type())
+      : axis_base<with_uoflow>(n, label, uoflow), min_(trans.forward(min)),
+        delta_((trans.forward(max) - trans.forward(min)) / n), trans_(trans) {
     if (!(min < max)) {
       throw std::logic_error("min < max required");
     }
+    BOOST_ASSERT(!std::isnan(min_));
+    BOOST_ASSERT(!std::isnan(delta_));
   }
 
   regular() = default;
@@ -293,7 +290,7 @@ public:
   }
 
   /// Returns the starting edge of the bin.
-  bin_type operator[](int idx) const {
+  bin_type operator[](int idx) const noexcept {
     auto eval = [this](int i) {
       const auto n = size();
       if (i < 0)
@@ -301,28 +298,29 @@ public:
       if (i > n)
         return trans_.inverse(std::numeric_limits<value_type>::infinity());
       const auto z = value_type(i) / n;
-      return trans_.inverse((1.0 - z) * min_ +
-                                            z * (min_ + delta_ * n));
+      return trans_.inverse((1.0 - z) * min_ + z * (min_ + delta_ * n));
     };
-    return {eval(idx), eval(idx+1)};
+    return {eval(idx), eval(idx + 1)};
   }
 
-  bool operator==(const regular &o) const {
+  bool operator==(const regular &o) const noexcept {
     return axis_base<with_uoflow>::operator==(o) && min_ == o.min_ &&
            delta_ == o.delta_ && trans_ == o.trans_;
   }
 
-  const_iterator begin() const {
+  const_iterator begin() const noexcept {
     return const_iterator(*this, uoflow() ? -1 : 0);
   }
 
-  const_iterator end() const {
+  const_iterator end() const noexcept {
     return const_iterator(*this, uoflow() ? size() + 1 : size());
   }
 
+  const transform_type &transform() const noexcept { return trans_; }
+
 private:
   value_type min_ = 0.0, delta_ = 1.0;
-  transform trans_;
+  transform_type trans_;
 
   friend class ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);
@@ -374,7 +372,7 @@ public:
       const value_type z = value_type(i) / size();
       return z * perimeter_ + phase_;
     };
-    return {eval(idx), eval(idx+1)};
+    return {eval(idx), eval(idx + 1)};
   }
 
   bool operator==(const circular &o) const {
@@ -467,7 +465,7 @@ public:
       }
       return x_[i];
     };
-    return {eval(idx), eval(idx+1)};
+    return {eval(idx), eval(idx + 1)};
   }
 
   bool operator==(const variable &o) const {
@@ -531,9 +529,7 @@ public:
   }
 
   /// Returns the integer that is mapped to the bin index.
-  bin_type operator[](int idx) const {
-    return {min_ + idx, min_ + idx + 1};
-  }
+  bin_type operator[](int idx) const { return {min_ + idx, min_ + idx + 1}; }
 
   bool operator==(const integer &o) const {
     return axis_base<with_uoflow>::operator==(o) && min_ == o.min_;
@@ -562,11 +558,13 @@ private:
  * Binning is a O(1) operation. The value type must be hashable.
  */
 template <typename T = int>
-class category : public axis_base<without_uoflow>, boost::operators<category<T>> {
+class category : public axis_base<without_uoflow>,
+                 boost::operators<category<T>> {
   using map_type = bimap<T, int>;
+
 public:
   using value_type = T;
-  using bin_type = const value_type&;
+  using bin_type = const value_type &;
   using const_iterator = axis_iterator<category<T>>;
 
   category() = default;
@@ -575,22 +573,18 @@ public:
    *
    * \param seq sequence of unique values.
    */
-  category(std::initializer_list<T> seq,
-           string_view label = string_view())
-    : axis_base<without_uoflow>(seq.size(), label)
-  {
+  category(std::initializer_list<T> seq, string_view label = string_view())
+      : axis_base<without_uoflow>(seq.size(), label) {
     int index = 0;
-    for (const auto& x : seq)
+    for (const auto &x : seq)
       map_.insert({x, index++});
     if (index == 0)
       throw std::logic_error("sequence is empty");
   }
 
   template <typename Iterator>
-  category(Iterator begin, Iterator end,
-           string_view label = string_view())
-    : axis_base<without_uoflow>(std::distance(begin, end), label)
-  {
+  category(Iterator begin, Iterator end, string_view label = string_view())
+      : axis_base<without_uoflow>(std::distance(begin, end), label) {
     int index = 0;
     while (begin != end)
       map_.insert({*begin++, index++});
@@ -600,7 +594,7 @@ public:
 
   /// Returns the bin index for the passed argument.
   /// Performs a range check.
-  inline int index(const value_type& x) const noexcept {
+  inline int index(const value_type &x) const noexcept {
     auto it = map_.left.find(x);
     if (it == map_.left.end())
       return size();
@@ -633,8 +627,11 @@ private:
 } // namespace axis
 
 using builtin_axes =
-    mpl::vector<axis::regular<>, axis::circular<>, axis::variable<>,
-                axis::integer<>, axis::category<int>>;
+    mpl::vector<axis::regular<>, axis::regular<double, axis::transform::log>,
+                axis::regular<double, axis::transform::sqrt>,
+                axis::regular<double, axis::transform::cos>,
+                axis::regular<double, axis::transform::pow>, axis::circular<>,
+                axis::variable<>, axis::integer<>, axis::category<>>;
 
 } // namespace histogram
 } // namespace boost

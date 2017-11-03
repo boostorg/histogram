@@ -115,7 +115,7 @@ template <typename Type> void run_tests() {
 
   // init_5
   {
-    enum {A, B, C};
+    enum { A, B, C };
     auto h = make_histogram<adaptive_storage<>>(
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},

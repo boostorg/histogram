@@ -7,19 +7,19 @@
 #ifndef _BOOST_HISTOGARM_AXIS_VISITOR_HPP_
 #define _BOOST_HISTOGARM_AXIS_VISITOR_HPP_
 
-#include <boost/histogram/interval.hpp>
 #include <boost/fusion/container/vector.hpp>
 #include <boost/fusion/include/comparison.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/include/is_sequence.hpp>
 #include <boost/fusion/include/size.hpp>
 #include <boost/fusion/support/is_sequence.hpp>
+#include <boost/histogram/interval.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/contains.hpp>
+#include <boost/type_traits.hpp>
 #include <boost/variant/get.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/variant.hpp>
-#include <boost/type_traits.hpp>
 
 namespace boost {
 namespace histogram {
@@ -43,18 +43,18 @@ template <typename V> struct index : public static_visitor<int> {
   template <typename A> int operator()(const A &a) const { return a.index(v); }
 };
 
-struct bin : public static_visitor<interval<double>> {
-  using double_interval = interval<double>;
+struct bin : public static_visitor<axis::interval<double>> {
+  using double_interval = axis::interval<double>;
   const int i;
   bin(const int v) : i(v) {}
-  template <typename A>
-  double_interval operator()(const A &a) const {
+  template <typename A> double_interval operator()(const A &a) const {
     return impl(is_convertible<typename A::bin_type, double_interval>(),
-                std::forward<typename A::bin_type>(a[i])); }
-  template<typename B>
-  double_interval impl(true_type, B && b) const { return b; }
-  template<typename B>
-  double_interval impl(false_type, B &&) const {
+                std::forward<typename A::bin_type>(a[i]));
+  }
+  template <typename B> double_interval impl(true_type, B &&b) const {
+    return b;
+  }
+  template <typename B> double_interval impl(false_type, B &&) const {
     throw std::runtime_error("cannot convert bin_type to interval<double>");
   }
 };

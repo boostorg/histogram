@@ -20,15 +20,6 @@
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
 #define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
-namespace boost { namespace histogram {
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const interval<T>& i)
-{
-  os << "[" << i.lower() << ", " << i.upper() << ")";
-  return os;
-}
-}}
-
 template <typename Axis>
 void test_axis_iterator(const Axis &a, int begin, int end) {
   for (const auto &bin : a) {
@@ -215,7 +206,7 @@ int main() {
 
   // iterators
   {
-    enum {A, B, C};
+    enum { A, B, C };
     test_axis_iterator(axis::regular<>(5, 0, 1, "", false), 0, 5);
     test_axis_iterator(axis::regular<>(5, 0, 1, "", true), -1, 6);
     test_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5);
@@ -251,9 +242,11 @@ int main() {
 
   // axis_t_streamable
   {
-    enum {A, B, C};
+    enum { A, B, C };
     std::vector<axis_t> axes;
-    axes.push_back(axis::regular<>{2, -1, 1, "regular", false});
+    axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
+    axes.push_back(axis::regular<double, axis::transform::log>{
+        2, 1, 10, "regular2", false});
     axes.push_back(axis::circular<>{4, 0.1, 1.0, "polar"});
     axes.push_back(axis::variable<>{{-1, 0, 1}, "variable", false});
     axes.push_back(axis::category<>{{A, B, C}, "category"});
@@ -262,17 +255,19 @@ int main() {
     for (const auto &a : axes) {
       os << a;
     }
-    const std::string ref = "regular(2, -1, 1, label='regular', uoflow=False)"
-                            "circular(4, phase=0.1, perimeter=1, label='polar')"
-                            "variable(-1, 0, 1, label='variable', uoflow=False)"
-                            "category(0, 1, 2, label='category')"
-                            "integer(-1, 1, label='integer', uoflow=False)";
+    const std::string ref =
+        "regular(2, -1, 1, label='regular1')"
+        "regular(2, 1, 10, label='regular2', uoflow=False, trans='log')"
+        "circular(4, phase=0.1, perimeter=1, label='polar')"
+        "variable(-1, 0, 1, label='variable', uoflow=False)"
+        "category(0, 1, 2, label='category')"
+        "integer(-1, 1, label='integer', uoflow=False)";
     BOOST_TEST_EQ(os.str(), ref);
   }
 
   // axis_t_equal_comparable
   {
-    enum {A, B, C};
+    enum { A, B, C };
     std::vector<axis_t> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
     axes.push_back(axis::circular<>{4});
@@ -289,19 +284,16 @@ int main() {
 
   // sequence equality
   {
-    enum {A, B, C};
+    enum { A, B, C };
     std::vector<boost::variant<axis::regular<>, axis::variable<>,
                                axis::category<>, axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{A, B, C}};
 
     std::vector<
-        boost::variant<
-          axis::regular<>, axis::variable<>, axis::category<>
-        >
-      >
-    std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                   axis::category<>{{A, B, C}}};
+        boost::variant<axis::regular<>, axis::variable<>, axis::category<>>>
+        std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
+                       axis::category<>{{A, B, C}}};
 
     std::vector<boost::variant<axis::regular<>, axis::variable<>>> std_vector3 =
         {axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
@@ -333,7 +325,7 @@ int main() {
 
   // sequence assign
   {
-    enum {A, B, C, D};
+    enum { A, B, C, D };
     std::vector<boost::variant<axis::regular<>, axis::variable<>,
                                axis::category<>, axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
