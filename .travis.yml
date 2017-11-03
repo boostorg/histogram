@@ -7,7 +7,7 @@ sudo: false
 cache:
   pip: true
   directories:
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.63.0
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0
 
 language: cpp
 
@@ -71,7 +71,7 @@ install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
 
-  - BOOST_VERSION=1.65.0
+  - BOOST_VERSION=1.65.0 # match version number of cache directory above
   - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}
   - |
     if [ ! -e ${BOOST_DIR} ]; then
