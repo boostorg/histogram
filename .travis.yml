@@ -73,7 +73,8 @@ install:
 
   - BOOST_VERSION=1.65.0
   - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}
-  - if [ ! -e ${BOOST_DIR} ]; then
+  - |
+    if [ ! -e ${BOOST_DIR} ]; then
       mkdir -p ${BOOST_DIR}
       pip install --user numpy==1.11.1;
       BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
