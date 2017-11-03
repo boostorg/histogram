@@ -237,7 +237,7 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
   for (auto d = 0u; d < dim; ++d) {
     fetch[d].assign(args[1 + d]);
     if (fetch[d].n > 0) {
-      if (n && fetch[d].n != n) {
+      if (n > 0 && fetch[d].n != n) {
         PyErr_SetString(PyExc_ValueError, "lengths of sequences do not match");
         python::throw_error_already_set();
       }
@@ -256,7 +256,7 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
     use_weight = true;
     fetch_weight.assign(kwargs.get("weight"));
     if (fetch_weight.n > 0) {
-      if (n && fetch_weight.n != n) {
+      if (n > 0 && fetch_weight.n != n) {
         PyErr_SetString(PyExc_ValueError, "length of weight sequence does not match");
         python::throw_error_already_set();
       }
