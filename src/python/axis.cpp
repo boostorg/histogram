@@ -207,11 +207,16 @@ python::object make_regular(unsigned bin, double lower, double upper,
     return object(axis::regular<double, axis::transform::cos>(
       bin, lower, upper, label, uoflow));
   else if (trans.substr(0, 3) == "pow") {
-    const double val = lexical_cast<double>(trans.substr(4, trans.size()-1));
-    return object(axis::regular<double, axis::transform::pow>(
-      bin, lower, upper, label, uoflow, axis::transform::pow(val)));
+    try {
+      const double val = lexical_cast<double>(trans.substr(4, trans.size()-5));
+      return object(axis::regular<double, axis::transform::pow>(
+        bin, lower, upper, label, uoflow, axis::transform::pow(val)));
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "pow argument not recognized");
+      throw_error_already_set();
+    }
   }
-  PyErr_SetString(PyExc_KeyError, "transform signature not recognized");
+  PyErr_SetString(PyExc_ValueError, "transform signature not recognized");
   throw_error_already_set();
   return object();
 }

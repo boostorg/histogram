@@ -16,7 +16,6 @@
 
 namespace boost {
 namespace histogram {
-
 namespace axis {
 
 namespace detail {

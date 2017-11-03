@@ -29,6 +29,11 @@ class test_regular(unittest.TestCase):
         regular(1, 1.0, 2.0, label="ra")
         regular(1, 1.0, 2.0, uoflow=False)
         regular(1, 1.0, 2.0, label="ra", uoflow=False)
+        regular(1, 1.0, 2.0, trans="log")
+        regular(1, 1.0, 2.0, trans="sqrt")
+        regular(1, 0.5, 1.0, trans="cos")
+        regular(1, 1.0, 2.0, trans="pow(1.5)")
+        regular(1, 1.0, 2.0, trans="pow[2]")
         with self.assertRaises(TypeError):
             regular()
         with self.assertRaises(TypeError):
@@ -49,6 +54,12 @@ class test_regular(unittest.TestCase):
             regular(1, 1.0, 2.0, label="ra", uoflow="True")
         with self.assertRaises(TypeError):
             regular(1, 1.0, 2.0, bad_keyword="ra")
+        with self.assertRaises(ValueError):
+            regular(1, 1.0, 2.0, trans="bla")
+        with self.assertRaises(ValueError):
+            regular(1, 1.0, 2.0, trans="pow")
+        with self.assertRaises(ValueError):
+            regular(1, 1.0, 2.0, trans="pow()")
         a = regular(4, 1.0, 2.0)
         self.assertEqual(a, regular(4, 1.0, 2.0))
         self.assertNotEqual(a, regular(3, 1.0, 2.0))
@@ -63,7 +74,8 @@ class test_regular(unittest.TestCase):
         for s in ("regular(4, 1.1, 2.2)",
                   "regular(4, 1.1, 2.2, label='ra')",
                   "regular(4, 1.1, 2.2, uoflow=False)",
-                  "regular(4, 1.1, 2.2, label='ra', uoflow=False)"):
+                  "regular(4, 1.1, 2.2, label='ra', uoflow=False)",
+                  "regular(4, 1.1, 2.2, trans='log')"):
             self.assertEqual(str(eval(s)), s)
 
     def test_getitem(self):
