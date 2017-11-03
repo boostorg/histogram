@@ -16,8 +16,8 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
-template <typename RealType>
-inline std::ostream &operator<<(std::ostream &os, const regular<RealType> &a) {
+template <typename RealType, template <class> class Transform>
+inline std::ostream &operator<<(std::ostream &os, const regular<RealType, Transform> &a) {
   os << "regular(" << a.size() << ", " << a[0].lower() << ", " << a[a.size()].lower();
   if (!a.label().empty()) {
     os << ", label=";

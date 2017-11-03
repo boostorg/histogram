@@ -132,6 +132,14 @@ void axis_base<with_uoflow>::serialize(Archive &ar, unsigned /* version */) {
   ar &label_;
 }
 
+namespace transform {
+  template <typename Value>
+  template <class Archive>
+  void pow<Value>::serialize(Archive& ar, unsigned /* version */) {
+    ar & value;
+  }
+}
+
 template <typename RealType, template <class> class Transform>
 template <class Archive>
 void regular<RealType, Transform>::serialize(Archive &ar,
@@ -139,6 +147,7 @@ void regular<RealType, Transform>::serialize(Archive &ar,
   ar &boost::serialization::base_object<axis_base<with_uoflow>>(*this);
   ar &min_;
   ar &delta_;
+  ar &trans_;
 }
 
 template <typename RealType>

@@ -548,13 +548,13 @@ template <typename Type> void run_tests() {
       buf = os.str();
     }
     auto b = decltype(a)();
-    BOOST_TEST(a != b);
+    BOOST_TEST_NE(a, b);
     {
       std::istringstream is(buf);
       boost::archive::text_iarchive ia(is);
       ia >> b;
     }
-    BOOST_TEST(a == b);
+    BOOST_TEST_EQ(a, b);
   }
 
   // histogram_ostream

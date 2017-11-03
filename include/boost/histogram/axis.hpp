@@ -207,16 +207,38 @@ namespace transform {
 template <typename Value> struct identity {
   static Value forward(Value v) { return v; }
   static Value inverse(Value v) { return v; }
+  bool operator==(const identity&) const { return true; }
+  template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
 template <typename Value> struct log {
   static Value forward(Value v) { return std::log(v); }
   static Value inverse(Value v) { return std::exp(v); }
+  bool operator==(const log&) const { return true; }
+  template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
 template <typename Value> struct sqrt {
   static Value forward(Value v) { return std::sqrt(v); }
   static Value inverse(Value v) { return v * v; }
+  bool operator==(const sqrt&) const { return true; }
+  template <class Archive> void serialize(Archive &, unsigned) {}
+};
+
+template <typename Value> struct cos {
+  static Value forward(Value v) { return std::cos(v); }
+  static Value inverse(Value v) { return std::acos(v); }
+  bool operator==(const cos&) const { return true; }
+  template <class Archive> void serialize(Archive &, unsigned) {}
+};
+
+template <typename Value> struct pow {
+  pow(double exponent) : value(exponent) {}
+  Value forward(Value v) const { return std::pow(v, value); }
+  Value inverse(Value v) const { return std::pow(v, 1.0/value); }
+  double value = 1.0;
+  bool operator==(const pow& other) const { return value == other.value; }
+  template <class Archive> void serialize(Archive &, unsigned);
 };
 } // namespace transform
 
@@ -242,12 +264,16 @@ public:
    * \param max high edge of last bin.
    * \param label description of the axis.
    * \param uoflow whether to add under-/overflow bins.
+   * \param trans arguments passed to the transform.
    */
   regular(unsigned n, value_type min, value_type max,
-          string_view label = string_view(), bool uoflow = true)
+          string_view label = string_view(),
+          bool uoflow = true, transform trans = transform())
       : axis_base<with_uoflow>(n, label, uoflow),
-        min_(transform::forward(min)),
-        delta_((transform::forward(max) - min_) / n) {
+        min_(trans.forward(min)),
+        delta_((trans.forward(max) - trans.forward(min)) / n),
+        trans_(trans)
+  {
     if (!(min < max)) {
       throw std::logic_error("min < max required");
     }
@@ -262,7 +288,7 @@ public:
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
     // Optimized code
-    const value_type z = (transform::forward(x) - min_) / delta_;
+    const value_type z = (trans_.forward(x) - min_) / delta_;
     return z >= 0.0 ? (z > size() ? size() : static_cast<int>(z)) : -1;
   }
 
@@ -271,11 +297,11 @@ public:
     auto eval = [this](int i) {
       const auto n = size();
       if (i < 0)
-        return transform::inverse(-std::numeric_limits<value_type>::infinity());
+        return trans_.inverse(-std::numeric_limits<value_type>::infinity());
       if (i > n)
-        return transform::inverse(std::numeric_limits<value_type>::infinity());
+        return trans_.inverse(std::numeric_limits<value_type>::infinity());
       const auto z = value_type(i) / n;
-      return transform::inverse((1.0 - z) * min_ +
+      return trans_.inverse((1.0 - z) * min_ +
                                             z * (min_ + delta_ * n));
     };
     return {eval(idx), eval(idx+1)};
@@ -283,7 +309,7 @@ public:
 
   bool operator==(const regular &o) const {
     return axis_base<with_uoflow>::operator==(o) && min_ == o.min_ &&
-           delta_ == o.delta_;
+           delta_ == o.delta_ && trans_ == o.trans_;
   }
 
   const_iterator begin() const {
@@ -296,6 +322,7 @@ public:
 
 private:
   value_type min_ = 0.0, delta_ = 1.0;
+  transform trans_;
 
   friend class ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);
