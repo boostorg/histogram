@@ -355,10 +355,10 @@ void register_histogram() {
 #ifdef HAVE_NUMPY
       .add_property("__array_interface__", &python::access::array_interface)
 #endif
-      .def("__len__", &dynamic_histogram::dim)
-      .def("axis", histogram_axis, python::arg("i")=0,
-           ":param index: integer"
-           "\nAccess axis object as index.")
+      .add_property("dim", &dynamic_histogram::dim)
+      .def("axis", histogram_axis, python::arg("i") = 0,
+           ":param int i: axis index"
+           "\nReturns axis with index i.")
       .def("fill", python::raw_function(histogram_fill),
            "Pass N values where N is equal to the dimensions"
            "\nof the histogram, and optionally another value with the keyword"
@@ -367,6 +367,8 @@ void register_histogram() {
            "\nIf Numpy support is enabled, 1d-arrays can be passed instead of"
            "\nvalues, which must be equal in lenght. Arrays and values can"
            "\nbe mixed in the same call.")
+      .add_property("size", &dynamic_histogram::size,
+           "Returns total number of bins, including under- and overflow.")
       .add_property("sum", &dynamic_histogram::sum,
            "Returns sum of all entries, including under- and overflow bins.")
       .def("value", python::raw_function(histogram_value),

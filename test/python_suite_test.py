@@ -82,21 +82,20 @@ class test_regular(unittest.TestCase):
         v = [1.0, 1.25, 1.5, 1.75, 2.0]
         a = regular(4, 1.0, 2.0)
         for i in range(4):
-            self.assertEqual(a[i].lower, v[i])
-            self.assertEqual(a[i].upper, v[i+1])
+            self.assertAlmostEqual(a[i].lower, v[i])
+            self.assertAlmostEqual(a[i].upper, v[i+1])
 
     def test_iter(self):
         v = [1.0, 1.25, 1.5, 1.75, 2.0]
         a = regular(4, 1.0, 2.0)
-        self.assertEqual([x.lower for x in a], v[:-1])
-        self.assertEqual([x.upper for x in a], v[1:])
+        self.assertAlmostEqual([x.lower for x in a], v[:-1])
+        self.assertAlmostEqual([x.upper for x in a], v[1:])
 
     def test_index(self):
         a = regular(4, 1.0, 2.0)
         self.assertEqual(a.index(-1), -1)
         self.assertEqual(a.index(0.99), -1)
         self.assertEqual(a.index(1.0), 0)
-        self.assertEqual(a.index(1.1), 0)
         self.assertEqual(a.index(1.249), 0)
         self.assertEqual(a.index(1.250), 1)
         self.assertEqual(a.index(1.499), 1)
@@ -105,8 +104,36 @@ class test_regular(unittest.TestCase):
         self.assertEqual(a.index(1.750), 3)
         self.assertEqual(a.index(1.999), 3)
         self.assertEqual(a.index(2.000), 4)
-        self.assertEqual(a.index(2.1), 4)
         self.assertEqual(a.index(20), 4)
+
+    def test_log_transform(self):
+        a = regular(2, 1e0, 1e2, trans="log")
+        self.assertEqual(a.index(-1), -1)
+        self.assertEqual(a.index(0.99), -1)
+        self.assertEqual(a.index(1.0), 0)
+        self.assertEqual(a.index(9.99), 0)
+        self.assertEqual(a.index(10.0), 1)
+        self.assertEqual(a.index(99.9), 1)
+        self.assertEqual(a.index(100), 2)
+        self.assertEqual(a.index(1000), 2)
+        self.assertAlmostEqual(a[0].lower, 1e0)
+        self.assertAlmostEqual(a[1].lower, 1e1)
+        self.assertAlmostEqual(a[1].upper, 1e2)
+
+
+    def test_pow_transform(self):
+        a = regular(2, 1.0, 9.0, trans="pow(0.5)")
+        self.assertEqual(a.index(-1), -1)
+        self.assertEqual(a.index(0.99), -1)
+        self.assertEqual(a.index(1.0), 0)
+        self.assertEqual(a.index(3.99), 0)
+        self.assertEqual(a.index(4.0), 1)
+        self.assertEqual(a.index(8.99), 1)
+        self.assertEqual(a.index(9), 2)
+        self.assertEqual(a.index(1000), 2)
+        self.assertAlmostEqual(a[0].lower, 1.0)
+        self.assertAlmostEqual(a[1].lower, 4.0)
+        self.assertAlmostEqual(a[1].upper, 9.0)
 
 class test_circular(unittest.TestCase):
 
@@ -345,7 +372,7 @@ class test_histogram(unittest.TestCase):
             histogram(integer(-1, 1), unknown_keyword="nh")
 
         h = histogram(integer(-1, 2))
-        self.assertEqual(len(h), 1)
+        self.assertEqual(h.dim, 1)
         self.assertEqual(h.axis(0), integer(-1, 2))
         self.assertEqual(h.axis(0).shape, 5)
         self.assertEqual(histogram(integer(-1, 2, uoflow=False)).axis(0).shape, 3)
@@ -572,7 +599,7 @@ class test_histogram(unittest.TestCase):
         io.seek(0)
         b = pickle.load(io)
         self.assertNotEqual(id(a), id(b))
-        self.assertEqual(len(a), len(b))
+        self.assertEqual(a.dim, b.dim)
         self.assertEqual(a.axis(0), b.axis(0))
         self.assertEqual(a.axis(1), b.axis(1))
         self.assertEqual(a.axis(2), b.axis(2))
@@ -600,7 +627,7 @@ class test_histogram(unittest.TestCase):
         io.seek(0)
         b = pickle.load(io)
         self.assertNotEqual(id(a), id(b))
-        self.assertEqual(len(a), len(b))
+        self.assertEqual(a.dim, b.dim)
         self.assertEqual(a.axis(0), b.axis(0))
         self.assertEqual(a.axis(1), b.axis(1))
         self.assertEqual(a.axis(2), b.axis(2))
