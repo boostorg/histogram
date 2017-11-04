@@ -226,7 +226,7 @@ struct pow {
  * Very fast. Binning is a O(1) operation.
  */
 template <typename RealType = double, typename Transform = transform::identity>
-class regular : public axis_base_uoflow, private Transform,
+class regular : public axis_base_uoflow, Transform,
                 boost::operators<regular<RealType, Transform>> {
 public:
   using value_type = RealType;
@@ -243,7 +243,8 @@ public:
    * \param trans arguments passed to the transform.
    */
   regular(unsigned n, value_type min, value_type max,
-          string_view label = string_view(), enum uoflow uo = uoflow::on,
+          string_view label = {},
+          enum uoflow uo = ::boost::histogram::axis::uoflow::on,
           Transform trans = Transform())
       : axis_base_uoflow(n, label, uo), Transform(trans),
         min_(trans.forward(min)),
@@ -329,7 +330,7 @@ public:
    */
   explicit circular(unsigned n, value_type phase = 0.0,
                     value_type perimeter = math::double_constants::two_pi,
-                    string_view label = string_view())
+                    string_view label = {})
       : axis_base(n, label), phase_(phase), perimeter_(perimeter) {}
 
   circular() = default;
@@ -392,7 +393,8 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   variable(std::initializer_list<value_type> x,
-           string_view label = string_view(), enum uoflow uo = uoflow::on)
+           string_view label = {},
+           enum uoflow uo = ::boost::histogram::axis::uoflow::on)
       : axis_base_uoflow(x.size() - 1, label, uo),
         x_(new value_type[x.size()]) {
     if (x.size() < 2) {
@@ -403,8 +405,8 @@ public:
   }
 
   template <typename Iterator>
-  variable(Iterator begin, Iterator end, string_view label = string_view(),
-           enum uoflow uo = uoflow::on)
+  variable(Iterator begin, Iterator end, string_view label = {},
+           enum uoflow uo = ::boost::histogram::axis::uoflow::on)
       : axis_base_uoflow(std::distance(begin, end) - 1, label, uo),
         x_(new value_type[std::distance(begin, end)]) {
     std::copy(begin, end, x_.get());
@@ -485,8 +487,8 @@ public:
    * \param min smallest integer of the covered range.
    * \param max largest integer of the covered range.
    */
-  integer(value_type min, value_type max, string_view label = string_view(),
-          enum uoflow uo = uoflow::on)
+  integer(value_type min, value_type max, string_view label = {},
+          enum uoflow uo = ::boost::histogram::axis::uoflow::on)
       : axis_base_uoflow(max - min, label, uo), min_(min) {
     if (min > max) {
       throw std::logic_error("min <= max required");
@@ -560,7 +562,7 @@ public:
    *
    * \param seq sequence of unique values.
    */
-  category(std::initializer_list<T> seq, string_view label = string_view())
+  category(std::initializer_list<T> seq, string_view label = {})
       : axis_base(seq.size(), label), map_(new map_type()) {
     int index = 0;
     for (const auto &x : seq)
@@ -570,7 +572,7 @@ public:
   }
 
   template <typename Iterator>
-  category(Iterator begin, Iterator end, string_view label = string_view())
+  category(Iterator begin, Iterator end, string_view label = {})
       : axis_base(std::distance(begin, end), label), map_(new map_type()) {
     int index = 0;
     while (begin != end)
