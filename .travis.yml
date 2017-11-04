@@ -73,6 +73,7 @@ install:
 
   - BOOST_VERSION=1.65.0 # match version number of cache directory above
   - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}
+  - rm -rf ${BOOST_DIR}
   - |
     if [ ! -e ${BOOST_DIR} ]; then
       mkdir -p ${BOOST_DIR}
