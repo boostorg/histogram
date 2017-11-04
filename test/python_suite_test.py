@@ -18,7 +18,9 @@ if sys.version_info.major == 3:
 else:
     from StringIO import StringIO as BytesIO
 
-have_numpy = "@BUILD_NUMPY_SUPPORT@"
+ON = True
+OFF = False
+have_numpy = @BUILD_NUMPY_SUPPORT@
 if have_numpy:
     import numpy
 
