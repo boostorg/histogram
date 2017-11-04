@@ -144,9 +144,9 @@ template <class Archive>
 void regular<RealType, Transform>::serialize(Archive &ar,
                                              unsigned /* version */) {
   ar &boost::serialization::base_object<axis_base_uoflow>(*this);
+  ar &boost::serialization::base_object<Transform>(*this);
   ar &min_;
   ar &delta_;
-  ar &trans_;
 }
 
 template <typename RealType>

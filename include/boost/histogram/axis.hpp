@@ -226,12 +226,11 @@ struct pow {
  * Very fast. Binning is a O(1) operation.
  */
 template <typename RealType = double, typename Transform = transform::identity>
-class regular : public axis_base_uoflow,
+class regular : public axis_base_uoflow, private Transform,
                 boost::operators<regular<RealType, Transform>> {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
-  using transform_type = Transform;
   using const_iterator = axis_iterator<regular>;
 
   /** Construct axis with n bins over range [min, max).
@@ -245,9 +244,10 @@ public:
    */
   regular(unsigned n, value_type min, value_type max,
           string_view label = string_view(), enum uoflow uo = uoflow::on,
-          transform_type trans = transform_type())
-      : axis_base_uoflow(n, label, uo), min_(trans.forward(min)),
-        delta_((trans.forward(max) - trans.forward(min)) / n), trans_(trans) {
+          Transform trans = Transform())
+      : axis_base_uoflow(n, label, uo), Transform(trans),
+        min_(trans.forward(min)),
+        delta_((trans.forward(max) - trans.forward(min)) / n) {
     if (!(min < max)) {
       throw std::logic_error("min < max required");
     }
@@ -264,7 +264,7 @@ public:
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
     // Optimized code
-    const value_type z = (trans_.forward(x) - min_) / delta_;
+    const value_type z = (this->forward(x) - min_) / delta_;
     return z >= 0.0 ? (z > size() ? size() : static_cast<int>(z)) : -1;
   }
 
@@ -273,18 +273,19 @@ public:
     auto eval = [this](int i) {
       const auto n = size();
       if (i < 0)
-        return trans_.inverse(-std::numeric_limits<value_type>::infinity());
+        return this->inverse(-std::numeric_limits<value_type>::infinity());
       if (i > n)
-        return trans_.inverse(std::numeric_limits<value_type>::infinity());
+        return this->inverse(std::numeric_limits<value_type>::infinity());
       const auto z = value_type(i) / n;
-      return trans_.inverse((1.0 - z) * min_ + z * (min_ + delta_ * n));
+      return this->inverse((1.0 - z) * min_ + z * (min_ + delta_ * n));
     };
     return {eval(idx), eval(idx + 1)};
   }
 
   bool operator==(const regular &o) const noexcept {
-    return axis_base_uoflow::operator==(o) && min_ == o.min_ &&
-           delta_ == o.delta_ && trans_ == o.trans_;
+    return axis_base_uoflow::operator==(o) &&
+           Transform::operator==(o) &&
+           min_ == o.min_ && delta_ == o.delta_;
   }
 
   const_iterator begin() const noexcept {
@@ -295,11 +296,12 @@ public:
     return const_iterator(*this, uoflow() ? size() + 1 : size());
   }
 
-  const transform_type &transform() const noexcept { return trans_; }
+  const Transform &transform() const noexcept {
+    return static_cast<const Transform&>(*this);
+  }
 
 private:
   value_type min_ = 0.0, delta_ = 1.0;
-  transform_type trans_;
 
   friend class ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);
