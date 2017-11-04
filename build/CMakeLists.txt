@@ -23,30 +23,26 @@ else()
 endif()
 
 if(BUILD_PYTHON)
+  if(DEFINED PYTHON_VERSION)
+    find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
+    find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test
+  else()
+    find_package(PythonLibs REQUIRED)
+    find_package(PythonInterp REQUIRED) # used by python_suite_test
+  endif()
+
+  message(STATUS "Python lib: ${PYTHON_LIBRARIES}")
+  message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
+  include_directories(${PYTHON_INCLUDE_DIRS})
+
   if(BUILD_NUMPY_SUPPORT)
     find_package(Boost 1.55 REQUIRED
                  COMPONENTS iostreams serialization python numpy)
-    find_package(Numpy 1.7 REQUIRED)
-    set(HAVE_NUMPY 1)
-    include_directories(${NUMPY_INCLUDE_DIR})
     add_definitions(-DHAVE_NUMPY)
   else()
     find_package(Boost 1.55 REQUIRED
                  COMPONENTS iostreams serialization python)
   endif()
-
-  if(DEFINED PYTHON_VERSION)
-    find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
-    find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test and FindNumpy
-  else()
-    find_package(PythonLibs REQUIRED)
-    find_package(PythonInterp REQUIRED) # used by python_suite_test and FindNumpy
-  endif()
-
-  message(STATUS "Python lib: ${PYTHON_LIBRARIES}")
-  message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
-  set(HAVE_PYTHON 1)
-  include_directories(${PYTHON_INCLUDE_DIRS})
 
   add_library(histogram SHARED
     ../src/python/module.cpp
@@ -93,7 +89,7 @@ add_custom_target(sync_examples ALL COMMAND python ../doc/sync_code.py)
 # checks
 if(BUILD_CHECKS)
   add_executable(speed_cpp ../test/speed_cpp.cpp)
-  if (HAVE_PYTHON)
+  if (BUILD_PYTHON)
     configure_file(../test/speed_numpy.py speed_numpy.py)
   endif()
 endif()
@@ -101,14 +97,14 @@ endif()
 # tests
 enable_testing()
 
-if(HAVE_PYTHON)
+if(BUILD_PYTHON)
   file(GLOB TEST_SOURCES ../test/*_test.py ../examples/*.py ${CMAKE_BINARY_DIR}/doc_test/*.py)
   foreach(SRC IN ITEMS ${TEST_SOURCES})
     if (SRC MATCHES "/([_a-zA-Z0-9]+)\\.py")
       set(TESTNAME ${CMAKE_MATCH_1})
       file(READ ${SRC} SRC_CONTENT)
-      if (HAVE_NUMPY OR
-          (NOT HAVE_NUMPY AND NOT SRC_CONTENT MATCHES "^import numpy|\nimport numpy"))
+      if (BUILD_NUMPY_SUPPORT OR
+          (NOT BUILD_NUMPY_SUPPORT AND NOT SRC_CONTENT MATCHES "^import numpy|\nimport numpy"))
         configure_file(${SRC} ${TESTNAME}.py)
         add_test(${TESTNAME} ${PYTHON_EXECUTABLE} ${TESTNAME}.py)
       endif()
@@ -119,7 +115,7 @@ endif()
 file(GLOB TEST_SOURCES ../test/*_test.cpp ../examples/*.cpp)
 foreach(SRC IN ITEMS ${TEST_SOURCES})
   if(SRC MATCHES "/module_([_a-zA-Z0-9]+)\\.cpp")
-    if(HAVE_PYTHON)
+    if(BUILD_PYTHON)
       add_library(${CMAKE_MATCH_1} SHARED ${SRC})
       set_target_properties(${CMAKE_MATCH_1} PROPERTIES PREFIX "" SUFFIX ".so")
       target_link_libraries(${CMAKE_MATCH_1} ${LIBRARIES})

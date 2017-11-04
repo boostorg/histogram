@@ -3,6 +3,7 @@
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
 
 import python ;
+import numpy ;
 import ../../config/checks/config : requires ;
 
 project boost/histogram
@@ -18,6 +19,7 @@ if [ python.configured ]
       python/histogram.cpp
     : # Requirements
       <library>/boost/python//boost_python
+      <library>/boost/python//boost_numpy
       <library>/boost/serialization//boost_serialization
       <link>shared
       [ requires
