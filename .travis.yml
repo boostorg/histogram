@@ -60,8 +60,8 @@ matrix:
           packages:
             - cmake
             - cmake-data
-            - g++-6
-      env: COMPILER_VERSION=6 CMAKE_BUILD_TYPE=cov
+            - g++-7
+      env: COMPILER_VERSION=7 CMAKE_BUILD_TYPE=cov
 
 git:
   depth: 1
@@ -73,7 +73,6 @@ install:
 
   - BOOST_VERSION=1.65.0 # match version number of cache directory above
   - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}
-  - rm -rf ${BOOST_DIR}
   - |
     if [ ! -e ${BOOST_DIR} ]; then
       mkdir -p ${BOOST_DIR}

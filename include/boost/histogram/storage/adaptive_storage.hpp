@@ -38,16 +38,33 @@ namespace detail {
 
 using mp_int = multiprecision::cpp_int;
 
+class array_base {
+public:
+  array_base(const std::size_t s) : size(s) {}
+  array_base() = default;
+  array_base(const array_base&) = default;
+  array_base& operator=(const array_base&) = default;
+  array_base(array_base&& rhs) : size(rhs.size) { rhs.size = 0; }
+  array_base& operator=(array_base&& rhs) {
+    if (this != &rhs) {
+      size = rhs.size;
+      rhs.size = 0;
+    }
+    return *this;
+  }
+  std::size_t size = 0;
+};
+
 template <template <class> class Allocator, typename T>
-class array : public Allocator<T> {
+class array : public array_base, public Allocator<T> {
 public:
   using value_type = T;
-  array(const std::size_t &s) : size(s) {
+  array(const std::size_t s) : array_base(s) {
     create();
     std::fill(begin(), end(), T(0));
   }
   array() = default;
-  array(const array &rhs) : Allocator<T>(rhs), size(rhs.size) {
+  array(const array &rhs) : array_base(rhs), Allocator<T>(rhs) {
     create();
     std::copy(rhs.begin(), rhs.end(), begin());
   }
@@ -64,13 +81,11 @@ public:
     return *this;
   }
   array(array &&rhs)
-      : Allocator<T>(std::move(rhs)), size(rhs.size), ptr(rhs.ptr) {
-    rhs.size = 0;
-  }
+      : array_base(std::move(rhs)), Allocator<T>(std::move(rhs)), ptr(rhs.ptr) {}
   array &operator=(array &&rhs) {
     if (this != &rhs) {
-      Allocator<T>::operator=(std::move(rhs));
       size = rhs.size;
+      Allocator<T>::operator=(std::move(rhs));
       ptr = rhs.ptr;
       rhs.size = 0;
     }
@@ -78,12 +93,13 @@ public:
   }
   ~array() { destroy(); }
 
+  // copy only up to nmax elements
   template <typename U>
   array(const array<Allocator, U> &rhs,
-        std::size_t n = std::numeric_limits<std::size_t>::max())
-      : Allocator<T>(rhs), size(rhs.size) {
+        std::size_t nmax = std::numeric_limits<std::size_t>::max())
+      : array_base(rhs), Allocator<T>(rhs) {
     create();
-    std::copy(rhs.begin(), rhs.begin() + std::min(n, size), begin());
+    std::copy(rhs.begin(), rhs.begin() + std::min(nmax, size), begin());
   }
 
   T &operator[](const std::size_t i) { return ptr[i]; }
@@ -93,8 +109,6 @@ public:
   T *end() { return ptr + size; }
   const T *begin() const { return ptr; }
   const T *end() const { return ptr + size; }
-
-  std::size_t size = 0;
 
 private:
   void create() {
@@ -118,16 +132,11 @@ private:
   T *ptr = nullptr;
 };
 
-template <template <class> class Allocator> class array<Allocator, void> {
+template <template <class> class Allocator> class array<Allocator, void>
+: public array_base {
 public:
   using value_type = void;
-  array(const std::size_t &s) : size(s) {}
-  array() = default;
-  array(const array &) = default;
-  array &operator=(const array &) = default;
-  array(array &&) = default;
-  array &operator=(array &&) = default;
-  std::size_t size = 0;
+  using array_base::array_base;
 };
 
 template <typename T> struct next_type;
@@ -158,23 +167,23 @@ public:
   adaptive_storage(adaptive_storage &&) = default;
   adaptive_storage &operator=(adaptive_storage &&) = default;
 
-  template <typename S, typename = detail::is_storage<S>>
-  explicit adaptive_storage(const S &rhs) : buffer_(array<void>(rhs.size())) {
-    for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
+  template <typename RHS, typename = detail::is_storage<RHS>>
+  explicit adaptive_storage(const RHS &rhs) : buffer_(array<void>(rhs.size())) {
+    for (auto i = 0ul, n = rhs.size(); i < n; ++i) {
       apply_visitor(
-          assign_visitor<typename S::value_type>(i, rhs.value(i), buffer_),
+          assign_visitor<typename RHS::value_type>(i, rhs.value(i), buffer_),
           buffer_);
     }
   }
 
-  template <typename S> adaptive_storage &operator=(const S &rhs) {
+  template <typename RHS> adaptive_storage &operator=(const RHS &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       if (size() != rhs.size()) {
         buffer_ = array<void>(rhs.size());
       }
-      for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
+      for (auto i = 0ul, n = rhs.size(); i < n; ++i) {
         apply_visitor(
-            assign_visitor<typename S::value_type>(i, rhs.value(i), buffer_),
+            assign_visitor<typename RHS::value_type>(i, rhs.value(i), buffer_),
             buffer_);
       }
     }
@@ -246,8 +255,9 @@ private:
     }
 
     void operator()(array<void> &b) const {
-      buffer = array<uint8_t>(b.size);
-      (*this)(get<array<uint8_t>>(buffer));
+      auto a = array<uint8_t>(b.size);
+      (*this)(a);
+      buffer = a;
     }
 
     void operator()(array<mp_int> &b) const {
