@@ -42,10 +42,10 @@ class array_base {
 public:
   array_base(const std::size_t s) : size(s) {}
   array_base() = default;
-  array_base(const array_base&) = default;
-  array_base& operator=(const array_base&) = default;
-  array_base(array_base&& rhs) : size(rhs.size) { rhs.size = 0; }
-  array_base& operator=(array_base&& rhs) {
+  array_base(const array_base &) = default;
+  array_base &operator=(const array_base &) = default;
+  array_base(array_base &&rhs) : size(rhs.size) { rhs.size = 0; }
+  array_base &operator=(array_base &&rhs) {
     if (this != &rhs) {
       size = rhs.size;
       rhs.size = 0;
@@ -81,7 +81,8 @@ public:
     return *this;
   }
   array(array &&rhs)
-      : array_base(std::move(rhs)), Allocator<T>(std::move(rhs)), ptr(rhs.ptr) {}
+      : array_base(std::move(rhs)), Allocator<T>(std::move(rhs)), ptr(rhs.ptr) {
+  }
   array &operator=(array &&rhs) {
     if (this != &rhs) {
       size = rhs.size;
@@ -132,8 +133,8 @@ private:
   T *ptr = nullptr;
 };
 
-template <template <class> class Allocator> class array<Allocator, void>
-: public array_base {
+template <template <class> class Allocator>
+class array<Allocator, void> : public array_base {
 public:
   using value_type = void;
   using array_base::array_base;

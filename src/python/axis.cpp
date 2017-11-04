@@ -11,16 +11,17 @@
 #include <boost/python.hpp>
 #include <boost/python/def_visitor.hpp>
 #include <boost/python/raw_function.hpp>
-#include <boost/lexical_cast.hpp>
+#include <boost/python/make_constructor.hpp>
+#include <boost/python/to_python_converter.hpp>
 #ifdef HAVE_NUMPY
 #include <boost/python/numpy.hpp>
 namespace np = boost::python::numpy;
 #endif
 #include <sstream>
-#include <string>
 #include <type_traits>
 #include <vector>
 #include <utility>
+#include <iostream>
 
 namespace boost {
 namespace histogram {
@@ -32,6 +33,26 @@ template <typename T> python::str generic_repr(const T &t) {
   os << t;
   return os.str().c_str();
 }
+
+template <typename T>
+struct axis_interval_to_python
+{
+  static PyObject* convert(const axis::interval<T> &i)
+  {
+    return python::incref(python::make_tuple(i.lower(), i.upper()).ptr());
+  }
+};
+
+template <typename T>
+struct pair_int_axis_interval_to_python
+{
+  static PyObject* convert(const std::pair<int, axis::interval<T>> &p)
+  {
+    return python::incref(python::make_tuple(
+      p.first, python::make_tuple(p.second.lower(), p.second.upper())
+    ).ptr());
+  }
+};
 
 python::object variable_init(python::tuple args, python::dict kwargs) {
   using namespace python;
@@ -49,15 +70,17 @@ python::object variable_init(python::tuple args, python::dict kwargs) {
   }
 
   string_view label;
-  bool uoflow = true;
+  auto uo = axis::uoflow::on;
   while (len(kwargs) > 0) {
     python::tuple kv = kwargs.popitem();
     string_view k = extract<const char*>(kv[0])();
     object v = kv[1];
     if (k == "label")
       label = extract<const char*>(v)();
-    else if (k == "uoflow")
-      uoflow = extract<bool>(v);
+    else if (k == "uoflow") {
+      if (!extract<bool>(v))
+        uo = axis::uoflow::off;
+    }
     else {
       std::stringstream s;
       s << "keyword " << k << " not recognized";
@@ -67,7 +90,7 @@ python::object variable_init(python::tuple args, python::dict kwargs) {
   }
 
   return self.attr("__init__")(
-      axis::variable<>(v.begin(), v.end(), label, uoflow));
+      axis::variable<>(v.begin(), v.end(), label, uo));
 }
 
 python::object category_init(python::tuple args, python::dict kwargs) {
@@ -104,22 +127,15 @@ python::object category_init(python::tuple args, python::dict kwargs) {
 
 template <typename A> python::object axis_getitem(const A &a, int i) {
   if (i == a.size()) {
-    PyErr_SetString(PyExc_StopIteration, "no more");
-    python::throw_error_already_set();
-  }
-  return python::object(a[i]);
-}
-
-template <> python::object axis_getitem(const axis::category<> &a, int i) {
-  if (i == a.size()) {
-    PyErr_SetString(PyExc_StopIteration, "no more");
+    PyErr_SetString(PyExc_IndexError, "index out of bounds");
     python::throw_error_already_set();
   }
   return python::object(a[i]);
 }
 
 template <typename T> void axis_set_label(T& t, python::str s) {
-  t.label(python::extract<const char*>(s)());
+  t.label({python::extract<const char*>(s)(),
+           static_cast<std::size_t>(python::len(s))});
 }
 
 template <typename T> python::str axis_get_label(const T& t) {
@@ -179,6 +195,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T>> {
            ":param integer i: bin index"
            "\n:returns: bin corresponding to index",
            python::args("self", "i"));
+    // cl.def("__iter__", python::iterator<const T>());
     cl.def("__repr__", generic_repr<T>,
            ":returns: string representation of this axis", python::arg("self"));
     cl.def(python::self == python::self);
@@ -188,37 +205,41 @@ struct axis_suite : public python::def_visitor<axis_suite<T>> {
   }
 };
 
-python::object make_regular(unsigned bin, double lower, double upper,
-                            python::str pylabel, bool uoflow,
-                            python::str pytrans)
+template <typename Transform>
+axis::regular<double, Transform>* regular_init(
+  unsigned bin, double lower, double upper,
+  python::str pylabel, bool with_uoflow)
 {
   using namespace ::boost::python;
-  string_view label(extract<const char*>(pylabel)(), len(pylabel));
-  string_view trans(extract<const char*>(pytrans)(), len(pytrans));
-  if (trans.empty())
-    return object(axis::regular<>(bin, lower, upper, label, uoflow));
-  else if (trans == "log")
-    return object(axis::regular<double, axis::transform::log>(
-      bin, lower, upper, label, uoflow));
-  else if (trans == "sqrt")
-    return object(axis::regular<double, axis::transform::sqrt>(
-      bin, lower, upper, label, uoflow));
-  else if (trans == "cos")
-    return object(axis::regular<double, axis::transform::cos>(
-      bin, lower, upper, label, uoflow));
-  else if (trans.substr(0, 3) == "pow") {
-    try {
-      const double val = lexical_cast<double>(trans.substr(4, trans.size()-5));
-      return object(axis::regular<double, axis::transform::pow>(
-        bin, lower, upper, label, uoflow, axis::transform::pow(val)));
-    } catch (...) {
-      PyErr_SetString(PyExc_ValueError, "pow argument not recognized");
-      throw_error_already_set();
-    }
-  }
-  PyErr_SetString(PyExc_ValueError, "transform signature not recognized");
-  throw_error_already_set();
-  return object();
+  const auto uo = with_uoflow ? axis::uoflow::on : axis::uoflow::off;
+  return new axis::regular<double, Transform>(bin, lower, upper,
+      {extract<const char*>(pylabel)(),
+       static_cast<std::size_t>(len(pylabel))},
+      uo);
+}
+
+axis::regular<double, axis::transform::pow>* regular_pow_init(
+  unsigned bin, double lower, double upper, double power,
+  python::str pylabel, bool with_uoflow)
+{
+  using namespace ::boost::python;
+  const auto uo = with_uoflow ? axis::uoflow::on : axis::uoflow::off;
+  return new axis::regular<double, axis::transform::pow>(
+      bin, lower, upper,
+      {extract<const char*>(pylabel)(),
+       static_cast<std::size_t>(len(pylabel))},
+      uo, power);
+}
+
+axis::integer<>* integer_init(int lower, int upper,
+                              python::str pylabel, bool with_uoflow)
+{
+  using namespace ::boost::python;
+  const auto uo = with_uoflow ? axis::uoflow::on : axis::uoflow::off;
+  return new axis::integer<>(lower, upper,
+      {extract<const char*>(pylabel)(),
+       static_cast<std::size_t>(len(pylabel))},
+      uo);
 }
 
 } // namespace
@@ -229,58 +250,67 @@ void register_axis_types() {
   using ::boost::python::arg; // resolve ambiguity
   docstring_options dopt(true, true, false);
 
-  class_<interval<double>>(
-      "interval_double",
-      no_init)
-      .add_property("lower",
-                    make_function(&interval<double>::lower,
-                                  return_value_policy<return_by_value>()))
-      .add_property("upper",
-                    make_function(&interval<double>::upper,
-                                  return_value_policy<return_by_value>()))
-      .def("__repr__", generic_repr<interval<double>>)
-      ;
+  to_python_converter<
+    interval<int>,
+    axis_interval_to_python<int>
+  >();
 
-  class_<interval<int>>(
-      "interval_int",
-      no_init)
-      .add_property("lower",
-                    make_function(&interval<int>::lower,
-                                  return_value_policy<return_by_value>()))
-      .add_property("upper",
-                    make_function(&interval<int>::upper,
-                                  return_value_policy<return_by_value>()))
-      .def("__repr__", generic_repr<interval<int>>)
-      ;
+  to_python_converter<
+    interval<double>,
+    axis_interval_to_python<double>
+  >();
 
-#define BOOST_HISTOGRAM_REGULAR_AXIS_PYTHON_CLASS(x)            \
-  class_<regular<double, transform::x>>(            \
-      "regular_"#x,                                             \
-      "An axis for real-valued data and bins of equal width."   \
-      "\nBinning is a O(1) operation.",                         \
-      no_init)                                                  \
-      .def(axis_suite<regular<double, transform::x>>())
+  to_python_converter<
+    std::pair<int, interval<int>>,
+    pair_int_axis_interval_to_python<int>
+  >();
 
-  BOOST_HISTOGRAM_REGULAR_AXIS_PYTHON_CLASS(identity);
-  BOOST_HISTOGRAM_REGULAR_AXIS_PYTHON_CLASS(log);
-  BOOST_HISTOGRAM_REGULAR_AXIS_PYTHON_CLASS(sqrt);
-  BOOST_HISTOGRAM_REGULAR_AXIS_PYTHON_CLASS(cos);
-  BOOST_HISTOGRAM_REGULAR_AXIS_PYTHON_CLASS(pow);
+  to_python_converter<
+    std::pair<int, interval<double>>,
+    pair_int_axis_interval_to_python<double>
+  >();
 
-  def("regular", make_regular,
-      "An axis for real-valued data and bins of equal width."
-      "\nOptionally, a monotonic transform can be selected from"
-      "\na predefined set, which mediates between the data space"
-      "\nand the axis space. For example, one can create an axis"
-      "\nwith logarithmic instead of normal linear steps."
+  class_<regular<>>(
+      "regular",
+      "Axis for real-valued data and bins of equal width."
       "\nBinning is a O(1) operation.",
-      (arg("bin"), arg("lower"), arg("upper"),
-       arg("label") = str(), arg("uoflow") = true,
-       arg("trans") = str()));
+      no_init)
+      .def("__init__", make_constructor(regular_init<axis::transform::identity>,
+        default_call_policies(),
+        (arg("bin"), arg("lower"), arg("upper"),
+         arg("label")="", arg("uoflow")=true)))
+      .def(axis_suite<regular<>>());
+
+#define BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(x)                           \
+  class_<regular<double, axis::transform::x>>(                            \
+      "regular_"#x,                                                       \
+      "Axis for real-valued data and bins of equal width in "#x"-space."  \
+      "\nBinning is a O(1) operation.",                                   \
+      no_init)                                                            \
+      .def("__init__", make_constructor(regular_init<axis::transform::x>, \
+        default_call_policies(),                                          \
+        (arg("bin"), arg("lower"), arg("upper"),                          \
+         arg("label")="", arg("uoflow")=true)))                           \
+      .def(axis_suite<regular<double, axis::transform::x>>())
+
+  BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(log);
+  BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(sqrt);
+  BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(cos);
+
+  class_<regular<double, axis::transform::pow>>(
+      "regular_pow",
+      "Axis for real-valued data and bins of equal width in power-space."
+      "\nBinning is a O(1) operation.",
+      no_init)
+      .def("__init__", make_constructor(regular_pow_init,
+        default_call_policies(),
+        (arg("bin"), arg("lower"), arg("upper"), arg("power"),
+         arg("label")="", arg("uoflow")=true)))
+      .def(axis_suite<regular<double, axis::transform::pow>>());
 
   class_<circular<>>(
       "circular",
-      "An axis for real-valued angles."
+      "Axis for real-valued angles."
       "\nThere are no overflow/underflow bins for this axis,"
       "\nsince the axis is circular and wraps around after reaching"
       "\nthe perimeter value. Binning is a O(1) operation.",
@@ -288,12 +318,12 @@ void register_axis_types() {
       .def(init<unsigned, double, double, const char*>(
           (arg("self"), arg("bin"), arg("phase") = 0.0,
            arg("perimeter") = math::double_constants::two_pi,
-           arg("label") = std::string())))
+           arg("label") = "")))
       .def(axis_suite<circular<>>());
 
   class_<variable<>>(
       "variable",
-      "An axis for real-valued data and bins of varying width."
+      "Axis for real-valued data and bins of varying width."
       "\nBinning is a O(log(N)) operation. If speed matters and"
       "\nthe problem domain allows it, prefer a regular axis.",
       no_init)
@@ -307,9 +337,10 @@ void register_axis_types() {
       "\nthat are one integer wide. Faster than a regular axis."
       "\nBinning is a O(1) operation.",
       no_init)
-      .def(init<int, int, const char *, bool>(
-          (arg("self"), arg("lower"), arg("upper"), arg("label") = std::string(),
-           arg("uoflow") = true)))
+      .def("__init__", make_constructor(integer_init,
+           default_call_policies(),
+           (arg("lower"), arg("upper"), arg("label") = "",
+            arg("uoflow") = true)))
       .def(axis_suite<integer<>>());
 
   class_<category<>>(

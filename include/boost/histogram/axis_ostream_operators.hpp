@@ -3,6 +3,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// String representations here evaluate correctly in Python.
 
 #ifndef _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
 #define _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
@@ -10,7 +12,6 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/interval.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <ostream>
 
@@ -19,32 +20,17 @@ namespace histogram {
 namespace axis {
 
 namespace detail {
-inline string_view to_string(int) { return {"int", 3}; }
-inline string_view to_string(double) { return {"double", 6}; }
 inline string_view to_string(const transform::identity &) { return {}; }
-inline string_view to_string(const transform::log &) { return {"log", 3}; }
-inline string_view to_string(const transform::sqrt &) { return {"sqrt", 4}; }
-inline string_view to_string(const transform::cos &) { return {"cos", 3}; }
-inline std::string to_string(const transform::pow &p) {
-  std::string s("pow(");
-  s += lexical_cast<std::string>(p.value);
-  s += ")";
-  return s;
-}
+inline string_view to_string(const transform::log &) { return {"_log", 4}; }
+inline string_view to_string(const transform::sqrt &) { return {"_sqrt", 5}; }
+inline string_view to_string(const transform::cos &) { return {"_cos", 4}; }
 } // namespace detail
-
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const interval<T> &i) {
-  os << "interval_" << detail::to_string(T()) << "(" << i.lower() << ", "
-     << i.upper() << ")";
-  return os;
-}
 
 template <typename RealType, typename Transform>
 inline std::ostream &operator<<(std::ostream &os,
                                 const regular<RealType, Transform> &a) {
-  os << "regular(" << a.size() << ", " << a[0].lower() << ", "
-     << a[a.size()].lower();
+  os << "regular" << detail::to_string(Transform()) << "(" << a.size() << ", "
+     << a[0].lower() << ", " << a[a.size()].lower();
   if (!a.label().empty()) {
     os << ", label=";
     ::boost::histogram::detail::escape(os, a.label());
@@ -52,10 +38,21 @@ inline std::ostream &operator<<(std::ostream &os,
   if (!a.uoflow()) {
     os << ", uoflow=False";
   }
-  auto strans = detail::to_string(a.transform());
-  if (!strans.empty()) {
-    os << ", trans=";
-    ::boost::histogram::detail::escape(os, strans);
+  os << ")";
+  return os;
+}
+
+template <typename RealType>
+inline std::ostream &
+operator<<(std::ostream &os, const regular<RealType, axis::transform::pow> &a) {
+  os << "regular_pow(" << a.size() << ", " << a[0].lower() << ", "
+     << a[a.size()].lower() << ", " << a.transform().value;
+  if (!a.label().empty()) {
+    os << ", label=";
+    ::boost::histogram::detail::escape(os, a.label());
+  }
+  if (!a.uoflow()) {
+    os << ", uoflow=False";
   }
   os << ")";
   return os;

@@ -256,7 +256,7 @@ template <typename Type> void run_tests() {
   // d1_2
   {
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::integer<>(0, 2, "", false));
+        Type(), axis::integer<>(0, 2, "", axis::uoflow::off));
     h.fill(0);
     h.fill(-0);
     h.fill(-1);
@@ -322,7 +322,8 @@ template <typename Type> void run_tests() {
   // d2
   {
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::regular<>(2, -1, 1), axis::integer<>(-1, 2, "", false));
+        Type(), axis::regular<>(2, -1, 1),
+        axis::integer<>(-1, 2, "", axis::uoflow::off));
     h.fill(-1, -1);
     h.fill(-1, 0);
     h.fill(-1, -10);
@@ -371,7 +372,8 @@ template <typename Type> void run_tests() {
   // d2w
   {
     auto h = make_histogram<adaptive_storage<>>(
-        Type(), axis::regular<>(2, -1, 1), axis::integer<>(-1, 2, "", false));
+        Type(), axis::regular<>(2, -1, 1),
+        axis::integer<>(-1, 2, "", axis::uoflow::off));
     h.fill(-1, 0);              // -> 0, 1
     h.fill(weight(10), -1, -1); // -> 0, 0
     h.fill(weight(5), -1, -10); // is ignored
@@ -572,7 +574,7 @@ template <typename Type> void run_tests() {
   // histogram_reset
   {
     auto a = make_histogram<adaptive_storage<>>(
-        Type(), axis::integer<>(0, 2, "", false));
+        Type(), axis::integer<>(0, 2, "", axis::uoflow::off));
     a.fill(0);
     a.fill(1);
     BOOST_TEST_EQ(a.value(0), 1);

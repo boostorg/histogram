@@ -37,7 +37,7 @@ namespace histogram {
 
 namespace axis {
 
-enum { with_uoflow = true, without_uoflow = false };
+enum class uoflow { off = false, on = true };
 
 namespace detail {
 // similar to boost::reference_wrapper, but with default ctor
@@ -63,9 +63,9 @@ template <typename Axis>
 class axis_iterator : public iterator_facade<axis_iterator<Axis>,
                                              detail::axis_iterator_value<Axis>,
                                              random_access_traversal_tag> {
+public:
   using value_type = detail::axis_iterator_value<Axis>;
 
-public:
   explicit axis_iterator(const Axis &axis, int idx) : axis_(axis) {
     value_.first = idx;
   }
@@ -89,76 +89,17 @@ private:
   friend class boost::iterator_core_access;
 };
 
-/// Common base class for all axes.
-template <bool UOFlow> class axis_base;
-
-/// Specialization with overflow/underflow bins.
-template <> class axis_base<with_uoflow> {
+/// Base class for all axes.
+class axis_base {
 public:
   /// Returns the number of bins, excluding overflow/underflow.
-  inline int size() const { return size_; }
+  inline int size() const noexcept { return size_; }
   /// Returns the number of bins, including overflow/underflow.
-  inline int shape() const { return shape_; }
+  inline int shape() const noexcept { return size_; }
   /// Returns whether axis has extra overflow and underflow bins.
-  inline bool uoflow() const { return shape_ > size_; }
+  inline bool uoflow() const noexcept { return false; }
   /// Returns the axis label, which is a name or description.
-  string_view label() const { return label_; }
-  /// Change the label of an axis.
-  void label(string_view label) { label_.assign(label.begin(), label.end()); }
-
-protected:
-  axis_base(unsigned n, string_view label, bool uoflow)
-      : size_(n), shape_(size_ + 2 * static_cast<int>(uoflow)),
-        label_(label.begin(), label.end()) {
-    if (n == 0) {
-      throw std::logic_error("bins > 0 required");
-    }
-  }
-
-  axis_base() = default;
-  axis_base(const axis_base &) = default;
-  axis_base &operator=(const axis_base &) = default;
-  axis_base(axis_base &&other)
-      : size_(other.size_), shape_(other.shape_),
-        label_(std::move(other.label_)) {
-    other.size_ = 0;
-    other.shape_ = 0;
-  }
-  axis_base &operator=(axis_base &&other) {
-    if (this != &other) {
-      size_ = other.size_;
-      shape_ = other.shape_;
-      label_ = std::move(other.label_);
-      other.size_ = 0;
-      other.shape_ = 0;
-    }
-    return *this;
-  }
-
-  bool operator==(const axis_base &o) const {
-    return size_ == o.size_ && shape_ == o.shape_ && label_ == o.label_;
-  }
-
-private:
-  int size_ = 0;
-  int shape_ = 0;
-  std::string label_;
-
-  friend class ::boost::serialization::access;
-  template <class Archive> void serialize(Archive &, unsigned);
-};
-
-/// Specialization without overflow/underflow bins.
-template <> class axis_base<without_uoflow> {
-public:
-  /// Returns the number of bins, excluding overflow/underflow.
-  inline int size() const { return size_; }
-  /// Returns the number of bins, including overflow/underflow.
-  inline int shape() const { return size_; }
-  /// Returns whether axis has extra overflow and underflow bins.
-  inline bool uoflow() const { return false; }
-  /// Returns the axis label, which is a name or description.
-  string_view label() const { return label_; }
+  string_view label() const noexcept { return label_; }
   /// Change the label of an axis.
   void label(string_view label) { label_.assign(label.begin(), label.end()); }
 
@@ -174,26 +115,64 @@ protected:
   axis_base() = default;
   axis_base(const axis_base &) = default;
   axis_base &operator=(const axis_base &) = default;
-  axis_base(axis_base &&other)
-      : size_(other.size_), label_(std::move(other.label_)) {
-    other.size_ = 0;
+  axis_base(axis_base &&rhs) : size_(rhs.size_), label_(std::move(rhs.label_)) {
+    rhs.size_ = 0;
   }
-  axis_base &operator=(axis_base &&other) {
-    if (this != &other) {
-      size_ = other.size_;
-      label_ = std::move(other.label_);
-      other.size_ = 0;
+  axis_base &operator=(axis_base &&rhs) {
+    if (this != &rhs) {
+      size_ = rhs.size_;
+      label_ = std::move(rhs.label_);
+      rhs.size_ = 0;
     }
     return *this;
   }
 
-  bool operator==(const axis_base &other) const {
-    return size_ == other.size_ && label_ == other.label_;
+  bool operator==(const axis_base &rhs) const {
+    return size_ == rhs.size_ && label_ == rhs.label_;
   }
 
 private:
   int size_ = 0;
   std::string label_;
+
+  friend class ::boost::serialization::access;
+  template <class Archive> void serialize(Archive &, unsigned);
+};
+
+/// Base class for axes with overflow/underflow bins.
+class axis_base_uoflow : public axis_base {
+public:
+  /// Returns the number of bins, including overflow/underflow.
+  inline int shape() const noexcept { return shape_; }
+  /// Returns whether axis has extra overflow and underflow bins.
+  inline bool uoflow() const noexcept { return shape_ > size(); }
+
+protected:
+  axis_base_uoflow(unsigned n, string_view label, enum uoflow uo)
+      : axis_base(n, label), shape_(n + 2u * static_cast<unsigned>(uo)) {}
+
+  axis_base_uoflow() = default;
+  axis_base_uoflow(const axis_base_uoflow &) = default;
+  axis_base_uoflow &operator=(const axis_base_uoflow &) = default;
+  axis_base_uoflow(axis_base_uoflow &&rhs)
+      : axis_base(std::move(rhs)), shape_(rhs.shape_) {
+    rhs.shape_ = 0;
+  }
+  axis_base_uoflow &operator=(axis_base_uoflow &&rhs) {
+    if (this != &rhs) {
+      axis_base::operator=(std::move(rhs));
+      shape_ = rhs.shape_;
+      rhs.shape_ = 0;
+    }
+    return *this;
+  }
+
+  bool operator==(const axis_base_uoflow &rhs) const {
+    return axis_base::operator==(rhs) && shape_ == rhs.shape_;
+  }
+
+private:
+  int shape_ = 0;
 
   friend class ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);
@@ -247,7 +226,7 @@ struct pow {
  * Very fast. Binning is a O(1) operation.
  */
 template <typename RealType = double, typename Transform = transform::identity>
-class regular : public axis_base<with_uoflow>,
+class regular : public axis_base_uoflow,
                 boost::operators<regular<RealType, Transform>> {
 public:
   using value_type = RealType;
@@ -265,9 +244,9 @@ public:
    * \param trans arguments passed to the transform.
    */
   regular(unsigned n, value_type min, value_type max,
-          string_view label = string_view(), bool uoflow = true,
+          string_view label = string_view(), enum uoflow uo = uoflow::on,
           transform_type trans = transform_type())
-      : axis_base<with_uoflow>(n, label, uoflow), min_(trans.forward(min)),
+      : axis_base_uoflow(n, label, uo), min_(trans.forward(min)),
         delta_((trans.forward(max) - trans.forward(min)) / n), trans_(trans) {
     if (!(min < max)) {
       throw std::logic_error("min < max required");
@@ -304,7 +283,7 @@ public:
   }
 
   bool operator==(const regular &o) const noexcept {
-    return axis_base<with_uoflow>::operator==(o) && min_ == o.min_ &&
+    return axis_base_uoflow::operator==(o) && min_ == o.min_ &&
            delta_ == o.delta_ && trans_ == o.trans_;
   }
 
@@ -333,8 +312,7 @@ private:
  * bins for this axis. Binning is a O(1) operation.
  */
 template <typename RealType = double>
-class circular : public axis_base<without_uoflow>,
-                 boost::operators<regular<RealType>> {
+class circular : public axis_base, boost::operators<regular<RealType>> {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -350,8 +328,7 @@ public:
   explicit circular(unsigned n, value_type phase = 0.0,
                     value_type perimeter = math::double_constants::two_pi,
                     string_view label = string_view())
-      : axis_base<without_uoflow>(n, label), phase_(phase),
-        perimeter_(perimeter) {}
+      : axis_base(n, label), phase_(phase), perimeter_(perimeter) {}
 
   circular() = default;
   circular(const circular &) = default;
@@ -376,7 +353,7 @@ public:
   }
 
   bool operator==(const circular &o) const {
-    return axis_base<without_uoflow>::operator==(o) && phase_ == o.phase_ &&
+    return axis_base::operator==(o) && phase_ == o.phase_ &&
            perimeter_ == o.perimeter_;
   }
 
@@ -400,8 +377,7 @@ private:
  * and the problem domain allows it, prefer a regular.
  */
 template <typename RealType = double>
-class variable : public axis_base<with_uoflow>,
-                 boost::operators<variable<RealType>> {
+class variable : public axis_base_uoflow, boost::operators<variable<RealType>> {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -414,8 +390,8 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   variable(std::initializer_list<value_type> x,
-           string_view label = string_view(), bool uoflow = true)
-      : axis_base<with_uoflow>(x.size() - 1, label, uoflow),
+           string_view label = string_view(), enum uoflow uo = uoflow::on)
+      : axis_base_uoflow(x.size() - 1, label, uo),
         x_(new value_type[x.size()]) {
     if (x.size() < 2) {
       throw std::logic_error("at least two values required");
@@ -426,8 +402,8 @@ public:
 
   template <typename Iterator>
   variable(Iterator begin, Iterator end, string_view label = string_view(),
-           bool uoflow = true)
-      : axis_base<with_uoflow>(std::distance(begin, end) - 1, label, uoflow),
+           enum uoflow uo = uoflow::on)
+      : axis_base_uoflow(std::distance(begin, end) - 1, label, uo),
         x_(new value_type[std::distance(begin, end)]) {
     std::copy(begin, end, x_.get());
     std::sort(x_.get(), x_.get() + size() + 1);
@@ -435,12 +411,12 @@ public:
 
   variable() = default;
   variable(const variable &o)
-      : axis_base<with_uoflow>(o), x_(new value_type[size() + 1]) {
+      : axis_base_uoflow(o), x_(new value_type[size() + 1]) {
     std::copy(o.x_.get(), o.x_.get() + size() + 1, x_.get());
   }
   variable &operator=(const variable &o) {
     if (this != &o) {
-      axis_base<with_uoflow>::operator=(o);
+      axis_base_uoflow::operator=(o);
       x_.reset(new value_type[size() + 1]);
       std::copy(o.x_.get(), o.x_.get() + size() + 1, x_.get());
     }
@@ -469,7 +445,7 @@ public:
   }
 
   bool operator==(const variable &o) const {
-    if (!axis_base<with_uoflow>::operator==(o)) {
+    if (!axis_base_uoflow::operator==(o)) {
       return false;
     }
     return std::equal(x_.get(), x_.get() + size() + 1, o.x_.get());
@@ -496,8 +472,7 @@ private:
  * faster than a regular.
  */
 template <typename IntType = int>
-class integer : public axis_base<with_uoflow>,
-                boost::operators<integer<IntType>> {
+class integer : public axis_base_uoflow, boost::operators<integer<IntType>> {
 public:
   using value_type = IntType;
   using bin_type = interval<value_type>;
@@ -509,8 +484,8 @@ public:
    * \param max largest integer of the covered range.
    */
   integer(value_type min, value_type max, string_view label = string_view(),
-          bool uoflow = true)
-      : axis_base<with_uoflow>(max - min, label, uoflow), min_(min) {
+          enum uoflow uo = uoflow::on)
+      : axis_base_uoflow(max - min, label, uo), min_(min) {
     if (min > max) {
       throw std::logic_error("min <= max required");
     }
@@ -532,7 +507,7 @@ public:
   bin_type operator[](int idx) const { return {min_ + idx, min_ + idx + 1}; }
 
   bool operator==(const integer &o) const {
-    return axis_base<with_uoflow>::operator==(o) && min_ == o.min_;
+    return axis_base_uoflow::operator==(o) && min_ == o.min_;
   }
 
   const_iterator begin() const {
@@ -558,8 +533,7 @@ private:
  * Binning is a O(1) operation. The value type must be hashable.
  */
 template <typename T = int>
-class category : public axis_base<without_uoflow>,
-                 boost::operators<category<T>> {
+class category : public axis_base, boost::operators<category<T>> {
   using map_type = bimap<T, int>;
 
 public:
@@ -568,26 +542,37 @@ public:
   using const_iterator = axis_iterator<category<T>>;
 
   category() = default;
+  category(const category &rhs)
+      : axis_base(rhs), map_(new map_type(*rhs.map_)) {}
+  category &operator=(const category &rhs) {
+    if (this != &rhs) {
+      axis_base::operator=(rhs);
+      map_.reset(new map_type(*rhs.map_));
+    }
+    return *this;
+  }
+  category(category &&rhs) = default;
+  category &operator=(category &&rhs) = default;
 
   /** Construct from an initializer list of strings.
    *
    * \param seq sequence of unique values.
    */
   category(std::initializer_list<T> seq, string_view label = string_view())
-      : axis_base<without_uoflow>(seq.size(), label) {
+      : axis_base(seq.size(), label), map_(new map_type()) {
     int index = 0;
     for (const auto &x : seq)
-      map_.insert({x, index++});
+      map_->insert({x, index++});
     if (index == 0)
       throw std::logic_error("sequence is empty");
   }
 
   template <typename Iterator>
   category(Iterator begin, Iterator end, string_view label = string_view())
-      : axis_base<without_uoflow>(std::distance(begin, end), label) {
+      : axis_base(std::distance(begin, end), label), map_(new map_type()) {
     int index = 0;
     while (begin != end)
-      map_.insert({*begin++, index++});
+      map_->insert({*begin++, index++});
     if (index == 0)
       throw std::logic_error("iterator range is empty");
   }
@@ -595,22 +580,22 @@ public:
   /// Returns the bin index for the passed argument.
   /// Performs a range check.
   inline int index(const value_type &x) const noexcept {
-    auto it = map_.left.find(x);
-    if (it == map_.left.end())
+    auto it = map_->left.find(x);
+    if (it == map_->left.end())
       return size();
     return it->second;
   }
 
   /// Returns the value for the bin index.
   bin_type operator[](int idx) const {
-    auto it = map_.right.find(idx);
-    BOOST_ASSERT_MSG(it != map_.right.end(), "category index out of range");
+    auto it = map_->right.find(idx);
+    BOOST_ASSERT_MSG(it != map_->right.end(), "category index out of range");
     return it->second;
   }
 
   bool operator==(const category &other) const {
-    return axis_base<without_uoflow>::operator==(other) &&
-           std::equal(map_.begin(), map_.end(), other.map_.begin());
+    return axis_base::operator==(other) &&
+           std::equal(map_->begin(), map_->end(), other.map_->begin());
   }
 
   const_iterator begin() const { return const_iterator(*this, 0); }
@@ -618,7 +603,7 @@ public:
   const_iterator end() const { return const_iterator(*this, size()); }
 
 private:
-  map_type map_;
+  std::unique_ptr<map_type> map_;
 
   friend class ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);

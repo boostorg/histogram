@@ -9,7 +9,7 @@
 import unittest
 from math import pi
 from histogram import histogram
-from histogram.axis import regular, circular, variable, category, integer
+from histogram.axis import regular, regular_log, regular_sqrt, regular_cos, regular_pow, circular, variable, category, integer
 import pickle
 import os
 import sys
@@ -18,7 +18,7 @@ if sys.version_info.major == 3:
 else:
     from StringIO import StringIO as BytesIO
 
-have_numpy = "@HAVE_NUMPY@"
+have_numpy = "@BUILD_NUMPY_SUPPORT@"
 if have_numpy:
     import numpy
 
@@ -29,11 +29,10 @@ class test_regular(unittest.TestCase):
         regular(1, 1.0, 2.0, label="ra")
         regular(1, 1.0, 2.0, uoflow=False)
         regular(1, 1.0, 2.0, label="ra", uoflow=False)
-        regular(1, 1.0, 2.0, trans="log")
-        regular(1, 1.0, 2.0, trans="sqrt")
-        regular(1, 0.5, 1.0, trans="cos")
-        regular(1, 1.0, 2.0, trans="pow(1.5)")
-        regular(1, 1.0, 2.0, trans="pow[2]")
+        regular_log(1, 1.0, 2.0)
+        regular_sqrt(1, 1.0, 2.0)
+        regular_cos(1, 0.5, 1.0)
+        regular_pow(1, 1.0, 2.0, 1.5)
         with self.assertRaises(TypeError):
             regular()
         with self.assertRaises(TypeError):
@@ -54,12 +53,8 @@ class test_regular(unittest.TestCase):
             regular(1, 1.0, 2.0, label="ra", uoflow="True")
         with self.assertRaises(TypeError):
             regular(1, 1.0, 2.0, bad_keyword="ra")
-        with self.assertRaises(ValueError):
-            regular(1, 1.0, 2.0, trans="bla")
-        with self.assertRaises(ValueError):
-            regular(1, 1.0, 2.0, trans="pow")
-        with self.assertRaises(ValueError):
-            regular(1, 1.0, 2.0, trans="pow()")
+        with self.assertRaises(TypeError):
+            regular_pow(1, 1.0, 2.0)
         a = regular(4, 1.0, 2.0)
         self.assertEqual(a, regular(4, 1.0, 2.0))
         self.assertNotEqual(a, regular(3, 1.0, 2.0))
@@ -75,21 +70,22 @@ class test_regular(unittest.TestCase):
                   "regular(4, 1.1, 2.2, label='ra')",
                   "regular(4, 1.1, 2.2, uoflow=False)",
                   "regular(4, 1.1, 2.2, label='ra', uoflow=False)",
-                  "regular(4, 1.1, 2.2, trans='log')"):
+                  "regular_log(4, 1.1, 2.2)",
+                  "regular_pow(4, 1.1, 2.2, 0.5)"):
             self.assertEqual(str(eval(s)), s)
 
     def test_getitem(self):
         v = [1.0, 1.25, 1.5, 1.75, 2.0]
         a = regular(4, 1.0, 2.0)
         for i in range(4):
-            self.assertAlmostEqual(a[i].lower, v[i])
-            self.assertAlmostEqual(a[i].upper, v[i+1])
+            self.assertAlmostEqual(a[i][0], v[i])
+            self.assertAlmostEqual(a[i][1], v[i+1])
 
     def test_iter(self):
         v = [1.0, 1.25, 1.5, 1.75, 2.0]
         a = regular(4, 1.0, 2.0)
-        self.assertAlmostEqual([x.lower for x in a], v[:-1])
-        self.assertAlmostEqual([x.upper for x in a], v[1:])
+        self.assertAlmostEqual([x[0] for x in a], v[:-1])
+        self.assertAlmostEqual([x[1] for x in a], v[1:])
 
     def test_index(self):
         a = regular(4, 1.0, 2.0)
@@ -107,7 +103,7 @@ class test_regular(unittest.TestCase):
         self.assertEqual(a.index(20), 4)
 
     def test_log_transform(self):
-        a = regular(2, 1e0, 1e2, trans="log")
+        a = regular_log(2, 1e0, 1e2)
         self.assertEqual(a.index(-1), -1)
         self.assertEqual(a.index(0.99), -1)
         self.assertEqual(a.index(1.0), 0)
@@ -116,13 +112,13 @@ class test_regular(unittest.TestCase):
         self.assertEqual(a.index(99.9), 1)
         self.assertEqual(a.index(100), 2)
         self.assertEqual(a.index(1000), 2)
-        self.assertAlmostEqual(a[0].lower, 1e0)
-        self.assertAlmostEqual(a[1].lower, 1e1)
-        self.assertAlmostEqual(a[1].upper, 1e2)
+        self.assertAlmostEqual(a[0][0], 1e0)
+        self.assertAlmostEqual(a[1][0], 1e1)
+        self.assertAlmostEqual(a[1][1], 1e2)
 
 
     def test_pow_transform(self):
-        a = regular(2, 1.0, 9.0, trans="pow(0.5)")
+        a = regular_pow(2, 1.0, 9.0, 0.5)
         self.assertEqual(a.index(-1), -1)
         self.assertEqual(a.index(0.99), -1)
         self.assertEqual(a.index(1.0), 0)
@@ -131,9 +127,9 @@ class test_regular(unittest.TestCase):
         self.assertEqual(a.index(8.99), 1)
         self.assertEqual(a.index(9), 2)
         self.assertEqual(a.index(1000), 2)
-        self.assertAlmostEqual(a[0].lower, 1.0)
-        self.assertAlmostEqual(a[1].lower, 4.0)
-        self.assertAlmostEqual(a[1].upper, 9.0)
+        self.assertAlmostEqual(a[0][0], 1.0)
+        self.assertAlmostEqual(a[1][0], 4.0)
+        self.assertAlmostEqual(a[1][1], 9.0)
 
 class test_circular(unittest.TestCase):
 
@@ -173,14 +169,14 @@ class test_circular(unittest.TestCase):
         v = [1.0, 1.0 + 0.5 * pi, 1.0 + pi, 1.0 + 1.5 *pi, 1.0 + 2.0 * pi]
         a = circular(4, 1.0)
         for i in range(4):
-            self.assertEqual(a[i].lower, v[i])
-            self.assertEqual(a[i].upper, v[i+1])
+            self.assertEqual(a[i][0], v[i])
+            self.assertEqual(a[i][1], v[i+1])
 
     def test_iter(self):
         a = circular(4, 1.0)
         v = [1.0, 1.0 + 0.5 * pi, 1.0 + pi, 1.0 + 1.5 *pi, 1.0 + 2.0 * pi]
-        self.assertEqual([x.lower for x in a], v[:-1])
-        self.assertEqual([x.upper for x in a], v[1:])
+        self.assertEqual([x[0] for x in a], v[:-1])
+        self.assertEqual([x[1] for x in a], v[1:])
 
     def test_index(self):
         a = circular(4, 1.0)
@@ -237,14 +233,14 @@ class test_variable(unittest.TestCase):
         v = [-0.1, 0.2, 0.3]
         a = variable(*v)
         for i in range(2):
-            self.assertEqual(a[i].lower, v[i])
-            self.assertEqual(a[i].upper, v[i+1])
+            self.assertEqual(a[i][0], v[i])
+            self.assertEqual(a[i][1], v[i+1])
 
     def test_iter(self):
         v = [-0.1, 0.2, 0.3]
         a = variable(*v)
-        self.assertEqual([x.lower for x in a], v[:-1])
-        self.assertEqual([x.upper for x in a], v[1:])
+        self.assertEqual([x[0] for x in a], v[:-1])
+        self.assertEqual([x[1] for x in a], v[1:])
 
     def test_index(self):
         a = variable(-0.1, 0.2, 0.3)
@@ -334,10 +330,10 @@ class test_integer(unittest.TestCase):
         v = [-1, 0, 1, 2]
         a = integer(-1, 3)
         for i in range(4):
-            self.assertEqual(a[i].lower, v[i])
+            self.assertEqual(a[i][0], v[i])
 
     def test_iter(self):
-        v = [x.lower for x in integer(-1, 3)]
+        v = [x[0] for x in integer(-1, 3)]
         self.assertEqual(v, [-1, 0, 1, 2])
 
     def test_index(self):

@@ -20,6 +20,18 @@
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
 #define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
+namespace boost {
+namespace histogram {
+namespace axis {
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const interval<T> &i) {
+  os << "[" << i.lower() << ", " << i.upper() << ")";
+  return os;
+}
+} // namespace axis
+} // namespace histogram
+} // namespace boost
+
 template <typename Axis>
 void test_axis_iterator(const Axis &a, int begin, int end) {
   for (const auto &bin : a) {
@@ -207,13 +219,15 @@ int main() {
   // iterators
   {
     enum { A, B, C };
-    test_axis_iterator(axis::regular<>(5, 0, 1, "", false), 0, 5);
-    test_axis_iterator(axis::regular<>(5, 0, 1, "", true), -1, 6);
+    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow::off), 0, 5);
+    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow::on), -1, 6);
     test_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5);
-    test_axis_iterator(axis::variable<>({1, 2, 3}, "", false), 0, 2);
-    test_axis_iterator(axis::variable<>({1, 2, 3}, "", true), -1, 3);
-    test_axis_iterator(axis::integer<>(0, 4, "", false), 0, 4);
-    test_axis_iterator(axis::integer<>(0, 4, "", true), -1, 5);
+    test_axis_iterator(axis::variable<>({1, 2, 3}, "", axis::uoflow::off), 0,
+                       2);
+    test_axis_iterator(axis::variable<>({1, 2, 3}, "", axis::uoflow::on), -1,
+                       3);
+    test_axis_iterator(axis::integer<>(0, 4, "", axis::uoflow::off), 0, 4);
+    test_axis_iterator(axis::integer<>(0, 4, "", axis::uoflow::on), -1, 5);
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
   }
 
@@ -246,18 +260,21 @@ int main() {
     std::vector<axis_t> axes;
     axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
     axes.push_back(axis::regular<double, axis::transform::log>{
-        2, 1, 10, "regular2", false});
+        2, 1, 10, "regular2", axis::uoflow::off});
+    axes.push_back(axis::regular<double, axis::transform::pow>{
+        2, 1, 10, "regular3", axis::uoflow::on, 0.5});
     axes.push_back(axis::circular<>{4, 0.1, 1.0, "polar"});
-    axes.push_back(axis::variable<>{{-1, 0, 1}, "variable", false});
+    axes.push_back(axis::variable<>{{-1, 0, 1}, "variable", axis::uoflow::off});
     axes.push_back(axis::category<>{{A, B, C}, "category"});
-    axes.push_back(axis::integer<>{-1, 1, "integer", false});
+    axes.push_back(axis::integer<>{-1, 1, "integer", axis::uoflow::off});
     std::ostringstream os;
     for (const auto &a : axes) {
       os << a;
     }
     const std::string ref =
         "regular(2, -1, 1, label='regular1')"
-        "regular(2, 1, 10, label='regular2', uoflow=False, trans='log')"
+        "regular_log(2, 1, 10, label='regular2', uoflow=False)"
+        "regular_pow(2, 1, 10, 0.5, label='regular3')"
         "circular(4, phase=0.1, perimeter=1, label='polar')"
         "variable(-1, 0, 1, label='variable', uoflow=False)"
         "category(0, 1, 2, label='category')"

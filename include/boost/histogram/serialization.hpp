@@ -15,6 +15,7 @@
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/serialization/array.hpp>
+#include <boost/serialization/unique_ptr.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -120,16 +121,15 @@ void adaptive_storage<Allocator>::serialize(Archive &ar,
 namespace axis {
 
 template <class Archive>
-void axis_base<without_uoflow>::serialize(Archive &ar, unsigned /* version */) {
+void axis_base::serialize(Archive &ar, unsigned /* version */) {
   ar &size_;
   ar &label_;
 }
 
 template <class Archive>
-void axis_base<with_uoflow>::serialize(Archive &ar, unsigned /* version */) {
-  ar &size_;
+void axis_base_uoflow::serialize(Archive &ar, unsigned /* version */) {
+  ar &boost::serialization::base_object<axis_base>(*this);
   ar &shape_;
-  ar &label_;
 }
 
 namespace transform {
@@ -143,7 +143,7 @@ template <typename RealType, typename Transform>
 template <class Archive>
 void regular<RealType, Transform>::serialize(Archive &ar,
                                              unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<with_uoflow>>(*this);
+  ar &boost::serialization::base_object<axis_base_uoflow>(*this);
   ar &min_;
   ar &delta_;
   ar &trans_;
@@ -152,7 +152,7 @@ void regular<RealType, Transform>::serialize(Archive &ar,
 template <typename RealType>
 template <class Archive>
 void circular<RealType>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<without_uoflow>>(*this);
+  ar &boost::serialization::base_object<axis_base>(*this);
   ar &phase_;
   ar &perimeter_;
 }
@@ -160,7 +160,7 @@ void circular<RealType>::serialize(Archive &ar, unsigned /* version */) {
 template <typename RealType>
 template <class Archive>
 void variable<RealType>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<with_uoflow>>(*this);
+  ar &boost::serialization::base_object<axis_base_uoflow>(*this);
   if (Archive::is_loading::value) {
     x_.reset(new RealType[size() + 1]);
   }
@@ -170,14 +170,14 @@ void variable<RealType>::serialize(Archive &ar, unsigned /* version */) {
 template <typename IntType>
 template <class Archive>
 void integer<IntType>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<with_uoflow>>(*this);
+  ar &boost::serialization::base_object<axis_base_uoflow>(*this);
   ar &min_;
 }
 
 template <typename T>
 template <class Archive>
 void category<T>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base<without_uoflow>>(*this);
+  ar &boost::serialization::base_object<axis_base>(*this);
   ar &map_;
 }
 

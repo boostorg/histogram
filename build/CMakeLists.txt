@@ -92,6 +92,7 @@ if(BUILD_CHECKS)
   if (BUILD_PYTHON)
     configure_file(../test/speed_numpy.py speed_numpy.py)
   endif()
+  add_executable(axis_size ../test/axis_size.cpp)
 endif()
 
 # tests
