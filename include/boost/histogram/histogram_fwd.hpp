@@ -65,6 +65,47 @@ inline detail::keep_dynamic keep(unsigned i, Rest... rest) {
   return s;
 }
 
+// fast operators (boost::operators does not use rvalue references yet)
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> && operator+(histogram<Variant, Axes, Storage> &&a,
+                                        const histogram<Variant, Axes, Storage> &b)
+{ a+=b; return std::move(a); }
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage>&& operator+(histogram<Variant, Axes, Storage> &&a,
+                                       histogram<Variant, Axes, Storage> &&b)
+{ a+=b; return std::move(a); }
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage>&& operator+(const histogram<Variant, Axes, Storage> &a,
+                                       histogram<Variant, Axes, Storage> &&b)
+{ b+=a; return std::move(b); }
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> operator+(const histogram<Variant, Axes, Storage> &a,
+                                     const histogram<Variant, Axes, Storage> &b)
+{ histogram<Variant, Axes, Storage> r(a); r+=b; return r; }
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage>&& operator*(histogram<Variant, Axes, Storage> &&a,
+                                       const double x)
+{ a*=x; return std::move(a); }
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage>&& operator*(const double x,
+                                       histogram<Variant, Axes, Storage> &&b)
+{ b*=x; return std::move(b); }
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> operator*(const histogram<Variant, Axes, Storage> &a,
+                                     const double x)
+{ histogram<Variant, Axes, Storage> r(a); r*=x; return r; }
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> operator*(const double x,
+                                     const histogram<Variant, Axes, Storage> &b)
+{ histogram<Variant, Axes, Storage> r(b); r*=x; return r; }
+
 } // namespace histogram
 } // namespace boost
 

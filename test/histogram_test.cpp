@@ -532,6 +532,32 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.sum(), 20.0);
   }
 
+  // operators
+  {
+    auto a = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3));
+    auto b = a;
+    a.fill(0);
+    b.fill(1);
+    auto c = a + b;
+    BOOST_TEST_EQ(c.value(0), 1.0);
+    BOOST_TEST_EQ(c.value(1), 1.0);
+    c += b;
+    BOOST_TEST_EQ(c.value(0), 1.0);
+    BOOST_TEST_EQ(c.value(1), 2.0);
+    auto d = 3 * a;
+    auto e = b * 2;
+    BOOST_TEST_EQ(d.value(0), 3.0);
+    BOOST_TEST_EQ(d.value(1), 0.0);
+    BOOST_TEST_EQ(e.value(0), 0.0);
+    BOOST_TEST_EQ(e.value(1), 2.0);
+    auto r = a;
+    r += b;
+    r += d;
+    BOOST_TEST_EQ(r.value(0), 4.0);
+    BOOST_TEST_EQ(r.value(1), 1.0);
+    BOOST_TEST_EQ(r, a + b + 3 * a);
+  }
+
   // histogram_serialization
   {
     enum { A, B, C };
@@ -679,7 +705,7 @@ template <typename T1, typename T2> void run_mixed_tests() {
   {
     auto a = make_histogram<adaptive_storage>(T1{}, axis::regular<>{3, 0, 3},
                                                 axis::integer<>(0, 2));
-    auto b = make_histogram<adaptive_storage>(T2{}, axis::regular<>{3, 0, 3},
+    auto b = make_histogram<array_storage<int>>(T2{}, axis::regular<>{3, 0, 3},
                                                 axis::integer<>(0, 2));
     BOOST_TEST_EQ(a, b);
     auto b2 = make_histogram<adaptive_storage>(T2{}, axis::integer<>{0, 3},
@@ -694,7 +720,7 @@ template <typename T1, typename T2> void run_mixed_tests() {
   {
     auto a = make_histogram<adaptive_storage>(T1{}, axis::regular<>{3, 0, 3},
                                                 axis::integer<>(0, 2));
-    auto b = make_histogram<adaptive_storage>(T2{}, axis::regular<>{3, 0, 3},
+    auto b = make_histogram<array_storage<int>>(T2{}, axis::regular<>{3, 0, 3},
                                                 axis::integer<>(0, 2));
     a.fill(1, 1);
     BOOST_TEST_NE(a, b);

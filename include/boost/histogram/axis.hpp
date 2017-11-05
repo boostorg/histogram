@@ -13,7 +13,6 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/mpl/vector.hpp>
-#include <boost/operators.hpp>
 #include <boost/utility/string_view.hpp>
 #include <cmath>
 #include <limits>
@@ -127,7 +126,7 @@ protected:
     return *this;
   }
 
-  bool operator==(const axis_base &rhs) const {
+  bool operator==(const axis_base &rhs) const noexcept {
     return size_ == rhs.size_ && label_ == rhs.label_;
   }
 
@@ -167,7 +166,7 @@ protected:
     return *this;
   }
 
-  bool operator==(const axis_base_uoflow &rhs) const {
+  bool operator==(const axis_base_uoflow &rhs) const noexcept {
     return axis_base::operator==(rhs) && shape_ == rhs.shape_;
   }
 
@@ -182,28 +181,28 @@ namespace transform {
 struct identity {
   template <typename T> static T forward(T v) { return v; }
   template <typename T> static T inverse(T v) { return v; }
-  bool operator==(const identity &) const { return true; }
+  bool operator==(const identity &) const noexcept { return true; }
   template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
 struct log {
   template <typename T> static T forward(T v) { return std::log(v); }
   template <typename T> static T inverse(T v) { return std::exp(v); }
-  bool operator==(const log &) const { return true; }
+  bool operator==(const log &) const noexcept { return true; }
   template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
 struct sqrt {
   template <typename T> static T forward(T v) { return std::sqrt(v); }
   template <typename T> static T inverse(T v) { return v * v; }
-  bool operator==(const sqrt &) const { return true; }
+  bool operator==(const sqrt &) const noexcept { return true; }
   template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
 struct cos {
   template <typename T> static T forward(T v) { return std::cos(v); }
   template <typename T> static T inverse(T v) { return std::acos(v); }
-  bool operator==(const cos &) const { return true; }
+  bool operator==(const cos &) const noexcept { return true; }
   template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
@@ -215,7 +214,7 @@ struct pow {
     return std::pow(v, 1.0 / value);
   }
   double value = 1.0;
-  bool operator==(const pow &other) const { return value == other.value; }
+  bool operator==(const pow &other) const noexcept { return value == other.value; }
   template <class Archive> void serialize(Archive &, unsigned);
 };
 } // namespace transform
@@ -226,8 +225,7 @@ struct pow {
  * Very fast. Binning is a O(1) operation.
  */
 template <typename RealType = double, typename Transform = transform::identity>
-class regular : public axis_base_uoflow, Transform,
-                boost::operators<regular<RealType, Transform>> {
+class regular : public axis_base_uoflow, Transform {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -315,7 +313,7 @@ private:
  * bins for this axis. Binning is a O(1) operation.
  */
 template <typename RealType = double>
-class circular : public axis_base, boost::operators<regular<RealType>> {
+class circular : public axis_base {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -355,7 +353,7 @@ public:
     return {eval(idx), eval(idx + 1)};
   }
 
-  bool operator==(const circular &o) const {
+  bool operator==(const circular &o) const noexcept {
     return axis_base::operator==(o) && phase_ == o.phase_ &&
            perimeter_ == o.perimeter_;
   }
@@ -380,7 +378,7 @@ private:
  * and the problem domain allows it, prefer a regular.
  */
 template <typename RealType = double>
-class variable : public axis_base_uoflow, boost::operators<variable<RealType>> {
+class variable : public axis_base_uoflow {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -448,7 +446,7 @@ public:
     return {eval(idx), eval(idx + 1)};
   }
 
-  bool operator==(const variable &o) const {
+  bool operator==(const variable &o) const noexcept {
     if (!axis_base_uoflow::operator==(o)) {
       return false;
     }
@@ -476,7 +474,7 @@ private:
  * faster than a regular.
  */
 template <typename IntType = int>
-class integer : public axis_base_uoflow, boost::operators<integer<IntType>> {
+class integer : public axis_base_uoflow {
 public:
   using value_type = IntType;
   using bin_type = interval<value_type>;
@@ -510,7 +508,7 @@ public:
   /// Returns the integer that is mapped to the bin index.
   bin_type operator[](int idx) const { return {min_ + idx, min_ + idx + 1}; }
 
-  bool operator==(const integer &o) const {
+  bool operator==(const integer &o) const noexcept {
     return axis_base_uoflow::operator==(o) && min_ == o.min_;
   }
 
@@ -537,7 +535,7 @@ private:
  * Binning is a O(1) operation. The value type must be hashable.
  */
 template <typename T = int>
-class category : public axis_base, boost::operators<category<T>> {
+class category : public axis_base {
   using map_type = bimap<T, int>;
 
 public:
@@ -597,9 +595,9 @@ public:
     return it->second;
   }
 
-  bool operator==(const category &other) const {
-    return axis_base::operator==(other) &&
-           std::equal(map_->begin(), map_->end(), other.map_->begin());
+  bool operator==(const category &o) const noexcept {
+    return axis_base::operator==(o) &&
+           std::equal(map_->begin(), map_->end(), o.map_->begin());
   }
 
   const_iterator begin() const { return const_iterator(*this, 0); }

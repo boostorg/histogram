@@ -7,8 +7,6 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_IMPL_STATIC_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_IMPL_STATIC_HPP_
 
-#include <boost/call_traits.hpp>
-#include <boost/config.hpp>
 #include <boost/fusion/adapted/mpl.hpp>
 #include <boost/fusion/algorithm.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
