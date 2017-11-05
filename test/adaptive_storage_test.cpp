@@ -374,6 +374,27 @@ int main() {
     }
   }
 
+  // multiply
+  {
+    adaptive_storage a(2);
+    a.increase(0);
+    a *= 3;
+    BOOST_TEST_EQ(a.value(0), 3.0);
+    BOOST_TEST_EQ(a.variance(0), 3.0);
+    BOOST_TEST_EQ(a.value(1), 0.0);
+    BOOST_TEST_EQ(a.variance(1), 0.0);
+    a.add(1, 2.0, 5.0);
+    BOOST_TEST_EQ(a.value(0), 3.0);
+    BOOST_TEST_EQ(a.variance(0), 3.0);
+    BOOST_TEST_EQ(a.value(1), 2.0);
+    BOOST_TEST_EQ(a.variance(1), 5.0);
+    a *= 3;
+    BOOST_TEST_EQ(a.value(0), 9.0);
+    BOOST_TEST_EQ(a.variance(0), 9.0);
+    BOOST_TEST_EQ(a.value(1), 6.0);
+    BOOST_TEST_EQ(a.variance(1), 15.0);
+  }
+
   // convert_array_storage
   {
     convert_array_storage_impl<void>();

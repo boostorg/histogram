@@ -165,14 +165,6 @@ inline bool safe_radd(T& t, const double u) {
   return true;
 }
 
-template <typename T>
-inline bool safe_rmul(T& t, const uint64_t x) {
-  if ((x * t) > std::numeric_limits<T>::max())
-    return false;
-  t *= x;
-  return true;
-}
-
 struct size_visitor : public static_visitor<std::size_t> {
   template <typename Array> std::size_t operator()(const Array &b) const {
     return b.size;

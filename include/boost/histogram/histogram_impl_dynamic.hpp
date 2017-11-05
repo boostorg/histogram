@@ -124,7 +124,7 @@ public:
     return *this;
   }
 
-  template <typename... Args> void fill(Args &&... args) noexcept {
+  template <typename... Args> void fill(Args &&... args) {
     using n_count = typename mpl::count<mpl::vector<Args...>, count>;
     using n_weight = typename mpl::count<mpl::vector<Args...>, weight>;
     static_assert(
@@ -138,7 +138,7 @@ public:
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end) noexcept {
+  void fill(Iterator begin, Iterator end) {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -149,7 +149,7 @@ public:
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end, const count n) noexcept {
+  void fill(Iterator begin, Iterator end, const count n) {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -160,7 +160,7 @@ public:
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end, const weight w) noexcept {
+  void fill(Iterator begin, Iterator end, const weight w) {
     BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
                      "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;

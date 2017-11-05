@@ -93,10 +93,14 @@ public:
 
   template <typename D, typename A, typename S>
   histogram &operator+=(const histogram<D, A, S> &rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_)) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
       throw std::logic_error("axes of histograms differ");
-    }
     storage_ += rhs.storage_;
+    return *this;
+  }
+
+  histogram &operator*=(const value_type rhs) {
+    storage_ *= rhs;
     return *this;
   }
 
@@ -152,7 +156,7 @@ public:
   }
 
   /// Reset bin counters to zero
-  void reset() { storage_ = std::move(Storage(storage_.size())); }
+  void reset() { storage_ = Storage(storage_.size()); }
 
   /// Get N-th axis
   template <int N>
