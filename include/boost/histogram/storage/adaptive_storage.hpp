@@ -156,7 +156,7 @@ inline bool safe_radd(T& t, const U& u) {
   return true;
 }
 
-// WTF is this needed?
+// float rounding is a mess, the equal sign is necessary here
 template <typename T>
 inline bool safe_radd(T& t, const double u) {
   if ((std::numeric_limits<T>::max() - t) <= u)
