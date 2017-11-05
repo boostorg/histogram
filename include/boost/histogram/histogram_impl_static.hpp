@@ -96,8 +96,7 @@ public:
     if (!detail::axes_equal(axes_, rhs.axes_)) {
       throw std::logic_error("axes of histograms differ");
     }
-    for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
-      storage_.add(i, rhs.storage_.value(i), rhs.storage_.variance(i));
+    storage_ += rhs.storage_;
     return *this;
   }
 
@@ -201,7 +200,7 @@ private:
     unsigned n = 0;
     xlin_n<0>(idx, stride, n, std::forward<Args>(args)...);
     if (stride) {
-      storage_.increase(idx, n);
+      storage_.add(idx, n);
     }
   }
 

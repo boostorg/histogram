@@ -35,7 +35,7 @@ int main() {
     c.increase(0);
     c.increase(0);
     d.increase(0);
-    d.increase(1, 5);
+    d.add(1, 5);
     BOOST_TEST_EQ(a.value(0), 1u);
     BOOST_TEST_EQ(b.value(0), 1u);
     BOOST_TEST_EQ(c.value(0), 2u);

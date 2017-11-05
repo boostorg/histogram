@@ -20,10 +20,9 @@ namespace histogram {
 using Static = std::integral_constant<int, 0>;
 using Dynamic = std::integral_constant<int, 1>;
 
-template <template <class> class Allocator = std::allocator>
 class adaptive_storage;
 
-template <class Variant, class Axes, class Storage = adaptive_storage<>>
+template <class Variant, class Axes, class Storage = adaptive_storage>
 class histogram;
 
 struct weight {

@@ -59,13 +59,14 @@ By default, under- and overflow bins are added automatically for each axis range
 namespace bh = boost::histogram;
 
 int main() {
-	// create a 1d-histogram for dice throws, eyes are always between 1 and 6
-	auto h = bh::make_static_histogram(bh::axis::integer<>(1, 6, "eyes", bh::axis::without_uoflow));
+	// create a 1d-histogram for dice throws with eye values from 1 to 6
+	auto h = bh::make_static_histogram(bh::axis::integer<>(1, 7, "eyes", bh::axis::uoflow::off));
 	// do something with h
 }
 ``
 
-Using a [classref boost::histogram::axis::integer integer axis] in this example is convenient, because the input values are integers and we want one bin for each eye value.
+Using a [classref boost::histogram::axis::integer integer axis] in this example is convenient, because the input values are integers and we want one bin for each eye value. The intervals in all axes are always semi-open, the last value is never included. That's why the upper end is 7 and not 6, here. This is similar to iterator
+ranges from `begin` to `end`, where `end` is also not included.
 [note The specialised [classref boost::histogram::axis::circular circular axis] never creates under- and overflow bins, because the axis is circular. The highest bin wrapps around to the lowest bin and vice versa, so there is no need for extra bins.]
 
 When you work with [classref boost::histogram::histogram<Dynamic,...>], you can also create a histogram from a run-time compiled collection of axis objects:
@@ -81,13 +82,13 @@ int main() {
 	using hist_type = bh::histogram<bh::Dynamic, bh::builtin_axes>;
 	auto v = std::vector<hist_type::axis_type>();
 	v.push_back(bh::axis::regular<>(100, -1, 1));
-	v.push_back(bh::axis::integer(1, 6));
+	v.push_back(bh::axis::integer<>(1, 6));
 	auto h = hist_type(v.begin(), v.end());
 	// do something with h
 }
 ``
 
-[note In all these examples, memory for bin counters is allocated lazily, because the default policy [classref boost::histogram::adaptive_storage<>] is used. Allocation is deferred to the first call to `fill(...)`, which are described in the next section. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later on the first fill.]
+[note In all these examples, memory for bin counters is allocated lazily, because the default policy [classref boost::histogram::adaptive_storage] is used. Allocation is deferred to the first call to `fill(...)`, which are described in the next section. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later on the first fill.]
 
 [endsect]
 
@@ -138,7 +139,7 @@ Here is a second example which using a weighted fill in a functional programming
 namespace bh = boost::histogram;
 
 int main() {
-	auto h = bh::make_static_histogram(bh::axis::integer(0, 9));
+	auto h = bh::make_static_histogram(bh::axis::integer<>(0, 9));
 	std::vector<int> v{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 	std::for_each(v.begin(), v.end(), [&h](int x) { h.fill(x, bh::weight(2.0)); });
 	// h is now filled
@@ -188,7 +189,7 @@ cpp_filler.process(h) # histogram is filled with input values
 
 In Python, you can straight-forwardly create a histogram object with a variable number of axis arguments. The histogram instance passes the language barrier without copying its internal (possibly large) data buffer, so this workflow is efficient.
 
-You can also fill the histogram in Python. If you pass the input values as numpy arrays, this is quite efficient and almost as fast as using C++, see the [link histogram.benchmarks benchmark]. Looping over a collection in Python, however, is very slow and should be avoided. Here is an example to illustrate:
+You can also fill the histogram in Python. Looping over a collection in Python is very slow and should be avoided. If you pass the input values as numpy arrays, this is efficient and almost as fast as using C++, see the [link histogram.benchmarks benchmark].  Here is an example to illustrate:
 
 [python]``
 import histogram as bh
@@ -201,9 +202,11 @@ for i in range(10):
 	h.fill(i)
 
 # do this instead, it is very fast
-v = np.arange(10)
+v = np.arange(10, dtype=float)
 h.fill(v) # fills the histogram with each value in the array
 ``
+
+`fill(...)` accepts any sequence that can be converted into a numpy array with `dtype=float`. To get the best performance, avoid the conversion and work with such numpy arrays directly.
 
 [endsect]
 

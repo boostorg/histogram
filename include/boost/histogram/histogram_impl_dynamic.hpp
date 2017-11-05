@@ -113,11 +113,14 @@ public:
 
   template <typename D, typename A, typename S>
   histogram &operator+=(const histogram<D, A, S> &rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_)) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
       throw std::logic_error("axes of histograms differ");
-    }
-    for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
-      storage_.add(i, rhs.storage_.value(i), rhs.storage_.variance(i));
+    storage_ += rhs.storage_;
+    return *this;
+  }
+
+  histogram &operator*=(const value_type rhs) {
+    storage_ *= rhs;
     return *this;
   }
 
@@ -152,7 +155,7 @@ public:
     std::size_t idx = 0, stride = 1;
     xlin_iter(idx, stride, begin);
     if (stride) {
-      storage_.increase(idx, n.value);
+      storage_.add(idx, n.value);
     }
   }
 
@@ -270,7 +273,7 @@ private:
     unsigned n = 0;
     xlin_n<0>(idx, stride, n, std::forward<Args>(args)...);
     if (stride) {
-      storage_.increase(idx, n);
+      storage_.add(idx, n);
     }
   }
 

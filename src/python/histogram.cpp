@@ -29,7 +29,7 @@ namespace np = boost::python::numpy;
 namespace boost {
 
 namespace histogram {
-using dynamic_histogram = histogram<Dynamic, builtin_axes, adaptive_storage<>>;
+using dynamic_histogram = histogram<Dynamic, builtin_axes, adaptive_storage>;
 } // namespace histogram
 
 namespace python {
@@ -37,18 +37,18 @@ namespace python {
 #ifdef HAVE_NUMPY
 class access {
 public:
-  using mp_int = histogram::adaptive_storage<>::mp_int;
-  using weight = histogram::adaptive_storage<>::weight;
+  using mp_int = histogram::detail::mp_int;
+  using weight = histogram::detail::weight;
   template <typename T>
-  using array = histogram::adaptive_storage<>::array<T>;
+  using array = histogram::detail::array<T>;
 
   struct dtype_visitor : public static_visitor<str> {
     list & shapes, & strides;
     dtype_visitor(list &sh, list &st) : shapes(sh), strides(st) {}
-    template <typename Array>
-    str operator()(const Array& /*unused*/) const {
-      strides.append(sizeof(typename Array::value_type));
-      return dtype_typestr<typename Array::value_type>();
+    template <typename T>
+    str operator()(const array<T>& /*unused*/) const {
+      strides.append(sizeof(T));
+      return dtype_typestr<T>();
     }
     str operator()(const array<void>& /*unused*/) const {
       strides.append(sizeof(uint8_t));
@@ -186,8 +186,10 @@ struct fetcher {
   long n = 0;
   union {
     double value = 0;
-    const double* array;
+    const double* carray;
   };
+  python::object keep_alive;
+
   void assign(python::object o) {
     // skipping check for currently held type, since it is always value
     python::extract<double> get_double(o);
@@ -197,20 +199,17 @@ struct fetcher {
       return;
     }
 #ifdef HAVE_NUMPY
-    np::ndarray a = python::extract<np::ndarray>(o);
-    if (a.get_nd() != 1)
-      throw std::invalid_argument("array must be 1 dimensional");
-    if (a.get_dtype() != np::dtype::get_builtin<double>())
-      throw std::invalid_argument("array dtype must be double");
-    array = reinterpret_cast<const double*>(a.get_data());
+    np::ndarray a = np::from_object(o, np::dtype::get_builtin<double>(), 1);
+    carray = reinterpret_cast<const double*>(a.get_data());
     n = a.shape(0);
+    keep_alive = a; // this may be a temporary object
     return;
 #endif
     throw std::invalid_argument("argument must be a number");
   }
   double get(long i) const noexcept {
     if (n > 0)
-      return array[i];
+      return carray[i];
     return value;
   }
 };

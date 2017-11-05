@@ -20,6 +20,8 @@ struct weight {
   weight &operator=(const weight &) = default;
   weight &operator=(weight &&) = default;
 
+  weight(double value, double variance) : w(value), w2(variance) {}
+
   weight &operator+=(const weight &rhs) {
     w += rhs.w;
     w2 += rhs.w2;
@@ -28,6 +30,12 @@ struct weight {
   weight &operator++() {
     ++w;
     ++w2;
+    return *this;
+  }
+
+  weight &operator*=(const double x) {
+    w *= x;
+    w2 *= x;
     return *this;
   }
 
@@ -49,7 +57,7 @@ struct weight {
   }
 
   template <typename T>
-  explicit weight(const T &t) : w(static_cast<double>(t)), w2(w) {}
+  explicit weight(const T &t) : w(static_cast<double>(t)), w2(static_cast<double>(t)) {}
 
   template <typename T> weight &operator=(const T &t) {
     w = static_cast<double>(t);

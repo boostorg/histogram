@@ -17,34 +17,35 @@ namespace boost {
 
 namespace histogram {
 
-template <typename T> adaptive_storage<> prepare(unsigned n = 1) {
-  adaptive_storage<> s(n);
+template <typename T> adaptive_storage prepare(unsigned n = 1) {
+  adaptive_storage s(n);
   s.increase(0);
   const auto tmax = std::numeric_limits<T>::max();
   while (s.value(0) < 0.1 * tmax) {
-    s.increase(0, s.value(0));
+    s.add(0, s.value(0));
   }
   return s;
 }
 
-template <> adaptive_storage<> prepare<void>(unsigned n) {
-  adaptive_storage<> s(n);
+template <> adaptive_storage prepare<void>(unsigned n) {
+  adaptive_storage s(n);
   return s;
 }
 
-template <> adaptive_storage<> prepare<detail::weight>(unsigned n) {
-  adaptive_storage<> s(n);
+template <> adaptive_storage prepare<detail::weight>(unsigned n) {
+  adaptive_storage s(n);
   s.weighted_increase(0, 1.0);
   return s;
 }
 
-template <> adaptive_storage<> prepare<detail::mp_int>(unsigned n) {
-  adaptive_storage<> s(n);
+template <> adaptive_storage prepare<detail::mp_int>(unsigned n) {
+  adaptive_storage s(n);
   s.increase(0);
   auto tmax = static_cast<double>(std::numeric_limits<uint64_t>::max());
   tmax *= 2.0;
   while (s.value(0) < tmax) {
-    s.increase(0, s.value(0));
+    assert(s.value(0) != 0);
+    s.add(0, s.value(0));
   }
   return s;
 }
@@ -55,9 +56,9 @@ namespace python { // cheating to get access
 class access {
 public:
   template <typename T>
-  static histogram::adaptive_storage<> set_value(unsigned n, T x) {
-    histogram::adaptive_storage<> s = histogram::prepare<T>(n);
-    get<histogram::adaptive_storage<>::array<T>>(s.buffer_)[0] = x;
+  static histogram::adaptive_storage set_value(unsigned n, T x) {
+    histogram::adaptive_storage s = histogram::prepare<T>(n);
+    get<histogram::detail::array<T>>(s.buffer_)[0] = x;
     return s;
   }
 };
@@ -92,7 +93,7 @@ template <typename T> void serialization_impl() {
     oa << a;
     buf = os.str();
   }
-  adaptive_storage<> b;
+  adaptive_storage b;
   BOOST_TEST(!(a == b));
   {
     std::istringstream is(buf);
@@ -103,7 +104,7 @@ template <typename T> void serialization_impl() {
 }
 
 template <> void serialization_impl<void>() {
-  adaptive_storage<> a(1);
+  adaptive_storage a(1);
   std::ostringstream os;
   std::string buf;
   {
@@ -112,7 +113,7 @@ template <> void serialization_impl<void>() {
     oa << a;
     buf = os.str();
   }
-  adaptive_storage<> b;
+  adaptive_storage b;
   BOOST_TEST(!(a == b));
   {
     std::istringstream is(buf);
@@ -123,7 +124,7 @@ template <> void serialization_impl<void>() {
 }
 
 template <typename T> void equal_impl() {
-  adaptive_storage<> a(1);
+  adaptive_storage a(1);
   auto b = python::access::set_value(1, T(0));
   BOOST_TEST_EQ(a.value(0), 0.0);
   BOOST_TEST_EQ(a.variance(0), 0.0);
@@ -139,7 +140,7 @@ template <typename T> void equal_impl() {
 }
 
 template <> void equal_impl<void>() {
-  adaptive_storage<> a(1);
+  adaptive_storage a(1);
   auto b = python::access::set_value(1, uint8_t(0));
   auto c = python::access::set_value(2, uint8_t(0));
   auto d = array_storage<unsigned>(1);
@@ -168,10 +169,10 @@ template <typename T> void increase_and_grow_impl() {
   n.increase(0);
   n.increase(0);
 
-  adaptive_storage<> x(2);
+  adaptive_storage x(2);
   x.increase(0);
-  n2.increase(0, x.value(0));
-  n2.increase(0, x.value(0));
+  n2.add(0, x.value(0));
+  n2.add(0, x.value(0));
 
   double v = tmax;
   ++v;
@@ -182,7 +183,7 @@ template <typename T> void increase_and_grow_impl() {
 }
 
 template <> void increase_and_grow_impl<void>() {
-  adaptive_storage<> s(2);
+  adaptive_storage s(2);
   s.increase(0);
   BOOST_TEST_EQ(s.value(0), 1.0);
   BOOST_TEST_EQ(s.value(1), 0.0);
@@ -200,14 +201,14 @@ template <typename T> void convert_array_storage_impl() {
   a.increase(0);
   BOOST_TEST(!(a == s));
 
-  adaptive_storage<> b(s);
+  adaptive_storage b(s);
   BOOST_TEST_EQ(b.value(0), 1.0);
   BOOST_TEST(b == s);
   b.increase(0);
   BOOST_TEST(!(b == s));
 
   auto c = aref;
-  c.increase(0, s.value(0));
+  c.add(0, s.value(0));
   BOOST_TEST_EQ(c.value(0), 1.0);
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
@@ -215,7 +216,7 @@ template <typename T> void convert_array_storage_impl() {
   array_storage<float> t(1);
   t.increase(0);
   while (t.value(0) < 1e20)
-    t.increase(0, t.value(0));
+    t.add(0, t.value(0));
   auto d = aref;
   d = t;
   BOOST_TEST(d == t);
@@ -227,14 +228,14 @@ template <typename T> void convert_array_storage_impl() {
   e.increase(0);
   BOOST_TEST(!(e == s));
 
-  adaptive_storage<> f(s);
+  adaptive_storage f(s);
   BOOST_TEST_EQ(f.value(0), 1.0);
   BOOST_TEST(f == s);
   f.increase(0);
   BOOST_TEST(!(f == s));
 
   auto g = aref;
-  g.increase(0, s.value(0));
+  g.add(0, s.value(0));
   BOOST_TEST_EQ(g.value(0), 1.0);
   BOOST_TEST(g == s);
   BOOST_TEST(s == g);
@@ -248,7 +249,7 @@ template <typename T> void convert_array_storage_impl() {
 }
 
 template <> void convert_array_storage_impl<void>() {
-  const auto aref = adaptive_storage<>(1);
+  const auto aref = adaptive_storage(1);
   BOOST_TEST_EQ(aref.value(0), 0.0);
   array_storage<uint8_t> s(1);
   s.increase(0);
@@ -261,7 +262,7 @@ template <> void convert_array_storage_impl<void>() {
   BOOST_TEST(!(a == s));
 
   auto c = aref;
-  c.increase(0, s.value(0));
+  c.add(0, s.value(0));
   BOOST_TEST_EQ(c.value(0), 1.0);
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
@@ -278,9 +279,31 @@ template <> void convert_array_storage_impl<void>() {
 int main() {
   using namespace boost::histogram;
 
+  // low-level tools
+  {
+    uint8_t c = 0;
+    BOOST_TEST_EQ(detail::safe_increase(c), true);
+    BOOST_TEST_EQ(c, 1);
+    c = 255;
+    BOOST_TEST_EQ(detail::safe_increase(c), false);
+    BOOST_TEST_EQ(c, 255);
+    BOOST_TEST_EQ(detail::safe_assign(c, 255), true);
+    BOOST_TEST_EQ(detail::safe_assign(c, 256), false);
+    BOOST_TEST_EQ(c, 255);
+    c = 0;
+    BOOST_TEST_EQ(detail::safe_radd(c, 255), true);
+    BOOST_TEST_EQ(c, 255);
+    c = 1;
+    BOOST_TEST_EQ(detail::safe_radd(c, 255), false);
+    BOOST_TEST_EQ(c, 1);
+    c = 255;
+    BOOST_TEST_EQ(detail::safe_radd(c, 1), false);
+    BOOST_TEST_EQ(c, 255);
+  }
+
   // empty state
   {
-    adaptive_storage<> a;
+    adaptive_storage a;
     BOOST_TEST_EQ(a.size(), 0);
   }
 
@@ -325,18 +348,18 @@ int main() {
 
   // add_and_grow
   {
-    adaptive_storage<> a(1);
+    adaptive_storage a(1);
     a.increase(0);
     double x = 1.0;
-    adaptive_storage<> y(1);
+    adaptive_storage y(1);
     BOOST_TEST_EQ(y.value(0), 0.0);
-    a.increase(0, y.value(0));
+    a.add(0, y.value(0));
     BOOST_TEST_EQ(a.value(0), x);
     for (unsigned i = 0; i < 80; ++i) {
-      a.increase(0, a.value(0));
+      a.add(0, a.value(0));
       x += x;
-      adaptive_storage<> b(1);
-      b.increase(0, a.value(0));
+      adaptive_storage b(1);
+      b.add(0, a.value(0));
       BOOST_TEST_EQ(a.value(0), x);
       BOOST_TEST_EQ(a.variance(0), x);
       BOOST_TEST_EQ(b.value(0), x);
@@ -344,7 +367,7 @@ int main() {
       b.weighted_increase(0, 0.0);
       BOOST_TEST_EQ(b.value(0), x);
       BOOST_TEST_EQ(b.variance(0), x);
-      adaptive_storage<> c(1);
+      adaptive_storage c(1);
       c.weighted_increase(0, a.value(0));
       BOOST_TEST_EQ(c.value(0), x);
       BOOST_TEST_EQ(c.variance(0), x * x);

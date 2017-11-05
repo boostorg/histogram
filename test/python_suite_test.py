@@ -778,7 +778,8 @@ class test_histogram(unittest.TestCase):
     def test_fill_with_numpy_array_0(self):
         ar = lambda *args: numpy.array(args, dtype=float)
         a = histogram(integer(0, 3, uoflow=False))
-        a.fill(ar(-1, 0, 1, 2, 1, 4, -1, 0, 1, 2))
+        a.fill(ar(-1, 0, 1, 2, 1))
+        a.fill((4, -1, 0, 1, 2))
         self.assertEqual(a.value(0), 2)
         self.assertEqual(a.value(1), 3)
         self.assertEqual(a.value(2), 2)
@@ -787,7 +788,7 @@ class test_histogram(unittest.TestCase):
             a.fill(numpy.empty((2, 2)))
         with self.assertRaises(ValueError):
             a.fill(numpy.empty(2), 1)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             a.fill("abc")
 
         a = histogram(integer(0, 2, uoflow=False),
@@ -816,7 +817,7 @@ class test_histogram(unittest.TestCase):
         v = ar(-1, 0, 1, 2, 3, 4)
         w = ar( 2, 3, 4, 5, 6, 7)
         a.fill(v, weight=w)
-        a.fill(ar(0, 1), weight=ar(2, 3))
+        a.fill((0, 1), weight=(2, 3))
         self.assertEqual(a.value(-1), 2)
         self.assertEqual(a.value(0), 5)
         self.assertEqual(a.value(1), 7)
@@ -825,32 +826,33 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(a.variance(0), 13)
         self.assertEqual(a.variance(1), 25)
         self.assertEqual(a.variance(2), 25)
-        a.fill(ar(1, 2), weight=1)
-        a.fill(0, weight=ar(1, 2))
+        a.fill((1, 2), weight=1)
+        a.fill(0, weight=(1, 2))
         self.assertEqual(a.value(0), 8)
         self.assertEqual(a.value(1), 8)
         self.assertEqual(a.value(2), 6)
 
         with self.assertRaises(RuntimeError):
-            a.fill(ar(1, 2), foo=ar(1, 1))
+            a.fill((1, 2), foo=(1, 1))
         with self.assertRaises(ValueError):
-            a.fill(ar(1, 2), weight=ar(1))
-        with self.assertRaises(TypeError):
-            a.fill(ar(1, 2), weight="ab")
+            a.fill((1, 2), weight=(1,))
+        with self.assertRaises(ValueError):
+            a.fill((1, 2), weight="ab")
         with self.assertRaises(RuntimeError):
-            a.fill(ar(1, 2), weight=ar(1, 1), foo=1)
+            a.fill((1, 2), weight=(1, 1), foo=1)
         with self.assertRaises(ValueError):
-            a.fill(ar(1, 2), weight=ar([1, 1], [2, 2]))
+            a.fill((1, 2), weight=([1, 1], [2, 2]))
 
         a = histogram(integer(0, 2, uoflow=False),
                       regular(2, 0, 2, uoflow=False))
-        a.fill(ar(-1, 0, 1), ar(-1, 1, 0.1))
+        a.fill((-1, 0, 1), (-1, 1, 0.1))
         self.assertEqual(a.value(0, 0), 0)
         self.assertEqual(a.value(0, 1), 1)
         self.assertEqual(a.value(1, 0), 1)
         self.assertEqual(a.value(1, 1), 0)
         a = histogram(integer(0, 3, uoflow=False))
-        a.fill(ar(0, 0, 1, 2, 1, 0, 2, 2))
+        a.fill((0, 0, 1, 2))
+        a.fill((1, 0, 2, 2))
         self.assertEqual(a.value(0), 3)
         self.assertEqual(a.value(1), 2)
         self.assertEqual(a.value(2), 3)
