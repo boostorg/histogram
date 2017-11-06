@@ -50,8 +50,7 @@ void serialize(Archive &ar, array_storage<Container> &store,
 }
 
 template <class Archive>
-void adaptive_storage::serialize(Archive &ar,
-                                            unsigned /* version */) {
+void adaptive_storage::serialize(Archive &ar, unsigned /* version */) {
   using detail::array;
   std::size_t size = this->size();
   ar &size;
@@ -106,11 +105,13 @@ void adaptive_storage::serialize(Archive &ar,
       tid = 4;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (array<detail::mp_int> *a = get<array<detail::mp_int>>(&buffer_)) {
+    } else if (array<detail::mp_int> *a =
+                   get<array<detail::mp_int>>(&buffer_)) {
       tid = 5;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (array<detail::weight> *a = get<array<detail::weight>>(&buffer_)) {
+    } else if (array<detail::weight> *a =
+                   get<array<detail::weight>>(&buffer_)) {
       tid = 6;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);

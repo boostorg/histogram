@@ -9,9 +9,9 @@
 
 #include <algorithm>
 #include <boost/histogram/detail/meta.hpp>
-#include <type_traits>
 #include <cstddef>
 #include <memory>
+#include <type_traits>
 
 // forward declaration for serialization
 namespace boost {
@@ -74,10 +74,9 @@ public:
 
   std::size_t size() const noexcept { return size_; }
   void increase(std::size_t i) noexcept { ++array_[i]; }
-  void add(std::size_t i, const value_type& n) noexcept {
-    array_[i] += n;
-  }
-  void add(std::size_t i, const value_type& n, const value_type& /* variance */) noexcept {
+  void add(std::size_t i, const value_type &n) noexcept { array_[i] += n; }
+  void add(std::size_t i, const value_type &n,
+           const value_type & /* variance */) noexcept {
     array_[i] += n;
   }
 
@@ -85,13 +84,13 @@ public:
   value_type variance(std::size_t i) const noexcept { return array_[i]; }
 
   template <typename U>
-  array_storage& operator+=(const array_storage<U>& rhs) noexcept {
+  array_storage &operator+=(const array_storage<U> &rhs) noexcept {
     for (auto i = 0ul; i < size_; ++i)
       array_[i] += rhs.array_[i];
     return *this;
   }
 
-  array_storage& operator*=(const value_type x) noexcept {
+  array_storage &operator*=(const value_type x) noexcept {
     for (auto i = 0ul; i < size_; ++i)
       array_[i] *= x;
     return *this;

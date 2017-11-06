@@ -57,7 +57,8 @@ struct weight {
   }
 
   template <typename T>
-  explicit weight(const T &t) : w(static_cast<double>(t)), w2(static_cast<double>(t)) {}
+  explicit weight(const T &t)
+      : w(static_cast<double>(t)), w2(static_cast<double>(t)) {}
 
   template <typename T> weight &operator=(const T &t) {
     w = static_cast<double>(t);

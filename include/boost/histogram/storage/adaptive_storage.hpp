@@ -56,8 +56,7 @@ public:
   std::size_t size = 0;
 };
 
-template <typename T>
-class array : public array_base {
+template <typename T> class array : public array_base {
 public:
   explicit array(const std::size_t s) : array_base(s), ptr(new T[s]) {
     std::fill(begin(), end(), T(0));
@@ -76,8 +75,7 @@ public:
     }
     return *this;
   }
-  array(array &&rhs)
-      : array_base(std::move(rhs)), ptr(std::move(rhs.ptr)) {
+  array(array &&rhs) : array_base(std::move(rhs)), ptr(std::move(rhs.ptr)) {
     rhs.size = 0;
   }
   array &operator=(array &&rhs) {
@@ -109,20 +107,14 @@ private:
   std::unique_ptr<T[]> ptr;
 };
 
-template <>
-class array<void> : public array_base {
+template <> class array<void> : public array_base {
 public:
   using array_base::array_base;
 };
 
 using any_array =
-      variant<array<void>,
-              array<uint8_t>,
-              array<uint16_t>,
-              array<uint32_t>,
-              array<uint64_t>,
-              array<mp_int>,
-              array<weight>>;
+    variant<array<void>, array<uint8_t>, array<uint16_t>, array<uint32_t>,
+            array<uint64_t>, array<mp_int>, array<weight>>;
 
 template <typename T> struct next_type;
 template <> struct next_type<uint8_t> { using type = uint16_t; };
@@ -131,16 +123,14 @@ template <> struct next_type<uint32_t> { using type = uint64_t; };
 template <> struct next_type<uint64_t> { using type = mp_int; };
 template <typename T> using next = typename next_type<T>::type;
 
-template <typename T>
-inline bool safe_increase(T& t) {
+template <typename T> inline bool safe_increase(T &t) {
   if (t == std::numeric_limits<T>::max())
     return false;
   ++t;
   return true;
 }
 
-template <typename T, typename U>
-inline bool safe_assign(T& t, const U& u) {
+template <typename T, typename U> inline bool safe_assign(T &t, const U &u) {
   if (std::numeric_limits<T>::max() < std::numeric_limits<U>::max() &&
       std::numeric_limits<T>::max() < u)
     return false;
@@ -148,8 +138,7 @@ inline bool safe_assign(T& t, const U& u) {
   return true;
 }
 
-template <typename T, typename U>
-inline bool safe_radd(T& t, const U& u) {
+template <typename T, typename U> inline bool safe_radd(T &t, const U &u) {
   if ((std::numeric_limits<T>::max() - t) < u)
     return false;
   t += static_cast<T>(u);
@@ -157,8 +146,7 @@ inline bool safe_radd(T& t, const U& u) {
 }
 
 // float rounding is a mess, the equal sign is necessary here
-template <typename T>
-inline bool safe_radd(T& t, const double u) {
+template <typename T> inline bool safe_radd(T &t, const double u) {
   if ((std::numeric_limits<T>::max() - t) <= u)
     return false;
   t += u;
@@ -171,8 +159,7 @@ struct size_visitor : public static_visitor<std::size_t> {
   }
 };
 
-template <typename RHS>
-struct assign_visitor : public static_visitor<void> {
+template <typename RHS> struct assign_visitor : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
   const RHS &rhs;
@@ -191,9 +178,7 @@ struct assign_visitor : public static_visitor<void> {
     operator()(get<array<uint8_t>>(lhs_any));
   }
 
-  void operator()(array<mp_int> &lhs) const {
-    lhs[idx].assign(rhs);
-  }
+  void operator()(array<mp_int> &lhs) const { lhs[idx].assign(rhs); }
 
   void operator()(array<weight> &lhs) const { lhs[idx] = rhs; }
 };
@@ -201,8 +186,7 @@ struct assign_visitor : public static_visitor<void> {
 struct increase_visitor : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
-  increase_visitor(any_array& a, const std::size_t i)
-      : lhs_any(a), idx(i) {}
+  increase_visitor(any_array &a, const std::size_t i) : lhs_any(a), idx(i) {}
 
   template <typename T> void operator()(array<T> &lhs) const {
     if (!safe_increase(lhs[idx])) {
@@ -253,13 +237,9 @@ struct value_visitor : public static_visitor<double> {
     return static_cast<double>(b[idx]);
   }
 
-  double operator()(const array<void> & /*b*/) const {
-    return 0;
-  }
+  double operator()(const array<void> & /*b*/) const { return 0; }
 
-  double operator()(const array<weight> &b) const {
-    return b[idx].w;
-  }
+  double operator()(const array<weight> &b) const { return b[idx].w; }
 };
 
 struct variance_visitor : public static_visitor<double> {
@@ -270,13 +250,9 @@ struct variance_visitor : public static_visitor<double> {
     return static_cast<double>(b[idx]);
   }
 
-  double operator()(const array<void> & /*b*/) const {
-    return 0;
-  }
+  double operator()(const array<void> & /*b*/) const { return 0; }
 
-  double operator()(const array<weight> &b) const {
-    return b[idx].w2;
-  }
+  double operator()(const array<weight> &b) const { return b[idx].w2; }
 };
 
 template <typename RHS> struct radd_visitor : public static_visitor<void> {
@@ -307,7 +283,6 @@ template <typename RHS> struct radd_visitor : public static_visitor<void> {
   void operator()(array<weight> &lhs) const { lhs[idx] += rhs; }
 };
 
-
 template <> struct radd_visitor<weight> : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
@@ -325,15 +300,13 @@ template <> struct radd_visitor<weight> : public static_visitor<void> {
     operator()(get<array<weight>>(lhs_any));
   }
 
-  void operator()(array<weight> &lhs) const {
-    lhs[idx] += rhs;
-  }
+  void operator()(array<weight> &lhs) const { lhs[idx] += rhs; }
 };
 
 // precondition: both arrays must have same size and may not be identical
 struct radd_array_visitor : public static_visitor<void> {
-  any_array& lhs_any;
-  radd_array_visitor(any_array& l) : lhs_any(l) {}
+  any_array &lhs_any;
+  radd_array_visitor(any_array &l) : lhs_any(l) {}
   template <typename T> void operator()(const array<T> &rhs) const {
     for (auto i = 0ul; i < rhs.size; ++i)
       apply_visitor(radd_visitor<T>(lhs_any, i, rhs[i]), lhs_any);
@@ -342,15 +315,15 @@ struct radd_array_visitor : public static_visitor<void> {
 };
 
 struct rmul_visitor : public static_visitor<void> {
-  any_array& lhs_any;
+  any_array &lhs_any;
   const double x;
-  rmul_visitor(any_array& l, const double v) : lhs_any(l), x(v) {}
-  template <typename T> void operator()(array<T>& lhs) const {
+  rmul_visitor(any_array &l, const double v) : lhs_any(l), x(v) {}
+  template <typename T> void operator()(array<T> &lhs) const {
     lhs_any = array<weight>(lhs);
     operator()(get<array<weight>>(lhs_any));
   }
-  void operator()(array<void>&) const {}
-  void operator()(array<weight>& lhs) const {
+  void operator()(array<void> &) const {}
+  void operator()(array<weight> &lhs) const {
     for (auto i = 0ul; i != lhs.size; ++i)
       lhs[i] *= x;
   }
@@ -368,7 +341,7 @@ struct bicmp_visitor : public static_visitor<bool> {
   bool operator()(const array<T> &b1, const array<void> &b2) const {
     if (b1.size != b2.size)
       return false;
-    return std::all_of(b1.begin(), b1.end(), [](const T& t) { return t == 0; });
+    return std::all_of(b1.begin(), b1.end(), [](const T &t) { return t == 0; });
   }
 
   template <typename T>
@@ -385,6 +358,7 @@ struct bicmp_visitor : public static_visitor<bool> {
 
 class adaptive_storage {
   using buffer_type = detail::any_array;
+
 public:
   using value_type = double;
 
@@ -397,12 +371,12 @@ public:
   adaptive_storage &operator=(adaptive_storage &&) = default;
 
   template <typename RHS, typename = detail::is_storage<RHS>>
-  explicit adaptive_storage(const RHS &rhs) : buffer_(detail::array<void>(rhs.size())) {
+  explicit adaptive_storage(const RHS &rhs)
+      : buffer_(detail::array<void>(rhs.size())) {
     using T = typename RHS::value_type;
     for (auto i = 0ul, n = rhs.size(); i < n; ++i) {
-      apply_visitor(
-          detail::assign_visitor<T>(buffer_, i, rhs.value(i)),
-          buffer_);
+      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs.value(i)),
+                    buffer_);
     }
   }
 
@@ -414,15 +388,16 @@ public:
         buffer_ = detail::array<void>(n);
       }
       for (auto i = 0ul; i < n; ++i) {
-        apply_visitor(
-            detail::assign_visitor<T>(buffer_, i, rhs.value(i)),
-            buffer_);
+        apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs.value(i)),
+                      buffer_);
       }
     }
     return *this;
   }
 
-  std::size_t size() const { return apply_visitor(detail::size_visitor(), buffer_); }
+  std::size_t size() const {
+    return apply_visitor(detail::size_visitor(), buffer_);
+  }
 
   void increase(std::size_t i) {
     apply_visitor(detail::increase_visitor(buffer_, i), buffer_);
@@ -433,11 +408,13 @@ public:
   }
 
   template <typename T>
-  void add(std::size_t i, const T& value, const T& variance) {
+  void add(std::size_t i, const T &value, const T &variance) {
     if (value == variance) {
       apply_visitor(detail::radd_visitor<T>(buffer_, i, value), buffer_);
     } else {
-      apply_visitor(detail::radd_visitor<detail::weight>(buffer_, i, detail::weight(value, variance)), buffer_);
+      apply_visitor(detail::radd_visitor<detail::weight>(
+                        buffer_, i, detail::weight(value, variance)),
+                    buffer_);
     }
   }
 
@@ -458,12 +435,11 @@ public:
   }
 
   // precondition: storages have same size
-  adaptive_storage& operator+=(const adaptive_storage& rhs) {
+  adaptive_storage &operator+=(const adaptive_storage &rhs) {
     if (this == &rhs) {
       for (auto i = 0ul, n = size(); i < n; ++i)
         add(i, rhs.value(i), rhs.variance(i)); // this is losing precision
-    }
-    else {
+    } else {
       apply_visitor(detail::radd_array_visitor(buffer_), rhs.buffer_);
     }
     return *this;
@@ -471,13 +447,15 @@ public:
 
   // precondition: storages have same size
   template <typename RHS, typename = detail::is_storage<RHS>>
-  adaptive_storage& operator+=(const RHS& rhs) {
+  adaptive_storage &operator+=(const RHS &rhs) {
     for (auto i = 0ul, n = size(); i < n; ++i)
-      apply_visitor(detail::radd_visitor<typename RHS::value_type>(buffer_, i, rhs.value(i)), buffer_);
+      apply_visitor(detail::radd_visitor<typename RHS::value_type>(
+                        buffer_, i, rhs.value(i)),
+                    buffer_);
     return *this;
   }
 
-  adaptive_storage& operator*=(const value_type x) {
+  adaptive_storage &operator*=(const value_type x) {
     apply_visitor(detail::rmul_visitor(buffer_, x), buffer_);
     return *this;
   }

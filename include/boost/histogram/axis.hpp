@@ -214,7 +214,9 @@ struct pow {
     return std::pow(v, 1.0 / value);
   }
   double value = 1.0;
-  bool operator==(const pow &other) const noexcept { return value == other.value; }
+  bool operator==(const pow &other) const noexcept {
+    return value == other.value;
+  }
   template <class Archive> void serialize(Archive &, unsigned);
 };
 } // namespace transform
@@ -240,8 +242,7 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    * \param trans arguments passed to the transform.
    */
-  regular(unsigned n, value_type min, value_type max,
-          string_view label = {},
+  regular(unsigned n, value_type min, value_type max, string_view label = {},
           enum uoflow uo = ::boost::histogram::axis::uoflow::on,
           Transform trans = Transform())
       : axis_base_uoflow(n, label, uo), Transform(trans),
@@ -282,8 +283,7 @@ public:
   }
 
   bool operator==(const regular &o) const noexcept {
-    return axis_base_uoflow::operator==(o) &&
-           Transform::operator==(o) &&
+    return axis_base_uoflow::operator==(o) && Transform::operator==(o) &&
            min_ == o.min_ && delta_ == o.delta_;
   }
 
@@ -296,7 +296,7 @@ public:
   }
 
   const Transform &transform() const noexcept {
-    return static_cast<const Transform&>(*this);
+    return static_cast<const Transform &>(*this);
   }
 
 private:
@@ -312,8 +312,7 @@ private:
  * perimeter value. Therefore, there are no overflow/underflow
  * bins for this axis. Binning is a O(1) operation.
  */
-template <typename RealType = double>
-class circular : public axis_base {
+template <typename RealType = double> class circular : public axis_base {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -377,8 +376,7 @@ private:
  * Binning is a O(log(N)) operation. If speed matters
  * and the problem domain allows it, prefer a regular.
  */
-template <typename RealType = double>
-class variable : public axis_base_uoflow {
+template <typename RealType = double> class variable : public axis_base_uoflow {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -390,8 +388,7 @@ public:
    * \param label description of the axis.
    * \param uoflow whether to add under-/overflow bins.
    */
-  variable(std::initializer_list<value_type> x,
-           string_view label = {},
+  variable(std::initializer_list<value_type> x, string_view label = {},
            enum uoflow uo = ::boost::histogram::axis::uoflow::on)
       : axis_base_uoflow(x.size() - 1, label, uo),
         x_(new value_type[x.size()]) {
@@ -473,8 +470,7 @@ private:
  * Binning is a O(1) operation. This axis operates
  * faster than a regular.
  */
-template <typename IntType = int>
-class integer : public axis_base_uoflow {
+template <typename IntType = int> class integer : public axis_base_uoflow {
 public:
   using value_type = IntType;
   using bin_type = interval<value_type>;
@@ -534,8 +530,7 @@ private:
  * for this axis, which counts values that are not part of the set.
  * Binning is a O(1) operation. The value type must be hashable.
  */
-template <typename T = int>
-class category : public axis_base {
+template <typename T = int> class category : public axis_base {
   using map_type = bimap<T, int>;
 
 public:
