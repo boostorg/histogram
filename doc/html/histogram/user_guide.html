@@ -104,7 +104,7 @@
           your own, too, see <a class="link" href="concepts.html#histogram.concepts.axis_type" title="Axis type">axis concept</a>).
           The <code class="computeroutput"><a class="link" href="../boost/histogram/axis/regular.html" title="Class template regular">regular axis</a></code>
           should be your default choice, because it is easy to use and fast. If you
-          have a continous range of integers, the <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class integer">integer
+          have a continous range of integers, the <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class template integer">integer
           axis</a></code> is faster. If you have data which wraps around, like angles,
           use a <code class="computeroutput"><a class="link" href="../boost/histogram/axis/circular.html" title="Class template circular">circular axis</a></code>.
         </p>
@@ -112,8 +112,8 @@
           Check the class descriptions of <code class="computeroutput"><a class="link" href="../boost/histogram/axis/regular.html" title="Class template regular">regular
           axis</a></code>, <code class="computeroutput"><a class="link" href="../boost/histogram/axis/variable.html" title="Class template variable">variable
           axis</a></code>, <code class="computeroutput"><a class="link" href="../boost/histogram/axis/circular.html" title="Class template circular">circular
-          axis</a></code>, <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class integer">integer
-          axis</a></code>, and <code class="computeroutput"><a class="link" href="../boost/histogram/axis/category.html" title="Class category">category
+          axis</a></code>, <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class template integer">integer
+          axis</a></code>, and <code class="computeroutput"><a class="link" href="../boost/histogram/axis/category.html" title="Class template category">category
           axis</a></code> for advice. See the <a class="link" href="rationale.html#histogram.rationale.axis_types" title="Axis types">rationale
           about axis types</a> for more information.
         </p>
@@ -154,15 +154,18 @@
 <span class="keyword">namespace</span> <span class="identifier">bh</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">histogram</span><span class="special">;</span>
 
 <span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span> <span class="special">{</span>
-	<span class="comment">// create a 1d-histogram for dice throws, eyes are always between 1 and 6</span>
-	<span class="keyword">auto</span> <span class="identifier">h</span> <span class="special">=</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">make_static_histogram</span><span class="special">(</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">integer</span><span class="special">(</span><span class="number">1</span><span class="special">,</span> <span class="number">6</span><span class="special">,</span> <span class="string">"eyes"</span><span class="special">,</span> <span class="keyword">false</span><span class="special">));</span>
+	<span class="comment">// create a 1d-histogram for dice throws with eye values from 1 to 6</span>
+	<span class="keyword">auto</span> <span class="identifier">h</span> <span class="special">=</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">make_static_histogram</span><span class="special">(</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">integer</span><span class="special">&lt;&gt;(</span><span class="number">1</span><span class="special">,</span> <span class="number">7</span><span class="special">,</span> <span class="string">"eyes"</span><span class="special">,</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">uoflow</span><span class="special">::</span><span class="identifier">off</span><span class="special">));</span>
 	<span class="comment">// do something with h</span>
 <span class="special">}</span>
 </pre>
 <p>
-          Using a <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class integer">integer axis</a></code>
+          Using a <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class template integer">integer axis</a></code>
           in this example is convenient, because the input values are integers and
-          we want one bin for each eye value.
+          we want one bin for each eye value. The intervals in all axes are always
+          semi-open, the last value is never included. That's why the upper end is
+          7 and not 6, here. This is similar to iterator ranges from <code class="computeroutput"><span class="identifier">begin</span></code> to <code class="computeroutput"><span class="identifier">end</span></code>,
+          where <code class="computeroutput"><span class="identifier">end</span></code> is also not included.
         </p>
 <div class="note"><table border="0" summary="Note">
 <tr>
@@ -191,7 +194,7 @@
 	<span class="keyword">using</span> <span class="identifier">hist_type</span> <span class="special">=</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">histogram</span><span class="special">&lt;</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">Dynamic</span><span class="special">,</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">builtin_axes</span><span class="special">&gt;;</span>
 	<span class="keyword">auto</span> <span class="identifier">v</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">hist_type</span><span class="special">::</span><span class="identifier">axis_type</span><span class="special">&gt;();</span>
 	<span class="identifier">v</span><span class="special">.</span><span class="identifier">push_back</span><span class="special">(</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">regular</span><span class="special">&lt;&gt;(</span><span class="number">100</span><span class="special">,</span> <span class="special">-</span><span class="number">1</span><span class="special">,</span> <span class="number">1</span><span class="special">));</span>
-	<span class="identifier">v</span><span class="special">.</span><span class="identifier">push_back</span><span class="special">(</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">integer</span><span class="special">(</span><span class="number">1</span><span class="special">,</span> <span class="number">6</span><span class="special">));</span>
+	<span class="identifier">v</span><span class="special">.</span><span class="identifier">push_back</span><span class="special">(</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">integer</span><span class="special">&lt;&gt;(</span><span class="number">1</span><span class="special">,</span> <span class="number">6</span><span class="special">));</span>
 	<span class="keyword">auto</span> <span class="identifier">h</span> <span class="special">=</span> <span class="identifier">hist_type</span><span class="special">(</span><span class="identifier">v</span><span class="special">.</span><span class="identifier">begin</span><span class="special">(),</span> <span class="identifier">v</span><span class="special">.</span><span class="identifier">end</span><span class="special">());</span>
 	<span class="comment">// do something with h</span>
 <span class="special">}</span>
@@ -203,7 +206,7 @@
 </tr>
 <tr><td align="left" valign="top"><p>
             In all these examples, memory for bin counters is allocated lazily, because
-            the default policy <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">boost::histogram::adaptive_storage&lt;&gt;</a></code>
+            the default policy <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class adaptive_storage">boost::histogram::adaptive_storage</a></code>
             is used. Allocation is deferred to the first call to <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code>, which are described in the next
             section. Therefore memory allocation exceptions are not thrown when the
             histogram is created, but possibly later on the first fill.
@@ -286,7 +289,7 @@
 <span class="keyword">namespace</span> <span class="identifier">bh</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">histogram</span><span class="special">;</span>
 
 <span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span> <span class="special">{</span>
-	<span class="keyword">auto</span> <span class="identifier">h</span> <span class="special">=</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">make_static_histogram</span><span class="special">(</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">integer</span><span class="special">(</span><span class="number">0</span><span class="special">,</span> <span class="number">9</span><span class="special">));</span>
+	<span class="keyword">auto</span> <span class="identifier">h</span> <span class="special">=</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">make_static_histogram</span><span class="special">(</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">integer</span><span class="special">&lt;&gt;(</span><span class="number">0</span><span class="special">,</span> <span class="number">9</span><span class="special">));</span>
 	<span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">v</span><span class="special">{</span><span class="number">0</span><span class="special">,</span> <span class="number">1</span><span class="special">,</span> <span class="number">2</span><span class="special">,</span> <span class="number">3</span><span class="special">,</span> <span class="number">4</span><span class="special">,</span> <span class="number">5</span><span class="special">,</span> <span class="number">6</span><span class="special">,</span> <span class="number">7</span><span class="special">,</span> <span class="number">8</span><span class="special">,</span> <span class="number">9</span><span class="special">};</span>
 	<span class="identifier">std</span><span class="special">::</span><span class="identifier">for_each</span><span class="special">(</span><span class="identifier">v</span><span class="special">.</span><span class="identifier">begin</span><span class="special">(),</span> <span class="identifier">v</span><span class="special">.</span><span class="identifier">end</span><span class="special">(),</span> <span class="special">[&amp;</span><span class="identifier">h</span><span class="special">](</span><span class="keyword">int</span> <span class="identifier">x</span><span class="special">)</span> <span class="special">{</span> <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="identifier">x</span><span class="special">,</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">weight</span><span class="special">(</span><span class="number">2.0</span><span class="special">));</span> <span class="special">});</span>
 	<span class="comment">// h is now filled</span>
@@ -357,11 +360,9 @@
         is efficient.
       </p>
 <p>
-        You can also fill the histogram in Python. If you pass the input values as
-        numpy arrays, this is quite efficient and almost as fast as using C++, see
-        the <a class="link" href="benchmarks.html" title="Benchmarks">benchmark</a>. Looping over a
-        collection in Python, however, is very slow and should be avoided. Here is
-        an example to illustrate:
+        You can also fill the histogram in Python. Looping over a collection in Python
+        is very slow and should be avoided. If you pass the input values as numpy
+        arrays, this is efficient and almost as fast as using C++, see the <a class="link" href="benchmarks.html" title="Benchmarks">benchmark</a>. Here is an example to illustrate:
       </p>
 <pre class="programlisting"><span class="keyword">import</span> <span class="identifier">histogram</span> <span class="keyword">as</span> <span class="identifier">bh</span>
 <span class="keyword">import</span> <span class="identifier">numpy</span> <span class="keyword">as</span> <span class="identifier">np</span>
@@ -373,9 +374,14 @@
 	<span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="identifier">i</span><span class="special">)</span>
 
 <span class="comment"># do this instead, it is very fast</span>
-<span class="identifier">v</span> <span class="special">=</span> <span class="identifier">np</span><span class="special">.</span><span class="identifier">arange</span><span class="special">(</span><span class="number">10</span><span class="special">)</span>
+<span class="identifier">v</span> <span class="special">=</span> <span class="identifier">np</span><span class="special">.</span><span class="identifier">arange</span><span class="special">(</span><span class="number">10</span><span class="special">,</span> <span class="identifier">dtype</span><span class="special">=</span><span class="identifier">float</span><span class="special">)</span>
 <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="identifier">v</span><span class="special">)</span> <span class="comment"># fills the histogram with each value in the array</span>
 </pre>
+<p>
+        <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...)</span></code>
+        accepts any sequence that can be converted into a numpy array with <code class="computeroutput"><span class="identifier">dtype</span><span class="special">=</span><span class="identifier">float</span></code>. To get the best performance, avoid
+        the conversion and work with such numpy arrays directly.
+      </p>
 </div>
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>

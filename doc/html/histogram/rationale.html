@@ -36,6 +36,8 @@
 <dt><span class="section"><a href="rationale.html#histogram.rationale.weigths">Support of weights</a></span></dt>
 <dt><span class="section"><a href="rationale.html#histogram.rationale.python_support">Python support</a></span></dt>
 <dt><span class="section"><a href="rationale.html#histogram.rationale.serialization">Serialization</a></span></dt>
+<dt><span class="section"><a href="rationale.html#histogram.rationale.comparison_to_boost_accumulators">Comparison
+      to Boost.Accumulators</a></span></dt>
 </dl></div>
 <p>
       This library was designed based on a decade of experience collected in working
@@ -158,11 +160,11 @@
             wraps around.
           </li>
 <li class="listitem">
-            <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class integer">boost::histogram::axis::integer</a></code>
+            <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class template integer">boost::histogram::axis::integer</a></code>
             is a specialization of a regular axis for a continuous range of integers.
           </li>
 <li class="listitem">
-            <code class="computeroutput"><a class="link" href="../boost/histogram/axis/category.html" title="Class category">boost::histogram::axis::category</a></code>
+            <code class="computeroutput"><a class="link" href="../boost/histogram/axis/category.html" title="Class template category">boost::histogram::axis::category</a></code>
             is a specialization of an integer axis for categorical data, like "men"
             and "women".
           </li>
@@ -190,7 +192,7 @@
         when the bits in the mantissa are used up.
       </p>
 <p>
-        The standard storage used in the library is <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">boost::histogram::adaptive_storage</a></code>,
+        The standard storage used in the library is <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class adaptive_storage">boost::histogram::adaptive_storage</a></code>,
         which solves these issues in an effective way, based on the following insight.
       </p>
 <p>
@@ -225,7 +227,7 @@
         size leads to better utilization of the CPU cache.
       </p>
 <p>
-        In a sense, <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage</a></code>
+        In a sense, <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class adaptive_storage">adaptive_storage</a></code>
         is the opposite of a <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span></code>,
         which keeps the size of the stored type constant, but grows to hold a larger
         number of elements. Here, the number of elements remains the same, but the
@@ -286,7 +288,7 @@
         If the input values for the histogram come from a <a href="https://en.wikipedia.org/wiki/Stochastic_process" target="_top">stochastic
         process</a>, the variance provides useful additional information. Examples
         for a stochastic process are a physics experiment or a random person filling
-        out a questionaire<a href="#ftn.histogram.rationale.weights.f0" class="footnote" name="histogram.rationale.weights.f0"><sup class="footnote">[1]</sup></a>. The variance <span class="emphasis"><em>v</em></span> is the square of the <a href="https://en.wikipedia.org/wiki/Standard_deviation" target="_top">standard deviation</a>.
+        out a questionaire<a href="#ftn.histogram.rationale.weights.f0" class="footnote" name="histogram.rationale.weights.f0"><sup class="footnote">[2]</sup></a>. The variance <span class="emphasis"><em>v</em></span> is the square of the <a href="https://en.wikipedia.org/wiki/Standard_deviation" target="_top">standard deviation</a>.
         The standard deviation in a bin tells us how much we can expect the observed
         value to fluctuate if we or someone else would repeat our experiment with
         new random input.
@@ -348,7 +350,7 @@
         the expected number of counts <span class="emphasis"><em>lambda</em></span> per bin, we could
         compute the variance as <span class="emphasis"><em>v = lambda</em></span>, because counts in
         a histogram follow the <a href="https://en.wikipedia.org/wiki/Poisson_distribution" target="_top">Poisson
-        distribution</a> <a href="#ftn.histogram.rationale.weights.f1" class="footnote" name="histogram.rationale.weights.f1"><sup class="footnote">[2]</sup></a>. After filling a histogram, we do not know the expected number
+        distribution</a> <a href="#ftn.histogram.rationale.weights.f1" class="footnote" name="histogram.rationale.weights.f1"><sup class="footnote">[3]</sup></a>. After filling a histogram, we do not know the expected number
         of counts <span class="emphasis"><em>lambda</em></span> for any particular bin, but we know
         the observed count <span class="emphasis"><em>k</em></span>, which is not too far from <span class="emphasis"><em>lambda</em></span>.
         We therefore might be tempted to just replace <span class="emphasis"><em>lambda</em></span>
@@ -373,7 +375,7 @@
 </h3></div></div></div>
 <p>
         A histogram categorizes input values and increments a bin counter if an input
-        value falls into the value range covered by that bin. The <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">standard
+        value falls into the value range covered by that bin. The <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class adaptive_storage">standard
         storage</a></code> uses integer types to store these counts, see the <a class="link" href="rationale.html#histogram.rationale.storage_types" title="Storage types">storage section</a> how integer
         overflow is avoided. However, sometimes histograms need to be filled with
         values that have a weight <span class="emphasis"><em>w</em></span> attached to them. In this
@@ -397,7 +399,7 @@
         </p></td></tr>
 </table></div>
 <p>
-        When the <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class template adaptive_storage">adaptive_storage</a></code>
+        When the <code class="computeroutput"><a class="link" href="../boost/histogram/adaptive_storage.html" title="Class adaptive_storage">adaptive_storage</a></code>
         is used, histograms may also be filled with weighted values. The choice of
         using weighted fills can be made at run-time. If the call <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">(</span><span class="identifier">x</span><span class="special">))</span></code>
         is used, two doubles per bin are stored (previous integer counts are automatically
@@ -437,41 +439,48 @@
         the library provides Python bindings. The histogram may be used as an interface
         between a complex simulation or data-storage system written in C++ and data-analysis/plotting
         in Python. Users are able to define the histogram in Python, let it be filled
-        on the C++ side, and then get it back for further data analysis or plotting.
+        on the C++ side (using a few lines of Boost.Python code to define the interface),
+        and then get it back for further data analysis or plotting.
       </p>
 <p>
-        Data analysis in Python is Numpy-based, so Numpy support is included. If
-        number of dimensions is larger than one, this implementation is faster than
-        the equivalent Numpy functions (while being more flexible), see <a class="link" href="benchmarks.html" title="Benchmarks">benchmark</a>.
+        Data analysis in Python is Numpy-based, so Numpy is fully support. Histograms
+        can be filled with chunks of data in form of Numpy arrays, which is efficient,
+        and the bin counts can be retrieved as a Numpy array without copying data.
       </p>
 <div class="note"><table border="0" summary="Note">
 <tr>
 <td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
 <th align="left">Note</th>
 </tr>
-<tr><td align="left" valign="top">
-<p>
-          The Python and C++ interface use consistent naming, but sometimes Python
-          offers more elegant and pythonic ways of implementing things. Where possible,
-          the more pythonic interface is used.
-        </p>
-<p>
-          Properties: Getter/setter-like functions are wrapped as properties. Examples:
-          <code class="computeroutput"><span class="identifier">histogram</span><span class="special">.</span><span class="identifier">dim</span></code>, <code class="computeroutput"><span class="identifier">regular_axis</span><span class="special">.</span><span class="identifier">bins</span></code>.
-        </p>
-<p>
-          Axis access: The <code class="computeroutput"><span class="identifier">histogram</span></code>
-          object implements the sequence protocol and behaves like an immutable sequence
-          of axes. Examples: <code class="computeroutput"><span class="identifier">len</span><span class="special">(</span><span class="identifier">histogram</span><span class="special">)</span></code> returns the number of axes, <code class="computeroutput"><span class="identifier">histogram</span><span class="special">[</span><span class="number">0</span><span class="special">]</span></code> accesses
-          the first axis, <code class="computeroutput"><span class="keyword">for</span> <span class="identifier">axis</span>
-          <span class="identifier">in</span> <span class="identifier">histogram</span><span class="special">:</span> <span class="special">[...]</span></code>.
-        </p>
-<p>
-          Keyword-based parameters: the member function call <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">(</span><span class="identifier">x</span><span class="special">))</span></code>
-          in C++ is translated into a Python member function call <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">=</span><span class="identifier">x</span><span class="special">)</span></code>.
-        </p>
-</td></tr>
+<tr><td align="left" valign="top"><p>
+          If number of dimensions is larger than one, this implementation is faster
+          than the equivalent Numpy functions (while being more flexible), see <a class="link" href="benchmarks.html" title="Benchmarks">benchmark</a>.
+        </p></td></tr>
 </table></div>
+<p>
+        The Python and C++ interface were designed to be as consistent as possible,
+        while following established style for the respective C++ or Python community.
+        This leads to the following stylistic changes on the Python side.
+      </p>
+<p>
+        Properties: Getter/setter-like functions on the C++ side are wrapped in Python
+        as properties. Examples: <code class="computeroutput"><span class="identifier">histogram</span><span class="special">.</span><span class="identifier">dim</span></code>,
+        <code class="computeroutput"><span class="identifier">axis</span><span class="special">.</span><span class="identifier">regular</span><span class="special">.</span><span class="identifier">uoflow</span></code>. In general, a C++ function that
+        takes no argument but returns a value is using the property syntax on the
+        Python side. An exception is made for the function <code class="computeroutput"><span class="identifier">size</span><span class="special">()</span></code>, see next item.
+      </p>
+<p>
+        <code class="computeroutput"><span class="identifier">len</span><span class="special">(</span><span class="identifier">x</span><span class="special">)</span></code> instead
+        of <code class="computeroutput"><span class="identifier">x</span><span class="special">.</span><span class="identifier">size</span><span class="special">()</span></code>:
+        An axis instance behaves like a container of bins in C++ and like a sequence
+        of bins in Python. To get the length of a sequence in Python one uses the
+        <code class="computeroutput"><span class="identifier">len</span><span class="special">(...)</span></code>
+        function, while in C++ one uses the <code class="computeroutput"><span class="identifier">size</span><span class="special">()</span></code> method.
+      </p>
+<p>
+        Keyword-based parameters: the member function call <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">(</span><span class="identifier">x</span><span class="special">))</span></code>
+        in C++ is translated into a Python member function call <code class="computeroutput"><span class="identifier">fill</span><span class="special">(...,</span> <span class="identifier">weight</span><span class="special">=</span><span class="identifier">x</span><span class="special">)</span></code>.
+      </p>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -481,18 +490,72 @@
         Serialization is implemented using <a href="../../../libs/serialization/index.html" target="_top">Boost.Serialization</a>.
         Pickling in Python is implemented based on the C++ serialization code. In
         the current implementation, the pickled stream is <span class="bold"><strong>not</strong></span>
-        portable, since it uses <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">archive</span><span class="special">::</span><span class="identifier">binary_archive</span></code>.
-        It would be great to switch to a portable binary representation in the future,
-        when that becomes available.
+        portable between different hardware platforms, since it uses <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">archive</span><span class="special">::</span><span class="identifier">binary_archive</span></code>. It would be great to switch
+        to a portable binary representation in the future, when that becomes available.
+        In practice, most computing clusters and most consumer hardware are x86 compatible
+        nowadays. The binary_archive is portable between such hardware platforms.
+        Naturally, it is portable between operating systems, like OSX, Windows, and
+        Linux.
       </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="histogram.rationale.comparison_to_boost_accumulators"></a><a class="link" href="rationale.html#histogram.rationale.comparison_to_boost_accumulators" title="Comparison to Boost.Accumulators">Comparison
+      to Boost.Accumulators</a>
+</h3></div></div></div>
+<p>
+        Boost.Histogram has a weak overlap with <a href="../../../libs/accumulators/index.html" target="_top">Boost.Accumulators</a>.
+        In particular, the statistical accumulators <code class="computeroutput"><span class="identifier">density</span></code>
+        and <code class="computeroutput"><span class="identifier">weighted_density</span></code> also
+        generate one-dimensional histograms. The axis range and the bin widths are
+        determined automatically from a cached sample of initial values. In contrast,
+        Boost.Histogram puts the responsibility to choose range and bin widths on
+        the user.
+      </p>
+<p>
+        Automatic binning is not an option for Boost.Histogram, because it does not
+        scale well to many dimensions. Because of the Curse of Dimensionality, a
+        prohibitive number of samples would need to be collected.
+      </p>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          There is no scientific consensus on how do automatic binning in an optimal
+          way, mostly because there is no consensus over the cost function (there
+          are many articles with different solutions in the literature). The problem
+          is not solved for one-dimensional data, and even less so for multi-dimensional
+          data.
+        </p></td></tr>
+</table></div>
+<p>
+        Recommendation:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            Boost.Accumulators: You have one-dimensional data of which you know nothing
+            about, and/or you want to a histogram quickly without worrying about
+            binning details.
+          </li>
+<li class="listitem">
+            Boost.Histogram: You have multi-dimensional data or you suspect you will
+            switch to multi-dimensional data later. You want to customize the binning
+            by hand, for example, to make bin edges coincide with special values
+            or to reflect special properties in your data (for example, the data
+            values are periodic, like angles, or only integers, or you only want
+            to distinguish between a few special non-contiguous values).
+          </li>
+</ul></div>
 </div>
 <div class="footnotes">
 <br><hr style="width:100; text-align:left;margin-left: 0">
-<div id="ftn.histogram.rationale.weights.f0" class="footnote"><p><a href="#histogram.rationale.weights.f0" class="para"><sup class="para">[1] </sup></a>
+<div id="ftn.histogram.rationale.weights.f0" class="footnote"><p><a href="#histogram.rationale.weights.f0" class="para"><sup class="para">[2] </sup></a>
           The choices of the person are most likely not random, but if we pick a
           random person from a group, we randomly sample from a pool of opinions
         </p></div>
-<div id="ftn.histogram.rationale.weights.f1" class="footnote"><p><a href="#histogram.rationale.weights.f1" class="para"><sup class="para">[2] </sup></a>
+<div id="ftn.histogram.rationale.weights.f1" class="footnote"><p><a href="#histogram.rationale.weights.f1" class="para"><sup class="para">[3] </sup></a>
           The Poisson distribution is correct as far as the counts <span class="emphasis"><em>k</em></span>
           themselves are of interest. If the fractions per bin <span class="emphasis"><em>p = k /
           N</em></span> are of interest, where <span class="emphasis"><em>N</em></span> is the total

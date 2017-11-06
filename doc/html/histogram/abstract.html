@@ -27,29 +27,35 @@
 <a name="histogram.abstract"></a><a class="link" href="abstract.html" title="Abstract">Abstract</a>
 </h2></div></div></div>
 <p>
-      This <code class="computeroutput"><span class="identifier">C</span><span class="special">++</span><span class="number">11</span></code> library provides an easy-to-use powerful n-dimensional
-      <a href="https://en.wikipedia.org/wiki/Histogram" target="_top">histogram</a> class
-      for your statistics needs. It is very customisable through policy classes,
-      but the default policies were carefully designed so that most users won't need
-      to customize anything. The library has a convenient uniform interface, is memory
-      efficient, and very fast. If the default policies are used, bin counts <span class="bold"><strong>cannot overflow</strong></span> or <span class="bold"><strong>be capped</strong></span>.
+      This <code class="computeroutput"><span class="identifier">C</span><span class="special">++</span><span class="number">11</span></code> library provides an easy-to-use and multi-dimensional
+      <a href="https://en.wikipedia.org/wiki/Histogram" target="_top">histogram</a> template
+      class for your counting and statistics needs. It is very customisable through
+      policy classes, but the default policies were carefully crafted so that most
+      users won't need to customize anything. The histogram has a convenient interface,
+      designed to work well for the one- and multi-dimensional case. If the default
+      policies are used, the histogram is guaranteed to be safe to use as a black
+      box, memory efficient, and very fast. Safe means that bin counts <span class="bold"><strong>cannot overflow</strong></span> or <span class="bold"><strong>be capped</strong></span>
+      at some large value, which is generally not guaranteed in other implementations.
     </p>
 <p>
-      The histogram class comes in two implementations with a common interface. The
-      <span class="bold"><strong>static</strong></span> variant uses compile-time information
-      to provide maximum performance, at the cost of potentially larger executables
-      and reduced runtime flexibility. The <span class="bold"><strong>dynamic</strong></span>
-      variant makes the opposite trade-off. Python bindings for the latter are included,
-      implemented with <a href="../../../libs/python/index.html" target="_top">Boost.Python</a>.
+      The histogram class comes in two variants, which share a common interface.
+      The <span class="bold"><strong>static</strong></span> variant uses a maximum of compile-time
+      information to provide maximum performance, at the cost of reduced runtime
+      flexibility and potentially larger executables, if many different histograms
+      are instantiated. The <span class="bold"><strong>dynamic</strong></span> variant is a
+      bit slower, but configurable at run-time, and does not increase the size of
+      the executable if several different configurations are used. Python bindings
+      for the latter are included, implemented with <a href="../../../libs/python/index.html" target="_top">Boost.Python</a>.
       Optional serialization support is implemented with <a href="../../../libs/serialization/index.html" target="_top">Boost.Serialization</a>.
     </p>
 <p>
-      The histogram supports value semantics. Move operations and trips over the
-      language boundary from C++ to Python are cheap. Histogram instances can be
-      streamed from/to files and pickled in Python. <a href="http://www.numpy.org" target="_top">Numpy</a>
-      is supported to speed up operations in Python: histograms can be filled with
-      Numpy arrays at high speed (faster than numpy's own histogram functions) and
-      are convertible into Numpy arrays without copying data.
+      The histogram supports value semantics. Histograms can be added and scaled.
+      Move operations and trips over the language boundary from C++ to Python are
+      efficient. Histogram instances can be streamed from/to files and pickled in
+      Python. <a href="http://www.numpy.org" target="_top">Numpy</a> is supported to speed
+      up operations in Python: histograms can be filled with Numpy arrays at high
+      speed (faster than numpy's own histogram functions for multi-dimensional data)
+      and are convertible into Numpy array views.
     </p>
 <p>
       My goal is to submit this project to <a href="http://www.boost.org" target="_top">Boost</a>,

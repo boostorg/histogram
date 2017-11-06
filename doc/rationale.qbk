@@ -150,7 +150,7 @@ Serialization is implemented using [@boost:/libs/serialization/index.html Boost.
 
 [section Comparison to Boost.Accumulators]
 
-Boost.Histogram has a weak overlap with the [@boost:/libs/accumulators/index.html Boost.Accumulators] framework, in particular with the statistical accumulators `density` and `weighted_density`. The two accumulators generate one-dimensional histograms from input data. The axis range and the bin widths are determined automatically from a cached sample of initial values. In contrast, Boost.Histogram puts the responsibility to choose range and bin widths on the user.
+Boost.Histogram has a weak overlap with [@boost:/libs/accumulators/index.html Boost.Accumulators]. In particular, the statistical accumulators `density` and `weighted_density` also generate one-dimensional histograms. The axis range and the bin widths are determined automatically from a cached sample of initial values. In contrast, Boost.Histogram puts the responsibility to choose range and bin widths on the user.
 
 Automatic binning is not an option for Boost.Histogram, because it does not scale well to many dimensions. Because of the Curse of Dimensionality, a prohibitive number of samples would need to be collected.
 
@@ -158,7 +158,10 @@ Automatic binning is not an option for Boost.Histogram, because it does not scal
 There is no scientific consensus on how do automatic binning in an optimal way, mostly because there is no consensus over the cost function (there are many articles with different solutions in the literature). The problem is not solved for one-dimensional data, and even less so for multi-dimensional data.
 ]
 
-Recommendation: If you have one-dimensional data of which you know nothing about, and/or you want to a histogram quickly, use the Boost.Accumulators. Use Boost.Histogram, if you have multi-dimensional data or if you suspect you will switch to multi-dimensional data later, or if you want to customize the binning by hand.
+Recommendation:
+
+* Boost.Accumulators: You have one-dimensional data of which you know nothing about, and/or you want to a histogram quickly without worrying about binning details.
+* Boost.Histogram: You have multi-dimensional data or you suspect you will switch to multi-dimensional data later. You want to customize the binning by hand, for example, to make bin edges coincide with special values or to reflect special properties in your data (for example, the data values are periodic, like angles, or only integers, or you only want to distinguish between a few special non-contiguous values).
 
 [endsect]
 

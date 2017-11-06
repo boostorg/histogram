@@ -28,6 +28,36 @@
 </h2></div></div></div>
 <h4>
 <a name="histogram.changelog.h0"></a>
+      <span class="phrase"><a name="histogram.changelog.2_1_not_in_boost"></a></span><a class="link" href="changelog.html#histogram.changelog.2_1_not_in_boost">2.1
+      (not in boost)</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+          Support for efficient adding of multiple histograms and scaling
+        </li>
+<li class="listitem">
+          Re-design of category axis as a general mapping between unique values and
+          bins
+        </li>
+<li class="listitem">
+          Re-design of the bin description an axis returns upon element access
+        </li>
+<li class="listitem">
+          Interface cleanup, more consistency between Python and C++ interface
+        </li>
+<li class="listitem">
+          range-based for-loops in C++ and Python loops now excludes over-/underflow
+          bins
+        </li>
+<li class="listitem">
+          Regular axis in C++: Allowing transforms with state
+        </li>
+<li class="listitem">
+          Regular axis in Python: Support for all C++ transforms
+        </li>
+</ul></div>
+<h4>
+<a name="histogram.changelog.h1"></a>
       <span class="phrase"><a name="histogram.changelog.2_0_not_in_boost"></a></span><a class="link" href="changelog.html#histogram.changelog.2_0_not_in_boost">2.0
       (not in boost)</a>
     </h4>
@@ -56,9 +86,13 @@
 <li class="listitem">
           Python interface changed: histograms are now iterable, returning axis classes
         </li>
+<li class="listitem">
+          Support reduction (removing a subset of axes and returning the equivalent
+          histogram; in other words, those axes are integrated over)
+        </li>
 </ul></div>
 <h4>
-<a name="histogram.changelog.h1"></a>
+<a name="histogram.changelog.h2"></a>
       <span class="phrase"><a name="histogram.changelog.1_0_not_in_boost"></a></span><a class="link" href="changelog.html#histogram.changelog.1_0_not_in_boost">1.0
       (not in boost)</a>
     </h4>

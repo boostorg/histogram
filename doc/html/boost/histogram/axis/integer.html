@@ -1,13 +1,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<title>Class integer</title>
+<title>Class template integer</title>
 <link rel="stylesheet" href="../../../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../../../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
 <link rel="up" href="../../../histogram/reference.html#header.boost.histogram.axis_hpp" title="Header &lt;boost/histogram/axis.hpp&gt;">
 <link rel="prev" href="circular.html" title="Class template circular">
-<link rel="next" href="real_bin.html" title="Struct template real_bin">
+<link rel="next" href="regular.html" title="Class template regular">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -20,56 +20,56 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="circular.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../histogram/reference.html#header.boost.histogram.axis_hpp"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="real_bin.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="circular.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../histogram/reference.html#header.boost.histogram.axis_hpp"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="regular.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="refentry">
 <a name="boost.histogram.axis.integer"></a><div class="titlepage"></div>
 <div class="refnamediv">
-<h2><span class="refentrytitle">Class integer</span></h2>
-<p>boost::histogram::axis::integer &#8212; An axis for a contiguous range of integers. </p>
+<h2><span class="refentrytitle">Class template integer</span></h2>
+<p>boost::histogram::axis::integer &#8212; Axis for an interval of integral values with unit steps. </p>
 </div>
 <h2 xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="refsynopsisdiv-title">Synopsis</h2>
 <div xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../../../histogram/reference.html#header.boost.histogram.axis_hpp" title="Header &lt;boost/histogram/axis.hpp&gt;">boost/histogram/axis.hpp</a>&gt;
 
-</span>
-<span class="keyword">class</span> <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">:</span> <span class="keyword">public</span> boost::histogram::axis::axis_base&lt; true &gt;,
-                <span class="keyword">private</span> boost::operators&lt; integer &gt;
-<span class="special">{</span>
+</span><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> IntType <span class="special">=</span> <span class="keyword">int</span><span class="special">&gt;</span> 
+<span class="keyword">class</span> <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">:</span> <span class="keyword">public</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">histogram</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">axis_base_uoflow</span> <span class="special">{</span>
 <span class="keyword">public</span><span class="special">:</span>
   <span class="comment">// types</span>
-  <span class="keyword">typedef</span> <span class="keyword">int</span>                      <a name="boost.histogram.axis.integer.value_type"></a><span class="identifier">value_type</span><span class="special">;</span>    
-  <span class="keyword">typedef</span> <span class="identifier">axis_iterator</span><span class="special">&lt;</span> <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&gt;</span> <a name="boost.histogram.axis.integer.const_iterator"></a><span class="identifier">const_iterator</span><span class="special">;</span>
+  <span class="keyword">typedef</span> <span class="identifier">IntType</span>                  <a name="boost.histogram.axis.integer.value_type"></a><span class="identifier">value_type</span><span class="special">;</span>    
+  <span class="keyword">typedef</span> <span class="identifier">interval</span><span class="special">&lt;</span> <span class="identifier">value_type</span> <span class="special">&gt;</span>   <a name="boost.histogram.axis.integer.bin_type"></a><span class="identifier">bin_type</span><span class="special">;</span>      
+  <span class="keyword">typedef</span> <span class="identifier">axis_iterator</span><span class="special">&lt;</span> <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&gt;</span> <a name="boost.histogram.axis.integer.const_iterator"></a><span class="identifier">const_iterator</span><span class="special">;</span>
 
   <span class="comment">// <a class="link" href="integer.html#boost.histogram.axis.integerconstruct-copy-destruct">construct/copy/destruct</a></span>
-  <a class="link" href="integer.html#idm317565431232-bb"><span class="identifier">integer</span></a><span class="special">(</span><span class="identifier">value_type</span><span class="special">,</span> <span class="identifier">value_type</span><span class="special">,</span> <span class="identifier">string_view</span> <span class="special">=</span> <span class="identifier">string_view</span><span class="special">(</span><span class="special">)</span><span class="special">,</span> <span class="keyword">bool</span> <span class="special">=</span> <span class="keyword">true</span><span class="special">)</span><span class="special">;</span>
-  <a class="link" href="integer.html#idm317565426288-bb"><span class="identifier">integer</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
-  <a class="link" href="integer.html#idm317565425776-bb"><span class="identifier">integer</span></a><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
-  <a class="link" href="integer.html#idm317565422096-bb"><span class="identifier">integer</span></a><span class="special">(</span><a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
-  <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span> <a class="link" href="integer.html#idm317565424208-bb"><span class="keyword">operator</span><span class="special">=</span></a><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
-  <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span> <a class="link" href="integer.html#idm317565420672-bb"><span class="keyword">operator</span><span class="special">=</span></a><span class="special">(</span><a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
+  <a class="link" href="integer.html#idm213152634496-bb"><span class="identifier">integer</span></a><span class="special">(</span><span class="identifier">value_type</span><span class="special">,</span> <span class="identifier">value_type</span><span class="special">,</span> <span class="identifier">string_view</span> <span class="special">=</span> <span class="special">{</span><span class="special">}</span><span class="special">,</span> 
+          <span class="keyword">enum</span> <span class="identifier">uoflow</span> <span class="special">=</span> <span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">histogram</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">uoflow</span><span class="special">::</span><span class="identifier">on</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="integer.html#idm213152629424-bb"><span class="identifier">integer</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
+  <a class="link" href="integer.html#idm213152628944-bb"><span class="identifier">integer</span></a><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
+  <a class="link" href="integer.html#idm213152625488-bb"><span class="identifier">integer</span></a><span class="special">(</span><a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
+  <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span> <a class="link" href="integer.html#idm213152627472-bb"><span class="keyword">operator</span><span class="special">=</span></a><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
+  <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span> <a class="link" href="integer.html#idm213152624144-bb"><span class="keyword">operator</span><span class="special">=</span></a><span class="special">(</span><a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
 
-  <span class="comment">// <a class="link" href="integer.html#idm317565439984-bb">public member functions</a></span>
-  <span class="keyword">int</span> <a class="link" href="integer.html#idm317565439456-bb"><span class="identifier">index</span></a><span class="special">(</span><span class="identifier">value_type</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
-  <span class="identifier">value_type</span> <a class="link" href="integer.html#idm317565437488-bb"><span class="keyword">operator</span><span class="special">[</span><span class="special">]</span></a><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
-  <span class="keyword">bool</span> <a class="link" href="integer.html#idm317565435504-bb"><span class="keyword">operator</span><span class="special">==</span></a><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
-  <span class="identifier">const_iterator</span> <a class="link" href="integer.html#idm317565433424-bb"><span class="identifier">begin</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
-  <span class="identifier">const_iterator</span> <a class="link" href="integer.html#idm317565432400-bb"><span class="identifier">end</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="comment">// <a class="link" href="integer.html#idm213152642688-bb">public member functions</a></span>
+  <span class="keyword">int</span> <a class="link" href="integer.html#idm213152642208-bb"><span class="identifier">index</span></a><span class="special">(</span><span class="identifier">value_type</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+  <span class="identifier">bin_type</span> <a class="link" href="integer.html#idm213152640384-bb"><span class="keyword">operator</span><span class="special">[</span><span class="special">]</span></a><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">bool</span> <a class="link" href="integer.html#idm213152638496-bb"><span class="keyword">operator</span><span class="special">==</span></a><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+  <span class="identifier">const_iterator</span> <a class="link" href="integer.html#idm213152636544-bb"><span class="identifier">begin</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="identifier">const_iterator</span> <a class="link" href="integer.html#idm213152635584-bb"><span class="identifier">end</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 
-  <span class="comment">// <a class="link" href="integer.html#idm317565418704-bb">private member functions</a></span>
-  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> <span class="keyword">void</span> <a class="link" href="integer.html#idm317565418176-bb"><span class="identifier">serialize</span></a><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">unsigned</span><span class="special">)</span><span class="special">;</span>
+  <span class="comment">// <a class="link" href="integer.html#idm213152622288-bb">private member functions</a></span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> <span class="keyword">void</span> <a class="link" href="integer.html#idm213152621808-bb"><span class="identifier">serialize</span></a><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">unsigned</span><span class="special">)</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm85536742064"></a><h2>Description</h2>
+<a name="idm130742714896"></a><h2>Description</h2>
 <p>Binning is a O(1) operation. This axis operates faster than a regular. </p>
 <div class="refsect2">
-<a name="idm85536741328"></a><h3>
+<a name="idm130742714160"></a><h3>
 <a name="boost.histogram.axis.integerconstruct-copy-destruct"></a><code class="computeroutput">integer</code> 
         public
        construct/copy/destruct</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
 <li class="listitem">
-<pre class="literallayout"><a name="idm317565431232-bb"></a><span class="identifier">integer</span><span class="special">(</span><span class="identifier">value_type</span> min<span class="special">,</span> <span class="identifier">value_type</span> max<span class="special">,</span> <span class="identifier">string_view</span> label <span class="special">=</span> <span class="identifier">string_view</span><span class="special">(</span><span class="special">)</span><span class="special">,</span> 
-        <span class="keyword">bool</span> uoflow <span class="special">=</span> <span class="keyword">true</span><span class="special">)</span><span class="special">;</span></pre>Construct axis over integer range [min, max]. <p>
+<pre class="literallayout"><a name="idm213152634496-bb"></a><span class="identifier">integer</span><span class="special">(</span><span class="identifier">value_type</span> lower<span class="special">,</span> <span class="identifier">value_type</span> upper<span class="special">,</span> <span class="identifier">string_view</span> label <span class="special">=</span> <span class="special">{</span><span class="special">}</span><span class="special">,</span> 
+        <span class="keyword">enum</span> <span class="identifier">uoflow</span> uo <span class="special">=</span> <span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">histogram</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">uoflow</span><span class="special">::</span><span class="identifier">on</span><span class="special">)</span><span class="special">;</span></pre>Construct axis over a semi-open integer interval [lower, upper). <p>
 </p>
 <div class="variablelist"><table border="0" class="variablelist compact">
 <colgroup>
@@ -85,42 +85,46 @@
 </colgroup>
 <tbody>
 <tr>
-<td><p><span class="term"><code class="computeroutput">max</code></span></p></td>
-<td><p>largest integer of the covered range. </p></td>
+<td><p><span class="term"><code class="computeroutput">label</code></span></p></td>
+<td><p>description of the axis. </p></td>
 </tr>
 <tr>
-<td><p><span class="term"><code class="computeroutput">min</code></span></p></td>
+<td><p><span class="term"><code class="computeroutput">lower</code></span></p></td>
 <td><p>smallest integer of the covered range. </p></td>
+</tr>
+<tr>
+<td><p><span class="term"><code class="computeroutput">upper</code></span></p></td>
+<td><p>largest integer of the covered range. </p></td>
 </tr>
 </tbody>
 </table></div></td>
 </tr></tbody>
 </table></div>
 </li>
-<li class="listitem"><pre class="literallayout"><a name="idm317565426288-bb"></a><span class="identifier">integer</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><a name="idm317565425776-bb"></a><span class="identifier">integer</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><a name="idm317565422096-bb"></a><span class="identifier">integer</span><span class="special">(</span><a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span> <a name="idm317565424208-bb"></a><span class="keyword">operator</span><span class="special">=</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span> <a name="idm317565420672-bb"></a><span class="keyword">operator</span><span class="special">=</span><span class="special">(</span><a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="idm213152629424-bb"></a><span class="identifier">integer</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="idm213152628944-bb"></a><span class="identifier">integer</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="idm213152625488-bb"></a><span class="identifier">integer</span><span class="special">(</span><a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span> <a name="idm213152627472-bb"></a><span class="keyword">operator</span><span class="special">=</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span> <a name="idm213152624144-bb"></a><span class="keyword">operator</span><span class="special">=</span><span class="special">(</span><a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;&amp;</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 <div class="refsect2">
-<a name="idm85536690416"></a><h3>
-<a name="idm317565439984-bb"></a><code class="computeroutput">integer</code> public member functions</h3>
+<a name="idm130742657328"></a><h3>
+<a name="idm213152642688-bb"></a><code class="computeroutput">integer</code> public member functions</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
 <li class="listitem">
-<pre class="literallayout"><span class="keyword">int</span> <a name="idm317565439456-bb"></a><span class="identifier">index</span><span class="special">(</span><span class="identifier">value_type</span> x<span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span></pre>Returns the bin index for the passed argument. </li>
+<pre class="literallayout"><span class="keyword">int</span> <a name="idm213152642208-bb"></a><span class="identifier">index</span><span class="special">(</span><span class="identifier">value_type</span> x<span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span></pre>Returns the bin index for the passed argument. </li>
 <li class="listitem">
-<pre class="literallayout"><span class="identifier">value_type</span> <a name="idm317565437488-bb"></a><span class="keyword">operator</span><span class="special">[</span><span class="special">]</span><span class="special">(</span><span class="keyword">int</span> idx<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>Returns the integer that is mapped to the bin index. </li>
-<li class="listitem"><pre class="literallayout"><span class="keyword">bool</span> <a name="idm317565435504-bb"></a><span class="keyword">operator</span><span class="special">==</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class integer">integer</a> <span class="special">&amp;</span> o<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><span class="identifier">const_iterator</span> <a name="idm317565433424-bb"></a><span class="identifier">begin</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><span class="identifier">const_iterator</span> <a name="idm317565432400-bb"></a><span class="identifier">end</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<pre class="literallayout"><span class="identifier">bin_type</span> <a name="idm213152640384-bb"></a><span class="keyword">operator</span><span class="special">[</span><span class="special">]</span><span class="special">(</span><span class="keyword">int</span> idx<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>Returns the integer that is mapped to the bin index. </li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">bool</span> <a name="idm213152638496-bb"></a><span class="keyword">operator</span><span class="special">==</span><span class="special">(</span><span class="keyword">const</span> <a class="link" href="integer.html" title="Class template integer">integer</a> <span class="special">&amp;</span> o<span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="identifier">const_iterator</span> <a name="idm213152636544-bb"></a><span class="identifier">begin</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="identifier">const_iterator</span> <a name="idm213152635584-bb"></a><span class="identifier">end</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 <div class="refsect2">
-<a name="idm85536659440"></a><h3>
-<a name="idm317565418704-bb"></a><code class="computeroutput">integer</code> private member functions</h3>
-<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> <span class="keyword">void</span> <a name="idm317565418176-bb"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">unsigned</span><span class="special">)</span><span class="special">;</span></pre></li></ol></div>
+<a name="idm130742625712"></a><h3>
+<a name="idm213152622288-bb"></a><code class="computeroutput">integer</code> private member functions</h3>
+<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Archive<span class="special">&gt;</span> <span class="keyword">void</span> <a name="idm213152621808-bb"></a><span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span> <span class="special">&amp;</span><span class="special">,</span> <span class="keyword">unsigned</span><span class="special">)</span><span class="special">;</span></pre></li></ol></div>
 </div>
 </div>
 </div>
@@ -134,7 +138,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="circular.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../histogram/reference.html#header.boost.histogram.axis_hpp"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="real_bin.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="circular.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../histogram/reference.html#header.boost.histogram.axis_hpp"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="regular.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

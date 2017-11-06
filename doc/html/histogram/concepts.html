@@ -47,7 +47,8 @@
       </p>
 <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
 <li class="listitem">
-            derive from <code class="computeroutput"><a class="link" href="../boost/histogram/axis/axis_base.html" title="Class template axis_base">boost::histogram::axis::axis_base</a></code>
+            derive from <code class="computeroutput"><a class="link" href="../boost/histogram/axis/axis_base.html" title="Class axis_base">boost::histogram::axis::axis_base</a></code>
+            or <code class="computeroutput"><a class="link" href="../boost/histogram/axis/axis_base_uoflow.html" title="Class axis_base_uoflow">boost::histogram::axis::axis_base_uoflow</a></code>
           </li>
 <li class="listitem">
             be default/copy/move constructable
@@ -59,9 +60,14 @@
             be equal comparable
           </li>
 <li class="listitem">
-            have a nested type <code class="computeroutput"><span class="identifier">value_type</span></code>,
-            which is the type of the input values (may be a const reference if the
-            input value is expensive to copy)
+            have a nested type <code class="computeroutput"><span class="identifier">value_type</span></code>
+            reflecting the type of the input values (may be a const reference if
+            the input value is expensive to copy)
+          </li>
+<li class="listitem">
+            have a nested type <code class="computeroutput"><span class="identifier">bin_type</span></code>,
+            which is a type that represents the bin, typically a semi-open interval
+            (may be a const reference if the bin type is expensive to copy)
           </li>
 <li class="listitem">
             have the following methods:
@@ -73,43 +79,37 @@
                   and returns the bin index
                 </li>
 <li class="listitem">
-                  <code class="computeroutput"><span class="identifier">value_type</span> <span class="keyword">operator</span><span class="special">[](</span><span class="keyword">int</span>
+                  <code class="computeroutput"><span class="identifier">bin_type</span> <span class="keyword">operator</span><span class="special">[](</span><span class="keyword">int</span>
                   <span class="identifier">index</span><span class="special">)</span>
-                  <span class="keyword">const</span></code>: takes a bin index
-                  and returns the low edge of the bin
+                  <span class="keyword">const</span></code>: takes an index and
+                  returns the corresponding bin instance
                 </li>
 </ul></div>
           </li>
-</ul></div>
-<p>
-        For full support of all library features, the <code class="computeroutput"><span class="identifier">axis_type</span></code>
-        should also be:
-      </p>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
 <li class="listitem">
-            streamable, by implementing a free function <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span>
-            <span class="keyword">operator</span><span class="special">&lt;&lt;(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span><span class="special">&amp;,</span>
-            <span class="keyword">const</span> <span class="identifier">axis_type</span><span class="special">&amp;)</span></code>
+            optionally, be streamable by implementation a free function
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem">
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="keyword">operator</span><span class="special">&lt;&lt;(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span><span class="special">&amp;,</span> <span class="keyword">const</span>
+                  <span class="identifier">axis_type</span><span class="special">&amp;)</span></code>
+                </li></ul></div>
           </li>
 <li class="listitem">
-            serializable, by implementing a free function <code class="computeroutput"><span class="keyword">template</span>
-            <span class="special">&lt;</span><span class="keyword">class</span>
-            <span class="identifier">Archive</span><span class="special">&gt;</span>
-            <span class="keyword">inline</span> <span class="keyword">void</span>
-            <span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span><span class="special">&amp;</span>
-            <span class="identifier">ar</span><span class="special">,</span>
-            <span class="identifier">axis_type</span> <span class="special">&amp;</span>
-            <span class="identifier">axis</span><span class="special">,</span>
-            <span class="keyword">unsigned</span> <span class="comment">/* version
-            */</span><span class="special">)</span></code>
+            optionally, be serializable, by implementing a member function template
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem">
+                  <code class="computeroutput"><span class="keyword">template</span> <span class="special">&lt;</span><span class="keyword">class</span> <span class="identifier">Archive</span><span class="special">&gt;</span> <span class="keyword">void</span>
+                  <span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span><span class="special">&amp;</span>
+                  <span class="identifier">ar</span><span class="special">,</span>
+                  <span class="keyword">unsigned</span> <span class="comment">/*
+                  version */</span><span class="special">)</span></code>
+                </li></ul></div>
           </li>
 </ul></div>
 <p>
         The latter two are not needed, if the histogram that uses the custom axis
-        type is never serialized or ostreamed.
+        type is never serialized or streamed.
       </p>
 <p>
-        It is recommended to take a look at the existing axis types, like <code class="computeroutput"><a class="link" href="../boost/histogram/axis/regular.html" title="Class template regular">boost::histogram::axis::regular</a></code>,
+        It is recommended to take a look at the existing axis types, like <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class template integer">boost::histogram::axis::integer</a></code>,
         which serve as templates to create new ones.
       </p>
 </div>
@@ -148,7 +148,7 @@
             bins.
           </li>
 <li class="listitem">
-            have the following methods:
+            have the following methods and operators:
             <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; ">
 <li class="listitem">
                   <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span><span class="special">()</span> <span class="keyword">const</span></code>
@@ -158,16 +158,16 @@
                   <span class="identifier">index</span><span class="special">)</span></code>
                 </li>
 <li class="listitem">
-                  <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">increase</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">add</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
                   <span class="identifier">index</span><span class="special">,</span>
-                  <span class="identifier">value_type</span> <span class="identifier">n</span><span class="special">)</span></code>
+                  <span class="keyword">const</span> <span class="identifier">value_type</span><span class="special">&amp;</span> <span class="identifier">n</span><span class="special">)</span></code>
                 </li>
 <li class="listitem">
                   <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">add</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
                   <span class="identifier">index</span><span class="special">,</span>
-                  <span class="keyword">const</span> <span class="identifier">value_type</span><span class="special">&amp;</span> <span class="identifier">val</span><span class="special">,</span> <span class="keyword">const</span>
+                  <span class="keyword">const</span> <span class="identifier">value_type</span><span class="special">&amp;</span> <span class="identifier">value</span><span class="special">,</span> <span class="keyword">const</span>
                   <span class="identifier">value_type</span><span class="special">&amp;</span>
-                  <span class="identifier">var</span><span class="special">)</span></code>
+                  <span class="identifier">variance</span><span class="special">)</span></code>
                 </li>
 <li class="listitem">
                   <code class="computeroutput"><span class="identifier">value_type</span> <span class="identifier">value</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
@@ -179,17 +179,26 @@
                   <span class="identifier">index</span><span class="special">)</span>
                   <span class="keyword">const</span></code>
                 </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="identifier">storage_type</span><span class="special">&amp;</span>
+                  <span class="keyword">operator</span><span class="special">+=(</span><span class="keyword">const</span> <span class="identifier">storage_type</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span></code>
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="identifier">storage_type</span><span class="special">&amp;</span>
+                  <span class="keyword">operator</span><span class="special">*=(</span><span class="keyword">const</span> <span class="identifier">value_type</span>
+                  <span class="identifier">x</span><span class="special">)</span></code>
+                </li>
 </ul></div>
           </li>
+<li class="listitem">
+            optionally, it can have a method to support weighted fills:
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem">
+                  <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">weighted_increase</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">,</span>
+                  <span class="keyword">const</span> <span class="identifier">value_type</span><span class="special">&amp;</span> <span class="identifier">weight</span><span class="special">)</span></code>
+                </li></ul></div>
+          </li>
 </ul></div>
-<p>
-        To support weighted fills, an additional method is required:
-      </p>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
-            <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">weighted_increase</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
-            <span class="identifier">index</span><span class="special">,</span>
-            <span class="identifier">value_type</span> <span class="identifier">weight</span><span class="special">)</span></code>
-          </li></ul></div>
 <p>
         <code class="computeroutput"><a class="link" href="../boost/histogram/array_storage.html" title="Class template array_storage">boost::histogram::array_storage</a></code>
         is a simple storage type which does not support weighted fills. It may serve

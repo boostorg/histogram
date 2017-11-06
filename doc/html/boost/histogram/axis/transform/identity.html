@@ -1,13 +1,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<title>Struct template identity</title>
+<title>Struct identity</title>
 <link rel="stylesheet" href="../../../../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../../../../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
 <link rel="up" href="../../../../histogram/reference.html#header.boost.histogram.axis_hpp" title="Header &lt;boost/histogram/axis.hpp&gt;">
-<link rel="prev" href="../../../../histogram/reference.html" title="Reference">
-<link rel="next" href="log.html" title="Struct template log">
+<link rel="prev" href="cos.html" title="Struct cos">
+<link rel="next" href="log.html" title="Struct log">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -20,32 +20,32 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="../../../../histogram/reference.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../../histogram/reference.html#header.boost.histogram.axis_hpp"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="log.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="cos.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../../histogram/reference.html#header.boost.histogram.axis_hpp"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="log.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="refentry">
 <a name="boost.histogram.axis.transform.identity"></a><div class="titlepage"></div>
 <div class="refnamediv">
-<h2><span class="refentrytitle">Struct template identity</span></h2>
+<h2><span class="refentrytitle">Struct identity</span></h2>
 <p>boost::histogram::axis::transform::identity</p>
 </div>
 <h2 xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="refsynopsisdiv-title">Synopsis</h2>
 <div xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../../../../histogram/reference.html#header.boost.histogram.axis_hpp" title="Header &lt;boost/histogram/axis.hpp&gt;">boost/histogram/axis.hpp</a>&gt;
 
-</span><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Value<span class="special">&gt;</span> 
-<span class="keyword">struct</span> <a class="link" href="identity.html" title="Struct template identity">identity</a> <span class="special">{</span>
+</span>
+<span class="keyword">struct</span> <a class="link" href="identity.html" title="Struct identity">identity</a> <span class="special">{</span>
 
-  <span class="comment">// <a class="link" href="identity.html#idm317565343376-bb">public static functions</a></span>
-  <span class="keyword">static</span> <span class="identifier">Value</span> <a class="link" href="identity.html#idm317565342848-bb"><span class="identifier">forward</span></a><span class="special">(</span><span class="identifier">Value</span><span class="special">)</span><span class="special">;</span>
-  <span class="keyword">static</span> <span class="identifier">Value</span> <a class="link" href="identity.html#idm317565341184-bb"><span class="identifier">inverse</span></a><span class="special">(</span><span class="identifier">Value</span><span class="special">)</span><span class="special">;</span>
+  <span class="comment">// <a class="link" href="identity.html#idm213152548048-bb">public static functions</a></span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> T<span class="special">&gt;</span> <span class="keyword">static</span> <span class="identifier">T</span> <a class="link" href="identity.html#idm213152547568-bb"><span class="identifier">forward</span></a><span class="special">(</span><span class="identifier">T</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> T<span class="special">&gt;</span> <span class="keyword">static</span> <span class="identifier">T</span> <a class="link" href="identity.html#idm213152545264-bb"><span class="identifier">inverse</span></a><span class="special">(</span><span class="identifier">T</span><span class="special">)</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm85537754144"></a><h2>Description</h2>
+<a name="idm130743920784"></a><h2>Description</h2>
 <div class="refsect2">
-<a name="idm85537753760"></a><h3>
-<a name="idm317565343376-bb"></a><code class="computeroutput">identity</code> public static functions</h3>
+<a name="idm130743920400"></a><h3>
+<a name="idm213152548048-bb"></a><code class="computeroutput">identity</code> public static functions</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
-<li class="listitem"><pre class="literallayout"><span class="keyword">static</span> <span class="identifier">Value</span> <a name="idm317565342848-bb"></a><span class="identifier">forward</span><span class="special">(</span><span class="identifier">Value</span> v<span class="special">)</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><span class="keyword">static</span> <span class="identifier">Value</span> <a name="idm317565341184-bb"></a><span class="identifier">inverse</span><span class="special">(</span><span class="identifier">Value</span> v<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> T<span class="special">&gt;</span> <span class="keyword">static</span> <span class="identifier">T</span> <a name="idm213152547568-bb"></a><span class="identifier">forward</span><span class="special">(</span><span class="identifier">T</span> v<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> T<span class="special">&gt;</span> <span class="keyword">static</span> <span class="identifier">T</span> <a name="idm213152545264-bb"></a><span class="identifier">inverse</span><span class="special">(</span><span class="identifier">T</span> v<span class="special">)</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 </div>
@@ -60,7 +60,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="../../../../histogram/reference.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../../histogram/reference.html#header.boost.histogram.axis_hpp"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="log.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="cos.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../../histogram/reference.html#header.boost.histogram.axis_hpp"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="log.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

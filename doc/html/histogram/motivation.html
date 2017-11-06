@@ -28,17 +28,14 @@
 </h2></div></div></div>
 <p>
       Histograms are a basic tool in statistical analysis. When analysing large data
-      sets, it is usually more convenient to work with a histogram of input values,
-      which may consume a lot of memory or disc space and may be slow to process.
-      Histograms can compactly represent a data set of one or several random variables
-      with acceptable loss of information. One can imagine histograms as a lossy
+      sets, it is usually more convenient to work with a histogram of the input values.
+      Histograms can compactly represent a data set of stochastic variables. If the
+      histogram layout is chosen appropriately, any information present in the original
+      can also be extracted from the histogram<a href="#ftn.histogram.motivation.f0" class="footnote" name="histogram.motivation.f0"><sup class="footnote">[1]</sup></a>; the information loss due to binning is then negligible. Processing
+      a histogram is much faster than processing the original data, because the memory
+      footprint of a histogram is much smaller. Next to data visualisation, this
+      is the main reason to use histograms. In other words, a histogram is a lossy
       compression of statistical data.
-    </p>
-<p>
-      Parameters of interest, like the center of a distribution, can be extracted
-      from the histogram instead of the original data set; statistical models can
-      be fitted to histograms to the same end. Finally, histograms help to visualize
-      complex data sets.
     </p>
 <p>
       C++ lacks a widely-used, free histogram class. While it is easy to write a
@@ -53,37 +50,45 @@
       have histogram implementations. The C implementations of the GSL are object
       oriented and elegant, but only support one and two dimensions. The implementations
       are not customizable, you have to live with the trade-offs chosen by the implementors.
-      ROOT has implementations for one, two, three, and general n-dimensional histograms.
-      However, the interfaces are unnecessarily complex and inconsistent, and mix
-      many different responsibilities. They are also not well designed to prevent
-      user errors. For example, the ROOT design forces users to make an educated
-      decision on which data type for the counters, an aspect that the library should
-      encapsulate.
+      ROOT has implementations for one, two, three, and general multi-dimensional
+      histograms. However, the implementations are also not customizable, and in
+      addition the interfaces are unnecessarily complex and inconsistent, and mix
+      many different responsibilities. They are also not safe to use, it is easy
+      to make a mistake. For example, before filling the histogram with weighted
+      data, one has to call a special function which prepares the histogram for this
+      input. Also, the ROOT design puts the burden on the users to decide which data
+      type to use for the bin counts. A small integer type reduces the memory footprint,
+      but may overflow.
     </p>
 <p>
-      The two histogram classes in this project share an interface which we believe
-      to be as elegant as the GSL implementations. In addition, they are customizable
-      through exchangable policies and user-supplied binning algorithms. Thanks to
-      variadic templates, the interface is consistent for any number of dimensions.
-      The implementations are also very fast, using compile-time information wherever
-      possible and <a href="../../../libs/variant/index.html" target="_top">Boost.Variant</a>
-      rather than virtual inheritance to achieve more flexible polymorphism.
+      The histogram class template in this library has an interface which we believe
+      to be as elegant as the GSL implementations. In addition, it is very customizable
+      and extensible through policy classes and in the way input values are binned.
+      Thanks to variadic templates, the interface remains straight-forward for any
+      number of dimensions. While being safe, customizable, and convenient, the histogram
+      is also very performant. The static variant, which uses compile-time information
+      wherever possible, can be filled twice as fast with input values as the more
+      conventional dynamic variant.
     </p>
 <p>
-      A central design goal is to completely encapsulate details on the internal
-      counters. The internal counting mechanism is independent of the external histogram
-      interface and encapsulated in a storage policy, which can be replaced at compile
-      time.
+      A central design goal was to abstract away details on the internal counters.
+      The internal counting mechanism is encapsulated in a storage policy, which
+      can be replaced at compile time. The standard policy implements an adaptive
+      memory managment which is safe for the user, memory-efficient, and fast. The
+      safety comes from the guarantee, that counts cannot overflow or be capped.
+      This is a rare guarantee other libraries generally cannot give. In the standard
+      configuration, the histogram <span class="bold"><strong>just works</strong></span> under
+      any circumstance. Yet, users with unusual requirements can implement their
+      own custom storage policy or use an alternative array-based storage policy.
     </p>
-<p>
-      The standard policy implements a smart counting approach which is very fast,
-      memory-efficient, and safe, since counts can neither overflow nor lose precision.
-      In the standard configuration, the histogram <span class="bold"><strong>just works</strong></span>
-      under any circumstance. Users with unusual requirements can implement their
-      own custom storage policy or use the alternative container-based storage policy.
-      With the latter, for example, and in conjunction with a <a href="../../../libs/array/index.html" target="_top">Boost.Array</a>,
-      it is possible to construct a histogram entirely on the stack.
-    </p>
+<div class="footnotes">
+<br><hr style="width:100; text-align:left;margin-left: 0">
+<div id="ftn.histogram.motivation.f0" class="footnote"><p><a href="#histogram.motivation.f0" class="para"><sup class="para">[1] </sup></a>
+        Parameters of interest, like the center of a distribution, can be extracted
+        from the histogram instead of the original data set; statistical models can
+        be fitted to histograms to the same end.
+      </p></div>
+</div>
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
