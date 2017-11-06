@@ -16,10 +16,10 @@
 #include <boost/histogram/interval.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/contains.hpp>
-#include <boost/type_traits.hpp>
 #include <boost/variant/get.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/variant.hpp>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {

@@ -145,7 +145,7 @@ template <typename T> python::str axis_get_label(const T& t) {
 
 #ifdef HAVE_NUMPY
 template <typename Axis> python::object axis_array_interface(const Axis& axis) {
-  using T = typename decay<decltype(axis[0].lower())>::type;
+  using T = typename std::decay<decltype(axis[0].lower())>::type;
   python::dict d;
   auto shape = python::make_tuple(axis.size()+1);
   d["shape"] = shape;

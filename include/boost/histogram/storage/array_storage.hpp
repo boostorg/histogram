@@ -9,7 +9,7 @@
 
 #include <algorithm>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/type_traits.hpp>
+#include <type_traits>
 #include <cstddef>
 #include <memory>
 
