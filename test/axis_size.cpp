@@ -5,15 +5,23 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/histogram/axis.hpp>
+#include <boost/variant.hpp>
 #include <iostream>
+
+namespace boost { namespace histogram {
+    using axis_variant =
+        typename make_variant_over<builtin_axes>::type;
+}}
 
 int main() {
 
 #define SIZEOF(axis)                                                           \
   std::cout << #axis << " " << sizeof(boost::histogram::axis) << std::endl
-  SIZEOF(axis::regular<>);
-  SIZEOF(axis::circular<>);
-  SIZEOF(axis::variable<>);
-  SIZEOF(axis::integer);
-  SIZEOF(axis::category);
+SIZEOF(axis::regular<>);
+SIZEOF(axis::circular<>);
+SIZEOF(axis::variable<>);
+SIZEOF(axis::integer<>);
+SIZEOF(axis::category<>);
+SIZEOF(axis_variant);
+
 }

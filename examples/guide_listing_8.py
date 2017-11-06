@@ -8,5 +8,5 @@ for i in range(10):
 	h.fill(i)
 
 # do this instead, it is very fast
-v = np.arange(10)
+v = np.arange(10, dtype=float)
 h.fill(v) # fills the histogram with each value in the array

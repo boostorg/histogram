@@ -85,12 +85,12 @@ hd_sd 0.079
 uniform distribution
 hs_ss 0.059
 hs_sd 0.035
-hd_ss 0.121
+hd_ss 0.114
 hd_sd 0.068
 normal distribution
 hs_ss 0.057
 hs_sd 0.041
-hd_ss 0.113
+hd_ss 0.103
 hd_sd 0.074
 6D
 uniform distribution

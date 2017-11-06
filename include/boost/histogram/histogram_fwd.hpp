@@ -8,11 +8,11 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/mpl/vector.hpp>
 #include <boost/mpl/int.hpp>
+#include <boost/mpl/vector.hpp>
+#include <initializer_list>
 #include <set>
 #include <type_traits>
-#include <initializer_list>
 
 namespace boost {
 namespace histogram {
@@ -20,43 +20,35 @@ namespace histogram {
 using Static = std::integral_constant<int, 0>;
 using Dynamic = std::integral_constant<int, 1>;
 
-template <template <class> class Allocator = std::allocator>
 class adaptive_storage;
 
-template <class Variant, class Axes, class Storage = adaptive_storage<>>
+template <class Variant, class Axes, class Storage = adaptive_storage>
 class histogram;
 
-class weight {
-public:
-  explicit weight(double v) : value(v) {}
-  explicit operator double() const { return value; }
-
-private:
+struct weight {
+  weight(double w) : value(w) {}
   double value;
 };
 
-class count {
-public:
-  explicit count(unsigned v) : value(v) {}
-  explicit operator unsigned() const { return value; }
-
-private:
+struct count {
+  count(unsigned n) : value(n) {}
   unsigned value;
 };
 
 // for static and dynamic histogram
 template <int N, typename... Rest>
-inline auto keep(mpl::int_<N>, Rest...) -> detail::unique_sorted<mpl::vector<mpl::int_<N>, Rest...>> {
+inline auto keep(mpl::int_<N>, Rest...)
+    -> detail::unique_sorted<mpl::vector<mpl::int_<N>, Rest...>> {
   return {};
 }
 
 // for dynamic histogram only
 namespace detail {
 using keep_dynamic = std::set<unsigned>;
-inline void insert(std::set<unsigned>&) {} // end recursion
-template <typename First, typename... Rest>
-inline void insert(std::set<unsigned>& s, First f, Rest... rest) {
-  s.insert(static_cast<unsigned>(f));
+inline void insert(keep_dynamic &) {} // end recursion
+template <typename... Rest>
+inline void insert(keep_dynamic &s, unsigned i, Rest... rest) {
+  s.insert(i);
   insert(s, rest...);
 }
 } // namespace detail
@@ -67,10 +59,74 @@ inline detail::keep_dynamic keep(Iterator begin, Iterator end) {
 }
 
 template <typename... Rest>
-inline detail::keep_dynamic keep(unsigned dim, Rest... rest) {
+inline detail::keep_dynamic keep(unsigned i, Rest... rest) {
   detail::keep_dynamic s;
-  detail::insert(s, dim, rest...);
+  detail::insert(s, i, rest...);
   return s;
+}
+
+// fast operators (boost::operators does not use rvalue references yet)
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> &&
+operator+(histogram<Variant, Axes, Storage> &&a,
+          const histogram<Variant, Axes, Storage> &b) {
+  a += b;
+  return std::move(a);
+}
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> &&
+operator+(histogram<Variant, Axes, Storage> &&a,
+          histogram<Variant, Axes, Storage> &&b) {
+  a += b;
+  return std::move(a);
+}
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> &&
+operator+(const histogram<Variant, Axes, Storage> &a,
+          histogram<Variant, Axes, Storage> &&b) {
+  b += a;
+  return std::move(b);
+}
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage>
+operator+(const histogram<Variant, Axes, Storage> &a,
+          const histogram<Variant, Axes, Storage> &b) {
+  histogram<Variant, Axes, Storage> r(a);
+  r += b;
+  return r;
+}
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> &&
+operator*(histogram<Variant, Axes, Storage> &&a, const double x) {
+  a *= x;
+  return std::move(a);
+}
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> &&
+operator*(const double x, histogram<Variant, Axes, Storage> &&b) {
+  b *= x;
+  return std::move(b);
+}
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage>
+operator*(const histogram<Variant, Axes, Storage> &a, const double x) {
+  histogram<Variant, Axes, Storage> r(a);
+  r *= x;
+  return r;
+}
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage>
+operator*(const double x, const histogram<Variant, Axes, Storage> &b) {
+  histogram<Variant, Axes, Storage> r(b);
+  r *= x;
+  return r;
 }
 
 } // namespace histogram

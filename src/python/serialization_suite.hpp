@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_PYTHON_SERIALIZATION_SUITE_HPP_
-#define _BOOST_PYTHON_SERIALIZATION_SUITE_HPP_
+#ifndef _BOOST_HISTOGRAM_PYTHON_SERIALIZATION_SUITE_HPP_
+#define _BOOST_HISTOGRAM_PYTHON_SERIALIZATION_SUITE_HPP_
 
 #include <algorithm>
 #include <boost/archive/text_iarchive.hpp>

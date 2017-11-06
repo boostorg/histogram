@@ -28,7 +28,7 @@ int main() {
     // show histogram
     for (const auto& ybin : h.axis(1_c)) { // vertical
         for (const auto& xbin : h.axis(0_c)) { // horizontal
-            std::printf("%3.0f ", h.value(xbin.idx, ybin.idx));
+            std::printf("%3.0f ", h.value(xbin.first, ybin.first));
         }
         std::printf("\n");
     }

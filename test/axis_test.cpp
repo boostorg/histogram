@@ -20,22 +20,23 @@
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
 #define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
-template <typename Axis>
-void test_real_axis_iterator(Axis &&a, int begin, int end) {
-  for (const auto &bin : a) {
-    BOOST_TEST_EQ(bin.idx, begin);
-    BOOST_TEST_EQ(bin.left, boost::histogram::left(a, begin));
-    BOOST_TEST_EQ(bin.right, boost::histogram::right(a, begin));
-    ++begin;
-  }
-  BOOST_TEST_EQ(begin, end);
+namespace boost {
+namespace histogram {
+namespace axis {
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const interval<T> &i) {
+  os << "[" << i.lower() << ", " << i.upper() << ")";
+  return os;
 }
+} // namespace axis
+} // namespace histogram
+} // namespace boost
 
 template <typename Axis>
 void test_axis_iterator(const Axis &a, int begin, int end) {
   for (const auto &bin : a) {
-    BOOST_TEST_EQ(bin.idx, begin);
-    BOOST_TEST_EQ(bin.value, a[begin]);
+    BOOST_TEST_EQ(bin.first, begin);
+    BOOST_TEST_EQ(bin.second, a[begin]);
     ++begin;
   }
   BOOST_TEST_EQ(begin, end);
@@ -52,15 +53,15 @@ int main() {
     BOOST_TEST_THROWS(axis::circular<>(0), std::logic_error);
     BOOST_TEST_THROWS(axis::variable<>({}), std::logic_error);
     BOOST_TEST_THROWS(axis::variable<>({1.0}), std::logic_error);
-    BOOST_TEST_THROWS(axis::integer(1, -1), std::logic_error);
-    BOOST_TEST_THROWS(axis::category({}), std::logic_error);
+    BOOST_TEST_THROWS(axis::integer<>(1, -1), std::logic_error);
+    BOOST_TEST_THROWS(axis::category<>({}), std::logic_error);
   }
 
   // axis::regular
   {
     axis::regular<> a{4, -2, 2};
-    BOOST_TEST_EQ(a[-1], -std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[a.bins() + 1], std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
     axis::regular<> b;
     BOOST_TEST_NOT(a == b);
     b = a;
@@ -90,11 +91,11 @@ int main() {
   // axis::regular with transform
   {
     axis::regular<double, axis::transform::log> b{2, 1e0, 1e2};
-    BOOST_TEST_EQ(b[-1], 0.0);
-    BOOST_TEST_IS_CLOSE(b[0], 1.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(b[1], 10.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(b[2], 100.0, 1e-9);
-    BOOST_TEST_EQ(b[3], std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(b[-1].lower(), 0.0);
+    BOOST_TEST_IS_CLOSE(b[0].lower(), 1.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(b[1].lower(), 10.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(b[2].lower(), 100.0, 1e-9);
+    BOOST_TEST_EQ(b[2].upper(), std::numeric_limits<double>::infinity());
 
     BOOST_TEST_EQ(b.index(-1), -1);
     BOOST_TEST_EQ(b.index(0), -1);
@@ -109,7 +110,7 @@ int main() {
   // axis::circular
   {
     axis::circular<> a{4};
-    BOOST_TEST_EQ(a[-1], a[a.bins() - 1] - a.perimeter());
+    BOOST_TEST_EQ(a[-1].lower(), a[a.size() - 1].lower() - a.perimeter());
     axis::circular<> b;
     BOOST_TEST_NOT(a == b);
     b = a;
@@ -137,8 +138,8 @@ int main() {
   // axis::variable
   {
     axis::variable<> a{-1, 0, 1};
-    BOOST_TEST_EQ(a[-1], -std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[a.bins() + 1], std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
     axis::variable<> b;
     BOOST_TEST_NOT(a == b);
     b = a;
@@ -166,17 +167,19 @@ int main() {
 
   // axis::integer
   {
-    axis::integer a{-1, 1};
-    axis::integer b;
+    axis::integer<> a{-1, 2};
+    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<int>::max());
+    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<int>::max());
+    axis::integer<> b;
     BOOST_TEST_NOT(a == b);
     b = a;
     BOOST_TEST_EQ(a, b);
     b = b;
     BOOST_TEST_EQ(a, b);
-    axis::integer c = std::move(b);
+    axis::integer<> c = std::move(b);
     BOOST_TEST(c == a);
     BOOST_TEST_NOT(b == a);
-    axis::integer d;
+    axis::integer<> d;
     BOOST_TEST_NOT(c == d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
@@ -191,35 +194,42 @@ int main() {
 
   // axis::category
   {
-    axis::category a{{"A", "B", "C"}};
-    axis::category b;
+    std::string A("A"), B("B"), C("C");
+    axis::category<std::string> a{{A, B, C}};
+    axis::category<std::string> b;
     BOOST_TEST_NOT(a == b);
     b = a;
     BOOST_TEST_EQ(a, b);
     b = b;
     BOOST_TEST_EQ(a, b);
-    axis::category c = std::move(b);
+    axis::category<std::string> c = std::move(b);
     BOOST_TEST(c == a);
     BOOST_TEST_NOT(b == a);
-    axis::category d;
+    axis::category<std::string> d;
     BOOST_TEST_NOT(c == d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
-    BOOST_TEST_EQ(a.index(0), 0);
-    BOOST_TEST_EQ(a.index(1), 1);
-    BOOST_TEST_EQ(a.index(2), 2);
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(a.index(A), 0);
+    BOOST_TEST_EQ(a.index(B), 1);
+    BOOST_TEST_EQ(a.index(C), 2);
+    BOOST_TEST_EQ(a[0], A);
+    BOOST_TEST_EQ(a[1], B);
+    BOOST_TEST_EQ(a[2], C);
   }
 
   // iterators
   {
-    test_real_axis_iterator(axis::regular<>(5, 0, 1, "", false), 0, 5);
-    test_real_axis_iterator(axis::regular<>(5, 0, 1, "", true), -1, 6);
-    test_real_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5);
-    test_real_axis_iterator(axis::variable<>({1, 2, 3}, "", false), 0, 2);
-    test_real_axis_iterator(axis::variable<>({1, 2, 3}, "", true), -1, 3);
-    test_axis_iterator(axis::integer(0, 4, "", false), 0, 5);
-    test_axis_iterator(axis::integer(0, 4, "", true), -1, 6);
-    test_axis_iterator(axis::category({"A", "B", "C"}), 0, 3);
+    enum { A, B, C };
+    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow::off), 0, 5);
+    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow::on), 0, 5);
+    test_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5);
+    test_axis_iterator(axis::variable<>({1, 2, 3}, "", axis::uoflow::off), 0,
+                       2);
+    test_axis_iterator(axis::variable<>({1, 2, 3}, "", axis::uoflow::on), 0, 2);
+    test_axis_iterator(axis::integer<>(0, 4, "", axis::uoflow::off), 0, 4);
+    test_axis_iterator(axis::integer<>(0, 4, "", axis::uoflow::on), 0, 4);
+    test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
   }
 
   // axis_t_copyable
@@ -247,32 +257,41 @@ int main() {
 
   // axis_t_streamable
   {
+    enum { A, B, C };
     std::vector<axis_t> axes;
-    axes.push_back(axis::regular<>{2, -1, 1, "regular", false});
+    axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
+    axes.push_back(axis::regular<double, axis::transform::log>{
+        2, 1, 10, "regular2", axis::uoflow::off});
+    axes.push_back(axis::regular<double, axis::transform::pow>{
+        2, 1, 10, "regular3", axis::uoflow::on, 0.5});
     axes.push_back(axis::circular<>{4, 0.1, 1.0, "polar"});
-    axes.push_back(axis::variable<>{{-1, 0, 1}, "variable", false});
-    axes.push_back(axis::category{{"A", "B", "C"}, "category"});
-    axes.push_back(axis::integer{-1, 1, "integer", false});
+    axes.push_back(axis::variable<>{{-1, 0, 1}, "variable", axis::uoflow::off});
+    axes.push_back(axis::category<>{{A, B, C}, "category"});
+    axes.push_back(axis::integer<>{-1, 1, "integer", axis::uoflow::off});
     std::ostringstream os;
     for (const auto &a : axes) {
       os << a;
     }
-    const std::string ref = "regular(2, -1, 1, label='regular', uoflow=False)"
-                            "circular(4, phase=0.1, perimeter=1, label='polar')"
-                            "variable(-1, 0, 1, label='variable', uoflow=False)"
-                            "category('A', 'B', 'C', label='category')"
-                            "integer(-1, 1, label='integer', uoflow=False)";
+    const std::string ref =
+        "regular(2, -1, 1, label='regular1')"
+        "regular_log(2, 1, 10, label='regular2', uoflow=False)"
+        "regular_pow(2, 1, 10, 0.5, label='regular3')"
+        "circular(4, phase=0.1, perimeter=1, label='polar')"
+        "variable(-1, 0, 1, label='variable', uoflow=False)"
+        "category(0, 1, 2, label='category')"
+        "integer(-1, 1, label='integer', uoflow=False)";
     BOOST_TEST_EQ(os.str(), ref);
   }
 
   // axis_t_equal_comparable
   {
+    enum { A, B, C };
     std::vector<axis_t> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
     axes.push_back(axis::circular<>{4});
     axes.push_back(axis::variable<>{-1, 0, 1});
-    axes.push_back(axis::category{"A", "B", "C"});
-    axes.push_back(axis::integer{-1, 1});
+    axes.push_back(axis::category<>{A, B, C});
+    axes.push_back(axis::integer<>{-1, 1});
     for (const auto &a : axes) {
       BOOST_TEST(!(a == axis_t()));
       BOOST_TEST_EQ(a, a);
@@ -283,15 +302,16 @@ int main() {
 
   // sequence equality
   {
+    enum { A, B, C };
     std::vector<boost::variant<axis::regular<>, axis::variable<>,
-                               axis::category, axis::integer>>
+                               axis::category<>, axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                       axis::category{"A", "B", "C"}};
+                       axis::category<>{A, B, C}};
 
     std::vector<
-        boost::variant<axis::regular<>, axis::variable<>, axis::category>>
+        boost::variant<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                       axis::category{"A", "B", "C"}};
+                       axis::category<>{{A, B, C}}};
 
     std::vector<boost::variant<axis::regular<>, axis::variable<>>> std_vector3 =
         {axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
@@ -305,11 +325,11 @@ int main() {
 
     auto fusion_vector1 = boost::fusion::make_vector(
         axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-        axis::category{"A", "B", "C"});
+        axis::category<>{{A, B, C}});
 
     auto fusion_vector2 = boost::fusion::make_vector(axis::regular<>{2, -1, 1},
                                                      axis::variable<>{-1, 0, 1},
-                                                     axis::category{"A", "B"});
+                                                     axis::category<>{{A, B}});
 
     auto fusion_vector3 = boost::fusion::make_vector(
         axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1});
@@ -323,22 +343,23 @@ int main() {
 
   // sequence assign
   {
+    enum { A, B, C, D };
     std::vector<boost::variant<axis::regular<>, axis::variable<>,
-                               axis::category, axis::integer>>
+                               axis::category<>, axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                       axis::category{"A", "B", "C"}};
+                       axis::category<>{A, B, C}};
 
     std::vector<
-        boost::variant<axis::regular<>, axis::variable<>, axis::category>>
+        boost::variant<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -2, 2}, axis::variable<>{-2, 0, 2},
-                       axis::category{"A", "B"}};
+                       axis::category<>{A, B}};
 
     detail::axes_assign(std_vector2, std_vector1);
     BOOST_TEST(detail::axes_equal(std_vector2, std_vector1));
 
     auto fusion_vector1 = boost::fusion::make_vector(
         axis::regular<>{2, -3, 3}, axis::variable<>{-3, 0, 3},
-        axis::category{"A", "B", "C", "D"});
+        axis::category<>{A, B, C, D});
 
     detail::axes_assign(fusion_vector1, std_vector1);
     BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
@@ -350,7 +371,7 @@ int main() {
 
     auto fusion_vector2 = boost::fusion::make_vector(axis::regular<>{2, -1, 1},
                                                      axis::variable<>{-1, 0, 1},
-                                                     axis::category{"A", "B"});
+                                                     axis::category<>{A, B});
 
     detail::axes_assign(fusion_vector2, fusion_vector1);
     BOOST_TEST(detail::axes_equal(fusion_vector2, fusion_vector1));

@@ -7,8 +7,6 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_IMPL_STATIC_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_IMPL_STATIC_HPP_
 
-#include <boost/call_traits.hpp>
-#include <boost/config.hpp>
 #include <boost/fusion/adapted/mpl.hpp>
 #include <boost/fusion/algorithm.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
@@ -93,15 +91,18 @@ public:
 
   template <typename D, typename A, typename S>
   histogram &operator+=(const histogram<D, A, S> &rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_)) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
       throw std::logic_error("axes of histograms differ");
-    }
-    for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
-      storage_.add(i, rhs.storage_.value(i), rhs.storage_.variance(i));
+    storage_ += rhs.storage_;
     return *this;
   }
 
-  template <typename... Args> void fill(const Args &... args) {
+  histogram &operator*=(const value_type rhs) {
+    storage_ *= rhs;
+    return *this;
+  }
+
+  template <typename... Args> void fill(Args &&... args) {
     using n_count = typename mpl::count<mpl::vector<Args...>, count>;
     using n_weight = typename mpl::count<mpl::vector<Args...>, weight>;
     static_assert(
@@ -110,15 +111,15 @@ public:
     static_assert(sizeof...(args) ==
                       (axes_size::value + n_count::value + n_weight::value),
                   "number of arguments does not match histogram dimension");
-    fill_impl(mpl::int_<(n_count::value + 2 * n_weight::value)>(), args...);
+    fill_impl(mpl::int_<(n_count::value + 2 * n_weight::value)>(),
+              std::forward<Args>(args)...);
   }
 
-  template <typename... Indices>
-  value_type value(const Indices &... indices) const {
+  template <typename... Indices> value_type value(Indices &&... indices) const {
     static_assert(sizeof...(indices) == axes_size::value,
                   "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    apply_lin<detail::lin, 0, Indices...>(idx, stride, indices...);
+    lin<0>(idx, stride, std::forward<Indices>(indices)...);
     if (stride == 0) {
       throw std::out_of_range("invalid index");
     }
@@ -126,11 +127,11 @@ public:
   }
 
   template <typename... Indices>
-  value_type variance(const Indices &... indices) const {
+  value_type variance(Indices &&... indices) const {
     static_assert(sizeof...(indices) == axes_size::value,
                   "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    apply_lin<detail::lin, 0, Indices...>(idx, stride, indices...);
+    lin<0>(idx, stride, std::forward<Indices>(indices)...);
     if (stride == 0) {
       throw std::out_of_range("invalid index");
     }
@@ -153,7 +154,7 @@ public:
   }
 
   /// Reset bin counters to zero
-  void reset() { storage_ = std::move(Storage(storage_.size())); }
+  void reset() { storage_ = Storage(storage_.size()); }
 
   /// Get N-th axis
   template <int N>
@@ -187,74 +188,91 @@ private:
   }
 
   template <typename... Args>
-  inline void fill_impl(mpl::int_<0>, const Args &... args) {
+  inline void fill_impl(mpl::int_<0>, Args &&... args) {
     std::size_t idx = 0, stride = 1;
-    apply_lin<detail::xlin, 0, Args...>(idx, stride, args...);
+    xlin<0>(idx, stride, std::forward<Args>(args)...);
     if (stride) {
       storage_.increase(idx);
     }
   }
 
   template <typename... Args>
-  inline void fill_impl(mpl::int_<1>, const Args &... args) {
+  inline void fill_impl(mpl::int_<1>, Args &&... args) {
     std::size_t idx = 0, stride = 1;
     unsigned n = 0;
-    apply_lin_x<detail::xlin, 0, unsigned, Args...>(idx, stride, n, args...);
+    xlin_n<0>(idx, stride, n, std::forward<Args>(args)...);
     if (stride) {
-      storage_.increase(idx, n);
+      storage_.add(idx, n);
     }
   }
 
   template <typename... Args>
-  inline void fill_impl(mpl::int_<2>, const Args &... args) {
+  inline void fill_impl(mpl::int_<2>, Args &&... args) {
     std::size_t idx = 0, stride = 1;
     double w = 0.0;
-    apply_lin_x<detail::xlin, 0, double, Args...>(idx, stride, w, args...);
+    xlin_w<0>(idx, stride, w, std::forward<Args>(args)...);
     if (stride) {
       storage_.weighted_increase(idx, w);
     }
   }
 
-  template <template <class, class> class Lin, unsigned D>
-  inline void apply_lin(std::size_t &, std::size_t &) const {}
+  template <unsigned D> inline void lin(std::size_t &, std::size_t &) const {}
 
-  template <template <class, class> class Lin, unsigned D, typename First,
-            typename... Rest>
-  inline void apply_lin(std::size_t &idx, std::size_t &stride, const First &x,
-                        const Rest &... rest) const {
-    Lin<typename fusion::result_of::value_at_c<axes_type, D>::type,
-        First>::apply(idx, stride, fusion::at_c<D>(axes_), x);
-    return apply_lin<Lin, D + 1, Rest...>(idx, stride, rest...);
+  template <unsigned D, typename First, typename... Rest>
+  inline void lin(std::size_t &idx, std::size_t &stride, First &&x,
+                  Rest &&... rest) const {
+    detail::lin(idx, stride, fusion::at_c<D>(axes_), std::forward<First>(x));
+    return lin<D + 1>(idx, stride, std::forward<Rest>(rest)...);
   }
 
-  template <template <class, class> class Lin, unsigned D, typename X>
-  inline void apply_lin_x(std::size_t &, std::size_t &, X &) const {}
+  template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const {}
 
-  template <template <class, class> class Lin, unsigned D, typename X,
-            typename First, typename... Rest>
-  inline typename std::enable_if<!(std::is_same<First, weight>::value ||
-                                   std::is_same<First, count>::value)>::type
-  apply_lin_x(std::size_t &idx, std::size_t &stride, X &x, const First &first,
-              const Rest &... rest) const {
-    Lin<typename fusion::result_of::value_at_c<axes_type, D>::type,
-        First>::apply(idx, stride, fusion::at_c<D>(axes_), first);
-    return apply_lin_x<Lin, D + 1, X, Rest...>(idx, stride, x, rest...);
+  template <unsigned D, typename First, typename... Rest>
+  inline void xlin(std::size_t &idx, std::size_t &stride, First &&first,
+                   Rest &&... rest) const {
+    detail::xlin(idx, stride, fusion::at_c<D>(axes_),
+                 std::forward<First>(first));
+    return xlin<D + 1>(idx, stride, std::forward<Rest>(rest)...);
   }
 
-  template <template <class, class> class Lin, unsigned D, typename X, typename,
-            typename... Rest>
-  inline void apply_lin_x(std::size_t &idx, std::size_t &stride, X &x,
-                          const weight &first, const Rest &... rest) const {
-    x = static_cast<X>(first);
-    return apply_lin_x<Lin, D, X, Rest...>(idx, stride, x, rest...);
+  template <unsigned D>
+  inline void xlin_w(std::size_t &, std::size_t &, double &) const {}
+
+  template <unsigned D, typename First, typename... Rest>
+  inline typename disable_if<is_same<First, weight>>::type
+  xlin_w(std::size_t &idx, std::size_t &stride, double &x, First &&first,
+         Rest &&... rest) const {
+    detail::xlin(idx, stride, fusion::at_c<D>(axes_),
+                 std::forward<First>(first));
+    return xlin_w<D + 1>(idx, stride, x, std::forward<Rest>(rest)...);
   }
 
-  template <template <class, class> class Lin, unsigned D, typename X, typename,
-            typename... Rest>
-  inline void apply_lin_x(std::size_t &idx, std::size_t &stride, X &x,
-                          const count &first, const Rest &... rest) const {
-    x = static_cast<X>(first);
-    return apply_lin_x<Lin, D, X, Rest...>(idx, stride, x, rest...);
+  template <unsigned D, typename First, typename... Rest>
+  inline typename enable_if<is_same<First, weight>>::type
+  xlin_w(std::size_t &idx, std::size_t &stride, double &x, First &&first,
+         Rest &&... rest) const {
+    x = first.value;
+    return xlin_w<D>(idx, stride, x, std::forward<Rest>(rest)...);
+  }
+
+  template <unsigned D>
+  inline void xlin_n(std::size_t &, std::size_t &, unsigned &) const {}
+
+  template <unsigned D, typename First, typename... Rest>
+  inline typename disable_if<is_same<First, count>>::type
+  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, First &&first,
+         Rest &&... rest) const {
+    detail::xlin(idx, stride, fusion::at_c<D>(axes_),
+                 std::forward<First>(first));
+    return xlin_n<D + 1>(idx, stride, x, std::forward<Rest>(rest)...);
+  }
+
+  template <unsigned D, typename First, typename... Rest>
+  inline typename enable_if<is_same<First, count>>::type
+  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, First &&first,
+         Rest &&... rest) const {
+    x = first.value;
+    return xlin_n<D>(idx, stride, x, std::forward<Rest>(rest)...);
   }
 
   struct shape_assign_helper {

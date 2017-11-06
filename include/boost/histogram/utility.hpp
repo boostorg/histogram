@@ -7,16 +7,16 @@
 #ifndef BOOST_HISTOGRAM_UTILITY_HPP_
 #define BOOST_HISTOGRAM_UTILITY_HPP_
 
-#include <boost/variant/variant_fwd.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
+#include <boost/variant/variant_fwd.hpp>
 
 namespace boost {
 namespace histogram {
 
-template <typename A> inline int bins(const A &a) { return a.bins(); }
+template <typename A> inline int size(const A &a) { return a.size(); }
 
-template <typename... Axes> inline int bins(const boost::variant<Axes...> &a) {
-  return apply_visitor(detail::bins(), a);
+template <typename... Axes> inline int size(const boost::variant<Axes...> &a) {
+  return apply_visitor(detail::size(), a);
 }
 
 template <typename A> inline int shape(const A &a) { return a.shape(); }
@@ -34,31 +34,14 @@ inline int index(const boost::variant<Axes...> &a, const V v) {
   return apply_visitor(detail::index<V>(v), a);
 }
 
-template <typename A> inline typename A::value_type left(const A &a, const int i) {
+template <typename A> inline typename A::bin_type bin(const A &a, const int i) {
   return a[i];
 }
 
 template <typename... Axes>
-inline double left(const boost::variant<Axes...> &a, const int i) {
-  return apply_visitor(detail::left(i), a);
-}
-
-template <typename A> inline typename A::value_type right(const A &a, const int i) {
-  return left(a, i + 1);
-}
-
-template <typename... Axes>
-inline double right(const boost::variant<Axes...> &a, const int i) {
-  return apply_visitor(detail::right(i), a);
-}
-
-template <typename A> inline double center(const A &a, const int i) {
-  return 0.5 * (left(a, i) + right(a, i));
-}
-
-template <typename... Axes>
-inline double center(const boost::variant<Axes...> &a, const int i) {
-  return apply_visitor(detail::center(i), a);
+inline axis::interval<double> bin(const boost::variant<Axes...> &a,
+                                  const int i) {
+  return apply_visitor(detail::bin(i), a);
 }
 
 } // namespace histogram

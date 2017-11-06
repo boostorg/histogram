@@ -5,6 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include "serialization_suite.hpp"
+#include "utility.hpp"
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/histogram_ostream_operators.hpp>
@@ -16,11 +17,10 @@
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
 #ifdef HAVE_NUMPY
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL boost_histogram_ARRAY_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+#include <boost/python/numpy.hpp>
+namespace np = boost::python::numpy;
 #endif
+#include <memory>
 
 #ifndef BOOST_HISTOGRAM_AXIS_LIMIT
 #define BOOST_HISTOGRAM_AXIS_LIMIT 32
@@ -29,7 +29,7 @@
 namespace boost {
 
 namespace histogram {
-using dynamic_histogram = histogram<Dynamic, builtin_axes, adaptive_storage<>>;
+using dynamic_histogram = histogram<Dynamic, builtin_axes, adaptive_storage>;
 } // namespace histogram
 
 namespace python {
@@ -37,36 +37,32 @@ namespace python {
 #ifdef HAVE_NUMPY
 class access {
 public:
-  using mp_int = histogram::adaptive_storage<>::mp_int;
-  using weight = histogram::adaptive_storage<>::weight;
+  using mp_int = histogram::detail::mp_int;
+  using weight = histogram::detail::weight;
   template <typename T>
-  using array = histogram::adaptive_storage<>::array<T>;
+  using array = histogram::detail::array<T>;
 
-  struct dtype_visitor : public static_visitor<std::pair<int, object>> {
-    template <typename Array>
-    std::pair<int, object> operator()(const Array& /*unused*/) const {
-      std::pair<int, object> p;
-      p.first = sizeof(typename Array::value_type);
-      p.second = str("|u") + str(p.first);
-      return p;
+  struct dtype_visitor : public static_visitor<str> {
+    list & shapes, & strides;
+    dtype_visitor(list &sh, list &st) : shapes(sh), strides(st) {}
+    template <typename T>
+    str operator()(const array<T>& /*unused*/) const {
+      strides.append(sizeof(T));
+      return dtype_typestr<T>();
     }
-    std::pair<int, object> operator()(const array<void>& /*unused*/) const {
-      std::pair<int, object> p;
-      p.first = sizeof(uint8_t);
-      p.second = str("|u") + str(p.first);
-      return p;
+    str operator()(const array<void>& /*unused*/) const {
+      strides.append(sizeof(uint8_t));
+      return dtype_typestr<uint8_t>();
     }
-    std::pair<int, object> operator()(const array<mp_int>& /*unused*/) const {
-      std::pair<int, object> p;
-      p.first = sizeof(double);
-      p.second = str("|f") + str(p.first);
-      return p;
+    str operator()(const array<mp_int>& /*unused*/) const {
+      strides.append(sizeof(double));
+      return dtype_typestr<double>();
     }
-    std::pair<int, object> operator()(const array<weight>& /*unused*/) const {
-      std::pair<int, object> p;
-      p.first = 0; // communicate that the type was array<weight>
-      p.second = str("|f") + str(sizeof(double));
-      return p;
+    str operator()(const array<weight>& /*unused*/) const {
+      strides.append(sizeof(double));
+      strides.append(strides[-1] * 2);
+      shapes.append(2);
+      return dtype_typestr<double>();
     }
   };
 
@@ -81,68 +77,35 @@ public:
     object operator()(const array<void>& b) const {
       // cannot pass non-existent memory to numpy; make new
       // zero-initialized uint8 array, and pass it
-      auto dim = len(shapes);
-      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
-      for (auto i = 0; i < dim; ++i) {
-        shapes2[i] = extract<npy_intp>(shapes[i]);
-      }
-      auto *a = (PyArrayObject*)PyArray_SimpleNew(dim, shapes2, NPY_UINT8);
-      for (auto i = 0; i < dim; ++i) {
-        PyArray_STRIDES(a)[i] = extract<npy_intp>(strides[i]);
-      }
-      auto *buf = (uint8_t *)PyArray_DATA(a);
-      std::fill(buf, buf + b.size, uint8_t(0));
-      PyArray_CLEARFLAGS(a, NPY_ARRAY_WRITEABLE);
-      return object(handle<>((PyObject*)a));
+      return np::zeros(tuple(shapes), np::dtype::get_builtin<uint8_t>());
     }
     object operator()(const array<mp_int>& b) const {
       // cannot pass cpp_int to numpy; make new
       // double array, fill it and pass it
-      auto dim = len(shapes);
-      npy_intp shapes2[BOOST_HISTOGRAM_AXIS_LIMIT];
-      for (auto i = 0; i < dim; ++i) {
-        shapes2[i] = extract<npy_intp>(shapes[i]);
-      }
-      auto *a = (PyArrayObject*)PyArray_SimpleNew(dim, shapes2, NPY_DOUBLE);
-      for (auto i = 0; i < dim; ++i) {
-        PyArray_STRIDES(a)[i] = extract<npy_intp>(strides[i]);
-      }
-      auto *buf = (double *)PyArray_DATA(a);
-      for (auto i = 0ul; i < b.size; ++i) {
+      auto a = np::empty(tuple(shapes), np::dtype::get_builtin<double>());
+      for (auto i = 0l, n = len(shapes); i < n; ++i)
+        const_cast<Py_intptr_t*>(a.get_strides())[i] = python::extract<int>(strides[i]);
+      auto *buf = (double *)a.get_data();
+      for (auto i = 0ul; i < b.size; ++i)
         buf[i] = static_cast<double>(b[i]);
-      }
-      PyArray_CLEARFLAGS(a, NPY_ARRAY_WRITEABLE);
-      return object(handle<>((PyObject*)a));
+      return a;
     }
   };
 
   static object array_interface(const histogram::dynamic_histogram &self) {
     dict d;
-
     list shapes;
     list strides;
     auto &b = self.storage_.buffer_;
-    auto dtype = apply_visitor(dtype_visitor(), b);
-    auto stride = dtype.first;
-    if (stride == 0) { // buffer is weight, needs special treatment
-      stride = sizeof(double);
-      strides.append(stride);
-      stride *= 2;
-      shapes.append(2);
+    d["typestr"] = apply_visitor(dtype_visitor(shapes, strides), b);
+    for (auto i = 0u; i < self.dim(); ++i) {
+      if (i) strides.append(strides[-1] * shapes[-1]);
+      shapes.append(histogram::shape(self.axis(i)));
     }
-    for (unsigned i = 0; i < self.dim(); ++i) {
-      const auto s = histogram::shape(self.axis(i));
-      shapes.append(s);
-      strides.append(stride);
-      stride *= s;
-    }
-    if (self.dim() == 0) {
+    if (self.dim() == 0)
       shapes.append(0);
-      strides.append(stride);
-    }
     d["shape"] = tuple(shapes);
     d["strides"] = tuple(strides);
-    d["typestr"] = dtype.second;
     d["data"] = apply_visitor(data_visitor(shapes, strides), b);
     return d;
   }
@@ -200,12 +163,12 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
       axes.push_back(ev());
       continue;
     }
-    python::extract<axis::integer> ei(pa);
+    python::extract<axis::integer<>> ei(pa);
     if (ei.check()) {
       axes.push_back(ei());
       continue;
     }
-    python::extract<axis::category> ec(pa);
+    python::extract<axis::category<>> ec(pa);
     if (ec.check()) {
       axes.push_back(ec());
       continue;
@@ -220,49 +183,35 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
 }
 
 struct fetcher {
-  char type = 0;
+  long n = 0;
   union {
-#ifdef HAVE_NUMPY
-    PyArrayObject* a;
-#endif
-    double value;
+    double value = 0;
+    const double* carray;
   };
+  python::object keep_alive;
 
-#ifdef HAVE_NUMPY
-  ~fetcher() {    
-    if (type == 2) Py_DECREF((PyObject*)a);
-  }
-#endif
-
-  long connect(python::object o) {
+  void assign(python::object o) {
+    // skipping check for currently held type, since it is always value
     python::extract<double> get_double(o);
     if (get_double.check()) {
-      type = 1;
       value = get_double();
-      return 0;
+      n = 0;
+      return;
     }
 #ifdef HAVE_NUMPY
-    a = (PyArrayObject*)PyArray_FROMANY(o.ptr(), NPY_DOUBLE, 1, 1, NPY_ARRAY_CARRAY);
-    if (a) {
-      type = 2;
-      return PyArray_SHAPE(a)[0];
-    }
+    np::ndarray a = np::from_object(o, np::dtype::get_builtin<double>(), 1);
+    carray = reinterpret_cast<const double*>(a.get_data());
+    n = a.shape(0);
+    keep_alive = a; // this may be a temporary object
+    return;
 #endif
-    PyErr_SetString(PyExc_ValueError, "cannot convert argument");
-    python::throw_error_already_set();
-    return 0;
+    throw std::invalid_argument("argument must be a number");
   }
-
-  bool empty() const { return type == 0; }
-
-  double operator()(long i) const {
-#ifdef HAVE_NUMPY
-    if (type == 2) {
-      return *static_cast<double*>(PyArray_GETPTR1(a, i));
-    }
-#endif
+  double get(long i) const noexcept {
+    if (n > 0)
+      return carray[i];
     return value;
-  };
+  }
 };
 
 python::object histogram_fill(python::tuple args, python::dict kwargs) {
@@ -285,44 +234,44 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
   fetcher fetch[BOOST_HISTOGRAM_AXIS_LIMIT];
   long n = 0;
   for (auto d = 0u; d < dim; ++d) {
-    python::object o = python::extract<python::object>(args[1 + d]);
-    const auto on = fetch[d].connect(o);
-    if (on > 0) {
-      if (n && on != n) {
+    fetch[d].assign(args[1 + d]);
+    if (fetch[d].n > 0) {
+      if (n > 0 && fetch[d].n != n) {
         PyErr_SetString(PyExc_ValueError, "lengths of sequences do not match");
         python::throw_error_already_set();
       }
-      n = on;
+      n = fetch[d].n;
     }
   }
 
-  double v[BOOST_HISTOGRAM_AXIS_LIMIT];
   fetcher fetch_weight;
+  bool use_weight = false;
   const auto nkwargs = python::len(kwargs);
   if (nkwargs > 0) {
     if (nkwargs > 1 || !kwargs.has_key("weight")) {
       PyErr_SetString(PyExc_RuntimeError, "only keyword weight allowed");
       python::throw_error_already_set();
     }
-    python::object o = kwargs.get("weight");
-    const auto on = fetch_weight.connect(o);
-    if (on > 0) {
-      if (n && on != n) {
-        PyErr_SetString(PyExc_ValueError, "lengths of argument sequences do not match");
+    use_weight = true;
+    fetch_weight.assign(kwargs.get("weight"));
+    if (fetch_weight.n > 0) {
+      if (n > 0 && fetch_weight.n != n) {
+        PyErr_SetString(PyExc_ValueError, "length of weight sequence does not match");
         python::throw_error_already_set();
       }
-      n = on;
+      n = fetch_weight.n;
     }
   }
 
+  double v[BOOST_HISTOGRAM_AXIS_LIMIT];
   if (!n) ++n;
   for (auto i = 0l; i < n; ++i) {
     for (auto d = 0u; d < dim; ++d)
-      v[d] = fetch[d](i);
-    if (fetch_weight.empty()) {
-      self.fill(v, v + dim);
+      v[d] = fetch[d].get(i);
+    if (use_weight) {
+      self.fill(v, v + dim, weight(fetch_weight.get(i)));
     } else {
-      self.fill(v, v + dim, weight(fetch_weight(i)));
+      self.fill(v, v + dim);
     }
   }
 
@@ -354,7 +303,7 @@ python::object histogram_value(python::tuple args, python::dict kwargs) {
   for (unsigned i = 0; i < self.dim(); ++i)
     idx[i] = python::extract<int>(args[1 + i]);
 
-  return python::object(self.value(idx + 0, idx + self.dim()));
+  return python::object(self.value(idx, idx + self.dim()));
 }
 
 python::object histogram_variance(python::tuple args, python::dict kwargs) {
@@ -383,7 +332,7 @@ python::object histogram_variance(python::tuple args, python::dict kwargs) {
   for (unsigned i = 0; i < self.dim(); ++i)
     idx[i] = python::extract<int>(args[1 + i]);
 
-  return python::object(self.variance(idx + 0, idx + self.dim()));
+  return python::object(self.variance(idx, idx + self.dim()));
 }
 
 std::string histogram_repr(const dynamic_histogram &h) {
@@ -399,26 +348,28 @@ void register_histogram() {
       "histogram", "N-dimensional histogram for real-valued data.", python::no_init)
       .def("__init__", python::raw_function(histogram_init),
            ":param axis args: axis objects"
-           "\nPass one or more axis objects to define"
-           "\nthe dimensions of the dynamic_histogram.")
+           "\nPass one or more axis objects to configure the histogram.")
       // shadowed C++ ctors
       .def(python::init<const dynamic_histogram &>())
 #ifdef HAVE_NUMPY
       .add_property("__array_interface__", &python::access::array_interface)
 #endif
-      .def("__len__", &dynamic_histogram::dim)
-      .def("axis", histogram_axis)
+      .add_property("dim", &dynamic_histogram::dim)
+      .def("axis", histogram_axis, python::arg("i") = 0,
+           ":param int i: axis index"
+           "\nReturns axis with index i.")
       .def("fill", python::raw_function(histogram_fill),
-           "Pass a sequence of values with a length n is"
-           "\nequal to the dimensions of the histogram,"
-           "\nand optionally a weight w for this fill"
-           "\n(*int* or *float*)."
+           "Pass N values where N is equal to the dimensions"
+           "\nof the histogram, and optionally another value with the keyword"
+           "\n*weight*. All values must be convertible to double."
            "\n"
-           "\nIf Numpy support is enabled, values may also"
-           "\nbe a 2d-array of shape (m, n), where m is"
-           "\nthe number of tuples, and optionally"
-           "\nanother a second 1d-array w of shape (n,).")
-      .add_property("sum", &dynamic_histogram::sum)
+           "\nIf Numpy support is enabled, 1d-arrays can be passed instead of"
+           "\nvalues, which must be equal in lenght. Arrays and values can"
+           "\nbe mixed in the same call.")
+      .add_property("size", &dynamic_histogram::size,
+           "Returns total number of bins, including under- and overflow.")
+      .add_property("sum", &dynamic_histogram::sum,
+           "Returns sum of all entries, including under- and overflow bins.")
       .def("value", python::raw_function(histogram_value),
            ":param int args: indices of the bin"
            "\n:return: count for the bin")
