@@ -27,7 +27,7 @@ int main(int, char**) {
     h.fill(20.0); // put in overflow bin
     h.fill(0.1, bh::weight(5)); // fill with a weighted entry, weight is 5
 
-    // iterate over bins, loop includes under- and overflow bin
+    // iterate over bins, loop excludes under- and overflow bins
     for (const auto& bin : h.axis(0_c)) {
         std::cout << "bin " << bin.first
                   << " x in [" << bin.second.lower() << ", " << bin.second.upper() << "): "
@@ -37,7 +37,6 @@ int main(int, char**) {
 
     /* program output:
 
-    bin -1 x in [-inf, -1): 1 +/- 1
     bin 0 x in [-1, -0.7): 1 +/- 1
     bin 1 x in [-0.7, -0.4): 1 +/- 1
     bin 2 x in [-0.4, -0.1): 0 +/- 0
@@ -48,7 +47,6 @@ int main(int, char**) {
     bin 7 x in [1.1, 1.4): 1 +/- 1
     bin 8 x in [1.4, 1.7): 0 +/- 0
     bin 9 x in [1.7, 2): 1 +/- 1
-    bin 10 x in [2, inf): 2 +/- 1.41421
 
     */
 }

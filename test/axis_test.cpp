@@ -168,6 +168,8 @@ int main() {
   // axis::integer
   {
     axis::integer<> a{-1, 2};
+    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<int>::max());
+    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<int>::max());
     axis::integer<> b;
     BOOST_TEST_NOT(a == b);
     b = a;
@@ -220,14 +222,13 @@ int main() {
   {
     enum { A, B, C };
     test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow::off), 0, 5);
-    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow::on), -1, 6);
+    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow::on), 0, 5);
     test_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5);
     test_axis_iterator(axis::variable<>({1, 2, 3}, "", axis::uoflow::off), 0,
                        2);
-    test_axis_iterator(axis::variable<>({1, 2, 3}, "", axis::uoflow::on), -1,
-                       3);
+    test_axis_iterator(axis::variable<>({1, 2, 3}, "", axis::uoflow::on), 0, 2);
     test_axis_iterator(axis::integer<>(0, 4, "", axis::uoflow::off), 0, 4);
-    test_axis_iterator(axis::integer<>(0, 4, "", axis::uoflow::on), -1, 5);
+    test_axis_iterator(axis::integer<>(0, 4, "", axis::uoflow::on), 0, 4);
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
   }
 

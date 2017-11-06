@@ -9,7 +9,9 @@
 import unittest
 from math import pi
 from histogram import histogram
-from histogram.axis import regular, regular_log, regular_sqrt, regular_cos, regular_pow, circular, variable, category, integer
+from histogram.axis import (regular, regular_log, regular_sqrt, regular_cos,
+                            regular_pow, circular, variable, category,
+                            integer)
 import pickle
 import os
 import sys
@@ -82,6 +84,8 @@ class test_regular(unittest.TestCase):
         for i in range(4):
             self.assertAlmostEqual(a[i][0], v[i])
             self.assertAlmostEqual(a[i][1], v[i+1])
+        self.assertEqual(a[-1][0], -float("infinity"))
+        self.assertEqual(a[4][1], float("infinity"))
 
     def test_iter(self):
         v = [1.0, 1.25, 1.5, 1.75, 2.0]
@@ -117,7 +121,6 @@ class test_regular(unittest.TestCase):
         self.assertAlmostEqual(a[0][0], 1e0)
         self.assertAlmostEqual(a[1][0], 1e1)
         self.assertAlmostEqual(a[1][1], 1e2)
-
 
     def test_pow_transform(self):
         a = regular_pow(2, 1.0, 9.0, 0.5)
@@ -237,6 +240,8 @@ class test_variable(unittest.TestCase):
         for i in range(2):
             self.assertEqual(a[i][0], v[i])
             self.assertEqual(a[i][1], v[i+1])
+        self.assertEqual(a[-1][0], -float("infinity"))
+        self.assertEqual(a[2][1], float("infinity"))
 
     def test_iter(self):
         v = [-0.1, 0.2, 0.3]
@@ -257,44 +262,6 @@ class test_variable(unittest.TestCase):
         self.assertEqual(a.index(0.3), 2)
         self.assertEqual(a.index(0.31), 2)
         self.assertEqual(a.index(10), 2)
-
-class test_category(unittest.TestCase):
-
-    def test_init(self):
-        category(1, 2, 3)
-        category(1, 2, 3, label="ca")
-        with self.assertRaises(TypeError):
-            category()
-        with self.assertRaises(TypeError):
-            category("1")
-        with self.assertRaises(TypeError):
-            category(1, "2")
-        with self.assertRaises(TypeError):
-            category(1, 2, label=1)
-        with self.assertRaises(KeyError):
-            category(1, 2, 3, uoflow=True)
-        self.assertEqual(category(1, 2, 3),
-                         category(1, 2, 3))
-
-    def test_len(self):
-        a = category(1, 2, 3)
-        self.assertEqual(len(a), 3)
-
-    def test_repr(self):
-        for s in ("category(1)",
-                  "category(1, 2)",
-                  "category(1, 2, 3)"):
-            self.assertEqual(str(eval(s)), s)
-
-    def test_getitem(self):
-        c = 1, 2, 3
-        a = category(*c)
-        for i in range(3):
-            self.assertEqual(a[i], c[i])
-
-    def test_iter(self):
-        c = [1, 2, 3]
-        self.assertEqual([x for x in category(*c)], c)
 
 class test_integer(unittest.TestCase):
 
@@ -333,10 +300,14 @@ class test_integer(unittest.TestCase):
         a = integer(-1, 3)
         for i in range(4):
             self.assertEqual(a[i][0], v[i])
+        self.assertEqual(a[-1][0], -2 ** 31 + 1)
+        self.assertEqual(a[4][1], 2 ** 31 - 1)
 
     def test_iter(self):
-        v = [x[0] for x in integer(-1, 3)]
-        self.assertEqual(v, [-1, 0, 1, 2])
+        v = [-1, 0, 1, 2, 3]
+        a = integer(-1, 3)
+        self.assertEqual([x[0] for x in a], v[:-1])
+        self.assertEqual([x[1] for x in a], v[1:])
 
     def test_index(self):
         a = integer(-1, 3)
@@ -348,6 +319,44 @@ class test_integer(unittest.TestCase):
         self.assertEqual(a.index(2), 3)
         self.assertEqual(a.index(3), 4)
         self.assertEqual(a.index(4), 4)
+
+class test_category(unittest.TestCase):
+
+    def test_init(self):
+        category(1, 2, 3)
+        category(1, 2, 3, label="ca")
+        with self.assertRaises(TypeError):
+            category()
+        with self.assertRaises(TypeError):
+            category("1")
+        with self.assertRaises(TypeError):
+            category(1, "2")
+        with self.assertRaises(TypeError):
+            category(1, 2, label=1)
+        with self.assertRaises(KeyError):
+            category(1, 2, 3, uoflow=True)
+        self.assertEqual(category(1, 2, 3),
+                         category(1, 2, 3))
+
+    def test_len(self):
+        a = category(1, 2, 3)
+        self.assertEqual(len(a), 3)
+
+    def test_repr(self):
+        for s in ("category(1)",
+                  "category(1, 2)",
+                  "category(1, 2, 3)"):
+            self.assertEqual(str(eval(s)), s)
+
+    def test_getitem(self):
+        c = 1, 2, 3
+        a = category(*c)
+        for i in range(3):
+            self.assertEqual(a[i], c[i])
+
+    def test_iter(self):
+        c = [1, 2, 3]
+        self.assertEqual([x for x in category(*c)], c)
 
 class test_histogram(unittest.TestCase):
 

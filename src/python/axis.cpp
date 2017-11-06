@@ -34,6 +34,25 @@ template <typename T> python::str generic_repr(const T &t) {
   return os.str().c_str();
 }
 
+struct generic_iterator {
+  generic_iterator(python::object o) : iterable(o), size(python::len(iterable)) {}
+  python::object next() {
+    if (idx == size) {
+      PyErr_SetString(PyExc_StopIteration, "No more items.");
+      python::throw_error_already_set();
+    }
+    return iterable[idx++];
+  }
+  python::object self() { return python::object(*this); }
+  python::object iterable;
+  unsigned idx = 0;
+  unsigned size = 0;
+};
+
+generic_iterator make_generic_iterator(python::object self) {
+  return generic_iterator(self);
+}
+
 template <typename T>
 struct axis_interval_to_python
 {
@@ -126,7 +145,7 @@ python::object category_init(python::tuple args, python::dict kwargs) {
 }
 
 template <typename A> python::object axis_getitem(const A &a, int i) {
-  if (i == a.size()) {
+  if (i < -1 * a.uoflow() || i >= a.size() + 1 * a.uoflow()) {
     PyErr_SetString(PyExc_IndexError, "index out of bounds");
     python::throw_error_already_set();
   }
@@ -195,7 +214,7 @@ struct axis_suite : public python::def_visitor<axis_suite<T>> {
            ":param integer i: bin index"
            "\n:returns: bin corresponding to index",
            python::args("self", "i"));
-    // cl.def("__iter__", python::iterator<const T>());
+    cl.def("__iter__", make_generic_iterator);
     cl.def("__repr__", generic_repr<T>,
            ":returns: string representation of this axis", python::arg("self"));
     cl.def(python::self == python::self);
@@ -269,6 +288,10 @@ void register_axis_types() {
     std::pair<int, interval<double>>,
     pair_int_axis_interval_to_python<double>
   >();
+
+  class_<generic_iterator>("generic_iterator", init<object>())
+    .def("__iter__", &generic_iterator::self)
+    .def("next", &generic_iterator::next);
 
   class_<regular<>>(
       "regular",

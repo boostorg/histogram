@@ -43,7 +43,7 @@ template <typename T, typename = decltype(std::begin(std::declval<T &>()),
                                           std::end(std::declval<T &>()))>
 struct is_sequence {};
 
-template <typename MainVector, typename AuxVector> struct combiner {
+template <typename MainVector, typename AuxVector> struct combine {
   using type =
       typename mpl::copy_if<AuxVector,
                             mpl::not_<mpl::contains<MainVector, mpl::_1>>,
@@ -51,7 +51,7 @@ template <typename MainVector, typename AuxVector> struct combiner {
 };
 
 template <typename MainVector, typename AuxVector>
-using combine = typename combiner<MainVector, AuxVector>::type;
+using combine_t = typename combine<MainVector, AuxVector>::type;
 
 struct bool_mask_op {
   std::vector<bool> &b;

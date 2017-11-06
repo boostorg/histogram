@@ -43,7 +43,16 @@ namespace detail {
 template <typename T> class cref {
 public:
   cref() = default;
+  cref(const cref &o) : ptr_(o.ptr_) {}
+  cref &operator=(const cref &o) {
+    ptr_ = o.ptr_;
+    return *this;
+  }
   cref(const T &t) : ptr_(&t) {}
+  cref &operator=(const T &t) {
+    ptr_ = &t;
+    return *this;
+  }
   operator const T &() const { return *ptr_; }
 
 private:
@@ -51,7 +60,7 @@ private:
 };
 
 template <typename Axis>
-using axis_iterator_value = std::pair<
+using axis_iterator_value_t = std::pair<
     int, typename conditional<
              is_reference<typename Axis::bin_type>::value,
              cref<typename remove_reference<typename Axis::bin_type>::type>,
@@ -59,15 +68,19 @@ using axis_iterator_value = std::pair<
 } // namespace detail
 
 template <typename Axis>
-class axis_iterator : public iterator_facade<axis_iterator<Axis>,
-                                             detail::axis_iterator_value<Axis>,
-                                             random_access_traversal_tag> {
+class axis_iterator
+    : public iterator_facade<axis_iterator<Axis>,
+                             detail::axis_iterator_value_t<Axis>,
+                             random_access_traversal_tag> {
 public:
-  using value_type = detail::axis_iterator_value<Axis>;
+  using value_type = detail::axis_iterator_value_t<Axis>;
 
   explicit axis_iterator(const Axis &axis, int idx) : axis_(axis) {
     value_.first = idx;
   }
+
+  axis_iterator(const axis_iterator &o) = default;
+  axis_iterator &operator=(const axis_iterator &o) = default;
 
 private:
   void increment() noexcept { ++value_.first; }
@@ -180,10 +193,10 @@ private:
 namespace transform {
 namespace detail {
 struct stateless {
-  bool operator==(const stateless&) const noexcept { return true; }
+  bool operator==(const stateless &) const noexcept { return true; }
   template <class Archive> void serialize(Archive &, unsigned) {}
 };
-}
+} // namespace detail
 
 struct identity : public detail::stateless {
   template <typename T> static T forward(T v) { return v; }
@@ -220,7 +233,7 @@ struct pow {
 };
 } // namespace transform
 
-/** Axis for binning real-valued data into equidistant bins.
+/** Axis for equidistant intervals on the real line.
  *
  * The most common binning strategy.
  * Very fast. Binning is a O(1) operation.
@@ -232,23 +245,24 @@ public:
   using bin_type = interval<value_type>;
   using const_iterator = axis_iterator<regular>;
 
-  /** Construct axis with n bins over range [min, max).
+  /** Construct axis with n bins over real range [lower, upper).
    *
    * \param n number of bins.
-   * \param min low edge of first bin.
-   * \param max high edge of last bin.
+   * \param lower low edge of first bin.
+   * \param upper high edge of last bin.
    * \param label description of the axis.
    * \param uoflow whether to add under-/overflow bins.
    * \param trans arguments passed to the transform.
    */
-  regular(unsigned n, value_type min, value_type max, string_view label = {},
+  regular(unsigned n, value_type lower, value_type upper,
+          string_view label = {},
           enum uoflow uo = ::boost::histogram::axis::uoflow::on,
           Transform trans = Transform())
       : axis_base_uoflow(n, label, uo), Transform(trans),
-        min_(trans.forward(min)),
-        delta_((trans.forward(max) - trans.forward(min)) / n) {
-    if (!(min < max)) {
-      throw std::logic_error("min < max required");
+        min_(trans.forward(lower)),
+        delta_((trans.forward(upper) - trans.forward(lower)) / n) {
+    if (!(lower < upper)) {
+      throw std::logic_error("lower < upper required");
     }
     BOOST_ASSERT(!std::isnan(min_));
     BOOST_ASSERT(!std::isnan(delta_));
@@ -286,13 +300,9 @@ public:
            min_ == o.min_ && delta_ == o.delta_;
   }
 
-  const_iterator begin() const noexcept {
-    return const_iterator(*this, uoflow() ? -1 : 0);
-  }
+  const_iterator begin() const { return const_iterator(*this, 0); }
 
-  const_iterator end() const noexcept {
-    return const_iterator(*this, uoflow() ? size() + 1 : size());
-  }
+  const_iterator end() const { return const_iterator(*this, size()); }
 
   const Transform &transform() const noexcept {
     return static_cast<const Transform &>(*this);
@@ -305,7 +315,7 @@ private:
   template <class Archive> void serialize(Archive &, unsigned);
 };
 
-/** Axis for real-valued angles.
+/** Axis for real values on a circle.
  *
  * The axis is circular and wraps around reaching the
  * perimeter value. Therefore, there are no overflow/underflow
@@ -370,10 +380,10 @@ private:
   template <class Archive> void serialize(Archive &, unsigned);
 };
 
-/** An axis for real-valued data and bins of varying width.
+/** Axis for non-equidistant bins on the real line.
  *
- * Binning is a O(log(N)) operation. If speed matters
- * and the problem domain allows it, prefer a regular.
+ * Binning is a O(log(N)) operation. If speed matters and the problem
+ * domain allows it, prefer a regular axis, possibly with a transform.
  */
 template <typename RealType = double> class variable : public axis_base_uoflow {
 public:
@@ -449,13 +459,9 @@ public:
     return std::equal(x_.get(), x_.get() + size() + 1, o.x_.get());
   }
 
-  const_iterator begin() const {
-    return const_iterator(*this, uoflow() ? -1 : 0);
-  }
+  const_iterator begin() const { return const_iterator(*this, 0); }
 
-  const_iterator end() const {
-    return const_iterator(*this, uoflow() ? size() + 1 : size());
-  }
+  const_iterator end() const { return const_iterator(*this, size()); }
 
 private:
   std::unique_ptr<value_type[]> x_; // smaller size compared to std::vector
@@ -464,7 +470,7 @@ private:
   template <class Archive> void serialize(Archive &, unsigned);
 };
 
-/** An axis for a contiguous range of integers.
+/** Axis for an interval of integral values with unit steps.
  *
  * Binning is a O(1) operation. This axis operates
  * faster than a regular.
@@ -475,16 +481,18 @@ public:
   using bin_type = interval<value_type>;
   using const_iterator = axis_iterator<integer>;
 
-  /** Construct axis over integer range [min, max].
+  /** Construct axis over a semi-open integer interval [lower, upper).
    *
-   * \param min smallest integer of the covered range.
-   * \param max largest integer of the covered range.
+   * \param lower smallest integer of the covered range.
+   * \param upper largest integer of the covered range.
+   * \param label description of the axis.
+   * \param uoflow whether to add under-/overflow bins.
    */
-  integer(value_type min, value_type max, string_view label = {},
+  integer(value_type lower, value_type upper, string_view label = {},
           enum uoflow uo = ::boost::histogram::axis::uoflow::on)
-      : axis_base_uoflow(max - min, label, uo), min_(min) {
-    if (min > max) {
-      throw std::logic_error("min <= max required");
+      : axis_base_uoflow(upper - lower, label, uo), min_(lower) {
+    if (lower > upper) {
+      throw std::logic_error("lower <= upper required");
     }
   }
 
@@ -501,19 +509,26 @@ public:
   }
 
   /// Returns the integer that is mapped to the bin index.
-  bin_type operator[](int idx) const { return {min_ + idx, min_ + idx + 1}; }
+  bin_type operator[](int idx) const {
+    auto eval = [this](int i) {
+      if (i < 0) {
+        return -std::numeric_limits<value_type>::max();
+      }
+      if (i > size()) {
+        return std::numeric_limits<value_type>::max();
+      }
+      return min_ + i;
+    };
+    return {eval(idx), eval(idx + 1)};
+  }
 
   bool operator==(const integer &o) const noexcept {
     return axis_base_uoflow::operator==(o) && min_ == o.min_;
   }
 
-  const_iterator begin() const {
-    return const_iterator(*this, uoflow() ? -1 : 0);
-  }
+  const_iterator begin() const { return const_iterator(*this, 0); }
 
-  const_iterator end() const {
-    return const_iterator(*this, uoflow() ? size() + 1 : size());
-  }
+  const_iterator end() const { return const_iterator(*this, size()); }
 
 private:
   value_type min_ = 0;
@@ -522,7 +537,7 @@ private:
   template <class Archive> void serialize(Archive &, unsigned);
 };
 
-/** An axis for a set of unique values.
+/** Axis which maps unique single values to bins (one on one).
  *
  * The axis maps a set of values to bins, following the order of
  * arguments in the constructor. There is an optional overflow bin
