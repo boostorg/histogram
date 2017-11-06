@@ -178,32 +178,31 @@ private:
 };
 
 namespace transform {
-struct identity {
+namespace detail {
+struct stateless {
+  bool operator==(const stateless&) const noexcept { return true; }
+  template <class Archive> void serialize(Archive &, unsigned) {}
+};
+}
+
+struct identity : public detail::stateless {
   template <typename T> static T forward(T v) { return v; }
   template <typename T> static T inverse(T v) { return v; }
-  bool operator==(const identity &) const noexcept { return true; }
-  template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
-struct log {
+struct log : public detail::stateless {
   template <typename T> static T forward(T v) { return std::log(v); }
   template <typename T> static T inverse(T v) { return std::exp(v); }
-  bool operator==(const log &) const noexcept { return true; }
-  template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
-struct sqrt {
+struct sqrt : public detail::stateless {
   template <typename T> static T forward(T v) { return std::sqrt(v); }
   template <typename T> static T inverse(T v) { return v * v; }
-  bool operator==(const sqrt &) const noexcept { return true; }
-  template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
-struct cos {
+struct cos : public detail::stateless {
   template <typename T> static T forward(T v) { return std::cos(v); }
   template <typename T> static T inverse(T v) { return std::acos(v); }
-  bool operator==(const cos &) const noexcept { return true; }
-  template <class Archive> void serialize(Archive &, unsigned) {}
 };
 
 struct pow {
@@ -223,7 +222,7 @@ struct pow {
 
 /** Axis for binning real-valued data into equidistant bins.
  *
- * The simplest and common binning strategy.
+ * The most common binning strategy.
  * Very fast. Binning is a O(1) operation.
  */
 template <typename RealType = double, typename Transform = transform::identity>
