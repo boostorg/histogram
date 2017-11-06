@@ -125,25 +125,40 @@ This variance estimate can be derived from the [@https://en.wikipedia.org/wiki/V
 
 [section Python support]
 
-Python is a popular scripting language in the data science community. Thus, the library provides Python bindings. The histogram may be used as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. Users are able to define the histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
+Python is a popular scripting language in the data science community. Thus, the library provides Python bindings. The histogram may be used as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. Users are able to define the histogram in Python, let it be filled on the C++ side (using a few lines of Boost.Python code to define the interface), and then get it back for further data analysis or plotting.
 
-Data analysis in Python is Numpy-based, so Numpy support is included. If number of dimensions is larger than one, this implementation is faster than the equivalent Numpy functions (while being more flexible), see [link histogram.benchmarks benchmark].
-
+Data analysis in Python is Numpy-based, so Numpy is fully support. Histograms can be filled with chunks of data in form of Numpy arrays, which is efficient, and the bin counts can be retrieved as a Numpy array without copying data.
 [note
-The Python and C++ interface use consistent naming, but sometimes Python offers more elegant and pythonic ways of implementing things. Where possible, the more pythonic interface is used.
+If number of dimensions is larger than one, this implementation is faster than the equivalent Numpy functions (while being more flexible), see [link histogram.benchmarks benchmark].
+]
 
-Properties: Getter/setter-like functions are wrapped as properties. Examples: `histogram.dim`, `regular_axis.bins`.
+The Python and C++ interface were designed to be as consistent as possible, while following established style for the respective C++ or Python community. This leads to the following stylistic changes on the Python side.
 
-Axis access: The `histogram` object implements the sequence protocol and behaves like an immutable sequence of axes. Examples: `len(histogram)` returns the number of axes, `histogram[0]` accesses the first axis, `for axis in histogram: [...]`.
+Properties: Getter/setter-like functions on the C++ side are wrapped in Python as properties. Examples: `histogram.dim`, `axis.regular.uoflow`. In general, a C++ function that takes no argument but returns a value is using the property syntax on the Python side. An exception is made for the function `size()`, see next item.
+
+`len(x)` instead of `x.size()`: An axis instance behaves like a container of bins in C++ and like a sequence of bins in Python. To get the length of a sequence in Python one uses the `len(...)` function, while in C++ one uses the `size()` method.
 
 Keyword-based parameters: the member function call `fill(..., weight(x))` in C++ is translated into a Python member function call `fill(..., weight=x)`.
-]
 
 [endsect]
 
 [section Serialization]
 
-Serialization is implemented using [@boost:/libs/serialization/index.html Boost.Serialization]. Pickling in Python is implemented based on the C++ serialization code. In the current implementation, the pickled stream is *not* portable, since it uses `boost::archive::binary_archive`. It would be great to switch to a portable binary representation in the future, when that becomes available.
+Serialization is implemented using [@boost:/libs/serialization/index.html Boost.Serialization]. Pickling in Python is implemented based on the C++ serialization code. In the current implementation, the pickled stream is *not* portable between different hardware platforms, since it uses `boost::archive::binary_archive`. It would be great to switch to a portable binary representation in the future, when that becomes available. In practice, most computing clusters and most consumer hardware are x86 compatible nowadays. The binary_archive is portable between such hardware platforms. Naturally, it is portable between operating systems, like OSX, Windows, and Linux.
+
+[endsect]
+
+[section Comparison to Boost.Accumulators]
+
+Boost.Histogram has a weak overlap with the [@boost:/libs/accumulators/index.html Boost.Accumulators] framework, in particular with the statistical accumulators `density` and `weighted_density`. The two accumulators generate one-dimensional histograms from input data. The axis range and the bin widths are determined automatically from a cached sample of initial values. In contrast, Boost.Histogram puts the responsibility to choose range and bin widths on the user.
+
+Automatic binning is not an option for Boost.Histogram, because it does not scale well to many dimensions. Because of the Curse of Dimensionality, a prohibitive number of samples would need to be collected.
+
+[note
+There is no scientific consensus on how do automatic binning in an optimal way, mostly because there is no consensus over the cost function (there are many articles with different solutions in the literature). The problem is not solved for one-dimensional data, and even less so for multi-dimensional data.
+]
+
+Recommendation: If you have one-dimensional data of which you know nothing about, and/or you want to a histogram quickly, use the Boost.Accumulators. Use Boost.Histogram, if you have multi-dimensional data or if you suspect you will switch to multi-dimensional data later, or if you want to customize the binning by hand.
 
 [endsect]
 

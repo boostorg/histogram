@@ -1,5 +1,15 @@
 [section Changelog]
 
+[heading 2.1 (not in boost)]
+
+* Support for efficient adding of multiple histograms and scaling
+* Re-design of category axis as a general mapping between unique values and bins
+* Re-design of the bin description an axis returns upon element access
+* Interface cleanup, more consistency between Python and C++ interface
+* range-based for-loops in C++ and Python loops now excludes over-/underflow bins
+* Regular axis in C++: Allowing transforms with state
+* Regular axis in Python: Support for all C++ transforms
+
 [heading 2.0 (not in boost)]
 
 * Added static_histogram (v1.0 only had dynamic_histogram).
@@ -9,6 +19,7 @@
 * Replaced dynamic_storage with adaptive_storage, which adds the capability to grow the bin counter into a cpp_int, thus avoiding integer overflow completely.
 * Serialization uses binary_archive instead of text_archive. The latter is portable, but the performance is terrible.
 * Python interface changed: histograms are now iterable, returning axis classes
+* Support reduction (removing a subset of axes and returning the equivalent histogram; in other words, those axes are integrated over)
 
 [heading 1.0 (not in boost)]
 
