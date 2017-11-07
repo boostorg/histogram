@@ -53,6 +53,15 @@ public:
   class axis_type : public any_axis {
   public:
     using any_axis::any_axis;
+    axis_type() = default;
+    axis_type(const axis_type& t) : any_axis(reinterpret_cast<const any_axis&>(t)) {}
+    axis_type(axis_type&& t) : any_axis(std::move(reinterpret_cast<any_axis&>(t))) {}
+    axis_type& operator=(const axis_type& t) {
+      return reinterpret_cast<axis_type&>(any_axis::operator=(reinterpret_cast<const any_axis&>(t)));
+    }
+    axis_type& operator=(axis_type&& t) {
+      return reinterpret_cast<axis_type&>(any_axis::operator=(std::move(reinterpret_cast<any_axis&>(t))));
+    }
 
     int size() const {
       return apply_visitor(detail::size(), *this);
