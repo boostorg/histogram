@@ -86,7 +86,7 @@ void adaptive_storage::serialize(Archive &ar, unsigned /* version */) {
     }
   } else {
     unsigned tid = 0;
-    if (array<void> *a = get<array<void>>(&buffer_)) {
+    if (get<array<void>>(&buffer_)) {
       tid = 0;
       ar &tid;
     } else if (array<uint8_t> *a = get<array<uint8_t>>(&buffer_)) {
