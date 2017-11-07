@@ -51,7 +51,6 @@ public:
   class axis_type : public make_variant_over<Axes>::type {
     using any_axis = typename make_variant_over<Axes>::type;
   public:
-    using any_axis::any_axis;
     axis_type() = default;
     axis_type(const axis_type& t) = default;
     axis_type(axis_type&& t) = default;
