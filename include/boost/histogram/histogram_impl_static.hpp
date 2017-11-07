@@ -139,15 +139,14 @@ public:
   }
 
   /// Number of axes (dimensions) of histogram
-  constexpr unsigned dim() const { return axes_size::value; }
+  constexpr unsigned dim() const noexcept { return axes_size::value; }
 
   /// Total number of bins in the histogram (including underflow/overflow)
-  std::size_t bincount() const { return storage_.size(); }
+  std::size_t bincount() const noexcept { return storage_.size(); }
 
   /// Sum of all counts in the histogram
-  double sum() const {
+  double sum() const noexcept {
     double result = 0.0;
-    // don't use bincount() here, so sum() still works in a moved-from object
     for (std::size_t i = 0, n = storage_.size(); i < n; ++i) {
       result += storage_.value(i);
     }
