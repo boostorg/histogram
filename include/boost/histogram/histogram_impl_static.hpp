@@ -58,11 +58,11 @@ public:
 
   template <typename... Axis>
   explicit histogram(const Axis &... axis) : axes_(axis...) {
-    storage_ = Storage(field_count());
+    storage_ = Storage(bincount_from_axes());
   }
 
   explicit histogram(axes_type &&axes) : axes_(std::move(axes)) {
-    storage_ = Storage(field_count());
+    storage_ = Storage(bincount_from_axes());
   }
 
   template <typename D, typename A, typename S>
@@ -142,19 +142,20 @@ public:
   constexpr unsigned dim() const { return axes_size::value; }
 
   /// Total number of bins in the histogram (including underflow/overflow)
-  std::size_t size() const { return storage_.size(); }
+  std::size_t bincount() const { return storage_.size(); }
 
   /// Sum of all counts in the histogram
   double sum() const {
     double result = 0.0;
-    for (std::size_t i = 0, n = size(); i < n; ++i) {
+    // don't use bincount() here, so sum() still works in a moved-from object
+    for (std::size_t i = 0, n = storage_.size(); i < n; ++i) {
       result += storage_.value(i);
     }
     return result;
   }
 
   /// Reset bin counters to zero
-  void reset() { storage_ = Storage(storage_.size()); }
+  void reset() { storage_ = Storage(bincount_from_axes()); }
 
   /// Get N-th axis
   template <int N>
@@ -181,7 +182,7 @@ private:
   axes_type axes_;
   Storage storage_;
 
-  std::size_t field_count() const {
+  std::size_t bincount_from_axes() const noexcept {
     detail::field_count fc;
     fusion::for_each(axes_, fc);
     return fc.value;

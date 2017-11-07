@@ -28,8 +28,8 @@ inline void escape(std::ostream &os, const string_view s) {
   os << '\'';
 }
 
-template <typename A>
-inline void lin(std::size_t &out, std::size_t &stride, const A &a,
+template <typename Axis>
+inline void lin(std::size_t &out, std::size_t &stride, const Axis &a,
                 int j) noexcept {
   // the following is highly optimized code that runs in a hot loop;
   // please measure the performance impact of changes
@@ -43,12 +43,12 @@ inline void lin(std::size_t &out, std::size_t &stride, const A &a,
   stride *= a.shape();
 }
 
-template <typename A, typename X>
-inline void xlin(std::size_t &out, std::size_t &stride, const A &a,
-                 X &&x) noexcept {
+template <typename Axis>
+inline void xlin(std::size_t &out, std::size_t &stride, const Axis &a,
+                 const typename Axis::value_type &x) noexcept {
   // the following is highly optimized code that runs in a hot loop;
   // please measure the performance impact of changes
-  int j = a.index(std::forward<X>(x));
+  int j = a.index(x);
   // j is guaranteed to be in range [-1, bins]
   j += (j < 0) * (a.size() + 2); // wrap around if j < 0
   out += j * stride;

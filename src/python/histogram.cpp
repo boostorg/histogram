@@ -10,7 +10,6 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/histogram_ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
-#include <boost/histogram/utility.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -100,7 +99,7 @@ public:
     d["typestr"] = apply_visitor(dtype_visitor(shapes, strides), b);
     for (auto i = 0u; i < self.dim(); ++i) {
       if (i) strides.append(strides[-1] * shapes[-1]);
-      shapes.append(histogram::shape(self.axis(i)));
+      shapes.append(self.axis(i).shape());
     }
     if (self.dim() == 0)
       shapes.append(0);
@@ -366,7 +365,7 @@ void register_histogram() {
            "\nIf Numpy support is enabled, 1d-arrays can be passed instead of"
            "\nvalues, which must be equal in lenght. Arrays and values can"
            "\nbe mixed in the same call.")
-      .add_property("size", &dynamic_histogram::size,
+      .add_property("bincount", &dynamic_histogram::bincount,
            "Returns total number of bins, including under- and overflow.")
       .add_property("sum", &dynamic_histogram::sum,
            "Returns sum of all entries, including under- and overflow bins.")

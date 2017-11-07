@@ -9,6 +9,7 @@
 * range-based for-loops in C++ and Python loops now excludes over-/underflow bins
 * Regular axis in C++: Allowing transforms with state
 * Regular axis in Python: Support for all C++ transforms
+* Getting rid of utility functions, use interface augmented boost::variant instead
 
 [heading 2.0 (not in boost)]
 

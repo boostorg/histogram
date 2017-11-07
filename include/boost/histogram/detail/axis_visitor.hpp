@@ -37,10 +37,18 @@ struct uoflow : public static_visitor<bool> {
   template <typename A> bool operator()(const A &a) const { return a.uoflow(); }
 };
 
-template <typename V> struct index : public static_visitor<int> {
-  const V &v;
-  explicit index(const V &x) : v(x) {}
-  template <typename A> int operator()(const A &a) const { return a.index(v); }
+template <typename T> struct index : public static_visitor<int> {
+  const T &t;
+  explicit index(const T &arg) : t(arg) {}
+  template <typename Axis> int operator()(const Axis &a) const {
+    return impl(std::is_convertible<T, typename Axis::value_type>(), a);
+  }
+  template <typename Axis> int impl(std::true_type, const Axis& a) const {
+    return a.index(t);
+  }
+  template <typename Axis> int impl(std::false_type, const Axis&) const {
+    throw std::runtime_error("index argument not convertible to axis value type");
+  }
 };
 
 struct bin : public static_visitor<axis::interval<double>> {
@@ -135,7 +143,7 @@ inline bool axes_equal_impl(mpl::false_, mpl::false_, const A &a, const B &b) {
   if (a.size() != n) {
     return false;
   }
-  for (decltype(n) i = 0; i < n; ++i) {
+  for (auto i = 0; i < n; ++i) {
     if (!apply_visitor(cmp_axis<typename A::value_type>(a[i]), b[i])) {
       return false;
     }

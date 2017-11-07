@@ -9,5 +9,6 @@
 
 #include <boost/histogram/histogram_impl_dynamic.hpp>
 #include <boost/histogram/histogram_impl_static.hpp>
+#include <boost/histogram/histogram_arithmetic_operators.hpp>
 
 #endif

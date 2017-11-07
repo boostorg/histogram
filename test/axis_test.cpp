@@ -12,7 +12,6 @@
 #include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/utility.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/variant.hpp>
 #include <limits>

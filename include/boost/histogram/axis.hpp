@@ -627,7 +627,8 @@ using builtin_axes =
                 axis::regular<double, axis::transform::sqrt>,
                 axis::regular<double, axis::transform::cos>,
                 axis::regular<double, axis::transform::pow>, axis::circular<>,
-                axis::variable<>, axis::integer<>, axis::category<>>;
+                axis::variable<>, axis::integer<>,
+                axis::category<>, axis::category<std::string>>;
 
 } // namespace histogram
 } // namespace boost

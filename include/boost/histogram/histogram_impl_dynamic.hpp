@@ -47,9 +47,43 @@ namespace histogram {
 template <typename Axes, typename Storage>
 class histogram<Dynamic, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
+  using any_axis = typename make_variant_over<Axes>::type;
 
 public:
-  using axis_type = typename make_variant_over<Axes>::type;
+  class axis_type : public any_axis {
+  public:
+    using any_axis::any_axis;
+
+    int size() const {
+      return apply_visitor(detail::size(), *this);
+    }
+
+    int shape() const {
+      return apply_visitor(detail::shape(), *this);
+    }
+
+    bool uoflow() const {
+      return apply_visitor(detail::uoflow(), *this);
+    }
+
+    // note: this only works for axes with compatible value type
+    int index(const double x) const {
+      return apply_visitor(detail::index<double>(x), *this);
+    }
+
+    // note: this only works for axes with compatible bin type
+    axis::interval<double> operator[](const int i) const {
+      return apply_visitor(detail::bin(i), *this);
+    }
+
+    bool operator==(const axis_type& rhs) const {
+      return any_axis::operator==(static_cast<const any_axis&>(rhs));
+    }
+
+  private:
+    template <typename Archive> void serialize(Archive&, unsigned /* version */);
+    friend boost::serialization::access;
+  };
   using value_type = typename Storage::value_type;
 
 private:
@@ -64,14 +98,14 @@ public:
 
   template <typename... Axes1>
   explicit histogram(const Axes1 &... axes) : axes_({axis_type(axes)...}) {
-    storage_ = Storage(field_count());
+    storage_ = Storage(bincount_from_axes());
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   histogram(Iterator axes_begin, Iterator axes_end)
       : axes_(std::distance(axes_begin, axes_end)) {
     std::copy(axes_begin, axes_end, axes_.begin());
-    storage_ = Storage(field_count());
+    storage_ = Storage(bincount_from_axes());
   }
 
   template <typename D, typename A, typename S>
@@ -221,19 +255,20 @@ public:
   unsigned dim() const noexcept { return axes_.size(); }
 
   /// Total number of bins in the histogram (including underflow/overflow)
-  std::size_t size() const noexcept { return storage_.size(); }
+  std::size_t bincount() const noexcept { return storage_.size(); }
 
   /// Sum of all counts in the histogram
   double sum() const noexcept {
     double result = 0.0;
-    for (std::size_t i = 0, n = size(); i < n; ++i) {
+    // don't use bincount() here, so sum() still works in a moved-from object
+    for (std::size_t i = 0, n = storage_.size(); i < n; ++i) {
       result += storage_.value(i);
     }
     return result;
   }
 
   /// Reset bin counters to zero
-  void reset() { storage_ = std::move(Storage(storage_.size())); }
+  void reset() { storage_ = Storage(bincount_from_axes()); }
 
   /// Return axis \a i
   const axis_type &axis(unsigned i = 0) const {
@@ -252,7 +287,7 @@ private:
   axes_type axes_;
   Storage storage_;
 
-  std::size_t field_count() const {
+  std::size_t bincount_from_axes() const noexcept {
     detail::field_count fc;
     for_each_axis(fc);
     return fc.value;
@@ -304,8 +339,18 @@ private:
     const Value &val;
     xlin_visitor(std::size_t &i, std::size_t &s, const Value &v)
         : idx(i), stride(s), val(v) {}
-    template <typename A> void operator()(const A &a) const {
+    template <typename Axis> void operator()(const Axis &a) const {
+      impl(std::is_convertible<Value, typename Axis::value_type>(), a);
+    }
+
+    template <typename Axis>
+    void impl(std::true_type, const Axis& a) const {
       detail::xlin(idx, stride, a, val);
+    }
+
+    template <typename Axis>
+    void impl(std::false_type, const Axis&) const {
+      throw std::runtime_error("fill argument not convertible to axis value type");
     }
   };
 
