@@ -202,7 +202,7 @@ void histogram<Dynamic, A, S>::serialize(Archive &ar, unsigned /* version */) {
 template <class A, class S>
 template <class Archive>
 void histogram<Dynamic, A, S>::axis_type::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<histogram<Dynamic, A, S>::any_axis>(*this);
+  ar &boost::serialization::base_object<histogram<Dynamic, A, S>::axis_type::any_axis>(*this);
 }
 
 } // namespace histogram

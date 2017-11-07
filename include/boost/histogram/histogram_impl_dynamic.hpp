@@ -47,21 +47,31 @@ namespace histogram {
 template <typename Axes, typename Storage>
 class histogram<Dynamic, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
-  using any_axis = typename make_variant_over<Axes>::type;
-
 public:
-  class axis_type : public any_axis {
+  class axis_type : public make_variant_over<Axes>::type {
+    using any_axis = typename make_variant_over<Axes>::type;
   public:
     using any_axis::any_axis;
     axis_type() = default;
-    axis_type(const axis_type& t) : any_axis(reinterpret_cast<const any_axis&>(t)) {}
-    axis_type(axis_type&& t) : any_axis(std::move(reinterpret_cast<any_axis&>(t))) {}
-    axis_type& operator=(const axis_type& t) {
-      return reinterpret_cast<axis_type&>(any_axis::operator=(reinterpret_cast<const any_axis&>(t)));
-    }
-    axis_type& operator=(axis_type&& t) {
-      return reinterpret_cast<axis_type&>(any_axis::operator=(std::move(reinterpret_cast<any_axis&>(t))));
-    }
+    axis_type(const axis_type& t) = default;
+    axis_type(axis_type&& t) = default;
+    axis_type& operator=(const axis_type& t) = default;
+    axis_type& operator=(axis_type&& t) = default;
+
+    template <typename T, typename = typename std::enable_if<
+      mpl::contains<Axes, T>::value
+    >::type>
+    axis_type(const T& t) : any_axis(t) {}
+
+    template <typename T, typename = typename std::enable_if<
+      mpl::contains<Axes, T>::value
+    >::type>
+    axis_type& operator=(const T& t) { return reinterpret_cast<axis_type&>(any_axis::operator=(t)); }
+
+    template <typename T, typename = typename std::enable_if<
+      mpl::contains<Axes, T>::value
+    >::type>
+    axis_type& operator=(T&& t) { return reinterpret_cast<axis_type&>(any_axis::operator=(std::move(t))); }
 
     int size() const {
       return apply_visitor(detail::size(), *this);
