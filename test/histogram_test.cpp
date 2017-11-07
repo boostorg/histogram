@@ -54,10 +54,10 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.bincount(), 0);
     auto h2 = histogram<Static, mpl::vector<axis::integer<>>,
                         array_storage<unsigned>>();
-    BOOST_TEST(h2 == h);
+    BOOST_TEST_EQ(h2, h);
     auto h3 =
         histogram<Static, mpl::vector<axis::regular<>>, adaptive_storage>();
-    BOOST_TEST(h3 != h);
+    BOOST_TEST_NE(h3, h);
   }
 
   // init_1
@@ -70,7 +70,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.axis().shape(), 5);
     auto h2 = make_histogram<array_storage<unsigned>>(
         Type(), axis::regular<>{3, -1, 1});
-    BOOST_TEST(h2 == h);
+    BOOST_TEST_EQ(h2, h);
   }
 
   // init_2
@@ -83,7 +83,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.axis(1_c).shape(), 5);
     auto h2 = make_histogram<array_storage<unsigned>>(
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2});
-    BOOST_TEST(h2 == h);
+    BOOST_TEST_EQ(h2, h);
   }
 
   // init_3
@@ -96,7 +96,7 @@ template <typename Type> void run_tests() {
     auto h2 = make_histogram<array_storage<unsigned>>(
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3});
-    BOOST_TEST(h2 == h);
+    BOOST_TEST_EQ(h2, h);
   }
 
   // init_4
@@ -109,7 +109,7 @@ template <typename Type> void run_tests() {
     auto h2 = make_histogram<array_storage<unsigned>>(
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1});
-    BOOST_TEST(h2 == h);
+    BOOST_TEST_EQ(h2, h);
   }
 
   // init_5
@@ -125,7 +125,7 @@ template <typename Type> void run_tests() {
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},
         axis::category<>{{A, B, C}});
-    BOOST_TEST(h2 == h);
+    BOOST_TEST_EQ(h2, h);
   }
 
   // copy_ctor
@@ -137,7 +137,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST(h2 == h);
     auto h3 = histogram<Static, mpl::vector<axis::integer<>, axis::integer<>>,
                         array_storage<unsigned>>(h);
-    BOOST_TEST(h3 == h);
+    BOOST_TEST_EQ(h3, h);
   }
 
   // copy_assign
@@ -146,16 +146,16 @@ template <typename Type> void run_tests() {
                                               axis::integer<>(0, 2));
     h.fill(0, 0);
     auto h2 = decltype(h)();
-    BOOST_TEST(h != h2);
+    BOOST_TEST_NE(h, h2);
     h2 = h;
-    BOOST_TEST(h == h2);
+    BOOST_TEST_EQ(h, h2);
     // test self-assign
     h2 = h2;
-    BOOST_TEST(h == h2);
+    BOOST_TEST_EQ(h, h2);
     auto h3 = histogram<Static, mpl::vector<axis::integer<>, axis::integer<>>,
                         array_storage<unsigned>>();
     h3 = h;
-    BOOST_TEST(h == h3);
+    BOOST_TEST_EQ(h, h3);
   }
 
   // move
@@ -169,14 +169,14 @@ template <typename Type> void run_tests() {
                   Type() == 0 ? 2 : 0); // static axes cannot shrink to zero
     BOOST_TEST_EQ(h.sum(), 0);
     BOOST_TEST_EQ(h.bincount(), 0);
-    BOOST_TEST(h2 == href);
+    BOOST_TEST_EQ(h2, href);
     decltype(h) h3;
     h3 = std::move(h2);
     BOOST_TEST_EQ(h2.dim(),
                   Type() == 0 ? 2 : 0); // static axes cannot shrink to zero
     BOOST_TEST_EQ(h2.sum(), 0);
     BOOST_TEST_EQ(h2.bincount(), 0);
-    BOOST_TEST(h3 == href);
+    BOOST_TEST_EQ(h3, href);
   }
 
   // axis methods
