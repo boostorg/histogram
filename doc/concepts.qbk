@@ -2,7 +2,7 @@
 
 Users can extend the library with new axis and storage types.
 
-[section:axis_type Axis type]
+[section:axis Axis type]
 
 An `axis_type` converts input values into bin indices.
 
@@ -28,7 +28,7 @@ It is recommended to take a look at the existing axis types, like [classref boos
 
 [endsect]
 
-[section:storage_type Storage type]
+[section:storage Storage type]
 
 A `storage_type` handles memory for the bin counters and provides a uniform interface for incrementing bin counters and reading their values.
 
