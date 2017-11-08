@@ -26,11 +26,11 @@ boost/histogram/axis/variable.html
 boost/histogram/count.html
 boost/histogram/histogram.html
 boost/histogram/weight.html
-boost/histogram/histogram__idm380173038448.html
-boost/histogram/histogram__idm380173038448/lin_visitor.html
-boost/histogram/histogram__idm380173038448/xlin_visitor.html
-boost/histogram/histogram__idm380164444128.html
-boost/histogram/histogram__idm380164444128/shape_assign_helper.html
+boost/histogram/histogram__idm414260316224.html
+boost/histogram/histogram__idm414260316224/lin_visitor.html
+boost/histogram/histogram__idm414260316224/xlin_visitor.html
+boost/histogram/histogram__idm414260134512.html
+boost/histogram/histogram__idm414260134512/shape_assign_helper.html
 boost/histogram/axis/interval.html
 boost/histogram/adaptive_storage.html
 boost/histogram/array_storage.html

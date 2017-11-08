@@ -65,11 +65,11 @@ public:
     return apply_visitor(detail::index<double>(x), *this);
   }
 
-  ::boost::string_view label() const {
+  string_view label() const {
     return apply_visitor(detail::get_label(), *this);
   }
 
-  void label(const ::boost::string_view x) {
+  void label(const string_view x) {
     return apply_visitor(detail::set_label(x), *this);
   }
 

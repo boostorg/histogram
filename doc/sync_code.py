@@ -34,8 +34,9 @@ for qbk in glob.glob(os.path.dirname(__file__) + "/*.qbk"):
             else:
                 with open(foname) as fi:
                     code2 = fi.read()
-                qbk_content = qbk_content[:start] + code2 + qbk_content[end:]
-                qbk_needs_update = True
+                if code != code2:
+                    qbk_content = qbk_content[:start] + code2 + qbk_content[end:]
+                    qbk_needs_update = True
         else:
             with open(foname, "w") as fo:
                 fo.write(code)

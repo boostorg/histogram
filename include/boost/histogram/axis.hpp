@@ -108,7 +108,7 @@ public:
   inline int size() const noexcept { return size_; }
   /// Returns the number of bins, including overflow/underflow.
   inline int shape() const noexcept { return size_; }
-  /// Returns whether axis has extra overflow and underflow bins.
+  /// Returns true if axis has extra overflow and underflow bins.
   inline bool uoflow() const noexcept { return false; }
   /// Returns the axis label, which is a name or description.
   string_view label() const noexcept { return label_; }

@@ -14,8 +14,8 @@
 <method name="shape" cv="const"><type>int</type></method>
 <method name="uoflow" cv="const"><type>bool</type></method>
 <method name="index" cv="const"><type>int</type><parameter name="x"><paramtype>const double</paramtype></parameter></method>
-<method name="label" cv="const"><type>::boost::string_view</type></method>
-<method name="label"><type>void</type><parameter name="x"><paramtype>const ::boost::string_view</paramtype></parameter></method>
+<method name="label" cv="const"><type>string_view</type></method>
+<method name="label"><type>void</type><parameter name="x"><paramtype>const string_view</paramtype></parameter></method>
 <method name="operator[]" cv="const"><type>axis::interval&lt; double &gt;</type><parameter name="i"><paramtype>const int</paramtype></parameter></method>
 <method name="operator==" cv="const"><type>bool</type><parameter name="rhs"><paramtype>const <classname>any_axis</classname> &amp;</paramtype></parameter></method>
 </method-group>
@@ -94,7 +94,7 @@
 <class name="axis_base"><purpose>Base class for all axes. </purpose><method-group name="public member functions">
 <method name="size" cv="const noexcept"><type>int</type><purpose>Returns the number of bins, excluding overflow/underflow. </purpose></method>
 <method name="shape" cv="const noexcept"><type>int</type><purpose>Returns the number of bins, including overflow/underflow. </purpose></method>
-<method name="uoflow" cv="const noexcept"><type>bool</type><purpose>Returns whether axis has extra overflow and underflow bins. </purpose></method>
+<method name="uoflow" cv="const noexcept"><type>bool</type><purpose>Returns true if axis has extra overflow and underflow bins. </purpose></method>
 <method name="label" cv="const noexcept"><type>string_view</type><purpose>Returns the axis label, which is a name or description. </purpose></method>
 <method name="label"><type>void</type><parameter name="label"><paramtype>string_view</paramtype></parameter><purpose>Change the label of an axis. </purpose></method>
 </method-group>

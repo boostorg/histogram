@@ -379,6 +379,10 @@ void register_histogram() {
            ":returns: string representation of the histogram")
       .def(python::self == python::self)
       .def(python::self += python::self)
+      .def(python::self *= double())
+      .def(python::self * double())
+      .def(double() * python::self)
+      .def(python::self + python::self)
       .def_pickle(serialization_suite<dynamic_histogram>());
 }
 

@@ -584,6 +584,21 @@ class test_histogram(unittest.TestCase):
         with self.assertRaises(IndexError):
             h.variance(4)
 
+    def test_operators(self):
+        h = histogram(integer(0, 2))
+        h.fill(0)
+        h += h
+        self.assertEqual(h.value(0), 2)
+        self.assertEqual(h.variance(0), 2)
+        self.assertEqual(h.value(1), 0)
+        h *= 2.5
+        self.assertEqual(h.value(0), 5)
+        self.assertEqual(h.variance(0), 5)
+        self.assertEqual(h.value(1), 0)
+        self.assertEqual(h + h, 2 * h)
+        self.assertEqual(h + h, h * 2)
+
+
     def test_pickle_0(self):
         a = histogram(category(0, 1, 2),
                       integer(0, 20, label='ia'),
