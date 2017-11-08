@@ -223,12 +223,10 @@ int main() {
     test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow::off), 0, 5);
     test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow::on), 0, 5);
     test_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5);
-    test_axis_iterator(axis::variable<>({1, 2, 3}, "", axis::uoflow::off), 0,
-                       2);
-    test_axis_iterator(axis::variable<>({1, 2, 3}, "", axis::uoflow::on), 0, 2);
-    test_axis_iterator(axis::integer<>(0, 4, "", axis::uoflow::off), 0, 4);
-    test_axis_iterator(axis::integer<>(0, 4, "", axis::uoflow::on), 0, 4);
+    test_axis_iterator(axis::variable<>({1, 2, 3}, ""), 0, 2);
+    test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4);
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
+    test_axis_iterator(any_axis_type(axis::regular<>(5, 0, 1)), 0, 5);
   }
 
   // any_axis_type_copyable

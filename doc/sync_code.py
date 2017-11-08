@@ -28,13 +28,13 @@ for qbk in glob.glob(os.path.dirname(__file__) + "/*.qbk"):
             raise NotImplementedError("can only handle tags c++ and python")
         foname = out_dir + "/%s_listing_%i.%s" % (base, exi, ext)
         if os.path.exists(foname):
-            if is_more_recent(qbk, foname):
-                with open(foname, "w") as fo:
-                    fo.write(code)
-            else:
-                with open(foname) as fi:
-                    code2 = fi.read()
-                if code != code2:
+            with open(foname) as fi:
+                code2 = fi.read()
+            if code != code2:
+                if is_more_recent(qbk, foname):
+                    with open(foname, "w") as fo:
+                        fo.write(code)
+                else:
                     qbk_content = qbk_content[:start] + code2 + qbk_content[end:]
                     qbk_needs_update = True
         else:

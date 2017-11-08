@@ -110,12 +110,14 @@ int main() {
 
     /*
         print histogram
-        - in opposition to the static case, we need to cast axis to correct
-          type since dynamic histogram cannot do this automatically
-        -
+        - for most axis types, the for loop looks just like for a static
+          histogram, except that we can pass runtime numbers, too
+        - in contrast to the static histogram, we need to cast axis::any
+          to the held axis type before looping, if the [bin type] is not
+          convertible to a double interval
     */
-    for (const auto& ybin : h.axis(1)) {
-        for (const auto& xbin : h.axis(0)) {
+    for (const auto& ybin : h.axis(1)) { // rows
+        for (const auto& xbin : h.axis(0)) { // columns
             std::printf("%3.0f ", h.value(xbin.first, ybin.first));
         }
         std::printf("\n");
