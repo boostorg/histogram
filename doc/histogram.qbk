@@ -31,7 +31,7 @@ Klemens Morgenstern helped me to make this library boost-compliant, converting t
 
 [include motivation.qbk]
 [include build.qbk]
-[include tutorial.qbk]
+[include getting_started.qbk]
 [include guide.qbk]
 [include benchmarks.qbk]
 [include rationale.qbk]

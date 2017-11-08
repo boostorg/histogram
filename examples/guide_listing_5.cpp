@@ -1,19 +1,14 @@
-// also see examples/example_2d.cpp
+// also see examples/create_dynamic_histogram.cpp
 #include <boost/histogram.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/normal_distribution.hpp>
+#include <vector>
 
-namespace br = boost::random;
 namespace bh = boost::histogram;
 
 int main() {
-	br::mt19937 gen;
-	br::normal_distribution<> norm;
-	auto h = bh::make_static_histogram(
-		bh::axis::regular<>(100, -5, 5, "x"),
-		bh::axis::regular<>(100, -5, 5, "y")
-	);
-	for (int i = 0; i < 1000; ++i)
-		h.fill(norm(gen), norm(gen));
-	// h is now filled
+	using hist_type = bh::histogram<bh::Dynamic, bh::builtin_axes>;
+	auto v = std::vector<hist_type::any_axis_type>();
+	v.push_back(bh::axis::regular<>(100, -1, 1));
+	v.push_back(bh::axis::integer<>(1, 7));
+	auto h = hist_type(v.begin(), v.end());
+	// do something with h
 }

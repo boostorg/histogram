@@ -1,0 +1,151 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Getting started</title>
+<link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="prev" href="setup.html" title="How to build and install">
+<link rel="next" href="user_guide.html" title="User guide">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../boost.png"></td>
+<td align="center"><a href="../../../index.html">Home</a></td>
+<td align="center"><a href="../../../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="setup.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="user_guide.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="histogram.getting_started"></a><a class="link" href="getting_started.html" title="Getting started">Getting started</a>
+</h2></div></div></div>
+<div class="toc"><dl class="toc">
+<dt><span class="section"><a href="getting_started.html#histogram.getting_started.make_and_use_a_static_1d_histogr">Make
+      and use a static 1d-histogram in C++</a></span></dt>
+<dt><span class="section"><a href="getting_started.html#histogram.getting_started.make_and_use_a_2d_histogram_in_p">Make
+      and use a 2d-histogram in Python</a></span></dt>
+</dl></div>
+<p>
+      To get you started, here are some commented usage examples.
+    </p>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="histogram.getting_started.make_and_use_a_static_1d_histogr"></a><a class="link" href="getting_started.html#histogram.getting_started.make_and_use_a_static_1d_histogr" title="Make and use a static 1d-histogram in C++">Make
+      and use a static 1d-histogram in C++</a>
+</h3></div></div></div>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">histogram</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">cmath</span><span class="special">&gt;</span>
+
+<span class="keyword">int</span> <span class="identifier">main</span><span class="special">(</span><span class="keyword">int</span><span class="special">,</span> <span class="keyword">char</span><span class="special">**)</span> <span class="special">{</span>
+    <span class="keyword">namespace</span> <span class="identifier">bh</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">histogram</span><span class="special">;</span>
+
+    <span class="comment">// create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,</span>
+    <span class="comment">// with axis of histogram labeled as "x"</span>
+    <span class="keyword">auto</span> <span class="identifier">h</span> <span class="special">=</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">make_static_histogram</span><span class="special">(</span><span class="identifier">bh</span><span class="special">::</span><span class="identifier">axis</span><span class="special">::</span><span class="identifier">regular</span><span class="special">(</span><span class="number">10</span><span class="special">,</span> <span class="special">-</span><span class="number">1.0</span><span class="special">,</span> <span class="number">2.0</span><span class="special">,</span> <span class="string">"x"</span><span class="special">));</span>
+
+    <span class="comment">// fill histogram with data, you typically do this in a handcrafted loop</span>
+    <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(-</span><span class="number">1.5</span><span class="special">);</span> <span class="comment">// put in underflow bin</span>
+    <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(-</span><span class="number">1.0</span><span class="special">);</span> <span class="comment">// included in first bin, bin interval is semi-open</span>
+    <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(-</span><span class="number">0.5</span><span class="special">);</span>
+    <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="number">1.1</span><span class="special">);</span>
+    <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="number">0.3</span><span class="special">);</span>
+    <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="number">1.7</span><span class="special">);</span>
+    <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="number">2.0</span><span class="special">);</span>  <span class="comment">// put in overflow bin, bin interval is semi-open</span>
+    <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="number">20.0</span><span class="special">);</span> <span class="comment">// put in overflow bin</span>
+    <span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="number">0.1</span><span class="special">,</span> <span class="identifier">bh</span><span class="special">::</span><span class="identifier">weight</span><span class="special">(</span><span class="number">5.0</span><span class="special">));</span> <span class="comment">// fill with a weighted entry, weight is 5</span>
+
+    <span class="comment">// iterate over bins, loop includes under- and overflow bin</span>
+    <span class="keyword">for</span> <span class="special">(</span><span class="keyword">const</span> <span class="keyword">auto</span><span class="special">&amp;</span> <span class="identifier">bin</span> <span class="special">:</span> <span class="identifier">h</span><span class="special">.</span><span class="identifier">axis</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;())</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"bin "</span> <span class="special">&lt;&lt;</span> <span class="identifier">bin</span><span class="special">.</span><span class="identifier">idx</span>
+                  <span class="special">&lt;&lt;</span> <span class="string">" x in ["</span> <span class="special">&lt;&lt;</span> <span class="identifier">bin</span><span class="special">.</span><span class="identifier">left</span> <span class="special">&lt;&lt;</span> <span class="string">", "</span> <span class="special">&lt;&lt;</span> <span class="identifier">bin</span><span class="special">.</span><span class="identifier">right</span> <span class="special">&lt;&lt;</span> <span class="string">"): "</span>
+                  <span class="special">&lt;&lt;</span> <span class="identifier">h</span><span class="special">.</span><span class="identifier">value</span><span class="special">(</span><span class="identifier">bin</span><span class="special">.</span><span class="identifier">idx</span><span class="special">)</span> <span class="special">&lt;&lt;</span> <span class="string">" +/- "</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">sqrt</span><span class="special">(</span><span class="identifier">h</span><span class="special">.</span><span class="identifier">variance</span><span class="special">(</span><span class="identifier">bin</span><span class="special">.</span><span class="identifier">idx</span><span class="special">))</span>
+                  <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
+    <span class="special">}</span>
+
+    <span class="comment">/* program output:
+
+    bin -1 x in [-inf, -1): 1 +/- 1
+    bin 0 x in [-1, -0.7): 1 +/- 1
+    bin 1 x in [-0.7, -0.4): 1 +/- 1
+    bin 2 x in [-0.4, -0.1): 0 +/- 0
+    bin 3 x in [-0.1, 0.2): 5 +/- 5
+    bin 4 x in [0.2, 0.5): 1 +/- 1
+    bin 5 x in [0.5, 0.8): 0 +/- 0
+    bin 6 x in [0.8, 1.1): 0 +/- 0
+    bin 7 x in [1.1, 1.4): 1 +/- 1
+    bin 8 x in [1.4, 1.7): 0 +/- 0
+    bin 9 x in [1.7, 2): 1 +/- 1
+    bin 10 x in [2, inf): 2 +/- 1.41421
+    */</span>
+<span class="special">}</span>
+</pre>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="histogram.getting_started.make_and_use_a_2d_histogram_in_p"></a><a class="link" href="getting_started.html#histogram.getting_started.make_and_use_a_2d_histogram_in_p" title="Make and use a 2d-histogram in Python">Make
+      and use a 2d-histogram in Python</a>
+</h3></div></div></div>
+<pre class="programlisting"><span class="keyword">import</span> <span class="identifier">histogram</span> <span class="keyword">as</span> <span class="identifier">bh</span>
+<span class="keyword">import</span> <span class="identifier">numpy</span> <span class="keyword">as</span> <span class="identifier">np</span>
+
+<span class="comment"># create 2d-histogram over polar coordinates, with</span>
+<span class="comment"># 10 equidistant bins in radius from 0 to 5 and</span>
+<span class="comment"># 4 equidistant bins in polar angle</span>
+<span class="identifier">h</span> <span class="special">=</span> <span class="identifier">bh</span><span class="special">.</span><span class="identifier">histogram</span><span class="special">(</span><span class="identifier">bh</span><span class="special">.</span><span class="identifier">regular_axis</span><span class="special">(</span><span class="number">10</span><span class="special">,</span> <span class="number">0.0</span><span class="special">,</span> <span class="number">5.0</span><span class="special">,</span> <span class="string">"radius"</span><span class="special">,</span>
+                                 <span class="identifier">uoflow</span><span class="special">=</span><span class="identifier">False</span><span class="special">),</span>
+                 <span class="identifier">bh</span><span class="special">.</span><span class="identifier">circular_axis</span><span class="special">(</span><span class="number">4</span><span class="special">,</span> <span class="number">0.0</span><span class="special">,</span> <span class="number">2</span><span class="special">*</span><span class="identifier">np</span><span class="special">.</span><span class="identifier">pi</span><span class="special">,</span> <span class="string">"phi"</span><span class="special">))</span>
+
+<span class="comment"># generate some numpy arrays with data to fill into histogram,</span>
+<span class="comment"># in this case normal distributed random numbers in x and y,</span>
+<span class="comment"># converted into polar coordinates</span>
+<span class="identifier">x</span> <span class="special">=</span> <span class="identifier">np</span><span class="special">.</span><span class="identifier">random</span><span class="special">.</span><span class="identifier">randn</span><span class="special">(</span><span class="number">1000</span><span class="special">)</span>             <span class="comment"># generate x</span>
+<span class="identifier">y</span> <span class="special">=</span> <span class="identifier">np</span><span class="special">.</span><span class="identifier">random</span><span class="special">.</span><span class="identifier">randn</span><span class="special">(</span><span class="number">1000</span><span class="special">)</span>             <span class="comment"># generate y</span>
+<span class="identifier">rphi</span> <span class="special">=</span> <span class="identifier">np</span><span class="special">.</span><span class="identifier">empty</span><span class="special">((</span><span class="number">1000</span><span class="special">,</span> <span class="number">2</span><span class="special">))</span>
+<span class="identifier">rphi</span><span class="special">[:,</span> <span class="number">0</span><span class="special">]</span> <span class="special">=</span> <span class="special">(</span><span class="identifier">x</span> <span class="special">**</span> <span class="number">2</span> <span class="special">+</span> <span class="identifier">y</span> <span class="special">**</span> <span class="number">2</span><span class="special">)</span> <span class="special">**</span> <span class="number">0.5</span> <span class="comment"># compute radius</span>
+<span class="identifier">rphi</span><span class="special">[:,</span> <span class="number">1</span><span class="special">]</span> <span class="special">=</span> <span class="identifier">np</span><span class="special">.</span><span class="identifier">arctan2</span><span class="special">(</span><span class="identifier">y</span><span class="special">,</span> <span class="identifier">x</span><span class="special">)</span>         <span class="comment"># compute phi</span>
+
+<span class="comment"># fill histogram with numpy array</span>
+<span class="identifier">h</span><span class="special">.</span><span class="identifier">fill</span><span class="special">(</span><span class="identifier">rphi</span><span class="special">)</span>
+
+<span class="comment"># access histogram counts (no copy)</span>
+<span class="identifier">count_matrix</span> <span class="special">=</span> <span class="identifier">np</span><span class="special">.</span><span class="identifier">asarray</span><span class="special">(</span><span class="identifier">h</span><span class="special">)</span>
+
+<span class="keyword">print</span> <span class="identifier">count_matrix</span>
+
+<span class="comment"># program output:</span>
+<span class="comment">#</span>
+<span class="comment"># [[37 26 33 37]</span>
+<span class="comment">#  [60 69 76 62]</span>
+<span class="comment">#  [48 80 80 77]</span>
+<span class="comment">#  [38 49 45 49]</span>
+<span class="comment">#  [22 24 20 23]</span>
+<span class="comment">#  [ 7  9  9  8]</span>
+<span class="comment">#  [ 3  2  3  3]</span>
+<span class="comment">#  [ 0  0  0  0]</span>
+<span class="comment">#  [ 0  1  0  0]</span>
+<span class="comment">#  [ 0  0  0  0]]</span>
+</pre>
+</div>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2016, 2017 Hans Dembinski<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="setup.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="user_guide.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

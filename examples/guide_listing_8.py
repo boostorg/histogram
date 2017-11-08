@@ -1,12 +1,10 @@
+# also see examples/create_python_fill_cpp.py and examples/module_cpp_filler.cpp
 import histogram as bh
-import numpy as np
+import cpp_filler
 
-h = bh.histogram(bh.axis.integer(0, 9))
+h = bh.histogram(bh.axis.regular(100, -1, 1),
+                 bh.axis.integer(0, 10))
 
-# don't do this, it is very slow
-for i in range(10):
-	h.fill(i)
+cpp_filler.process(h) # histogram is filled with input values
 
-# do this instead, it is very fast
-v = np.arange(10, dtype=float)
-h.fill(v) # fills the histogram with each value in the array
+# continue with statistical analysis of h
