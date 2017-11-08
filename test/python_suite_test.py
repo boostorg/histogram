@@ -597,7 +597,9 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(h.value(1), 0)
         self.assertEqual(h + h, 2 * h)
         self.assertEqual(h + h, h * 2)
-
+        h2 = histogram(regular(2, 0, 2))
+        with self.assertRaises(RuntimeError):
+            h + h2
 
     def test_pickle_0(self):
         a = histogram(category(0, 1, 2),
