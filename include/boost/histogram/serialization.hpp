@@ -192,17 +192,16 @@ void histogram<Static, A, S>::serialize(Archive &ar, unsigned /* version */) {
   ar &storage_;
 }
 
+template <class Archive, class Axes>
+void serialize(Archive &ar, any_axis<Axes>& a,  unsigned /* version */) {
+  ar &boost::serialization::base_object<typename any_axis<Axes>::base_type>(a);
+}
+
 template <class A, class S>
 template <class Archive>
 void histogram<Dynamic, A, S>::serialize(Archive &ar, unsigned /* version */) {
   ar &axes_;
   ar &storage_;
-}
-
-template <class A, class S>
-template <class Archive>
-void histogram<Dynamic, A, S>::axis_type::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<histogram<Dynamic, A, S>::axis_type::any_axis>(*this);
 }
 
 } // namespace histogram

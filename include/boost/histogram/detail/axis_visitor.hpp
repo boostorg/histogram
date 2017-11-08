@@ -14,6 +14,7 @@
 #include <boost/fusion/include/size.hpp>
 #include <boost/fusion/support/is_sequence.hpp>
 #include <boost/histogram/interval.hpp>
+#include <boost/utility/string_view.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/variant/get.hpp>
@@ -35,6 +36,16 @@ struct shape : public static_visitor<int> {
 
 struct uoflow : public static_visitor<bool> {
   template <typename A> bool operator()(const A &a) const { return a.uoflow(); }
+};
+
+struct get_label : public static_visitor<string_view> {
+  template <typename A> ::boost::string_view operator()(const A& a) const { return a.label(); }
+};
+
+struct set_label : public static_visitor<void> {
+  const ::boost::string_view label;
+  set_label(const ::boost::string_view x) : label(x) {}
+  template <typename A> void operator()(A& a) const { a.label(label); }
 };
 
 template <typename T> struct index : public static_visitor<int> {

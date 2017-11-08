@@ -144,7 +144,7 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
   const unsigned dim = len(args) - 1;
 
   // normal constructor
-  std::vector<dynamic_histogram::axis_type> axes;
+  std::vector<dynamic_histogram::any_axis_type> axes;
   for (unsigned i = 0; i < dim; ++i) {
     python::object pa = args[i + 1];
     python::extract<axis::regular<>> er(pa);

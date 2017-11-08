@@ -182,12 +182,15 @@ template <typename Type> void run_tests() {
   // axis methods
   {
     enum { A=3, B=5 };
-    auto a = make_histogram<adaptive_storage>(Type(), axis::regular<>(1, 1, 2));
+    auto a = make_histogram<adaptive_storage>(Type(), axis::regular<>(1, 1, 2, "foo"));
     BOOST_TEST_EQ(a.axis().size(), 1);
     BOOST_TEST_EQ(a.axis().shape(), 3);
     BOOST_TEST_EQ(a.axis().index(1.0), 0);
     BOOST_TEST_EQ(a.axis()[0].lower(), 1.0);
     BOOST_TEST_EQ(a.axis()[0].upper(), 2.0);
+    BOOST_TEST_EQ(a.axis().label(), "foo");
+    a.axis().label("bar");
+    BOOST_TEST_EQ(a.axis().label(), "bar");
 
     auto b = make_histogram<adaptive_storage>(Type(), axis::integer<>(1, 2));
     BOOST_TEST_EQ(b.axis().size(), 1);
@@ -195,13 +198,19 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(b.axis().index(1), 0);
     BOOST_TEST_EQ(b.axis()[0].lower(), 1);
     BOOST_TEST_EQ(b.axis()[0].upper(), 2);
+    b.axis().label("foo");
+    BOOST_TEST_EQ(b.axis().label(), "foo");
 
     auto c = make_histogram<adaptive_storage>(Type(), axis::category<>({A, B}));
     BOOST_TEST_EQ(c.axis().size(), 2);
     BOOST_TEST_EQ(c.axis().shape(), 2);
     BOOST_TEST_EQ(c.axis().index(A), 0);
     BOOST_TEST_EQ(c.axis().index(B), 1);
-    // c.axis()[0] is tested separately for Static and Dynamic below
+    c.axis().label("foo");
+    BOOST_TEST_EQ(c.axis().label(), "foo");
+    // need to cast here for this to work with Type == Dynamic
+    auto ca = axis_cast<axis::category<>>(c.axis());
+    BOOST_TEST_EQ(ca[0], A);
   }
 
   // equal_compare
@@ -765,14 +774,11 @@ int main() {
   run_tests<boost::histogram::Static>();
   run_tests<boost::histogram::Dynamic>();
 
-  // special stuff that only works with Static
-  
-
   // special stuff that only works with Dynamic
 
   // init
   {
-    auto v = std::vector<histogram<Dynamic, builtin_axes>::axis_type>();
+    auto v = std::vector<histogram<Dynamic, builtin_axes>::any_axis_type>();
     v.push_back(axis::regular<>(100, -1, 1));
     v.push_back(axis::integer<>(1, 7));
     auto h = histogram<Dynamic, builtin_axes>(v.begin(), v.end());

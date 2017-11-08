@@ -14,7 +14,7 @@ namespace bh = boost::histogram;
 int main(int argc, char** argv) {
     using Histogram = bh::histogram<bh::Dynamic, bh::builtin_axes>;
 
-    auto v = std::vector<Histogram::axis_type>();
+    auto v = std::vector<Histogram::any_axis_type>();
 
     // parse arguments
     auto argi = 1;

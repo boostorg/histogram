@@ -44,9 +44,9 @@ namespace histogram {
 template <typename Axes, typename Storage>
 class histogram<Static, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
+  using axes_size = typename fusion::result_of::size<Axes>::type;
 
 public:
-  using axes_size = typename fusion::result_of::size<Axes>::type;
   using axes_type = typename fusion::result_of::as_vector<Axes>::type;
   using value_type = typename Storage::value_type;
 
@@ -156,19 +156,33 @@ public:
   /// Reset bin counters to zero
   void reset() { storage_ = Storage(bincount_from_axes()); }
 
-  /// Get N-th axis
+  /// Get N-th axis (const version)
   template <int N>
-  constexpr typename std::add_const<
+  typename std::add_const<
       typename fusion::result_of::value_at_c<axes_type, N>::type>::type &
   axis(mpl::int_<N>) const {
     static_assert(N < axes_size::value, "axis index out of range");
     return fusion::at_c<N>(axes_);
   }
 
-  // Get first axis (convenience for 1-d histograms)
+  /// Get N-th axis
+  template <int N>
+  typename fusion::result_of::value_at_c<axes_type, N>::type &
+  axis(mpl::int_<N>) {
+    static_assert(N < axes_size::value, "axis index out of range");
+    return fusion::at_c<N>(axes_);
+  }
+
+  // Get first axis (convenience for 1-d histograms, const version)
   constexpr typename std::add_const<
       typename fusion::result_of::value_at_c<axes_type, 0>::type>::type &
   axis() const {
+    return fusion::at_c<0>(axes_);
+  }
+
+  // Get first axis (convenience for 1-d histograms)
+  typename fusion::result_of::value_at_c<axes_type, 0>::type &
+  axis() {
     return fusion::at_c<0>(axes_);
   }
 
