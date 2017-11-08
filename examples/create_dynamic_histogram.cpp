@@ -12,9 +12,7 @@ namespace bh = boost::histogram;
 */
 
 int main(int argc, char** argv) {
-    using Histogram = bh::histogram<bh::Dynamic, bh::builtin_axes>;
-
-    auto v = std::vector<Histogram::any_axis_type>();
+    auto v = std::vector<bh::axis::any<>>();
 
     // parse arguments
     auto argi = 1;
@@ -46,7 +44,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    auto h = Histogram(v.begin(), v.end());
+    auto h = bh::histogram<bh::Dynamic, bh::axis::builtins>(v.begin(), v.end());
 
     // do something with h
     std::cout << "you created the following histogram:\n" << h << std::endl;

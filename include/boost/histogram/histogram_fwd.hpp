@@ -20,6 +20,31 @@ using Dynamic = std::integral_constant<int, 1>;
 
 class adaptive_storage;
 
+namespace axis {
+
+namespace transform {
+  struct identity;
+  struct log;
+  struct sqrt;
+  struct cos;
+  struct pow;
+}
+
+template <typename RealType = double, typename Transform = transform::identity> class regular;
+template <typename RealType = double> class circular;
+template <typename RealType = double> class variable;
+template <typename IntType = int> class integer;
+template <typename T = int> class category;
+
+using builtins =
+    mpl::vector<axis::regular<>, axis::regular<double, axis::transform::log>,
+                axis::regular<double, axis::transform::sqrt>,
+                axis::regular<double, axis::transform::cos>,
+                axis::regular<double, axis::transform::pow>, axis::circular<>,
+                axis::variable<>, axis::integer<>,
+                axis::category<>, axis::category<std::string>>;
+}
+
 template <class Variant, class Axes, class Storage = adaptive_storage>
 class histogram;
 

@@ -182,6 +182,12 @@ void category<T>::serialize(Archive &ar, unsigned /* version */) {
   ar &map_;
 }
 
+template <class Axes>
+template <class Archive>
+void any<Axes>::serialize(Archive &ar, unsigned /* version */) {
+  ar &boost::serialization::base_object<base_type>(*this);
+}
+
 } // namespace axis
 
 template <class A, class S>
@@ -190,11 +196,6 @@ void histogram<Static, A, S>::serialize(Archive &ar, unsigned /* version */) {
   detail::serialize_helper<Archive> sh(ar);
   fusion::for_each(axes_, sh);
   ar &storage_;
-}
-
-template <class Archive, class Axes>
-void serialize(Archive &ar, any_axis<Axes>& a,  unsigned /* version */) {
-  ar &boost::serialization::base_object<typename any_axis<Axes>::base_type>(a);
 }
 
 template <class A, class S>

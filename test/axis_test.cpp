@@ -43,7 +43,7 @@ void test_axis_iterator(const Axis &a, int begin, int end) {
 
 int main() {
   using namespace boost::histogram;
-  using axis_t = typename boost::make_variant_over<builtin_axes>::type;
+  using any_axis_type = axis::any<>;
 
   // bad_ctors
   {
@@ -231,33 +231,33 @@ int main() {
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
   }
 
-  // axis_t_copyable
+  // any_axis_type_copyable
   {
-    axis_t a(axis::regular<>(2, -1, 1));
-    axis_t b(a);
+    any_axis_type a(axis::regular<>(2, -1, 1));
+    any_axis_type b(a);
     BOOST_TEST(a == b);
-    axis_t c;
+    any_axis_type c;
     BOOST_TEST_NOT(a == c);
     c = a;
     BOOST_TEST(a == c);
   }
 
-  // axis_t_movable
+  // any_axis_type_movable
   {
-    axis_t a(axis::regular<>(2, -1, 1));
-    axis_t r(a);
-    axis_t b(std::move(a));
-    BOOST_TEST(b == r);
-    axis_t c;
+    any_axis_type a(axis::regular<>(2, -1, 1));
+    any_axis_type r(a);
+    any_axis_type b(std::move(a));
+    BOOST_TEST_EQ(b, r);
+    any_axis_type c;
     BOOST_TEST_NOT(a == c);
     c = std::move(b);
     BOOST_TEST(c == r);
   }
 
-  // axis_t_streamable
+  // any_axis_type_streamable
   {
     enum { A, B, C };
-    std::vector<axis_t> axes;
+    std::vector<any_axis_type> axes;
     axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
     axes.push_back(axis::regular<double, axis::transform::log>{
         2, 1, 10, "regular2", axis::uoflow::off});
@@ -282,21 +282,21 @@ int main() {
     BOOST_TEST_EQ(os.str(), ref);
   }
 
-  // axis_t_equal_comparable
+  // any_axis_type_equal_comparable
   {
     enum { A, B, C };
-    std::vector<axis_t> axes;
+    std::vector<any_axis_type> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
     axes.push_back(axis::circular<>{4});
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>{A, B, C});
     axes.push_back(axis::integer<>{-1, 1});
     for (const auto &a : axes) {
-      BOOST_TEST(!(a == axis_t()));
+      BOOST_TEST(!(a == any_axis_type()));
       BOOST_TEST_EQ(a, a);
     }
-    BOOST_TEST_NOT(axes == std::vector<axis_t>());
-    BOOST_TEST(axes == std::vector<axis_t>(axes));
+    BOOST_TEST_NOT(axes == std::vector<any_axis_type>());
+    BOOST_TEST(axes == std::vector<any_axis_type>(axes));
   }
 
   // sequence equality

@@ -28,7 +28,7 @@ namespace np = boost::python::numpy;
 namespace boost {
 
 namespace histogram {
-using dynamic_histogram = histogram<Dynamic, builtin_axes, adaptive_storage>;
+using dynamic_histogram = histogram<Dynamic, axis::builtins, adaptive_storage>;
 } // namespace histogram
 
 namespace python {

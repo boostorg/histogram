@@ -12,9 +12,11 @@ int main(int, char**) {
     namespace bh = boost::histogram;
     using namespace bh::literals; // enables _c suffix
 
-    // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
+    // create static 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
     // with axis of histogram labeled as "x"
-    auto h = bh::make_static_histogram(bh::axis::regular<>(10, -1.0, 2.0, "x"));
+    auto h = bh::make_static_histogram(
+        bh::axis::regular<>(10, -1.0, 2.0, "x")
+    );
 
     // fill histogram with data
     h.fill(-1.5); // put in underflow bin
@@ -77,12 +79,55 @@ int main(int, char**) {
 
 [endsect]
 
+[section Make and use a dynamic 2d-histogram in C++]
+
+Here we fill the histogram with some random numbers.
+
+[c++]``
+#include <boost/histogram.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <cstdlib>
+
+namespace br = boost::random;
+namespace bh = boost::histogram;
+
+int main() {
+    /*
+        create dynamic histogram using `make_dynamic_histogram`
+        - axis can be passed directly, just like for `make_static_histogram`
+        - in addition, also accepts iterators over a sequence of axes
+    */
+    std::vector<bh::axis::any<>> axes = {bh::axis::regular<>(5, -5, 5, "x"),
+                                         bh::axis::regular<>(5, -5, 5, "y")};
+    auto h = bh::make_dynamic_histogram(axes.begin(), axes.end());
+
+    // fill histogram, random numbers are generated on the fly
+    br::mt19937 gen;
+    br::normal_distribution<> norm;
+    for (int i = 0; i < 1000; ++i)
+        h.fill(norm(gen), norm(gen));
+
+    /*
+        print histogram
+        - in opposition to the static case, we need to cast axis to correct
+          type since dynamic histogram cannot do this automatically
+        -
+    */
+    for (const auto& ybin : h.axis(1)) {
+        for (const auto& xbin : h.axis(0)) {
+            std::printf("%3.0f ", h.value(xbin.first, ybin.first));
+        }
+        std::printf("\n");
+    }
+}
+``
+
 [section Make and use a 2d-histogram in Python]
 
 You need to build the library with Numpy support to run this example.
 
-[python]``
-import histogram as hg
+[python]`import histogram as hg
 import numpy as np
 
 # create 2d-histogram with two axes with 10 equidistant bins from -3 to 3

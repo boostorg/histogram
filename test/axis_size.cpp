@@ -10,7 +10,7 @@
 
 namespace boost { namespace histogram {
     using axis_variant =
-        typename make_variant_over<builtin_axes>::type;
+        typename make_variant_over<axis::builtins>::type;
 }}
 
 int main() {

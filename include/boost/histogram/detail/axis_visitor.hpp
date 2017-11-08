@@ -26,58 +26,6 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-struct size : public static_visitor<int> {
-  template <typename A> int operator()(const A &a) const { return a.size(); }
-};
-
-struct shape : public static_visitor<int> {
-  template <typename A> int operator()(const A &a) const { return a.shape(); }
-};
-
-struct uoflow : public static_visitor<bool> {
-  template <typename A> bool operator()(const A &a) const { return a.uoflow(); }
-};
-
-struct get_label : public static_visitor<string_view> {
-  template <typename A> ::boost::string_view operator()(const A& a) const { return a.label(); }
-};
-
-struct set_label : public static_visitor<void> {
-  const ::boost::string_view label;
-  set_label(const ::boost::string_view x) : label(x) {}
-  template <typename A> void operator()(A& a) const { a.label(label); }
-};
-
-template <typename T> struct index : public static_visitor<int> {
-  const T &t;
-  explicit index(const T &arg) : t(arg) {}
-  template <typename Axis> int operator()(const Axis &a) const {
-    return impl(std::is_convertible<T, typename Axis::value_type>(), a);
-  }
-  template <typename Axis> int impl(std::true_type, const Axis& a) const {
-    return a.index(t);
-  }
-  template <typename Axis> int impl(std::false_type, const Axis&) const {
-    throw std::runtime_error("index argument not convertible to axis value type");
-  }
-};
-
-struct bin : public static_visitor<axis::interval<double>> {
-  using double_interval = axis::interval<double>;
-  const int i;
-  bin(const int v) : i(v) {}
-  template <typename A> double_interval operator()(const A &a) const {
-    return impl(is_convertible<typename A::bin_type, double_interval>(),
-                std::forward<typename A::bin_type>(a[i]));
-  }
-  template <typename B> double_interval impl(true_type, B &&b) const {
-    return b;
-  }
-  template <typename B> double_interval impl(false_type, B &&) const {
-    throw std::runtime_error("cannot convert bin_type to interval<double>");
-  }
-};
-
 template <typename V> struct cmp_axis : public static_visitor<bool> {
   const V &lhs;
   cmp_axis(const V &v) : lhs(v) {}

@@ -13,7 +13,7 @@ namespace br = boost::random;
 namespace bh = boost::histogram;
 namespace bp = boost::python;
 
-void process(bh::histogram<bh::Dynamic, bh::builtin_axes>& h) {
+void process(bh::histogram<bh::Dynamic, bh::axis::builtins>& h) {
   br::mt19937 gen;
   br::normal_distribution<> norm;
   // fill histogram

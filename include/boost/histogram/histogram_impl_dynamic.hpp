@@ -11,7 +11,6 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/any_axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
@@ -48,7 +47,7 @@ template <typename Axes, typename Storage>
 class histogram<Dynamic, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
 public:
-  using any_axis_type = any_axis<Axes>;
+  using any_axis_type = axis::any<Axes>;
   using value_type = typename Storage::value_type;
 
 private:
@@ -407,7 +406,7 @@ private:
     for (const auto &bi : b) {
       if (bi)
         axes.emplace_back(*axes_iter);
-      *n_iter = apply_visitor(detail::shape(), *axes_iter);
+      *n_iter = axes_iter->shape();
       ++axes_iter;
       ++n_iter;
     }
@@ -446,21 +445,37 @@ private:
 };
 
 template <typename... Axes>
-inline histogram<Dynamic, detail::combine_t<builtin_axes, mpl::vector<Axes...>>>
+histogram<Dynamic, detail::combine_t<axis::builtins, mpl::vector<Axes...>>>
 make_dynamic_histogram(Axes &&... axes) {
 
   return histogram<Dynamic,
-                   detail::combine_t<builtin_axes, mpl::vector<Axes...>>>(
+                   detail::combine_t<axis::builtins, mpl::vector<Axes...>>>(
       std::forward<Axes>(axes)...);
 }
 
 template <typename Storage, typename... Axes>
-inline histogram<Dynamic, detail::combine_t<builtin_axes, mpl::vector<Axes...>>,
+histogram<Dynamic, detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
                  Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
   return histogram<
-      Dynamic, detail::combine_t<builtin_axes, mpl::vector<Axes...>>, Storage>(
+      Dynamic, detail::combine_t<axis::builtins, mpl::vector<Axes...>>, Storage>(
       std::forward<Axes>(axes)...);
+}
+
+template <typename Iterator, typename = detail::is_iterator<Iterator>>
+histogram<Dynamic, detail::combine_t<axis::builtins, typename Iterator::value_type::types>>
+make_dynamic_histogram(Iterator begin, Iterator end) {
+  return histogram<
+      Dynamic, detail::combine_t<axis::builtins, typename Iterator::value_type::types>>(
+      begin, end);
+}
+
+template <typename Storage, typename Iterator, typename = detail::is_iterator<Iterator>>
+histogram<Dynamic, detail::combine_t<axis::builtins, typename Iterator::value_type::types>, Storage>
+make_dynamic_histogram_with(Iterator begin, Iterator end) {
+  return histogram<
+      Dynamic, detail::combine_t<axis::builtins, typename Iterator::value_type::types>, Storage>(
+      begin, end);
 }
 
 } // namespace histogram

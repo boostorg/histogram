@@ -209,7 +209,7 @@ template <typename Type> void run_tests() {
     c.axis().label("foo");
     BOOST_TEST_EQ(c.axis().label(), "foo");
     // need to cast here for this to work with Type == Dynamic
-    auto ca = axis_cast<axis::category<>>(c.axis());
+    auto ca = axis::cast<axis::category<>>(c.axis());
     BOOST_TEST_EQ(ca[0], A);
   }
 
@@ -778,10 +778,10 @@ int main() {
 
   // init
   {
-    auto v = std::vector<histogram<Dynamic, builtin_axes>::any_axis_type>();
+    auto v = std::vector<axis::any<>>();
     v.push_back(axis::regular<>(100, -1, 1));
     v.push_back(axis::integer<>(1, 7));
-    auto h = histogram<Dynamic, builtin_axes>(v.begin(), v.end());
+    auto h = histogram<Dynamic, axis::builtins>(v.begin(), v.end());
     BOOST_TEST_EQ(h.axis(0_c), v[0]);
     BOOST_TEST_EQ(h.axis(1_c), v[1]);
     BOOST_TEST_EQ(h.axis(0), v[0]);
