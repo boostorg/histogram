@@ -371,27 +371,27 @@ void register_histogram() {
       .add_property("dim", &dynamic_histogram::dim)
       .def("axis", histogram_axis, python::arg("i") = 0,
            ":param int i: axis index"
-           "\nReturns axis with index i.")
+           "\n:return: corresponding axis object")
       .def("fill", python::raw_function(histogram_fill),
-           "Pass N values where N is equal to the dimensions"
-           "\nof the histogram, and optionally another value with the keyword"
-           "\n*weight*. All values must be convertible to double."
+           ":param double args: values (number must match dimension)"
+           "\n:keyword double weight: optional weight"
+           "\n:keyword uint32_t count: optional count"
            "\n"
            "\nIf Numpy support is enabled, 1d-arrays can be passed instead of"
            "\nvalues, which must be equal in lenght. Arrays and values can"
-           "\nbe mixed in the same call.")
+           "\nbe mixed arbitrarily in the same call.")
       .add_property("bincount", &dynamic_histogram::bincount,
-           "Returns total number of bins, including under- and overflow.")
+           ":return: total number of bins, including under- and overflow")
       .add_property("sum", &dynamic_histogram::sum,
-           "Returns sum of all entries, including under- and overflow bins.")
+           ":return: sum of all entries, including under- and overflow bins")
       .def("value", python::raw_function(histogram_value),
-           ":param int args: indices of the bin"
+           ":param int args: indices of the bin (number must match dimension)"
            "\n:return: count for the bin")
       .def("variance", python::raw_function(histogram_variance),
-           ":param int args: indices of the bin"
+           ":param int args: indices of the bin (number must match dimension)"
            "\n:return: variance estimate for the bin")
       .def("__repr__", histogram_repr,
-           ":returns: string representation of the histogram")
+           ":return: string representation of the histogram")
       .def(python::self == python::self)
       .def(python::self += python::self)
       .def(python::self *= double())

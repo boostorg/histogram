@@ -8,13 +8,11 @@ def is_more_recent(a, b):
 
 out_dir = os.path.dirname(__file__) + "/../examples"
 
-exi = 1
 for qbk in glob.glob(os.path.dirname(__file__) + "/*.qbk"):
     base = os.path.splitext(os.path.basename(qbk))[0]
-    if base != "getting_started": continue
     with open(qbk) as fi:
         qbk_content = fi.read()
-    qbk_needs_update = False
+    exi = 1
     for m in re.finditer("\[([^\]]+)\]``\n*", qbk_content):
         tag = m.group(1)
         start = m.end()
@@ -26,7 +24,7 @@ for qbk in glob.glob(os.path.dirname(__file__) + "/*.qbk"):
             ext = "py"
         else:
             raise NotImplementedError("can only handle tags c++ and python")
-        foname = out_dir + "/%s_listing_%i.%s" % (base, exi, ext)
+        foname = out_dir + "/%s_listing_%02i.%s" % (base, exi, ext)
         if os.path.exists(foname):
             with open(foname) as fi:
                 code2 = fi.read()
@@ -34,13 +32,7 @@ for qbk in glob.glob(os.path.dirname(__file__) + "/*.qbk"):
                 if is_more_recent(qbk, foname):
                     with open(foname, "w") as fo:
                         fo.write(code)
-                else:
-                    qbk_content = qbk_content[:start] + code2 + qbk_content[end:]
-                    qbk_needs_update = True
         else:
             with open(foname, "w") as fo:
                 fo.write(code)
         exi += 1
-    if qbk_needs_update:
-        with open(qbk, "w") as fo:
-            fo.write(qbk_content)

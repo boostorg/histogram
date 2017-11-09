@@ -4,6 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+// also see python_fill_cpp.py
+
 #include <boost/python.hpp>
 #include <boost/histogram.hpp>
 #include <boost/random/mersenne_twister.hpp>

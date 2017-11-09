@@ -779,13 +779,27 @@ int main() {
   // init
   {
     auto v = std::vector<axis::any<>>();
-    v.push_back(axis::regular<>(100, -1, 1));
+    v.push_back(axis::regular<>(4, -1, 1));
     v.push_back(axis::integer<>(1, 7));
-    auto h = histogram<Dynamic, axis::builtins>(v.begin(), v.end());
-    BOOST_TEST_EQ(h.axis(0_c), v[0]);
-    BOOST_TEST_EQ(h.axis(1_c), v[1]);
+    auto h = make_dynamic_histogram(v.begin(), v.end());
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
+  }
+
+  // using iterator ranges
+  {
+    auto h = make_dynamic_histogram(axis::regular<>(2, -1, 1),
+                                    axis::regular<>(2,  2, 4));
+    auto v = std::vector<double>(2);
+    v = {-0.5, 2.5};
+    h.fill(v.begin(), v.end());
+    v = { 0.5, 3.5};
+    h.fill(v.begin(), v.end());
+    auto i = std::vector<int>(2);
+    i = {0, 0};
+    BOOST_TEST_EQ(h.value(i.begin(), i.end()), 1);
+    i = {1, 1};
+    BOOST_TEST_EQ(h.variance(i.begin(), i.end()), 1);
   }
 
   // axis methods

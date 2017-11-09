@@ -1,4 +1,4 @@
-[section Getting started]
+[section:getting_started Getting started]
 
 To get you started quickly, here are some heavily commented examples to copy paste from. If you prefer a more traditional, structured exposition, check out the [link histogram.guide full user guide].
 
@@ -220,7 +220,7 @@ except ImportError:
 
 [section Make and use a 1d-histogram in Python without Numpy]
 
-Building the library with Numpy support is highly recommended, but just for completeness, here is an example on how to use the library without Numpy support.
+Building the library with Numpy support is highly recommended, but here is an example on how to use the library without Numpy support for completeness.
 
 [python]``
 import histogram as hg
