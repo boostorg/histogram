@@ -578,23 +578,31 @@ template <typename Type> void run_tests() {
     a.fill(0);
     b.fill(1);
     auto c = a + b;
-    BOOST_TEST_EQ(c.value(0), 1.0);
-    BOOST_TEST_EQ(c.value(1), 1.0);
+    BOOST_TEST_EQ(c.value(0), 1);
+    BOOST_TEST_EQ(c.value(1), 1);
     c += b;
-    BOOST_TEST_EQ(c.value(0), 1.0);
-    BOOST_TEST_EQ(c.value(1), 2.0);
-    auto d = 3 * a;
-    auto e = b * 2;
-    BOOST_TEST_EQ(d.value(0), 3.0);
-    BOOST_TEST_EQ(d.value(1), 0.0);
-    BOOST_TEST_EQ(e.value(0), 0.0);
-    BOOST_TEST_EQ(e.value(1), 2.0);
+    BOOST_TEST_EQ(c.value(0), 1);
+    BOOST_TEST_EQ(c.value(1), 2);
+    auto d = a + b + c;
+    BOOST_TEST_EQ(d.value(0), 2);
+    BOOST_TEST_EQ(d.value(1), 3);
+    auto e = 3 * a;
+    auto f = b * 2;
+    BOOST_TEST_EQ(e.value(0), 3);
+    BOOST_TEST_EQ(e.value(1), 0);
+    BOOST_TEST_EQ(f.value(0), 0);
+    BOOST_TEST_EQ(f.value(1), 2);
     auto r = a;
     r += b;
-    r += d;
-    BOOST_TEST_EQ(r.value(0), 4.0);
-    BOOST_TEST_EQ(r.value(1), 1.0);
+    r += e;
+    BOOST_TEST_EQ(r.value(0), 4);
+    BOOST_TEST_EQ(r.value(1), 1);
     BOOST_TEST_EQ(r, a + b + 3 * a);
+    auto s = r / 4;
+    r /= 4;
+    BOOST_TEST_EQ(r.value(0), 1);
+    BOOST_TEST_EQ(r.value(1), 0.25);
+    BOOST_TEST_EQ(r, s);
   }
 
   // histogram_serialization

@@ -102,6 +102,11 @@ public:
     return *this;
   }
 
+  histogram &operator/=(const value_type rhs) {
+    storage_ *= 1.0 / rhs;
+    return *this;
+  }
+
   template <typename... Args> void fill(Args &&... args) {
     using n_count = typename mpl::count<mpl::vector<Args...>, count>;
     using n_weight = typename mpl::count<mpl::vector<Args...>, weight>;

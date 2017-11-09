@@ -96,7 +96,7 @@ Under- and overflow bins are useful in one-dimensional histograms, and nearly es
 
 [endsect]
 
-[section:weights Variance estimates]
+[section:variance Variance estimates]
 
 Once a histogram is filled, the count ['k] in a bin can be queried with the `value(...)` method. The histogram also offers a `variance(...)` method, which returns an estimate of the [@https://en.wikipedia.org/wiki/Variance variance] ['v] of that count.
 
@@ -121,7 +121,7 @@ Now, if the value returned by the method `variance(...)` is just the same as the
 
 [endsect]
 
-[section:weigths Support of weighted increments]
+[section:weights Support of weighted increments]
 
 A histogram categorizes input values and increments a bin counter if an input value falls into the value range covered by that bin. The [classref boost::histogram::adaptive_storage standard storage] uses integer types to store these counts, see the [link histogram.rationale.storage_types storage section] how integer overflow is avoided. However, sometimes histograms need to be filled with values that have a weight ['w] attached to them. In this case, the corresponding bin counter is not increased by one, but by the passed weight ['w].
 [note

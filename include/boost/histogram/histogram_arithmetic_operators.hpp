@@ -75,6 +75,21 @@ operator*(const double x, const histogram<Variant, Axes, Storage> &b) {
   return r;
 }
 
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage> &&
+operator/(histogram<Variant, Axes, Storage> &&a, const double x) {
+  a /= x;
+  return std::move(a);
+}
+
+template <typename Variant, typename Axes, typename Storage>
+histogram<Variant, Axes, Storage>
+operator/(const histogram<Variant, Axes, Storage> &a, const double x) {
+  histogram<Variant, Axes, Storage> r(a);
+  r /= x;
+  return r;
+}
+
 } // namespace histogram
 } // namespace boost
 
