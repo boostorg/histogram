@@ -22,7 +22,7 @@ y = np.array(h.axis(1))
 # creates a view of the counts (no copy involved)
 count_matrix = np.asarray(h)
 
-# cut off the under- and overflow bins (no copy involved)
+# cut off the under- and overflow bins to not confuse matplotib (no copy)
 reduced_count_matrix = count_matrix[:-2,:-2]
 
 try:
@@ -33,5 +33,20 @@ try:
     plt.ylabel(h.axis(1).label)
     plt.savefig("example_2d_python.png")
 except ImportError:
-    # ok, no matplotlib, then just print it
+    # ok, no matplotlib, then just print the full count matrix
     print count_matrix
+
+    # output of the print looks something like this, the two right-most rows
+    # and two down-most columns represent under-/overflow bins
+    # [[ 0  0  0  1  5  0  0  1  0  0  0  0]
+    #  [ 0  0  0  1 17 11  6  0  0  0  0  0]
+    #  [ 0  0  0  5 31 26  4  1  0  0  0  0]
+    #  [ 0  0  3 20 59 62 26  4  0  0  0  0]
+    #  [ 0  0  1 26 96 89 16  1  0  0  0  0]
+    #  [ 0  0  4 21 86 84 20  1  0  0  0  0]
+    #  [ 0  0  1 24 71 50 15  2  0  0  0  0]
+    #  [ 0  0  0  6 26 37  7  0  0  0  0  0]
+    #  [ 0  0  0  0 11 10  2  0  0  0  0  0]
+    #  [ 0  0  0  1  2  3  1  0  0  0  0  0]
+    #  [ 0  0  0  0  0  2  0  0  0  0  0  0]
+    #  [ 0  0  0  0  0  1  0  0  0  0  0  0]]

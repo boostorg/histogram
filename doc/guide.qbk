@@ -1,4 +1,4 @@
-[section User guide]
+[section:guide User guide]
 
 How to create and work with histograms is described here. This library is designed to make simple things simple, yet complex things possible. For a quick start, you don't need to read the complete user guide; have a look into the tutorial and the examples instead. This guide covers the basic and more advanced usage of the library.
 
@@ -72,7 +72,6 @@ ranges from `begin` to `end`, where `end` is also not included.
 When you work with [classref boost::histogram::histogram<Dynamic,...>], you can also create a histogram from a run-time compiled collection of axis objects:
 
 [c++]``
-// also see examples/create_dynamic_histogram.cpp
 #include <boost/histogram.hpp>
 #include <vector>
 
@@ -131,7 +130,6 @@ int main() {
 Here is a second example which using a weighted fill in a functional programming style. The input values are taken from a container:
 
 [c++]``
-// also see examples/create_dynamic_histogram.cpp
 #include <boost/histogram.hpp>
 #include <algorithm>
 #include <vector>

@@ -15,6 +15,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
+#include <boost/mpl/for_each.hpp>
 #ifdef HAVE_NUMPY
 #include <boost/python/numpy.hpp>
 namespace np = boost::python::numpy;
@@ -121,6 +122,22 @@ struct axis_visitor : public static_visitor<python::object> {
   }
 };
 
+struct axes_appender {
+  python::object obj;
+  std::vector<dynamic_histogram::any_axis_type>& axes;
+  bool& success;
+  axes_appender(python::object o, std::vector<dynamic_histogram::any_axis_type>& a,
+                bool& s) : obj(o), axes(a), success(s) {}
+  template <typename A> void operator()(const A&) const {
+    if (success) return;
+    python::extract<const A&> get_axis(obj);
+    if (get_axis.check()) {
+      axes.emplace_back(get_axis());
+      success = true;
+    }
+  }
+};
+
 python::object histogram_axis(const dynamic_histogram &self, int i) {
   if (i < 0)
     i += self.dim();
@@ -147,35 +164,16 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
   std::vector<dynamic_histogram::any_axis_type> axes;
   for (unsigned i = 0; i < dim; ++i) {
     python::object pa = args[i + 1];
-    python::extract<axis::regular<>> er(pa);
-    if (er.check()) {
-      axes.push_back(er());
-      continue;
+    bool success = false;
+    mpl::for_each<dynamic_histogram::any_axis_type::types>(
+      axes_appender(pa, axes, success)
+    );
+    if (!success) {
+      std::string msg = "require an axis object, got ";
+      msg += python::extract<std::string>(pa.attr("__class__"))();
+      PyErr_SetString(PyExc_TypeError, msg.c_str());
+      python::throw_error_already_set();
     }
-    python::extract<axis::circular<>> ep(pa);
-    if (ep.check()) {
-      axes.push_back(ep());
-      continue;
-    }
-    python::extract<axis::variable<>> ev(pa);
-    if (ev.check()) {
-      axes.push_back(ev());
-      continue;
-    }
-    python::extract<axis::integer<>> ei(pa);
-    if (ei.check()) {
-      axes.push_back(ei());
-      continue;
-    }
-    python::extract<axis::category<>> ec(pa);
-    if (ec.check()) {
-      axes.push_back(ec());
-      continue;
-    }
-    std::string msg = "require an axis object, got ";
-    msg += python::extract<std::string>(pa.attr("__class__").attr("__name__"))();
-    PyErr_SetString(PyExc_TypeError, msg.c_str());
-    python::throw_error_already_set();
   }
   dynamic_histogram h(axes.begin(), axes.end());
   return pyinit(h);

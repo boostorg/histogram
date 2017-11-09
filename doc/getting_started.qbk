@@ -1,8 +1,10 @@
 [section Getting started]
 
-To get you started, here are some commented usage examples.
+To get you started quickly, here are some heavily commented examples to copy paste from. If you prefer a more traditional, structured exposition, check out the [link histogram.guide full user guide].
 
 [section Make and use a static 1d-histogram in C++]
+
+If possible, use the static histogram. It is faster and user errors are caught at compile time.
 
 [c++]``
 #include <boost/histogram.hpp>
@@ -12,13 +14,15 @@ int main(int, char**) {
     namespace bh = boost::histogram;
     using namespace bh::literals; // enables _c suffix
 
-    // create static 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
-    // with axis of histogram labeled as "x"
+    /*
+        create a static 1d-histogram with an axis that has 10 equidistant
+        bins on the real line from -1.0 to 2.0, and label it as "x"
+    */
     auto h = bh::make_static_histogram(
         bh::axis::regular<>(10, -1.0, 2.0, "x")
     );
 
-    // fill histogram with data
+    // fill histogram with data, typically this would happen in a loop
     h.fill(-1.5); // put in underflow bin
     h.fill(-1.0); // included in first bin, bin interval is semi-open
     h.fill(-0.5);
@@ -29,36 +33,49 @@ int main(int, char**) {
     h.fill(20.0); // put in overflow bin
 
     /*
-        instead of calling h.fill(...) with same argument N times,
-        use bh::count, which accepts an integer argument N
+        use bh::count(N) if you would otherwise call h.fill(...) with
+        *same* argument N times, N is an integer argument
     */
     h.fill(1.0, bh::count(4));
 
     /*
-        to fill a weighted entry, use bh::weight, which accepts a double
-        argument; don't confuse with bh::count, it has a different effect
-        on the variance (see Rationale for a section explaining weighted fills)
+        do a weighted fill using bh::weight, which accepts a double
+        - don't mix this with bh::count, both have a different effect on the
+          variance (see Rationale for an explanation regarding weights)
+        - if you don't know what this is good for, use bh::count instead,
+          it is most likeliy what you want and it is more efficient
     */
     h.fill(0.1, bh::weight(2.5));
 
     /*
         iterate over bins, loop excludes under- and overflow bins
-        - index 0_c is a compile-time number to make axis(...) return
-          a different type for each axis
-        - for-loop yields std::pair<[bin index], [bin type]>, where
-          [bin type] usually is a semi-open interval representing the bin,
-          whose edges can be accessed with methods lower() and upper(), but
-          the [bin type] depends on the axis and could be something else
-        - value(index) method returns the bin count at index,
-        - variance(index) method returns a variance estimate of the bin count
-          at index (see Rationale for a section explaining the variance)
+        - index 0_c is a compile-time number, the only way in C++ to make
+          axis(...) to return a different type for each index
+        - for-loop yields instances of `std::pair<int, bin_type>`, where
+          `bin_type` usually is a semi-open interval representing the bin,
+          whose edges can be accessed with methods `lower()` and `upper()`,
+          but the [bin type] depends on the axis, look it up in the reference
+        - `value(index)` method returns the bin count at index
+        - `variance(index)` method returns a variance estimate of the bin
+          count at index (see Rationale section for what this means)
     */
     for (const auto& bin : h.axis(0_c)) {
-        std::cout << "bin " << bin.first
-                  << " x in [" << bin.second.lower() << ", " << bin.second.upper() << "): "
-                  << h.value(bin.first) << " +/- " << std::sqrt(h.variance(bin.first))
+        std::cout << "bin " << bin.first << " x in ["
+                  << bin.second.lower() << ", " << bin.second.upper() << "): "
+                  << h.value(bin.first) << " +/- "
+                  << std::sqrt(h.variance(bin.first))
                   << std::endl;
     }
+
+    // accessing under- and overflow bins is easy, use indices -1 and 10
+    std::cout << "underflow bin [" << h.axis(0_c)[-1].lower()
+              << ", " << h.axis(0_c)[-1].upper() << "): "
+              << h.value(-1) << " +/- " << std::sqrt(h.variance(-1))
+              << std::endl;
+    std::cout << "overflow  bin [" << h.axis(0_c)[10].lower()
+              << ", " << h.axis(0_c)[10].upper() << "): "
+              << h.value(10) << " +/- " << std::sqrt(h.variance(10))
+              << std::endl;
 
     /* program output:
 
@@ -72,6 +89,8 @@ int main(int, char**) {
     bin 7 x in [1.1, 1.4): 1 +/- 1
     bin 8 x in [1.4, 1.7): 0 +/- 0
     bin 9 x in [1.7, 2): 1 +/- 1
+    underflow bin [-inf, -1): 1 +/- 1
+    overflow  bin [2, inf): 2 +/- 1.41421
 
     */
 }
@@ -79,57 +98,71 @@ int main(int, char**) {
 
 [endsect]
 
-[section Make and use a dynamic 2d-histogram in C++]
+[section Make and use a dynamic 3d-histogram in C++]
 
-Here we fill the histogram with some random numbers.
+Dynamic histograms are a bit slower than static histograms, but still faster than other libraries. Use a dynamic histogram when you only know at runtime how to layout the histogram, for example, because you wrote a graphical user interface that uses Boost.Histogram underneath.
 
 [c++]``
 #include <boost/histogram.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <cstdlib>
+#include <string>
 
 namespace br = boost::random;
 namespace bh = boost::histogram;
 
 int main() {
     /*
-        create dynamic histogram using `make_dynamic_histogram`
-        - axis can be passed directly, just like for `make_static_histogram`
-        - in addition, also accepts iterators over a sequence of axes
+        create a dynamic histogram with the factory `make_dynamic_histogram`
+        - axis can be passed directly just like for `make_static_histogram`
+        - in addition, the factory also accepts iterators over a sequence of
+          axis::any, the polymorphic type that can hold concrete axis types
     */
-    std::vector<bh::axis::any<>> axes = {bh::axis::regular<>(5, -5, 5, "x"),
-                                         bh::axis::regular<>(5, -5, 5, "y")};
+    std::vector<bh::axis::any<>> axes;
+    axes.emplace_back(bh::axis::category<std::string>({"red", "blue"}));
+    axes.emplace_back(bh::axis::regular<>(5, -5, 5, "x"));
+    axes.emplace_back(bh::axis::regular<>(5, -5, 5, "y"));
     auto h = bh::make_dynamic_histogram(axes.begin(), axes.end());
 
-    // fill histogram, random numbers are generated on the fly
+    // fill histogram with random numbers
     br::mt19937 gen;
     br::normal_distribution<> norm;
     for (int i = 0; i < 1000; ++i)
-        h.fill(norm(gen), norm(gen));
+        h.fill(i % 2 ? "red" : "blue", norm(gen), norm(gen));
 
     /*
-        print histogram
+        print dynamic histogram by iterating over bins
         - for most axis types, the for loop looks just like for a static
           histogram, except that we can pass runtime numbers, too
-        - in contrast to the static histogram, we need to cast axis::any
-          to the held axis type before looping, if the [bin type] is not
-          convertible to a double interval
+        - if the [bin type] of the axis is not convertible to a
+          double interval, one needs to cast axis::any before looping;
+          this is here the case for the category axis
     */
-    for (const auto& ybin : h.axis(1)) { // rows
-        for (const auto& xbin : h.axis(0)) { // columns
-            std::printf("%3.0f ", h.value(xbin.first, ybin.first));
+    using cas = bh::axis::category<std::string>;
+    for (const auto& cbin : bh::axis::cast<cas>(h.axis(0))) {
+        std::printf("%s\n", cbin.second.c_str());
+        for (const auto& ybin : h.axis(2)) { // rows
+            for (const auto& xbin : h.axis(1)) { // columns
+                std::printf("%3.0f ", h.value(cbin.first, xbin.first, ybin.first));
+            }
+            std::printf("\n");
         }
-        std::printf("\n");
     }
 }
 ``
+[note
+If you care about maximum performance: In this example, `axis::category<std::string>` is used with two string labels "red" and "blue". It is faster to use an enum, `enum { red, blue };` and a `axis::category<>` axis.
+]
+
+[endsect]
 
 [section Make and use a 2d-histogram in Python]
 
 You need to build the library with Numpy support to run this example.
 
-[python]`import histogram as hg
+[python]``
+import histogram as hg
 import numpy as np
 
 # create 2d-histogram with two axes with 10 equidistant bins from -3 to 3
@@ -153,7 +186,7 @@ y = np.array(h.axis(1))
 # creates a view of the counts (no copy involved)
 count_matrix = np.asarray(h)
 
-# cut off the under- and overflow bins (no copy involved)
+# cut off the under- and overflow bins to not confuse matplotib (no copy)
 reduced_count_matrix = count_matrix[:-2,:-2]
 
 try:
@@ -164,8 +197,44 @@ try:
     plt.ylabel(h.axis(1).label)
     plt.savefig("example_2d_python.png")
 except ImportError:
-    # ok, no matplotlib, then just print it
+    # ok, no matplotlib, then just print the full count matrix
     print count_matrix
+
+    # output of the print looks something like this, the two right-most rows
+    # and two down-most columns represent under-/overflow bins
+    # [[ 0  0  0  1  5  0  0  1  0  0  0  0]
+    #  [ 0  0  0  1 17 11  6  0  0  0  0  0]
+    #  [ 0  0  0  5 31 26  4  1  0  0  0  0]
+    #  [ 0  0  3 20 59 62 26  4  0  0  0  0]
+    #  [ 0  0  1 26 96 89 16  1  0  0  0  0]
+    #  [ 0  0  4 21 86 84 20  1  0  0  0  0]
+    #  [ 0  0  1 24 71 50 15  2  0  0  0  0]
+    #  [ 0  0  0  6 26 37  7  0  0  0  0  0]
+    #  [ 0  0  0  0 11 10  2  0  0  0  0  0]
+    #  [ 0  0  0  1  2  3  1  0  0  0  0  0]
+    #  [ 0  0  0  0  0  2  0  0  0  0  0  0]
+    #  [ 0  0  0  0  0  1  0  0  0  0  0  0]]
+``
+
+[endsect]
+
+[section Make and use a 1d-histogram in Python without Numpy]
+
+Building the library with Numpy support is highly recommended, but just for completeness, here is an example on how to use the library without Numpy support.
+
+[python]``
+import histogram as hg
+
+# make 1-d histogram with 10 logarithmic bins from 1e0 to 1e5
+h = hg.histogram(hg.axis.regular_log(10, 1e0, 1e5, "x"))
+
+# fill histogram with numbers
+for x in (1e0, 1e1, 1e2, 1e3, 1e4):
+    h.fill(x)
+
+# iterate over bins
+for idx, (lower, upper) in enumerate(h.axis(0)):
+    print "bin %i x in [%g, %g): %g +/- %g" % (idx, lower, upper, h.value(idx), h.variance(idx) ** 0.5)
 ``
 
 [endsect]

@@ -2,38 +2,46 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <cstdlib>
+#include <string>
 
 namespace br = boost::random;
 namespace bh = boost::histogram;
 
 int main() {
     /*
-        create dynamic histogram using `make_dynamic_histogram`
-        - axis can be passed directly, just like for `make_static_histogram`
-        - in addition, also accepts iterators over a sequence of axes
+        create a dynamic histogram with the factory `make_dynamic_histogram`
+        - axis can be passed directly just like for `make_static_histogram`
+        - in addition, the factory also accepts iterators over a sequence of
+          axis::any, the polymorphic type that can hold concrete axis types
     */
-    std::vector<bh::axis::any<>> axes = {bh::axis::regular<>(5, -5, 5, "x"),
-                                         bh::axis::regular<>(5, -5, 5, "y")};
+    std::vector<bh::axis::any<>> axes;
+    axes.emplace_back(bh::axis::category<std::string>({"red", "blue"}));
+    axes.emplace_back(bh::axis::regular<>(5, -5, 5, "x"));
+    axes.emplace_back(bh::axis::regular<>(5, -5, 5, "y"));
     auto h = bh::make_dynamic_histogram(axes.begin(), axes.end());
 
-    // fill histogram, random numbers are generated on the fly
+    // fill histogram with random numbers
     br::mt19937 gen;
     br::normal_distribution<> norm;
     for (int i = 0; i < 1000; ++i)
-        h.fill(norm(gen), norm(gen));
+        h.fill(i % 2 ? "red" : "blue", norm(gen), norm(gen));
 
     /*
-        print histogram
+        print dynamic histogram by iterating over bins
         - for most axis types, the for loop looks just like for a static
           histogram, except that we can pass runtime numbers, too
-        - in contrast to the static histogram, we need to cast axis::any
-          to the held axis type before looping, if the [bin type] is not
-          convertible to a double interval
+        - if the [bin type] of the axis is not convertible to a
+          double interval, one needs to cast axis::any before looping;
+          this is here the case for the category axis
     */
-    for (const auto& ybin : h.axis(1)) { // rows
-        for (const auto& xbin : h.axis(0)) { // columns
-            std::printf("%3.0f ", h.value(xbin.first, ybin.first));
+    using cas = bh::axis::category<std::string>;
+    for (const auto& cbin : bh::axis::cast<cas>(h.axis(0))) {
+        std::printf("%s\n", cbin.second.c_str());
+        for (const auto& ybin : h.axis(2)) { // rows
+            for (const auto& xbin : h.axis(1)) { // columns
+                std::printf("%3.0f ", h.value(cbin.first, xbin.first, ybin.first));
+            }
+            std::printf("\n");
         }
-        std::printf("\n");
     }
 }

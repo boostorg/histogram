@@ -1,4 +1,3 @@
-// also see examples/create_dynamic_histogram.cpp
 #include <boost/histogram.hpp>
 #include <algorithm>
 #include <vector>

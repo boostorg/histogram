@@ -41,66 +41,33 @@ namespace axis {
 
 enum class uoflow { off = false, on = true };
 
-namespace detail {
-// similar to boost::reference_wrapper, but with default ctor
-template <typename T> class cref {
-public:
-  cref() = default;
-  cref(const cref &o) : ptr_(o.ptr_) {}
-  cref &operator=(const cref &o) {
-    ptr_ = o.ptr_;
-    return *this;
-  }
-  cref(const T &t) : ptr_(&t) {}
-  cref &operator=(const T &t) {
-    ptr_ = &t;
-    return *this;
-  }
-  operator const T &() const { return *ptr_; }
-
-private:
-  const T *ptr_ = nullptr;
-};
-
-template <typename Axis>
-using axis_iterator_value_t = std::pair<
-    int, typename conditional<
-             is_reference<typename Axis::bin_type>::value,
-             cref<typename remove_reference<typename Axis::bin_type>::type>,
-             typename Axis::bin_type>::type>;
-} // namespace detail
-
 template <typename Axis>
 class axis_iterator
     : public iterator_facade<axis_iterator<Axis>,
-                             detail::axis_iterator_value_t<Axis>,
-                             random_access_traversal_tag> {
+                             std::pair<int, typename Axis::bin_type>,
+                             random_access_traversal_tag,
+                             std::pair<int, typename Axis::bin_type>> {
 public:
-  using value_type = detail::axis_iterator_value_t<Axis>;
-
-  explicit axis_iterator(const Axis &axis, int idx) : axis_(axis) {
-    value_.first = idx;
-  }
+  explicit axis_iterator(const Axis &axis, int idx) : axis_(axis), idx_(idx) {}
 
   axis_iterator(const axis_iterator &o) = default;
   axis_iterator &operator=(const axis_iterator &o) = default;
 
 private:
-  void increment() noexcept { ++value_.first; }
-  void decrement() noexcept { --value_.first; }
-  void advance(int n) noexcept { value_.first += n; }
+  void increment() noexcept { ++idx_; }
+  void decrement() noexcept { --idx_; }
+  void advance(int n) noexcept { idx_ += n; }
   int distance_to(const axis_iterator &other) const noexcept {
-    return other.value_.first - value_.first;
+    return other.idx_ - idx_;
   }
   bool equal(const axis_iterator &other) const noexcept {
-    return value_.first == other.value_.first;
+    return idx_ == other.idx_;
   }
-  value_type &dereference() const {
-    value_.second = axis_[value_.first];
-    return value_;
+  std::pair<int, typename Axis::bin_type> dereference() const {
+    return std::make_pair(idx_, axis_[idx_]);
   }
-  const Axis &axis_;
-  mutable value_type value_;
+  const Axis& axis_;
+  int idx_;
   friend class boost::iterator_core_access;
 };
 
@@ -552,7 +519,7 @@ template <typename T> class category : public axis_base {
 
 public:
   using value_type = T;
-  using bin_type = const value_type &;
+  using bin_type = T;
   using const_iterator = axis_iterator<category<T>>;
 
   category() = default;
