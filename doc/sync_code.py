@@ -7,6 +7,8 @@ def is_more_recent(a, b):
     return os.stat(a).st_mtime > os.stat(b).st_mtime
 
 out_dir = os.path.dirname(__file__) + "/../examples"
+if not os.path.exists(out_dir):
+    os.mkdir(out_dir)
 
 for qbk in glob.glob(os.path.dirname(__file__) + "/*.qbk"):
     base = os.path.splitext(os.path.basename(qbk))[0]
