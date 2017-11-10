@@ -196,6 +196,27 @@ public:
     fusion::for_each(axes_, unary);
   }
 
+  /// Returns a lower-dimensional histogram
+  template <typename Indices>
+  auto reduce(detail::keep_static<Indices>) const
+      -> histogram<Static, detail::axes_select<Axes, Indices>, Storage> {
+    using HR = histogram<Static, detail::axes_select<Axes, Indices>, Storage>;
+    typename HR::axes_type axes;
+    detail::axes_assign_subset<Indices>(axes, axes_);
+    auto hr = HR(std::move(axes));
+    const auto b = detail::bool_mask<Indices>(dim(), true);
+    reduce_impl(hr, b);
+    return hr;
+  }
+
+  /// Returns a lower-dimensional histogram
+  template <typename I>
+  auto reduce(detail::remove_static<I>) const
+      -> histogram<Static, detail::axes_select<Axes, detail::anti_indices<axes_size::value, I>>, Storage> {
+    using Indices = detail::anti_indices<axes_size::value, I>;
+    return reduce(detail::keep_static<Indices>());
+  }
+
 private:
   axes_type axes_;
   Storage storage_;
@@ -308,18 +329,6 @@ private:
     do {
       detail::storage_add(h.storage_, storage_, m.second, m.first);
     } while (m.next());
-  }
-
-  template <typename Keep>
-  friend auto reduce(const histogram &h, Keep)
-      -> histogram<Static, detail::axes_select<Axes, Keep>, Storage> {
-    using HR = histogram<Static, detail::axes_select<Axes, Keep>, Storage>;
-    typename HR::axes_type axes;
-    detail::axes_assign_subset<Keep>(axes, h.axes_);
-    auto hr = HR(std::move(axes));
-    const auto b = detail::bool_mask<Keep>(h.dim(), true);
-    h.reduce_impl(hr, b);
-    return hr;
   }
 
   template <typename D, typename A, typename S> friend class histogram;

@@ -20,6 +20,8 @@
 #include <boost/mpl/transform.hpp>
 #include <boost/mpl/unique.hpp>
 #include <boost/mpl/vector.hpp>
+#include <boost/mpl/remove_if.hpp>
+#include <boost/mpl/range_c.hpp>
 
 #include <iterator>
 #include <limits>
@@ -99,12 +101,21 @@ void axes_assign_subset(Axes1 &axes1, const Axes &axes) {
 
 template <typename Ns>
 using unique_sorted =
-    typename mpl::unique<typename mpl::sort<Ns>::type,
-                         std::is_same<mpl::_1, mpl::_2>>::type;
+  typename mpl::unique<typename mpl::sort<Ns>::type,
+                       std::is_same<mpl::_1, mpl::_2>>::type;
 
 template <typename Axes, typename Numbers>
 using axes_select =
-    typename mpl::transform<Numbers, mpl::at<Axes, mpl::_1>>::type;
+  typename mpl::transform<Numbers, mpl::at<Axes, mpl::_1>>::type;
+
+template <int N, typename Numbers>
+using anti_indices = typename mpl::copy_if<
+    typename mpl::range_c<int, 0, N>::type,
+    mpl::not_<mpl::contains<Numbers, mpl::_1>>,
+    mpl::back_inserter<
+      mpl::vector<>
+    >
+  >::type;
 
 } // namespace detail
 } // namespace histogram

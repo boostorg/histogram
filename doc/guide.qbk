@@ -317,6 +317,60 @@ int main() {
 
 [endsect]
 
+[section Reductions]
+
+When you have a high-dimensional histogram, you may want to remove some axes and look the equivalent lower-dimensional version. Perhaps you found out that there is no interesting structure along an axis. Or you want to visualize 1-d or 2-d projections of a higher-dimensional histogram.
+
+For this purpose, there is the `reduce(...)` method, which returns are new reduced histogram. The reduced histogram has fewer axis, and has been summed over the missing axes. The `reduce(...)` method accepts a single argument, `remove(...)` or `keep(...)`. Both accept a variable number of axis indices. Like the names suggest, `remove(...)` removes the listed axes, while `keep(...)` removes all other axes except those listed.
+
+An example illustrates this.
+
+[c++]``
+#include <boost/histogram.hpp>
+#include <iostream>
+
+namespace bh = boost::histogram;
+
+int main() {
+    using namespace bh::literals; // enables _c suffix
+
+    // make a 2d histogram
+    auto h = bh::make_static_histogram(bh::axis::regular<>(4, -1, 1),
+                                       bh::axis::integer<>(0, 4));
+
+    h.fill(-0.9, 0);
+    h.fill(0.9, 3);
+    h.fill(0.1, 2);
+
+    auto hr0 = h.reduce(bh::keep(0_c)); // keep only first axis
+    auto hr1 = h.reduce(bh::keep(1_c)); // keep only second axis
+
+    /*
+        reduce does not remove counts
+        - bin counters are summed over removed axes
+        - hr0 and hr1 have same number of total counts as h
+    */
+    std::cout << h.sum() << " " << hr0.sum() << " " << hr1.sum() << std::endl;
+
+    for (const auto& ybin : h.axis(1_c)) {
+        for (const auto& xbin : h.axis(0_c)) {
+            std::cout << h.value(xbin.first, ybin.first) << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    for (const auto& bin : hr0.axis())
+        std::cout << hr0.value(bin.first) << " ";
+    std::cout << std::endl;
+
+    for (const auto& bin : hr1.axis())
+        std::cout << hr1.value(bin.first) << " ";
+    std::cout << std::endl;
+}
+``
+
+[endsect]
+
 [section Streaming]
 
 Simple ostream operators are shipped with the library, which are internally used by the Python interface bindings. These give text representations of axis and histogram configurations, but do not show the histogram content. For users, the builtin streaming operators may be useful for debugging. The streaming operators are not included by the standard header `#include <boost/histogram.hpp>`, to not collide with user implementations. The following example shows the effect of output streaming.

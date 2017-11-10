@@ -258,6 +258,34 @@ public:
     }
   }
 
+  /// Return a lower dimensional histogram
+  template <typename Indices> histogram reduce(detail::keep_static<Indices>) const {
+    const auto b = detail::bool_mask<Indices>(dim(), true);
+    return reduce_impl(b);
+  }
+
+  /// Return a lower dimensional histogram
+  template <typename Indices> histogram reduce(detail::remove_static<Indices>) const {
+    const auto b = detail::bool_mask<Indices>(dim(), false);
+    return reduce_impl(b);
+  }
+
+  /// Return a lower dimensional histogram
+  histogram reduce(const detail::keep_dynamic &k) const {
+    std::vector<bool> b(dim(), false);
+    for (const auto &i : k)
+      b[i] = true;
+    return reduce_impl(b);
+  }
+
+  /// Return a lower dimensional histogram
+  histogram reduce(const detail::remove_dynamic &r) const {
+    std::vector<bool> b(dim(), true);
+    for (const auto &i : r)
+      b[i] = false;
+    return reduce_impl(b);
+  }
+
 private:
   axes_type axes_;
   Storage storage_;
@@ -422,25 +450,6 @@ private:
     } while (m.next());
     return h;
   }
-
-  template <typename Keep> friend histogram reduce(const histogram &h, Keep) {
-    const auto b = detail::bool_mask<Keep>(h.dim(), true);
-    return h.reduce_impl(b);
-  }
-
-  friend histogram reduce(const histogram &h, const detail::keep_dynamic &k) {
-    std::vector<bool> b(h.dim(), false);
-    for (const auto &i : k)
-      b[i] = true;
-    return h.reduce_impl(b);
-  }
-
-  // friend histogram reduce(const histogram &h, const remove &r) {
-  //   std::vector<bool> b(h.dim(), true);
-  //   for (const auto &i : r)
-  //     b[i] = false;
-  //   return h.reduce_impl(std::move(b));
-  // }
 
   template <typename D, typename A, typename S> friend class histogram;
   friend class ::boost::python::access;
