@@ -32,7 +32,7 @@ template <> adaptive_storage prepare<void>(unsigned n) {
   return s;
 }
 
-template <> adaptive_storage prepare<detail::weight>(unsigned n) {
+template <> adaptive_storage prepare<detail::weight_counter>(unsigned n) {
   adaptive_storage s(n);
   s.weighted_increase(0, 1.0);
   return s;
@@ -309,7 +309,7 @@ int main() {
 
   // copy
   {
-    copy_impl<detail::weight>();
+    copy_impl<detail::weight_counter>();
     copy_impl<void>();
     copy_impl<uint8_t>();
     copy_impl<uint16_t>();
@@ -326,7 +326,7 @@ int main() {
     equal_impl<uint32_t>();
     equal_impl<uint64_t>();
     equal_impl<detail::mp_int>();
-    equal_impl<detail::weight>();
+    equal_impl<detail::weight_counter>();
   }
 
   // increase_and_grow
@@ -379,20 +379,20 @@ int main() {
     adaptive_storage a(2);
     a.increase(0);
     a *= 3;
-    BOOST_TEST_EQ(a.value(0), 3.0);
-    BOOST_TEST_EQ(a.variance(0), 3.0);
-    BOOST_TEST_EQ(a.value(1), 0.0);
-    BOOST_TEST_EQ(a.variance(1), 0.0);
-    a.add(1, 2.0, 5.0);
-    BOOST_TEST_EQ(a.value(0), 3.0);
-    BOOST_TEST_EQ(a.variance(0), 3.0);
-    BOOST_TEST_EQ(a.value(1), 2.0);
-    BOOST_TEST_EQ(a.variance(1), 5.0);
+    BOOST_TEST_EQ(a.value(0), 3);
+    BOOST_TEST_EQ(a.variance(0), 9);
+    BOOST_TEST_EQ(a.value(1), 0);
+    BOOST_TEST_EQ(a.variance(1), 0);
+    a.add(1, 2, 5);
+    BOOST_TEST_EQ(a.value(0), 3);
+    BOOST_TEST_EQ(a.variance(0), 9);
+    BOOST_TEST_EQ(a.value(1), 2);
+    BOOST_TEST_EQ(a.variance(1), 5);
     a *= 3;
-    BOOST_TEST_EQ(a.value(0), 9.0);
-    BOOST_TEST_EQ(a.variance(0), 9.0);
-    BOOST_TEST_EQ(a.value(1), 6.0);
-    BOOST_TEST_EQ(a.variance(1), 15.0);
+    BOOST_TEST_EQ(a.value(0), 9);
+    BOOST_TEST_EQ(a.variance(0), 81);
+    BOOST_TEST_EQ(a.value(1), 6);
+    BOOST_TEST_EQ(a.variance(1), 45);
   }
 
   // convert_array_storage
@@ -403,7 +403,7 @@ int main() {
     convert_array_storage_impl<uint32_t>();
     convert_array_storage_impl<uint64_t>();
     convert_array_storage_impl<detail::mp_int>();
-    convert_array_storage_impl<detail::weight>();
+    convert_array_storage_impl<detail::weight_counter>();
   }
 
   // serialization_test
@@ -414,7 +414,7 @@ int main() {
     serialization_impl<uint32_t>();
     serialization_impl<uint64_t>();
     serialization_impl<detail::mp_int>();
-    serialization_impl<detail::weight>();
+    serialization_impl<detail::weight_counter>();
   }
 
   return boost::report_errors();

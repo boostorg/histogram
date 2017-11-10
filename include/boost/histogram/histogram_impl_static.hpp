@@ -152,9 +152,8 @@ public:
   /// Sum of all counts in the histogram
   double sum() const noexcept {
     double result = 0.0;
-    for (std::size_t i = 0, n = storage_.size(); i < n; ++i) {
+    for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
       result += storage_.value(i);
-    }
     return result;
   }
 
@@ -210,9 +209,8 @@ private:
   inline void fill_impl(mpl::int_<0>, Args &&... args) {
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, std::forward<Args>(args)...);
-    if (stride) {
+    if (stride)
       storage_.increase(idx);
-    }
   }
 
   template <typename... Args>
@@ -220,9 +218,8 @@ private:
     std::size_t idx = 0, stride = 1;
     unsigned n = 0;
     xlin_n<0>(idx, stride, n, std::forward<Args>(args)...);
-    if (stride) {
+    if (stride)
       storage_.add(idx, n);
-    }
   }
 
   template <typename... Args>
@@ -230,9 +227,8 @@ private:
     std::size_t idx = 0, stride = 1;
     double w = 0.0;
     xlin_w<0>(idx, stride, w, std::forward<Args>(args)...);
-    if (stride) {
+    if (stride)
       storage_.weighted_increase(idx, w);
-    }
   }
 
   template <unsigned D> inline void lin(std::size_t &, std::size_t &) const {}

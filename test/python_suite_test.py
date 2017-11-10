@@ -591,12 +591,14 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(h.value(0), 2)
         self.assertEqual(h.variance(0), 2)
         self.assertEqual(h.value(1), 0)
-        h *= 2.5
-        self.assertEqual(h.value(0), 5)
-        self.assertEqual(h.variance(0), 5)
+        h *= 2
+        self.assertEqual(h.value(0), 4)
+        self.assertEqual(h.variance(0), 8)
         self.assertEqual(h.value(1), 0)
-        self.assertEqual(h + h, 2 * h)
-        self.assertEqual(h + h, h * 2)
+        self.assertEqual((h + h).value(0), (2 * h).value(0))
+        self.assertEqual((h + h).value(0), (h * 2).value(0))
+        self.assertNotEqual((h + h).variance(0), (2 * h).variance(0))
+        self.assertNotEqual((h + h).variance(0), (h * 2).variance(0))
         h2 = histogram(regular(2, 0, 2))
         with self.assertRaises(RuntimeError):
             h + h2

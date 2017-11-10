@@ -199,6 +199,8 @@ struct pow {
   bool operator==(const pow &other) const noexcept {
     return value == other.value;
   }
+private:
+  friend ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);
 };
 } // namespace transform
@@ -570,7 +572,8 @@ public:
   /// Returns the value for the bin index.
   bin_type operator[](int idx) const {
     auto it = map_->right.find(idx);
-    BOOST_ASSERT_MSG(it != map_->right.end(), "category index out of range");
+    if (it == map_->right.end())
+      throw std::out_of_range("category index out of range");
     return it->second;
   }
 

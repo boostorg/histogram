@@ -236,13 +236,26 @@ int main() {
 
 Some arithmetic operations are supported for histograms. Histograms are...
 
-* comparable
+* equal comparable
 * addable (adding histograms with non-matching axes is an error)
 * multipliable and dividable by a real number
 
 The operations are commutative, except for division. Dividing a number by a histogram is not allowed.
 
-The operations are illustrated in the next listing.
+Two histograms compare equal, if...
+
+* all axes compare equal, which also checks equality of axis labels
+* all values and variances compare equal
+
+Adding histograms is useful, if you want to parallelize the filling of a histogram over several threads or processes. Fill independent copies of the histogram in worker threads, and then add them all up in the main thread.
+
+Scaling is useful to re-weight histograms before adding them, for those who need to work with weights. Scaling a bin count by a factor `x` has a different effect on value and variance of the count. The value is multiplied by `x`, but the variance is multiplied by `x*x`. This follows from the properties of the variance, as explained in [link histogram.rationale.variance the rationale].
+
+[warning Because of behavior of the variance, adding a histogram to itself is not identical to multiplying the original histogram by two, as far as the variance is concerned.]
+
+[note Scaling a histogram internally converts the bin counters from integers to double counters per bin to store the now different numbers for value and variance, as explained in previous sections.]
+
+Here is an example which show-cases the supported operators.
 
 [c++]``
 #include <boost/histogram.hpp>
@@ -283,20 +296,30 @@ int main() {
     std::cout << (h4 != h5) << " " << (h4 == 5 * h5) << std::endl;
 
     // prints: 1 1
+
+    // beware the special effect of multiplying a histogram on its variance
+    auto h = bh::make_static_histogram(bh::axis::regular<>(2, -1, 1));
+    h.fill(-0.5);
+    std::cout << "value    " << (2 * h).value(0)
+              << " " << (h + h).value(0) << "\n"
+              << "variance " << (2 * h).variance(0)
+              << " " << (h + h).variance(0) << std::endl;
+    // equality operator also checks variances, so the statement is false
+    std::cout << (h + h == 2 * h) << std::endl;
+
+    /* prints:
+        value    2 2
+        variance 4 2
+        0
+    */
 }
 ``
-
-Adding histograms is useful, if you want to parallelize the filling of a histogram over several threads or processes. Fill independent copies of the histogram in worker threads, and then add them all up in the main thread.
-
-Scaling is useful to re-weight histograms before adding them, for those who need to work with weights.
-
-[note Scaling by a factor `x` internally converts the bin counters from integers to double counters per bin, as explained in previous sections. The value counter is multiplied by `x`, the variance counter by `x*x`. This follows from the properties of the variance, as explained in [link histogram.rationale.variance the rationale].]
 
 [endsect]
 
 [section Streaming]
 
-Simple ostream operators are shipped with the library, which are internally used by the Python interface bindings. These may be useful for debugging, since they give a text representation of axis and histogram instances. The streaming operators are not included by default (so that users can implement their own). The following example shows the effect of output streaming.
+Simple ostream operators are shipped with the library, which are internally used by the Python interface bindings. These give text representations of axis and histogram configurations, but do not show the histogram content. For users, the builtin streaming operators may be useful for debugging. The streaming operators are not included by the standard header `#include <boost/histogram.hpp>`, to not collide with user implementations. The following example shows the effect of output streaming.
 
 [c++]``
 #include <boost/histogram.hpp>
@@ -340,7 +363,7 @@ int main() {
 
 [section Serialization]
 
-The library supports serialization via [@boost:/libs/serialization/index.html Boost.Serialization]. The serialization machinery is also used in Python to enable pickling of histograms. The streaming code is not included by default, so that the library can be used without having Boost.Serialization installed.
+The library supports serialization via [@boost:/libs/serialization/index.html Boost.Serialization]. The serialization machinery is used in the Python module to enable pickling of histograms. The streaming code is not included by default, so that the library can be used without having Boost.Serialization installed.
 
 [c++]``
 #include <boost/histogram.hpp>
@@ -398,13 +421,13 @@ The C++ histogram has Python-bindings, so you can create and fill histograms in 
 
 To access the Python interface of Boost.Histogram, you need to active the compilation of the corresponding module, which you can then import via `import histogram` in Python.
 
-The Python interface generally mimics the C++ interface. All methods on the C++ side have an equivalent on the Python side. Typical C++ idioms, however, have been replaced with equivalent Python idioms.
+The Python interface generally mimics the C++ interface. All methods on the C++ side have an equivalent on the Python side. Typical C++ idioms have been replaced with equivalent Python idioms:
 
 * methods which take no argument and just return a value are represented by properties in Python
 * axis objects support the sequence protocol (e.g. len(x) instead of x.size)
 * optional values are passed via keyword arguments
 
-The documentation of the Python interface can be explored from within the Python interpreter (type `help()`, then `histogram`).
+The documentation of the Python interface is best explored from within the Python interpreter (type `help()`, then `histogram`).
 
 Here is an example of the Python module in action.
 
@@ -547,7 +570,7 @@ h2 = hg.histogram(h1) # creates copy
 h1.fill(-0.5)
 h2.fill(0.5)
 
-# arithmetic operators
+# arithmetic operators (see performance note below)
 h3 = h1 + h2
 h4 = h3 * 2
 
@@ -557,6 +580,10 @@ print h4.value(0), h4.value(1)
 # 2.0 2.0
 ``
 [endsect]
+
+[note Python has no concept of rvalue references and therefore cannot avoid creating temporary objects in arithmetic operations like C++ can. A statement `h3 = h1 + h2` is equivalent to `tmp = hg.histogram(h1); tmp += h2; h3 = hg.histogram(tmp)`, which amounts to two allocations, one in the first and one in the last copy-assignment, while only one allocation is really necessary.
+
+To avoid creating superfluous temporaries, write your code entirely with operators `+=` and `*=`, this is always possible. In the example above, the optimised code would be: `h3 = hg.histogram(h1); h3 += h2`. It is actually quite puzzling why Python does not do such simple optimisations by itself.]
 
 [section Mixing Python and C++]
 

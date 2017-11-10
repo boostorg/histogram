@@ -14,6 +14,8 @@ endif()
 option(BUILD_PYTHON "Build python bindings" ON)
 option(BUILD_NUMPY_SUPPORT "Build numpy support" ON)
 option(BUILD_CHECKS "Build auxillary checks" OFF)
+option(TRACE_ALLOCS "Debug: Trace allocations" OFF)
+mark_as_advanced(TRACE_ALLOCS)
 
 if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
@@ -24,6 +26,10 @@ if(MSVC)
 else()
   # -fpermissive needed for cpp_int in gcc-6
   add_definitions(-Wall -fpermissive)
+endif()
+
+if(TRACE_ALLOCS)
+  add_definitions(-DBOOST_HISTOGRAM_TRACE_ALLOCS)
 endif()
 
 if(BUILD_PYTHON)

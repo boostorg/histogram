@@ -38,7 +38,7 @@ namespace python {
 class access {
 public:
   using mp_int = histogram::detail::mp_int;
-  using weight = histogram::detail::weight;
+  using weight_counter = histogram::detail::weight_counter;
   template <typename T>
   using array = histogram::detail::array<T>;
 
@@ -58,7 +58,7 @@ public:
       strides.append(sizeof(double));
       return dtype_typestr<double>();
     }
-    str operator()(const array<weight>& /*unused*/) const {
+    str operator()(const array<weight_counter>& /*unused*/) const {
       strides.append(sizeof(double));
       strides.append(strides[-1] * 2);
       shapes.append(2);

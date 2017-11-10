@@ -10,7 +10,7 @@
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/detail/weight.hpp>
+#include <boost/histogram/detail/weight_counter.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
@@ -30,7 +30,7 @@ namespace histogram {
 namespace detail {
 
 template <class Archive>
-void serialize(Archive &ar, weight &wt, unsigned /* version */) {
+void serialize(Archive &ar, weight_counter &wt, unsigned /* version */) {
   ar &wt.w;
   ar &wt.w2;
 }
@@ -52,67 +52,67 @@ void serialize(Archive &ar, array_storage<Container> &store,
 template <class Archive>
 void adaptive_storage::serialize(Archive &ar, unsigned /* version */) {
   using detail::array;
-  std::size_t size = this->size();
+  auto size = this->size();
   ar &size;
   if (Archive::is_loading::value) {
-    unsigned tid = 0;
+    auto tid = 0u;
     ar &tid;
-    if (tid == 0) {
+    if (tid == 0u) {
       buffer_ = detail::array<void>(size);
-    } else if (tid == 1) {
+    } else if (tid == 1u) {
       array<uint8_t> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 2) {
+    } else if (tid == 2u) {
       array<uint16_t> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 3) {
+    } else if (tid == 3u) {
       array<uint32_t> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 4) {
+    } else if (tid == 4u) {
       array<uint64_t> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 5) {
+    } else if (tid == 5u) {
       array<detail::mp_int> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 6) {
-      array<detail::weight> a(size);
+    } else if (tid == 6u) {
+      array<detail::weight_counter> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
     }
   } else {
-    unsigned tid = 0;
+    auto tid = 0u;
     if (get<array<void>>(&buffer_)) {
-      tid = 0;
+      tid = 0u;
       ar &tid;
-    } else if (array<uint8_t> *a = get<array<uint8_t>>(&buffer_)) {
-      tid = 1;
-      ar &tid;
-      ar &serialization::make_array(a->begin(), size);
-    } else if (array<uint16_t> *a = get<array<uint16_t>>(&buffer_)) {
-      tid = 2;
+    } else if (auto *a = get<array<uint8_t>>(&buffer_)) {
+      tid = 1u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (array<uint32_t> *a = get<array<uint32_t>>(&buffer_)) {
-      tid = 3;
+    } else if (auto *a = get<array<uint16_t>>(&buffer_)) {
+      tid = 2u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (array<uint64_t> *a = get<array<uint64_t>>(&buffer_)) {
-      tid = 4;
+    } else if (auto *a = get<array<uint32_t>>(&buffer_)) {
+      tid = 3u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (array<detail::mp_int> *a =
+    } else if (auto *a = get<array<uint64_t>>(&buffer_)) {
+      tid = 4u;
+      ar &tid;
+      ar &serialization::make_array(a->begin(), size);
+    } else if (auto *a =
                    get<array<detail::mp_int>>(&buffer_)) {
-      tid = 5;
+      tid = 5u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (array<detail::weight> *a =
-                   get<array<detail::weight>>(&buffer_)) {
-      tid = 6;
+    } else if (auto *a =
+                   get<array<detail::weight_counter>>(&buffer_)) {
+      tid = 6u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
     }

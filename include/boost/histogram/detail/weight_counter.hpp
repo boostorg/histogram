@@ -11,38 +11,39 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-/// Used by nstore to hold a sum of weighted counts and a variance estimate
-struct weight {
+/// Double counter which holds a sum of weights and a sum of squared weights
+struct weight_counter {
   double w, w2;
-  weight() = default;
-  weight(const weight &) = default;
-  weight(weight &&) = default;
-  weight &operator=(const weight &) = default;
-  weight &operator=(weight &&) = default;
+  weight_counter() = default;
+  weight_counter(const weight_counter &) = default;
+  weight_counter(weight_counter &&) = default;
+  weight_counter &operator=(const weight_counter &) = default;
+  weight_counter &operator=(weight_counter &&) = default;
 
-  weight(double value, double variance) : w(value), w2(variance) {}
+  weight_counter(double value, double variance) : w(value), w2(variance) {}
 
-  weight &operator+=(const weight &rhs) {
-    w += rhs.w;
-    w2 += rhs.w2;
-    return *this;
-  }
-  weight &operator++() {
+  weight_counter &operator++() {
     ++w;
     ++w2;
     return *this;
   }
 
-  weight &operator*=(const double x) {
-    w *= x;
-    w2 *= x;
+  weight_counter &operator+=(const weight_counter &rhs) {
+    w += rhs.w;
+    w2 += rhs.w2;
     return *this;
   }
 
-  bool operator==(const weight &rhs) const {
+  weight_counter &operator*=(const double x) {
+    w *= x;
+    w2 *= x*x;
+    return *this;
+  }
+
+  bool operator==(const weight_counter &rhs) const {
     return w == rhs.w && w2 == rhs.w2;
   }
-  bool operator!=(const weight &rhs) const { return !operator==(rhs); }
+  bool operator!=(const weight_counter &rhs) const { return !operator==(rhs); }
   template <typename T> bool operator==(const T &rhs) const {
     return w == static_cast<double>(rhs) && w2 == static_cast<double>(rhs);
   }
@@ -50,33 +51,33 @@ struct weight {
     return !operator==(rhs);
   }
 
-  weight &add_weight(double t) {
+  weight_counter &operator+=(double t) {
     w += t;
     w2 += t * t;
     return *this;
   }
 
   template <typename T>
-  explicit weight(const T &t)
+  explicit weight_counter(const T &t)
       : w(static_cast<double>(t)), w2(static_cast<double>(t)) {}
 
-  template <typename T> weight &operator=(const T &t) {
+  template <typename T> weight_counter &operator=(const T &t) {
     w = static_cast<double>(t);
     w2 = static_cast<double>(t);
     return *this;
   }
-  template <typename T> weight &operator+=(const T &t) {
+  template <typename T> weight_counter &operator+=(const T &t) {
     w += static_cast<double>(t);
     w2 += static_cast<double>(t);
     return *this;
   }
 };
 
-template <typename T> bool operator==(const T &t, const weight &w) {
+template <typename T> bool operator==(const T &t, const weight_counter &w) {
   return w == t;
 }
 
-template <typename T> bool operator!=(const T &t, const weight &w) {
+template <typename T> bool operator!=(const T &t, const weight_counter &w) {
   return !(w == t);
 }
 } // namespace detail

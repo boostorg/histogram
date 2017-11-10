@@ -8,7 +8,6 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_DYNAMIC_IMPL_HPP_
 
 #include <algorithm>
-#include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
@@ -133,17 +132,16 @@ public:
     static_assert(
         (n_count::value + n_weight::value) <= 1,
         "arguments may contain at most one instance of type count or weight");
-    BOOST_ASSERT_MSG(sizeof...(args) ==
-                         (dim() + n_count::value + n_weight::value),
-                     "number of arguments does not match histogram dimension");
+    if (dim() != sizeof...(args) - n_count::value - n_weight::value)
+      throw std::invalid_argument("fill arguments does not match histogram dimension");
     fill_impl(mpl::int_<(n_count::value + 2 * n_weight::value)>(),
               std::forward<Args>(args)...);
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   void fill(Iterator begin, Iterator end) {
-    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
-                     "number of arguments does not match histogram dimension");
+    if(dim() != std::distance(begin, end))
+      throw std::invalid_argument("fill iterator range does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     xlin_iter(idx, stride, begin);
     if (stride) {
@@ -153,8 +151,8 @@ public:
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   void fill(Iterator begin, Iterator end, const count n) {
-    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
-                     "number of arguments does not match histogram dimension");
+    if(dim() != std::distance(begin, end))
+      throw std::invalid_argument("fill iterator range does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     xlin_iter(idx, stride, begin);
     if (stride) {
@@ -164,8 +162,8 @@ public:
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   void fill(Iterator begin, Iterator end, const weight w) {
-    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
-                     "number of arguments does not match histogram dimension");
+    if(dim() != std::distance(begin, end))
+      throw std::invalid_argument("fill iterator range does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     xlin_iter(idx, stride, begin);
     if (stride) {
@@ -174,32 +172,30 @@ public:
   }
 
   template <typename... Indices> value_type value(Indices &&... indices) const {
-    BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
-                     "number of arguments does not match histogram dimension");
+    if(dim() != sizeof...(indices))
+      throw std::invalid_argument("value arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, std::forward<Indices>(indices)...);
-    if (stride == 0) {
+    if (stride == 0)
       throw std::out_of_range("invalid index");
-    }
     return storage_.value(idx);
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   value_type value(Iterator begin, Iterator end) const {
-    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
-                     "number of arguments does not match histogram dimension");
+    if(dim() != std::distance(begin, end))
+      throw std::invalid_argument("value iterator range does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_iter(idx, stride, begin);
-    if (stride == 0) {
+    if (stride == 0)
       throw std::out_of_range("invalid index");
-    }
     return storage_.value(idx);
   }
 
   template <typename... Indices>
   value_type variance(Indices &&... indices) const {
-    BOOST_ASSERT_MSG(sizeof...(indices) == dim(),
-                     "number of arguments does not match histogram dimension");
+    if(dim() != sizeof...(indices))
+      throw std::invalid_argument("variance arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, std::forward<Indices>(indices)...);
     if (stride == 0) {
@@ -210,8 +206,8 @@ public:
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
   value_type variance(Iterator begin, Iterator end) const {
-    BOOST_ASSERT_MSG(std::distance(begin, end) == dim(),
-                     "number of arguments does not match histogram dimension");
+    if(dim() != std::distance(begin, end))
+      throw std::invalid_argument("variance iterator range does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_iter(idx, stride, begin);
     if (stride == 0) {
@@ -241,13 +237,15 @@ public:
 
   /// Return axis \a i
   any_axis_type &axis(unsigned i = 0) {
-    BOOST_ASSERT_MSG(i < dim(), "axis index out of range");
+    if(i >= dim())
+      throw std::out_of_range("axis index out of range");
     return axes_[i];
   }
 
   /// Return axis \a i (const version)
   const any_axis_type &axis(unsigned i = 0) const {
-    BOOST_ASSERT_MSG(i < dim(), "axis index out of range");
+    if(i >= dim())
+      throw std::out_of_range("axis index out of range");
     return axes_[i];
   }
 

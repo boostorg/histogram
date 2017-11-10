@@ -10,13 +10,18 @@
 #include <algorithm>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/weight.hpp>
+#include <boost/histogram/detail/weight_counter.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/variant.hpp>
 #include <limits>
 #include <memory>
 #include <type_traits>
+#ifdef BOOST_HISTOGRAM_TRACE_ALLOCS
+#include <iostream>
+#include <boost/core/typeinfo.hpp>
+#endif
+
 
 // forward declaration for serialization
 namespace boost {
@@ -39,6 +44,15 @@ namespace detail {
 
 using mp_int = multiprecision::cpp_int;
 
+template <typename T>
+inline T* alloc(std::size_t s) {
+#ifdef BOOST_HISTOGRAM_TRACE_ALLOCS
+  boost::core::typeinfo const & ti = BOOST_CORE_TYPEID(T);
+  std::cerr << "alloc " << boost::core::demangled_name( ti ) << "[" << s << "]" << std::endl;
+#endif
+  return new T[s];
+}
+
 class array_base {
 public:
   explicit array_base(const std::size_t s) : size(s) {}
@@ -58,18 +72,18 @@ public:
 
 template <typename T> class array : public array_base {
 public:
-  explicit array(const std::size_t s) : array_base(s), ptr(new T[s]) {
+  explicit array(const std::size_t s) : array_base(s), ptr(alloc<T>(s)) {
     std::fill(begin(), end(), T(0));
   }
   array() = default;
-  array(const array &rhs) : array_base(rhs), ptr(new T[rhs.size]) {
+  array(const array &rhs) : array_base(rhs), ptr(alloc<T>(rhs.size)) {
     std::copy(rhs.begin(), rhs.end(), begin());
   }
   array &operator=(const array &rhs) {
     if (this != &rhs) {
       if (size != rhs.size) {
         size = rhs.size;
-        ptr.reset(new T[size]);
+        ptr.reset(alloc<T>(size));
       }
       std::copy(rhs.begin(), rhs.end(), begin());
     }
@@ -91,7 +105,7 @@ public:
   template <typename U>
   array(const array<U> &rhs,
         std::size_t nmax = std::numeric_limits<std::size_t>::max())
-      : array_base(rhs), ptr(new T[rhs.size]) {
+      : array_base(rhs), ptr(alloc<T>(rhs.size)) {
     std::copy(rhs.begin(), rhs.begin() + std::min(nmax, size), begin());
   }
 
@@ -114,7 +128,7 @@ public:
 
 using any_array =
     variant<array<void>, array<uint8_t>, array<uint16_t>, array<uint32_t>,
-            array<uint64_t>, array<mp_int>, array<weight>>;
+            array<uint64_t>, array<mp_int>, array<weight_counter>>;
 
 template <typename T> struct next_type;
 template <> struct next_type<uint8_t> { using type = uint16_t; };
@@ -180,7 +194,7 @@ template <typename RHS> struct assign_visitor : public static_visitor<void> {
 
   void operator()(array<mp_int> &lhs) const { lhs[idx].assign(rhs); }
 
-  void operator()(array<weight> &lhs) const { lhs[idx] = rhs; }
+  void operator()(array<weight_counter> &lhs) const { lhs[idx] = rhs; }
 };
 
 struct increase_visitor : public static_visitor<void> {
@@ -204,7 +218,7 @@ struct increase_visitor : public static_visitor<void> {
 
   void operator()(array<mp_int> &lhs) const { ++lhs[idx]; }
 
-  void operator()(array<weight> &lhs) const { ++lhs[idx]; }
+  void operator()(array<weight_counter> &lhs) const { ++lhs[idx]; }
 };
 
 struct wincrease_visitor : public static_visitor<void> {
@@ -215,18 +229,18 @@ struct wincrease_visitor : public static_visitor<void> {
       : lhs_any(l), idx(i), rhs(r) {}
 
   template <typename T> void operator()(array<T> &lhs) const {
-    array<weight> a(lhs);
-    a[idx].add_weight(rhs);
+    array<weight_counter> a(lhs);
+    a[idx] += rhs;
     lhs_any = std::move(a);
   }
 
   void operator()(array<void> &lhs) const {
-    array<weight> a(lhs.size);
-    a[idx].add_weight(rhs);
+    array<weight_counter> a(lhs.size);
+    a[idx] += rhs;
     lhs_any = std::move(a);
   }
 
-  void operator()(array<weight> &lhs) const { lhs[idx].add_weight(rhs); }
+  void operator()(array<weight_counter> &lhs) const { lhs[idx] += rhs; }
 };
 
 struct value_visitor : public static_visitor<double> {
@@ -239,7 +253,7 @@ struct value_visitor : public static_visitor<double> {
 
   double operator()(const array<void> & /*b*/) const { return 0; }
 
-  double operator()(const array<weight> &b) const { return b[idx].w; }
+  double operator()(const array<weight_counter> &b) const { return b[idx].w; }
 };
 
 struct variance_visitor : public static_visitor<double> {
@@ -252,7 +266,7 @@ struct variance_visitor : public static_visitor<double> {
 
   double operator()(const array<void> & /*b*/) const { return 0; }
 
-  double operator()(const array<weight> &b) const { return b[idx].w2; }
+  double operator()(const array<weight_counter> &b) const { return b[idx].w2; }
 };
 
 template <typename RHS> struct radd_visitor : public static_visitor<void> {
@@ -280,27 +294,27 @@ template <typename RHS> struct radd_visitor : public static_visitor<void> {
     lhs[idx] += static_cast<mp_int>(rhs);
   }
 
-  void operator()(array<weight> &lhs) const { lhs[idx] += rhs; }
+  void operator()(array<weight_counter> &lhs) const { lhs[idx] += rhs; }
 };
 
-template <> struct radd_visitor<weight> : public static_visitor<void> {
+template <> struct radd_visitor<weight_counter> : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
-  const weight &rhs;
-  radd_visitor(any_array &l, const std::size_t i, const weight &r)
+  const weight_counter &rhs;
+  radd_visitor(any_array &l, const std::size_t i, const weight_counter &r)
       : lhs_any(l), idx(i), rhs(r) {}
 
   template <typename T> void operator()(array<T> &lhs) const {
-    lhs_any = array<weight>(lhs);
-    operator()(get<array<weight>>(lhs_any));
+    lhs_any = array<weight_counter>(lhs);
+    operator()(get<array<weight_counter>>(lhs_any));
   }
 
   void operator()(array<void> &lhs) const {
-    lhs_any = array<weight>(lhs.size);
-    operator()(get<array<weight>>(lhs_any));
+    lhs_any = array<weight_counter>(lhs.size);
+    operator()(get<array<weight_counter>>(lhs_any));
   }
 
-  void operator()(array<weight> &lhs) const { lhs[idx] += rhs; }
+  void operator()(array<weight_counter> &lhs) const { lhs[idx] += rhs; }
 };
 
 // precondition: both arrays must have same size and may not be identical
@@ -319,11 +333,11 @@ struct rmul_visitor : public static_visitor<void> {
   const double x;
   rmul_visitor(any_array &l, const double v) : lhs_any(l), x(v) {}
   template <typename T> void operator()(array<T> &lhs) const {
-    lhs_any = array<weight>(lhs);
-    operator()(get<array<weight>>(lhs_any));
+    lhs_any = array<weight_counter>(lhs);
+    operator()(get<array<weight_counter>>(lhs_any));
   }
   void operator()(array<void> &) const {}
-  void operator()(array<weight> &lhs) const {
+  void operator()(array<weight_counter> &lhs) const {
     for (auto i = 0ul; i != lhs.size; ++i)
       lhs[i] *= x;
   }
@@ -412,14 +426,14 @@ public:
     if (value == variance) {
       apply_visitor(detail::radd_visitor<T>(buffer_, i, value), buffer_);
     } else {
-      apply_visitor(detail::radd_visitor<detail::weight>(
-                        buffer_, i, detail::weight(value, variance)),
+      apply_visitor(detail::radd_visitor<detail::weight_counter>(
+                        buffer_, i, detail::weight_counter(value, variance)),
                     buffer_);
     }
   }
 
-  void weighted_increase(std::size_t i, const double weight) {
-    apply_visitor(detail::wincrease_visitor(buffer_, i, weight), buffer_);
+  void weighted_increase(std::size_t i, const double weight_counter) {
+    apply_visitor(detail::wincrease_visitor(buffer_, i, weight_counter), buffer_);
   }
 
   value_type value(std::size_t i) const {
