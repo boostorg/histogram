@@ -35,6 +35,23 @@ template <typename T, typename = decltype(std::declval<T &>().size(),
                                           std::declval<T &>().value(0))>
 struct is_storage {};
 
+template <typename T>
+struct has_variance_support
+{
+  template<typename U, typename T::value_type (U::*)(std::size_t) const> struct SFINAE {};
+  template<typename U> static std::true_type Test(SFINAE<U, &U::variance>*);
+  template<typename U> static std::false_type Test(...);
+  using type = decltype(Test<T>(nullptr));
+};
+
+template <typename T>
+using has_variance_support_t = typename has_variance_support<T>::type;
+
+template <typename S>
+using requires_variance_support = typename std::enable_if<
+    has_variance_support_t<S>::value, typename S::value_type
+  >::type;
+
 template <typename T,
           typename = decltype(*std::declval<T &>(), ++std::declval<T &>())>
 struct is_iterator {};

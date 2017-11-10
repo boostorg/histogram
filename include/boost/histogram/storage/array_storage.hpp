@@ -75,13 +75,8 @@ public:
   std::size_t size() const noexcept { return size_; }
   void increase(std::size_t i) noexcept { ++array_[i]; }
   void add(std::size_t i, const value_type &n) noexcept { array_[i] += n; }
-  void add(std::size_t i, const value_type &n,
-           const value_type & /* variance */) noexcept {
-    array_[i] += n;
-  }
 
   value_type value(std::size_t i) const noexcept { return array_[i]; }
-  value_type variance(std::size_t i) const noexcept { return array_[i]; }
 
   template <typename U>
   array_storage &operator+=(const array_storage<U> &rhs) noexcept {

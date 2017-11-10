@@ -561,7 +561,6 @@ public:
   }
 
   /// Returns the bin index for the passed argument.
-  /// Performs a range check.
   inline int index(const value_type &x) const noexcept {
     auto it = map_->left.find(x);
     if (it == map_->left.end())
@@ -569,7 +568,7 @@ public:
     return it->second;
   }
 
-  /// Returns the value for the bin index.
+  /// Returns the value for the bin index (performs a range check).
   bin_type operator[](int idx) const {
     auto it = map_->right.find(idx);
     if (it == map_->right.end())

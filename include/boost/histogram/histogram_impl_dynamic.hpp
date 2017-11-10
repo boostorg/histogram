@@ -192,8 +192,9 @@ public:
     return storage_.value(idx);
   }
 
-  template <typename... Indices>
-  value_type variance(Indices &&... indices) const {
+  template <typename S = Storage, typename... Indices>
+  detail::requires_variance_support<S>
+  variance(Indices &&... indices) const {
     if(dim() != sizeof...(indices))
       throw std::invalid_argument("variance arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -204,8 +205,9 @@ public:
     return storage_.variance(idx);
   }
 
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  value_type variance(Iterator begin, Iterator end) const {
+  template <typename S = Storage, typename Iterator, typename = detail::is_iterator<Iterator>>
+  detail::requires_variance_support<S>
+  variance(Iterator begin, Iterator end) const {
     if(dim() != std::distance(begin, end))
       throw std::invalid_argument("variance iterator range does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -416,8 +418,7 @@ private:
     histogram h(axes.begin(), axes.end());
     detail::index_mapper m(n, b);
     do {
-      h.storage_.add(m.second, storage_.value(m.first),
-                     storage_.variance(m.first));
+      detail::storage_add(h.storage_, storage_, m.second, m.first);
     } while (m.next());
     return h;
   }

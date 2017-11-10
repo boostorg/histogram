@@ -131,8 +131,9 @@ public:
     return storage_.value(idx);
   }
 
-  template <typename... Indices>
-  value_type variance(Indices &&... indices) const {
+  template <typename S=Storage, typename... Indices>
+  detail::requires_variance_support<S>
+  variance(Indices &&... indices) const {
     static_assert(sizeof...(indices) == axes_size::value,
                   "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -305,8 +306,7 @@ private:
     for_each_axis(helper);
     detail::index_mapper m(n, b);
     do {
-      h.storage_.add(m.second, storage_.value(m.first),
-                     storage_.variance(m.first));
+      detail::storage_add(h.storage_, storage_, m.second, m.first);
     } while (m.next());
   }
 

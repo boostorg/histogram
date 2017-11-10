@@ -111,7 +111,7 @@ We use an [classref boost::histogram::axis::integer integer axis] here, because 
 
 [endsect]
 
-[section Fill a histogram with data]
+[section Fill histogram]
 
 After you created the histogram, you want to insert potentionally multi-dimensional data. This is done with the flexible `fill(...)` method, which you call in a handcrafted loop. The histogram supports three kinds of fills, as shown in the example:
 
@@ -466,7 +466,7 @@ print "overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h.value(5), h.variance(
 
 [section:numpy Numpy support]
 
-Looping over a large collection in Python is very slow and should be avoided. If the Python module was build with Numpy support, you can also pass the input values as Numpy arrays. This is strongly recommended for efficiency and convenience. The performance is almost as good as using C++ directly, and except in case of one-dimensional histograms better than Numpy's histogram functions (which are not as flexible and not object oriented, either), see the [link histogram.benchmarks benchmark]. Here is an example to illustrate:
+Looping over a large collection in Python to fill a histogram is very slow and should be avoided. If the Python module was build with Numpy support, you can instead pass the input values as Numpy arrays. This is very fast and convenient. The performance is almost as good as using C++ directly, and usually better than Numpy's histogram functions, see the [link histogram.benchmarks benchmark]. Here is an example to illustrate:
 
 [python]``
 import histogram as hg
@@ -484,9 +484,9 @@ y = 0.5 * np.random.randn(1000)
 # fill histogram with numpy arrays, this is very fast
 h.fill(x, y) # call looks the same as if x, y were values
 
-# get representations of the bin edges as Numpy arrays, this representation
-# differs from `list(h.axis(0))`, because it is optimised for compatibility
-# with Numpy conventions, i.e. return values of numpy.histogram
+# get representations of the bin edges as Numpy arrays; this representation
+# differs from `list(h.axis(0))` since it was adapted to be straight-forward
+# for those who have worked with Numpy's histogramming functions before
 x = np.array(h.axis(0))
 y = np.array(h.axis(1))
 
@@ -523,9 +523,9 @@ except ImportError:
     #  [ 0  0  0  0  0  1  0  0  0  0  0  0]]
 ``
 
-[note The `fill(...)` method accepts any sequence that can be converted into a Numpy array with `dtype=float`. To get the best performance, avoid the conversion and work with such numpy arrays of dtype `float` directly.]
+[note The `fill(...)` method accepts not only Numpy arrays as arguments, but also any sequence that can be converted into a Numpy array with `dtype=float`. The best performance is achieved, however, if such conversions are avoided. Therefore, it is best to create numpy arrays with dtype `float` directly.]
 
-The conversion of axes which represent a contiguous sequence of bins to Numpy arrays has been optimised for interoperability with other Numpy functions and matplotlib. For such an axis with `N` bins, a sequence of bin edges is generated of length `N+1`. The Numpy array is a sequence of all bin edges, including the upper edge of the last bin. The following code illustrates how the sequence is constructed.
+The conversion of an axis to a Numpy array has been optimised for interoperability with other Numpy functions and matplotlib. For such an axis with `N` bins, a sequence of bin edges is generated of length `N+1`. The Numpy array is a sequence of all bin edges, including the upper edge of the last bin. The following code illustrates how the sequence is constructed.
 
 [python]``
 import histogram as hg
@@ -547,13 +547,13 @@ print xedge2
 # [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 ``
 
-Using a Numpy array to view the count matrix reveals an implementation detail on how under- and overflow bins are stored internally. For a 1-d histogram with 5 bins, the counter structure looks like this:
+Using a Numpy array to view the count matrix reveals an implementation detail of how under- and overflow bins are stored internally. For a 1-d histogram with 5 bins, the counter structure looks like this:
 
     bin0 bin1 bin2 bin3 bin4 overflow underflow
 
-There are seven counters in total, five plus two. The overflow bin naturally follows in order after the normal bins. The position of the underflow bin may be surprising, but derives from the fact that Python counts negative indices from the end of a container, so that the index `-1` accesses the last counter in the sequence.
+There are seven counters in total, five plus two. The overflow bin naturally follows in order after the normal bins. The position of the underflow bin may be surprising, but derives from the fact that Python counts negative indices from the end of a container. Since the index `-1` accesses the last counter in the sequence, the underflow bin is put there.
 
-It is very easy to crop the extra counters by slicing each dimension with under-/overflow bins with the shorthand `:-2`, which just removes the last two bins.
+It is very easy to crop the extra counters by slicing each dimension with under-/overflow bins with the shorthand `:-2` along each dimension, which just removes the last two bins.
 
 [endsect]
 
@@ -576,14 +576,26 @@ h4 = h3 * 2
 
 print h4.value(0), h4.value(1)
 
-# prints:
-# 2.0 2.0
+# prints: 2.0 2.0
+
+# now save the histogram
+with open("h4_saved.pkl", "w") as f:
+    cPickle.dump(h4, f)
+with open("h4_saved.pkl", "r") as f:
+    h5 = cPickle.load(f)
+
+print h4 == h5
+
+# prints: true
 ``
-[endsect]
 
 [note Python has no concept of rvalue references and therefore cannot avoid creating temporary objects in arithmetic operations like C++ can. A statement `h3 = h1 + h2` is equivalent to `tmp = hg.histogram(h1); tmp += h2; h3 = hg.histogram(tmp)`, which amounts to two allocations, one in the first and one in the last copy-assignment, while only one allocation is really necessary.
 
 To avoid creating superfluous temporaries, write your code entirely with operators `+=` and `*=`, this is always possible. In the example above, the optimised code would be: `h3 = hg.histogram(h1); h3 += h2`. It is actually quite puzzling why Python does not do such simple optimisations by itself.]
+
+[warning Pickling in Python uses a binary representation which is *not* portable between different hardware platforms. It will only work on platforms with the same endianess and same floating point binary format. In practice, most computing clusters and most consumer hardware are x86 compatible nowadays. The binary_archive is portable between such hardware platforms. It is also portable between operating systems, like OSX, Windows, and Linux.]
+
+[endsect]
 
 [section Mixing Python and C++]
 
@@ -644,14 +656,19 @@ for iy in range(len(h.axis(1))):
 
 [section:expert Advanced usage]
 
+The library was carefully designed to be customizable and extensible for users. Users can create new axis classes and use them with the histogram, or implemented a custom storage policy.
+
 [section User-defined axis class]
 
-TODO
+
 
 [endsect]
 
 [section User-defined storage policy]
 
+Histograms can easily be created which use a different storage policy than the default `adaptive_storage`. A simple alternative is provided by the library, `array_storage`, which does not do dynamic memory management, and let's the user choose the counter type. As a consequence, it does 
+
+A simple alternat
 TODO
 
 [endsect]

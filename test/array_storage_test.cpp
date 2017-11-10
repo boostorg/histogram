@@ -53,19 +53,13 @@ int main() {
     a.increase(0);
     a *= 3;
     BOOST_TEST_EQ(a.value(0), 3.0);
-    BOOST_TEST_EQ(a.variance(0), 3.0);
     BOOST_TEST_EQ(a.value(1), 0.0);
-    BOOST_TEST_EQ(a.variance(1), 0.0);
-    a.add(1, 2.0, 5.0); // 5.0 is intentionally ignored
+    a.add(1, 2.0);
     BOOST_TEST_EQ(a.value(0), 3.0);
-    BOOST_TEST_EQ(a.variance(0), 3.0);
     BOOST_TEST_EQ(a.value(1), 2.0);
-    BOOST_TEST_EQ(a.variance(1), 2.0);
     a *= 3;
     BOOST_TEST_EQ(a.value(0), 9.0);
-    BOOST_TEST_EQ(a.variance(0), 9.0);
     BOOST_TEST_EQ(a.value(1), 6.0);
-    BOOST_TEST_EQ(a.variance(1), 6.0);
   }
 
   // copy

@@ -18,5 +18,17 @@ int main() {
   using result = bhd::unique_sorted<numbers>;
 
   BOOST_MPL_ASSERT((equal<result, expected, equal_to<_, _>>));
+
+  struct no_variance_method {
+    using value_type = int;
+  };
+  struct variance_method {
+    using value_type = int;
+    value_type variance(std::size_t) const;
+  };
+
+  BOOST_TEST_EQ(typename bhd::has_variance_support<no_variance_method>::type(), false);
+  BOOST_TEST_EQ(typename bhd::has_variance_support<variance_method>::type(), true);
+
   return boost::report_errors();
 }
