@@ -11,17 +11,15 @@
 #include <boost/fusion/include/fold.hpp>
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/back_inserter.hpp>
+#include <boost/mpl/int.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/mpl/copy_if.hpp>
 #include <boost/mpl/for_each.hpp>
-#include <boost/mpl/next.hpp>
 #include <boost/mpl/not.hpp>
 #include <boost/mpl/sort.hpp>
 #include <boost/mpl/transform.hpp>
 #include <boost/mpl/unique.hpp>
 #include <boost/mpl/vector.hpp>
-#include <boost/mpl/remove_if.hpp>
-#include <boost/mpl/range_c.hpp>
 
 #include <iterator>
 #include <limits>
@@ -106,16 +104,7 @@ using unique_sorted =
 
 template <typename Axes, typename Numbers>
 using axes_select =
-  typename mpl::transform<Numbers, mpl::at<Axes, mpl::_1>>::type;
-
-template <int N, typename Numbers>
-using anti_indices = typename mpl::copy_if<
-    typename mpl::range_c<int, 0, N>::type,
-    mpl::not_<mpl::contains<Numbers, mpl::_1>>,
-    mpl::back_inserter<
-      mpl::vector<>
-    >
-  >::type;
+  typename mpl::transform<Numbers, mpl::at<Axes, mpl::_>>::type;
 
 } // namespace detail
 } // namespace histogram

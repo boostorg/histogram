@@ -197,24 +197,16 @@ public:
   }
 
   /// Returns a lower-dimensional histogram
-  template <typename Indices>
-  auto reduce(detail::keep_static<Indices>) const
-      -> histogram<Static, detail::axes_select<Axes, Indices>, Storage> {
-    using HR = histogram<Static, detail::axes_select<Axes, Indices>, Storage>;
+  template <int N, typename... Rest>
+  auto reduce_to(mpl::int_<N>, Rest...) const
+      -> histogram<Static, detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage> {
+    using HR = histogram<Static, detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage>;
     typename HR::axes_type axes;
-    detail::axes_assign_subset<Indices>(axes, axes_);
+    detail::axes_assign_subset<mpl::vector<mpl::int_<N>, Rest...>>(axes, axes_);
     auto hr = HR(std::move(axes));
-    const auto b = detail::bool_mask<Indices>(dim(), true);
+    const auto b = detail::bool_mask<mpl::vector<mpl::int_<N>, Rest...>>(dim(), true);
     reduce_impl(hr, b);
     return hr;
-  }
-
-  /// Returns a lower-dimensional histogram
-  template <typename I>
-  auto reduce(detail::remove_static<I>) const
-      -> histogram<Static, detail::axes_select<Axes, detail::anti_indices<axes_size::value, I>>, Storage> {
-    using Indices = detail::anti_indices<axes_size::value, I>;
-    return reduce(detail::keep_static<Indices>());
   }
 
 private:

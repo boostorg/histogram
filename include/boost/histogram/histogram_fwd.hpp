@@ -58,46 +58,6 @@ struct count {
   unsigned value;
 };
 
-namespace detail {
-template <typename T> struct keep_static {};
-template <typename T> struct remove_static {};
-
-struct keep_dynamic : public std::set<unsigned> {
-  using base_type = std::set<unsigned>;
-  using base_type::base_type;
-};
-struct remove_dynamic : public std::set<unsigned> {
-  using base_type = std::set<unsigned>;
-  using base_type::base_type;
-};
-
-inline void insert(keep_dynamic &) {} // end recursion
-template <typename... Rest>
-inline void insert(keep_dynamic &s, unsigned i, Rest... rest) {
-  s.insert(i);
-  insert(s, rest...);
-}
-} // namespace detail
-
-// for static and dynamic histogram
-template <int N, typename... Rest>
-inline auto keep(mpl::int_<N>, Rest...)
-    -> detail::keep_static<detail::unique_sorted<mpl::vector<mpl::int_<N>, Rest...>>> {
-  return {};
-}
-
-template <typename Iterator, typename = detail::is_iterator<Iterator>>
-inline detail::keep_dynamic keep(Iterator begin, Iterator end) {
-  return {begin, end};
-}
-
-template <typename... Rest>
-inline detail::keep_dynamic keep(unsigned i, Rest... rest) {
-  detail::keep_dynamic s;
-  detail::insert(s, i, rest...);
-  return s;
-}
-
 } // namespace histogram
 } // namespace boost
 

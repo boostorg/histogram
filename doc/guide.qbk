@@ -319,9 +319,9 @@ int main() {
 
 [section Reductions]
 
-When you have a high-dimensional histogram, you may want to remove some axes and look the equivalent lower-dimensional version. Perhaps you found out that there is no interesting structure along an axis. Or you want to visualize 1-d or 2-d projections of a higher-dimensional histogram.
+When you have a high-dimensional histogram, you may want to remove some axes and look the equivalent lower-dimensional version obtained by summing the bin counts along the removed axes. Perhaps you found out that there is no interesting structure along an axis, or you want to visualize 1-d or 2-d projections of a higher-dimensional histogram.
 
-For this purpose, there is the `reduce(...)` method, which returns are new reduced histogram. The reduced histogram has fewer axis, and has been summed over the missing axes. The `reduce(...)` method accepts a single argument, `remove(...)` or `keep(...)`. Both accept a variable number of axis indices. Like the names suggest, `remove(...)` removes the listed axes, while `keep(...)` removes all other axes except those listed.
+For this purpose, there is the `reduce_to(...)` method, which returns are new reduced histogram. The `reduce_to(...)` method accepts one or several compile-time numbers, which are the indices of the axes to keep. The dynamic histogram also accepts runtime numbers and iterators over numbers.
 
 An example illustrates this.
 
@@ -342,8 +342,8 @@ int main() {
     h.fill(0.9, 3);
     h.fill(0.1, 2);
 
-    auto hr0 = h.reduce(bh::keep(0_c)); // keep only first axis
-    auto hr1 = h.reduce(bh::keep(1_c)); // keep only second axis
+    auto hr0 = h.reduce_to(0_c); // keep only first axis
+    auto hr1 = h.reduce_to(1_c); // keep only second axis
 
     /*
         reduce does not remove counts

@@ -259,30 +259,25 @@ public:
   }
 
   /// Return a lower dimensional histogram
-  template <typename Indices> histogram reduce(detail::keep_static<Indices>) const {
-    const auto b = detail::bool_mask<Indices>(dim(), true);
+  template <int N, typename... Rest> histogram reduce_to(mpl::int_<N>, Rest...) const {
+    const auto b = detail::bool_mask<mpl::vector<mpl::int_<N>, Rest...>>(dim(), true);
     return reduce_impl(b);
   }
 
   /// Return a lower dimensional histogram
-  template <typename Indices> histogram reduce(detail::remove_static<Indices>) const {
-    const auto b = detail::bool_mask<Indices>(dim(), false);
-    return reduce_impl(b);
-  }
-
-  /// Return a lower dimensional histogram
-  histogram reduce(const detail::keep_dynamic &k) const {
+  template <typename... Rest> histogram reduce_to(int n, Rest... rest) const {
     std::vector<bool> b(dim(), false);
-    for (const auto &i : k)
+    for (const auto &i : {n, rest...})
       b[i] = true;
     return reduce_impl(b);
   }
 
   /// Return a lower dimensional histogram
-  histogram reduce(const detail::remove_dynamic &r) const {
-    std::vector<bool> b(dim(), true);
-    for (const auto &i : r)
-      b[i] = false;
+  template <typename Iterator, typename = detail::is_iterator<Iterator>>
+  histogram reduce_to(Iterator begin, Iterator end) const {
+    std::vector<bool> b(dim(), false);
+    for (; begin != end; ++begin)
+      b[*begin] = true;
     return reduce_impl(b);
   }
 
