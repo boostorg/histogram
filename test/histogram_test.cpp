@@ -17,6 +17,7 @@
 #include <limits>
 #include <sstream>
 #include <vector>
+#include <cstdlib>
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
@@ -743,6 +744,34 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_12.value(0, 2), 2);
     BOOST_TEST(axis_equal(Type(), h2_12.axis(0_c), axis::integer<>(0, 3)));
     BOOST_TEST(axis_equal(Type(), h2_12.axis(1_c), axis::integer<>(0, 4)));
+  }
+
+  // custom axis
+  {
+    struct custom_axis : public axis::integer<> {
+      using value_type = const char*; // type that is fed to the axis
+
+      using integer::integer; // inherit ctors of base
+
+      // the customization point
+      // - accept const char* and convert to int
+      // - then call index method of base class
+      int index(value_type s) const {
+        return integer::index(std::atoi(s));
+      }
+    };
+
+    auto h = make_histogram<adaptive_storage>(Type(), custom_axis(0, 3));
+    h.fill("-10");
+    h.fill("0");
+    h.fill("1");
+    h.fill("9");
+
+    BOOST_TEST_EQ(h.dim(), 1);
+    BOOST_TEST(h.axis() == custom_axis(0, 3));
+    BOOST_TEST_EQ(h.value(0), 1);
+    BOOST_TEST_EQ(h.value(1), 1);
+    BOOST_TEST_EQ(h.value(2), 0);
   }
 }
 
