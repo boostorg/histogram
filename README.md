@@ -6,7 +6,7 @@
 
 This `C++11` library provides a multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. It is very customisable through policy classes, but the default policies were carefully designed so that most users won't need to customize anything. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: bin counts *cannot overflow* or *be capped*. While being safe to use, the library also has a convenient interface, is memory conserving, and faster than other libraries (see benchmarks).
 
-The histogram class comes in two variants which share a common interface. The *static* variant uses compile-time information to provide maximum performance, at the cost of runtime flexibility and potentially larger executables. The *dynamic* variant is a bit slower, but configurable at run-time and may produce smaller executables. Python bindings for the latter are included, implemented with `boost.python`.
+The histogram class comes in two variants which share a common interface. The *static* variant uses compile-time information to provide maximum performance, at the cost of runtime flexibility and potentially larger executables. The *dynamic* variant is a bit slower, but configurable at run-time and may produce smaller executables. Python bindings for the latter are included, implemented with `Boost.Python`.
 
 The histogram supports value semantics. Histograms can be added and scaled. Move operations and trips over the language boundary from C++ to Python and back are cheap. Histogram instances can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (in most cases several times faster than numpy's own histogram function) and are convertible into Numpy array views without copying data.
 
@@ -17,24 +17,24 @@ Check out the [full documentation](https://htmlpreview.github.io/?https://raw.gi
 ## Features
 
 * Multi-dimensional histogram
-* Simple and convenient interface in C++11 and Python
+* Simple and convenient interface in C++ and Python
 * Static and dynamic implementation in C++ with common interface
 * Counters cannot overflow or be capped (+)
 * Better performance than other libraries (see benchmarks for details)
 * Efficient move operations
 * Efficient conversion between static and dynamic implementation
-* Efficient use of memory (counter size dynamically grows as needed)
-* Support for many binning schemes (user-extensible)
-* Support for weighted input
-* Support for underflow/overflow bins for each dimension (can be disabled)
-* Support for statistical variance queries (++)
+* Efficient use of memory (counter capacity dynamically grows as needed)
+* Support for many mappings of input values to bin indices (user extensible)
+* Support for weighted increments
+* Support for under-/overflow bins (can be disabled individually for each dimension)
+* Support for variance tracking (++)
 * Support for addition and scaling of histograms
-* Support for serialization using `boost.serialization`
+* Support for serialization based on `Boost.Serialization`
 * Support for Python 2.x and 3.x
 * Support for Numpy
 
 (+) In the standard configuration and if you don't use weighted input.
-(++) Variance estimates are trivial if you don't have weighted input. If you don't fill a histogram with weighted input, variance queries come at zero cost. Only when you fill a histogram with weighted input, extra space is reserved internally to keep track of a variance counter per bin.
+(++) If you don't use weighted increments, variance tracking come at zero cost. If you use weighted increments, extra space is reserved internally to keep track of a variance counter per bin. The conversion happens automatically and transparently.
 
 ## Dependencies
 
@@ -57,7 +57,7 @@ To run the tests, do `make test`.
 ## Code examples
 
 For the full version of the following examples with explanations, see
-[Tutorial](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/tutorial.html).
+the [Getting started](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/getting_started.html) section in the documentation.
 
 Example 1: Fill a 1d-histogram in C++
 
@@ -155,7 +155,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
 ## Benchmarks
 
-Thanks to modern meta-programming and dynamic memory management, this library is not only safer, more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [GNU Scientific Library](https://www.gnu.org/software/gsl), the [ROOT framework from CERN](https://root.cern.ch), and to the histogram functions in [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. More details on the benchmark are given in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/benchmarks.html)
+Thanks to meta-programming and dynamic memory management, this library is not only safer, more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [GNU Scientific Library](https://www.gnu.org/software/gsl), the [ROOT framework from CERN](https://root.cern.ch), and to the histogram functions in [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. More details on the benchmark are given in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/benchmarks.html)
 
 ![alt benchmark](doc/benchmark.png)
 
@@ -163,7 +163,7 @@ Thanks to modern meta-programming and dynamic memory management, this library is
 
 There is a lack of a widely-used free histogram class in C++. While it is easy to write a one-dimensional histogram, writing a general multi-dimensional histogram is not trivial. Even more so, if you want the histogram to be serializable and have Python-bindings and support Numpy. In high-energy physics, the [ROOT framework](https://root.cern.ch) from CERN is widely used. This histogram class is designed to be more convenient, more flexiable, and faster than the equivalent ROOT histograms. This library comes in a clean and modern C++ design which follows the advice given in popular C++ books, like those of [Meyers](http://www.aristeia.com/books.html) and [Sutter and Alexandrescu](http://www.gotw.ca/publications/c++cs.htm).
 
-Read more about the rationale of the design choices in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/rationale.html)
+Read more about the design choices in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/rationale.html)
 
 ## State of project
 
