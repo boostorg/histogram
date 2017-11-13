@@ -34,9 +34,9 @@ To understand the need for multi-dimensional histograms, think of point coordina
 
 This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.axis_types axis types]. The number and concret types of the axes objects held by the histogram may be known at compile time or only at runtime, depending on how the library is used.
 
-Users can chose between two histogram variants, which have the same user interface. The variant is selected with the first template argument of the histogram template, see [classref boost::histogram::histogram]. The static variant is faster (see [link histogram.benchmarks benchmark]), because it can hold the axis types directly and use static dispatch on them. This also means that user errors are caught at compile-time rather than run-time.
+Users can chose between two histogram variants, which have the same user interface, see [classref boost::histogram::static_histogram] and [classref boost::histogram::dynamic_histogram]. The static variant is faster (see [link histogram.benchmarks benchmark]), because it can access the different axis types without any indirections or dynamic type casting. This also means that user errors are caught at compile-time rather than run-time.
 
-The static variant cannot be used when the user only knows the axis configuration at run-time, for example, if a histogram is created from Python. The dynamic variant addresses this and allows one to set the number of axes and their types at runtime. The interface of the dynamic variant is a strict superset of the static variant.
+The static variant cannot be used when the axis configuration is only known at run-time, for example, if a histogram is created from Python. The dynamic variant addresses this and allows one to set the number of axes and their types at runtime. The interface of the dynamic variant is a strict superset of the static variant.
 
 [endsect]
 

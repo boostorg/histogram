@@ -10,6 +10,7 @@ doxygen autodoc
 :
   ../../../boost/histogram.hpp
   [ glob ../../../boost/histogram/*.hpp ]
+  [ glob ../../../boost/histogram/axis/*.hpp ]
   [ glob ../../../boost/histogram/storage/*.hpp ]
 :
   <doxygen:param>PREDEFINED=BOOST_HISTOGRAM_DOXYGEN

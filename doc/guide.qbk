@@ -10,7 +10,7 @@ Input data can be one-dimensional or multi-dimensional. In the multi-dimensional
 
 The advantage of using a 3d histogram over three separate 1d histograms, one for each coordinate, is that the 3d histogram is able to capture more structure. For example, you could have a point distribution that looks like a checker board in three dimensions (a checker cube): high and low densities are alternating along each coordinate. Then the 1d histograms for each separate coordinate would look like flat distributions, completely hiding the complex structure, while the 3d histogram would retain the structure for further analysis.
 
-The term /histogram/ is usually reserved for something that has bins over continuous data. The histogram class in this library generalizes this concept, and can also process categorical variables and even have non-consecutive bins. The only real restriction is that bins are non-overlapping, since there must be a unique mapping from input value to bin.
+The term /histogram/ is usually reserved for something with bins over continuous data. The histogram classes in this library generalize this concept. They can also process categorical variables and even have non-consecutive bins. In fact, they are not restricted to numbers as input. Any type can be fed into the histogram, if there is a specialized axis object that maps values of this type to a bin index. The only remaining restriction is that bins are non-overlapping, since there must be a unique mapping from input value to bin.
 
 [endsect]
 
@@ -783,11 +783,29 @@ int main() {
 
 [section User-defined storage policy]
 
-Histograms can be created with a different storage policy than the default [classref boost::histogram::adaptive_storage], using the factories `make_static_histogram_with<other_storage>(...)` and `make_dynamic_histogram_with<other_storage>(...)`.
+Histograms can be created with a different storage policy than the default [classref boost::histogram::adaptive_storage adaptive_storage], using the templated factories [funcref boost::histogram::make_static_histogram_with make_static_histogram_with] and [funcref boost::histogram::make_dynamic_histogram_with make_dynamic_histogram_with].
 
-A simple alternative to the default storage, [classref boost::histogram::array_storage], is included in the library. It does not do dynamic memory management, nor does it handle weighted increments. Instead, it lets the user choose the type which internally stores the bin count at compile-time. If performance is a concern, you could give this storage policy a try, since it is possibly faster for one- or two-dimensional histograms.
+A simple alternative, [classref boost::histogram::array_storage array_storage], is included in the library. It does not do dynamic memory management and it does not handle weighted increments. Instead, it lets the user choose the type which internally stores the bin count at compile-time. If performance is a concern, you could give this storage policy a try, since it may be faster for low-dimensional histograms.
 
-[warning The guarantees regarding protection against overflow and bin count capping are only valid, if the default storage, [classref boost::histogram::adaptive_storage] is used. If you change the storage policy, you need know what you are doing.]
+Here is an example of a histogram construced with an alternative storage policy.
+
+[c++]``
+#include <boost/histogram.hpp>
+#include <boost/histogram/storage/array_storage.hpp>
+
+namespace bh = boost::histogram;
+
+int main() {
+    // create static histogram with array_storage, using int as bin counter
+    auto h = bh::make_static_histogram_with<bh::array_storage<int>>(
+            bh::axis::regular<>(10, 0, 1)
+        );
+
+    // do something with h
+}
+``
+
+[warning The guarantees regarding protection against overflow and bin count capping are only valid, if the default [classref boost::histogram::adaptive_storage adaptive_storage] is used. If you change the storage policy, you need know what you are doing.]
 
 [endsect]
 
