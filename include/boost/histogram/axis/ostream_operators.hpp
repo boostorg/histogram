@@ -9,7 +9,7 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
 #define _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
 
-#include <boost/histogram/axis.hpp>
+#include <boost/histogram/axis/axis.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/interval.hpp>
 #include <boost/math/constants/constants.hpp>

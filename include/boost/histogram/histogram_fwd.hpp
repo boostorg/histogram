@@ -7,16 +7,11 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
-#include <boost/histogram/detail/meta.hpp>
-#include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
-#include <set>
+#include <string>
 
 namespace boost {
 namespace histogram {
-
-using Static = std::integral_constant<int, 0>;
-using Dynamic = std::integral_constant<int, 1>;
 
 class adaptive_storage;
 
@@ -43,10 +38,17 @@ using builtins =
                 axis::regular<double, axis::transform::pow>, axis::circular<>,
                 axis::variable<>, axis::integer<>,
                 axis::category<>, axis::category<std::string>>;
-}
 
-template <class Variant, class Axes, class Storage = adaptive_storage>
-class histogram;
+template <typename Axes = builtins>
+class any;
+
+} // namespace axis
+
+template <class Axes, class Storage = adaptive_storage>
+class static_histogram;
+
+template <class Axes, class Storage = adaptive_storage>
+class dynamic_histogram;
 
 struct weight {
   weight(double w) : value(w) {}

@@ -20,7 +20,7 @@ The term /histogram/ is usually reserved for something that has bins over contin
 
 [section Static or dynamic histogram]
 
-The histogram class comes in two variants with a common interface, see the [link histogram.rationale.histogram_types rationale] for more information. Using a [classref boost::histogram::histogram<Static,Axes,Storage> static histogram] is recommended. You need a [classref boost::histogram::histogram<Dynamic,Axes,Storage> dynamic histogram] instead, if:
+The histogram class comes in two variants with a common interface, see the [link histogram.rationale.histogram_types rationale] for more information. Using a [classref boost::histogram::static_histogram static histogram] is recommended. You need a [classref boost::histogram::dynamic_histogram dynamic histogram] instead, if:
 
 * you only know the histogram configurations at runtime, not at compile-time
 
@@ -40,6 +40,7 @@ int main() {
         create a 1d-histogram in default configuration which
         covers the real line from -1 to 1 in 100 bins, the same
         call with `make_dynamic_histogram` would also work
+    */
     auto h = bh::make_static_histogram(bh::axis::regular<>(100, -1, 1));
 
     // do something with h
@@ -394,7 +395,7 @@ Simple ostream operators are shipped with the library, which are internally used
 
 [c++]``
 #include <boost/histogram.hpp>
-#include <boost/histogram/histogram_ostream_operators.hpp>
+#include <boost/histogram/ostream_operators.hpp>
 #include <iostream>
 
 namespace bh = boost::histogram;
@@ -686,7 +687,7 @@ namespace bh = boost::histogram;
 namespace bp = boost::python;
 
 // function that runs in C++ and accepts reference to dynamic histogram
-void process(bh::histogram<bh::Dynamic, bh::axis::builtins>& h) {
+void process(bh::dynamic_histogram<bh::axis::builtins>& h) {
   // fill histogram, in reality this would be arbitrarily complex code
   for (int i = 0; i < 4; ++i)
       h.fill(0.25 * i, i);

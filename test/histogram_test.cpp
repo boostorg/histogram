@@ -7,13 +7,13 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/axis_ostream_operators.hpp>
 #include <boost/histogram/histogram.hpp>
-#include <boost/histogram/histogram_ostream_operators.hpp>
+#include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
+#include <boost/mpl/int.hpp>
 #include <limits>
 #include <sstream>
 #include <vector>
@@ -22,6 +22,9 @@
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
 namespace mpl = boost::mpl;
+
+using Static = mpl::int_<0>;
+using Dynamic = mpl::int_<1>;
 
 template <typename S, typename... Axes>
 auto make_histogram(Static, Axes &&... axes)
@@ -50,14 +53,14 @@ template <typename Type> void run_tests() {
   // init_0
   {
     auto h =
-        histogram<Static, mpl::vector<axis::integer<>>, adaptive_storage>();
+        static_histogram<mpl::vector<axis::integer<>>, adaptive_storage>();
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(h.bincount(), 0);
-    auto h2 = histogram<Static, mpl::vector<axis::integer<>>,
+    auto h2 = static_histogram<mpl::vector<axis::integer<>>,
                         array_storage<unsigned>>();
     BOOST_TEST_EQ(h2, h);
     auto h3 =
-        histogram<Static, mpl::vector<axis::regular<>>, adaptive_storage>();
+        static_histogram<mpl::vector<axis::regular<>>, adaptive_storage>();
     BOOST_TEST_NE(h3, h);
   }
 
@@ -136,7 +139,7 @@ template <typename Type> void run_tests() {
     h.fill(0, 0);
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
-    auto h3 = histogram<Static, mpl::vector<axis::integer<>, axis::integer<>>,
+    auto h3 = static_histogram<mpl::vector<axis::integer<>, axis::integer<>>,
                         array_storage<unsigned>>(h);
     BOOST_TEST_EQ(h3, h);
   }
@@ -153,7 +156,7 @@ template <typename Type> void run_tests() {
     // test self-assign
     h2 = h2;
     BOOST_TEST_EQ(h, h2);
-    auto h3 = histogram<Static, mpl::vector<axis::integer<>, axis::integer<>>,
+    auto h3 = static_histogram<mpl::vector<axis::integer<>, axis::integer<>>,
                         array_storage<unsigned>>();
     h3 = h;
     BOOST_TEST_EQ(h, h3);
@@ -808,8 +811,8 @@ template <typename T1, typename T2> void run_mixed_tests() {
 int main() {
 
   // common interface
-  run_tests<boost::histogram::Static>();
-  run_tests<boost::histogram::Dynamic>();
+  run_tests<Static>();
+  run_tests<Dynamic>();
 
   // special stuff that only works with Dynamic
 
@@ -873,8 +876,8 @@ int main() {
     BOOST_TEST(axis_equal(Dynamic(), h1_1.axis(), h1.axis(1_c)));
   }
 
-  run_mixed_tests<boost::histogram::Static, boost::histogram::Dynamic>();
-  run_mixed_tests<boost::histogram::Dynamic, boost::histogram::Static>();
+  run_mixed_tests<Static, Dynamic>();
+  run_mixed_tests<Dynamic, Static>();
 
   return boost::report_errors();
 }

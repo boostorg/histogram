@@ -19,7 +19,7 @@
 #include <boost/fusion/include/sequence.hpp>
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/sequence/comparison.hpp>
-#include <boost/histogram/axis.hpp>
+#include <boost/histogram/axis/axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
@@ -42,7 +42,7 @@ namespace boost {
 namespace histogram {
 
 template <typename Axes, typename Storage>
-class histogram<Static, Axes, Storage> {
+class static_histogram {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
   using axes_size = typename fusion::result_of::size<Axes>::type;
 
@@ -50,28 +50,33 @@ public:
   using axes_type = typename fusion::result_of::as_vector<Axes>::type;
   using value_type = typename Storage::value_type;
 
-  histogram() = default;
-  histogram(const histogram &rhs) = default;
-  histogram(histogram &&rhs) = default;
-  histogram &operator=(const histogram &rhs) = default;
-  histogram &operator=(histogram &&rhs) = default;
+  static_histogram() = default;
+  static_histogram(const static_histogram &rhs) = default;
+  static_histogram(static_histogram &&rhs) = default;
+  static_histogram &operator=(const static_histogram &rhs) = default;
+  static_histogram &operator=(static_histogram &&rhs) = default;
 
   template <typename... Axis>
-  explicit histogram(const Axis &... axis) : axes_(axis...) {
+  explicit static_histogram(const Axis &... axis) : axes_(axis...) {
     storage_ = Storage(bincount_from_axes());
   }
 
-  explicit histogram(axes_type &&axes) : axes_(std::move(axes)) {
+  explicit static_histogram(axes_type &&axes) : axes_(std::move(axes)) {
     storage_ = Storage(bincount_from_axes());
   }
 
-  template <typename D, typename A, typename S>
-  explicit histogram(const histogram<D, A, S> &rhs) : storage_(rhs.storage_) {
+  template <typename S>
+  explicit static_histogram(const static_histogram<Axes, S> &rhs) : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
-  template <typename D, typename A, typename S>
-  histogram &operator=(const histogram<D, A, S> &rhs) {
+  template <typename A, typename S>
+  explicit static_histogram(const dynamic_histogram<A, S> &rhs) : storage_(rhs.storage_) {
+    detail::axes_assign(axes_, rhs.axes_);
+  }
+
+  template <typename S>
+  static_histogram &operator=(const static_histogram<Axes, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       detail::axes_assign(axes_, rhs.axes_);
       storage_ = rhs.storage_;
@@ -79,30 +84,62 @@ public:
     return *this;
   }
 
-  template <typename D, typename A, typename S>
-  bool operator==(const histogram<D, A, S> &rhs) const {
+  template <typename A, typename S>
+  static_histogram &operator=(const dynamic_histogram<A, S> &rhs) {
+    if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
+      detail::axes_assign(axes_, rhs.axes_);
+      storage_ = rhs.storage_;
+    }
+    return *this;
+  }
+
+  template <typename A, typename S>
+  bool operator==(const static_histogram<A, S> &rhs) const noexcept {
+    return false;
+  }
+
+  template <typename S>
+  bool operator==(const static_histogram<Axes, S> &rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <typename D, typename A, typename S>
-  bool operator!=(const histogram<D, A, S> &rhs) const {
+  template <typename A, typename S>
+  bool operator==(const dynamic_histogram<A, S> &rhs) const noexcept {
+    return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
+  }
+
+  template <typename A, typename S>
+  bool operator!=(const static_histogram<A, S> &rhs) const noexcept {
     return !operator==(rhs);
   }
 
-  template <typename D, typename A, typename S>
-  histogram &operator+=(const histogram<D, A, S> &rhs) {
+  template <typename A, typename S>
+  bool operator!=(const dynamic_histogram<A, S> &rhs) const noexcept {
+    return !operator==(rhs);
+  }
+
+  template <typename S>
+  static_histogram &operator+=(const static_histogram<Axes, S> &rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_))
       throw std::logic_error("axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
 
-  histogram &operator*=(const value_type rhs) {
+  template <typename A, typename S>
+  static_histogram &operator+=(const dynamic_histogram<A, S> &rhs) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
+      throw std::logic_error("axes of histograms differ");
+    storage_ += rhs.storage_;
+    return *this;
+  }
+
+  static_histogram &operator*=(const value_type rhs) {
     storage_ *= rhs;
     return *this;
   }
 
-  histogram &operator/=(const value_type rhs) {
+  static_histogram &operator/=(const value_type rhs) {
     storage_ *= 1.0 / rhs;
     return *this;
   }
@@ -199,8 +236,8 @@ public:
   /// Returns a lower-dimensional histogram
   template <int N, typename... Rest>
   auto reduce_to(mpl::int_<N>, Rest...) const
-      -> histogram<Static, detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage> {
-    using HR = histogram<Static, detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage>;
+      -> static_histogram<detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage> {
+    using HR = static_histogram<detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage>;
     typename HR::axes_type axes;
     detail::axes_assign_subset<mpl::vector<mpl::int_<N>, Rest...>>(axes, axes_);
     auto hr = HR(std::move(axes));
@@ -323,25 +360,26 @@ private:
     } while (m.next());
   }
 
-  template <typename D, typename A, typename S> friend class histogram;
+  template <typename A, typename S> friend class static_histogram;
+  template <typename A, typename S> friend class dynamic_histogram;
   friend class ::boost::serialization::access;
   template <typename Archive> void serialize(Archive &, unsigned);
 };
 
 /// default static type factory
 template <typename... Axis>
-inline histogram<Static, mpl::vector<Axis...>>
+inline static_histogram<mpl::vector<Axis...>>
 make_static_histogram(Axis &&... axis) {
-  using h = histogram<Static, mpl::vector<Axis...>>;
+  using h = static_histogram<mpl::vector<Axis...>>;
   auto axes = typename h::axes_type(std::forward<Axis>(axis)...);
   return h(std::move(axes));
 }
 
 /// static type factory with variable storage type
 template <typename Storage, typename... Axis>
-inline histogram<Static, mpl::vector<Axis...>, Storage>
+inline static_histogram<mpl::vector<Axis...>, Storage>
 make_static_histogram_with(Axis &&... axis) {
-  using h = histogram<Static, mpl::vector<Axis...>, Storage>;
+  using h = static_histogram<mpl::vector<Axis...>, Storage>;
   auto axes = typename h::axes_type(std::forward<Axis>(axis)...);
   return h(std::move(axes));
 }

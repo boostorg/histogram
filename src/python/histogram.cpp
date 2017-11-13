@@ -6,9 +6,8 @@
 
 #include "serialization_suite.hpp"
 #include "utility.hpp"
-#include <boost/histogram/axis.hpp>
-#include <boost/histogram/histogram.hpp>
-#include <boost/histogram/histogram_ostream_operators.hpp>
+#include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
@@ -29,7 +28,7 @@ namespace np = boost::python::numpy;
 namespace boost {
 
 namespace histogram {
-using dynamic_histogram = histogram<Dynamic, axis::builtins, adaptive_storage>;
+using histogram = dynamic_histogram<axis::builtins, adaptive_storage>;
 } // namespace histogram
 
 namespace python {
@@ -92,7 +91,7 @@ public:
     }
   };
 
-  static object array_interface(const histogram::dynamic_histogram &self) {
+  static object array_interface(const histogram::histogram &self) {
     dict d;
     list shapes;
     list strides;
@@ -124,9 +123,9 @@ struct axis_visitor : public static_visitor<python::object> {
 
 struct axes_appender {
   python::object obj;
-  std::vector<dynamic_histogram::any_axis_type>& axes;
+  std::vector<histogram::any_axis_type>& axes;
   bool& success;
-  axes_appender(python::object o, std::vector<dynamic_histogram::any_axis_type>& a,
+  axes_appender(python::object o, std::vector<histogram::any_axis_type>& a,
                 bool& s) : obj(o), axes(a), success(s) {}
   template <typename A> void operator()(const A&) const {
     if (success) return;
@@ -138,7 +137,7 @@ struct axes_appender {
   }
 };
 
-python::object histogram_axis(const dynamic_histogram &self, int i) {
+python::object histogram_axis(const histogram &self, int i) {
   if (i < 0)
     i += self.dim();
   if (i < 0 || i >= int(self.dim())) {
@@ -161,11 +160,11 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
   const unsigned dim = len(args) - 1;
 
   // normal constructor
-  std::vector<dynamic_histogram::any_axis_type> axes;
+  std::vector<histogram::any_axis_type> axes;
   for (unsigned i = 0; i < dim; ++i) {
     python::object pa = args[i + 1];
     bool success = false;
-    mpl::for_each<dynamic_histogram::any_axis_type::types>(
+    mpl::for_each<histogram::any_axis_type::types>(
       axes_appender(pa, axes, success)
     );
     if (!success) {
@@ -175,7 +174,7 @@ python::object histogram_init(python::tuple args, python::dict kwargs) {
       python::throw_error_already_set();
     }
   }
-  dynamic_histogram h(axes.begin(), axes.end());
+  histogram h(axes.begin(), axes.end());
   return pyinit(h);
 }
 
@@ -214,7 +213,7 @@ struct fetcher {
 
 python::object histogram_fill(python::tuple args, python::dict kwargs) {
   const auto nargs = python::len(args);
-  dynamic_histogram &self = python::extract<dynamic_histogram &>(args[0]);
+  histogram &self = python::extract<histogram &>(args[0]);
 
   const unsigned dim = nargs - 1;
   if (dim != self.dim()) {
@@ -293,7 +292,7 @@ python::object histogram_fill(python::tuple args, python::dict kwargs) {
 }
 
 python::object histogram_value(python::tuple args, python::dict kwargs) {
-  const dynamic_histogram & self = python::extract<const dynamic_histogram &>(args[0]);
+  const histogram & self = python::extract<const histogram &>(args[0]);
 
   const unsigned dim = len(args) - 1;
   if (self.dim() != dim) {
@@ -321,8 +320,8 @@ python::object histogram_value(python::tuple args, python::dict kwargs) {
 }
 
 python::object histogram_variance(python::tuple args, python::dict kwargs) {
-  const dynamic_histogram &self =
-      python::extract<const dynamic_histogram &>(args[0]);
+  const histogram &self =
+      python::extract<const histogram &>(args[0]);
 
   const unsigned dim = len(args) - 1;
   if (self.dim() != dim) {
@@ -349,7 +348,7 @@ python::object histogram_variance(python::tuple args, python::dict kwargs) {
   return python::object(self.variance(idx, idx + self.dim()));
 }
 
-std::string histogram_repr(const dynamic_histogram &h) {
+std::string histogram_repr(const histogram &h) {
   std::ostringstream os;
   os << h;
   return os.str();
@@ -358,17 +357,17 @@ std::string histogram_repr(const dynamic_histogram &h) {
 void register_histogram() {
   python::docstring_options dopt(true, true, false);
 
-  python::class_<dynamic_histogram, boost::shared_ptr<dynamic_histogram>>(
+  python::class_<histogram, boost::shared_ptr<histogram>>(
       "histogram", "N-dimensional histogram for real-valued data.", python::no_init)
       .def("__init__", python::raw_function(histogram_init),
            ":param axis args: axis objects"
            "\nPass one or more axis objects to configure the histogram.")
       // shadowed C++ ctors
-      .def(python::init<const dynamic_histogram &>())
+      .def(python::init<const histogram &>())
 #ifdef HAVE_NUMPY
       .add_property("__array_interface__", &python::access::array_interface)
 #endif
-      .add_property("dim", &dynamic_histogram::dim)
+      .add_property("dim", &histogram::dim)
       .def("axis", histogram_axis, python::arg("i") = 0,
            ":param int i: axis index"
            "\n:return: corresponding axis object")
@@ -380,9 +379,9 @@ void register_histogram() {
            "\nIf Numpy support is enabled, 1d-arrays can be passed instead of"
            "\nvalues, which must be equal in lenght. Arrays and values can"
            "\nbe mixed arbitrarily in the same call.")
-      .add_property("bincount", &dynamic_histogram::bincount,
+      .add_property("bincount", &histogram::bincount,
            ":return: total number of bins, including under- and overflow")
-      .add_property("sum", &dynamic_histogram::sum,
+      .add_property("sum", &histogram::sum,
            ":return: sum of all entries, including under- and overflow bins")
       .def("value", python::raw_function(histogram_value),
            ":param int args: indices of the bin (number must match dimension)"
@@ -398,7 +397,7 @@ void register_histogram() {
       .def(python::self * double())
       .def(double() * python::self)
       .def(python::self + python::self)
-      .def_pickle(serialization_suite<dynamic_histogram>());
+      .def_pickle(serialization_suite<histogram>());
 }
 
 } // NS histogram

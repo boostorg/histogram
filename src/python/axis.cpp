@@ -5,8 +5,10 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include "utility.hpp"
-#include <boost/histogram/axis.hpp>
-#include <boost/histogram/axis_ostream_operators.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/axis/axis.hpp>
+#include <boost/histogram/axis/any.hpp>
+#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/python.hpp>
 #include <boost/python/def_visitor.hpp>

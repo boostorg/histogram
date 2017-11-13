@@ -108,18 +108,18 @@ int main() {
     else
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
-           compare_1d<histogram<Static,mpl::vector<axis::regular<>>,
+           compare_1d<static_histogram<mpl::vector<axis::regular<>>,
                                 array_storage<int>>>(
                6000000, itype));
     printf("hs_sd %.3f\n",
-           compare_1d<histogram<Static,mpl::vector<axis::regular<>>,
+           compare_1d<static_histogram<mpl::vector<axis::regular<>>,
                                 adaptive_storage>>(6000000, itype));
     printf("hd_ss %.3f\n",
-           compare_1d<histogram<Dynamic, axis::builtins,
+           compare_1d<dynamic_histogram<axis::builtins,
                                 array_storage<int>>>(
                6000000, itype));
     printf("hd_sd %.3f\n",
-           compare_1d<histogram<Dynamic, axis::builtins, adaptive_storage>>(
+           compare_1d<dynamic_histogram<axis::builtins, adaptive_storage>>(
                6000000, itype));
   }
 
@@ -130,19 +130,19 @@ int main() {
     else
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
-           compare_2d<histogram<Static,
+           compare_2d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>>,
                array_storage<int>>>(6000000, itype));
     printf("hs_sd %.3f\n",
-           compare_2d<histogram<Static,
+           compare_2d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>>,
                adaptive_storage>>(6000000, itype));
     printf("hd_ss %.3f\n",
-           compare_2d<histogram<Dynamic, axis::builtins,
+           compare_2d<dynamic_histogram<axis::builtins,
                       array_storage<int>>>(
                6000000, itype));
     printf("hd_sd %.3f\n",
-           compare_2d<histogram<Dynamic, axis::builtins, adaptive_storage>>(
+           compare_2d<dynamic_histogram<axis::builtins, adaptive_storage>>(
                6000000, itype));
   }
 
@@ -153,19 +153,19 @@ int main() {
     else
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
-           compare_3d<histogram<Static,
+           compare_3d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>>,
                array_storage<int>>>(6000000, itype));
     printf("hs_sd %.3f\n",
-           compare_3d<histogram<Static,
+           compare_3d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>>,
                adaptive_storage>>(6000000, itype));
     printf("hd_ss %.3f\n",
-           compare_3d<histogram<Dynamic, axis::builtins,
+           compare_3d<dynamic_histogram<axis::builtins,
                                 array_storage<int>>>(
                6000000, itype));
     printf("hd_sd %.3f\n",
-           compare_3d<histogram<Dynamic, axis::builtins, adaptive_storage>>(
+           compare_3d<dynamic_histogram<axis::builtins, adaptive_storage>>(
                6000000, itype));
   }
 
@@ -176,21 +176,21 @@ int main() {
     else
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
-           compare_6d<histogram<Static,
+           compare_6d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>,
                            axis::regular<>, axis::regular<>, axis::regular<>>,
                array_storage<int>>>(6000000, itype));
     printf("hs_sd %.3f\n",
-           compare_6d<histogram<Static,
+           compare_6d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>,
                            axis::regular<>, axis::regular<>, axis::regular<>>,
                adaptive_storage>>(6000000, itype));
     printf("hd_ss %.3f\n",
-           compare_6d<histogram<Dynamic, axis::builtins,
+           compare_6d<dynamic_histogram<axis::builtins,
                                 array_storage<int>>>(
                6000000, itype));
     printf("hd_sd %.3f\n",
-           compare_6d<histogram<Dynamic, axis::builtins, adaptive_storage>>(
+           compare_6d<dynamic_histogram<axis::builtins, adaptive_storage>>(
                6000000, itype));
   }
 }
