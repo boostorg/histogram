@@ -603,6 +603,22 @@ class test_histogram(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             h + h2
 
+    def test_reduce_to(self):
+        h = histogram(integer(0, 2), integer(1, 4))
+        h.fill(0, 1)
+        h.fill(0, 2)
+        h.fill(1, 3)
+
+        h0 = h.reduce_to(0)
+        self.assertEqual(h0.dim, 1)
+        self.assertEqual(h0.axis(), integer(0, 2))
+        self.assertEqual([h0.value(i) for i in range(2)], [2, 1])
+
+        h1 = h.reduce_to(1)
+        self.assertEqual(h1.dim, 1)
+        self.assertEqual(h1.axis(), integer(1, 4))
+        self.assertEqual([h1.value(i) for i in range(3)], [1, 1, 1])
+
     def test_pickle_0(self):
         a = histogram(category(0, 1, 2),
                       integer(0, 20, label='ia'),

@@ -342,10 +342,35 @@ python::object histogram_variance(python::tuple args, python::dict kwargs) {
   }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
-  for (unsigned i = 0; i < self.dim(); ++i)
+  for (auto i = 0u; i < self.dim(); ++i)
     idx[i] = python::extract<int>(args[1 + i]);
 
   return python::object(self.variance(idx, idx + self.dim()));
+}
+
+python::object histogram_reduce_to(python::tuple args, python::dict kwargs) {
+  const histogram &self =
+      python::extract<const histogram &>(args[0]);
+
+  const unsigned nargs = len(args) - 1;
+
+  if (nargs > BOOST_HISTOGRAM_AXIS_LIMIT) {
+    std::ostringstream os;
+    os << "too many arguments, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
+    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
+    python::throw_error_already_set();
+  }
+
+  if (kwargs) {
+    PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
+    python::throw_error_already_set();
+  }
+
+  int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
+  for (auto i = 0u; i < nargs; ++i)
+    idx[i] = python::extract<int>(args[1 + i]);
+
+  return python::object(self.reduce_to(idx, idx + nargs));
 }
 
 std::string histogram_repr(const histogram &h) {
@@ -389,6 +414,9 @@ void register_histogram() {
       .def("variance", python::raw_function(histogram_variance),
            ":param int args: indices of the bin (number must match dimension)"
            "\n:return: variance estimate for the bin")
+      .def("reduce_to", python::raw_function(histogram_reduce_to),
+           ":param int args: indices of the axes in the reduced histogram"
+           "\n:return: reduced histogram with subset of axes")
       .def("__repr__", histogram_repr,
            ":return: string representation of the histogram")
       .def(python::self == python::self)

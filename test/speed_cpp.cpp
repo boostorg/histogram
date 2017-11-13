@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <boost/histogram.hpp>
+#include <boost/histogram/storage/array_storage.hpp>
 #include <cstdio>
 #include <ctime>
 #include <limits>
