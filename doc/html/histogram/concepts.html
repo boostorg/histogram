@@ -1,0 +1,230 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Concepts</title>
+<link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="up" href="../index.html" title="Chapter&#160;1.&#160;Boost.Histogram">
+<link rel="prev" href="rationale.html" title="Rationale">
+<link rel="next" href="reference.html" title="Reference">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../boost.png"></td>
+<td align="center"><a href="../../../index.html">Home</a></td>
+<td align="center"><a href="../../../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="rationale.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="reference.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="histogram.concepts"></a><a class="link" href="concepts.html" title="Concepts">Concepts</a>
+</h2></div></div></div>
+<div class="toc"><dl class="toc">
+<dt><span class="section"><a href="concepts.html#histogram.concepts.axis">Axis type</a></span></dt>
+<dt><span class="section"><a href="concepts.html#histogram.concepts.storage">Storage type</a></span></dt>
+</dl></div>
+<p>
+      Users can extend the library with new axis and storage types.
+    </p>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="histogram.concepts.axis"></a><a class="link" href="concepts.html#histogram.concepts.axis" title="Axis type">Axis type</a>
+</h3></div></div></div>
+<p>
+        An <code class="computeroutput"><span class="identifier">axis_type</span></code> converts input
+        values into bin indices.
+      </p>
+<p>
+        An <code class="computeroutput"><span class="identifier">axis_type</span></code> is required
+        to:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            derive publically from <code class="computeroutput"><a class="link" href="../boost/histogram/axis/axis_base.html" title="Class axis_base">boost::histogram::axis::axis_base</a></code>
+            or <code class="computeroutput"><a class="link" href="../boost/histogram/axis/axis_base_uoflow.html" title="Class axis_base_uoflow">boost::histogram::axis::axis_base_uoflow</a></code>
+          </li>
+<li class="listitem">
+            be default/copy/move constructable
+          </li>
+<li class="listitem">
+            be copy/move assignable
+          </li>
+<li class="listitem">
+            be equal comparable
+          </li>
+<li class="listitem">
+            have a nested type <code class="computeroutput"><span class="identifier">value_type</span></code>
+            reflecting the type of the input values (may be a const reference if
+            the input value is expensive to copy)
+          </li>
+<li class="listitem">
+            have a nested type <code class="computeroutput"><span class="identifier">bin_type</span></code>,
+            which is a type that represents the bin, typically a semi-open interval
+            (may be a const reference if the bin type is expensive to copy)
+          </li>
+<li class="listitem">
+            have a nested type <code class="computeroutput"><span class="identifier">const_iterator</span></code>,
+            which iterates over bins, preferably based on the <code class="computeroutput"><span class="identifier">axis_iterator</span></code>
+            template
+          </li>
+<li class="listitem">
+            have the following methods:
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; ">
+<li class="listitem">
+                  <code class="computeroutput"><span class="keyword">int</span> <span class="identifier">index</span><span class="special">(</span><span class="identifier">value_type</span>
+                  <span class="identifier">x</span><span class="special">)</span>
+                  <span class="keyword">const</span></code>: takes an input value
+                  and returns the bin index
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="identifier">bin_type</span> <span class="keyword">operator</span><span class="special">[](</span><span class="keyword">int</span>
+                  <span class="identifier">index</span><span class="special">)</span>
+                  <span class="keyword">const</span></code>: takes an index and
+                  returns the corresponding bin instance
+                </li>
+</ul></div>
+          </li>
+<li class="listitem">
+            optionally, be streamable by implementation a free function
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem">
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="keyword">operator</span><span class="special">&lt;&lt;(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span><span class="special">&amp;,</span> <span class="keyword">const</span>
+                  <span class="identifier">axis_type</span><span class="special">&amp;)</span></code>
+                </li></ul></div>
+          </li>
+<li class="listitem">
+            optionally, be serializable, by implementing a member function template
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem">
+                  <code class="computeroutput"><span class="keyword">template</span> <span class="special">&lt;</span><span class="keyword">class</span> <span class="identifier">Archive</span><span class="special">&gt;</span> <span class="keyword">void</span>
+                  <span class="identifier">serialize</span><span class="special">(</span><span class="identifier">Archive</span><span class="special">&amp;</span>
+                  <span class="identifier">ar</span><span class="special">,</span>
+                  <span class="keyword">unsigned</span> <span class="comment">/*
+                  version */</span><span class="special">)</span></code>
+                </li></ul></div>
+          </li>
+</ul></div>
+<p>
+        The latter two are not needed, if the histogram that uses the custom axis
+        type is never serialized or streamed.
+      </p>
+<p>
+        It is recommended to take a look at the existing axis types, like <code class="computeroutput"><a class="link" href="../boost/histogram/axis/integer.html" title="Class template integer">boost::histogram::axis::integer</a></code>,
+        which serve as templates to create new ones.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="histogram.concepts.storage"></a><a class="link" href="concepts.html#histogram.concepts.storage" title="Storage type">Storage type</a>
+</h3></div></div></div>
+<p>
+        A <code class="computeroutput"><span class="identifier">storage_type</span></code> handles memory
+        for the bin counters and provides a uniform interface for incrementing bin
+        counters and reading their values.
+      </p>
+<p>
+        A <code class="computeroutput"><span class="identifier">storage_type</span></code> is required
+        to:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            be default/copy/move constructable
+          </li>
+<li class="listitem">
+            be copy/move assignable
+          </li>
+<li class="listitem">
+            be equal comparable
+          </li>
+<li class="listitem">
+            have a nested type <code class="computeroutput"><span class="identifier">value_type</span></code>,
+            the external type used to represent the bin count (internally it may
+            be a different type)
+          </li>
+<li class="listitem">
+            have a constructor <code class="computeroutput"><span class="identifier">storage_type</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+            <span class="identifier">n</span><span class="special">)</span></code>,
+            which prepares the storage of <code class="computeroutput"><span class="identifier">n</span></code>
+            bins.
+          </li>
+<li class="listitem">
+            have the following methods and operators:
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; ">
+<li class="listitem">
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span><span class="special">()</span> <span class="keyword">const</span></code>
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">increase</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">)</span></code>
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">add</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">,</span>
+                  <span class="keyword">const</span> <span class="identifier">value_type</span><span class="special">&amp;</span> <span class="identifier">n</span><span class="special">)</span></code>
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="identifier">value_type</span> <span class="identifier">value</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">)</span>
+                  <span class="keyword">const</span></code>
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="identifier">storage_type</span><span class="special">&amp;</span>
+                  <span class="keyword">operator</span><span class="special">+=(</span><span class="keyword">const</span> <span class="identifier">storage_type</span><span class="special">&amp;</span> <span class="identifier">other</span><span class="special">)</span></code>
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="identifier">storage_type</span><span class="special">&amp;</span>
+                  <span class="keyword">operator</span><span class="special">*=(</span><span class="keyword">const</span> <span class="identifier">value_type</span>
+                  <span class="identifier">x</span><span class="special">)</span></code>
+                </li>
+</ul></div>
+          </li>
+<li class="listitem">
+            optionally, it can have the following methods:
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; ">
+<li class="listitem">
+                  <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">weighted_increase</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">,</span>
+                  <span class="keyword">const</span> <span class="identifier">value_type</span><span class="special">&amp;</span> <span class="identifier">weight</span><span class="special">)</span></code>
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="identifier">value_type</span> <span class="identifier">variance</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">)</span>
+                  <span class="keyword">const</span></code>
+                </li>
+<li class="listitem">
+                  <code class="computeroutput"><span class="keyword">void</span> <span class="identifier">add</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span>
+                  <span class="identifier">index</span><span class="special">,</span>
+                  <span class="keyword">const</span> <span class="identifier">value_type</span><span class="special">&amp;</span> <span class="identifier">value</span><span class="special">,</span> <span class="keyword">const</span>
+                  <span class="identifier">value_type</span><span class="special">&amp;</span>
+                  <span class="identifier">variance</span><span class="special">)</span></code>
+                </li>
+</ul></div>
+          </li>
+</ul></div>
+<p>
+        <code class="computeroutput"><a class="link" href="../boost/histogram/array_storage.html" title="Class template array_storage">boost::histogram::array_storage</a></code>
+        is a simple storage type which does not support weighted fills nor does it
+        keep track of variances. It may serve as a template to create a new storage
+        type.
+      </p>
+</div>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2016, 2017 Hans Dembinski<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="rationale.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="reference.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>
