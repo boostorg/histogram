@@ -11,7 +11,6 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/storage/array_storage.hpp>
 
 /**
  * \file boost/histogram.hpp
