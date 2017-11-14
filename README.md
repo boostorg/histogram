@@ -88,8 +88,8 @@ Example 1: Fill a 1d-histogram in C++
         // iterate over bins, loop skips under- and overflow bin
         for (const auto& bin : h.axis(0_c)) {
             std::cout << "bin " << bin.first
-                      << " x in [" << bin.second.lower << ", " << bin.second.upper << "): "
-                      << h.value(bin.idx) << " +/- " << std::sqrt(h.variance(bin.idx))
+                      << " x in [" << bin.second.lower() << ", " << bin.second.upper() << "): "
+                      << h.value(bin.first) << " +/- " << std::sqrt(h.variance(bin.first))
                       << std::endl;
         }
 
