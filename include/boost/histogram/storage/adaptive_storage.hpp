@@ -153,7 +153,7 @@ template <typename T, typename U> inline bool safe_assign(T &t, const U &u) {
 }
 
 template <typename T, typename U> inline bool safe_radd(T &t, const U &u) {
-  if ((std::numeric_limits<T>::max() - t) < u)
+  if (static_cast<T>(std::numeric_limits<T>::max() - t) < u)
     return false;
   t += static_cast<T>(u);
   return true;
