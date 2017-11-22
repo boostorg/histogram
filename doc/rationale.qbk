@@ -26,13 +26,13 @@ The library consists of three orthogonal components:
 
 [section:histogram_types Histograms types]
 
-Histograms store a number of axes. A one-dimensional histogram has one axis, a multi-dimensional histogram as several. Each axis maps a value from an input tuple onto a bin in its range.
+Histograms store a number of axes. A one-dimensional histogram has one axis, a multi-dimensional histogram has several. Each axis maps a value from an input tuple onto a bin in its range.
 
 [note
 To understand the need for multi-dimensional histograms, think of point coordinates. If all points that you consider lie on a line, you need only one value to describe the point. If all points lie in a plane, you need two values to describe the position. Three values are needed for a point in space. A histogram puts a discrete grid over the line, the plane or the space, and counts how many points lie in each cell of the grid. To reflect a point distribution on a line, a 1d-histogram is sufficient. To do the same in 3d-space, one needs a 3d-histogram.
 ]
 
-This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.axis_types axis types]. The number and concret types of the axes objects held by the histogram may be known at compile time or only at runtime, depending on how the library is used.
+This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.axis_types axis types]. The number and concrete types of the axes objects held by the histogram may be known at compile time or only at runtime, depending on how the library is used.
 
 Users can chose between two histogram variants, which have the same user interface, see [classref boost::histogram::static_histogram] and [classref boost::histogram::dynamic_histogram]. The static variant is faster (see [link histogram.benchmarks benchmark]), because it can access the different axis types without any indirections or dynamic type casting. This also means that user errors are caught at compile-time rather than run-time.
 
@@ -84,7 +84,7 @@ In a sense, [classref boost::histogram::adaptive_storage adaptive_storage] is th
 
 [section:uoflow Under- and overflow bins]
 
-Axis instances by default add extra bins that count values which fall below or above the range covered by the axis (for those types where that makes sense). These extra bins are called under- and overflow bins, respectively. The extra bins can be turned off individually for each axis to conserve memory, but it generally recommended to keep them. The extra bins do not interfere with normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
+Axis instances by default add extra bins that count values which fall below or above the range covered by the axis (for those types where that makes sense). These extra bins are called under- and overflow bins, respectively. The extra bins can be turned off individually for each axis to conserve memory, but it is generally recommended to keep them. The extra bins do not interfere with normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
 
 Under- and overflow bins are useful in one-dimensional histograms, and nearly essential in multi-dimensional histograms. Here are the advantages:
 
@@ -92,7 +92,7 @@ Under- and overflow bins are useful in one-dimensional histograms, and nearly es
 
 * Diagnosis: Unexpected extreme values show up in the extra bins, which otherwise may be overlooked.
 
-* Reducability: In multi-dimensional histograms, an out-of-range value along one axis may be paired with an in-range value along another axis. If under- and overflow bins are missing, such a value pair is lost completely. If you apply a `reduce` operation on a histogram, which removes somes axes by resummation of the bin counts, this would lead to distortions the histogram even along the remaining axes. When under- and overflow bins are present, the `reduce` operation always produces the same sub-histogram that would have been obtained if it was filled from scratch with the original data.
+* Reducibility: In multi-dimensional histograms, an out-of-range value along one axis may be paired with an in-range value along another axis. If under- and overflow bins are missing, such a value pair is lost completely. If you apply a `reduce` operation on a histogram, which removes somes axes by resummation of the bin counts, this would lead to distortions of the histogram along the remaining axes. When under- and overflow bins are present, the `reduce` operation always produces the same sub-histogram that would have been obtained if it was filled from scratch with the original data.
 
 [endsect]
 
@@ -138,7 +138,7 @@ This variance estimate can be derived from the [@https://en.wikipedia.org/wiki/V
 
 Python is a popular scripting language in the data science community. Thus, the library provides Python bindings. The histogram may be used as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. Users are able to define the histogram in Python, let it be filled on the C++ side (using a few lines of Boost.Python code to define the interface), and then get it back for further data analysis or plotting.
 
-Data analysis in Python is Numpy-based, so Numpy is fully support. Histograms can be filled with chunks of data in form of Numpy arrays, which is efficient, and the bin counts can be retrieved as a Numpy array without copying data.
+Data analysis in Python is Numpy-based, so Numpy is fully supported. Histograms can be filled with chunks of data in a form of Numpy arrays, which is efficient, and the bin counts can be retrieved as a Numpy array without copying data.
 [note
 If number of dimensions is larger than one, this implementation is faster than the equivalent Numpy functions (while being more flexible), see [link histogram.benchmarks benchmark].
 ]
