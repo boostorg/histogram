@@ -12,7 +12,7 @@ The histogram supports value semantics. Histograms can be added and scaled. Move
 
 My goal is to submit this project to [Boost](http://www.boost.org), that's why it uses the Boost directory structure and namespace. The code is released under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
-Check out the [full documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/index.html). Highlights are given below.
+Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/). Highlights are given below.
 
 ## Features
 
@@ -57,7 +57,7 @@ To run the tests, do `make test`.
 ## Code examples
 
 For the full version of the following examples with explanations, see
-the [Getting started](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/getting_started.html) section in the documentation.
+the [Getting started](http://hdembinski.github.io/histogram/doc/html/histogram/getting_started.html) section in the documentation.
 
 Example 1: Fill a 1d-histogram in C++
 
@@ -155,7 +155,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
 ## Benchmarks
 
-Thanks to meta-programming and dynamic memory management, this library is not only safer, more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [GNU Scientific Library](https://www.gnu.org/software/gsl), the [ROOT framework from CERN](https://root.cern.ch), and to the histogram functions in [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. More details on the benchmark are given in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/benchmarks.html)
+Thanks to meta-programming and dynamic memory management, this library is not only safer, more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [GNU Scientific Library](https://www.gnu.org/software/gsl), the [ROOT framework from CERN](https://root.cern.ch), and to the histogram functions in [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. More details on the benchmark are given in the [documentation](http://hdembinski.github.io/histogram/doc/html/histogram/benchmarks.html)
 
 ![alt benchmark](doc/benchmark.png)
 
@@ -163,7 +163,7 @@ Thanks to meta-programming and dynamic memory management, this library is not on
 
 There is a lack of a widely-used free histogram class in C++. While it is easy to write a one-dimensional histogram, writing a general multi-dimensional histogram is not trivial. Even more so, if you want the histogram to be serializable and have Python-bindings and support Numpy. In high-energy physics, the [ROOT framework](https://root.cern.ch) from CERN is widely used. This histogram class is designed to be more convenient, more flexiable, and faster than the equivalent ROOT histograms. This library comes in a clean and modern C++ design which follows the advice given in popular C++ books, like those of [Meyers](http://www.aristeia.com/books.html) and [Sutter and Alexandrescu](http://www.gotw.ca/publications/c++cs.htm).
 
-Read more about the design choices in the [documentation](https://htmlpreview.github.io/?https://raw.githubusercontent.com/HDembinski/histogram/html/doc/html/histogram/rationale.html)
+Read more about the design choices in the [documentation](http://hdembinski.github.io/histogram/doc/html/histogram/rationale.html)
 
 ## State of project
 
