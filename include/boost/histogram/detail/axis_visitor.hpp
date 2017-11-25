@@ -102,7 +102,7 @@ inline bool axes_equal_impl(mpl::false_, mpl::false_, const A &a, const B &b) {
   if (a.size() != n) {
     return false;
   }
-  for (auto i = 0; i < n; ++i) {
+  for (auto i = 0u; i < n; ++i) {
     if (!apply_visitor(cmp_axis<typename A::value_type>(a[i]), b[i])) {
       return false;
     }
