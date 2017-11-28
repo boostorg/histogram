@@ -15,9 +15,9 @@ namespace boost {
 namespace histogram {
 
 template <typename Storage>
-class value_iterator
+class value_iterator_over
     : public iterator_facade<
-          value_iterator<Storage>, typename Storage::value_type,
+          value_iterator_over<Storage>, typename Storage::value_type,
           forward_traversal_tag, typename Storage::value_type> {
   struct dim_t {
     int idx, size;
@@ -36,17 +36,17 @@ class value_iterator
 public:
   /// begin iterator
   template <typename Histogram>
-  value_iterator(const Histogram &h, const Storage &s) : s_(s), idx_(0) {
+  value_iterator_over(const Histogram &h, const Storage &s) : s_(s), idx_(0) {
     dims_.reserve(h.dim());
     h.for_each_axis(dim_visitor{1, dims_});
   }
 
   /// end iterator
-  explicit value_iterator(const Storage &s)
+  explicit value_iterator_over(const Storage &s)
       : s_(s), idx_(std::numeric_limits<std::size_t>::max()) {}
 
-  value_iterator(const value_iterator &) = default;
-  value_iterator &operator=(const value_iterator &) = default;
+  value_iterator_over(const value_iterator_over &) = default;
+  value_iterator_over &operator=(const value_iterator_over &) = default;
 
   int idx(int dim = 0) const noexcept { return dims_[dim].idx; }
 
@@ -66,7 +66,7 @@ private:
         idx_ += iter->idx * iter->stride;
     }
   }
-  bool equal(const value_iterator &other) const noexcept {
+  bool equal(const value_iterator_over &other) const noexcept {
     return &s_ == &(other.s_) && idx_ == other.idx_;
   }
   typename Storage::value_type dereference() const { return s_.value(idx_); }

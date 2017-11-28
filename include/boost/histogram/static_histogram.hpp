@@ -49,7 +49,7 @@ template <typename Axes, typename Storage> class static_histogram {
 public:
   using axes_type = typename fusion::result_of::as_vector<Axes>::type;
   using value_type = typename Storage::value_type;
-  using value_iterator = value_iterator<Storage>;
+  using value_iterator = value_iterator_over<Storage>;
 
   static_histogram() = default;
   static_histogram(const static_histogram &rhs) = default;

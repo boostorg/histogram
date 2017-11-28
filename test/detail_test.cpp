@@ -8,6 +8,9 @@
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/variant.hpp>
+#include <sstream>
+#include <vector>
+#include <string>
 using namespace boost::histogram::detail;
 
 int main() {

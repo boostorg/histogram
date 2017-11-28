@@ -50,7 +50,7 @@ template <typename Axes, typename Storage> class dynamic_histogram {
 public:
   using any_axis_type = axis::any<Axes>;
   using value_type = typename Storage::value_type;
-  using value_iterator = value_iterator<Storage>;
+  using value_iterator = value_iterator_over<Storage>;
 
 private:
   using axes_type = std::vector<any_axis_type>;
