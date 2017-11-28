@@ -26,8 +26,7 @@ struct axis_ostream_visitor {
 template <template <class, class> class H, typename A, typename S>
 inline std::ostream &operator<<(std::ostream &os, const H<A, S> &h) {
   os << "histogram(";
-  detail::axis_ostream_visitor sh(os);
-  h.for_each_axis(sh);
+  h.for_each_axis(detail::axis_ostream_visitor(os));
   os << (h.dim() ? "\n)" : ")");
   return os;
 }

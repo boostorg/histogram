@@ -11,10 +11,10 @@
 #include <boost/fusion/include/fold.hpp>
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/back_inserter.hpp>
-#include <boost/mpl/int.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/mpl/copy_if.hpp>
 #include <boost/mpl/for_each.hpp>
+#include <boost/mpl/int.hpp>
 #include <boost/mpl/not.hpp>
 #include <boost/mpl/sort.hpp>
 #include <boost/mpl/transform.hpp>
@@ -33,24 +33,23 @@ namespace detail {
 template <typename T, typename = decltype(std::declval<T &>().size(),
                                           std::declval<T &>().increase(0),
                                           std::declval<T &>().value(0))>
-struct is_storage {};
+struct requires_storage {};
 
-template <typename T>
-struct has_variance_support
-{
-  template<typename U, typename T::value_type (U::*)(std::size_t) const> struct SFINAE {};
-  template<typename U> static std::true_type Test(SFINAE<U, &U::variance>*);
-  template<typename U> static std::false_type Test(...);
+template <typename T> struct has_variance_support {
+  template <typename U, typename T::value_type (U::*)(std::size_t) const>
+  struct SFINAE {};
+  template <typename U> static std::true_type Test(SFINAE<U, &U::variance> *);
+  template <typename U> static std::false_type Test(...);
   using type = decltype(Test<T>(nullptr));
 };
 
 template <typename T>
 using has_variance_support_t = typename has_variance_support<T>::type;
 
-template <typename S>
-using requires_variance_support = typename std::enable_if<
-    has_variance_support_t<S>::value, typename S::value_type
-  >::type;
+template <typename S, typename ReturnValue = typename S::value_type>
+using requires_variance_support =
+    typename std::enable_if<has_variance_support_t<S>::value,
+                            ReturnValue>::type;
 
 template <typename T,
           typename = decltype(*std::declval<T &>(), ++std::declval<T &>())>
@@ -99,12 +98,12 @@ void axes_assign_subset(Axes1 &axes1, const Axes &axes) {
 
 template <typename Ns>
 using unique_sorted =
-  typename mpl::unique<typename mpl::sort<Ns>::type,
-                       std::is_same<mpl::_1, mpl::_2>>::type;
+    typename mpl::unique<typename mpl::sort<Ns>::type,
+                         std::is_same<mpl::_1, mpl::_2>>::type;
 
 template <typename Axes, typename Numbers>
 using axes_select =
-  typename mpl::transform<Numbers, mpl::at<Axes, mpl::_>>::type;
+    typename mpl::transform<Numbers, mpl::at<Axes, mpl::_>>::type;
 
 } // namespace detail
 } // namespace histogram

@@ -10,10 +10,10 @@
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/detail/weight_counter.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
+#include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/unique_ptr.hpp>
 #include <boost/serialization/variant.hpp>
@@ -28,20 +28,19 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-
-template <class Archive>
-void serialize(Archive &ar, weight_counter &wt, unsigned /* version */) {
-  ar &wt.w;
-  ar &wt.w2;
-}
-
 template <typename Archive> struct serialize_helper {
   Archive &ar_;
   explicit serialize_helper(Archive &ar) : ar_(ar) {}
   template <typename T> void operator()(T &t) const { ar_ &t; }
 };
-
 } // namespace detail
+
+template <typename RealType>
+template <class Archive>
+void weight_counter<RealType>::serialize(Archive &ar, unsigned /* version */) {
+  ar &w;
+  ar &w2;
+}
 
 template <class Archive, typename Container>
 void serialize(Archive &ar, array_storage<Container> &store,
@@ -105,13 +104,11 @@ void adaptive_storage::serialize(Archive &ar, unsigned /* version */) {
       tid = 4u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (auto *a =
-                   get<array<detail::mp_int>>(&buffer_)) {
+    } else if (auto *a = get<array<detail::mp_int>>(&buffer_)) {
       tid = 5u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (auto *a =
-                   get<array<detail::weight_counter>>(&buffer_)) {
+    } else if (auto *a = get<array<detail::weight_counter>>(&buffer_)) {
       tid = 6u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);

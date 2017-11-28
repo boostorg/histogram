@@ -4,7 +4,9 @@
 
 This library was written based on a decade of experience collected in working with big data, more precisely in the field of particle physics and astroparticle physics. The design is guided by advice from people like Bjarne Stroustrup, Scott Meyers, Herb Sutter, and Andrei Alexandrescu, and Chandler Carruth. I also like the [@https://www.python.org/dev/peps/pep-0020 Zen of Python] (also applies to other languages). I also borrowed ideas from the [@https://eigen.tuxfamily.org/ Eigen library].
 
-Two design goals of the library:
+Three design goals of the library:
+
+* Provide a simple and convenient default behavior for the casual user, yet allow a maximum of customization for the power user. Follow the "Don't pay for what you don't use" principle. Features that you don't use should not affect your performance negatively.
 
 * Provide the same interface for one-dimensional and multi-dimensional histograms. This makes the interface easier to learn, and makes it easier to move a project from one-dimensional to multi-dimensional analysis. This sounds obvious, but other libraries don't do that.
 

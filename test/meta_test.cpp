@@ -25,7 +25,8 @@ int main() {
     value_type variance(std::size_t) const;
   };
 
-  BOOST_TEST_EQ(typename has_variance_support<no_variance_method>::type(), false);
+  BOOST_TEST_EQ(typename has_variance_support<no_variance_method>::type(),
+                false);
   BOOST_TEST_EQ(typename has_variance_support<variance_method>::type(), true);
 
   return boost::report_errors();

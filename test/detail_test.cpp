@@ -7,43 +7,13 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/detail/weight_counter.hpp>
 #include <boost/variant.hpp>
-#include <cstring>
 #include <sstream>
+#include <vector>
+#include <string>
 using namespace boost::histogram::detail;
 
-namespace boost { namespace histogram { namespace detail {
-std::ostream& operator<<(std::ostream& os, const weight_counter& w) {
-  os << "[ " << w.w << ", " << w.w2 << "]";
-  return os;
-}
-}}}
-
 int main() {
-  // weight_counter
-  {
-    BOOST_TEST_EQ(weight_counter(0), weight_counter());
-    weight_counter w(1);
-    BOOST_TEST_EQ(w, weight_counter(1));
-    BOOST_TEST_NE(w, weight_counter());
-    BOOST_TEST_EQ(1, w);
-    BOOST_TEST_EQ(w, 1);
-    BOOST_TEST_NE(2, w);
-    BOOST_TEST_NE(w, 2);
-    w += 2.0;
-    BOOST_TEST_EQ(w, weight_counter(3, 5));
-    // consistency: a weighted counter increased by weight 1 multiplied
-    // by 2 must be the same as a weighted counter increased by weight 2
-    weight_counter u(0);
-    u += 1.0;
-    u *= 2;
-    BOOST_TEST_EQ(u, weight_counter(2, 4));
-    weight_counter v(0);
-    v += 2.0;
-    BOOST_TEST_EQ(u, v);
-  }
-
   // escape0
   {
     std::ostringstream os;

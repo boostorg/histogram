@@ -21,11 +21,19 @@ if(${CMAKE_BUILD_TYPE})
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
-if(MSVC)
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   add_definitions(/W3)
-else()
-  # -fpermissive needed for cpp_int in gcc-6
-  add_definitions(-Wall -fpermissive)
+endif()
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  add_definitions(-Wall)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
+    # -fpermissive needed for cpp_int in gcc-6
+    # -Wno-noexcept-type to silence warnings related to Boost.Python
+    add_definitions(-fpermissive -Wno-noexcept-type)
+  endif()
+endif()
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  add_definitions(-Wall)
 endif()
 
 if(TRACE_ALLOCS)

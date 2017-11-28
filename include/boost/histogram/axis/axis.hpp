@@ -163,6 +163,7 @@ struct pow {
   bool operator==(const pow &other) const noexcept {
     return value == other.value;
   }
+
 private:
   friend ::boost::serialization::access;
   template <class Archive> void serialize(Archive &, unsigned);

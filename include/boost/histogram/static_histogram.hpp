@@ -25,6 +25,7 @@
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage/operators.hpp>
+#include <boost/histogram/value_iterator.hpp>
 #include <boost/mpl/count.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/int.hpp>
@@ -41,14 +42,14 @@ class access;
 namespace boost {
 namespace histogram {
 
-template <typename Axes, typename Storage>
-class static_histogram {
+template <typename Axes, typename Storage> class static_histogram {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
   using axes_size = typename fusion::result_of::size<Axes>::type;
 
 public:
   using axes_type = typename fusion::result_of::as_vector<Axes>::type;
   using value_type = typename Storage::value_type;
+  using value_iterator = value_iterator_over<Storage>;
 
   static_histogram() = default;
   static_histogram(const static_histogram &rhs) = default;
@@ -66,12 +67,14 @@ public:
   }
 
   template <typename S>
-  explicit static_histogram(const static_histogram<Axes, S> &rhs) : storage_(rhs.storage_) {
+  explicit static_histogram(const static_histogram<Axes, S> &rhs)
+      : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
   template <typename A, typename S>
-  explicit static_histogram(const dynamic_histogram<A, S> &rhs) : storage_(rhs.storage_) {
+  explicit static_histogram(const dynamic_histogram<A, S> &rhs)
+      : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
@@ -168,9 +171,8 @@ public:
     return storage_.value(idx);
   }
 
-  template <typename S=Storage, typename... Indices>
-  detail::requires_variance_support<S>
-  variance(Indices &&... indices) const {
+  template <typename S = Storage, typename... Indices>
+  detail::requires_variance_support<S> variance(Indices &&... indices) const {
     static_assert(sizeof...(indices) == axes_size::value,
                   "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -223,27 +225,36 @@ public:
   }
 
   // Get first axis (convenience for 1-d histograms)
-  typename fusion::result_of::value_at_c<axes_type, 0>::type &
-  axis() {
+  typename fusion::result_of::value_at_c<axes_type, 0>::type &axis() {
     return fusion::at_c<0>(axes_);
   }
 
   /// Apply unary functor/function to each axis
-  template <typename Unary> void for_each_axis(Unary &unary) const {
+  template <typename Unary> void for_each_axis(Unary &&unary) const {
     fusion::for_each(axes_, unary);
   }
 
   /// Returns a lower-dimensional histogram
   template <int N, typename... Rest>
-  auto reduce_to(mpl::int_<N>, Rest...) const
-      -> static_histogram<detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage> {
-    using HR = static_histogram<detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage>;
+  auto reduce_to(mpl::int_<N>, Rest...) const -> static_histogram<
+      detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage> {
+    using HR = static_histogram<
+        detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage>;
     typename HR::axes_type axes;
     detail::axes_assign_subset<mpl::vector<mpl::int_<N>, Rest...>>(axes, axes_);
     auto hr = HR(std::move(axes));
-    const auto b = detail::bool_mask<mpl::vector<mpl::int_<N>, Rest...>>(dim(), true);
+    const auto b =
+        detail::bool_mask<mpl::vector<mpl::int_<N>, Rest...>>(dim(), true);
     reduce_impl(hr, b);
     return hr;
+  }
+
+  value_iterator begin() const noexcept {
+    return value_iterator(*this, storage_);
+  }
+
+  value_iterator end() const noexcept {
+    return value_iterator(storage_);
   }
 
 private:
@@ -251,7 +262,7 @@ private:
   Storage storage_;
 
   std::size_t bincount_from_axes() const noexcept {
-    detail::field_count fc;
+    detail::field_count_visitor fc;
     fusion::for_each(axes_, fc);
     return fc.value;
   }
@@ -279,7 +290,7 @@ private:
     double w = 0.0;
     xlin_w<0>(idx, stride, w, std::forward<Args>(args)...);
     if (stride)
-      storage_.weighted_increase(idx, w);
+      storage_.increase_by_weight(idx, w);
   }
 
   template <unsigned D> inline void lin(std::size_t &, std::size_t &) const {}
@@ -341,7 +352,7 @@ private:
     return xlin_n<D>(idx, stride, x, std::forward<Rest>(rest)...);
   }
 
-  struct shape_assign_helper {
+  struct shape_assign_visitor {
     mutable std::vector<unsigned>::iterator ni;
     template <typename Axis> void operator()(const Axis &a) const {
       *ni = a.shape();
@@ -352,8 +363,7 @@ private:
   template <typename H>
   void reduce_impl(H &h, const std::vector<bool> &b) const {
     std::vector<unsigned> n(dim());
-    auto helper = shape_assign_helper{n.begin()};
-    for_each_axis(helper);
+    for_each_axis(shape_assign_visitor{n.begin()});
     detail::index_mapper m(n, b);
     do {
       detail::storage_add(h.storage_, storage_, m.second, m.first);

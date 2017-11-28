@@ -14,7 +14,6 @@
 #include <boost/fusion/include/size.hpp>
 #include <boost/fusion/support/is_sequence.hpp>
 #include <boost/histogram/interval.hpp>
-#include <boost/utility/string_view.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/variant/get.hpp>
@@ -83,7 +82,7 @@ template <typename Iterator> struct fusion_assign_axis2 {
   template <typename T> void operator()(const T &t) const { *(iter++) = t; }
 };
 
-struct field_count : public static_visitor<void> {
+struct field_count_visitor : public static_visitor<void> {
   mutable std::size_t value = 1;
   template <typename T> void operator()(const T &t) const {
     value *= t.shape();

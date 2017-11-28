@@ -12,24 +12,23 @@
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>
-#include <deque>
+#include <boost/histogram/storage/weight_counter.hpp>
 #include <limits>
-#include <vector>
 
 int main() {
   using namespace boost::histogram;
 
   // ctor
   {
-    array_storage<unsigned> a(1);
+    array_storage<unsigned> a(std::size_t(1));
     BOOST_TEST_EQ(a.size(), 1u);
     BOOST_TEST_EQ(a.value(0), 0u);
   }
 
   // increase
   {
-    array_storage<unsigned> a(1), b(1);
-    array_storage<unsigned char> c(1), d(2);
+    array_storage<unsigned> a(std::size_t(1)), b(std::size_t(1));
+    array_storage<unsigned char> c(std::size_t(1)), d(std::size_t(2));
     a.increase(0);
     b.increase(0);
     c.increase(0);
@@ -49,12 +48,12 @@ int main() {
 
   // multiply
   {
-    array_storage<unsigned> a(2);
+    array_storage<unsigned> a(std::size_t(2));
     a.increase(0);
     a *= 3;
     BOOST_TEST_EQ(a.value(0), 3.0);
     BOOST_TEST_EQ(a.value(1), 0.0);
-    a.add(1, 2.0);
+    a.add(1, 2);
     BOOST_TEST_EQ(a.value(0), 3.0);
     BOOST_TEST_EQ(a.value(1), 2.0);
     a *= 3;
@@ -64,9 +63,9 @@ int main() {
 
   // copy
   {
-    array_storage<unsigned> a(1);
+    array_storage<unsigned> a(std::size_t(1));
     a.increase(0);
-    decltype(a) b(2);
+    decltype(a) b(std::size_t(2));
     BOOST_TEST(!(a == b));
     b = a;
     BOOST_TEST(a == b);
@@ -78,7 +77,7 @@ int main() {
     BOOST_TEST_EQ(c.size(), 1u);
     BOOST_TEST_EQ(c.value(0), 1u);
 
-    array_storage<unsigned char> d(1);
+    array_storage<unsigned char> d(std::size_t(1));
     BOOST_TEST(!(a == d));
     d = a;
     BOOST_TEST(a == d);
@@ -88,7 +87,7 @@ int main() {
 
   // move
   {
-    array_storage<unsigned> a(1);
+    array_storage<unsigned> a(std::size_t(1));
     a.increase(0);
     decltype(a) b;
     BOOST_TEST(!(a == b));
@@ -100,6 +99,19 @@ int main() {
     BOOST_TEST_EQ(c.size(), 1u);
     BOOST_TEST_EQ(c.value(0), 1u);
     BOOST_TEST_EQ(b.size(), 0u);
+  }
+
+  // with weight_counter
+  {
+    array_storage<weight_counter<double>> a(std::size_t(1));
+    a.increase(0);
+    a.add(0, 1);
+    a.add(0, 1, 0);
+    BOOST_TEST_EQ(a.value(0), 3);
+    BOOST_TEST_EQ(a.variance(0), 2);
+    a.increase_by_weight(0, 2);
+    BOOST_TEST_EQ(a.value(0), 5);
+    BOOST_TEST_EQ(a.variance(0), 6);
   }
 
   return boost::report_errors();
