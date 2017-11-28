@@ -383,7 +383,7 @@ int main() {
     BOOST_TEST_EQ(a.variance(0), 9);
     BOOST_TEST_EQ(a.value(1), 0);
     BOOST_TEST_EQ(a.variance(1), 0);
-    a.add(1, 2, 5);
+    a.add(1, 2.0, 5.0);
     BOOST_TEST_EQ(a.value(0), 3);
     BOOST_TEST_EQ(a.variance(0), 9);
     BOOST_TEST_EQ(a.value(1), 2);

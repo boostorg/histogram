@@ -66,6 +66,14 @@ public:
     return *this;
   }
 
+  bool operator==(const weight_counter &rhs) const {
+    return w == rhs.w && w2 == rhs.w2;
+  }
+
+  bool operator!=(const weight_counter &rhs) const {
+    return !operator==(rhs);
+  }
+
   template <typename U>
   bool operator==(const weight_counter<U> &rhs) const {
     return w == rhs.w && w2 == rhs.w2;
