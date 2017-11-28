@@ -23,12 +23,19 @@ class access;
 namespace boost {
 namespace histogram {
 
-namespace detail {} // namespace detail
+namespace detail {
+template <typename T>
+struct counter_traits {
+  using value_type = T;
+  static value_type value(const T& t) noexcept { return t; }
+  static void increase_by_count(T& lhs, const T& n) noexcept { lhs += n; }
+  static void increase_by_weight(T& lhs, const T& w) noexcept { lhs += w; }
+};
+} // namespace detail
 
 template <typename T> class array_storage {
 public:
-  static_assert(is_arithmetic<T>::value, "T must support arithmetic operators");
-  using value_type = T;
+  using value_type = typename detail::counter_traits<T>::value_type;
 
   explicit array_storage(std::size_t s) { init(s); }
 
@@ -56,7 +63,7 @@ public:
     return *this;
   }
 
-  template <typename S, typename = detail::is_storage<S>>
+  template <typename S>
   explicit array_storage(const S &other) {
     reset(other.size());
     for (decltype(size_) i = 0u; i < size_; ++i) {
@@ -73,10 +80,30 @@ public:
   }
 
   std::size_t size() const noexcept { return size_; }
-  void increase(std::size_t i) noexcept { ++array_[i]; }
-  void add(std::size_t i, const value_type &n) noexcept { array_[i] += n; }
 
-  value_type value(std::size_t i) const noexcept { return array_[i]; }
+  void increase(std::size_t i) noexcept { ++array_[i]; }
+
+  void increase_by_weight(std::size_t i, const value_type w) noexcept {
+    detail::counter_traits<T>::increase_by_weight(array_[i], w);
+  }
+
+  void add(std::size_t i, const value_type &n) noexcept {
+    detail::counter_traits<T>::increase_by_count(array_[i], n);
+  }
+
+  template <typename U=T, typename = decltype(U(0, 0))>
+  void add(std::size_t i, const value_type& value, const value_type& variance) noexcept {
+    array_[i] += T(value, variance);
+  }
+
+  value_type value(std::size_t i) const noexcept {
+    return detail::counter_traits<T>::value(array_[i]);
+  }
+
+  template <typename U=T, typename = decltype(std::declval<U &>().variance())>
+  value_type variance(std::size_t i) const noexcept {
+    return array_[i].variance();
+  }
 
   template <typename U>
   array_storage &operator+=(const array_storage<U> &rhs) noexcept {

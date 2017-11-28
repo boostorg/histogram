@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/weight_counter.hpp>
+#include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/variant.hpp>
@@ -18,10 +18,9 @@
 #include <memory>
 #include <type_traits>
 #ifdef BOOST_HISTOGRAM_TRACE_ALLOCS
-#include <iostream>
 #include <boost/core/typeinfo.hpp>
+#include <iostream>
 #endif
-
 
 // forward declaration for serialization
 namespace boost {
@@ -42,13 +41,14 @@ namespace histogram {
 
 namespace detail {
 
-using mp_int = multiprecision::cpp_int;
+using mp_int = ::boost::multiprecision::cpp_int;
+using weight_counter = ::boost::histogram::weight_counter<double>;
 
-template <typename T>
-inline T* alloc(std::size_t s) {
+template <typename T> inline T *alloc(std::size_t s) {
 #ifdef BOOST_HISTOGRAM_TRACE_ALLOCS
-  boost::core::typeinfo const & ti = BOOST_CORE_TYPEID(T);
-  std::cerr << "alloc " << boost::core::demangled_name( ti ) << "[" << s << "]" << std::endl;
+  boost::core::typeinfo const &ti = BOOST_CORE_TYPEID(T);
+  std::cerr << "alloc " << boost::core::demangled_name(ti) << "[" << s << "]"
+            << std::endl;
 #endif
   return new T[s];
 }
@@ -230,17 +230,19 @@ struct wincrease_visitor : public static_visitor<void> {
 
   template <typename T> void operator()(array<T> &lhs) const {
     array<weight_counter> a(lhs);
-    a[idx] += rhs;
+    a[idx].increase_by_weight(rhs);
     lhs_any = std::move(a);
   }
 
   void operator()(array<void> &lhs) const {
     array<weight_counter> a(lhs.size);
-    a[idx] += rhs;
+    a[idx].increase_by_weight(rhs);
     lhs_any = std::move(a);
   }
 
-  void operator()(array<weight_counter> &lhs) const { lhs[idx] += rhs; }
+  void operator()(array<weight_counter> &lhs) const {
+    lhs[idx].increase_by_weight(rhs);
+  }
 };
 
 struct value_visitor : public static_visitor<double> {
@@ -253,7 +255,9 @@ struct value_visitor : public static_visitor<double> {
 
   double operator()(const array<void> & /*b*/) const { return 0; }
 
-  double operator()(const array<weight_counter> &b) const { return b[idx].w; }
+  double operator()(const array<weight_counter> &b) const {
+    return b[idx].value();
+  }
 };
 
 struct variance_visitor : public static_visitor<double> {
@@ -266,7 +270,9 @@ struct variance_visitor : public static_visitor<double> {
 
   double operator()(const array<void> & /*b*/) const { return 0; }
 
-  double operator()(const array<weight_counter> &b) const { return b[idx].w2; }
+  double operator()(const array<weight_counter> &b) const {
+    return b[idx].variance();
+  }
 };
 
 template <typename RHS> struct radd_visitor : public static_visitor<void> {
@@ -294,7 +300,8 @@ template <typename RHS> struct radd_visitor : public static_visitor<void> {
     lhs[idx] += static_cast<mp_int>(rhs);
   }
 
-  void operator()(array<weight_counter> &lhs) const { lhs[idx] += rhs; }
+  void operator()(array<weight_counter> &lhs) const {
+    lhs[idx].increase_by_count(static_cast<double>(rhs)); }
 };
 
 template <> struct radd_visitor<weight_counter> : public static_visitor<void> {
@@ -384,7 +391,7 @@ public:
   adaptive_storage(adaptive_storage &&) = default;
   adaptive_storage &operator=(adaptive_storage &&) = default;
 
-  template <typename RHS, typename = detail::is_storage<RHS>>
+  template <typename RHS>
   explicit adaptive_storage(const RHS &rhs)
       : buffer_(detail::array<void>(rhs.size())) {
     using T = typename RHS::value_type;
@@ -432,8 +439,9 @@ public:
     }
   }
 
-  void weighted_increase(std::size_t i, const double weight_counter) {
-    apply_visitor(detail::wincrease_visitor(buffer_, i, weight_counter), buffer_);
+  void increase_by_weight(std::size_t i, const value_type weight_counter) {
+    apply_visitor(detail::wincrease_visitor(buffer_, i, weight_counter),
+                  buffer_);
   }
 
   value_type value(std::size_t i) const {
@@ -460,7 +468,7 @@ public:
   }
 
   // precondition: storages have same size
-  template <typename RHS, typename = detail::is_storage<RHS>>
+  template <typename RHS>
   adaptive_storage &operator+=(const RHS &rhs) {
     for (auto i = 0ul, n = size(); i < n; ++i)
       apply_visitor(detail::radd_visitor<typename RHS::value_type>(

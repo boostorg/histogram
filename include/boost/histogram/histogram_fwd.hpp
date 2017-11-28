@@ -18,14 +18,15 @@ class adaptive_storage;
 namespace axis {
 
 namespace transform {
-  struct identity;
-  struct log;
-  struct sqrt;
-  struct cos;
-  struct pow;
-}
+struct identity;
+struct log;
+struct sqrt;
+struct cos;
+struct pow;
+} // namespace transform
 
-template <typename RealType = double, typename Transform = transform::identity> class regular;
+template <typename RealType = double, typename Transform = transform::identity>
+class regular;
 template <typename RealType = double> class circular;
 template <typename RealType = double> class variable;
 template <typename IntType = int> class integer;
@@ -36,19 +37,16 @@ using builtins =
                 axis::regular<double, axis::transform::sqrt>,
                 axis::regular<double, axis::transform::cos>,
                 axis::regular<double, axis::transform::pow>, axis::circular<>,
-                axis::variable<>, axis::integer<>,
-                axis::category<>, axis::category<std::string>>;
+                axis::variable<>, axis::integer<>, axis::category<>,
+                axis::category<std::string>>;
 
-template <typename Axes = builtins>
-class any;
+template <typename Axes = builtins> class any;
 
 } // namespace axis
 
-template <class Axes, class Storage = adaptive_storage>
-class static_histogram;
+template <class Axes, class Storage = adaptive_storage> class static_histogram;
 
-template <class Axes, class Storage = adaptive_storage>
-class dynamic_histogram;
+template <class Axes, class Storage = adaptive_storage> class dynamic_histogram;
 
 struct weight {
   weight(double w) : value(w) {}
