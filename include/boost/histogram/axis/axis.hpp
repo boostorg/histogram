@@ -1,4 +1,4 @@
-// Copyright 2015-2016 Hans Dembinski
+// Copyright 2015-2017 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -180,7 +180,7 @@ class regular : public axis_base_uoflow, Transform {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
-  using const_iterator = axis_iterator<regular>;
+  using const_iterator = iterator_over<regular>;
 
   /** Construct axis with n bins over real range [lower, upper).
    *
@@ -262,7 +262,7 @@ template <typename RealType> class circular : public axis_base {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
-  using const_iterator = axis_iterator<circular>;
+  using const_iterator = iterator_over<circular>;
 
   /** Constructor for n bins with an optional offset.
    *
@@ -326,7 +326,7 @@ template <typename RealType> class variable : public axis_base_uoflow {
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
-  using const_iterator = axis_iterator<variable>;
+  using const_iterator = iterator_over<variable>;
 
   /** Construct an axis from bin edges.
    *
@@ -416,7 +416,7 @@ template <typename IntType> class integer : public axis_base_uoflow {
 public:
   using value_type = IntType;
   using bin_type = interval<value_type>;
-  using const_iterator = axis_iterator<integer>;
+  using const_iterator = iterator_over<integer>;
 
   /** Construct axis over a semi-open integer interval [lower, upper).
    *
@@ -487,7 +487,7 @@ template <typename T> class category : public axis_base {
 public:
   using value_type = T;
   using bin_type = T;
-  using const_iterator = axis_iterator<category<T>>;
+  using const_iterator = iterator_over<category<T>>;
 
   category() = default;
   category(const category &rhs)

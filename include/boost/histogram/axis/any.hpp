@@ -1,4 +1,4 @@
-// Copyright 2015-2016 Hans Dembinski
+// Copyright 2015-2017 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -93,7 +93,7 @@ public:
   using types = typename base_type::types;
   using value_type = double;
   using bin_type = interval<double>;
-  using const_iterator = axis_iterator<any>;
+  using const_iterator = iterator_over<any>;
 
   any() = default;
   any(const any &t) = default;

@@ -1,4 +1,4 @@
-// Copyright 2015-2016 Hans Dembinski
+// Copyright 2015-2017 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -15,25 +15,25 @@ namespace histogram {
 namespace axis {
 
 template <typename Axis>
-class axis_iterator
-    : public iterator_facade<axis_iterator<Axis>,
+class iterator_over
+    : public iterator_facade<iterator_over<Axis>,
                              std::pair<int, typename Axis::bin_type>,
                              random_access_traversal_tag,
                              std::pair<int, typename Axis::bin_type>> {
 public:
-  explicit axis_iterator(const Axis &axis, int idx) : axis_(axis), idx_(idx) {}
+  explicit iterator_over(const Axis &axis, int idx) : axis_(axis), idx_(idx) {}
 
-  axis_iterator(const axis_iterator &) = default;
-  axis_iterator &operator=(const axis_iterator &) = default;
+  iterator_over(const iterator_over &) = default;
+  iterator_over &operator=(const iterator_over &) = default;
 
 private:
   void increment() noexcept { ++idx_; }
   void decrement() noexcept { --idx_; }
   void advance(int n) noexcept { idx_ += n; }
-  int distance_to(const axis_iterator &other) const noexcept {
+  int distance_to(const iterator_over &other) const noexcept {
     return other.idx_ - idx_;
   }
-  bool equal(const axis_iterator &other) const noexcept {
+  bool equal(const iterator_over &other) const noexcept {
     return idx_ == other.idx_;
   }
   std::pair<int, typename Axis::bin_type> dereference() const {
