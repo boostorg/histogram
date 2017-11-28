@@ -53,14 +53,15 @@ public:
 private:
   void increment() noexcept {
     auto iter = dims_.begin();
-    while (iter->idx == (iter->size - 1)) {
+    for (; iter != dims_.end(); ++iter) {
+      ++(iter->idx);
+      if (iter->idx < iter->size)
+        break;
       iter->idx = 0;
-      ++iter;
     }
     if (iter == dims_.end())
       idx_ = std::numeric_limits<std::size_t>::max();
     else {
-      ++(iter->idx);
       idx_ = 0;
       for (; iter != dims_.end(); ++iter)
         idx_ += iter->idx * iter->stride;
