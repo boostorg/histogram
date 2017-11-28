@@ -25,7 +25,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   add_definitions(/W3)
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  add_definitions(-Wall -pedantic)
+  add_definitions(-Wall)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
     # -fpermissive needed for cpp_int in gcc-6
     # -Wno-noexcept-type to silence warnings related to Boost.Python
@@ -33,7 +33,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   endif()
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  add_definitions(-Wall -pedantic)
+  add_definitions(-Wall)
 endif()
 
 if(TRACE_ALLOCS)
