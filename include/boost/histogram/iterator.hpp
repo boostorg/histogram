@@ -14,11 +14,8 @@
 namespace boost {
 namespace histogram {
 
-template <typename Storage>
-class value_iterator_over
-    : public iterator_facade<
-          value_iterator_over<Storage>, typename Storage::value_type,
-          forward_traversal_tag, typename Storage::value_type> {
+namespace detail {
+class multi_index {
   struct dim_t {
     int idx, size;
     std::size_t stride;
@@ -34,24 +31,14 @@ class value_iterator_over
   };
 
 public:
-  /// begin iterator
+  multi_index() = default;
+
   template <typename Histogram>
-  value_iterator_over(const Histogram &h, const Storage &s) : s_(s), idx_(0) {
+  explicit multi_index(const Histogram &h) : idx_(0) {
     dims_.reserve(h.dim());
     h.for_each_axis(dim_visitor{1, dims_});
   }
 
-  /// end iterator
-  explicit value_iterator_over(const Storage &s)
-      : s_(s), idx_(std::numeric_limits<std::size_t>::max()) {}
-
-  value_iterator_over(const value_iterator_over &) = default;
-  value_iterator_over &operator=(const value_iterator_over &) = default;
-
-  int idx(int dim = 0) const noexcept { return dims_[dim].idx; }
-  unsigned dim() const noexcept { return dims_.size(); }
-
-private:
   void increment() noexcept {
     auto iter = dims_.begin();
     for (; iter != dims_.end(); ++iter) {
@@ -68,14 +55,42 @@ private:
         idx_ += iter->idx * iter->stride;
     }
   }
+
+protected:
+  std::size_t idx_ = std::numeric_limits<std::size_t>::max();
+  std::vector<dim_t> dims_;
+};
+} // namespace detail
+
+template <typename Storage>
+class value_iterator_over
+    : public iterator_facade<
+          value_iterator_over<Storage>, typename Storage::value_type,
+          forward_traversal_tag, typename Storage::value_type>,
+      public detail::multi_index {
+
+public:
+  /// begin iterator
+  template <typename Histogram>
+  value_iterator_over(const Histogram &h, const Storage &s)
+      : detail::multi_index(h), s_(s) {}
+
+  /// end iterator
+  explicit value_iterator_over(const Storage &s) : s_(s) {}
+
+  value_iterator_over(const value_iterator_over &) = default;
+  value_iterator_over &operator=(const value_iterator_over &) = default;
+
+  int idx(unsigned dim = 0) const noexcept { return dims_[dim].idx; }
+  unsigned dim() const noexcept { return dims_.size(); }
+
+private:
   bool equal(const value_iterator_over &other) const noexcept {
     return &s_ == &(other.s_) && idx_ == other.idx_;
   }
   typename Storage::value_type dereference() const { return s_.value(idx_); }
 
   const Storage &s_;
-  std::size_t idx_;
-  std::vector<dim_t> dims_;
   friend class ::boost::iterator_core_access;
 };
 } // namespace histogram

@@ -15,8 +15,8 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/operators.hpp>
-#include <boost/histogram/value_iterator.hpp>
 #include <boost/mpl/count.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/int.hpp>
@@ -44,7 +44,8 @@ class access;
 namespace boost {
 namespace histogram {
 
-template <typename Axes, typename Storage> class histogram<dynamic_tag, Axes, Storage> {
+template <typename Axes, typename Storage>
+class histogram<dynamic_tag, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
 
 public:
@@ -61,21 +62,18 @@ public:
   histogram &operator=(histogram &&) = default;
 
   template <typename... Axes1>
-  explicit histogram(const Axes1 &... axes)
-      : axes_({any_axis_type(axes)...}) {
+  explicit histogram(const Axes1 &... axes) : axes_({any_axis_type(axes)...}) {
     storage_ = Storage(bincount_from_axes());
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  histogram(Iterator begin, Iterator end)
-      : axes_(std::distance(begin, end)) {
+  histogram(Iterator begin, Iterator end) : axes_(std::distance(begin, end)) {
     std::copy(begin, end, axes_.begin());
     storage_ = Storage(bincount_from_axes());
   }
 
   template <typename T, typename A, typename S>
-  explicit histogram(const histogram<T, A, S> &rhs)
-      : storage_(rhs.storage_) {
+  explicit histogram(const histogram<T, A, S> &rhs) : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
@@ -278,8 +276,7 @@ public:
   }
 
   /// Return a lower dimensional histogram
-  template <typename... Rest>
-  histogram reduce_to(int n, Rest... rest) const {
+  template <typename... Rest> histogram reduce_to(int n, Rest... rest) const {
     std::vector<bool> b(dim(), false);
     for (const auto &i : {n, rest...})
       b[i] = true;
@@ -299,9 +296,7 @@ public:
     return value_iterator(*this, storage_);
   }
 
-  value_iterator end() const noexcept {
-    return value_iterator(storage_);
-  }
+  value_iterator end() const noexcept { return value_iterator(storage_); }
 
 private:
   axes_type axes_;
@@ -477,35 +472,38 @@ template <typename... Axes>
 histogram<dynamic_tag, detail::combine_t<axis::builtins, mpl::vector<Axes...>>>
 make_dynamic_histogram(Axes &&... axes) {
   return histogram<dynamic_tag,
-      detail::combine_t<axis::builtins, mpl::vector<Axes...>>>(
+                   detail::combine_t<axis::builtins, mpl::vector<Axes...>>>(
       std::forward<Axes>(axes)...);
 }
 
 template <typename Storage, typename... Axes>
 histogram<dynamic_tag, detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
-                  Storage>
+          Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
   return histogram<dynamic_tag,
-      detail::combine_t<axis::builtins, mpl::vector<Axes...>>, Storage>(
-      std::forward<Axes>(axes)...);
+                   detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
+                   Storage>(std::forward<Axes>(axes)...);
 }
 
 template <typename Iterator, typename = detail::is_iterator<Iterator>>
-histogram<dynamic_tag,
-    detail::combine_t<axis::builtins, typename Iterator::value_type::types>>
+histogram<dynamic_tag, detail::combine_t<axis::builtins,
+                                         typename Iterator::value_type::types>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
-  return histogram<dynamic_tag,
+  return histogram<
+      dynamic_tag,
       detail::combine_t<axis::builtins, typename Iterator::value_type::types>>(
       begin, end);
 }
 
 template <typename Storage, typename Iterator,
           typename = detail::is_iterator<Iterator>>
-histogram<dynamic_tag,
+histogram<
+    dynamic_tag,
     detail::combine_t<axis::builtins, typename Iterator::value_type::types>,
     Storage>
 make_dynamic_histogram_with(Iterator begin, Iterator end) {
-  return histogram<dynamic_tag,
+  return histogram<
+      dynamic_tag,
       detail::combine_t<axis::builtins, typename Iterator::value_type::types>,
       Storage>(begin, end);
 }

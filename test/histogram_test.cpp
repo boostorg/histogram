@@ -50,12 +50,10 @@ int expected_moved_from_dim(static_tag, int static_value) {
   return static_value;
 }
 
-int expected_moved_from_dim(dynamic_tag, int) {
-  return 0;
-}
+int expected_moved_from_dim(dynamic_tag, int) { return 0; }
 
 template <typename... Ts>
-void pass_histogram(boost::histogram::histogram<Ts...>& h) {}
+void pass_histogram(boost::histogram::histogram<Ts...> &h) {}
 
 template <typename Type> void run_tests() {
 
@@ -360,8 +358,8 @@ template <typename Type> void run_tests() {
 
   // d1w3
   {
-    auto h =
-        make_histogram<array_storage<weight_counter<double>>>(Type(), axis::regular<>(2, -1, 1));
+    auto h = make_histogram<array_storage<weight_counter<double>>>(
+        Type(), axis::regular<>(2, -1, 1));
     h.fill(0);
     h.fill(weight(0.5), -1.0);
     h.fill(-1.0);

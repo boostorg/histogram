@@ -24,8 +24,8 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/operators.hpp>
-#include <boost/histogram/value_iterator.hpp>
 #include <boost/mpl/count.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/int.hpp>
@@ -42,7 +42,8 @@ class access;
 namespace boost {
 namespace histogram {
 
-template <typename Axes, typename Storage> class histogram<static_tag, Axes, Storage> {
+template <typename Axes, typename Storage>
+class histogram<static_tag, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
   using axes_size = typename fusion::result_of::size<Axes>::type;
 
@@ -229,10 +230,13 @@ public:
 
   /// Returns a lower-dimensional histogram
   template <int N, typename... Rest>
-  auto reduce_to(mpl::int_<N>, Rest...) const -> histogram<static_tag,
-      detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage> {
-    using HR = histogram<static_tag,
-        detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>, Storage>;
+  auto reduce_to(mpl::int_<N>, Rest...) const -> histogram<
+      static_tag, detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
+      Storage> {
+    using HR =
+        histogram<static_tag,
+                  detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
+                  Storage>;
     typename HR::axes_type axes;
     detail::axes_assign_subset<mpl::vector<mpl::int_<N>, Rest...>>(axes, axes_);
     auto hr = HR(std::move(axes));
@@ -246,9 +250,7 @@ public:
     return value_iterator(*this, storage_);
   }
 
-  value_iterator end() const noexcept {
-    return value_iterator(storage_);
-  }
+  value_iterator end() const noexcept { return value_iterator(storage_); }
 
 private:
   axes_type axes_;

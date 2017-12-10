@@ -9,8 +9,8 @@
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/variant.hpp>
 #include <sstream>
-#include <vector>
 #include <string>
+#include <vector>
 using namespace boost::histogram::detail;
 
 int main() {

@@ -46,7 +46,8 @@ template <typename Axes = builtins> class any;
 
 struct dynamic_tag {};
 struct static_tag {};
-template <class Type, class Axes, class Storage = adaptive_storage> class histogram;
+template <class Type, class Axes, class Storage = adaptive_storage>
+class histogram;
 
 template <class Axes = axis::builtins, class Storage = adaptive_storage>
 using dynamic_histogram = histogram<dynamic_tag, Axes, Storage>;

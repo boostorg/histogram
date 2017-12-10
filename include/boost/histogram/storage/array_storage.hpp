@@ -24,12 +24,11 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-template <typename T>
-struct counter_traits {
+template <typename T> struct counter_traits {
   using value_type = T;
-  static value_type value(const T& t) noexcept { return t; }
-  static void increase_by_count(T& lhs, const T& n) noexcept { lhs += n; }
-  static void increase_by_weight(T& lhs, const T& w) noexcept { lhs += w; }
+  static value_type value(const T &t) noexcept { return t; }
+  static void increase_by_count(T &lhs, const T &n) noexcept { lhs += n; }
+  static void increase_by_weight(T &lhs, const T &w) noexcept { lhs += w; }
 };
 } // namespace detail
 
@@ -63,8 +62,7 @@ public:
     return *this;
   }
 
-  template <typename S>
-  explicit array_storage(const S &other) {
+  template <typename S> explicit array_storage(const S &other) {
     reset(other.size());
     for (decltype(size_) i = 0u; i < size_; ++i) {
       array_[i] = other.value(i);
@@ -91,8 +89,9 @@ public:
     detail::counter_traits<T>::increase_by_count(array_[i], n);
   }
 
-  template <typename U=T, typename = decltype(U(0, 0))>
-  void add(std::size_t i, const value_type& value, const value_type& variance) noexcept {
+  template <typename U = T, typename = decltype(U(0, 0))>
+  void add(std::size_t i, const value_type &value,
+           const value_type &variance) noexcept {
     array_[i] += T(value, variance);
   }
 
@@ -100,7 +99,7 @@ public:
     return detail::counter_traits<T>::value(array_[i]);
   }
 
-  template <typename U=T, typename = decltype(std::declval<U &>().variance())>
+  template <typename U = T, typename = decltype(std::declval<U &>().variance())>
   value_type variance(std::size_t i) const noexcept {
     return array_[i].variance();
   }

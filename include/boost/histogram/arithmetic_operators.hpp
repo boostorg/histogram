@@ -13,7 +13,8 @@ namespace boost {
 namespace histogram {
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> &&operator+(histogram<T, A, S> &&a, const histogram<T, A, S> &b) {
+histogram<T, A, S> &&operator+(histogram<T, A, S> &&a,
+                               const histogram<T, A, S> &b) {
   a += b;
   return std::move(a);
 }
@@ -25,13 +26,15 @@ histogram<T, A, S> &&operator+(histogram<T, A, S> &&a, histogram<T, A, S> &&b) {
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> &&operator+(const histogram<T, A, S> &a, histogram<T, A, S> &&b) {
+histogram<T, A, S> &&operator+(const histogram<T, A, S> &a,
+                               histogram<T, A, S> &&b) {
   b += a;
   return std::move(b);
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> operator+(const histogram<T, A, S> &a, const histogram<T, A, S> &b) {
+histogram<T, A, S> operator+(const histogram<T, A, S> &a,
+                             const histogram<T, A, S> &b) {
   histogram<T, A, S> r(a);
   r += b;
   return r;
