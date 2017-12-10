@@ -58,7 +58,7 @@ private:
   PyObject **pstr_;
   std::streamsize len_, pos_;
 };
-}
+} // namespace detail
 
 template <class T> struct serialization_suite : python::pickle_suite {
   static python::tuple getstate(python::object obj) {
@@ -91,7 +91,7 @@ template <class T> struct serialization_suite : python::pickle_suite {
 #undef PyBytes_AS_STRING
 #undef PyBytes_Size
 #undef _PyBytes_Resize
-}
-}
+} // histogram
+} // boost
 
 #endif

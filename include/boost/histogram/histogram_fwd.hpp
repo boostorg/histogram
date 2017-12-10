@@ -44,9 +44,15 @@ template <typename Axes = builtins> class any;
 
 } // namespace axis
 
-template <class Axes, class Storage = adaptive_storage> class static_histogram;
+struct dynamic_tag {};
+struct static_tag {};
+template <class Type, class Axes, class Storage = adaptive_storage> class histogram;
 
-template <class Axes, class Storage = adaptive_storage> class dynamic_histogram;
+template <class Axes = axis::builtins, class Storage = adaptive_storage>
+using dynamic_histogram = histogram<dynamic_tag, Axes, Storage>;
+
+template <class Axes, class Storage = adaptive_storage>
+using static_histogram = histogram<static_tag, Axes, Storage>;
 
 struct weight {
   weight(double w) : value(w) {}

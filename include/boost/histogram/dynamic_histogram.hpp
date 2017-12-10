@@ -44,60 +44,43 @@ class access;
 namespace boost {
 namespace histogram {
 
-template <typename Axes, typename Storage> class dynamic_histogram {
+template <typename Axes, typename Storage> class histogram<dynamic_tag, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
 
 public:
   using any_axis_type = axis::any<Axes>;
+  using axes_type = std::vector<any_axis_type>;
   using value_type = typename Storage::value_type;
   using value_iterator = value_iterator_over<Storage>;
 
-private:
-  using axes_type = std::vector<any_axis_type>;
-
 public:
-  dynamic_histogram() = default;
-  dynamic_histogram(const dynamic_histogram &) = default;
-  dynamic_histogram(dynamic_histogram &&) = default;
-  dynamic_histogram &operator=(const dynamic_histogram &) = default;
-  dynamic_histogram &operator=(dynamic_histogram &&) = default;
+  histogram() = default;
+  histogram(const histogram &) = default;
+  histogram(histogram &&) = default;
+  histogram &operator=(const histogram &) = default;
+  histogram &operator=(histogram &&) = default;
 
   template <typename... Axes1>
-  explicit dynamic_histogram(const Axes1 &... axes)
+  explicit histogram(const Axes1 &... axes)
       : axes_({any_axis_type(axes)...}) {
     storage_ = Storage(bincount_from_axes());
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  dynamic_histogram(Iterator begin, Iterator end)
+  histogram(Iterator begin, Iterator end)
       : axes_(std::distance(begin, end)) {
     std::copy(begin, end, axes_.begin());
     storage_ = Storage(bincount_from_axes());
   }
 
-  template <typename A, typename S>
-  explicit dynamic_histogram(const static_histogram<A, S> &rhs)
+  template <typename T, typename A, typename S>
+  explicit histogram(const histogram<T, A, S> &rhs)
       : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
-  template <typename A, typename S>
-  explicit dynamic_histogram(const dynamic_histogram<A, S> &rhs)
-      : storage_(rhs.storage_) {
-    detail::axes_assign(axes_, rhs.axes_);
-  }
-
-  template <typename A, typename S>
-  dynamic_histogram &operator=(const static_histogram<A, S> &rhs) {
-    if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
-      detail::axes_assign(axes_, rhs.axes_);
-      storage_ = rhs.storage_;
-    }
-    return *this;
-  }
-
-  template <typename A, typename S>
-  dynamic_histogram &operator=(const dynamic_histogram<A, S> &rhs) {
+  template <typename T, typename A, typename S>
+  histogram &operator=(const histogram<T, A, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       detail::axes_assign(axes_, rhs.axes_);
       storage_ = rhs.storage_;
@@ -106,11 +89,11 @@ public:
   }
 
   template <typename S>
-  explicit dynamic_histogram(dynamic_histogram<Axes, S> &&rhs)
+  explicit histogram(histogram<dynamic_tag, Axes, S> &&rhs)
       : axes_(std::move(rhs.axes_)), storage_(std::move(rhs.storage_)) {}
 
   template <typename S>
-  dynamic_histogram &operator=(dynamic_histogram<Axes, S> &&rhs) {
+  histogram &operator=(histogram<dynamic_tag, Axes, S> &&rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       axes_ = std::move(rhs.axes_);
       storage_ = std::move(rhs.storage_);
@@ -118,48 +101,30 @@ public:
     return *this;
   }
 
-  template <typename A, typename S>
-  bool operator==(const static_histogram<A, S> &rhs) const noexcept {
+  template <typename T, typename A, typename S>
+  bool operator==(const histogram<T, A, S> &rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <typename A, typename S>
-  bool operator==(const dynamic_histogram<A, S> &rhs) const noexcept {
-    return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
-  }
-
-  template <typename A, typename S>
-  bool operator!=(const static_histogram<A, S> &rhs) const noexcept {
+  template <typename T, typename A, typename S>
+  bool operator!=(const histogram<T, A, S> &rhs) const noexcept {
     return !operator==(rhs);
   }
 
-  template <typename A, typename S>
-  bool operator!=(const dynamic_histogram<A, S> &rhs) const noexcept {
-    return !operator==(rhs);
-  }
-
-  template <typename A, typename S>
-  dynamic_histogram &operator+=(const static_histogram<A, S> &rhs) {
+  template <typename T, typename A, typename S>
+  histogram &operator+=(const histogram<T, A, S> &rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_))
       throw std::logic_error("axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
 
-  template <typename A, typename S>
-  dynamic_histogram &operator+=(const dynamic_histogram<A, S> &rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_))
-      throw std::logic_error("axes of histograms differ");
-    storage_ += rhs.storage_;
-    return *this;
-  }
-
-  dynamic_histogram &operator*=(const value_type rhs) {
+  histogram &operator*=(const value_type rhs) {
     storage_ *= rhs;
     return *this;
   }
 
-  dynamic_histogram &operator/=(const value_type rhs) {
+  histogram &operator/=(const value_type rhs) {
     storage_ *= 1.0 / rhs;
     return *this;
   }
@@ -306,7 +271,7 @@ public:
 
   /// Return a lower dimensional histogram
   template <int N, typename... Rest>
-  dynamic_histogram reduce_to(mpl::int_<N>, Rest...) const {
+  histogram reduce_to(mpl::int_<N>, Rest...) const {
     const auto b =
         detail::bool_mask<mpl::vector<mpl::int_<N>, Rest...>>(dim(), true);
     return reduce_impl(b);
@@ -314,7 +279,7 @@ public:
 
   /// Return a lower dimensional histogram
   template <typename... Rest>
-  dynamic_histogram reduce_to(int n, Rest... rest) const {
+  histogram reduce_to(int n, Rest... rest) const {
     std::vector<bool> b(dim(), false);
     for (const auto &i : {n, rest...})
       b[i] = true;
@@ -323,7 +288,7 @@ public:
 
   /// Return a lower dimensional histogram
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  dynamic_histogram reduce_to(Iterator begin, Iterator end) const {
+  histogram reduce_to(Iterator begin, Iterator end) const {
     std::vector<bool> b(dim(), false);
     for (; begin != end; ++begin)
       b[*begin] = true;
@@ -482,7 +447,7 @@ private:
     }
   }
 
-  dynamic_histogram reduce_impl(const std::vector<bool> &b) const {
+  histogram reduce_impl(const std::vector<bool> &b) const {
     axes_type axes;
     std::vector<unsigned> n(b.size());
     auto axes_iter = axes_.begin();
@@ -494,7 +459,7 @@ private:
       ++axes_iter;
       ++n_iter;
     }
-    dynamic_histogram h(axes.begin(), axes.end());
+    histogram h(axes.begin(), axes.end());
     detail::index_mapper m(n, b);
     do {
       detail::storage_add(h.storage_, storage_, m.second, m.first);
@@ -502,47 +467,45 @@ private:
     return h;
   }
 
-  template <typename A, typename S> friend class dynamic_histogram;
-  template <typename A, typename S> friend class static_histogram;
+  template <typename T, typename A, typename S> friend class histogram;
   friend class ::boost::python::access;
   friend class ::boost::serialization::access;
   template <typename Archive> void serialize(Archive &, unsigned);
 };
 
 template <typename... Axes>
-dynamic_histogram<detail::combine_t<axis::builtins, mpl::vector<Axes...>>>
+histogram<dynamic_tag, detail::combine_t<axis::builtins, mpl::vector<Axes...>>>
 make_dynamic_histogram(Axes &&... axes) {
-
-  return dynamic_histogram<
+  return histogram<dynamic_tag,
       detail::combine_t<axis::builtins, mpl::vector<Axes...>>>(
       std::forward<Axes>(axes)...);
 }
 
 template <typename Storage, typename... Axes>
-dynamic_histogram<detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
+histogram<dynamic_tag, detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
                   Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
-  return dynamic_histogram<
+  return histogram<dynamic_tag,
       detail::combine_t<axis::builtins, mpl::vector<Axes...>>, Storage>(
       std::forward<Axes>(axes)...);
 }
 
 template <typename Iterator, typename = detail::is_iterator<Iterator>>
-dynamic_histogram<
+histogram<dynamic_tag,
     detail::combine_t<axis::builtins, typename Iterator::value_type::types>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
-  return dynamic_histogram<
+  return histogram<dynamic_tag,
       detail::combine_t<axis::builtins, typename Iterator::value_type::types>>(
       begin, end);
 }
 
 template <typename Storage, typename Iterator,
           typename = detail::is_iterator<Iterator>>
-dynamic_histogram<
+histogram<dynamic_tag,
     detail::combine_t<axis::builtins, typename Iterator::value_type::types>,
     Storage>
 make_dynamic_histogram_with(Iterator begin, Iterator end) {
-  return dynamic_histogram<
+  return histogram<dynamic_tag,
       detail::combine_t<axis::builtins, typename Iterator::value_type::types>,
       Storage>(begin, end);
 }

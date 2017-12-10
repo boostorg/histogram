@@ -23,8 +23,8 @@ struct axis_ostream_visitor {
 };
 } // namespace detail
 
-template <template <class, class> class H, typename A, typename S>
-inline std::ostream &operator<<(std::ostream &os, const H<A, S> &h) {
+template <typename T, typename A, typename S>
+inline std::ostream &operator<<(std::ostream &os, const histogram<T, A, S> &h) {
   os << "histogram(";
   h.for_each_axis(detail::axis_ostream_visitor(os));
   os << (h.dim() ? "\n)" : ")");

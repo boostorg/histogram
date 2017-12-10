@@ -49,6 +49,7 @@ public:
   value_iterator_over &operator=(const value_iterator_over &) = default;
 
   int idx(int dim = 0) const noexcept { return dims_[dim].idx; }
+  unsigned dim() const noexcept { return dims_.size(); }
 
 private:
   void increment() noexcept {
