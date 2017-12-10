@@ -799,6 +799,8 @@ template <typename Type> void run_tests() {
     h.fill(1, 2);
     h.fill(1, 3);
     auto it = h.begin();
+    BOOST_TEST_EQ(it.dim(), 2);
+
     BOOST_TEST_EQ(it.idx(0), 0);
     BOOST_TEST_EQ(it.idx(1), 0);
     BOOST_TEST_EQ(*it, 1);
@@ -913,8 +915,8 @@ int main() {
 
   // reduce
   {
-    auto h1 =
-        make_dynamic_histogram(axis::integer<>(0, 2), axis::integer<>(0, 3));
+    auto h1 = make_dynamic_histogram(axis::integer<>(0, 2),
+                                     axis::integer<>(0, 3));
     h1.fill(0, 0);
     h1.fill(0, 1);
     h1.fill(1, 0);

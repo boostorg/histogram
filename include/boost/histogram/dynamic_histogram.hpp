@@ -337,16 +337,25 @@ private:
     }
   }
 
-  template <typename Value> struct lin_visitor : public static_visitor<void> {
+  struct lin_visitor : public static_visitor<void> {
     std::size_t &idx;
     std::size_t &stride;
-    const Value &val;
-    lin_visitor(std::size_t &i, std::size_t &s, const Value &v)
+    const int val;
+    lin_visitor(std::size_t &i, std::size_t &s, const int v)
         : idx(i), stride(s), val(v) {}
     template <typename A> void operator()(const A &a) const {
       detail::lin(idx, stride, a, val);
     }
   };
+
+  template <unsigned D> inline void lin(std::size_t &, std::size_t &) const {}
+
+  template <unsigned D, typename First, typename... Rest>
+  inline void lin(std::size_t &idx, std::size_t &stride, First &&x,
+                  Rest &&... rest) const {
+    apply_visitor(lin_visitor{idx, stride, x}, axes_[D]);
+    return lin<D + 1>(idx, stride, std::forward<Rest>(rest)...);
+  }
 
   template <typename Value> struct xlin_visitor : public static_visitor<void> {
     std::size_t &idx;
@@ -367,15 +376,6 @@ private:
           "fill argument not convertible to axis value type");
     }
   };
-
-  template <unsigned D> inline void lin(std::size_t &, std::size_t &) const {}
-
-  template <unsigned D, typename First, typename... Rest>
-  inline void lin(std::size_t &idx, std::size_t &stride, First &&x,
-                  Rest &&... rest) const {
-    apply_visitor(lin_visitor<First>{idx, stride, x}, axes_[D]);
-    return lin<D + 1>(idx, stride, std::forward<Rest>(rest)...);
-  }
 
   template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const {}
 
@@ -429,7 +429,7 @@ private:
   template <typename Iterator>
   void lin_iter(std::size_t &idx, std::size_t &stride, Iterator iter) const {
     for (const auto &a : axes_) {
-      apply_visitor(lin_visitor<decltype(*iter)>(idx, stride, *iter), a);
+      apply_visitor(lin_visitor(idx, stride, *iter), a);
       ++iter;
     }
   }

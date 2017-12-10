@@ -39,6 +39,10 @@ public:
     h.for_each_axis(dim_visitor{1, dims_});
   }
 
+  int idx(unsigned dim = 0) const noexcept { return dims_[dim].idx; }
+  unsigned dim() const noexcept { return dims_.size(); }
+
+protected:
   void increment() noexcept {
     auto iter = dims_.begin();
     for (; iter != dims_.end(); ++iter) {
@@ -56,7 +60,6 @@ public:
     }
   }
 
-protected:
   std::size_t idx_ = std::numeric_limits<std::size_t>::max();
   std::vector<dim_t> dims_;
 };
@@ -81,14 +84,40 @@ public:
   value_iterator_over(const value_iterator_over &) = default;
   value_iterator_over &operator=(const value_iterator_over &) = default;
 
-  int idx(unsigned dim = 0) const noexcept { return dims_[dim].idx; }
-  unsigned dim() const noexcept { return dims_.size(); }
-
 private:
   bool equal(const value_iterator_over &other) const noexcept {
     return &s_ == &(other.s_) && idx_ == other.idx_;
   }
   typename Storage::value_type dereference() const { return s_.value(idx_); }
+
+  const Storage &s_;
+  friend class ::boost::iterator_core_access;
+};
+
+template <typename Storage>
+class variance_iterator_over
+    : public iterator_facade<
+          variance_iterator_over<Storage>, typename Storage::value_type,
+          forward_traversal_tag, typename Storage::value_type>,
+      public detail::multi_index {
+
+public:
+  /// begin iterator
+  template <typename Histogram>
+  variance_iterator_over(const Histogram &h, const Storage &s)
+      : detail::multi_index(h), s_(s) {}
+
+  /// end iterator
+  explicit variance_iterator_over(const Storage &s) : s_(s) {}
+
+  variance_iterator_over(const variance_iterator_over &) = default;
+  variance_iterator_over &operator=(const variance_iterator_over &) = default;
+
+private:
+  bool equal(const variance_iterator_over &other) const noexcept {
+    return &s_ == &(other.s_) && idx_ == other.idx_;
+  }
+  typename Storage::value_type dereference() const { return s_.variance(idx_); }
 
   const Storage &s_;
   friend class ::boost::iterator_core_access;

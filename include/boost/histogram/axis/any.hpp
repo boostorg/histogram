@@ -102,18 +102,18 @@ public:
   any &operator=(any &&t) = default;
 
   template <typename T, typename = typename std::enable_if<
-                            mpl::contains<Axes, T>::value>::type>
+                            mpl::contains<types, T>::value>::type>
   any(const T &t) : base_type(t) {}
 
   template <typename T, typename = typename std::enable_if<
-                            mpl::contains<Axes, T>::value>::type>
+                            mpl::contains<types, T>::value>::type>
   any &operator=(const T &t) {
     // ugly workaround for compiler bug
     return reinterpret_cast<any &>(base_type::operator=(t));
   }
 
   template <typename T, typename = typename std::enable_if<
-                            mpl::contains<Axes, T>::value>::type>
+                            mpl::contains<types, T>::value>::type>
   any &operator=(T &&t) {
     // ugly workaround for compiler bug
     return reinterpret_cast<any &>(base_type::operator=(std::move(t)));
