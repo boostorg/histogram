@@ -14,6 +14,7 @@
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/operators.hpp>
@@ -21,6 +22,7 @@
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
+#include <boost/type_index.hpp>
 #include <cstddef>
 #include <iterator>
 #include <stdexcept>
@@ -137,7 +139,7 @@ public:
       throw std::invalid_argument(
           "fill arguments does not match histogram dimension");
     fill_impl(mpl::int_<(n_count::value + 2 * n_weight::value)>(),
-              std::forward<Args>(args)...);
+              args...);
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
@@ -311,7 +313,7 @@ private:
   template <typename... Args>
   inline void fill_impl(mpl::int_<0>, Args &&... args) {
     std::size_t idx = 0, stride = 1;
-    xlin<0>(idx, stride, std::forward<Args>(args)...);
+    xlin<0>(idx, stride, args...);
     if (stride) {
       storage_.increase(idx);
     }
@@ -321,7 +323,7 @@ private:
   inline void fill_impl(mpl::int_<1>, Args &&... args) {
     std::size_t idx = 0, stride = 1;
     unsigned n = 0;
-    xlin_n<0>(idx, stride, n, std::forward<Args>(args)...);
+    xlin_n<0>(idx, stride, n, args...);
     if (stride) {
       storage_.add(idx, n);
     }
@@ -331,7 +333,7 @@ private:
   inline void fill_impl(mpl::int_<2>, Args &&... args) {
     std::size_t idx = 0, stride = 1;
     double w = 0.0;
-    xlin_w<0>(idx, stride, w, std::forward<Args>(args)...);
+    xlin_w<0>(idx, stride, w, args...);
     if (stride) {
       storage_.increase_by_weight(idx, w);
     }
@@ -348,13 +350,13 @@ private:
     }
   };
 
-  template <unsigned D> inline void lin(std::size_t &, std::size_t &) const {}
+  template <unsigned D> inline void lin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename First, typename... Rest>
-  inline void lin(std::size_t &idx, std::size_t &stride, First &&x,
-                  Rest &&... rest) const {
+  inline void lin(std::size_t &idx, std::size_t &stride, const First &x,
+                  const Rest &... rest) const noexcept {
     apply_visitor(lin_visitor{idx, stride, x}, axes_[D]);
-    return lin<D + 1>(idx, stride, std::forward<Rest>(rest)...);
+    return lin<D + 1>(idx, stride, rest...);
   }
 
   template <typename Value> struct xlin_visitor : public static_visitor<void> {
@@ -372,18 +374,21 @@ private:
     }
 
     template <typename Axis> void impl(std::false_type, const Axis &) const {
-      throw std::runtime_error(
-          "fill argument not convertible to axis value type");
+      throw std::runtime_error(detail::cat(
+        "fill argument not convertible to axis value type: ",
+        boost::typeindex::type_id<Axis>().pretty_name(),
+        ", ",
+        boost::typeindex::type_id<Value>().pretty_name()));
     }
   };
 
   template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const {}
 
   template <unsigned D, typename First, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, First &&x,
-                   Rest &&... rest) const {
-    apply_visitor(xlin_visitor<First>{idx, stride, x}, axes_[D]);
-    return xlin<D + 1>(idx, stride, std::forward<Rest>(rest)...);
+  inline void xlin(std::size_t &idx, std::size_t &stride, const First &first,
+                   const Rest &... rest) const {
+    apply_visitor(xlin_visitor<First>{idx, stride, first}, axes_[D]);
+    return xlin<D + 1>(idx, stride, rest...);
   }
 
   template <unsigned D>
@@ -391,19 +396,19 @@ private:
 
   template <unsigned D, typename First, typename... Rest>
   inline typename enable_if<is_same<First, weight>>::type
-  xlin_w(std::size_t &idx, std::size_t &stride, double &x, First &&first,
-         Rest &&... rest) const {
+  xlin_w(std::size_t &idx, std::size_t &stride, double &x, const First &first,
+         const Rest &... rest) const {
     x = first.value;
-    return xlin_w<D>(idx, stride, x, std::forward<Rest>(rest)...);
+    return xlin_w<D>(idx, stride, x, rest...);
   }
 
   template <unsigned D, typename First, typename... Rest>
   inline typename disable_if<is_same<First, weight>>::type
-  xlin_w(std::size_t &idx, std::size_t &stride, double &x, First &&first,
-         Rest &&... rest) const {
-    apply_visitor(xlin_visitor<First>{idx, stride, std::forward<First>(first)},
+  xlin_w(std::size_t &idx, std::size_t &stride, double &x, const First &first,
+         const Rest &... rest) const {
+    apply_visitor(xlin_visitor<First>{idx, stride, first},
                   axes_[D]);
-    return xlin_w<D + 1>(idx, stride, x, std::forward<Rest>(rest)...);
+    return xlin_w<D + 1>(idx, stride, x, rest...);
   }
 
   template <unsigned D>
@@ -411,19 +416,19 @@ private:
 
   template <unsigned D, typename First, typename... Rest>
   inline typename enable_if<is_same<First, count>>::type
-  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, First &&first,
-         Rest &&... rest) const {
+  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, const First &first,
+         const Rest &... rest) const {
     x = first.value;
-    return xlin_n<D>(idx, stride, x, std::forward<Rest>(rest)...);
+    return xlin_n<D>(idx, stride, x, rest...);
   }
 
   template <unsigned D, typename First, typename... Rest>
   inline typename disable_if<is_same<First, count>>::type
-  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, First &&first,
-         Rest &&... rest) const {
-    apply_visitor(xlin_visitor<First>{idx, stride, std::forward<First>(first)},
+  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, const First &first,
+         const Rest &... rest) const {
+    apply_visitor(xlin_visitor<First>{idx, stride, first},
                   axes_[D]);
-    return xlin_n<D + 1>(idx, stride, x, std::forward<Rest>(rest)...);
+    return xlin_n<D + 1>(idx, stride, x, rest...);
   }
 
   template <typename Iterator>
@@ -437,7 +442,7 @@ private:
   template <typename Iterator>
   void xlin_iter(std::size_t &idx, std::size_t &stride, Iterator iter) const {
     for (const auto &a : axes_) {
-      apply_visitor(xlin_visitor<decltype(*iter)>(idx, stride, *iter), a);
+      apply_visitor(xlin_visitor<decltype(*iter)>{idx, stride, *iter}, a);
       ++iter;
     }
   }

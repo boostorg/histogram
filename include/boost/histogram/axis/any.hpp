@@ -9,6 +9,7 @@
 
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
+#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/interval.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/utility/string_view.hpp>
@@ -63,8 +64,11 @@ template <typename T> struct index : public static_visitor<int> {
     return a.index(t);
   }
   template <typename Axis> int impl(std::false_type, const Axis &) const {
-    throw std::runtime_error(
-        "index argument not convertible to axis value type");
+    throw std::runtime_error(::boost::histogram::detail::cat(
+      "fill argument not convertible to axis value type: ",
+      boost::typeindex::type_id<Axis>().pretty_name(),
+      ", ",
+      boost::typeindex::type_id<T>().pretty_name()));
   }
 };
 
