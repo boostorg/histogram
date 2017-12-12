@@ -102,7 +102,7 @@ else()
 endif()
 
 # sync examples in documentation with example folder
-add_custom_target(sync_examples ALL COMMAND python ../doc/sync_code.py)
+add_custom_target(sync_examples ALL COMMAND python ${PROJECT_SOURCE_DIR}/../doc/sync_code.py)
 
 # checks
 if(BUILD_CHECKS)
