@@ -24,45 +24,38 @@ using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
 namespace mpl = boost::mpl;
 
-using Static = mpl::int_<0>;
-using Dynamic = mpl::int_<1>;
-
 template <typename S, typename... Axes>
-auto make_histogram(Static, Axes &&... axes)
+auto make_histogram(static_tag, Axes &&... axes)
     -> decltype(make_static_histogram_with<S>(std::forward<Axes>(axes)...)) {
   return make_static_histogram_with<S>(std::forward<Axes>(axes)...);
 }
 
 template <typename S, typename... Axes>
-auto make_histogram(Dynamic, Axes &&... axes)
+auto make_histogram(dynamic_tag, Axes &&... axes)
     -> decltype(make_dynamic_histogram_with<S>(std::forward<Axes>(axes)...)) {
   return make_dynamic_histogram_with<S>(std::forward<Axes>(axes)...);
 }
 
 template <typename T, typename U>
-bool axis_equal(Static, const T &t, const U &u) {
+bool axis_equal(static_tag, const T &t, const U &u) {
   return t == u;
 }
 
 template <typename T, typename U>
-bool axis_equal(Dynamic, const T &t, const U &u) {
+bool axis_equal(dynamic_tag, const T &t, const U &u) {
   return t == T(u); // need to convert rhs to boost::variant
 }
 
-template <typename Type> void run_tests() {
+int expected_moved_from_dim(static_tag, int static_value) {
+  return static_value;
+}
 
-  // init_0
-  {
-    auto h = static_histogram<mpl::vector<axis::integer<>>, adaptive_storage>();
-    BOOST_TEST_EQ(h.dim(), 1);
-    BOOST_TEST_EQ(h.bincount(), 0);
-    auto h2 = static_histogram<mpl::vector<axis::integer<>>,
-                               array_storage<unsigned>>();
-    BOOST_TEST_EQ(h2, h);
-    auto h3 =
-        static_histogram<mpl::vector<axis::regular<>>, adaptive_storage>();
-    BOOST_TEST_NE(h3, h);
-  }
+int expected_moved_from_dim(dynamic_tag, int) { return 0; }
+
+template <typename... Ts>
+void pass_histogram(boost::histogram::histogram<Ts...> &h) {}
+
+template <typename Type> void run_tests() {
 
   // init_1
   {
@@ -169,15 +162,15 @@ template <typename Type> void run_tests() {
     h.fill(0, 0);
     const auto href = h;
     decltype(h) h2(std::move(h));
-    BOOST_TEST_EQ(h.dim(),
-                  Type() == 0 ? 2 : 0); // static axes cannot shrink to zero
+    // static axes cannot shrink to zero
+    BOOST_TEST_EQ(h.dim(), expected_moved_from_dim(Type(), 2));
     BOOST_TEST_EQ(h.sum(), 0);
     BOOST_TEST_EQ(h.bincount(), 0);
     BOOST_TEST_EQ(h2, href);
     decltype(h) h3;
     h3 = std::move(h2);
-    BOOST_TEST_EQ(h2.dim(),
-                  Type() == 0 ? 2 : 0); // static axes cannot shrink to zero
+    // static axes cannot shrink to zero
+    BOOST_TEST_EQ(h2.dim(), expected_moved_from_dim(Type(), 2));
     BOOST_TEST_EQ(h2.sum(), 0);
     BOOST_TEST_EQ(h2.bincount(), 0);
     BOOST_TEST_EQ(h3, href);
@@ -213,7 +206,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(c.axis().index(B), 1);
     c.axis().label("foo");
     BOOST_TEST_EQ(c.axis().label(), "foo");
-    // need to cast here for this to work with Type == Dynamic
+    // need to cast here for this to work with Type == dynamic_tag
     auto ca = axis::cast<axis::category<>>(c.axis());
     BOOST_TEST_EQ(ca[0], A);
   }
@@ -365,8 +358,8 @@ template <typename Type> void run_tests() {
 
   // d1w3
   {
-    auto h =
-        make_histogram<array_storage<weight_counter<double>>>(Type(), axis::regular<>(2, -1, 1));
+    auto h = make_histogram<array_storage<weight_counter<double>>>(
+        Type(), axis::regular<>(2, -1, 1));
     h.fill(0);
     h.fill(weight(0.5), -1.0);
     h.fill(-1.0);
@@ -697,11 +690,11 @@ template <typename Type> void run_tests() {
     auto h1_0 = h1.reduce_to(0_c);
     BOOST_TEST_EQ(h1_0.dim(), 1);
     BOOST_TEST_EQ(h1_0.sum(), 5);
-    // BOOST_TEST_EQ(h1_0.value(0), 2);
-    // BOOST_TEST_EQ(h1_0.value(1), 3);
-    // BOOST_TEST_EQ(h1_0.axis()[0].lower(), 0.0);
-    // BOOST_TEST_EQ(h1_0.axis()[1].lower(), 1.0);
-    // BOOST_TEST(axis_equal(Type(), h1_0.axis(), h1.axis(0_c)));
+    BOOST_TEST_EQ(h1_0.value(0), 2);
+    BOOST_TEST_EQ(h1_0.value(1), 3);
+    BOOST_TEST_EQ(h1_0.axis()[0].lower(), 0);
+    BOOST_TEST_EQ(h1_0.axis()[1].lower(), 1);
+    BOOST_TEST(axis_equal(Type(), h1_0.axis(), h1.axis(0_c)));
 
     auto h1_1 = h1.reduce_to(1_c);
     BOOST_TEST_EQ(h1_1.dim(), 1);
@@ -806,6 +799,8 @@ template <typename Type> void run_tests() {
     h.fill(1, 2);
     h.fill(1, 3);
     auto it = h.begin();
+    BOOST_TEST_EQ(it.dim(), 2);
+
     BOOST_TEST_EQ(it.idx(0), 0);
     BOOST_TEST_EQ(it.idx(1), 0);
     BOOST_TEST_EQ(*it, 1);
@@ -837,6 +832,12 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.value(it.idx(0), it.idx(1)), *it);
     ++it;
     BOOST_TEST(it == h.end());
+  }
+
+  // pass histogram to function
+  {
+    auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3));
+    pass_histogram(h);
   }
 }
 
@@ -873,10 +874,10 @@ template <typename T1, typename T2> void run_mixed_tests() {
 int main() {
 
   // common interface
-  run_tests<Static>();
-  run_tests<Dynamic>();
+  run_tests<static_tag>();
+  run_tests<dynamic_tag>();
 
-  // special stuff that only works with Dynamic
+  // special stuff that only works with dynamic_tag
 
   // init
   {
@@ -914,8 +915,8 @@ int main() {
 
   // reduce
   {
-    auto h1 =
-        make_dynamic_histogram(axis::integer<>(0, 2), axis::integer<>(0, 3));
+    auto h1 = make_dynamic_histogram(axis::integer<>(0, 2),
+                                     axis::integer<>(0, 3));
     h1.fill(0, 0);
     h1.fill(0, 1);
     h1.fill(1, 0);
@@ -927,7 +928,7 @@ int main() {
     BOOST_TEST_EQ(h1_0.sum(), 5);
     BOOST_TEST_EQ(h1_0.value(0), 2);
     BOOST_TEST_EQ(h1_0.value(1), 3);
-    BOOST_TEST(axis_equal(Dynamic(), h1_0.axis(), h1.axis(0_c)));
+    BOOST_TEST(axis_equal(dynamic_tag(), h1_0.axis(), h1.axis(0_c)));
 
     auto h1_1 = h1.reduce_to(1);
     BOOST_TEST_EQ(h1_1.dim(), 1);
@@ -935,11 +936,11 @@ int main() {
     BOOST_TEST_EQ(h1_1.value(0), 2);
     BOOST_TEST_EQ(h1_1.value(1), 2);
     BOOST_TEST_EQ(h1_1.value(2), 1);
-    BOOST_TEST(axis_equal(Dynamic(), h1_1.axis(), h1.axis(1_c)));
+    BOOST_TEST(axis_equal(dynamic_tag(), h1_1.axis(), h1.axis(1_c)));
   }
 
-  run_mixed_tests<Static, Dynamic>();
-  run_mixed_tests<Dynamic, Static>();
+  run_mixed_tests<static_tag, dynamic_tag>();
+  run_mixed_tests<dynamic_tag, static_tag>();
 
   return boost::report_errors();
 }

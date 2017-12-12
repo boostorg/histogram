@@ -9,7 +9,9 @@
 
 namespace boost {
 
-namespace serialization { class access; } // forward declare
+namespace serialization {
+class access;
+} // namespace serialization
 
 namespace histogram {
 
@@ -70,17 +72,15 @@ public:
     return w == rhs.w && w2 == rhs.w2;
   }
 
-  bool operator!=(const weight_counter &rhs) const {
-    return !operator==(rhs);
-  }
+  bool operator!=(const weight_counter &rhs) const { return !operator==(rhs); }
 
-  template <typename U>
-  bool operator==(const weight_counter<U> &rhs) const {
+  template <typename U> bool operator==(const weight_counter<U> &rhs) const {
     return w == rhs.w && w2 == rhs.w2;
   }
 
-  template <typename U>
-  bool operator!=(const weight_counter<U> &rhs) const { return !operator==(rhs); }
+  template <typename U> bool operator!=(const weight_counter<U> &rhs) const {
+    return !operator==(rhs);
+  }
 
   template <typename T> bool operator==(const T &rhs) const {
     return w == w2 && w == static_cast<RealType>(rhs);
@@ -101,26 +101,33 @@ private:
   RealType w, w2;
 };
 
-template <typename T, typename U> bool operator==(const T &t, const weight_counter<U> &w) {
+template <typename T, typename U>
+bool operator==(const T &t, const weight_counter<U> &w) {
   return w == t;
 }
 
-template <typename T, typename U> bool operator!=(const T &t, const weight_counter<U> &w) {
+template <typename T, typename U>
+bool operator!=(const T &t, const weight_counter<U> &w) {
   return !(w == t);
 }
 
 namespace detail {
-  template <typename T> struct counter_traits; // fwd declaration
+template <typename T> struct counter_traits; // fwd declaration
 
-  // specialization
-  template <typename T>
-  struct counter_traits<weight_counter<T>> {
-    using value_type = T;
-    static value_type value(const weight_counter<T>& w) noexcept { return w.value(); }
-    static void increase_by_count(weight_counter<T>& lhs, const T& n) noexcept { lhs.increase_by_count(n); }
-    static void increase_by_weight(weight_counter<T>& lhs, const T& w) noexcept { lhs.increase_by_weight(w); }
-  };
-}
+// specialization
+template <typename T> struct counter_traits<weight_counter<T>> {
+  using value_type = T;
+  static value_type value(const weight_counter<T> &w) noexcept {
+    return w.value();
+  }
+  static void increase_by_count(weight_counter<T> &lhs, const T &n) noexcept {
+    lhs.increase_by_count(n);
+  }
+  static void increase_by_weight(weight_counter<T> &lhs, const T &w) noexcept {
+    lhs.increase_by_weight(w);
+  }
+};
+} // namespace detail
 
 } // namespace histogram
 } // namespace boost

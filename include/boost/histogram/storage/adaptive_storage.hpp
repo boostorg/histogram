@@ -301,7 +301,8 @@ template <typename RHS> struct radd_visitor : public static_visitor<void> {
   }
 
   void operator()(array<weight_counter> &lhs) const {
-    lhs[idx].increase_by_count(static_cast<double>(rhs)); }
+    lhs[idx].increase_by_count(static_cast<double>(rhs));
+  }
 };
 
 template <> struct radd_visitor<weight_counter> : public static_visitor<void> {
@@ -468,8 +469,7 @@ public:
   }
 
   // precondition: storages have same size
-  template <typename RHS>
-  adaptive_storage &operator+=(const RHS &rhs) {
+  template <typename RHS> adaptive_storage &operator+=(const RHS &rhs) {
     for (auto i = 0ul, n = size(); i < n; ++i)
       apply_visitor(detail::radd_visitor<typename RHS::value_type>(
                         buffer_, i, rhs.value(i)),

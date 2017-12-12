@@ -189,7 +189,8 @@ void any<Axes>::serialize(Archive &ar, unsigned /* version */) {
 
 template <class A, class S>
 template <class Archive>
-void static_histogram<A, S>::serialize(Archive &ar, unsigned /* version */) {
+void histogram<static_tag, A, S>::serialize(Archive &ar,
+                                            unsigned /* version */) {
   detail::serialize_helper<Archive> sh(ar);
   fusion::for_each(axes_, sh);
   ar &storage_;
@@ -197,7 +198,8 @@ void static_histogram<A, S>::serialize(Archive &ar, unsigned /* version */) {
 
 template <class A, class S>
 template <class Archive>
-void dynamic_histogram<A, S>::serialize(Archive &ar, unsigned /* version */) {
+void histogram<dynamic_tag, A, S>::serialize(Archive &ar,
+                                             unsigned /* version */) {
   ar &axes_;
   ar &storage_;
 }
