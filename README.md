@@ -54,6 +54,12 @@ make # or 'make install'
 
 To run the tests, do `make test`.
 
+### Trouble-shooting when compiling with Python support
+
+If you compile the library with Python support (the default if Python is found) and have several versions of Python installed, `cmake` will pick the latest Python version by default. Please make sure that this is the same version that Boost.Python was compiled against, otherwise you will get strange errors during compilation and/or at runtime. You can force `cmake` to pick a specific Python version with the PYTHON_VERSION flag. For example, to force the use of Python2 over Python3, do: `cmake -DPYTHON_VERSION=2.7 ../histogram/build`
+
+In the future, the build system may be able to pick the right Python version automatically, but right now it has to be done manually.
+
 ## Code examples
 
 For the full version of the following examples with explanations, see
@@ -130,7 +136,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
     radius = (x ** 2 + y ** 2) ** 0.5
     phi = np.arctan2(y, x)
 
-    # fill histogram with numpy arrays; the call looks the
+    # fill histogram with numpy arrays; call looks as
     # if radius and phi are numbers instead of arrays
     h.fill(radius, phi)
 
@@ -168,3 +174,7 @@ Read more about the design choices in the [documentation](http://hdembinski.gith
 ## State of project
 
 The histogram is feature-complete. More than 500 individual tests make sure that the implementation works as expected. Full documentation is available. User feedback is appreciated!
+
+As we are finalising the interface in the review process, code breaking changes of the interface are not unlikely to happen. If you want to use the library in production code, please use the [latest release](https://github.com/HDembinski/histogram/releases) instead of the master. After the library is accepted as part of Boost, the interface will be kept stable, of course.
+
+Review of the library is planned to happen in March 2018.
