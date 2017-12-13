@@ -429,7 +429,7 @@ public:
           enum uoflow uo = ::boost::histogram::axis::uoflow::on)
       : axis_base_uoflow(upper - lower, label, uo), min_(lower) {
     if (lower > upper) {
-      throw std::logic_error("lower <= upper required");
+      throw std::logic_error("lower < upper required");
     }
   }
 
