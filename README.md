@@ -60,6 +60,8 @@ If you compile the library with Python support (the default if Python is found) 
 
 In the future, the build system may be able to pick the right Python version automatically, but right now it has to be done manually.
 
+If you installed Boost with `brew` on OSX, also have a look at this [Stackoverflow](https://stackoverflow.com/questions/33653001/unable-to-link-against-boost-python-on-os-x) question.
+
 ## Code examples
 
 For the full version of the following examples with explanations, see
