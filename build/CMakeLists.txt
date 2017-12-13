@@ -43,23 +43,30 @@ endif()
 if(BUILD_PYTHON)
   if(DEFINED PYTHON_VERSION)
     find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
-    find_package(PythonInterp ${PYTHON_VERSION} EXACT REQUIRED) # used by python_suite_test
   else()
     find_package(PythonLibs REQUIRED)
-    find_package(PythonInterp REQUIRED) # used by python_suite_test
   endif()
 
-  message(STATUS "Python lib: ${PYTHON_LIBRARIES}")
+  # used by python_suite_test, version automatically matches PythonLibs
+  find_package(PythonInterp REQUIRED)
+
+  message(STATUS "Python lib: ${PYTHON_LIBRARIES} (MUST match what Boost.Python was compiled against)")
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
   include_directories(${PYTHON_INCLUDE_DIRS})
 
+  if (PYTHON_VERSION_MAJOR EQUAL 3)
+    set(BOOST_PYTHON_NAME python3)
+  else()
+    set(BOOST_PYTHON_NAME python)
+  endif()
+
   if(BUILD_NUMPY_SUPPORT)
-    find_package(Boost 1.55 REQUIRED
-                 COMPONENTS iostreams serialization python numpy)
+    find_package(Boost 1.63 REQUIRED
+                 COMPONENTS iostreams serialization ${BOOST_PYTHON_NAME} numpy)
     add_definitions(-DHAVE_NUMPY)
   else()
-    find_package(Boost 1.55 REQUIRED
-                 COMPONENTS iostreams serialization python)
+    find_package(Boost 1.63
+                 COMPONENTS iostreams serialization ${BOOST_PYTHON_NAME})
   endif()
 
   add_library(histogram SHARED
@@ -72,7 +79,7 @@ if(BUILD_PYTHON)
   target_link_libraries(histogram ${LIBRARIES})
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
 else()
-  find_package(Boost 1.55 REQUIRED
+  find_package(Boost 1.63 REQUIRED
                COMPONENTS serialization)
   set(LIBRARIES ${Boost_LIBRARIES})
 endif()
