@@ -56,7 +56,7 @@ To run the tests, do `make test`.
 
 ### Trouble-shooting when compiling with Python support
 
-If you compile the library with Python support (the default if Python is found) and have several versions of Python installed, `cmake` will pick the latest Python version by default. Please make sure that this is the same version that Boost.Python was compiled against, otherwise you will get strange errors during compilation and/or at runtime. You can force `cmake` to pick a specific Python version with the PYTHON_VERSION flag. For example, to force the use of Python2 over Python3, do: `cmake -DPYTHON_VERSION=2.7 ../histogram/build`
+If you compile the library with Python support (the default if Python is found) and have several versions of Python installed, `cmake` will pick the latest Python version by default. Please make sure that this is the same version that Boost.Python and Boost.Numpy were compiled against, otherwise you will get strange errors during compilation and/or at runtime. You can force `cmake` to pick a specific Python version with the PYTHON_VERSION flag. For example, to force the use of Python2.7, do: `cmake -DPYTHON_VERSION=2.7 ../histogram/build`
 
 In the future, the build system may be able to pick the right Python version automatically, but right now it has to be done manually.
 

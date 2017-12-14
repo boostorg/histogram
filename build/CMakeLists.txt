@@ -47,12 +47,14 @@ if(BUILD_PYTHON)
     find_package(PythonLibs REQUIRED)
   endif()
 
-  # used by python_suite_test, version automatically matches PythonLibs
-  find_package(PythonInterp REQUIRED)
-
   message(STATUS "Python lib: ${PYTHON_LIBRARIES} (MUST match what Boost.Python was compiled against)")
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
   include_directories(${PYTHON_INCLUDE_DIRS})
+
+  # used by python_suite_test, version is matched with PythonLibs
+  # automatically in cmake-3.9.6, but this seems not to be the case in older
+  # cmake versions
+  find_package(PythonInterp ${PYTHONLIBS_VERSION_STRING} EXACT REQUIRED)
 
   if (PYTHON_VERSION_MAJOR EQUAL 3)
     set(BOOST_PYTHON_NAME python3)
@@ -74,7 +76,6 @@ if(BUILD_PYTHON)
     ../src/python/axis.cpp
     ../src/python/histogram.cpp
   )
-
   set(LIBRARIES ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
   target_link_libraries(histogram ${LIBRARIES})
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
