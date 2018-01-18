@@ -1,4 +1,4 @@
-// Copyright 2015-2016 Hans Dembinski
+// Copyright 2015-2018 Hans Dembinski
 //
 // Distributed under the Boost Software License, version 1.0.
 // (See accompanying file LICENSE_1_0.txt

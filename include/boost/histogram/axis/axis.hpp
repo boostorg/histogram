@@ -428,7 +428,7 @@ public:
   integer(value_type lower, value_type upper, string_view label = {},
           enum uoflow uo = ::boost::histogram::axis::uoflow::on)
       : axis_base_uoflow(upper - lower, label, uo), min_(lower) {
-    if (lower > upper) {
+    if (!(lower < upper)) {
       throw std::logic_error("lower < upper required");
     }
   }

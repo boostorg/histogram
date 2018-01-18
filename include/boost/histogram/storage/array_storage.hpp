@@ -81,7 +81,7 @@ public:
 
   void increase(std::size_t i) noexcept { ++array_[i]; }
 
-  void increase_by_weight(std::size_t i, const value_type w) noexcept {
+  void increase_by_weight(std::size_t i, const value_type& w) noexcept {
     detail::counter_traits<T>::increase_by_weight(array_[i], w);
   }
 

@@ -785,7 +785,7 @@ int main() {
 
 Histograms can be created with a different storage policy than the default [classref boost::histogram::adaptive_storage adaptive_storage], using the templated factories [funcref boost::histogram::make_static_histogram_with make_static_histogram_with] and [funcref boost::histogram::make_dynamic_histogram_with make_dynamic_histogram_with].
 
-A simple alternative, [classref boost::histogram::array_storage array_storage], is included in the library. It does not do dynamic memory management and it does not handle weighted increments. Instead, it lets the user choose the type which internally stores the bin count at compile-time. If performance is a concern, you could give this storage policy a try, since it may be faster for low-dimensional histograms.
+A simple alternative, [classref boost::histogram::array_storage array_storage], is included in the library. It does not do dynamic memory management and it does not handle weighted increments. Instead, it lets the user choose the type which internally stores the bin count at compile-time. If performance is a concern, you could give this storage policy a try, since it may be faster for low-dimensional histograms (but it can be slower as well, just try it out and measure).
 
 Here is an example of a histogram construced with an alternative storage policy.
 
