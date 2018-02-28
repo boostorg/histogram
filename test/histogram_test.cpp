@@ -243,25 +243,25 @@ template <typename Type> void run_tests() {
     h.fill(0);
     h.fill(0);
     h.fill(-1);
-    h.fill(10, count(10));
+    h.fill(10);
 
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(h.axis(0_c).size(), 2);
     BOOST_TEST_EQ(h.axis(0_c).shape(), 4);
-    BOOST_TEST_EQ(h.sum(), 13);
+    BOOST_TEST_EQ(h.sum(), 4);
 
     BOOST_TEST_THROWS(h.value(-2), std::out_of_range);
     BOOST_TEST_EQ(h.value(-1), 1);
     BOOST_TEST_EQ(h.value(0), 2);
     BOOST_TEST_EQ(h.value(1), 0);
-    BOOST_TEST_EQ(h.value(2), 10);
+    BOOST_TEST_EQ(h.value(2), 1);
     BOOST_TEST_THROWS(h.value(3), std::out_of_range);
 
     BOOST_TEST_THROWS(h.variance(-2), std::out_of_range);
     BOOST_TEST_EQ(h.variance(-1), 1);
     BOOST_TEST_EQ(h.variance(0), 2);
     BOOST_TEST_EQ(h.variance(1), 0);
-    BOOST_TEST_EQ(h.variance(2), 10);
+    BOOST_TEST_EQ(h.variance(2), 1);
     BOOST_TEST_THROWS(h.variance(3), std::out_of_range);
   }
 
@@ -272,7 +272,7 @@ template <typename Type> void run_tests() {
     h.fill(0);
     h.fill(-0);
     h.fill(-1);
-    h.fill(10, count(10));
+    h.fill(10);
 
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(h.axis(0_c).size(), 2);
@@ -297,7 +297,7 @@ template <typename Type> void run_tests() {
     h.fill("A");
     h.fill("B");
     h.fill("D");
-    h.fill("E", count(10));
+    h.fill("E");
 
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(h.axis(0_c).size(), 2);
@@ -323,7 +323,7 @@ template <typename Type> void run_tests() {
     h.fill(weight(0.5), -1);
     h.fill(-1);
     h.fill(-2);
-    h.fill(weight(5), 10);
+    h.fill(10, weight(5));
 
     BOOST_TEST_EQ(h.sum(), 8.5);
 
@@ -336,46 +336,6 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.variance(0), 1.25);
     BOOST_TEST_EQ(h.variance(1), 1);
     BOOST_TEST_EQ(h.variance(2), 25);
-  }
-
-  // d1w2
-  {
-    auto h =
-        make_histogram<array_storage<float>>(Type(), axis::regular<>(2, -1, 1));
-    h.fill(0);
-    h.fill(weight(0.5), -1);
-    h.fill(-1);
-    h.fill(-2);
-    h.fill(count(5), 10);
-
-    BOOST_TEST_EQ(h.sum(), 8.5);
-
-    BOOST_TEST_EQ(h.value(-1), 1);
-    BOOST_TEST_EQ(h.value(0), 1.5);
-    BOOST_TEST_EQ(h.value(1), 1);
-    BOOST_TEST_EQ(h.value(2), 5);
-  }
-
-  // d1w3
-  {
-    auto h = make_histogram<array_storage<weight_counter<double>>>(
-        Type(), axis::regular<>(2, -1, 1));
-    h.fill(0);
-    h.fill(weight(0.5), -1.0);
-    h.fill(-1.0);
-    h.fill(-2.0);
-    h.fill(count(5), 10.0);
-
-    BOOST_TEST_EQ(h.sum(), 8.5);
-
-    BOOST_TEST_EQ(h.value(-1), 1);
-    BOOST_TEST_EQ(h.variance(-1), 1);
-    BOOST_TEST_EQ(h.value(0), 1.5);
-    BOOST_TEST_EQ(h.variance(0), 1.25);
-    BOOST_TEST_EQ(h.value(1), 1);
-    BOOST_TEST_EQ(h.variance(1), 1);
-    BOOST_TEST_EQ(h.value(2), 5);
-    BOOST_TEST_EQ(h.variance(2), 5);
   }
 
   // d2

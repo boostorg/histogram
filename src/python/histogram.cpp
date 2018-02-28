@@ -242,13 +242,11 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
   }
 
   fetcher<double> fetch_weight;
-  fetcher<unsigned> fetch_count;
   const auto nkwargs = bp::len(kwargs);
   if (nkwargs > 0) {
     const bool use_weight = kwargs.has_key("weight");
-    const bool use_count = kwargs.has_key("count");
-    if (nkwargs > 1 || (use_weight == use_count)) { // may not be both true or false
-      PyErr_SetString(PyExc_RuntimeError, "only keyword weight or count allowed");
+    if (nkwargs > use_weight) { // only one keyword allowed: weight
+      PyErr_SetString(PyExc_RuntimeError, "only keyword weight allowed");
       bp::throw_error_already_set();
     }
 
@@ -262,17 +260,6 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
         n = fetch_weight.n;
       }
     }
-
-    if (use_count) {
-      fetch_count.assign(kwargs.get("count"));
-      if (fetch_count.n > 0) {
-        if (n > 0 && fetch_count.n != n) {
-          PyErr_SetString(PyExc_ValueError, "length of count sequence does not match");
-          bp::throw_error_already_set();
-        }
-        n = fetch_count.n;
-      }
-    }
   }
 
   double v[BOOST_HISTOGRAM_AXIS_LIMIT];
@@ -282,8 +269,6 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
       v[d] = fetch[d][i];
     if (fetch_weight.n >= 0)
       self.fill(v, v + dim, bh::weight(fetch_weight[i]));
-    else if (fetch_count.n >= 0)
-      self.fill(v, v + dim, bh::count(fetch_count[i]));
     else
       self.fill(v, v + dim);
   }
@@ -398,7 +383,6 @@ void register_histogram() {
       .def("fill", bp::raw_function(histogram_fill),
            ":param double args: values (number must match dimension)"
            "\n:keyword double weight: optional weight"
-           "\n:keyword uint32_t count: optional count"
            "\n"
            "\nIf Numpy support is enabled, 1d-arrays can be passed instead of"
            "\nvalues, which must be equal in lenght. Arrays and values can"

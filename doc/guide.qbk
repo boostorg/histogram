@@ -144,8 +144,6 @@ int main() {
 
     // fill histogram, number of arguments must be equal to number of axes
     h.fill(0, 4.1); // increases bin counter by one
-    h.fill(1, 1.2, bh::count(3)); // increase bin counter by 3
-    h.fill(bh::count(3), 2, 2.3); // the same as the previous call
     h.fill(3, 3.4, bh::weight(1.5)); // increase bin counter by weight 1.5
     h.fill(bh::weight(1.5), 3, 3.4); // the same as the previous call
 
@@ -213,9 +211,9 @@ int main() {
     // make histogram with 2 x 2 = 4 bins (not counting under-/overflow bins)
     auto h = bh::make_dynamic_histogram(bh::axis::regular<>(2, -1, 1),
                                         bh::axis::regular<>(2,  2, 4));
-    h.fill(-0.5, 2.5, bh::count(1)); // low, low
-    h.fill(-0.5, 3.5, bh::count(2)); // low, high
-    h.fill( 0.5, 2.5, bh::count(3)); // high, low
+    h.fill(-0.5, 2.5, bh::weight(1)); // low, low
+    h.fill(-0.5, 3.5, bh::weight(2)); // low, high
+    h.fill( 0.5, 2.5, bh::weight(3)); // high, low
     h.fill( 0.5, 3.5, bh::weight(4)); // high, high
 
     // access value of bin count, number of arguments must be equal
@@ -234,7 +232,7 @@ int main() {
               << h.variance(1, 1)        // high, high
               << std::endl;
 
-    // prints: 1 2 3 16
+    // prints: 1 4 9 16
 
     // a dynamic histogram also supports access via an interator range, while
     // a static histogram does not allow it; using a range of wrong length
@@ -511,7 +509,7 @@ h = hg.histogram(hg.axis.regular_log(5, 1e0, 1e5, "x"))
 
 # fill histogram with numbers
 for x in (2e0, 2e1, 2e2, 2e3, 2e4):
-    h.fill(x, count=4) # increment bin counter by 4
+    h.fill(x, weight=4) # increment bin counter by 4
 
 # iterate over bins and access bin counter
 for idx, (lower, upper) in enumerate(h.axis(0)):
@@ -525,11 +523,11 @@ lo, up = h.axis(0)[5]
 print "overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h.value(5), h.variance(5))
 
 # prints:
-# bin 0 x in [1.0, 10.0): 4.0 +/- 2.0
-# bin 1 x in [10.0, 100.0): 4.0 +/- 2.0
-# bin 2 x in [100.0, 1000.0): 4.0 +/- 2.0
-# bin 3 x in [1000.0, 10000.0): 4.0 +/- 2.0
-# bin 4 x in [10000.0, 100000.0): 4.0 +/- 2.0
+# bin 0 x in [1.0, 10.0): 4.0 +/- 4.0
+# bin 1 x in [10.0, 100.0): 4.0 +/- 4.0
+# bin 2 x in [100.0, 1000.0): 4.0 +/- 4.0
+# bin 3 x in [1000.0, 10000.0): 4.0 +/- 4.0
+# bin 4 x in [10000.0, 100000.0): 4.0 +/- 4.0
 # underflow [0.0, 1.0): 0.0 +/- 0.0
 # overflow  [100000.0, inf): 0.0 +/- 0.0
 ``

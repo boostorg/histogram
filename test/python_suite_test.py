@@ -680,27 +680,27 @@ class test_histogram(unittest.TestCase):
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
     def test_numpy_conversion_0(self):
         a = histogram(integer(0, 3, uoflow=False))
-        for i in range(10):
+        a.fill(0)
+        for i in range(5):
             a.fill(1)
-        a.fill(1, count=90)
         c = numpy.array(a) # a copy
         v = numpy.asarray(a) # a view
 
         for t in (c, v):
             self.assertEqual(t.dtype, numpy.uint8)
-            self.assertTrue(numpy.all(t == numpy.array((0, 100, 0))))
+            self.assertTrue(numpy.all(t == numpy.array((1, 5, 0))))
 
-        for i in range(20):
-            a.fill(1)
-        a.fill(1, count=2 * numpy.ones(40, dtype=numpy.uint32))
+        for i in range(10):
+            a.fill(2)
         # copy does not change, but view does
-        self.assertTrue(numpy.all(c == numpy.array((0, 100, 0))))
-        self.assertTrue(numpy.all(v == numpy.array((0, 200, 0))))
+        self.assertTrue(numpy.all(c == numpy.array((1, 5, 0))))
+        self.assertTrue(numpy.all(v == numpy.array((1, 5, 10))))
 
-        a.fill(1, count=100)
+        for i in range(255):
+            a.fill(1)
         c = numpy.array(a)
         self.assertEqual(c.dtype, numpy.uint16)
-        self.assertTrue(numpy.all(c == numpy.array((0, 300, 0))))
+        self.assertTrue(numpy.all(c == numpy.array((1, 260, 10))))
         # view does not follow underlying switch in word size
         self.assertFalse(numpy.all(c == v))
 

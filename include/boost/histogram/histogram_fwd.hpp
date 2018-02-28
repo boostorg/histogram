@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
 #include <boost/mpl/vector.hpp>
+#include <boost/mpl/bool.hpp>
 #include <string>
 
 namespace boost {
@@ -55,15 +56,27 @@ using dynamic_histogram = histogram<dynamic_tag, Axes, Storage>;
 template <class Axes, class Storage = adaptive_storage>
 using static_histogram = histogram<static_tag, Axes, Storage>;
 
-struct weight {
-  weight(double w) : value(w) {}
-  double value;
-};
+namespace detail {
+template <typename T>
+struct weight_t { T value;};
+template <typename T>
+struct is_weight : mpl::false_ {};
+template <typename T>
+struct is_weight<weight_t<T>> : mpl::true_ {};
 
-struct count {
-  count(unsigned n) : value(n) {}
-  unsigned value;
-};
+template <typename T>
+struct sample_t { T value; };
+template <typename T>
+struct is_sample : mpl::false_ {};
+template <typename T>
+struct is_sample<sample_t<T>> : mpl::true_ {};
+} // namespace detail
+
+template <typename T>
+detail::weight_t<T> weight(T&& t) { return {t}; }
+
+template <typename T>
+detail::sample_t<T> sample(T&& t) { return {t}; }
 
 } // namespace histogram
 } // namespace boost

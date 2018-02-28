@@ -33,17 +33,7 @@ int main(int, char**) {
     h.fill(20.0); // put in overflow bin
 
     /*
-        use bh::count(N) if you would otherwise call h.fill(...) with
-        *same* argument N times, N is an integer argument
-    */
-    h.fill(1.0, bh::count(4));
-
-    /*
         do a weighted fill using bh::weight, which accepts a double
-        - don't mix this with bh::count, both have a different effect on the
-          variance (see Rationale for an explanation regarding weights)
-        - if you don't know what this is good for, use bh::count instead,
-          it is most likeliy what you want and it is more efficient
     */
     h.fill(0.1, bh::weight(2.5));
 
@@ -230,7 +220,7 @@ h = hg.histogram(hg.axis.regular_log(5, 1e0, 1e5, "x"))
 
 # fill histogram with numbers
 for x in (2e0, 2e1, 2e2, 2e3, 2e4):
-    h.fill(x, count=2)
+    h.fill(x, weight=2)
 
 # iterate over bins and access bin counter
 for idx, (lower, upper) in enumerate(h.axis(0)):

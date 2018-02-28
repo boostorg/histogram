@@ -18,7 +18,8 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/operators.hpp>
-#include <boost/mpl/count.hpp>
+#include <boost/mpl/count_if.hpp>
+#include <boost/mpl/bool.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
@@ -129,16 +130,19 @@ public:
     return *this;
   }
 
-  template <typename... Args> void fill(Args &&... args) {
-    using n_count = typename mpl::count<mpl::vector<Args...>, count>;
-    using n_weight = typename mpl::count<mpl::vector<Args...>, weight>;
+  template <typename... Args> void fill(const Args &... args) {
+    using n_weight = typename mpl::count_if<mpl::vector<Args...>, detail::is_weight<mpl::_>>;
+    using n_sample = typename mpl::count_if<mpl::vector<Args...>, detail::is_sample<mpl::_>>;
     static_assert(
-        (n_count::value + n_weight::value) <= 1,
-        "arguments may contain at most one instance of type count or weight");
-    if (dim() != sizeof...(args) - n_count::value - n_weight::value)
+        n_weight::value <= 1,
+        "more than one weight argument is not allowed");
+    static_assert(
+        n_sample::value <= 1,
+        "more than one sample argument is not allowed");
+    if (dim() != sizeof...(args) - n_weight::value - n_sample::value)
       throw std::invalid_argument(
           "fill arguments does not match histogram dimension");
-    fill_impl(mpl::int_<(n_count::value + 2 * n_weight::value)>(),
+    fill_impl(mpl::bool_<n_weight::value>(), mpl::bool_<n_sample::value>(),
               args...);
   }
 
@@ -154,20 +158,8 @@ public:
     }
   }
 
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end, const count n) {
-    if (dim() != std::distance(begin, end))
-      throw std::invalid_argument(
-          "fill iterator range does not match histogram dimension");
-    std::size_t idx = 0, stride = 1;
-    xlin_iter(idx, stride, begin);
-    if (stride) {
-      storage_.add(idx, n.value);
-    }
-  }
-
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end, const weight w) {
+  template <typename Iterator, typename T, typename = detail::is_iterator<Iterator>>
+  void fill(Iterator begin, Iterator end, const detail::weight_t<T>& w) {
     if (dim() != std::distance(begin, end))
       throw std::invalid_argument(
           "fill iterator range does not match histogram dimension");
@@ -311,32 +303,33 @@ private:
   }
 
   template <typename... Args>
-  inline void fill_impl(mpl::int_<0>, Args &&... args) {
+  inline void fill_impl(mpl::false_, mpl::false_, const Args &... args) {
     std::size_t idx = 0, stride = 1;
-    xlin<0>(idx, stride, args...);
+    double w;
+    xlin<0>(idx, stride, w, args...);
     if (stride) {
       storage_.increase(idx);
     }
   }
 
   template <typename... Args>
-  inline void fill_impl(mpl::int_<1>, Args &&... args) {
+  inline void fill_impl(mpl::true_, mpl::false_, const Args &... args) {
     std::size_t idx = 0, stride = 1;
-    unsigned n = 0;
-    xlin_n<0>(idx, stride, n, args...);
+    double w;
+    xlin<0>(idx, stride, w, args...);
     if (stride) {
-      storage_.add(idx, n);
+      storage_.increase_by_weight(idx, w);
     }
   }
 
   template <typename... Args>
-  inline void fill_impl(mpl::int_<2>, Args &&... args) {
-    std::size_t idx = 0, stride = 1;
-    double w = 0.0;
-    xlin_w<0>(idx, stride, w, args...);
-    if (stride) {
-      storage_.increase_by_weight(idx, w);
-    }
+  inline void fill_impl(mpl::false_, mpl::true_, const Args &... args) {
+    // not implemented
+  }
+
+  template <typename... Args>
+  inline void fill_impl(mpl::true_, mpl::true_, const Args &... args) {
+    // not implemented
   }
 
   struct lin_visitor : public static_visitor<void> {
@@ -382,57 +375,25 @@ private:
     }
   };
 
-  template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const {}
+  template <unsigned D> inline void xlin(std::size_t &, std::size_t &, double&) const {}
 
   template <unsigned D, typename First, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, const First &first,
+  inline void xlin(std::size_t &idx, std::size_t &stride, double& w, const First &first,
                    const Rest &... rest) const {
     apply_visitor(xlin_visitor<First>{idx, stride, first}, axes_[D]);
-    return xlin<D + 1>(idx, stride, rest...);
+    return xlin<D + 1>(idx, stride, w, rest...);
   }
 
-  template <unsigned D>
-  inline void xlin_w(std::size_t &, std::size_t &, double &) const {}
-
-  template <unsigned D, typename First, typename... Rest>
-  inline typename enable_if<is_same<First, weight>>::type
-  xlin_w(std::size_t &idx, std::size_t &stride, double &x, const First &first,
+  template <unsigned D, typename T, typename... Rest>
+  inline void xlin(std::size_t &idx, std::size_t &stride, double &w,
+                   const detail::weight_t<T> &first,
          const Rest &... rest) const {
-    x = first.value;
-    return xlin_w<D>(idx, stride, x, rest...);
-  }
-
-  template <unsigned D, typename First, typename... Rest>
-  inline typename disable_if<is_same<First, weight>>::type
-  xlin_w(std::size_t &idx, std::size_t &stride, double &x, const First &first,
-         const Rest &... rest) const {
-    apply_visitor(xlin_visitor<First>{idx, stride, first},
-                  axes_[D]);
-    return xlin_w<D + 1>(idx, stride, x, rest...);
-  }
-
-  template <unsigned D>
-  inline void xlin_n(std::size_t &, std::size_t &, unsigned &) const {}
-
-  template <unsigned D, typename First, typename... Rest>
-  inline typename enable_if<is_same<First, count>>::type
-  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, const First &first,
-         const Rest &... rest) const {
-    x = first.value;
-    return xlin_n<D>(idx, stride, x, rest...);
-  }
-
-  template <unsigned D, typename First, typename... Rest>
-  inline typename disable_if<is_same<First, count>>::type
-  xlin_n(std::size_t &idx, std::size_t &stride, unsigned &x, const First &first,
-         const Rest &... rest) const {
-    apply_visitor(xlin_visitor<First>{idx, stride, first},
-                  axes_[D]);
-    return xlin_n<D + 1>(idx, stride, x, rest...);
+    w = first.value;
+    return xlin<D>(idx, stride, w, rest...);
   }
 
   template <typename Iterator>
-  void lin_iter(std::size_t &idx, std::size_t &stride, Iterator iter) const {
+  inline void lin_iter(std::size_t &idx, std::size_t &stride, Iterator iter) const {
     for (const auto &a : axes_) {
       apply_visitor(lin_visitor(idx, stride, *iter), a);
       ++iter;
