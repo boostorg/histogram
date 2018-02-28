@@ -12,14 +12,14 @@
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/axis.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
+#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/operators.hpp>
-#include <boost/mpl/count_if.hpp>
 #include <boost/mpl/bool.hpp>
+#include <boost/mpl/count_if.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
@@ -131,14 +131,14 @@ public:
   }
 
   template <typename... Args> void fill(const Args &... args) {
-    using n_weight = typename mpl::count_if<mpl::vector<Args...>, detail::is_weight<mpl::_>>;
-    using n_sample = typename mpl::count_if<mpl::vector<Args...>, detail::is_sample<mpl::_>>;
-    static_assert(
-        n_weight::value <= 1,
-        "more than one weight argument is not allowed");
-    static_assert(
-        n_sample::value <= 1,
-        "more than one sample argument is not allowed");
+    using n_weight =
+        typename mpl::count_if<mpl::vector<Args...>, detail::is_weight<mpl::_>>;
+    using n_sample =
+        typename mpl::count_if<mpl::vector<Args...>, detail::is_sample<mpl::_>>;
+    static_assert(n_weight::value <= 1,
+                  "more than one weight argument is not allowed");
+    static_assert(n_sample::value <= 1,
+                  "more than one sample argument is not allowed");
     if (dim() != sizeof...(args) - n_weight::value - n_sample::value)
       throw std::invalid_argument(
           "fill arguments does not match histogram dimension");
@@ -158,8 +158,9 @@ public:
     }
   }
 
-  template <typename Iterator, typename T, typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end, const detail::weight_t<T>& w) {
+  template <typename Iterator, typename T,
+            typename = detail::is_iterator<Iterator>>
+  void fill(Iterator begin, Iterator end, const detail::weight_t<T> &w) {
     if (dim() != std::distance(begin, end))
       throw std::invalid_argument(
           "fill iterator range does not match histogram dimension");
@@ -343,7 +344,8 @@ private:
     }
   };
 
-  template <unsigned D> inline void lin(std::size_t &, std::size_t &) const noexcept {}
+  template <unsigned D>
+  inline void lin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename First, typename... Rest>
   inline void lin(std::size_t &idx, std::size_t &stride, const First &x,
@@ -367,19 +369,19 @@ private:
     }
 
     template <typename Axis> void impl(std::false_type, const Axis &) const {
-      throw std::runtime_error(detail::cat(
-        "fill argument not convertible to axis value type: ",
-        boost::typeindex::type_id<Axis>().pretty_name(),
-        ", ",
-        boost::typeindex::type_id<Value>().pretty_name()));
+      throw std::runtime_error(
+          detail::cat("fill argument not convertible to axis value type: ",
+                      boost::typeindex::type_id<Axis>().pretty_name(), ", ",
+                      boost::typeindex::type_id<Value>().pretty_name()));
     }
   };
 
-  template <unsigned D> inline void xlin(std::size_t &, std::size_t &, double&) const {}
+  template <unsigned D>
+  inline void xlin(std::size_t &, std::size_t &, double &) const {}
 
   template <unsigned D, typename First, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, double& w, const First &first,
-                   const Rest &... rest) const {
+  inline void xlin(std::size_t &idx, std::size_t &stride, double &w,
+                   const First &first, const Rest &... rest) const {
     apply_visitor(xlin_visitor<First>{idx, stride, first}, axes_[D]);
     return xlin<D + 1>(idx, stride, w, rest...);
   }
@@ -387,13 +389,14 @@ private:
   template <unsigned D, typename T, typename... Rest>
   inline void xlin(std::size_t &idx, std::size_t &stride, double &w,
                    const detail::weight_t<T> &first,
-         const Rest &... rest) const {
+                   const Rest &... rest) const {
     w = first.value;
     return xlin<D>(idx, stride, w, rest...);
   }
 
   template <typename Iterator>
-  inline void lin_iter(std::size_t &idx, std::size_t &stride, Iterator iter) const {
+  inline void lin_iter(std::size_t &idx, std::size_t &stride,
+                       Iterator iter) const {
     for (const auto &a : axes_) {
       apply_visitor(lin_visitor(idx, stride, *iter), a);
       ++iter;

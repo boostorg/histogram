@@ -875,8 +875,8 @@ int main() {
 
   // reduce
   {
-    auto h1 = make_dynamic_histogram(axis::integer<>(0, 2),
-                                     axis::integer<>(0, 3));
+    auto h1 =
+        make_dynamic_histogram(axis::integer<>(0, 2), axis::integer<>(0, 3));
     h1.fill(0, 0);
     h1.fill(0, 1);
     h1.fill(1, 0);

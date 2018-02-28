@@ -13,20 +13,19 @@ namespace boost {
 namespace histogram {
 namespace detail {
 namespace {
-    void cat_impl(std::ostringstream&) {}
+void cat_impl(std::ostringstream &) {}
 
-    template <typename T, typename... Us>
-    void cat_impl(std::ostringstream& os, const T& t, const Us... us) {
-        os << t;
-        cat_impl(os, us...);
-    }
+template <typename T, typename... Us>
+void cat_impl(std::ostringstream &os, const T &t, const Us... us) {
+  os << t;
+  cat_impl(os, us...);
 }
+} // namespace
 
-template <typename... Ts>
-std::string cat(const Ts&... args) {
-    std::ostringstream os;
-    cat_impl(os, args...);
-    return os.str();
+template <typename... Ts> std::string cat(const Ts &... args) {
+  std::ostringstream os;
+  cat_impl(os, args...);
+  return os.str();
 }
 } // namespace detail
 } // namespace histogram

@@ -7,8 +7,8 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
-#include <boost/mpl/vector.hpp>
 #include <boost/mpl/bool.hpp>
+#include <boost/mpl/vector.hpp>
 #include <string>
 
 namespace boost {
@@ -57,26 +57,18 @@ template <class Axes, class Storage = adaptive_storage>
 using static_histogram = histogram<static_tag, Axes, Storage>;
 
 namespace detail {
-template <typename T>
-struct weight_t { T value;};
-template <typename T>
-struct is_weight : mpl::false_ {};
-template <typename T>
-struct is_weight<weight_t<T>> : mpl::true_ {};
+template <typename T> struct weight_t { T value; };
+template <typename T> struct is_weight : mpl::false_ {};
+template <typename T> struct is_weight<weight_t<T>> : mpl::true_ {};
 
-template <typename T>
-struct sample_t { T value; };
-template <typename T>
-struct is_sample : mpl::false_ {};
-template <typename T>
-struct is_sample<sample_t<T>> : mpl::true_ {};
+template <typename T> struct sample_t { T value; };
+template <typename T> struct is_sample : mpl::false_ {};
+template <typename T> struct is_sample<sample_t<T>> : mpl::true_ {};
 } // namespace detail
 
-template <typename T>
-detail::weight_t<T> weight(T&& t) { return {t}; }
+template <typename T> detail::weight_t<T> weight(T &&t) { return {t}; }
 
-template <typename T>
-detail::sample_t<T> sample(T&& t) { return {t}; }
+template <typename T> detail::sample_t<T> sample(T &&t) { return {t}; }
 
 } // namespace histogram
 } // namespace boost
