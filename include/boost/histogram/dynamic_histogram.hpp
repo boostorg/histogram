@@ -173,7 +173,7 @@ public:
     std::size_t idx = 0, stride = 1;
     xlin_iter(idx, stride, begin);
     if (stride) {
-      storage_.add(idx, w.value);
+      storage_.add(idx, w);
     }
   }
 
@@ -366,10 +366,9 @@ private:
     return xlin<D + 1>(idx, stride, w, rest...);
   }
 
-  template <unsigned D, typename Weight, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, Weight& w,
-                   const Weight &first,
-                   const Rest &... rest) const {
+  template <unsigned D, typename T, typename... Rest>
+  inline void xlin(std::size_t &idx, std::size_t &stride, detail::weight_t<T> &w,
+                   const detail::weight_t<T> &first, const Rest &... rest) const {
     w = first;
     return xlin<D>(idx, stride, w, rest...);
   }

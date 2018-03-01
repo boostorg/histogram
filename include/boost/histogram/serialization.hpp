@@ -50,7 +50,6 @@ void serialize(Archive &ar, array_storage<Container> &store,
 
 template <class Archive>
 void adaptive_storage::serialize(Archive &ar, unsigned /* version */) {
-  using detail::array;
   auto size = this->size();
   ar &size;
   if (Archive::is_loading::value) {
@@ -59,56 +58,56 @@ void adaptive_storage::serialize(Archive &ar, unsigned /* version */) {
     if (tid == 0u) {
       buffer_ = detail::array<void>(size);
     } else if (tid == 1u) {
-      array<uint8_t> a(size);
+      detail::array<uint8_t> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
     } else if (tid == 2u) {
-      array<uint16_t> a(size);
+      detail::array<uint16_t> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
     } else if (tid == 3u) {
-      array<uint32_t> a(size);
+      detail::array<uint32_t> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
     } else if (tid == 4u) {
-      array<uint64_t> a(size);
+      detail::array<uint64_t> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
     } else if (tid == 5u) {
-      array<detail::mp_int> a(size);
+      detail::array<detail::mp_int> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
     } else if (tid == 6u) {
-      array<detail::weight_counter> a(size);
+      detail::array<detail::wcount> a(size);
       ar &serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
     }
   } else {
     auto tid = 0u;
-    if (get<array<void>>(&buffer_)) {
+    if (get<detail::array<void>>(&buffer_)) {
       tid = 0u;
       ar &tid;
-    } else if (auto *a = get<array<uint8_t>>(&buffer_)) {
+    } else if (auto *a = get<detail::array<uint8_t>>(&buffer_)) {
       tid = 1u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (auto *a = get<array<uint16_t>>(&buffer_)) {
+    } else if (auto *a = get<detail::array<uint16_t>>(&buffer_)) {
       tid = 2u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (auto *a = get<array<uint32_t>>(&buffer_)) {
+    } else if (auto *a = get<detail::array<uint32_t>>(&buffer_)) {
       tid = 3u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (auto *a = get<array<uint64_t>>(&buffer_)) {
+    } else if (auto *a = get<detail::array<uint64_t>>(&buffer_)) {
       tid = 4u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (auto *a = get<array<detail::mp_int>>(&buffer_)) {
+    } else if (auto *a = get<detail::array<detail::mp_int>>(&buffer_)) {
       tid = 5u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);
-    } else if (auto *a = get<array<detail::weight_counter>>(&buffer_)) {
+    } else if (auto *a = get<detail::array<detail::wcount>>(&buffer_)) {
       tid = 6u;
       ar &tid;
       ar &serialization::make_array(a->begin(), size);

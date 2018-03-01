@@ -19,6 +19,7 @@
 #include <limits>
 #include <sstream>
 #include <vector>
+#include <array>
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
@@ -751,7 +752,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.bin(2).value(), 0);
   }
 
-  // value iterator
+  // bin iterator
   {
     auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3),
                                               axis::integer<>(2, 4));
@@ -851,18 +852,30 @@ int main() {
 
   // using iterator ranges
   {
-    auto h = make_dynamic_histogram(axis::regular<>(2, -1, 1),
-                                    axis::regular<>(2, 2, 4));
-    auto v = std::vector<double>(2);
-    v = {-0.5, 2.5};
+    auto h = make_dynamic_histogram(axis::integer<>(0, 2),
+                                    axis::integer<>(2, 4));
+    auto v = std::vector<int>(2);
+    auto i = std::array<int, 2>();
+
+    v = {0, 2};
     h.fill(v.begin(), v.end());
-    v = {0.5, 3.5};
+    v = {1, 3};
     h.fill(v.begin(), v.end());
-    auto i = std::vector<int>(2);
+
     i = {0, 0};
     BOOST_TEST_EQ(h.bin(i.begin(), i.end()).value(), 1);
     i = {1, 1};
     BOOST_TEST_EQ(h.bin(i.begin(), i.end()).variance(), 1);
+
+    v = {0, 2};
+    h.fill(v.begin(), v.end(), weight(2));
+    v = {1, 3};
+    h.fill(v.begin(), v.end(), weight(2));
+
+    i = {0, 0};
+    BOOST_TEST_EQ(h.bin(i.begin(), i.end()).value(), 3);
+    i = {1, 1};
+    BOOST_TEST_EQ(h.bin(i.begin(), i.end()).variance(), 5);
   }
 
   // axis methods

@@ -413,29 +413,25 @@ class test_histogram(unittest.TestCase):
             h.fill(1)
             h.fill(1)
             h.fill(10)
-        self.assertEqual(h0.sum, 6)
+        self.assertEqual(h0.sum.value, 6)
         self.assertEqual(h0.axis(0).shape, 3)
-        self.assertEqual(h1.sum, 8)
+        self.assertEqual(h1.sum.value, 8)
         self.assertEqual(h1.axis(0).shape, 5)
 
         for h in (h0, h1):
-            self.assertEqual(h[0], 2)
-            self.assertEqual(h[1], 1)
-            self.assertEqual(h[2], 3)
+            self.assertEqual(h.bin(0).value, 2)
+            self.assertEqual(h.bin(1).value, 1)
+            self.assertEqual(h.bin(2).value, 3)
             with self.assertRaises(RuntimeError):
-                h.value(0, 1)
+                h.bin(0, 1).value
             with self.assertRaises(RuntimeError):
-                h.value(0, foo=None)
-            self.assertEqual(h.variance(0), 2)
-            self.assertEqual(h.variance(1), 1)
-            self.assertEqual(h.variance(2), 3)
-            with self.assertRaises(RuntimeError):
-                h.variance(0, 1)
-            with self.assertRaises(RuntimeError):
-                h.variance(0, foo=None)
+                h.bin(0, foo=None)
+            self.assertEqual(h.bin(0).variance, 2)
+            self.assertEqual(h.bin(1).variance, 1)
+            self.assertEqual(h.bin(2).variance, 3)
 
-        self.assertEqual(h1.value(-1), 1)
-        self.assertEqual(h1[3], 1)
+        self.assertEqual(h1.bin(-1).value, 1)
+        self.assertEqual(h1.bin(3).value, 1)
 
     def test_growth(self):
         h = histogram(integer(-1, 2))
@@ -447,11 +443,11 @@ class test_histogram(unittest.TestCase):
         h.fill(0)
         for i in range(1000-256):
             h.fill(0)
-        self.assertEqual(h.value(-1), 0)
-        self.assertEqual(h[0], 1)
-        self.assertEqual(h[1], 1000)
-        self.assertEqual(h[2], 2)
-        self.assertEqual(h[3], 0)
+        self.assertEqual(h.bin(-1).value, 0)
+        self.assertEqual(h.bin(0).value, 1)
+        self.assertEqual(h.bin(1).value, 1000)
+        self.assertEqual(h.bin(2).value, 2)
+        self.assertEqual(h.bin(3).value, 0)
 
     def test_fill_2d(self):
         for uoflow in (False, True):
@@ -476,7 +472,7 @@ class test_histogram(unittest.TestCase):
                  [0, 0, 0, 0, 0, 0]]
             for i in range(-uoflow, len(h.axis(0)) + uoflow):
                 for j in range(-uoflow, len(h.axis(1)) + uoflow):
-                    self.assertEqual(h.value(i, j), m[i][j])
+                    self.assertEqual(h.bin(i, j).value, m[i][j])
 
     def test_add_2d(self):
         for uoflow in (False, True):
@@ -500,8 +496,8 @@ class test_histogram(unittest.TestCase):
 
             for i in range(-uoflow, len(h.axis(0)) + uoflow):
                 for j in range(-uoflow, len(h.axis(1)) + uoflow):
-                    self.assertEqual(h.value(i, j), 2 * m[i][j])
-                    self.assertEqual(h.variance(i, j), 2 * m[i][j])
+                    self.assertEqual(h.bin(i, j).value, 2 * m[i][j])
+                    self.assertEqual(h.bin(i, j).variance, 2 * m[i][j])
 
     def test_add_2d_bad(self):
         a = histogram(integer(-1, 1))
@@ -538,8 +534,8 @@ class test_histogram(unittest.TestCase):
 
             for i in range(-uoflow, len(h.axis(0)) + uoflow):
                 for j in range(-uoflow, len(h.axis(1)) + uoflow):
-                    self.assertEqual(h.value(i, j), 2 * m[i][j])
-                    self.assertEqual(h.variance(i, j), 2 * m[i][j])
+                    self.assertEqual(h.bin(i, j).value, 2 * m[i][j])
+                    self.assertEqual(h.bin(i, j).variance, 2 * m[i][j])
 
     def test_repr(self):
         h = histogram(regular(10, 0, 1), integer(0, 1))
@@ -564,41 +560,38 @@ class test_histogram(unittest.TestCase):
             h.fill(*range(50))
 
         with self.assertRaises(RuntimeError):
-            h.value(*range(50))
-
-        with self.assertRaises(RuntimeError):
-            h.variance(*range(50))
+            h.bin(*range(50)).value
 
     def test_out_of_range(self):
         h = histogram(regular(3, 0, 1))
         h.fill(-1)
         h.fill(2)
-        self.assertEqual(h.value(-1), 1)
-        self.assertEqual(h[3], 1)
+        self.assertEqual(h.bin(-1).value, 1)
+        self.assertEqual(h.bin(3).value, 1)
         with self.assertRaises(IndexError):
-            h.value(-2)
+            h.bin(-2).value
         with self.assertRaises(IndexError):
-            h[4]
+            h.bin(4).value
         with self.assertRaises(IndexError):
-            h.variance(-2)
+            h.bin(-2).variance
         with self.assertRaises(IndexError):
-            h.variance(4)
+            h.bin(4).variance
 
     def test_operators(self):
         h = histogram(integer(0, 2))
         h.fill(0)
         h += h
-        self.assertEqual(h[0], 2)
-        self.assertEqual(h.variance(0), 2)
-        self.assertEqual(h[1], 0)
+        self.assertEqual(h.bin(0).value, 2)
+        self.assertEqual(h.bin(0).variance, 2)
+        self.assertEqual(h.bin(1).value, 0)
         h *= 2
-        self.assertEqual(h[0], 4)
-        self.assertEqual(h.variance(0), 8)
-        self.assertEqual(h[1], 0)
-        self.assertEqual((h + h)[0], (2 * h)[0])
-        self.assertEqual((h + h)[0], (h * 2)[0])
-        self.assertNotEqual((h + h).variance(0), (2 * h).variance(0))
-        self.assertNotEqual((h + h).variance(0), (h * 2).variance(0))
+        self.assertEqual(h.bin(0).value, 4)
+        self.assertEqual(h.bin(0).variance, 8)
+        self.assertEqual(h.bin(1).value, 0)
+        self.assertEqual((h + h).bin(0).value, (2 * h).bin(0).value)
+        self.assertEqual((h + h).bin(0).value, (h * 2).bin(0).value)
+        self.assertNotEqual((h + h).bin(0).variance, (2 * h).bin(0).variance)
+        self.assertNotEqual((h + h).bin(0).variance, (h * 2).bin(0).variance)
         h2 = histogram(regular(2, 0, 2))
         with self.assertRaises(RuntimeError):
             h + h2
@@ -612,12 +605,12 @@ class test_histogram(unittest.TestCase):
         h0 = h.reduce_to(0)
         self.assertEqual(h0.dim, 1)
         self.assertEqual(h0.axis(), integer(0, 2))
-        self.assertEqual([h0.value(i) for i in range(2)], [2, 1])
+        self.assertEqual([h0.bin(i).value for i in range(2)], [2, 1])
 
         h1 = h.reduce_to(1)
         self.assertEqual(h1.dim, 1)
         self.assertEqual(h1.axis(), integer(1, 4))
-        self.assertEqual([h1.value(i) for i in range(3)], [1, 1, 1])
+        self.assertEqual([h1.bin(i).value for i in range(3)], [1, 1, 1])
 
     def test_pickle_0(self):
         a = histogram(category(0, 1, 2),
@@ -647,7 +640,7 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(a.axis(2), b.axis(2))
         self.assertEqual(a.axis(3), b.axis(3))
         self.assertEqual(a.axis(4), b.axis(4))
-        self.assertEqual(a.sum, b.sum)
+        self.assertEqual(a.sum.value, b.sum.value)
         self.assertEqual(a, b)
 
     def test_pickle_1(self):
@@ -674,7 +667,7 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(a.axis(1), b.axis(1))
         self.assertEqual(a.axis(2), b.axis(2))
         self.assertEqual(a.axis(3), b.axis(3))
-        self.assertEqual(a.sum, b.sum)
+        self.assertEqual(a.sum.value, b.sum.value)
         self.assertEqual(a, b)
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
@@ -732,7 +725,7 @@ class test_histogram(unittest.TestCase):
         for i in range(len(a.axis(0))):
             for j in range(len(a.axis(1))):
                 for k in range(len(a.axis(2))):
-                    d[i,j,k] = a.value(i,j,k)
+                    d[i,j,k] = a.bin(i,j,k).value
 
         self.assertTrue(numpy.all(d == r))
 
@@ -761,8 +754,8 @@ class test_histogram(unittest.TestCase):
         for i in range(len(a.axis(0))):
             for j in range(len(a.axis(1))):
                 for k in range(len(a.axis(2))):
-                    c2[0, i, j, k] = a.value(i,j,k)
-                    c2[1, i, j, k] = a.variance(i,j,k)
+                    c2[0, i, j, k] = a.bin(i,j,k).value
+                    c2[1, i, j, k] = a.bin(i,j,k).variance
 
         self.assertTrue(numpy.all(c == c2))
         self.assertTrue(numpy.all(c == r))
@@ -825,9 +818,9 @@ class test_histogram(unittest.TestCase):
         a = histogram(integer(0, 3, uoflow=False))
         a.fill(ar(-1, 0, 1, 2, 1))
         a.fill((4, -1, 0, 1, 2))
-        self.assertEqual(a[0], 2)
-        self.assertEqual(a[1], 3)
-        self.assertEqual(a[2], 2)
+        self.assertEqual(a.bin(0).value, 2)
+        self.assertEqual(a.bin(1).value, 3)
+        self.assertEqual(a.bin(2).value, 2)
 
         with self.assertRaises(ValueError):
             a.fill(numpy.empty((2, 2)))
@@ -840,19 +833,19 @@ class test_histogram(unittest.TestCase):
                       regular(2, 0, 2, uoflow=False))
         a.fill(ar(-1, 0, 1),
                ar(-1., 1., 0.1))
-        self.assertEqual(a.value(0, 0), 0)
-        self.assertEqual(a.value(0, 1), 1)
-        self.assertEqual(a.value(1, 0), 1)
-        self.assertEqual(a.value(1, 1), 0)
+        self.assertEqual(a.bin(0, 0).value, 0)
+        self.assertEqual(a.bin(0, 1).value, 1)
+        self.assertEqual(a.bin(1, 0).value, 1)
+        self.assertEqual(a.bin(1, 1).value, 0)
 
         with self.assertRaises(ValueError):
             a.fill(ar(1, 2, 3))
 
         a = histogram(integer(0, 3, uoflow=False))
         a.fill(ar(0, 0, 1, 2, 1, 0, 2, 2))
-        self.assertEqual(a[0], 3)
-        self.assertEqual(a[1], 2)
-        self.assertEqual(a[2], 3)
+        self.assertEqual(a.bin(0).value, 3)
+        self.assertEqual(a.bin(1).value, 2)
+        self.assertEqual(a.bin(2).value, 3)
 
 
     @unittest.skipUnless(have_numpy, "requires build with numpy-support")
@@ -863,19 +856,19 @@ class test_histogram(unittest.TestCase):
         w = ar( 2, 3, 4, 5, 6, 7)
         a.fill(v, weight=w)
         a.fill((0, 1), weight=(2, 3))
-        self.assertEqual(a.value(-1), 2)
-        self.assertEqual(a[0], 5)
-        self.assertEqual(a[1], 7)
-        self.assertEqual(a[2], 5)
-        self.assertEqual(a.variance(-1), 4)
-        self.assertEqual(a.variance(0), 13)
-        self.assertEqual(a.variance(1), 25)
-        self.assertEqual(a.variance(2), 25)
+        self.assertEqual(a.bin(-1).value, 2)
+        self.assertEqual(a.bin(0).value, 5)
+        self.assertEqual(a.bin(1).value, 7)
+        self.assertEqual(a.bin(2).value, 5)
+        self.assertEqual(a.bin(-1).variance, 4)
+        self.assertEqual(a.bin(0).variance, 13)
+        self.assertEqual(a.bin(1).variance, 25)
+        self.assertEqual(a.bin(2).variance, 25)
         a.fill((1, 2), weight=1)
         a.fill(0, weight=(1, 2))
-        self.assertEqual(a[0], 8)
-        self.assertEqual(a[1], 8)
-        self.assertEqual(a[2], 6)
+        self.assertEqual(a.bin(0).value, 8)
+        self.assertEqual(a.bin(1).value, 8)
+        self.assertEqual(a.bin(2).value, 6)
 
         with self.assertRaises(RuntimeError):
             a.fill((1, 2), foo=(1, 1))
@@ -891,16 +884,16 @@ class test_histogram(unittest.TestCase):
         a = histogram(integer(0, 2, uoflow=False),
                       regular(2, 0, 2, uoflow=False))
         a.fill((-1, 0, 1), (-1, 1, 0.1))
-        self.assertEqual(a.value(0, 0), 0)
-        self.assertEqual(a.value(0, 1), 1)
-        self.assertEqual(a.value(1, 0), 1)
-        self.assertEqual(a.value(1, 1), 0)
+        self.assertEqual(a.bin(0, 0).value, 0)
+        self.assertEqual(a.bin(0, 1).value, 1)
+        self.assertEqual(a.bin(1, 0).value, 1)
+        self.assertEqual(a.bin(1, 1).value, 0)
         a = histogram(integer(0, 3, uoflow=False))
         a.fill((0, 0, 1, 2))
         a.fill((1, 0, 2, 2))
-        self.assertEqual(a[0], 3)
-        self.assertEqual(a[1], 2)
-        self.assertEqual(a[2], 3)
+        self.assertEqual(a.bin(0).value, 3)
+        self.assertEqual(a.bin(1).value, 2)
+        self.assertEqual(a.bin(2).value, 3)
 
 if __name__ == "__main__":
     unittest.main()

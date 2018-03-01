@@ -32,7 +32,7 @@ template <> adaptive_storage prepare<void>(std::size_t n) {
   return s;
 }
 
-template <> adaptive_storage prepare<detail::weight_counter>(std::size_t n) {
+template <> adaptive_storage prepare<detail::wcount>(std::size_t n) {
   adaptive_storage s(n);
   s.add(0, weight(1.0));
   return s;
@@ -309,7 +309,7 @@ int main() {
 
   // copy
   {
-    copy_impl<detail::weight_counter>();
+    copy_impl<detail::wcount>();
     copy_impl<void>();
     copy_impl<uint8_t>();
     copy_impl<uint16_t>();
@@ -326,7 +326,7 @@ int main() {
     equal_impl<uint32_t>();
     equal_impl<uint64_t>();
     equal_impl<detail::mp_int>();
-    equal_impl<detail::weight_counter>();
+    equal_impl<detail::wcount>();
   }
 
   // increase_and_grow
@@ -403,7 +403,7 @@ int main() {
     convert_array_storage_impl<uint32_t>();
     convert_array_storage_impl<uint64_t>();
     convert_array_storage_impl<detail::mp_int>();
-    convert_array_storage_impl<detail::weight_counter>();
+    convert_array_storage_impl<detail::wcount>();
   }
 
   // serialization_test
@@ -414,7 +414,7 @@ int main() {
     serialization_impl<uint32_t>();
     serialization_impl<uint64_t>();
     serialization_impl<detail::mp_int>();
-    serialization_impl<detail::weight_counter>();
+    serialization_impl<detail::wcount>();
   }
 
   return boost::report_errors();

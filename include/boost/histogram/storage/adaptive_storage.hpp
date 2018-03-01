@@ -42,7 +42,7 @@ namespace histogram {
 namespace detail {
 
 using mp_int = ::boost::multiprecision::cpp_int;
-using weight_counter = ::boost::histogram::weight_counter<double>;
+using wcount = ::boost::histogram::weight_counter<double>;
 
 template <typename T> inline T *alloc(std::size_t s) {
 #ifdef BOOST_HISTOGRAM_TRACE_ALLOCS
@@ -128,7 +128,7 @@ public:
 
 using any_array =
     variant<array<void>, array<uint8_t>, array<uint16_t>, array<uint32_t>,
-            array<uint64_t>, array<mp_int>, array<weight_counter>>;
+            array<uint64_t>, array<mp_int>, array<wcount>>;
 
 template <typename T> struct next_type;
 template <> struct next_type<uint8_t> { using type = uint16_t; };
@@ -194,7 +194,7 @@ template <typename RHS> struct assign_visitor : public static_visitor<void> {
 
   void operator()(array<mp_int> &lhs) const { lhs[idx].assign(rhs); }
 
-  void operator()(array<weight_counter> &lhs) const { lhs[idx] = rhs; }
+  void operator()(array<wcount> &lhs) const { lhs[idx] = rhs; }
 };
 
 struct increase_visitor : public static_visitor<void> {
@@ -218,32 +218,7 @@ struct increase_visitor : public static_visitor<void> {
 
   void operator()(array<mp_int> &lhs) const { ++lhs[idx]; }
 
-  void operator()(array<weight_counter> &lhs) const { ++lhs[idx]; }
-};
-
-struct wincrease_visitor : public static_visitor<void> {
-  any_array &lhs_any;
-  const std::size_t idx;
-  const detail::weight_t<double> rhs;
-  template <typename T>
-  wincrease_visitor(any_array &l, const std::size_t i, const detail::weight_t<T>& r)
-      : lhs_any(l), idx(i), rhs{static_cast<double>(r.value)} {}
-
-  template <typename T> void operator()(array<T> &lhs) const {
-    array<weight_counter> a(lhs);
-    a[idx] += rhs;
-    lhs_any = std::move(a);
-  }
-
-  void operator()(array<void> &lhs) const {
-    array<weight_counter> a(lhs.size);
-    a[idx] += rhs;
-    lhs_any = std::move(a);
-  }
-
-  void operator()(array<weight_counter> &lhs) const {
-    lhs[idx] += rhs;
-  }
+  void operator()(array<wcount> &lhs) const { ++lhs[idx]; }
 };
 
 struct value_visitor : public static_visitor<double> {
@@ -256,7 +231,7 @@ struct value_visitor : public static_visitor<double> {
 
   double operator()(const array<void> & /*b*/) const { return 0; }
 
-  double operator()(const array<weight_counter> &b) const {
+  double operator()(const array<wcount> &b) const {
     return b[idx].value();
   }
 };
@@ -271,7 +246,7 @@ struct variance_visitor : public static_visitor<double> {
 
   double operator()(const array<void> & /*b*/) const { return 0; }
 
-  double operator()(const array<weight_counter> &b) const {
+  double operator()(const array<wcount> &b) const {
     return b[idx].variance();
   }
 };
@@ -301,7 +276,7 @@ template <typename RHS> struct radd_visitor : public static_visitor<void> {
     lhs[idx] += static_cast<mp_int>(rhs);
   }
 
-  void operator()(array<weight_counter> &lhs) const {
+  void operator()(array<wcount> &lhs) const {
     lhs[idx] += rhs;
   }
 };
@@ -331,29 +306,49 @@ template <> struct radd_visitor<mp_int> : public static_visitor<void> {
     lhs[idx] += rhs;
   }
 
-  void operator()(array<weight_counter> &lhs) const {
+  void operator()(array<wcount> &lhs) const {
     lhs[idx] += static_cast<double>(rhs);
   }
 };
 
-template <> struct radd_visitor<weight_counter> : public static_visitor<void> {
+template <> struct radd_visitor<wcount> : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
-  const weight_counter &rhs;
-  radd_visitor(any_array &l, const std::size_t i, const weight_counter &r)
+  const wcount &rhs;
+  radd_visitor(any_array &l, const std::size_t i, const wcount &r)
       : lhs_any(l), idx(i), rhs(r) {}
 
   template <typename T> void operator()(array<T> &lhs) const {
-    lhs_any = array<weight_counter>(lhs);
-    operator()(get<array<weight_counter>>(lhs_any));
+    lhs_any = array<wcount>(lhs);
+    operator()(get<array<wcount>>(lhs_any));
   }
 
   void operator()(array<void> &lhs) const {
-    lhs_any = array<weight_counter>(lhs.size);
-    operator()(get<array<weight_counter>>(lhs_any));
+    lhs_any = array<wcount>(lhs.size);
+    operator()(get<array<wcount>>(lhs_any));
   }
 
-  void operator()(array<weight_counter> &lhs) const { lhs[idx] += rhs; }
+  void operator()(array<wcount> &lhs) const { lhs[idx] += rhs; }
+};
+
+template <> struct radd_visitor<weight_t<double>> : public static_visitor<void> {
+  any_array &lhs_any;
+  const std::size_t idx;
+  const weight_t<double> rhs;
+  radd_visitor(any_array &l, const std::size_t i, const double w)
+      : lhs_any(l), idx(i), rhs{w} {}
+
+  template <typename T> void operator()(array<T> &lhs) const {
+    lhs_any = array<wcount>(lhs);
+    operator()(get<array<wcount>>(lhs_any));
+  }
+
+  void operator()(array<void> &lhs) const {
+    lhs_any = array<wcount>(lhs.size);
+    operator()(get<array<wcount>>(lhs_any));
+  }
+
+  void operator()(array<wcount> &lhs) const { lhs[idx] += rhs; }
 };
 
 // precondition: both arrays must have same size and may not be identical
@@ -372,11 +367,11 @@ struct rmul_visitor : public static_visitor<void> {
   const double x;
   rmul_visitor(any_array &l, const double v) : lhs_any(l), x(v) {}
   template <typename T> void operator()(array<T> &lhs) const {
-    lhs_any = array<weight_counter>(lhs);
-    operator()(get<array<weight_counter>>(lhs_any));
+    lhs_any = array<wcount>(lhs);
+    operator()(get<array<wcount>>(lhs_any));
   }
   void operator()(array<void> &) const {}
-  void operator()(array<weight_counter> &lhs) const {
+  void operator()(array<wcount> &lhs) const {
     for (auto i = 0ul; i != lhs.size; ++i)
       lhs[i] *= x;
   }
@@ -413,7 +408,7 @@ class adaptive_storage {
   using buffer_type = detail::any_array;
 
 public:
-  using bin_type = weight_counter<double>;
+  using bin_type = detail::wcount;
 
   explicit adaptive_storage(std::size_t s) : buffer_(detail::array<void>(s)) {}
 
@@ -456,12 +451,12 @@ public:
     apply_visitor(detail::increase_visitor(buffer_, i), buffer_);
   }
 
-  template <typename T> void add(std::size_t i, const T &value) {
-    apply_visitor(detail::radd_visitor<T>(buffer_, i, value), buffer_);
+  template <typename T> void add(std::size_t i, const T &t) {
+    apply_visitor(detail::radd_visitor<T>(buffer_, i, t), buffer_);
   }
 
   template <typename T> void add(std::size_t i, const detail::weight_t<T> &w) {
-    apply_visitor(detail::wincrease_visitor(buffer_, i, w),
+    apply_visitor(detail::radd_visitor<detail::weight_t<double>>(buffer_, i, w.value),
                   buffer_);
   }
 
@@ -469,13 +464,12 @@ public:
     if (x.value() == x.variance()) {
       apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()), buffer_);
     } else {
-      apply_visitor(detail::radd_visitor<detail::weight_counter>(
-                        buffer_, i, detail::weight_counter(x.value(), x.variance())),
-                    buffer_);
+      apply_visitor(detail::radd_visitor<bin_type>(buffer_, i, x), buffer_);
     }
   }
 
   bin_type operator[](std::size_t i) const {
+    // TODO optimize this with a dedicated visitor
     return {apply_visitor(detail::value_visitor(i), buffer_),
             apply_visitor(detail::variance_visitor(i), buffer_)};
   }

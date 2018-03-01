@@ -38,7 +38,7 @@ namespace python {
 class access {
 public:
   using mp_int = bh::detail::mp_int;
-  using weight_counter = bh::detail::weight_counter;
+  using wcount = bh::detail::wcount;
   template <typename T>
   using array = bh::detail::array<T>;
 
@@ -58,7 +58,7 @@ public:
       strides.append(sizeof(double));
       return dtype_typestr<double>();
     }
-    str operator()(const array<weight_counter>& /*unused*/) const {
+    str operator()(const array<wcount>& /*unused*/) const {
       strides.append(sizeof(double));
       strides.append(strides[-1] * 2);
       shapes.append(2);
