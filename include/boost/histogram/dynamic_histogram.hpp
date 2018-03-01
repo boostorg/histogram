@@ -18,11 +18,15 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/operators.hpp>
+#include <boost/histogram/storage/array_storage.hpp>
+#include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/count_if.hpp>
+#include <boost/mpl/find_if.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
+#include <boost/mpl/deref.hpp>
 #include <boost/type_index.hpp>
 #include <cstddef>
 #include <iterator>
@@ -54,8 +58,8 @@ class histogram<dynamic_tag, Axes, Storage> {
 public:
   using any_axis_type = axis::any<Axes>;
   using axes_type = std::vector<any_axis_type>;
-  using value_type = typename Storage::value_type;
-  using value_iterator = value_iterator_over<Storage>;
+  using bin_type = typename Storage::bin_type;
+  using bin_iterator = bin_iterator_over<Storage>;
 
 public:
   histogram() = default;
@@ -120,12 +124,14 @@ public:
     return *this;
   }
 
-  histogram &operator*=(const value_type rhs) {
+  template <typename T>
+  histogram &operator*=(const T& rhs) {
     storage_ *= rhs;
     return *this;
   }
 
-  histogram &operator/=(const value_type rhs) {
+  template <typename T>
+  histogram &operator/=(const T& rhs) {
     storage_ *= 1.0 / rhs;
     return *this;
   }
@@ -167,11 +173,11 @@ public:
     std::size_t idx = 0, stride = 1;
     xlin_iter(idx, stride, begin);
     if (stride) {
-      storage_.increase_by_weight(idx, w.value);
+      storage_.add(idx, w.value);
     }
   }
 
-  template <typename... Indices> value_type value(Indices &&... indices) const {
+  template <typename... Indices> bin_type bin(Indices &&... indices) const {
     if (dim() != sizeof...(indices))
       throw std::invalid_argument(
           "value arguments does not match histogram dimension");
@@ -179,47 +185,19 @@ public:
     lin<0>(idx, stride, indices...);
     if (stride == 0)
       throw std::out_of_range("invalid index");
-    return storage_.value(idx);
+    return storage_[idx];
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  value_type value(Iterator begin, Iterator end) const {
+  bin_type bin(Iterator begin, Iterator end) const {
     if (dim() != std::distance(begin, end))
       throw std::invalid_argument(
-          "value iterator range does not match histogram dimension");
+          "iterator range in bin(...) does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_iter(idx, stride, begin);
     if (stride == 0)
       throw std::out_of_range("invalid index");
-    return storage_.value(idx);
-  }
-
-  template <typename S = Storage, typename... Indices>
-  detail::requires_variance_support<S> variance(Indices &&... indices) const {
-    if (dim() != sizeof...(indices))
-      throw std::invalid_argument(
-          "variance arguments does not match histogram dimension");
-    std::size_t idx = 0, stride = 1;
-    lin<0>(idx, stride, indices...);
-    if (stride == 0) {
-      throw std::out_of_range("invalid index");
-    }
-    return storage_.variance(idx);
-  }
-
-  template <typename S = Storage, typename Iterator,
-            typename = detail::is_iterator<Iterator>>
-  detail::requires_variance_support<S> variance(Iterator begin,
-                                                Iterator end) const {
-    if (dim() != std::distance(begin, end))
-      throw std::invalid_argument(
-          "variance iterator range does not match histogram dimension");
-    std::size_t idx = 0, stride = 1;
-    lin_iter(idx, stride, begin);
-    if (stride == 0) {
-      throw std::out_of_range("invalid index");
-    }
-    return storage_.variance(idx);
+    return storage_[idx];
   }
 
   /// Number of axes (dimensions) of histogram
@@ -229,11 +207,11 @@ public:
   std::size_t bincount() const noexcept { return storage_.size(); }
 
   /// Sum of all counts in the histogram
-  double sum() const noexcept {
-    double result = 0.0;
+  bin_type sum() const noexcept {
+    bin_type result(0);
     // don't use bincount() here, so sum() still works in a moved-from object
     for (std::size_t i = 0, n = storage_.size(); i < n; ++i) {
-      result += storage_.value(i);
+      result += storage_[i];
     }
     return result;
   }
@@ -287,11 +265,11 @@ public:
     return reduce_impl(b);
   }
 
-  value_iterator begin() const noexcept {
-    return value_iterator(*this, storage_);
+  bin_iterator begin() const noexcept {
+    return bin_iterator(*this, storage_);
   }
 
-  value_iterator end() const noexcept { return value_iterator(storage_); }
+  bin_iterator end() const noexcept { return bin_iterator(storage_); }
 
 private:
   axes_type axes_;
@@ -306,8 +284,8 @@ private:
   template <typename... Args>
   inline void fill_impl(mpl::false_, mpl::false_, const Args &... args) {
     std::size_t idx = 0, stride = 1;
-    double w;
-    xlin<0>(idx, stride, w, args...);
+    int dummy;
+    xlin<0>(idx, stride, dummy, args...);
     if (stride) {
       storage_.increase(idx);
     }
@@ -316,10 +294,12 @@ private:
   template <typename... Args>
   inline void fill_impl(mpl::true_, mpl::false_, const Args &... args) {
     std::size_t idx = 0, stride = 1;
-    double w;
+    typename mpl::deref<
+        typename mpl::find_if<mpl::vector<Args...>, detail::is_weight<mpl::_>>::type
+      >::type w;
     xlin<0>(idx, stride, w, args...);
     if (stride) {
-      storage_.increase_by_weight(idx, w);
+      storage_.add(idx, w);
     }
   }
 
@@ -376,21 +356,21 @@ private:
     }
   };
 
-  template <unsigned D>
-  inline void xlin(std::size_t &, std::size_t &, double &) const {}
+  template <unsigned D, typename Weight>
+  inline void xlin(std::size_t &, std::size_t &, Weight &) const {}
 
-  template <unsigned D, typename First, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, double &w,
+  template <unsigned D, typename Weight, typename First, typename... Rest>
+  inline void xlin(std::size_t &idx, std::size_t &stride, Weight &w,
                    const First &first, const Rest &... rest) const {
     apply_visitor(xlin_visitor<First>{idx, stride, first}, axes_[D]);
     return xlin<D + 1>(idx, stride, w, rest...);
   }
 
-  template <unsigned D, typename T, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, double &w,
-                   const detail::weight_t<T> &first,
+  template <unsigned D, typename Weight, typename... Rest>
+  inline void xlin(std::size_t &idx, std::size_t &stride, Weight& w,
+                   const Weight &first,
                    const Rest &... rest) const {
-    w = first.value;
+    w = first;
     return xlin<D>(idx, stride, w, rest...);
   }
 
@@ -426,7 +406,7 @@ private:
     histogram h(axes.begin(), axes.end());
     detail::index_mapper m(n, b);
     do {
-      detail::storage_add(h.storage_, storage_, m.second, m.first);
+      h.storage_.add(m.second, storage_[m.first]);
     } while (m.next());
     return h;
   }
@@ -445,6 +425,16 @@ make_dynamic_histogram(Axes &&... axes) {
       std::forward<Axes>(axes)...);
 }
 
+template <typename... Axes>
+histogram<dynamic_tag, detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
+array_storage<weight_counter<double>>>
+make_dynamic_weighted_histogram(Axes &&... axes) {
+  return histogram<dynamic_tag,
+                   detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
+                   array_storage<weight_counter<double>>
+    >(std::forward<Axes>(axes)...);
+}
+
 template <typename Storage, typename... Axes>
 histogram<dynamic_tag, detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
           Storage>
@@ -461,6 +451,18 @@ make_dynamic_histogram(Iterator begin, Iterator end) {
   return histogram<
       dynamic_tag,
       detail::combine_t<axis::builtins, typename Iterator::value_type::types>>(
+      begin, end);
+}
+
+template <typename Iterator, typename = detail::is_iterator<Iterator>>
+histogram<dynamic_tag, detail::combine_t<axis::builtins,
+                                         typename Iterator::value_type::types>,
+                                         array_storage<weight_counter<double>>>
+make_dynamic_weighted_histogram(Iterator begin, Iterator end) {
+  return histogram<
+      dynamic_tag,
+      detail::combine_t<axis::builtins, typename Iterator::value_type::types>,
+      array_storage<weight_counter<double>>>(
       begin, end);
 }
 

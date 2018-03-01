@@ -32,13 +32,13 @@ namespace detail {
 
 template <typename T, typename = decltype(std::declval<T &>().size(),
                                           std::declval<T &>().increase(0),
-                                          std::declval<T &>().value(0))>
+                                          std::declval<T &>()[0])>
 struct requires_storage {};
 
 template <typename T> struct has_variance_support {
-  template <typename U, typename T::value_type (U::*)(std::size_t) const>
+  template <typename U, typename = decltype(std::declval<typename U::bin_type&>().variance())>
   struct SFINAE {};
-  template <typename U> static std::true_type Test(SFINAE<U, &U::variance> *);
+  template <typename U> static std::true_type Test(SFINAE<U> *);
   template <typename U> static std::false_type Test(...);
   using type = decltype(Test<T>(nullptr));
 };

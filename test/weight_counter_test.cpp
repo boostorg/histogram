@@ -20,6 +20,7 @@ std::ostream &operator<<(std::ostream &os, const weight_counter<T> &w) {
 
 int main() {
   using weight_counter = boost::histogram::weight_counter<double>;
+  using boost::histogram::weight;
 
   weight_counter w(1);
   BOOST_TEST_EQ(w, weight_counter(1));
@@ -29,23 +30,23 @@ int main() {
   BOOST_TEST_NE(2, w);
   BOOST_TEST_NE(w, 2);
 
-  w.increase_by_weight(2);
+  w += weight(2);
   BOOST_TEST_EQ(w.value(), 3);
   BOOST_TEST_EQ(w.variance(), 5);
 
   // consistency: a weighted counter increased by weight 1 multiplied
   // by 2 must be the same as a weighted counter increased by weight 2
   weight_counter u(0);
-  u.increase_by_weight(1);
+  u += weight(1);
   u *= 2;
   BOOST_TEST_EQ(u, weight_counter(2, 4));
 
   weight_counter v(0);
-  v.increase_by_weight(2);
+  v += weight(2);
   BOOST_TEST_EQ(u, v);
 
   weight_counter x(0);
-  x.increase_by_count(2);
+  x += 2;
   BOOST_TEST_EQ(x, weight_counter(2, 2));
 
   return boost::report_errors();

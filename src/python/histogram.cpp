@@ -276,7 +276,7 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
   return bp::object();
 }
 
-bp::object histogram_value(bp::tuple args, bp::dict kwargs) {
+bp::object histogram_bin(bp::tuple args, bp::dict kwargs) {
   const pyhistogram & self = bp::extract<const pyhistogram &>(args[0]);
 
   const unsigned dim = len(args) - 1;
@@ -301,35 +301,7 @@ bp::object histogram_value(bp::tuple args, bp::dict kwargs) {
   for (unsigned i = 0; i < self.dim(); ++i)
     idx[i] = bp::extract<int>(args[1 + i]);
 
-  return bp::object(self.value(idx, idx + self.dim()));
-}
-
-bp::object histogram_variance(bp::tuple args, bp::dict kwargs) {
-  const pyhistogram& self = bp::extract<const pyhistogram &>(args[0]);
-
-  const unsigned dim = len(args) - 1;
-  if (self.dim() != dim) {
-    PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
-    bp::throw_error_already_set();
-  }
-
-  if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
-    std::ostringstream os;
-    os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
-    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
-    bp::throw_error_already_set();
-  }
-
-  if (kwargs) {
-    PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
-    bp::throw_error_already_set();
-  }
-
-  int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
-  for (auto i = 0u; i < self.dim(); ++i)
-    idx[i] = bp::extract<int>(args[1 + i]);
-
-  return bp::object(self.variance(idx, idx + self.dim()));
+  return bp::object(self.bin(idx, idx + self.dim()));
 }
 
 bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
@@ -365,6 +337,12 @@ std::string histogram_repr(const pyhistogram &h) {
 void register_histogram() {
   bp::docstring_options dopt(true, true, false);
 
+  bp::class_<pyhistogram::bin_type>(
+      "bin_type", "Holds value and variance of bin count.", bp::no_init)
+      .add_property("value", &pyhistogram::bin_type::value)
+      .add_property("variance", &pyhistogram::bin_type::variance)
+      ;
+
   bp::class_<pyhistogram, boost::shared_ptr<pyhistogram>>(
       "histogram", "N-dimensional histogram for real-valued data.", bp::no_init)
       .def("__init__", bp::raw_function(histogram_init),
@@ -391,12 +369,9 @@ void register_histogram() {
            ":return: total number of bins, including under- and overflow")
       .add_property("sum", &pyhistogram::sum,
            ":return: sum of all entries, including under- and overflow bins")
-      .def("value", bp::raw_function(histogram_value),
+      .def("bin", bp::raw_function(histogram_bin),
            ":param int args: indices of the bin (number must match dimension)"
-           "\n:return: count for the bin")
-      .def("variance", bp::raw_function(histogram_variance),
-           ":param int args: indices of the bin (number must match dimension)"
-           "\n:return: variance estimate for the bin")
+           "\n:return: bin content")
       .def("reduce_to", bp::raw_function(histogram_reduce_to),
            ":param int args: indices of the axes in the reduced histogram"
            "\n:return: reduced histogram with subset of axes")

@@ -17,24 +17,6 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <typename Storage>
-void storage_add_impl(std::true_type, Storage &result, const Storage &input,
-                      std::size_t dst, std::size_t src) {
-  result.add(dst, input.value(src), input.variance(src));
-}
-
-template <typename Storage>
-void storage_add_impl(std::false_type, Storage &result, const Storage &input,
-                      std::size_t dst, std::size_t src) {
-  result.add(dst, input.value(src));
-}
-
-template <typename Storage>
-void storage_add(Storage &result, const Storage &input, std::size_t dst,
-                 std::size_t src) {
-  storage_add_impl(has_variance_support_t<Storage>(), result, input, dst, src);
-}
-
 inline void escape(std::ostream &os, const string_view s) {
   os << '\'';
   for (auto sit = s.begin(); sit != s.end(); ++sit) {

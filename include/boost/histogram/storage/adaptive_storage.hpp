@@ -224,24 +224,25 @@ struct increase_visitor : public static_visitor<void> {
 struct wincrease_visitor : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
-  const double rhs;
-  wincrease_visitor(any_array &l, const std::size_t i, const double r)
-      : lhs_any(l), idx(i), rhs(r) {}
+  const detail::weight_t<double> rhs;
+  template <typename T>
+  wincrease_visitor(any_array &l, const std::size_t i, const detail::weight_t<T>& r)
+      : lhs_any(l), idx(i), rhs{static_cast<double>(r.value)} {}
 
   template <typename T> void operator()(array<T> &lhs) const {
     array<weight_counter> a(lhs);
-    a[idx].increase_by_weight(rhs);
+    a[idx] += rhs;
     lhs_any = std::move(a);
   }
 
   void operator()(array<void> &lhs) const {
     array<weight_counter> a(lhs.size);
-    a[idx].increase_by_weight(rhs);
+    a[idx] += rhs;
     lhs_any = std::move(a);
   }
 
   void operator()(array<weight_counter> &lhs) const {
-    lhs[idx].increase_by_weight(rhs);
+    lhs[idx] += rhs;
   }
 };
 
@@ -301,7 +302,37 @@ template <typename RHS> struct radd_visitor : public static_visitor<void> {
   }
 
   void operator()(array<weight_counter> &lhs) const {
-    lhs[idx].increase_by_count(static_cast<double>(rhs));
+    lhs[idx] += rhs;
+  }
+};
+
+template <> struct radd_visitor<mp_int> : public static_visitor<void> {
+  any_array &lhs_any;
+  const std::size_t idx;
+  const mp_int &rhs;
+  radd_visitor(any_array &l, const std::size_t i, const mp_int &r)
+      : lhs_any(l), idx(i), rhs(r) {}
+
+  template <typename T> void operator()(array<T> &lhs) const {
+    if (!safe_radd(lhs[idx], rhs)) {
+      lhs_any = array<next<T>>(lhs);
+      operator()(get<array<next<T>>>(lhs_any));
+    }
+  }
+
+  void operator()(array<void> &lhs) const {
+    if (rhs != 0) {
+      lhs_any = array<uint8_t>(lhs.size);
+      operator()(get<array<uint8_t>>(lhs_any));
+    }
+  }
+
+  void operator()(array<mp_int> &lhs) const {
+    lhs[idx] += rhs;
+  }
+
+  void operator()(array<weight_counter> &lhs) const {
+    lhs[idx] += static_cast<double>(rhs);
   }
 };
 
@@ -382,7 +413,7 @@ class adaptive_storage {
   using buffer_type = detail::any_array;
 
 public:
-  using value_type = double;
+  using bin_type = weight_counter<double>;
 
   explicit adaptive_storage(std::size_t s) : buffer_(detail::array<void>(s)) {}
 
@@ -395,22 +426,22 @@ public:
   template <typename RHS>
   explicit adaptive_storage(const RHS &rhs)
       : buffer_(detail::array<void>(rhs.size())) {
-    using T = typename RHS::value_type;
+    using T = typename RHS::bin_type;
     for (auto i = 0ul, n = rhs.size(); i < n; ++i) {
-      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs.value(i)),
+      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]),
                     buffer_);
     }
   }
 
   template <typename RHS> adaptive_storage &operator=(const RHS &rhs) {
-    using T = typename RHS::value_type;
+    using T = typename RHS::bin_type;
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       const auto n = rhs.size();
       if (size() != n) {
         buffer_ = detail::array<void>(n);
       }
       for (auto i = 0ul; i < n; ++i) {
-        apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs.value(i)),
+        apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]),
                       buffer_);
       }
     }
@@ -429,28 +460,24 @@ public:
     apply_visitor(detail::radd_visitor<T>(buffer_, i, value), buffer_);
   }
 
-  template <typename T>
-  void add(std::size_t i, const T &value, const T &variance) {
-    if (value == variance) {
-      apply_visitor(detail::radd_visitor<T>(buffer_, i, value), buffer_);
+  template <typename T> void add(std::size_t i, const detail::weight_t<T> &w) {
+    apply_visitor(detail::wincrease_visitor(buffer_, i, w),
+                  buffer_);
+  }
+
+  void add(std::size_t i, const bin_type& x) {
+    if (x.value() == x.variance()) {
+      apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()), buffer_);
     } else {
       apply_visitor(detail::radd_visitor<detail::weight_counter>(
-                        buffer_, i, detail::weight_counter(value, variance)),
+                        buffer_, i, detail::weight_counter(x.value(), x.variance())),
                     buffer_);
     }
   }
 
-  void increase_by_weight(std::size_t i, const value_type weight_counter) {
-    apply_visitor(detail::wincrease_visitor(buffer_, i, weight_counter),
-                  buffer_);
-  }
-
-  value_type value(std::size_t i) const {
-    return apply_visitor(detail::value_visitor(i), buffer_);
-  }
-
-  value_type variance(std::size_t i) const {
-    return apply_visitor(detail::variance_visitor(i), buffer_);
+  bin_type operator[](std::size_t i) const {
+    return {apply_visitor(detail::value_visitor(i), buffer_),
+            apply_visitor(detail::variance_visitor(i), buffer_)};
   }
 
   bool operator==(const adaptive_storage &rhs) const {
@@ -460,8 +487,9 @@ public:
   // precondition: storages have same size
   adaptive_storage &operator+=(const adaptive_storage &rhs) {
     if (this == &rhs) {
-      for (auto i = 0ul, n = size(); i < n; ++i)
-        add(i, rhs.value(i), rhs.variance(i)); // this is losing precision
+      for (auto i = 0ul, n = size(); i < n; ++i) {
+        add(i, rhs[i]); // may loose precision
+      }
     } else {
       apply_visitor(detail::radd_array_visitor(buffer_), rhs.buffer_);
     }
@@ -471,13 +499,13 @@ public:
   // precondition: storages have same size
   template <typename RHS> adaptive_storage &operator+=(const RHS &rhs) {
     for (auto i = 0ul, n = size(); i < n; ++i)
-      apply_visitor(detail::radd_visitor<typename RHS::value_type>(
-                        buffer_, i, rhs.value(i)),
+      apply_visitor(detail::radd_visitor<typename RHS::bin_type>(
+                        buffer_, i, rhs[i]),
                     buffer_);
     return *this;
   }
 
-  adaptive_storage &operator*=(const value_type x) {
+  template <typename T> adaptive_storage &operator*=(const T& x) {
     apply_visitor(detail::rmul_visitor(buffer_, x), buffer_);
     return *this;
   }

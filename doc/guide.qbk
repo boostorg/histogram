@@ -144,8 +144,8 @@ int main() {
 
     // fill histogram, number of arguments must be equal to number of axes
     h.fill(0, 4.1); // increases bin counter by one
-    h.fill(3, 3.4, bh::weight(1.5)); // increase bin counter by weight 1.5
-    h.fill(bh::weight(1.5), 3, 3.4); // the same as the previous call
+    h.fill(3, 3.4, bh::weight(2)); // increase bin counter by 2
+    h.fill(bh::weight(2), 3, 3.4); // the same as the previous call
 
     // a dynamic histogram also supports fills from an interator range while
     // a static histogram does not allow it; using a range of wrong length
@@ -194,10 +194,9 @@ int main() {
 
 After the histogram has been filled, you want to access the bin counts at some point. You may want to visualize the counts, or compute some quantities like the mean from the data distribution approximated by the histogram.
 
-To access the count of each bin, you use a multi-dimensional index, which consists of a sequence of bin indices for the axes in order. You can use this index to access the value for each and the variance estimate, using these methods:
+To access each bin, you use a multi-dimensional index, which consists of a sequence of bin indices for the axes in order. You can use this index to access the value for each and the variance estimate, using these methods:
 
-* `histogram::value(...)` takes `N` arguments, where `N` is equal to the number of axes of the histogram, and returns the count of the associated bin
-* `histogram::variance(...)` does the same but returns a variance estimate for the bin, purpose and meaning of the variance is explained in [link histogram.rationale.variance the rationale]
+* `histogram::bin(...)` takes `N` arguments, where `N` is equal to the number of axes of the histogram, and returns the associated bin type
 
 Both calls are demonstrated in the next example.
 
@@ -209,27 +208,29 @@ namespace bh = boost::histogram;
 
 int main() {
     // make histogram with 2 x 2 = 4 bins (not counting under-/overflow bins)
-    auto h = bh::make_dynamic_histogram(bh::axis::regular<>(2, -1, 1),
-                                        bh::axis::regular<>(2,  2, 4));
+    auto h = bh::make_dynamic_histogram(
+            bh::axis::regular<>(2, -1, 1),
+            bh::axis::regular<>(2,  2, 4)
+        );
     h.fill(-0.5, 2.5, bh::weight(1)); // low, low
     h.fill(-0.5, 3.5, bh::weight(2)); // low, high
     h.fill( 0.5, 2.5, bh::weight(3)); // high, low
     h.fill( 0.5, 3.5, bh::weight(4)); // high, high
 
     // access value of bin count, number of arguments must be equal
-    std::cout << h.value(0, 0) << " " // low, low
-              << h.value(0, 1) << " " // low, high
-              << h.value(1, 0) << " " // high, low
-              << h.value(1, 1)        // high, high
+    std::cout << h.bin(0, 0).value() << " " // low, low
+              << h.bin(0, 1).value() << " " // low, high
+              << h.bin(1, 0).value() << " " // high, low
+              << h.bin(1, 1).value()        // high, high
               << std::endl;
 
     // prints: 1 2 3 4
 
-    // access variance of bin count
-    std::cout << h.variance(0, 0) << " " // low, low
-              << h.variance(0, 1) << " " // low, high
-              << h.variance(1, 0) << " " // high, low
-              << h.variance(1, 1)        // high, high
+    // access variance of bin count, this only works for weighted histograms
+    std::cout << h.bin(0, 0).variance() << " " // low, low
+              << h.bin(0, 1).variance() << " " // low, high
+              << h.bin(1, 0).variance() << " " // high, low
+              << h.bin(1, 1).variance()        // high, high
               << std::endl;
 
     // prints: 1 4 9 16
@@ -239,8 +240,7 @@ int main() {
     // is an error
     std::vector<int> idx(2);
     idx = {0, 1};
-    std::cout << h.value(idx.begin(), idx.end()) << " "
-              << h.variance(idx.begin(), idx.end()) << std::endl;
+    std::cout << h.bin(idx.begin(), idx.end()).value() << std::endl;
 }
 ``
 
@@ -296,15 +296,15 @@ int main() {
     // accept and return rvalue references where possible
     auto h4 = h1 + h2 + h3;
 
-    std::cout << h4.value(0) << " " << h4.value(1) << std::endl;
+    std::cout << h4.bin(0).value() << " " << h4.bin(1).value() << std::endl;
 
     // prints: 2 2
 
-    // histograms are scalable by real numbers
-    h4 *= 2.5;
-    auto h5 = h4 / 5;
+    // histograms are scalable
+    h4 *= 2;
+    auto h5 = h4 / 4;
 
-    std::cout << h5.value(0) << " " << h5.value(1) << std::endl;
+    std::cout << h5.bin(0).value() << " " << h5.bin(1).value() << std::endl;
 
     // prints: 1 1
 
@@ -316,10 +316,10 @@ int main() {
     // beware the special effect of multiplying a histogram on its variance
     auto h = bh::make_static_histogram(bh::axis::regular<>(2, -1, 1));
     h.fill(-0.5);
-    std::cout << "value    " << (2 * h).value(0)
-              << " " << (h + h).value(0) << "\n"
-              << "variance " << (2 * h).variance(0)
-              << " " << (h + h).variance(0) << std::endl;
+    std::cout << "value    " << (2 * h).bin(0).value()
+              << " " << (h + h).bin(0).value() << "\n"
+              << "variance " << (2 * h).bin(0).variance()
+              << " " << (h + h).bin(0).variance() << std::endl;
     // equality operator also checks variances, so the statement is false
     std::cout << (h + h == 2 * h) << std::endl;
 
@@ -366,21 +366,21 @@ int main() {
         - bin counters are summed over removed axes
         - hr0 and hr1 have same number of total counts as h
     */
-    std::cout << h.sum() << " " << hr0.sum() << " " << hr1.sum() << std::endl;
+    std::cout << h.sum().value() << " " << hr0.sum().value() << " " << hr1.sum().value() << std::endl;
 
     for (const auto& ybin : h.axis(1_c)) {
         for (const auto& xbin : h.axis(0_c)) {
-            std::cout << h.value(xbin.first, ybin.first) << " ";
+            std::cout << h.bin(xbin.first, ybin.first).value() << " ";
         }
         std::cout << std::endl;
     }
 
     for (const auto& bin : hr0.axis())
-        std::cout << hr0.value(bin.first) << " ";
+        std::cout << hr0.bin(bin.first).value() << " ";
     std::cout << std::endl;
 
     for (const auto& bin : hr1.axis())
-        std::cout << hr1.value(bin.first) << " ";
+        std::cout << hr1.bin(bin.first).value() << " ";
     std::cout << std::endl;
 }
 ``
@@ -514,13 +514,13 @@ for x in (2e0, 2e1, 2e2, 2e3, 2e4):
 # iterate over bins and access bin counter
 for idx, (lower, upper) in enumerate(h.axis(0)):
     print "bin {0} x in [{1}, {2}): {3} +/- {4}".format(
-        idx, lower, upper, h.value(idx), h.variance(idx) ** 0.5)
+        idx, lower, upper, h.bin(idx).value, h.bin(idx).variance ** 0.5)
 
 # under- and overflow bins are accessed like in C++
 lo, up = h.axis(0)[-1]
-print "underflow [{0}, {1}): {2} +/- {3}".format(lo, up, h.value(-1), h.variance(-1))
+print "underflow [{0}, {1}): {2} +/- {3}".format(lo, up, h.bin(-1).value, h.bin(-1).variance)
 lo, up = h.axis(0)[5]
-print "overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h.value(5), h.variance(5))
+print "overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h.bin(5).value, h.bin(5).variance)
 
 # prints:
 # bin 0 x in [1.0, 10.0): 4.0 +/- 4.0
@@ -644,7 +644,7 @@ h2.fill(0.5)
 h3 = h1 + h2
 h4 = h3 * 2
 
-print h4.value(0), h4.value(1)
+print h4.bin(0), h4.bin(1)
 
 # prints: 2.0 2.0
 
@@ -710,7 +710,7 @@ cpp_filler.process(h) # histogram is filled with input values in C++
 
 for iy in range(len(h.axis(1))):
     for ix in range(len(h.axis(0))):
-        print h.value(ix, iy),
+        print h.bin(ix, iy),
     print
 
 # prints:
@@ -761,9 +761,9 @@ int main() {
     h.fill("1");
     h.fill("9");
 
-    for (const auto& bin : h.axis()) {
-        std::cout << "bin " << bin.first << " [" << bin.second.lower() << ", "
-                  << bin.second.upper() << ") " << h.value(bin.first)
+    for (const auto& a : h.axis()) {
+        std::cout << "bin " << a.first << " [" << a.second.lower() << ", "
+                  << a.second.upper() << ") " << h.bin(a.first).value()
                   << std::endl;
     }
 

@@ -14,17 +14,23 @@ namespace histogram {
 namespace detail {
 template <typename S1, typename S2>
 bool equal_impl(std::true_type, std::true_type, const S1 &s1, const S2 &s2) {
-  for (decltype(s1.size()) i = 0, n = s1.size(); i < n; ++i)
-    if (s1.value(i) != s2.value(i) || s1.variance(i) != s2.variance(i))
+  for (std::size_t i = 0, n = s1.size(); i < n; ++i) {
+    auto x1 = s1[i];
+    auto x2 = s2[i];
+    if (x1.value() != x2.value() || x1.variance() != x2.variance())
       return false;
+  }
   return true;
 }
 
 template <typename S1, typename S2>
 bool equal_impl(std::true_type, std::false_type, const S1 &s1, const S2 &s2) {
-  for (decltype(s1.size()) i = 0, n = s1.size(); i < n; ++i)
-    if (s1.value(i) != s2.value(i) || s1.value(i) != s1.variance(i))
+  for (std::size_t i = 0, n = s1.size(); i < n; ++i) {
+    auto x1 = s1[i];
+    auto x2 = s2[i];
+    if (x1.value() != x2 || x1.value() != x1.variance())
       return false;
+  }
   return true;
 }
 
@@ -35,8 +41,8 @@ bool equal_impl(std::false_type, std::true_type, const S1 &s1, const S2 &s2) {
 
 template <typename S1, typename S2>
 bool equal_impl(std::false_type, std::false_type, const S1 &s1, const S2 &s2) {
-  for (decltype(s1.size()) i = 0, n = s1.size(); i < n; ++i)
-    if (s1.value(i) != s2.value(i))
+  for (std::size_t i = 0, n = s1.size(); i < n; ++i)
+    if (s1[i] != s2[i])
       return false;
   return true;
 }

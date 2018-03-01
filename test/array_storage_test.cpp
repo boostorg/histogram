@@ -22,7 +22,7 @@ int main() {
   {
     array_storage<unsigned> a(std::size_t(1));
     BOOST_TEST_EQ(a.size(), 1u);
-    BOOST_TEST_EQ(a.value(0), 0u);
+    BOOST_TEST_EQ(a[0], 0);
   }
 
   // increase
@@ -35,11 +35,11 @@ int main() {
     c.increase(0);
     d.increase(0);
     d.add(1, 5);
-    BOOST_TEST_EQ(a.value(0), 1u);
-    BOOST_TEST_EQ(b.value(0), 1u);
-    BOOST_TEST_EQ(c.value(0), 2u);
-    BOOST_TEST_EQ(d.value(0), 1u);
-    BOOST_TEST_EQ(d.value(1), 5u);
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_EQ(b[0], 1);
+    BOOST_TEST_EQ(c[0], 2);
+    BOOST_TEST_EQ(d[0], 1);
+    BOOST_TEST_EQ(d[1], 5);
     BOOST_TEST(a == a);
     BOOST_TEST(a == b);
     BOOST_TEST(!(a == c));
@@ -51,14 +51,14 @@ int main() {
     array_storage<unsigned> a(std::size_t(2));
     a.increase(0);
     a *= 3;
-    BOOST_TEST_EQ(a.value(0), 3.0);
-    BOOST_TEST_EQ(a.value(1), 0.0);
+    BOOST_TEST_EQ(a[0], 3);
+    BOOST_TEST_EQ(a[1], 0);
     a.add(1, 2);
-    BOOST_TEST_EQ(a.value(0), 3.0);
-    BOOST_TEST_EQ(a.value(1), 2.0);
+    BOOST_TEST_EQ(a[0], 3);
+    BOOST_TEST_EQ(a[1], 2);
     a *= 3;
-    BOOST_TEST_EQ(a.value(0), 9.0);
-    BOOST_TEST_EQ(a.value(1), 6.0);
+    BOOST_TEST_EQ(a[0], 9);
+    BOOST_TEST_EQ(a[1], 6);
   }
 
   // copy
@@ -69,13 +69,13 @@ int main() {
     BOOST_TEST(!(a == b));
     b = a;
     BOOST_TEST(a == b);
-    BOOST_TEST_EQ(b.size(), 1u);
-    BOOST_TEST_EQ(b.value(0), 1u);
+    BOOST_TEST_EQ(b.size(), 1);
+    BOOST_TEST_EQ(b[0], 1);
 
     decltype(a) c(a);
     BOOST_TEST(a == c);
-    BOOST_TEST_EQ(c.size(), 1u);
-    BOOST_TEST_EQ(c.value(0), 1u);
+    BOOST_TEST_EQ(c.size(), 1);
+    BOOST_TEST_EQ(c[0], 1);
 
     array_storage<unsigned char> d(std::size_t(1));
     BOOST_TEST(!(a == d));
@@ -92,13 +92,13 @@ int main() {
     decltype(a) b;
     BOOST_TEST(!(a == b));
     b = std::move(a);
-    BOOST_TEST_EQ(a.size(), 0u);
-    BOOST_TEST_EQ(b.size(), 1u);
-    BOOST_TEST_EQ(b.value(0), 1u);
+    BOOST_TEST_EQ(a.size(), 0);
+    BOOST_TEST_EQ(b.size(), 1);
+    BOOST_TEST_EQ(b[0], 1);
     decltype(a) c(std::move(b));
-    BOOST_TEST_EQ(c.size(), 1u);
-    BOOST_TEST_EQ(c.value(0), 1u);
-    BOOST_TEST_EQ(b.size(), 0u);
+    BOOST_TEST_EQ(c.size(), 1);
+    BOOST_TEST_EQ(c[0], 1);
+    BOOST_TEST_EQ(b.size(), 0);
   }
 
   // with weight_counter
@@ -106,12 +106,12 @@ int main() {
     array_storage<weight_counter<double>> a(std::size_t(1));
     a.increase(0);
     a.add(0, 1);
-    a.add(0, 1, 0);
-    BOOST_TEST_EQ(a.value(0), 3);
-    BOOST_TEST_EQ(a.variance(0), 2);
-    a.increase_by_weight(0, 2);
-    BOOST_TEST_EQ(a.value(0), 5);
-    BOOST_TEST_EQ(a.variance(0), 6);
+    a.add(0, weight_counter<double>(1, 0));
+    BOOST_TEST_EQ(a[0].value(), 3);
+    BOOST_TEST_EQ(a[0].variance(), 2);
+    a.add(0, weight(2));
+    BOOST_TEST_EQ(a[0].value(), 5);
+    BOOST_TEST_EQ(a[0].variance(), 6);
   }
 
   return boost::report_errors();

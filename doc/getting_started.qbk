@@ -49,22 +49,22 @@ int main(int, char**) {
         - `variance(index)` method returns a variance estimate of the bin
           count at index (see Rationale section for what this means)
     */
-    for (const auto& bin : h.axis(0_c)) {
-        std::cout << "bin " << bin.first << " x in ["
-                  << bin.second.lower() << ", " << bin.second.upper() << "): "
-                  << h.value(bin.first) << " +/- "
-                  << std::sqrt(h.variance(bin.first))
+    for (const auto& a : h.axis(0_c)) {
+        std::cout << "bin " << a.first << " x in ["
+                  << a.second.lower() << ", " << a.second.upper() << "): "
+                  << h.bin(a.first).value() << " +/- "
+                  << std::sqrt(h.bin(a.first).variance())
                   << std::endl;
     }
 
     // accessing under- and overflow bins is easy, use indices -1 and 10
     std::cout << "underflow bin [" << h.axis(0_c)[-1].lower()
               << ", " << h.axis(0_c)[-1].upper() << "): "
-              << h.value(-1) << " +/- " << std::sqrt(h.variance(-1))
+              << h.bin(-1).value() << " +/- " << std::sqrt(h.bin(-1).variance())
               << std::endl;
     std::cout << "overflow  bin [" << h.axis(0_c)[10].lower()
               << ", " << h.axis(0_c)[10].upper() << "): "
-              << h.value(10) << " +/- " << std::sqrt(h.variance(10))
+              << h.bin(10).value() << " +/- " << std::sqrt(h.bin(10).variance())
               << std::endl;
 
     /* program output:
@@ -134,7 +134,7 @@ int main() {
         std::printf("%s\n", cbin.second.c_str());
         for (const auto& ybin : h.axis(2)) { // rows
             for (const auto& xbin : h.axis(1)) { // columns
-                std::printf("%3.0f ", h.value(cbin.first, xbin.first, ybin.first));
+                std::printf("%3.0f ", h.bin(cbin.first, xbin.first, ybin.first).value());
             }
             std::printf("\n");
         }
@@ -225,7 +225,7 @@ for x in (2e0, 2e1, 2e2, 2e3, 2e4):
 # iterate over bins and access bin counter
 for idx, (lower, upper) in enumerate(h.axis(0)):
     print "bin {0} x in [{1}, {2}): {3} +/- {4}".format(
-        idx, lower, upper, h.value(idx), h.variance(idx) ** 0.5)
+        idx, lower, upper, h.bin(idx).value, h.bin(idx).variance ** 0.5)
 ``
 
 [endsect]

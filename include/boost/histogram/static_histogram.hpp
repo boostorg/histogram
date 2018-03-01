@@ -28,6 +28,8 @@
 #include <boost/histogram/storage/operators.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/count_if.hpp>
+#include <boost/mpl/find_if.hpp>
+#include <boost/mpl/deref.hpp>
 #include <boost/mpl/empty.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
@@ -50,8 +52,8 @@ class histogram<static_tag, Axes, Storage> {
 
 public:
   using axes_type = typename fusion::result_of::as_vector<Axes>::type;
-  using value_type = typename Storage::value_type;
-  using value_iterator = value_iterator_over<Storage>;
+  using bin_type = typename Storage::bin_type;
+  using bin_iterator = bin_iterator_over<Storage>;
 
   histogram() = default;
   histogram(const histogram &rhs) = default;
@@ -132,12 +134,12 @@ public:
     return *this;
   }
 
-  histogram &operator*=(const value_type rhs) {
+  template <typename T> histogram &operator*=(const T &rhs) {
     storage_ *= rhs;
     return *this;
   }
 
-  histogram &operator/=(const value_type rhs) {
+  template <typename T> histogram &operator/=(const T &rhs) {
     storage_ *= 1.0 / rhs;
     return *this;
   }
@@ -159,7 +161,7 @@ public:
   }
 
   template <typename... Indices>
-  value_type value(const Indices &... indices) const {
+  bin_type bin(const Indices &... indices) const {
     static_assert(sizeof...(indices) == axes_size::value,
                   "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -167,20 +169,7 @@ public:
     if (stride == 0) {
       throw std::out_of_range("invalid index");
     }
-    return storage_.value(idx);
-  }
-
-  template <typename S = Storage, typename... Indices>
-  detail::requires_variance_support<S>
-  variance(const Indices &... indices) const {
-    static_assert(sizeof...(indices) == axes_size::value,
-                  "number of arguments does not match histogram dimension");
-    std::size_t idx = 0, stride = 1;
-    lin<0>(idx, stride, indices...);
-    if (stride == 0) {
-      throw std::out_of_range("invalid index");
-    }
-    return storage_.variance(idx);
+    return storage_[idx];
   }
 
   /// Number of axes (dimensions) of histogram
@@ -190,10 +179,10 @@ public:
   std::size_t bincount() const noexcept { return storage_.size(); }
 
   /// Sum of all counts in the histogram
-  double sum() const noexcept {
-    double result = 0.0;
+  bin_type sum() const noexcept {
+    bin_type result(0);
     for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
-      result += storage_.value(i);
+      result += storage_[i];
     return result;
   }
 
@@ -252,11 +241,11 @@ public:
     return hr;
   }
 
-  value_iterator begin() const noexcept {
-    return value_iterator(*this, storage_);
+  bin_iterator begin() const noexcept {
+    return bin_iterator(*this, storage_);
   }
 
-  value_iterator end() const noexcept { return value_iterator(storage_); }
+  bin_iterator end() const noexcept { return bin_iterator(storage_); }
 
 private:
   axes_type axes_;
@@ -271,8 +260,8 @@ private:
   template <typename... Args>
   inline void fill_impl(mpl::false_, mpl::false_, const Args &... args) {
     std::size_t idx = 0, stride = 1;
-    double w;
-    xlin<0>(idx, stride, w, args...);
+    int dummy;
+    xlin<0>(idx, stride, dummy, args...);
     if (stride) {
       storage_.increase(idx);
     }
@@ -281,10 +270,12 @@ private:
   template <typename... Args>
   inline void fill_impl(mpl::true_, mpl::false_, const Args &... args) {
     std::size_t idx = 0, stride = 1;
-    double w;
+    typename mpl::deref<
+        typename mpl::find_if<mpl::vector<Args...>, detail::is_weight<mpl::_>>::type
+      >::type w;
     xlin<0>(idx, stride, w, args...);
     if (stride)
-      storage_.increase_by_weight(idx, w);
+      storage_.add(idx, w);
   }
 
   template <typename... Args>
@@ -307,21 +298,20 @@ private:
     return lin<D + 1>(idx, stride, rest...);
   }
 
-  template <unsigned D>
-  inline void xlin(std::size_t &, std::size_t &, double &) const {}
+  template <unsigned D, typename Weight>
+  inline void xlin(std::size_t &, std::size_t &, Weight &) const {}
 
-  template <unsigned D, typename First, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, double &w,
+  template <unsigned D, typename Weight, typename First, typename... Rest>
+  inline void xlin(std::size_t &idx, std::size_t &stride, Weight &w,
                    const First &first, const Rest &... rest) const {
     detail::xlin(idx, stride, fusion::at_c<D>(axes_), first);
     return xlin<D + 1>(idx, stride, w, rest...);
   }
 
-  template <unsigned D, typename T, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, double &w,
-                   const detail::weight_t<T> &first,
-                   const Rest &... rest) const {
-    w = first.value;
+  template <unsigned D, typename Weight, typename... Rest>
+  inline void xlin(std::size_t &idx, std::size_t &stride, Weight &w,
+                   const Weight &first, const Rest &... rest) const {
+    w = first;
     return xlin<D>(idx, stride, w, rest...);
   }
 
@@ -339,7 +329,7 @@ private:
     for_each_axis(shape_assign_visitor{n.begin()});
     detail::index_mapper m(n, b);
     do {
-      detail::storage_add(h.storage_, storage_, m.second, m.first);
+      h.storage_.add(m.second, storage_[m.first]);
     } while (m.next());
   }
 
@@ -355,6 +345,14 @@ make_static_histogram(Axis &&... axis) {
   using h = histogram<static_tag, mpl::vector<Axis...>>;
   return h(typename h::axes_type(std::forward<Axis>(axis)...));
 }
+
+template <typename... Axis>
+inline histogram<static_tag, mpl::vector<Axis...>, array_storage<weight_counter<double>>>
+make_static_weighted_histogram(Axis &&... axis) {
+  using h = histogram<static_tag, mpl::vector<Axis...>, array_storage<weight_counter<double>>>;
+  return h(typename h::axes_type(std::forward<Axis>(axis)...));
+}
+
 
 /// static type factory with variable storage type
 template <typename Storage, typename... Axis>

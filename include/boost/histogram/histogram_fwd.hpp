@@ -15,6 +15,7 @@ namespace boost {
 namespace histogram {
 
 class adaptive_storage;
+template <typename T> class array_storage;
 
 namespace axis {
 

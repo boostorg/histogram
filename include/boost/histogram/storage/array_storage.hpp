@@ -23,18 +23,9 @@ class access;
 namespace boost {
 namespace histogram {
 
-namespace detail {
-template <typename T> struct counter_traits {
-  using value_type = T;
-  static value_type value(const T &t) noexcept { return t; }
-  static void increase_by_count(T &lhs, const T &n) noexcept { lhs += n; }
-  static void increase_by_weight(T &lhs, const T &w) noexcept { lhs += w; }
-};
-} // namespace detail
-
 template <typename T> class array_storage {
 public:
-  using value_type = typename detail::counter_traits<T>::value_type;
+  using bin_type = T;
 
   explicit array_storage(std::size_t s) { init(s); }
 
@@ -65,14 +56,14 @@ public:
   template <typename S> explicit array_storage(const S &other) {
     reset(other.size());
     for (decltype(size_) i = 0u; i < size_; ++i) {
-      array_[i] = other.value(i);
+      array_[i] = static_cast<bin_type>(other[i]);
     }
   }
 
   template <typename S> array_storage &operator=(const S &other) {
     reset(other.size());
     for (decltype(size_) i = 0u; i < size_; ++i) {
-      array_[i] = other.value(i);
+      array_[i] = static_cast<bin_type>(other[i]);
     }
     return *this;
   }
@@ -81,53 +72,45 @@ public:
 
   void increase(std::size_t i) noexcept { ++array_[i]; }
 
-  void increase_by_weight(std::size_t i, const value_type &w) noexcept {
-    detail::counter_traits<T>::increase_by_weight(array_[i], w);
+  template <typename U> void add(std::size_t i, const U &x) noexcept {
+    array_[i] += x;
   }
 
-  void add(std::size_t i, const value_type &n) noexcept {
-    detail::counter_traits<T>::increase_by_count(array_[i], n);
-  }
-
-  template <typename U = T, typename = decltype(U(0, 0))>
-  void add(std::size_t i, const value_type &value,
-           const value_type &variance) noexcept {
-    array_[i] += T(value, variance);
-  }
-
-  value_type value(std::size_t i) const noexcept {
-    return detail::counter_traits<T>::value(array_[i]);
-  }
-
-  template <typename U = T, typename = decltype(std::declval<U &>().variance())>
-  value_type variance(std::size_t i) const noexcept {
-    return array_[i].variance();
+  const bin_type& operator[](std::size_t i) const noexcept {
+    return array_[i];
   }
 
   template <typename U>
-  array_storage &operator+=(const array_storage<U> &rhs) noexcept {
-    for (auto i = 0ul; i < size_; ++i)
-      array_[i] += rhs.array_[i];
+  bool operator==(const array_storage<U> &rhs) const noexcept {
+    if (size_ != rhs.size_)
+      return false;
+    return std::equal(array_.get(), array_.get() + size_,
+                      rhs.array_.get());
+  }
+
+  template <typename S> array_storage &operator+=(const S &rhs) noexcept {
+    for (std::size_t i = 0; i < size_; ++i)
+      array_[i] += static_cast<bin_type>(rhs[i]);
     return *this;
   }
 
-  array_storage &operator*=(const value_type x) noexcept {
-    for (auto i = 0ul; i < size_; ++i)
+  template <typename U> array_storage &operator*=(const U &x) noexcept {
+    for (std::size_t i = 0; i < size_; ++i)
       array_[i] *= x;
     return *this;
   }
 
 private:
   std::size_t size_ = 0;
-  std::unique_ptr<T[]> array_;
+  std::unique_ptr<bin_type[]> array_;
 
   void reset(std::size_t size) {
     size_ = size;
-    array_.reset(new T[size]);
+    array_.reset(new bin_type[size]);
   }
   void init(std::size_t size) {
     reset(size);
-    std::fill(array_.get(), array_.get() + size, T(0));
+    std::fill(array_.get(), array_.get() + size, bin_type(0));
   }
 
   template <typename U> friend class array_storage;

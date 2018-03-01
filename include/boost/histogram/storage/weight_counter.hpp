@@ -7,6 +7,8 @@
 #ifndef _BOOST_HISTOGRAM_STORAGE_WEIGHT_COUNTER_HPP_
 #define _BOOST_HISTOGRAM_STORAGE_WEIGHT_COUNTER_HPP_
 
+#include <boost/histogram/histogram_fwd.hpp>
+
 namespace boost {
 
 namespace serialization {
@@ -50,21 +52,22 @@ public:
     return *this;
   }
 
+  template <typename U>
+  weight_counter &operator+=(const detail::weight_t<U> &rhs) {
+    w += rhs.value;
+    w2 += rhs.value * rhs.value;
+    return *this;
+  }
+
+  weight_counter &operator+=(const RealType &x) {
+    w += x;
+    w2 += x;
+    return *this;
+  }
+
   weight_counter &operator*=(const RealType x) {
     w *= x;
     w2 *= x * x;
-    return *this;
-  }
-
-  weight_counter &increase_by_count(const RealType n) {
-    w += n;
-    w2 += n;
-    return *this;
-  }
-
-  weight_counter &increase_by_weight(const RealType x) {
-    w += x;
-    w2 += x * x;
     return *this;
   }
 
@@ -92,6 +95,7 @@ public:
 
   RealType value() const noexcept { return w; }
   RealType variance() const noexcept { return w2; }
+  template <typename T> explicit operator T() const noexcept { return w; }
 
 private:
   friend class ::boost::serialization::access;
@@ -110,24 +114,6 @@ template <typename T, typename U>
 bool operator!=(const T &t, const weight_counter<U> &w) {
   return !(w == t);
 }
-
-namespace detail {
-template <typename T> struct counter_traits; // fwd declaration
-
-// specialization
-template <typename T> struct counter_traits<weight_counter<T>> {
-  using value_type = T;
-  static value_type value(const weight_counter<T> &w) noexcept {
-    return w.value();
-  }
-  static void increase_by_count(weight_counter<T> &lhs, const T &n) noexcept {
-    lhs.increase_by_count(n);
-  }
-  static void increase_by_weight(weight_counter<T> &lhs, const T &w) noexcept {
-    lhs.increase_by_weight(w);
-  }
-};
-} // namespace detail
 
 } // namespace histogram
 } // namespace boost

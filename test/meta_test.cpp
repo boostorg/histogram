@@ -18,11 +18,11 @@ int main() {
   }
 
   struct no_variance_method {
-    using value_type = int;
+    using bin_type = int;
   };
+
   struct variance_method {
-    using value_type = int;
-    value_type variance(std::size_t) const;
+    struct bin_type { double variance() const; };
   };
 
   BOOST_TEST_EQ(typename has_variance_support<no_variance_method>::type(),

@@ -66,58 +66,29 @@ protected:
 } // namespace detail
 
 template <typename Storage>
-class value_iterator_over
+class bin_iterator_over
     : public iterator_facade<
-          value_iterator_over<Storage>, typename Storage::value_type,
-          forward_traversal_tag, typename Storage::value_type>,
+          bin_iterator_over<Storage>, typename Storage::bin_type,
+          forward_traversal_tag, typename Storage::bin_type>,
       public detail::multi_index {
 
 public:
   /// begin iterator
   template <typename Histogram>
-  value_iterator_over(const Histogram &h, const Storage &s)
+  bin_iterator_over(const Histogram &h, const Storage &s)
       : detail::multi_index(h), s_(s) {}
 
   /// end iterator
-  explicit value_iterator_over(const Storage &s) : s_(s) {}
+  explicit bin_iterator_over(const Storage &s) : s_(s) {}
 
-  value_iterator_over(const value_iterator_over &) = default;
-  value_iterator_over &operator=(const value_iterator_over &) = default;
-
-private:
-  bool equal(const value_iterator_over &other) const noexcept {
-    return &s_ == &(other.s_) && idx_ == other.idx_;
-  }
-  typename Storage::value_type dereference() const { return s_.value(idx_); }
-
-  const Storage &s_;
-  friend class ::boost::iterator_core_access;
-};
-
-template <typename Storage>
-class variance_iterator_over
-    : public iterator_facade<
-          variance_iterator_over<Storage>, typename Storage::value_type,
-          forward_traversal_tag, typename Storage::value_type>,
-      public detail::multi_index {
-
-public:
-  /// begin iterator
-  template <typename Histogram>
-  variance_iterator_over(const Histogram &h, const Storage &s)
-      : detail::multi_index(h), s_(s) {}
-
-  /// end iterator
-  explicit variance_iterator_over(const Storage &s) : s_(s) {}
-
-  variance_iterator_over(const variance_iterator_over &) = default;
-  variance_iterator_over &operator=(const variance_iterator_over &) = default;
+  bin_iterator_over(const bin_iterator_over &) = default;
+  bin_iterator_over &operator=(const bin_iterator_over &) = default;
 
 private:
-  bool equal(const variance_iterator_over &other) const noexcept {
+  bool equal(const bin_iterator_over &other) const noexcept {
     return &s_ == &(other.s_) && idx_ == other.idx_;
   }
-  typename Storage::value_type dereference() const { return s_.variance(idx_); }
+  typename Storage::bin_type dereference() const { return s_[idx_]; }
 
   const Storage &s_;
   friend class ::boost::iterator_core_access;
