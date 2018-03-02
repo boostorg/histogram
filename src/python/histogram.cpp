@@ -334,14 +334,21 @@ std::string histogram_repr(const pyhistogram &h) {
   return os.str();
 }
 
+double bin_type_value(const pyhistogram::bin_type& b) {
+  return b.value();
+}
+
+double bin_type_variance(const pyhistogram::bin_type& b) {
+  return b.variance();
+}
+
 void register_histogram() {
   bp::docstring_options dopt(true, true, false);
 
   bp::class_<pyhistogram::bin_type>(
       "bin_type", "Holds value and variance of bin count.", bp::no_init)
-      .add_property("value", &pyhistogram::bin_type::value)
-      .add_property("variance", &pyhistogram::bin_type::variance)
-      ;
+      .add_property("value", bin_type_value)
+      .add_property("variance", bin_type_variance);
 
   bp::class_<pyhistogram, boost::shared_ptr<pyhistogram>>(
       "histogram", "N-dimensional histogram for real-valued data.", bp::no_init)

@@ -349,7 +349,7 @@ private:
     }
 
     template <typename Axis> void impl(std::false_type, const Axis &) const {
-      throw std::runtime_error(
+      throw std::invalid_argument(
           detail::cat("fill argument not convertible to axis value type: ",
                       boost::typeindex::type_id<Axis>().pretty_name(), ", ",
                       boost::typeindex::type_id<Value>().pretty_name()));
@@ -417,50 +417,50 @@ private:
 };
 
 template <typename... Axes>
-histogram<dynamic_tag, detail::combine_t<axis::builtins, mpl::vector<Axes...>>>
+histogram<dynamic_tag, detail::union_t<axis::builtins, mpl::vector<Axes...>>>
 make_dynamic_histogram(Axes &&... axes) {
   return histogram<dynamic_tag,
-                   detail::combine_t<axis::builtins, mpl::vector<Axes...>>>(
+                   detail::union_t<axis::builtins, mpl::vector<Axes...>>>(
       std::forward<Axes>(axes)...);
 }
 
 template <typename... Axes>
-histogram<dynamic_tag, detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
+histogram<dynamic_tag, detail::union_t<axis::builtins, mpl::vector<Axes...>>,
 array_storage<weight_counter<double>>>
 make_dynamic_weighted_histogram(Axes &&... axes) {
   return histogram<dynamic_tag,
-                   detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
+                   detail::union_t<axis::builtins, mpl::vector<Axes...>>,
                    array_storage<weight_counter<double>>
     >(std::forward<Axes>(axes)...);
 }
 
 template <typename Storage, typename... Axes>
-histogram<dynamic_tag, detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
+histogram<dynamic_tag, detail::union_t<axis::builtins, mpl::vector<Axes...>>,
           Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
   return histogram<dynamic_tag,
-                   detail::combine_t<axis::builtins, mpl::vector<Axes...>>,
+                   detail::union_t<axis::builtins, mpl::vector<Axes...>>,
                    Storage>(std::forward<Axes>(axes)...);
 }
 
 template <typename Iterator, typename = detail::is_iterator<Iterator>>
-histogram<dynamic_tag, detail::combine_t<axis::builtins,
+histogram<dynamic_tag, detail::union_t<axis::builtins,
                                          typename Iterator::value_type::types>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
   return histogram<
       dynamic_tag,
-      detail::combine_t<axis::builtins, typename Iterator::value_type::types>>(
+      detail::union_t<axis::builtins, typename Iterator::value_type::types>>(
       begin, end);
 }
 
 template <typename Iterator, typename = detail::is_iterator<Iterator>>
-histogram<dynamic_tag, detail::combine_t<axis::builtins,
+histogram<dynamic_tag, detail::union_t<axis::builtins,
                                          typename Iterator::value_type::types>,
                                          array_storage<weight_counter<double>>>
 make_dynamic_weighted_histogram(Iterator begin, Iterator end) {
   return histogram<
       dynamic_tag,
-      detail::combine_t<axis::builtins, typename Iterator::value_type::types>,
+      detail::union_t<axis::builtins, typename Iterator::value_type::types>,
       array_storage<weight_counter<double>>>(
       begin, end);
 }
@@ -469,12 +469,12 @@ template <typename Storage, typename Iterator,
           typename = detail::is_iterator<Iterator>>
 histogram<
     dynamic_tag,
-    detail::combine_t<axis::builtins, typename Iterator::value_type::types>,
+    detail::union_t<axis::builtins, typename Iterator::value_type::types>,
     Storage>
 make_dynamic_histogram_with(Iterator begin, Iterator end) {
   return histogram<
       dynamic_tag,
-      detail::combine_t<axis::builtins, typename Iterator::value_type::types>,
+      detail::union_t<axis::builtins, typename Iterator::value_type::types>,
       Storage>(begin, end);
 }
 

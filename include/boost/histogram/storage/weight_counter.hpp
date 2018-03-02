@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_STORAGE_WEIGHT_COUNTER_HPP_
 
 #include <boost/histogram/histogram_fwd.hpp>
+#include <stdexcept>
 
 namespace boost {
 
@@ -27,35 +28,11 @@ public:
   weight_counter &operator=(const weight_counter &) = default;
   weight_counter &operator=(weight_counter &&) = default;
 
-  weight_counter(RealType value, RealType variance) : w(value), w2(variance) {}
-
-  template <typename T>
-  explicit weight_counter(const T &t)
-      : w(static_cast<RealType>(t)), w2(static_cast<RealType>(t)) {}
-
-  template <typename T> weight_counter &operator=(const T &t) {
-    w = static_cast<RealType>(t);
-    w2 = static_cast<RealType>(t);
-    return *this;
-  }
+  weight_counter(const RealType& value, const RealType& variance) : w(value), w2(variance) {}
 
   weight_counter &operator++() {
     ++w;
     ++w2;
-    return *this;
-  }
-
-  template <typename U>
-  weight_counter &operator+=(const weight_counter<U> &rhs) {
-    w += rhs.w;
-    w2 += rhs.w2;
-    return *this;
-  }
-
-  template <typename U>
-  weight_counter &operator+=(const detail::weight_t<U> &rhs) {
-    w += rhs.value;
-    w2 += rhs.value * rhs.value;
     return *this;
   }
 
@@ -65,7 +42,22 @@ public:
     return *this;
   }
 
-  weight_counter &operator*=(const RealType x) {
+  template <typename T>
+  weight_counter &operator+=(const weight_counter<T> &rhs) {
+    w += static_cast<RealType>(rhs.w);
+    w2 += static_cast<RealType>(rhs.w2);
+    return *this;
+  }
+
+  template <typename T>
+  weight_counter &operator+=(const detail::weight_t<T> &rhs) {
+    const auto x = static_cast<RealType>(rhs.value);
+    w += x;
+    w2 += x * x;
+    return *this;
+  }
+
+  weight_counter &operator*=(const RealType &x) {
     w *= x;
     w2 *= x * x;
     return *this;
@@ -77,11 +69,11 @@ public:
 
   bool operator!=(const weight_counter &rhs) const { return !operator==(rhs); }
 
-  template <typename U> bool operator==(const weight_counter<U> &rhs) const {
+  template <typename T> bool operator==(const weight_counter<T> &rhs) const {
     return w == rhs.w && w2 == rhs.w2;
   }
 
-  template <typename U> bool operator!=(const weight_counter<U> &rhs) const {
+  template <typename T> bool operator!=(const weight_counter<T> &rhs) const {
     return !operator==(rhs);
   }
 
@@ -93,9 +85,27 @@ public:
     return !operator==(rhs);
   }
 
-  RealType value() const noexcept { return w; }
-  RealType variance() const noexcept { return w2; }
-  template <typename T> explicit operator T() const noexcept { return w; }
+  const RealType& value() const noexcept { return w; }
+  const RealType& variance() const noexcept { return w2; }
+
+  bool has_trivial_variance() const noexcept { return w == w2; }
+
+  // conversion
+  template <typename T> explicit weight_counter(const T &t) : w(static_cast<T>(t)), w2(w) {}
+  explicit operator RealType() const {
+    if (!has_trivial_variance())
+      throw std::logic_error("cannot convert weight_counter to RealType, value and variance differ");
+    return w;
+  }
+  template <typename T> explicit operator T() const {
+    if (!has_trivial_variance())
+      throw std::logic_error("cannot convert weight_counter to RealType, value and variance differ");
+    return w;
+  }
+  template <typename T> weight_counter &operator=(const T &x) {
+    w = w2 = static_cast<RealType>(x);
+    return *this;
+  }
 
 private:
   friend class ::boost::serialization::access;

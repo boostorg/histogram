@@ -8,10 +8,9 @@
 #define _BOOST_HISTOGRAM_STORAGE_ARRAY_HPP_
 
 #include <algorithm>
-#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/storage/weight_counter.hpp>
 #include <cstddef>
 #include <memory>
-#include <type_traits>
 
 // forward declaration for serialization
 namespace boost {
@@ -55,16 +54,14 @@ public:
 
   template <typename S> explicit array_storage(const S &other) {
     reset(other.size());
-    for (decltype(size_) i = 0u; i < size_; ++i) {
+    for (std::size_t i = 0; i < size_; ++i)
       array_[i] = static_cast<bin_type>(other[i]);
-    }
   }
 
   template <typename S> array_storage &operator=(const S &other) {
     reset(other.size());
-    for (decltype(size_) i = 0u; i < size_; ++i) {
+    for (std::size_t i = 0; i < size_; ++i)
       array_[i] = static_cast<bin_type>(other[i]);
-    }
     return *this;
   }
 

@@ -36,7 +36,8 @@ template <typename T, typename = decltype(std::declval<T &>().size(),
 struct requires_storage {};
 
 template <typename T> struct has_variance_support {
-  template <typename U, typename = decltype(std::declval<typename U::bin_type&>().variance())>
+  template <typename U, typename = decltype(std::declval<U&>().value(),
+                                            std::declval<U&>().variance())>
   struct SFINAE {};
   template <typename U> static std::true_type Test(SFINAE<U> *);
   template <typename U> static std::false_type Test(...);
@@ -46,11 +47,6 @@ template <typename T> struct has_variance_support {
 template <typename T>
 using has_variance_support_t = typename has_variance_support<T>::type;
 
-template <typename S, typename ReturnValue = typename S::value_type>
-using requires_variance_support =
-    typename std::enable_if<has_variance_support_t<S>::value,
-                            ReturnValue>::type;
-
 template <typename T,
           typename = decltype(*std::declval<T &>(), ++std::declval<T &>())>
 struct is_iterator {};
@@ -59,15 +55,14 @@ template <typename T, typename = decltype(std::begin(std::declval<T &>()),
                                           std::end(std::declval<T &>()))>
 struct is_sequence {};
 
-template <typename MainVector, typename AuxVector> struct combine {
-  using type =
-      typename mpl::copy_if<AuxVector,
-                            mpl::not_<mpl::contains<MainVector, mpl::_1>>,
-                            mpl::back_inserter<MainVector>>::type;
-};
+template <typename MainVector, typename AuxVector> struct union_ :
+  mpl::copy_if<AuxVector,
+               mpl::not_<mpl::contains<MainVector, mpl::_1>>,
+               mpl::back_inserter<MainVector>>
+{};
 
 template <typename MainVector, typename AuxVector>
-using combine_t = typename combine<MainVector, AuxVector>::type;
+using union_t = typename union_<MainVector, AuxVector>::type;
 
 struct bool_mask_op {
   std::vector<bool> &b;
@@ -97,12 +92,12 @@ void axes_assign_subset(Axes1 &axes1, const Axes &axes) {
 }
 
 template <typename Ns>
-using unique_sorted =
+using unique_sorted_t =
     typename mpl::unique<typename mpl::sort<Ns>::type,
                          std::is_same<mpl::_1, mpl::_2>>::type;
 
 template <typename Axes, typename Numbers>
-using axes_select =
+using axes_select_t =
     typename mpl::transform<Numbers, mpl::at<Axes, mpl::_>>::type;
 
 } // namespace detail

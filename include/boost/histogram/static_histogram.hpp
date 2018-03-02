@@ -226,11 +226,11 @@ public:
   /// Returns a lower-dimensional histogram
   template <int N, typename... Rest>
   auto reduce_to(mpl::int_<N>, Rest...) const -> histogram<
-      static_tag, detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
+      static_tag, detail::axes_select_t<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
       Storage> {
     using HR =
         histogram<static_tag,
-                  detail::axes_select<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
+                  detail::axes_select_t<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
                   Storage>;
     typename HR::axes_type axes;
     detail::axes_assign_subset<mpl::vector<mpl::int_<N>, Rest...>>(axes, axes_);

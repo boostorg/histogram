@@ -221,33 +221,18 @@ struct increase_visitor : public static_visitor<void> {
   void operator()(array<wcount> &lhs) const { ++lhs[idx]; }
 };
 
-struct value_visitor : public static_visitor<double> {
+struct bin_visitor : public static_visitor<wcount> {
   const std::size_t idx;
-  value_visitor(const std::size_t i) : idx(i) {}
+  bin_visitor(const std::size_t i) : idx(i) {}
 
-  template <typename Array> double operator()(const Array &b) const {
-    return static_cast<double>(b[idx]);
+  template <typename Array> wcount operator()(const Array &b) const {
+    return wcount(static_cast<double>(b[idx]));
   }
 
-  double operator()(const array<void> & /*b*/) const { return 0; }
+  wcount operator()(const array<void> & /*b*/) const { return wcount(0.0); }
 
-  double operator()(const array<wcount> &b) const {
-    return b[idx].value();
-  }
-};
-
-struct variance_visitor : public static_visitor<double> {
-  const std::size_t idx;
-  variance_visitor(const std::size_t i) : idx(i) {}
-
-  template <typename Array> double operator()(const Array &b) const {
-    return static_cast<double>(b[idx]);
-  }
-
-  double operator()(const array<void> & /*b*/) const { return 0; }
-
-  double operator()(const array<wcount> &b) const {
-    return b[idx].variance();
+  wcount operator()(const array<wcount> &b) const {
+    return b[idx];
   }
 };
 
@@ -422,23 +407,22 @@ public:
   explicit adaptive_storage(const RHS &rhs)
       : buffer_(detail::array<void>(rhs.size())) {
     using T = typename RHS::bin_type;
-    for (auto i = 0ul, n = rhs.size(); i < n; ++i) {
+    for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
       apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]),
                     buffer_);
     }
   }
 
   template <typename RHS> adaptive_storage &operator=(const RHS &rhs) {
+    // no check for self-assign needed, default operator above is better match
+    const auto n = rhs.size();
+    if (size() != n) {
+      buffer_ = detail::array<void>(n);
+    }
     using T = typename RHS::bin_type;
-    if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
-      const auto n = rhs.size();
-      if (size() != n) {
-        buffer_ = detail::array<void>(n);
-      }
-      for (auto i = 0ul; i < n; ++i) {
-        apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]),
-                      buffer_);
-      }
+    for (std::size_t i = 0; i < n; ++i) {
+      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]),
+                    buffer_);
     }
     return *this;
   }
@@ -451,6 +435,14 @@ public:
     apply_visitor(detail::increase_visitor(buffer_, i), buffer_);
   }
 
+  void add(std::size_t i, const bin_type& x) {
+    if (x.has_trivial_variance()) {
+      apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()), buffer_);
+    } else {
+      apply_visitor(detail::radd_visitor<bin_type>(buffer_, i, x), buffer_);
+    }
+  }
+
   template <typename T> void add(std::size_t i, const T &t) {
     apply_visitor(detail::radd_visitor<T>(buffer_, i, t), buffer_);
   }
@@ -460,18 +452,8 @@ public:
                   buffer_);
   }
 
-  void add(std::size_t i, const bin_type& x) {
-    if (x.value() == x.variance()) {
-      apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()), buffer_);
-    } else {
-      apply_visitor(detail::radd_visitor<bin_type>(buffer_, i, x), buffer_);
-    }
-  }
-
   bin_type operator[](std::size_t i) const {
-    // TODO optimize this with a dedicated visitor
-    return {apply_visitor(detail::value_visitor(i), buffer_),
-            apply_visitor(detail::variance_visitor(i), buffer_)};
+    return apply_visitor(detail::bin_visitor(i), buffer_);
   }
 
   bool operator==(const adaptive_storage &rhs) const {
