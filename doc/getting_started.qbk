@@ -45,11 +45,12 @@ int main(int, char**) {
           `bin_type` usually is a semi-open interval representing the bin,
           whose edges can be accessed with methods `lower()` and `upper()`,
           but the [bin type] depends on the axis, look it up in the reference
-        - `value(index)` method returns the bin count at index
-        - `variance(index)` method returns a variance estimate of the bin
-          count at index (see Rationale section for what this means)
+        - `bin(index)` method returns the bin counter at index, you can then
+           access its `value() and `variance()` methods; the first returns the
+           actual count, the second returns a variance estimate of the count
+           (see Rationale section for what this means)
     */
-    for (const auto& a : h.axis(0_c)) {
+    for (auto a : h.axis(0_c)) {
         std::cout << "bin " << a.first << " x in ["
                   << a.second.lower() << ", " << a.second.upper() << "): "
                   << h.bin(a.first).value() << " +/- "
@@ -90,7 +91,7 @@ int main(int, char**) {
 
 [section Make and use a dynamic 3d-histogram in C++]
 
-Dynamic histograms are a bit slower than static histograms, but still faster than other libraries. Use a dynamic histogram when you only know at runtime how to layout the histogram, for example, because you wrote a graphical user interface that uses Boost.Histogram underneath.
+Dynamic histograms are a bit slower than static histograms, but still faster than other libraries. Use a dynamic histogram when you only know at runtime which and how many axis are going to be used, for example, because you wrote a graphical user interface that uses Boost.Histogram underneath.
 
 [c++]``
 #include <boost/histogram.hpp>
@@ -130,7 +131,7 @@ int main() {
           this is here the case for the category axis
     */
     using cas = bh::axis::category<std::string>;
-    for (const auto& cbin : bh::axis::cast<cas>(h.axis(0))) {
+    for (auto cbin : bh::axis::cast<cas>(h.axis(0))) {
         std::printf("%s\n", cbin.second.c_str());
         for (const auto& ybin : h.axis(2)) { // rows
             for (const auto& xbin : h.axis(1)) { // columns
