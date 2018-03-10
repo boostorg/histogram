@@ -349,10 +349,12 @@ int main() {
   // add_and_grow
   {
     adaptive_storage a(std::size_t(1));
+    a += a;
+    BOOST_TEST_EQ(a[0].value(), 0);
     a.increase(0);
-    double x = 1.0;
+    double x = 1;
     adaptive_storage y(std::size_t(1));
-    BOOST_TEST_EQ(y[0].value(), 0.0);
+    BOOST_TEST_EQ(y[0].value(), 0);
     a.add(0, y[0].value());
     BOOST_TEST_EQ(a[0].value(), x);
     for (unsigned i = 0; i < 80; ++i) {
@@ -364,7 +366,7 @@ int main() {
       BOOST_TEST_EQ(a[0].variance(), x);
       BOOST_TEST_EQ(b[0].value(), x);
       BOOST_TEST_EQ(b[0].variance(), x);
-      b.add(0, weight(0.0));
+      b.add(0, weight(0));
       BOOST_TEST_EQ(b[0].value(), x);
       BOOST_TEST_EQ(b[0].variance(), x);
       adaptive_storage c(std::size_t(1));
@@ -377,6 +379,9 @@ int main() {
   // multiply
   {
     adaptive_storage a(std::size_t(2));
+    a *= 2;
+    BOOST_TEST_EQ(a[0].value(), 0);
+    BOOST_TEST_EQ(a[1].value(), 0);
     a.increase(0);
     a *= 3;
     BOOST_TEST_EQ(a[0].value(), 3);

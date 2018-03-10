@@ -91,10 +91,10 @@ bp::object variable_init(bp::tuple args, bp::dict kwargs) {
   auto uo = bha::uoflow::on;
   while (len(kwargs) > 0) {
     bp::tuple kv = kwargs.popitem();
-    boost::string_view k = bp::extract<const char*>(kv[0])();
+    boost::string_view k(bp::extract<const char*>(kv[0]), bp::len(kv[0]));
     bp::object v = kv[1];
     if (k == "label")
-      label = bp::extract<const char*>(v)();
+      label = boost::string_view(bp::extract<const char*>(v), bp::len(v));
     else if (k == "uoflow") {
       if (!bp::extract<bool>(v))
         uo = bha::uoflow::off;
@@ -122,10 +122,10 @@ bp::object category_init(bp::tuple args, bp::dict kwargs) {
   boost::string_view label;
   while (bp::len(kwargs) > 0) {
     bp::tuple kv = kwargs.popitem();
-    boost::string_view k = bp::extract<const char*>(kv[0])();
+    boost::string_view k(bp::extract<const char*>(kv[0]), bp::len(kv[0]));
     bp::object v = kv[1];
     if (k == "label")
-      label = bp::extract<const char*>(v)();
+      label = boost::string_view(bp::extract<const char*>(v), bp::len(v));
     else {
       std::stringstream s;
       s << "keyword " << k << " not recognized";

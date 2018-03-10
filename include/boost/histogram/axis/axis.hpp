@@ -11,6 +11,7 @@
 #include <boost/bimap.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/interval.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/utility/string_view.hpp>
 #include <cmath>
@@ -501,7 +502,7 @@ public:
    *
    * \param seq sequence of unique values.
    */
-  category(std::initializer_list<T> seq, string_view label = {})
+  category(std::initializer_list<bin_type> seq, string_view label = {})
       : base_type(seq.size(), label), map_(new map_type()) {
     int index = 0;
     for (const auto &x : seq)
@@ -510,7 +511,7 @@ public:
       throw std::logic_error("sequence is empty");
   }
 
-  template <typename Iterator>
+  template <typename Iterator, typename = ::boost::histogram::detail::is_iterator<Iterator>>
   category(Iterator begin, Iterator end, string_view label = {})
       : base_type(std::distance(begin, end), label), map_(new map_type()) {
     int index = 0;

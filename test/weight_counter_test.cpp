@@ -7,47 +7,54 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <ostream>
+#include <sstream>
 
-namespace boost {
-namespace histogram {
+using namespace boost::histogram;
+using wcount = weight_counter<double>;
+
 template <typename T>
 std::ostream &operator<<(std::ostream &os, const weight_counter<T> &w) {
-  os << "[ " << w.value() << ", " << w.variance() << "]";
+  os << "[" << w.value() << ", " << w.variance() << "]";
   return os;
 }
-} // namespace histogram
-} // namespace boost
 
 int main() {
-  using weight_counter = boost::histogram::weight_counter<double>;
-  using boost::histogram::weight;
+  {
+    wcount w(1);
+    std::ostringstream os;
+    os << w;
+    BOOST_TEST_EQ(os.str(), std::string("[1, 1]"));
 
-  weight_counter w(1);
-  BOOST_TEST_EQ(w, weight_counter(1));
-  BOOST_TEST_NE(w, weight_counter(0));
-  BOOST_TEST_EQ(1, w);
-  BOOST_TEST_EQ(w, 1);
-  BOOST_TEST_NE(2, w);
-  BOOST_TEST_NE(w, 2);
+    BOOST_TEST_EQ(w, wcount(1));
+    BOOST_TEST_NE(w, wcount(0));
+    BOOST_TEST_EQ(1, w);
+    BOOST_TEST_EQ(w, 1);
+    BOOST_TEST_NE(2, w);
+    BOOST_TEST_NE(w, 2);
 
-  w += weight(2);
-  BOOST_TEST_EQ(w.value(), 3);
-  BOOST_TEST_EQ(w.variance(), 5);
+    w += weight(2);
+    BOOST_TEST_EQ(w.value(), 3);
+    BOOST_TEST_EQ(w.variance(), 5);    
+  }
 
-  // consistency: a weighted counter increased by weight 1 multiplied
-  // by 2 must be the same as a weighted counter increased by weight 2
-  weight_counter u(0);
-  u += weight(1);
-  u *= 2;
-  BOOST_TEST_EQ(u, weight_counter(2, 4));
+  {
+    // consistency: a weighted counter increased by weight 1 multiplied
+    // by 2 must be the same as a weighted counter increased by weight 2
+    wcount u(0);
+    u += weight(1);
+    u *= 2;
+    BOOST_TEST_EQ(u, wcount(2, 4));    
 
-  weight_counter v(0);
-  v += weight(2);
-  BOOST_TEST_EQ(u, v);
+    wcount v(0);
+    v += weight(2);
+    BOOST_TEST_EQ(u, v);
+  }
 
-  weight_counter x(0);
-  x += 2;
-  BOOST_TEST_EQ(x, weight_counter(2, 2));
+  {
+    wcount x(0);
+    x += 2;
+    BOOST_TEST_EQ(x, wcount(2, 2));
+  }
 
   return boost::report_errors();
 }

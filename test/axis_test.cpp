@@ -265,28 +265,35 @@ int main() {
   // any_axis_type_streamable
   {
     enum { A, B, C };
+    std::string a = "A";
+    std::string b = "B";
     std::vector<any_axis_type> axes;
     axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
     axes.push_back(axis::regular<double, axis::transform::log>{
         2, 1, 10, "regular2", axis::uoflow::off});
     axes.push_back(axis::regular<double, axis::transform::pow>{
         2, 1, 10, "regular3", axis::uoflow::on, 0.5});
+    axes.push_back(axis::regular<double, axis::transform::pow>{
+        2, 1, 10, "regular4", axis::uoflow::off, -0.5});
     axes.push_back(axis::circular<>{4, 0.1, 1.0, "polar"});
     axes.push_back(axis::variable<>{{-1, 0, 1}, "variable", axis::uoflow::off});
     axes.push_back(axis::category<>{{A, B, C}, "category"});
+    axes.push_back(axis::category<std::string>{{a, b}, "category2"});
     axes.push_back(axis::integer<>{-1, 1, "integer", axis::uoflow::off});
     std::ostringstream os;
     for (const auto &a : axes) {
-      os << a;
+      os << a << "\n";
     }
     const std::string ref =
-        "regular(2, -1, 1, label='regular1')"
-        "regular_log(2, 1, 10, label='regular2', uoflow=False)"
-        "regular_pow(2, 1, 10, 0.5, label='regular3')"
-        "circular(4, phase=0.1, perimeter=1, label='polar')"
-        "variable(-1, 0, 1, label='variable', uoflow=False)"
-        "category(0, 1, 2, label='category')"
-        "integer(-1, 1, label='integer', uoflow=False)";
+        "regular(2, -1, 1, label='regular1')\n"
+        "regular_log(2, 1, 10, label='regular2', uoflow=False)\n"
+        "regular_pow(2, 1, 10, 0.5, label='regular3')\n"
+        "regular_pow(2, 1, 10, -0.5, label='regular4', uoflow=False)\n"
+        "circular(4, phase=0.1, perimeter=1, label='polar')\n"
+        "variable(-1, 0, 1, label='variable', uoflow=False)\n"
+        "category(0, 1, 2, label='category')\n"
+        "category('A', 'B', label='category2')\n"
+        "integer(-1, 1, label='integer', uoflow=False)\n";
     BOOST_TEST_EQ(os.str(), ref);
   }
 
