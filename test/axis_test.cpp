@@ -271,17 +271,17 @@ int main() {
     std::string b = "B";
     std::vector<any_axis_type> axes;
     axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
-    axes.push_back(axis::regular<double, axis::transform::log>{
-        2, 1, 10, "regular2", axis::uoflow::off});
-    axes.push_back(axis::regular<double, axis::transform::pow>{
-        2, 1, 10, "regular3", axis::uoflow::on, 0.5});
-    axes.push_back(axis::regular<double, axis::transform::pow>{
-        2, 1, 10, "regular4", axis::uoflow::off, -0.5});
-    axes.push_back(axis::circular<>{4, 0.1, 1.0, "polar"});
-    axes.push_back(axis::variable<>{{-1, 0, 1}, "variable", axis::uoflow::off});
-    axes.push_back(axis::category<>{{A, B, C}, "category"});
-    axes.push_back(axis::category<std::string>{{a, b}, "category2"});
-    axes.push_back(axis::integer<>{-1, 1, "integer", axis::uoflow::off});
+    axes.push_back(axis::regular<double, axis::transform::log>(
+        2, 1, 10, "regular2", axis::uoflow::off));
+    axes.push_back(axis::regular<double, axis::transform::pow>(
+        2, 1, 10, "regular3", axis::uoflow::on, 0.5));
+    axes.push_back(axis::regular<double, axis::transform::pow>(
+        2, 1, 10, "regular4", axis::uoflow::off, -0.5));
+    axes.push_back(axis::circular<>(4, 0.1, 1.0, "polar"));
+    axes.push_back(axis::variable<>({-1, 0, 1}, "variable", axis::uoflow::off));
+    axes.push_back(axis::category<>({A, B, C}, "category"));
+    axes.push_back(axis::category<std::string>({a, b}, "category2"));
+    axes.push_back(axis::integer<>(-1, 1, "integer", axis::uoflow::off));
     std::ostringstream os;
     for (const auto &a : axes) {
       os << a << "\n";
