@@ -12,10 +12,14 @@
 using namespace boost::histogram;
 using wcount = weight_counter<double>;
 
+namespace boost {
+namespace histogram {
 template <typename T>
 std::ostream &operator<<(std::ostream &os, const weight_counter<T> &w) {
   os << "[" << w.value() << ", " << w.variance() << "]";
   return os;
+}
+}
 }
 
 int main() {

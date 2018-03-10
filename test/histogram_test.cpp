@@ -862,9 +862,9 @@ int main() {
     v = {1, 3};
     h.fill(v.begin(), v.end());
 
-    i = {0, 0};
+    i = {{0, 0}};
     BOOST_TEST_EQ(h.bin(i.begin(), i.end()).value(), 1);
-    i = {1, 1};
+    i = {{1, 1}};
     BOOST_TEST_EQ(h.bin(i.begin(), i.end()).variance(), 1);
 
     v = {0, 2};
@@ -872,9 +872,9 @@ int main() {
     v = {1, 3};
     h.fill(v.begin(), v.end(), weight(2));
 
-    i = {0, 0};
+    i = {{0, 0}};
     BOOST_TEST_EQ(h.bin(i.begin(), i.end()).value(), 3);
-    i = {1, 1};
+    i = {{1, 1}};
     BOOST_TEST_EQ(h.bin(i.begin(), i.end()).variance(), 5);
   }
 

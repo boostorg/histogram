@@ -17,8 +17,8 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/variant.hpp>
 #include <limits>
-#include <string>
 #include <sstream>
+#include <string>
 
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
 #define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
