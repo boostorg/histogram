@@ -330,7 +330,7 @@ private:
   inline void lin(std::size_t &idx, std::size_t &stride, const First &x,
                   const Rest &... rest) const noexcept {
     apply_visitor(lin_visitor{idx, stride, static_cast<int>(x)}, axes_[D]);
-    return lin<D + 1>(idx, stride, rest...);
+    lin<D + 1>(idx, stride, rest...);
   }
 
   template <typename Value> struct xlin_visitor : public static_visitor<void> {
@@ -368,7 +368,7 @@ private:
   template <unsigned D, typename Weight>
   inline void wxlin(std::size_t &, std::size_t &, Weight &) const {}
 
-  // enable_if needed so that gcc 
+  // enable_if needed, because gcc thinks the overloads are ambiguous
   template <unsigned D, typename Weight, typename First, typename... Rest>
   inline typename std::enable_if<!(detail::is_weight<First>::value)>::type
   wxlin(std::size_t &idx, std::size_t &stride, Weight &w,
