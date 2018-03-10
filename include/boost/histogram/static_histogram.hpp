@@ -72,7 +72,7 @@ public:
 
   template <typename S>
   explicit histogram(const histogram<static_tag, Axes, S> &rhs)
-      : storage_(rhs.storage_), axes_(rhs.axes_) {}
+      : axes_(rhs.axes_), storage_(rhs.storage_) {}
 
   template <typename S>
   histogram &operator=(const histogram<static_tag, Axes, S> &rhs) {
@@ -260,8 +260,7 @@ private:
   template <typename... Args>
   inline void fill_impl(mpl::false_, mpl::false_, const Args &... args) {
     std::size_t idx = 0, stride = 1;
-    int dummy;
-    xlin<0>(idx, stride, dummy, args...);
+    xlin<0>(idx, stride, args...);
     if (stride) {
       storage_.increase(idx);
     }
@@ -273,7 +272,7 @@ private:
     typename mpl::deref<
         typename mpl::find_if<mpl::vector<Args...>, detail::is_weight<mpl::_>>::type
       >::type w;
-    xlin<0>(idx, stride, w, args...);
+    wxlin<0>(idx, stride, w, args...);
     if (stride)
       storage_.add(idx, w);
   }
@@ -298,21 +297,33 @@ private:
     return lin<D + 1>(idx, stride, rest...);
   }
 
-  template <unsigned D, typename Weight>
-  inline void xlin(std::size_t &, std::size_t &, Weight &) const {}
+  template <unsigned D>
+  inline void xlin(std::size_t &, std::size_t &) const {}
 
-  template <unsigned D, typename Weight, typename First, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, Weight &w,
+  template <unsigned D, typename First, typename... Rest>
+  inline void xlin(std::size_t &idx, std::size_t &stride,
                    const First &first, const Rest &... rest) const {
     detail::xlin(idx, stride, fusion::at_c<D>(axes_), first);
-    return xlin<D + 1>(idx, stride, w, rest...);
+    xlin<D + 1>(idx, stride, rest...);
   }
 
-  template <unsigned D, typename T, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, detail::weight_t<T> &w,
+  template <unsigned D, typename Weight>
+  inline void wxlin(std::size_t &, std::size_t &, Weight &) const {}
+
+  // enable_if needed, because gcc thinks the overloads are ambiguous
+  template <unsigned D, typename Weight, typename First, typename... Rest>
+  inline typename std::enable_if<!(detail::is_weight<First>::value)>::type
+  wxlin(std::size_t &idx, std::size_t &stride, Weight &w,
+                   const First &first, const Rest &... rest) const {
+    detail::xlin(idx, stride, fusion::at_c<D>(axes_), first);
+    wxlin<D + 1>(idx, stride, w, rest...);
+  }
+
+  template <unsigned D, typename Weight, typename T, typename... Rest>
+  inline void wxlin(std::size_t &idx, std::size_t &stride, Weight &w,
                    const detail::weight_t<T> &first, const Rest &... rest) const {
     w = first;
-    return xlin<D>(idx, stride, w, rest...);
+    wxlin<D>(idx, stride, w, rest...);
   }
 
   struct shape_assign_visitor {
