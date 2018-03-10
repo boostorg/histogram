@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <boost/bimap.hpp>
 #include <boost/histogram/axis/iterator.hpp>
-#include <boost/histogram/interval.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/interval.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/utility/string_view.hpp>
 #include <cmath>
@@ -37,8 +37,7 @@ namespace axis {
 enum class uoflow { off = false, on = true };
 
 /// Base class for all axes, uses CRTP.
-template <typename Derived>
-class axis_base {
+template <typename Derived> class axis_base {
 public:
   using const_iterator = iterator_over<Derived>;
   using const_reverse_iterator = reverse_iterator_over<Derived>;
@@ -54,10 +53,18 @@ public:
   /// Change the label of an axis.
   void label(string_view label) { label_.assign(label.begin(), label.end()); }
 
-  const_iterator begin() const noexcept { return const_iterator(*static_cast<const Derived*>(this), 0); }
-  const_iterator end() const noexcept { return const_iterator(*static_cast<const Derived*>(this), size()); }
-  const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(*static_cast<const Derived*>(this), size()); }
-  const_reverse_iterator rend() const noexcept { return const_reverse_iterator(*static_cast<const Derived*>(this), 0); }
+  const_iterator begin() const noexcept {
+    return const_iterator(*static_cast<const Derived *>(this), 0);
+  }
+  const_iterator end() const noexcept {
+    return const_iterator(*static_cast<const Derived *>(this), size());
+  }
+  const_reverse_iterator rbegin() const noexcept {
+    return const_reverse_iterator(*static_cast<const Derived *>(this), size());
+  }
+  const_reverse_iterator rend() const noexcept {
+    return const_reverse_iterator(*static_cast<const Derived *>(this), 0);
+  }
 
 protected:
   axis_base(unsigned n, string_view label)
@@ -96,9 +103,9 @@ private:
 };
 
 /// Base class for axes with overflow/underflow bins, uses CRTP.
-template <typename Derived>
-class axis_base_uoflow : public axis_base<Derived> {
+template <typename Derived> class axis_base_uoflow : public axis_base<Derived> {
   using base_type = axis_base<Derived>;
+
 public:
   /// Returns the number of bins, including overflow/underflow.
   inline int shape() const noexcept { return shape_; }
@@ -189,8 +196,10 @@ private:
  */
 // private inheritance from Transform wastes no space if it is stateless
 template <typename RealType, typename Transform>
-class regular : public axis_base_uoflow<regular<RealType, Transform>>, Transform {
+class regular : public axis_base_uoflow<regular<RealType, Transform>>,
+                Transform {
   using base_type = axis_base_uoflow<regular<RealType, Transform>>;
+
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -208,8 +217,7 @@ public:
           string_view label = {},
           enum uoflow uo = ::boost::histogram::axis::uoflow::on,
           Transform trans = Transform())
-      : base_type(n, label, uo), Transform(trans),
-        min_(trans.forward(lower)),
+      : base_type(n, label, uo), Transform(trans), min_(trans.forward(lower)),
         delta_((trans.forward(upper) - trans.forward(lower)) / n) {
     if (!(lower < upper)) {
       throw std::logic_error("lower < upper required");
@@ -228,7 +236,9 @@ public:
   inline int index(value_type x) const noexcept {
     // Optimized code
     const value_type z = (this->forward(x) - min_) / delta_;
-    return z >= 0.0 ? (z > base_type::size() ? base_type::size() : static_cast<int>(z)) : -1;
+    return z >= 0.0 ? (z > base_type::size() ? base_type::size()
+                                             : static_cast<int>(z))
+                    : -1;
   }
 
   /// Returns the starting edge of the bin.
@@ -267,8 +277,10 @@ private:
  * perimeter value. Therefore, there are no overflow/underflow
  * bins for this axis. Binning is a O(1) operation.
  */
-template <typename RealType> class circular : public axis_base<circular<RealType>> {
+template <typename RealType>
+class circular : public axis_base<circular<RealType>> {
   using base_type = axis_base<circular<RealType>>;
+
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -294,7 +306,8 @@ public:
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
     const value_type z = (x - phase_) / perimeter_;
-    const int i = static_cast<int>(std::floor(z * base_type::size())) % base_type::size();
+    const int i =
+        static_cast<int>(std::floor(z * base_type::size())) % base_type::size();
     return i + (i < 0) * base_type::size();
   }
 
@@ -327,8 +340,10 @@ private:
  * Binning is a O(log(N)) operation. If speed matters and the problem
  * domain allows it, prefer a regular axis, possibly with a transform.
  */
-template <typename RealType> class variable : public axis_base_uoflow<variable<RealType>> {
+template <typename RealType>
+class variable : public axis_base_uoflow<variable<RealType>> {
   using base_type = axis_base_uoflow<variable<RealType>>;
+
 public:
   using value_type = RealType;
   using bin_type = interval<value_type>;
@@ -341,8 +356,7 @@ public:
    */
   variable(std::initializer_list<value_type> x, string_view label = {},
            enum uoflow uo = ::boost::histogram::axis::uoflow::on)
-      : base_type(x.size() - 1, label, uo),
-        x_(new value_type[x.size()]) {
+      : base_type(x.size() - 1, label, uo), x_(new value_type[x.size()]) {
     if (x.size() < 2) {
       throw std::logic_error("at least two values required");
     }
@@ -377,7 +391,8 @@ public:
 
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
-    return std::upper_bound(x_.get(), x_.get() + base_type::size() + 1, x) - x_.get() - 1;
+    return std::upper_bound(x_.get(), x_.get() + base_type::size() + 1, x) -
+           x_.get() - 1;
   }
 
   /// Returns the starting edge of the bin.
@@ -413,8 +428,10 @@ private:
  * Binning is a O(1) operation. This axis operates
  * faster than a regular.
  */
-template <typename IntType> class integer : public axis_base_uoflow<integer<IntType>> {
+template <typename IntType>
+class integer : public axis_base_uoflow<integer<IntType>> {
   using base_type = axis_base_uoflow<integer<IntType>>;
+
 public:
   using value_type = IntType;
   using bin_type = interval<value_type>;
@@ -481,6 +498,7 @@ private:
 template <typename T> class category : public axis_base<category<T>> {
   using map_type = bimap<T, int>;
   using base_type = axis_base<category<T>>;
+
 public:
   using value_type = T;
   using bin_type = T;
@@ -511,7 +529,8 @@ public:
       throw std::logic_error("sequence is empty");
   }
 
-  template <typename Iterator, typename = ::boost::histogram::detail::is_iterator<Iterator>>
+  template <typename Iterator,
+            typename = ::boost::histogram::detail::is_iterator<Iterator>>
   category(Iterator begin, Iterator end, string_view label = {})
       : base_type(std::distance(begin, end), label), map_(new map_type()) {
     int index = 0;

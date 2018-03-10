@@ -28,9 +28,9 @@
 #include <boost/histogram/storage/operators.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/count_if.hpp>
-#include <boost/mpl/find_if.hpp>
 #include <boost/mpl/deref.hpp>
 #include <boost/mpl/empty.hpp>
+#include <boost/mpl/find_if.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/vector.hpp>
 #include <type_traits>
@@ -193,7 +193,7 @@ public:
   template <int N>
   typename std::add_const<
       typename fusion::result_of::value_at_c<axes_type, N>::type>::type &
-  axis(mpl::int_<N>) const {
+      axis(mpl::int_<N>) const {
     static_assert(N < axes_size::value, "axis index out of range");
     return fusion::at_c<N>(axes_);
   }
@@ -201,7 +201,7 @@ public:
   /// Get N-th axis
   template <int N>
   typename fusion::result_of::value_at_c<axes_type, N>::type &
-  axis(mpl::int_<N>) {
+      axis(mpl::int_<N>) {
     static_assert(N < axes_size::value, "axis index out of range");
     return fusion::at_c<N>(axes_);
   }
@@ -226,12 +226,13 @@ public:
   /// Returns a lower-dimensional histogram
   template <int N, typename... Rest>
   auto reduce_to(mpl::int_<N>, Rest...) const -> histogram<
-      static_tag, detail::axes_select_t<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
+      static_tag,
+      detail::axes_select_t<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
       Storage> {
-    using HR =
-        histogram<static_tag,
-                  detail::axes_select_t<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
-                  Storage>;
+    using HR = histogram<
+        static_tag,
+        detail::axes_select_t<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
+        Storage>;
     typename HR::axes_type axes;
     detail::axes_assign_subset<mpl::vector<mpl::int_<N>, Rest...>>(axes, axes_);
     auto hr = HR(std::move(axes));
@@ -241,9 +242,7 @@ public:
     return hr;
   }
 
-  bin_iterator begin() const noexcept {
-    return bin_iterator(*this, storage_);
-  }
+  bin_iterator begin() const noexcept { return bin_iterator(*this, storage_); }
 
   bin_iterator end() const noexcept { return bin_iterator(storage_); }
 
@@ -269,9 +268,8 @@ private:
   template <typename... Args>
   inline void fill_impl(mpl::true_, mpl::false_, const Args &... args) {
     std::size_t idx = 0, stride = 1;
-    typename mpl::deref<
-        typename mpl::find_if<mpl::vector<Args...>, detail::is_weight<mpl::_>>::type
-      >::type w;
+    typename mpl::deref<typename mpl::find_if<
+        mpl::vector<Args...>, detail::is_weight<mpl::_>>::type>::type w;
     wxlin<0>(idx, stride, w, args...);
     if (stride)
       storage_.add(idx, w);
@@ -297,12 +295,11 @@ private:
     lin<D + 1>(idx, stride, rest...);
   }
 
-  template <unsigned D>
-  inline void xlin(std::size_t &, std::size_t &) const {}
+  template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const {}
 
   template <unsigned D, typename First, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride,
-                   const First &first, const Rest &... rest) const {
+  inline void xlin(std::size_t &idx, std::size_t &stride, const First &first,
+                   const Rest &... rest) const {
     detail::xlin(idx, stride, fusion::at_c<D>(axes_), first);
     xlin<D + 1>(idx, stride, rest...);
   }
@@ -313,15 +310,16 @@ private:
   // enable_if needed, because gcc thinks the overloads are ambiguous
   template <unsigned D, typename Weight, typename First, typename... Rest>
   inline typename std::enable_if<!(detail::is_weight<First>::value)>::type
-  wxlin(std::size_t &idx, std::size_t &stride, Weight &w,
-                   const First &first, const Rest &... rest) const {
+  wxlin(std::size_t &idx, std::size_t &stride, Weight &w, const First &first,
+        const Rest &... rest) const {
     detail::xlin(idx, stride, fusion::at_c<D>(axes_), first);
     wxlin<D + 1>(idx, stride, w, rest...);
   }
 
   template <unsigned D, typename Weight, typename T, typename... Rest>
   inline void wxlin(std::size_t &idx, std::size_t &stride, Weight &w,
-                   const detail::weight_t<T> &first, const Rest &... rest) const {
+                    const detail::weight_t<T> &first,
+                    const Rest &... rest) const {
     w = first;
     wxlin<D>(idx, stride, w, rest...);
   }
@@ -358,12 +356,13 @@ make_static_histogram(Axis &&... axis) {
 }
 
 template <typename... Axis>
-inline histogram<static_tag, mpl::vector<Axis...>, array_storage<weight_counter<double>>>
+inline histogram<static_tag, mpl::vector<Axis...>,
+                 array_storage<weight_counter<double>>>
 make_static_weighted_histogram(Axis &&... axis) {
-  using h = histogram<static_tag, mpl::vector<Axis...>, array_storage<weight_counter<double>>>;
+  using h = histogram<static_tag, mpl::vector<Axis...>,
+                      array_storage<weight_counter<double>>>;
   return h(typename h::axes_type(std::forward<Axis>(axis)...));
 }
-
 
 /// static type factory with variable storage type
 template <typename Storage, typename... Axis>

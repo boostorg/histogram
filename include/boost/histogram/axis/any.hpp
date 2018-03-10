@@ -154,8 +154,12 @@ public:
 
   const_iterator begin() const { return const_iterator(*this, 0); }
   const_iterator end() const { return const_iterator(*this, size()); }
-  const_reverse_iterator rbegin() const { return const_reverse_iterator(*this, size()); }
-  const_reverse_iterator rend() const { return const_reverse_iterator(*this, 0); }
+  const_reverse_iterator rbegin() const {
+    return const_reverse_iterator(*this, size());
+  }
+  const_reverse_iterator rend() const {
+    return const_reverse_iterator(*this, 0);
+  }
 
 private:
   friend class ::boost::serialization::access;

@@ -36,8 +36,8 @@ template <typename T, typename = decltype(std::declval<T &>().size(),
 struct requires_storage {};
 
 template <typename T> struct has_variance_support {
-  template <typename U, typename = decltype(std::declval<U&>().value(),
-                                            std::declval<U&>().variance())>
+  template <typename U, typename = decltype(std::declval<U &>().value(),
+                                            std::declval<U &>().variance())>
   struct SFINAE {};
   template <typename U> static std::true_type Test(SFINAE<U> *);
   template <typename U> static std::false_type Test(...);
@@ -55,11 +55,10 @@ template <typename T, typename = decltype(std::begin(std::declval<T &>()),
                                           std::end(std::declval<T &>()))>
 struct is_sequence {};
 
-template <typename MainVector, typename AuxVector> struct union_ :
-  mpl::copy_if<AuxVector,
-               mpl::not_<mpl::contains<MainVector, mpl::_1>>,
-               mpl::back_inserter<MainVector>>
-{};
+template <typename MainVector, typename AuxVector>
+struct union_
+    : mpl::copy_if<AuxVector, mpl::not_<mpl::contains<MainVector, mpl::_1>>,
+                   mpl::back_inserter<MainVector>> {};
 
 template <typename MainVector, typename AuxVector>
 using union_t = typename union_<MainVector, AuxVector>::type;

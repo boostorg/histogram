@@ -34,7 +34,7 @@ int main() {
 
     w += weight(2);
     BOOST_TEST_EQ(w.value(), 3);
-    BOOST_TEST_EQ(w.variance(), 5);    
+    BOOST_TEST_EQ(w.variance(), 5);
   }
 
   {
@@ -43,7 +43,7 @@ int main() {
     wcount u(0);
     u += weight(1);
     u *= 2;
-    BOOST_TEST_EQ(u, wcount(2, 4));    
+    BOOST_TEST_EQ(u, wcount(2, 4));
 
     wcount v(0);
     v += weight(2);

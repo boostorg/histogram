@@ -231,9 +231,7 @@ struct bin_visitor : public static_visitor<wcount> {
 
   wcount operator()(const array<void> & /*b*/) const { return wcount(0.0); }
 
-  wcount operator()(const array<wcount> &b) const {
-    return b[idx];
-  }
+  wcount operator()(const array<wcount> &b) const { return b[idx]; }
 };
 
 template <typename RHS> struct radd_visitor : public static_visitor<void> {
@@ -261,9 +259,7 @@ template <typename RHS> struct radd_visitor : public static_visitor<void> {
     lhs[idx] += static_cast<mp_int>(rhs);
   }
 
-  void operator()(array<wcount> &lhs) const {
-    lhs[idx] += rhs;
-  }
+  void operator()(array<wcount> &lhs) const { lhs[idx] += rhs; }
 };
 
 template <> struct radd_visitor<mp_int> : public static_visitor<void> {
@@ -287,9 +283,7 @@ template <> struct radd_visitor<mp_int> : public static_visitor<void> {
     }
   }
 
-  void operator()(array<mp_int> &lhs) const {
-    lhs[idx] += rhs;
-  }
+  void operator()(array<mp_int> &lhs) const { lhs[idx] += rhs; }
 
   void operator()(array<wcount> &lhs) const {
     lhs[idx] += static_cast<double>(rhs);
@@ -316,7 +310,8 @@ template <> struct radd_visitor<wcount> : public static_visitor<void> {
   void operator()(array<wcount> &lhs) const { lhs[idx] += rhs; }
 };
 
-template <> struct radd_visitor<weight_t<double>> : public static_visitor<void> {
+template <>
+struct radd_visitor<weight_t<double>> : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
   const weight_t<double> rhs;
@@ -408,8 +403,7 @@ public:
       : buffer_(detail::array<void>(rhs.size())) {
     using T = typename RHS::bin_type;
     for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
-      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]),
-                    buffer_);
+      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]), buffer_);
     }
   }
 
@@ -421,8 +415,7 @@ public:
     }
     using T = typename RHS::bin_type;
     for (std::size_t i = 0; i < n; ++i) {
-      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]),
-                    buffer_);
+      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]), buffer_);
     }
     return *this;
   }
@@ -435,9 +428,10 @@ public:
     apply_visitor(detail::increase_visitor(buffer_, i), buffer_);
   }
 
-  void add(std::size_t i, const bin_type& x) {
+  void add(std::size_t i, const bin_type &x) {
     if (x.has_trivial_variance()) {
-      apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()), buffer_);
+      apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()),
+                    buffer_);
     } else {
       apply_visitor(detail::radd_visitor<bin_type>(buffer_, i, x), buffer_);
     }
@@ -448,8 +442,9 @@ public:
   }
 
   template <typename T> void add(std::size_t i, const detail::weight_t<T> &w) {
-    apply_visitor(detail::radd_visitor<detail::weight_t<double>>(buffer_, i, w.value),
-                  buffer_);
+    apply_visitor(
+        detail::radd_visitor<detail::weight_t<double>>(buffer_, i, w.value),
+        buffer_);
   }
 
   bin_type operator[](std::size_t i) const {
@@ -475,13 +470,13 @@ public:
   // precondition: storages have same size
   template <typename RHS> adaptive_storage &operator+=(const RHS &rhs) {
     for (auto i = 0ul, n = size(); i < n; ++i)
-      apply_visitor(detail::radd_visitor<typename RHS::bin_type>(
-                        buffer_, i, rhs[i]),
-                    buffer_);
+      apply_visitor(
+          detail::radd_visitor<typename RHS::bin_type>(buffer_, i, rhs[i]),
+          buffer_);
     return *this;
   }
 
-  template <typename T> adaptive_storage &operator*=(const T& x) {
+  template <typename T> adaptive_storage &operator*=(const T &x) {
     apply_visitor(detail::rmul_visitor(buffer_, x), buffer_);
     return *this;
   }

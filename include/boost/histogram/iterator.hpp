@@ -67,9 +67,9 @@ protected:
 
 template <typename Storage>
 class bin_iterator_over
-    : public iterator_facade<
-          bin_iterator_over<Storage>, typename Storage::bin_type,
-          forward_traversal_tag, typename Storage::bin_type>,
+    : public iterator_facade<bin_iterator_over<Storage>,
+                             typename Storage::bin_type, forward_traversal_tag,
+                             typename Storage::bin_type>,
       public detail::multi_index {
 
 public:

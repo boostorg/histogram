@@ -26,15 +26,13 @@ template <typename T> class array_storage {
 public:
   using bin_type = T;
 
-  explicit array_storage(std::size_t s) :
-    size_(s), array_(new bin_type[s])
-  {
+  explicit array_storage(std::size_t s) : size_(s), array_(new bin_type[s]) {
     std::fill(array_.get(), array_.get() + s, bin_type(0));
   }
 
   array_storage() = default;
-  array_storage(const array_storage &other) :
-    size_(other.size()), array_(new bin_type[other.size()]) {
+  array_storage(const array_storage &other)
+      : size_(other.size()), array_(new bin_type[other.size()]) {
     std::copy(other.array_.get(), other.array_.get() + size_, array_.get());
   }
   array_storage &operator=(const array_storage &other) {
@@ -79,16 +77,13 @@ public:
     array_[i] += x;
   }
 
-  const bin_type& operator[](std::size_t i) const noexcept {
-    return array_[i];
-  }
+  const bin_type &operator[](std::size_t i) const noexcept { return array_[i]; }
 
   template <typename U>
   bool operator==(const array_storage<U> &rhs) const noexcept {
     if (size_ != rhs.size_)
       return false;
-    return std::equal(array_.get(), array_.get() + size_,
-                      rhs.array_.get());
+    return std::equal(array_.get(), array_.get() + size_, rhs.array_.get());
   }
 
   template <typename S> array_storage &operator+=(const S &rhs) noexcept {

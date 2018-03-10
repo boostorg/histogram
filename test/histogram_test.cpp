@@ -4,6 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <array>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
@@ -19,7 +20,6 @@
 #include <limits>
 #include <sstream>
 #include <vector>
-#include <array>
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
@@ -852,8 +852,8 @@ int main() {
 
   // using iterator ranges
   {
-    auto h = make_dynamic_histogram(axis::integer<>(0, 2),
-                                    axis::integer<>(2, 4));
+    auto h =
+        make_dynamic_histogram(axis::integer<>(0, 2), axis::integer<>(2, 4));
     auto v = std::vector<int>(2);
     auto i = std::array<int, 2>();
 

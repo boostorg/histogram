@@ -9,8 +9,8 @@
 
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/vector.hpp>
-#include <type_traits>
 #include <string>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -60,8 +60,8 @@ using static_histogram = histogram<static_tag, Axes, Storage>;
 
 namespace detail {
 template <typename T> struct weight_t {
-    T value;
-    operator const T&() const { return value; }
+  T value;
+  operator const T &() const { return value; }
 };
 template <typename T> struct is_weight : std::false_type {};
 template <typename T> struct is_weight<weight_t<T>> : std::true_type {};
