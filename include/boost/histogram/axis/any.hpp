@@ -97,6 +97,7 @@ public:
   using value_type = double;
   using bin_type = interval<double>;
   using const_iterator = iterator_over<any>;
+  using const_reverse_iterator = reverse_iterator_over<any>;
 
   any() = default;
   any(const any &t) = default;
@@ -152,8 +153,9 @@ public:
   }
 
   const_iterator begin() const { return const_iterator(*this, 0); }
-
   const_iterator end() const { return const_iterator(*this, size()); }
+  const_reverse_iterator rbegin() const { return const_reverse_iterator(*this, size()); }
+  const_reverse_iterator rend() const { return const_reverse_iterator(*this, 0); }
 
 private:
   friend class ::boost::serialization::access;

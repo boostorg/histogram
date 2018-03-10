@@ -330,7 +330,7 @@ private:
   template <unsigned D, typename First, typename... Rest>
   inline void lin(std::size_t &idx, std::size_t &stride, const First &x,
                   const Rest &... rest) const noexcept {
-    apply_visitor(lin_visitor{idx, stride, x}, axes_[D]);
+    apply_visitor(lin_visitor{idx, stride, static_cast<int>(x)}, axes_[D]);
     return lin<D + 1>(idx, stride, rest...);
   }
 

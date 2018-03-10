@@ -50,11 +50,11 @@ int main(int, char**) {
            actual count, the second returns a variance estimate of the count
            (see Rationale section for what this means)
     */
-    for (auto a : h.axis(0_c)) {
-        std::cout << "bin " << a.first << " x in ["
-                  << a.second.lower() << ", " << a.second.upper() << "): "
-                  << h.bin(a.first).value() << " +/- "
-                  << std::sqrt(h.bin(a.first).variance())
+    for (auto it = h.axis(0_c).begin(); it; ++it) {
+        std::cout << "bin " << it.idx() << " x in ["
+                  << it->lower() << ", " << it->upper() << "): "
+                  << h.bin(it).value() << " +/- "
+                  << std::sqrt(h.bin(it).variance())
                   << std::endl;
     }
 
@@ -131,11 +131,11 @@ int main() {
           this is here the case for the category axis
     */
     using cas = bh::axis::category<std::string>;
-    for (auto cbin : bh::axis::cast<cas>(h.axis(0))) {
-        std::printf("%s\n", cbin.second.c_str());
-        for (const auto& ybin : h.axis(2)) { // rows
-            for (const auto& xbin : h.axis(1)) { // columns
-                std::printf("%3.0f ", h.bin(cbin.first, xbin.first, ybin.first).value());
+    for (auto cit = bh::axis::cast<cas>(h.axis(0)).begin(); cit; ++cit) {
+        std::printf("%s\n", cit->c_str());
+        for (auto yit = h.axis(2).begin(); yit; ++yit) { // rows
+            for (auto xit = h.axis(1).begin(); xit; ++xit) { // columns
+                std::printf("%3.0f ", h.bin(cit, xit, yit).value());
             }
             std::printf("\n");
         }

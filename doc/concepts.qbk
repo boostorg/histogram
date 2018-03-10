@@ -14,7 +14,6 @@ An `axis_type` is required to:
 * be equal comparable
 * have a nested type `value_type` reflecting the type of the input values (may be a const reference if the input value is expensive to copy)
 * have a nested type `bin_type`, which is a type that represents the bin, typically a semi-open interval (may be a const reference if the bin type is expensive to copy)
-* have a nested type `const_iterator`, which iterates over bins, preferably based on the `axis_iterator` template
 * have the following methods:
   * `int index(value_type x) const`: takes an input value and returns the bin index
   * `bin_type operator[](int index) const`: takes an index and returns the corresponding bin instance
@@ -38,21 +37,19 @@ A `storage_type` is required to:
 * be default/copy/move constructable
 * be copy/move assignable
 * be equal comparable
-* have a nested type `value_type`, the external type used to represent the bin count (internally it may be a different type)
+* have a nested type `bin_type`, the external type used to represent the bin count (internally it may be a different type)
 * have a constructor `storage_type(std::size_t n)`, which prepares the storage of `n` bins.
 * have the following methods and operators:
   * `std::size_t size() const`
   * `void increase(std::size_t index)`
-  * `void add(std::size_t index, const value_type& n)`
-  * `value_type value(std::size_t index) const`
+  * `template <typename T> void add(std::size_t index, const T& x)`
+  * `bin_type operator[](std::size_t index) const`
   * `storage_type& operator+=(const storage_type& other)`
   * `storage_type& operator*=(const value_type x)`
-* optionally, it can have the following methods:
-  * `void weighted_increase(std::size_t index, const value_type& weight)`
-  * `value_type variance(std::size_t index) const`
-  * `void add(std::size_t index, const value_type& value, const value_type& variance)`
+* optionally, it can have the following method to support weighted increments:
+  * `template <typename T> void add(std::size_t index, const boost::histogram::detail::weight_t<T>& w)`
 
-[classref boost::histogram::array_storage] is a simple storage type which does not support weighted fills nor does it keep track of variances. It may serve as a template to create a new storage type.
+[classref boost::histogram::array_storage] is a simple storage type which may serve as a template for creating a new storage type.
 
 [endsect]
 

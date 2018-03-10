@@ -117,15 +117,17 @@ void adaptive_storage::serialize(Archive &ar, unsigned /* version */) {
 
 namespace axis {
 
+template <typename Derived>
 template <class Archive>
-void axis_base::serialize(Archive &ar, unsigned /* version */) {
+void axis_base<Derived>::serialize(Archive &ar, unsigned /* version */) {
   ar &size_;
   ar &label_;
 }
 
+template <typename Derived>
 template <class Archive>
-void axis_base_uoflow::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base>(*this);
+void axis_base_uoflow<Derived>::serialize(Archive &ar, unsigned /* version */) {
+  ar &boost::serialization::base_object<axis_base<Derived>>(*this);
   ar &shape_;
 }
 
@@ -140,7 +142,7 @@ template <typename RealType, typename Transform>
 template <class Archive>
 void regular<RealType, Transform>::serialize(Archive &ar,
                                              unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base_uoflow>(*this);
+  ar &boost::serialization::base_object<base_type>(*this);
   ar &boost::serialization::base_object<Transform>(*this);
   ar &min_;
   ar &delta_;
@@ -149,7 +151,7 @@ void regular<RealType, Transform>::serialize(Archive &ar,
 template <typename RealType>
 template <class Archive>
 void circular<RealType>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base>(*this);
+  ar &boost::serialization::base_object<base_type>(*this);
   ar &phase_;
   ar &perimeter_;
 }
@@ -157,24 +159,24 @@ void circular<RealType>::serialize(Archive &ar, unsigned /* version */) {
 template <typename RealType>
 template <class Archive>
 void variable<RealType>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base_uoflow>(*this);
+  ar &boost::serialization::base_object<base_type>(*this);
   if (Archive::is_loading::value) {
-    x_.reset(new RealType[size() + 1]);
+    x_.reset(new RealType[base_type::size() + 1]);
   }
-  ar &boost::serialization::make_array(x_.get(), size() + 1);
+  ar &boost::serialization::make_array(x_.get(), base_type::size() + 1);
 }
 
 template <typename IntType>
 template <class Archive>
 void integer<IntType>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base_uoflow>(*this);
+  ar &boost::serialization::base_object<base_type>(*this);
   ar &min_;
 }
 
 template <typename T>
 template <class Archive>
 void category<T>::serialize(Archive &ar, unsigned /* version */) {
-  ar &boost::serialization::base_object<axis_base>(*this);
+  ar &boost::serialization::base_object<base_type>(*this);
   ar &map_;
 }
 

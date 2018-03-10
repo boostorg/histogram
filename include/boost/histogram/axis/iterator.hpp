@@ -8,7 +8,6 @@
 #define _BOOST_HISTOGRAM_AXIS_ITERATOR_HPP_
 
 #include <boost/iterator/iterator_facade.hpp>
-#include <utility>
 
 namespace boost {
 namespace histogram {
@@ -17,16 +16,20 @@ namespace axis {
 template <typename Axis>
 class iterator_over
     : public iterator_facade<iterator_over<Axis>,
-                             std::pair<int, typename Axis::bin_type>,
+                             typename Axis::bin_type,
                              random_access_traversal_tag,
-                             std::pair<int, typename Axis::bin_type>> {
+                             typename Axis::bin_type> {
 public:
   explicit iterator_over(const Axis &axis, int idx) : axis_(axis), idx_(idx) {}
 
   iterator_over(const iterator_over &) = default;
   iterator_over &operator=(const iterator_over &) = default;
 
-private:
+  operator bool() const noexcept { return idx_ < axis_.size(); }
+  explicit operator int() const noexcept { return idx_; }
+  int idx() const noexcept { return idx_; }
+
+protected:
   void increment() noexcept { ++idx_; }
   void decrement() noexcept { --idx_; }
   void advance(int n) noexcept { idx_ += n; }
@@ -34,14 +37,50 @@ private:
     return other.idx_ - idx_;
   }
   bool equal(const iterator_over &other) const noexcept {
-    return idx_ == other.idx_;
+    return &axis_ == &other.axis_ && idx_ == other.idx_;
   }
-  std::pair<int, typename Axis::bin_type> dereference() const {
-    return std::make_pair(idx_, axis_[idx_]);
+  typename Axis::bin_type dereference() const {
+    return axis_[idx_];
   }
-  const Axis &axis_;
-  int idx_;
   friend class ::boost::iterator_core_access;
+
+  const Axis& axis_;
+  int idx_;
+};
+
+template <typename Axis>
+class reverse_iterator_over
+    : public iterator_facade<reverse_iterator_over<Axis>,
+                             typename Axis::bin_type,
+                             random_access_traversal_tag,
+                             typename Axis::bin_type> {
+public:
+  explicit reverse_iterator_over(const Axis &axis, int idx) : axis_(axis), idx_(idx) {}
+
+  reverse_iterator_over(const reverse_iterator_over &) = default;
+  reverse_iterator_over &operator=(const reverse_iterator_over &) = default;
+
+  operator bool() const noexcept { return idx_ > 0; }
+  explicit operator int() const noexcept { return idx_; }
+  int idx() const noexcept { return idx_-1; }
+
+protected:
+  void increment() noexcept { --idx_; }
+  void decrement() noexcept { ++idx_; }
+  void advance(int n) noexcept { idx_ -= n; }
+  int distance_to(const reverse_iterator_over &other) const noexcept {
+    return other.idx_ - idx_;
+  }
+  bool equal(const reverse_iterator_over &other) const noexcept {
+    return &axis_ == &other.axis_ && idx_ == other.idx_;
+  }
+  typename Axis::bin_type dereference() const {
+    return axis_[idx_-1];
+  }
+  friend class ::boost::iterator_core_access;
+
+  const Axis& axis_;
+  int idx_;
 };
 
 } // namespace axis

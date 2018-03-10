@@ -35,12 +35,20 @@ std::ostream &operator<<(std::ostream &os, const interval<T> &i) {
 
 template <typename Axis>
 void test_axis_iterator(const Axis &a, int begin, int end) {
-  for (const auto &bin : a) {
-    BOOST_TEST_EQ(bin.first, begin);
-    BOOST_TEST_EQ(bin.second, a[begin]);
+  auto it = a.begin();
+  for (; it; ++it) {
+    BOOST_TEST_EQ(it.idx(), begin);
+    BOOST_TEST_EQ(*it, a[begin]);
     ++begin;
   }
   BOOST_TEST_EQ(begin, end);
+  BOOST_TEST_EQ(it, a.end());
+  auto rit = a.rbegin();
+  for (; rit; ++rit) {
+    BOOST_TEST_EQ(rit.idx(), --begin);
+    BOOST_TEST_EQ(*rit, a[begin]);
+  }
+  BOOST_TEST_EQ(rit, a.rend());
 }
 
 int main() {

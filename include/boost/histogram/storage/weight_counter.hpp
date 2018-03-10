@@ -63,25 +63,27 @@ public:
     return *this;
   }
 
-  bool operator==(const weight_counter &rhs) const {
+  bool operator==(const weight_counter &rhs) const noexcept {
     return w == rhs.w && w2 == rhs.w2;
   }
 
-  bool operator!=(const weight_counter &rhs) const { return !operator==(rhs); }
-
-  template <typename T> bool operator==(const weight_counter<T> &rhs) const {
-    return w == rhs.w && w2 == rhs.w2;
-  }
-
-  template <typename T> bool operator!=(const weight_counter<T> &rhs) const {
+  bool operator!=(const weight_counter &rhs) const noexcept {
     return !operator==(rhs);
   }
 
-  template <typename T> bool operator==(const T &rhs) const {
+  template <typename T> bool operator==(const weight_counter<T> &rhs) const noexcept {
+    return w == rhs.w && w2 == rhs.w2;
+  }
+
+  template <typename T> bool operator!=(const weight_counter<T> &rhs) const noexcept {
+    return !operator==(rhs);
+  }
+
+  template <typename T> bool operator==(const T &rhs) const noexcept {
     return w == w2 && w == static_cast<RealType>(rhs);
   }
 
-  template <typename T> bool operator!=(const T &rhs) const {
+  template <typename T> bool operator!=(const T &rhs) const noexcept {
     return !operator==(rhs);
   }
 

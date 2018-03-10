@@ -26,11 +26,15 @@ template <typename T> class array_storage {
 public:
   using bin_type = T;
 
-  explicit array_storage(std::size_t s) { init(s); }
+  explicit array_storage(std::size_t s) :
+    size_(s), array_(new bin_type[s])
+  {
+    std::fill(array_.get(), array_.get() + s, bin_type(0));
+  }
 
   array_storage() = default;
-  array_storage(const array_storage &other) {
-    reset(other.size());
+  array_storage(const array_storage &other) :
+    size_(other.size()), array_(new bin_type[other.size()]) {
     std::copy(other.array_.get(), other.array_.get() + size_, array_.get());
   }
   array_storage &operator=(const array_storage &other) {
@@ -52,13 +56,15 @@ public:
     return *this;
   }
 
-  template <typename S> explicit array_storage(const S &other) {
+  template <typename S, typename = detail::requires_storage<S>>
+  explicit array_storage(const S &other) {
     reset(other.size());
     for (std::size_t i = 0; i < size_; ++i)
       array_[i] = static_cast<bin_type>(other[i]);
   }
 
-  template <typename S> array_storage &operator=(const S &other) {
+  template <typename S, typename = detail::requires_storage<S>>
+  array_storage &operator=(const S &other) {
     reset(other.size());
     for (std::size_t i = 0; i < size_; ++i)
       array_[i] = static_cast<bin_type>(other[i]);
@@ -87,7 +93,7 @@ public:
 
   template <typename S> array_storage &operator+=(const S &rhs) noexcept {
     for (std::size_t i = 0; i < size_; ++i)
-      array_[i] += static_cast<bin_type>(rhs[i]);
+      add(i, rhs[i]);
     return *this;
   }
 
@@ -104,10 +110,6 @@ private:
   void reset(std::size_t size) {
     size_ = size;
     array_.reset(new bin_type[size]);
-  }
-  void init(std::size_t size) {
-    reset(size);
-    std::fill(array_.get(), array_.get() + size, bin_type(0));
   }
 
   template <typename U> friend class array_storage;

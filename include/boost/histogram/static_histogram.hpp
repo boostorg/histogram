@@ -294,7 +294,7 @@ private:
   template <unsigned D, typename First, typename... Rest>
   inline void lin(std::size_t &idx, std::size_t &stride, const First &x,
                   const Rest &... rest) const noexcept {
-    detail::lin(idx, stride, fusion::at_c<D>(axes_), x);
+    detail::lin(idx, stride, fusion::at_c<D>(axes_), static_cast<int>(x));
     return lin<D + 1>(idx, stride, rest...);
   }
 

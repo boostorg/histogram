@@ -9,6 +9,7 @@
 
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/vector.hpp>
+#include <type_traits>
 #include <string>
 
 namespace boost {
@@ -58,13 +59,16 @@ template <class Axes, class Storage = adaptive_storage>
 using static_histogram = histogram<static_tag, Axes, Storage>;
 
 namespace detail {
-template <typename T> struct weight_t { T value; };
-template <typename T> struct is_weight : mpl::false_ {};
-template <typename T> struct is_weight<weight_t<T>> : mpl::true_ {};
+template <typename T> struct weight_t {
+    T value;
+    operator const T&() const { return value; }
+};
+template <typename T> struct is_weight : std::false_type {};
+template <typename T> struct is_weight<weight_t<T>> : std::true_type {};
 
 template <typename T> struct sample_t { T value; };
-template <typename T> struct is_sample : mpl::false_ {};
-template <typename T> struct is_sample<sample_t<T>> : mpl::true_ {};
+template <typename T> struct is_sample : std::false_type {};
+template <typename T> struct is_sample<sample_t<T>> : std::true_type {};
 } // namespace detail
 
 template <typename T> detail::weight_t<T> weight(T &&t) { return {t}; }
