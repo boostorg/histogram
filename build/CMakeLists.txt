@@ -17,7 +17,7 @@ option(BUILD_CHECKS "Build auxillary checks" OFF)
 option(TRACE_ALLOCS "Debug: Trace allocations" OFF)
 mark_as_advanced(TRACE_ALLOCS)
 
-if(${CMAKE_BUILD_TYPE})
+if(CMAKE_BUILD_TYPE)
   STRING(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 endif()
 
