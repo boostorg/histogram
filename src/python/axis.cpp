@@ -55,22 +55,11 @@ generic_iterator make_generic_iterator(bp::object self) {
 }
 
 template <typename T>
-struct axis_interval_to_python
+struct axis_interval_view_to_python
 {
-  static PyObject* convert(const bha::interval<T> &i)
+  static PyObject* convert(const bha::interval_view<T> &i)
   {
     return bp::incref(bp::make_tuple(i.lower(), i.upper()).ptr());
-  }
-};
-
-template <typename T>
-struct pair_int_axis_interval_to_python
-{
-  static PyObject* convert(const std::pair<int, bha::interval<T>> &p)
-  {
-    return bp::incref(bp::make_tuple(
-      p.first, bp::make_tuple(p.second.lower(), p.second.upper())
-    ).ptr());
   }
 };
 
@@ -263,23 +252,13 @@ void register_axis_types() {
   docstring_options dopt(true, true, false);
 
   to_python_converter<
-    bha::interval<int>,
-    axis_interval_to_python<int>
+    bha::interval_view<int>,
+    axis_interval_view_to_python<int>
   >();
 
   to_python_converter<
-    bha::interval<double>,
-    axis_interval_to_python<double>
-  >();
-
-  to_python_converter<
-    std::pair<int, bha::interval<int>>,
-    pair_int_axis_interval_to_python<int>
-  >();
-
-  to_python_converter<
-    std::pair<int, bha::interval<double>>,
-    pair_int_axis_interval_to_python<double>
+    bha::interval_view<double>,
+    axis_interval_view_to_python<double>
   >();
 
   class_<generic_iterator>("generic_iterator", init<object>())

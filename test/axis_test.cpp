@@ -23,18 +23,6 @@
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
 #define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
-namespace boost {
-namespace histogram {
-namespace axis {
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const interval<T> &i) {
-  os << "[" << i.lower() << ", " << i.upper() << ")";
-  return os;
-}
-} // namespace axis
-} // namespace histogram
-} // namespace boost
-
 template <typename Axis>
 void test_axis_iterator(const Axis &a, int begin, int end) {
   auto it = a.begin();
@@ -239,6 +227,7 @@ int main() {
     test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4);
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
     test_axis_iterator(any_axis_type(axis::regular<>(5, 0, 1)), 0, 5);
+    BOOST_TEST_THROWS(any_axis_type(axis::category<>({A, B, C}))[0], std::runtime_error);
   }
 
   // any_axis_type_copyable

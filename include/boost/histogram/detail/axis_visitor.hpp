@@ -13,7 +13,7 @@
 #include <boost/fusion/include/is_sequence.hpp>
 #include <boost/fusion/include/size.hpp>
 #include <boost/fusion/support/is_sequence.hpp>
-#include <boost/histogram/interval.hpp>
+#include <boost/histogram/axis/interval.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/variant/get.hpp>

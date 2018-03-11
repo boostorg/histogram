@@ -7,10 +7,10 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 #define _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 
+#include <boost/histogram/axis/interval.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/cat.hpp>
-#include <boost/histogram/interval.hpp>
 #include <boost/mpl/contains.hpp>
 #include <boost/utility/string_view.hpp>
 #include <boost/variant.hpp>
@@ -54,36 +54,47 @@ struct set_label : public static_visitor<void> {
   template <typename A> void operator()(A &a) const { a.label(label); }
 };
 
-template <typename T> struct index : public static_visitor<int> {
-  const T &t;
-  explicit index(const T &arg) : t(arg) {}
+struct index : public static_visitor<int> {
+  const double x;
+  explicit index(const double arg) : x(arg) {}
   template <typename Axis> int operator()(const Axis &a) const {
-    return impl(std::is_convertible<T, typename Axis::value_type>(), a);
+    return impl(std::is_convertible<double, typename Axis::value_type>(), a);
   }
   template <typename Axis> int impl(std::true_type, const Axis &a) const {
-    return a.index(t);
+    return a.index(x);
   }
   template <typename Axis> int impl(std::false_type, const Axis &) const {
     throw std::runtime_error(::boost::histogram::detail::cat(
-        "fill argument not convertible to axis value type: ",
-        boost::typeindex::type_id<Axis>().pretty_name(), ", ",
-        boost::typeindex::type_id<T>().pretty_name()));
+        "cannot convert value_type ",
+        boost::typeindex::type_id<typename Axis::value_type>().pretty_name(),
+        " of ",
+        boost::typeindex::type_id<Axis>().pretty_name(),
+        " to double")
+      );
   }
 };
 
-struct bin : public static_visitor<axis::interval<double>> {
-  using double_interval = axis::interval<double>;
-  const int i;
-  bin(const int v) : i(v) {}
-  template <typename A> double_interval operator()(const A &a) const {
-    return impl(is_convertible<typename A::bin_type, double_interval>(),
-                std::forward<typename A::bin_type>(a[i]));
+struct eval : public static_visitor<std::function<double(int)>> {
+  template <typename Axis> std::function<double(int)> operator()(const Axis &a) const {
+    return impl(std::integral_constant<bool,
+        (std::is_convertible<typename Axis::value_type, double>::value &&
+         std::is_same<
+           typename Axis::bin_type,
+           interval_view<typename Axis::value_type>
+         >::value)
+        >(), a);
   }
-  template <typename B> double_interval impl(true_type, B &&b) const {
-    return b;
+  template <typename Axis> std::function<double(int)> impl(std::true_type, const Axis &a) const {
+    return [&a](int i) -> double { return a[i].lower(); } ;
   }
-  template <typename B> double_interval impl(false_type, B &&) const {
-    throw std::runtime_error("cannot convert bin_type to interval<double>");
+  template <typename Axis> std::function<double(int)> impl(std::false_type, const Axis &) const {
+    throw std::runtime_error(::boost::histogram::detail::cat(
+        "cannot convert bin_type ",
+        boost::typeindex::type_id<typename Axis::bin_type>().pretty_name(),
+        " of ",
+        boost::typeindex::type_id<Axis>().pretty_name(),
+        " to interval_view<double>")
+      );
   }
 };
 } // namespace detail
@@ -95,7 +106,7 @@ template <typename Axes> class any : public make_variant_over<Axes>::type {
 public:
   using types = typename base_type::types;
   using value_type = double;
-  using bin_type = interval<double>;
+  using bin_type = interval_view<double>;
   using const_iterator = iterator_over<any>;
   using const_reverse_iterator = reverse_iterator_over<any>;
 
@@ -112,15 +123,15 @@ public:
   template <typename T, typename = typename std::enable_if<
                             mpl::contains<types, T>::value>::type>
   any &operator=(const T &t) {
-    // ugly workaround for compiler bug
-    return reinterpret_cast<any &>(base_type::operator=(t));
+    base_type::operator=(t);
+    return *this;
   }
 
   template <typename T, typename = typename std::enable_if<
                             mpl::contains<types, T>::value>::type>
   any &operator=(T &&t) {
-    // ugly workaround for compiler bug
-    return reinterpret_cast<any &>(base_type::operator=(std::move(t)));
+    base_type::operator=(std::move(t));
+    return *this;
   }
 
   int size() const { return apply_visitor(detail::size(), *this); }
@@ -131,7 +142,7 @@ public:
 
   // note: this only works for axes with compatible value type
   int index(const value_type x) const {
-    return apply_visitor(detail::index<value_type>(x), *this);
+    return apply_visitor(detail::index(x), *this);
   }
 
   string_view label() const {
@@ -143,9 +154,10 @@ public:
   }
 
   // this only works for axes with compatible bin type
-  // and will raise an error otherwise
+  // and will throw a runtime_error otherwise
   bin_type operator[](const int i) const {
-    return apply_visitor(detail::bin(i), *this);
+    auto eval = apply_visitor(detail::eval(), *this);
+    return bin_type(i, eval);
   }
 
   bool operator==(const any &rhs) const {

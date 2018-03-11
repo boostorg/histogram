@@ -9,9 +9,9 @@
 
 #include <algorithm>
 #include <boost/bimap.hpp>
+#include <boost/histogram/axis/interval.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/interval.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/utility/string_view.hpp>
 #include <cmath>
@@ -36,7 +36,7 @@ namespace axis {
 
 enum class uoflow { off = false, on = true };
 
-/// Base class for all axes, uses CRTP.
+/// Base class for all axes, uses CRTP to inject iterator logic.
 template <typename Derived> class axis_base {
 public:
   using const_iterator = iterator_over<Derived>;
@@ -102,7 +102,7 @@ private:
   template <class Archive> void serialize(Archive &, unsigned);
 };
 
-/// Base class for axes with overflow/underflow bins, uses CRTP.
+/// Base class for axes with optional under-/overflow bins, uses CRTP.
 template <typename Derived> class axis_base_uoflow : public axis_base<Derived> {
   using base_type = axis_base<Derived>;
 
@@ -114,7 +114,7 @@ public:
 
 protected:
   axis_base_uoflow(unsigned n, string_view label, enum uoflow uo)
-      : base_type(n, label), shape_(n + 2u * static_cast<unsigned>(uo)) {}
+      : base_type(n, label), shape_(n + 2 * static_cast<int>(uo)) {}
 
   axis_base_uoflow() = default;
   axis_base_uoflow(const axis_base_uoflow &) = default;
@@ -202,7 +202,7 @@ class regular : public axis_base_uoflow<regular<RealType, Transform>>,
 
 public:
   using value_type = RealType;
-  using bin_type = interval<value_type>;
+  using bin_type = interval_view<value_type>;
 
   /** Construct axis with n bins over real range [lower, upper).
    *
@@ -241,9 +241,9 @@ public:
                     : -1;
   }
 
-  /// Returns the starting edge of the bin.
+  /// Returns the bin interval.
   bin_type operator[](int idx) const noexcept {
-    auto eval = [this](int i) {
+    return bin_type(idx, [this](int i) {
       const auto n = base_type::size();
       if (i < 0)
         return this->inverse(-std::numeric_limits<value_type>::infinity());
@@ -251,8 +251,7 @@ public:
         return this->inverse(std::numeric_limits<value_type>::infinity());
       const auto z = value_type(i) / n;
       return this->inverse((1.0 - z) * min_ + z * (min_ + delta_ * n));
-    };
-    return {eval(idx), eval(idx + 1)};
+    });
   }
 
   bool operator==(const regular &o) const noexcept {
@@ -260,6 +259,7 @@ public:
            min_ == o.min_ && delta_ == o.delta_;
   }
 
+  /// Access properties of the transform.
   const Transform &transform() const noexcept {
     return static_cast<const Transform &>(*this);
   }
@@ -283,7 +283,7 @@ class circular : public axis_base<circular<RealType>> {
 
 public:
   using value_type = RealType;
-  using bin_type = interval<value_type>;
+  using bin_type = interval_view<value_type>;
 
   /** Constructor for n bins with an optional offset.
    *
@@ -313,11 +313,10 @@ public:
 
   /// Returns the starting edge of the bin.
   bin_type operator[](int idx) const {
-    auto eval = [this](int i) {
+    return bin_type(idx, [this](int i) {
       const value_type z = value_type(i) / base_type::size();
       return z * perimeter_ + phase_;
-    };
-    return {eval(idx), eval(idx + 1)};
+    });
   }
 
   bool operator==(const circular &o) const noexcept {
@@ -346,7 +345,7 @@ class variable : public axis_base_uoflow<variable<RealType>> {
 
 public:
   using value_type = RealType;
-  using bin_type = interval<value_type>;
+  using bin_type = interval_view<value_type>;
 
   /** Construct an axis from bin edges.
    *
@@ -397,7 +396,7 @@ public:
 
   /// Returns the starting edge of the bin.
   bin_type operator[](int idx) const {
-    auto eval = [this](int i) {
+    return bin_type(idx, [this](int i) {
       if (i < 0) {
         return -std::numeric_limits<value_type>::infinity();
       }
@@ -405,8 +404,7 @@ public:
         return std::numeric_limits<value_type>::infinity();
       }
       return x_[i];
-    };
-    return {eval(idx), eval(idx + 1)};
+    });
   }
 
   bool operator==(const variable &o) const noexcept {
@@ -434,7 +432,7 @@ class integer : public axis_base_uoflow<integer<IntType>> {
 
 public:
   using value_type = IntType;
-  using bin_type = interval<value_type>;
+  using bin_type = interval_view<value_type>;
 
   /** Construct axis over a semi-open integer interval [lower, upper).
    *
@@ -465,7 +463,7 @@ public:
 
   /// Returns the integer that is mapped to the bin index.
   bin_type operator[](int idx) const {
-    auto eval = [this](int i) {
+    return bin_type(idx, [this](int i) {
       if (i < 0) {
         return -std::numeric_limits<value_type>::max();
       }
@@ -473,8 +471,7 @@ public:
         return std::numeric_limits<value_type>::max();
       }
       return min_ + i;
-    };
-    return {eval(idx), eval(idx + 1)};
+    });
   }
 
   bool operator==(const integer &o) const noexcept {

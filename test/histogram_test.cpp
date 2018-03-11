@@ -882,8 +882,7 @@ int main() {
   {
     enum { A, B };
     auto c = make_dynamic_histogram(axis::category<>({A, B}));
-    BOOST_TEST_THROWS(c.axis()[0].lower(), std::runtime_error);
-    BOOST_TEST_THROWS(c.axis()[0].upper(), std::runtime_error);
+    BOOST_TEST_THROWS(c.axis()[0], std::runtime_error);
   }
 
   // reduce
