@@ -47,6 +47,17 @@ template <typename T> struct has_variance_support {
 template <typename T>
 using has_variance_support_t = typename has_variance_support<T>::type;
 
+template <typename T> struct has_method_lower {
+  template <typename U, typename = decltype(std::declval<U &>().lower(0))>
+  struct SFINAE {};
+  template <typename U> static std::true_type Test(SFINAE<U> *);
+  template <typename U> static std::false_type Test(...);
+  using type = decltype(Test<T>(nullptr));
+};
+
+template <typename T>
+using has_method_lower_t = typename has_method_lower<T>::type;
+
 template <typename T,
           typename = decltype(*std::declval<T &>(), ++std::declval<T &>())>
 struct is_iterator {};

@@ -137,7 +137,7 @@ inline std::ostream &operator<<(std::ostream &os,
                                 const category<std::string> &a) {
   os << "category(";
   for (int i = 0; i < a.size(); ++i) {
-    ::boost::histogram::detail::escape(os, a[i].value());
+    ::boost::histogram::detail::escape(os, a.value(i));
     os << (i == (a.size() - 1) ? "" : ", ");
   }
   if (!a.label().empty()) {

@@ -26,8 +26,8 @@ public:
 
   int idx() const noexcept { return idx_; }
 
-  typename Axis::value_type lower() const noexcept { return axis_.lower(idx_); }
-  typename Axis::value_type upper() const noexcept { return axis_.lower(idx_+1); }
+  auto lower() const noexcept -> decltype(std::declval<Axis&>().lower(0)) { return axis_.lower(idx_); }
+  auto upper() const noexcept -> decltype(std::declval<Axis&>().lower(0)) { return axis_.lower(idx_+1); }
   typename Axis::value_type width() const noexcept { return upper() - lower(); }
 
   bool operator==(const interval_view &rhs) const noexcept {
@@ -56,7 +56,7 @@ public:
 
   int idx() const noexcept { return idx_; }
 
-  typename Axis::value_type value() const {
+  auto value() const -> decltype(std::declval<Axis&>().value(0)) {
     return axis_.value(idx_);
   }
 

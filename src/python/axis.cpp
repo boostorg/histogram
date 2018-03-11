@@ -153,10 +153,7 @@ template <typename A> bp::object axis_getitem(const A &a, int i) {
     PyErr_SetString(PyExc_IndexError, "index out of bounds");
     bp::throw_error_already_set();
   }
-  return axis_getitem_impl(std::is_same<
-      typename A::bin_type, bha::interval_view<A>
-    >(), a, i);
-  return bp::object();
+  return axis_getitem_impl(bh::detail::has_method_lower_t<A>(), a, i);
 }
 
 template <typename T> void axis_set_label(T& t, bp::str s) {

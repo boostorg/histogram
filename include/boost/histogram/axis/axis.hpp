@@ -552,7 +552,7 @@ public:
   }
 
   /// Returns the value for the bin index (performs a range check).
-  inline value_type value(int idx) const {
+  inline const value_type& value(int idx) const {
     auto it = map_->right.find(idx);
     if (it == map_->right.end())
       throw std::out_of_range("category index out of range");
