@@ -10,7 +10,7 @@
 #define _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
 
 #include <boost/histogram/axis/axis.hpp>
-#include <boost/histogram/axis/interval.hpp>
+#include <boost/histogram/axis/bin_view.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <ostream>
@@ -29,6 +29,12 @@ inline string_view to_string(const transform::cos &) { return {"_cos", 4}; }
 template <typename T>
 inline std::ostream &operator<<(std::ostream &os, const interval_view<T> &i) {
   os << "[" << i.lower() << ", " << i.upper() << ")";
+  return os;
+}
+
+template <typename T>
+inline std::ostream &operator<<(std::ostream &os, const value_view<T> &i) {
+  os << i.value();
   return os;
 }
 
@@ -131,7 +137,7 @@ inline std::ostream &operator<<(std::ostream &os,
                                 const category<std::string> &a) {
   os << "category(";
   for (int i = 0; i < a.size(); ++i) {
-    ::boost::histogram::detail::escape(os, a[i]);
+    ::boost::histogram::detail::escape(os, a[i].value());
     os << (i == (a.size() - 1) ? "" : ", ");
   }
   if (!a.label().empty()) {

@@ -24,10 +24,6 @@ public:
   iterator_over(const iterator_over &) = default;
   iterator_over &operator=(const iterator_over &) = default;
 
-  operator bool() const noexcept { return idx_ < axis_.size(); }
-  explicit operator int() const noexcept { return idx_; }
-  int idx() const noexcept { return idx_; }
-
 protected:
   void increment() noexcept { ++idx_; }
   void decrement() noexcept { --idx_; }
@@ -56,10 +52,6 @@ public:
 
   reverse_iterator_over(const reverse_iterator_over &) = default;
   reverse_iterator_over &operator=(const reverse_iterator_over &) = default;
-
-  operator bool() const noexcept { return idx_ > 0; }
-  explicit operator int() const noexcept { return idx_; }
-  int idx() const noexcept { return idx_ - 1; }
 
 protected:
   void increment() noexcept { --idx_; }

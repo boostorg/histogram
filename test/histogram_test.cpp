@@ -209,7 +209,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(c.axis().label(), "foo");
     // need to cast here for this to work with Type == dynamic_tag
     auto ca = axis::cast<axis::category<>>(c.axis());
-    BOOST_TEST_EQ(ca[0], A);
+    BOOST_TEST_EQ(ca[0].value(), A);
   }
 
   // equal_compare
@@ -882,7 +882,7 @@ int main() {
   {
     enum { A, B };
     auto c = make_dynamic_histogram(axis::category<>({A, B}));
-    BOOST_TEST_THROWS(c.axis()[0], std::runtime_error);
+    BOOST_TEST_THROWS(c.axis().lower(0), std::runtime_error);
   }
 
   // reduce

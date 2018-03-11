@@ -7,7 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 #define _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 
-#include <boost/histogram/axis/interval.hpp>
+#include <boost/histogram/axis/bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/cat.hpp>
@@ -74,26 +74,24 @@ struct index : public static_visitor<int> {
   }
 };
 
-struct eval : public static_visitor<std::function<double(int)>> {
-  template <typename Axis> std::function<double(int)> operator()(const Axis &a) const {
+struct lower : public static_visitor<double> {
+  int idx;
+  lower(int i) : idx(i) {}
+  template <typename Axis> double operator()(const Axis &a) const {
     return impl(std::integral_constant<bool,
         (std::is_convertible<typename Axis::value_type, double>::value &&
-         std::is_same<
-           typename Axis::bin_type,
-           interval_view<typename Axis::value_type>
-         >::value)
+         std::is_same<typename Axis::bin_type, interval_view<Axis>>::value)
         >(), a);
   }
-  template <typename Axis> std::function<double(int)> impl(std::true_type, const Axis &a) const {
-    return [&a](int i) -> double { return a[i].lower(); } ;
+  template <typename Axis> double impl(std::true_type, const Axis &a) const {
+    return a.lower(idx) ;
   }
-  template <typename Axis> std::function<double(int)> impl(std::false_type, const Axis &) const {
+  template <typename Axis> double impl(std::false_type, const Axis &) const {
     throw std::runtime_error(::boost::histogram::detail::cat(
-        "cannot convert bin_type ",
-        boost::typeindex::type_id<typename Axis::bin_type>().pretty_name(),
-        " of ",
+        "cannot use ",
         boost::typeindex::type_id<Axis>().pretty_name(),
-        " to interval_view<double>")
+        " with generic boost::histogram::axis::any interface, use"
+        " boost::histogram::axis::cast to access underlying axis type")
       );
   }
 };
@@ -106,7 +104,7 @@ template <typename Axes> class any : public make_variant_over<Axes>::type {
 public:
   using types = typename base_type::types;
   using value_type = double;
-  using bin_type = interval_view<double>;
+  using bin_type = interval_view<any>;
   using const_iterator = iterator_over<any>;
   using const_reverse_iterator = reverse_iterator_over<any>;
 
@@ -155,9 +153,12 @@ public:
 
   // this only works for axes with compatible bin type
   // and will throw a runtime_error otherwise
-  bin_type operator[](const int i) const {
-    auto eval = apply_visitor(detail::eval(), *this);
-    return bin_type(i, eval);
+  double lower(int idx) const {
+    return apply_visitor(detail::lower(idx), *this);
+  }
+
+  bin_type operator[](const int idx) const {
+    return bin_type(idx, *this);
   }
 
   bool operator==(const any &rhs) const {

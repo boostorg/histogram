@@ -41,20 +41,21 @@ int main(int, char**) {
         iterate over bins, loop excludes under- and overflow bins
         - index 0_c is a compile-time number, the only way in C++ to make
           axis(...) to return a different type for each index
-        - for-loop yields instances of `std::pair<int, bin_type>`, where
-          `bin_type` usually is a semi-open interval representing the bin,
-          whose edges can be accessed with methods `lower()` and `upper()`,
-          but the [bin type] depends on the axis, look it up in the reference
+        - for-loop yields instances of `bin_type`, usually is a semi-open
+          interval representing the bin, whose edges can be accessed with
+          methods `lower()` and `upper()`, but the choice depends on the
+          axis type, please look it up in the reference
         - `bin(index)` method returns the bin counter at index, you can then
            access its `value() and `variance()` methods; the first returns the
-           actual count, the second returns a variance estimate of the count
+           actual count, the second returns a variance estimate of the count;
+           a bin_type is convertible into an index
            (see Rationale section for what this means)
     */
-    for (auto it = h.axis(0_c).begin(); it; ++it) {
-        std::cout << "bin " << it.idx() << " x in ["
-                  << it->lower() << ", " << it->upper() << "): "
-                  << h.bin(it).value() << " +/- "
-                  << std::sqrt(h.bin(it).variance())
+    for (auto bin : h.axis(0_c)) {
+        std::cout << "bin " << bin.idx() << " x in ["
+                  << bin.lower() << ", " << bin.upper() << "): "
+                  << h.bin(bin).value() << " +/- "
+                  << std::sqrt(h.bin(bin).variance())
                   << std::endl;
     }
 
@@ -131,11 +132,11 @@ int main() {
           this is here the case for the category axis
     */
     using cas = bh::axis::category<std::string>;
-    for (auto cit = bh::axis::cast<cas>(h.axis(0)).begin(); cit; ++cit) {
-        std::printf("%s\n", cit->c_str());
-        for (auto yit = h.axis(2).begin(); yit; ++yit) { // rows
-            for (auto xit = h.axis(1).begin(); xit; ++xit) { // columns
-                std::printf("%3.0f ", h.bin(cit, xit, yit).value());
+    for (auto cbin : bh::axis::cast<cas>(h.axis(0))) {
+        std::printf("%s\n", cbin.value().c_str());
+        for (auto ybin : h.axis(2)) { // rows
+            for (auto xbin : h.axis(1)) { // columns
+                std::printf("%3.0f ", h.bin(cbin, xbin, ybin).value());
             }
             std::printf("\n");
         }

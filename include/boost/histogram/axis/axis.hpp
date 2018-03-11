@@ -9,7 +9,7 @@
 
 #include <algorithm>
 #include <boost/bimap.hpp>
-#include <boost/histogram/axis/interval.hpp>
+#include <boost/histogram/axis/bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/math/constants/constants.hpp>
@@ -202,7 +202,7 @@ class regular : public axis_base_uoflow<regular<RealType, Transform>>,
 
 public:
   using value_type = RealType;
-  using bin_type = interval_view<value_type>;
+  using bin_type = interval_view<regular>;
 
   /** Construct axis with n bins over real range [lower, upper).
    *
@@ -241,18 +241,22 @@ public:
                     : -1;
   }
 
-  /// Returns the bin interval.
-  bin_type operator[](int idx) const noexcept {
-    return bin_type(idx, [this](int i) {
-      const auto n = base_type::size();
-      if (i < 0)
-        return this->inverse(-std::numeric_limits<value_type>::infinity());
-      if (i > n)
-        return this->inverse(std::numeric_limits<value_type>::infinity());
+  /// Returns lower edge of bin.
+  inline value_type lower(int i) const noexcept {
+    const auto n = base_type::size();
+    value_type x;
+    if (i < 0)
+      x = -std::numeric_limits<value_type>::infinity();
+    else if (i > n)
+      x = std::numeric_limits<value_type>::infinity();
+    else { 
       const auto z = value_type(i) / n;
-      return this->inverse((1.0 - z) * min_ + z * (min_ + delta_ * n));
-    });
+      x = (1.0 - z) * min_ + z * (min_ + delta_ * n);
+    }
+    return Transform::inverse(x);
   }
+
+  bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const regular &o) const noexcept {
     return base_type::operator==(o) && Transform::operator==(o) &&
@@ -283,7 +287,7 @@ class circular : public axis_base<circular<RealType>> {
 
 public:
   using value_type = RealType;
-  using bin_type = interval_view<value_type>;
+  using bin_type = interval_view<circular>;
 
   /** Constructor for n bins with an optional offset.
    *
@@ -311,12 +315,14 @@ public:
     return i + (i < 0) * base_type::size();
   }
 
-  /// Returns the starting edge of the bin.
-  bin_type operator[](int idx) const {
-    return bin_type(idx, [this](int i) {
-      const value_type z = value_type(i) / base_type::size();
-      return z * perimeter_ + phase_;
-    });
+  /// Returns lower edge of bin.
+  inline value_type lower(int i) const noexcept {
+    const value_type z = value_type(i) / base_type::size();
+    return z * perimeter_ + phase_;
+  }
+
+  inline bin_type operator[](int idx) const noexcept {
+    return bin_type(idx, *this);
   }
 
   bool operator==(const circular &o) const noexcept {
@@ -345,7 +351,7 @@ class variable : public axis_base_uoflow<variable<RealType>> {
 
 public:
   using value_type = RealType;
-  using bin_type = interval_view<value_type>;
+  using bin_type = interval_view<variable>;
 
   /** Construct an axis from bin edges.
    *
@@ -395,17 +401,17 @@ public:
   }
 
   /// Returns the starting edge of the bin.
-  bin_type operator[](int idx) const {
-    return bin_type(idx, [this](int i) {
-      if (i < 0) {
-        return -std::numeric_limits<value_type>::infinity();
-      }
-      if (i > base_type::size()) {
-        return std::numeric_limits<value_type>::infinity();
-      }
-      return x_[i];
-    });
+  inline value_type lower(int i) const noexcept {
+    if (i < 0) {
+      return -std::numeric_limits<value_type>::infinity();
+    }
+    if (i > base_type::size()) {
+      return std::numeric_limits<value_type>::infinity();
+    }
+    return x_[i];
   }
+
+  bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const variable &o) const noexcept {
     if (!base_type::operator==(o)) {
@@ -432,7 +438,7 @@ class integer : public axis_base_uoflow<integer<IntType>> {
 
 public:
   using value_type = IntType;
-  using bin_type = interval_view<value_type>;
+  using bin_type = interval_view<integer>;
 
   /** Construct axis over a semi-open integer interval [lower, upper).
    *
@@ -461,18 +467,18 @@ public:
     return z >= 0 ? (z > base_type::size() ? base_type::size() : z) : -1;
   }
 
-  /// Returns the integer that is mapped to the bin index.
-  bin_type operator[](int idx) const {
-    return bin_type(idx, [this](int i) {
-      if (i < 0) {
-        return -std::numeric_limits<value_type>::max();
-      }
-      if (i > base_type::size()) {
-        return std::numeric_limits<value_type>::max();
-      }
-      return min_ + i;
-    });
+  /// Returns lower edge of the integral bin.
+  inline value_type lower(int i) const noexcept {
+    if (i < 0) {
+      return -std::numeric_limits<value_type>::max();
+    }
+    if (i > base_type::size()) {
+      return std::numeric_limits<value_type>::max();
+    }
+    return min_ + i;
   }
+
+  bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const integer &o) const noexcept {
     return base_type::operator==(o) && min_ == o.min_;
@@ -498,7 +504,7 @@ template <typename T> class category : public axis_base<category<T>> {
 
 public:
   using value_type = T;
-  using bin_type = T;
+  using bin_type = value_view<category>;
 
   category() = default;
   category(const category &rhs)
@@ -517,7 +523,7 @@ public:
    *
    * \param seq sequence of unique values.
    */
-  category(std::initializer_list<bin_type> seq, string_view label = {})
+  category(std::initializer_list<value_type> seq, string_view label = {})
       : base_type(seq.size(), label), map_(new map_type()) {
     int index = 0;
     for (const auto &x : seq)
@@ -546,12 +552,14 @@ public:
   }
 
   /// Returns the value for the bin index (performs a range check).
-  bin_type operator[](int idx) const {
+  inline value_type value(int idx) const {
     auto it = map_->right.find(idx);
     if (it == map_->right.end())
       throw std::out_of_range("category index out of range");
     return it->second;
   }
+
+  bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const category &o) const noexcept {
     return base_type::operator==(o) &&

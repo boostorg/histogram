@@ -25,20 +25,17 @@
 
 template <typename Axis>
 void test_axis_iterator(const Axis &a, int begin, int end) {
-  auto it = a.begin();
-  for (; it; ++it) {
-    BOOST_TEST_EQ(it.idx(), begin);
-    BOOST_TEST_EQ(*it, a[begin]);
+  for (auto bin : a) {
+    BOOST_TEST_EQ(bin.idx(), begin);
+    BOOST_TEST_EQ(bin, a[begin]);
     ++begin;
   }
   BOOST_TEST_EQ(begin, end);
-  BOOST_TEST_EQ(it, a.end());
   auto rit = a.rbegin();
-  for (; rit; ++rit) {
-    BOOST_TEST_EQ(rit.idx(), --begin);
+  for (; rit != a.rend(); ++rit) {
+    BOOST_TEST_EQ(rit->idx(), --begin);
     BOOST_TEST_EQ(*rit, a[begin]);
   }
-  BOOST_TEST_EQ(rit, a.rend());
 }
 
 int main() {
@@ -212,9 +209,9 @@ int main() {
     BOOST_TEST_EQ(a.index(A), 0);
     BOOST_TEST_EQ(a.index(B), 1);
     BOOST_TEST_EQ(a.index(C), 2);
-    BOOST_TEST_EQ(a[0], A);
-    BOOST_TEST_EQ(a[1], B);
-    BOOST_TEST_EQ(a[2], C);
+    BOOST_TEST_EQ(a.value(0), A);
+    BOOST_TEST_EQ(a.value(1), B);
+    BOOST_TEST_EQ(a.value(2), C);
   }
 
   // iterators
@@ -227,7 +224,7 @@ int main() {
     test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4);
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
     test_axis_iterator(any_axis_type(axis::regular<>(5, 0, 1)), 0, 5);
-    BOOST_TEST_THROWS(any_axis_type(axis::category<>({A, B, C}))[0], std::runtime_error);
+    BOOST_TEST_THROWS(any_axis_type(axis::category<>({A, B, C})).lower(0), std::runtime_error);
   }
 
   // any_axis_type_copyable

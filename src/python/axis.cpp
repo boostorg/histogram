@@ -8,6 +8,7 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis/axis.hpp>
 #include <boost/histogram/axis/any.hpp>
+#include <boost/histogram/axis/bin_view.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/python.hpp>
@@ -54,10 +55,19 @@ generic_iterator make_generic_iterator(bp::object self) {
   return generic_iterator(self);
 }
 
-template <typename T>
+template <typename Axis>
+struct axis_value_view_to_python
+{
+  static PyObject* convert(const bha::value_view<Axis> &i)
+  {
+    return bp::incref(bp::object(i.value()).ptr());
+  }
+};
+
+template <typename Axis>
 struct axis_interval_view_to_python
 {
-  static PyObject* convert(const bha::interval_view<T> &i)
+  static PyObject* convert(const bha::interval_view<Axis> &i)
   {
     return bp::incref(bp::make_tuple(i.lower(), i.upper()).ptr());
   }
@@ -130,12 +140,23 @@ bp::object category_init(bp::tuple args, bp::dict kwargs) {
   return self.attr("__init__")(bha::category<>(c.begin(), c.end(), label));
 }
 
+template <typename A> bp::object axis_getitem_impl(std::true_type, const A &a, int i) {
+  return bp::make_tuple(a.lower(i), a.lower(i+1));
+}
+
+template <typename A> bp::object axis_getitem_impl(std::false_type, const A &a, int i) {
+  return bp::object(a.value(i));
+}
+
 template <typename A> bp::object axis_getitem(const A &a, int i) {
   if (i < -1 * a.uoflow() || i >= a.size() + 1 * a.uoflow()) {
     PyErr_SetString(PyExc_IndexError, "index out of bounds");
     bp::throw_error_already_set();
   }
-  return bp::object(a[i]);
+  return axis_getitem_impl(std::is_same<
+      typename A::bin_type, bha::interval_view<A>
+    >(), a, i);
+  return bp::object();
 }
 
 template <typename T> void axis_set_label(T& t, bp::str s) {
@@ -159,7 +180,7 @@ template <typename Axis> bp::object axis_array_interface(const Axis& axis) {
   auto a = np::empty(shape, np::dtype::get_builtin<T>());
   auto buf = reinterpret_cast<T*>(a.get_data());
   for (auto i = 0; i < axis.size()+1; ++i)
-    buf[i] = axis[i].lower();
+    buf[i] = axis.lower(i);
   d["data"] = a;
   d["version"] = 3;
   return d;
@@ -174,7 +195,7 @@ template <> bp::object axis_array_interface<bha::category<>>(const bha::category
   auto a = np::empty(shape, np::dtype::get_builtin<int>());
   auto buf = reinterpret_cast<int*>(a.get_data());
   for (auto i = 0; i < axis.size(); ++i)
-    buf[i] = axis[i];
+    buf[i] = axis.value(i);
   d["data"] = a;
   d["version"] = 3;
   return d;
@@ -250,16 +271,6 @@ void register_axis_types() {
   using namespace ::boost::python;
   using bp::arg; // resolve ambiguity
   docstring_options dopt(true, true, false);
-
-  to_python_converter<
-    bha::interval_view<int>,
-    axis_interval_view_to_python<int>
-  >();
-
-  to_python_converter<
-    bha::interval_view<double>,
-    axis_interval_view_to_python<double>
-  >();
 
   class_<generic_iterator>("generic_iterator", init<object>())
     .def("__iter__", &generic_iterator::self)

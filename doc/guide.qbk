@@ -374,19 +374,19 @@ int main() {
               << hr1.sum().value() << std::endl;
     // prints: 3 3 3
 
-    for (auto yit = h.axis(1_c).begin(); yit; ++yit) {
-        for (auto xit = h.axis(0_c).begin(); xit; ++xit) {
-            std::cout << h.bin(xit, yit).value() << " ";
+    for (auto ybin : h.axis(1_c)) {
+        for (auto xbin : h.axis(0_c)) {
+            std::cout << h.bin(xbin, ybin).value() << " ";
         }
         std::cout << std::endl;
     }
 
-    for (auto it = hr0.axis().begin(); it; ++it)
-        std::cout << hr0.bin(it).value() << " ";
+    for (auto abin : hr0.axis())
+        std::cout << hr0.bin(abin).value() << " ";
     std::cout << std::endl;
 
-    for (auto it = hr1.axis().begin(); it; ++it)
-        std::cout << hr1.bin(it).value() << " ";
+    for (auto abin : hr1.axis())
+        std::cout << hr1.bin(abin).value() << " ";
     std::cout << std::endl;
 }
 ``
@@ -769,9 +769,9 @@ int main() {
     h.fill("1");
     h.fill("9");
 
-    for (auto it = h.axis().begin(); it; ++it) {
-        std::cout << "bin " << it.idx() << " [" << it->lower() << ", "
-                  << it->upper() << ") " << h.bin(it).value()
+    for (auto bin : h.axis()) {
+        std::cout << "bin " << bin.idx() << " [" << bin.lower() << ", "
+                  << bin.upper() << ") " << h.bin(bin).value()
                   << std::endl;
     }
 
