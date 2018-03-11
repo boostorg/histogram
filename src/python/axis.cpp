@@ -140,22 +140,6 @@ bp::object category_init(bp::tuple args, bp::dict kwargs) {
   return self.attr("__init__")(bha::category<>(c.begin(), c.end(), label));
 }
 
-template <typename A> bp::object axis_getitem_impl(std::true_type, const A &a, int i) {
-  return bp::make_tuple(a.lower(i), a.lower(i+1));
-}
-
-template <typename A> bp::object axis_getitem_impl(std::false_type, const A &a, int i) {
-  return bp::object(a.value(i));
-}
-
-template <typename A> bp::object axis_getitem(const A &a, int i) {
-  if (i < -1 * a.uoflow() || i >= a.size() + 1 * a.uoflow()) {
-    PyErr_SetString(PyExc_IndexError, "index out of bounds");
-    bp::throw_error_already_set();
-  }
-  return axis_getitem_impl(bh::detail::has_method_lower_t<A>(), a, i);
-}
-
 template <typename T> void axis_set_label(T& t, bp::str s) {
   t.label({bp::extract<const char*>(s)(),
            static_cast<std::size_t>(bp::len(s))});
@@ -166,9 +150,25 @@ template <typename T> bp::str axis_get_label(const T& t) {
   return {s.data(), s.size()};
 }
 
+template <typename A> bp::object axis_getitem(const A &a, int i) {
+  if (i < -1 * a.uoflow() || i >= a.size() + 1 * a.uoflow()) {
+    PyErr_SetString(PyExc_IndexError, "index out of bounds");
+    bp::throw_error_already_set();
+  }
+  return bp::make_tuple(a.lower(i), a.lower(i+1));
+}
+
+template <> bp::object axis_getitem<bha::category<>>(const A &a, int i) {
+  if (i < 0 || i >= a.size()) {
+    PyErr_SetString(PyExc_IndexError, "index out of bounds");
+    bp::throw_error_already_set();
+  }
+  return bp::object(a.value(i));
+}
+
 #ifdef HAVE_NUMPY
 template <typename Axis> bp::object axis_array_interface(const Axis& axis) {
-  using T = typename std::decay<decltype(axis[0].lower())>::type;
+  using T = typename std::decay<typename Axis::value_type>::type;
   bp::dict d;
   auto shape = bp::make_tuple(axis.size()+1);
   d["shape"] = shape;
