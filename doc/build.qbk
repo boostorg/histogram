@@ -33,6 +33,16 @@ If you want to build this library as part of the Boost distribution, do this.
 
 Only the Python bindings need building, the rest of the library is header only.
 
+If the build fails, try to add these lines to your `user-config.jam`, which turn on C++11 support and increase the stack size for template recursion.
+
+[teletype]
+``
+    import toolset : using ;
+    using python ;
+    using gcc : c++11 : "g++" : <cxxflags>-std=c++11 <cxxflags>-ftemplate-depth=500 ;
+    using clang : c++11 : "clang++" : <cxxflags>-std=c++11 ;
+``
+
 [endsect]
 
 [endsect]
