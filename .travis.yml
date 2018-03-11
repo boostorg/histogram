@@ -133,7 +133,7 @@ script:
 # Calculate coverage
 after_success:
   if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
-    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which gcov-${COMPILER_VERSION}`;
+    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which gcov-${COMPILER_VERSION}` --gcov-options '\-lp';
   fi
 
 after_failure:
