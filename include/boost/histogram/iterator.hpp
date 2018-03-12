@@ -66,8 +66,8 @@ protected:
 } // namespace detail
 
 template <typename Storage>
-class bin_iterator_over
-    : public iterator_facade<bin_iterator_over<Storage>,
+class iterator_over
+    : public iterator_facade<iterator_over<Storage>,
                              typename Storage::bin_type, forward_traversal_tag,
                              typename Storage::bin_type>,
       public detail::multi_index {
@@ -75,17 +75,17 @@ class bin_iterator_over
 public:
   /// begin iterator
   template <typename Histogram>
-  bin_iterator_over(const Histogram &h, const Storage &s)
+  iterator_over(const Histogram &h, const Storage &s)
       : detail::multi_index(h), s_(s) {}
 
   /// end iterator
-  explicit bin_iterator_over(const Storage &s) : s_(s) {}
+  explicit iterator_over(const Storage &s) : s_(s) {}
 
-  bin_iterator_over(const bin_iterator_over &) = default;
-  bin_iterator_over &operator=(const bin_iterator_over &) = default;
+  iterator_over(const iterator_over &) = default;
+  iterator_over &operator=(const iterator_over &) = default;
 
 private:
-  bool equal(const bin_iterator_over &other) const noexcept {
+  bool equal(const iterator_over &other) const noexcept {
     return &s_ == &(other.s_) && idx_ == other.idx_;
   }
   typename Storage::bin_type dereference() const { return s_[idx_]; }

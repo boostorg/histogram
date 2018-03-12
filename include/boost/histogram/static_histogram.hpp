@@ -53,7 +53,7 @@ class histogram<static_tag, Axes, Storage> {
 public:
   using axes_type = typename fusion::result_of::as_vector<Axes>::type;
   using bin_type = typename Storage::bin_type;
-  using bin_iterator = bin_iterator_over<Storage>;
+  using bin_iterator = iterator_over<Storage>;
 
   histogram() = default;
   histogram(const histogram &rhs) = default;

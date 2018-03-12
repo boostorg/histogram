@@ -59,7 +59,7 @@ public:
   using any_axis_type = axis::any<Axes>;
   using axes_type = std::vector<any_axis_type>;
   using bin_type = typename Storage::bin_type;
-  using bin_iterator = bin_iterator_over<Storage>;
+  using bin_iterator = iterator_over<Storage>;
 
 public:
   histogram() = default;
