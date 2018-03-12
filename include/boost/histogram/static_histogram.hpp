@@ -52,8 +52,9 @@ class histogram<static_tag, Axes, Storage> {
 
 public:
   using axes_type = typename fusion::result_of::as_vector<Axes>::type;
-  using bin_type = typename Storage::bin_type;
-  using bin_iterator = iterator_over<Storage>;
+  using element_type = typename Storage::element_type;
+  using const_reference = typename Storage::const_reference;
+  using const_iterator = iterator_over<histogram, Storage>;
 
   histogram() = default;
   histogram(const histogram &rhs) = default;
@@ -161,7 +162,7 @@ public:
   }
 
   template <typename... Indices>
-  bin_type bin(const Indices &... indices) const {
+  const_reference bin(const Indices &... indices) const {
     static_assert(sizeof...(indices) == axes_size::value,
                   "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -179,8 +180,8 @@ public:
   std::size_t bincount() const noexcept { return storage_.size(); }
 
   /// Sum of all counts in the histogram
-  bin_type sum() const noexcept {
-    bin_type result(0);
+  element_type sum() const noexcept {
+    element_type result(0);
     for (std::size_t i = 0, n = storage_.size(); i < n; ++i)
       result += storage_[i];
     return result;
@@ -242,9 +243,13 @@ public:
     return hr;
   }
 
-  bin_iterator begin() const noexcept { return bin_iterator(*this, storage_); }
+  const_iterator begin() const noexcept {
+    return const_iterator(*this, storage_, true);
+  }
 
-  bin_iterator end() const noexcept { return bin_iterator(storage_); }
+  const_iterator end() const noexcept {
+    return const_iterator(*this, storage_);
+  }
 
 private:
   axes_type axes_;

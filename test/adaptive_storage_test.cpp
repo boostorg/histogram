@@ -388,7 +388,7 @@ int main() {
     BOOST_TEST_EQ(a[0].variance(), 9);
     BOOST_TEST_EQ(a[1].value(), 0);
     BOOST_TEST_EQ(a[1].variance(), 0);
-    a.add(1, adaptive_storage::bin_type(2, 5));
+    a.add(1, adaptive_storage::element_type(2, 5));
     BOOST_TEST_EQ(a[0].value(), 3);
     BOOST_TEST_EQ(a[0].variance(), 9);
     BOOST_TEST_EQ(a[1].value(), 2);

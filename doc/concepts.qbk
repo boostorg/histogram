@@ -37,13 +37,14 @@ A `storage_type` is required to:
 * be default/copy/move constructable
 * be copy/move assignable
 * be equal comparable
-* have a nested type `bin_type`, the external type used to represent the bin count (internally it may be a different type)
+* have a nested type `element_type`, which represent the bin count
+* have a nested type `const_reference`, its const reference version
 * have a constructor `storage_type(std::size_t n)`, which prepares the storage of `n` bins.
 * have the following methods and operators:
   * `std::size_t size() const`
   * `void increase(std::size_t index)`
   * `template <typename T> void add(std::size_t index, const T& x)`
-  * `bin_type operator[](std::size_t index) const`
+  * `const_reference operator[](std::size_t index) const`
   * `storage_type& operator+=(const storage_type& other)`
   * `storage_type& operator*=(const value_type x)`
 * optionally, it can have the following method to support weighted increments:

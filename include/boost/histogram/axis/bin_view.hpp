@@ -16,8 +16,7 @@ namespace axis {
 
 template <typename Axis> class interval_view {
 public:
-  interval_view(int idx, const Axis& axis) :
-    idx_(idx), axis_(axis) {}
+  interval_view(int idx, const Axis &axis) : idx_(idx), axis_(axis) {}
 
   interval_view(const interval_view &) = default;
   interval_view &operator=(const interval_view &) = default;
@@ -26,8 +25,12 @@ public:
 
   int idx() const noexcept { return idx_; }
 
-  auto lower() const noexcept -> decltype(std::declval<Axis&>().lower(0)) { return axis_.lower(idx_); }
-  auto upper() const noexcept -> decltype(std::declval<Axis&>().lower(0)) { return axis_.lower(idx_+1); }
+  auto lower() const noexcept -> decltype(std::declval<Axis &>().lower(0)) {
+    return axis_.lower(idx_);
+  }
+  auto upper() const noexcept -> decltype(std::declval<Axis &>().lower(0)) {
+    return axis_.lower(idx_ + 1);
+  }
   typename Axis::value_type width() const noexcept { return upper() - lower(); }
 
   bool operator==(const interval_view &rhs) const noexcept {
@@ -41,13 +44,12 @@ public:
 
 private:
   const int idx_;
-  const Axis& axis_;
+  const Axis &axis_;
 };
 
 template <typename Axis> class value_view {
 public:
-  value_view(int idx, const Axis& axis) :
-    idx_(idx), axis_(axis) {}
+  value_view(int idx, const Axis &axis) : idx_(idx), axis_(axis) {}
 
   value_view(const value_view &) = default;
   value_view &operator=(const value_view &) = default;
@@ -56,7 +58,7 @@ public:
 
   int idx() const noexcept { return idx_; }
 
-  auto value() const -> decltype(std::declval<Axis&>().value(0)) {
+  auto value() const -> decltype(std::declval<Axis &>().value(0)) {
     return axis_.value(idx_);
   }
 
@@ -71,7 +73,7 @@ public:
 
 private:
   const int idx_;
-  const Axis& axis_;
+  const Axis &axis_;
 };
 
 } // namespace axis

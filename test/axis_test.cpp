@@ -224,7 +224,8 @@ int main() {
     test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4);
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
     test_axis_iterator(any_axis_type(axis::regular<>(5, 0, 1)), 0, 5);
-    BOOST_TEST_THROWS(any_axis_type(axis::category<>({A, B, C})).lower(0), std::runtime_error);
+    BOOST_TEST_THROWS(any_axis_type(axis::category<>({A, B, C})).lower(0),
+                      std::runtime_error);
   }
 
   // any_axis_type_copyable

@@ -249,7 +249,7 @@ public:
       x = -std::numeric_limits<value_type>::infinity();
     else if (i > n)
       x = std::numeric_limits<value_type>::infinity();
-    else { 
+    else {
       const auto z = value_type(i) / n;
       x = (1.0 - z) * min_ + z * (min_ + delta_ * n);
     }
@@ -552,7 +552,7 @@ public:
   }
 
   /// Returns the value for the bin index (performs a range check).
-  inline const value_type& value(int idx) const {
+  inline const value_type &value(int idx) const {
     auto it = map_->right.find(idx);
     if (it == map_->right.end())
       throw std::out_of_range("category index out of range");

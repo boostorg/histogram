@@ -67,10 +67,7 @@ struct index : public static_visitor<int> {
     throw std::runtime_error(::boost::histogram::detail::cat(
         "cannot convert value_type ",
         boost::typeindex::type_id<typename Axis::value_type>().pretty_name(),
-        " of ",
-        boost::typeindex::type_id<Axis>().pretty_name(),
-        " to double")
-      );
+        " of ", boost::typeindex::type_id<Axis>().pretty_name(), " to double"));
   }
 };
 
@@ -78,21 +75,22 @@ struct lower : public static_visitor<double> {
   int idx;
   lower(int i) : idx(i) {}
   template <typename Axis> double operator()(const Axis &a) const {
-    return impl(std::integral_constant<bool,
-        (std::is_convertible<typename Axis::value_type, double>::value &&
-         std::is_same<typename Axis::bin_type, interval_view<Axis>>::value)
-        >(), a);
+    return impl(
+        std::integral_constant<
+            bool,
+            (std::is_convertible<typename Axis::value_type, double>::value &&
+             std::is_same<typename Axis::bin_type,
+                          interval_view<Axis>>::value)>(),
+        a);
   }
   template <typename Axis> double impl(std::true_type, const Axis &a) const {
-    return a.lower(idx) ;
+    return a.lower(idx);
   }
   template <typename Axis> double impl(std::false_type, const Axis &) const {
     throw std::runtime_error(::boost::histogram::detail::cat(
-        "cannot use ",
-        boost::typeindex::type_id<Axis>().pretty_name(),
+        "cannot use ", boost::typeindex::type_id<Axis>().pretty_name(),
         " with generic boost::histogram::axis::any interface, use"
-        " boost::histogram::axis::cast to access underlying axis type")
-      );
+        " boost::histogram::axis::cast to access underlying axis type"));
   }
 };
 } // namespace detail
@@ -157,9 +155,7 @@ public:
     return apply_visitor(detail::lower(idx), *this);
   }
 
-  bin_type operator[](const int idx) const {
-    return bin_type(idx, *this);
-  }
+  bin_type operator[](const int idx) const { return bin_type(idx, *this); }
 
   bool operator==(const any &rhs) const {
     return base_type::operator==(static_cast<const base_type &>(rhs));

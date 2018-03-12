@@ -24,15 +24,17 @@ namespace histogram {
 
 template <typename T> class array_storage {
 public:
-  using bin_type = T;
+  using element_type = T;
+  using const_reference = const T &;
 
-  explicit array_storage(std::size_t s) : size_(s), array_(new bin_type[s]) {
-    std::fill(array_.get(), array_.get() + s, bin_type(0));
+  explicit array_storage(std::size_t s)
+      : size_(s), array_(new element_type[s]) {
+    std::fill(array_.get(), array_.get() + s, element_type(0));
   }
 
   array_storage() = default;
   array_storage(const array_storage &other)
-      : size_(other.size()), array_(new bin_type[other.size()]) {
+      : size_(other.size()), array_(new element_type[other.size()]) {
     std::copy(other.array_.get(), other.array_.get() + size_, array_.get());
   }
   array_storage &operator=(const array_storage &other) {
@@ -58,14 +60,14 @@ public:
   explicit array_storage(const S &other) {
     reset(other.size());
     for (std::size_t i = 0; i < size_; ++i)
-      array_[i] = static_cast<bin_type>(other[i]);
+      array_[i] = static_cast<element_type>(other[i]);
   }
 
   template <typename S, typename = detail::requires_storage<S>>
   array_storage &operator=(const S &other) {
     reset(other.size());
     for (std::size_t i = 0; i < size_; ++i)
-      array_[i] = static_cast<bin_type>(other[i]);
+      array_[i] = static_cast<element_type>(other[i]);
     return *this;
   }
 
@@ -77,7 +79,7 @@ public:
     array_[i] += x;
   }
 
-  const bin_type &operator[](std::size_t i) const noexcept { return array_[i]; }
+  const_reference operator[](std::size_t i) const noexcept { return array_[i]; }
 
   template <typename U>
   bool operator==(const array_storage<U> &rhs) const noexcept {
@@ -100,11 +102,11 @@ public:
 
 private:
   std::size_t size_ = 0;
-  std::unique_ptr<bin_type[]> array_;
+  std::unique_ptr<element_type[]> array_;
 
   void reset(std::size_t size) {
     size_ = size;
-    array_.reset(new bin_type[size]);
+    array_.reset(new element_type[size]);
   }
 
   template <typename U> friend class array_storage;

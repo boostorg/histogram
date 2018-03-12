@@ -388,7 +388,8 @@ class adaptive_storage {
   using buffer_type = detail::any_array;
 
 public:
-  using bin_type = detail::wcount;
+  using element_type = detail::wcount;
+  using const_reference = element_type;
 
   explicit adaptive_storage(std::size_t s) : buffer_(detail::array<void>(s)) {}
 
@@ -401,7 +402,7 @@ public:
   template <typename RHS>
   explicit adaptive_storage(const RHS &rhs)
       : buffer_(detail::array<void>(rhs.size())) {
-    using T = typename RHS::bin_type;
+    using T = typename RHS::element_type;
     for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
       apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]), buffer_);
     }
@@ -413,7 +414,7 @@ public:
     if (size() != n) {
       buffer_ = detail::array<void>(n);
     }
-    using T = typename RHS::bin_type;
+    using T = typename RHS::element_type;
     for (std::size_t i = 0; i < n; ++i) {
       apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]), buffer_);
     }
@@ -428,12 +429,12 @@ public:
     apply_visitor(detail::increase_visitor(buffer_, i), buffer_);
   }
 
-  void add(std::size_t i, const bin_type &x) {
+  void add(std::size_t i, const element_type &x) {
     if (x.has_trivial_variance()) {
       apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()),
                     buffer_);
     } else {
-      apply_visitor(detail::radd_visitor<bin_type>(buffer_, i, x), buffer_);
+      apply_visitor(detail::radd_visitor<element_type>(buffer_, i, x), buffer_);
     }
   }
 
@@ -447,7 +448,7 @@ public:
         buffer_);
   }
 
-  bin_type operator[](std::size_t i) const {
+  const_reference operator[](std::size_t i) const {
     return apply_visitor(detail::bin_visitor(i), buffer_);
   }
 
@@ -471,7 +472,7 @@ public:
   template <typename RHS> adaptive_storage &operator+=(const RHS &rhs) {
     for (auto i = 0ul, n = size(); i < n; ++i)
       apply_visitor(
-          detail::radd_visitor<typename RHS::bin_type>(buffer_, i, rhs[i]),
+          detail::radd_visitor<typename RHS::element_type>(buffer_, i, rhs[i]),
           buffer_);
     return *this;
   }

@@ -58,8 +58,9 @@ class histogram<dynamic_tag, Axes, Storage> {
 public:
   using any_axis_type = axis::any<Axes>;
   using axes_type = std::vector<any_axis_type>;
-  using bin_type = typename Storage::bin_type;
-  using bin_iterator = iterator_over<Storage>;
+  using element_type = typename Storage::element_type;
+  using const_reference = typename Storage::const_reference;
+  using const_iterator = iterator_over<histogram, Storage>;
 
 public:
   histogram() = default;
@@ -175,7 +176,8 @@ public:
     }
   }
 
-  template <typename... Indices> bin_type bin(Indices &&... indices) const {
+  template <typename... Indices>
+  const_reference bin(Indices &&... indices) const {
     if (dim() != sizeof...(indices))
       throw std::invalid_argument(
           "value arguments does not match histogram dimension");
@@ -187,7 +189,7 @@ public:
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  bin_type bin(Iterator begin, Iterator end) const {
+  const_reference bin(Iterator begin, Iterator end) const {
     if (dim() != std::distance(begin, end))
       throw std::invalid_argument(
           "iterator range in bin(...) does not match histogram dimension");
@@ -205,8 +207,8 @@ public:
   std::size_t bincount() const noexcept { return storage_.size(); }
 
   /// Sum of all counts in the histogram
-  bin_type sum() const noexcept {
-    bin_type result(0);
+  element_type sum() const noexcept {
+    element_type result(0);
     // don't use bincount() here, so sum() still works in a moved-from object
     for (std::size_t i = 0, n = storage_.size(); i < n; ++i) {
       result += storage_[i];
@@ -263,9 +265,13 @@ public:
     return reduce_impl(b);
   }
 
-  bin_iterator begin() const noexcept { return bin_iterator(*this, storage_); }
+  const_iterator begin() const noexcept {
+    return const_iterator(*this, storage_, true);
+  }
 
-  bin_iterator end() const noexcept { return bin_iterator(storage_); }
+  const_iterator end() const noexcept {
+    return const_iterator(*this, storage_);
+  }
 
 private:
   axes_type axes_;
