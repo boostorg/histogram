@@ -752,11 +752,41 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.bin(2).value(), 0);
   }
 
-  // bin iterator
+  // histogram iterator 1D
+  {
+    auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3));
+    const auto &a = h.axis();
+    h.fill(0, weight(2));
+    h.fill(1);
+    h.fill(1);
+    auto it = h.begin();
+    BOOST_TEST_EQ(it.dim(), 1);
+
+    BOOST_TEST_EQ(it.idx(), 0);
+    BOOST_TEST_EQ(it.bin(), a[0]);
+    BOOST_TEST_EQ(it->value(), 2);
+    BOOST_TEST_EQ(it->variance(), 4);
+    ++it;
+    BOOST_TEST_EQ(it.idx(), 1);
+    BOOST_TEST_EQ(it.bin(), a[1]);
+    BOOST_TEST_EQ(it->value(), 2);
+    BOOST_TEST_EQ(it->variance(), 2);
+    ++it;
+    BOOST_TEST_EQ(it.idx(), 2);
+    BOOST_TEST_EQ(it.bin(), a[2]);
+    BOOST_TEST_EQ(it->value(), 0);
+    BOOST_TEST_EQ(it->variance(), 0);
+    ++it;
+    BOOST_TEST(it == h.end());
+  }
+
+  // histogram iterator 2D
   {
     auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3),
                                               axis::integer<>(2, 4));
-    h.fill(0, 2);
+    const auto &a0 = h.axis(0_c);
+    const auto &a1 = h.axis(1_c);
+    h.fill(0, 2, weight(2));
     h.fill(1, 2);
     h.fill(1, 3);
     auto it = h.begin();
@@ -764,33 +794,41 @@ template <typename Type> void run_tests() {
 
     BOOST_TEST_EQ(it.idx(0), 0);
     BOOST_TEST_EQ(it.idx(1), 0);
-    BOOST_TEST_EQ(it->value(), 1);
-    BOOST_TEST_EQ(h.bin(it.idx(0), it.idx(1)).value(), it->value());
+    BOOST_TEST_EQ(it.bin(0_c), a0[0]);
+    BOOST_TEST_EQ(it.bin(1_c), a1[0]);
+    BOOST_TEST_EQ(it->value(), 2);
+    BOOST_TEST_EQ(it->variance(), 4);
     ++it;
     BOOST_TEST_EQ(it.idx(0), 1);
     BOOST_TEST_EQ(it.idx(1), 0);
+    BOOST_TEST_EQ(it.bin(0_c), a0[1]);
+    BOOST_TEST_EQ(it.bin(1_c), a1[0]);
     BOOST_TEST_EQ(it->value(), 1);
-    BOOST_TEST_EQ(h.bin(it.idx(0), it.idx(1)).value(), it->value());
+    BOOST_TEST_EQ(it->variance(), 1);
     ++it;
     BOOST_TEST_EQ(it.idx(0), 2);
     BOOST_TEST_EQ(it.idx(1), 0);
+    BOOST_TEST_EQ(it.bin(0_c), a0[2]);
+    BOOST_TEST_EQ(it.bin(1_c), a1[0]);
     BOOST_TEST_EQ(it->value(), 0);
-    BOOST_TEST_EQ(h.bin(it.idx(0), it.idx(1)).value(), it->value());
     ++it;
     BOOST_TEST_EQ(it.idx(0), 0);
     BOOST_TEST_EQ(it.idx(1), 1);
+    BOOST_TEST_EQ(it.bin(0_c), a0[0]);
+    BOOST_TEST_EQ(it.bin(1_c), a1[1]);
     BOOST_TEST_EQ(it->value(), 0);
-    BOOST_TEST_EQ(h.bin(it.idx(0), it.idx(1)).value(), it->value());
     ++it;
     BOOST_TEST_EQ(it.idx(0), 1);
     BOOST_TEST_EQ(it.idx(1), 1);
+    BOOST_TEST_EQ(it.bin(0_c), a0[1]);
+    BOOST_TEST_EQ(it.bin(1_c), a1[1]);
     BOOST_TEST_EQ(it->value(), 1);
-    BOOST_TEST_EQ(h.bin(it.idx(0), it.idx(1)).value(), it->value());
     ++it;
     BOOST_TEST_EQ(it.idx(0), 2);
     BOOST_TEST_EQ(it.idx(1), 1);
+    BOOST_TEST_EQ(it.bin(0_c), a0[2]);
+    BOOST_TEST_EQ(it.bin(1_c), a1[1]);
     BOOST_TEST_EQ(it->value(), 0);
-    BOOST_TEST_EQ(h.bin(it.idx(0), it.idx(1)).value(), it->value());
     ++it;
     BOOST_TEST(it == h.end());
   }
@@ -909,6 +947,34 @@ int main() {
     BOOST_TEST_EQ(h1_1.bin(1).value(), 2);
     BOOST_TEST_EQ(h1_1.bin(2).value(), 1);
     BOOST_TEST(axis_equal(dynamic_tag(), h1_1.axis(), h1.axis(1_c)));
+  }
+
+  // histogram iterator
+  {
+    auto h = make_dynamic_histogram(axis::integer<>(0, 3));
+    const auto &a = h.axis();
+    h.fill(0, weight(2));
+    h.fill(1);
+    h.fill(1);
+    auto it = h.begin();
+    BOOST_TEST_EQ(it.dim(), 1);
+
+    BOOST_TEST_EQ(it.idx(0), 0);
+    BOOST_TEST_EQ(it.bin(0), a[0]);
+    BOOST_TEST_EQ(it->value(), 2);
+    BOOST_TEST_EQ(it->variance(), 4);
+    ++it;
+    BOOST_TEST_EQ(it.idx(0), 1);
+    BOOST_TEST_EQ(it.bin(0), a[1]);
+    BOOST_TEST_EQ(it->value(), 2);
+    BOOST_TEST_EQ(it->variance(), 2);
+    ++it;
+    BOOST_TEST_EQ(it.idx(0), 2);
+    BOOST_TEST_EQ(it.bin(0), a[2]);
+    BOOST_TEST_EQ(it->value(), 0);
+    BOOST_TEST_EQ(it->variance(), 0);
+    ++it;
+    BOOST_TEST(it == h.end());
   }
 
   run_mixed_tests<static_tag, dynamic_tag>();

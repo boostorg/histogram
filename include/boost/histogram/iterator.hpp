@@ -13,6 +13,7 @@
 #include <boost/mpl/int.hpp>
 #include <limits>
 #include <vector>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -93,50 +94,20 @@ public:
   iterator_over(const iterator_over &) = default;
   iterator_over &operator=(const iterator_over &) = default;
 
-  template <unsigned D>
-  auto bin(mpl::int_<D>) const
-      -> decltype(std::declval<Histogram &>().axis(mpl::int_<D>())[0]) {
-    return histogram_.axis(mpl::int_<D>())[dims_[dim].idx];
+  auto bin() const
+      -> decltype(std::declval<Histogram &>().axis(mpl::int_<0>())[0]) {
+    return histogram_.axis(mpl::int_<0>())[dims_[0].idx];
   }
 
-private:
-  bool equal(const iterator_over &rhs) const noexcept {
-    return &storage_ == &rhs.storage_ && idx_ == rhs.idx_;
-  }
-  typename Storage::const_reference dereference() const {
-    return storage_[idx_];
+  template <int N>
+  auto bin(mpl::int_<N>) const
+      -> decltype(std::declval<Histogram &>().axis(mpl::int_<N>())[0]) {
+    return histogram_.axis(mpl::int_<N>())[dims_[N].idx];
   }
 
-  const Histogram &histogram_;
-  const Storage &storage_;
-  friend class ::boost::iterator_core_access;
-};
-
-template <typename Axes, typename Storage>
-class iterator_over<dynamic_histogram<Axes, Storage>, Storage>
-    : public iterator_facade<
-          iterator_over<dynamic_histogram<Axes, Storage>, Storage>,
-          typename Storage::element_type, forward_traversal_tag,
-          typename Storage::const_reference>,
-      public detail::multi_index {
-
-public:
-  /// begin iterator
-  iterator_over(const dynamic_histogram<Axes, Storage> &h, const Storage &s,
-                bool)
-      : detail::multi_index(h), histogram_(h), storage_(s) {}
-
-  /// end iterator
-  iterator_over(const dynamic_histogram<Axes, Storage> &h, const Storage &s)
-      : histogram_(h), storage_(s) {
-    idx_ = std::numeric_limits<std::size_t>::max();
-  }
-
-  iterator_over(const iterator_over &) = default;
-  iterator_over &operator=(const iterator_over &) = default;
-
-  const typename dynamic_histogram<Axes, Storage>::any_axis_type &
-  bin(unsigned dim = 0) const {
+  template <typename Int>
+  auto bin(Int dim) const -> decltype(
+      std::declval<Histogram &>().axis(dim)[0]) {
     return histogram_.axis(dim)[dims_[dim].idx];
   }
 
@@ -148,7 +119,7 @@ private:
     return storage_[idx_];
   }
 
-  const dynamic_histogram<Axes, Storage> &histogram_;
+  const Histogram &histogram_;
   const Storage &storage_;
   friend class ::boost::iterator_core_access;
 };
