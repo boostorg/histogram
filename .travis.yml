@@ -61,7 +61,7 @@ matrix:
             - cmake
             - cmake-data
             - g++-7
-      env: COMPILER_VERSION=7 CMAKE_BUILD_TYPE=cov
+      env: COMPILER_VERSION=7 CMAKE_BUILD_TYPE=coverage
 
 git:
   depth: 1
@@ -90,7 +90,7 @@ install:
   - if [ -z ${NUMPY_SUPPORT} ]; then
       export NUMPY_SUPPORT=OFF;
     fi
-  - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+  - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
       pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
     fi
   - if [ "${NUMPY_SUPPORT}" = "ON" ]; then
@@ -99,25 +99,25 @@ install:
 
 script:
   - cd build
-  - if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+  - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
 
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=OFF
-              -DCMAKE_BUILD_TYPE=cov &&
+              -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
               -DPYTHON_VERSION=2
               -DBUILD_NUMPY_SUPPORT=OFF
-              -DCMAKE_BUILD_TYPE=cov &&
+              -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
               -DPYTHON_VERSION=2
               -DBUILD_NUMPY_SUPPORT=ON
-              -DCMAKE_BUILD_TYPE=cov &&
+              -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
     else
@@ -132,7 +132,7 @@ script:
 
 # Calculate coverage
 after_success:
-  if [ "${CMAKE_BUILD_TYPE}" = "cov" ]; then
+  if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
     coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which gcov-${COMPILER_VERSION}` --gcov-options '\-lp';
   fi
 
