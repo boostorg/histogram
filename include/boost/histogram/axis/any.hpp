@@ -65,9 +65,9 @@ struct index : public static_visitor<int> {
   }
   template <typename Axis> int impl(std::false_type, const Axis &) const {
     throw std::runtime_error(::boost::histogram::detail::cat(
-        "cannot convert value_type ",
+        "cannot convert double to value_type ",
         boost::typeindex::type_id<typename Axis::value_type>().pretty_name(),
-        " of ", boost::typeindex::type_id<Axis>().pretty_name(), " to double"));
+        " of ", boost::typeindex::type_id<Axis>().pretty_name()));
   }
 };
 

@@ -303,6 +303,15 @@ int main() {
     BOOST_TEST(axes == std::vector<any_axis_type>(axes));
   }
 
+  // any_axis_type_value_to_index_failure
+  {
+    std::string a = "A", b = "B";
+    any_axis_type x = axis::category<std::string>({a, b}, "category");
+    BOOST_TEST_THROWS(x.index(1.5), std::runtime_error);
+    const auto& cx = axis::cast<axis::category<std::string>>(x);
+    BOOST_TEST_EQ(cx.index(b), 1);
+  }
+
   // sequence equality
   {
     enum { A, B, C };
