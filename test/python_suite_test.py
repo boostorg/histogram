@@ -86,6 +86,10 @@ class test_regular(unittest.TestCase):
             self.assertAlmostEqual(a[i][1], v[i+1])
         self.assertEqual(a[-1][0], -float("infinity"))
         self.assertEqual(a[4][1], float("infinity"))
+        with self.assertRaises(IndexError):
+            a[-2]
+        with self.assertRaises(IndexError):
+            a[5]
 
     def test_iter(self):
         v = [1.0, 1.25, 1.5, 1.75, 2.0]
@@ -176,6 +180,10 @@ class test_circular(unittest.TestCase):
         for i in range(4):
             self.assertEqual(a[i][0], v[i])
             self.assertEqual(a[i][1], v[i+1])
+        with self.assertRaises(IndexError):
+            a[-1]
+        with self.assertRaises(IndexError):
+            a[4]
 
     def test_iter(self):
         a = circular(4, 1.0)
@@ -242,6 +250,10 @@ class test_variable(unittest.TestCase):
             self.assertEqual(a[i][1], v[i+1])
         self.assertEqual(a[-1][0], -float("infinity"))
         self.assertEqual(a[2][1], float("infinity"))
+        with self.assertRaises(IndexError):
+            a[-2]
+        with self.assertRaises(IndexError):
+            a[3]
 
     def test_iter(self):
         v = [-0.1, 0.2, 0.3]
@@ -293,7 +305,10 @@ class test_integer(unittest.TestCase):
             self.assertEqual(str(eval(s)), s)
 
     def test_label(self):
-        self.assertEqual(integer(-1, 2, label="ia").label, "ia")
+        a = integer(-1, 2, label="foo")
+        self.assertEqual(a.label, "foo")
+        a.label = "bar"
+        self.assertEqual(a.label, "bar")
 
     def test_getitem(self):
         v = [-1, 0, 1, 2]
@@ -302,6 +317,10 @@ class test_integer(unittest.TestCase):
             self.assertEqual(a[i][0], v[i])
         self.assertEqual(a[-1][0], -2 ** 31 + 1)
         self.assertEqual(a[4][1], 2 ** 31 - 1)
+        with self.assertRaises(IndexError):
+            a[-2]
+        with self.assertRaises(IndexError):
+            a[5]
 
     def test_iter(self):
         v = [-1, 0, 1, 2, 3]
@@ -353,6 +372,10 @@ class test_category(unittest.TestCase):
         a = category(*c)
         for i in range(3):
             self.assertEqual(a[i], c[i])
+        with self.assertRaises(IndexError):
+            a[-1]
+        with self.assertRaises(IndexError):
+            a[3]
 
     def test_iter(self):
         c = [1, 2, 3]
