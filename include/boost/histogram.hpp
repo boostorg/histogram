@@ -8,9 +8,12 @@
 #define BOOST_HISTOGRAM_HPP_
 
 #include <boost/histogram/axis/axis.hpp>
-#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
+#include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
+#include <boost/histogram/storage/array_storage.hpp>
+#include <boost/histogram/storage/weight_counter.hpp>
 
 /**
  * \file boost/histogram.hpp

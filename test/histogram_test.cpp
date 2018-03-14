@@ -8,7 +8,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>

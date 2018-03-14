@@ -24,8 +24,10 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/arithmetic_operators.hpp>
 #include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/operators.hpp>
+#include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/count_if.hpp>
 #include <boost/mpl/deref.hpp>

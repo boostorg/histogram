@@ -16,6 +16,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/arithmetic_operators.hpp>
 #include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>

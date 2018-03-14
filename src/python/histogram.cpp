@@ -7,6 +7,7 @@
 #include "serialization_suite.hpp"
 #include "utility.hpp"
 #include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/python.hpp>
@@ -29,7 +30,7 @@ namespace mpl = boost::mpl;
 namespace bh = boost::histogram;
 namespace bp = boost::python;
 
-using pyhistogram = bh::histogram<bh::dynamic_tag, bh::axis::builtins>;
+using pyhistogram = bh::dynamic_histogram<>;
 
 namespace boost {
 namespace python {
