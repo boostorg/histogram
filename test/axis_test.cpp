@@ -308,7 +308,7 @@ int main() {
     std::string a = "A", b = "B";
     any_axis_type x = axis::category<std::string>({a, b}, "category");
     BOOST_TEST_THROWS(x.index(1.5), std::runtime_error);
-    const auto& cx = axis::cast<axis::category<std::string>>(x);
+    const auto &cx = axis::cast<axis::category<std::string>>(x);
     BOOST_TEST_EQ(cx.index(b), 1);
   }
 

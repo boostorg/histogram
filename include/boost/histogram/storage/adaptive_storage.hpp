@@ -423,7 +423,7 @@ public:
 
   // used in unit tests
   template <typename T>
-  explicit adaptive_storage(const detail::array<T>& a) : buffer_(a) {}
+  explicit adaptive_storage(const detail::array<T> &a) : buffer_(a) {}
 
   std::size_t size() const {
     return apply_visitor(detail::size_visitor(), buffer_);

@@ -12,8 +12,8 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/mpl/int.hpp>
 #include <limits>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -106,8 +106,8 @@ public:
   }
 
   template <typename Int>
-  auto bin(Int dim) const -> decltype(
-      std::declval<Histogram &>().axis(dim)[0]) {
+  auto bin(Int dim) const
+      -> decltype(std::declval<Histogram &>().axis(dim)[0]) {
     return histogram_.axis(dim)[dims_[dim].idx];
   }
 

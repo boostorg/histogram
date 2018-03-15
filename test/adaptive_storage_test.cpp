@@ -233,8 +233,7 @@ template <> void convert_array_storage_impl<void>() {
   BOOST_TEST(!(d == t));
 }
 
-template <typename LHS, typename RHS>
-void add_impl() {
+template <typename LHS, typename RHS> void add_impl() {
   auto a = prepare<LHS>(2);
   auto b = prepare<RHS>(2);
   if (std::is_same<RHS, void>::value) {
@@ -251,8 +250,7 @@ void add_impl() {
   }
 }
 
-template <typename LHS>
-void add_impl_all_rhs() {
+template <typename LHS> void add_impl_all_rhs() {
   add_impl<LHS, void>();
   add_impl<LHS, uint8_t>();
   add_impl<LHS, uint16_t>();
