@@ -13,58 +13,18 @@
 #include <limits>
 #include <sstream>
 
-namespace boost {
+using namespace boost::histogram;
 
-namespace histogram {
-
-template <typename T> adaptive_storage prepare(std::size_t n = 1) {
-  adaptive_storage s(n);
-  s.increase(0);
-  const auto tmax = std::numeric_limits<T>::max();
-  while (s[0].value() < 0.1 * tmax) {
-    s.add(0, s[0].value());
-  }
-  return s;
+template <typename T> adaptive_storage prepare(std::size_t n) {
+  auto a = detail::array<T>(n);
+  return adaptive_storage(a);
 }
 
-template <> adaptive_storage prepare<void>(std::size_t n) {
-  adaptive_storage s(n);
-  return s;
+template <typename T> adaptive_storage prepare(std::size_t n, const T x) {
+  auto a = detail::array<T>(n);
+  a[0] = x;
+  return adaptive_storage(a);
 }
-
-template <> adaptive_storage prepare<detail::wcount>(std::size_t n) {
-  adaptive_storage s(n);
-  s.add(0, weight(1.0));
-  return s;
-}
-
-template <> adaptive_storage prepare<detail::mp_int>(std::size_t n) {
-  adaptive_storage s(n);
-  s.increase(0);
-  auto tmax = static_cast<double>(std::numeric_limits<uint64_t>::max());
-  tmax *= 2.0;
-  while (s[0].value() < tmax) {
-    assert(s[0].value() != 0);
-    s.add(0, s[0].value());
-  }
-  return s;
-}
-
-} // namespace histogram
-
-namespace python { // cheating to get access
-class access {
-public:
-  template <typename T>
-  static histogram::adaptive_storage set_value(std::size_t n, T x) {
-    histogram::adaptive_storage s = histogram::prepare<T>(n);
-    get<histogram::detail::array<T>>(s.buffer_)[0] = x;
-    return s;
-  }
-};
-} // namespace python
-
-namespace histogram {
 
 template <typename T> void copy_impl() {
   const auto b = prepare<T>(1);
@@ -84,7 +44,7 @@ template <typename T> void copy_impl() {
 }
 
 template <typename T> void serialization_impl() {
-  const auto a = python::access::set_value(1, T(1));
+  const auto a = prepare(1, T(1));
   std::ostringstream os;
   std::string buf;
   {
@@ -125,7 +85,7 @@ template <> void serialization_impl<void>() {
 
 template <typename T> void equal_impl() {
   adaptive_storage a(std::size_t(1));
-  auto b = python::access::set_value(1, T(0));
+  auto b = prepare(1, T(0));
   BOOST_TEST_EQ(a[0].value(), 0.0);
   BOOST_TEST_EQ(a[0].variance(), 0.0);
   BOOST_TEST(a == b);
@@ -133,7 +93,7 @@ template <typename T> void equal_impl() {
   BOOST_TEST(!(a == b));
 
   array_storage<unsigned> c(std::size_t(1));
-  auto d = python::access::set_value(1, T(0));
+  auto d = prepare(1, T(0));
   BOOST_TEST(c == d);
   c.increase(0);
   BOOST_TEST(!(c == d));
@@ -141,8 +101,8 @@ template <typename T> void equal_impl() {
 
 template <> void equal_impl<void>() {
   adaptive_storage a(std::size_t(1));
-  auto b = python::access::set_value(1, uint8_t(0));
-  auto c = python::access::set_value(2, uint8_t(0));
+  auto b = prepare<uint8_t>(1, 0);
+  auto c = prepare<uint8_t>(2, 0);
   auto d = array_storage<unsigned>(std::size_t(1));
   BOOST_TEST_EQ(a[0].value(), 0.0);
   BOOST_TEST_EQ(a[0].variance(), 0.0);
@@ -162,16 +122,14 @@ template <> void equal_impl<void>() {
 
 template <typename T> void increase_and_grow_impl() {
   auto tmax = std::numeric_limits<T>::max();
-  auto s = python::access::set_value<T>(2, tmax - 1);
+  auto s = prepare(2, tmax);
   auto n = s;
   auto n2 = s;
 
   n.increase(0);
-  n.increase(0);
 
   adaptive_storage x(std::size_t(2));
   x.increase(0);
-  n2.add(0, x[0].value());
   n2.add(0, x[0].value());
 
   double v = tmax;
@@ -184,13 +142,15 @@ template <typename T> void increase_and_grow_impl() {
 
 template <> void increase_and_grow_impl<void>() {
   adaptive_storage s(std::size_t(2));
+  BOOST_TEST_EQ(s[0].value(), 0);
+  BOOST_TEST_EQ(s[1].value(), 0);
   s.increase(0);
-  BOOST_TEST_EQ(s[0].value(), 1.0);
-  BOOST_TEST_EQ(s[1].value(), 0.0);
+  BOOST_TEST_EQ(s[0].value(), 1);
+  BOOST_TEST_EQ(s[1].value(), 0);
 }
 
 template <typename T> void convert_array_storage_impl() {
-  const auto aref = python::access::set_value(1, T(0));
+  const auto aref = prepare(1, T(0));
   array_storage<uint8_t> s(std::size_t(1));
   s.increase(0);
 
@@ -273,12 +233,36 @@ template <> void convert_array_storage_impl<void>() {
   BOOST_TEST(!(d == t));
 }
 
-} // namespace histogram
-} // namespace boost
+template <typename LHS, typename RHS>
+void add_impl() {
+  auto a = prepare<LHS>(2);
+  auto b = prepare<RHS>(2);
+  if (std::is_same<RHS, void>::value) {
+    a += b;
+    BOOST_TEST_EQ(a[0].value(), 0);
+    BOOST_TEST_EQ(a[1].value(), 0);
+  } else {
+    b.increase(0);
+    b.increase(0);
+    a += b;
+    BOOST_TEST_EQ(a[0].value(), 2);
+    BOOST_TEST_EQ(a[0].variance(), 2);
+    BOOST_TEST_EQ(a[1].value(), 0);
+  }
+}
+
+template <typename LHS>
+void add_impl_all_rhs() {
+  add_impl<LHS, void>();
+  add_impl<LHS, uint8_t>();
+  add_impl<LHS, uint16_t>();
+  add_impl<LHS, uint32_t>();
+  add_impl<LHS, uint64_t>();
+  add_impl<LHS, detail::mp_int>();
+  add_impl<LHS, detail::wcount>();
+}
 
 int main() {
-  using namespace boost::histogram;
-
   // low-level tools
   {
     uint8_t c = 0;
@@ -338,12 +322,23 @@ int main() {
     increase_and_grow_impl<uint64_t>();
 
     // only increase for mp_int
-    auto a = boost::python::access::set_value(2, detail::mp_int(1));
-    BOOST_TEST_EQ(a[0].value(), 1.0);
-    BOOST_TEST_EQ(a[1].value(), 0.0);
+    auto a = prepare<detail::mp_int>(2, 1);
+    BOOST_TEST_EQ(a[0].value(), 1);
+    BOOST_TEST_EQ(a[1].value(), 0);
     a.increase(0);
-    BOOST_TEST_EQ(a[0].value(), 2.0);
-    BOOST_TEST_EQ(a[1].value(), 0.0);
+    BOOST_TEST_EQ(a[0].value(), 2);
+    BOOST_TEST_EQ(a[1].value(), 0);
+  }
+
+  // add
+  {
+    add_impl_all_rhs<void>();
+    add_impl_all_rhs<uint8_t>();
+    add_impl_all_rhs<uint16_t>();
+    add_impl_all_rhs<uint32_t>();
+    add_impl_all_rhs<uint64_t>();
+    add_impl_all_rhs<detail::mp_int>();
+    add_impl_all_rhs<detail::wcount>();
   }
 
   // add_and_grow
