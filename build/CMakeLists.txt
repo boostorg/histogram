@@ -91,7 +91,6 @@ if(CMAKE_BUILD_TYPE MATCHES coverage)
   add_definitions(-O0 -g)
   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage)
 elseif(CMAKE_BUILD_TYPE MATCHES release)
-  set(BUILD_CHECKS ON)
   if(MSVC)
     add_definitions(/DBOOST_DISABLE_ASSERTS)
   else()
@@ -104,11 +103,13 @@ add_custom_target(sync_examples ALL COMMAND python ${PROJECT_SOURCE_DIR}/../doc/
 
 # checks
 if(BUILD_CHECKS)
+  add_executable(axis_size ../test/axis_size.cpp)
+  # find_package(benchmark)
   add_executable(speed_cpp ../test/speed_cpp.cpp)
+  # target_link_libraries(speed_cpp -lbenchmark -lpthread)
   if (BUILD_PYTHON)
     configure_file(../test/speed_numpy.py speed_numpy.py)
   endif()
-  add_executable(axis_size ../test/axis_size.cpp)
 endif()
 
 # tests

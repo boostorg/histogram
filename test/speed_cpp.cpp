@@ -10,31 +10,49 @@
 #include <ctime>
 #include <limits>
 #include <random>
-#include <vector>
+#include <memory>
 
 using namespace boost::histogram;
 namespace mpl = boost::mpl;
 
-std::vector<double> random_array(unsigned n, int type) {
-  std::vector<double> result(n);
+std::unique_ptr<double[]> random_array(unsigned n, int type) {
+  std::unique_ptr<double[]> r(new double[n]);
   std::default_random_engine gen(1);
   if (type) { // type == 1
     std::normal_distribution<> d(0.5, 0.3);
-    for (auto &x : result)
-      x = d(gen);
+    for (unsigned i = 0; i < n; ++i)
+      r[i] = d(gen);
   } else { // type == 0
     std::uniform_real_distribution<> d(0.0, 1.0);
-    for (auto &x : result)
-      x = d(gen);
+    for (unsigned i = 0; i < n; ++i)
+      r[i] = d(gen);
   }
-  return result;
+  return r;
+}
+
+template<class T> void ignore( const T& ) { }
+
+double baseline(unsigned n) {
+  auto r = random_array(n, 0);
+
+  auto best = std::numeric_limits<double>::max();
+  for (unsigned k = 0; k < 20; ++k) {
+    auto t = clock();
+    for (unsigned i = 0; i < n; ++i) {
+      volatile auto x = r[i];
+      ignore(x);
+    }
+    t = clock() - t;
+    best = std::min(best, double(t) / CLOCKS_PER_SEC);
+  }
+  return best;
 }
 
 template <typename Histogram> double compare_1d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   auto best = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 50; ++k) {
+  for (unsigned k = 0; k < 20; ++k) {
     auto h = Histogram(axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
@@ -50,7 +68,7 @@ template <typename Histogram> double compare_2d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   auto best = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 50; ++k) {
+  for (unsigned k = 0; k < 20; ++k) {
     auto h = Histogram(axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n/2; ++i)
@@ -66,7 +84,7 @@ template <typename Histogram> double compare_3d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   auto best = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 50; ++k) {
+  for (unsigned k = 0; k < 20; ++k) {
     auto h = Histogram(axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1),
                        axis::regular<>(100, 0, 1));
     auto t = clock();
@@ -83,7 +101,7 @@ template <typename Histogram> double compare_6d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   auto best = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 50; ++k) {
+  for (unsigned k = 0; k < 20; ++k) {
     auto h = Histogram(axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1),
                        axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1),
                        axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1));
@@ -101,6 +119,10 @@ template <typename Histogram> double compare_6d(unsigned n, int distrib) {
 }
 
 int main() {
+  const unsigned nfill = 6000000;
+
+  printf("baseline %.3f\n", baseline(nfill));
+
   printf("1D\n");
   for (int itype = 0; itype < 2; ++itype) {
     if (itype == 0)
@@ -110,17 +132,17 @@ int main() {
     printf("hs_ss %.3f\n",
            compare_1d<static_histogram<mpl::vector<axis::regular<>>,
                                 array_storage<int>>>(
-               6000000, itype));
+               nfill, itype));
     printf("hs_sd %.3f\n",
            compare_1d<static_histogram<mpl::vector<axis::regular<>>,
-                                adaptive_storage>>(6000000, itype));
+                                adaptive_storage>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_1d<dynamic_histogram<axis::builtins,
                                 array_storage<int>>>(
-               6000000, itype));
+               nfill, itype));
     printf("hd_sd %.3f\n",
            compare_1d<dynamic_histogram<axis::builtins, adaptive_storage>>(
-               6000000, itype));
+               nfill, itype));
   }
 
   printf("2D\n");
@@ -132,18 +154,18 @@ int main() {
     printf("hs_ss %.3f\n",
            compare_2d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>>,
-               array_storage<int>>>(6000000, itype));
+               array_storage<int>>>(nfill, itype));
     printf("hs_sd %.3f\n",
            compare_2d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>>,
-               adaptive_storage>>(6000000, itype));
+               adaptive_storage>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_2d<dynamic_histogram<axis::builtins,
                       array_storage<int>>>(
-               6000000, itype));
+               nfill, itype));
     printf("hd_sd %.3f\n",
            compare_2d<dynamic_histogram<axis::builtins, adaptive_storage>>(
-               6000000, itype));
+               nfill, itype));
   }
 
   printf("3D\n");
@@ -155,18 +177,18 @@ int main() {
     printf("hs_ss %.3f\n",
            compare_3d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>>,
-               array_storage<int>>>(6000000, itype));
+               array_storage<int>>>(nfill, itype));
     printf("hs_sd %.3f\n",
            compare_3d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>>,
-               adaptive_storage>>(6000000, itype));
+               adaptive_storage>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_3d<dynamic_histogram<axis::builtins,
                                 array_storage<int>>>(
-               6000000, itype));
+               nfill, itype));
     printf("hd_sd %.3f\n",
            compare_3d<dynamic_histogram<axis::builtins, adaptive_storage>>(
-               6000000, itype));
+               nfill, itype));
   }
 
   printf("6D\n");
@@ -179,18 +201,18 @@ int main() {
            compare_6d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>,
                            axis::regular<>, axis::regular<>, axis::regular<>>,
-               array_storage<int>>>(6000000, itype));
+               array_storage<int>>>(nfill, itype));
     printf("hs_sd %.3f\n",
            compare_6d<static_histogram<
                mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>,
                            axis::regular<>, axis::regular<>, axis::regular<>>,
-               adaptive_storage>>(6000000, itype));
+               adaptive_storage>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_6d<dynamic_histogram<axis::builtins,
                                 array_storage<int>>>(
-               6000000, itype));
+               nfill, itype));
     printf("hd_sd %.3f\n",
            compare_6d<dynamic_histogram<axis::builtins, adaptive_storage>>(
-               6000000, itype));
+               nfill, itype));
   }
 }

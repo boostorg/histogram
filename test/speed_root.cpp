@@ -14,28 +14,28 @@
 #include <ctime>
 #include <limits>
 #include <random>
-#include <vector>
+#include <memory>
 
-std::vector<double> random_array(unsigned n, int type) {
-  std::vector<double> result(n);
+std::unique_ptr<double[]> random_array(unsigned n, int type) {
+  std::unique_ptr<double[]> r(new double[n]);
   std::default_random_engine gen(1);
   if (type) { // type == 1
     std::normal_distribution<> d(0.5, 0.3);
-    for (auto &x : result)
-      x = d(gen);
+    for (unsigned i = 0; i < n; ++i)
+      r[i] = d(gen);
   } else { // type == 0
     std::uniform_real_distribution<> d(0.0, 1.0);
-    for (auto &x : result)
-      x = d(gen);
+    for (unsigned i = 0; i < n; ++i)
+      r[i] = d(gen);
   }
-  return result;
+  return r;
 }
 
 void compare_1d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 50; ++k) {
+  for (unsigned k = 0; k < 20; ++k) {
     TH1I hroot("", "", 100, 0, 1);
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
@@ -50,7 +50,7 @@ void compare_2d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 50; ++k) {
+  for (unsigned k = 0; k < 20; ++k) {
     TH2I hroot("", "", 100, 0, 1, 100, 0, 1);
     auto t = clock();
     for (unsigned i = 0; i < n/2; ++i)
@@ -65,7 +65,7 @@ void compare_3d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 50; ++k) {
+  for (unsigned k = 0; k < 20; ++k) {
     TH3I hroot("", "", 100, 0, 1, 100, 0, 1, 100, 0, 1);
     auto t = clock();
     for (unsigned i = 0; i < n/3; ++i)
@@ -80,7 +80,7 @@ void compare_6d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   double best_root = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 50; ++k) {
+  for (unsigned k = 0; k < 20; ++k) {
     std::vector<int> bin(6, 10);
     std::vector<double> min(6, 0);
     std::vector<double> max(6, 1);
@@ -88,7 +88,7 @@ void compare_6d(unsigned n, int distrib) {
 
     auto t = clock();
     for (unsigned i = 0; i < n/6; ++i) {
-      hroot.Fill(&r.front() + 6 * i);
+      hroot.Fill(r.get() + 6 * i);
     }
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
@@ -97,27 +97,29 @@ void compare_6d(unsigned n, int distrib) {
 }
 
 int main(int argc, char **argv) {
+  constexpr unsigned nfill = 6000000;
+
   printf("1D\n");
   printf("uniform distribution\n");
-  compare_1d(6000000, 0);
+  compare_1d(nfill, 0);
   printf("normal distribution\n");
-  compare_1d(6000000, 1);
+  compare_1d(nfill, 1);
 
   printf("2D\n");
   printf("uniform distribution\n");
-  compare_2d(6000000, 0);
+  compare_2d(nfill, 0);
   printf("normal distribution\n");
-  compare_2d(6000000, 1);
+  compare_2d(nfill, 1);
 
   printf("3D\n");
   printf("uniform distribution\n");
-  compare_3d(6000000, 0);
+  compare_3d(nfill, 0);
   printf("normal distribution\n");
-  compare_3d(6000000, 1);
+  compare_3d(nfill, 1);
 
   printf("6D\n");
   printf("uniform distribution\n");
-  compare_6d(6000000, 0);
+  compare_6d(nfill, 0);
   printf("normal distribution\n");
-  compare_6d(6000000, 1);
+  compare_6d(nfill, 1);
 }

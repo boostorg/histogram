@@ -19,7 +19,7 @@ def compare_1d(n, distrib):
 
     best_numpy = float("infinity")
     best_boost = float("infinity")
-    for k in xrange(50):
+    for k in xrange(20):
         t = timer()
         w, xe = np.histogram(r, bins=100, range=(0.0, 1.0))
         t = timer() - t
@@ -44,7 +44,7 @@ def compare_2d(n, distrib):
 
     best_numpy = float("infinity")
     best_boost = float("infinity")
-    for k in xrange(50):
+    for k in xrange(20):
         t = timer()
         w, xe, ye = np.histogram2d(r[0], r[1], bins=(100, 100),
                                    range=((0.0, 1.0), (0.0, 1.0)))
@@ -70,7 +70,7 @@ def compare_3d(n, distrib):
 
     best_numpy = float("infinity")
     best_boost = float("infinity")
-    for k in xrange(50):
+    for k in xrange(20):
         t = timer()
         w, xe = np.histogramdd(r.T, bins=(100, 100, 100),
                                range=((0.0, 1.0),
@@ -100,7 +100,7 @@ def compare_6d(n, distrib):
 
     best_numpy = float("infinity")
     best_boost = float("infinity")
-    for k in xrange(50):
+    for k in xrange(20):
         t = timer()
         w, xe = np.histogramdd(r.T, bins=(10, 10, 10,
                                         10, 10, 10),
@@ -128,26 +128,28 @@ def compare_6d(n, distrib):
     print "py:numpy %.3f" % best_numpy
     print "py:hd_sd %.3f" % best_boost
 
+nfill = 6000000
+
 print "1D"
 print "uniform distribution"
-compare_1d(6000000, 0)
+compare_1d(nfill, 0)
 print "normal distribution"
-compare_1d(6000000, 1)
+compare_1d(nfill, 1)
 
 print "2D"
 print "uniform distribution"
-compare_2d(6000000, 0)
+compare_2d(nfill, 0)
 print "normal distribution"
-compare_2d(6000000, 1)
+compare_2d(nfill, 1)
 
 print "3D"
 print "uniform distribution"
-compare_3d(6000000, 0)
+compare_3d(nfill, 0)
 print "normal distribution"
-compare_3d(6000000, 1)
+compare_3d(nfill, 1)
 
 print "6D"
 print "uniform distribution"
-compare_6d(6000000, 0)
+compare_6d(nfill, 0)
 print "normal distribution"
-compare_6d(6000000, 1)
+compare_6d(nfill, 1)
