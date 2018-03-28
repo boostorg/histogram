@@ -292,7 +292,7 @@ void register_axis_types() {
       .def("__init__", make_constructor(regular_init<bha::transform::x>,  \
         default_call_policies(),                                          \
         (arg("bin"), arg("lower"), arg("upper"),                          \
-         arg("label") = "", arg("uoflow") = true)))                           \
+         arg("label") = "", arg("uoflow") = true)))                       \
       .def(axis_suite<bha::regular<double, bha::transform::x>>())
 
   BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(log);
