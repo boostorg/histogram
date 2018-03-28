@@ -112,7 +112,7 @@ public:
 private:
   friend class ::boost::serialization::access;
 
-  template <class Archive> void serialize(Archive &ar, unsigned /* version */);
+  template <class Archive> void serialize(Archive &, unsigned /* version */);
 
   RealType w, w2;
 };

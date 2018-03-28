@@ -8,7 +8,6 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis/axis.hpp>
 #include <boost/histogram/axis/any.hpp>
-#include <boost/histogram/axis/bin_view.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/python.hpp>
@@ -76,19 +75,19 @@ struct axis_interval_view_to_python
 bp::object variable_init(bp::tuple args, bp::dict kwargs) {
   bp::object self = args[0];
 
-  if (len(args) < 2) {
+  if (bp::len(args) < 2) {
     PyErr_SetString(PyExc_TypeError, "require at least two arguments");
     bp::throw_error_already_set();
   }
 
   std::vector<double> v;
-  for (int i = 1, n = len(args); i < n; ++i) {
+  for (int i = 1, n = bp::len(args); i < n; ++i) {
     v.push_back(bp::extract<double>(args[i]));
   }
 
   boost::string_view label;
   auto uo = bha::uoflow::on;
-  while (len(kwargs) > 0) {
+  while (bp::len(kwargs) > 0) {
     bp::tuple kv = kwargs.popitem();
     boost::string_view k(bp::extract<const char*>(kv[0]), bp::len(kv[0]));
     bp::object v = kv[1];
@@ -249,7 +248,7 @@ bha::regular<double, bha::transform::pow>* regular_pow_init(
   return new bha::regular<double, bha::transform::pow>(
       bin, lower, upper,
       {extract<const char*>(pylabel)(),
-       static_cast<std::size_t>(len(pylabel))},
+       static_cast<std::size_t>(bp::len(pylabel))},
       uo, power);
 }
 
@@ -260,7 +259,7 @@ bha::integer<>* integer_init(int lower, int upper,
   const auto uo = with_uoflow ? bha::uoflow::on : bha::uoflow::off;
   return new bha::integer<>(lower, upper,
       {extract<const char*>(pylabel)(),
-       static_cast<std::size_t>(len(pylabel))},
+       static_cast<std::size_t>(bp::len(pylabel))},
       uo);
 }
 
@@ -281,7 +280,7 @@ void register_axis_types() {
       .def("__init__", make_constructor(regular_init<bha::transform::identity>,
         default_call_policies(),
         (arg("bin"), arg("lower"), arg("upper"),
-         arg("label")="", arg("uoflow")=true)))
+         arg("label") = "", arg("uoflow") = true)))
       .def(axis_suite<bha::regular<>>());
 
 #define BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(x)                           \
@@ -293,7 +292,7 @@ void register_axis_types() {
       .def("__init__", make_constructor(regular_init<bha::transform::x>,  \
         default_call_policies(),                                          \
         (arg("bin"), arg("lower"), arg("upper"),                          \
-         arg("label")="", arg("uoflow")=true)))                           \
+         arg("label") = "", arg("uoflow") = true)))                           \
       .def(axis_suite<bha::regular<double, bha::transform::x>>())
 
   BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(log);
@@ -308,7 +307,7 @@ void register_axis_types() {
       .def("__init__", make_constructor(regular_pow_init,
         default_call_policies(),
         (arg("bin"), arg("lower"), arg("upper"), arg("power"),
-         arg("label")="", arg("uoflow")=true)))
+         arg("label") = "", arg("uoflow") = true)))
       .def(axis_suite<bha::regular<double, bha::transform::pow>>());
 
   class_<bha::circular<>>(

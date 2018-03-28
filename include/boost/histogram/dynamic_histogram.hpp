@@ -178,7 +178,7 @@ public:
   }
 
   template <typename... Indices>
-  const_reference bin(Indices &&... indices) const {
+  const_reference operator()(Indices &&... indices) const {
     if (dim() != sizeof...(indices))
       throw std::invalid_argument(
           "value arguments does not match histogram dimension");
@@ -190,10 +190,10 @@ public:
   }
 
   template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  const_reference bin(Iterator begin, Iterator end) const {
+  const_reference operator()(Iterator begin, Iterator end) const {
     if (dim() != std::distance(begin, end))
       throw std::invalid_argument(
-          "iterator range in bin(...) does not match histogram dimension");
+          "iterator range in operator() does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_iter(idx, stride, begin);
     if (stride == 0)

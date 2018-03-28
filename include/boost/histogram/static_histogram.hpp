@@ -164,7 +164,7 @@ public:
   }
 
   template <typename... Indices>
-  const_reference bin(const Indices &... indices) const {
+  const_reference operator()(const Indices &... indices) const {
     static_assert(sizeof...(indices) == axes_size::value,
                   "number of arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;

@@ -84,7 +84,7 @@ public:
       // cannot pass cpp_int to numpy; make new
       // double array, fill it and pass it
       auto a = np::empty(tuple(shapes), np::dtype::get_builtin<double>());
-      for (auto i = 0l, n = len(shapes); i < n; ++i)
+      for (auto i = 0l, n = bp::len(shapes); i < n; ++i)
         const_cast<Py_intptr_t*>(a.get_strides())[i] = bp::extract<int>(strides[i]);
       auto *buf = (double *)a.get_data();
       for (auto i = 0ul; i < b.size; ++i)
@@ -157,7 +157,7 @@ bp::object histogram_init(bp::tuple args, bp::dict kwargs) {
     bp::throw_error_already_set();
   }
 
-  const unsigned dim = len(args) - 1;
+  const unsigned dim = bp::len(args) - 1;
 
   // normal constructor
   pyhistogram::axes_type axes;
@@ -277,10 +277,10 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
   return bp::object();
 }
 
-bp::object histogram_bin(bp::tuple args, bp::dict kwargs) {
+bp::object histogram_call(bp::tuple args, bp::dict kwargs) {
   const pyhistogram & self = bp::extract<const pyhistogram &>(args[0]);
 
-  const unsigned dim = len(args) - 1;
+  const unsigned dim = bp::len(args) - 1;
   if (self.dim() != dim) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
     bp::throw_error_already_set();
@@ -302,13 +302,13 @@ bp::object histogram_bin(bp::tuple args, bp::dict kwargs) {
   for (unsigned i = 0; i < self.dim(); ++i)
     idx[i] = bp::extract<int>(args[1 + i]);
 
-  return bp::object(self.bin(idx, idx + self.dim()));
+  return bp::object(self(idx, idx + self.dim()));
 }
 
 bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
   const pyhistogram &self = bp::extract<const pyhistogram &>(args[0]);
 
-  const unsigned nargs = len(args) - 1;
+  const unsigned nargs = bp::len(args) - 1;
 
   if (nargs > BOOST_HISTOGRAM_AXIS_LIMIT) {
     std::ostringstream os;
@@ -377,7 +377,7 @@ void register_histogram() {
            ":return: total number of bins, including under- and overflow")
       .add_property("sum", &pyhistogram::sum,
            ":return: sum of all entries, including under- and overflow bins")
-      .def("bin", bp::raw_function(histogram_bin),
+      .def("__call__", bp::raw_function(histogram_call),
            ":param int args: indices of the bin (number must match dimension)"
            "\n:return: bin content")
       .def("reduce_to", bp::raw_function(histogram_reduce_to),

@@ -215,24 +215,24 @@ int main() {
     h.fill( 0.5, 3.5, bh::weight(4)); // bin index 1, 1
 
     // access count value, number of indices must match number of axes
-    std::cout << h.bin(0, 0).value() << " "
-              << h.bin(0, 1).value() << " "
-              << h.bin(1, 0).value() << " "
-              << h.bin(1, 1).value()
+    std::cout << h(0, 0).value() << " "
+              << h(0, 1).value() << " "
+              << h(1, 0).value() << " "
+              << h(1, 1).value()
               << std::endl;
 
     // prints: 1 2 3 4
 
     // access count variance, number of indices must match number of axes
-    std::cout << h.bin(0, 0).variance() << " "
-              << h.bin(0, 1).variance() << " "
-              << h.bin(1, 0).variance() << " "
-              << h.bin(1, 1).variance()
+    std::cout << h(0, 0).variance() << " "
+              << h(0, 1).variance() << " "
+              << h(1, 0).variance() << " "
+              << h(1, 1).variance()
               << std::endl;
     // prints: 1 4 9 16
 
     // you can also make a copy of the type that holds the bin count
-    auto c11 = h.bin(1, 1);
+    auto c11 = h(1, 1);
     std::cout << c11.value() << " " << c11.variance() << std::endl;
     // prints: 4 16
 
@@ -245,7 +245,7 @@ int main() {
 
     std::vector<int> idx(2);
     idx = {0, 1};
-    std::cout << h2.bin(idx.begin(), idx.end()).value() << std::endl;
+    std::cout << h2(idx.begin(), idx.end()).value() << std::endl;
 }
 ``
 
@@ -301,7 +301,7 @@ int main() {
     // accept and return rvalue references where possible
     auto h4 = h1 + h2 + h3; // counts are: 2 2
 
-    std::cout << h4.bin(0).value() << " " << h4.bin(1).value() << std::endl;
+    std::cout << h4(0).value() << " " << h4(1).value() << std::endl;
     // prints: 2 2
 
     // multiply by number
@@ -310,7 +310,7 @@ int main() {
     // divide by number
     auto h5 = h4 / 4;       // counts are: 1 1
 
-    std::cout << h5.bin(0).value() << " " << h5.bin(1).value() << std::endl;
+    std::cout << h5(0).value() << " " << h5(1).value() << std::endl;
     // prints: 1 1
 
     // compare histograms
@@ -319,11 +319,11 @@ int main() {
 
     // note: special effect of multiplication on counter variance
     auto h = bh::make_static_histogram(bh::axis::regular<>(2, -1, 1));
-    h.fill(-0.5);          // counts are: 1 0
-    std::cout << "value    " << (2 * h).bin(0).value()
-              << " " << (h + h).bin(0).value() << "\n"
-              << "variance " << (2 * h).bin(0).variance()
-              << " " << (h + h).bin(0).variance() << std::endl;
+    h.fill(-0.5); // counts are: 1 0
+    std::cout << "value    " << (2 * h)(0).value()
+              << " " << (h + h)(0).value() << "\n"
+              << "variance " << (2 * h)(0).variance()
+              << " " << (h + h)(0).variance() << std::endl;
     // equality operator also checks variances, so the statement is false
     std::cout << (h + h == 2 * h) << std::endl;
 
@@ -374,19 +374,19 @@ int main() {
               << hr1.sum().value() << std::endl;
     // prints: 3 3 3
 
-    for (auto ybin : h.axis(1_c)) {
-        for (auto xbin : h.axis(0_c)) {
-            std::cout << h.bin(xbin, ybin).value() << " ";
+    for (auto yi : h.axis(1_c)) {
+        for (auto xi : h.axis(0_c)) {
+            std::cout << h(xi, yi).value() << " ";
         }
         std::cout << std::endl;
     }
 
-    for (auto abin : hr0.axis())
-        std::cout << hr0.bin(abin).value() << " ";
+    for (auto xi : hr0.axis())
+        std::cout << hr0(xi).value() << " ";
     std::cout << std::endl;
 
-    for (auto abin : hr1.axis())
-        std::cout << hr1.bin(abin).value() << " ";
+    for (auto yi : hr1.axis())
+        std::cout << hr1(yi).value() << " ";
     std::cout << std::endl;
 }
 ``
@@ -517,13 +517,13 @@ for x in (2e0, 2e1, 2e2, 2e3, 2e4):
 # iterate over bins and access bin counter
 for idx, (lower, upper) in enumerate(h.axis(0)):
     print "bin {0} x in [{1}, {2}): {3} +/- {4}".format(
-        idx, lower, upper, h.bin(idx).value, h.bin(idx).variance ** 0.5)
+        idx, lower, upper, h(idx).value, h(idx).variance ** 0.5)
 
 # under- and overflow bins are accessed like in C++
 lo, up = h.axis(0)[-1]
-print "underflow [{0}, {1}): {2} +/- {3}".format(lo, up, h.bin(-1).value, h.bin(-1).variance)
+print "underflow [{0}, {1}): {2} +/- {3}".format(lo, up, h(-1).value, h(-1).variance)
 lo, up = h.axis(0)[5]
-print "overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h.bin(5).value, h.bin(5).variance)
+print "overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h(5).value, h(5).variance)
 
 # prints:
 # bin 0 x in [1.0, 10.0): 4.0 +/- 4.0
@@ -654,7 +654,7 @@ h2.fill(0.5)
 h3 = h1 + h2
 h4 = h3 * 2
 
-print h4.bin(0).value, h4.bin(1).value
+print h4(0).value, h4(1).value
 # prints: 2.0 2.0
 
 # now save the histogram
@@ -718,7 +718,7 @@ cpp_filler.process(h) # histogram is filled with input values in C++
 
 for iy, y in enumerate(h.axis(1)):
     for ix, x in enumerate(h.axis(0)):
-        print h.bin(ix, iy).value,
+        print h(ix, iy).value,
     print
 
 # prints:
@@ -769,9 +769,9 @@ int main() {
     h.fill("1");
     h.fill("9");
 
-    for (auto bin : h.axis()) {
-        std::cout << "bin " << bin.idx() << " [" << bin.lower() << ", "
-                  << bin.upper() << ") " << h.bin(bin).value()
+    for (auto xi : h.axis()) {
+        std::cout << "bin " << xi.idx() << " [" << xi.lower() << ", "
+                  << xi.upper() << ") " << h(xi).value()
                   << std::endl;
     }
 

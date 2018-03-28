@@ -10,7 +10,8 @@
 #define _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
 
 #include <boost/histogram/axis/axis.hpp>
-#include <boost/histogram/axis/bin_view.hpp>
+#include <boost/histogram/axis/interval_view.hpp>
+#include <boost/histogram/axis/value_view.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <ostream>
