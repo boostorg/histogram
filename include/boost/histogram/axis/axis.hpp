@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <boost/bimap.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
-#include <boost/histogram/axis/value_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/value_view.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/utility/string_view.hpp>
