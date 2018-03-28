@@ -39,6 +39,8 @@ int main() {
     w += weight(2);
     BOOST_TEST_EQ(w.value(), 3);
     BOOST_TEST_EQ(w.variance(), 5);
+    BOOST_TEST_EQ(w, wcount(3, 5));
+    BOOST_TEST_NE(w, wcount(3));
   }
 
   {
@@ -55,9 +57,18 @@ int main() {
   }
 
   {
+    // consistency : a weight counter increased by a real number x
+    // is the same was adding x times weight(1)
     wcount x(0);
     x += 2;
     BOOST_TEST_EQ(x, wcount(2, 2));
+  }
+
+  {
+    // automatic conversion to RealType
+    wcount x(1, 2);
+    BOOST_TEST_NE(x, 1);
+    BOOST_TEST_EQ(static_cast<double>(x), 1);
   }
 
   return boost::report_errors();
