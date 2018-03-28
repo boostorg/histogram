@@ -104,8 +104,8 @@ public:
   }
   operator RealType() const {
     // if (!has_trivial_variance())
-    //   throw std::logic_error("cannot convert weight_counter to RealType, value "
-    //                          "and variance differ");
+    //   throw std::logic_error("cannot convert weight_counter to RealType, "
+    //                          "value and variance differ");
     return w;
   }
 

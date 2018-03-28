@@ -19,8 +19,8 @@ std::ostream &operator<<(std::ostream &os, const weight_counter<T> &w) {
   os << "[" << w.value() << ", " << w.variance() << "]";
   return os;
 }
-}
-}
+} // namespace histogram
+} // namespace boost
 
 int main() {
   {

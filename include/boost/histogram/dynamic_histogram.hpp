@@ -145,7 +145,7 @@ public:
                   "more than one weight argument is not allowed");
     static_assert(n_sample::value <= 1,
                   "more than one sample argument is not allowed");
-    if (dim() != sizeof...(args)-n_weight::value - n_sample::value)
+    if (dim() != sizeof...(args) - n_weight::value - n_sample::value)
       throw std::invalid_argument(
           "fill arguments does not match histogram dimension");
     fill_impl(mpl::bool_<n_weight::value>(), mpl::bool_<n_sample::value>(),

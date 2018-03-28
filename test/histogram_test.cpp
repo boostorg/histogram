@@ -19,9 +19,9 @@
 #include <boost/mpl/int.hpp>
 #include <cstdlib>
 #include <limits>
+#include <numeric>
 #include <sstream>
 #include <vector>
-#include <numeric>
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
@@ -303,8 +303,7 @@ template <typename Type> void run_tests() {
 
   // d1w
   {
-    auto h =
-        make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2));
+    auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2));
     h.fill(-1);
     h.fill(0);
     h.fill(weight(0.5), 0);
@@ -805,7 +804,7 @@ template <typename Type> void run_tests() {
   {
     auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3));
     for (int i = 0; i < 3; ++i)
-        h.fill(i);
+      h.fill(i);
     auto a = std::vector<double>();
     std::partial_sum(h.begin(), h.end(), std::back_inserter(a));
     BOOST_TEST_EQ(a[0], 1);

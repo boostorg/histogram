@@ -196,7 +196,7 @@ public:
   template <int N>
   typename std::add_const<
       typename fusion::result_of::value_at_c<axes_type, N>::type>::type &
-      axis(mpl::int_<N>) const {
+  axis(mpl::int_<N>) const {
     static_assert(N < axes_size::value, "axis index out of range");
     return fusion::at_c<N>(axes_);
   }
@@ -204,7 +204,7 @@ public:
   /// Get N-th axis
   template <int N>
   typename fusion::result_of::value_at_c<axes_type, N>::type &
-      axis(mpl::int_<N>) {
+  axis(mpl::int_<N>) {
     static_assert(N < axes_size::value, "axis index out of range");
     return fusion::at_c<N>(axes_);
   }
