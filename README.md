@@ -179,4 +179,4 @@ The histogram is feature-complete. More than 500 individual tests make sure that
 
 As we are finalising the interface in the review process, code breaking changes of the interface are not unlikely to happen. If you want to use the library in production code, please use the [latest release](https://github.com/HDembinski/histogram/releases) instead of the master. After the library is accepted as part of Boost, the interface will be kept stable, of course.
 
-Review of the library is planned to happen in March 2018.
+Review of the library was planned to happen in March 2018, but is delayed.
