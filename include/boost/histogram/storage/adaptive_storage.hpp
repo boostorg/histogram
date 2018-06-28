@@ -463,8 +463,8 @@ public:
   // precondition: storages have same size
   adaptive_storage &operator+=(const adaptive_storage &rhs) {
     if (this == &rhs) {
-      for (auto i = 0ul, n = size(); i < n; ++i) {
-        add(i, rhs[i]); // may loose precision
+      for (decltype(size()) i = 0, n = size(); i < n; ++i) {
+        add(i, rhs[i]); // may lose precision
       }
     } else {
       apply_visitor(detail::radd_array_visitor(buffer_), rhs.buffer_);
