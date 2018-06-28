@@ -40,7 +40,9 @@ inline void lin(std::size_t &out, std::size_t &stride, const Axis &a,
   stride *= (j >= -uoflow) & (j < (a.size() + uoflow));
   j += (j < 0) * (a.size() + 2); // wrap around if in < 0
   out += j * stride;
+#ifndef _MSC_VER
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
+#endif
   stride *= a.shape();
 }
 
@@ -53,7 +55,9 @@ inline void xlin(std::size_t &out, std::size_t &stride, const Axis &a,
   // j is guaranteed to be in range [-1, bins]
   j += (j < 0) * (a.size() + 2); // wrap around if j < 0
   out += j * stride;
+#ifndef _MSC_VER
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
+#endif
   stride *= (j < a.shape()) * a.shape(); // stride == 0 indicates out-of-range
 }
 
