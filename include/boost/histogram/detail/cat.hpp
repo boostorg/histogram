@@ -9,6 +9,10 @@
 
 #include <sstream>
 
+#ifdef _MSC_VER
+#define __attribute__(A) // ignore GCC extension
+#endif
+
 namespace boost {
 namespace histogram {
 namespace detail {
