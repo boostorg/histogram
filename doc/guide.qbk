@@ -30,45 +30,15 @@ Use the factory function [funcref boost::histogram::make_static_histogram make_s
 
 Here is an example on how to use [funcref boost::histogram::make_static_histogram make_static_histogram]. You pass one or several axis instances, which define the layout of the histogram.
 
-[c++]``
-#include <boost/histogram.hpp>
-
-namespace bh = boost::histogram;
-
-int main() {
-    /*
-        create a 1d-histogram in default configuration which
-        covers the real line from -1 to 1 in 100 bins, the same
-        call with `make_dynamic_histogram` would also work
-    */
-    auto h = bh::make_static_histogram(bh::axis::regular<>(100, -1, 1));
-
-    // do something with h
-}
-``
+[import ../examples/guide_make_static_histogram.cpp]
+[guide_make_static_histogram]
 
 An axis object defines how input values are mapped to bins, which means that it defines the number of bins along that axis and a mapping function from input values to bins. If you provide one axis, the histogram is one-dimensional. If you provide two, it is two-dimensional, and so on.
 
 When you work with dynamic histograms, you can also create a sequence of axes at run-time and pass them to the factory:
 
-[c++]``
-#include <boost/histogram.hpp>
-#include <vector>
-
-namespace bh = boost::histogram;
-
-int main() {
-    // create vector of axes, axis::any is a polymorphic axis type
-    auto v = std::vector<bh::axis::any<>>();
-    v.push_back(bh::axis::regular<>(100, -1, 1));
-    v.push_back(bh::axis::integer<>(1, 7));
-
-    // create dynamic histogram (make_static_histogram be used with iterators)
-    auto h = bh::make_dynamic_histogram(v.begin(), v.end());
-
-    // do something with h
-}
-``
+[import ../examples/guide_make_dynamic_histogram.cpp]
+[guide_make_dynamic_histogram]
 
 [funcref boost::histogram::make_static_histogram make_static_histogram] cannot handle this case because a static histogram can only be constructed when the number of types of all axes are known already at compile time. While strictly speaking that is also true in this example, you could have filled the vector also at run-time, based on run-time user input.
 
@@ -88,38 +58,15 @@ The [classref boost::histogram::axis::regular regular axis] also accepts a secon
 
 In addition to the required parameters for an axis, you can assign an optional label to any axis, which helps to remember what the axis is about. Example: you have census data and you want to investigate how yearly income correlates with age, you could do:
 
-[c++]``
-#include <boost/histogram.hpp>
-
-namespace bh = boost::histogram;
-
-int main() {
-    // create a 2d-histogram with an "age" and an "income" axis
-    auto h = bh::make_static_histogram(
-            bh::axis::regular<>(20, 0, 100, "age in years"),
-            bh::axis::regular<>(20, 0, 100, "yearly income in $1000")
-        );
-
-    // do something with h
-}
-``
+[import ../examples/guide_axis_with_labels.cpp]
+[guide_axis_with_labels]
 
 Without the labels it would be difficult to remember which axis was covering which quantity, because they look the same otherwise. Labels are the only axis property that can be changed later. Axes objects with different label do not compare equal with `operator==`.
 
 By default, additional under- and overflow bins are added automatically for each axis where that makes sense. If you create an axis with 20 bins, the histogram will actually have 22 bins along that axis. The two extra bins are generally very good to have, as explained in [link histogram.rationale.uoflow the rationale]. If you are certain that the input cannot exceed the axis range, you can disable the extra bins to save memory. This is done by passing the enum value [enumref boost::histogram::axis::uoflow uoflow::off] to the axis constructor:
 
-[c++]``
-#include <boost/histogram.hpp>
-
-namespace bh = boost::histogram;
-
-int main() {
-    // create a 1d-histogram for dice throws with integer values from 1 to 6
-    auto h = bh::make_static_histogram(bh::axis::integer<>(1, 7, "eyes", bh::axis::uoflow::off));
-
-    // do something with h
-}
-``
+[import ../examples/guide_axis_with_uoflow_off.cpp]
+[guide_axis_with_uoflow_off]
 
 We use an [classref boost::histogram::axis::integer integer axis] here, because the input values are integers and we want one bin for each eye value.
 
@@ -131,60 +78,20 @@ We use an [classref boost::histogram::axis::integer integer axis] here, because 
 
 [section Fill histogram]
 
-After you created a histogram, you want to insert (possibly multi-dimensional) data. This is done with the flexible `histogram::fill(...)` method, which you typically call in a loop. Some extra parameters can be passed to the method as shown in the next example.
+After you created a histogram, you want to insert (possibly multi-dimensional) data. This is done with the flexible `histogram(...)` call, which you typically do in a loop. Some extra parameters can be passed to the method as shown in the next example.
 
-[c++]``
-#include <boost/histogram.hpp>
+[import ../examples/guide_fill_histogram.cpp]
+[guide_fill_histogram]
 
-namespace bh = boost::histogram;
+`histogram(...)` either takes `N` arguments or one container with `N` elements, where `N` is equal to the number of axes of the histogram, finds the corresponding bin, and increments the bin counter by one.
 
-int main() {
-    auto h = bh::make_dynamic_histogram(bh::axis::integer<>(0, 4),
-                                        bh::axis::regular<>(10, 0, 5));
+This library was designed to feel familiar to users of [@boost:/libs/accumulators/index.html Boost.Accumulators] and to make it compatible with `std::for_each`, that's why values are filled with `operator()`. If you have the input values in a collection, `std::for_each` fills the histogram in one line.
 
-    // fill histogram, number of arguments must be equal to number of axes
-    h.fill(0, 4.1); // increases bin counter by one
-    h.fill(3, 3.4, bh::weight(2)); // increase bin counter by 2
-    h.fill(bh::weight(2), 3, 3.4); // the same as the previous call
+`histogram(weight(x), ...)` does the same as the first call, but increments the bin counter by the value `x`. The type of `x` is not restricted, usually it is a real number. The `weight(x)` helper class must be first argument. You can freely mix calls with and without a `weight`. Calls without a `weight` act like the weight is `1`.
 
-    // a dynamic histogram also supports fills from an interator range while
-    // a static histogram does not allow it; using a range of wrong length
-    // is an error
-    std::vector<double> values = {4, 3.1};
-    h.fill(values.begin(), values.end());
-}
-``
+Why weighted increments are sometimes useful, especially in a scientific context, is explained [link histogram.rationale.weights in the rationale]. If you don't see the point, you can just ignore this type of call. This feature does not affect the performance of the histogram if you don't use it.
 
-Here is an explanation for these calls.
-
-* `histogram::fill(...)` takes `N` arguments, where `N` is equal to the number of axes of the histogram, finds the corresponding bin, and increments the bin counter by one.
-
-* `histogram::fill(..., weight(x))` does the same as the first call, but increments the bin counter by a weight `x`. The type of `x` is not restricted, but usually it is a real number. The position of the `weight` helper class is not restricted, it can appear at any place.
-
-Having more than one `weight` instance in the same call is an error. You can freely mix calls with and without a `weight`. Calls without a `weight` act like the weight is `1`.
-
-Why weighted increments are sometimes useful, mostly in a scientific context. How weights are handled is explained [link histogram.rationale.weights in the rationale]. If you don't see the point, you can just ignore this type of call, this feature does not affect the preformance of the histogram if you don't use it.
-
-[note The first call to a weighted fill internally switches the default storage from integral counters to another type, which holds two real numbers per bin, one for the sum of weights (the weighted count), and another for the sum of weights squared (the variance of the weighted count). This is not necessary for unweighted fills, because the two sums are identical is all weights are `1`. The default storage automatically optimizes this case by using only one integral number per bin.]
-
-In contrast to [@boost:/libs/accumulators/index.html Boost.Accumulators], this library asks you to write a loop yourself to pass data to the histogram, because that is the most flexible solution. If you prefer a functional programming style, you can use a lambda, as shown in this example.
-
-[c++]``
-#include <boost/histogram.hpp>
-#include <algorithm>
-#include <vector>
-
-namespace bh = boost::histogram;
-
-int main() {
-    auto h = bh::make_static_histogram(bh::axis::integer<>(0, 9));
-    std::vector<int> v{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    std::for_each(v.begin(), v.end(),
-        [&h](int x) { h.fill(x, bh::weight(2.0)); }
-    );
-    // h is now filled
-}
-``
+[note The first call to a weighted fill internally switches the default storage from integral counters to another type, which holds two real numbers per bin, one for the sum of weights (the weighted count), and another for the sum of weights squared (the variance of the weighted count). This is not necessary for unweighted fills, because the two sums are identical is all weights are `1`. The default storage automatically optimizes this case by using only one integral number per bin as long as no weights are encountered.]
 
 [endsect]
 
@@ -196,60 +103,10 @@ To access each bin, you use a multi-dimensional index, which consists of a seque
 
 The calls are demonstrated in the next example.
 
-[c++]``
-#include <boost/histogram.hpp>
-#include <iostream>
+[import ../examples/guide_access_bin_counts.cpp]
+[guide_access_bin_counts]
 
-namespace bh = boost::histogram;
-
-int main() {
-    // make histogram with 2 x 2 = 4 bins (not counting under-/overflow bins)
-    auto h = bh::make_static_histogram(
-            bh::axis::regular<>(2, -1, 1),
-            bh::axis::regular<>(2,  2, 4)
-        );
-
-    h.fill(-0.5, 2.5, bh::weight(1)); // bin index 0, 0
-    h.fill(-0.5, 3.5, bh::weight(2)); // bin index 0, 1
-    h.fill( 0.5, 2.5, bh::weight(3)); // bin index 1, 0
-    h.fill( 0.5, 3.5, bh::weight(4)); // bin index 1, 1
-
-    // access count value, number of indices must match number of axes
-    std::cout << h(0, 0).value() << " "
-              << h(0, 1).value() << " "
-              << h(1, 0).value() << " "
-              << h(1, 1).value()
-              << std::endl;
-
-    // prints: 1 2 3 4
-
-    // access count variance, number of indices must match number of axes
-    std::cout << h(0, 0).variance() << " "
-              << h(0, 1).variance() << " "
-              << h(1, 0).variance() << " "
-              << h(1, 1).variance()
-              << std::endl;
-    // prints: 1 4 9 16
-
-    // you can also make a copy of the type that holds the bin count
-    auto c11 = h(1, 1);
-    std::cout << c11.value() << " " << c11.variance() << std::endl;
-    // prints: 4 16
-
-    // a dynamic histogram also supports access via an interator range,
-    // using a range of wrong length is an error
-    auto h2 = bh::make_dynamic_histogram(
-            bh::axis::regular<>(2, -1, 1),
-            bh::axis::regular<>(2,  2, 4)
-        );
-
-    std::vector<int> idx(2);
-    idx = {0, 1};
-    std::cout << h2(idx.begin(), idx.end()).value() << std::endl;
-}
-``
-
-[note The numbers returned by `value()` and `variance()` are equal, if weighted fills are not used. The internal structure, which handles the bin counters, has been optimised for this common case. Internally only a single integral number per bin is used until a weighted fill, then the counters internally switch to storing two real numbers per bin. If the very first call to `histogram::fill` is already a weighted increment, the two real numbers per bin are allocated directly without any superfluous conversion from integral counters to double counters. This special case is efficiently handled.]
+[note The numbers returned by `value()` and `variance()` are always equal, if weighted fills are not used. The internal structure, which handles the bin counters, has been optimised for this common case. Internally only a single integral number per bin is used until a weighted fill, then the counters internally switch to storing two real numbers per bin. If the very first call to `histogram(...)` is already a weighted increment, the two real numbers per bin are allocated directly without any superfluous conversion from integral counters to double counters. This special case is efficiently handled.]
 
 [endsect]
 
@@ -272,68 +129,14 @@ Adding histograms is useful, if you want to parallelize the filling of a histogr
 
 Multiplying by a number is useful to re-weight histograms before adding them, for those who need to work with weights. Multiplying by a factor `x` has a different effect on value and variance of each bin counter. The value is multiplied by `x`, but the variance is multiplied by `x*x`. This follows from the properties of the variance, as explained in [link histogram.rationale.variance the rationale].
 
-[warning Because of behavior of the variance, adding a histogram to itself is not identical to multiplying the original histogram by two, as far as the variance is concerned.]
+[warning Because of special behavior of the variance, adding a histogram to itself is not identical to multiplying the original histogram by two, as far as the variance is concerned.]
 
 [note Scaling a histogram automatically converts the bin counters from an integral number per bin to two real numbers per bin, if that has not happened already, because value and variance are different after the multiplication.]
 
 Here is an example which demonstrates the supported operators.
 
-[c++]``
-#include <boost/histogram.hpp>
-#include <iostream>
-
-namespace bh = boost::histogram;
-
-int main() {
-    // make two histograms
-    auto h1 = bh::make_static_histogram(bh::axis::regular<>(2, -1, 1));
-    auto h2 = bh::make_static_histogram(bh::axis::regular<>(2, -1, 1));
-
-    h1.fill(-0.5);          // counts are: 1 0
-    h2.fill(0.5);           // counts are: 0 1
-
-    // add them
-    auto h3 = h1;
-    h3 += h2;               // counts are: 1 1
-
-    // adding multiple histograms at once is efficient and does not create
-    // superfluous temporaries since operator+ functions are overloaded to
-    // accept and return rvalue references where possible
-    auto h4 = h1 + h2 + h3; // counts are: 2 2
-
-    std::cout << h4(0).value() << " " << h4(1).value() << std::endl;
-    // prints: 2 2
-
-    // multiply by number
-    h4 *= 2;                // counts are: 4 4
-
-    // divide by number
-    auto h5 = h4 / 4;       // counts are: 1 1
-
-    std::cout << h5(0).value() << " " << h5(1).value() << std::endl;
-    // prints: 1 1
-
-    // compare histograms
-    std::cout << (h4 == 4 * h5) << " " << (h4 != h5) << std::endl;
-    // prints: 1 1
-
-    // note: special effect of multiplication on counter variance
-    auto h = bh::make_static_histogram(bh::axis::regular<>(2, -1, 1));
-    h.fill(-0.5); // counts are: 1 0
-    std::cout << "value    " << (2 * h)(0).value()
-              << " " << (h + h)(0).value() << "\n"
-              << "variance " << (2 * h)(0).variance()
-              << " " << (h + h)(0).variance() << std::endl;
-    // equality operator also checks variances, so the statement is false
-    std::cout << (h + h == 2 * h) << std::endl;
-
-    /* prints:
-        value    2 2
-        variance 4 2
-        0
-    */
-}
-``
+[import ../examples/guide_histogram_operators.cpp]
+[guide_histogram_operators]
 
 [endsect]
 
@@ -345,51 +148,8 @@ For this purpose use the `histogram::reduce_to(...)` method, which returns a new
 
 Here is an example to illustrates this.
 
-[c++]``
-#include <boost/histogram.hpp>
-#include <iostream>
-
-namespace bh = boost::histogram;
-
-int main() {
-    using namespace bh::literals; // enables _c suffix
-
-    // make a 2d histogram
-    auto h = bh::make_static_histogram(bh::axis::regular<>(4, -1, 1),
-                                       bh::axis::integer<>(0, 4));
-
-    h.fill(-0.9, 0);
-    h.fill(0.9, 3);
-    h.fill(0.1, 2);
-
-    auto hr0 = h.reduce_to(0_c); // keep only first axis
-    auto hr1 = h.reduce_to(1_c); // keep only second axis
-
-    /*
-        reduce does not remove counts; returned histograms are summed over
-        the removed axes, so h, hr0, and hr1 have same number of total counts
-    */
-    std::cout << h.sum().value() << " "
-              << hr0.sum().value() << " "
-              << hr1.sum().value() << std::endl;
-    // prints: 3 3 3
-
-    for (auto yi : h.axis(1_c)) {
-        for (auto xi : h.axis(0_c)) {
-            std::cout << h(xi, yi).value() << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    for (auto xi : hr0.axis())
-        std::cout << hr0(xi).value() << " ";
-    std::cout << std::endl;
-
-    for (auto yi : hr1.axis())
-        std::cout << hr1(yi).value() << " ";
-    std::cout << std::endl;
-}
-``
+[import ../examples/guide_histogram_reduction.cpp]
+[guide_histogram_reduction]
 
 [endsect]
 
@@ -397,43 +157,8 @@ int main() {
 
 Simple ostream operators are shipped with the library, which are internally used by the Python interface bindings. These give text representations of axis and histogram configurations, but do not show the histogram content. For users, the builtin streaming operators may be useful for debugging. They are not included by the super header `#include <boost/histogram.hpp>`, so that users can use their own implementations. The following example shows the effect of output streaming.
 
-[c++]``
-#include <boost/histogram.hpp>
-#include <boost/histogram/ostream_operators.hpp>
-#include <iostream>
-
-namespace bh = boost::histogram;
-
-int main() {
-    namespace axis = boost::histogram::axis;
-
-    enum { A, B, C };
-
-    auto h = bh::make_static_histogram(
-        axis::regular<>(2, -1, 1, "regular1", axis::uoflow::off),
-        axis::regular<double, axis::transform::log>(2, 1, 10, "regular2"),
-        axis::circular<>(4, 0.1, 1.0, "polar"),
-        axis::variable<>({-1, 0, 1}, "variable", axis::uoflow::off),
-        axis::category<>({A, B, C}, "category"),
-        axis::integer<>(-1, 1, "integer", axis::uoflow::off)
-    );
-
-    std::cout << h << std::endl;
-
-    /* prints:
-
-    histogram(
-      regular(2, -1, 1, label='regular1', uoflow=False),
-      regular_log(2, 1, 10, label='regular2'),
-      circular(4, phase=0.1, perimeter=1, label='polar'),
-      variable(-1, 0, 1, label='variable', uoflow=False),
-      category(0, 1, 2, label='category'),
-      integer(-1, 1, label='integer', uoflow=False),
-    )
-
-    */
-}
-``
+[import ../examples/guide_histogram_streaming.cpp]
+[guide_histogram_streaming]
 
 [endsect]
 
@@ -441,46 +166,8 @@ int main() {
 
 The library supports serialization via [@boost:/libs/serialization/index.html Boost.Serialization]. The serialization machinery is used in the Python module to enable pickling of histograms. The streaming code is not included by the super header `#include <boost/histogram.hpp>`, so that the library can be used without having Boost.Serialization installed.
 
-[c++]``
-#include <boost/histogram.hpp>
-#include <boost/histogram/serialization.hpp> // includes serialization code
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <sstream>
-
-namespace bh = boost::histogram;
-
-int main() {
-    auto a = bh::make_static_histogram(bh::axis::regular<>(3, -1, 1, "r"),
-                                       bh::axis::integer<>(0, 2, "i"));
-    a.fill(0.5, 1);
-
-    std::string buf; // holds persistent representation
-
-    // store histogram
-    {
-      std::ostringstream os;
-      boost::archive::text_oarchive oa(os);
-      oa << a;
-      buf = os.str();
-    }
-
-    auto b = decltype(a)(); // create a default-constructed second histogram
-
-    std::cout << "before restore " << (a == b) << std::endl;
-    // prints: before restore 0
-
-    // load histogram
-    {
-      std::istringstream is(buf);
-      boost::archive::text_iarchive ia(is);
-      ia >> b;
-    }
-
-    std::cout << "after restore " << (a == b) << std::endl;
-    // prints: after restore 1
-}
-``
+[import ../examples/guide_histogram_serialization.cpp]
+[guide_histogram_serialization]
 
 [endsect]
 
@@ -504,36 +191,8 @@ The documentation of the Python interface is best explored from within the Pytho
 
 Here is an example of the Python module in action.
 
-[python]``
-import histogram as hg
-
-# make 1-d histogram with 5 logarithmic bins from 1e0 to 1e5
-h = hg.histogram(hg.axis.regular_log(5, 1e0, 1e5, "x"))
-
-# fill histogram with numbers
-for x in (2e0, 2e1, 2e2, 2e3, 2e4):
-    h.fill(x, weight=4) # increment bin counter by 4
-
-# iterate over bins and access bin counter
-for idx, (lower, upper) in enumerate(h.axis(0)):
-    print "bin {0} x in [{1}, {2}): {3} +/- {4}".format(
-        idx, lower, upper, h(idx).value, h(idx).variance ** 0.5)
-
-# under- and overflow bins are accessed like in C++
-lo, up = h.axis(0)[-1]
-print "underflow [{0}, {1}): {2} +/- {3}".format(lo, up, h(-1).value, h(-1).variance)
-lo, up = h.axis(0)[5]
-print "overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h(5).value, h(5).variance)
-
-# prints:
-# bin 0 x in [1.0, 10.0): 4.0 +/- 4.0
-# bin 1 x in [10.0, 100.0): 4.0 +/- 4.0
-# bin 2 x in [100.0, 1000.0): 4.0 +/- 4.0
-# bin 3 x in [1000.0, 10000.0): 4.0 +/- 4.0
-# bin 4 x in [10000.0, 100000.0): 4.0 +/- 4.0
-# underflow [0.0, 1.0): 0.0 +/- 0.0
-# overflow  [100000.0, inf): 0.0 +/- 0.0
-``
+[import ../examples/guide_python_histogram.py]
+[guide_python_histogram]
 
 [endsect]
 
@@ -541,91 +200,15 @@ print "overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h(5).value, h(5).varian
 
 Looping over a large collection of numbers in Python to fill a histogram is very slow. If the Python module was build with Numpy support, the input values can be passed as Numpy arrays. This is very fast and convenient. The performance is almost as good as using C++ directly, and usually better than Numpy's histogram functions, see the [link histogram.benchmarks benchmark]. Here is an example to illustrate:
 
-[python]``
-import histogram as hg
-import numpy as np
+[import ../examples/guide_numpy_support.py]
+[guide_numpy_support]
 
-# create 2d-histogram with two axes with 10 equidistant bins from -3 to 3
-h = hg.histogram(hg.axis.regular(10, -3, 3, "x"),
-                 hg.axis.regular(10, -3, 3, "y"))
-
-# generate some numpy arrays with data to fill into histogram,
-# in this case normal distributed random numbers in x and y
-x = np.random.randn(1000)
-y = 0.5 * np.random.randn(1000)
-
-# fill histogram with numpy arrays, this is very fast
-h.fill(x, y) # call looks the same as if x, y were values
-
-# get representations of the bin edges as Numpy arrays; this representation
-# differs from `list(h.axis(0))` as explained in the next example
-x = np.array(h.axis(0))
-y = np.array(h.axis(1))
-
-# creates a view of the counts (no copy involved)
-count_matrix = np.asarray(h)
-
-# cut off the under- and overflow bins to not confuse matplotib (no copy)
-reduced_count_matrix = count_matrix[:-2,:-2]
-
-try:
-    # draw the count matrix
-    import matplotlib.pyplot as plt
-    plt.pcolor(x, y, reduced_count_matrix.T)
-    plt.xlabel(h.axis(0).label)
-    plt.ylabel(h.axis(1).label)
-    plt.savefig("example_2d_python.png")
-except ImportError:
-    # ok, no matplotlib, then just print the full count matrix
-    print count_matrix
-
-    # output of the print looks something like this, the two right-most rows
-    # and two down-most columns represent under-/overflow bins
-    # [[ 0  0  0  1  5  0  0  1  0  0  0  0]
-    #  [ 0  0  0  1 17 11  6  0  0  0  0  0]
-    #  [ 0  0  0  5 31 26  4  1  0  0  0  0]
-    #  [ 0  0  3 20 59 62 26  4  0  0  0  0]
-    #  [ 0  0  1 26 96 89 16  1  0  0  0  0]
-    #  [ 0  0  4 21 86 84 20  1  0  0  0  0]
-    #  [ 0  0  1 24 71 50 15  2  0  0  0  0]
-    #  [ 0  0  0  6 26 37  7  0  0  0  0  0]
-    #  [ 0  0  0  0 11 10  2  0  0  0  0  0]
-    #  [ 0  0  0  1  2  3  1  0  0  0  0  0]
-    #  [ 0  0  0  0  0  2  0  0  0  0  0  0]
-    #  [ 0  0  0  0  0  1  0  0  0  0  0  0]]
-``
-
-[note The `fill(...)` method accepts not only Numpy arrays as arguments, but also any sequence that can be converted into a Numpy array with `dtype=float`. The best performance is achieved, if numpy arrays are used with dtype `float` directly, so that no conversion happens.]
+[note `histogram(...)` accepts any sequence that can be converted into a Numpy array with `dtype=float` for convenience. To achieve the best performance, use numpy arrays with dtype `float` as input to avoid a conversion.]
 
 The conversion of an axis to a Numpy array has been optimised for interoperability with other Numpy functions and matplotlib. For an axis with `N` bins, a sequence of bin edges is generated of length `N+1`. The Numpy array is a unique ordered sequence of all bin edges, including the upper edge of the last bin. The following code illustrates how the sequence is constructed.
 
-[python]``
-import histogram as hg
-import numpy as np
-
-ax = hg.axis.regular(5, 0, 1)
-xedge1 = np.array(ax) # this is equivalent to...
-xedge2 = []
-for idx, (lower, upper) in enumerate(ax):
-    xedge2.append(lower)
-    if idx == len(ax)-1:
-        xedge2.append(upper)
-
-print xedge1
-print xedge2
-
-# prints:
-# [ 0.   0.2  0.4  0.6  0.8  1. ]
-# [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-
-# sequences constructed from an axis use its iterator, the result differs
-xedge3 = list(ax)
-
-print xedge3
-
-# prints:
-# [(0., 0.2), (0.2, 0.4), (0.4, 0.6), (0.8, 1.0)]
-``
+[import ../examples/guide_python_axis_representation.py]
+[guide_python_axis_representation]
 
 Using a Numpy array to view the count matrix reveals an implementation detail of how under- and overflow bins are stored internally. For a 1-d histogram with 5 bins, the counter structure looks like this:
 
@@ -641,31 +224,8 @@ It is very easy to crop the extra counters by slicing each dimension with the sl
 
 Histograms in Python support the same operators as in C++. In addition, histograms support the Pickle protocol. An example:
 
-[python]``
-import histogram as hg
-import cPickle
-
-h1 = hg.histogram(hg.axis.regular(2, -1, 1))
-h2 = hg.histogram(h1) # creates copy
-h1.fill(-0.5)
-h2.fill(0.5)
-
-# arithmetic operators (see performance note below)
-h3 = h1 + h2
-h4 = h3 * 2
-
-print h4(0).value, h4(1).value
-# prints: 2.0 2.0
-
-# now save the histogram
-with open("h4_saved.pkl", "w") as f:
-    cPickle.dump(h4, f)
-with open("h4_saved.pkl", "r") as f:
-    h5 = cPickle.load(f)
-
-print h4 == h5
-# prints: True
-``
+[import ../examples/guide_histogram_pickle.py]
+[guide_histogram_pickle]
 
 [note Python has no concept of rvalue references and therefore cannot avoid creating temporary objects in arithmetic operations like C++ can. A statement `h3 = h1 + h2` is equivalent to `tmp = hg.histogram(h1); tmp += h2; h3 = hg.histogram(tmp)`, which amounts to two allocations, one in the first and one in the last copy-assignment, while only one allocation is really necessary.
 
@@ -685,48 +245,13 @@ Here is an example, consisting of a C++ part, which needs be compiled as a share
 
 C++ code that is compiled into a shared library.
 
-[c++]``
-#include <boost/python.hpp>
-#include <boost/histogram.hpp>
-
-namespace bh = boost::histogram;
-namespace bp = boost::python;
-
-// function that runs in C++ and accepts reference to dynamic histogram
-void process(bh::dynamic_histogram<>& h) {
-  // fill histogram, in reality this would be arbitrarily complex code
-  for (int i = 0; i < 4; ++i)
-      h.fill(0.25 * i, i);
-}
-
-// a minimal Python module, which exposes the process function to Python
-BOOST_PYTHON_MODULE(cpp_filler) {
-  bp::def("process", process);
-}
-``
+[import ../examples/guide_mixed_cpp_python.cpp]
+[guide_mixed_cpp_python_part_cpp]
 
 Python script which uses the shared library.
 
-[python]``
-import histogram as bh
-import cpp_filler
-
-h = bh.histogram(bh.axis.regular(4, 0, 1),
-                 bh.axis.integer(0, 4))
-
-cpp_filler.process(h) # histogram is filled with input values in C++
-
-for iy, y in enumerate(h.axis(1)):
-    for ix, x in enumerate(h.axis(0)):
-        print h(ix, iy).value,
-    print
-
-# prints:
-# 1.0 0.0 0.0 0.0
-# 0.0 1.0 0.0 0.0
-# 0.0 0.0 1.0 0.0
-# 0.0 0.0 0.0 1.0
-``
+[import ../examples/guide_mixed_cpp_python.py]
+[guide_mixed_cpp_python_part_py]
 
 [endsect]
 
@@ -742,46 +267,8 @@ In C++, users can implement their own axis class without touching any library co
 
 The simplest way to make a custom axis is to derive from a builtin class. Here is a contrieved example of a custom axis that inherits from the [classref boost::histogram::axis::integer integer axis] and accepts c-strings representing numbers.
 
-[c++]``
-#include <boost/histogram.hpp>
-#include <iostream>
-
-namespace bh = boost::histogram;
-
-// custom axis, which adapts builtin integer axis
-struct custom_axis : public bh::axis::integer<> {
-    using value_type = const char*; // type that is fed to the axis
-
-    using integer::integer; // inherit ctors of base
-
-    // the customization point
-    // - accept const char* and convert to int
-    // - then call index method of base class
-    int index(value_type s) const {
-      return integer::index(std::atoi(s));
-    }
-};
-
-int main() {
-    auto h = bh::make_static_histogram(custom_axis(0, 3));
-    h.fill("-10");
-    h.fill("0");
-    h.fill("1");
-    h.fill("9");
-
-    for (auto xi : h.axis()) {
-        std::cout << "bin " << xi.idx() << " [" << xi.lower() << ", "
-                  << xi.upper() << ") " << h(xi).value()
-                  << std::endl;
-    }
-
-    /* prints:
-        bin 0 [0, 1) 1
-        bin 1 [1, 2] 1
-        bin 2 [2, 3] 0
-    */
-}
-``
+[import ../examples/guide_custom_axis.cpp]
+[guide_custom_axis]
 
 [note The axis types available in Python cannot be changed without changing library code and recompiling the library.]
 
@@ -797,21 +284,8 @@ If you work exclusively with weighted fills, [classref boost::histogram::array_s
 
 Here is an example of a histogram construced with an alternative storage policy.
 
-[c++]``
-#include <boost/histogram.hpp>
-#include <boost/histogram/storage/array_storage.hpp>
-
-namespace bh = boost::histogram;
-
-int main() {
-    // create static histogram with array_storage, using int as counter type
-    auto h = bh::make_static_histogram_with<bh::array_storage<int>>(
-            bh::axis::regular<>(10, 0, 1)
-        );
-
-    // do something with h
-}
-``
+[import ../examples/guide_custom_storage.cpp]
+[guide_custom_storage]
 
 [warning The guarantees regarding protection against overflow and count capping are only valid, if the default [classref boost::histogram::adaptive_storage adaptive_storage] is used. If you change the storage policy, you need know what you are doing.]
 

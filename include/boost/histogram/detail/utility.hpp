@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_DETAIL_UTILITY_HPP_
 
 #include <algorithm>
+#include <boost/assert.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/utility/string_view.hpp>
 #include <ostream>
@@ -34,25 +35,8 @@ inline void lin(std::size_t &out, std::size_t &stride, const Axis &a,
                 int j) noexcept {
   // the following is highly optimized code that runs in a hot loop;
   // please measure the performance impact of changes
-  const int uoflow = a.uoflow();
-  // set stride to zero if 'j' is not in range,
-  // this communicates the out-of-range condition to the caller
-  stride *= (j >= -uoflow) & (j < (a.size() + uoflow));
-  j += (j < 0) * (a.size() + 2); // wrap around if in < 0
-  out += j * stride;
-#ifndef _MSC_VER
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-#endif
-  stride *= a.shape();
-}
-
-template <typename Axis>
-inline void xlin(std::size_t &out, std::size_t &stride, const Axis &a,
-                 const typename Axis::value_type &x) noexcept {
-  // the following is highly optimized code that runs in a hot loop;
-  // please measure the performance impact of changes
-  int j = a.index(x);
-  // j is guaranteed to be in range [-1, bins]
+  BOOST_ASSERT_MSG(-1 <= j && j <= a.size(),
+                   "index not in range [-1, size], check your logic");
   j += (j < 0) * (a.size() + 2); // wrap around if j < 0
   out += j * stride;
 #ifndef _MSC_VER

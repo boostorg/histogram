@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/config.hpp>
+#include <boost/assert.hpp>
 #include <boost/histogram/arithmetic_operators.hpp>
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/axis.hpp>
@@ -34,6 +35,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
+#include <utility>
 
 // forward declaration for serialization
 namespace boost {
@@ -75,7 +77,7 @@ public:
     storage_ = Storage(bincount_from_axes());
   }
 
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
+  template <typename Iterator, typename = detail::requires_iterator<Iterator>>
   histogram(Iterator begin, Iterator end) : axes_(std::distance(begin, end)) {
     std::copy(begin, end, axes_.begin());
     storage_ = Storage(bincount_from_axes());
@@ -136,69 +138,67 @@ public:
     return *this;
   }
 
-  template <typename... Args> void fill(const Args &... args) {
-    using n_weight =
-        typename mpl::count_if<mpl::vector<Args...>, detail::is_weight<mpl::_>>;
-    using n_sample =
-        typename mpl::count_if<mpl::vector<Args...>, detail::is_sample<mpl::_>>;
-    static_assert(n_weight::value <= 1,
-                  "more than one weight argument is not allowed");
-    static_assert(n_sample::value <= 1,
-                  "more than one sample argument is not allowed");
-    if (dim() != sizeof...(args) - n_weight::value - n_sample::value)
-      throw std::invalid_argument(
-          "fill arguments does not match histogram dimension");
-    fill_impl(mpl::bool_<n_weight::value>(), mpl::bool_<n_sample::value>(),
-              args...);
-  }
-
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end) {
-    if (dim() != std::distance(begin, end))
-      throw std::invalid_argument(
-          "fill iterator range does not match histogram dimension");
+  template <typename... Ts> void operator()(Ts&&... ts) {
+    // case with one argument is ambiguous, is specialized below
+    BOOST_ASSERT_MSG(dim() == sizeof...(Ts),
+                     "fill arguments does not match histogram dimension "
+                     "(did you use weight() in the wrong place?)");
     std::size_t idx = 0, stride = 1;
-    xlin_iter(idx, stride, begin);
+    xlin<0>(idx, stride, std::forward<Ts>(ts)...);
     if (stride) {
-      storage_.increase(idx);
+      fill_storage_impl(idx);
     }
   }
 
-  template <typename Iterator, typename T,
-            typename = detail::is_iterator<Iterator>>
-  void fill(Iterator begin, Iterator end, const detail::weight_t<T> &w) {
-    if (dim() != std::distance(begin, end))
-      throw std::invalid_argument(
-          "fill iterator range does not match histogram dimension");
-    std::size_t idx = 0, stride = 1;
-    xlin_iter(idx, stride, begin);
-    if (stride) {
-      storage_.add(idx, w);
+  template <typename T> void operator()(T && t) {
+    // check whether T is unpackable
+    if (dim() == 1) {
+      fill_impl(detail::no_container_tag(), std::forward<T>(t));
+    } else {
+      fill_impl(detail::classify_container_t<T>(), std::forward<T>(t));
     }
   }
 
-  template <typename... Indices>
-  const_reference operator()(Indices &&... indices) const {
-    if (dim() != sizeof...(indices))
-      throw std::invalid_argument(
-          "value arguments does not match histogram dimension");
+  template <typename W, typename... Ts> void operator()(detail::weight<W>&& w,
+                                                        Ts&&... ts) {
+    // case with one argument is ambiguous, is specialized below
+    BOOST_ASSERT_MSG(dim() == sizeof...(Ts),
+                     "fill arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin<0>(idx, stride, indices...);
-    if (stride == 0)
-      throw std::out_of_range("invalid index");
+    xlin<0>(idx, stride, std::forward<Ts>(ts)...);
+    if (stride) {
+      fill_storage_impl(idx, std::move(w));
+    }
+  }
+
+  template <typename W, typename T>
+  void operator()(detail::weight<W>&& w, T&& t) {
+    // check whether T is unpackable
+    if (dim() == 1) {
+      fill_impl(detail::no_container_tag(), std::forward<T>(t), std::move(w));
+    } else {
+      fill_impl(detail::classify_container_t<T>(), std::forward<T>(t), std::move(w));
+    }
+  }
+
+  template <typename... Ts>
+  const_reference bin(Ts &&... ts) const {
+    // case with one argument is ambiguous, is specialized below
+    BOOST_ASSERT_MSG(dim() == sizeof...(Ts),
+                     "bin arguments does not match histogram dimension");
+    std::size_t idx = 0, stride = 1;
+    lin<0>(idx, stride, static_cast<int>(ts)...);
+    BOOST_ASSERT_MSG(stride > 0, "invalid index");
     return storage_[idx];
   }
 
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
-  const_reference operator()(Iterator begin, Iterator end) const {
-    if (dim() != std::distance(begin, end))
-      throw std::invalid_argument(
-          "iterator range in operator() does not match histogram dimension");
-    std::size_t idx = 0, stride = 1;
-    lin_iter(idx, stride, begin);
-    if (stride == 0)
-      throw std::out_of_range("invalid index");
-    return storage_[idx];
+  template <typename T>
+  const_reference bin(T&&t) const {
+    // check whether T is unpackable
+    if (dim() == 1)
+      return bin_impl(detail::no_container_tag(), std::forward<T>(t));
+    else
+      return bin_impl(detail::classify_container_t<T>(), std::forward<T>(t));
   }
 
   /// Number of axes (dimensions) of histogram
@@ -206,16 +206,6 @@ public:
 
   /// Total number of bins in the histogram (including underflow/overflow)
   std::size_t bincount() const noexcept { return storage_.size(); }
-
-  /// Sum of all counts in the histogram
-  element_type sum() const noexcept {
-    element_type result(0);
-    // don't use bincount() here, so sum() still works in a moved-from object
-    for (std::size_t i = 0, n = storage_.size(); i < n; ++i) {
-      result += storage_[i];
-    }
-    return result;
-  }
 
   /// Reset bin counters to zero
   void reset() { storage_ = Storage(bincount_from_axes()); }
@@ -258,7 +248,7 @@ public:
   }
 
   /// Return a lower dimensional histogram
-  template <typename Iterator, typename = detail::is_iterator<Iterator>>
+  template <typename Iterator, typename = detail::requires_iterator<Iterator>>
   histogram reduce_to(Iterator begin, Iterator end) const {
     std::vector<bool> b(dim(), false);
     for (; begin != end; ++begin)
@@ -267,11 +257,11 @@ public:
   }
 
   const_iterator begin() const noexcept {
-    return const_iterator(*this, storage_, true);
+    return const_iterator(*this, storage_, 0);
   }
 
   const_iterator end() const noexcept {
-    return const_iterator(*this, storage_);
+    return const_iterator(*this, storage_, storage_.size());
   }
 
 private:
@@ -284,34 +274,87 @@ private:
     return v.value;
   }
 
-  template <typename... Args>
-  inline void fill_impl(mpl::false_, mpl::false_, const Args &... args) {
+  template <typename T>
+  void fill_storage_impl(std::size_t idx, detail::weight<T> && w) {
+    storage_.add(idx, w);
+  }
+
+  void fill_storage_impl(std::size_t idx) {
+    storage_.increase(idx);
+  }
+
+  template <typename T, typename... Ts>
+  void fill_impl(detail::dynamic_container_tag, T && t, Ts&&... ts) {
+    BOOST_ASSERT_MSG(dim() == std::distance(std::begin(t), std::end(t)),
+                     "fill container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    xlin<0>(idx, stride, args...);
+    xlin_iter(idx, stride, std::begin(t));
     if (stride) {
-      storage_.increase(idx);
+      fill_storage_impl(idx, std::forward<Ts>(ts)...);
     }
   }
 
-  template <typename... Args>
-  inline void fill_impl(mpl::true_, mpl::false_, const Args &... args) {
+  template <typename T, typename... Ts>
+  void fill_impl(detail::static_container_tag, T && t, Ts&&... ts) {
+    BOOST_ASSERT_MSG(dim() == detail::size_of<T>::value,
+                     "fill container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    typename mpl::deref<typename mpl::find_if<
-        mpl::vector<Args...>, detail::is_weight<mpl::_>>::type>::type w;
-    wxlin<0>(idx, stride, w, args...);
+    xlin_get(mpl::int_<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
     if (stride) {
-      storage_.add(idx, w);
+      fill_storage_impl(idx, std::forward<Ts>(ts)...);
     }
   }
 
-  template <typename... Args>
-  inline void fill_impl(mpl::false_, mpl::true_, const Args &... args) {
-    // not implemented
+  template <typename T, typename... Ts>
+  void fill_impl(detail::no_container_tag, T && t, Ts&&... ts) {
+    BOOST_ASSERT_MSG(dim() == 1,
+                     "fill argument does not match histogram dimension");
+    std::size_t idx = 0, stride = 1;
+    xlin<0>(idx, stride, t);
+    if (stride) {
+      fill_storage_impl(idx, std::forward<Ts>(ts)...);
+    }
   }
 
-  template <typename... Args>
-  inline void fill_impl(mpl::true_, mpl::true_, const Args &... args) {
-    // not implemented
+  template <typename T>
+  const_reference bin_impl(detail::dynamic_container_tag, T && t) const {
+    BOOST_ASSERT_MSG(dim() == std::distance(std::begin(t), std::end(t)),
+                     "bin container does not match histogram dimension");
+    std::size_t idx = 0, stride = 1;
+    lin_iter(idx, stride, std::begin(t));
+    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    return storage_[idx];
+  }
+
+  template <typename T>
+  const_reference bin_impl(detail::static_container_tag, T && t) const {
+    BOOST_ASSERT_MSG(dim() == detail::size_of<T>::value,
+                     "bin container does not match histogram dimension");
+    std::size_t idx = 0, stride = 1;
+    lin_get(mpl::int_<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
+    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    return storage_[idx];
+  }
+
+  template <typename T>
+  typename std::enable_if<std::is_convertible<T, int>::value, const_reference>::type
+  bin_impl(detail::no_container_tag, T && t) const {
+    BOOST_ASSERT_MSG(dim() == 1,
+                     "bin argument does not match histogram dimension");
+    std::size_t idx = 0, stride = 1;
+    lin<0>(idx, stride, static_cast<int>(t));
+    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    return storage_[idx];
+  }
+
+  template <typename T>
+  typename std::enable_if<!(std::is_convertible<T, int>::value), const_reference>::type
+  bin_impl(detail::no_container_tag, T && t) const {
+    BOOST_ASSERT_MSG(dim() == 1,
+                     "bin argument does not match histogram dimension");
+    BOOST_ASSERT_MSG(false,
+                     "bin argument not convertible to int");
+    return storage_[0];
   }
 
   struct lin_visitor : public static_visitor<void> {
@@ -328,11 +371,11 @@ private:
   template <unsigned D>
   inline void lin(std::size_t &, std::size_t &) const noexcept {}
 
-  template <unsigned D, typename First, typename... Rest>
-  inline void lin(std::size_t &idx, std::size_t &stride, const First &x,
-                  const Rest &... rest) const noexcept {
-    apply_visitor(lin_visitor{idx, stride, static_cast<int>(x)}, axes_[D]);
-    lin<D + 1>(idx, stride, rest...);
+  template <unsigned D, typename... Ts>
+  inline void lin(std::size_t &idx, std::size_t &stride, int x,
+                  Ts... ts) const noexcept {
+    apply_visitor(lin_visitor{idx, stride, x}, axes_[D]);
+    lin<D + 1>(idx, stride, ts...);
   }
 
   template <typename Value> struct xlin_visitor : public static_visitor<void> {
@@ -346,7 +389,7 @@ private:
     }
 
     template <typename Axis> void impl(std::true_type, const Axis &a) const {
-      detail::xlin(idx, stride, a, val);
+      detail::lin(idx, stride, a, a.index(val));
     }
 
     template <typename Axis> void impl(std::false_type, const Axis &) const {
@@ -359,31 +402,11 @@ private:
 
   template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const {}
 
-  template <unsigned D, typename First, typename... Rest>
-  inline void xlin(std::size_t &idx, std::size_t &stride, const First &first,
-                   const Rest &... rest) const {
-    apply_visitor(xlin_visitor<First>{idx, stride, first}, axes_[D]);
-    xlin<D + 1>(idx, stride, rest...);
-  }
-
-  template <unsigned D, typename Weight>
-  inline void wxlin(std::size_t &, std::size_t &, Weight &) const {}
-
-  // enable_if needed, because gcc thinks the overloads are ambiguous
-  template <unsigned D, typename Weight, typename First, typename... Rest>
-  inline typename std::enable_if<!(detail::is_weight<First>::value)>::type
-  wxlin(std::size_t &idx, std::size_t &stride, Weight &w, const First &first,
-        const Rest &... rest) const {
-    apply_visitor(xlin_visitor<First>{idx, stride, first}, axes_[D]);
-    wxlin<D + 1>(idx, stride, w, rest...);
-  }
-
-  template <unsigned D, typename Weight, typename T, typename... Rest>
-  inline void wxlin(std::size_t &idx, std::size_t &stride, Weight &w,
-                    const detail::weight_t<T> &first,
-                    const Rest &... rest) const {
-    w = first;
-    wxlin<D>(idx, stride, w, rest...);
+  template <unsigned D, typename T, typename... Ts>
+  inline void xlin(std::size_t &idx, std::size_t &stride, T &&t,
+                    Ts &&... ts) const {
+    apply_visitor(xlin_visitor<T>{idx, stride, t}, axes_[D]);
+    xlin<(D+1)>(idx, stride, std::forward<Ts>(ts)...);
   }
 
   template <typename Iterator>
@@ -401,6 +424,25 @@ private:
       apply_visitor(xlin_visitor<decltype(*iter)>{idx, stride, *iter}, a);
       ++iter;
     }
+  }
+
+  template <typename T> void xlin_get(mpl::int_<0>, std::size_t&, std::size_t &, T&&t) const {}
+
+  template <int N, typename T> void xlin_get(mpl::int_<N>, std::size_t& idx,
+    std::size_t & stride, T&&t) const {
+    constexpr unsigned D = detail::size_of<T>::value - N;
+    apply_visitor(xlin_visitor<detail::type_of<D, T>>{idx, stride, std::get<D>(t)}, axes_[D]);
+    xlin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));
+  }
+
+  template <typename T> void lin_get(mpl::int_<0>, std::size_t& ,
+    std::size_t & , T&&) const {}
+
+  template <int N, typename T> void lin_get(mpl::int_<N>, std::size_t& idx,
+    std::size_t & stride, T&&t) const {
+    constexpr unsigned D = detail::size_of<T>::value - N;
+    apply_visitor(lin_visitor{idx, stride, static_cast<int>(std::get<D>(t))}, axes_[D]);
+    lin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));
   }
 
   histogram reduce_impl(const std::vector<bool> &b) const {
@@ -456,7 +498,7 @@ make_dynamic_histogram_with(Axes &&... axes) {
                    Storage>(std::forward<Axes>(axes)...);
 }
 
-template <typename Iterator, typename = detail::is_iterator<Iterator>>
+template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 histogram<dynamic_tag,
           detail::union_t<axis::builtins, typename Iterator::value_type::types>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
@@ -466,7 +508,7 @@ make_dynamic_histogram(Iterator begin, Iterator end) {
       begin, end);
 }
 
-template <typename Iterator, typename = detail::is_iterator<Iterator>>
+template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 histogram<dynamic_tag,
           detail::union_t<axis::builtins, typename Iterator::value_type::types>,
           array_storage<weight_counter<double>>>
@@ -478,7 +520,7 @@ make_dynamic_weighted_histogram(Iterator begin, Iterator end) {
 }
 
 template <typename Storage, typename Iterator,
-          typename = detail::is_iterator<Iterator>>
+          typename = detail::requires_iterator<Iterator>>
 histogram<dynamic_tag,
           detail::union_t<axis::builtins, typename Iterator::value_type::types>,
           Storage>

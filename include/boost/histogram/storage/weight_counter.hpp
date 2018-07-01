@@ -37,6 +37,7 @@ public:
     return *this;
   }
 
+  // TODO: explain why this is needed
   weight_counter &operator+=(const RealType &x) {
     w += x;
     w2 += x;
@@ -51,7 +52,7 @@ public:
   }
 
   template <typename T>
-  weight_counter &operator+=(const detail::weight_t<T> &rhs) {
+  weight_counter &operator+=(const detail::weight<T> &rhs) {
     const auto x = static_cast<RealType>(rhs.value);
     w += x;
     w2 += x * x;
@@ -125,6 +126,23 @@ bool operator==(const T &t, const weight_counter<U> &w) {
 template <typename T, typename U>
 bool operator!=(const T &t, const weight_counter<U> &w) {
   return !(w == t);
+}
+
+template <typename T>
+weight_counter<T>& operator+(const weight_counter<T>& a, const weight_counter<T>& b) {
+  weight_counter<T> c = a;
+  return c += b;
+}
+
+template <typename T>
+weight_counter<T>&& operator+(weight_counter<T>&& a, const weight_counter<T>& b) {
+  a += b;
+  return std::move(a);
+}
+
+template <typename T>
+weight_counter<T>&& operator+(const weight_counter<T>& a, weight_counter<T>&& b) {
+  return operator+(std::move(b), a);
 }
 
 } // namespace histogram

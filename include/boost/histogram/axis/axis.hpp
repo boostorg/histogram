@@ -534,7 +534,7 @@ public:
   }
 
   template <typename Iterator,
-            typename = ::boost::histogram::detail::is_iterator<Iterator>>
+            typename = ::boost::histogram::detail::requires_iterator<Iterator>>
   category(Iterator begin, Iterator end, string_view label = {})
       : base_type(std::distance(begin, end), label), map_(new map_type()) {
     int index = 0;

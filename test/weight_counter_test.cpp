@@ -41,6 +41,10 @@ int main() {
     BOOST_TEST_EQ(w.variance(), 5);
     BOOST_TEST_EQ(w, wcount(3, 5));
     BOOST_TEST_NE(w, wcount(3));
+
+    w += wcount(1, 2);
+    BOOST_TEST_EQ(w.value(), 4);
+    BOOST_TEST_EQ(w.variance(), 7);
   }
 
   {

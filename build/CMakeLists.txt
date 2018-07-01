@@ -98,9 +98,6 @@ elseif(CMAKE_BUILD_TYPE MATCHES release)
   endif()
 endif()
 
-# sync examples in documentation with example folder
-add_custom_target(sync_examples ALL COMMAND python ${PROJECT_SOURCE_DIR}/../doc/sync_code.py)
-
 # checks
 if(BUILD_CHECKS)
   add_executable(axis_size ../test/axis_size.cpp)
@@ -143,7 +140,6 @@ foreach(SRC IN ITEMS ${TEST_SOURCES})
       endif()
     else()
       add_executable(${BASENAME} ${SRC})
-      add_dependencies(${BASENAME} sync_examples)
       if (SANITIZE)
         target_compile_options(${BASENAME} PRIVATE -fsanitize=address,undefined)
         target_link_libraries(${BASENAME} -lasan -lubsan ${LIBRARIES})

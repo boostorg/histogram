@@ -311,10 +311,10 @@ template <> struct radd_visitor<wcount> : public static_visitor<void> {
 };
 
 template <>
-struct radd_visitor<weight_t<double>> : public static_visitor<void> {
+struct radd_visitor<weight<double>> : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
-  const weight_t<double> rhs;
+  const weight<double> rhs;
   radd_visitor(any_array &l, const std::size_t i, const double w)
       : lhs_any(l), idx(i), rhs{w} {}
 
@@ -446,9 +446,9 @@ public:
     apply_visitor(detail::radd_visitor<T>(buffer_, i, t), buffer_);
   }
 
-  template <typename T> void add(std::size_t i, const detail::weight_t<T> &w) {
+  template <typename T> void add(std::size_t i, const detail::weight<T> &w) {
     apply_visitor(
-        detail::radd_visitor<detail::weight_t<double>>(buffer_, i, w.value),
+        detail::radd_visitor<detail::weight<double>>(buffer_, i, w.value),
         buffer_);
   }
 
