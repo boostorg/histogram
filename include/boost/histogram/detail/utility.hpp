@@ -18,6 +18,9 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+// two_pi can be found in boost/math, but it is defined here to reduce deps
+constexpr double two_pi = 6.283185307179586;
+
 inline void escape(std::ostream &os, const string_view s) {
   os << '\'';
   for (auto sit = s.begin(); sit != s.end(); ++sit) {

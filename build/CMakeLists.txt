@@ -11,7 +11,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL Clang)
 endif()
 
 # setup build
-option(BUILD_PYTHON "Build python bindings" ON)
+option(BUILD_PYTHON "Build python bindings" OFF)
 option(BUILD_NUMPY_SUPPORT "Build numpy support" ON)
 option(BUILD_CHECKS "Build auxillary checks" OFF)
 option(TRACE_ALLOCS "Debug: Trace allocations" OFF)
@@ -40,13 +40,28 @@ if(TRACE_ALLOCS)
   endif()
 endif()
 
+find_package(Boost 1.63 COMPONENTS serialization)
+
 if(BUILD_PYTHON)
-  if(DEFINED PYTHON_VERSION)
-    find_package(PythonLibs ${PYTHON_VERSION} EXACT REQUIRED)
-  else()
-    find_package(PythonLibs REQUIRED)
+  # We need both find_packge(PythonInterp) and find_package(PythonLibs),
+  # but as of cmake-3.11.4, cmake is not able to find matching versions of
+  # libs and interpreter. So we just discover the python executable (can be
+  # overriden with -DPYTHON_EXECUTABLE=/path/to/python in the shell) and
+  # use Python facilities to find the correct libs and header paths.
+  if(NOT DEFINED PYTHON_EXECUTABLE)
+    find_package(PythonInterp REQUIRED)
   endif()
 
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig, sys; sys.stdout.write(sysconfig.get_paths()[\"include\"])"
+                  OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS)
+
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig, sys; sys.stdout.write(sysconfig.get_paths()['stdlib'] + '/..')"
+                  OUTPUT_VARIABLE PYTHON_PREFIX)
+
+  find_library(PYTHON_LIBRARIES
+               NAMES python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}
+               PATHS ${PYTHON_PREFIX}
+               NO_DEFAULT_PATH)
   message(STATUS "Python lib: ${PYTHON_LIBRARIES} (MUST match what Boost.Python was compiled against)")
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
   include_directories(${PYTHON_INCLUDE_DIRS})
@@ -54,20 +69,16 @@ if(BUILD_PYTHON)
   # used by python_suite_test, version is matched with PythonLibs
   # automatically in cmake-3.9.6, but this seems not to be the case in older
   # cmake versions
-  find_package(PythonInterp ${PYTHONLIBS_VERSION_STRING} EXACT REQUIRED)
 
-  if (PYTHON_VERSION_MAJOR EQUAL 3)
-    set(BOOST_PYTHON_NAME python3)
-  else()
-    set(BOOST_PYTHON_NAME python)
-  endif()
+  set(BOOST_PYTHON_NAME "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" CACHE STRING "boost python name")
+  set(BOOST_NUMPY_NAME "numpy${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" CACHE STRING "boost numpy name")
 
   if(BUILD_NUMPY_SUPPORT)
     find_package(Boost 1.63 REQUIRED
-                 COMPONENTS iostreams serialization ${BOOST_PYTHON_NAME} numpy)
+                 COMPONENTS iostreams serialization ${BOOST_PYTHON_NAME} ${BOOST_NUMPY_NAME})
     add_definitions(-DHAVE_NUMPY)
   else()
-    find_package(Boost 1.63
+    find_package(Boost 1.63 REQUIRED
                  COMPONENTS iostreams serialization ${BOOST_PYTHON_NAME})
   endif()
 
@@ -80,8 +91,6 @@ if(BUILD_PYTHON)
   target_link_libraries(histogram ${LIBRARIES})
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
 else()
-  find_package(Boost 1.63 REQUIRED
-               COMPONENTS serialization)
   set(LIBRARIES ${Boost_LIBRARIES})
 endif()
 

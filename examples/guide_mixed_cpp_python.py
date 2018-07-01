@@ -7,11 +7,11 @@ import cpp_filler
 h = bh.histogram(bh.axis.regular(4, 0, 1),
                  bh.axis.integer(0, 4))
 
-cpp_filler.process(h) # histogram is filled with input values in C++
+cpp_filler.process(h)  # histogram is filled with input values in C++
 
 for iy, y in enumerate(h.axis(1)):
     for ix, x in enumerate(h.axis(0)):
-        print(h(ix, iy).value, end=' ')
+        print(h.bin(ix, iy).value, end=' ')
     print()
 
 # prints:

@@ -13,7 +13,6 @@
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/value_view.hpp>
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/math/constants/constants.hpp>
 #include <ostream>
 
 namespace boost {
@@ -77,7 +76,7 @@ inline std::ostream &operator<<(std::ostream &os, const circular<RealType> &a) {
   if (a.phase() != 0.0) {
     os << ", phase=" << a.phase();
   }
-  if (a.perimeter() != RealType(math::double_constants::two_pi)) {
+  if (a.perimeter() != RealType(::boost::histogram::detail::two_pi)) {
     os << ", perimeter=" << a.perimeter();
   }
   if (!a.label().empty()) {

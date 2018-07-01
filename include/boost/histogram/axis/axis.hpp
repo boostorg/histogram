@@ -13,7 +13,7 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/value_view.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/math/constants/constants.hpp>
+#include <boost/histogram/detail/utility.hpp>
 #include <boost/utility/string_view.hpp>
 #include <cmath>
 #include <limits>
@@ -298,7 +298,7 @@ public:
    * \param label     description of the axis.
    */
   explicit circular(unsigned n, value_type phase = 0.0,
-                    value_type perimeter = math::double_constants::two_pi,
+                    value_type perimeter = ::boost::histogram::detail::two_pi,
                     string_view label = {})
       : base_type(n, label), phase_(phase), perimeter_(perimeter) {}
 
