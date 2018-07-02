@@ -10,6 +10,7 @@
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
+#include <boost/histogram/detail/cat.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -231,9 +232,9 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
   }
 
   if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
-    std::ostringstream os;
-    os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
-    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
+    PyErr_SetString(PyExc_RuntimeError,
+      bh::detail::cat("too many arguments, maximum is ",
+                      BOOST_HISTOGRAM_AXIS_LIMIT).c_str());
     bp::throw_error_already_set();
   }
 
@@ -311,9 +312,9 @@ bp::object histogram_bin(bp::tuple args, bp::dict kwargs) {
   }
 
   if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
-    std::ostringstream os;
-    os << "too many axes, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
-    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
+    PyErr_SetString(PyExc_RuntimeError,
+      bh::detail::cat("too many arguments, maximum is ",
+                      BOOST_HISTOGRAM_AXIS_LIMIT).c_str());
     bp::throw_error_already_set();
   }
 
@@ -338,9 +339,9 @@ bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
   const unsigned nargs = bp::len(args) - 1;
 
   if (nargs > BOOST_HISTOGRAM_AXIS_LIMIT) {
-    std::ostringstream os;
-    os << "too many arguments, maximum is " << BOOST_HISTOGRAM_AXIS_LIMIT;
-    PyErr_SetString(PyExc_RuntimeError, os.str().c_str());
+    PyErr_SetString(PyExc_RuntimeError,
+      bh::detail::cat("too many arguments, maximum is ",
+                      BOOST_HISTOGRAM_AXIS_LIMIT).c_str());
     bp::throw_error_already_set();
   }
 
@@ -357,9 +358,7 @@ bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
 }
 
 std::string histogram_repr(const pyhistogram &h) {
-  std::ostringstream os;
-  os << h;
-  return os.str();
+  return bh::detail::cat(h);
 }
 
 double element_value(const pyhistogram::element_type& b) {
@@ -370,15 +369,31 @@ double element_variance(const pyhistogram::element_type& b) {
   return b.variance();
 }
 
+double element_getitem(const pyhistogram::element_type& e, int i) {
+  if (i < 0 || i > 1)
+    throw std::out_of_range("element_getitem");
+  return i == 0 ? e.value() : e.variance();
+}
+
+int element_len(const pyhistogram::element_type&) { return 2; }
+
+std::string element_repr(const pyhistogram::element_type& e) {
+  return bh::detail::cat("histogram.element(", e.value(), ", ", e.variance(), ")");
+}
+
 void register_histogram() {
   bp::docstring_options dopt(true, true, false);
 
   bp::class_<pyhistogram::element_type>(
-      "element", "Holds value and variance of bin count.", bp::no_init)
+      "element", "Holds value and variance of bin count.", bp::init<double, double>())
       .add_property("value", element_value)
       .add_property("variance", element_variance)
+      .def("__getitem__", element_getitem)
+      .def("__len__", element_len)
       .def(bp::self + bp::self)
       .def(bp::self += bp::self)
+      .def(bp::self += double())
+      .def("__repr__", element_repr)
       ;
 
   bp::class_<pyhistogram, boost::shared_ptr<pyhistogram>>(
@@ -411,6 +426,7 @@ void register_histogram() {
       .def("reduce_to", bp::raw_function(histogram_reduce_to),
            ":param int args: indices of the axes in the reduced histogram"
            "\n:return: reduced histogram with subset of axes")
+      .def("__iter__", bp::iterator<pyhistogram>())
       .def("__repr__", histogram_repr,
            ":return: string representation of the histogram")
       .def(bp::self == bp::self)

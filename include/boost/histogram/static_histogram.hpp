@@ -59,6 +59,7 @@ public:
   using element_type = typename Storage::element_type;
   using const_reference = typename Storage::const_reference;
   using const_iterator = iterator_over<histogram, Storage>;
+  using iterator = const_iterator;
 
   histogram() = default;
   histogram(const histogram &rhs) = default;
@@ -358,24 +359,28 @@ private:
     return storage_[idx];
   }
 
-  template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const {}
+  template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename T, typename... Ts>
   inline void xlin(std::size_t &idx, std::size_t &stride, T&&t,
                    Ts&&... ts) const {
-    detail::lin(idx, stride, fusion::at_c<D>(axes_),
-                fusion::at_c<D>(axes_).index(t));
+    const auto a_size = fusion::at_c<D>(axes_).size();
+    const auto a_shape = fusion::at_c<D>(axes_).shape();
+    const int j = fusion::at_c<D>(axes_).index(t);
+    detail::lin(idx, stride, a_size, a_shape, j);
     xlin<D + 1>(idx, stride, std::forward<Ts>(ts)...);
   }
 
   template <typename Iterator>
-  void xlin_iter(mpl::int_<0>, std::size_t &, std::size_t &, Iterator ) const {}
+  void xlin_iter(mpl::int_<0>, std::size_t &, std::size_t &, Iterator ) const noexcept {}
 
   template <int N, typename Iterator>
   void xlin_iter(mpl::int_<N>, std::size_t &idx, std::size_t &stride, Iterator iter) const {
     constexpr unsigned D = axes_size::value - N;
-    detail::lin(idx, stride, fusion::at_c<D>(axes_),
-                fusion::at_c<D>(axes_).index(*iter));
+    const auto a_size = fusion::at_c<D>(axes_).size();
+    const auto a_shape = fusion::at_c<D>(axes_).shape();
+    const int j = fusion::at_c<D>(axes_).index(*iter);
+    detail::lin(idx, stride, a_size, a_shape, j);
     xlin_iter(mpl::int_<N-1>(), idx, stride, ++iter);
   }
 
@@ -385,39 +390,50 @@ private:
   template <unsigned D, typename... Ts>
   inline void lin(std::size_t &idx, std::size_t &stride, int x,
                   Ts... ts) const noexcept {
-    detail::lin(idx, stride, fusion::at_c<D>(axes_), x);
+    const auto a_size = fusion::at_c<D>(axes_).size();
+    const auto a_shape = fusion::at_c<D>(axes_).shape();
+    detail::lin(idx, stride, a_size, a_shape, x);
     lin<(D+1)>(idx, stride, ts...);
   }
 
   template <typename Iterator>
-  void lin_iter(mpl::int_<0>, std::size_t &, std::size_t &, Iterator) const {}
+  void lin_iter(mpl::int_<0>, std::size_t &, std::size_t &, Iterator) const noexcept {}
 
   template <int N, typename Iterator>
   void lin_iter(mpl::int_<N>, std::size_t &idx, std::size_t &stride,
-                Iterator iter) const {
+                Iterator iter) const noexcept {
     constexpr unsigned D = axes_size::value - N;
-    detail::lin(idx, stride, fusion::at_c<D>(axes_), static_cast<int>(*iter));
+    const auto a_size = fusion::at_c<D>(axes_).size();
+    const auto a_shape = fusion::at_c<D>(axes_).shape();
+    const auto j = detail::indirect_int_cast(*iter);
+    stride *= (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
+    detail::lin(idx, stride, a_size, a_shape, j);
     lin_iter(mpl::int_<(N-1)>(), idx, stride, ++iter);
   }
 
   template <typename T>
-  void xlin_get(mpl::int_<0>, std::size_t &, std::size_t &, T &&) const {}
+  void xlin_get(mpl::int_<0>, std::size_t &, std::size_t &, T &&) const noexcept {}
 
   template <int N, typename T>
   void xlin_get(mpl::int_<N>, std::size_t &idx, std::size_t &stride, T && t) const {
     constexpr unsigned D = detail::size_of<T>::value - N;
-    detail::lin(idx, stride, fusion::at_c<D>(axes_),
-                fusion::at_c<D>(axes_).index(std::get<D>(t)));
+    const auto a_size = fusion::at_c<D>(axes_).size();
+    const auto a_shape = fusion::at_c<D>(axes_).shape();
+    const auto j = fusion::at_c<D>(axes_).index(std::get<D>(t));
+    detail::lin(idx, stride, a_size, a_shape, j);
     xlin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));
   }
 
   template <typename T>
-  void lin_get(mpl::int_<0>, std::size_t &, std::size_t &, T&&) const {}
+  void lin_get(mpl::int_<0>, std::size_t &, std::size_t &, T&&) const noexcept {}
 
   template <int N, typename T>
-  void lin_get(mpl::int_<N>, std::size_t &idx, std::size_t &stride, T&&t) const {
+  void lin_get(mpl::int_<N>, std::size_t &idx, std::size_t &stride, T&&t) const noexcept {
     constexpr unsigned D = detail::size_of<T>::value - N;
-    detail::lin(idx, stride, fusion::at_c<D>(axes_), static_cast<int>(std::get<D>(t)));
+    const auto a_size = fusion::at_c<D>(axes_).size();
+    const auto a_shape = fusion::at_c<D>(axes_).shape();
+    const auto j = detail::indirect_int_cast(std::get<D>(t));
+    detail::lin(idx, stride, a_size, a_shape, j);
     lin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));
   }
 

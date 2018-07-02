@@ -54,21 +54,6 @@ class access;
 namespace boost {
 namespace histogram {
 
-namespace detail {
-  template <typename T>
-  typename std::enable_if<std::is_convertible<T, int>::value, int>::type
-  indirect_int_cast(T&&t) { return static_cast<int>(std::forward<T>(t)); }
-
-  template <typename T>
-  typename std::enable_if<!(std::is_convertible<T, int>::value), int>::type
-  indirect_int_cast(T&&t) {
-    // Cannot use static_assert here, because this function is created as a
-    // side-effect of TMP. It must be valid at compile-time.
-    BOOST_ASSERT_MSG(false, "bin argument not convertible to int");
-    return 0;
-  }
-}
-
 template <typename Axes, typename Storage>
 class histogram<dynamic_tag, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
@@ -79,6 +64,7 @@ public:
   using element_type = typename Storage::element_type;
   using const_reference = typename Storage::const_reference;
   using const_iterator = iterator_over<histogram, Storage>;
+  using iterator = const_iterator;
 
 public:
   histogram() = default;
@@ -368,11 +354,14 @@ private:
   struct lin_visitor : public static_visitor<void> {
     std::size_t &idx;
     std::size_t &stride;
-    const int val;
-    lin_visitor(std::size_t &i, std::size_t &s, const int v)
-        : idx(i), stride(s), val(v) {}
-    template <typename A> void operator()(const A &a) const {
-      detail::lin(idx, stride, a, val);
+    const int j;
+    lin_visitor(std::size_t &i, std::size_t &s, const int x) noexcept
+        : idx(i), stride(s), j(x) {}
+    template <typename A> void operator()(const A &a) const noexcept {
+      const auto a_size = a.size();
+      const auto a_shape = a.shape();
+      stride *= (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
+      detail::lin(idx, stride, a_size, a_shape, j);
     }
   };
 
@@ -397,7 +386,10 @@ private:
     }
 
     template <typename Axis> void impl(std::true_type, const Axis &a) const {
-      detail::lin(idx, stride, a, a.index(val));
+      const auto a_size = a.size();
+      const auto a_shape = a.shape();
+      const auto j = a.index(val);
+      detail::lin(idx, stride, a_size, a_shape, j);
     }
 
     template <typename Axis> void impl(std::false_type, const Axis &) const {
@@ -408,7 +400,7 @@ private:
     }
   };
 
-  template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const {}
+  template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename T, typename... Ts>
   inline void xlin(std::size_t &idx, std::size_t &stride, T &&t,
@@ -419,7 +411,7 @@ private:
 
   template <typename Iterator>
   inline void lin_iter(std::size_t &idx, std::size_t &stride,
-                       Iterator iter) const {
+                       Iterator iter) const noexcept {
     for (const auto &a : axes_) {
       apply_visitor(lin_visitor(idx, stride, *iter), a);
       ++iter;
@@ -434,7 +426,7 @@ private:
     }
   }
 
-  template <typename T> void xlin_get(mpl::int_<0>, std::size_t&, std::size_t &, T&&t) const {}
+  template <typename T> void xlin_get(mpl::int_<0>, std::size_t&, std::size_t &, T&&t) const noexcept {}
 
   template <int N, typename T> void xlin_get(mpl::int_<N>, std::size_t& idx,
     std::size_t & stride, T&&t) const {
@@ -444,10 +436,10 @@ private:
   }
 
   template <typename T> void lin_get(mpl::int_<0>, std::size_t& ,
-    std::size_t & , T&&) const {}
+    std::size_t & , T&&) const noexcept {}
 
   template <int N, typename T> void lin_get(mpl::int_<N>, std::size_t& idx,
-    std::size_t & stride, T&&t) const {
+    std::size_t & stride, T&&t) const noexcept {
     constexpr unsigned D = detail::size_of<T>::value - N;
     apply_visitor(lin_visitor{idx, stride, static_cast<int>(std::get<D>(t))}, axes_[D]);
     lin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));

@@ -6,10 +6,6 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-depth=1024")
-endif()
-
 # setup build
 option(BUILD_PYTHON "Build python bindings" OFF)
 option(BUILD_NUMPY_SUPPORT "Build numpy support" ON)
@@ -19,24 +15,40 @@ option(SANITIZE "Debug: Compile with santizers" OFF)
 mark_as_advanced(TRACE_ALLOCS)
 mark_as_advanced(SANITIZE)
 
+# set build type if none is specified
+set(default_build_type "RELEASE")
+if (EXISTS "${PROJECT_SOURCE_DIR}/../.git")
+  set(default_build_type "Debug")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+      STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+# set special compiler flags
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  add_definitions(/W3)
+  add_compile_options(/W4)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_definitions(-Wall)
+  add_compile_options(-Wall -Wextra -Werror)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
     # -fpermissive needed for cpp_int in gcc-6
     # -Wno-noexcept-type to silence warnings related to Boost.Python
-    add_definitions(-fpermissive -Wno-noexcept-type)
+    add_compile_options(-fpermissive -Wno-noexcept-type)
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  add_definitions(-Wall -D__STRICT_ANSI__)
+  add_compile_options(-Wall -pedantic-errors -D__STRICT_ANSI__ -ftemplate-depth=1024)
 endif()
 
 if(TRACE_ALLOCS)
   if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_definitions(/DBOOST_HISTOGRAM_TRACE_ALLOCS)
+    add_compile_options(/DBOOST_HISTOGRAM_TRACE_ALLOCS)
   else()
-    add_definitions(-DBOOST_HISTOGRAM_TRACE_ALLOCS)
+    add_compile_options(-DBOOST_HISTOGRAM_TRACE_ALLOCS)
   endif()
 endif()
 
@@ -62,7 +74,8 @@ if(BUILD_PYTHON)
                NAMES python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}
                PATHS ${PYTHON_PREFIX}
                NO_DEFAULT_PATH)
-  message(STATUS "Python lib: ${PYTHON_LIBRARIES} (MUST match what Boost.Python was compiled against)")
+  message(STATUS "Python lib: ${PYTHON_LIBRARIES}")
+  message(STATUS "Beware: Python lib MUST match what Boost.Python was compiled against")
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
   include_directories(${PYTHON_INCLUDE_DIRS})
 
@@ -71,7 +84,9 @@ if(BUILD_PYTHON)
   # cmake versions
 
   set(BOOST_PYTHON_NAME "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" CACHE STRING "boost python name")
+  mark_as_advanced(BOOST_PYTHON_NAME)
   set(BOOST_NUMPY_NAME "numpy${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" CACHE STRING "boost numpy name")
+  mark_as_advanced(BOOST_NUMPY_NAME)
 
   if(BUILD_NUMPY_SUPPORT)
     find_package(Boost 1.63 REQUIRED
