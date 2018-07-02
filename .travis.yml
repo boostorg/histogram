@@ -20,30 +20,14 @@ matrix:
   include:
     - os: linux # minimal gcc
       compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - cmake
-            - cmake-data
-            - g++-4.8
       env:
         - COMPILER_VERSION=4.8
-        - PYTHON_EXECUTABLE=
+        - PYTHON_EXECUTABLE=null
         - BUILD_PYTHON=OFF
         - BUILD_NUMPY=OFF
         - BUILD_SERIALIZATION=OFF
     - os: linux # maximal gcc
       compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - cmake
-            - cmake-data
-            - g++-4.8
       env: 
         - COMPILER_VERSION=4.8
         - PYTHON_EXECUTABLE=python2
@@ -116,27 +100,28 @@ script:
 
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=OFF
+              -DBUILD_SERIALIZATION=ON
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DPYTHON_EXECUTABLE=python2
               -DBUILD_PYTHON=ON
-              -DPYTHON_VERSION=2
               -DBUILD_NUMPY_SUPPORT=OFF
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
+              -DPYTHON_EXECUTABLE=python2
               -DBUILD_PYTHON=ON
-              -DPYTHON_VERSION=2
               -DBUILD_NUMPY_SUPPORT=ON
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
     else
       cmake . -DBOOST_ROOT=${BOOST_DIR}
-              -DBUILD_PYTHON=${BUILD_PYTHON}
               -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
+              -DBUILD_PYTHON=${BUILD_PYTHON}
               -DBUILD_NUMPY=${BUILD_NUMPY}
               -DBUILD_SERIALIZATION=${BUILD_SERIALIZATION}
               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
