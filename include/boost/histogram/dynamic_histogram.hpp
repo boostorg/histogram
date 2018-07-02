@@ -54,6 +54,21 @@ class access;
 namespace boost {
 namespace histogram {
 
+namespace detail {
+  template <typename T>
+  typename std::enable_if<std::is_convertible<T, int>::value, int>::type
+  indirect_int_cast(T&&t) { return static_cast<int>(std::forward<T>(t)); }
+
+  template <typename T>
+  typename std::enable_if<!(std::is_convertible<T, int>::value), int>::type
+  indirect_int_cast(T&&t) {
+    // Cannot use static_assert here, because this function is created as a
+    // side-effect of TMP. It must be valid at compile-time.
+    BOOST_ASSERT_MSG(false, "bin argument not convertible to int");
+    return 0;
+  }
+}
+
 template <typename Axes, typename Storage>
 class histogram<dynamic_tag, Axes, Storage> {
   static_assert(!mpl::empty<Axes>::value, "at least one axis required");
@@ -188,7 +203,8 @@ public:
                      "bin arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, static_cast<int>(ts)...);
-    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    if (stride == 0)
+      throw std::out_of_range("invalid index");
     return storage_[idx];
   }
 
@@ -322,7 +338,8 @@ private:
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_iter(idx, stride, std::begin(t));
-    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    if (stride == 0)
+      throw std::out_of_range("invalid index");
     return storage_[idx];
   }
 
@@ -332,29 +349,20 @@ private:
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_get(mpl::int_<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
-    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    if (stride == 0)
+      throw std::out_of_range("invalid index");
     return storage_[idx];
   }
 
   template <typename T>
-  typename std::enable_if<std::is_convertible<T, int>::value, const_reference>::type
-  bin_impl(detail::no_container_tag, T && t) const {
+  const_reference bin_impl(detail::no_container_tag, T && t) const {
     BOOST_ASSERT_MSG(dim() == 1,
                      "bin argument does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin<0>(idx, stride, static_cast<int>(t));
-    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    lin<0>(idx, stride, detail::indirect_int_cast(t));
+    if (stride == 0)
+      throw std::out_of_range("invalid index");
     return storage_[idx];
-  }
-
-  template <typename T>
-  typename std::enable_if<!(std::is_convertible<T, int>::value), const_reference>::type
-  bin_impl(detail::no_container_tag, T && t) const {
-    BOOST_ASSERT_MSG(dim() == 1,
-                     "bin argument does not match histogram dimension");
-    BOOST_ASSERT_MSG(false,
-                     "bin argument not convertible to int");
-    return storage_[0];
   }
 
   struct lin_visitor : public static_visitor<void> {

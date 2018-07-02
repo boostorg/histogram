@@ -190,7 +190,8 @@ public:
                   "bin arguments do not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, static_cast<int>(indices)...);
-    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    if (stride == 0)
+      throw std::out_of_range("invalid index");
     return storage_[idx];
   }
 
@@ -330,7 +331,8 @@ private:
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_iter(mpl::int_<axes_size::value>(), idx, stride, std::begin(t));
-    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    if (stride == 0)
+      throw std::out_of_range("invalid index");
     return storage_[idx];
   }
 
@@ -340,7 +342,8 @@ private:
                   "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_get(mpl::int_<axes_size::value>(), idx, stride, std::forward<T>(t));
-    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    if (stride == 0)
+      throw std::out_of_range("invalid index");
     return storage_[idx];
   }
 
@@ -350,7 +353,8 @@ private:
                   "bin argument does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, static_cast<int>(t));
-    BOOST_ASSERT_MSG(stride > 0, "invalid index");
+    if (stride == 0)
+      throw std::out_of_range("invalid index");
     return storage_[idx];
   }
 
