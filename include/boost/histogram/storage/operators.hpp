@@ -18,7 +18,7 @@ bool operator==(const S1 &s1, const S2 &s2) noexcept {
   if (s1.size() != s2.size())
     return false;
   for (std::size_t i = 0, n = s1.size(); i < n; ++i)
-    if (s1[i] != s2[i])
+    if (!(s1[i] == s2[i]))
       return false;
   return true;
 }

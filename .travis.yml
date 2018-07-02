@@ -18,29 +18,7 @@ branches:
 
 matrix:
   include:
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - cmake
-            - cmake-data
-            - clang-3.6
-      env: COMPILER_VERSION=3.6 BUILD_PYTHON=OFF PYTHON=none
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - cmake
-            - cmake-data
-            - clang-3.8
-      env: COMPILER_VERSION=3.8 BUILD_PYTHON=ON PYTHON=python2
-    - os: linux
+    - os: linux # minimal gcc
       compiler: gcc
       addons:
         apt:
@@ -50,8 +28,13 @@ matrix:
             - cmake
             - cmake-data
             - g++-4.8
-      env: COMPILER_VERSION=4.8 BUILD_PYTHON=ON PYTHON=python3
-    - os: linux
+      env:
+        - COMPILER_VERSION=4.8
+        - PYTHON_EXECUTABLE=
+        - BUILD_PYTHON=OFF
+        - BUILD_NUMPY=OFF
+        - BUILD_SERIALIZATION=OFF
+    - os: linux # maximal gcc
       compiler: gcc
       addons:
         apt:
@@ -60,8 +43,46 @@ matrix:
           packages:
             - cmake
             - cmake-data
-            - g++-7
-      env: COMPILER_VERSION=7 CMAKE_BUILD_TYPE=coverage
+            - g++-4.8
+      env: 
+        - COMPILER_VERSION=4.8
+        - PYTHON_EXECUTABLE=python2
+        - BUILD_PYTHON=ON
+        - BUILD_NUMPY=ON
+        - BUILD_SERIALIZATION=ON
+    # - os: linux
+    #   compiler: clang
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - ubuntu-toolchain-r-test
+    #       packages:
+    #         - cmake
+    #         - cmake-data
+    #         - clang-3.6
+    #   env: COMPILER_VERSION=3.6 BUILD_PYTHON=OFF PYTHON=none
+    # - os: linux
+    #   compiler: clang
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - ubuntu-toolchain-r-test
+    #       packages:
+    #         - cmake
+    #         - cmake-data
+    #         - clang-3.8
+    #   env: COMPILER_VERSION=3.8 BUILD_PYTHON=ON PYTHON=python2
+    # - os: linux
+    #   compiler: gcc
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - ubuntu-toolchain-r-test
+    #       packages:
+    #         - cmake
+    #         - cmake-data
+    #         - g++-7
+    #   env: COMPILER_VERSION=7 CMAKE_BUILD_TYPE=coverage
 
 git:
   depth: 1
@@ -82,14 +103,6 @@ install:
       (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR})
     fi
 
-  - if [ -z ${PYTHON_VERSION} ]; then
-      export BUILD_PYTHON=OFF;
-    else
-      export BUILD_PYTHON=ON;
-    fi
-  - if [ -z ${NUMPY_SUPPORT} ]; then
-      export NUMPY_SUPPORT=OFF;
-    fi
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
       pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
     fi
@@ -123,8 +136,9 @@ script:
     else
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=${BUILD_PYTHON}
-              -DPYTHON_EXECUTABLE=${PYTHON}
-              -DBUILD_NUMPY_SUPPORT=${NUMPY_SUPPORT}
+              -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
+              -DBUILD_NUMPY=${BUILD_NUMPY}
+              -DBUILD_SERIALIZATION=${BUILD_SERIALIZATION}
               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
       make -j2 &&
       ctest -V;

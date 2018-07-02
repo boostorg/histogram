@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_OSTREAM_OPERATORS_HPP_
 
 #include <boost/histogram/axis/ostream_operators.hpp>
+#include <boost/histogram/storage/weight_counter.hpp>
 #include <ostream>
 
 namespace boost {
@@ -23,11 +24,17 @@ struct axis_ostream_visitor {
 };
 } // namespace detail
 
-template <typename T, typename A, typename S>
-inline std::ostream &operator<<(std::ostream &os, const histogram<T, A, S> &h) {
+template <typename... Ts>
+inline std::ostream &operator<<(std::ostream &os, const histogram<Ts...> &h) {
   os << "histogram(";
   h.for_each_axis(detail::axis_ostream_visitor(os));
   os << (h.dim() ? "\n)" : ")");
+  return os;
+}
+
+template <typename T>
+inline std::ostream &operator<<(std::ostream& os, const weight_counter<T>& x) {
+  os << "weight_counter(" << x.value() << ", " << x.variance() << ")";
   return os;
 }
 

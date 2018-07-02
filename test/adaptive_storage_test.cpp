@@ -7,9 +7,12 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/serialization.hpp>
+#ifdef HAVE_SERIALIZATION
+#  include <boost/histogram/serialization.hpp>
+#endif
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
+#include <boost/histogram/storage/operators.hpp>
 #include <limits>
 #include <sstream>
 
@@ -43,6 +46,7 @@ template <typename T> void copy_impl() {
   BOOST_TEST(a == b);
 }
 
+#ifdef HAVE_SERIALIZATION
 template <typename T> void serialization_impl() {
   const auto a = prepare(1, T(1));
   std::ostringstream os;
@@ -82,6 +86,7 @@ template <> void serialization_impl<void>() {
   }
   BOOST_TEST(a == b);
 }
+#endif
 
 template <typename T> void equal_impl() {
   adaptive_storage a(std::size_t(1));
@@ -404,6 +409,7 @@ int main() {
     convert_array_storage_impl<detail::wcount>();
   }
 
+#ifdef HAVE_SERIALIZATION
   // serialization_test
   {
     serialization_impl<void>();
@@ -414,6 +420,7 @@ int main() {
     serialization_impl<detail::mp_int>();
     serialization_impl<detail::wcount>();
   }
+#endif
 
   return boost::report_errors();
 }

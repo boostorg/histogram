@@ -5,13 +5,15 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <array>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
-#include <boost/histogram/serialization.hpp>
+#ifdef HAVE_SERIALIZATION
+#  include <boost/archive/text_iarchive.hpp>
+#  include <boost/archive/text_oarchive.hpp>
+#  include <boost/histogram/serialization.hpp>
+#endif
 #include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
@@ -560,6 +562,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(r, s);
   }
 
+#ifdef HAVE_SERIALIZATION
   // histogram_serialization
   {
     enum { A, B, C };
@@ -586,6 +589,7 @@ template <typename Type> void run_tests() {
     }
     BOOST_TEST_EQ(a, b);
   }
+#endif
 
   // histogram_ostream
   {
@@ -829,11 +833,11 @@ template <typename Type> void run_tests() {
     auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3));
     for (int i = 0; i < 3; ++i)
       h(i);
-    auto a = std::vector<double>();
+    auto a = std::vector<weight_counter<double>>();
     std::partial_sum(h.begin(), h.end(), std::back_inserter(a));
-    BOOST_TEST_EQ(a[0], 1);
-    BOOST_TEST_EQ(a[1], 2);
-    BOOST_TEST_EQ(a[2], 3);
+    BOOST_TEST_EQ(a[0].value(), 1);
+    BOOST_TEST_EQ(a[1].value(), 2);
+    BOOST_TEST_EQ(a[2].value(), 3);
   }
 
   // using STL containers

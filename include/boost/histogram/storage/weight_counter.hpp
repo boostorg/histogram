@@ -28,8 +28,11 @@ public:
   weight_counter &operator=(const weight_counter &) = default;
   weight_counter &operator=(weight_counter &&) = default;
 
-  weight_counter(const RealType &value, const RealType &variance)
-      : w(value), w2(variance) {}
+  weight_counter(const RealType &value, const RealType &variance) noexcept
+    : w(value), w2(variance) {}
+
+  explicit weight_counter(const RealType &value) noexcept
+    : w(value), w2(value) {}
 
   weight_counter &operator++() {
     ++w;
@@ -83,28 +86,20 @@ public:
     return !operator==(rhs);
   }
 
-  template <typename T> bool operator==(const T &rhs) const noexcept {
-    return w == w2 && w == static_cast<RealType>(rhs);
-  }
-
-  template <typename T> bool operator!=(const T &rhs) const noexcept {
-    return !operator==(rhs);
-  }
-
   const RealType &value() const noexcept { return w; }
   const RealType &variance() const noexcept { return w2; }
 
   // conversion
   template <typename T>
-  explicit weight_counter(const T &t) : w(static_cast<T>(t)), w2(w) {}
+  explicit weight_counter(const T &t) { operator=(t); }
   template <typename T> weight_counter &operator=(const T &x) {
     w = w2 = static_cast<RealType>(x);
     return *this;
   }
-  operator RealType() const {
-    // lossy conversion should be explicit
-    return w;
-  }
+
+  // lossy conversion must be explicit
+  template <typename T>
+  explicit operator T() const { return static_cast<T>(w); }
 
 private:
   friend class ::boost::serialization::access;
@@ -115,13 +110,23 @@ private:
 };
 
 template <typename T, typename U>
-bool operator==(const T &t, const weight_counter<U> &w) {
-  return w == t;
+bool operator==(const weight_counter<T> &w, const U & u) {
+  return w.value() == w.variance() && w.value() == static_cast<T>(u);
 }
 
 template <typename T, typename U>
-bool operator!=(const T &t, const weight_counter<U> &w) {
-  return !(w == t);
+bool operator==(const T & t, const weight_counter<U> &w) {
+  return operator==(w, t);
+}
+
+template <typename T, typename U>
+bool operator!=(const weight_counter<T> &w, const U & u) {
+  return !operator==(w, u);
+}
+
+template <typename T, typename U>
+bool operator!=(const T & t, const weight_counter<U> &w) {
+  return operator!=(w, t);
 }
 
 template <typename T>

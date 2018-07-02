@@ -358,8 +358,8 @@ struct rmul_visitor : public static_visitor<void> {
 };
 
 struct bicmp_visitor : public static_visitor<bool> {
-  template <typename Array1, typename Array2>
-  bool operator()(const Array1 &b1, const Array2 &b2) const {
+  template <typename T, typename U>
+  bool operator()(const array<T> &b1, const array<U> &b2) const {
     if (b1.size != b2.size)
       return false;
     return std::equal(b1.begin(), b1.end(), b2.begin());
