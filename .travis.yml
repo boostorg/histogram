@@ -28,7 +28,7 @@ matrix:
             - cmake
             - cmake-data
             - clang-3.6
-      env: COMPILER_VERSION=3.6
+      env: COMPILER_VERSION=3.6 BUILD_PYTHON=OFF PYTHON=none
     - os: linux
       compiler: clang
       addons:
@@ -39,7 +39,7 @@ matrix:
             - cmake
             - cmake-data
             - clang-3.8
-      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7
+      env: COMPILER_VERSION=3.8 BUILD_PYTHON=ON PYTHON=python2
     - os: linux
       compiler: gcc
       addons:
@@ -50,7 +50,7 @@ matrix:
             - cmake
             - cmake-data
             - g++-4.8
-      env: COMPILER_VERSION=4.8
+      env: COMPILER_VERSION=4.8 BUILD_PYTHON=ON PYTHON=python3
     - os: linux
       compiler: gcc
       addons:
@@ -123,7 +123,7 @@ script:
     else
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=${BUILD_PYTHON}
-              -DPYTHON_VERSION=${PYTHON_VERSION}
+              -DPYTHON_EXECUTABLE=${PYTHON}
               -DBUILD_NUMPY_SUPPORT=${NUMPY_SUPPORT}
               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
       make -j2 &&
