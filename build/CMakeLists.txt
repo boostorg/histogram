@@ -52,8 +52,6 @@ if(TRACE_ALLOCS)
   endif()
 endif()
 
-find_package(Boost 1.63 COMPONENTS serialization)
-
 if(BUILD_PYTHON)
   # We need both find_packge(PythonInterp) and find_package(PythonLibs),
   # but as of cmake-3.11.4, cmake is not able to find matching versions of
@@ -79,22 +77,24 @@ if(BUILD_PYTHON)
   message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
   include_directories(${PYTHON_INCLUDE_DIRS})
 
-  # used by python_suite_test, version is matched with PythonLibs
-  # automatically in cmake-3.9.6, but this seems not to be the case in older
-  # cmake versions
+  find_package(Boost 1.63 REQUIRED COMPONENTS iostreams serialization)
+  set(LIBRARIES ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
 
-  set(BOOST_PYTHON_NAME "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" CACHE STRING "boost python name")
-  mark_as_advanced(BOOST_PYTHON_NAME)
-  set(BOOST_NUMPY_NAME "numpy${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" CACHE STRING "boost numpy name")
-  mark_as_advanced(BOOST_NUMPY_NAME)
+  find_library(Boost_PYTHON
+               NAMES boost_python boost_python${PYTHON_VERSION_MAJOR} boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
+               PATHS ${Boost_LIBRARY_DIRS}
+               NO_DEFAULT_PATH)
+  list(APPEND LIBRARIES ${Boost_PYTHON})
+  message(STATUS "Found boost_python: ${Boost_PYTHON}")
 
   if(BUILD_NUMPY_SUPPORT)
-    find_package(Boost 1.63 REQUIRED
-                 COMPONENTS iostreams serialization ${BOOST_PYTHON_NAME} ${BOOST_NUMPY_NAME})
+    find_library(Boost_NUMPY
+                 NAMES boost_numpy boost_numpy${PYTHON_VERSION_MAJOR} boost_numpy${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
+                 PATHS ${Boost_LIBRARY_DIRS}
+                 NO_DEFAULT_PATH)
+    message(STATUS "Found boost_numpy: ${Boost_NUMPY}")
     add_definitions(-DHAVE_NUMPY)
-  else()
-    find_package(Boost 1.63 REQUIRED
-                 COMPONENTS iostreams serialization ${BOOST_PYTHON_NAME})
+    list(APPEND LIBRARIES ${Boost_NUMPY})
   endif()
 
   add_library(histogram SHARED
@@ -102,10 +102,10 @@ if(BUILD_PYTHON)
     ../src/python/axis.cpp
     ../src/python/histogram.cpp
   )
-  set(LIBRARIES ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
   target_link_libraries(histogram ${LIBRARIES})
   set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
 else()
+  find_package(Boost 1.63 REQUIRED)
   set(LIBRARIES ${Boost_LIBRARIES})
 endif()
 
