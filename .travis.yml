@@ -84,13 +84,13 @@ install:
       pip install --user numpy==1.11.1
       BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
       { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
-      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR})
+      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR} >/dev/null)
     fi
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
       pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
     fi
-  - if [ "${NUMPY_SUPPORT}" = "ON" ]; then
+  - if [ "${BUILD_NUMPY}" = "ON" ]; then
       pip install --user numpy==1.11.1;
     fi
 
@@ -107,14 +107,14 @@ script:
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DPYTHON_EXECUTABLE=python2
               -DBUILD_PYTHON=ON
-              -DBUILD_NUMPY_SUPPORT=OFF
+              -DBUILD_NUMPY=OFF
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DPYTHON_EXECUTABLE=python2
               -DBUILD_PYTHON=ON
-              -DBUILD_NUMPY_SUPPORT=ON
+              -DBUILD_NUMPY=ON
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
