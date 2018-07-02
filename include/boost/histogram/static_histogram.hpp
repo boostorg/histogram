@@ -105,7 +105,7 @@ public:
   }
 
   template <typename A, typename S>
-  bool operator==(const histogram<static_tag, A, S> &rhs) const noexcept {
+  bool operator==(const histogram<static_tag, A, S> &) const noexcept {
     return false;
   }
 

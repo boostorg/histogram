@@ -105,7 +105,7 @@ indirect_int_cast(T&&t) noexcept { return static_cast<int>(std::forward<T>(t)); 
 
 template <typename T>
 typename std::enable_if<!(std::is_convertible<T, int>::value), int>::type
-indirect_int_cast(T&&t) noexcept {
+indirect_int_cast(T&&) noexcept {
   // Cannot use static_assert here, because this function is created as a
   // side-effect of TMP. It must be valid at compile-time.
   BOOST_ASSERT_MSG(false,

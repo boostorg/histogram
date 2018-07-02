@@ -62,23 +62,19 @@ if(BUILD_PYTHON)
     find_package(PythonInterp REQUIRED)
   endif()
 
-  execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig, sys; sys.stdout.write(sysconfig.get_paths()[\"include\"])"
-                  OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS)
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/get_python_include.py
+                  OUTPUT_VARIABLE PYTHON_INCLUDE)
 
-  execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig, sys; sys.stdout.write(sysconfig.get_paths()['stdlib'] + '/..')"
-                  OUTPUT_VARIABLE PYTHON_PREFIX)
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/get_python_library.py
+                  OUTPUT_VARIABLE PYTHON_LIBRARY)
 
-  find_library(PYTHON_LIBRARIES
-               NAMES python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}
-               PATHS ${PYTHON_PREFIX}
-               NO_DEFAULT_PATH)
-  message(STATUS "Python lib: ${PYTHON_LIBRARIES}")
+  message(STATUS "Python include: ${PYTHON_INCLUDE}")
+  message(STATUS "Python lib: ${PYTHON_LIBRARY}")
   message(STATUS "Beware: Python lib MUST match what Boost.Python was compiled against")
-  message(STATUS "Python include: ${PYTHON_INCLUDE_DIRS}")
-  include_directories(${PYTHON_INCLUDE_DIRS})
+  include_directories(${PYTHON_INCLUDE})
 
   find_package(Boost 1.63 REQUIRED COMPONENTS iostreams serialization)
-  set(LIBRARIES ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+  set(LIBRARIES ${Boost_LIBRARIES} ${PYTHON_LIBRARY})
 
   find_library(Boost_PYTHON
                NAMES boost_python boost_python${PYTHON_VERSION_MAJOR} boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}

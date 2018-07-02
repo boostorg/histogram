@@ -160,7 +160,7 @@ int main() {
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result3, static_container_tag> ));
 
     using result3a = classify_container_t<std::pair<int, int>&>;
-    BOOST_TEST_TRAIT_TRUE(( std::is_same<result3, static_container_tag> ));
+    BOOST_TEST_TRAIT_TRUE(( std::is_same<result3a, static_container_tag> ));
 
     using result4 = classify_container_t<decltype("abc")>;
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result4, dynamic_container_tag> ));

@@ -339,7 +339,7 @@ struct radd_array_visitor : public static_visitor<void> {
     for (auto i = 0ul; i < rhs.size; ++i)
       apply_visitor(radd_visitor<T>(lhs_any, i, rhs[i]), lhs_any);
   }
-  void operator()(const array<void> &rhs) const {}
+  void operator()(const array<void> &) const {}
 };
 
 struct rmul_visitor : public static_visitor<void> {
@@ -434,7 +434,7 @@ public:
   }
 
   void add(std::size_t i, const element_type &x) {
-    if (x.has_trivial_variance()) {
+    if (x.variance() == x.value()) {
       apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()),
                     buffer_);
     } else {

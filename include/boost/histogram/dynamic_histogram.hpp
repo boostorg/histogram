@@ -426,7 +426,7 @@ private:
     }
   }
 
-  template <typename T> void xlin_get(mpl::int_<0>, std::size_t&, std::size_t &, T&&t) const noexcept {}
+  template <typename T> void xlin_get(mpl::int_<0>, std::size_t&, std::size_t &, T&&) const noexcept {}
 
   template <int N, typename T> void xlin_get(mpl::int_<N>, std::size_t& idx,
     std::size_t & stride, T&&t) const {

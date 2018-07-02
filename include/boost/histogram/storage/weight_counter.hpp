@@ -94,8 +94,6 @@ public:
   const RealType &value() const noexcept { return w; }
   const RealType &variance() const noexcept { return w2; }
 
-  bool has_trivial_variance() const noexcept { return w == w2; }
-
   // conversion
   template <typename T>
   explicit weight_counter(const T &t) : w(static_cast<T>(t)), w2(w) {}
@@ -104,9 +102,7 @@ public:
     return *this;
   }
   operator RealType() const {
-    // if (!has_trivial_variance())
-    //   throw std::logic_error("cannot convert weight_counter to RealType, "
-    //                          "value and variance differ");
+    // lossy conversion should be explicit
     return w;
   }
 

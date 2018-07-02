@@ -69,7 +69,7 @@ typename Histogram::element_type sum(const Histogram& h) {
 }
 
 template <typename... Ts>
-void pass_histogram(boost::histogram::histogram<Ts...> &h) {}
+void pass_histogram(boost::histogram::histogram<Ts...> &) {}
 
 template <typename Type> void run_tests() {
 

@@ -76,7 +76,7 @@ public:
     object operator()(const Array& b) const {
       return make_tuple(reinterpret_cast<uintptr_t>(b.begin()), true);
     }
-    object operator()(const array<void>& b) const {
+    object operator()(const array<void>& /* unused */) const {
       // cannot pass non-existent memory to numpy; make new
       // zero-initialized uint8 array, and pass it
       return np::zeros(tuple(shapes), np::dtype::get_builtin<uint8_t>());
