@@ -18,55 +18,36 @@ branches:
 
 matrix:
   include:
-    - os: linux # minimal gcc
+    - os: linux # minimum gcc
       compiler: gcc
       env:
         - COMPILER_VERSION=4.8
-        - PYTHON_EXECUTABLE=null
+        - PYTHON_VERSION=2
         - BUILD_PYTHON=OFF
         - BUILD_NUMPY=OFF
         - BUILD_SERIALIZATION=OFF
-    - os: linux # maximal gcc
+    - os: linux # maximum gcc python2
       compiler: gcc
-      env: 
+      env:
         - COMPILER_VERSION=4.8
-        - PYTHON_EXECUTABLE=python2
+        - PYTHON_VERSION=2
         - BUILD_PYTHON=ON
         - BUILD_NUMPY=ON
         - BUILD_SERIALIZATION=ON
-    # - os: linux
-    #   compiler: clang
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - cmake
-    #         - cmake-data
-    #         - clang-3.6
-    #   env: COMPILER_VERSION=3.6 BUILD_PYTHON=OFF PYTHON=none
-    # - os: linux
-    #   compiler: clang
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - cmake
-    #         - cmake-data
-    #         - clang-3.8
-    #   env: COMPILER_VERSION=3.8 BUILD_PYTHON=ON PYTHON=python2
-    # - os: linux
-    #   compiler: gcc
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - cmake
-    #         - cmake-data
-    #         - g++-7
-    #   env: COMPILER_VERSION=7 CMAKE_BUILD_TYPE=coverage
+    - os: linux # coverage gcc python2
+      compiler: gcc
+      env:
+        - COMPILER_VERSION=4.8
+        - PYTHON_VERSION=2
+        - CMAKE_BUILD_TYPE=coverage
+    - os: linux # maximum clang python2
+      compiler: clang
+      env:
+        - COMPILER_VERSION=5
+        - PYTHON_VERSION=2
+        - BUILD_PYTHON=ON
+        - BUILD_NUMPY=ON
+        - BUILD_SERIALIZATION=ON
 
 git:
   depth: 1
@@ -76,22 +57,28 @@ install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
 
+  - if [ "${PYTHON_VERSION}" = 3 ]; then
+      export PIP=pip3
+    else
+      export PIP=pip
+    fi
+
   - BOOST_VERSION=1.65.0 # match version number of cache directory above
-  - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}
+  - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}-py${PYTHON_VERSION}
   - mkdir -p ${BOOST_DIR}
   - |
     if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
-      pip install --user numpy==1.11.1
+      ${PIP} install --user numpy==1.11.1
       BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
       { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
       (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR} serialization iostreams python)
     fi
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
-      pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
+      ${PIP} install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
     fi
   - if [ "${BUILD_NUMPY}" = "ON" ]; then
-      pip install --user numpy==1.11.1;
+      ${PIP} install --user numpy==1.11.1;
     fi
 
 script:
@@ -120,7 +107,7 @@ script:
       ctest -V;
     else
       cmake . -DBOOST_ROOT=${BOOST_DIR}
-              -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
+              -DPYTHON_EXECUTABLE=python${PYTHON_VERSION}
               -DBUILD_PYTHON=${BUILD_PYTHON}
               -DBUILD_NUMPY=${BUILD_NUMPY}
               -DBUILD_SERIALIZATION=${BUILD_SERIALIZATION}
