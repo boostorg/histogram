@@ -46,7 +46,7 @@ matrix:
       env:
         CC=gcc CXX=g++ PYTHON_VERSION=3.6
         BUILD_PYTHON=ON
-        BUILD_NUMPY=ON
+        BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=ON
     # - os: linux # maximum clang
     #   python: 2.7
@@ -69,10 +69,11 @@ install:
   - pyenv versions
   - pyenv global ${PYTHON_VERSION}
 
+  - pip install --user numpy
   - (cd build && source travis_install_boost.sh)
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
-      pip install cpp-coveralls urllib3[secure];
+      pip install --user cpp-coveralls urllib3[secure];
     fi
 
 script:
