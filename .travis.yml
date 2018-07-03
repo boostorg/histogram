@@ -68,7 +68,7 @@ git:
 install:
   - pyenv versions
   - pyenv global ${PYTHON_VERSION}
-  - ls /opt/pyenv/versions/3.6.3/include/python3.6
+  - ls $(python get_python_include.py)
   - PYTHON_VERSION_MAJOR=$(python -c 'import sys; sys.stdout.write("%i" % sys.version_info.major)')
 
   - BOOST_VERSION=1.65.0 # match version number of cache directory above
