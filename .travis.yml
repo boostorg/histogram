@@ -7,7 +7,8 @@ sudo: false
 cache:
   pip: true
   directories:
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py2
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py3
 
 language: cpp
 
