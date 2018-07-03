@@ -18,7 +18,8 @@ branches:
 
 matrix:
   include:
-    - os: linux # minimum gcc, no python
+    - os: linux # minimum gcc
+      python: 2.7
       env:
         - CC=gcc
         - CXX=g++
@@ -54,7 +55,7 @@ matrix:
       addons:
         apt:
           sources: deadsnakes
-          packages: python2-dev
+          packages: python2.7-dev
       env:
         - CC=clang
         - CXX=clang++
@@ -66,7 +67,7 @@ matrix:
       addons:
         apt:
           sources: deadsnakes
-          packages: python2-dev
+          packages: python2.7-dev
       env:
         - CC=gcc
         - CXX=g++
@@ -87,7 +88,7 @@ install:
     if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
       BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
       { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
-      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR} --with-serialization --with-iostreams --with-python | grep -v common.copy)
+      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR} --with-serialization --with-iostreams --with-python | grep -v -e common\.copy -e common\.mkdir)
     fi
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then

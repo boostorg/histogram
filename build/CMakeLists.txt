@@ -35,7 +35,7 @@ endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   add_compile_options(/W4)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_compile_options(-Wall -Wextra -Werror)
+  add_compile_options(-Wall -Wextra)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
     # -fpermissive needed for cpp_int in gcc-6
     # -Wno-noexcept-type to silence warnings related to Boost.Python
