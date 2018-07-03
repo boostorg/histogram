@@ -42,7 +42,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     add_compile_options(-fpermissive -Wno-noexcept-type)
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  add_compile_options(-Wall -pedantic-errors -D__STRICT_ANSI__ -ftemplate-depth=1024)
+  add_compile_options(-Wall -pedantic -D__STRICT_ANSI__ -ftemplate-depth=1024)
 endif()
 
 if(TRACE_ALLOCS)
