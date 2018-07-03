@@ -9,7 +9,7 @@ cache:
   pip: true
   directories:
     - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py2
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py3
+    # - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py3
 
 branches:
   only:
@@ -20,9 +20,8 @@ addons:
   apt:
     sources: deadsnakes
     packages:
-      - python2.7-dev
-      - python3-dev
-      - python-dev
+      - libpython2.7-dev
+      - libpython3.5-dev
 
 matrix:
   include:
