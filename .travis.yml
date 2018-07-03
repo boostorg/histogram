@@ -58,7 +58,7 @@ install:
   - export CC=${CC}-${COMPILER_VERSION}
 
   - |
-    if [ "${PYTHON_VERSION}" = "3" ]; then
+    if [[ "${PYTHON_VERSION}" = "3" ]]; then
       export PIP=pip3
     else
       export PIP=pip
