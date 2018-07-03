@@ -54,7 +54,7 @@ matrix:
         BUILD_SERIALIZATION=ON
     - os: linux # coverage gcc
       env:
-        CC=gcc CXX=g++ PYTHON_VERSION=2.7
+        CC=gcc CXX=g++ GCOV=gcov PYTHON_VERSION=2.7
         CMAKE_BUILD_TYPE=coverage
 
 git:
@@ -106,7 +106,7 @@ script:
 # Calculate coverage
 after_success:
   if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
-    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which gcov-${COMPILER_VERSION}` --gcov-options '\-lp';
+    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which ${GCOV}` --gcov-options '\-lp';
   fi
 
 # after_failure:
