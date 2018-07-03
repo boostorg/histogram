@@ -22,7 +22,7 @@ else:
 
 ON = True
 OFF = False
-have_numpy = @BUILD_NUMPY_SUPPORT@  # noqa
+have_numpy = @BUILD_NUMPY@  # noqa
 if have_numpy:
     import numpy
 

@@ -18,8 +18,8 @@ if [ python.configured ]
       python/histogram.cpp
     : # Requirements
       <library>/boost/python//boost_python
-      <library>/boost/python//boost_numpy
       <library>/boost/serialization//boost_serialization
+      <library>/boost/iostreams//boost_iostreams
       <link>shared
       [ requires
           cxx11_auto_declarations
