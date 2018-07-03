@@ -44,7 +44,7 @@ matrix:
     #     BUILD_SERIALIZATION=ON
     - os: linux # maximum gcc
       env:
-        CC=gcc CXX=g++ PYTHON_VERSION=3.5
+        CC=gcc CXX=g++ PYTHON_VERSION=3.5.4
         BUILD_PYTHON=ON
         BUILD_NUMPY=ON
         BUILD_SERIALIZATION=ON
@@ -67,7 +67,7 @@ git:
 # Install packages (pre-installed: pytest numpy)
 install:
   - pyenv versions
-  - pyenv install 3.5.4
+  - pyenv install ${PYTHON_VERSION}
   - pyenv global ${PYTHON_VERSION}
   - PYTHON_VERSION_MAJOR=$(python -c 'import sys; sys.stdout.write("%i" % sys.version_info.major)')
 
