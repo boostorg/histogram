@@ -9,7 +9,7 @@ cache:
   pip: true
   directories:
     - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py2
-    # - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py3
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py3
 
 branches:
   only:
@@ -70,7 +70,7 @@ install:
   - pyenv global ${PYTHON_VERSION}
 
   - pip install --user numpy
-  - (cd build && source travis_install_boost.sh)
+  - source build/travis_install_boost.sh
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
       pip install --user cpp-coveralls urllib3[secure];
