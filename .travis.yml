@@ -57,10 +57,11 @@ install:
   - export CXX=${CXX}-${COMPILER_VERSION}
   - export CC=${CC}-${COMPILER_VERSION}
 
-  - if [ "${PYTHON_VERSION}" = "3" ]; then
-      export PIP=pip3;
+  - |
+    if [ "${PYTHON_VERSION}" = "3" ]; then
+      export PIP=pip3
     else
-      export PIP=pip;
+      export PIP=pip
     fi
 
   - BOOST_VERSION=1.65.0 # match version number of cache directory above
