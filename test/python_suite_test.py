@@ -420,7 +420,6 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(h.axis(0).shape, 5)
         self.assertEqual(histogram(integer(-1, 2, uoflow=False)).axis(0).shape, 3)
         self.assertNotEqual(h, histogram(regular(1, -1, 1)))
-        self.assertNotEqual(h, histogram(integer(-1, 2)))
         self.assertNotEqual(h, histogram(integer(-1, 1, label="ia")))
 
     def test_copy(self):
