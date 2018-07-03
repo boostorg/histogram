@@ -3,7 +3,7 @@
 # (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
 
 sudo: false
-language: python
+language: generic
 
 cache:
   pip: true
@@ -16,56 +16,58 @@ branches:
     - master
     - develop
 
-addons:
-  apt:
-    sources: deadsnakes
-    packages:
-      - libpython2.7-dev
-      - libpython3.5-dev
+# addons:
+#   apt:
+#     sources: deadsnakes
+#     packages:
+#       - python2.7
+#       - python3.5
+#       - python3-pip
+#       - libpython2.7-dev
+#       - libpython3.5-dev
 
 matrix:
   include:
-    - os: linux # minimum gcc
-      python: 2.7
-      env:
-        CC=gcc CXX=g++
-        BUILD_PYTHON=OFF
-        BUILD_NUMPY=OFF
-        BUILD_SERIALIZATION=OFF
+    # - os: linux # minimum gcc
+    #   python: 2.7
+    #   env:
+    #     CC=gcc CXX=g++
+    #     BUILD_PYTHON=OFF
+    #     BUILD_NUMPY=OFF
+    #     BUILD_SERIALIZATION=OFF
+    # - os: linux # maximum gcc
+    #   python: 2.7
+    #   env:
+    #     CC=gcc CXX=g++
+    #     BUILD_PYTHON=ON
+    #     BUILD_NUMPY=ON
+    #     BUILD_SERIALIZATION=ON
     - os: linux # maximum gcc
-      python: 2.7
       env:
-        CC=gcc CXX=g++
+        CC=gcc CXX=g++ PYTHON_VERSION=3.5
         BUILD_PYTHON=ON
         BUILD_NUMPY=ON
         BUILD_SERIALIZATION=ON
-    - os: linux # maximum gcc
-      python: 3.5
-      env:
-        CC=gcc CXX=g++
-        BUILD_PYTHON=ON
-        BUILD_NUMPY=ON
-        BUILD_SERIALIZATION=ON
-    - os: linux # maximum clang
-      python: 2.7
-      env:
-        CC=clang CXX=clang++
-        BUILD_PYTHON=ON
-        BUILD_NUMPY=ON
-        BUILD_SERIALIZATION=ON
-    - os: linux # coverage gcc
-      python: 2.7
-      env:
-        CC=gcc CXX=g++
-        CMAKE_BUILD_TYPE=coverage
+    # - os: linux # maximum clang
+    #   python: 2.7
+    #   env:
+    #     CC=clang CXX=clang++
+    #     BUILD_PYTHON=ON
+    #     BUILD_NUMPY=ON
+    #     BUILD_SERIALIZATION=ON
+    # - os: linux # coverage gcc
+    #   python: 2.7
+    #   env:
+    #     CC=gcc CXX=g++
+    #     CMAKE_BUILD_TYPE=coverage
 
 git:
   depth: 1
 
 # Install packages (pre-installed: pytest numpy)
 install:
+  - pyenv global system ${PYTHON_VERSION}
   - PYTHON_VERSION_MAJOR=$(python -c 'import sys; sys.stdout.write("%i" % sys.version_info.major)')
-  - PYTHON_VERSION=$(python -c 'import sys; sys.stdout.write("%i.%i" % (sys.version_info.major, sys.version_info.minor))')
 
   - BOOST_VERSION=1.65.0 # match version number of cache directory above
   - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}-py${PYTHON_VERSION_MAJOR}
