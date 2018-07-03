@@ -22,7 +22,6 @@ matrix:
     - os: linux # minimum gcc
       compiler: gcc
       env:
-        - COMPILER_VERSION=4.8
         - PYTHON_VERSION=2
         - BUILD_PYTHON=OFF
         - BUILD_NUMPY=OFF
@@ -30,7 +29,6 @@ matrix:
     - os: linux # maximum gcc python2
       compiler: gcc
       env:
-        - COMPILER_VERSION=4.8
         - PYTHON_VERSION=2
         - BUILD_PYTHON=ON
         - BUILD_NUMPY=ON
@@ -38,13 +36,11 @@ matrix:
     - os: linux # coverage gcc python2
       compiler: gcc
       env:
-        - COMPILER_VERSION=4.8
         - PYTHON_VERSION=2
         - CMAKE_BUILD_TYPE=coverage
     - os: linux # maximum clang python2
       compiler: clang
       env:
-        - COMPILER_VERSION=5
         - PYTHON_VERSION=2
         - BUILD_PYTHON=ON
         - BUILD_NUMPY=ON
@@ -55,9 +51,6 @@ git:
 
 # Install packages
 install:
-  - export CXX=${CXX}-${COMPILER_VERSION}
-  - export CC=${CC}-${COMPILER_VERSION}
-
   - |
     if [[ "${PYTHON_VERSION}" = "3" ]]; then
       export PIP=pip3
@@ -74,6 +67,12 @@ install:
       BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
       { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
       (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR} --with-serialization --with-iostreams --with-python)
+    fi
+
+  - |
+    if [[ "${COMPILER_VERSION}" ]]; then
+      export CXX=${CXX}-${COMPILER_VERSION}
+      export CC=${CC}-${COMPILER_VERSION}
     fi
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
