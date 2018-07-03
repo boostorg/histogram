@@ -33,6 +33,13 @@ matrix:
         - BUILD_PYTHON=ON
         - BUILD_NUMPY=ON
         - BUILD_SERIALIZATION=ON
+    - os: linux # maximum gcc python3
+      compiler: gcc
+      env:
+        - PYTHON_VERSION=3
+        - BUILD_PYTHON=ON
+        - BUILD_NUMPY=ON
+        - BUILD_SERIALIZATION=ON
     - os: linux # coverage gcc python2
       compiler: gcc
       env:
@@ -66,7 +73,7 @@ install:
       ${PIP} install --user numpy==1.11.1
       BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
       { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
-      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR} --with-serialization --with-iostreams --with-python)
+      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR} --with-serialization --with-iostreams --with-python | grep -v common.copy)
     fi
 
   - |
