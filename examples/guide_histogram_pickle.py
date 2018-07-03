@@ -17,9 +17,9 @@ print(h4.bin(0).value, h4.bin(1).value)
 # prints: 2.0 2.0
 
 # now save the histogram
-with open("h4_saved.pkl", "w") as f:
+with open("h4_saved.pkl", "wb") as f:
     pickle.dump(h4, f)
-with open("h4_saved.pkl", "r") as f:
+with open("h4_saved.pkl", "rb") as f:
     h5 = pickle.load(f)
 
 print(h4 == h5)

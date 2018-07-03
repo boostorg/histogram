@@ -28,38 +28,34 @@ branches:
 
 matrix:
   include:
-    # - os: linux # minimum gcc
-    #   python: 2.7
-    #   env:
-    #     CC=gcc CXX=g++
-    #     BUILD_PYTHON=OFF
-    #     BUILD_NUMPY=OFF
-    #     BUILD_SERIALIZATION=OFF
-    # - os: linux # maximum gcc
-    #   python: 2.7
-    #   env:
-    #     CC=gcc CXX=g++
-    #     BUILD_PYTHON=ON
-    #     BUILD_NUMPY=ON
-    #     BUILD_SERIALIZATION=ON
+    - os: linux # minimum gcc
+      env:
+        CC=gcc CXX=g++ PYTHON_VERSION=2.7
+        BUILD_PYTHON=OFF
+        BUILD_NUMPY=OFF
+        BUILD_SERIALIZATION=OFF
+    - os: linux # maximum gcc
+      env:
+        CC=gcc CXX=g++ PYTHON_VERSION=2.7
+        BUILD_PYTHON=ON
+        BUILD_NUMPY=ON
+        BUILD_SERIALIZATION=ON
     - os: linux # maximum gcc
       env:
         CC=gcc CXX=g++ PYTHON_VERSION=3.6
         BUILD_PYTHON=ON
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=ON
-    # - os: linux # maximum clang
-    #   python: 2.7
-    #   env:
-    #     CC=clang CXX=clang++
-    #     BUILD_PYTHON=ON
-    #     BUILD_NUMPY=ON
-    #     BUILD_SERIALIZATION=ON
-    # - os: linux # coverage gcc
-    #   python: 2.7
-    #   env:
-    #     CC=gcc CXX=g++
-    #     CMAKE_BUILD_TYPE=coverage
+    - os: linux # maximum clang
+      env:
+        CC=clang CXX=clang++
+        BUILD_PYTHON=ON PYTHON_VERSION=2.7
+        BUILD_NUMPY=ON
+        BUILD_SERIALIZATION=ON
+    - os: linux # coverage gcc
+      env:
+        CC=gcc CXX=g++ PYTHON_VERSION=2.7
+        CMAKE_BUILD_TYPE=coverage
 
 git:
   depth: 1

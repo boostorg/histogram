@@ -1,5 +1,5 @@
 #[ guide_python_histogram
-
+from __future__ import print_function
 import histogram as hg
 
 # make 1-d histogram with 5 logarithmic bins from 1e0 to 1e5
@@ -11,14 +11,14 @@ for x in (2e0, 2e1, 2e2, 2e3, 2e4):
 
 # iterate over bins and access bin counter
 for idx, (lower, upper) in enumerate(h.axis(0)):
-    print "bin {0} x in [{1}, {2}): {3} +/- {4}".format(
-        idx, lower, upper, h.bin(idx).value, h.bin(idx).variance ** 0.5)
+    print("bin {0} x in [{1}, {2}): {3} +/- {4}".format(
+        idx, lower, upper, h.bin(idx).value, h.bin(idx).variance ** 0.5))
 
 # under- and overflow bins are accessed like in C++
 lo, up = h.axis(0)[-1]
-print "underflow [{0}, {1}): {2} +/- {3}".format(lo, up, h.bin(-1).value, h.bin(-1).variance)
+print("underflow [{0}, {1}): {2} +/- {3}".format(lo, up, h.bin(-1).value, h.bin(-1).variance))
 lo, up = h.axis(0)[5]
-print "overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h.bin(5).value, h.bin(5).variance)
+print("overflow  [{0}, {1}): {2} +/- {3}".format(lo, up, h.bin(5).value, h.bin(5).variance))
 
 # prints:
 # bin 0 x in [1.0, 10.0): 4.0 +/- 4.0

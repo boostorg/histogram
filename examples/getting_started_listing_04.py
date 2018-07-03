@@ -13,6 +13,6 @@ for x in (2e0, 2e1, 2e2, 2e3, 2e4):
 # iterate over bins and access bin counter
 for idx, (lower, upper) in enumerate(h.axis(0)):
     print("bin {0} x in [{1}, {2}): {3} +/- {4}".format(
-        idx, lower, upper, h.bin(idx).value, h.bin(idx).variance ** 0.5))
+          idx, lower, upper, h.bin(idx).value, h.bin(idx).variance ** 0.5))
 
 #]
