@@ -78,8 +78,8 @@ git:
 
 # Install packages (pre-installed: pytest numpy)
 install:
-  - PYTHON_VERISON_MAJOR=$(python -c 'import sys; sys.stdout.write("%i" % sys.version_info.major)')
-  - PYTHON_VERISON=$(python -c 'import sys; sys.stdout.write("%i.%i" % (sys.version_info.major, sys.version_info.minor))')
+  - PYTHON_VERSION_MAJOR=$(python -c 'import sys; sys.stdout.write("%i" % sys.version_info.major)')
+  - PYTHON_VERSION=$(python -c 'import sys; sys.stdout.write("%i.%i" % (sys.version_info.major, sys.version_info.minor))')
 
   - BOOST_VERSION=1.65.0 # match version number of cache directory above
   - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}-py${PYTHON_VERSION_MAJOR}

@@ -35,14 +35,14 @@ endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   add_compile_options(/W4)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_compile_options(-Wall -Wextra)
+  add_compile_options(-Wall -Wextra -pedantic)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
     # -fpermissive needed for cpp_int in gcc-6
     # -Wno-noexcept-type to silence warnings related to Boost.Python
     add_compile_options(-fpermissive -Wno-noexcept-type)
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  add_compile_options(-Wall -pedantic -D__STRICT_ANSI__ -ftemplate-depth=1024)
+  add_compile_options(-Wall -Wextra -pedantic -D__STRICT_ANSI__ -ftemplate-depth=1024)
 endif()
 
 if(TRACE_ALLOCS)
