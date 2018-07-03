@@ -69,7 +69,7 @@ install:
   - pyenv versions
   - pyenv global ${PYTHON_VERSION}
 
-  - source travis_install_boost.sh
+  - (cd build && source travis_install_boost.sh)
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
       pip install cpp-coveralls urllib3[secure];
