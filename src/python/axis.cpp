@@ -9,7 +9,7 @@
 #include <boost/histogram/axis/axis.hpp>
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
-#include <boost/math/constants/constants.hpp>
+#include <boost/histogram/detail/utility.hpp>
 #include <boost/python.hpp>
 #include <boost/python/def_visitor.hpp>
 #include <boost/python/raw_function.hpp>
@@ -44,7 +44,7 @@ struct generic_iterator {
     }
     return iterable[idx++];
   }
-  bp::object self() { return bp::object(*this); }
+  generic_iterator& self() { return *this; }
   bp::object iterable;
   unsigned idx = 0;
   unsigned size = 0;
@@ -89,7 +89,8 @@ bp::object variable_init(bp::tuple args, bp::dict kwargs) {
   auto uo = bha::uoflow::on;
   while (bp::len(kwargs) > 0) {
     bp::tuple kv = kwargs.popitem();
-    boost::string_view k(bp::extract<const char*>(kv[0]), bp::len(kv[0]));
+    const char* key_cstr = bp::extract<const char*>(kv[0]);
+    boost::string_view k(key_cstr, bp::len(kv[0]));
     bp::object v = kv[1];
     if (k == "label")
       label = boost::string_view(bp::extract<const char*>(v), bp::len(v));
@@ -120,7 +121,8 @@ bp::object category_init(bp::tuple args, bp::dict kwargs) {
   boost::string_view label;
   while (bp::len(kwargs) > 0) {
     bp::tuple kv = kwargs.popitem();
-    boost::string_view k(bp::extract<const char*>(kv[0]), bp::len(kv[0]));
+    const char* key_cstr = bp::extract<const char*>(kv[0]);
+    boost::string_view k(key_cstr, bp::len(kv[0]));
     bp::object v = kv[1];
     if (k == "label")
       label = boost::string_view(bp::extract<const char*>(v), bp::len(v));
@@ -269,8 +271,10 @@ void register_axis_types() {
   docstring_options dopt(true, true, false);
 
   class_<generic_iterator>("generic_iterator", init<object>())
-    .def("__iter__", &generic_iterator::self)
-    .def("next", &generic_iterator::next);
+    .def("__iter__", &generic_iterator::self, return_internal_reference<>())
+    .def("__next__", &generic_iterator::next) // Python3
+    .def("next", &generic_iterator::next)     // Python2
+    ;
 
   class_<bha::regular<>>(
       "regular",
@@ -319,7 +323,7 @@ void register_axis_types() {
       no_init)
       .def(init<unsigned, double, double, const char*>(
           (arg("self"), arg("bin"), arg("phase") = 0.0,
-           arg("perimeter") = boost::math::double_constants::two_pi,
+           arg("perimeter") = bh::detail::two_pi,
            arg("label") = "")))
       .def(axis_suite<bha::circular<>>());
 

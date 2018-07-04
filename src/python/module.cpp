@@ -8,7 +8,7 @@
 #include <boost/python/scope.hpp>
 #include <boost/python/object.hpp>
 #ifdef HAVE_NUMPY
-#include <boost/python/numpy.hpp>
+#  include <boost/python/numpy.hpp>
 #endif
 
 void register_axis_types();
@@ -16,10 +16,13 @@ void register_histogram();
 
 BOOST_PYTHON_MODULE(histogram) {
   using namespace boost::python;
+  scope current;
 #ifdef HAVE_NUMPY
   numpy::initialize();
+  current.attr("HAVE_NUMPY") = true;
+#else
+  current.attr("HAVE_NUMPY") = false;
 #endif
-  scope current;
   object axis_module = object(
     borrowed(PyImport_AddModule("histogram.axis"))
   );

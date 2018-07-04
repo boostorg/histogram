@@ -3,128 +3,101 @@
 # (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
 
 sudo: false
+language: generic
 
 cache:
   pip: true
   directories:
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0
-
-language: cpp
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py2
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py3
 
 branches:
   only:
     - master
     - develop
 
+# addons:
+#   apt:
+#     sources: deadsnakes
+#     packages:
+#       - python2.7
+#       - python3.5
+#       - python3-pip
+#       - libpython2.7-dev
+#       - libpython3.5-dev
+
 matrix:
   include:
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - cmake
-            - cmake-data
-            - clang-3.6
-      env: COMPILER_VERSION=3.6
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - cmake
-            - cmake-data
-            - clang-3.8
-      env: COMPILER_VERSION=3.8 PYTHON_VERSION=2.7
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - cmake
-            - cmake-data
-            - g++-4.8
-      env: COMPILER_VERSION=4.8
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - cmake
-            - cmake-data
-            - g++-7
-      env: COMPILER_VERSION=7 CMAKE_BUILD_TYPE=coverage
+    - os: linux # minimum gcc
+      env:
+        CC=gcc CXX=g++ PYTHON_VERSION=2.7
+        BUILD_PYTHON=OFF
+        BUILD_NUMPY=OFF
+        BUILD_SERIALIZATION=OFF
+    - os: linux # maximum gcc
+      env:
+        CC=gcc CXX=g++ PYTHON_VERSION=2.7
+        BUILD_PYTHON=ON
+        BUILD_NUMPY=ON
+        BUILD_SERIALIZATION=ON
+    - os: linux # maximum gcc
+      env:
+        CC=gcc CXX=g++ PYTHON_VERSION=3.6
+        BUILD_PYTHON=ON
+        BUILD_NUMPY=OFF
+        BUILD_SERIALIZATION=ON
+    - os: linux # maximum clang
+      env:
+        CC=clang CXX=clang++
+        BUILD_PYTHON=ON PYTHON_VERSION=2.7
+        BUILD_NUMPY=ON
+        BUILD_SERIALIZATION=ON
+    - os: linux # coverage gcc
+      env:
+        CC=gcc CXX=g++ GCOV=gcov PYTHON_VERSION=2.7
+        CMAKE_BUILD_TYPE=coverage
 
 git:
   depth: 1
 
-# Install packages
+# Install packages (pre-installed: pytest numpy)
 install:
-  - export CXX=${CXX}-${COMPILER_VERSION}
-  - export CC=${CC}-${COMPILER_VERSION}
+  - pyenv versions
+  - pyenv global ${PYTHON_VERSION}
 
-  - BOOST_VERSION=1.65.0 # match version number of cache directory above
-  - BOOST_DIR=${TRAVIS_BUILD_DIR}/deps/boost-${BOOST_VERSION}
-  - mkdir -p ${BOOST_DIR}
-  - |
-    if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
-      pip install --user numpy==1.11.1
-      BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//\./_}.tar.gz"
-      { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
-      (cd ${BOOST_DIR} && ./bootstrap.sh && ./b2 install --prefix=${BOOST_DIR})
-    fi
+  - pip install --user numpy
+  - source build/travis_install_boost.sh
 
-  - if [ -z ${PYTHON_VERSION} ]; then
-      export BUILD_PYTHON=OFF;
-    else
-      export BUILD_PYTHON=ON;
-    fi
-  - if [ -z ${NUMPY_SUPPORT} ]; then
-      export NUMPY_SUPPORT=OFF;
-    fi
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
-      pip install --user numpy==1.11.1 cpp-coveralls urllib3[secure];
-    fi
-  - if [ "${NUMPY_SUPPORT}" = "ON" ]; then
-      pip install --user numpy==1.11.1;
+      pip install --user cpp-coveralls urllib3[secure];
     fi
 
 script:
   - cd build
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
-
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=OFF
+              -DBUILD_SERIALIZATION=ON
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
-              -DPYTHON_VERSION=2
-              -DBUILD_NUMPY_SUPPORT=OFF
+              -DBUILD_NUMPY=OFF
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
-              -DPYTHON_VERSION=2
-              -DBUILD_NUMPY_SUPPORT=ON
+              -DBUILD_NUMPY=ON
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
     else
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=${BUILD_PYTHON}
-              -DPYTHON_VERSION=${PYTHON_VERSION}
-              -DBUILD_NUMPY_SUPPORT=${NUMPY_SUPPORT}
+              -DBUILD_NUMPY=${BUILD_NUMPY}
+              -DBUILD_SERIALIZATION=${BUILD_SERIALIZATION}
               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} &&
       make -j2 &&
       ctest -V;
@@ -133,10 +106,10 @@ script:
 # Calculate coverage
 after_success:
   if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
-    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which gcov-${COMPILER_VERSION}` --gcov-options '\-lp';
+    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which ${GCOV}` --gcov-options '\-lp';
   fi
 
-after_failure:
+# after_failure:
   # - printf "r\nbt" > gdb.cmd
   # - for x in *_test; do
   #     $x || gdb $x --batch -x gdb.cmd;

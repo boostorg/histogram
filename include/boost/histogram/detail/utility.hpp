@@ -8,14 +8,21 @@
 #define _BOOST_HISTOGRAM_DETAIL_UTILITY_HPP_
 
 #include <algorithm>
+#include <boost/config.hpp>
+#include <boost/assert.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/utility/string_view.hpp>
+#include <boost/type_index.hpp>
 #include <ostream>
 #include <vector>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
 namespace detail {
+
+// two_pi can be found in boost/math, but it is defined here to reduce deps
+constexpr double two_pi = 6.283185307179586;
 
 inline void escape(std::ostream &os, const string_view s) {
   os << '\'';
@@ -29,36 +36,20 @@ inline void escape(std::ostream &os, const string_view s) {
   os << '\'';
 }
 
-template <typename Axis>
-inline void lin(std::size_t &out, std::size_t &stride, const Axis &a,
+// the following is highly optimized code that runs in a hot loop;
+// please measure the performance impact of changes
+inline void lin(std::size_t &out, std::size_t &stride,
+                const int axis_size,
+                const int axis_shape,
                 int j) noexcept {
-  // the following is highly optimized code that runs in a hot loop;
-  // please measure the performance impact of changes
-  const int uoflow = a.uoflow();
-  // set stride to zero if 'j' is not in range,
-  // this communicates the out-of-range condition to the caller
-  stride *= (j >= -uoflow) & (j < (a.size() + uoflow));
-  j += (j < 0) * (a.size() + 2); // wrap around if in < 0
+  BOOST_ASSERT_MSG(stride == 0 || (-1 <= j && j <= axis_size),
+                   "index must be in bounds for this algorithm");
+  j += (j < 0) * (axis_size + 2); // wrap around if j < 0
   out += j * stride;
 #ifndef _MSC_VER
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
 #endif
-  stride *= a.shape();
-}
-
-template <typename Axis>
-inline void xlin(std::size_t &out, std::size_t &stride, const Axis &a,
-                 const typename Axis::value_type &x) noexcept {
-  // the following is highly optimized code that runs in a hot loop;
-  // please measure the performance impact of changes
-  int j = a.index(x);
-  // j is guaranteed to be in range [-1, bins]
-  j += (j < 0) * (a.size() + 2); // wrap around if j < 0
-  out += j * stride;
-#ifndef _MSC_VER
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-#endif
-  stride *= (j < a.shape()) * a.shape(); // stride == 0 indicates out-of-range
+  stride *= (j < axis_shape) * axis_shape; // stride == 0 indicates out-of-range
 }
 
 struct index_mapper {
@@ -79,11 +70,10 @@ struct index_mapper {
       s1 *= ni;
       ++bi;
     }
-    std::sort(dims.begin(), dims.end(), [](const dim &a, const dim &b) {
-      if (a.stride1 == b.stride1)
-        return 0;
-      return a.stride1 < b.stride1 ? -1 : 1;
-    });
+    std::sort(dims.begin(), dims.end(),
+              [](const dim &a, const dim &b) {
+                return a.stride1 > b.stride1;
+              });
     nfirst = s1;
   }
 
@@ -106,6 +96,19 @@ private:
   };
   std::vector<dim> dims;
 };
+
+template <typename T>
+typename std::enable_if<(is_castable_to_int_t<T>::value), int>::type
+indirect_int_cast(T&&t) noexcept { return static_cast<int>(std::forward<T>(t)); }
+
+template <typename T>
+typename std::enable_if<!(is_castable_to_int_t<T>::value), int>::type
+indirect_int_cast(T&&) noexcept {
+  // Cannot use static_assert here, because this function is created as a
+  // side-effect of TMP. It must be valid at compile-time.
+  BOOST_ASSERT_MSG(false, "bin argument not convertible to int");
+  return 0;
+}
 
 } // namespace detail
 } // namespace histogram

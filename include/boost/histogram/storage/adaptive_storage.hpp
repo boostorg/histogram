@@ -311,10 +311,10 @@ template <> struct radd_visitor<wcount> : public static_visitor<void> {
 };
 
 template <>
-struct radd_visitor<weight_t<double>> : public static_visitor<void> {
+struct radd_visitor<weight<double>> : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
-  const weight_t<double> rhs;
+  const weight<double> rhs;
   radd_visitor(any_array &l, const std::size_t i, const double w)
       : lhs_any(l), idx(i), rhs{w} {}
 
@@ -339,7 +339,7 @@ struct radd_array_visitor : public static_visitor<void> {
     for (auto i = 0ul; i < rhs.size; ++i)
       apply_visitor(radd_visitor<T>(lhs_any, i, rhs[i]), lhs_any);
   }
-  void operator()(const array<void> &rhs) const {}
+  void operator()(const array<void> &) const {}
 };
 
 struct rmul_visitor : public static_visitor<void> {
@@ -358,8 +358,8 @@ struct rmul_visitor : public static_visitor<void> {
 };
 
 struct bicmp_visitor : public static_visitor<bool> {
-  template <typename Array1, typename Array2>
-  bool operator()(const Array1 &b1, const Array2 &b2) const {
+  template <typename T, typename U>
+  bool operator()(const array<T> &b1, const array<U> &b2) const {
     if (b1.size != b2.size)
       return false;
     return std::equal(b1.begin(), b1.end(), b2.begin());
@@ -434,7 +434,7 @@ public:
   }
 
   void add(std::size_t i, const element_type &x) {
-    if (x.has_trivial_variance()) {
+    if (x.variance() == x.value()) {
       apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()),
                     buffer_);
     } else {
@@ -446,9 +446,9 @@ public:
     apply_visitor(detail::radd_visitor<T>(buffer_, i, t), buffer_);
   }
 
-  template <typename T> void add(std::size_t i, const detail::weight_t<T> &w) {
+  template <typename T> void add(std::size_t i, const detail::weight<T> &w) {
     apply_visitor(
-        detail::radd_visitor<detail::weight_t<double>>(buffer_, i, w.value),
+        detail::radd_visitor<detail::weight<double>>(buffer_, i, w.value),
         buffer_);
   }
 

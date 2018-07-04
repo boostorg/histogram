@@ -25,46 +25,62 @@
 #include <limits>
 #include <type_traits>
 #include <vector>
+#include <utility>
 
 namespace boost {
 namespace histogram {
 namespace detail {
+
+#define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond)                  \
+template <typename U> struct name {                              \
+  template <typename T, typename = decltype(cond)>               \
+  struct SFINAE {};                                              \
+  template <typename T> static std::true_type Test(SFINAE<T> *); \
+  template <typename T> static std::false_type Test(...);        \
+  using type = decltype(Test<U>(nullptr));                       \
+};                                                               \
+template <typename T>                                            \
+using name##_t = typename name<T>::type
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
+                            (std::declval<T&>().value(), std::declval<T&>().variance()));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower,
+                            (std::declval<T &>().lower(0)));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_dynamic_container,
+                            (std::begin(std::declval<T&>())));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container,
+                            (std::get<0>(std::declval<T&>())));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_castable_to_int,
+                            (static_cast<int>(std::declval<T&>())));
+
+struct static_container_tag {};
+struct dynamic_container_tag {};
+struct no_container_tag {};
+
+template <typename T>
+using classify_container_t =
+  typename std::conditional<
+    is_static_container_t<T>::value,
+    static_container_tag,
+    typename std::conditional<
+      is_dynamic_container_t<T>::value,
+      dynamic_container_tag,
+      no_container_tag
+    >::type
+  >::type;
 
 template <typename T, typename = decltype(std::declval<T &>().size(),
                                           std::declval<T &>().increase(0),
                                           std::declval<T &>()[0])>
 struct requires_storage {};
 
-template <typename T> struct has_variance_support {
-  template <typename U, typename = decltype(std::declval<U &>().value(),
-                                            std::declval<U &>().variance())>
-  struct SFINAE {};
-  template <typename U> static std::true_type Test(SFINAE<U> *);
-  template <typename U> static std::false_type Test(...);
-  using type = decltype(Test<T>(nullptr));
-};
-
-template <typename T>
-using has_variance_support_t = typename has_variance_support<T>::type;
-
-template <typename T> struct has_method_lower {
-  template <typename U, typename = decltype(std::declval<U &>().lower(0))>
-  struct SFINAE {};
-  template <typename U> static std::true_type Test(SFINAE<U> *);
-  template <typename U> static std::false_type Test(...);
-  using type = decltype(Test<T>(nullptr));
-};
-
-template <typename T>
-using has_method_lower_t = typename has_method_lower<T>::type;
-
 template <typename T,
           typename = decltype(*std::declval<T &>(), ++std::declval<T &>())>
-struct is_iterator {};
-
-template <typename T, typename = decltype(std::begin(std::declval<T &>()),
-                                          std::end(std::declval<T &>()))>
-struct is_sequence {};
+struct requires_iterator {};
 
 template <typename MainVector, typename AuxVector>
 struct union_
@@ -109,6 +125,15 @@ using unique_sorted_t =
 template <typename Axes, typename Numbers>
 using axes_select_t =
     typename mpl::transform<Numbers, mpl::at<Axes, mpl::_>>::type;
+
+template <typename T>
+using size_of = std::tuple_size<typename std::decay<T>::type>;
+
+template <unsigned D, typename T>
+using type_of = typename std::tuple_element<D, typename std::decay<T>::type>::type;
+
+template <bool C, typename T1, typename T2>
+using if_else = typename std::conditional<C, T1, T2>::type;
 
 } // namespace detail
 } // namespace histogram

@@ -5,6 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -17,6 +18,7 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <utility>
 
 using namespace boost::mpl;
 using namespace boost::histogram::detail;
@@ -138,6 +140,30 @@ int main() {
     BOOST_TEST_EQ(
         typename has_variance_support<value_and_variance_methods>::type(),
         true);
+  }
+
+  // classify_container
+  {
+    using result1 = classify_container_t<int>;
+    BOOST_TEST_TRAIT_TRUE(( std::is_same<result1, no_container_tag> ));
+
+    using result1a = classify_container_t<int&>;
+    BOOST_TEST_TRAIT_TRUE(( std::is_same<result1a, no_container_tag> ));
+
+    using result2 = classify_container_t<std::vector<int>>;
+    BOOST_TEST_TRAIT_TRUE(( std::is_same<result2, dynamic_container_tag> ));
+
+    using result2a = classify_container_t<std::vector<int>&>;
+    BOOST_TEST_TRAIT_TRUE(( std::is_same<result2a, dynamic_container_tag> ));
+
+    using result3 = classify_container_t<std::pair<int, int>>;
+    BOOST_TEST_TRAIT_TRUE(( std::is_same<result3, static_container_tag> ));
+
+    using result3a = classify_container_t<std::pair<int, int>&>;
+    BOOST_TEST_TRAIT_TRUE(( std::is_same<result3a, static_container_tag> ));
+
+    using result4 = classify_container_t<decltype("abc")>;
+    BOOST_TEST_TRAIT_TRUE(( std::is_same<result4, dynamic_container_tag> ));
   }
 
   return boost::report_errors();

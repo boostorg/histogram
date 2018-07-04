@@ -110,7 +110,7 @@ inline bool axes_equal_impl(mpl::false_, mpl::false_, const A &a, const B &b) {
 
 template <typename A, typename B>
 inline bool axes_equal_impl(mpl::false_, mpl::true_, const A &a, const B &b) {
-  if (a.size() != fusion::size(b))
+  if (a.size() != static_cast<unsigned>(fusion::size(b)))
     return false;
   fusion_cmp_axis<typename A::const_iterator> cmp(a.begin());
   fusion::for_each(b, cmp);
@@ -156,7 +156,7 @@ inline void axes_assign_impl(mpl::false_, mpl::true_, A &a, const B &b) {
 template <typename A, typename B>
 inline void axes_assign_impl(mpl::true_, mpl::false_, A &a, const B &b) {
   BOOST_ASSERT_MSG(
-      static_cast<int>(fusion::size(a)) == b.size(),
+      static_cast<unsigned>(fusion::size(a)) == b.size(),
       "cannot assign to static axes vector: number of axes does not match");
   fusion::for_each(a,
                    fusion_assign_axis<typename B::const_iterator>(b.begin()));

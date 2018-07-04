@@ -28,8 +28,11 @@ public:
   weight_counter &operator=(const weight_counter &) = default;
   weight_counter &operator=(weight_counter &&) = default;
 
-  weight_counter(const RealType &value, const RealType &variance)
-      : w(value), w2(variance) {}
+  weight_counter(const RealType &value, const RealType &variance) noexcept
+    : w(value), w2(variance) {}
+
+  explicit weight_counter(const RealType &value) noexcept
+    : w(value), w2(value) {}
 
   weight_counter &operator++() {
     ++w;
@@ -37,6 +40,7 @@ public:
     return *this;
   }
 
+  // TODO: explain why this is needed
   weight_counter &operator+=(const RealType &x) {
     w += x;
     w2 += x;
@@ -51,7 +55,7 @@ public:
   }
 
   template <typename T>
-  weight_counter &operator+=(const detail::weight_t<T> &rhs) {
+  weight_counter &operator+=(const detail::weight<T> &rhs) {
     const auto x = static_cast<RealType>(rhs.value);
     w += x;
     w2 += x * x;
@@ -82,32 +86,20 @@ public:
     return !operator==(rhs);
   }
 
-  template <typename T> bool operator==(const T &rhs) const noexcept {
-    return w == w2 && w == static_cast<RealType>(rhs);
-  }
-
-  template <typename T> bool operator!=(const T &rhs) const noexcept {
-    return !operator==(rhs);
-  }
-
   const RealType &value() const noexcept { return w; }
   const RealType &variance() const noexcept { return w2; }
 
-  bool has_trivial_variance() const noexcept { return w == w2; }
-
   // conversion
   template <typename T>
-  explicit weight_counter(const T &t) : w(static_cast<T>(t)), w2(w) {}
+  explicit weight_counter(const T &t) { operator=(t); }
   template <typename T> weight_counter &operator=(const T &x) {
     w = w2 = static_cast<RealType>(x);
     return *this;
   }
-  operator RealType() const {
-    // if (!has_trivial_variance())
-    //   throw std::logic_error("cannot convert weight_counter to RealType, "
-    //                          "value and variance differ");
-    return w;
-  }
+
+  // lossy conversion must be explicit
+  template <typename T>
+  explicit operator T() const { return static_cast<T>(w); }
 
 private:
   friend class ::boost::serialization::access;
@@ -118,13 +110,54 @@ private:
 };
 
 template <typename T, typename U>
-bool operator==(const T &t, const weight_counter<U> &w) {
-  return w == t;
+bool operator==(const weight_counter<T> &w, const U & u) {
+  return w.value() == w.variance() && w.value() == static_cast<T>(u);
 }
 
 template <typename T, typename U>
-bool operator!=(const T &t, const weight_counter<U> &w) {
-  return !(w == t);
+bool operator==(const T & t, const weight_counter<U> &w) {
+  return operator==(w, t);
+}
+
+template <typename T, typename U>
+bool operator!=(const weight_counter<T> &w, const U & u) {
+  return !operator==(w, u);
+}
+
+template <typename T, typename U>
+bool operator!=(const T & t, const weight_counter<U> &w) {
+  return operator!=(w, t);
+}
+
+template <typename T>
+weight_counter<T> operator+(const weight_counter<T>& a, const weight_counter<T>& b) noexcept {
+  weight_counter<T> c = a;
+  return c += b;
+}
+
+template <typename T>
+weight_counter<T>&& operator+(weight_counter<T>&& a, const weight_counter<T>& b) noexcept {
+  a += b;
+  return std::move(a);
+}
+
+template <typename T>
+weight_counter<T>&& operator+(const weight_counter<T>& a, weight_counter<T>&& b) noexcept {
+  return operator+(std::move(b), a);
+}
+
+template <typename T>
+weight_counter<T> operator+(const weight_counter<T>& a, const T& b) noexcept
+{
+  auto r = a;
+  return r += b;
+}
+
+template <typename T>
+weight_counter<T> operator+(const T& a, const weight_counter<T>& b) noexcept
+{
+  auto r = b;
+  return r += a;
 }
 
 } // namespace histogram
