@@ -44,7 +44,7 @@ struct generic_iterator {
     }
     return iterable[idx++];
   }
-  bp::object self() { return bp::object(*this); }
+  generic_iterator& self() { return *this; }
   bp::object iterable;
   unsigned idx = 0;
   unsigned size = 0;
@@ -271,7 +271,7 @@ void register_axis_types() {
   docstring_options dopt(true, true, false);
 
   class_<generic_iterator>("generic_iterator", init<object>())
-    .def("__iter__", &generic_iterator::self)
+    .def("__iter__", &generic_iterator::self, return_internal_reference<>())
     .def("__next__", &generic_iterator::next) // Python3
     .def("next", &generic_iterator::next)     // Python2
     ;

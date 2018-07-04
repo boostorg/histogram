@@ -124,7 +124,7 @@ public:
   template <typename T, typename A, typename S>
   histogram &operator+=(const histogram<T, A, S> &rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_))
-      throw std::logic_error("axes of histograms differ");
+      throw std::invalid_argument("axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
@@ -190,7 +190,7 @@ public:
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, static_cast<int>(ts)...);
     if (stride == 0)
-      throw std::out_of_range("invalid index");
+      throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 
@@ -214,15 +214,13 @@ public:
 
   /// Return axis \a i
   any_axis_type &axis(unsigned i = 0) {
-    if (i >= dim())
-      throw std::out_of_range("axis index out of range");
+    BOOST_ASSERT_MSG(i < dim(), "axis index out of range");
     return axes_[i];
   }
 
   /// Return axis \a i (const version)
   const any_axis_type &axis(unsigned i = 0) const {
-    if (i >= dim())
-      throw std::out_of_range("axis index out of range");
+    BOOST_ASSERT_MSG(i < dim(), "axis index out of range");
     return axes_[i];
   }
 
@@ -325,7 +323,7 @@ private:
     std::size_t idx = 0, stride = 1;
     lin_iter(idx, stride, std::begin(t));
     if (stride == 0)
-      throw std::out_of_range("invalid index");
+      throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 
@@ -336,7 +334,7 @@ private:
     std::size_t idx = 0, stride = 1;
     lin_get(mpl::int_<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
     if (stride == 0)
-      throw std::out_of_range("invalid index");
+      throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 
@@ -347,7 +345,7 @@ private:
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, detail::indirect_int_cast(t));
     if (stride == 0)
-      throw std::out_of_range("invalid index");
+      throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 

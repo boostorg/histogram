@@ -70,11 +70,10 @@ struct index_mapper {
       s1 *= ni;
       ++bi;
     }
-    std::sort(dims.begin(), dims.end(), [](const dim &a, const dim &b) {
-      if (a.stride1 == b.stride1)
-        return 0;
-      return a.stride1 < b.stride1 ? -1 : 1;
-    });
+    std::sort(dims.begin(), dims.end(),
+              [](const dim &a, const dim &b) {
+                return a.stride1 < b.stride1;
+              });
     nfirst = s1;
   }
 

@@ -119,23 +119,22 @@ public:
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <typename T, typename A, typename S>
-  bool operator!=(const histogram<T, A, S> &rhs) const noexcept {
+  template <typename... Ts>
+  bool operator!=(const histogram<Ts...> &rhs) const noexcept {
     return !operator==(rhs);
   }
 
   template <typename S>
   histogram &operator+=(const histogram<static_tag, Axes, S> &rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_))
-      throw std::logic_error("axes of histograms differ");
+    BOOST_ASSERT_MSG(detail::axes_equal(axes_, rhs.axes_), "axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
 
-  template <typename T, typename A, typename S>
-  histogram &operator+=(const histogram<T, A, S> &rhs) {
+  template <typename A, typename S>
+  histogram &operator+=(const histogram<dynamic_tag, A, S> &rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_))
-      throw std::logic_error("axes of histograms differ");
+      throw std::invalid_argument("axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
@@ -192,7 +191,7 @@ public:
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, static_cast<int>(indices)...);
     if (stride == 0)
-      throw std::out_of_range("invalid index");
+      throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 
@@ -333,7 +332,7 @@ private:
     std::size_t idx = 0, stride = 1;
     lin_iter(mpl::int_<axes_size::value>(), idx, stride, std::begin(t));
     if (stride == 0)
-      throw std::out_of_range("invalid index");
+      throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 
@@ -344,18 +343,16 @@ private:
     std::size_t idx = 0, stride = 1;
     lin_get(mpl::int_<axes_size::value>(), idx, stride, std::forward<T>(t));
     if (stride == 0)
-      throw std::out_of_range("invalid index");
+      throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 
   template <typename T>
   const_reference bin_impl(detail::no_container_tag, T&&t) const {
-    static_assert(axes_size::value == 1,
-                  "bin argument does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin<0>(idx, stride, static_cast<int>(t));
+    lin<0>(idx, stride, detail::indirect_int_cast(t));
     if (stride == 0)
-      throw std::out_of_range("invalid index");
+      throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 

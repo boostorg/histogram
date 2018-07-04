@@ -384,19 +384,7 @@ std::string element_repr(const pyhistogram::element_type& e) {
 void register_histogram() {
   bp::docstring_options dopt(true, true, false);
 
-  bp::class_<pyhistogram::element_type>(
-      "element", "Holds value and variance of bin count.", bp::init<double, double>())
-      .add_property("value", element_value)
-      .add_property("variance", element_variance)
-      .def("__getitem__", element_getitem)
-      .def("__len__", element_len)
-      .def(bp::self + bp::self)
-      .def(bp::self += bp::self)
-      .def(bp::self += double())
-      .def("__repr__", element_repr)
-      ;
-
-  bp::class_<pyhistogram, boost::shared_ptr<pyhistogram>>(
+  bp::scope s = bp::class_<pyhistogram, boost::shared_ptr<pyhistogram>>(
       "histogram", "N-dimensional histogram for real-valued data.", bp::no_init)
       .def("__init__", bp::raw_function(histogram_init),
            ":param axis args: axis objects"
@@ -430,11 +418,29 @@ void register_histogram() {
       .def("__repr__", histogram_repr,
            ":return: string representation of the histogram")
       .def(bp::self == bp::self)
+      .def(bp::self != bp::self)
       .def(bp::self += bp::self)
       .def(bp::self *= double())
       .def(bp::self * double())
       .def(double() * bp::self)
       .def(bp::self + bp::self)
       .def_pickle(bh::serialization_suite<pyhistogram>())
+      ;
+
+  bp::class_<pyhistogram::element_type>(
+      "element", "Holds value and variance of bin count.",
+      bp::init<double, double>())
+      .add_property("value", element_value)
+      .add_property("variance", element_variance)
+      .def("__getitem__", element_getitem)
+      .def("__len__", element_len)
+      .def(bp::self == bp::self)
+      .def(bp::self != bp::self)
+      .def(bp::self += bp::self)
+      .def(bp::self += double())
+      .def(bp::self + bp::self)
+      .def(bp::self + double())
+      .def(double() + bp::self)
+      .def("__repr__", element_repr)
       ;
 }

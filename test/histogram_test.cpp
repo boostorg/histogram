@@ -510,13 +510,6 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(d.bin(3), 0);
   }
 
-  // bad_add
-  {
-    auto a = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2));
-    auto b = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3));
-    BOOST_TEST_THROWS(a += b, std::logic_error);
-  }
-
   // functional programming
   {
     auto v = std::vector<int>{0, 1, 2};

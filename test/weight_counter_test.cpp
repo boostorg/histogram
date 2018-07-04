@@ -6,28 +6,19 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/histogram/ostream_operators.hpp>
 #include <ostream>
 #include <sstream>
 
 using namespace boost::histogram;
 using wcount = weight_counter<double>;
 
-namespace boost {
-namespace histogram {
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const weight_counter<T> &w) {
-  os << "[" << w.value() << ", " << w.variance() << "]";
-  return os;
-}
-} // namespace histogram
-} // namespace boost
-
 int main() {
   {
     wcount w(1);
     std::ostringstream os;
     os << w;
-    BOOST_TEST_EQ(os.str(), std::string("[1, 1]"));
+    BOOST_TEST_EQ(os.str(), std::string("weight_counter(1, 1)"));
 
     BOOST_TEST_EQ(w, wcount(1));
     BOOST_TEST_NE(w, wcount(0));

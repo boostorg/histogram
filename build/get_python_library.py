@@ -9,5 +9,9 @@ getvar = sysconfig.get_config_var
 
 libname = "python" + pyver
 
-lib = glob.glob(pj(getvar('LIBPL'), "*" + libname + ".*"))[0]
-sys.stdout.write(lib)
+for ext in ('so', 'dylib', 'dll'):
+    lib = glob.glob(pj(getvar('LIBPL'), "*" + libname + "." + ext))
+    if lib:
+        assert len(lib) == 1
+        sys.stdout.write(lib[0])
+        break

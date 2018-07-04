@@ -8,27 +8,23 @@
 
 import unittest
 from math import pi
-from histogram import histogram, element
+from histogram import HAVE_NUMPY
+from histogram import histogram
 from histogram.axis import (regular, regular_log, regular_sqrt, regular_cos,
                             regular_pow, circular, variable, category,
                             integer)
 import pickle
-import os
 import sys
 if sys.version_info.major == 3:
     from io import BytesIO
 else:
     from StringIO import StringIO as BytesIO
-
-ON = True
-OFF = False
-have_numpy = @BUILD_NUMPY@  # noqa
-if have_numpy:
+if HAVE_NUMPY:
     import numpy
 
 
 def hsum(h):
-    result = element(0, 0)
+    result = histogram.element(0, 0)
     for x in h:
         result += x
     return result
@@ -394,6 +390,31 @@ class test_category(unittest.TestCase):
         self.assertEqual([x for x in category(*c)], c)
 
 
+class test_histogram_element(unittest.TestCase):
+
+    def test_basic(self):
+        elem = histogram.element(1, 2)
+        self.assertEqual(elem.value, 1)
+        self.assertEqual(elem.variance, 2)
+        self.assertEqual(len(elem), 2)
+        self.assertEqual(elem[0], 1)
+        self.assertEqual(elem[1], 2)
+        self.assertEqual(tuple(elem), (1, 2))
+
+    def test_ops(self):
+        a = histogram.element(1, 2)
+        b = histogram.element(2, 1)
+        self.assertNotEqual(a, b)
+        self.assertEqual(a + b, histogram.element(3, 3))
+        self.assertEqual(a + 1, histogram.element(2, 3))
+        self.assertEqual(1 + a, histogram.element(2, 3))
+        self.assertEqual(a + 2, histogram.element(3, 4))
+
+    def test_repr(self):
+        elem = histogram.element(1, 2)
+        self.assertEqual(str(elem), "histogram.element(1, 2)")
+
+
 class test_histogram(unittest.TestCase):
 
     def test_init(self):
@@ -537,7 +558,7 @@ class test_histogram(unittest.TestCase):
     def test_add_2d_bad(self):
         a = histogram(integer(-1, 1))
         b = histogram(regular(3, -1, 1))
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             a += b
 
     def test_add_2d_w(self):
@@ -628,7 +649,7 @@ class test_histogram(unittest.TestCase):
         self.assertNotEqual((h + h).bin(0).variance, (2 * h).bin(0).variance)
         self.assertNotEqual((h + h).bin(0).variance, (h * 2).bin(0).variance)
         h2 = histogram(regular(2, 0, 2))
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             h + h2
 
     def test_reduce_to(self):
@@ -705,7 +726,7 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(hsum(a).value, hsum(b).value)
         self.assertEqual(a, b)
 
-    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    @unittest.skipUnless(HAVE_NUMPY, "requires build with numpy-support")
     def test_numpy_conversion_0(self):
         a = histogram(integer(0, 3, uoflow=False))
         a(0)
@@ -732,7 +753,7 @@ class test_histogram(unittest.TestCase):
         # view does not follow underlying switch in word size
         self.assertFalse(numpy.all(c == v))
 
-    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    @unittest.skipUnless(HAVE_NUMPY, "requires build with numpy-support")
     def test_numpy_conversion_1(self):
         a = histogram(integer(0, 3))
         for i in range(10):
@@ -743,7 +764,7 @@ class test_histogram(unittest.TestCase):
         self.assertTrue(numpy.all(c == numpy.array(((0, 30, 0, 0, 0), (0, 90, 0, 0, 0)))))
         self.assertTrue(numpy.all(v == c))
 
-    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    @unittest.skipUnless(HAVE_NUMPY, "requires build with numpy-support")
     def test_numpy_conversion_2(self):
         a = histogram(integer(0, 2, uoflow=False),
                       integer(0, 3, uoflow=False),
@@ -770,7 +791,7 @@ class test_histogram(unittest.TestCase):
         self.assertTrue(numpy.all(c == r))
         self.assertTrue(numpy.all(v == r))
 
-    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    @unittest.skipUnless(HAVE_NUMPY, "requires build with numpy-support")
     def test_numpy_conversion_3(self):
         a = histogram(integer(0, 2),
                       integer(0, 3),
@@ -796,7 +817,7 @@ class test_histogram(unittest.TestCase):
         self.assertTrue(numpy.all(c == r))
         self.assertTrue(numpy.all(v == r))
 
-    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    @unittest.skipUnless(HAVE_NUMPY, "requires build with numpy-support")
     def test_numpy_conversion_4(self):
         a = histogram(integer(0, 2, uoflow=False),
                       integer(0, 4, uoflow=False))
@@ -809,7 +830,7 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(b1.shape, (0,))
         self.assertEqual(numpy.sum(b1), 0)
 
-    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    @unittest.skipUnless(HAVE_NUMPY, "requires build with numpy-support")
     def test_numpy_conversion_5(self):
         a = histogram(integer(0, 3, uoflow=False),
                       integer(0, 2, uoflow=False))
@@ -835,7 +856,7 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(a1[1, 1], 4)
         self.assertEqual(a1[2, 1], 5)
 
-    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    @unittest.skipUnless(HAVE_NUMPY, "requires build with numpy-support")
     def test_numpy_conversion_6(self):
         a = integer(0, 2)
         b = regular(2, 0, 2)
@@ -851,7 +872,7 @@ class test_histogram(unittest.TestCase):
         ref = numpy.array((1, 2))
         self.assertTrue(numpy.all(numpy.array(e) == ref))
 
-    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    @unittest.skipUnless(HAVE_NUMPY, "requires build with numpy-support")
     def test_fill_with_numpy_array_0(self):
         def ar(*args):
             return numpy.array(args, dtype=float)
@@ -886,7 +907,7 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(a.bin(1).value, 2)
         self.assertEqual(a.bin(2).value, 3)
 
-    @unittest.skipUnless(have_numpy, "requires build with numpy-support")
+    @unittest.skipUnless(HAVE_NUMPY, "requires build with numpy-support")
     def test_fill_with_numpy_array_1(self):
         def ar(*args):
             return numpy.array(args, dtype=float)
