@@ -54,6 +54,9 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_dynamic_container,
 BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container,
                             (std::get<0>(std::declval<T&>())));
 
+BOOST_HISTOGRAM_MAKE_SFINAE(is_castable_to_int,
+                            (static_cast<int>(std::declval<T&>())));
+
 struct static_container_tag {};
 struct dynamic_container_tag {};
 struct no_container_tag {};
