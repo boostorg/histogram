@@ -870,6 +870,23 @@ template <typename Type> void run_tests() {
     // BOOST_TEST_EQ(h.bin({1, 1}).variance(), 5);
   }
 
+  // bin args out of range
+  {
+    auto h1 = make_histogram<adaptive_storage>(Type(),
+                                               axis::integer<>(0, 2));
+    BOOST_TEST_THROWS(h1.bin(-2), std::out_of_range);
+    BOOST_TEST_THROWS(h1.bin(3), std::out_of_range);
+    BOOST_TEST_THROWS(h1.bin(std::make_tuple(-2)), std::out_of_range);
+    BOOST_TEST_THROWS(h1.bin(std::vector<int>({3})), std::out_of_range);
+
+    auto h2 = make_histogram<adaptive_storage>(Type(),
+                                               axis::integer<>(0, 2),
+                                               axis::integer<>(0, 2));
+    BOOST_TEST_THROWS(h2.bin(0, -2), std::out_of_range);
+    BOOST_TEST_THROWS(h2.bin(std::make_tuple(0, -2)), std::out_of_range);
+    BOOST_TEST_THROWS(h2.bin(std::vector<int>({0, -2})), std::out_of_range);
+  }
+
   // pass histogram to function
   {
     auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3));

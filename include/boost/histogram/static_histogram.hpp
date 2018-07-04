@@ -198,9 +198,7 @@ public:
   template <typename T>
   const_reference bin(T&&t) const {
     // check whether we need to unpack argument
-    return bin_impl(detail::if_else<(axes_size::value == 1),
-      detail::no_container_tag,
-      detail::classify_container_t<T>>(), std::forward<T>(t));
+    return bin_impl(detail::classify_container_t<T>(), std::forward<T>(t));
   }
 
   /// Number of axes (dimensions) of histogram
@@ -385,11 +383,12 @@ private:
   inline void lin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename... Ts>
-  inline void lin(std::size_t &idx, std::size_t &stride, int x,
+  inline void lin(std::size_t &idx, std::size_t &stride, int j,
                   Ts... ts) const noexcept {
     const auto a_size = fusion::at_c<D>(axes_).size();
     const auto a_shape = fusion::at_c<D>(axes_).shape();
-    detail::lin(idx, stride, a_size, a_shape, x);
+    stride *= (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
+    detail::lin(idx, stride, a_size, a_shape, j);
     lin<(D+1)>(idx, stride, ts...);
   }
 
@@ -430,6 +429,7 @@ private:
     const auto a_size = fusion::at_c<D>(axes_).size();
     const auto a_shape = fusion::at_c<D>(axes_).shape();
     const auto j = detail::indirect_int_cast(std::get<D>(t));
+    stride *= (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
     detail::lin(idx, stride, a_size, a_shape, j);
     lin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));
   }

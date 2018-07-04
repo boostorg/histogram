@@ -197,10 +197,7 @@ public:
   template <typename T>
   const_reference bin(T&&t) const {
     // check whether T is unpackable
-    if (dim() == 1)
-      return bin_impl(detail::no_container_tag(), std::forward<T>(t));
-    else
-      return bin_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+    return bin_impl(detail::classify_container_t<T>(), std::forward<T>(t));
   }
 
   /// Number of axes (dimensions) of histogram

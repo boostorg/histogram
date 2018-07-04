@@ -42,8 +42,8 @@ inline void lin(std::size_t &out, std::size_t &stride,
                 const int axis_size,
                 const int axis_shape,
                 int j) noexcept {
-  BOOST_ASSERT_MSG(stride == 0 || -1 <= j,
-                   "index must be => -1 for this algorithm, check input");
+  BOOST_ASSERT_MSG(stride == 0 || (-1 <= j && j <= axis_size),
+                   "index must be in bounds for this algorithm");
   j += (j < 0) * (axis_size + 2); // wrap around if j < 0
   out += j * stride;
 #ifndef _MSC_VER
