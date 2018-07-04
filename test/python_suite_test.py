@@ -32,6 +32,20 @@ def hsum(h):
     return result
 
 
+class test_generic_iterator(unittest.TestCase):
+
+    def test(self):
+        from histogram.axis import generic_iterator as giter
+        x = (1, 2, 3)
+        it = giter(x)
+        it2 = it.__iter__()
+        self.assertEqual(it.next(), 1)
+        self.assertEqual(it2.next(), 2)
+        self.assertEqual(it.__next__(), 3)
+        with self.assertRaises(StopIteration):
+            it.next()
+
+
 class test_regular(unittest.TestCase):
 
     def test_init(self):
