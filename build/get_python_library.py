@@ -1,6 +1,13 @@
 from distutils import sysconfig
-import os.path as op
+import os.path
 import sys
-v = sysconfig.get_config_vars()
-fpaths = [op.join(v[pv], v['LDLIBRARY']) for pv in ('LIBDIR', 'LIBPL')]
-sys.stdout.write(list(filter(op.exists, fpaths))[0])
+import glob
+pj = os.path.join
+
+pyver = sysconfig.get_config_var('VERSION')
+getvar = sysconfig.get_config_var
+
+libname = "python" + pyver
+
+lib = glob.glob(pj(getvar('LIBPL'), "*" + libname + ".*"))[0]
+sys.stdout.write(lib)
