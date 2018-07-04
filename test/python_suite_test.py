@@ -6,6 +6,9 @@
 # (See accompanying file LICENSE_1_0.txt
 # or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+import sys
+import os
+sys.path.append(os.getcwd())
 import unittest
 from math import pi
 from histogram import HAVE_NUMPY
@@ -14,7 +17,6 @@ from histogram.axis import (regular, regular_log, regular_sqrt, regular_cos,
                             regular_pow, circular, variable, category,
                             integer)
 import pickle
-import sys
 if sys.version_info.major == 3:
     from io import BytesIO
 else:

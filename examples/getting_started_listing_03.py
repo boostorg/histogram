@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.getcwd())
+
 #[ getting_started_listing_03
 
 import histogram as hg

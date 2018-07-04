@@ -1,5 +1,9 @@
-#[ guide_python_axis_representation
+from __future__ import print_function
+import sys
+import os
+sys.path.append(os.getcwd())
 
+#[ guide_python_axis_representation
 import histogram as hg
 import numpy as np
 
@@ -11,8 +15,8 @@ for idx, (lower, upper) in enumerate(ax):
     if idx == len(ax)-1:
         xedge2.append(upper)
 
-print xedge1
-print xedge2
+print(xedge1)
+print(xedge2)
 
 # prints:
 # [ 0.   0.2  0.4  0.6  0.8  1. ]
@@ -21,7 +25,7 @@ print xedge2
 # sequences constructed from an axis use its iterator, the result differs
 xedge3 = list(ax)
 
-print xedge3
+print(xedge3)
 
 # prints:
 # [(0., 0.2), (0.2, 0.4), (0.4, 0.6), (0.8, 1.0)]

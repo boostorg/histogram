@@ -1,6 +1,9 @@
-#[ guide_histogram_pickle
-
 from __future__ import print_function
+import sys
+import os
+sys.path.append(os.getcwd())
+
+#[ guide_histogram_pickle
 import histogram as hg
 import pickle
 

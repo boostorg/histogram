@@ -1,6 +1,9 @@
-#[ getting_started_listing_04
-
 from __future__ import print_function
+import sys
+import os
+sys.path.append(os.getcwd())
+
+#[ getting_started_listing_04
 import histogram as hg
 
 # make 1-d histogram with 5 logarithmic bins from 1e0 to 1e5

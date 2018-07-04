@@ -1,6 +1,9 @@
-#[ guide_mixed_cpp_python_part_py
-
 from __future__ import print_function
+import sys
+import os
+sys.path.append(os.getcwd())
+
+#[ guide_mixed_cpp_python_part_py
 import histogram as bh
 import cpp_filler
 

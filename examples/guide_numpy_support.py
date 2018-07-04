@@ -1,5 +1,9 @@
-#[ guide_numpy_support
+from __future__ import print_function
+import sys
+import os
+sys.path.append(os.getcwd())
 
+#[ guide_numpy_support
 import histogram as hg
 import numpy as np
 
@@ -35,7 +39,7 @@ try:
     plt.savefig("example_2d_python.png")
 except ImportError:
     # ok, no matplotlib, then just print the full count matrix
-    print count_matrix
+    print(count_matrix)
 
     # output of the print looks something like this, the two right-most rows
     # and two down-most columns represent under-/overflow bins
