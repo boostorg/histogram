@@ -72,7 +72,7 @@ struct index_mapper {
     }
     std::sort(dims.begin(), dims.end(),
               [](const dim &a, const dim &b) {
-                return a.stride1 < b.stride1;
+                return a.stride1 > b.stride1;
               });
     nfirst = s1;
   }

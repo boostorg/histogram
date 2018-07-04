@@ -621,6 +621,17 @@ template <typename Type> void run_tests() {
     h1(1, 1);
     h1(1, 2);
 
+    /*
+      matrix layout:
+
+      0 ->
+    1 1 1 0 0
+    | 1 1 0 0
+    v 0 1 0 0
+      0 0 0 0
+      0 0 0 0
+    */
+
     auto h1_0 = h1.reduce_to(0_c);
     BOOST_TEST_EQ(h1_0.dim(), 1);
     BOOST_TEST_EQ(sum(h1_0), 5);
