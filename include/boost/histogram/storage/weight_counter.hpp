@@ -130,20 +130,34 @@ bool operator!=(const T & t, const weight_counter<U> &w) {
 }
 
 template <typename T>
-weight_counter<T>& operator+(const weight_counter<T>& a, const weight_counter<T>& b) {
+weight_counter<T> operator+(const weight_counter<T>& a, const weight_counter<T>& b) noexcept {
   weight_counter<T> c = a;
   return c += b;
 }
 
 template <typename T>
-weight_counter<T>&& operator+(weight_counter<T>&& a, const weight_counter<T>& b) {
+weight_counter<T>&& operator+(weight_counter<T>&& a, const weight_counter<T>& b) noexcept {
   a += b;
   return std::move(a);
 }
 
 template <typename T>
-weight_counter<T>&& operator+(const weight_counter<T>& a, weight_counter<T>&& b) {
+weight_counter<T>&& operator+(const weight_counter<T>& a, weight_counter<T>&& b) noexcept {
   return operator+(std::move(b), a);
+}
+
+template <typename T>
+weight_counter<T> operator+(const weight_counter<T>& a, const T& b) noexcept
+{
+  auto r = a;
+  return r += b;
+}
+
+template <typename T>
+weight_counter<T> operator+(const T& a, const weight_counter<T>& b) noexcept
+{
+  auto r = b;
+  return r += a;
 }
 
 } // namespace histogram
