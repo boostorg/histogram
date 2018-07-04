@@ -11,7 +11,6 @@
 #include <boost/config.hpp>
 #include <boost/assert.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <boost/utility/string_view.hpp>
 #include <boost/type_index.hpp>
 #include <ostream>
@@ -100,17 +99,15 @@ private:
 };
 
 template <typename T>
-typename std::enable_if<std::is_convertible<T, int>::value, int>::type
+typename std::enable_if<(is_castable_to_int_t<T>::value), int>::type
 indirect_int_cast(T&&t) noexcept { return static_cast<int>(std::forward<T>(t)); }
 
 template <typename T>
-typename std::enable_if<!(std::is_convertible<T, int>::value), int>::type
+typename std::enable_if<!(is_castable_to_int_t<T>::value), int>::type
 indirect_int_cast(T&&) noexcept {
   // Cannot use static_assert here, because this function is created as a
   // side-effect of TMP. It must be valid at compile-time.
-  BOOST_ASSERT_MSG(false,
-                   detail::cat("bin argument not convertible to int: ",
-                               ::boost::typeindex::type_id<T>().pretty_name()).c_str());
+  BOOST_ASSERT_MSG(false, "bin argument not convertible to int");
   return 0;
 }
 
