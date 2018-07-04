@@ -19,10 +19,10 @@ namespace detail {
 namespace {
 __attribute__((unused)) void cat_impl(std::ostringstream &) {}
 
-template <typename T, typename... Us>
-void cat_impl(std::ostringstream &os, const T &t, const Us... us) {
+template <typename T, typename... Ts>
+void cat_impl(std::ostringstream &os, const T &t, const Ts&... ts) {
   os << t;
-  cat_impl(os, us...);
+  cat_impl(os, ts...);
 }
 } // namespace
 
