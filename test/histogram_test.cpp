@@ -268,10 +268,10 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.axis(0_c).shape(), 4);
     BOOST_TEST_EQ(sum(h), 4);
 
-    BOOST_TEST_EQ(h.bin(-1), 1);
-    BOOST_TEST_EQ(h.bin(0), 2);
-    BOOST_TEST_EQ(h.bin(1), 0);
-    BOOST_TEST_EQ(h.bin(2), 1);
+    BOOST_TEST_EQ(h.at(-1), 1);
+    BOOST_TEST_EQ(h.at(0), 2);
+    BOOST_TEST_EQ(h.at(1), 0);
+    BOOST_TEST_EQ(h.at(2), 1);
   }
 
   // d1_2
@@ -288,8 +288,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.axis(0_c).shape(), 2);
     BOOST_TEST_EQ(sum(h), 2);
 
-    BOOST_TEST_EQ(h.bin(0), 2);
-    BOOST_TEST_EQ(h.bin(1), 0);
+    BOOST_TEST_EQ(h.at(0), 2);
+    BOOST_TEST_EQ(h.at(1), 0);
   }
 
   // d1_3
@@ -306,8 +306,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.axis(0_c).shape(), 2);
     BOOST_TEST_EQ(sum(h), 2);
 
-    BOOST_TEST_EQ(h.bin(0), 1);
-    BOOST_TEST_EQ(h.bin(1), 1);
+    BOOST_TEST_EQ(h.at(0), 1);
+    BOOST_TEST_EQ(h.at(1), 1);
   }
 
   // d1w
@@ -322,15 +322,15 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(sum(h).value(), 5.5);
     BOOST_TEST_EQ(sum(h).variance(), 7.25);
 
-    BOOST_TEST_EQ(h.bin(-1).value(), 1);
-    BOOST_TEST_EQ(h.bin(0).value(), 1.5);
-    BOOST_TEST_EQ(h.bin(1).value(), 1);
-    BOOST_TEST_EQ(h.bin(2).value(), 2);
+    BOOST_TEST_EQ(h.at(-1).value(), 1);
+    BOOST_TEST_EQ(h.at(0).value(), 1.5);
+    BOOST_TEST_EQ(h.at(1).value(), 1);
+    BOOST_TEST_EQ(h.at(2).value(), 2);
 
-    BOOST_TEST_EQ(h.bin(-1).variance(), 1);
-    BOOST_TEST_EQ(h.bin(0).variance(), 1.25);
-    BOOST_TEST_EQ(h.bin(1).variance(), 1);
-    BOOST_TEST_EQ(h.bin(2).variance(), 4);
+    BOOST_TEST_EQ(h.at(-1).variance(), 1);
+    BOOST_TEST_EQ(h.at(0).variance(), 1.25);
+    BOOST_TEST_EQ(h.at(1).variance(), 1);
+    BOOST_TEST_EQ(h.at(2).variance(), 4);
   }
 
   // d2
@@ -350,21 +350,21 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h.axis(1_c).shape(), 3);
     BOOST_TEST_EQ(sum(h), 3);
 
-    BOOST_TEST_EQ(h.bin(-1, 0), 0);
-    BOOST_TEST_EQ(h.bin(-1, 1), 1);
-    BOOST_TEST_EQ(h.bin(-1, 2), 0);
+    BOOST_TEST_EQ(h.at(-1, 0), 0);
+    BOOST_TEST_EQ(h.at(-1, 1), 1);
+    BOOST_TEST_EQ(h.at(-1, 2), 0);
 
-    BOOST_TEST_EQ(h.bin(0, 0), 1);
-    BOOST_TEST_EQ(h.bin(0, 1), 1);
-    BOOST_TEST_EQ(h.bin(0, 2), 0);
+    BOOST_TEST_EQ(h.at(0, 0), 1);
+    BOOST_TEST_EQ(h.at(0, 1), 1);
+    BOOST_TEST_EQ(h.at(0, 2), 0);
 
-    BOOST_TEST_EQ(h.bin(1, 0), 0);
-    BOOST_TEST_EQ(h.bin(1, 1), 0);
-    BOOST_TEST_EQ(h.bin(1, 2), 0);
+    BOOST_TEST_EQ(h.at(1, 0), 0);
+    BOOST_TEST_EQ(h.at(1, 1), 0);
+    BOOST_TEST_EQ(h.at(1, 2), 0);
 
-    BOOST_TEST_EQ(h.bin(2, 0), 0);
-    BOOST_TEST_EQ(h.bin(2, 1), 0);
-    BOOST_TEST_EQ(h.bin(2, 2), 0);
+    BOOST_TEST_EQ(h.at(2, 0), 0);
+    BOOST_TEST_EQ(h.at(2, 1), 0);
+    BOOST_TEST_EQ(h.at(2, 2), 0);
   }
 
   // d2w
@@ -380,37 +380,37 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(sum(h).value(), 18);
     BOOST_TEST_EQ(sum(h).variance(), 150);
 
-    BOOST_TEST_EQ(h.bin(-1, 0).value(), 0);
-    BOOST_TEST_EQ(h.bin(-1, 1).value(), 7);
-    BOOST_TEST_EQ(h.bin(-1, 2).value(), 0);
+    BOOST_TEST_EQ(h.at(-1, 0).value(), 0);
+    BOOST_TEST_EQ(h.at(-1, 1).value(), 7);
+    BOOST_TEST_EQ(h.at(-1, 2).value(), 0);
 
-    BOOST_TEST_EQ(h.bin(0, 0).value(), 10);
-    BOOST_TEST_EQ(h.bin(0, 1).value(), 1);
-    BOOST_TEST_EQ(h.bin(0, 2).value(), 0);
+    BOOST_TEST_EQ(h.at(0, 0).value(), 10);
+    BOOST_TEST_EQ(h.at(0, 1).value(), 1);
+    BOOST_TEST_EQ(h.at(0, 2).value(), 0);
 
-    BOOST_TEST_EQ(h.bin(1, 0).value(), 0);
-    BOOST_TEST_EQ(h.bin(1, 1).value(), 0);
-    BOOST_TEST_EQ(h.bin(1, 2).value(), 0);
+    BOOST_TEST_EQ(h.at(1, 0).value(), 0);
+    BOOST_TEST_EQ(h.at(1, 1).value(), 0);
+    BOOST_TEST_EQ(h.at(1, 2).value(), 0);
 
-    BOOST_TEST_EQ(h.bin(2, 0).value(), 0);
-    BOOST_TEST_EQ(h.bin(2, 1).value(), 0);
-    BOOST_TEST_EQ(h.bin(2, 2).value(), 0);
+    BOOST_TEST_EQ(h.at(2, 0).value(), 0);
+    BOOST_TEST_EQ(h.at(2, 1).value(), 0);
+    BOOST_TEST_EQ(h.at(2, 2).value(), 0);
 
-    BOOST_TEST_EQ(h.bin(-1, 0).variance(), 0);
-    BOOST_TEST_EQ(h.bin(-1, 1).variance(), 49);
-    BOOST_TEST_EQ(h.bin(-1, 2).variance(), 0);
+    BOOST_TEST_EQ(h.at(-1, 0).variance(), 0);
+    BOOST_TEST_EQ(h.at(-1, 1).variance(), 49);
+    BOOST_TEST_EQ(h.at(-1, 2).variance(), 0);
 
-    BOOST_TEST_EQ(h.bin(0, 0).variance(), 100);
-    BOOST_TEST_EQ(h.bin(0, 1).variance(), 1);
-    BOOST_TEST_EQ(h.bin(0, 2).variance(), 0);
+    BOOST_TEST_EQ(h.at(0, 0).variance(), 100);
+    BOOST_TEST_EQ(h.at(0, 1).variance(), 1);
+    BOOST_TEST_EQ(h.at(0, 2).variance(), 0);
 
-    BOOST_TEST_EQ(h.bin(1, 0).variance(), 0);
-    BOOST_TEST_EQ(h.bin(1, 1).variance(), 0);
-    BOOST_TEST_EQ(h.bin(1, 2).variance(), 0);
+    BOOST_TEST_EQ(h.at(1, 0).variance(), 0);
+    BOOST_TEST_EQ(h.at(1, 1).variance(), 0);
+    BOOST_TEST_EQ(h.at(1, 2).variance(), 0);
 
-    BOOST_TEST_EQ(h.bin(2, 0).variance(), 0);
-    BOOST_TEST_EQ(h.bin(2, 1).variance(), 0);
-    BOOST_TEST_EQ(h.bin(2, 2).variance(), 0);
+    BOOST_TEST_EQ(h.at(2, 0).variance(), 0);
+    BOOST_TEST_EQ(h.at(2, 1).variance(), 0);
+    BOOST_TEST_EQ(h.at(2, 2).variance(), 0);
   }
 
   // d3w
@@ -429,8 +429,8 @@ template <typename Type> void run_tests() {
     for (auto i = 0; i < h.axis(0_c).size(); ++i) {
       for (auto j = 0; j < h.axis(1_c).size(); ++j) {
         for (auto k = 0; k < h.axis(2_c).size(); ++k) {
-          BOOST_TEST_EQ(h.bin(i, j, k).value(), i + j + k);
-          BOOST_TEST_EQ(h.bin(i, j, k).variance(), (i + j + k) * (i + j + k));
+          BOOST_TEST_EQ(h.at(i, j, k).value(), i + j + k);
+          BOOST_TEST_EQ(h.at(i, j, k).variance(), (i + j + k) * (i + j + k));
         }
       }
     }
@@ -445,18 +445,18 @@ template <typename Type> void run_tests() {
     b(1);
     auto c = a;
     c += b;
-    BOOST_TEST_EQ(c.bin(-1), 0);
-    BOOST_TEST_EQ(c.bin(0), 1);
-    BOOST_TEST_EQ(c.bin(1), 0);
-    BOOST_TEST_EQ(c.bin(2), 1);
-    BOOST_TEST_EQ(c.bin(3), 0);
+    BOOST_TEST_EQ(c.at(-1), 0);
+    BOOST_TEST_EQ(c.at(0), 1);
+    BOOST_TEST_EQ(c.at(1), 0);
+    BOOST_TEST_EQ(c.at(2), 1);
+    BOOST_TEST_EQ(c.at(3), 0);
     auto d = a;
     d += b;
-    BOOST_TEST_EQ(d.bin(-1), 0);
-    BOOST_TEST_EQ(d.bin(0), 1);
-    BOOST_TEST_EQ(d.bin(1), 0);
-    BOOST_TEST_EQ(d.bin(2), 1);
-    BOOST_TEST_EQ(d.bin(3), 0);
+    BOOST_TEST_EQ(d.at(-1), 0);
+    BOOST_TEST_EQ(d.at(0), 1);
+    BOOST_TEST_EQ(d.at(1), 0);
+    BOOST_TEST_EQ(d.at(2), 1);
+    BOOST_TEST_EQ(d.at(3), 0);
   }
 
   // add_2
@@ -465,25 +465,25 @@ template <typename Type> void run_tests() {
     auto b = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2));
 
     a(0);
-    BOOST_TEST_EQ(a.bin(0).variance(), 1);
+    BOOST_TEST_EQ(a.at(0).variance(), 1);
     b(weight(3), 1);
-    BOOST_TEST_EQ(b.bin(1).variance(), 9);
+    BOOST_TEST_EQ(b.at(1).variance(), 9);
     auto c = a;
     c += b;
-    BOOST_TEST_EQ(c.bin(-1).value(), 0);
-    BOOST_TEST_EQ(c.bin(0).value(), 1);
-    BOOST_TEST_EQ(c.bin(0).variance(), 1);
-    BOOST_TEST_EQ(c.bin(1).value(), 3);
-    BOOST_TEST_EQ(c.bin(1).variance(), 9);
-    BOOST_TEST_EQ(c.bin(2).value(), 0);
+    BOOST_TEST_EQ(c.at(-1).value(), 0);
+    BOOST_TEST_EQ(c.at(0).value(), 1);
+    BOOST_TEST_EQ(c.at(0).variance(), 1);
+    BOOST_TEST_EQ(c.at(1).value(), 3);
+    BOOST_TEST_EQ(c.at(1).variance(), 9);
+    BOOST_TEST_EQ(c.at(2).value(), 0);
     auto d = a;
     d += b;
-    BOOST_TEST_EQ(d.bin(-1).value(), 0);
-    BOOST_TEST_EQ(d.bin(0).value(), 1);
-    BOOST_TEST_EQ(d.bin(0).variance(), 1);
-    BOOST_TEST_EQ(d.bin(1).value(), 3);
-    BOOST_TEST_EQ(d.bin(1).variance(), 9);
-    BOOST_TEST_EQ(d.bin(2).value(), 0);
+    BOOST_TEST_EQ(d.at(-1).value(), 0);
+    BOOST_TEST_EQ(d.at(0).value(), 1);
+    BOOST_TEST_EQ(d.at(0).variance(), 1);
+    BOOST_TEST_EQ(d.at(1).value(), 3);
+    BOOST_TEST_EQ(d.at(1).variance(), 9);
+    BOOST_TEST_EQ(d.at(2).value(), 0);
   }
 
   // add_3
@@ -496,18 +496,18 @@ template <typename Type> void run_tests() {
     b(1);
     auto c = a;
     c += b;
-    BOOST_TEST_EQ(c.bin(-1), 0);
-    BOOST_TEST_EQ(c.bin(0), 1);
-    BOOST_TEST_EQ(c.bin(1), 0);
-    BOOST_TEST_EQ(c.bin(2), 1);
-    BOOST_TEST_EQ(c.bin(3), 0);
+    BOOST_TEST_EQ(c.at(-1), 0);
+    BOOST_TEST_EQ(c.at(0), 1);
+    BOOST_TEST_EQ(c.at(1), 0);
+    BOOST_TEST_EQ(c.at(2), 1);
+    BOOST_TEST_EQ(c.at(3), 0);
     auto d = a;
     d += b;
-    BOOST_TEST_EQ(d.bin(-1), 0);
-    BOOST_TEST_EQ(d.bin(0), 1);
-    BOOST_TEST_EQ(d.bin(1), 0);
-    BOOST_TEST_EQ(d.bin(2), 1);
-    BOOST_TEST_EQ(d.bin(3), 0);
+    BOOST_TEST_EQ(d.at(-1), 0);
+    BOOST_TEST_EQ(d.at(0), 1);
+    BOOST_TEST_EQ(d.at(1), 0);
+    BOOST_TEST_EQ(d.at(2), 1);
+    BOOST_TEST_EQ(d.at(3), 0);
   }
 
   // functional programming
@@ -515,9 +515,9 @@ template <typename Type> void run_tests() {
     auto v = std::vector<int>{0, 1, 2};
     auto h = std::for_each(v.begin(), v.end(),
                            make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3)));
-    BOOST_TEST_EQ(h.bin(0), 1);
-    BOOST_TEST_EQ(h.bin(1), 1);
-    BOOST_TEST_EQ(h.bin(2), 1);
+    BOOST_TEST_EQ(h.at(0), 1);
+    BOOST_TEST_EQ(h.at(1), 1);
+    BOOST_TEST_EQ(h.at(2), 1);
     BOOST_TEST_EQ(sum(h), 3);
   }
 
@@ -528,30 +528,30 @@ template <typename Type> void run_tests() {
     a(0);
     b(1);
     auto c = a + b;
-    BOOST_TEST_EQ(c.bin(0), 1);
-    BOOST_TEST_EQ(c.bin(1), 1);
+    BOOST_TEST_EQ(c.at(0), 1);
+    BOOST_TEST_EQ(c.at(1), 1);
     c += b;
-    BOOST_TEST_EQ(c.bin(0), 1);
-    BOOST_TEST_EQ(c.bin(1), 2);
+    BOOST_TEST_EQ(c.at(0), 1);
+    BOOST_TEST_EQ(c.at(1), 2);
     auto d = a + b + c;
-    BOOST_TEST_EQ(d.bin(0), 2);
-    BOOST_TEST_EQ(d.bin(1), 3);
+    BOOST_TEST_EQ(d.at(0), 2);
+    BOOST_TEST_EQ(d.at(1), 3);
     auto e = 3 * a;
     auto f = b * 2;
-    BOOST_TEST_EQ(e.bin(0).value(), 3);
-    BOOST_TEST_EQ(e.bin(1).value(), 0);
-    BOOST_TEST_EQ(f.bin(0).value(), 0);
-    BOOST_TEST_EQ(f.bin(1).value(), 2);
+    BOOST_TEST_EQ(e.at(0).value(), 3);
+    BOOST_TEST_EQ(e.at(1).value(), 0);
+    BOOST_TEST_EQ(f.at(0).value(), 0);
+    BOOST_TEST_EQ(f.at(1).value(), 2);
     auto r = a;
     r += b;
     r += e;
-    BOOST_TEST_EQ(r.bin(0).value(), 4);
-    BOOST_TEST_EQ(r.bin(1).value(), 1);
+    BOOST_TEST_EQ(r.at(0).value(), 4);
+    BOOST_TEST_EQ(r.at(1).value(), 1);
     BOOST_TEST_EQ(r, a + b + 3 * a);
     auto s = r / 4;
     r /= 4;
-    BOOST_TEST_EQ(r.bin(0).value(), 1);
-    BOOST_TEST_EQ(r.bin(1).value(), 0.25);
+    BOOST_TEST_EQ(r.at(0).value(), 1);
+    BOOST_TEST_EQ(r.at(1).value(), 0.25);
     BOOST_TEST_EQ(r, s);
   }
 
@@ -602,12 +602,12 @@ template <typename Type> void run_tests() {
         Type(), axis::integer<>(0, 2, "", axis::uoflow::off));
     h(0);
     h(1);
-    BOOST_TEST_EQ(h.bin(0), 1);
-    BOOST_TEST_EQ(h.bin(1), 1);
+    BOOST_TEST_EQ(h.at(0), 1);
+    BOOST_TEST_EQ(h.at(1), 1);
     BOOST_TEST_EQ(sum(h), 2);
     h.reset();
-    BOOST_TEST_EQ(h.bin(0), 0);
-    BOOST_TEST_EQ(h.bin(1), 0);
+    BOOST_TEST_EQ(h.at(0), 0);
+    BOOST_TEST_EQ(h.at(1), 0);
     BOOST_TEST_EQ(sum(h), 0);
   }
 
@@ -635,8 +635,8 @@ template <typename Type> void run_tests() {
     auto h1_0 = h1.reduce_to(0_c);
     BOOST_TEST_EQ(h1_0.dim(), 1);
     BOOST_TEST_EQ(sum(h1_0), 5);
-    BOOST_TEST_EQ(h1_0.bin(0), 2);
-    BOOST_TEST_EQ(h1_0.bin(1), 3);
+    BOOST_TEST_EQ(h1_0.at(0), 2);
+    BOOST_TEST_EQ(h1_0.at(1), 3);
     BOOST_TEST_EQ(h1_0.axis()[0].lower(), 0);
     BOOST_TEST_EQ(h1_0.axis()[1].lower(), 1);
     BOOST_TEST(axis_equal(Type(), h1_0.axis(), h1.axis(0_c)));
@@ -644,9 +644,9 @@ template <typename Type> void run_tests() {
     auto h1_1 = h1.reduce_to(1_c);
     BOOST_TEST_EQ(h1_1.dim(), 1);
     BOOST_TEST_EQ(sum(h1_1), 5);
-    BOOST_TEST_EQ(h1_1.bin(0), 2);
-    BOOST_TEST_EQ(h1_1.bin(1), 2);
-    BOOST_TEST_EQ(h1_1.bin(2), 1);
+    BOOST_TEST_EQ(h1_1.at(0), 2);
+    BOOST_TEST_EQ(h1_1.at(1), 2);
+    BOOST_TEST_EQ(h1_1.at(2), 1);
     BOOST_TEST(axis_equal(Type(), h1_1.axis(), h1.axis(1_c)));
 
     auto h2 = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2),
@@ -661,51 +661,51 @@ template <typename Type> void run_tests() {
     auto h2_0 = h2.reduce_to(0_c);
     BOOST_TEST_EQ(h2_0.dim(), 1);
     BOOST_TEST_EQ(sum(h2_0), 5);
-    BOOST_TEST_EQ(h2_0.bin(0), 4);
-    BOOST_TEST_EQ(h2_0.bin(1), 1);
+    BOOST_TEST_EQ(h2_0.at(0), 4);
+    BOOST_TEST_EQ(h2_0.at(1), 1);
     BOOST_TEST(axis_equal(Type(), h2_0.axis(), axis::integer<>(0, 2)));
 
     auto h2_1 = h2.reduce_to(1_c);
     BOOST_TEST_EQ(h2_1.dim(), 1);
     BOOST_TEST_EQ(sum(h2_1), 5);
-    BOOST_TEST_EQ(h2_1.bin(0), 3);
-    BOOST_TEST_EQ(h2_1.bin(1), 2);
+    BOOST_TEST_EQ(h2_1.at(0), 3);
+    BOOST_TEST_EQ(h2_1.at(1), 2);
     BOOST_TEST(axis_equal(Type(), h2_1.axis(), axis::integer<>(0, 3)));
 
     auto h2_2 = h2.reduce_to(2_c);
     BOOST_TEST_EQ(h2_2.dim(), 1);
     BOOST_TEST_EQ(sum(h2_2), 5);
-    BOOST_TEST_EQ(h2_2.bin(0), 2);
-    BOOST_TEST_EQ(h2_2.bin(1), 1);
-    BOOST_TEST_EQ(h2_2.bin(2), 2);
+    BOOST_TEST_EQ(h2_2.at(0), 2);
+    BOOST_TEST_EQ(h2_2.at(1), 1);
+    BOOST_TEST_EQ(h2_2.at(2), 2);
     BOOST_TEST(axis_equal(Type(), h2_2.axis(), axis::integer<>(0, 4)));
 
     auto h2_01 = h2.reduce_to(0_c, 1_c);
     BOOST_TEST_EQ(h2_01.dim(), 2);
     BOOST_TEST_EQ(sum(h2_01), 5);
-    BOOST_TEST_EQ(h2_01.bin(0, 0), 2);
-    BOOST_TEST_EQ(h2_01.bin(0, 1), 2);
-    BOOST_TEST_EQ(h2_01.bin(1, 0), 1);
+    BOOST_TEST_EQ(h2_01.at(0, 0), 2);
+    BOOST_TEST_EQ(h2_01.at(0, 1), 2);
+    BOOST_TEST_EQ(h2_01.at(1, 0), 1);
     BOOST_TEST(axis_equal(Type(), h2_01.axis(0_c), axis::integer<>(0, 2)));
     BOOST_TEST(axis_equal(Type(), h2_01.axis(1_c), axis::integer<>(0, 3)));
 
     auto h2_02 = h2.reduce_to(0_c, 2_c);
     BOOST_TEST_EQ(h2_02.dim(), 2);
     BOOST_TEST_EQ(sum(h2_02), 5);
-    BOOST_TEST_EQ(h2_02.bin(0, 0), 2);
-    BOOST_TEST_EQ(h2_02.bin(0, 1), 1);
-    BOOST_TEST_EQ(h2_02.bin(0, 2), 1);
-    BOOST_TEST_EQ(h2_02.bin(1, 2), 1);
+    BOOST_TEST_EQ(h2_02.at(0, 0), 2);
+    BOOST_TEST_EQ(h2_02.at(0, 1), 1);
+    BOOST_TEST_EQ(h2_02.at(0, 2), 1);
+    BOOST_TEST_EQ(h2_02.at(1, 2), 1);
     BOOST_TEST(axis_equal(Type(), h2_02.axis(0_c), axis::integer<>(0, 2)));
     BOOST_TEST(axis_equal(Type(), h2_02.axis(1_c), axis::integer<>(0, 4)));
 
     auto h2_12 = h2.reduce_to(1_c, 2_c);
     BOOST_TEST_EQ(h2_12.dim(), 2);
     BOOST_TEST_EQ(sum(h2_12), 5);
-    BOOST_TEST_EQ(h2_12.bin(0, 0), 1);
-    BOOST_TEST_EQ(h2_12.bin(1, 0), 1);
-    BOOST_TEST_EQ(h2_12.bin(1, 1), 1);
-    BOOST_TEST_EQ(h2_12.bin(0, 2), 2);
+    BOOST_TEST_EQ(h2_12.at(0, 0), 1);
+    BOOST_TEST_EQ(h2_12.at(1, 0), 1);
+    BOOST_TEST_EQ(h2_12.at(1, 1), 1);
+    BOOST_TEST_EQ(h2_12.at(0, 2), 2);
     BOOST_TEST(axis_equal(Type(), h2_12.axis(0_c), axis::integer<>(0, 3)));
     BOOST_TEST(axis_equal(Type(), h2_12.axis(1_c), axis::integer<>(0, 4)));
   }
@@ -731,9 +731,9 @@ template <typename Type> void run_tests() {
 
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST(h.axis() == custom_axis(0, 3));
-    BOOST_TEST_EQ(h.bin(0), 1);
-    BOOST_TEST_EQ(h.bin(1), 1);
-    BOOST_TEST_EQ(h.bin(2), 0);
+    BOOST_TEST_EQ(h.at(0), 1);
+    BOOST_TEST_EQ(h.at(1), 1);
+    BOOST_TEST_EQ(h.at(2), 0);
   }
 
   // histogram iterator 1D
@@ -855,9 +855,9 @@ template <typename Type> void run_tests() {
     h(std::make_pair(1, 3.0));
 
     // pair out
-    BOOST_TEST_EQ(h.bin(std::make_pair(0, 0)), 1);
+    BOOST_TEST_EQ(h.at(std::make_pair(0, 0)), 1);
     // tuple out
-    BOOST_TEST_EQ(h.bin(std::make_tuple(1, 1)), 1);
+    BOOST_TEST_EQ(h.at(std::make_tuple(1, 1)), 1);
 
     // vector in, weights
     h(weight(2), std::vector<int>({0, 2}));
@@ -865,26 +865,26 @@ template <typename Type> void run_tests() {
     h(weight(2), std::make_pair(1, 3.0));
 
     // vector
-    BOOST_TEST_EQ(h.bin(std::vector<int>({0, 0})).value(), 3);
+    BOOST_TEST_EQ(h.at(std::vector<int>({0, 0})).value(), 3);
     // // initializer_list
-    // BOOST_TEST_EQ(h.bin({1, 1}).variance(), 5);
+    // BOOST_TEST_EQ(h.at({1, 1}).variance(), 5);
   }
 
   // bin args out of range
   {
     auto h1 = make_histogram<adaptive_storage>(Type(),
                                                axis::integer<>(0, 2));
-    BOOST_TEST_THROWS(h1.bin(-2), std::out_of_range);
-    BOOST_TEST_THROWS(h1.bin(3), std::out_of_range);
-    BOOST_TEST_THROWS(h1.bin(std::make_tuple(-2)), std::out_of_range);
-    BOOST_TEST_THROWS(h1.bin(std::vector<int>({3})), std::out_of_range);
+    BOOST_TEST_THROWS(h1.at(-2), std::out_of_range);
+    BOOST_TEST_THROWS(h1.at(3), std::out_of_range);
+    BOOST_TEST_THROWS(h1.at(std::make_tuple(-2)), std::out_of_range);
+    BOOST_TEST_THROWS(h1.at(std::vector<int>({3})), std::out_of_range);
 
     auto h2 = make_histogram<adaptive_storage>(Type(),
                                                axis::integer<>(0, 2),
                                                axis::integer<>(0, 2));
-    BOOST_TEST_THROWS(h2.bin(0, -2), std::out_of_range);
-    BOOST_TEST_THROWS(h2.bin(std::make_tuple(0, -2)), std::out_of_range);
-    BOOST_TEST_THROWS(h2.bin(std::vector<int>({0, -2})), std::out_of_range);
+    BOOST_TEST_THROWS(h2.at(0, -2), std::out_of_range);
+    BOOST_TEST_THROWS(h2.at(std::make_tuple(0, -2)), std::out_of_range);
+    BOOST_TEST_THROWS(h2.at(std::vector<int>({0, -2})), std::out_of_range);
   }
 
   // pass histogram to function
@@ -962,16 +962,16 @@ int main() {
     auto h1_0 = h1.reduce_to(0);
     BOOST_TEST_EQ(h1_0.dim(), 1);
     BOOST_TEST_EQ(sum(h1_0), 5);
-    BOOST_TEST_EQ(h1_0.bin(0), 2);
-    BOOST_TEST_EQ(h1_0.bin(1), 3);
+    BOOST_TEST_EQ(h1_0.at(0), 2);
+    BOOST_TEST_EQ(h1_0.at(1), 3);
     BOOST_TEST(axis_equal(dynamic_tag(), h1_0.axis(), h1.axis(0_c)));
 
     auto h1_1 = h1.reduce_to(1);
     BOOST_TEST_EQ(h1_1.dim(), 1);
     BOOST_TEST_EQ(sum(h1_1), 5);
-    BOOST_TEST_EQ(h1_1.bin(0), 2);
-    BOOST_TEST_EQ(h1_1.bin(1), 2);
-    BOOST_TEST_EQ(h1_1.bin(2), 1);
+    BOOST_TEST_EQ(h1_1.at(0), 2);
+    BOOST_TEST_EQ(h1_1.at(1), 2);
+    BOOST_TEST_EQ(h1_1.at(2), 1);
     BOOST_TEST(axis_equal(dynamic_tag(), h1_1.axis(), h1.axis(1_c)));
   }
 

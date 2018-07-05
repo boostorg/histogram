@@ -22,7 +22,7 @@ int main() {
     // accept and return rvalue references where possible
     auto h4 = h1 + h2 + h3; // counts are: 2 2
 
-    std::cout << h4.bin(0).value() << " " << h4.bin(1).value() << std::endl;
+    std::cout << h4.at(0).value() << " " << h4.at(1).value() << std::endl;
     // prints: 2 2
 
     // multiply by number
@@ -31,7 +31,7 @@ int main() {
     // divide by number
     auto h5 = h4 / 4;       // counts are: 1 1
 
-    std::cout << h5.bin(0).value() << " " << h5.bin(1).value() << std::endl;
+    std::cout << h5.at(0).value() << " " << h5.at(1).value() << std::endl;
     // prints: 1 1
 
     // compare histograms
@@ -41,10 +41,10 @@ int main() {
     // note: special effect of multiplication on counter variance
     auto h = bh::make_static_histogram(bh::axis::regular<>(2, -1, 1));
     h(-0.5); // counts are: 1 0
-    std::cout << "value    " << (2 * h).bin(0).value()
-              << " " << (h + h).bin(0).value() << "\n"
-              << "variance " << (2 * h).bin(0).variance()
-              << " " << (h + h).bin(0).variance() << std::endl;
+    std::cout << "value    " << (2 * h).at(0).value()
+              << " " << (h + h).at(0).value() << "\n"
+              << "variance " << (2 * h).at(0).variance()
+              << " " << (h + h).at(0).variance() << std::endl;
     // equality operator also checks variances, so the statement is false
     std::cout << (h + h == 2 * h) << std::endl;
     /* prints:

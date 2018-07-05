@@ -39,7 +39,7 @@ int main() {
 
     for (auto yi : h.axis(1_c)) {
         for (auto xi : h.axis(0_c)) {
-            std::cout << h.bin(xi, yi).value() << " ";
+            std::cout << h.at(xi, yi).value() << " ";
         }
         std::cout << std::endl;
     }
@@ -49,12 +49,12 @@ int main() {
     //         0 0 1
 
     for (auto xi : hr0.axis())
-        std::cout << hr0.bin(xi).value() << " ";
+        std::cout << hr0.at(xi).value() << " ";
     std::cout << std::endl;
     // prints: 1 1 1
 
     for (auto yi : hr1.axis())
-        std::cout << hr1.bin(yi).value() << " ";
+        std::cout << hr1.at(yi).value() << " ";
     std::cout << std::endl;
     // prints: 1 0 1 1
 }

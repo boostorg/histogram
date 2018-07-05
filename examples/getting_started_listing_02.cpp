@@ -41,7 +41,7 @@ int main() {
         std::printf("%s\n", cbin.value().c_str());
         for (auto ybin : h.axis(2)) { // rows
             for (auto xbin : h.axis(1)) { // columns
-                std::printf("%3.0f ", h.bin(cbin, xbin, ybin).value());
+                std::printf("%3.0f ", h.at(cbin, xbin, ybin).value());
             }
             std::printf("\n");
         }

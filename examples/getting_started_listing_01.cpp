@@ -48,19 +48,19 @@ int main(int, char**) {
     for (auto bin : h.axis(0_c)) {
         std::cout << "bin " << bin.idx() << " x in ["
                   << bin.lower() << ", " << bin.upper() << "): "
-                  << h.bin(bin).value() << " +/- "
-                  << std::sqrt(h.bin(bin).variance())
+                  << h.at(bin).value() << " +/- "
+                  << std::sqrt(h.at(bin).variance())
                   << std::endl;
     }
 
     // accessing under- and overflow bins is easy, use indices -1 and 10
     std::cout << "underflow bin [" << h.axis(0_c)[-1].lower()
               << ", " << h.axis(0_c)[-1].upper() << "): "
-              << h.bin(-1).value() << " +/- " << std::sqrt(h.bin(-1).variance())
+              << h.at(-1).value() << " +/- " << std::sqrt(h.at(-1).variance())
               << std::endl;
     std::cout << "overflow  bin [" << h.axis(0_c)[10].lower()
               << ", " << h.axis(0_c)[10].upper() << "): "
-              << h.bin(10).value() << " +/- " << std::sqrt(h.bin(10).variance())
+              << h.at(10).value() << " +/- " << std::sqrt(h.at(10).variance())
               << std::endl;
 
     /* program output:

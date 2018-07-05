@@ -14,7 +14,7 @@ cpp_filler.process(h)  # histogram is filled with input values in C++
 
 for iy, y in enumerate(h.axis(1)):
     for ix, x in enumerate(h.axis(0)):
-        print(h.bin(ix, iy).value, end=' ')
+        print(h.at(ix, iy).value, end=' ')
     print()
 
 # prints:

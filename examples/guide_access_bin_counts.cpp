@@ -19,31 +19,31 @@ int main() {
     h(bh::weight(4),  0.5, 3.5); // bin index 1, 1
 
     // access count value, number of indices must match number of axes
-    std::cout << h.bin(0, 0).value() << " "
-              << h.bin(0, 1).value() << " "
-              << h.bin(1, 0).value() << " "
-              << h.bin(1, 1).value()
+    std::cout << h.at(0, 0).value() << " "
+              << h.at(0, 1).value() << " "
+              << h.at(1, 0).value() << " "
+              << h.at(1, 1).value()
               << std::endl;
 
     // prints: 1 2 3 4
 
     // access count variance, number of indices must match number of axes
-    std::cout << h.bin(0, 0).variance() << " "
-              << h.bin(0, 1).variance() << " "
-              << h.bin(1, 0).variance() << " "
-              << h.bin(1, 1).variance()
+    std::cout << h.at(0, 0).variance() << " "
+              << h.at(0, 1).variance() << " "
+              << h.at(1, 0).variance() << " "
+              << h.at(1, 1).variance()
               << std::endl;
     // prints: 1 4 9 16
 
     // you can also make a copy of the type that holds the bin count
-    auto c11 = h.bin(1, 1);
+    auto c11 = h.at(1, 1);
     std::cout << c11.value() << " " << c11.variance() << std::endl;
     // prints: 4 16
 
     // histogram also supports access via container; using a container of
     // wrong size trips an assertion in debug mode
     auto idx = {0, 1};
-    std::cout << h.bin(idx).value() << std::endl;
+    std::cout << h.at(idx).value() << std::endl;
     // prints: 2
 
     // histogram also provides extended iterators

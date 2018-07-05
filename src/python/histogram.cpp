@@ -302,7 +302,7 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
   return bp::object();
 }
 
-bp::object histogram_bin(bp::tuple args, bp::dict kwargs) {
+bp::object histogram_at(bp::tuple args, bp::dict kwargs) {
   const pyhistogram & self = bp::extract<const pyhistogram &>(args[0]);
 
   const unsigned dim = bp::len(args) - 1;
@@ -328,9 +328,9 @@ bp::object histogram_bin(bp::tuple args, bp::dict kwargs) {
     idx[i] = bp::extract<int>(args[1 + i]);
 
   if (dim == 1)
-    return bp::object(self.bin(idx[0]));
+    return bp::object(self.at(idx[0]));
   else
-    return bp::object(self.bin(span<int>{idx, self.dim()}));
+    return bp::object(self.at(span<int>{idx, self.dim()}));
 }
 
 bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
@@ -408,7 +408,10 @@ void register_histogram() {
            "\nbe mixed arbitrarily in the same call.")
       .add_property("bincount", &pyhistogram::bincount,
            ":return: total number of bins, including under- and overflow")
-      .def("bin", bp::raw_function(histogram_bin),
+      .def("at", bp::raw_function(histogram_at),
+           ":param int args: indices of the bin (number must match dimension)"
+           "\n:return: bin content")
+      .def("__getitem__", bp::raw_function(histogram_at),
            ":param int args: indices of the bin (number must match dimension)"
            "\n:return: bin content")
       .def("reduce_to", bp::raw_function(histogram_reduce_to),

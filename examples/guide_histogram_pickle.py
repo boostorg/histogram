@@ -16,7 +16,7 @@ h2(0.5)
 h3 = h1 + h2
 h4 = h3 * 2
 
-print(h4.bin(0).value, h4.bin(1).value)
+print(h4.at(0).value, h4.at(1).value)
 # prints: 2.0 2.0
 
 # now save the histogram

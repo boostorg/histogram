@@ -183,7 +183,7 @@ public:
   }
 
   template <typename... Ts>
-  const_reference bin(Ts &&... ts) const {
+  const_reference at(Ts &&... ts) const {
     // case with one argument is ambiguous, is specialized below
     BOOST_ASSERT_MSG(dim() == sizeof...(Ts),
                      "bin arguments does not match histogram dimension");
@@ -195,9 +195,9 @@ public:
   }
 
   template <typename T>
-  const_reference bin(T&&t) const {
+  const_reference at(T&&t) const {
     // check whether T is unpackable
-    return bin_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+    return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
   }
 
   /// Number of axes (dimensions) of histogram
@@ -314,7 +314,7 @@ private:
   }
 
   template <typename T>
-  const_reference bin_impl(detail::dynamic_container_tag, T && t) const {
+  const_reference at_impl(detail::dynamic_container_tag, T && t) const {
     BOOST_ASSERT_MSG(dim() == std::distance(std::begin(t), std::end(t)),
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -325,7 +325,7 @@ private:
   }
 
   template <typename T>
-  const_reference bin_impl(detail::static_container_tag, T && t) const {
+  const_reference at_impl(detail::static_container_tag, T && t) const {
     BOOST_ASSERT_MSG(dim() == detail::size_of<T>::value,
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -336,7 +336,7 @@ private:
   }
 
   template <typename T>
-  const_reference bin_impl(detail::no_container_tag, T && t) const {
+  const_reference at_impl(detail::no_container_tag, T && t) const {
     BOOST_ASSERT_MSG(dim() == 1,
                      "bin argument does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
