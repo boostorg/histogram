@@ -196,6 +196,12 @@ public:
   }
 
   template <typename T>
+  const_reference operator[](T&&t) const {
+    // check whether we need to unpack argument
+    return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+  }
+
+  template <typename T>
   const_reference at(T&&t) const {
     // check whether we need to unpack argument
     return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));

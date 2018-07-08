@@ -302,10 +302,18 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
   return bp::object();
 }
 
-bp::object histogram_at(bp::tuple args, bp::dict kwargs) {
-  const pyhistogram & self = bp::extract<const pyhistogram &>(args[0]);
+bp::object histogram_getitem(const pyhistogram& self, bp::object args) {
+  bp::extract<int> get_int(args);
+  if (get_int.check()) {
+    if (self.dim() != 1) {
+      PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
+      bp::throw_error_already_set();
+    }
 
-  const unsigned dim = bp::len(args) - 1;
+    return bp::object(self[get_int()]);
+  }
+
+  const unsigned dim = bp::len(args);
   if (self.dim() != dim) {
     PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
     bp::throw_error_already_set();
@@ -318,19 +326,23 @@ bp::object histogram_at(bp::tuple args, bp::dict kwargs) {
     bp::throw_error_already_set();
   }
 
+  int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
+  for (unsigned i = 0; i < dim; ++i)
+    idx[i] = bp::extract<int>(args[i]);
+
+  return bp::object(self.at(span<int>{idx, self.dim()}));
+}
+
+bp::object histogram_at(bp::tuple args, bp::dict kwargs) {
+  const pyhistogram & self = bp::extract<const pyhistogram &>(args[0]);
+
   if (kwargs) {
     PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
     bp::throw_error_already_set();
   }
 
-  int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
-  for (unsigned i = 0; i < dim; ++i)
-    idx[i] = bp::extract<int>(args[1 + i]);
-
-  if (dim == 1)
-    return bp::object(self.at(idx[0]));
-  else
-    return bp::object(self.at(span<int>{idx, self.dim()}));
+  bp::object a = args.slice(1, bp::_);
+  return histogram_getitem(self, bp::extract<bp::tuple>(a));
 }
 
 bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
@@ -411,7 +423,7 @@ void register_histogram() {
       .def("at", bp::raw_function(histogram_at),
            ":param int args: indices of the bin (number must match dimension)"
            "\n:return: bin content")
-      .def("__getitem__", bp::raw_function(histogram_at),
+      .def("__getitem__", histogram_getitem,
            ":param int args: indices of the bin (number must match dimension)"
            "\n:return: bin content")
       .def("reduce_to", bp::raw_function(histogram_reduce_to),

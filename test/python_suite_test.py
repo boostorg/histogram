@@ -11,8 +11,7 @@ import os
 sys.path.append(os.getcwd())
 import unittest
 from math import pi
-from histogram import HAVE_NUMPY
-from histogram import histogram
+from histogram import HAVE_NUMPY, histogram
 from histogram.axis import (regular, regular_log, regular_sqrt, regular_cos,
                             regular_pow, circular, variable, category,
                             integer)
@@ -470,40 +469,36 @@ class test_histogram(unittest.TestCase):
         self.assertNotEqual(id(b), id(c))
 
     def test_fill_1d(self):
-        h0 = histogram(integer(-1, 2, uoflow=False))
-        h1 = histogram(integer(-1, 2, uoflow=True))
-        for h in (h0, h1):
+        for uoflow in (False, True):
+            h = histogram(integer(-1, 2, uoflow=uoflow))
             with self.assertRaises(ValueError):
                 h()
             with self.assertRaises(ValueError):
                 h(1, 2)
-            h(-10)
-            h(-1)
-            h(-1)
-            h(0)
-            h(1)
-            h(1)
-            h(1)
-            h(10)
-        self.assertEqual(hsum(h0).value, 6)
-        self.assertEqual(h0.axis(0).shape, 3)
-        self.assertEqual(hsum(h1).value, 8)
-        self.assertEqual(h1.axis(0).shape, 5)
+            for x in (-10, -1, -1, 0, 1, 1, 1, 10):
+                h(x)
+            self.assertEqual(hsum(h).value, {False: 6, True: 8}[uoflow])
+            self.assertEqual(h.axis(0).shape, {False: 3, True: 5}[uoflow])
 
-        for h in (h0, h1):
-            self.assertEqual(h.at(0).value, 2)
-            self.assertEqual(h.at(1).value, 1)
-            self.assertEqual(h.at(2).value, 3)
-            with self.assertRaises(RuntimeError):
-                h.at(0, 1).value
             with self.assertRaises(RuntimeError):
                 h.at(0, foo=None)
-            self.assertEqual(h.at(0).variance, 2)
-            self.assertEqual(h.at(1).variance, 1)
-            self.assertEqual(h.at(2).variance, 3)
+            with self.assertRaises(RuntimeError):
+                h.at(0, 1)
+            with self.assertRaises(RuntimeError):
+                h[0, 1]
 
-        self.assertEqual(h1.at(-1).value, 1)
-        self.assertEqual(h1.at(3).value, 1)
+            for get in (lambda h, arg: h.at(arg),
+                        lambda h, arg: h[arg]):
+                self.assertEqual(get(h, 0).value, 2)
+                self.assertEqual(get(h, 1).value, 1)
+                self.assertEqual(get(h, 2).value, 3)
+                self.assertEqual(get(h, 0).variance, 2)
+                self.assertEqual(get(h, 1).variance, 1)
+                self.assertEqual(get(h, 2).variance, 3)
+
+            if uoflow is True:
+                self.assertEqual(get(h, -1).value, 1)
+                self.assertEqual(get(h, 3).value, 1)
 
     def test_growth(self):
         h = histogram(integer(-1, 2))
@@ -542,9 +537,11 @@ class test_histogram(unittest.TestCase):
                  [0, 0, 1, 0, 0, 0],
                  [0, 1, 0, 0, 0, 0],
                  [0, 0, 0, 0, 0, 0]]
-            for i in range(-uoflow, len(h.axis(0)) + uoflow):
-                for j in range(-uoflow, len(h.axis(1)) + uoflow):
-                    self.assertEqual(h.at(i, j).value, m[i][j])
+            for get in (lambda h, x, y: h.at(x, y),
+                        lambda h, x, y: h[x, y]):
+                for i in range(-uoflow, len(h.axis(0)) + uoflow):
+                    for j in range(-uoflow, len(h.axis(1)) + uoflow):
+                        self.assertEqual(get(h, i, j).value, m[i][j])
 
     def test_add_2d(self):
         for uoflow in (False, True):

@@ -200,6 +200,12 @@ public:
     return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
   }
 
+  template <typename T>
+  const_reference operator[](T&&t) const {
+    // check whether T is unpackable
+    return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+  }
+
   /// Number of axes (dimensions) of histogram
   unsigned dim() const noexcept { return axes_.size(); }
 

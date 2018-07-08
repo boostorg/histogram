@@ -62,10 +62,6 @@ int expected_moved_from_dim(dynamic_tag, int) { return 0; }
 
 template <typename Histogram>
 typename Histogram::element_type sum(const Histogram& h) {
-  // auto result = typename Histogram::element_type(0);
-  // for (auto x : h)
-  //   result += x;
-  // return result;
   return std::accumulate(h.begin(), h.end(),
                          typename Histogram::element_type(0));
 }
@@ -856,8 +852,9 @@ template <typename Type> void run_tests() {
 
     // pair out
     BOOST_TEST_EQ(h.at(std::make_pair(0, 0)), 1);
+    BOOST_TEST_EQ(h[std::make_pair(0, 0)], 1);
     // tuple out
-    BOOST_TEST_EQ(h.at(std::make_tuple(1, 1)), 1);
+    BOOST_TEST_EQ(h[std::make_tuple(1, 1)], 1);
 
     // vector in, weights
     h(weight(2), std::vector<int>({0, 2}));
@@ -866,8 +863,11 @@ template <typename Type> void run_tests() {
 
     // vector
     BOOST_TEST_EQ(h.at(std::vector<int>({0, 0})).value(), 3);
-    // // initializer_list
-    // BOOST_TEST_EQ(h.at({1, 1}).variance(), 5);
+    BOOST_TEST_EQ(h[std::vector<int>({0, 0})].value(), 3);
+    // initializer_list
+    auto i = {1, 1};
+    BOOST_TEST_EQ(h.at(i).variance(), 5);
+    BOOST_TEST_EQ(h[i].variance(), 5);
   }
 
   // bin args out of range
@@ -878,6 +878,10 @@ template <typename Type> void run_tests() {
     BOOST_TEST_THROWS(h1.at(3), std::out_of_range);
     BOOST_TEST_THROWS(h1.at(std::make_tuple(-2)), std::out_of_range);
     BOOST_TEST_THROWS(h1.at(std::vector<int>({3})), std::out_of_range);
+    BOOST_TEST_THROWS(h1[-2], std::out_of_range);
+    BOOST_TEST_THROWS(h1[3], std::out_of_range);
+    BOOST_TEST_THROWS(h1[std::make_tuple(-2)], std::out_of_range);
+    BOOST_TEST_THROWS(h1[std::vector<int>({3})], std::out_of_range);
 
     auto h2 = make_histogram<adaptive_storage>(Type(),
                                                axis::integer<>(0, 2),
@@ -885,6 +889,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_THROWS(h2.at(0, -2), std::out_of_range);
     BOOST_TEST_THROWS(h2.at(std::make_tuple(0, -2)), std::out_of_range);
     BOOST_TEST_THROWS(h2.at(std::vector<int>({0, -2})), std::out_of_range);
+    BOOST_TEST_THROWS(h2[std::make_tuple(0, -2)], std::out_of_range);
+    BOOST_TEST_THROWS(h2[std::vector<int>({0, -2})], std::out_of_range);
   }
 
   // pass histogram to function
