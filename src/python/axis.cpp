@@ -24,6 +24,7 @@ namespace np = boost::python::numpy;
 #include <vector>
 #include <utility>
 #include <iostream>
+#include <stdexcept>
 
 namespace bp = boost::python;
 namespace bh = boost::histogram;
@@ -152,18 +153,14 @@ template <typename T> bp::str axis_get_label(const T& t) {
 }
 
 template <typename A> bp::object axis_getitem(const A &a, int i) {
-  if (i < -1 * a.uoflow() || i >= a.size() + 1 * a.uoflow()) {
-    PyErr_SetString(PyExc_IndexError, "index out of bounds");
-    bp::throw_error_already_set();
-  }
+  if (i < -1 * a.uoflow() || i >= a.size() + 1 * a.uoflow())
+    throw std::out_of_range("index out of bounds");
   return bp::make_tuple(a.lower(i), a.lower(i+1));
 }
 
 template <> bp::object axis_getitem<bha::category<>>(const bha::category<> &a, int i) {
-  if (i < 0 || i >= a.size()) {
-    PyErr_SetString(PyExc_IndexError, "index out of bounds");
-    bp::throw_error_already_set();
-  }
+  if (i < 0 || i >= a.size())
+    throw std::out_of_range("index out of bounds");
   return bp::object(a.value(i));
 }
 

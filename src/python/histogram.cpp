@@ -142,10 +142,8 @@ struct axes_appender {
 bp::object histogram_axis(const pyhistogram &self, int i) {
   if (i < 0)
     i += self.dim();
-  if (i < 0 || i >= int(self.dim())) {
-    PyErr_SetString(PyExc_IndexError, "axis index out of range");
-    bp::throw_error_already_set();
-  }
+  if (i < 0 || i >= int(self.dim()))
+    throw std::out_of_range("axis index out of range");
   return boost::apply_visitor(axis_visitor(), self.axis(i));
 }
 
