@@ -43,8 +43,7 @@ int main(int, char**) {
       - iterator dereferences to histogram::element_type, which is defined by
         its storage class; by default something with value() and
         variance() methods; the first returns the
-        actual count, the second returns a variance estimate of the count;
-        a bin_type is convertible into an index
+        actual count, the second returns a variance estimate of the count
         (see Rationale section for what this means)
       - idx(N) method returns the index of the N-th axis
       - bin(N_c) method returns current bin of N-th axis; the suffx _c turns

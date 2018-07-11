@@ -70,52 +70,66 @@ the [Getting started](http://hdembinski.github.io/histogram/doc/html/histogram/g
 Example 1: Fill a 1d-histogram in C++
 
 ```cpp
-    #include <boost/histogram.hpp> // proposed for inclusion in Boost
-    #include <iostream>
-    #include <cmath>
 
-    int main(int, char**) {
-        namespace bh = boost::histogram;
-        using namespace boost::histogram::literals; // enables _c suffix
+int main(int, char**) {
+    namespace bh = boost::histogram;
+    using namespace bh::literals; // enables _c suffix
 
-        // create 1d-histogram with 10 equidistant bins from -1.0 to 2.0,
-        // with axis of histogram labeled as "x"
-        auto h = bh::make_static_histogram(bh::axis::regular<>(10, -1.0, 2.0, "x"));
+    /*
+      create a static 1d-histogram with an axis that has 10 equidistant
+      bins on the real line from -1.0 to 2.0, and label it as "x"
+    */
+    auto h = bh::make_static_histogram(
+      bh::axis::regular<>(6, -1.0, 2.0, "x")
+    );
 
-        // fill histogram with data
-        h.fill(-1.5); // put in underflow bin
-        h.fill(-1.0); // included in first bin, bin interval is semi-open
-        h.fill(-0.5);
-        h.fill(1.1);
-        h.fill(0.3);
-        h.fill(1.7);
-        h.fill(2.0);  // put in overflow bin, bin interval is semi-open
-        h.fill(20.0); // put in overflow bin
-        h.fill(0.1, bh::weight(5)); // fill with a weighted entry, weight is 5
+    // fill histogram with data, typically this happens in a loop
+    // STL algorithms are supported
+    auto data = { -0.5, 1.1, 0.3, 1.7 };
+    std::for_each(data.begin(), data.end(), h);
 
-        // iterate over bins, loop skips under- and overflow bin
-        for (auto bin : h.axis(0_c)) {
-            std::cout << "bin " << bin.idx()
-                      << " x in [" << bin.lower() << ", " << bin.upper() << "): "
-                      << h.bin(bin).value() << " +/- " << std::sqrt(h.bin(bin).variance())
-                      << std::endl;
-        }
+    /*
+      a regular axis is a sequence of semi-open bins; extra under- and
+      overflow bins extend the axis in the default configuration
+      index   :     -1    0    1   2   3   4   5   6
+      bin edge:  -inf -1.0 -0.5 0.0 0.5 1.0 1.5 2.0 inf
+    */
+    h(-1.5); // put in underflow bin
+    h(-1.0); // included in first bin, bin interval is semi-open
+    h(2.0);  // put in overflow bin, bin interval is semi-open
+    h(20.0); // put in overflow bin
 
-        /* program output:
+    /*
+      do a weighted fill using bh::weight, a wrapper for any type,
+      which may appear at the beginning of the argument list
+    */
+    h(bh::weight(1.0), 0.1);
 
-        bin 0 x in [-1, -0.7): 1 +/- 1
-        bin 1 x in [-0.7, -0.4): 1 +/- 1
-        bin 2 x in [-0.4, -0.1): 0 +/- 0
-        bin 3 x in [-0.1, 0.2): 5 +/- 5
-        bin 4 x in [0.2, 0.5): 1 +/- 1
-        bin 5 x in [0.5, 0.8): 0 +/- 0
-        bin 6 x in [0.8, 1.1): 0 +/- 0
-        bin 7 x in [1.1, 1.4): 1 +/- 1
-        bin 8 x in [1.4, 1.7): 0 +/- 0
-        bin 9 x in [1.7, 2): 1 +/- 1
-
-        */
+    /*
+      iterate over bins with a fancy histogram iterator
+    */
+    for (auto it = h.begin(); it != h.end(); ++it) {
+      const auto bin = it.bin(0_c);
+      std::cout << "bin " << it.idx(0) << " x in ["
+                << bin.lower() << ", " << bin.upper() << "): "
+                << it->value() << " +/- "
+                << std::sqrt(it->variance())
+                << std::endl;
     }
+
+    /* program output: (note that under- and overflow bins appear at the end)
+
+    bin 0 x in [-1.0, -0.5): 1 +/- 1
+    bin 1 x in [-0.5,  0.0): 0 +/- 0
+    bin 2 x in [ 0.0,  0.5): 1 +/- 1
+    bin 3 x in [ 0.5,  1.0): 0 +/- 0
+    bin 4 x in [ 1.0,  1.5): 1 +/- 1
+    bin 5 x in [ 1.5,  2.0): 0 +/- 0
+    bin 6 x in [ 2.0, inf): 2 +/- 1.41421
+    bin -1 x in [-inf, -1): 1 +/- 1
+
+    */
+}
 ```
 
 Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
@@ -128,7 +142,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
     # 10 equidistant bins in radius from 0 to 5 and
     # 4 equidistant bins in polar angle
     h = bh.histogram(bh.axis.regular(10, 0.0, 5.0, "radius", uoflow=False),
-                     bh.axis.circular(4, 0.0, 2*np.pi, "phi"))
+                     bh.axis.circular(4, 0.0, 2 * np.pi, "phi"))
 
     # generate some numpy arrays with data to fill into histogram,
     # in this case normal distributed random numbers in x and y,
@@ -140,7 +154,7 @@ Example 2: Fill a 2d-histogram in Python with data in Numpy arrays
 
     # fill histogram with numpy arrays; call looks as
     # if radius and phi are numbers instead of arrays
-    h.fill(radius, phi)
+    h(radius, phi)
 
     # access histogram counts (no copy)
     count_matrix = np.asarray(h)
