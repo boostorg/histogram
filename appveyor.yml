@@ -4,6 +4,8 @@
 
 shallow_clone: true
 
+image: Visual Studio 2015
+
 branches:
   only:
     - master
@@ -13,12 +15,12 @@ build: off
 
 environment:
   # MSVC_DEFAULT_OPTIONS: ON
-  BOOST_ROOT: C:\Libraries\boost_1_63_0
-  # BOOST_LIBRARYDIR: C:\Libraries\boost_1_63_0\lib64-msvc-14.0
+  BOOST_ROOT: C:\Libraries\boost_1_67_0
 
 test_script:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - cd build
-  - cmake . -DBUILD_NUMPY_SUPPORT=OFF 
+  - cmake . -DBUILD_PYTHON=OFF -DBUILD_NUMPY_SUPPORT=OFF 
     -DBOOST_ROOT="%BOOST_ROOT%" -DBoost_USE_STATIC_LIBS="ON"
   - cmake --build .
   - ctest -V
