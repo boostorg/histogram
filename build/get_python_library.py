@@ -16,4 +16,4 @@ for libvar in ('LIBDIR', 'LIBPL'):
         if lib:
             assert len(lib) == 1
             sys.stdout.write(lib[0])
-            break
+            raise SystemExit
