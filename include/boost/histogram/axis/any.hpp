@@ -7,6 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 #define _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
