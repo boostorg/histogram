@@ -8,7 +8,7 @@ int main(int, char**) {
     using namespace bh::literals; // enables _c suffix
 
     /*
-      create a static 1d-histogram with an axis that has 10 equidistant
+      create a static 1d-histogram with an axis that has 6 equidistant
       bins on the real line from -1.0 to 2.0, and label it as "x"
     */
     auto h = bh::make_static_histogram(
@@ -26,10 +26,10 @@ int main(int, char**) {
       index   :     -1    0    1   2   3   4   5   6
       bin edge:  -inf -1.0 -0.5 0.0 0.5 1.0 1.5 2.0 inf
     */
-    h(-1.5); // put in underflow bin
-    h(-1.0); // included in first bin, bin interval is semi-open
-    h(2.0);  // put in overflow bin, bin interval is semi-open
-    h(20.0); // put in overflow bin
+    h(-1.5); // put in underflow bin -1
+    h(-1.0); // put in bin 0, bin interval is semi-open
+    h(2.0);  // put in overflow bin 6, bin interval is semi-open
+    h(20.0); // put in overflow bin 6
 
     /*
       do a weighted fill using bh::weight, a wrapper for any type,
