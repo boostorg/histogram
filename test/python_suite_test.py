@@ -12,7 +12,7 @@ sys.path.append(os.getcwd())
 import unittest
 from math import pi
 from histogram import HAVE_NUMPY, histogram
-from histogram.axis import (regular, regular_log, regular_sqrt, regular_cos,
+from histogram.axis import (regular, regular_log, regular_sqrt,
                             regular_pow, circular, variable, category,
                             integer)
 import pickle
@@ -54,7 +54,6 @@ class test_regular(unittest.TestCase):
         regular(1, 1.0, 2.0, label="ra", uoflow=False)
         regular_log(1, 1.0, 2.0)
         regular_sqrt(1, 1.0, 2.0)
-        regular_cos(1, 0.5, 1.0)
         regular_pow(1, 1.0, 2.0, 1.5)
         with self.assertRaises(TypeError):
             regular()
@@ -62,13 +61,13 @@ class test_regular(unittest.TestCase):
             regular(1)
         with self.assertRaises(TypeError):
             regular(1, 1.0)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             regular(0, 1.0, 2.0)
         with self.assertRaises(TypeError):
             regular("1", 1.0, 2.0)
         with self.assertRaises(Exception):
             regular(-1, 1.0, 2.0)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             regular(1, 2.0, 1.0)
         with self.assertRaises(TypeError):
             regular(1, 1.0, 2.0, label=0)
@@ -94,6 +93,7 @@ class test_regular(unittest.TestCase):
                   "regular(4, 1.1, 2.2, uoflow=False)",
                   "regular(4, 1.1, 2.2, label='ra', uoflow=False)",
                   "regular_log(4, 1.1, 2.2)",
+                  "regular_sqrt(3, 1.1, 2.2)",
                   "regular_pow(4, 1.1, 2.2, 0.5)"):
             self.assertEqual(str(eval(s)), s)
 
@@ -240,7 +240,7 @@ class test_variable(unittest.TestCase):
         variable(0, 1, label="va", uoflow=True)
         with self.assertRaises(TypeError):
             variable()
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             variable(1.0)
         with self.assertRaises(TypeError):
             variable("1", 2)
@@ -307,7 +307,7 @@ class test_integer(unittest.TestCase):
             integer(1)
         with self.assertRaises(TypeError):
             integer("1", 2)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             integer(2, -1)
         with self.assertRaises(TypeError):
             integer(1, 2, 3)

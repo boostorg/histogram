@@ -298,7 +298,7 @@ void register_axis_types() {
 
   BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(log);
   BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(sqrt);
-  BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(cos);
+  // BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(cos);
 
   class_<bha::regular<double, bha::transform::pow>>(
       "regular_pow",

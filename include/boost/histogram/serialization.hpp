@@ -135,7 +135,7 @@ void axis_base_uoflow<Derived>::serialize(Archive &ar, unsigned /* version */) {
 namespace transform {
 template <class Archive>
 void pow::serialize(Archive &ar, unsigned /* version */) {
-  ar &value;
+  ar &power;
 }
 } // namespace transform
 
