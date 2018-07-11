@@ -70,10 +70,11 @@ public:
 protected:
   axis_base(unsigned n, string_view label)
       : size_(n), label_(label.begin(), label.end()) {
-    if (n == 0) {
-      throw std::logic_error("bins > 0 required");
+    if (n > 0) {
+      std::copy(label.begin(), label.end(), label_.begin());
+    } else {
+      throw std::invalid_argument("bins > 0 required");
     }
-    std::copy(label.begin(), label.end(), label_.begin());
   }
 
   axis_base() = default;
@@ -153,8 +154,8 @@ struct stateless {
 } // namespace detail
 
 struct identity : public detail::stateless {
-  template <typename T> static T forward(T v) { return v; }
-  template <typename T> static T inverse(T v) { return v; }
+  template <typename T> static T&& forward(T&& v) { return std::forward<T>(v); }
+  template <typename T> static T&& inverse(T&& v) { return std::forward<T>(v); }
 };
 
 struct log : public detail::stateless {
@@ -167,21 +168,22 @@ struct sqrt : public detail::stateless {
   template <typename T> static T inverse(T v) { return v * v; }
 };
 
-struct cos : public detail::stateless {
-  template <typename T> static T forward(T v) { return std::cos(v); }
-  template <typename T> static T inverse(T v) { return std::acos(v); }
-};
+// struct cos : public detail::stateless {
+//   template <typename T> static T forward(T v) { return std::cos(v); }
+//   template <typename T> static T inverse(T v) { return std::acos(v); }
+// };
 
 struct pow {
+  double power = 1.0;
+
   pow() = default;
-  pow(double exponent) : value(exponent) {}
-  template <typename T> T forward(T v) const { return std::pow(v, value); }
+  pow(double p) : power(p) {}
+  template <typename T> T forward(T v) const { return std::pow(v, power); }
   template <typename T> T inverse(T v) const {
-    return std::pow(v, 1.0 / value);
+    return std::pow(v, 1.0 / power);
   }
-  double value = 1.0;
   bool operator==(const pow &other) const noexcept {
-    return value == other.value;
+    return power == other.power;
   }
 
 private:
@@ -220,11 +222,12 @@ public:
           Transform trans = Transform())
       : base_type(n, label, uo), Transform(trans), min_(trans.forward(lower)),
         delta_((trans.forward(upper) - trans.forward(lower)) / n) {
-    if (!(lower < upper)) {
-      throw std::logic_error("lower < upper required");
+    if (lower < upper) {
+      BOOST_ASSERT(!std::isnan(min_));
+      BOOST_ASSERT(!std::isnan(delta_));
+    } else {
+      throw std::invalid_argument("lower < upper required");
     }
-    BOOST_ASSERT(!std::isnan(min_));
-    BOOST_ASSERT(!std::isnan(delta_));
   }
 
   regular() = default;
@@ -236,7 +239,7 @@ public:
   /// Returns the bin index for the passed argument.
   inline int index(value_type x) const noexcept {
     // Optimized code
-    const value_type z = (this->forward(x) - min_) / delta_;
+    const value_type z = (Transform::forward(x) - min_) / delta_;
     return z >= 0.0 ? (z > base_type::size() ? base_type::size()
                                              : static_cast<int>(z))
                     : -1;
@@ -363,11 +366,12 @@ public:
   variable(std::initializer_list<value_type> x, string_view label = {},
            enum uoflow uo = ::boost::histogram::axis::uoflow::on)
       : base_type(x.size() - 1, label, uo), x_(new value_type[x.size()]) {
-    if (x.size() < 2) {
-      throw std::logic_error("at least two values required");
+    if (x.size() >= 2) {
+      std::copy(x.begin(), x.end(), x_.get());
+      std::sort(x_.get(), x_.get() + base_type::size() + 1);
+    } else {
+      throw std::invalid_argument("at least two values required");
     }
-    std::copy(x.begin(), x.end(), x_.get());
-    std::sort(x_.get(), x_.get() + base_type::size() + 1);
   }
 
   template <typename Iterator>
@@ -452,7 +456,7 @@ public:
           enum uoflow uo = ::boost::histogram::axis::uoflow::on)
       : base_type(upper - lower, label, uo), min_(lower) {
     if (!(lower < upper)) {
-      throw std::logic_error("lower < upper required");
+      throw std::invalid_argument("lower < upper required");
     }
   }
 
@@ -530,7 +534,7 @@ public:
     for (const auto &x : seq)
       map_->insert({x, index++});
     if (index == 0)
-      throw std::logic_error("sequence is empty");
+      throw std::invalid_argument("sequence is empty");
   }
 
   template <typename Iterator,
@@ -541,7 +545,7 @@ public:
     while (begin != end)
       map_->insert({*begin++, index++});
     if (index == 0)
-      throw std::logic_error("iterator range is empty");
+      throw std::invalid_argument("iterator range is empty");
   }
 
   /// Returns the bin index for the passed argument.

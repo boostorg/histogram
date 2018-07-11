@@ -948,6 +948,12 @@ int main() {
     BOOST_TEST_EQ(h.axis(1), v[1]);
   }
 
+  // bad fill argument
+  {
+    auto h = make_dynamic_histogram(axis::integer<>(0, 3));
+    BOOST_TEST_THROWS(h(std::string()), std::invalid_argument);
+  }
+
   // axis methods
   {
     enum { A, B };

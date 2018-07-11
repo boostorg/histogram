@@ -351,26 +351,28 @@ int main() {
     BOOST_TEST_EQ(a[0].value(), 0);
     a.increase(0);
     double x = 1;
-    adaptive_storage y(std::size_t(1));
-    BOOST_TEST_EQ(y[0].value(), 0);
-    a.add(0, y[0].value());
-    BOOST_TEST_EQ(a[0].value(), x);
+    adaptive_storage b(std::size_t(1));
+    b.increase(0);
+    BOOST_TEST_EQ(b[0].value(), x);
     for (unsigned i = 0; i < 80; ++i) {
-      a.add(0, a[0].value());
       x += x;
-      adaptive_storage b(std::size_t(1));
-      b.add(0, a[0].value());
+      a.add(0, a[0].value());
+      b += b;
       BOOST_TEST_EQ(a[0].value(), x);
       BOOST_TEST_EQ(a[0].variance(), x);
       BOOST_TEST_EQ(b[0].value(), x);
       BOOST_TEST_EQ(b[0].variance(), x);
-      b.add(0, weight(0));
-      BOOST_TEST_EQ(b[0].value(), x);
-      BOOST_TEST_EQ(b[0].variance(), x);
       adaptive_storage c(std::size_t(1));
-      c.add(0, weight(a[0].value()));
+      c.add(0, a[0].value());
       BOOST_TEST_EQ(c[0].value(), x);
-      BOOST_TEST_EQ(c[0].variance(), x * x);
+      BOOST_TEST_EQ(c[0].variance(), x);
+      c.add(0, weight(0));
+      BOOST_TEST_EQ(c[0].value(), x);
+      BOOST_TEST_EQ(c[0].variance(), x);
+      adaptive_storage d(std::size_t(1));
+      d.add(0, weight(a[0].value()));
+      BOOST_TEST_EQ(d[0].value(), x);
+      BOOST_TEST_EQ(d[0].variance(), x * x);
     }
   }
 

@@ -23,7 +23,6 @@ namespace detail {
 inline string_view to_string(const transform::identity &) { return {}; }
 inline string_view to_string(const transform::log &) { return {"_log", 4}; }
 inline string_view to_string(const transform::sqrt &) { return {"_sqrt", 5}; }
-inline string_view to_string(const transform::cos &) { return {"_cos", 4}; }
 } // namespace detail
 
 template <typename T>
@@ -58,7 +57,7 @@ template <typename RealType>
 inline std::ostream &
 operator<<(std::ostream &os, const regular<RealType, axis::transform::pow> &a) {
   os << "regular_pow(" << a.size() << ", " << a[0].lower() << ", "
-     << a[a.size()].lower() << ", " << a.transform().value;
+     << a[a.size()].lower() << ", " << a.transform().power;
   if (!a.label().empty()) {
     os << ", label=";
     ::boost::histogram::detail::escape(os, a.label());

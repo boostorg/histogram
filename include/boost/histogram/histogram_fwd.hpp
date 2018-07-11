@@ -24,7 +24,6 @@ namespace transform {
 struct identity;
 struct log;
 struct sqrt;
-struct cos;
 struct pow;
 } // namespace transform
 
@@ -39,7 +38,6 @@ using builtins =
     mpl::vector<axis::regular<double, axis::transform::identity>,
                 axis::regular<double, axis::transform::log>,
                 axis::regular<double, axis::transform::sqrt>,
-                axis::regular<double, axis::transform::cos>,
                 axis::regular<double, axis::transform::pow>,
                 axis::circular<double>, axis::variable<double>,
                 axis::integer<int>, axis::category<int>,
