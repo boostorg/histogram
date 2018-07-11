@@ -62,12 +62,9 @@ protected:
 
   template <typename Histogram>
   multi_index(const Histogram &h, std::size_t idx) :
-    dim_(h.dim()), idx_(idx), last_(idx),
+    dim_(h.dim()), idx_(idx), last_(0),
     dims_(new dim_t[h.dim()]) {
     h.for_each_axis(dim_visitor{1, dims_.get()});
-    if (0 < idx && idx < h.bincount()) {
-      decode(idx, dim_, dims_.get());
-    }
   }
 
   multi_index(const multi_index& o) :
@@ -121,19 +118,19 @@ public:
 
   auto bin() const
       -> decltype(std::declval<Histogram &>().axis(mpl::int_<0>())[0]) {
-    return histogram_.axis(mpl::int_<0>())[dims_[0].idx];
+    return histogram_.axis(mpl::int_<0>())[idx(0)];
   }
 
-  template <int N>
-  auto bin(mpl::int_<N>) const
-      -> decltype(std::declval<Histogram &>().axis(mpl::int_<N>())[0]) {
-    return histogram_.axis(mpl::int_<N>())[dims_[N].idx];
+  template <int Dim>
+  auto bin(mpl::int_<Dim>) const
+      -> decltype(std::declval<Histogram &>().axis(mpl::int_<Dim>())[0]) {
+    return histogram_.axis(mpl::int_<Dim>())[idx(Dim)];
   }
 
-  template <typename Int> // TODO: solve this with a std::enable_if
-  auto bin(Int dim) const
-      -> decltype(std::declval<Histogram &>().axis(dim)[0]) {
-    return histogram_.axis(dim)[dims_[dim].idx];
+  template <typename T = Histogram> // use SFINAE for this method
+  auto bin(unsigned dim) const
+      -> decltype(std::declval<T &>().axis(dim)[0]) {
+    return histogram_.axis(dim)[idx(dim)];
   }
 
 private:
