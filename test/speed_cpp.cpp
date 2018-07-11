@@ -56,7 +56,7 @@ template <typename Histogram> double compare_1d(unsigned n, int distrib) {
     auto h = Histogram(axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
-      h.fill(r[i]);
+      h(r[i]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   }
@@ -72,7 +72,7 @@ template <typename Histogram> double compare_2d(unsigned n, int distrib) {
     auto h = Histogram(axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n/2; ++i)
-      h.fill(r[2 * i], r[2 * i + 1]);
+      h(r[2 * i], r[2 * i + 1]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   }
@@ -89,7 +89,7 @@ template <typename Histogram> double compare_3d(unsigned n, int distrib) {
                        axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n/3; ++i)
-      h.fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
+      h(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   }
@@ -108,8 +108,8 @@ template <typename Histogram> double compare_6d(unsigned n, int distrib) {
 
     auto t = clock();
     for (unsigned i = 0; i < n/6; ++i) {
-      h.fill(r[6 * i], r[6 * i + 1], r[6 * i + 2],
-             r[6 * i + 3], r[6 * i + 4], r[6 * i + 5]);
+      h(r[6 * i], r[6 * i + 1], r[6 * i + 2],
+        r[6 * i + 3], r[6 * i + 4], r[6 * i + 5]);
     }
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
