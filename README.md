@@ -45,7 +45,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 
 ## Build instructions
 
-If you don't need the Python module and don't want to run the tests, there is nothing to build. Just copy the content of the include folder where your project.
+If you don't need the Python module and don't want to run the tests, there is nothing to build. Just copy the content of the include folder to a place where your project can find it.
 
 The Python module and the tests can be build with `b2` from the Boost project or `cmake`. If you are not a Boost developer, use `cmake`.
 
