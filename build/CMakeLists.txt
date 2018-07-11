@@ -7,12 +7,14 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # setup build
-option(BUILD_PYTHON "Build python bindings" OFF)
+option(BUILD_PYTHON "Build python bindings" ON)
 option(BUILD_NUMPY "Build numpy support" ON)
 option(BUILD_CHECKS "Build auxillary checks" OFF)
 option(BUILD_SERIALIZATION "Build serialization code" ON)
 option(TRACE_ALLOCS "Debug: Trace allocations" OFF)
 option(SANITIZE "Debug: Compile with santizers" OFF)
+mark_as_advanced(BUILD_CHECKS)
+mark_as_advanced(BUILD_SERIALIZATION)
 mark_as_advanced(TRACE_ALLOCS)
 mark_as_advanced(SANITIZE)
 
