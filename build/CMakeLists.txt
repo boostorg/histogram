@@ -35,7 +35,7 @@ endif()
 
 # set special compiler flags
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  add_compile_options(/W4)
+  add_compile_options(/W4 -D_SCL_SECURE_NO_WARNINGS)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   add_compile_options(-Wall -Wextra -pedantic)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
