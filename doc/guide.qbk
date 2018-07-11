@@ -40,7 +40,7 @@ When you work with dynamic histograms, you can also create a sequence of axes at
 [import ../examples/guide_make_dynamic_histogram.cpp]
 [guide_make_dynamic_histogram]
 
-[funcref boost::histogram::make_static_histogram make_static_histogram] cannot handle this case because a static histogram can only be constructed when the number of types of all axes are known already at compile time. While strictly speaking that is also true in this example, you could have filled the vector also at run-time, based on run-time user input.
+[funcref boost::histogram::make_static_histogram make_static_histogram] cannot handle this case because a static histogram can only be constructed when the number and types of all axes are known already at compile time. While strictly speaking that is also true in this example, you could have filled the vector also at run-time, based on run-time user input.
 
 [note Memory for bin counters is allocated lazily, because if the default storage policy [classref boost::histogram::adaptive_storage adaptive_storage] is used. Allocation is deferred to the first time, when input values are passed to the histogram. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later. This gives you a chance to check how much memory the histogram will allocate and possible give a warning if that amount is excessively large. Use the method `histogram::bincount()` to see how many bins your axis layout requires. At the first fill, that many bytes will be allocated. The allocated amount of memory may grow further later when the capacity of the bin counters needs to grow.]
 
@@ -70,7 +70,7 @@ By default, additional under- and overflow bins are added automatically for each
 
 We use an [classref boost::histogram::axis::integer integer axis] here, because the input values are integers and we want one bin for each eye value.
 
-[note The [classref boost::histogram::axis::circular circular axis] never creates under- and overflow bins, because the axis is circular. The highest bin wrapps around to the lowest bin and vice versa, so there is no possibility for overflow. Similarly, the [classref boost::histogram::axis::category category axis] has under- and overflow bins, because these terms have no meaning for categorical variables.]
+[note The [classref boost::histogram::axis::circular circular axis] never creates under- and overflow bins. The highest bin wraps around to the lowest bin and vice versa, so there is no possibility for overflow. Similarly, the [classref boost::histogram::axis::category category axis] comes without under- and overflow bins, because these terms have no meaning for categorical variables.]
 
 [endsect]
 
@@ -78,14 +78,12 @@ We use an [classref boost::histogram::axis::integer integer axis] here, because 
 
 [section Fill histogram]
 
-After you created a histogram, you want to insert (possibly multi-dimensional) data. This is done with the flexible `histogram(...)` call, which you typically do in a loop. Some extra parameters can be passed to the method as shown in the next example.
+After you created a histogram, you want to insert tuples of possibly multi-dimensional and heterogenous values. This is done with the flexible `histogram(...)` call, which you typically do in a loop. Some extra parameters can be passed to the method as shown in the next example.
 
 [import ../examples/guide_fill_histogram.cpp]
 [guide_fill_histogram]
 
-`histogram(...)` either takes `N` arguments or one container with `N` elements, where `N` is equal to the number of axes of the histogram, finds the corresponding bin, and increments the bin counter by one.
-
-This library was designed to feel familiar to users of [@boost:/libs/accumulators/index.html Boost.Accumulators] and to make it compatible with `std::for_each`, that's why values are filled with `operator()`. If you have the input values in a collection, `std::for_each` fills the histogram in one line.
+`histogram(...)` either takes `N` arguments or a container with `N` elements, where `N` is equal to the number of axes of the histogram. It finds the corresponding bin, and increments the bin counter by one.
 
 `histogram(weight(x), ...)` does the same as the first call, but increments the bin counter by the value `x`. The type of `x` is not restricted, usually it is a real number. The `weight(x)` helper class must be first argument. You can freely mix calls with and without a `weight`. Calls without a `weight` act like the weight is `1`.
 
