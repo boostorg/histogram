@@ -10,10 +10,9 @@
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
-#include <boost/mpl/equal.hpp>
-#include <boost/mpl/vector.hpp>
-#include <boost/mpl/vector_c.hpp>
 #include <boost/variant.hpp>
+#include <boost/mp11.hpp>
+#include <tuple>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -45,16 +44,16 @@ int main() {
     BOOST_TEST_EQ(os.str(), std::string("'\\\'abc\\\''"));
   }
 
-  // assign_axis unreachable branch
-  {
-    using V1 = boost::variant<float>;
-    using V2 = boost::variant<int>;
-    V1 v1(1.0);
-    V2 v2(2);
-    boost::apply_visitor(assign_axis<V1>(v1), v2);
-    BOOST_TEST_EQ(v1, V1(1.0));
-    BOOST_TEST_EQ(v2, V2(2));
-  }
+  // // assign_axis unreachable branch
+  // {
+  //   using V1 = boost::variant<float>;
+  //   using V2 = boost::variant<int>;
+  //   V1 v1(1.0);
+  //   V2 v2(2);
+  //   boost::apply_visitor(assign_axis<V1>(v1), v2);
+  //   BOOST_TEST_EQ(v1, V1(1.0));
+  //   BOOST_TEST_EQ(v2, V2(2));
+  // }
 
   // index_mapper 1
   {
@@ -99,21 +98,21 @@ int main() {
 
   // unique_sorted
   {
-    typedef vector_c<int, 2, 1, 1, 3> numbers;
-    typedef vector_c<int, 1, 2, 3> expected;
-    using result = unique_sorted_t<numbers>;
+    using input = ::boost::mp11::mp_list_c<int, 3, 2, 1, 2, 3, 1, 3>;
+    using result = unique_sorted_t<input>;
+    using expected = ::boost::mp11::mp_list_c<int, 1, 2, 3>;
 
-    BOOST_MPL_ASSERT((equal<result, expected, equal_to<_, _>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
   }
 
   // union
   {
-    typedef vector<int, unsigned, char> main_vector;
-    typedef vector<unsigned, void *> aux_vector;
-    using result = union_t<main_vector, aux_vector>;
+    using main_list = ::boost::mp11::mp_list<int, unsigned, char>;
+    using aux_list = ::boost::mp11::mp_list<unsigned, void *>;
+    using result = union_t<main_list, aux_list>;
+    using expected = ::boost::mp11::mp_list<int, unsigned, char, void *>;
 
-    typedef vector<int, unsigned, char, void *> expected;
-    BOOST_MPL_ASSERT((equal<result, expected, std::is_same<_, _>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
   }
 
   // has_variance_support
@@ -133,13 +132,12 @@ int main() {
       const double &variance() const;
     };
 
-    BOOST_TEST_EQ(typename has_variance_support<no_methods>::type(), false);
-    BOOST_TEST_EQ(typename has_variance_support<value_method>::type(), false);
-    BOOST_TEST_EQ(typename has_variance_support<variance_method>::type(),
+    BOOST_TEST_EQ(has_variance_support_t<no_methods>(), false);
+    BOOST_TEST_EQ(has_variance_support_t<value_method>(), false);
+    BOOST_TEST_EQ(has_variance_support_t<variance_method>(),
                   false);
-    BOOST_TEST_EQ(
-        typename has_variance_support<value_and_variance_methods>::type(),
-        true);
+    BOOST_TEST_EQ(has_variance_support_t<value_and_variance_methods>(),
+                  true);
   }
 
   // classify_container

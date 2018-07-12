@@ -7,7 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_LITERALS_HPP_
 #define _BOOST_HISTOGRAM_LITERALS_HPP_
 
-#include <boost/mpl/int.hpp>
+#include <boost/mp11.hpp>
 #include <type_traits>
 
 namespace boost {
@@ -34,8 +34,8 @@ template <int N, char First, char... Rest> constexpr int parse() {
 } // namespace detail
 
 template <char... Digits>
-auto operator"" _c() -> decltype(mpl::int_<detail::parse<0u, Digits...>()>()) {
-  return mpl::int_<detail::parse<0u, Digits...>()>();
+auto operator"" _c() -> mp11::mp_int<detail::parse<0, Digits...>()> {
+  return {};
 }
 
 } // namespace literals

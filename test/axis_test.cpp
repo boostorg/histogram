@@ -5,9 +5,6 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/fusion/container/generation/make_vector.hpp>
-#include <boost/fusion/include/make_vector.hpp>
-#include <boost/fusion/include/vector.hpp>
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/axis.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
@@ -18,6 +15,8 @@
 #include <limits>
 #include <sstream>
 #include <string>
+
+using namespace boost::histogram;
 
 #define BOOST_TEST_NOT(expr) BOOST_TEST(!(expr))
 #define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
@@ -38,8 +37,7 @@ void test_axis_iterator(const Axis &a, int begin, int end) {
 }
 
 int main() {
-  using namespace boost::histogram;
-  using any_axis_type = axis::any<>;
+  using any_axis = boost::mp11::mp_rename<axis::builtins, axis::any>;
 
   // bad_ctors
   {
@@ -242,17 +240,17 @@ int main() {
     test_axis_iterator(axis::variable<>({1, 2, 3}, ""), 0, 2);
     test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4);
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
-    test_axis_iterator(any_axis_type(axis::regular<>(5, 0, 1)), 0, 5);
-    BOOST_TEST_THROWS(any_axis_type(axis::category<>({A, B, C})).lower(0),
+    test_axis_iterator(any_axis(axis::regular<>(5, 0, 1)), 0, 5);
+    BOOST_TEST_THROWS(any_axis(axis::category<>({A, B, C})).lower(0),
                       std::runtime_error);
   }
 
   // any_axis_type_copyable
   {
-    any_axis_type a(axis::regular<>(2, -1, 1));
-    any_axis_type b(a);
+    any_axis a(axis::regular<>(2, -1, 1));
+    any_axis b(a);
     BOOST_TEST(a == b);
-    any_axis_type c;
+    any_axis c;
     BOOST_TEST_NOT(a == c);
     c = a;
     BOOST_TEST(a == c);
@@ -260,11 +258,11 @@ int main() {
 
   // any_axis_type_movable
   {
-    any_axis_type a(axis::regular<>(2, -1, 1));
-    any_axis_type r(a);
-    any_axis_type b(std::move(a));
+    any_axis a(axis::regular<>(2, -1, 1));
+    any_axis r(a);
+    any_axis b(std::move(a));
     BOOST_TEST_EQ(b, r);
-    any_axis_type c;
+    any_axis c;
     BOOST_TEST_NOT(a == c);
     c = std::move(b);
     BOOST_TEST(c == r);
@@ -275,7 +273,7 @@ int main() {
     enum { A, B, C };
     std::string a = "A";
     std::string b = "B";
-    std::vector<any_axis_type> axes;
+    std::vector<any_axis> axes;
     axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
     axes.push_back(axis::regular<double, axis::transform::log>(
         2, 1, 10, "regular2", axis::uoflow::off));
@@ -308,24 +306,24 @@ int main() {
   // any_axis_type_equal_comparable
   {
     enum { A, B, C };
-    std::vector<any_axis_type> axes;
+    std::vector<any_axis> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
     axes.push_back(axis::circular<>{4});
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>{A, B, C});
     axes.push_back(axis::integer<>{-1, 1});
     for (const auto &a : axes) {
-      BOOST_TEST(!(a == any_axis_type()));
+      BOOST_TEST(!(a == any_axis()));
       BOOST_TEST_EQ(a, a);
     }
-    BOOST_TEST_NOT(axes == std::vector<any_axis_type>());
-    BOOST_TEST(axes == std::vector<any_axis_type>(axes));
+    BOOST_TEST_NOT(axes == std::vector<any_axis>());
+    BOOST_TEST(axes == std::vector<any_axis>(axes));
   }
 
   // any_axis_type_value_to_index_failure
   {
     std::string a = "A", b = "B";
-    any_axis_type x = axis::category<std::string>({a, b}, "category");
+    any_axis x = axis::category<std::string>({a, b}, "category");
     BOOST_TEST_THROWS(x.index(1.5), std::runtime_error);
     const auto &cx = axis::cast<axis::category<std::string>>(x);
     BOOST_TEST_EQ(cx.index(b), 1);
@@ -334,78 +332,93 @@ int main() {
   // sequence equality
   {
     enum { A, B, C };
-    std::vector<boost::variant<axis::regular<>, axis::variable<>,
-                               axis::category<>, axis::integer<>>>
-        std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                       axis::category<>{A, B, C}};
+    std::vector<
+      axis::any<
+        axis::regular<>, axis::variable<>,
+        axis::category<>, axis::integer<>
+      >
+    > std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
+                     axis::category<>{A, B, C}};
 
     std::vector<
-        boost::variant<axis::regular<>, axis::variable<>, axis::category<>>>
-        std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                       axis::category<>{{A, B, C}}};
+      axis::any<
+        axis::regular<>, axis::variable<>, axis::category<>
+      >
+    > std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
+                     axis::category<>{{A, B, C}}};
 
-    std::vector<boost::variant<axis::regular<>, axis::variable<>>> std_vector3 =
-        {axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
+    std::vector<
+      axis::any<
+        axis::regular<>,
+        axis::variable<>
+      >
+    > std_vector3 = {axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
 
-    std::vector<boost::variant<axis::variable<>, axis::regular<>>> std_vector4 =
-        {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1}};
+    std::vector<
+      axis::any<
+        axis::variable<>,
+        axis::regular<>
+      >
+    > std_vector4 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1}};
 
     BOOST_TEST(detail::axes_equal(std_vector1, std_vector2));
     BOOST_TEST_NOT(detail::axes_equal(std_vector2, std_vector3));
     BOOST_TEST_NOT(detail::axes_equal(std_vector3, std_vector4));
 
-    auto fusion_vector1 = boost::fusion::make_vector(
+    auto tuple1 = std::make_tuple(
         axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-        axis::category<>{{A, B, C}});
+        axis::category<>{{A, B, C}}
+      );
 
-    auto fusion_vector2 = boost::fusion::make_vector(axis::regular<>{2, -1, 1},
-                                                     axis::variable<>{-1, 0, 1},
-                                                     axis::category<>{{A, B}});
+    auto tuple2 = std::make_tuple(
+        axis::regular<>{2, -1, 1},
+                               axis::variable<>{-1, 0, 1},
+                                     axis::category<>{{A, B}});
 
-    auto fusion_vector3 = boost::fusion::make_vector(
+    auto tuple3 = std::make_tuple(
         axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1});
 
-    BOOST_TEST(detail::axes_equal(std_vector1, fusion_vector1));
-    BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
-    BOOST_TEST_NOT(detail::axes_equal(fusion_vector1, fusion_vector2));
-    BOOST_TEST_NOT(detail::axes_equal(fusion_vector2, fusion_vector3));
-    BOOST_TEST_NOT(detail::axes_equal(std_vector3, fusion_vector3));
+    BOOST_TEST(detail::axes_equal(std_vector1, tuple1));
+    BOOST_TEST(detail::axes_equal(tuple1, std_vector1));
+    BOOST_TEST_NOT(detail::axes_equal(tuple1, tuple2));
+    BOOST_TEST_NOT(detail::axes_equal(tuple2, tuple3));
+    BOOST_TEST_NOT(detail::axes_equal(std_vector3, tuple3));
   }
 
   // sequence assign
   {
     enum { A, B, C, D };
-    std::vector<boost::variant<axis::regular<>, axis::variable<>,
+    std::vector<axis::any<axis::regular<>, axis::variable<>,
                                axis::category<>, axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{A, B, C}};
 
     std::vector<
-        boost::variant<axis::regular<>, axis::variable<>, axis::category<>>>
+        axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -2, 2}, axis::variable<>{-2, 0, 2},
                        axis::category<>{A, B}};
 
     detail::axes_assign(std_vector2, std_vector1);
     BOOST_TEST(detail::axes_equal(std_vector2, std_vector1));
 
-    auto fusion_vector1 = boost::fusion::make_vector(
+    auto tuple1 = std::make_tuple(
         axis::regular<>{2, -3, 3}, axis::variable<>{-3, 0, 3},
         axis::category<>{A, B, C, D});
 
-    detail::axes_assign(fusion_vector1, std_vector1);
-    BOOST_TEST(detail::axes_equal(fusion_vector1, std_vector1));
+    detail::axes_assign(tuple1, std_vector1);
+    BOOST_TEST(detail::axes_equal(tuple1, std_vector1));
 
     decltype(std_vector1) std_vector3;
-    BOOST_TEST_NOT(detail::axes_equal(std_vector3, fusion_vector1));
-    detail::axes_assign(std_vector3, fusion_vector1);
-    BOOST_TEST(detail::axes_equal(std_vector3, fusion_vector1));
+    BOOST_TEST_NOT(detail::axes_equal(std_vector3, tuple1));
+    detail::axes_assign(std_vector3, tuple1);
+    BOOST_TEST(detail::axes_equal(std_vector3, tuple1));
 
-    auto fusion_vector2 = boost::fusion::make_vector(axis::regular<>{2, -1, 1},
-                                                     axis::variable<>{-1, 0, 1},
-                                                     axis::category<>{A, B});
+    auto tuple2 = std::make_tuple(axis::regular<>{2, -1, 1},
+                                  axis::variable<>{-1, 0, 1},
+                                  axis::category<>{A, B});
 
-    detail::axes_assign(fusion_vector2, fusion_vector1);
-    BOOST_TEST(detail::axes_equal(fusion_vector2, fusion_vector1));
+    detail::axes_assign(tuple2, tuple1);
+    BOOST_TEST(detail::axes_equal(tuple2, tuple1));
   }
 
   return boost::report_errors();

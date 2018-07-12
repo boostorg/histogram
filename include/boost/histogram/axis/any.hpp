@@ -12,9 +12,10 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/cat.hpp>
-#include <boost/mpl/contains.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/utility/string_view.hpp>
 #include <boost/variant.hpp>
+#include <boost/mp11.hpp>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -94,14 +95,15 @@ struct lower : public static_visitor<double> {
         " boost::histogram::axis::cast to access underlying axis type"));
   }
 };
+
 } // namespace detail
 
 /// Polymorphic axis type
-template <typename Axes> class any : public make_variant_over<Axes>::type {
-  using base_type = typename make_variant_over<Axes>::type;
+template <typename... Ts> class any : public ::boost::variant<Ts...> {
+  using base_type = ::boost::variant<Ts...>;
 
 public:
-  using types = typename base_type::types;
+  using types = mp11::mp_list<Ts...>;
   using value_type = double;
   using bin_type = interval_view<any>;
   using const_iterator = iterator_over<any>;
@@ -113,19 +115,19 @@ public:
   any &operator=(const any &t) = default;
   any &operator=(any &&t) = default;
 
-  template <typename T, typename = typename std::enable_if<
-                            mpl::contains<types, T>::value>::type>
+  template <typename T, typename = mp11::mp_if<
+                            mp11::mp_contains<types, T>, void>>
   any(const T &t) : base_type(t) {}
 
-  template <typename T, typename = typename std::enable_if<
-                            mpl::contains<types, T>::value>::type>
+  template <typename T, typename = mp11::mp_if<
+                            mp11::mp_contains<types, T>, void>>
   any &operator=(const T &t) {
     base_type::operator=(t);
     return *this;
   }
 
-  template <typename T, typename = typename std::enable_if<
-                            mpl::contains<types, T>::value>::type>
+  template <typename T, typename = mp11::mp_if<
+                            mp11::mp_contains<types, T>, void>>
   any &operator=(T &&t) {
     base_type::operator=(std::move(t));
     return *this;
@@ -177,23 +179,23 @@ private:
 };
 
 // dynamic casts
-template <typename T, typename Axes>
-typename std::add_lvalue_reference<T>::type cast(any<Axes> &any) {
+template <typename T, typename... Ts>
+typename std::add_lvalue_reference<T>::type cast(any<Ts...> &any) {
   return get<T>(any);
 }
 
-template <typename T, typename Axes>
-const typename std::add_lvalue_reference<T>::type cast(const any<Axes> &any) {
+template <typename T, typename... Ts>
+const typename std::add_lvalue_reference<T>::type cast(const any<Ts...> &any) {
   return get<T>(any);
 }
 
-template <typename T, typename Axes>
-typename std::add_pointer<T>::type cast(any<Axes> *any) {
+template <typename T, typename... Ts>
+typename std::add_pointer<T>::type cast(any<Ts...> *any) {
   return get<T>(&any);
 }
 
-template <typename T, typename Axes>
-const typename std::add_pointer<T>::type cast(const any<Axes> *any) {
+template <typename T, typename... Ts>
+const typename std::add_pointer<T>::type cast(const any<Ts...> *any) {
   return get<T>(&any);
 }
 

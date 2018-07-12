@@ -11,7 +11,6 @@
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
-#include <boost/mpl/int.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/variant.hpp>
 #include <limits>

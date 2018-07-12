@@ -22,14 +22,8 @@
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
-#include <boost/mpl/bool.hpp>
-#include <boost/mpl/count_if.hpp>
-#include <boost/mpl/deref.hpp>
-#include <boost/mpl/empty.hpp>
-#include <boost/mpl/find_if.hpp>
-#include <boost/mpl/int.hpp>
-#include <boost/mpl/vector.hpp>
 #include <boost/type_index.hpp>
+#include <boost/mp11.hpp>
 #include <cstddef>
 #include <iterator>
 #include <stdexcept>
@@ -56,7 +50,7 @@ namespace histogram {
 
 template <typename Axes, typename Storage>
 class histogram<dynamic_tag, Axes, Storage> {
-  static_assert(!mpl::empty<Axes>::value, "at least one axis required");
+  static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
 
 public:
   using any_axis_type = axis::any<Axes>;
@@ -235,17 +229,17 @@ public:
   }
 
   /// Return a lower dimensional histogram
-  template <int N, typename... Rest>
-  histogram reduce_to(mpl::int_<N>, Rest...) const {
+  template <int N, typename... Ts>
+  histogram reduce_to(mp11::mp_int<N>, Ts...) const {
     const auto b =
-        detail::bool_mask<mpl::vector<mpl::int_<N>, Rest...>>(dim(), true);
+        detail::bool_mask<mp11::mp_int<N>, Ts...>>(dim(), true);
     return reduce_impl(b);
   }
 
   /// Return a lower dimensional histogram
-  template <typename... Rest> histogram reduce_to(int n, Rest... rest) const {
+  template <typename... Ts> histogram reduce_to(int n, Ts... ts) const {
     std::vector<bool> b(dim(), false);
-    for (const auto &i : {n, rest...})
+    for (const auto &i : {n, int(ts)...})
       b[i] = true;
     return reduce_impl(b);
   }
@@ -302,7 +296,7 @@ private:
     BOOST_ASSERT_MSG(dim() == detail::size_of<T>::value,
                      "fill container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    xlin_get(mpl::int_<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
+    xlin_get(mp11::mp_int<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
     if (stride) {
       fill_storage_impl(idx, std::forward<Ts>(ts)...);
     }
@@ -335,7 +329,7 @@ private:
     BOOST_ASSERT_MSG(dim() == detail::size_of<T>::value,
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin_get(mpl::int_<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
+    lin_get(mp11::mp_int<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
     if (stride == 0)
       throw std::out_of_range("bin index out of range");
     return storage_[idx];
@@ -427,23 +421,23 @@ private:
     }
   }
 
-  template <typename T> void xlin_get(mpl::int_<0>, std::size_t&, std::size_t &, T&&) const noexcept {}
+  template <typename T> void xlin_get(mp11::mp_int<0>, std::size_t&, std::size_t &, T&&) const noexcept {}
 
-  template <int N, typename T> void xlin_get(mpl::int_<N>, std::size_t& idx,
+  template <int N, typename T> void xlin_get(mp11::mp_int<N>, std::size_t& idx,
     std::size_t & stride, T&&t) const {
     constexpr unsigned D = detail::size_of<T>::value - N;
     apply_visitor(xlin_visitor<detail::type_of<D, T>>{idx, stride, std::get<D>(t)}, axes_[D]);
-    xlin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));
+    xlin_get(mp11::mp_int<(N-1)>(), idx, stride, std::forward<T>(t));
   }
 
-  template <typename T> void lin_get(mpl::int_<0>, std::size_t& ,
+  template <typename T> void lin_get(mp11::mp_int<0>, std::size_t& ,
     std::size_t & , T&&) const noexcept {}
 
-  template <int N, typename T> void lin_get(mpl::int_<N>, std::size_t& idx,
+  template <int N, typename T> void lin_get(mp11::mp_int<N>, std::size_t& idx,
     std::size_t & stride, T&&t) const noexcept {
     constexpr unsigned D = detail::size_of<T>::value - N;
     apply_visitor(lin_visitor{idx, stride, static_cast<int>(std::get<D>(t))}, axes_[D]);
-    lin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));
+    lin_get(mp11::mp_int<(N-1)>(), idx, stride, std::forward<T>(t));
   }
 
   histogram reduce_impl(const std::vector<bool> &b) const {
@@ -473,29 +467,29 @@ private:
 };
 
 template <typename... Axes>
-histogram<dynamic_tag, detail::union_t<axis::builtins, mpl::vector<Axes...>>>
+histogram<dynamic_tag, detail::union_t<axis::builtins, mp11::mp_list<Axes...>>>
 make_dynamic_histogram(Axes &&... axes) {
   return histogram<dynamic_tag,
-                   detail::union_t<axis::builtins, mpl::vector<Axes...>>>(
+                   detail::union_t<axis::builtins, mp11::mp_list<Axes...>>>(
       std::forward<Axes>(axes)...);
 }
 
 template <typename... Axes>
-histogram<dynamic_tag, detail::union_t<axis::builtins, mpl::vector<Axes...>>,
+histogram<dynamic_tag, detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
           array_storage<weight_counter<double>>>
 make_dynamic_weighted_histogram(Axes &&... axes) {
   return histogram<dynamic_tag,
-                   detail::union_t<axis::builtins, mpl::vector<Axes...>>,
+                   detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
                    array_storage<weight_counter<double>>>(
       std::forward<Axes>(axes)...);
 }
 
 template <typename Storage, typename... Axes>
-histogram<dynamic_tag, detail::union_t<axis::builtins, mpl::vector<Axes...>>,
+histogram<dynamic_tag, detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
           Storage>
 make_dynamic_histogram_with(Axes &&... axes) {
   return histogram<dynamic_tag,
-                   detail::union_t<axis::builtins, mpl::vector<Axes...>>,
+                   detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
                    Storage>(std::forward<Axes>(axes)...);
 }
 

@@ -10,7 +10,7 @@
 #include <array>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/iterator/iterator_facade.hpp>
-#include <boost/mpl/int.hpp>
+#include <boost/mp11.hpp>
 #include <limits>
 #include <type_traits>
 #include <vector>
@@ -117,14 +117,14 @@ public:
   iterator_over &operator=(iterator_over &&) = default;
 
   auto bin() const
-      -> decltype(std::declval<Histogram &>().axis(mpl::int_<0>())[0]) {
-    return histogram_.axis(mpl::int_<0>())[idx(0)];
+      -> decltype(std::declval<Histogram &>().axis(mp11::mp_int<0>())[0]) {
+    return histogram_.axis(mp11::mp_int<0>())[idx(0)];
   }
 
   template <int Dim>
-  auto bin(mpl::int_<Dim>) const
-      -> decltype(std::declval<Histogram &>().axis(mpl::int_<Dim>())[0]) {
-    return histogram_.axis(mpl::int_<Dim>())[idx(Dim)];
+  auto bin(mp11::mp_int<Dim>) const
+      -> decltype(std::declval<Histogram &>().axis(mp11::mp_int<Dim>())[0]) {
+    return histogram_.axis(mp11::mp_int<Dim>())[idx(Dim)];
   }
 
   template <typename T = Histogram> // use SFINAE for this method
