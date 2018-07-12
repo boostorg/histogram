@@ -50,7 +50,7 @@ template <typename V> struct axes_assign_visitor : public static_visitor<void> {
   template <typename U> void impl(mp11::mp_true, const U &rhs) const { lhs = rhs; }
 
   template <typename U> void impl(mp11::mp_false, const U &) const {
-    // never called: cannot assign to variant if U is not a bounded type
+    BOOST_ASSERT_MSG(false, "cannot assign U to variant if it is not a bounded type");
   }
 };
 

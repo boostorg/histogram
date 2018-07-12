@@ -120,12 +120,26 @@ using size_of = std::tuple_size<typename std::decay<T>::type>;
 template <unsigned D, typename T>
 using type_of = typename std::tuple_element<D, typename std::decay<T>::type>::type;
 
-// template <bool C, typename T1, typename T2>
-// using if_else = typename std::conditional<C, T1, T2>::type;
+namespace {
+  template <typename Tuple, typename F>
+  struct for_each_fn {
+    Tuple&& t;
+    F&& f;
+    for_each_fn(Tuple&& tt, F&& ff) :
+      t(std::forward<Tuple>(tt)), f(std::forward<F>(ff)) {}
+    template <typename Int> void operator()(Int) const {
+      f(std::get<Int::value>(t));
+    }
+  };
+}
 
-template <typename T, typename F>
-void for_each(T&& t, F&& f) {
-  // TODO
+template <typename Tuple, typename F>
+void for_each(Tuple&& t, F&& f) {
+  auto fn = for_each_fn<Tuple, F>(std::forward<Tuple>(t),
+                                  std::forward<F>(f));
+  using size = mp11::mp_size<typename std::decay<Tuple>::type>;
+  using nums = mp11::mp_iota<size>;
+  mp11::mp_for_each<nums>(fn);
 }
 
 } // namespace detail

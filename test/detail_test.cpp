@@ -19,8 +19,27 @@
 #include <vector>
 #include <utility>
 
-using namespace boost::mpl;
 using namespace boost::histogram::detail;
+
+struct for_each_test_visitor {
+  int i = 0;
+  bool result = true;
+  template <typename T> void operator()(T& t) {
+    // expect: int char float
+    switch (i++) {
+      case 0:
+        result &= std::is_same<T, int>::value;
+      break;
+      case 1:
+        result &= std::is_same<T, char>::value;
+      break;
+      case 2:
+        result &= std::is_same<T, float>::value;
+    };
+    t += 1;
+  }
+};
+
 
 int main() {
   // escape0
@@ -162,6 +181,18 @@ int main() {
 
     using result4 = classify_container_t<decltype("abc")>;
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result4, dynamic_container_tag> ));
+  }
+
+  // for_each
+  {
+    for_each_test_visitor v;
+    std::tuple<int, char, float> t(0, 0, 0);
+    ::boost::histogram::detail::for_each(t, v);
+    BOOST_TEST_EQ(v.i, 3);
+    BOOST_TEST_EQ(v.result, true);
+    BOOST_TEST_EQ(std::get<0>(t), 1);
+    BOOST_TEST_EQ(std::get<1>(t), 1);
+    BOOST_TEST_EQ(std::get<2>(t), 1);
   }
 
   return boost::report_errors();
