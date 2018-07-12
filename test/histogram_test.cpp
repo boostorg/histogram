@@ -18,7 +18,7 @@
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
-#include <boost/mpl/int.hpp>
+#include <boost/mp11.hpp>
 #include <cstdlib>
 #include <limits>
 #include <numeric>
@@ -30,7 +30,7 @@
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
-namespace mpl = boost::mpl;
+namespace mp11 = boost::mp11;
 
 template <typename S, typename... Axes>
 auto make_histogram(static_tag, Axes &&... axes)
@@ -146,7 +146,7 @@ template <typename Type> void run_tests() {
     h(0, 0);
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
-    auto h3 = static_histogram<mpl::vector<axis::integer<>, axis::integer<>>,
+    auto h3 = static_histogram<mp11::mp_list<axis::integer<>, axis::integer<>>,
                                array_storage<unsigned>>(h);
     BOOST_TEST_EQ(h3, h);
   }
@@ -163,7 +163,7 @@ template <typename Type> void run_tests() {
     // test self-assign
     h2 = h2;
     BOOST_TEST_EQ(h, h2);
-    auto h3 = static_histogram<mpl::vector<axis::integer<>, axis::integer<>>,
+    auto h3 = static_histogram<mp11::mp_list<axis::integer<>, axis::integer<>>,
                                array_storage<unsigned>>();
     h3 = h;
     BOOST_TEST_EQ(h, h3);
@@ -940,7 +940,11 @@ int main() {
 
   // init
   {
-    auto v = std::vector<axis::any<>>();
+    auto v = std::vector<
+        axis::any<
+          axis::regular<>, axis::integer<>
+        >
+      >();
     v.push_back(axis::regular<>(4, -1, 1));
     v.push_back(axis::integer<>(1, 7));
     auto h = make_dynamic_histogram(v.begin(), v.end());
