@@ -180,9 +180,9 @@ void category<T>::serialize(Archive &ar, unsigned /* version */) {
   ar &map_;
 }
 
-template <class Axes>
+template <typename... Ts>
 template <class Archive>
-void any<Axes>::serialize(Archive &ar, unsigned /* version */) {
+void any<Ts...>::serialize(Archive &ar, unsigned /* version */) {
   ar &boost::serialization::base_object<base_type>(*this);
 }
 

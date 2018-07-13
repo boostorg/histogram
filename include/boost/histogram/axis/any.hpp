@@ -97,7 +97,7 @@ struct lower : public static_visitor<double> {
 };
 
 struct bicmp : public static_visitor<bool> {
-  template <typename T, typename U> bool operator()(const T& t, const U& u) const {
+  template <typename T, typename U> bool operator()(const T&, const U&) const {
     return false;
   }
 
@@ -119,29 +119,39 @@ public:
   using const_iterator = iterator_over<any>;
   using const_reverse_iterator = reverse_iterator_over<any>;
 
+private:
+  template <typename T> using requires_bounded_type = mp11::mp_if<mp11::mp_contains<types, T>, void>;
+
+public:
   any() = default;
-  any(const any &t) = default;
-  any(any &&t) = default;
-  any &operator=(const any &t) = default;
-  any &operator=(any &&t) = default;
+  any(const any&) = default;
+  any& operator=(const any&) = default;
+  // any(any&&) = default;
+  // any& operator=(any&&) = default;
 
-  template <typename T, typename = mp11::mp_if<
-                            mp11::mp_contains<types, T>, void>>
-  any(const T &t) : base_type(t) {}
+  template <typename... Us>
+  any(const any<Us...> &) {} // TODO
 
-  template <typename T, typename = mp11::mp_if<
-                            mp11::mp_contains<types, T>, void>>
-  any &operator=(const T &t) {
-    base_type::operator=(t);
+  template <typename... Us>
+  any &operator=(const any<Us...> &) { // TODO
     return *this;
   }
 
-  template <typename T, typename = mp11::mp_if<
-                            mp11::mp_contains<types, T>, void>>
-  any &operator=(T &&t) {
-    base_type::operator=(std::move(t));
+  template <typename T, typename = requires_bounded_type<T>>
+  any(const T& ) {} // TODO
+
+  template <typename T>
+  any& operator=(const T&) {
     return *this;
   }
+
+  // template <typename... Us>
+  // any(any<Us...> &&t) {} // TODO
+
+  // template <typename... Us>
+  // any &operator=(any<Us...> &&t) { // TODO
+  //   return *this;
+  // }
 
   int size() const { return apply_visitor(detail::size(), *this); }
 
@@ -177,6 +187,11 @@ public:
   template <typename... Us>
   bool operator==(const any<Us...>& rhs) const {
     return apply_visitor(detail::bicmp(), *this, rhs);
+  }
+
+  template <typename T, typename = requires_bounded_type<T>>
+  bool operator==(const T &) const { // TODO
+    return false;
   }
 
   const_iterator begin() const { return const_iterator(*this, 0); }

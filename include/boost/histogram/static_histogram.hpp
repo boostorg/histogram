@@ -111,14 +111,16 @@ public:
 
   template <typename S>
   histogram &operator+=(const static_histogram<Axes, S> &rhs) {
-    BOOST_ASSERT_MSG(detail::axes_equal(axes_, rhs.axes_), "axes of histograms differ");
+    if (!detail::axes_equal(axes_, rhs.axes_))
+      throw std::invalid_argument("axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
 
   template <typename A, typename S>
   histogram &operator+=(const dynamic_histogram<A, S> &rhs) {
-    BOOST_ASSERT_MSG(detail::axes_equal(axes_, rhs.axes_), "axes of histograms differ");
+    if (!detail::axes_equal(axes_, rhs.axes_))
+      throw std::invalid_argument("axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
@@ -247,7 +249,7 @@ public:
       detail::selection<Axes, mp11::mp_int<N>, Ns...>,
       Storage
     >;
-    auto hr = HR(detail::make_sub_axes<axes_type, mp11::mp_int<N>, Ns...>(axes_));
+    auto hr = HR(detail::make_sub_tuple<axes_type, mp11::mp_int<N>, Ns...>(axes_));
     const auto b =
         detail::bool_mask<mp11::mp_int<N>, Ns...>(dim(), true);
     reduce_impl(hr, b);
@@ -294,7 +296,7 @@ private:
 
   template <typename T, typename... Ts>
   void fill_impl(detail::static_container_tag, T&&t, Ts&&...ts) {
-    static_assert(mp11::mp_size<T>::value == axes_size::value,
+    static_assert(detail::size_of<T>::value == axes_size::value,
                   "fill container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     xlin_get(axes_size(), idx, stride, std::forward<T>(t));
@@ -360,7 +362,7 @@ private:
   template <typename Iterator>
   void xlin_iter(mp11::mp_size_t<0>, std::size_t &, std::size_t &, Iterator ) const noexcept {}
 
-  template <int N, typename Iterator>
+  template <long unsigned int N, typename Iterator>
   void xlin_iter(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride, Iterator iter) const {
     constexpr unsigned D = axes_size::value - N;
     const auto a_size = std::get<D>(axes_).size();
@@ -386,7 +388,7 @@ private:
   template <typename Iterator>
   void lin_iter(mp11::mp_size_t<0>, std::size_t &, std::size_t &, Iterator) const noexcept {}
 
-  template <int N, typename Iterator>
+  template <long unsigned int N, typename Iterator>
   void lin_iter(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride,
                 Iterator iter) const noexcept {
     constexpr unsigned D = axes_size::value - N;
@@ -401,9 +403,9 @@ private:
   template <typename T>
   void xlin_get(mp11::mp_size_t<0>, std::size_t &, std::size_t &, T &&) const noexcept {}
 
-  template <int N, typename T>
+  template <long unsigned int N, typename T>
   void xlin_get(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride, T && t) const {
-    constexpr unsigned D = mp11::mp_size<T>::value - N;
+    constexpr unsigned D = detail::size_of<T>::value - N;
     const auto a_size = std::get<D>(axes_).size();
     const auto a_shape = std::get<D>(axes_).shape();
     const auto j = std::get<D>(axes_).index(std::get<D>(t));
@@ -414,9 +416,9 @@ private:
   template <typename T>
   void lin_get(mp11::mp_size_t<0>, std::size_t &, std::size_t &, T&&) const noexcept {}
 
-  template <int N, typename T>
+  template <long unsigned int N, typename T>
   void lin_get(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride, T&&t) const noexcept {
-    constexpr unsigned D = mp11::mp_size<T>::value - N;
+    constexpr unsigned D = detail::size_of<T>::value - N;
     const auto a_size = std::get<D>(axes_).size();
     const auto a_shape = std::get<D>(axes_).shape();
     const auto j = detail::indirect_int_cast(std::get<D>(t));

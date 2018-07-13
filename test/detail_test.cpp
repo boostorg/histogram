@@ -10,6 +10,7 @@
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/literals.hpp>
 #include <boost/variant.hpp>
 #include <boost/mp11.hpp>
 #include <tuple>
@@ -20,6 +21,7 @@
 #include <utility>
 
 using namespace boost::histogram::detail;
+using namespace boost::histogram::literals;
 namespace mp11 = boost::mp11;
 
 using i0 = mp11::mp_int<0>;
@@ -188,11 +190,17 @@ int main() {
     BOOST_TEST_EQ(v2, std::vector<bool>({false, true, false, true}));
   }
 
-  // // literals
-  // {
-  //   using c0 = 0_c;
-  //   BOOST_TEST_TRAIT_TRUE((std::is_same<c0, mp11::mp_int<0>>));
-  // }
+  // literals
+  {
+    auto j0 = 0_c;
+    auto j3 = 3_c;
+    auto j10 = 10_c;
+    auto j213 = 213_c;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<i0, decltype(j0)>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<i3, decltype(j3)>));
+    BOOST_TEST_EQ(decltype(j10)::value, 10);
+    BOOST_TEST_EQ(decltype(j213)::value, 213);
+  }
 
   // selection 
   {

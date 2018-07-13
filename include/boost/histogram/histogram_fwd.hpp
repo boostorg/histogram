@@ -44,6 +44,8 @@ using builtins =
 
 template <typename... Ts> class any;
 
+using any_builtin = mp11::mp_rename<builtins, any>;
+
 } // namespace axis
 
 struct dynamic_tag {};

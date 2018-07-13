@@ -8,7 +8,6 @@
 #define _BOOST_HISTOGRAM_LITERALS_HPP_
 
 #include <boost/mp11.hpp>
-#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -34,8 +33,8 @@ template <int N, char First, char... Rest> constexpr int parse() {
 } // namespace detail
 
 template <char... Digits>
-auto operator"" _c() -> decltype(mpl::int_<detail::parse<0u, Digits...>()>()) {
-  return ::boost::mp11::mp_int<detail::parse<0u, Digits...>()>();
+auto operator"" _c() -> ::boost::mp11::mp_int<detail::parse<0, Digits...>()> {
+  return ::boost::mp11::mp_int<detail::parse<0, Digits...>()>();
 }
 
 } // namespace literals

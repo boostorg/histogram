@@ -67,9 +67,11 @@ public:
   histogram &operator=(const histogram &) = default;
   histogram &operator=(histogram &&) = default;
 
-  template <typename... Axis>
-  explicit histogram(Axis &&... axis) :
-    axes_({any_axis_type(std::forward<Axis>(axis))...}) {
+  template <typename Axis0, typename ... Axis,
+            typename = detail::requires_axis<Axis0>>
+  explicit histogram(Axis0 && axis0, Axis&&... axis) :
+    axes_({any_axis_type(std::forward<Axis0>(axis0)),
+           any_axis_type(std::forward<Axis>(axis))...}) {
     storage_ = Storage(bincount_from_axes());
   }
 
@@ -233,7 +235,7 @@ public:
   template <int N, typename... Ts>
   histogram reduce_to(mp11::mp_int<N>, Ts...) const {
     const auto b =
-        detail::bool_mask<mp11::mp_int<N>, Ts...>>(dim(), true);
+        detail::bool_mask<mp11::mp_int<N>, Ts...>(dim(), true);
     return reduce_impl(b);
   }
 

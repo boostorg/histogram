@@ -16,7 +16,7 @@ int main() {
         - in addition, the factory also accepts iterators over a sequence of
           axis::any, the polymorphic type that can hold concrete axis types
     */
-    std::vector<bh::axis::any<>> axes;
+    std::vector<bh::axis::any_builtin> axes;
     axes.emplace_back(bh::axis::category<std::string>({"red", "blue"}));
     axes.emplace_back(bh::axis::regular<>(5, -5, 5, "x"));
     axes.emplace_back(bh::axis::regular<>(5, -5, 5, "y"));

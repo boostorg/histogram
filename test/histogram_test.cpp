@@ -51,7 +51,7 @@ bool axis_equal(static_tag, const T &t, const U &u) {
 
 template <typename T, typename U>
 bool axis_equal(dynamic_tag, const T &t, const U &u) {
-  return t == T(u); // need to convert rhs to boost::variant
+  return t == u; // need to convert rhs to boost::variant
 }
 
 int expected_moved_from_dim(static_tag, int static_value) {
