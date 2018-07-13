@@ -71,48 +71,27 @@ template <typename T,
           typename = decltype(*std::declval<T &>(), ++std::declval<T &>())>
 struct requires_iterator {};
 
-template <typename L1, typename L2>
-using union_t = mp11::mp_unique<mp11::mp_append<L1, L2>>;
+template <typename T>
+using requires_axis = decltype(std::declval<T &>().size(),
+                        std::declval<T &>().shape(),
+                        std::declval<T &>().uoflow(),
+                        std::declval<T &>().label(),
+                        std::declval<T &>()[0]);
 
-struct bool_mask_op {
-  std::vector<bool> &b;
-  bool v;
-  template <typename N> void operator()(const N &) const { b[N::value] = v; }
-};
+namespace {
+  struct bool_mask_impl {
+    std::vector<bool> &b;
+    bool v;
+    template <typename Int> void operator()(Int) const { b[Int::value] = v; }
+  };
+}
 
-template <typename Ns> std::vector<bool> bool_mask(unsigned n, bool v) {
+template <typename... Ns>
+std::vector<bool> bool_mask(unsigned n, bool v) {
   std::vector<bool> b(n, !v);
-  mp11::mp_for_each<Ns>(bool_mask_op{b, v});
+  mp11::mp_for_each<mp11::mp_list<Ns...>>(bool_mask_impl{b, v});
   return b;
 }
-
-template <typename Axes, typename Ns> struct axes_assign_subset_op {
-  const Axes &axes_;
-  template <int N, typename R>
-  auto operator()(mp11::mp_int<N>, R &r) const -> mp11::mp_int<N + 1> {
-    using I2 = typename mp11::mp_at_c<Ns, N>::type;
-    r = std::get<I2::value>(axes_);
-    return {};
-  }
-};
-
-template <typename Ns, typename Axes1, typename Axes>
-void axes_assign_subset(Axes1 &axes1, const Axes &axes) {
-  // fusion::fold(axes1, mpl::int_<0>(), axes_assign_subset_op<Axes, Ns>{axes});
-}
-
-template <typename Ns>
-using unique_sorted_t = mp11::mp_unique<mp11::mp_sort<Ns, mp11::mp_less>>;
-
-template <typename Axes, typename Numbers>
-struct axes_select {
-  template <typename I>
-  using axes_at = mp11::mp_at<Axes, I>;
-  using type = mp11::mp_transform<axes_at, Numbers>; 
-};
-
-template <typename Axes, typename Numbers>
-using axes_select_t = typename axes_select<Axes, Numbers>::type;
 
 template <typename T>
 using size_of = std::tuple_size<typename std::decay<T>::type>;
@@ -121,25 +100,43 @@ template <unsigned D, typename T>
 using type_of = typename std::tuple_element<D, typename std::decay<T>::type>::type;
 
 namespace {
-  template <typename Tuple, typename F>
-  struct for_each_fn {
-    Tuple&& t;
-    F&& f;
-    for_each_fn(Tuple&& tt, F&& ff) :
-      t(std::forward<Tuple>(tt)), f(std::forward<F>(ff)) {}
-    template <typename Int> void operator()(Int) const {
-      f(std::get<Int::value>(t));
+  template <typename L, typename... Ns>
+  struct selection_impl {
+    template <typename Int> using at = mp11::mp_at<L, Int>;
+    using N = mp11::mp_list<Ns...>;
+    using LNs = mp11::mp_assign<L, N>;
+    using type = mp11::mp_transform<at, LNs>;
+  };
+}
+
+template <typename L, typename... Ns>
+using selection = typename selection_impl<L, Ns...>::type;
+
+template <typename Ns>
+using unique_sorted = mp11::mp_unique<mp11::mp_sort<Ns, mp11::mp_less>>;
+
+namespace {
+  template <typename Src, typename Dst>
+  struct sub_tuple_assign_impl {
+    const Src& src;
+    Dst& dst;
+    template <typename I1, typename I2>
+    void operator()(std::pair<I1, I2>) const {
+      std::get<I1::value>(dst) = std::get<I2::value>(src);
     }
   };
 }
 
-template <typename Tuple, typename F>
-void for_each(Tuple&& t, F&& f) {
-  auto fn = for_each_fn<Tuple, F>(std::forward<Tuple>(t),
-                                  std::forward<F>(f));
-  using size = mp11::mp_size<typename std::decay<Tuple>::type>;
-  using nums = mp11::mp_iota<size>;
-  mp11::mp_for_each<nums>(fn);
+template <typename T, typename... Ns>
+selection<T, Ns...> make_sub_tuple(const T& t) {
+  using U = selection<T, Ns...>;
+  U u;
+  using N1 = mp11::mp_list<Ns...>;
+  using Len = mp11::mp_size<N1>;
+  using N2 = mp11::mp_iota<Len>;
+  using N3 = mp11::mp_transform<std::pair, N2, N1>;
+  mp11::mp_for_each<N3>(sub_tuple_assign_impl<T, U>{t, u});
+  return u;
 }
 
 } // namespace detail

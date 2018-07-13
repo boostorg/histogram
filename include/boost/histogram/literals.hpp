@@ -34,8 +34,8 @@ template <int N, char First, char... Rest> constexpr int parse() {
 } // namespace detail
 
 template <char... Digits>
-auto operator"" _c() -> mp11::mp_int<detail::parse<0, Digits...>()> {
-  return {};
+auto operator"" _c() -> decltype(mpl::int_<detail::parse<0u, Digits...>()>()) {
+  return ::boost::mp11::mp_int<detail::parse<0u, Digits...>()>();
 }
 
 } // namespace literals

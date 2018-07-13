@@ -96,6 +96,16 @@ struct lower : public static_visitor<double> {
   }
 };
 
+struct bicmp : public static_visitor<bool> {
+  template <typename T, typename U> bool operator()(const T& t, const U& u) const {
+    return false;
+  }
+
+  template <typename T> bool operator()(const T& t, const T& u) const {
+    return t == u;
+  }  
+};
+
 } // namespace detail
 
 /// Polymorphic axis type
@@ -162,6 +172,11 @@ public:
 
   bool operator==(const any &rhs) const {
     return base_type::operator==(static_cast<const base_type &>(rhs));
+  }
+
+  template <typename... Us>
+  bool operator==(const any<Us...>& rhs) const {
+    return apply_visitor(detail::bicmp(), *this, rhs);
   }
 
   const_iterator begin() const { return const_iterator(*this, 0); }

@@ -20,26 +20,38 @@
 #include <utility>
 
 using namespace boost::histogram::detail;
+namespace mp11 = boost::mp11;
 
-struct for_each_test_visitor {
-  int i = 0;
-  bool result = true;
-  template <typename T> void operator()(T& t) {
-    // expect: int char float
-    switch (i++) {
-      case 0:
-        result &= std::is_same<T, int>::value;
-      break;
-      case 1:
-        result &= std::is_same<T, char>::value;
-      break;
-      case 2:
-        result &= std::is_same<T, float>::value;
-    };
-    t += 1;
+using i0 = mp11::mp_int<0>;
+using i1 = mp11::mp_int<1>;
+using i2 = mp11::mp_int<2>;
+using i3 = mp11::mp_int<3>;
+
+namespace boost { namespace detail {
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
+  os << "[";
+  for (const auto& x : v)
+    os << x << " ";
+  os << "]";
+  return os; 
+}
+
+struct ostreamer {
+  std::ostream& os;
+  template <typename T> void operator()(const T& t) const {
+    os << t << " ";
   }
 };
 
+template <typename... Ts>
+std::ostream& operator<<(std::ostream& os, const std::tuple<Ts...>& t) {
+  os << "[";
+  mp11::tuple_for_each(t, ostreamer{os});
+  os << "]";
+  return os; 
+}
+}}
 
 int main() {
   // escape0
@@ -113,25 +125,9 @@ int main() {
   }
 
   // cat
-  { BOOST_TEST_EQ(cat("foo", 1, "bar"), std::string("foo1bar")); }
-
-  // unique_sorted
   {
-    using input = ::boost::mp11::mp_list_c<int, 3, 2, 1, 2, 3, 1, 3>;
-    using result = unique_sorted_t<input>;
-    using expected = ::boost::mp11::mp_list_c<int, 1, 2, 3>;
-
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
-  }
-
-  // union
-  {
-    using main_list = ::boost::mp11::mp_list<int, unsigned, char>;
-    using aux_list = ::boost::mp11::mp_list<unsigned, void *>;
-    using result = union_t<main_list, aux_list>;
-    using expected = ::boost::mp11::mp_list<int, unsigned, char, void *>;
-
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
+    BOOST_TEST_EQ(cat("foo", 1, "bar"),
+                  std::string("foo1bar")); 
   }
 
   // has_variance_support
@@ -183,16 +179,50 @@ int main() {
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result4, dynamic_container_tag> ));
   }
 
-  // for_each
+  // bool mask
   {
-    for_each_test_visitor v;
-    std::tuple<int, char, float> t(0, 0, 0);
-    ::boost::histogram::detail::for_each(t, v);
-    BOOST_TEST_EQ(v.i, 3);
-    BOOST_TEST_EQ(v.result, true);
-    BOOST_TEST_EQ(std::get<0>(t), 1);
-    BOOST_TEST_EQ(std::get<1>(t), 1);
-    BOOST_TEST_EQ(std::get<2>(t), 1);
+    auto v1 = bool_mask<i1, i2>(4, false);
+    BOOST_TEST_EQ(v1, std::vector<bool>({true, false, false, true}));
+
+    auto v2 = bool_mask<i1, i3>(4, true);
+    BOOST_TEST_EQ(v2, std::vector<bool>({false, true, false, true}));
+  }
+
+  // // literals
+  // {
+  //   using c0 = 0_c;
+  //   BOOST_TEST_TRAIT_TRUE((std::is_same<c0, mp11::mp_int<0>>));
+  // }
+
+  // selection 
+  {
+    struct A {};
+    struct B {};
+    struct C {};
+
+    using input = mp11::mp_list<A, B, C>;
+    using result = selection<input, i2, i0>;
+    using expected = mp11::mp_list<C, A>;
+
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
+  }
+
+  // unique_sorted
+  {
+    using input = mp11::mp_list_c<int, 3, 3, 1, 2, 1, 2>;
+    using result = unique_sorted<input>;
+    using expected = mp11::mp_list_c<int, 1, 2, 3>;
+
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
+  }
+
+  // make_sub_tuple
+  {
+    std::tuple<int, long, char> t(1, 2, 3);
+    auto result = make_sub_tuple<decltype(t), i1, i2>(t);
+    auto expected = std::tuple<long, char>(2, 3);
+
+    BOOST_TEST_EQ(result, expected);
   }
 
   return boost::report_errors();

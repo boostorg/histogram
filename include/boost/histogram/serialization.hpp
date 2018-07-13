@@ -193,7 +193,7 @@ template <class Archive>
 void histogram<static_tag, A, S>::serialize(Archive &ar,
                                             unsigned /* version */) {
   detail::serialize_helper<Archive> sh(ar);
-  detail::for_each(axes_, sh);
+  mp11::tuple_for_each(axes_, sh);
   ar &storage_;
 }
 

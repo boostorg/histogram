@@ -53,7 +53,7 @@ class histogram<dynamic_tag, Axes, Storage> {
   static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
 
 public:
-  using any_axis_type = axis::any<Axes>;
+  using any_axis_type = mp11::mp_rename<Axes, axis::any>;
   using axes_type = std::vector<any_axis_type>;
   using element_type = typename Storage::element_type;
   using const_reference = typename Storage::const_reference;
@@ -67,8 +67,9 @@ public:
   histogram &operator=(const histogram &) = default;
   histogram &operator=(histogram &&) = default;
 
-  template <typename... Axes1>
-  explicit histogram(const Axes1 &... axes) : axes_({any_axis_type(axes)...}) {
+  template <typename... Axis>
+  explicit histogram(Axis &&... axis) :
+    axes_({any_axis_type(std::forward<Axis>(axis))...}) {
     storage_ = Storage(bincount_from_axes());
   }
 
@@ -93,11 +94,11 @@ public:
   }
 
   template <typename S>
-  explicit histogram(histogram<dynamic_tag, Axes, S> &&rhs)
+  explicit histogram(dynamic_histogram<Axes, S> &&rhs)
       : axes_(std::move(rhs.axes_)), storage_(std::move(rhs.storage_)) {}
 
   template <typename S>
-  histogram &operator=(histogram<dynamic_tag, Axes, S> &&rhs) {
+  histogram &operator=(dynamic_histogram<Axes, S> &&rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       axes_ = std::move(rhs.axes_);
       storage_ = std::move(rhs.storage_);
@@ -466,65 +467,85 @@ private:
   template <typename Archive> void serialize(Archive &, unsigned);
 };
 
-template <typename... Axes>
-histogram<dynamic_tag, detail::union_t<axis::builtins, mp11::mp_list<Axes...>>>
-make_dynamic_histogram(Axes &&... axes) {
-  return histogram<dynamic_tag,
-                   detail::union_t<axis::builtins, mp11::mp_list<Axes...>>>(
-      std::forward<Axes>(axes)...);
-}
-
-template <typename... Axes>
-histogram<dynamic_tag, detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
-          array_storage<weight_counter<double>>>
-make_dynamic_weighted_histogram(Axes &&... axes) {
-  return histogram<dynamic_tag,
-                   detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
-                   array_storage<weight_counter<double>>>(
-      std::forward<Axes>(axes)...);
+template <typename... Axis>
+dynamic_histogram<
+  mp11::mp_set_push_back<axis::builtins, Axis...>
+>
+make_dynamic_histogram(Axis &&... axis) {
+  using H = dynamic_histogram<
+    mp11::mp_set_push_back<axis::builtins, Axis...>
+  >;
+  return H(std::forward<Axis>(axis)...);
 }
 
 template <typename Storage, typename... Axes>
-histogram<dynamic_tag, detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
-          Storage>
+dynamic_histogram<
+  mp11::mp_set_push_back<axis::builtins, Axes...>,
+  Storage
+>
 make_dynamic_histogram_with(Axes &&... axes) {
-  return histogram<dynamic_tag,
-                   detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
-                   Storage>(std::forward<Axes>(axes)...);
+  using H = dynamic_histogram<
+    mp11::mp_set_push_back<axis::builtins, Axes...>,
+    Storage
+  >;
+  return H(std::forward<Axes>(axes)...);
 }
 
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
-histogram<dynamic_tag,
-          detail::union_t<axis::builtins, typename Iterator::value_type::types>>
+dynamic_histogram<
+  mp11::mp_unique<
+    mp11::mp_append<
+      axis::builtins,
+      typename Iterator::value_type::types
+    >
+  >
+>
 make_dynamic_histogram(Iterator begin, Iterator end) {
-  return histogram<
-      dynamic_tag,
-      detail::union_t<axis::builtins, typename Iterator::value_type::types>>(
-      begin, end);
+  using H = dynamic_histogram<
+    mp11::mp_unique<
+      mp11::mp_append<
+        axis::builtins,
+        typename Iterator::value_type::types
+      >
+    >
+  >;
+  return H(begin, end);
 }
 
-template <typename Iterator, typename = detail::requires_iterator<Iterator>>
-histogram<dynamic_tag,
-          detail::union_t<axis::builtins, typename Iterator::value_type::types>,
-          array_storage<weight_counter<double>>>
-make_dynamic_weighted_histogram(Iterator begin, Iterator end) {
-  return histogram<
-      dynamic_tag,
-      detail::union_t<axis::builtins, typename Iterator::value_type::types>,
-      array_storage<weight_counter<double>>>(begin, end);
-}
+// template <typename... Axes>
+// dynamic_histogram<
+  
+// detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
+//           array_storage<weight_counter<double>>>
+// make_dynamic_weighted_histogram(Axes &&... axes) {
+//   return dynamic_histogram,
+//                    detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
+//                    array_storage<weight_counter<double>>>(
+//       std::forward<Axes>(axes)...);
+// }
 
-template <typename Storage, typename Iterator,
-          typename = detail::requires_iterator<Iterator>>
-histogram<dynamic_tag,
-          detail::union_t<axis::builtins, typename Iterator::value_type::types>,
-          Storage>
-make_dynamic_histogram_with(Iterator begin, Iterator end) {
-  return histogram<
-      dynamic_tag,
-      detail::union_t<axis::builtins, typename Iterator::value_type::types>,
-      Storage>(begin, end);
-}
+// template <typename Iterator, typename = detail::requires_iterator<Iterator>>
+// dynamic_histogram,
+//           detail::union_t<axis::builtins, typename Iterator::value_type::types>,
+//           array_storage<weight_counter<double>>>
+// make_dynamic_weighted_histogram(Iterator begin, Iterator end) {
+//   return histogram<
+//       dynamic_tag,
+//       detail::union_t<axis::builtins, typename Iterator::value_type::types>,
+//       array_storage<weight_counter<double>>>(begin, end);
+// }
+
+// template <typename Storage, typename Iterator,
+//           typename = detail::requires_iterator<Iterator>>
+// dynamic_histogram,
+//           detail::union_t<axis::builtins, typename Iterator::value_type::types>,
+//           Storage>
+// make_dynamic_histogram_with(Iterator begin, Iterator end) {
+//   return histogram<
+//       dynamic_tag,
+//       detail::union_t<axis::builtins, typename Iterator::value_type::types>,
+//       Storage>(begin, end);
+// }
 
 } // namespace histogram
 } // namespace boost

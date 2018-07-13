@@ -38,7 +38,7 @@ class histogram<static_tag, Axes, Storage> {
   static_assert(axes_size::value > 0, "at least one axis required");
 
 public:
-  using axes_type = mp11::mp_apply<std::tuple, Axes>;
+  using axes_type = mp11::mp_rename<Axes, std::tuple>;
   using element_type = typename Storage::element_type;
   using const_reference = typename Storage::const_reference;
   using const_iterator = iterator_over<histogram, Storage>;
@@ -50,8 +50,10 @@ public:
   histogram &operator=(const histogram &rhs) = default;
   histogram &operator=(histogram &&rhs) = default;
 
-  template <typename... Axis>
-  explicit histogram(Axis &&... axis) : axes_(std::forward<Axis>(axis)...) {
+  template <typename Axis0, typename ... Axis,
+            typename = detail::requires_axis<Axis0>>
+  explicit histogram(Axis0 && axis0, Axis &&... axis)
+      : axes_(std::forward<Axis0>(axis0), std::forward<Axis>(axis)...) {
     storage_ = Storage(bincount_from_axes());
   }
 
@@ -60,11 +62,11 @@ public:
   }
 
   template <typename S>
-  explicit histogram(const histogram<static_tag, Axes, S> &rhs)
+  explicit histogram(const static_histogram<Axes, S> &rhs)
       : axes_(rhs.axes_), storage_(rhs.storage_) {}
 
   template <typename S>
-  histogram &operator=(const histogram<static_tag, Axes, S> &rhs) {
+  histogram &operator=(const static_histogram<Axes, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       axes_ = rhs.axes_;
       storage_ = rhs.storage_;
@@ -73,13 +75,13 @@ public:
   }
 
   template <typename A, typename S>
-  explicit histogram(const histogram<dynamic_tag, A, S> &rhs)
+  explicit histogram(const dynamic_histogram<A, S> &rhs)
       : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
   template <typename A, typename S>
-  histogram &operator=(const histogram<dynamic_tag, A, S> &rhs) {
+  histogram &operator=(const dynamic_histogram<A, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       detail::axes_assign(axes_, rhs.axes_);
       storage_ = rhs.storage_;
@@ -88,36 +90,35 @@ public:
   }
 
   template <typename A, typename S>
-  bool operator==(const histogram<static_tag, A, S> &) const noexcept {
+  bool operator==(const static_histogram<A, S> &) const noexcept {
     return false;
   }
 
   template <typename S>
-  bool operator==(const histogram<static_tag, Axes, S> &rhs) const noexcept {
+  bool operator==(const static_histogram<Axes, S> &rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
   template <typename A, typename S>
-  bool operator==(const histogram<dynamic_tag, A, S> &rhs) const noexcept {
+  bool operator==(const dynamic_histogram<A, S> &rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <typename... Ts>
-  bool operator!=(const histogram<Ts...> &rhs) const noexcept {
+  template <typename T, typename A, typename S>
+  bool operator!=(const histogram<T, A, S> &rhs) const noexcept {
     return !operator==(rhs);
   }
 
   template <typename S>
-  histogram &operator+=(const histogram<static_tag, Axes, S> &rhs) {
+  histogram &operator+=(const static_histogram<Axes, S> &rhs) {
     BOOST_ASSERT_MSG(detail::axes_equal(axes_, rhs.axes_), "axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
 
   template <typename A, typename S>
-  histogram &operator+=(const histogram<dynamic_tag, A, S> &rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_))
-      throw std::invalid_argument("axes of histograms differ");
+  histogram &operator+=(const dynamic_histogram<A, S> &rhs) {
+    BOOST_ASSERT_MSG(detail::axes_equal(axes_, rhs.axes_), "axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
@@ -149,6 +150,7 @@ public:
                 detail::classify_container_t<T>>(), std::forward<T>(t));
   }
 
+  // TODO: merge this with unpacking
   template <typename W, typename... Ts> void operator()(detail::weight<W>&& w,
                                                         Ts &&... ts) {
     // case with one argument is ambiguous, is specialized below
@@ -158,6 +160,7 @@ public:
       fill_storage_impl(idx, std::move(w));
   }
 
+  // TODO: remove as obsolete
   template <typename W, typename T> void operator()(detail::weight<W>&& w,
                                                     T&&t) {
     // check whether we need to unpack argument
@@ -166,13 +169,13 @@ public:
                 detail::classify_container_t<T>>(), std::forward<T>(t), std::move(w));
   }
 
-  template <typename... Indices>
-  const_reference at(Indices &&... indices) const {
+  template <typename... Ts>
+  const_reference at(Ts &&... ts) const {
     // case with one argument is ambiguous, is specialized below
-    static_assert(sizeof...(indices) == axes_size::value,
+    static_assert(sizeof...(ts) == axes_size::value,
                   "bin arguments do not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin<0>(idx, stride, static_cast<int>(indices)...);
+    lin<0>(idx, stride, static_cast<int>(ts)...);
     if (stride == 0)
       throw std::out_of_range("bin index out of range");
     return storage_[idx];
@@ -232,24 +235,21 @@ public:
 
   /// Apply unary functor/function to each axis
   template <typename Unary> void for_each_axis(Unary &&unary) const {
-    detail::for_each(axes_, std::forward<Unary>(unary));
+    mp11::tuple_for_each(axes_, std::forward<Unary>(unary));
   }
 
   /// Returns a lower-dimensional histogram
-  template <int N, typename... Rest>
-  auto reduce_to(mp11::mp_int<N>, Rest...) const -> histogram<
-      static_tag,
-      detail::axes_select_t<Axes, mp11::mp_int<N>, Rest...>,
+  template <int N, typename... Ns>
+  auto reduce_to(mp11::mp_int<N>, Ns...) const -> static_histogram<
+      detail::selection<Axes, mp11::mp_int<N>, Ns...>,
       Storage> {
-    using HR = histogram<
-        static_tag,
-        detail::axes_select_t<Axes, mp11::mp_int<N>, Rest...>,
-        Storage>;
-    typename HR::axes_type axes;
-    detail::axes_assign_subset<mp11::mp_int<N>, Rest...>(axes, axes_);
-    auto hr = HR(std::move(axes));
+    using HR = static_histogram<
+      detail::selection<Axes, mp11::mp_int<N>, Ns...>,
+      Storage
+    >;
+    auto hr = HR(detail::make_sub_axes<axes_type, mp11::mp_int<N>, Ns...>(axes_));
     const auto b =
-        detail::bool_mask<mp11::mp_size_t<N>, Rest...>(dim(), true);
+        detail::bool_mask<mp11::mp_int<N>, Ns...>(dim(), true);
     reduce_impl(hr, b);
     return hr;
   }
@@ -268,7 +268,7 @@ private:
 
   std::size_t bincount_from_axes() const noexcept {
     detail::field_count_visitor fc;
-    detail::for_each(axes_, fc);
+    mp11::tuple_for_each(axes_, fc);
     return fc.value;
   }
 
@@ -450,27 +450,27 @@ private:
 
 /// default static type factory
 template <typename... Axis>
-inline histogram<static_tag, mp11::mp_list<Axis...>>
+static_histogram<mp11::mp_list<Axis...>>
 make_static_histogram(Axis &&... axis) {
-  using h = histogram<static_tag, mp11::mp_list<Axis...>>;
-  return h(typename h::axes_type(std::forward<Axis>(axis)...));
-}
-
-template <typename... Axis>
-inline histogram<static_tag, mp11::mp_list<Axis...>,
-                 array_storage<weight_counter<double>>>
-make_static_weighted_histogram(Axis &&... axis) {
-  using h = histogram<static_tag, mp11::mp_list<Axis...>,
-                      array_storage<weight_counter<double>>>;
-  return h(typename h::axes_type(std::forward<Axis>(axis)...));
+  using H = static_histogram<mp11::mp_list<Axis...>>;
+  return H(std::forward<Axis>(axis)...);
 }
 
 /// static type factory with variable storage type
 template <typename Storage, typename... Axis>
-inline histogram<static_tag, mp11::mp_list<Axis...>, Storage>
+static_histogram<mp11::mp_list<Axis...>, Storage>
 make_static_histogram_with(Axis &&... axis) {
-  using h = histogram<static_tag, mp11::mp_list<Axis...>, Storage>;
-  return h(typename h::axes_type(std::forward<Axis>(axis)...));
+  using H = static_histogram<mp11::mp_list<Axis...>, Storage>;
+  return H(std::forward<Axis>(axis)...);
+}
+
+template <typename... Axis>
+static_histogram<mp11::mp_list<Axis...>,
+                 array_storage<weight_counter<double>>>
+make_static_weighted_histogram(Axis &&... axis) {
+  using H = static_histogram<mp11::mp_list<Axis...>,
+                             array_storage<weight_counter<double>>>;
+  return H(std::forward<Axis>(axis)...);
 }
 
 } // namespace histogram

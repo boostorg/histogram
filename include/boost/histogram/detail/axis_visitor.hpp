@@ -14,6 +14,7 @@
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/variant.hpp>
 #include <boost/histogram/axis/any.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <type_traits>
 
 
