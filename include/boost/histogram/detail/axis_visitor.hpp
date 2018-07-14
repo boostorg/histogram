@@ -105,18 +105,27 @@ template <typename Unary> struct unary_visitor : public static_visitor<void> {
   template <typename Axis> void operator()(const Axis &a) const { unary(a); }
 };
 
+namespace {
+
+template <typename... Ts>
+bool axes_equal(mp11::mp_true, const std::tuple<Ts...>& t,
+                               const std::tuple<Ts...>& u) {
+  return t == u;
+}
+
 template <typename... Ts, typename... Us>
-constexpr bool axes_equal(const std::tuple<Ts...>&,
-                          const std::tuple<Us...>&)
-{
+bool axes_equal(mp11::mp_false, const std::tuple<Ts...>&,
+                                const std::tuple<Us...>&) {
   return false;
 }
 
-template <typename... Ts>
-constexpr bool axes_equal(const std::tuple<Ts...>& t,
-                          const std::tuple<Ts...>& u)
+}
+
+template <typename... Ts, typename... Us>
+bool axes_equal(const std::tuple<Ts...>& t,
+                const std::tuple<Us...>& u)
 {
-  return t == u;
+  return axes_equal_impl(mp11::mp_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>(), t, u);
 }
 
 template <typename... Ts, typename... Us>
