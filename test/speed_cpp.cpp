@@ -11,9 +11,10 @@
 #include <limits>
 #include <random>
 #include <memory>
+#include <boost/mp11.hpp>
 
 using namespace boost::histogram;
-namespace mpl = boost::mpl;
+using boost::mp11::mp_list;
 
 std::unique_ptr<double[]> random_array(unsigned n, int type) {
   std::unique_ptr<double[]> r(new double[n]);
@@ -130,11 +131,11 @@ int main() {
     else
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
-           compare_1d<static_histogram<mpl::vector<axis::regular<>>,
+           compare_1d<static_histogram<mp_list<axis::regular<>>,
                                 array_storage<int>>>(
                nfill, itype));
     printf("hs_sd %.3f\n",
-           compare_1d<static_histogram<mpl::vector<axis::regular<>>,
+           compare_1d<static_histogram<mp_list<axis::regular<>>,
                                 adaptive_storage>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_1d<dynamic_histogram<axis::types,
@@ -153,11 +154,11 @@ int main() {
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
            compare_2d<static_histogram<
-               mpl::vector<axis::regular<>, axis::regular<>>,
+               mp_list<axis::regular<>, axis::regular<>>,
                array_storage<int>>>(nfill, itype));
     printf("hs_sd %.3f\n",
            compare_2d<static_histogram<
-               mpl::vector<axis::regular<>, axis::regular<>>,
+               mp_list<axis::regular<>, axis::regular<>>,
                adaptive_storage>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_2d<dynamic_histogram<axis::types,
@@ -176,11 +177,11 @@ int main() {
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
            compare_3d<static_histogram<
-               mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>>,
+               mp_list<axis::regular<>, axis::regular<>, axis::regular<>>,
                array_storage<int>>>(nfill, itype));
     printf("hs_sd %.3f\n",
            compare_3d<static_histogram<
-               mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>>,
+               mp_list<axis::regular<>, axis::regular<>, axis::regular<>>,
                adaptive_storage>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_3d<dynamic_histogram<axis::types,
@@ -199,12 +200,12 @@ int main() {
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
            compare_6d<static_histogram<
-               mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>,
+               mp_list<axis::regular<>, axis::regular<>, axis::regular<>,
                            axis::regular<>, axis::regular<>, axis::regular<>>,
                array_storage<int>>>(nfill, itype));
     printf("hs_sd %.3f\n",
            compare_6d<static_histogram<
-               mpl::vector<axis::regular<>, axis::regular<>, axis::regular<>,
+               mp_list<axis::regular<>, axis::regular<>, axis::regular<>,
                            axis::regular<>, axis::regular<>, axis::regular<>>,
                adaptive_storage>>(nfill, itype));
     printf("hd_ss %.3f\n",
