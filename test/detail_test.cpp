@@ -29,9 +29,9 @@ using i1 = mp11::mp_int<1>;
 using i2 = mp11::mp_int<2>;
 using i3 = mp11::mp_int<3>;
 
-namespace boost { namespace detail {
+namespace std { // never do this, we only do it to get ADL working
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
+ostream& operator<<(ostream& os, const vector<T>& v) {
   os << "[";
   for (const auto& x : v)
     os << x << " ";
@@ -40,20 +40,20 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
 }
 
 struct ostreamer {
-  std::ostream& os;
+  ostream& os;
   template <typename T> void operator()(const T& t) const {
     os << t << " ";
   }
 };
 
 template <typename... Ts>
-std::ostream& operator<<(std::ostream& os, const std::tuple<Ts...>& t) {
+ostream& operator<<(ostream& os, const tuple<Ts...>& t) {
   os << "[";
-  mp11::tuple_for_each(t, ostreamer{os});
+  ::boost::mp11::tuple_for_each(t, ostreamer{os});
   os << "]";
   return os; 
 }
-}}
+}
 
 int main() {
   // escape0
