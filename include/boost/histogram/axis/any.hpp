@@ -181,38 +181,38 @@ public:
 
   template <typename... Us>
   any(const any<Us...> & u) {
-    apply_visitor(detail::assign_visitor<any>(*this), u);
+    ::boost::apply_visitor(detail::assign_visitor<any>(*this), u);
   }
 
   template <typename... Us>
   any &operator=(const any<Us...> & u) {
-    apply_visitor(detail::assign_visitor<any>(*this), u);
+    ::boost::apply_visitor(detail::assign_visitor<any>(*this), u);
     return *this;
   }
 
-  int size() const { return apply_visitor(detail::size_visitor(), *this); }
+  int size() const { return ::boost::apply_visitor(detail::size_visitor(), *this); }
 
-  int shape() const { return apply_visitor(detail::shape_visitor(), *this); }
+  int shape() const { return ::boost::apply_visitor(detail::shape_visitor(), *this); }
 
-  bool uoflow() const { return apply_visitor(detail::uoflow_visitor(), *this); }
+  bool uoflow() const { return ::boost::apply_visitor(detail::uoflow_visitor(), *this); }
 
   // note: this only works for axes with compatible value type
   int index(const value_type x) const {
-    return apply_visitor(detail::index_visitor(x), *this);
+    return ::boost::apply_visitor(detail::index_visitor(x), *this);
   }
 
   string_view label() const {
-    return apply_visitor(detail::get_label_visitor(), *this);
+    return ::boost::apply_visitor(detail::get_label_visitor(), *this);
   }
 
   void label(const string_view x) {
-    return apply_visitor(detail::set_label_visitor(x), *this);
+    return ::boost::apply_visitor(detail::set_label_visitor(x), *this);
   }
 
   // this only works for axes with compatible bin type
   // and will throw a runtime_error otherwise
   double lower(int idx) const {
-    return apply_visitor(detail::lower_visitor(idx), *this);
+    return ::boost::apply_visitor(detail::lower_visitor(idx), *this);
   }
 
   bin_type operator[](const int idx) const { return bin_type(idx, *this); }
@@ -223,13 +223,13 @@ public:
 
   template <typename... Us>
   bool operator==(const any<Us...>& u) const {
-    return apply_visitor(detail::bicmp_visitor(), *this, u);
+    return ::boost::apply_visitor(detail::bicmp_visitor(), *this, u);
   }
 
   template <typename T, typename = requires_bounded_type<T>>
   bool operator==(const T & t) const {
     // variant::operator==(T) is implemented, but only to fail, cannot use it
-    return apply_visitor(detail::cmp_visitor<T>(t), *this);
+    return ::boost::apply_visitor(detail::cmp_visitor<T>(t), *this);
   }
 
   const_iterator begin() const { return const_iterator(*this, 0); }
