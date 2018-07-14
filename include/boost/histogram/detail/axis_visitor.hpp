@@ -108,13 +108,13 @@ template <typename Unary> struct unary_visitor : public static_visitor<void> {
 namespace {
 
 template <typename... Ts>
-bool axes_equal(mp11::mp_true, const std::tuple<Ts...>& t,
+bool axes_equal_impl(mp11::mp_true, const std::tuple<Ts...>& t,
                                const std::tuple<Ts...>& u) {
   return t == u;
 }
 
 template <typename... Ts, typename... Us>
-bool axes_equal(mp11::mp_false, const std::tuple<Ts...>&,
+bool axes_equal_impl(mp11::mp_false, const std::tuple<Ts...>&,
                                 const std::tuple<Us...>&) {
   return false;
 }
