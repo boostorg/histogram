@@ -8,8 +8,8 @@ language: generic
 cache:
   pip: true
   directories:
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py2
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.65.0-py3
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.66.0-py2
+    - ${TRAVIS_BUILD_DIR}/deps/boost-1.66.0-py3
 
 branches:
   only:

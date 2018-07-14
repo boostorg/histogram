@@ -1,7 +1,7 @@
 # Must be run from project directory, can be run locally for testing.
 # Uses default python interpreter and patches project-config.jam as a
 # workaround for a bug in the boost build scripts.
-BOOST_VERSION=1.65.0
+BOOST_VERSION=1.66.0
 if [[ -z "${TRAVIS_BUILD_DIR}" ]]; then
   TRAVIS_BUILD_DIR=/tmp
 fi
