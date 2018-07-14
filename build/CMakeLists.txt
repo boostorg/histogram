@@ -119,7 +119,8 @@ endif()
 include_directories(../include ${Boost_INCLUDE_DIRS})
 
 if(CMAKE_BUILD_TYPE MATCHES coverage)
-  add_compile_options(--coverage -O0 -g)
+  add_compile_options(-O0 -g)
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage) # enable linker flags as well
 elseif(CMAKE_BUILD_TYPE MATCHES release)
   add_definitions(-DBOOST_DISABLE_ASSERTS)
 endif()
