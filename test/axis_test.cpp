@@ -37,7 +37,7 @@ void test_axis_iterator(const Axis &a, int begin, int end) {
 
 int main() {
 
-  // sizes
+  // sizes (there are platform-dependent)
   {
     BOOST_TEST(sizeof(axis::regular<>) <= 64);
     BOOST_TEST(sizeof(axis::circular<>) <= 56);
@@ -253,18 +253,27 @@ int main() {
                       std::runtime_error);
   }
 
-  // any_std_type_copyable
+  // axis::any copyable
   {
-    axis::any_std a(axis::regular<>(2, -1, 1));
-    axis::any_std b(a);
-    BOOST_TEST(a == b);
-    axis::any_std c;
-    BOOST_TEST_NOT(a == c);
-    c = a;
-    BOOST_TEST(a == c);
+    axis::any_std a1(axis::regular<>(2, -1, 1));
+    axis::any_std a2(a1);
+    BOOST_TEST_EQ(a1, a2);
+    axis::any_std a3;
+    BOOST_TEST_NE(a3, a1);
+    a3 = a1;
+    BOOST_TEST_EQ(a3, a1);
+    axis::any<axis::regular<>> a4(axis::regular<>(3, -2, 2));
+    axis::any_std a5(a4);
+    BOOST_TEST_EQ(a4, a5);
+    axis::any<axis::regular<>> a6;
+    a6 = a1;
+    BOOST_TEST_EQ(a6, a1);
+    axis::any<axis::regular<>, axis::integer<>> a7(axis::integer<>(0, 2));
+    BOOST_TEST_THROWS(axis::any<axis::regular<>> a8(a7), std::invalid_argument);
+    BOOST_TEST_THROWS(a4 = a7, std::invalid_argument);
   }
 
-  // any_std_type_movable
+  // axis::any movable
   {
     axis::any_std a(axis::regular<>(2, -1, 1));
     axis::any_std r(a);
@@ -276,7 +285,7 @@ int main() {
     BOOST_TEST(c == r);
   }
 
-  // any_std_type_streamable
+  // axis::any streamable
   {
     enum { A, B, C };
     std::string a = "A";
@@ -311,7 +320,7 @@ int main() {
     BOOST_TEST_EQ(os.str(), ref);
   }
 
-  // any_std_type_equal_comparable
+  // axis::any equal_comparable
   {
     enum { A, B, C };
     std::vector<axis::any_std> axes;
@@ -328,7 +337,7 @@ int main() {
     BOOST_TEST(axes == std::vector<axis::any_std>(axes));
   }
 
-  // any_std_type_value_to_index_failure
+  // axis::any value_to_index_failure
   {
     std::string a = "A", b = "B";
     axis::any_std x = axis::category<std::string>({a, b}, "category");
