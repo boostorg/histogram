@@ -34,7 +34,7 @@ struct dim_visitor {
   }
 };
 
-void decode(std::size_t idx, unsigned dim, dim_t* dims) {
+void decode(std::size_t idx, unsigned dim, dim_t *dims) {
   dims += dim;
   while ((--dims, --dim)) {
     dims->idx = idx / dims->stride;
@@ -49,10 +49,10 @@ class multi_index {
 public:
   unsigned dim() const noexcept { return dim_; }
 
-  int idx(unsigned dim=0) const noexcept {
+  int idx(unsigned dim = 0) const noexcept {
     if (idx_ != last_) {
-      const_cast<std::size_t&>(last_) = idx_;
-      decode(idx_, dim_, const_cast<dim_t*>(dims_.get()));
+      const_cast<std::size_t &>(last_) = idx_;
+      decode(idx_, dim_, const_cast<dim_t *>(dims_.get()));
     }
     return dims_[dim].idx;
   }
@@ -61,20 +61,17 @@ protected:
   multi_index() = default;
 
   template <typename Histogram>
-  multi_index(const Histogram &h, std::size_t idx) :
-    dim_(h.dim()), idx_(idx), last_(0),
-    dims_(new dim_t[h.dim()]) {
+  multi_index(const Histogram &h, std::size_t idx)
+      : dim_(h.dim()), idx_(idx), last_(0), dims_(new dim_t[h.dim()]) {
     h.for_each_axis(dim_visitor{1, dims_.get()});
   }
 
-  multi_index(const multi_index& o) :
-    dim_(o.dim_), idx_(o.idx_), last_(o.last_),
-    dims_(new dim_t[o.dim_])
-  {
+  multi_index(const multi_index &o)
+      : dim_(o.dim_), idx_(o.idx_), last_(o.last_), dims_(new dim_t[o.dim_]) {
     std::copy(o.dims_.get(), o.dims_.get() + o.dim_, dims_.get());
   }
 
-  multi_index& operator=(const multi_index& o) {
+  multi_index &operator=(const multi_index &o) {
     if (this != &o) {
       if (dim_ != o.dim_) {
         dims_.reset(new dim_t[o.dim_]);
@@ -87,8 +84,8 @@ protected:
     return *this;
   }
 
-  multi_index(multi_index&&) = default;
-  multi_index& operator=(multi_index&&) = default;
+  multi_index(multi_index &&) = default;
+  multi_index &operator=(multi_index &&) = default;
 
   void increment() noexcept { ++idx_; }
   void decrement() noexcept { --idx_; }
@@ -128,8 +125,7 @@ public:
   }
 
   template <typename T = Histogram> // use SFINAE for this method
-  auto bin(unsigned dim) const
-      -> decltype(std::declval<T &>().axis(dim)[0]) {
+  auto bin(unsigned dim) const -> decltype(std::declval<T &>().axis(dim)[0]) {
     return histogram_.axis(dim)[idx(dim)];
   }
 

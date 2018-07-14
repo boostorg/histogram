@@ -29,10 +29,11 @@ public:
   weight_counter &operator=(weight_counter &&) = default;
 
   weight_counter(const RealType &value, const RealType &variance) noexcept
-    : w(value), w2(variance) {}
+      : w(value),
+        w2(variance) {}
 
-  explicit weight_counter(const RealType &value) noexcept
-    : w(value), w2(value) {}
+  explicit weight_counter(const RealType &value) noexcept : w(value),
+                                                            w2(value) {}
 
   weight_counter &operator++() {
     ++w;
@@ -90,16 +91,16 @@ public:
   const RealType &variance() const noexcept { return w2; }
 
   // conversion
-  template <typename T>
-  explicit weight_counter(const T &t) { operator=(t); }
+  template <typename T> explicit weight_counter(const T &t) { operator=(t); }
   template <typename T> weight_counter &operator=(const T &x) {
     w = w2 = static_cast<RealType>(x);
     return *this;
   }
 
   // lossy conversion must be explicit
-  template <typename T>
-  explicit operator T() const { return static_cast<T>(w); }
+  template <typename T> explicit operator T() const {
+    return static_cast<T>(w);
+  }
 
 private:
   friend class ::boost::serialization::access;
@@ -110,52 +111,53 @@ private:
 };
 
 template <typename T, typename U>
-bool operator==(const weight_counter<T> &w, const U & u) {
+bool operator==(const weight_counter<T> &w, const U &u) {
   return w.value() == w.variance() && w.value() == static_cast<T>(u);
 }
 
 template <typename T, typename U>
-bool operator==(const T & t, const weight_counter<U> &w) {
+bool operator==(const T &t, const weight_counter<U> &w) {
   return operator==(w, t);
 }
 
 template <typename T, typename U>
-bool operator!=(const weight_counter<T> &w, const U & u) {
+bool operator!=(const weight_counter<T> &w, const U &u) {
   return !operator==(w, u);
 }
 
 template <typename T, typename U>
-bool operator!=(const T & t, const weight_counter<U> &w) {
+bool operator!=(const T &t, const weight_counter<U> &w) {
   return operator!=(w, t);
 }
 
 template <typename T>
-weight_counter<T> operator+(const weight_counter<T>& a, const weight_counter<T>& b) noexcept {
+weight_counter<T> operator+(const weight_counter<T> &a,
+                            const weight_counter<T> &b) noexcept {
   weight_counter<T> c = a;
   return c += b;
 }
 
 template <typename T>
-weight_counter<T>&& operator+(weight_counter<T>&& a, const weight_counter<T>& b) noexcept {
+weight_counter<T> &&operator+(weight_counter<T> &&a,
+                              const weight_counter<T> &b) noexcept {
   a += b;
   return std::move(a);
 }
 
 template <typename T>
-weight_counter<T>&& operator+(const weight_counter<T>& a, weight_counter<T>&& b) noexcept {
+weight_counter<T> &&operator+(const weight_counter<T> &a,
+                              weight_counter<T> &&b) noexcept {
   return operator+(std::move(b), a);
 }
 
 template <typename T>
-weight_counter<T> operator+(const weight_counter<T>& a, const T& b) noexcept
-{
+weight_counter<T> operator+(const weight_counter<T> &a, const T &b) noexcept {
   auto r = a;
   return r += b;
 }
 
 template <typename T>
-weight_counter<T> operator+(const T& a, const weight_counter<T>& b) noexcept
-{
+weight_counter<T> operator+(const T &a, const weight_counter<T> &b) noexcept {
   auto r = b;
   return r += a;
 }

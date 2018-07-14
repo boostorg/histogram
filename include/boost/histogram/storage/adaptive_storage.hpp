@@ -309,8 +309,7 @@ template <> struct radd_visitor<wcount> : public static_visitor<void> {
   void operator()(array<wcount> &lhs) const { lhs[idx] += rhs; }
 };
 
-template <>
-struct radd_visitor<weight<double>> : public static_visitor<void> {
+template <> struct radd_visitor<weight<double>> : public static_visitor<void> {
   any_array &lhs_any;
   const std::size_t idx;
   const weight<double> rhs;

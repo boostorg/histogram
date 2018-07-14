@@ -341,51 +341,35 @@ int main() {
   // sequence equality
   {
     enum { A, B, C };
-    std::vector<
-      axis::any<
-        axis::regular<>, axis::variable<>,
-        axis::category<>, axis::integer<>
-      >
-    > std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                     axis::category<>{A, B, C}};
+    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>,
+                          axis::integer<>>>
+        std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
+                       axis::category<>{A, B, C}};
 
-    std::vector<
-      axis::any<
-        axis::regular<>, axis::variable<>, axis::category<>
-      >
-    > std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                     axis::category<>{{A, B, C}}};
+    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
+        std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
+                       axis::category<>{{A, B, C}}};
 
-    std::vector<
-      axis::any<
-        axis::regular<>,
-        axis::variable<>
-      >
-    > std_vector3 = {axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
+    std::vector<axis::any<axis::regular<>, axis::variable<>>> std_vector3 = {
+        axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
 
-    std::vector<
-      axis::any<
-        axis::variable<>,
-        axis::regular<>
-      >
-    > std_vector4 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1}};
+    std::vector<axis::any<axis::variable<>, axis::regular<>>> std_vector4 = {
+        axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1}};
 
     BOOST_TEST(detail::axes_equal(std_vector1, std_vector2));
     BOOST_TEST_NOT(detail::axes_equal(std_vector2, std_vector3));
     BOOST_TEST_NOT(detail::axes_equal(std_vector3, std_vector4));
 
-    auto tuple1 = std::make_tuple(
-        axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-        axis::category<>{{A, B, C}}
-      );
+    auto tuple1 =
+        std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
+                        axis::category<>{{A, B, C}});
 
-    auto tuple2 = std::make_tuple(
-        axis::regular<>{2, -1, 1},
-                               axis::variable<>{-1, 0, 1},
-                                     axis::category<>{{A, B}});
+    auto tuple2 =
+        std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
+                        axis::category<>{{A, B}});
 
-    auto tuple3 = std::make_tuple(
-        axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1});
+    auto tuple3 =
+        std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1});
 
     BOOST_TEST(detail::axes_equal(std_vector1, tuple1));
     BOOST_TEST(detail::axes_equal(tuple1, std_vector1));
@@ -397,22 +381,21 @@ int main() {
   // sequence assign
   {
     enum { A, B, C, D };
-    std::vector<axis::any<axis::regular<>, axis::variable<>,
-                               axis::category<>, axis::integer<>>>
+    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>,
+                          axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{A, B, C}};
 
-    std::vector<
-        axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
+    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -2, 2}, axis::variable<>{-2, 0, 2},
                        axis::category<>{A, B}};
 
     detail::axes_assign(std_vector2, std_vector1);
     BOOST_TEST(detail::axes_equal(std_vector2, std_vector1));
 
-    auto tuple1 = std::make_tuple(
-        axis::regular<>{2, -3, 3}, axis::variable<>{-3, 0, 3},
-        axis::category<>{A, B, C, D});
+    auto tuple1 =
+        std::make_tuple(axis::regular<>{2, -3, 3}, axis::variable<>{-3, 0, 3},
+                        axis::category<>{A, B, C, D});
 
     detail::axes_assign(tuple1, std_vector1);
     BOOST_TEST(detail::axes_equal(tuple1, std_vector1));
@@ -422,9 +405,9 @@ int main() {
     detail::axes_assign(std_vector3, tuple1);
     BOOST_TEST(detail::axes_equal(std_vector3, tuple1));
 
-    auto tuple2 = std::make_tuple(axis::regular<>{2, -1, 1},
-                                  axis::variable<>{-1, 0, 1},
-                                  axis::category<>{A, B});
+    auto tuple2 =
+        std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
+                        axis::category<>{A, B});
 
     detail::axes_assign(tuple2, tuple1);
     BOOST_TEST(detail::axes_equal(tuple2, tuple1));

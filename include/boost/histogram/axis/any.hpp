@@ -7,15 +7,15 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 #define _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/mp11.hpp>
 #include <boost/utility/string_view.hpp>
 #include <boost/variant.hpp>
-#include <boost/mp11.hpp>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -98,48 +98,44 @@ struct lower_visitor : public static_visitor<double> {
 };
 
 struct bicmp_visitor : public static_visitor<bool> {
-  template <typename T, typename U> bool operator()(const T&, const U&) const {
+  template <typename T, typename U>
+  bool operator()(const T &, const U &) const {
     return false;
   }
 
-  template <typename T> bool operator()(const T& t, const T& u) const {
+  template <typename T> bool operator()(const T &t, const T &u) const {
     return t == u;
-  }  
+  }
 };
 
-template <typename T>
-struct cmp_visitor : public static_visitor<bool> {
-  const T& t;
-  cmp_visitor(const T& tt) : t(tt) {}
-  template <typename U> bool operator()(const U& u) const {
+template <typename T> struct cmp_visitor : public static_visitor<bool> {
+  const T &t;
+  cmp_visitor(const T &tt) : t(tt) {}
+  template <typename U> bool operator()(const U &u) const {
     return impl(mp11::mp_same<T, U>(), u);
   }
 
-  template <typename U> bool impl(mp11::mp_true, const U& u) const {
+  template <typename U> bool impl(mp11::mp_true, const U &u) const {
     return t == u;
   }
 
-  template <typename U> bool impl(mp11::mp_false, const U&) const {
+  template <typename U> bool impl(mp11::mp_false, const U &) const {
     return false;
   }
 };
 
-template <typename T>
-struct assign_visitor : public static_visitor<void> {
-  T& t;
-  assign_visitor(T& tt) : t(tt) {}
-  template <typename U> void operator()(const U& u) const {
+template <typename T> struct assign_visitor : public static_visitor<void> {
+  T &t;
+  assign_visitor(T &tt) : t(tt) {}
+  template <typename U> void operator()(const U &u) const {
     impl(mp11::mp_contains<typename T::types, U>(), u);
   }
 
-  template <typename U> void impl(mp11::mp_true, const U& u) const {
-    t = u;
-  }
+  template <typename U> void impl(mp11::mp_true, const U &u) const { t = u; }
 
-  template <typename U> void impl(mp11::mp_false, const U&) const {
+  template <typename U> void impl(mp11::mp_false, const U &) const {
     throw std::invalid_argument(::boost::histogram::detail::cat(
-        "argument ",
-        boost::typeindex::type_id<U>().pretty_name(),
+        "argument ", boost::typeindex::type_id<U>().pretty_name(),
         " is not a bounded type of ",
         boost::typeindex::type_id<T>().pretty_name()));
   }
@@ -159,42 +155,46 @@ public:
   using const_reverse_iterator = reverse_iterator_over<any>;
 
 private:
-  template <typename T> using requires_bounded_type = mp11::mp_if<
-      mp11::mp_contains<types, ::boost::histogram::detail::rm_cv_ref<T>
-    >, void>;
+  template <typename T>
+  using requires_bounded_type = mp11::mp_if<
+      mp11::mp_contains<types, ::boost::histogram::detail::rm_cv_ref<T>>, void>;
 
 public:
   any() = default;
-  any(const any&) = default;
-  any& operator=(const any&) = default;
-  any(any&&) = default;
-  any& operator=(any&&) = default;
+  any(const any &) = default;
+  any &operator=(const any &) = default;
+  any(any &&) = default;
+  any &operator=(any &&) = default;
 
   template <typename T, typename = requires_bounded_type<T>>
-  any(T&& t) : base_type(std::forward<T>(t)) {}
+  any(T &&t) : base_type(std::forward<T>(t)) {}
 
   template <typename T, typename = requires_bounded_type<T>>
-  any& operator=(T&& t) {
+  any &operator=(T &&t) {
     base_type::operator=(std::forward<T>(t));
     return *this;
   }
 
-  template <typename... Us>
-  any(const any<Us...> & u) {
+  template <typename... Us> any(const any<Us...> &u) {
     ::boost::apply_visitor(detail::assign_visitor<any>(*this), u);
   }
 
-  template <typename... Us>
-  any &operator=(const any<Us...> & u) {
+  template <typename... Us> any &operator=(const any<Us...> &u) {
     ::boost::apply_visitor(detail::assign_visitor<any>(*this), u);
     return *this;
   }
 
-  int size() const { return ::boost::apply_visitor(detail::size_visitor(), *this); }
+  int size() const {
+    return ::boost::apply_visitor(detail::size_visitor(), *this);
+  }
 
-  int shape() const { return ::boost::apply_visitor(detail::shape_visitor(), *this); }
+  int shape() const {
+    return ::boost::apply_visitor(detail::shape_visitor(), *this);
+  }
 
-  bool uoflow() const { return ::boost::apply_visitor(detail::uoflow_visitor(), *this); }
+  bool uoflow() const {
+    return ::boost::apply_visitor(detail::uoflow_visitor(), *this);
+  }
 
   // note: this only works for axes with compatible value type
   int index(const value_type x) const {
@@ -221,13 +221,12 @@ public:
     return base_type::operator==(static_cast<const base_type &>(rhs));
   }
 
-  template <typename... Us>
-  bool operator==(const any<Us...>& u) const {
+  template <typename... Us> bool operator==(const any<Us...> &u) const {
     return ::boost::apply_visitor(detail::bicmp_visitor(), *this, u);
   }
 
   template <typename T, typename = requires_bounded_type<T>>
-  bool operator==(const T & t) const {
+  bool operator==(const T &t) const {
     // variant::operator==(T) is implemented, but only to fail, cannot use it
     return ::boost::apply_visitor(detail::cmp_visitor<T>(t), *this);
   }
@@ -269,7 +268,8 @@ const typename std::add_pointer<T>::type cast(const any<Ts...> *any) {
 
 // pass-through for generic programming, to keep code workgin when
 // you switch from dynamic to static histogram
-template <typename, typename U> auto cast(U && u) -> decltype(std::forward<U>(u)) {
+template <typename, typename U>
+auto cast(U &&u) -> decltype(std::forward<U>(u)) {
   return std::forward<U>(u);
 }
 

@@ -10,12 +10,12 @@
 #include <algorithm>
 #include <boost/bimap.hpp>
 #include <boost/config.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/value_view.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/utility/string_view.hpp>
 #include <cmath>
 #include <limits>
@@ -40,9 +40,9 @@ namespace axis {
 enum class uoflow { off = false, on = true };
 
 #ifdef BOOST_MSVC
-#  define BOOST_HISTOGRAM_ENUM_CLASS_ARG enum class
+#define BOOST_HISTOGRAM_ENUM_CLASS_ARG enum class
 #else
-#  define BOOST_HISTOGRAM_ENUM_CLASS_ARG enum
+#define BOOST_HISTOGRAM_ENUM_CLASS_ARG enum
 #endif
 
 /// Base class for all axes, uses CRTP to inject iterator logic.
@@ -123,7 +123,8 @@ public:
   inline bool uoflow() const noexcept { return shape_ > base_type::size(); }
 
 protected:
-  axis_base_uoflow(unsigned n, string_view label, BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo)
+  axis_base_uoflow(unsigned n, string_view label,
+                   BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo)
       : base_type(n, label), shape_(n + 2 * static_cast<int>(uo)) {}
 
   axis_base_uoflow() = default;
@@ -162,8 +163,8 @@ struct stateless {
 } // namespace detail
 
 struct identity : public detail::stateless {
-  template <typename T> static T&& forward(T&& v) { return std::forward<T>(v); }
-  template <typename T> static T&& inverse(T&& v) { return std::forward<T>(v); }
+  template <typename T> static T &&forward(T &&v) { return std::forward<T>(v); }
+  template <typename T> static T &&inverse(T &&v) { return std::forward<T>(v); }
 };
 
 struct log : public detail::stateless {
@@ -225,8 +226,8 @@ public:
    * \param trans arguments passed to the transform.
    */
   regular(unsigned n, value_type lower, value_type upper,
-          string_view label = {},
-          BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo = ::boost::histogram::axis::uoflow::on,
+          string_view label = {}, BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo =
+                                      ::boost::histogram::axis::uoflow::on,
           Transform trans = Transform())
       : base_type(n, label, uo), Transform(trans), min_(trans.forward(lower)),
         delta_((trans.forward(upper) - trans.forward(lower)) / n) {
@@ -372,7 +373,8 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   variable(std::initializer_list<value_type> x, string_view label = {},
-           BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo = ::boost::histogram::axis::uoflow::on)
+           BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo =
+               ::boost::histogram::axis::uoflow::on)
       : base_type(x.size() - 1, label, uo), x_(new value_type[x.size()]) {
     if (x.size() >= 2) {
       std::copy(x.begin(), x.end(), x_.get());
@@ -384,7 +386,8 @@ public:
 
   template <typename Iterator>
   variable(Iterator begin, Iterator end, string_view label = {},
-           BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo = ::boost::histogram::axis::uoflow::on)
+           BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo =
+               ::boost::histogram::axis::uoflow::on)
       : base_type(std::distance(begin, end) - 1, label, uo),
         x_(new value_type[std::distance(begin, end)]) {
     std::copy(begin, end, x_.get());
@@ -461,7 +464,8 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   integer(value_type lower, value_type upper, string_view label = {},
-          BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo = ::boost::histogram::axis::uoflow::on)
+          BOOST_HISTOGRAM_ENUM_CLASS_ARG uoflow uo =
+              ::boost::histogram::axis::uoflow::on)
       : base_type(upper - lower, label, uo), min_(lower) {
     if (!(lower < upper)) {
       throw std::invalid_argument("lower < upper required");

@@ -7,13 +7,13 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP_
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP_
 
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
 #include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/unique_ptr.hpp>
 #include <boost/serialization/variant.hpp>

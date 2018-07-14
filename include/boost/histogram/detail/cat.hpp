@@ -20,7 +20,7 @@ namespace {
 __attribute__((unused)) void cat_impl(std::ostringstream &) {}
 
 template <typename T, typename... Ts>
-void cat_impl(std::ostringstream &os, const T &t, const Ts&... ts) {
+void cat_impl(std::ostringstream &os, const T &t, const Ts &... ts) {
   os << t;
   cat_impl(os, ts...);
 }

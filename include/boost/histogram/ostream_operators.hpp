@@ -33,7 +33,7 @@ inline std::ostream &operator<<(std::ostream &os, const histogram<Ts...> &h) {
 }
 
 template <typename T>
-inline std::ostream &operator<<(std::ostream& os, const weight_counter<T>& x) {
+inline std::ostream &operator<<(std::ostream &os, const weight_counter<T> &x) {
   os << "weight_counter(" << x.value() << ", " << x.variance() << ")";
   return os;
 }

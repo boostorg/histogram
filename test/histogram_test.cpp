@@ -10,10 +10,11 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #ifdef HAVE_SERIALIZATION
-#  include <boost/archive/text_iarchive.hpp>
-#  include <boost/archive/text_oarchive.hpp>
-#  include <boost/histogram/serialization.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/histogram/serialization.hpp>
 #endif
+#include <algorithm>
 #include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
@@ -23,10 +24,9 @@
 #include <limits>
 #include <numeric>
 #include <sstream>
-#include <vector>
-#include <utility>
 #include <tuple>
-#include <algorithm>
+#include <utility>
+#include <vector>
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
@@ -51,7 +51,7 @@ int expected_moved_from_dim(static_tag, int static_value) {
 int expected_moved_from_dim(dynamic_tag, int) { return 0; }
 
 template <typename Histogram>
-typename Histogram::element_type sum(const Histogram& h) {
+typename Histogram::element_type sum(const Histogram &h) {
   return std::accumulate(h.begin(), h.end(),
                          typename Histogram::element_type(0));
 }
@@ -499,8 +499,9 @@ template <typename Type> void run_tests() {
   // functional programming
   {
     auto v = std::vector<int>{0, 1, 2};
-    auto h = std::for_each(v.begin(), v.end(),
-                           make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3)));
+    auto h = std::for_each(
+        v.begin(), v.end(),
+        make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3)));
     BOOST_TEST_EQ(h.at(0), 1);
     BOOST_TEST_EQ(h.at(1), 1);
     BOOST_TEST_EQ(h.at(2), 1);
@@ -758,8 +759,9 @@ template <typename Type> void run_tests() {
 
   // histogram iterator 2D
   {
-    auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 1),
-                                              axis::integer<>(2, 4, "", axis::uoflow::off));
+    auto h = make_histogram<adaptive_storage>(
+        Type(), axis::integer<>(0, 1),
+        axis::integer<>(2, 4, "", axis::uoflow::off));
     const auto &a0 = h.axis(0_c);
     const auto &a1 = h.axis(1_c);
     h(weight(2), 0, 2);
@@ -832,8 +834,7 @@ template <typename Type> void run_tests() {
 
   // using STL containers
   {
-    auto h = make_histogram<adaptive_storage>(Type(),
-                                              axis::integer<>(0, 2),
+    auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2),
                                               axis::regular<>(2, 2, 4));
     // vector in
     h(std::vector<int>({0, 2}));
@@ -862,8 +863,7 @@ template <typename Type> void run_tests() {
 
   // bin args out of range
   {
-    auto h1 = make_histogram<adaptive_storage>(Type(),
-                                               axis::integer<>(0, 2));
+    auto h1 = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2));
     BOOST_TEST_THROWS(h1.at(-2), std::out_of_range);
     BOOST_TEST_THROWS(h1.at(3), std::out_of_range);
     BOOST_TEST_THROWS(h1.at(std::make_tuple(-2)), std::out_of_range);
@@ -873,8 +873,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_THROWS(h1[std::make_tuple(-2)], std::out_of_range);
     BOOST_TEST_THROWS(h1[std::vector<int>({3})], std::out_of_range);
 
-    auto h2 = make_histogram<adaptive_storage>(Type(),
-                                               axis::integer<>(0, 2),
+    auto h2 = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2),
                                                axis::integer<>(0, 2));
     BOOST_TEST_THROWS(h2.at(0, -2), std::out_of_range);
     BOOST_TEST_THROWS(h2.at(std::make_tuple(0, -2)), std::out_of_range);
@@ -930,11 +929,7 @@ int main() {
 
   // init
   {
-    auto v = std::vector<
-        axis::any<
-          axis::regular<>, axis::integer<>
-        >
-      >();
+    auto v = std::vector<axis::any<axis::regular<>, axis::integer<>>>();
     v.push_back(axis::regular<>(4, -1, 1));
     v.push_back(axis::integer<>(1, 7));
     auto h = make_dynamic_histogram(v.begin(), v.end());

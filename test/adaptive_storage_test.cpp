@@ -8,7 +8,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #ifdef HAVE_SERIALIZATION
-#  include <boost/histogram/serialization.hpp>
+#include <boost/histogram/serialization.hpp>
 #endif
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
