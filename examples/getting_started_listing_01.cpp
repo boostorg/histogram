@@ -53,12 +53,16 @@ int main(int, char**) {
         edges can be accessed with methods `lower()` and `upper()`, but the
         implementation depends on the axis, please look it up in the reference
     */
+    std::cout.setf(std::ios_base::fixed);
     for (auto it = h.begin(); it != h.end(); ++it) {
       const auto bin = it.bin(0_c);
       std::cout << "bin " << it.idx(0) << " x in ["
-                << bin.lower() << ", " << bin.upper() << "): "
+                << std::setprecision(1)
+                << std::setw(4) << bin.lower() << ", "
+                << std::setw(4) << bin.upper() << "): "
+                << std::setprecision(1)
                 << it->value() << " +/- "
-                << std::sqrt(it->variance())
+                << std::setprecision(3) << std::sqrt(it->variance())
                 << std::endl;
     }
 
@@ -68,7 +72,7 @@ int main(int, char**) {
     bin 1 x in [-0.5,  0.0): 0 +/- 0
     bin 2 x in [ 0.0,  0.5): 1 +/- 1
     bin 3 x in [ 0.5,  1.0): 0 +/- 0
-    bin 4 x in [ 1.0,  1.5): 1 +/- 1
+    bin 4 x in [ 1.0,  1.5): 0 +/- 0
     bin 5 x in [ 1.5,  2.0): 0 +/- 0
     bin 6 x in [ 2.0, inf): 2 +/- 1.41421
     bin -1 x in [-inf, -1): 1 +/- 1
