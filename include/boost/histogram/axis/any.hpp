@@ -32,7 +32,6 @@ namespace histogram {
 namespace axis {
 
 namespace detail {
-using ::boost::histogram::detail::rm_cv_ref;
 
 struct size_visitor : public static_visitor<int> {
   template <typename A> int operator()(const A &a) const { return a.size(); }
@@ -161,7 +160,7 @@ public:
 
 private:
   template <typename T> using requires_bounded_type = mp11::mp_if<
-      mp11::mp_contains<types, detail::rm_cv_ref<T>
+      mp11::mp_contains<types, ::boost::histogram::detail::rm_cv_ref<T>
     >, void>;
 
 public:

@@ -72,10 +72,10 @@ template <> void serialization_impl<void>() {
   std::ostringstream os;
   std::string buf;
   {
-    std::ostringstream os;
-    boost::archive::text_oarchive oa(os);
+    std::ostringstream os2;
+    boost::archive::text_oarchive oa(os2);
     oa << a;
-    buf = os.str();
+    buf = os2.str();
   }
   adaptive_storage b;
   BOOST_TEST(!(a == b));
