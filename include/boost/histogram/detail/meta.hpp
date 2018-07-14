@@ -21,7 +21,7 @@ namespace histogram {
 namespace detail {
 
 #define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond)                  \
-template <typename U> struct name {                              \
+template <typename U> struct name##_impl {                       \
   template <typename T, typename = decltype(cond)>               \
   struct SFINAE {};                                              \
   template <typename T> static std::true_type Test(SFINAE<T> *); \
@@ -29,7 +29,7 @@ template <typename U> struct name {                              \
   using type = decltype(Test<U>(nullptr));                       \
 };                                                               \
 template <typename T>                                            \
-using name##_t = typename name<T>::type
+using name = typename name##_impl<T>::type
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
                             (std::declval<T&>().value(), std::declval<T&>().variance()));
@@ -51,12 +51,12 @@ struct dynamic_container_tag {};
 struct no_container_tag {};
 
 template <typename T>
-using classify_container_t =
+using classify_container =
   typename std::conditional<
-    is_static_container_t<T>::value,
+    is_static_container<T>::value,
     static_container_tag,
     typename std::conditional<
-      is_dynamic_container_t<T>::value,
+      is_dynamic_container<T>::value,
       dynamic_container_tag,
       no_container_tag
     >::type
@@ -73,10 +73,10 @@ struct requires_iterator {};
 
 template <typename T>
 using requires_axis = decltype(std::declval<T &>().size(),
-                        std::declval<T &>().shape(),
-                        std::declval<T &>().uoflow(),
-                        std::declval<T &>().label(),
-                        std::declval<T &>()[0]);
+                               std::declval<T &>().shape(),
+                               std::declval<T &>().uoflow(),
+                               std::declval<T &>().label(),
+                               std::declval<T &>()[0]);
 
 namespace {
   struct bool_mask_impl {
@@ -93,11 +93,15 @@ std::vector<bool> bool_mask(unsigned n, bool v) {
   return b;
 }
 
-template <typename T>
-using size_of = std::tuple_size<typename std::decay<T>::type>;
+template<class T> using rm_cv_ref = typename std::remove_cv<
+    typename std::remove_reference<T>::type>::type;
 
-template <unsigned D, typename T>
-using type_of = typename std::tuple_element<D, typename std::decay<T>::type>::type;
+template<class T> using mp_size = mp11::mp_size<rm_cv_ref<T>>;
+
+template<typename T, unsigned D> using mp_at_c = mp11::mp_at_c<rm_cv_ref<T>, D>;
+
+template <typename L1, typename L2>
+using mp_union = mp11::mp_rename<mp11::mp_push_front<L2, L1>, mp11::mp_set_push_back>;
 
 namespace {
   template <typename L, typename... Ns>

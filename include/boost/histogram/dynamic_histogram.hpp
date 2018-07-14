@@ -153,7 +153,7 @@ public:
     if (dim() == 1) {
       fill_impl(detail::no_container_tag(), std::forward<T>(t));
     } else {
-      fill_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+      fill_impl(detail::classify_container<T>(), std::forward<T>(t));
     }
   }
 
@@ -175,7 +175,7 @@ public:
     if (dim() == 1) {
       fill_impl(detail::no_container_tag(), std::forward<T>(t), std::move(w));
     } else {
-      fill_impl(detail::classify_container_t<T>(), std::forward<T>(t), std::move(w));
+      fill_impl(detail::classify_container<T>(), std::forward<T>(t), std::move(w));
     }
   }
 
@@ -194,13 +194,13 @@ public:
   template <typename T>
   const_reference at(T&&t) const {
     // check whether T is unpackable
-    return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+    return at_impl(detail::classify_container<T>(), std::forward<T>(t));
   }
 
   template <typename T>
   const_reference operator[](T&&t) const {
     // check whether T is unpackable
-    return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+    return at_impl(detail::classify_container<T>(), std::forward<T>(t));
   }
 
   /// Number of axes (dimensions) of histogram
@@ -296,10 +296,10 @@ private:
 
   template <typename T, typename... Ts>
   void fill_impl(detail::static_container_tag, T && t, Ts&&... ts) {
-    BOOST_ASSERT_MSG(dim() == detail::size_of<T>::value,
+    BOOST_ASSERT_MSG(dim() == detail::mp_size<T>::value,
                      "fill container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    xlin_get(mp11::mp_int<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
+    xlin_get(mp11::mp_int<detail::mp_size<T>::value>(), idx, stride, std::forward<T>(t));
     if (stride) {
       fill_storage_impl(idx, std::forward<Ts>(ts)...);
     }
@@ -329,10 +329,10 @@ private:
 
   template <typename T>
   const_reference at_impl(detail::static_container_tag, T && t) const {
-    BOOST_ASSERT_MSG(dim() == detail::size_of<T>::value,
+    BOOST_ASSERT_MSG(dim() == detail::mp_size<T>::value,
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin_get(mp11::mp_int<detail::size_of<T>::value>(), idx, stride, std::forward<T>(t));
+    lin_get(mp11::mp_int<detail::mp_size<T>::value>(), idx, stride, std::forward<T>(t));
     if (stride == 0)
       throw std::out_of_range("bin index out of range");
     return storage_[idx];
@@ -428,8 +428,8 @@ private:
 
   template <int N, typename T> void xlin_get(mp11::mp_int<N>, std::size_t& idx,
     std::size_t & stride, T&&t) const {
-    constexpr unsigned D = detail::size_of<T>::value - N;
-    apply_visitor(xlin_visitor<detail::type_of<D, T>>{idx, stride, std::get<D>(t)}, axes_[D]);
+    constexpr unsigned D = detail::mp_size<T>::value - N;
+    apply_visitor(xlin_visitor<detail::mp_at_c<T, D>>{idx, stride, std::get<D>(t)}, axes_[D]);
     xlin_get(mp11::mp_int<(N-1)>(), idx, stride, std::forward<T>(t));
   }
 
@@ -438,7 +438,7 @@ private:
 
   template <int N, typename T> void lin_get(mp11::mp_int<N>, std::size_t& idx,
     std::size_t & stride, T&&t) const noexcept {
-    constexpr unsigned D = detail::size_of<T>::value - N;
+    constexpr unsigned D = detail::mp_size<T>::value - N;
     apply_visitor(lin_visitor{idx, stride, static_cast<int>(std::get<D>(t))}, axes_[D]);
     lin_get(mp11::mp_int<(N-1)>(), idx, stride, std::forward<T>(t));
   }
@@ -471,45 +471,36 @@ private:
 
 template <typename... Axis>
 dynamic_histogram<
-  mp11::mp_set_push_back<axis::builtins, Axis...>
+  mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>
 >
 make_dynamic_histogram(Axis &&... axis) {
   using H = dynamic_histogram<
-    mp11::mp_set_push_back<axis::builtins, Axis...>
+    mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>
   >;
   return H(std::forward<Axis>(axis)...);
 }
 
-template <typename Storage, typename... Axes>
+template <typename Storage, typename... Axis>
 dynamic_histogram<
-  mp11::mp_set_push_back<axis::builtins, Axes...>,
+  mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>,
   Storage
 >
-make_dynamic_histogram_with(Axes &&... axes) {
+make_dynamic_histogram_with(Axis &&... axis) {
   using H = dynamic_histogram<
-    mp11::mp_set_push_back<axis::builtins, Axes...>,
+    mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>,
     Storage
   >;
-  return H(std::forward<Axes>(axes)...);
+  return H(std::forward<Axis>(axis)...);
 }
 
-template <typename Iterator, typename = detail::requires_iterator<Iterator>>
+template <typename Iterator,
+          typename = detail::requires_iterator<Iterator>>
 dynamic_histogram<
-  mp11::mp_unique<
-    mp11::mp_append<
-      axis::builtins,
-      typename Iterator::value_type::types
-    >
-  >
+  detail::mp_union<axis::types, typename Iterator::value_type::types>
 >
 make_dynamic_histogram(Iterator begin, Iterator end) {
   using H = dynamic_histogram<
-    mp11::mp_unique<
-      mp11::mp_append<
-        axis::builtins,
-        typename Iterator::value_type::types
-      >
-    >
+    detail::mp_union<axis::types, typename Iterator::value_type::types>
   >;
   return H(begin, end);
 }
@@ -517,35 +508,35 @@ make_dynamic_histogram(Iterator begin, Iterator end) {
 // template <typename... Axes>
 // dynamic_histogram<
   
-// detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
+// detail::union_t<axis::types, mp11::mp_list<Axes...>>,
 //           array_storage<weight_counter<double>>>
 // make_dynamic_weighted_histogram(Axes &&... axes) {
 //   return dynamic_histogram,
-//                    detail::union_t<axis::builtins, mp11::mp_list<Axes...>>,
+//                    detail::union_t<axis::types, mp11::mp_list<Axes...>>,
 //                    array_storage<weight_counter<double>>>(
 //       std::forward<Axes>(axes)...);
 // }
 
 // template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 // dynamic_histogram,
-//           detail::union_t<axis::builtins, typename Iterator::value_type::types>,
+//           detail::union_t<axis::types, typename Iterator::value_type::types>,
 //           array_storage<weight_counter<double>>>
 // make_dynamic_weighted_histogram(Iterator begin, Iterator end) {
 //   return histogram<
 //       dynamic_tag,
-//       detail::union_t<axis::builtins, typename Iterator::value_type::types>,
+//       detail::union_t<axis::types, typename Iterator::value_type::types>,
 //       array_storage<weight_counter<double>>>(begin, end);
 // }
 
 // template <typename Storage, typename Iterator,
 //           typename = detail::requires_iterator<Iterator>>
 // dynamic_histogram,
-//           detail::union_t<axis::builtins, typename Iterator::value_type::types>,
+//           detail::union_t<axis::types, typename Iterator::value_type::types>,
 //           Storage>
 // make_dynamic_histogram_with(Iterator begin, Iterator end) {
 //   return histogram<
 //       dynamic_tag,
-//       detail::union_t<axis::builtins, typename Iterator::value_type::types>,
+//       detail::union_t<axis::types, typename Iterator::value_type::types>,
 //       Storage>(begin, end);
 // }
 

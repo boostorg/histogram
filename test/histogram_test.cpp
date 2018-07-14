@@ -44,16 +44,6 @@ auto make_histogram(dynamic_tag, Axes &&... axes)
   return make_dynamic_histogram_with<S>(std::forward<Axes>(axes)...);
 }
 
-template <typename T, typename U>
-bool axis_equal(static_tag, const T &t, const U &u) {
-  return t == u;
-}
-
-template <typename T, typename U>
-bool axis_equal(dynamic_tag, const T &t, const U &u) {
-  return t == u; // need to convert rhs to boost::variant
-}
-
 int expected_moved_from_dim(static_tag, int static_value) {
   return static_value;
 }
@@ -635,7 +625,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h1_0.at(1), 3);
     BOOST_TEST_EQ(h1_0.axis()[0].lower(), 0);
     BOOST_TEST_EQ(h1_0.axis()[1].lower(), 1);
-    BOOST_TEST(axis_equal(Type(), h1_0.axis(), h1.axis(0_c)));
+    BOOST_TEST(h1_0.axis() == h1.axis(0_c));
 
     auto h1_1 = h1.reduce_to(1_c);
     BOOST_TEST_EQ(h1_1.dim(), 1);
@@ -643,7 +633,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h1_1.at(0), 2);
     BOOST_TEST_EQ(h1_1.at(1), 2);
     BOOST_TEST_EQ(h1_1.at(2), 1);
-    BOOST_TEST(axis_equal(Type(), h1_1.axis(), h1.axis(1_c)));
+    BOOST_TEST(h1_1.axis() == h1.axis(1_c));
 
     auto h2 = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2),
                                                axis::integer<>(0, 3),
@@ -659,14 +649,14 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(sum(h2_0), 5);
     BOOST_TEST_EQ(h2_0.at(0), 4);
     BOOST_TEST_EQ(h2_0.at(1), 1);
-    BOOST_TEST(axis_equal(Type(), h2_0.axis(), axis::integer<>(0, 2)));
+    BOOST_TEST(h2_0.axis() == axis::integer<>(0, 2));
 
     auto h2_1 = h2.reduce_to(1_c);
     BOOST_TEST_EQ(h2_1.dim(), 1);
     BOOST_TEST_EQ(sum(h2_1), 5);
     BOOST_TEST_EQ(h2_1.at(0), 3);
     BOOST_TEST_EQ(h2_1.at(1), 2);
-    BOOST_TEST(axis_equal(Type(), h2_1.axis(), axis::integer<>(0, 3)));
+    BOOST_TEST(h2_1.axis() == axis::integer<>(0, 3));
 
     auto h2_2 = h2.reduce_to(2_c);
     BOOST_TEST_EQ(h2_2.dim(), 1);
@@ -674,7 +664,7 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_2.at(0), 2);
     BOOST_TEST_EQ(h2_2.at(1), 1);
     BOOST_TEST_EQ(h2_2.at(2), 2);
-    BOOST_TEST(axis_equal(Type(), h2_2.axis(), axis::integer<>(0, 4)));
+    BOOST_TEST(h2_2.axis() == axis::integer<>(0, 4));
 
     auto h2_01 = h2.reduce_to(0_c, 1_c);
     BOOST_TEST_EQ(h2_01.dim(), 2);
@@ -682,8 +672,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_01.at(0, 0), 2);
     BOOST_TEST_EQ(h2_01.at(0, 1), 2);
     BOOST_TEST_EQ(h2_01.at(1, 0), 1);
-    BOOST_TEST(axis_equal(Type(), h2_01.axis(0_c), axis::integer<>(0, 2)));
-    BOOST_TEST(axis_equal(Type(), h2_01.axis(1_c), axis::integer<>(0, 3)));
+    BOOST_TEST(h2_01.axis(0_c) == axis::integer<>(0, 2));
+    BOOST_TEST(h2_01.axis(1_c) == axis::integer<>(0, 3));
 
     auto h2_02 = h2.reduce_to(0_c, 2_c);
     BOOST_TEST_EQ(h2_02.dim(), 2);
@@ -692,8 +682,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_02.at(0, 1), 1);
     BOOST_TEST_EQ(h2_02.at(0, 2), 1);
     BOOST_TEST_EQ(h2_02.at(1, 2), 1);
-    BOOST_TEST(axis_equal(Type(), h2_02.axis(0_c), axis::integer<>(0, 2)));
-    BOOST_TEST(axis_equal(Type(), h2_02.axis(1_c), axis::integer<>(0, 4)));
+    BOOST_TEST(h2_02.axis(0_c) == axis::integer<>(0, 2));
+    BOOST_TEST(h2_02.axis(1_c) == axis::integer<>(0, 4));
 
     auto h2_12 = h2.reduce_to(1_c, 2_c);
     BOOST_TEST_EQ(h2_12.dim(), 2);
@@ -702,8 +692,8 @@ template <typename Type> void run_tests() {
     BOOST_TEST_EQ(h2_12.at(1, 0), 1);
     BOOST_TEST_EQ(h2_12.at(1, 1), 1);
     BOOST_TEST_EQ(h2_12.at(0, 2), 2);
-    BOOST_TEST(axis_equal(Type(), h2_12.axis(0_c), axis::integer<>(0, 3)));
-    BOOST_TEST(axis_equal(Type(), h2_12.axis(1_c), axis::integer<>(0, 4)));
+    BOOST_TEST(h2_12.axis(0_c) == axis::integer<>(0, 3));
+    BOOST_TEST(h2_12.axis(1_c) == axis::integer<>(0, 4));
   }
 
   // custom axis
@@ -726,7 +716,7 @@ template <typename Type> void run_tests() {
     h("9");
 
     BOOST_TEST_EQ(h.dim(), 1);
-    BOOST_TEST(h.axis() == custom_axis(0, 3));
+    BOOST_TEST_EQ(h.axis(), custom_axis(0, 3));
     BOOST_TEST_EQ(h.at(0), 1);
     BOOST_TEST_EQ(h.at(1), 1);
     BOOST_TEST_EQ(h.at(2), 0);
@@ -980,7 +970,7 @@ int main() {
     BOOST_TEST_EQ(sum(h1_0), 5);
     BOOST_TEST_EQ(h1_0.at(0), 2);
     BOOST_TEST_EQ(h1_0.at(1), 3);
-    BOOST_TEST(axis_equal(dynamic_tag(), h1_0.axis(), h1.axis(0_c)));
+    BOOST_TEST(h1_0.axis() == h1.axis(0_c));
 
     auto h1_1 = h1.reduce_to(1);
     BOOST_TEST_EQ(h1_1.dim(), 1);
@@ -988,7 +978,7 @@ int main() {
     BOOST_TEST_EQ(h1_1.at(0), 2);
     BOOST_TEST_EQ(h1_1.at(1), 2);
     BOOST_TEST_EQ(h1_1.at(2), 1);
-    BOOST_TEST(axis_equal(dynamic_tag(), h1_1.axis(), h1.axis(1_c)));
+    BOOST_TEST(h1_1.axis() == h1.axis(1_c));
   }
 
   // histogram iterator

@@ -37,7 +37,16 @@ void test_axis_iterator(const Axis &a, int begin, int end) {
 }
 
 int main() {
-  using any_axis = boost::mp11::mp_rename<axis::builtins, axis::any>;
+
+  // sizes
+  {
+    BOOST_TEST_EQ(sizeof(axis::regular<>), 64);
+    BOOST_TEST_EQ(sizeof(axis::circular<>), 56);
+    BOOST_TEST_EQ(sizeof(axis::variable<>), 56);
+    BOOST_TEST_EQ(sizeof(axis::integer<>), 48);
+    BOOST_TEST_EQ(sizeof(axis::category<>), 48);
+    BOOST_TEST_EQ(sizeof(axis::any_std), 80);
+  }
 
   // bad_ctors
   {
@@ -240,40 +249,40 @@ int main() {
     test_axis_iterator(axis::variable<>({1, 2, 3}, ""), 0, 2);
     test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4);
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
-    test_axis_iterator(any_axis(axis::regular<>(5, 0, 1)), 0, 5);
-    BOOST_TEST_THROWS(any_axis(axis::category<>({A, B, C})).lower(0),
+    test_axis_iterator(axis::any_std(axis::regular<>(5, 0, 1)), 0, 5);
+    BOOST_TEST_THROWS(axis::any_std(axis::category<>({A, B, C})).lower(0),
                       std::runtime_error);
   }
 
-  // any_axis_type_copyable
+  // any_std_type_copyable
   {
-    any_axis a(axis::regular<>(2, -1, 1));
-    any_axis b(a);
+    axis::any_std a(axis::regular<>(2, -1, 1));
+    axis::any_std b(a);
     BOOST_TEST(a == b);
-    any_axis c;
+    axis::any_std c;
     BOOST_TEST_NOT(a == c);
     c = a;
     BOOST_TEST(a == c);
   }
 
-  // any_axis_type_movable
+  // any_std_type_movable
   {
-    any_axis a(axis::regular<>(2, -1, 1));
-    any_axis r(a);
-    any_axis b(std::move(a));
+    axis::any_std a(axis::regular<>(2, -1, 1));
+    axis::any_std r(a);
+    axis::any_std b(std::move(a));
     BOOST_TEST_EQ(b, r);
-    any_axis c;
+    axis::any_std c;
     BOOST_TEST_NOT(a == c);
     c = std::move(b);
     BOOST_TEST(c == r);
   }
 
-  // any_axis_type_streamable
+  // any_std_type_streamable
   {
     enum { A, B, C };
     std::string a = "A";
     std::string b = "B";
-    std::vector<any_axis> axes;
+    std::vector<axis::any_std> axes;
     axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
     axes.push_back(axis::regular<double, axis::transform::log>(
         2, 1, 10, "regular2", axis::uoflow::off));
@@ -303,27 +312,27 @@ int main() {
     BOOST_TEST_EQ(os.str(), ref);
   }
 
-  // any_axis_type_equal_comparable
+  // any_std_type_equal_comparable
   {
     enum { A, B, C };
-    std::vector<any_axis> axes;
+    std::vector<axis::any_std> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
     axes.push_back(axis::circular<>{4});
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>{A, B, C});
     axes.push_back(axis::integer<>{-1, 1});
     for (const auto &a : axes) {
-      BOOST_TEST(!(a == any_axis()));
+      BOOST_TEST(!(a == axis::any_std()));
       BOOST_TEST_EQ(a, a);
     }
-    BOOST_TEST_NOT(axes == std::vector<any_axis>());
-    BOOST_TEST(axes == std::vector<any_axis>(axes));
+    BOOST_TEST_NOT(axes == std::vector<axis::any_std>());
+    BOOST_TEST(axes == std::vector<axis::any_std>(axes));
   }
 
-  // any_axis_type_value_to_index_failure
+  // any_std_type_value_to_index_failure
   {
     std::string a = "A", b = "B";
-    any_axis x = axis::category<std::string>({a, b}, "category");
+    axis::any_std x = axis::category<std::string>({a, b}, "category");
     BOOST_TEST_THROWS(x.index(1.5), std::runtime_error);
     const auto &cx = axis::cast<axis::category<std::string>>(x);
     BOOST_TEST_EQ(cx.index(b), 1);

@@ -149,35 +149,35 @@ int main() {
       const double &variance() const;
     };
 
-    BOOST_TEST_EQ(has_variance_support_t<no_methods>(), false);
-    BOOST_TEST_EQ(has_variance_support_t<value_method>(), false);
-    BOOST_TEST_EQ(has_variance_support_t<variance_method>(),
+    BOOST_TEST_EQ(has_variance_support<no_methods>(), false);
+    BOOST_TEST_EQ(has_variance_support<value_method>(), false);
+    BOOST_TEST_EQ(has_variance_support<variance_method>(),
                   false);
-    BOOST_TEST_EQ(has_variance_support_t<value_and_variance_methods>(),
+    BOOST_TEST_EQ(has_variance_support<value_and_variance_methods>(),
                   true);
   }
 
   // classify_container
   {
-    using result1 = classify_container_t<int>;
+    using result1 = classify_container<int>;
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result1, no_container_tag> ));
 
-    using result1a = classify_container_t<int&>;
+    using result1a = classify_container<int&>;
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result1a, no_container_tag> ));
 
-    using result2 = classify_container_t<std::vector<int>>;
+    using result2 = classify_container<std::vector<int>>;
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result2, dynamic_container_tag> ));
 
-    using result2a = classify_container_t<std::vector<int>&>;
+    using result2a = classify_container<std::vector<int>&>;
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result2a, dynamic_container_tag> ));
 
-    using result3 = classify_container_t<std::pair<int, int>>;
+    using result3 = classify_container<std::pair<int, int>>;
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result3, static_container_tag> ));
 
-    using result3a = classify_container_t<std::pair<int, int>&>;
+    using result3a = classify_container<std::pair<int, int>&>;
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result3a, static_container_tag> ));
 
-    using result4 = classify_container_t<decltype("abc")>;
+    using result4 = classify_container<decltype("abc")>;
     BOOST_TEST_TRAIT_TRUE(( std::is_same<result4, dynamic_container_tag> ));
   }
 
@@ -188,6 +188,31 @@ int main() {
 
     auto v2 = bool_mask<i1, i3>(4, true);
     BOOST_TEST_EQ(v2, std::vector<bool>({false, true, false, true}));
+  }
+
+  // rm_cv_ref
+  {
+    using T1 = int;
+    using T2 = const int;
+    using T3 = const int&;
+    using T4 = volatile int;
+    using T5 = volatile const int;
+    using T6 = volatile const int&;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T1>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T2>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T3>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T4>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T5>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T6>, int>));
+  }
+
+  // mp_union
+  {
+    using L1 = mp11::mp_list<int, char, long>;
+    using L2 = mp11::mp_list<char, char*>;
+    using result = mp_union<L1, L2>;
+    using expected = mp11::mp_list<int, char, long, char*>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
   }
 
   // literals

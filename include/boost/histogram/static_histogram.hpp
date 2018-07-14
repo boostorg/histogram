@@ -149,7 +149,7 @@ public:
     // check whether we need to unpack argument
     fill_impl(mp11::mp_if_c<(axes_size::value == 1),
                 detail::no_container_tag,
-                detail::classify_container_t<T>>(), std::forward<T>(t));
+                detail::classify_container<T>>(), std::forward<T>(t));
   }
 
   // TODO: merge this with unpacking
@@ -168,7 +168,7 @@ public:
     // check whether we need to unpack argument
     fill_impl(mp11::mp_if_c<(axes_size::value == 1),
                 detail::no_container_tag,
-                detail::classify_container_t<T>>(), std::forward<T>(t), std::move(w));
+                detail::classify_container<T>>(), std::forward<T>(t), std::move(w));
   }
 
   template <typename... Ts>
@@ -186,13 +186,13 @@ public:
   template <typename T>
   const_reference operator[](T&&t) const {
     // check whether we need to unpack argument
-    return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+    return at_impl(detail::classify_container<T>(), std::forward<T>(t));
   }
 
   template <typename T>
   const_reference at(T&&t) const {
     // check whether we need to unpack argument
-    return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+    return at_impl(detail::classify_container<T>(), std::forward<T>(t));
   }
 
   /// Number of axes (dimensions) of histogram
@@ -296,7 +296,7 @@ private:
 
   template <typename T, typename... Ts>
   void fill_impl(detail::static_container_tag, T&&t, Ts&&...ts) {
-    static_assert(detail::size_of<T>::value == axes_size::value,
+    static_assert(detail::mp_size<T>::value == axes_size::value,
                   "fill container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     xlin_get(axes_size(), idx, stride, std::forward<T>(t));
@@ -405,7 +405,7 @@ private:
 
   template <long unsigned int N, typename T>
   void xlin_get(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride, T && t) const {
-    constexpr unsigned D = detail::size_of<T>::value - N;
+    constexpr unsigned D = detail::mp_size<T>::value - N;
     const auto a_size = std::get<D>(axes_).size();
     const auto a_shape = std::get<D>(axes_).shape();
     const auto j = std::get<D>(axes_).index(std::get<D>(t));
@@ -418,7 +418,7 @@ private:
 
   template <long unsigned int N, typename T>
   void lin_get(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride, T&&t) const noexcept {
-    constexpr unsigned D = detail::size_of<T>::value - N;
+    constexpr unsigned D = detail::mp_size<T>::value - N;
     const auto a_size = std::get<D>(axes_).size();
     const auto a_shape = std::get<D>(axes_).shape();
     const auto j = detail::indirect_int_cast(std::get<D>(t));

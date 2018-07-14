@@ -98,11 +98,11 @@ private:
 };
 
 template <typename T>
-typename std::enable_if<(is_castable_to_int_t<T>::value), int>::type
+typename std::enable_if<(is_castable_to_int<T>::value), int>::type
 indirect_int_cast(T&&t) noexcept { return static_cast<int>(std::forward<T>(t)); }
 
 template <typename T>
-typename std::enable_if<!(is_castable_to_int_t<T>::value), int>::type
+typename std::enable_if<!(is_castable_to_int<T>::value), int>::type
 indirect_int_cast(T&&) noexcept {
   // Cannot use static_assert here, because this function is created as a
   // side-effect of TMP. It must be valid at compile-time.
