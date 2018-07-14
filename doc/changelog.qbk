@@ -1,15 +1,19 @@
 [section Changelog]
 
-[heading 2.1 (not in boost)]
+[master]
+
+[heading 3.0 (not in boost)]
 
 * Support for efficient adding of multiple histograms and scaling
 * Re-design of category axis as a general mapping between unique values and bins
 * Re-design of the bin description an axis returns upon element access
-* Interface cleanup, more consistency between Python and C++ interface
-* range-based for-loops in C++ and Python loops now excludes over-/underflow bins
+* Interface cleanup and simplification, more consistency between Python and C++ interface
+* Iterators for histogram and axes for STL compatibility
 * Regular axis in C++: Allowing transforms with state
 * Regular axis in Python: Support for all C++ transforms
-* Getting rid of utility functions, use interface augmented boost::variant instead
+* Polymorphic axis::any type
+* Internal refactoring from boost::mpl and boost::fusion to std::tuple and boost::mp11
+* Windows support
 
 [heading 2.0 (not in boost)]
 

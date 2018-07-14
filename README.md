@@ -11,7 +11,7 @@ This `C++11` library provides a multi-dimensional [histogram](https://en.wikiped
 Tested platforms:
 - Linux: gcc-4.8.4, clang-5.0.0
 - Mac: Xcode 9
-- Windows: Visual Studio 2015
+- Windows: Visual Studio 14 2015
 - Python: 2.7 and 3.6
 
 The histogram is very customisable through policy classes, but the default policies were carefully designed so that most users don't need to customize anything. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: bin counts *cannot overflow* or *be capped*. While being safe to use, the library also has a convenient interface, is memory conserving, and faster than other libraries (see benchmarks).
