@@ -12,7 +12,7 @@ Tested platforms:
 - Windows: Visual Studio 2015
 - Python: 2.7 and 3.6
 
-It is very customisable through policy classes, but the default policies were carefully designed so that most users won't need to customize anything. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: bin counts *cannot overflow* or *be capped*. While being safe to use, the library also has a convenient interface, is memory conserving, and faster than other libraries (see benchmarks).
+The histogram is very customisable through policy classes, but the default policies were carefully designed so that most users won't need to customize anything. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: bin counts *cannot overflow* or *be capped*. While being safe to use, the library also has a convenient interface, is memory conserving, and faster than other libraries (see benchmarks).
 
 The histogram class comes in two variants which share a common interface. The *static* variant uses compile-time information to provide maximum performance, at the cost of runtime flexibility and potentially larger executables. The *dynamic* variant is a bit slower, but configurable at run-time and may produce smaller executables. Python bindings for the latter are included, implemented with `Boost.Python`.
 
@@ -27,7 +27,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Multi-dimensional histogram
 * Simple and convenient interface in C++ and Python
 * Static and dynamic implementation in C++ with common interface
-* Counters cannot overflow or be capped (+)
+* High dynamic range: Counters cannot overflow or be capped (+)
 * Better performance than other libraries (see benchmarks for details)
 * Efficient move operations
 * Efficient conversion between static and dynamic implementation
@@ -37,17 +37,17 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Support for under-/overflow bins (can be disabled individually for each dimension)
 * Support for variance tracking (++)
 * Support for addition and scaling of histograms
-* Support for serialization based on `Boost.Serialization`
-* Support for Python 2.x and 3.x
-* Support for Numpy
+* Optional serialization based on `Boost.Serialization`
+* Optional Python-bindings for Python 2.x and 3.x
+* Optional Numpy support
 
 (+) In the standard configuration, if you don't use weighted increments.
 (++) If you don't use weighted increments, variance tracking come at zero cost. If you use weighted increments, extra space is reserved internally to keep track of a variance counter per bin. The conversion happens automatically and transparently.
 
 ## Dependencies
 
-* [Boost](http://www.boost.org)
-* Optional: [CMake](https://cmake.org) [Python](http://www.python.org) [Numpy](http://www.numpy.org)
+* [Boost](http://www.boost.org) *header-only installation*
+* Optional: [CMake](https://cmake.org) [Python](http://www.python.org) [Numpy](http://www.numpy.org) [Boost.Python](https://www.boost.org/doc/libs/release/libs/python/) [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/) [Boost.Iostreams](https://www.boost.org/doc/libs/release/libs/iostreams/)
 
 ## Build instructions
 
