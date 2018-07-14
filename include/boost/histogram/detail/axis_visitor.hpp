@@ -10,9 +10,6 @@
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/mp11.hpp>
-#include <boost/variant/get.hpp>
-#include <boost/variant/static_visitor.hpp>
-#include <boost/variant/variant.hpp>
 #include <tuple>
 #include <type_traits>
 #include <vector>
@@ -22,41 +19,6 @@ namespace histogram {
 namespace detail {
 
 namespace {
-template <typename Variant>
-struct axes_equal_visitor : public static_visitor<bool> {
-  const Variant &lhs;
-  axes_equal_visitor(const Variant &v) : lhs(v) {}
-  template <typename T> bool operator()(const T &rhs) const {
-    return impl(mp11::mp_contains<typename Variant::types, T>(), rhs);
-  }
-
-  template <typename T> bool impl(mp11::mp_true, const T &rhs) const {
-    auto tp = boost::get<T>(&lhs);
-    return tp && *tp == rhs;
-  }
-
-  template <typename T> bool impl(mp11::mp_false, const T &) const {
-    return false;
-  }
-};
-
-template <typename V> struct axes_assign_visitor : public static_visitor<void> {
-  V &lhs;
-  axes_assign_visitor(V &v) : lhs(v) {}
-
-  template <typename U> void operator()(const U &rhs) const {
-    impl(mp11::mp_contains<typename V::types, U>(), rhs);
-  }
-
-  template <typename U> void impl(mp11::mp_true, const U &rhs) const {
-    lhs = rhs;
-  }
-
-  template <typename U> void impl(mp11::mp_false, const U &) const {
-    BOOST_ASSERT_MSG(false,
-                     "cannot assign U to variant if it is not a bounded type");
-  }
-};
 
 template <typename Tuple, typename VecVar> struct axes_equal_tuple_vecvar {
   bool &equal;
@@ -89,22 +51,6 @@ template <typename VecVar, typename Tuple> struct axes_assign_vecvar_tuple {
     v[Int::value] = std::get<Int::value>(t);
   }
 };
-}
-
-struct field_count_visitor : public static_visitor<void> {
-  mutable std::size_t value = 1;
-  template <typename T> void operator()(const T &t) const {
-    value *= t.shape();
-  }
-};
-
-template <typename Unary> struct unary_visitor : public static_visitor<void> {
-  Unary &unary;
-  unary_visitor(Unary &u) : unary(u) {}
-  template <typename Axis> void operator()(const Axis &a) const { unary(a); }
-};
-
-namespace {
 
 template <typename... Ts>
 bool axes_equal_impl(mp11::mp_true, const std::tuple<Ts...> &t,
@@ -117,7 +63,8 @@ bool axes_equal_impl(mp11::mp_false, const std::tuple<Ts...> &,
                      const std::tuple<Us...> &) {
   return false;
 }
-}
+
+} // namespace
 
 template <typename... Ts, typename... Us>
 bool axes_equal(const std::tuple<Ts...> &t, const std::tuple<Us...> &u) {
@@ -172,7 +119,7 @@ bool axes_equal(const std::vector<axis::any<Ts...>> &t,
   if (t.size() != u.size())
     return false;
   for (std::size_t i = 0; i < t.size(); ++i) {
-    if (!apply_visitor(axes_equal_visitor<axis::any<Ts...>>(t[i]), u[i]))
+    if (t[i] != u[i])
       return false;
   }
   return true;
@@ -182,9 +129,22 @@ template <typename... Ts, typename... Us>
 void axes_assign(std::vector<axis::any<Ts...>> &t,
                  const std::vector<axis::any<Us...>> &u) {
   for (std::size_t i = 0; i < t.size(); ++i) {
-    apply_visitor(axes_assign_visitor<axis::any<Ts...>>(t[i]), u[i]);
+    t[i] = u[i];
   }
 }
+
+struct field_count_visitor : public static_visitor<void> {
+  mutable std::size_t value = 1;
+  template <typename T> void operator()(const T &t) const {
+    value *= t.shape();
+  }
+};
+
+template <typename Unary> struct unary_visitor : public static_visitor<void> {
+  Unary &unary;
+  unary_visitor(Unary &u) : unary(u) {}
+  template <typename Axis> void operator()(const Axis &a) const { unary(a); }
+};
 
 } // namespace detail
 } // namespace histogram

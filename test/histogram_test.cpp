@@ -906,6 +906,21 @@ template <typename T1, typename T2> void run_mixed_tests() {
     BOOST_TEST_NE(a, b3);
   }
 
+  // add
+  {
+    auto a = make_histogram<adaptive_storage>(T1{}, axis::integer<>{0, 2});
+    auto b = make_histogram<adaptive_storage>(T2{}, axis::integer<>{0, 2});
+    BOOST_TEST_EQ(a, b);
+    a(0);   // 1 0
+    b(1);   // 0 1
+    a += b; // 1 1
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_EQ(a[1], 1);
+
+    auto c = make_histogram<adaptive_storage>(T2{}, axis::integer<>{0, 3});
+    BOOST_TEST_THROWS(a += c, std::invalid_argument);
+  }
+
   // copy_assign
   {
     auto a = make_histogram<adaptive_storage>(T1{}, axis::regular<>{3, 0, 3},

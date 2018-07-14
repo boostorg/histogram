@@ -12,7 +12,6 @@
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/mp11.hpp>
-#include <boost/variant.hpp>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -73,17 +72,6 @@ int main() {
     escape(os, std::string("'abc'"));
     BOOST_TEST_EQ(os.str(), std::string("'\\\'abc\\\''"));
   }
-
-  // // assign_axis unreachable branch
-  // {
-  //   using V1 = boost::variant<float>;
-  //   using V2 = boost::variant<int>;
-  //   V1 v1(1.0);
-  //   V2 v2(2);
-  //   boost::apply_visitor(assign_axis<V1>(v1), v2);
-  //   BOOST_TEST_EQ(v1, V1(1.0));
-  //   BOOST_TEST_EQ(v2, V2(2));
-  // }
 
   // index_mapper 1
   {

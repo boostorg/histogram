@@ -9,7 +9,6 @@
 
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
-#include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
@@ -103,24 +102,8 @@ struct bicmp_visitor : public static_visitor<bool> {
     return false;
   }
 
-  template <typename T> bool operator()(const T &t, const T &u) const {
-    return t == u;
-  }
-};
-
-template <typename T> struct cmp_visitor : public static_visitor<bool> {
-  const T &t;
-  cmp_visitor(const T &tt) : t(tt) {}
-  template <typename U> bool operator()(const U &u) const {
-    return impl(mp11::mp_same<T, U>(), u);
-  }
-
-  template <typename U> bool impl(mp11::mp_true, const U &u) const {
-    return t == u;
-  }
-
-  template <typename U> bool impl(mp11::mp_false, const U &) const {
-    return false;
+  template <typename T> bool operator()(const T &a, const T &b) const {
+    return a == b;
   }
 };
 
@@ -228,7 +211,12 @@ public:
   template <typename T, typename = requires_bounded_type<T>>
   bool operator==(const T &t) const {
     // variant::operator==(T) is implemented, but only to fail, cannot use it
-    return ::boost::apply_visitor(detail::cmp_visitor<T>(t), *this);
+    auto tp = ::boost::get<::boost::histogram::detail::rm_cv_ref<T>>(this);
+    return tp && *tp == t;
+  }
+
+  template <typename T> bool operator!=(T &&t) const {
+    return !operator==(std::forward<T>(t));
   }
 
   const_iterator begin() const { return const_iterator(*this, 0); }

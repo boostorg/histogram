@@ -11,7 +11,6 @@
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/variant.hpp>
 #include <limits>
 #include <sstream>
 #include <string>
