@@ -9,7 +9,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/histogram/arithmetic_operators.hpp>
-#include <boost/histogram/axis/axis.hpp>
+#include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>

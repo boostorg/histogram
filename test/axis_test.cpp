@@ -6,7 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/any.hpp>
-#include <boost/histogram/axis/axis.hpp>
+#include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/utility.hpp>
