@@ -48,8 +48,8 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 
 ## Dependencies
 
-* [Boost](http://www.boost.org) *header-only installation*
-* Optional: [CMake](https://cmake.org) [Python](http://www.python.org) [Numpy](http://www.numpy.org) [Boost.Python](https://www.boost.org/doc/libs/release/libs/python/) [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/) [Boost.Iostreams](https://www.boost.org/doc/libs/release/libs/iostreams/)
+* [Boost >= 1.66](http://www.boost.org) *header-only installation*
+* Optional: [CMake >= 3.2](https://cmake.org) [Python >= 2.7](http://www.python.org) [Numpy](http://www.numpy.org) [Boost.Python](https://www.boost.org/doc/libs/release/libs/python/) [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/) [Boost.Iostreams](https://www.boost.org/doc/libs/release/libs/iostreams/)
 
 ## Build instructions
 
