@@ -335,7 +335,7 @@ struct radd_array_visitor : public static_visitor<void> {
   any_array &lhs_any;
   radd_array_visitor(any_array &l) : lhs_any(l) {}
   template <typename T> void operator()(const array<T> &rhs) const {
-    for (auto i = 0ul; i < rhs.size; ++i)
+    for (std::size_t i = 0; i < rhs.size; ++i)
       apply_visitor(radd_visitor<T>(lhs_any, i, rhs[i]), lhs_any);
   }
   void operator()(const array<void> &) const {}
@@ -351,7 +351,7 @@ struct rmul_visitor : public static_visitor<void> {
   }
   void operator()(array<void> &) const {}
   void operator()(array<wcount> &lhs) const {
-    for (auto i = 0ul; i != lhs.size; ++i)
+    for (std::size_t i = 0; i != lhs.size; ++i)
       lhs[i] *= x;
   }
 };
@@ -462,7 +462,7 @@ public:
   // precondition: storages have same size
   adaptive_storage &operator+=(const adaptive_storage &rhs) {
     if (this == &rhs) {
-      for (decltype(size()) i = 0, n = size(); i < n; ++i) {
+      for (std::size_t i = 0, n = size(); i < n; ++i) {
         add(i, rhs[i]); // may lose precision
       }
     } else {
@@ -473,7 +473,7 @@ public:
 
   // precondition: storages have same size
   template <typename RHS> adaptive_storage &operator+=(const RHS &rhs) {
-    for (auto i = 0ul, n = size(); i < n; ++i)
+    for (std::size_t i = 0, n = size(); i < n; ++i)
       apply_visitor(
           detail::radd_visitor<typename RHS::element_type>(buffer_, i, rhs[i]),
           buffer_);
