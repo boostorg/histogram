@@ -80,19 +80,19 @@ script:
               -DBUILD_SERIALIZATION=ON
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
-      ctest -V;
+      ctest;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
               -DBUILD_NUMPY=OFF
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
-      ctest -V;
+      ctest;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
               -DBUILD_NUMPY=ON
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
-      ctest -V;
+      ctest;
     else
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=${BUILD_PYTHON}
