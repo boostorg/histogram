@@ -1,4 +1,3 @@
-#!@PYTHON_EXECUTABLE@
 ##
 ## Copyright 2015-2016 Hans Dembinski
 ##

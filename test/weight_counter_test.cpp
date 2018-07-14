@@ -5,8 +5,8 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/histogram/ostream_operators.hpp>
+#include <boost/histogram/storage/weight_counter.hpp>
 #include <ostream>
 #include <sstream>
 

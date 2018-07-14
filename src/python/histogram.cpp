@@ -16,7 +16,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
-#include <boost/mpl/for_each.hpp>
 #ifdef HAVE_NUMPY
 #include <boost/python/numpy.hpp>
 namespace np = boost::python::numpy;
@@ -163,7 +162,7 @@ bp::object histogram_init(bp::tuple args, bp::dict kwargs) {
   for (unsigned i = 0; i < dim; ++i) {
     bp::object pa = args[i + 1];
     bool success = false;
-    mpl::for_each<pyhistogram::any_axis_type::types>(
+    boost::mp11::mp_for_each<pyhistogram::any_axis_type::types>(
       axes_appender(pa, axes, success)
     );
     if (!success) {

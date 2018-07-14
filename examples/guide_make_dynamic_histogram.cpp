@@ -7,7 +7,7 @@ namespace bh = boost::histogram;
 
 int main() {
     // create vector of axes, axis::any is a polymorphic axis type
-    auto v = std::vector<bh::axis::any<>>();
+    auto v = std::vector<bh::axis::any_std>();
     v.push_back(bh::axis::regular<>(100, -1, 1));
     v.push_back(bh::axis::integer<>(1, 7));
 

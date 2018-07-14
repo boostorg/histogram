@@ -8,14 +8,14 @@
 #define _BOOST_HISTOGRAM_DETAIL_UTILITY_HPP_
 
 #include <algorithm>
-#include <boost/config.hpp>
 #include <boost/assert.hpp>
+#include <boost/config.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/utility/string_view.hpp>
 #include <boost/type_index.hpp>
+#include <boost/utility/string_view.hpp>
 #include <ostream>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -38,10 +38,8 @@ inline void escape(std::ostream &os, const string_view s) {
 
 // the following is highly optimized code that runs in a hot loop;
 // please measure the performance impact of changes
-inline void lin(std::size_t &out, std::size_t &stride,
-                const int axis_size,
-                const int axis_shape,
-                int j) noexcept {
+inline void lin(std::size_t &out, std::size_t &stride, const int axis_size,
+                const int axis_shape, int j) noexcept {
   BOOST_ASSERT_MSG(stride == 0 || (-1 <= j && j <= axis_size),
                    "index must be in bounds for this algorithm");
   j += (j < 0) * (axis_size + 2); // wrap around if j < 0
@@ -71,9 +69,7 @@ struct index_mapper {
       ++bi;
     }
     std::sort(dims.begin(), dims.end(),
-              [](const dim &a, const dim &b) {
-                return a.stride1 > b.stride1;
-              });
+              [](const dim &a, const dim &b) { return a.stride1 > b.stride1; });
     nfirst = s1;
   }
 
@@ -98,12 +94,14 @@ private:
 };
 
 template <typename T>
-typename std::enable_if<(is_castable_to_int_t<T>::value), int>::type
-indirect_int_cast(T&&t) noexcept { return static_cast<int>(std::forward<T>(t)); }
+typename std::enable_if<(is_castable_to_int<T>::value), int>::type
+indirect_int_cast(T &&t) noexcept {
+  return static_cast<int>(std::forward<T>(t));
+}
 
 template <typename T>
-typename std::enable_if<!(is_castable_to_int_t<T>::value), int>::type
-indirect_int_cast(T&&) noexcept {
+typename std::enable_if<!(is_castable_to_int<T>::value), int>::type
+indirect_int_cast(T &&) noexcept {
   // Cannot use static_assert here, because this function is created as a
   // side-effect of TMP. It must be valid at compile-time.
   BOOST_ASSERT_MSG(false, "bin argument not convertible to int");

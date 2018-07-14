@@ -7,8 +7,7 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP_
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP_
 
-#include <boost/fusion/algorithm/iteration/for_each.hpp>
-#include <boost/fusion/include/for_each.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
 #include <boost/histogram/static_histogram.hpp>
@@ -181,9 +180,9 @@ void category<T>::serialize(Archive &ar, unsigned /* version */) {
   ar &map_;
 }
 
-template <class Axes>
+template <typename... Ts>
 template <class Archive>
-void any<Axes>::serialize(Archive &ar, unsigned /* version */) {
+void any<Ts...>::serialize(Archive &ar, unsigned /* version */) {
   ar &boost::serialization::base_object<base_type>(*this);
 }
 
@@ -194,7 +193,7 @@ template <class Archive>
 void histogram<static_tag, A, S>::serialize(Archive &ar,
                                             unsigned /* version */) {
   detail::serialize_helper<Archive> sh(ar);
-  fusion::for_each(axes_, sh);
+  mp11::tuple_for_each(axes_, sh);
   ar &storage_;
 }
 

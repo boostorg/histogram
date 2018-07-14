@@ -8,20 +8,8 @@
 #define _BOOST_HISTOGRAM_HISTOGRAM_IMPL_STATIC_HPP_
 
 #include <boost/assert.hpp>
-#include <boost/fusion/adapted/mpl.hpp>
-#include <boost/fusion/algorithm.hpp>
-#include <boost/fusion/algorithm/iteration/for_each.hpp>
-#include <boost/fusion/container/vector/convert.hpp>
-#include <boost/fusion/include/algorithm.hpp>
-#include <boost/fusion/include/as_vector.hpp>
-#include <boost/fusion/include/comparison.hpp>
-#include <boost/fusion/include/for_each.hpp>
-#include <boost/fusion/include/mpl.hpp>
-#include <boost/fusion/include/sequence.hpp>
-#include <boost/fusion/sequence.hpp>
-#include <boost/fusion/sequence/comparison.hpp>
 #include <boost/histogram/arithmetic_operators.hpp>
-#include <boost/histogram/axis/axis.hpp>
+#include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
@@ -29,13 +17,8 @@
 #include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/operators.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
-#include <boost/mpl/bool.hpp>
-#include <boost/mpl/count_if.hpp>
-#include <boost/mpl/deref.hpp>
-#include <boost/mpl/empty.hpp>
-#include <boost/mpl/find_if.hpp>
-#include <boost/mpl/int.hpp>
-#include <boost/mpl/vector.hpp>
+#include <boost/mp11.hpp>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -51,11 +34,11 @@ namespace histogram {
 
 template <typename Axes, typename Storage>
 class histogram<static_tag, Axes, Storage> {
-  static_assert(!mpl::empty<Axes>::value, "at least one axis required");
-  using axes_size = typename fusion::result_of::size<Axes>::type;
+  using axes_size = mp11::mp_size<Axes>;
+  static_assert(axes_size::value > 0, "at least one axis required");
 
 public:
-  using axes_type = typename fusion::result_of::as_vector<Axes>::type;
+  using axes_type = mp11::mp_rename<Axes, std::tuple>;
   using element_type = typename Storage::element_type;
   using const_reference = typename Storage::const_reference;
   using const_iterator = iterator_over<histogram, Storage>;
@@ -67,8 +50,10 @@ public:
   histogram &operator=(const histogram &rhs) = default;
   histogram &operator=(histogram &&rhs) = default;
 
-  template <typename... Axis>
-  explicit histogram(const Axis &... axis) : axes_(axis...) {
+  template <typename Axis0, typename... Axis,
+            typename = detail::requires_axis<Axis0>>
+  explicit histogram(Axis0 &&axis0, Axis &&... axis)
+      : axes_(std::forward<Axis0>(axis0), std::forward<Axis>(axis)...) {
     storage_ = Storage(bincount_from_axes());
   }
 
@@ -77,11 +62,11 @@ public:
   }
 
   template <typename S>
-  explicit histogram(const histogram<static_tag, Axes, S> &rhs)
+  explicit histogram(const static_histogram<Axes, S> &rhs)
       : axes_(rhs.axes_), storage_(rhs.storage_) {}
 
   template <typename S>
-  histogram &operator=(const histogram<static_tag, Axes, S> &rhs) {
+  histogram &operator=(const static_histogram<Axes, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       axes_ = rhs.axes_;
       storage_ = rhs.storage_;
@@ -90,13 +75,13 @@ public:
   }
 
   template <typename A, typename S>
-  explicit histogram(const histogram<dynamic_tag, A, S> &rhs)
+  explicit histogram(const dynamic_histogram<A, S> &rhs)
       : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
   template <typename A, typename S>
-  histogram &operator=(const histogram<dynamic_tag, A, S> &rhs) {
+  histogram &operator=(const dynamic_histogram<A, S> &rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       detail::axes_assign(axes_, rhs.axes_);
       storage_ = rhs.storage_;
@@ -105,34 +90,35 @@ public:
   }
 
   template <typename A, typename S>
-  bool operator==(const histogram<static_tag, A, S> &) const noexcept {
+  bool operator==(const static_histogram<A, S> &) const noexcept {
     return false;
   }
 
   template <typename S>
-  bool operator==(const histogram<static_tag, Axes, S> &rhs) const noexcept {
+  bool operator==(const static_histogram<Axes, S> &rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
   template <typename A, typename S>
-  bool operator==(const histogram<dynamic_tag, A, S> &rhs) const noexcept {
+  bool operator==(const dynamic_histogram<A, S> &rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <typename... Ts>
-  bool operator!=(const histogram<Ts...> &rhs) const noexcept {
+  template <typename T, typename A, typename S>
+  bool operator!=(const histogram<T, A, S> &rhs) const noexcept {
     return !operator==(rhs);
   }
 
   template <typename S>
-  histogram &operator+=(const histogram<static_tag, Axes, S> &rhs) {
-    BOOST_ASSERT_MSG(detail::axes_equal(axes_, rhs.axes_), "axes of histograms differ");
+  histogram &operator+=(const static_histogram<Axes, S> &rhs) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
+      throw std::invalid_argument("axes of histograms differ");
     storage_ += rhs.storage_;
     return *this;
   }
 
   template <typename A, typename S>
-  histogram &operator+=(const histogram<dynamic_tag, A, S> &rhs) {
+  histogram &operator+=(const dynamic_histogram<A, S> &rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_))
       throw std::invalid_argument("axes of histograms differ");
     storage_ += rhs.storage_;
@@ -159,15 +145,16 @@ public:
       fill_storage_impl(idx);
   }
 
-  template <typename T> void operator()(T && t) {
+  template <typename T> void operator()(T &&t) {
     // check whether we need to unpack argument
-    fill_impl(detail::if_else<(axes_size::value == 1),
-                detail::no_container_tag,
-                detail::classify_container_t<T>>(), std::forward<T>(t));
+    fill_impl(mp11::mp_if_c<(axes_size::value == 1), detail::no_container_tag,
+                            detail::classify_container<T>>(),
+              std::forward<T>(t));
   }
 
-  template <typename W, typename... Ts> void operator()(detail::weight<W>&& w,
-                                                        Ts &&... ts) {
+  // TODO: merge this with unpacking
+  template <typename W, typename... Ts>
+  void operator()(detail::weight<W> &&w, Ts &&... ts) {
     // case with one argument is ambiguous, is specialized below
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, ts...);
@@ -175,36 +162,34 @@ public:
       fill_storage_impl(idx, std::move(w));
   }
 
-  template <typename W, typename T> void operator()(detail::weight<W>&& w,
-                                                    T&&t) {
+  // TODO: remove as obsolete
+  template <typename W, typename T>
+  void operator()(detail::weight<W> &&w, T &&t) {
     // check whether we need to unpack argument
-    fill_impl(detail::if_else<(axes_size::value == 1),
-                detail::no_container_tag,
-                detail::classify_container_t<T>>(), std::forward<T>(t), std::move(w));
+    fill_impl(mp11::mp_if_c<(axes_size::value == 1), detail::no_container_tag,
+                            detail::classify_container<T>>(),
+              std::forward<T>(t), std::move(w));
   }
 
-  template <typename... Indices>
-  const_reference at(Indices &&... indices) const {
+  template <typename... Ts> const_reference at(Ts &&... ts) const {
     // case with one argument is ambiguous, is specialized below
-    static_assert(sizeof...(indices) == axes_size::value,
+    static_assert(sizeof...(ts) == axes_size::value,
                   "bin arguments do not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin<0>(idx, stride, static_cast<int>(indices)...);
+    lin<0>(idx, stride, static_cast<int>(ts)...);
     if (stride == 0)
       throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 
-  template <typename T>
-  const_reference operator[](T&&t) const {
+  template <typename T> const_reference operator[](T &&t) const {
     // check whether we need to unpack argument
-    return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+    return at_impl(detail::classify_container<T>(), std::forward<T>(t));
   }
 
-  template <typename T>
-  const_reference at(T&&t) const {
+  template <typename T> const_reference at(T &&t) const {
     // check whether we need to unpack argument
-    return at_impl(detail::classify_container_t<T>(), std::forward<T>(t));
+    return at_impl(detail::classify_container<T>(), std::forward<T>(t));
   }
 
   /// Number of axes (dimensions) of histogram
@@ -218,53 +203,46 @@ public:
 
   /// Get N-th axis (const version)
   template <int N>
-  typename std::add_const<
-      typename fusion::result_of::value_at_c<axes_type, N>::type>::type &
-  axis(mpl::int_<N>) const {
+  typename std::add_const<typename std::tuple_element<N, axes_type>::type>::type
+      &axis(mp11::mp_int<N>) const {
     static_assert(N < axes_size::value, "axis index out of range");
-    return fusion::at_c<N>(axes_);
+    return std::get<N>(axes_);
   }
 
   /// Get N-th axis
   template <int N>
-  typename fusion::result_of::value_at_c<axes_type, N>::type &
-  axis(mpl::int_<N>) {
+  typename std::tuple_element<N, axes_type>::type &axis(mp11::mp_int<N>) {
     static_assert(N < axes_size::value, "axis index out of range");
-    return fusion::at_c<N>(axes_);
+    return std::get<N>(axes_);
   }
 
   // Get first axis (convenience for 1-d histograms, const version)
   constexpr typename std::add_const<
-      typename fusion::result_of::value_at_c<axes_type, 0>::type>::type &
+      typename std::tuple_element<0, axes_type>::type>::type &
   axis() const {
-    return fusion::at_c<0>(axes_);
+    return std::get<0>(axes_);
   }
 
   // Get first axis (convenience for 1-d histograms)
-  typename fusion::result_of::value_at_c<axes_type, 0>::type &axis() {
-    return fusion::at_c<0>(axes_);
+  typename std::tuple_element<0, axes_type>::type &axis() {
+    return std::get<0>(axes_);
   }
 
   /// Apply unary functor/function to each axis
   template <typename Unary> void for_each_axis(Unary &&unary) const {
-    fusion::for_each(axes_, unary);
+    mp11::tuple_for_each(axes_, std::forward<Unary>(unary));
   }
 
   /// Returns a lower-dimensional histogram
-  template <int N, typename... Rest>
-  auto reduce_to(mpl::int_<N>, Rest...) const -> histogram<
-      static_tag,
-      detail::axes_select_t<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
-      Storage> {
-    using HR = histogram<
-        static_tag,
-        detail::axes_select_t<Axes, mpl::vector<mpl::int_<N>, Rest...>>,
-        Storage>;
-    typename HR::axes_type axes;
-    detail::axes_assign_subset<mpl::vector<mpl::int_<N>, Rest...>>(axes, axes_);
-    auto hr = HR(std::move(axes));
-    const auto b =
-        detail::bool_mask<mpl::vector<mpl::int_<N>, Rest...>>(dim(), true);
+  template <int N, typename... Ns>
+  auto reduce_to(mp11::mp_int<N>, Ns...) const
+      -> static_histogram<detail::selection<Axes, mp11::mp_int<N>, Ns...>,
+                          Storage> {
+    using HR = static_histogram<detail::selection<Axes, mp11::mp_int<N>, Ns...>,
+                                Storage>;
+    auto hr =
+        HR(detail::make_sub_tuple<axes_type, mp11::mp_int<N>, Ns...>(axes_));
+    const auto b = detail::bool_mask<mp11::mp_int<N>, Ns...>(dim(), true);
     reduce_impl(hr, b);
     return hr;
   }
@@ -283,43 +261,42 @@ private:
 
   std::size_t bincount_from_axes() const noexcept {
     detail::field_count_visitor fc;
-    fusion::for_each(axes_, fc);
+    mp11::tuple_for_each(axes_, fc);
     return fc.value;
   }
 
   template <typename T>
-  void fill_storage_impl(std::size_t idx, detail::weight<T>&& w) {
+  void fill_storage_impl(std::size_t idx, detail::weight<T> &&w) {
     storage_.add(idx, w);
   }
 
-  void fill_storage_impl(std::size_t idx) {
-    storage_.increase(idx);
-  }
+  void fill_storage_impl(std::size_t idx) { storage_.increase(idx); }
 
   template <typename T, typename... Ts>
-  void fill_impl(detail::dynamic_container_tag, T&&t, Ts&&...ts) {
-    BOOST_ASSERT_MSG(std::distance(std::begin(t), std::end(t)) == axes_size::value,
+  void fill_impl(detail::dynamic_container_tag, T &&t, Ts &&... ts) {
+    BOOST_ASSERT_MSG(std::distance(std::begin(t), std::end(t)) ==
+                         axes_size::value,
                      "fill container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    xlin_iter(mpl::int_<axes_size::value>(), idx, stride, std::begin(t));
+    xlin_iter(axes_size(), idx, stride, std::begin(t));
     if (stride) {
       fill_storage_impl(idx, std::forward<Ts>(ts)...);
     }
   }
 
   template <typename T, typename... Ts>
-  void fill_impl(detail::static_container_tag, T&&t, Ts&&...ts) {
-    static_assert(detail::size_of<T>::value == axes_size::value,
+  void fill_impl(detail::static_container_tag, T &&t, Ts &&... ts) {
+    static_assert(detail::mp_size<T>::value == axes_size::value,
                   "fill container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    xlin_get(mpl::int_<axes_size::value>(), idx, stride, std::forward<T>(t));
+    xlin_get(axes_size(), idx, stride, std::forward<T>(t));
     if (stride) {
       fill_storage_impl(idx, std::forward<Ts>(ts)...);
     }
   }
 
   template <typename T, typename... Ts>
-  void fill_impl(detail::no_container_tag, T&&t, Ts&&... ts) {
+  void fill_impl(detail::no_container_tag, T &&t, Ts &&... ts) {
     static_assert(axes_size::value == 1,
                   "fill argument does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
@@ -330,29 +307,30 @@ private:
   }
 
   template <typename T>
-  const_reference at_impl(detail::dynamic_container_tag, T && t) const {
-    BOOST_ASSERT_MSG(std::distance(std::begin(t), std::end(t)) == axes_size::value,
+  const_reference at_impl(detail::dynamic_container_tag, T &&t) const {
+    BOOST_ASSERT_MSG(std::distance(std::begin(t), std::end(t)) ==
+                         axes_size::value,
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin_iter(mpl::int_<axes_size::value>(), idx, stride, std::begin(t));
+    lin_iter(axes_size(), idx, stride, std::begin(t));
     if (stride == 0)
       throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 
   template <typename T>
-  const_reference at_impl(detail::static_container_tag, T&&t) const {
-    static_assert(detail::size_of<T>::value == axes_size::value,
+  const_reference at_impl(detail::static_container_tag, T &&t) const {
+    static_assert(mp11::mp_size<T>::value == axes_size::value,
                   "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin_get(mpl::int_<axes_size::value>(), idx, stride, std::forward<T>(t));
+    lin_get(axes_size(), idx, stride, std::forward<T>(t));
     if (stride == 0)
       throw std::out_of_range("bin index out of range");
     return storage_[idx];
   }
 
   template <typename T>
-  const_reference at_impl(detail::no_container_tag, T&&t) const {
+  const_reference at_impl(detail::no_container_tag, T &&t) const {
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, detail::indirect_int_cast(t));
     if (stride == 0)
@@ -360,84 +338,92 @@ private:
     return storage_[idx];
   }
 
-  template <unsigned D> inline void xlin(std::size_t &, std::size_t &) const noexcept {}
+  template <unsigned D>
+  inline void xlin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename T, typename... Ts>
-  inline void xlin(std::size_t &idx, std::size_t &stride, T&&t,
-                   Ts&&... ts) const {
-    const auto a_size = fusion::at_c<D>(axes_).size();
-    const auto a_shape = fusion::at_c<D>(axes_).shape();
-    const int j = fusion::at_c<D>(axes_).index(t);
+  inline void xlin(std::size_t &idx, std::size_t &stride, T &&t,
+                   Ts &&... ts) const {
+    const auto a_size = std::get<D>(axes_).size();
+    const auto a_shape = std::get<D>(axes_).shape();
+    const int j = std::get<D>(axes_).index(t);
     detail::lin(idx, stride, a_size, a_shape, j);
     xlin<D + 1>(idx, stride, std::forward<Ts>(ts)...);
   }
 
   template <typename Iterator>
-  void xlin_iter(mpl::int_<0>, std::size_t &, std::size_t &, Iterator ) const noexcept {}
+  void xlin_iter(mp11::mp_size_t<0>, std::size_t &, std::size_t &,
+                 Iterator) const noexcept {}
 
-  template <int N, typename Iterator>
-  void xlin_iter(mpl::int_<N>, std::size_t &idx, std::size_t &stride, Iterator iter) const {
+  template <long unsigned int N, typename Iterator>
+  void xlin_iter(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride,
+                 Iterator iter) const {
     constexpr unsigned D = axes_size::value - N;
-    const auto a_size = fusion::at_c<D>(axes_).size();
-    const auto a_shape = fusion::at_c<D>(axes_).shape();
-    const int j = fusion::at_c<D>(axes_).index(*iter);
+    const auto a_size = std::get<D>(axes_).size();
+    const auto a_shape = std::get<D>(axes_).shape();
+    const int j = std::get<D>(axes_).index(*iter);
     detail::lin(idx, stride, a_size, a_shape, j);
-    xlin_iter(mpl::int_<N-1>(), idx, stride, ++iter);
+    xlin_iter(mp11::mp_size_t<N - 1>(), idx, stride, ++iter);
   }
 
   template <unsigned D>
   inline void lin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename... Ts>
-  inline void lin(std::size_t &idx, std::size_t &stride, int j,
-                  Ts... ts) const noexcept {
-    const auto a_size = fusion::at_c<D>(axes_).size();
-    const auto a_shape = fusion::at_c<D>(axes_).shape();
+  inline void lin(std::size_t &idx, std::size_t &stride, int j, Ts... ts) const
+      noexcept {
+    const auto a_size = std::get<D>(axes_).size();
+    const auto a_shape = std::get<D>(axes_).shape();
     stride *= (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
     detail::lin(idx, stride, a_size, a_shape, j);
-    lin<(D+1)>(idx, stride, ts...);
+    lin<(D + 1)>(idx, stride, ts...);
   }
 
   template <typename Iterator>
-  void lin_iter(mpl::int_<0>, std::size_t &, std::size_t &, Iterator) const noexcept {}
+  void lin_iter(mp11::mp_size_t<0>, std::size_t &, std::size_t &,
+                Iterator) const noexcept {}
 
-  template <int N, typename Iterator>
-  void lin_iter(mpl::int_<N>, std::size_t &idx, std::size_t &stride,
+  template <long unsigned int N, typename Iterator>
+  void lin_iter(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride,
                 Iterator iter) const noexcept {
     constexpr unsigned D = axes_size::value - N;
-    const auto a_size = fusion::at_c<D>(axes_).size();
-    const auto a_shape = fusion::at_c<D>(axes_).shape();
+    const auto a_size = std::get<D>(axes_).size();
+    const auto a_shape = std::get<D>(axes_).shape();
     const auto j = detail::indirect_int_cast(*iter);
     stride *= (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
     detail::lin(idx, stride, a_size, a_shape, j);
-    lin_iter(mpl::int_<(N-1)>(), idx, stride, ++iter);
+    lin_iter(mp11::mp_size_t<(N - 1)>(), idx, stride, ++iter);
   }
 
   template <typename T>
-  void xlin_get(mpl::int_<0>, std::size_t &, std::size_t &, T &&) const noexcept {}
+  void xlin_get(mp11::mp_size_t<0>, std::size_t &, std::size_t &, T &&) const
+      noexcept {}
 
-  template <int N, typename T>
-  void xlin_get(mpl::int_<N>, std::size_t &idx, std::size_t &stride, T && t) const {
-    constexpr unsigned D = detail::size_of<T>::value - N;
-    const auto a_size = fusion::at_c<D>(axes_).size();
-    const auto a_shape = fusion::at_c<D>(axes_).shape();
-    const auto j = fusion::at_c<D>(axes_).index(std::get<D>(t));
+  template <long unsigned int N, typename T>
+  void xlin_get(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride,
+                T &&t) const {
+    constexpr unsigned D = detail::mp_size<T>::value - N;
+    const auto a_size = std::get<D>(axes_).size();
+    const auto a_shape = std::get<D>(axes_).shape();
+    const auto j = std::get<D>(axes_).index(std::get<D>(t));
     detail::lin(idx, stride, a_size, a_shape, j);
-    xlin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));
+    xlin_get(mp11::mp_size_t<(N - 1)>(), idx, stride, std::forward<T>(t));
   }
 
   template <typename T>
-  void lin_get(mpl::int_<0>, std::size_t &, std::size_t &, T&&) const noexcept {}
+  void lin_get(mp11::mp_size_t<0>, std::size_t &, std::size_t &, T &&) const
+      noexcept {}
 
-  template <int N, typename T>
-  void lin_get(mpl::int_<N>, std::size_t &idx, std::size_t &stride, T&&t) const noexcept {
-    constexpr unsigned D = detail::size_of<T>::value - N;
-    const auto a_size = fusion::at_c<D>(axes_).size();
-    const auto a_shape = fusion::at_c<D>(axes_).shape();
+  template <long unsigned int N, typename T>
+  void lin_get(mp11::mp_size_t<N>, std::size_t &idx, std::size_t &stride,
+               T &&t) const noexcept {
+    constexpr unsigned D = detail::mp_size<T>::value - N;
+    const auto a_size = std::get<D>(axes_).size();
+    const auto a_shape = std::get<D>(axes_).shape();
     const auto j = detail::indirect_int_cast(std::get<D>(t));
     stride *= (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
     detail::lin(idx, stride, a_size, a_shape, j);
-    lin_get(mpl::int_<(N-1)>(), idx, stride, std::forward<T>(t));
+    lin_get(mp11::mp_size_t<(N - 1)>(), idx, stride, std::forward<T>(t));
   }
 
   struct shape_assign_visitor {
@@ -465,27 +451,26 @@ private:
 
 /// default static type factory
 template <typename... Axis>
-inline histogram<static_tag, mpl::vector<Axis...>>
+static_histogram<mp11::mp_list<Axis...>>
 make_static_histogram(Axis &&... axis) {
-  using h = histogram<static_tag, mpl::vector<Axis...>>;
-  return h(typename h::axes_type(std::forward<Axis>(axis)...));
-}
-
-template <typename... Axis>
-inline histogram<static_tag, mpl::vector<Axis...>,
-                 array_storage<weight_counter<double>>>
-make_static_weighted_histogram(Axis &&... axis) {
-  using h = histogram<static_tag, mpl::vector<Axis...>,
-                      array_storage<weight_counter<double>>>;
-  return h(typename h::axes_type(std::forward<Axis>(axis)...));
+  using H = static_histogram<mp11::mp_list<Axis...>>;
+  return H(std::forward<Axis>(axis)...);
 }
 
 /// static type factory with variable storage type
 template <typename Storage, typename... Axis>
-inline histogram<static_tag, mpl::vector<Axis...>, Storage>
+static_histogram<mp11::mp_list<Axis...>, Storage>
 make_static_histogram_with(Axis &&... axis) {
-  using h = histogram<static_tag, mpl::vector<Axis...>, Storage>;
-  return h(typename h::axes_type(std::forward<Axis>(axis)...));
+  using H = static_histogram<mp11::mp_list<Axis...>, Storage>;
+  return H(std::forward<Axis>(axis)...);
+}
+
+template <typename... Axis>
+static_histogram<mp11::mp_list<Axis...>, array_storage<weight_counter<double>>>
+make_static_weighted_histogram(Axis &&... axis) {
+  using H = static_histogram<mp11::mp_list<Axis...>,
+                             array_storage<weight_counter<double>>>;
+  return H(std::forward<Axis>(axis)...);
 }
 
 } // namespace histogram

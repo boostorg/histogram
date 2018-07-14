@@ -8,7 +8,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #ifdef HAVE_SERIALIZATION
-#  include <boost/histogram/serialization.hpp>
+#include <boost/histogram/serialization.hpp>
 #endif
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
@@ -72,10 +72,10 @@ template <> void serialization_impl<void>() {
   std::ostringstream os;
   std::string buf;
   {
-    std::ostringstream os;
-    boost::archive::text_oarchive oa(os);
+    std::ostringstream os2;
+    boost::archive::text_oarchive oa(os2);
     oa << a;
-    buf = os.str();
+    buf = os2.str();
   }
   adaptive_storage b;
   BOOST_TEST(!(a == b));

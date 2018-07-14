@@ -7,8 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
-#include <boost/mpl/bool.hpp>
-#include <boost/mpl/vector.hpp>
+#include <boost/mp11.hpp>
 #include <string>
 #include <type_traits>
 
@@ -34,16 +33,16 @@ template <typename RealType = double> class variable;
 template <typename IntType = int> class integer;
 template <typename T = int> class category;
 
-using builtins =
-    mpl::vector<axis::regular<double, axis::transform::identity>,
-                axis::regular<double, axis::transform::log>,
-                axis::regular<double, axis::transform::sqrt>,
-                axis::regular<double, axis::transform::pow>,
-                axis::circular<double>, axis::variable<double>,
-                axis::integer<int>, axis::category<int>,
-                axis::category<std::string>>;
+using types = mp11::mp_list<axis::regular<double, axis::transform::identity>,
+                            axis::regular<double, axis::transform::log>,
+                            axis::regular<double, axis::transform::sqrt>,
+                            axis::regular<double, axis::transform::pow>,
+                            axis::circular<double>, axis::variable<double>,
+                            axis::integer<int>, axis::category<int>,
+                            axis::category<std::string>>;
 
-template <typename Axes = builtins> class any;
+template <typename... Ts> class any;
+using any_std = mp11::mp_rename<types, any>;
 
 } // namespace axis
 
@@ -52,7 +51,7 @@ struct static_tag {};
 template <class Type, class Axes, class Storage = adaptive_storage>
 class histogram;
 
-template <class Axes = axis::builtins, class Storage = adaptive_storage>
+template <class Axes = axis::types, class Storage = adaptive_storage>
 using dynamic_histogram = histogram<dynamic_tag, Axes, Storage>;
 
 template <class Axes, class Storage = adaptive_storage>
