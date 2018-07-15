@@ -131,9 +131,6 @@ if(BUILD_BENCHMARKS)
   add_executable(speed_cpp ../test/speed_cpp.cpp)
   target_compile_options(speed_cpp PRIVATE -O3)
   # target_link_libraries(speed_cpp -lbenchmark -lpthread)
-  if (BUILD_PYTHON)
-    configure_file(../test/speed_numpy.py speed_numpy.py)
-  endif()
 endif()
 
 # tests
