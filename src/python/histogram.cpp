@@ -415,7 +415,7 @@ void register_histogram() {
            "\nIf Numpy support is enabled, 1d-arrays can be passed instead of"
            "\nvalues, which must be equal in lenght. Arrays and values can"
            "\nbe mixed arbitrarily in the same call.")
-      .add_property("bincount", &pyhistogram::bincount,
+      .def("__len__", &pyhistogram::size,
            ":return: total number of bins, including under- and overflow")
       .def("at", bp::raw_function(histogram_at),
            ":param int args: indices of the bin (number must match dimension)"
