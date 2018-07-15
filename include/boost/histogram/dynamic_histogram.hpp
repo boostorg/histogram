@@ -143,7 +143,7 @@ public:
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, std::forward<Ts>(ts)...);
     if (stride) {
-      fill_storage_impl(idx);
+      detail::fill_storage(storage_, idx);
     }
   }
 
@@ -164,7 +164,7 @@ public:
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, std::forward<Ts>(ts)...);
     if (stride) {
-      fill_storage_impl(idx, std::move(w));
+      detail::fill_storage(storage_, idx, std::move(w));
     }
   }
 
@@ -185,9 +185,7 @@ public:
                      "bin arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, static_cast<int>(ts)...);
-    if (stride == 0)
-      throw std::out_of_range("bin index out of range");
-    return storage_[idx];
+    return detail::storage_get(storage_, idx, stride == 0);
   }
 
   template <typename T> const_reference at(T &&t) const {
@@ -270,13 +268,6 @@ private:
     return v.value;
   }
 
-  template <typename T>
-  void fill_storage_impl(std::size_t idx, detail::weight<T> &&w) {
-    storage_.add(idx, w);
-  }
-
-  void fill_storage_impl(std::size_t idx) { storage_.increase(idx); }
-
   template <typename T, typename... Ts>
   void fill_impl(detail::dynamic_container_tag, T &&t, Ts &&... ts) {
     BOOST_ASSERT_MSG(dim() == std::distance(std::begin(t), std::end(t)),
@@ -284,7 +275,7 @@ private:
     std::size_t idx = 0, stride = 1;
     xlin_iter(idx, stride, std::begin(t));
     if (stride) {
-      fill_storage_impl(idx, std::forward<Ts>(ts)...);
+      detail::fill_storage(storage_, idx, std::forward<Ts>(ts)...);
     }
   }
 
@@ -296,7 +287,7 @@ private:
     xlin_get(mp11::mp_int<detail::mp_size<T>::value>(), idx, stride,
              std::forward<T>(t));
     if (stride) {
-      fill_storage_impl(idx, std::forward<Ts>(ts)...);
+      detail::fill_storage(storage_, idx, std::forward<Ts>(ts)...);
     }
   }
 
@@ -307,7 +298,7 @@ private:
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, t);
     if (stride) {
-      fill_storage_impl(idx, std::forward<Ts>(ts)...);
+      detail::fill_storage(storage_, idx, std::forward<Ts>(ts)...);
     }
   }
 
@@ -317,9 +308,7 @@ private:
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_iter(idx, stride, std::begin(t));
-    if (stride == 0)
-      throw std::out_of_range("bin index out of range");
-    return storage_[idx];
+    return detail::storage_get(storage_, idx, stride == 0);
   }
 
   template <typename T>
@@ -329,9 +318,7 @@ private:
     std::size_t idx = 0, stride = 1;
     lin_get(mp11::mp_int<detail::mp_size<T>::value>(), idx, stride,
             std::forward<T>(t));
-    if (stride == 0)
-      throw std::out_of_range("bin index out of range");
-    return storage_[idx];
+    return detail::storage_get(storage_, idx, stride == 0);
   }
 
   template <typename T>
@@ -340,9 +327,7 @@ private:
                      "bin argument does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, detail::indirect_int_cast(t));
-    if (stride == 0)
-      throw std::out_of_range("bin index out of range");
-    return storage_[idx];
+    return detail::storage_get(storage_, idx, stride == 0);
   }
 
   struct lin_visitor : public static_visitor<void> {
@@ -362,10 +347,10 @@ private:
   };
 
   template <unsigned D>
-  inline void lin(std::size_t &, std::size_t &) const noexcept {}
+  void lin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename... Ts>
-  inline void lin(std::size_t &idx, std::size_t &stride, int x, Ts... ts) const
+  void lin(std::size_t &idx, std::size_t &stride, int x, Ts... ts) const
       noexcept {
     apply_visitor(lin_visitor{idx, stride, x}, axes_[D]);
     lin<D + 1>(idx, stride, ts...);
@@ -397,29 +382,27 @@ private:
   };
 
   template <unsigned D>
-  inline void xlin(std::size_t &, std::size_t &) const noexcept {}
+  void xlin(std::size_t &, std::size_t &) const {}
 
   template <unsigned D, typename T, typename... Ts>
-  inline void xlin(std::size_t &idx, std::size_t &stride, T &&t,
+  void xlin(std::size_t &idx, std::size_t &stride, T &&t,
                    Ts &&... ts) const {
     apply_visitor(xlin_visitor<T>{idx, stride, t}, axes_[D]);
     xlin<(D + 1)>(idx, stride, std::forward<Ts>(ts)...);
   }
 
   template <typename Iterator>
-  inline void lin_iter(std::size_t &idx, std::size_t &stride,
+  void lin_iter(std::size_t &idx, std::size_t &stride,
                        Iterator iter) const noexcept {
     for (const auto &a : axes_) {
-      apply_visitor(lin_visitor(idx, stride, *iter), a);
-      ++iter;
+      apply_visitor(lin_visitor(idx, stride, *iter++), a);
     }
   }
 
   template <typename Iterator>
   void xlin_iter(std::size_t &idx, std::size_t &stride, Iterator iter) const {
     for (const auto &a : axes_) {
-      apply_visitor(xlin_visitor<decltype(*iter)>{idx, stride, *iter}, a);
-      ++iter;
+      apply_visitor(xlin_visitor<decltype(*iter)>{idx, stride, *iter++}, a);
     }
   }
 
@@ -480,63 +463,39 @@ template <typename... Axis>
 dynamic_histogram<
     mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>>
 make_dynamic_histogram(Axis &&... axis) {
-  using H = dynamic_histogram<
-      mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>>;
-  return H(std::forward<Axis>(axis)...);
+  return dynamic_histogram<
+      mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>>(
+      std::forward<Axis>(axis)...);
 }
 
 template <typename Storage, typename... Axis>
 dynamic_histogram<
     mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>, Storage>
 make_dynamic_histogram_with(Axis &&... axis) {
-  using H = dynamic_histogram<
-      mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>, Storage>;
-  return H(std::forward<Axis>(axis)...);
+  return dynamic_histogram<
+      mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>, Storage>(
+      std::forward<Axis>(axis)...);
 }
 
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 dynamic_histogram<
     detail::mp_union<axis::types, typename Iterator::value_type::types>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
-  using H = dynamic_histogram<
-      detail::mp_union<axis::types, typename Iterator::value_type::types>>;
-  return H(begin, end);
+  return dynamic_histogram<
+      detail::mp_union<axis::types, typename Iterator::value_type::types>>(
+      begin, end);
 }
 
-// template <typename... Axes>
-// dynamic_histogram<
-
-// detail::union_t<axis::types, mp11::mp_list<Axes...>>,
-//           array_storage<weight_counter<double>>>
-// make_dynamic_weighted_histogram(Axes &&... axes) {
-//   return dynamic_histogram,
-//                    detail::union_t<axis::types, mp11::mp_list<Axes...>>,
-//                    array_storage<weight_counter<double>>>(
-//       std::forward<Axes>(axes)...);
-// }
-
-// template <typename Iterator, typename = detail::requires_iterator<Iterator>>
-// dynamic_histogram,
-//           detail::union_t<axis::types, typename Iterator::value_type::types>,
-//           array_storage<weight_counter<double>>>
-// make_dynamic_weighted_histogram(Iterator begin, Iterator end) {
-//   return histogram<
-//       dynamic_tag,
-//       detail::union_t<axis::types, typename Iterator::value_type::types>,
-//       array_storage<weight_counter<double>>>(begin, end);
-// }
-
-// template <typename Storage, typename Iterator,
-//           typename = detail::requires_iterator<Iterator>>
-// dynamic_histogram,
-//           detail::union_t<axis::types, typename Iterator::value_type::types>,
-//           Storage>
-// make_dynamic_histogram_with(Iterator begin, Iterator end) {
-//   return histogram<
-//       dynamic_tag,
-//       detail::union_t<axis::types, typename Iterator::value_type::types>,
-//       Storage>(begin, end);
-// }
+template <typename Storage, typename Iterator,
+          typename = detail::requires_iterator<Iterator>>
+dynamic_histogram<
+    detail::mp_union<axis::types, typename Iterator::value_type::types>,
+    Storage>
+make_dynamic_histogram_with(Iterator begin, Iterator end) {
+  return dynamic_histogram<
+      detail::mp_union<axis::types, typename Iterator::value_type::types>,
+      Storage>(begin, end);
+}
 
 } // namespace histogram
 } // namespace boost

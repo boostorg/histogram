@@ -134,10 +134,8 @@ void axes_assign(std::vector<axis::any<Ts...>> &t,
 }
 
 struct field_count_visitor : public static_visitor<void> {
-  mutable std::size_t value = 1;
-  template <typename T> void operator()(const T &t) const {
-    value *= t.shape();
-  }
+  std::size_t value = 1;
+  template <typename T> void operator()(const T &t) { value *= t.shape(); }
 };
 
 template <typename Unary> struct unary_visitor : public static_visitor<void> {

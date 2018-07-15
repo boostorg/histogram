@@ -142,7 +142,7 @@ public:
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, ts...);
     if (stride)
-      fill_storage_impl(idx);
+      detail::fill_storage(storage_, idx);
   }
 
   template <typename T> void operator()(T &&t) {
@@ -159,7 +159,7 @@ public:
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, ts...);
     if (stride)
-      fill_storage_impl(idx, std::move(w));
+      detail::fill_storage(storage_, idx, std::move(w));
   }
 
   // TODO: remove as obsolete
@@ -177,9 +177,7 @@ public:
                   "bin arguments do not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, static_cast<int>(ts)...);
-    if (stride == 0)
-      throw std::out_of_range("bin index out of range");
-    return storage_[idx];
+    return detail::storage_get(storage_, idx, stride == 0);
   }
 
   template <typename T> const_reference operator[](T &&t) const {
@@ -260,17 +258,10 @@ private:
   Storage storage_;
 
   std::size_t bincount_from_axes() const noexcept {
-    detail::field_count_visitor fc;
-    mp11::tuple_for_each(axes_, fc);
-    return fc.value;
+    detail::field_count_visitor v;
+    for_each_axis(v);
+    return v.value;
   }
-
-  template <typename T>
-  void fill_storage_impl(std::size_t idx, detail::weight<T> &&w) {
-    storage_.add(idx, w);
-  }
-
-  void fill_storage_impl(std::size_t idx) { storage_.increase(idx); }
 
   template <typename T, typename... Ts>
   void fill_impl(detail::dynamic_container_tag, T &&t, Ts &&... ts) {
@@ -280,7 +271,7 @@ private:
     std::size_t idx = 0, stride = 1;
     xlin_iter(axes_size(), idx, stride, std::begin(t));
     if (stride) {
-      fill_storage_impl(idx, std::forward<Ts>(ts)...);
+      detail::fill_storage(storage_, idx, std::forward<Ts>(ts)...);
     }
   }
 
@@ -291,7 +282,7 @@ private:
     std::size_t idx = 0, stride = 1;
     xlin_get(axes_size(), idx, stride, std::forward<T>(t));
     if (stride) {
-      fill_storage_impl(idx, std::forward<Ts>(ts)...);
+      detail::fill_storage(storage_, idx, std::forward<Ts>(ts)...);
     }
   }
 
@@ -302,7 +293,7 @@ private:
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, std::forward<T>(t));
     if (stride) {
-      fill_storage_impl(idx, std::forward<Ts>(ts)...);
+      detail::fill_storage(storage_, idx, std::forward<Ts>(ts)...);
     }
   }
 
@@ -313,9 +304,7 @@ private:
                      "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_iter(axes_size(), idx, stride, std::begin(t));
-    if (stride == 0)
-      throw std::out_of_range("bin index out of range");
-    return storage_[idx];
+    return detail::storage_get(storage_, idx, stride == 0);
   }
 
   template <typename T>
@@ -324,25 +313,21 @@ private:
                   "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     lin_get(axes_size(), idx, stride, std::forward<T>(t));
-    if (stride == 0)
-      throw std::out_of_range("bin index out of range");
-    return storage_[idx];
+    return detail::storage_get(storage_, idx, stride == 0);
   }
 
   template <typename T>
   const_reference at_impl(detail::no_container_tag, T &&t) const {
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, detail::indirect_int_cast(t));
-    if (stride == 0)
-      throw std::out_of_range("bin index out of range");
-    return storage_[idx];
+    return detail::storage_get(storage_, idx, stride == 0);
   }
 
   template <unsigned D>
-  inline void xlin(std::size_t &, std::size_t &) const noexcept {}
+  void xlin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename T, typename... Ts>
-  inline void xlin(std::size_t &idx, std::size_t &stride, T &&t,
+  void xlin(std::size_t &idx, std::size_t &stride, T &&t,
                    Ts &&... ts) const {
     const auto a_size = std::get<D>(axes_).size();
     const auto a_shape = std::get<D>(axes_).shape();
@@ -367,10 +352,10 @@ private:
   }
 
   template <unsigned D>
-  inline void lin(std::size_t &, std::size_t &) const noexcept {}
+  void lin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename... Ts>
-  inline void lin(std::size_t &idx, std::size_t &stride, int j, Ts... ts) const
+  void lin(std::size_t &idx, std::size_t &stride, int j, Ts... ts) const
       noexcept {
     const auto a_size = std::get<D>(axes_).size();
     const auto a_shape = std::get<D>(axes_).shape();
@@ -451,26 +436,18 @@ private:
 
 /// default static type factory
 template <typename... Axis>
-static_histogram<mp11::mp_list<Axis...>>
+static_histogram<mp11::mp_list<detail::rm_cv_ref<Axis>...>>
 make_static_histogram(Axis &&... axis) {
-  using H = static_histogram<mp11::mp_list<Axis...>>;
-  return H(std::forward<Axis>(axis)...);
+  return static_histogram<mp11::mp_list<detail::rm_cv_ref<Axis>...>>(
+      std::forward<Axis>(axis)...);
 }
 
 /// static type factory with variable storage type
 template <typename Storage, typename... Axis>
-static_histogram<mp11::mp_list<Axis...>, Storage>
+static_histogram<mp11::mp_list<detail::rm_cv_ref<Axis>...>, Storage>
 make_static_histogram_with(Axis &&... axis) {
-  using H = static_histogram<mp11::mp_list<Axis...>, Storage>;
-  return H(std::forward<Axis>(axis)...);
-}
-
-template <typename... Axis>
-static_histogram<mp11::mp_list<Axis...>, array_storage<weight_counter<double>>>
-make_static_weighted_histogram(Axis &&... axis) {
-  using H = static_histogram<mp11::mp_list<Axis...>,
-                             array_storage<weight_counter<double>>>;
-  return H(std::forward<Axis>(axis)...);
+  return static_histogram<mp11::mp_list<detail::rm_cv_ref<Axis>...>, Storage>(
+      std::forward<Axis>(axis)...);
 }
 
 } // namespace histogram

@@ -952,7 +952,8 @@ int main() {
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
 
-    auto h2 = make_dynamic_histogram_with<array_storage<int>>(v.begin(), v.end());
+    auto h2 =
+        make_dynamic_histogram_with<array_storage<int>>(v.begin(), v.end());
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
   }
