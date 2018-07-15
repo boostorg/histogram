@@ -66,7 +66,7 @@ template <typename Type> void run_tests() {
     auto h =
         make_histogram<adaptive_storage>(Type(), axis::regular<>{3, -1, 1});
     BOOST_TEST_EQ(h.dim(), 1);
-    BOOST_TEST_EQ(h.bincount(), 5);
+    BOOST_TEST_EQ(h.size(), 5);
     BOOST_TEST_EQ(h.axis(0_c).shape(), 5);
     BOOST_TEST_EQ(h.axis().shape(), 5);
     auto h2 = make_histogram<array_storage<unsigned>>(
@@ -79,7 +79,7 @@ template <typename Type> void run_tests() {
     auto h = make_histogram<adaptive_storage>(Type(), axis::regular<>{3, -1, 1},
                                               axis::integer<>{-1, 2});
     BOOST_TEST_EQ(h.dim(), 2);
-    BOOST_TEST_EQ(h.bincount(), 25);
+    BOOST_TEST_EQ(h.size(), 25);
     BOOST_TEST_EQ(h.axis(0_c).shape(), 5);
     BOOST_TEST_EQ(h.axis(1_c).shape(), 5);
     auto h2 = make_histogram<array_storage<unsigned>>(
@@ -93,7 +93,7 @@ template <typename Type> void run_tests() {
                                               axis::integer<>{-1, 2},
                                               axis::circular<>{3});
     BOOST_TEST_EQ(h.dim(), 3);
-    BOOST_TEST_EQ(h.bincount(), 75);
+    BOOST_TEST_EQ(h.size(), 75);
     auto h2 = make_histogram<array_storage<unsigned>>(
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3});
@@ -106,7 +106,7 @@ template <typename Type> void run_tests() {
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1});
     BOOST_TEST_EQ(h.dim(), 4);
-    BOOST_TEST_EQ(h.bincount(), 300);
+    BOOST_TEST_EQ(h.size(), 300);
     auto h2 = make_histogram<array_storage<unsigned>>(
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1});
@@ -121,7 +121,7 @@ template <typename Type> void run_tests() {
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},
         axis::category<>{{A, B, C}});
     BOOST_TEST_EQ(h.dim(), 5);
-    BOOST_TEST_EQ(h.bincount(), 900);
+    BOOST_TEST_EQ(h.size(), 900);
     auto h2 = make_histogram<array_storage<unsigned>>(
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},
@@ -169,14 +169,14 @@ template <typename Type> void run_tests() {
     // static axes cannot shrink to zero
     BOOST_TEST_EQ(h.dim(), expected_moved_from_dim(Type(), 2));
     BOOST_TEST_EQ(sum(h).value(), 0);
-    BOOST_TEST_EQ(h.bincount(), 0);
+    BOOST_TEST_EQ(h.size(), 0);
     BOOST_TEST_EQ(h2, href);
     decltype(h) h3;
     h3 = std::move(h2);
     // static axes cannot shrink to zero
     BOOST_TEST_EQ(h2.dim(), expected_moved_from_dim(Type(), 2));
     BOOST_TEST_EQ(sum(h2).value(), 0);
-    BOOST_TEST_EQ(h2.bincount(), 0);
+    BOOST_TEST_EQ(h2.size(), 0);
     BOOST_TEST_EQ(h3, href);
   }
 

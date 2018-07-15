@@ -52,11 +52,11 @@ public:
   using const_reverse_iterator = reverse_iterator_over<Derived>;
 
   /// Returns the number of bins, excluding overflow/underflow.
-  inline int size() const noexcept { return size_; }
+  int size() const noexcept { return size_; }
   /// Returns the number of bins, including overflow/underflow.
-  inline int shape() const noexcept { return size_; }
+  int shape() const noexcept { return size_; }
   /// Returns true if axis has extra overflow and underflow bins.
-  inline bool uoflow() const noexcept { return false; }
+  bool uoflow() const noexcept { return false; }
   /// Returns the axis label, which is a name or description.
   string_view label() const noexcept { return label_; }
   /// Change the label of an axis.
@@ -118,9 +118,9 @@ template <typename Derived> class axis_base_uoflow : public axis_base<Derived> {
 
 public:
   /// Returns the number of bins, including overflow/underflow.
-  inline int shape() const noexcept { return shape_; }
+  int shape() const noexcept { return shape_; }
   /// Returns whether axis has extra overflow and underflow bins.
-  inline bool uoflow() const noexcept { return shape_ > base_type::size(); }
+  bool uoflow() const noexcept { return shape_ > base_type::size(); }
 
 protected:
   axis_base_uoflow(unsigned n, string_view label,
@@ -246,7 +246,7 @@ public:
   regular &operator=(regular &&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(value_type x) const noexcept {
+  int index(value_type x) const noexcept {
     // Optimized code
     const value_type z = (Transform::forward(x) - min_) / delta_;
     return z >= 0.0 ? (z > base_type::size() ? base_type::size()
@@ -255,7 +255,7 @@ public:
   }
 
   /// Returns lower edge of bin.
-  inline value_type lower(int i) const noexcept {
+  value_type lower(int i) const noexcept {
     const auto n = base_type::size();
     value_type x;
     if (i < 0)
@@ -321,7 +321,7 @@ public:
   circular &operator=(circular &&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(value_type x) const noexcept {
+  int index(value_type x) const noexcept {
     const value_type z = (x - phase_) / perimeter_;
     const int i =
         static_cast<int>(std::floor(z * base_type::size())) % base_type::size();
@@ -329,12 +329,12 @@ public:
   }
 
   /// Returns lower edge of bin.
-  inline value_type lower(int i) const noexcept {
+  value_type lower(int i) const noexcept {
     const value_type z = value_type(i) / base_type::size();
     return z * perimeter_ + phase_;
   }
 
-  inline bin_type operator[](int idx) const noexcept {
+  bin_type operator[](int idx) const noexcept {
     return bin_type(idx, *this);
   }
 
@@ -411,13 +411,13 @@ public:
   variable &operator=(variable &&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(value_type x) const noexcept {
+  int index(value_type x) const noexcept {
     return std::upper_bound(x_.get(), x_.get() + base_type::size() + 1, x) -
            x_.get() - 1;
   }
 
   /// Returns the starting edge of the bin.
-  inline value_type lower(int i) const noexcept {
+  value_type lower(int i) const noexcept {
     if (i < 0) {
       return -std::numeric_limits<value_type>::infinity();
     }
@@ -479,13 +479,13 @@ public:
   integer &operator=(integer &&) = default;
 
   /// Returns the bin index for the passed argument.
-  inline int index(value_type x) const noexcept {
+  int index(value_type x) const noexcept {
     const int z = x - min_;
     return z >= 0 ? (z > base_type::size() ? base_type::size() : z) : -1;
   }
 
   /// Returns lower edge of the integral bin.
-  inline value_type lower(int i) const noexcept {
+  value_type lower(int i) const noexcept {
     if (i < 0) {
       return -std::numeric_limits<value_type>::max();
     }
@@ -561,7 +561,7 @@ public:
   }
 
   /// Returns the bin index for the passed argument.
-  inline int index(const value_type &x) const noexcept {
+  int index(const value_type &x) const noexcept {
     auto it = map_->left.find(x);
     if (it == map_->left.end())
       return base_type::size();
@@ -569,7 +569,7 @@ public:
   }
 
   /// Returns the value for the bin index (performs a range check).
-  inline const value_type &value(int idx) const {
+  const value_type &value(int idx) const {
     auto it = map_->right.find(idx);
     if (it == map_->right.end())
       throw std::out_of_range("category index out of range");

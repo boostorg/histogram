@@ -57,7 +57,7 @@ public:
   using axes_type = std::vector<any_axis_type>;
   using element_type = typename Storage::element_type;
   using const_reference = typename Storage::const_reference;
-  using const_iterator = iterator_over<histogram, Storage>;
+  using const_iterator = iterator_over<histogram>;
   using iterator = const_iterator;
 
 public:
@@ -72,18 +72,27 @@ public:
   explicit histogram(Axis0 &&axis0, Axis &&... axis)
       : axes_({any_axis_type(std::forward<Axis0>(axis0)),
                any_axis_type(std::forward<Axis>(axis))...}) {
-    storage_ = Storage(bincount_from_axes());
+    storage_ = Storage(size_from_axes());
+    index_cache_.reset(*this);
+  }
+
+  explicit histogram(axes_type&& axes)
+      : axes_(std::move(axes)) {
+    storage_ = Storage(size_from_axes());
+    index_cache_.reset(*this);
   }
 
   template <typename Iterator, typename = detail::requires_iterator<Iterator>>
   histogram(Iterator begin, Iterator end) : axes_(std::distance(begin, end)) {
     std::copy(begin, end, axes_.begin());
-    storage_ = Storage(bincount_from_axes());
+    storage_ = Storage(size_from_axes());
+    index_cache_.reset(*this);
   }
 
   template <typename T, typename A, typename S>
   explicit histogram(const histogram<T, A, S> &rhs) : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
+    index_cache_.reset(*this);
   }
 
   template <typename T, typename A, typename S>
@@ -91,18 +100,22 @@ public:
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       detail::axes_assign(axes_, rhs.axes_);
       storage_ = rhs.storage_;
+      index_cache_.reset(*this);
     }
     return *this;
   }
 
   template <typename S>
   explicit histogram(dynamic_histogram<Axes, S> &&rhs)
-      : axes_(std::move(rhs.axes_)), storage_(std::move(rhs.storage_)) {}
+      : axes_(std::move(rhs.axes_)), storage_(std::move(rhs.storage_)) {
+    index_cache_.reset(*this);
+  }
 
   template <typename S> histogram &operator=(dynamic_histogram<Axes, S> &&rhs) {
     if (static_cast<const void *>(this) != static_cast<const void *>(&rhs)) {
       axes_ = std::move(rhs.axes_);
       storage_ = std::move(rhs.storage_);
+      index_cache_.reset(*this);
     }
     return *this;
   }
@@ -202,10 +215,10 @@ public:
   unsigned dim() const noexcept { return axes_.size(); }
 
   /// Total number of bins in the histogram (including underflow/overflow)
-  std::size_t bincount() const noexcept { return storage_.size(); }
+  std::size_t size() const noexcept { return storage_.size(); }
 
   /// Reset bin counters to zero
-  void reset() { storage_ = Storage(bincount_from_axes()); }
+  void reset() { storage_ = Storage(size_from_axes()); }
 
   /// Return axis \a i
   any_axis_type &axis(unsigned i = 0) {
@@ -251,18 +264,19 @@ public:
   }
 
   const_iterator begin() const noexcept {
-    return const_iterator(*this, storage_, 0);
+    return const_iterator(*this, 0);
   }
 
   const_iterator end() const noexcept {
-    return const_iterator(*this, storage_, storage_.size());
+    return const_iterator(*this, storage_.size());
   }
 
 private:
   axes_type axes_;
   Storage storage_;
+  mutable detail::index_cache index_cache_;
 
-  std::size_t bincount_from_axes() const noexcept {
+  std::size_t size_from_axes() const noexcept {
     detail::field_count_visitor v;
     for_each_axis(v);
     return v.value;
@@ -445,7 +459,7 @@ private:
       ++axes_iter;
       ++n_iter;
     }
-    histogram h(axes.begin(), axes.end());
+    histogram h(std::move(axes));
     detail::index_mapper m(n, b);
     do {
       h.storage_.add(m.second, storage_[m.first]);
@@ -454,6 +468,7 @@ private:
   }
 
   template <typename T, typename A, typename S> friend class histogram;
+  template <typename H> friend class iterator_over;
   friend class ::boost::python::access;
   friend class ::boost::serialization::access;
   template <typename Archive> void serialize(Archive &, unsigned);

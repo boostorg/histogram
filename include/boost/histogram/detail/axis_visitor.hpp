@@ -53,13 +53,13 @@ template <typename VecVar, typename Tuple> struct axes_assign_vecvar_tuple {
 };
 
 template <typename... Ts>
-bool axes_equal_impl(mp11::mp_true, const std::tuple<Ts...> &t,
+inline bool axes_equal_impl(mp11::mp_true, const std::tuple<Ts...> &t,
                      const std::tuple<Ts...> &u) {
   return t == u;
 }
 
 template <typename... Ts, typename... Us>
-bool axes_equal_impl(mp11::mp_false, const std::tuple<Ts...> &,
+inline bool axes_equal_impl(mp11::mp_false, const std::tuple<Ts...> &,
                      const std::tuple<Us...> &) {
   return false;
 }
@@ -67,20 +67,20 @@ bool axes_equal_impl(mp11::mp_false, const std::tuple<Ts...> &,
 } // namespace
 
 template <typename... Ts, typename... Us>
-bool axes_equal(const std::tuple<Ts...> &t, const std::tuple<Us...> &u) {
+inline bool axes_equal(const std::tuple<Ts...> &t, const std::tuple<Us...> &u) {
   return axes_equal_impl(
       mp11::mp_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>(), t, u);
 }
 
 template <typename... Ts, typename... Us>
-void axes_assign(std::tuple<Ts...> &t, const std::tuple<Us...> &u) {
+inline void axes_assign(std::tuple<Ts...> &t, const std::tuple<Us...> &u) {
   static_assert(std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>::value,
                 "cannot assign incompatible axes");
   t = u;
 }
 
 template <typename... Ts, typename... Us>
-bool axes_equal(const std::tuple<Ts...> &t,
+inline bool axes_equal(const std::tuple<Ts...> &t,
                 const std::vector<axis::any<Us...>> &u) {
   if (sizeof...(Ts) != u.size())
     return false;
@@ -93,20 +93,20 @@ bool axes_equal(const std::tuple<Ts...> &t,
 }
 
 template <typename... Ts, typename... Us>
-void axes_assign(std::tuple<Ts...> &t, const std::vector<axis::any<Us...>> &u) {
+inline void axes_assign(std::tuple<Ts...> &t, const std::vector<axis::any<Us...>> &u) {
   auto fn = axes_assign_tuple_vecvar<std::tuple<Ts...>,
                                      std::vector<axis::any<Us...>>>(t, u);
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(fn);
 }
 
 template <typename... Ts, typename... Us>
-bool axes_equal(const std::vector<axis::any<Ts...>> &t,
+inline bool axes_equal(const std::vector<axis::any<Ts...>> &t,
                 const std::tuple<Us...> &u) {
   return axes_equal(u, t);
 }
 
 template <typename... Ts, typename... Us>
-void axes_assign(std::vector<axis::any<Ts...>> &t, const std::tuple<Us...> &u) {
+inline void axes_assign(std::vector<axis::any<Ts...>> &t, const std::tuple<Us...> &u) {
   t.resize(sizeof...(Us));
   auto fn = axes_assign_vecvar_tuple<std::vector<axis::any<Ts...>>,
                                      std::tuple<Us...>>(t, u);
@@ -114,7 +114,7 @@ void axes_assign(std::vector<axis::any<Ts...>> &t, const std::tuple<Us...> &u) {
 }
 
 template <typename... Ts, typename... Us>
-bool axes_equal(const std::vector<axis::any<Ts...>> &t,
+inline bool axes_equal(const std::vector<axis::any<Ts...>> &t,
                 const std::vector<axis::any<Us...>> &u) {
   if (t.size() != u.size())
     return false;
@@ -126,7 +126,7 @@ bool axes_equal(const std::vector<axis::any<Ts...>> &t,
 }
 
 template <typename... Ts, typename... Us>
-void axes_assign(std::vector<axis::any<Ts...>> &t,
+inline void axes_assign(std::vector<axis::any<Ts...>> &t,
                  const std::vector<axis::any<Us...>> &u) {
   for (std::size_t i = 0; i < t.size(); ++i) {
     t[i] = u[i];
@@ -142,6 +142,15 @@ template <typename Unary> struct unary_visitor : public static_visitor<void> {
   Unary &unary;
   unary_visitor(Unary &u) : unary(u) {}
   template <typename Axis> void operator()(const Axis &a) const { unary(a); }
+};
+
+struct shape_vector_visitor {
+  std::vector<unsigned> shapes;
+  std::vector<unsigned>::iterator iter;
+  shape_vector_visitor(unsigned n) : shapes(n) { iter = shapes.begin(); }
+  template <typename Axis> void operator()(const Axis &a) {
+    *iter++ = a.shape();
+  }
 };
 
 } // namespace detail
