@@ -74,7 +74,7 @@ git:
 
 # Install packages (pre-installed: pytest numpy)
 install:
-  - if [[ ! -e $(which pip) ]]; then
+  - if [[ -n $(which pip) ]]; then
       python build/get_pip.py
     fi
   - pyenv versions
