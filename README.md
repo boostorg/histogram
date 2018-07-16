@@ -35,8 +35,8 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Support for variance tracking (++)
 * Support for addition and scaling of histograms
 * Optional serialization based on [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
-* Optional Python-bindings that work with Python 2.7 to 3.6 with [Boost.Python](https://www.boost.org/doc/libs/release/libs/python/)
-* Optional Numpy support
+* Optional Python-bindings that work with [Python-2.7 to 3.6](http://www.python.org)  with [Boost.Python](https://www.boost.org/doc/libs/release/libs/python/)
+* Optional [Numpy](http://www.numpy.org) support
 
 (+) In the standard configuration, if you don't use weighted increments.
 (++) If you don't use weighted increments, variance tracking come at zero cost. If you use weighted increments, extra space is reserved internally to keep track of a variance counter per bin. The conversion happens automatically and transparently.
