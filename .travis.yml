@@ -64,12 +64,14 @@ matrix:
         CMAKE_BUILD_TYPE=coverage
 
 git:
-  depth: 1
+  depth: 10
 
 # Install packages (pre-installed: pytest numpy)
 install:
   - pyenv versions
   - pyenv global ${PYTHON_VERSION}
+  - python build/get_python_include.py
+  - python build/get_python_library.py
 
   - source build/travis_install_boost.sh
 

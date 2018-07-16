@@ -15,6 +15,6 @@ if [[ -z "$(ls -A ${BOOST_DIR})" ]]; then
   { wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
   (cd ${BOOST_DIR} && ./bootstrap.sh > /dev/null && \
    sed -i "${BOOSTRAP_PATCH_REGEX}" project-config.jam && \
-   ./b2 install --prefix=${BOOST_DIR} --with-serialization --with-iostreams --with-python | grep -v -e common\.copy -e common\.mkdir)
+   ./b2 install --prefix=${BOOST_DIR} --with-serialization --with-iostreams --with-python | grep -v -e common\.copy -e common\.mkdir) || exit 1
 fi
 ls ${BOOST_DIR}/lib | grep libboost
