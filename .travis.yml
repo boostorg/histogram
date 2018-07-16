@@ -65,6 +65,7 @@ matrix:
     - os: osx # minimum osx Xcode 8.3
       osximage: xcode8.3
       env:
+        PYTHON_VERSION=system
         BUILD_PYTHON=OFF
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=OFF
@@ -74,19 +75,19 @@ git:
 
 # Install packages (pre-installed: pytest numpy)
 install:
-  - if [[ -z $(which pip) ]]; then
-      python build/get_pip.py --user;
-    fi
   - pyenv versions
-  - if [[ ${PYTHON_VERSION} ]]; then pyenv global ${PYTHON_VERSION}; fi
+  - pyenv global ${PYTHON_VERSION}
+  - if [[ -z $(which pip) ]]; then
+      python build/get_pip.py;
+    fi
   - python build/get_python_include.py
   - python build/get_python_library.py
 
-  - pip install --user --upgrade numpy # update numpy to avoid segfaults later
+  - pip install --upgrade numpy # update numpy to avoid segfaults later
   - source build/travis_install_boost.sh
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
-      pip install --user cpp-coveralls urllib3[secure];
+      pip install cpp-coveralls urllib3[secure];
     fi
 
 script:
