@@ -34,33 +34,39 @@ matrix:
         BUILD_PYTHON=OFF
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=OFF
-    - os: linux # minimum gcc
+    - os: linux # gcc minimum
       env:
         CC=gcc CXX=g++ PYTHON_VERSION=2.7
         BUILD_PYTHON=OFF
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=OFF
-    - os: linux # maximum gcc py27
+    - os: linux # gcc py27 w/o numpy
+      env:
+        CC=gcc CXX=g++ PYTHON_VERSION=2.7
+        BUILD_PYTHON=ON
+        BUILD_NUMPY=OFF
+        BUILD_SERIALIZATION=ON
+    - os: linux # gcc py27
       env:
         CC=gcc CXX=g++ PYTHON_VERSION=2.7
         BUILD_PYTHON=ON
         BUILD_NUMPY=ON
         BUILD_SERIALIZATION=ON
-    - os: linux # maximum gcc py36
+    - os: linux # gcc py36
       env:
         CC=gcc CXX=g++ PYTHON_VERSION=3.6
         BUILD_PYTHON=ON
-        BUILD_NUMPY=OFF
+        BUILD_NUMPY=ON
         BUILD_SERIALIZATION=ON
-    - os: linux # maximum clang
+    - os: linux # clang py36
       env:
         CC=clang CXX=clang++
         BUILD_PYTHON=ON PYTHON_VERSION=3.6
         BUILD_NUMPY=ON
         BUILD_SERIALIZATION=ON
-    - os: linux # coverage gcc
+    - os: linux # coverage py36
       env:
-        CC=gcc CXX=g++ GCOV=gcov PYTHON_VERSION=2.7
+        CC=gcc CXX=g++ GCOV=gcov PYTHON_VERSION=3.6
         CMAKE_BUILD_TYPE=coverage
 
 git:
@@ -68,11 +74,15 @@ git:
 
 # Install packages (pre-installed: pytest numpy)
 install:
+  - if [[ ! -e $(which pip) ]]; then
+      python build/get_pip.py
+    fi
   - pyenv versions
-  - pyenv global ${PYTHON_VERSION}
+  - if [[ ${PYTHON_VERSION} ]]; then pyenv global ${PYTHON_VERSION}; fi
   - python build/get_python_include.py
   - python build/get_python_library.py
 
+  - pip install --upgrade numpy # update numpy to avoid segfaults later
   - source build/travis_install_boost.sh
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
