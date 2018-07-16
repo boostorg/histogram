@@ -28,14 +28,15 @@ branches:
 
 matrix:
   include:
-    - os: linux # minimum gcc
+    - os: osx # minimum osx Xcode 8.3
+      osximage: xcode8.3
       env:
-        CC=gcc CXX=g++ PYTHON_VERSION=2.7
         BUILD_PYTHON=OFF
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=OFF
-    - os: osx
+    - os: linux # minimum gcc
       env:
+        CC=gcc CXX=g++ PYTHON_VERSION=2.7
         BUILD_PYTHON=OFF
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=OFF
@@ -70,7 +71,6 @@ install:
   - pyenv versions
   - pyenv global ${PYTHON_VERSION}
 
-  - pip install --user numpy
   - source build/travis_install_boost.sh
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
