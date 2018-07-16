@@ -36,7 +36,6 @@ matrix:
         BUILD_SERIALIZATION=OFF
     - os: osx
       env:
-        PYTHON_VERSION=3.6
         BUILD_PYTHON=OFF
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=OFF
