@@ -2,21 +2,15 @@
 
 **Fast multi-dimensional histogram with convenient interface for C++11 and Python**
 
-Branch | Linux (gcc-4.8.4, clang-5.0.0) | Windows (Visual Studio 14 2015) | Coverage
------- | ------------------------------ | ------------------------------- | --------
+Branch | Linux (gcc-4.8.4, clang-5.0.0, Py-2.7, Py-3.6) | Windows (Visual Studio 14 2015) | Coverage
+------ | ---------------------------------------------- | ------------------------------- | --------
 master | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/master?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/master) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master)](https://coveralls.io/github/HDembinski/histogram?branch=master)
 
 This `C++11` library provides a multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. The library is **header-only**, if you don't need the Python module.
 
-Tested platforms:
-- Linux: gcc-4.8.4, clang-5.0.0
-- Mac: Xcode 9
-- Windows: Visual Studio 14 2015
-- Python: 2.7 and 3.6
-
 The histogram is very customisable through policy classes, but the default policies were carefully designed so that most users don't need to customize anything. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: bin counts *cannot overflow* or *be capped*. While being safe to use, the library also has a convenient interface, is memory conserving, and faster than other libraries (see benchmarks).
 
-The histogram class comes in two variants which share a common interface. The *static* variant uses compile-time information to provide maximum performance, at the cost of runtime flexibility and potentially larger executables. The *dynamic* variant is a bit slower, but configurable at run-time and may produce smaller executables. Python bindings for the latter are included, implemented with `Boost.Python`.
+The histogram class comes in two variants which share a common interface. The *static* variant uses compile-time information to provide maximum performance, at the cost of runtime flexibility and potentially larger executables. The *dynamic* variant is a bit slower, but configurable at run-time and may produce smaller executables. Python bindings for the latter are included, implemented with [Boost.Python](https://www.boost.org/doc/libs/release/libs/python/).
 
 The histogram supports value semantics. Histograms can be added and scaled. Move operations and trips over the language boundary from C++ to Python and back are cheap. Histogram instances can be streamed from/to files and pickled in Python. [Numpy](http://www.numpy.org) is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (in most cases several times faster than numpy's own histogram function) and are convertible into Numpy array views without copying data.
 
@@ -31,6 +25,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Static and dynamic implementation in C++ with common interface
 * High dynamic range: Counters cannot overflow or be capped (+)
 * Better performance than other libraries (see benchmarks for details)
+* Fast compilation thanks to modern template meta-programming using [Boost.Mp11](https://www.boost.org/doc/libs/release/libs/mp11/)
 * Efficient move operations
 * Efficient conversion between static and dynamic implementation
 * Efficient use of memory (counter capacity dynamically grows as needed)
@@ -39,8 +34,8 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Support for under-/overflow bins (can be disabled individually for each dimension)
 * Support for variance tracking (++)
 * Support for addition and scaling of histograms
-* Optional serialization based on `Boost.Serialization`
-* Optional Python-bindings for Python 2.x and 3.x
+* Optional serialization based on [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
+* Optional Python-bindings that work with Python 2.7 to 3.6 with [Boost.Python](https://www.boost.org/doc/libs/release/libs/python/)
 * Optional Numpy support
 
 (+) In the standard configuration, if you don't use weighted increments.
