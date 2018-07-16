@@ -23,7 +23,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Multi-dimensional histogram
 * Simple and convenient interface in C++ and Python
 * Static and dynamic implementation in C++ with common interface
-* High dynamic range: Counters cannot overflow or be capped (+)
+* High dynamic range using [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/): Counters cannot overflow or be capped (+)
 * Better performance than other libraries (see benchmarks for details)
 * Fast compilation thanks to modern template meta-programming using [Boost.Mp11](https://www.boost.org/doc/libs/release/libs/mp11/)
 * Efficient move operations
