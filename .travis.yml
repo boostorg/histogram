@@ -75,14 +75,14 @@ git:
 # Install packages (pre-installed: pytest numpy)
 install:
   - if [[ -z $(which pip) ]]; then
-      python build/get_pip.py;
+      python build/get_pip.py --user;
     fi
   - pyenv versions
   - if [[ ${PYTHON_VERSION} ]]; then pyenv global ${PYTHON_VERSION}; fi
   - python build/get_python_include.py
   - python build/get_python_library.py
 
-  - pip install --upgrade numpy # update numpy to avoid segfaults later
+  - pip install --user --upgrade numpy # update numpy to avoid segfaults later
   - source build/travis_install_boost.sh
 
   - if [ "${CMAKE_BUILD_TYPE}" = "coverage" ]; then
