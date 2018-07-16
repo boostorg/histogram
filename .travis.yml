@@ -28,12 +28,6 @@ branches:
 
 matrix:
   include:
-    - os: osx # minimum osx Xcode 8.3
-      osximage: xcode8.3
-      env:
-        BUILD_PYTHON=OFF
-        BUILD_NUMPY=OFF
-        BUILD_SERIALIZATION=OFF
     - os: linux # gcc minimum
       env:
         CC=gcc CXX=g++ PYTHON_VERSION=2.7
@@ -68,6 +62,12 @@ matrix:
       env:
         CC=gcc CXX=g++ GCOV=gcov PYTHON_VERSION=3.6
         CMAKE_BUILD_TYPE=coverage
+    - os: osx # minimum osx Xcode 8.3
+      osximage: xcode8.3
+      env:
+        BUILD_PYTHON=OFF
+        BUILD_NUMPY=OFF
+        BUILD_SERIALIZATION=OFF
 
 git:
   depth: 10
@@ -75,7 +75,7 @@ git:
 # Install packages (pre-installed: pytest numpy)
 install:
   - if [[ -z $(which pip) ]]; then
-      python build/get_pip.py
+      python build/get_pip.py;
     fi
   - pyenv versions
   - if [[ ${PYTHON_VERSION} ]]; then pyenv global ${PYTHON_VERSION}; fi
