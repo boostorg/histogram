@@ -34,13 +34,19 @@ matrix:
         BUILD_PYTHON=OFF
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=OFF
-    - os: linux # maximum gcc
+    - os: osx
+      env:
+        PYTHON_VERSION=3.6
+        BUILD_PYTHON=OFF
+        BUILD_NUMPY=OFF
+        BUILD_SERIALIZATION=OFF
+    - os: linux # maximum gcc py27
       env:
         CC=gcc CXX=g++ PYTHON_VERSION=2.7
         BUILD_PYTHON=ON
         BUILD_NUMPY=ON
         BUILD_SERIALIZATION=ON
-    - os: linux # maximum gcc
+    - os: linux # maximum gcc py36
       env:
         CC=gcc CXX=g++ PYTHON_VERSION=3.6
         BUILD_PYTHON=ON
@@ -49,7 +55,7 @@ matrix:
     - os: linux # maximum clang
       env:
         CC=clang CXX=clang++
-        BUILD_PYTHON=ON PYTHON_VERSION=2.7
+        BUILD_PYTHON=ON PYTHON_VERSION=3.6
         BUILD_NUMPY=ON
         BUILD_SERIALIZATION=ON
     - os: linux # coverage gcc
