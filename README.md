@@ -2,9 +2,9 @@
 
 **Fast multi-dimensional histogram with convenient interface for C++11 and Python**
 
-[![Build Status Linux](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram?branch=master) 
-[![Build status Windows](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/master?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/master)
-[![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master)](https://coveralls.io/github/HDembinski/histogram?branch=master)
+Branch | Linux (gcc-4.8.4, clang-5.0.0) | Windows (Visual Studio 14 2015) | Coverage
+------ | ------------------------------ | ------------------------------- | --------
+master | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/master?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/master) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master)](https://coveralls.io/github/HDembinski/histogram?branch=master)
 
 This `C++11` library provides a multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. The library is **header-only**, if you don't need the Python module.
 
