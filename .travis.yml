@@ -55,7 +55,7 @@ matrix:
     - os: osx # minimum osx Xcode 8.3
       osximage: xcode8.3
       env:
-        PY=3.6
+        PY=3.6.3
         BUILD_PYTHON=OFF
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=OFF
