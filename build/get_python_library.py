@@ -15,3 +15,5 @@ for libpath in ('LIBDEST', 'LIBDIR', 'LIBPL'):
     if os.path.exists(p):
         sys.stdout.write(p)
         break
+else:
+    raise StandardError("no library found:\n" + str(d))
