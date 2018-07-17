@@ -55,7 +55,7 @@ matrix:
     - os: osx # minimum osx Xcode 8.3
       osximage: xcode8.3
       env:
-        PY=3.7
+        PY=3.6
         BUILD_PYTHON=OFF
         BUILD_NUMPY=OFF
         BUILD_SERIALIZATION=OFF
@@ -66,12 +66,11 @@ git:
 # Install packages (pre-installed: pytest numpy)
 install:
   - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then
-      brew update;
-      brew upgrade python;
+      pyenv install ${PY}
     fi
-  - python --version
   - pyenv versions
   - pyenv global ${PY}
+  - python --version
   - python build/get_python_include.py
   - python build/get_python_library.py
 
