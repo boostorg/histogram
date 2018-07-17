@@ -63,7 +63,7 @@ struct index_visitor : public static_visitor<int> {
     return impl(std::is_convertible<double, typename Axis::value_type>(), a);
   }
   template <typename Axis> int impl(std::true_type, const Axis &a) const {
-    return a.index(x);
+    return a.index(static_cast<typename Axis::value_type>(x));
   }
   template <typename Axis> int impl(std::false_type, const Axis &) const {
     throw std::runtime_error(::boost::histogram::detail::cat(
