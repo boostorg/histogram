@@ -14,6 +14,7 @@ for libvar in ('LIBDIR', 'LIBPL'):
         match = pj(getvar(libvar), "*" + libname + "*." + ext)
         lib = glob.glob(match)
         if lib:
-            assert len(lib) == 1
+            if len(lib) > 1:
+                raise ValueError("too many matches:\n" + "\n".join(lib))
             sys.stdout.write(lib[0])
             raise SystemExit
