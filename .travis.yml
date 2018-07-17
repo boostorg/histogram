@@ -93,7 +93,7 @@ script:
 # Calculate coverage
 after_success:
   if [ -n "$GCOV" ]; then
-    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which ${COV}` --gcov-options '\-lpbc';
+    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which ${GCOV}` --gcov-options '\-lpbc';
   fi
 
 # after_failure:

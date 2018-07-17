@@ -1,7 +1,7 @@
 from distutils import sysconfig
 import os
 import sys
-import pprint
+from pprint import pprint
 pj = os.path.join
 
 d = sysconfig.get_config_vars()
