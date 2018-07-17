@@ -19,7 +19,7 @@ branches:
 matrix:
   include:
     - os: osx # minimum osx Xcode 8.3
-      osximage: xcode8.3
+      osx_image: xcode8.3
       env: BUILD_PYTHON=OFF BUILD_NUMPY=OFF BUILD_SERIALIZATION=OFF
   allow_failures:
     - os: osx
@@ -27,19 +27,17 @@ matrix:
 git:
   depth: 10
 
-# Install packages (pre-installed: pytest numpy)
+# Install packages (pre-installed: pytest)
 install:
   - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then
       brew update;
-      brew outdated pyenv || brew upgrade pyenv;
       brew upgrade python;
-      export PY=$(python3 -c 'import sysconfig, sys; sys.stdout.write(sysconfig.get_python_version())')
-      export PYENV_ROOT="$HOME/.pyenv";
-      export PATH="$PYENV_ROOT/bin:$PATH";
-      eval "$(pyenv init -)";
+      export PATH="/usr/local/opt/python/libexec/bin:$PATH";
+    else
+      pyenv global ${PY};
     fi
+
   - pyenv versions
-  - pyenv global ${PY}
   - python --version
   - python build/get_python_include.py
   - python build/get_python_library.py
