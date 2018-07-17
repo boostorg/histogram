@@ -66,7 +66,7 @@ git:
 # Install packages (pre-installed: pytest numpy)
 install:
   - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then
-      pyenv install ${PY}
+      pyenv install ${PY};
     fi
   - pyenv versions
   - pyenv global ${PY}
