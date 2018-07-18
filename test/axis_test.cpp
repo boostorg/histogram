@@ -37,16 +37,6 @@ void test_axis_iterator(const Axis &a, int begin, int end) {
 
 int main() {
 
-  // sizes (there are platform-dependent)
-  {
-    BOOST_TEST(sizeof(axis::regular<>) <= 64);
-    BOOST_TEST(sizeof(axis::circular<>) <= 56);
-    BOOST_TEST(sizeof(axis::variable<>) <= 56);
-    BOOST_TEST(sizeof(axis::integer<>) <= 48);
-    BOOST_TEST(sizeof(axis::category<>) <= 48);
-    BOOST_TEST(sizeof(axis::any_std) <= 80);
-  }
-
   // bad_ctors
   {
     BOOST_TEST_THROWS(axis::regular<>(0, 0, 1), std::logic_error);
