@@ -76,8 +76,7 @@ public:
     index_cache_.reset(*this);
   }
 
-  explicit histogram(axes_type&& axes)
-      : axes_(std::move(axes)) {
+  explicit histogram(axes_type &&axes) : axes_(std::move(axes)) {
     storage_ = Storage(size_from_axes());
     index_cache_.reset(*this);
   }
@@ -263,9 +262,7 @@ public:
     return reduce_impl(b);
   }
 
-  const_iterator begin() const noexcept {
-    return const_iterator(*this, 0);
-  }
+  const_iterator begin() const noexcept { return const_iterator(*this, 0); }
 
   const_iterator end() const noexcept {
     return const_iterator(*this, storage_.size());
@@ -360,8 +357,7 @@ private:
     }
   };
 
-  template <unsigned D>
-  void lin(std::size_t &, std::size_t &) const noexcept {}
+  template <unsigned D> void lin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename... Ts>
   void lin(std::size_t &idx, std::size_t &stride, int x, Ts... ts) const
@@ -395,19 +391,17 @@ private:
     }
   };
 
-  template <unsigned D>
-  void xlin(std::size_t &, std::size_t &) const {}
+  template <unsigned D> void xlin(std::size_t &, std::size_t &) const {}
 
   template <unsigned D, typename T, typename... Ts>
-  void xlin(std::size_t &idx, std::size_t &stride, T &&t,
-                   Ts &&... ts) const {
+  void xlin(std::size_t &idx, std::size_t &stride, T &&t, Ts &&... ts) const {
     apply_visitor(xlin_visitor<T>{idx, stride, t}, axes_[D]);
     xlin<(D + 1)>(idx, stride, std::forward<Ts>(ts)...);
   }
 
   template <typename Iterator>
-  void lin_iter(std::size_t &idx, std::size_t &stride,
-                       Iterator iter) const noexcept {
+  void lin_iter(std::size_t &idx, std::size_t &stride, Iterator iter) const
+      noexcept {
     for (const auto &a : axes_) {
       apply_visitor(lin_visitor(idx, stride, *iter++), a);
     }
@@ -494,21 +488,21 @@ make_dynamic_histogram_with(Axis &&... axis) {
 
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 dynamic_histogram<
-    detail::mp_union<axis::types, typename Iterator::value_type::types>>
+    detail::mp_set_union<axis::types, typename Iterator::value_type::types>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
   return dynamic_histogram<
-      detail::mp_union<axis::types, typename Iterator::value_type::types>>(
+      detail::mp_set_union<axis::types, typename Iterator::value_type::types>>(
       begin, end);
 }
 
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
 dynamic_histogram<
-    detail::mp_union<axis::types, typename Iterator::value_type::types>,
+    detail::mp_set_union<axis::types, typename Iterator::value_type::types>,
     Storage>
 make_dynamic_histogram_with(Iterator begin, Iterator end) {
   return dynamic_histogram<
-      detail::mp_union<axis::types, typename Iterator::value_type::types>,
+      detail::mp_set_union<axis::types, typename Iterator::value_type::types>,
       Storage>(begin, end);
 }
 

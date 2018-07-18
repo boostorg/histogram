@@ -202,11 +202,33 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T6>, int>));
   }
 
-  // mp_union
+  // copy_qualifiers
+  {
+    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int, long>, long>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<copy_qualifiers<const int, long>, const long>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int &, long>, long &>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<copy_qualifiers<const int &, long>, const long &>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<copy_qualifiers<int &&, long>, long &&>));
+  }
+
+  // is_common_base
+  {
+    struct A {};
+    struct B : A {};
+    struct C : A {};
+    struct D {};
+    BOOST_TEST_TRAIT_TRUE((is_common_base<A, B, C>));
+    BOOST_TEST_TRAIT_FALSE((is_common_base<A, B, D, C>));
+  }
+
+  // mp_set_union
   {
     using L1 = mp11::mp_list<int, char, long>;
-    using L2 = mp11::mp_list<char, char *>;
-    using result = mp_union<L1, L2>;
+    using L2 = mp11::mp_list<char, int, char, char *>;
+    using result = mp_set_union<L1, L2>;
     using expected = mp11::mp_list<int, char, long, char *>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
   }

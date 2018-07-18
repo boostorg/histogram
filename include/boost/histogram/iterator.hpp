@@ -8,8 +8,8 @@
 #define _BOOST_HISTOGRAM_VALUE_ITERATOR_HPP_
 
 #include <array>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/detail/utility.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/mp11.hpp>
 #include <limits>
@@ -22,10 +22,8 @@ namespace histogram {
 template <typename Histogram>
 class iterator_over
     : public iterator_facade<
-          iterator_over<Histogram>,
-          typename Histogram::element_type,
-          random_access_traversal_tag,
-          typename Histogram::const_reference> {
+          iterator_over<Histogram>, typename Histogram::element_type,
+          random_access_traversal_tag, typename Histogram::const_reference> {
 public:
   iterator_over(const Histogram &h, std::size_t idx)
       : histogram_(h), idx_(idx) {}

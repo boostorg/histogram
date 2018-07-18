@@ -251,13 +251,9 @@ public:
     return hr;
   }
 
-  const_iterator begin() const noexcept {
-    return const_iterator(*this, 0);
-  }
+  const_iterator begin() const noexcept { return const_iterator(*this, 0); }
 
-  const_iterator end() const noexcept {
-    return const_iterator(*this, size());
-  }
+  const_iterator end() const noexcept { return const_iterator(*this, size()); }
 
 private:
   axes_type axes_;
@@ -334,8 +330,7 @@ private:
   void xlin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename T, typename... Ts>
-  void xlin(std::size_t &idx, std::size_t &stride, T &&t,
-                   Ts &&... ts) const {
+  void xlin(std::size_t &idx, std::size_t &stride, T &&t, Ts &&... ts) const {
     const auto a_size = std::get<D>(axes_).size();
     const auto a_shape = std::get<D>(axes_).shape();
     const int j = std::get<D>(axes_).index(t);
@@ -358,8 +353,7 @@ private:
     xlin_iter(mp11::mp_size_t<N - 1>(), idx, stride, ++iter);
   }
 
-  template <unsigned D>
-  void lin(std::size_t &, std::size_t &) const noexcept {}
+  template <unsigned D> void lin(std::size_t &, std::size_t &) const noexcept {}
 
   template <unsigned D, typename... Ts>
   void lin(std::size_t &idx, std::size_t &stride, int j, Ts... ts) const

@@ -14,11 +14,11 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/type_index.hpp>
 #include <boost/utility/string_view.hpp>
+#include <memory>
 #include <ostream>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
-#include <memory>
 
 namespace boost {
 namespace histogram {
@@ -73,17 +73,14 @@ struct index_cache {
   std::unique_ptr<dim_t[]> dims_;
 
   index_cache() = default;
-  index_cache(index_cache&&) = default;
-  index_cache& operator=(index_cache&&) = default;
+  index_cache(index_cache &&) = default;
+  index_cache &operator=(index_cache &&) = default;
 
-  index_cache(const index_cache& o) :
-    dim_(o.dim_), dims_(new dim_t[o.dim_])
-  {
+  index_cache(const index_cache &o) : dim_(o.dim_), dims_(new dim_t[o.dim_]) {
     std::copy(o.dims_.get(), o.dims_.get() + dim_, dims_.get());
   }
 
-  index_cache& operator=(const index_cache& o)
-  {
+  index_cache &operator=(const index_cache &o) {
     if (this != &o) {
       if (o.dim_ != dim_) {
         dim_ = o.dim_;
@@ -94,8 +91,7 @@ struct index_cache {
     return *this;
   }
 
-  template <typename H>
-  void reset(const H& h) {
+  template <typename H> void reset(const H &h) {
     if (h.dim() != dim_) {
       dim_ = h.dim();
       dims_.reset(new dim_t[dim_]);
@@ -104,7 +100,8 @@ struct index_cache {
   }
 
   void operator()(std::size_t idx) {
-    if (idx == idx_) return;
+    if (idx == idx_)
+      return;
     idx_ = idx;
     auto dim_ptr = dims_.get();
     auto dim = dim_;
