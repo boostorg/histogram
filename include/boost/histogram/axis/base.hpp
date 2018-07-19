@@ -28,7 +28,7 @@ enum class uoflow { off = 0, only_oflow = 1, on = 2 };
 
 /// Base class for all axes
 class base {
-public:
+ public:
   /// Returns the number of bins without overflow/underflow.
   int size() const noexcept { return size_; }
   /// Returns the number of bins, including overflow/underflow if enabled.
@@ -40,9 +40,10 @@ public:
   /// Change the label of an axis.
   void label(string_view label) { label_.assign(label.begin(), label.end()); }
 
-protected:
+ protected:
   base(unsigned size, string_view label, axis::uoflow uo)
-      : size_(size), shape_(size + static_cast<int>(uo)),
+      : size_(size),
+        shape_(size + static_cast<int>(uo)),
         label_(label.begin(), label.end()) {
     if (size_ == 0) {
       throw std::invalid_argument("bins > 0 required");
@@ -50,14 +51,14 @@ protected:
   }
 
   base() = default;
-  base(const base &) = default;
-  base &operator=(const base &) = default;
-  base(base &&rhs) :
-      size_(rhs.size_), shape_(rhs.shape_),
-      label_(std::move(rhs.label_)) {
-    rhs.size_ = 0; rhs.shape_ = 0;
+  base(const base&) = default;
+  base& operator=(const base&) = default;
+  base(base&& rhs)
+      : size_(rhs.size_), shape_(rhs.shape_), label_(std::move(rhs.label_)) {
+    rhs.size_ = 0;
+    rhs.shape_ = 0;
   }
-  base &operator=(base &&rhs) {
+  base& operator=(base&& rhs) {
     if (this != &rhs) {
       size_ = rhs.size_;
       shape_ = rhs.shape_;
@@ -68,39 +69,41 @@ protected:
     return *this;
   }
 
-  bool operator==(const base &rhs) const noexcept {
+  bool operator==(const base& rhs) const noexcept {
     return size_ == rhs.size_ && shape_ == rhs.shape_ && label_ == rhs.label_;
   }
 
-private:
+ private:
   int size_ = 0, shape_ = 0;
   std::string label_;
 
   friend class ::boost::serialization::access;
-  template <class Archive> void serialize(Archive &, unsigned);
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 };
 
 /// Iterator mixin, uses CRTP to inject iterator logic into Derived.
 template <typename Derived>
 class iterator_mixin {
-public:
+ public:
   using const_iterator = iterator_over<Derived>;
   using const_reverse_iterator = reverse_iterator_over<Derived>;
 
   const_iterator begin() const noexcept {
-    return const_iterator(*static_cast<const Derived *>(this), 0);
+    return const_iterator(*static_cast<const Derived*>(this), 0);
   }
   const_iterator end() const noexcept {
-    return const_iterator(*static_cast<const Derived *>(this), static_cast<const Derived *>(this)->size());
+    return const_iterator(*static_cast<const Derived*>(this),
+                          static_cast<const Derived*>(this)->size());
   }
   const_reverse_iterator rbegin() const noexcept {
-    return const_reverse_iterator(*static_cast<const Derived *>(this), static_cast<const Derived *>(this)->size());
+    return const_reverse_iterator(*static_cast<const Derived*>(this),
+                                  static_cast<const Derived*>(this)->size());
   }
   const_reverse_iterator rend() const noexcept {
-    return const_reverse_iterator(*static_cast<const Derived *>(this), 0);
+    return const_reverse_iterator(*static_cast<const Derived*>(this), 0);
   }
 };
-
 }
 }
 }

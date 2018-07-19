@@ -21,7 +21,7 @@ using namespace boost::histogram;
 #define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
 template <typename Axis>
-void test_axis_iterator(const Axis &a, int begin, int end) {
+void test_axis_iterator(const Axis& a, int begin, int end) {
   for (auto bin : a) {
     BOOST_TEST_EQ(bin.idx(), begin);
     BOOST_TEST_EQ(bin, a[begin]);
@@ -36,7 +36,6 @@ void test_axis_iterator(const Axis &a, int begin, int end) {
 }
 
 int main() {
-
   // bad_ctors
   {
     BOOST_TEST_THROWS(axis::regular<>(0, 0, 1), std::logic_error);
@@ -294,7 +293,7 @@ int main() {
     axes.push_back(axis::category<std::string>({a, b}, "category2"));
     axes.push_back(axis::integer<>(-1, 1, "integer", axis::uoflow::off));
     std::ostringstream os;
-    for (const auto &a : axes) {
+    for (const auto& a : axes) {
       os << a << "\n";
     }
     const std::string ref =
@@ -319,7 +318,7 @@ int main() {
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>{A, B, C});
     axes.push_back(axis::integer<>{-1, 1});
-    for (const auto &a : axes) {
+    for (const auto& a : axes) {
       BOOST_TEST(!(a == axis::any_std()));
       BOOST_TEST_EQ(a, a);
     }
@@ -332,7 +331,7 @@ int main() {
     std::string a = "A", b = "B";
     axis::any_std x = axis::category<std::string>({a, b}, "category");
     BOOST_TEST_THROWS(x.index(1.5), std::runtime_error);
-    const auto &cx = axis::cast<axis::category<std::string>>(x);
+    const auto& cx = axis::cast<axis::category<std::string>>(x);
     BOOST_TEST_EQ(cx.index(b), 1);
   }
 

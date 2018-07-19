@@ -1,0 +1,7 @@
+---
+Language:        Cpp
+BasedOnStyle:  Chromium
+SpacesBeforeTrailingComments: 1
+DerivePointerAlignment: false
+PointerAlignment: Left
+...

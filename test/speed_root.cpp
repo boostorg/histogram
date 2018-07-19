@@ -53,7 +53,7 @@ void compare_2d(unsigned n, int distrib) {
   for (unsigned k = 0; k < 20; ++k) {
     TH2I hroot("", "", 100, 0, 1, 100, 0, 1);
     auto t = clock();
-    for (unsigned i = 0; i < n/2; ++i)
+    for (unsigned i = 0; i < n / 2; ++i)
       hroot.Fill(r[2 * i], r[2 * i + 1]);
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
@@ -68,7 +68,7 @@ void compare_3d(unsigned n, int distrib) {
   for (unsigned k = 0; k < 20; ++k) {
     TH3I hroot("", "", 100, 0, 1, 100, 0, 1, 100, 0, 1);
     auto t = clock();
-    for (unsigned i = 0; i < n/3; ++i)
+    for (unsigned i = 0; i < n / 3; ++i)
       hroot.Fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
     t = clock() - t;
     best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
@@ -87,7 +87,7 @@ void compare_6d(unsigned n, int distrib) {
     THnI hroot("", "", 6, &bin.front(), &min.front(), &max.front());
 
     auto t = clock();
-    for (unsigned i = 0; i < n/6; ++i) {
+    for (unsigned i = 0; i < n / 6; ++i) {
       hroot.Fill(r.get() + 6 * i);
     }
     t = clock() - t;
@@ -96,7 +96,7 @@ void compare_6d(unsigned n, int distrib) {
   printf("root %.3f\n", best_root);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   constexpr unsigned nfill = 6000000;
 
   printf("1D\n");

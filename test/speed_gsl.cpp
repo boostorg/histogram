@@ -34,7 +34,7 @@ void compare_1d(unsigned n, int distrib) {
 
   double best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 20; ++k) {
-    gsl_histogram *h = gsl_histogram_alloc(100);
+    gsl_histogram* h = gsl_histogram_alloc(100);
     gsl_histogram_set_ranges_uniform(h, 0, 1);
     auto t = clock();
     for (unsigned i = 0; i < n; ++i)
@@ -51,10 +51,10 @@ void compare_2d(unsigned n, int distrib) {
 
   double best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 20; ++k) {
-    gsl_histogram2d *h = gsl_histogram2d_alloc(100, 100);
+    gsl_histogram2d* h = gsl_histogram2d_alloc(100, 100);
     gsl_histogram2d_set_ranges_uniform(h, 0, 1, 0, 1);
     auto t = clock();
-    for (unsigned i = 0; i < n/2; ++i)
+    for (unsigned i = 0; i < n / 2; ++i)
       gsl_histogram2d_increment(h, r[2 * i], r[2 * i + 1]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
@@ -63,7 +63,7 @@ void compare_2d(unsigned n, int distrib) {
   printf("gsl %.3f\n", best);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   constexpr unsigned nfill = 6000000;
   printf("1D\n");
   printf("uniform distribution\n");

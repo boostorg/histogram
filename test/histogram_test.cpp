@@ -33,13 +33,13 @@ using namespace boost::histogram::literals; // to get _c suffix
 namespace mp11 = boost::mp11;
 
 template <typename S, typename... Axes>
-auto make_histogram(static_tag, Axes &&... axes)
+auto make_histogram(static_tag, Axes&&... axes)
     -> decltype(make_static_histogram_with<S>(std::forward<Axes>(axes)...)) {
   return make_static_histogram_with<S>(std::forward<Axes>(axes)...);
 }
 
 template <typename S, typename... Axes>
-auto make_histogram(dynamic_tag, Axes &&... axes)
+auto make_histogram(dynamic_tag, Axes&&... axes)
     -> decltype(make_dynamic_histogram_with<S>(std::forward<Axes>(axes)...)) {
   return make_dynamic_histogram_with<S>(std::forward<Axes>(axes)...);
 }
@@ -48,19 +48,21 @@ int expected_moved_from_dim(static_tag, int static_value) {
   return static_value;
 }
 
-int expected_moved_from_dim(dynamic_tag, int) { return 0; }
+int expected_moved_from_dim(dynamic_tag, int) {
+  return 0;
+}
 
 template <typename Histogram>
-typename Histogram::element_type sum(const Histogram &h) {
+typename Histogram::element_type sum(const Histogram& h) {
   return std::accumulate(h.begin(), h.end(),
                          typename Histogram::element_type(0));
 }
 
 template <typename... Ts>
-void pass_histogram(boost::histogram::histogram<Ts...> &) {}
+void pass_histogram(boost::histogram::histogram<Ts...>&) {}
 
-template <typename Type> void run_tests() {
-
+template <typename Type>
+void run_tests() {
   // init_1
   {
     auto h =
@@ -578,10 +580,11 @@ template <typename Type> void run_tests() {
         Type(), axis::regular<>(3, -1, 1, "r"), axis::integer<>(0, 2, "i"));
     std::ostringstream os;
     os << a;
-    BOOST_TEST_EQ(os.str(), "histogram("
-                            "\n  regular(3, -1, 1, label='r'),"
-                            "\n  integer(0, 2, label='i'),"
-                            "\n)");
+    BOOST_TEST_EQ(os.str(),
+                  "histogram("
+                  "\n  regular(3, -1, 1, label='r'),"
+                  "\n  integer(0, 2, label='i'),"
+                  "\n)");
   }
 
   // histogram_reset
@@ -701,7 +704,7 @@ template <typename Type> void run_tests() {
   // custom axis
   {
     struct custom_axis : public axis::integer<> {
-      using value_type = const char *; // type that is fed to the axis
+      using value_type = const char*; // type that is fed to the axis
 
       using integer::integer; // inherit ctors of base
 
@@ -727,7 +730,7 @@ template <typename Type> void run_tests() {
   // histogram iterator 1D
   {
     auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3));
-    const auto &a = h.axis();
+    const auto& a = h.axis();
     h(weight(2), 0);
     h(1);
     h(1);
@@ -763,8 +766,8 @@ template <typename Type> void run_tests() {
     auto h = make_histogram<adaptive_storage>(
         Type(), axis::integer<>(0, 1),
         axis::integer<>(2, 4, "", axis::uoflow::off));
-    const auto &a0 = h.axis(0_c);
-    const auto &a1 = h.axis(1_c);
+    const auto& a0 = h.axis(0_c);
+    const auto& a1 = h.axis(1_c);
     h(weight(2), 0, 2);
     h(-1, 2);
     h(1, 3);
@@ -890,8 +893,8 @@ template <typename Type> void run_tests() {
   }
 }
 
-template <typename T1, typename T2> void run_mixed_tests() {
-
+template <typename T1, typename T2>
+void run_mixed_tests() {
   // compare
   {
     auto a = make_histogram<adaptive_storage>(T1{}, axis::regular<>{3, 0, 3},
@@ -936,7 +939,6 @@ template <typename T1, typename T2> void run_mixed_tests() {
 }
 
 int main() {
-
   // common interface
   run_tests<static_tag>();
   run_tests<dynamic_tag>();
@@ -1000,7 +1002,7 @@ int main() {
   // histogram iterator
   {
     auto h = make_dynamic_histogram(axis::integer<>(0, 3));
-    const auto &a = h.axis();
+    const auto& a = h.axis();
     h(weight(2), 0);
     h(1);
     h(1);

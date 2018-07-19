@@ -191,12 +191,6 @@ file(GLOB_RECURSE
      ../test/*_test.cpp ../include/*.hpp
      )
 
-add_custom_target(clf
-  COMMAND clang-format
-  -i
-  ${ALL_SOURCE_FILES}
-  )
-
 get_property(INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 set(TIDY_INCLUDE)
 foreach(x ${INCLUDE_DIRS})

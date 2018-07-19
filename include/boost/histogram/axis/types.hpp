@@ -36,24 +36,43 @@ namespace axis {
 namespace transform {
 namespace detail {
 struct stateless {
-  bool operator==(const stateless &) const noexcept { return true; }
-  template <class Archive> void serialize(Archive &, unsigned) {}
+  bool operator==(const stateless&) const noexcept { return true; }
+  template <class Archive>
+  void serialize(Archive&, unsigned) {}
 };
 } // namespace detail
 
 struct identity : public detail::stateless {
-  template <typename T> static T &&forward(T &&v) { return std::forward<T>(v); }
-  template <typename T> static T &&inverse(T &&v) { return std::forward<T>(v); }
+  template <typename T>
+  static T&& forward(T&& v) {
+    return std::forward<T>(v);
+  }
+  template <typename T>
+  static T&& inverse(T&& v) {
+    return std::forward<T>(v);
+  }
 };
 
 struct log : public detail::stateless {
-  template <typename T> static T forward(T v) { return std::log(v); }
-  template <typename T> static T inverse(T v) { return std::exp(v); }
+  template <typename T>
+  static T forward(T v) {
+    return std::log(v);
+  }
+  template <typename T>
+  static T inverse(T v) {
+    return std::exp(v);
+  }
 };
 
 struct sqrt : public detail::stateless {
-  template <typename T> static T forward(T v) { return std::sqrt(v); }
-  template <typename T> static T inverse(T v) { return v * v; }
+  template <typename T>
+  static T forward(T v) {
+    return std::sqrt(v);
+  }
+  template <typename T>
+  static T inverse(T v) {
+    return v * v;
+  }
 };
 
 // struct cos : public detail::stateless {
@@ -66,17 +85,22 @@ struct pow {
 
   pow() = default;
   pow(double p) : power(p) {}
-  template <typename T> T forward(T v) const { return std::pow(v, power); }
-  template <typename T> T inverse(T v) const {
+  template <typename T>
+  T forward(T v) const {
+    return std::pow(v, power);
+  }
+  template <typename T>
+  T inverse(T v) const {
     return std::pow(v, 1.0 / power);
   }
-  bool operator==(const pow &other) const noexcept {
+  bool operator==(const pow& other) const noexcept {
     return power == other.power;
   }
 
-private:
+ private:
   friend ::boost::serialization::access;
-  template <class Archive> void serialize(Archive &, unsigned);
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 };
 } // namespace transform
 
@@ -90,7 +114,7 @@ template <typename RealType, typename Transform>
 class regular : public base,
                 public iterator_mixin<regular<RealType, Transform>>,
                 Transform {
-public:
+ public:
   using value_type = RealType;
   using bin_type = interval_view<regular>;
 
@@ -103,10 +127,15 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    * \param trans arguments passed to the transform.
    */
-  regular(unsigned n, value_type lower, value_type upper,
-          string_view label = {}, axis::uoflow uo = axis::uoflow::on,
+  regular(unsigned n,
+          value_type lower,
+          value_type upper,
+          string_view label = {},
+          axis::uoflow uo = axis::uoflow::on,
           Transform trans = Transform())
-      : base(n, label, uo), Transform(trans), min_(trans.forward(lower)),
+      : base(n, label, uo),
+        Transform(trans),
+        min_(trans.forward(lower)),
         delta_((trans.forward(upper) - trans.forward(lower)) / n) {
     if (lower < upper) {
       BOOST_ASSERT(!std::isnan(min_));
@@ -117,10 +146,10 @@ public:
   }
 
   regular() = default;
-  regular(const regular &) = default;
-  regular &operator=(const regular &) = default;
-  regular(regular &&) = default;
-  regular &operator=(regular &&) = default;
+  regular(const regular&) = default;
+  regular& operator=(const regular&) = default;
+  regular(regular&&) = default;
+  regular& operator=(regular&&) = default;
 
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
@@ -147,21 +176,22 @@ public:
 
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
-  bool operator==(const regular &o) const noexcept {
+  bool operator==(const regular& o) const noexcept {
     return base::operator==(o) && Transform::operator==(o) && min_ == o.min_ &&
            delta_ == o.delta_;
   }
 
   /// Access properties of the transform.
-  const Transform &transform() const noexcept {
-    return static_cast<const Transform &>(*this);
+  const Transform& transform() const noexcept {
+    return static_cast<const Transform&>(*this);
   }
 
-private:
+ private:
   value_type min_ = 0.0, delta_ = 1.0;
 
   friend class ::boost::serialization::access;
-  template <class Archive> void serialize(Archive &, unsigned);
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 };
 
 /** Axis for real values on a circle.
@@ -172,7 +202,7 @@ private:
  */
 template <typename RealType>
 class circular : public base, public iterator_mixin<circular<RealType>> {
-public:
+ public:
   using value_type = RealType;
   using bin_type = interval_view<circular>;
 
@@ -183,17 +213,19 @@ public:
    * \param perimeter range after which value wraps around.
    * \param label     description of the axis.
    */
-  explicit circular(unsigned n, value_type phase = 0.0,
+  explicit circular(unsigned n,
+                    value_type phase = 0.0,
                     value_type perimeter = boost::histogram::detail::two_pi,
                     string_view label = {})
-      : base(n, label, axis::uoflow::off), phase_(phase),
+      : base(n, label, axis::uoflow::off),
+        phase_(phase),
         perimeter_(perimeter) {}
 
   circular() = default;
-  circular(const circular &) = default;
-  circular &operator=(const circular &) = default;
-  circular(circular &&) = default;
-  circular &operator=(circular &&) = default;
+  circular(const circular&) = default;
+  circular& operator=(const circular&) = default;
+  circular(circular&&) = default;
+  circular& operator=(circular&&) = default;
 
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
@@ -210,7 +242,7 @@ public:
 
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
-  bool operator==(const circular &o) const noexcept {
+  bool operator==(const circular& o) const noexcept {
     return base::operator==(o) && phase_ == o.phase_ &&
            perimeter_ == o.perimeter_;
   }
@@ -218,11 +250,12 @@ public:
   value_type perimeter() const { return perimeter_; }
   value_type phase() const { return phase_; }
 
-private:
+ private:
   value_type phase_ = 0.0, perimeter_ = 1.0;
 
   friend class ::boost::serialization::access;
-  template <class Archive> void serialize(Archive &, unsigned);
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 };
 
 /** Axis for non-equidistant bins on the real line.
@@ -232,7 +265,7 @@ private:
  */
 template <typename RealType>
 class variable : public base, public iterator_mixin<variable<RealType>> {
-public:
+ public:
   using value_type = RealType;
   using bin_type = interval_view<variable>;
 
@@ -242,7 +275,8 @@ public:
    * \param label description of the axis.
    * \param uoflow whether to add under-/overflow bins.
    */
-  variable(std::initializer_list<value_type> x, string_view label = {},
+  variable(std::initializer_list<value_type> x,
+           string_view label = {},
            axis::uoflow uo = axis::uoflow::on)
       : base(x.size() - 1, label, uo), x_(new value_type[x.size()]) {
     if (x.size() >= 2) {
@@ -254,7 +288,9 @@ public:
   }
 
   template <typename Iterator>
-  variable(Iterator begin, Iterator end, string_view label = {},
+  variable(Iterator begin,
+           Iterator end,
+           string_view label = {},
            axis::uoflow uo = axis::uoflow::on)
       : base(std::distance(begin, end) - 1, label, uo),
         x_(new value_type[std::distance(begin, end)]) {
@@ -263,10 +299,10 @@ public:
   }
 
   variable() = default;
-  variable(const variable &o) : base(o), x_(new value_type[base::size() + 1]) {
+  variable(const variable& o) : base(o), x_(new value_type[base::size() + 1]) {
     std::copy(o.x_.get(), o.x_.get() + base::size() + 1, x_.get());
   }
-  variable &operator=(const variable &o) {
+  variable& operator=(const variable& o) {
     if (this != &o) {
       base::operator=(o);
       x_.reset(new value_type[base::size() + 1]);
@@ -274,8 +310,8 @@ public:
     }
     return *this;
   }
-  variable(variable &&) = default;
-  variable &operator=(variable &&) = default;
+  variable(variable&&) = default;
+  variable& operator=(variable&&) = default;
 
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
@@ -296,18 +332,19 @@ public:
 
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
-  bool operator==(const variable &o) const noexcept {
+  bool operator==(const variable& o) const noexcept {
     if (!base::operator==(o)) {
       return false;
     }
     return std::equal(x_.get(), x_.get() + base::size() + 1, o.x_.get());
   }
 
-private:
+ private:
   std::unique_ptr<value_type[]> x_; // smaller size compared to std::vector
 
   friend class ::boost::serialization::access;
-  template <class Archive> void serialize(Archive &, unsigned);
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 };
 
 /** Axis for an interval of integral values with unit steps.
@@ -317,7 +354,7 @@ private:
  */
 template <typename IntType>
 class integer : public base, public iterator_mixin<integer<IntType>> {
-public:
+ public:
   using value_type = IntType;
   using bin_type = interval_view<integer>;
 
@@ -328,7 +365,9 @@ public:
    * \param label description of the axis.
    * \param uoflow whether to add under-/overflow bins.
    */
-  integer(value_type lower, value_type upper, string_view label = {},
+  integer(value_type lower,
+          value_type upper,
+          string_view label = {},
           axis::uoflow uo = axis::uoflow::on)
       : base(upper - lower, label, uo), min_(lower) {
     if (!(lower < upper)) {
@@ -337,10 +376,10 @@ public:
   }
 
   integer() = default;
-  integer(const integer &) = default;
-  integer &operator=(const integer &) = default;
-  integer(integer &&) = default;
-  integer &operator=(integer &&) = default;
+  integer(const integer&) = default;
+  integer& operator=(const integer&) = default;
+  integer(integer&&) = default;
+  integer& operator=(integer&&) = default;
 
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
@@ -361,15 +400,16 @@ public:
 
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
-  bool operator==(const integer &o) const noexcept {
+  bool operator==(const integer& o) const noexcept {
     return base::operator==(o) && min_ == o.min_;
   }
 
-private:
+ private:
   value_type min_ = 0;
 
   friend class ::boost::serialization::access;
-  template <class Archive> void serialize(Archive &, unsigned);
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 };
 
 /** Axis which maps unique single values to bins (one on one).
@@ -383,21 +423,21 @@ template <typename T>
 class category : public base, public iterator_mixin<category<T>> {
   using map_type = bimap<T, int>;
 
-public:
+ public:
   using value_type = T;
   using bin_type = value_view<category>;
 
   category() = default;
-  category(const category &rhs) : base(rhs), map_(new map_type(*rhs.map_)) {}
-  category &operator=(const category &rhs) {
+  category(const category& rhs) : base(rhs), map_(new map_type(*rhs.map_)) {}
+  category& operator=(const category& rhs) {
     if (this != &rhs) {
       base::operator=(rhs);
       map_.reset(new map_type(*rhs.map_));
     }
     return *this;
   }
-  category(category &&rhs) = default;
-  category &operator=(category &&rhs) = default;
+  category(category&& rhs) = default;
+  category& operator=(category&& rhs) = default;
 
   /** Construct from an initializer list of strings.
    *
@@ -406,7 +446,7 @@ public:
   category(std::initializer_list<value_type> seq, string_view label = {})
       : base(seq.size(), label, axis::uoflow::off), map_(new map_type()) {
     int index = 0;
-    for (const auto &x : seq)
+    for (const auto& x : seq)
       map_->insert({x, index++});
     if (index == 0)
       throw std::invalid_argument("sequence is empty");
@@ -425,7 +465,7 @@ public:
   }
 
   /// Returns the bin index for the passed argument.
-  int index(const value_type &x) const noexcept {
+  int index(const value_type& x) const noexcept {
     auto it = map_->left.find(x);
     if (it == map_->left.end())
       return base::size();
@@ -433,7 +473,7 @@ public:
   }
 
   /// Returns the value for the bin index (performs a range check).
-  const value_type &value(int idx) const {
+  const value_type& value(int idx) const {
     auto it = map_->right.find(idx);
     if (it == map_->right.end())
       throw std::out_of_range("category index out of range");
@@ -442,16 +482,17 @@ public:
 
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
-  bool operator==(const category &o) const noexcept {
+  bool operator==(const category& o) const noexcept {
     return base::operator==(o) &&
            std::equal(map_->begin(), map_->end(), o.map_->begin());
   }
 
-private:
+ private:
   std::unique_ptr<map_type> map_;
 
   friend class ::boost::serialization::access;
-  template <class Archive> void serialize(Archive &, unsigned);
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 };
 } // namespace axis
 } // namespace histogram
