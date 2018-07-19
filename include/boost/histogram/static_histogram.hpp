@@ -11,6 +11,8 @@
 #include <boost/histogram/arithmetic_operators.hpp>
 #include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
+#include <boost/histogram/detail/index_cache.hpp>
+#include <boost/histogram/detail/index_mapper.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
@@ -75,6 +77,7 @@ class histogram<static_tag, Axes, Storage> {
     if (static_cast<const void*>(this) != static_cast<const void*>(&rhs)) {
       axes_ = rhs.axes_;
       storage_ = rhs.storage_;
+      index_cache_.reset(*this);
     }
     return *this;
   }
@@ -183,7 +186,7 @@ class histogram<static_tag, Axes, Storage> {
   }
 
   template <typename... Ts>
-  const_reference at(Ts&&... ts) const {
+  const_reference at(const Ts&... ts) const {
     // case with one argument is ambiguous, is specialized below
     static_assert(sizeof...(ts) == axes_size::value,
                   "bin arguments do not match histogram dimension");
@@ -193,15 +196,14 @@ class histogram<static_tag, Axes, Storage> {
   }
 
   template <typename T>
-  const_reference operator[](T&& t) const {
-    // check whether we need to unpack argument
-    return at_impl(detail::classify_container<T>(), std::forward<T>(t));
+  const_reference operator[](const T& t) const {
+    return at(t);
   }
 
   template <typename T>
-  const_reference at(T&& t) const {
+  const_reference at(const T& t) const {
     // check whether we need to unpack argument
-    return at_impl(detail::classify_container<T>(), std::forward<T>(t));
+    return at_impl(detail::classify_container<T>(), t);
   }
 
   /// Number of axes (dimensions) of histogram
@@ -310,7 +312,7 @@ class histogram<static_tag, Axes, Storage> {
   }
 
   template <typename T>
-  const_reference at_impl(detail::dynamic_container_tag, T&& t) const {
+  const_reference at_impl(detail::dynamic_container_tag, const T& t) const {
     BOOST_ASSERT_MSG(
         std::distance(std::begin(t), std::end(t)) == axes_size::value,
         "bin container does not match histogram dimension");
@@ -320,16 +322,16 @@ class histogram<static_tag, Axes, Storage> {
   }
 
   template <typename T>
-  const_reference at_impl(detail::static_container_tag, T&& t) const {
+  const_reference at_impl(detail::static_container_tag, const T& t) const {
     static_assert(mp11::mp_size<T>::value == axes_size::value,
                   "bin container does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    lin_get(axes_size(), idx, stride, std::forward<T>(t));
+    lin_get(axes_size(), idx, stride, t);
     return detail::storage_get(storage_, idx, stride == 0);
   }
 
   template <typename T>
-  const_reference at_impl(detail::no_container_tag, T&& t) const {
+  const_reference at_impl(detail::no_container_tag, const T& t) const {
     std::size_t idx = 0, stride = 1;
     lin<0>(idx, stride, detail::indirect_int_cast(t));
     return detail::storage_get(storage_, idx, stride == 0);
@@ -427,7 +429,7 @@ class histogram<static_tag, Axes, Storage> {
     const auto j = detail::indirect_int_cast(std::get<D>(t));
     stride *= (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
     detail::lin(idx, stride, a_size, a_shape, j);
-    lin_get(mp11::mp_size_t<(N - 1)>(), idx, stride, std::forward<T>(t));
+    lin_get(mp11::mp_size_t<(N - 1)>(), idx, stride, t);
   }
 
   template <typename H>
