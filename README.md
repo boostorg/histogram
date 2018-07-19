@@ -158,9 +158,17 @@ Thanks to meta-programming and dynamic memory management, this library is not on
 
 ![alt benchmark](doc/benchmark.png)
 
+## What users say
+
+<p style="color: black; margin-left: 5%; margin-right: 5%;font-size: large;">
+<strong>John Buonagurio</strong> | Manager at <a style="text-decoration: none; color:black" href="www.exponent.com"><strong>E<sup><i>x</i></sup>ponent<sup>&reg;</sup></strong></a>
+</p>
+<p style="color: dimgray; margin-left: 5%; margin-right: 5%; font-style: italic; font-size: large;">I just wanted to say 'thanks' for your awesome Histogram library. I'm working on a software package for processing meteorology data and I'm using it to generate wind roses with the help of Qt and QwtPolar. Looks like you thought of just about everything here &ndash; the circular axis type was practically designed for this application, everything 'just worked'.
+</p>
+
 ## Rationale
 
-There is a lack of a widely-used free histogram class in C++. While it is easy to write a one-dimensional histogram, writing a general multi-dimensional histogram is not trivial. Even more so, if you want the histogram to be serializable and have Python-bindings and support Numpy. In high-energy physics, the [ROOT framework](https://root.cern.ch) from CERN is widely used. This histogram class is designed to be more convenient, more flexiable, and faster than the equivalent ROOT histograms. This library comes in a clean and modern C++ design which follows the advice given in popular C++ books, like those of [Meyers](http://www.aristeia.com/books.html) and [Sutter and Alexandrescu](http://www.gotw.ca/publications/c++cs.htm).
+There is a lack of a widely-used free histogram class in C++. While it is easy to write a one-dimensional histogram, writing a general multi-dimensional histogram is not trivial. Even more so, if you want the histogram to be serializable and have Python-bindings and support Numpy. In high-energy physics, the [ROOT framework](https://root.cern.ch) from CERN is widely used. This histogram class is designed to be more convenient, flexible, and faster than the equivalent ROOT histograms. It is easy to integrate in your project without adding a huge dependency; you only need Boost. Finally, this library comes in a clean and modern C++11 design which follows the STL and Boost styles, and the general advice given by popular C++ experts ([Meyers](http://www.aristeia.com/books.html), [Sutter and Alexandrescu](http://www.gotw.ca/publications/c++cs.htm), and others).
 
 Read more about the design choices in the [documentation](http://hdembinski.github.io/histogram/doc/html/histogram/rationale.html)
 
