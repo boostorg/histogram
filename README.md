@@ -160,7 +160,7 @@ Thanks to meta-programming and dynamic memory management, this library is not on
 
 ## What users say
 
-**John Buonagurio** | Manager at [www.exponent.com](**E<sup><i>x</i></sup>ponent<sup>&reg;</sup>**)
+**John Buonagurio** | Manager at [**E<sup><i>x</i></sup>ponent<sup>&reg;</sup>**](www.exponent.com)
 
 *"I just wanted to say 'thanks' for your awesome Histogram library. I'm working on a software package for processing meteorology data and I'm using it to generate wind roses with the help of Qt and QwtPolar. Looks like you thought of just about everything here &ndash; the circular axis type was practically designed for this application, everything 'just worked'."*
 
