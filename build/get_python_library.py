@@ -13,8 +13,13 @@ for required_key in ("LDLIBRARY", "LIBDEST", "LIBDIR", "LIBPL"):
         pprint(config)
         raise SystemExit(1)
 
-so_ext = config['SO']
-so_ext = so_ext[so_ext.rindex("."):]
+if sys.platform == "darwin":
+    so_ext = "dylib"
+elif sys.platform.startswith("linux"):
+    so_ext = "so"
+else:
+    so_ext = "dll"
+
 library = "*python%s*%s" % (sysconfig.get_python_version(), so_ext) 
 pprint(library)
 for libpath in ('LIBDEST', 'LIBDIR', 'LIBPL'):
