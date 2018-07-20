@@ -27,7 +27,8 @@ pprint(config)
 
 for libpath in ('BINLIBDEST', 'LIBDEST', 'LIBDIR', 'LIBPL'):
     pprint(libpath)
-    if os.path.exists(libpath):
-        pprint(os.listdir(libpath))
+    p = config[libpath]
+    if os.path.exists(p):
+        pprint(os.listdir(p))
 
 raise SystemExit(1)
