@@ -21,7 +21,6 @@ else:
     so_ext = "dll"
 
 library = "*python%s*%s" % (sysconfig.get_python_version(), so_ext) 
-pprint(library)
 for libpath in ('LIBDEST', 'LIBDIR', 'LIBPL'):
     p = pj(config[libpath], library)
     cand = glob(p)
