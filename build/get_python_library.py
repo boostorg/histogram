@@ -16,14 +16,14 @@ for required_key in ("LDLIBRARY", "LIBDEST", "LIBDIR", "LIBPL"):
 so_ext = config['SO']
 library = "*python" + sysconfig.get_python_version() + "*" + so_ext 
 for libpath in ('BINLIBDEST', 'LIBDEST', 'LIBDIR', 'LIBPL'):
-    p = pj(d[libpath], library)
+    p = pj(config[libpath], library)
     cand = glob(p)
     if cand and len(cand) == 1:
         sys.stdout.write(cand[0])
         raise SystemExit
 
 pprint("no library found, dumping config:")
-pprint(d)
+pprint(config)
 
 for libpath in ('BINLIBDEST', 'LIBDEST', 'LIBDIR', 'LIBPL'):
     pprint(libpath)
