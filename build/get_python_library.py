@@ -26,8 +26,6 @@ args = subp.check_output([python_config, "--ldflags"]).split()
 libdir = []
 lib = []
 
-so_ext = config.get("SO")
-
 for arg in args:
     if arg.startswith("-L"):
         libdir.append(arg[2:])
@@ -36,7 +34,8 @@ for arg in args:
 
 for d in libdir:
     for l in lib:
-        pattern = pj(d, "*" + l + "*" + so_ext)
+        pattern = pj(d, "*" + l + "*")
+        pprint(pattern)
         match = glob(pattern)
         if match:
             assert len(match) == 1
