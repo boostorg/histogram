@@ -18,6 +18,7 @@ bindir = config.get("BINDIR")
 
 python_config = pj(bindir, "python-config")
 if not ex(python_config):
+    pprint(python_config + " not found")
     fail()
 
 args = subp.check_output([python_config, "--ldflags"]).split()
