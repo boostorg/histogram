@@ -5,15 +5,16 @@ from pprint import pprint
 from glob import glob
 pj = os.path.join
 
-d = sysconfig.get_config_vars()
+config = sysconfig.get_config_vars()
 
 for required_key in ("LDLIBRARY", "LIBDEST", "LIBDIR", "LIBPL"):
-    if required_key not in d:
+    if required_key not in config:
         pprint("some keys not found, dumping config:")
-        pprint(d)
+        pprint(config)
         raise SystemExit(1)
 
-library = "libpython" + sysconfig.get_python_version() + "*"
+so_ext = config['SO']
+library = "*python" + sysconfig.get_python_version() + "*" + so_ext 
 for libpath in ('BINLIBDEST', 'LIBDEST', 'LIBDIR', 'LIBPL'):
     p = pj(d[libpath], library)
     cand = glob(p)
@@ -23,4 +24,10 @@ for libpath in ('BINLIBDEST', 'LIBDEST', 'LIBDIR', 'LIBPL'):
 
 pprint("no library found, dumping config:")
 pprint(d)
+
+for libpath in ('BINLIBDEST', 'LIBDEST', 'LIBDIR', 'LIBPL'):
+    pprint(libpath)
+    if os.path.exists(libpath):
+        pprint(os.listdir(libpath))
+
 raise SystemExit(1)
