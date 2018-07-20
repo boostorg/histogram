@@ -1,47 +1,27 @@
 from distutils import sysconfig
-import subprocess as subp
 import os
 import sys
-from glob import glob
 from pprint import pprint
+from glob import glob
 pj = os.path.join
-ex = os.path.exists
 
-config = sysconfig.get_config_vars()
+d = sysconfig.get_config_vars()
 
-def fail():
-    pprint("no library found, dumping config:")
-    pprint(config)
-    raise SystemExit(1)
+for required_key in ("LDLIBRARY", "LIBDEST", "LIBDIR", "LIBPL"):
+    if required_key not in d:
+        pprint("some keys not found, dumping config:")
+        pprint(d)
+        raise SystemExit(1)
 
-bindir = config.get("BINDIR")
+library = d["LDLIBRARY"] or ("libpython" + sysconfig.get_python_version() + "*")
+for libpath in ('LIBDEST', 'LIBDIR', 'LIBPL'):
+    p = pj(d[libpath], library)
+    if "*" in p:
+        p = (glob(p) or [""])[0]
+    if os.path.exists(p):
+        sys.stdout.write(p)
+        raise SystemExit
 
-python_config = pj(bindir, "python-config")
-if not ex(python_config):
-    pprint(python_config + " not found")
-    fail()
-
-args = subp.check_output([python_config, "--ldflags"]).split()
-
-libdir = []
-lib = []
-
-pprint(args)
-
-for arg in args:
-    if arg.startswith("-L"):
-        libdir.append(arg[2:])
-    if arg.startswith("-l"):
-        lib.append(arg[2:])
-
-for d in libdir:
-    for l in lib:
-        pattern = pj(d, "*" + l + "*")
-        pprint(pattern)
-        match = glob(pattern)
-        if match:
-            assert len(match) == 1
-            sys.stdout.write(match[0])
-            raise SystemExit
-
-fail()
+pprint("no library found, dumping config:")
+pprint(d)
+raise SystemExit(1)
