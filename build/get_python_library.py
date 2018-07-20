@@ -26,6 +26,8 @@ args = subp.check_output([python_config, "--ldflags"]).split()
 libdir = []
 lib = []
 
+pprint(args)
+
 for arg in args:
     if arg.startswith("-L"):
         libdir.append(arg[2:])
