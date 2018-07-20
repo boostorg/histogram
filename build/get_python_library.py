@@ -14,7 +14,7 @@ for required_key in ("LDLIBRARY", "LIBDEST", "LIBDIR", "LIBPL"):
         raise SystemExit(1)
 
 so_ext = config['SO']
-so_ext = so_ext[so_ext.index("."):]
+so_ext = so_ext[so_ext.rindex("."):]
 library = "*python%s*%s" % (sysconfig.get_python_version(), so_ext) 
 pprint(library)
 for libpath in ('LIBDEST', 'LIBDIR', 'LIBPL'):
