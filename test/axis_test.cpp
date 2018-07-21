@@ -21,7 +21,7 @@ using namespace boost::histogram;
 #define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
 template <typename Axis>
-void test_axis_iterator(const Axis &a, int begin, int end) {
+void test_axis_iterator(const Axis& a, int begin, int end) {
   for (auto bin : a) {
     BOOST_TEST_EQ(bin.idx(), begin);
     BOOST_TEST_EQ(bin, a[begin]);
@@ -62,7 +62,8 @@ int main() {
   {
     axis::regular<> a{4, -2, 2};
     BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a[a.size()].upper(),
+                  std::numeric_limits<double>::infinity());
     axis::regular<> b;
     BOOST_TEST_NOT(a == b);
     b = a;
@@ -160,7 +161,8 @@ int main() {
   {
     axis::variable<> a{-1, 0, 1};
     BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a[a.size()].upper(),
+                  std::numeric_limits<double>::infinity());
     axis::variable<> b;
     BOOST_TEST_NOT(a == b);
     b = a;
@@ -269,7 +271,8 @@ int main() {
     a6 = a1;
     BOOST_TEST_EQ(a6, a1);
     axis::any<axis::regular<>, axis::integer<>> a7(axis::integer<>(0, 2));
-    BOOST_TEST_THROWS(axis::any<axis::regular<>> a8(a7), std::invalid_argument);
+    BOOST_TEST_THROWS(axis::any<axis::regular<>> a8(a7),
+                      std::invalid_argument);
     BOOST_TEST_THROWS(a4 = a7, std::invalid_argument);
   }
 
@@ -299,14 +302,13 @@ int main() {
     axes.push_back(axis::regular<double, axis::transform::pow>(
         2, 1, 10, "regular4", axis::uoflow::off, -0.5));
     axes.push_back(axis::circular<>(4, 0.1, 1.0, "polar"));
-    axes.push_back(axis::variable<>({-1, 0, 1}, "variable", axis::uoflow::off));
+    axes.push_back(
+        axis::variable<>({-1, 0, 1}, "variable", axis::uoflow::off));
     axes.push_back(axis::category<>({A, B, C}, "category"));
     axes.push_back(axis::category<std::string>({a, b}, "category2"));
     axes.push_back(axis::integer<>(-1, 1, "integer", axis::uoflow::off));
     std::ostringstream os;
-    for (const auto &a : axes) {
-      os << a << "\n";
-    }
+    for (const auto& a : axes) { os << a << "\n"; }
     const std::string ref =
         "regular(2, -1, 1, label='regular1')\n"
         "regular_log(2, 1, 10, label='regular2', uoflow=False)\n"
@@ -329,7 +331,7 @@ int main() {
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>{A, B, C});
     axes.push_back(axis::integer<>{-1, 1});
-    for (const auto &a : axes) {
+    for (const auto& a : axes) {
       BOOST_TEST(!(a == axis::any_std()));
       BOOST_TEST_EQ(a, a);
     }
@@ -342,7 +344,7 @@ int main() {
     std::string a = "A", b = "B";
     axis::any_std x = axis::category<std::string>({a, b}, "category");
     BOOST_TEST_THROWS(x.index(1.5), std::runtime_error);
-    const auto &cx = axis::cast<axis::category<std::string>>(x);
+    const auto& cx = axis::cast<axis::category<std::string>>(x);
     BOOST_TEST_EQ(cx.index(b), 1);
   }
 
@@ -354,7 +356,8 @@ int main() {
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{A, B, C}};
 
-    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
+    std::vector<
+        axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{{A, B, C}}};
 
@@ -376,8 +379,8 @@ int main() {
         std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                         axis::category<>{{A, B}});
 
-    auto tuple3 =
-        std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1});
+    auto tuple3 = std::make_tuple(axis::regular<>{2, -1, 1},
+                                  axis::variable<>{-1, 0, 1});
 
     BOOST_TEST(detail::axes_equal(std_vector1, tuple1));
     BOOST_TEST(detail::axes_equal(tuple1, std_vector1));
@@ -394,7 +397,8 @@ int main() {
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{A, B, C}};
 
-    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
+    std::vector<
+        axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -2, 2}, axis::variable<>{-2, 0, 2},
                        axis::category<>{A, B}};
 

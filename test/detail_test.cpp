@@ -29,21 +29,24 @@ using i2 = mp11::mp_int<2>;
 using i3 = mp11::mp_int<3>;
 
 namespace std { // never add to std, we only do it to get ADL working
-template <typename T> ostream &operator<<(ostream &os, const vector<T> &v) {
+template <typename T>
+ostream& operator<<(ostream& os, const vector<T>& v) {
   os << "[ ";
-  for (const auto &x : v)
-    os << x << " ";
+  for (const auto& x : v) os << x << " ";
   os << "]";
   return os;
 }
 
 struct ostreamer {
-  ostream &os;
-  template <typename T> void operator()(const T &t) const { os << t << " "; }
+  ostream& os;
+  template <typename T>
+  void operator()(const T& t) const {
+    os << t << " ";
+  }
 };
 
 template <typename... Ts>
-ostream &operator<<(ostream &os, const tuple<Ts...> &t) {
+ostream& operator<<(ostream& os, const tuple<Ts...>& t) {
   os << "[ ";
   ::boost::mp11::tuple_for_each(t, ostreamer{os});
   os << "]";
@@ -135,16 +138,16 @@ int main() {
     struct no_methods {};
 
     struct value_method {
-      const double &value() const;
+      const double& value() const;
     };
 
     struct variance_method {
-      const double &variance() const;
+      const double& variance() const;
     };
 
     struct value_and_variance_methods {
-      const double &value() const;
-      const double &variance() const;
+      const double& value() const;
+      const double& variance() const;
     };
 
     BOOST_TEST_EQ(has_variance_support<no_methods>(), false);
@@ -158,19 +161,19 @@ int main() {
     using result1 = classify_container<int>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result1, no_container_tag>));
 
-    using result1a = classify_container<int &>;
+    using result1a = classify_container<int&>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result1a, no_container_tag>));
 
     using result2 = classify_container<std::vector<int>>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result2, dynamic_container_tag>));
 
-    using result2a = classify_container<std::vector<int> &>;
+    using result2a = classify_container<std::vector<int>&>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result2a, dynamic_container_tag>));
 
     using result3 = classify_container<std::pair<int, int>>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result3, static_container_tag>));
 
-    using result3a = classify_container<std::pair<int, int> &>;
+    using result3a = classify_container<std::pair<int, int>&>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result3a, static_container_tag>));
 
     using result4 = classify_container<decltype("abc")>;
@@ -190,10 +193,10 @@ int main() {
   {
     using T1 = int;
     using T2 = const int;
-    using T3 = const int &;
+    using T3 = const int&;
     using T4 = volatile int;
     using T5 = volatile const int;
-    using T6 = volatile const int &;
+    using T6 = volatile const int&;
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T1>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T2>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T3>, int>));
@@ -205,9 +208,9 @@ int main() {
   // mp_union
   {
     using L1 = mp11::mp_list<int, char, long>;
-    using L2 = mp11::mp_list<char, char *>;
+    using L2 = mp11::mp_list<char, char*>;
     using result = mp_union<L1, L2>;
-    using expected = mp11::mp_list<int, char, long, char *>;
+    using expected = mp11::mp_list<int, char, long, char*>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
   }
 

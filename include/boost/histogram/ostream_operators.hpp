@@ -16,16 +16,17 @@ namespace histogram {
 
 namespace detail {
 struct axis_ostream_visitor {
-  std::ostream &os_;
-  explicit axis_ostream_visitor(std::ostream &os) : os_(os) {}
-  template <typename Axis> void operator()(const Axis &a) const {
+  std::ostream& os_;
+  explicit axis_ostream_visitor(std::ostream& os) : os_(os) {}
+  template <typename Axis>
+  void operator()(const Axis& a) const {
     os_ << "\n  " << a << ",";
   }
 };
 } // namespace detail
 
 template <typename... Ts>
-inline std::ostream &operator<<(std::ostream &os, const histogram<Ts...> &h) {
+inline std::ostream& operator<<(std::ostream& os, const histogram<Ts...>& h) {
   os << "histogram(";
   h.for_each_axis(detail::axis_ostream_visitor(os));
   os << (h.dim() ? "\n)" : ")");
@@ -33,7 +34,8 @@ inline std::ostream &operator<<(std::ostream &os, const histogram<Ts...> &h) {
 }
 
 template <typename T>
-inline std::ostream &operator<<(std::ostream &os, const weight_counter<T> &x) {
+inline std::ostream& operator<<(std::ostream& os,
+                                const weight_counter<T>& x) {
   os << "weight_counter(" << x.value() << ", " << x.variance() << ")";
   return os;
 }

@@ -22,10 +22,11 @@ class access;
 namespace boost {
 namespace histogram {
 
-template <typename T> class array_storage {
+template <typename T>
+class array_storage {
 public:
   using element_type = T;
-  using const_reference = const T &;
+  using const_reference = const T&;
 
   explicit array_storage(std::size_t s)
       : size_(s), array_(new element_type[s]) {
@@ -33,22 +34,22 @@ public:
   }
 
   array_storage() = default;
-  array_storage(const array_storage &other)
+  array_storage(const array_storage& other)
       : size_(other.size()), array_(new element_type[other.size()]) {
     std::copy(other.array_.get(), other.array_.get() + size_, array_.get());
   }
-  array_storage &operator=(const array_storage &other) {
+  array_storage& operator=(const array_storage& other) {
     if (this != &other) {
       reset(other.size());
       std::copy(other.array_.get(), other.array_.get() + size_, array_.get());
     }
     return *this;
   }
-  array_storage(array_storage &&other) {
+  array_storage(array_storage&& other) {
     std::swap(size_, other.size_);
     std::swap(array_, other.array_);
   }
-  array_storage &operator=(array_storage &&other) {
+  array_storage& operator=(array_storage&& other) {
     if (this != &other) {
       std::swap(size_, other.size_);
       std::swap(array_, other.array_);
@@ -57,14 +58,14 @@ public:
   }
 
   template <typename S, typename = detail::requires_storage<S>>
-  explicit array_storage(const S &other) {
+  explicit array_storage(const S& other) {
     reset(other.size());
     for (std::size_t i = 0; i < size_; ++i)
       array_[i] = static_cast<element_type>(other[i]);
   }
 
   template <typename S, typename = detail::requires_storage<S>>
-  array_storage &operator=(const S &other) {
+  array_storage& operator=(const S& other) {
     reset(other.size());
     for (std::size_t i = 0; i < size_; ++i)
       array_[i] = static_cast<element_type>(other[i]);
@@ -75,28 +76,30 @@ public:
 
   void increase(std::size_t i) noexcept { ++array_[i]; }
 
-  template <typename U> void add(std::size_t i, const U &x) noexcept {
+  template <typename U>
+  void add(std::size_t i, const U& x) noexcept {
     array_[i] += x;
   }
 
-  const_reference operator[](std::size_t i) const noexcept { return array_[i]; }
+  const_reference operator[](std::size_t i) const noexcept {
+    return array_[i];
+  }
 
   template <typename U>
-  bool operator==(const array_storage<U> &rhs) const noexcept {
-    if (size_ != rhs.size_)
-      return false;
+  bool operator==(const array_storage<U>& rhs) const noexcept {
+    if (size_ != rhs.size_) return false;
     return std::equal(array_.get(), array_.get() + size_, rhs.array_.get());
   }
 
-  template <typename S> array_storage &operator+=(const S &rhs) noexcept {
-    for (std::size_t i = 0; i < size_; ++i)
-      add(i, rhs[i]);
+  template <typename S>
+  array_storage& operator+=(const S& rhs) noexcept {
+    for (std::size_t i = 0; i < size_; ++i) add(i, rhs[i]);
     return *this;
   }
 
-  template <typename U> array_storage &operator*=(const U &x) noexcept {
-    for (std::size_t i = 0; i < size_; ++i)
-      array_[i] *= x;
+  template <typename U>
+  array_storage& operator*=(const U& x) noexcept {
+    for (std::size_t i = 0; i < size_; ++i) array_[i] *= x;
     return *this;
   }
 
@@ -109,10 +112,12 @@ private:
     array_.reset(new element_type[size]);
   }
 
-  template <typename U> friend class array_storage;
+  template <typename U>
+  friend class array_storage;
 
   friend class ::boost::serialization::access;
-  template <typename Archive> void serialize(Archive &, unsigned);
+  template <typename Archive>
+  void serialize(Archive&, unsigned);
 };
 
 } // namespace histogram

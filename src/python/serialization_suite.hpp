@@ -31,11 +31,11 @@ namespace detail {
 
 class python_bytes_sink : public iostreams::sink {
 public:
-  python_bytes_sink(PyObject **pstr) : pstr_(pstr), len_(0), pos_(0) {
+  python_bytes_sink(PyObject** pstr) : pstr_(pstr), len_(0), pos_(0) {
     BOOST_ASSERT(*pstr == 0);
   }
 
-  std::streamsize write(const char *s, std::streamsize n) {
+  std::streamsize write(const char* s, std::streamsize n) {
     if (len_ == 0) {
       *pstr_ = PyBytes_FromStringAndSize(s, n);
       if (*pstr_ == 0) // no point trying to recover from allocation error
@@ -47,7 +47,7 @@ public:
         if (_PyBytes_Resize(pstr_, len_) == -1)
           std::abort(); // no point trying to recover from allocation error
       }
-      char *b = PyBytes_AS_STRING(*pstr_);
+      char* b = PyBytes_AS_STRING(*pstr_);
       std::copy(s, s + n, b + pos_);
     }
     pos_ += n;
@@ -55,17 +55,18 @@ public:
   }
 
 private:
-  PyObject **pstr_;
+  PyObject** pstr_;
   std::streamsize len_, pos_;
 };
 } // namespace detail
 
-template <class T> struct serialization_suite : python::pickle_suite {
+template <class T>
+struct serialization_suite : python::pickle_suite {
   static python::tuple getstate(python::object obj) {
-    PyObject *pobj = 0;
+    PyObject* pobj = 0;
     iostreams::stream<detail::python_bytes_sink> os(&pobj);
     archive::text_oarchive oa(os);
-    oa << python::extract<const T &>(obj)();
+    oa << python::extract<const T&>(obj)();
     os.flush();
     return python::make_tuple(obj.attr("__dict__"),
                               python::object(python::handle<>(pobj)));
@@ -81,7 +82,7 @@ template <class T> struct serialization_suite : python::pickle_suite {
     iostreams::stream<iostreams::array_source> is(PyBytes_AS_STRING(o.ptr()),
                                                   PyBytes_Size(o.ptr()));
     archive::text_iarchive ia(is);
-    ia >> python::extract<T &>(obj)();
+    ia >> python::extract<T&>(obj)();
   }
 
   static bool getstate_manages_dict() { return true; }

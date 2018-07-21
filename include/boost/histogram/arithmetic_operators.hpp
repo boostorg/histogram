@@ -13,67 +13,68 @@ namespace boost {
 namespace histogram {
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> &&operator+(histogram<T, A, S> &&a,
-                               const histogram<T, A, S> &b) {
+histogram<T, A, S>&& operator+(histogram<T, A, S>&& a,
+                               const histogram<T, A, S>& b) {
   a += b;
   return std::move(a);
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> &&operator+(histogram<T, A, S> &&a, histogram<T, A, S> &&b) {
+histogram<T, A, S>&& operator+(histogram<T, A, S>&& a,
+                               histogram<T, A, S>&& b) {
   a += b;
   return std::move(a);
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> &&operator+(const histogram<T, A, S> &a,
-                               histogram<T, A, S> &&b) {
+histogram<T, A, S>&& operator+(const histogram<T, A, S>& a,
+                               histogram<T, A, S>&& b) {
   b += a;
   return std::move(b);
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> operator+(const histogram<T, A, S> &a,
-                             const histogram<T, A, S> &b) {
+histogram<T, A, S> operator+(const histogram<T, A, S>& a,
+                             const histogram<T, A, S>& b) {
   histogram<T, A, S> r(a);
   r += b;
   return r;
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> &&operator*(histogram<T, A, S> &&a, const double x) {
+histogram<T, A, S>&& operator*(histogram<T, A, S>&& a, const double x) {
   a *= x;
   return std::move(a);
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> &&operator*(const double x, histogram<T, A, S> &&b) {
+histogram<T, A, S>&& operator*(const double x, histogram<T, A, S>&& b) {
   b *= x;
   return std::move(b);
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> operator*(const histogram<T, A, S> &a, const double x) {
+histogram<T, A, S> operator*(const histogram<T, A, S>& a, const double x) {
   auto r = a;
   r *= x;
   return r;
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> operator*(const double x, const histogram<T, A, S> &b) {
+histogram<T, A, S> operator*(const double x, const histogram<T, A, S>& b) {
   auto r = b;
   r *= x;
   return r;
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> &&operator/(histogram<T, A, S> &&a, const double x) {
+histogram<T, A, S>&& operator/(histogram<T, A, S>&& a, const double x) {
   a /= x;
   return std::move(a);
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S> operator/(const histogram<T, A, S> &a, const double x) {
+histogram<T, A, S> operator/(const histogram<T, A, S>& a, const double x) {
   auto r = a;
   r /= x;
   return r;

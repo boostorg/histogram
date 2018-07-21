@@ -14,18 +14,16 @@ namespace histogram {
 
 template <typename S1, typename S2, typename = detail::requires_storage<S1>,
           typename = detail::requires_storage<S2>>
-bool operator==(const S1 &s1, const S2 &s2) noexcept {
-  if (s1.size() != s2.size())
-    return false;
+bool operator==(const S1& s1, const S2& s2) noexcept {
+  if (s1.size() != s2.size()) return false;
   for (std::size_t i = 0, n = s1.size(); i < n; ++i)
-    if (!(s1[i] == s2[i]))
-      return false;
+    if (!(s1[i] == s2[i])) return false;
   return true;
 }
 
 template <typename S1, typename S2, typename = detail::requires_storage<S1>,
           typename = detail::requires_storage<S2>>
-bool operator!=(const S1 &s1, const S2 &s2) noexcept {
+bool operator!=(const S1& s1, const S2& s2) noexcept {
   return !operator==(s1, s2);
 }
 
