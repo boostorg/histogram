@@ -5,13 +5,7 @@ from pprint import pprint
 from glob import glob
 pj = os.path.join
 
-config = sysconfig.get_config_vars()
-
-for required_key in ("LDLIBRARY", "LIBDEST", "LIBDIR", "LIBPL"):
-    if required_key not in config:
-        pprint("some keys not found, dumping config:")
-        pprint(config)
-        raise SystemExit(1)
+LIB_KEYS = ('LIBDEST', 'LIBDIR', 'LIBPL')
 
 if sys.platform == "darwin":
     so_ext = "dylib"
@@ -20,18 +14,21 @@ elif sys.platform.startswith("linux"):
 else:
     so_ext = "dll"
 
+config = sysconfig.get_config_vars()
+
 library = "*python%s*%s" % (sysconfig.get_python_version(), so_ext) 
-for libpath in ('LIBDEST', 'LIBDIR', 'LIBPL'):
+for libpath in LIB_KEYS:
     p = pj(config[libpath], library)
     cand = glob(p)
     if cand and len(cand) == 1:
         sys.stdout.write(cand[0])
         raise SystemExit
 
-pprint("no library found, dumping config:")
+pprint("no library found, dumping library pattern, config, and directory contents:")
+pprint(library)
 pprint(config)
 
-for libpath in ('BINLIBDEST', 'LIBDEST', 'LIBDIR', 'LIBPL'):
+for libpath in LIB_KEYS:
     pprint(libpath)
     p = config[libpath]
     if os.path.exists(p):
