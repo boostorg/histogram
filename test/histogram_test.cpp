@@ -48,9 +48,7 @@ int expected_moved_from_dim(static_tag, int static_value) {
   return static_value;
 }
 
-int expected_moved_from_dim(dynamic_tag, int) {
-  return 0;
-}
+int expected_moved_from_dim(dynamic_tag, int) { return 0; }
 
 template <typename Histogram>
 typename Histogram::element_type sum(const Histogram& h) {
@@ -212,8 +210,8 @@ void run_tests() {
     BOOST_TEST_EQ(c.axis().index(B), 1);
     c.axis().label("foo");
     BOOST_TEST_EQ(c.axis().label(), "foo");
-    // need to cast here for this to work with Type == dynamic_tag
-    auto ca = axis::cast<axis::category<>>(c.axis());
+    // need to cast here for this to work with Type == dynamic_tag, too
+    auto ca = static_cast<const axis::category<>&>(c.axis());
     BOOST_TEST_EQ(ca[0].value(), A);
   }
 
@@ -827,8 +825,7 @@ void run_tests() {
   // STL compatibility
   {
     auto h = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 3));
-    for (int i = 0; i < 3; ++i)
-      h(i);
+    for (int i = 0; i < 3; ++i) h(i);
     auto a = std::vector<weight_counter<double>>();
     std::partial_sum(h.begin(), h.end(), std::back_inserter(a));
     BOOST_TEST_EQ(a[0].value(), 1);

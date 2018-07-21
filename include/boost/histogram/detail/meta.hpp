@@ -117,11 +117,6 @@ using copy_qualifiers = mp11::mp_if<
                     T2&>,
         mp11::mp_if<std::is_const<T1>, const T2, T2>>>;
 
-template <typename T, typename... Ts>
-using is_common_base =
-    mp11::mp_all<mp11::mp_all_of_q<mp11::mp_list<Ts...>,
-                                   mp11::mp_bind_front<std::is_base_of, T>>>;
-
 template <typename S, typename L>
 using mp_set_union =
     mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back, S>, L>;
