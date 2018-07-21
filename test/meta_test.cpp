@@ -19,11 +19,6 @@ using namespace boost::histogram::detail;
 using namespace boost::histogram::literals;
 namespace mp11 = boost::mp11;
 
-using i0 = mp11::mp_int<0>;
-using i1 = mp11::mp_int<1>;
-using i2 = mp11::mp_int<2>;
-using i3 = mp11::mp_int<3>;
-
 int main() {
   // literals
   {
@@ -141,16 +136,6 @@ int main() {
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<copy_qualifiers<const int&, long>, const long&>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&&, long>, long&&>));
-  }
-
-  // is_common_base
-  {
-    struct A {};
-    struct B : A {};
-    struct C : A {};
-    struct D {};
-    BOOST_TEST_TRAIT_TRUE((is_common_base<A, B, C>));
-    BOOST_TEST_TRAIT_FALSE((is_common_base<A, B, D, C>));
   }
 
   // mp_set_union
