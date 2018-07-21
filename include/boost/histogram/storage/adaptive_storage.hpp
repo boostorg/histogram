@@ -54,7 +54,7 @@ inline T* alloc(std::size_t s) {
 }
 
 class array_base {
- public:
+public:
   explicit array_base(const std::size_t s) : size(s) {}
   array_base() = default;
   array_base(const array_base&) = default;
@@ -72,7 +72,7 @@ class array_base {
 
 template <typename T>
 class array : public array_base {
- public:
+public:
   explicit array(const std::size_t s) : array_base(s), ptr(alloc<T>(s)) {
     std::fill(begin(), end(), T(0));
   }
@@ -118,23 +118,19 @@ class array : public array_base {
   const T* begin() const { return ptr.get(); }
   const T* end() const { return ptr.get() + size; }
 
- private:
+private:
   std::unique_ptr<T[]> ptr;
 };
 
 template <>
 class array<void> : public array_base {
- public:
+public:
   using array_base::array_base;
 };
 
-using any_array = variant<array<void>,
-                          array<uint8_t>,
-                          array<uint16_t>,
-                          array<uint32_t>,
-                          array<uint64_t>,
-                          array<mp_int>,
-                          array<wcount>>;
+using any_array =
+    variant<array<void>, array<uint8_t>, array<uint16_t>, array<uint32_t>,
+            array<uint64_t>, array<mp_int>, array<wcount>>;
 
 template <typename T>
 struct next_type;
@@ -159,8 +155,7 @@ using next = typename next_type<T>::type;
 
 template <typename T>
 inline bool safe_increase(T& t) {
-  if (t == std::numeric_limits<T>::max())
-    return false;
+  if (t == std::numeric_limits<T>::max()) return false;
   ++t;
   return true;
 }
@@ -176,8 +171,7 @@ inline bool safe_assign(T& t, const U& u) {
 
 template <typename T, typename U>
 inline bool safe_radd(T& t, const U& u) {
-  if (static_cast<T>(std::numeric_limits<T>::max() - t) < u)
-    return false;
+  if (static_cast<T>(std::numeric_limits<T>::max() - t) < u) return false;
   t += static_cast<T>(u);
   return true;
 }
@@ -185,8 +179,7 @@ inline bool safe_radd(T& t, const U& u) {
 // float rounding is a mess, the equal sign is necessary here
 template <typename T>
 inline bool safe_radd(T& t, const double u) {
-  if ((std::numeric_limits<T>::max() - t) <= u)
-    return false;
+  if ((std::numeric_limits<T>::max() - t) <= u) return false;
   t += u;
   return true;
 }
@@ -390,24 +383,22 @@ struct rmul_visitor : public static_visitor<void> {
   }
   void operator()(array<void>&) const {}
   void operator()(array<wcount>& lhs) const {
-    for (std::size_t i = 0; i != lhs.size; ++i)
-      lhs[i] *= x;
+    for (std::size_t i = 0; i != lhs.size; ++i) lhs[i] *= x;
   }
 };
 
 struct bicmp_visitor : public static_visitor<bool> {
   template <typename T, typename U>
   bool operator()(const array<T>& b1, const array<U>& b2) const {
-    if (b1.size != b2.size)
-      return false;
+    if (b1.size != b2.size) return false;
     return std::equal(b1.begin(), b1.end(), b2.begin());
   }
 
   template <typename T>
   bool operator()(const array<T>& b1, const array<void>& b2) const {
-    if (b1.size != b2.size)
-      return false;
-    return std::all_of(b1.begin(), b1.end(), [](const T& t) { return t == 0; });
+    if (b1.size != b2.size) return false;
+    return std::all_of(b1.begin(), b1.end(),
+                       [](const T& t) { return t == 0; });
   }
 
   template <typename T>
@@ -425,11 +416,12 @@ struct bicmp_visitor : public static_visitor<bool> {
 class adaptive_storage {
   using buffer_type = detail::any_array;
 
- public:
+public:
   using element_type = detail::wcount;
   using const_reference = element_type;
 
-  explicit adaptive_storage(std::size_t s) : buffer_(detail::array<void>(s)) {}
+  explicit adaptive_storage(std::size_t s)
+      : buffer_(detail::array<void>(s)) {}
 
   adaptive_storage() = default;
   adaptive_storage(const adaptive_storage&) = default;
@@ -450,9 +442,7 @@ class adaptive_storage {
   adaptive_storage& operator=(const RHS& rhs) {
     // no check for self-assign needed, default operator above is better match
     const auto n = rhs.size();
-    if (size() != n) {
-      buffer_ = detail::array<void>(n);
-    }
+    if (size() != n) { buffer_ = detail::array<void>(n); }
     using T = typename RHS::element_type;
     for (std::size_t i = 0; i < n; ++i) {
       apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]), buffer_);
@@ -477,7 +467,8 @@ class adaptive_storage {
       apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()),
                     buffer_);
     } else {
-      apply_visitor(detail::radd_visitor<element_type>(buffer_, i, x), buffer_);
+      apply_visitor(detail::radd_visitor<element_type>(buffer_, i, x),
+                    buffer_);
     }
   }
 
@@ -517,9 +508,9 @@ class adaptive_storage {
   template <typename RHS>
   adaptive_storage& operator+=(const RHS& rhs) {
     for (std::size_t i = 0, n = size(); i < n; ++i)
-      apply_visitor(
-          detail::radd_visitor<typename RHS::element_type>(buffer_, i, rhs[i]),
-          buffer_);
+      apply_visitor(detail::radd_visitor<typename RHS::element_type>(
+                        buffer_, i, rhs[i]),
+                    buffer_);
     return *this;
   }
 
@@ -529,7 +520,7 @@ class adaptive_storage {
     return *this;
   }
 
- private:
+private:
   buffer_type buffer_;
 
   friend class ::boost::python::access;

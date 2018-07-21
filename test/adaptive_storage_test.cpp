@@ -190,8 +190,7 @@ void convert_array_storage_impl() {
 
   array_storage<float> t(std::size_t(1));
   t.increase(0);
-  while (t[0] < 1e20)
-    t.add(0, t[0]);
+  while (t[0] < 1e20) t.add(0, t[0]);
   auto d = aref;
   d = t;
   BOOST_TEST(d == t);

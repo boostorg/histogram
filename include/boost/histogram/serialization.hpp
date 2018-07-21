@@ -41,14 +41,14 @@ struct serialize_helper {
 
 template <typename RealType>
 template <class Archive>
-void weight_counter<RealType>::serialize(Archive& ar, unsigned /* version */) {
+void weight_counter<RealType>::serialize(Archive& ar,
+                                         unsigned /* version */) {
   ar& w;
   ar& w2;
 }
 
 template <class Archive, typename Container>
-void serialize(Archive& ar,
-               array_storage<Container>& store,
+void serialize(Archive& ar, array_storage<Container>& store,
                unsigned /* version */) {
   ar& store.array_;
 }

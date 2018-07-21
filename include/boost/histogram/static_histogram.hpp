@@ -39,7 +39,7 @@ class histogram<static_tag, Axes, Storage> {
   using axes_size = mp11::mp_size<Axes>;
   static_assert(axes_size::value > 0, "at least one axis required");
 
- public:
+public:
   using axes_type = mp11::mp_rename<Axes, std::tuple>;
   using element_type = typename Storage::element_type;
   using const_reference = typename Storage::const_reference;
@@ -52,8 +52,7 @@ class histogram<static_tag, Axes, Storage> {
   histogram& operator=(const histogram& rhs) = default;
   histogram& operator=(histogram&& rhs) = default;
 
-  template <typename Axis0,
-            typename... Axis,
+  template <typename Axis0, typename... Axis,
             typename = detail::requires_axis<Axis0>>
   explicit histogram(Axis0&& axis0, Axis&&... axis)
       : axes_(std::forward<Axis0>(axis0), std::forward<Axis>(axis)...) {
@@ -154,8 +153,7 @@ class histogram<static_tag, Axes, Storage> {
                   "fill arguments do not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, ts...);
-    if (stride)
-      detail::fill_storage(storage_, idx);
+    if (stride) detail::fill_storage(storage_, idx);
   }
 
   template <typename T>
@@ -172,8 +170,7 @@ class histogram<static_tag, Axes, Storage> {
     // case with one argument is ambiguous, is specialized below
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, ts...);
-    if (stride)
-      detail::fill_storage(storage_, idx, std::move(w));
+    if (stride) detail::fill_storage(storage_, idx, std::move(w));
   }
 
   // TODO: remove as obsolete
@@ -253,8 +250,9 @@ class histogram<static_tag, Axes, Storage> {
   auto reduce_to(mp11::mp_int<N>, Ns...) const
       -> static_histogram<detail::selection<Axes, mp11::mp_int<N>, Ns...>,
                           Storage> {
-    using HR = static_histogram<detail::selection<Axes, mp11::mp_int<N>, Ns...>,
-                                Storage>;
+    using HR =
+        static_histogram<detail::selection<Axes, mp11::mp_int<N>, Ns...>,
+                         Storage>;
     auto hr =
         HR(detail::make_sub_tuple<axes_type, mp11::mp_int<N>, Ns...>(axes_));
     const auto b = detail::bool_mask<mp11::mp_int<N>, Ns...>(dim(), true);
@@ -264,9 +262,11 @@ class histogram<static_tag, Axes, Storage> {
 
   const_iterator begin() const noexcept { return const_iterator(*this, 0); }
 
-  const_iterator end() const noexcept { return const_iterator(*this, size()); }
+  const_iterator end() const noexcept {
+    return const_iterator(*this, size());
+  }
 
- private:
+private:
   axes_type axes_;
   Storage storage_;
   mutable detail::index_cache index_cache_;
@@ -350,13 +350,11 @@ class histogram<static_tag, Axes, Storage> {
   }
 
   template <typename Iterator>
-  void xlin_iter(mp11::mp_size_t<0>, std::size_t&, std::size_t&, Iterator) const
-      noexcept {}
+  void xlin_iter(mp11::mp_size_t<0>, std::size_t&, std::size_t&,
+                 Iterator) const noexcept {}
 
   template <long unsigned int N, typename Iterator>
-  void xlin_iter(mp11::mp_size_t<N>,
-                 std::size_t& idx,
-                 std::size_t& stride,
+  void xlin_iter(mp11::mp_size_t<N>, std::size_t& idx, std::size_t& stride,
                  Iterator iter) const {
     constexpr unsigned D = axes_size::value - N;
     const auto a_size = std::get<D>(axes_).size();
@@ -380,13 +378,11 @@ class histogram<static_tag, Axes, Storage> {
   }
 
   template <typename Iterator>
-  void lin_iter(mp11::mp_size_t<0>, std::size_t&, std::size_t&, Iterator) const
-      noexcept {}
+  void lin_iter(mp11::mp_size_t<0>, std::size_t&, std::size_t&,
+                Iterator) const noexcept {}
 
   template <long unsigned int N, typename Iterator>
-  void lin_iter(mp11::mp_size_t<N>,
-                std::size_t& idx,
-                std::size_t& stride,
+  void lin_iter(mp11::mp_size_t<N>, std::size_t& idx, std::size_t& stride,
                 Iterator iter) const noexcept {
     constexpr unsigned D = axes_size::value - N;
     const auto a_size = std::get<D>(axes_).size();
@@ -402,9 +398,7 @@ class histogram<static_tag, Axes, Storage> {
       noexcept {}
 
   template <long unsigned int N, typename T>
-  void xlin_get(mp11::mp_size_t<N>,
-                std::size_t& idx,
-                std::size_t& stride,
+  void xlin_get(mp11::mp_size_t<N>, std::size_t& idx, std::size_t& stride,
                 T&& t) const {
     constexpr unsigned D = detail::mp_size<T>::value - N;
     const auto a_size = std::get<D>(axes_).size();
@@ -419,9 +413,7 @@ class histogram<static_tag, Axes, Storage> {
       noexcept {}
 
   template <long unsigned int N, typename T>
-  void lin_get(mp11::mp_size_t<N>,
-               std::size_t& idx,
-               std::size_t& stride,
+  void lin_get(mp11::mp_size_t<N>, std::size_t& idx, std::size_t& stride,
                T&& t) const noexcept {
     constexpr unsigned D = detail::mp_size<T>::value - N;
     const auto a_size = std::get<D>(axes_).size();
@@ -437,9 +429,7 @@ class histogram<static_tag, Axes, Storage> {
     detail::shape_vector_visitor v(dim());
     for_each_axis(v);
     detail::index_mapper m(v.shapes, b);
-    do {
-      h.storage_.add(m.second, storage_[m.first]);
-    } while (m.next());
+    do { h.storage_.add(m.second, storage_[m.first]); } while (m.next());
   }
 
   template <typename T, typename A, typename S>

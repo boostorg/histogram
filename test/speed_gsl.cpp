@@ -11,20 +11,18 @@
 #include <cstdio>
 #include <ctime>
 #include <limits>
-#include <random>
 #include <memory>
+#include <random>
 
 std::unique_ptr<double[]> random_array(unsigned n, int type) {
   std::unique_ptr<double[]> r(new double[n]);
   std::default_random_engine gen(1);
   if (type) { // type == 1
     std::normal_distribution<> d(0.5, 0.3);
-    for (unsigned i = 0; i < n; ++i)
-      r[i] = d(gen);
+    for (unsigned i = 0; i < n; ++i) r[i] = d(gen);
   } else { // type == 0
     std::uniform_real_distribution<> d(0.0, 1.0);
-    for (unsigned i = 0; i < n; ++i)
-      r[i] = d(gen);
+    for (unsigned i = 0; i < n; ++i) r[i] = d(gen);
   }
   return r;
 }
@@ -37,8 +35,7 @@ void compare_1d(unsigned n, int distrib) {
     gsl_histogram* h = gsl_histogram_alloc(100);
     gsl_histogram_set_ranges_uniform(h, 0, 1);
     auto t = clock();
-    for (unsigned i = 0; i < n; ++i)
-      gsl_histogram_increment(h, r[i]);
+    for (unsigned i = 0; i < n; ++i) gsl_histogram_increment(h, r[i]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
     gsl_histogram_free(h);

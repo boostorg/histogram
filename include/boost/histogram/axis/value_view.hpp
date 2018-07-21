@@ -16,7 +16,7 @@ namespace axis {
 
 template <typename Axis>
 class value_view {
- public:
+public:
   value_view(int idx, const Axis& axis) : idx_(idx), axis_(axis) {}
 
   value_view(const value_view&) = default;
@@ -39,7 +39,7 @@ class value_view {
 
   explicit operator int() const noexcept { return idx_; }
 
- private:
+private:
   const int idx_;
   const Axis& axis_;
 };

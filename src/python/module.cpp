@@ -5,10 +5,10 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/python/module.hpp>
-#include <boost/python/scope.hpp>
 #include <boost/python/object.hpp>
+#include <boost/python/scope.hpp>
 #ifdef HAVE_NUMPY
-#  include <boost/python/numpy.hpp>
+#include <boost/python/numpy.hpp>
 #endif
 
 void register_axis_types();
@@ -23,9 +23,7 @@ BOOST_PYTHON_MODULE(histogram) {
 #else
   current.attr("HAVE_NUMPY") = false;
 #endif
-  object axis_module = object(
-    borrowed(PyImport_AddModule("histogram.axis"))
-  );
+  object axis_module = object(borrowed(PyImport_AddModule("histogram.axis")));
   current.attr("axis") = axis_module;
   {
     scope current = axis_module;

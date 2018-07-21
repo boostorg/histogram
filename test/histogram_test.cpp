@@ -76,8 +76,8 @@ void run_tests() {
 
   // init_2
   {
-    auto h = make_histogram<adaptive_storage>(Type(), axis::regular<>{3, -1, 1},
-                                              axis::integer<>{-1, 2});
+    auto h = make_histogram<adaptive_storage>(
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2});
     BOOST_TEST_EQ(h.dim(), 2);
     BOOST_TEST_EQ(h.size(), 25);
     BOOST_TEST_EQ(h.axis(0_c).shape(), 5);
@@ -89,9 +89,9 @@ void run_tests() {
 
   // init_3
   {
-    auto h = make_histogram<adaptive_storage>(Type(), axis::regular<>{3, -1, 1},
-                                              axis::integer<>{-1, 2},
-                                              axis::circular<>{3});
+    auto h = make_histogram<adaptive_storage>(
+        Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
+        axis::circular<>{3});
     BOOST_TEST_EQ(h.dim(), 3);
     BOOST_TEST_EQ(h.size(), 75);
     auto h2 = make_histogram<array_storage<unsigned>>(
@@ -136,8 +136,9 @@ void run_tests() {
     h(0, 0);
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
-    auto h3 = static_histogram<mp11::mp_list<axis::integer<>, axis::integer<>>,
-                               array_storage<unsigned>>(h);
+    auto h3 =
+        static_histogram<mp11::mp_list<axis::integer<>, axis::integer<>>,
+                         array_storage<unsigned>>(h);
     BOOST_TEST_EQ(h3, h);
   }
 
@@ -153,8 +154,9 @@ void run_tests() {
     // test self-assign
     h2 = h2;
     BOOST_TEST_EQ(h, h2);
-    auto h3 = static_histogram<mp11::mp_list<axis::integer<>, axis::integer<>>,
-                               array_storage<unsigned>>();
+    auto h3 =
+        static_histogram<mp11::mp_list<axis::integer<>, axis::integer<>>,
+                         array_storage<unsigned>>();
     h3 = h;
     BOOST_TEST_EQ(h, h3);
   }
@@ -183,8 +185,8 @@ void run_tests() {
   // axis methods
   {
     enum { A = 3, B = 5 };
-    auto a = make_histogram<adaptive_storage>(Type(),
-                                              axis::regular<>(1, 1, 2, "foo"));
+    auto a = make_histogram<adaptive_storage>(
+        Type(), axis::regular<>(1, 1, 2, "foo"));
     BOOST_TEST_EQ(a.axis().size(), 1);
     BOOST_TEST_EQ(a.axis().shape(), 3);
     BOOST_TEST_EQ(a.axis().index(1), 0);
@@ -203,7 +205,8 @@ void run_tests() {
     b.axis().label("foo");
     BOOST_TEST_EQ(b.axis().label(), "foo");
 
-    auto c = make_histogram<adaptive_storage>(Type(), axis::category<>({A, B}));
+    auto c =
+        make_histogram<adaptive_storage>(Type(), axis::category<>({A, B}));
     BOOST_TEST_EQ(c.axis().size(), 2);
     BOOST_TEST_EQ(c.axis().shape(), 2);
     BOOST_TEST_EQ(c.axis().index(A), 0);
@@ -227,7 +230,8 @@ void run_tests() {
     BOOST_TEST(c != b);
     BOOST_TEST(a == c);
     BOOST_TEST(c == a);
-    auto d = make_histogram<adaptive_storage>(Type(), axis::regular<>(2, 0, 1));
+    auto d =
+        make_histogram<adaptive_storage>(Type(), axis::regular<>(2, 0, 1));
     BOOST_TEST(c != d);
     BOOST_TEST(d != c);
     c(0);
@@ -425,8 +429,8 @@ void run_tests() {
   // add_1
   {
     auto a = make_histogram<adaptive_storage>(Type(), axis::integer<>(0, 2));
-    auto b =
-        make_histogram<array_storage<unsigned>>(Type(), axis::integer<>(0, 2));
+    auto b = make_histogram<array_storage<unsigned>>(Type(),
+                                                     axis::integer<>(0, 2));
     a(0); // 1 0
     b(1); // 0 1
     auto a2 = a;
@@ -477,8 +481,8 @@ void run_tests() {
   {
     auto a =
         make_histogram<array_storage<char>>(Type(), axis::integer<>(-1, 2));
-    auto b =
-        make_histogram<array_storage<unsigned>>(Type(), axis::integer<>(-1, 2));
+    auto b = make_histogram<array_storage<unsigned>>(Type(),
+                                                     axis::integer<>(-1, 2));
     a(-1);
     b(1);
     auto c = a;
@@ -896,8 +900,8 @@ void run_mixed_tests() {
   {
     auto a = make_histogram<adaptive_storage>(T1{}, axis::regular<>{3, 0, 3},
                                               axis::integer<>(0, 2));
-    auto b = make_histogram<array_storage<int>>(T2{}, axis::regular<>{3, 0, 3},
-                                                axis::integer<>(0, 2));
+    auto b = make_histogram<array_storage<int>>(
+        T2{}, axis::regular<>{3, 0, 3}, axis::integer<>(0, 2));
     BOOST_TEST_EQ(a, b);
     auto b2 = make_histogram<adaptive_storage>(T2{}, axis::integer<>{0, 3},
                                                axis::integer<>(0, 2));
@@ -926,8 +930,8 @@ void run_mixed_tests() {
   {
     auto a = make_histogram<adaptive_storage>(T1{}, axis::regular<>{3, 0, 3},
                                               axis::integer<>(0, 2));
-    auto b = make_histogram<array_storage<int>>(T2{}, axis::regular<>{3, 0, 3},
-                                                axis::integer<>(0, 2));
+    auto b = make_histogram<array_storage<int>>(
+        T2{}, axis::regular<>{3, 0, 3}, axis::integer<>(0, 2));
     a(1, 1);
     BOOST_TEST_NE(a, b);
     b = a;

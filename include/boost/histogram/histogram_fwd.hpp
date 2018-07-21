@@ -27,7 +27,8 @@ struct sqrt;
 struct pow;
 } // namespace transform
 
-template <typename RealType = double, typename Transform = transform::identity>
+template <typename RealType = double,
+          typename Transform = transform::identity>
 class regular;
 template <typename RealType = double>
 class circular;
@@ -42,10 +43,8 @@ using types = mp11::mp_list<axis::regular<double, axis::transform::identity>,
                             axis::regular<double, axis::transform::log>,
                             axis::regular<double, axis::transform::sqrt>,
                             axis::regular<double, axis::transform::pow>,
-                            axis::circular<double>,
-                            axis::variable<double>,
-                            axis::integer<int>,
-                            axis::category<int>,
+                            axis::circular<double>, axis::variable<double>,
+                            axis::integer<int>, axis::category<int>,
                             axis::category<std::string>>;
 
 template <typename... Ts>

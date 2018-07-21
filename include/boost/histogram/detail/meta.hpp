@@ -55,16 +55,14 @@ struct no_container_tag {};
 
 template <typename T>
 using classify_container = typename std::conditional<
-    is_static_container<T>::value,
-    static_container_tag,
+    is_static_container<T>::value, static_container_tag,
     typename std::conditional<is_dynamic_container<T>::value,
                               dynamic_container_tag,
                               no_container_tag>::type>::type;
 
-template <typename T,
-          typename = decltype(std::declval<T&>().size(),
-                              std::declval<T&>().increase(0),
-                              std::declval<T&>()[0])>
+template <typename T, typename = decltype(std::declval<T&>().size(),
+                                          std::declval<T&>().increase(0),
+                                          std::declval<T&>()[0])>
 struct requires_storage {};
 
 template <typename T,
@@ -72,11 +70,10 @@ template <typename T,
 struct requires_iterator {};
 
 template <typename T>
-using requires_axis = decltype(std::declval<T&>().size(),
-                               std::declval<T&>().shape(),
-                               std::declval<T&>().uoflow(),
-                               std::declval<T&>().label(),
-                               std::declval<T&>()[0]);
+using requires_axis =
+    decltype(std::declval<T&>().size(), std::declval<T&>().shape(),
+             std::declval<T&>().uoflow(), std::declval<T&>().label(),
+             std::declval<T&>()[0]);
 
 namespace {
 struct bool_mask_impl {
@@ -108,13 +105,11 @@ using mp_at_c = mp11::mp_at_c<rm_cv_ref<T>, D>;
 
 template <typename T1, typename T2>
 using copy_qualifiers = mp11::mp_if<
-    std::is_rvalue_reference<T1>,
-    T2&&,
+    std::is_rvalue_reference<T1>, T2&&,
     mp11::mp_if<
         std::is_lvalue_reference<T1>,
         mp11::mp_if<std::is_const<typename std::remove_reference<T1>::type>,
-                    const T2&,
-                    T2&>,
+                    const T2&, T2&>,
         mp11::mp_if<std::is_const<T1>, const T2, T2>>>;
 
 template <typename S, typename L>

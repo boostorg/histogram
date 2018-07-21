@@ -21,7 +21,7 @@ namespace histogram {
 /// Double counter which holds a sum of weights and a sum of squared weights
 template <typename RealType>
 class weight_counter {
- public:
+public:
   /// Beware: For performance reasons counters are not initialized
   weight_counter() = default;
   weight_counter(const weight_counter&) = default;
@@ -108,7 +108,7 @@ class weight_counter {
     return static_cast<T>(w);
   }
 
- private:
+private:
   friend class ::boost::serialization::access;
 
   template <class Archive>

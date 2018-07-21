@@ -4,11 +4,11 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include "utility.hpp"
-#include <boost/histogram/detail/index_mapper.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/detail/index_mapper.hpp>
 #include <vector>
+#include "utility.hpp"
 
 using namespace boost::histogram::detail;
 

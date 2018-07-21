@@ -6,12 +6,12 @@
 
 #include <algorithm>
 #include <boost/histogram.hpp>
+#include <boost/mp11.hpp>
 #include <cstdio>
 #include <ctime>
 #include <limits>
-#include <random>
 #include <memory>
-#include <boost/mp11.hpp>
+#include <random>
 
 using namespace boost::histogram;
 using boost::mp11::mp_list;
@@ -21,12 +21,10 @@ std::unique_ptr<double[]> random_array(unsigned n, int type) {
   std::default_random_engine gen(1);
   if (type) { // type == 1
     std::normal_distribution<> d(0.5, 0.3);
-    for (unsigned i = 0; i < n; ++i)
-      r[i] = d(gen);
+    for (unsigned i = 0; i < n; ++i) r[i] = d(gen);
   } else { // type == 0
     std::uniform_real_distribution<> d(0.0, 1.0);
-    for (unsigned i = 0; i < n; ++i)
-      r[i] = d(gen);
+    for (unsigned i = 0; i < n; ++i) r[i] = d(gen);
   }
   return r;
 }
@@ -58,8 +56,7 @@ double compare_1d(unsigned n, int distrib) {
   for (unsigned k = 0; k < 20; ++k) {
     auto h = Histogram(axis::regular<>(100, 0, 1));
     auto t = clock();
-    for (unsigned i = 0; i < n; ++i)
-      h(r[i]);
+    for (unsigned i = 0; i < n; ++i) h(r[i]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   }
@@ -73,10 +70,10 @@ double compare_2d(unsigned n, int distrib) {
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 20; ++k) {
-    auto h = Histogram(axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1));
+    auto h =
+        Histogram(axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1));
     auto t = clock();
-    for (unsigned i = 0; i < n / 2; ++i)
-      h(r[2 * i], r[2 * i + 1]);
+    for (unsigned i = 0; i < n / 2; ++i) h(r[2 * i], r[2 * i + 1]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   }
@@ -136,9 +133,8 @@ int main() {
     else
       printf("normal distribution\n");
     printf("hs_ss %.3f\n",
-           compare_1d<
-               static_histogram<mp_list<axis::regular<>>, array_storage<int>>>(
-               nfill, itype));
+           compare_1d<static_histogram<mp_list<axis::regular<>>,
+                                       array_storage<int>>>(nfill, itype));
     printf("hs_sd %.3f\n",
            compare_1d<
                static_histogram<mp_list<axis::regular<>>, adaptive_storage>>(
@@ -147,8 +143,8 @@ int main() {
            compare_1d<dynamic_histogram<axis::types, array_storage<int>>>(
                nfill, itype));
     printf("hd_sd %.3f\n",
-           compare_1d<dynamic_histogram<axis::types, adaptive_storage>>(nfill,
-                                                                        itype));
+           compare_1d<dynamic_histogram<axis::types, adaptive_storage>>(
+               nfill, itype));
   }
 
   printf("2D\n");
@@ -169,8 +165,8 @@ int main() {
            compare_2d<dynamic_histogram<axis::types, array_storage<int>>>(
                nfill, itype));
     printf("hd_sd %.3f\n",
-           compare_2d<dynamic_histogram<axis::types, adaptive_storage>>(nfill,
-                                                                        itype));
+           compare_2d<dynamic_histogram<axis::types, adaptive_storage>>(
+               nfill, itype));
   }
 
   printf("3D\n");
@@ -191,8 +187,8 @@ int main() {
            compare_3d<dynamic_histogram<axis::types, array_storage<int>>>(
                nfill, itype));
     printf("hd_sd %.3f\n",
-           compare_3d<dynamic_histogram<axis::types, adaptive_storage>>(nfill,
-                                                                        itype));
+           compare_3d<dynamic_histogram<axis::types, adaptive_storage>>(
+               nfill, itype));
   }
 
   printf("6D\n");
@@ -215,7 +211,7 @@ int main() {
            compare_6d<dynamic_histogram<axis::types, array_storage<int>>>(
                nfill, itype));
     printf("hd_sd %.3f\n",
-           compare_6d<dynamic_histogram<axis::types, adaptive_storage>>(nfill,
-                                                                        itype));
+           compare_6d<dynamic_histogram<axis::types, adaptive_storage>>(
+               nfill, itype));
   }
 }

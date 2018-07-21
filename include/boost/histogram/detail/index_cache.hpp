@@ -7,8 +7,8 @@
 #ifndef _BOOST_HISTOGRAM_DETAIL_INDEX_CACHE_HPP_
 #define _BOOST_HISTOGRAM_DETAIL_INDEX_CACHE_HPP_
 
-#include <memory>
 #include <cstddef>
+#include <memory>
 
 namespace boost {
 namespace histogram {
@@ -62,8 +62,7 @@ struct index_cache {
   }
 
   void operator()(std::size_t idx) {
-    if (idx == idx_)
-      return;
+    if (idx == idx_) return;
     idx_ = idx;
     auto dim_ptr = dims_.get();
     auto dim = dim_;

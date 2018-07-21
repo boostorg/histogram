@@ -20,15 +20,9 @@ namespace histogram {
 namespace axis {
 
 namespace detail {
-inline string_view to_string(const transform::identity&) {
-  return {};
-}
-inline string_view to_string(const transform::log&) {
-  return {"_log", 4};
-}
-inline string_view to_string(const transform::sqrt&) {
-  return {"_sqrt", 5};
-}
+inline string_view to_string(const transform::identity&) { return {}; }
+inline string_view to_string(const transform::log&) { return {"_log", 4}; }
+inline string_view to_string(const transform::sqrt&) { return {"_sqrt", 5}; }
 } // namespace detail
 
 template <typename T>
@@ -52,36 +46,30 @@ inline std::ostream& operator<<(std::ostream& os,
     os << ", label=";
     ::boost::histogram::detail::escape(os, a.label());
   }
-  if (!a.uoflow()) {
-    os << ", uoflow=False";
-  }
+  if (!a.uoflow()) { os << ", uoflow=False"; }
   os << ")";
   return os;
 }
 
 template <typename RealType>
 inline std::ostream& operator<<(
-    std::ostream& os,
-    const regular<RealType, axis::transform::pow>& a) {
+    std::ostream& os, const regular<RealType, axis::transform::pow>& a) {
   os << "regular_pow(" << a.size() << ", " << a[0].lower() << ", "
      << a[a.size()].lower() << ", " << a.transform().power;
   if (!a.label().empty()) {
     os << ", label=";
     ::boost::histogram::detail::escape(os, a.label());
   }
-  if (!a.uoflow()) {
-    os << ", uoflow=False";
-  }
+  if (!a.uoflow()) { os << ", uoflow=False"; }
   os << ")";
   return os;
 }
 
 template <typename RealType>
-inline std::ostream& operator<<(std::ostream& os, const circular<RealType>& a) {
+inline std::ostream& operator<<(std::ostream& os,
+                                const circular<RealType>& a) {
   os << "circular(" << a.size();
-  if (a.phase() != 0.0) {
-    os << ", phase=" << a.phase();
-  }
+  if (a.phase() != 0.0) { os << ", phase=" << a.phase(); }
   if (a.perimeter() != RealType(::boost::histogram::detail::two_pi)) {
     os << ", perimeter=" << a.perimeter();
   }
@@ -94,18 +82,15 @@ inline std::ostream& operator<<(std::ostream& os, const circular<RealType>& a) {
 }
 
 template <typename RealType>
-inline std::ostream& operator<<(std::ostream& os, const variable<RealType>& a) {
+inline std::ostream& operator<<(std::ostream& os,
+                                const variable<RealType>& a) {
   os << "variable(" << a[0].lower();
-  for (int i = 1; i <= a.size(); ++i) {
-    os << ", " << a[i].lower();
-  }
+  for (int i = 1; i <= a.size(); ++i) { os << ", " << a[i].lower(); }
   if (!a.label().empty()) {
     os << ", label=";
     ::boost::histogram::detail::escape(os, a.label());
   }
-  if (!a.uoflow()) {
-    os << ", uoflow=False";
-  }
+  if (!a.uoflow()) { os << ", uoflow=False"; }
   os << ")";
   return os;
 }
@@ -117,9 +102,7 @@ inline std::ostream& operator<<(std::ostream& os, const integer<IntType>& a) {
     os << ", label=";
     ::boost::histogram::detail::escape(os, a.label());
   }
-  if (!a.uoflow()) {
-    os << ", uoflow=False";
-  }
+  if (!a.uoflow()) { os << ", uoflow=False"; }
   os << ")";
   return os;
 }

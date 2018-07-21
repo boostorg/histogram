@@ -20,7 +20,8 @@ histogram<T, A, S>&& operator+(histogram<T, A, S>&& a,
 }
 
 template <typename T, typename A, typename S>
-histogram<T, A, S>&& operator+(histogram<T, A, S>&& a, histogram<T, A, S>&& b) {
+histogram<T, A, S>&& operator+(histogram<T, A, S>&& a,
+                               histogram<T, A, S>&& b) {
   a += b;
   return std::move(a);
 }

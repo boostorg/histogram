@@ -22,8 +22,7 @@ namespace std { // never add to std, we only do it to get ADL working
 template <typename T>
 ostream& operator<<(ostream& os, const vector<T>& v) {
   os << "[ ";
-  for (const auto& x : v)
-    os << x << " ";
+  for (const auto& x : v) os << x << " ";
   os << "]";
   return os;
 }

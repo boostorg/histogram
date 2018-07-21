@@ -54,7 +54,7 @@ template <typename Axes, typename Storage>
 class histogram<dynamic_tag, Axes, Storage> {
   static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
 
- public:
+public:
   using any_axis_type = mp11::mp_rename<Axes, axis::any>;
   using axes_type = std::vector<any_axis_type>;
   using element_type = typename Storage::element_type;
@@ -62,15 +62,14 @@ class histogram<dynamic_tag, Axes, Storage> {
   using const_iterator = iterator_over<histogram>;
   using iterator = const_iterator;
 
- public:
+public:
   histogram() = default;
   histogram(const histogram&) = default;
   histogram(histogram&&) = default;
   histogram& operator=(const histogram&) = default;
   histogram& operator=(histogram&&) = default;
 
-  template <typename Axis0,
-            typename... Axis,
+  template <typename Axis0, typename... Axis,
             typename = detail::requires_axis<Axis0>>
   explicit histogram(Axis0&& axis0, Axis&&... axis)
       : axes_({any_axis_type(std::forward<Axis0>(axis0)),
@@ -161,9 +160,7 @@ class histogram<dynamic_tag, Axes, Storage> {
                      "(did you use weight() in the wrong place?)");
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, std::forward<Ts>(ts)...);
-    if (stride) {
-      detail::fill_storage(storage_, idx);
-    }
+    if (stride) { detail::fill_storage(storage_, idx); }
   }
 
   template <typename T>
@@ -183,9 +180,7 @@ class histogram<dynamic_tag, Axes, Storage> {
                      "fill arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, std::forward<Ts>(ts)...);
-    if (stride) {
-      detail::fill_storage(storage_, idx, std::move(w));
-    }
+    if (stride) { detail::fill_storage(storage_, idx, std::move(w)); }
   }
 
   template <typename W, typename T>
@@ -260,8 +255,7 @@ class histogram<dynamic_tag, Axes, Storage> {
   template <typename... Ts>
   histogram reduce_to(int n, Ts... ts) const {
     std::vector<bool> b(dim(), false);
-    for (const auto& i : {n, int(ts)...})
-      b[i] = true;
+    for (const auto& i : {n, int(ts)...}) b[i] = true;
     return reduce_impl(b);
   }
 
@@ -269,8 +263,7 @@ class histogram<dynamic_tag, Axes, Storage> {
   template <typename Iterator, typename = detail::requires_iterator<Iterator>>
   histogram reduce_to(Iterator begin, Iterator end) const {
     std::vector<bool> b(dim(), false);
-    for (; begin != end; ++begin)
-      b[*begin] = true;
+    for (; begin != end; ++begin) b[*begin] = true;
     return reduce_impl(b);
   }
 
@@ -280,7 +273,7 @@ class histogram<dynamic_tag, Axes, Storage> {
     return const_iterator(*this, storage_.size());
   }
 
- private:
+private:
   axes_type axes_;
   Storage storage_;
   mutable detail::index_cache index_cache_;
@@ -402,9 +395,7 @@ class histogram<dynamic_tag, Axes, Storage> {
       noexcept {}
 
   template <int N, typename T>
-  void xlin_get(mp11::mp_int<N>,
-                std::size_t& idx,
-                std::size_t& stride,
+  void xlin_get(mp11::mp_int<N>, std::size_t& idx, std::size_t& stride,
                 T&& t) const {
     constexpr unsigned D = detail::mp_size<T>::value - N;
     apply_visitor(
@@ -434,7 +425,8 @@ class histogram<dynamic_tag, Axes, Storage> {
       const auto a_size = a.size();
       const auto a_shape = a.shape();
       const auto j = detail::indirect_int_cast(*iter++);
-      stride *= (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
+      stride *=
+          (-1 <= j && j <= a_size); // set stride to zero, if j is invalid
       detail::lin(idx, stride, a_size, a_shape, j);
     }
   }
@@ -444,9 +436,7 @@ class histogram<dynamic_tag, Axes, Storage> {
       noexcept {}
 
   template <long unsigned int N, typename T>
-  void lin_get(mp11::mp_size_t<N>,
-               std::size_t& idx,
-               std::size_t& stride,
+  void lin_get(mp11::mp_size_t<N>, std::size_t& idx, std::size_t& stride,
                const T& t) const noexcept {
     constexpr long unsigned int D = detail::mp_size<T>::value - N;
     const auto& a = axes_[D];
@@ -464,17 +454,14 @@ class histogram<dynamic_tag, Axes, Storage> {
     auto axes_iter = axes_.begin();
     auto n_iter = n.begin();
     for (const auto& bi : b) {
-      if (bi)
-        axes.emplace_back(*axes_iter);
+      if (bi) axes.emplace_back(*axes_iter);
       *n_iter = axes_iter->shape();
       ++axes_iter;
       ++n_iter;
     }
     histogram h(std::move(axes));
     detail::index_mapper m(n, b);
-    do {
-      h.storage_.add(m.second, storage_[m.first]);
-    } while (m.next());
+    do { h.storage_.add(m.second, storage_[m.first]); } while (m.next());
     return h;
   }
 
@@ -499,25 +486,22 @@ make_dynamic_histogram(Axis&&... axis) {
 
 template <typename Storage, typename... Axis>
 dynamic_histogram<
-    mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>,
-    Storage>
+    mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>, Storage>
 make_dynamic_histogram_with(Axis&&... axis) {
   return dynamic_histogram<
-      mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>, Storage>(
-      std::forward<Axis>(axis)...);
+      mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Axis>...>,
+      Storage>(std::forward<Axis>(axis)...);
 }
 
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 dynamic_histogram<
     detail::mp_set_union<axis::types, typename Iterator::value_type::types>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
-  return dynamic_histogram<
-      detail::mp_set_union<axis::types, typename Iterator::value_type::types>>(
-      begin, end);
+  return dynamic_histogram<detail::mp_set_union<
+      axis::types, typename Iterator::value_type::types>>(begin, end);
 }
 
-template <typename Storage,
-          typename Iterator,
+template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
 dynamic_histogram<
     detail::mp_set_union<axis::types, typename Iterator::value_type::types>,

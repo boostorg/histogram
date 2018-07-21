@@ -41,11 +41,8 @@ inline void escape(std::ostream& os, const string_view s) {
 
 // the following is highly optimized code that runs in a hot loop;
 // please measure the performance impact of changes
-inline void lin(std::size_t& out,
-                std::size_t& stride,
-                const int axis_size,
-                const int axis_shape,
-                int j) noexcept {
+inline void lin(std::size_t& out, std::size_t& stride, const int axis_size,
+                const int axis_shape, int j) noexcept {
   BOOST_ASSERT_MSG(stride == 0 || (-1 <= j && j <= axis_size),
                    "index must be in bounds for this algorithm");
   j += (j < 0) * (axis_size + 2); // wrap around if j < 0
@@ -53,7 +50,8 @@ inline void lin(std::size_t& out,
 #ifndef _MSC_VER
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
 #endif
-  stride *= (j < axis_shape) * axis_shape; // stride == 0 indicates out-of-range
+  stride *=
+      (j < axis_shape) * axis_shape; // stride == 0 indicates out-of-range
 }
 
 template <typename T>
@@ -84,8 +82,7 @@ inline void fill_storage(S& s, std::size_t idx) {
 template <typename S>
 inline auto storage_get(const S& s, std::size_t idx, bool error) ->
     typename S::const_reference {
-  if (error)
-    throw std::out_of_range("bin index out of range");
+  if (error) throw std::out_of_range("bin index out of range");
   return s[idx];
 }
 

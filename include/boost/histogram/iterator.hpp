@@ -21,11 +21,10 @@ namespace histogram {
 
 template <typename Histogram>
 class iterator_over
-    : public iterator_facade<iterator_over<Histogram>,
-                             typename Histogram::element_type,
-                             random_access_traversal_tag,
-                             typename Histogram::const_reference> {
- public:
+    : public iterator_facade<
+          iterator_over<Histogram>, typename Histogram::element_type,
+          random_access_traversal_tag, typename Histogram::const_reference> {
+public:
   iterator_over(const Histogram& h, std::size_t idx)
       : histogram_(h), idx_(idx) {}
 
@@ -55,7 +54,7 @@ class iterator_over
     return histogram_.axis(dim)[idx(dim)];
   }
 
- private:
+private:
   bool equal(const iterator_over& rhs) const noexcept {
     return &histogram_ == &rhs.histogram_ && idx_ == rhs.idx_;
   }

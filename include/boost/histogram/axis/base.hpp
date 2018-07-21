@@ -28,7 +28,7 @@ enum class uoflow { off = 0, only_oflow = 1, on = 2 };
 
 /// Base class for all axes
 class base {
- public:
+public:
   /// Returns the number of bins without overflow/underflow.
   int size() const noexcept { return size_; }
   /// Returns the number of bins, including overflow/underflow if enabled.
@@ -40,14 +40,12 @@ class base {
   /// Change the label of an axis.
   void label(string_view label) { label_.assign(label.begin(), label.end()); }
 
- protected:
+protected:
   base(unsigned size, string_view label, axis::uoflow uo)
       : size_(size),
         shape_(size + static_cast<int>(uo)),
         label_(label.begin(), label.end()) {
-    if (size_ == 0) {
-      throw std::invalid_argument("bins > 0 required");
-    }
+    if (size_ == 0) { throw std::invalid_argument("bins > 0 required"); }
   }
 
   base() = default;
@@ -73,7 +71,7 @@ class base {
     return size_ == rhs.size_ && shape_ == rhs.shape_ && label_ == rhs.label_;
   }
 
- private:
+private:
   int size_ = 0, shape_ = 0;
   std::string label_;
 
@@ -85,7 +83,7 @@ class base {
 /// Iterator mixin, uses CRTP to inject iterator logic into Derived.
 template <typename Derived>
 class iterator_mixin {
- public:
+public:
   using const_iterator = iterator_over<Derived>;
   using const_reverse_iterator = reverse_iterator_over<Derived>;
 

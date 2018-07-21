@@ -32,8 +32,9 @@ struct index_mapper {
       s1 *= ni;
       ++bi;
     }
-    std::sort(dims.begin(), dims.end(),
-              [](const dim& a, const dim& b) { return a.stride1 > b.stride1; });
+    std::sort(dims.begin(), dims.end(), [](const dim& a, const dim& b) {
+      return a.stride1 > b.stride1;
+    });
     nfirst = s1;
   }
 
@@ -49,7 +50,7 @@ struct index_mapper {
     return first < nfirst;
   }
 
- private:
+private:
   std::size_t nfirst;
   struct dim {
     std::size_t stride1, stride2;

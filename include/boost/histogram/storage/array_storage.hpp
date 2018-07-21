@@ -24,7 +24,7 @@ namespace histogram {
 
 template <typename T>
 class array_storage {
- public:
+public:
   using element_type = T;
   using const_reference = const T&;
 
@@ -81,30 +81,29 @@ class array_storage {
     array_[i] += x;
   }
 
-  const_reference operator[](std::size_t i) const noexcept { return array_[i]; }
+  const_reference operator[](std::size_t i) const noexcept {
+    return array_[i];
+  }
 
   template <typename U>
   bool operator==(const array_storage<U>& rhs) const noexcept {
-    if (size_ != rhs.size_)
-      return false;
+    if (size_ != rhs.size_) return false;
     return std::equal(array_.get(), array_.get() + size_, rhs.array_.get());
   }
 
   template <typename S>
   array_storage& operator+=(const S& rhs) noexcept {
-    for (std::size_t i = 0; i < size_; ++i)
-      add(i, rhs[i]);
+    for (std::size_t i = 0; i < size_; ++i) add(i, rhs[i]);
     return *this;
   }
 
   template <typename U>
   array_storage& operator*=(const U& x) noexcept {
-    for (std::size_t i = 0; i < size_; ++i)
-      array_[i] *= x;
+    for (std::size_t i = 0; i < size_; ++i) array_[i] *= x;
     return *this;
   }
 
- private:
+private:
   std::size_t size_ = 0;
   std::unique_ptr<element_type[]> array_;
 

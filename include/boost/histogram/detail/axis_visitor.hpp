@@ -59,15 +59,13 @@ struct axes_assign_vecvar_tuple {
 };
 
 template <typename... Ts>
-inline bool axes_equal_impl(mp11::mp_true,
-                            const std::tuple<Ts...>& t,
+inline bool axes_equal_impl(mp11::mp_true, const std::tuple<Ts...>& t,
                             const std::tuple<Ts...>& u) {
   return t == u;
 }
 
 template <typename... Ts, typename... Us>
-inline bool axes_equal_impl(mp11::mp_false,
-                            const std::tuple<Ts...>&,
+inline bool axes_equal_impl(mp11::mp_false, const std::tuple<Ts...>&,
                             const std::tuple<Us...>&) {
   return false;
 }
@@ -75,27 +73,28 @@ inline bool axes_equal_impl(mp11::mp_false,
 } // namespace
 
 template <typename... Ts, typename... Us>
-inline bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
+inline bool axes_equal(const std::tuple<Ts...>& t,
+                       const std::tuple<Us...>& u) {
   return axes_equal_impl(
       mp11::mp_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>(), t, u);
 }
 
 template <typename... Ts, typename... Us>
 inline void axes_assign(std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
-  static_assert(std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>::value,
-                "cannot assign incompatible axes");
+  static_assert(
+      std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>::value,
+      "cannot assign incompatible axes");
   t = u;
 }
 
 template <typename... Ts, typename... Us>
 inline bool axes_equal(const std::tuple<Ts...>& t,
                        const std::vector<axis::any<Us...>>& u) {
-  if (sizeof...(Ts) != u.size())
-    return false;
+  if (sizeof...(Ts) != u.size()) return false;
   bool equal = true;
   auto fn =
-      axes_equal_tuple_vecvar<std::tuple<Ts...>, std::vector<axis::any<Us...>>>(
-          equal, t, u);
+      axes_equal_tuple_vecvar<std::tuple<Ts...>,
+                              std::vector<axis::any<Us...>>>(equal, t, u);
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(fn);
   return equal;
 }
@@ -126,11 +125,9 @@ inline void axes_assign(std::vector<axis::any<Ts...>>& t,
 template <typename... Ts, typename... Us>
 inline bool axes_equal(const std::vector<axis::any<Ts...>>& t,
                        const std::vector<axis::any<Us...>>& u) {
-  if (t.size() != u.size())
-    return false;
+  if (t.size() != u.size()) return false;
   for (std::size_t i = 0; i < t.size(); ++i) {
-    if (t[i] != u[i])
-      return false;
+    if (t[i] != u[i]) return false;
   }
   return true;
 }
@@ -138,9 +135,7 @@ inline bool axes_equal(const std::vector<axis::any<Ts...>>& t,
 template <typename... Ts, typename... Us>
 inline void axes_assign(std::vector<axis::any<Ts...>>& t,
                         const std::vector<axis::any<Us...>>& u) {
-  for (std::size_t i = 0; i < t.size(); ++i) {
-    t[i] = u[i];
-  }
+  for (std::size_t i = 0; i < t.size(); ++i) { t[i] = u[i]; }
 }
 
 struct field_count_visitor : public static_visitor<void> {

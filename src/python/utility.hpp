@@ -8,22 +8,22 @@
 #define _BOOST_HISTOGRAM_PYTHON_UTILITY_HPP_
 
 #include <boost/python/str.hpp>
-#include <type_traits>
 #include <stdexcept>
+#include <type_traits>
 
 namespace boost {
 namespace python {
 template <typename T>
 str dtype_typestr() {
-    str s;
-    if (std::is_floating_point<T>::value)
-        s = "|f";
-    else if (std::is_integral<T>::value)
-        s = std::is_unsigned<T>::value ? "|u" : "|i";
-    else
-        throw std::invalid_argument("T must be a builtin arithmetic type");
-    s += str(sizeof(T));
-    return s;
+  str s;
+  if (std::is_floating_point<T>::value)
+    s = "|f";
+  else if (std::is_integral<T>::value)
+    s = std::is_unsigned<T>::value ? "|u" : "|i";
+  else
+    throw std::invalid_argument("T must be a builtin arithmetic type");
+  s += str(sizeof(T));
+  return s;
 }
 } // python
 } // boost

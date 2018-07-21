@@ -97,7 +97,7 @@ struct pow {
     return power == other.power;
   }
 
- private:
+private:
   friend ::boost::serialization::access;
   template <class Archive>
   void serialize(Archive&, unsigned);
@@ -114,7 +114,7 @@ template <typename RealType, typename Transform>
 class regular : public base,
                 public iterator_mixin<regular<RealType, Transform>>,
                 Transform {
- public:
+public:
   using value_type = RealType;
   using bin_type = interval_view<regular>;
 
@@ -127,11 +127,8 @@ class regular : public base,
    * \param uoflow whether to add under-/overflow bins.
    * \param trans arguments passed to the transform.
    */
-  regular(unsigned n,
-          value_type lower,
-          value_type upper,
-          string_view label = {},
-          axis::uoflow uo = axis::uoflow::on,
+  regular(unsigned n, value_type lower, value_type upper,
+          string_view label = {}, axis::uoflow uo = axis::uoflow::on,
           Transform trans = Transform())
       : base(n, label, uo),
         Transform(trans),
@@ -177,8 +174,8 @@ class regular : public base,
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const regular& o) const noexcept {
-    return base::operator==(o) && Transform::operator==(o) && min_ == o.min_ &&
-           delta_ == o.delta_;
+    return base::operator==(o) && Transform::operator==(o) &&
+           min_ == o.min_ && delta_ == o.delta_;
   }
 
   /// Access properties of the transform.
@@ -186,7 +183,7 @@ class regular : public base,
     return static_cast<const Transform&>(*this);
   }
 
- private:
+private:
   value_type min_ = 0.0, delta_ = 1.0;
 
   friend class ::boost::serialization::access;
@@ -202,7 +199,7 @@ class regular : public base,
  */
 template <typename RealType>
 class circular : public base, public iterator_mixin<circular<RealType>> {
- public:
+public:
   using value_type = RealType;
   using bin_type = interval_view<circular>;
 
@@ -213,8 +210,7 @@ class circular : public base, public iterator_mixin<circular<RealType>> {
    * \param perimeter range after which value wraps around.
    * \param label     description of the axis.
    */
-  explicit circular(unsigned n,
-                    value_type phase = 0.0,
+  explicit circular(unsigned n, value_type phase = 0.0,
                     value_type perimeter = boost::histogram::detail::two_pi,
                     string_view label = {})
       : base(n, label, axis::uoflow::off),
@@ -230,7 +226,8 @@ class circular : public base, public iterator_mixin<circular<RealType>> {
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
     const value_type z = (x - phase_) / perimeter_;
-    const int i = static_cast<int>(std::floor(z * base::size())) % base::size();
+    const int i =
+        static_cast<int>(std::floor(z * base::size())) % base::size();
     return i + (i < 0) * base::size();
   }
 
@@ -250,7 +247,7 @@ class circular : public base, public iterator_mixin<circular<RealType>> {
   value_type perimeter() const { return perimeter_; }
   value_type phase() const { return phase_; }
 
- private:
+private:
   value_type phase_ = 0.0, perimeter_ = 1.0;
 
   friend class ::boost::serialization::access;
@@ -265,7 +262,7 @@ class circular : public base, public iterator_mixin<circular<RealType>> {
  */
 template <typename RealType>
 class variable : public base, public iterator_mixin<variable<RealType>> {
- public:
+public:
   using value_type = RealType;
   using bin_type = interval_view<variable>;
 
@@ -275,8 +272,7 @@ class variable : public base, public iterator_mixin<variable<RealType>> {
    * \param label description of the axis.
    * \param uoflow whether to add under-/overflow bins.
    */
-  variable(std::initializer_list<value_type> x,
-           string_view label = {},
+  variable(std::initializer_list<value_type> x, string_view label = {},
            axis::uoflow uo = axis::uoflow::on)
       : base(x.size() - 1, label, uo), x_(new value_type[x.size()]) {
     if (x.size() >= 2) {
@@ -288,9 +284,7 @@ class variable : public base, public iterator_mixin<variable<RealType>> {
   }
 
   template <typename Iterator>
-  variable(Iterator begin,
-           Iterator end,
-           string_view label = {},
+  variable(Iterator begin, Iterator end, string_view label = {},
            axis::uoflow uo = axis::uoflow::on)
       : base(std::distance(begin, end) - 1, label, uo),
         x_(new value_type[std::distance(begin, end)]) {
@@ -299,7 +293,8 @@ class variable : public base, public iterator_mixin<variable<RealType>> {
   }
 
   variable() = default;
-  variable(const variable& o) : base(o), x_(new value_type[base::size() + 1]) {
+  variable(const variable& o)
+      : base(o), x_(new value_type[base::size() + 1]) {
     std::copy(o.x_.get(), o.x_.get() + base::size() + 1, x_.get());
   }
   variable& operator=(const variable& o) {
@@ -321,9 +316,7 @@ class variable : public base, public iterator_mixin<variable<RealType>> {
 
   /// Returns the starting edge of the bin.
   value_type lower(int i) const noexcept {
-    if (i < 0) {
-      return -std::numeric_limits<value_type>::infinity();
-    }
+    if (i < 0) { return -std::numeric_limits<value_type>::infinity(); }
     if (i > base::size()) {
       return std::numeric_limits<value_type>::infinity();
     }
@@ -333,13 +326,11 @@ class variable : public base, public iterator_mixin<variable<RealType>> {
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const variable& o) const noexcept {
-    if (!base::operator==(o)) {
-      return false;
-    }
+    if (!base::operator==(o)) { return false; }
     return std::equal(x_.get(), x_.get() + base::size() + 1, o.x_.get());
   }
 
- private:
+private:
   std::unique_ptr<value_type[]> x_; // smaller size compared to std::vector
 
   friend class ::boost::serialization::access;
@@ -354,7 +345,7 @@ class variable : public base, public iterator_mixin<variable<RealType>> {
  */
 template <typename IntType>
 class integer : public base, public iterator_mixin<integer<IntType>> {
- public:
+public:
   using value_type = IntType;
   using bin_type = interval_view<integer>;
 
@@ -365,9 +356,7 @@ class integer : public base, public iterator_mixin<integer<IntType>> {
    * \param label description of the axis.
    * \param uoflow whether to add under-/overflow bins.
    */
-  integer(value_type lower,
-          value_type upper,
-          string_view label = {},
+  integer(value_type lower, value_type upper, string_view label = {},
           axis::uoflow uo = axis::uoflow::on)
       : base(upper - lower, label, uo), min_(lower) {
     if (!(lower < upper)) {
@@ -389,12 +378,8 @@ class integer : public base, public iterator_mixin<integer<IntType>> {
 
   /// Returns lower edge of the integral bin.
   value_type lower(int i) const noexcept {
-    if (i < 0) {
-      return -std::numeric_limits<value_type>::max();
-    }
-    if (i > base::size()) {
-      return std::numeric_limits<value_type>::max();
-    }
+    if (i < 0) { return -std::numeric_limits<value_type>::max(); }
+    if (i > base::size()) { return std::numeric_limits<value_type>::max(); }
     return min_ + i;
   }
 
@@ -404,7 +389,7 @@ class integer : public base, public iterator_mixin<integer<IntType>> {
     return base::operator==(o) && min_ == o.min_;
   }
 
- private:
+private:
   value_type min_ = 0;
 
   friend class ::boost::serialization::access;
@@ -423,7 +408,7 @@ template <typename T>
 class category : public base, public iterator_mixin<category<T>> {
   using map_type = bimap<T, int>;
 
- public:
+public:
   using value_type = T;
   using bin_type = value_view<category>;
 
@@ -446,10 +431,8 @@ class category : public base, public iterator_mixin<category<T>> {
   category(std::initializer_list<value_type> seq, string_view label = {})
       : base(seq.size(), label, axis::uoflow::off), map_(new map_type()) {
     int index = 0;
-    for (const auto& x : seq)
-      map_->insert({x, index++});
-    if (index == 0)
-      throw std::invalid_argument("sequence is empty");
+    for (const auto& x : seq) map_->insert({x, index++});
+    if (index == 0) throw std::invalid_argument("sequence is empty");
   }
 
   template <typename Iterator,
@@ -458,17 +441,14 @@ class category : public base, public iterator_mixin<category<T>> {
       : base(std::distance(begin, end), label, axis::uoflow::off),
         map_(new map_type()) {
     int index = 0;
-    while (begin != end)
-      map_->insert({*begin++, index++});
-    if (index == 0)
-      throw std::invalid_argument("iterator range is empty");
+    while (begin != end) map_->insert({*begin++, index++});
+    if (index == 0) throw std::invalid_argument("iterator range is empty");
   }
 
   /// Returns the bin index for the passed argument.
   int index(const value_type& x) const noexcept {
     auto it = map_->left.find(x);
-    if (it == map_->left.end())
-      return base::size();
+    if (it == map_->left.end()) return base::size();
     return it->second;
   }
 
@@ -487,7 +467,7 @@ class category : public base, public iterator_mixin<category<T>> {
            std::equal(map_->begin(), map_->end(), o.map_->begin());
   }
 
- private:
+private:
   std::unique_ptr<map_type> map_;
 
   friend class ::boost::serialization::access;

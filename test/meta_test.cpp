@@ -135,7 +135,8 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&, long>, long&>));
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<copy_qualifiers<const int&, long>, const long&>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&&, long>, long&&>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<copy_qualifiers<int&&, long>, long&&>));
   }
 
   // mp_set_union
@@ -153,8 +154,8 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<selection<T, i0>, std::tuple<char>>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<selection<T, i1>, std::tuple<int>>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<selection<T, i2>, std::tuple<long>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<selection<T, i0, i1, i2>, std::tuple<char, int, long>>));
+    BOOST_TEST_TRAIT_TRUE((
+        std::is_same<selection<T, i0, i1, i2>, std::tuple<char, int, long>>));
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<selection<T, i0, i1>, std::tuple<char, int>>));
     BOOST_TEST_TRAIT_TRUE(
