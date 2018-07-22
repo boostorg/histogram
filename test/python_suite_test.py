@@ -133,7 +133,7 @@ class test_regular(unittest.TestCase):
 
     def test_log_transform(self):
         a = regular_log(2, 1e0, 1e2)
-        self.assertEqual(a.index(-1), -1)
+        self.assertEqual(a.index(-1), 2)
         self.assertEqual(a.index(0.99), -1)
         self.assertEqual(a.index(1.0), 0)
         self.assertEqual(a.index(9.99), 0)
@@ -147,7 +147,7 @@ class test_regular(unittest.TestCase):
 
     def test_pow_transform(self):
         a = regular_pow(2, 1.0, 9.0, 0.5)
-        self.assertEqual(a.index(-1), -1)
+        self.assertEqual(a.index(-1), 2)
         self.assertEqual(a.index(0.99), -1)
         self.assertEqual(a.index(1.0), 0)
         self.assertEqual(a.index(3.99), 0)

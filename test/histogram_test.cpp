@@ -121,7 +121,7 @@ void run_tests() {
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},
         axis::category<>{{A, B, C}});
     BOOST_TEST_EQ(h.dim(), 5);
-    BOOST_TEST_EQ(h.size(), 900);
+    BOOST_TEST_EQ(h.size(), 1200);
     auto h2 = make_histogram<array_storage<unsigned>>(
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},
@@ -208,7 +208,7 @@ void run_tests() {
     auto c =
         make_histogram<adaptive_storage>(Type(), axis::category<>({A, B}));
     BOOST_TEST_EQ(c.axis().size(), 2);
-    BOOST_TEST_EQ(c.axis().shape(), 2);
+    BOOST_TEST_EQ(c.axis().shape(), 3);
     BOOST_TEST_EQ(c.axis().index(A), 0);
     BOOST_TEST_EQ(c.axis().index(B), 1);
     c.axis().label("foo");
@@ -293,8 +293,8 @@ void run_tests() {
 
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(h.axis(0_c).size(), 2);
-    BOOST_TEST_EQ(h.axis(0_c).shape(), 2);
-    BOOST_TEST_EQ(sum(h), 2);
+    BOOST_TEST_EQ(h.axis(0_c).shape(), 3);
+    BOOST_TEST_EQ(sum(h), 4);
 
     BOOST_TEST_EQ(h.at(0), 1);
     BOOST_TEST_EQ(h.at(1), 1);

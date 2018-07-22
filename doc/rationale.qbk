@@ -88,15 +88,15 @@ In a sense, [classref boost::histogram::adaptive_storage adaptive_storage] is th
 
 [section:uoflow Under- and overflow bins]
 
-Axis instances by default add extra bins that count values which fall below or above the range covered by the axis (for those types where that makes sense). These extra bins are called under- and overflow bins, respectively. The extra bins can be turned off individually for each axis to conserve memory, but it is generally recommended to keep them. The extra bins do not interfere with normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
+Axis instances by default add extra bins that count values which fall below or above the range covered by the axis (for those types where that makes sense). These extra bins are called under- and overflow bins, respectively. The extra bins can be turned off individually for each axis to conserve memory, but it is generally recommended to have them. The extra bins do not interfere with normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
 
 Under- and overflow bins are useful in one-dimensional histograms, and nearly essential in multi-dimensional histograms. Here are the advantages:
 
-* No loss: The total sum over all bin counts is strictly equal to the number of times `fill(...)` was called. Even NaN values are counted, they end up in the underflow bin by convention.
+* No loss: The total sum over all bin counts is strictly equal to the number of times the histogram was filled. Even NaN values are counted, they are put in the overflow-bin by convention.
 
 * Diagnosis: Unexpected extreme values show up in the extra bins, which otherwise may be overlooked.
 
-* Reducibility: In multi-dimensional histograms, an out-of-range value along one axis may be paired with an in-range value along another axis. If under- and overflow bins are missing, such a value pair is lost completely. If you apply a `reduce` operation on a histogram, which removes somes axes by resummation of the bin counts, this would lead to distortions of the histogram along the remaining axes. When under- and overflow bins are present, the `reduce` operation always produces the same sub-histogram that would have been obtained if it was filled from scratch with the original data.
+* Ability to reduce histograms: In multi-dimensional histograms, an out-of-range value along one axis may be paired with an in-range value along another axis. If under- and overflow bins are missing, such a value pair is lost completely. If you apply a `reduce` operation on a histogram, which removes somes axes by summing counts over that dimension, this would lead to distortions of the histogram along the remaining axes. When under- and overflow bins are present, the `reduce` operation always produces a sub-histogram identical to one obtained if it was filled from scratch with the original data.
 
 [endsect]
 

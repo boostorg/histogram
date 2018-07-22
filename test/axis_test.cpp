@@ -74,9 +74,9 @@ int main() {
     BOOST_TEST_EQ(a.index(0.9), 2);
     BOOST_TEST_EQ(a.index(1.0), 3);
     BOOST_TEST_EQ(a.index(10.), 4);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 4);
     BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), -1);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 4);
   }
 
   // axis::regular with log transform
@@ -88,7 +88,7 @@ int main() {
     BOOST_TEST_IS_CLOSE(b[2].lower(), 100.0, 1e-9);
     BOOST_TEST_EQ(b[2].upper(), std::numeric_limits<double>::infinity());
 
-    BOOST_TEST_EQ(b.index(-1), -1);
+    BOOST_TEST_EQ(b.index(-1), 2); // produces NaN in conversion
     BOOST_TEST_EQ(b.index(0), -1);
     BOOST_TEST_EQ(b.index(1), 0);
     BOOST_TEST_EQ(b.index(9), 0);
@@ -108,7 +108,7 @@ int main() {
     BOOST_TEST_IS_CLOSE(b[2].lower(), 4.0, 1e-9);
     BOOST_TEST_EQ(b[2].upper(), std::numeric_limits<double>::infinity());
 
-    BOOST_TEST_EQ(b.index(-1), -1);
+    BOOST_TEST_EQ(b.index(-1), 2); // produces NaN in conversion
     BOOST_TEST_EQ(b.index(0), 0);
     BOOST_TEST_EQ(b.index(0.99), 0);
     BOOST_TEST_EQ(b.index(1), 1);
@@ -172,8 +172,8 @@ int main() {
     BOOST_TEST_EQ(a.index(0.), 1);
     BOOST_TEST_EQ(a.index(1.), 2);
     BOOST_TEST_EQ(a.index(10.), 2);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
     BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
     BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
   }
 
@@ -206,7 +206,7 @@ int main() {
 
   // axis::category
   {
-    std::string A("A"), B("B"), C("C");
+    std::string A("A"), B("B"), C("C"), other;
     axis::category<std::string> a{{A, B, C}};
     axis::category<std::string> b;
     BOOST_TEST_NOT(a == b);
@@ -225,6 +225,7 @@ int main() {
     BOOST_TEST_EQ(a.index(A), 0);
     BOOST_TEST_EQ(a.index(B), 1);
     BOOST_TEST_EQ(a.index(C), 2);
+    BOOST_TEST_EQ(a.index(other), 3);
     BOOST_TEST_EQ(a.value(0), A);
     BOOST_TEST_EQ(a.value(1), B);
     BOOST_TEST_EQ(a.value(2), C);

@@ -24,7 +24,7 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
-enum class uoflow { off = 0, only_oflow = 1, on = 2 };
+enum class uoflow { off = 0, oflow = 1, on = 2 };
 
 /// Base class for all axes
 class base {

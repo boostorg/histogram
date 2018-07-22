@@ -152,8 +152,8 @@ public:
   int index(value_type x) const noexcept {
     // Optimized code
     const value_type z = (Transform::forward(x) - min_) / delta_;
-    return z >= 0.0 ? (z > base::size() ? base::size() : static_cast<int>(z))
-                    : -1;
+    return z < base::size() ? (z >= 0.0 ? static_cast<int>(z) : -1)
+                            : base::size();
   }
 
   /// Returns lower edge of bin.
@@ -428,8 +428,11 @@ public:
    *
    * \param seq sequence of unique values.
    */
-  category(std::initializer_list<value_type> seq, string_view label = {})
-      : base(seq.size(), label, axis::uoflow::off), map_(new map_type()) {
+  category(std::initializer_list<value_type> seq, string_view label = {},
+           axis::uoflow uo = axis::uoflow::oflow)
+      : base(seq.size(), label,
+             uo == axis::uoflow::on ? axis::uoflow::oflow : uo),
+        map_(new map_type()) {
     int index = 0;
     for (const auto& x : seq) map_->insert({x, index++});
     if (index == 0) throw std::invalid_argument("sequence is empty");
@@ -437,8 +440,10 @@ public:
 
   template <typename Iterator,
             typename = boost::histogram::detail::requires_iterator<Iterator>>
-  category(Iterator begin, Iterator end, string_view label = {})
-      : base(std::distance(begin, end), label, axis::uoflow::off),
+  category(Iterator begin, Iterator end, string_view label = {},
+           axis::uoflow uo = axis::uoflow::oflow)
+      : base(std::distance(begin, end), label,
+             uo == axis::uoflow::on ? axis::uoflow::oflow : uo),
         map_(new map_type()) {
     int index = 0;
     while (begin != end) map_->insert({*begin++, index++});
