@@ -447,7 +447,7 @@ class test_histogram(unittest.TestCase):
             histogram(regular())
         with self.assertRaises(TypeError):
             histogram([integer(-1, 1)])
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             histogram(integer(-1, 1), unknown_keyword="nh")
 
         h = histogram(integer(-1, 2))
@@ -480,11 +480,11 @@ class test_histogram(unittest.TestCase):
             self.assertEqual(hsum(h).value, {False: 6, True: 8}[uoflow])
             self.assertEqual(h.axis(0).shape, {False: 3, True: 5}[uoflow])
 
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(ValueError):
                 h.at(0, foo=None)
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(ValueError):
                 h.at(0, 1)
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(ValueError):
                 h[0, 1]
 
             for get in (lambda h, arg: h.at(arg),
@@ -625,10 +625,10 @@ class test_histogram(unittest.TestCase):
 
     def test_overflow(self):
         h = histogram(*[regular(1, 0, 1) for i in range(50)])
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             h(*range(50))
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             h.at(*range(50)).value
 
     def test_out_of_range(self):
@@ -901,7 +901,12 @@ class test_histogram(unittest.TestCase):
         with self.assertRaises(ValueError):
             a(numpy.empty(2), 1)
         with self.assertRaises(ValueError):
+            a(numpy.empty(2), numpy.empty(3))
+        with self.assertRaises(ValueError):
             a("abc")
+
+        with self.assertRaises(ValueError):
+            a.at(1, 2)
 
         a = histogram(integer(0, 2, uoflow=False),
                       regular(2, 0, 2, uoflow=False))
@@ -910,9 +915,12 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(a.at(0, 1).value, 1)
         self.assertEqual(a.at(1, 0).value, 1)
         self.assertEqual(a.at(1, 1).value, 0)
+        # we don't support: self.assertEqual(a.at([1, 1]).value, 0)
 
         with self.assertRaises(ValueError):
-            a(ar(1, 2, 3))
+            a.at(1)
+        with self.assertRaises(ValueError):
+            a.at(1, 2, 3)
 
         a = histogram(integer(0, 3, uoflow=False))
         a(ar(0, 0, 1, 2, 1, 0, 2, 2))
@@ -943,13 +951,13 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(a.at(1).value, 8)
         self.assertEqual(a.at(2).value, 6)
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             a((1, 2), foo=(1, 1))
         with self.assertRaises(ValueError):
             a((1, 2), weight=(1,))
         with self.assertRaises(ValueError):
             a((1, 2), weight="ab")
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             a((1, 2), weight=(1, 1), foo=1)
         with self.assertRaises(ValueError):
             a((1, 2), weight=([1, 1], [2, 2]))

@@ -555,6 +555,7 @@ void run_tests() {
         Type(), axis::regular<>(3, -1, 1, "r"),
         axis::circular<>(4, 0.0, 1.0, "p"),
         axis::regular<double, axis::transform::log>(3, 1, 100, "lr"),
+        axis::regular<double, axis::transform::pow>(3, 1, 100, "pr", 0.5),
         axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
         axis::category<>{A, B, C}, axis::integer<>(0, 2, "i"));
     a(0.5, 20, 0.1, 0.25, 1, 0);

@@ -229,6 +229,7 @@ int main() {
     BOOST_TEST_EQ(a.value(0), A);
     BOOST_TEST_EQ(a.value(1), B);
     BOOST_TEST_EQ(a.value(2), C);
+    BOOST_TEST_THROWS(a.value(3), std::out_of_range);
   }
 
   // iterators
@@ -299,6 +300,7 @@ int main() {
     axes.push_back(axis::integer<>(-1, 1, "integer", axis::uoflow::off));
     std::ostringstream os;
     for (const auto& a : axes) { os << a << "\n"; }
+    os << axes.back()[0];
     const std::string ref =
         "regular(2, -1, 1, label='regular1')\n"
         "regular_log(2, 1, 10, label='regular2', uoflow=False)\n"
@@ -308,7 +310,8 @@ int main() {
         "variable(-1, 0, 1, label='variable', uoflow=False)\n"
         "category(0, 1, 2, label='category')\n"
         "category('A', 'B', label='category2')\n"
-        "integer(-1, 1, label='integer', uoflow=False)\n";
+        "integer(-1, 1, label='integer', uoflow=False)\n"
+        "[-1, 0)";
     BOOST_TEST_EQ(os.str(), ref);
   }
 
@@ -317,13 +320,15 @@ int main() {
     enum { A, B, C };
     std::vector<axis::any_std> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
+    axes.push_back(axis::regular<double, axis::transform::pow>(
+        2, 1, 4, "", axis::uoflow::on, 0.5));
     axes.push_back(axis::circular<>{4});
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>{A, B, C});
     axes.push_back(axis::integer<>{-1, 1});
     for (const auto& a : axes) {
       BOOST_TEST(!(a == axis::any_std()));
-      BOOST_TEST_EQ(a, a);
+      BOOST_TEST_EQ(a, axis::any_std(a));
     }
     BOOST_TEST_NOT(axes == std::vector<axis::any_std>());
     BOOST_TEST(axes == std::vector<axis::any_std>(axes));
