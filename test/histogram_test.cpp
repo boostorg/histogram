@@ -9,7 +9,7 @@
 #include <boost/histogram/dynamic_histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
-#ifdef HAVE_SERIALIZATION
+#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/histogram/serialization.hpp>
@@ -547,7 +547,7 @@ void run_tests() {
     BOOST_TEST_EQ(r, s);
   }
 
-#ifdef HAVE_SERIALIZATION
+#ifdef BOOST_HISTOGRAM_NO_SERIALIZATION
   // histogram_serialization
   {
     enum { A, B, C };
@@ -555,10 +555,11 @@ void run_tests() {
         Type(), axis::regular<>(3, -1, 1, "r"),
         axis::circular<>(4, 0.0, 1.0, "p"),
         axis::regular<double, axis::transform::log>(3, 1, 100, "lr"),
-        axis::regular<double, axis::transform::pow>(3, 1, 100, "pr", 0.5),
+        axis::regular<double, axis::transform::pow>(3, 1, 100, "pr",
+                                                    axis::uoflow::on, 0.5),
         axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
         axis::category<>{A, B, C}, axis::integer<>(0, 2, "i"));
-    a(0.5, 20, 0.1, 0.25, 1, 0);
+    a(0.5, 0.2, 20, 20, 0.25, 1);
     std::string buf;
     {
       std::ostringstream os;
