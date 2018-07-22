@@ -27,7 +27,7 @@ namespace detail {
 // two_pi can be found in boost/math, but it is defined here to reduce deps
 constexpr double two_pi = 6.283185307179586;
 
-void escape(std::ostream& os, const string_view s) {
+inline void escape(std::ostream& os, const string_view s) {
   os << '\'';
   for (auto sit = s.begin(); sit != s.end(); ++sit) {
     if (*sit == '\'' && (sit == s.begin() || *(sit - 1) != '\\')) {
@@ -41,15 +41,12 @@ void escape(std::ostream& os, const string_view s) {
 
 // the following is highly optimized code that runs in a hot loop;
 // please measure the performance impact of changes
-void lin(std::size_t& out, std::size_t& stride, const int axis_size,
-         const int axis_shape, int j) noexcept {
+inline void lin(std::size_t& out, std::size_t& stride, const int axis_size,
+                const int axis_shape, int j) noexcept {
   BOOST_ASSERT_MSG(stride == 0 || (-1 <= j && j <= axis_size),
                    "index must be in bounds for this algorithm");
   j += (j < 0) * (axis_size + 2); // wrap around if j < 0
   out += j * stride;
-#ifndef _MSC_VER
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-#endif
   stride *=
       (j < axis_shape) * axis_shape; // stride == 0 indicates out-of-range
 }

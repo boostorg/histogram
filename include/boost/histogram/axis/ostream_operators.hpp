@@ -20,9 +20,9 @@ namespace histogram {
 namespace axis {
 
 namespace detail {
-string_view to_string(const transform::identity&) { return {}; }
-string_view to_string(const transform::log&) { return {"_log", 4}; }
-string_view to_string(const transform::sqrt&) { return {"_sqrt", 5}; }
+inline string_view to_string(const transform::identity&) { return {}; }
+inline string_view to_string(const transform::log&) { return {"_log", 4}; }
+inline string_view to_string(const transform::sqrt&) { return {"_sqrt", 5}; }
 } // namespace detail
 
 template <typename T>
@@ -120,7 +120,8 @@ std::ostream& operator<<(std::ostream& os, const category<T>& a) {
 }
 
 template <>
-std::ostream& operator<<(std::ostream& os, const category<std::string>& a) {
+inline std::ostream& operator<<(std::ostream& os,
+                                const category<std::string>& a) {
   os << "category(";
   for (int i = 0; i < a.size(); ++i) {
     ::boost::histogram::detail::escape(os, a.value(i));
