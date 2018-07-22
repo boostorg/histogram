@@ -918,7 +918,13 @@ class test_histogram(unittest.TestCase):
         # we don't support: self.assertEqual(a.at([1, 1]).value, 0)
 
         with self.assertRaises(ValueError):
+            a(1)
+        with self.assertRaises(ValueError):
+            a([1, 0], [1])
+        with self.assertRaises(ValueError):
             a.at(1)
+        with self.assertRaises(ValueError):
+            a[1]
         with self.assertRaises(ValueError):
             a.at(1, 2, 3)
 
