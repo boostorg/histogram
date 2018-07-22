@@ -559,7 +559,7 @@ void run_tests() {
                                                     axis::uoflow::on, 0.5),
         axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
         axis::category<>{A, B, C}, axis::integer<>(0, 2, "i"));
-    a(0.5, 0.2, 20, 20, 0.25, 1);
+    a(0.5, 0.2, 20, 20, 0.25, 1, 1);
     std::string buf;
     {
       std::ostringstream os;
