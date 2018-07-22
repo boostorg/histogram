@@ -19,7 +19,7 @@ branches:
 matrix:
   include:
     - os: linux # gcc minimum
-      env: PYVER=2.7 CC=gcc CXX=g++ PY=ON NUMPY=OFF SERIAL=OFF
+      env: PYVER=2.7 CC=gcc CXX=g++ PY=OFF NUMPY=OFF SERIAL=OFF
     - os: linux # gcc py27 w/o numpy
       env: PYVER=2.7 CC=gcc CXX=g++ PY=ON NUMPY=OFF SERIAL=ON
     - os: linux # gcc py27

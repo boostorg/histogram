@@ -547,7 +547,7 @@ void run_tests() {
     BOOST_TEST_EQ(r, s);
   }
 
-#ifdef BOOST_HISTOGRAM_NO_SERIALIZATION
+#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
   // histogram_serialization
   {
     enum { A, B, C };
