@@ -38,15 +38,14 @@ public:
   std::streamsize write(const char* s, std::streamsize n) {
     if (len_ == 0) {
       *pstr_ = PyBytes_FromStringAndSize(s, n);
-      // no point trying to recover from allocation error
-      BOOST_ASSERT(*pstr_ != 0);
+      if (*pstr_ == 0) // no point trying to recover from allocation error
+        std::abort();
       len_ = n;
     } else {
       if (pos_ + n > len_) {
         len_ = pos_ + n;
-        auto err_code = _PyBytes_Resize(pstr_, len_);
-        // no point trying to recover from allocation error
-        BOOST_ASSERT(err_code != -1);
+        if (_PyBytes_Resize(pstr_, len_) == -1)
+          std::abort(); // no point trying to recover from allocation error
       }
       char* b = PyBytes_AS_STRING(*pstr_);
       std::copy(s, s + n, b + pos_);
