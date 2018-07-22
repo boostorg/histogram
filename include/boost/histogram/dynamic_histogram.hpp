@@ -361,7 +361,7 @@ private:
     void impl(std::true_type, const Axis& a) const {
       const auto a_size = a.size();
       const auto a_shape = a.shape();
-      const auto j = a.index(val);
+      const auto j = a.index(static_cast<typename Axis::value_type>(val));
       detail::lin(idx, stride, a_size, a_shape, j);
     }
 

@@ -37,16 +37,16 @@ int main() {
     struct no_methods {};
 
     struct value_method {
-      void value();
+      void value() {}
     };
 
     struct variance_method {
-      void variance();
+      void variance() {}
     };
 
     struct value_and_variance_methods {
-      void value();
-      void variance();
+      void value() {}
+      void variance() {}
     };
 
     BOOST_TEST_TRAIT_FALSE((has_variance_support<no_methods>));
@@ -59,7 +59,7 @@ int main() {
   {
     struct no_methods {};
     struct lower_method {
-      void lower(int);
+      void lower(int) {}
     };
 
     BOOST_TEST_TRAIT_FALSE((has_method_lower<no_methods>));
