@@ -27,7 +27,7 @@ namespace detail {
 // two_pi can be found in boost/math, but it is defined here to reduce deps
 constexpr double two_pi = 6.283185307179586;
 
-inline void escape(std::ostream& os, const string_view s) {
+void escape(std::ostream& os, const string_view s) {
   os << '\'';
   for (auto sit = s.begin(); sit != s.end(); ++sit) {
     if (*sit == '\'' && (sit == s.begin() || *(sit - 1) != '\\')) {
@@ -41,8 +41,8 @@ inline void escape(std::ostream& os, const string_view s) {
 
 // the following is highly optimized code that runs in a hot loop;
 // please measure the performance impact of changes
-inline void lin(std::size_t& out, std::size_t& stride, const int axis_size,
-                const int axis_shape, int j) noexcept {
+void lin(std::size_t& out, std::size_t& stride, const int axis_size,
+         const int axis_shape, int j) noexcept {
   BOOST_ASSERT_MSG(stride == 0 || (-1 <= j && j <= axis_size),
                    "index must be in bounds for this algorithm");
   j += (j < 0) * (axis_size + 2); // wrap around if j < 0
@@ -55,13 +55,13 @@ inline void lin(std::size_t& out, std::size_t& stride, const int axis_size,
 }
 
 template <typename T>
-inline typename std::enable_if<(is_castable_to_int<T>::value), int>::type
+typename std::enable_if<(is_castable_to_int<T>::value), int>::type
 indirect_int_cast(T&& t) noexcept {
   return static_cast<int>(std::forward<T>(t));
 }
 
 template <typename T>
-inline typename std::enable_if<!(is_castable_to_int<T>::value), int>::type
+typename std::enable_if<!(is_castable_to_int<T>::value), int>::type
 indirect_int_cast(T&&) noexcept {
   // Cannot use static_assert here, because this function is created as a
   // side-effect of TMP. It must be valid at compile-time.
@@ -70,17 +70,17 @@ indirect_int_cast(T&&) noexcept {
 }
 
 template <typename S, typename T>
-inline void fill_storage(S& s, std::size_t idx, weight<T>&& w) {
+void fill_storage(S& s, std::size_t idx, weight<T>&& w) {
   s.add(idx, w);
 }
 
 template <typename S>
-inline void fill_storage(S& s, std::size_t idx) {
+void fill_storage(S& s, std::size_t idx) {
   s.increase(idx);
 }
 
 template <typename S>
-inline auto storage_get(const S& s, std::size_t idx, bool error) ->
+auto storage_get(const S& s, std::size_t idx, bool error) ->
     typename S::const_reference {
   if (error) throw std::out_of_range("bin index out of range");
   return s[idx];

@@ -150,7 +150,7 @@ public:
 
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
-    // Optimized code
+    // Optimized code, measure impact of changes
     const value_type z = (Transform::forward(x) - min_) / delta_;
     return z < base::size() ? (z >= 0.0 ? static_cast<int>(z) : -1)
                             : base::size();

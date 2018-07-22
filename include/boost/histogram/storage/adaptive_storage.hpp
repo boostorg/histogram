@@ -44,7 +44,7 @@ using mp_int = ::boost::multiprecision::cpp_int;
 using wcount = ::boost::histogram::weight_counter<double>;
 
 template <typename T>
-inline T* alloc(std::size_t s) {
+T* alloc(std::size_t s) {
 #ifdef BOOST_HISTOGRAM_TRACE_ALLOCS
   boost::core::typeinfo const& ti = BOOST_CORE_TYPEID(T);
   std::cerr << "alloc " << boost::core::demangled_name(ti) << "[" << s << "]"
@@ -154,14 +154,14 @@ template <typename T>
 using next = typename next_type<T>::type;
 
 template <typename T>
-inline bool safe_increase(T& t) {
+bool safe_increase(T& t) {
   if (t == std::numeric_limits<T>::max()) return false;
   ++t;
   return true;
 }
 
 template <typename T, typename U>
-inline bool safe_assign(T& t, const U& u) {
+bool safe_assign(T& t, const U& u) {
   if (std::numeric_limits<T>::max() < std::numeric_limits<U>::max() &&
       std::numeric_limits<T>::max() < u)
     return false;
@@ -170,7 +170,7 @@ inline bool safe_assign(T& t, const U& u) {
 }
 
 template <typename T, typename U>
-inline bool safe_radd(T& t, const U& u) {
+bool safe_radd(T& t, const U& u) {
   if (static_cast<T>(std::numeric_limits<T>::max() - t) < u) return false;
   t += static_cast<T>(u);
   return true;
@@ -178,7 +178,7 @@ inline bool safe_radd(T& t, const U& u) {
 
 // float rounding is a mess, the equal sign is necessary here
 template <typename T>
-inline bool safe_radd(T& t, const double u) {
+bool safe_radd(T& t, const double u) {
   if ((std::numeric_limits<T>::max() - t) <= u) return false;
   t += u;
   return true;
