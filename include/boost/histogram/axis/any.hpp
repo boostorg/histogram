@@ -52,14 +52,14 @@ struct index_visitor : public boost::static_visitor<int> {
   }
   template <typename Axis>
   int impl(std::true_type, const Axis& a) const {
-    return a.index(x);
+    return a.index(static_cast<typename Axis::value_type>(x));
   }
   template <typename Axis>
   int impl(std::false_type, const Axis&) const {
     throw std::runtime_error(boost::histogram::detail::cat(
-        "cannot convert double to value_type ",
+        "cannot convert double to ",
         boost::typeindex::type_id<typename Axis::value_type>().pretty_name(),
-        " of ", boost::typeindex::type_id<Axis>().pretty_name()));
+        " for ", boost::typeindex::type_id<Axis>().pretty_name()));
   }
 };
 
