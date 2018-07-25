@@ -50,11 +50,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 if(TRACE_ALLOCS)
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options(/DBOOST_HISTOGRAM_TRACE_ALLOCS)
-  else()
-    add_compile_options(-DBOOST_HISTOGRAM_TRACE_ALLOCS)
-  endif()
+  add_definitions(-DBOOST_HISTOGRAM_TRACE_ALLOCS)
 endif()
 
 if(BUILD_PYTHON)
@@ -109,9 +105,9 @@ else()
   # serialization only required for tests
   if (BUILD_SERIALIZATION)
     find_package(Boost ${MIN_BOOST_VERSION} REQUIRED serialization)
-    add_definitions(-DHAVE_SERIALIZATION)
   else ()
     find_package(Boost ${MIN_BOOST_VERSION} REQUIRED)
+    add_definitions(-DBOOST_HISTOGRAM_NO_SERIALIZATION)
   endif()
   set(LIBRARIES ${Boost_LIBRARIES})
 endif()
@@ -190,12 +186,6 @@ file(GLOB_RECURSE
      LIST_DIRECTORIES false
      ../test/*_test.cpp ../include/*.hpp
      )
-
-add_custom_target(clf
-  COMMAND clang-format
-  -i
-  ${ALL_SOURCE_FILES}
-  )
 
 get_property(INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 set(TIDY_INCLUDE)

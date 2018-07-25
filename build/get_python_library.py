@@ -1,19 +1,37 @@
 from distutils import sysconfig
-import os.path
+import os
 import sys
-import glob
+from pprint import pprint
+from glob import glob
 pj = os.path.join
 
-pyver = sysconfig.get_config_var('VERSION')
-getvar = sysconfig.get_config_var
+LIB_KEYS = ('LIBDEST', 'LIBDIR', 'LIBPL')
 
-libname = "python" + pyver
+if sys.platform == "darwin":
+    so_ext = "dylib"
+elif sys.platform.startswith("linux"):
+    so_ext = "so"
+else:
+    so_ext = "dll"
 
-for libvar in ('LIBDIR', 'LIBPL'):
-    for ext in ('so', 'dylib', 'dll'):
-        match = pj(getvar(libvar), "*" + libname + "*." + ext)
-        lib = glob.glob(match)
-        if lib:
-            assert len(lib) == 1
-            sys.stdout.write(lib[0])
-            raise SystemExit
+config = sysconfig.get_config_vars()
+
+library = "*python%s*%s" % (sysconfig.get_python_version(), so_ext) 
+for libpath in LIB_KEYS:
+    p = pj(config[libpath], library)
+    cand = glob(p)
+    if cand and len(cand) == 1:
+        sys.stdout.write(cand[0])
+        raise SystemExit
+
+pprint("no library found, dumping library pattern, config, and directory contents:")
+pprint(library)
+pprint(config)
+
+for libpath in LIB_KEYS:
+    pprint(libpath)
+    p = config[libpath]
+    if os.path.exists(p):
+        pprint(os.listdir(p))
+
+raise SystemExit(1)

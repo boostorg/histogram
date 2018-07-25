@@ -36,17 +36,6 @@ void test_axis_iterator(const Axis& a, int begin, int end) {
 }
 
 int main() {
-
-  // sizes (there are platform-dependent)
-  {
-    BOOST_TEST(sizeof(axis::regular<>) <= 64);
-    BOOST_TEST(sizeof(axis::circular<>) <= 56);
-    BOOST_TEST(sizeof(axis::variable<>) <= 56);
-    BOOST_TEST(sizeof(axis::integer<>) <= 48);
-    BOOST_TEST(sizeof(axis::category<>) <= 48);
-    BOOST_TEST(sizeof(axis::any_std) <= 80);
-  }
-
   // bad_ctors
   {
     BOOST_TEST_THROWS(axis::regular<>(0, 0, 1), std::logic_error);
@@ -85,9 +74,9 @@ int main() {
     BOOST_TEST_EQ(a.index(0.9), 2);
     BOOST_TEST_EQ(a.index(1.0), 3);
     BOOST_TEST_EQ(a.index(10.), 4);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 4);
     BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), -1);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 4);
   }
 
   // axis::regular with log transform
@@ -99,7 +88,7 @@ int main() {
     BOOST_TEST_IS_CLOSE(b[2].lower(), 100.0, 1e-9);
     BOOST_TEST_EQ(b[2].upper(), std::numeric_limits<double>::infinity());
 
-    BOOST_TEST_EQ(b.index(-1), -1);
+    BOOST_TEST_EQ(b.index(-1), 2); // produces NaN in conversion
     BOOST_TEST_EQ(b.index(0), -1);
     BOOST_TEST_EQ(b.index(1), 0);
     BOOST_TEST_EQ(b.index(9), 0);
@@ -119,7 +108,7 @@ int main() {
     BOOST_TEST_IS_CLOSE(b[2].lower(), 4.0, 1e-9);
     BOOST_TEST_EQ(b[2].upper(), std::numeric_limits<double>::infinity());
 
-    BOOST_TEST_EQ(b.index(-1), -1);
+    BOOST_TEST_EQ(b.index(-1), 2); // produces NaN in conversion
     BOOST_TEST_EQ(b.index(0), 0);
     BOOST_TEST_EQ(b.index(0.99), 0);
     BOOST_TEST_EQ(b.index(1), 1);
@@ -183,8 +172,8 @@ int main() {
     BOOST_TEST_EQ(a.index(0.), 1);
     BOOST_TEST_EQ(a.index(1.), 2);
     BOOST_TEST_EQ(a.index(10.), 2);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
     BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
     BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
   }
 
@@ -217,7 +206,7 @@ int main() {
 
   // axis::category
   {
-    std::string A("A"), B("B"), C("C");
+    std::string A("A"), B("B"), C("C"), other;
     axis::category<std::string> a{{A, B, C}};
     axis::category<std::string> b;
     BOOST_TEST_NOT(a == b);
@@ -236,9 +225,11 @@ int main() {
     BOOST_TEST_EQ(a.index(A), 0);
     BOOST_TEST_EQ(a.index(B), 1);
     BOOST_TEST_EQ(a.index(C), 2);
+    BOOST_TEST_EQ(a.index(other), 3);
     BOOST_TEST_EQ(a.value(0), A);
     BOOST_TEST_EQ(a.value(1), B);
     BOOST_TEST_EQ(a.value(2), C);
+    BOOST_TEST_THROWS(a.value(3), std::out_of_range);
   }
 
   // iterators
@@ -309,6 +300,7 @@ int main() {
     axes.push_back(axis::integer<>(-1, 1, "integer", axis::uoflow::off));
     std::ostringstream os;
     for (const auto& a : axes) { os << a << "\n"; }
+    os << axes.back()[0];
     const std::string ref =
         "regular(2, -1, 1, label='regular1')\n"
         "regular_log(2, 1, 10, label='regular2', uoflow=False)\n"
@@ -318,7 +310,8 @@ int main() {
         "variable(-1, 0, 1, label='variable', uoflow=False)\n"
         "category(0, 1, 2, label='category')\n"
         "category('A', 'B', label='category2')\n"
-        "integer(-1, 1, label='integer', uoflow=False)\n";
+        "integer(-1, 1, label='integer', uoflow=False)\n"
+        "[-1, 0)";
     BOOST_TEST_EQ(os.str(), ref);
   }
 
@@ -327,13 +320,15 @@ int main() {
     enum { A, B, C };
     std::vector<axis::any_std> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
+    axes.push_back(axis::regular<double, axis::transform::pow>(
+        2, 1, 4, "", axis::uoflow::on, 0.5));
     axes.push_back(axis::circular<>{4});
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>{A, B, C});
     axes.push_back(axis::integer<>{-1, 1});
     for (const auto& a : axes) {
       BOOST_TEST(!(a == axis::any_std()));
-      BOOST_TEST_EQ(a, a);
+      BOOST_TEST_EQ(a, axis::any_std(a));
     }
     BOOST_TEST_NOT(axes == std::vector<axis::any_std>());
     BOOST_TEST(axes == std::vector<axis::any_std>(axes));
@@ -344,7 +339,7 @@ int main() {
     std::string a = "A", b = "B";
     axis::any_std x = axis::category<std::string>({a, b}, "category");
     BOOST_TEST_THROWS(x.index(1.5), std::runtime_error);
-    const auto& cx = axis::cast<axis::category<std::string>>(x);
+    auto cx = static_cast<const axis::category<std::string>&>(x);
     BOOST_TEST_EQ(cx.index(b), 1);
   }
 

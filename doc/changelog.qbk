@@ -2,6 +2,19 @@
 
 [master]
 
+[heading 3.1 (not in boost)]
+
+* Renamed `bincount` method to `size`
+* Support for axes with only overflow and no underflow bin
+* category axis now by default has bin for "other" input that does not fall
+  into the predefined categories, making it consistent with other axes
+* NaN is now consistently put into overflow bin for all axes
+* Eliminated warnings about safe internal conversions on MSVC
+* Established a cpp house style with corresponding .clang-format file
+* Better detection of Python library on all systems
+* Improved code coverage by testing more input errors
+* Raise ValueError instead of generic RuntimeError in Python on input errors
+
 [heading 3.0 (not in boost)]
 
 * Support for efficient adding of multiple histograms and scaling

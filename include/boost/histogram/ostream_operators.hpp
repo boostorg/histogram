@@ -26,7 +26,7 @@ struct axis_ostream_visitor {
 } // namespace detail
 
 template <typename... Ts>
-inline std::ostream& operator<<(std::ostream& os, const histogram<Ts...>& h) {
+std::ostream& operator<<(std::ostream& os, const histogram<Ts...>& h) {
   os << "histogram(";
   h.for_each_axis(detail::axis_ostream_visitor(os));
   os << (h.dim() ? "\n)" : ")");
@@ -34,8 +34,7 @@ inline std::ostream& operator<<(std::ostream& os, const histogram<Ts...>& h) {
 }
 
 template <typename T>
-inline std::ostream& operator<<(std::ostream& os,
-                                const weight_counter<T>& x) {
+std::ostream& operator<<(std::ostream& os, const weight_counter<T>& x) {
   os << "weight_counter(" << x.value() << ", " << x.variance() << ")";
   return os;
 }

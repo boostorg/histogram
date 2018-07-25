@@ -7,7 +7,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
-#ifdef HAVE_SERIALIZATION
+#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
 #include <boost/histogram/serialization.hpp>
 #endif
 #include <boost/histogram/storage/adaptive_storage.hpp>
@@ -49,7 +49,7 @@ void copy_impl() {
   BOOST_TEST(a == b);
 }
 
-#ifdef HAVE_SERIALIZATION
+#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
 template <typename T>
 void serialization_impl() {
   const auto a = prepare(1, T(1));
@@ -423,7 +423,7 @@ int main() {
     convert_array_storage_impl<detail::wcount>();
   }
 
-#ifdef HAVE_SERIALIZATION
+#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
   // serialization_test
   {
     serialization_impl<void>();

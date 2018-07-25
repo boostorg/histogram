@@ -103,9 +103,18 @@ using mp_size = mp11::mp_size<rm_cv_ref<T>>;
 template <typename T, unsigned D>
 using mp_at_c = mp11::mp_at_c<rm_cv_ref<T>, D>;
 
-template <typename L1, typename L2>
-using mp_union =
-    mp11::mp_rename<mp11::mp_push_front<L2, L1>, mp11::mp_set_push_back>;
+template <typename T1, typename T2>
+using copy_qualifiers = mp11::mp_if<
+    std::is_rvalue_reference<T1>, T2&&,
+    mp11::mp_if<
+        std::is_lvalue_reference<T1>,
+        mp11::mp_if<std::is_const<typename std::remove_reference<T1>::type>,
+                    const T2&, T2&>,
+        mp11::mp_if<std::is_const<T1>, const T2, T2>>>;
+
+template <typename S, typename L>
+using mp_set_union =
+    mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back, S>, L>;
 
 namespace {
 template <typename L, typename... Ns>

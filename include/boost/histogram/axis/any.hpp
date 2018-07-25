@@ -7,6 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 #define _BOOST_HISTOGRAM_AXIS_ANY_HPP_
 
+#include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/cat.hpp>
@@ -32,44 +33,17 @@ namespace axis {
 
 namespace detail {
 
-struct size_visitor : public static_visitor<int> {
+// this visitation may be collapsed by the compiler almost into a direct cast,
+// works with gcc-8 -O2 -DNDEBUG on Compiler Explorer at least
+template <typename T>
+struct static_cast_visitor : public boost::static_visitor<T> {
   template <typename A>
-  int operator()(const A& a) const {
-    return a.size();
+  T operator()(A&& a) const {
+    return static_cast<T>(std::forward<A>(a));
   }
 };
 
-struct shape_visitor : public static_visitor<int> {
-  template <typename A>
-  int operator()(const A& a) const {
-    return a.shape();
-  }
-};
-
-struct uoflow_visitor : public static_visitor<bool> {
-  template <typename A>
-  bool operator()(const A& a) const {
-    return a.uoflow();
-  }
-};
-
-struct get_label_visitor : public static_visitor<string_view> {
-  template <typename A>
-  ::boost::string_view operator()(const A& a) const {
-    return a.label();
-  }
-};
-
-struct set_label_visitor : public static_visitor<void> {
-  const ::boost::string_view label;
-  set_label_visitor(const ::boost::string_view x) : label(x) {}
-  template <typename A>
-  void operator()(A& a) const {
-    a.label(label);
-  }
-};
-
-struct index_visitor : public static_visitor<int> {
+struct index_visitor : public boost::static_visitor<int> {
   const double x;
   explicit index_visitor(const double arg) : x(arg) {}
   template <typename Axis>
@@ -78,18 +52,18 @@ struct index_visitor : public static_visitor<int> {
   }
   template <typename Axis>
   int impl(std::true_type, const Axis& a) const {
-    return a.index(x);
+    return a.index(static_cast<typename Axis::value_type>(x));
   }
   template <typename Axis>
   int impl(std::false_type, const Axis&) const {
-    throw std::runtime_error(::boost::histogram::detail::cat(
-        "cannot convert double to value_type ",
+    throw std::runtime_error(boost::histogram::detail::cat(
+        "cannot convert double to ",
         boost::typeindex::type_id<typename Axis::value_type>().pretty_name(),
-        " of ", boost::typeindex::type_id<Axis>().pretty_name()));
+        " for ", boost::typeindex::type_id<Axis>().pretty_name()));
   }
 };
 
-struct lower_visitor : public static_visitor<double> {
+struct lower_visitor : public boost::static_visitor<double> {
   int idx;
   lower_visitor(int i) : idx(i) {}
   template <typename Axis>
@@ -108,14 +82,14 @@ struct lower_visitor : public static_visitor<double> {
   }
   template <typename Axis>
   double impl(std::false_type, const Axis&) const {
-    throw std::runtime_error(::boost::histogram::detail::cat(
+    throw std::runtime_error(boost::histogram::detail::cat(
         "cannot use ", boost::typeindex::type_id<Axis>().pretty_name(),
         " with generic boost::histogram::axis::any interface, use"
-        " boost::histogram::axis::cast to access underlying axis type"));
+        " a static_cast to access the underlying axis type"));
   }
 };
 
-struct bicmp_visitor : public static_visitor<bool> {
+struct bicmp_visitor : public boost::static_visitor<bool> {
   template <typename T, typename U>
   bool operator()(const T&, const U&) const {
     return false;
@@ -128,7 +102,7 @@ struct bicmp_visitor : public static_visitor<bool> {
 };
 
 template <typename T>
-struct assign_visitor : public static_visitor<void> {
+struct assign_visitor : public boost::static_visitor<void> {
   T& t;
   assign_visitor(T& tt) : t(tt) {}
   template <typename U>
@@ -143,7 +117,7 @@ struct assign_visitor : public static_visitor<void> {
 
   template <typename U>
   void impl(mp11::mp_false, const U&) const {
-    throw std::invalid_argument(::boost::histogram::detail::cat(
+    throw std::invalid_argument(boost::histogram::detail::cat(
         "argument ", boost::typeindex::type_id<U>().pretty_name(),
         " is not a bounded type of ",
         boost::typeindex::type_id<T>().pretty_name()));
@@ -154,8 +128,8 @@ struct assign_visitor : public static_visitor<void> {
 
 /// Polymorphic axis type
 template <typename... Ts>
-class any : public ::boost::variant<Ts...> {
-  using base_type = ::boost::variant<Ts...>;
+class any : public boost::variant<Ts...> {
+  using base_type = boost::variant<Ts...>;
 
 public:
   using types = mp11::mp_list<Ts...>;
@@ -167,8 +141,7 @@ public:
 private:
   template <typename T>
   using requires_bounded_type = mp11::mp_if<
-      mp11::mp_contains<types, ::boost::histogram::detail::rm_cv_ref<T>>,
-      void>;
+      mp11::mp_contains<types, boost::histogram::detail::rm_cv_ref<T>>, void>;
 
 public:
   any() = default;
@@ -188,44 +161,36 @@ public:
 
   template <typename... Us>
   any(const any<Us...>& u) {
-    ::boost::apply_visitor(detail::assign_visitor<any>(*this), u);
+    boost::apply_visitor(detail::assign_visitor<any>(*this), u);
   }
 
   template <typename... Us>
   any& operator=(const any<Us...>& u) {
-    ::boost::apply_visitor(detail::assign_visitor<any>(*this), u);
+    boost::apply_visitor(detail::assign_visitor<any>(*this), u);
     return *this;
   }
 
-  int size() const {
-    return ::boost::apply_visitor(detail::size_visitor(), *this);
-  }
+  int size() const { return static_cast<const base&>(*this).size(); }
 
-  int shape() const {
-    return ::boost::apply_visitor(detail::shape_visitor(), *this);
-  }
+  int shape() const { return static_cast<const base&>(*this).shape(); }
 
-  bool uoflow() const {
-    return ::boost::apply_visitor(detail::uoflow_visitor(), *this);
-  }
+  bool uoflow() const { return static_cast<const base&>(*this).uoflow(); }
 
   // note: this only works for axes with compatible value type
   int index(const value_type x) const {
-    return ::boost::apply_visitor(detail::index_visitor(x), *this);
+    return boost::apply_visitor(detail::index_visitor(x), *this);
   }
 
   string_view label() const {
-    return ::boost::apply_visitor(detail::get_label_visitor(), *this);
+    return static_cast<const base&>(*this).label();
   }
 
-  void label(const string_view x) {
-    return ::boost::apply_visitor(detail::set_label_visitor(x), *this);
-  }
+  void label(const string_view x) { static_cast<base&>(*this).label(x); }
 
   // this only works for axes with compatible bin type
   // and will throw a runtime_error otherwise
   double lower(int idx) const {
-    return ::boost::apply_visitor(detail::lower_visitor(idx), *this);
+    return boost::apply_visitor(detail::lower_visitor(idx), *this);
   }
 
   bin_type operator[](const int idx) const { return bin_type(idx, *this); }
@@ -236,19 +201,38 @@ public:
 
   template <typename... Us>
   bool operator==(const any<Us...>& u) const {
-    return ::boost::apply_visitor(detail::bicmp_visitor(), *this, u);
+    return boost::apply_visitor(detail::bicmp_visitor(), *this, u);
   }
 
   template <typename T, typename = requires_bounded_type<T>>
   bool operator==(const T& t) const {
-    // variant::operator==(T) is implemented, but only to fail, cannot use it
-    auto tp = ::boost::get<::boost::histogram::detail::rm_cv_ref<T>>(this);
+    // variant::operator==(T) is implemented only to fail, we cannot use it
+    auto tp = boost::get<T>(this);
     return tp && *tp == t;
   }
 
   template <typename T>
-  bool operator!=(T&& t) const {
-    return !operator==(std::forward<T>(t));
+  bool operator!=(const T& t) const {
+    return !operator==(t);
+  }
+
+  explicit operator const base&() const {
+    return boost::apply_visitor(detail::static_cast_visitor<const base&>(),
+                                *this);
+  }
+
+  explicit operator base&() {
+    return boost::apply_visitor(detail::static_cast_visitor<base&>(), *this);
+  }
+
+  template <typename T>
+  explicit operator const T&() const {
+    return boost::strict_get<T>(*this);
+  }
+
+  template <typename T>
+  explicit operator T&() {
+    return boost::strict_get<T>(*this);
   }
 
   const_iterator begin() const { return const_iterator(*this, 0); }
@@ -261,39 +245,10 @@ public:
   }
 
 private:
-  friend class ::boost::serialization::access;
+  friend class boost::serialization::access;
   template <typename Archive>
   void serialize(Archive&, unsigned);
 };
-
-// dynamic casts
-template <typename T, typename... Ts>
-typename std::add_lvalue_reference<T>::type cast(any<Ts...>& any) {
-  return get<T>(any);
-}
-
-template <typename T, typename... Ts>
-const typename std::add_lvalue_reference<T>::type cast(
-    const any<Ts...>& any) {
-  return get<T>(any);
-}
-
-template <typename T, typename... Ts>
-typename std::add_pointer<T>::type cast(any<Ts...>* any) {
-  return get<T>(&any);
-}
-
-template <typename T, typename... Ts>
-const typename std::add_pointer<T>::type cast(const any<Ts...>* any) {
-  return get<T>(&any);
-}
-
-// pass-through for generic programming, to keep code workgin when
-// you switch from dynamic to static histogram
-template <typename, typename U>
-auto cast(U&& u) -> decltype(std::forward<U>(u)) {
-  return std::forward<U>(u);
-}
 
 } // namespace axis
 } // namespace histogram

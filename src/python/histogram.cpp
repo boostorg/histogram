@@ -150,10 +150,7 @@ bp::object histogram_init(bp::tuple args, bp::dict kwargs) {
 
   bp::object self = args[0];
 
-  if (kwargs) {
-    PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
-    bp::throw_error_already_set();
-  }
+  if (kwargs) { throw std::invalid_argument("no keyword arguments allowed"); }
 
   const unsigned dim = bp::len(args) - 1;
 
@@ -166,7 +163,7 @@ bp::object histogram_init(bp::tuple args, bp::dict kwargs) {
         axes_appender(pa, axes, success));
     if (!success) {
       std::string msg = "require an axis object, got ";
-      msg += bp::extract<std::string>(pa.attr("__class__"))();
+      msg += bp::extract<std::string>(bp::str(pa));
       PyErr_SetString(PyExc_TypeError, msg.c_str());
       bp::throw_error_already_set();
     }
@@ -222,17 +219,15 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
 
   const unsigned dim = nargs - 1;
   if (dim != self.dim()) {
-    PyErr_SetString(PyExc_ValueError,
-                    "number of arguments and dimension do not match");
-    bp::throw_error_already_set();
+    throw std::invalid_argument(
+        "number of arguments and dimension do not match");
   }
 
   if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
-    PyErr_SetString(PyExc_RuntimeError,
-                    bh::detail::cat("too many arguments, maximum is ",
-                                    BOOST_HISTOGRAM_AXIS_LIMIT)
-                        .c_str());
-    bp::throw_error_already_set();
+    throw std::invalid_argument(
+        bh::detail::cat("too many arguments, maximum is ",
+                        BOOST_HISTOGRAM_AXIS_LIMIT)
+            .c_str());
   }
 
   fetcher<double> fetch[BOOST_HISTOGRAM_AXIS_LIMIT];
@@ -241,9 +236,7 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
     fetch[d].assign(args[1 + d]);
     if (fetch[d].n > 0) {
       if (n > 0 && fetch[d].n != n) {
-        PyErr_SetString(PyExc_ValueError,
-                        "lengths of sequences do not match");
-        bp::throw_error_already_set();
+        throw std::invalid_argument("lengths of sequences do not match");
       }
       n = fetch[d].n;
     }
@@ -254,17 +247,15 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
   if (nkwargs > 0) {
     const bool use_weight = kwargs.has_key("weight");
     if (nkwargs > use_weight) { // only one keyword allowed: weight
-      PyErr_SetString(PyExc_RuntimeError, "only keyword weight allowed");
-      bp::throw_error_already_set();
+      throw std::invalid_argument("only keyword weight allowed");
     }
 
     if (use_weight) {
       fetch_weight.assign(kwargs.get("weight"));
       if (fetch_weight.n > 0) {
         if (n > 0 && fetch_weight.n != n) {
-          PyErr_SetString(PyExc_ValueError,
-                          "length of weight sequence does not match");
-          bp::throw_error_already_set();
+          throw std::invalid_argument(
+              "length of weight sequence does not match");
         }
         n = fetch_weight.n;
       }
@@ -300,26 +291,20 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
 bp::object histogram_getitem(const pyhistogram& self, bp::object args) {
   bp::extract<int> get_int(args);
   if (get_int.check()) {
-    if (self.dim() != 1) {
-      PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
-      bp::throw_error_already_set();
-    }
-
-    return bp::object(self[get_int()]);
+    if (self.dim() == 1) { return bp::object(self[get_int()]); }
+    throw std::invalid_argument("wrong number of arguments");
   }
 
   const unsigned dim = bp::len(args);
   if (self.dim() != dim) {
-    PyErr_SetString(PyExc_RuntimeError, "wrong number of arguments");
-    bp::throw_error_already_set();
+    throw std::invalid_argument("wrong number of arguments");
   }
 
   if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
-    PyErr_SetString(PyExc_RuntimeError,
-                    bh::detail::cat("too many arguments, maximum is ",
-                                    BOOST_HISTOGRAM_AXIS_LIMIT)
-                        .c_str());
-    bp::throw_error_already_set();
+    throw std::invalid_argument(
+        bh::detail::cat("too many arguments, maximum is ",
+                        BOOST_HISTOGRAM_AXIS_LIMIT)
+            .c_str());
   }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
@@ -331,10 +316,7 @@ bp::object histogram_getitem(const pyhistogram& self, bp::object args) {
 bp::object histogram_at(bp::tuple args, bp::dict kwargs) {
   const pyhistogram& self = bp::extract<const pyhistogram&>(args[0]);
 
-  if (kwargs) {
-    PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
-    bp::throw_error_already_set();
-  }
+  if (kwargs) { throw std::invalid_argument("no keyword arguments allowed"); }
 
   bp::object a = args.slice(1, bp::_);
   return histogram_getitem(self, bp::extract<bp::tuple>(a));
@@ -346,17 +328,13 @@ bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
   const unsigned nargs = bp::len(args) - 1;
 
   if (nargs > BOOST_HISTOGRAM_AXIS_LIMIT) {
-    PyErr_SetString(PyExc_RuntimeError,
-                    bh::detail::cat("too many arguments, maximum is ",
-                                    BOOST_HISTOGRAM_AXIS_LIMIT)
-                        .c_str());
-    bp::throw_error_already_set();
+    throw std::invalid_argument(
+        bh::detail::cat("too many arguments, maximum is ",
+                        BOOST_HISTOGRAM_AXIS_LIMIT)
+            .c_str());
   }
 
-  if (kwargs) {
-    PyErr_SetString(PyExc_RuntimeError, "no keyword arguments allowed");
-    bp::throw_error_already_set();
-  }
+  if (kwargs) { throw std::invalid_argument("no keyword arguments allowed"); }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
   for (auto i = 0u; i < nargs; ++i) idx[i] = bp::extract<int>(args[1 + i]);

@@ -9,7 +9,7 @@
 #include <boost/histogram/dynamic_histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
-#ifdef HAVE_SERIALIZATION
+#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/histogram/serialization.hpp>
@@ -61,7 +61,6 @@ void pass_histogram(boost::histogram::histogram<Ts...>&) {}
 
 template <typename Type>
 void run_tests() {
-
   // init_1
   {
     auto h =
@@ -122,7 +121,7 @@ void run_tests() {
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},
         axis::category<>{{A, B, C}});
     BOOST_TEST_EQ(h.dim(), 5);
-    BOOST_TEST_EQ(h.size(), 900);
+    BOOST_TEST_EQ(h.size(), 1200);
     auto h2 = make_histogram<array_storage<unsigned>>(
         Type(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
         axis::circular<>{3}, axis::variable<>{-1, 0, 1},
@@ -209,13 +208,13 @@ void run_tests() {
     auto c =
         make_histogram<adaptive_storage>(Type(), axis::category<>({A, B}));
     BOOST_TEST_EQ(c.axis().size(), 2);
-    BOOST_TEST_EQ(c.axis().shape(), 2);
+    BOOST_TEST_EQ(c.axis().shape(), 3);
     BOOST_TEST_EQ(c.axis().index(A), 0);
     BOOST_TEST_EQ(c.axis().index(B), 1);
     c.axis().label("foo");
     BOOST_TEST_EQ(c.axis().label(), "foo");
-    // need to cast here for this to work with Type == dynamic_tag
-    auto ca = axis::cast<axis::category<>>(c.axis());
+    // need to cast here for this to work with Type == dynamic_tag, too
+    auto ca = static_cast<const axis::category<>&>(c.axis());
     BOOST_TEST_EQ(ca[0].value(), A);
   }
 
@@ -294,8 +293,8 @@ void run_tests() {
 
     BOOST_TEST_EQ(h.dim(), 1);
     BOOST_TEST_EQ(h.axis(0_c).size(), 2);
-    BOOST_TEST_EQ(h.axis(0_c).shape(), 2);
-    BOOST_TEST_EQ(sum(h), 2);
+    BOOST_TEST_EQ(h.axis(0_c).shape(), 3);
+    BOOST_TEST_EQ(sum(h), 4);
 
     BOOST_TEST_EQ(h.at(0), 1);
     BOOST_TEST_EQ(h.at(1), 1);
@@ -548,7 +547,7 @@ void run_tests() {
     BOOST_TEST_EQ(r, s);
   }
 
-#ifdef HAVE_SERIALIZATION
+#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
   // histogram_serialization
   {
     enum { A, B, C };
@@ -556,9 +555,11 @@ void run_tests() {
         Type(), axis::regular<>(3, -1, 1, "r"),
         axis::circular<>(4, 0.0, 1.0, "p"),
         axis::regular<double, axis::transform::log>(3, 1, 100, "lr"),
+        axis::regular<double, axis::transform::pow>(3, 1, 100, "pr",
+                                                    axis::uoflow::on, 0.5),
         axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "v"),
         axis::category<>{A, B, C}, axis::integer<>(0, 2, "i"));
-    a(0.5, 20, 0.1, 0.25, 1, 0);
+    a(0.5, 0.2, 20, 20, 0.25, 1, 1);
     std::string buf;
     {
       std::ostringstream os;
@@ -897,7 +898,6 @@ void run_tests() {
 
 template <typename T1, typename T2>
 void run_mixed_tests() {
-
   // compare
   {
     auto a = make_histogram<adaptive_storage>(T1{}, axis::regular<>{3, 0, 3},
@@ -942,7 +942,6 @@ void run_mixed_tests() {
 }
 
 int main() {
-
   // common interface
   run_tests<static_tag>();
   run_tests<dynamic_tag>();

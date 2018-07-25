@@ -58,63 +58,63 @@ void adaptive_storage::serialize(Archive& ar, unsigned /* version */) {
   auto size = this->size();
   ar& size;
   if (Archive::is_loading::value) {
-    auto tid = 0u;
-    ar& tid;
-    if (tid == 0u) {
+    auto type_id = 0u;
+    ar& type_id;
+    if (type_id == 0u) {
       buffer_ = detail::array<void>(size);
-    } else if (tid == 1u) {
+    } else if (type_id == 1u) {
       detail::array<uint8_t> a(size);
       ar& serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 2u) {
+    } else if (type_id == 2u) {
       detail::array<uint16_t> a(size);
       ar& serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 3u) {
+    } else if (type_id == 3u) {
       detail::array<uint32_t> a(size);
       ar& serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 4u) {
+    } else if (type_id == 4u) {
       detail::array<uint64_t> a(size);
       ar& serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 5u) {
+    } else if (type_id == 5u) {
       detail::array<detail::mp_int> a(size);
       ar& serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
-    } else if (tid == 6u) {
+    } else if (type_id == 6u) {
       detail::array<detail::wcount> a(size);
       ar& serialization::make_array(a.begin(), size);
       buffer_ = std::move(a);
     }
   } else {
-    auto tid = 0u;
+    auto type_id = 0u;
     if (get<detail::array<void>>(&buffer_)) {
-      tid = 0u;
-      ar& tid;
+      type_id = 0u;
+      ar& type_id;
     } else if (auto* a = get<detail::array<uint8_t>>(&buffer_)) {
-      tid = 1u;
-      ar& tid;
+      type_id = 1u;
+      ar& type_id;
       ar& serialization::make_array(a->begin(), size);
     } else if (auto* a = get<detail::array<uint16_t>>(&buffer_)) {
-      tid = 2u;
-      ar& tid;
+      type_id = 2u;
+      ar& type_id;
       ar& serialization::make_array(a->begin(), size);
     } else if (auto* a = get<detail::array<uint32_t>>(&buffer_)) {
-      tid = 3u;
-      ar& tid;
+      type_id = 3u;
+      ar& type_id;
       ar& serialization::make_array(a->begin(), size);
     } else if (auto* a = get<detail::array<uint64_t>>(&buffer_)) {
-      tid = 4u;
-      ar& tid;
+      type_id = 4u;
+      ar& type_id;
       ar& serialization::make_array(a->begin(), size);
     } else if (auto* a = get<detail::array<detail::mp_int>>(&buffer_)) {
-      tid = 5u;
-      ar& tid;
+      type_id = 5u;
+      ar& type_id;
       ar& serialization::make_array(a->begin(), size);
     } else if (auto* a = get<detail::array<detail::wcount>>(&buffer_)) {
-      tid = 6u;
-      ar& tid;
+      type_id = 6u;
+      ar& type_id;
       ar& serialization::make_array(a->begin(), size);
     }
   }
@@ -122,19 +122,11 @@ void adaptive_storage::serialize(Archive& ar, unsigned /* version */) {
 
 namespace axis {
 
-template <typename Derived>
 template <class Archive>
-void axis_base<Derived>::serialize(Archive& ar, unsigned /* version */) {
+void base::serialize(Archive& ar, unsigned /* version */) {
   ar& size_;
-  ar& label_;
-}
-
-template <typename Derived>
-template <class Archive>
-void axis_base_uoflow<Derived>::serialize(Archive& ar,
-                                          unsigned /* version */) {
-  ar& boost::serialization::base_object<axis_base<Derived>>(*this);
   ar& shape_;
+  ar& label_;
 }
 
 namespace transform {
@@ -148,7 +140,7 @@ template <typename RealType, typename Transform>
 template <class Archive>
 void regular<RealType, Transform>::serialize(Archive& ar,
                                              unsigned /* version */) {
-  ar& boost::serialization::base_object<base_type>(*this);
+  ar& boost::serialization::base_object<base>(*this);
   ar& boost::serialization::base_object<Transform>(*this);
   ar& min_;
   ar& delta_;
@@ -157,7 +149,7 @@ void regular<RealType, Transform>::serialize(Archive& ar,
 template <typename RealType>
 template <class Archive>
 void circular<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base_type>(*this);
+  ar& boost::serialization::base_object<base>(*this);
   ar& phase_;
   ar& perimeter_;
 }
@@ -165,31 +157,31 @@ void circular<RealType>::serialize(Archive& ar, unsigned /* version */) {
 template <typename RealType>
 template <class Archive>
 void variable<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base_type>(*this);
+  ar& boost::serialization::base_object<base>(*this);
   if (Archive::is_loading::value) {
-    x_.reset(new RealType[base_type::size() + 1]);
+    x_.reset(new RealType[base::size() + 1]);
   }
-  ar& boost::serialization::make_array(x_.get(), base_type::size() + 1);
+  ar& boost::serialization::make_array(x_.get(), base::size() + 1);
 }
 
 template <typename IntType>
 template <class Archive>
 void integer<IntType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base_type>(*this);
+  ar& boost::serialization::base_object<base>(*this);
   ar& min_;
 }
 
 template <typename T>
 template <class Archive>
 void category<T>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base_type>(*this);
+  ar& boost::serialization::base_object<base>(*this);
   ar& map_;
 }
 
 template <typename... Ts>
 template <class Archive>
 void any<Ts...>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base_type>(*this);
+  ar& boost::serialization::base_object<boost::variant<Ts...>>(*this);
 }
 
 } // namespace axis
