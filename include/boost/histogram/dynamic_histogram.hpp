@@ -140,14 +140,12 @@ public:
     return *this;
   }
 
-  template <typename T>
-  histogram& operator*=(const T& rhs) {
+  histogram& operator*=(const double rhs) {
     storage_ *= rhs;
     return *this;
   }
 
-  template <typename T>
-  histogram& operator/=(const T& rhs) {
+  histogram& operator/=(const double rhs) {
     storage_ *= 1.0 / rhs;
     return *this;
   }

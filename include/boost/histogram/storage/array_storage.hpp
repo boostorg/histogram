@@ -97,8 +97,7 @@ public:
     return *this;
   }
 
-  template <typename U>
-  array_storage& operator*=(const U& x) noexcept {
+  array_storage& operator*=(const double x) noexcept {
     for (std::size_t i = 0; i < size_; ++i) array_[i] *= x;
     return *this;
   }
