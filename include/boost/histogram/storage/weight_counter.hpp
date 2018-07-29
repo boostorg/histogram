@@ -7,7 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_STORAGE_WEIGHT_COUNTER_HPP_
 #define _BOOST_HISTOGRAM_STORAGE_WEIGHT_COUNTER_HPP_
 
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/weight.hpp>
 #include <stdexcept>
 
 namespace boost {

@@ -7,13 +7,16 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
+#include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
+#include <memory>
 #include <string>
 #include <type_traits>
 
 namespace boost {
 namespace histogram {
 
+template <typename Alloc = std::allocator<char>>
 class adaptive_storage;
 template <typename T>
 class array_storage;
@@ -55,40 +58,14 @@ using any_std = mp11::mp_rename<types, any>;
 
 struct dynamic_tag {};
 struct static_tag {};
-template <class Type, class Axes, class Storage = adaptive_storage>
+template <class Type, class Axes, class Storage = adaptive_storage<>>
 class histogram;
 
-template <class Axes = axis::types, class Storage = adaptive_storage>
+template <class Axes = axis::types, class Storage = adaptive_storage<>>
 using dynamic_histogram = histogram<dynamic_tag, Axes, Storage>;
 
-template <class Axes, class Storage = adaptive_storage>
+template <class Axes, class Storage = adaptive_storage<>>
 using static_histogram = histogram<static_tag, Axes, Storage>;
-
-namespace detail {
-template <typename T>
-struct weight {
-  T value;
-};
-// template <typename T> struct is_weight : std::false_type {};
-// template <typename T> struct is_weight<weight_t<T>> : std::true_type {};
-
-template <typename T>
-struct sample {
-  T value;
-};
-// template <typename T> struct is_sample : std::false_type {};
-// template <typename T> struct is_sample<sample_t<T>> : std::true_type {};
-} // namespace detail
-
-template <typename T>
-detail::weight<T> weight(T&& t) {
-  return {t};
-}
-
-template <typename T>
-detail::sample<T> sample(T&& t) {
-  return {t};
-}
 
 } // namespace histogram
 } // namespace boost
