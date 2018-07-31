@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_STORAGE_ARRAY_HPP_
 
 #include <algorithm>
+#include <boost/histogram/meta.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <cstddef>
 #include <memory>
