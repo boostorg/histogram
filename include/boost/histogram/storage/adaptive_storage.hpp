@@ -114,27 +114,27 @@ bool safe_radd(T& t, const U& u) {
 template <typename F, typename A, typename... Ts>
 typename std::result_of<F(void*, A&&, Ts&&...)>::type apply(F&& f, A&& a,
                                                             Ts&&... ts) {
-  switch (a.type) {
-    case 1:
-      return f(reinterpret_cast<uint8_t*>(a.ptr), std::forward<A>(a),
-               std::forward<Ts>(ts)...);
-    case 2:
-      return f(reinterpret_cast<uint16_t*>(a.ptr), std::forward<A>(a),
-               std::forward<Ts>(ts)...);
-    case 3:
-      return f(reinterpret_cast<uint32_t*>(a.ptr), std::forward<A>(a),
-               std::forward<Ts>(ts)...);
-    case 4:
-      return f(reinterpret_cast<uint64_t*>(a.ptr), std::forward<A>(a),
-               std::forward<Ts>(ts)...);
-    case 5:
-      return f(reinterpret_cast<mp_int*>(a.ptr), std::forward<A>(a),
-               std::forward<Ts>(ts)...);
-    case 6:
-      return f(reinterpret_cast<wcount*>(a.ptr), std::forward<A>(a),
-               std::forward<Ts>(ts)...);
-  }
-  // case 0
+  // this is intentionally not a switch, the if-chain is faster in benchmarks
+  if (a.type == 1)
+    return f(reinterpret_cast<uint8_t*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 2)
+    return f(reinterpret_cast<uint16_t*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 3)
+    return f(reinterpret_cast<uint32_t*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 4)
+    return f(reinterpret_cast<uint64_t*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 5)
+    return f(reinterpret_cast<mp_int*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 6)
+    return f(reinterpret_cast<wcount*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  // a.type == 0 is intentionally the last in the chain, because it is rarely
+  // triggered
   return f(a.ptr, std::forward<A>(a), std::forward<Ts>(ts)...);
 }
 
