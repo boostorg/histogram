@@ -9,8 +9,10 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/config.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/cstdint.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/histogram/weight.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
@@ -99,8 +101,9 @@ bool safe_assign(T& t, const U& u) {
 template <typename T, typename U>
 bool safe_radd(T& t, const U& u) {
   BOOST_ASSERT(u >= 0);
+  // static_cast converts back from signed to unsigned integer
   if (static_cast<T>(std::numeric_limits<T>::max() - t) < u) return false;
-  t += u;
+  t += static_cast<T>(u); // static_cast to suppress conversion warning
   return true;
 }
 

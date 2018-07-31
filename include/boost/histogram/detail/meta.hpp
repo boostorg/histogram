@@ -156,7 +156,6 @@ selection<T, Ns...> make_sub_tuple(const T& t) {
   mp11::mp_for_each<N3>(sub_tuple_assign_impl<T, U>{t, u});
   return u;
 }
-
 } // namespace detail
 } // namespace histogram
 } // namespace boost

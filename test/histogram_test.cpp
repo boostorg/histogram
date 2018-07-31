@@ -956,41 +956,12 @@ void run_mixed_tests() {
 }
 
 int main() {
-  {
-    auto a =
-        make_dynamic_histogram(axis::integer<>(0, 3, "", axis::uoflow::off),
-                               axis::integer<>(0, 2, "", axis::uoflow::off));
-    a(0, 0);
-    double x = 1;
-    for (int i = 0; i < 80; ++i) {
-      a += a;
-      x += x;
-    }
-    a(1, 0);
-    for (int i = 0; i < 2; ++i) a(2, 0);
-    for (int i = 0; i < 3; ++i) a(0, 1);
-    for (int i = 0; i < 4; ++i) a(1, 1);
-    for (int i = 0; i < 5; ++i) a(2, 1);
-
-    BOOST_TEST_EQ(a.at(0, 0), x);
-    BOOST_TEST_EQ(a.at(1, 0), 1);
-    BOOST_TEST_EQ(a.at(2, 0), 2);
-    BOOST_TEST_EQ(a.at(0, 1), 3);
-    BOOST_TEST_EQ(a.at(1, 1), 4);
-    BOOST_TEST_EQ(a.at(2, 1), 5);
-    std::cout << a.at(0, 0) << std::endl;
-    std::cout << a.at(1, 0) << std::endl;
-    std::cout << a.at(2, 0) << std::endl;
-    std::cout << a.at(0, 1) << std::endl;
-    std::cout << a.at(1, 1) << std::endl;
-    std::cout << a.at(2, 1) << std::endl;
-  }
-
-  // common interface
   run_tests<static_tag>();
   run_tests<dynamic_tag>();
+  run_mixed_tests<static_tag, dynamic_tag>();
+  run_mixed_tests<dynamic_tag, static_tag>();
 
-  // special stuff that only works with dynamic_tag
+  // below: special stuff that only works with dynamic_tag
 
   // init
   {
@@ -1079,9 +1050,6 @@ int main() {
     ++it;
     BOOST_TEST(it == h.end());
   }
-
-  run_mixed_tests<static_tag, dynamic_tag>();
-  run_mixed_tests<dynamic_tag, static_tag>();
 
   return boost::report_errors();
 }
