@@ -40,13 +40,6 @@ class access;
 }
 } // namespace boost
 
-// forward declaration for python
-namespace boost {
-namespace python {
-class access;
-}
-} // namespace boost
-
 namespace boost {
 namespace histogram {
 
@@ -467,7 +460,7 @@ private:
   friend class histogram;
   template <typename H>
   friend class iterator_over;
-  friend class ::boost::python::access;
+  friend class python_access;
   friend class ::boost::serialization::access;
   template <typename Archive>
   void serialize(Archive&, unsigned);

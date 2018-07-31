@@ -524,7 +524,7 @@ private:
   Alloc alloc_;
   buffer_type buffer_;
 
-  friend class ::boost::python::access;
+  friend class python_access;
   friend class ::boost::serialization::access;
   template <class Archive>
   void serialize(Archive&, unsigned);
