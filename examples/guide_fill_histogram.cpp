@@ -7,7 +7,7 @@
 namespace bh = boost::histogram;
 
 int main() {
-  auto h = bh::make_static_histogram(bh::axis::integer<>(0, 4),
+  auto h = bh::make_static_histogram(bh::axis::regular<>(8, 0, 4),
                                      bh::axis::regular<>(10, 0, 5));
 
   // fill histogram, number of arguments must be equal to number of axes
@@ -29,9 +29,9 @@ int main() {
   // histograms is ok, though, because of return-value-optimization
   auto h2 =
       std::for_each(input_data.begin(), input_data.end(),
-                    bh::make_static_histogram(bh::axis::integer<>(0, 4),
+                    bh::make_static_histogram(bh::axis::regular<>(8, 0, 4),
                                               bh::axis::regular<>(10, 0, 5)));
-  // h is filled
+  // h2 is filled
 }
 
 //]

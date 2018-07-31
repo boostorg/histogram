@@ -344,7 +344,7 @@ private:
     const auto a_shape = std::get<D>(axes_).shape();
     const int j = std::get<D>(axes_).index(t);
     detail::lin(idx, stride, a_size, a_shape, j);
-    xlin<D + 1>(idx, stride, std::forward<Ts>(ts)...);
+    xlin<(D + 1)>(idx, stride, std::forward<Ts>(ts)...);
   }
 
   template <typename Iterator>
@@ -359,7 +359,7 @@ private:
     const auto a_shape = std::get<D>(axes_).shape();
     const int j = std::get<D>(axes_).index(*iter);
     detail::lin(idx, stride, a_size, a_shape, j);
-    xlin_iter(mp11::mp_size_t<N - 1>(), idx, stride, ++iter);
+    xlin_iter(mp11::mp_size_t<(N - 1)>(), idx, stride, ++iter);
   }
 
   template <unsigned D>
