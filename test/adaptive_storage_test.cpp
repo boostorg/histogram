@@ -16,19 +16,62 @@
 #include <limits>
 #include <sstream>
 
-using namespace boost::histogram;
+#ifdef BOOST_HISTOGAM_TRACE_ALLOCS
+#include <boost/core/typeinfo.hpp>
+#include <iostream>
 
-template <typename T>
-adaptive_storage prepare(std::size_t n) {
-  auto a = detail::array<T>(n);
-  return adaptive_storage(a);
-}
+template <class T>
+struct tracing_allocator {
+  using value_type = T;
+  tracing_allocator() noexcept {}
+  template <class U>
+  tracing_allocator(const tracing_allocator<U>&) noexcept {}
+  T* allocate(std::size_t n) {
+    T* p = new T[n];
+    boost::core::typeinfo const& ti = BOOST_CORE_TYPEID(T);
+    std::cerr << "ALLOC @ " << (void*)p << " "
+              << boost::core::demangled_name(ti) << "[" << n << "]"
+              << std::endl;
+    return p;
+  }
+  void deallocate(T* p, std::size_t n) {
+    boost::core::typeinfo const& ti = BOOST_CORE_TYPEID(T);
+    std::cerr << "DEALLOC @ " << (void*)p << " "
+              << boost::core::demangled_name(ti) << "[" << n << "]"
+              << std::endl;
+    delete[] p;
+  }
+};
+
+template <class T, class U>
+constexpr bool operator==(const tracing_allocator<T>&,
+                          const tracing_allocator<U>&) noexcept;
+
+template <class T, class U>
+constexpr bool operator!=(const tracing_allocator<T>&,
+                          const tracing_allocator<U>&) noexcept;
+
+using adaptive_storage =
+    boost::histogram::adaptive_storage<tracing_allocator<char>>;
+#else
+using adaptive_storage = boost::histogram::adaptive_storage<>;
+#endif
+
+using boost::histogram::array_storage;
+using boost::histogram::weight;
+namespace detail = boost::histogram::detail;
 
 template <typename T>
 adaptive_storage prepare(std::size_t n, const T x) {
-  auto a = detail::array<T>(n);
-  a[0] = x;
-  return adaptive_storage(a);
+  std::unique_ptr<T[]> v(new T[n]);
+  std::fill(v.get(), v.get() + n, static_cast<T>(0));
+  v.get()[0] = x;
+  return adaptive_storage(n, v.get());
+}
+
+template <typename T>
+adaptive_storage prepare(std::size_t n) {
+  return adaptive_storage(n, static_cast<T*>(nullptr));
 }
 
 template <typename T>

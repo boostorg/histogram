@@ -40,13 +40,6 @@ class access;
 }
 } // namespace boost
 
-// forward declaration for python
-namespace boost {
-namespace python {
-class access;
-}
-} // namespace boost
-
 namespace boost {
 namespace histogram {
 
@@ -140,14 +133,12 @@ public:
     return *this;
   }
 
-  template <typename T>
-  histogram& operator*=(const T& rhs) {
+  histogram& operator*=(const double rhs) {
     storage_ *= rhs;
     return *this;
   }
 
-  template <typename T>
-  histogram& operator/=(const T& rhs) {
+  histogram& operator/=(const double rhs) {
     storage_ *= 1.0 / rhs;
     return *this;
   }
@@ -469,7 +460,7 @@ private:
   friend class histogram;
   template <typename H>
   friend class iterator_over;
-  friend class ::boost::python::access;
+  friend class python_access;
   friend class ::boost::serialization::access;
   template <typename Archive>
   void serialize(Archive&, unsigned);

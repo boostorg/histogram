@@ -29,14 +29,28 @@ namespace histogram {
 
 namespace detail {
 template <typename Archive>
-struct serialize_helper {
+struct serialize_t {
   Archive& ar_;
-  explicit serialize_helper(Archive& ar) : ar_(ar) {}
+  explicit serialize_t(Archive& ar) : ar_(ar) {}
   template <typename T>
   void operator()(T& t) const {
     ar_& t;
   }
 };
+
+struct serializer {
+  template <typename T, typename Buffer, typename Alloc, typename Archive>
+  void operator()(T*, Buffer& b, Alloc& a, Archive& ar) {
+    if (Archive::is_loading::value) { create(type_tag<T>(), b, a); }
+    ar& boost::serialization::make_array(reinterpret_cast<T*>(b.ptr), b.size);
+  }
+
+  template <typename Buffer, typename Alloc, typename Archive>
+  void operator()(void*, Buffer& b, Alloc&, Archive&) {
+    if (Archive::is_loading::value) { b.ptr = nullptr; }
+  }
+};
+
 } // namespace detail
 
 template <typename RealType>
@@ -53,71 +67,15 @@ void serialize(Archive& ar, array_storage<Container>& store,
   ar& store.array_;
 }
 
+template <typename Alloc>
 template <class Archive>
-void adaptive_storage::serialize(Archive& ar, unsigned /* version */) {
-  auto size = this->size();
-  ar& size;
+void adaptive_storage<Alloc>::serialize(Archive& ar, unsigned /* version */) {
   if (Archive::is_loading::value) {
-    auto type_id = 0u;
-    ar& type_id;
-    if (type_id == 0u) {
-      buffer_ = detail::array<void>(size);
-    } else if (type_id == 1u) {
-      detail::array<uint8_t> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 2u) {
-      detail::array<uint16_t> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 3u) {
-      detail::array<uint32_t> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 4u) {
-      detail::array<uint64_t> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 5u) {
-      detail::array<detail::mp_int> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 6u) {
-      detail::array<detail::wcount> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    }
-  } else {
-    auto type_id = 0u;
-    if (get<detail::array<void>>(&buffer_)) {
-      type_id = 0u;
-      ar& type_id;
-    } else if (auto* a = get<detail::array<uint8_t>>(&buffer_)) {
-      type_id = 1u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<uint16_t>>(&buffer_)) {
-      type_id = 2u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<uint32_t>>(&buffer_)) {
-      type_id = 3u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<uint64_t>>(&buffer_)) {
-      type_id = 4u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<detail::mp_int>>(&buffer_)) {
-      type_id = 5u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<detail::wcount>>(&buffer_)) {
-      type_id = 6u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    }
+    detail::apply(detail::destroyer(), buffer_, alloc_);
   }
+  ar& buffer_.type;
+  ar& buffer_.size;
+  detail::apply(detail::serializer(), buffer_, alloc_, ar);
 }
 
 namespace axis {
@@ -190,7 +148,7 @@ template <class A, class S>
 template <class Archive>
 void histogram<static_tag, A, S>::serialize(Archive& ar,
                                             unsigned /* version */) {
-  detail::serialize_helper<Archive> sh(ar);
+  detail::serialize_t<Archive> sh(ar);
   mp11::tuple_for_each(axes_, sh);
   ar& storage_;
 }

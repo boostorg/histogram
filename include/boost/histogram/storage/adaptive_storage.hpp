@@ -8,29 +8,20 @@
 #define _BOOST_HISTOGRAM_STORAGE_ADAPTIVE_HPP_
 
 #include <algorithm>
+#include <boost/assert.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/histogram/weight.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
-#include <boost/variant.hpp>
+#include <iostream>
 #include <limits>
 #include <memory>
 #include <type_traits>
-#ifdef BOOST_HISTOGRAM_TRACE_ALLOCS
-#include <boost/core/typeinfo.hpp>
-#include <iostream>
-#endif
 
 // forward declaration for serialization
 namespace boost {
 namespace serialization {
-class access;
-}
-} // namespace boost
-
-// forward declaration for python
-namespace boost {
-namespace python {
 class access;
 }
 } // namespace boost
@@ -44,120 +35,56 @@ using mp_int = ::boost::multiprecision::cpp_int;
 using wcount = ::boost::histogram::weight_counter<double>;
 
 template <typename T>
-T* alloc(std::size_t s) {
-#ifdef BOOST_HISTOGRAM_TRACE_ALLOCS
-  boost::core::typeinfo const& ti = BOOST_CORE_TYPEID(T);
-  std::cerr << "alloc " << boost::core::demangled_name(ti) << "[" << s << "]"
-            << std::endl;
-#endif
-  return new T[s];
+struct type_tag {};
+template <>
+struct type_tag<void> {
+  static constexpr char value = 0;
+  using next = uint8_t;
+};
+template <>
+struct type_tag<uint8_t> {
+  static constexpr char value = 1;
+  using next = uint16_t;
+};
+template <>
+struct type_tag<uint16_t> {
+  static constexpr char value = 2;
+  using next = uint32_t;
+};
+template <>
+struct type_tag<uint32_t> {
+  static constexpr char value = 3;
+  using next = uint64_t;
+};
+template <>
+struct type_tag<uint64_t> {
+  static constexpr char value = 4;
+  using next = mp_int;
+};
+template <>
+struct type_tag<mp_int> {
+  static constexpr char value = 5;
+};
+template <>
+struct type_tag<wcount> {
+  static constexpr char value = 6;
+};
+
+template <typename T>
+using next_type = typename type_tag<T>::next;
+
+template <typename T>
+constexpr char type_index() {
+  return type_tag<T>::value;
 }
-
-class array_base {
-public:
-  explicit array_base(const std::size_t s) : size(s) {}
-  array_base() = default;
-  array_base(const array_base&) = default;
-  array_base& operator=(const array_base&) = default;
-  array_base(array_base&& rhs) : size(rhs.size) { rhs.size = 0; }
-  array_base& operator=(array_base&& rhs) {
-    if (this != &rhs) {
-      size = rhs.size;
-      rhs.size = 0;
-    }
-    return *this;
-  }
-  std::size_t size = 0;
-};
-
-template <typename T>
-class array : public array_base {
-public:
-  explicit array(const std::size_t s) : array_base(s), ptr(alloc<T>(s)) {
-    std::fill(begin(), end(), T(0));
-  }
-  array() = default;
-  array(const array& rhs) : array_base(rhs), ptr(alloc<T>(rhs.size)) {
-    std::copy(rhs.begin(), rhs.end(), begin());
-  }
-  array& operator=(const array& rhs) {
-    if (this != &rhs) {
-      if (size != rhs.size) {
-        size = rhs.size;
-        ptr.reset(alloc<T>(size));
-      }
-      std::copy(rhs.begin(), rhs.end(), begin());
-    }
-    return *this;
-  }
-  array(array&& rhs) : array_base(std::move(rhs)), ptr(std::move(rhs.ptr)) {
-    rhs.size = 0;
-  }
-  array& operator=(array&& rhs) {
-    if (this != &rhs) {
-      size = rhs.size;
-      ptr = std::move(rhs.ptr);
-      rhs.size = 0;
-    }
-    return *this;
-  }
-
-  // copy only up to nmax elements
-  template <typename U>
-  array(const array<U>& rhs,
-        std::size_t nmax = std::numeric_limits<std::size_t>::max())
-      : array_base(rhs), ptr(alloc<T>(rhs.size)) {
-    std::copy(rhs.begin(), rhs.begin() + std::min(nmax, size), begin());
-  }
-
-  T& operator[](const std::size_t i) { return ptr[i]; }
-  const T& operator[](const std::size_t i) const { return ptr[i]; }
-
-  T* begin() { return ptr.get(); }
-  T* end() { return ptr.get() + size; }
-  const T* begin() const { return ptr.get(); }
-  const T* end() const { return ptr.get() + size; }
-
-private:
-  std::unique_ptr<T[]> ptr;
-};
-
-template <>
-class array<void> : public array_base {
-public:
-  using array_base::array_base;
-};
-
-using any_array =
-    variant<array<void>, array<uint8_t>, array<uint16_t>, array<uint32_t>,
-            array<uint64_t>, array<mp_int>, array<wcount>>;
-
-template <typename T>
-struct next_type;
-template <>
-struct next_type<uint8_t> {
-  using type = uint16_t;
-};
-template <>
-struct next_type<uint16_t> {
-  using type = uint32_t;
-};
-template <>
-struct next_type<uint32_t> {
-  using type = uint64_t;
-};
-template <>
-struct next_type<uint64_t> {
-  using type = mp_int;
-};
-template <typename T>
-using next = typename next_type<T>::type;
 
 template <typename T>
 bool safe_increase(T& t) {
-  if (t == std::numeric_limits<T>::max()) return false;
-  ++t;
-  return true;
+  if (t < std::numeric_limits<T>::max()) {
+    ++t;
+    return true;
+  }
+  return false;
 }
 
 template <typename T, typename U>
@@ -171,359 +98,426 @@ bool safe_assign(T& t, const U& u) {
 
 template <typename T, typename U>
 bool safe_radd(T& t, const U& u) {
+  BOOST_ASSERT(u >= 0);
   if (static_cast<T>(std::numeric_limits<T>::max() - t) < u) return false;
-  t += static_cast<T>(u);
-  return true;
-}
-
-// float rounding is a mess, the equal sign is necessary here
-template <typename T>
-bool safe_radd(T& t, const double u) {
-  if ((std::numeric_limits<T>::max() - t) <= u) return false;
   t += u;
   return true;
 }
 
-struct size_visitor : public static_visitor<std::size_t> {
-  template <typename Array>
-  std::size_t operator()(const Array& b) const {
-    return b.size;
+template <typename F, typename A, typename... Ts>
+typename std::result_of<F(void*, A&&, Ts&&...)>::type apply(F&& f, A&& a,
+                                                            Ts&&... ts) {
+  // this is intentionally not a switch, the if-chain is faster in benchmarks
+  if (a.type == 1)
+    return f(reinterpret_cast<uint8_t*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 2)
+    return f(reinterpret_cast<uint16_t*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 3)
+    return f(reinterpret_cast<uint32_t*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 4)
+    return f(reinterpret_cast<uint64_t*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 5)
+    return f(reinterpret_cast<mp_int*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  if (a.type == 6)
+    return f(reinterpret_cast<wcount*>(a.ptr), std::forward<A>(a),
+             std::forward<Ts>(ts)...);
+  // a.type == 0 is intentionally the last in the chain, because it is rarely
+  // triggered
+  return f(a.ptr, std::forward<A>(a), std::forward<Ts>(ts)...);
+}
+
+template <typename T, typename Buffer, typename Alloc, typename U = T>
+void create(type_tag<T>, Buffer& b, Alloc& a, const U* init = nullptr) {
+  using alloc_type =
+      typename std::allocator_traits<Alloc>::template rebind_alloc<T>;
+  alloc_type alloc(a); // rebind allocator
+  T* p = std::allocator_traits<alloc_type>::allocate(alloc, b.size);
+  if (init) {
+    for (std::size_t i = 0; i < b.size; ++i)
+      std::allocator_traits<alloc_type>::construct(alloc, p + i, init[i]);
+  } else {
+    for (std::size_t i = 0; i < b.size; ++i)
+      std::allocator_traits<alloc_type>::construct(alloc, p + i, 0);
   }
+  b.type = type_index<T>();
+  b.ptr = p;
+}
+
+template <typename Buffer, typename Alloc, typename U = void>
+void create(type_tag<void>, Buffer& b, Alloc&, const U* init = nullptr) {
+  boost::ignore_unused(init);
+  BOOST_ASSERT(!init);
+  b.ptr = nullptr;
+  b.type = type_index<void>();
+}
+
+struct destroyer {
+  template <typename T, typename Buffer, typename Alloc>
+  void operator()(T* tp, Buffer& b, Alloc& a) {
+    using alloc_type =
+        typename std::allocator_traits<Alloc>::template rebind_alloc<T>;
+    alloc_type alloc(a); // rebind allocator
+    for (std::size_t i = 0; i < b.size; ++i)
+      std::allocator_traits<alloc_type>::destroy(alloc, tp + i);
+    std::allocator_traits<alloc_type>::deallocate(alloc, tp, b.size);
+  }
+
+  template <typename Buffer, typename Alloc>
+  void operator()(void*, Buffer&, Alloc&) {}
 };
 
-template <typename RHS>
-struct assign_visitor : public static_visitor<void> {
-  any_array& lhs_any;
-  const std::size_t idx;
-  const RHS& rhs;
-  assign_visitor(any_array& a, const std::size_t i, const RHS& x)
-      : lhs_any(a), idx(i), rhs(x) {}
-
-  template <typename T>
-  void operator()(array<T>& lhs) const {
-    if (!safe_assign(lhs[idx], rhs)) {
-      lhs_any = array<next<T>>(lhs, idx);
-      operator()(get<array<next<T>>>(lhs_any));
+struct replacer {
+  template <typename T, typename OBuffer, typename Buffer, typename Alloc>
+  void operator()(T* optr, const OBuffer& ob, Buffer& b, Alloc& a) {
+    if (b.size == ob.size && b.type == ob.type) {
+      std::copy(optr, optr + ob.size, reinterpret_cast<T*>(b.ptr));
+    } else {
+      apply(destroyer(), b, a);
+      b.size = ob.size;
+      create(type_tag<T>(), b, a, optr);
     }
   }
 
-  void operator()(array<void>& lhs) const {
-    lhs_any = array<uint8_t>(lhs.size);
-    operator()(get<array<uint8_t>>(lhs_any));
+  template <typename OBuffer, typename Buffer, typename Alloc>
+  void operator()(void*, const OBuffer& ob, Buffer& b, Alloc& a) {
+    apply(destroyer(), b, a);
+    b.type = 0;
+    b.size = ob.size;
   }
-
-  void operator()(array<mp_int>& lhs) const { lhs[idx].assign(rhs); }
-
-  void operator()(array<wcount>& lhs) const { lhs[idx] = rhs; }
 };
 
-struct increase_visitor : public static_visitor<void> {
-  any_array& lhs_any;
-  const std::size_t idx;
-  increase_visitor(any_array& a, const std::size_t i) : lhs_any(a), idx(i) {}
-
-  template <typename T>
-  void operator()(array<T>& lhs) const {
-    if (!safe_increase(lhs[idx])) {
-      array<next<T>> a = lhs;
-      ++a[idx];
-      lhs_any = std::move(a);
+struct increaser {
+  template <typename T, typename Buffer, typename Alloc>
+  void operator()(T* tp, Buffer& b, Alloc& a, std::size_t i) {
+    if (!safe_increase(tp[i])) {
+      using U = next_type<T>;
+      create(type_tag<U>(), b, a, tp);
+      destroyer()(tp, b, a);
+      ++reinterpret_cast<U*>(b.ptr)[i];
     }
   }
 
-  void operator()(array<void>& lhs) const {
-    array<uint8_t> a(lhs.size);
-    ++a[idx];
-    lhs_any = std::move(a);
+  template <typename Buffer, typename Alloc>
+  void operator()(void*, Buffer& b, Alloc& a, std::size_t i) {
+    using U = next_type<void>;
+    create(type_tag<U>(), b, a);
+    ++reinterpret_cast<U*>(b.ptr)[i];
   }
 
-  void operator()(array<mp_int>& lhs) const { ++lhs[idx]; }
-
-  void operator()(array<wcount>& lhs) const { ++lhs[idx]; }
-};
-
-struct bin_visitor : public static_visitor<wcount> {
-  const std::size_t idx;
-  bin_visitor(const std::size_t i) : idx(i) {}
-
-  template <typename Array>
-  wcount operator()(const Array& b) const {
-    return wcount(static_cast<double>(b[idx]));
+  template <typename Buffer, typename Alloc>
+  void operator()(mp_int* tp, Buffer&, Alloc&, std::size_t i) {
+    ++tp[i];
   }
 
-  wcount operator()(const array<void>& /*b*/) const { return wcount(0.0); }
-
-  wcount operator()(const array<wcount>& b) const { return b[idx]; }
+  template <typename Buffer, typename Alloc>
+  void operator()(wcount* tp, Buffer&, Alloc&, std::size_t i) {
+    ++tp[i];
+  }
 };
 
-template <typename RHS>
-struct radd_visitor : public static_visitor<void> {
-  any_array& lhs_any;
-  const std::size_t idx;
-  const RHS& rhs;
-  radd_visitor(any_array& l, const std::size_t i, const RHS& r)
-      : lhs_any(l), idx(i), rhs(r) {}
+struct adder {
+  template <typename U>
+  using is_convertible_to_mp_int =
+      typename std::is_convertible<U, mp_int>::type;
 
-  template <typename T>
-  void operator()(array<T>& lhs) const {
-    if (!safe_radd(lhs[idx], rhs)) {
-      lhs_any = array<next<T>>(lhs);
-      operator()(get<array<next<T>>>(lhs_any));
+  template <typename U>
+  using is_integral = typename std::is_integral<U>::type;
+
+  template <typename T, typename Buffer, typename Alloc, typename U>
+  void if_integral(std::true_type, T* tp, Buffer& b, Alloc& a, std::size_t i,
+                   const U& x) {
+    if (!safe_radd(tp[i], x)) {
+      using V = next_type<T>;
+      create(type_tag<V>(), b, a, tp);
+      destroyer()(tp, b, a);
+      operator()(reinterpret_cast<V*>(b.ptr), b, a, i, x);
     }
   }
 
-  void operator()(array<void>& lhs) const {
-    if (rhs != 0) {
-      lhs_any = array<uint8_t>(lhs.size);
-      operator()(get<array<uint8_t>>(lhs_any));
+  template <typename T, typename Buffer, typename Alloc, typename U>
+  void if_integral(std::false_type, T* tp, Buffer& b, Alloc& a, std::size_t i,
+                   const U& x) {
+    create(type_tag<wcount>(), b, a, tp);
+    destroyer()(tp, b, a);
+    operator()(reinterpret_cast<wcount*>(b.ptr), b, a, i, x);
+  }
+
+  template <typename T, typename Buffer, typename Alloc, typename U>
+  void operator()(T* tp, Buffer& b, Alloc& a, std::size_t i, const U& x) {
+    if_integral(is_integral<U>(), tp, b, a, i, x);
+  }
+
+  template <typename Buffer, typename Alloc, typename U>
+  void operator()(void*, Buffer& b, Alloc& a, std::size_t i, const U& x) {
+    using V = next_type<void>;
+    create(type_tag<V>(), b, a);
+    operator()(reinterpret_cast<V*>(b.ptr), b, a, i, x);
+  }
+
+  template <typename Buffer, typename Alloc, typename U>
+  void if_convertible_to_mp_int(std::true_type, mp_int* tp, Buffer&, Alloc&,
+                                std::size_t i, const U& x) {
+    tp[i] += static_cast<mp_int>(x);
+  }
+
+  template <typename Buffer, typename Alloc, typename U>
+  void if_convertible_to_mp_int(std::false_type, mp_int* tp, Buffer& b,
+                                Alloc& a, std::size_t i, const U& x) {
+    create(type_tag<wcount>(), b, a, tp);
+    destroyer()(tp, b, a);
+    operator()(reinterpret_cast<wcount*>(b.ptr), b, a, i, x);
+  }
+
+  template <typename Buffer, typename Alloc, typename U>
+  void operator()(mp_int* tp, Buffer& b, Alloc& a, std::size_t i,
+                  const U& x) {
+    if_convertible_to_mp_int(is_convertible_to_mp_int<U>(), tp, b, a, i, x);
+  }
+
+  template <typename Buffer, typename Alloc, typename U>
+  void operator()(wcount* tp, Buffer&, Alloc&, std::size_t i, const U& x) {
+    tp[i] += x;
+  }
+
+  template <typename Buffer, typename Alloc>
+  void operator()(wcount* tp, Buffer&, Alloc&, std::size_t i,
+                  const mp_int& x) {
+    tp[i] += static_cast<double>(x);
+  }
+};
+
+struct buffer_adder {
+  template <typename T, typename OBuffer, typename Buffer, typename Alloc>
+  void operator()(T* tp, const OBuffer&, Buffer& b, Alloc& a) {
+    for (std::size_t i = 0; i < b.size; ++i) {
+      apply(adder(), b, a, i, tp[i]);
     }
   }
 
-  void operator()(array<mp_int>& lhs) const {
-    lhs[idx] += static_cast<mp_int>(rhs);
-  }
-
-  void operator()(array<wcount>& lhs) const { lhs[idx] += rhs; }
+  template <typename OBuffer, typename Buffer, typename Alloc>
+  void operator()(void*, const OBuffer&, Buffer&, Alloc&) {}
 };
 
-template <>
-struct radd_visitor<mp_int> : public static_visitor<void> {
-  any_array& lhs_any;
-  const std::size_t idx;
-  const mp_int& rhs;
-  radd_visitor(any_array& l, const std::size_t i, const mp_int& r)
-      : lhs_any(l), idx(i), rhs(r) {}
+struct getter {
+  template <typename T, typename Buffer>
+  wcount operator()(T* tp, Buffer&, std::size_t i) {
+    return static_cast<wcount>(tp[i]);
+  }
 
-  template <typename T>
-  void operator()(array<T>& lhs) const {
-    if (!safe_radd(lhs[idx], rhs)) {
-      lhs_any = array<next<T>>(lhs);
-      operator()(get<array<next<T>>>(lhs_any));
+  template <typename Buffer>
+  wcount operator()(void*, Buffer&, std::size_t) {
+    return static_cast<wcount>(0);
+  }
+};
+
+// precondition: buffers already have same size
+struct comparer {
+  struct inner {
+    template <typename U, typename OBuffer, typename T>
+    bool operator()(const U* optr, const OBuffer& ob, const T* tp) {
+      return std::equal(optr, optr + ob.size, tp);
     }
-  }
 
-  void operator()(array<void>& lhs) const {
-    if (rhs != 0) {
-      lhs_any = array<uint8_t>(lhs.size);
-      operator()(get<array<uint8_t>>(lhs_any));
+    template <typename U, typename OBuffer>
+    bool operator()(const U* optr, const OBuffer& ob, const void*) {
+      return std::all_of(optr, optr + ob.size,
+                         [](const U& x) { return x == 0; });
     }
-  }
 
-  void operator()(array<mp_int>& lhs) const { lhs[idx] += rhs; }
+    template <typename OBuffer, typename T>
+    bool operator()(const void*, const OBuffer& ob, const T* tp) {
+      return std::all_of(tp, tp + ob.size, [](const T& x) { return x == 0; });
+    }
 
-  void operator()(array<wcount>& lhs) const {
-    lhs[idx] += static_cast<double>(rhs);
-  }
-};
+    template <typename OBuffer>
+    bool operator()(const void*, const OBuffer&, const void*) {
+      return true;
+    }
+  };
 
-template <>
-struct radd_visitor<wcount> : public static_visitor<void> {
-  any_array& lhs_any;
-  const std::size_t idx;
-  const wcount& rhs;
-  radd_visitor(any_array& l, const std::size_t i, const wcount& r)
-      : lhs_any(l), idx(i), rhs(r) {}
-
-  template <typename T>
-  void operator()(array<T>& lhs) const {
-    lhs_any = array<wcount>(lhs);
-    operator()(get<array<wcount>>(lhs_any));
-  }
-
-  void operator()(array<void>& lhs) const {
-    lhs_any = array<wcount>(lhs.size);
-    operator()(get<array<wcount>>(lhs_any));
-  }
-
-  void operator()(array<wcount>& lhs) const { lhs[idx] += rhs; }
-};
-
-template <>
-struct radd_visitor<weight<double>> : public static_visitor<void> {
-  any_array& lhs_any;
-  const std::size_t idx;
-  const weight<double> rhs;
-  radd_visitor(any_array& l, const std::size_t i, const double w)
-      : lhs_any(l), idx(i), rhs{w} {}
-
-  template <typename T>
-  void operator()(array<T>& lhs) const {
-    lhs_any = array<wcount>(lhs);
-    operator()(get<array<wcount>>(lhs_any));
-  }
-
-  void operator()(array<void>& lhs) const {
-    lhs_any = array<wcount>(lhs.size);
-    operator()(get<array<wcount>>(lhs_any));
-  }
-
-  void operator()(array<wcount>& lhs) const { lhs[idx] += rhs; }
-};
-
-// precondition: both arrays must have same size and may not be identical
-struct radd_array_visitor : public static_visitor<void> {
-  any_array& lhs_any;
-  radd_array_visitor(any_array& l) : lhs_any(l) {}
-  template <typename T>
-  void operator()(const array<T>& rhs) const {
-    for (std::size_t i = 0; i < rhs.size; ++i)
-      apply_visitor(radd_visitor<T>(lhs_any, i, rhs[i]), lhs_any);
-  }
-  void operator()(const array<void>&) const {}
-};
-
-struct rmul_visitor : public static_visitor<void> {
-  any_array& lhs_any;
-  const double x;
-  rmul_visitor(any_array& l, const double v) : lhs_any(l), x(v) {}
-  template <typename T>
-  void operator()(array<T>& lhs) const {
-    lhs_any = array<wcount>(lhs);
-    operator()(get<array<wcount>>(lhs_any));
-  }
-  void operator()(array<void>&) const {}
-  void operator()(array<wcount>& lhs) const {
-    for (std::size_t i = 0; i != lhs.size; ++i) lhs[i] *= x;
+  template <typename T, typename Buffer, typename OBuffer>
+  bool operator()(const T* tp, const Buffer& b, const OBuffer& ob) {
+    BOOST_ASSERT(b.size == ob.size);
+    return apply(inner(), ob, tp);
   }
 };
 
-struct bicmp_visitor : public static_visitor<bool> {
-  template <typename T, typename U>
-  bool operator()(const array<T>& b1, const array<U>& b2) const {
-    if (b1.size != b2.size) return false;
-    return std::equal(b1.begin(), b1.end(), b2.begin());
+struct multiplier {
+  template <typename T, typename Buffer, typename Alloc>
+  void operator()(T* tp, Buffer& b, Alloc& a, const double x) {
+    create(type_tag<wcount>(), b, a, tp);
+    operator()(reinterpret_cast<wcount*>(b.ptr), b, a, x);
   }
 
-  template <typename T>
-  bool operator()(const array<T>& b1, const array<void>& b2) const {
-    if (b1.size != b2.size) return false;
-    return std::all_of(b1.begin(), b1.end(),
-                       [](const T& t) { return t == 0; });
-  }
+  template <typename Buffer, typename Alloc>
+  void operator()(void*, Buffer&, Alloc&, const double) {}
 
-  template <typename T>
-  bool operator()(const array<void>& b1, const array<T>& b2) const {
-    return operator()(b2, b1);
-  }
-
-  bool operator()(const array<void>& b1, const array<void>& b2) const {
-    return b1.size == b2.size;
+  template <typename Buffer, typename Alloc>
+  void operator()(wcount* tp, Buffer& b, Alloc&, const double x) {
+    for (std::size_t i = 0; i < b.size; ++i) tp[i] *= x;
   }
 };
 
 } // namespace detail
 
+template <class Alloc>
 class adaptive_storage {
-  using buffer_type = detail::any_array;
+  struct buffer_type {
+    char type;
+    std::size_t size;
+    void* ptr;
+    buffer_type(std::size_t s = 0) : type(0), size(s), ptr(nullptr) {}
+  };
 
 public:
   using element_type = detail::wcount;
   using const_reference = element_type;
 
-  explicit adaptive_storage(std::size_t s)
-      : buffer_(detail::array<void>(s)) {}
-
   adaptive_storage() = default;
-  adaptive_storage(const adaptive_storage&) = default;
-  adaptive_storage& operator=(const adaptive_storage&) = default;
-  adaptive_storage(adaptive_storage&&) = default;
-  adaptive_storage& operator=(adaptive_storage&&) = default;
 
-  template <typename RHS>
-  explicit adaptive_storage(const RHS& rhs)
-      : buffer_(detail::array<void>(rhs.size())) {
-    using T = typename RHS::element_type;
-    for (std::size_t i = 0, n = rhs.size(); i < n; ++i) {
-      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]), buffer_);
-    }
+  explicit adaptive_storage(const Alloc& a) : alloc_(a) {}
+
+  adaptive_storage(const adaptive_storage& o) : alloc_(o.alloc_) {
+    detail::apply(detail::replacer(), o.buffer_, buffer_, alloc_);
   }
 
-  template <typename RHS>
-  adaptive_storage& operator=(const RHS& rhs) {
-    // no check for self-assign needed, default operator above is better match
-    const auto n = rhs.size();
-    if (size() != n) { buffer_ = detail::array<void>(n); }
-    using T = typename RHS::element_type;
-    for (std::size_t i = 0; i < n; ++i) {
-      apply_visitor(detail::assign_visitor<T>(buffer_, i, rhs[i]), buffer_);
+  adaptive_storage& operator=(const adaptive_storage& o) {
+    if (this != &o) {
+      alloc_ = o.alloc_;
+      detail::apply(detail::replacer(), o.buffer_, buffer_, alloc_);
     }
     return *this;
   }
 
-  // used in unit tests
-  template <typename T>
-  explicit adaptive_storage(const detail::array<T>& a) : buffer_(a) {}
-
-  std::size_t size() const {
-    return apply_visitor(detail::size_visitor(), buffer_);
+  adaptive_storage(adaptive_storage&& o)
+      : alloc_(std::move(o.alloc_)), buffer_(std::move(o.buffer_)) {
+    o.buffer_.type = 0;
+    o.buffer_.size = 0;
+    o.buffer_.ptr = nullptr;
   }
 
-  void increase(std::size_t i) {
-    apply_visitor(detail::increase_visitor(buffer_, i), buffer_);
+  adaptive_storage& operator=(adaptive_storage&& o) {
+    if (this != &o) {
+      std::swap(alloc_, o.alloc_);
+      std::swap(buffer_, o.buffer_);
+    }
+    return *this;
   }
 
-  void add(std::size_t i, const element_type& x) {
-    if (x.variance() == x.value()) {
-      apply_visitor(detail::radd_visitor<double>(buffer_, i, x.value()),
-                    buffer_);
-    } else {
-      apply_visitor(detail::radd_visitor<element_type>(buffer_, i, x),
-                    buffer_);
+  ~adaptive_storage() { detail::apply(detail::destroyer(), buffer_, alloc_); }
+
+  template <typename S>
+  explicit adaptive_storage(const S& s) : buffer_(s.size()) {
+    create(detail::type_tag<detail::wcount>(), buffer_, alloc_);
+    for (std::size_t i = 0; i < size(); ++i) {
+      reinterpret_cast<detail::wcount*>(buffer_.ptr)[i] = s[i];
     }
   }
 
+  template <typename S>
+  explicit adaptive_storage(const S& s, const Alloc& a)
+      : alloc_(a), buffer_(s.size()) {
+    create(detail::type_tag<detail::wcount>(), buffer_, alloc_);
+    for (std::size_t i = 0; i < size(); ++i) {
+      reinterpret_cast<detail::wcount*>(buffer_.ptr)[i] = s[i];
+    }
+  }
+
+  template <typename S>
+  adaptive_storage& operator=(const S& s) {
+    // no check for self-assign needed, since S is different type
+    detail::apply(detail::destroyer(), buffer_, alloc_);
+    buffer_.size = s.size();
+    create(detail::type_tag<void>(), buffer_, alloc_);
+    for (std::size_t i = 0; i < size(); ++i) { add(i, s[i]); }
+    return *this;
+  }
+
+  explicit adaptive_storage(std::size_t s) : buffer_(s) {
+    detail::create(detail::type_tag<void>(), buffer_, alloc_);
+  }
+
+  explicit adaptive_storage(std::size_t s, const Alloc& a)
+      : alloc_(a), buffer_(s) {
+    detail::create(detail::type_tag<void>(), buffer_, alloc_);
+  }
+
+  // used by unit tests, not part of generic storage interface
   template <typename T>
-  void add(std::size_t i, const T& t) {
-    apply_visitor(detail::radd_visitor<T>(buffer_, i, t), buffer_);
+  adaptive_storage(std::size_t s, const T* p) : buffer_(s) {
+    detail::create(detail::type_tag<T>(), buffer_, alloc_, p);
+  }
+
+  std::size_t size() const { return buffer_.size; }
+
+  void increase(std::size_t i) {
+    BOOST_ASSERT(i < size());
+    detail::apply(detail::increaser(), buffer_, alloc_, i);
   }
 
   template <typename T>
-  void add(std::size_t i, const detail::weight<T>& w) {
-    apply_visitor(
-        detail::radd_visitor<detail::weight<double>>(buffer_, i, w.value),
-        buffer_);
+  void add(std::size_t i, const T& x) {
+    BOOST_ASSERT(i < size());
+    detail::apply(detail::adder(), buffer_, alloc_, i, x);
+  }
+
+  template <typename T>
+  void add(std::size_t i, const detail::weight<T>& x) {
+    BOOST_ASSERT(i < size());
+    detail::apply(detail::adder(), buffer_, alloc_, i, x);
   }
 
   const_reference operator[](std::size_t i) const {
-    return apply_visitor(detail::bin_visitor(i), buffer_);
+    return detail::apply(detail::getter(), buffer_, i);
   }
 
-  bool operator==(const adaptive_storage& rhs) const {
-    return apply_visitor(detail::bicmp_visitor(), buffer_, rhs.buffer_);
+  bool operator==(const adaptive_storage& o) const {
+    if (size() != o.size()) return false;
+    return detail::apply(detail::comparer(), buffer_, o.buffer_);
   }
 
   // precondition: storages have same size
-  adaptive_storage& operator+=(const adaptive_storage& rhs) {
-    if (this == &rhs) {
-      for (std::size_t i = 0, n = size(); i < n; ++i) {
-        add(i, rhs[i]); // may lose precision
-      }
+  adaptive_storage& operator+=(const adaptive_storage& o) {
+    BOOST_ASSERT(o.size() == size());
+    if (this == &o) {
+      /*
+        Self-adding needs to be special-cased, because the source buffer ptr
+        may be invalided by growth. We avoid this by making a copy of the
+        source. This is a simple, but expensive solution. This is ok, because
+        self-adding is mostly used in the unit-tests to grow a histogram
+        quickly. It does not occur frequently in real applications.
+      */
+      const auto o_copy = o;
+      detail::apply(detail::buffer_adder(), o_copy.buffer_, buffer_, alloc_);
     } else {
-      apply_visitor(detail::radd_array_visitor(buffer_), rhs.buffer_);
+      detail::apply(detail::buffer_adder(), o.buffer_, buffer_, alloc_);
     }
     return *this;
   }
 
   // precondition: storages have same size
-  template <typename RHS>
-  adaptive_storage& operator+=(const RHS& rhs) {
-    for (std::size_t i = 0, n = size(); i < n; ++i)
-      apply_visitor(detail::radd_visitor<typename RHS::element_type>(
-                        buffer_, i, rhs[i]),
-                    buffer_);
+  template <typename S>
+  adaptive_storage& operator+=(const S& o) {
+    BOOST_ASSERT(o.size() == size());
+    for (std::size_t i = 0; i < size(); ++i) add(i, o[i]);
     return *this;
   }
 
-  template <typename T>
-  adaptive_storage& operator*=(const T& x) {
-    apply_visitor(detail::rmul_visitor(buffer_, x), buffer_);
+  adaptive_storage& operator*=(const double x) {
+    detail::apply(detail::multiplier(), buffer_, alloc_, x);
     return *this;
   }
 
 private:
+  Alloc alloc_;
   buffer_type buffer_;
 
-  friend class ::boost::python::access;
+  friend class python_access;
   friend class ::boost::serialization::access;
   template <class Archive>
   void serialize(Archive&, unsigned);

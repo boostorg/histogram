@@ -32,88 +32,90 @@ namespace bp = boost::python;
 
 using pyhistogram = bh::dynamic_histogram<>;
 
-namespace boost {
-namespace python {
-
 #ifdef HAVE_NUMPY
-class access {
+namespace boost {
+namespace histogram {
+class python_access {
 public:
-  using mp_int = bh::detail::mp_int;
-  using wcount = bh::detail::wcount;
-  template <typename T>
-  using array = bh::detail::array<T>;
+  using mp_int = detail::mp_int;
+  using wcount = detail::wcount;
 
-  struct dtype_visitor : public boost::static_visitor<str> {
-    list &shapes, &strides;
-    dtype_visitor(list& sh, list& st) : shapes(sh), strides(st) {}
-    template <typename T>
-    str operator()(const array<T>& /*unused*/) const {
+  struct dtype_visitor {
+    template <typename T, typename Buffer>
+    bp::str operator()(T*, const Buffer&, bp::list&, bp::list& strides) {
       strides.append(sizeof(T));
-      return dtype_typestr<T>();
+      return bp::dtype_typestr<T>();
     }
-    str operator()(const array<void>& /*unused*/) const {
+    template <typename Buffer>
+    bp::str operator()(void*, const Buffer&, bp::list&, bp::list& strides) {
       strides.append(sizeof(uint8_t));
-      return dtype_typestr<uint8_t>();
+      return bp::dtype_typestr<uint8_t>();
     }
-    str operator()(const array<mp_int>& /*unused*/) const {
+    template <typename Buffer>
+    bp::str operator()(mp_int*, const Buffer&, bp::list&, bp::list& strides) {
       strides.append(sizeof(double));
-      return dtype_typestr<double>();
+      return bp::dtype_typestr<double>();
     }
-    str operator()(const array<wcount>& /*unused*/) const {
+    template <typename Buffer>
+    bp::str operator()(wcount*, const Buffer&, bp::list& shapes,
+                       bp::list& strides) {
       strides.append(sizeof(double));
       strides.append(strides[-1] * 2);
       shapes.append(2);
-      return dtype_typestr<double>();
+      return bp::dtype_typestr<double>();
     }
   };
 
-  struct data_visitor : public boost::static_visitor<object> {
-    const list& shapes;
-    const list& strides;
-    data_visitor(const list& sh, const list& st) : shapes(sh), strides(st) {}
-    template <typename Array>
-    object operator()(const Array& b) const {
-      return make_tuple(reinterpret_cast<uintptr_t>(b.begin()), true);
+  struct data_visitor {
+    template <typename T, typename Buffer>
+    bp::object operator()(T* tp, const Buffer&, const bp::list&,
+                          const bp::list&) const {
+      return bp::make_tuple(reinterpret_cast<uintptr_t>(tp), true);
     }
-    object operator()(const array<void>& /* unused */) const {
+    template <typename Buffer>
+    bp::object operator()(void*, const Buffer&, const bp::list& shapes,
+                          const bp::list&) const {
       // cannot pass non-existent memory to numpy; make new
       // zero-initialized uint8 array, and pass it
-      return np::zeros(tuple(shapes), np::dtype::get_builtin<uint8_t>());
+      return np::zeros(bp::tuple(shapes), np::dtype::get_builtin<uint8_t>());
     }
-    object operator()(const array<mp_int>& b) const {
+    template <typename Buffer>
+    bp::object operator()(mp_int* tp, const Buffer& b, const bp::list& shapes,
+                          const bp::list& strides) const {
       // cannot pass cpp_int to numpy; make new
       // double array, fill it and pass it
-      auto a = np::empty(tuple(shapes), np::dtype::get_builtin<double>());
-      for (auto i = 0l, n = bp::len(shapes); i < n; ++i)
+      auto a = np::empty(bp::tuple(shapes), np::dtype::get_builtin<double>());
+      for (std::size_t i = 0, n = bp::len(shapes); i < n; ++i)
         const_cast<Py_intptr_t*>(a.get_strides())[i] =
             bp::extract<int>(strides[i]);
       auto* buf = (double*)a.get_data();
-      for (auto i = 0ul; i < b.size; ++i) buf[i] = static_cast<double>(b[i]);
+      for (std::size_t i = 0; i < b.size; ++i) {
+        buf[i] = static_cast<double>(tp[i]);
+      }
       return a;
     }
   };
 
-  static object array_interface(const pyhistogram& self) {
-    dict d;
-    list shapes;
-    list strides;
+  static bp::object array_interface(const pyhistogram& self) {
+    bp::dict d;
+    bp::list shapes;
+    bp::list strides;
     auto& b = self.storage_.buffer_;
-    d["typestr"] = boost::apply_visitor(dtype_visitor(shapes, strides), b);
-    for (auto i = 0u; i < self.dim(); ++i) {
-      if (i) strides.append(strides[-1] * shapes[-1]);
+    d["typestr"] = bh::detail::apply(dtype_visitor(), b, shapes, strides);
+    for (unsigned i = 0; i < self.dim(); ++i) {
+      if (i > 0) strides.append(strides[-1] * shapes[-1]);
       shapes.append(self.axis(i).shape());
     }
     if (self.dim() == 0) shapes.append(0);
-    d["shape"] = tuple(shapes);
-    d["strides"] = tuple(strides);
-    d["data"] = boost::apply_visitor(data_visitor(shapes, strides), b);
+    d["shape"] = bp::tuple(shapes);
+    d["strides"] = bp::tuple(strides);
+    d["data"] = bh::detail::apply(data_visitor(), b, shapes, strides);
     return d;
   }
 };
-#endif
-
-} // namespace python
+} // namespace histogram
 } // namespace boost
+#endif
 
 struct axis_visitor : public boost::static_visitor<bp::object> {
   template <typename T>
@@ -378,7 +380,8 @@ void register_histogram() {
           .def(bp::init<const pyhistogram&>())
 // .def(bp::init<pyhistogram &&>())
 #ifdef HAVE_NUMPY
-          .add_property("__array_interface__", &bp::access::array_interface)
+          .add_property("__array_interface__",
+                        &bh::python_access::array_interface)
 #endif
           .add_property("dim", &pyhistogram::dim)
           .def("axis", histogram_axis, bp::arg("i") = 0,
