@@ -14,6 +14,7 @@
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>
 #include <limits>
+#include <memory>
 #include <sstream>
 
 #ifdef BOOST_HISTOGAM_TRACE_ALLOCS
@@ -54,7 +55,8 @@ constexpr bool operator!=(const tracing_allocator<T>&,
 using adaptive_storage_type =
     boost::histogram::adaptive_storage<tracing_allocator<char>>;
 #else
-using adaptive_storage_type = boost::histogram::adaptive_storage<>;
+using adaptive_storage_type =
+    boost::histogram::adaptive_storage<std::allocator<char>>;
 #endif
 
 using namespace boost::histogram;
