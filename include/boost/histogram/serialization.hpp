@@ -29,14 +29,28 @@ namespace histogram {
 
 namespace detail {
 template <typename Archive>
-struct serialize_helper {
+struct serialize_t {
   Archive& ar_;
-  explicit serialize_helper(Archive& ar) : ar_(ar) {}
+  explicit serialize_t(Archive& ar) : ar_(ar) {}
   template <typename T>
   void operator()(T& t) const {
     ar_& t;
   }
 };
+
+struct serializer {
+  template <typename T, typename Buffer, typename Archive>
+  void operator()(T*, Buffer& b, Archive& ar) {
+    if (Archive::is_loading::value) { create(tag<T>(), b); }
+    ar& boost::serialization::make_array(reinterpret_cast<T*>(b.ptr), b.size);
+  }
+
+  template <typename Buffer, typename Archive>
+  void operator()(void*, Buffer& b, Archive&) {
+    if (Archive::is_loading::value) { b.ptr = nullptr; }
+  }
+};
+
 } // namespace detail
 
 template <typename RealType>
@@ -55,8 +69,13 @@ void serialize(Archive& ar, array_storage<Container>& store,
 
 template <typename Alloc>
 template <class Archive>
-void adaptive_storage<Alloc>::serialize(Archive&, unsigned /* version */) {
-  // TODO
+void adaptive_storage<Alloc>::serialize(Archive& ar, unsigned /* version */) {
+  if (Archive::is_loading::value) {
+    detail::apply(detail::destroyer(), buffer_);
+  }
+  ar& buffer_.type;
+  ar& buffer_.size;
+  detail::apply(detail::serializer(), buffer_, ar);
 }
 
 namespace axis {
@@ -129,7 +148,7 @@ template <class A, class S>
 template <class Archive>
 void histogram<static_tag, A, S>::serialize(Archive& ar,
                                             unsigned /* version */) {
-  detail::serialize_helper<Archive> sh(ar);
+  detail::serialize_t<Archive> sh(ar);
   mp11::tuple_for_each(axes_, sh);
   ar& storage_;
 }

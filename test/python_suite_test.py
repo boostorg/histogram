@@ -849,7 +849,7 @@ class test_histogram(unittest.TestCase):
                       integer(0, 2, uoflow=False))
         a(0, 0)
         for i in range(80):
-            a += a
+            a = a + a
         # a now holds a multiprecision type
         a(1, 0)
         for i in range(2):

@@ -40,26 +40,27 @@ class access {
 public:
   using mp_int = bh::detail::mp_int;
   using wcount = bh::detail::wcount;
-  template <typename T>
-  using array = bh::detail::array<T>;
 
-  struct dtype_visitor : public boost::static_visitor<str> {
+  struct dtype_visitor {
     list &shapes, &strides;
     dtype_visitor(list& sh, list& st) : shapes(sh), strides(st) {}
-    template <typename T>
-    str operator()(const array<T>& /*unused*/) const {
+    template <typename T, typename Buffer>
+    str operator()(T*, const Buffer&) {
       strides.append(sizeof(T));
       return dtype_typestr<T>();
     }
-    str operator()(const array<void>& /*unused*/) const {
+    template <typename Buffer>
+    str operator()(void*, const Buffer&) {
       strides.append(sizeof(uint8_t));
       return dtype_typestr<uint8_t>();
     }
-    str operator()(const array<mp_int>& /*unused*/) const {
+    template <typename Buffer>
+    str operator()(mp_int*, const Buffer&) {
       strides.append(sizeof(double));
       return dtype_typestr<double>();
     }
-    str operator()(const array<wcount>& /*unused*/) const {
+    template <typename Buffer>
+    str operator()(wcount*, const Buffer&) {
       strides.append(sizeof(double));
       strides.append(strides[-1] * 2);
       shapes.append(2);
@@ -67,28 +68,32 @@ public:
     }
   };
 
-  struct data_visitor : public boost::static_visitor<object> {
+  struct data_visitor {
     const list& shapes;
     const list& strides;
     data_visitor(const list& sh, const list& st) : shapes(sh), strides(st) {}
-    template <typename Array>
-    object operator()(const Array& b) const {
-      return make_tuple(reinterpret_cast<uintptr_t>(b.begin()), true);
+    template <typename T, typename Buffer>
+    object operator()(T* tp, const Buffer&) const {
+      return make_tuple(reinterpret_cast<uintptr_t>(tp), true);
     }
-    object operator()(const array<void>& /* unused */) const {
+    template <typename Buffer>
+    object operator()(void*, const Buffer&) const {
       // cannot pass non-existent memory to numpy; make new
       // zero-initialized uint8 array, and pass it
       return np::zeros(tuple(shapes), np::dtype::get_builtin<uint8_t>());
     }
-    object operator()(const array<mp_int>& b) const {
+    template <typename Buffer>
+    object operator()(mp_int* tp, const Buffer& b) const {
       // cannot pass cpp_int to numpy; make new
       // double array, fill it and pass it
       auto a = np::empty(tuple(shapes), np::dtype::get_builtin<double>());
-      for (auto i = 0l, n = bp::len(shapes); i < n; ++i)
+      for (std::size_t i = 0, n = bp::len(shapes); i < n; ++i)
         const_cast<Py_intptr_t*>(a.get_strides())[i] =
             bp::extract<int>(strides[i]);
       auto* buf = (double*)a.get_data();
-      for (auto i = 0ul; i < b.size; ++i) buf[i] = static_cast<double>(b[i]);
+      for (std::size_t i = 0; i < b.size; ++i) {
+        buf[i] = static_cast<double>(tp[i]);
+      }
       return a;
     }
   };
@@ -98,7 +103,7 @@ public:
     list shapes;
     list strides;
     auto& b = self.storage_.buffer_;
-    d["typestr"] = boost::apply_visitor(dtype_visitor(shapes, strides), b);
+    d["typestr"] = bh::detail::apply(dtype_visitor(shapes, strides), b);
     for (auto i = 0u; i < self.dim(); ++i) {
       if (i) strides.append(strides[-1] * shapes[-1]);
       shapes.append(self.axis(i).shape());
@@ -106,7 +111,7 @@ public:
     if (self.dim() == 0) shapes.append(0);
     d["shape"] = tuple(shapes);
     d["strides"] = tuple(strides);
-    d["data"] = boost::apply_visitor(data_visitor(shapes, strides), b);
+    d["data"] = bh::detail::apply(data_visitor(shapes, strides), b);
     return d;
   }
 };

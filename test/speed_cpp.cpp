@@ -136,14 +136,13 @@ int main() {
            compare_1d<static_histogram<mp_list<axis::regular<>>,
                                        array_storage<int>>>(nfill, itype));
     printf("hs_sd %.3f\n",
-           compare_1d<
-               static_histogram<mp_list<axis::regular<>>, adaptive_storage>>(
-               nfill, itype));
+           compare_1d<static_histogram<mp_list<axis::regular<>>,
+                                       adaptive_storage<>>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_1d<dynamic_histogram<axis::types, array_storage<int>>>(
                nfill, itype));
     printf("hd_sd %.3f\n",
-           compare_1d<dynamic_histogram<axis::types, adaptive_storage>>(
+           compare_1d<dynamic_histogram<axis::types, adaptive_storage<>>>(
                nfill, itype));
   }
 
@@ -160,12 +159,12 @@ int main() {
     printf(
         "hs_sd %.3f\n",
         compare_2d<static_histogram<mp_list<axis::regular<>, axis::regular<>>,
-                                    adaptive_storage>>(nfill, itype));
+                                    adaptive_storage<>>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_2d<dynamic_histogram<axis::types, array_storage<int>>>(
                nfill, itype));
     printf("hd_sd %.3f\n",
-           compare_2d<dynamic_histogram<axis::types, adaptive_storage>>(
+           compare_2d<dynamic_histogram<axis::types, adaptive_storage<>>>(
                nfill, itype));
   }
 
@@ -182,12 +181,12 @@ int main() {
     printf("hs_sd %.3f\n",
            compare_3d<static_histogram<
                mp_list<axis::regular<>, axis::regular<>, axis::regular<>>,
-               adaptive_storage>>(nfill, itype));
+               adaptive_storage<>>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_3d<dynamic_histogram<axis::types, array_storage<int>>>(
                nfill, itype));
     printf("hd_sd %.3f\n",
-           compare_3d<dynamic_histogram<axis::types, adaptive_storage>>(
+           compare_3d<dynamic_histogram<axis::types, adaptive_storage<>>>(
                nfill, itype));
   }
 
@@ -206,12 +205,12 @@ int main() {
            compare_6d<static_histogram<
                mp_list<axis::regular<>, axis::regular<>, axis::regular<>,
                        axis::regular<>, axis::regular<>, axis::regular<>>,
-               adaptive_storage>>(nfill, itype));
+               adaptive_storage<>>>(nfill, itype));
     printf("hd_ss %.3f\n",
            compare_6d<dynamic_histogram<axis::types, array_storage<int>>>(
                nfill, itype));
     printf("hd_sd %.3f\n",
-           compare_6d<dynamic_histogram<axis::types, adaptive_storage>>(
+           compare_6d<dynamic_histogram<axis::types, adaptive_storage<>>>(
                nfill, itype));
   }
 }

@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/histogram/weight.hpp>
@@ -86,9 +87,11 @@ constexpr char type_index() {
 
 template <typename T>
 bool safe_increase(T& t) {
-  if (t == std::numeric_limits<T>::max()) return false;
-  ++t;
-  return true;
+  if (t < std::numeric_limits<T>::max()) {
+    ++t;
+    return true;
+  }
+  return false;
 }
 
 template <typename T, typename U>
@@ -154,6 +157,7 @@ void create(tag<T>, Buffer& b, const U* init = nullptr) {
 
 template <typename Buffer, typename U = void>
 void create(tag<void>, Buffer& b, const U* init = nullptr) {
+  boost::ignore_unused(init);
   BOOST_ASSERT(!init);
   b.ptr = nullptr;
   b.type = type_index<void>();
@@ -295,12 +299,7 @@ struct adder {
 struct buffer_adder {
   template <typename T, typename OBuffer, typename Buffer>
   void operator()(T* tp, const OBuffer&, Buffer& b) {
-    for (std::size_t i = 0; i < b.size; ++i) {
-      // make copy in case we are self-adding, since adder() may
-      // invalidate tp pointer
-      const T x = tp[i];
-      apply(adder(), b, i, x);
-    }
+    for (std::size_t i = 0; i < b.size; ++i) { apply(adder(), b, i, tp[i]); }
   }
 
   template <typename OBuffer, typename Buffer>
@@ -399,6 +398,7 @@ public:
 
   adaptive_storage(adaptive_storage&& o) : buffer_(std::move(o.buffer_)) {
     o.buffer_.type = 0;
+    o.buffer_.size = 0;
     o.buffer_.ptr = nullptr;
   }
 
@@ -471,7 +471,19 @@ public:
   // precondition: storages have same size
   adaptive_storage& operator+=(const adaptive_storage& o) {
     BOOST_ASSERT(o.size() == size());
-    detail::apply(detail::buffer_adder(), o.buffer_, buffer_);
+    if (this == &o) {
+      /*
+        Self-adding needs to be special-cased, because the source buffer ptr
+        may be invalided by growth. We avoid this by making a copy of the
+        source. This is a simple, but expensive solution. This is ok, because
+        self-adding is mostly used in the unit-tests to grow a histogram
+        quickly. It does not occur frequently in real applications.
+      */
+      const auto o_copy = o;
+      detail::apply(detail::buffer_adder(), o_copy.buffer_, buffer_);
+    } else {
+      detail::apply(detail::buffer_adder(), o.buffer_, buffer_);
+    }
     return *this;
   }
 
