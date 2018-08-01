@@ -24,6 +24,7 @@
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/mp11.hpp>
 #include <boost/type_index.hpp>
 #include <cstddef>
@@ -49,7 +50,7 @@ class histogram<dynamic_tag, Axes, Storage> {
 
 public:
   using any_axis_type = mp11::mp_rename<Axes, axis::any>;
-  using axes_type = std::vector<any_axis_type>;
+  using axes_type = boost::container::vector<any_axis_type>;
   using element_type = typename Storage::element_type;
   using const_reference = typename Storage::const_reference;
   using const_iterator = iterator_over<histogram>;
@@ -144,44 +145,43 @@ public:
   }
 
   template <typename... Ts>
-  void operator()(Ts&&... ts) {
+  void operator()(const Ts&... ts) {
     // case with one argument is ambiguous, is specialized below
     BOOST_ASSERT_MSG(dim() == sizeof...(Ts),
                      "fill arguments does not match histogram dimension "
                      "(did you use weight() in the wrong place?)");
     std::size_t idx = 0, stride = 1;
-    xlin<0>(idx, stride, std::forward<Ts>(ts)...);
+    xlin<0>(idx, stride, ts...);
     if (stride) { detail::fill_storage(storage_, idx); }
   }
 
   template <typename T>
-  void operator()(T&& t) {
+  void operator()(const T& t) {
     // check whether T is unpackable
     if (dim() == 1) {
-      fill_impl(detail::no_container_tag(), std::forward<T>(t));
+      fill_impl(detail::no_container_tag(), t);
     } else {
-      fill_impl(detail::classify_container<T>(), std::forward<T>(t));
+      fill_impl(detail::classify_container<T>(), t);
     }
   }
 
   template <typename W, typename... Ts>
-  void operator()(detail::weight<W>&& w, Ts&&... ts) {
+  void operator()(detail::weight<W>&& w, const Ts&... ts) {
     // case with one argument is ambiguous, is specialized below
     BOOST_ASSERT_MSG(dim() == sizeof...(Ts),
                      "fill arguments does not match histogram dimension");
     std::size_t idx = 0, stride = 1;
-    xlin<0>(idx, stride, std::forward<Ts>(ts)...);
+    xlin<0>(idx, stride, ts...);
     if (stride) { detail::fill_storage(storage_, idx, std::move(w)); }
   }
 
   template <typename W, typename T>
-  void operator()(detail::weight<W>&& w, T&& t) {
+  void operator()(detail::weight<W>&& w, const T& t) {
     // check whether T is unpackable
     if (dim() == 1) {
-      fill_impl(detail::no_container_tag(), std::forward<T>(t), std::move(w));
+      fill_impl(detail::no_container_tag(), t, std::move(w));
     } else {
-      fill_impl(detail::classify_container<T>(), std::forward<T>(t),
-                std::move(w));
+      fill_impl(detail::classify_container<T>(), t, std::move(w));
     }
   }
 

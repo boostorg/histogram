@@ -12,7 +12,7 @@ develop | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg
 3. Visual Studio 14 2015
 
 
-This `C++11` library provides a multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. The library is **header-only**, if you don't need the Python module.
+This `C++11` open-source library provides a state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to count things. The library is **header-only**, if you don't need the Python module. Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/).
 
 The histogram is very customisable through policy classes, but the default policies were carefully designed so that most users don't need to customize anything. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: bin counts *cannot overflow* or *be capped*. While being safe to use, the library also has a convenient interface, is memory conserving, and faster than other libraries (see benchmarks).
 

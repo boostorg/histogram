@@ -145,7 +145,7 @@ public:
   }
 
   template <typename... Ts>
-  void operator()(Ts&&... ts) {
+  void operator()(const Ts&... ts) {
     // case with one argument is ambiguous, is specialized below
     static_assert(sizeof...(Ts) == axes_size::value,
                   "fill arguments do not match histogram dimension");
@@ -155,16 +155,16 @@ public:
   }
 
   template <typename T>
-  void operator()(T&& t) {
+  void operator()(const T& t) {
     // check whether we need to unpack argument
     fill_impl(mp11::mp_if_c<(axes_size::value == 1), detail::no_container_tag,
                             detail::classify_container<T>>(),
-              std::forward<T>(t));
+              t);
   }
 
   // TODO: merge this with unpacking
   template <typename W, typename... Ts>
-  void operator()(detail::weight<W>&& w, Ts&&... ts) {
+  void operator()(detail::weight<W>&& w, const Ts&... ts) {
     // case with one argument is ambiguous, is specialized below
     std::size_t idx = 0, stride = 1;
     xlin<0>(idx, stride, ts...);
@@ -173,11 +173,11 @@ public:
 
   // TODO: remove as obsolete
   template <typename W, typename T>
-  void operator()(detail::weight<W>&& w, T&& t) {
+  void operator()(detail::weight<W>&& w, const T& t) {
     // check whether we need to unpack argument
     fill_impl(mp11::mp_if_c<(axes_size::value == 1), detail::no_container_tag,
                             detail::classify_container<T>>(),
-              std::forward<T>(t), std::move(w));
+              t, std::move(w));
   }
 
   template <typename... Ts>

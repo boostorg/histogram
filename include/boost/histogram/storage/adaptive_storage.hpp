@@ -33,8 +33,8 @@ namespace histogram {
 
 namespace detail {
 
-using mp_int = ::boost::multiprecision::cpp_int;
-using wcount = ::boost::histogram::weight_counter<double>;
+using wcount = weight_counter<double>;
+using mp_int = boost::multiprecision::cpp_int;
 
 template <typename T>
 struct type_tag {};
@@ -100,6 +100,7 @@ bool safe_assign(T& t, const U& u) {
 
 template <typename T, typename U>
 bool safe_radd(T& t, const U& u) {
+  BOOST_ASSERT(t >= 0);
   BOOST_ASSERT(u >= 0);
   // static_cast converts back from signed to unsigned integer
   if (static_cast<T>(std::numeric_limits<T>::max() - t) < u) return false;
@@ -378,7 +379,7 @@ class adaptive_storage {
   };
 
 public:
-  using element_type = detail::wcount;
+  using element_type = weight_counter<double>;
   using const_reference = element_type;
 
   adaptive_storage() = default;

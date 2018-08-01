@@ -10,8 +10,8 @@
 #include <boost/config.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/utility/string_view.hpp>
+#include <boost/container/string.hpp>
 #include <stdexcept>
-#include <string>
 
 // forward declaration for serialization
 namespace boost {
@@ -73,7 +73,7 @@ protected:
 
 private:
   int size_ = 0, shape_ = 0;
-  std::string label_;
+  boost::container::string label_;
 
   friend class ::boost::serialization::access;
   template <class Archive>
