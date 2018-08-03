@@ -24,7 +24,6 @@
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
-#include <boost/container/vector.hpp>
 #include <boost/mp11.hpp>
 #include <boost/type_index.hpp>
 #include <cstddef>
@@ -50,7 +49,7 @@ class histogram<dynamic_tag, Axes, Storage> {
 
 public:
   using any_axis_type = mp11::mp_rename<Axes, axis::any>;
-  using axes_type = boost::container::vector<any_axis_type>;
+  using axes_type = std::vector<any_axis_type>;
   using element_type = typename Storage::element_type;
   using const_reference = typename Storage::const_reference;
   using const_iterator = iterator_over<histogram>;

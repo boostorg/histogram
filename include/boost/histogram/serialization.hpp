@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP_
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP_
 
+#include <boost/container/string.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/dynamic_histogram.hpp>
@@ -25,6 +26,16 @@
  */
 
 namespace boost {
+namespace container {
+template <class Archive>
+void serialize(Archive& ar, string& s, unsigned /* version */) {
+  auto size = s.size();
+  ar& size;
+  if (Archive::is_loading::value) { s.resize(size); }
+  ar& serialization::make_array(s.data(), size);
+}
+}
+
 namespace histogram {
 
 namespace detail {
@@ -61,9 +72,8 @@ void weight_counter<RealType>::serialize(Archive& ar,
   ar& w2;
 }
 
-template <class Archive, typename Container>
-void serialize(Archive& ar, array_storage<Container>& store,
-               unsigned /* version */) {
+template <class Archive, typename T>
+void serialize(Archive& ar, array_storage<T>& store, unsigned /* version */) {
   ar& store.array_;
 }
 
