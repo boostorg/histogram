@@ -284,7 +284,7 @@ int main() {
     enum { A, B, C };
     std::string a = "A";
     std::string b = "B";
-    std::vector<axis::any_std> axes;
+    boost::container::vector<axis::any_std> axes;
     axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
     axes.push_back(axis::regular<double, axis::transform::log>(
         2, 1, 10, "regular2", axis::uoflow::off));
@@ -318,7 +318,7 @@ int main() {
   // axis::any equal_comparable
   {
     enum { A, B, C };
-    std::vector<axis::any_std> axes;
+    boost::container::vector<axis::any_std> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
     axes.push_back(axis::regular<double, axis::transform::pow>(
         2, 1, 4, "", axis::uoflow::on, 0.5));
@@ -330,8 +330,8 @@ int main() {
       BOOST_TEST(!(a == axis::any_std()));
       BOOST_TEST_EQ(a, axis::any_std(a));
     }
-    BOOST_TEST_NOT(axes == std::vector<axis::any_std>());
-    BOOST_TEST(axes == std::vector<axis::any_std>(axes));
+    BOOST_TEST_NOT(axes == boost::container::vector<axis::any_std>());
+    BOOST_TEST(axes == boost::container::vector<axis::any_std>(axes));
   }
 
   // axis::any value_to_index_failure
@@ -346,20 +346,20 @@ int main() {
   // sequence equality
   {
     enum { A, B, C };
-    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>,
+    boost::container::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>,
                           axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{A, B, C}};
 
-    std::vector<
+    boost::container::vector<
         axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{{A, B, C}}};
 
-    std::vector<axis::any<axis::regular<>, axis::variable<>>> std_vector3 = {
+    boost::container::vector<axis::any<axis::regular<>, axis::variable<>>> std_vector3 = {
         axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
 
-    std::vector<axis::any<axis::variable<>, axis::regular<>>> std_vector4 = {
+    boost::container::vector<axis::any<axis::variable<>, axis::regular<>>> std_vector4 = {
         axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1}};
 
     BOOST_TEST(detail::axes_equal(std_vector1, std_vector2));
@@ -387,12 +387,12 @@ int main() {
   // sequence assign
   {
     enum { A, B, C, D };
-    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>,
+    boost::container::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>,
                           axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{A, B, C}};
 
-    std::vector<
+    boost::container::vector<
         axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -2, 2}, axis::variable<>{-2, 0, 2},
                        axis::category<>{A, B}};
