@@ -270,7 +270,7 @@ private:
   mutable detail::index_cache index_cache_;
 
   std::size_t size_from_axes() const noexcept {
-    detail::field_count_visitor v;
+    detail::field_counter v;
     for_each_axis(v);
     return v.value;
   }
@@ -424,9 +424,9 @@ private:
 
   template <typename H>
   void reduce_impl(H& h, const std::vector<bool>& b) const {
-    detail::shape_vector_visitor v(dim());
-    for_each_axis(v);
-    detail::index_mapper m(v.shapes, b);
+    std::vector<unsigned> shape(dim());
+    for_each_axis(detail::shape_collector(shape.begin()));
+    detail::index_mapper m(shape, b);
     do { h.storage_.add(m.second, storage_[m.first]); } while (m.next());
   }
 

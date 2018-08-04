@@ -230,7 +230,9 @@ public:
   template <typename Unary>
   void for_each_axis(Unary&& unary) const {
     for (const auto& a : axes_) {
-      apply_visitor(detail::unary_visitor<Unary>(unary), a);
+      apply_visitor(
+          detail::unary_adaptor_visitor<Unary>(std::forward<Unary>(unary)),
+          a);
     }
   }
 
@@ -269,7 +271,7 @@ private:
   mutable detail::index_cache index_cache_;
 
   std::size_t size_from_axes() const noexcept {
-    detail::field_count_visitor v;
+    detail::field_counter v;
     for_each_axis(v);
     return v.value;
   }
