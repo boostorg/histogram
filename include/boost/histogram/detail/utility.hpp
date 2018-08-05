@@ -7,37 +7,13 @@
 #ifndef _BOOST_HISTOGRAM_DETAIL_UTILITY_HPP_
 #define _BOOST_HISTOGRAM_DETAIL_UTILITY_HPP_
 
-#include <algorithm>
 #include <boost/assert.hpp>
-#include <boost/config.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
-#include <boost/type_index.hpp>
-#include <boost/utility/string_view.hpp>
-#include <memory>
-#include <ostream>
-#include <stdexcept>
 #include <type_traits>
-#include <vector>
 
 namespace boost {
 namespace histogram {
 namespace detail {
-
-// two_pi can be found in boost/math, but it is defined here to reduce deps
-constexpr double two_pi = 6.283185307179586;
-
-inline void escape(std::ostream& os, const string_view s) {
-  os << '\'';
-  for (auto sit = s.begin(); sit != s.end(); ++sit) {
-    if (*sit == '\'' && (sit == s.begin() || *(sit - 1) != '\\')) {
-      os << "\\\'";
-    } else {
-      os << *sit;
-    }
-  }
-  os << '\'';
-}
 
 // the following is highly optimized code that runs in a hot loop;
 // please measure the performance impact of changes
@@ -64,23 +40,6 @@ indirect_int_cast(T&&) noexcept {
   // side-effect of TMP. It must be valid at compile-time.
   BOOST_ASSERT_MSG(false, "bin argument not convertible to int");
   return 0;
-}
-
-template <typename S, typename T>
-void fill_storage(S& s, std::size_t idx, weight<T>&& w) {
-  s.add(idx, w);
-}
-
-template <typename S>
-void fill_storage(S& s, std::size_t idx) {
-  s.increase(idx);
-}
-
-template <typename S>
-auto storage_get(const S& s, std::size_t idx, bool error) ->
-    typename S::const_reference {
-  if (error) throw std::out_of_range("bin index out of range");
-  return s[idx];
 }
 
 } // namespace detail

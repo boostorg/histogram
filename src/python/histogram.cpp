@@ -5,10 +5,11 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/histogram/detail/cat.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
+#include <boost/mp11.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -23,14 +24,20 @@ namespace np = boost::python::numpy;
 #include <memory>
 
 #ifndef BOOST_HISTOGRAM_AXIS_LIMIT
-#define BOOST_HISTOGRAM_AXIS_LIMIT 32
+#define BOOST_HISTOGRAM_AXIS_LIMIT 16
 #endif
 
-namespace mpl = boost::mpl;
 namespace bh = boost::histogram;
 namespace bp = boost::python;
+namespace mp11 = boost::mp11;
 
-using pyhistogram = bh::dynamic_histogram<>;
+class pyhistogram : public bh::histogram<> {
+  using base_type = bh::histogram<>;
+
+public:
+  using base_type::base_type;
+  using iterator = bh::histogram<>::const_iterator;
+};
 
 #ifdef HAVE_NUMPY
 namespace boost {
@@ -161,7 +168,7 @@ bp::object histogram_init(bp::tuple args, bp::dict kwargs) {
   for (unsigned i = 0; i < dim; ++i) {
     bp::object pa = args[i + 1];
     bool success = false;
-    boost::mp11::mp_for_each<pyhistogram::any_axis_type::types>(
+    boost::mp11::mp_for_each<bh::axis::types>(
         axes_appender(pa, axes, success));
     if (!success) {
       std::string msg = "require an axis object, got ";
@@ -170,7 +177,7 @@ bp::object histogram_init(bp::tuple args, bp::dict kwargs) {
       bp::throw_error_already_set();
     }
   }
-  pyhistogram h(axes.begin(), axes.end());
+  pyhistogram h(axes, typename pyhistogram::storage_type());
   return self.attr("__init__")(std::move(h));
 }
 

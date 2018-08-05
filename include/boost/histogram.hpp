@@ -9,9 +9,8 @@
 
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/types.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
-#include <boost/histogram/static_histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>

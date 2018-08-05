@@ -84,7 +84,7 @@ bp::object variable_init(bp::tuple args, bp::dict kwargs) {
   }
 
   boost::string_view label;
-  auto uo = bha::uoflow::on;
+  auto uo = bha::uoflow_type::on;
   while (bp::len(kwargs) > 0) {
     bp::tuple kv = kwargs.popitem();
     const char* key_cstr = bp::extract<const char*>(kv[0]);
@@ -93,7 +93,7 @@ bp::object variable_init(bp::tuple args, bp::dict kwargs) {
     if (k == "label")
       label = boost::string_view(bp::extract<const char*>(v), bp::len(v));
     else if (k == "uoflow") {
-      if (!bp::extract<bool>(v)) uo = bha::uoflow::off;
+      if (!bp::extract<bool>(v)) uo = bha::uoflow_type::off;
     } else {
       std::stringstream s;
       s << "keyword " << k << " not recognized";
@@ -227,22 +227,22 @@ struct axis_suite : public bp::def_visitor<axis_suite<T>> {
 };
 
 template <typename Transform>
-bha::regular<double, Transform>* regular_init(unsigned bin, double lower,
-                                              double upper, bp::str pylabel,
-                                              bool with_uoflow) {
-  const auto uo = with_uoflow ? bha::uoflow::on : bha::uoflow::off;
-  return new bha::regular<double, Transform>(
+bha::regular<Transform>* regular_init(unsigned bin, double lower,
+                                      double upper, bp::str pylabel,
+                                      bool with_uoflow) {
+  const auto uo = with_uoflow ? bha::uoflow_type::on : bha::uoflow_type::off;
+  return new bha::regular<Transform>(
       bin, lower, upper, {bp::extract<const char*>(pylabel)(),
                           static_cast<std::size_t>(bp::len(pylabel))},
       uo);
 }
 
-bha::regular<double, bha::transform::pow>* regular_pow_init(
+bha::regular<bha::transform::pow>* regular_pow_init(
     unsigned bin, double lower, double upper, double power, bp::str pylabel,
     bool with_uoflow) {
   using namespace ::boost::python;
-  const auto uo = with_uoflow ? bha::uoflow::on : bha::uoflow::off;
-  return new bha::regular<double, bha::transform::pow>(
+  const auto uo = with_uoflow ? bha::uoflow_type::on : bha::uoflow_type::off;
+  return new bha::regular<bha::transform::pow>(
       bin, lower, upper, {extract<const char*>(pylabel)(),
                           static_cast<std::size_t>(bp::len(pylabel))},
       uo, power);
@@ -251,7 +251,7 @@ bha::regular<double, bha::transform::pow>* regular_pow_init(
 bha::integer<>* integer_init(int lower, int upper, bp::str pylabel,
                              bool with_uoflow) {
   using namespace ::boost::python;
-  const auto uo = with_uoflow ? bha::uoflow::on : bha::uoflow::off;
+  const auto uo = with_uoflow ? bha::uoflow_type::on : bha::uoflow_type::off;
   return new bha::integer<>(lower, upper,
                             {extract<const char*>(pylabel)(),
                              static_cast<std::size_t>(bp::len(pylabel))},
@@ -281,7 +281,7 @@ void register_axis_types() {
       .def(axis_suite<bha::regular<>>());
 
 #define BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(x)                         \
-  class_<bha::regular<double, bha::transform::x>>(                      \
+  class_<bha::regular<bha::transform::x>>(                              \
       "regular_" #x,                                                    \
       "Axis for real-valued data and bins of equal width in " #x        \
       "-space."                                                         \
@@ -292,13 +292,13 @@ void register_axis_types() {
                             default_call_policies(),                    \
                             (arg("bin"), arg("lower"), arg("upper"),    \
                              arg("label") = "", arg("uoflow") = true))) \
-      .def(axis_suite<bha::regular<double, bha::transform::x>>())
+      .def(axis_suite<bha::regular<bha::transform::x>>())
 
   BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(log);
   BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(sqrt);
   // BOOST_HISTOGRAM_PYTHON_REGULAR_CLASS(cos);
 
-  class_<bha::regular<double, bha::transform::pow>>(
+  class_<bha::regular<bha::transform::pow>>(
       "regular_pow",
       "Axis for real-valued data and bins of equal width in power-space."
       "\nBinning is a O(1) operation.",
@@ -308,7 +308,7 @@ void register_axis_types() {
                regular_pow_init, default_call_policies(),
                (arg("bin"), arg("lower"), arg("upper"), arg("power"),
                 arg("label") = "", arg("uoflow") = true)))
-      .def(axis_suite<bha::regular<double, bha::transform::pow>>());
+      .def(axis_suite<bha::regular<bha::transform::pow>>());
 
   class_<bha::circular<>>(
       "circular",
@@ -319,7 +319,7 @@ void register_axis_types() {
       no_init)
       .def(init<unsigned, double, double, const char*>(
           (arg("self"), arg("bin"), arg("phase") = 0.0,
-           arg("perimeter") = bh::detail::two_pi, arg("label") = "")))
+           arg("perimeter") = bha::circular<>::two_pi, arg("label") = "")))
       .def(axis_suite<bha::circular<>>());
 
   class_<bha::variable<>>(

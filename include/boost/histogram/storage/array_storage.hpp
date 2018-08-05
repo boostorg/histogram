@@ -60,17 +60,17 @@ public:
     return *this;
   }
 
-  array_storage() : array_storage(0) {}
+  explicit array_storage(const allocator_type& a = allocator_type())
+      : array_(a) {}
 
-  array_storage(const allocator_type& a) : array_storage(0, a) {}
+  allocator_type get_allocator() const { return array_.get_allocator(); }
 
-  array_storage(std::size_t s) : array_storage(s, allocator_type()) {}
-
-  array_storage(std::size_t s, const allocator_type& a)
-      : array_(s, element_type(0), a) {}
-
-  allocator_type get_allocator() const noexcept {
-    return array_.get_allocator();
+  void reset(std::size_t s) {
+    if (s == size()) {
+      std::fill(array_.begin(), array_.end(), element_type(0));
+    } else {
+      array_ = array_type(s, element_type(0), array_.get_allocator());
+    }
   }
 
   std::size_t size() const noexcept { return array_.size(); }

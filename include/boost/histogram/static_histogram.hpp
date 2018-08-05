@@ -11,8 +11,6 @@
 #include <boost/histogram/arithmetic_operators.hpp>
 #include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/detail/axis_visitor.hpp>
-#include <boost/histogram/detail/index_cache.hpp>
-#include <boost/histogram/detail/index_mapper.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
@@ -35,16 +33,16 @@ namespace boost {
 namespace histogram {
 
 template <typename Axes, typename Storage>
-class histogram<static_tag, Axes, Storage> {
+class histogram {
   using axes_size = mp11::mp_size<Axes>;
   static_assert(axes_size::value > 0, "at least one axis required");
 
 public:
   using axes_type = mp11::mp_rename<Axes, std::tuple>;
-  using element_type = typename Storage::element_type;
-  using const_reference = typename Storage::const_reference;
+  using storage_type = Storage;
+  using element_type = typename storage_type::element_type;
+  using const_reference = typename storage_type::const_reference;
   using const_iterator = iterator_over<histogram>;
-  using iterator = const_iterator;
 
   histogram() = default;
   histogram(const histogram& rhs) = default;
@@ -52,82 +50,34 @@ public:
   histogram& operator=(const histogram& rhs) = default;
   histogram& operator=(histogram&& rhs) = default;
 
-  template <typename Axis0, typename... Axis,
-            typename = detail::requires_axis<Axis0>>
-  explicit histogram(Axis0&& axis0, Axis&&... axis)
-      : axes_(std::forward<Axis0>(axis0), std::forward<Axis>(axis)...) {
-    storage_ = Storage(size_from_axes());
-    index_cache_.reset(*this);
-  }
-
-  explicit histogram(axes_type&& axes) : axes_(std::move(axes)) {
-    storage_ = Storage(size_from_axes());
-    index_cache_.reset(*this);
-  }
-
-  template <typename S>
-  explicit histogram(const static_histogram<Axes, S>& rhs)
-      : axes_(rhs.axes_), storage_(rhs.storage_) {
-    index_cache_.reset(*this);
-  }
-
-  template <typename S>
-  histogram& operator=(const static_histogram<Axes, S>& rhs) {
-    if (static_cast<const void*>(this) != static_cast<const void*>(&rhs)) {
-      axes_ = rhs.axes_;
-      storage_ = rhs.storage_;
-      index_cache_.reset(*this);
-    }
-    return *this;
-  }
-
-  template <typename A, typename S>
-  explicit histogram(const dynamic_histogram<A, S>& rhs)
-      : storage_(rhs.storage_) {
+  template <typename... Ts>
+  explicit histogram(const histogram<Ts...>& rhs) : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
-    index_cache_.reset(*this);
   }
 
-  template <typename A, typename S>
-  histogram& operator=(const dynamic_histogram<A, S>& rhs) {
-    if (static_cast<const void*>(this) != static_cast<const void*>(&rhs)) {
-      detail::axes_assign(axes_, rhs.axes_);
-      storage_ = rhs.storage_;
-      index_cache_.reset(*this);
-    }
+  template <typename... Ts>
+  histogram& operator=(const histogram<Ts...>& rhs) {
+    storage_ = rhs.storage_;
+    detail::axes_assign(axes_, rhs.axes_);
     return *this;
   }
 
-  template <typename A, typename S>
-  bool operator==(const static_histogram<A, S>&) const noexcept {
-    return false;
-  }
+  template <typename T, typename S>
+  histogram(T&& axes, S&& storage)
+      : axes_(std::forward<T>(axes)), storage_(std::forward<S>(storage)) {}
 
-  template <typename S>
-  bool operator==(const static_histogram<Axes, S>& rhs) const noexcept {
+  template <typename... Ts>
+  bool operator==(const histogram<Ts...>& rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <typename A, typename S>
-  bool operator==(const dynamic_histogram<A, S>& rhs) const noexcept {
-    return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
-  }
-
-  template <typename T, typename A, typename S>
-  bool operator!=(const histogram<T, A, S>& rhs) const noexcept {
+  template <typename... Ts>
+  bool operator!=(const histogram<Ts...>& rhs) const noexcept {
     return !operator==(rhs);
   }
 
-  template <typename S>
-  histogram& operator+=(const static_histogram<Axes, S>& rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_))
-      throw std::invalid_argument("axes of histograms differ");
-    storage_ += rhs.storage_;
-    return *this;
-  }
-
-  template <typename A, typename S>
-  histogram& operator+=(const dynamic_histogram<A, S>& rhs) {
+  template <typename... Ts>
+  histogram& operator+=(const histogram<Ts...>& rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_))
       throw std::invalid_argument("axes of histograms differ");
     storage_ += rhs.storage_;
@@ -208,7 +158,7 @@ public:
   std::size_t size() const noexcept { return storage_.size(); }
 
   /// Reset bin counters to zero
-  void reset() { storage_ = Storage(size_from_axes()); }
+  void reset() { storage_ = storage_type(storage_.size(), storage_.alloc()); }
 
   /// Get N-th axis (const version)
   template <int N>
@@ -267,7 +217,6 @@ public:
 private:
   axes_type axes_;
   Storage storage_;
-  mutable detail::index_cache index_cache_;
 
   std::size_t size_from_axes() const noexcept {
     detail::field_counter v;

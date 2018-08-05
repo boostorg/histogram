@@ -54,12 +54,20 @@ class adaptive_storage;
 template <typename T, typename Allocator = std::allocator<T>>
 class array_storage;
 
+namespace {
 template <typename... Ts>
-using dynamic_axes = std::vector<axis::any<Ts...>>;
+using rebind =
+    typename std::allocator_traits<typename mp11::mp_front<mp11::mp_list<
+        Ts...>>::allocator_type>::template rebind_alloc<axis::any<Ts...>>;
+}
+
+template <typename... Ts>
+using dynamic_axes = std::vector<axis::any<Ts...>, rebind<Ts...>>;
 template <typename... Ts>
 using static_axes = std::tuple<Ts...>;
 
-template <class Axes, class Storage>
+template <class Axes = std::vector<axis::any_std>,
+          class Storage = adaptive_storage<>>
 class histogram;
 
 } // namespace histogram

@@ -34,8 +34,9 @@ public:
   unsigned dim() const noexcept { return histogram_.dim(); }
 
   int idx(unsigned dim = 0) const noexcept {
-    histogram_.index_cache_(idx_);
-    return histogram_.index_cache_[dim];
+    // histogram_.index_cache_(idx_);
+    // return histogram_.index_cache_[dim];
+    return dim;
   }
 
   auto bin() const

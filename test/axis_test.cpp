@@ -5,16 +5,17 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/detail/axes.hpp>
-#include <boost/histogram/detail/axis_visitor.hpp>
 #include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <limits>
 #include <sstream>
 #include <string>
+#include "utility.hpp"
 
 using namespace boost::histogram;
 
@@ -420,6 +421,48 @@ int main() {
 
     detail::axes_assign(tuple2, tuple1);
     BOOST_TEST(detail::axes_equal(tuple2, tuple1));
+  }
+
+  // sub_axes
+  {
+    using ra = axis::regular<>;
+    using ia = axis::integer<>;
+    using ca = axis::category<>;
+    using T = static_axes<ra, ia, ca>;
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<detail::sub_axes<T, i0>, static_axes<ra>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<detail::sub_axes<T, i1>, static_axes<ia>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<detail::sub_axes<T, i2>, static_axes<ca>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::sub_axes<T, i0, i1, i2>,
+                                        static_axes<ra, ia, ca>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::sub_axes<T, i2, i0, i1>,
+                                        static_axes<ra, ia, ca>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<detail::sub_axes<T, i0, i1>, static_axes<ra, ia>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<detail::sub_axes<T, i0, i2>, static_axes<ra, ca>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<detail::sub_axes<T, i1, i0>, static_axes<ra, ia>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<detail::sub_axes<T, i2, i1>, static_axes<ia, ca>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::sub_axes<T, i1, i2, i2, i1>,
+                                        static_axes<ia, ca>>));
+  }
+
+  // make_sub_tuple
+  {
+    using ia = axis::integer<>;
+    using T = static_axes<ia, ia, ia>;
+    auto axes = T(ia(0, 1), ia(1, 2), ia(2, 3));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, i1(), i2()),
+                  (static_axes<ia, ia>(ia(1, 2), ia(2, 3))));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, i1(), i0()),
+                  (static_axes<ia, ia>(ia(0, 1), ia(1, 2))));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, i1(), i1()),
+                  (static_axes<ia>(ia(1, 2))));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, i0(), i1(), i2()), axes);
   }
 
   return boost::report_errors();

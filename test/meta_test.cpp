@@ -148,24 +148,6 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
   }
 
-  // selection
-  {
-    using T = std::tuple<char, int, long>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<selection<T, i0>, std::tuple<char>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<selection<T, i1>, std::tuple<int>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<selection<T, i2>, std::tuple<long>>));
-    BOOST_TEST_TRAIT_TRUE((
-        std::is_same<selection<T, i0, i1, i2>, std::tuple<char, int, long>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<selection<T, i0, i1>, std::tuple<char, int>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<selection<T, i0, i2>, std::tuple<char, long>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<selection<T, i1, i0>, std::tuple<int, char>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<selection<T, i1, i2>, std::tuple<int, long>>));
-  }
-
   // unique_sorted
   {
     using input = mp11::mp_list_c<int, 3, 3, 1, 2, 1, 2>;
@@ -173,15 +155,6 @@ int main() {
     using expected = mp11::mp_list_c<int, 1, 2, 3>;
 
     BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
-  }
-
-  // make_sub_tuple
-  {
-    std::tuple<int, long, char> t(1, 2, 3);
-    auto result = make_sub_tuple<decltype(t), i1, i2>(t);
-    auto expected = std::tuple<long, char>(2, 3);
-
-    BOOST_TEST_EQ(result, expected);
   }
 
   return boost::report_errors();
