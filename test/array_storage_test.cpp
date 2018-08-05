@@ -5,11 +5,8 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <array>
-#include <boost/array.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
