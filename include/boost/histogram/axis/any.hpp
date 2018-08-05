@@ -124,6 +124,22 @@ struct assign_visitor : public boost::static_visitor<void> {
   }
 };
 
+struct get_label_visitor : public boost::static_visitor<boost::string_view> {
+  template <typename T>
+  boost::string_view operator()(const T& t) const {
+    return t.label();
+  }
+};
+
+struct set_label_visitor : public boost::static_visitor<void> {
+  boost::string_view view;
+  set_label_visitor(boost::string_view v) : view(v) {}
+  template <typename T>
+  void operator()(T& t) const {
+    t.label(view);
+  }
+};
+
 } // namespace detail
 
 /// Polymorphic axis type
@@ -182,10 +198,12 @@ public:
   }
 
   string_view label() const {
-    return static_cast<const base&>(*this).label();
+    return boost::apply_visitor(detail::get_label_visitor(), *this);
   }
 
-  void label(const string_view x) { static_cast<base&>(*this).label(x); }
+  void label(const string_view x) {
+    boost::apply_visitor(detail::set_label_visitor(x), *this);
+  }
 
   // this only works for axes with compatible bin type
   // and will throw a runtime_error otherwise
