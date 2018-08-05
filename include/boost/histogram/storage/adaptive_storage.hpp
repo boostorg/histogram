@@ -453,12 +453,6 @@ public:
     detail::apply(detail::adder(), buffer_, i, x);
   }
 
-  template <typename T>
-  void add(std::size_t i, const detail::weight_type<T>& x) {
-    BOOST_ASSERT(i < size());
-    detail::apply(detail::adder(), buffer_, i, static_cast<double>(x.value));
-  }
-
   const_reference operator[](std::size_t i) const {
     return detail::apply(detail::getter(), buffer_, i);
   }

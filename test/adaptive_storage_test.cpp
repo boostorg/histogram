@@ -431,7 +431,7 @@ int main() {
       BOOST_TEST_EQ(c[0].value(), x);
       BOOST_TEST_EQ(c[0].variance(), x);
       auto d = prepare<void>(1);
-      d.add(0, weight(a[0].value()));
+      d.add(0, weight(x));
       BOOST_TEST_EQ(d[0].value(), x);
       BOOST_TEST_EQ(d[0].variance(), x * x);
     }
