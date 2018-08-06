@@ -31,12 +31,17 @@ namespace bh = boost::histogram;
 namespace bp = boost::python;
 namespace mp11 = boost::mp11;
 
+using pyhistogram = bh::histogram<>;
+
 class pyhistogram : public bh::histogram<> {
   using base_type = bh::histogram<>;
 
 public:
   using base_type::base_type;
   using iterator = bh::histogram<>::const_iterator;
+
+  // pyhistogram(const base_type& h) : base_type(h) {}
+  // pyhistogram(base_type&& h) : base_type(std::move(h)) {}
 };
 
 #ifdef HAVE_NUMPY
@@ -443,4 +448,7 @@ void register_histogram() {
       .def(bp::self + double())
       .def(double() + bp::self)
       .def("__repr__", element_repr);
+
+  // bp::implicitly_convertible<pyhistogram, bh::histogram<>>();
+  // bp::implicitly_convertible<bh::histogram<>, pyhistogram>();
 }

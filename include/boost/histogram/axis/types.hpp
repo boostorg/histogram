@@ -214,7 +214,7 @@ public:
   using bin_type = interval_view<circular>;
 
   // two_pi can be found in boost/math, but it is defined here to reduce deps
-  static constexpr value_type two_pi = 6.283185307179586;
+  static value_type two_pi() { return 6.283185307179586; }
 
   /** Constructor for n bins with an optional offset.
    *
@@ -224,7 +224,7 @@ public:
    * \param label     description of the axis.
    */
   explicit circular(unsigned n, value_type phase = 0.0,
-                    value_type perimeter = two_pi, string_view label = {},
+                    value_type perimeter = two_pi(), string_view label = {},
                     const allocator_type& a = allocator_type())
       : base_type(n, uoflow_type::off, label, a),
         phase_(phase),

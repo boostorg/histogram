@@ -157,7 +157,8 @@ public:
   void operator()(const Ts&... ts) {
     // case with one argument needs special treatment, specialized below
     detail::dimension_check(axes_, mp11::mp_size_t<sizeof...(Ts)>());
-    auto index = detail::args_to_index(axes_, ts...);
+    auto index = detail::optional_index();
+    detail::args_to_index<0>(index, axes_, ts...);
     if (index) storage_.increase(*index);
   }
 
@@ -171,7 +172,8 @@ public:
   void operator()(detail::weight_type<T>&& w, const Ts&... ts) {
     // case with one argument is ambiguous, is specialized below
     detail::dimension_check(axes_, mp11::mp_size_t<sizeof...(Ts)>());
-    auto index = detail::args_to_index(axes_, ts...);
+    auto index = detail::optional_index();
+    detail::args_to_index<0>(index, axes_, ts...);
     if (index) storage_.add(*index, w);
   }
 
@@ -185,15 +187,16 @@ public:
   const_reference at(const Ts&... ts) const {
     // case with one argument is ambiguous, is specialized below
     detail::dimension_check(axes_, mp11::mp_size_t<sizeof...(Ts)>());
-    auto index = detail::indices_to_index(axes_, static_cast<int>(ts)...);
+    auto index = detail::optional_index();
+    detail::indices_to_index<0>(index, axes_, static_cast<int>(ts)...);
     BOOST_ASSERT_MSG(index, "indices out of bounds");
     return storage_[*index];
   }
 
   template <typename T>
-  const_reference at(const T&) const {
-    // check whether we need to unpack argument
-    return storage_[0];
+  const_reference at(const T& t) const {
+    // check whether we need to unpack argument;
+    return storage_[at_impl(detail::classify_container<T>(), t)];
   }
 
   /// Access bin counter at index

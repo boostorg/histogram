@@ -80,7 +80,7 @@ template <typename T, typename A>
 std::ostream& operator<<(std::ostream& os, const circular<T, A>& a) {
   os << "circular(" << a.size();
   if (a.phase() != 0.0) { os << ", phase=" << a.phase(); }
-  if (a.perimeter() != circular<T, A>::two_pi) {
+  if (a.perimeter() != circular<T, A>::two_pi()) {
     os << ", perimeter=" << a.perimeter();
   }
   if (!a.label().empty()) {

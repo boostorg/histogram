@@ -319,7 +319,7 @@ void register_axis_types() {
       no_init)
       .def(init<unsigned, double, double, const char*>(
           (arg("self"), arg("bin"), arg("phase") = 0.0,
-           arg("perimeter") = bha::circular<>::two_pi, arg("label") = "")))
+           arg("perimeter") = bha::circular<>::two_pi(), arg("label") = "")))
       .def(axis_suite<bha::circular<>>());
 
   class_<bha::variable<>>(

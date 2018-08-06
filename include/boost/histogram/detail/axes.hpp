@@ -8,8 +8,10 @@
 #define _BOOST_HISTOGRAM_DETAIL_AXES_HPP_
 
 #include <algorithm>
+#include <boost/assert.hpp>
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
 #include <boost/variant/apply_visitor.hpp>
@@ -323,33 +325,88 @@ sub_axes<dynamic_axes<Ts...>, Ns...> make_sub_axes(
 
 struct optional_index {
   std::size_t idx = 0;
-  std::size_t shape = 0;
-  operator bool() const { return shape > 0; }
+  std::size_t stride = 0;
+  operator bool() const { return stride > 0; }
   std::size_t operator*() const { return idx; }
 };
 
-template <typename... Ts, typename... Us>
-optional_index args_to_index(const static_axes<Ts...>&, const Us&...) {
-  auto index = optional_index();
-  return index;
+// the following is highly optimized code that runs in a hot loop;
+// please measure the performance impact of changes
+inline void linearize(optional_index& out, const int axis_size,
+                      const int axis_shape, int j) noexcept {
+  BOOST_ASSERT_MSG(out.stride == 0 || (-1 <= j && j <= axis_size),
+                   "index must be in bounds for this algorithm");
+  j += (j < 0) * (axis_size + 2); // wrap around if j < 0
+  out.idx += j * out.stride;
+  out.stride *= (j < axis_shape) * axis_shape; // set to 0, if j is invalid
 }
 
-template <typename... Ts, typename... Us>
-optional_index args_to_index(const dynamic_axes<Ts...>&, const Us&...) {
-  auto index = optional_index();
-  return index;
+template <unsigned D, typename Axes>
+void indices_to_index(optional_index&, const Axes&) noexcept {}
+
+template <unsigned D, typename Axes, typename... Us>
+void indices_to_index(optional_index& idx, const Axes& axes, const int j,
+                      const Us... us) {
+  const auto& a = ::boost::histogram::detail::get<D>(axes);
+  const auto a_size = a.size();
+  const auto a_shape = a.shape();
+  idx.stride *= (-1 <= j && j <= a_size); // set to 0, if j is invalid
+  linearize(idx, a_size, a_shape, j);
+  indices_to_index<(D + 1)>(idx, axes, us...);
 }
 
-template <typename... Ts, typename... Us>
-optional_index indices_to_index(const static_axes<Ts...>&, const Us&...) {
-  auto index = optional_index();
-  return index;
+template <unsigned D, typename... Ts, typename... Us>
+void args_to_index(optional_index&, const static_axes<Ts...>&) noexcept {}
+
+template <unsigned D, typename... Ts, typename U, typename... Us>
+void args_to_index(optional_index& idx, const static_axes<Ts...>& axes,
+                   const U& u, const Us&... us) {
+  const auto a_size = std::get<D>(axes).size();
+  const auto a_shape = std::get<D>(axes).shape();
+  const int j = std::get<D>(axes).index(u);
+  linearize(idx, a_size, a_shape, j);
+  args_to_index<(D + 1)>(idx, axes, us...);
 }
 
-template <typename... Ts, typename... Us>
-optional_index indices_to_index(const dynamic_axes<Ts...>&, const Us&...) {
-  auto index = optional_index();
-  return index;
+namespace {
+template <typename T>
+struct args_to_index_visitor : public boost::static_visitor<void> {
+  optional_index& idx;
+  const T& val;
+  args_to_index_visitor(optional_index& i, const T& v) : idx(i), val(v) {}
+  template <typename Axis>
+  void operator()(const Axis& a) const {
+    impl(std::is_convertible<T, typename Axis::value_type>(), a);
+  }
+
+  template <typename Axis>
+  void impl(std::true_type, const Axis& a) const {
+    const auto a_size = a.size();
+    const auto a_shape = a.shape();
+    const auto j = a.index(static_cast<typename Axis::value_type>(val));
+    linearize(idx, a_size, a_shape, j);
+  }
+
+  template <typename Axis>
+  void impl(std::false_type, const Axis&) const {
+    throw std::invalid_argument(detail::cat(
+        "axis ", boost::typeindex::type_id<Axis>().pretty_name(),
+        ": argument ", boost::typeindex::type_id<T>().pretty_name(),
+        " not convertible to value_type ",
+        boost::typeindex::type_id<typename Axis::value_type>()
+            .pretty_name()));
+  }
+};
+}
+
+template <unsigned D, typename... Ts>
+void args_to_index(optional_index&, const dynamic_axes<Ts...>&) {}
+
+template <unsigned D, typename... Ts, typename U, typename... Us>
+void args_to_index(optional_index& idx, const dynamic_axes<Ts...>& axes,
+                   const U& u, const Us&... us) {
+  boost::apply_visitor(args_to_index_visitor<rm_cv_ref<U>>(idx, u), axes[D]);
+  args_to_index<(D + 1)>(idx, axes, us...);
 }
 
 } // namespace detail
