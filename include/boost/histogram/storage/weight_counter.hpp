@@ -57,7 +57,7 @@ public:
   }
 
   template <typename T>
-  weight_counter& operator+=(const detail::weight<T>& rhs) {
+  weight_counter& operator+=(const detail::weight_type<T>& rhs) {
     const auto x = static_cast<RealType>(rhs.value);
     w += x;
     w2 += x * x;

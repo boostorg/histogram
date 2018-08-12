@@ -7,19 +7,14 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
-#include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
 #include <memory>
-#include <string>
+#include <tuple>
 #include <type_traits>
+#include <vector>
 
 namespace boost {
 namespace histogram {
-
-template <typename Alloc = std::allocator<char>>
-class adaptive_storage;
-template <typename T>
-class array_storage;
 
 namespace axis {
 
@@ -30,25 +25,23 @@ struct sqrt;
 struct pow;
 } // namespace transform
 
-template <typename RealType = double,
-          typename Transform = transform::identity>
+template <typename Transform = transform::identity, typename T = double,
+          typename Allocator = std::allocator<char>>
 class regular;
-template <typename RealType = double>
+template <typename T = double, typename Allocator = std::allocator<char>>
 class circular;
-template <typename RealType = double>
+template <typename T = double, typename Allocator = std::allocator<char>>
 class variable;
-template <typename IntType = int>
+template <typename T = int, typename Allocator = std::allocator<char>>
 class integer;
-template <typename T = int>
+template <typename T = int, typename Allocator = std::allocator<char>>
 class category;
 
-using types = mp11::mp_list<axis::regular<double, axis::transform::identity>,
-                            axis::regular<double, axis::transform::log>,
-                            axis::regular<double, axis::transform::sqrt>,
-                            axis::regular<double, axis::transform::pow>,
-                            axis::circular<double>, axis::variable<double>,
-                            axis::integer<int>, axis::category<int>,
-                            axis::category<std::string>>;
+using types = mp11::mp_list<
+    axis::regular<axis::transform::identity>,
+    axis::regular<axis::transform::log>, axis::regular<axis::transform::sqrt>,
+    axis::regular<axis::transform::pow>, axis::circular<>, axis::variable<>,
+    axis::integer<>, axis::category<>, axis::category<std::string>>;
 
 template <typename... Ts>
 class any;
@@ -56,16 +49,26 @@ using any_std = mp11::mp_rename<types, any>;
 
 } // namespace axis
 
-struct dynamic_tag {};
-struct static_tag {};
-template <class Type, class Axes, class Storage = adaptive_storage<>>
+template <typename Allocator = std::allocator<char>>
+class adaptive_storage;
+template <typename T, typename Allocator = std::allocator<T>>
+class array_storage;
+
+namespace {
+template <typename... Ts>
+using rebind =
+    typename std::allocator_traits<typename mp11::mp_front<mp11::mp_list<
+        Ts...>>::allocator_type>::template rebind_alloc<axis::any<Ts...>>;
+}
+
+template <typename... Ts>
+using dynamic_axes = std::vector<axis::any<Ts...>, rebind<Ts...>>;
+template <typename... Ts>
+using static_axes = std::tuple<Ts...>;
+
+template <class Axes = std::vector<axis::any_std>,
+          class Storage = adaptive_storage<>>
 class histogram;
-
-template <class Axes = axis::types, class Storage = adaptive_storage<>>
-using dynamic_histogram = histogram<dynamic_tag, Axes, Storage>;
-
-template <class Axes, class Storage = adaptive_storage<>>
-using static_histogram = histogram<static_tag, Axes, Storage>;
 
 } // namespace histogram
 } // namespace boost

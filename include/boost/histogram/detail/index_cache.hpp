@@ -13,70 +13,62 @@
 namespace boost {
 namespace histogram {
 namespace detail {
-struct index_cache {
-  struct dim_t {
-    int idx, size;
-    std::size_t stride;
-  };
+
+struct state_t {
+  unsigned dim;
+  std::size_t idx;
+};
+
+struct dim_t {
+  int idx, size;
+  std::size_t stride;
+};
+
+union block_t {
+  state_t state;
+  dim_t dim;
+};
+
+struct index_cache : public std::unique_ptr<block_t[]> {
+  using ptr_t = std::unique_ptr<block_t[]>;
 
   struct dim_visitor {
     mutable std::size_t stride;
-    mutable dim_t* dims;
+    mutable block_t* b;
     template <typename Axis>
     void operator()(const Axis& a) const noexcept {
-      *dims++ = dim_t{0, a.size(), stride};
+      b->dim = dim_t{0, a.size(), stride};
+      ++b;
       stride *= a.shape();
     }
   };
 
-  unsigned dim_ = 0;
-  std::size_t idx_ = 0;
-  std::unique_ptr<dim_t[]> dims_;
-
-  index_cache() = default;
-  index_cache(index_cache&&) = default;
-  index_cache& operator=(index_cache&&) = default;
-
-  index_cache(const index_cache& o) : dim_(o.dim_), dims_(new dim_t[o.dim_]) {
-    std::copy(o.dims_.get(), o.dims_.get() + dim_, dims_.get());
-  }
-
-  index_cache& operator=(const index_cache& o) {
-    if (this != &o) {
-      if (o.dim_ != dim_) {
-        dim_ = o.dim_;
-        dims_.reset(new dim_t[dim_]);
-      }
-      std::copy(o.dims_.get(), o.dims_.get() + dim_, dims_.get());
-    }
-    return *this;
-  }
-
   template <typename H>
-  void reset(const H& h) {
-    if (h.dim() != dim_) {
-      dim_ = h.dim();
-      dims_.reset(new dim_t[dim_]);
+  void set(const H& h) {
+    if (!(*this) || h.dim() != ptr_t::get()->state.dim) {
+      ptr_t::reset(new block_t[h.dim() + 1]);
+      ptr_t::get()->state.dim = h.dim();
+      ptr_t::get()->state.idx = 0;
     }
-    h.for_each_axis(dim_visitor{1, dims_.get()});
+    h.for_each_axis(dim_visitor{1, ptr_t::get() + 1});
   }
 
-  void operator()(std::size_t idx) {
-    if (idx == idx_) return;
-    idx_ = idx;
-    auto dim_ptr = dims_.get();
-    auto dim = dim_;
-    dim_ptr += dim;
-    while ((--dim_ptr, --dim)) {
-      dim_ptr->idx = idx / dim_ptr->stride;
-      idx -= dim_ptr->idx * dim_ptr->stride;
-      dim_ptr->idx -= (dim_ptr->idx > dim_ptr->size) * (dim_ptr->size + 2);
+  void set_idx(std::size_t idx) {
+    auto& s = ptr_t::get()->state;
+    if (idx == s.idx) return;
+    s.idx = idx;
+    auto d = s.dim;
+    auto b = (ptr_t::get() + 1) + d;
+    while ((--b, --d)) {
+      b->dim.idx = idx / b->dim.stride;
+      idx -= b->dim.idx * b->dim.stride;
+      b->dim.idx -= (b->dim.idx > b->dim.size) * (b->dim.size + 2);
     }
-    dim_ptr->idx = idx;
-    dim_ptr->idx -= (dim_ptr->idx > dim_ptr->size) * (dim_ptr->size + 2);
+    b->dim.idx = idx;
+    b->dim.idx -= (b->dim.idx > b->dim.size) * (b->dim.size + 2);
   }
 
-  int operator[](unsigned dim) const { return dims_[dim].idx; }
+  int get(unsigned d) const { return (ptr_t::get() + 1 + d)->dim.idx; }
 };
 }
 }

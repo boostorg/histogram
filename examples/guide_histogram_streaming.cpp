@@ -12,12 +12,12 @@ int main() {
   enum { A, B, C };
 
   auto h = bh::make_static_histogram(
-      axis::regular<>(2, -1, 1, "regular1", axis::uoflow::off),
-      axis::regular<double, axis::transform::log>(2, 1, 10, "regular2"),
+      axis::regular<>(2, -1, 1, "regular1", axis::uoflow_type::off),
+      axis::regular<axis::transform::log>(2, 1, 10, "regular2"),
       axis::circular<>(4, 0.1, 1.0, "polar"),
-      axis::variable<>({-1, 0, 1}, "variable", axis::uoflow::off),
+      axis::variable<>({-1, 0, 1}, "variable", axis::uoflow_type::off),
       axis::category<>({A, B, C}, "category"),
-      axis::integer<>(-1, 1, "integer", axis::uoflow::off));
+      axis::integer<>(-1, 1, "integer", axis::uoflow_type::off));
 
   std::cout << h << std::endl;
 

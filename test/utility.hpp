@@ -7,8 +7,10 @@
 #ifndef BOOST_HISTOGRAM_TEST_UTILITY_HPP_
 #define BOOST_HISTOGRAM_TEST_UTILITY_HPP_
 
+#include <boost/histogram/histogram.hpp>
 #include <boost/mp11/integral.hpp>
 #include <boost/mp11/tuple.hpp>
+#include <numeric>
 #include <ostream>
 #include <tuple>
 #include <vector>
@@ -43,5 +45,41 @@ ostream& operator<<(ostream& os, const tuple<Ts...>& t) {
   return os;
 }
 } // namespace std
+
+namespace boost {
+namespace histogram {
+template <typename Histogram>
+typename Histogram::element_type sum(const Histogram& h) {
+  return std::accumulate(h.begin(), h.end(), typename Histogram::element_type(0));
+}
+
+struct static_tag {};
+struct dynamic_tag {};
+
+template <typename... Axes>
+auto make(static_tag, Axes&&... axes)
+    -> decltype(make_static_histogram(std::forward<Axes>(axes)...)) {
+  return make_static_histogram(std::forward<Axes>(axes)...);
+}
+
+template <typename... Axes>
+auto make(dynamic_tag, Axes&&... axes)
+    -> decltype(make_dynamic_histogram(std::forward<Axes>(axes)...)) {
+  return make_dynamic_histogram(std::forward<Axes>(axes)...);
+}
+
+template <typename S, typename... Axes>
+auto make_s(static_tag, S&& s, Axes&&... axes)
+    -> decltype(make_static_histogram_with(s, std::forward<Axes>(axes)...)) {
+  return make_static_histogram_with(s, std::forward<Axes>(axes)...);
+}
+
+template <typename S, typename... Axes>
+auto make_s(dynamic_tag, S&& s, Axes&&... axes)
+    -> decltype(make_dynamic_histogram_with(s, std::forward<Axes>(axes)...)) {
+  return make_dynamic_histogram_with(s, std::forward<Axes>(axes)...);
+}
+} // namespace histogram
+} // namespace boost
 
 #endif

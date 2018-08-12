@@ -11,23 +11,23 @@ namespace boost {
 namespace histogram {
 namespace detail {
 template <typename T>
-struct weight {
+struct weight_type {
   T value;
 };
 
 template <typename T>
-struct sample {
+struct sample_type {
   T value;
 };
 } // namespace detail
 
 template <typename T>
-detail::weight<T> weight(T&& t) {
+detail::weight_type<T> weight(T&& t) {
   return {t};
 }
 
 template <typename T>
-detail::sample<T> sample(T&& t) {
+detail::sample_type<T> sample(T&& t) {
   return {t};
 }
 }
