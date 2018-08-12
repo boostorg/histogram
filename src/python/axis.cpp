@@ -146,7 +146,7 @@ bp::str axis_get_label(const T& t) {
 
 template <typename A>
 bp::object axis_getitem(const A& a, int i) {
-  if (i < -1 * a.uoflow() || i >= a.size() + 1 * a.uoflow())
+  if (i < -(a.uoflow() == 2) || i >= (a.size() + int(a.uoflow() > 0)))
     throw std::out_of_range("index out of bounds");
   return bp::make_tuple(a.lower(i), a.lower(i + 1));
 }

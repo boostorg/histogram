@@ -7,6 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_HPP_
 
+#include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/histogram/arithmetic_operators.hpp>
 #include <boost/histogram/detail/axes.hpp>
@@ -18,6 +19,7 @@
 #include <boost/histogram/storage/operators.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/mp11.hpp>
+#include <functional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -213,18 +215,21 @@ public:
     return hr;
   }
 
+  // precondition: range represents sequence of strictly ascending axis indices
   template <typename Iterator, typename U = axes_type,
             typename = detail::requires_dynamic_axes<U>,
             typename = detail::requires_iterator<Iterator>>
   histogram reduce_to(Iterator begin, Iterator end) const {
-    std::set<unsigned> indices(begin, end);
-    BOOST_ASSERT_MSG(*indices.rbegin() < dim(), "index out of range");
+    BOOST_ASSERT_MSG(std::is_sorted(begin, end, std::less_equal<decltype(*begin)>()),
+                     "integer sequence must be strictly ascending");
+    BOOST_ASSERT_MSG(begin == end || static_cast<unsigned>(*(end - 1)) < dim(),
+                     "index out of range");
     auto sub_axes = histogram::axes_type(axes_.get_allocator());
-    sub_axes.reserve(indices.size());
+    sub_axes.reserve(std::distance(begin, end));
     auto b = std::vector<bool>(dim(), false);
-    for (auto k : indices) {
-      sub_axes.push_back(axes_[k]);
-      b[k] = true;
+    for (auto it = begin; it != end; ++it) {
+      sub_axes.push_back(axes_[*it]);
+      b[*it] = true;
     }
     auto hr = histogram(std::move(sub_axes), storage_type(storage_.get_allocator()));
     std::vector<unsigned> shape(dim());

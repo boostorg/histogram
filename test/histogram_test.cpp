@@ -17,6 +17,7 @@
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <sstream>
+#include <stdexcept>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -808,6 +809,14 @@ void run_tests() {
     auto i = {1, 1};
     BOOST_TEST_EQ(h.at(i).variance(), 5);
     BOOST_TEST_EQ(h[i].variance(), 5);
+  }
+
+  // bad bin access
+  {
+    auto h = make(Tag(), axis::integer<>(0, 1), axis::integer<>(0, 1));
+    BOOST_TEST_THROWS(h.at(0, 2), std::out_of_range);
+    BOOST_TEST_THROWS(h.at(std::make_pair(2, 0)), std::out_of_range);
+    BOOST_TEST_THROWS(h.at(std::vector<int>({0, 2})), std::out_of_range);
   }
 
   // pass histogram to function

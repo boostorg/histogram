@@ -316,9 +316,6 @@ bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
 
   const auto nargs = bp::len(args) - 1;
   if (nargs == 0) { throw std::invalid_argument("at least one argument required"); }
-  if (nargs < self.dim()) {
-    throw std::invalid_argument("fewer arguments than histogram axes required");
-  }
 
   if (nargs > BOOST_HISTOGRAM_AXIS_LIMIT) {
     throw std::invalid_argument(
@@ -327,7 +324,11 @@ bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
   }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
-  for (auto i = 0u; i < nargs; ++i) idx[i] = bp::extract<int>(args[1 + i]);
+  for (auto i = 0u; i < nargs; ++i) {
+    idx[i] = bp::extract<int>(args[1 + i]);
+    if (i > 0 && idx[i] <= idx[i - 1])
+      throw std::invalid_argument("indices must be strictly ascending");
+  }
 
   return bp::object(self.reduce_to(idx, idx + nargs));
 }

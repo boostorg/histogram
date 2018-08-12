@@ -16,6 +16,7 @@
 #include <boost/mp11.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
+#include <stdexcept>
 #include <tuple>
 #include <type_traits>
 #include <vector>
@@ -577,12 +578,18 @@ optional_index call_impl(dynamic_container_tag, const dynamic_axes<Ts...>& axes,
   return i;
 }
 
+/* In all at_impl, we throw instead of asserting when an index is out of
+ * bounds, because wrapping code cannot check this condition without spending
+ * a lot of extra cycles. For the wrapping code it is much easier to catch
+ * the exception and do something sensible.
+ */
+
 template <typename A, typename... Us>
 std::size_t at_impl(detail::no_container_tag, const A& axes, const Us&... us) {
   dimension_check(axes, mp11::mp_size_t<sizeof...(Us)>());
   auto index = detail::optional_index();
   detail::indices_to_index<0>(index, axes, static_cast<int>(us)...);
-  BOOST_ASSERT_MSG(index, "indices out of bounds");
+  if (!index) throw std::out_of_range("indices out of bounds");
   return *index;
 }
 
@@ -591,7 +598,7 @@ std::size_t at_impl(detail::static_container_tag, const A& axes, const U& u) {
   dimension_check(axes, mp_size<U>());
   auto index = detail::optional_index();
   detail::indices_to_index_get(mp_size<U>(), index, axes, u);
-  BOOST_ASSERT_MSG(index, "indices out of bounds");
+  if (!index) throw std::out_of_range("indices out of bounds");
   return *index;
 }
 
@@ -602,7 +609,7 @@ std::size_t at_impl(detail::dynamic_container_tag, const static_axes<Ts...>& axe
   auto index = detail::optional_index();
   detail::indices_to_index_iter(mp11::mp_size_t<sizeof...(Ts)>(), index, axes,
                                 std::begin(u));
-  BOOST_ASSERT_MSG(index, "indices out of bounds");
+  if (!index) throw std::out_of_range("indices out of bounds");
   return *index;
 }
 
@@ -612,7 +619,7 @@ std::size_t at_impl(detail::dynamic_container_tag, const dynamic_axes<Ts...>& ax
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
   auto index = detail::optional_index();
   detail::indices_to_index_iter(index, axes, std::begin(u));
-  BOOST_ASSERT_MSG(index, "indices out of bounds");
+  if (!index) throw std::out_of_range("indices out of bounds");
   return *index;
 }
 
