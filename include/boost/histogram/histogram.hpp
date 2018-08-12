@@ -34,8 +34,7 @@ namespace histogram {
 
 template <typename Axes, typename Storage>
 class histogram {
-  using axes_size = mp11::mp_size<Axes>;
-  static_assert(axes_size::value > 0, "at least one axis required");
+  static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
 
 public:
   using axes_type = Axes;
@@ -62,8 +61,7 @@ public:
     return *this;
   }
 
-  explicit histogram(const axes_type& a,
-                     const storage_type& s = storage_type())
+  explicit histogram(const axes_type& a, const storage_type& s = storage_type())
       : axes_(a), storage_(s) {
     storage_.reset(detail::bincount(axes_));
   }
@@ -125,23 +123,19 @@ public:
   }
 
   /// Get first axis (convenience for 1-d histograms, const version)
-  const detail::at<0, axes_type>& axis() const {
-    return axis(mp11::mp_int<0>());
-  }
+  const detail::at<0, axes_type>& axis() const { return axis(mp11::mp_int<0>()); }
 
   /// Get first axis (convenience for 1-d histograms)
   detail::at<0, axes_type>& axis() { return axis(mp11::mp_int<0>()); }
 
   /// Get N-th axis with runtime index (const version)
-  template <typename U = axes_type,
-            typename = detail::requires_dynamic_axes<U>>
+  template <typename U = axes_type, typename = detail::requires_dynamic_axes<U>>
   const detail::at<0, U>& axis(int i) const {
     return axes_[i];
   }
 
   /// Get N-th axis with runtime index
-  template <typename U = axes_type,
-            typename = detail::requires_dynamic_axes<U>>
+  template <typename U = axes_type, typename = detail::requires_dynamic_axes<U>>
   detail::at<0, U>& axis(int i) {
     return axes_[i];
   }
@@ -156,47 +150,45 @@ public:
   template <typename... Ts>
   void operator()(const Ts&... ts) {
     // case with one argument needs special treatment, specialized below
-    detail::dimension_check(axes_, mp11::mp_size_t<sizeof...(Ts)>());
-    auto index = detail::optional_index();
-    detail::args_to_index<0>(index, axes_, ts...);
+    const auto index = detail::call_impl(detail::no_container_tag(), axes_, ts...);
     if (index) storage_.increase(*index);
   }
 
-  template <typename T>
-  void operator()(const T&) {
-    // check whether we need to unpack argument
-  }
-
-  /// Fill histogram with a value tuple and a weight
-  template <typename T, typename... Ts>
-  void operator()(detail::weight_type<T>&& w, const Ts&... ts) {
-    // case with one argument is ambiguous, is specialized below
-    detail::dimension_check(axes_, mp11::mp_size_t<sizeof...(Ts)>());
-    auto index = detail::optional_index();
-    detail::args_to_index<0>(index, axes_, ts...);
+  /// Fill histogram with a weight and a value tuple
+  template <typename U, typename... Ts>
+  void operator()(detail::weight_type<U>&& w, const Ts&... ts) {
+    // case with one argument needs special treatment, specialized below
+    const auto index = detail::call_impl(detail::no_container_tag(), axes_, ts...);
     if (index) storage_.add(*index, w);
-  }
-
-  template <typename T, typename U>
-  void operator()(detail::weight_type<T>&&, const U&) {
-    // check whether we need to unpack argument
   }
 
   /// Access bin counter at indices
   template <typename... Ts>
   const_reference at(const Ts&... ts) const {
     // case with one argument is ambiguous, is specialized below
-    detail::dimension_check(axes_, mp11::mp_size_t<sizeof...(Ts)>());
-    auto index = detail::optional_index();
-    detail::indices_to_index<0>(index, axes_, static_cast<int>(ts)...);
-    BOOST_ASSERT_MSG(index, "indices out of bounds");
-    return storage_[*index];
+    const auto index =
+        detail::at_impl(detail::no_container_tag(), axes_, static_cast<int>(ts)...);
+    return storage_[index];
+  }
+
+  template <typename T>
+  void operator()(const T& t) {
+    // check whether we need to unpack argument
+    const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
+    if (index) storage_.increase(*index);
+  }
+
+  template <typename U, typename T>
+  void operator()(detail::weight_type<U>&& w, const T& t) {
+    // check whether we need to unpack argument
+    const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
+    if (index) storage_.add(*index, w);
   }
 
   template <typename T>
   const_reference at(const T& t) const {
     // check whether we need to unpack argument;
-    return storage_[at_impl(detail::classify_container<T>(), t)];
+    return storage_[detail::at_impl(detail::classify_container<T>(), axes_, t)];
   }
 
   /// Access bin counter at index
@@ -208,8 +200,7 @@ public:
   /// Returns a lower-dimensional histogram
   template <int N, typename... Ns>
   auto reduce_to(mp11::mp_int<N>, Ns...) const
-      -> histogram<detail::sub_axes<axes_type, mp11::mp_int<N>, Ns...>,
-                   storage_type> {
+      -> histogram<detail::sub_axes<axes_type, mp11::mp_int<N>, Ns...>, storage_type> {
     using sub_axes_type = detail::sub_axes<axes_type, mp11::mp_int<N>, Ns...>;
     using HR = histogram<sub_axes_type, storage_type>;
     auto sub_axes = detail::make_sub_axes(axes_, mp11::mp_int<N>(), Ns()...);
@@ -235,8 +226,7 @@ public:
       sub_axes.push_back(axes_[k]);
       b[k] = true;
     }
-    auto hr = histogram(std::move(sub_axes),
-                        storage_type(storage_.get_allocator()));
+    auto hr = histogram(std::move(sub_axes), storage_type(storage_.get_allocator()));
     std::vector<unsigned> shape(dim());
     for_each_axis(detail::shape_collector(shape.begin()));
     detail::index_mapper m(shape, b);
@@ -246,9 +236,7 @@ public:
 
   const_iterator begin() const noexcept { return const_iterator(*this, 0); }
 
-  const_iterator end() const noexcept {
-    return const_iterator(*this, size());
-  }
+  const_iterator end() const noexcept { return const_iterator(*this, size()); }
 
 private:
   axes_type axes_;
@@ -266,8 +254,7 @@ private:
 
 /// static type factory
 template <typename... Ts>
-histogram<static_axes<detail::rm_cv_ref<Ts>...>> make_static_histogram(
-    Ts&&... axis) {
+histogram<static_axes<detail::rm_cv_ref<Ts>...>> make_static_histogram(Ts&&... axis) {
   using histogram_type = histogram<static_axes<detail::rm_cv_ref<Ts>...>>;
   auto axes = typename histogram_type::axes_type(std::forward<Ts>(axis)...);
   return histogram_type(std::move(axes));
@@ -277,42 +264,36 @@ histogram<static_axes<detail::rm_cv_ref<Ts>...>> make_static_histogram(
 template <typename Storage, typename... Ts>
 histogram<static_axes<detail::rm_cv_ref<Ts>...>, detail::rm_cv_ref<Storage>>
 make_static_histogram_with(Storage&& s, Ts&&... axis) {
-  using histogram_type = histogram<static_axes<detail::rm_cv_ref<Ts>...>,
-                                   detail::rm_cv_ref<Storage>>;
+  using histogram_type =
+      histogram<static_axes<detail::rm_cv_ref<Ts>...>, detail::rm_cv_ref<Storage>>;
   auto axes = typename histogram_type::axes_type(std::forward<Ts>(axis)...);
   return histogram_type(std::move(axes), std::move(s));
 }
 
 /// dynamic type factory
 template <typename... Ts>
-histogram<mp11::mp_rename<
-    mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>,
-    dynamic_axes>>
+histogram<mp11::mp_rename<mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>,
+                          dynamic_axes>>
 make_dynamic_histogram(Ts&&... axis) {
   using histogram_type = histogram<mp11::mp_rename<
-      mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>,
-      dynamic_axes>>;
+      mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>, dynamic_axes>>;
   using value_type = typename histogram_type::axes_type::value_type;
-  auto axes = typename histogram_type::axes_type(
-      {value_type(std::forward<Ts>(axis))...});
+  auto axes = typename histogram_type::axes_type({value_type(std::forward<Ts>(axis))...});
   return histogram_type(std::move(axes));
 }
 
 /// dynamic type factory with custom storage type
 template <typename Storage, typename... Ts>
-histogram<mp11::mp_rename<
-              mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>,
-              dynamic_axes>,
+histogram<mp11::mp_rename<mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>,
+                          dynamic_axes>,
           detail::rm_cv_ref<Storage>>
 make_dynamic_histogram_with(Storage&& s, Ts&&... axis) {
-  using histogram_type =
-      histogram<mp11::mp_rename<mp11::mp_set_push_back<
-                                    axis::types, detail::rm_cv_ref<Ts>...>,
-                                dynamic_axes>,
-                detail::rm_cv_ref<Storage>>;
+  using histogram_type = histogram<
+      mp11::mp_rename<mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>,
+                      dynamic_axes>,
+      detail::rm_cv_ref<Storage>>;
   using value_type = typename histogram_type::axes_type::value_type;
-  auto axes = typename histogram_type::axes_type(
-      {value_type(std::forward<Ts>(axis))...});
+  auto axes = typename histogram_type::axes_type({value_type(std::forward<Ts>(axis))...});
   return histogram_type(std::move(axes), std::move(s));
 }
 
@@ -331,17 +312,16 @@ make_dynamic_histogram(Iterator begin, Iterator end) {
 
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
-histogram<
-    mp11::mp_rename<detail::mp_set_union<
-                        axis::types, typename Iterator::value_type::types>,
-                    dynamic_axes>,
-    Storage>
+histogram<mp11::mp_rename<
+              detail::mp_set_union<axis::types, typename Iterator::value_type::types>,
+              dynamic_axes>,
+          Storage>
 make_dynamic_histogram_with(Storage&& s, Iterator begin, Iterator end) {
-  using histogram_type = histogram<
-      mp11::mp_rename<detail::mp_set_union<
-                          axis::types, typename Iterator::value_type::types>,
-                      dynamic_axes>,
-      Storage>;
+  using histogram_type =
+      histogram<mp11::mp_rename<detail::mp_set_union<
+                                    axis::types, typename Iterator::value_type::types>,
+                                dynamic_axes>,
+                Storage>;
   auto axes = typename histogram_type::axes_type(begin, end);
   return histogram_type(std::move(axes), std::move(s));
 }

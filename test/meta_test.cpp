@@ -86,8 +86,15 @@ int main() {
     using result3a = classify_container<std::pair<int, int>&>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result3a, static_container_tag>));
 
-    using result4 = classify_container<decltype("abc")>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result4, dynamic_container_tag>));
+    // (c-)strings are not regarded as dynamic containers
+    using result4a = classify_container<decltype("abc")>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result4a, no_container_tag>));
+
+    using result4b = classify_container<std::string>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result4b, no_container_tag>));
+
+    using result5 = classify_container<int*>; // has no std::end
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result5, no_container_tag>));
   }
 
   // bool mask
@@ -130,13 +137,10 @@ int main() {
   // copy_qualifiers
   {
     BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int, long>, long>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<copy_qualifiers<const int, long>, const long>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<const int, long>, const long>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&, long>, long&>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<copy_qualifiers<const int&, long>, const long&>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<copy_qualifiers<int&&, long>, long&&>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<const int&, long>, const long&>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&&, long>, long&&>));
   }
 
   // mp_set_union

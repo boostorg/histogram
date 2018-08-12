@@ -31,8 +31,7 @@ struct axes_equal_static_dynamic_impl {
   bool& equal;
   const StaticAxes& t;
   const DynamicAxes& v;
-  axes_equal_static_dynamic_impl(bool& eq, const StaticAxes& tt,
-                                 const DynamicAxes& vv)
+  axes_equal_static_dynamic_impl(bool& eq, const StaticAxes& tt, const DynamicAxes& vv)
       : equal(eq), t(tt), v(vv) {}
   template <typename Int>
   void operator()(Int) const {
@@ -58,8 +57,7 @@ template <typename StaticAxes, typename DynamicAxes>
 struct axes_assign_static_dynamic_impl {
   StaticAxes& t;
   const DynamicAxes& v;
-  axes_assign_static_dynamic_impl(StaticAxes& tt, const DynamicAxes& vv)
-      : t(tt), v(vv) {}
+  axes_assign_static_dynamic_impl(StaticAxes& tt, const DynamicAxes& vv) : t(tt), v(vv) {}
   template <typename Int>
   void operator()(Int) const {
     using T = mp11::mp_at<StaticAxes, Int>;
@@ -71,8 +69,7 @@ template <typename DynamicAxes, typename StaticAxes>
 struct axes_assign_dynamic_static_impl {
   DynamicAxes& v;
   const StaticAxes& t;
-  axes_assign_dynamic_static_impl(DynamicAxes& vv, const StaticAxes& tt)
-      : v(vv), t(tt) {}
+  axes_assign_dynamic_static_impl(DynamicAxes& vv, const StaticAxes& tt) : v(vv), t(tt) {}
   template <typename Int>
   void operator()(Int) const {
     v[Int::value] = std::get<Int::value>(t);
@@ -90,9 +87,8 @@ template <typename... Ts, typename... Us>
 bool axes_equal(const static_axes<Ts...>& t, const dynamic_axes<Us...>& u) {
   if (sizeof...(Ts) != u.size()) return false;
   bool equal = true;
-  auto fn =
-      axes_equal_static_dynamic_impl<static_axes<Ts...>, dynamic_axes<Us...>>(
-          equal, t, u);
+  auto fn = axes_equal_static_dynamic_impl<static_axes<Ts...>, dynamic_axes<Us...>>(equal,
+                                                                                    t, u);
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(fn);
   return equal;
 }
@@ -110,24 +106,23 @@ bool axes_equal(const dynamic_axes<Ts...>& t, const dynamic_axes<Us...>& u) {
 
 template <typename... Ts, typename... Us>
 void axes_assign(static_axes<Ts...>& t, const static_axes<Us...>& u) {
-  static_assert(
-      std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>::value,
-      "cannot assign incompatible axes");
+  static_assert(std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>::value,
+                "cannot assign incompatible axes");
   t = u;
 }
 
 template <typename... Ts, typename... Us>
 void axes_assign(static_axes<Ts...>& t, const dynamic_axes<Us...>& u) {
-  auto fn = axes_assign_static_dynamic_impl<static_axes<Ts...>,
-                                            dynamic_axes<Us...>>(t, u);
+  auto fn =
+      axes_assign_static_dynamic_impl<static_axes<Ts...>, dynamic_axes<Us...>>(t, u);
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(fn);
 }
 
 template <typename... Ts, typename... Us>
 void axes_assign(dynamic_axes<Ts...>& t, const static_axes<Us...>& u) {
   t.resize(sizeof...(Us));
-  auto fn = axes_assign_dynamic_static_impl<dynamic_axes<Ts...>,
-                                            static_axes<Us...>>(t, u);
+  auto fn =
+      axes_assign_dynamic_static_impl<dynamic_axes<Ts...>, static_axes<Us...>>(t, u);
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(fn);
 }
 
@@ -235,14 +230,24 @@ std::size_t bincount(const T& axes) {
   return fc.value;
 }
 
-template <std::size_t N, typename... Ts>
+template <typename... Ts, std::size_t N>
 void dimension_check(const static_axes<Ts...>&, mp11::mp_size_t<N>) {
   static_assert(sizeof...(Ts) == N, "number of arguments does not match");
 }
 
-template <std::size_t N, typename... Ts>
+template <typename... Ts>
+void dimension_check(const static_axes<Ts...>&, std::size_t n) {
+  BOOST_ASSERT_MSG(sizeof...(Ts) == n, "number of arguments does not match");
+}
+
+template <typename... Ts, std::size_t N>
 void dimension_check(const dynamic_axes<Ts...>& axes, mp11::mp_size_t<N>) {
   BOOST_ASSERT_MSG(axes.size() == N, "number of arguments does not match");
+}
+
+template <typename... Ts>
+void dimension_check(const dynamic_axes<Ts...>& axes, std::size_t n) {
+  BOOST_ASSERT_MSG(axes.size() == n, "number of arguments does not match");
 }
 
 struct shape_collector {
@@ -288,8 +293,7 @@ struct sub_static_assign_impl {
 }
 
 template <typename... Ts, typename... Ns>
-sub_axes<static_axes<Ts...>, Ns...> make_sub_axes(const static_axes<Ts...>& t,
-                                                  Ns...) {
+sub_axes<static_axes<Ts...>, Ns...> make_sub_axes(const static_axes<Ts...>& t, Ns...) {
   using T = static_axes<Ts...>;
   using U = sub_axes<static_axes<Ts...>, Ns...>;
   U u;
@@ -313,8 +317,7 @@ struct sub_dynamic_assign_impl {
 }
 
 template <typename... Ts, typename... Ns>
-sub_axes<dynamic_axes<Ts...>, Ns...> make_sub_axes(
-    const dynamic_axes<Ts...>& t, Ns...) {
+sub_axes<dynamic_axes<Ts...>, Ns...> make_sub_axes(const dynamic_axes<Ts...>& t, Ns...) {
   using T = dynamic_axes<Ts...>;
   T u;
   u.reserve(sizeof...(Ns));
@@ -325,15 +328,15 @@ sub_axes<dynamic_axes<Ts...>, Ns...> make_sub_axes(
 
 struct optional_index {
   std::size_t idx = 0;
-  std::size_t stride = 0;
+  std::size_t stride = 1;
   operator bool() const { return stride > 0; }
   std::size_t operator*() const { return idx; }
 };
 
 // the following is highly optimized code that runs in a hot loop;
 // please measure the performance impact of changes
-inline void linearize(optional_index& out, const int axis_size,
-                      const int axis_shape, int j) noexcept {
+inline void linearize(optional_index& out, const int axis_size, const int axis_shape,
+                      int j) noexcept {
   BOOST_ASSERT_MSG(out.stride == 0 || (-1 <= j && j <= axis_size),
                    "index must be in bounds for this algorithm");
   j += (j < 0) * (axis_size + 2); // wrap around if j < 0
@@ -341,10 +344,10 @@ inline void linearize(optional_index& out, const int axis_size,
   out.stride *= (j < axis_shape) * axis_shape; // set to 0, if j is invalid
 }
 
-template <unsigned D, typename Axes>
+template <std::size_t D, typename Axes>
 void indices_to_index(optional_index&, const Axes&) noexcept {}
 
-template <unsigned D, typename Axes, typename... Us>
+template <std::size_t D, typename Axes, typename... Us>
 void indices_to_index(optional_index& idx, const Axes& axes, const int j,
                       const Us... us) {
   const auto& a = ::boost::histogram::detail::get<D>(axes);
@@ -355,17 +358,93 @@ void indices_to_index(optional_index& idx, const Axes& axes, const int j,
   indices_to_index<(D + 1)>(idx, axes, us...);
 }
 
-template <unsigned D, typename... Ts, typename... Us>
+template <typename... Ts, typename Iterator>
+void indices_to_index_iter(mp11::mp_size_t<0>, optional_index&, const static_axes<Ts...>&,
+                           Iterator) {}
+
+template <std::size_t N, typename... Ts, typename Iterator>
+void indices_to_index_iter(mp11::mp_size_t<N>, optional_index& idx,
+                           const static_axes<Ts...>& axes, Iterator iter) {
+  constexpr auto D = mp11::mp_size_t<sizeof...(Ts)>() - N;
+  const auto& a = std::get<D>(axes);
+  const auto a_size = a.size();
+  const auto a_shape = a.shape();
+  const auto j = static_cast<int>(*iter);
+  idx.stride *= (-1 <= j && j <= a_size); // set to 0, if j is invalid
+  linearize(idx, a_size, a_shape, j);
+  indices_to_index_iter(mp11::mp_size_t<(N - 1)>(), idx, axes, ++iter);
+}
+
+template <typename... Ts, typename Iterator>
+void indices_to_index_iter(optional_index& idx, const dynamic_axes<Ts...>& axes,
+                           Iterator iter) {
+  for (const auto& a : axes) {
+    const auto a_size = a.size();
+    const auto a_shape = a.shape();
+    const auto j = static_cast<int>(*iter++);
+    idx.stride *= (-1 <= j && j <= a_size); // set to 0, if j is invalid
+    linearize(idx, a_size, a_shape, j);
+  }
+}
+
+template <typename Axes, typename T>
+void indices_to_index_get(mp11::mp_size_t<0>, optional_index&, const Axes&, const T&) {}
+
+template <std::size_t N, typename Axes, typename T>
+void indices_to_index_get(mp11::mp_size_t<N>, optional_index& idx, const Axes& axes,
+                          const T& t) {
+  constexpr std::size_t D = mp_size<T>() - N;
+  const auto& a = ::boost::histogram::detail::get<D>(axes);
+  const auto a_size = a.size();
+  const auto a_shape = a.shape();
+  const auto j = static_cast<int>(std::get<D>(t));
+  idx.stride *= (-1 <= j && j <= a_size); // set to 0, if j is invalid
+  linearize(idx, a_size, a_shape, j);
+  indices_to_index_get(mp11::mp_size_t<(N - 1)>(), idx, axes, t);
+}
+
+template <std::size_t D, typename... Ts>
 void args_to_index(optional_index&, const static_axes<Ts...>&) noexcept {}
 
-template <unsigned D, typename... Ts, typename U, typename... Us>
-void args_to_index(optional_index& idx, const static_axes<Ts...>& axes,
-                   const U& u, const Us&... us) {
+template <std::size_t D, typename... Ts, typename U, typename... Us>
+void args_to_index(optional_index& idx, const static_axes<Ts...>& axes, const U& u,
+                   const Us&... us) {
   const auto a_size = std::get<D>(axes).size();
   const auto a_shape = std::get<D>(axes).shape();
   const int j = std::get<D>(axes).index(u);
   linearize(idx, a_size, a_shape, j);
   args_to_index<(D + 1)>(idx, axes, us...);
+}
+
+template <typename... Ts, typename Iterator>
+void args_to_index_iter(mp11::mp_size_t<0>, optional_index&, const static_axes<Ts...>&,
+                        Iterator) {}
+
+template <std::size_t N, typename... Ts, typename Iterator>
+void args_to_index_iter(mp11::mp_size_t<N>, optional_index& idx,
+                        const static_axes<Ts...>& axes, Iterator iter) {
+  constexpr std::size_t D = sizeof...(Ts)-N;
+  const auto& a = ::boost::histogram::detail::get<D>(axes);
+  const auto a_size = a.size();
+  const auto a_shape = a.shape();
+  const int j = a.index(*iter);
+  linearize(idx, a_size, a_shape, j);
+  args_to_index_iter(mp11::mp_size_t<(N - 1)>(), idx, axes, ++iter);
+}
+
+template <typename... Ts, typename T>
+void args_to_index_get(mp11::mp_size_t<0>, optional_index&, const static_axes<Ts...>&,
+                       const T&) {}
+
+template <std::size_t N, typename... Ts, typename T>
+void args_to_index_get(mp11::mp_size_t<N>, optional_index& idx,
+                       const static_axes<Ts...>& axes, const T& t) {
+  constexpr std::size_t D = mp_size<T>::value - N;
+  const auto a_size = std::get<D>(axes).size();
+  const auto a_shape = std::get<D>(axes).shape();
+  const int j = std::get<D>(axes).index(std::get<D>(t));
+  linearize(idx, a_size, a_shape, j);
+  args_to_index_get(mp11::mp_size_t<(N - 1)>(), idx, axes, t);
 }
 
 namespace {
@@ -390,23 +469,151 @@ struct args_to_index_visitor : public boost::static_visitor<void> {
   template <typename Axis>
   void impl(std::false_type, const Axis&) const {
     throw std::invalid_argument(detail::cat(
-        "axis ", boost::typeindex::type_id<Axis>().pretty_name(),
-        ": argument ", boost::typeindex::type_id<T>().pretty_name(),
-        " not convertible to value_type ",
-        boost::typeindex::type_id<typename Axis::value_type>()
-            .pretty_name()));
+        "axis ", boost::typeindex::type_id<Axis>().pretty_name(), ": argument ",
+        boost::typeindex::type_id<T>().pretty_name(), " not convertible to value_type ",
+        boost::typeindex::type_id<typename Axis::value_type>().pretty_name()));
   }
 };
 }
 
-template <unsigned D, typename... Ts>
+template <std::size_t D, typename... Ts>
 void args_to_index(optional_index&, const dynamic_axes<Ts...>&) {}
 
-template <unsigned D, typename... Ts, typename U, typename... Us>
-void args_to_index(optional_index& idx, const dynamic_axes<Ts...>& axes,
-                   const U& u, const Us&... us) {
-  boost::apply_visitor(args_to_index_visitor<rm_cv_ref<U>>(idx, u), axes[D]);
+template <std::size_t D, typename... Ts, typename U, typename... Us>
+void args_to_index(optional_index& idx, const dynamic_axes<Ts...>& axes, const U& u,
+                   const Us&... us) {
+  boost::apply_visitor(args_to_index_visitor<U>(idx, u), axes[D]);
   args_to_index<(D + 1)>(idx, axes, us...);
+}
+
+template <typename... Ts, typename Iterator>
+void args_to_index_iter(optional_index& idx, const dynamic_axes<Ts...>& axes,
+                        Iterator iter) {
+  for (const auto& a : axes) {
+    // iter could be a plain pointer, so we cannot use nested value_type here
+    boost::apply_visitor(args_to_index_visitor<decltype(*iter)>(idx, *iter++), a);
+  }
+}
+
+template <typename... Ts, typename T>
+void args_to_index_get(mp11::mp_size_t<0>, optional_index&, const dynamic_axes<Ts...>&,
+                       const T&) {}
+
+template <std::size_t N, typename... Ts, typename T>
+void args_to_index_get(mp11::mp_size_t<N>, optional_index& idx,
+                       const dynamic_axes<Ts...>& axes, const T& t) {
+  constexpr std::size_t D = mp_size<T>::value - N;
+  using U = decltype(std::get<D>(t));
+  boost::apply_visitor(args_to_index_visitor<U>(idx, std::get<D>(t)), axes[D]);
+  args_to_index_get(mp11::mp_size_t<(N - 1)>(), idx, axes, t);
+}
+
+// specialization for one-dimensional histograms
+template <typename Tag, typename T, typename... Us>
+optional_index call_impl(Tag, const static_axes<T>& axes, const Us&... us) {
+  dimension_check(axes, mp11::mp_size_t<sizeof...(Us)>());
+  optional_index i;
+  args_to_index<0>(i, axes, us...);
+  return i;
+}
+
+template <typename T1, typename T2, typename... Ts, typename... Us>
+optional_index call_impl(no_container_tag, const static_axes<T1, T2, Ts...>& axes,
+                         const Us&... us) {
+  dimension_check(axes, mp11::mp_size_t<sizeof...(Us)>());
+  optional_index i;
+  args_to_index<0>(i, axes, us...);
+  return i;
+}
+
+template <typename T1, typename T2, typename... Ts, typename U>
+optional_index call_impl(static_container_tag, const static_axes<T1, T2, Ts...>& axes,
+                         const U& u) {
+  dimension_check(axes, mp_size<U>());
+  optional_index i;
+  args_to_index_get(mp_size<U>(), i, axes, u);
+  return i;
+}
+
+template <typename T1, typename T2, typename... Ts, typename U>
+optional_index call_impl(dynamic_container_tag, const static_axes<T1, T2, Ts...>& axes,
+                         const U& u) {
+  dimension_check(axes, u.size());
+  optional_index i;
+  args_to_index_iter(mp11::mp_size_t<(2 + sizeof...(Ts))>(), i, axes, std::begin(u));
+  return i;
+}
+
+template <typename... Ts, typename... Us>
+optional_index call_impl(no_container_tag, const dynamic_axes<Ts...>& axes,
+                         const Us&... us) {
+  dimension_check(axes, mp11::mp_size_t<sizeof...(Us)>());
+  optional_index i;
+  args_to_index<0>(i, axes, us...);
+  return i;
+}
+
+template <typename... Ts, typename U>
+optional_index call_impl(static_container_tag, const dynamic_axes<Ts...>& axes,
+                         const U& u) {
+  dimension_check(axes, mp_size<U>());
+  optional_index i;
+  if (axes.size() == 1)
+    args_to_index<0>(i, axes, u);
+  else
+    args_to_index_get(mp_size<U>(), i, axes, u);
+  return i;
+}
+
+template <typename... Ts, typename U>
+optional_index call_impl(dynamic_container_tag, const dynamic_axes<Ts...>& axes,
+                         const U& u) {
+  dimension_check(axes, std::distance(std::begin(u), std::end(u)));
+  optional_index i;
+  if (axes.size() == 1)
+    args_to_index<0>(i, axes, u);
+  else
+    args_to_index_iter(i, axes, std::begin(u));
+  return i;
+}
+
+template <typename A, typename... Us>
+std::size_t at_impl(detail::no_container_tag, const A& axes, const Us&... us) {
+  dimension_check(axes, mp11::mp_size_t<sizeof...(Us)>());
+  auto index = detail::optional_index();
+  detail::indices_to_index<0>(index, axes, static_cast<int>(us)...);
+  BOOST_ASSERT_MSG(index, "indices out of bounds");
+  return *index;
+}
+
+template <typename A, typename U>
+std::size_t at_impl(detail::static_container_tag, const A& axes, const U& u) {
+  dimension_check(axes, mp_size<U>());
+  auto index = detail::optional_index();
+  detail::indices_to_index_get(mp_size<U>(), index, axes, u);
+  BOOST_ASSERT_MSG(index, "indices out of bounds");
+  return *index;
+}
+
+template <typename... Ts, typename U>
+std::size_t at_impl(detail::dynamic_container_tag, const static_axes<Ts...>& axes,
+                    const U& u) {
+  dimension_check(axes, std::distance(std::begin(u), std::end(u)));
+  auto index = detail::optional_index();
+  detail::indices_to_index_iter(mp11::mp_size_t<sizeof...(Ts)>(), index, axes,
+                                std::begin(u));
+  BOOST_ASSERT_MSG(index, "indices out of bounds");
+  return *index;
+}
+
+template <typename... Ts, typename U>
+std::size_t at_impl(detail::dynamic_container_tag, const dynamic_axes<Ts...>& axes,
+                    const U& u) {
+  dimension_check(axes, std::distance(std::begin(u), std::end(u)));
+  auto index = detail::optional_index();
+  detail::indices_to_index_iter(index, axes, std::begin(u));
+  BOOST_ASSERT_MSG(index, "indices out of bounds");
+  return *index;
 }
 
 } // namespace detail
