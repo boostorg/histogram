@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/utility.hpp>
@@ -244,11 +245,14 @@ void dimension_check(const static_axes<Ts...>&, std::size_t n) {
 template <typename... Ts, std::size_t N>
 void dimension_check(const dynamic_axes<Ts...>& axes, mp11::mp_size_t<N>) {
   BOOST_ASSERT_MSG(axes.size() == N, "number of arguments does not match");
+  boost::ignore_unused(axes);
 }
 
 template <typename... Ts>
 void dimension_check(const dynamic_axes<Ts...>& axes, std::size_t n) {
   BOOST_ASSERT_MSG(axes.size() == n, "number of arguments does not match");
+  boost::ignore_unused(axes);
+  boost::ignore_unused(n);
 }
 
 struct shape_collector {
