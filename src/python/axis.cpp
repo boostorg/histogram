@@ -37,6 +37,23 @@ bp::str generic_repr(const T& t) {
   return os.str().c_str();
 }
 
+struct generic_iterator {
+  generic_iterator(bp::object o) : iterable(o), size(bp::len(iterable)) {}
+  bp::object next() {
+    if (idx == size) {
+      PyErr_SetString(PyExc_StopIteration, "No more items.");
+      bp::throw_error_already_set();
+    }
+    return iterable[idx++];
+  }
+  generic_iterator& self() { return *this; }
+  bp::object iterable;
+  unsigned idx = 0;
+  unsigned size = 0;
+};
+
+generic_iterator make_generic_iterator(bp::object self) { return generic_iterator(self); }
+
 template <typename Axis>
 struct axis_value_view_to_python {
   static PyObject* convert(const bha::value_view<Axis>& i) {
@@ -192,7 +209,7 @@ struct axis_suite : public bp::def_visitor<axis_suite<T>> {
            ":param integer i: bin index"
            "\n:returns: bin corresponding to index",
            bp::args("self", "i"));
-    cl.def("__iter__", bp::iterator<const T>());
+    cl.def("__iter__", make_generic_iterator);
     cl.def("__repr__", generic_repr<T>, ":returns: string representation of this axis",
            bp::arg("self"));
     cl.def(bp::self == bp::self);
@@ -235,6 +252,12 @@ void register_axis_types() {
   using namespace ::boost::python;
   using bp::arg; // resolve ambiguity
   docstring_options dopt(true, true, false);
+
+  class_<generic_iterator>("generic_iterator", init<object>())
+      .def("__iter__", &generic_iterator::self, return_internal_reference<>())
+      .def("__next__", &generic_iterator::next) // Python3
+      .def("next", &generic_iterator::next)     // Python2
+      ;
 
   class_<bha::regular<>>("regular",
                          "Axis for real-valued data and bins of equal width."
