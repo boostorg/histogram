@@ -168,7 +168,7 @@ foreach(SRC IN ITEMS ${TEST_SOURCES})
       else()
         target_link_libraries(${BASENAME} ${LIBRARIES})
       endif()
-      if (BASENAME MATCHES "fail")
+      if (BASENAME MATCHES "fail_")
         if (DEFINED PYTHON_EXECUTABLE)
           add_test(NAME ${BASENAME} COMMAND ${PYTHON_EXECUTABLE}
                    ../test/pass_on_fail.py ${BASENAME})
