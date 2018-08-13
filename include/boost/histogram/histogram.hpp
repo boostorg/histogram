@@ -276,11 +276,11 @@ make_static_histogram_with(Storage&& s, Ts&&... axis) {
 
 /// dynamic type factory
 template <typename... Ts>
-histogram<mp11::mp_rename<mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>,
+histogram<mp11::mp_rename<mp11::mp_set_push_back<axis::any_std, detail::rm_cv_ref<Ts>...>,
                           dynamic_axes>>
 make_dynamic_histogram(Ts&&... axis) {
   using histogram_type = histogram<mp11::mp_rename<
-      mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>, dynamic_axes>>;
+      mp11::mp_set_push_back<axis::any_std, detail::rm_cv_ref<Ts>...>, dynamic_axes>>;
   using value_type = typename histogram_type::axes_type::value_type;
   auto axes = typename histogram_type::axes_type({value_type(std::forward<Ts>(axis))...});
   return histogram_type(std::move(axes));
@@ -288,12 +288,12 @@ make_dynamic_histogram(Ts&&... axis) {
 
 /// dynamic type factory with custom storage type
 template <typename Storage, typename... Ts>
-histogram<mp11::mp_rename<mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>,
+histogram<mp11::mp_rename<mp11::mp_set_push_back<axis::any_std, detail::rm_cv_ref<Ts>...>,
                           dynamic_axes>,
           detail::rm_cv_ref<Storage>>
 make_dynamic_histogram_with(Storage&& s, Ts&&... axis) {
   using histogram_type = histogram<
-      mp11::mp_rename<mp11::mp_set_push_back<axis::types, detail::rm_cv_ref<Ts>...>,
+      mp11::mp_rename<mp11::mp_set_push_back<axis::any_std, detail::rm_cv_ref<Ts>...>,
                       dynamic_axes>,
       detail::rm_cv_ref<Storage>>;
   using value_type = typename histogram_type::axes_type::value_type;
@@ -304,11 +304,11 @@ make_dynamic_histogram_with(Storage&& s, Ts&&... axis) {
 /// dynamic type factory from axis iterators
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 histogram<mp11::mp_rename<
-    detail::mp_set_union<axis::types, typename Iterator::value_type::types>,
+    detail::mp_set_union<axis::any_std, typename Iterator::value_type::types>,
     dynamic_axes>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
   using histogram_type = histogram<mp11::mp_rename<
-      detail::mp_set_union<axis::types, typename Iterator::value_type::types>,
+      detail::mp_set_union<axis::any_std, typename Iterator::value_type::types>,
       dynamic_axes>>;
   auto axes = typename histogram_type::axes_type(begin, end);
   return histogram_type(std::move(axes));
@@ -317,13 +317,13 @@ make_dynamic_histogram(Iterator begin, Iterator end) {
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
 histogram<mp11::mp_rename<
-              detail::mp_set_union<axis::types, typename Iterator::value_type::types>,
+              detail::mp_set_union<axis::any_std, typename Iterator::value_type::types>,
               dynamic_axes>,
           Storage>
 make_dynamic_histogram_with(Storage&& s, Iterator begin, Iterator end) {
   using histogram_type =
       histogram<mp11::mp_rename<detail::mp_set_union<
-                                    axis::types, typename Iterator::value_type::types>,
+                                    axis::any_std, typename Iterator::value_type::types>,
                                 dynamic_axes>,
                 Storage>;
   auto axes = typename histogram_type::axes_type(begin, end);

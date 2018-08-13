@@ -37,15 +37,19 @@ class integer;
 template <typename T = int, typename Allocator = std::allocator<char>>
 class category;
 
-using types = mp11::mp_list<
-    regular<transform::identity>,
-    regular<transform::log>, regular<transform::sqrt>,
-    regular<transform::pow>, circular<>, variable<>,
-    integer<>, category<>, category<std::string>>;
-
 template <typename... Ts>
 class any;
-using any_std = mp11::mp_rename<types, any>;
+using any_std = any<
+    regular<transform::identity, double, std::allocator<char>>,
+    regular<transform::log, double, std::allocator<char>>,
+    regular<transform::sqrt, double, std::allocator<char>>,
+    regular<transform::pow, double, std::allocator<char>>,
+    circular<double, std::allocator<char>>,
+    variable<double, std::allocator<char>>,
+    integer<int, std::allocator<char>>,
+    category<int, std::allocator<char>>,
+    category<std::string, std::allocator<char>>
+>;
 
 } // namespace axis
 

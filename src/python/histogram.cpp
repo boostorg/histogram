@@ -156,7 +156,7 @@ bp::object histogram_init(bp::tuple args, bp::dict kwargs) {
   for (unsigned i = 0; i < dim; ++i) {
     bp::object pa = args[i + 1];
     bool success = false;
-    boost::mp11::mp_for_each<bh::axis::types>(axes_appender(pa, axes, success));
+    boost::mp11::mp_for_each<bh::axis::any_std>(axes_appender(pa, axes, success));
     if (!success) {
       std::string msg = "require an axis object, got ";
       msg += bp::extract<std::string>(bp::str(pa));
