@@ -16,9 +16,10 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
+template <typename OStream>
 struct axis_ostream_visitor {
-  std::ostream& os_;
-  explicit axis_ostream_visitor(std::ostream& os) : os_(os) {}
+  OStream& os_;
+  explicit axis_ostream_visitor(OStream& os) : os_(os) {}
   template <typename Axis>
   void operator()(const Axis& a) const {
     os_ << "\n  " << a << ",";
@@ -26,16 +27,19 @@ struct axis_ostream_visitor {
 };
 } // namespace detail
 
-template <typename A, typename S>
-std::ostream& operator<<(std::ostream& os, const histogram<A, S>& h) {
+template <typename CharT, typename Traits, typename A, typename S>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
+                                              const histogram<A, S>& h) {
+  using OS = std::basic_ostream<CharT, Traits>;
   os << "histogram(";
-  h.for_each_axis(detail::axis_ostream_visitor(os));
+  h.for_each_axis(detail::axis_ostream_visitor<OS>(os));
   os << (h.dim() ? "\n)" : ")");
   return os;
 }
 
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const weight_counter<T>& x) {
+template <typename CharT, typename Traits, typename W>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
+                                              const weight_counter<W>& x) {
   os << "weight_counter(" << x.value() << ", " << x.variance() << ")";
   return os;
 }
