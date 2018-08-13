@@ -7,6 +7,7 @@
 #include <boost/python/module.hpp>
 #include <boost/python/object.hpp>
 #include <boost/python/scope.hpp>
+#include <boost/python/exception_translator.hpp>
 #include <stdexcept>
 #ifdef HAVE_NUMPY
 #include <boost/python/numpy.hpp>
