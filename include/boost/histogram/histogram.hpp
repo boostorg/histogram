@@ -111,33 +111,33 @@ public:
 
   /// Get N-th axis (const version)
   template <int N>
-  auto axis(mp11::mp_int<N>) const -> const detail::at<N, axes_type>& {
+  auto axis(mp11::mp_int<N>) const -> const detail::axis_at<N, axes_type>& {
     detail::range_check<N>(axes_);
-    return detail::get<N>(axes_);
+    return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis
   template <int N>
-  auto axis(mp11::mp_int<N>) -> detail::at<N, axes_type>& {
+  auto axis(mp11::mp_int<N>) -> detail::axis_at<N, axes_type>& {
     detail::range_check<N>(axes_);
-    return detail::get<N>(axes_);
+    return detail::axis_get<N>(axes_);
   }
 
   /// Get first axis (convenience for 1-d histograms, const version)
-  const detail::at<0, axes_type>& axis() const { return axis(mp11::mp_int<0>()); }
+  const detail::axis_at<0, axes_type>& axis() const { return axis(mp11::mp_int<0>()); }
 
   /// Get first axis (convenience for 1-d histograms)
-  detail::at<0, axes_type>& axis() { return axis(mp11::mp_int<0>()); }
+  detail::axis_at<0, axes_type>& axis() { return axis(mp11::mp_int<0>()); }
 
   /// Get N-th axis with runtime index (const version)
   template <typename U = axes_type, typename = detail::requires_dynamic_axes<U>>
-  const detail::at<0, U>& axis(int i) const {
+  const detail::axis_at<0, U>& axis(int i) const {
     return axes_[i];
   }
 
   /// Get N-th axis with runtime index
   template <typename U = axes_type, typename = detail::requires_dynamic_axes<U>>
-  detail::at<0, U>& axis(int i) {
+  detail::axis_at<0, U>& axis(int i) {
     return axes_[i];
   }
 

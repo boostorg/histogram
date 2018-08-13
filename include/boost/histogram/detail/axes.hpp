@@ -154,39 +154,39 @@ void range_check(const static_axes<Ts...>&) {
 
 namespace {
 template <int N, typename T>
-struct at_impl {};
+struct axis_at_impl {};
 
 template <int N, typename... Ts>
-struct at_impl<N, static_axes<Ts...>> {
+struct axis_at_impl<N, static_axes<Ts...>> {
   using type = mp11::mp_at_c<static_axes<Ts...>, N>;
 };
 
 template <int N, typename... Ts>
-struct at_impl<N, dynamic_axes<Ts...>> {
+struct axis_at_impl<N, dynamic_axes<Ts...>> {
   using type = axis::any<Ts...>;
 };
 }
 
 template <int N, typename T>
-using at = typename at_impl<N, T>::type;
+using axis_at = typename axis_at_impl<N, T>::type;
 
 template <int N, typename... Ts>
-auto get(static_axes<Ts...>& axes) -> at<N, static_axes<Ts...>>& {
+auto axis_get(static_axes<Ts...>& axes) -> axis_at<N, static_axes<Ts...>>& {
   return std::get<N>(axes);
 }
 
 template <int N, typename... Ts>
-auto get(const static_axes<Ts...>& axes) -> const at<N, static_axes<Ts...>>& {
+auto axis_get(const static_axes<Ts...>& axes) -> const axis_at<N, static_axes<Ts...>>& {
   return std::get<N>(axes);
 }
 
 template <int N, typename... Ts>
-axis::any<Ts...>& get(dynamic_axes<Ts...>& axes) {
+axis::any<Ts...>& axis_get(dynamic_axes<Ts...>& axes) {
   return axes[N];
 }
 
 template <int N, typename... Ts>
-const axis::any<Ts...>& get(const dynamic_axes<Ts...>& axes) {
+const axis::any<Ts...>& axis_get(const dynamic_axes<Ts...>& axes) {
   return axes[N];
 }
 
@@ -354,7 +354,7 @@ void indices_to_index(optional_index&, const Axes&) noexcept {}
 template <std::size_t D, typename Axes, typename... Us>
 void indices_to_index(optional_index& idx, const Axes& axes, const int j,
                       const Us... us) {
-  const auto& a = ::boost::histogram::detail::get<D>(axes);
+  const auto& a = axis_get<D>(axes);
   const auto a_size = a.size();
   const auto a_shape = a.shape();
   idx.stride *= (-1 <= j && j <= a_size); // set to 0, if j is invalid
@@ -398,7 +398,7 @@ template <std::size_t N, typename Axes, typename T>
 void indices_to_index_get(mp11::mp_size_t<N>, optional_index& idx, const Axes& axes,
                           const T& t) {
   constexpr std::size_t D = mp_size<T>() - N;
-  const auto& a = ::boost::histogram::detail::get<D>(axes);
+  const auto& a = axis_get<D>(axes);
   const auto a_size = a.size();
   const auto a_shape = a.shape();
   const auto j = static_cast<int>(std::get<D>(t));
@@ -428,7 +428,7 @@ template <std::size_t N, typename... Ts, typename Iterator>
 void args_to_index_iter(mp11::mp_size_t<N>, optional_index& idx,
                         const static_axes<Ts...>& axes, Iterator iter) {
   constexpr std::size_t D = sizeof...(Ts)-N;
-  const auto& a = ::boost::histogram::detail::get<D>(axes);
+  const auto& a = axis_get<D>(axes);
   const auto a_size = a.size();
   const auto a_shape = a.shape();
   const int j = a.index(*iter);
