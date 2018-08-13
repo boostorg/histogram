@@ -562,10 +562,7 @@ optional_index call_impl(static_container_tag, const dynamic_axes<Ts...>& axes,
                          const U& u) {
   dimension_check(axes, mp_size<U>());
   optional_index i;
-  if (axes.size() == 1)
-    args_to_index<0>(i, axes, u);
-  else
-    args_to_index_get(mp_size<U>(), i, axes, u);
+  args_to_index_get(mp_size<U>(), i, axes, u);
   return i;
 }
 
@@ -574,10 +571,7 @@ optional_index call_impl(dynamic_container_tag, const dynamic_axes<Ts...>& axes,
                          const U& u) {
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
   optional_index i;
-  if (axes.size() == 1)
-    args_to_index<0>(i, axes, u);
-  else
-    args_to_index_iter(i, axes, std::begin(u));
+  args_to_index_iter(i, axes, std::begin(u));
   return i;
 }
 

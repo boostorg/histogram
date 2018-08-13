@@ -681,6 +681,13 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(h1.axis(), integer(1, 4))
         self.assertEqual([h1.at(i).value for i in range(3)], [1, 1, 1])
 
+        with self.assertRaises(ValueError):
+            h.reduce_to(*range(100))
+
+        with self.assertRaises(ValueError):
+            h.reduce_to(2, 1)
+
+
     def test_pickle_0(self):
         a = histogram(category(0, 1, 2),
                       integer(0, 20, label='ia'),

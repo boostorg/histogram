@@ -15,11 +15,15 @@
 int main() {
   using namespace boost::histogram;
 
-  // ctor
+  // ctor and reset
   {
     array_storage<unsigned> a;
+    BOOST_TEST_EQ(a.size(), 0);
     a.reset(1);
-    BOOST_TEST_EQ(a.size(), 1u);
+    BOOST_TEST_EQ(a.size(), 1);
+    a.increase(0);
+    BOOST_TEST_EQ(a[0], 1);
+    a.reset(1);
     BOOST_TEST_EQ(a[0], 0);
   }
 
