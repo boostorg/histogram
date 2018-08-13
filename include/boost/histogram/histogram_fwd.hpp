@@ -38,10 +38,10 @@ template <typename T = int, typename Allocator = std::allocator<char>>
 class category;
 
 using types = mp11::mp_list<
-    axis::regular<axis::transform::identity>,
-    axis::regular<axis::transform::log>, axis::regular<axis::transform::sqrt>,
-    axis::regular<axis::transform::pow>, axis::circular<>, axis::variable<>,
-    axis::integer<>, axis::category<>, axis::category<std::string>>;
+    regular<transform::identity>,
+    regular<transform::log>, regular<transform::sqrt>,
+    regular<transform::pow>, circular<>, variable<>,
+    integer<>, category<>, category<std::string>>;
 
 template <typename... Ts>
 class any;
