@@ -55,7 +55,7 @@ int main() {
 
   // multiply
   {
-    array_storage<unsigned> a;
+    array_storage<double> a;
     a.reset(2);
     a.increase(0);
     a *= 3;

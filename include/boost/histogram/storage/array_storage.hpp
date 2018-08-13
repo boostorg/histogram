@@ -60,8 +60,7 @@ public:
     return *this;
   }
 
-  explicit array_storage(const allocator_type& a = allocator_type())
-      : array_(a) {}
+  explicit array_storage(const allocator_type& a = allocator_type()) : array_(a) {}
 
   allocator_type get_allocator() const { return array_.get_allocator(); }
 
