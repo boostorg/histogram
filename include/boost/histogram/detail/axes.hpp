@@ -12,7 +12,6 @@
 #include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
 #include <boost/variant/apply_visitor.hpp>

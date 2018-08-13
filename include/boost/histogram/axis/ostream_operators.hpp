@@ -12,7 +12,6 @@
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/axis/value_view.hpp>
-#include <boost/histogram/detail/utility.hpp>
 #include <ostream>
 
 namespace boost {

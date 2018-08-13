@@ -14,7 +14,6 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/value_view.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/utility.hpp>
 #include <cmath>
 #include <limits>
 #include <memory>

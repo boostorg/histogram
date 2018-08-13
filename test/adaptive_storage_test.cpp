@@ -10,6 +10,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/histogram/serialization.hpp>
 #endif
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>

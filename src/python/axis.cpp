@@ -7,7 +7,6 @@
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/types.hpp>
-#include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/python.hpp>
 #include <boost/python/def_visitor.hpp>

@@ -13,7 +13,6 @@
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/index_mapper.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/operators.hpp>

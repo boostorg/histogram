@@ -12,7 +12,6 @@
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/utility.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
