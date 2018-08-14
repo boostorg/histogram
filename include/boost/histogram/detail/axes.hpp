@@ -133,12 +133,12 @@ void axes_assign(dynamic_axes<Ts...>& t, const dynamic_axes<Us...>& u) {
 }
 
 template <typename... Ts>
-constexpr unsigned axes_size(const static_axes<Ts...>&) {
+constexpr std::size_t axes_size(const static_axes<Ts...>&) {
   return sizeof...(Ts);
 }
 
 template <typename... Ts>
-unsigned axes_size(const dynamic_axes<Ts...>& axes) {
+std::size_t axes_size(const dynamic_axes<Ts...>& axes) {
   return axes.size();
 }
 
@@ -264,19 +264,25 @@ struct shape_collector {
 };
 
 namespace {
+
 template <typename LN, typename T>
 struct sub_axes_impl {};
 
 template <typename LN, typename... Ts>
 struct sub_axes_impl<LN, static_axes<Ts...>> {
+  static_assert(mp11::mp_is_set<LN>::value,
+                "integer arguments must be strictly ascending");
+  static_assert(mp_last<LN>::value < sizeof...(Ts), "index out of range");
   template <typename I>
   using at = mp11::mp_at<mp11::mp_list<Ts...>, I>;
-  using L = mp11::mp_rename<unique_sorted<LN>, static_axes>;
+  using L = mp11::mp_rename<LN, static_axes>;
   using type = mp11::mp_transform<at, L>;
 };
 
 template <typename LN, typename... Ts>
 struct sub_axes_impl<LN, dynamic_axes<Ts...>> {
+  static_assert(mp11::mp_is_set<LN>::value,
+                "integer arguments must be strictly ascending");
   using type = dynamic_axes<Ts...>;
 };
 }
@@ -301,7 +307,7 @@ sub_axes<static_axes<Ts...>, Ns...> make_sub_axes(const static_axes<Ts...>& t, N
   using T = static_axes<Ts...>;
   using U = sub_axes<static_axes<Ts...>, Ns...>;
   U u;
-  using N1 = unique_sorted<mp11::mp_list<Ns...>>;
+  using N1 = mp11::mp_list<Ns...>;
   using N2 = mp11::mp_iota<mp11::mp_size<N1>>;
   using N3 = mp11::mp_transform<std::pair, N2, N1>;
   mp11::mp_for_each<N3>(sub_static_assign_impl<T, U>{t, u});
@@ -323,9 +329,9 @@ struct sub_dynamic_assign_impl {
 template <typename... Ts, typename... Ns>
 sub_axes<dynamic_axes<Ts...>, Ns...> make_sub_axes(const dynamic_axes<Ts...>& t, Ns...) {
   using T = dynamic_axes<Ts...>;
-  T u;
+  T u(t.get_allocator());
   u.reserve(sizeof...(Ns));
-  using N = unique_sorted<mp11::mp_list<Ns...>>;
+  using N = mp11::mp_list<Ns...>;
   mp11::mp_for_each<N>(sub_dynamic_assign_impl<T>{t, u});
   return u;
 }
@@ -415,7 +421,7 @@ void args_to_index(optional_index& idx, const static_axes<Ts...>& axes, const U&
                    const Us&... us) {
   const auto a_size = std::get<D>(axes).size();
   const auto a_shape = std::get<D>(axes).shape();
-  const int j = std::get<D>(axes).index(u);
+  const auto j = std::get<D>(axes).index(u);
   linearize(idx, a_size, a_shape, j);
   args_to_index<(D + 1)>(idx, axes, us...);
 }
@@ -431,7 +437,7 @@ void args_to_index_iter(mp11::mp_size_t<N>, optional_index& idx,
   const auto& a = axis_get<D>(axes);
   const auto a_size = a.size();
   const auto a_shape = a.shape();
-  const int j = a.index(*iter);
+  const auto j = a.index(*iter);
   linearize(idx, a_size, a_shape, j);
   args_to_index_iter(mp11::mp_size_t<(N - 1)>(), idx, axes, ++iter);
 }
@@ -446,7 +452,7 @@ void args_to_index_get(mp11::mp_size_t<N>, optional_index& idx,
   constexpr std::size_t D = mp_size<T>::value - N;
   const auto a_size = std::get<D>(axes).size();
   const auto a_shape = std::get<D>(axes).shape();
-  const int j = std::get<D>(axes).index(std::get<D>(t));
+  const auto j = std::get<D>(axes).index(std::get<D>(t));
   linearize(idx, a_size, a_shape, j);
   args_to_index_get(mp11::mp_size_t<(N - 1)>(), idx, axes, t);
 }

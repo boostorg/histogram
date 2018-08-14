@@ -98,7 +98,7 @@ public:
     bp::list strides;
     auto& b = self.storage_.buffer_;
     d["typestr"] = bh::detail::apply(dtype_visitor(), b, shapes, strides);
-    for (unsigned i = 0; i < self.dim(); ++i) {
+    for (std::size_t i = 0; i < self.dim(); ++i) {
       if (i > 0) strides.append(strides[-1] * shapes[-1]);
       shapes.append(self.axis(i).shape());
     }
@@ -204,7 +204,7 @@ struct fetcher {
 template <typename T>
 struct span {
   T* data;
-  unsigned size;
+  std::size_t size;
   const T* begin() const { return data; }
   const T* end() const { return data + size; }
 };
@@ -297,7 +297,7 @@ bp::object histogram_getitem(const pyhistogram& self, bp::object args) {
   }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
-  for (unsigned i = 0; i < dim; ++i) idx[i] = bp::extract<int>(args[i]);
+  for (std::size_t i = 0; i < dim; ++i) idx[i] = bp::extract<int>(args[i]);
 
   return bp::object(self.at(span<int>{idx, self.dim()}));
 }

@@ -109,17 +109,21 @@ int main() {
   // rm_cv_ref
   {
     using T1 = int;
-    using T2 = const int;
-    using T3 = const int&;
-    using T4 = volatile int;
-    using T5 = volatile const int;
-    using T6 = volatile const int&;
+    using T2 = int&&;
+    using T3 = const int;
+    using T4 = const int&;
+    using T5 = volatile int;
+    using T6 = volatile int&&;
+    using T7 = volatile const int;
+    using T8 = volatile const int&;
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T1>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T2>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T3>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T4>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T5>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T6>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T7>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T8>, int>));
   }
 
   // mp_size
@@ -149,15 +153,6 @@ int main() {
     using L2 = mp11::mp_list<char, int, char, char*>;
     using result = mp_set_union<L1, L2>;
     using expected = mp11::mp_list<int, char, long, char*>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
-  }
-
-  // unique_sorted
-  {
-    using input = mp11::mp_list_c<int, 3, 3, 1, 2, 1, 2>;
-    using result = unique_sorted<input>;
-    using expected = mp11::mp_list_c<int, 1, 2, 3>;
-
     BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
   }
 

@@ -97,12 +97,14 @@ public:
   }
 
   histogram& operator/=(const scale_type rhs) {
+    static_assert(std::is_floating_point<scale_type>::value,
+                  "division requires a floating point type");
     storage_ *= scale_type(1) / rhs;
     return *this;
   }
 
   /// Number of axes (dimensions) of histogram
-  unsigned dim() const noexcept { return detail::axes_size(axes_); }
+  std::size_t dim() const noexcept { return detail::axes_size(axes_); }
 
   /// Total number of bins in the histogram (including underflow/overflow)
   std::size_t size() const noexcept { return storage_.size(); }
@@ -111,34 +113,36 @@ public:
   void reset() { storage_.reset(storage_.size()); }
 
   /// Get N-th axis (const version)
-  template <int N>
-  auto axis(mp11::mp_int<N>) const -> const detail::axis_at<N, axes_type>& {
+  template <std::size_t N>
+  auto axis(mp11::mp_size_t<N>) const -> const detail::axis_at<N, axes_type>& {
     detail::range_check<N>(axes_);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis
-  template <int N>
-  auto axis(mp11::mp_int<N>) -> detail::axis_at<N, axes_type>& {
+  template <std::size_t N>
+  auto axis(mp11::mp_size_t<N>) -> detail::axis_at<N, axes_type>& {
     detail::range_check<N>(axes_);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get first axis (convenience for 1-d histograms, const version)
-  const detail::axis_at<0, axes_type>& axis() const { return axis(mp11::mp_int<0>()); }
+  const detail::axis_at<0, axes_type>& axis() const { return axis(mp11::mp_size_t<0>()); }
 
   /// Get first axis (convenience for 1-d histograms)
-  detail::axis_at<0, axes_type>& axis() { return axis(mp11::mp_int<0>()); }
+  detail::axis_at<0, axes_type>& axis() { return axis(mp11::mp_size_t<0>()); }
 
   /// Get N-th axis with runtime index (const version)
   template <typename U = axes_type, typename = detail::requires_dynamic_axes<U>>
-  const detail::axis_at<0, U>& axis(int i) const {
+  const detail::axis_at<0, U>& axis(std::size_t i) const {
+    BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
   }
 
   /// Get N-th axis with runtime index
   template <typename U = axes_type, typename = detail::requires_dynamic_axes<U>>
-  detail::axis_at<0, U>& axis(int i) {
+  detail::axis_at<0, U>& axis(std::size_t i) {
+    BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
   }
 
@@ -200,14 +204,18 @@ public:
   }
 
   /// Returns a lower-dimensional histogram
-  template <int N, typename... Ns>
-  auto reduce_to(mp11::mp_int<N>, Ns...) const
-      -> histogram<detail::sub_axes<axes_type, mp11::mp_int<N>, Ns...>, storage_type> {
-    using sub_axes_type = detail::sub_axes<axes_type, mp11::mp_int<N>, Ns...>;
+  // precondition: argument sequence must be strictly ascending axis indices
+  template <std::size_t I, typename... Ns>
+  auto reduce_to(mp11::mp_size_t<I>, Ns...) const
+      -> histogram<detail::sub_axes<axes_type, mp11::mp_size_t<I>, Ns...>, storage_type> {
+    using N = mp11::mp_size_t<I>;
+    using LN = mp11::mp_list<N, Ns...>;
+    detail::range_check<detail::mp_last<LN>::value>(axes_);
+    using sub_axes_type = detail::sub_axes<axes_type, N, Ns...>;
     using HR = histogram<sub_axes_type, storage_type>;
-    auto sub_axes = detail::make_sub_axes(axes_, mp11::mp_int<N>(), Ns()...);
+    auto sub_axes = detail::make_sub_axes(axes_, N(), Ns()...);
     auto hr = HR(std::move(sub_axes), storage_type(storage_.get_allocator()));
-    const auto b = detail::bool_mask<mp11::mp_int<N>, Ns...>(dim(), true);
+    const auto b = detail::bool_mask<N, Ns...>(dim(), true);
     std::vector<unsigned> shape(dim());
     for_each_axis(detail::shape_collector(shape.begin()));
     detail::index_mapper m(shape, b);
@@ -215,7 +223,8 @@ public:
     return hr;
   }
 
-  // precondition: range represents sequence of strictly ascending axis indices
+  /// Returns a lower-dimensional histogram
+  // precondition: sequence must be strictly ascending axis indices
   template <typename Iterator, typename U = axes_type,
             typename = detail::requires_dynamic_axes<U>,
             typename = detail::requires_iterator<Iterator>>
@@ -315,6 +324,7 @@ make_dynamic_histogram(Iterator begin, Iterator end) {
   return histogram_type(std::move(axes));
 }
 
+/// dynamic type factory from axis iterators with custom storage type
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
 histogram<mp11::mp_rename<

@@ -31,26 +31,26 @@ public:
     cache_.reset();
   }
 
-  unsigned dim() const noexcept { return histogram_.dim(); }
+  std::size_t dim() const noexcept { return histogram_.dim(); }
 
-  int idx(unsigned dim = 0) const noexcept {
+  int idx(std::size_t dim = 0) const noexcept {
     if (!cache_) { cache_.set(histogram_); }
     cache_.set_idx(idx_);
     return cache_.get(dim);
   }
 
-  auto bin() const -> decltype(std::declval<Histogram&>().axis(mp11::mp_int<0>())[0]) {
-    return histogram_.axis(mp11::mp_int<0>())[idx(0)];
+  auto bin() const -> decltype(std::declval<Histogram&>().axis()[0]) {
+    return histogram_.axis()[idx()];
   }
 
-  template <int D>
-  auto bin(mp11::mp_int<D>) const
-      -> decltype(std::declval<Histogram&>().axis(mp11::mp_int<D>())[0]) {
-    return histogram_.axis(mp11::mp_int<D>())[idx(D)];
+  template <std::size_t I>
+  auto bin(mp11::mp_size_t<I>) const
+      -> decltype(std::declval<Histogram&>().axis(mp11::mp_size_t<I>())[0]) {
+    return histogram_.axis(mp11::mp_size_t<I>())[idx(I)];
   }
 
   template <typename T = Histogram> // use SFINAE for this method
-  auto bin(unsigned dim) const -> decltype(std::declval<T&>().axis(dim)[0]) {
+  auto bin(std::size_t dim) const -> decltype(std::declval<T&>().axis(dim)[0]) {
     return histogram_.axis(dim)[idx(dim)];
   }
 

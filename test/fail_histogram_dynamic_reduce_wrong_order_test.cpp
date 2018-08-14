@@ -5,10 +5,10 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/histogram.hpp>
-#include <utility>
 
 using namespace boost::histogram;
 int main() {
-  auto h = make_dynamic_histogram(axis::integer<>(0, 2));
-  h.at(std::make_pair(0, 0));
+  auto h = make_dynamic_histogram(axis::integer<>(0, 1), axis::integer<>(1, 2));
+  auto v = {0, 0};
+  h.reduce_to(v.begin(), v.end());
 }
