@@ -41,6 +41,7 @@ public:
   using axes_type = Axes;
   using storage_type = Storage;
   using element_type = typename storage_type::element_type;
+  using scale_type = detail::arg_type<1, decltype(&Storage::operator*=)>;
   using const_reference = typename storage_type::const_reference;
   using const_iterator = iterator_over<histogram>;
 
@@ -90,13 +91,13 @@ public:
     return *this;
   }
 
-  histogram& operator*=(const double rhs) {
+  histogram& operator*=(const scale_type rhs) {
     storage_ *= rhs;
     return *this;
   }
 
-  histogram& operator/=(const double rhs) {
-    storage_ *= 1.0 / rhs;
+  histogram& operator/=(const scale_type rhs) {
+    storage_ *= scale_type(1) / rhs;
     return *this;
   }
 

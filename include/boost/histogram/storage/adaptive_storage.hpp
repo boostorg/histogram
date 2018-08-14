@@ -109,8 +109,7 @@ bool safe_radd(T& t, const U& u) {
 }
 
 template <typename F, typename A, typename... Ts>
-typename std::result_of<F(void*, A&&, Ts&&...)>::type apply(F&& f, A&& a,
-                                                            Ts&&... ts) {
+typename std::result_of<F(void*, A&&, Ts&&...)>::type apply(F&& f, A&& a, Ts&&... ts) {
   // this is intentionally not a switch, the if-chain is faster in benchmarks
   if (a.type == 1)
     return f(reinterpret_cast<uint8_t*>(a.ptr), std::forward<A>(a),
@@ -227,15 +226,13 @@ struct increaser {
 
 struct adder {
   template <typename U>
-  using is_convertible_to_mp_int =
-      typename std::is_convertible<U, mp_int>::type;
+  using is_convertible_to_mp_int = typename std::is_convertible<U, mp_int>::type;
 
   template <typename U>
   using is_integral = typename std::is_integral<U>::type;
 
   template <typename T, typename Buffer, typename U>
-  void if_integral(std::true_type, T* tp, Buffer& b, std::size_t i,
-                   const U& x) {
+  void if_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
     if (!safe_radd(tp[i], x)) {
       using V = next_type<T>;
       create(type_tag<V>(), b, tp);
@@ -245,8 +242,7 @@ struct adder {
   }
 
   template <typename T, typename Buffer, typename U>
-  void if_integral(std::false_type, T* tp, Buffer& b, std::size_t i,
-                   const U& x) {
+  void if_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
     create(type_tag<wcount>(), b, tp);
     destroyer()(tp, b);
     operator()(reinterpret_cast<wcount*>(b.ptr), b, i, x);
@@ -265,14 +261,14 @@ struct adder {
   }
 
   template <typename Buffer, typename U>
-  void if_convertible_to_mp_int(std::true_type, mp_int* tp, Buffer&,
-                                std::size_t i, const U& x) {
+  void if_convertible_to_mp_int(std::true_type, mp_int* tp, Buffer&, std::size_t i,
+                                const U& x) {
     tp[i] += static_cast<mp_int>(x);
   }
 
   template <typename Buffer, typename U>
-  void if_convertible_to_mp_int(std::false_type, mp_int* tp, Buffer& b,
-                                std::size_t i, const U& x) {
+  void if_convertible_to_mp_int(std::false_type, mp_int* tp, Buffer& b, std::size_t i,
+                                const U& x) {
     create(type_tag<wcount>(), b, tp);
     destroyer()(tp, b);
     operator()(reinterpret_cast<wcount*>(b.ptr), b, i, x);
@@ -326,8 +322,7 @@ struct comparer {
 
     template <typename U, typename OBuffer>
     bool operator()(const U* optr, const OBuffer& ob, const void*) {
-      return std::all_of(optr, optr + ob.size,
-                         [](const U& x) { return x == 0; });
+      return std::all_of(optr, optr + ob.size, [](const U& x) { return x == 0; });
     }
 
     template <typename OBuffer, typename T>
@@ -408,8 +403,7 @@ public:
   }
 
   template <typename S, typename = detail::requires_storage<S>>
-  explicit adaptive_storage(const S& s)
-      : buffer_(s.size(), s.get_allocator()) {
+  explicit adaptive_storage(const S& s) : buffer_(s.size(), s.get_allocator()) {
     create(detail::type_tag<detail::wcount>(), buffer_);
     for (std::size_t i = 0; i < size(); ++i) {
       reinterpret_cast<detail::wcount*>(buffer_.ptr)[i] = s[i];
@@ -427,8 +421,7 @@ public:
     return *this;
   }
 
-  explicit adaptive_storage(const allocator_type& a = allocator_type())
-      : buffer_(0, a) {
+  explicit adaptive_storage(const allocator_type& a = allocator_type()) : buffer_(0, a) {
     detail::create(detail::type_tag<void>(), buffer_);
   }
 
@@ -496,8 +489,7 @@ public:
 
   // used by unit tests, not part of generic storage interface
   template <typename T>
-  adaptive_storage(std::size_t s, const T* p,
-                   const allocator_type& a = allocator_type())
+  adaptive_storage(std::size_t s, const T* p, const allocator_type& a = allocator_type())
       : buffer_(s, a) {
     detail::create(detail::type_tag<T>(), buffer_, p);
   }

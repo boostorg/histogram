@@ -102,7 +102,7 @@ public:
     return *this;
   }
 
-  array_storage& operator*=(const double x) noexcept {
+  array_storage& operator*=(const element_type& x) noexcept {
     for (std::size_t i = 0; i < size(); ++i) array_[i] *= x;
     return *this;
   }

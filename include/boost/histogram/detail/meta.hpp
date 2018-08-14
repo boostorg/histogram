@@ -7,8 +7,8 @@
 #ifndef _BOOST_HISTOGRAM_DETAIL_META_HPP_
 #define _BOOST_HISTOGRAM_DETAIL_META_HPP_
 
+#include <boost/callable_traits/args.hpp>
 #include <boost/mp11.hpp>
-
 #include <iterator>
 #include <limits>
 #include <tuple>
@@ -118,6 +118,9 @@ using mp_set_union = mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back
 
 template <typename Ns>
 using unique_sorted = mp11::mp_unique<mp11::mp_sort<Ns, mp11::mp_less>>;
+
+template <unsigned N, typename T>
+using arg_type = mp11::mp_at_c<callable_traits::args_t<T>, N>;
 
 } // namespace detail
 } // namespace histogram
