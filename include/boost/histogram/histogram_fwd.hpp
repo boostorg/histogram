@@ -39,17 +39,14 @@ class category;
 
 template <typename... Ts>
 class any;
-using any_std = any<
-    regular<transform::identity, double, std::allocator<char>>,
-    regular<transform::log, double, std::allocator<char>>,
-    regular<transform::sqrt, double, std::allocator<char>>,
-    regular<transform::pow, double, std::allocator<char>>,
-    circular<double, std::allocator<char>>,
-    variable<double, std::allocator<char>>,
-    integer<int, std::allocator<char>>,
-    category<int, std::allocator<char>>,
-    category<std::string, std::allocator<char>>
->;
+using any_std =
+    any<regular<transform::identity, double, std::allocator<char>>,
+        regular<transform::log, double, std::allocator<char>>,
+        regular<transform::sqrt, double, std::allocator<char>>,
+        regular<transform::pow, double, std::allocator<char>>,
+        circular<double, std::allocator<char>>, variable<double, std::allocator<char>>,
+        integer<int, std::allocator<char>>, category<int, std::allocator<char>>,
+        category<std::string, std::allocator<char>>>;
 
 } // namespace axis
 
@@ -60,9 +57,8 @@ class array_storage;
 
 namespace {
 template <typename... Ts>
-using rebind =
-    typename std::allocator_traits<typename mp11::mp_front<mp11::mp_list<
-        Ts...>>::allocator_type>::template rebind_alloc<axis::any<Ts...>>;
+using rebind = typename std::allocator_traits<typename mp11::mp_front<
+    mp11::mp_list<Ts...>>::allocator_type>::template rebind_alloc<axis::any<Ts...>>;
 }
 
 template <typename... Ts>
@@ -70,8 +66,7 @@ using dynamic_axes = std::vector<axis::any<Ts...>, rebind<Ts...>>;
 template <typename... Ts>
 using static_axes = std::tuple<Ts...>;
 
-template <class Axes = std::vector<axis::any_std>,
-          class Storage = adaptive_storage<>>
+template <class Axes = std::vector<axis::any_std>, class Storage = adaptive_storage<>>
 class histogram;
 
 } // namespace histogram

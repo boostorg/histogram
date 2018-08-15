@@ -441,5 +441,26 @@ int main() {
     BOOST_TEST_EQ(detail::make_sub_axes(axes, i0(), i1(), i2()), axes);
   }
 
+  // dynamic_axes with allocator
+  {
+    using inner_type = axis::integer<int, tracing_allocator<char>>;
+    using axis_type = axis::any<inner_type>;
+    using axes_type = dynamic_axes<inner_type>;
+    using expected = tracing_allocator<axis_type>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<axes_type::allocator_type, expected>));
+
+    std::size_t allocated_bytes = 0;
+    std::size_t deallocated_bytes = 0;
+    {
+      auto a = tracing_allocator<char>(allocated_bytes, deallocated_bytes);
+      auto axis = inner_type(0, 1, std::string(1024, 'c'), axis::uoflow_type::on, a);
+      axes_type axes(a);
+      axes.reserve(1);
+      axes.emplace_back(std::move(axis));
+    }
+    BOOST_TEST_EQ(allocated_bytes, deallocated_bytes);
+    BOOST_TEST_EQ(allocated_bytes, 1024 + 3 * sizeof(std::size_t) + sizeof(axis_type));
+  }
+
   return boost::report_errors();
 }

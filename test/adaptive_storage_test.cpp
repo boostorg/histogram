@@ -18,47 +18,7 @@
 #include <memory>
 #include <sstream>
 
-#ifdef BOOST_HISTOGAM_TRACE_ALLOCS
-#include <boost/core/typeinfo.hpp>
-#include <iostream>
-
-template <class T>
-struct tracing_allocator {
-  using value_type = T;
-  tracing_allocator() noexcept {}
-  template <class U>
-  tracing_allocator(const tracing_allocator<U>&) noexcept {}
-  T* allocate(std::size_t n) {
-    T* p = new T[n];
-    boost::core::typeinfo const& ti = BOOST_CORE_TYPEID(T);
-    std::cerr << "ALLOC @ " << (void*)p << " "
-              << boost::core::demangled_name(ti) << "[" << n << "]"
-              << std::endl;
-    return p;
-  }
-  void deallocate(T* p, std::size_t n) {
-    boost::core::typeinfo const& ti = BOOST_CORE_TYPEID(T);
-    std::cerr << "DEALLOC @ " << (void*)p << " "
-              << boost::core::demangled_name(ti) << "[" << n << "]"
-              << std::endl;
-    delete[] p;
-  }
-};
-
-template <class T, class U>
-constexpr bool operator==(const tracing_allocator<T>&,
-                          const tracing_allocator<U>&) noexcept;
-
-template <class T, class U>
-constexpr bool operator!=(const tracing_allocator<T>&,
-                          const tracing_allocator<U>&) noexcept;
-
-using adaptive_storage_type =
-    boost::histogram::adaptive_storage<tracing_allocator<char>>;
-#else
-using adaptive_storage_type =
-    boost::histogram::adaptive_storage<std::allocator<char>>;
-#endif
+using adaptive_storage_type = boost::histogram::adaptive_storage<>;
 
 using namespace boost::histogram;
 

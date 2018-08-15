@@ -93,9 +93,7 @@ struct pow {
   T inverse(T v) const {
     return std::pow(v, 1.0 / power);
   }
-  bool operator==(const pow& other) const noexcept {
-    return power == other.power;
-  }
+  bool operator==(const pow& other) const noexcept { return power == other.power; }
 
 private:
   friend ::boost::serialization::access;
@@ -111,14 +109,13 @@ private:
  */
 // private inheritance from Transform wastes no space if it is stateless
 template <typename Transform, typename RealType, typename Allocator>
-class regular
-    : public labeled_base<Allocator>,
-      public iterator_mixin<regular<Transform, RealType, Allocator>>,
-      Transform {
+class regular : public labeled_base<Allocator>,
+                public iterator_mixin<regular<Transform, RealType, Allocator>>,
+                Transform {
   using base_type = labeled_base<Allocator>;
 
 public:
-  using allocator_type = typename labeled_base<Allocator>::allocator_type;
+  using allocator_type = typename base_type::allocator_type;
   using value_type = RealType;
   using bin_type = interval_view<regular>;
 
@@ -131,14 +128,13 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    * \param trans arguments passed to the transform.
    */
-  regular(unsigned n, value_type lower, value_type upper,
-          string_view label = {}, uoflow_type uo = uoflow_type::on,
-          Transform trans = Transform(),
+  regular(unsigned n, value_type lower, value_type upper, string_view label = {},
+          uoflow_type uo = uoflow_type::on, Transform trans = Transform(),
           const allocator_type& a = allocator_type())
-      : base_type(n, uo, label, a),
-        Transform(trans),
-        min_(trans.forward(lower)),
-        delta_((trans.forward(upper) - trans.forward(lower)) / n) {
+      : base_type(n, uo, label, a)
+      , Transform(trans)
+      , min_(trans.forward(lower))
+      , delta_((trans.forward(upper) - trans.forward(lower)) / n) {
     if (lower < upper) {
       BOOST_ASSERT(!std::isnan(min_));
       BOOST_ASSERT(!std::isnan(delta_));
@@ -179,8 +175,8 @@ public:
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const regular& o) const noexcept {
-    return base_type::operator==(o) && Transform::operator==(o) &&
-           min_ == o.min_ && delta_ == o.delta_;
+    return base_type::operator==(o) && Transform::operator==(o) && min_ == o.min_ &&
+           delta_ == o.delta_;
   }
 
   /// Access properties of the transform.
@@ -208,7 +204,7 @@ class circular : public labeled_base<Allocator>,
   using base_type = labeled_base<Allocator>;
 
 public:
-  using allocator_type = typename labeled_base<Allocator>::allocator_type;
+  using allocator_type = typename base_type::allocator_type;
   using value_type = RealType;
   using bin_type = interval_view<circular>;
 
@@ -222,12 +218,9 @@ public:
    * \param perimeter range after which value wraps around.
    * \param label     description of the axis.
    */
-  explicit circular(unsigned n, value_type phase = 0.0,
-                    value_type perimeter = two_pi(), string_view label = {},
-                    const allocator_type& a = allocator_type())
-      : base_type(n, uoflow_type::off, label, a),
-        phase_(phase),
-        perimeter_(perimeter) {}
+  explicit circular(unsigned n, value_type phase = 0.0, value_type perimeter = two_pi(),
+                    string_view label = {}, const allocator_type& a = allocator_type())
+      : base_type(n, uoflow_type::off, label, a), phase_(phase), perimeter_(perimeter) {}
 
   circular() = default;
   circular(const circular&) = default;
@@ -238,8 +231,7 @@ public:
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
     const value_type z = (x - phase_) / perimeter_;
-    const int i = static_cast<int>(std::floor(z * base_type::size())) %
-                  base_type::size();
+    const int i = static_cast<int>(std::floor(z * base_type::size())) % base_type::size();
     return i + (i < 0) * base_type::size();
   }
 
@@ -252,8 +244,7 @@ public:
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const circular& o) const noexcept {
-    return base_type::operator==(o) && phase_ == o.phase_ &&
-           perimeter_ == o.perimeter_;
+    return base_type::operator==(o) && phase_ == o.phase_ && perimeter_ == o.perimeter_;
   }
 
   value_type perimeter() const { return perimeter_; }
@@ -278,7 +269,7 @@ class variable : public labeled_base<Allocator>,
   using base_type = labeled_base<Allocator>;
 
 public:
-  using allocator_type = typename labeled_base<Allocator>::allocator_type;
+  using allocator_type = typename base_type::allocator_type;
   using value_type = RealType;
   using bin_type = interval_view<variable>;
 
@@ -289,8 +280,7 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   variable(std::initializer_list<value_type> x, string_view label = {},
-           uoflow_type uo = uoflow_type::on,
-           const allocator_type& a = allocator_type())
+           uoflow_type uo = uoflow_type::on, const allocator_type& a = allocator_type())
       : base_type(x.size() - 1, uo, label, a), x_(new value_type[x.size()]) {
     if (x.size() >= 2) {
       std::copy(x.begin(), x.end(), x_.get());
@@ -302,17 +292,15 @@ public:
 
   template <typename Iterator>
   variable(Iterator begin, Iterator end, string_view label = {},
-           uoflow_type uo = uoflow_type::on,
-           const allocator_type& a = allocator_type())
-      : base_type(std::distance(begin, end) - 1, uo, label, a),
-        x_(new value_type[std::distance(begin, end)]) {
+           uoflow_type uo = uoflow_type::on, const allocator_type& a = allocator_type())
+      : base_type(std::distance(begin, end) - 1, uo, label, a)
+      , x_(new value_type[std::distance(begin, end)]) {
     std::copy(begin, end, x_.get());
     std::sort(x_.get(), x_.get() + base_type::size() + 1);
   }
 
   variable() = default;
-  variable(const variable& o)
-      : base_type(o), x_(new value_type[base_type::size() + 1]) {
+  variable(const variable& o) : base_type(o), x_(new value_type[base_type::size() + 1]) {
     std::copy(o.x_.get(), o.x_.get() + base_type::size() + 1, x_.get());
   }
   variable& operator=(const variable& o) {
@@ -328,16 +316,13 @@ public:
 
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
-    return std::upper_bound(x_.get(), x_.get() + base_type::size() + 1, x) -
-           x_.get() - 1;
+    return std::upper_bound(x_.get(), x_.get() + base_type::size() + 1, x) - x_.get() - 1;
   }
 
   /// Returns the starting edge of the bin.
   value_type lower(int i) const noexcept {
     if (i < 0) { return -std::numeric_limits<value_type>::infinity(); }
-    if (i > base_type::size()) {
-      return std::numeric_limits<value_type>::infinity();
-    }
+    if (i > base_type::size()) { return std::numeric_limits<value_type>::infinity(); }
     return x_[i];
   }
 
@@ -367,7 +352,7 @@ class integer : public labeled_base<Allocator>,
   using base_type = labeled_base<Allocator>;
 
 public:
-  using allocator_type = typename labeled_base<Allocator>::allocator_type;
+  using allocator_type = typename base_type::allocator_type;
   using value_type = IntType;
   using bin_type = interval_view<integer>;
 
@@ -379,12 +364,9 @@ public:
    * \param uoflow whether to add under-/overflow bins.
    */
   integer(value_type lower, value_type upper, string_view label = {},
-          uoflow_type uo = uoflow_type::on,
-          const allocator_type& a = allocator_type())
+          uoflow_type uo = uoflow_type::on, const allocator_type& a = allocator_type())
       : base_type(upper - lower, uo, label, a), min_(lower) {
-    if (!(lower < upper)) {
-      throw std::invalid_argument("lower < upper required");
-    }
+    if (!(lower < upper)) { throw std::invalid_argument("lower < upper required"); }
   }
 
   integer() = default;
@@ -402,9 +384,7 @@ public:
   /// Returns lower edge of the integral bin.
   value_type lower(int i) const noexcept {
     if (i < 0) { return -std::numeric_limits<value_type>::max(); }
-    if (i > base_type::size()) {
-      return std::numeric_limits<value_type>::max();
-    }
+    if (i > base_type::size()) { return std::numeric_limits<value_type>::max(); }
     return min_ + i;
   }
 
@@ -435,7 +415,7 @@ class category : public labeled_base<Allocator>,
   using base_type = labeled_base<Allocator>;
 
 public:
-  using allocator_type = typename labeled_base<Allocator>::allocator_type;
+  using allocator_type = typename base_type::allocator_type;
   using value_type = T;
   using bin_type = value_view<category>;
 
@@ -450,8 +430,7 @@ private:
 
 public:
   category() = default;
-  category(const category& rhs)
-      : base_type(rhs), map_(new map_type(*rhs.map_)) {}
+  category(const category& rhs) : base_type(rhs), map_(new map_type(*rhs.map_)) {}
   category& operator=(const category& rhs) {
     if (this != &rhs) {
       base_type::operator=(rhs);
@@ -469,9 +448,8 @@ public:
   category(std::initializer_list<value_type> seq, string_view label = {},
            uoflow_type uo = uoflow_type::oflow,
            const allocator_type& a = allocator_type())
-      : base_type(seq.size(), uo == uoflow_type::on ? uoflow_type::oflow : uo,
-                  label, a),
-        map_(new map_type()) {
+      : base_type(seq.size(), uo == uoflow_type::on ? uoflow_type::oflow : uo, label, a)
+      , map_(new map_type()) {
     int index = 0;
     for (const auto& x : seq) map_->insert({x, index++});
     if (index == 0) throw std::invalid_argument("sequence is empty");
@@ -483,8 +461,8 @@ public:
            uoflow_type uo = uoflow_type::oflow,
            const allocator_type& a = allocator_type())
       : base_type(std::distance(begin, end),
-                  uo == uoflow_type::on ? uoflow_type::oflow : uo, label, a),
-        map_(new map_type()) {
+                  uo == uoflow_type::on ? uoflow_type::oflow : uo, label, a)
+      , map_(new map_type()) {
     int index = 0;
     while (begin != end) map_->insert({*begin++, index++});
     if (index == 0) throw std::invalid_argument("iterator range is empty");
@@ -500,8 +478,7 @@ public:
   /// Returns the value for the bin index (performs a range check).
   const value_type& value(int idx) const {
     auto it = map_->right.find(idx);
-    if (it == map_->right.end())
-      throw std::out_of_range("category index out of range");
+    if (it == map_->right.end()) throw std::out_of_range("category index out of range");
     return it->second;
   }
 

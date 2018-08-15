@@ -58,8 +58,8 @@ struct index_visitor : public boost::static_visitor<int> {
   int impl(std::false_type, const Axis&) const {
     throw std::runtime_error(boost::histogram::detail::cat(
         "cannot convert double to ",
-        boost::typeindex::type_id<typename Axis::value_type>().pretty_name(),
-        " for ", boost::typeindex::type_id<Axis>().pretty_name()));
+        boost::typeindex::type_id<typename Axis::value_type>().pretty_name(), " for ",
+        boost::typeindex::type_id<Axis>().pretty_name()));
   }
 };
 
@@ -70,10 +70,8 @@ struct lower_visitor : public boost::static_visitor<double> {
   double operator()(const Axis& a) const {
     return impl(
         std::integral_constant<
-            bool,
-            (std::is_convertible<typename Axis::value_type, double>::value &&
-             std::is_same<typename Axis::bin_type,
-                          interval_view<Axis>>::value)>(),
+            bool, (std::is_convertible<typename Axis::value_type, double>::value &&
+                   std::is_same<typename Axis::bin_type, interval_view<Axis>>::value)>(),
         a);
   }
   template <typename Axis>
@@ -119,8 +117,7 @@ struct assign_visitor : public boost::static_visitor<void> {
   void impl(mp11::mp_false, const U&) const {
     throw std::invalid_argument(boost::histogram::detail::cat(
         "argument ", boost::typeindex::type_id<U>().pretty_name(),
-        " is not a bounded type of ",
-        boost::typeindex::type_id<T>().pretty_name()));
+        " is not a bounded type of ", boost::typeindex::type_id<T>().pretty_name()));
   }
 };
 
@@ -156,8 +153,8 @@ public:
 
 private:
   template <typename T>
-  using requires_bounded_type = mp11::mp_if<
-      mp11::mp_contains<types, boost::histogram::detail::rm_cv_ref<T>>, void>;
+  using requires_bounded_type =
+      mp11::mp_if<mp11::mp_contains<types, boost::histogram::detail::rm_cv_ref<T>>, void>;
 
 public:
   any() = default;
@@ -235,8 +232,7 @@ public:
   }
 
   explicit operator const base&() const {
-    return boost::apply_visitor(detail::static_cast_visitor<const base&>(),
-                                *this);
+    return boost::apply_visitor(detail::static_cast_visitor<const base&>(), *this);
   }
 
   explicit operator base&() {
@@ -255,12 +251,8 @@ public:
 
   const_iterator begin() const { return const_iterator(*this, 0); }
   const_iterator end() const { return const_iterator(*this, size()); }
-  const_reverse_iterator rbegin() const {
-    return const_reverse_iterator(*this, size());
-  }
-  const_reverse_iterator rend() const {
-    return const_reverse_iterator(*this, 0);
-  }
+  const_reverse_iterator rbegin() const { return const_reverse_iterator(*this, size()); }
+  const_reverse_iterator rend() const { return const_reverse_iterator(*this, 0); }
 
 private:
   friend class boost::serialization::access;

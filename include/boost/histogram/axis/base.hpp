@@ -82,9 +82,7 @@ public:
   /// Returns the axis label, which is a name or description.
   boost::string_view label() const noexcept { return label_; }
   /// Change the label of an axis.
-  void label(boost::string_view label) {
-    label_.assign(label.begin(), label.end());
-  }
+  void label(boost::string_view label) { label_.assign(label.begin(), label.end()); }
 
   bool operator==(const labeled_base& rhs) const noexcept {
     return base::operator==(rhs) && label_ == rhs.label_;
@@ -102,8 +100,7 @@ protected:
       : base(size, uo), label_(label.begin(), label.end(), a) {}
 
 private:
-  boost::container::basic_string<char, std::char_traits<char>, allocator_type>
-      label_;
+  boost::container::basic_string<char, std::char_traits<char>, allocator_type> label_;
 
   friend class ::boost::serialization::access;
   template <class Archive>
