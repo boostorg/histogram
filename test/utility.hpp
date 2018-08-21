@@ -64,22 +64,22 @@ auto make(static_tag, Axes&&... axes)
   return make_static_histogram(std::forward<Axes>(axes)...);
 }
 
-template <typename... Axes>
-auto make(dynamic_tag, Axes&&... axes)
-    -> decltype(make_dynamic_histogram(std::forward<Axes>(axes)...)) {
-  return make_dynamic_histogram(std::forward<Axes>(axes)...);
-}
-
 template <typename S, typename... Axes>
 auto make_s(static_tag, S&& s, Axes&&... axes)
     -> decltype(make_static_histogram_with(s, std::forward<Axes>(axes)...)) {
   return make_static_histogram_with(s, std::forward<Axes>(axes)...);
 }
 
+template <typename... Axes>
+auto make(dynamic_tag, Axes&&... axes)
+    -> decltype(make_dynamic_histogram<axis::any<detail::rm_cv_ref<Axes>...>>(std::forward<Axes>(axes)...)) {
+  return make_dynamic_histogram<axis::any<detail::rm_cv_ref<Axes>...>>(std::forward<Axes>(axes)...);
+}
+
 template <typename S, typename... Axes>
 auto make_s(dynamic_tag, S&& s, Axes&&... axes)
-    -> decltype(make_dynamic_histogram_with(s, std::forward<Axes>(axes)...)) {
-  return make_dynamic_histogram_with(s, std::forward<Axes>(axes)...);
+    -> decltype(make_dynamic_histogram_with<axis::any<detail::rm_cv_ref<Axes>...>>(s, std::forward<Axes>(axes)...)) {
+  return make_dynamic_histogram_with<axis::any<detail::rm_cv_ref<Axes>...>>(s, std::forward<Axes>(axes)...);
 }
 
 template <class T>
