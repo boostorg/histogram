@@ -32,18 +32,17 @@ int main() {
 
   // tracing_allocator
   {
-    std::set<std::string> types;
-    std::size_t allocated_bytes = 0;
-    std::size_t deallocated_bytes = 0;
-    tracing_allocator<char> a(types, allocated_bytes, deallocated_bytes);
+    tracing_allocator_db db;
+    tracing_allocator<char> a(db);
     auto p1 = a.allocate(2);
     a.deallocate(p1, 2);
     tracing_allocator<int> b(a);
     auto p2 = b.allocate(3);
     b.deallocate(p2, 3);
-    auto expected = {"char", "int"};
-    BOOST_TEST_ALL_EQ(types.begin(), types.end(), expected.begin(), expected.end());
-    BOOST_TEST_EQ(allocated_bytes, 2 + 3 * sizeof(int));
-    BOOST_TEST_EQ(allocated_bytes, deallocated_bytes);
+    BOOST_TEST_EQ(db.size(), 2);
+    BOOST_TEST_EQ(db[typeid(char)].first, 2);
+    BOOST_TEST_EQ(db[typeid(char)].second, 2);
+    BOOST_TEST_EQ(db[typeid(int)].first, 3);
+    BOOST_TEST_EQ(db[typeid(int)].second, 3);
   }
 }

@@ -828,22 +828,28 @@ void run_tests() {
 
   // allocator support
   {
-    std::size_t allocated_bytes = 0, deallocated_bytes = 0;
+    tracing_allocator_db db;
     {
-      tracing_allocator<char> a(allocated_bytes, deallocated_bytes);
+      tracing_allocator<char> a(db);
       auto h = make_s(Tag(), array_storage<int, tracing_allocator<int>>(a),
                       axis::integer<int, tracing_allocator<char>>(
-                          0, 1024, std::string(1024, 'c'), axis::uoflow_type::on, a));
+                          0, 1024, std::string(512, 'c'), axis::uoflow_type::on, a));
       h(0);
     }
-    BOOST_TEST_EQ(allocated_bytes, deallocated_bytes);
-    BOOST_TEST_EQ(allocated_bytes,
-                  // axis label
-                  1024 + 3 * sizeof(std::size_t) +
-                      // any<...>, only dynamic
-                      sizeof(axis::integer<int, tracing_allocator<char>>) +
-                      // array_storage
-                      1026 * sizeof(int) + 3 * sizeof(std::size_t));
+
+    // int allocation for array_storage
+    BOOST_TEST_EQ(db[typeid(int)].first, db[typeid(int)].second);
+    BOOST_TEST_GE(db[typeid(int)].first, 1024);
+
+    // char allocation for axis label
+    BOOST_TEST_EQ(db[typeid(char)].first, db[typeid(char)].second);
+    BOOST_TEST_GE(db[typeid(char)].first, 512);
+
+    if (Tag()) { // axis::any allocation, only for dynamic histogram
+      using T = axis::any<axis::integer<int, tracing_allocator<char>>>;
+      BOOST_TEST_EQ(db[typeid(T)].first, db[typeid(T)].second);
+      BOOST_TEST_EQ(db[typeid(T)].first, 1);
+    }
   }
 }
 

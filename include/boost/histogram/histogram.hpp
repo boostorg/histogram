@@ -270,10 +270,9 @@ private:
 template <typename Storage, typename... Ts>
 histogram<static_axes<detail::rm_cv_ref<Ts>...>, detail::rm_cv_ref<Storage>>
 make_static_histogram_with(Storage&& s, Ts&&... axis) {
-  using histogram_type =
-      histogram<static_axes<detail::rm_cv_ref<Ts>...>, detail::rm_cv_ref<Storage>>;
-  auto axes = typename histogram_type::axes_type(std::forward<Ts>(axis)...);
-  return histogram_type(std::move(axes), std::move(s));
+  using H = histogram<static_axes<detail::rm_cv_ref<Ts>...>, detail::rm_cv_ref<Storage>>;
+  auto axes = typename H::axes_type(std::forward<Ts>(axis)...);
+  return H(std::move(axes), std::forward<Storage>(s));
 }
 
 /// static type factory with standard storage type
@@ -287,13 +286,13 @@ histogram<static_axes<detail::rm_cv_ref<Ts>...>> make_static_histogram(Ts&&... a
 template <typename AnyAxisType=axis::any_std, typename Storage, typename T, typename... Ts>
 histogram<mp11::mp_rename<AnyAxisType, dynamic_axes>, detail::rm_cv_ref<Storage>>
 make_dynamic_histogram_with(Storage&& s, T&& axis0, Ts&&... axis) {
-  using histogram_type = histogram<
+  using H = histogram<
       mp11::mp_rename<AnyAxisType, dynamic_axes>, detail::rm_cv_ref<Storage>
     >;
   auto a = axis0.get_allocator();
-  auto axes = typename histogram_type::axes_type(
+  auto axes = typename H::axes_type(
       {AnyAxisType(std::forward<T>(axis0)), AnyAxisType(std::forward<Ts>(axis))...}, a);
-  return histogram_type(std::move(axes), std::move(s));
+  return H(std::move(axes), std::forward<Storage>(s));
 }
 
 /// dynamic type factory with standard storage type
@@ -304,25 +303,29 @@ make_dynamic_histogram(T&& axis0, Ts&&... axis) {
   return make_dynamic_histogram_with<AnyAxisType>(S(), std::forward<T>(axis0), std::forward<Ts>(axis)...);
 }
 
-/// dynamic type factory from axis iterators with custom storage type
+/// dynamic type factory with custom storage type
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
-histogram<typename Iterator::value_type, detail::rm_cv_ref<Storage>>
+histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>, detail::rm_cv_ref<Storage>>
 make_dynamic_histogram_with(Storage&& s, Iterator begin, Iterator end) {
-  BOOST_ASSERT_MSG(std::distance(begin, end) > 0, "at least one axis required");
-  using histogram_type = histogram<typename Iterator::value_type, detail::rm_cv_ref<Storage>>;
-  auto axes = typename histogram_type::axes_type(begin, end, begin->get_allocator());
-  return histogram_type(std::move(axes), std::move(s));
+  using H = histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>, detail::rm_cv_ref<Storage>>;
+  using alloc_type = typename mp11::mp_front<typename Iterator::value_type>::allocator_type;
+  // auto axes = typename H::axes_type(static_cast<const axis::labeled_base<alloc_type>&>(*begin).get_allocator());
+  // axes.reserve(std::distance(begin, end));
+  // while (begin != end)
+  //   axes.emplace_back(*begin++);
+  // return H(std::move(axes), std::forward<Storage>(s));
+  return H();
 }
 
-/// dynamic type factory from axis iterators with standard storage type
-template <typename Iterator, typename = detail::requires_iterator<Iterator>>
-histogram<typename Iterator::value_type>
+/// dynamic type factory with standard storage type
+template <typename Iterator,
+          typename = detail::requires_iterator<Iterator>>
+histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
-  using S = typename histogram<typename Iterator::value_type>::storage_type;
+  using S = typename histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>>::storage_type;
   return make_dynamic_histogram_with(S(), begin, end);
 }
-
 } // namespace histogram
 } // namespace boost
 

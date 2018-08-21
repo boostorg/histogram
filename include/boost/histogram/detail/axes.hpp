@@ -37,7 +37,7 @@ struct axes_equal_static_dynamic_impl {
   template <typename Int>
   void operator()(Int) const {
     using T = mp11::mp_at<StaticAxes, Int>;
-    auto tp = boost::get<T>(&v[Int::value]);
+    auto tp = boost::relaxed_get<T>(&v[Int::value]);
     equal &= (tp && *tp == std::get<Int::value>(t));
   }
 };

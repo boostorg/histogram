@@ -125,9 +125,23 @@ void circular<T, A>::serialize(Archive& ar, unsigned /* version */) {
 template <typename T, typename A>
 template <class Archive>
 void variable<T, A>::serialize(Archive& ar, unsigned /* version */) {
+  const auto old_size = base_type::size();
+  value_allocator_type old_alloc = base_type::get_allocator();
   ar& boost::serialization::base_object<labeled_base<A>>(*this);
-  if (Archive::is_loading::value) { x_.reset(new T[base::size() + 1]); }
-  ar& boost::serialization::make_array(x_.get(), base::size() + 1);
+  if (Archive::is_loading::value && old_size != base_type::size()) {
+    auto xit = x_;
+    auto xend = x_ + old_size + 1;
+    while (xit != xend)
+      old_alloc.destroy(xit++);
+    old_alloc.deallocate(x_, old_size + 1);
+    value_allocator_type new_alloc(base_type::get_allocator());
+    x_ = new_alloc.allocate(base_type::size() + 1);
+    xit = x_;
+    xend = x_ + base_type::size() + 1;
+    while (xit != xend)
+      new_alloc.construct(xit++);
+  }
+  ar& boost::serialization::make_array(x_, base_type::size() + 1);
 }
 
 template <typename T, typename A>

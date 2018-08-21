@@ -443,23 +443,45 @@ int main() {
 
   // dynamic_axes with allocator
   {
-    using inner_type = axis::integer<int, tracing_allocator<char>>;
-    using axis_type = axis::any<inner_type>;
-    using axes_type = dynamic_axes<inner_type>;
+    using T1 = axis::regular<axis::transform::identity, double, tracing_allocator<char>>;
+    using T2 = axis::circular<double, tracing_allocator<char>>;
+    using T3 = axis::variable<double, tracing_allocator<char>>;
+    using T4 = axis::integer<int, tracing_allocator<char>>;
+    using T5 = axis::category<int, tracing_allocator<char>>;
+    using axis_type = axis::any<T1, T2, T3, T4, T5>;
+    using axes_type = boost::mp11::mp_rename<axis_type, dynamic_axes>;
     using expected = tracing_allocator<axis_type>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<axes_type::allocator_type, expected>));
 
-    std::size_t allocated_bytes = 0;
-    std::size_t deallocated_bytes = 0;
+    tracing_allocator_db db;
     {
-      auto a = tracing_allocator<char>(allocated_bytes, deallocated_bytes);
-      auto axis = inner_type(0, 1, std::string(1024, 'c'), axis::uoflow_type::on, a);
+      auto a = tracing_allocator<char>(db);
+      const auto label = std::string(512, 'c');
       axes_type axes(a);
-      axes.reserve(1);
-      axes.emplace_back(std::move(axis));
+      axes.reserve(5);
+      axes.emplace_back(T1(1, 0, 1, label, axis::uoflow_type::on, {}, a));
+      axes.emplace_back(T2(2, 0, T2::two_pi(), label, a));
+      axes.emplace_back(T3({0., 1., 2.}, label, axis::uoflow_type::on, a));
+      axes.emplace_back(T4(0, 4, label, axis::uoflow_type::on, a));
+      axes.emplace_back(T5({1, 2, 3, 4, 5}, label, axis::uoflow_type::on, a));
     }
-    BOOST_TEST_EQ(allocated_bytes, deallocated_bytes);
-    BOOST_TEST_EQ(allocated_bytes, 1024 + 3 * sizeof(std::size_t) + sizeof(axis_type));
+    // 5 axis::any objects
+    BOOST_TEST_EQ(db[typeid(axis_type)].first, db[typeid(axis_type)].second);
+    BOOST_TEST_EQ(db[typeid(axis_type)].first, 5);
+
+    // 5 labels
+    BOOST_TEST_EQ(db[typeid(char)].first, db[typeid(char)].second);
+    BOOST_TEST_GE(db[typeid(char)].first, 5 * 512);
+
+    // nothing to allocate for T1
+    // nothing to allocate for T2
+    // T3 allocates storage for bin edges
+    BOOST_TEST_EQ(db[typeid(double)].first, db[typeid(double)].second);
+    BOOST_TEST_EQ(db[typeid(double)].first, 3);
+    // nothing to allocate for T4
+    // T5 allocates storage for bimap
+    BOOST_TEST_EQ(db[typeid(boost::bimap<int, int>)].first, db[typeid(boost::bimap<int, int>)].second);
+    BOOST_TEST_EQ(db[typeid(boost::bimap<int, int>)].first, 1);
   }
 
   return boost::report_errors();

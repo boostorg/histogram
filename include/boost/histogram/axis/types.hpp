@@ -21,6 +21,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 
 // forward declaration for serialization
 namespace boost {
@@ -118,6 +119,7 @@ public:
   using allocator_type = typename base_type::allocator_type;
   using value_type = RealType;
   using bin_type = interval_view<regular>;
+  using transform_type = Transform;
 
   /** Construct axis with n bins over real range [lower, upper).
    *
@@ -129,10 +131,10 @@ public:
    * \param trans arguments passed to the transform.
    */
   regular(unsigned n, value_type lower, value_type upper, string_view label = {},
-          uoflow_type uo = uoflow_type::on, Transform trans = Transform(),
+          uoflow_type uo = uoflow_type::on, transform_type trans = transform_type(),
           const allocator_type& a = allocator_type())
       : base_type(n, uo, label, a)
-      , Transform(trans)
+      , transform_type(trans)
       , min_(trans.forward(lower))
       , delta_((trans.forward(upper) - trans.forward(lower)) / n) {
     if (lower < upper) {
@@ -152,7 +154,7 @@ public:
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
     // Optimized code, measure impact of changes
-    const value_type z = (Transform::forward(x) - min_) / delta_;
+    const value_type z = (transform_type::forward(x) - min_) / delta_;
     return z < base_type::size() ? (z >= 0.0 ? static_cast<int>(z) : -1)
                                  : base_type::size();
   }
@@ -169,19 +171,19 @@ public:
       const auto z = value_type(i) / n;
       x = (1.0 - z) * min_ + z * (min_ + delta_ * n);
     }
-    return Transform::inverse(x);
+    return transform_type::inverse(x);
   }
 
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const regular& o) const noexcept {
-    return base_type::operator==(o) && Transform::operator==(o) && min_ == o.min_ &&
+    return base_type::operator==(o) && transform_type::operator==(o) && min_ == o.min_ &&
            delta_ == o.delta_;
   }
 
   /// Access properties of the transform.
-  const Transform& transform() const noexcept {
-    return static_cast<const Transform&>(*this);
+  const transform_type& transform() const noexcept {
+    return static_cast<const transform_type&>(*this);
   }
 
 private:
@@ -273,6 +275,10 @@ public:
   using value_type = RealType;
   using bin_type = interval_view<variable>;
 
+private:
+  using value_allocator_type = typename std::allocator_traits<allocator_type>::template rebind_alloc<value_type>;
+public:
+
   /** Construct an axis from bin edges.
    *
    * \param x sequence of bin edges.
@@ -281,42 +287,90 @@ public:
    */
   variable(std::initializer_list<value_type> x, string_view label = {},
            uoflow_type uo = uoflow_type::on, const allocator_type& a = allocator_type())
-      : base_type(x.size() - 1, uo, label, a), x_(new value_type[x.size()]) {
-    if (x.size() >= 2) {
-      std::copy(x.begin(), x.end(), x_.get());
-      std::sort(x_.get(), x_.get() + base_type::size() + 1);
-    } else {
-      throw std::invalid_argument("at least two values required");
-    }
-  }
+      : variable(x.begin(), x.end(), label, uo, a)
+  {}
 
   template <typename Iterator>
   variable(Iterator begin, Iterator end, string_view label = {},
            uoflow_type uo = uoflow_type::on, const allocator_type& a = allocator_type())
-      : base_type(std::distance(begin, end) - 1, uo, label, a)
-      , x_(new value_type[std::distance(begin, end)]) {
-    std::copy(begin, end, x_.get());
-    std::sort(x_.get(), x_.get() + base_type::size() + 1);
+      : base_type(std::max(std::distance(begin, end), 1l) - 1, uo, label, a) {
+    value_allocator_type a2(a);
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a2, base_type::size() + 1);
+    auto xit = x_;
+    AT::construct(a2, xit, *begin);
+    ++begin;
+    while (begin != end) {
+      if (*begin <= *xit)
+        throw std::invalid_argument("input sequence must be strictly ascending");
+      AT::construct(a2, ++xit, *begin++);
+    }
   }
 
   variable() = default;
-  variable(const variable& o) : base_type(o), x_(new value_type[base_type::size() + 1]) {
-    std::copy(o.x_.get(), o.x_.get() + base_type::size() + 1, x_.get());
+
+  variable(const variable& o) : base_type(o) {
+    value_allocator_type a(o.get_allocator());
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a, base_type::size() + 1);
+    auto it = o.x_;
+    const auto end = o.x_ + base_type::size() + 1;
+    auto xit = x_;
+    for (; it != end; ++it, ++xit)
+      AT::construct(a, xit, *it);
   }
+
   variable& operator=(const variable& o) {
     if (this != &o) {
-      base::operator=(o);
-      x_.reset(new value_type[base_type::size() + 1]);
-      std::copy(o.x_.get(), o.x_.get() + base_type::size() + 1, x_.get());
+      if (base_type::size() != o.size()) {
+        using AT = std::allocator_traits<value_allocator_type>;
+        value_allocator_type old_alloc(base_type::get_allocator());
+        auto xit = x_;
+        const auto xend = xit + base_type::size() + 1;
+        while (xit != xend)
+          AT::destroy(old_alloc, xit++);
+        AT::deallocate(old_alloc, x_, base_type::size() + 1);
+        base::operator=(o);
+        value_allocator_type new_alloc(base_type::get_allocator());
+        x_ = AT::allocate(new_alloc, o.size() + 1);
+        xit = x_;
+        auto it = o.x_;
+        const auto end = o.x_ + o.size() + 1;
+        while (it != end)
+          AT::construct(new_alloc, xit++, *it++);
+      } else {
+        base::operator=(o);
+        std::copy(o.x_, o.x_ + o.size() + 1, x_);
+      }
     }
     return *this;
   }
-  variable(variable&&) = default;
-  variable& operator=(variable&&) = default;
+
+  variable(variable&& o) : base_type(std::move(o)) {
+    x_ = o.x_;
+    o.x_ = nullptr;
+  }
+
+  variable& operator=(variable&& o) {
+    base::operator=(std::move(o));
+    x_ = o.x_;
+    o.x_ = nullptr;
+    return *this;
+  }
+
+  ~variable() {
+    value_allocator_type a(base_type::get_allocator());
+    using AT = std::allocator_traits<value_allocator_type>;
+    auto xit = x_;
+    const auto end = x_ + base_type::size() + 1;
+    while (xit != end)
+      AT::destroy(a, xit++);
+    AT::deallocate(a, x_, base_type::size() + 1);
+  }
 
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
-    return std::upper_bound(x_.get(), x_.get() + base_type::size() + 1, x) - x_.get() - 1;
+    return std::upper_bound(x_, x_ + base_type::size() + 1, x) - x_ - 1;
   }
 
   /// Returns the starting edge of the bin.
@@ -330,11 +384,11 @@ public:
 
   bool operator==(const variable& o) const noexcept {
     if (!base::operator==(o)) { return false; }
-    return std::equal(x_.get(), x_.get() + base_type::size() + 1, o.x_.get());
+    return std::equal(x_, x_ + base_type::size() + 1, o.x_);
   }
 
 private:
-  std::unique_ptr<value_type[]> x_; // smaller size compared to std::vector
+  value_type* x_ = nullptr;
 
   friend class ::boost::serialization::access;
   template <class Archive>
