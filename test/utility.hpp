@@ -10,7 +10,6 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/mp11/integral.hpp>
 #include <boost/mp11/tuple.hpp>
-#include <iostream>
 #include <numeric>
 #include <ostream>
 #include <tuple>

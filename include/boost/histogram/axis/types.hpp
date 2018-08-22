@@ -359,13 +359,15 @@ public:
   }
 
   ~variable() {
-    value_allocator_type a(base_type::get_allocator());
-    using AT = std::allocator_traits<value_allocator_type>;
-    auto xit = x_;
-    const auto end = x_ + base_type::size() + 1;
-    while (xit != end)
-      AT::destroy(a, xit++);
-    AT::deallocate(a, x_, base_type::size() + 1);
+    if (x_) { // nothing to do for empty state
+      value_allocator_type a(base_type::get_allocator());
+      using AT = std::allocator_traits<value_allocator_type>;
+      auto xit = x_;
+      const auto end = x_ + base_type::size() + 1;
+      while (xit != end)
+        AT::destroy(a, xit++);
+      AT::deallocate(a, x_, base_type::size() + 1);
+    }
   }
 
   /// Returns the bin index for the passed argument.
