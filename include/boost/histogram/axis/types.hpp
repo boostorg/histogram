@@ -8,7 +8,6 @@
 #define _BOOST_HISTOGRAM_AXIS_TYPES_HPP_
 
 #include <algorithm>
-#include <boost/bimap.hpp>
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
@@ -19,7 +18,6 @@
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
-#include <unordered_map>
 #include <vector>
 #include <algorithm>
 
@@ -290,7 +288,8 @@ public:
       : variable(x.begin(), x.end(), label, uo, a)
   {}
 
-  template <typename Iterator>
+  template <typename Iterator,
+            typename = boost::histogram::detail::requires_iterator<Iterator>>
   variable(Iterator begin, Iterator end, string_view label = {},
            uoflow_type uo = uoflow_type::on, const allocator_type& a = allocator_type())
       : base_type(std::max(std::distance(begin, end), 1l) - 1, uo, label, a) {
@@ -352,6 +351,7 @@ public:
   }
 
   variable& operator=(variable&& o) {
+    this->~variable();
     base::operator=(std::move(o));
     x_ = o.x_;
     o.x_ = nullptr;
@@ -458,12 +458,13 @@ private:
   void serialize(Archive&, unsigned);
 };
 
-/** Axis which maps unique single values to bins (one on one).
+/** Axis which maps unique values to bins (one on one).
  *
  * The axis maps a set of values to bins, following the order of
  * arguments in the constructor. There is an optional overflow bin
  * for this axis, which counts values that are not part of the set.
- * Binning is a O(1) operation. The value type must be hashable.
+ * Binning is a O(n) operation for n values in the worst case and O(1) in
+ * the best case. The value types must be equal-comparable.
  */
 template <typename T, typename Allocator>
 class category : public labeled_base<Allocator>,
@@ -476,26 +477,8 @@ public:
   using bin_type = value_view<category>;
 
 private:
-  using map_type = bimap<T, int>;
-  // using map_type = std::unordered_set<
-  //     value_type, std::hash<value_type>, std::equal_to<value_type>,
-  //     typename std::allocator_traits<allocator_type>::template
-  //     rebind_alloc<
-  //         value_type>>;
-  // using vector_type = std::vector < value_type,
-
+  using value_allocator_type = typename std::allocator_traits<allocator_type>::template rebind_alloc<value_type>;
 public:
-  category() = default;
-  category(const category& rhs) : base_type(rhs), map_(new map_type(*rhs.map_)) {}
-  category& operator=(const category& rhs) {
-    if (this != &rhs) {
-      base_type::operator=(rhs);
-      map_.reset(new map_type(*rhs.map_));
-    }
-    return *this;
-  }
-  category(category&& rhs) = default;
-  category& operator=(category&& rhs) = default;
 
   /** Construct from an initializer list of strings.
    *
@@ -504,12 +487,7 @@ public:
   category(std::initializer_list<value_type> seq, string_view label = {},
            uoflow_type uo = uoflow_type::oflow,
            const allocator_type& a = allocator_type())
-      : base_type(seq.size(), uo == uoflow_type::on ? uoflow_type::oflow : uo, label, a)
-      , map_(new map_type()) {
-    int index = 0;
-    for (const auto& x : seq) map_->insert({x, index++});
-    if (index == 0) throw std::invalid_argument("sequence is empty");
-  }
+      : category(seq.begin(), seq.end(), label, uo, a) {}
 
   template <typename Iterator,
             typename = boost::histogram::detail::requires_iterator<Iterator>>
@@ -518,35 +496,107 @@ public:
            const allocator_type& a = allocator_type())
       : base_type(std::distance(begin, end),
                   uo == uoflow_type::on ? uoflow_type::oflow : uo, label, a)
-      , map_(new map_type()) {
-    int index = 0;
-    while (begin != end) map_->insert({*begin++, index++});
-    if (index == 0) throw std::invalid_argument("iterator range is empty");
+  {
+    value_allocator_type a2(a);
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a2, base_type::size());
+    auto xit = x_;
+    while (begin != end)
+      AT::construct(a2, xit++, *begin++);
+  }
+
+  category() = default;
+
+  category(const category& o) : base_type(o) {
+    value_allocator_type a(o.get_allocator());
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a, base_type::size());
+    auto xit = x_;
+    auto it = o.x_;
+    const auto end = o.x_ + base_type::size();
+    while (it != end)
+      AT::construct(a, xit++, *it++);
+  }
+
+  category& operator=(const category& o) {
+    if (this != &o) {
+      if (base_type::size() != o.size()) {
+        value_allocator_type old_alloc(base_type::get_allocator());
+        using AT = std::allocator_traits<value_allocator_type>;
+        auto xit = x_;
+        auto xend = x_ + base_type::size();
+        while (xit != xend) {
+          AT::destroy(old_alloc, xit++);
+        }
+        AT::deallocate(old_alloc, x_, base_type::size());
+        base_type::operator=(o);
+        value_allocator_type new_alloc(base_type::get_allocator());
+        x_ = AT::allocate(new_alloc, base_type::size());
+        xit = x_;
+        xend = x_ + base_type::size();
+        auto it = o.x_;
+        while (xit != xend)
+          AT::construct(new_alloc, xit++, *it++);
+      } else {
+        base_type::operator=(o);
+        std::copy(o.x_, o.x_ + o.size(), x_);
+      }
+    }
+    return *this;
+  }
+
+  category(category&& o) : base_type(std::move(o)) {
+    x_ = o.x_;
+    o.x_ = nullptr;
+  }
+
+  category& operator=(category&& o) {
+    this->~category();
+    base_type::operator=(std::move(o));
+    x_ = o.x_;
+    o.x_ = nullptr;
+    return *this;
+  }
+
+  ~category() {
+    if (x_) { // nothing to do for empty state
+      value_allocator_type a(base_type::get_allocator());
+      using AT = std::allocator_traits<value_allocator_type>;
+      auto xit = x_;
+      const auto end = x_ + base_type::size();
+      while (xit != end)
+        AT::destroy(a, xit++);
+      AT::deallocate(a, x_, base_type::size());
+    }
   }
 
   /// Returns the bin index for the passed argument.
   int index(const value_type& x) const noexcept {
-    auto it = map_->left.find(x);
-    if (it == map_->left.end()) return base_type::size();
-    return it->second;
+    if (x_[last_] == x)
+      return last_;
+    last_ = 0;
+    for (auto xit = x_, xend = x_ + base_type::size();
+         xit != xend && !(*xit == x); ++xit, ++last_);
+    return last_;
   }
 
   /// Returns the value for the bin index (performs a range check).
   const value_type& value(int idx) const {
-    auto it = map_->right.find(idx);
-    if (it == map_->right.end()) throw std::out_of_range("category index out of range");
-    return it->second;
+    if (idx < 0 || idx >= base_type::size())
+      throw std::out_of_range("category index out of range");
+    return x_[idx];
   }
 
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const category& o) const noexcept {
     return base_type::operator==(o) &&
-           std::equal(map_->begin(), map_->end(), o.map_->begin());
+           std::equal(x_, x_ + base_type::size(), o.x_);
   }
 
 private:
-  std::unique_ptr<map_type> map_;
+  value_type* x_ = nullptr;
+  mutable std::size_t last_ = 0;
 
   friend class ::boost::serialization::access;
   template <class Archive>
