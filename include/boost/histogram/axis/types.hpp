@@ -322,21 +322,16 @@ public:
   variable& operator=(const variable& o) {
     if (this != &o) {
       if (base_type::size() != o.size()) {
-        using AT = std::allocator_traits<value_allocator_type>;
-        value_allocator_type old_alloc(base_type::get_allocator());
-        auto xit = x_;
-        const auto xend = xit + base_type::size() + 1;
-        while (xit != xend)
-          AT::destroy(old_alloc, xit++);
-        AT::deallocate(old_alloc, x_, base_type::size() + 1);
+        this->~variable();
         base::operator=(o);
-        value_allocator_type new_alloc(base_type::get_allocator());
-        x_ = AT::allocate(new_alloc, o.size() + 1);
-        xit = x_;
+        value_allocator_type a(base_type::get_allocator());
+        using AT = std::allocator_traits<value_allocator_type>;
+        x_ = AT::allocate(a, o.size() + 1);
+        auto xit = x_;
         auto it = o.x_;
         const auto end = o.x_ + o.size() + 1;
         while (it != end)
-          AT::construct(new_alloc, xit++, *it++);
+          AT::construct(a, xit++, *it++);
       } else {
         base::operator=(o);
         std::copy(o.x_, o.x_ + o.size() + 1, x_);
@@ -521,22 +516,16 @@ public:
   category& operator=(const category& o) {
     if (this != &o) {
       if (base_type::size() != o.size()) {
-        value_allocator_type old_alloc(base_type::get_allocator());
-        using AT = std::allocator_traits<value_allocator_type>;
-        auto xit = x_;
-        auto xend = x_ + base_type::size();
-        while (xit != xend) {
-          AT::destroy(old_alloc, xit++);
-        }
-        AT::deallocate(old_alloc, x_, base_type::size());
+        this->~category();
         base_type::operator=(o);
-        value_allocator_type new_alloc(base_type::get_allocator());
-        x_ = AT::allocate(new_alloc, base_type::size());
-        xit = x_;
-        xend = x_ + base_type::size();
+        value_allocator_type a(base_type::get_allocator());
+        using AT = std::allocator_traits<value_allocator_type>;
+        x_ = AT::allocate(a, base_type::size());
+        auto xit = x_;
+        const auto xend = x_ + base_type::size();
         auto it = o.x_;
         while (xit != xend)
-          AT::construct(new_alloc, xit++, *it++);
+          AT::construct(a, xit++, *it++);
       } else {
         base_type::operator=(o);
         std::copy(o.x_, o.x_ + o.size(), x_);

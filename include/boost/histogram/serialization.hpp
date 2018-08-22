@@ -125,22 +125,22 @@ void circular<T, A>::serialize(Archive& ar, unsigned /* version */) {
 template <typename T, typename A>
 template <class Archive>
 void variable<T, A>::serialize(Archive& ar, unsigned /* version */) {
-  const auto old_size = base_type::size();
-  value_allocator_type old_alloc = base_type::get_allocator();
-  ar& boost::serialization::base_object<labeled_base<A>>(*this);
-  if (Archive::is_loading::value && old_size != base_type::size()) {
-    auto xit = x_;
-    auto xend = x_ + old_size + 1;
-    while (xit != xend)
-      old_alloc.destroy(xit++);
-    old_alloc.deallocate(x_, old_size + 1);
-    value_allocator_type new_alloc(base_type::get_allocator());
-    x_ = new_alloc.allocate(base_type::size() + 1);
-    xit = x_;
-    xend = x_ + base_type::size() + 1;
-    while (xit != xend)
-      new_alloc.construct(xit++);
+  if (Archive::is_loading::value) {
+    this->~variable();
   }
+
+  ar& boost::serialization::base_object<labeled_base<A>>(*this);
+
+  if (Archive::is_loading::value) {
+    value_allocator_type a(base_type::get_allocator());
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a, base_type::size() + 1);
+    auto xit = x_;
+    const auto xend = x_ + base_type::size() + 1;
+    while (xit != xend)
+      AT::construct(a, xit++);
+  }
+
   ar& boost::serialization::make_array(x_, base_type::size() + 1);
 }
 
@@ -154,8 +154,23 @@ void integer<T, A>::serialize(Archive& ar, unsigned /* version */) {
 template <typename T, typename A>
 template <class Archive>
 void category<T, A>::serialize(Archive& ar, unsigned /* version */) {
+  if (Archive::is_loading::value) {
+    this->~category();
+  }
+
   ar& boost::serialization::base_object<labeled_base<A>>(*this);
-  ar& map_;
+
+  if (Archive::is_loading::value) {
+    value_allocator_type a(base_type::get_allocator());
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a, base_type::size());
+    auto xit = x_;
+    const auto xend = x_ + base_type::size();
+    while (xit != xend)
+      AT::construct(a, xit++);
+  }
+
+  ar& boost::serialization::make_array(x_, base_type::size());
 }
 
 template <typename... Ts>
