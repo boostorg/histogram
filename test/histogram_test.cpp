@@ -848,7 +848,7 @@ void run_tests() {
     if (Tag()) { // axis::any allocation, only for dynamic histogram
       using T = axis::any<axis::integer<int, tracing_allocator<char>>>;
       BOOST_TEST_EQ(db[typeid(T)].first, db[typeid(T)].second);
-      BOOST_TEST_EQ(db[typeid(T)].first, 1);
+      BOOST_TEST_GE(db[typeid(T)].first, 1);
     }
   }
 }

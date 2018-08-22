@@ -310,12 +310,12 @@ histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>, detail::
 make_dynamic_histogram_with(Storage&& s, Iterator begin, Iterator end) {
   using H = histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>, detail::rm_cv_ref<Storage>>;
   using alloc_type = typename mp11::mp_front<typename Iterator::value_type>::allocator_type;
-  // auto axes = typename H::axes_type(static_cast<const axis::labeled_base<alloc_type>&>(*begin).get_allocator());
-  // axes.reserve(std::distance(begin, end));
-  // while (begin != end)
-  //   axes.emplace_back(*begin++);
-  // return H(std::move(axes), std::forward<Storage>(s));
-  return H();
+  auto a = boost::apply_visitor(axis::detail::get_allocator_visitor<alloc_type>(), *begin);
+  auto axes = typename H::axes_type(a);
+  axes.reserve(std::distance(begin, end));
+  while (begin != end)
+    axes.emplace_back(*begin++);
+  return H(std::move(axes), std::forward<Storage>(s));
 }
 
 /// dynamic type factory with standard storage type

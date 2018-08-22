@@ -441,14 +441,14 @@ int main() {
     BOOST_TEST_EQ(detail::make_sub_axes(axes, i0(), i1(), i2()), axes);
   }
 
-  // dynamic_axes with allocator
+  // dynamic_axes with custom allocators
   {
     using T1 = axis::regular<axis::transform::identity, double, tracing_allocator<char>>;
     using T2 = axis::circular<double, tracing_allocator<char>>;
     using T3 = axis::variable<double, tracing_allocator<char>>;
     using T4 = axis::integer<int, tracing_allocator<char>>;
     using T5 = axis::category<int, tracing_allocator<char>>;
-    using axis_type = axis::any<T1, T2, T3, T4, T5>;
+    using axis_type = axis::any<T1, T2, T3, T4, T5>; // no heap allocation
     using axes_type = boost::mp11::mp_rename<axis_type, dynamic_axes>;
     using expected = tracing_allocator<axis_type>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<axes_type::allocator_type, expected>));
@@ -482,6 +482,8 @@ int main() {
     // T5 allocates storage for bimap
     BOOST_TEST_EQ(db[typeid(boost::bimap<int, int>)].first, db[typeid(boost::bimap<int, int>)].second);
     BOOST_TEST_EQ(db[typeid(boost::bimap<int, int>)].first, 1);
+
+    BOOST_TEST_EQ(db.size(), 4); // axis_type, char, double, bimap
   }
 
   return boost::report_errors();

@@ -137,6 +137,14 @@ struct set_label_visitor : public boost::static_visitor<void> {
   }
 };
 
+template <typename U>
+struct get_allocator_visitor : public boost::static_visitor<U> {
+  template <typename T>
+  U operator()(const T& t) const {
+    return t.get_allocator();
+  }
+};
+
 } // namespace detail
 
 /// Polymorphic axis type
