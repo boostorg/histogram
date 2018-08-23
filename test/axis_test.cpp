@@ -211,6 +211,9 @@ int main() {
     BOOST_TEST_NOT(a == b);
     b = a;
     BOOST_TEST_EQ(a, b);
+    b = axis::category<std::string>{{B, A, C}};
+    BOOST_TEST_NOT(a == b);
+    b = a;
     b = b;
     BOOST_TEST_EQ(a, b);
     axis::category<std::string> c = std::move(b);
