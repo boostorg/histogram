@@ -292,7 +292,7 @@ public:
             typename = boost::histogram::detail::requires_iterator<Iterator>>
   variable(Iterator begin, Iterator end, string_view label = {},
            uoflow_type uo = uoflow_type::on, const allocator_type& a = allocator_type())
-      : base_type(std::max(std::distance(begin, end), 1l) - 1, uo, label, a) {
+      : base_type(begin == end ? 0 : std::distance(begin, end) - 1, uo, label, a) {
     value_allocator_type a2(a);
     using AT = std::allocator_traits<value_allocator_type>;
     x_ = AT::allocate(a2, base_type::size() + 1);
