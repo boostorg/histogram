@@ -125,9 +125,23 @@ void circular<T, A>::serialize(Archive& ar, unsigned /* version */) {
 template <typename T, typename A>
 template <class Archive>
 void variable<T, A>::serialize(Archive& ar, unsigned /* version */) {
+  if (Archive::is_loading::value) {
+    this->~variable();
+  }
+
   ar& boost::serialization::base_object<labeled_base<A>>(*this);
-  if (Archive::is_loading::value) { x_.reset(new T[base::size() + 1]); }
-  ar& boost::serialization::make_array(x_.get(), base::size() + 1);
+
+  if (Archive::is_loading::value) {
+    value_allocator_type a(base_type::get_allocator());
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a, base_type::size() + 1);
+    auto xit = x_;
+    const auto xend = x_ + base_type::size() + 1;
+    while (xit != xend)
+      AT::construct(a, xit++);
+  }
+
+  ar& boost::serialization::make_array(x_, base_type::size() + 1);
 }
 
 template <typename T, typename A>
@@ -140,8 +154,23 @@ void integer<T, A>::serialize(Archive& ar, unsigned /* version */) {
 template <typename T, typename A>
 template <class Archive>
 void category<T, A>::serialize(Archive& ar, unsigned /* version */) {
+  if (Archive::is_loading::value) {
+    this->~category();
+  }
+
   ar& boost::serialization::base_object<labeled_base<A>>(*this);
-  ar& map_;
+
+  if (Archive::is_loading::value) {
+    value_allocator_type a(base_type::get_allocator());
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a, base_type::size());
+    auto xit = x_;
+    const auto xend = x_ + base_type::size();
+    while (xit != xend)
+      AT::construct(a, xit++);
+  }
+
+  ar& boost::serialization::make_array(x_, base_type::size());
 }
 
 template <typename... Ts>

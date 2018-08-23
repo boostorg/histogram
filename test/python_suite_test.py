@@ -233,7 +233,6 @@ class test_variable(unittest.TestCase):
 
     def test_init(self):
         variable(0, 1)
-        variable(1, -1)
         variable(0, 1, 2, 3, 4)
         variable(0, 1, label="va")
         variable(0, 1, uoflow=True)
@@ -241,7 +240,11 @@ class test_variable(unittest.TestCase):
         with self.assertRaises(TypeError):
             variable()
         with self.assertRaises(ValueError):
-            variable(1.0)
+            variable(1)
+        with self.assertRaises(ValueError):
+            variable(1, -1)
+        with self.assertRaises(ValueError):
+            variable(1, 1)
         with self.assertRaises(TypeError):
             variable("1", 2)
         with self.assertRaises(KeyError):

@@ -10,6 +10,8 @@
 #include <tuple>
 #include <vector>
 
+using namespace boost::histogram;
+
 int main() {
   // vector streaming
   {
@@ -27,4 +29,20 @@ int main() {
     BOOST_TEST_EQ(os.str(), std::string("[ 1 2.5 hi ]"));
   }
   return boost::report_errors();
+
+  // tracing_allocator
+  {
+    tracing_allocator_db db;
+    tracing_allocator<char> a(db);
+    auto p1 = a.allocate(2);
+    a.deallocate(p1, 2);
+    tracing_allocator<int> b(a);
+    auto p2 = b.allocate(3);
+    b.deallocate(p2, 3);
+    BOOST_TEST_EQ(db.size(), 2);
+    BOOST_TEST_EQ(db[typeid(char)].first, 2);
+    BOOST_TEST_EQ(db[typeid(char)].second, 2);
+    BOOST_TEST_EQ(db[typeid(int)].first, 3);
+    BOOST_TEST_EQ(db[typeid(int)].second, 3);
+  }
 }

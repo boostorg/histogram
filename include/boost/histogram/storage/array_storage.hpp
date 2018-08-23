@@ -35,14 +35,10 @@ private:
   using array_type = std::vector<element_type, allocator_type>;
 
 public:
-  array_storage(const array_storage& o) = default;
-  array_storage& operator=(const array_storage& o) = default;
-
-  array_storage(array_storage&& o) { std::swap(array_, o.array_); }
-  array_storage& operator=(array_storage&& o) {
-    if (this != &o) { std::swap(array_, o.array_); }
-    return *this;
-  }
+  array_storage(const array_storage&) = default;
+  array_storage& operator=(const array_storage&) = default;
+  array_storage(array_storage&&) = default;
+  array_storage& operator=(array_storage&&) = default;
 
   template <typename S, typename = detail::requires_storage<S>>
   explicit array_storage(const S& o) : array_(o.get_allocator()) {
