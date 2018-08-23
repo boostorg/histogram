@@ -471,17 +471,17 @@ int main() {
 
     // 5 labels
     BOOST_TEST_EQ(db[typeid(char)].first, db[typeid(char)].second);
-    BOOST_TEST_GE(db[typeid(char)].first, 5 * 512);
+    BOOST_TEST_GE(db[typeid(char)].first, 5 * 512u);
 
     // nothing to allocate for T1
     // nothing to allocate for T2
     // T3 allocates storage for bin edges
     BOOST_TEST_EQ(db[typeid(double)].first, db[typeid(double)].second);
-    BOOST_TEST_EQ(db[typeid(double)].first, 3);
+    BOOST_TEST_EQ(db[typeid(double)].first, 3u);
     // nothing to allocate for T4
-    // T5 allocates storage for bimap
+    // T5 allocates storage for long array
     BOOST_TEST_EQ(db[typeid(long)].first, db[typeid(long)].second);
-    BOOST_TEST_EQ(db[typeid(long)].first, 5);
+    BOOST_TEST_EQ(db[typeid(long)].first, 5u);
 
     BOOST_TEST_EQ(db.size(), 4); // axis_type, char, double, long
   }

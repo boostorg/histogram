@@ -18,7 +18,6 @@
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
-#include <vector>
 #include <algorithm>
 
 // forward declaration for serialization
