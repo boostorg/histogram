@@ -40,7 +40,7 @@ When you work with dynamic histograms, you can also create a sequence of axes at
 
 [funcref boost::histogram::make_static_histogram make_static_histogram] cannot handle this case because a static histogram can only be constructed when the number and types of all axes are known already at compile time. While strictly speaking that is also true in this example, you could have filled the vector also at run-time, based on run-time user input.
 
-[note Memory for bin counters is allocated lazily, because if the default storage policy [classref boost::histogram::adaptive_storage adaptive_storage] is used. Allocation is deferred to the first time, when input values are passed to the histogram. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later. This gives you a chance to check how much memory the histogram will allocate and possibly give a warning if that amount is excessively large. Use the method `histogram::size()` to see how many bins your axis layout requires. At the first fill, that many bytes will be allocated. The allocated amount of memory may grow further later when the capacity of the bin counters needs to grow.]
+[note Memory for bin counters is allocated lazily, if the default storage policy [classref boost::histogram::adaptive_storage adaptive_storage] is used. Allocation is delayed to the first time, when input values are passed to the histogram. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later. This gives you a chance to check how much memory the histogram will allocate and possibly give a warning if that amount is excessively large. Use the method `histogram::size()` to see how many bins your axis layout requires. At the first fill, that many bytes will be allocated. The allocated amount of memory may grow further later when the capacity of the bin counters needs to grow.]
 
 [endsect]
 
@@ -140,7 +140,7 @@ Here is an example which demonstrates the supported operators.
 
 When you have a high-dimensional histogram, sometimes you want to remove some axes and look the equivalent lower-dimensional version obtained by summing over the counts along the removed axes. Perhaps you found out that there is no interesting structure along an axis, so it is not worth keeping that axies around, or you want to visualize 1d or 2d projections of a high-dimensional histogram.
 
-For this purpose use the `histogram::reduce_to(...)` method, which returns a new reduced histogram with fewer axes. The method accepts indices (one or more), which indicate the  axes that are kept. The static histogram only accepts compile-time numbers, while the dynamic histogram also accepts runtime numbers and iterators over numbers.
+For this purpose use the `histogram::reduce_to(...)` method, which returns a new reduced histogram with fewer axes. The method accepts indices (one or more), which indicate the axes that are kept. The static histogram only accepts compile-time numbers, while the dynamic histogram also accepts runtime numbers and iterators over numbers.
 
 Here is an example to illustrates this.
 
