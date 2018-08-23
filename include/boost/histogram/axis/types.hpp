@@ -18,7 +18,6 @@
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
-#include <algorithm>
 
 // forward declaration for serialization
 namespace boost {
@@ -273,9 +272,10 @@ public:
   using bin_type = interval_view<variable>;
 
 private:
-  using value_allocator_type = typename std::allocator_traits<allocator_type>::template rebind_alloc<value_type>;
-public:
+  using value_allocator_type =
+      typename std::allocator_traits<allocator_type>::template rebind_alloc<value_type>;
 
+public:
   /** Construct an axis from bin edges.
    *
    * \param x sequence of bin edges.
@@ -284,8 +284,7 @@ public:
    */
   variable(std::initializer_list<value_type> x, string_view label = {},
            uoflow_type uo = uoflow_type::on, const allocator_type& a = allocator_type())
-      : variable(x.begin(), x.end(), label, uo, a)
-  {}
+      : variable(x.begin(), x.end(), label, uo, a) {}
 
   template <typename Iterator,
             typename = boost::histogram::detail::requires_iterator<Iterator>>
@@ -294,10 +293,9 @@ public:
       : base_type(begin == end ? 0 : std::distance(begin, end) - 1, uo, label, a) {
     value_allocator_type a2(a);
     using AT = std::allocator_traits<value_allocator_type>;
-    x_ = AT::allocate(a2, base_type::size() + 1);
+    x_ = AT::allocate(a2, nx());
     auto xit = x_;
-    AT::construct(a2, xit, *begin);
-    ++begin;
+    AT::construct(a2, xit, *begin++);
     while (begin != end) {
       if (*begin <= *xit)
         throw std::invalid_argument("input sequence must be strictly ascending");
@@ -310,12 +308,9 @@ public:
   variable(const variable& o) : base_type(o) {
     value_allocator_type a(o.get_allocator());
     using AT = std::allocator_traits<value_allocator_type>;
-    x_ = AT::allocate(a, base_type::size() + 1);
+    x_ = AT::allocate(a, nx());
     auto it = o.x_;
-    const auto end = o.x_ + base_type::size() + 1;
-    auto xit = x_;
-    for (; it != end; ++it, ++xit)
-      AT::construct(a, xit, *it);
+    for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::construct(a, xit, *it++);
   }
 
   variable& operator=(const variable& o) {
@@ -325,15 +320,12 @@ public:
         base::operator=(o);
         value_allocator_type a(base_type::get_allocator());
         using AT = std::allocator_traits<value_allocator_type>;
-        x_ = AT::allocate(a, o.size() + 1);
-        auto xit = x_;
+        x_ = AT::allocate(a, nx());
         auto it = o.x_;
-        const auto end = o.x_ + o.size() + 1;
-        while (it != end)
-          AT::construct(a, xit++, *it++);
+        for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::construct(a, xit, *it++);
       } else {
         base::operator=(o);
-        std::copy(o.x_, o.x_ + o.size() + 1, x_);
+        std::copy(o.x_, o.x_ + o.nx(), x_);
       }
     }
     return *this;
@@ -356,17 +348,14 @@ public:
     if (x_) { // nothing to do for empty state
       value_allocator_type a(base_type::get_allocator());
       using AT = std::allocator_traits<value_allocator_type>;
-      auto xit = x_;
-      const auto end = x_ + base_type::size() + 1;
-      while (xit != end)
-        AT::destroy(a, xit++);
-      AT::deallocate(a, x_, base_type::size() + 1);
+      for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::destroy(a, xit);
+      AT::deallocate(a, x_, nx());
     }
   }
 
   /// Returns the bin index for the passed argument.
   int index(value_type x) const noexcept {
-    return std::upper_bound(x_, x_ + base_type::size() + 1, x) - x_ - 1;
+    return std::upper_bound(x_, x_ + nx(), x) - x_ - 1;
   }
 
   /// Returns the starting edge of the bin.
@@ -380,10 +369,13 @@ public:
 
   bool operator==(const variable& o) const noexcept {
     if (!base::operator==(o)) { return false; }
-    return std::equal(x_, x_ + base_type::size() + 1, o.x_);
+    return std::equal(x_, x_ + nx(), o.x_);
   }
 
 private:
+  int nx() const { return base_type::size() + 1; }
+  value_type* xend() { return x_ + nx(); }
+
   value_type* x_ = nullptr;
 
   friend class ::boost::serialization::access;
@@ -471,12 +463,15 @@ public:
   using bin_type = value_view<category>;
 
 private:
-  using value_allocator_type = typename std::allocator_traits<allocator_type>::template rebind_alloc<value_type>;
-public:
+  using value_allocator_type =
+      typename std::allocator_traits<allocator_type>::template rebind_alloc<value_type>;
 
+public:
   /** Construct from an initializer list of strings.
    *
    * \param seq sequence of unique values.
+   * \param label description of the axis.
+   * \param uoflow whether to add under-/overflow bins.
    */
   category(std::initializer_list<value_type> seq, string_view label = {},
            uoflow_type uo = uoflow_type::oflow,
@@ -489,14 +484,12 @@ public:
            uoflow_type uo = uoflow_type::oflow,
            const allocator_type& a = allocator_type())
       : base_type(std::distance(begin, end),
-                  uo == uoflow_type::on ? uoflow_type::oflow : uo, label, a)
-  {
+                  uo == uoflow_type::on ? uoflow_type::oflow : uo, label, a) {
     value_allocator_type a2(a);
     using AT = std::allocator_traits<value_allocator_type>;
-    x_ = AT::allocate(a2, base_type::size());
+    x_ = AT::allocate(a2, nx());
     auto xit = x_;
-    while (begin != end)
-      AT::construct(a2, xit++, *begin++);
+    while (begin != end) AT::construct(a2, xit++, *begin++);
   }
 
   category() = default;
@@ -505,11 +498,8 @@ public:
     value_allocator_type a(o.get_allocator());
     using AT = std::allocator_traits<value_allocator_type>;
     x_ = AT::allocate(a, base_type::size());
-    auto xit = x_;
     auto it = o.x_;
-    const auto end = o.x_ + base_type::size();
-    while (it != end)
-      AT::construct(a, xit++, *it++);
+    for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::construct(a, xit, *it++);
   }
 
   category& operator=(const category& o) {
@@ -519,15 +509,12 @@ public:
         base_type::operator=(o);
         value_allocator_type a(base_type::get_allocator());
         using AT = std::allocator_traits<value_allocator_type>;
-        x_ = AT::allocate(a, base_type::size());
-        auto xit = x_;
-        const auto xend = x_ + base_type::size();
+        x_ = AT::allocate(a, nx());
         auto it = o.x_;
-        while (xit != xend)
-          AT::construct(a, xit++, *it++);
+        for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::construct(a, xit, *it++);
       } else {
         base_type::operator=(o);
-        std::copy(o.x_, o.x_ + o.size(), x_);
+        std::copy(o.x_, o.x_ + o.nx(), x_);
       }
     }
     return *this;
@@ -550,21 +537,16 @@ public:
     if (x_) { // nothing to do for empty state
       value_allocator_type a(base_type::get_allocator());
       using AT = std::allocator_traits<value_allocator_type>;
-      auto xit = x_;
-      const auto end = x_ + base_type::size();
-      while (xit != end)
-        AT::destroy(a, xit++);
-      AT::deallocate(a, x_, base_type::size());
+      for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::destroy(a, xit);
+      AT::deallocate(a, x_, nx());
     }
   }
 
   /// Returns the bin index for the passed argument.
   int index(const value_type& x) const noexcept {
-    if (x_[last_] == x)
-      return last_;
+    if (last_ < nx() && x_[last_] == x) return last_;
     last_ = 0;
-    for (auto xit = x_, xend = x_ + base_type::size();
-         xit != xend && !(*xit == x); ++xit, ++last_);
+    for (auto xit = x_, xe = x_ + nx(); xit != xe && !(*xit == x); ++xit) ++last_;
     return last_;
   }
 
@@ -578,13 +560,15 @@ public:
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const category& o) const noexcept {
-    return base_type::operator==(o) &&
-           std::equal(x_, x_ + base_type::size(), o.x_);
+    return base_type::operator==(o) && std::equal(x_, x_ + nx(), o.x_);
   }
 
 private:
+  int nx() const { return base_type::size(); }
+  value_type* xend() { return x_ + nx(); }
+
   value_type* x_ = nullptr;
-  mutable std::size_t last_ = 0;
+  mutable int last_ = 0;
 
   friend class ::boost::serialization::access;
   template <class Archive>

@@ -138,14 +138,13 @@ template <typename T, typename Buffer, typename U = T>
 void create(type_tag<T>, Buffer& b, const U* init = nullptr) {
   using alloc_type = typename std::allocator_traits<
       typename Buffer::allocator_type>::template rebind_alloc<T>;
-  alloc_type alloc(b.alloc); // rebind allocator
-  T* p = std::allocator_traits<alloc_type>::allocate(alloc, b.size);
+  alloc_type a(b.alloc); // rebind allocator
+  using AT = std::allocator_traits<alloc_type>;
+  T* p = AT::allocate(a, b.size);
   if (init) {
-    for (std::size_t i = 0; i < b.size; ++i)
-      std::allocator_traits<alloc_type>::construct(alloc, p + i, init[i]);
+    for (auto it = p, end = p + b.size; it != end; ++it) AT::construct(a, it, *init++);
   } else {
-    for (std::size_t i = 0; i < b.size; ++i)
-      std::allocator_traits<alloc_type>::construct(alloc, p + i, 0);
+    for (auto it = p, end = p + b.size; it != end; ++it) AT::construct(a, it, 0);
   }
   b.type = type_index<T>();
   b.ptr = p;
@@ -164,10 +163,10 @@ struct destroyer {
   void operator()(T* tp, Buffer& b) {
     using alloc_type = typename std::allocator_traits<
         typename Buffer::allocator_type>::template rebind_alloc<T>;
-    alloc_type alloc(b.alloc); // rebind allocator
-    for (std::size_t i = 0; i < b.size; ++i)
-      std::allocator_traits<alloc_type>::destroy(alloc, tp + i);
-    std::allocator_traits<alloc_type>::deallocate(alloc, tp, b.size);
+    using AT = std::allocator_traits<alloc_type>;
+    alloc_type a(b.alloc); // rebind allocator
+    for (auto it = tp, end = tp + b.size; it != end; ++it) AT::destroy(a, it);
+    AT::deallocate(a, tp, b.size);
   }
 
   template <typename Buffer>
@@ -355,7 +354,7 @@ struct multiplier {
 
   template <typename Buffer>
   void operator()(wcount* tp, Buffer& b, const double x) {
-    for (std::size_t i = 0; i < b.size; ++i) tp[i] *= x;
+    for (auto end = tp + b.size; tp != end; ++tp) *tp *= x;
   }
 };
 
@@ -405,9 +404,10 @@ public:
   template <typename S, typename = detail::requires_storage<S>>
   explicit adaptive_storage(const S& s) : buffer_(s.size(), s.get_allocator()) {
     create(detail::type_tag<detail::wcount>(), buffer_);
-    for (std::size_t i = 0; i < size(); ++i) {
-      reinterpret_cast<detail::wcount*>(buffer_.ptr)[i] = s[i];
-    }
+    auto it = reinterpret_cast<detail::wcount*>(buffer_.ptr);
+    const auto end = it + size();
+    std::size_t i = 0;
+    while (it != end) *it++ = s[i++];
   }
 
   template <typename S, typename = detail::requires_storage<S>>
