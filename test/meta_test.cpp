@@ -86,8 +86,15 @@ int main() {
     using result3a = classify_container<std::pair<int, int>&>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result3a, static_container_tag>));
 
-    using result4 = classify_container<decltype("abc")>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result4, dynamic_container_tag>));
+    // (c-)strings are not regarded as dynamic containers
+    using result4a = classify_container<decltype("abc")>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result4a, no_container_tag>));
+
+    using result4b = classify_container<std::string>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result4b, no_container_tag>));
+
+    using result5 = classify_container<int*>; // has no std::end
+    BOOST_TEST_TRAIT_TRUE((std::is_same<result5, no_container_tag>));
   }
 
   // bool mask
@@ -102,17 +109,21 @@ int main() {
   // rm_cv_ref
   {
     using T1 = int;
-    using T2 = const int;
-    using T3 = const int&;
-    using T4 = volatile int;
-    using T5 = volatile const int;
-    using T6 = volatile const int&;
+    using T2 = int&&;
+    using T3 = const int;
+    using T4 = const int&;
+    using T5 = volatile int;
+    using T6 = volatile int&&;
+    using T7 = volatile const int;
+    using T8 = volatile const int&;
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T1>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T2>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T3>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T4>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T5>, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T6>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T7>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T8>, int>));
   }
 
   // mp_size
@@ -130,13 +141,10 @@ int main() {
   // copy_qualifiers
   {
     BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int, long>, long>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<copy_qualifiers<const int, long>, const long>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<const int, long>, const long>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&, long>, long&>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<copy_qualifiers<const int&, long>, const long&>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<copy_qualifiers<int&&, long>, long&&>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<const int&, long>, const long&>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&&, long>, long&&>));
   }
 
   // mp_set_union
@@ -146,42 +154,6 @@ int main() {
     using result = mp_set_union<L1, L2>;
     using expected = mp11::mp_list<int, char, long, char*>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
-  }
-
-  // selection
-  {
-    using T = std::tuple<char, int, long>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<selection<T, i0>, std::tuple<char>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<selection<T, i1>, std::tuple<int>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<selection<T, i2>, std::tuple<long>>));
-    BOOST_TEST_TRAIT_TRUE((
-        std::is_same<selection<T, i0, i1, i2>, std::tuple<char, int, long>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<selection<T, i0, i1>, std::tuple<char, int>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<selection<T, i0, i2>, std::tuple<char, long>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<selection<T, i1, i0>, std::tuple<int, char>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<selection<T, i1, i2>, std::tuple<int, long>>));
-  }
-
-  // unique_sorted
-  {
-    using input = mp11::mp_list_c<int, 3, 3, 1, 2, 1, 2>;
-    using result = unique_sorted<input>;
-    using expected = mp11::mp_list_c<int, 1, 2, 3>;
-
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
-  }
-
-  // make_sub_tuple
-  {
-    std::tuple<int, long, char> t(1, 2, 3);
-    auto result = make_sub_tuple<decltype(t), i1, i2>(t);
-    auto expected = std::tuple<long, char>(2, 3);
-
-    BOOST_TEST_EQ(result, expected);
   }
 
   return boost::report_errors();

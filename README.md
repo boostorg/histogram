@@ -12,7 +12,7 @@ develop | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg
 3. Visual Studio 14 2015
 
 
-This `C++11` library provides a multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for your statistics needs. The library is **header-only**, if you don't need the Python module.
+This `C++11` open-source library provides a state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to count things. The library is **header-only**, if you don't need the Python module. Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/).
 
 The histogram is very customisable through policy classes, but the default policies were carefully designed so that most users don't need to customize anything. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: bin counts *cannot overflow* or *be capped*. While being safe to use, the library also has a convenient interface, is memory conserving, and faster than other libraries (see benchmarks).
 
@@ -40,6 +40,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Support for under-/overflow bins (can be disabled individually for each dimension)
 * Support for variance tracking (++)
 * Support for addition and scaling of histograms
+* Support for custom allocators
 * Optional serialization based on [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
 * Optional Python-bindings that work with [Python-2.7 to 3.6](http://www.python.org)  with [Boost.Python](https://www.boost.org/doc/libs/release/libs/python/)
 * Optional [Numpy](http://www.numpy.org) support

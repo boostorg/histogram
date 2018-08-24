@@ -7,10 +7,12 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP_
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP_
 
+#include <boost/container/string.hpp>
+#include <boost/histogram/axis/any.hpp>
+#include <boost/histogram/axis/base.hpp>
+#include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
-#include <boost/histogram/static_histogram.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
@@ -29,14 +31,28 @@ namespace histogram {
 
 namespace detail {
 template <typename Archive>
-struct serialize_helper {
+struct serialize_t {
   Archive& ar_;
-  explicit serialize_helper(Archive& ar) : ar_(ar) {}
+  explicit serialize_t(Archive& ar) : ar_(ar) {}
   template <typename T>
   void operator()(T& t) const {
     ar_& t;
   }
 };
+
+struct serializer {
+  template <typename T, typename Buffer, typename Archive>
+  void operator()(T*, Buffer& b, Archive& ar) {
+    if (Archive::is_loading::value) { create(type_tag<T>(), b); }
+    ar& boost::serialization::make_array(reinterpret_cast<T*>(b.ptr), b.size);
+  }
+
+  template <typename Buffer, typename Archive>
+  void operator()(void*, Buffer& b, Archive&) {
+    if (Archive::is_loading::value) { b.ptr = nullptr; }
+  }
+};
+
 } // namespace detail
 
 template <typename RealType>
@@ -47,77 +63,21 @@ void weight_counter<RealType>::serialize(Archive& ar,
   ar& w2;
 }
 
-template <class Archive, typename Container>
-void serialize(Archive& ar, array_storage<Container>& store,
+template <class Archive, typename T, typename A>
+void serialize(Archive& ar, array_storage<T, A>& store,
                unsigned /* version */) {
   ar& store.array_;
 }
 
+template <typename A>
 template <class Archive>
-void adaptive_storage::serialize(Archive& ar, unsigned /* version */) {
-  auto size = this->size();
-  ar& size;
+void adaptive_storage<A>::serialize(Archive& ar, unsigned /* version */) {
   if (Archive::is_loading::value) {
-    auto type_id = 0u;
-    ar& type_id;
-    if (type_id == 0u) {
-      buffer_ = detail::array<void>(size);
-    } else if (type_id == 1u) {
-      detail::array<uint8_t> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 2u) {
-      detail::array<uint16_t> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 3u) {
-      detail::array<uint32_t> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 4u) {
-      detail::array<uint64_t> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 5u) {
-      detail::array<detail::mp_int> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    } else if (type_id == 6u) {
-      detail::array<detail::wcount> a(size);
-      ar& serialization::make_array(a.begin(), size);
-      buffer_ = std::move(a);
-    }
-  } else {
-    auto type_id = 0u;
-    if (get<detail::array<void>>(&buffer_)) {
-      type_id = 0u;
-      ar& type_id;
-    } else if (auto* a = get<detail::array<uint8_t>>(&buffer_)) {
-      type_id = 1u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<uint16_t>>(&buffer_)) {
-      type_id = 2u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<uint32_t>>(&buffer_)) {
-      type_id = 3u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<uint64_t>>(&buffer_)) {
-      type_id = 4u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<detail::mp_int>>(&buffer_)) {
-      type_id = 5u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    } else if (auto* a = get<detail::array<detail::wcount>>(&buffer_)) {
-      type_id = 6u;
-      ar& type_id;
-      ar& serialization::make_array(a->begin(), size);
-    }
+    detail::apply(detail::destroyer(), buffer_);
   }
+  ar& buffer_.type;
+  ar& buffer_.size;
+  detail::apply(detail::serializer(), buffer_, ar);
 }
 
 namespace axis {
@@ -126,7 +86,16 @@ template <class Archive>
 void base::serialize(Archive& ar, unsigned /* version */) {
   ar& size_;
   ar& shape_;
-  ar& label_;
+}
+
+template <class A>
+template <class Archive>
+void labeled_base<A>::serialize(Archive& ar, unsigned /* version */) {
+  ar& boost::serialization::base_object<base>(*this);
+  auto size = label_.size();
+  ar& size;
+  if (Archive::is_loading::value) { label_.resize(size); }
+  ar& serialization::make_array(label_.data(), size);
 }
 
 namespace transform {
@@ -136,46 +105,72 @@ void pow::serialize(Archive& ar, unsigned /* version */) {
 }
 } // namespace transform
 
-template <typename RealType, typename Transform>
+template <typename T, typename U, typename A>
 template <class Archive>
-void regular<RealType, Transform>::serialize(Archive& ar,
-                                             unsigned /* version */) {
-  ar& boost::serialization::base_object<base>(*this);
-  ar& boost::serialization::base_object<Transform>(*this);
+void regular<T, U, A>::serialize(Archive& ar, unsigned /* version */) {
+  ar& boost::serialization::base_object<labeled_base<A>>(*this);
+  ar& boost::serialization::base_object<T>(*this);
   ar& min_;
   ar& delta_;
 }
 
-template <typename RealType>
+template <typename T, typename A>
 template <class Archive>
-void circular<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base>(*this);
+void circular<T, A>::serialize(Archive& ar, unsigned /* version */) {
+  ar& boost::serialization::base_object<labeled_base<A>>(*this);
   ar& phase_;
   ar& perimeter_;
 }
 
-template <typename RealType>
+template <typename T, typename A>
 template <class Archive>
-void variable<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base>(*this);
+void variable<T, A>::serialize(Archive& ar, unsigned /* version */) {
   if (Archive::is_loading::value) {
-    x_.reset(new RealType[base::size() + 1]);
+    this->~variable();
   }
-  ar& boost::serialization::make_array(x_.get(), base::size() + 1);
+
+  ar& boost::serialization::base_object<labeled_base<A>>(*this);
+
+  if (Archive::is_loading::value) {
+    value_allocator_type a(base_type::get_allocator());
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a, base_type::size() + 1);
+    auto xit = x_;
+    const auto xend = x_ + base_type::size() + 1;
+    while (xit != xend)
+      AT::construct(a, xit++);
+  }
+
+  ar& boost::serialization::make_array(x_, base_type::size() + 1);
 }
 
-template <typename IntType>
+template <typename T, typename A>
 template <class Archive>
-void integer<IntType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base>(*this);
+void integer<T, A>::serialize(Archive& ar, unsigned /* version */) {
+  ar& boost::serialization::base_object<labeled_base<A>>(*this);
   ar& min_;
 }
 
-template <typename T>
+template <typename T, typename A>
 template <class Archive>
-void category<T>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base>(*this);
-  ar& map_;
+void category<T, A>::serialize(Archive& ar, unsigned /* version */) {
+  if (Archive::is_loading::value) {
+    this->~category();
+  }
+
+  ar& boost::serialization::base_object<labeled_base<A>>(*this);
+
+  if (Archive::is_loading::value) {
+    value_allocator_type a(base_type::get_allocator());
+    using AT = std::allocator_traits<value_allocator_type>;
+    x_ = AT::allocate(a, base_type::size());
+    auto xit = x_;
+    const auto xend = x_ + base_type::size();
+    while (xit != xend)
+      AT::construct(a, xit++);
+  }
+
+  ar& boost::serialization::make_array(x_, base_type::size());
 }
 
 template <typename... Ts>
@@ -186,20 +181,23 @@ void any<Ts...>::serialize(Archive& ar, unsigned /* version */) {
 
 } // namespace axis
 
-template <class A, class S>
-template <class Archive>
-void histogram<static_tag, A, S>::serialize(Archive& ar,
-                                            unsigned /* version */) {
-  detail::serialize_helper<Archive> sh(ar);
-  mp11::tuple_for_each(axes_, sh);
-  ar& storage_;
+namespace {
+template <class Archive, typename... Ts>
+void serialize_axes(Archive& ar, std::tuple<Ts...>& axes) {
+  detail::serialize_t<Archive> sh(ar);
+  mp11::tuple_for_each(axes, sh);
+}
+
+template <class Archive, typename Any, typename A>
+void serialize_axes(Archive& ar, std::vector<Any, A>& axes) {
+  ar& axes;
+}
 }
 
 template <class A, class S>
 template <class Archive>
-void histogram<dynamic_tag, A, S>::serialize(Archive& ar,
-                                             unsigned /* version */) {
-  ar& axes_;
+void histogram<A, S>::serialize(Archive& ar, unsigned /* version */) {
+  serialize_axes(ar, axes_);
   ar& storage_;
 }
 

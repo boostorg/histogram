@@ -4,31 +4,35 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/histogram/serialization.hpp>
 #endif
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>
 #include <limits>
+#include <memory>
 #include <sstream>
+
+using adaptive_storage_type = boost::histogram::adaptive_storage<>;
 
 using namespace boost::histogram;
 
 template <typename T>
-adaptive_storage prepare(std::size_t n) {
-  auto a = detail::array<T>(n);
-  return adaptive_storage(a);
+adaptive_storage_type prepare(std::size_t n, const T x) {
+  std::unique_ptr<T[]> v(new T[n]);
+  std::fill(v.get(), v.get() + n, static_cast<T>(0));
+  v.get()[0] = x;
+  return adaptive_storage_type(n, v.get());
 }
 
 template <typename T>
-adaptive_storage prepare(std::size_t n, const T x) {
-  auto a = detail::array<T>(n);
-  a[0] = x;
-  return adaptive_storage(a);
+adaptive_storage_type prepare(std::size_t n) {
+  return adaptive_storage_type(n, static_cast<T*>(nullptr));
 }
 
 template <typename T>
@@ -61,7 +65,7 @@ void serialization_impl() {
     oa << a;
     buf = os.str();
   }
-  adaptive_storage b;
+  adaptive_storage_type b;
   BOOST_TEST(!(a == b));
   {
     std::istringstream is(buf);
@@ -73,7 +77,7 @@ void serialization_impl() {
 
 template <>
 void serialization_impl<void>() {
-  adaptive_storage a(std::size_t(1));
+  const auto a = prepare<void>(1);
   std::ostringstream os;
   std::string buf;
   {
@@ -82,7 +86,7 @@ void serialization_impl<void>() {
     oa << a;
     buf = os2.str();
   }
-  adaptive_storage b;
+  adaptive_storage_type b;
   BOOST_TEST(!(a == b));
   {
     std::istringstream is(buf);
@@ -95,7 +99,7 @@ void serialization_impl<void>() {
 
 template <typename T>
 void equal_impl() {
-  adaptive_storage a(std::size_t(1));
+  auto a = prepare<void>(1);
   auto b = prepare(1, T(0));
   BOOST_TEST_EQ(a[0].value(), 0.0);
   BOOST_TEST_EQ(a[0].variance(), 0.0);
@@ -103,7 +107,8 @@ void equal_impl() {
   b.increase(0);
   BOOST_TEST(!(a == b));
 
-  array_storage<unsigned> c(std::size_t(1));
+  array_storage<unsigned> c;
+  c.reset(1);
   auto d = prepare(1, T(0));
   BOOST_TEST(c == d);
   c.increase(0);
@@ -112,10 +117,10 @@ void equal_impl() {
 
 template <>
 void equal_impl<void>() {
-  adaptive_storage a(std::size_t(1));
+  auto a = prepare<void>(1);
   auto b = prepare<uint8_t>(1, 0);
   auto c = prepare<uint8_t>(2, 0);
-  auto d = array_storage<unsigned>(std::size_t(1));
+  auto d = prepare<unsigned>(1);
   BOOST_TEST_EQ(a[0].value(), 0.0);
   BOOST_TEST_EQ(a[0].variance(), 0.0);
   BOOST_TEST(a == b);
@@ -141,7 +146,7 @@ void increase_and_grow_impl() {
 
   n.increase(0);
 
-  adaptive_storage x(std::size_t(2));
+  auto x = prepare<void>(2);
   x.increase(0);
   n2.add(0, x[0].value());
 
@@ -155,7 +160,7 @@ void increase_and_grow_impl() {
 
 template <>
 void increase_and_grow_impl<void>() {
-  adaptive_storage s(std::size_t(2));
+  auto s = prepare<void>(2);
   BOOST_TEST_EQ(s[0].value(), 0);
   BOOST_TEST_EQ(s[1].value(), 0);
   s.increase(0);
@@ -166,7 +171,8 @@ void increase_and_grow_impl<void>() {
 template <typename T>
 void convert_array_storage_impl() {
   const auto aref = prepare(1, T(0));
-  array_storage<uint8_t> s(std::size_t(1));
+  array_storage<uint8_t> s;
+  s.reset(1);
   s.increase(0);
 
   auto a = aref;
@@ -176,7 +182,7 @@ void convert_array_storage_impl() {
   a.increase(0);
   BOOST_TEST(!(a == s));
 
-  adaptive_storage b(s);
+  adaptive_storage_type b(s);
   BOOST_TEST_EQ(b[0].value(), 1.0);
   BOOST_TEST(b == s);
   b.increase(0);
@@ -188,7 +194,8 @@ void convert_array_storage_impl() {
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
 
-  array_storage<float> t(std::size_t(1));
+  array_storage<float> t;
+  t.reset(1);
   t.increase(0);
   while (t[0] < 1e20) t.add(0, t[0]);
   auto d = aref;
@@ -202,7 +209,7 @@ void convert_array_storage_impl() {
   e.increase(0);
   BOOST_TEST(!(e == s));
 
-  adaptive_storage f(s);
+  adaptive_storage_type f(s);
   BOOST_TEST_EQ(f[0].value(), 1.0);
   BOOST_TEST(f == s);
   f.increase(0);
@@ -214,7 +221,8 @@ void convert_array_storage_impl() {
   BOOST_TEST(g == s);
   BOOST_TEST(s == g);
 
-  array_storage<uint8_t> u(std::size_t(2));
+  array_storage<uint8_t> u;
+  u.reset(2);
   u.increase(0);
   auto h = aref;
   BOOST_TEST(!(h == u));
@@ -224,9 +232,10 @@ void convert_array_storage_impl() {
 
 template <>
 void convert_array_storage_impl<void>() {
-  const auto aref = adaptive_storage(std::size_t(1));
+  const auto aref = prepare<void>(1);
   BOOST_TEST_EQ(aref[0].value(), 0.0);
-  array_storage<uint8_t> s(std::size_t(1));
+  array_storage<uint8_t> s;
+  s.reset(1);
   s.increase(0);
 
   auto a = aref;
@@ -242,7 +251,8 @@ void convert_array_storage_impl<void>() {
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
 
-  array_storage<uint8_t> t(std::size_t(2));
+  array_storage<uint8_t> t;
+  t.reset(2);
   t.increase(0);
   auto d = aref;
   BOOST_TEST(!(d == t));
@@ -302,7 +312,7 @@ int main() {
 
   // empty state
   {
-    adaptive_storage a;
+    adaptive_storage_type a;
     BOOST_TEST_EQ(a.size(), 0);
   }
 
@@ -358,12 +368,12 @@ int main() {
 
   // add_and_grow
   {
-    adaptive_storage a(std::size_t(1));
+    auto a = prepare<void>(1);
     a += a;
     BOOST_TEST_EQ(a[0].value(), 0);
     a.increase(0);
     double x = 1;
-    adaptive_storage b(std::size_t(1));
+    auto b = prepare<void>(1);
     b.increase(0);
     BOOST_TEST_EQ(b[0].value(), x);
     for (unsigned i = 0; i < 80; ++i) {
@@ -374,15 +384,15 @@ int main() {
       BOOST_TEST_EQ(a[0].variance(), x);
       BOOST_TEST_EQ(b[0].value(), x);
       BOOST_TEST_EQ(b[0].variance(), x);
-      adaptive_storage c(std::size_t(1));
+      auto c = prepare<void>(1);
       c.add(0, a[0].value());
       BOOST_TEST_EQ(c[0].value(), x);
       BOOST_TEST_EQ(c[0].variance(), x);
       c.add(0, weight(0));
       BOOST_TEST_EQ(c[0].value(), x);
       BOOST_TEST_EQ(c[0].variance(), x);
-      adaptive_storage d(std::size_t(1));
-      d.add(0, weight(a[0].value()));
+      auto d = prepare<void>(1);
+      d.add(0, weight(x));
       BOOST_TEST_EQ(d[0].value(), x);
       BOOST_TEST_EQ(d[0].variance(), x * x);
     }
@@ -390,7 +400,7 @@ int main() {
 
   // multiply
   {
-    adaptive_storage a(std::size_t(2));
+    auto a = prepare<void>(2);
     a *= 2;
     BOOST_TEST_EQ(a[0].value(), 0);
     BOOST_TEST_EQ(a[1].value(), 0);
@@ -400,7 +410,7 @@ int main() {
     BOOST_TEST_EQ(a[0].variance(), 9);
     BOOST_TEST_EQ(a[1].value(), 0);
     BOOST_TEST_EQ(a[1].variance(), 0);
-    a.add(1, adaptive_storage::element_type(2, 5));
+    a.add(1, adaptive_storage_type::element_type(2, 5));
     BOOST_TEST_EQ(a[0].value(), 3);
     BOOST_TEST_EQ(a[0].variance(), 9);
     BOOST_TEST_EQ(a[1].value(), 2);

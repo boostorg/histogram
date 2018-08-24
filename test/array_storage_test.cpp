@@ -5,11 +5,8 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <array>
-#include <boost/array.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/utility.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
@@ -18,17 +15,26 @@
 int main() {
   using namespace boost::histogram;
 
-  // ctor
+  // ctor and reset
   {
-    array_storage<unsigned> a(1);
-    BOOST_TEST_EQ(a.size(), 1u);
+    array_storage<unsigned> a;
+    BOOST_TEST_EQ(a.size(), 0);
+    a.reset(1);
+    BOOST_TEST_EQ(a.size(), 1);
+    a.increase(0);
+    BOOST_TEST_EQ(a[0], 1);
+    a.reset(1);
     BOOST_TEST_EQ(a[0], 0);
   }
 
   // increase
   {
-    array_storage<unsigned> a(1), b(1);
-    array_storage<unsigned char> c(1), d(2);
+    array_storage<unsigned> a, b;
+    a.reset(1);
+    b.reset(1);
+    array_storage<unsigned char> c, d;
+    c.reset(1);
+    d.reset(2);
     a.increase(0);
     b.increase(0);
     c.increase(0);
@@ -49,7 +55,8 @@ int main() {
 
   // multiply
   {
-    array_storage<unsigned> a(2);
+    array_storage<double> a;
+    a.reset(2);
     a.increase(0);
     a *= 3;
     BOOST_TEST_EQ(a[0], 3);
@@ -64,9 +71,11 @@ int main() {
 
   // copy
   {
-    array_storage<unsigned> a(1);
+    array_storage<unsigned> a;
+    a.reset(1);
     a.increase(0);
-    decltype(a) b(2);
+    decltype(a) b;
+    b.reset(2);
     BOOST_TEST(!(a == b));
     b = a;
     BOOST_TEST(a == b);
@@ -78,7 +87,8 @@ int main() {
     BOOST_TEST_EQ(c.size(), 1);
     BOOST_TEST_EQ(c[0], 1);
 
-    array_storage<unsigned char> d(1);
+    array_storage<unsigned char> d;
+    d.reset(1);
     BOOST_TEST(!(a == d));
     d = a;
     BOOST_TEST(a == d);
@@ -88,7 +98,8 @@ int main() {
 
   // move
   {
-    array_storage<unsigned> a(1);
+    array_storage<unsigned> a;
+    a.reset(1);
     a.increase(0);
     decltype(a) b;
     BOOST_TEST(!(a == b));
@@ -104,7 +115,8 @@ int main() {
 
   // with weight_counter
   {
-    array_storage<weight_counter<double>> a(1);
+    array_storage<weight_counter<double>> a;
+    a.reset(1);
     a.increase(0);
     a.add(0, 1);
     a.add(0, weight_counter<double>(1, 0));

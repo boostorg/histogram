@@ -8,6 +8,7 @@
 #define _BOOST_HISTOGRAM_LITERALS_HPP_
 
 #include <boost/mp11.hpp>
+#include <cstddef>
 
 namespace boost {
 namespace histogram {
@@ -17,59 +18,59 @@ template <char C>
 struct char2int;
 template <>
 struct char2int<'0'> {
-  static constexpr int value = 0;
+  static constexpr std::size_t value = 0;
 };
 template <>
 struct char2int<'1'> {
-  static constexpr int value = 1;
+  static constexpr std::size_t value = 1;
 };
 template <>
 struct char2int<'2'> {
-  static constexpr int value = 2;
+  static constexpr std::size_t value = 2;
 };
 template <>
 struct char2int<'3'> {
-  static constexpr int value = 3;
+  static constexpr std::size_t value = 3;
 };
 template <>
 struct char2int<'4'> {
-  static constexpr int value = 4;
+  static constexpr std::size_t value = 4;
 };
 template <>
 struct char2int<'5'> {
-  static constexpr int value = 5;
+  static constexpr std::size_t value = 5;
 };
 template <>
 struct char2int<'6'> {
-  static constexpr int value = 6;
+  static constexpr std::size_t value = 6;
 };
 template <>
 struct char2int<'7'> {
-  static constexpr int value = 7;
+  static constexpr std::size_t value = 7;
 };
 template <>
 struct char2int<'8'> {
-  static constexpr int value = 8;
+  static constexpr std::size_t value = 8;
 };
 template <>
 struct char2int<'9'> {
-  static constexpr int value = 9;
+  static constexpr std::size_t value = 9;
 };
 
-template <int N>
-constexpr int parse() {
+template <std::size_t N>
+constexpr std::size_t parse() {
   return N;
 }
 
-template <int N, char First, char... Rest>
-constexpr int parse() {
+template <std::size_t N, char First, char... Rest>
+constexpr std::size_t parse() {
   return parse<N * 10 + char2int<First>::value, Rest...>();
 }
 } // namespace detail
 
 template <char... Digits>
-auto operator"" _c() -> ::boost::mp11::mp_int<detail::parse<0, Digits...>()> {
-  return ::boost::mp11::mp_int<detail::parse<0, Digits...>()>();
+auto operator"" _c() -> ::boost::mp11::mp_size_t<detail::parse<0, Digits...>()> {
+  return ::boost::mp11::mp_size_t<detail::parse<0, Digits...>()>();
 }
 
 } // namespace literals

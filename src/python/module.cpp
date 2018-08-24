@@ -7,6 +7,8 @@
 #include <boost/python/module.hpp>
 #include <boost/python/object.hpp>
 #include <boost/python/scope.hpp>
+#include <boost/python/exception_translator.hpp>
+#include <stdexcept>
 #ifdef HAVE_NUMPY
 #include <boost/python/numpy.hpp>
 #endif
@@ -16,6 +18,10 @@ void register_histogram();
 
 BOOST_PYTHON_MODULE(histogram) {
   using namespace boost::python;
+
+  register_exception_translator<std::out_of_range>(
+      [](const std::out_of_range& e) { PyErr_SetString(PyExc_IndexError, e.what()); });
+
   scope current;
 #ifdef HAVE_NUMPY
   numpy::initialize();

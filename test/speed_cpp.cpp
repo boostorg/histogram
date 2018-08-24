@@ -12,6 +12,7 @@
 #include <limits>
 #include <memory>
 #include <random>
+#include "utility.hpp"
 
 using namespace boost::histogram;
 using boost::mp11::mp_list;
@@ -48,13 +49,13 @@ double baseline(unsigned n) {
   return best;
 }
 
-template <typename Histogram>
+template <typename Tag, typename Storage>
 double compare_1d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 20; ++k) {
-    auto h = Histogram(axis::regular<>(100, 0, 1));
+    auto h = make_s(Tag(), Storage(), axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n; ++i) h(r[i]);
     t = clock() - t;
@@ -64,14 +65,14 @@ double compare_1d(unsigned n, int distrib) {
   return best;
 }
 
-template <typename Histogram>
+template <typename Tag, typename Storage>
 double compare_2d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 20; ++k) {
     auto h =
-        Histogram(axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1));
+        make_s(Tag(), Storage(), axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1));
     auto t = clock();
     for (unsigned i = 0; i < n / 2; ++i) h(r[2 * i], r[2 * i + 1]);
     t = clock() - t;
@@ -81,17 +82,16 @@ double compare_2d(unsigned n, int distrib) {
   return best;
 }
 
-template <typename Histogram>
+template <typename Tag, typename Storage>
 double compare_3d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 20; ++k) {
-    auto h = Histogram(axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1),
-                       axis::regular<>(100, 0, 1));
+    auto h = make_s(Tag(), Storage(), axis::regular<>(100, 0, 1),
+                    axis::regular<>(100, 0, 1), axis::regular<>(100, 0, 1));
     auto t = clock();
-    for (unsigned i = 0; i < n / 3; ++i)
-      h(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
+    for (unsigned i = 0; i < n / 3; ++i) h(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
   }
@@ -99,20 +99,20 @@ double compare_3d(unsigned n, int distrib) {
   return best;
 }
 
-template <typename Histogram>
+template <typename Tag, typename Storage>
 double compare_6d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
 
   auto best = std::numeric_limits<double>::max();
   for (unsigned k = 0; k < 20; ++k) {
-    auto h = Histogram(axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1),
-                       axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1),
-                       axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1));
+    auto h =
+        make_s(Tag(), Storage(), axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1),
+               axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1),
+               axis::regular<>(10, 0, 1), axis::regular<>(10, 0, 1));
 
     auto t = clock();
     for (unsigned i = 0; i < n / 6; ++i) {
-      h(r[6 * i], r[6 * i + 1], r[6 * i + 2], r[6 * i + 3], r[6 * i + 4],
-        r[6 * i + 5]);
+      h(r[6 * i], r[6 * i + 1], r[6 * i + 2], r[6 * i + 3], r[6 * i + 4], r[6 * i + 5]);
     }
     t = clock() - t;
     best = std::min(best, double(t) / CLOCKS_PER_SEC);
@@ -132,19 +132,10 @@ int main() {
       printf("uniform distribution\n");
     else
       printf("normal distribution\n");
-    printf("hs_ss %.3f\n",
-           compare_1d<static_histogram<mp_list<axis::regular<>>,
-                                       array_storage<int>>>(nfill, itype));
-    printf("hs_sd %.3f\n",
-           compare_1d<
-               static_histogram<mp_list<axis::regular<>>, adaptive_storage>>(
-               nfill, itype));
-    printf("hd_ss %.3f\n",
-           compare_1d<dynamic_histogram<axis::types, array_storage<int>>>(
-               nfill, itype));
-    printf("hd_sd %.3f\n",
-           compare_1d<dynamic_histogram<axis::types, adaptive_storage>>(
-               nfill, itype));
+    printf("hs_ss %.3f\n", compare_1d<static_tag, array_storage<int>>(nfill, itype));
+    printf("hs_sd %.3f\n", compare_1d<static_tag, adaptive_storage<>>(nfill, itype));
+    printf("hd_ss %.3f\n", compare_1d<dynamic_tag, array_storage<int>>(nfill, itype));
+    printf("hd_sd %.3f\n", compare_1d<dynamic_tag, adaptive_storage<>>(nfill, itype));
   }
 
   printf("2D\n");
@@ -153,20 +144,10 @@ int main() {
       printf("uniform distribution\n");
     else
       printf("normal distribution\n");
-    printf(
-        "hs_ss %.3f\n",
-        compare_2d<static_histogram<mp_list<axis::regular<>, axis::regular<>>,
-                                    array_storage<int>>>(nfill, itype));
-    printf(
-        "hs_sd %.3f\n",
-        compare_2d<static_histogram<mp_list<axis::regular<>, axis::regular<>>,
-                                    adaptive_storage>>(nfill, itype));
-    printf("hd_ss %.3f\n",
-           compare_2d<dynamic_histogram<axis::types, array_storage<int>>>(
-               nfill, itype));
-    printf("hd_sd %.3f\n",
-           compare_2d<dynamic_histogram<axis::types, adaptive_storage>>(
-               nfill, itype));
+    printf("hs_ss %.3f\n", compare_2d<static_tag, array_storage<int>>(nfill, itype));
+    printf("hs_sd %.3f\n", compare_2d<static_tag, adaptive_storage<>>(nfill, itype));
+    printf("hd_ss %.3f\n", compare_2d<dynamic_tag, array_storage<int>>(nfill, itype));
+    printf("hd_sd %.3f\n", compare_2d<dynamic_tag, adaptive_storage<>>(nfill, itype));
   }
 
   printf("3D\n");
@@ -175,20 +156,10 @@ int main() {
       printf("uniform distribution\n");
     else
       printf("normal distribution\n");
-    printf("hs_ss %.3f\n",
-           compare_3d<static_histogram<
-               mp_list<axis::regular<>, axis::regular<>, axis::regular<>>,
-               array_storage<int>>>(nfill, itype));
-    printf("hs_sd %.3f\n",
-           compare_3d<static_histogram<
-               mp_list<axis::regular<>, axis::regular<>, axis::regular<>>,
-               adaptive_storage>>(nfill, itype));
-    printf("hd_ss %.3f\n",
-           compare_3d<dynamic_histogram<axis::types, array_storage<int>>>(
-               nfill, itype));
-    printf("hd_sd %.3f\n",
-           compare_3d<dynamic_histogram<axis::types, adaptive_storage>>(
-               nfill, itype));
+    printf("hs_ss %.3f\n", compare_3d<static_tag, array_storage<int>>(nfill, itype));
+    printf("hs_sd %.3f\n", compare_3d<static_tag, adaptive_storage<>>(nfill, itype));
+    printf("hd_ss %.3f\n", compare_3d<dynamic_tag, array_storage<int>>(nfill, itype));
+    printf("hd_sd %.3f\n", compare_3d<dynamic_tag, adaptive_storage<>>(nfill, itype));
   }
 
   printf("6D\n");
@@ -197,21 +168,9 @@ int main() {
       printf("uniform distribution\n");
     else
       printf("normal distribution\n");
-    printf("hs_ss %.3f\n",
-           compare_6d<static_histogram<
-               mp_list<axis::regular<>, axis::regular<>, axis::regular<>,
-                       axis::regular<>, axis::regular<>, axis::regular<>>,
-               array_storage<int>>>(nfill, itype));
-    printf("hs_sd %.3f\n",
-           compare_6d<static_histogram<
-               mp_list<axis::regular<>, axis::regular<>, axis::regular<>,
-                       axis::regular<>, axis::regular<>, axis::regular<>>,
-               adaptive_storage>>(nfill, itype));
-    printf("hd_ss %.3f\n",
-           compare_6d<dynamic_histogram<axis::types, array_storage<int>>>(
-               nfill, itype));
-    printf("hd_sd %.3f\n",
-           compare_6d<dynamic_histogram<axis::types, adaptive_storage>>(
-               nfill, itype));
+    printf("hs_ss %.3f\n", compare_6d<static_tag, array_storage<int>>(nfill, itype));
+    printf("hs_sd %.3f\n", compare_6d<static_tag, adaptive_storage<>>(nfill, itype));
+    printf("hd_ss %.3f\n", compare_6d<dynamic_tag, array_storage<int>>(nfill, itype));
+    printf("hd_sd %.3f\n", compare_6d<dynamic_tag, adaptive_storage<>>(nfill, itype));
   }
 }

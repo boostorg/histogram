@@ -233,7 +233,6 @@ class test_variable(unittest.TestCase):
 
     def test_init(self):
         variable(0, 1)
-        variable(1, -1)
         variable(0, 1, 2, 3, 4)
         variable(0, 1, label="va")
         variable(0, 1, uoflow=True)
@@ -241,7 +240,11 @@ class test_variable(unittest.TestCase):
         with self.assertRaises(TypeError):
             variable()
         with self.assertRaises(ValueError):
-            variable(1.0)
+            variable(1)
+        with self.assertRaises(ValueError):
+            variable(1, -1)
+        with self.assertRaises(ValueError):
+            variable(1, 1)
         with self.assertRaises(TypeError):
             variable("1", 2)
         with self.assertRaises(KeyError):
@@ -681,6 +684,13 @@ class test_histogram(unittest.TestCase):
         self.assertEqual(h1.axis(), integer(1, 4))
         self.assertEqual([h1.at(i).value for i in range(3)], [1, 1, 1])
 
+        with self.assertRaises(ValueError):
+            h.reduce_to(*range(100))
+
+        with self.assertRaises(ValueError):
+            h.reduce_to(2, 1)
+
+
     def test_pickle_0(self):
         a = histogram(category(0, 1, 2),
                       integer(0, 20, label='ia'),
@@ -849,7 +859,7 @@ class test_histogram(unittest.TestCase):
                       integer(0, 2, uoflow=False))
         a(0, 0)
         for i in range(80):
-            a += a
+            a = a + a
         # a now holds a multiprecision type
         a(1, 0)
         for i in range(2):

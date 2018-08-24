@@ -5,10 +5,11 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/histogram/detail/cat.hpp>
-#include <boost/histogram/dynamic_histogram.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
+#include <boost/mp11.hpp>
 #include <boost/python.hpp>
 #include <boost/python/raw_function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -23,97 +24,94 @@ namespace np = boost::python::numpy;
 #include <memory>
 
 #ifndef BOOST_HISTOGRAM_AXIS_LIMIT
-#define BOOST_HISTOGRAM_AXIS_LIMIT 32
+#define BOOST_HISTOGRAM_AXIS_LIMIT 16
 #endif
 
-namespace mpl = boost::mpl;
 namespace bh = boost::histogram;
 namespace bp = boost::python;
+namespace mp11 = boost::mp11;
 
-using pyhistogram = bh::dynamic_histogram<>;
-
-namespace boost {
-namespace python {
+using pyhistogram = bh::histogram<>;
 
 #ifdef HAVE_NUMPY
-class access {
+namespace boost {
+namespace histogram {
+class python_access {
 public:
-  using mp_int = bh::detail::mp_int;
-  using wcount = bh::detail::wcount;
-  template <typename T>
-  using array = bh::detail::array<T>;
+  using mp_int = detail::mp_int;
+  using wcount = detail::wcount;
 
-  struct dtype_visitor : public boost::static_visitor<str> {
-    list &shapes, &strides;
-    dtype_visitor(list& sh, list& st) : shapes(sh), strides(st) {}
-    template <typename T>
-    str operator()(const array<T>& /*unused*/) const {
+  struct dtype_visitor {
+    template <typename T, typename Buffer>
+    bp::str operator()(T*, const Buffer&, bp::list&, bp::list& strides) {
       strides.append(sizeof(T));
-      return dtype_typestr<T>();
+      return bp::dtype_typestr<T>();
     }
-    str operator()(const array<void>& /*unused*/) const {
+    template <typename Buffer>
+    bp::str operator()(void*, const Buffer&, bp::list&, bp::list& strides) {
       strides.append(sizeof(uint8_t));
-      return dtype_typestr<uint8_t>();
+      return bp::dtype_typestr<uint8_t>();
     }
-    str operator()(const array<mp_int>& /*unused*/) const {
+    template <typename Buffer>
+    bp::str operator()(mp_int*, const Buffer&, bp::list&, bp::list& strides) {
       strides.append(sizeof(double));
-      return dtype_typestr<double>();
+      return bp::dtype_typestr<double>();
     }
-    str operator()(const array<wcount>& /*unused*/) const {
+    template <typename Buffer>
+    bp::str operator()(wcount*, const Buffer&, bp::list& shapes, bp::list& strides) {
       strides.append(sizeof(double));
       strides.append(strides[-1] * 2);
       shapes.append(2);
-      return dtype_typestr<double>();
+      return bp::dtype_typestr<double>();
     }
   };
 
-  struct data_visitor : public boost::static_visitor<object> {
-    const list& shapes;
-    const list& strides;
-    data_visitor(const list& sh, const list& st) : shapes(sh), strides(st) {}
-    template <typename Array>
-    object operator()(const Array& b) const {
-      return make_tuple(reinterpret_cast<uintptr_t>(b.begin()), true);
+  struct data_visitor {
+    template <typename T, typename Buffer>
+    bp::object operator()(T* tp, const Buffer&, const bp::list&, const bp::list&) const {
+      return bp::make_tuple(reinterpret_cast<uintptr_t>(tp), true);
     }
-    object operator()(const array<void>& /* unused */) const {
+    template <typename Buffer>
+    bp::object operator()(void*, const Buffer&, const bp::list& shapes,
+                          const bp::list&) const {
       // cannot pass non-existent memory to numpy; make new
       // zero-initialized uint8 array, and pass it
-      return np::zeros(tuple(shapes), np::dtype::get_builtin<uint8_t>());
+      return np::zeros(bp::tuple(shapes), np::dtype::get_builtin<uint8_t>());
     }
-    object operator()(const array<mp_int>& b) const {
+    template <typename Buffer>
+    bp::object operator()(mp_int* tp, const Buffer& b, const bp::list& shapes,
+                          const bp::list& strides) const {
       // cannot pass cpp_int to numpy; make new
       // double array, fill it and pass it
-      auto a = np::empty(tuple(shapes), np::dtype::get_builtin<double>());
-      for (auto i = 0l, n = bp::len(shapes); i < n; ++i)
-        const_cast<Py_intptr_t*>(a.get_strides())[i] =
-            bp::extract<int>(strides[i]);
+      auto a = np::empty(bp::tuple(shapes), np::dtype::get_builtin<double>());
+      for (std::size_t i = 0, n = bp::len(shapes); i < n; ++i)
+        const_cast<Py_intptr_t*>(a.get_strides())[i] = bp::extract<int>(strides[i]);
       auto* buf = (double*)a.get_data();
-      for (auto i = 0ul; i < b.size; ++i) buf[i] = static_cast<double>(b[i]);
+      for (std::size_t i = 0; i < b.size; ++i) { buf[i] = static_cast<double>(tp[i]); }
       return a;
     }
   };
 
-  static object array_interface(const pyhistogram& self) {
-    dict d;
-    list shapes;
-    list strides;
+  static bp::object array_interface(const pyhistogram& self) {
+    bp::dict d;
+    bp::list shapes;
+    bp::list strides;
     auto& b = self.storage_.buffer_;
-    d["typestr"] = boost::apply_visitor(dtype_visitor(shapes, strides), b);
-    for (auto i = 0u; i < self.dim(); ++i) {
-      if (i) strides.append(strides[-1] * shapes[-1]);
+    d["typestr"] = bh::detail::apply(dtype_visitor(), b, shapes, strides);
+    for (std::size_t i = 0; i < self.dim(); ++i) {
+      if (i > 0) strides.append(strides[-1] * shapes[-1]);
       shapes.append(self.axis(i).shape());
     }
     if (self.dim() == 0) shapes.append(0);
-    d["shape"] = tuple(shapes);
-    d["strides"] = tuple(strides);
-    d["data"] = boost::apply_visitor(data_visitor(shapes, strides), b);
+    d["shape"] = bp::tuple(shapes);
+    d["strides"] = bp::tuple(strides);
+    d["data"] = bh::detail::apply(data_visitor(), b, shapes, strides);
     return d;
   }
 };
-#endif
-
-} // namespace python
+} // namespace histogram
 } // namespace boost
+#endif
 
 struct axis_visitor : public boost::static_visitor<bp::object> {
   template <typename T>
@@ -141,8 +139,7 @@ struct axes_appender {
 
 bp::object histogram_axis(const pyhistogram& self, int i) {
   if (i < 0) i += self.dim();
-  if (i < 0 || i >= int(self.dim()))
-    throw std::out_of_range("axis index out of range");
+  if (i < 0 || i >= int(self.dim())) throw std::out_of_range("axis index out of range");
   return boost::apply_visitor(axis_visitor(), self.axis(i));
 }
 
@@ -159,8 +156,7 @@ bp::object histogram_init(bp::tuple args, bp::dict kwargs) {
   for (unsigned i = 0; i < dim; ++i) {
     bp::object pa = args[i + 1];
     bool success = false;
-    boost::mp11::mp_for_each<pyhistogram::any_axis_type::types>(
-        axes_appender(pa, axes, success));
+    boost::mp11::mp_for_each<bh::axis::any_std>(axes_appender(pa, axes, success));
     if (!success) {
       std::string msg = "require an axis object, got ";
       msg += bp::extract<std::string>(bp::str(pa));
@@ -168,7 +164,7 @@ bp::object histogram_init(bp::tuple args, bp::dict kwargs) {
       bp::throw_error_already_set();
     }
   }
-  pyhistogram h(axes.begin(), axes.end());
+  pyhistogram h(axes, typename pyhistogram::storage_type());
   return self.attr("__init__")(std::move(h));
 }
 
@@ -208,25 +204,23 @@ struct fetcher {
 template <typename T>
 struct span {
   T* data;
-  unsigned size;
+  std::size_t size;
   const T* begin() const { return data; }
   const T* end() const { return data + size; }
 };
 
-bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
+bp::object histogram_call(bp::tuple args, bp::dict kwargs) {
   const auto nargs = bp::len(args);
   pyhistogram& self = bp::extract<pyhistogram&>(args[0]);
 
   const unsigned dim = nargs - 1;
   if (dim != self.dim()) {
-    throw std::invalid_argument(
-        "number of arguments and dimension do not match");
+    throw std::invalid_argument("number of arguments and dimension do not match");
   }
 
   if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
     throw std::invalid_argument(
-        bh::detail::cat("too many arguments, maximum is ",
-                        BOOST_HISTOGRAM_AXIS_LIMIT)
+        bh::detail::cat("too many arguments, maximum is ", BOOST_HISTOGRAM_AXIS_LIMIT)
             .c_str());
   }
 
@@ -254,8 +248,7 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
       fetch_weight.assign(kwargs.get("weight"));
       if (fetch_weight.n > 0) {
         if (n > 0 && fetch_weight.n != n) {
-          throw std::invalid_argument(
-              "length of weight sequence does not match");
+          throw std::invalid_argument("length of weight sequence does not match");
         }
         n = fetch_weight.n;
       }
@@ -265,8 +258,7 @@ bp::object histogram_fill(bp::tuple args, bp::dict kwargs) {
   if (!n) ++n;
   if (dim == 1) {
     if (fetch_weight.n >= 0) {
-      for (auto i = 0l; i < n; ++i)
-        self(bh::weight(fetch_weight[i]), fetch[0][i]);
+      for (auto i = 0l; i < n; ++i) self(bh::weight(fetch_weight[i]), fetch[0][i]);
     } else {
       for (auto i = 0l; i < n; ++i) self(fetch[0][i]);
     }
@@ -296,61 +288,56 @@ bp::object histogram_getitem(const pyhistogram& self, bp::object args) {
   }
 
   const unsigned dim = bp::len(args);
-  if (self.dim() != dim) {
-    throw std::invalid_argument("wrong number of arguments");
-  }
+  if (self.dim() != dim) { throw std::invalid_argument("wrong number of arguments"); }
 
   if (dim > BOOST_HISTOGRAM_AXIS_LIMIT) {
     throw std::invalid_argument(
-        bh::detail::cat("too many arguments, maximum is ",
-                        BOOST_HISTOGRAM_AXIS_LIMIT)
+        bh::detail::cat("too many arguments, maximum is ", BOOST_HISTOGRAM_AXIS_LIMIT)
             .c_str());
   }
 
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
-  for (unsigned i = 0; i < dim; ++i) idx[i] = bp::extract<int>(args[i]);
+  for (std::size_t i = 0; i < dim; ++i) idx[i] = bp::extract<int>(args[i]);
 
   return bp::object(self.at(span<int>{idx, self.dim()}));
 }
 
 bp::object histogram_at(bp::tuple args, bp::dict kwargs) {
-  const pyhistogram& self = bp::extract<const pyhistogram&>(args[0]);
-
   if (kwargs) { throw std::invalid_argument("no keyword arguments allowed"); }
+  const pyhistogram& self = bp::extract<const pyhistogram&>(args[0]);
 
   bp::object a = args.slice(1, bp::_);
   return histogram_getitem(self, bp::extract<bp::tuple>(a));
 }
 
 bp::object histogram_reduce_to(bp::tuple args, bp::dict kwargs) {
+  if (kwargs) { throw std::invalid_argument("no keyword arguments allowed"); }
   const pyhistogram& self = bp::extract<const pyhistogram&>(args[0]);
 
-  const unsigned nargs = bp::len(args) - 1;
+  const auto nargs = bp::len(args) - 1;
+  if (nargs == 0) { throw std::invalid_argument("at least one argument required"); }
 
   if (nargs > BOOST_HISTOGRAM_AXIS_LIMIT) {
     throw std::invalid_argument(
-        bh::detail::cat("too many arguments, maximum is ",
-                        BOOST_HISTOGRAM_AXIS_LIMIT)
+        bh::detail::cat("too many arguments, maximum is ", BOOST_HISTOGRAM_AXIS_LIMIT)
             .c_str());
   }
 
-  if (kwargs) { throw std::invalid_argument("no keyword arguments allowed"); }
-
   int idx[BOOST_HISTOGRAM_AXIS_LIMIT];
-  for (auto i = 0u; i < nargs; ++i) idx[i] = bp::extract<int>(args[1 + i]);
+  for (auto i = 0u; i < nargs; ++i) {
+    idx[i] = bp::extract<int>(args[1 + i]);
+    if (i > 0 && idx[i] <= idx[i - 1])
+      throw std::invalid_argument("indices must be strictly ascending");
+  }
 
   return bp::object(self.reduce_to(idx, idx + nargs));
 }
 
-std::string histogram_repr(const pyhistogram& h) {
-  return bh::detail::cat(h);
-}
+std::string histogram_repr(const pyhistogram& h) { return bh::detail::cat(h); }
 
 double element_value(const pyhistogram::element_type& b) { return b.value(); }
 
-double element_variance(const pyhistogram::element_type& b) {
-  return b.variance();
-}
+double element_variance(const pyhistogram::element_type& b) { return b.variance(); }
 
 double element_getitem(const pyhistogram::element_type& e, int i) {
   if (i < 0 || i > 1) throw std::out_of_range("element_getitem");
@@ -360,8 +347,7 @@ double element_getitem(const pyhistogram::element_type& e, int i) {
 int element_len(const pyhistogram::element_type&) { return 2; }
 
 std::string element_repr(const pyhistogram::element_type& e) {
-  return bh::detail::cat("histogram.element(", e.value(), ", ", e.variance(),
-                         ")");
+  return bh::detail::cat("histogram.element(", e.value(), ", ", e.variance(), ")");
 }
 
 void register_histogram() {
@@ -369,30 +355,28 @@ void register_histogram() {
 
   bp::scope s =
       bp::class_<pyhistogram, boost::shared_ptr<pyhistogram>>(
-          "histogram", "N-dimensional histogram for real-valued data.",
-          bp::no_init)
+          "histogram", "N-dimensional histogram for real-valued data.", bp::no_init)
           .def("__init__", bp::raw_function(histogram_init),
                ":param axis args: axis objects"
                "\nPass one or more axis objects to configure the histogram.")
           // shadowed C++ ctors
           .def(bp::init<const pyhistogram&>())
-// .def(bp::init<pyhistogram &&>())
+// .def(bp::init<pyhistogram &&>()) move-ctor doesn't work with boost.python
 #ifdef HAVE_NUMPY
-          .add_property("__array_interface__", &bp::access::array_interface)
+          .add_property("__array_interface__", &bh::python_access::array_interface)
 #endif
           .add_property("dim", &pyhistogram::dim)
           .def("axis", histogram_axis, bp::arg("i") = 0,
                ":param int i: axis index"
                "\n:return: corresponding axis object")
-          .def(
-              "__call__", bp::raw_function(histogram_fill),
-              ":param double args: values (number must match dimension)"
-              "\n:keyword double weight: optional weight"
-              "\n"
-              "\nIf Numpy support is enabled, 1d-arrays can be passed "
-              "instead of"
-              "\nvalues, which must be equal in lenght. Arrays and values can"
-              "\nbe mixed arbitrarily in the same call.")
+          .def("__call__", bp::raw_function(histogram_call),
+               ":param double args: values (number must match dimension)"
+               "\n:keyword double weight: optional weight"
+               "\n"
+               "\nIf Numpy support is enabled, 1d-arrays can be passed "
+               "instead of"
+               "\nvalues, which must be equal in lenght. Arrays and values can"
+               "\nbe mixed arbitrarily in the same call.")
           .def("__len__", &pyhistogram::size,
                ":return: total number of bins, including under- and overflow")
           .def("at", bp::raw_function(histogram_at),
@@ -406,7 +390,7 @@ void register_histogram() {
           .def("reduce_to", bp::raw_function(histogram_reduce_to),
                ":param int args: indices of the axes in the reduced histogram"
                "\n:return: reduced histogram with subset of axes")
-          .def("__iter__", bp::iterator<pyhistogram>())
+          .def("__iter__", bp::iterator<const pyhistogram>())
           .def("__repr__", histogram_repr,
                ":return: string representation of the histogram")
           .def(bp::self == bp::self)
@@ -419,8 +403,7 @@ void register_histogram() {
           .def_pickle(bh::serialization_suite<pyhistogram>());
 
   bp::class_<pyhistogram::element_type>(
-      "element", "Holds value and variance of bin count.",
-      bp::init<double, double>())
+      "element", "Holds value and variance of bin count.", bp::init<double, double>())
       .add_property("value", element_value)
       .add_property("variance", element_variance)
       .def("__getitem__", element_getitem)

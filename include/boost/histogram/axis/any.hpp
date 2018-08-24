@@ -58,8 +58,8 @@ struct index_visitor : public boost::static_visitor<int> {
   int impl(std::false_type, const Axis&) const {
     throw std::runtime_error(boost::histogram::detail::cat(
         "cannot convert double to ",
-        boost::typeindex::type_id<typename Axis::value_type>().pretty_name(),
-        " for ", boost::typeindex::type_id<Axis>().pretty_name()));
+        boost::typeindex::type_id<typename Axis::value_type>().pretty_name(), " for ",
+        boost::typeindex::type_id<Axis>().pretty_name()));
   }
 };
 
@@ -70,10 +70,8 @@ struct lower_visitor : public boost::static_visitor<double> {
   double operator()(const Axis& a) const {
     return impl(
         std::integral_constant<
-            bool,
-            (std::is_convertible<typename Axis::value_type, double>::value &&
-             std::is_same<typename Axis::bin_type,
-                          interval_view<Axis>>::value)>(),
+            bool, (std::is_convertible<typename Axis::value_type, double>::value &&
+                   std::is_same<typename Axis::bin_type, interval_view<Axis>>::value)>(),
         a);
   }
   template <typename Axis>
@@ -119,8 +117,31 @@ struct assign_visitor : public boost::static_visitor<void> {
   void impl(mp11::mp_false, const U&) const {
     throw std::invalid_argument(boost::histogram::detail::cat(
         "argument ", boost::typeindex::type_id<U>().pretty_name(),
-        " is not a bounded type of ",
-        boost::typeindex::type_id<T>().pretty_name()));
+        " is not a bounded type of ", boost::typeindex::type_id<T>().pretty_name()));
+  }
+};
+
+struct get_label_visitor : public boost::static_visitor<boost::string_view> {
+  template <typename T>
+  boost::string_view operator()(const T& t) const {
+    return t.label();
+  }
+};
+
+struct set_label_visitor : public boost::static_visitor<void> {
+  boost::string_view view;
+  set_label_visitor(boost::string_view v) : view(v) {}
+  template <typename T>
+  void operator()(T& t) const {
+    t.label(view);
+  }
+};
+
+template <typename U>
+struct get_allocator_visitor : public boost::static_visitor<U> {
+  template <typename T>
+  U operator()(const T& t) const {
+    return t.get_allocator();
   }
 };
 
@@ -140,8 +161,8 @@ public:
 
 private:
   template <typename T>
-  using requires_bounded_type = mp11::mp_if<
-      mp11::mp_contains<types, boost::histogram::detail::rm_cv_ref<T>>, void>;
+  using requires_bounded_type =
+      mp11::mp_if<mp11::mp_contains<types, boost::histogram::detail::rm_cv_ref<T>>, void>;
 
 public:
   any() = default;
@@ -182,10 +203,12 @@ public:
   }
 
   string_view label() const {
-    return static_cast<const base&>(*this).label();
+    return boost::apply_visitor(detail::get_label_visitor(), *this);
   }
 
-  void label(const string_view x) { static_cast<base&>(*this).label(x); }
+  void label(const string_view x) {
+    boost::apply_visitor(detail::set_label_visitor(x), *this);
+  }
 
   // this only works for axes with compatible bin type
   // and will throw a runtime_error otherwise
@@ -217,8 +240,7 @@ public:
   }
 
   explicit operator const base&() const {
-    return boost::apply_visitor(detail::static_cast_visitor<const base&>(),
-                                *this);
+    return boost::apply_visitor(detail::static_cast_visitor<const base&>(), *this);
   }
 
   explicit operator base&() {
@@ -237,12 +259,8 @@ public:
 
   const_iterator begin() const { return const_iterator(*this, 0); }
   const_iterator end() const { return const_iterator(*this, size()); }
-  const_reverse_iterator rbegin() const {
-    return const_reverse_iterator(*this, size());
-  }
-  const_reverse_iterator rend() const {
-    return const_reverse_iterator(*this, 0);
-  }
+  const_reverse_iterator rbegin() const { return const_reverse_iterator(*this, size()); }
+  const_reverse_iterator rend() const { return const_reverse_iterator(*this, 0); }
 
 private:
   friend class boost::serialization::access;

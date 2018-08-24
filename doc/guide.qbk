@@ -18,13 +18,13 @@ The term /histogram/ is usually strictly used for something with bins over discr
 
 [section Static or dynamic histogram]
 
-The histogram class comes in two variants with a common interface, see the [link histogram.rationale.histogram_types rationale] for more information. Using a [classref boost::histogram::static_histogram static histogram] is recommended. You need a [classref boost::histogram::dynamic_histogram dynamic histogram] instead, if:
+The histogram host class can store axis objects in a static or dynamic container, see the [link histogram.rationale.histogram_host rationale] for details. Use the factory functions [funcref boost::histogram::make_static_histogram make_static_histogram] and [funcref boost::histogram::make_dynamic_histogram make_dynamic_histogram] to make the corresponding histograms. Using static histograms is recommended, because they are faster and usage errors are caught at compile-time. Use dynamic histogram, if:
 
-* you only know the histogram configurations at runtime, not at compile-time
+* You only know the axis configurations at runtime, not at compile-time.
 
-* you want to write C++ code that interoperates with the Python module included in the library
+* You want to write C++ code that interoperates with the Python module included in the library.
 
-Use the factory function [funcref boost::histogram::make_static_histogram make_static_histogram] (or [funcref boost::histogram::make_dynamic_histogram make_dynamic_histogram], respectively) to make histograms with the default storage policy. The default storage policy makes sure that counting is safe, fast, and memory efficient. If you are curious about trying another storage policy or using your own, have a look at the section [link histogram.guide.expert Advanced Usage].
+These factory functions create histograms with the default storage type [classref boost::histogram::adaptive_storage], which provides safe counting, is fast and memory efficient. If you think you need another storage type or if you want to create your own, have a look at the section [link histogram.guide.expert Advanced Usage].
 
 Here is an example on how to use [funcref boost::histogram::make_static_histogram make_static_histogram]. You pass one or several axis instances, which define the layout of the histogram.
 
@@ -40,7 +40,7 @@ When you work with dynamic histograms, you can also create a sequence of axes at
 
 [funcref boost::histogram::make_static_histogram make_static_histogram] cannot handle this case because a static histogram can only be constructed when the number and types of all axes are known already at compile time. While strictly speaking that is also true in this example, you could have filled the vector also at run-time, based on run-time user input.
 
-[note Memory for bin counters is allocated lazily, because if the default storage policy [classref boost::histogram::adaptive_storage adaptive_storage] is used. Allocation is deferred to the first time, when input values are passed to the histogram. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later. This gives you a chance to check how much memory the histogram will allocate and possibly give a warning if that amount is excessively large. Use the method `histogram::size()` to see how many bins your axis layout requires. At the first fill, that many bytes will be allocated. The allocated amount of memory may grow further later when the capacity of the bin counters needs to grow.]
+[note Memory for bin counters is allocated lazily, if the default storage policy [classref boost::histogram::adaptive_storage adaptive_storage] is used. Allocation is delayed to the first time, when input values are passed to the histogram. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later. This gives you a chance to check how much memory the histogram will allocate and possibly give a warning if that amount is excessively large. Use the method `histogram::size()` to see how many bins your axis layout requires. At the first fill, that many bytes will be allocated. The allocated amount of memory may grow further later when the capacity of the bin counters needs to grow.]
 
 [endsect]
 
@@ -61,7 +61,7 @@ In addition to the required parameters for an axis, you can assign an optional l
 
 Without the labels it would be difficult to remember which axis was covering which quantity, because they look the same otherwise. Labels are the only axis property that can be changed later. Axes objects with different label do not compare equal with `operator==`.
 
-By default, additional under- and overflow bins are added automatically for each axis where that makes sense. If you create an axis with 20 bins, the histogram will actually have 22 bins along that axis. The two extra bins are generally very good to have, as explained in [link histogram.rationale.uoflow the rationale]. If you are certain that the input cannot exceed the axis range, you can disable the extra bins to save memory. This is done by passing the enum value [enumref boost::histogram::axis::uoflow uoflow::off] to the axis constructor:
+By default, additional under- and overflow bins are added automatically for each axis where that makes sense. If you create an axis with 20 bins, the histogram will actually have 22 bins along that axis. The two extra bins are generally very good to have, as explained in [link histogram.rationale.uoflow the rationale]. If you are certain that the input cannot exceed the axis range, you can disable the extra bins to save memory. This is done by passing the enum value [enumref boost::histogram::axis::uoflow_type uoflow_type::off] to the axis constructor:
 
 [import ../examples/guide_axis_with_uoflow_off.cpp]
 [guide_axis_with_uoflow_off]
@@ -95,7 +95,7 @@ Why weighted increments are sometimes useful, especially in a scientific context
 
 After the histogram has been filled, you want to access the counts per bin at some point. You may want to visualize the counts, or compute some quantities like the mean from the data distribution approximated by the histogram.
 
-To access each bin, you use a multi-dimensional index, which consists of a sequence of bin indices for each axes in order. You can use this index to access the value for each and the variance estimate, using the method `histogram::bin(...)`. It accepts integral indices, one for each axis of the histogram, and returns the associated bin counter type. The bin counter type then allows you to access the count value and its variance.
+To access each bin, you use a multi-dimensional index, which consists of a sequence of bin indices for each axes in order. You can use this index to access the value for each and the variance estimate, using the method `histogram::at(...)` (in analogy to `std::vector::at`). It accepts integral indices, one for each axis of the histogram, and returns the associated bin counter type. The bin counter type then allows you to access the count value and its variance.
 
 The calls are demonstrated in the next example.
 
@@ -140,7 +140,7 @@ Here is an example which demonstrates the supported operators.
 
 When you have a high-dimensional histogram, sometimes you want to remove some axes and look the equivalent lower-dimensional version obtained by summing over the counts along the removed axes. Perhaps you found out that there is no interesting structure along an axis, so it is not worth keeping that axies around, or you want to visualize 1d or 2d projections of a high-dimensional histogram.
 
-For this purpose use the `histogram::reduce_to(...)` method, which returns a new reduced histogram with fewer axes. The method accepts indices (one or more), which indicate the  axes that are kept. The static histogram only accepts compile-time numbers, while the dynamic histogram also accepts runtime numbers and iterators over numbers.
+For this purpose use the `histogram::reduce_to(...)` method, which returns a new reduced histogram with fewer axes. The method accepts indices (one or more), which indicate the axes that are kept. The static histogram only accepts compile-time numbers, while the dynamic histogram also accepts runtime numbers and iterators over numbers.
 
 Here is an example to illustrates this.
 

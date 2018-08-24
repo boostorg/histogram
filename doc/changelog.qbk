@@ -2,6 +2,11 @@
 
 [master]
 
+[heading 3.2 (not in boost)]
+
+* Allocator support everywhere
+* Internal refactoring
+
 [heading 3.1 (not in boost)]
 
 * Renamed `bincount` method to `size`

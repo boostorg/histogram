@@ -7,7 +7,7 @@ namespace bh = boost::histogram;
 namespace bp = boost::python;
 
 // function that runs in C++ and accepts reference to dynamic histogram
-void process(bh::dynamic_histogram<>& h) {
+void process(bh::histogram<>& h) {
   // fill histogram, in reality this would be arbitrarily complex code
   for (int i = 0; i < 4; ++i) h(0.25 * i, i);
 }

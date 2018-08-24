@@ -9,14 +9,14 @@ The following plot shows results of a benchmark on a 9 GHz Macbook Pro. Random n
 [variablelist Plot legend:
 	[[root] [[@https://root.cern.ch ROOT classes] (`TH1I` for 1D, `TH3I` for 3D and `THnI` for 6D)]]
 	[[py:numpy] [numpy functions ([python]`numpy.histogram` for 1D, `numpy.histogramdd` for 2D, 3D, and 6D)]]
-	[[py:hd_sd] [[classref boost::histogram::dynamic_histogram] with [classref boost::histogram::adaptive_storage], called from Python]]
-	[[hs_ss] [[classref boost::histogram::static_histogram] with [classref boost::histogram::array_storage<int>]]]
-	[[hs_sd] [[classref boost::histogram::static_histogram] with [classref boost::histogram::adaptive_storage]]]
-	[[hd_ss] [[classref boost::histogram::dynamic_histogram] with [classref boost::histogram::array_storage<int>]]]
-	[[hd_sd] [[classref boost::histogram::dynamic_histogram] with [classref boost::histogram::adaptive_storage]]]
+	[[py:hd_sd] [[funcref boost::histogram::make_dynamic_histogram dynamic histogram] with [classref boost::histogram::adaptive_storage], called from Python]]
+	[[hs_ss] [[funcref boost::histogram::make_static_histogram static histogram] with [classref boost::histogram::array_storage<int>]]]
+	[[hs_sd] [[funcref boost::histogram::make_static_histogram static histogram] with [classref boost::histogram::adaptive_storage]]]
+	[[hd_ss] [[funcref boost::histogram::make_dynamic_histogram dynamic histogram] with [classref boost::histogram::array_storage<int>]]]
+	[[hd_sd] [[funcref boost::histogram::make_dynamic_histogram dynamic histogram] with [classref boost::histogram::adaptive_storage]]]
 ]
 
-[classref boost::histogram::static_histogram] is always faster than [classref boost::histogram::dynamic_histogram] and safer to use, as more checks are done at compile time. It is recommended when working in C++ only. [classref boost::histogram::adaptive_storage] is faster than [classref boost::histogram::array_storage] for histograms with many bins, because it uses the cache more effectively due to its smaller memory consumption per bin. If the number of bins is small, it is slower because of overhead of handling memory in a dynamic way.
+A [classref boost::histogram::make_static_histogram static histogram] is always faster than [classref boost::histogram::make_dynamic_histogram dynamic histogram] and safer to use, as more checks are done at compile time. It is recommended when working in C++ only. [classref boost::histogram::adaptive_storage] is faster than [classref boost::histogram::array_storage] for histograms with many bins, because it uses the cache more effectively due to its smaller memory consumption per bin. If the number of bins is small, it is slower because of overhead of handling memory in a dynamic way.
 
 The histograms in this library are mostly faster than the competition, in some cases by a factor of 2. Simultaneously they are more flexible, since binning strategies can be customised. The Python-wrapped histogram is slower than numpy's own specialized function for 1D, but beats numpy's multi-dimensional histogramming function by a factor 2 to 3.
 

@@ -28,7 +28,7 @@ int main() {
             << std::endl;
   // prints: 1 4 9 16
 
-  // you can also make a copy of the type that holds the bin count
+  // this is more efficient when you want to query value and variance
   auto c11 = h.at(1, 1);
   std::cout << c11.value() << " " << c11.variance() << std::endl;
   // prints: 4 16
@@ -39,11 +39,24 @@ int main() {
   std::cout << h.at(idx).value() << std::endl;
   // prints: 2
 
-  // histogram also provides extended iterators
+  // histogram also provides bin iterators
   auto sum = std::accumulate(h.begin(), h.end(),
                              typename decltype(h)::element_type(0));
   std::cout << sum.value() << " " << sum.variance() << std::endl;
   // prints: 10 30
+
+  // bin iterators are fancy iterators with extra methods
+  for (auto it = h.begin(), end = h.end(); it != end; ++it) {
+    const auto x = *it;
+    std::cout << it.idx(0) << " " << it.idx(1) << ": "
+              << x.value() << " " << x.variance() << std::endl;
+  }
+  // prints: (iteration order is an implementation detail, don't rely on it)
+  // 0 0: 1 1
+  // 1 0: 3 9
+  // ...
+  // 2 -1: 0 0
+  // -1 -1: 0 0
 }
 
 //]

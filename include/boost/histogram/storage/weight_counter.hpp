@@ -7,7 +7,7 @@
 #ifndef _BOOST_HISTOGRAM_STORAGE_WEIGHT_COUNTER_HPP_
 #define _BOOST_HISTOGRAM_STORAGE_WEIGHT_COUNTER_HPP_
 
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/weight.hpp>
 #include <stdexcept>
 
 namespace boost {
@@ -57,7 +57,7 @@ public:
   }
 
   template <typename T>
-  weight_counter& operator+=(const detail::weight<T>& rhs) {
+  weight_counter& operator+=(const detail::weight_type<T>& rhs) {
     const auto x = static_cast<RealType>(rhs.value);
     w += x;
     w2 += x * x;

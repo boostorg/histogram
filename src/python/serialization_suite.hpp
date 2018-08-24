@@ -38,14 +38,14 @@ public:
   std::streamsize write(const char* s, std::streamsize n) {
     if (len_ == 0) {
       *pstr_ = PyBytes_FromStringAndSize(s, n);
-      if (*pstr_ == 0) // no point trying to recover from allocation error
-        std::abort();
+      if (*pstr_ == nullptr) // no point trying to recover from allocation error
+        std::terminate();
       len_ = n;
     } else {
       if (pos_ + n > len_) {
         len_ = pos_ + n;
         if (_PyBytes_Resize(pstr_, len_) == -1)
-          std::abort(); // no point trying to recover from allocation error
+          std::terminate(); // no point trying to recover from allocation error
       }
       char* b = PyBytes_AS_STRING(*pstr_);
       std::copy(s, s + n, b + pos_);
@@ -63,7 +63,7 @@ private:
 template <class T>
 struct serialization_suite : python::pickle_suite {
   static python::tuple getstate(python::object obj) {
-    PyObject* pobj = 0;
+    PyObject* pobj = nullptr;
     iostreams::stream<detail::python_bytes_sink> os(&pobj);
     archive::text_oarchive oa(os);
     oa << python::extract<const T&>(obj)();
