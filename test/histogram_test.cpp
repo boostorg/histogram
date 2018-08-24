@@ -107,7 +107,7 @@ void run_tests() {
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
     auto h3 =
-        histogram<static_axes<axis::integer<>, axis::integer<>>, array_storage<unsigned>>(
+        histogram<std::tuple<axis::integer<>, axis::integer<>>, array_storage<unsigned>>(
             h);
     BOOST_TEST_EQ(h3, h);
   }
@@ -123,7 +123,7 @@ void run_tests() {
     // test self-assign
     h2 = h2;
     BOOST_TEST_EQ(h, h2);
-    auto h3 = histogram<static_axes<axis::integer<>, axis::integer<>>,
+    auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
                         array_storage<unsigned>>();
     h3 = h;
     BOOST_TEST_EQ(h, h3);

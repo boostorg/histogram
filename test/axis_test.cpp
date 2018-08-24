@@ -418,34 +418,34 @@ int main() {
     using ra = axis::regular<>;
     using ia = axis::integer<>;
     using ca = axis::category<>;
-    using T = static_axes<ra, ia, ca>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::sub_axes<T, i0>, static_axes<ra>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::sub_axes<T, i1>, static_axes<ia>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::sub_axes<T, i2>, static_axes<ca>>));
+    using T = std::tuple<ra, ia, ca>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::sub_axes<T, i0>, std::tuple<ra>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::sub_axes<T, i1>, std::tuple<ia>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::sub_axes<T, i2>, std::tuple<ca>>));
     BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<detail::sub_axes<T, i0, i1, i2>, static_axes<ra, ia, ca>>));
+        (std::is_same<detail::sub_axes<T, i0, i1, i2>, std::tuple<ra, ia, ca>>));
     BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<detail::sub_axes<T, i0, i1>, static_axes<ra, ia>>));
+        (std::is_same<detail::sub_axes<T, i0, i1>, std::tuple<ra, ia>>));
     BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<detail::sub_axes<T, i0, i2>, static_axes<ra, ca>>));
+        (std::is_same<detail::sub_axes<T, i0, i2>, std::tuple<ra, ca>>));
     BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<detail::sub_axes<T, i1, i2>, static_axes<ia, ca>>));
+        (std::is_same<detail::sub_axes<T, i1, i2>, std::tuple<ia, ca>>));
   }
 
   // make_sub_tuple
   {
     using ia = axis::integer<>;
-    using T = static_axes<ia, ia, ia>;
+    using T = std::tuple<ia, ia, ia>;
     auto axes = T(ia(0, 1), ia(1, 2), ia(2, 3));
     BOOST_TEST_EQ(detail::make_sub_axes(axes, i1(), i2()),
-                  (static_axes<ia, ia>(ia(1, 2), ia(2, 3))));
+                  (std::tuple<ia, ia>(ia(1, 2), ia(2, 3))));
     BOOST_TEST_EQ(detail::make_sub_axes(axes, i0(), i1()),
-                  (static_axes<ia, ia>(ia(0, 1), ia(1, 2))));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, i1()), (static_axes<ia>(ia(1, 2))));
+                  (std::tuple<ia, ia>(ia(0, 1), ia(1, 2))));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, i1()), (std::tuple<ia>(ia(1, 2))));
     BOOST_TEST_EQ(detail::make_sub_axes(axes, i0(), i1(), i2()), axes);
   }
 
-  // dynamic_axes with custom allocators
+  // vector of axes with custom allocators
   {
     using T1 = axis::regular<axis::transform::identity, double, tracing_allocator<char>>;
     using T2 = axis::circular<double, tracing_allocator<char>>;
@@ -453,9 +453,7 @@ int main() {
     using T4 = axis::integer<int, tracing_allocator<char>>;
     using T5 = axis::category<long, tracing_allocator<char>>;
     using axis_type = axis::any<T1, T2, T3, T4, T5>; // no heap allocation
-    using axes_type = boost::mp11::mp_rename<axis_type, dynamic_axes>;
-    using expected = tracing_allocator<axis_type>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<axes_type::allocator_type, expected>));
+    using axes_type = std::vector<axis_type, tracing_allocator<axis_type>>;
 
     tracing_allocator_db db;
     {

@@ -133,14 +133,14 @@ public:
   detail::axis_at<0, axes_type>& axis() { return axis(mp11::mp_size_t<0>()); }
 
   /// Get N-th axis with runtime index (const version)
-  template <typename U = axes_type, typename = detail::requires_dynamic_axes<U>>
+  template <typename U = axes_type, typename = detail::requires_vector<U>>
   const detail::axis_at<0, U>& axis(std::size_t i) const {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
   }
 
   /// Get N-th axis with runtime index
-  template <typename U = axes_type, typename = detail::requires_dynamic_axes<U>>
+  template <typename U = axes_type, typename = detail::requires_vector<U>>
   detail::axis_at<0, U>& axis(std::size_t i) {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
@@ -226,7 +226,7 @@ public:
   /// Returns a lower-dimensional histogram
   // precondition: sequence must be strictly ascending axis indices
   template <typename Iterator, typename U = axes_type,
-            typename = detail::requires_dynamic_axes<U>,
+            typename = detail::requires_vector<U>,
             typename = detail::requires_iterator<Iterator>>
   histogram reduce_to(Iterator begin, Iterator end) const {
     BOOST_ASSERT_MSG(std::is_sorted(begin, end, std::less_equal<decltype(*begin)>()),
@@ -268,50 +268,51 @@ private:
 
 /// static type factory with custom storage type
 template <typename Storage, typename... Ts>
-histogram<static_axes<detail::rm_cv_ref<Ts>...>, detail::rm_cv_ref<Storage>>
+histogram<std::tuple<detail::rm_cv_ref<Ts>...>, detail::rm_cv_ref<Storage>>
 make_static_histogram_with(Storage&& s, Ts&&... axis) {
-  using H = histogram<static_axes<detail::rm_cv_ref<Ts>...>, detail::rm_cv_ref<Storage>>;
+  using H = histogram<std::tuple<detail::rm_cv_ref<Ts>...>, detail::rm_cv_ref<Storage>>;
   auto axes = typename H::axes_type(std::forward<Ts>(axis)...);
   return H(std::move(axes), std::forward<Storage>(s));
 }
 
 /// static type factory with standard storage type
 template <typename... Ts>
-histogram<static_axes<detail::rm_cv_ref<Ts>...>> make_static_histogram(Ts&&... axis) {
-  using S = typename histogram<static_axes<detail::rm_cv_ref<Ts>...>>::storage_type;
+histogram<std::tuple<detail::rm_cv_ref<Ts>...>> make_static_histogram(Ts&&... axis) {
+  using S = typename histogram<std::tuple<detail::rm_cv_ref<Ts>...>>::storage_type;
   return make_static_histogram_with(S(), std::forward<Ts>(axis)...);
 }
 
+namespace detail {
+  template <typename S, typename Any>
+  using srebind = typename std::allocator_traits<typename rm_cv_ref<S>::allocator_type>::template rebind_alloc<Any>;
+}
+
 /// dynamic type factory with custom storage type
-template <typename AnyAxisType=axis::any_std, typename Storage, typename T, typename... Ts>
-histogram<mp11::mp_rename<AnyAxisType, dynamic_axes>, detail::rm_cv_ref<Storage>>
+template <typename Any=axis::any_std, typename Storage, typename T, typename... Ts>
+histogram<std::vector<Any, detail::srebind<Storage, Any>>, detail::rm_cv_ref<Storage>>
 make_dynamic_histogram_with(Storage&& s, T&& axis0, Ts&&... axis) {
-  using H = histogram<
-      mp11::mp_rename<AnyAxisType, dynamic_axes>, detail::rm_cv_ref<Storage>
-    >;
-  auto a = axis0.get_allocator();
+  using H = histogram<std::vector<Any, detail::srebind<Storage, Any>>, detail::rm_cv_ref<Storage>>;
   auto axes = typename H::axes_type(
-      {AnyAxisType(std::forward<T>(axis0)), AnyAxisType(std::forward<Ts>(axis))...}, a);
+      {Any(std::forward<T>(axis0)), Any(std::forward<Ts>(axis))...}, s.get_allocator());
   return H(std::move(axes), std::forward<Storage>(s));
 }
 
 /// dynamic type factory with standard storage type
-template <typename AnyAxisType=axis::any_std, typename T, typename... Ts>
-histogram<mp11::mp_rename<AnyAxisType, dynamic_axes>>
+template <typename Any=axis::any_std, typename T, typename... Ts>
+histogram<std::vector<Any>>
 make_dynamic_histogram(T&& axis0, Ts&&... axis) {
-  using S = typename histogram<mp11::mp_rename<AnyAxisType, dynamic_axes>>::storage_type;
-  return make_dynamic_histogram_with<AnyAxisType>(S(), std::forward<T>(axis0), std::forward<Ts>(axis)...);
+  using S = typename histogram<std::vector<Any>>::storage_type;
+  return make_dynamic_histogram_with<Any>(S(), std::forward<T>(axis0), std::forward<Ts>(axis)...);
 }
 
 /// dynamic type factory with custom storage type
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
-histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>, detail::rm_cv_ref<Storage>>
+histogram<std::vector<typename Iterator::value_type, detail::srebind<Storage, typename Iterator::value_type>>, detail::rm_cv_ref<Storage>>
 make_dynamic_histogram_with(Storage&& s, Iterator begin, Iterator end) {
-  using H = histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>, detail::rm_cv_ref<Storage>>;
-  using alloc_type = typename mp11::mp_front<typename Iterator::value_type>::allocator_type;
-  auto a = boost::apply_visitor(axis::detail::get_allocator_visitor<alloc_type>(), *begin);
-  auto axes = typename H::axes_type(a);
+  using H = histogram<std::vector<typename Iterator::value_type, detail::srebind<Storage, typename Iterator::value_type>>, detail::rm_cv_ref<Storage>>
+;
+  auto axes = typename H::axes_type(s.get_allocator());
   axes.reserve(std::distance(begin, end));
   while (begin != end)
     axes.emplace_back(*begin++);
@@ -321,9 +322,9 @@ make_dynamic_histogram_with(Storage&& s, Iterator begin, Iterator end) {
 /// dynamic type factory with standard storage type
 template <typename Iterator,
           typename = detail::requires_iterator<Iterator>>
-histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>>
+histogram<std::vector<typename Iterator::value_type>>
 make_dynamic_histogram(Iterator begin, Iterator end) {
-  using S = typename histogram<mp11::mp_rename<typename Iterator::value_type, dynamic_axes>>::storage_type;
+  using S = typename histogram<std::vector<typename Iterator::value_type>>::storage_type;
   return make_dynamic_histogram_with(S(), begin, end);
 }
 } // namespace histogram

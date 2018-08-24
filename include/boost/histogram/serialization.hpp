@@ -183,13 +183,13 @@ void any<Ts...>::serialize(Archive& ar, unsigned /* version */) {
 
 namespace {
 template <class Archive, typename... Ts>
-void serialize_axes(Archive& ar, static_axes<Ts...>& axes) {
+void serialize_axes(Archive& ar, std::tuple<Ts...>& axes) {
   detail::serialize_t<Archive> sh(ar);
   mp11::tuple_for_each(axes, sh);
 }
 
-template <class Archive, typename... Ts>
-void serialize_axes(Archive& ar, dynamic_axes<Ts...>& axes) {
+template <class Archive, typename Any, typename A>
+void serialize_axes(Archive& ar, std::vector<Any, A>& axes) {
   ar& axes;
 }
 }

@@ -15,6 +15,14 @@ int main() {
   auto h = bh::make_dynamic_histogram(v.begin(), v.end());
 
   // do something with h
+
+
+
+  // make_dynamic_histogram copies axis objects; to instead move the whole axis
+  // vector into the histogram, create a histogram instance directly like so
+  auto h2 = bh::histogram<decltype(v)>(std::move(v));
+
+  // do something with h2
 }
 
 //]

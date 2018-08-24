@@ -68,10 +68,10 @@ template <typename T, typename = decltype(*std::declval<T&>(), ++std::declval<T&
 struct requires_iterator {};
 
 template <typename T, typename = decltype(std::declval<T&>()[0])>
-struct requires_dynamic_axes {};
+struct requires_vector {};
 
 template <typename T, typename = decltype(std::get<0>(std::declval<T&>()))>
-struct requires_static_axes {};
+struct requires_tuple {};
 
 template <typename T>
 using requires_axis = decltype(std::declval<T&>().size(), std::declval<T&>().shape(),
