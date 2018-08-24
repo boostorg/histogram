@@ -28,7 +28,7 @@ The library consists of three orthogonal components:
 
 [endsect]
 
-[section:histogram_types Histogram host class]
+[section:histogram_host Histogram host class]
 
 Histograms store axis objects and a storage object. A one-dimensional histogram has one axis, a multi-dimensional histogram has several. Each axis maps a value from an input tuple onto an index. The histogram host class combines these indices into a global index that is used to address bin counter in the storage object.
 

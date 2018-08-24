@@ -18,13 +18,13 @@ The term /histogram/ is usually strictly used for something with bins over discr
 
 [section Static or dynamic histogram]
 
-The histogram class comes in two variants with a common interface, see the [link histogram.rationale.histogram_types rationale] for more information. Using a [classref boost::histogram::static_histogram static histogram] is recommended. You need a [classref boost::histogram::dynamic_histogram dynamic histogram] instead, if:
+The histogram host class can store axis objects in a static or dynamic container, see the [link histogram.rationale.histogram_host rationale] for details. Use the factory functions [funcref boost::histogram::make_static_histogram make_static_histogram] and [funcref boost::histogram::make_dynamic_histogram make_dynamic_histogram] to make the corresponding histograms. Using static histograms is recommended, because they are faster and usage errors are caught at compile-time. Use dynamic histogram, if:
 
-* you only know the histogram configurations at runtime, not at compile-time
+* You only know the axis configurations at runtime, not at compile-time.
 
-* you want to write C++ code that interoperates with the Python module included in the library
+* You want to write C++ code that interoperates with the Python module included in the library.
 
-Use the factory function [funcref boost::histogram::make_static_histogram make_static_histogram] (or [funcref boost::histogram::make_dynamic_histogram make_dynamic_histogram], respectively) to make histograms with the default storage policy. The default storage policy makes sure that counting is safe, fast, and memory efficient. If you are curious about trying another storage policy or using your own, have a look at the section [link histogram.guide.expert Advanced Usage].
+These factory functions create histograms with the default storage type [classref boost::histogram::adaptive_storage], which provides safe counting, is fast and memory efficient. If you think you need another storage type or if you want to create your own, have a look at the section [link histogram.guide.expert Advanced Usage].
 
 Here is an example on how to use [funcref boost::histogram::make_static_histogram make_static_histogram]. You pass one or several axis instances, which define the layout of the histogram.
 
