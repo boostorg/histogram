@@ -7,11 +7,9 @@
 #ifndef _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 #define _BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP_
 
-#include <boost/mp11.hpp>
-#include <memory>
-#include <tuple>
-#include <type_traits>
+#include <memory> // for std::allocator
 #include <vector>
+#include <string>
 
 namespace boost {
 namespace histogram {
