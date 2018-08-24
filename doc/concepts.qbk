@@ -8,7 +8,7 @@ An `axis_type` converts input values into bin indices.
 
 An `axis_type` is required to:
 
-* derive publically from [classref boost::histogram::axis::axis_base] or [classref boost::histogram::axis::axis_base_uoflow]
+* derive publically from [classref boost::histogram::axis::labeled_base] and [classref boost::histogram::axis::iterator_mixin]
 * be default/copy/move constructable
 * be copy/move assignable
 * be equal comparable
@@ -37,6 +37,7 @@ A `storage_type` is required to:
 * be default/copy/move constructable
 * be copy/move assignable
 * be equal comparable
+* have a nested type `allocator_type`
 * have a nested type `element_type`, which represent the bin count
 * have a nested type `const_reference`, its const reference version
 * have a constructor `storage_type(std::size_t n)`, which prepares the storage of `n` bins.

@@ -61,7 +61,7 @@ In addition to the required parameters for an axis, you can assign an optional l
 
 Without the labels it would be difficult to remember which axis was covering which quantity, because they look the same otherwise. Labels are the only axis property that can be changed later. Axes objects with different label do not compare equal with `operator==`.
 
-By default, additional under- and overflow bins are added automatically for each axis where that makes sense. If you create an axis with 20 bins, the histogram will actually have 22 bins along that axis. The two extra bins are generally very good to have, as explained in [link histogram.rationale.uoflow the rationale]. If you are certain that the input cannot exceed the axis range, you can disable the extra bins to save memory. This is done by passing the enum value [enumref boost::histogram::axis::uoflow uoflow::off] to the axis constructor:
+By default, additional under- and overflow bins are added automatically for each axis where that makes sense. If you create an axis with 20 bins, the histogram will actually have 22 bins along that axis. The two extra bins are generally very good to have, as explained in [link histogram.rationale.uoflow the rationale]. If you are certain that the input cannot exceed the axis range, you can disable the extra bins to save memory. This is done by passing the enum value [enumref boost::histogram::axis::uoflow_type uoflow_type::off] to the axis constructor:
 
 [import ../examples/guide_axis_with_uoflow_off.cpp]
 [guide_axis_with_uoflow_off]
@@ -95,7 +95,7 @@ Why weighted increments are sometimes useful, especially in a scientific context
 
 After the histogram has been filled, you want to access the counts per bin at some point. You may want to visualize the counts, or compute some quantities like the mean from the data distribution approximated by the histogram.
 
-To access each bin, you use a multi-dimensional index, which consists of a sequence of bin indices for each axes in order. You can use this index to access the value for each and the variance estimate, using the method `histogram::bin(...)`. It accepts integral indices, one for each axis of the histogram, and returns the associated bin counter type. The bin counter type then allows you to access the count value and its variance.
+To access each bin, you use a multi-dimensional index, which consists of a sequence of bin indices for each axes in order. You can use this index to access the value for each and the variance estimate, using the method `histogram::at(...)` (in analogy to `std::vector::at`). It accepts integral indices, one for each axis of the histogram, and returns the associated bin counter type. The bin counter type then allows you to access the count value and its variance.
 
 The calls are demonstrated in the next example.
 

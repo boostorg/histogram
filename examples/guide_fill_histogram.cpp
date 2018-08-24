@@ -24,9 +24,9 @@ int main() {
   // functional-style processing is also supported
   std::vector<std::pair<int, double>> input_data{
       {0, 1.2}, {2, 3.4}, {4, 5.6}};
-  // Note that std::for_each takes the functor by value, thus it makes a
-  // potentially expensive copy of your histogram. Passing freshly created
-  // histograms is ok, though, because of return-value-optimization
+  // std::for_each takes the functor by value, thus it potentially makes
+  // expensive copies of the histogram, but modern compilers are usually smart
+  // enough to avoid the superfluous copies
   auto h2 =
       std::for_each(input_data.begin(), input_data.end(),
                     bh::make_static_histogram(bh::axis::regular<>(8, 0, 4),
