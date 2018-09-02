@@ -350,6 +350,11 @@ struct multiplier {
 
 template <class Allocator>
 class adaptive_storage {
+  static_assert(
+      std::is_same<typename std::allocator_traits<Allocator>::pointer,
+                   typename std::allocator_traits<Allocator>::value_type*>::value,
+      "adaptive_storage requires allocator with trivial pointer type");
+
 public:
   using allocator_type = Allocator;
   using element_type = weight_counter<double>;
