@@ -20,19 +20,19 @@ matrix:
   include:
     # all build config options
     - os: linux
-      env: PYVER=3.7 CC=gcc CXX=g++ PY=OFF NUMPY=OFF SERIAL=OFF
+      env: PYVER=3.6 CC=gcc CXX=g++ PY=OFF NUMPY=OFF SERIAL=OFF
     - os: linux
-      env: PYVER=3.7 CC=gcc CXX=g++ PY=ON NUMPY=OFF SERIAL=ON
+      env: PYVER=3.6 CC=gcc CXX=g++ PY=ON NUMPY=OFF SERIAL=ON
     - os: linux
-      env: PYVER=3.7 CC=gcc CXX=g++ PY=ON NUMPY=ON SERIAL=ON
+      env: PYVER=3.6 CC=gcc CXX=g++ PY=ON NUMPY=ON SERIAL=ON
 
     - os: linux # clang
-      env: PYVER=3.7 CC=clang CXX=clang++ PY=ON NUMPY=ON SERIAL=ON
+      env: PYVER=3.6 CC=clang CXX=clang++ PY=ON NUMPY=ON SERIAL=ON
     - os: linux # old python
       env: PYVER=2.7 CC=gcc CXX=g++ PY=ON NUMPY=ON SERIAL=ON
 
     - os: linux # coverage
-      env: PYVER=3.7 CC=gcc CXX=g++ GCOV=gcov
+      env: PYVER=3.6 CC=gcc CXX=g++ GCOV=gcov
 
     - os: osx # minimum
       env: PY=2.7 NUMPY=OFF SERIAL=OFF
