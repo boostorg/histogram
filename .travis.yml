@@ -44,7 +44,6 @@ git:
 install:
   - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then
       export PATH="/usr/local/opt/python/libexec/bin:$PATH";
-    else
       pyenv versions;
       pyenv global ${PYVER};
     fi
