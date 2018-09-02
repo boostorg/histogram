@@ -98,7 +98,8 @@ after_success:
     coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which ${GCOV}` --gcov-options '\-lpbc';
   fi
 
-# after_failure:
+after_failure:
+  - otool -L histogram.so
   # - printf "r\nbt" > gdb.cmd
   # - for x in *_test; do
   #     $x || gdb $x --batch -x gdb.cmd;
