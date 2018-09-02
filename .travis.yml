@@ -68,12 +68,14 @@ script:
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest;
+      rm -f CMakeCache.txt CMakeFiles *.cmake;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
               -DBUILD_NUMPY=OFF
               -DCMAKE_BUILD_TYPE=coverage &&
       make histogram cpp_filler &&
       ctest;
+      rm -f CMakeCache.txt CMakeFiles *.cmake;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
               -DBUILD_NUMPY=ON
