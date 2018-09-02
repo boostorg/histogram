@@ -12,6 +12,7 @@
 #include <boost/config.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/cstdint.hpp>
+#include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/histogram/weight.hpp>
@@ -80,6 +81,21 @@ constexpr char type_index() {
   return type_tag<T>::value;
 }
 
+namespace {
+template <typename T>
+struct is_integral_impl {
+  using type = typename std::is_integral<T>::type;
+};
+
+template <>
+struct is_integral_impl<mp_int> {
+  using type = std::true_type;
+};
+}
+
+template <typename T>
+using is_integral = typename is_integral_impl<T>::type;
+
 template <typename T>
 bool safe_increase(T& t) {
   if (t < std::numeric_limits<T>::max()) {
@@ -111,22 +127,22 @@ bool safe_radd(T& t, const U& u) {
 template <typename F, typename A, typename... Ts>
 typename std::result_of<F(void*, A&&, Ts&&...)>::type apply(F&& f, A&& a, Ts&&... ts) {
   // this is intentionally not a switch, the if-chain is faster in benchmarks
-  if (a.type == 1)
+  if (a.type == type_index<uint8_t>())
     return f(reinterpret_cast<uint8_t*>(a.ptr), std::forward<A>(a),
              std::forward<Ts>(ts)...);
-  if (a.type == 2)
+  if (a.type == type_index<uint16_t>())
     return f(reinterpret_cast<uint16_t*>(a.ptr), std::forward<A>(a),
              std::forward<Ts>(ts)...);
-  if (a.type == 3)
+  if (a.type == type_index<uint32_t>())
     return f(reinterpret_cast<uint32_t*>(a.ptr), std::forward<A>(a),
              std::forward<Ts>(ts)...);
-  if (a.type == 4)
+  if (a.type == type_index<uint64_t>())
     return f(reinterpret_cast<uint64_t*>(a.ptr), std::forward<A>(a),
              std::forward<Ts>(ts)...);
-  if (a.type == 5)
+  if (a.type == type_index<mp_int>())
     return f(reinterpret_cast<mp_int*>(a.ptr), std::forward<A>(a),
              std::forward<Ts>(ts)...);
-  if (a.type == 6)
+  if (a.type == type_index<wcount>())
     return f(reinterpret_cast<wcount*>(a.ptr), std::forward<A>(a),
              std::forward<Ts>(ts)...);
   // a.type == 0 is intentionally the last in the chain, because it is rarely
@@ -139,13 +155,7 @@ void create(type_tag<T>, Buffer& b, const U* init = nullptr) {
   using alloc_type = typename std::allocator_traits<
       typename Buffer::allocator_type>::template rebind_alloc<T>;
   alloc_type a(b.alloc); // rebind allocator
-  using AT = std::allocator_traits<alloc_type>;
-  T* p = AT::allocate(a, b.size);
-  if (init) {
-    for (auto it = p, end = p + b.size; it != end; ++it) AT::construct(a, it, *init++);
-  } else {
-    for (auto it = p, end = p + b.size; it != end; ++it) AT::construct(a, it, 0);
-  }
+  T* p = init ? create_buffer_from_iter(a, b.size, init) : create_buffer(a, b.size, 0);
   b.type = type_index<T>();
   b.ptr = p;
 }
@@ -153,7 +163,7 @@ void create(type_tag<T>, Buffer& b, const U* init = nullptr) {
 template <typename Buffer, typename U = void>
 void create(type_tag<void>, Buffer& b, const U* init = nullptr) {
   boost::ignore_unused(init);
-  BOOST_ASSERT(!init);
+  BOOST_ASSERT(!init); // init is always a nullptr in this specialization
   b.ptr = nullptr;
   b.type = type_index<void>();
 }
@@ -163,10 +173,8 @@ struct destroyer {
   void operator()(T* tp, Buffer& b) {
     using alloc_type = typename std::allocator_traits<
         typename Buffer::allocator_type>::template rebind_alloc<T>;
-    using AT = std::allocator_traits<alloc_type>;
     alloc_type a(b.alloc); // rebind allocator
-    for (auto it = tp, end = tp + b.size; it != end; ++it) AT::destroy(a, it);
-    AT::deallocate(a, tp, b.size);
+    destroy_buffer(a, tp, b.size);
   }
 
   template <typename Buffer>
@@ -224,29 +232,6 @@ struct increaser {
 };
 
 struct adder {
-  template <typename U>
-  using is_convertible_to_mp_int = typename std::is_convertible<U, mp_int>::type;
-
-  template <typename U>
-  using is_integral = typename std::is_integral<U>::type;
-
-  template <typename T, typename Buffer, typename U>
-  void if_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
-    if (!safe_radd(tp[i], x)) {
-      using V = next_type<T>;
-      create(type_tag<V>(), b, tp);
-      destroyer()(tp, b);
-      operator()(reinterpret_cast<V*>(b.ptr), b, i, x);
-    }
-  }
-
-  template <typename T, typename Buffer, typename U>
-  void if_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
-    create(type_tag<wcount>(), b, tp);
-    destroyer()(tp, b);
-    operator()(reinterpret_cast<wcount*>(b.ptr), b, i, x);
-  }
-
   template <typename T, typename Buffer, typename U>
   void operator()(T* tp, Buffer& b, std::size_t i, const U& x) {
     if_integral(is_integral<U>(), tp, b, i, x);
@@ -260,25 +245,6 @@ struct adder {
   }
 
   template <typename Buffer, typename U>
-  void if_convertible_to_mp_int(std::true_type, mp_int* tp, Buffer&, std::size_t i,
-                                const U& x) {
-    tp[i] += static_cast<mp_int>(x);
-  }
-
-  template <typename Buffer, typename U>
-  void if_convertible_to_mp_int(std::false_type, mp_int* tp, Buffer& b, std::size_t i,
-                                const U& x) {
-    create(type_tag<wcount>(), b, tp);
-    destroyer()(tp, b);
-    operator()(reinterpret_cast<wcount*>(b.ptr), b, i, x);
-  }
-
-  template <typename Buffer, typename U>
-  void operator()(mp_int* tp, Buffer& b, std::size_t i, const U& x) {
-    if_convertible_to_mp_int(is_convertible_to_mp_int<U>(), tp, b, i, x);
-  }
-
-  template <typename Buffer, typename U>
   void operator()(wcount* tp, Buffer&, std::size_t i, const U& x) {
     tp[i] += x;
   }
@@ -286,6 +252,28 @@ struct adder {
   template <typename Buffer>
   void operator()(wcount* tp, Buffer&, std::size_t i, const mp_int& x) {
     tp[i] += static_cast<double>(x);
+  }
+
+  template <typename T, typename Buffer, typename U>
+  void if_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
+    if (!safe_radd(tp[i], x)) {
+      using V = next_type<T>;
+      create(type_tag<V>(), b, tp);
+      destroyer()(tp, b);
+      if_integral(std::true_type(), reinterpret_cast<V*>(b.ptr), b, i, x);
+    }
+  }
+
+  template <typename Buffer, typename U>
+  void if_integral(std::true_type, mp_int* tp, Buffer&, std::size_t i, const U& x) {
+    tp[i] += static_cast<mp_int>(x);
+  }
+
+  template <typename T, typename Buffer, typename U>
+  void if_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
+    create(type_tag<wcount>(), b, tp);
+    destroyer()(tp, b);
+    operator()(reinterpret_cast<wcount*>(b.ptr), b, i, x);
   }
 };
 

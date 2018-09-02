@@ -12,6 +12,7 @@
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/value_view.hpp>
+#include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <cmath>
 #include <limits>
@@ -274,6 +275,8 @@ public:
 private:
   using value_allocator_type =
       typename std::allocator_traits<allocator_type>::template rebind_alloc<value_type>;
+  using value_pointer_type =
+      typename std::allocator_traits<value_allocator_type>::pointer;
 
 public:
   /** Construct an axis from bin edges.
@@ -295,11 +298,21 @@ public:
     using AT = std::allocator_traits<value_allocator_type>;
     x_ = AT::allocate(a2, nx());
     auto xit = x_;
-    AT::construct(a2, xit, *begin++);
-    while (begin != end) {
-      if (*begin <= *xit)
-        throw std::invalid_argument("input sequence must be strictly ascending");
-      AT::construct(a2, ++xit, *begin++);
+    try {
+      AT::construct(a2, xit, *begin++);
+      while (begin != end) {
+        if (*begin <= *xit) {
+          ++xit; // to make sure catch code works
+          throw std::invalid_argument("input sequence must be strictly ascending");
+        }
+        ++xit;
+        AT::construct(a2, xit, *begin++);
+      }
+    } catch (...) {
+      // release resources that were already acquired before rethrowing
+      while (xit != x_) AT::destroy(a2, --xit);
+      AT::deallocate(a2, x_, nx());
+      throw;
     }
   }
 
@@ -307,10 +320,7 @@ public:
 
   variable(const variable& o) : base_type(o) {
     value_allocator_type a(o.get_allocator());
-    using AT = std::allocator_traits<value_allocator_type>;
-    x_ = AT::allocate(a, nx());
-    auto it = o.x_;
-    for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::construct(a, xit, *it++);
+    x_ = boost::histogram::detail::create_buffer_from_iter(a, nx(), o.x_);
   }
 
   variable& operator=(const variable& o) {
@@ -319,10 +329,7 @@ public:
         this->~variable();
         base::operator=(o);
         value_allocator_type a(base_type::get_allocator());
-        using AT = std::allocator_traits<value_allocator_type>;
-        x_ = AT::allocate(a, nx());
-        auto it = o.x_;
-        for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::construct(a, xit, *it++);
+        x_ = boost::histogram::detail::create_buffer_from_iter(a, nx(), o.x_);
       } else {
         base::operator=(o);
         std::copy(o.x_, o.x_ + o.nx(), x_);
@@ -347,9 +354,7 @@ public:
   ~variable() {
     if (x_) { // nothing to do for empty state
       value_allocator_type a(base_type::get_allocator());
-      using AT = std::allocator_traits<value_allocator_type>;
-      for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::destroy(a, xit);
-      AT::deallocate(a, x_, nx());
+      boost::histogram::detail::destroy_buffer(a, x_, nx());
     }
   }
 
@@ -374,9 +379,8 @@ public:
 
 private:
   int nx() const { return base_type::size() + 1; }
-  value_type* xend() { return x_ + nx(); }
 
-  value_type* x_ = nullptr;
+  value_pointer_type x_ = nullptr;
 
   friend class ::boost::serialization::access;
   template <class Archive>
@@ -465,6 +469,8 @@ public:
 private:
   using value_allocator_type =
       typename std::allocator_traits<allocator_type>::template rebind_alloc<value_type>;
+  using value_pointer_type =
+      typename std::allocator_traits<value_allocator_type>::pointer;
 
 public:
   /** Construct from an initializer list of strings.
@@ -486,20 +492,14 @@ public:
       : base_type(std::distance(begin, end),
                   uo == uoflow_type::on ? uoflow_type::oflow : uo, label, a) {
     value_allocator_type a2(a);
-    using AT = std::allocator_traits<value_allocator_type>;
-    x_ = AT::allocate(a2, nx());
-    auto xit = x_;
-    while (begin != end) AT::construct(a2, xit++, *begin++);
+    x_ = boost::histogram::detail::create_buffer_from_iter(a2, nx(), begin);
   }
 
   category() = default;
 
   category(const category& o) : base_type(o) {
     value_allocator_type a(o.get_allocator());
-    using AT = std::allocator_traits<value_allocator_type>;
-    x_ = AT::allocate(a, base_type::size());
-    auto it = o.x_;
-    for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::construct(a, xit, *it++);
+    x_ = boost::histogram::detail::create_buffer_from_iter(a, o.nx(), o.x_);
   }
 
   category& operator=(const category& o) {
@@ -508,10 +508,7 @@ public:
         this->~category();
         base_type::operator=(o);
         value_allocator_type a(base_type::get_allocator());
-        using AT = std::allocator_traits<value_allocator_type>;
-        x_ = AT::allocate(a, nx());
-        auto it = o.x_;
-        for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::construct(a, xit, *it++);
+        x_ = boost::histogram::detail::create_buffer_from_iter(a, nx(), o.x_);
       } else {
         base_type::operator=(o);
         std::copy(o.x_, o.x_ + o.nx(), x_);
@@ -536,9 +533,7 @@ public:
   ~category() {
     if (x_) { // nothing to do for empty state
       value_allocator_type a(base_type::get_allocator());
-      using AT = std::allocator_traits<value_allocator_type>;
-      for (auto xit = x_, xe = xend(); xit != xe; ++xit) AT::destroy(a, xit);
-      AT::deallocate(a, x_, nx());
+      boost::histogram::detail::destroy_buffer(a, x_, nx());
     }
   }
 
@@ -565,9 +560,8 @@ public:
 
 private:
   int nx() const { return base_type::size(); }
-  value_type* xend() { return x_ + nx(); }
 
-  value_type* x_ = nullptr;
+  value_pointer_type x_ = nullptr;
   mutable int last_ = 0;
 
   friend class ::boost::serialization::access;
