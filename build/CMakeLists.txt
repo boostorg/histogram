@@ -13,11 +13,9 @@ option(BUILD_PYTHON "Build python bindings" ON)
 option(BUILD_NUMPY "Build numpy support" ON)
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(BUILD_SERIALIZATION "Build serialization code" ON)
-option(TRACE_ALLOCS "Debug: Trace allocations" OFF)
 option(SANITIZE "Debug: Compile with santizers" OFF)
 mark_as_advanced(BUILD_BENCHMARKS)
 mark_as_advanced(BUILD_SERIALIZATION)
-mark_as_advanced(TRACE_ALLOCS)
 mark_as_advanced(SANITIZE)
 
 # set build type if none is specified
@@ -47,10 +45,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   add_compile_options(-Wall -Wextra -D__STRICT_ANSI__)
-endif()
-
-if(TRACE_ALLOCS)
-  add_definitions(-DBOOST_HISTOGRAM_TRACE_ALLOCS)
 endif()
 
 if(BUILD_PYTHON)
