@@ -19,20 +19,20 @@ branches:
 matrix:
   include:
     - os: linux # gcc minimum
-      env: PYVER=2.7 CC=gcc CXX=g++ PY=OFF NUMPY=OFF SERIAL=OFF
-    - os: linux # gcc py27 w/o numpy
-      env: PYVER=2.7 CC=gcc CXX=g++ PY=ON NUMPY=OFF SERIAL=ON
+      env: PYVER=OFF CC=gcc CXX=g++ NUMPY=OFF SERIAL=OFF
+    - os: linux # gcc py37 w/o numpy
+      env: PYVER=3.7 CC=gcc CXX=g++ NUMPY=OFF SERIAL=ON
+    - os: linux # gcc py37
+      env: PYVER=3.7 CC=gcc CXX=g++ NUMPY=ON SERIAL=ON
+    - os: linux # clang py37
+      env: PYVER=3.7 CC=clang CXX=clang++ NUMPY=ON SERIAL=ON
     - os: linux # gcc py27
-      env: PYVER=2.7 CC=gcc CXX=g++ PY=ON NUMPY=ON SERIAL=ON
-    - os: linux # gcc py36
-      env: PYVER=3.6 CC=gcc CXX=g++ PY=ON NUMPY=ON SERIAL=ON
-    - os: linux # clang py36
-      env: PYVER=3.6 CC=clang CXX=clang++ PY=ON NUMPY=ON SERIAL=ON
-    - os: linux # coverage py27
-      env: PYVER=2.7 CC=gcc CXX=g++ GCOV=gcov
+      env: PYVER=2.7 CC=gcc CXX=g++ NUMPY=ON SERIAL=ON
+    - os: linux # coverage py37
+      env: PYVER=3.7 CC=gcc CXX=g++ GCOV=gcov
     - os: osx # minimum osx Xcode 8.3
       osx_image: xcode8.3
-      env: PY=OFF NUMPY=OFF SERIAL=OFF
+      env: PYVER=OFF NUMPY=OFF SERIAL=OFF
 
 git:
   depth: 10
@@ -42,8 +42,13 @@ install:
   - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then
       export PATH="/usr/local/opt/python/libexec/bin:$PATH";
     else
-      pyenv versions;
-      pyenv global ${PYVER};
+      if [[ ${PYVER} != "OFF" ]]; then
+        pyenv versions;
+        pyenv global ${PYVER};
+        export PYTHON=ON;
+      else
+        export PYTHON=OFF;
+      fi;
     fi
 
   - python --version
@@ -53,7 +58,7 @@ install:
   - pip install --upgrade numpy # update numpy to avoid segfaults later
   - source build/travis_install_boost.sh
 
-  - if [ -n "$GCOV" ]; then
+  - if [ -n ${GCOV} ]; then
       pip install cpp-coveralls urllib3[secure];
     fi
 
@@ -80,7 +85,7 @@ script:
       ctest;
     else
       cmake . -DBOOST_ROOT=${BOOST_DIR}
-              -DBUILD_PYTHON=${PY}
+              -DBUILD_PYTHON=${PYTHON}
               -DBUILD_NUMPY=${NUMPY}
               -DBUILD_SERIALIZATION=${SERIAL}
               -DCMAKE_BUILD_TYPE=Debug &&
