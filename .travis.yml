@@ -35,10 +35,11 @@ matrix:
       env: PYVER=3.6 CC=gcc CXX=g++ GCOV=gcov
 
     - os: osx # minimum
-      env: PY=2.7 NUMPY=OFF SERIAL=OFF
+      env: PY=2.7 PY=OFF NUMPY=OFF SERIAL=OFF
+      # cannot test python because there is a linking problem on osx
 
 git:
-  depth: 10
+  depth: 1
 
 # Install packages (pre-installed: pytest)
 install:
