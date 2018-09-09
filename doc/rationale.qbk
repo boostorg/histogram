@@ -8,7 +8,7 @@ Design goals of the library:
 
 * Provide a simple and convenient default behavior for the casual user, yet allow a maximum of customization for the power user. Follow the "Don't pay for what you don't use" principle. Features that you don't use should not affect your performance negatively.
 
-* Provide the same interface for one-dimensional and multi-dimensional histograms. This makes the interface easier to learn, and makes it easier to move a project from one-dimensional to multi-dimensional analysis. This sounds obvious, but other libraries don't do that.
+* Provide the same interface for one-dimensional and multi-dimensional histograms. This makes the interface easier to learn, and makes it easier to move a project from one-dimensional to multi-dimensional analysis.
 
 * Hide the details of how the bin counters work. Other implementations, notably those in the [@https://root.cern.ch ROOT framework] expose this, which forces the user to make a choice which is potentially dangerous. At best, the choice is merely inefficient. In the worst case, it can lead to information loss in form of overflowing or capped counters.
 

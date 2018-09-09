@@ -82,8 +82,9 @@ the [Getting started](http://hdembinski.github.io/histogram/doc/html/histogram/g
 Example 1: Fill a 1d-histogram in C++
 
 ```cpp
+#include <boost/histogram.hpp>
 
-int main(int, char**) {
+int main() {
     namespace bh = boost::histogram;
     using namespace bh::literals; // enables _c suffix
 
