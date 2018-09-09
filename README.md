@@ -39,7 +39,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Support for weighted increments
 * Support for under-/overflow bins (can be disabled individually for each dimension)
 * Support for variance tracking (++)
-* Support for addition and scaling of histograms
+* Support for adding and scaling histograms
 * Support for custom allocators
 * Optional serialization based on [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
 * Optional Python-bindings that work with [Python-2.7 to 3.6](http://www.python.org)  with [Boost.Python](https://www.boost.org/doc/libs/release/libs/python/)

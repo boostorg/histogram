@@ -33,17 +33,16 @@ public:
       : w(value),
         w2(variance) {}
 
-  explicit weight_counter(const RealType& value) noexcept : w(value),
-                                                            w2(value) {}
+  explicit weight_counter(const RealType& value) noexcept : w(value), w2(value) {}
 
-  weight_counter& operator++() {
+  weight_counter& operator++() noexcept {
     ++w;
     ++w2;
     return *this;
   }
 
   // TODO: explain why this is needed
-  weight_counter& operator+=(const RealType& x) {
+  weight_counter& operator+=(const RealType& x) noexcept {
     w += x;
     w2 += x;
     return *this;
@@ -64,7 +63,7 @@ public:
     return *this;
   }
 
-  weight_counter& operator*=(const RealType& x) {
+  weight_counter& operator*=(const RealType& x) noexcept {
     w *= x;
     w2 *= x * x;
     return *this;
@@ -74,9 +73,7 @@ public:
     return w == rhs.w && w2 == rhs.w2;
   }
 
-  bool operator!=(const weight_counter& rhs) const noexcept {
-    return !operator==(rhs);
-  }
+  bool operator!=(const weight_counter& rhs) const noexcept { return !operator==(rhs); }
 
   template <typename T>
   bool operator==(const weight_counter<T>& rhs) const noexcept {

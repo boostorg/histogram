@@ -11,6 +11,7 @@
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/types.hpp>
+#include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
@@ -57,24 +58,20 @@ struct serializer {
 
 template <typename RealType>
 template <class Archive>
-void weight_counter<RealType>::serialize(Archive& ar,
-                                         unsigned /* version */) {
+void weight_counter<RealType>::serialize(Archive& ar, unsigned /* version */) {
   ar& w;
   ar& w2;
 }
 
 template <class Archive, typename T, typename A>
-void serialize(Archive& ar, array_storage<T, A>& store,
-               unsigned /* version */) {
+void serialize(Archive& ar, array_storage<T, A>& store, unsigned /* version */) {
   ar& store.array_;
 }
 
 template <typename A>
 template <class Archive>
 void adaptive_storage<A>::serialize(Archive& ar, unsigned /* version */) {
-  if (Archive::is_loading::value) {
-    detail::apply(detail::destroyer(), buffer_);
-  }
+  if (Archive::is_loading::value) { detail::apply(detail::destroyer(), buffer_); }
   ar& buffer_.type;
   ar& buffer_.size;
   detail::apply(detail::serializer(), buffer_, ar);
@@ -125,20 +122,13 @@ void circular<T, A>::serialize(Archive& ar, unsigned /* version */) {
 template <typename T, typename A>
 template <class Archive>
 void variable<T, A>::serialize(Archive& ar, unsigned /* version */) {
-  if (Archive::is_loading::value) {
-    this->~variable();
-  }
+  if (Archive::is_loading::value) { this->~variable(); }
 
   ar& boost::serialization::base_object<labeled_base<A>>(*this);
 
   if (Archive::is_loading::value) {
     value_allocator_type a(base_type::get_allocator());
-    using AT = std::allocator_traits<value_allocator_type>;
-    x_ = AT::allocate(a, base_type::size() + 1);
-    auto xit = x_;
-    const auto xend = x_ + base_type::size() + 1;
-    while (xit != xend)
-      AT::construct(a, xit++);
+    x_ = boost::histogram::detail::create_buffer(a, nx());
   }
 
   ar& boost::serialization::make_array(x_, base_type::size() + 1);
@@ -154,20 +144,13 @@ void integer<T, A>::serialize(Archive& ar, unsigned /* version */) {
 template <typename T, typename A>
 template <class Archive>
 void category<T, A>::serialize(Archive& ar, unsigned /* version */) {
-  if (Archive::is_loading::value) {
-    this->~category();
-  }
+  if (Archive::is_loading::value) { this->~category(); }
 
   ar& boost::serialization::base_object<labeled_base<A>>(*this);
 
   if (Archive::is_loading::value) {
     value_allocator_type a(base_type::get_allocator());
-    using AT = std::allocator_traits<value_allocator_type>;
-    x_ = AT::allocate(a, base_type::size());
-    auto xit = x_;
-    const auto xend = x_ + base_type::size();
-    while (xit != xend)
-      AT::construct(a, xit++);
+    x_ = boost::histogram::detail::create_buffer(a, nx());
   }
 
   ar& boost::serialization::make_array(x_, base_type::size());

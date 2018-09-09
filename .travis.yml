@@ -18,34 +18,37 @@ branches:
 
 matrix:
   include:
-    - os: linux # gcc minimum
-      env: PYVER=2.7 CC=gcc CXX=g++ PY=OFF NUMPY=OFF SERIAL=OFF
-    - os: linux # gcc py27 w/o numpy
-      env: PYVER=2.7 CC=gcc CXX=g++ PY=ON NUMPY=OFF SERIAL=ON
-    - os: linux # gcc py27
-      env: PYVER=2.7 CC=gcc CXX=g++ PY=ON NUMPY=ON SERIAL=ON
-    - os: linux # gcc py36
+    # all build config options
+    - os: linux
+      env: PYVER=3.6 CC=gcc CXX=g++ PY=OFF NUMPY=OFF SERIAL=OFF
+    - os: linux
+      env: PYVER=3.6 CC=gcc CXX=g++ PY=ON NUMPY=OFF SERIAL=ON
+    - os: linux
       env: PYVER=3.6 CC=gcc CXX=g++ PY=ON NUMPY=ON SERIAL=ON
-    - os: linux # clang py36
+
+    - os: linux # clang
       env: PYVER=3.6 CC=clang CXX=clang++ PY=ON NUMPY=ON SERIAL=ON
-    - os: linux # coverage py27
-      env: PYVER=2.7 CC=gcc CXX=g++ GCOV=gcov
-    - os: osx # minimum osx Xcode 8.3
-      osx_image: xcode8.3
-      env: PY=OFF NUMPY=OFF SERIAL=OFF
+    - os: linux # old python
+      env: PYVER=2.7 CC=gcc CXX=g++ PY=ON NUMPY=ON SERIAL=ON
+
+    - os: linux # coverage
+      env: PYVER=3.6 CC=gcc CXX=g++ GCOV=gcov
+
+    - os: osx # minimum
+      env: PY=2.7 PY=OFF NUMPY=OFF SERIAL=OFF
+      # cannot test python because there is a linking problem on osx
 
 git:
-  depth: 10
+  depth: 1
 
 # Install packages (pre-installed: pytest)
 install:
   - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then
       export PATH="/usr/local/opt/python/libexec/bin:$PATH";
-    else
-      pyenv versions;
-      pyenv global ${PYVER};
     fi
 
+  - pyenv versions
+  - pyenv global ${PYVER}
   - python --version
   - python build/get_python_include.py
   - python build/get_python_library.py
@@ -66,12 +69,14 @@ script:
               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest;
+      rm -f CMakeCache.txt;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
               -DBUILD_NUMPY=OFF
               -DCMAKE_BUILD_TYPE=coverage &&
       make histogram cpp_filler &&
       ctest;
+      rm -f CMakeCache.txt;
       cmake . -DBOOST_ROOT=${BOOST_DIR}
               -DBUILD_PYTHON=ON
               -DBUILD_NUMPY=ON
@@ -94,7 +99,8 @@ after_success:
     coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which ${GCOV}` --gcov-options '\-lpbc';
   fi
 
-# after_failure:
+after_failure:
+  - otool -L histogram.so
   # - printf "r\nbt" > gdb.cmd
   # - for x in *_test; do
   #     $x || gdb $x --batch -x gdb.cmd;

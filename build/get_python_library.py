@@ -5,7 +5,7 @@ from pprint import pprint
 from glob import glob
 pj = os.path.join
 
-LIB_KEYS = ('LIBDEST', 'LIBDIR', 'LIBPL')
+LIB_KEYS = ('LIBDIR', 'LIBPL')
 
 if sys.platform == "darwin":
     so_ext = "dylib"
@@ -16,7 +16,7 @@ else:
 
 config = sysconfig.get_config_vars()
 
-library = "*python%s*%s" % (sysconfig.get_python_version(), so_ext) 
+library = "*python%s%s*%s" % (sysconfig.get_python_version(), config.get("ABIFLAGS", ""), so_ext)
 for libpath in LIB_KEYS:
     p = pj(config[libpath], library)
     cand = glob(p)
