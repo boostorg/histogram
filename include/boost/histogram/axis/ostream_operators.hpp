@@ -6,8 +6,8 @@
 //
 // String representations here evaluate correctly in Python.
 
-#ifndef _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
-#define _BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP_
+#ifndef BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
+#define BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
 
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/types.hpp>

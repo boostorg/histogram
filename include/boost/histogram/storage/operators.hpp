@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_HISTOGRAM_STORAGE_OPERATORS_HPP_
-#define _BOOST_HISTOGRAM_STORAGE_OPERATORS_HPP_
+#ifndef BOOST_HISTOGRAM_STORAGE_OPERATORS_HPP
+#define BOOST_HISTOGRAM_STORAGE_OPERATORS_HPP
 
 #include <boost/histogram/detail/meta.hpp>
 

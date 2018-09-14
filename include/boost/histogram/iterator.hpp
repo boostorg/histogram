@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_HISTOGRAM_VALUE_ITERATOR_HPP_
-#define _BOOST_HISTOGRAM_VALUE_ITERATOR_HPP_
+#ifndef BOOST_HISTOGRAM_VALUE_ITERATOR_HPP
+#define BOOST_HISTOGRAM_VALUE_ITERATOR_HPP
 
 #include <boost/histogram/detail/index_cache.hpp>
 #include <boost/histogram/histogram_fwd.hpp>

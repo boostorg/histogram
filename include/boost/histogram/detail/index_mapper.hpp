@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_HISTOGRAM_DETAIL_INDEX_MAPPER_HPP_
-#define _BOOST_HISTOGRAM_DETAIL_INDEX_MAPPER_HPP_
+#ifndef BOOST_HISTOGRAM_DETAIL_INDEX_MAPPER_HPP
+#define BOOST_HISTOGRAM_DETAIL_INDEX_MAPPER_HPP
 
 #include <algorithm>
 #include <cstddef>
