@@ -1,41 +1,47 @@
-# Copyright Klemens David Morgenstern, Hans P. Dembinski 2016-2017. Distributed under the Boost
-# Software License, Version 1.0. (See accompanying
-# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+# Copyright (c) 2018 Mateusz Loskot <mateusz@loskot.net>
+# Copyright Klemens David Morgenstern, Hans P. Dembinski 2016-2017
+#
+# Use, modification and distribution is subject to the Boost Software License,
+# Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt) 
 
 import testing ;
-import regex ;
 
-project
+project histogram-test
     : requirements
       <library>/boost/serialization//boost_serialization
       <link>static
-;
-
-rule histogram-all-tests {
-    local toolset =
-        <toolset>clang:<cxxflags>"-std=c++11 -pedantic -Wall -Wextra -ftemplate-depth=256"
-        <toolset>darwin:<cxxflags>"-std=c++11 -pedantic -Wall -Wextra -ftemplate-depth=256"
     ;
 
-    local result ;
+alias run-tests :
+    [ run adaptive_storage_test.cpp ]
+    [ run array_storage_test.cpp ]
+    [ run axis_test.cpp ]
+    [ run detail_test.cpp ]
+    [ run histogram_dynamic_test.cpp ]
+    [ run histogram_mixed_test.cpp ]
+    [ run histogram_serialization_test.cpp ]
+    [ run histogram_test.cpp ]
+    [ run index_mapper_test.cpp ]
+    [ run meta_test.cpp ]
+    [ run utility_test.cpp ]
+    [ run weight_counter_test.cpp ]
+    ;
 
-    local sources = [ glob-tree *_test.cpp ] ;
-    for local source in $(sources)
-    {
-        local target = [ regex.replace $(source) "\_test.cpp" "" ] ;
-        target = [ regex.replace $(target) "/" "." ] ;
-        result += [ run $(source) : : : $(toolset) : test.$(target) ] ;
-    }
+alias run-fail-tests :
+    [ run-fail histogram_dynamic_add_fail.cpp ]
+    [ run-fail histogram_dynamic_at_tuple_wrong_dimension_fail.cpp ]
+    [ run-fail histogram_dynamic_at_vector_wrong_dimension_fail.cpp ]
+    [ run-fail histogram_dynamic_at_wrong_dimension_fail.cpp ]
+    [ run-fail histogram_dynamic_reduce_wrong_order_fail.cpp ]
+    [ run-fail histogram_static_add_fail.cpp ]
+    [ run-fail histogram_static_at_vector_wrong_dimension_fail.cpp ]
+    ;
 
-    return $(result) ;
-}
+alias run-speed-tests :
+    [ run speed_cpp.cpp ]
+    [ run speed_gsl.cpp ]
+    [ run speed_root.cpp ]
+    ;
 
-test-suite histogram : [ histogram-all-tests ] ;
-
-test-suite minimal : histogram ;
-test-suite full    : histogram ;
-test-suite extra   : histogram ;
-
-explicit histogram ;
-explicit minimal ;
-explicit extra ;
+explicit run-speed-tests ;
