@@ -87,10 +87,6 @@ struct adaptive_storage {
     return static_cast<char>(mp11::mp_find<types, T>::value);
   }
 
-  template <typename T>
-  using next_type = mp11::mp_at_c<types,
-    (adaptive_storage::type_index<T>() == 5 ? 5 : adaptive_storage::type_index<T>() + 1)>;
-
   struct buffer_type {
     allocator_type alloc;
     char type;
@@ -316,7 +312,7 @@ struct adaptive_storage {
     template <typename T, typename Buffer>
     void operator()(T* tp, Buffer& b, std::size_t i) {
       if (!detail::safe_increase(tp[i])) {
-        using U = next_type<T>;
+        using U = mp11::mp_at_c<types, (type_index<T>() + 1)>;
         U* ptr = b.template create<U>(tp);
         destroyer()(tp, b);
         b.set(ptr);
@@ -326,7 +322,7 @@ struct adaptive_storage {
 
     template <typename Buffer>
     void operator()(void*, Buffer& b, std::size_t i) {
-      using U = next_type<void>;
+      using U = mp11::mp_at_c<types, 1>;
       b.set(b.template create<U>());
       ++reinterpret_cast<U*>(b.ptr)[i];
     }
@@ -351,11 +347,11 @@ struct adaptive_storage {
     template <typename T, typename Buffer, typename U>
     void if_U_is_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
       if (!detail::safe_radd(tp[i], x)) {
-        using V = next_type<T>;
+        using V = mp11::mp_at_c<types, (type_index<T>() + 1)>;
         auto ptr = b.template create<V>(tp);
         destroyer()(tp, b);
         b.set(ptr);
-        if_U_is_integral(std::true_type(), reinterpret_cast<V*>(b.ptr), b, i, x);
+        if_U_is_integral(std::true_type(), static_cast<V*>(b.ptr), b, i, x);
       }
     }
 
@@ -364,7 +360,7 @@ struct adaptive_storage {
       auto ptr = b.template create<wcount>(tp);
       destroyer()(tp, b);
       b.set(ptr);
-      operator()(reinterpret_cast<wcount*>(b.ptr), b, i, x);
+      operator()(static_cast<wcount*>(b.ptr), b, i, x);
     }
 
     template <typename T, typename Buffer, typename U>
@@ -376,7 +372,7 @@ struct adaptive_storage {
 
     template <typename Buffer, typename U>
     void operator()(void*, Buffer& b, std::size_t i, const U& x) {
-      using V = next_type<void>;
+      using V = mp11::mp_at_c<types, 1>;
       b.set(b.template create<V>());
       operator()(reinterpret_cast<V*>(b.ptr), b, i, x);
     }
