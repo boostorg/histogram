@@ -14,7 +14,8 @@ if not os.path.isabs(args[0]):
     args[0] = os.path.abspath(args[0])
 
 # add missing extension on windows
-t = os.path.join("Debug", args[0] + ".exe")
+t = os.path.join(os.getcwd(), "Debug", args[0] + ".exe")
+sys.stdout.write("input file: " + t)
 if os.path.exists(t):
     args[0] = t
 
