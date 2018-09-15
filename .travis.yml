@@ -39,7 +39,7 @@ install:
   - source build/travis_install_boost.sh
 
   - if [ -n "$GCOV" ]; then
-      pip install cpp-coveralls urllib3[secure];
+      pip install --user cpp-coveralls urllib3[secure];
     fi
 
 script:
