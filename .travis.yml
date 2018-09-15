@@ -56,7 +56,8 @@ script:
               -DTEST_SERIALIZATION=${SERIAL}
               -DCMAKE_BUILD_TYPE=Debug &&
       make -j2 &&
-      LSAN_OPTIONS=verbosity=1:log_threads=1 ctest -V;
+      LSAN_OPTIONS=verbosity=1:log_threads=1 ASAN_OPTIONS=detect_leaks=0 ctest -V;
+      # LeakSanitizer is segfaulting
     fi
 
 # Calculate coverage

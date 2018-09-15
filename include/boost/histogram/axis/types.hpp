@@ -219,7 +219,10 @@ public:
    */
   explicit circular(unsigned n, value_type phase = 0.0, value_type perimeter = two_pi(),
                     string_view label = {}, const allocator_type& a = allocator_type())
-      : base_type(n, uoflow_type::off, label, a), phase_(phase), perimeter_(perimeter) {}
+      : base_type(n, uoflow_type::off, label, a), phase_(phase), perimeter_(perimeter) {
+    if (perimeter <= 0)
+      throw std::invalid_argument("perimeter must be positive");
+  }
 
   circular() = default;
   circular(const circular&) = default;
