@@ -1,0 +1,27 @@
+# Copyright (c) 2018 Mateusz Loskot <mateusz@loskot.net>
+#
+# Use, modification and distribution is subject to the Boost Software License,
+# Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt) 
+
+
+project histogram-example
+    : requirements
+    <include>$(BOOST_ROOT)
+    <include>.
+    ; 
+
+exe getting_started_listing_01 : getting_started_listing_01.cpp ;
+exe getting_started_listing_02 : getting_started_listing_02.cpp ;
+exe guide_access_bin_counts : guide_access_bin_counts.cpp ;
+exe guide_axis_with_labels : guide_axis_with_labels.cpp ;
+exe guide_axis_with_uoflow_off : guide_axis_with_uoflow_off.cpp ;
+exe guide_custom_axis : guide_custom_axis.cpp ;
+exe guide_custom_storage : guide_custom_storage.cpp ;
+exe guide_fill_histogram : guide_fill_histogram.cpp ;
+exe guide_histogram_operators : guide_histogram_operators.cpp ;
+exe guide_histogram_reduction : guide_histogram_reduction.cpp ;
+exe guide_histogram_serialization : guide_histogram_serialization.cpp  /boost/serialization//boost_serialization/<link>static ;
+exe guide_histogram_streaming : guide_histogram_streaming.cpp ;
+exe guide_make_dynamic_histogram : guide_make_dynamic_histogram.cpp ;
+exe guide_make_static_histogram : guide_make_static_histogram.cpp ;
