@@ -88,7 +88,8 @@ struct adaptive_storage {
   }
 
   template <typename T>
-  using next_type = mp11::mp_at_c<types, (adaptive_storage::type_index<T>() + 1)>;
+  using next_type = mp11::mp_at_c<types,
+    (adaptive_storage::type_index<T>() == 5 ? 5 : adaptive_storage::type_index<T>() + 1)>;
 
   struct buffer_type {
     allocator_type alloc;
