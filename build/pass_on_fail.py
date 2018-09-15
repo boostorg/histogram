@@ -10,14 +10,14 @@ import os
 
 args = sys.argv[1:]
 
-if not os.path.isabs(args[0]):
-    args[0] = os.path.abspath(args[0])
-
-# add missing extension on windows
-t = os.getcwd() + "\\Debug\\" + args[0] + ".exe"
+# modify path for windows [this is a hotfix]
+t = os.path.join(os.getcwd(), "Debug", args[0] + ".exe")
 sys.stdout.write("input file: " + t + "\n")
 if os.path.exists(t):
     args[0] = t
+
+if not os.path.isabs(args[0]):
+    args[0] = os.path.abspath(args[0])
 
 exit_code = subp.call(args)
 
