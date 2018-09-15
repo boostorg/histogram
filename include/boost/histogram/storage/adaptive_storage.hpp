@@ -17,6 +17,7 @@
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/histogram/weight.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <boost/mp11.hpp>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -90,8 +91,8 @@ public:
                               mp_int, wcount>;
 
   template <typename T>
-  static constexpr std::size_t type_index() {
-    return mp11::mp_find<types, T>::value;
+  static constexpr char type_index() {
+    return static_cast<char>(mp11::mp_find<types, T>::value);
   }
 
   template <typename T>
