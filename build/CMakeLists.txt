@@ -80,7 +80,7 @@ function(compiled_test SRC)
   # endif()
 
   if (${BASENAME} MATCHES "_fail")
-    add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/pass_on_fail.py ${BASENAME})
+    add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/pass_on_fail.py ${CMAKE_CURRENT_BINARY_DIR}/${BASENAME})
   else()
     add_test(${BASENAME} ${BASENAME})
   endif()
