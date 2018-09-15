@@ -44,7 +44,9 @@ struct serialize_t {
 struct serializer {
   template <typename T, typename Buffer, typename Archive>
   void operator()(T*, Buffer& b, Archive& ar) {
-    if (Archive::is_loading::value) { create(type_tag<T>(), b); }
+    if (Archive::is_loading::value) {
+      b.create(mp11::mp_identity<T>());
+    }
     ar& boost::serialization::make_array(reinterpret_cast<T*>(b.ptr), b.size);
   }
 
@@ -71,10 +73,10 @@ void serialize(Archive& ar, array_storage<T, A>& store, unsigned /* version */) 
 template <typename A>
 template <class Archive>
 void adaptive_storage<A>::serialize(Archive& ar, unsigned /* version */) {
-  if (Archive::is_loading::value) { detail::apply(detail::destroyer(), buffer_); }
+  if (Archive::is_loading::value) { apply(destroyer(), buffer_); }
   ar& buffer_.type;
   ar& buffer_.size;
-  detail::apply(detail::serializer(), buffer_, ar);
+  apply(detail::serializer(), buffer_, ar);
 }
 
 namespace axis {

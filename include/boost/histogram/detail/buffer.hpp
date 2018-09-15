@@ -39,19 +39,23 @@ void create_buffer_impl(std::false_type, typename AT::allocator_type& a, std::si
   }
 }
 
-template <typename AT, typename Iterator>
+template <typename AT, typename Iterator, typename... Ts>
 void create_buffer_from_iter_impl(std::true_type, typename AT::allocator_type& a,
-                                  std::size_t n, typename AT::pointer it, Iterator iter) {
+                                  std::size_t n, typename AT::pointer it,
+                                  Iterator iter, Ts&&... ts) {
   // never throws
-  for (const auto end = it + n; it != end; ++it) AT::construct(a, it, *iter++);
+  for (const auto end = it + n; it != end; ++it)
+    AT::construct(a, it, *iter++, std::forward<Ts>(ts)...);
 }
 
-template <typename AT, typename Iterator>
+template <typename AT, typename Iterator, typename... Ts>
 void create_buffer_from_iter_impl(std::false_type, typename AT::allocator_type& a,
-                                  std::size_t n, typename AT::pointer it, Iterator iter) {
+                                  std::size_t n, typename AT::pointer it,
+                                  Iterator iter, Ts&&... ts) {
   const auto ptr = it;
   try {
-    for (const auto end = it + n; it != end; ++it) AT::construct(a, it, *iter++);
+    for (const auto end = it + n; it != end; ++it)
+      AT::construct(a, it, *iter++, std::forward<Ts>(ts)...);
   } catch (...) {
     // release resources that were already acquired before rethrowing
     while (it != ptr) AT::destroy(a, it--);
@@ -72,15 +76,15 @@ typename std::allocator_traits<Allocator>::pointer create_buffer(Allocator& a,
   return ptr;
 }
 
-template <typename Allocator, typename Iterator>
+template <typename Allocator, typename Iterator, typename... Ts>
 typename std::allocator_traits<Allocator>::pointer create_buffer_from_iter(
-    Allocator& a, std::size_t n, Iterator iter) {
+    Allocator& a, std::size_t n, Iterator iter, Ts&&... ts) {
   using AT = std::allocator_traits<Allocator>;
   using T = typename AT::value_type;
   using U = decltype(*iter);
   auto ptr = AT::allocate(a, n); // may throw
   create_buffer_from_iter_impl<AT>(std::is_nothrow_constructible<T, U>(), a, n, ptr,
-                                   iter);
+                                   iter, std::forward<Ts>(ts)...);
   return ptr;
 }
 

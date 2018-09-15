@@ -234,8 +234,8 @@ void add_impl_all_rhs() {
   add_impl<LHS, uint16_t>();
   add_impl<LHS, uint32_t>();
   add_impl<LHS, uint64_t>();
-  add_impl<LHS, detail::mp_int>();
-  add_impl<LHS, detail::wcount>();
+  add_impl<LHS, adaptive_storage_type::mp_int>();
+  add_impl<LHS, adaptive_storage_type::wcount>();
 }
 
 int main() {
@@ -269,13 +269,13 @@ int main() {
 
   // copy
   {
-    copy_impl<detail::wcount>();
+    copy_impl<adaptive_storage_type::wcount>();
     copy_impl<void>();
     copy_impl<uint8_t>();
     copy_impl<uint16_t>();
     copy_impl<uint32_t>();
     copy_impl<uint64_t>();
-    copy_impl<detail::mp_int>();
+    copy_impl<adaptive_storage_type::mp_int>();
   }
 
   // equal_operator
@@ -285,8 +285,8 @@ int main() {
     equal_impl<uint16_t>();
     equal_impl<uint32_t>();
     equal_impl<uint64_t>();
-    equal_impl<detail::mp_int>();
-    equal_impl<detail::wcount>();
+    equal_impl<adaptive_storage_type::mp_int>();
+    equal_impl<adaptive_storage_type::wcount>();
   }
 
   // increase_and_grow
@@ -298,7 +298,7 @@ int main() {
     increase_and_grow_impl<uint64_t>();
 
     // only increase for mp_int
-    auto a = prepare<detail::mp_int>(2, 1);
+    auto a = prepare<adaptive_storage_type::mp_int>(2, 1);
     BOOST_TEST_EQ(a[0].value(), 1);
     BOOST_TEST_EQ(a[1].value(), 0);
     a.increase(0);
@@ -313,8 +313,8 @@ int main() {
     add_impl_all_rhs<uint16_t>();
     add_impl_all_rhs<uint32_t>();
     add_impl_all_rhs<uint64_t>();
-    add_impl_all_rhs<detail::mp_int>();
-    add_impl_all_rhs<detail::wcount>();
+    add_impl_all_rhs<adaptive_storage_type::mp_int>();
+    add_impl_all_rhs<adaptive_storage_type::wcount>();
   }
 
   // add_and_grow
@@ -380,8 +380,8 @@ int main() {
     convert_array_storage_impl<uint16_t>();
     convert_array_storage_impl<uint32_t>();
     convert_array_storage_impl<uint64_t>();
-    convert_array_storage_impl<detail::mp_int>();
-    convert_array_storage_impl<detail::wcount>();
+    convert_array_storage_impl<adaptive_storage_type::mp_int>();
+    convert_array_storage_impl<adaptive_storage_type::wcount>();
   }
 
   return boost::report_errors();
