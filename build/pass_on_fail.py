@@ -14,8 +14,9 @@ if not os.path.isabs(args[0]):
     args[0] = os.path.abspath(args[0])
 
 # add missing extension on windows
-if os.path.exists(args[0] + ".exe"):
-    args[0] += ".exe"
+t = os.path.join("Debug", args[0] + ".exe")
+if os.path.exists(t):
+    args[0] = t
 
 exit_code = subp.call(args)
 
