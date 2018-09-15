@@ -20,7 +20,7 @@ environment:
 test_script:
   # - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - cd build
-  - cmake . -DBUILD_PYTHON=OFF -DBUILD_NUMPY=OFF
+  - cmake .
     -DBOOST_ROOT="%BOOST_ROOT%" -DBoost_USE_STATIC_LIBS="ON"
   - cmake --build .
   - ctest -V
