@@ -46,6 +46,14 @@ endif()
 # serialization only required for tests
 if (TEST_SERIALIZATION)
   find_package(Boost ${MIN_BOOST_VERSION} REQUIRED COMPONENTS serialization)
+  # needed if Boost version is newer than CMake version
+  if(NOT TARGET Boost::serialization)
+    add_library(Boost::serialization IMPORTED INTERFACE)
+    set_property(TARGET Boost::serialization PROPERTY
+        INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR})
+    set_property(TARGET Boost::serialization PROPERTY
+        INTERFACE_LINK_LIBRARIES ${Boost_LIBRARIES})
+  endif()
 else ()
   find_package(Boost ${MIN_BOOST_VERSION} REQUIRED)
 endif()
@@ -66,7 +74,7 @@ function(compiled_test SRC)
   get_filename_component(BASENAME ${SRC} NAME_WE)
   add_executable(${BASENAME} ${SRC})
   if (${BASENAME} MATCHES "serialization")
-    target_link_libraries(${BASENAME} PUBLIC Boost::Serialization)
+    target_link_libraries(${BASENAME} PUBLIC Boost::serialization)
   endif()
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${BASENAME} PRIVATE
