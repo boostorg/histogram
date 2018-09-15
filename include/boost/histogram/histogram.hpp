@@ -41,8 +41,8 @@ public:
   using axes_type = Axes;
   using storage_type = Storage;
   using element_type = typename storage_type::element_type;
-  using scale_type = detail::arg_type<1, decltype(&Storage::operator*=)>;
   using const_reference = typename storage_type::const_reference;
+  using scale_type = typename storage_type::scale_type;
   using const_iterator = iterator_over<histogram>;
 
   histogram() = default;
@@ -91,12 +91,12 @@ public:
     return *this;
   }
 
-  histogram& operator*=(const scale_type rhs) {
+  histogram& operator*=(const scale_type& rhs) {
     storage_ *= rhs;
     return *this;
   }
 
-  histogram& operator/=(const scale_type rhs) {
+  histogram& operator/=(const scale_type& rhs) {
     static_assert(std::is_floating_point<scale_type>::value,
                   "division requires a floating point type");
     storage_ *= scale_type(1) / rhs;

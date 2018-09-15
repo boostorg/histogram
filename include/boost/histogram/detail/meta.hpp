@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_META_HPP
 #define BOOST_HISTOGRAM_DETAIL_META_HPP
 
-#include <boost/callable_traits/args.hpp>
 #include <boost/mp11.hpp>
 #include <iterator>
 #include <limits>
@@ -115,9 +114,6 @@ using copy_qualifiers = mp11::mp_if<
 
 template <typename S, typename L>
 using mp_set_union = mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back, S>, L>;
-
-template <unsigned N, typename T>
-using arg_type = mp11::mp_at_c<callable_traits::args_t<T>, N>;
 
 template <typename L>
 using mp_last = mp11::mp_at_c<L, (mp11::mp_size<L>::value - 1)>;

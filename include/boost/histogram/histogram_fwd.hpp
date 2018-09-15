@@ -49,9 +49,9 @@ using any_std =
 } // namespace axis
 
 template <typename Allocator = std::allocator<char>>
-class adaptive_storage;
-template <typename T, typename Allocator = std::allocator<T>>
-class array_storage;
+struct adaptive_storage;
+template <typename T, typename ScaleType = T, typename Allocator = std::allocator<T>>
+struct array_storage;
 
 template <class Axes = std::vector<axis::any_std>, class Storage = adaptive_storage<>>
 class histogram;

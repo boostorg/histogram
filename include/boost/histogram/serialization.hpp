@@ -66,17 +66,17 @@ void weight_counter<RealType>::serialize(Archive& ar, unsigned /* version */) {
 }
 
 template <class Archive, typename T, typename A>
-void serialize(Archive& ar, array_storage<T, A>& store, unsigned /* version */) {
-  ar& store.array_;
+void serialize(Archive& ar, array_storage<T, A>& s, unsigned /* version */) {
+  ar& s.buffer;
 }
 
-template <typename A>
-template <class Archive>
-void adaptive_storage<A>::serialize(Archive& ar, unsigned /* version */) {
-  if (Archive::is_loading::value) { apply(destroyer(), buffer_); }
-  ar& buffer_.type;
-  ar& buffer_.size;
-  apply(detail::serializer(), buffer_, ar);
+template <class Archive, typename A>
+void serialize(Archive& ar, adaptive_storage<A>& s, unsigned /* version */) {
+  using S = adaptive_storage<A>;
+  if (Archive::is_loading::value) { S::apply(typename S::destroyer(), s.buffer); }
+  ar& s.buffer.type;
+  ar& s.buffer.size;
+  S::apply(detail::serializer(), s.buffer, ar);
 }
 
 namespace axis {

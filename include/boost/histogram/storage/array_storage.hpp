@@ -14,82 +14,73 @@
 #include <memory>
 #include <vector>
 
-// forward declaration for serialization
-namespace boost {
-namespace serialization {
-class access;
-}
-} // namespace boost
-
 namespace boost {
 namespace histogram {
 
-template <typename T, typename Allocator>
-class array_storage {
-public:
+template <typename T, typename ScaleType, typename Allocator>
+struct array_storage {
   using allocator_type = Allocator;
   using element_type = T;
+  using scale_type = ScaleType;
   using const_reference = const T&;
 
-private:
-  using array_type = std::vector<element_type, allocator_type>;
+  using buffer_type = std::vector<element_type, allocator_type>;
 
-public:
   array_storage(const array_storage&) = default;
   array_storage& operator=(const array_storage&) = default;
   array_storage(array_storage&&) = default;
   array_storage& operator=(array_storage&&) = default;
 
   template <typename S, typename = detail::requires_storage<S>>
-  explicit array_storage(const S& o) : array_(o.get_allocator()) {
-    array_.reserve(o.size());
+  explicit array_storage(const S& o) : buffer(o.get_allocator()) {
+    buffer.reserve(o.size());
     for (std::size_t i = 0; i < o.size(); ++i)
-      array_.emplace_back(static_cast<element_type>(o[i]));
+      buffer.emplace_back(static_cast<element_type>(o[i]));
   }
 
   template <typename S, typename = detail::requires_storage<S>>
   array_storage& operator=(const S& o) {
-    array_ = array_type(o.get_allocator());
-    array_.reserve(o.size());
+    buffer = buffer_type(o.get_allocator());
+    buffer.reserve(o.size());
     for (std::size_t i = 0; i < o.size(); ++i)
-      array_.emplace_back(static_cast<element_type>(o[i]));
+      buffer.emplace_back(static_cast<element_type>(o[i]));
     return *this;
   }
 
-  explicit array_storage(const allocator_type& a = allocator_type()) : array_(a) {}
+  explicit array_storage(const allocator_type& a = allocator_type()) : buffer(a) {}
 
-  allocator_type get_allocator() const { return array_.get_allocator(); }
+  allocator_type get_allocator() const { return buffer.get_allocator(); }
 
   void reset(std::size_t s) {
     if (s == size()) {
-      std::fill(array_.begin(), array_.end(), element_type(0));
+      std::fill(buffer.begin(), buffer.end(), element_type(0));
     } else {
-      array_ = array_type(s, element_type(0), array_.get_allocator());
+      buffer = buffer_type(s, element_type(0), buffer.get_allocator());
     }
   }
 
-  std::size_t size() const noexcept { return array_.size(); }
+  std::size_t size() const noexcept { return buffer.size(); }
 
   void increase(std::size_t i) noexcept {
     BOOST_ASSERT(i < size());
-    ++array_[i];
+    ++buffer[i];
   }
 
   template <typename U>
   void add(std::size_t i, const U& x) noexcept {
     BOOST_ASSERT(i < size());
-    array_[i] += x;
+    buffer[i] += x;
   }
 
   const_reference operator[](std::size_t i) const noexcept {
     BOOST_ASSERT(i < size());
-    return array_[i];
+    return buffer[i];
   }
 
-  template <typename U, typename A>
-  bool operator==(const array_storage<U, A>& rhs) const noexcept {
+  template <typename... Ts>
+  bool operator==(const array_storage<Ts...>& rhs) const noexcept {
     if (size() != rhs.size()) return false;
-    return std::equal(array_.begin(), array_.end(), rhs.array_.begin());
+    return std::equal(buffer.begin(), buffer.end(), rhs.buffer.begin());
   }
 
   template <typename S>
@@ -98,20 +89,12 @@ public:
     return *this;
   }
 
-  array_storage& operator*=(const element_type& x) noexcept {
-    for (std::size_t i = 0; i < size(); ++i) array_[i] *= x;
+  array_storage& operator*=(const scale_type& x) noexcept {
+    for (std::size_t i = 0; i < size(); ++i) buffer[i] *= x;
     return *this;
   }
 
-private:
-  array_type array_;
-
-  template <typename U, typename A>
-  friend class array_storage;
-
-  friend class ::boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive&, unsigned);
+  buffer_type buffer;
 };
 
 } // namespace histogram

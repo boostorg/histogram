@@ -23,13 +23,6 @@
 #include <memory>
 #include <type_traits>
 
-// forward declaration for serialization
-namespace boost {
-namespace serialization {
-class access;
-}
-} // namespace boost
-
 namespace boost {
 namespace histogram {
 
@@ -65,15 +58,15 @@ bool safe_radd(T& t, const U& u) {
 }
 
 template <class Allocator>
-class adaptive_storage {
+struct adaptive_storage {
   static_assert(
       std::is_same<typename std::allocator_traits<Allocator>::pointer,
                    typename std::allocator_traits<Allocator>::value_type*>::value,
       "adaptive_storage requires allocator with trivial pointer type");
 
-public:
   using allocator_type = Allocator;
   using element_type = weight_counter<double>;
+  using scale_type = double;
   using const_reference = element_type;
 
   using wcount = weight_counter<double>;
@@ -98,7 +91,6 @@ public:
   template <typename T>
   using next_type = mp11::mp_at_c<types, (adaptive_storage::type_index<T>() + 1)>;
 
-private:
   struct buffer_type {
     allocator_type alloc;
     char type;
@@ -138,33 +130,32 @@ private:
     }
   };
 
-public:
-  ~adaptive_storage() { apply(destroyer(), buffer_); }
+  ~adaptive_storage() { apply(destroyer(), buffer); }
 
   adaptive_storage(const adaptive_storage& o) {
-    apply(replacer(), o.buffer_, buffer_);
+    apply(replacer(), o.buffer, buffer);
   }
 
   adaptive_storage& operator=(const adaptive_storage& o) {
-    if (this != &o) { apply(replacer(), o.buffer_, buffer_); }
+    if (this != &o) { apply(replacer(), o.buffer, buffer); }
     return *this;
   }
 
-  adaptive_storage(adaptive_storage&& o) : buffer_(std::move(o.buffer_)) {
-    o.buffer_.type = 0;
-    o.buffer_.size = 0;
-    o.buffer_.ptr = nullptr;
+  adaptive_storage(adaptive_storage&& o) : buffer(std::move(o.buffer)) {
+    o.buffer.type = 0;
+    o.buffer.size = 0;
+    o.buffer.ptr = nullptr;
   }
 
   adaptive_storage& operator=(adaptive_storage&& o) {
-    if (this != &o) { std::swap(buffer_, o.buffer_); }
+    if (this != &o) { std::swap(buffer, o.buffer); }
     return *this;
   }
 
   template <typename S, typename = detail::requires_storage<S>>
-  explicit adaptive_storage(const S& s) : buffer_(s.size(), s.get_allocator()) {
-    buffer_.create(mp11::mp_identity<wcount>());
-    auto it = reinterpret_cast<wcount*>(buffer_.ptr);
+  explicit adaptive_storage(const S& s) : buffer(s.size(), s.get_allocator()) {
+    buffer.create(mp11::mp_identity<wcount>());
+    auto it = reinterpret_cast<wcount*>(buffer.ptr);
     const auto end = it + size();
     std::size_t i = 0;
     while (it != end) *it++ = s[i++];
@@ -173,46 +164,46 @@ public:
   template <typename S, typename = detail::requires_storage<S>>
   adaptive_storage& operator=(const S& s) {
     // no check for self-assign needed, since S is different type
-    apply(destroyer(), buffer_);
-    buffer_.alloc = s.get_allocator();
-    buffer_.size = s.size();
-    buffer_.create(mp11::mp_identity<void>());
+    apply(destroyer(), buffer);
+    buffer.alloc = s.get_allocator();
+    buffer.size = s.size();
+    buffer.create(mp11::mp_identity<void>());
     for (std::size_t i = 0; i < size(); ++i) { add(i, s[i]); }
     return *this;
   }
 
-  explicit adaptive_storage(const allocator_type& a = allocator_type()) : buffer_(0, a) {
-    buffer_.create(mp11::mp_identity<void>());
+  explicit adaptive_storage(const allocator_type& a = allocator_type()) : buffer(0, a) {
+    buffer.create(mp11::mp_identity<void>());
   }
 
-  allocator_type get_allocator() const { return buffer_.alloc; }
+  allocator_type get_allocator() const { return buffer.alloc; }
 
   void reset(std::size_t s) {
-    apply(destroyer(), buffer_);
-    buffer_.size = s;
-    buffer_.create(mp11::mp_identity<void>());
+    apply(destroyer(), buffer);
+    buffer.size = s;
+    buffer.create(mp11::mp_identity<void>());
   }
 
-  std::size_t size() const { return buffer_.size; }
+  std::size_t size() const { return buffer.size; }
 
   void increase(std::size_t i) {
     BOOST_ASSERT(i < size());
-    apply(increaser(), buffer_, i);
+    apply(increaser(), buffer, i);
   }
 
   template <typename T>
   void add(std::size_t i, const T& x) {
     BOOST_ASSERT(i < size());
-    apply(adder(), buffer_, i, x);
+    apply(adder(), buffer, i, x);
   }
 
   const_reference operator[](std::size_t i) const {
-    return apply(getter(), buffer_, i);
+    return apply(getter(), buffer, i);
   }
 
   bool operator==(const adaptive_storage& o) const {
     if (size() != o.size()) return false;
-    return apply(comparer(), buffer_, o.buffer_);
+    return apply(comparer(), buffer, o.buffer);
   }
 
   // precondition: storages have same size
@@ -227,9 +218,9 @@ public:
         frequently in real applications.
       */
       const auto copy = o;
-      apply(buffer_adder(), copy.buffer_, buffer_);
+      apply(buffer_adder(), copy.buffer, buffer);
     } else {
-      apply(buffer_adder(), o.buffer_, buffer_);
+      apply(buffer_adder(), o.buffer, buffer);
     }
     return *this;
   }
@@ -243,18 +234,17 @@ public:
   }
 
   adaptive_storage& operator*=(const double x) {
-    apply(multiplier(), buffer_, x);
+    apply(multiplier(), buffer, x);
     return *this;
   }
 
   // used by unit tests, not part of generic storage interface
   template <typename T>
   adaptive_storage(std::size_t s, const T* p, const allocator_type& a = allocator_type())
-      : buffer_(s, a) {
-    buffer_.create(mp11::mp_identity<T>(), p);
+      : buffer(s, a) {
+    buffer.create(mp11::mp_identity<T>(), p);
   }
 
-private:
   struct destroyer {
     template <typename T, typename Buffer>
     void operator()(T* tp, Buffer& b) {
@@ -461,14 +451,7 @@ private:
     }
   };
 
-  buffer_type buffer_;
-
-  template <typename UAllocator>
-  friend class adaptive_storage;
-  friend class python_access;
-  friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive&, unsigned);
+  buffer_type buffer;
 };
 
 } // namespace histogram
