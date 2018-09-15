@@ -15,6 +15,7 @@
 namespace boost {
 namespace histogram {
 
+/// Fancy iterator over histogram bins with access multi-dimensional index.
 template <typename Histogram>
 class iterator_over
     : public iterator_facade<iterator_over<Histogram>, typename Histogram::element_type,

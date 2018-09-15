@@ -21,11 +21,13 @@ struct sample_type {
 };
 } // namespace detail
 
+/// Helper function to mark argument as a weight
 template <typename T>
 detail::weight_type<T> weight(T&& t) {
   return {t};
 }
 
+/// Helper function to mark argument as a sample
 template <typename T>
 detail::sample_type<T> sample(T&& t) {
   return {t};
