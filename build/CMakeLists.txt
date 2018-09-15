@@ -19,7 +19,6 @@ set(default_build_type "RELEASE")
 if (EXISTS "${PROJECT_SOURCE_DIR}/../.git")
   set(default_build_type "Debug")
 endif()
-
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
   set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
@@ -29,21 +28,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# set special compiler flags
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  add_compile_options(-D_SCL_SECURE_NO_WARNINGS)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_compile_options(-Wall -Wextra)
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
-    # -fpermissive needed for cpp_int in gcc-6
-    # -Wno-noexcept-type to silence warnings related to Boost.Python
-    add_compile_options(-fpermissive -Wno-noexcept-type)
-  endif()
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wno-unused-local-typedef -D__STRICT_ANSI__)
-endif()
-
-# serialization only required for tests
+# serialization is optional
 if (TEST_SERIALIZATION)
   find_package(Boost ${MIN_BOOST_VERSION} REQUIRED COMPONENTS serialization)
   # needed if Boost version is newer than CMake version
@@ -58,33 +43,45 @@ else ()
   find_package(Boost ${MIN_BOOST_VERSION} REQUIRED)
 endif()
 
-include_directories(../include ${Boost_INCLUDE_DIRS})
-
-if(CMAKE_BUILD_TYPE MATCHES coverage)
-  add_compile_options(-O0 -g)
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} --coverage) # enable linker flags as well
-elseif(CMAKE_BUILD_TYPE MATCHES release)
-  add_definitions(-DBOOST_DISABLE_ASSERTS)
-endif()
-
 # tests
 enable_testing()
 
 function(compiled_test SRC)
   get_filename_component(BASENAME ${SRC} NAME_WE)
   add_executable(${BASENAME} ${SRC})
-  if (${BASENAME} MATCHES "serialization")
-    target_link_libraries(${BASENAME} PUBLIC Boost::serialization)
+  target_include_directories(${BASENAME} PUBLIC ../include)
+
+  if(CMAKE_BUILD_TYPE MATCHES coverage)
+    target_compile_options(${BASENAME} -O0 -g --coverage)
+    target_link_libraries(${BASENAME} --coverage)
   endif()
+
+  # max warnings
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(${BASENAME} PRIVATE -D_SCL_SECURE_NO_WARNINGS)
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra)
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
+      # -fpermissive needed for cpp_int in gcc-6
+      target_compile_options(${BASENAME} PRIVATE -fpermissive)
+    endif()
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra
+                           -Wno-unused-local-typedef -D__STRICT_ANSI__)
+  endif()
+
+  # activate sanitizers for clang builds
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${BASENAME} PRIVATE
-                           -fsanitize=address,undefined -fno-omit-frame-pointer)
+                           -fsanitize=address,undefined
+                           -fno-omit-frame-pointer)
     target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
   endif()
+
   if (${BASENAME} MATCHES "_fail")
-    add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/pass_on_fail.py ${BASENAME})
+    add_test(test_${BASENAME} python ${PROJECT_SOURCE_DIR}/pass_on_fail.py ${BASENAME})
   else()
-    add_test(${BASENAME} ${BASENAME})
+    add_test(test_${BASENAME} ${BASENAME})
   endif()
 endfunction()
 
@@ -122,11 +119,19 @@ compiled_test(../examples/guide_make_dynamic_histogram.cpp)
 compiled_test(../examples/guide_make_static_histogram.cpp)
 
 if (TEST_SERIALIZATION)
-  compiled_test(../examples/guide_histogram_serialization.cpp)
-  compiled_test(../test/adaptive_storage_serialization_test.cpp)
+  compiled_test(../examples/guide_histogram_serialization.cpp Boost::serialization)
+  target_link_libraries(guide_histogram_serialization PUBLIC Boost::serialization)
+
+  compiled_test(../test/adaptive_storage_serialization_test.cpp Boost::serialization)
+  target_link_libraries(adaptive_storage_serialization_test PUBLIC Boost::serialization)
 endif()
 
-if(BUILD_BENCHMARKS)
+if (BUILD_BENCHMARKS)
+  if (NOT ${CMAKE_BUILD_TYPE} EQUAL Release)
+    message(WARNING "Benchmarks should be build in Release mode")
+  endif()
   add_executable(speed_cpp ../test/speed_cpp.cpp)
+  target_include_directories(speed_cpp PRIVATE ../include)
+  target_compile_definitions(speed_cpp PRIVATE -DBOOST_DISABLE_ASSERTS)
   target_compile_options(speed_cpp PRIVATE -O3)
 endif()
