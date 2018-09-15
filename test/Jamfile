@@ -25,6 +25,7 @@ alias run-tests :
     [ run histogram_test.cpp ]
     [ run index_mapper_test.cpp ]
     [ run meta_test.cpp ]
+    [ link speed_cpp.cpp : : speed_test ]
     [ run utility_test.cpp ]
     [ run weight_counter_test.cpp ]
     ;
