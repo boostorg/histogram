@@ -125,6 +125,9 @@ if (TEST_SERIALIZATION)
 
   compiled_test(../test/adaptive_storage_serialization_test.cpp Boost::serialization)
   target_link_libraries(adaptive_storage_serialization_test PUBLIC Boost::serialization)
+
+  compiled_test(../test/histogram_serialization_test.cpp Boost::serialization)
+  target_link_libraries(histogram_serialization_test PUBLIC Boost::serialization)
 endif()
 
 if (BUILD_BENCHMARKS)
