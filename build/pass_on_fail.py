@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2018 Hans Dembinski
 #
 # Distributed under the Boost Software License, Version 1.0.

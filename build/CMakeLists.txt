@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.5)
 
 project(histogram CXX)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
@@ -9,14 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(MIN_BOOST_VERSION 1.66)
 
 # setup build
-option(BUILD_PYTHON "Build python bindings" ON)
-option(BUILD_NUMPY "Build numpy support" ON)
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
-option(BUILD_SERIALIZATION "Build serialization code" ON)
-option(SANITIZE "Debug: Compile with santizers" OFF)
+option(TEST_SERIALIZATION "Test serialization code" OFF)
 mark_as_advanced(BUILD_BENCHMARKS)
-mark_as_advanced(BUILD_SERIALIZATION)
-mark_as_advanced(SANITIZE)
+mark_as_advanced(TEST_SERIALIZATION)
 
 # set build type if none is specified
 set(default_build_type "RELEASE")
@@ -43,67 +39,15 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # -Wno-noexcept-type to silence warnings related to Boost.Python
     add_compile_options(-fpermissive -Wno-noexcept-type)
   endif()
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  add_compile_options(-Wall -Wextra -D__STRICT_ANSI__)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wno-unused-local-typedef -D__STRICT_ANSI__)
 endif()
 
-if(BUILD_PYTHON)
-  # We need both find_packge(PythonInterp) and find_package(PythonLibs),
-  # but as of cmake-3.11.4, cmake is not able to find matching versions of
-  # libs and interpreter. So we just discover the python executable (can be
-  # overriden with -DPYTHON_EXECUTABLE=/path/to/python in the shell) and
-  # use Python facilities to find the correct libs and header paths.
-  if(NOT DEFINED PYTHON_EXECUTABLE)
-    find_package(PythonInterp REQUIRED)
-  endif()
-
-  execute_process(COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/get_python_include.py
-                  OUTPUT_VARIABLE PYTHON_INCLUDE)
-
-  execute_process(COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/get_python_library.py
-                  OUTPUT_VARIABLE PYTHON_LIBRARY)
-
-  message(STATUS "Python include: ${PYTHON_INCLUDE}")
-  message(STATUS "Python lib: ${PYTHON_LIBRARY}")
-  message(STATUS "Beware: Python lib MUST match what Boost.Python was compiled against")
-  include_directories(${PYTHON_INCLUDE})
-
-  find_package(Boost ${MIN_BOOST_VERSION} REQUIRED COMPONENTS iostreams serialization)
-  set(LIBRARIES ${Boost_LIBRARIES} ${PYTHON_LIBRARY})
-
-  find_library(Boost_PYTHON
-               NAMES boost_python boost_python${PYTHON_VERSION_MAJOR} boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
-               PATHS ${Boost_LIBRARY_DIRS}
-               NO_DEFAULT_PATH)
-  list(APPEND LIBRARIES ${Boost_PYTHON})
-  message(STATUS "Found boost_python: ${Boost_PYTHON}")
-
-  if(BUILD_NUMPY)
-    find_library(Boost_NUMPY
-                 NAMES boost_numpy boost_numpy${PYTHON_VERSION_MAJOR} boost_numpy${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
-                 PATHS ${Boost_LIBRARY_DIRS}
-                 NO_DEFAULT_PATH)
-    message(STATUS "Found boost_numpy: ${Boost_NUMPY}")
-    add_definitions(-DHAVE_NUMPY)
-    list(APPEND LIBRARIES ${Boost_NUMPY})
-  endif()
-
-  add_library(histogram SHARED
-    ../src/python/module.cpp
-    ../src/python/axis.cpp
-    ../src/python/histogram.cpp
-  )
-  target_link_libraries(histogram PUBLIC ${LIBRARIES})
-  set_target_properties(histogram PROPERTIES PREFIX "" SUFFIX ".so")
-else()
-  # serialization only required for tests
-  if (BUILD_SERIALIZATION)
-    find_package(Boost ${MIN_BOOST_VERSION} REQUIRED serialization)
-  else ()
-    find_package(Boost ${MIN_BOOST_VERSION} REQUIRED)
-    add_definitions(-DBOOST_HISTOGRAM_NO_SERIALIZATION)
-  endif()
-  set(LIBRARIES ${Boost_LIBRARIES})
+# serialization only required for tests
+if (TEST_SERIALIZATION)
+  find_package(Boost ${MIN_BOOST_VERSION} REQUIRED COMPONENTS serialization)
+else ()
+  find_package(Boost ${MIN_BOOST_VERSION} REQUIRED)
 endif()
 
 include_directories(../include ${Boost_INCLUDE_DIRS})
@@ -115,83 +59,66 @@ elseif(CMAKE_BUILD_TYPE MATCHES release)
   add_definitions(-DBOOST_DISABLE_ASSERTS)
 endif()
 
-# checks
-if(BUILD_BENCHMARKS)
-  # find_package(benchmark)
-  add_executable(speed_cpp ../test/speed_cpp.cpp)
-  target_compile_options(speed_cpp PRIVATE -O3)
-  # target_link_libraries(speed_cpp -lbenchmark -lpthread)
-endif()
-
 # tests
 enable_testing()
 
-if(BUILD_PYTHON)
-  file(GLOB TEST_SOURCES ../test/*_test.py ../examples/*.py ${CMAKE_BINARY_DIR}/doc_test/*.py)
-  foreach(SRC IN ITEMS ${TEST_SOURCES})
-    if (SRC MATCHES "/([_a-zA-Z0-9]+)\\.py")
-      set(TESTNAME ${CMAKE_MATCH_1})
-      file(READ ${SRC} SRC_CONTENT)
-      if (BUILD_NUMPY OR
-          (NOT BUILD_NUMPY AND NOT SRC_CONTENT MATCHES "^import numpy|\nimport numpy"))
-        add_test(${TESTNAME} ${PYTHON_EXECUTABLE} ${SRC})
-      endif()
-    endif()
-  endforeach()
+function(compiled_test SRC)
+  get_filename_component(BASENAME ${SRC} NAME_WE)
+  add_executable(${BASENAME} ${SRC})
+  if (${BASENAME} MATCHES "serialization")
+    target_link_libraries(${BASENAME} PUBLIC Boost::Serialization)
+  endif()
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(${BASENAME} PRIVATE
+                           -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
+  endif()
+  if (${BASENAME} MATCHES "^fail_")
+    add_test(${BASENAME} COMMAND python ${PROJECT_SOURCE_DIR}/pass_on_fail.py ${BASENAME})
+  else()
+    add_test(${BASENAME} ${BASENAME})
+  endif()
+endfunction()
+
+compiled_test(../test/adaptive_storage_test.cpp)
+compiled_test(../test/array_storage_test.cpp)
+compiled_test(../test/axis_test.cpp)
+compiled_test(../test/detail_test.cpp)
+compiled_test(../test/fail_histogram_dynamic_add_test.cpp)
+compiled_test(../test/fail_histogram_dynamic_at_tuple_wrong_dimension_test.cpp)
+compiled_test(../test/fail_histogram_dynamic_at_vector_wrong_dimension_test.cpp)
+compiled_test(../test/fail_histogram_dynamic_at_wrong_dimension_test.cpp)
+compiled_test(../test/fail_histogram_dynamic_reduce_wrong_order_test.cpp)
+compiled_test(../test/fail_histogram_static_add_test.cpp)
+compiled_test(../test/fail_histogram_static_at_vector_wrong_dimension_test.cpp)
+compiled_test(../test/histogram_dynamic_test.cpp)
+compiled_test(../test/histogram_mixed_test.cpp)
+compiled_test(../test/histogram_test.cpp)
+compiled_test(../test/index_mapper_test.cpp)
+compiled_test(../test/meta_test.cpp)
+compiled_test(../test/utility_test.cpp)
+compiled_test(../test/weight_counter_test.cpp)
+
+compiled_test(../examples/getting_started_listing_01.cpp)
+compiled_test(../examples/getting_started_listing_02.cpp)
+compiled_test(../examples/guide_access_bin_counts.cpp)
+compiled_test(../examples/guide_axis_with_labels.cpp)
+compiled_test(../examples/guide_axis_with_uoflow_off.cpp)
+compiled_test(../examples/guide_custom_axis.cpp)
+compiled_test(../examples/guide_custom_storage.cpp)
+compiled_test(../examples/guide_fill_histogram.cpp)
+compiled_test(../examples/guide_histogram_operators.cpp)
+compiled_test(../examples/guide_histogram_reduction.cpp)
+compiled_test(../examples/guide_histogram_streaming.cpp)
+compiled_test(../examples/guide_make_dynamic_histogram.cpp)
+compiled_test(../examples/guide_make_static_histogram.cpp)
+
+if (TEST_SERIALIZATION)
+  compiled_test(../examples/guide_histogram_serialization.cpp)
+  compiled_test(../test/adaptive_storage_serialization_test.cpp)
 endif()
 
-file(GLOB TEST_SOURCES ../test/*_test.cpp ../examples/*.cpp)
-foreach(SRC IN ITEMS ${TEST_SOURCES})
-  if(SRC MATCHES "/([_a-zA-Z0-9]+)\\.cpp")
-    set(BASENAME ${CMAKE_MATCH_1})
-    if (NOT BUILD_SERIALIZATION AND BASENAME MATCHES "serialization")
-      continue()
-    endif()
-    file(READ ${SRC} SRC_CONTENT)
-    if(SRC_CONTENT MATCHES "BOOST_PYTHON_MODULE\\(([a-z_]+)\\)")
-      if(BUILD_PYTHON)
-        add_library(${CMAKE_MATCH_1} SHARED ${SRC})
-        set_target_properties(${CMAKE_MATCH_1} PROPERTIES PREFIX "" SUFFIX ".so")
-        target_link_libraries(${CMAKE_MATCH_1} PUBLIC ${LIBRARIES})
-      endif()
-    else()
-      add_executable(${BASENAME} ${SRC})
-      if (SANITIZE)
-        target_compile_options(${BASENAME} PRIVATE -fsanitize=address,undefined)
-        target_link_libraries(${BASENAME} PUBLIC -lasan -lubsan ${LIBRARIES})
-      else()
-        target_link_libraries(${BASENAME} PUBLIC ${LIBRARIES})
-      endif()
-      if (BASENAME MATCHES "fail_")
-        if (DEFINED PYTHON_EXECUTABLE)
-          add_test(NAME ${BASENAME} COMMAND ${PYTHON_EXECUTABLE}
-                   ../test/pass_on_fail.py ${BASENAME})
-        endif()
-      else()
-        add_test(${BASENAME} ${BASENAME})
-      endif()
-    endif()
-  endif()
-endforeach()
-
-# for clang format and clang tidy
-file(GLOB_RECURSE
-     ALL_SOURCE_FILES
-     LIST_DIRECTORIES false
-     ../test/*_test.cpp ../include/*.hpp
-     )
-
-get_property(INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-set(TIDY_INCLUDE)
-foreach(x ${INCLUDE_DIRS})
-  LIST(APPEND TIDY_INCLUDE -I${x})
-endforeach()
-add_custom_target(
-  clang-tidy
-  COMMAND clang-tidy
-  ${ALL_SOURCE_FILES}
-  -checks=*,-*alpha*
-  --
-  -std=c++11
-  ${TIDY_INCLUDE}
-  )
+if(BUILD_BENCHMARKS)
+  add_executable(speed_cpp ../test/speed_cpp.cpp)
+  target_compile_options(speed_cpp PRIVATE -O3)
+endif()

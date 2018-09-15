@@ -5,11 +5,6 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/histogram/serialization.hpp>
-#endif
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
@@ -52,50 +47,6 @@ void copy_impl() {
   a = b;
   BOOST_TEST(a == b);
 }
-
-#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
-template <typename T>
-void serialization_impl() {
-  const auto a = prepare(1, T(1));
-  std::ostringstream os;
-  std::string buf;
-  {
-    std::ostringstream os;
-    boost::archive::text_oarchive oa(os);
-    oa << a;
-    buf = os.str();
-  }
-  adaptive_storage_type b;
-  BOOST_TEST(!(a == b));
-  {
-    std::istringstream is(buf);
-    boost::archive::text_iarchive ia(is);
-    ia >> b;
-  }
-  BOOST_TEST(a == b);
-}
-
-template <>
-void serialization_impl<void>() {
-  const auto a = prepare<void>(1);
-  std::ostringstream os;
-  std::string buf;
-  {
-    std::ostringstream os2;
-    boost::archive::text_oarchive oa(os2);
-    oa << a;
-    buf = os2.str();
-  }
-  adaptive_storage_type b;
-  BOOST_TEST(!(a == b));
-  {
-    std::istringstream is(buf);
-    boost::archive::text_iarchive ia(is);
-    ia >> b;
-  }
-  BOOST_TEST(a == b);
-}
-#endif
 
 template <typename T>
 void equal_impl() {
@@ -432,19 +383,6 @@ int main() {
     convert_array_storage_impl<detail::mp_int>();
     convert_array_storage_impl<detail::wcount>();
   }
-
-#ifndef BOOST_HISTOGRAM_NO_SERIALIZATION
-  // serialization_test
-  {
-    serialization_impl<void>();
-    serialization_impl<uint8_t>();
-    serialization_impl<uint16_t>();
-    serialization_impl<uint32_t>();
-    serialization_impl<uint64_t>();
-    serialization_impl<detail::mp_int>();
-    serialization_impl<detail::wcount>();
-  }
-#endif
 
   return boost::report_errors();
 }
