@@ -52,8 +52,8 @@ function(compiled_test SRC)
   target_include_directories(${BASENAME} PUBLIC ../include ${Boost_INCLUDE_DIR})
 
   if(CMAKE_BUILD_TYPE MATCHES coverage)
-    target_compile_options(${BASENAME} -O0 -g --coverage)
-    target_link_libraries(${BASENAME} --coverage)
+    target_compile_options(${BASENAME} PRIVATE -O0 -g --coverage)
+    target_link_libraries(${BASENAME} PRIVATE --coverage)
   endif()
 
   # max warnings

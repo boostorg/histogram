@@ -26,10 +26,11 @@ matrix:
     - os: linux
       compiler: clang
       env: SERIAL=ON
-    - os: linux # coverage
+    - os: osx
+      env: SERIAL=OFF
+    - os: linux # coverage build
       compiler: gcc
       env: GCOV=gcov
-    - os: osx
 
 git:
   depth: 1
