@@ -5,17 +5,18 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/operators.hpp>
 #include <limits>
 #include <memory>
 #include <sstream>
+#include <memory>
 
-using adaptive_storage_type = boost::histogram::adaptive_storage<>;
-
-using namespace boost::histogram;
+namespace bh = boost::histogram;
+using adaptive_storage_type = bh::adaptive_storage<std::allocator<char>>;
+template <typename T> using array_storage = bh::array_storage<T, T, std::allocator<T>>;
+using bh::weight;
 
 template <typename T>
 adaptive_storage_type prepare(std::size_t n, const T x) {
@@ -242,22 +243,22 @@ int main() {
   // low-level tools
   {
     uint8_t c = 0;
-    BOOST_TEST_EQ(detail::safe_increase(c), true);
+    BOOST_TEST_EQ(bh::detail::safe_increase(c), true);
     BOOST_TEST_EQ(c, 1);
     c = 255;
-    BOOST_TEST_EQ(detail::safe_increase(c), false);
+    BOOST_TEST_EQ(bh::detail::safe_increase(c), false);
     BOOST_TEST_EQ(c, 255);
-    BOOST_TEST_EQ(detail::safe_assign(c, 255), true);
-    BOOST_TEST_EQ(detail::safe_assign(c, 256), false);
+    BOOST_TEST_EQ(bh::detail::safe_assign(c, 255), true);
+    BOOST_TEST_EQ(bh::detail::safe_assign(c, 256), false);
     BOOST_TEST_EQ(c, 255);
     c = 0;
-    BOOST_TEST_EQ(detail::safe_radd(c, 255), true);
+    BOOST_TEST_EQ(bh::detail::safe_radd(c, 255), true);
     BOOST_TEST_EQ(c, 255);
     c = 1;
-    BOOST_TEST_EQ(detail::safe_radd(c, 255), false);
+    BOOST_TEST_EQ(bh::detail::safe_radd(c, 255), false);
     BOOST_TEST_EQ(c, 1);
     c = 255;
-    BOOST_TEST_EQ(detail::safe_radd(c, 1), false);
+    BOOST_TEST_EQ(bh::detail::safe_radd(c, 1), false);
     BOOST_TEST_EQ(c, 255);
   }
 
