@@ -14,3 +14,4 @@ project histogram
     ;
 
 build-project test ;
+build-project examples ;
