@@ -13,6 +13,10 @@ args = sys.argv[1:]
 if not os.path.isabs(args[0]):
     args[0] = os.path.abspath(args[0])
 
+# add missing extension on windows
+if os.path.exists(args[0] + ".exe"):
+    args[0] += ".exe"
+
 exit_code = subp.call(args)
 
 sys.exit(not exit_code)
