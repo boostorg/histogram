@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef _BOOST_HISTOGRAM_DETAIL_META_HPP_
-#define _BOOST_HISTOGRAM_DETAIL_META_HPP_
+#ifndef BOOST_HISTOGRAM_DETAIL_META_HPP
+#define BOOST_HISTOGRAM_DETAIL_META_HPP
 
 #include <boost/callable_traits/args.hpp>
 #include <boost/mp11.hpp>

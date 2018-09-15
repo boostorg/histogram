@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_HPP_
-#define BOOST_HISTOGRAM_HPP_
+#ifndef BOOST_HISTOGRAM_HPP
+#define BOOST_HISTOGRAM_HPP
 
 #include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/types.hpp>
