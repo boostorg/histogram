@@ -797,7 +797,7 @@ void run_tests() {
     tracing_allocator_db db;
     {
       tracing_allocator<char> a(db);
-      auto h = make_s(Tag(), array_storage<int, tracing_allocator<int>>(a),
+      auto h = make_s(Tag(), array_storage<int, int, tracing_allocator<int>>(a),
                       axis::integer<int, tracing_allocator<char>>(
                           0, 1024, std::string(512, 'c'), axis::uoflow_type::on, a));
       h(0);
