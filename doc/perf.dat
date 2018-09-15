@@ -33,31 +33,31 @@ gsl 0.051
 1D
 uniform distribution
 py:numpy 0.077
-py:hd_sd 0.103
+# py:hd_sd 0.103
 normal distribution
 py:numpy 0.084
-py:hd_sd 0.112
+# py:hd_sd 0.112
 2D
 uniform distribution
 py:numpy 0.398
-py:hd_sd 0.075
+# py:hd_sd 0.075
 normal distribution
 py:numpy 0.392
-py:hd_sd 0.084
+# py:hd_sd 0.084
 3D
 uniform distribution
 py:numpy 0.450
-py:hd_sd 0.076
+# py:hd_sd 0.076
 normal distribution
 py:numpy 0.326
-py:hd_sd 0.117
+# py:hd_sd 0.117
 6D
 uniform distribution
 py:numpy 0.361
-py:hd_sd 0.076
+# py:hd_sd 0.076
 normal distribution
 py:numpy 0.305
-py:hd_sd 0.116
+# py:hd_sd 0.116
 
 1D
 uniform distribution

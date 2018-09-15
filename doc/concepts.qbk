@@ -37,19 +37,21 @@ A `storage_type` is required to:
 * be default/copy/move constructable
 * be copy/move assignable
 * be equal comparable
-* have a nested type `allocator_type`
-* have a nested type `element_type`, which represent the bin count
-* have a nested type `const_reference`, its const reference version
-* have a constructor `storage_type(std::size_t n)`, which prepares the storage of `n` bins.
+* have nested types
+  * `allocator_type`
+  * `element_type`, which represent the bin count
+  * `const_reference`, const reference of bin count
+  * `scale_type`, type to scale the storage counters
 * have the following methods and operators:
-  * `std::size_t size() const`
-  * `void increase(std::size_t index)`
-  * `template <typename T> void add(std::size_t index, const T& x)`
-  * `const_reference operator[](std::size_t index) const`
-  * `storage_type& operator+=(const storage_type& other)`
-  * `storage_type& operator*=(const value_type x)`
+  * `void reset(std::size_t n)` which prepares n counters initialized to zero
+  * `std::size_t size() const` get number of counters
+  * `void increase(std::size_t index)` increment bin counter
+  * `template <typename T> void add(std::size_t index, const T& x)` add value to bin counter
+  * `const_reference operator[](std::size_t index) const` read bin counter
+  * `storage_type& operator+=(const storage_type& other)` add another storage
+  * `storage_type& operator*=(const scale_type& x)` multiply by scale type
 * optionally, it can have the following method to support weighted increments:
-  * `template <typename T> void add(std::size_t index, const boost::histogram::detail::weight_t<T>& w)`
+  * `template <typename T> void add(std::size_t index, const boost::histogram::detail::weight_type<T>& w)`
 
 [classref boost::histogram::array_storage] is a simple storage type which may serve as a template for creating a new storage type.
 

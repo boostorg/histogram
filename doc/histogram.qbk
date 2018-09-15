@@ -15,9 +15,7 @@
 
 This `C++11` library provides an easy-to-use and multi-dimensional [@https://en.wikipedia.org/wiki/Histogram histogram] template class for your counting and statistics needs. It is very customisable through policy classes, but the default policies were carefully crafted so that most users won't need to customize anything. The histogram has a convenient interface, designed to work well for the one- and multi-dimensional case. If the default policies are used, the histogram is guaranteed to be safe to use as a black box, memory efficient, and very fast. Safe means that bin counts *cannot overflow* or *be capped* at some large value, which is generally not guaranteed in other implementations.
 
-The histogram class comes in two variants, which share a common interface. The *static* variant uses a maximum of compile-time information to provide maximum performance, at the cost of reduced runtime flexibility and potentially larger executables, if many different histograms are instantiated. The *dynamic* variant is a bit slower, but configurable at run-time, and does not increase the size of the executable if several different configurations are used. Python bindings for the latter are included, implemented with [@boost:/libs/python/index.html Boost.Python]. Optional serialization support is implemented with [@boost:/libs/serialization/index.html Boost.Serialization].
-
-The histogram supports value semantics. Histograms can be added and scaled. Move operations and trips over the language boundary from C++ to Python are efficient. Histogram instances can be streamed from/to files and pickled in Python. [@http://www.numpy.org Numpy] is supported to speed up operations in Python: histograms can be filled with Numpy arrays at high speed (faster than numpy's own histogram functions for multi-dimensional data) and are convertible into Numpy array views.
+The histogram class comes in two variants, which share a common interface. The *static* variant uses a maximum of compile-time information to provide maximum performance, at the cost of reduced runtime flexibility and potentially larger executables, if many different histograms are instantiated. The *dynamic* variant is a bit slower, but configurable at run-time, and does not increase the size of the executable if several different configurations are used. Optional serialization support is implemented with [@boost:/libs/serialization/index.html Boost.Serialization].
 
 My goal is to submit this project to [@http://www.boost.org Boost], that's why it uses the Boost directory structure and namespace. The code is released under the [@http://www.boost.org/LICENSE_1_0.txt Boost Software License].
 
@@ -26,6 +24,8 @@ My goal is to submit this project to [@http://www.boost.org Boost], that's why i
 [section Acknowledgments]
 
 Klemens Morgenstern helped me to make this library boost-compliant, converting the documentation, and adding Jamfiles, and provided code improvements.
+
+Mateusz Loskot kindly agreed to be the Review Manager for this library and contributed various patches.
 
 [endsect]
 

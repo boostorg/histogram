@@ -40,7 +40,7 @@ This library supports different axis types, so that the user can customize how t
 
 When the histogram host class is configured to store axis types in a `std::tuple`, we obtain a static histogram. The number and types of the axes are known at compile-time. Axis access is done with compile-time indices. A static histogram is always faster (see [link histogram.benchmarks benchmark]), because of type conversions and run-time polymorphism are not needed, and because the compiler can inline more code. Furthermore, user errors are caught at compile-time rather than run-time.
 
-The static histogram has many advantages, but cannot be used when the axis configuration is only known at run-time. This is the case, for example, when a histogram is created in Python. Therefore, axis types can also be stored in a generic `boost::histogram::axis::any` type, which in turn can be put in a `std::vector`. When the histogram host class is configured to storage axis types like this, we obtain a dynamic histogram. The dynamic histogram is a single type that can store an arbitrary number and permutations of axes types. The axis configuration can be varied arbitrarily at runtime. There is an additional run-time cost involved whenever an axis is queried to enable the polymorphic behavior of the generic `boost::histogram::axis::any` type.
+The static histogram has many advantages, but cannot be used when the axis configuration is only known at run-time. This is the case, for example, when histograms should be created at run-time from Python. Therefore, axis types can also be stored in a generic `boost::histogram::axis::any` type, which can be put in a `std::vector`. When the histogram host class is configured to store axis types like this, we obtain a dynamic histogram. The dynamic histogram is a single type that can store arbitrary sequences of axes types, which are generated at runtime. The polymorphic behavior of the generic `boost::histogram::axis::any` type has a run-time cost, however.
 
 [endsect]
 
@@ -140,26 +140,13 @@ Why the sum of weights squared is the variance estimate can be derived from the 
 
 [section Python support]
 
-Python is a popular scripting language in the data science community. Thus, the library provides Python bindings. The histogram may be used as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. Users are able to define the histogram in Python, let it be filled on the C++ side (using a few lines of Boost.Python code to define the interface), and then get it back for further data analysis or plotting.
-
-Data analysis in Python is Numpy-based, so Numpy is fully supported. Histograms can be filled with chunks of data in a form of Numpy arrays, which is efficient, and the bin counts can be retrieved as a Numpy array without copying data.
-[note
-If number of dimensions is larger than one, this implementation is faster than the equivalent Numpy functions (while being more flexible), see [link histogram.benchmarks benchmark].
-]
-
-The Python and C++ interface were designed to be as consistent as possible, while following established style for the respective C++ or Python community. This leads to the following stylistic changes on the Python side.
-
-Properties: Getter/setter-like functions on the C++ side are wrapped in Python as properties. Examples: `histogram.dim`, `axis.regular.uoflow`. In general, a C++ function that takes no argument but returns a value is using the property syntax on the Python side.
-
-`len(x)` versus `x.size()`: An axis instance behaves like a container of bins in C++ and like a sequence of bins in Python. To get the length of a sequence in Python one uses the `len(...)` function, while in C++ one uses the `size()` method.
-
-Keyword-based parameters: the member function call `operator()(weight(x), ...)` in C++ is translated into a Python member function call `__call__(..., weight=x)`.
+Python is a popular scripting language in the data science community. Thus, the library must be designed to support Python bindings, which are developed separately. The histogram is usable as an interface between a complex simulation or data-storage system written in C++ and data-analysis/plotting in Python. Users are able to define a histogram in Python, let it be filled on the C++ side, and then get it back for further data analysis or plotting.
 
 [endsect]
 
 [section Serialization]
 
-Serialization is implemented using [@boost:/libs/serialization/index.html Boost.Serialization]. Pickling in Python is implemented based on the C++ serialization code. In the current implementation, the pickled stream is *not* portable between different hardware platforms, since it uses `boost::archive::binary_archive`. It would be great to switch to a portable binary representation in the future, when that becomes available. In practice, most computing clusters and most consumer hardware are x86 compatible nowadays. The binary_archive is portable between such hardware platforms. Naturally, it is portable between operating systems, like OSX, Windows, and Linux.
+Serialization is implemented using [@boost:/libs/serialization/index.html Boost.Serialization]. It would be great to have a portable binary archive with support for floating point data to store and retrieve histograms efficiently, which is currently not available. The library has to be open for other serialization libraries.
 
 [endsect]
 

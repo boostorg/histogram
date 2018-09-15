@@ -24,22 +24,4 @@ If you care about maximum performance: In this example, `axis::category<std::str
 
 [endsect]
 
-[section Make and use a 2d-histogram in Python]
-
-You need to build the library with Numpy support to run this example.
-
-[import ../examples/getting_started_listing_03.py]
-[getting_started_listing_03]
-
-[endsect]
-
-[section Make and use a 1d-histogram in Python without Numpy]
-
-Building the library with Numpy support is highly recommended, but here is an example on how to use the library without Numpy support for completeness.
-
-[import ../examples/getting_started_listing_04.py]
-[getting_started_listing_04]
-
-[endsect]
-
 [endsect]

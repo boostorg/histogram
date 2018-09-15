@@ -12,8 +12,6 @@ The term /histogram/ is usually strictly used for something with bins over discr
 
 [endsect]
 
-[section:cpp C++ usage]
-
 [section Create a histogram]
 
 [section Static or dynamic histogram]
@@ -21,8 +19,7 @@ The term /histogram/ is usually strictly used for something with bins over discr
 The histogram host class can store axis objects in a static or dynamic container, see the [link histogram.rationale.histogram_host rationale] for details. Use the factory functions [funcref boost::histogram::make_static_histogram make_static_histogram] and [funcref boost::histogram::make_dynamic_histogram make_dynamic_histogram] to make the corresponding histograms. Using static histograms is recommended, because they are faster and usage errors are caught at compile-time. Use dynamic histogram, if:
 
 * You only know the axis configurations at runtime, not at compile-time.
-
-* You want to write C++ code that interoperates with the Python module included in the library.
+* You want to use a single type in your C++ code that operates on histograms and avoid templated functions.
 
 These factory functions create histograms with the default storage type [classref boost::histogram::adaptive_storage], which provides safe counting, is fast and memory efficient. If you think you need another storage type or if you want to create your own, have a look at the section [link histogram.guide.expert Advanced Usage].
 
@@ -151,7 +148,7 @@ Here is an example to illustrates this.
 
 [section Streaming]
 
-Simple ostream operators are shipped with the library, which are internally used by the Python interface bindings. These give text representations of axis and histogram configurations, but do not show the histogram content. For users, the builtin streaming operators may be useful for debugging. They are not included by the super header `#include <boost/histogram.hpp>`, so that users can use their own implementations. The following example shows the effect of output streaming.
+Simple ostream operators are shipped with the library, which are internally used by the unit tests. These give text representations of axis and histogram configurations, but do not show the histogram content. They may be useful for debugging, but users are encouraged to write their own ostream operators. Therefore, the headers with the builtin implementations are not included by the super header `#include <boost/histogram.hpp>`, so that users can use their own implementations. The following example shows the effect of output streaming.
 
 [import ../examples/guide_histogram_streaming.cpp]
 [guide_histogram_streaming]
@@ -160,96 +157,10 @@ Simple ostream operators are shipped with the library, which are internally used
 
 [section Serialization]
 
-The library supports serialization via [@boost:/libs/serialization/index.html Boost.Serialization]. The serialization machinery is used in the Python module to enable pickling of histograms. The streaming code is not included by the super header `#include <boost/histogram.hpp>`, so that the library can be used without having Boost.Serialization installed.
+The library supports serialization via [@boost:/libs/serialization/index.html Boost.Serialization]. The serialization code is not included by the super header `#include <boost/histogram.hpp>`, so that the library can be used without Boost.Serialization.
 
 [import ../examples/guide_histogram_serialization.cpp]
 [guide_histogram_serialization]
-
-[endsect]
-
-[endsect]
-
-[section:python Python usage]
-
-The C++ histogram has Python-bindings, so you can create and fill histograms in Python.
-
-[section Python interface]
-
-To access the histogram from Python, you need to compile the corresponding module, which you can then import via `import histogram` in Python.
-
-The Python interface generally mimics the C++ interface. All methods on the C++ side have an equivalent on the Python side. Typical C++ idioms have been replaced with equivalent Python idioms:
-
-* methods which take no argument and just return a value are represented by properties in Python
-* axis objects support the sequence protocol (e.g. len(x) instead of x.size)
-* `weight`s are passed via a keyword argument with the same name
-
-The documentation of the Python interface is best explored from within the Python interpreter (type `help()`, then `histogram`).
-
-Here is an example of the Python module in action.
-
-[import ../examples/guide_python_histogram.py]
-[guide_python_histogram]
-
-[endsect]
-
-[section:numpy Numpy support]
-
-Looping over a large collection of numbers in Python to fill a histogram is very slow. If the Python module was build with Numpy support, the input values can be passed as Numpy arrays. This is very fast and convenient. The performance is almost as good as using C++ directly, and usually better than Numpy's histogram functions, see the [link histogram.benchmarks benchmark]. Here is an example to illustrate:
-
-[import ../examples/guide_numpy_support.py]
-[guide_numpy_support]
-
-[note `histogram(...)` accepts any sequence that can be converted into a Numpy array with `dtype=float` for convenience. To achieve the best performance, use numpy arrays with dtype `float` as input to avoid a conversion.]
-
-The conversion of an axis to a Numpy array has been optimised for interoperability with other Numpy functions and matplotlib. For an axis with `N` bins, a sequence of bin edges is generated of length `N+1`. The Numpy array is a unique ordered sequence of all bin edges, including the upper edge of the last bin. The following code illustrates how the sequence is constructed.
-
-[import ../examples/guide_python_axis_representation.py]
-[guide_python_axis_representation]
-
-Using a Numpy array to view the count matrix reveals an implementation detail of how under- and overflow bins are stored internally. For a 1-d histogram with 5 bins, the counter structure looks like this:
-
-    bin0 bin1 bin2 bin3 bin4 overflow underflow
-
-There are seven counters in total. The overflow bin naturally follows in order after the normal bins. The position of the underflow bin is surprising, but exploits how Python uses negative indices to access elements relative to the end of a sequence. Since the index `-1` accesses the last counter in the sequence, the underflow bin is put there.
-
-It is very easy to crop the extra counters by slicing each dimension with the slice shorthand `:-2`, which just removes the last two bins.
-
-[endsect]
-
-[section Operator support and pickling]
-
-Histograms in Python support the same operators as in C++. In addition, histograms support the Pickle protocol. An example:
-
-[import ../examples/guide_histogram_pickle.py]
-[guide_histogram_pickle]
-
-[note Python has no concept of rvalue references and therefore cannot avoid creating temporary objects in arithmetic operations like C++ can. A statement `h3 = h1 + h2` is equivalent to `tmp = hg.histogram(h1); tmp += h2; h3 = hg.histogram(tmp)`, which amounts to two allocations, one in the first and one in the last copy-assignment, while only one allocation is really necessary.
-
-To avoid creating superfluous temporaries, write your code entirely with operators `+=` and `*=`, this is always possible. In the example above, the optimised code would be: `h3 = hg.histogram(h1); h3 += h2`. It is actually quite puzzling why Python does not do such simple optimisations by itself.]
-
-[warning Pickling in Python uses a binary representation which is *not* portable between different hardware platforms. It will only work on platforms with the same endianess and same floating point binary format. In practice, most computing clusters and most consumer hardware are x86 compatible nowadays. The binary representation is portable between such hardware platforms. It is also portable between operating systems on the same hardware platform, like OSX, Windows, and Linux.]
-
-[endsect]
-
-[section Mixing Python and C++]
-
-It is an efficient workflow to create and configure histograms in Python and then pass them to some C++ code which fills them at maximum speed. You rarely need to change the way the histogram is filled, but you likely want to iterate the range and binning of the axis after seeing the data. With [@boost:/libs/python/index.html Boost.Python] it is easy to set this up.
-
-[note The histogram instance passes the language barrier without copying its internal (possibly large) data buffer.]
-
-Here is an example, consisting of a C++ part, which needs be compiled as a shared library and linked against Boost.Python, and a Python script which includes the histogram module.
-
-C++ code that is compiled into a shared library.
-
-[import ../examples/guide_mixed_cpp_python.cpp]
-[guide_mixed_cpp_python_part_cpp]
-
-Python script which uses the shared library.
-
-[import ../examples/guide_mixed_cpp_python.py]
-[guide_mixed_cpp_python_part_py]
-
-[endsect]
 
 [endsect]
 
@@ -265,8 +176,6 @@ The simplest way to make a custom axis is to derive from a builtin class. Here i
 
 [import ../examples/guide_custom_axis.cpp]
 [guide_custom_axis]
-
-[note The axis types available in Python cannot be changed without changing library code and recompiling the library.]
 
 [endsect]
 
