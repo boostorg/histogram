@@ -25,7 +25,6 @@ If you want to build this library as part of the Boost distribution, do this.
     git clone https://github.com/HDembinski/histogram.git
     mv histogram $BOOST_ROOT/libs
     cd $BOOST_ROOT
-    b2 serialization # build the serialization library
     b2 libs/histogram/test # build and run the tests
 ``
 
