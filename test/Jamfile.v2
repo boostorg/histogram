@@ -4,7 +4,6 @@
 
 import testing ;
 import regex ;
-# import python ;
 
 project
     : requirements
@@ -32,8 +31,6 @@ rule histogram-all-tests {
 }
 
 test-suite histogram : [ histogram-all-tests ] ;
-
-# how to make python_suite_test.py?
 
 test-suite minimal : histogram ;
 test-suite full    : histogram ;

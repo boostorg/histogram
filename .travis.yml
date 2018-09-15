@@ -25,6 +25,7 @@ matrix:
       env: SERIAL=ON
     - os: linux
       compiler: clang
+      env: SERIAL=ON
     - os: linux # coverage
       compiler: gcc
       env: GCOV=gcov
