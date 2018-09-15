@@ -95,7 +95,7 @@ public:
   }
 
   template <typename T>
-  using next_type = mp11::mp_at_c<types, (type_index<T>() + 1)>;
+  using next_type = mp11::mp_at_c<types, (adaptive_storage::type_index<T>() + 1)>;
 
 private:
   struct buffer_type {
