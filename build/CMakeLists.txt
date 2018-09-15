@@ -70,18 +70,18 @@ function(compiled_test SRC)
                            -Wno-unused-local-typedef -D__STRICT_ANSI__)
   endif()
 
-  # activate sanitizers for clang builds
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${BASENAME} PRIVATE
-                           -fsanitize=address,undefined
-                           -fno-omit-frame-pointer)
-    target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
-  endif()
+  ## deactivate sanitizers for now, LeakSanitizer is crashing
+  # # activate sanitizers for clang builds
+  # if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  #   target_compile_options(${BASENAME} PRIVATE
+  #                          -fsanitize=address,undefined
+  #                          -fno-omit-frame-pointer)
+  #   target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
+  # endif()
 
   if (${BASENAME} MATCHES "_fail")
     add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/pass_on_fail.py ${BASENAME})
   else()
-    # run with LSAN_OPTIONS=verbosity=1:log_threads=1 for more sanitizer output
     add_test(${BASENAME} ${BASENAME})
   endif()
 endfunction()
