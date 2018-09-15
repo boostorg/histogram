@@ -55,6 +55,7 @@ bool safe_radd(T& t, const U& u) {
   return true;
 }
 
+template <typename T> struct tag {};
 }
 
 template <class Allocator>
@@ -100,7 +101,7 @@ struct adaptive_storage {
         : alloc(a), type(0), size(s), ptr(nullptr) {}
 
     template <typename T, typename U = T>
-    void create(mp11::mp_identity<T>, const U* init = nullptr) {
+    void create(detail::tag<T>, const U* init = nullptr) {
       using alloc_type = typename std::allocator_traits<
         allocator_type>::template rebind_alloc<T>;
       alloc_type a(alloc); // rebind allocator
@@ -110,7 +111,7 @@ struct adaptive_storage {
     }
 
     template <typename U = mp_int>
-    void create(mp11::mp_identity<mp_int>, const U* init = nullptr) {
+    void create(detail::tag<mp_int>, const U* init = nullptr) {
       using alloc_type = typename std::allocator_traits<
         allocator_type>::template rebind_alloc<mp_int>;
       alloc_type a(alloc); // rebound allocator for buffer
@@ -122,7 +123,7 @@ struct adaptive_storage {
     }
 
     template <typename U = void>
-    void create(mp11::mp_identity<void>, const U* init = nullptr) {
+    void create(detail::tag<void>, const U* init = nullptr) {
       boost::ignore_unused(init);
       BOOST_ASSERT(!init); // init is always a nullptr in this specialization
       ptr = nullptr;
@@ -154,7 +155,7 @@ struct adaptive_storage {
 
   template <typename S, typename = detail::requires_storage<S>>
   explicit adaptive_storage(const S& s) : buffer(s.size(), s.get_allocator()) {
-    buffer.create(mp11::mp_identity<wcount>());
+    buffer.create(detail::tag<wcount>());
     auto it = reinterpret_cast<wcount*>(buffer.ptr);
     const auto end = it + size();
     std::size_t i = 0;
@@ -167,13 +168,13 @@ struct adaptive_storage {
     apply(destroyer(), buffer);
     buffer.alloc = s.get_allocator();
     buffer.size = s.size();
-    buffer.create(mp11::mp_identity<void>());
+    buffer.create(detail::tag<void>());
     for (std::size_t i = 0; i < size(); ++i) { add(i, s[i]); }
     return *this;
   }
 
   explicit adaptive_storage(const allocator_type& a = allocator_type()) : buffer(0, a) {
-    buffer.create(mp11::mp_identity<void>());
+    buffer.create(detail::tag<void>());
   }
 
   allocator_type get_allocator() const { return buffer.alloc; }
@@ -181,7 +182,7 @@ struct adaptive_storage {
   void reset(std::size_t s) {
     apply(destroyer(), buffer);
     buffer.size = s;
-    buffer.create(mp11::mp_identity<void>());
+    buffer.create(detail::tag<void>());
   }
 
   std::size_t size() const { return buffer.size; }
@@ -242,7 +243,7 @@ struct adaptive_storage {
   template <typename T>
   adaptive_storage(std::size_t s, const T* p, const allocator_type& a = allocator_type())
       : buffer(s, a) {
-    buffer.create(mp11::mp_identity<T>(), p);
+    buffer.create(detail::tag<T>(), p);
   }
 
   struct destroyer {
@@ -293,7 +294,7 @@ struct adaptive_storage {
         apply(destroyer(), b);
         b.alloc = ob.alloc;
         b.size = ob.size;
-        b.create(mp11::mp_identity<T>(), optr);
+        b.create(detail::tag<T>(), optr);
       }
     }
 
@@ -310,7 +311,7 @@ struct adaptive_storage {
     void operator()(T* tp, Buffer& b, std::size_t i) {
       if (!detail::safe_increase(tp[i])) {
         using U = next_type<T>;
-        b.create(mp11::mp_identity<U>(), tp);
+        b.create(detail::tag<U>(), tp);
         destroyer()(tp, b);
         ++reinterpret_cast<U*>(b.ptr)[i];
       }
@@ -319,7 +320,7 @@ struct adaptive_storage {
     template <typename Buffer>
     void operator()(void*, Buffer& b, std::size_t i) {
       using U = next_type<void>;
-      b.create(mp11::mp_identity<U>());
+      b.create(detail::tag<U>());
       ++reinterpret_cast<U*>(b.ptr)[i];
     }
 
@@ -344,7 +345,7 @@ struct adaptive_storage {
     void if_U_is_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
       if (!detail::safe_radd(tp[i], x)) {
         using V = next_type<T>;
-        b.create(mp11::mp_identity<V>(), tp);
+        b.create(detail::tag<V>(), tp);
         destroyer()(tp, b);
         if_U_is_integral(std::true_type(), reinterpret_cast<V*>(b.ptr), b, i, x);
       }
@@ -352,7 +353,7 @@ struct adaptive_storage {
 
     template <typename T, typename Buffer, typename U>
     void if_U_is_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
-      b.create(mp11::mp_identity<wcount>(), tp);
+      b.create(detail::tag<wcount>(), tp);
       destroyer()(tp, b);
       operator()(reinterpret_cast<wcount*>(b.ptr), b, i, x);
     }
@@ -367,7 +368,7 @@ struct adaptive_storage {
     template <typename Buffer, typename U>
     void operator()(void*, Buffer& b, std::size_t i, const U& x) {
       using V = next_type<void>;
-      b.create(mp11::mp_identity<V>());
+      b.create(detail::tag<V>());
       operator()(reinterpret_cast<V*>(b.ptr), b, i, x);
     }
 
@@ -438,7 +439,7 @@ struct adaptive_storage {
   struct multiplier {
     template <typename T, typename Buffer>
     void operator()(T* tp, Buffer& b, const double x) {
-      b.create(mp11::mp_identity<wcount>(), tp);
+      b.create(detail::tag<wcount>(), tp);
       operator()(reinterpret_cast<wcount*>(b.ptr), b, x);
     }
 
