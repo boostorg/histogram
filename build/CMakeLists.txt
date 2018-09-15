@@ -71,7 +71,7 @@ function(compiled_test SRC)
   endif()
 
   # activate sanitizers for clang builds
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     target_compile_options(${BASENAME} PRIVATE
                            -fsanitize=address,undefined
                            -fno-omit-frame-pointer)
@@ -79,9 +79,9 @@ function(compiled_test SRC)
   endif()
 
   if (${BASENAME} MATCHES "_fail")
-    add_test(test_${BASENAME} python ${PROJECT_SOURCE_DIR}/pass_on_fail.py ${BASENAME})
+    add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/pass_on_fail.py ${BASENAME})
   else()
-    add_test(test_${BASENAME} ${BASENAME})
+    add_test(${BASENAME} LSAN_OPTIONS=verbosity=1:log_threads=1 ${BASENAME})
   endif()
 endfunction()
 
