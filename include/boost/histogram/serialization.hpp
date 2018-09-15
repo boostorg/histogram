@@ -44,9 +44,9 @@ struct serialize_t {
 struct serializer {
   template <typename T, typename Buffer, typename Archive>
   void operator()(T*, Buffer& b, Archive& ar) {
-    // precondition: buffer is destroyed
     if (Archive::is_loading::value) {
-      b.create(tag<T>());
+      // precondition: buffer is destroyed
+      b.set(b.template create<T>());
     }
     ar& boost::serialization::make_array(reinterpret_cast<T*>(b.ptr), b.size);
   }

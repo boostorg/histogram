@@ -54,8 +54,6 @@ bool safe_radd(T& t, const U& u) {
   t += static_cast<T>(u); // static_cast to suppress conversion warning
   return true;
 }
-
-template <typename T> struct tag {};
 }
 
 template <class Allocator>
@@ -100,34 +98,41 @@ struct adaptive_storage {
     buffer_type(std::size_t s = 0, const allocator_type& a = allocator_type())
         : alloc(a), type(0), size(s), ptr(nullptr) {}
 
-    template <typename T, typename U = T>
-    void create(detail::tag<T>, const U* init = nullptr) {
+    template <typename T, typename U>
+    T* create_impl(T*, const U* init) {
       using alloc_type = typename std::allocator_traits<
         allocator_type>::template rebind_alloc<T>;
       alloc_type a(alloc); // rebind allocator
-      ptr = init ? detail::create_buffer_from_iter(a, size, init) :
-                   detail::create_buffer(a, size, 0);
-      type = type_index<T>();
+      return init ? detail::create_buffer_from_iter(a, size, init) :
+                    detail::create_buffer(a, size, 0);
     }
 
     template <typename U = mp_int>
-    void create(detail::tag<mp_int>, const U* init = nullptr) {
+    mp_int* create_impl(mp_int*, const U* init) {
       using alloc_type = typename std::allocator_traits<
         allocator_type>::template rebind_alloc<mp_int>;
       alloc_type a(alloc); // rebound allocator for buffer
       // mp_int has no ctor with an allocator instance, cannot pass state :(
       // typename mp_int::backend_type::allocator_type a2(alloc);
-      ptr = init ? detail::create_buffer_from_iter(a, size, init) :
-                   detail::create_buffer(a, size, 0);
-      type = type_index<mp_int>();
+      return init ? detail::create_buffer_from_iter(a, size, init) :
+                    detail::create_buffer(a, size, 0);
     }
 
-    template <typename U = void>
-    void create(detail::tag<void>, const U* init = nullptr) {
+    void* create_impl(void*, const void* init) {
       boost::ignore_unused(init);
       BOOST_ASSERT(!init); // init is always a nullptr in this specialization
-      ptr = nullptr;
-      type = type_index<void>();
+      return nullptr;
+    }
+
+    template <typename T, typename U = T>
+    T* create(const U* init = nullptr) {
+      return create_impl(static_cast<T*>(nullptr), init);
+    }
+
+    template <typename T>
+    void set(T* p) {
+      type = type_index<T>();
+      ptr = p;
     }
   };
 
@@ -155,8 +160,8 @@ struct adaptive_storage {
 
   template <typename S, typename = detail::requires_storage<S>>
   explicit adaptive_storage(const S& s) : buffer(s.size(), s.get_allocator()) {
-    buffer.create(detail::tag<wcount>());
-    auto it = reinterpret_cast<wcount*>(buffer.ptr);
+    buffer.set(buffer.template create<wcount>());
+    auto it = static_cast<wcount*>(buffer.ptr);
     const auto end = it + size();
     std::size_t i = 0;
     while (it != end) *it++ = s[i++];
@@ -168,13 +173,13 @@ struct adaptive_storage {
     apply(destroyer(), buffer);
     buffer.alloc = s.get_allocator();
     buffer.size = s.size();
-    buffer.create(detail::tag<void>());
+    buffer.set(buffer.template create<void>());
     for (std::size_t i = 0; i < size(); ++i) { add(i, s[i]); }
     return *this;
   }
 
   explicit adaptive_storage(const allocator_type& a = allocator_type()) : buffer(0, a) {
-    buffer.create(detail::tag<void>());
+    buffer.set(buffer.template create<void>());
   }
 
   allocator_type get_allocator() const { return buffer.alloc; }
@@ -182,7 +187,7 @@ struct adaptive_storage {
   void reset(std::size_t s) {
     apply(destroyer(), buffer);
     buffer.size = s;
-    buffer.create(detail::tag<void>());
+    buffer.set(buffer.template create<void>());
   }
 
   std::size_t size() const { return buffer.size; }
@@ -243,7 +248,7 @@ struct adaptive_storage {
   template <typename T>
   adaptive_storage(std::size_t s, const T* p, const allocator_type& a = allocator_type())
       : buffer(s, a) {
-    buffer.create(detail::tag<T>(), p);
+    buffer.set(buffer.template create<T>(p));
   }
 
   struct destroyer {
@@ -294,7 +299,7 @@ struct adaptive_storage {
         apply(destroyer(), b);
         b.alloc = ob.alloc;
         b.size = ob.size;
-        b.create(detail::tag<T>(), optr);
+        b.set(b.template create<T>(optr));
       }
     }
 
@@ -311,8 +316,9 @@ struct adaptive_storage {
     void operator()(T* tp, Buffer& b, std::size_t i) {
       if (!detail::safe_increase(tp[i])) {
         using U = next_type<T>;
-        b.create(detail::tag<U>(), tp);
+        U* ptr = b.template create<U>(tp);
         destroyer()(tp, b);
+        b.set(ptr);
         ++reinterpret_cast<U*>(b.ptr)[i];
       }
     }
@@ -320,7 +326,7 @@ struct adaptive_storage {
     template <typename Buffer>
     void operator()(void*, Buffer& b, std::size_t i) {
       using U = next_type<void>;
-      b.create(detail::tag<U>());
+      b.set(b.template create<U>());
       ++reinterpret_cast<U*>(b.ptr)[i];
     }
 
@@ -345,16 +351,18 @@ struct adaptive_storage {
     void if_U_is_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
       if (!detail::safe_radd(tp[i], x)) {
         using V = next_type<T>;
-        b.create(detail::tag<V>(), tp);
+        auto ptr = b.template create<V>(tp);
         destroyer()(tp, b);
+        b.set(ptr);
         if_U_is_integral(std::true_type(), reinterpret_cast<V*>(b.ptr), b, i, x);
       }
     }
 
     template <typename T, typename Buffer, typename U>
     void if_U_is_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
-      b.create(detail::tag<wcount>(), tp);
+      auto ptr = b.template create<wcount>(tp);
       destroyer()(tp, b);
+      b.set(ptr);
       operator()(reinterpret_cast<wcount*>(b.ptr), b, i, x);
     }
 
@@ -368,7 +376,7 @@ struct adaptive_storage {
     template <typename Buffer, typename U>
     void operator()(void*, Buffer& b, std::size_t i, const U& x) {
       using V = next_type<void>;
-      b.create(detail::tag<V>());
+      b.set(b.template create<V>());
       operator()(reinterpret_cast<V*>(b.ptr), b, i, x);
     }
 
@@ -439,7 +447,9 @@ struct adaptive_storage {
   struct multiplier {
     template <typename T, typename Buffer>
     void operator()(T* tp, Buffer& b, const double x) {
-      b.create(detail::tag<wcount>(), tp);
+      auto ptr = b.template create<wcount>(tp);
+      destroyer()(tp, b);
+      b.set(ptr);
       operator()(reinterpret_cast<wcount*>(b.ptr), b, x);
     }
 
