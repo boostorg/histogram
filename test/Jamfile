@@ -3,7 +3,7 @@
 #
 # Use, modification and distribution is subject to the Boost Software License,
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt) 
+# http://www.boost.org/LICENSE_1_0.txt)
 
 import testing ;
 
@@ -11,17 +11,17 @@ project histogram-test
     : requirements
     <include>$(BOOST_ROOT)
     <include>.
-    ; 
+    ;
 
 alias run-tests :
     [ run adaptive_storage_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
+    [ run histogram_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
     [ run adaptive_storage_test.cpp ]
     [ run array_storage_test.cpp ]
     [ run axis_test.cpp ]
     [ run detail_test.cpp ]
     [ run histogram_dynamic_test.cpp ]
     [ run histogram_mixed_test.cpp ]
-    [ run histogram_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
     [ run histogram_test.cpp ]
     [ run index_mapper_test.cpp ]
     [ run meta_test.cpp ]
