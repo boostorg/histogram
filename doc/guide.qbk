@@ -16,7 +16,7 @@ The term /histogram/ is usually strictly used for something with bins over discr
 
 [section Static or dynamic histogram]
 
-The histogram host class can store axis objects in a static or dynamic container, see the [link histogram.rationale.histogram_host rationale] for details. Use the factory functions [funcref boost::histogram::make_static_histogram make_static_histogram] and [funcref boost::histogram::make_dynamic_histogram make_dynamic_histogram] to make the corresponding histograms. Using static histograms is recommended, because they are faster and usage errors are caught at compile-time. Use dynamic histogram, if:
+The histogram host class can store axis objects in a static or dynamic container, see the [link histogram.rationale.structure.histogram_host rationale] for details. Use the factory functions [funcref boost::histogram::make_static_histogram make_static_histogram] and [funcref boost::histogram::make_dynamic_histogram make_dynamic_histogram] to make the corresponding histograms. Using static histograms is recommended, because they are faster and usage errors are caught at compile-time. Use dynamic histogram, if:
 
 * You only know the axis configurations at runtime, not at compile-time.
 * You want to use a single type in your C++ code that operates on histograms and avoid templated functions.

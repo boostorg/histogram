@@ -16,31 +16,33 @@ Design goals of the library:
 
 [endsect]
 
-[section Structure]
+[section:structure Structure]
 
 The library consists of three orthogonal components:
 
-* [link histogram.rationale.histogram_host histogram host class]: The histogram host class defines the public user interface and holds axis objects (one for each dimension) and a storage object. The user can chose whether axis objects are stored in a static tuple or a dynamic vector.
+* [link histogram.rationale.structure.histogram_host histogram host class]: The histogram host class defines the public user interface and holds axis objects (one for each dimension) and a storage object. The user can chose whether axis objects are stored in a static tuple or a dynamic vector.
 
-* [link histogram.rationale.axis_types axis types]: Defines how input values are mapped to bins. Several axis types are provided which implement different specializations. Users can make their own axis types following the axis concept and use them with the library.
+* [link histogram.rationale.structure.axis_types axis types]: Defines how input values are mapped to bins. Several axis types are provided which implement different specializations. Users can make their own axis types following the axis concept and use them with the library.
 
-* [link histogram.rationale.storage_types storage types]: Manages a collection of bin counters. The requirements for a storage differ from those of an STL container, it needs to follow the storage concept. Two implementations are provided.
-
-[endsect]
+* [link histogram.rationale.structure.storage_types storage types]: Manages a collection of bin counters. The requirements for a storage differ from those of an STL container, it needs to follow the storage concept. Two implementations are provided.
 
 [section:histogram_host Histogram host class]
 
-Histograms store axis objects and a storage object. A one-dimensional histogram has one axis, a multi-dimensional histogram has several. Each axis maps a value from an input tuple onto an index. The histogram host class combines these indices into a global index that is used to address bin counter in the storage object.
+Histograms store axis objects and a storage object. A one-dimensional histogram has one axis, a multi-dimensional histogram has several. When you pass an input tuple, say (v1, v2, v3), then the first axis will map v1 onto index i1, the second axis v2 onto i2, and so on, to generate the index tuple (i1, i2, i3). The histogram host class then converts these indices into a linear global index that is used to address bin counter in the storage object.
 
 [note
-To understand the need for multi-dimensional histograms, think of point coordinates. If all points that you consider lie on a line, you need only one value to describe the point. If all points lie in a plane, you need two values to describe the position. Three values are needed for a point in space. A histogram puts a discrete grid over the line, the plane or the space, and counts how many points lie in each cell of the grid. To reflect a point distribution on a line, a 1d-histogram is sufficient. To do the same in 3d-space, one needs a 3d-histogram.
+To understand the need for multi-dimensional histograms, think of point coordinates. If all points that you consider lie on a line, you need only one value to describe the point. If all points lie in a plane, you need two values to describe the position. Three values are needed for a point in space. A histogram puts a discrete grid over the line, the plane or the space, and counts how many points lie in each cell of the grid. To approximate a point distribution on a line, a 1d-histogram is sufficient. To do the same in 3d-space, one needs a 3d-histogram.
 ]
 
-This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.axis_types axis types]. Users can furthermore chose between two ways of storing axis types in the histogram.
+This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.structure.axis_types axis types]. Users can furthermore chose between two ways of storing axis types in the histogram.
 
-When the histogram host class is configured to store axis types in a `std::tuple`, we obtain a static histogram. The number and types of the axes are known at compile-time. Axis access is done with compile-time indices. A static histogram is always faster (see [link histogram.benchmarks benchmark]), because of type conversions and run-time polymorphism are not needed, and because the compiler can inline more code. Furthermore, user errors are caught at compile-time rather than run-time.
+When the histogram host class is configured to store axis types in a `std::tuple`, we obtain a static histogram. The number and types of the axes are known at compile-time. Axis access is done with compile-time indices. A static histogram is always faster (see [link histogram.benchmarks benchmark]), because there are no type checks and conversions happening at run-time, and because the compiler can inline more code. Furthermore, many user errors are caught at compile-time rather than run-time.
 
-The static histogram has many advantages, but cannot be used when the axis configuration is only known at run-time. This is the case, for example, when histograms should be created at run-time from Python. Therefore, axis types can also be stored in a generic `boost::histogram::axis::any` type, which can be put in a `std::vector`. When the histogram host class is configured to store axis types like this, we obtain a dynamic histogram. The dynamic histogram is a single type that can store arbitrary sequences of axes types, which are generated at runtime. The polymorphic behavior of the generic `boost::histogram::axis::any` type has a run-time cost, however.
+The static histogram is generally preferable, but cannot be used when the axis configuration is only known at run-time. This is the case, for example, when histograms are created at run-time from Python. Therefore, axis types can also be stored in a variant-like `boost::histogram::axis::any` type, which can be put in a `std::vector`. When the histogram host class is configured to store axis types like this, we obtain a dynamic histogram. The dynamic histogram is a single type that can store arbitrary sequences of axes types, which are generated at runtime. The polymorphic behavior of the generic `boost::histogram::axis::any` type has a run-time cost, however.
+
+[note
+The design decision to store axis types in the variant-like type `boost::histogram::axis::any` has several advantages over forms of run-time polymorphism based on vtables. Firstly, it guarantees that axis objects are local in memory, which reduces cache misses when the histogram iterates over axis objects in a tight loop, which it often does. Secondly, each axis may accept a different value type. Classic polymorphism with vtables assumes that all overloads provided by derived classes share the same method signature, but that is not the case here. One axis may convert numbers to indices, another strings. The method signatures are different and so classic run-time polymorphism does not work, but variants do.
+]
 
 [endsect]
 
@@ -86,6 +88,8 @@ In a sense, [classref boost::histogram::adaptive_storage adaptive_storage] is th
 
 [endsect]
 
+[endsect]
+
 [section:uoflow Under- and overflow bins]
 
 Axis instances by default add extra bins that count values which fall below or above the range covered by the axis (for those types where that makes sense). These extra bins are called under- and overflow bins, respectively. The extra bins can be turned off individually for each axis to conserve memory, but it is generally recommended to have them. The extra bins do not interfere with normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
@@ -127,7 +131,7 @@ Now, if the number returned by the `variance()` method is just the same as the n
 
 [section:weights Support of weighted fills]
 
-A histogram sorts input values into bins and increments a bin counter if an input value falls into the range covered by that bin. The [classref boost::histogram::adaptive_storage standard storage] uses integer types to store these counts, see the [link histogram.rationale.storage_types storage section] how integer overflow is avoided. However, sometimes histograms need to be filled with values that have a weight ['w] attached to them. In this case, the corresponding bin counter is not increased by one, but by the passed weight ['w].
+A histogram sorts input values into bins and increments a bin counter if an input value falls into the range covered by that bin. The [classref boost::histogram::adaptive_storage standard storage] uses integer types to store these counts, see the [link histogram.rationale.structure.storage_types storage section] how integer overflow is avoided. However, sometimes histograms need to be filled with values that have a weight ['w] attached to them. In this case, the corresponding bin counter is not increased by one, but by the passed weight ['w].
 [note
 There are several uses for weighted increments. The main use in particle physics is to adapt simulated data of an experiment to real data. Simulations are needed to determine various corrections and efficiencies, but a simulated experiment is almost never a perfect replica of the real experiment. In addition, simulations are expensive to do. So, when deviations in a simulated distribution of a variable are found, one typically does not rerun the simulations, but assigns weights to match the simulated distribution to the real one.
 ]
@@ -167,6 +171,20 @@ Recommendation:
 * Boost.Histogram
   * You have multi-dimensional data or you suspect you will switch to multi-dimensional data later.
   * You want to customize the binning by hand, for example, to make bin edges coincide with special values or to handle special properties of your values, like angles defined on a circle.
+
+[endsect]
+
+[section Why is Boost.Histogram not build on top of Boost.MultiArray?]
+
+Boost.MultiArray implements a multi-dimensional array, it also converts an index tuple into a global index that is used to access an element in the array. Boost.Histogram and Boost.MultiArray share this functionality, but Boost.Histogram cannot use Boost.MultiArray as a backend. Boost.MultiArray does not allow to change the element type dynamically, like it is needed to implement the adaptive storage mentioned further up. Using a variant type as the element type of a Boost.MultiArray would not work, because it creates this wasteful layout:
+
+`[type-index 1][value 1][type-index 2][value 2]...`
+
+A type index is stored for each cell. Moreover, the variant is always as large as the largest type in the union, so there is no way to safe memory by using a smaller type when the bin count is low, as it is done by the adaptive storage. The adaptive storage uses only one type-index for the whole array and allocates a homogenous array of values of the same type that exactly matches their sizes, creating the following layout:
+
+`[type-index][value 1][value 2][value 3]...`
+
+There is only one type index and the number of allocated bytes for the array can adapted dynamically to the size of the value type.
 
 [endsect]
 
