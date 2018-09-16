@@ -2,14 +2,14 @@
 #
 # Use, modification and distribution is subject to the Boost Software License,
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt) 
+# http://www.boost.org/LICENSE_1_0.txt)
 
 
 project histogram-example
     : requirements
     <include>$(BOOST_ROOT)
     <include>.
-    ; 
+    ;
 
 exe getting_started_listing_01 : getting_started_listing_01.cpp ;
 exe getting_started_listing_02 : getting_started_listing_02.cpp ;
