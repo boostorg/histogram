@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/assert.hpp>
 #include <cstddef>
 #include <memory>
 #include <vector>
