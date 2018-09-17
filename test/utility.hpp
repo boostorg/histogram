@@ -112,7 +112,7 @@ struct tracing_allocator {
     return static_cast<T*>(::operator new(n * sizeof(T)));
   }
 
-  void deallocate(T*& p, std::size_t n) {
+  void deallocate(T* p, std::size_t n) {
     if (db) {
       (*db)[typeid(T)].second += n;
     }
