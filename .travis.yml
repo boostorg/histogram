@@ -37,25 +37,26 @@ git:
 
 # Install packages (pre-installed: pytest)
 install:
-  - source build/travis_install_boost.sh
+  - source tools/travis_install_boost.sh
 
   - if [ -n "$GCOV" ]; then
       pip install --user cpp-coveralls urllib3[secure];
     fi
 
 script:
+  - mkdir build
   - cd build
   - if [ -n "$GCOV" ]; then
-      cmake . -DBOOST_ROOT=${BOOST_DIR}
-              -DTEST_SERIALIZATION=ON
-              -DCMAKE_BUILD_TYPE=coverage &&
+      cmake .. -DBOOST_ROOT=${BOOST_DIR}
+               -DTEST_SERIALIZATION=ON
+               -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest;
     else
-      cmake . -DBOOST_ROOT=${BOOST_DIR}
-              -DBUILD_BENCHMARKS=ON
-              -DTEST_SERIALIZATION=${SERIAL}
-              -DCMAKE_BUILD_TYPE=Debug &&
+      cmake .. -DBOOST_ROOT=${BOOST_DIR}
+               -DBUILD_BENCHMARKS=ON
+               -DTEST_SERIALIZATION=${SERIAL}
+               -DCMAKE_BUILD_TYPE=Debug &&
       make -j2 &&
       LSAN_OPTIONS=verbosity=1:log_threads=1 ASAN_OPTIONS=detect_leaks=0 ctest -V;
     fi
