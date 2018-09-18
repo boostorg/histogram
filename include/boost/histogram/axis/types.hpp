@@ -93,8 +93,6 @@ struct pow {
   }
   bool operator==(const pow& other) const noexcept { return power == other.power; }
 
-private:
-  friend ::boost::serialization::access;
   template <class Archive>
   void serialize(Archive&, unsigned);
 };
@@ -114,9 +112,12 @@ class regular : public labeled_base<Allocator>,
 
 public:
   using allocator_type = typename base_type::allocator_type;
+  using transform_type = Transform;
   using value_type = RealType;
   using bin_type = interval_view<regular>;
-  using transform_type = Transform;
+
+  static_assert(std::is_floating_point<value_type>::value,
+                "type returned by forward transform must be floating point");
 
   /** Construct axis with n bins over real range [lower, upper).
    *
@@ -131,9 +132,9 @@ public:
           uoflow_type uo = uoflow_type::on, transform_type trans = transform_type(),
           const allocator_type& a = allocator_type())
       : base_type(n, uo, label, a)
-      , transform_type(trans)
-      , min_(trans.forward(lower))
-      , delta_((trans.forward(upper) - trans.forward(lower)) / n) {
+      , transform_type(std::move(trans))
+      , min_(transform_type::forward(lower))
+      , delta_((transform_type::forward(upper) - transform_type::forward(lower)) / n) {
     if (lower < upper) {
       BOOST_ASSERT(!std::isnan(min_));
       BOOST_ASSERT(!std::isnan(delta_));
@@ -184,7 +185,7 @@ public:
   }
 
 private:
-  value_type min_ = 0.0, delta_ = 1.0;
+  value_type min_ = 0, delta_ = 1;
 
   friend class ::boost::serialization::access;
   template <class Archive>
@@ -220,8 +221,7 @@ public:
   explicit circular(unsigned n, value_type phase = 0.0, value_type perimeter = two_pi(),
                     string_view label = {}, const allocator_type& a = allocator_type())
       : base_type(n, uoflow_type::off, label, a), phase_(phase), perimeter_(perimeter) {
-    if (perimeter <= 0)
-      throw std::invalid_argument("perimeter must be positive");
+    if (perimeter <= 0) throw std::invalid_argument("perimeter must be positive");
   }
 
   circular() = default;
