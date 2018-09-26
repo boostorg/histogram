@@ -775,6 +775,14 @@ void run_tests() {
     auto i = {1, 1};
     BOOST_TEST_EQ(h.at(i).variance(), 5);
     BOOST_TEST_EQ(h[i].variance(), 5);
+
+    // also test special case of 1-dimensional histogram, which should unpack
+    // the argument in the "at" call, even though they do not unpack in the
+    // operator() call (because that is ambiguous)
+    auto h1 = make(Tag(), axis::integer<>(0, 2));
+    h1(1);
+    BOOST_TEST_EQ(h1.at(std::make_tuple(0)), 0);
+    BOOST_TEST_EQ(h1.at(std::vector<int>(1, 1)), 1);
   }
 
   // bad bin access
