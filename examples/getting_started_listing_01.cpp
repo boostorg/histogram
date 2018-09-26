@@ -16,7 +16,7 @@ int main(int, char**) {
   // fill histogram with data, typically this happens in a loop
   // STL algorithms are supported
   auto data = {-0.5, 1.1, 0.3, 1.7};
-  std::for_each(data.begin(), data.end(), h);
+  h = std::for_each(data.begin(), data.end(), h);
 
   /*
     a regular axis is a sequence of semi-open bins; extra under- and
