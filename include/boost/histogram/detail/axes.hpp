@@ -564,6 +564,8 @@ optional_index call_impl(no_container_tag, const std::vector<Any, A>& axes,
 template <typename Any, typename A, typename U>
 optional_index call_impl(static_container_tag, const std::vector<Any, A>& axes,
                          const U& u) {
+  if (axes.size() == 1) // do not unpack for 1d histograms, it is ambiguous
+    return call_impl(no_container_tag(), axes, u);
   dimension_check(axes, mp_size<U>());
   optional_index i;
   args_to_index_get(mp_size<U>(), i, axes, u);
@@ -573,6 +575,8 @@ optional_index call_impl(static_container_tag, const std::vector<Any, A>& axes,
 template <typename Any, typename A, typename U>
 optional_index call_impl(dynamic_container_tag, const std::vector<Any, A>& axes,
                          const U& u) {
+  if (axes.size() == 1) // do not unpack for 1d histograms, it is ambiguous
+    return call_impl(no_container_tag(), axes, u);
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
   optional_index i;
   args_to_index_iter(i, axes, std::begin(u));

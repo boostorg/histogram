@@ -10,5 +10,5 @@
 using namespace boost::histogram;
 int main() {
   auto a = make_dynamic_histogram(axis::integer<>(0, 2));
-  a(std::vector<int>(1));
+  a(std::vector<int>(1)); // fails, because tuple is intentionally not unpacked
 }
