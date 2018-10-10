@@ -36,7 +36,7 @@ To understand the need for multi-dimensional histograms, think of point coordina
 
 This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.structure.axis_types axis types]. Users can furthermore chose between two ways of storing axis types in the histogram.
 
-When the histogram host class is configured to store axis types in a `std::tuple`, we obtain a static histogram. The number and types of the axes are known at compile-time. Axis access is done with compile-time indices. A static histogram is always faster (see [link histogram.benchmarks benchmark]), because there are no type checks and conversions happening at run-time, and because the compiler can inline more code. Furthermore, many user errors are caught at compile-time rather than run-time.
+When the histogram host class is configured to store axis types in a `std::tuple`, we obtain a static histogram. The number and types of the axes are known at compile-time. To access a particular axis, you need to use a compile-time number as index. A static histogram is always faster (see [link histogram.benchmarks benchmark]), because there are no type checks and conversions happening at run-time, and because the compiler can inline more code. Furthermore, many user errors are caught at compile-time rather than run-time.
 
 The static histogram is generally preferable, but cannot be used when the axis configuration is only known at run-time. This is the case, for example, when histograms are created at run-time from Python. Therefore, axis types can also be stored in a variant-like `boost::histogram::axis::any` type, which can be put in a `std::vector`. When the histogram host class is configured to store axis types like this, we obtain a dynamic histogram. The dynamic histogram is a single type that can store arbitrary sequences of axes types, which are generated at runtime. The polymorphic behavior of the generic `boost::histogram::axis::any` type has a run-time cost, however.
 
@@ -131,9 +131,9 @@ Now, if the number returned by the `variance()` method is just the same as the n
 
 [section:weights Support of weighted fills]
 
-A histogram sorts input values into bins and increments a bin counter if an input value falls into the range covered by that bin. The [classref boost::histogram::adaptive_storage standard storage] uses integer types to store these counts, see the [link histogram.rationale.structure.storage_types storage section] how integer overflow is avoided. However, sometimes histograms need to be filled with values that have a weight ['w] attached to them. In this case, the corresponding bin counter is not increased by one, but by the passed weight ['w].
+A histogram sorts input values into bins and increments a bin counter if an input value falls into the range covered by that bin. The [classref boost::histogram::adaptive_storage standard storage] uses integer types to store these counts, see the [link histogram.rationale.structure.storage_types storage section] how integer overflow is avoided. However, sometimes histograms need to be filled with values that have a weight ['w] attached to them. In this case, the corresponding bin counter is not increased by one, but by the weight value ['w].
 [note
-There are several uses for weighted increments. The main use in particle physics is to adapt simulated data of an experiment to real data. Simulations are needed to determine various corrections and efficiencies, but a simulated experiment is almost never a perfect replica of the real experiment. In addition, simulations are expensive to do. So, when deviations in a simulated distribution of a variable are found, one typically does not rerun the simulations, but assigns weights to match the simulated distribution to the real one.
+There are several use-cases for weighted increments. The main use in particle physics is to adapt simulated data of an experiment to real data. Simulations are needed to determine various corrections and efficiencies, but a simulated experiment is almost never a perfect replica of the real experiment. In addition, simulations are expensive to do. So, when deviations in a simulated distribution of a variable are found, one typically does not rerun the simulations, but assigns weights to match the simulated distribution to the real one.
 ]
 When the [classref boost::histogram::adaptive_storage adaptive_storage] is used, histograms may also be filled with weighted value tuples. The choice of using weighted fills can be made at run-time. If the call `operator()(weight(x), ...)` is used, two doubles per bin are stored (previous integer counts are automatically converted). The first double keeps track of the sum of weights. The second double keeps track of the sum of weights squared, which is the variance estimate in this case. The former is accessed with the `value()` method of the bin counter, and the latter with the `variance()` method.
 [note
@@ -156,7 +156,7 @@ Serialization is implemented using [@boost:/libs/serialization/index.html Boost.
 
 [section Comparison to Boost.Accumulators]
 
-Boost.Histogram has a minor overlap with [@boost:/libs/accumulators/index.html Boost.Accumulators], but the scopes are rather different. The statistical accumulators `density` and `weighted_density` in Boost.Accumulators generate one-dimensional histograms. The axis range and the bin widths are determined automatically from a cached sample of initial values. Boost.Histogram focusses on multi-dimensional data and gives the user full control of how the binning should be done for each dimension.
+Boost.Histogram has a minor overlap with [@boost:/libs/accumulators/index.html Boost.Accumulators], but the scopes are rather different. The statistical accumulators `density` and `weighted_density` in Boost.Accumulators generate one-dimensional histograms. The axis range and the bin widths are determined automatically from a cached sample of initial values. They cannot be used for multi-dimensional data. Boost.Histogram focusses on multi-dimensional data and gives the user full control of how the binning should be done for each dimension.
 
 Automatic binning is not an option for Boost.Histogram, because it does not scale well to many dimensions. Because of the Curse of Dimensionality, a prohibitive number of samples would need to be collected.
 
@@ -174,7 +174,7 @@ Recommendation:
 
 [endsect]
 
-[section Why is Boost.Histogram not build on top of Boost.MultiArray?]
+[section Why is Boost.Histogram not built on top of Boost.MultiArray?]
 
 Boost.MultiArray implements a multi-dimensional array, it also converts an index tuple into a global index that is used to access an element in the array. Boost.Histogram and Boost.MultiArray share this functionality, but Boost.Histogram cannot use Boost.MultiArray as a backend. Boost.MultiArray does not allow to change the element type dynamically, like it is needed to implement the adaptive storage mentioned further up. Using a variant type as the element type of a Boost.MultiArray would not work, because it creates this wasteful layout:
 

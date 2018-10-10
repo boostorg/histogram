@@ -4,6 +4,7 @@ import sys
 import re
 from collections import defaultdict, OrderedDict
 from matplotlib.patches import Rectangle
+from matplotlib.lines import Line2D
 from matplotlib.text import Text
 from matplotlib.font_manager import FontProperties
 
@@ -30,16 +31,16 @@ plt.subplots_adjust(left=0.12, right=0.92, top=0.95, bottom=0.1)
 i = 0
 for dim in sorted(data):
 	v = data[dim]
-	v2 = []
 	labels = OrderedDict()
 	for label, dist, time in v:
 		if label in labels:
-			labels[label].append(time)
+			labels[label][dist] = time
 		else:
-			labels[label] = [time]
+			labels[label] = {dist: time}
 	j = 0
-	for label,v in labels.items():
-		tmin, tmax = sorted(v)
+	for label, d in labels.items():
+		t1 = d["uniform"]
+		t2 = d["normal"]
 		i -= 1
 		z = float(j) / len(labels)
 		col = ((1.0-z) * np.array((1.0, 0.0, 0.0))
@@ -54,8 +55,10 @@ for dim in sorted(data):
 		# r2 = Rectangle((0, i), tmax, 1, facecolor="None", edgecolor=col)
 		# plt.gca().add_artist(r1)
 		# plt.gca().add_artist(r2)
-		r = Rectangle((0, i), 0.5 * (tmin + tmax), 1, facecolor=col)
-		plt.gca().add_artist(r)
+		r1 = Rectangle((0, i), t1, 0.5, facecolor=col)
+		r2 = Rectangle((0, i+0.5), t2, 0.5, facecolor=col)
+		plt.gca().add_artist(r1)
+		plt.gca().add_artist(r2)
 		tx = Text(-0.01, i+0.5, "%s" % label,
 			      fontsize=17, va="center", ha="right", clip_on=False)
 		plt.gca().add_artist(tx)

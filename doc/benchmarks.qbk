@@ -9,7 +9,8 @@ The following plot shows results of a benchmark on a 2.9 GHz Macbook Pro. Random
 [variablelist Plot legend:
 	[[root] [[@https://root.cern.ch ROOT classes] (`TH1I` for 1D, `TH3I` for 3D and `THnI` for 6D)]]
 	[[py:numpy] [numpy functions ([python]`numpy.histogram` for 1D, `numpy.histogramdd` for 2D, 3D, and 6D)]]
-	[[hs_ss] [[funcref boost::histogram::make_static_histogram static histogram] with [classref boost::histogram::array_storage<int>]]]
+	[[gsl] [[@https://www.gnu.org/software/gsl/doc/html/histogram.html GSL histograms] for 1D and 2D]]
+    [[hs_ss] [[funcref boost::histogram::make_static_histogram static histogram] with [classref boost::histogram::array_storage<int>]]]
 	[[hs_sd] [[funcref boost::histogram::make_static_histogram static histogram] with [classref boost::histogram::adaptive_storage]]]
 	[[hd_ss] [[funcref boost::histogram::make_dynamic_histogram dynamic histogram] with [classref boost::histogram::array_storage<int>]]]
 	[[hd_sd] [[funcref boost::histogram::make_dynamic_histogram dynamic histogram] with [classref boost::histogram::adaptive_storage]]]
