@@ -29,7 +29,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Static and dynamic implementation with common interface
 * High dynamic range using [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/): Counters cannot overflow or be capped (+)
 * Better performance than other libraries (see benchmarks for details)
-* Fast compilation thanks to modern template meta-programming using [Boost.Mp11](https://www.boost.org/doc/libs/release/libs/mp11/)
+* Fast compilation thanks to template meta-programming using [Boost.Mp11](https://www.boost.org/doc/libs/release/libs/mp11/)
 * Efficient move operations
 * Efficient conversion between static and dynamic implementation
 * Efficient use of memory (counter capacity dynamically grows as needed)
@@ -122,7 +122,7 @@ Thanks to meta-programming and dynamic memory management, this library is not on
 
 ## Rationale
 
-There is a lack of a widely-used free histogram class in C++. While it is easy to write a one-dimensional histogram, writing a general multi-dimensional histogram is not trivial. In high-energy physics, the [ROOT framework](https://root.cern.ch) from CERN is widely used. This histogram class is designed to be more convenient, flexible, and faster than the equivalent ROOT histograms. It is easy to integrate in your project if you already use Boost. The library comes in a modern C++11 design which follows the STL and Boost styles, and the general advice given by popular C++ experts ([Meyers](http://www.aristeia.com/books.html), [Sutter and Alexandrescu](http://www.gotw.ca/publications/c++cs.htm), and others).
+There is a lack of a widely-used free histogram class in C++. While it is easy to write a one-dimensional histogram, writing a general multi-dimensional histogram is not trivial. In high-energy physics, the [ROOT framework](https://root.cern.ch) from CERN is widely used. This histogram class is designed to be more convenient, flexible, and faster than the equivalent ROOT histograms. It is easy to integrate in your project if you already use Boost. The library comes in a C++11 design which follows the STL and Boost styles, and the general advice given by popular C++ experts ([Meyers](http://www.aristeia.com/books.html), [Sutter and Alexandrescu](http://www.gotw.ca/publications/c++cs.htm), and others).
 
 Read more about the design choices in the [documentation](http://hdembinski.github.io/histogram/doc/html/histogram/rationale.html)
 

@@ -3,7 +3,7 @@
 #include <boost/histogram.hpp>
 #include <iostream>
 
-int main(int, char**) {
+int main() {
   namespace bh = boost::histogram;
   using namespace bh::literals; // enables _c suffix
 

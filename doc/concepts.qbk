@@ -2,11 +2,11 @@
 
 Users can extend the library with new axis and storage types.
 
-[section:axis Axis type]
+[section:axis AxisType]
 
-An `axis_type` converts input values into bin indices.
+An `AxisType` converts input values into bin indices.
 
-An `axis_type` is required to:
+An `AxisType` is required to:
 
 * derive publically from [classref boost::histogram::axis::labeled_base] and [classref boost::histogram::axis::iterator_mixin]
 * be default/copy/move constructable
@@ -28,11 +28,11 @@ It is recommended to take a look at the existing axis types, like [classref boos
 
 [endsect]
 
-[section:storage Storage type]
+[section:storage StorageType]
 
-A `storage_type` handles memory for the bin counters and provides a uniform interface for incrementing bin counters and reading their values.
+A `StorageType` handles memory for the bin counters and provides a uniform interface for incrementing bin counters and reading their values.
 
-A `storage_type` is required to:
+A `StorageType` is required to:
 
 * be default/copy/move constructable
 * be copy/move assignable
