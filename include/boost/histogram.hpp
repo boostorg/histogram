@@ -7,7 +7,7 @@
 #ifndef BOOST_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_HPP
 
-#include <boost/histogram/axis/any.hpp>
+#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>

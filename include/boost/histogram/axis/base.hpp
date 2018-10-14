@@ -1,4 +1,4 @@
-// Copyright 2015-2017 Hans Dembinski
+// Copyright 2015-2018 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -7,107 +7,106 @@
 #ifndef BOOST_HISTOGRAM_AXIS_BASE_HPP
 #define BOOST_HISTOGRAM_AXIS_BASE_HPP
 
-#include <boost/config.hpp>
-#include <boost/container/string.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/axis/iterator.hpp>
-#include <boost/utility/string_view.hpp>
+#include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <stdexcept>
-
-// forward declaration for serialization
-namespace boost {
-namespace serialization {
-class access;
-} // namespace serialization
-} // namespace boost
+#include <limits>
+#include <utility>
 
 namespace boost {
 namespace histogram {
 namespace axis {
 
-enum class uoflow_type { off = 0, oflow = 1, on = 2 };
-
 /// Base class for all axes
-class base {
+template <typename MetaData>
+class base
+{
+  using metadata_type = MetaData;
+  struct data : metadata_type // empty base class optimization
+  {
+    int size = 0;
+    option_type opt = option_type::none;
+
+    data() = default;
+    data(const data&) = default;
+    data& operator=(const data&) = default;
+    data(data&& rhs)
+      : metadata_type(std::move(rhs))
+      , size(rhs.size), opt(rhs.opt)
+    { rhs.size = 0; rhs.opt = option_type::none; }
+    data& operator=(data&& rhs) {
+      if (this != &rhs) {
+        metadata_type::operator=(std::move(rhs));
+        size = rhs.size;
+        opt = rhs.opt;
+        rhs.size = 0;
+        rhs.opt = option_type::none;
+      }
+      return *this;
+    }
+    data(const metadata_type& m, int s, option_type o)
+    : metadata_type(m), size(s), opt(o) {}
+
+    bool operator==(const data& rhs) const noexcept {
+      return size == rhs.size && opt == rhs.opt &&
+        equal_impl(detail::is_equal_comparable<metadata_type>(), rhs);
+    }
+
+    bool equal_impl(std::true_type, const metadata_type& rhs) const noexcept {
+      return static_cast<const metadata_type&>(*this) == rhs;
+    }
+
+    bool equal_impl(std::false_type, const metadata_type&) const noexcept {
+      return true;
+    }
+  };
+
 public:
-  /// Returns the number of bins without overflow/underflow.
-  int size() const noexcept { return size_; }
-  /// Returns the number of bins, including overflow/underflow if enabled.
-  int shape() const noexcept { return shape_; }
-  /// Returns number of extra bins to count under- or overflow.
-  int uoflow() const noexcept { return shape_ - size_; }
+  /// Returns the number of bins, without extra bins.
+  unsigned size() const noexcept { return data_.size; }
+  /// Returns the options.
+  option_type options() const noexcept { return data_.opt; }
+  /// Returns the metadata.
+  metadata_type& metadata() noexcept { return static_cast<metadata_type&>(data_); }
+  /// Returns the metadata (const version).
+  const metadata_type& metadata() const noexcept { return static_cast<const metadata_type&>(data_); }
+
+  template <class Archive>
+  void serialize(Archive&, unsigned);
+
+  friend void swap(base& a, base& b) noexcept // ADL works with friend functions
+  {
+    std::swap(static_cast<metadata_type&>(a), static_cast<metadata_type&>(b));
+    std::swap(a.data_.size, b.data_.size);
+    std::swap(a.data_.opt, b.data_.opt);
+  }
 
 protected:
-  base(unsigned size, axis::uoflow_type uo)
-      : size_(size), shape_(size + static_cast<int>(uo)) {
-    if (size_ == 0) { throw std::invalid_argument("bins > 0 required"); }
+  base(unsigned size, const metadata_type& m, option_type opt)
+      : data_(m, size, opt)
+  {
+    if (size == 0) { throw std::invalid_argument("bins > 0 required"); }
+    const auto max_index = std::numeric_limits<int>::max()
+      - static_cast<int>(data_.opt);
+    if (size > max_index)
+      throw std::invalid_argument(
+        detail::cat("bins <= ", max_index, " required")
+      );
   }
 
   base() = default;
-  base(const base&) = default;
-  base& operator=(const base&) = default;
-  base(base&& rhs) : size_(rhs.size_), shape_(rhs.shape_) {
-    rhs.size_ = 0;
-    rhs.shape_ = 0;
-  }
-  base& operator=(base&& rhs) {
-    if (this != &rhs) {
-      size_ = rhs.size_;
-      shape_ = rhs.shape_;
-      rhs.size_ = 0;
-      rhs.shape_ = 0;
-    }
-    return *this;
-  }
 
   bool operator==(const base& rhs) const noexcept {
-    return size_ == rhs.size_ && shape_ == rhs.shape_;
+    return data_ == rhs.data_;
   }
 
 private:
-  int size_ = 0, shape_ = 0;
-
-  friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive&, unsigned);
+  data data_;
 };
 
-/// Base class with a label
-template <typename Allocator>
-class labeled_base : public base {
-public:
-  using allocator_type = Allocator;
-
-  allocator_type get_allocator() const { return label_.get_allocator(); }
-
-  /// Returns the axis label, which is a name or description.
-  boost::string_view label() const noexcept { return label_; }
-  /// Change the label of an axis.
-  void label(boost::string_view label) { label_.assign(label.begin(), label.end()); }
-
-  bool operator==(const labeled_base& rhs) const noexcept {
-    return base::operator==(rhs) && label_ == rhs.label_;
-  }
-
-protected:
-  labeled_base() = default;
-  labeled_base(const labeled_base&) = default;
-  labeled_base& operator=(const labeled_base&) = default;
-  labeled_base(labeled_base&& rhs) = default;
-  labeled_base& operator=(labeled_base&& rhs) = default;
-
-  labeled_base(unsigned size, axis::uoflow_type uo, string_view label,
-               const allocator_type& a)
-      : base(size, uo), label_(label.begin(), label.end(), a) {}
-
-private:
-  boost::container::basic_string<char, std::char_traits<char>, allocator_type> label_;
-
-  friend class ::boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive&, unsigned);
-};
-
-/// Iterator mixin, uses CRTP to inject iterator logic into Derived.
+/// Uses CRTP to inject iterator logic into Derived.
 template <typename Derived>
 class iterator_mixin {
 public:

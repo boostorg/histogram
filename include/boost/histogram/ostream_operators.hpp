@@ -20,8 +20,8 @@ template <typename OStream>
 struct axis_ostream_visitor {
   OStream& os_;
   explicit axis_ostream_visitor(OStream& os) : os_(os) {}
-  template <typename Axis>
-  void operator()(const Axis& a) const {
+  template <typename T>
+  void operator()(const T& a) const {
     os_ << "\n  " << a << ",";
   }
 };
