@@ -88,8 +88,8 @@ protected:
       : data_(m, size, opt)
   {
     if (size == 0) { throw std::invalid_argument("bins > 0 required"); }
-    const auto max_index = std::numeric_limits<int>::max()
-      - static_cast<int>(data_.opt);
+    const auto max_index = static_cast<unsigned>(std::numeric_limits<int>::max()
+      - static_cast<int>(data_.opt));
     if (size > max_index)
       throw std::invalid_argument(
         detail::cat("bins <= ", max_index, " required")
