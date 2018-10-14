@@ -15,7 +15,7 @@
 
 namespace bh = boost::histogram;
 using adaptive_storage_type = bh::adaptive_storage<std::allocator<char>>;
-template <typename T> using array_storage = bh::array_storage<T, T, std::allocator<T>>;
+template <typename T> using array_storage = bh::array_storage<T, std::allocator<T>>;
 using bh::weight;
 
 template <typename T>
@@ -53,8 +53,7 @@ template <typename T>
 void equal_impl() {
   auto a = prepare<void>(1);
   auto b = prepare(1, T(0));
-  BOOST_TEST_EQ(a[0].value(), 0.0);
-  BOOST_TEST_EQ(a[0].variance(), 0.0);
+  BOOST_TEST_EQ(a[0], 0.0);
   BOOST_TEST(a == b);
   b.increase(0);
   BOOST_TEST(!(a == b));
@@ -73,8 +72,7 @@ void equal_impl<void>() {
   auto b = prepare<uint8_t>(1, 0);
   auto c = prepare<uint8_t>(2, 0);
   auto d = prepare<unsigned>(1);
-  BOOST_TEST_EQ(a[0].value(), 0.0);
-  BOOST_TEST_EQ(a[0].variance(), 0.0);
+  BOOST_TEST_EQ(a[0], 0.0);
   BOOST_TEST(a == b);
   BOOST_TEST(b == a);
   BOOST_TEST(a == d);
@@ -100,24 +98,24 @@ void increase_and_grow_impl() {
 
   auto x = prepare<void>(2);
   x.increase(0);
-  n2.add(0, x[0].value());
+  n2.add(0, x[0]);
 
   double v = tmax;
   ++v;
-  BOOST_TEST_EQ(n[0].value(), v);
-  BOOST_TEST_EQ(n2[0].value(), v);
-  BOOST_TEST_EQ(n[1].value(), 0.0);
-  BOOST_TEST_EQ(n2[1].value(), 0.0);
+  BOOST_TEST_EQ(n[0], v);
+  BOOST_TEST_EQ(n2[0], v);
+  BOOST_TEST_EQ(n[1], 0.0);
+  BOOST_TEST_EQ(n2[1], 0.0);
 }
 
 template <>
 void increase_and_grow_impl<void>() {
   auto s = prepare<void>(2);
-  BOOST_TEST_EQ(s[0].value(), 0);
-  BOOST_TEST_EQ(s[1].value(), 0);
+  BOOST_TEST_EQ(s[0], 0);
+  BOOST_TEST_EQ(s[1], 0);
   s.increase(0);
-  BOOST_TEST_EQ(s[0].value(), 1);
-  BOOST_TEST_EQ(s[1].value(), 0);
+  BOOST_TEST_EQ(s[0], 1);
+  BOOST_TEST_EQ(s[1], 0);
 }
 
 template <typename T>
@@ -129,20 +127,20 @@ void convert_array_storage_impl() {
 
   auto a = aref;
   a = s;
-  BOOST_TEST_EQ(a[0].value(), 1.0);
+  BOOST_TEST_EQ(a[0], 1.0);
   BOOST_TEST(a == s);
   a.increase(0);
   BOOST_TEST(!(a == s));
 
   adaptive_storage_type b(s);
-  BOOST_TEST_EQ(b[0].value(), 1.0);
+  BOOST_TEST_EQ(b[0], 1.0);
   BOOST_TEST(b == s);
   b.increase(0);
   BOOST_TEST(!(b == s));
 
   auto c = aref;
   c.add(0, s[0]);
-  BOOST_TEST_EQ(c[0].value(), 1.0);
+  BOOST_TEST_EQ(c[0], 1.0);
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
 
@@ -156,20 +154,20 @@ void convert_array_storage_impl() {
 
   auto e = aref;
   e = s;
-  BOOST_TEST_EQ(e[0].value(), 1.0);
+  BOOST_TEST_EQ(e[0], 1.0);
   BOOST_TEST(e == s);
   e.increase(0);
   BOOST_TEST(!(e == s));
 
   adaptive_storage_type f(s);
-  BOOST_TEST_EQ(f[0].value(), 1.0);
+  BOOST_TEST_EQ(f[0], 1.0);
   BOOST_TEST(f == s);
   f.increase(0);
   BOOST_TEST(!(f == s));
 
   auto g = aref;
   g.add(0, s[0]);
-  BOOST_TEST_EQ(g[0].value(), 1.0);
+  BOOST_TEST_EQ(g[0], 1.0);
   BOOST_TEST(g == s);
   BOOST_TEST(s == g);
 
@@ -185,21 +183,21 @@ void convert_array_storage_impl() {
 template <>
 void convert_array_storage_impl<void>() {
   const auto aref = prepare<void>(1);
-  BOOST_TEST_EQ(aref[0].value(), 0.0);
+  BOOST_TEST_EQ(aref[0], 0.0);
   array_storage<uint8_t> s;
   s.reset(1);
   s.increase(0);
 
   auto a = aref;
   a = s;
-  BOOST_TEST_EQ(a[0].value(), 1.0);
+  BOOST_TEST_EQ(a[0], 1.0);
   BOOST_TEST(a == s);
   a.increase(0);
   BOOST_TEST(!(a == s));
 
   auto c = aref;
   c.add(0, s[0]);
-  BOOST_TEST_EQ(c[0].value(), 1.0);
+  BOOST_TEST_EQ(c[0], 1.0);
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
 
@@ -216,15 +214,14 @@ void add_impl() {
   auto b = prepare<RHS>(2);
   if (std::is_same<RHS, void>::value) {
     a += b;
-    BOOST_TEST_EQ(a[0].value(), 0);
-    BOOST_TEST_EQ(a[1].value(), 0);
+    BOOST_TEST_EQ(a[0], 0);
+    BOOST_TEST_EQ(a[1], 0);
   } else {
     b.increase(0);
     b.increase(0);
     a += b;
-    BOOST_TEST_EQ(a[0].value(), 2);
-    BOOST_TEST_EQ(a[0].variance(), 2);
-    BOOST_TEST_EQ(a[1].value(), 0);
+    BOOST_TEST_EQ(a[0], 2);
+    BOOST_TEST_EQ(a[1], 0);
   }
 }
 
@@ -236,7 +233,7 @@ void add_impl_all_rhs() {
   add_impl<LHS, uint32_t>();
   add_impl<LHS, uint64_t>();
   add_impl<LHS, adaptive_storage_type::mp_int>();
-  add_impl<LHS, adaptive_storage_type::wcount>();
+  add_impl<LHS, double>();
 }
 
 int main() {
@@ -270,7 +267,7 @@ int main() {
 
   // copy
   {
-    copy_impl<adaptive_storage_type::wcount>();
+    copy_impl<double>();
     copy_impl<void>();
     copy_impl<uint8_t>();
     copy_impl<uint16_t>();
@@ -287,7 +284,7 @@ int main() {
     equal_impl<uint32_t>();
     equal_impl<uint64_t>();
     equal_impl<adaptive_storage_type::mp_int>();
-    equal_impl<adaptive_storage_type::wcount>();
+    equal_impl<double>();
   }
 
   // increase_and_grow
@@ -300,11 +297,11 @@ int main() {
 
     // only increase for mp_int
     auto a = prepare<adaptive_storage_type::mp_int>(2, 1);
-    BOOST_TEST_EQ(a[0].value(), 1);
-    BOOST_TEST_EQ(a[1].value(), 0);
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_EQ(a[1], 0);
     a.increase(0);
-    BOOST_TEST_EQ(a[0].value(), 2);
-    BOOST_TEST_EQ(a[1].value(), 0);
+    BOOST_TEST_EQ(a[0], 2);
+    BOOST_TEST_EQ(a[1], 0);
   }
 
   // add
@@ -315,38 +312,33 @@ int main() {
     add_impl_all_rhs<uint32_t>();
     add_impl_all_rhs<uint64_t>();
     add_impl_all_rhs<adaptive_storage_type::mp_int>();
-    add_impl_all_rhs<adaptive_storage_type::wcount>();
+    add_impl_all_rhs<double>();
   }
 
   // add_and_grow
   {
     auto a = prepare<void>(1);
     a += a;
-    BOOST_TEST_EQ(a[0].value(), 0);
+    BOOST_TEST_EQ(a[0], 0);
     a.increase(0);
     double x = 1;
     auto b = prepare<void>(1);
     b.increase(0);
-    BOOST_TEST_EQ(b[0].value(), x);
+    BOOST_TEST_EQ(b[0], x);
     for (unsigned i = 0; i < 80; ++i) {
       x += x;
-      a.add(0, a[0].value());
+      a.add(0, a[0]);
       b += b;
-      BOOST_TEST_EQ(a[0].value(), x);
-      BOOST_TEST_EQ(a[0].variance(), x);
-      BOOST_TEST_EQ(b[0].value(), x);
-      BOOST_TEST_EQ(b[0].variance(), x);
+      BOOST_TEST_EQ(a[0], x);
+      BOOST_TEST_EQ(b[0], x);
       auto c = prepare<void>(1);
-      c.add(0, a[0].value());
-      BOOST_TEST_EQ(c[0].value(), x);
-      BOOST_TEST_EQ(c[0].variance(), x);
+      c.add(0, a[0]);
+      BOOST_TEST_EQ(c[0], x);
       c.add(0, weight(0));
-      BOOST_TEST_EQ(c[0].value(), x);
-      BOOST_TEST_EQ(c[0].variance(), x);
+      BOOST_TEST_EQ(c[0], x);
       auto d = prepare<void>(1);
       d.add(0, weight(x));
-      BOOST_TEST_EQ(d[0].value(), x);
-      BOOST_TEST_EQ(d[0].variance(), x * x);
+      BOOST_TEST_EQ(d[0], x);
     }
   }
 
@@ -354,24 +346,18 @@ int main() {
   {
     auto a = prepare<void>(2);
     a *= 2;
-    BOOST_TEST_EQ(a[0].value(), 0);
-    BOOST_TEST_EQ(a[1].value(), 0);
+    BOOST_TEST_EQ(a[0], 0);
+    BOOST_TEST_EQ(a[1], 0);
     a.increase(0);
     a *= 3;
-    BOOST_TEST_EQ(a[0].value(), 3);
-    BOOST_TEST_EQ(a[0].variance(), 9);
-    BOOST_TEST_EQ(a[1].value(), 0);
-    BOOST_TEST_EQ(a[1].variance(), 0);
-    a.add(1, adaptive_storage_type::element_type(2, 5));
-    BOOST_TEST_EQ(a[0].value(), 3);
-    BOOST_TEST_EQ(a[0].variance(), 9);
-    BOOST_TEST_EQ(a[1].value(), 2);
-    BOOST_TEST_EQ(a[1].variance(), 5);
+    BOOST_TEST_EQ(a[0], 3);
+    BOOST_TEST_EQ(a[1], 0);
+    a.add(1, 2);
+    BOOST_TEST_EQ(a[0], 3);
+    BOOST_TEST_EQ(a[1], 2);
     a *= 3;
-    BOOST_TEST_EQ(a[0].value(), 9);
-    BOOST_TEST_EQ(a[0].variance(), 81);
-    BOOST_TEST_EQ(a[1].value(), 6);
-    BOOST_TEST_EQ(a[1].variance(), 45);
+    BOOST_TEST_EQ(a[0], 9);
+    BOOST_TEST_EQ(a[1], 6);
   }
 
   // convert_array_storage
@@ -382,7 +368,7 @@ int main() {
     convert_array_storage_impl<uint32_t>();
     convert_array_storage_impl<uint64_t>();
     convert_array_storage_impl<adaptive_storage_type::mp_int>();
-    convert_array_storage_impl<adaptive_storage_type::wcount>();
+    convert_array_storage_impl<double>();
   }
 
   return boost::report_errors();

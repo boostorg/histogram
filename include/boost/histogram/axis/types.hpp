@@ -15,8 +15,6 @@
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/mp11.hpp>
-#include <boost/callable_traits/args.hpp>
-#include <boost/callable_traits/return_type.hpp>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -32,8 +30,8 @@ namespace transform {
 
 template <typename T>
 struct identity {
-  T forward(T x) { return x; }
-  T inverse(T x) { return x; }
+  static T forward(T x) { return x; }
+  static T inverse(T x) { return x; }
 
   constexpr bool operator==(const identity&) const noexcept { return true; }
   template <class Archive>
@@ -42,23 +40,27 @@ struct identity {
 
 template <typename T>
 struct log : public identity<T> {
-  T forward(T x) { return std::log(x); }
-  T inverse(T x) { return std::exp(x); }
+  static T forward(T x) { return std::log(x); }
+  static T inverse(T x) { return std::exp(x); }
 };
 
 template <typename T>
 struct sqrt : public identity<T> {
-  T forward(T x) { return std::sqrt(x); }
-  T inverse(T x) { return x * x; }
+  static T forward(T x) { return std::sqrt(x); }
+  static T inverse(T x) { return x * x; }
 };
 
 template <typename T>
-struct unit {
+struct quantity {
   T unit;
   using U = decltype(std::declval<T>() / std::declval<T>());
 
-  U forward(T x) { return x / unit; }
-  T inverse(U x) { return x * unit; }
+  U forward(T x) const { return x / unit; }
+  T inverse(U x) const { return x * unit; }
+
+  bool operator==(const quantity& o) const noexcept { return unit == o.unit; }
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 };
 
 template <typename T>
@@ -71,7 +73,7 @@ struct pow {
   T forward(T v) const { return std::pow(v, power); }
   T inverse(T v) const { return std::pow(v, 1.0 / power); }
 
-  bool operator==(const pow& other) const noexcept { return power == other.power; }
+  bool operator==(const pow& o) const noexcept { return power == o.power; }
   template <class Archive>
   void serialize(Archive&, unsigned);
 };
@@ -88,12 +90,8 @@ class regular : public base<MetaData>,
 {
   using base_type = base<MetaData>;
   using transform_type = Transform;
-  using value_type = boost::mp11::mp_first<
-    boost::callable_traits::args_t<
-      decltype(&transform_type::forward)
-    >
-  >;
-  using internal_type = boost::callable_traits::return_type<
+  using value_type = detail::arg_type<-1, decltype(&transform_type::forward)>;
+  using internal_type = detail::return_type<
     decltype(&transform_type::forward)
   >;
   static_assert(std::is_floating_point<internal_type>::value,
@@ -105,8 +103,8 @@ class regular : public base<MetaData>,
 
     data(const transform_type& t, unsigned n, value_type b, value_type e)
     : transform_type(t)
-    , min(forward(b))
-    , delta((forward(e) - forward(b))/n)
+    , min(this->forward(b))
+    , delta((this->forward(e) - this->forward(b))/n)
     {}
 
     data() = default;

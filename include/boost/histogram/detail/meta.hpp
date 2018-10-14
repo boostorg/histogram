@@ -9,6 +9,8 @@
 
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
+#include <boost/callable_traits/args.hpp>
+#include <boost/callable_traits/return_type.hpp>
 #include <iterator>
 #include <limits>
 #include <tuple>
@@ -108,8 +110,8 @@ using rm_cv_ref = typename std::remove_cv<typename std::remove_reference<T>::typ
 template <class T>
 using mp_size = mp11::mp_size<rm_cv_ref<T>>;
 
-template <typename T, unsigned D>
-using mp_at_c = mp11::mp_at_c<rm_cv_ref<T>, D>;
+template <typename T, unsigned N>
+using mp_at_c = mp11::mp_at_c<rm_cv_ref<T>, N>;
 
 template <typename T1, typename T2>
 using copy_qualifiers = mp11::mp_if<
@@ -126,10 +128,19 @@ template <typename L>
 using mp_last = mp11::mp_at_c<L, (mp11::mp_size<L>::value - 1)>;
 
 template <typename T>
-using container_element_type = rm_cv_ref<decltype(*std::begin(std::declval<T&>()))>;
+using container_element_type = mp11::mp_first<T>;
 
 template <typename T>
 using iterator_value_type = rm_cv_ref<decltype(*std::declval<T&>())>;
+
+template <typename T>
+using return_type = typename boost::callable_traits::return_type<T>::type;
+
+template <typename T>
+using args_type = boost::callable_traits::args_t<T>;
+
+template <int N, typename T>
+using arg_type = typename mp11::mp_at_c<args_type<T>, (N < 0 ? mp11::mp_size<args_type<T>>::value + N : N)>;
 
 } // namespace detail
 } // namespace histogram

@@ -26,7 +26,7 @@ namespace transform {
 template <typename T=double> struct identity;
 template <typename T=double> struct log;
 template <typename T=double> struct sqrt;
-template <typename T=double> struct unit;
+template <typename T=double> struct quantity;
 template <typename T=double> struct pow;
 } // namespace transform
 
@@ -60,7 +60,7 @@ class variant;
 template <typename Allocator = std::allocator<char>>
 struct adaptive_storage;
 
-template <typename T, typename ScaleType = T, typename Allocator = std::allocator<T>>
+template <typename T, typename Allocator = std::allocator<T>>
 struct array_storage;
 
 using default_storage = adaptive_storage<>;

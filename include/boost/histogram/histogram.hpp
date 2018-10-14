@@ -36,7 +36,6 @@ public:
   using storage_type = Storage;
   using element_type = typename storage_type::element_type;
   using const_reference = typename storage_type::const_reference;
-  using scale_type = typename storage_type::scale_type;
   using const_iterator = iterator_over<histogram>;
 
   histogram() = default;
@@ -85,15 +84,13 @@ public:
     return *this;
   }
 
-  histogram& operator*=(const scale_type& rhs) {
-    storage_ *= rhs;
+  histogram& operator*=(const double x) {
+    storage_ *= x;
     return *this;
   }
 
-  histogram& operator/=(const scale_type& rhs) {
-    static_assert(std::is_floating_point<scale_type>::value,
-                  "division requires a floating point type");
-    storage_ *= scale_type(1) / rhs;
+  histogram& operator/=(const double x) {
+    storage_ *= 1.0 / x;
     return *this;
   }
 
@@ -156,7 +153,7 @@ public:
 
   /// Fill histogram with a weight and a value tuple
   template <typename U, typename... Ts>
-  void operator()(detail::weight_type<U>&& w, const Ts&... ts) {
+  void operator()(weight_type<U>&& w, const Ts&... ts) {
     // case with one argument needs special treatment, specialized below
     const auto index = detail::call_impl(detail::no_container_tag(), axes_, ts...);
     if (index) storage_.add(*index, w);
@@ -179,7 +176,7 @@ public:
   }
 
   template <typename U, typename T>
-  void operator()(detail::weight_type<U>&& w, const T& t) {
+  void operator()(weight_type<U>&& w, const T& t) {
     // check whether we need to unpack argument
     const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
     if (index) storage_.add(*index, w);
@@ -285,7 +282,8 @@ auto make_histogram(T&& axis0, Ts&&... axis)
 }
 
 /// dynamic type factory from vector-like with custom storage type
-template <typename S, typename T, typename = detail::requires_vector<T>>
+template <typename S, typename T, typename = detail::requires_vector<T>,
+          typename = detail::requires_axis<detail::container_element_type<T>>>
 histogram<detail::rm_cv_ref<T>, detail::rm_cv_ref<S>>
 make_histogram_with(S&& s, T&& t) {
   return histogram<detail::rm_cv_ref<T>, detail::rm_cv_ref<S>>(
@@ -294,7 +292,8 @@ make_histogram_with(S&& s, T&& t) {
 }
 
 /// dynamic type factory from vector-like with standard storage type
-template <typename T, typename = detail::requires_vector<T>>
+template <typename T, typename = detail::requires_vector<T>,
+          typename = detail::requires_axis<detail::container_element_type<T>>>
 auto make_histogram(T&& t)
   -> decltype(make_histogram_with(default_storage(), std::forward<T>(t)))
 {
@@ -311,13 +310,13 @@ make_histogram_with(Storage&& s, Iterator begin, Iterator end) {
   return make_histogram_with(std::forward<Storage>(s), std::move(axes));
 }
 
-/// dynamic type factory from iterator range with standard storage type
-template <typename Iterator, typename = detail::requires_iterator<Iterator>>
-auto make_histogram(Iterator begin, Iterator end)
-  -> decltype(make_histogram_with(default_storage(), begin, end))
-{
-  return make_histogram_with(default_storage(), begin, end);
-}
+// /// dynamic type factory from iterator range with standard storage type
+// template <typename Iterator, typename = detail::requires_iterator<Iterator>>
+// auto make_histogram(Iterator begin, Iterator end)
+//   -> decltype(make_histogram_with(default_storage(), begin, end))
+// {
+//   return make_histogram_with(default_storage(), begin, end);
+// }
 } // namespace histogram
 } // namespace boost
 

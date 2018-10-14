@@ -2,6 +2,7 @@
 
 #include <boost/histogram.hpp>
 #include <vector>
+#include <cassert>
 
 namespace bh = boost::histogram;
 
@@ -15,13 +16,11 @@ int main() {
 
   // create dynamic histogram from iterator range
   auto h = bh::make_histogram(v.begin(), v.end());
-
-  // do something with h
+  assert(h.rank() == 2);
 
   // create dynamic histogram by moving the vector (this avoids copies)
   auto h2 = bh::make_histogram(std::move(v));
-
-  // do something with h2
+  assert(h2.rank() == 2);
 }
 
 //]

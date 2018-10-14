@@ -14,11 +14,11 @@ struct custom_axis : public bh::axis::integer<> {
   // the customization point
   // - accept const char* and convert to int
   // - then call index method of base class
-  int index(value_type s) const { return integer::index(std::atoi(s)); }
+  int operator()(value_type s) const { return integer::operator()(std::atoi(s)); }
 };
 
 int main() {
-  auto h = bh::make_static_histogram(custom_axis(0, 3));
+  auto h = bh::make_histogram(custom_axis(0, 3));
   h("-10");
   h("0");
   h("1");
