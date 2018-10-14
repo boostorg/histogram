@@ -10,7 +10,8 @@
 #include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/core/ignore_unused.hpp>
-#include <boost/histogram/axis/any.hpp>
+#include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
@@ -217,7 +218,7 @@ struct field_counter {
   std::size_t value = 1;
   template <typename T>
   void operator()(const T& t) {
-    value *= t.shape();
+    value *= axis::traits<T>::extend(t);
   }
 };
 }
@@ -257,7 +258,7 @@ struct shape_collector {
   shape_collector(std::vector<unsigned>::iterator i) : iter(i) {}
   template <typename T>
   void operator()(const T& a) {
-    *iter++ = a.shape();
+    *iter++ = axis::traits<T>::extend(a);
   }
 };
 

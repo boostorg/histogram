@@ -12,6 +12,7 @@
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/axis/value_view.hpp>
+#include <boost/utility/string_view.hpp>
 #include <ostream>
 
 namespace boost {
@@ -19,12 +20,12 @@ namespace histogram {
 namespace axis {
 
 namespace detail {
-inline string_view to_string(const transform::identity&) { return {}; }
-inline string_view to_string(const transform::log&) { return {"_log", 4}; }
-inline string_view to_string(const transform::sqrt&) { return {"_sqrt", 5}; }
+inline ::boost::string_view to_string(const transform::identity&) { return {}; }
+inline ::boost::string_view to_string(const transform::log&) { return {"_log", 4}; }
+inline ::boost::string_view to_string(const transform::sqrt&) { return {"_sqrt", 5}; }
 
 template <typename OStream>
-void escape_string(OStream& os, const string_view s) {
+void escape_string(OStream& os, const ::boost::string_view s) {
   os << '\'';
   for (auto sit = s.begin(); sit != s.end(); ++sit) {
     if (*sit == '\'' && (sit == s.begin() || *(sit - 1) != '\\')) {
@@ -51,30 +52,30 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   return os;
 }
 
-template <typename CharT, typename Traits, typename T, typename U, typename A>
+template <typename CharT, typename Traits, typename T, typename M>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const regular<T, U, A>& a) {
+                                              const regular<T, M>& a) {
   os << "regular" << detail::to_string(a.transform()) << "(" << a.size() << ", "
-     << a[0].lower() << ", " << a[a.size()].lower();
-  if (!a.label().empty()) {
-    os << ", label=";
-    detail::escape_string(os, a.label());
-  }
-  if (!a.uoflow()) { os << ", uoflow=False"; }
+     << a.lower(0) << ", " << a.lower(a.size());
+  // if (!a.label().empty()) {
+  //   os << ", label=";
+  //   detail::escape_string(os, a.label());
+  // }
+  // if (!a.uoflow()) { os << ", uoflow=False"; }
   os << ")";
   return os;
 }
 
-template <typename CharT, typename Traits, typename T, typename A>
+template <typename CharT, typename Traits, typename T, typename M>
 std::basic_ostream<CharT, Traits>& operator<<(
-    std::basic_ostream<CharT, Traits>& os, const regular<axis::transform::pow, T, A>& a) {
-  os << "regular_pow(" << a.size() << ", " << a[0].lower() << ", " << a[a.size()].lower()
+    std::basic_ostream<CharT, Traits>& os, const regular<axis::transform::pow<T>, M>& a) {
+  os << "regular_pow(" << a.size() << ", " << a.lower(0) << ", " << a.lower(a.size())
      << ", " << a.transform().power;
-  if (!a.label().empty()) {
-    os << ", label=";
-    detail::escape_string(os, a.label());
-  }
-  if (!a.uoflow()) { os << ", uoflow=False"; }
+  // if (!a.label().empty()) {
+  //   os << ", label=";
+  //   detail::escape_string(os, a.label());
+  // }
+  // if (!a.uoflow()) { os << ", uoflow=False"; }
   os << ")";
   return os;
 }
@@ -83,14 +84,16 @@ template <typename CharT, typename Traits, typename T, typename A>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const circular<T, A>& a) {
   os << "circular(" << a.size();
-  if (a.phase() != 0.0) { os << ", phase=" << a.phase(); }
-  if (a.perimeter() != circular<T, A>::two_pi()) {
-    os << ", perimeter=" << a.perimeter();
+  const auto phase = a.lower(0);
+  const auto perimeter = a.lower(a.size()) - a.lower(0);
+  if (phase != 0.0) { os << ", phase=" << phase; }
+  if (perimeter != circular<T, A>::two_pi()) {
+    os << ", perimeter=" << perimeter;
   }
-  if (!a.label().empty()) {
-    os << ", label=";
-    detail::escape_string(os, a.label());
-  }
+  // if (!a.label().empty()) {
+  //   os << ", label=";
+  //   detail::escape_string(os, a.label());
+  // }
   os << ")";
   return os;
 }
@@ -98,13 +101,13 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
 template <typename CharT, typename Traits, typename T, typename A>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const variable<T, A>& a) {
-  os << "variable(" << a[0].lower();
-  for (int i = 1; i <= a.size(); ++i) { os << ", " << a[i].lower(); }
-  if (!a.label().empty()) {
-    os << ", label=";
-    detail::escape_string(os, a.label());
-  }
-  if (!a.uoflow()) { os << ", uoflow=False"; }
+  os << "variable(" << a.lower(0);
+  for (int i = 1; i <= a.size(); ++i) { os << ", " << a.lower(i); }
+  // if (!a.label().empty()) {
+  //   os << ", label=";
+  //   detail::escape_string(os, a.label());
+  // }
+  // if (!a.uoflow()) { os << ", uoflow=False"; }
   os << ")";
   return os;
 }
@@ -112,12 +115,12 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
 template <typename CharT, typename Traits, typename T, typename A>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const integer<T, A>& a) {
-  os << "integer(" << a[0].lower() << ", " << a[a.size()].lower();
-  if (!a.label().empty()) {
-    os << ", label=";
-    detail::escape_string(os, a.label());
-  }
-  if (!a.uoflow()) { os << ", uoflow=False"; }
+  os << "integer(" << a.lower(0) << ", " << a.lower(a.size());
+  // if (!a.label().empty()) {
+  //   os << ", label=";
+  //   detail::escape_string(os, a.label());
+  // }
+  // if (!a.uoflow()) { os << ", uoflow=False"; }
   os << ")";
   return os;
 }
@@ -127,10 +130,10 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
                                               const category<T, A>& a) {
   os << "category(";
   for (int i = 0; i < a.size(); ++i) { os << a[i] << (i == (a.size() - 1) ? "" : ", "); }
-  if (!a.label().empty()) {
-    os << ", label=";
-    detail::escape_string(os, a.label());
-  }
+  // if (!a.label().empty()) {
+  //   os << ", label=";
+  //   detail::escape_string(os, a.label());
+  // }
   os << ")";
   return os;
 }
@@ -143,10 +146,10 @@ inline std::basic_ostream<CharT, Traits>& operator<<(
     detail::escape_string(os, a.value(i));
     os << (i == (a.size() - 1) ? "" : ", ");
   }
-  if (!a.label().empty()) {
-    os << ", label=";
-    detail::escape_string(os, a.label());
-  }
+  // if (!a.label().empty()) {
+  //   os << ", label=";
+  //   detail::escape_string(os, a.label());
+  // }
   os << ")";
   return os;
 }

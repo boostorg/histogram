@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_META_HPP
 #define BOOST_HISTOGRAM_DETAIL_META_HPP
 
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
 #include <iterator>
 #include <limits>
@@ -38,13 +39,19 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower, (std::declval<T&>().lower(0)));
 
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options,
+                            (static_cast<axis::option_type>(std::declval<T&>().options())));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
+
 BOOST_HISTOGRAM_MAKE_SFINAE(is_dynamic_container, (std::begin(std::declval<T&>())));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container, (std::get<0>(std::declval<T&>())));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_castable_to_int, (static_cast<int>(std::declval<T&>())));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_string, (std::declval<T&>().c_str()));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_equal_comparable,
+                            (std::declval<T&>() == std::declval<T&>()));
 
 struct static_container_tag {};
 struct dynamic_container_tag {};
@@ -53,9 +60,7 @@ struct no_container_tag {};
 template <typename T>
 using classify_container = typename std::conditional<
     is_static_container<T>::value, static_container_tag,
-    typename std::conditional<(is_dynamic_container<T>::value &&
-                               !std::is_convertible<T, const char*>::value &&
-                               !is_string<T>::value),
+    typename std::conditional<is_dynamic_container<T>::value,
                               dynamic_container_tag, no_container_tag>::type>::type;
 
 template <typename T,
@@ -66,16 +71,18 @@ struct requires_storage {};
 template <typename T, typename = decltype(*std::declval<T&>(), ++std::declval<T&>())>
 struct requires_iterator {};
 
+template <typename T, typename = decltype(std::begin(std::declval<T&>()))>
+struct requires_iterable {};
+
 template <typename T, typename = decltype(std::declval<T&>()[0])>
 struct requires_vector {};
 
 template <typename T, typename = decltype(std::get<0>(std::declval<T&>()))>
 struct requires_tuple {};
 
-template <typename T>
-using requires_axis = decltype(std::declval<T&>().size(), std::declval<T&>().shape(),
-                               std::declval<T&>().uoflow(), std::declval<T&>().label(),
-                               std::declval<T&>()[0]);
+template <typename T,
+          typename = decltype(std::declval<T&>().size(), &T::operator())>
+struct requires_axis {};
 
 namespace {
 struct bool_mask_impl {
@@ -117,6 +124,12 @@ using mp_set_union = mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back
 
 template <typename L>
 using mp_last = mp11::mp_at_c<L, (mp11::mp_size<L>::value - 1)>;
+
+template <typename T>
+using container_element_type = rm_cv_ref<decltype(*std::begin(std::declval<T&>()))>;
+
+template <typename T>
+using iterator_value_type = rm_cv_ref<decltype(*std::declval<T&>())>;
 
 } // namespace detail
 } // namespace histogram
