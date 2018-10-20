@@ -15,8 +15,6 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
-#include <boost/variant/apply_visitor.hpp>
-#include <boost/variant/static_visitor.hpp>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -43,7 +41,7 @@ struct axes_equal_static_dynamic_impl {
   template <typename N>
   void operator()(N) const {
     using T = mp11::mp_at<Tuple, N>;
-    auto tp = boost::relaxed_get<T>(&v[N::value]);
+    auto tp = axis::get<T>(&v[N::value]);
     equal &= (tp && *tp == std::get<N::value>(t));
   }
 };
@@ -66,7 +64,7 @@ struct axes_assign_static_dynamic_impl {
   template <typename N>
   void operator()(N) const {
     using T = mp11::mp_at<Tuple, N>;
-    std::get<N::value>(t) = static_cast<const T&>(v[N::value]);
+    std::get<N::value>(t) = axis::get<T>(v[N::value]);
   }
 };
 
@@ -156,42 +154,19 @@ void range_check(const std::tuple<Ts...>&) {
   static_assert(N < sizeof...(Ts), "index out of range");
 }
 
-namespace {
-template <int N, typename T>
-struct axis_at_impl {};
+template <typename T, int N>
+using axis_at = mp_at_c<T, is_static_container<T>::value * N>;
 
-template <int N, typename... Ts>
-struct axis_at_impl<N, std::tuple<Ts...>> {
-  using type = mp11::mp_at_c<std::tuple<Ts...>, N>;
-};
-
-template <int N, typename T, typename A>
-struct axis_at_impl<N, std::vector<T, A>> {
-  using type = T;
-};
+template <int N, typename T,
+          typename = requires_static_container<T>>
+auto axis_get(T&& axes) -> decltype(std::get<N>(std::forward<T>(axes))) {
+  return std::get<N>(std::forward<T>(axes));
 }
 
-template <int N, typename T>
-using axis_at = typename axis_at_impl<N, T>::type;
-
-template <int N, typename... Ts>
-auto axis_get(std::tuple<Ts...>& axes) -> axis_at<N, std::tuple<Ts...>>& {
-  return std::get<N>(axes);
-}
-
-template <int N, typename... Ts>
-auto axis_get(const std::tuple<Ts...>& axes) -> const axis_at<N, std::tuple<Ts...>>& {
-  return std::get<N>(axes);
-}
-
-template <int N, typename T, typename A>
-T& axis_get(std::vector<T, A>& axes) {
-  return axes[N];
-}
-
-template <int N, typename T, typename A>
-const T& axis_get(const std::vector<T, A>& axes) {
-  return axes[N];
+template <int N, typename T,
+          typename = requires_dynamic_container<T>>
+auto axis_get(T&& axes) -> decltype(std::forward<T>(axes)[N]) {
+  return std::forward<T>(axes)[N];
 }
 
 template <typename F, typename... Ts>
@@ -199,22 +174,10 @@ void for_each_axis(const std::tuple<Ts...>& axes, F&& f) {
   mp11::tuple_for_each(axes, std::forward<F>(f));
 }
 
-namespace {
-template <typename Unary>
-struct unary_adaptor : public boost::static_visitor<void> {
-  Unary&& unary;
-  unary_adaptor(Unary&& u) : unary(std::forward<Unary>(u)) {}
-  template <typename T>
-  void operator()(const T& a) const {
-    unary(a);
-  }
-};
-}
-
-template <typename F, typename Any, typename A>
-void for_each_axis(const std::vector<Any, A>& axes, F&& f) {
+template <typename F, typename T, typename A>
+void for_each_axis(const std::vector<T, A>& axes, F&& f) {
   for (const auto& x : axes) {
-    boost::apply_visitor(unary_adaptor<F>(std::forward<F>(f)), x);
+    axis::visit(std::forward<F>(f), x);
   }
 }
 
@@ -381,7 +344,7 @@ void indices_to_index_iter(mp11::mp_size_t<N>, optional_index& idx,
                            const std::tuple<Ts...>& axes, Iterator iter) {
   constexpr auto D = mp11::mp_size_t<sizeof...(Ts)>() - N;
   const auto& a = std::get<D>(axes);
-  const auto a_size = a.size();
+  const auto a_size = static_cast<int>(a.size());
   const auto a_shape = extend(a);
   const auto j = static_cast<int>(*iter);
   idx.stride *= (-1 <= j && j <= a_size); // set to 0, if j is invalid
@@ -465,29 +428,33 @@ void args_to_index_get(mp11::mp_size_t<N>, optional_index& idx,
 
 namespace {
 template <typename T>
-struct args_to_index_visitor : public boost::static_visitor<void> {
+struct args_to_index_visitor {
   optional_index& idx;
   const T& val;
   args_to_index_visitor(optional_index& i, const T& v) : idx(i), val(v) {}
   template <typename Axis>
   void operator()(const Axis& a) const {
-    impl(std::is_convertible<T, typename Axis::value_type>(), a);
+    using value_type = return_type<decltype(&T::operator())>;
+    impl(std::is_convertible<T, value_type>(), a);
   }
 
   template <typename Axis>
   void impl(std::true_type, const Axis& a) const {
+    using value_type = return_type<decltype(&T::operator())>;
     const auto a_size = a.size();
     const auto a_shape = extend(a);
-    const auto j = a(static_cast<typename Axis::value_type>(val));
+    const auto j = a(static_cast<value_type>(val));
     linearize(idx, a_size, a_shape, j);
   }
 
   template <typename Axis>
   void impl(std::false_type, const Axis&) const {
+    using value_type = return_type<decltype(&T::operator())>;
     throw std::invalid_argument(detail::cat(
-        "axis ", boost::typeindex::type_id<Axis>().pretty_name(), ": argument ",
-        boost::typeindex::type_id<T>().pretty_name(), " not convertible to value_type ",
-        boost::typeindex::type_id<typename Axis::value_type>().pretty_name()));
+      boost::core::demangled_name( BOOST_CORE_TYPEID(Axis) ),
+      ": cannot convert argument of type ",
+      boost::core::demangled_name( BOOST_CORE_TYPEID(T) ), " to ",
+      boost::core::demangled_name( BOOST_CORE_TYPEID(value_type) )));
   }
 };
 }
@@ -498,7 +465,7 @@ void args_to_index(optional_index&, const std::vector<Any, A>&) {}
 template <std::size_t D, typename Any, typename A, typename U, typename... Us>
 void args_to_index(optional_index& idx, const std::vector<Any, A>& axes, const U& u,
                    const Us&... us) {
-  boost::apply_visitor(args_to_index_visitor<U>(idx, u), axes[D]);
+  axis::visit(args_to_index_visitor<U>(idx, u), axes[D]);
   args_to_index<(D + 1)>(idx, axes, us...);
 }
 
@@ -507,7 +474,7 @@ void args_to_index_iter(optional_index& idx, const std::vector<Any, A>& axes,
                         Iterator iter) {
   for (const auto& a : axes) {
     // iter could be a plain pointer, so we cannot use nested value_type here
-    boost::apply_visitor(args_to_index_visitor<decltype(*iter)>(idx, *iter++), a);
+    axis::visit(args_to_index_visitor<decltype(*iter)>(idx, *iter++), a);
   }
 }
 
@@ -520,7 +487,7 @@ void args_to_index_get(mp11::mp_size_t<N>, optional_index& idx,
                        const std::vector<Any, A>& axes, const T& t) {
   constexpr std::size_t D = mp_size<T>::value - N;
   using U = decltype(std::get<D>(t));
-  boost::apply_visitor(args_to_index_visitor<U>(idx, std::get<D>(t)), axes[D]);
+  axis::visit(args_to_index_visitor<U>(idx, std::get<D>(t)), axes[D]);
   args_to_index_get(mp11::mp_size_t<(N - 1)>(), idx, axes, t);
 }
 

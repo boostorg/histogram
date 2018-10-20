@@ -7,7 +7,7 @@
 #include <boost/config.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/axis/any.hpp>
+#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/detail/axes.hpp>
@@ -39,13 +39,13 @@ void test_axis_iterator(const Axis& a, int begin, int end) {
 int main() {
   // bad_ctors
   {
-    BOOST_TEST_THROWS(axis::regular<>(0, 0, 1), std::logic_error);
-    BOOST_TEST_THROWS(axis::regular<>(1, 1, -1), std::logic_error);
-    BOOST_TEST_THROWS(axis::circular<>(0), std::logic_error);
-    BOOST_TEST_THROWS(axis::variable<>({}), std::logic_error);
-    BOOST_TEST_THROWS(axis::variable<>({1.0}), std::logic_error);
-    BOOST_TEST_THROWS(axis::integer<>(1, -1), std::logic_error);
-    BOOST_TEST_THROWS(axis::category<>({}), std::logic_error);
+    BOOST_TEST_THROWS(axis::regular<>(0, 0, 1), std::invalid_argument);
+    // BOOST_TEST_THROWS(axis::regular<>(1, 1, -1), std::invalid_argument);
+    BOOST_TEST_THROWS(axis::circular<>(0), std::invalid_argument);
+    BOOST_TEST_THROWS(axis::variable<>(std::vector<double>()), std::invalid_argument);
+    BOOST_TEST_THROWS(axis::variable<>({1.0}), std::invalid_argument);
+    BOOST_TEST_THROWS(axis::integer<>(1, -1), std::invalid_argument);
+    BOOST_TEST_THROWS(axis::category<>(std::vector<int>()), std::invalid_argument);
   }
 
   // axis::regular
@@ -66,41 +66,41 @@ int main() {
     BOOST_TEST_NOT(c == d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
-    BOOST_TEST_EQ(a.index(-10.), -1);
-    BOOST_TEST_EQ(a.index(-2.1), -1);
-    BOOST_TEST_EQ(a.index(-2.0), 0);
-    BOOST_TEST_EQ(a.index(-1.1), 0);
-    BOOST_TEST_EQ(a.index(0.0), 2);
-    BOOST_TEST_EQ(a.index(0.9), 2);
-    BOOST_TEST_EQ(a.index(1.0), 3);
-    BOOST_TEST_EQ(a.index(10.), 4);
-    BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 4);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 4);
+    BOOST_TEST_EQ(a(-10.), -1);
+    BOOST_TEST_EQ(a(-2.1), -1);
+    BOOST_TEST_EQ(a(-2.0), 0);
+    BOOST_TEST_EQ(a(-1.1), 0);
+    BOOST_TEST_EQ(a(0.0), 2);
+    BOOST_TEST_EQ(a(0.9), 2);
+    BOOST_TEST_EQ(a(1.0), 3);
+    BOOST_TEST_EQ(a(10.), 4);
+    BOOST_TEST_EQ(a(-std::numeric_limits<double>::infinity()), -1);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 4);
   }
 
   // axis::regular with log transform
   {
-    axis::regular<axis::transform::log> b{2, 1e0, 1e2};
+    axis::regular<axis::transform::log<>> b{2, 1e0, 1e2};
     BOOST_TEST_EQ(b[-1].lower(), 0.0);
     BOOST_TEST_IS_CLOSE(b[0].lower(), 1.0, 1e-9);
     BOOST_TEST_IS_CLOSE(b[1].lower(), 10.0, 1e-9);
     BOOST_TEST_IS_CLOSE(b[2].lower(), 100.0, 1e-9);
     BOOST_TEST_EQ(b[2].upper(), std::numeric_limits<double>::infinity());
 
-    BOOST_TEST_EQ(b.index(-1), 2); // produces NaN in conversion
-    BOOST_TEST_EQ(b.index(0), -1);
-    BOOST_TEST_EQ(b.index(1), 0);
-    BOOST_TEST_EQ(b.index(9), 0);
-    BOOST_TEST_EQ(b.index(10), 1);
-    BOOST_TEST_EQ(b.index(90), 1);
-    BOOST_TEST_EQ(b.index(100), 2);
-    BOOST_TEST_EQ(b.index(std::numeric_limits<double>::infinity()), 2);
+    BOOST_TEST_EQ(b(-1), 2); // produces NaN in conversion
+    BOOST_TEST_EQ(b(0), -1);
+    BOOST_TEST_EQ(b(1), 0);
+    BOOST_TEST_EQ(b(9), 0);
+    BOOST_TEST_EQ(b(10), 1);
+    BOOST_TEST_EQ(b(90), 1);
+    BOOST_TEST_EQ(b(100), 2);
+    BOOST_TEST_EQ(b(std::numeric_limits<double>::infinity()), 2);
   }
 
   // axis::regular with sqrt transform
   {
-    axis::regular<axis::transform::sqrt> b{2, 0, 4};
+    axis::regular<axis::transform::sqrt<>> b{2, 0, 4};
     // this is weird: -inf * -inf = inf, thus the lower bound
     BOOST_TEST_EQ(b[-1].lower(), std::numeric_limits<double>::infinity());
     BOOST_TEST_IS_CLOSE(b[0].lower(), 0.0, 1e-9);
@@ -108,20 +108,20 @@ int main() {
     BOOST_TEST_IS_CLOSE(b[2].lower(), 4.0, 1e-9);
     BOOST_TEST_EQ(b[2].upper(), std::numeric_limits<double>::infinity());
 
-    BOOST_TEST_EQ(b.index(-1), 2); // produces NaN in conversion
-    BOOST_TEST_EQ(b.index(0), 0);
-    BOOST_TEST_EQ(b.index(0.99), 0);
-    BOOST_TEST_EQ(b.index(1), 1);
-    BOOST_TEST_EQ(b.index(3.99), 1);
-    BOOST_TEST_EQ(b.index(4), 2);
-    BOOST_TEST_EQ(b.index(100), 2);
-    BOOST_TEST_EQ(b.index(std::numeric_limits<double>::infinity()), 2);
+    BOOST_TEST_EQ(b(-1), 2); // produces NaN in conversion
+    BOOST_TEST_EQ(b(0), 0);
+    BOOST_TEST_EQ(b(0.99), 0);
+    BOOST_TEST_EQ(b(1), 1);
+    BOOST_TEST_EQ(b(3.99), 1);
+    BOOST_TEST_EQ(b(4), 2);
+    BOOST_TEST_EQ(b(100), 2);
+    BOOST_TEST_EQ(b(std::numeric_limits<double>::infinity()), 2);
   }
 
   // axis::circular
   {
-    axis::circular<> a{4};
-    BOOST_TEST_EQ(a[-1].lower(), a[a.size() - 1].lower() - a.perimeter());
+    axis::circular<> a{4, 0, 1};
+    BOOST_TEST_EQ(a[-1].lower(), a[a.size() - 1].lower() - 1);
     axis::circular<> b;
     BOOST_TEST_NOT(a == b);
     b = a;
@@ -135,15 +135,15 @@ int main() {
     BOOST_TEST_NOT(c == d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
-    BOOST_TEST_EQ(a.index(-1.0 * a.perimeter()), 0);
-    BOOST_TEST_EQ(a.index(0.0), 0);
-    BOOST_TEST_EQ(a.index(0.25 * a.perimeter()), 1);
-    BOOST_TEST_EQ(a.index(0.5 * a.perimeter()), 2);
-    BOOST_TEST_EQ(a.index(0.75 * a.perimeter()), 3);
-    BOOST_TEST_EQ(a.index(1.00 * a.perimeter()), 0);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 0);
-    BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), 0);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 0);
+    BOOST_TEST_EQ(a(-1.0 * 3), 0);
+    BOOST_TEST_EQ(a(0.0), 0);
+    BOOST_TEST_EQ(a(0.25), 1);
+    BOOST_TEST_EQ(a(0.5), 2);
+    BOOST_TEST_EQ(a(0.75), 3);
+    BOOST_TEST_EQ(a(1.0), 0);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a(-std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 4);
   }
 
   // axis::variable
@@ -166,20 +166,20 @@ int main() {
     BOOST_TEST_EQ(d, a);
     axis::variable<> e{-2, 0, 2};
     BOOST_TEST_NOT(a == e);
-    BOOST_TEST_EQ(a.index(-10.), -1);
-    BOOST_TEST_EQ(a.index(-1.), 0);
-    BOOST_TEST_EQ(a.index(0.), 1);
-    BOOST_TEST_EQ(a.index(1.), 2);
-    BOOST_TEST_EQ(a.index(10.), 2);
-    BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
+    BOOST_TEST_EQ(a(-10.), -1);
+    BOOST_TEST_EQ(a(-1.), 0);
+    BOOST_TEST_EQ(a(0.), 1);
+    BOOST_TEST_EQ(a(1.), 2);
+    BOOST_TEST_EQ(a(10.), 2);
+    BOOST_TEST_EQ(a(-std::numeric_limits<double>::infinity()), -1);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::infinity()), 2);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 2);
   }
 
   // axis::integer
   {
     axis::integer<> a{-1, 2};
-    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<int>::max());
+    BOOST_TEST_EQ(a[-1].lower(), std::numeric_limits<int>::min());
     BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<int>::max());
     axis::integer<> b;
     BOOST_TEST_NOT(a == b);
@@ -194,21 +194,21 @@ int main() {
     BOOST_TEST_NOT(c == d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
-    BOOST_TEST_EQ(a.index(-10), -1);
-    BOOST_TEST_EQ(a.index(-2), -1);
-    BOOST_TEST_EQ(a.index(-1), 0);
-    BOOST_TEST_EQ(a.index(0), 1);
-    BOOST_TEST_EQ(a.index(1), 2);
-    BOOST_TEST_EQ(a.index(2), 3);
-    BOOST_TEST_EQ(a.index(10), 3);
+    BOOST_TEST_EQ(a(-10), -1);
+    BOOST_TEST_EQ(a(-2), -1);
+    BOOST_TEST_EQ(a(-1), 0);
+    BOOST_TEST_EQ(a(0), 1);
+    BOOST_TEST_EQ(a(1), 2);
+    BOOST_TEST_EQ(a(2), 3);
+    BOOST_TEST_EQ(a(10), 3);
   }
 
   // axis::category
   {
     std::string A("A"), B("B"), C("C"), other;
-    axis::category<std::string> a{{A, B, C}};
+    axis::category<std::string> a({A, B, C});
     axis::category<std::string> b;
-    BOOST_TEST_NOT(a == b);
+  BOOST_TEST_NOT(a == b);
     b = a;
     BOOST_TEST_EQ(a, b);
     b = axis::category<std::string>{{B, A, C}};
@@ -224,10 +224,10 @@ int main() {
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
     BOOST_TEST_EQ(a.size(), 3);
-    BOOST_TEST_EQ(a.index(A), 0);
-    BOOST_TEST_EQ(a.index(B), 1);
-    BOOST_TEST_EQ(a.index(C), 2);
-    BOOST_TEST_EQ(a.index(other), 3);
+    BOOST_TEST_EQ(a(A), 0);
+    BOOST_TEST_EQ(a(B), 1);
+    BOOST_TEST_EQ(a(C), 2);
+    BOOST_TEST_EQ(a(other), 3);
     BOOST_TEST_EQ(a.value(0), A);
     BOOST_TEST_EQ(a.value(1), B);
     BOOST_TEST_EQ(a.value(2), C);
@@ -237,44 +237,44 @@ int main() {
   // iterators
   {
     enum { A, B, C };
-    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow_type::off), 0, 5);
-    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::uoflow_type::on), 0, 5);
+    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::option_type::none), 0, 5);
+    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::option_type::underflow_and_overflow), 0, 5);
     test_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5);
     test_axis_iterator(axis::variable<>({1, 2, 3}, ""), 0, 2);
     test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4);
     test_axis_iterator(axis::category<>({A, B, C}, ""), 0, 3);
-    test_axis_iterator(axis::any_std(axis::regular<>(5, 0, 1)), 0, 5);
-    BOOST_TEST_THROWS(axis::any_std(axis::category<>({A, B, C})).lower(0),
-                      std::runtime_error);
+    test_axis_iterator(axis::variant<axis::regular<>>(axis::regular<>(5, 0, 1)), 0, 5);
+    // BOOST_TEST_THROWS(axis::variant<axis::category<>>(axis::category<>({A, B, C}))[0].lower(),
+    //                   std::runtime_error);
   }
 
   // axis::any copyable
   {
-    axis::any_std a1(axis::regular<>(2, -1, 1));
-    axis::any_std a2(a1);
+    axis::variant<axis::regular<>> a1(axis::regular<>(2, -1, 1));
+    axis::variant<axis::regular<>> a2(a1);
     BOOST_TEST_EQ(a1, a2);
-    axis::any_std a3;
+    axis::variant<axis::regular<>> a3;
     BOOST_TEST_NE(a3, a1);
     a3 = a1;
     BOOST_TEST_EQ(a3, a1);
-    axis::any<axis::regular<>> a4(axis::regular<>(3, -2, 2));
-    axis::any_std a5(a4);
+    axis::variant<axis::regular<>> a4(axis::regular<>(3, -2, 2));
+    axis::variant<axis::regular<>, axis::integer<>> a5(a4);
     BOOST_TEST_EQ(a4, a5);
-    axis::any<axis::regular<>> a6;
+    axis::variant<axis::regular<>> a6;
     a6 = a1;
     BOOST_TEST_EQ(a6, a1);
-    axis::any<axis::regular<>, axis::integer<>> a7(axis::integer<>(0, 2));
-    BOOST_TEST_THROWS(axis::any<axis::regular<>> a8(a7), std::invalid_argument);
+    axis::variant<axis::regular<>, axis::integer<>> a7(axis::integer<>(0, 2));
+    BOOST_TEST_THROWS(axis::variant<axis::regular<>> a8(a7), std::invalid_argument);
     BOOST_TEST_THROWS(a4 = a7, std::invalid_argument);
   }
 
   // axis::any movable
   {
-    axis::any_std a(axis::regular<>(2, -1, 1));
-    axis::any_std r(a);
-    axis::any_std b(std::move(a));
+    axis::variant<axis::regular<>> a(axis::regular<>(2, -1, 1));
+    axis::variant<axis::regular<>> r(a);
+    axis::variant<axis::regular<>> b(std::move(a));
     BOOST_TEST_EQ(b, r);
-    axis::any_std c;
+    axis::variant<axis::regular<>> c;
     BOOST_TEST_NOT(a == c);
     c = std::move(b);
     BOOST_TEST(c == r);
@@ -285,32 +285,41 @@ int main() {
     enum { A, B, C };
     std::string a = "A";
     std::string b = "B";
-    std::vector<axis::any_std> axes;
+    std::vector<axis::variant<
+      axis::regular<>,
+      axis::regular<axis::transform::log<>>,
+      axis::regular<axis::transform::pow<>>,
+      axis::circular<>,
+      axis::variable<>,
+      axis::category<>,
+      axis::category<std::string>,
+      axis::integer<>
+    >> axes;
     axes.push_back(axis::regular<>{2, -1, 1, "regular1"});
-    axes.push_back(axis::regular<axis::transform::log>(2, 1, 10, "regular2",
-                                                       axis::uoflow_type::off));
-    axes.push_back(axis::regular<axis::transform::pow>(2, 1, 10, "regular3",
-                                                       axis::uoflow_type::on, 0.5));
-    axes.push_back(axis::regular<axis::transform::pow>(2, 1, 10, "regular4",
-                                                       axis::uoflow_type::off, -0.5));
+    axes.push_back(axis::regular<axis::transform::log<>>(2, 1, 10, "regular2",
+                                                       axis::option_type::none));
+    axes.push_back(axis::regular<axis::transform::pow<>>(2, 1, 10, "regular3",
+                                                       axis::option_type::overflow, 0.5));
+    axes.push_back(axis::regular<axis::transform::pow<>>(2, 1, 10, "regular4",
+                                                       axis::option_type::none, -0.5));
     axes.push_back(axis::circular<>(4, 0.1, 1.0, "polar"));
-    axes.push_back(axis::variable<>({-1, 0, 1}, "variable", axis::uoflow_type::off));
+    axes.push_back(axis::variable<>({-1, 0, 1}, "variable", axis::option_type::none));
     axes.push_back(axis::category<>({A, B, C}, "category"));
     axes.push_back(axis::category<std::string>({a, b}, "category2"));
-    axes.push_back(axis::integer<>(-1, 1, "integer", axis::uoflow_type::off));
+    axes.push_back(axis::integer<>(-1, 1, "integer", axis::option_type::none));
     std::ostringstream os;
     for (const auto& a : axes) { os << a << "\n"; }
     os << axes.back()[0];
     const std::string ref =
-        "regular(2, -1, 1, label='regular1')\n"
-        "regular_log(2, 1, 10, label='regular2', uoflow=False)\n"
-        "regular_pow(2, 1, 10, 0.5, label='regular3')\n"
-        "regular_pow(2, 1, 10, -0.5, label='regular4', uoflow=False)\n"
-        "circular(4, phase=0.1, perimeter=1, label='polar')\n"
-        "variable(-1, 0, 1, label='variable', uoflow=False)\n"
-        "category(0, 1, 2, label='category')\n"
-        "category('A', 'B', label='category2')\n"
-        "integer(-1, 1, label='integer', uoflow=False)\n"
+        "regular(2, -1, 1, metadata='regular1', options=underflow_and_overflow)\n"
+        "regular_log(2, 1, 10, metadata='regular2', options=none)\n"
+        "regular_pow(2, 1, 10, metadata='regular3', options=overflow, power=0.5)\n"
+        "regular_pow(2, 1, 10, metadata='regular4', options=none, power=-0.5)\n"
+        "circular(4, 0.1, 1.1, metadata='polar', options=overflow)\n"
+        "variable(-1, 0, 1, metadata='variable', options=none)\n"
+        "category(0, 1, 2, metadata='category', options=overflow)\n"
+        "category('A', 'B', metadata='category2', options=overflow)\n"
+        "integer(-1, 1, metadata='integer', options=none)\n"
         "[-1, 0)";
     BOOST_TEST_EQ(os.str(), ref);
   }
@@ -318,47 +327,54 @@ int main() {
   // axis::any equal_comparable
   {
     enum { A, B, C };
-    std::vector<axis::any_std> axes;
+    using variant = axis::variant<
+      axis::regular<>,
+      axis::regular<axis::transform::pow<>>,
+      axis::circular<>,
+      axis::variable<>,
+      axis::category<>,
+      axis::integer<>
+    >;
+    std::vector<variant> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
     axes.push_back(
-        axis::regular<axis::transform::pow>(2, 1, 4, "", axis::uoflow_type::on, 0.5));
+        axis::regular<axis::transform::pow<>>(2, 1, 4, "", axis::option_type::underflow_and_overflow, 0.5));
     axes.push_back(axis::circular<>{4});
     axes.push_back(axis::variable<>{-1, 0, 1});
-    axes.push_back(axis::category<>{A, B, C});
+    axes.push_back(axis::category<>({A, B, C}));
     axes.push_back(axis::integer<>{-1, 1});
     for (const auto& a : axes) {
-      BOOST_TEST(!(a == axis::any_std()));
-      BOOST_TEST_EQ(a, axis::any_std(a));
+      BOOST_TEST(!(a == variant()));
+      BOOST_TEST_EQ(a, variant(a));
     }
-    BOOST_TEST_NOT(axes == std::vector<axis::any_std>());
-    BOOST_TEST(axes == std::vector<axis::any_std>(axes));
+    BOOST_TEST_NOT(axes == std::vector<variant>());
+    BOOST_TEST(axes == std::vector<variant>(axes));
   }
 
   // axis::any value_to_index_failure
   {
     std::string a = "A", b = "B";
-    axis::any_std x = axis::category<std::string>({a, b}, "category");
-    BOOST_TEST_THROWS(x.index(1.5), std::runtime_error);
-    auto cx = static_cast<const axis::category<std::string>&>(x);
-    BOOST_TEST_EQ(cx.index(b), 1);
+    axis::variant<axis::category<std::string>> x = axis::category<std::string>({a, b}, "category");
+    auto cx = axis::get<axis::category<std::string>>(x);
+    BOOST_TEST_EQ(cx(b), 1);
   }
 
   // sequence equality
   {
     enum { A, B, C };
     std::vector<
-        axis::any<axis::regular<>, axis::variable<>, axis::category<>, axis::integer<>>>
+        axis::variant<axis::regular<>, axis::variable<>, axis::category<>, axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{A, B, C}};
 
-    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
+    std::vector<axis::variant<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{{A, B, C}}};
 
-    std::vector<axis::any<axis::regular<>, axis::variable<>>> std_vector3 = {
+    std::vector<axis::variant<axis::regular<>, axis::variable<>>> std_vector3 = {
         axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
 
-    std::vector<axis::any<axis::variable<>, axis::regular<>>> std_vector4 = {
+    std::vector<axis::variant<axis::variable<>, axis::regular<>>> std_vector4 = {
         axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1}};
 
     BOOST_TEST(detail::axes_equal(std_vector1, std_vector2));
@@ -384,11 +400,11 @@ int main() {
   {
     enum { A, B, C, D };
     std::vector<
-        axis::any<axis::regular<>, axis::variable<>, axis::category<>, axis::integer<>>>
+        axis::variant<axis::regular<>, axis::variable<>, axis::category<>, axis::integer<>>>
         std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
                        axis::category<>{A, B, C}};
 
-    std::vector<axis::any<axis::regular<>, axis::variable<>, axis::category<>>>
+    std::vector<axis::variant<axis::regular<>, axis::variable<>, axis::category<>>>
         std_vector2 = {axis::regular<>{2, -2, 2}, axis::variable<>{-2, 0, 2},
                        axis::category<>{A, B}};
 
@@ -447,25 +463,26 @@ int main() {
 
   // vector of axes with custom allocators
   {
-    using T1 = axis::regular<axis::transform::identity, double, tracing_allocator<char>>;
-    using T2 = axis::circular<double, tracing_allocator<char>>;
-    using T3 = axis::variable<double, tracing_allocator<char>>;
-    using T4 = axis::integer<int, tracing_allocator<char>>;
-    using T5 = axis::category<long, tracing_allocator<char>>;
-    using axis_type = axis::any<T1, T2, T3, T4, T5>; // no heap allocation
+    struct null {};
+    using M = std::vector<char, tracing_allocator<char>>;
+    using T1 = axis::regular<axis::transform::identity<>, M>;
+    using T2 = axis::circular<double, null>;
+    using T3 = axis::variable<double, tracing_allocator<double>, null>;
+    using T4 = axis::integer<int, null>;
+    using T5 = axis::category<long, tracing_allocator<long>, null>;
+    using axis_type = axis::variant<T1, T2, T3, T4, T5>; // no heap allocation
     using axes_type = std::vector<axis_type, tracing_allocator<axis_type>>;
 
     tracing_allocator_db db;
     {
       auto a = tracing_allocator<char>(db);
-      const auto label = std::string(512, 'c');
       axes_type axes(a);
       axes.reserve(5);
-      axes.emplace_back(T1(1, 0, 1, label, axis::uoflow_type::on, {}, a));
-      axes.emplace_back(T2(2, 0, T2::two_pi(), label, a));
-      axes.emplace_back(T3({0., 1., 2.}, label, axis::uoflow_type::on, a));
-      axes.emplace_back(T4(0, 4, label, axis::uoflow_type::on, a));
-      axes.emplace_back(T5({1, 2, 3, 4, 5}, label, axis::uoflow_type::on, a));
+      axes.emplace_back(T1(1, 0, 1, M(3, 'c', a)));
+      axes.emplace_back(T2(2));
+      axes.emplace_back(T3({0., 1., 2.}, {}, axis::option_type::underflow_and_overflow, a));
+      axes.emplace_back(T4(0, 4));
+      axes.emplace_back(T5({1, 2, 3, 4, 5}, {}, axis::option_type::overflow, a));
     }
     // 5 axis::any objects
     BOOST_TEST_EQ(db[typeid(axis_type)].first, db[typeid(axis_type)].second);
@@ -473,7 +490,7 @@ int main() {
 
     // 5 labels
     BOOST_TEST_EQ(db[typeid(char)].first, db[typeid(char)].second);
-    BOOST_TEST_GE(db[typeid(char)].first, 5 * 512u);
+    BOOST_TEST_GE(db[typeid(char)].first, 3u);
 
     // nothing to allocate for T1
     // nothing to allocate for T2

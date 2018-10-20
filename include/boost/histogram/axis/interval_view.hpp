@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_INTERVAL_VIEW_HPP
 #define BOOST_HISTOGRAM_AXIS_INTERVAL_VIEW_HPP
 
-#include <functional>
 #include <utility>
 
 namespace boost {
@@ -32,7 +31,7 @@ public:
   auto upper() const noexcept -> decltype(std::declval<Axis&>().lower(0)) {
     return axis_.lower(idx_ + 1);
   }
-  typename Axis::value_type width() const noexcept {
+  auto width() const noexcept -> decltype(upper() - lower()) {
     return upper() - lower();
   }
 
