@@ -133,7 +133,7 @@ public:
       : base_type(n, m, o)
       , data_(trans, n, begin, end)
   {
-    if (!std::isnormal(data_.min) || !std::isnormal(data_.delta))
+    if (!std::isfinite(data_.min) || !std::isfinite(data_.delta))
       throw std::invalid_argument("forward transform of lower or upper invalid");
   }
 
@@ -169,6 +169,8 @@ public:
     }
     return data_.inverse(x);
   }
+
+  const transform_type& transform() const { return data_; }
 
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
@@ -216,7 +218,7 @@ public:
                   option_type::overflow : o)
       , phase_(phase), delta_(perimeter / n)
   {
-    if (!std::isnormal(phase) || !(perimeter > 0))
+    if (!std::isfinite(phase) || !(perimeter > 0))
       throw std::invalid_argument("invalid phase or perimeter");
   }
 
@@ -225,7 +227,7 @@ public:
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
     const auto z = std::floor((x - phase_) / delta_);
-    if (std::isnormal(z)) {
+    if (std::isfinite(z)) {
       const auto i = static_cast<int>(z) % base_type::size();
       return i + (i < 0) * base_type::size();
     }
@@ -269,6 +271,16 @@ class variable : public base<MetaData>,
   {
     typename std::allocator_traits<allocator_type>::pointer x = nullptr;
     using allocator_type::allocator_type;
+    data(const allocator_type& a) : allocator_type(a) {}
+    data() = default;
+
+    friend void swap(data& a, data& b) noexcept
+    {
+      std::swap(a.x, b.x);
+      auto tmp = static_cast<allocator_type&&>(a);
+      a = static_cast<allocator_type&&>(b);
+      b = static_cast<allocator_type&&>(tmp);
+    }
   };
 
 public:
@@ -329,6 +341,13 @@ public:
            const allocator_type& a = allocator_type())
       : variable(std::begin(iterable), std::end(iterable), m, o, a) {}
 
+  template <typename T>
+  variable(const std::initializer_list<T>& t,
+           const metadata_type& m = metadata_type(),
+           const option_type o = option_type::underflow_and_overflow,
+           const allocator_type& a = allocator_type())
+      : variable(t.begin(), t.end(), m, o, a) {}
+
   variable() = default;
 
   variable(const variable& o) : base_type(o), data_(o.data_) {
@@ -359,9 +378,9 @@ public:
 
   variable& operator=(variable&& o) {
     if (this != &o) {
-      std::swap(static_cast<base_type&>(*this), o);
-      std::swap(static_cast<allocator_type&>(data_), o.data_);
-      std::swap(data_.x, o.data_.x);
+      std::swap(static_cast<base_type&>(*this),
+                static_cast<base_type&>(o));
+      std::swap(data_, o.data_);
     }
     return *this;
   }
@@ -378,7 +397,7 @@ public:
   /// Returns the starting edge of the bin.
   value_type lower(int i) const noexcept {
     if (i < 0) { return -std::numeric_limits<value_type>::infinity(); }
-    if (i > base_type::size()) { return std::numeric_limits<value_type>::infinity(); }
+    if (i > static_cast<int>(base_type::size())) { return std::numeric_limits<value_type>::infinity(); }
     return data_.x[i];
   }
 
@@ -434,13 +453,13 @@ public:
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
     const int z = x - min_;
-    return z >= 0 ? (z > base_type::size() ? base_type::size() : z) : -1;
+    return z >= 0 ? (z > static_cast<int>(base_type::size()) ? base_type::size() : z) : -1;
   }
 
   /// Returns lower edge of the integral bin.
   value_type lower(int i) const noexcept {
     if (i < 0) { return std::numeric_limits<value_type>::min(); }
-    if (i > base_type::size()) { return std::numeric_limits<value_type>::max(); }
+    if (i > static_cast<int>(base_type::size())) { return std::numeric_limits<value_type>::max(); }
     return min_ + i;
   }
 
@@ -477,6 +496,16 @@ class category : public base<MetaData>,
   struct data : allocator_type {
     typename std::allocator_traits<allocator_type>::pointer x = nullptr;
     using allocator_type::allocator_type;
+    data(const allocator_type& a) : allocator_type(a) {}
+    data() = default;
+
+    friend void swap(data& a, data& b) noexcept
+    {
+      std::swap(a.x, b.x);
+      auto tmp = static_cast<allocator_type&&>(a);
+      a = static_cast<allocator_type&&>(b);
+      b = static_cast<allocator_type&&>(tmp);
+    }
   };
 
 public:
@@ -506,11 +535,18 @@ public:
    * \param metadata description of the axis.
    */
   template <typename T, typename = detail::requires_iterable<T>>
-  category(T iterable,
+  category(T t,
            const metadata_type& m = metadata_type(),
            const option_type o = option_type::overflow,
            const allocator_type& a = allocator_type())
-    : category(std::begin(iterable), std::end(iterable), m, o, a) {}
+    : category(std::begin(t), std::end(t), m, o, a) {}
+
+  template <typename T>
+  category(const std::initializer_list<T>& t,
+           const metadata_type& m = metadata_type(),
+           const option_type o = option_type::overflow,
+           const allocator_type& a = allocator_type())
+    : category(t.begin(), t.end(), m, o, a) {}
 
   category() = default;
 
@@ -526,6 +562,7 @@ public:
       if (base_type::size() != o.size()) {
         detail::destroy_buffer(data_, data_.x, base_type::size());
         base_type::operator=(o);
+        data_ = o.data_;
         data_.x = detail::create_buffer_from_iter(data_, base_type::size(), o.data_.x);
       } else {
         base_type::operator=(o);
@@ -537,15 +574,14 @@ public:
 
   category(category&& o)
     : base_type(std::move(o))
-    , data_(std::move(o)) {
+    , data_(std::move(o.data_)) {
     o.data_.x = nullptr;
   }
 
   category& operator=(category&& o) {
     if (this != &o) {
-      std::swap(static_cast<base_type&>(*this), o);
-      std::swap(static_cast<allocator_type&>(data_), o.data_);
-      std::swap(data_.x, o.data_.x);
+      std::swap(static_cast<base_type&>(*this), static_cast<base_type&>(o));
+      std::swap(data_, o.data_);
     }
     return *this;
   }
@@ -563,7 +599,7 @@ public:
 
   /// Returns the value for the bin index (performs a range check).
   const value_type& value(int idx) const {
-    if (idx < 0 || idx >= base_type::size())
+    if (idx < 0 || idx >= static_cast<int>(base_type::size()))
       throw std::out_of_range("category index out of range");
     return data_.x[idx];
   }

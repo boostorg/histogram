@@ -39,7 +39,7 @@ template <typename T = double,
 class circular;
 
 template <typename T = double,
-          typename Allocator = std::allocator<double>,
+          typename Allocator = std::allocator<T>,
           typename MetaData = boost::container::string>
 class variable;
 
@@ -48,7 +48,7 @@ template <typename T = int,
 class integer;
 
 template <typename T = int,
-          typename Allocator = std::allocator<int>,
+          typename Allocator = std::allocator<T>,
           typename MetaData = boost::container::string>
 class category;
 

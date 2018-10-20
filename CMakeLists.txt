@@ -19,20 +19,6 @@ option(TEST_SERIALIZATION "Test serialization code" OFF)
 mark_as_advanced(BUILD_BENCHMARKS)
 mark_as_advanced(TEST_SERIALIZATION)
 
-# set build type if none is specified
-set(default_build_type "Release")
-if (EXISTS "${PROJECT_SOURCE_DIR}/.git")
-  set(default_build_type "Debug")
-endif()
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
-  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
-      STRING "Choose the type of build." FORCE)
-  # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
-
 # serialization is optional
 if (TEST_SERIALIZATION)
   find_package(Boost ${MIN_BOOST_VERSION} REQUIRED COMPONENTS serialization)
@@ -59,6 +45,8 @@ function(compiled_test SRC)
   if(CMAKE_BUILD_TYPE MATCHES coverage)
     target_compile_options(${BASENAME} PRIVATE -O0 -g --coverage)
     target_link_libraries(${BASENAME} PRIVATE --coverage)
+  else()
+    target_compile_options(${BASENAME} PRIVATE -O0 -g)
   endif()
 
   # max warnings
@@ -118,7 +106,8 @@ compiled_test(examples/getting_started_listing_02.cpp)
 compiled_test(examples/guide_access_bin_counts.cpp)
 compiled_test(examples/guide_axis_with_labels.cpp)
 compiled_test(examples/guide_axis_with_uoflow_off.cpp)
-compiled_test(examples/guide_custom_axis.cpp)
+compiled_test(examples/guide_custom_modified_axis.cpp)
+compiled_test(examples/guide_custom_minimal_axis.cpp)
 compiled_test(examples/guide_custom_storage.cpp)
 compiled_test(examples/guide_fill_histogram.cpp)
 compiled_test(examples/guide_histogram_operators.cpp)

@@ -31,7 +31,7 @@ namespace axis {
 
 template <typename T>
 struct traits {
-  using call_args = boost::callable_traits::args_t<decltype(&T::operator())>;
+  using args = boost::callable_traits::args_t<decltype(&T::operator())>;
 
   static option_type options(const T& t) {
     return detail::axis_traits_options_impl(detail::has_method_options<T>(), t);

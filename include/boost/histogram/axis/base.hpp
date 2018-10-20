@@ -11,6 +11,7 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/iterator/reverse_iterator.hpp>
 #include <stdexcept>
 #include <limits>
 #include <utility>
@@ -111,7 +112,7 @@ template <typename Derived>
 class iterator_mixin {
 public:
   using const_iterator = iterator_over<Derived>;
-  using const_reverse_iterator = reverse_iterator_over<Derived>;
+  using const_reverse_iterator = boost::reverse_iterator<const_iterator>;
 
   const_iterator begin() const noexcept {
     return const_iterator(*static_cast<const Derived*>(this), 0);
@@ -121,11 +122,10 @@ public:
                           static_cast<const Derived*>(this)->size());
   }
   const_reverse_iterator rbegin() const noexcept {
-    return const_reverse_iterator(*static_cast<const Derived*>(this),
-                                  static_cast<const Derived*>(this)->size());
+    return boost::make_reverse_iterator(end());
   }
   const_reverse_iterator rend() const noexcept {
-    return const_reverse_iterator(*static_cast<const Derived*>(this), 0);
+    return boost::make_reverse_iterator(begin());
   }
 };
 

@@ -105,34 +105,36 @@ public:
 
   /// Get N-th axis (const version)
   template <std::size_t N>
-  auto axis(mp11::mp_size_t<N>) const -> const detail::axis_at<N, axes_type>& {
+  auto axis(mp11::mp_size_t<N>) const -> const detail::axis_at<axes_type, N>& {
     detail::range_check<N>(axes_);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis
   template <std::size_t N>
-  auto axis(mp11::mp_size_t<N>) -> detail::axis_at<N, axes_type>& {
+  auto axis(mp11::mp_size_t<N>) -> detail::axis_at<axes_type, N>& {
     detail::range_check<N>(axes_);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get first axis (convenience for 1-d histograms, const version)
-  const detail::axis_at<0, axes_type>& axis() const { return axis(mp11::mp_size_t<0>()); }
+  auto axis() const -> const detail::axis_at<axes_type, 0>& { return axis(mp11::mp_size_t<0>()); }
 
   /// Get first axis (convenience for 1-d histograms)
-  detail::axis_at<0, axes_type>& axis() { return axis(mp11::mp_size_t<0>()); }
+  auto axis() -> detail::axis_at<axes_type, 0>& { return axis(mp11::mp_size_t<0>()); }
 
   /// Get N-th axis with runtime index (const version)
-  template <typename U = axes_type, typename = detail::requires_vector<U>>
-  const detail::axis_at<0, U>& axis(std::size_t i) const {
+  template <typename U = axes_type,
+            typename = detail::requires_dynamic_container<U>>
+  auto axis(std::size_t i) const -> const detail::container_element_type<U>& {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
   }
 
   /// Get N-th axis with runtime index
-  template <typename U = axes_type, typename = detail::requires_vector<U>>
-  detail::axis_at<0, U>& axis(std::size_t i) {
+  template <typename U = axes_type,
+            typename = detail::requires_dynamic_container<U>>
+  auto axis(std::size_t i) -> detail::container_element_type<U>& {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
   }
@@ -217,7 +219,7 @@ public:
   /// Returns a lower-dimensional histogram
   // precondition: sequence must be strictly ascending axis indices
   template <typename Iterator, typename U = axes_type,
-            typename = detail::requires_vector<U>,
+            typename = detail::requires_dynamic_container<U>,
             typename = detail::requires_iterator<Iterator>>
   histogram reduce_to(Iterator begin, Iterator end) const {
     BOOST_ASSERT_MSG(std::is_sorted(begin, end, std::less_equal<decltype(*begin)>()),
@@ -259,12 +261,12 @@ private:
 /// static type factory with custom storage type
 template <typename S, typename T, typename... Ts, typename = detail::requires_axis<T>>
 histogram<
-  std::tuple<detail::rm_cv_ref<T>, detail::rm_cv_ref<Ts>...>,
-  detail::rm_cv_ref<S>
+  std::tuple<detail::rm_cvref<T>, detail::rm_cvref<Ts>...>,
+  detail::rm_cvref<S>
 >
 make_histogram_with(S&& s, T&& axis0, Ts&&... axis) {
   auto axes = std::make_tuple(std::forward<T>(axis0), std::forward<Ts>(axis)...);
-  return histogram<decltype(axes), detail::rm_cv_ref<S>>(
+  return histogram<decltype(axes), detail::rm_cvref<S>>(
     std::move(axes), std::forward<S>(s)
   );
 }
@@ -282,18 +284,18 @@ auto make_histogram(T&& axis0, Ts&&... axis)
 }
 
 /// dynamic type factory from vector-like with custom storage type
-template <typename S, typename T, typename = detail::requires_vector<T>,
-          typename = detail::requires_axis<detail::container_element_type<T>>>
-histogram<detail::rm_cv_ref<T>, detail::rm_cv_ref<S>>
+template <typename S, typename T,
+          typename = detail::requires_axis_vector<T>>
+histogram<detail::rm_cvref<T>, detail::rm_cvref<S>>
 make_histogram_with(S&& s, T&& t) {
-  return histogram<detail::rm_cv_ref<T>, detail::rm_cv_ref<S>>(
+  return histogram<detail::rm_cvref<T>, detail::rm_cvref<S>>(
     std::forward<T>(t), std::forward<S>(s)
   );
 }
 
 /// dynamic type factory from vector-like with standard storage type
-template <typename T, typename = detail::requires_vector<T>,
-          typename = detail::requires_axis<detail::container_element_type<T>>>
+template <typename T,
+          typename = detail::requires_axis_vector<T>>
 auto make_histogram(T&& t)
   -> decltype(make_histogram_with(default_storage(), std::forward<T>(t)))
 {
@@ -303,20 +305,21 @@ auto make_histogram(T&& t)
 /// dynamic type factory from iterator range with custom storage type
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
-histogram<std::vector<detail::iterator_value_type<Iterator>>,
-          detail::rm_cv_ref<Storage>>
+histogram<std::vector<detail::unqualified_iterator_value_type<Iterator>>,
+          detail::rm_cvref<Storage>>
 make_histogram_with(Storage&& s, Iterator begin, Iterator end) {
-  auto axes = std::vector<detail::iterator_value_type<Iterator>>(begin, end);
+  using T = detail::unqualified_iterator_value_type<Iterator>;
+  auto axes = std::vector<T>(begin, end);
   return make_histogram_with(std::forward<Storage>(s), std::move(axes));
 }
 
-// /// dynamic type factory from iterator range with standard storage type
-// template <typename Iterator, typename = detail::requires_iterator<Iterator>>
-// auto make_histogram(Iterator begin, Iterator end)
-//   -> decltype(make_histogram_with(default_storage(), begin, end))
-// {
-//   return make_histogram_with(default_storage(), begin, end);
-// }
+/// dynamic type factory from iterator range with standard storage type
+template <typename Iterator, typename = detail::requires_iterator<Iterator>>
+auto make_histogram(Iterator begin, Iterator end)
+  -> decltype(make_histogram_with(default_storage(), begin, end))
+{
+  return make_histogram_with(default_storage(), begin, end);
+}
 } // namespace histogram
 } // namespace boost
 

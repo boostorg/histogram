@@ -22,6 +22,47 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+template <class T>
+using rm_cvref = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+
+template <class T>
+using mp_size = mp11::mp_size<rm_cvref<T>>;
+
+template <typename T, unsigned N>
+using mp_at_c = mp11::mp_at_c<rm_cvref<T>, N>;
+
+template <typename T1, typename T2>
+using copy_qualifiers = mp11::mp_if<
+    std::is_rvalue_reference<T1>, T2&&,
+    mp11::mp_if<std::is_lvalue_reference<T1>,
+                mp11::mp_if<std::is_const<typename std::remove_reference<T1>::type>,
+                            const T2&, T2&>,
+                mp11::mp_if<std::is_const<T1>, const T2, T2>>>;
+
+template <typename S, typename L>
+using mp_set_union = mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back, S>, L>;
+
+template <typename L>
+using mp_last = mp11::mp_at_c<L, (mp_size<L>::value - 1)>;
+
+template <typename T>
+using container_element_type = mp11::mp_first<rm_cvref<T>>;
+
+template <typename T>
+using unqualified_iterator_value_type = rm_cvref<typename std::iterator_traits<T>::value_type>;
+
+template <typename T>
+using return_type = typename boost::callable_traits::return_type<T>::type;
+
+template <typename T>
+using args_type = boost::callable_traits::args_t<T>;
+
+template <int N, typename T>
+using arg_type = typename mp11::mp_at_c<args_type<T>, (N < 0 ? mp11::mp_size<args_type<T>>::value + N : N)>;
+
+template <typename F, typename V>
+using visitor_return_type = decltype(std::declval<F>()(std::declval<copy_qualifiers<V, mp_at_c<V, 0>>>()));
+
 #define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond)      \
   template <typename U>                              \
   struct name##_impl {                               \
@@ -39,21 +80,56 @@ namespace detail {
 BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
                             (std::declval<T&>().value(), std::declval<T&>().variance()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower, (std::declval<T&>().lower(0)));
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower,
+                            (std::declval<T&>().lower(0)));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options,
                             (static_cast<axis::option_type>(std::declval<T&>().options())));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata,
+                            (std::declval<T&>().metadata()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_dynamic_container, (std::begin(std::declval<T&>())));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_dynamic_container,
+                            (std::declval<T&>()[0], std::declval<T&>().size()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container, (std::get<0>(std::declval<T&>())));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container,
+                            (std::get<0>(std::declval<T&>())));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_castable_to_int, (static_cast<int>(std::declval<T&>())));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_castable_to_int,
+                            (static_cast<int>(std::declval<T&>())));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_equal_comparable,
                             (std::declval<T&>() == std::declval<T&>()));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_axis,
+                            (std::declval<T&>().size(), &T::operator()));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_iterable,
+                            (std::begin(std::declval<T&>()),
+                             std::end(std::declval<T&>())));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
+                            (std::declval<std::ostream&>() << std::declval<T&>()));
+
+namespace {
+template <typename T>
+struct is_axis_variant_impl : std::false_type {};
+
+template <typename... Ts>
+struct is_axis_variant_impl<axis::variant<Ts...>> : std::true_type {};
+}
+
+template <typename T>
+using is_axis_variant = typename is_axis_variant_impl<T>::type;
+
+template <typename T>
+using is_axis_vector = mp11::mp_all<
+    is_dynamic_container<T>,
+    mp11::mp_any<
+      is_axis_variant<container_element_type<rm_cvref<T>>>,
+      is_axis<container_element_type<rm_cvref<T>>>
+    >
+  >;
 
 struct static_container_tag {};
 struct dynamic_container_tag {};
@@ -64,27 +140,6 @@ using classify_container = typename std::conditional<
     is_static_container<T>::value, static_container_tag,
     typename std::conditional<is_dynamic_container<T>::value,
                               dynamic_container_tag, no_container_tag>::type>::type;
-
-template <typename T,
-          typename = decltype(std::declval<T&>().size(), std::declval<T&>().increase(0),
-                              std::declval<T&>()[0])>
-struct requires_storage {};
-
-template <typename T, typename = decltype(*std::declval<T&>(), ++std::declval<T&>())>
-struct requires_iterator {};
-
-template <typename T, typename = decltype(std::begin(std::declval<T&>()))>
-struct requires_iterable {};
-
-template <typename T, typename = decltype(std::declval<T&>()[0])>
-struct requires_vector {};
-
-template <typename T, typename = decltype(std::get<0>(std::declval<T&>()))>
-struct requires_tuple {};
-
-template <typename T,
-          typename = decltype(std::declval<T&>().size(), &T::operator())>
-struct requires_axis {};
 
 namespace {
 struct bool_mask_impl {
@@ -104,43 +159,42 @@ std::vector<bool> bool_mask(unsigned n, bool v) {
   return b;
 }
 
-template <class T>
-using rm_cv_ref = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+// poor-mans concept checks
+template <typename T,
+          typename = decltype(std::declval<T&>().size(), std::declval<T&>().increase(0),
+                              std::declval<T&>()[0])>
+struct requires_storage {};
 
-template <class T>
-using mp_size = mp11::mp_size<rm_cv_ref<T>>;
+template <typename T, typename = decltype(*std::declval<T&>(), ++std::declval<T&>())>
+struct requires_iterator {};
 
-template <typename T, unsigned N>
-using mp_at_c = mp11::mp_at_c<rm_cv_ref<T>, N>;
+template <typename T, typename = mp11::mp_if<is_iterable<T>, void>>
+struct requires_iterable {};
 
-template <typename T1, typename T2>
-using copy_qualifiers = mp11::mp_if<
-    std::is_rvalue_reference<T1>, T2&&,
-    mp11::mp_if<std::is_lvalue_reference<T1>,
-                mp11::mp_if<std::is_const<typename std::remove_reference<T1>::type>,
-                            const T2&, T2&>,
-                mp11::mp_if<std::is_const<T1>, const T2, T2>>>;
+template <typename T, typename = mp11::mp_if<is_dynamic_container<T>, void>>
+struct requires_dynamic_container {};
 
-template <typename S, typename L>
-using mp_set_union = mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back, S>, L>;
+template <typename T, typename = mp11::mp_if<is_static_container<T>, void>>
+struct requires_static_container {};
 
-template <typename L>
-using mp_last = mp11::mp_at_c<L, (mp11::mp_size<L>::value - 1)>;
+template <typename T, typename = mp11::mp_if<is_static_container<T>, void>>
+struct requires_tuple {};
 
-template <typename T>
-using container_element_type = mp11::mp_first<T>;
+template <typename T,
+          typename = mp11::mp_if<is_axis<T>, void>>
+struct requires_axis {};
 
-template <typename T>
-using iterator_value_type = rm_cv_ref<decltype(*std::declval<T&>())>;
+template <typename T,
+          typename = mp11::mp_if_c<(is_axis<T>::value ||
+                                    is_axis_variant<T>::value), void>>
+struct requires_axis_or_axis_variant {};
 
-template <typename T>
-using return_type = typename boost::callable_traits::return_type<T>::type;
-
-template <typename T>
-using args_type = boost::callable_traits::args_t<T>;
-
-template <int N, typename T>
-using arg_type = typename mp11::mp_at_c<args_type<T>, (N < 0 ? mp11::mp_size<args_type<T>>::value + N : N)>;
+template <typename T,
+          typename U = container_element_type<T>,
+          typename = mp11::mp_if_c<(is_dynamic_container<T>::value &&
+                                    (is_axis<U>::value ||
+                                     is_axis_variant<U>::value)), void>>
+struct requires_axis_vector {};
 
 } // namespace detail
 } // namespace histogram

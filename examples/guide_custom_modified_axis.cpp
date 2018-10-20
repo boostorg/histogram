@@ -1,4 +1,4 @@
-//[ guide_custom_axis
+//[ guide_custom_modified_axis
 
 #include <boost/histogram.hpp>
 #include <iostream>
