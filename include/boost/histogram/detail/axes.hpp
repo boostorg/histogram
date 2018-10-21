@@ -351,7 +351,7 @@ template <typename Any, typename A, typename Iterator>
 void indices_to_index_iter(optional_index& idx, const std::vector<Any, A>& axes,
                            Iterator iter) {
   for (const auto& a : axes) {
-    const auto a_size = a.size();
+    const auto a_size = static_cast<int>(a.size());
     const auto a_shape = axis::traits::extend(a);
     const auto j = static_cast<int>(*iter++);
     idx.stride *= (-1 <= j && j <= a_size); // set to 0, if j is invalid
