@@ -33,7 +33,7 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   using OS = std::basic_ostream<CharT, Traits>;
   os << "histogram(";
   h.for_each_axis(detail::axis_ostream_visitor<OS>(os));
-  os << (h.dim() ? "\n)" : ")");
+  os << (h.rank() ? "\n)" : ")");
   return os;
 }
 

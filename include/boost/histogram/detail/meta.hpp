@@ -55,13 +55,27 @@ template <typename T>
 using return_type = typename boost::callable_traits::return_type<T>::type;
 
 template <typename T>
-using args_type = boost::callable_traits::args_t<T>;
+using args_type = mp11::mp_if<
+  std::is_member_function_pointer<T>,
+  mp11::mp_pop_front<boost::callable_traits::args_t<T>>,
+  boost::callable_traits::args_t<T>
+>;
 
 template <int N, typename T>
 using arg_type = typename mp11::mp_at_c<args_type<T>, (N < 0 ? mp11::mp_size<args_type<T>>::value + N : N)>;
 
 template <typename F, typename V>
 using visitor_return_type = decltype(std::declval<F>()(std::declval<copy_qualifiers<V, mp_at_c<V, 0>>>()));
+
+template <typename T1, typename T2>
+struct overload_type : T1, T2 {
+  overload_type(T1 t1, T2 t2) : T1(t1), T2(t2) {}
+  using T1::operator();
+  using T2::operator();
+};
+
+template <typename T1, typename T2>
+overload_type<T1, T2> overload(T1 t1, T2 t2) { return overload_type<T1, T2>(t1, t2); }
 
 #define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond)      \
   template <typename U>                              \
@@ -89,7 +103,7 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options,
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata,
                             (std::declval<T&>().metadata()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_dynamic_container,
+BOOST_HISTOGRAM_MAKE_SFINAE(is_random_access_container,
                             (std::declval<T&>()[0], std::declval<T&>().size()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container,
@@ -124,7 +138,7 @@ using is_axis_variant = typename is_axis_variant_impl<T>::type;
 
 template <typename T>
 using is_axis_vector = mp11::mp_all<
-    is_dynamic_container<T>,
+    is_random_access_container<T>,
     mp11::mp_any<
       is_axis_variant<container_element_type<rm_cvref<T>>>,
       is_axis<container_element_type<rm_cvref<T>>>
@@ -132,14 +146,14 @@ using is_axis_vector = mp11::mp_all<
   >;
 
 struct static_container_tag {};
-struct dynamic_container_tag {};
+struct iterable_container_tag {};
 struct no_container_tag {};
 
 template <typename T>
 using classify_container = typename std::conditional<
-    is_static_container<T>::value, static_container_tag,
-    typename std::conditional<is_dynamic_container<T>::value,
-                              dynamic_container_tag, no_container_tag>::type>::type;
+    is_iterable<T>::value, iterable_container_tag,
+    typename std::conditional<is_static_container<T>::value,
+                              static_container_tag, no_container_tag>::type>::type;
 
 namespace {
 struct bool_mask_impl {
@@ -171,14 +185,8 @@ struct requires_iterator {};
 template <typename T, typename = mp11::mp_if<is_iterable<T>, void>>
 struct requires_iterable {};
 
-template <typename T, typename = mp11::mp_if<is_dynamic_container<T>, void>>
-struct requires_dynamic_container {};
-
 template <typename T, typename = mp11::mp_if<is_static_container<T>, void>>
 struct requires_static_container {};
-
-template <typename T, typename = mp11::mp_if<is_static_container<T>, void>>
-struct requires_tuple {};
 
 template <typename T,
           typename = mp11::mp_if<is_axis<T>, void>>
@@ -191,7 +199,7 @@ struct requires_axis_or_axis_variant {};
 
 template <typename T,
           typename U = container_element_type<T>,
-          typename = mp11::mp_if_c<(is_dynamic_container<T>::value &&
+          typename = mp11::mp_if_c<(is_random_access_container<T>::value &&
                                     (is_axis<U>::value ||
                                      is_axis_variant<U>::value)), void>>
 struct requires_axis_vector {};

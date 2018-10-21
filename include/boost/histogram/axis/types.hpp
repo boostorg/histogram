@@ -51,19 +51,6 @@ struct sqrt : public identity<T> {
 };
 
 template <typename T>
-struct quantity {
-  T unit;
-  using U = decltype(std::declval<T>() / std::declval<T>());
-
-  U forward(T x) const { return x / unit; }
-  T inverse(U x) const { return x * unit; }
-
-  bool operator==(const quantity& o) const noexcept { return unit == o.unit; }
-  template <class Archive>
-  void serialize(Archive&, unsigned);
-};
-
-template <typename T>
 struct pow {
   T power = 1.0;
 
@@ -74,6 +61,22 @@ struct pow {
   T inverse(T v) const { return std::pow(v, 1.0 / power); }
 
   bool operator==(const pow& o) const noexcept { return power == o.power; }
+  template <class Archive>
+  void serialize(Archive&, unsigned);
+};
+
+template <typename Quantity, typename Unit>
+struct quantity {
+  Unit unit;
+
+  quantity(const Unit& u) : unit(u) {}
+
+  using Dimensionless = decltype(std::declval<Quantity&>() / std::declval<Unit&>());
+
+  Dimensionless forward(Quantity x) const { return x / unit; }
+  Quantity inverse(Dimensionless x) const { return x * unit; }
+
+  bool operator==(const quantity& o) const noexcept { return unit == o.unit; }
   template <class Archive>
   void serialize(Archive&, unsigned);
 };
@@ -120,18 +123,18 @@ public:
   /** Construct axis with n bins over real range [begin, end).
    *
    * \param n        number of bins.
-   * \param begin    low edge of first bin.
-   * \param end    high edge of last bin.
+   * \param start    low edge of first bin.
+   * \param stop     high edge of last bin.
    * \param metadata description of the axis.
    * \param options  extra bin options.
    * \param trans    transform instance to use.
    */
-  regular(unsigned n, value_type begin, value_type end,
-          const metadata_type& m = metadata_type(),
-          const option_type o = option_type::underflow_and_overflow,
-          const transform_type& trans = transform_type())
-      : base_type(n, m, o)
-      , data_(trans, n, begin, end)
+  regular(unsigned n, value_type start, value_type stop,
+          metadata_type m = metadata_type(),
+          option_type o = option_type::underflow_and_overflow,
+          transform_type trans = transform_type())
+      : base_type(n, std::move(m), o)
+      , data_(std::move(trans), n, start, stop)
   {
     if (!std::isfinite(data_.min) || !std::isfinite(data_.delta))
       throw std::invalid_argument("forward transform of lower or upper invalid");
@@ -159,11 +162,11 @@ public:
   /// Returns lower edge of bin.
   value_type lower(int idx) const noexcept {
     const auto z = internal_type(idx) / base_type::size();
-    value_type x;
+    internal_type x;
     if (z < 0)
-      x = -std::numeric_limits<value_type>::infinity();
+      x = -std::numeric_limits<internal_type>::infinity();
     else if (z > 1)
-      x = std::numeric_limits<value_type>::infinity();
+      x = std::numeric_limits<internal_type>::infinity();
     else {
       x = (1 - z) * data_.min + z * (data_.min + data_.delta * base_type::size());
     }
@@ -212,9 +215,9 @@ public:
    */
   explicit circular(unsigned n, value_type phase = 0.0,
                     value_type perimeter = two_pi(),
-                    const metadata_type& m = metadata_type(),
-                    const option_type o = option_type::overflow)
-      : base_type(n, m, o == option_type::underflow_and_overflow ?
+                    metadata_type m = metadata_type(),
+                    option_type o = option_type::overflow)
+      : base_type(n, std::move(m), o == option_type::underflow_and_overflow ?
                   option_type::overflow : o)
       , phase_(phase), delta_(perimeter / n)
   {
@@ -295,11 +298,11 @@ public:
   template <typename Iterator,
             typename = detail::requires_iterator<Iterator>>
   variable(Iterator begin, Iterator end,
-           const metadata_type& m = metadata_type(),
-           const option_type o = option_type::underflow_and_overflow,
-           const allocator_type& a = allocator_type())
-      : base_type(begin == end ? 0 : std::distance(begin, end) - 1, m, o)
-      , data_(a)
+           metadata_type m = metadata_type(),
+           option_type o = option_type::underflow_and_overflow,
+           allocator_type a = allocator_type())
+      : base_type(begin == end ? 0 : std::distance(begin, end) - 1, std::move(m), o)
+      , data_(std::move(a))
   {
     using AT = std::allocator_traits<allocator_type>;
     data_.x = AT::allocate(data_, nx());
@@ -335,18 +338,18 @@ public:
    * \param allocator allocator instance to use.
    */
   template <typename T, typename = detail::requires_iterable<T>>
-  variable(T iterable,
-           const metadata_type& m = metadata_type(),
-           const option_type o = option_type::underflow_and_overflow,
-           const allocator_type& a = allocator_type())
-      : variable(std::begin(iterable), std::end(iterable), m, o, a) {}
+  variable(const T& t,
+           metadata_type m = metadata_type(),
+           option_type o = option_type::underflow_and_overflow,
+           allocator_type a = allocator_type())
+      : variable(std::begin(t), std::end(t), std::move(m), o, std::move(a)) {}
 
   template <typename T>
-  variable(const std::initializer_list<T>& t,
-           const metadata_type& m = metadata_type(),
-           const option_type o = option_type::underflow_and_overflow,
-           const allocator_type& a = allocator_type())
-      : variable(t.begin(), t.end(), m, o, a) {}
+  variable(std::initializer_list<T> t,
+           metadata_type m = metadata_type(),
+           option_type o = option_type::underflow_and_overflow,
+           allocator_type a = allocator_type())
+      : variable(t.begin(), t.end(), std::move(m), o, std::move(a)) {}
 
   variable() = default;
 
@@ -438,9 +441,9 @@ public:
    * \param options  extra bin options.
    */
   integer(value_type begin, value_type end,
-          const metadata_type& m = metadata_type(),
-          const option_type o = option_type::underflow_and_overflow)
-      : base_type(end - begin, m, o), min_(begin) {
+          metadata_type m = metadata_type(),
+          option_type o = option_type::underflow_and_overflow)
+      : base_type(end - begin, std::move(m), o), min_(begin) {
     if (begin >= end) { throw std::invalid_argument("begin < end required"); }
   }
 
@@ -520,11 +523,11 @@ public:
   template <typename Iterator,
             typename = detail::requires_iterator<Iterator>>
   category(Iterator begin, Iterator end,
-           const metadata_type& m = metadata_type(),
-           const option_type o = option_type::overflow,
-           const allocator_type& a = allocator_type())
-    : base_type(std::distance(begin, end), m, o)
-    , data_(a)
+           metadata_type m = metadata_type(),
+           option_type o = option_type::overflow,
+           allocator_type a = allocator_type())
+    : base_type(std::distance(begin, end), std::move(m), o)
+    , data_(std::move(a))
   {
     data_.x = detail::create_buffer_from_iter(data_, base_type::size(), begin);
   }
@@ -534,19 +537,20 @@ public:
    * \param seq sequence of unique values.
    * \param metadata description of the axis.
    */
-  template <typename T, typename = detail::requires_iterable<T>>
-  category(T t,
-           const metadata_type& m = metadata_type(),
-           const option_type o = option_type::overflow,
-           const allocator_type& a = allocator_type())
-    : category(std::begin(t), std::end(t), m, o, a) {}
+  template <typename T,
+            typename = detail::requires_iterable<T>>
+  category(const T& t,
+           metadata_type m = metadata_type(),
+           option_type o = option_type::overflow,
+           allocator_type a = allocator_type())
+    : category(std::begin(t), std::end(t), std::move(m), o, std::move(a)) {}
 
   template <typename T>
-  category(const std::initializer_list<T>& t,
-           const metadata_type& m = metadata_type(),
-           const option_type o = option_type::overflow,
-           const allocator_type& a = allocator_type())
-    : category(t.begin(), t.end(), m, o, a) {}
+  category(std::initializer_list<T> t,
+           metadata_type m = metadata_type(),
+           option_type o = option_type::overflow,
+           allocator_type a = allocator_type())
+    : category(t.begin(), t.end(), std::move(m), o, std::move(a)) {}
 
   category() = default;
 

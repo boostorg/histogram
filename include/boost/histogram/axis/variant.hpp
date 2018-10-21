@@ -32,7 +32,7 @@ struct call_visitor {
   call_visitor(const double arg) : x(arg) {}
   template <typename T>
   int operator()(const T& t) const {
-    using args = typename axis::traits<T>::args;
+    using args = axis::traits::args<T>;
     return impl(mp11::mp_bool<
                   (mp11::mp_size<args>::value == 1 &&
                    std::is_convertible<double, mp11::mp_first<args>>::value)
@@ -40,12 +40,11 @@ struct call_visitor {
   }
   template <typename T>
   int impl(std::true_type, const T& a) const {
-    using U = mp11::mp_first<typename axis::traits<T>::args>;
-    return a(static_cast<U>(x));
+    return a(x);
   }
   template <typename T>
   int impl(std::false_type, const T&) const {
-    using args = typename axis::traits<T>::args;
+    using args = axis::traits::args<T>;
     throw std::invalid_argument(detail::cat(
       "cannot convert double to ",
       boost::core::demangled_name( BOOST_CORE_TYPEID(args) ),
@@ -55,97 +54,10 @@ struct call_visitor {
   }
 };
 
-struct size_visitor {
-  template <typename T>
-  unsigned operator()(const T& a) const {
-    return a.size();
-  }
-};
-
-struct options_visitor {
-  template <typename T>
-  axis::option_type operator()(const T& t) const {
-    return axis::traits<T>::options(t);
-  }
-};
-
-struct lower_visitor {
-  int idx;
-  lower_visitor(int i) : idx(i) {}
-  template <typename T>
-  double operator()(const T& a) const {
-    return impl(detail::has_method_lower<T>(), a);
-  }
-  template <typename T>
-  double impl(std::true_type, const T& a) const {
-    return a.lower(idx);
-  }
-  template <typename T>
-  double impl(std::false_type, const T&) const {
-    throw std::runtime_error(detail::cat(
-        boost::core::demangled_name( BOOST_CORE_TYPEID(T) ),
-        " has no lower method"));
-  }
-};
-
-template <typename T>
-struct assign_visitor {
-  T& t;
-  assign_visitor(T& x) : t(x) {}
-  template <typename U>
-  void operator()(const U& u) const {
-    impl(mp11::mp_contains<rm_cvref<T>, U>(), u);
-  }
-
-  template <typename U>
-  void impl(std::true_type, const U& u) const {
-    t = u;
-  }
-
-  template <typename U>
-  void impl(std::false_type, const U&) const {
-    throw std::invalid_argument(detail::cat(
-        boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
-        " is not a bounded type of ",
-        boost::core::demangled_name( BOOST_CORE_TYPEID(T) )
-      ));
-  }
-};
-
-template <typename T>
-struct equal_visitor {
-  const T& t;
-  equal_visitor(const T& x) : t(x) {}
-  template <typename U>
-  bool operator()(const U& u) const {
-    return t == u;
-  }
-};
-
-template <typename OStream>
-struct ostream_visitor {
-  OStream& os;
-  ostream_visitor(OStream& o) : os(o) {}
-  template <typename T>
-  void operator()(const T& t) const {
-    impl(is_streamable<T>(), t);
-  }
-  template <typename T>
-  void impl(std::true_type, const T& t) const {
-    os << t;
-  }
-  template <typename T>
-  void impl(std::false_type, const T&) const {
-    throw std::invalid_argument(detail::cat(
-        boost::core::demangled_name( BOOST_CORE_TYPEID(T) ),
-        " is not streamable"));
-  }
-};
-
 template <typename F, typename R>
 struct functor_wrapper : public boost::static_visitor<R> {
-  F fcn;
-  functor_wrapper(F f) : fcn(std::forward<F>(f)) {}
+  F& fcn;
+  functor_wrapper(F& f) : fcn(f) {}
 
   template <typename T>
   R operator()(T&& t) const {
@@ -165,14 +77,19 @@ class variant
 {
   using base_type = boost::variant<Ts...>;
   using bin_type = interval_view<variant>;
+  using first_bounded_type = mp11::mp_first<base_type>;
+  using metadata_type = traits::metadata_type<first_bounded_type>;
 
   template <typename T>
   using requires_bounded_type =
-    mp11::mp_if<mp11::mp_contains<base_type,
-                detail::rm_cvref<T>>, void>;
+    mp11::mp_if<mp11::mp_contains<base_type, detail::rm_cvref<T>>, void>;
 
 public:
   variant() = default;
+  variant(const variant&) = default;
+  variant& operator=(const variant&) = default;
+  variant(variant&&) = default;
+  variant& operator=(variant&&) = default;
 
   template <typename T, typename = requires_bounded_type<T>>
   variant(T&& t) : base_type(std::forward<T>(t)) {}
@@ -185,21 +102,57 @@ public:
 
   template <typename... Us>
   variant(const variant<Us...>& u) {
-    visit(detail::assign_visitor<variant>(*this), u);
+    this->operator=(u);
   }
 
   template <typename... Us>
   variant& operator=(const variant<Us...>& u) {
-    visit(detail::assign_visitor<variant>(*this), u);
+    visit([this](const auto& u) {
+      using U = detail::rm_cvref<decltype(u)>;
+      detail::overload(
+        [this](std::true_type, const auto& u) { this->operator=(u); },
+        [](std::false_type, const auto&) {
+          throw std::runtime_error(detail::cat(
+              boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
+              " is not a bounded type of ",
+              boost::core::demangled_name( BOOST_CORE_TYPEID(variant) )
+            ));
+        }
+      )(mp11::mp_contains<base_type, U>(), u);
+    }, u);
     return *this;
   }
 
   unsigned size() const {
-    return visit(detail::size_visitor(), *this);
+    return visit([](const auto& x) { return x.size(); }, *this);
   }
 
   option_type options() const {
-    return visit(detail::options_visitor(), *this);
+    return visit([](const auto& x) { return axis::traits::options(x); }, *this);
+  }
+
+  const metadata_type& metadata() const {
+    return visit([](const auto& x) {
+        using T = detail::rm_cvref<decltype(x)>;
+        using U = traits::metadata_type<T>;
+        return detail::overload(
+          [](std::true_type, const auto& x) { return x.metadata(); },
+          [](std::false_type, const auto&) -> const metadata_type& {
+            throw std::runtime_error(detail::cat(
+              boost::core::demangled_name( BOOST_CORE_TYPEID(T) ),
+              " cannot return metadata of type ",
+              boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
+              " through variant interface which uses type ",
+              boost::core::demangled_name( BOOST_CORE_TYPEID(metadata_type) )
+              ));
+          }
+        )(std::is_same<U, metadata_type>(), x);
+      }, *this);
+  }
+
+  metadata_type& metadata() {
+  //   return visit([](auto& x) { return axis::traits::metadata(x); }, *this);
+    return metadata_type();
   }
 
   // Only works for axes with compatible call signature
@@ -211,7 +164,17 @@ public:
   // Only works for axes with a lower method
   // and will throw a runtime_error otherwise
   double lower(int idx) const {
-    return visit(detail::lower_visitor(idx), *this);
+    return visit([idx](const auto& x) {
+      using T = detail::rm_cvref<decltype(x)>;
+      return detail::overload(
+        [idx](std::true_type, const auto& x) -> double { return x.lower(idx); },
+        [](std::false_type, const auto&) -> double {
+          throw std::runtime_error(detail::cat(
+            boost::core::demangled_name( BOOST_CORE_TYPEID(T) ),
+            " has no lower method"));
+        }
+      )(detail::has_method_lower<T>(), x);
+    }, *this);
   }
 
   // this only works for axes with compatible bin type
@@ -224,7 +187,7 @@ public:
 
   template <typename... Us>
   bool operator==(const variant<Us...>& u) const {
-    return visit(detail::equal_visitor<decltype(u)>(u), *this);
+    return visit([&u](const auto& x) { return u == x; }, *this);
   }
 
   template <typename T>
@@ -267,7 +230,7 @@ auto visit(Functor&& f, Variant&& v)
   -> detail::visitor_return_type<Functor, Variant>
 {
   using R = detail::visitor_return_type<Functor, Variant>;
-  return boost::apply_visitor(detail::functor_wrapper<Functor, R>(std::forward<Functor>(f)),
+  return boost::apply_visitor(detail::functor_wrapper<Functor, R>(f),
                               static_cast<
                                 detail::copy_qualifiers<Variant,
                                   typename detail::rm_cvref<Variant>::base_type>
@@ -277,34 +240,58 @@ auto visit(Functor&& f, Variant&& v)
 template <typename CharT, typename Traits, typename... Ts>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os, const variant<Ts...>& v)
 {
-  visit(detail::ostream_visitor<decltype(os)>(os), v);
+  visit([&os](const auto& x) {
+    using T = detail::rm_cvref<decltype(x)>;
+    detail::overload(
+      [&os](std::true_type, const auto& x) { os << x; },
+      [](std::false_type, const auto&) {
+        throw std::runtime_error(detail::cat(
+            boost::core::demangled_name( BOOST_CORE_TYPEID(T) ),
+            " is not streamable"));
+      }
+    )(detail::is_streamable<T>(), x);
+  }, v);
   return os;
 }
 
 template <typename T, typename... Us>
 T& get(variant<Us...>& v) {
-  return boost::relaxed_get<T>(v);
+  return boost::get<T>(static_cast<typename variant<Us...>::base_type&>(v));
 }
 
 template <typename T, typename... Us>
 const T& get(const variant<Us...>& v) {
-  return boost::relaxed_get<T>(v);
+  return boost::get<T>(static_cast<const typename variant<Us...>::base_type&>(v));
 }
 
 template <typename T, typename... Us>
 T&& get(variant<Us...>&& v) {
-  return boost::relaxed_get<T>(v);
+  return boost::get<T>(static_cast<typename variant<Us...>::base_type&&>(v));
 }
 
 template <typename T, typename... Us>
 T* get(variant<Us...>* v) {
-  return boost::relaxed_get<T>(v);
+  return boost::get<T>(static_cast<typename variant<Us...>::base_type*>(v));
 }
 
 template <typename T, typename... Us>
 const T* get(const variant<Us...>* v) {
-  return boost::relaxed_get<T>(v);
+  return boost::get<T>(static_cast<const typename variant<Us...>::base_type*>(v));
 }
+
+// pass-through if T is an axis instead of a variant
+template <typename T, typename U,
+          typename = detail::requires_axis<detail::rm_cvref<U>>,
+          typename = mp11::mp_if<
+            std::is_same<
+              detail::rm_cvref<T>,
+              detail::rm_cvref<U>
+            >, void>
+         >
+U get(U&& u) {
+  return std::forward<U>(u);
+}
+
 } // namespace axis
 } // namespace histogram
 } // namespace boost

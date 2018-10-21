@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <boost/histogram/axis/traits.hpp>
 
 namespace boost {
 namespace histogram {
@@ -35,19 +36,19 @@ struct index_cache : public std::unique_ptr<block_t[]> {
   struct dim_visitor {
     mutable std::size_t stride;
     mutable block_t* b;
-    template <typename Axis>
-    void operator()(const Axis& a) const noexcept {
-      b->dim = dim_t{0, a.size(), stride};
+    template <typename T>
+    void operator()(const T& a) const noexcept {
+      b->dim = dim_t{0, static_cast<int>(a.size()), stride};
       ++b;
-      stride *= a.shape();
+      stride *= axis::traits::extend(a);
     }
   };
 
   template <typename H>
   void set(const H& h) {
-    if (!(*this) || h.dim() != ptr_t::get()->state.dim) {
-      ptr_t::reset(new block_t[h.dim() + 1]);
-      ptr_t::get()->state.dim = h.dim();
+    if (!(*this) || h.rank() != ptr_t::get()->state.dim) {
+      ptr_t::reset(new block_t[h.rank() + 1]);
+      ptr_t::get()->state.dim = h.rank();
       ptr_t::get()->state.idx = 0;
     }
     h.for_each_axis(dim_visitor{1, ptr_t::get() + 1});

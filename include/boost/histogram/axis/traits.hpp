@@ -9,39 +9,42 @@
 
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/callable_traits/args.hpp>
-#include <type_traits>
 
 namespace boost {
 namespace histogram {
-
 namespace detail {
-template <typename T>
-axis::option_type axis_traits_options_impl(std::true_type, const T& t) {
-  return t.options();
-}
-
-template <typename T>
-axis::option_type axis_traits_options_impl(std::false_type, const T&) {
-  return axis::option_type::none;
-}
+  template <typename B, typename T>
+  struct metadata_type_impl;
+  template <typename T>
+  struct metadata_type_impl<std::true_type, T> {
+    using type = detail::rm_cvref<decltype(std::declval<const T&>().metadata())>;
+  };
+  template <typename T>
+  struct metadata_type_impl<std::false_type, T> {
+    using type = axis::missing_metadata_type;
+  };
 } // namespace detail
-
 namespace axis {
+namespace traits {
+  template <typename T>
+  using args = detail::args_type<decltype(&T::operator())>;
 
-template <typename T>
-struct traits {
-  using args = boost::callable_traits::args_t<decltype(&T::operator())>;
+  template <typename T>
+  using metadata_type = typename detail::metadata_type_impl<detail::has_method_metadata<T>, T>::type;
 
-  static option_type options(const T& t) {
-    return detail::axis_traits_options_impl(detail::has_method_options<T>(), t);
+  template <typename T>
+  option_type options(const T& t) {
+    return detail::overload(
+      [](std::true_type, const auto& x) { return x.options(); },
+      [](std::false_type, const auto&) { return axis::option_type::none; }
+    )(detail::has_method_options<T>(), t);
   }
 
-  static unsigned extend(const T& t) {
+  template <typename T>
+  unsigned extend(const T& t) {
     return t.size() + static_cast<unsigned>(options(t));
   }
-};
-
+} // namespace traits
 } // namespace axis
 } // namespace histogram
 } // namespace boost

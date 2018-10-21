@@ -11,6 +11,7 @@
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/histogram/axis/variant.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <tuple>
@@ -38,23 +39,23 @@ void run_tests() {
   // init_1
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1});
-    BOOST_TEST_EQ(h.dim(), 1);
+    BOOST_TEST_EQ(h.rank(), 1);
     BOOST_TEST_EQ(h.size(), 5);
-    BOOST_TEST_EQ(h.axis(0_c).shape(), 5);
-    BOOST_TEST_EQ(h.axis().shape(), 5);
+    BOOST_TEST_EQ(h.axis(0_c).size(), 3);
+    BOOST_TEST_EQ(h.axis().size(), 3);
     auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1});
     BOOST_TEST_EQ(h2, h);
   }
 
   // init_2
   {
-    auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2});
-    BOOST_TEST_EQ(h.dim(), 2);
-    BOOST_TEST_EQ(h.size(), 25);
-    BOOST_TEST_EQ(h.axis(0_c).shape(), 5);
-    BOOST_TEST_EQ(h.axis(1_c).shape(), 5);
+    auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 3});
+    BOOST_TEST_EQ(h.rank(), 2);
+    BOOST_TEST_EQ(h.size(), 30);
+    BOOST_TEST_EQ(h.axis(0_c).size(), 3);
+    BOOST_TEST_EQ(h.axis(1_c).size(), 4);
     auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
-                     axis::integer<>{-1, 2});
+                     axis::integer<>{-1, 3});
     BOOST_TEST_EQ(h2, h);
   }
 
@@ -62,7 +63,7 @@ void run_tests() {
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
                   axis::circular<>{3});
-    BOOST_TEST_EQ(h.dim(), 3);
+    BOOST_TEST_EQ(h.rank(), 3);
     BOOST_TEST_EQ(h.size(), 75);
     auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
                      axis::integer<>{-1, 2}, axis::circular<>{3});
@@ -73,7 +74,7 @@ void run_tests() {
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
                   axis::circular<>{3}, axis::variable<>{-1, 0, 1});
-    BOOST_TEST_EQ(h.dim(), 4);
+    BOOST_TEST_EQ(h.rank(), 4);
     BOOST_TEST_EQ(h.size(), 300);
     auto h2 =
         make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
@@ -87,7 +88,7 @@ void run_tests() {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
                   axis::circular<>{3}, axis::variable<>{-1, 0, 1},
                   axis::category<>{{A, B, C}});
-    BOOST_TEST_EQ(h.dim(), 5);
+    BOOST_TEST_EQ(h.rank(), 5);
     BOOST_TEST_EQ(h.size(), 1200);
     auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
                      axis::integer<>{-1, 2}, axis::circular<>{3},
@@ -131,51 +132,49 @@ void run_tests() {
     const auto href = h;
     decltype(h) h2(std::move(h));
     // static axes cannot shrink to zero
-    BOOST_TEST_EQ(h.dim(), expected_moved_from_dim(Tag(), 2));
-    BOOST_TEST_EQ(sum(h).value(), 0);
+    BOOST_TEST_EQ(h.rank(), expected_moved_from_dim(Tag(), 2));
+    BOOST_TEST_EQ(sum(h), 0);
     BOOST_TEST_EQ(h.size(), 0);
     BOOST_TEST_EQ(h2, href);
     decltype(h) h3;
     h3 = std::move(h2);
     // static axes cannot shrink to zero
-    BOOST_TEST_EQ(h2.dim(), expected_moved_from_dim(Tag(), 2));
-    BOOST_TEST_EQ(sum(h2).value(), 0);
+    BOOST_TEST_EQ(h2.rank(), expected_moved_from_dim(Tag(), 2));
+    BOOST_TEST_EQ(sum(h2), 0);
     BOOST_TEST_EQ(h2.size(), 0);
     BOOST_TEST_EQ(h3, href);
   }
 
   // axis methods
   {
-    enum { A = 3, B = 5 };
     auto a = make(Tag(), axis::regular<>(1, 1, 2, "foo"));
     BOOST_TEST_EQ(a.axis().size(), 1);
-    BOOST_TEST_EQ(a.axis().shape(), 3);
-    BOOST_TEST_EQ(a.axis().index(1), 0);
     BOOST_TEST_EQ(a.axis()[0].lower(), 1);
     BOOST_TEST_EQ(a.axis()[0].upper(), 2);
-    BOOST_TEST_EQ(a.axis().label(), "foo");
-    a.axis().label("bar");
-    BOOST_TEST_EQ(a.axis().label(), "bar");
+    BOOST_TEST_EQ(a.axis().metadata(), "foo");
+    a.axis().metadata() = "bar";
+    BOOST_TEST_EQ(a.axis().metadata(), "bar");
 
-    auto b = make(Tag(), axis::integer<>(1, 2));
-    BOOST_TEST_EQ(b.axis().size(), 1);
-    BOOST_TEST_EQ(b.axis().shape(), 3);
-    BOOST_TEST_EQ(b.axis().index(1), 0);
-    BOOST_TEST_EQ(b.axis()[0].lower(), 1);
-    BOOST_TEST_EQ(b.axis()[0].upper(), 2);
-    b.axis().label("foo");
-    BOOST_TEST_EQ(b.axis().label(), "foo");
+    auto b = make(Tag(), axis::regular<>(1, 1, 2, "foo"),
+                  axis::integer<>(1, 3));
+    BOOST_TEST_EQ(b.axis(0_c).size(), 1);
+    BOOST_TEST_EQ(b.axis(0_c)[0].lower(), 1);
+    BOOST_TEST_EQ(b.axis(0_c)[0].upper(), 2);
+    BOOST_TEST_EQ(b.axis(1_c).size(), 2);
+    BOOST_TEST_EQ(b.axis(1_c)[0].lower(), 1);
+    BOOST_TEST_EQ(b.axis(1_c)[0].upper(), 3);
+    b.axis(1_c).metadata() = "bar";
+    BOOST_TEST_EQ(b.axis(0_c).metadata(), "foo");
+    BOOST_TEST_EQ(b.axis(1_c).metadata(), "bar");
 
-    auto c = make(Tag(), axis::category<>({A, B}));
+    enum class C { A = 3, B = 5 };
+    auto c = make(Tag(), axis::category<C>({C::A, C::B}));
     BOOST_TEST_EQ(c.axis().size(), 2);
-    BOOST_TEST_EQ(c.axis().shape(), 3);
-    BOOST_TEST_EQ(c.axis().index(A), 0);
-    BOOST_TEST_EQ(c.axis().index(B), 1);
-    c.axis().label("foo");
-    BOOST_TEST_EQ(c.axis().label(), "foo");
+    c.axis().metadata() = "foo";
+    BOOST_TEST_EQ(c.axis().metadata(), "foo");
     // need to cast here for this to work with Tag == dynamic_tag, too
-    auto ca = static_cast<const axis::category<>&>(c.axis());
-    BOOST_TEST_EQ(ca[0].value(), A);
+    auto ca = axis::get<axis::category<C>>(c.axis());
+    BOOST_TEST(ca[0].value() == C::A);
   }
 
   // equal_compare
@@ -211,9 +210,8 @@ void run_tests() {
     h(-1);
     h(10);
 
-    BOOST_TEST_EQ(h.dim(), 1);
-    BOOST_TEST_EQ(h.axis(0_c).size(), 2);
-    BOOST_TEST_EQ(h.axis(0_c).shape(), 4);
+    BOOST_TEST_EQ(h.rank(), 1);
+    BOOST_TEST_EQ(h.axis().size(), 2);
     BOOST_TEST_EQ(sum(h), 4);
 
     BOOST_TEST_EQ(h.at(-1), 1);
@@ -224,15 +222,14 @@ void run_tests() {
 
   // d1_2
   {
-    auto h = make(Tag(), axis::integer<>(0, 2, "", axis::uoflow_type::off));
+    auto h = make(Tag(), axis::integer<>(0, 2, "", axis::option_type::none));
     h(0);
     h(-0);
     h(-1);
     h(10);
 
-    BOOST_TEST_EQ(h.dim(), 1);
-    BOOST_TEST_EQ(h.axis(0_c).size(), 2);
-    BOOST_TEST_EQ(h.axis(0_c).shape(), 2);
+    BOOST_TEST_EQ(h.rank(), 1);
+    BOOST_TEST_EQ(h.axis().size(), 2);
     BOOST_TEST_EQ(sum(h), 2);
 
     BOOST_TEST_EQ(h.at(0), 2);
@@ -247,18 +244,19 @@ void run_tests() {
     h("D");
     h("E");
 
-    BOOST_TEST_EQ(h.dim(), 1);
-    BOOST_TEST_EQ(h.axis(0_c).size(), 2);
-    BOOST_TEST_EQ(h.axis(0_c).shape(), 3);
+    BOOST_TEST_EQ(h.rank(), 1);
+    BOOST_TEST_EQ(h.axis().size(), 2);
     BOOST_TEST_EQ(sum(h), 4);
 
     BOOST_TEST_EQ(h.at(0), 1);
     BOOST_TEST_EQ(h.at(1), 1);
+    BOOST_TEST_EQ(h.at(2), 2); // overflow bin
   }
 
   // d1w
   {
-    auto h = make(Tag(), axis::integer<>(0, 2));
+    auto h = make_s(Tag(), array_storage<weight_counter<>>(),
+                    axis::integer<>(0, 2));
     h(-1);
     h(0);
     h(weight(0.5), 0);
@@ -282,17 +280,15 @@ void run_tests() {
   // d2
   {
     auto h = make(Tag(), axis::regular<>(2, -1, 1),
-                  axis::integer<>(-1, 2, "", axis::uoflow_type::off));
+                  axis::integer<>(-1, 2, {}, axis::option_type::none));
     h(-1, -1);
     h(-1, 0);
     h(-1, -10);
     h(-10, 0);
 
-    BOOST_TEST_EQ(h.dim(), 2);
+    BOOST_TEST_EQ(h.rank(), 2);
     BOOST_TEST_EQ(h.axis(0_c).size(), 2);
-    BOOST_TEST_EQ(h.axis(0_c).shape(), 4);
     BOOST_TEST_EQ(h.axis(1_c).size(), 3);
-    BOOST_TEST_EQ(h.axis(1_c).shape(), 3);
     BOOST_TEST_EQ(sum(h), 3);
 
     BOOST_TEST_EQ(h.at(-1, 0), 0);
@@ -314,8 +310,10 @@ void run_tests() {
 
   // d2w
   {
-    auto h = make(Tag(), axis::regular<>(2, -1, 1),
-                  axis::integer<>(-1, 2, "", axis::uoflow_type::off));
+    auto h = make_s(Tag(),
+                    array_storage<weight_counter<>>(),
+                    axis::regular<>(2, -1, 1),
+                    axis::integer<>(-1, 2, {}, axis::option_type::none));
     h(-1, 0);              // -> 0, 1
     h(weight(10), -1, -1); // -> 0, 0
     h(weight(5), -1, -10); // is ignored
@@ -359,17 +357,20 @@ void run_tests() {
 
   // d3w
   {
-    auto h =
-        make(Tag(), axis::integer<>(0, 3), axis::integer<>(0, 4), axis::integer<>(0, 5));
-    for (auto i = 0; i < h.axis(0_c).size(); ++i) {
-      for (auto j = 0; j < h.axis(1_c).size(); ++j) {
-        for (auto k = 0; k < h.axis(2_c).size(); ++k) { h(weight(i + j + k), i, j, k); }
+    auto h = make_s(Tag(),
+                    array_storage<weight_counter<>>(),
+                    axis::integer<>(0, 3),
+                    axis::integer<>(0, 4),
+                    axis::integer<>(0, 5));
+    for (auto i = 0u; i < h.axis(0_c).size(); ++i) {
+      for (auto j = 0u; j < h.axis(1_c).size(); ++j) {
+        for (auto k = 0u; k < h.axis(2_c).size(); ++k) { h(weight(i + j + k), i, j, k); }
       }
     }
 
-    for (auto i = 0; i < h.axis(0_c).size(); ++i) {
-      for (auto j = 0; j < h.axis(1_c).size(); ++j) {
-        for (auto k = 0; k < h.axis(2_c).size(); ++k) {
+    for (auto i = 0u; i < h.axis(0_c).size(); ++i) {
+      for (auto j = 0u; j < h.axis(1_c).size(); ++j) {
+        for (auto k = 0u; k < h.axis(2_c).size(); ++k) {
           BOOST_TEST_EQ(h.at(i, j, k).value(), i + j + k);
           BOOST_TEST_EQ(h.at(i, j, k).variance(), (i + j + k) * (i + j + k));
         }
@@ -402,8 +403,10 @@ void run_tests() {
 
   // add_2
   {
-    auto a = make(Tag(), axis::integer<>(0, 2));
-    auto b = make(Tag(), axis::integer<>(0, 2));
+    auto a = make_s(Tag(), array_storage<weight_counter<>>(),
+                    axis::integer<>(0, 2));
+    auto b = make_s(Tag(), array_storage<weight_counter<>>(),
+                    axis::integer<>(0, 2));
 
     a(0);
     BOOST_TEST_EQ(a.at(0).variance(), 1);
@@ -476,20 +479,20 @@ void run_tests() {
     BOOST_TEST_EQ(d.at(1), 3);
     auto e = 3 * a;
     auto f = b * 2;
-    BOOST_TEST_EQ(e.at(0).value(), 3);
-    BOOST_TEST_EQ(e.at(1).value(), 0);
-    BOOST_TEST_EQ(f.at(0).value(), 0);
-    BOOST_TEST_EQ(f.at(1).value(), 2);
+    BOOST_TEST_EQ(e.at(0), 3);
+    BOOST_TEST_EQ(e.at(1), 0);
+    BOOST_TEST_EQ(f.at(0), 0);
+    BOOST_TEST_EQ(f.at(1), 2);
     auto r = a;
     r += b;
     r += e;
-    BOOST_TEST_EQ(r.at(0).value(), 4);
-    BOOST_TEST_EQ(r.at(1).value(), 1);
+    BOOST_TEST_EQ(r.at(0), 4);
+    BOOST_TEST_EQ(r.at(1), 1);
     BOOST_TEST_EQ(r, a + b + 3 * a);
     auto s = r / 4;
     r /= 4;
-    BOOST_TEST_EQ(r.at(0).value(), 1);
-    BOOST_TEST_EQ(r.at(1).value(), 0.25);
+    BOOST_TEST_EQ(r.at(0), 1);
+    BOOST_TEST_EQ(r.at(1), 0.25);
     BOOST_TEST_EQ(r, s);
   }
 
@@ -500,14 +503,14 @@ void run_tests() {
     os << a;
     BOOST_TEST_EQ(os.str(),
                   "histogram("
-                  "\n  regular(3, -1, 1, label='r'),"
-                  "\n  integer(0, 2, label='i'),"
+                  "\n  regular(3, -1, 1, metadata='r', options=underflow_and_overflow),"
+                  "\n  integer(0, 2, metadata='i', options=underflow_and_overflow),"
                   "\n)");
   }
 
   // histogram_reset
   {
-    auto h = make(Tag(), axis::integer<>(0, 2, "", axis::uoflow_type::off));
+    auto h = make(Tag(), axis::integer<>(0, 2, {}, axis::option_type::none));
     h(0);
     h(1);
     BOOST_TEST_EQ(h.at(0), 1);
@@ -540,16 +543,14 @@ void run_tests() {
     */
 
     auto h1_0 = h1.reduce_to(0_c);
-    BOOST_TEST_EQ(h1_0.dim(), 1);
+    BOOST_TEST_EQ(h1_0.rank(), 1);
     BOOST_TEST_EQ(sum(h1_0), 5);
     BOOST_TEST_EQ(h1_0.at(0), 2);
     BOOST_TEST_EQ(h1_0.at(1), 3);
-    BOOST_TEST_EQ(h1_0.axis()[0].lower(), 0);
-    BOOST_TEST_EQ(h1_0.axis()[1].lower(), 1);
     BOOST_TEST(h1_0.axis() == h1.axis(0_c));
 
     auto h1_1 = h1.reduce_to(1_c);
-    BOOST_TEST_EQ(h1_1.dim(), 1);
+    BOOST_TEST_EQ(h1_1.rank(), 1);
     BOOST_TEST_EQ(sum(h1_1), 5);
     BOOST_TEST_EQ(h1_1.at(0), 2);
     BOOST_TEST_EQ(h1_1.at(1), 2);
@@ -565,21 +566,21 @@ void run_tests() {
     h2(1, 0, 2);
 
     auto h2_0 = h2.reduce_to(0_c);
-    BOOST_TEST_EQ(h2_0.dim(), 1);
+    BOOST_TEST_EQ(h2_0.rank(), 1);
     BOOST_TEST_EQ(sum(h2_0), 5);
     BOOST_TEST_EQ(h2_0.at(0), 4);
     BOOST_TEST_EQ(h2_0.at(1), 1);
     BOOST_TEST(h2_0.axis() == axis::integer<>(0, 2));
 
     auto h2_1 = h2.reduce_to(1_c);
-    BOOST_TEST_EQ(h2_1.dim(), 1);
+    BOOST_TEST_EQ(h2_1.rank(), 1);
     BOOST_TEST_EQ(sum(h2_1), 5);
     BOOST_TEST_EQ(h2_1.at(0), 3);
     BOOST_TEST_EQ(h2_1.at(1), 2);
     BOOST_TEST(h2_1.axis() == axis::integer<>(0, 3));
 
     auto h2_2 = h2.reduce_to(2_c);
-    BOOST_TEST_EQ(h2_2.dim(), 1);
+    BOOST_TEST_EQ(h2_2.rank(), 1);
     BOOST_TEST_EQ(sum(h2_2), 5);
     BOOST_TEST_EQ(h2_2.at(0), 2);
     BOOST_TEST_EQ(h2_2.at(1), 1);
@@ -587,7 +588,7 @@ void run_tests() {
     BOOST_TEST(h2_2.axis() == axis::integer<>(0, 4));
 
     auto h2_01 = h2.reduce_to(0_c, 1_c);
-    BOOST_TEST_EQ(h2_01.dim(), 2);
+    BOOST_TEST_EQ(h2_01.rank(), 2);
     BOOST_TEST_EQ(sum(h2_01), 5);
     BOOST_TEST_EQ(h2_01.at(0, 0), 2);
     BOOST_TEST_EQ(h2_01.at(0, 1), 2);
@@ -596,7 +597,7 @@ void run_tests() {
     BOOST_TEST(h2_01.axis(1_c) == axis::integer<>(0, 3));
 
     auto h2_02 = h2.reduce_to(0_c, 2_c);
-    BOOST_TEST_EQ(h2_02.dim(), 2);
+    BOOST_TEST_EQ(h2_02.rank(), 2);
     BOOST_TEST_EQ(sum(h2_02), 5);
     BOOST_TEST_EQ(h2_02.at(0, 0), 2);
     BOOST_TEST_EQ(h2_02.at(0, 1), 1);
@@ -606,7 +607,7 @@ void run_tests() {
     BOOST_TEST(h2_02.axis(1_c) == axis::integer<>(0, 4));
 
     auto h2_12 = h2.reduce_to(1_c, 2_c);
-    BOOST_TEST_EQ(h2_12.dim(), 2);
+    BOOST_TEST_EQ(h2_12.rank(), 2);
     BOOST_TEST_EQ(sum(h2_12), 5);
     BOOST_TEST_EQ(h2_12.at(0, 0), 1);
     BOOST_TEST_EQ(h2_12.at(1, 0), 1);
@@ -619,14 +620,12 @@ void run_tests() {
   // custom axis
   {
     struct custom_axis : public axis::integer<> {
-      using value_type = const char*; // type that is fed to the axis
-
       using integer::integer; // inherit ctors of base
 
-      // the customization point
-      // - accept const char* and convert to int
-      // - then call index method of base class
-      int index(value_type s) const { return integer::index(std::atoi(s)); }
+      // customization point: convert argument and call base class
+      int operator()(const char* s) const {
+        return integer::operator()(std::atoi(s));
+      }
     };
 
     auto h = make(Tag(), custom_axis(0, 3));
@@ -635,7 +634,7 @@ void run_tests() {
     h("1");
     h("9");
 
-    BOOST_TEST_EQ(h.dim(), 1);
+    BOOST_TEST_EQ(h.rank(), 1);
     BOOST_TEST_EQ(h.axis(), custom_axis(0, 3));
     BOOST_TEST_EQ(h.at(0), 1);
     BOOST_TEST_EQ(h.at(1), 1);
@@ -644,13 +643,14 @@ void run_tests() {
 
   // histogram iterator 1D
   {
-    auto h = make(Tag(), axis::integer<>(0, 3));
+    auto h = make_s(Tag(), array_storage<weight_counter<>>(),
+                    axis::integer<>(0, 3));
     const auto& a = h.axis();
     h(weight(2), 0);
     h(1);
     h(1);
     auto it = h.begin();
-    BOOST_TEST_EQ(it.dim(), 1);
+    BOOST_TEST_EQ(it.rank(), 1);
 
     BOOST_TEST_EQ(it.idx(), 0);
     BOOST_TEST_EQ(it.bin(), a[0]);
@@ -678,8 +678,10 @@ void run_tests() {
 
   // histogram iterator 2D
   {
-    auto h = make(Tag(), axis::integer<>(0, 1),
-                  axis::integer<>(2, 4, "", axis::uoflow_type::off));
+    auto h = make_s(Tag(),
+                    array_storage<weight_counter<>>(),
+                    axis::integer<>(0, 1),
+                    axis::integer<>(2, 4, "", axis::option_type::none));
     const auto& a0 = h.axis(0_c);
     const auto& a1 = h.axis(1_c);
     h(weight(2), 0, 2);
@@ -687,7 +689,7 @@ void run_tests() {
     h(1, 3);
 
     auto it = h.begin();
-    BOOST_TEST_EQ(it.dim(), 2);
+    BOOST_TEST_EQ(it.rank(), 2);
 
     BOOST_TEST_EQ(it.idx(0), 0);
     BOOST_TEST_EQ(it.idx(1), 0);
@@ -742,16 +744,18 @@ void run_tests() {
   {
     auto h = make(Tag(), axis::integer<>(0, 3));
     for (int i = 0; i < 3; ++i) h(i);
-    auto a = std::vector<weight_counter<double>>();
+    auto a = std::vector<double>();
     std::partial_sum(h.begin(), h.end(), std::back_inserter(a));
-    BOOST_TEST_EQ(a[0].value(), 1);
-    BOOST_TEST_EQ(a[1].value(), 2);
-    BOOST_TEST_EQ(a[2].value(), 3);
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_EQ(a[1], 2);
+    BOOST_TEST_EQ(a[2], 3);
   }
 
   // using STL containers
   {
-    auto h = make(Tag(), axis::integer<>(0, 2), axis::regular<>(2, 2, 4));
+    auto h = make_s(Tag(),
+                    array_storage<weight_counter<>>(),
+                    axis::integer<>(0, 2), axis::regular<>(2, 2, 4));
     // vector in
     h(std::vector<int>({0, 2}));
     // pair in
@@ -805,9 +809,8 @@ void run_tests() {
     tracing_allocator_db db;
     {
       tracing_allocator<char> a(db);
-      auto h = make_s(Tag(), array_storage<int, int, tracing_allocator<int>>(a),
-                      axis::integer<int, tracing_allocator<char>>(
-                          0, 1024, std::string(512, 'c'), axis::uoflow_type::on, a));
+      auto h = make_s(Tag(), array_storage<int, tracing_allocator<int>>(a),
+                      axis::integer<>(0, 1024));
       h(0);
     }
 
@@ -815,12 +818,8 @@ void run_tests() {
     BOOST_TEST_EQ(db[typeid(int)].first, db[typeid(int)].second);
     BOOST_TEST_GE(db[typeid(int)].first, 1024u);
 
-    // char allocation for axis label
-    BOOST_TEST_EQ(db[typeid(char)].first, db[typeid(char)].second);
-    BOOST_TEST_GE(db[typeid(char)].first, 512u);
-
-    if (Tag()) { // axis::any allocation, only for dynamic histogram
-      using T = axis::any<axis::integer<int, tracing_allocator<char>>>;
+    if (Tag()) { // axis::variant allocation, only for dynamic histogram
+      using T = axis::variant<axis::integer<>>;
       BOOST_TEST_EQ(db[typeid(T)].first, db[typeid(T)].second);
       BOOST_TEST_GE(db[typeid(T)].first, 1u);
     }

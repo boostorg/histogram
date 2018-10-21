@@ -47,8 +47,8 @@ class base
       }
       return *this;
     }
-    data(const metadata_type& m, int s, option_type o)
-    : metadata_type(m), size(s), opt(o) {}
+    data(metadata_type&& m, int s, option_type o)
+    : metadata_type(std::move(m)), size(s), opt(o) {}
 
     bool operator==(const data& rhs) const noexcept {
       return size == rhs.size && opt == rhs.opt &&
@@ -85,8 +85,8 @@ public:
   }
 
 protected:
-  base(unsigned size, const metadata_type& m, option_type opt)
-      : data_(m, size, opt)
+  base(unsigned size, metadata_type&& m, option_type opt)
+      : data_(std::move(m), size, opt)
   {
     if (size == 0) { throw std::invalid_argument("bins > 0 required"); }
     const auto max_index = static_cast<unsigned>(std::numeric_limits<int>::max()
