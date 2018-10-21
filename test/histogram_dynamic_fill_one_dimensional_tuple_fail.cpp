@@ -9,6 +9,7 @@
 
 using namespace boost::histogram;
 int main() {
-  auto a = make_dynamic_histogram(axis::integer<>(0, 2));
+  std::vector<axis::variant<axis::integer<>>> v(1, axis::integer<>(0, 2));
+  auto a = make_histogram(v);
   a(std::make_tuple(1)); // fails, because tuple is intentionally not unpacked
 }

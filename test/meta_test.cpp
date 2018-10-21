@@ -126,6 +126,14 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_iterable<C>));
   }
 
+  // is_streamable
+  {
+    struct Foo {};
+    BOOST_TEST_TRAIT_TRUE((is_streamable<int>));
+    BOOST_TEST_TRAIT_TRUE((is_streamable<std::string>));
+    BOOST_TEST_TRAIT_FALSE((is_streamable<Foo>));
+  }
+
   // is_axis_variant
   {
     struct A {};
@@ -136,29 +144,36 @@ int main() {
 
   // classify_container
   {
-    using result1 = classify_container<int>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result1, no_container_tag>));
+    using A = classify_container<int>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<A, no_container_tag>));
 
-    using result1a = classify_container<int&>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result1a, no_container_tag>));
+    using B = classify_container<int&>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<B, no_container_tag>));
 
-    using result2 = classify_container<std::vector<int>>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result2, dynamic_container_tag>));
+    using C = classify_container<std::vector<int>>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<C, iterable_container_tag>));
 
-    using result2a = classify_container<std::vector<int>&>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result2a, dynamic_container_tag>));
+    using D = classify_container<std::vector<int>&>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<D, iterable_container_tag>));
 
-    using result3 = classify_container<std::pair<int, int>>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result3, static_container_tag>));
+    using E = classify_container<std::pair<int, int>>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<E, static_container_tag>));
 
-    using result3a = classify_container<std::pair<int, int>&>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result3a, static_container_tag>));
+    using F = classify_container<std::pair<int, int>&>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<F, static_container_tag>));
 
-    using result4 = classify_container<std::string>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result4, dynamic_container_tag>));
+    using G = classify_container<std::string>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<G, iterable_container_tag>));
 
-    using result5 = classify_container<int*>; // has no std::end
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result5, no_container_tag>));
+    using H = classify_container<int*>; // has no std::end
+    BOOST_TEST_TRAIT_TRUE((std::is_same<H, no_container_tag>));
+
+    using I = classify_container<std::initializer_list<int>>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<I, iterable_container_tag>));
+
+    auto j = {0, 1};
+    using J = classify_container<decltype(j)>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<I, iterable_container_tag>));
   }
 
   // bool mask
@@ -242,6 +257,17 @@ int main() {
     using T2 = std::iterator<std::random_access_iterator_tag, int>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<unqualified_iterator_value_type<T1>, char>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<unqualified_iterator_value_type<T2>, int>));
+  }
+
+  // args_type
+  {
+    struct Foo {
+      static int f1(char);
+      int f2(long) const;
+    };
+
+    BOOST_TEST_TRAIT_TRUE((std::is_same<args_type<decltype(&Foo::f1)>, std::tuple<char>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<args_type<decltype(&Foo::f2)>, std::tuple<long>>));
   }
 
   // visitor_return_type

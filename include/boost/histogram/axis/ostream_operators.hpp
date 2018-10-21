@@ -23,8 +23,8 @@ namespace detail {
 template <typename T> const char* to_string(const axis::transform::identity<T>&) { return ""; }
 template <typename T> const char* to_string(const axis::transform::log<T>&) { return "_log"; }
 template <typename T> const char* to_string(const axis::transform::sqrt<T>&) { return "_sqrt"; }
-template <typename T> const char* to_string(const axis::transform::quantity<T>&) { return "_quantity"; }
 template <typename T> const char* to_string(const axis::transform::pow<T>&) { return "_pow"; }
+template <typename Q, typename U> const char* to_string(const axis::transform::quantity<Q,U>&) { return "_quantity"; }
 
 template <typename OStream>
 void escape_string(OStream& os, const std::string& s) {
@@ -68,8 +68,8 @@ void stream_transform(OStream& os, const axis::transform::pow<T>& t) {
   os << ", power=" << t.power;
 }
 
-template <typename OStream, typename T>
-void stream_transform(OStream& os, const axis::transform::quantity<T>& t) {
+template <typename OStream, typename Q, typename U>
+void stream_transform(OStream& os, const axis::transform::quantity<Q,U>& t) {
   os << ", unit=" << t.unit;
 }
 

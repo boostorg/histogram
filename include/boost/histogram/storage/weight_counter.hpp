@@ -19,7 +19,7 @@ class access;
 namespace histogram {
 
 /// Double counter which holds a sum of weights and a sum of squared weights
-template <typename RealType>
+template <typename RealType=double>
 class weight_counter {
 public:
   /// Beware: For performance reasons counters are not initialized

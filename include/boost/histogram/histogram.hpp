@@ -125,7 +125,7 @@ public:
 
   /// Get N-th axis with runtime index (const version)
   template <typename U = axes_type,
-            typename = detail::requires_dynamic_container<U>>
+            typename = detail::requires_axis_vector<U>>
   auto axis(std::size_t i) const -> const detail::container_element_type<U>& {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
@@ -133,7 +133,7 @@ public:
 
   /// Get N-th axis with runtime index
   template <typename U = axes_type,
-            typename = detail::requires_dynamic_container<U>>
+            typename = detail::requires_axis_vector<U>>
   auto axis(std::size_t i) -> detail::container_element_type<U>& {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
@@ -219,7 +219,7 @@ public:
   /// Returns a lower-dimensional histogram
   // precondition: sequence must be strictly ascending axis indices
   template <typename Iterator, typename U = axes_type,
-            typename = detail::requires_dynamic_container<U>,
+            typename = detail::requires_axis_vector<U>,
             typename = detail::requires_iterator<Iterator>>
   histogram reduce_to(Iterator begin, Iterator end) const {
     BOOST_ASSERT_MSG(std::is_sorted(begin, end, std::less_equal<decltype(*begin)>()),

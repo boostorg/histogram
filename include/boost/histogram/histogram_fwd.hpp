@@ -16,6 +16,8 @@ namespace histogram {
 
 namespace axis {
 
+struct missing_metadata_type {};
+
 enum class option_type {
   none = 0,
   overflow = 1,
@@ -26,8 +28,8 @@ namespace transform {
 template <typename T=double> struct identity;
 template <typename T=double> struct log;
 template <typename T=double> struct sqrt;
-template <typename T=double> struct quantity;
 template <typename T=double> struct pow;
+template <typename Q, typename U> struct quantity;
 } // namespace transform
 
 template <typename Transform = transform::identity<>,

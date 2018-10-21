@@ -37,7 +37,7 @@ int main() {
       this is here the case for the category axis.
   */
   using cas = bh::axis::category<std::string>;
-  for (auto cbin : static_cast<const cas&>(h.axis(0))) {
+  for (auto cbin : bh::axis::get<cas>(h.axis(0))) {
     for (auto ybin : h.axis(2)) {   // rows
       for (auto xbin : h.axis(1)) { // columns
         const auto v = h.at(cbin, xbin, ybin);

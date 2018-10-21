@@ -26,7 +26,7 @@ int main() {
 
   for (auto xi : h.axis()) {
     std::cout << "bin " << xi.idx() << " [" << xi.lower() << ", "
-              << xi.upper() << ") " << h.at(xi).value() << std::endl;
+              << xi.upper() << ") " << h.at(xi) << std::endl;
   }
 
   /* prints:
