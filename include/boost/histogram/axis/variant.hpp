@@ -78,7 +78,7 @@ class variant
   using base_type = boost::variant<Ts...>;
   using bin_type = interval_view<variant>;
   using first_bounded_type = mp11::mp_first<base_type>;
-  using metadata_type = traits::metadata_type<first_bounded_type>;
+  using metadata_type = detail::rm_cvref<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
 
   template <typename T>
   using requires_bounded_type =
@@ -132,27 +132,37 @@ public:
   }
 
   const metadata_type& metadata() const {
-    return visit([](const auto& x) {
-        using T = detail::rm_cvref<decltype(x)>;
-        using U = traits::metadata_type<T>;
+    return visit([](const auto& x) -> const metadata_type& {
+        using U = decltype(traits::metadata(x));
         return detail::overload(
-          [](std::true_type, const auto& x) { return x.metadata(); },
+          [](std::true_type, const auto& x) -> const metadata_type& { return traits::metadata(x); },
           [](std::false_type, const auto&) -> const metadata_type& {
             throw std::runtime_error(detail::cat(
-              boost::core::demangled_name( BOOST_CORE_TYPEID(T) ),
-              " cannot return metadata of type ",
+              "cannot return metadata of type ",
               boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
               " through variant interface which uses type ",
-              boost::core::demangled_name( BOOST_CORE_TYPEID(metadata_type) )
+              boost::core::demangled_name( BOOST_CORE_TYPEID(const metadata_type&) )
               ));
           }
-        )(std::is_same<U, metadata_type>(), x);
+        )(std::is_same<U, const metadata_type&>(), x);
       }, *this);
   }
 
   metadata_type& metadata() {
-  //   return visit([](auto& x) { return axis::traits::metadata(x); }, *this);
-    return metadata_type();
+    return visit([](auto& x) -> metadata_type& {
+        using U = decltype(traits::metadata(x));
+        return detail::overload(
+          [](std::true_type, auto& x) -> metadata_type& { return traits::metadata(x); },
+          [](std::false_type, auto&) -> metadata_type& {
+            throw std::runtime_error(detail::cat(
+              "cannot return metadata of type ",
+              boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
+              " through variant interface which uses type ",
+              boost::core::demangled_name( BOOST_CORE_TYPEID(metadata_type&) )
+              ));
+          }
+        )(std::is_same<U, metadata_type&>(), x);
+      }, *this);
   }
 
   // Only works for axes with compatible call signature
