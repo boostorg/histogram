@@ -140,7 +140,7 @@ public:
             throw std::runtime_error(detail::cat(
               "cannot return metadata of type ",
               boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
-              " through variant interface which uses type ",
+              " through axis::variant interface which uses type ",
               boost::core::demangled_name( BOOST_CORE_TYPEID(const metadata_type&) )
               ));
           }
@@ -156,8 +156,8 @@ public:
           [](std::false_type, auto&) -> metadata_type& {
             throw std::runtime_error(detail::cat(
               "cannot return metadata of type ",
-              boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
-              " through variant interface which uses type ",
+              boost::core::demangled_name( BOOST_CORE_TYPEID(mp11::mp_identity<U>) ),
+              " through axis::variant interface which uses type ",
               boost::core::demangled_name( BOOST_CORE_TYPEID(metadata_type&) )
               ));
           }
@@ -281,23 +281,18 @@ T&& get(variant<Us...>&& v) {
 
 template <typename T, typename... Us>
 T* get(variant<Us...>* v) {
-  return boost::get<T>(static_cast<typename variant<Us...>::base_type*>(v));
+  return boost::relaxed_get<T>(static_cast<typename variant<Us...>::base_type*>(v));
 }
 
 template <typename T, typename... Us>
 const T* get(const variant<Us...>* v) {
-  return boost::get<T>(static_cast<const typename variant<Us...>::base_type*>(v));
+  return boost::relaxed_get<T>(static_cast<const typename variant<Us...>::base_type*>(v));
 }
 
 // pass-through if T is an axis instead of a variant
 template <typename T, typename U,
           typename = detail::requires_axis<detail::rm_cvref<U>>,
-          typename = mp11::mp_if<
-            std::is_same<
-              detail::rm_cvref<T>,
-              detail::rm_cvref<U>
-            >, void>
-         >
+          typename = detail::requires_same<T, detail::rm_cvref<U>>>
 U get(U&& u) {
   return std::forward<U>(u);
 }

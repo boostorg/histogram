@@ -9,6 +9,8 @@
 
 using namespace boost::histogram;
 int main() {
-  auto h = make_dynamic_histogram(axis::integer<>(0, 2));
+  auto v = std::vector<axis::variant<axis::integer<>>>();
+  v.push_back(axis::integer<>(0, 2));
+  auto h = make_histogram(v);
   h.at(std::vector<int>({0, 0}));
 }

@@ -7,7 +7,7 @@ namespace bh = boost::histogram;
 
 // stateless axis which returns 1 if the input is even and 0 otherwise
 struct minimal_axis {
-  int operator()(int x) const { return x % 2 == 0; }
+  int operator()(int x) const { return x % 2; }
   unsigned size() const { return 2; }
 };
 

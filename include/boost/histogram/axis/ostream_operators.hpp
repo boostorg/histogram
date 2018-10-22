@@ -15,6 +15,9 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <ostream>
+#include <iomanip>
+#include <type_traits>
+#include <boost/core/typeinfo.hpp>
 
 namespace boost {
 namespace histogram {
@@ -26,28 +29,21 @@ template <typename T> const char* to_string(const axis::transform::sqrt<T>&) { r
 template <typename T> const char* to_string(const axis::transform::pow<T>&) { return "_pow"; }
 template <typename Q, typename U> const char* to_string(const axis::transform::quantity<Q,U>&) { return "_quantity"; }
 
-template <typename OStream>
-void escape_string(OStream& os, const std::string& s) {
-  os << '\'';
-  for (auto sit = s.begin(); sit != s.end(); ++sit) {
-    if (*sit == '\'' && (sit == s.begin() || *(sit - 1) != '\\')) {
-      os << "\\\'";
-    } else {
-      os << *sit;
-    }
-  }
-  os << '\'';
-}
-
 template <typename OStream, typename T>
 void stream_metadata(OStream& os, const T& t) {
-  if (detail::is_streamable<T>::value) {
-    std::ostringstream oss;
-    oss << t;
-    if (!oss.str().empty())
-      os << ", metadata=";
-      escape_string(os, oss.str());
-  }
+  detail::overload(
+    [](std::true_type, OStream& os, const auto& t) {
+      std::ostringstream oss;
+      oss << t;
+      if (!oss.str().empty()) {
+        os << ", metadata=" << std::quoted(oss.str());
+      }
+    },
+    [](std::false_type, OStream& os, const T&) {
+      using U = detail::rm_cvref<T>;
+      os << ", metadata=" << boost::core::demangled_name( BOOST_CORE_TYPEID(U) );
+    }
+  )(detail::is_streamable<T>(), os, t);
 }
 
 template <typename OStream>
@@ -76,6 +72,12 @@ void stream_transform(OStream& os, const axis::transform::quantity<Q,U>& t) {
 } // namespace detail
 
 namespace axis {
+
+template <typename CharT, typename Traits>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
+                                              const empty_metadata_type&) {
+  return os; // do nothing
+}
 
 template <typename CharT, typename Traits, typename T>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
@@ -151,7 +153,7 @@ std::basic_ostream<CharT, Traits>& operator<<(
     std::basic_ostream<CharT, Traits>& os, const category<std::string, A>& a) {
   os << "category(";
   for (unsigned i = 0; i < a.size(); ++i) {
-    detail::escape_string(os, a.value(i));
+    os << std::quoted(a.value(i));
     os << (i == (a.size() - 1) ? "" : ", ");
   }
   detail::stream_metadata(os, a.metadata());

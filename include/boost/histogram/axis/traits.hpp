@@ -12,6 +12,16 @@
 
 namespace boost {
 namespace histogram {
+namespace detail {
+  template <typename T>
+  decltype(auto) metadata_impl(std::true_type, T&& x) { return x.metadata(); }
+
+  template <typename T>
+  copy_qualifiers<T, axis::empty_metadata_type> metadata_impl(std::false_type, T&&) {
+    static axis::empty_metadata_type m;
+    return m;
+  }
+}
 namespace axis {
 namespace traits {
   template <typename T>
@@ -19,20 +29,14 @@ namespace traits {
 
   template <typename T>
   decltype(auto) metadata(T&& t) {
-    return detail::overload(
-      [](std::true_type, auto&& x) { return x.metadata(); },
-      [](std::false_type, auto&&) {
-        static missing_metadata_type m;
-        return static_cast<detail::copy_qualifiers<T, missing_metadata_type>>(m);
-      }
-    )(detail::has_method_metadata<detail::rm_cvref<T>>(), t);
+    return detail::metadata_impl(detail::has_method_metadata<detail::rm_cvref<T>>(), t);
   }
 
   template <typename T>
   option_type options(const T& t) {
     return detail::overload(
       [](std::true_type, const auto& x) { return x.options(); },
-      [](std::false_type, const auto&) { return axis::option_type::none; }
+      [](std::false_type, const T&) { return axis::option_type::none; }
     )(detail::has_method_options<T>(), t);
   }
 

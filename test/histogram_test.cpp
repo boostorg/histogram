@@ -62,37 +62,36 @@ void run_tests() {
   // init_3
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
-                  axis::circular<>{3});
+                  axis::circular<>{2});
     BOOST_TEST_EQ(h.rank(), 3);
-    BOOST_TEST_EQ(h.size(), 75);
+    BOOST_TEST_EQ(h.size(), 5 * 5 * 3);
     auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
-                     axis::integer<>{-1, 2}, axis::circular<>{3});
+                     axis::integer<>{-1, 2}, axis::circular<>{2});
     BOOST_TEST_EQ(h2, h);
   }
 
   // init_4
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
-                  axis::circular<>{3}, axis::variable<>{-1, 0, 1});
+                  axis::circular<>{2}, axis::variable<>{-1, 0, 1});
     BOOST_TEST_EQ(h.rank(), 4);
-    BOOST_TEST_EQ(h.size(), 300);
+    BOOST_TEST_EQ(h.size(), 5 * 5 * 3 * 4);
     auto h2 =
         make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
-               axis::integer<>{-1, 2}, axis::circular<>{3}, axis::variable<>{-1, 0, 1});
+               axis::integer<>{-1, 2}, axis::circular<>{2}, axis::variable<>{-1, 0, 1});
     BOOST_TEST_EQ(h2, h);
   }
 
   // init_5
   {
-    enum { A, B, C };
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
-                  axis::circular<>{3}, axis::variable<>{-1, 0, 1},
-                  axis::category<>{{A, B, C}});
+                  axis::circular<>{2}, axis::variable<>{-1, 0, 1},
+                  axis::category<>{{3, 1, 2}});
     BOOST_TEST_EQ(h.rank(), 5);
-    BOOST_TEST_EQ(h.size(), 1200);
+    BOOST_TEST_EQ(h.size(), 5 * 5 * 3 * 4 * 4);
     auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
-                     axis::integer<>{-1, 2}, axis::circular<>{3},
-                     axis::variable<>{-1, 0, 1}, axis::category<>{{A, B, C}});
+                     axis::integer<>{-1, 2}, axis::circular<>{2},
+                     axis::variable<>{-1, 0, 1}, axis::category<>{{3, 1, 2}});
     BOOST_TEST_EQ(h2, h);
   }
 
@@ -162,7 +161,7 @@ void run_tests() {
     BOOST_TEST_EQ(b.axis(0_c)[0].upper(), 2);
     BOOST_TEST_EQ(b.axis(1_c).size(), 2);
     BOOST_TEST_EQ(b.axis(1_c)[0].lower(), 1);
-    BOOST_TEST_EQ(b.axis(1_c)[0].upper(), 3);
+    BOOST_TEST_EQ(b.axis(1_c)[0].upper(), 2);
     b.axis(1_c).metadata() = "bar";
     BOOST_TEST_EQ(b.axis(0_c).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1_c).metadata(), "bar");
@@ -502,10 +501,12 @@ void run_tests() {
     std::ostringstream os;
     os << a;
     BOOST_TEST_EQ(os.str(),
-                  "histogram("
-                  "\n  regular(3, -1, 1, metadata='r', options=underflow_and_overflow),"
-                  "\n  integer(0, 2, metadata='i', options=underflow_and_overflow),"
-                  "\n)");
+                  std::string(
+                    "histogram(\n"
+                    "  regular(3, -1, 1, metadata=\"r\", options=underflow_and_overflow),\n"
+                    "  integer(0, 2, metadata=\"i\", options=underflow_and_overflow),\n"
+                    ")"
+                  ));
   }
 
   // histogram_reset
@@ -810,18 +811,18 @@ void run_tests() {
     {
       tracing_allocator<char> a(db);
       auto h = make_s(Tag(), array_storage<int, tracing_allocator<int>>(a),
-                      axis::integer<>(0, 1024));
+                      axis::integer<>(0, 1000));
       h(0);
     }
 
     // int allocation for array_storage
     BOOST_TEST_EQ(db[typeid(int)].first, db[typeid(int)].second);
-    BOOST_TEST_GE(db[typeid(int)].first, 1024u);
+    BOOST_TEST_EQ(db[typeid(int)].first, 1002u);
 
     if (Tag()) { // axis::variant allocation, only for dynamic histogram
       using T = axis::variant<axis::integer<>>;
       BOOST_TEST_EQ(db[typeid(T)].first, db[typeid(T)].second);
-      BOOST_TEST_GE(db[typeid(T)].first, 1u);
+      BOOST_TEST_LE(db[typeid(T)].first, 1u); // zero if vector uses small-vector-optimisation
     }
   }
 }

@@ -1,7 +1,8 @@
 //[ guide_histogram_reduction
 
 #include <boost/histogram.hpp>
-#include <iostream>
+#include <sstream>
+#include <cassert>
 
 namespace bh = boost::histogram;
 
@@ -18,8 +19,8 @@ int main() {
   using namespace bh::literals; // enables _c suffix
 
   // make a 2d histogram
-  auto h = bh::make_static_histogram(bh::axis::regular<>(3, -1, 1),
-                                     bh::axis::integer<>(0, 4));
+  auto h = bh::make_histogram(bh::axis::regular<>(3, -1, 1),
+                              bh::axis::integer<>(0, 4));
 
   h(-0.9, 0);
   h(0.9, 3);
@@ -32,26 +33,26 @@ int main() {
       reduce does not remove counts; returned histograms are summed over
       the removed axes, so h, hr0, and hr1 have same number of total counts
   */
-  std::cout << sum(h).value() << " " << sum(hr0).value() << " "
-            << sum(hr1).value() << std::endl;
-  // prints: 3 3 3
+  assert(sum(h) == 3 && sum(hr0) == 3 && sum(hr1) == 3);
 
+  std::ostringstream os1;
   for (auto yi : h.axis(1_c)) {
-    for (auto xi : h.axis(0_c)) { std::cout << h.at(xi, yi).value() << " "; }
-    std::cout << std::endl;
+    for (auto xi : h.axis(0_c)) { os1 << h.at(xi, yi) << " "; }
+    os1 << "\n";
   }
-  // prints: 1 0 0
-  //         0 0 0
-  //         0 1 0
-  //         0 0 1
+  assert(os1.str() == 
+         "1 0 0 \n"
+         "0 0 0 \n"
+         "0 1 0 \n"
+         "0 0 1 \n");
 
-  for (auto xi : hr0.axis()) std::cout << hr0.at(xi).value() << " ";
-  std::cout << std::endl;
-  // prints: 1 1 1
+  std::ostringstream os2;
+  for (auto xi : hr0.axis()) os2 << hr0.at(xi) << " ";
+  assert(os2.str() == "1 1 1 ");
 
-  for (auto yi : hr1.axis()) std::cout << hr1.at(yi).value() << " ";
-  std::cout << std::endl;
-  // prints: 1 0 1 1
+  std::ostringstream os3;
+  for (auto yi : hr1.axis()) os3 << hr1.at(yi) << " ";
+  assert(os3.str() == "1 0 1 1 ");
 }
 
 //]

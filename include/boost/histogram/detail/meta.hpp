@@ -204,6 +204,10 @@ template <typename T,
                                      is_axis_variant<U>::value)), void>>
 struct requires_axis_vector {};
 
+template <typename T, typename U,
+          typename = mp11::mp_if<std::is_same<T, U>, void>>
+struct requires_same {};
+
 } // namespace detail
 } // namespace histogram
 } // namespace boost
