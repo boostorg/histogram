@@ -30,36 +30,36 @@ int main() {
 
   // init
   {
-    auto v = std::vector<axis::any<axis::regular<>, axis::integer<>>>();
+    auto v = std::vector<axis::variant<axis::regular<>, axis::integer<>>>();
     v.push_back(axis::regular<>(4, -1, 1));
     v.push_back(axis::integer<>(1, 7));
-    auto h = make_dynamic_histogram(v.begin(), v.end());
-    BOOST_TEST_EQ(h.dim(), 2);
+    auto h = make_histogram(v.begin(), v.end());
+    BOOST_TEST_EQ(h.rank(), 2);
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
 
-    auto h2 = make_dynamic_histogram_with(array_storage<int>(), v.begin(), v.end());
-    BOOST_TEST_EQ(h2.dim(), 2);
+    auto h2 = make_histogram_with(array_storage<int>(), v.begin(), v.end());
+    BOOST_TEST_EQ(h2.rank(), 2);
     BOOST_TEST_EQ(h2.axis(0), v[0]);
     BOOST_TEST_EQ(h2.axis(1), v[1]);
   }
 
   // bad fill argument
   {
-    auto h = make_dynamic_histogram(axis::integer<>(0, 3));
+    auto h = make(dynamic_tag(), axis::integer<>(0, 3));
     BOOST_TEST_THROWS(h(std::string()), std::invalid_argument);
   }
 
   // axis methods
   {
     enum { A, B };
-    auto c = make_dynamic_histogram(axis::category<>({A, B}));
+    auto c = make(dynamic_tag(), axis::category<>({A, B}));
     BOOST_TEST_THROWS(c.axis().lower(0), std::runtime_error);
   }
 
   // reduce
   {
-    auto h1 = make_dynamic_histogram(axis::integer<>(0, 2), axis::integer<>(0, 3));
+    auto h1 = make(dynamic_tag(), axis::integer<>(0, 2), axis::integer<>(0, 3));
     h1(0, 0);
     h1(0, 1);
     h1(1, 0);
@@ -70,7 +70,7 @@ int main() {
 
     x = {0};
     auto h1_0 = h1.reduce_to(x.begin(), x.end());
-    BOOST_TEST_EQ(h1_0.dim(), 1);
+    BOOST_TEST_EQ(h1_0.rank(), 1);
     BOOST_TEST_EQ(sum(h1_0), 5);
     BOOST_TEST_EQ(h1_0.at(0), 2);
     BOOST_TEST_EQ(h1_0.at(1), 3);
@@ -78,7 +78,7 @@ int main() {
 
     x = {1};
     auto h1_1 = h1.reduce_to(x.begin(), x.end());
-    BOOST_TEST_EQ(h1_1.dim(), 1);
+    BOOST_TEST_EQ(h1_1.rank(), 1);
     BOOST_TEST_EQ(sum(h1_1), 5);
     BOOST_TEST_EQ(h1_1.at(0), 2);
     BOOST_TEST_EQ(h1_1.at(1), 2);
@@ -88,13 +88,13 @@ int main() {
 
   // histogram iterator
   {
-    auto h = make_dynamic_histogram(axis::integer<>(0, 3));
+    auto h = make_s(dynamic_tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 3));
     const auto& a = h.axis();
     h(weight(2), 0);
     h(1);
     h(1);
     auto it = h.begin();
-    BOOST_TEST_EQ(it.dim(), 1);
+    BOOST_TEST_EQ(it.rank(), 1);
 
     BOOST_TEST_EQ(it.idx(0), 0);
     BOOST_TEST_EQ(it.bin(0), a[0]);

@@ -16,7 +16,7 @@ namespace histogram {
 
 namespace axis {
 
-struct missing_metadata_type {};
+struct empty_metadata_type {};
 
 enum class option_type {
   none = 0,

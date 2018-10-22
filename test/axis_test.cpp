@@ -350,27 +350,29 @@ int main() {
       axis::variant<T> axis(std::move(a));
       std::ostringstream os;
       os << axis;
-      BOOST_TEST_EQ(os.str(), ref);
+      BOOST_TEST_EQ(os.str(), std::string(ref));
     };
 
+    struct user_defined {};
+
     test(axis::regular<>{2, -1, 1, "regular1"},
-         "regular(2, -1, 1, metadata='regular1', options=underflow_and_overflow)");
+         "regular(2, -1, 1, metadata=\"regular1\", options=underflow_and_overflow)");
     test(axis::regular<axis::transform::log<>>(2, 1, 10, "regular2", axis::option_type::none),
-         "regular_log(2, 1, 10, metadata='regular2', options=none)");
+         "regular_log(2, 1, 10, metadata=\"regular2\", options=none)");
     test(axis::regular<axis::transform::pow<>>(2, 1, 10, "regular3", axis::option_type::overflow, 0.5),
-         "regular_pow(2, 1, 10, metadata='regular3', options=overflow, power=0.5)");
+         "regular_pow(2, 1, 10, metadata=\"regular3\", options=overflow, power=0.5)");
     test(axis::regular<axis::transform::pow<>>(2, 1, 10, "regular4", axis::option_type::none, -0.5),
-         "regular_pow(2, 1, 10, metadata='regular4', options=none, power=-0.5)");
-    test(axis::circular<>(4, 0.1, 1.0, "polar"),
-         "circular(4, 0.1, 1.1, metadata='polar', options=overflow)");
+         "regular_pow(2, 1, 10, metadata=\"regular4\", options=none, power=-0.5)");
+    test(axis::circular<double, axis::empty_metadata_type>(4, 0.1, 1.0),
+         "circular(4, 0.1, 1.1, options=overflow)");
     test(axis::variable<>({-1, 0, 1}, "variable", axis::option_type::none),
-         "variable(-1, 0, 1, metadata='variable', options=none)");
+         "variable(-1, 0, 1, metadata=\"variable\", options=none)");
     test(axis::category<>({0, 1, 2}, "category"),
-         "category(0, 1, 2, metadata='category', options=overflow)");
+         "category(0, 1, 2, metadata=\"category\", options=overflow)");
     test(axis::category<std::string>({"A", "B"}, "category2"),
-         "category('A', 'B', metadata='category2', options=overflow)");
-    test(axis::integer<>(-1, 1, "integer", axis::option_type::none),
-         "integer(-1, 1, metadata='integer', options=none)");
+         "category(\"A\", \"B\", metadata=\"category2\", options=overflow)");
+    test(axis::integer<int, user_defined>(-1, 1, {}, axis::option_type::none),
+         "integer(-1, 1, metadata=main::user_defined, options=none)");
   }
 
   // axis::variant support for minimal_axis
@@ -386,7 +388,7 @@ int main() {
     BOOST_TEST_EQ(axis.size(), 1);
     BOOST_TEST_THROWS(std::ostringstream() << axis, std::runtime_error);
     BOOST_TEST_THROWS(axis.lower(0), std::runtime_error);
-    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(axis.metadata()), axis::missing_metadata_type&>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(axis.metadata()), axis::empty_metadata_type&>));
   }
 
   // bin_type streamable
@@ -394,7 +396,7 @@ int main() {
     auto test = [](const auto& x, const char* ref) {
       std::ostringstream os;
       os << x;
-      BOOST_TEST_EQ(os.str(), ref);
+      BOOST_TEST_EQ(os.str(), std::string(ref));
     };
 
     auto a = axis::regular<>(2, 0, 1);

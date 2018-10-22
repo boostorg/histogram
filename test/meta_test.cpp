@@ -173,7 +173,7 @@ int main() {
 
     auto j = {0, 1};
     using J = classify_container<decltype(j)>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<I, iterable_container_tag>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<J, iterable_container_tag>));
   }
 
   // bool mask
