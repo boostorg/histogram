@@ -7,8 +7,13 @@
 #ifndef BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 #define BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 
-#include <memory>  // for std::allocator
+#include <memory> // for std::allocator
 #include <string>
+
+namespace std {
+template <typename T>
+class allocator;
+}
 
 namespace boost {
 namespace histogram {
@@ -32,10 +37,9 @@ template <typename T = double>
 struct pow;
 template <typename Q, typename U>
 struct quantity;
-}  // namespace transform
+} // namespace transform
 
-template <typename Transform = transform::identity<>,
-          typename MetaData = std::string>
+template <typename Transform = transform::identity<>, typename MetaData = std::string>
 class regular;
 
 template <typename T = double, typename MetaData = std::string>
@@ -54,7 +58,7 @@ class category;
 
 template <typename... Ts>
 class variant;
-}  // namespace axis
+} // namespace axis
 
 template <typename Allocator = std::allocator<char>>
 struct adaptive_storage;
@@ -66,7 +70,7 @@ using default_storage = adaptive_storage<>;
 
 template <class Axes, class Storage = default_storage>
 class histogram;
-}  // namespace histogram
-}  // namespace boost
+} // namespace histogram
+} // namespace boost
 
 #endif
