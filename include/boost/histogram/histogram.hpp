@@ -105,28 +105,28 @@ public:
 
   /// Get N-th axis (const version)
   template <std::size_t N>
-  auto axis(mp11::mp_size_t<N>) const -> const detail::axis_at<axes_type, N>& {
+  decltype(auto) axis(mp11::mp_size_t<N>) const {
     detail::range_check<N>(axes_);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis
   template <std::size_t N>
-  auto axis(mp11::mp_size_t<N>) -> detail::axis_at<axes_type, N>& {
+  decltype(auto) axis(mp11::mp_size_t<N>) {
     detail::range_check<N>(axes_);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get first axis (convenience for 1-d histograms, const version)
-  auto axis() const -> const detail::axis_at<axes_type, 0>& { return axis(mp11::mp_size_t<0>()); }
+  decltype(auto) axis() const { return axis(mp11::mp_size_t<0>()); }
 
   /// Get first axis (convenience for 1-d histograms)
-  auto axis() -> detail::axis_at<axes_type, 0>& { return axis(mp11::mp_size_t<0>()); }
+  decltype(auto) axis() { return axis(mp11::mp_size_t<0>()); }
 
   /// Get N-th axis with runtime index (const version)
   template <typename U = axes_type,
             typename = detail::requires_axis_vector<U>>
-  auto axis(std::size_t i) const -> const detail::container_element_type<U>& {
+  decltype(auto) axis(std::size_t i) const {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
   }
@@ -134,7 +134,7 @@ public:
   /// Get N-th axis with runtime index
   template <typename U = axes_type,
             typename = detail::requires_axis_vector<U>>
-  auto axis(std::size_t i) -> detail::container_element_type<U>& {
+  decltype(auto) axis(std::size_t i) {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
   }

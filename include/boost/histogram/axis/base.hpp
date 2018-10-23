@@ -52,15 +52,10 @@ class base
 
     bool operator==(const data& rhs) const noexcept {
       return size == rhs.size && opt == rhs.opt &&
-        equal_impl(detail::is_equal_comparable<metadata_type>(), rhs);
-    }
-
-    bool equal_impl(std::true_type, const metadata_type& rhs) const noexcept {
-      return static_cast<const metadata_type&>(*this) == rhs;
-    }
-
-    bool equal_impl(std::false_type, const metadata_type&) const noexcept {
-      return true;
+        detail::static_if<detail::is_equal_comparable<metadata_type>>(
+          [&rhs](const auto& m) { return m == rhs; },
+          [](const auto&) { return true; },
+          static_cast<const metadata_type&>(*this));
     }
   };
 
@@ -74,15 +69,15 @@ public:
   /// Returns the metadata (const version).
   const metadata_type& metadata() const noexcept { return static_cast<const metadata_type&>(data_); }
 
-  template <class Archive>
-  void serialize(Archive&, unsigned);
-
   friend void swap(base& a, base& b) noexcept // ADL works with friend functions
   {
     std::swap(static_cast<metadata_type&>(a), static_cast<metadata_type&>(b));
     std::swap(a.data_.size, b.data_.size);
     std::swap(a.data_.opt, b.data_.opt);
   }
+
+  template <class Archive>
+  void serialize(Archive&, unsigned);
 
 protected:
   base(unsigned size, metadata_type&& m, option_type opt)

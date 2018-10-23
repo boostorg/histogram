@@ -16,8 +16,6 @@ set(MIN_BOOST_VERSION 1.66)
 # setup build
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(TEST_SERIALIZATION "Test serialization code" OFF)
-mark_as_advanced(BUILD_BENCHMARKS)
-mark_as_advanced(TEST_SERIALIZATION)
 
 # serialization is optional
 if (TEST_SERIALIZATION)
@@ -63,14 +61,13 @@ function(compiled_test SRC)
                            -Wno-unused-local-typedef -D__STRICT_ANSI__)
   endif()
 
-  ## deactivate sanitizers for now, LeakSanitizer is crashing
-  # # activate sanitizers for clang builds
-  # if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  #   target_compile_options(${BASENAME} PRIVATE
-  #                          -fsanitize=address,undefined
-  #                          -fno-omit-frame-pointer)
-  #   target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
-  # endif()
+  # activate sanitizers for clang builds
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(${BASENAME} PRIVATE
+                           -fsanitize=address,undefined
+                           -fno-omit-frame-pointer)
+    target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
+  endif()
 
   if (${BASENAME} MATCHES "_fail")
     add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/tools/pass_on_fail.py ${BASENAME})
@@ -128,9 +125,6 @@ if (TEST_SERIALIZATION)
 endif()
 
 if (BUILD_BENCHMARKS)
-  if (NOT ${CMAKE_BUILD_TYPE} EQUAL Release)
-    message(WARNING "Benchmarks should be build in Release mode")
-  endif()
   add_executable(speed_cpp test/speed_cpp.cpp)
   target_include_directories(speed_cpp PRIVATE include ${Boost_INCLUDE_DIR})
   target_compile_definitions(speed_cpp PRIVATE -DBOOST_DISABLE_ASSERTS)
