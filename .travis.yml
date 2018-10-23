@@ -34,7 +34,6 @@ matrix:
     - os: osx
       env: SERIAL=OFF
     - os: linux # coverage build
-      compiler: gcc
       env: GCOV=gcov CC=gcc-5 CXX=g++-5
 
 git:

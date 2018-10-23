@@ -11,17 +11,12 @@
 #include <stdexcept>
 
 namespace boost {
-
-namespace serialization {
-class access;
-} // namespace serialization
-
 namespace histogram {
 
 /// Double counter which holds a sum of weights and a sum of squared weights
-template <typename RealType=double>
+template <typename RealType = double>
 class weight_counter {
-public:
+ public:
   /// Beware: For performance reasons counters are not initialized
   weight_counter() = default;
   weight_counter(const weight_counter&) = default;
@@ -30,10 +25,10 @@ public:
   weight_counter& operator=(weight_counter&&) = default;
 
   weight_counter(const RealType& value, const RealType& variance) noexcept
-      : w(value),
-        w2(variance) {}
+      : w(value), w2(variance) {}
 
-  explicit weight_counter(const RealType& value) noexcept : w(value), w2(value) {}
+  explicit weight_counter(const RealType& value) noexcept
+      : w(value), w2(value) {}
 
   weight_counter& operator++() noexcept {
     ++w;
@@ -73,7 +68,9 @@ public:
     return w == rhs.w && w2 == rhs.w2;
   }
 
-  bool operator!=(const weight_counter& rhs) const noexcept { return !operator==(rhs); }
+  bool operator!=(const weight_counter& rhs) const noexcept {
+    return !operator==(rhs);
+  }
 
   template <typename T>
   bool operator==(const weight_counter<T>& rhs) const noexcept {
@@ -105,12 +102,10 @@ public:
     return static_cast<T>(w);
   }
 
-private:
-  friend class ::boost::serialization::access;
-
   template <class Archive>
   void serialize(Archive&, unsigned /* version */);
 
+ private:
   RealType w, w2;
 };
 
@@ -166,7 +161,7 @@ weight_counter<T> operator+(const T& a, const weight_counter<T>& b) noexcept {
   return r += a;
 }
 
-} // namespace histogram
-} // namespace boost
+}  // namespace histogram
+}  // namespace boost
 
 #endif

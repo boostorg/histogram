@@ -7,21 +7,20 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP
 
-#include <boost/container/string.hpp>
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/types.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/buffer.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/serialization/array.hpp>
-#include <boost/serialization/unique_ptr.hpp>
+#include <boost/serialization/string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
+#include <string>
 #include <tuple>
 
 /** \file boost/histogram/serialization.hpp
@@ -32,23 +31,11 @@
 namespace std {
 template <class Archive, typename... Ts>
 void serialize(Archive& ar, tuple<Ts...>& t, unsigned /* version */) {
-  boost::mp11::tuple_for_each(t, [&ar](auto& x) { ar& x; });
+  ::boost::mp11::tuple_for_each(t, [&ar](auto& x) { ar& x; });
 }
 }  // namespace std
 
 namespace boost {
-namespace container {
-template <class Archive>
-void serialize(Archive& ar, string& s, unsigned /* version */) {
-  auto size = s.size();
-  ar& size;
-  if (Archive::is_loading::value) {
-    s.resize(size);
-  }
-  ar& boost::serialization::make_array(s.data(), size);
-}
-}  // namespace container
-
 namespace histogram {
 template <typename RealType>
 template <class Archive>
