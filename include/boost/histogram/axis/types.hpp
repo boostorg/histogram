@@ -36,7 +36,7 @@ struct identity {
 
   constexpr bool operator==(const identity&) const noexcept { return true; }
   template <class Archive>
-  void serialize(Archive&, unsigned) {}  // noop
+  void serialize(Archive&, unsigned) {} // noop
 };
 
 template <typename T>
@@ -72,8 +72,7 @@ struct quantity {
 
   quantity(const Unit& u) : unit(u) {}
 
-  using Dimensionless =
-      decltype(std::declval<Quantity&>() / std::declval<Unit&>());
+  using Dimensionless = decltype(std::declval<Quantity&>() / std::declval<Unit&>());
 
   Dimensionless forward(Quantity x) const { return x / unit; }
   Quantity inverse(Dimensionless x) const { return x * unit; }
@@ -82,7 +81,7 @@ struct quantity {
   template <class Archive>
   void serialize(Archive&, unsigned);
 };
-}  // namespace transform
+} // namespace transform
 
 /** Axis for equidistant intervals on the real line.
  *
@@ -99,25 +98,24 @@ class regular : public base<MetaData>,
   static_assert(std::is_floating_point<internal_type>::value,
                 "type returned by forward transform must be floating point");
   using metadata_type = MetaData;
-  struct data : transform_type  // empty base class optimization
+  struct data : transform_type // empty base class optimization
   {
     internal_type min = 0, delta = 1;
 
     data(const transform_type& t, unsigned n, value_type b, value_type e)
-        : transform_type(t),
-          min(this->forward(b)),
-          delta((this->forward(e) - this->forward(b)) / n) {}
+        : transform_type(t)
+        , min(this->forward(b))
+        , delta((this->forward(e) - this->forward(b)) / n) {}
 
     data() = default;
 
     bool operator==(const data& rhs) const noexcept {
-      return transform_type::operator==(rhs) && min == rhs.min &&
-             delta == rhs.delta;
+      return transform_type::operator==(rhs) && min == rhs.min && delta == rhs.delta;
     }
   };
   using bin_type = interval_view<regular>;
 
- public:
+public:
   /** Construct axis with n bins over real range [begin, end).
    *
    * \param n        number of bins.
@@ -133,8 +131,7 @@ class regular : public base<MetaData>,
           transform_type trans = transform_type())
       : base_type(n, std::move(m), o), data_(std::move(trans), n, start, stop) {
     if (!std::isfinite(data_.min) || !std::isfinite(data_.delta))
-      throw std::invalid_argument(
-          "forward transform of lower or upper invalid");
+      throw std::invalid_argument("forward transform of lower or upper invalid");
   }
 
   regular() = default;
@@ -149,7 +146,7 @@ class regular : public base<MetaData>,
       else
         return -1;
     }
-    return base_type::size();  // also returned if z is NaN
+    return base_type::size(); // also returned if z is NaN
 
     // const auto lt_max = z < base_type::size();
     // const auto ge_zero = z >= 0;
@@ -166,8 +163,7 @@ class regular : public base<MetaData>,
     else if (z > 1)
       x = std::numeric_limits<internal_type>::infinity();
     else {
-      x = (1 - z) * data_.min +
-          z * (data_.min + data_.delta * base_type::size());
+      x = (1 - z) * data_.min + z * (data_.min + data_.delta * base_type::size());
     }
     return data_.inverse(x);
   }
@@ -183,7 +179,7 @@ class regular : public base<MetaData>,
   template <class Archive>
   void serialize(Archive&, unsigned);
 
- private:
+private:
   data data_;
 };
 
@@ -201,7 +197,7 @@ class circular : public base<MetaData>,
   using metadata_type = MetaData;
   using bin_type = interval_view<circular>;
 
- public:
+public:
   // two_pi can be found in boost/math, but it is defined here to reduce deps
   static constexpr value_type two_pi() { return 6.283185307179586; }
 
@@ -213,16 +209,13 @@ class circular : public base<MetaData>,
    * \param metadata  description of the axis.
    * \param options   extra bin options.
    */
-  explicit circular(unsigned n, value_type phase = 0.0,
-                    value_type perimeter = two_pi(),
+  explicit circular(unsigned n, value_type phase = 0.0, value_type perimeter = two_pi(),
                     metadata_type m = metadata_type(),
                     option_type o = option_type::overflow)
       : base_type(n, std::move(m),
-                  o == option_type::underflow_and_overflow
-                      ? option_type::overflow
-                      : o),
-        phase_(phase),
-        delta_(perimeter / n) {
+                  o == option_type::underflow_and_overflow ? option_type::overflow : o)
+      , phase_(phase)
+      , delta_(perimeter / n) {
     if (!std::isfinite(phase) || !(perimeter > 0))
       throw std::invalid_argument("invalid phase or perimeter");
   }
@@ -251,7 +244,7 @@ class circular : public base<MetaData>,
   template <class Archive>
   void serialize(Archive&, unsigned);
 
- private:
+private:
   value_type phase_ = 0.0, delta_ = 1.0;
 };
 
@@ -261,33 +254,32 @@ class circular : public base<MetaData>,
  * domain allows it, prefer a regular axis, possibly with a transform.
  */
 template <typename RealType, typename Allocator, typename MetaData>
-class variable
-    : public base<MetaData>,
-      public iterator_mixin<variable<RealType, Allocator, MetaData>> {
+class variable : public base<MetaData>,
+                 public iterator_mixin<variable<RealType, Allocator, MetaData>> {
   using base_type = base<MetaData>;
   using value_type = RealType;
   using allocator_type = Allocator;
   using metadata_type = MetaData;
   using bin_type = interval_view<variable>;
 
-  struct data : allocator_type  // empty base class optimization
+  struct data : Allocator // empty base class optimization
   {
-    typename std::allocator_traits<allocator_type>::pointer x = nullptr;
+    typename std::allocator_traits<Allocator>::pointer x = nullptr;
 
-    using allocator_type::allocator_type;
+    using Allocator::Allocator;
 
-    data(const allocator_type& a) : allocator_type(a) {}
+    data(const Allocator& a) : Allocator(a) {}
     data() = default;
 
     friend void swap(data& a, data& b) noexcept {
       std::swap(a.x, b.x);
-      auto tmp = static_cast<allocator_type&&>(a);
-      a = static_cast<allocator_type&&>(b);
-      b = static_cast<allocator_type&&>(tmp);
+      auto tmp = static_cast<Allocator&&>(a);
+      a = static_cast<Allocator&&>(b);
+      b = static_cast<Allocator&&>(tmp);
     }
   };
 
- public:
+public:
   /** Construct an axis from iterator range of bin edges.
    *
    * \param begin     begin of edge sequence.
@@ -300,9 +292,8 @@ class variable
   variable(Iterator begin, Iterator end, metadata_type m = metadata_type(),
            option_type o = option_type::underflow_and_overflow,
            allocator_type a = allocator_type())
-      : base_type(begin == end ? 0 : std::distance(begin, end) - 1,
-                  std::move(m), o),
-        data_(std::move(a)) {
+      : base_type(begin == end ? 0 : std::distance(begin, end) - 1, std::move(m), o)
+      , data_(std::move(a)) {
     using AT = std::allocator_traits<allocator_type>;
     data_.x = AT::allocate(data_, nx());
     try {
@@ -311,9 +302,8 @@ class variable
         AT::construct(data_, xit, *begin++);
         while (begin != end) {
           if (*begin <= *xit) {
-            ++xit;  // to make sure catch code works
-            throw std::invalid_argument(
-                "input sequence must be strictly ascending");
+            ++xit; // to make sure catch code works
+            throw std::invalid_argument("input sequence must be strictly ascending");
           }
           ++xit;
           AT::construct(data_, xit, *begin++);
@@ -391,9 +381,7 @@ class variable
 
   /// Returns the starting edge of the bin.
   value_type lower(int i) const noexcept {
-    if (i < 0) {
-      return -std::numeric_limits<value_type>::infinity();
-    }
+    if (i < 0) { return -std::numeric_limits<value_type>::infinity(); }
     if (i > static_cast<int>(base_type::size())) {
       return std::numeric_limits<value_type>::infinity();
     }
@@ -403,14 +391,13 @@ class variable
   bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
 
   bool operator==(const variable& o) const noexcept {
-    return base_type::operator==(o) &&
-           std::equal(data_.x, data_.x + nx(), o.data_.x);
+    return base_type::operator==(o) && std::equal(data_.x, data_.x + nx(), o.data_.x);
   }
 
   template <class Archive>
   void serialize(Archive&, unsigned);
 
- private:
+private:
   int nx() const { return base_type::size() + 1; }
   data data_;
 };
@@ -421,14 +408,13 @@ class variable
  * faster than a regular.
  */
 template <typename IntType, typename MetaData>
-class integer : public base<MetaData>,
-                public iterator_mixin<integer<IntType, MetaData>> {
+class integer : public base<MetaData>, public iterator_mixin<integer<IntType, MetaData>> {
   using base_type = base<MetaData>;
   using value_type = IntType;
   using metadata_type = MetaData;
   using bin_type = interval_view<integer>;
 
- public:
+public:
   /** Construct axis over a semi-open integer interval [begin, end).
    *
    * \param begin    first integer of covered range.
@@ -439,9 +425,7 @@ class integer : public base<MetaData>,
   integer(value_type begin, value_type end, metadata_type m = metadata_type(),
           option_type o = option_type::underflow_and_overflow)
       : base_type(end - begin, std::move(m), o), min_(begin) {
-    if (begin >= end) {
-      throw std::invalid_argument("begin < end required");
-    }
+    if (begin >= end) { throw std::invalid_argument("begin < end required"); }
   }
 
   integer() = default;
@@ -453,16 +437,13 @@ class integer : public base<MetaData>,
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
     const int z = x - min_;
-    return z >= 0 ? (z > static_cast<int>(base_type::size()) ? base_type::size()
-                                                             : z)
+    return z >= 0 ? (z > static_cast<int>(base_type::size()) ? base_type::size() : z)
                   : -1;
   }
 
   /// Returns lower edge of the integral bin.
   value_type lower(int i) const noexcept {
-    if (i < 0) {
-      return std::numeric_limits<value_type>::min();
-    }
+    if (i < 0) { return std::numeric_limits<value_type>::min(); }
     if (i > static_cast<int>(base_type::size())) {
       return std::numeric_limits<value_type>::max();
     }
@@ -478,7 +459,7 @@ class integer : public base<MetaData>,
   template <class Archive>
   void serialize(Archive&, unsigned);
 
- private:
+private:
   value_type min_ = 0;
 };
 
@@ -491,9 +472,8 @@ class integer : public base<MetaData>,
  * the best case. The value types must be equal-comparable.
  */
 template <typename ValueType, typename Allocator, typename MetaData>
-class category
-    : public base<MetaData>,
-      public iterator_mixin<category<ValueType, Allocator, MetaData>> {
+class category : public base<MetaData>,
+                 public iterator_mixin<category<ValueType, Allocator, MetaData>> {
   using base_type = base<MetaData>;
   using metadata_type = MetaData;
   using value_type = ValueType;
@@ -514,7 +494,7 @@ class category
     }
   };
 
- public:
+public:
   /** Construct an axis from iterator range of categories.
    *
    * \param begin     begin of category range of unique values.
@@ -525,10 +505,8 @@ class category
    */
   template <typename Iterator, typename = detail::requires_iterator<Iterator>>
   category(Iterator begin, Iterator end, metadata_type m = metadata_type(),
-           option_type o = option_type::overflow,
-           allocator_type a = allocator_type())
-      : base_type(std::distance(begin, end), std::move(m), o),
-        data_(std::move(a)) {
+           option_type o = option_type::overflow, allocator_type a = allocator_type())
+      : base_type(std::distance(begin, end), std::move(m), o), data_(std::move(a)) {
     data_.x = detail::create_buffer_from_iter(data_, base_type::size(), begin);
   }
 
@@ -539,21 +517,18 @@ class category
    */
   template <typename T, typename = detail::requires_iterable<T>>
   category(const T& t, metadata_type m = metadata_type(),
-           option_type o = option_type::overflow,
-           allocator_type a = allocator_type())
+           option_type o = option_type::overflow, allocator_type a = allocator_type())
       : category(std::begin(t), std::end(t), std::move(m), o, std::move(a)) {}
 
   template <typename T>
   category(std::initializer_list<T> t, metadata_type m = metadata_type(),
-           option_type o = option_type::overflow,
-           allocator_type a = allocator_type())
+           option_type o = option_type::overflow, allocator_type a = allocator_type())
       : category(t.begin(), t.end(), std::move(m), o, std::move(a)) {}
 
   category() = default;
 
   category(const category& o) : base_type(o), data_(o.data_) {
-    data_.x =
-        detail::create_buffer_from_iter(data_, base_type::size(), o.data_.x);
+    data_.x = detail::create_buffer_from_iter(data_, base_type::size(), o.data_.x);
   }
 
   category& operator=(const category& o) {
@@ -562,8 +537,7 @@ class category
         detail::destroy_buffer(data_, data_.x, base_type::size());
         base_type::operator=(o);
         data_ = o.data_;
-        data_.x = detail::create_buffer_from_iter(data_, base_type::size(),
-                                                  o.data_.x);
+        data_.x = detail::create_buffer_from_iter(data_, base_type::size(), o.data_.x);
       } else {
         base_type::operator=(o);
         std::copy(o.data_.x, o.data_.x + base_type::size(), data_.x);
@@ -610,11 +584,11 @@ class category
   template <class Archive>
   void serialize(Archive&, unsigned);
 
- private:
+private:
   data data_;
 };
-}  // namespace axis
-}  // namespace histogram
-}  // namespace boost
+} // namespace axis
+} // namespace histogram
+} // namespace boost
 
 #endif
