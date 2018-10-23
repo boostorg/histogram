@@ -34,10 +34,14 @@ matrix:
     - os: osx
       env: SERIAL=OFF
     - os: linux # coverage build
-      env: GCOV=gcov CC=gcc-5 CXX=g++-5
+      env:
+        - MATRIX_EVAL="GCOV=gcov-5 && CC=gcc-5 && CXX=g++-5"
 
 git:
   depth: 1
+
+before_install:
+    - eval "${MATRIX_EVAL}"
 
 # Install packages (pre-installed: pytest)
 install:
