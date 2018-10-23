@@ -480,17 +480,17 @@ class category : public base<MetaData>,
   using allocator_type = Allocator;
   using bin_type = value_view<category>;
 
-  struct data : allocator_type {
-    typename std::allocator_traits<allocator_type>::pointer x = nullptr;
-    using allocator_type::allocator_type;
-    data(const allocator_type& a) : allocator_type(a) {}
+  struct data : Allocator {
+    typename std::allocator_traits<Allocator>::pointer x = nullptr;
+    using Allocator::Allocator;
+    data(const Allocator& a) : Allocator(a) {}
     data() = default;
 
     friend void swap(data& a, data& b) noexcept {
       std::swap(a.x, b.x);
-      auto tmp = static_cast<allocator_type&&>(a);
-      a = static_cast<allocator_type&&>(b);
-      b = static_cast<allocator_type&&>(tmp);
+      auto tmp = static_cast<Allocator&&>(a);
+      a = static_cast<Allocator&&>(b);
+      b = static_cast<Allocator&&>(tmp);
     }
   };
 
