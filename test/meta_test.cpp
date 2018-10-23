@@ -280,6 +280,19 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<visitor_return_type<VisitorTestFunctor, V3>, const long&>));
   }
 
+  // static_if
+  {
+    struct callable { int operator()() { return 1; }; };
+    struct not_callable {};
+    auto fcn = [](auto b, auto x) {
+      return static_if<decltype(b)>(
+        [](auto x) { return x(); },
+        [](auto) { return 2; }, x);
+    };
+    BOOST_TEST_EQ(fcn(std::true_type(), callable()), 1);
+    BOOST_TEST_EQ(fcn(std::false_type(), not_callable()), 2);
+  }
+
   // is_axis_vector
   {
     using A = std::vector<bh::axis::regular<>>;

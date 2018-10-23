@@ -67,15 +67,21 @@ using arg_type = typename mp11::mp_at_c<args_type<T>, (N < 0 ? mp11::mp_size<arg
 template <typename F, typename V>
 using visitor_return_type = decltype(std::declval<F>()(std::declval<copy_qualifiers<V, mp_at_c<V, 0>>>()));
 
-template <typename T1, typename T2>
-struct overload_type : T1, T2 {
-  overload_type(T1 t1, T2 t2) : T1(t1), T2(t2) {}
-  using T1::operator();
-  using T2::operator();
-};
+template <bool B, typename T, typename F, typename... Ts>
+constexpr decltype(auto) static_if_c(T&& t, F&& f, Ts&&... ts)
+{
+  return std::get<(B ? 0 : 1)>(
+    std::forward_as_tuple(
+      std::forward<T>(t),
+      std::forward<F>(f)
+    ))(std::forward<Ts>(ts)...);
+}
 
-template <typename T1, typename T2>
-overload_type<T1, T2> overload(T1 t1, T2 t2) { return overload_type<T1, T2>(t1, t2); }
+template <typename B, typename... Ts>
+constexpr decltype(auto) static_if(Ts&&... ts)
+{
+  return static_if_c<B::value>(std::forward<Ts>(ts)...);
+}
 
 #define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond)      \
   template <typename U>                              \
