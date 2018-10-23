@@ -31,19 +31,18 @@ template <typename Q, typename U> const char* to_string(const axis::transform::q
 
 template <typename OStream, typename T>
 void stream_metadata(OStream& os, const T& t) {
-  detail::overload(
-    [](std::true_type, OStream& os, const auto& t) {
+  detail::static_if<detail::is_streamable<T>>(
+    [&os](const auto& t) {
       std::ostringstream oss;
       oss << t;
       if (!oss.str().empty()) {
         os << ", metadata=" << std::quoted(oss.str());
       }
     },
-    [](std::false_type, OStream& os, const T&) {
+    [&os](const auto&) {
       using U = detail::rm_cvref<T>;
       os << ", metadata=" << boost::core::demangled_name( BOOST_CORE_TYPEID(U) );
-    }
-  )(detail::is_streamable<T>(), os, t);
+    }, t);
 }
 
 template <typename OStream>

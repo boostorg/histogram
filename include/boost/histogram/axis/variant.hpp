@@ -109,16 +109,15 @@ public:
   variant& operator=(const variant<Us...>& u) {
     visit([this](const auto& u) {
       using U = detail::rm_cvref<decltype(u)>;
-      detail::overload(
-        [this](std::true_type, const auto& u) { this->operator=(u); },
-        [](std::false_type, const auto&) {
+      detail::static_if<mp11::mp_contains<base_type, U>>(
+        [this](const auto& u) { this->operator=(u); },
+        [](const auto&) {
           throw std::runtime_error(detail::cat(
               boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
               " is not a bounded type of ",
               boost::core::demangled_name( BOOST_CORE_TYPEID(variant) )
             ));
-        }
-      )(mp11::mp_contains<base_type, U>(), u);
+        }, u);
     }, u);
     return *this;
   }
@@ -134,34 +133,32 @@ public:
   const metadata_type& metadata() const {
     return visit([](const auto& x) -> const metadata_type& {
         using U = decltype(traits::metadata(x));
-        return detail::overload(
-          [](std::true_type, const auto& x) -> const metadata_type& { return traits::metadata(x); },
-          [](std::false_type, const auto&) -> const metadata_type& {
+        return detail::static_if<std::is_same<U, const metadata_type&>>(
+          [](const auto& x) -> const metadata_type& { return traits::metadata(x); },
+          [](const auto&) -> const metadata_type& {
             throw std::runtime_error(detail::cat(
               "cannot return metadata of type ",
               boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
               " through axis::variant interface which uses type ",
               boost::core::demangled_name( BOOST_CORE_TYPEID(const metadata_type&) )
               ));
-          }
-        )(std::is_same<U, const metadata_type&>(), x);
+          }, x);
       }, *this);
   }
 
   metadata_type& metadata() {
     return visit([](auto& x) -> metadata_type& {
         using U = decltype(traits::metadata(x));
-        return detail::overload(
-          [](std::true_type, auto& x) -> metadata_type& { return traits::metadata(x); },
-          [](std::false_type, auto&) -> metadata_type& {
+        return detail::static_if<std::is_same<U, metadata_type&>>(
+          [](auto& x) -> metadata_type& { return traits::metadata(x); },
+          [](auto&) -> metadata_type& {
             throw std::runtime_error(detail::cat(
               "cannot return metadata of type ",
-              boost::core::demangled_name( BOOST_CORE_TYPEID(mp11::mp_identity<U>) ),
+              boost::core::demangled_name( BOOST_CORE_TYPEID(U) ),
               " through axis::variant interface which uses type ",
               boost::core::demangled_name( BOOST_CORE_TYPEID(metadata_type&) )
               ));
-          }
-        )(std::is_same<U, metadata_type&>(), x);
+          }, x);
       }, *this);
   }
 
@@ -176,14 +173,13 @@ public:
   double lower(int idx) const {
     return visit([idx](const auto& x) {
       using T = detail::rm_cvref<decltype(x)>;
-      return detail::overload(
-        [idx](std::true_type, const auto& x) -> double { return x.lower(idx); },
-        [](std::false_type, const auto&) -> double {
+      return detail::static_if<detail::has_method_lower<T>>(
+        [idx](const auto& x) -> double { return x.lower(idx); },
+        [](const auto&) -> double {
           throw std::runtime_error(detail::cat(
             boost::core::demangled_name( BOOST_CORE_TYPEID(T) ),
             " has no lower method"));
-        }
-      )(detail::has_method_lower<T>(), x);
+        }, x);
     }, *this);
   }
 
@@ -252,14 +248,13 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
 {
   visit([&os](const auto& x) {
     using T = detail::rm_cvref<decltype(x)>;
-    detail::overload(
-      [&os](std::true_type, const auto& x) { os << x; },
-      [](std::false_type, const auto&) {
+    detail::static_if<detail::is_streamable<T>>(
+      [&os](const auto& x) { os << x; },
+      [](const auto&) {
         throw std::runtime_error(detail::cat(
             boost::core::demangled_name( BOOST_CORE_TYPEID(T) ),
             " is not streamable"));
-      }
-    )(detail::is_streamable<T>(), x);
+      }, x);
   }, v);
   return os;
 }
