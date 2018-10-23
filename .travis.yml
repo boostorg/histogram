@@ -18,18 +18,18 @@ branches:
 matrix:
   include:
     - os: linux
-      compiler: gcc
+      compiler: gcc-5
       env: SERIAL=OFF
     - os: linux
-      compiler: gcc
+      compiler: gcc-5
       env: SERIAL=ON
     - os: linux
-      compiler: clang
+      compiler: clang-3.4
       env: SERIAL=ON
     - os: osx
       env: SERIAL=OFF
     - os: linux # coverage build
-      compiler: gcc
+      compiler: gcc-5
       env: GCOV=gcov
 
 git:

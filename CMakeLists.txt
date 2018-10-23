@@ -41,23 +41,21 @@ function(compiled_test SRC)
   target_include_directories(${BASENAME} PUBLIC include ${Boost_INCLUDE_DIR})
 
   if(CMAKE_BUILD_TYPE MATCHES coverage)
-    target_compile_options(${BASENAME} PRIVATE -O0 -g --coverage)
+    target_compile_options(${BASENAME} PRIVATE --coverage)
     target_link_libraries(${BASENAME} PRIVATE --coverage)
-  else()
-    target_compile_options(${BASENAME} PRIVATE -O0 -g)
   endif()
 
   # max warnings
   if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(${BASENAME} PRIVATE -D_SCL_SECURE_NO_WARNINGS)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra)
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
       # -fpermissive needed for cpp_int in gcc-6
       target_compile_options(${BASENAME} PRIVATE -fpermissive)
     endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0
                            -Wno-unused-local-typedef -D__STRICT_ANSI__)
   endif()
 
