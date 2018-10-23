@@ -98,22 +98,25 @@ class regular : public base<MetaData>,
   static_assert(std::is_floating_point<internal_type>::value,
                 "type returned by forward transform must be floating point");
   using metadata_type = MetaData;
-  struct data : transform_type // empty base class optimization
+  using bin_type = interval_view<regular>;
+
+  struct data : Transform // empty base class optimization,
+                          // MSVC fails if transform_type is used here
+
   {
     internal_type min = 0, delta = 1;
 
-    data(const transform_type& t, unsigned n, value_type b, value_type e)
-        : transform_type(t)
+    data(const Transform& t, unsigned n, value_type b, value_type e)
+        : Transform(t)
         , min(this->forward(b))
         , delta((this->forward(e) - this->forward(b)) / n) {}
 
     data() = default;
 
     bool operator==(const data& rhs) const noexcept {
-      return transform_type::operator==(rhs) && min == rhs.min && delta == rhs.delta;
+      return Transform::operator==(rhs) && min == rhs.min && delta == rhs.delta;
     }
   };
-  using bin_type = interval_view<regular>;
 
 public:
   /** Construct axis with n bins over real range [begin, end).
@@ -262,7 +265,8 @@ class variable : public base<MetaData>,
   using metadata_type = MetaData;
   using bin_type = interval_view<variable>;
 
-  struct data : Allocator // empty base class optimization
+  struct data : Allocator // empty base class optimization,
+                          // MSVC fails if allocator_type is used here
   {
     typename std::allocator_traits<Allocator>::pointer x = nullptr;
 
@@ -480,7 +484,9 @@ class category : public base<MetaData>,
   using allocator_type = Allocator;
   using bin_type = value_view<category>;
 
-  struct data : Allocator {
+  struct data : Allocator // empty base class optimization,
+                          // MSVC fails if allocator_type is used here
+  {
     typename std::allocator_traits<Allocator>::pointer x = nullptr;
     using Allocator::Allocator;
     data(const Allocator& a) : Allocator(a) {}
