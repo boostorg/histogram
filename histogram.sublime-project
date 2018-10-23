@@ -9,6 +9,7 @@
 	{
 		"ClangFormat":
 		{
+		    "style": "File",
 			"format_on_save": true
 		},
 
