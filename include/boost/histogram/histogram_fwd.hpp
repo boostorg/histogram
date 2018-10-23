@@ -7,12 +7,8 @@
 #ifndef BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 #define BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 
+#include <memory>  // for std::allocator
 #include <string>
-
-namespace std {
-template <typename T>
-class allocator;
-}  // namespace std
 
 namespace boost {
 namespace histogram {
