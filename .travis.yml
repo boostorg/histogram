@@ -15,29 +15,25 @@ branches:
     - master
     - develop
 
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-5
-
 matrix:
   include:
     - os: linux
-      compiler: gcc-5
+      compiler: clang
       env: SERIAL=OFF
-    - os: linux
-      compiler: gcc-5
-      env: SERIAL=ON
     - os: linux
       compiler: clang
       env: SERIAL=ON
     - os: osx
       env: SERIAL=OFF
     - os: linux # coverage build
-      compiler: gcc-5
-      env: GCOV=gcov
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      compiler: gcc
+      env: GCOV=gcov-5 CC=gcc-5 CXX=g++-5
 
 git:
   depth: 1
