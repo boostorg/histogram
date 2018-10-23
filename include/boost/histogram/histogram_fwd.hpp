@@ -7,15 +7,16 @@
 #ifndef BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 #define BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 
-#include <memory> // for std::allocator
-#include <vector>
-#include <boost/container/string.hpp>
+#include <string>
+
+namespace std {
+template <typename T>
+class allocator;
+}  // namespace std
 
 namespace boost {
 namespace histogram {
-
 namespace axis {
-
 struct empty_metadata_type {};
 
 enum class option_type {
@@ -25,39 +26,39 @@ enum class option_type {
 };
 
 namespace transform {
-template <typename T=double> struct identity;
-template <typename T=double> struct log;
-template <typename T=double> struct sqrt;
-template <typename T=double> struct pow;
-template <typename Q, typename U> struct quantity;
-} // namespace transform
+template <typename T = double>
+struct identity;
+template <typename T = double>
+struct log;
+template <typename T = double>
+struct sqrt;
+template <typename T = double>
+struct pow;
+template <typename Q, typename U>
+struct quantity;
+}  // namespace transform
 
 template <typename Transform = transform::identity<>,
-          typename MetaData = boost::container::string>
+          typename MetaData = std::string>
 class regular;
 
-template <typename T = double,
-          typename MetaData = boost::container::string>
+template <typename T = double, typename MetaData = std::string>
 class circular;
 
-template <typename T = double,
-          typename Allocator = std::allocator<T>,
-          typename MetaData = boost::container::string>
+template <typename T = double, typename Allocator = std::allocator<T>,
+          typename MetaData = std::string>
 class variable;
 
-template <typename T = int,
-          typename MetaData = boost::container::string>
+template <typename T = int, typename MetaData = std::string>
 class integer;
 
-template <typename T = int,
-          typename Allocator = std::allocator<T>,
-          typename MetaData = boost::container::string>
+template <typename T = int, typename Allocator = std::allocator<T>,
+          typename MetaData = std::string>
 class category;
 
 template <typename... Ts>
 class variant;
-
-} // namespace axis
+}  // namespace axis
 
 template <typename Allocator = std::allocator<char>>
 struct adaptive_storage;
@@ -69,8 +70,7 @@ using default_storage = adaptive_storage<>;
 
 template <class Axes, class Storage = default_storage>
 class histogram;
-
-} // namespace histogram
-} // namespace boost
+}  // namespace histogram
+}  // namespace boost
 
 #endif
