@@ -82,7 +82,7 @@ int main() {
     serialization_impl<uint32_t>();
     serialization_impl<uint64_t>();
     serialization_impl<adaptive_storage_type::mp_int>();
-    serialization_impl<adaptive_storage_type::wcount>();
+    serialization_impl<double>();
   }
 
   return boost::report_errors();

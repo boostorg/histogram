@@ -209,7 +209,7 @@ public:
   }
 
   template <typename Archive>
-  void serialize(Archive&, unsigned);
+  void serialize(Archive& ar, unsigned);
 
   template <typename Functor, typename Variant>
   friend auto visit(Functor&& f, Variant&& v)

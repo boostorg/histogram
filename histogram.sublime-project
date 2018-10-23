@@ -10,6 +10,19 @@
 		"ClangFormat":
 		{
 			"format_on_save": true
+		},
+
+		"trim_trailing_white_space_on_save": false,
+		"ensure_newline_at_eof_on_save": false,
+	},
+	"build_systems":
+	[
+		{
+			"name": "CMake",
+			"working_dir": "${project_path}/build",
+			"cmd": ["{ [ ! -e Makefile ] && cmake .. ; } && make -j4 && ctest"],
+			"shell": true,
+			"file_regex": "/([^/:]+):(\\d+):(\\d+): ",
 		}
-	}
+	]
 }

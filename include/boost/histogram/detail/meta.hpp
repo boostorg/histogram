@@ -145,10 +145,7 @@ using is_axis_variant = typename is_axis_variant_impl<T>::type;
 template <typename T>
 using is_axis_vector = mp11::mp_all<
     is_random_access_container<T>,
-    mp11::mp_any<
-      is_axis_variant<container_element_type<rm_cvref<T>>>,
-      is_axis<container_element_type<rm_cvref<T>>>
-    >
+    is_axis<container_element_type<rm_cvref<T>>>
   >;
 
 struct static_container_tag {};

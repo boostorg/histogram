@@ -35,7 +35,7 @@ struct identity {
 
   constexpr bool operator==(const identity&) const noexcept { return true; }
   template <class Archive>
-  void serialize(Archive&, unsigned) {}
+  void serialize(Archive&, unsigned) {} // noop
 };
 
 template <typename T>
@@ -273,7 +273,9 @@ class variable : public base<MetaData>,
   struct data : allocator_type // empty base class optimization
   {
     typename std::allocator_traits<allocator_type>::pointer x = nullptr;
+
     using allocator_type::allocator_type;
+
     data(const allocator_type& a) : allocator_type(a) {}
     data() = default;
 
