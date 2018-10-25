@@ -47,12 +47,13 @@ void test_axis_iterator(const Axis& a, int begin, int end) {
 int main() {
   // bad_ctors
   {
+    auto empty = std::vector<double>(0);
     BOOST_TEST_THROWS(axis::regular<>(0, 0, 1), std::invalid_argument);
     BOOST_TEST_THROWS(axis::circular<>(0), std::invalid_argument);
-    BOOST_TEST_THROWS(axis::variable<>(std::vector<double>()), std::invalid_argument);
+    BOOST_TEST_THROWS((axis::variable<>(empty)), std::invalid_argument);
     BOOST_TEST_THROWS(axis::variable<>({1.0}), std::invalid_argument);
     BOOST_TEST_THROWS(axis::integer<>(1, -1), std::invalid_argument);
-    BOOST_TEST_THROWS(axis::category<>(std::vector<int>()), std::invalid_argument);
+    BOOST_TEST_THROWS((axis::category<>(empty)), std::invalid_argument);
   }
 
   // axis::regular
