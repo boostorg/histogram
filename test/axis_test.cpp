@@ -358,8 +358,10 @@ int main() {
          "category(0, 1, 2, metadata=\"category\", options=overflow)");
     test(axis::category<std::string>({"A", "B"}, "category2"),
          "category(\"A\", \"B\", metadata=\"category2\", options=overflow)");
+#ifndef _MSC_VER // fails on MSVC because demagnled name for user_defined looks different
     test(axis::integer<int, user_defined>(-1, 1, {}, axis::option_type::none),
          "integer(-1, 1, metadata=main::user_defined, options=none)");
+#endif
   }
 
   // axis::variant support for minimal_axis
