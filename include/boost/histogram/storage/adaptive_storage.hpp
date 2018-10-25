@@ -15,11 +15,15 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 // warning-ignore required in Boost-1.66 for cpp_int.hpp:822
 #include <boost/multiprecision/cpp_int.hpp>
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 #include <iostream>
 #include <limits>
 #include <memory>
