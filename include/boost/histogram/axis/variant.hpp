@@ -176,7 +176,9 @@ public:
                 using T = detail::rm_cvref<decltype(a)>;
                 using U = detail::return_type<decltype(&T::value)>;
                 return detail::static_if<std::is_convertible<U, double>>(
-                    [idx](const auto& a) -> double { return a.value(idx); },
+                    [idx](const auto& a) -> double {
+                      return static_cast<double>(a.value(idx));
+                    },
                     [](const auto&) -> double {
                       throw std::runtime_error(detail::cat(
                           "return value ",
