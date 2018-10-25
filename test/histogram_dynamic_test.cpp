@@ -52,9 +52,8 @@ int main() {
 
   // axis methods
   {
-    enum { A, B };
-    auto c = make(dynamic_tag(), axis::category<>({A, B}));
-    BOOST_TEST_THROWS(c.axis().lower(0), std::runtime_error);
+    auto c = make(dynamic_tag(), axis::category<std::string>({"A", "B"}));
+    BOOST_TEST_THROWS(c.axis().value(0), std::runtime_error);
   }
 
   // reduce
@@ -88,7 +87,8 @@ int main() {
 
   // histogram iterator
   {
-    auto h = make_s(dynamic_tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 3));
+    auto h =
+        make_s(dynamic_tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 3));
     const auto& a = h.axis();
     h(weight(2), 0);
     h(1);

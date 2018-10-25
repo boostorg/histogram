@@ -7,13 +7,11 @@
 #ifndef BOOST_HISTOGRAM_AXIS_BASE_HPP
 #define BOOST_HISTOGRAM_AXIS_BASE_HPP
 
-#include <boost/histogram/histogram_fwd.hpp>
-#include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/iterator/reverse_iterator.hpp>
-#include <stdexcept>
 #include <limits>
+#include <stdexcept>
 #include <utility>
 
 namespace boost {
@@ -22,107 +20,62 @@ namespace axis {
 
 /// Base class for all axes
 template <typename MetaData>
-class base
-{
+class base {
   using metadata_type = MetaData;
-  struct data : metadata_type // empty base class optimization
-  {
-    int size = 0;
-    option_type opt = option_type::none;
-
-    data() = default;
-    data(const data&) = default;
-    data& operator=(const data&) = default;
-    data(data&& rhs)
-      : metadata_type(std::move(rhs))
-      , size(rhs.size), opt(rhs.opt)
-    { rhs.size = 0; rhs.opt = option_type::none; }
-    data& operator=(data&& rhs) {
-      if (this != &rhs) {
-        metadata_type::operator=(std::move(rhs));
-        size = rhs.size;
-        opt = rhs.opt;
-        rhs.size = 0;
-        rhs.opt = option_type::none;
-      }
-      return *this;
-    }
-    data(metadata_type&& m, int s, option_type o)
-    : metadata_type(std::move(m)), size(s), opt(o) {}
-
-    bool operator==(const data& rhs) const noexcept {
-      return size == rhs.size && opt == rhs.opt &&
-        detail::static_if<detail::is_equal_comparable<metadata_type>>(
-          [&rhs](const auto& m) { return m == rhs; },
-          [](const auto&) { return true; },
-          static_cast<const metadata_type&>(*this));
-    }
-  };
 
 public:
   /// Returns the number of bins, without extra bins.
-  unsigned size() const noexcept { return data_.size; }
+  unsigned size() const noexcept { return size_meta_.first(); }
   /// Returns the options.
-  option_type options() const noexcept { return data_.opt; }
+  option_type options() const noexcept { return opt_; }
   /// Returns the metadata.
-  metadata_type& metadata() noexcept { return static_cast<metadata_type&>(data_); }
+  metadata_type& metadata() noexcept { return size_meta_.second(); }
   /// Returns the metadata (const version).
-  const metadata_type& metadata() const noexcept { return static_cast<const metadata_type&>(data_); }
+  const metadata_type& metadata() const noexcept { return size_meta_.second(); }
 
   friend void swap(base& a, base& b) noexcept // ADL works with friend functions
   {
-    std::swap(static_cast<metadata_type&>(a), static_cast<metadata_type&>(b));
-    std::swap(a.data_.size, b.data_.size);
-    std::swap(a.data_.opt, b.data_.opt);
+    using std::swap;
+    swap(a.size_meta_, b.size_meta_);
+    swap(a.opt_, b.opt_);
   }
 
   template <class Archive>
   void serialize(Archive&, unsigned);
 
 protected:
-  base(unsigned size, metadata_type&& m, option_type opt)
-      : data_(std::move(m), size, opt)
-  {
-    if (size == 0) { throw std::invalid_argument("bins > 0 required"); }
-    const auto max_index = static_cast<unsigned>(std::numeric_limits<int>::max()
-      - static_cast<int>(data_.opt));
-    if (size > max_index)
-      throw std::invalid_argument(
-        detail::cat("bins <= ", max_index, " required")
-      );
+  base(unsigned n, metadata_type&& m, option_type opt)
+      : size_meta_(n, std::move(m)), opt_(opt) {
+    if (size() == 0) { throw std::invalid_argument("bins > 0 required"); }
+    const auto max_index =
+        static_cast<unsigned>(std::numeric_limits<int>::max() - static_cast<int>(opt_));
+    if (size() > max_index)
+      throw std::invalid_argument(detail::cat("bins <= ", max_index, " required"));
   }
 
-  base() = default;
+  base() : size_meta_(0), opt_(option_type::none) {}
+  base(const base&) = default;
+  base& operator=(const base&) = default;
+  base(base&& rhs) : size_meta_(std::move(rhs.size_meta_)), opt_(rhs.opt_) {}
+  base& operator=(base&& rhs) {
+    if (this != &rhs) {
+      size_meta_ = std::move(rhs.size_meta_);
+      opt_ = rhs.opt_;
+    }
+    return *this;
+  }
 
   bool operator==(const base& rhs) const noexcept {
-    return data_ == rhs.data_;
+    return size() == rhs.size() && opt_ == rhs.opt_ &&
+           detail::static_if<detail::is_equal_comparable<metadata_type>>(
+               [&rhs](const auto& m) { return m == rhs.metadata(); },
+               [](const auto&) { return true; }, metadata());
   }
 
 private:
-  data data_;
-};
-
-/// Uses CRTP to inject iterator logic into Derived.
-template <typename Derived>
-class iterator_mixin {
-public:
-  using const_iterator = iterator_over<Derived>;
-  using const_reverse_iterator = boost::reverse_iterator<const_iterator>;
-
-  const_iterator begin() const noexcept {
-    return const_iterator(*static_cast<const Derived*>(this), 0);
-  }
-  const_iterator end() const noexcept {
-    return const_iterator(*static_cast<const Derived*>(this),
-                          static_cast<const Derived*>(this)->size());
-  }
-  const_reverse_iterator rbegin() const noexcept {
-    return boost::make_reverse_iterator(end());
-  }
-  const_reverse_iterator rend() const noexcept {
-    return boost::make_reverse_iterator(begin());
-  }
-};
+  detail::compressed_pair<int, metadata_type> size_meta_;
+  option_type opt_;
+}; // namespace axis
 
 } // namespace axis
 } // namespace histogram

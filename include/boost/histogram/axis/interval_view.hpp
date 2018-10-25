@@ -7,8 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_INTERVAL_VIEW_HPP
 #define BOOST_HISTOGRAM_AXIS_INTERVAL_VIEW_HPP
 
-#include <utility>
-
 namespace boost {
 namespace histogram {
 namespace axis {
@@ -18,29 +16,17 @@ class interval_view {
 public:
   interval_view(int idx, const Axis& axis) : idx_(idx), axis_(axis) {}
 
-  interval_view(const interval_view&) = default;
-  interval_view& operator=(const interval_view&) = default;
-  interval_view(interval_view&&) = default;
-  interval_view& operator=(interval_view&&) = default;
-
   int idx() const noexcept { return idx_; }
 
-  auto lower() const noexcept -> decltype(std::declval<Axis&>().lower(0)) {
-    return axis_.lower(idx_);
-  }
-  auto upper() const noexcept -> decltype(std::declval<Axis&>().lower(0)) {
-    return axis_.lower(idx_ + 1);
-  }
-  auto width() const noexcept -> decltype(upper() - lower()) {
-    return upper() - lower();
-  }
+  decltype(auto) lower() const noexcept { return axis_.value(idx_); }
+  decltype(auto) upper() const noexcept { return axis_.value(idx_ + 1); }
+  decltype(auto) center() const noexcept { return axis_.value(idx_ + 0.5); }
+  decltype(auto) width() const noexcept { return upper() - lower(); }
 
   bool operator==(const interval_view& rhs) const noexcept {
     return idx_ == rhs.idx_ && axis_ == rhs.axis_;
   }
-  bool operator!=(const interval_view& rhs) const noexcept {
-    return !operator==(rhs);
-  }
+  bool operator!=(const interval_view& rhs) const noexcept { return !operator==(rhs); }
 
   explicit operator int() const noexcept { return idx_; }
 

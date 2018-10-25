@@ -10,11 +10,6 @@
 #include <memory> // for std::allocator
 #include <string>
 
-namespace std {
-template <typename T>
-class allocator;
-}
-
 namespace boost {
 namespace histogram {
 namespace axis {
@@ -35,21 +30,20 @@ template <typename T = double>
 struct sqrt;
 template <typename T = double>
 struct pow;
-template <typename Q, typename U>
-struct quantity;
 } // namespace transform
 
-template <typename Transform = transform::identity<>, typename MetaData = std::string>
+template <typename Transform = transform::identity<double>,
+          typename MetaData = std::string>
 class regular;
 
-template <typename T = double, typename MetaData = std::string>
+template <typename RealType = double, typename MetaData = std::string>
 class circular;
 
-template <typename T = double, typename Allocator = std::allocator<T>,
+template <typename RealType = double, typename Allocator = std::allocator<RealType>,
           typename MetaData = std::string>
 class variable;
 
-template <typename T = int, typename MetaData = std::string>
+template <typename IntType = int, typename MetaData = std::string>
 class integer;
 
 template <typename T = int, typename Allocator = std::allocator<T>,

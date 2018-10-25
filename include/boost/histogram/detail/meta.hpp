@@ -7,10 +7,10 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_META_HPP
 #define BOOST_HISTOGRAM_DETAIL_META_HPP
 
-#include <boost/histogram/histogram_fwd.hpp>
-#include <boost/mp11.hpp>
 #include <boost/callable_traits/args.hpp>
 #include <boost/callable_traits/return_type.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/mp11.hpp>
 #include <iterator>
 #include <limits>
 #include <tuple>
@@ -49,37 +49,32 @@ template <typename T>
 using container_element_type = mp11::mp_first<rm_cvref<T>>;
 
 template <typename T>
-using unqualified_iterator_value_type = rm_cvref<typename std::iterator_traits<T>::value_type>;
+using unqualified_iterator_value_type =
+    rm_cvref<typename std::iterator_traits<T>::value_type>;
 
 template <typename T>
 using return_type = typename boost::callable_traits::return_type<T>::type;
 
 template <typename T>
-using args_type = mp11::mp_if<
-  std::is_member_function_pointer<T>,
-  mp11::mp_pop_front<boost::callable_traits::args_t<T>>,
-  boost::callable_traits::args_t<T>
->;
+using args_type = mp11::mp_if<std::is_member_function_pointer<T>,
+                              mp11::mp_pop_front<boost::callable_traits::args_t<T>>,
+                              boost::callable_traits::args_t<T>>;
 
-template <int N, typename T>
-using arg_type = typename mp11::mp_at_c<args_type<T>, (N < 0 ? mp11::mp_size<args_type<T>>::value + N : N)>;
+template <typename T, std::size_t N = 0>
+using arg_type = typename mp11::mp_at_c<args_type<T>, N>;
 
 template <typename F, typename V>
-using visitor_return_type = decltype(std::declval<F>()(std::declval<copy_qualifiers<V, mp_at_c<V, 0>>>()));
+using visitor_return_type =
+    decltype(std::declval<F>()(std::declval<copy_qualifiers<V, mp_at_c<V, 0>>>()));
 
 template <bool B, typename T, typename F, typename... Ts>
-constexpr decltype(auto) static_if_c(T&& t, F&& f, Ts&&... ts)
-{
-  return std::get<(B ? 0 : 1)>(
-    std::forward_as_tuple(
-      std::forward<T>(t),
-      std::forward<F>(f)
-    ))(std::forward<Ts>(ts)...);
+constexpr decltype(auto) static_if_c(T&& t, F&& f, Ts&&... ts) {
+  return std::get<(B ? 0 : 1)>(std::forward_as_tuple(
+      std::forward<T>(t), std::forward<F>(f)))(std::forward<Ts>(ts)...);
 }
 
 template <typename B, typename... Ts>
-constexpr decltype(auto) static_if(Ts&&... ts)
-{
+constexpr decltype(auto) static_if(Ts&&... ts) {
   return static_if_c<B::value>(std::forward<Ts>(ts)...);
 }
 
@@ -100,33 +95,29 @@ constexpr decltype(auto) static_if(Ts&&... ts)
 BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
                             (std::declval<T&>().value(), std::declval<T&>().variance()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower,
-                            (std::declval<T&>().lower(0)));
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, (std::declval<T&>().value(0)));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options,
-                            (static_cast<axis::option_type>(std::declval<T&>().options())));
+BOOST_HISTOGRAM_MAKE_SFINAE(
+    has_method_options, (static_cast<axis::option_type>(std::declval<T&>().options())));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata,
-                            (std::declval<T&>().metadata()));
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_transform, (&T::forward, &T::inverse));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_random_access_container,
                             (std::declval<T&>()[0], std::declval<T&>().size()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container,
-                            (std::get<0>(std::declval<T&>())));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container, (std::get<0>(std::declval<T&>())));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_castable_to_int,
-                            (static_cast<int>(std::declval<T&>())));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_castable_to_int, (static_cast<int>(std::declval<T&>())));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_equal_comparable,
                             (std::declval<T&>() == std::declval<T&>()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_axis,
-                            (std::declval<T&>().size(), &T::operator()));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_axis, (std::declval<T&>().size(), &T::operator()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_iterable,
-                            (std::begin(std::declval<T&>()),
-                             std::end(std::declval<T&>())));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_iterable, (std::begin(std::declval<T&>()),
+                                          std::end(std::declval<T&>())));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
                             (std::declval<std::ostream&>() << std::declval<T&>()));
@@ -137,16 +128,14 @@ struct is_axis_variant_impl : std::false_type {};
 
 template <typename... Ts>
 struct is_axis_variant_impl<axis::variant<Ts...>> : std::true_type {};
-}
+} // namespace
 
 template <typename T>
 using is_axis_variant = typename is_axis_variant_impl<T>::type;
 
 template <typename T>
-using is_axis_vector = mp11::mp_all<
-    is_random_access_container<T>,
-    is_axis<container_element_type<rm_cvref<T>>>
-  >;
+using is_axis_vector = mp11::mp_all<is_random_access_container<T>,
+                                    is_axis<container_element_type<rm_cvref<T>>>>;
 
 struct static_container_tag {};
 struct iterable_container_tag {};
@@ -155,8 +144,8 @@ struct no_container_tag {};
 template <typename T>
 using classify_container = typename std::conditional<
     is_iterable<T>::value, iterable_container_tag,
-    typename std::conditional<is_static_container<T>::value,
-                              static_container_tag, no_container_tag>::type>::type;
+    typename std::conditional<is_static_container<T>::value, static_container_tag,
+                              no_container_tag>::type>::type;
 
 namespace {
 struct bool_mask_impl {
@@ -167,7 +156,7 @@ struct bool_mask_impl {
     b[Int::value] = v;
   }
 };
-}
+} // namespace
 
 template <typename... Ns>
 std::vector<bool> bool_mask(unsigned n, bool v) {
@@ -191,25 +180,25 @@ struct requires_iterable {};
 template <typename T, typename = mp11::mp_if<is_static_container<T>, void>>
 struct requires_static_container {};
 
-template <typename T,
-          typename = mp11::mp_if<is_axis<T>, void>>
+template <typename T, typename = mp11::mp_if<is_axis<T>, void>>
 struct requires_axis {};
 
 template <typename T,
-          typename = mp11::mp_if_c<(is_axis<T>::value ||
-                                    is_axis_variant<T>::value), void>>
+          typename =
+              mp11::mp_if_c<(is_axis<T>::value || is_axis_variant<T>::value), void>>
 struct requires_axis_or_axis_variant {};
 
-template <typename T,
-          typename U = container_element_type<T>,
+template <typename T, typename U = container_element_type<T>,
           typename = mp11::mp_if_c<(is_random_access_container<T>::value &&
-                                    (is_axis<U>::value ||
-                                     is_axis_variant<U>::value)), void>>
+                                    (is_axis<U>::value || is_axis_variant<U>::value)),
+                                   void>>
 struct requires_axis_vector {};
 
-template <typename T, typename U,
-          typename = mp11::mp_if<std::is_same<T, U>, void>>
+template <typename T, typename U, typename = mp11::mp_if<std::is_same<T, U>, void>>
 struct requires_same {};
+
+template <typename T, typename = mp11::mp_if<is_transform<T>, void>>
+struct requires_transform {};
 
 } // namespace detail
 } // namespace histogram

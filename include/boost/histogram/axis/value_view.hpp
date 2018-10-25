@@ -7,9 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_VALUE_VIEW_HPP
 #define BOOST_HISTOGRAM_AXIS_VALUE_VIEW_HPP
 
-#include <functional>
-#include <utility>
-
 namespace boost {
 namespace histogram {
 namespace axis {
@@ -19,23 +16,14 @@ class value_view {
 public:
   value_view(int idx, const Axis& axis) : idx_(idx), axis_(axis) {}
 
-  value_view(const value_view&) = default;
-  value_view& operator=(const value_view&) = default;
-  value_view(value_view&&) = default;
-  value_view& operator=(value_view&&) = default;
-
   int idx() const noexcept { return idx_; }
 
-  auto value() const -> decltype(std::declval<Axis&>().value(0)) {
-    return axis_.value(idx_);
-  }
+  decltype(auto) value() const { return axis_.value(idx_); }
 
   bool operator==(const value_view& rhs) const noexcept {
     return idx_ == rhs.idx_ && axis_ == rhs.axis_;
   }
-  bool operator!=(const value_view& rhs) const noexcept {
-    return !operator==(rhs);
-  }
+  bool operator!=(const value_view& rhs) const noexcept { return !operator==(rhs); }
 
   explicit operator int() const noexcept { return idx_; }
 
