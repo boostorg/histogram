@@ -150,21 +150,21 @@ int main() {
     using namespace boost::units::si;
     using Q = quantity<length>;
 
-    // axis::regular<axis::transform::identity<Q>> b(2, 0 * meter, 2 * meter);
-    // BOOST_TEST_EQ(b[-1].lower() / meter, -std::numeric_limits<double>::infinity());
-    // BOOST_TEST_IS_CLOSE(b[0].lower() / meter, 0.0, 1e-9);
-    // BOOST_TEST_IS_CLOSE(b[1].lower() / meter, 1.0, 1e-9);
-    // BOOST_TEST_IS_CLOSE(b[2].lower() / meter, 2.0, 1e-9);
-    // BOOST_TEST_EQ(b[2].upper() / meter, std::numeric_limits<double>::infinity());
+    axis::regular<axis::transform::unit<Q>> b(2, 0 * meter, 2 * meter);
+    BOOST_TEST_EQ(b[-1].lower() / meter, -std::numeric_limits<double>::infinity());
+    BOOST_TEST_IS_CLOSE(b[0].lower() / meter, 0.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(b[1].lower() / meter, 1.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(b[2].lower() / meter, 2.0, 1e-9);
+    BOOST_TEST_EQ(b[2].upper() / meter, std::numeric_limits<double>::infinity());
 
-    // BOOST_TEST_EQ(b(-1 * meter), -1); // produces NaN in conversion
-    // BOOST_TEST_EQ(b(0 * meter), 0);
-    // BOOST_TEST_EQ(b(0.99 * meter), 0);
-    // BOOST_TEST_EQ(b(1 * meter), 1);
-    // BOOST_TEST_EQ(b(1.99 * meter), 1);
-    // BOOST_TEST_EQ(b(2 * meter), 2);
-    // BOOST_TEST_EQ(b(100 * meter), 2);
-    // BOOST_TEST_EQ(b(std::numeric_limits<double>::infinity() * meter), 2);
+    BOOST_TEST_EQ(b(-1 * meter), -1); // produces NaN in conversion
+    BOOST_TEST_EQ(b(0 * meter), 0);
+    BOOST_TEST_EQ(b(0.99 * meter), 0);
+    BOOST_TEST_EQ(b(1 * meter), 1);
+    BOOST_TEST_EQ(b(1.99 * meter), 1);
+    BOOST_TEST_EQ(b(2 * meter), 2);
+    BOOST_TEST_EQ(b(100 * meter), 2);
+    BOOST_TEST_EQ(b(std::numeric_limits<double>::infinity() * meter), 2);
   }
 
   // axis::circular
