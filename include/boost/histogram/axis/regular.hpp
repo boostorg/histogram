@@ -47,10 +47,10 @@ struct sqrt : identity<T> {
 template <typename T>
 struct pow {
   using U = mp11::mp_if<std::is_integral<T>, double, T>;
-  U power = 1;
+  U power = 1.0;
 
-  pow() = default;
   pow(U p) : power(p) {}
+  pow() = default;
 
   U forward(U v) const { return std::pow(v, power); }
   U inverse(U v) const { return std::pow(v, 1.0 / power); }
@@ -58,6 +58,14 @@ struct pow {
   bool operator==(const pow& o) const noexcept { return power == o.power; }
   template <class Archive>
   void serialize(Archive&, unsigned);
+};
+
+template <typename Q>
+struct unit {
+  using T = typename Q::value_type;
+  using U = typename Q::unit_type;
+  T forward(Q x) const { return x / U(); }
+  Q inverse(T x) const { return x * U(); }
 };
 } // namespace transform
 
