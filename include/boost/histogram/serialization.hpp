@@ -8,7 +8,11 @@
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP
 
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/types.hpp>
+#include <boost/histogram/axis/category.hpp>
+#include <boost/histogram/axis/circular.hpp>
+#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/histogram.hpp>
@@ -33,7 +37,7 @@ template <class Archive, typename... Ts>
 void serialize(Archive& ar, tuple<Ts...>& t, unsigned /* version */) {
   ::boost::mp11::tuple_for_each(t, [&ar](auto& x) { ar& x; });
 }
-}  // namespace std
+} // namespace std
 
 namespace boost {
 namespace histogram {
@@ -62,19 +66,15 @@ struct serializer {
 
   template <typename Buffer, typename Archive>
   void operator()(void*, Buffer& b, Archive&) {
-    if (Archive::is_loading::value) {
-      b.ptr = nullptr;
-    }
+    if (Archive::is_loading::value) { b.ptr = nullptr; }
   }
 };
-}  // namespace detail
+} // namespace detail
 
 template <class Archive, typename A>
 void serialize(Archive& ar, adaptive_storage<A>& s, unsigned /* version */) {
   using S = adaptive_storage<A>;
-  if (Archive::is_loading::value) {
-    S::apply(typename S::destroyer(), s.buffer);
-  }
+  if (Archive::is_loading::value) { S::apply(typename S::destroyer(), s.buffer); }
   ar& s.buffer.type;
   ar& s.buffer.size;
   S::apply(detail::serializer(), s.buffer, ar);
@@ -89,15 +89,14 @@ void histogram<A, S>::serialize(Archive& ar, unsigned /* version */) {
 
 namespace axis {
 template <class Archive>
-void serialize(Archive&, empty_metadata_type&, unsigned /* version */) {
-}  // noop
+void serialize(Archive&, empty_metadata_type&, unsigned /* version */) {} // noop
 
 template <typename M>
 template <class Archive>
 void base<M>::serialize(Archive& ar, unsigned /* version */) {
-  ar& metadata();
-  ar& data_.size;
-  ar& data_.opt;
+  ar& size_meta_.first();
+  ar& size_meta_.second();
+  ar& opt_;
 }
 
 template <typename T>
@@ -106,25 +105,19 @@ void transform::pow<T>::serialize(Archive& ar, unsigned /* version */) {
   ar& power;
 }
 
-template <typename Q, typename U>
-template <class Archive>
-void transform::quantity<Q, U>::serialize(Archive& ar, unsigned /* version */) {
-  ar& unit;
-}
-
 template <typename T, typename M>
 template <class Archive>
 void regular<T, M>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base_type>(*this);
-  ar& boost::serialization::base_object<T>(data_);
-  ar& data_.min;
-  ar& data_.delta;
+  ar& static_cast<base_type&>(*this);
+  ar& static_cast<transform_type&>(*this);
+  ar& min_;
+  ar& delta_;
 }
 
 template <typename R, typename M>
 template <class Archive>
 void circular<R, M>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base_type>(*this);
+  ar& static_cast<base_type&>(*this);
   ar& phase_;
   ar& delta_;
 }
@@ -133,17 +126,17 @@ template <typename R, typename A, typename M>
 template <class Archive>
 void variable<R, A, M>::serialize(Archive& ar, unsigned /* version */) {
   // destroy must happen before base serialization with old size
-  if (Archive::is_loading::value) detail::destroy_buffer(data_, data_.x, nx());
-  ar& boost::serialization::base_object<base_type>(*this);
+  if (Archive::is_loading::value) detail::destroy_buffer(x_.second(), x_.first(), nx());
+  ar& static_cast<base_type&>(*this);
   if (Archive::is_loading::value)
-    data_.x = boost::histogram::detail::create_buffer(data_, nx());
-  ar& boost::serialization::make_array(data_.x, nx());
+    x_.first() = boost::histogram::detail::create_buffer(x_.second(), nx());
+  ar& boost::serialization::make_array(x_.first(), nx());
 }
 
 template <typename I, typename M>
 template <class Archive>
 void integer<I, M>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base_type>(*this);
+  ar& static_cast<base_type&>(*this);
   ar& min_;
 }
 
@@ -152,11 +145,11 @@ template <class Archive>
 void category<V, A, M>::serialize(Archive& ar, unsigned /* version */) {
   // destroy must happen before base serialization with old size
   if (Archive::is_loading::value)
-    detail::destroy_buffer(data_, data_.x, base_type::size());
-  ar& boost::serialization::base_object<base_type>(*this);
+    detail::destroy_buffer(x_.second(), x_.first(), base_type::size());
+  ar& static_cast<base_type&>(*this);
   if (Archive::is_loading::value)
-    data_.x = boost::histogram::detail::create_buffer(data_, base_type::size());
-  ar& boost::serialization::make_array(data_.x, base_type::size());
+    x_.first() = boost::histogram::detail::create_buffer(x_.second(), base_type::size());
+  ar& boost::serialization::make_array(x_.first(), base_type::size());
 }
 
 template <typename... Ts>
@@ -164,9 +157,9 @@ template <class Archive>
 void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
 }
-}  // namespace axis
+} // namespace axis
 
-}  // namespace histogram
-}  // namespace boost
+} // namespace histogram
+} // namespace boost
 
 #endif

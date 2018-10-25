@@ -10,9 +10,13 @@
 #define BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
 
 #include <boost/core/typeinfo.hpp>
+#include <boost/histogram/axis/category.hpp>
+#include <boost/histogram/axis/circular.hpp>
+#include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
-#include <boost/histogram/axis/types.hpp>
+#include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/value_view.hpp>
+#include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <iomanip>
@@ -38,10 +42,6 @@ const char* to_string(const axis::transform::sqrt<T>&) {
 template <typename T>
 const char* to_string(const axis::transform::pow<T>&) {
   return "_pow";
-}
-template <typename Q, typename U>
-const char* to_string(const axis::transform::quantity<Q, U>&) {
-  return "_quantity";
 }
 
 template <typename OStream, typename T>
@@ -83,40 +83,45 @@ void stream_transform(OStream& os, const axis::transform::pow<T>& t) {
   os << ", power=" << t.power;
 }
 
-template <typename OStream, typename Q, typename U>
-void stream_transform(OStream& os, const axis::transform::quantity<Q, U>& t) {
-  os << ", unit=" << t.unit;
+template <typename OStream, typename T>
+void stream_value(OStream& os, const T& t) {
+  os << t;
+}
+
+template <typename OStream, typename... Ts>
+void stream_value(OStream& os, const std::basic_string<Ts...>& t) {
+  os << std::quoted(t);
 }
 
 } // namespace detail
 
 namespace axis {
 
-template <typename CharT, typename Traits>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const empty_metadata_type&) {
+template <typename C, typename T>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const empty_metadata_type&) {
   return os; // do nothing
 }
 
-template <typename CharT, typename Traits, typename T>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const interval_view<T>& i) {
+template <typename C, typename T, typename U>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const interval_view<U>& i) {
   os << "[" << i.lower() << ", " << i.upper() << ")";
   return os;
 }
 
-template <typename CharT, typename Traits, typename T>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const value_view<T>& i) {
+template <typename C, typename T, typename U>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const value_view<U>& i) {
   os << i.value();
   return os;
 }
 
-template <typename CharT, typename Traits, typename T, typename M>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const regular<T, M>& a) {
+template <typename C, typename T, typename... Ts>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const regular<Ts...>& a) {
   os << "regular" << detail::to_string(a.transform()) << "(" << a.size() << ", "
-     << a.lower(0) << ", " << a.lower(a.size());
+     << a.value(0) << ", " << a.value(a.size());
   detail::stream_metadata(os, a.metadata());
   detail::stream_options(os, a.options());
   detail::stream_transform(os, a.transform());
@@ -124,56 +129,43 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   return os;
 }
 
-template <typename CharT, typename Traits, typename T, typename A>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const circular<T, A>& a) {
-  os << "circular(" << a.size() << ", " << a.lower(0) << ", " << a.lower(a.size());
+template <typename C, typename T, typename... Ts>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const circular<Ts...>& a) {
+  os << "circular(" << a.size() << ", " << a.value(0) << ", " << a.value(a.size());
   detail::stream_metadata(os, a.metadata());
   detail::stream_options(os, a.options());
   os << ")";
   return os;
 }
 
-template <typename CharT, typename Traits, typename T, typename A>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const variable<T, A>& a) {
-  os << "variable(" << a.lower(0);
-  for (unsigned i = 1; i <= a.size(); ++i) { os << ", " << a.lower(i); }
+template <typename C, typename T, typename... Ts>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const variable<Ts...>& a) {
+  os << "variable(" << a.value(0);
+  for (unsigned i = 1; i <= a.size(); ++i) { os << ", " << a.value(i); }
   detail::stream_metadata(os, a.metadata());
   detail::stream_options(os, a.options());
   os << ")";
   return os;
 }
 
-template <typename CharT, typename Traits, typename T, typename A>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const integer<T, A>& a) {
-  os << "integer(" << a.lower(0) << ", " << a.lower(a.size());
+template <typename C, typename T, typename... Ts>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const integer<Ts...>& a) {
+  os << "integer(" << a.value(0) << ", " << a.value(a.size());
   detail::stream_metadata(os, a.metadata());
   detail::stream_options(os, a.options());
   os << ")";
   return os;
 }
 
-template <typename CharT, typename Traits, typename T, typename A>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const category<T, A>& a) {
+template <typename C, typename T, typename... Ts>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const category<Ts...>& a) {
   os << "category(";
   for (unsigned i = 0; i < a.size(); ++i) {
-    os << a[i] << (i == (a.size() - 1) ? "" : ", ");
-  }
-  detail::stream_metadata(os, a.metadata());
-  detail::stream_options(os, a.options());
-  os << ")";
-  return os;
-}
-
-template <typename CharT, typename Traits, typename A>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const category<std::string, A>& a) {
-  os << "category(";
-  for (unsigned i = 0; i < a.size(); ++i) {
-    os << std::quoted(a.value(i));
+    detail::stream_value(os, a.value(i));
     os << (i == (a.size() - 1) ? "" : ", ");
   }
   detail::stream_metadata(os, a.metadata());

@@ -6,16 +6,16 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/literals.hpp>
-#include <boost/histogram/axis/types.hpp>
-#include <boost/histogram/axis/variant.hpp>
 #include <boost/mp11.hpp>
+#include <iterator>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <iterator>
 #include "utility.hpp"
 
 namespace bh = boost::histogram;
@@ -64,21 +64,27 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((has_variance_support<D>));
   }
 
-  // has_method_lower
+  // has_method_value
   {
     struct A {};
-    struct B { void lower(int) {} };
+    struct B {
+      void value(int) {}
+    };
 
-    BOOST_TEST_TRAIT_FALSE((has_method_lower<A>));
-    BOOST_TEST_TRAIT_TRUE((has_method_lower<B>));
+    BOOST_TEST_TRAIT_FALSE((has_method_value<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_value<B>));
   }
 
   // has_method_options
   {
     struct NotOptions {};
     struct A {};
-    struct B { NotOptions options(); };
-    struct C { bh::axis::option_type options(); };
+    struct B {
+      NotOptions options();
+    };
+    struct C {
+      bh::axis::option_type options();
+    };
 
     BOOST_TEST_TRAIT_FALSE((has_method_options<A>));
     BOOST_TEST_TRAIT_FALSE((has_method_options<B>));
@@ -88,16 +94,32 @@ int main() {
   // has_method_metadata
   {
     struct A {};
-    struct B { void metadata(); };
+    struct B {
+      void metadata();
+    };
 
     BOOST_TEST_TRAIT_FALSE((has_method_metadata<A>));
     BOOST_TEST_TRAIT_TRUE((has_method_metadata<B>));
   }
 
+  // is_transform
+  {
+    struct A {};
+    struct B {
+      double forward(double);
+      double inverse(double);
+    };
+
+    BOOST_TEST_TRAIT_FALSE((is_transform<A>));
+    BOOST_TEST_TRAIT_TRUE((is_transform<B>));
+  }
+
   // is_equal_comparable
   {
     struct A {};
-    struct B { bool operator==(const B&); };
+    struct B {
+      bool operator==(const B&);
+    };
     BOOST_TEST_TRAIT_TRUE((is_equal_comparable<int>));
     BOOST_TEST_TRAIT_FALSE((is_equal_comparable<A>));
     BOOST_TEST_TRAIT_TRUE((is_equal_comparable<B>));
@@ -106,9 +128,16 @@ int main() {
   // is_axis
   {
     struct A {};
-    struct B { int operator()(double); unsigned size() const; };
-    struct C { int operator()(double); };
-    struct D { unsigned size(); };
+    struct B {
+      int operator()(double);
+      unsigned size() const;
+    };
+    struct C {
+      int operator()(double);
+    };
+    struct D {
+      unsigned size();
+    };
     BOOST_TEST_TRAIT_FALSE((is_axis<A>));
     BOOST_TEST_TRAIT_TRUE((is_axis<B>));
     BOOST_TEST_TRAIT_FALSE((is_axis<C>));
@@ -266,8 +295,10 @@ int main() {
       int f2(long) const;
     };
 
-    BOOST_TEST_TRAIT_TRUE((std::is_same<args_type<decltype(&Foo::f1)>, std::tuple<char>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<args_type<decltype(&Foo::f2)>, std::tuple<long>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<args_type<decltype(&Foo::f1)>, std::tuple<char>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<args_type<decltype(&Foo::f2)>, std::tuple<long>>));
   }
 
   // visitor_return_type
@@ -275,19 +306,23 @@ int main() {
     using V1 = bh::axis::variant<char>;
     using V2 = bh::axis::variant<int>&;
     using V3 = const bh::axis::variant<long>&;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<visitor_return_type<VisitorTestFunctor, V1>, char>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<visitor_return_type<VisitorTestFunctor, V2>, int&>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<visitor_return_type<VisitorTestFunctor, V3>, const long&>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<visitor_return_type<VisitorTestFunctor, V1>, char>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<visitor_return_type<VisitorTestFunctor, V2>, int&>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<visitor_return_type<VisitorTestFunctor, V3>, const long&>));
   }
 
   // static_if
   {
-    struct callable { int operator()() { return 1; }; };
+    struct callable {
+      int operator()() { return 1; };
+    };
     struct not_callable {};
     auto fcn = [](auto b, auto x) {
-      return static_if<decltype(b)>(
-        [](auto x) { return x(); },
-        [](auto) { return 2; }, x);
+      return static_if<decltype(b)>([](auto x) { return x(); }, [](auto) { return 2; },
+                                    x);
     };
     BOOST_TEST_EQ(fcn(std::true_type(), callable()), 1);
     BOOST_TEST_EQ(fcn(std::false_type(), not_callable()), 2);
