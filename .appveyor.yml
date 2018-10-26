@@ -11,17 +11,21 @@ branches:
     - master
     - develop
 
+install:
+  - cd ..
+  - git clone -b %APPVEYOR_REPO_BRANCH% https://github.com/boostorg/boost
+  - cd boost
+  - git submodule init libs/assert
+  - git submodule init libs/config
+  - git submodule init libs/core
+  - git submodule init libs/serialization
+  - git submodule init tools/build
+  - git submodule update
+  - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram
+  - cmd /c bootstrap
+  - b2 --with-serialization
+
 build: off
 
-environment:
-  # MSVC_DEFAULT_OPTIONS: ON
-  BOOST_ROOT: C:\Libraries\boost_1_67_0
-
 test_script:
-  # - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  - mkdir build
-  - cd build
-  - cmake ..
-    -DBOOST_ROOT="%BOOST_ROOT%" -DBoost_USE_STATIC_LIBS="ON"
-  - cmake --build .
-  - ctest -V
+  - b2 libs/histogram
