@@ -22,6 +22,18 @@ install:
   - git submodule init libs/config
   - git submodule init libs/core
   - git submodule init libs/serialization
+  - git submodule init libs/io
+  - git submodule init libs/utility
+  - git submodule init libs/type_traits
+  - git submodule init libs/unordered_map
+  - git submodule init libs/variant
+  - git submodule init libs/smart_ptr  
+  - git submodule init libs/spirit
+  - git submodule init libs/static_assert
+  - git submodule init libs/mpl
+  - git submodule init libs/mp11
+  - git submodule init libs/iterator
+  - git submodule init libs/align
   - git submodule update
   - bootstrap
   - b2 --with-serialization
