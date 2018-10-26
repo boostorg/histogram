@@ -15,14 +15,13 @@ install:
   - cd ..
   - git clone -b %APPVEYOR_REPO_BRANCH% https://github.com/boostorg/boost
   - cd boost
-  - dir
-  - dir %APPVEYOR_BUILD_FOLDER%
+  - mkdir libs\histogram
   - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram
+  - git submodule init tools/build
   - git submodule init libs/assert
   - git submodule init libs/config
   - git submodule init libs/core
   - git submodule init libs/serialization
-  - git submodule init tools/build
   - git submodule update
   - bootstrap
   - b2 --with-serialization
