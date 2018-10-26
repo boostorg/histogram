@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_TEST_UTILITY_HPP
 #define BOOST_HISTOGRAM_TEST_UTILITY_HPP
 
+#include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/mp11/integral.hpp>
 #include <boost/mp11/tuple.hpp>
@@ -128,6 +129,23 @@ constexpr bool operator!=(const tracing_allocator<T>& t,
                           const tracing_allocator<U>& u) noexcept {
   return !operator==(t, u);
 }
+
+template <typename Axis>
+void test_axis_iterator(const Axis& a, int begin, int end) {
+  for (auto bin : a) {
+    BOOST_TEST_EQ(bin.idx(), begin);
+    BOOST_TEST_EQ(bin, a[begin]);
+    ++begin;
+  }
+  BOOST_TEST_EQ(begin, end);
+  auto rit = a.rbegin();
+  for (; rit != a.rend(); ++rit) {
+    BOOST_TEST_EQ(rit->idx(), --begin);
+    BOOST_TEST_EQ(*rit, a[begin]);
+  }
+}
+
+#define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
 } // namespace histogram
 } // namespace boost

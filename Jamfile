@@ -8,9 +8,9 @@
 project histogram
     :
     requirements
-        <toolset>gcc:<cxxflags>"-std=c++14 -pedantic -Wall -Wextra"
-        <toolset>clang:<cxxflags>"-std=c++14 -pedantic -Wall -Wextra"
-        <toolset>darwin:<cxxflags>"-std=c++14 -pedantic -Wall -Wextra"
+        <toolset>gcc:<cxxflags>"-std=c++14 -Wall -Wextra -Wno-noexcept-type"
+        <toolset>clang:<cxxflags>"-std=c++14 -Wall -Wextra"
+        <toolset>darwin:<cxxflags>"-std=c++14 -Wall -Wextra"
     ;
 
 build-project test ;
