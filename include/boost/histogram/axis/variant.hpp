@@ -159,7 +159,16 @@ public:
           using args_t = std::tuple<Us...>;
           using expected_args_t = axis::traits::args<A>;
           return detail::static_if<std::is_convertible<args_t, expected_args_t>>(
-              [&args](const auto& a) -> int { return mp11::tuple_apply(a, args); },
+              [&args](const auto& a) -> int {
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4244) // possible loss of data
+#endif
+                return mp11::tuple_apply(a, args);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+              },
               [](const auto&) -> int {
                 throw std::invalid_argument(detail::cat(
                     "cannot convert ",
