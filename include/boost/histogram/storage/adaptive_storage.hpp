@@ -151,7 +151,14 @@ struct adaptive_storage {
 
     template <typename T, typename U = T>
     T* create(const U* init = nullptr) {
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4244) // possible loss of data
+#endif
       return create_impl(static_cast<T*>(nullptr), init);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
     }
 
     template <typename T>
@@ -482,15 +489,8 @@ struct adaptive_storage {
   struct multiplier {
     template <typename T, typename Buffer>
     void operator()(T* tp, Buffer& b, const double x) {
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4244) // possible loss of data
-#endif
       // potential lossy conversion that cannot be avoided
       auto ptr = b.template create<double>(tp);
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
       destroyer()(tp, b);
       b.set(ptr);
       operator()(reinterpret_cast<double*>(b.ptr), b, x);
