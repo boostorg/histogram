@@ -50,24 +50,17 @@ void copy_impl() {
 }
 
 template <typename T>
-void equal_impl() {
+void equal_1_impl() {
   auto a = prepare<void>(1);
   auto b = prepare(1, T(0));
   BOOST_TEST_EQ(a[0], 0.0);
   BOOST_TEST(a == b);
   b.increase(0);
   BOOST_TEST(!(a == b));
-
-  array_storage<unsigned> c;
-  c.reset(1);
-  auto d = prepare(1, T(0));
-  BOOST_TEST(c == d);
-  c.increase(0);
-  BOOST_TEST(!(c == d));
 }
 
 template <>
-void equal_impl<void>() {
+void equal_1_impl<void>() {
   auto a = prepare<void>(1);
   auto b = prepare<uint8_t>(1, 0);
   auto c = prepare<uint8_t>(2, 0);
@@ -85,6 +78,16 @@ void equal_impl<void>() {
   d.increase(0);
   BOOST_TEST(!(a == d));
   BOOST_TEST(!(d == a));
+}
+
+template <typename T, typename U>
+void equal_2_impl() {
+  auto a = prepare<T>(1);
+  array_storage<U> b;
+  b.reset(1);
+  BOOST_TEST(a == b);
+  b.increase(0);
+  BOOST_TEST(!(a == b));
 }
 
 template <typename T>
@@ -278,13 +281,29 @@ int main() {
 
   // equal_operator
   {
-    equal_impl<void>();
-    equal_impl<uint8_t>();
-    equal_impl<uint16_t>();
-    equal_impl<uint32_t>();
-    equal_impl<uint64_t>();
-    equal_impl<adaptive_storage_type::mp_int>();
-    equal_impl<double>();
+    equal_1_impl<void>();
+    equal_1_impl<uint8_t>();
+    equal_1_impl<uint16_t>();
+    equal_1_impl<uint32_t>();
+    equal_1_impl<uint64_t>();
+    equal_1_impl<adaptive_storage_type::mp_int>();
+    equal_1_impl<double>();
+
+    equal_2_impl<void, unsigned>();
+    equal_2_impl<uint8_t, unsigned>();
+    equal_2_impl<uint16_t, unsigned>();
+    equal_2_impl<uint32_t, unsigned>();
+    equal_2_impl<uint64_t, unsigned>();
+    equal_2_impl<adaptive_storage_type::mp_int, unsigned>();
+    equal_2_impl<double, unsigned>();
+
+    equal_2_impl<adaptive_storage_type::mp_int, double>();
+
+    auto a = prepare<double>(1);
+    auto b = prepare<adaptive_storage_type::mp_int>(1);
+    BOOST_TEST(a == b);
+    a.increase(0);
+    BOOST_TEST_NOT(a == b);
   }
 
   // increase_and_grow

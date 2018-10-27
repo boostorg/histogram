@@ -20,6 +20,7 @@ using namespace boost::histogram;
 int main() {
   // bad_ctors
   {
+    BOOST_TEST_THROWS(axis::regular<>(1, 0, 0), std::invalid_argument);
     BOOST_TEST_THROWS(axis::regular<>(0, 0, 1), std::invalid_argument);
   }
 
@@ -136,7 +137,6 @@ int main() {
 
   // iterators
   {
-    enum { A, B, C };
     test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::option_type::none), 0, 5);
     test_axis_iterator(
         axis::regular<>(5, 0, 1, "", axis::option_type::underflow_and_overflow), 0, 5);

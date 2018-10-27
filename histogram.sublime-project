@@ -21,7 +21,7 @@
 		{
 			"name": "CMake",
 			"working_dir": "${project_path}/build",
-			"cmd": ["cmake .. && cmake --build . && ctest"],
+			"cmd": ["make && ctest"],
 			"shell": true,
 			"file_regex": "/([^/:]+):(\\d+):(\\d+): ",
 		}

@@ -451,7 +451,20 @@ void run_tests() {
     BOOST_TEST_EQ(d.at(3), 0);
   }
 
-  // functional programming
+  // bad add
+  {
+    auto va = std::vector<axis::variant<axis::integer<>>>();
+    va.push_back(axis::integer<>(0, 2));
+    auto a = make_histogram(va);
+
+    auto vb = std::vector<axis::variant<axis::integer<>>>();
+    vb.push_back(axis::integer<>(0, 3));
+    auto b = make_histogram(vb);
+
+    BOOST_TEST_THROWS(a += b, std::invalid_argument);
+  }
+
+  // STL support
   {
     auto v = std::vector<int>{0, 1, 2};
     auto h = std::for_each(v.begin(), v.end(), make(Tag(), axis::integer<>(0, 3)));
@@ -459,6 +472,12 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(1), 1);
     BOOST_TEST_EQ(h.at(2), 1);
     BOOST_TEST_EQ(sum(h), 3);
+
+    auto a = std::vector<double>();
+    std::partial_sum(h.begin(), h.end(), std::back_inserter(a));
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_EQ(a[1], 2);
+    BOOST_TEST_EQ(a[2], 3);
   }
 
   // operators
@@ -739,17 +758,6 @@ void run_tests() {
     auto v = sum(h);
     BOOST_TEST_EQ(v.value(), 4);
     BOOST_TEST_EQ(v.variance(), 6);
-  }
-
-  // STL compatibility
-  {
-    auto h = make(Tag(), axis::integer<>(0, 3));
-    for (int i = 0; i < 3; ++i) h(i);
-    auto a = std::vector<double>();
-    std::partial_sum(h.begin(), h.end(), std::back_inserter(a));
-    BOOST_TEST_EQ(a[0], 1);
-    BOOST_TEST_EQ(a[1], 2);
-    BOOST_TEST_EQ(a[2], 3);
   }
 
   // using STL containers
