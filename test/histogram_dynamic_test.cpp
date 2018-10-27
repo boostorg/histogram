@@ -120,5 +120,18 @@ int main() {
     BOOST_TEST(it == h.end());
   }
 
+  // wrong dimension
+  {
+    auto h1 = make(dynamic_tag(), axis::integer<>(0, 2));
+    h1(1);
+    BOOST_TEST_THROWS(h1.at(0, 0), std::invalid_argument);
+    BOOST_TEST_THROWS(h1.at(std::make_pair(0, 0)), std::invalid_argument);
+  }
+
+  // {
+  //   auto v = std::vector<axis::integer<>>(1, axis::integer<>(0, 3));
+  //   auto h = make_histogram(v);
+  // }
+
   return boost::report_errors();
 }

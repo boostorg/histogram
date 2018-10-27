@@ -35,11 +35,7 @@ alias run-tests :
     ;
 
 alias run-fail-tests :
-    [ run-fail histogram_dynamic_at_tuple_wrong_dimension_fail.cpp ]
-    [ run-fail histogram_dynamic_at_vector_wrong_dimension_fail.cpp ]
-    [ run-fail histogram_dynamic_at_wrong_dimension_fail.cpp ]
     [ run-fail histogram_dynamic_reduce_wrong_order_fail.cpp ]
-    [ run-fail histogram_static_at_vector_wrong_dimension_fail.cpp ]
     ;
 
 alias run-speed-tests :
