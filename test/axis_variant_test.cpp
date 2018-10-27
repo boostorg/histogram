@@ -17,11 +17,57 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <vector>
 #include "utility.hpp"
 
 using namespace boost::histogram;
 
 int main() {
+  {
+    BOOST_TEST_THROWS(axis::integer<>(1, 1), std::invalid_argument);
+  }
+
+  {
+    axis::variant<
+      axis::integer<>,
+      axis::category<std::string>
+    > a{axis::integer<>(0, 2, "int")};
+    BOOST_TEST_EQ(a(-10), -1);
+    BOOST_TEST_EQ(a(-1), -1);
+    BOOST_TEST_EQ(a(0), 0);
+    BOOST_TEST_EQ(a(0.5), 0);
+    BOOST_TEST_EQ(a(1), 1);
+    BOOST_TEST_EQ(a(2), 2);
+    BOOST_TEST_EQ(a(10), 2);
+    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.metadata(), std::string("int"));
+    BOOST_TEST_EQ(a.options(), axis::option_type::underflow_and_overflow);
+
+    a = axis::category<std::string>({"A", "B"}, "cat");
+    BOOST_TEST_EQ(a("A"), 0);
+    BOOST_TEST_EQ(a("B"), 1);
+    // BOOST_TEST_EQ(a.metadata(), std::string("cat"));
+    // BOOST_TEST_EQ(a.options(), axis::option_type::overflow);
+  }
+
+  // axis::variant support for minimal_axis
+  {
+    struct minimal_axis {
+      int operator()(double) const { return 0; }
+      unsigned size() const { return 1; }
+    };
+
+    axis::variant<minimal_axis> axis;
+    BOOST_TEST_EQ(axis(0), 0);
+    BOOST_TEST_EQ(axis(10), 0);
+    BOOST_TEST_EQ(axis.size(), 1);
+    BOOST_TEST_THROWS(std::ostringstream() << axis, std::runtime_error);
+    BOOST_TEST_THROWS(axis.value(0), std::runtime_error);
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<decltype(axis.metadata()), axis::empty_metadata_type&>));
+  }
+
   // axis::variant copyable
   {
     axis::variant<axis::regular<>> a1(axis::regular<>(2, -1, 1));
@@ -89,23 +135,6 @@ int main() {
 #endif
   }
 
-  // axis::variant support for minimal_axis
-  {
-    struct minimal_axis {
-      int operator()(double) const { return 0; }
-      unsigned size() const { return 1; }
-    };
-
-    axis::variant<minimal_axis> axis;
-    BOOST_TEST_EQ(axis(0), 0);
-    BOOST_TEST_EQ(axis(10), 0);
-    BOOST_TEST_EQ(axis.size(), 1);
-    BOOST_TEST_THROWS(std::ostringstream() << axis, std::runtime_error);
-    BOOST_TEST_THROWS(axis.value(0), std::runtime_error);
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<decltype(axis.metadata()), axis::empty_metadata_type&>));
-  }
-
   // bin_type streamable
   {
     auto test = [](const auto& x, const char* ref) {
@@ -140,12 +169,16 @@ int main() {
     BOOST_TEST(axes == std::vector<variant>(axes));
   }
 
-  // axis::variant value_to_index_failure
+  // axis::variant with unusual args
   {
     axis::variant<axis::category<std::string>> x =
         axis::category<std::string>({"A", "B"}, "category");
-    auto cx = axis::get<axis::category<std::string>>(x);
-    BOOST_TEST_EQ(cx("B"), 1);
+    BOOST_TEST_EQ(x("B"), 1);
+  }
+
+  {
+    auto a = axis::variant<axis::category<>>(axis::category<>({2, 1, 3}));
+    BOOST_TEST_THROWS(a[0].lower(), std::runtime_error);    
   }
 
   // vector of axes with custom allocators
@@ -195,6 +228,11 @@ int main() {
 #else
     BOOST_TEST_EQ(db.size(), 4); // axis_type, char, double, long
 #endif
+  }
+
+  // iterators
+  {
+    test_axis_iterator(axis::variant<axis::regular<>>(axis::regular<>(5, 0, 1)), 0, 5);
   }
 
   return boost::report_errors();

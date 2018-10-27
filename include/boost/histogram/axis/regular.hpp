@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_AXIS_REGULAR_HPP
 
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/interval_view.hpp>
+#include <boost/histogram/axis/interval_bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
@@ -103,7 +103,9 @@ public:
       , min_(this->forward(start))
       , delta_((this->forward(stop) - this->forward(start)) / n) {
     if (!std::isfinite(min_) || !std::isfinite(delta_))
-      throw std::invalid_argument("forward transform of lower or upper invalid");
+      throw std::invalid_argument("forward transform of start or stop invalid");
+    if (delta_ == 0)
+      throw std::invalid_argument("range of forward transformed axis is zero");
   }
 
   /** Construct n bins over real range [begin, end).
@@ -155,7 +157,7 @@ public:
   }
 
   /// Access bin at index
-  auto operator[](int idx) const noexcept { return interval_view<regular>(idx, *this); }
+  auto operator[](int idx) const noexcept { return interval_bin_view<regular>(idx, *this); }
 
   bool operator==(const regular& o) const noexcept {
     return base_type::operator==(o) && transform_type::operator==(o) && min_ == o.min_ &&

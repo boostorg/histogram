@@ -1,7 +1,8 @@
 //[ guide_custom_modified_axis
 
 #include <boost/histogram.hpp>
-#include <iostream>
+#include <sstream>
+#include <cassert>
 
 namespace bh = boost::histogram;
 
@@ -18,22 +19,25 @@ struct custom_axis : public bh::axis::integer<> {
 };
 
 int main() {
-  auto h = bh::make_histogram(custom_axis(0, 3));
+  auto h = bh::make_histogram(custom_axis(3, 6));
   h("-10");
-  h("0");
-  h("1");
+  h("3");
+  h("4");
   h("9");
 
+  std::ostringstream os;
   for (auto xi : h.axis()) {
-    std::cout << "bin " << xi.idx() << " [" << xi.lower() << ", "
-              << xi.upper() << ") " << h.at(xi) << std::endl;
+    os << "bin " << xi.idx()
+       << " [" << xi.lower() << ", " << xi.upper() << ") "
+       << h.at(xi) << "\n";
   }
 
-  /* prints:
-      bin 0 [0, 1) 1
-      bin 1 [1, 2] 1
-      bin 2 [2, 3] 0
-  */
+  std::cout << os.str() << std::endl;
+
+  assert(os.str() ==
+         "bin 0 [3, 4) 1\n"
+         "bin 1 [4, 5) 1\n"
+         "bin 2 [5, 6) 0\n");
 }
 
 //]

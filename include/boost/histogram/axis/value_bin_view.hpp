@@ -4,26 +4,28 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_AXIS_VALUE_VIEW_HPP
-#define BOOST_HISTOGRAM_AXIS_VALUE_VIEW_HPP
+#ifndef BOOST_HISTOGRAM_AXIS_VALUE_BIN_VIEW_HPP
+#define BOOST_HISTOGRAM_AXIS_VALUE_BIN_VIEW_HPP
+
+#include <utility>
 
 namespace boost {
 namespace histogram {
 namespace axis {
 
 template <typename Axis>
-class value_view {
+class value_bin_view {
 public:
-  value_view(int idx, const Axis& axis) : idx_(idx), axis_(axis) {}
+  value_bin_view(int idx, const Axis& axis) : idx_(idx), axis_(axis) {}
 
   int idx() const noexcept { return idx_; }
 
   decltype(auto) value() const { return axis_.value(idx_); }
 
-  bool operator==(const value_view& rhs) const noexcept {
+  bool operator==(const value_bin_view& rhs) const noexcept {
     return idx_ == rhs.idx_ && axis_ == rhs.axis_;
   }
-  bool operator!=(const value_view& rhs) const noexcept { return !operator==(rhs); }
+  bool operator!=(const value_bin_view& rhs) const noexcept { return !operator==(rhs); }
 
   explicit operator int() const noexcept { return idx_; }
 
