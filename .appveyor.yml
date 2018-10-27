@@ -39,6 +39,7 @@ install:
   - git submodule init libs/mpl
   - git submodule init libs/multiprecision
   - git submodule init libs/numeric
+  - git submodule init libs/optional
   - git submodule init libs/predef
   - git submodule init libs/preprocessor
   - git submodule init libs/range
