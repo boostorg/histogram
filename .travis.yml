@@ -21,7 +21,7 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - g++-5
+      - libstd++6
 
 matrix:
   include:
@@ -34,6 +34,12 @@ matrix:
     - os: osx
       env: SERIAL=OFF
     - os: linux # coverage build
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
       env:
         - MATRIX_EVAL="GCOV=gcov-5 && CC=gcc-5 && CXX=g++-5"
 
