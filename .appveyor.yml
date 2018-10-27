@@ -18,22 +18,37 @@ install:
   - mkdir libs\histogram
   - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram
   - git submodule init tools/build
-  - git submodule init libs/assert
+  - git submodule init libs/array
+  - git submodule init libs/bind
+  - git submodule init libs/callable_traits
+  - git submodule init libs/concept_check
   - git submodule init libs/config
+  - git submodule init libs/container
+  - git submodule init libs/container_hash
   - git submodule init libs/core
-  - git submodule init libs/serialization
+  - git submodule init libs/detail
+  - git submodule init libs/function
+  - git submodule init libs/integer
   - git submodule init libs/io
-  - git submodule init libs/utility
-  - git submodule init libs/type_traits
-  - git submodule init libs/unordered_map
-  - git submodule init libs/variant
-  - git submodule init libs/smart_ptr  
+  - git submodule init libs/iterator
+  - git submodule init libs/lexical_cast
+  - git submodule init libs/math
+  - git submodule init libs/move
+  - git submodule init libs/mp11
+  - git submodule init libs/mpl
+  - git submodule init libs/multiprecison
+  - git submodule init libs/numeric
+  - git submodule init libs/predef
+  - git submodule init libs/preprocessor
+  - git submodule init libs/range
+  - git submodule init libs/rational
+  - git submodule init libs/serialization
+  - git submodule init libs/smart_ptr
   - git submodule init libs/spirit
   - git submodule init libs/static_assert
-  - git submodule init libs/mpl
-  - git submodule init libs/mp11
-  - git submodule init libs/iterator
-  - git submodule init libs/align
+  - git submodule init libs/type_traits
+  - git submodule init libs/utility
+  - git submodule init libs/variant
   - git submodule update
   - bootstrap
   - b2 --with-serialization
