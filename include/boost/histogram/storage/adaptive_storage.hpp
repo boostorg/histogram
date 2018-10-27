@@ -9,15 +9,21 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
-#include <boost/config.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/histogram/weight.hpp>
-#include <boost/multiprecision/cpp_int.hpp>
 #include <boost/mp11.hpp>
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+// warning-ignore required in Boost-1.66 for cpp_int.hpp:822
+#include <boost/multiprecision/cpp_int.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -45,8 +51,36 @@ bool safe_assign(T& t, const U& u) {
   return true;
 }
 
+template <typename T, typename B>
+struct make_unsigned_impl;
+
+template <typename T>
+struct make_unsigned_impl<T, std::true_type> {
+  using type = typename std::make_unsigned<T>::type;
+};
+
+template <typename T>
+struct make_unsigned_impl<T, std::false_type> {
+  using type = T;
+};
+
+template <typename T>
+using make_unsigned =
+    typename make_unsigned_impl<T, typename std::is_signed<T>::type>::type;
+
 template <typename T, typename U>
 bool safe_radd(T& t, const U& u) {
+  BOOST_ASSERT(t >= 0);
+  BOOST_ASSERT(u >= 0);
+  using V = make_unsigned<U>;
+  // static_cast converts back from signed to unsigned integer
+  if (static_cast<T>(std::numeric_limits<T>::max() - t) < static_cast<V>(u)) return false;
+  t += static_cast<T>(u); // static_cast to suppress conversion warning
+  return true;
+}
+
+template <typename T, typename U>
+bool safe_radd(T& t, const boost::multiprecision::number<U>& u) {
   BOOST_ASSERT(t >= 0);
   BOOST_ASSERT(u >= 0);
   // static_cast converts back from signed to unsigned integer
@@ -54,7 +88,7 @@ bool safe_radd(T& t, const U& u) {
   t += static_cast<T>(u); // static_cast to suppress conversion warning
   return true;
 }
-}
+} // namespace detail
 
 template <class Allocator>
 struct adaptive_storage {
@@ -64,23 +98,16 @@ struct adaptive_storage {
       "adaptive_storage requires allocator with trivial pointer type");
 
   using allocator_type = Allocator;
-  using element_type = weight_counter<double>;
-  using scale_type = double;
-  using const_reference = element_type;
+  using element_type = double;
+  using const_reference = double;
 
-  using wcount = weight_counter<double>;
-  using mp_int = boost::multiprecision::number<
-    boost::multiprecision::cpp_int_backend<
-      0, 0, boost::multiprecision::signed_magnitude,
-      boost::multiprecision::unchecked,
+  using mp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<
+      0, 0, boost::multiprecision::signed_magnitude, boost::multiprecision::unchecked,
       typename std::allocator_traits<Allocator>::template rebind_alloc<
-        boost::multiprecision::limb_type
-      >
-    >
-  >;
+          boost::multiprecision::limb_type>>>;
 
-  using types = mp11::mp_list<void, uint8_t, uint16_t, uint32_t,uint64_t,
-                              mp_int, wcount>;
+  using types =
+      mp11::mp_list<void, uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
 
   template <typename T>
   static constexpr char type_index() {
@@ -92,27 +119,28 @@ struct adaptive_storage {
     char type;
     std::size_t size;
     void* ptr;
+
     buffer_type(std::size_t s = 0, const allocator_type& a = allocator_type())
         : alloc(a), type(0), size(s), ptr(nullptr) {}
 
     template <typename T, typename U>
     T* create_impl(T*, const U* init) {
-      using alloc_type = typename std::allocator_traits<
-        allocator_type>::template rebind_alloc<T>;
+      using alloc_type =
+          typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
       alloc_type a(alloc); // rebind allocator
-      return init ? detail::create_buffer_from_iter(a, size, init) :
-                    detail::create_buffer(a, size, 0);
+      return init ? detail::create_buffer_from_iter(a, size, init)
+                  : detail::create_buffer(a, size, 0);
     }
 
     template <typename U = mp_int>
     mp_int* create_impl(mp_int*, const U* init) {
-      using alloc_type = typename std::allocator_traits<
-        allocator_type>::template rebind_alloc<mp_int>;
+      using alloc_type =
+          typename std::allocator_traits<allocator_type>::template rebind_alloc<mp_int>;
       alloc_type a(alloc); // rebound allocator for buffer
       // mp_int has no ctor with an allocator instance, cannot pass state :(
       // typename mp_int::backend_type::allocator_type a2(alloc);
-      return init ? detail::create_buffer_from_iter(a, size, init) :
-                    detail::create_buffer(a, size, 0);
+      return init ? detail::create_buffer_from_iter(a, size, init)
+                  : detail::create_buffer(a, size, 0);
     }
 
     void* create_impl(void*, const void* init) {
@@ -133,11 +161,29 @@ struct adaptive_storage {
     }
   };
 
+  template <typename F, typename B, typename... Ts>
+  static decltype(auto) apply(F&& f, B&& b, Ts&&... ts) {
+    // this is intentionally not a switch, the if-chain is faster in benchmarks
+    if (b.type == type_index<uint8_t>())
+      return f(reinterpret_cast<uint8_t*>(b.ptr), b, std::forward<Ts>(ts)...);
+    if (b.type == type_index<uint16_t>())
+      return f(reinterpret_cast<uint16_t*>(b.ptr), b, std::forward<Ts>(ts)...);
+    if (b.type == type_index<uint32_t>())
+      return f(reinterpret_cast<uint32_t*>(b.ptr), b, std::forward<Ts>(ts)...);
+    if (b.type == type_index<uint64_t>())
+      return f(reinterpret_cast<uint64_t*>(b.ptr), b, std::forward<Ts>(ts)...);
+    if (b.type == type_index<mp_int>())
+      return f(reinterpret_cast<mp_int*>(b.ptr), b, std::forward<Ts>(ts)...);
+    if (b.type == type_index<double>())
+      return f(reinterpret_cast<double*>(b.ptr), b, std::forward<Ts>(ts)...);
+    // b.type == 0 is intentionally the last in the chain,
+    // because it is rarely triggered
+    return f(b.ptr, b, std::forward<Ts>(ts)...);
+  }
+
   ~adaptive_storage() { apply(destroyer(), buffer); }
 
-  adaptive_storage(const adaptive_storage& o) {
-    apply(replacer(), o.buffer, buffer);
-  }
+  adaptive_storage(const adaptive_storage& o) { apply(replacer(), o.buffer, buffer); }
 
   adaptive_storage& operator=(const adaptive_storage& o) {
     if (this != &o) { apply(replacer(), o.buffer, buffer); }
@@ -157,8 +203,8 @@ struct adaptive_storage {
 
   template <typename S, typename = detail::requires_storage<S>>
   explicit adaptive_storage(const S& s) : buffer(s.size(), s.get_allocator()) {
-    buffer.set(buffer.template create<wcount>());
-    auto it = static_cast<wcount*>(buffer.ptr);
+    buffer.set(buffer.template create<double>());
+    auto it = static_cast<double*>(buffer.ptr);
     const auto end = it + size();
     std::size_t i = 0;
     while (it != end) *it++ = s[i++];
@@ -200,9 +246,13 @@ struct adaptive_storage {
     apply(adder(), buffer, i, x);
   }
 
-  const_reference operator[](std::size_t i) const {
-    return apply(getter(), buffer, i);
+  template <typename T>
+  void add(std::size_t i, const weight_type<T>& x) {
+    BOOST_ASSERT(i < size());
+    apply(adder(), buffer, i, x.value);
   }
+
+  const_reference operator[](std::size_t i) const { return apply(getter(), buffer, i); }
 
   bool operator==(const adaptive_storage& o) const {
     if (size() != o.size()) return false;
@@ -251,8 +301,8 @@ struct adaptive_storage {
   struct destroyer {
     template <typename T, typename Buffer>
     void operator()(T* tp, Buffer& b) {
-      using alloc_type = typename std::allocator_traits<
-        allocator_type>::template rebind_alloc<T>;
+      using alloc_type =
+          typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
       alloc_type a(b.alloc); // rebind allocator
       detail::destroy_buffer(a, tp, b.size);
     }
@@ -260,32 +310,6 @@ struct adaptive_storage {
     template <typename Buffer>
     void operator()(void*, Buffer&) {}
   };
-
-  template <typename F, typename B, typename... Ts>
-  static typename std::result_of<F(void*, B&&, Ts&&...)>::type apply(F&& f, B&& b, Ts&&... ts) {
-    // this is intentionally not a switch, the if-chain is faster in benchmarks
-    if (b.type == type_index<uint8_t>())
-      return f(reinterpret_cast<uint8_t*>(b.ptr), std::forward<B>(b),
-               std::forward<Ts>(ts)...);
-    if (b.type == type_index<uint16_t>())
-      return f(reinterpret_cast<uint16_t*>(b.ptr), std::forward<B>(b),
-               std::forward<Ts>(ts)...);
-    if (b.type == type_index<uint32_t>())
-      return f(reinterpret_cast<uint32_t*>(b.ptr), std::forward<B>(b),
-               std::forward<Ts>(ts)...);
-    if (b.type == type_index<uint64_t>())
-      return f(reinterpret_cast<uint64_t*>(b.ptr), std::forward<B>(b),
-               std::forward<Ts>(ts)...);
-    if (b.type == type_index<mp_int>())
-      return f(reinterpret_cast<mp_int*>(b.ptr), std::forward<B>(b),
-               std::forward<Ts>(ts)...);
-    if (b.type == type_index<wcount>())
-      return f(reinterpret_cast<wcount*>(b.ptr), std::forward<B>(b),
-               std::forward<Ts>(ts)...);
-    // b.type == 0 is intentionally the last in the chain, because it is rarely
-    // triggered
-    return f(b.ptr, std::forward<B>(b), std::forward<Ts>(ts)...);
-  }
 
   struct replacer {
     template <typename T, typename OBuffer, typename Buffer>
@@ -333,14 +357,15 @@ struct adaptive_storage {
     }
 
     template <typename Buffer>
-    void operator()(wcount* tp, Buffer&, std::size_t i) {
+    void operator()(double* tp, Buffer&, std::size_t i) {
       ++tp[i];
     }
   };
 
   struct adder {
     template <typename Buffer, typename U>
-    void if_U_is_integral(std::true_type, mp_int* tp, Buffer&, std::size_t i, const U& x) {
+    void if_U_is_integral(std::true_type, mp_int* tp, Buffer&, std::size_t i,
+                          const U& x) {
       tp[i] += static_cast<mp_int>(x);
     }
 
@@ -357,17 +382,17 @@ struct adaptive_storage {
 
     template <typename T, typename Buffer, typename U>
     void if_U_is_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
-      auto ptr = b.template create<wcount>(tp);
+      auto ptr = b.template create<double>(tp);
       destroyer()(tp, b);
       b.set(ptr);
-      operator()(static_cast<wcount*>(b.ptr), b, i, x);
+      operator()(static_cast<double*>(b.ptr), b, i, x);
     }
 
     template <typename T, typename Buffer, typename U>
     void operator()(T* tp, Buffer& b, std::size_t i, const U& x) {
-      if_U_is_integral(std::integral_constant<bool,
-                       (std::is_integral<U>::value ||
-                        std::is_same<U, mp_int>::value)>(), tp, b, i, x);
+      if_U_is_integral(
+          mp11::mp_bool<(std::is_integral<U>::value || std::is_same<U, mp_int>::value)>(),
+          tp, b, i, x);
     }
 
     template <typename Buffer, typename U>
@@ -378,12 +403,12 @@ struct adaptive_storage {
     }
 
     template <typename Buffer, typename U>
-    void operator()(wcount* tp, Buffer&, std::size_t i, const U& x) {
+    void operator()(double* tp, Buffer&, std::size_t i, const U& x) {
       tp[i] += x;
     }
 
     template <typename Buffer>
-    void operator()(wcount* tp, Buffer&, std::size_t i, const mp_int& x) {
+    void operator()(double* tp, Buffer&, std::size_t i, const mp_int& x) {
       tp[i] += static_cast<double>(x);
     }
   };
@@ -400,22 +425,35 @@ struct adaptive_storage {
 
   struct getter {
     template <typename T, typename Buffer>
-    wcount operator()(T* tp, Buffer&, std::size_t i) {
-      return static_cast<wcount>(tp[i]);
+    double operator()(T* tp, Buffer&, std::size_t i) {
+      return static_cast<double>(tp[i]);
     }
 
     template <typename Buffer>
-    wcount operator()(void*, Buffer&, std::size_t) {
-      return static_cast<wcount>(0);
+    double operator()(void*, Buffer&, std::size_t) {
+      return 0.0;
     }
   };
 
   // precondition: buffers already have same size
   struct comparer {
     struct inner {
+      struct cmp {
+        template <typename T, typename U>
+        bool operator()(const T& t, const U& u) {
+          return t == u;
+        }
+        bool operator()(const mp_int& t, const double& u) {
+          return static_cast<double>(t) == u;
+        }
+        bool operator()(const double& t, const mp_int& u) {
+          return t == static_cast<double>(u);
+        }
+      };
+
       template <typename U, typename OBuffer, typename T>
       bool operator()(const U* optr, const OBuffer& ob, const T* tp) {
-        return std::equal(optr, optr + ob.size, tp);
+        return std::equal(optr, optr + ob.size, tp, cmp());
       }
 
       template <typename U, typename OBuffer>
@@ -444,17 +482,25 @@ struct adaptive_storage {
   struct multiplier {
     template <typename T, typename Buffer>
     void operator()(T* tp, Buffer& b, const double x) {
-      auto ptr = b.template create<wcount>(tp);
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4244) // possible loss of data
+#endif
+      // potential lossy conversion that cannot be avoided
+      auto ptr = b.template create<double>(tp);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
       destroyer()(tp, b);
       b.set(ptr);
-      operator()(reinterpret_cast<wcount*>(b.ptr), b, x);
+      operator()(reinterpret_cast<double*>(b.ptr), b, x);
     }
 
     template <typename Buffer>
     void operator()(void*, Buffer&, const double) {}
 
     template <typename Buffer>
-    void operator()(wcount* tp, Buffer& b, const double x) {
+    void operator()(double* tp, Buffer& b, const double x) {
       for (auto end = tp + b.size; tp != end; ++tp) *tp *= x;
     }
   };

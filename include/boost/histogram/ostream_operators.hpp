@@ -20,8 +20,8 @@ template <typename OStream>
 struct axis_ostream_visitor {
   OStream& os_;
   explicit axis_ostream_visitor(OStream& os) : os_(os) {}
-  template <typename Axis>
-  void operator()(const Axis& a) const {
+  template <typename T>
+  void operator()(const T& a) const {
     os_ << "\n  " << a << ",";
   }
 };
@@ -33,7 +33,7 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   using OS = std::basic_ostream<CharT, Traits>;
   os << "histogram(";
   h.for_each_axis(detail::axis_ostream_visitor<OS>(os));
-  os << (h.dim() ? "\n)" : ")");
+  os << (h.rank() ? "\n)" : ")");
   return os;
 }
 

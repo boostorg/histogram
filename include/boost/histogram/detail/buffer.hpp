@@ -91,6 +91,8 @@ typename std::allocator_traits<Allocator>::pointer create_buffer_from_iter(
 template <typename Allocator>
 void destroy_buffer(Allocator& a, typename std::allocator_traits<Allocator>::pointer p,
                     std::size_t n) {
+  if (!p)
+    return;
   using AT = std::allocator_traits<Allocator>;
   auto it = p + n;
   const auto end = p;

@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_TEST_UTILITY_HPP
 #define BOOST_HISTOGRAM_TEST_UTILITY_HPP
 
+#include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/mp11/integral.hpp>
 #include <boost/mp11/tuple.hpp>
@@ -25,7 +26,7 @@ using i2 = boost::mp11::mp_size_t<2>;
 using i3 = boost::mp11::mp_size_t<3>;
 
 namespace std {
-// never add to std, we only do it to get ADL working :(
+// never add to std, we only do it here to get ADL working :(
 template <typename T>
 ostream& operator<<(ostream& os, const vector<T>& v) {
   os << "[ ";
@@ -34,20 +35,10 @@ ostream& operator<<(ostream& os, const vector<T>& v) {
   return os;
 }
 
-namespace detail {
-  struct ostreamer {
-    ostream& os;
-    template <typename T>
-    void operator()(const T& t) const {
-      os << t << " ";
-    }
-  };
-}
-
 template <typename... Ts>
 ostream& operator<<(ostream& os, const tuple<Ts...>& t) {
   os << "[ ";
-  ::boost::mp11::tuple_for_each(t, detail::ostreamer{os});
+  ::boost::mp11::tuple_for_each(t, [&os](const auto& x) { os << x << " "; });
   os << "]";
   return os;
 }
@@ -60,31 +51,38 @@ typename Histogram::element_type sum(const Histogram& h) {
   return std::accumulate(h.begin(), h.end(), typename Histogram::element_type(0));
 }
 
+template <typename... Ts>
+std::vector<axis::variant<detail::rm_cvref<Ts>...>>
+make_axis_vector(Ts&& ... ts) {
+  using T = axis::variant<detail::rm_cvref<Ts>...>;
+  return std::vector<T>({T(std::forward<Ts>(ts))...});
+}
+
 using static_tag = std::false_type;
 using dynamic_tag = std::true_type;
 
 template <typename... Axes>
 auto make(static_tag, Axes&&... axes)
-    -> decltype(make_static_histogram(std::forward<Axes>(axes)...)) {
-  return make_static_histogram(std::forward<Axes>(axes)...);
+    -> decltype(make_histogram(std::forward<Axes>(axes)...)) {
+  return make_histogram(std::forward<Axes>(axes)...);
 }
 
 template <typename S, typename... Axes>
 auto make_s(static_tag, S&& s, Axes&&... axes)
-    -> decltype(make_static_histogram_with(s, std::forward<Axes>(axes)...)) {
-  return make_static_histogram_with(s, std::forward<Axes>(axes)...);
+    -> decltype(make_histogram_with(s, std::forward<Axes>(axes)...)) {
+  return make_histogram_with(s, std::forward<Axes>(axes)...);
 }
 
 template <typename... Axes>
 auto make(dynamic_tag, Axes&&... axes)
-    -> decltype(make_dynamic_histogram<axis::any<detail::rm_cv_ref<Axes>...>>(std::forward<Axes>(axes)...)) {
-  return make_dynamic_histogram<axis::any<detail::rm_cv_ref<Axes>...>>(std::forward<Axes>(axes)...);
+    -> decltype(make_histogram(make_axis_vector(std::forward<Axes>(axes)...))) {
+  return make_histogram(make_axis_vector(std::forward<Axes>(axes)...));
 }
 
 template <typename S, typename... Axes>
 auto make_s(dynamic_tag, S&& s, Axes&&... axes)
-    -> decltype(make_dynamic_histogram_with<axis::any<detail::rm_cv_ref<Axes>...>>(s, std::forward<Axes>(axes)...)) {
-  return make_dynamic_histogram_with<axis::any<detail::rm_cv_ref<Axes>...>>(s, std::forward<Axes>(axes)...);
+    -> decltype(make_histogram_with(s, make_axis_vector(std::forward<Axes>(axes)...))) {
+  return make_histogram_with(s, make_axis_vector(std::forward<Axes>(axes)...));
 }
 
 using tracing_allocator_db = std::unordered_map<
@@ -131,6 +129,23 @@ constexpr bool operator!=(const tracing_allocator<T>& t,
                           const tracing_allocator<U>& u) noexcept {
   return !operator==(t, u);
 }
+
+template <typename Axis>
+void test_axis_iterator(const Axis& a, int begin, int end) {
+  for (auto bin : a) {
+    BOOST_TEST_EQ(bin.idx(), begin);
+    BOOST_TEST_EQ(bin, a[begin]);
+    ++begin;
+  }
+  BOOST_TEST_EQ(begin, end);
+  auto rit = a.rbegin();
+  for (; rit != a.rend(); ++rit) {
+    BOOST_TEST_EQ(rit->idx(), --begin);
+    BOOST_TEST_EQ(*rit, a[begin]);
+  }
+}
+
+#define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
 
 } // namespace histogram
 } // namespace boost

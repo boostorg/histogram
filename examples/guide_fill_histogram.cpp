@@ -3,12 +3,15 @@
 #include <boost/histogram.hpp>
 #include <utility>
 #include <vector>
+#include <functional>
+#include <numeric>
+#include <cassert>
 
 namespace bh = boost::histogram;
 
 int main() {
-  auto h = bh::make_static_histogram(bh::axis::regular<>(8, 0, 4),
-                                     bh::axis::regular<>(10, 0, 5));
+  auto h = bh::make_histogram(bh::axis::regular<>(8, 0, 4),
+                              bh::axis::regular<>(10, 0, 5));
 
   // fill histogram, number of arguments must be equal to number of axes
   h(0, 1.1);                // increases bin counter by one
@@ -24,14 +27,17 @@ int main() {
   // functional-style processing is also supported
   std::vector<std::pair<int, double>> input_data{
       {0, 1.2}, {2, 3.4}, {4, 5.6}};
-  // std::for_each takes the functor by value, thus it potentially makes
-  // expensive copies of the histogram, but modern compilers are usually smart
-  // enough to avoid the superfluous copies
-  auto h2 =
-      std::for_each(input_data.begin(), input_data.end(),
-                    bh::make_static_histogram(bh::axis::regular<>(8, 0, 4),
-                                              bh::axis::regular<>(10, 0, 5)));
+
+  // std::for_each takes the functor by value, we use a reference wrapper
+  // to avoid costly copies
+  auto h2 = bh::make_histogram(bh::axis::regular<>(8, 0, 4),
+                               bh::axis::regular<>(10, 0, 5));
+  std::for_each(input_data.begin(), input_data.end(),
+                std::ref(h2));
+
   // h2 is filled
+  const double sum = std::accumulate(h2.begin(), h2.end(), 0.0);
+  assert(sum == 3);
 }
 
 //]

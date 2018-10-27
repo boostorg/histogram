@@ -4,24 +4,62 @@
 
 shallow_clone: true
 
-image: Visual Studio 2015
+image: Visual Studio 2017
 
 branches:
   only:
     - master
     - develop
 
+install:
+  - cd ..
+  - git clone -b %APPVEYOR_REPO_BRANCH% https://github.com/boostorg/boost
+  - cd boost
+  - mkdir libs\histogram
+  - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram
+  - git submodule init libs/array
+  - git submodule init libs/assert
+  - git submodule init libs/bind
+  - git submodule init libs/callable_traits
+  - git submodule init libs/concept_check
+  - git submodule init libs/config
+  - git submodule init libs/container
+  - git submodule init libs/container_hash
+  - git submodule init libs/core
+  - git submodule init libs/detail
+  - git submodule init libs/function
+  - git submodule init libs/integer
+  - git submodule init libs/io
+  - git submodule init libs/iterator
+  - git submodule init libs/lexical_cast
+  - git submodule init libs/math
+  - git submodule init libs/move
+  - git submodule init libs/mp11
+  - git submodule init libs/mpl
+  - git submodule init libs/multiprecision
+  - git submodule init libs/numeric
+  - git submodule init libs/optional
+  - git submodule init libs/predef
+  - git submodule init libs/preprocessor
+  - git submodule init libs/range
+  - git submodule init libs/rational
+  - git submodule init libs/serialization
+  - git submodule init libs/smart_ptr
+  - git submodule init libs/spirit
+  - git submodule init libs/static_assert
+  - git submodule init libs/throw_exception
+  - git submodule init libs/type_index
+  - git submodule init libs/type_traits
+  - git submodule init libs/typeof
+  - git submodule init libs/units
+  - git submodule init libs/utility
+  - git submodule init libs/variant
+  - git submodule init tools/build
+  - git submodule update
+  - bootstrap
+  - b2 --with-serialization
+
 build: off
 
-environment:
-  # MSVC_DEFAULT_OPTIONS: ON
-  BOOST_ROOT: C:\Libraries\boost_1_67_0
-
 test_script:
-  # - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  - mkdir build
-  - cd build
-  - cmake ..
-    -DBOOST_ROOT="%BOOST_ROOT%" -DBoost_USE_STATIC_LIBS="ON"
-  - cmake --build .
-  - ctest -V
+  - b2 libs/histogram

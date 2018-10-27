@@ -8,54 +8,62 @@
 #define BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 
 #include <memory> // for std::allocator
-#include <vector>
 #include <string>
 
 namespace boost {
 namespace histogram {
-
 namespace axis {
+struct empty_metadata_type {};
+
+enum class option_type {
+  none = 0,
+  overflow = 1,
+  underflow_and_overflow = 2,
+};
 
 namespace transform {
+template <typename T = double>
 struct identity;
+template <typename T = double>
 struct log;
+template <typename T = double>
 struct sqrt;
+template <typename T = double>
 struct pow;
 } // namespace transform
 
-template <typename Transform = transform::identity, typename T = double,
-          typename Allocator = std::allocator<char>>
+template <typename Transform = transform::identity<double>,
+          typename MetaData = std::string>
 class regular;
-template <typename T = double, typename Allocator = std::allocator<char>>
+
+template <typename RealType = double, typename MetaData = std::string>
 class circular;
-template <typename T = double, typename Allocator = std::allocator<char>>
+
+template <typename RealType = double, typename Allocator = std::allocator<RealType>,
+          typename MetaData = std::string>
 class variable;
-template <typename T = int, typename Allocator = std::allocator<char>>
+
+template <typename IntType = double, typename MetaData = std::string>
 class integer;
-template <typename T = int, typename Allocator = std::allocator<char>>
+
+template <typename T = int, typename Allocator = std::allocator<T>,
+          typename MetaData = std::string>
 class category;
 
 template <typename... Ts>
-class any;
-using any_std =
-    any<regular<transform::identity, double, std::allocator<char>>,
-        regular<transform::log, double, std::allocator<char>>,
-        regular<transform::sqrt, double, std::allocator<char>>,
-        regular<transform::pow, double, std::allocator<char>>,
-        circular<double, std::allocator<char>>, variable<double, std::allocator<char>>,
-        integer<int, std::allocator<char>>, category<int, std::allocator<char>>,
-        category<std::string, std::allocator<char>>>;
-
+class variant;
 } // namespace axis
 
 template <typename Allocator = std::allocator<char>>
 struct adaptive_storage;
-template <typename T, typename ScaleType = T, typename Allocator = std::allocator<T>>
+
+template <typename T, typename Allocator = std::allocator<T>>
 struct array_storage;
 
-template <class Axes = std::vector<axis::any_std>, class Storage = adaptive_storage<>>
-class histogram;
+using default_storage = adaptive_storage<>;
 
+template <class Axes, class Storage = default_storage>
+class histogram;
 } // namespace histogram
 } // namespace boost
 

@@ -174,8 +174,15 @@ In C++, users can implement their own axis class without touching any library co
 
 The simplest way to make a custom axis is to derive from a builtin class. Here is a contrived example of a custom axis that inherits from the [classref boost::histogram::axis::integer integer axis] and accepts c-strings representing numbers.
 
-[import ../examples/guide_custom_axis.cpp]
-[guide_custom_axis]
+[import ../examples/guide_custom_modified_axis.cpp]
+[guide_custom_modified_axis]
+
+Alternatively, you can also make an axis completely from scratch. An minimal axis is a functor that maps an input to a bin index. The index has a range `[0, AxisType::size())`.
+
+[import ../examples/guide_custom_minimal_axis.cpp]
+[guide_custom_minimal_axis]
+
+Such a minimal axis works, even though it lacks convenience features provided by the builtin axis types. For example, one cannot iterate over this axis. Not even a bin description can be queried, because `operator[]` is not implemented. It is up to the user to implement these optional aspects.
 
 [endsect]
 

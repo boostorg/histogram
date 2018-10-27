@@ -5,15 +5,16 @@
 #include <boost/histogram.hpp>
 #include <boost/histogram/serialization.hpp> // includes serialization code
 #include <sstream>
+#include <cassert>
 
 namespace bh = boost::histogram;
 
 int main() {
-  auto a = bh::make_static_histogram(bh::axis::regular<>(3, -1, 1, "r"),
-                                     bh::axis::integer<>(0, 2, "i"));
+  auto a = bh::make_histogram(bh::axis::regular<>(3, -1, 1, "axis 0"),
+                              bh::axis::integer<>(0, 2, "axis 1"));
   a(0.5, 1);
 
-  std::string buf; // holds persistent representation
+  std::string buf; // to hold persistent representation
 
   // store histogram
   {
@@ -25,8 +26,7 @@ int main() {
 
   auto b = decltype(a)(); // create a default-constructed second histogram
 
-  std::cout << "before restore " << (a == b) << std::endl;
-  // prints: before restore 0
+  assert(b != a); // b is empty, a is not
 
   // load histogram
   {
@@ -35,8 +35,7 @@ int main() {
     ia >> b;
   }
 
-  std::cout << "after restore " << (a == b) << std::endl;
-  // prints: after restore 1
+  assert(b == a); // now b is equal to a
 }
 
 //]

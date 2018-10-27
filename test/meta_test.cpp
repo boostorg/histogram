@@ -6,18 +6,27 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/mp11.hpp>
+#include <iterator>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
 #include "utility.hpp"
 
-using namespace boost::histogram::detail;
-using namespace boost::histogram::literals;
+namespace bh = boost::histogram;
+using namespace bh::detail;
+using namespace bh::literals;
 namespace mp11 = boost::mp11;
+
+struct VisitorTestFunctor {
+  template <typename T>
+  T operator()(T&&);
+};
 
 int main() {
   // literals
@@ -34,67 +43,166 @@ int main() {
 
   // has_variance_support
   {
-    struct no_methods {};
+    struct A {};
 
-    struct value_method {
+    struct B {
       void value() {}
     };
 
-    struct variance_method {
+    struct C {
       void variance() {}
     };
 
-    struct value_and_variance_methods {
+    struct D {
       void value() {}
       void variance() {}
     };
 
-    BOOST_TEST_TRAIT_FALSE((has_variance_support<no_methods>));
-    BOOST_TEST_TRAIT_FALSE((has_variance_support<value_method>));
-    BOOST_TEST_TRAIT_FALSE((has_variance_support<variance_method>));
-    BOOST_TEST_TRAIT_TRUE((has_variance_support<value_and_variance_methods>));
+    BOOST_TEST_TRAIT_FALSE((has_variance_support<A>));
+    BOOST_TEST_TRAIT_FALSE((has_variance_support<B>));
+    BOOST_TEST_TRAIT_FALSE((has_variance_support<C>));
+    BOOST_TEST_TRAIT_TRUE((has_variance_support<D>));
   }
 
-  // has_method_lower
+  // has_method_value
   {
-    struct no_methods {};
-    struct lower_method {
-      void lower(int) {}
+    struct A {};
+    struct B {
+      void value(int) {}
     };
 
-    BOOST_TEST_TRAIT_FALSE((has_method_lower<no_methods>));
-    BOOST_TEST_TRAIT_TRUE((has_method_lower<lower_method>));
+    BOOST_TEST_TRAIT_FALSE((has_method_value<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_value<B>));
+  }
+
+  // has_method_options
+  {
+    struct NotOptions {};
+    struct A {};
+    struct B {
+      NotOptions options();
+    };
+    struct C {
+      bh::axis::option_type options();
+    };
+
+    BOOST_TEST_TRAIT_FALSE((has_method_options<A>));
+    BOOST_TEST_TRAIT_FALSE((has_method_options<B>));
+    BOOST_TEST_TRAIT_TRUE((has_method_options<C>));
+  }
+
+  // has_method_metadata
+  {
+    struct A {};
+    struct B {
+      void metadata();
+    };
+
+    BOOST_TEST_TRAIT_FALSE((has_method_metadata<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_metadata<B>));
+  }
+
+  // is_transform
+  {
+    struct A {};
+    struct B {
+      double forward(double);
+      double inverse(double);
+    };
+
+    BOOST_TEST_TRAIT_FALSE((is_transform<A>));
+    BOOST_TEST_TRAIT_TRUE((is_transform<B>));
+  }
+
+  // is_equal_comparable
+  {
+    struct A {};
+    struct B {
+      bool operator==(const B&);
+    };
+    BOOST_TEST_TRAIT_TRUE((is_equal_comparable<int>));
+    BOOST_TEST_TRAIT_FALSE((is_equal_comparable<A>));
+    BOOST_TEST_TRAIT_TRUE((is_equal_comparable<B>));
+  }
+
+  // is_axis
+  {
+    struct A {};
+    struct B {
+      int operator()(double);
+      unsigned size() const;
+    };
+    struct C {
+      int operator()(double);
+    };
+    struct D {
+      unsigned size();
+    };
+    BOOST_TEST_TRAIT_FALSE((is_axis<A>));
+    BOOST_TEST_TRAIT_TRUE((is_axis<B>));
+    BOOST_TEST_TRAIT_FALSE((is_axis<C>));
+    BOOST_TEST_TRAIT_FALSE((is_axis<D>));
+  }
+
+  // is_iterable
+  {
+    using A = std::vector<int>;
+    using B = int[3];
+    using C = std::initializer_list<int>;
+    BOOST_TEST_TRAIT_FALSE((is_iterable<int>));
+    BOOST_TEST_TRAIT_TRUE((is_iterable<A>));
+    BOOST_TEST_TRAIT_TRUE((is_iterable<B>));
+    BOOST_TEST_TRAIT_TRUE((is_iterable<C>));
+  }
+
+  // is_streamable
+  {
+    struct Foo {};
+    BOOST_TEST_TRAIT_TRUE((is_streamable<int>));
+    BOOST_TEST_TRAIT_TRUE((is_streamable<std::string>));
+    BOOST_TEST_TRAIT_FALSE((is_streamable<Foo>));
+  }
+
+  // is_axis_variant
+  {
+    struct A {};
+    BOOST_TEST_TRAIT_FALSE((is_axis_variant<A>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_variant<bh::axis::variant<>>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_variant<bh::axis::variant<bh::axis::regular<>>>));
   }
 
   // classify_container
   {
-    using result1 = classify_container<int>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result1, no_container_tag>));
+    using A = classify_container<int>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<A, no_container_tag>));
 
-    using result1a = classify_container<int&>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result1a, no_container_tag>));
+    using B = classify_container<int&>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<B, no_container_tag>));
 
-    using result2 = classify_container<std::vector<int>>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result2, dynamic_container_tag>));
+    using C = classify_container<std::vector<int>>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<C, iterable_container_tag>));
 
-    using result2a = classify_container<std::vector<int>&>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result2a, dynamic_container_tag>));
+    using D = classify_container<std::vector<int>&>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<D, iterable_container_tag>));
 
-    using result3 = classify_container<std::pair<int, int>>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result3, static_container_tag>));
+    using E = classify_container<std::pair<int, int>>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<E, static_container_tag>));
 
-    using result3a = classify_container<std::pair<int, int>&>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result3a, static_container_tag>));
+    using F = classify_container<std::pair<int, int>&>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<F, static_container_tag>));
 
-    // (c-)strings are not regarded as dynamic containers
-    using result4a = classify_container<decltype("abc")>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result4a, no_container_tag>));
+    using G = classify_container<std::string>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<G, iterable_container_tag>));
 
-    using result4b = classify_container<std::string>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result4b, no_container_tag>));
+    using H = classify_container<int*>; // has no std::end
+    BOOST_TEST_TRAIT_TRUE((std::is_same<H, no_container_tag>));
 
-    using result5 = classify_container<int*>; // has no std::end
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result5, no_container_tag>));
+    using I = classify_container<std::initializer_list<int>>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<I, iterable_container_tag>));
+
+    auto j = {0, 1};
+    using J = classify_container<decltype(j)>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<J, iterable_container_tag>));
   }
 
   // bool mask
@@ -106,7 +214,7 @@ int main() {
     BOOST_TEST_EQ(v2, std::vector<bool>({false, true, false, true}));
   }
 
-  // rm_cv_ref
+  // rm_cvref
   {
     using T1 = int;
     using T2 = int&&;
@@ -116,14 +224,14 @@ int main() {
     using T6 = volatile int&&;
     using T7 = volatile const int;
     using T8 = volatile const int&;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T1>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T2>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T3>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T4>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T5>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T6>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T7>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cv_ref<T8>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T1>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T2>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T3>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T4>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T5>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T6>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T7>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T8>, int>));
   }
 
   // mp_size
@@ -154,6 +262,82 @@ int main() {
     using result = mp_set_union<L1, L2>;
     using expected = mp11::mp_list<int, char, long, char*>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
+  }
+
+  // mp_last
+  {
+    using L = mp11::mp_list<int, char, long>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<mp_last<L>, long>));
+  }
+
+  // container_element_type
+  {
+    using T1 = std::vector<int>;
+    using U1 = container_element_type<T1>;
+    using T2 = const std::vector<const int>&;
+    using U2 = container_element_type<T2>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<U1, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<U2, const int>));
+  }
+
+  // iterator_value_type
+  {
+    using T1 = const char*;
+    using T2 = std::iterator<std::random_access_iterator_tag, int>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<iterator_value_type<T1>, char>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<iterator_value_type<T2>, int>));
+  }
+
+  // args_type
+  {
+    struct Foo {
+      static int f1(char);
+      int f2(long) const;
+    };
+
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<args_type<decltype(&Foo::f1)>, std::tuple<char>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<args_type<decltype(&Foo::f2)>, std::tuple<long>>));
+  }
+
+  // visitor_return_type
+  {
+    using V1 = bh::axis::variant<char>;
+    using V2 = bh::axis::variant<int>&;
+    using V3 = const bh::axis::variant<long>&;
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<visitor_return_type<VisitorTestFunctor, V1>, char>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<visitor_return_type<VisitorTestFunctor, V2>, int&>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<visitor_return_type<VisitorTestFunctor, V3>, const long&>));
+  }
+
+  // static_if
+  {
+    struct callable {
+      int operator()() { return 1; };
+    };
+    struct not_callable {};
+    auto fcn = [](auto b, auto x) {
+      return static_if<decltype(b)>([](auto x) { return x(); }, [](auto) { return 2; },
+                                    x);
+    };
+    BOOST_TEST_EQ(fcn(std::true_type(), callable()), 1);
+    BOOST_TEST_EQ(fcn(std::false_type(), not_callable()), 2);
+  }
+
+  // is_axis_vector
+  {
+    using A = std::vector<bh::axis::regular<>>;
+    using B = std::vector<bh::axis::variant<bh::axis::regular<>>>;
+    using C = std::vector<int>;
+    using D = bh::axis::regular<>;
+    BOOST_TEST_TRAIT_TRUE((is_axis_vector<A>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_vector<B>));
+    BOOST_TEST_TRAIT_FALSE((is_axis_vector<C>));
+    BOOST_TEST_TRAIT_FALSE((is_axis_vector<D>));
   }
 
   return boost::report_errors();

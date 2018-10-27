@@ -15,28 +15,30 @@ project histogram-test
 
 alias run-tests :
     [ run adaptive_storage_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
-    [ run histogram_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
     [ run adaptive_storage_test.cpp ]
     [ run array_storage_test.cpp ]
-    [ run axis_test.cpp ]
+    [ run axis_regular_test.cpp ]
+    [ run axis_circular_test.cpp ]
+    [ run axis_variable_test.cpp ]
+    [ run axis_integer_test.cpp ]
+    [ run axis_category_test.cpp ]
+    [ run axis_variant_test.cpp ]
     [ run detail_test.cpp ]
     [ run histogram_dynamic_test.cpp ]
     [ run histogram_mixed_test.cpp ]
+    [ run histogram_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
     [ run histogram_test.cpp ]
     [ run index_mapper_test.cpp ]
     [ run meta_test.cpp ]
-    [ link speed_cpp.cpp : : speed_test ]
     [ run utility_test.cpp ]
     [ run weight_counter_test.cpp ]
     ;
 
 alias run-fail-tests :
-    [ run-fail histogram_dynamic_add_fail.cpp ]
     [ run-fail histogram_dynamic_at_tuple_wrong_dimension_fail.cpp ]
     [ run-fail histogram_dynamic_at_vector_wrong_dimension_fail.cpp ]
     [ run-fail histogram_dynamic_at_wrong_dimension_fail.cpp ]
     [ run-fail histogram_dynamic_reduce_wrong_order_fail.cpp ]
-    [ run-fail histogram_static_add_fail.cpp ]
     [ run-fail histogram_static_at_vector_wrong_dimension_fail.cpp ]
     ;
 
@@ -46,4 +48,5 @@ alias run-speed-tests :
     [ run speed_root.cpp ]
     ;
 
+explicit run-fail-tests ;
 explicit run-speed-tests ;

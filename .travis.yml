@@ -15,25 +15,39 @@ branches:
     - master
     - develop
 
+# g++-5 also needed for clang to see C++14 stdlib
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - libstdc++-5-dev libgcc-5-dev libstdc++6 libasan2 libtsan0 libubsan0
+
 matrix:
   include:
     - os: linux
-      compiler: gcc
+      compiler: clang
       env: SERIAL=OFF
-    - os: linux
-      compiler: gcc
-      env: SERIAL=ON
     - os: linux
       compiler: clang
       env: SERIAL=ON
     - os: osx
       env: SERIAL=OFF
     - os: linux # coverage build
-      compiler: gcc
-      env: GCOV=gcov
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env:
+        - MATRIX_EVAL="GCOV=gcov-5 && CC=gcc-5 && CXX=g++-5"
 
 git:
   depth: 1
+
+before_install:
+    - eval "${MATRIX_EVAL}"
 
 # Install packages (pre-installed: pytest)
 install:
@@ -67,7 +81,7 @@ after_success:
     coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which ${GCOV}` --gcov-options '\-lpbc';
   fi
 
-after_failure:
+# after_failure:
   # - otool -L histogram.so
   # - printf "r\nbt" > gdb.cmd
   # - for x in *_test; do

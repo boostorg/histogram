@@ -8,30 +8,18 @@ cmake_minimum_required (VERSION 3.5)
 
 project(histogram CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(MIN_BOOST_VERSION 1.66)
 
+if ("$ENV{BOOST_ROOT}" STREQUAL "")
+  set(BOOST_INCLUDEDIR "${PROJECT_SOURCE_DIR}/../..")
+endif()
+
 # setup build
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(TEST_SERIALIZATION "Test serialization code" OFF)
-mark_as_advanced(BUILD_BENCHMARKS)
-mark_as_advanced(TEST_SERIALIZATION)
-
-# set build type if none is specified
-set(default_build_type "Release")
-if (EXISTS "${PROJECT_SOURCE_DIR}/.git")
-  set(default_build_type "Debug")
-endif()
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
-  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
-      STRING "Choose the type of build." FORCE)
-  # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
 
 # serialization is optional
 if (TEST_SERIALIZATION)
@@ -57,7 +45,7 @@ function(compiled_test SRC)
   target_include_directories(${BASENAME} PUBLIC include ${Boost_INCLUDE_DIR})
 
   if(CMAKE_BUILD_TYPE MATCHES coverage)
-    target_compile_options(${BASENAME} PRIVATE -O0 -g --coverage)
+    target_compile_options(${BASENAME} PRIVATE --coverage)
     target_link_libraries(${BASENAME} PRIVATE --coverage)
   endif()
 
@@ -65,24 +53,24 @@ function(compiled_test SRC)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(${BASENAME} PRIVATE -D_SCL_SECURE_NO_WARNINGS)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra)
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
       # -fpermissive needed for cpp_int in gcc-6
-      target_compile_options(${BASENAME} PRIVATE -fpermissive)
+      # -Wno-noexcept-type needed for callable_traits
+      target_compile_options(${BASENAME} PRIVATE -fpermissive -Wno-noexcept-type)
     endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0
                            -Wno-unused-local-typedef -D__STRICT_ANSI__)
   endif()
 
-  ## deactivate sanitizers for now, LeakSanitizer is crashing
-  # # activate sanitizers for clang builds
-  # if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  #   target_compile_options(${BASENAME} PRIVATE
-  #                          -fsanitize=address,undefined
-  #                          -fno-omit-frame-pointer)
-  #   target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
-  # endif()
+  # activate sanitizers for clang builds
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(${BASENAME} PRIVATE
+                           -fsanitize=address,undefined
+                           -fno-omit-frame-pointer)
+    target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
+  endif()
 
   if (${BASENAME} MATCHES "_fail")
     add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/tools/pass_on_fail.py ${BASENAME})
@@ -93,9 +81,13 @@ endfunction()
 
 compiled_test(test/adaptive_storage_test.cpp)
 compiled_test(test/array_storage_test.cpp)
-compiled_test(test/axis_test.cpp)
+compiled_test(test/axis_regular_test.cpp)
+compiled_test(test/axis_circular_test.cpp)
+compiled_test(test/axis_variable_test.cpp)
+compiled_test(test/axis_integer_test.cpp)
+compiled_test(test/axis_category_test.cpp)
+compiled_test(test/axis_variant_test.cpp)
 compiled_test(test/detail_test.cpp)
-compiled_test(test/histogram_dynamic_add_fail.cpp)
 compiled_test(test/histogram_dynamic_fill_one_dimensional_vector_fail.cpp)
 compiled_test(test/histogram_dynamic_fill_one_dimensional_tuple_fail.cpp)
 compiled_test(test/histogram_dynamic_at_tuple_wrong_dimension_fail.cpp)
@@ -103,7 +95,6 @@ compiled_test(test/histogram_dynamic_at_vector_wrong_dimension_fail.cpp)
 compiled_test(test/histogram_dynamic_at_wrong_dimension_fail.cpp)
 compiled_test(test/histogram_dynamic_reduce_wrong_order_fail.cpp)
 # test fail to compile (test/histogram_static_fill_one_dimensional_tuple_fail.cpp)
-compiled_test(test/histogram_static_add_fail.cpp)
 compiled_test(test/histogram_static_at_vector_wrong_dimension_fail.cpp)
 compiled_test(test/histogram_dynamic_test.cpp)
 compiled_test(test/histogram_mixed_test.cpp)
@@ -118,7 +109,8 @@ compiled_test(examples/getting_started_listing_02.cpp)
 compiled_test(examples/guide_access_bin_counts.cpp)
 compiled_test(examples/guide_axis_with_labels.cpp)
 compiled_test(examples/guide_axis_with_uoflow_off.cpp)
-compiled_test(examples/guide_custom_axis.cpp)
+compiled_test(examples/guide_custom_modified_axis.cpp)
+compiled_test(examples/guide_custom_minimal_axis.cpp)
 compiled_test(examples/guide_custom_storage.cpp)
 compiled_test(examples/guide_fill_histogram.cpp)
 compiled_test(examples/guide_histogram_operators.cpp)
@@ -139,9 +131,6 @@ if (TEST_SERIALIZATION)
 endif()
 
 if (BUILD_BENCHMARKS)
-  if (NOT ${CMAKE_BUILD_TYPE} EQUAL Release)
-    message(WARNING "Benchmarks should be build in Release mode")
-  endif()
   add_executable(speed_cpp test/speed_cpp.cpp)
   target_include_directories(speed_cpp PRIVATE include ${Boost_INCLUDE_DIR})
   target_compile_definitions(speed_cpp PRIVATE -DBOOST_DISABLE_ASSERTS)

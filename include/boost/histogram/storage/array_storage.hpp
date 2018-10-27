@@ -18,11 +18,10 @@
 namespace boost {
 namespace histogram {
 
-template <typename T, typename ScaleType, typename Allocator>
+template <typename T, typename Allocator>
 struct array_storage {
   using allocator_type = Allocator;
   using element_type = T;
-  using scale_type = ScaleType;
   using const_reference = const T&;
 
   using buffer_type = std::vector<element_type, allocator_type>;
@@ -90,7 +89,7 @@ struct array_storage {
     return *this;
   }
 
-  array_storage& operator*=(const scale_type& x) noexcept {
+  array_storage& operator*=(const double x) noexcept {
     for (std::size_t i = 0; i < size(); ++i) buffer[i] *= x;
     return *this;
   }

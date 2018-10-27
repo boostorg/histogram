@@ -32,7 +32,7 @@ public:
     cache_.reset();
   }
 
-  std::size_t dim() const noexcept { return histogram_.dim(); }
+  std::size_t rank() const noexcept { return histogram_.rank(); }
 
   int idx(std::size_t dim = 0) const noexcept {
     if (!cache_) { cache_.set(histogram_); }

@@ -7,31 +7,23 @@
 #ifndef BOOST_HISTOGRAM_WEIGHT_HPP
 #define BOOST_HISTOGRAM_WEIGHT_HPP
 
+#include <utility>
+
 namespace boost {
 namespace histogram {
-namespace detail {
+
+/// Type wrapper to make T as weight
 template <typename T>
 struct weight_type {
   T value;
 };
 
-template <typename T>
-struct sample_type {
-  T value;
-};
-} // namespace detail
-
 /// Helper function to mark argument as a weight
 template <typename T>
-detail::weight_type<T> weight(T&& t) {
-  return {t};
+weight_type<T&&> weight(T&& t) {
+  return {std::forward<T>(t)};
 }
 
-/// Helper function to mark argument as a sample
-template <typename T>
-detail::sample_type<T> sample(T&& t) {
-  return {t};
-}
 }
 }
 

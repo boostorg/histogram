@@ -7,40 +7,53 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP
 
-#include <boost/container/string.hpp>
-#include <boost/histogram/axis/any.hpp>
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/types.hpp>
+#include <boost/histogram/axis/category.hpp>
+#include <boost/histogram/axis/circular.hpp>
+#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variable.hpp>
+#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/buffer.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/mp11/tuple.hpp>
 #include <boost/serialization/array.hpp>
-#include <boost/serialization/unique_ptr.hpp>
+#include <boost/serialization/string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
+#include <string>
+#include <tuple>
 
 /** \file boost/histogram/serialization.hpp
  *  \brief Defines the serialization functions, to use with boost.serialize.
  *
  */
 
+namespace std {
+template <class Archive, typename... Ts>
+void serialize(Archive& ar, tuple<Ts...>& t, unsigned /* version */) {
+  ::boost::mp11::tuple_for_each(t, [&ar](auto& x) { ar& x; });
+}
+} // namespace std
+
 namespace boost {
 namespace histogram {
+template <typename RealType>
+template <class Archive>
+void weight_counter<RealType>::serialize(Archive& ar, unsigned /* version */) {
+  ar& w;
+  ar& w2;
+}
+
+template <class Archive, typename T, typename A>
+void serialize(Archive& ar, array_storage<T, A>& s, unsigned /* version */) {
+  ar& s.buffer;
+}
 
 namespace detail {
-template <typename Archive>
-struct serialize_t {
-  Archive& ar_;
-  explicit serialize_t(Archive& ar) : ar_(ar) {}
-  template <typename T>
-  void operator()(T& t) const {
-    ar_& t;
-  }
-};
-
 struct serializer {
   template <typename T, typename Buffer, typename Archive>
   void operator()(T*, Buffer& b, Archive& ar) {
@@ -56,20 +69,7 @@ struct serializer {
     if (Archive::is_loading::value) { b.ptr = nullptr; }
   }
 };
-
 } // namespace detail
-
-template <typename RealType>
-template <class Archive>
-void weight_counter<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& w;
-  ar& w2;
-}
-
-template <class Archive, typename T, typename A>
-void serialize(Archive& ar, array_storage<T, A>& s, unsigned /* version */) {
-  ar& s.buffer;
-}
 
 template <class Archive, typename A>
 void serialize(Archive& ar, adaptive_storage<A>& s, unsigned /* version */) {
@@ -80,112 +80,84 @@ void serialize(Archive& ar, adaptive_storage<A>& s, unsigned /* version */) {
   S::apply(detail::serializer(), s.buffer, ar);
 }
 
+template <typename A, typename S>
+template <class Archive>
+void histogram<A, S>::serialize(Archive& ar, unsigned /* version */) {
+  ar& axes_;
+  ar& storage_;
+}
+
 namespace axis {
-
 template <class Archive>
-void base::serialize(Archive& ar, unsigned /* version */) {
-  ar& size_;
-  ar& shape_;
+void serialize(Archive&, empty_metadata_type&, unsigned /* version */) {} // noop
+
+template <typename M>
+template <class Archive>
+void base<M>::serialize(Archive& ar, unsigned /* version */) {
+  ar& size_meta_.first();
+  ar& size_meta_.second();
+  ar& opt_;
 }
 
-template <class A>
+template <typename T>
 template <class Archive>
-void labeled_base<A>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<base>(*this);
-  auto size = label_.size();
-  ar& size;
-  if (Archive::is_loading::value) { label_.resize(size); }
-  ar& serialization::make_array(label_.data(), size);
-}
-
-namespace transform {
-template <class Archive>
-void pow::serialize(Archive& ar, unsigned /* version */) {
+void transform::pow<T>::serialize(Archive& ar, unsigned /* version */) {
   ar& power;
 }
-} // namespace transform
 
-template <typename T, typename U, typename A>
+template <typename T, typename M>
 template <class Archive>
-void regular<T, U, A>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<labeled_base<A>>(*this);
-  ar& boost::serialization::base_object<T>(*this);
+void regular<T, M>::serialize(Archive& ar, unsigned /* version */) {
+  ar& static_cast<base_type&>(*this);
+  ar& static_cast<transform_type&>(*this);
   ar& min_;
   ar& delta_;
 }
 
-template <typename T, typename A>
+template <typename R, typename M>
 template <class Archive>
-void circular<T, A>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<labeled_base<A>>(*this);
+void circular<R, M>::serialize(Archive& ar, unsigned /* version */) {
+  ar& static_cast<base_type&>(*this);
   ar& phase_;
-  ar& perimeter_;
+  ar& delta_;
 }
 
-template <typename T, typename A>
+template <typename R, typename A, typename M>
 template <class Archive>
-void variable<T, A>::serialize(Archive& ar, unsigned /* version */) {
-  if (Archive::is_loading::value) { this->~variable(); }
-
-  ar& boost::serialization::base_object<labeled_base<A>>(*this);
-
-  if (Archive::is_loading::value) {
-    value_allocator_type a(base_type::get_allocator());
-    x_ = boost::histogram::detail::create_buffer(a, nx());
-  }
-
-  ar& boost::serialization::make_array(x_, base_type::size() + 1);
+void variable<R, A, M>::serialize(Archive& ar, unsigned /* version */) {
+  // destroy must happen before base serialization with old size
+  if (Archive::is_loading::value) detail::destroy_buffer(x_.second(), x_.first(), nx());
+  ar& static_cast<base_type&>(*this);
+  if (Archive::is_loading::value)
+    x_.first() = boost::histogram::detail::create_buffer(x_.second(), nx());
+  ar& boost::serialization::make_array(x_.first(), nx());
 }
 
-template <typename T, typename A>
+template <typename I, typename M>
 template <class Archive>
-void integer<T, A>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<labeled_base<A>>(*this);
+void integer<I, M>::serialize(Archive& ar, unsigned /* version */) {
+  ar& static_cast<base_type&>(*this);
   ar& min_;
 }
 
-template <typename T, typename A>
+template <typename V, typename A, typename M>
 template <class Archive>
-void category<T, A>::serialize(Archive& ar, unsigned /* version */) {
-  if (Archive::is_loading::value) { this->~category(); }
-
-  ar& boost::serialization::base_object<labeled_base<A>>(*this);
-
-  if (Archive::is_loading::value) {
-    value_allocator_type a(base_type::get_allocator());
-    x_ = boost::histogram::detail::create_buffer(a, nx());
-  }
-
-  ar& boost::serialization::make_array(x_, base_type::size());
+void category<V, A, M>::serialize(Archive& ar, unsigned /* version */) {
+  // destroy must happen before base serialization with old size
+  if (Archive::is_loading::value)
+    detail::destroy_buffer(x_.second(), x_.first(), base_type::size());
+  ar& static_cast<base_type&>(*this);
+  if (Archive::is_loading::value)
+    x_.first() = boost::histogram::detail::create_buffer(x_.second(), base_type::size());
+  ar& boost::serialization::make_array(x_.first(), base_type::size());
 }
 
 template <typename... Ts>
 template <class Archive>
-void any<Ts...>::serialize(Archive& ar, unsigned /* version */) {
-  ar& boost::serialization::base_object<boost::variant<Ts...>>(*this);
+void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
+  ar& static_cast<base_type&>(*this);
 }
-
 } // namespace axis
-
-namespace {
-template <class Archive, typename... Ts>
-void serialize_axes(Archive& ar, std::tuple<Ts...>& axes) {
-  detail::serialize_t<Archive> sh(ar);
-  mp11::tuple_for_each(axes, sh);
-}
-
-template <class Archive, typename Any, typename A>
-void serialize_axes(Archive& ar, std::vector<Any, A>& axes) {
-  ar& axes;
-}
-}
-
-template <class A, class S>
-template <class Archive>
-void histogram<A, S>::serialize(Archive& ar, unsigned /* version */) {
-  serialize_axes(ar, axes_);
-  ar& storage_;
-}
 
 } // namespace histogram
 } // namespace boost
