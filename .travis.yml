@@ -21,7 +21,7 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - libstdc++6
+      - libstdc++5-dev libgcc-5-dev libstdc++6
 
 matrix:
   include:

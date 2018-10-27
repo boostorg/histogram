@@ -27,6 +27,14 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
+struct is_continuous : public boost::static_visitor<bool> {
+  template <typename A>
+  bool operator()(const A&) const {
+    using T = detail::arg_type<decltype(&A::value)>;
+    return !std::is_integral<T>::value;
+  }
+};
+
 template <typename F, typename R>
 struct functor_wrapper : public boost::static_visitor<R> {
   F& fcn;
@@ -205,13 +213,9 @@ public:
   }
 
   decltype(auto) operator[](const int idx) const {
-    const bool is_continuous = visit(
-      [](const auto& a) {
-        using A = detail::rm_cvref<decltype(a)>;
-        using T = detail::arg_type<decltype(&A::value)>;
-        return !std::is_integral<T>::value;
-      },
-      *this);
+    // using visit here causes internal error in MSVC 2017
+    const bool is_continuous = boost::apply_visitor(detail::is_continuous(),
+                                                    static_cast<const base_type&>(*this));
     return polymorphic_bin_view<variant>(idx, *this, is_continuous);
   }
 
