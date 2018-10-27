@@ -121,7 +121,7 @@ public:
   regular() = default;
 
   /// Returns instance of the transform type
-  const transform_type& transform() const { return *this; }
+  const transform_type& transform() const noexcept { return *this; }
 
   /// Returns the bin index for the passed argument.
   int operator()(external_type x) const noexcept {

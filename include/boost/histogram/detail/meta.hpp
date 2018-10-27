@@ -49,8 +49,8 @@ template <typename T>
 using container_element_type = mp11::mp_first<rm_cvref<T>>;
 
 template <typename T>
-using unqualified_iterator_value_type =
-    rm_cvref<typename std::iterator_traits<T>::value_type>;
+using iterator_value_type =
+    typename std::iterator_traits<T>::value_type;
 
 template <typename T>
 using return_type = typename boost::callable_traits::return_type<T>::type;
