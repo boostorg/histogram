@@ -47,8 +47,8 @@ int main() {
     a = axis::category<std::string>({"A", "B"}, "cat");
     BOOST_TEST_EQ(a("A"), 0);
     BOOST_TEST_EQ(a("B"), 1);
-    // BOOST_TEST_EQ(a.metadata(), std::string("cat"));
-    // BOOST_TEST_EQ(a.options(), axis::option_type::overflow);
+    BOOST_TEST_EQ(a.metadata(), std::string("cat"));
+    BOOST_TEST_EQ(a.options(), axis::option_type::overflow);
   }
 
   // axis::variant support for minimal_axis
