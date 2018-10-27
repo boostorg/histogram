@@ -21,7 +21,7 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - libstdc++5-dev libgcc-5-dev libstdc++6
+      - libstdc++-5-dev libgcc-5-dev libstdc++6 libasan2 libtsan0 libubsan0
 
 matrix:
   include:
