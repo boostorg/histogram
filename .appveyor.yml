@@ -19,6 +19,7 @@ install:
   - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram
   - git submodule init tools/build
   - git submodule init libs/array
+  - git submodule init libs/assert
   - git submodule init libs/bind
   - git submodule init libs/callable_traits
   - git submodule init libs/concept_check
