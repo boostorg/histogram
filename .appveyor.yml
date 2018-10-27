@@ -52,6 +52,7 @@ install:
   - git submodule init libs/type_index
   - git submodule init libs/type_traits
   - git submodule init libs/utility
+  - git submodule init libs/units
   - git submodule init libs/variant
   - git submodule update
   - bootstrap
