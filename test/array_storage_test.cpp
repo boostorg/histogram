@@ -8,7 +8,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
-#include <boost/histogram/storage/operators.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <limits>
 

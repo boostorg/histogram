@@ -7,15 +7,14 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
-#include <boost/histogram/storage/operators.hpp>
 #include <limits>
 #include <memory>
 #include <sstream>
-#include <memory>
 
 namespace bh = boost::histogram;
 using adaptive_storage_type = bh::adaptive_storage<std::allocator<char>>;
-template <typename T> using array_storage = bh::array_storage<T, std::allocator<T>>;
+template <typename T>
+using array_storage = bh::array_storage<T, std::allocator<T>>;
 using bh::weight;
 
 template <typename T>

@@ -5,13 +5,13 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
 #include <boost/histogram/storage/array_storage.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
-#include <boost/histogram/axis/variant.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <tuple>
@@ -154,8 +154,7 @@ void run_tests() {
     a.axis().metadata() = "bar";
     BOOST_TEST_EQ(a.axis().metadata(), "bar");
 
-    auto b = make(Tag(), axis::regular<>(1, 1, 2, "foo"),
-                  axis::integer<>(1, 3));
+    auto b = make(Tag(), axis::regular<>(1, 1, 2, "foo"), axis::integer<>(1, 3));
     BOOST_TEST_EQ(b.axis(0_c).size(), 1);
     BOOST_TEST_EQ(b.axis(0_c)[0].lower(), 1);
     BOOST_TEST_EQ(b.axis(0_c)[0].upper(), 2);
@@ -254,8 +253,7 @@ void run_tests() {
 
   // d1w
   {
-    auto h = make_s(Tag(), array_storage<weight_counter<>>(),
-                    axis::integer<>(0, 2));
+    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 2));
     h(-1);
     h(0);
     h(weight(0.5), 0);
@@ -309,9 +307,7 @@ void run_tests() {
 
   // d2w
   {
-    auto h = make_s(Tag(),
-                    array_storage<weight_counter<>>(),
-                    axis::regular<>(2, -1, 1),
+    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::regular<>(2, -1, 1),
                     axis::integer<>(-1, 2, {}, axis::option_type::none));
     h(-1, 0);              // -> 0, 1
     h(weight(10), -1, -1); // -> 0, 0
@@ -356,11 +352,8 @@ void run_tests() {
 
   // d3w
   {
-    auto h = make_s(Tag(),
-                    array_storage<weight_counter<>>(),
-                    axis::integer<>(0, 3),
-                    axis::integer<>(0, 4),
-                    axis::integer<>(0, 5));
+    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 3),
+                    axis::integer<>(0, 4), axis::integer<>(0, 5));
     for (auto i = 0u; i < h.axis(0_c).size(); ++i) {
       for (auto j = 0u; j < h.axis(1_c).size(); ++j) {
         for (auto k = 0u; k < h.axis(2_c).size(); ++k) { h(weight(i + j + k), i, j, k); }
@@ -402,10 +395,8 @@ void run_tests() {
 
   // add_2
   {
-    auto a = make_s(Tag(), array_storage<weight_counter<>>(),
-                    axis::integer<>(0, 2));
-    auto b = make_s(Tag(), array_storage<weight_counter<>>(),
-                    axis::integer<>(0, 2));
+    auto a = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 2));
+    auto b = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 2));
 
     a(0);
     BOOST_TEST_EQ(a.at(0).variance(), 1);
@@ -519,13 +510,13 @@ void run_tests() {
     auto a = make(Tag(), axis::regular<>(3, -1, 1, "r"), axis::integer<>(0, 2, "i"));
     std::ostringstream os;
     os << a;
-    BOOST_TEST_EQ(os.str(),
-                  std::string(
-                    "histogram(\n"
-                    "  regular(3, -1, 1, metadata=\"r\", options=underflow_and_overflow),\n"
-                    "  integer(0, 2, metadata=\"i\", options=underflow_and_overflow),\n"
-                    ")"
-                  ));
+    BOOST_TEST_EQ(
+        os.str(),
+        std::string(
+            "histogram(\n"
+            "  regular(3, -1, 1, metadata=\"r\", options=underflow_and_overflow),\n"
+            "  integer(0, 2, metadata=\"i\", options=underflow_and_overflow),\n"
+            ")"));
   }
 
   // histogram_reset
@@ -643,9 +634,7 @@ void run_tests() {
       using integer::integer; // inherit ctors of base
 
       // customization point: convert argument and call base class
-      int operator()(const char* s) const {
-        return integer::operator()(std::atoi(s));
-      }
+      int operator()(const char* s) const { return integer::operator()(std::atoi(s)); }
     };
 
     auto h = make(Tag(), custom_axis(0, 3));
@@ -663,8 +652,7 @@ void run_tests() {
 
   // histogram iterator 1D
   {
-    auto h = make_s(Tag(), array_storage<weight_counter<>>(),
-                    axis::integer<>(0, 3));
+    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 3));
     const auto& a = h.axis();
     h(weight(2), 0);
     h(1);
@@ -698,9 +686,7 @@ void run_tests() {
 
   // histogram iterator 2D
   {
-    auto h = make_s(Tag(),
-                    array_storage<weight_counter<>>(),
-                    axis::integer<>(0, 1),
+    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 1),
                     axis::integer<>(2, 4, "", axis::option_type::none));
     const auto& a0 = h.axis(0_c);
     const auto& a1 = h.axis(1_c);
@@ -762,9 +748,8 @@ void run_tests() {
 
   // using STL containers
   {
-    auto h = make_s(Tag(),
-                    array_storage<weight_counter<>>(),
-                    axis::integer<>(0, 2), axis::regular<>(2, 2, 4));
+    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 2),
+                    axis::regular<>(2, 2, 4));
     // vector in
     h(std::vector<int>({0, 2}));
     // pair in
@@ -796,6 +781,9 @@ void run_tests() {
     h1(1);
     BOOST_TEST_EQ(h1.at(std::make_tuple(0)), 0);
     BOOST_TEST_EQ(h1.at(std::vector<int>(1, 1)), 1);
+
+    // wrong dimension
+    BOOST_TEST_THROWS(h1.at(std::vector<int>({0, 2})), std::invalid_argument);
   }
 
   // bad bin access
@@ -830,7 +818,8 @@ void run_tests() {
     if (Tag()) { // axis::variant allocation, only for dynamic histogram
       using T = axis::variant<axis::integer<>>;
       BOOST_TEST_EQ(db[typeid(T)].first, db[typeid(T)].second);
-      BOOST_TEST_LE(db[typeid(T)].first, 1u); // zero if vector uses small-vector-optimisation
+      BOOST_TEST_LE(db[typeid(T)].first,
+                    1u); // zero if vector uses small-vector-optimisation
     }
   }
 }

@@ -8,9 +8,9 @@
 #define BOOST_HISTOGRAM_STORAGE_ARRAY_HPP
 
 #include <algorithm>
+#include <boost/assert.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
-#include <boost/assert.hpp>
 #include <cstddef>
 #include <memory>
 #include <vector>
@@ -81,6 +81,14 @@ struct array_storage {
   bool operator==(const array_storage<Ts...>& rhs) const noexcept {
     if (size() != rhs.size()) return false;
     return std::equal(buffer.begin(), buffer.end(), rhs.buffer.begin());
+  }
+
+  template <typename U>
+  bool operator==(const U& rhs) const noexcept {
+    if (size() != rhs.size()) return false;
+    for (std::size_t i = 0; i < size(); ++i)
+      if (!(buffer[i] == rhs[i])) return false;
+    return true;
   }
 
   template <typename S>

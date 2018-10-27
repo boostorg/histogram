@@ -16,7 +16,6 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/iterator.hpp>
 #include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/storage/operators.hpp>
 #include <boost/histogram/storage/weight_counter.hpp>
 #include <boost/mp11.hpp>
 #include <functional>
@@ -124,16 +123,14 @@ public:
   decltype(auto) axis() { return axis(mp11::mp_size_t<0>()); }
 
   /// Get N-th axis with runtime index (const version)
-  template <typename U = axes_type,
-            typename = detail::requires_axis_vector<U>>
+  template <typename U = axes_type, typename = detail::requires_axis_vector<U>>
   decltype(auto) axis(std::size_t i) const {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
   }
 
   /// Get N-th axis with runtime index
-  template <typename U = axes_type,
-            typename = detail::requires_axis_vector<U>>
+  template <typename U = axes_type, typename = detail::requires_axis_vector<U>>
   decltype(auto) axis(std::size_t i) {
     BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
     return axes_[i];
@@ -153,11 +150,25 @@ public:
     if (index) storage_.increase(*index);
   }
 
+  template <typename T>
+  void operator()(const T& t) {
+    // check whether we need to unpack argument
+    const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
+    if (index) storage_.increase(*index);
+  }
+
   /// Fill histogram with a weight and a value tuple
   template <typename U, typename... Ts>
   void operator()(weight_type<U>&& w, const Ts&... ts) {
     // case with one argument needs special treatment, specialized below
     const auto index = detail::call_impl(detail::no_container_tag(), axes_, ts...);
+    if (index) storage_.add(*index, w);
+  }
+
+  template <typename U, typename T>
+  void operator()(weight_type<U>&& w, const T& t) {
+    // check whether we need to unpack argument
+    const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
     if (index) storage_.add(*index, w);
   }
 
@@ -168,20 +179,6 @@ public:
     const auto index =
         detail::at_impl(detail::no_container_tag(), axes_, static_cast<int>(ts)...);
     return storage_[index];
-  }
-
-  template <typename T>
-  void operator()(const T& t) {
-    // check whether we need to unpack argument
-    const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
-    if (index) storage_.increase(*index);
-  }
-
-  template <typename U, typename T>
-  void operator()(weight_type<U>&& w, const T& t) {
-    // check whether we need to unpack argument
-    const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
-    if (index) storage_.add(*index, w);
   }
 
   template <typename T>
@@ -260,53 +257,40 @@ private:
 
 /// static type factory with custom storage type
 template <typename S, typename T, typename... Ts, typename = detail::requires_axis<T>>
-histogram<
-  std::tuple<detail::rm_cvref<T>, detail::rm_cvref<Ts>...>,
-  detail::rm_cvref<S>
->
+histogram<std::tuple<detail::rm_cvref<T>, detail::rm_cvref<Ts>...>, detail::rm_cvref<S>>
 make_histogram_with(S&& s, T&& axis0, Ts&&... axis) {
   auto axes = std::make_tuple(std::forward<T>(axis0), std::forward<Ts>(axis)...);
-  return histogram<decltype(axes), detail::rm_cvref<S>>(
-    std::move(axes), std::forward<S>(s)
-  );
+  return histogram<decltype(axes), detail::rm_cvref<S>>(std::move(axes),
+                                                        std::forward<S>(s));
 }
 
 /// static type factory with standard storage type
 template <typename T, typename... Ts, typename = detail::requires_axis<T>>
 auto make_histogram(T&& axis0, Ts&&... axis)
-  -> decltype(make_histogram_with(default_storage(),
-                                  std::forward<T>(axis0),
-                                  std::forward<Ts>(axis)...))
-{
-  return make_histogram_with(default_storage(),
-                             std::forward<T>(axis0),
+    -> decltype(make_histogram_with(default_storage(), std::forward<T>(axis0),
+                                    std::forward<Ts>(axis)...)) {
+  return make_histogram_with(default_storage(), std::forward<T>(axis0),
                              std::forward<Ts>(axis)...);
 }
 
 /// dynamic type factory from vector-like with custom storage type
-template <typename S, typename T,
-          typename = detail::requires_axis_vector<T>>
-histogram<detail::rm_cvref<T>, detail::rm_cvref<S>>
-make_histogram_with(S&& s, T&& t) {
-  return histogram<detail::rm_cvref<T>, detail::rm_cvref<S>>(
-    std::forward<T>(t), std::forward<S>(s)
-  );
+template <typename S, typename T, typename = detail::requires_axis_vector<T>>
+histogram<detail::rm_cvref<T>, detail::rm_cvref<S>> make_histogram_with(S&& s, T&& t) {
+  return histogram<detail::rm_cvref<T>, detail::rm_cvref<S>>(std::forward<T>(t),
+                                                             std::forward<S>(s));
 }
 
 /// dynamic type factory from vector-like with standard storage type
-template <typename T,
-          typename = detail::requires_axis_vector<T>>
+template <typename T, typename = detail::requires_axis_vector<T>>
 auto make_histogram(T&& t)
-  -> decltype(make_histogram_with(default_storage(), std::forward<T>(t)))
-{
+    -> decltype(make_histogram_with(default_storage(), std::forward<T>(t))) {
   return make_histogram_with(default_storage(), std::forward<T>(t));
 }
 
 /// dynamic type factory from iterator range with custom storage type
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
-histogram<std::vector<detail::iterator_value_type<Iterator>>,
-          detail::rm_cvref<Storage>>
+histogram<std::vector<detail::iterator_value_type<Iterator>>, detail::rm_cvref<Storage>>
 make_histogram_with(Storage&& s, Iterator begin, Iterator end) {
   using T = detail::iterator_value_type<Iterator>;
   auto axes = std::vector<T>(begin, end);
@@ -316,8 +300,7 @@ make_histogram_with(Storage&& s, Iterator begin, Iterator end) {
 /// dynamic type factory from iterator range with standard storage type
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 auto make_histogram(Iterator begin, Iterator end)
-  -> decltype(make_histogram_with(default_storage(), begin, end))
-{
+    -> decltype(make_histogram_with(default_storage(), begin, end)) {
   return make_histogram_with(default_storage(), begin, end);
 }
 } // namespace histogram

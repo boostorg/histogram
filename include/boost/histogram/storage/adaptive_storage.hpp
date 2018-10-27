@@ -266,6 +266,12 @@ struct adaptive_storage {
     return apply(comparer(), buffer, o.buffer);
   }
 
+  template <typename T>
+  bool operator==(const T& o) const {
+    if (size() != o.size()) return false;
+    return apply(comparer_extern(), buffer, o);
+  }
+
   // precondition: storages have same size
   adaptive_storage& operator+=(const adaptive_storage& o) {
     BOOST_ASSERT(o.size() == size());
@@ -442,22 +448,29 @@ struct adaptive_storage {
     }
   };
 
+  struct cmp {
+    template <typename T, typename U>
+    bool operator()(const T& t, const U& u) {
+      return t == u;
+    }
+    bool operator()(const mp_int& t, const double& u) {
+      return static_cast<double>(t) == u;
+    }
+    bool operator()(const double& t, const mp_int& u) {
+      return t == static_cast<double>(u);
+    }
+
+    bool operator()(const mp_int& t, const float& u) {
+      return static_cast<float>(t) == u;
+    }
+    bool operator()(const float& t, const mp_int& u) {
+      return t == static_cast<float>(u);
+    }
+  };
+
   // precondition: buffers already have same size
   struct comparer {
     struct inner {
-      struct cmp {
-        template <typename T, typename U>
-        bool operator()(const T& t, const U& u) {
-          return t == u;
-        }
-        bool operator()(const mp_int& t, const double& u) {
-          return static_cast<double>(t) == u;
-        }
-        bool operator()(const double& t, const mp_int& u) {
-          return t == static_cast<double>(u);
-        }
-      };
-
       template <typename U, typename OBuffer, typename T>
       bool operator()(const U* optr, const OBuffer& ob, const T* tp) {
         return std::equal(optr, optr + ob.size, tp, cmp());
@@ -483,6 +496,24 @@ struct adaptive_storage {
     bool operator()(const T* tp, const Buffer& b, const OBuffer& ob) {
       BOOST_ASSERT(b.size == ob.size);
       return apply(inner(), ob, tp);
+    }
+  };
+
+  // precondition: buffers already have same size
+  struct comparer_extern {
+    template <typename T, typename Buffer, typename U>
+    bool operator()(const T* ptr, const Buffer& b, const U& u) {
+      auto c = cmp();
+      for (std::size_t i = 0; i < b.size; ++i)
+        if (!c(ptr[i], u[i])) return false;
+      return true;
+    }
+
+    template <typename Buffer, typename U>
+    bool operator()(const void*, const Buffer& b, const U& u) {
+      for (std::size_t i = 0; i < b.size; ++i)
+        if (!(0 == u[i])) return false;
+      return true;
     }
   };
 
