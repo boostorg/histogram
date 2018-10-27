@@ -305,10 +305,10 @@ auto make_histogram(T&& t)
 /// dynamic type factory from iterator range with custom storage type
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
-histogram<std::vector<detail::unqualified_iterator_value_type<Iterator>>,
+histogram<std::vector<detail::iterator_value_type<Iterator>>,
           detail::rm_cvref<Storage>>
 make_histogram_with(Storage&& s, Iterator begin, Iterator end) {
-  using T = detail::unqualified_iterator_value_type<Iterator>;
+  using T = detail::iterator_value_type<Iterator>;
   auto axes = std::vector<T>(begin, end);
   return make_histogram_with(std::forward<Storage>(s), std::move(axes));
 }

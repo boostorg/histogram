@@ -21,7 +21,7 @@
 		{
 			"name": "CMake",
 			"working_dir": "${project_path}/build",
-			"cmd": ["{ [ ! -e Makefile ] && cmake .. ; } && make -j4 && ctest"],
+			"cmd": ["cmake .. && cmake --build . && ctest"],
 			"shell": true,
 			"file_regex": "/([^/:]+):(\\d+):(\\d+): ",
 		}

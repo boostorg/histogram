@@ -13,6 +13,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(MIN_BOOST_VERSION 1.66)
 
+if ("$ENV{BOOST_ROOT}" STREQUAL "")
+  set(BOOST_INCLUDEDIR "${PROJECT_SOURCE_DIR}/../..")
+endif()
+
 # setup build
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(TEST_SERIALIZATION "Test serialization code" OFF)
@@ -52,7 +56,8 @@ function(compiled_test SRC)
     target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0)
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
       # -fpermissive needed for cpp_int in gcc-6
-      target_compile_options(${BASENAME} PRIVATE -fpermissive)
+      # -Wno-noexcept-type needed for callable_traits
+      target_compile_options(${BASENAME} PRIVATE -fpermissive -Wno-noexcept-type)
     endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0

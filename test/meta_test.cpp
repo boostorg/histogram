@@ -280,12 +280,12 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<U2, const int>));
   }
 
-  // unqualified_iterator_value_type
+  // iterator_value_type
   {
     using T1 = const char*;
     using T2 = std::iterator<std::random_access_iterator_tag, int>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqualified_iterator_value_type<T1>, char>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqualified_iterator_value_type<T2>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<iterator_value_type<T1>, char>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<iterator_value_type<T2>, int>));
   }
 
   // args_type

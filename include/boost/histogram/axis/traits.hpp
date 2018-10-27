@@ -18,7 +18,7 @@ namespace traits {
   using args = detail::args_type<decltype(&T::operator())>;
 
   template <typename T>
-  decltype(auto) metadata(T&& t) {
+  decltype(auto) metadata(T&& t) noexcept {
     return detail::static_if<detail::has_method_metadata<T>>(
       [](auto&& x) -> decltype(auto) { return x.metadata(); },
       [](auto&&) -> detail::copy_qualifiers<T, axis::empty_metadata_type> {
@@ -28,7 +28,7 @@ namespace traits {
   }
 
   template <typename T>
-  option_type options(const T& t) {
+  option_type options(const T& t) noexcept {
     return detail::static_if<detail::has_method_options<T>>(
       [](const auto& x) { return x.options(); },
       [](const T&) { return axis::option_type::none; },
@@ -36,7 +36,7 @@ namespace traits {
   }
 
   template <typename T>
-  unsigned extend(const T& t) {
+  unsigned extend(const T& t) noexcept {
     return t.size() + static_cast<unsigned>(options(t));
   }
 } // namespace traits
