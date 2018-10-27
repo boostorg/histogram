@@ -36,7 +36,7 @@ install:
   - git submodule init libs/move
   - git submodule init libs/mp11
   - git submodule init libs/mpl
-  - git submodule init libs/multiprecison
+  - git submodule init libs/multiprecision
   - git submodule init libs/numeric
   - git submodule init libs/predef
   - git submodule init libs/preprocessor
