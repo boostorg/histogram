@@ -47,6 +47,8 @@ install:
   - git submodule init libs/smart_ptr
   - git submodule init libs/spirit
   - git submodule init libs/static_assert
+  - git submodule init libs/throw_exception
+  - git submodule init libs/type_index
   - git submodule init libs/type_traits
   - git submodule init libs/utility
   - git submodule init libs/variant
