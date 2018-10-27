@@ -45,4 +45,5 @@ alias run-speed-tests :
     [ run speed_root.cpp ]
     ;
 
+explicit run-fail-tests ;
 explicit run-speed-tests ;
