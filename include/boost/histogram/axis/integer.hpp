@@ -8,7 +8,8 @@
 #define BOOST_HISTOGRAM_AXIS_INTEGER_HPP
 
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/interval_view.hpp>
+#include <boost/histogram/axis/value_bin_view.hpp>
+#include <boost/histogram/axis/interval_bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
@@ -30,7 +31,8 @@ class integer : public base<MetaData>, public iterator_mixin<integer<IntType, Me
   using base_type = base<MetaData>;
   using value_type = IntType;
   using metadata_type = MetaData;
-  using bin_type = interval_view<integer>;
+  using bin_view = std::conditional_t<std::is_integral<value_type>::value,
+    value_bin_view<integer>, interval_bin_view<integer>>;
 
 public:
   /** Construct over semi-open integer interval [start, stop).
@@ -58,14 +60,24 @@ public:
 
   /// Returns axis value for index.
   value_type value(value_type i) const noexcept {
-    if (i < 0) { return std::numeric_limits<value_type>::min(); }
+    if (i < 0) {
+      return detail::static_if<std::is_integral<value_type>>(
+        [](auto) { return std::numeric_limits<value_type>::min(); },
+        [](auto) { return -std::numeric_limits<value_type>::infinity(); },
+        0
+      );
+    }
     if (i > static_cast<int>(base_type::size())) {
-      return std::numeric_limits<value_type>::max();
+      return detail::static_if<std::is_integral<value_type>>(
+        [](auto) { return std::numeric_limits<value_type>::max(); },
+        [](auto) { return std::numeric_limits<value_type>::infinity(); },
+        0
+      );
     }
     return min_ + i;
   }
 
-  bin_type operator[](int idx) const noexcept { return bin_type(idx, *this); }
+  decltype(auto) operator[](int idx) const noexcept { return bin_view(idx, *this); }
 
   bool operator==(const integer& o) const noexcept {
     return base_type::operator==(o) && min_ == o.min_;

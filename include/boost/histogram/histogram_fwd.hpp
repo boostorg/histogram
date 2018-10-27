@@ -43,7 +43,7 @@ template <typename RealType = double, typename Allocator = std::allocator<RealTy
           typename MetaData = std::string>
 class variable;
 
-template <typename IntType = int, typename MetaData = std::string>
+template <typename IntType = double, typename MetaData = std::string>
 class integer;
 
 template <typename T = int, typename Allocator = std::allocator<T>,

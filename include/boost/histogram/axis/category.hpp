@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/iterator.hpp>
-#include <boost/histogram/axis/value_view.hpp>
+#include <boost/histogram/axis/value_bin_view.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -132,7 +132,7 @@ public:
     return x_.first()[idx];
   }
 
-  auto operator[](int idx) const noexcept { return value_view<category>(idx, *this); }
+  auto operator[](int idx) const noexcept { return value_bin_view<category>(idx, *this); }
 
   bool operator==(const category& o) const noexcept {
     return base_type::operator==(o) &&

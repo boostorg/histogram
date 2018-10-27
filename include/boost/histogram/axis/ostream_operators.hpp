@@ -13,9 +13,9 @@
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/circular.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/axis/interval_view.hpp>
+#include <boost/histogram/axis/interval_bin_view.hpp>
 #include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/axis/value_view.hpp>
+#include <boost/histogram/axis/value_bin_view.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -61,18 +61,7 @@ void stream_metadata(OStream& os, const T& t) {
 
 template <typename OStream>
 void stream_options(OStream& os, const axis::option_type o) {
-  os << ", options=";
-  switch (o) {
-    case axis::option_type::none:
-      os << "none";
-      break;
-    case axis::option_type::overflow:
-      os << "overflow";
-      break;
-    case axis::option_type::underflow_and_overflow:
-      os << "underflow_and_overflow";
-      break;
-  }
+  os << ", options=" << o;
 }
 
 template <typename OStream, typename T>
@@ -99,21 +88,48 @@ namespace axis {
 
 template <typename C, typename T>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const axis::option_type o) {
+  switch (o) {
+    case axis::option_type::none:
+      os << "none";
+      break;
+    case axis::option_type::overflow:
+      os << "overflow";
+      break;
+    case axis::option_type::underflow_and_overflow:
+      os << "underflow_and_overflow";
+      break;
+  }
+  return os;
+}
+
+template <typename C, typename T>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const empty_metadata_type&) {
   return os; // do nothing
 }
 
 template <typename C, typename T, typename U>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const interval_view<U>& i) {
+                                     const interval_bin_view<U>& i) {
   os << "[" << i.lower() << ", " << i.upper() << ")";
   return os;
 }
 
 template <typename C, typename T, typename U>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const value_view<U>& i) {
+                                     const value_bin_view<U>& i) {
   os << i.value();
+  return os;
+}
+
+template <typename C, typename T, typename U>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const polymorphic_bin_view<U>& i) {
+  if (i.is_continuous())
+    os << "[" << i.lower() << ", " << i.upper() << ")";
+  else
+    os << i.value();  
   return os;
 }
 

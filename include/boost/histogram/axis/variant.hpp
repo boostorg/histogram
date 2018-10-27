@@ -9,7 +9,7 @@
 
 #include <boost/core/typeinfo.hpp>
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/interval_view.hpp>
+#include <boost/histogram/axis/polymorphic_bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/cat.hpp>
@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <tuple>
 
 namespace boost {
 namespace histogram {
@@ -44,7 +45,6 @@ namespace axis {
 template <typename... Ts>
 class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
   using base_type = boost::variant<Ts...>;
-  using bin_type = interval_view<variant>;
   using first_bounded_type = mp11::mp_first<base_type>;
   using metadata_type =
       detail::rm_cvref<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
@@ -141,22 +141,24 @@ public:
         *this);
   }
 
-  // Only works for axes with compatible call signature
-  // and will throw a invalid_argument exception otherwise
-  int operator()(double x) const {
+  // Will throw invalid_argument exception if axis has incompatible call signature
+  template <typename... Us>
+  int operator()(Us... x) const {
+    auto&& args = std::forward_as_tuple(std::forward<Us>(x)...);
     return visit(
-        [x](const auto& a) {
-          using T = detail::rm_cvref<decltype(a)>;
-          using args = axis::traits::args<T>;
-          return detail::static_if_c<(
-              mp11::mp_size<args>::value == 1 &&
-              std::is_convertible<double, mp11::mp_first<args>>::value)>(
-              [x](const auto& a) -> int { return a(x); },
-              [](const auto& a) -> int {
+        [&args](const auto& a) {
+          using A = detail::rm_cvref<decltype(a)>;
+          using args_t = std::tuple<Us...>;
+          using expected_args_t = axis::traits::args<A>;
+          return detail::static_if<std::is_convertible<args_t, expected_args_t>>(
+              [&args](const auto& a) -> int { return mp11::tuple_apply(a, args); },
+              [](const auto&) -> int {
                 throw std::invalid_argument(detail::cat(
-                    "cannot convert double to ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(args)), " for ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(decltype(a))),
+                    "cannot convert ",
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(args_t)),
+                    " to ",
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(expected_args_t)), " for ",
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
                     "; use boost::histogram::axis::get to obtain a reference "
                     "of this axis type"));
               },
@@ -202,9 +204,16 @@ public:
         *this);
   }
 
-  // this only works for axes with compatible bin type
-  // and will throw a runtime_error otherwise
-  bin_type operator[](const int idx) const { return bin_type(idx, *this); }
+  decltype(auto) operator[](const int idx) const {
+    const bool is_continuous = visit(
+      [](const auto& a) {
+        using A = detail::rm_cvref<decltype(a)>;
+        using T = detail::arg_type<decltype(&A::value)>;
+        return !std::is_integral<T>::value;
+      },
+      *this);
+    return polymorphic_bin_view<variant>(idx, *this, is_continuous);
+  }
 
   bool operator==(const variant& rhs) const {
     return base_type::operator==(static_cast<const base_type&>(rhs));

@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_AXIS_CIRCULAR_HPP
 
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/interval_view.hpp>
+#include <boost/histogram/axis/interval_bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
@@ -71,7 +71,7 @@ public:
   /// Returns axis value for fractional index.
   value_type value(value_type i) const noexcept { return phase_ + i * delta_; }
 
-  auto operator[](int idx) const noexcept { return interval_view<circular>(idx, *this); }
+  auto operator[](int idx) const noexcept { return interval_bin_view<circular>(idx, *this); }
 
   bool operator==(const circular& o) const noexcept {
     return base_type::operator==(o) && phase_ == o.phase_ && delta_ == o.delta_;
