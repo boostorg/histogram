@@ -55,11 +55,11 @@ class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts.
   using base_type = boost::variant<Ts...>;
   using first_bounded_type = mp11::mp_first<base_type>;
   using metadata_type =
-      detail::rm_cvref<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
+      detail::unqual<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
 
   template <typename T>
   using requires_bounded_type =
-      mp11::mp_if<mp11::mp_contains<base_type, detail::rm_cvref<T>>, void>;
+      mp11::mp_if<mp11::mp_contains<base_type, detail::unqual<T>>, void>;
 
 public:
   variant() = default;
@@ -86,7 +86,7 @@ public:
   variant& operator=(const variant<Us...>& u) {
     visit(
         [this](const auto& u) {
-          using U = detail::rm_cvref<decltype(u)>;
+          using U = detail::unqual<decltype(u)>;
           detail::static_if<mp11::mp_contains<base_type, U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
@@ -155,7 +155,7 @@ public:
     auto&& args = std::forward_as_tuple(std::forward<Us>(x)...);
     return visit(
         [&args](const auto& a) {
-          using A = detail::rm_cvref<decltype(a)>;
+          using A = detail::unqual<decltype(a)>;
           using args_t = std::tuple<Us...>;
           using expected_args_t = axis::traits::args<A>;
           return detail::static_if<std::is_convertible<args_t, expected_args_t>>(
@@ -189,10 +189,10 @@ public:
   double value(double idx) const {
     return visit(
         [idx](const auto& a) {
-          using T = detail::rm_cvref<decltype(a)>;
+          using T = detail::unqual<decltype(a)>;
           return detail::static_if<detail::has_method_value<T>>(
               [idx](const auto& a) -> double {
-                using T = detail::rm_cvref<decltype(a)>;
+                using T = detail::unqual<decltype(a)>;
                 using U = detail::return_type<decltype(&T::value)>;
                 return detail::static_if<std::is_convertible<U, double>>(
                     [idx](const auto& a) -> double {
@@ -278,7 +278,7 @@ auto visit(Functor&& f, Variant&& v) -> detail::visitor_return_type<Functor, Var
   return boost::apply_visitor(
       detail::functor_wrapper<Functor, R>(f),
       static_cast<detail::copy_qualifiers<Variant,
-                                          typename detail::rm_cvref<Variant>::base_type>>(
+                                          typename detail::unqual<Variant>::base_type>>(
           v));
 }
 
@@ -287,7 +287,7 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
                                               const variant<Ts...>& v) {
   visit(
       [&os](const auto& x) {
-        using T = detail::rm_cvref<decltype(x)>;
+        using T = detail::unqual<decltype(x)>;
         detail::static_if<detail::is_streamable<T>>(
             [&os](const auto& x) { os << x; },
             [](const auto&) {
@@ -327,8 +327,8 @@ const T* get(const variant<Us...>* v) {
 }
 
 // pass-through if T is an axis instead of a variant
-template <typename T, typename U, typename = detail::requires_axis<detail::rm_cvref<U>>,
-          typename = detail::requires_same<T, detail::rm_cvref<U>>>
+template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>,
+          typename = detail::requires_same<T, detail::unqual<U>>>
 U get(U&& u) {
   return std::forward<U>(u);
 }

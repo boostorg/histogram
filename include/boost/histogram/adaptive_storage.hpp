@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_STORAGE_ADAPTIVE_HPP
-#define BOOST_HISTOGRAM_STORAGE_ADAPTIVE_HPP
+#ifndef BOOST_HISTOGRAM_ADAPTIVE_STORAGE_HPP
+#define BOOST_HISTOGRAM_ADAPTIVE_STORAGE_HPP
 
 #include <algorithm>
 #include <boost/assert.hpp>
@@ -13,6 +13,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
 #ifdef __clang__
@@ -34,7 +35,7 @@ namespace histogram {
 
 namespace detail {
 template <typename T>
-bool safe_increase(T& t) {
+bool safe_increment(T& t) {
   if (t < std::numeric_limits<T>::max()) {
     ++t;
     return true;
@@ -98,7 +99,7 @@ struct adaptive_storage {
       "adaptive_storage requires allocator with trivial pointer type");
 
   using allocator_type = Allocator;
-  using element_type = double;
+  using value_type = double;
   using const_reference = double;
 
   using mp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<
@@ -208,8 +209,9 @@ struct adaptive_storage {
     return *this;
   }
 
-  template <typename S, typename = detail::requires_storage<S>>
-  explicit adaptive_storage(const S& s) : buffer(s.size(), s.get_allocator()) {
+  template <typename T>
+  adaptive_storage(const storage_adaptor<T>& s) : buffer(s.size()) {
+    // TODO: select appropriate buffer for T
     buffer.set(buffer.template create<double>());
     auto it = static_cast<double*>(buffer.ptr);
     const auto end = it + size();
@@ -217,14 +219,17 @@ struct adaptive_storage {
     while (it != end) *it++ = s[i++];
   }
 
-  template <typename S, typename = detail::requires_storage<S>>
-  adaptive_storage& operator=(const S& s) {
-    // no check for self-assign needed, since S is different type
+  template <typename T>
+  adaptive_storage& operator=(const storage_adaptor<T>& s) {
+    // no check for self-assign needed, since argument is different type
+    // TODO: select appropriate buffer for T
     apply(destroyer(), buffer);
-    buffer.alloc = s.get_allocator();
     buffer.size = s.size();
-    buffer.set(buffer.template create<void>());
-    for (std::size_t i = 0; i < size(); ++i) { add(i, s[i]); }
+    buffer.set(buffer.template create<double>());
+    auto it = static_cast<double*>(buffer.ptr);
+    const auto end = it + size();
+    std::size_t i = 0;
+    while (it != end) *it++ = s[i++];
     return *this;
   }
 
@@ -242,19 +247,19 @@ struct adaptive_storage {
 
   std::size_t size() const { return buffer.size; }
 
-  void increase(std::size_t i) {
+  void operator()(std::size_t i) {
     BOOST_ASSERT(i < size());
-    apply(increaser(), buffer, i);
+    apply(incrementor(), buffer, i);
   }
 
   template <typename T>
-  void add(std::size_t i, const T& x) {
+  void operator()(std::size_t i, const T& x) {
     BOOST_ASSERT(i < size());
     apply(adder(), buffer, i, x);
   }
 
   template <typename T>
-  void add(std::size_t i, const weight_type<T>& x) {
+  void operator()(std::size_t i, const weight_type<T>& x) {
     BOOST_ASSERT(i < size());
     apply(adder(), buffer, i, x.value);
   }
@@ -295,7 +300,7 @@ struct adaptive_storage {
   template <typename S>
   adaptive_storage& operator+=(const S& o) {
     BOOST_ASSERT(o.size() == size());
-    for (std::size_t i = 0; i < size(); ++i) add(i, o[i]);
+    for (std::size_t i = 0; i < size(); ++i) (*this)(i, o[i]);
     return *this;
   }
 
@@ -345,10 +350,10 @@ struct adaptive_storage {
     }
   };
 
-  struct increaser {
+  struct incrementor {
     template <typename T, typename Buffer>
     void operator()(T* tp, Buffer& b, std::size_t i) {
-      if (!detail::safe_increase(tp[i])) {
+      if (!detail::safe_increment(tp[i])) {
         using U = mp11::mp_at_c<types, (type_index<T>() + 1)>;
         U* ptr = b.template create<U>(tp);
         destroyer()(tp, b);
@@ -538,7 +543,6 @@ struct adaptive_storage {
 
   buffer_type buffer;
 };
-
 } // namespace histogram
 } // namespace boost
 

@@ -11,5 +11,6 @@ using namespace boost::histogram;
 int main() {
   std::vector<axis::variant<axis::integer<>>> v(1, axis::integer<>(0, 2));
   auto a = make_histogram(v);
-  a(std::vector<int>(1)); // fails, because tuple is intentionally not unpacked
+  auto i = std::vector<int>(1);
+  a(i); // fails, because tuple is intentionally not unpacked
 }

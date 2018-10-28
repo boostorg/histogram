@@ -53,7 +53,7 @@ void stream_metadata(OStream& os, const T& t) {
         if (!oss.str().empty()) { os << ", metadata=" << std::quoted(oss.str()); }
       },
       [&os](const auto&) {
-        using U = detail::rm_cvref<T>;
+        using U = detail::unqual<T>;
         os << ", metadata=" << boost::core::demangled_name(BOOST_CORE_TYPEID(U));
       },
       t);

@@ -103,7 +103,7 @@ int main() {
   // axis::variant streamable
   {
     auto test = [](auto&& a, const char* ref) {
-      using T = detail::rm_cvref<decltype(a)>;
+      using T = detail::unqual<decltype(a)>;
       axis::variant<T> axis(std::move(a));
       std::ostringstream os;
       os << axis;

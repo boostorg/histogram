@@ -2,6 +2,7 @@
 
 #include <boost/histogram.hpp>
 #include <cassert>
+#include <vector>
 
 namespace bh = boost::histogram;
 
@@ -34,7 +35,7 @@ int main() {
   assert(h4 != h5 && h4 == 4 * h5);
 
   // note special effect of multiplication on weight_counter variance
-  auto h = bh::make_histogram_with(bh::array_storage<bh::weight_counter<double>>(),
+  auto h = bh::make_histogram_with(std::vector<bh::weight_counter<double>>(),
                                    bh::axis::regular<>(2, -1, 1));
   h(-0.5); // counts are: 1 0
 

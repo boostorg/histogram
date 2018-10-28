@@ -80,7 +80,7 @@ function(compiled_test SRC)
 endfunction()
 
 compiled_test(test/adaptive_storage_test.cpp)
-compiled_test(test/array_storage_test.cpp)
+compiled_test(test/storage_adaptor_test.cpp)
 compiled_test(test/axis_regular_test.cpp)
 compiled_test(test/axis_circular_test.cpp)
 compiled_test(test/axis_variable_test.cpp)
