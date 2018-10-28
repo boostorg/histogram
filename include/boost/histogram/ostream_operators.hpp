@@ -9,7 +9,7 @@
 
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/histogram/weight_counter.hpp>
 #include <ostream>
 
 namespace boost {

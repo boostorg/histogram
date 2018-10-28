@@ -47,14 +47,14 @@ ostream& operator<<(ostream& os, const tuple<Ts...>& t) {
 namespace boost {
 namespace histogram {
 template <typename Histogram>
-typename Histogram::element_type sum(const Histogram& h) {
-  return std::accumulate(h.begin(), h.end(), typename Histogram::element_type(0));
+auto sum(const Histogram& h) {
+  return std::accumulate(h.begin(), h.end(), typename Histogram::value_type(0));
 }
 
 template <typename... Ts>
-std::vector<axis::variant<detail::rm_cvref<Ts>...>>
+std::vector<axis::variant<detail::unqual<Ts>...>>
 make_axis_vector(Ts&& ... ts) {
-  using T = axis::variant<detail::rm_cvref<Ts>...>;
+  using T = axis::variant<detail::unqual<Ts>...>;
   return std::vector<T>({T(std::forward<Ts>(ts))...});
 }
 

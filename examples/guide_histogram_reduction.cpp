@@ -8,9 +8,8 @@ namespace bh = boost::histogram;
 
 // example of a generic function for histograms, this one sums all entries
 template <typename... Ts>
-typename bh::histogram<Ts...>::element_type sum(
-    const bh::histogram<Ts...>& h) {
-  auto result = typename bh::histogram<Ts...>::element_type(0);
+auto sum(const bh::histogram<Ts...>& h) {
+  auto result = typename bh::histogram<Ts...>::value_type(0);
   for (auto x : h) result += x;
   return result;
 }

@@ -23,13 +23,13 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-using rm_cvref = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+using unqual = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template <class T>
-using mp_size = mp11::mp_size<rm_cvref<T>>;
+using mp_size = mp11::mp_size<unqual<T>>;
 
 template <typename T, unsigned N>
-using mp_at_c = mp11::mp_at_c<rm_cvref<T>, N>;
+using mp_at_c = mp11::mp_at_c<unqual<T>, N>;
 
 template <typename T1, typename T2>
 using copy_qualifiers = mp11::mp_if<
@@ -46,11 +46,10 @@ template <typename L>
 using mp_last = mp11::mp_at_c<L, (mp_size<L>::value - 1)>;
 
 template <typename T>
-using container_element_type = mp11::mp_first<rm_cvref<T>>;
+using container_value_type = mp11::mp_first<unqual<T>>;
 
 template <typename T>
-using iterator_value_type =
-    typename std::iterator_traits<T>::value_type;
+using iterator_value_type = typename std::iterator_traits<T>::value_type;
 
 template <typename T>
 using return_type = typename boost::callable_traits::return_type<T>::type;
@@ -97,30 +96,39 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, (std::declval<T&>().value(0)));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(
-    has_method_options, (static_cast<axis::option_type>(std::declval<T&>().options())));
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, &T::options);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, &T::metadata);
+
+// resize has two overloads, trying to get pmf in this case always fails
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_resize, (std::declval<T&>().resize(0)));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_size, &T::size);
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_clear, &T::clear);
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable, (std::declval<T&>()[0]));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_transform, (&T::forward, &T::inverse));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_random_access_container,
-                            (std::declval<T&>()[0], std::declval<T&>().size()));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_random_access_container, (std::declval<T&>()[0], &T::size,
+                                                         std::begin(std::declval<T&>()),
+                                                         std::end(std::declval<T&>())));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container, (std::get<0>(std::declval<T&>())));
-
-BOOST_HISTOGRAM_MAKE_SFINAE(is_castable_to_int, (static_cast<int>(std::declval<T&>())));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_equal_comparable,
                             (std::declval<T&>() == std::declval<T&>()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_axis, (std::declval<T&>().size(), &T::operator()));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_axis, (&T::size, &T::operator()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_iterable, (std::begin(std::declval<T&>()),
                                           std::end(std::declval<T&>())));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
                             (std::declval<std::ostream&>() << std::declval<T&>()));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_callable, (std::declval<T&>()()));
 
 namespace {
 template <typename T>
@@ -136,9 +144,9 @@ using is_axis_variant = typename is_axis_variant_impl<T>::type;
 template <typename T>
 using is_axis_or_axis_variant = mp11::mp_or<is_axis<T>, is_axis_variant<T>>;
 
-template <typename T>
-using is_axis_vector = mp11::mp_all<is_random_access_container<T>,
-                                    is_axis_or_axis_variant<container_element_type<rm_cvref<T>>>>;
+template <typename T, typename U = container_value_type<T>>
+using is_axis_vector =
+    mp11::mp_all<is_random_access_container<unqual<T>>, is_axis_or_axis_variant<U>>;
 
 struct static_container_tag {};
 struct iterable_container_tag {};
@@ -169,11 +177,6 @@ std::vector<bool> bool_mask(unsigned n, bool v) {
 }
 
 // poor-mans concept checks
-template <typename T,
-          typename = decltype(std::declval<T&>().size(), std::declval<T&>().increase(0),
-                              std::declval<T&>()[0])>
-struct requires_storage {};
-
 template <typename T, typename = decltype(*std::declval<T&>(), ++std::declval<T&>())>
 struct requires_iterator {};
 
@@ -186,15 +189,10 @@ struct requires_static_container {};
 template <typename T, typename = mp11::mp_if<is_axis<T>, void>>
 struct requires_axis {};
 
-template <typename T,
-          typename =
-              mp11::mp_if_c<(is_axis<T>::value || is_axis_variant<T>::value), void>>
+template <typename T, typename = mp11::mp_if<is_axis_or_axis_variant<T>, void>>
 struct requires_axis_or_axis_variant {};
 
-template <typename T, typename U = container_element_type<T>,
-          typename = mp11::mp_if_c<(is_random_access_container<T>::value &&
-                                    (is_axis<U>::value || is_axis_variant<U>::value)),
-                                   void>>
+template <typename T, typename = mp11::mp_if<is_axis_vector<T>, void>>
 struct requires_axis_vector {};
 
 template <typename T, typename U, typename = mp11::mp_if<std::is_same<T, U>, void>>

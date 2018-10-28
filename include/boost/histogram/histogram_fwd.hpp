@@ -54,11 +54,11 @@ template <typename... Ts>
 class variant;
 } // namespace axis
 
+template <typename T>
+struct storage_adaptor;
+
 template <typename Allocator = std::allocator<char>>
 struct adaptive_storage;
-
-template <typename T, typename Allocator = std::allocator<T>>
-struct array_storage;
 
 using default_storage = adaptive_storage<>;
 

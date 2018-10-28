@@ -10,9 +10,9 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/storage/array_storage.hpp>
-#include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/weight_counter.hpp>
 #include <cstdlib>
 #include <limits>
 #include <numeric>
@@ -38,7 +38,7 @@ int main() {
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
 
-    auto h2 = make_histogram_with(array_storage<int>(), v.begin(), v.end());
+    auto h2 = make_histogram_with(std::vector<int>(), v.begin(), v.end());
     BOOST_TEST_EQ(h2.rank(), 2);
     BOOST_TEST_EQ(h2.axis(0), v[0]);
     BOOST_TEST_EQ(h2.axis(1), v[1]);
@@ -88,7 +88,7 @@ int main() {
   // histogram iterator
   {
     auto h =
-        make_s(dynamic_tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 3));
+        make_s(dynamic_tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 3));
     const auto& a = h.axis();
     h(weight(2), 0);
     h(1);

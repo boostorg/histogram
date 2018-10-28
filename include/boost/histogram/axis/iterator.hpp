@@ -15,22 +15,22 @@ namespace histogram {
 namespace axis {
 
 template <typename Axis>
-class iterator_over
-    : public iterator_facade<iterator_over<Axis>, decltype(std::declval<Axis&>()[0]),
+class iterator
+    : public iterator_facade<iterator<Axis>, decltype(std::declval<Axis&>()[0]),
                              random_access_traversal_tag,
                              decltype(std::declval<Axis&>()[0]), int> {
 public:
-  explicit iterator_over(const Axis& axis, int idx) : axis_(axis), idx_(idx) {}
+  explicit iterator(const Axis& axis, int idx) : axis_(axis), idx_(idx) {}
 
-  iterator_over(const iterator_over&) = default;
-  iterator_over& operator=(const iterator_over&) = default;
+  iterator(const iterator&) = default;
+  iterator& operator=(const iterator&) = default;
 
 protected:
   void increment() noexcept { ++idx_; }
   void decrement() noexcept { --idx_; }
   void advance(int n) noexcept { idx_ += n; }
-  int distance_to(const iterator_over& other) const noexcept { return other.idx_ - idx_; }
-  bool equal(const iterator_over& other) const noexcept {
+  int distance_to(const iterator& other) const noexcept { return other.idx_ - idx_; }
+  bool equal(const iterator& other) const noexcept {
     return &axis_ == &other.axis_ && idx_ == other.idx_;
   }
   decltype(std::declval<Axis&>()[0]) dereference() const { return axis_[idx_]; }
@@ -45,7 +45,7 @@ protected:
 template <typename Derived>
 class iterator_mixin {
 public:
-  using const_iterator = iterator_over<Derived>;
+  using const_iterator = iterator<Derived>;
   using const_reverse_iterator = boost::reverse_iterator<const_iterator>;
 
   const_iterator begin() const noexcept {

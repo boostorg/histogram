@@ -35,6 +35,13 @@ public:
     return *this;
   }
 
+  template <typename T>
+  weight_counter& operator+=(const weight_type<T>& rhs) {
+    w += rhs.value;
+    w2 += rhs.value * rhs.value;
+    return *this;
+  }
+
   // TODO: explain why this is needed
   weight_counter& operator+=(const RealType& x) noexcept {
     w += x;
@@ -46,14 +53,6 @@ public:
   weight_counter& operator+=(const weight_counter<T>& rhs) {
     w += static_cast<RealType>(rhs.w);
     w2 += static_cast<RealType>(rhs.w2);
-    return *this;
-  }
-
-  template <typename T>
-  weight_counter& operator+=(const weight_type<T>& rhs) {
-    const auto x = static_cast<RealType>(rhs.value);
-    w += x;
-    w2 += x * x;
     return *this;
   }
 
