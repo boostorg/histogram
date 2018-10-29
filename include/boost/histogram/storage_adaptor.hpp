@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <array>
 #include <boost/assert.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <map>
@@ -83,6 +82,7 @@ struct storage_adaptor : detail::storage_reset<T> {
   using base_type::base_type;
   using value_type = typename T::value_type;
   using const_reference = typename T::const_reference;
+  struct storage_tag {};
 
   storage_adaptor() = default;
   storage_adaptor(const storage_adaptor&) = default;
@@ -93,16 +93,15 @@ struct storage_adaptor : detail::storage_reset<T> {
   storage_adaptor(const T& t) : base_type(t) {}
   storage_adaptor(T&& t) : base_type(std::move(t)) {}
 
-  template <typename U>
-  storage_adaptor(const storage_adaptor<U>& rhs) {
-    reset(rhs.size());
+  template <typename U, typename = detail::requires_storage<U>>
+  storage_adaptor(const U& rhs) {
     (*this) = rhs;
   }
 
-  template <typename U>
-  storage_adaptor& operator=(const storage_adaptor<U>& rhs) {
+  template <typename U, typename = detail::requires_storage<U>>
+  storage_adaptor& operator=(const U& rhs) {
     reset(rhs.size());
-    (*this) = rhs;
+    for (std::size_t i = 0, n = this->size(); i < n; ++i) (*this)(i, rhs[i]);
     return *this;
   }
 
@@ -120,8 +119,8 @@ struct storage_adaptor : detail::storage_reset<T> {
   }
 
   // precondition: storages have equal size
-  template <typename U>
-  storage_adaptor& operator+=(const storage_adaptor<U>& u) {
+  template <typename U, typename = detail::requires_storage<U>>
+  storage_adaptor& operator+=(const U& u) {
     const auto n = this->size();
     BOOST_ASSERT_MSG(n == u.size(), "sizes must be equal");
     for (std::size_t i = 0; i < n; ++i) (*this)(i, u[i]);
@@ -135,25 +134,14 @@ struct storage_adaptor : detail::storage_reset<T> {
 
   storage_adaptor& operator/=(const double x) { return operator*=(1.0 / x); }
 
-  template <typename U>
-  bool operator==(const storage_adaptor<U>& u) const {
+  template <typename U, typename = detail::requires_storage<U>>
+  bool operator==(const U& u) const {
     const auto n = this->size();
     if (n != u.size()) return false;
     for (std::size_t i = 0; i < n; ++i)
       if (!((*this)[i] == u[i])) return false;
     return true;
   }
-};
-
-template <typename A>
-struct storage_adaptor<adaptive_storage<A>> : adaptive_storage<A> {
-  using base_type = adaptive_storage<A>;
-  using value_type = typename base_type::value_type;
-  using const_reference = typename base_type::const_reference;
-  using base_type::base_type;
-
-  storage_adaptor(const adaptive_storage<A>& t) : base_type(t) {}
-  storage_adaptor(adaptive_storage<A>&& t) : base_type(std::move(t)) {}
 };
 } // namespace histogram
 } // namespace boost

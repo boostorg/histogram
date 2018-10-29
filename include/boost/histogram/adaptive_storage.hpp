@@ -98,6 +98,7 @@ struct adaptive_storage {
                    typename std::allocator_traits<Allocator>::value_type*>::value,
       "adaptive_storage requires allocator with trivial pointer type");
 
+  struct storage_tag {};
   using allocator_type = Allocator;
   using value_type = double;
   using const_reference = double;

@@ -13,7 +13,7 @@
 #include <vector>
 
 namespace bh = boost::histogram;
-using adaptive_storage_type = bh::storage_adaptor<bh::adaptive_storage<>>;
+using adaptive_storage_type = bh::adaptive_storage<>;
 template <typename T>
 using array_storage = bh::storage_adaptor<std::vector<T>>;
 using bh::weight;
