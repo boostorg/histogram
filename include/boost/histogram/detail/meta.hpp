@@ -96,9 +96,10 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, (std::declval<T&>().value(0)));
 
+// TODO try casting to more specific pmf with correct return type
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, &T::options);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, &T::metadata);
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
 
 // resize has two overloads, trying to get pmf in this case always fails
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_resize, (std::declval<T&>().resize(0)));
@@ -106,6 +107,10 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_resize, (std::declval<T&>().resize(0)));
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_size, &T::size);
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_clear, &T::clear);
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_allocator, &T::get_allocator);
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_storage, (std::declval<typename T::storage_tag>()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable, (std::declval<T&>()[0]));
 
@@ -200,6 +205,9 @@ struct requires_same {};
 
 template <typename T, typename = mp11::mp_if<is_transform<T>, void>>
 struct requires_transform {};
+
+template <typename T, typename = mp11::mp_if<is_storage<T>, void>>
+struct requires_storage {};
 
 } // namespace detail
 } // namespace histogram

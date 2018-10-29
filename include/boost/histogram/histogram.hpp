@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/histogram/adaptive_storage.hpp> // implements default_storage
 #include <boost/histogram/arithmetic_operators.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/index_mapper.hpp>
@@ -32,7 +33,8 @@ class histogram {
 public:
   using axes_type = Axes;
   using container_type = Container;
-  using storage_type = storage_adaptor<Container>;
+  using storage_type =
+      mp11::mp_if<detail::is_storage<Container>, Container, storage_adaptor<Container>>;
   using value_type = typename storage_type::value_type;
   using const_reference = typename storage_type::const_reference;
   using const_iterator = iterator<histogram>;
@@ -205,7 +207,11 @@ public:
     using sub_axes_type = detail::sub_axes<axes_type, N, Ns...>;
     using HR = histogram<sub_axes_type, storage_type>;
     auto sub_axes = detail::make_sub_axes(axes_, N(), Ns()...);
-    auto hr = HR(std::move(sub_axes), storage_type());
+    // make something here to copy allocator if container has an allocator
+    auto hr = HR(std::move(sub_axes),
+                 detail::static_if<detail::has_allocator<container_type>>(
+                     [this](auto) { return container_type(storage_.get_allocator()); },
+                     [](auto) { return container_type(); }, 0));
     const auto b = detail::bool_mask<N, Ns...>(rank(), true);
     std::vector<unsigned> shape(rank());
     for_each_axis(detail::shape_collector(shape.begin()));

@@ -7,6 +7,7 @@
 #include <array>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
@@ -133,6 +134,28 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((has_method_clear<B>));
     BOOST_TEST_TRAIT_TRUE((has_method_clear<C>));
     BOOST_TEST_TRAIT_FALSE((has_method_clear<D>));
+  }
+
+  // has_allocator
+  {
+    struct A {};
+    using B = std::vector<int>;
+    using C = std::map<int, int>;
+    using D = std::array<int, 10>;
+
+    BOOST_TEST_TRAIT_FALSE((has_method_clear<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_clear<B>));
+    BOOST_TEST_TRAIT_TRUE((has_method_clear<C>));
+    BOOST_TEST_TRAIT_FALSE((has_method_clear<D>));
+  }
+
+  // is_storage
+  {
+    struct A {};
+    using B = bh::adaptive_storage<>;
+
+    BOOST_TEST_TRAIT_FALSE((is_storage<A>));
+    BOOST_TEST_TRAIT_TRUE((is_storage<B>));
   }
 
   // is_indexable

@@ -18,7 +18,7 @@ using namespace boost::histogram;
 template <typename T>
 using vector_storage = storage_adaptor<std::vector<T>>;
 template <typename T>
-using array_storage = storage_adaptor<std::array<100, T>>;
+using array_storage = storage_adaptor<std::array<T, 100>>;
 
 int main() {
   // ctor, copy, move
@@ -47,13 +47,13 @@ int main() {
     vector_storage<unsigned char> c, d;
     c.reset(1);
     d.reset(2);
-    a.increment(0);
-    b.increment(0);
-    c.increment(0);
-    c.increment(0);
-    d.increment(0);
-    d.add(1, 5);
-    d.add(0, 2);
+    a(0);
+    b(0);
+    c(0);
+    c(0);
+    d(0);
+    d(1, 5);
+    d(0, 2);
     BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_EQ(b[0], 1);
     BOOST_TEST_EQ(c[0], 2);
@@ -69,11 +69,11 @@ int main() {
   {
     vector_storage<double> a;
     a.reset(2);
-    a.increment(0);
+    a(0);
     a *= 3;
     BOOST_TEST_EQ(a[0], 3);
     BOOST_TEST_EQ(a[1], 0);
-    a.add(1, 2);
+    a(1, 2);
     BOOST_TEST_EQ(a[0], 3);
     BOOST_TEST_EQ(a[1], 2);
     a *= 3;
@@ -85,7 +85,7 @@ int main() {
   {
     vector_storage<unsigned> a;
     a.reset(1);
-    a.increment(0);
+    a(0);
     decltype(a) b;
     b.reset(2);
     BOOST_TEST(!(a == b));
@@ -112,7 +112,7 @@ int main() {
   {
     vector_storage<unsigned> a;
     a.reset(1);
-    a.increment(0);
+    a(0);
     decltype(a) b;
     BOOST_TEST(!(a == b));
     b = std::move(a);
@@ -129,12 +129,12 @@ int main() {
   {
     vector_storage<weight_counter<double>> a;
     a.reset(1);
-    a.increment(0);
-    a.add(0, 1);
-    a.add(0, weight_counter<double>(1, 0));
+    a(0);
+    a(0, 1);
+    a(0, weight_counter<double>(1, 0));
     BOOST_TEST_EQ(a[0].value(), 3);
     BOOST_TEST_EQ(a[0].variance(), 2);
-    a.add(0, weight(2));
+    a(0, weight(2));
     BOOST_TEST_EQ(a[0].value(), 5);
     BOOST_TEST_EQ(a[0].variance(), 6);
   }

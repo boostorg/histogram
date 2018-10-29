@@ -14,11 +14,11 @@
 #include <numeric>
 #include <ostream>
 #include <tuple>
-#include <vector>
 #include <type_traits>
-#include <unordered_map>
-#include <typeinfo>
 #include <typeindex>
+#include <typeinfo>
+#include <unordered_map>
+#include <vector>
 
 using i0 = boost::mp11::mp_size_t<0>;
 using i1 = boost::mp11::mp_size_t<1>;
@@ -52,8 +52,7 @@ auto sum(const Histogram& h) {
 }
 
 template <typename... Ts>
-std::vector<axis::variant<detail::unqual<Ts>...>>
-make_axis_vector(Ts&& ... ts) {
+std::vector<axis::variant<detail::unqual<Ts>...>> make_axis_vector(Ts&&... ts) {
   using T = axis::variant<detail::unqual<Ts>...>;
   return std::vector<T>({T(std::forward<Ts>(ts))...});
 }
@@ -85,10 +84,8 @@ auto make_s(dynamic_tag, S&& s, Axes&&... axes)
   return make_histogram_with(s, make_axis_vector(std::forward<Axes>(axes)...));
 }
 
-using tracing_allocator_db = std::unordered_map<
-  std::type_index,
-  std::pair<std::size_t, std::size_t>
->;
+using tracing_allocator_db =
+    std::unordered_map<std::type_index, std::pair<std::size_t, std::size_t>>;
 
 template <class T>
 struct tracing_allocator {
@@ -99,21 +96,16 @@ struct tracing_allocator {
   tracing_allocator() noexcept {}
   tracing_allocator(tracing_allocator_db& x) noexcept : db(&x) {}
   template <class U>
-  tracing_allocator(const tracing_allocator<U>& a) noexcept
-      : db(a.db) {}
+  tracing_allocator(const tracing_allocator<U>& a) noexcept : db(a.db) {}
   ~tracing_allocator() noexcept {}
 
   T* allocate(std::size_t n) {
-    if (db) {
-      (*db)[typeid(T)].first += n;
-    }
+    if (db) { (*db)[typeid(T)].first += n; }
     return static_cast<T*>(::operator new(n * sizeof(T)));
   }
 
   void deallocate(T* p, std::size_t n) {
-    if (db) {
-      (*db)[typeid(T)].second += n;
-    }
+    if (db) { (*db)[typeid(T)].second += n; }
     ::operator delete((void*)p);
   }
 };

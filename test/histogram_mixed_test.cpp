@@ -5,11 +5,11 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/storage/array_storage.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
 #include "utility.hpp"
 
 using namespace boost::histogram;
@@ -19,7 +19,7 @@ void run_tests() {
   // compare
   {
     auto a = make(T1{}, axis::regular<>{3, 0, 3}, axis::integer<>(0, 2));
-    auto b = make_s(T2{}, array_storage<unsigned>(), axis::regular<>{3, 0, 3},
+    auto b = make_s(T2{}, std::vector<unsigned>(), axis::regular<>{3, 0, 3},
                     axis::integer<>(0, 2));
     BOOST_TEST_EQ(a, b);
     auto b2 = make(T2{}, axis::integer<>{0, 3}, axis::integer<>(0, 2));
@@ -46,7 +46,7 @@ void run_tests() {
   // copy_assign
   {
     auto a = make(T1{}, axis::regular<>{3, 0, 3}, axis::integer<>(0, 2));
-    auto b = make_s(T2{}, array_storage<unsigned>(), axis::regular<>{3, 0, 3},
+    auto b = make_s(T2{}, std::vector<unsigned>(), axis::regular<>{3, 0, 3},
                     axis::integer<>(0, 2));
     a(1, 1);
     BOOST_TEST_NE(a, b);
