@@ -15,7 +15,14 @@
 namespace bh = boost::histogram;
 using adaptive_storage_type = bh::adaptive_storage<>;
 template <typename T>
-using array_storage = bh::storage_adaptor<std::vector<T>>;
+using vector_storage = bh::storage_adaptor<std::vector<T>>;
+template <typename T>
+using array_storage = bh::storage_adaptor<std::array<T, 100>>;
+template <typename T>
+using map_storage = bh::storage_adaptor<std::map<int, T>>;
+
+// TODO: test array, map, boost::accumulator as bin type
+
 using bh::weight;
 
 template <typename T>
@@ -83,7 +90,7 @@ void equal_1_impl<void>() {
 template <typename T, typename U>
 void equal_2_impl() {
   auto a = prepare<T>(1);
-  array_storage<U> b;
+  vector_storage<U> b;
   b.reset(1);
   BOOST_TEST(a == b);
   b(0);
@@ -124,7 +131,7 @@ void increase_and_grow_impl<void>() {
 template <typename T>
 void convert_array_storage_impl() {
   const auto aref = prepare(1, T(0));
-  array_storage<uint8_t> s;
+  vector_storage<uint8_t> s;
   s.reset(1);
   s(0);
 
@@ -147,7 +154,7 @@ void convert_array_storage_impl() {
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
 
-  array_storage<float> t;
+  vector_storage<float> t;
   t.reset(1);
   t(0);
   while (t[0] < 1e20) t(0, t[0]);
@@ -174,7 +181,7 @@ void convert_array_storage_impl() {
   BOOST_TEST(g == s);
   BOOST_TEST(s == g);
 
-  array_storage<uint8_t> u;
+  vector_storage<uint8_t> u;
   u.reset(2);
   u(0);
   auto h = aref;
@@ -187,7 +194,7 @@ template <>
 void convert_array_storage_impl<void>() {
   const auto aref = prepare<void>(1);
   BOOST_TEST_EQ(aref[0], 0.0);
-  array_storage<uint8_t> s;
+  vector_storage<uint8_t> s;
   s.reset(1);
   s(0);
 
@@ -204,7 +211,7 @@ void convert_array_storage_impl<void>() {
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
 
-  array_storage<uint8_t> t;
+  vector_storage<uint8_t> t;
   t.reset(2);
   t(0);
   auto d = aref;
