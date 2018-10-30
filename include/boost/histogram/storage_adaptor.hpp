@@ -87,9 +87,14 @@ template <typename T>
 struct vector_augmentation : T {
   using value_type = typename T::value_type;
 
-  using T::T;
-  vector_augmentation(const T& t) : T(t) {}
   vector_augmentation(T&& t) : T(std::move(t)) {}
+  vector_augmentation(const T& t) : T(t) {}
+
+  vector_augmentation() = default;
+  vector_augmentation(vector_augmentation&&) = default;
+  vector_augmentation(const vector_augmentation&) = default;
+  vector_augmentation& operator=(vector_augmentation&&) = default;
+  vector_augmentation& operator=(const vector_augmentation&) = default;
 
   void reset(std::size_t n) {
     this->resize(n);
@@ -113,9 +118,14 @@ template <typename T>
 struct array_augmentation : T {
   using value_type = typename T::value_type;
 
-  using T::T;
-  array_augmentation(const T& t) : T(t) {}
   array_augmentation(T&& t) : T(std::move(t)) {}
+  array_augmentation(const T& t) : T(t) {}
+
+  array_augmentation() = default;
+  array_augmentation(array_augmentation&&) = default;
+  array_augmentation(const array_augmentation&) = default;
+  array_augmentation& operator=(array_augmentation&&) = default;
+  array_augmentation& operator=(const array_augmentation&) = default;
 
   void reset(std::size_t n) {
     if (n > this->max_size()) // for std::array
@@ -149,9 +159,14 @@ struct map_augmentation : T {
                 "map must use std::size_t as key_type");
   using value_type = typename T::mapped_type;
 
-  using T::T;
-  map_augmentation(const T& t) : T(t) {}
   map_augmentation(T&& t) : T(std::move(t)) {}
+  map_augmentation(const T& t) : T(t) {}
+
+  map_augmentation() = default;
+  map_augmentation(map_augmentation&&) = default;
+  map_augmentation(const map_augmentation&) = default;
+  map_augmentation& operator=( map_augmentation&&) = default;
+  map_augmentation& operator=(const map_augmentation&) = default;
 
   void reset(std::size_t n) {
     this->clear();
