@@ -113,8 +113,11 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable, (std::declval<T&>()[0]));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_transform, (&T::forward, &T::inverse));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_vector_like, (std::declval<T&>()[0], &T::size, &T::clear,
-                                             &T::reserve, &T::cbegin, &T::cend));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_storage, (typename T::storage_tag()));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_vector_like,
+                            (std::declval<T&>()[0], &T::size,
+                             std::declval<T&>().resize(0), &T::cbegin, &T::cend));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_array_like,
                             (std::declval<T&>()[0], &T::size, std::tuple_size<T>::value,
@@ -140,11 +143,6 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_iterable, (std::begin(std::declval<T&>()),
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
                             (std::declval<std::ostream&>() << std::declval<T&>()));
-
-BOOST_HISTOGRAM_MAKE_SFINAE(is_callable, (std::declval<T&>()()));
-
-template <typename T>
-using is_storage = typename std::is_base_of<storage_tag, T>::type;
 
 namespace {
 template <typename T>

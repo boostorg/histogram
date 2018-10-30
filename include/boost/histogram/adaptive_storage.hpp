@@ -92,7 +92,7 @@ bool safe_radd(T& t, const boost::multiprecision::number<U>& u) {
 } // namespace detail
 
 template <class Allocator>
-struct adaptive_storage : storage_tag {
+struct adaptive_storage {
   static_assert(
       std::is_same<typename std::allocator_traits<Allocator>::pointer,
                    typename std::allocator_traits<Allocator>::value_type*>::value,
@@ -254,15 +254,15 @@ struct adaptive_storage : storage_tag {
   }
 
   template <typename T>
-  void operator()(std::size_t i, const T& x) {
-    BOOST_ASSERT(i < size());
-    apply(adder(), buffer, i, x);
-  }
-
-  template <typename T>
   void operator()(std::size_t i, const weight_type<T>& x) {
     BOOST_ASSERT(i < size());
     apply(adder(), buffer, i, x.value);
+  }
+
+  template <typename T>
+  void add(std::size_t i, const T& x) {
+    BOOST_ASSERT(i < size());
+    apply(adder(), buffer, i, x);
   }
 
   const_reference operator[](std::size_t i) const { return apply(getter(), buffer, i); }
@@ -299,9 +299,10 @@ struct adaptive_storage : storage_tag {
 
   // precondition: storages have same size
   template <typename S>
-  adaptive_storage& operator+=(const S& o) {
-    BOOST_ASSERT(o.size() == size());
-    for (std::size_t i = 0; i < size(); ++i) (*this)(i, o[i]);
+  adaptive_storage& operator+=(const S& rhs) {
+    const auto n = size();
+    BOOST_ASSERT(n == rhs.size());
+    for (std::size_t i = 0; i < n; ++i) add(i, rhs[i]);
     return *this;
   }
 

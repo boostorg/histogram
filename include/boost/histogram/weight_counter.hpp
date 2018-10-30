@@ -29,17 +29,15 @@ public:
 
   explicit weight_counter(const RealType& value) noexcept : w(value), w2(value) {}
 
-  weight_counter& operator++() noexcept {
+  void operator()() noexcept {
     ++w;
     ++w2;
-    return *this;
   }
 
   template <typename T>
-  weight_counter& operator+=(const weight_type<T>& rhs) {
+  void operator()(const weight_type<T>& rhs) noexcept {
     w += rhs.value;
     w2 += rhs.value * rhs.value;
-    return *this;
   }
 
   // TODO: explain why this is needed

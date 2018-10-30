@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_TEST_UTILITY_ALLOCATOR_HPP
 #define BOOST_HISTOGRAM_TEST_UTILITY_ALLOCATOR_HPP
 
+#include <algorithm>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/typeinfo.hpp>
 #include <unordered_map>
@@ -20,6 +21,15 @@ struct tracing_allocator_db : std::unordered_map<const boost::core::typeinfo*,
   template <typename T>
   std::pair<std::size_t, std::size_t>& at() {
     return this->operator[](&BOOST_CORE_TYPEID(T));
+  }
+
+  std::pair<std::size_t, std::size_t> sum() {
+    std::pair<std::size_t, std::size_t> result(0, 0);
+    for (const auto& p : *this) {
+      result.first += p.second.first;
+      result.second += p.second.second;
+    }
+    return result;
   }
 };
 

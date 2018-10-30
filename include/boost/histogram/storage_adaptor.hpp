@@ -12,41 +12,76 @@
 #include <boost/assert.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/weight.hpp>
 #include <map>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
 
+// forward declaration
+namespace boost {
+namespace accumulators {
+template <typename Sample, typename Features, typename Weight>
+struct accumulator_set;
+} // namespace accumulators
+} // namespace boost
+
 namespace boost {
 namespace histogram {
 namespace detail {
 
-template <typename B, typename T>
-struct element_adaptor_impl;
-
 template <typename T>
-struct element_adaptor_impl<std::true_type, T> {
-  static void inc(T& t) { t(); }
+struct is_accumulator_set : std::false_type {};
+
+template <typename... Ts>
+struct is_accumulator_set<::boost::accumulators::accumulator_set<Ts...>>
+    : std::true_type {};
+
+// specialized form for arithmetic types
+template <typename T>
+struct element_adaptor_arithmetic {
+  static void forward(T& t) { ++t; }
   template <typename U>
-  static void add(T& t, U&& u) {
-    t(std::forward<U>(u));
+  static void forward(T& t, const weight_type<U>& u) {
+    t += std::forward<U>(u.value);
+  }
+};
+
+// specialized form for accumulator_set
+template <typename T>
+struct element_adaptor_accumulator_set {
+  static void forward(T& t) { t(); }
+  template <typename U>
+  static void forward(T& t, const U& u) {
+    t(u);
+  }
+  template <typename U>
+  static void forward(T& t, const weight_type<U>& u) {
+    t(weight = u.value);
+  }
+  template <typename U, typename W>
+  static void forward(T& t, const weight_type<W>& w, const U& u) {
+    t(u, weight = w.value);
+  }
+};
+
+// generic form for aggregators
+template <typename T>
+struct element_adaptor_generic {
+  template <typename... Us>
+  static void forward(T& t, Us&&... us) {
+    t(std::forward<Us>(us)...);
   }
 };
 
 template <typename T>
-struct element_adaptor_impl<std::false_type, T> {
-  static void inc(T& t) { ++t; }
-  template <typename U>
-  static void add(T& t, U&& u) {
-    t += std::forward<U>(u);
-  }
-};
+using element_adaptor =
+    mp11::mp_if<std::is_arithmetic<T>, element_adaptor_arithmetic<T>,
+                mp11::mp_if<is_accumulator_set<T>, element_adaptor_accumulator_set<T>,
+                            element_adaptor_generic<T>>>;
 
 template <typename T>
-using element_adaptor = element_adaptor_impl<is_callable<T>, T>;
-
-template <typename T>
-struct augmentation_error {};
+struct ERROR_type_passed_to_storage_adaptor_not_recognized {};
 
 template <typename T>
 struct vector_augmentation : T {
@@ -63,8 +98,15 @@ struct vector_augmentation : T {
 
   template <typename U>
   void set(std::size_t i, U&& u) {
-    (*this)[i] = std::forward<U>(u);
+    T::operator[](i) = std::forward<U>(u);
   }
+
+  template <typename U>
+  void add(std::size_t i, U&& u) {
+    T::operator[](i) += std::forward<U>(u);
+  }
+
+  void mul(std::size_t i, double x) { T::operator[](i) *= x; }
 };
 
 template <typename T>
@@ -84,18 +126,28 @@ struct array_augmentation : T {
   }
 
   template <typename U>
-  void set(std::size_t i, U&& u) {
-    (*this)[i] = std::forward<U>(u);
+  void add(std::size_t i, U&& u) {
+    T::operator[](i) += std::forward<U>(u);
   }
 
-  std::size_t size_ = 0;
   std::size_t size() const { return size_; }
+
+protected:
+  template <typename U>
+  void set(std::size_t i, U&& u) {
+    T::operator[](i) = std::forward<U>(u);
+  }
+
+  void mul(std::size_t i, double x) { T::operator[](i) *= x; }
+
+private:
+  std::size_t size_ = 0;
 };
 
 template <typename T>
 struct map_augmentation : T {
   static_assert(std::is_same<typename T::key_type, std::size_t>::value,
-                "map must have key_type equal to std::size_t");
+                "map must use std::size_t as key_type");
   using value_type = typename T::mapped_type;
 
   using T::T;
@@ -107,9 +159,29 @@ struct map_augmentation : T {
     size_ = n;
   }
 
+  value_type& operator[](std::size_t i) { return T::operator[](i); }
+
   value_type operator[](std::size_t i) const {
     auto it = this->find(i);
-    return it == this->end() ? value_type() : *it;
+    return it == this->end() ? value_type() : it->second;
+  }
+
+  template <typename U>
+  void add(std::size_t i, U&& u) {
+    if (u == value_type()) return;
+    auto it = this->find(i);
+    if (it != this->end())
+      it->second += std::forward<U>(u);
+    else
+      T::operator[](i) = std::forward<U>(u);
+  }
+
+  std::size_t size() const { return size_; }
+
+protected:
+  void mul(std::size_t i, double x) {
+    auto it = this->find(i);
+    if (it != this->end()) it->second *= x;
   }
 
   template <typename U>
@@ -118,27 +190,28 @@ struct map_augmentation : T {
     if (u == value_type()) {
       if (it != this->end()) this->erase(it);
     } else if (it != this->end())
-      *it = std::forward<U>(u);
+      it->second = std::forward<U>(u);
     else
-      this->insert(i, std::forward<U>(u));
+      T::operator[](i) = std::forward<U>(u);
   }
 
+private:
   std::size_t size_ = 0;
-  std::size_t size() const { return size_; }
 };
 
 template <typename T>
 using storage_augmentation = mp11::mp_if<
     is_vector_like<T>, vector_augmentation<T>,
     mp11::mp_if<is_array_like<T>, array_augmentation<T>,
-                mp11::mp_if<is_map_like<T>, map_augmentation<T>, augmentation_error<T>>>>;
+                mp11::mp_if<is_map_like<T>, map_augmentation<T>,
+                            ERROR_type_passed_to_storage_adaptor_not_recognized<T>>>>;
 
 } // namespace detail
 
 /// generic implementation for std::array, vector-like, and map-like containers
 template <typename T>
-struct storage_adaptor : detail::storage_augmentation<T>, storage_tag {
-
+struct storage_adaptor : detail::storage_augmentation<T> {
+  struct storage_tag {};
   using base_type = detail::storage_augmentation<T>;
   using value_type = typename base_type::value_type;
   using element_adaptor = detail::element_adaptor<value_type>;
@@ -166,28 +239,23 @@ struct storage_adaptor : detail::storage_augmentation<T>, storage_tag {
     return *this;
   }
 
-  void operator()(std::size_t i) {
+  template <typename... Us>
+  void operator()(std::size_t i, Us&&... us) {
     BOOST_ASSERT(i < this->size());
-    element_adaptor::inc((*this)[i]);
-  }
-
-  template <typename U>
-  void operator()(std::size_t i, U&& u) {
-    BOOST_ASSERT(i < this->size());
-    element_adaptor::add((*this)[i], std::forward<U>(u));
+    element_adaptor::forward((*this)[i], std::forward<Us>(us)...);
   }
 
   // precondition: storages have equal size
   template <typename U, typename = detail::requires_storage<U>>
-  storage_adaptor& operator+=(const U& u) {
+  storage_adaptor& operator+=(const U& rhs) {
     const auto n = this->size();
-    BOOST_ASSERT_MSG(n == u.size(), "sizes must be equal");
-    for (std::size_t i = 0; i < n; ++i) element_adaptor::add((*this)[i], u[i]);
+    BOOST_ASSERT_MSG(n == rhs.size(), "sizes must be equal");
+    for (std::size_t i = 0; i < n; ++i) this->add(i, rhs[i]);
     return *this;
   }
 
   storage_adaptor& operator*=(const double x) {
-    for (std::size_t i = 0, n = this->size(); i < n; ++i) (*this)[i] *= x;
+    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->mul(i, x);
     return *this;
   }
 

@@ -14,6 +14,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/mp11.hpp>
+#include <deque>
 #include <iterator>
 #include <map>
 #include <tuple>
@@ -192,10 +193,12 @@ int main() {
     using B = std::vector<int>;
     using C = std::array<int, 10>;
     using D = std::map<unsigned, int>;
+    using E = std::deque<int>;
     BOOST_TEST_TRAIT_FALSE((is_vector_like<A>));
     BOOST_TEST_TRAIT_TRUE((is_vector_like<B>));
     BOOST_TEST_TRAIT_FALSE((is_vector_like<C>));
     BOOST_TEST_TRAIT_FALSE((is_vector_like<D>));
+    BOOST_TEST_TRAIT_TRUE((is_vector_like<E>));
   }
 
   // is_array_like
