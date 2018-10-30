@@ -11,6 +11,7 @@
 #include <boost/callable_traits/return_type.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <tuple>
@@ -81,9 +82,7 @@ constexpr decltype(auto) static_if(Ts&&... ts) {
   template <typename U>                              \
   struct name##_impl {                               \
     template <typename T, typename = decltype(cond)> \
-    struct SFINAE {};                                \
-    template <typename T>                            \
-    static std::true_type Test(SFINAE<T>*);          \
+    static std::true_type Test(void*);               \
     template <typename T>                            \
     static std::false_type Test(...);                \
     using type = decltype(Test<U>(nullptr));         \
@@ -97,7 +96,7 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, (std::declval<T&>().value(0)));
 
 // TODO try casting to more specific pmf with correct return type
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, &T::options);
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, (std::declval<T&>().options()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
 
@@ -110,17 +109,26 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_clear, &T::clear);
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_allocator, &T::get_allocator);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_storage, (std::declval<typename T::storage_tag>()));
-
 BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable, (std::declval<T&>()[0]));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_transform, (&T::forward, &T::inverse));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_random_access_container, (std::declval<T&>()[0], &T::size,
-                                                         std::begin(std::declval<T&>()),
-                                                         std::end(std::declval<T&>())));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_vector_like, (std::declval<T&>()[0], &T::size, &T::clear,
+                                             &T::reserve, &T::cbegin, &T::cend));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_static_container, (std::get<0>(std::declval<T&>())));
+BOOST_HISTOGRAM_MAKE_SFINAE(is_array_like,
+                            (std::declval<T&>()[0], &T::size, std::tuple_size<T>::value,
+                             &T::cbegin, &T::cend));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_map_like,
+                            (typename T::key_type(), typename T::mapped_type(),
+                             std::declval<T&>().begin(), std::declval<T&>().end()));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable_container, (std::declval<T&>()[0], &T::size,
+                                                     std::begin(std::declval<T&>()),
+                                                     std::end(std::declval<T&>())));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(is_tuple, (std::get<0>(std::declval<T&>())));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_equal_comparable,
                             (std::declval<T&>() == std::declval<T&>()));
@@ -134,6 +142,9 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
                             (std::declval<std::ostream&>() << std::declval<T&>()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_callable, (std::declval<T&>()()));
+
+template <typename T>
+using is_storage = typename std::is_base_of<storage_tag, T>::type;
 
 namespace {
 template <typename T>
@@ -151,7 +162,7 @@ using is_axis_or_axis_variant = mp11::mp_or<is_axis<T>, is_axis_variant<T>>;
 
 template <typename T, typename U = container_value_type<T>>
 using is_axis_vector =
-    mp11::mp_all<is_random_access_container<unqual<T>>, is_axis_or_axis_variant<U>>;
+    mp11::mp_all<is_indexable_container<unqual<T>>, is_axis_or_axis_variant<U>>;
 
 struct static_container_tag {};
 struct iterable_container_tag {};
@@ -160,7 +171,7 @@ struct no_container_tag {};
 template <typename T>
 using classify_container = typename std::conditional<
     is_iterable<T>::value, iterable_container_tag,
-    typename std::conditional<is_static_container<T>::value, static_container_tag,
+    typename std::conditional<is_tuple<T>::value, static_container_tag,
                               no_container_tag>::type>::type;
 
 namespace {
@@ -188,7 +199,7 @@ struct requires_iterator {};
 template <typename T, typename = mp11::mp_if<is_iterable<T>, void>>
 struct requires_iterable {};
 
-template <typename T, typename = mp11::mp_if<is_static_container<T>, void>>
+template <typename T, typename = mp11::mp_if<is_tuple<T>, void>>
 struct requires_static_container {};
 
 template <typename T, typename = mp11::mp_if<is_axis<T>, void>>

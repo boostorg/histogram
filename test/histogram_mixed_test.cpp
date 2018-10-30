@@ -10,7 +10,7 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
-#include "utility.hpp"
+#include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 

@@ -5,11 +5,11 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/weight_counter.hpp>
 #include <sstream>
@@ -17,7 +17,9 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include "utility.hpp"
+#include "utility_allocator.hpp"
+#include "utility_histogram.hpp"
+#include "utility_meta.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
@@ -102,8 +104,7 @@ void run_tests() {
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
     auto h3 =
-        histogram<std::tuple<axis::integer<>, axis::integer<>>, std::vector<unsigned>>(
-            h);
+        histogram<std::tuple<axis::integer<>, axis::integer<>>, std::vector<unsigned>>(h);
     BOOST_TEST_EQ(h3, h);
   }
 
@@ -118,8 +119,8 @@ void run_tests() {
     // test self-assign
     h2 = h2;
     BOOST_TEST_EQ(h, h2);
-    auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
-                        std::vector<unsigned>>();
+    auto h3 =
+        histogram<std::tuple<axis::integer<>, axis::integer<>>, std::vector<unsigned>>();
     h3 = h;
     BOOST_TEST_EQ(h, h3);
   }
@@ -812,13 +813,13 @@ void run_tests() {
     }
 
     // int allocation for std::vector
-    BOOST_TEST_EQ(db[typeid(int)].first, db[typeid(int)].second);
-    BOOST_TEST_EQ(db[typeid(int)].first, 1002u);
+    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, db[&BOOST_CORE_TYPEID(int)].second);
+    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, 1002u);
 
     if (Tag()) { // axis::variant allocation, only for dynamic histogram
       using T = axis::variant<axis::integer<>>;
-      BOOST_TEST_EQ(db[typeid(T)].first, db[typeid(T)].second);
-      BOOST_TEST_LE(db[typeid(T)].first,
+      BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(T)].first, db[&BOOST_CORE_TYPEID(T)].second);
+      BOOST_TEST_LE(db[&BOOST_CORE_TYPEID(T)].first,
                     1u); // zero if vector uses small-vector-optimisation
     }
   }

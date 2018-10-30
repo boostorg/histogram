@@ -6,17 +6,17 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/detail/cat.hpp>
-#include <boost/histogram/detail/axes.hpp>
-#include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variable.hpp>
+#include <boost/histogram/detail/axes.hpp>
+#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <vector>
 #include <tuple>
-#include "utility.hpp"
+#include <vector>
+#include "utility_meta.hpp"
 
 using namespace boost::histogram;
 

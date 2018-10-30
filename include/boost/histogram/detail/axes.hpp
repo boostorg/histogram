@@ -147,9 +147,6 @@ void range_check(const std::tuple<Ts...>&) {
   static_assert(N < sizeof...(Ts), "index out of range");
 }
 
-template <typename T, int N>
-using axis_at = mp_at_c<T, is_static_container<T>::value * N>;
-
 template <int N, typename T, typename = requires_static_container<T>>
 auto axis_get(T&& axes) -> decltype(std::get<N>(std::forward<T>(axes))) {
   return std::get<N>(std::forward<T>(axes));

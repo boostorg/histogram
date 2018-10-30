@@ -18,20 +18,17 @@
 #include <string>
 #include <type_traits>
 #include <vector>
-#include "utility.hpp"
+#include "utility_allocator.hpp"
+#include "utility_axis.hpp"
 
 using namespace boost::histogram;
 
 int main() {
-  {
-    BOOST_TEST_THROWS(axis::integer<>(1, 1), std::invalid_argument);
-  }
+  { BOOST_TEST_THROWS(axis::integer<>(1, 1), std::invalid_argument); }
 
   {
-    axis::variant<
-      axis::integer<>,
-      axis::category<std::string>
-    > a{axis::integer<>(0, 2, "int")};
+    axis::variant<axis::integer<>, axis::category<std::string>> a{
+        axis::integer<>(0, 2, "int")};
     BOOST_TEST_EQ(a(-10), -1);
     BOOST_TEST_EQ(a(-1), -1);
     BOOST_TEST_EQ(a(0), 0);
@@ -178,7 +175,7 @@ int main() {
 
   {
     auto a = axis::variant<axis::category<>>(axis::category<>({2, 1, 3}));
-    BOOST_TEST_THROWS(a[0].lower(), std::runtime_error);    
+    BOOST_TEST_THROWS(a[0].lower(), std::runtime_error);
   }
 
   // vector of axes with custom allocators
@@ -206,22 +203,22 @@ int main() {
       axes.emplace_back(T5({1, 2, 3, 4, 5}, {}, axis::option_type::overflow, a));
     }
     // 5 axis::variant objects
-    BOOST_TEST_EQ(db[typeid(axis_type)].first, db[typeid(axis_type)].second);
-    BOOST_TEST_EQ(db[typeid(axis_type)].first, 5);
+    BOOST_TEST_EQ(db.at<axis_type>().first, db.at<axis_type>().second);
+    BOOST_TEST_EQ(db.at<axis_type>().first, 5);
 
     // label
-    BOOST_TEST_EQ(db[typeid(char)].first, db[typeid(char)].second);
-    BOOST_TEST_EQ(db[typeid(char)].first, 3u);
+    BOOST_TEST_EQ(db.at<char>().first, db.at<char>().second);
+    BOOST_TEST_EQ(db.at<char>().first, 3u);
 
     // nothing to allocate for T1
     // nothing to allocate for T2
     // T3 allocates storage for bin edges
-    BOOST_TEST_EQ(db[typeid(double)].first, db[typeid(double)].second);
-    BOOST_TEST_EQ(db[typeid(double)].first, 3u);
+    BOOST_TEST_EQ(db.at<double>().first, db.at<double>().second);
+    BOOST_TEST_EQ(db.at<double>().first, 3u);
     // nothing to allocate for T4
     // T5 allocates storage for long array
-    BOOST_TEST_EQ(db[typeid(long)].first, db[typeid(long)].second);
-    BOOST_TEST_EQ(db[typeid(long)].first, 5u);
+    BOOST_TEST_EQ(db.at<long>().first, db.at<long>().second);
+    BOOST_TEST_EQ(db.at<long>().first, 5u);
 
 #if (BOOST_MSVC)
     BOOST_TEST_EQ(db.size(), 5); // axis_type, char, double, long + ???
@@ -231,9 +228,7 @@ int main() {
   }
 
   // iterators
-  {
-    test_axis_iterator(axis::variant<axis::regular<>>(axis::regular<>(5, 0, 1)), 0, 5);
-  }
+  { test_axis_iterator(axis::variant<axis::regular<>>(axis::regular<>(5, 0, 1)), 0, 5); }
 
   return boost::report_errors();
 }

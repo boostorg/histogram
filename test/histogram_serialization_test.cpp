@@ -13,7 +13,7 @@
 #include <boost/histogram/serialization.hpp>
 #include <sstream>
 #include <string>
-#include "utility.hpp"
+#include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 

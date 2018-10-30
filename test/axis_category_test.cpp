@@ -6,14 +6,14 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/circular.hpp>
+#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <limits>
 #include <sstream>
 #include <string>
 #include <type_traits>
-#include "utility.hpp"
+#include "utility_axis.hpp"
 
 using namespace boost::histogram;
 

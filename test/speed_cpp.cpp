@@ -12,7 +12,7 @@
 #include <limits>
 #include <memory>
 #include <random>
-#include "utility.hpp"
+#include "utility_histgram.hpp"
 
 using namespace boost::histogram;
 using boost::mp11::mp_list;

@@ -54,6 +54,8 @@ template <typename... Ts>
 class variant;
 } // namespace axis
 
+struct storage_tag {};
+
 template <typename T>
 struct storage_adaptor;
 
