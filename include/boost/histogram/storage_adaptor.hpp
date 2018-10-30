@@ -97,16 +97,16 @@ struct vector_augmentation : T {
   }
 
   template <typename U>
-  void set(std::size_t i, U&& u) {
-    T::operator[](i) = std::forward<U>(u);
-  }
-
-  template <typename U>
   void add(std::size_t i, U&& u) {
     T::operator[](i) += std::forward<U>(u);
   }
 
-  void mul(std::size_t i, double x) { T::operator[](i) *= x; }
+  template <typename U>
+  void set_impl(std::size_t i, U&& u) {
+    T::operator[](i) = std::forward<U>(u);
+  }
+
+  void mul_impl(std::size_t i, double x) { T::operator[](i) *= x; }
 };
 
 template <typename T>
@@ -132,13 +132,12 @@ struct array_augmentation : T {
 
   std::size_t size() const { return size_; }
 
-protected:
   template <typename U>
-  void set(std::size_t i, U&& u) {
+  void set_impl(std::size_t i, U&& u) {
     T::operator[](i) = std::forward<U>(u);
   }
 
-  void mul(std::size_t i, double x) { T::operator[](i) *= x; }
+  void mul_impl(std::size_t i, double x) { T::operator[](i) *= x; }
 
 private:
   std::size_t size_ = 0;
@@ -178,14 +177,13 @@ struct map_augmentation : T {
 
   std::size_t size() const { return size_; }
 
-protected:
-  void mul(std::size_t i, double x) {
+  void mul_impl(std::size_t i, double x) {
     auto it = this->find(i);
     if (it != this->end()) it->second *= x;
   }
 
   template <typename U>
-  void set(std::size_t i, U&& u) {
+  void set_impl(std::size_t i, U&& u) {
     auto it = this->find(i);
     if (u == value_type()) {
       if (it != this->end()) this->erase(it);
@@ -235,7 +233,7 @@ struct storage_adaptor : detail::storage_augmentation<T> {
   template <typename U, typename = detail::requires_storage<U>>
   storage_adaptor& operator=(const U& rhs) {
     this->reset(rhs.size());
-    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->set(i, rhs[i]);
+    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->set_impl(i, rhs[i]);
     return *this;
   }
 
@@ -255,7 +253,7 @@ struct storage_adaptor : detail::storage_augmentation<T> {
   }
 
   storage_adaptor& operator*=(const double x) {
-    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->mul(i, x);
+    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->mul_impl(i, x);
     return *this;
   }
 
