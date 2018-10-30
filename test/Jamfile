@@ -16,7 +16,6 @@ project histogram-test
 alias run-tests :
     [ run adaptive_storage_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
     [ run adaptive_storage_test.cpp ]
-    [ run array_storage_test.cpp ]
     [ run axis_regular_test.cpp ]
     [ run axis_circular_test.cpp ]
     [ run axis_variable_test.cpp ]
@@ -30,6 +29,7 @@ alias run-tests :
     [ run histogram_test.cpp ]
     [ run index_mapper_test.cpp ]
     [ run meta_test.cpp ]
+    [ run storage_adaptor_test.cpp ]
     [ run storage_adaptor_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
     [ run utility_test.cpp ]
     [ run weight_counter_test.cpp ]
