@@ -216,7 +216,7 @@ public:
     std::vector<unsigned> shape(rank());
     for_each_axis(detail::shape_collector(shape.begin()));
     detail::index_mapper m(shape, b);
-    do { hr.storage_(m.second, storage_[m.first]); } while (m.next());
+    do { hr.storage_.add(m.second, storage_[m.first]); } while (m.next());
     return hr;
   }
 
@@ -241,7 +241,7 @@ public:
     std::vector<unsigned> shape(rank());
     for_each_axis(detail::shape_collector(shape.begin()));
     detail::index_mapper m(shape, b);
-    do { hr.storage_(m.second, storage_[m.first]); } while (m.next());
+    do { hr.storage_.add(m.second, storage_[m.first]); } while (m.next());
     return hr;
   }
 

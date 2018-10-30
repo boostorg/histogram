@@ -102,7 +102,7 @@ void increase_and_grow_impl() {
 
   auto x = prepare<void>(2);
   x(0);
-  n2(0, x[0]);
+  n2.add(0, x[0]);
 
   double v = tmax;
   ++v;
@@ -143,7 +143,7 @@ void convert_array_storage_impl() {
   BOOST_TEST(!(b == s));
 
   auto c = aref;
-  c(0, s[0]);
+  c.add(0, s[0]);
   BOOST_TEST_EQ(c[0], 1.0);
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
@@ -151,7 +151,7 @@ void convert_array_storage_impl() {
   vector_storage<float> t;
   t.reset(1);
   t(0);
-  while (t[0] < 1e20) t(0, t[0]);
+  while (t[0] < 1e20) t.add(0, t[0]);
   auto d = aref;
   d = t;
   BOOST_TEST(d == t);
@@ -170,7 +170,7 @@ void convert_array_storage_impl() {
   BOOST_TEST(!(f == s));
 
   auto g = aref;
-  g(0, s[0]);
+  g.add(0, s[0]);
   BOOST_TEST_EQ(g[0], 1.0);
   BOOST_TEST(g == s);
   BOOST_TEST(s == g);
@@ -200,7 +200,7 @@ void convert_array_storage_impl<void>() {
   BOOST_TEST(!(a == s));
 
   auto c = aref;
-  c(0, s[0]);
+  c.add(0, s[0]);
   BOOST_TEST_EQ(c[0], 1.0);
   BOOST_TEST(c == s);
   BOOST_TEST(s == c);
@@ -347,12 +347,12 @@ int main() {
     BOOST_TEST_EQ(b[0], x);
     for (unsigned i = 0; i < 80; ++i) {
       x += x;
-      a(0, a[0]);
+      a.add(0, a[0]);
       b += b;
       BOOST_TEST_EQ(a[0], x);
       BOOST_TEST_EQ(b[0], x);
       auto c = prepare<void>(1);
-      c(0, a[0]);
+      c.add(0, a[0]);
       BOOST_TEST_EQ(c[0], x);
       c(0, weight(0));
       BOOST_TEST_EQ(c[0], x);
@@ -372,7 +372,7 @@ int main() {
     a *= 3;
     BOOST_TEST_EQ(a[0], 3);
     BOOST_TEST_EQ(a[1], 0);
-    a(1, 2);
+    a.add(1, 2);
     BOOST_TEST_EQ(a[0], 3);
     BOOST_TEST_EQ(a[1], 2);
     a *= 3;
