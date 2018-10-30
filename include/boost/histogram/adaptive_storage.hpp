@@ -92,7 +92,7 @@ bool safe_radd(T& t, const boost::multiprecision::number<U>& u) {
 } // namespace detail
 
 template <class Allocator>
-struct adaptive_storage {
+struct adaptive_storage : storage_tag {
   static_assert(
       std::is_same<typename std::allocator_traits<Allocator>::pointer,
                    typename std::allocator_traits<Allocator>::value_type*>::value,

@@ -37,7 +37,10 @@ int main() {
   // note special effect of multiplication on weight_counter variance
   auto h = bh::make_histogram_with(std::vector<bh::weight_counter<double>>(),
                                    bh::axis::regular<>(2, -1, 1));
-  h(-0.5); // counts are: 1 0
+  h(-0.5);
+
+  // counts are: 1 0
+  assert(h.at(0).value() == 1 && h.at(1).value() == 0);
 
   auto h_sum = h + h;
   auto h_mul = 2 * h;

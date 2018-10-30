@@ -20,51 +20,72 @@
 namespace boost {
 namespace histogram {
 namespace detail {
-template <typename T>
-void increment_element_impl(std::true_type, T& t) {
-  t();
-}
+
+template <typename B, typename T>
+struct element_adaptor_impl;
 
 template <typename T>
-void increment_element_impl(std::false_type, T& t) {
-  ++t;
-}
-
-template <typename T>
-void increment_element(T& t) {
-  increment_element_impl(is_callable<T>(), t);
-}
-
-template <typename HasResize, typename HasClear, typename T>
-struct storage_reset_impl;
-
-template <typename T>
-struct storage_reset_impl<std::true_type, std::true_type, T> : T {
-  using T::T;
-  storage_reset_impl(const T& t) : T(t) {}
-  storage_reset_impl(T&& t) : T(std::move(t)) {}
-
-  void reset(T& t, std::size_t n) {
-    t.resize(n);
-    std::fill(t.begin(), t.end(), typename T::value_type());
+struct element_adaptor_impl<std::true_type, T> {
+  static void inc(T& t) { t(); }
+  template <typename U>
+  static void add(T& t, U&& u) {
+    t(std::forward<U>(u));
   }
 };
 
-template <typename HasClear, typename T>
-struct storage_reset_impl<std::false_type, HasClear, T> : T {
-  using T::T;
-  storage_reset_impl(const T& t) : T(t) {}
-  storage_reset_impl(T&& t) : T(std::move(t)) {}
+template <typename T>
+struct element_adaptor_impl<std::false_type, T> {
+  static void inc(T& t) { ++t; }
+  template <typename U>
+  static void add(T& t, U&& u) {
+    t += std::forward<U>(u);
+  }
+};
 
-  void reset(T& t, std::size_t n) {
+template <typename T>
+using element_adaptor = element_adaptor_impl<is_callable<T>, T>;
+
+template <typename T>
+struct augmentation_error {};
+
+template <typename T>
+struct vector_augmentation : T {
+  using value_type = typename T::value_type;
+
+  using T::T;
+  vector_augmentation(const T& t) : T(t) {}
+  vector_augmentation(T&& t) : T(std::move(t)) {}
+
+  void reset(std::size_t n) {
+    this->resize(n);
+    std::fill(this->begin(), this->end(), value_type());
+  }
+
+  template <typename U>
+  void set(std::size_t i, U&& u) {
+    (*this)[i] = std::forward<U>(u);
+  }
+};
+
+template <typename T>
+struct array_augmentation : T {
+  using value_type = typename T::value_type;
+
+  using T::T;
+  array_augmentation(const T& t) : T(t) {}
+  array_augmentation(T&& t) : T(std::move(t)) {}
+
+  void reset(std::size_t n) {
     if (n > this->max_size()) // for std::array
       throw std::runtime_error(
-          detail::cat("size ", n, " exceeds maximum capacity ", t.max_size()));
-    // map-like has clear(), std::array does not
-    static_if<HasClear>(
-        [](auto& t) { t.clear(); },
-        [n](auto& t) { std::fill_n(t.begin(), n, typename T::value_type()); }, t);
+          detail::cat("size ", n, " exceeds maximum capacity ", this->max_size()));
+    std::fill_n(this->begin(), n, value_type());
     size_ = n;
+  }
+
+  template <typename U>
+  void set(std::size_t i, U&& u) {
+    (*this)[i] = std::forward<U>(u);
   }
 
   std::size_t size_ = 0;
@@ -72,18 +93,58 @@ struct storage_reset_impl<std::false_type, HasClear, T> : T {
 };
 
 template <typename T>
-using storage_reset = storage_reset_impl<has_method_resize<T>, has_method_clear<T>, T>;
+struct map_augmentation : T {
+  static_assert(std::is_same<typename T::key_type, std::size_t>::value,
+                "map must have key_type equal to std::size_t");
+  using value_type = typename T::mapped_type;
+
+  using T::T;
+  map_augmentation(const T& t) : T(t) {}
+  map_augmentation(T&& t) : T(std::move(t)) {}
+
+  void reset(std::size_t n) {
+    this->clear();
+    size_ = n;
+  }
+
+  value_type operator[](std::size_t i) const {
+    auto it = this->find(i);
+    return it == this->end() ? value_type() : *it;
+  }
+
+  template <typename U>
+  void set(std::size_t i, U&& u) {
+    auto it = this->find(i);
+    if (u == value_type()) {
+      if (it != this->end()) this->erase(it);
+    } else if (it != this->end())
+      *it = std::forward<U>(u);
+    else
+      this->insert(i, std::forward<U>(u));
+  }
+
+  std::size_t size_ = 0;
+  std::size_t size() const { return size_; }
+};
+
+template <typename T>
+using storage_augmentation = mp11::mp_if<
+    is_vector_like<T>, vector_augmentation<T>,
+    mp11::mp_if<is_array_like<T>, array_augmentation<T>,
+                mp11::mp_if<is_map_like<T>, map_augmentation<T>, augmentation_error<T>>>>;
+
 } // namespace detail
 
 /// generic implementation for std::array, vector-like, and map-like containers
 template <typename T>
-struct storage_adaptor : detail::storage_reset<T> {
-  using base_type = detail::storage_reset<T>;
-  using base_type::base_type;
-  using value_type = typename T::value_type;
-  using const_reference = typename T::const_reference;
-  struct storage_tag {};
+struct storage_adaptor : detail::storage_augmentation<T>, storage_tag {
 
+  using base_type = detail::storage_augmentation<T>;
+  using value_type = typename base_type::value_type;
+  using element_adaptor = detail::element_adaptor<value_type>;
+  using const_reference = const value_type&;
+
+  using base_type::base_type;
   storage_adaptor() = default;
   storage_adaptor(const storage_adaptor&) = default;
   storage_adaptor& operator=(const storage_adaptor&) = default;
@@ -100,22 +161,20 @@ struct storage_adaptor : detail::storage_reset<T> {
 
   template <typename U, typename = detail::requires_storage<U>>
   storage_adaptor& operator=(const U& rhs) {
-    reset(rhs.size());
-    for (std::size_t i = 0, n = this->size(); i < n; ++i) (*this)(i, rhs[i]);
+    this->reset(rhs.size());
+    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->set(i, rhs[i]);
     return *this;
   }
 
-  void reset(std::size_t n) { detail::storage_reset<T>::reset(*this, n); }
-
   void operator()(std::size_t i) {
     BOOST_ASSERT(i < this->size());
-    detail::increment_element((*this)[i]);
+    element_adaptor::inc((*this)[i]);
   }
 
   template <typename U>
   void operator()(std::size_t i, U&& u) {
     BOOST_ASSERT(i < this->size());
-    (*this)[i] += std::forward<U>(u);
+    element_adaptor::add((*this)[i], std::forward<U>(u));
   }
 
   // precondition: storages have equal size
@@ -123,7 +182,7 @@ struct storage_adaptor : detail::storage_reset<T> {
   storage_adaptor& operator+=(const U& u) {
     const auto n = this->size();
     BOOST_ASSERT_MSG(n == u.size(), "sizes must be equal");
-    for (std::size_t i = 0; i < n; ++i) (*this)(i, u[i]);
+    for (std::size_t i = 0; i < n; ++i) element_adaptor::add((*this)[i], u[i]);
     return *this;
   }
 
@@ -139,7 +198,7 @@ struct storage_adaptor : detail::storage_reset<T> {
     const auto n = this->size();
     if (n != u.size()) return false;
     for (std::size_t i = 0; i < n; ++i)
-      if (!((*this)[i] == u[i])) return false;
+      if ((*this)[i] != u[i]) return false;
     return true;
   }
 };

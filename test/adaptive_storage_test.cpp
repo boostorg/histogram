@@ -16,12 +16,6 @@ namespace bh = boost::histogram;
 using adaptive_storage_type = bh::adaptive_storage<>;
 template <typename T>
 using vector_storage = bh::storage_adaptor<std::vector<T>>;
-template <typename T>
-using array_storage = bh::storage_adaptor<std::array<T, 100>>;
-template <typename T>
-using map_storage = bh::storage_adaptor<std::map<int, T>>;
-
-// TODO: test array, map, boost::accumulator as bin type
 
 using bh::weight;
 

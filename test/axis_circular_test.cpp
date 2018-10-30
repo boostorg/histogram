@@ -9,7 +9,7 @@
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <limits>
-#include "utility.hpp"
+#include "utility_axis.hpp"
 
 using namespace boost::histogram;
 
@@ -48,9 +48,7 @@ int main() {
   }
 
   // iterators
-  {
-    test_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5);
-  }
+  { test_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5); }
 
   return boost::report_errors();
 }

@@ -7,10 +7,10 @@
 #include <algorithm>
 #include <array>
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/weight_counter.hpp>
 #include <cstdlib>
@@ -20,7 +20,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include "utility.hpp"
+#include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix

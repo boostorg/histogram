@@ -19,7 +19,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
-#include "utility.hpp"
+#include "utility_axis.hpp"
 
 using namespace boost::histogram;
 
@@ -71,9 +71,7 @@ int main() {
   }
 
   // iterators
-  {
-    test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4);
-  }
+  { test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4); }
 
   return boost::report_errors();
 }
