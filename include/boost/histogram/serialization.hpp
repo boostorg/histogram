@@ -23,6 +23,7 @@
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/variant.hpp>
+#include <boost/serialization/map.hpp>
 #include <boost/serialization/vector.hpp>
 #include <string>
 #include <tuple>
@@ -50,7 +51,12 @@ void weight_counter<RealType>::serialize(Archive& ar, unsigned /* version */) {
 
 template <class Archive, typename T>
 void serialize(Archive& ar, storage_adaptor<T>& s, unsigned /* version */) {
-  // TODO
+  auto size = s.size();
+  ar & size;
+  if (Archive::is_loading::value) {
+    s.reset(size);
+  }
+  ar & static_cast<T&>(s);
 }
 
 namespace detail {
