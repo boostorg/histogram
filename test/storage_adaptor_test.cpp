@@ -247,28 +247,29 @@ int main() {
                          tracing_allocator<std::pair<const std::size_t, double>>>;
     using A = storage_adaptor<map>;
     auto a = A(map(alloc));
+    // MSVC implementation allocates some structures for debugging
+    const auto baseline = db.sum.first;
     a.reset(10);
-    BOOST_TEST_EQ(db.sum().first, 0); // nothing allocated yet
+    BOOST_TEST_EQ(db.sum.first, baseline); // nothing allocated yet
     BOOST_TEST_EQ(static_cast<const A&>(a)[0],
                   0);       // query on const reference does not allocate
     BOOST_TEST_EQ(a[9], 0); // query on writeable reference allocates
-    BOOST_TEST_EQ(db.sum().first, 1);
+    BOOST_TEST_EQ(db.sum.first, baseline + 1);
 
     a(5);
     BOOST_TEST_EQ(a[0], 0);
     BOOST_TEST_EQ(a[5], 1);
     BOOST_TEST_EQ(a[9], 0);
-    BOOST_TEST_EQ(db.sum().first, 3);
+    BOOST_TEST_EQ(db.sum.first, baseline + 3);
     a *= 2;
     BOOST_TEST_EQ(a[5], 2);
-    BOOST_TEST_EQ(db.sum().first, 3);
+    BOOST_TEST_EQ(db.sum.first, baseline + 3);
 
     auto b = storage_adaptor<std::vector<int>>();
     b.reset(5);
     b(2);
     a = b;
-    BOOST_TEST_EQ(db.sum().second, 3); // old allocations were freed
-    BOOST_TEST_EQ(db.sum().first, 4);  // only one new allocation for non-zero value
+    BOOST_TEST_EQ(db.sum.first, baseline + 4);  // only one new allocation for non-zero value
   }
 
   return boost::report_errors();
