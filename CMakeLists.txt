@@ -73,7 +73,10 @@ function(compiled_test SRC)
   endif()
 
   if (${BASENAME} MATCHES "_fail")
-    add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/tools/pass_on_fail.py ${BASENAME})
+    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+      # fail tests stall infinitely on appveyor, needs proper solution
+      add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/tools/pass_on_fail.py ${BASENAME})
+    endif()
   else()
     add_test(${BASENAME} ${BASENAME})
   endif()
