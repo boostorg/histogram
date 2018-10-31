@@ -180,14 +180,17 @@ public:
     // case with one argument is ambiguous, is specialized below
     const auto index =
         detail::at_impl(detail::no_container_tag(), axes_, static_cast<int>(ts)...);
-    return storage_[index];
+    if (!index) throw std::out_of_range("indices out of bounds");
+    return storage_[*index];
   }
 
   /// Access bin counter at index (specialization for 1D)
   template <typename T>
   const_reference at(const T& t) const {
     // check whether we need to unpack argument;
-    return storage_[detail::at_impl(detail::classify_container<T>(), axes_, t)];
+    const auto index = detail::at_impl(detail::classify_container<T>(), axes_, t);
+    if (!index) throw std::out_of_range("indices out of bounds");
+    return storage_[*index];
   }
 
   /// Access bin counter at index

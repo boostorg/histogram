@@ -9,6 +9,7 @@
 
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <utility>
 
 namespace boost {
 namespace histogram {
@@ -39,6 +40,19 @@ template <typename T>
 unsigned extend(const T& t) noexcept {
   return t.size() + static_cast<unsigned>(options(t));
 }
+
+template <typename T, typename... Ts>
+std::pair<int, unsigned> index_extend(const T& a, Ts&&... ts) {
+  return detail::static_if<detail::has_method_index_extend<T>>(
+      [](const auto& a, Ts&&... ts) -> std::pair<int, unsigned> {
+        return a.index_extend(std::forward<Ts>(ts)...);
+      },
+      [](const auto& a, Ts&&... ts) -> std::pair<int, unsigned> {
+        return {a(std::forward<Ts>(ts)...), extend(a)};
+      },
+      a, std::forward<Ts>(ts)...);
+} // namespace traits
+
 } // namespace traits
 } // namespace axis
 } // namespace histogram
