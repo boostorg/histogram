@@ -9,14 +9,14 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/histogram/adaptive_storage.hpp> // implements default_storage
 #include <boost/histogram/arithmetic_operators.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/index_mapper.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/iterator.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
 #include <boost/mp11.hpp>
 #include <functional>
 #include <tuple>
@@ -26,16 +26,18 @@
 namespace boost {
 namespace histogram {
 
-template <typename Axes, typename Storage>
+template <typename Axes, typename Container>
 class histogram {
   static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
 
 public:
   using axes_type = Axes;
-  using storage_type = Storage;
-  using element_type = typename storage_type::element_type;
+  using container_type = Container;
+  using storage_type =
+      mp11::mp_if<detail::is_storage<Container>, Container, storage_adaptor<Container>>;
+  using value_type = typename storage_type::value_type;
   using const_reference = typename storage_type::const_reference;
-  using const_iterator = iterator_over<histogram>;
+  using const_iterator = iterator<histogram>;
 
   histogram() = default;
   histogram(const histogram& rhs) = default;
@@ -43,40 +45,40 @@ public:
   histogram& operator=(const histogram& rhs) = default;
   histogram& operator=(histogram&& rhs) = default;
 
-  template <typename A, typename S>
-  explicit histogram(const histogram<A, S>& rhs) : storage_(rhs.storage_) {
+  template <typename A, typename C>
+  explicit histogram(const histogram<A, C>& rhs) : storage_(rhs.storage_) {
     detail::axes_assign(axes_, rhs.axes_);
   }
 
-  template <typename A, typename S>
-  histogram& operator=(const histogram<A, S>& rhs) {
+  template <typename A, typename C>
+  histogram& operator=(const histogram<A, C>& rhs) {
     storage_ = rhs.storage_;
     detail::axes_assign(axes_, rhs.axes_);
     return *this;
   }
 
-  explicit histogram(const axes_type& a, const storage_type& s = storage_type())
-      : axes_(a), storage_(s) {
+  explicit histogram(const axes_type& a, container_type c = container_type())
+      : axes_(a), storage_(std::move(c)) {
     storage_.reset(detail::bincount(axes_));
   }
 
-  explicit histogram(axes_type&& a, storage_type&& s = storage_type())
-      : axes_(std::move(a)), storage_(std::move(s)) {
+  explicit histogram(axes_type&& a, container_type c = container_type())
+      : axes_(std::move(a)), storage_(std::move(c)) {
     storage_.reset(detail::bincount(axes_));
   }
 
-  template <typename A, typename S>
-  bool operator==(const histogram<A, S>& rhs) const noexcept {
+  template <typename A, typename C>
+  bool operator==(const histogram<A, C>& rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
-  template <typename A, typename S>
-  bool operator!=(const histogram<A, S>& rhs) const noexcept {
+  template <typename A, typename C>
+  bool operator!=(const histogram<A, C>& rhs) const noexcept {
     return !operator==(rhs);
   }
 
-  template <typename A, typename S>
-  histogram& operator+=(const histogram<A, S>& rhs) {
+  template <typename A, typename C>
+  histogram& operator+=(const histogram<A, C>& rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_))
       throw std::invalid_argument("axes of histograms differ");
     storage_ += rhs.storage_;
@@ -147,29 +149,29 @@ public:
   void operator()(const Ts&... ts) {
     // case with one argument needs special treatment, specialized below
     const auto index = detail::call_impl(detail::no_container_tag(), axes_, ts...);
-    if (index) storage_.increase(*index);
+    if (index) storage_(*index);
   }
 
   template <typename T>
   void operator()(const T& t) {
     // check whether we need to unpack argument
     const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
-    if (index) storage_.increase(*index);
+    if (index) storage_(*index);
   }
 
   /// Fill histogram with a weight and a value tuple
   template <typename U, typename... Ts>
-  void operator()(weight_type<U>&& w, const Ts&... ts) {
+  void operator()(const weight_type<U>& w, const Ts&... ts) {
     // case with one argument needs special treatment, specialized below
     const auto index = detail::call_impl(detail::no_container_tag(), axes_, ts...);
-    if (index) storage_.add(*index, w);
+    if (index) storage_(*index, w);
   }
 
   template <typename U, typename T>
-  void operator()(weight_type<U>&& w, const T& t) {
+  void operator()(const weight_type<U>& w, const T& t) {
     // check whether we need to unpack argument
     const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
-    if (index) storage_.add(*index, w);
+    if (index) storage_(*index, w);
   }
 
   /// Access bin counter at indices
@@ -181,6 +183,7 @@ public:
     return storage_[index];
   }
 
+  /// Access bin counter at index (specialization for 1D)
   template <typename T>
   const_reference at(const T& t) const {
     // check whether we need to unpack argument;
@@ -204,7 +207,11 @@ public:
     using sub_axes_type = detail::sub_axes<axes_type, N, Ns...>;
     using HR = histogram<sub_axes_type, storage_type>;
     auto sub_axes = detail::make_sub_axes(axes_, N(), Ns()...);
-    auto hr = HR(std::move(sub_axes), storage_type(storage_.get_allocator()));
+    // make something here to copy allocator if container has an allocator
+    auto hr = HR(std::move(sub_axes),
+                 detail::static_if<detail::has_allocator<container_type>>(
+                     [this](auto) { return container_type(storage_.get_allocator()); },
+                     [](auto) { return container_type(); }, 0));
     const auto b = detail::bool_mask<N, Ns...>(rank(), true);
     std::vector<unsigned> shape(rank());
     for_each_axis(detail::shape_collector(shape.begin()));
@@ -238,60 +245,55 @@ public:
     return hr;
   }
 
-  const_iterator begin() const noexcept { return const_iterator(*this, 0); }
+  auto begin() const noexcept { return const_iterator(*this, 0); }
 
-  const_iterator end() const noexcept { return const_iterator(*this, size()); }
+  auto end() const noexcept { return const_iterator(*this, size()); }
 
   template <typename Archive>
   void serialize(Archive&, unsigned);
 
 private:
   axes_type axes_;
-  Storage storage_;
+  storage_type storage_;
 
   template <typename A, typename S>
   friend class histogram;
   template <typename H>
-  friend class iterator_over;
+  friend class iterator;
 };
 
 /// static type factory with custom storage type
 template <typename S, typename T, typename... Ts, typename = detail::requires_axis<T>>
-histogram<std::tuple<detail::rm_cvref<T>, detail::rm_cvref<Ts>...>, detail::rm_cvref<S>>
-make_histogram_with(S&& s, T&& axis0, Ts&&... axis) {
+auto make_histogram_with(S&& s, T&& axis0, Ts&&... axis) {
   auto axes = std::make_tuple(std::forward<T>(axis0), std::forward<Ts>(axis)...);
-  return histogram<decltype(axes), detail::rm_cvref<S>>(std::move(axes),
-                                                        std::forward<S>(s));
+  return histogram<decltype(axes), detail::unqual<S>>(std::move(axes),
+                                                      std::forward<S>(s));
 }
 
 /// static type factory with standard storage type
 template <typename T, typename... Ts, typename = detail::requires_axis<T>>
-auto make_histogram(T&& axis0, Ts&&... axis)
-    -> decltype(make_histogram_with(default_storage(), std::forward<T>(axis0),
-                                    std::forward<Ts>(axis)...)) {
+auto make_histogram(T&& axis0, Ts&&... axis) {
   return make_histogram_with(default_storage(), std::forward<T>(axis0),
                              std::forward<Ts>(axis)...);
 }
 
 /// dynamic type factory from vector-like with custom storage type
 template <typename S, typename T, typename = detail::requires_axis_vector<T>>
-histogram<detail::rm_cvref<T>, detail::rm_cvref<S>> make_histogram_with(S&& s, T&& t) {
-  return histogram<detail::rm_cvref<T>, detail::rm_cvref<S>>(std::forward<T>(t),
-                                                             std::forward<S>(s));
+auto make_histogram_with(S&& s, T&& t) {
+  return histogram<detail::unqual<T>, detail::unqual<S>>(std::forward<T>(t),
+                                                         std::forward<S>(s));
 }
 
 /// dynamic type factory from vector-like with standard storage type
 template <typename T, typename = detail::requires_axis_vector<T>>
-auto make_histogram(T&& t)
-    -> decltype(make_histogram_with(default_storage(), std::forward<T>(t))) {
+auto make_histogram(T&& t) {
   return make_histogram_with(default_storage(), std::forward<T>(t));
 }
 
 /// dynamic type factory from iterator range with custom storage type
 template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
-histogram<std::vector<detail::iterator_value_type<Iterator>>, detail::rm_cvref<Storage>>
-make_histogram_with(Storage&& s, Iterator begin, Iterator end) {
+auto make_histogram_with(Storage&& s, Iterator begin, Iterator end) {
   using T = detail::iterator_value_type<Iterator>;
   auto axes = std::vector<T>(begin, end);
   return make_histogram_with(std::forward<Storage>(s), std::move(axes));
@@ -299,8 +301,7 @@ make_histogram_with(Storage&& s, Iterator begin, Iterator end) {
 
 /// dynamic type factory from iterator range with standard storage type
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
-auto make_histogram(Iterator begin, Iterator end)
-    -> decltype(make_histogram_with(default_storage(), begin, end)) {
+auto make_histogram(Iterator begin, Iterator end) {
   return make_histogram_with(default_storage(), begin, end);
 }
 } // namespace histogram

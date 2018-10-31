@@ -73,14 +73,17 @@ function(compiled_test SRC)
   endif()
 
   if (${BASENAME} MATCHES "_fail")
-    add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/tools/pass_on_fail.py ${BASENAME})
+    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+      # fail tests stall infinitely on appveyor, needs proper solution
+      add_test(${BASENAME} python ${PROJECT_SOURCE_DIR}/tools/pass_on_fail.py ${BASENAME})
+    endif()
   else()
     add_test(${BASENAME} ${BASENAME})
   endif()
 endfunction()
 
 compiled_test(test/adaptive_storage_test.cpp)
-compiled_test(test/array_storage_test.cpp)
+compiled_test(test/storage_adaptor_test.cpp)
 compiled_test(test/axis_regular_test.cpp)
 compiled_test(test/axis_circular_test.cpp)
 compiled_test(test/axis_variable_test.cpp)
@@ -121,6 +124,9 @@ if (TEST_SERIALIZATION)
 
   compiled_test(test/adaptive_storage_serialization_test.cpp Boost::serialization)
   target_link_libraries(adaptive_storage_serialization_test PUBLIC Boost::serialization)
+
+  compiled_test(test/storage_adaptor_serialization_test.cpp)
+  target_link_libraries(storage_adaptor_serialization_test PUBLIC Boost::serialization)
 
   compiled_test(test/histogram_serialization_test.cpp Boost::serialization)
   target_link_libraries(histogram_serialization_test PUBLIC Boost::serialization)

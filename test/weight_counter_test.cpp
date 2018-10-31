@@ -6,7 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/ostream_operators.hpp>
-#include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/histogram/weight_counter.hpp>
 #include <ostream>
 #include <sstream>
 
@@ -27,7 +27,7 @@ int main() {
     BOOST_TEST_NE(2, w);
     BOOST_TEST_NE(w, 2);
 
-    w += weight(2);
+    w(weight(2));
     BOOST_TEST_EQ(w.value(), 3);
     BOOST_TEST_EQ(w.variance(), 5);
     BOOST_TEST_EQ(w, wcount(3, 5));
@@ -42,12 +42,12 @@ int main() {
     // consistency: a weighted counter increased by weight 1 multiplied
     // by 2 must be the same as a weighted counter increased by weight 2
     wcount u(0);
-    u += weight(1);
+    u(weight(1));
     u *= 2;
     BOOST_TEST_EQ(u, wcount(2, 4));
 
     wcount v(0);
-    v += weight(2);
+    v(weight(2));
     BOOST_TEST_EQ(u, v);
   }
 

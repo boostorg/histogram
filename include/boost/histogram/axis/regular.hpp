@@ -136,11 +136,6 @@ public:
         return -1;
     }
     return base_type::size(); // also returned if z is NaN
-
-    // const auto lt_max = z < base_type::size();
-    // const auto ge_zero = z >= 0;
-    // return lt_max * (ge_zero * static_cast<int>(z) - !ge_zero) + !lt_max *
-    // base_type::size();
   }
 
   /// Returns axis value for fractional index.

@@ -42,8 +42,8 @@ int main() {
   /*
     iterate over bins with a fancy histogram iterator
     - order in which bins are iterated over is an implementation detail
-    - iterator dereferences to histogram::element_type, which is defined by
-      its storage class; by default this is a double
+    - iterator dereferences to histogram::const_reference, which is defined by
+      its storage class; for the default storage it is actually a plain double
     - idx(N) method returns the index of the N-th axis
     - bin(N_c) method returns current bin of N-th axis; the suffx _c turns
       the argument into a compile-time number, which is needed to return

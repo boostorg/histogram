@@ -9,7 +9,7 @@
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <limits>
-#include "utility.hpp"
+#include "utility_axis.hpp"
 
 using namespace boost::histogram;
 
@@ -52,9 +52,7 @@ int main() {
   }
 
   // iterators
-  {
-    test_axis_iterator(axis::variable<>({1, 2, 3}, ""), 0, 2);
-  }
+  { test_axis_iterator(axis::variable<>({1, 2, 3}, ""), 0, 2); }
 
   return boost::report_errors();
 }

@@ -17,16 +17,16 @@ namespace histogram {
 
 /// Fancy iterator over histogram bins with access multi-dimensional index.
 template <typename Histogram>
-class iterator_over
-    : public iterator_facade<iterator_over<Histogram>, typename Histogram::element_type,
+class iterator
+    : public iterator_facade<iterator<Histogram>, typename Histogram::value_type,
                              random_access_traversal_tag,
                              typename Histogram::const_reference> {
 public:
-  iterator_over(const Histogram& h, std::size_t idx) : histogram_(h), idx_(idx) {}
+  iterator(const Histogram& h, std::size_t idx) : histogram_(h), idx_(idx) {}
 
-  iterator_over(const iterator_over& o) : histogram_(o.histogram_), idx_(o.idx_) {}
+  iterator(const iterator& o) : histogram_(o.histogram_), idx_(o.idx_) {}
 
-  iterator_over& operator=(const iterator_over& o) {
+  iterator& operator=(const iterator& o) {
     histogram_ = o.histogram_;
     idx_ = o.idx_;
     cache_.reset();
@@ -56,7 +56,7 @@ public:
   }
 
 private:
-  bool equal(const iterator_over& rhs) const noexcept {
+  bool equal(const iterator& rhs) const noexcept {
     return &histogram_ == &rhs.histogram_ && idx_ == rhs.idx_;
   }
 

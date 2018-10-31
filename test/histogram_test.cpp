@@ -5,19 +5,21 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/storage/array_storage.hpp>
-#include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/weight_counter.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include "utility.hpp"
+#include "utility_allocator.hpp"
+#include "utility_histogram.hpp"
+#include "utility_meta.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
@@ -43,7 +45,7 @@ void run_tests() {
     BOOST_TEST_EQ(h.size(), 5);
     BOOST_TEST_EQ(h.axis(0_c).size(), 3);
     BOOST_TEST_EQ(h.axis().size(), 3);
-    auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1});
+    auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1});
     BOOST_TEST_EQ(h2, h);
   }
 
@@ -54,7 +56,7 @@ void run_tests() {
     BOOST_TEST_EQ(h.size(), 30);
     BOOST_TEST_EQ(h.axis(0_c).size(), 3);
     BOOST_TEST_EQ(h.axis(1_c).size(), 4);
-    auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
+    auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
                      axis::integer<>{-1, 3});
     BOOST_TEST_EQ(h2, h);
   }
@@ -65,7 +67,7 @@ void run_tests() {
                   axis::circular<>{2});
     BOOST_TEST_EQ(h.rank(), 3);
     BOOST_TEST_EQ(h.size(), 5 * 5 * 3);
-    auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
+    auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
                      axis::integer<>{-1, 2}, axis::circular<>{2});
     BOOST_TEST_EQ(h2, h);
   }
@@ -77,7 +79,7 @@ void run_tests() {
     BOOST_TEST_EQ(h.rank(), 4);
     BOOST_TEST_EQ(h.size(), 5 * 5 * 3 * 4);
     auto h2 =
-        make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
+        make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
                axis::integer<>{-1, 2}, axis::circular<>{2}, axis::variable<>{-1, 0, 1});
     BOOST_TEST_EQ(h2, h);
   }
@@ -89,7 +91,7 @@ void run_tests() {
                   axis::category<>{{3, 1, 2}});
     BOOST_TEST_EQ(h.rank(), 5);
     BOOST_TEST_EQ(h.size(), 5 * 5 * 3 * 4 * 4);
-    auto h2 = make_s(Tag(), array_storage<unsigned>(), axis::regular<>{3, -1, 1},
+    auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
                      axis::integer<>{-1, 2}, axis::circular<>{2},
                      axis::variable<>{-1, 0, 1}, axis::category<>{{3, 1, 2}});
     BOOST_TEST_EQ(h2, h);
@@ -102,8 +104,7 @@ void run_tests() {
     auto h2 = decltype(h)(h);
     BOOST_TEST(h2 == h);
     auto h3 =
-        histogram<std::tuple<axis::integer<>, axis::integer<>>, array_storage<unsigned>>(
-            h);
+        histogram<std::tuple<axis::integer<>, axis::integer<>>, std::vector<unsigned>>(h);
     BOOST_TEST_EQ(h3, h);
   }
 
@@ -118,8 +119,8 @@ void run_tests() {
     // test self-assign
     h2 = h2;
     BOOST_TEST_EQ(h, h2);
-    auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
-                        array_storage<unsigned>>();
+    auto h3 =
+        histogram<std::tuple<axis::integer<>, axis::integer<>>, std::vector<unsigned>>();
     h3 = h;
     BOOST_TEST_EQ(h, h3);
   }
@@ -253,7 +254,7 @@ void run_tests() {
 
   // d1w
   {
-    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 2));
+    auto h = make_s(Tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 2));
     h(-1);
     h(0);
     h(weight(0.5), 0);
@@ -307,7 +308,7 @@ void run_tests() {
 
   // d2w
   {
-    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::regular<>(2, -1, 1),
+    auto h = make_s(Tag(), std::vector<weight_counter<>>(), axis::regular<>(2, -1, 1),
                     axis::integer<>(-1, 2, {}, axis::option_type::none));
     h(-1, 0);              // -> 0, 1
     h(weight(10), -1, -1); // -> 0, 0
@@ -352,7 +353,7 @@ void run_tests() {
 
   // d3w
   {
-    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 3),
+    auto h = make_s(Tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 3),
                     axis::integer<>(0, 4), axis::integer<>(0, 5));
     for (auto i = 0u; i < h.axis(0_c).size(); ++i) {
       for (auto j = 0u; j < h.axis(1_c).size(); ++j) {
@@ -373,7 +374,7 @@ void run_tests() {
   // add_1
   {
     auto a = make(Tag(), axis::integer<>(0, 2));
-    auto b = make_s(Tag(), array_storage<unsigned>(), axis::integer<>(0, 2));
+    auto b = make_s(Tag(), std::vector<unsigned>(), axis::integer<>(0, 2));
     a(0); // 1 0
     b(1); // 0 1
     auto a2 = a;
@@ -395,8 +396,8 @@ void run_tests() {
 
   // add_2
   {
-    auto a = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 2));
-    auto b = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 2));
+    auto a = make_s(Tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 2));
+    auto b = make_s(Tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 2));
 
     a(0);
     BOOST_TEST_EQ(a.at(0).variance(), 1);
@@ -422,8 +423,8 @@ void run_tests() {
 
   // add_3
   {
-    auto a = make_s(Tag(), array_storage<char>(), axis::integer<>(-1, 2));
-    auto b = make_s(Tag(), array_storage<unsigned>(), axis::integer<>(-1, 2));
+    auto a = make_s(Tag(), std::vector<char>(), axis::integer<>(-1, 2));
+    auto b = make_s(Tag(), std::vector<unsigned>(), axis::integer<>(-1, 2));
     a(-1);
     b(1);
     auto c = a;
@@ -652,7 +653,7 @@ void run_tests() {
 
   // histogram iterator 1D
   {
-    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 3));
+    auto h = make_s(Tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 3));
     const auto& a = h.axis();
     h(weight(2), 0);
     h(1);
@@ -686,7 +687,7 @@ void run_tests() {
 
   // histogram iterator 2D
   {
-    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 1),
+    auto h = make_s(Tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 1),
                     axis::integer<>(2, 4, "", axis::option_type::none));
     const auto& a0 = h.axis(0_c);
     const auto& a1 = h.axis(1_c);
@@ -748,7 +749,7 @@ void run_tests() {
 
   // using STL containers
   {
-    auto h = make_s(Tag(), array_storage<weight_counter<>>(), axis::integer<>(0, 2),
+    auto h = make_s(Tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 2),
                     axis::regular<>(2, 2, 4));
     // vector in
     h(std::vector<int>({0, 2}));
@@ -806,19 +807,19 @@ void run_tests() {
     tracing_allocator_db db;
     {
       tracing_allocator<char> a(db);
-      auto h = make_s(Tag(), array_storage<int, tracing_allocator<int>>(a),
+      auto h = make_s(Tag(), std::vector<int, tracing_allocator<int>>(a),
                       axis::integer<>(0, 1000));
       h(0);
     }
 
-    // int allocation for array_storage
-    BOOST_TEST_EQ(db[typeid(int)].first, db[typeid(int)].second);
-    BOOST_TEST_EQ(db[typeid(int)].first, 1002u);
+    // int allocation for std::vector
+    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, db[&BOOST_CORE_TYPEID(int)].second);
+    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, 1002u);
 
     if (Tag()) { // axis::variant allocation, only for dynamic histogram
       using T = axis::variant<axis::integer<>>;
-      BOOST_TEST_EQ(db[typeid(T)].first, db[typeid(T)].second);
-      BOOST_TEST_LE(db[typeid(T)].first,
+      BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(T)].first, db[&BOOST_CORE_TYPEID(T)].second);
+      BOOST_TEST_LE(db[&BOOST_CORE_TYPEID(T)].first,
                     1u); // zero if vector uses small-vector-optimisation
     }
   }

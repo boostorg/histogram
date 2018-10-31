@@ -4,19 +4,25 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <array>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/mp11.hpp>
+#include <deque>
 #include <iterator>
+#include <map>
 #include <tuple>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include "utility.hpp"
+#include "utility_meta.hpp"
 
 namespace bh = boost::histogram;
 using namespace bh::detail;
@@ -77,18 +83,15 @@ int main() {
 
   // has_method_options
   {
-    struct NotOptions {};
     struct A {};
     struct B {
-      NotOptions options();
-    };
-    struct C {
-      bh::axis::option_type options();
+      bh::axis::option_type options() { return bh::axis::option_type(); }
     };
 
+    auto foo = static_cast<std::function<bh::axis::option_type(B&)>>(&B::options);
+
     BOOST_TEST_TRAIT_FALSE((has_method_options<A>));
-    BOOST_TEST_TRAIT_FALSE((has_method_options<B>));
-    BOOST_TEST_TRAIT_TRUE((has_method_options<C>));
+    BOOST_TEST_TRAIT_TRUE((has_method_options<B>));
   }
 
   // has_method_metadata
@@ -102,6 +105,76 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((has_method_metadata<B>));
   }
 
+  // has_method_resize
+  {
+    struct A {};
+    using B = std::vector<int>;
+    using C = std::map<int, int>;
+
+    BOOST_TEST_TRAIT_FALSE((has_method_resize<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_resize<B>));
+    BOOST_TEST_TRAIT_FALSE((has_method_resize<C>));
+  }
+
+  // has_method_size
+  {
+    struct A {};
+    using B = std::vector<int>;
+    using C = std::map<int, int>;
+
+    BOOST_TEST_TRAIT_FALSE((has_method_size<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_size<B>));
+    BOOST_TEST_TRAIT_TRUE((has_method_size<C>));
+  }
+
+  // has_method_clear
+  {
+    struct A {};
+    using B = std::vector<int>;
+    using C = std::map<int, int>;
+    using D = std::array<int, 10>;
+
+    BOOST_TEST_TRAIT_FALSE((has_method_clear<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_clear<B>));
+    BOOST_TEST_TRAIT_TRUE((has_method_clear<C>));
+    BOOST_TEST_TRAIT_FALSE((has_method_clear<D>));
+  }
+
+  // has_allocator
+  {
+    struct A {};
+    using B = std::vector<int>;
+    using C = std::map<int, int>;
+    using D = std::array<int, 10>;
+
+    BOOST_TEST_TRAIT_FALSE((has_method_clear<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_clear<B>));
+    BOOST_TEST_TRAIT_TRUE((has_method_clear<C>));
+    BOOST_TEST_TRAIT_FALSE((has_method_clear<D>));
+  }
+
+  // is_storage
+  {
+    struct A {};
+    using B = bh::adaptive_storage<>;
+
+    BOOST_TEST_TRAIT_FALSE((is_storage<A>));
+    BOOST_TEST_TRAIT_TRUE((is_storage<B>));
+  }
+
+  // is_indexable
+  {
+    struct A {};
+    using B = std::vector<int>;
+    using C = std::map<int, int>;
+    using D = std::map<A, int>;
+
+    BOOST_TEST_TRAIT_FALSE((is_indexable<A>));
+    BOOST_TEST_TRAIT_TRUE((is_indexable<B>));
+    BOOST_TEST_TRAIT_TRUE((is_indexable<C>));
+    BOOST_TEST_TRAIT_FALSE((is_indexable<D>));
+  }
+
   // is_transform
   {
     struct A {};
@@ -112,6 +185,46 @@ int main() {
 
     BOOST_TEST_TRAIT_FALSE((is_transform<A>));
     BOOST_TEST_TRAIT_TRUE((is_transform<B>));
+  }
+
+  // is_vector_like
+  {
+    struct A {};
+    using B = std::vector<int>;
+    using C = std::array<int, 10>;
+    using D = std::map<unsigned, int>;
+    using E = std::deque<int>;
+    BOOST_TEST_TRAIT_FALSE((is_vector_like<A>));
+    BOOST_TEST_TRAIT_TRUE((is_vector_like<B>));
+    BOOST_TEST_TRAIT_FALSE((is_vector_like<C>));
+    BOOST_TEST_TRAIT_FALSE((is_vector_like<D>));
+    BOOST_TEST_TRAIT_TRUE((is_vector_like<E>));
+  }
+
+  // is_array_like
+  {
+    struct A {};
+    using B = std::vector<int>;
+    using C = std::array<int, 10>;
+    using D = std::map<unsigned, int>;
+    BOOST_TEST_TRAIT_FALSE((is_array_like<A>));
+    BOOST_TEST_TRAIT_FALSE((is_array_like<B>));
+    BOOST_TEST_TRAIT_TRUE((is_array_like<C>));
+    BOOST_TEST_TRAIT_FALSE((is_array_like<D>));
+  }
+
+  // is_map_like
+  {
+    struct A {};
+    using B = std::vector<int>;
+    using C = std::array<int, 10>;
+    using D = std::map<unsigned, int>;
+    using E = std::unordered_map<unsigned, int>;
+    BOOST_TEST_TRAIT_FALSE((is_map_like<A>));
+    BOOST_TEST_TRAIT_FALSE((is_map_like<B>));
+    BOOST_TEST_TRAIT_FALSE((is_map_like<C>));
+    BOOST_TEST_TRAIT_TRUE((is_map_like<D>));
+    BOOST_TEST_TRAIT_TRUE((is_map_like<E>));
   }
 
   // is_equal_comparable
@@ -214,7 +327,7 @@ int main() {
     BOOST_TEST_EQ(v2, std::vector<bool>({false, true, false, true}));
   }
 
-  // rm_cvref
+  // unqual
   {
     using T1 = int;
     using T2 = int&&;
@@ -224,14 +337,14 @@ int main() {
     using T6 = volatile int&&;
     using T7 = volatile const int;
     using T8 = volatile const int&;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T1>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T2>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T3>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T4>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T5>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T6>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T7>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<rm_cvref<T8>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T1>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T2>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T3>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T4>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T5>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T6>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T7>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T8>, int>));
   }
 
   // mp_size
@@ -270,12 +383,12 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<mp_last<L>, long>));
   }
 
-  // container_element_type
+  // container_value_type
   {
     using T1 = std::vector<int>;
-    using U1 = container_element_type<T1>;
+    using U1 = container_value_type<T1>;
     using T2 = const std::vector<const int>&;
-    using U2 = container_element_type<T2>;
+    using U2 = container_value_type<T2>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<U1, int>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<U2, const int>));
   }
@@ -334,10 +447,17 @@ int main() {
     using B = std::vector<bh::axis::variant<bh::axis::regular<>>>;
     using C = std::vector<int>;
     using D = bh::axis::regular<>;
+    using E = const std::vector<bh::axis::variant<bh::axis::integer<>>>;
+    using F = const std::vector<bh::axis::variant<bh::axis::integer<>>>&;
+    auto v = std::vector<bh::axis::variant<bh::axis::regular<>, bh::axis::integer<>>>();
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<A>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<B>));
     BOOST_TEST_TRAIT_FALSE((is_axis_vector<C>));
     BOOST_TEST_TRAIT_FALSE((is_axis_vector<D>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_vector<E>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_vector<std::remove_reference_t<F>>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(v)>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(std::move(v))>));
   }
 
   return boost::report_errors();

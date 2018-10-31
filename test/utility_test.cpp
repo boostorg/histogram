@@ -4,11 +4,12 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include "utility.hpp"
 #include <boost/core/lightweight_test.hpp>
 #include <sstream>
 #include <tuple>
 #include <vector>
+#include "utility_allocator.hpp"
+#include "utility_meta.hpp"
 
 using namespace boost::histogram;
 
@@ -40,9 +41,9 @@ int main() {
     auto p2 = b.allocate(3);
     b.deallocate(p2, 3);
     BOOST_TEST_EQ(db.size(), 2);
-    BOOST_TEST_EQ(db[typeid(char)].first, 2);
-    BOOST_TEST_EQ(db[typeid(char)].second, 2);
-    BOOST_TEST_EQ(db[typeid(int)].first, 3);
-    BOOST_TEST_EQ(db[typeid(int)].second, 3);
+    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(char)].first, 2);
+    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(char)].second, 2);
+    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, 3);
+    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].second, 3);
   }
 }

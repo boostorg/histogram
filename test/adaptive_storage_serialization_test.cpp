@@ -9,8 +9,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/storage/operators.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
 #include <memory>
 #include <sstream>
 

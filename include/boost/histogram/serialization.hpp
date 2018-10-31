@@ -16,13 +16,14 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/histogram.hpp>
-#include <boost/histogram/storage/adaptive_storage.hpp>
-#include <boost/histogram/storage/array_storage.hpp>
-#include <boost/histogram/storage/weight_counter.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/weight_counter.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/variant.hpp>
+#include <boost/serialization/map.hpp>
 #include <boost/serialization/vector.hpp>
 #include <string>
 #include <tuple>
@@ -48,9 +49,14 @@ void weight_counter<RealType>::serialize(Archive& ar, unsigned /* version */) {
   ar& w2;
 }
 
-template <class Archive, typename T, typename A>
-void serialize(Archive& ar, array_storage<T, A>& s, unsigned /* version */) {
-  ar& s.buffer;
+template <class Archive, typename T>
+void serialize(Archive& ar, storage_adaptor<T>& s, unsigned /* version */) {
+  auto size = s.size();
+  ar & size;
+  if (Archive::is_loading::value) {
+    s.reset(size);
+  }
+  ar & static_cast<T&>(s);
 }
 
 namespace detail {
