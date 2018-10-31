@@ -17,10 +17,13 @@ install:
   - cd boost
   - mkdir libs\histogram
   - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram
+  - git submodule init libs/accumulators
+  - git submodule init libs/align
   - git submodule init libs/array
   - git submodule init libs/assert
   - git submodule init libs/bind
   - git submodule init libs/callable_traits
+  - git submodule init libs/circular_buffer
   - git submodule init libs/concept_check
   - git submodule init libs/config
   - git submodule init libs/container
@@ -28,6 +31,7 @@ install:
   - git submodule init libs/core
   - git submodule init libs/detail
   - git submodule init libs/function
+  - git submodule init libs/fusion
   - git submodule init libs/integer
   - git submodule init libs/io
   - git submodule init libs/iterator
@@ -39,6 +43,7 @@ install:
   - git submodule init libs/multiprecision
   - git submodule init libs/numeric
   - git submodule init libs/optional
+  - git submodule init libs/parameter
   - git submodule init libs/predef
   - git submodule init libs/preprocessor
   - git submodule init libs/range
@@ -48,6 +53,7 @@ install:
   - git submodule init libs/spirit
   - git submodule init libs/static_assert
   - git submodule init libs/throw_exception
+  - git submodule init libs/tuple
   - git submodule init libs/type_index
   - git submodule init libs/type_traits
   - git submodule init libs/typeof
