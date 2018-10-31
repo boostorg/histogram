@@ -23,14 +23,7 @@ struct tracing_allocator_db : std::unordered_map<const boost::core::typeinfo*,
     return this->operator[](&BOOST_CORE_TYPEID(T));
   }
 
-  std::pair<std::size_t, std::size_t> sum() {
-    std::pair<std::size_t, std::size_t> result(0, 0);
-    for (const auto& p : *this) {
-      result.first += p.second.first;
-      result.second += p.second.second;
-    }
-    return result;
-  }
+  std::pair<std::size_t, std::size_t> sum;
 };
 
 template <class T>
@@ -46,12 +39,12 @@ struct tracing_allocator {
   ~tracing_allocator() noexcept {}
 
   T* allocate(std::size_t n) {
-    if (db) { db->at<T>().first += n; }
+    if (db) { db->at<T>().first += n; db->sum.first += n; }
     return static_cast<T*>(::operator new(n * sizeof(T)));
   }
 
   void deallocate(T* p, std::size_t n) {
-    if (db) { db->at<T>().second += n; }
+    if (db) { db->at<T>().second += n; db->sum.second += n; }
     ::operator delete((void*)p);
   }
 };
