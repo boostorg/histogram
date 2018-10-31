@@ -9,8 +9,8 @@
 
 #include <boost/core/typeinfo.hpp>
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/polymorphic_bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/polymorphic_bin_view.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -19,9 +19,9 @@
 #include <boost/variant.hpp>
 #include <ostream>
 #include <stdexcept>
+#include <tuple>
 #include <type_traits>
 #include <utility>
-#include <tuple>
 
 namespace boost {
 namespace histogram {
@@ -172,10 +172,43 @@ public:
               [](const auto&) -> int {
                 throw std::invalid_argument(detail::cat(
                     "cannot convert ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(args_t)),
-                    " to ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(expected_args_t)), " for ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(args_t)), " to ",
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(expected_args_t)),
+                    " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                    "; use boost::histogram::axis::get to obtain a reference "
+                    "of this axis type"));
+              },
+              a);
+        },
+        *this);
+  }
+
+  // Will throw invalid_argument exception if axis has incompatible call signature
+  template <typename... Us>
+  std::pair<int, unsigned> index_extend(Us... x) const {
+    auto&& args = std::forward_as_tuple(std::forward<Us>(x)...);
+    return visit(
+        [&args](const auto& a) {
+          using A = detail::unqual<decltype(a)>;
+          using args_t = std::tuple<Us...>;
+          using expected_args_t = axis::traits::args<A>;
+          return detail::static_if<std::is_convertible<args_t, expected_args_t>>(
+              [&args](const auto& a) -> std::pair<int, unsigned> {
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4244) // possible loss of data
+#endif
+                return {mp11::tuple_apply(a, args), a.size()};
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+              },
+              [](const auto&) -> std::pair<int, unsigned> {
+                throw std::invalid_argument(detail::cat(
+                    "cannot convert ",
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(args_t)), " to ",
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(expected_args_t)),
+                    " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
                     "; use boost::histogram::axis::get to obtain a reference "
                     "of this axis type"));
               },
@@ -277,8 +310,8 @@ auto visit(Functor&& f, Variant&& v) -> detail::visitor_return_type<Functor, Var
   using R = detail::visitor_return_type<Functor, Variant>;
   return boost::apply_visitor(
       detail::functor_wrapper<Functor, R>(f),
-      static_cast<detail::copy_qualifiers<Variant,
-                                          typename detail::unqual<Variant>::base_type>>(
+      static_cast<
+          detail::copy_qualifiers<Variant, typename detail::unqual<Variant>::base_type>>(
           v));
 }
 

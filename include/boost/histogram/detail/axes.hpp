@@ -348,22 +348,6 @@ void indices_to_index_iter(optional_index& idx, const std::vector<Ts...>& axes,
   }
 }
 
-template <typename Axes, typename T>
-void indices_to_index_get(mp11::mp_size_t<0>, optional_index&, const Axes&, const T&) {}
-
-template <std::size_t N, typename Axes, typename T>
-void indices_to_index_get(mp11::mp_size_t<N>, optional_index& idx, const Axes& axes,
-                          const T& t) {
-  constexpr std::size_t D = mp_size<T>() - N;
-  const auto& a = axis_get<D>(axes);
-  const auto a_size = static_cast<int>(a.size());
-  const auto a_shape = axis::traits::extend(a);
-  const auto j = static_cast<int>(std::get<D>(t));
-  idx.stride *= (-1 <= j && j <= a_size); // set to 0, if j is invalid
-  linearize(idx, a_size, a_shape, j);
-  indices_to_index_get(mp11::mp_size_t<(N - 1)>(), idx, axes, t);
-}
-
 template <std::size_t D, typename... Ts>
 void args_to_index(optional_index&, const std::tuple<Ts...>&) noexcept {}
 
@@ -392,22 +376,6 @@ void args_to_index_iter(mp11::mp_size_t<N>, optional_index& idx,
   const auto j = a(*iter);
   linearize(idx, a_size, a_shape, j);
   args_to_index_iter(mp11::mp_size_t<(N - 1)>(), idx, axes, ++iter);
-}
-
-template <typename... Ts, typename T>
-void args_to_index_get(mp11::mp_size_t<0>, optional_index&, const std::tuple<Ts...>&,
-                       const T&) {}
-
-template <std::size_t N, typename... Ts, typename T>
-void args_to_index_get(mp11::mp_size_t<N>, optional_index& idx,
-                       const std::tuple<Ts...>& axes, const T& t) {
-  constexpr std::size_t D = mp_size<T>::value - N;
-  const auto& a = std::get<D>(axes);
-  const auto a_size = a.size();
-  const auto a_shape = axis::traits::extend(a);
-  const auto j = a(std::get<D>(t));
-  linearize(idx, a_size, a_shape, j);
-  args_to_index_get(mp11::mp_size_t<(N - 1)>(), idx, axes, t);
 }
 
 namespace {
@@ -462,19 +430,6 @@ void args_to_index_iter(optional_index& idx, const std::vector<Ts...>& axes,
   }
 }
 
-template <typename... Ts, typename T>
-void args_to_index_get(mp11::mp_size_t<0>, optional_index&, const std::vector<Ts...>&,
-                       const T&) {}
-
-template <std::size_t N, typename... Ts, typename T>
-void args_to_index_get(mp11::mp_size_t<N>, optional_index& idx,
-                       const std::vector<Ts...>& axes, const T& t) {
-  constexpr std::size_t D = mp_size<T>::value - N;
-  using U = decltype(std::get<D>(t));
-  axis::visit(args_to_index_visitor<U>(idx, std::get<D>(t)), axes[D]);
-  args_to_index_get(mp11::mp_size_t<(N - 1)>(), idx, axes, t);
-}
-
 // specialization for one-dimensional histograms
 template <typename Tag, typename T, typename... Us>
 optional_index call_impl(Tag, const std::tuple<T>& axes, const Us&... us) {
@@ -496,10 +451,8 @@ optional_index call_impl(no_container_tag, const std::tuple<T1, T2, Ts...>& axes
 template <typename T1, typename T2, typename... Ts, typename U>
 optional_index call_impl(static_container_tag, const std::tuple<T1, T2, Ts...>& axes,
                          const U& u) {
-  dimension_check(axes, mp_size<U>());
-  optional_index i;
-  args_to_index_get(mp_size<U>(), i, axes, u);
-  return i;
+  return mp11::tuple_apply([&axes](const auto&... us) {
+    return call_impl(no_container_tag(), axes, us...); }, u);
 }
 
 template <typename T1, typename T2, typename... Ts, typename U>
@@ -525,10 +478,9 @@ optional_index call_impl(static_container_tag, const std::vector<Ts...>& axes,
                          const U& u) {
   if (axes.size() == 1) // do not unpack for 1d histograms, it is ambiguous
     return call_impl(no_container_tag(), axes, u);
-  dimension_check(axes, mp_size<U>());
-  optional_index i;
-  args_to_index_get(mp_size<U>(), i, axes, u);
-  return i;
+  return mp11::tuple_apply([&axes](const auto&... us) {
+    return call_impl(no_container_tag(), axes, us...);
+  }, u);
 }
 
 template <typename... Ts, typename U>
@@ -549,42 +501,37 @@ optional_index call_impl(iterable_container_tag, const std::vector<Ts...>& axes,
  */
 
 template <typename A, typename... Us>
-std::size_t at_impl(detail::no_container_tag, const A& axes, const Us&... us) {
+optional_index at_impl(no_container_tag, const A& axes, const Us&... us) {
   dimension_check(axes, mp11::mp_size_t<sizeof...(Us)>());
   auto index = detail::optional_index();
   detail::indices_to_index<0>(index, axes, static_cast<int>(us)...);
-  if (!index) throw std::out_of_range("indices out of bounds");
-  return *index;
+  return index;
 }
 
 template <typename A, typename U>
-std::size_t at_impl(detail::static_container_tag, const A& axes, const U& u) {
-  dimension_check(axes, mp_size<U>());
-  auto index = detail::optional_index();
-  detail::indices_to_index_get(mp_size<U>(), index, axes, u);
-  if (!index) throw std::out_of_range("indices out of bounds");
-  return *index;
+optional_index at_impl(static_container_tag, const A& axes, const U& u) {
+  return mp11::tuple_apply([&axes](const auto&... us) {
+    return at_impl(no_container_tag(), axes, us...);
+  }, u);
 }
 
 template <typename... Ts, typename U>
-std::size_t at_impl(detail::iterable_container_tag, const std::tuple<Ts...>& axes,
+optional_index at_impl(iterable_container_tag, const std::tuple<Ts...>& axes,
                     const U& u) {
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
   auto index = detail::optional_index();
   detail::indices_to_index_iter(mp11::mp_size_t<sizeof...(Ts)>(), index, axes,
-                                std::begin(u));
-  if (!index) throw std::out_of_range("indices out of bounds");
-  return *index;
+                                       std::begin(u));
+  return index;
 }
 
 template <typename... Ts, typename U>
-std::size_t at_impl(detail::iterable_container_tag, const std::vector<Ts...>& axes,
+optional_index at_impl(iterable_container_tag, const std::vector<Ts...>& axes,
                     const U& u) {
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
   auto index = detail::optional_index();
   detail::indices_to_index_iter(index, axes, std::begin(u));
-  if (!index) throw std::out_of_range("indices out of bounds");
-  return *index;
+  return index;
 }
 
 } // namespace detail

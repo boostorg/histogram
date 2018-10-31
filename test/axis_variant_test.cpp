@@ -24,7 +24,7 @@
 using namespace boost::histogram;
 
 int main() {
-  { BOOST_TEST_THROWS(axis::integer<>(1, 1), std::invalid_argument); }
+  BOOST_TEST_THROWS(axis::integer<>(1, 1), std::invalid_argument);
 
   {
     axis::variant<axis::integer<>, axis::category<std::string>> a{
@@ -168,9 +168,16 @@ int main() {
 
   // axis::variant with unusual args
   {
-    axis::variant<axis::category<std::string>> x =
+    struct minimal_axis {
+      int operator()(int x) const { return x % 2; }
+      unsigned size() const { return 2; }
+    };
+    axis::variant<axis::category<std::string>, minimal_axis> x =
         axis::category<std::string>({"A", "B"}, "category");
     BOOST_TEST_EQ(x("B"), 1);
+    x = minimal_axis();
+    BOOST_TEST_EQ(x(4), 0);
+    BOOST_TEST_EQ(x(5), 1);
   }
 
   {
@@ -220,8 +227,8 @@ int main() {
     BOOST_TEST_EQ(db.at<long>().first, db.at<long>().second);
     BOOST_TEST_EQ(db.at<long>().first, 5u);
 
-#if (BOOST_MSVC)
-    BOOST_TEST_EQ(db.size(), 5); // axis_type, char, double, long + ???
+#ifdef _MSC_VER
+    BOOST_TEST_EQ(db.size(), 5); // axis_type, char, double, long + debug struct
 #else
     BOOST_TEST_EQ(db.size(), 4); // axis_type, char, double, long
 #endif
