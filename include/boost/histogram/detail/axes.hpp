@@ -426,7 +426,7 @@ optional_index at_impl(static_container_tag, const A& axes, const U& u) {
   dimension_check(axes, mp11::mp_size<unqual<U>>());
   optional_index idx;
   mp11::mp_for_each<mp11::mp_iota<mp_size<U>>>([&](auto I) {
-    linearize2(idx, axis_get<decltype(I)::value>(axes), static_cast<int>(std::get<I>(u)));
+    linearize2(idx, axis_get<I>(axes), static_cast<int>(std::get<I>(u)));
   });
   return idx;
 }
