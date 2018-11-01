@@ -156,8 +156,8 @@ public:
         [&x](const auto& a) {
           using A = detail::unqual<decltype(a)>;
           using expected_t = axis::traits::arg<A>;
-          return detail::static_if<std::is_convertible<detail::unqual<U>, expected_t>>(
-              [&x](const auto& a) -> int { return a(static_cast<expected_t>(x)); },
+          return detail::static_if<std::is_convertible<U, expected_t>>(
+              [&x](const auto& a) -> int { return a(x); },
               [](const auto&) -> int {
                 throw std::invalid_argument(detail::cat(
                     "cannot convert ", boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
