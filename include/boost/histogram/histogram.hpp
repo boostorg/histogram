@@ -148,7 +148,8 @@ public:
   template <typename... Ts>
   void operator()(const Ts&... ts) {
     // case with one argument needs special treatment, specialized below
-    const auto index = detail::call_impl(detail::no_container_tag(), axes_, ts...);
+    const auto index = detail::call_impl(detail::static_container_tag(), axes_,
+                                         std::forward_as_tuple(ts...));
     if (index) storage_(*index);
   }
 
@@ -163,7 +164,8 @@ public:
   template <typename U, typename... Ts>
   void operator()(const weight_type<U>& w, const Ts&... ts) {
     // case with one argument needs special treatment, specialized below
-    const auto index = detail::call_impl(detail::no_container_tag(), axes_, ts...);
+    const auto index = detail::call_impl(detail::static_container_tag(), axes_,
+                                         std::forward_as_tuple(ts...));
     if (index) storage_(*index, w);
   }
 
@@ -178,8 +180,8 @@ public:
   template <typename... Ts>
   const_reference at(const Ts&... ts) const {
     // case with one argument is ambiguous, is specialized below
-    const auto index =
-        detail::at_impl(detail::no_container_tag(), axes_, static_cast<int>(ts)...);
+    const auto index = detail::at_impl(detail::static_container_tag(), axes_,
+                                       std::forward_as_tuple(static_cast<int>(ts)...));
     if (!index) throw std::out_of_range("indices out of bounds");
     return storage_[*index];
   }
