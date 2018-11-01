@@ -313,130 +313,76 @@ void linearize2(optional_index& out, const T& axis, int j) {
   linearize(out, a_size, a_shape, j);
 }
 
-template <std::size_t D, typename... Ts>
-void args_to_index(optional_index&, const std::tuple<Ts...>&) noexcept {}
-
-template <std::size_t D, typename... Ts, typename U, typename... Us>
-void args_to_index(optional_index& idx, const std::tuple<Ts...>& axes, const U& u,
-                   const Us&... us) {
-  const auto& a = std::get<D>(axes);
-  const auto a_size = a.size();
-  const auto a_shape = axis::traits::extend(a);
-  const auto j = a(u);
-  linearize(idx, a_size, a_shape, j);
-  args_to_index<(D + 1)>(idx, axes, us...);
+template <typename T, typename U>
+void linearize1(optional_index& out, const T& axis, const U& u) {
+  const auto a_size = axis.size();
+  const auto a_shape = axis::traits::extend(axis);
+  const auto j = axis(u);
+  linearize(out, a_size, a_shape, j);
 }
 
-template <typename... Ts, typename Iterator>
-void args_to_index_iter(mp11::mp_size_t<0>, optional_index&, const std::tuple<Ts...>&,
-                        Iterator) {}
-
-template <std::size_t N, typename... Ts, typename Iterator>
-void args_to_index_iter(mp11::mp_size_t<N>, optional_index& idx,
-                        const std::tuple<Ts...>& axes, Iterator iter) {
-  constexpr std::size_t D = sizeof...(Ts) - N;
-  const auto& a = axis_get<D>(axes);
-  const auto a_size = a.size();
-  const auto a_shape = axis::traits::extend(a);
-  const auto j = a(*iter);
-  linearize(idx, a_size, a_shape, j);
-  args_to_index_iter(mp11::mp_size_t<(N - 1)>(), idx, axes, ++iter);
-}
-
-namespace {
-template <typename T>
-struct args_to_index_visitor {
-  optional_index& idx;
-  const T& val;
-  args_to_index_visitor(optional_index& i, const T& v) : idx(i), val(v) {}
-  template <typename U>
-  void operator()(const U& a) const {
-    using arg_type = axis::traits::arg<U>;
-    impl(std::is_convertible<T, arg_type>(), a);
-  }
-
-  template <typename U>
-  void impl(std::true_type, const U& a) const {
-    using arg_type = axis::traits::arg<U>;
-    const auto a_size = a.size();
-    const auto a_shape = axis::traits::extend(a);
-    const auto j = a(static_cast<arg_type>(val));
-    linearize(idx, a_size, a_shape, j);
-  }
-
-  template <typename U>
-  void impl(std::false_type, const U&) const {
-    using arg_type = axis::traits::arg<U>;
-    throw std::invalid_argument(
-        detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
-                    ": cannot convert argument of type ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(T)), " to ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(arg_type))));
-  }
-};
-} // namespace
-
-template <std::size_t D, typename... Ts>
-void args_to_index(optional_index&, const std::vector<Ts...>&) {}
-
-template <std::size_t D, typename... Ts, typename U, typename... Us>
-void args_to_index(optional_index& idx, const std::vector<Ts...>& axes, const U& u,
-                   const Us&... us) {
-  axis::visit(args_to_index_visitor<U>(idx, u), axes[D]);
-  args_to_index<(D + 1)>(idx, axes, us...);
-}
-
-template <typename... Ts, typename Iterator>
-void args_to_index_iter(optional_index& idx, const std::vector<Ts...>& axes,
-                        Iterator iter) {
-  for (const auto& a : axes) {
-    // iter could be a plain pointer, so we cannot use nested value_type here
-    axis::visit(args_to_index_visitor<decltype(*iter)>(idx, *iter++), a);
-  }
+template <typename... Ts, typename U>
+void linearize1(optional_index& out, const axis::variant<Ts...>& axis, const U& u) {
+  axis::visit(
+      [&](const auto& a) {
+        using A = unqual<decltype(a)>;
+        using arg_type = axis::traits::arg<A>;
+        static_if<std::is_convertible<U, arg_type>>(
+            [&](const auto& u) { linearize1(out, a, u); },
+            [&](const U&) {
+              throw std::invalid_argument(
+                  detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                              ": cannot convert argument of type ",
+                              boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
+                              boost::core::demangled_name(BOOST_CORE_TYPEID(arg_type))));
+            },
+            u);
+      },
+      axis);
 }
 
 // specialization for one-dimensional histograms
-template <typename Tag, typename T, typename... Us>
-optional_index call_impl(Tag, const std::tuple<T>& axes, const Us&... us) {
-  dimension_check(axes, mp11::mp_size_t<sizeof...(Us)>());
-  optional_index i;
-  args_to_index<0>(i, axes, us...);
-  return i;
+template <typename Tag, typename T, typename U>
+optional_index call_impl(Tag, const std::tuple<T>& axes, const U& u) {
+  dimension_check(axes, 1);
+  optional_index idx;
+  linearize1(idx, std::get<0>(axes), u);
+  return idx;
 }
 
 template <typename T1, typename T2, typename... Ts, typename... Us>
 optional_index call_impl(no_container_tag, const std::tuple<T1, T2, Ts...>& axes,
                          const Us&... us) {
-  dimension_check(axes, mp11::mp_size_t<sizeof...(Us)>());
-  optional_index i;
-  args_to_index<0>(i, axes, us...);
-  return i;
+  return call_impl(static_container_tag(), axes, std::forward_as_tuple(us...));
 }
 
 template <typename T1, typename T2, typename... Ts, typename U>
 optional_index call_impl(static_container_tag, const std::tuple<T1, T2, Ts...>& axes,
                          const U& u) {
-  return mp11::tuple_apply(
-      [&axes](const auto&... us) { return call_impl(no_container_tag(), axes, us...); },
-      u);
+  dimension_check(axes, mp_size<U>());
+  optional_index idx;
+  mp11::mp_for_each<mp11::mp_iota_c<(2 + sizeof...(Ts))>>(
+      [&](auto I) { linearize1(idx, std::get<I>(axes), std::get<I>(u)); });
+  return idx;
 }
 
 template <typename T1, typename T2, typename... Ts, typename U>
 optional_index call_impl(iterable_container_tag, const std::tuple<T1, T2, Ts...>& axes,
                          const U& u) {
   dimension_check(axes, u.size());
-  optional_index i;
-  args_to_index_iter(mp11::mp_size_t<(2 + sizeof...(Ts))>(), i, axes, std::begin(u));
-  return i;
+  optional_index idx;
+  auto xit = std::begin(u);
+  mp11::mp_for_each<mp11::mp_iota_c<(2 + sizeof...(Ts))>>(
+      [&](auto I) { linearize1(idx, std::get<I>(axes), *xit++); });
+  return idx;
 }
 
-template <typename... Ts, typename... Us>
-optional_index call_impl(no_container_tag, const std::vector<Ts...>& axes,
-                         const Us&... us) {
-  dimension_check(axes, mp11::mp_size_t<sizeof...(Us)>());
-  optional_index i;
-  args_to_index<0>(i, axes, us...);
-  return i;
+template <typename... Ts, typename U>
+optional_index call_impl(no_container_tag, const std::vector<Ts...>& axes, const U& u) {
+  dimension_check(axes, 1);
+  optional_index idx;
+  linearize1(idx, axes[0], u);
+  return idx;
 }
 
 template <typename... Ts, typename U>
@@ -444,9 +390,12 @@ optional_index call_impl(static_container_tag, const std::vector<Ts...>& axes,
                          const U& u) {
   if (axes.size() == 1) // do not unpack for 1d histograms, it is ambiguous
     return call_impl(no_container_tag(), axes, u);
-  return mp11::tuple_apply(
-      [&axes](const auto&... us) { return call_impl(no_container_tag(), axes, us...); },
-      u);
+  dimension_check(axes, mp11::mp_size<unqual<U>>());
+  optional_index idx;
+  mp11::mp_for_each<mp11::mp_iota<mp_size<U>>>([&](auto I) {
+    linearize1(idx, axis_get<decltype(I)::value>(axes), std::get<I>(u));
+  });
+  return idx;
 }
 
 template <typename... Ts, typename U>
@@ -455,9 +404,10 @@ optional_index call_impl(iterable_container_tag, const std::vector<Ts...>& axes,
   if (axes.size() == 1) // do not unpack for 1d histograms, it is ambiguous
     return call_impl(no_container_tag(), axes, u);
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
-  optional_index i;
-  args_to_index_iter(i, axes, std::begin(u));
-  return i;
+  optional_index idx;
+  auto xit = std::begin(u);
+  for (const auto& a : axes) { linearize1(idx, a, *xit++); }
+  return idx;
 }
 
 /* In all at_impl, we throw instead of asserting when an index is out of
@@ -474,7 +424,7 @@ optional_index at_impl(no_container_tag, const A& axes, const U& u) {
 template <typename A, typename U>
 optional_index at_impl(static_container_tag, const A& axes, const U& u) {
   dimension_check(axes, mp11::mp_size<unqual<U>>());
-  detail::optional_index idx;
+  optional_index idx;
   mp11::mp_for_each<mp11::mp_iota<mp_size<U>>>([&](auto I) {
     linearize2(idx, axis_get<decltype(I)::value>(axes), static_cast<int>(std::get<I>(u)));
   });
@@ -485,7 +435,7 @@ template <typename... Ts, typename U>
 optional_index at_impl(iterable_container_tag, const std::tuple<Ts...>& axes,
                        const U& u) {
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
-  detail::optional_index idx;
+  optional_index idx;
   auto xit = std::begin(u);
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(
       [&](auto I) { linearize2(idx, std::get<I>(axes), static_cast<int>(*xit++)); });
@@ -496,7 +446,7 @@ template <typename... Ts, typename U>
 optional_index at_impl(iterable_container_tag, const std::vector<Ts...>& axes,
                        const U& u) {
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
-  detail::optional_index idx;
+  optional_index idx;
   auto xit = std::begin(u);
   for (const auto& a : axes) linearize2(idx, a, static_cast<int>(*xit++));
   return idx;
