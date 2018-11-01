@@ -100,8 +100,6 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, (std::declval<T&>().options()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_index_extend, &T::index_extend);
-
 // resize has two overloads, trying to get pmf in this case always fails
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_resize, (std::declval<T&>().resize(0)));
 

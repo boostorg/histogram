@@ -150,64 +150,18 @@ public:
   }
 
   // Will throw invalid_argument exception if axis has incompatible call signature
-  template <typename... Us>
-  int operator()(Us... x) const {
-    auto&& args = std::forward_as_tuple(std::forward<Us>(x)...);
+  template <typename U>
+  int operator()(U&& x) const {
     return visit(
-        [&args](const auto& a) {
+        [&x](const auto& a) {
           using A = detail::unqual<decltype(a)>;
-          using args_t = std::tuple<Us...>;
-          using expected_args_t = axis::traits::args<A>;
-          return detail::static_if<std::is_convertible<args_t, expected_args_t>>(
-              [&args](const auto& a) -> int {
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4244) // possible loss of data
-#endif
-                return mp11::tuple_apply(a, args);
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-              },
+          using expected_t = axis::traits::arg<A>;
+          return detail::static_if<std::is_convertible<detail::unqual<U>, expected_t>>(
+              [&x](const auto& a) -> int { return a(static_cast<expected_t>(x)); },
               [](const auto&) -> int {
                 throw std::invalid_argument(detail::cat(
-                    "cannot convert ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(args_t)), " to ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(expected_args_t)),
-                    " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                    "; use boost::histogram::axis::get to obtain a reference "
-                    "of this axis type"));
-              },
-              a);
-        },
-        *this);
-  }
-
-  // Will throw invalid_argument exception if axis has incompatible call signature
-  template <typename... Us>
-  std::pair<int, unsigned> index_extend(Us... x) const {
-    auto&& args = std::forward_as_tuple(std::forward<Us>(x)...);
-    return visit(
-        [&args](const auto& a) {
-          using A = detail::unqual<decltype(a)>;
-          using args_t = std::tuple<Us...>;
-          using expected_args_t = axis::traits::args<A>;
-          return detail::static_if<std::is_convertible<args_t, expected_args_t>>(
-              [&args](const auto& a) -> std::pair<int, unsigned> {
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4244) // possible loss of data
-#endif
-                return {mp11::tuple_apply(a, args), a.size()};
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-              },
-              [](const auto&) -> std::pair<int, unsigned> {
-                throw std::invalid_argument(detail::cat(
-                    "cannot convert ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(args_t)), " to ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(expected_args_t)),
+                    "cannot convert ", boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
+                    " to ", boost::core::demangled_name(BOOST_CORE_TYPEID(expected_t)),
                     " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
                     "; use boost::histogram::axis::get to obtain a reference "
                     "of this axis type"));

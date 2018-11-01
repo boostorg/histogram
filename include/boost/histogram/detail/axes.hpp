@@ -386,13 +386,13 @@ struct args_to_index_visitor {
   args_to_index_visitor(optional_index& i, const T& v) : idx(i), val(v) {}
   template <typename U>
   void operator()(const U& a) const {
-    using arg_type = mp11::mp_first<axis::traits::args<U>>;
+    using arg_type = axis::traits::arg<U>;
     impl(std::is_convertible<T, arg_type>(), a);
   }
 
   template <typename U>
   void impl(std::true_type, const U& a) const {
-    using arg_type = mp11::mp_first<axis::traits::args<U>>;
+    using arg_type = axis::traits::arg<U>;
     const auto a_size = a.size();
     const auto a_shape = axis::traits::extend(a);
     const auto j = a(static_cast<arg_type>(val));
@@ -401,7 +401,7 @@ struct args_to_index_visitor {
 
   template <typename U>
   void impl(std::false_type, const U&) const {
-    using arg_type = mp11::mp_first<axis::traits::args<U>>;
+    using arg_type = axis::traits::arg<U>;
     throw std::invalid_argument(
         detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     ": cannot convert argument of type ",
@@ -451,8 +451,9 @@ optional_index call_impl(no_container_tag, const std::tuple<T1, T2, Ts...>& axes
 template <typename T1, typename T2, typename... Ts, typename U>
 optional_index call_impl(static_container_tag, const std::tuple<T1, T2, Ts...>& axes,
                          const U& u) {
-  return mp11::tuple_apply([&axes](const auto&... us) {
-    return call_impl(no_container_tag(), axes, us...); }, u);
+  return mp11::tuple_apply(
+      [&axes](const auto&... us) { return call_impl(no_container_tag(), axes, us...); },
+      u);
 }
 
 template <typename T1, typename T2, typename... Ts, typename U>
@@ -478,9 +479,9 @@ optional_index call_impl(static_container_tag, const std::vector<Ts...>& axes,
                          const U& u) {
   if (axes.size() == 1) // do not unpack for 1d histograms, it is ambiguous
     return call_impl(no_container_tag(), axes, u);
-  return mp11::tuple_apply([&axes](const auto&... us) {
-    return call_impl(no_container_tag(), axes, us...);
-  }, u);
+  return mp11::tuple_apply(
+      [&axes](const auto&... us) { return call_impl(no_container_tag(), axes, us...); },
+      u);
 }
 
 template <typename... Ts, typename U>
@@ -510,24 +511,23 @@ optional_index at_impl(no_container_tag, const A& axes, const Us&... us) {
 
 template <typename A, typename U>
 optional_index at_impl(static_container_tag, const A& axes, const U& u) {
-  return mp11::tuple_apply([&axes](const auto&... us) {
-    return at_impl(no_container_tag(), axes, us...);
-  }, u);
+  return mp11::tuple_apply(
+      [&axes](const auto&... us) { return at_impl(no_container_tag(), axes, us...); }, u);
 }
 
 template <typename... Ts, typename U>
 optional_index at_impl(iterable_container_tag, const std::tuple<Ts...>& axes,
-                    const U& u) {
+                       const U& u) {
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
   auto index = detail::optional_index();
   detail::indices_to_index_iter(mp11::mp_size_t<sizeof...(Ts)>(), index, axes,
-                                       std::begin(u));
+                                std::begin(u));
   return index;
 }
 
 template <typename... Ts, typename U>
 optional_index at_impl(iterable_container_tag, const std::vector<Ts...>& axes,
-                    const U& u) {
+                       const U& u) {
   dimension_check(axes, std::distance(std::begin(u), std::end(u)));
   auto index = detail::optional_index();
   detail::indices_to_index_iter(index, axes, std::begin(u));
