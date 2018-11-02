@@ -15,24 +15,12 @@
 namespace boost {
 namespace histogram {
 
-namespace detail {
-template <typename OStream>
-struct axis_ostream_visitor {
-  OStream& os_;
-  explicit axis_ostream_visitor(OStream& os) : os_(os) {}
-  template <typename T>
-  void operator()(const T& a) const {
-    os_ << "\n  " << a << ",";
-  }
-};
-} // namespace detail
-
 template <typename CharT, typename Traits, typename A, typename S>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const histogram<A, S>& h) {
   using OS = std::basic_ostream<CharT, Traits>;
   os << "histogram(";
-  h.for_each_axis(detail::axis_ostream_visitor<OS>(os));
+  h.for_each_axis([&](const auto& a) { os << "\n  " << a << ","; });
   os << (h.rank() ? "\n)" : ")");
   return os;
 }
