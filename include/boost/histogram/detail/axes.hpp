@@ -64,7 +64,7 @@ void axes_assign(std::tuple<Ts...>& t, const std::tuple<Ts...>& u) {
 template <typename... Ts, typename... Us>
 void axes_assign(std::tuple<Ts...>& t, const std::vector<Us...>& u) {
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
-    using T = mp11::mp_at<std::tuple<Ts...>, decltype(I)>;
+    using T = mp11::mp_at_c<std::tuple<Ts...>, I>;
     std::get<I>(t) = axis::get<T>(u[I]);
   });
 }
@@ -336,9 +336,8 @@ optional_index call_impl(static_container_tag, const std::vector<Ts...>& axes,
     return call_impl(no_container_tag(), axes, u);
   dimension_check(axes, mp11::mp_size<unqual<U>>());
   optional_index idx;
-  mp11::mp_for_each<mp11::mp_iota<mp_size<U>>>([&](auto I) {
-    linearize1(idx, axis_get<decltype(I)::value>(axes), std::get<I>(u));
-  });
+  mp11::mp_for_each<mp11::mp_iota<mp_size<U>>>(
+      [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<I>(u)); });
   return idx;
 }
 
