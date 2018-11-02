@@ -16,9 +16,10 @@ namespace axis {
 template <typename Axis>
 class polymorphic_bin_view {
   using value_type = detail::return_type<decltype(&Axis::value)>;
+
 public:
   polymorphic_bin_view(int idx, const Axis& axis, bool is_continuous)
-    : idx_(idx), axis_(axis), is_continuous_(is_continuous) {}
+      : idx_(idx), axis_(axis), is_continuous_(is_continuous) {}
 
   int idx() const noexcept { return idx_; }
 
@@ -42,13 +43,18 @@ public:
       throw std::runtime_error("cannot call center() for discontinuous axis");
     return axis_.value(idx_ + 0.5);
   }
-  template <typename U=value_type, typename = decltype(std::declval<U&>() - std::declval<U&>())>
-  value_type width() const { return upper() - lower(); }
+  template <typename U = value_type,
+            typename = decltype(std::declval<U&>() - std::declval<U&>())>
+  value_type width() const {
+    return upper() - lower();
+  }
 
   bool operator==(const polymorphic_bin_view& rhs) const noexcept {
     return idx_ == rhs.idx_ && axis_ == rhs.axis_;
   }
-  bool operator!=(const polymorphic_bin_view& rhs) const noexcept { return !operator==(rhs); }
+  bool operator!=(const polymorphic_bin_view& rhs) const noexcept {
+    return !operator==(rhs);
+  }
 
   explicit operator int() const noexcept { return idx_; }
 

@@ -26,7 +26,9 @@ public:
   bool operator==(const interval_bin_view& rhs) const noexcept {
     return idx_ == rhs.idx_ && axis_ == rhs.axis_;
   }
-  bool operator!=(const interval_bin_view& rhs) const noexcept { return !operator==(rhs); }
+  bool operator!=(const interval_bin_view& rhs) const noexcept {
+    return !operator==(rhs);
+  }
 
   explicit operator int() const noexcept { return idx_; }
 

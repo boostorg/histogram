@@ -40,20 +40,14 @@ public:
     return cache_.get(dim);
   }
 
-  auto bin() const -> decltype(std::declval<Histogram&>().axis()[0]) {
-    return histogram_.axis()[idx()];
-  }
+  decltype(auto) bin() const { return histogram_.axis()[idx()]; }
 
   template <std::size_t I>
-  auto bin(mp11::mp_size_t<I>) const
-      -> decltype(std::declval<Histogram&>().axis(mp11::mp_size_t<I>())[0]) {
+  decltype(auto) bin(mp11::mp_size_t<I>) const {
     return histogram_.axis(mp11::mp_size_t<I>())[idx(I)];
   }
 
-  template <typename T = Histogram> // use SFINAE for this method
-  auto bin(std::size_t dim) const -> decltype(std::declval<T&>().axis(dim)[0]) {
-    return histogram_.axis(dim)[idx(dim)];
-  }
+  decltype(auto) bin(std::size_t dim) const { return histogram_.axis(dim)[idx(dim)]; }
 
 private:
   bool equal(const iterator& rhs) const noexcept {

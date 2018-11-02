@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 #include "utility_allocator.hpp"
+#include "utility_axis.hpp"
 #include "utility_histogram.hpp"
 #include "utility_meta.hpp"
 
@@ -156,6 +157,8 @@ void run_tests() {
     BOOST_TEST_EQ(a.axis().metadata(), "bar");
 
     auto b = make(Tag(), axis::regular<>(1, 1, 2, "foo"), axis::integer<>(1, 3));
+
+    // check static access
     BOOST_TEST_EQ(b.axis(0_c).size(), 1);
     BOOST_TEST_EQ(b.axis(0_c)[0].lower(), 1);
     BOOST_TEST_EQ(b.axis(0_c)[0].upper(), 2);
@@ -165,6 +168,18 @@ void run_tests() {
     b.axis(1_c).metadata() = "bar";
     BOOST_TEST_EQ(b.axis(0_c).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1_c).metadata(), "bar");
+
+    // check dynamic access
+    BOOST_TEST_EQ(b.axis(0).size(), 1);
+    BOOST_TEST_EQ(b.axis(0)[0].lower(), 1);
+    BOOST_TEST_EQ(b.axis(0)[0].upper(), 2);
+    BOOST_TEST_EQ(b.axis(1).size(), 2);
+    BOOST_TEST_EQ(b.axis(1)[0].lower(), 1);
+    BOOST_TEST_EQ(b.axis(1)[0].upper(), 2);
+    BOOST_TEST_EQ(b.axis(0).metadata(), "foo");
+    BOOST_TEST_EQ(b.axis(1).metadata(), "bar");
+    b.axis(0).metadata() = "baz";
+    BOOST_TEST_EQ(b.axis(0).metadata(), "baz");
 
     enum class C { A = 3, B = 5 };
     auto c = make(Tag(), axis::category<C>({C::A, C::B}));
@@ -710,6 +725,8 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 0);
     BOOST_TEST_EQ(it.bin(0_c), a0[0]);
     BOOST_TEST_EQ(it.bin(1_c), a1[0]);
+    BOOST_TEST_EQ(it.bin(0), a0[0]);
+    BOOST_TEST_EQ(it.bin(1), a1[0]);
     BOOST_TEST_EQ(it->value(), 2);
     BOOST_TEST_EQ(it->variance(), 4);
     ++it;
@@ -717,6 +734,8 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 0);
     BOOST_TEST_EQ(it.bin(0_c), a0[1]);
     BOOST_TEST_EQ(it.bin(1_c), a1[0]);
+    BOOST_TEST_EQ(it.bin(0), a0[1]);
+    BOOST_TEST_EQ(it.bin(1), a1[0]);
     BOOST_TEST_EQ(it->value(), 0);
     BOOST_TEST_EQ(it->variance(), 0);
     ++it;
@@ -724,6 +743,8 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 0);
     BOOST_TEST_EQ(it.bin(0_c), a0[-1]);
     BOOST_TEST_EQ(it.bin(1_c), a1[0]);
+    BOOST_TEST_EQ(it.bin(0), a0[-1]);
+    BOOST_TEST_EQ(it.bin(1), a1[0]);
     BOOST_TEST_EQ(it->value(), 1);
     BOOST_TEST_EQ(it->variance(), 1);
     ++it;
@@ -731,6 +752,8 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 1);
     BOOST_TEST_EQ(it.bin(0_c), a0[0]);
     BOOST_TEST_EQ(it.bin(1_c), a1[1]);
+    BOOST_TEST_EQ(it.bin(0), a0[0]);
+    BOOST_TEST_EQ(it.bin(1), a1[1]);
     BOOST_TEST_EQ(it->value(), 0);
     BOOST_TEST_EQ(it->variance(), 0);
     ++it;
@@ -738,6 +761,8 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 1);
     BOOST_TEST_EQ(it.bin(0_c), a0[1]);
     BOOST_TEST_EQ(it.bin(1_c), a1[1]);
+    BOOST_TEST_EQ(it.bin(0), a0[1]);
+    BOOST_TEST_EQ(it.bin(1), a1[1]);
     BOOST_TEST_EQ(it->value(), 1);
     BOOST_TEST_EQ(it->variance(), 1);
     ++it;
@@ -745,6 +770,8 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 1);
     BOOST_TEST_EQ(it.bin(0_c), a0[-1]);
     BOOST_TEST_EQ(it.bin(1_c), a1[1]);
+    BOOST_TEST_EQ(it.bin(0), a0[-1]);
+    BOOST_TEST_EQ(it.bin(1), a1[1]);
     BOOST_TEST_EQ(it->value(), 0);
     BOOST_TEST_EQ(it->variance(), 0);
     ++it;
