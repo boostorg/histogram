@@ -132,7 +132,7 @@ int main() {
 #endif
   }
 
-  // bin_type streamable
+  // bin_type operator<<
   {
     auto test = [](const auto& x, const char* ref) {
       std::ostringstream os;
@@ -144,7 +144,7 @@ int main() {
     test(b[0], "1");
   }
 
-  // axis::variant equal_comparable
+  // axis::variant operator==
   {
     enum { A, B, C };
     using variant = axis::variant<axis::regular<>, axis::regular<axis::transform::pow<>>,
@@ -226,16 +226,24 @@ int main() {
     // T5 allocates storage for long array
     BOOST_TEST_EQ(db.at<long>().first, db.at<long>().second);
     BOOST_TEST_EQ(db.at<long>().first, 5u);
+  }
 
-#ifdef _MSC_VER
-    BOOST_TEST_EQ(db.size(), 5); // axis_type, char, double, long + debug struct
-#else
-    BOOST_TEST_EQ(db.size(), 4); // axis_type, char, double, long
-#endif
+  // pass-through
+  {
+    axis::regular<> a(10, 0, 1);
+    axis::integer<> b(0, 3);
+    const auto& ta = axis::get<axis::regular<>>(a);
+    BOOST_TEST_EQ(ta, a);
+    const auto* tb = axis::get<axis::integer<>>(&b);
+    BOOST_TEST_EQ(tb, &b);
+    const auto* tc = axis::get<axis::regular<>>(&b);
+    BOOST_TEST_EQ(tc, nullptr);
+
+    axis::visit([&](const auto& x) { BOOST_TEST_EQ(a, x); }, a);
   }
 
   // iterators
-  { test_axis_iterator(axis::variant<axis::regular<>>(axis::regular<>(5, 0, 1)), 0, 5); }
+  test_axis_iterator(axis::variant<axis::regular<>>(axis::regular<>(5, 0, 1)), 0, 5);
 
   return boost::report_errors();
 }

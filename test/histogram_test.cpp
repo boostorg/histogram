@@ -629,26 +629,34 @@ void run_tests() {
     BOOST_TEST(h2_12.axis(1_c) == axis::integer<>(0, 4));
   }
 
-  // custom axis
+  // custom axes
   {
-    struct custom_axis : public axis::integer<> {
+    struct modified_axis : public axis::integer<> {
       using integer::integer; // inherit ctors of base
-
       // customization point: convert argument and call base class
       int operator()(const char* s) const { return integer::operator()(std::atoi(s)); }
     };
 
-    auto h = make(Tag(), custom_axis(0, 3));
-    h("-10");
-    h("0");
-    h("1");
-    h("9");
+    struct minimal {
+      int operator()(int x) const { return x % 2; }
+      unsigned size() const { return 2; }
+    };
 
-    BOOST_TEST_EQ(h.rank(), 1);
-    BOOST_TEST_EQ(h.axis(), custom_axis(0, 3));
-    BOOST_TEST_EQ(h.at(0), 1);
-    BOOST_TEST_EQ(h.at(1), 1);
-    BOOST_TEST_EQ(h.at(2), 0);
+    struct axis2d {
+      int operator()(std::tuple<double, double> x) const {
+        return std::get<0>(x) == 1 && std::get<1>(x) == 2;
+      }
+      unsigned size() const { return 2; }
+    };
+
+    auto h = make(Tag(), modified_axis(0, 3), minimal(), axis2d());
+    h("0", 1, std::make_tuple(1.0, 2.0));
+    h("1", 2, std::make_tuple(2.0, 1.0));
+
+    BOOST_TEST_EQ(h.rank(), 3);
+    BOOST_TEST_EQ(h.at(0, 0, 0), 0);
+    BOOST_TEST_EQ(h.at(0, 1, 1), 1);
+    BOOST_TEST_EQ(h.at(1, 0, 0), 1);
   }
 
   // histogram iterator 1D
