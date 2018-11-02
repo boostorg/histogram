@@ -33,8 +33,8 @@ constexpr bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Ts...>& u
   return t == u;
 }
 
-template <typename... Ts, typename... Us>
-bool axes_equal(const std::tuple<Ts...>& t, const std::vector<Us...>& u) {
+template <typename... Ts, typename U>
+bool axes_equal(const std::tuple<Ts...>& t, const U& u) {
   if (sizeof...(Ts) != u.size()) return false;
   bool equal = true;
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
@@ -45,13 +45,13 @@ bool axes_equal(const std::tuple<Ts...>& t, const std::vector<Us...>& u) {
   return equal;
 }
 
-template <typename... Ts, typename... Us>
-bool axes_equal(const std::vector<Ts...>& t, const std::tuple<Us...>& u) {
+template <typename T, typename... Us>
+bool axes_equal(const T& t, const std::tuple<Us...>& u) {
   return axes_equal(u, t);
 }
 
-template <typename... Ts, typename... Us>
-bool axes_equal(const std::vector<Ts...>& t, const std::vector<Us...>& u) {
+template <typename T, typename U>
+bool axes_equal(const T& t, const U& u) {
   if (t.size() != u.size()) return false;
   return std::equal(t.begin(), t.end(), u.begin());
 }
@@ -62,22 +62,27 @@ void axes_assign(std::tuple<Ts...>& t, const std::tuple<Ts...>& u) {
 }
 
 template <typename... Ts, typename... Us>
-void axes_assign(std::tuple<Ts...>& t, const std::vector<Us...>& u) {
+void axes_assign(std::tuple<Ts...>&, const std::tuple<Us...>&) {
+  throw std::invalid_argument("cannot assign axes if types do not match");
+}
+
+template <typename... Ts, typename U>
+void axes_assign(std::tuple<Ts...>& t, const U& u) {
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
     using T = mp11::mp_at_c<std::tuple<Ts...>, I>;
     std::get<I>(t) = axis::get<T>(u[I]);
   });
 }
 
-template <typename... Ts, typename... Us>
-void axes_assign(std::vector<Ts...>& t, const std::tuple<Us...>& u) {
+template <typename T, typename... Us>
+void axes_assign(T& t, const std::tuple<Us...>& u) {
   t.resize(sizeof...(Us));
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
       [&](auto I) { t[I] = std::get<I>(u); });
 }
 
-template <typename... Ts, typename... Us>
-void axes_assign(std::vector<Ts...>& t, const std::vector<Us...>& u) {
+template <typename T, typename U>
+void axes_assign(T& t, const U& u) {
   t.assign(u.begin(), u.end());
 }
 
@@ -101,13 +106,13 @@ void range_check(const T& axes) {
   BOOST_ASSERT_MSG(N < axes.size(), "index out of range");
 }
 
-template <int N, typename T, typename = requires_static_container<T>>
-auto axis_get(T&& axes) -> decltype(std::get<N>(std::forward<T>(axes))) {
+template <int N, typename T>
+decltype(auto) axis_get(T&& axes, requires_tuple<T>* = nullptr) {
   return std::get<N>(std::forward<T>(axes));
 }
 
-template <int N, typename T, typename = requires_axis_vector<T>>
-auto axis_get(T&& axes) -> decltype(std::forward<T>(axes)[N]) {
+template <int N, typename T>
+decltype(auto) axis_get(T&& axes, requires_axis_vector<T>* = nullptr) {
   return std::forward<T>(axes)[N];
 }
 
@@ -116,8 +121,8 @@ void for_each_axis(const std::tuple<Ts...>& axes, F&& f) {
   mp11::tuple_for_each(axes, std::forward<F>(f));
 }
 
-template <typename F, typename... Ts>
-void for_each_axis(const std::vector<Ts...>& axes, F&& f) {
+template <typename F, typename T>
+void for_each_axis(const T& axes, F&& f) {
   for (const auto& x : axes) { axis::visit(std::forward<F>(f), x); }
 }
 
@@ -209,25 +214,13 @@ sub_axes<std::tuple<Ts...>, Ns...> make_sub_axes(const std::tuple<Ts...>& t, Ns.
   return u;
 }
 
-namespace {
-template <typename T>
-struct sub_dynamic_assign_impl {
-  const T& src;
-  T& dst;
-  template <typename I>
-  void operator()(I) const {
-    dst.emplace_back(src[I::value]);
-  }
-};
-} // namespace
-
 template <typename... Ts, typename... Ns>
 sub_axes<std::vector<Ts...>, Ns...> make_sub_axes(const std::vector<Ts...>& t, Ns...) {
   using T = std::vector<Ts...>;
   T u(t.get_allocator());
   u.reserve(sizeof...(Ns));
   using N = mp11::mp_list<Ns...>;
-  mp11::mp_for_each<N>(sub_dynamic_assign_impl<T>{t, u});
+  mp11::mp_for_each<N>([&](auto I) { u.emplace_back(t[I]); });
   return u;
 }
 

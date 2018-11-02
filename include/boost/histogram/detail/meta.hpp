@@ -198,7 +198,7 @@ template <typename T, typename = mp11::mp_if<is_iterable<T>, void>>
 struct requires_iterable {};
 
 template <typename T, typename = mp11::mp_if<is_tuple<T>, void>>
-struct requires_static_container {};
+struct requires_tuple {};
 
 template <typename T, typename = mp11::mp_if<is_axis<T>, void>>
 struct requires_axis {};
