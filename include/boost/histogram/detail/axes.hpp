@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
-#include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -24,70 +23,25 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-namespace {
-
-template <typename Tuple, typename Vector>
-struct axes_equal_static_dynamic_impl {
-  bool& equal;
-  const Tuple& t;
-  const Vector& v;
-  axes_equal_static_dynamic_impl(bool& eq, const Tuple& tt, const Vector& vv)
-      : equal(eq), t(tt), v(vv) {}
-  template <typename N>
-  void operator()(N) const {
-    using T = mp11::mp_at<Tuple, N>;
-    auto tp = axis::get<T>(&v[N::value]);
-    equal &= (tp && *tp == std::get<N::value>(t));
-  }
-};
-
-template <typename Tuple>
-bool axes_equal_static_static_impl(mp11::mp_true, const Tuple& t, const Tuple& u) {
-  return t == u;
-}
-
-template <typename Tuple1, typename Tuple2>
-bool axes_equal_static_static_impl(mp11::mp_false, const Tuple1&, const Tuple2&) {
+template <typename... Ts, typename... Us>
+constexpr bool axes_equal(const std::tuple<Ts...>&, const std::tuple<Us...>&) {
   return false;
 }
 
-template <typename Tuple, typename Vector>
-struct axes_assign_static_dynamic_impl {
-  Tuple& t;
-  const Vector& v;
-  axes_assign_static_dynamic_impl(Tuple& tt, const Vector& vv) : t(tt), v(vv) {}
-  template <typename N>
-  void operator()(N) const {
-    using T = mp11::mp_at<Tuple, N>;
-    std::get<N::value>(t) = axis::get<T>(v[N::value]);
-  }
-};
-
-template <typename Vector, typename Tuple>
-struct axes_assign_dynamic_static_impl {
-  Vector& v;
-  const Tuple& t;
-  axes_assign_dynamic_static_impl(Vector& vv, const Tuple& tt) : v(vv), t(tt) {}
-  template <typename N>
-  void operator()(N) const {
-    v[N::value] = std::get<N::value>(t);
-  }
-};
-} // namespace
-
 template <typename... Ts, typename... Us>
-bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
-  return axes_equal_static_static_impl(
-      mp11::mp_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>(), t, u);
+constexpr bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Ts...>& u) {
+  return t == u;
 }
 
 template <typename... Ts, typename... Us>
 bool axes_equal(const std::tuple<Ts...>& t, const std::vector<Us...>& u) {
   if (sizeof...(Ts) != u.size()) return false;
   bool equal = true;
-  auto fn =
-      axes_equal_static_dynamic_impl<std::tuple<Ts...>, std::vector<Us...>>(equal, t, u);
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(fn);
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
+    using T = mp11::mp_at<std::tuple<Ts...>, decltype(I)>;
+    auto up = axis::get<T>(&u[I]);
+    equal &= (up && std::get<I>(t) == *up);
+  });
   return equal;
 }
 
@@ -102,24 +56,24 @@ bool axes_equal(const std::vector<Ts...>& t, const std::vector<Us...>& u) {
   return std::equal(t.begin(), t.end(), u.begin());
 }
 
-template <typename... Ts, typename... Us>
-void axes_assign(std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
-  static_assert(std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>::value,
-                "cannot assign incompatible axes");
+template <typename... Ts>
+void axes_assign(std::tuple<Ts...>& t, const std::tuple<Ts...>& u) {
   t = u;
 }
 
 template <typename... Ts, typename... Us>
 void axes_assign(std::tuple<Ts...>& t, const std::vector<Us...>& u) {
-  auto fn = axes_assign_static_dynamic_impl<std::tuple<Ts...>, std::vector<Us...>>(t, u);
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(fn);
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
+    using T = mp11::mp_at<std::tuple<Ts...>, decltype(I)>;
+    std::get<I>(t) = axis::get<T>(u[I]);
+  });
 }
 
 template <typename... Ts, typename... Us>
 void axes_assign(std::vector<Ts...>& t, const std::tuple<Us...>& u) {
   t.resize(sizeof...(Us));
-  auto fn = axes_assign_dynamic_static_impl<std::vector<Ts...>, std::tuple<Us...>>(t, u);
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(fn);
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
+      [&](auto I) { t[I] = std::get<I>(u); });
 }
 
 template <typename... Ts, typename... Us>
@@ -132,19 +86,19 @@ constexpr std::size_t axes_size(const std::tuple<Ts...>&) {
   return sizeof...(Ts);
 }
 
-template <typename... Ts>
-std::size_t axes_size(const std::vector<Ts...>& axes) {
+template <typename T>
+std::size_t axes_size(const T& axes) {
   return axes.size();
-}
-
-template <int N, typename... Ts>
-void range_check(const std::vector<Ts...>& axes) {
-  BOOST_ASSERT_MSG(N < axes.size(), "index out of range");
 }
 
 template <int N, typename... Ts>
 void range_check(const std::tuple<Ts...>&) {
   static_assert(N < sizeof...(Ts), "index out of range");
+}
+
+template <int N, typename T>
+void range_check(const T& axes) {
+  BOOST_ASSERT_MSG(N < axes.size(), "index out of range");
 }
 
 template <int N, typename T, typename = requires_static_container<T>>
@@ -167,21 +121,11 @@ void for_each_axis(const std::vector<Ts...>& axes, F&& f) {
   for (const auto& x : axes) { axis::visit(std::forward<F>(f), x); }
 }
 
-namespace {
-struct field_counter {
-  std::size_t value = 1;
-  template <typename T>
-  void operator()(const T& t) {
-    value *= axis::traits::extend(t);
-  }
-};
-} // namespace
-
 template <typename T>
 std::size_t bincount(const T& axes) {
-  field_counter fc;
-  for_each_axis(axes, fc);
-  return fc.value;
+  std::size_t n = 1;
+  for_each_axis(axes, [&n](const auto& a) { n *= axis::traits::extend(a); });
+  return n;
 }
 
 template <typename... Ts, std::size_t N>
