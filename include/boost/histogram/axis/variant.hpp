@@ -239,9 +239,13 @@ public:
   template <typename Archive>
   void serialize(Archive& ar, unsigned);
 
-  template <typename Functor, typename Variant>
-  friend auto visit(Functor&& f, Variant&& v)
-      -> detail::visitor_return_type<Functor, Variant>;
+  template <typename Functor, typename... Us>
+  friend auto visit(Functor&& f, variant<Us...>& v)
+      -> detail::visitor_return_type<Functor, variant<Us...>&>;
+
+  template <typename Functor, typename... Us>
+  friend auto visit(Functor&& f, const variant<Us...>& v)
+      -> detail::visitor_return_type<Functor, const variant<Us...>&>;
 
   template <typename T, typename... Us>
   friend T& get(variant<Us...>& v);
@@ -259,14 +263,20 @@ public:
   friend const T* get(const variant<Us...>* v);
 }; // namespace histogram
 
-template <typename Functor, typename Variant>
-auto visit(Functor&& f, Variant&& v) -> detail::visitor_return_type<Functor, Variant> {
-  using R = detail::visitor_return_type<Functor, Variant>;
-  return boost::apply_visitor(
-      detail::functor_wrapper<Functor, R>(f),
-      static_cast<
-          detail::copy_qualifiers<Variant, typename detail::unqual<Variant>::base_type>>(
-          v));
+template <typename Functor, typename... Us>
+auto visit(Functor&& f, variant<Us...>& v)
+    -> detail::visitor_return_type<Functor, variant<Us...>&> {
+  using R = detail::visitor_return_type<Functor, variant<Us...>&>;
+  return boost::apply_visitor(detail::functor_wrapper<Functor, R>(f),
+                              static_cast<typename variant<Us...>::base_type&>(v));
+}
+
+template <typename Functor, typename... Us>
+auto visit(Functor&& f, const variant<Us...>& v)
+    -> detail::visitor_return_type<Functor, const variant<Us...>&> {
+  using R = detail::visitor_return_type<Functor, const variant<Us...>&>;
+  return boost::apply_visitor(detail::functor_wrapper<Functor, R>(f),
+                              static_cast<const typename variant<Us...>::base_type&>(v));
 }
 
 template <typename CharT, typename Traits, typename... Ts>
@@ -313,11 +323,18 @@ const T* get(const variant<Us...>* v) {
   return boost::relaxed_get<T>(static_cast<const typename variant<Us...>::base_type*>(v));
 }
 
-// pass-through if T is an axis instead of a variant
+// pass-through version for generic programming, if T is axis instead of variant
 template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>,
           typename = detail::requires_same<T, detail::unqual<U>>>
 U get(U&& u) {
   return std::forward<U>(u);
+}
+
+// pass-through version for generic programming, if T is axis instead of variant
+template <typename Functor, typename T,
+          typename = detail::requires_axis<detail::unqual<T>>>
+decltype(auto) visit(Functor&& f, T&& t) {
+  return std::forward<Functor>(f)(std::forward<T>(t));
 }
 
 } // namespace axis

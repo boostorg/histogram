@@ -251,10 +251,13 @@ int main() {
     struct D {
       unsigned size();
     };
+    using E = bh::axis::variant<bh::axis::regular<>>;
+
     BOOST_TEST_TRAIT_FALSE((is_axis<A>));
     BOOST_TEST_TRAIT_TRUE((is_axis<B>));
     BOOST_TEST_TRAIT_FALSE((is_axis<C>));
     BOOST_TEST_TRAIT_FALSE((is_axis<D>));
+    BOOST_TEST_TRAIT_FALSE((is_axis<E>));
   }
 
   // is_iterable
@@ -455,7 +458,7 @@ int main() {
     BOOST_TEST_TRAIT_FALSE((is_axis_vector<C>));
     BOOST_TEST_TRAIT_FALSE((is_axis_vector<D>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<E>));
-    BOOST_TEST_TRAIT_TRUE((is_axis_vector<std::remove_reference_t<F>>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_vector<F>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(v)>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(std::move(v))>));
   }
