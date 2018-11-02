@@ -31,17 +31,24 @@ int main() {
   // init
   {
     auto v = std::vector<axis::variant<axis::regular<>, axis::integer<>>>();
-    v.push_back(axis::regular<>(4, -1, 1));
-    v.push_back(axis::integer<>(1, 7));
+    v.emplace_back(axis::regular<>(4, -1, 1));
+    v.emplace_back(axis::integer<>(1, 7));
     auto h = make_histogram(v.begin(), v.end());
     BOOST_TEST_EQ(h.rank(), 2);
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
 
-    auto h2 = make_histogram_with(std::vector<int>(), v.begin(), v.end());
+    auto h2 = make_histogram_with(std::vector<int>(), v);
     BOOST_TEST_EQ(h2.rank(), 2);
     BOOST_TEST_EQ(h2.axis(0), v[0]);
     BOOST_TEST_EQ(h2.axis(1), v[1]);
+
+    auto v2 = std::vector<axis::regular<>>();
+    v2.emplace_back(10, 0, 1);
+    v2.emplace_back(20, 0, 2);
+    auto h3 = make_histogram(v2);
+    BOOST_TEST_EQ(h3.axis(0), v2[0]);
+    BOOST_TEST_EQ(h3.axis(1), v2[1]);
   }
 
   // bad fill argument
@@ -128,10 +135,15 @@ int main() {
     BOOST_TEST_THROWS(h1.at(std::make_pair(0, 0)), std::invalid_argument);
   }
 
-  // {
-  //   auto v = std::vector<axis::integer<>>(1, axis::integer<>(0, 3));
-  //   auto h = make_histogram(v);
-  // }
+  {
+    auto h = make_histogram(std::vector<axis::integer<>>(1, axis::integer<>(0, 3)));
+    h(0);
+    h(1);
+    h(2);
+    BOOST_TEST_EQ(h.at(0), 1);
+    BOOST_TEST_EQ(h.at(1), 1);
+    BOOST_TEST_EQ(h.at(2), 1);
+  }
 
   return boost::report_errors();
 }
