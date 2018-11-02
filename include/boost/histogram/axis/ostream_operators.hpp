@@ -129,7 +129,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   if (i.is_continuous())
     os << "[" << i.lower() << ", " << i.upper() << ")";
   else
-    os << i.value();  
+    os << i.value();
   return os;
 }
 
@@ -187,6 +187,25 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   detail::stream_metadata(os, a.metadata());
   detail::stream_options(os, a.options());
   os << ")";
+  return os;
+}
+
+template <typename C, typename T, typename... Ts>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const variant<Ts...>& v) {
+  visit(
+      [&os](const auto& x) {
+        using A = detail::unqual<decltype(x)>;
+        detail::static_if<detail::is_streamable<A>>(
+            [&os](const auto& x) { os << x; },
+            [](const auto&) {
+              throw std::runtime_error(
+                  detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                              " is not streamable"));
+            },
+            x);
+      },
+      v);
   return os;
 }
 

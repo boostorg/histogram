@@ -279,38 +279,19 @@ auto visit(Functor&& f, const variant<Us...>& v)
                               static_cast<const typename variant<Us...>::base_type&>(v));
 }
 
-template <typename CharT, typename Traits, typename... Ts>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const variant<Ts...>& v) {
-  visit(
-      [&os](const auto& x) {
-        using T = detail::unqual<decltype(x)>;
-        detail::static_if<detail::is_streamable<T>>(
-            [&os](const auto& x) { os << x; },
-            [](const auto&) {
-              throw std::runtime_error(
-                  detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
-                              " is not streamable"));
-            },
-            x);
-      },
-      v);
-  return os;
-}
-
 template <typename T, typename... Us>
 T& get(variant<Us...>& v) {
   return boost::get<T>(static_cast<typename variant<Us...>::base_type&>(v));
 }
 
 template <typename T, typename... Us>
-const T& get(const variant<Us...>& v) {
-  return boost::get<T>(static_cast<const typename variant<Us...>::base_type&>(v));
+T&& get(variant<Us...>&& v) {
+  return boost::get<T>(static_cast<typename variant<Us...>::base_type&&>(v));
 }
 
 template <typename T, typename... Us>
-T&& get(variant<Us...>&& v) {
-  return boost::get<T>(static_cast<typename variant<Us...>::base_type&&>(v));
+const T& get(const variant<Us...>& v) {
+  return boost::get<T>(static_cast<const typename variant<Us...>::base_type&>(v));
 }
 
 template <typename T, typename... Us>
@@ -324,10 +305,34 @@ const T* get(const variant<Us...>* v) {
 }
 
 // pass-through version for generic programming, if T is axis instead of variant
-template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>,
-          typename = detail::requires_same<T, detail::unqual<U>>>
-U get(U&& u) {
-  return std::forward<U>(u);
+template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
+T& get(U& u) {
+  return static_cast<T&>(u);
+}
+
+// pass-through version for generic programming, if T is axis instead of variant
+template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
+T&& get(U&& u) {
+  return static_cast<T&&>(u);
+}
+
+// pass-through version for generic programming, if T is axis instead of variant
+template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
+const T& get(const U& u) {
+  return static_cast<const T&>(u);
+}
+
+// pass-through version for generic programming, if T is axis instead of variant
+template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
+T* get(U* u) {
+  return std::is_same<T, detail::unqual<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
+}
+
+// pass-through version for generic programming, if T is axis instead of variant
+template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
+const T* get(const U* u) {
+  return std::is_same<T, detail::unqual<U>>::value ? reinterpret_cast<const T*>(u)
+                                                   : nullptr;
 }
 
 // pass-through version for generic programming, if T is axis instead of variant
