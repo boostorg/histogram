@@ -92,41 +92,6 @@ int main() {
     BOOST_TEST(h1_1.axis() == h1.axis(1_c));
   }
 
-  // histogram iterator [MOVE to histogram_test]
-  {
-    auto h =
-        make_s(dynamic_tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 3));
-    const auto& a = h.axis();
-    h(weight(2), 0);
-    h(1);
-    h(1);
-    auto it = h.begin();
-    BOOST_TEST_EQ(it.rank(), 1);
-
-    BOOST_TEST_EQ(it.idx(0), 0);
-    BOOST_TEST_EQ(it.bin(0), a[0]);
-    BOOST_TEST_EQ(it->value(), 2);
-    BOOST_TEST_EQ(it->variance(), 4);
-    ++it;
-    BOOST_TEST_EQ(it.idx(0), 1);
-    BOOST_TEST_EQ(it.bin(0), a[1]);
-    BOOST_TEST_EQ(*it, 2);
-    ++it;
-    BOOST_TEST_EQ(it.idx(0), 2);
-    BOOST_TEST_EQ(it.bin(0), a[2]);
-    BOOST_TEST_EQ(*it, 0);
-    ++it;
-    BOOST_TEST_EQ(it.idx(0), 3);
-    BOOST_TEST_EQ(it.bin(0), a[3]);
-    BOOST_TEST_EQ(*it, 0);
-    ++it;
-    BOOST_TEST_EQ(it.idx(0), -1);
-    BOOST_TEST_EQ(it.bin(0), a[-1]);
-    BOOST_TEST_EQ(*it, 0);
-    ++it;
-    BOOST_TEST(it == h.end());
-  }
-
   // wrong dimension
   {
     auto h1 = make(dynamic_tag(), axis::integer<>(0, 2));
