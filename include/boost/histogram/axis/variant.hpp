@@ -57,9 +57,10 @@ class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts.
   using metadata_type =
       detail::unqual<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
 
+  using types = mp11::mp_transform<detail::unqual, base_type>;
   template <typename T>
   using requires_bounded_type =
-      mp11::mp_if<mp11::mp_contains<base_type, detail::unqual<T>>, void>;
+      mp11::mp_if<mp11::mp_contains<types, detail::unqual<T>>, void>;
 
 public:
   variant() = default;

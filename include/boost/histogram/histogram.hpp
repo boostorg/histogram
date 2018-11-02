@@ -125,18 +125,10 @@ public:
   decltype(auto) axis() { return axis(mp11::mp_size_t<0>()); }
 
   /// Get N-th axis with runtime index (const version)
-  template <typename U = axes_type, typename = detail::requires_axis_vector<U>>
-  decltype(auto) axis(std::size_t i) const {
-    BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
-    return axes_[i];
-  }
+  decltype(auto) axis(std::size_t i) const { return detail::axis_get(axes_, i); }
 
   /// Get N-th axis with runtime index
-  template <typename U = axes_type, typename = detail::requires_axis_vector<U>>
-  decltype(auto) axis(std::size_t i) {
-    BOOST_ASSERT_MSG(i < axes_.size(), "index out of range");
-    return axes_[i];
-  }
+  decltype(auto) axis(std::size_t i) { return detail::axis_get(axes_, i); }
 
   /// Apply unary functor/function to each axis
   template <typename Unary>

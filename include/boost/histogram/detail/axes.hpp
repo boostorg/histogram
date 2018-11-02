@@ -106,14 +106,46 @@ void range_check(const T& axes) {
   BOOST_ASSERT_MSG(N < axes.size(), "index out of range");
 }
 
-template <int N, typename T>
-decltype(auto) axis_get(T&& axes, requires_tuple<T>* = nullptr) {
-  return std::get<N>(std::forward<T>(axes));
+template <int N, typename... Ts>
+decltype(auto) axis_get(std::tuple<Ts...>& axes) {
+  return std::get<N>(axes);
+}
+
+template <int N, typename... Ts>
+decltype(auto) axis_get(const std::tuple<Ts...>& axes) {
+  return std::get<N>(axes);
 }
 
 template <int N, typename T>
-decltype(auto) axis_get(T&& axes, requires_axis_vector<T>* = nullptr) {
-  return std::forward<T>(axes)[N];
+decltype(auto) axis_get(T& axes) {
+  return axes[N];
+}
+
+template <int N, typename T>
+decltype(auto) axis_get(const T& axes) {
+  return axes[N];
+}
+
+template <typename... Ts>
+decltype(auto) axis_get(std::tuple<Ts...>& axes, std::size_t i) {
+  return mp11::mp_with_index<sizeof...(Ts)>(
+      i, [&](auto I) { return axis::variant<Ts&...>(std::get<I>(axes)); });
+}
+
+template <typename... Ts>
+decltype(auto) axis_get(const std::tuple<Ts...>& axes, std::size_t i) {
+  return mp11::mp_with_index<sizeof...(Ts)>(
+      i, [&](auto I) { return axis::variant<const Ts&...>(std::get<I>(axes)); });
+}
+
+template <typename T>
+decltype(auto) axis_get(T& axes, std::size_t i) {
+  return axes.at(i);
+}
+
+template <typename T>
+decltype(auto) axis_get(const T& axes, std::size_t i) {
+  return axes.at(i);
 }
 
 template <typename F, typename... Ts>
