@@ -92,7 +92,7 @@ int main() {
     BOOST_TEST(h1_1.axis() == h1.axis(1_c));
   }
 
-  // histogram iterator
+  // histogram iterator [MOVE to histogram_test]
   {
     auto h =
         make_s(dynamic_tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 3));
