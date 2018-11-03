@@ -25,7 +25,7 @@ public:
 
   value_type value() const {
     if (is_continuous_)
-      throw std::runtime_error("calling value() for continuous axis is ambiguous");
+      throw std::runtime_error("cannot call value() for continuous axis");
     return axis_.value(idx_);
   }
   value_type lower() const {

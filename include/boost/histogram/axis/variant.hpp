@@ -176,12 +176,11 @@ public:
   // double and will throw a runtime_error otherwise
   double value(double idx) const {
     return visit(
-        [idx](const auto& a) {
-          using T = detail::unqual<decltype(a)>;
-          return detail::static_if<detail::has_method_value<T>>(
+        [idx](const auto& a) -> double {
+          using A = detail::unqual<decltype(a)>;
+          return detail::static_if<detail::has_method_value<A>>(
               [idx](const auto& a) -> double {
-                using T = detail::unqual<decltype(a)>;
-                using U = detail::return_type<decltype(&T::value)>;
+                using U = detail::return_type<decltype(&A::value)>;
                 return detail::static_if<std::is_convertible<U, double>>(
                     [idx](const auto& a) -> double {
                       return static_cast<double>(a.value(idx));
@@ -190,19 +189,15 @@ public:
                       throw std::runtime_error(detail::cat(
                           "return value ",
                           boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " of ",
-                          boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
-                          "::value(double) is not convertible to double; use "
-                          "boost::histogram::axis::get to obtain a reference "
-                          "of this axis type"));
+                          boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                          "::value(double) is not convertible to double"));
                     },
                     a);
               },
               [](const auto&) -> double {
                 throw std::runtime_error(
-                    detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
-                                " has no value method; use "
-                                "boost::histogram::axis::get to obtain a reference "
-                                "of this axis type"));
+                    detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                                " has no value method"));
               },
               a);
         },
@@ -305,38 +300,38 @@ const T* get(const variant<Us...>* v) {
   return boost::relaxed_get<T>(static_cast<const typename variant<Us...>::base_type*>(v));
 }
 
-// pass-through version for generic programming, if T is axis instead of variant
+// pass-through version for generic programming, if U is axis instead of variant
 template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
 T& get(U& u) {
   return static_cast<T&>(u);
 }
 
-// pass-through version for generic programming, if T is axis instead of variant
+// pass-through version for generic programming, if U is axis instead of variant
 template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
 T&& get(U&& u) {
   return static_cast<T&&>(u);
 }
 
-// pass-through version for generic programming, if T is axis instead of variant
+// pass-through version for generic programming, if U is axis instead of variant
 template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
 const T& get(const U& u) {
   return static_cast<const T&>(u);
 }
 
-// pass-through version for generic programming, if T is axis instead of variant
+// pass-through version for generic programming, if U is axis instead of variant
 template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
 T* get(U* u) {
   return std::is_same<T, detail::unqual<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
 }
 
-// pass-through version for generic programming, if T is axis instead of variant
+// pass-through version for generic programming, if U is axis instead of variant
 template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
 const T* get(const U* u) {
   return std::is_same<T, detail::unqual<U>>::value ? reinterpret_cast<const T*>(u)
                                                    : nullptr;
 }
 
-// pass-through version for generic programming, if T is axis instead of variant
+// pass-through version for generic programming, if U is axis instead of variant
 template <typename Functor, typename T,
           typename = detail::requires_axis<detail::unqual<T>>>
 decltype(auto) visit(Functor&& f, T&& t) {
