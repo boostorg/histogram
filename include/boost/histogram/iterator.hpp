@@ -40,14 +40,17 @@ public:
     return cache_.get(dim);
   }
 
-  decltype(auto) bin() const { return histogram_.axis()[idx()]; }
+  // returns an instance to not create a dangling reference
+  auto bin() const { return histogram_.axis()[idx()]; }
 
+  // returns an instance to not create a dangling reference
   template <std::size_t I>
-  decltype(auto) bin(mp11::mp_size_t<I>) const {
+  auto bin(mp11::mp_size_t<I>) const {
     return histogram_.axis(mp11::mp_size_t<I>())[idx(I)];
   }
 
-  decltype(auto) bin(std::size_t dim) const { return histogram_.axis(dim)[idx(dim)]; }
+  // returns an instance to not create a dangling reference
+  auto bin(std::size_t dim) const { return histogram_.axis(dim)[idx(dim)]; }
 
 private:
   bool equal(const iterator& rhs) const noexcept {

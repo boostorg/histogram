@@ -24,8 +24,6 @@
 using namespace boost::histogram;
 
 int main() {
-  BOOST_TEST_THROWS(axis::integer<>(1, 1), std::invalid_argument);
-
   {
     axis::variant<axis::integer<>, axis::category<std::string>> a{
         axis::integer<>(0, 2, "int")};
@@ -126,7 +124,7 @@ int main() {
          "category(0, 1, 2, metadata=\"category\", options=overflow)");
     test(axis::category<std::string>({"A", "B"}, "category2"),
          "category(\"A\", \"B\", metadata=\"category2\", options=overflow)");
-#ifndef _MSC_VER // fails on MSVC because demagnled name for user_defined looks different
+#ifndef _MSC_VER // fails on MSVC because demangled name for user_defined looks different
     test(axis::integer<int, user_defined>(-1, 1, {}, axis::option_type::none),
          "integer(-1, 1, metadata=main::user_defined, options=none)");
 #endif
