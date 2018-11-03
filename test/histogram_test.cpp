@@ -218,7 +218,7 @@ void run_tests() {
 
   // d1
   {
-    auto h = make(Tag(), axis::integer<>{0, 2});
+    auto h = make_s(Tag(), std::vector<unsigned>(), axis::integer<>{0, 2});
     h(0);
     h(0);
     h(-1);
@@ -782,52 +782,60 @@ void run_tests() {
     BOOST_TEST_EQ(v.variance(), 6);
   }
 
-  // using STL containers
+  // using static containers
   {
     auto h = make_s(Tag(), std::vector<weight_counter<>>(), axis::integer<>(0, 2),
                     axis::regular<>(2, 2, 4));
-    // vector in
-    h(std::vector<int>({0, 2}));
-    // pair in
-    h(std::make_pair(1, 3.0));
+    // tuple in
+    h(std::make_tuple(0, 2.0));
+    h(std::make_tuple(1, 3.0));
 
-    // pair out
-    BOOST_TEST_EQ(h.at(std::make_pair(0, 0)), 1);
-    BOOST_TEST_EQ(h[std::make_pair(0, 0)], 1);
+    auto i00 = std::make_tuple(0, 0);
+    auto i11 = std::make_tuple(1, 1);
+
     // tuple out
-    BOOST_TEST_EQ(h[std::make_tuple(1, 1)], 1);
+    BOOST_TEST_EQ(h.at(i00), 1);
+    BOOST_TEST_EQ(h[i00], 1);
+    BOOST_TEST_EQ(h[i11], 1);
 
-    // vector in, weights
-    h(weight(2), std::vector<int>({0, 2}));
-    // pair in, weights
-    h(weight(2), std::make_pair(1, 3.0));
+    // tuple with weight
+    h(std::make_tuple(weight(2), 0, 2.0));
+    h(std::make_tuple(1, 3.0, weight(2)));
 
-    // vector
-    BOOST_TEST_EQ(h.at(std::vector<int>({0, 0})).value(), 3);
-    BOOST_TEST_EQ(h[std::vector<int>({0, 0})].value(), 3);
-    // initializer_list
-    auto i = {1, 1};
-    BOOST_TEST_EQ(h.at(i).variance(), 5);
-    BOOST_TEST_EQ(h[i].variance(), 5);
+    BOOST_TEST_EQ(h.at(i00).value(), 3);
+    BOOST_TEST_EQ(h[i00].value(), 3);
+    BOOST_TEST_EQ(h.at(i11).variance(), 5);
+    BOOST_TEST_EQ(h[i11].variance(), 5);
 
-    // also test special case of 1-dimensional histogram, which should unpack
-    // the argument in the "at" call, even though they do not unpack in the
-    // operator() call (because that is ambiguous)
+    // test special case of 1-dimensional histogram, which should unpack
+    // 1-dimensional tuple normally, but forward larger tuples to the axis
     auto h1 = make(Tag(), axis::integer<>(0, 2));
-    h1(1);
-    BOOST_TEST_EQ(h1.at(std::make_tuple(0)), 0);
-    BOOST_TEST_EQ(h1.at(std::vector<int>(1, 1)), 1);
+    h1(std::make_tuple(0));                      // as if one had passed 0 directly
+    BOOST_TEST_EQ(h1.at(std::make_tuple(0)), 1); // as if one had passed 0 directly
+    // passing 2d tuple is an error
+    BOOST_TEST_THROWS(h1(std::make_tuple(0, 0)), std::invalid_argument);
 
-    // wrong dimension
-    BOOST_TEST_THROWS(h1.at(std::vector<int>({0, 2})), std::invalid_argument);
+    struct axis_with_2d_tuple_argument {
+      int operator()(std::tuple<int, int> x) const {
+        return std::get<0>(x) == 1 && std::get<1>(x) == 2;
+      }
+      unsigned size() const { return 2; }
+    };
+    auto h2 = make(Tag(), axis_with_2d_tuple_argument());
+    h2(std::make_tuple(1, 2)); // forward 2d tuple to axis
+    BOOST_TEST_EQ(h2.at(0), 0);
+    BOOST_TEST_EQ(h2.at(1), 1);
+    // positive side-effect: passing two arguments directly does the right thing
+    h2(1, 2);
+    // also works with weights
+    // h2(1, 2, weight(2));
   }
 
   // bad bin access
   {
     auto h = make(Tag(), axis::integer<>(0, 1), axis::integer<>(0, 1));
     BOOST_TEST_THROWS(h.at(0, 2), std::out_of_range);
-    BOOST_TEST_THROWS(h.at(std::make_pair(2, 0)), std::out_of_range);
-    BOOST_TEST_THROWS(h.at(std::vector<int>({0, 2})), std::out_of_range);
+    BOOST_TEST_THROWS(h.at(std::make_tuple(2, 0)), std::out_of_range);
   }
 
   // pass histogram to function

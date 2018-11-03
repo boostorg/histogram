@@ -97,7 +97,7 @@ int main() {
     auto h1 = make(dynamic_tag(), axis::integer<>(0, 2));
     h1(1);
     BOOST_TEST_THROWS(h1.at(0, 0), std::invalid_argument);
-    BOOST_TEST_THROWS(h1.at(std::make_pair(0, 0)), std::invalid_argument);
+    BOOST_TEST_THROWS(h1.at(std::make_tuple(0, 0)), std::invalid_argument);
   }
 
   {

@@ -20,11 +20,11 @@ struct weight_type {
 
 /// Helper function to mark argument as a weight
 template <typename T>
-weight_type<T&&> weight(T&& t) {
+weight_type<T> weight(T&& t) {
   return {std::forward<T>(t)};
 }
 
-}
-}
+} // namespace histogram
+} // namespace boost
 
 #endif
