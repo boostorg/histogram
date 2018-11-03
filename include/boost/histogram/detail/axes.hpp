@@ -25,13 +25,10 @@ namespace histogram {
 namespace detail {
 
 template <typename... Ts, typename... Us>
-constexpr bool axes_equal(const std::tuple<Ts...>&, const std::tuple<Us...>&) {
-  return false;
-}
-
-template <typename... Ts>
-constexpr bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Ts...>& u) {
-  return t == u;
+bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
+  return static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
+      [](const auto& a, const auto& b) { return a == b; },
+      [](const auto&, const auto&) { return false; }, t, u);
 }
 
 template <typename... Ts, typename U>
@@ -374,15 +371,17 @@ void fill_impl(mp11::mp_int<-1>, S& storage, const A& axes,
 }
 
 template <typename L>
-using weight_index = mp11::mp_if<
-    is_weight<mp11::mp_first<L>>, mp11::mp_int<0>,
-    mp11::mp_if<is_weight<mp_last<L>>, mp11::mp_int<(mp11::mp_size<L>::value - 1)>,
-                mp11::mp_int<-1>>>;
+constexpr int weight_index() {
+  const int n = mp11::mp_size<L>::value - 1;
+  if (is_weight<mp11::mp_first<L>>::value) return 0;
+  if (is_weight<mp11::mp_at_c<L, n>>::value) return n;
+  return -1;
+}
 
 // generic entry point which analyses args and calls specific
-template <typename S, typename T, typename... Us>
-void fill_impl(S& s, const T& axes, const std::tuple<Us...>& args) {
-  fill_impl(weight_index<mp11::mp_list<Us...>>(), s, axes, args);
+template <typename S, typename T, typename U>
+void fill_impl(S& s, const T& axes, const U& args) {
+  fill_impl(mp11::mp_int<weight_index<unqual<U>>()>(), s, axes, args);
 }
 
 /* In all at_impl, we throw instead of asserting when an index is out of
