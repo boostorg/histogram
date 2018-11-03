@@ -180,6 +180,7 @@ public:
           using A = detail::unqual<decltype(a)>;
           return detail::static_if<detail::has_method_value<A>>(
               [idx](const auto& a) -> double {
+                using A = detail::unqual<decltype(a)>;
                 using U = detail::return_type<decltype(&A::value)>;
                 return detail::static_if<std::is_convertible<U, double>>(
                     [idx](const auto& a) -> double {

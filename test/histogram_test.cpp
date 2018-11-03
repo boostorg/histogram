@@ -681,28 +681,34 @@ void run_tests() {
     h(weight(2), 0);
     h(1);
     h(1);
+
     auto it = h.begin();
     BOOST_TEST_EQ(it.rank(), 1);
 
     BOOST_TEST_EQ(it.idx(), 0);
     BOOST_TEST_EQ(it.bin(), a[0]);
+    // BOOST_TEST_EQ(it.bin(0).lower(), a[0].lower());
     BOOST_TEST_EQ(it->value(), 2);
     BOOST_TEST_EQ(it->variance(), 4);
     ++it;
     BOOST_TEST_EQ(it.idx(), 1);
     BOOST_TEST_EQ(it.bin(), a[1]);
+    // BOOST_TEST_EQ(it.bin(0), a[1]);
     BOOST_TEST_EQ(*it, 2);
     ++it;
     BOOST_TEST_EQ(it.idx(), 2);
     BOOST_TEST_EQ(it.bin(), a[2]);
+    // BOOST_TEST_EQ(it.bin(0), a[2]);
     BOOST_TEST_EQ(*it, 0);
     ++it;
     BOOST_TEST_EQ(it.idx(), 3);
     BOOST_TEST_EQ(it.bin(), a[3]);
+    // BOOST_TEST_EQ(it.bin(0), a[3]);
     BOOST_TEST_EQ(*it, 0);
     ++it;
     BOOST_TEST_EQ(it.idx(), -1);
     BOOST_TEST_EQ(it.bin(), a[-1]);
+    // BOOST_TEST_EQ(it.bin(0), a[-1]);
     BOOST_TEST_EQ(*it, 0);
     ++it;
     BOOST_TEST(it == h.end());
@@ -725,8 +731,6 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 0);
     BOOST_TEST_EQ(it.bin(0_c), a0[0]);
     BOOST_TEST_EQ(it.bin(1_c), a1[0]);
-    // BOOST_TEST_EQ(it.bin(0), a0[0]);
-    // BOOST_TEST_EQ(it.bin(1), a1[0]);
     BOOST_TEST_EQ(it->value(), 2);
     BOOST_TEST_EQ(it->variance(), 4);
     ++it;
@@ -734,8 +738,6 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 0);
     BOOST_TEST_EQ(it.bin(0_c), a0[1]);
     BOOST_TEST_EQ(it.bin(1_c), a1[0]);
-    // BOOST_TEST_EQ(it.bin(0), a0[1]);
-    // BOOST_TEST_EQ(it.bin(1), a1[0]);
     BOOST_TEST_EQ(it->value(), 0);
     BOOST_TEST_EQ(it->variance(), 0);
     ++it;
@@ -743,8 +745,6 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 0);
     BOOST_TEST_EQ(it.bin(0_c), a0[-1]);
     BOOST_TEST_EQ(it.bin(1_c), a1[0]);
-    // BOOST_TEST_EQ(it.bin(0), a0[-1]);
-    // BOOST_TEST_EQ(it.bin(1), a1[0]);
     BOOST_TEST_EQ(it->value(), 1);
     BOOST_TEST_EQ(it->variance(), 1);
     ++it;
@@ -752,8 +752,6 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 1);
     BOOST_TEST_EQ(it.bin(0_c), a0[0]);
     BOOST_TEST_EQ(it.bin(1_c), a1[1]);
-    // BOOST_TEST_EQ(it.bin(0), a0[0]);
-    // BOOST_TEST_EQ(it.bin(1), a1[1]);
     BOOST_TEST_EQ(it->value(), 0);
     BOOST_TEST_EQ(it->variance(), 0);
     ++it;
@@ -761,8 +759,6 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 1);
     BOOST_TEST_EQ(it.bin(0_c), a0[1]);
     BOOST_TEST_EQ(it.bin(1_c), a1[1]);
-    // BOOST_TEST_EQ(it.bin(0), a0[1]);
-    // BOOST_TEST_EQ(it.bin(1), a1[1]);
     BOOST_TEST_EQ(it->value(), 1);
     BOOST_TEST_EQ(it->variance(), 1);
     ++it;
@@ -770,8 +766,6 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(1), 1);
     BOOST_TEST_EQ(it.bin(0_c), a0[-1]);
     BOOST_TEST_EQ(it.bin(1_c), a1[1]);
-    // BOOST_TEST_EQ(it.bin(0), a0[-1]);
-    // BOOST_TEST_EQ(it.bin(1), a1[1]);
     BOOST_TEST_EQ(it->value(), 0);
     BOOST_TEST_EQ(it->variance(), 0);
     ++it;
