@@ -24,86 +24,6 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <typename... Ts, typename... Us>
-bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
-  return static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
-      [](const auto& a, const auto& b) { return a == b; },
-      [](const auto&, const auto&) { return false; }, t, u);
-}
-
-template <typename... Ts, typename U>
-bool axes_equal(const std::tuple<Ts...>& t, const U& u) {
-  if (sizeof...(Ts) != u.size()) return false;
-  bool equal = true;
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
-    using T = mp11::mp_at<std::tuple<Ts...>, decltype(I)>;
-    auto up = axis::get<T>(&u[I]);
-    equal &= (up && std::get<I>(t) == *up);
-  });
-  return equal;
-}
-
-template <typename T, typename... Us>
-bool axes_equal(const T& t, const std::tuple<Us...>& u) {
-  return axes_equal(u, t);
-}
-
-template <typename T, typename U>
-bool axes_equal(const T& t, const U& u) {
-  if (t.size() != u.size()) return false;
-  return std::equal(t.begin(), t.end(), u.begin());
-}
-
-template <typename... Ts>
-void axes_assign(std::tuple<Ts...>& t, const std::tuple<Ts...>& u) {
-  t = u;
-}
-
-template <typename... Ts, typename... Us>
-void axes_assign(std::tuple<Ts...>&, const std::tuple<Us...>&) {
-  throw std::invalid_argument("cannot assign axes if types do not match");
-}
-
-template <typename... Ts, typename U>
-void axes_assign(std::tuple<Ts...>& t, const U& u) {
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
-    using T = mp11::mp_at_c<std::tuple<Ts...>, I>;
-    std::get<I>(t) = axis::get<T>(u[I]);
-  });
-}
-
-template <typename T, typename... Us>
-void axes_assign(T& t, const std::tuple<Us...>& u) {
-  t.resize(sizeof...(Us));
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
-      [&](auto I) { t[I] = std::get<I>(u); });
-}
-
-template <typename T, typename U>
-void axes_assign(T& t, const U& u) {
-  t.assign(u.begin(), u.end());
-}
-
-template <typename... Ts>
-constexpr std::size_t axes_size(const std::tuple<Ts...>&) {
-  return sizeof...(Ts);
-}
-
-template <typename T>
-std::size_t axes_size(const T& axes) {
-  return axes.size();
-}
-
-template <int N, typename... Ts>
-void range_check(const std::tuple<Ts...>&) {
-  static_assert(N < sizeof...(Ts), "index out of range");
-}
-
-template <int N, typename T>
-void range_check(const T& axes) {
-  BOOST_ASSERT_MSG(N < axes.size(), "index out of range");
-}
-
 template <int N, typename... Ts>
 decltype(auto) axis_get(std::tuple<Ts...>& axes) {
   return std::get<N>(axes);
@@ -144,6 +64,86 @@ decltype(auto) axis_get(T& axes, std::size_t i) {
 template <typename T>
 decltype(auto) axis_get(const T& axes, std::size_t i) {
   return axes.at(i);
+}
+
+template <typename... Ts, typename... Us>
+bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
+  return static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
+      [](const auto& a, const auto& b) { return a == b; },
+      [](const auto&, const auto&) { return false; }, t, u);
+}
+
+template <typename... Ts, typename U>
+bool axes_equal(const std::tuple<Ts...>& t, const U& u) {
+  if (sizeof...(Ts) != u.size()) return false;
+  bool equal = true;
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
+    using T = mp11::mp_at<std::tuple<Ts...>, decltype(I)>;
+    auto up = axis::get<T>(&u[I]);
+    equal &= (up && std::get<I>(t) == *up);
+  });
+  return equal;
+}
+
+template <typename T, typename... Us>
+bool axes_equal(const T& t, const std::tuple<Us...>& u) {
+  return axes_equal(u, t);
+}
+
+template <typename T, typename U>
+bool axes_equal(const T& t, const U& u) {
+  if (t.size() != u.size()) return false;
+  return std::equal(t.begin(), t.end(), u.begin());
+}
+
+template <typename... Ts, typename... Us>
+void axes_assign(std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
+  static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
+      [](auto& a, const auto& b) { a = b; },
+      [](auto&, const auto&) {
+        throw std::invalid_argument("cannot assign axes, types do not match");
+      },
+      t, u);
+}
+
+template <typename... Ts, typename U>
+void axes_assign(std::tuple<Ts...>& t, const U& u) {
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
+    using T = mp11::mp_at_c<std::tuple<Ts...>, I>;
+    std::get<I>(t) = axis::get<T>(u[I]);
+  });
+}
+
+template <typename T, typename... Us>
+void axes_assign(T& t, const std::tuple<Us...>& u) {
+  t.resize(sizeof...(Us));
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
+      [&](auto I) { t[I] = std::get<I>(u); });
+}
+
+template <typename T, typename U>
+void axes_assign(T& t, const U& u) {
+  t.assign(u.begin(), u.end());
+}
+
+template <typename... Ts>
+constexpr std::size_t axes_size(const std::tuple<Ts...>&) {
+  return sizeof...(Ts);
+}
+
+template <typename T>
+std::size_t axes_size(const T& axes) {
+  return axes.size();
+}
+
+template <int N, typename... Ts>
+void range_check(const std::tuple<Ts...>&) {
+  static_assert(N < sizeof...(Ts), "index out of range");
+}
+
+template <int N, typename T>
+void range_check(const T& axes) {
+  BOOST_ASSERT_MSG(N < axes.size(), "index out of range");
 }
 
 template <typename F, typename... Ts>

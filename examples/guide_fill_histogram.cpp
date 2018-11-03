@@ -1,3 +1,4 @@
+// clang-format off
 //[ guide_fill_histogram
 
 #include <boost/histogram.hpp>
@@ -10,8 +11,8 @@
 namespace bh = boost::histogram;
 
 int main() {
-  auto h =
-      bh::make_histogram(bh::axis::regular<>(8, 0, 4), bh::axis::regular<>(10, 0, 5));
+  auto h = bh::make_histogram(bh::axis::regular<>(8, 0, 4),
+                              bh::axis::regular<>(10, 0, 5));
 
   // fill histogram, number of arguments must be equal to number of axes
   h(0, 1.1);                // increases bin counter by one
@@ -30,8 +31,9 @@ int main() {
 
   // std::for_each takes the functor by value, we use a reference wrapper
   // here to avoid costly copies
-  auto h2 =
-      bh::make_histogram(bh::axis::regular<>(8, 0, 4), bh::axis::regular<>(10, 0, 5));
+  auto h2 = bh::make_histogram(bh::axis::regular<>(8, 0, 4),
+                               bh::axis::regular<>(10, 0, 5));
+
   std::for_each(input_data.begin(), input_data.end(), std::ref(h2));
 
   // h2 is filled
