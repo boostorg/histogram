@@ -23,7 +23,10 @@ int main() {
   h(xy);
 
   // functional-style processing is also supported
-  std::vector<std::tuple<int, double>> input_data{{0, 1.2}, {2, 3.4}, {4, 5.6}};
+  std::vector<std::tuple<int, double>> input_data;
+  input_data.emplace_back(0, 1.2);
+  input_data.emplace_back(2, 3.4);
+  input_data.emplace_back(4, 5.6);
 
   // std::for_each takes the functor by value, we use a reference wrapper
   // here to avoid costly copies
