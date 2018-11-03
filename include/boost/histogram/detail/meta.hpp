@@ -10,6 +10,7 @@
 #include <boost/callable_traits/args.hpp>
 #include <boost/callable_traits/return_type.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
 #include <functional>
 #include <iterator>
@@ -144,13 +145,11 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_iterable, (std::begin(std::declval<T&>()),
 BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
                             (std::declval<std::ostream&>() << std::declval<T&>()));
 
-namespace {
 template <typename T>
 struct is_axis_variant_impl : std::false_type {};
 
 template <typename... Ts>
 struct is_axis_variant_impl<axis::variant<Ts...>> : std::true_type {};
-} // namespace
 
 template <typename T>
 using is_axis_variant = typename is_axis_variant_impl<T>::type;
@@ -161,6 +160,15 @@ using is_axis_or_axis_variant = mp11::mp_or<is_axis<T>, is_axis_variant<T>>;
 template <typename T, typename U = container_value_type<T>>
 using is_axis_vector =
     mp11::mp_all<is_indexable_container<unqual<T>>, is_axis_or_axis_variant<U>>;
+
+template <typename T>
+struct is_weight_impl : std::false_type {};
+
+template <typename T>
+struct is_weight_impl<weight_type<T>> : std::true_type {};
+
+template <typename T>
+using is_weight = is_weight_impl<unqual<T>>;
 
 struct static_container_tag {};
 struct iterable_container_tag {};

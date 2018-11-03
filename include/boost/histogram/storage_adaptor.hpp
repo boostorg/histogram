@@ -12,13 +12,14 @@
 #include <boost/assert.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/weight.hpp>
 #include <map>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
 
-// forward declaration
+// forward declaration for optional boost.accumulators support
 namespace boost {
 namespace accumulators {
 template <typename Sample, typename Features, typename Weight>
@@ -65,7 +66,7 @@ struct element_adaptor_accumulator_set {
   }
 };
 
-// generic form for aggregators
+// generic form for aggregator types
 template <typename T>
 struct element_adaptor_generic {
   template <typename... Us>
@@ -165,7 +166,7 @@ struct map_augmentation : T {
   map_augmentation() = default;
   map_augmentation(map_augmentation&&) = default;
   map_augmentation(const map_augmentation&) = default;
-  map_augmentation& operator=( map_augmentation&&) = default;
+  map_augmentation& operator=(map_augmentation&&) = default;
   map_augmentation& operator=(const map_augmentation&) = default;
 
   void reset(std::size_t n) {

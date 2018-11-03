@@ -136,55 +136,32 @@ public:
     detail::for_each_axis(axes_, std::forward<Unary>(unary));
   }
 
-  /// Fill histogram with a value tuple
+  /// Fill histogram with value tuple and optional weight
   template <typename... Ts>
   void operator()(const Ts&... ts) {
     // case with one argument needs special treatment, specialized below
-    const auto index = detail::call_impl(detail::static_container_tag(), axes_,
-                                         std::forward_as_tuple(ts...));
-    if (index) storage_(*index);
+    operator()(std::forward_as_tuple(ts...));
   }
 
-  template <typename T>
-  void operator()(const T& t) {
-    // check whether we need to unpack argument
-    const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
-    if (index) storage_(*index);
-  }
-
-  /// Fill histogram with a weight and a value tuple
-  template <typename U, typename... Ts>
-  void operator()(const weight_type<U>& w, const Ts&... ts) {
-    // case with one argument needs special treatment, specialized below
-    const auto index = detail::call_impl(detail::static_container_tag(), axes_,
-                                         std::forward_as_tuple(ts...));
-    if (index) storage_(*index, w);
-  }
-
-  template <typename U, typename T>
-  void operator()(const weight_type<U>& w, const T& t) {
-    // check whether we need to unpack argument
-    const auto index = detail::call_impl(detail::classify_container<T>(), axes_, t);
-    if (index) storage_(*index, w);
+  /// Fill histogram with value tuple and optional weight
+  template <typename... Ts>
+  void operator()(const std::tuple<Ts...>& t) {
+    detail::fill_impl(storage_, axes_, t);
   }
 
   /// Access bin counter at indices
   template <typename... Ts>
   const_reference at(const Ts&... ts) const {
     // case with one argument is ambiguous, is specialized below
-    const auto index = detail::at_impl(detail::static_container_tag(), axes_,
-                                       std::forward_as_tuple(static_cast<int>(ts)...));
-    if (!index) throw std::out_of_range("indices out of bounds");
-    return storage_[*index];
+    return at(std::forward_as_tuple(ts...));
   }
 
   /// Access bin counter at index (specialization for 1D)
-  template <typename T>
-  const_reference at(const T& t) const {
-    // check whether we need to unpack argument;
-    const auto index = detail::at_impl(detail::classify_container<T>(), axes_, t);
-    if (!index) throw std::out_of_range("indices out of bounds");
-    return storage_[*index];
+  template <typename... Ts>
+  const_reference at(const std::tuple<Ts...>& t) const {
+    const auto idx = detail::at_impl(axes_, t);
+    if (!idx) throw std::out_of_range("indices out of bounds");
+    return storage_[*idx];
   }
 
   /// Access bin counter at index

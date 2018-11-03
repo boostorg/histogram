@@ -223,7 +223,7 @@ struct adaptive_storage {
   template <typename T>
   adaptive_storage& operator=(const storage_adaptor<T>& s) {
     // no check for self-assign needed, since argument is different type
-    // TODO: select appropriate buffer for T
+    // TODO: select appropriate buffer for T instead of double
     apply(destroyer(), buffer);
     buffer.size = s.size();
     buffer.set(buffer.template create<double>());

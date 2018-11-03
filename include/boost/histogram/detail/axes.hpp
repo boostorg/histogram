@@ -13,6 +13,7 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
 #include <stdexcept>
 #include <tuple>
@@ -28,7 +29,7 @@ constexpr bool axes_equal(const std::tuple<Ts...>&, const std::tuple<Us...>&) {
   return false;
 }
 
-template <typename... Ts, typename... Us>
+template <typename... Ts>
 constexpr bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Ts...>& u) {
   return t == u;
 }
@@ -256,6 +257,7 @@ sub_axes<std::vector<Ts...>, Ns...> make_sub_axes(const std::vector<Ts...>& t, N
   return u;
 }
 
+/// Index with an invalid state
 struct optional_index {
   std::size_t idx = 0;
   std::size_t stride = 1;
@@ -263,119 +265,124 @@ struct optional_index {
   std::size_t operator*() const { return idx; }
 };
 
-// the following is highly optimized code that runs in a hot loop;
-// please measure the performance impact of changes
 inline void linearize(optional_index& out, const int axis_size, const int axis_shape,
                       int j) noexcept {
   BOOST_ASSERT_MSG(out.stride == 0 || (-1 <= j && j <= axis_size),
                    "index must be in bounds for this algorithm");
-  j += (j < 0) * (axis_size + 2); // wrap around if j < 0
+  if (j < 0) j += (axis_size + 2); // wrap around if j < 0
   out.idx += j * out.stride;
-  out.stride *= (j < axis_shape) * axis_shape; // set to 0, if j is invalid
-}
-
-template <typename T>
-void linearize2(optional_index& out, const T& axis, int j) {
-  const auto a_size = static_cast<int>(axis.size());
-  const auto a_shape = axis::traits::extend(axis);
-  out.stride *= (-1 <= j && j <= a_size); // set to 0, if j is invalid
-  linearize(out, a_size, a_shape, j);
-}
-
-template <typename T, typename U>
-void linearize1(optional_index& out, const T& axis, const U& u) {
-  const auto a_size = axis.size();
-  const auto a_shape = axis::traits::extend(axis);
-  const auto j = axis(u);
-  linearize(out, a_size, a_shape, j);
+  // set stride to 0, if j is invalid
+  out.stride *= (j < axis_shape) * axis_shape;
 }
 
 template <typename... Ts, typename U>
 void linearize1(optional_index& out, const axis::variant<Ts...>& axis, const U& u) {
-  axis::visit(
-      [&](const auto& a) {
-        using A = unqual<decltype(a)>;
-        using arg_type = axis::traits::arg<A>;
-        static_if<std::is_convertible<U, arg_type>>(
-            [&](const auto& u) { linearize1(out, a, u); },
-            [&](const U&) {
-              throw std::invalid_argument(
-                  detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                              ": cannot convert argument of type ",
-                              boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
-                              boost::core::demangled_name(BOOST_CORE_TYPEID(arg_type))));
-            },
-            u);
+  axis::visit([&](const auto& a) { linearize1(out, a, u); }, axis);
+}
+
+template <typename A, typename U>
+void linearize1(optional_index& out, const A& axis, const U& u) {
+  // protect against instantiation with wrong template argument
+  using arg_type = axis::traits::arg<A>;
+  static_if<std::is_convertible<U, arg_type>>(
+      [&](const auto& u) {
+        const auto a_size = axis.size();
+        const auto a_shape = axis::traits::extend(axis);
+        const auto j = axis(u);
+        linearize(out, a_size, a_shape, j);
       },
-      axis);
+      [&](const U&) {
+        throw std::invalid_argument(
+            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                        ": cannot convert argument of type ",
+                        boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
+                        boost::core::demangled_name(BOOST_CORE_TYPEID(arg_type))));
+      },
+      u);
 }
 
-// specialization for one-dimensional histograms
-template <typename Tag, typename T, typename U>
-optional_index call_impl(Tag, const std::tuple<T>& axes, const U& u) {
-  dimension_check(axes, 1);
+template <typename T>
+void linearize2(optional_index& out, const T& axis, const int j) {
+  const auto a_size = static_cast<int>(axis.size());
+  const auto a_shape = axis::traits::extend(axis);
+  out.stride *= (-1 <= j && j <= a_size); // set stride to 0, if j is invalid
+  linearize(out, a_size, a_shape, j);
+}
+
+template <typename S, typename A, typename... Us>
+void fill_impl(mp11::mp_int<(sizeof...(Us) - 1)>, S& storage, const A& axes,
+               const std::tuple<Us...>& args) {
+  dimension_check(axes, sizeof...(Us) - 1);
   optional_index idx;
-  linearize1(idx, std::get<0>(axes), u);
-  return idx;
+  mp11::mp_for_each<mp11::mp_iota_c<(sizeof...(Us) - 1)>>(
+      [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<I>(args)); });
+  if (idx) storage(*idx, std::get<(sizeof...(Us) - 1)>(args));
 }
 
-template <typename T1, typename T2, typename... Ts, typename... Us>
-optional_index call_impl(no_container_tag, const std::tuple<T1, T2, Ts...>& axes,
-                         const Us&... us) {
-  return call_impl(static_container_tag(), axes, std::forward_as_tuple(us...));
-}
-
-template <typename T1, typename T2, typename... Ts, typename U>
-optional_index call_impl(static_container_tag, const std::tuple<T1, T2, Ts...>& axes,
-                         const U& u) {
-  dimension_check(axes, mp_size<U>());
+template <typename S, typename A, typename... Us>
+void fill_impl(mp11::mp_int<0>, S& storage, const A& axes,
+               const std::tuple<Us...>& args) {
+  dimension_check(axes, sizeof...(Us) - 1);
   optional_index idx;
-  mp11::mp_for_each<mp11::mp_iota_c<(2 + sizeof...(Ts))>>(
-      [&](auto I) { linearize1(idx, std::get<I>(axes), std::get<I>(u)); });
-  return idx;
+  mp11::mp_for_each<mp11::mp_iota_c<(sizeof...(Us) - 1)>>(
+      [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<(I + 1)>(args)); });
+  if (idx) storage(*idx, std::get<0>(args));
 }
 
-template <typename T1, typename T2, typename... Ts, typename U>
-optional_index call_impl(iterable_container_tag, const std::tuple<T1, T2, Ts...>& axes,
-                         const U& u) {
-  dimension_check(axes, u.size());
+template <typename S, typename T1, typename T2, typename... Ts, typename... Us>
+void fill_impl(mp11::mp_int<-1>, S& storage, const std::tuple<T1, T2, Ts...>& axes,
+               const std::tuple<Us...>& args) {
   optional_index idx;
-  auto xit = std::begin(u);
-  mp11::mp_for_each<mp11::mp_iota_c<(2 + sizeof...(Ts))>>(
-      [&](auto I) { linearize1(idx, std::get<I>(axes), *xit++); });
-  return idx;
+  dimension_check(axes, sizeof...(Us));
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
+      [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<I>(args)); });
+  if (idx) storage(*idx);
 }
 
-template <typename... Ts, typename U>
-optional_index call_impl(no_container_tag, const std::vector<Ts...>& axes, const U& u) {
-  dimension_check(axes, 1);
+template <typename S, typename T, typename... Us>
+void fill_impl(mp11::mp_int<-1>, S& storage, const std::tuple<T>& axes,
+               const std::tuple<Us...>& args) {
+  // special case that needs handling: 1d histogram, histogram::operator()
+  // called with tuple(2, 1), while histogram may have axis that accepts 2d tuple
+  // - normally would be interpret as two arguments passed, but here is one argument
+  // - cannot check call signature of the axis at compile-time in all configurations
+  //   (axis::variant provides generic call interface and hides concrete interface)
+  // - solution: forward tuples of size > 1 directly to axis for 1d histograms
   optional_index idx;
-  linearize1(idx, axes[0], u);
-  return idx;
+  if (sizeof...(Us) > 1) {
+    linearize1(idx, axis_get<0>(axes), args);
+  } else {
+    dimension_check(axes, sizeof...(Us));
+    linearize1(idx, axis_get<0>(axes), std::get<0>(args));
+  }
+  if (idx) storage(*idx);
 }
 
-template <typename... Ts, typename U>
-optional_index call_impl(static_container_tag, const std::vector<Ts...>& axes,
-                         const U& u) {
-  if (axes.size() == 1) // do not unpack for 1d histograms, it is ambiguous
-    return call_impl(no_container_tag(), axes, u);
-  dimension_check(axes, mp11::mp_size<unqual<U>>());
+template <typename S, typename A, typename... Us>
+void fill_impl(mp11::mp_int<-1>, S& storage, const A& axes,
+               const std::tuple<Us...>& args) {
+  // special case as above, but for dynamic axes
   optional_index idx;
-  mp11::mp_for_each<mp11::mp_iota<mp_size<U>>>(
-      [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<I>(u)); });
-  return idx;
+  if (sizeof...(Us) > 1 && axes.size() == 1) {
+    linearize1(idx, axis_get<0>(axes), args);
+  } else {
+    dimension_check(axes, sizeof...(Us));
+    mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
+        [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<I>(args)); });
+  }
+  if (idx) storage(*idx);
 }
 
-template <typename... Ts, typename U>
-optional_index call_impl(iterable_container_tag, const std::vector<Ts...>& axes,
-                         const U& u) {
-  if (axes.size() == 1) // do not unpack for 1d histograms, it is ambiguous
-    return call_impl(no_container_tag(), axes, u);
-  dimension_check(axes, std::distance(std::begin(u), std::end(u)));
-  optional_index idx;
-  auto xit = std::begin(u);
-  for (const auto& a : axes) { linearize1(idx, a, *xit++); }
-  return idx;
+template <typename L>
+using weight_index = mp11::mp_if<
+    is_weight<mp11::mp_first<L>>, mp11::mp_int<0>,
+    mp11::mp_if<is_weight<mp_last<L>>, mp11::mp_int<(mp11::mp_size<L>::value - 1)>,
+                mp11::mp_int<-1>>>;
+
+// generic entry point which analyses args and calls specific
+template <typename S, typename T, typename... Us>
+void fill_impl(S& s, const T& axes, const std::tuple<Us...>& args) {
+  fill_impl(weight_index<mp11::mp_list<Us...>>(), s, axes, args);
 }
 
 /* In all at_impl, we throw instead of asserting when an index is out of
@@ -384,39 +391,13 @@ optional_index call_impl(iterable_container_tag, const std::vector<Ts...>& axes,
  * the exception and do something sensible.
  */
 
-template <typename A, typename U>
-optional_index at_impl(no_container_tag, const A& axes, const U& u) {
-  return at_impl(static_container_tag(), axes, std::forward_as_tuple(u));
-}
-
-template <typename A, typename U>
-optional_index at_impl(static_container_tag, const A& axes, const U& u) {
-  dimension_check(axes, mp11::mp_size<unqual<U>>());
+template <typename A, typename... Us>
+optional_index at_impl(const A& axes, const std::tuple<Us...>& args) {
+  dimension_check(axes, sizeof...(Us));
   optional_index idx;
-  mp11::mp_for_each<mp11::mp_iota<mp_size<U>>>([&](auto I) {
-    linearize2(idx, axis_get<I>(axes), static_cast<int>(std::get<I>(u)));
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto I) {
+    linearize2(idx, axis_get<I>(axes), static_cast<int>(std::get<I>(args)));
   });
-  return idx;
-}
-
-template <typename... Ts, typename U>
-optional_index at_impl(iterable_container_tag, const std::tuple<Ts...>& axes,
-                       const U& u) {
-  dimension_check(axes, std::distance(std::begin(u), std::end(u)));
-  optional_index idx;
-  auto xit = std::begin(u);
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(
-      [&](auto I) { linearize2(idx, std::get<I>(axes), static_cast<int>(*xit++)); });
-  return idx;
-}
-
-template <typename... Ts, typename U>
-optional_index at_impl(iterable_container_tag, const std::vector<Ts...>& axes,
-                       const U& u) {
-  dimension_check(axes, std::distance(std::begin(u), std::end(u)));
-  optional_index idx;
-  auto xit = std::begin(u);
-  for (const auto& a : axes) linearize2(idx, a, static_cast<int>(*xit++));
   return idx;
 }
 
