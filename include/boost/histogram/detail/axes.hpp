@@ -275,41 +275,42 @@ void linearize2(optional_index& out, const T& axis, const int j) {
   linearize(out, a_size, a_shape, j);
 }
 
-template <unsigned Offset, unsigned N, typename... Ts, typename U>
-optional_index args_to_index(const std::tuple<Ts...>& axes, const U& args) {
-  constexpr unsigned M = sizeof...(Ts);
+// special case: histogram::operator(tuple(1, 2)) is called on 1d histogram with axis
+// that accepts 2d tuple, this should work and not fail
+// - solution is to forward tuples of size > 1 directly to axis for 1d histograms
+// - has nice side-effect of making histogram::operator(1, 2) work as well
+// - cannot detect call signature of axis at compile-time in all configurations
+//   (axis::variant provides generic call interface and hides concrete interface),
+//   so we throw at runtime if incompatible argument is passed (e.g. 3d tuple)
+template <unsigned Offset, unsigned N, typename T, typename U>
+optional_index args_to_index(const std::tuple<T>& axes, const U& args) {
   optional_index idx;
-  // special case: histogram::operator(tuple(1, 2)) is called on 1d histogram with axis
-  // that accepts 2d tuple, this should work and not fail
-  // - solution is to forward tuples of size > 1 directly to axis for 1d histograms
-  // - has nice side-effect of making histogram::operator(1, 2) work as well
-  // - cannot detect call signature of axis at compile-time in all configurations
-  //   (axis::variant provides generic call interface and hides concrete interface),
-  //   so we throw at runtime if incompatible argument is passed (e.g. 3d tuple)
-  static_if_c<(M == 1 && N > 1)>(
-      [&](auto) {
-        linearize1(idx, std::get<0>(axes), sub_tuple<Offset, N>(args));
-      },
-      [&](auto) {
-        if (M != N)
-          throw std::invalid_argument("number of arguments != histogram rank");
-        mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>(
-            [&](auto I) {
-              linearize1(idx, std::get<I>(axes), std::get<(Offset + I)>(args));
-            });
-      },
-      0);
+  if (N > 1) {
+    linearize1(idx, std::get<0>(axes), sub_tuple<Offset, N>(args));    
+  } else {
+    linearize1(idx, std::get<0>(axes), std::get<Offset>(args));
+  }
   return idx;
 }
 
-// overload of the above for dynamic axes
+template <unsigned Offset, unsigned N, typename T0, typename T1, typename... Ts, typename U>
+optional_index args_to_index(const std::tuple<T0, T1, Ts...>& axes, const U& args) {
+  static_assert(sizeof...(Ts) + 2 == N, "number of arguments != histogram rank");
+  optional_index idx;
+  mp11::mp_for_each<mp11::mp_iota_c<N>>(
+      [&](auto I) {
+        linearize1(idx, std::get<I>(axes), std::get<(Offset + I)>(args));
+      });    
+  return idx;
+}
+
+// overload for dynamic axes
 template <unsigned Offset, unsigned N, typename T, typename U>
 optional_index args_to_index(const T& axes, const U& args) {
-  const unsigned m = axes_size(axes);
+  const unsigned m = axes.size();
   optional_index idx;
-  if (m == 1 && N > 1) {
+  if (m == 1 && N > 1)
     linearize1(idx, axes[0], sub_tuple<Offset, N>(args));    
-  }
   else {
     if (m != N)
       throw std::invalid_argument("number of arguments != histogram rank");
