@@ -46,6 +46,19 @@ int main() {
     BOOST_TEST_EQ(a.options(), axis::option_type::overflow);
   }
 
+  // axis::variant with reference
+  {
+    auto a = axis::integer<double, axis::empty_metadata_type>(0, 3, {},
+                                                              axis::option_type::none);
+    using V = axis::variant<axis::integer<double, axis::empty_metadata_type>&>;
+    V v(a);
+    BOOST_TEST_EQ(v.size(), 3);
+    BOOST_TEST_EQ(v[0], a[0]);
+    BOOST_TEST_EQ(v.metadata(), a.metadata());
+    BOOST_TEST_EQ(v.options(), a.options());
+    BOOST_TEST_EQ(v(1), a(1));
+  }
+
   // axis::variant support for minimal_axis
   {
     struct minimal_axis {
@@ -178,9 +191,13 @@ int main() {
     BOOST_TEST_EQ(x(5), 1);
   }
 
+  // axis::variant with axis that has incompatible bin type
   {
-    auto a = axis::variant<axis::category<>>(axis::category<>({2, 1, 3}));
+    auto a = axis::variant<axis::category<std::string>>(
+        axis::category<std::string>({"A", "B", "C"}));
     BOOST_TEST_THROWS(a[0].lower(), std::runtime_error);
+    auto b = axis::variant<axis::category<int>>(axis::category<int>({2, 1, 3}));
+    BOOST_TEST_THROWS(b[0].lower(), std::runtime_error);
   }
 
   // vector of axes with custom allocators
@@ -226,7 +243,7 @@ int main() {
     BOOST_TEST_EQ(db.at<long>().first, 5u);
   }
 
-  // pass-through
+  // testing pass-through versions of get and visit
   {
     axis::regular<> a(10, 0, 1);
     axis::integer<> b(0, 3);

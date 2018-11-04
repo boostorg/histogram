@@ -24,8 +24,18 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+template <typename T>
+struct remove_reference_impl {
+  using type = std::remove_reference_t<T>;
+};
+
+template <typename T>
+struct remove_reference_impl<std::reference_wrapper<T>> {
+  using type = T;
+};
+
 template <class T>
-using unqual = std::remove_cv_t<std::remove_reference_t<T>>;
+using unqual = std::remove_cv_t<typename remove_reference_impl<T>::type>;
 
 template <class T>
 using mp_size = mp11::mp_size<unqual<T>>;
@@ -64,9 +74,16 @@ using args_type = mp11::mp_if<std::is_member_function_pointer<T>,
 template <typename T, std::size_t N = 0>
 using arg_type = typename mp11::mp_at_c<args_type<T>, N>;
 
-template <typename F, typename V>
-using visitor_return_type =
-    decltype(std::declval<F>()(std::declval<copy_qualifiers<V, mp_at_c<V, 0>>>()));
+template <typename V>
+struct variant_first_arg_qualified_impl {
+  using UV = unqual<V>;
+  using T0 = mp11::mp_first<UV>;
+  using type = copy_qualifiers<V, unqual<T0>>;
+};
+
+template <typename F, typename V,
+          typename T = typename variant_first_arg_qualified_impl<V>::type>
+using visitor_return_type = decltype(std::declval<F>()(std::declval<T>()));
 
 template <bool B, typename T, typename F, typename... Ts>
 constexpr decltype(auto) static_if_c(T&& t, F&& f, Ts&&... ts) {
@@ -95,6 +112,9 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
                             (std::declval<T&>().value(), std::declval<T&>().variance()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, (std::declval<T&>().value(0)));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value_with_return_type_convertible_to_double,
+                            (static_cast<double>(std::declval<T&>().value(0))));
 
 // TODO try casting to more specific pmf with correct return type
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, (std::declval<T&>().options()));

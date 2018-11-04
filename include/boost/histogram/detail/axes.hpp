@@ -44,16 +44,14 @@ decltype(auto) axis_get(const T& axes) {
   return axes[N];
 }
 
-// auto instead of decltype(auto) to not return reference
 template <typename... Ts>
-auto axis_get(std::tuple<Ts...>& axes, std::size_t i) {
+decltype(auto) axis_get(std::tuple<Ts...>& axes, std::size_t i) {
   return mp11::mp_with_index<sizeof...(Ts)>(
       i, [&](auto I) { return axis::variant<Ts&...>(std::get<I>(axes)); });
 }
 
-// auto instead of decltype(auto) to not return reference
 template <typename... Ts>
-auto axis_get(const std::tuple<Ts...>& axes, std::size_t i) {
+decltype(auto) axis_get(const std::tuple<Ts...>& axes, std::size_t i) {
   return mp11::mp_with_index<sizeof...(Ts)>(
       i, [&](auto I) { return axis::variant<const Ts&...>(std::get<I>(axes)); });
 }

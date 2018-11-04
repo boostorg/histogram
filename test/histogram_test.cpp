@@ -218,7 +218,8 @@ void run_tests() {
 
   // d1
   {
-    auto h = make_s(Tag(), std::vector<unsigned>(), axis::integer<>{0, 2});
+    auto h = make_s(Tag(), std::vector<unsigned>(),
+                    axis::integer<double, axis::empty_metadata_type>{0, 2});
     h(0);
     h(0);
     h(-1);
@@ -687,28 +688,28 @@ void run_tests() {
 
     BOOST_TEST_EQ(it.idx(), 0);
     BOOST_TEST_EQ(it.bin(), a[0]);
-    // BOOST_TEST_EQ(it.bin(0).lower(), a[0].lower());
+    BOOST_TEST_EQ(it.bin(0), a[0]);
     BOOST_TEST_EQ(it->value(), 2);
     BOOST_TEST_EQ(it->variance(), 4);
     ++it;
     BOOST_TEST_EQ(it.idx(), 1);
     BOOST_TEST_EQ(it.bin(), a[1]);
-    // BOOST_TEST_EQ(it.bin(0), a[1]);
+    BOOST_TEST_EQ(it.bin(0), a[1]);
     BOOST_TEST_EQ(*it, 2);
     ++it;
     BOOST_TEST_EQ(it.idx(), 2);
     BOOST_TEST_EQ(it.bin(), a[2]);
-    // BOOST_TEST_EQ(it.bin(0), a[2]);
+    BOOST_TEST_EQ(it.bin(0), a[2]);
     BOOST_TEST_EQ(*it, 0);
     ++it;
     BOOST_TEST_EQ(it.idx(), 3);
     BOOST_TEST_EQ(it.bin(), a[3]);
-    // BOOST_TEST_EQ(it.bin(0), a[3]);
+    BOOST_TEST_EQ(it.bin(0), a[3]);
     BOOST_TEST_EQ(*it, 0);
     ++it;
     BOOST_TEST_EQ(it.idx(), -1);
     BOOST_TEST_EQ(it.bin(), a[-1]);
-    // BOOST_TEST_EQ(it.bin(0), a[-1]);
+    BOOST_TEST_EQ(it.bin(0), a[-1]);
     BOOST_TEST_EQ(*it, 0);
     ++it;
     BOOST_TEST(it == h.end());

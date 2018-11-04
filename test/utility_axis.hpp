@@ -9,8 +9,9 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/interval_bin_view.hpp>
-#include <boost/histogram/axis/polymorphic_bin_view.hpp>
+#include <boost/histogram/axis/polymorphic_bin.hpp>
 #include <boost/histogram/axis/value_bin_view.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 
 namespace boost {
 namespace histogram {
@@ -32,14 +33,16 @@ void test_axis_iterator(const Axis& a, int begin, int end) {
 
 namespace axis {
 template <typename... Ts, typename... Us>
-bool operator==(const polymorphic_bin_view<Ts...>& t, const interval_bin_view<Us...>& u) {
+bool operator==(const polymorphic_bin<Ts...>& t, const interval_bin_view<Us...>& u) {
   return t.idx() == u.idx() && t.lower() == u.lower() && t.upper() == u.upper();
 }
 
 template <typename... Ts, typename... Us>
-bool operator==(const polymorphic_bin_view<Ts...>& t, const value_bin_view<Us...>& u) {
+bool operator==(const polymorphic_bin<Ts...>& t, const value_bin_view<Us...>& u) {
   return t.idx() == u.idx() && t.value() == u.value();
 }
+
+bool operator==(const empty_metadata_type&, const empty_metadata_type&) { return true; }
 } // namespace axis
 
 #define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
