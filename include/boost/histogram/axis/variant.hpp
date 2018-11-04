@@ -45,7 +45,7 @@ struct get_polymorphic_bin_data
             return std::tuple<double, double, double>(x, a.value(idx + 1),
                                                       a.value(idx + 0.5));
         },
-        [this](const auto&) -> std::tuple<double, double, double> {
+        [](const auto&) -> std::tuple<double, double, double> {
           throw std::runtime_error(
               cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
                   " has no value method or return type is not convertible to double"));

@@ -5,15 +5,23 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <array>
-#ifdef __GNUC__
+#include <boost/config.hpp>
+#if defined(BOOST_GCC)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
+#if defined(BOOST_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
-#ifdef __GNUC__
+#if defined(BOOST_GCC)
 #pragma GCC diagnostic pop
+#endif
+#if defined(BOOST_CLANG)
+#pragma clang diagnostic pop
 #endif
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
