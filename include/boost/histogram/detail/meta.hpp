@@ -7,13 +7,14 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_META_HPP
 #define BOOST_HISTOGRAM_DETAIL_META_HPP
 
-#if defined(BOOST_GCC)
+#include <boost/config/workaround.hpp>
+#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnoexcept-type"
 #endif
 #include <boost/callable_traits/args.hpp>
 #include <boost/callable_traits/return_type.hpp>
-#if defined(BOOST_GCC)
+#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
 #pragma GCC diagnostic pop
 #endif
 #include <boost/histogram/histogram_fwd.hpp>
