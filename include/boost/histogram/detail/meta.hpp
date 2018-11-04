@@ -96,17 +96,20 @@ constexpr decltype(auto) static_if(Ts&&... ts) {
   return static_if_c<B::value>(std::forward<Ts>(ts)...);
 }
 
-template <typename T, typename... Ns>
-decltype(auto) sub_tuple_impl(const T& t, mp11::mp_list<Ns...>) {
-  return std::forward_as_tuple(std::get<Ns::value>(t)...);
-}
+template <class... Ns>
+struct sub_tuple_impl {
+  template <typename T>
+  static decltype(auto) apply(const T& t) {
+    return std::forward_as_tuple(std::get<Ns::value>(t)...);
+  }
+};
 
 template <std::size_t Offset, std::size_t N, typename T>
 decltype(auto) sub_tuple(const T& t) {
   using LN = mp11::mp_iota_c<N>;
   using OffsetAdder = mp11::mp_bind_front<mp11::mp_plus, mp11::mp_size_t<Offset>>;
   using LN2 = mp11::mp_transform_q<OffsetAdder, LN>;
-  return sub_tuple_impl(t, LN2());
+  return mp11::mp_rename<LN2, sub_tuple_impl>::apply(t);
 }
 
 #define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond)      \
