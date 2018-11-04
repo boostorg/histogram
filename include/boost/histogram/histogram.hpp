@@ -107,14 +107,14 @@ public:
   /// Get N-th axis (const version)
   template <std::size_t N>
   decltype(auto) axis(mp11::mp_size_t<N>) const {
-    detail::range_check<N>(axes_);
+    detail::range_check(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis
   template <std::size_t N>
   decltype(auto) axis(mp11::mp_size_t<N>) {
-    detail::range_check<N>(axes_);
+    detail::range_check(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
@@ -125,10 +125,16 @@ public:
   decltype(auto) axis() { return axis(mp11::mp_size_t<0>()); }
 
   /// Get N-th axis with runtime index (const version)
-  decltype(auto) axis(std::size_t i) const { return detail::axis_get(axes_, i); }
+  decltype(auto) axis(std::size_t i) const {
+    detail::range_check(axes_, i);
+    return detail::axis_get(axes_, i);
+  }
 
   /// Get N-th axis with runtime index
-  decltype(auto) axis(std::size_t i) { return detail::axis_get(axes_, i); }
+  decltype(auto) axis(std::size_t i) {
+    detail::range_check(axes_, i);
+    return detail::axis_get(axes_, i);
+  }
 
   /// Apply unary functor/function to each axis
   template <typename Unary>
@@ -177,7 +183,7 @@ public:
       -> histogram<detail::sub_axes<axes_type, mp11::mp_size_t<I>, Ns...>, storage_type> {
     using N = mp11::mp_size_t<I>;
     using LN = mp11::mp_list<N, Ns...>;
-    detail::range_check<detail::mp_last<LN>::value>(axes_);
+    detail::range_check(axes_, detail::mp_last<LN>::value);
     using sub_axes_type = detail::sub_axes<axes_type, N, Ns...>;
     using HR = histogram<sub_axes_type, storage_type>;
     auto sub_axes = detail::make_sub_axes(axes_, N(), Ns()...);

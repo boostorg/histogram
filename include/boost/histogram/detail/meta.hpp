@@ -64,15 +64,15 @@ template <typename T>
 using iterator_value_type = typename std::iterator_traits<T>::value_type;
 
 template <typename T>
-using return_type = typename boost::callable_traits::return_type<T>::type;
-
-template <typename T>
 using args_type = mp11::mp_if<std::is_member_function_pointer<T>,
                               mp11::mp_pop_front<boost::callable_traits::args_t<T>>,
                               boost::callable_traits::args_t<T>>;
 
 template <typename T, std::size_t N = 0>
 using arg_type = typename mp11::mp_at_c<args_type<T>, N>;
+
+template <typename T>
+using return_type = typename boost::callable_traits::return_type<T>::type;
 
 template <typename V>
 struct variant_first_arg_qualified_impl {
@@ -94,6 +94,19 @@ constexpr decltype(auto) static_if_c(T&& t, F&& f, Ts&&... ts) {
 template <typename B, typename... Ts>
 constexpr decltype(auto) static_if(Ts&&... ts) {
   return static_if_c<B::value>(std::forward<Ts>(ts)...);
+}
+
+template <typename T, typename... Ns>
+decltype(auto) sub_tuple_impl(const T& t, mp11::mp_list<Ns...>) {
+  return std::forward_as_tuple(std::get<Ns::value>(t)...);
+}
+
+template <std::size_t Offset, std::size_t N, typename T>
+decltype(auto) sub_tuple(const T& t) {
+  using LN = mp11::mp_iota_c<N>;
+  using OffsetAdder = mp11::mp_bind_front<mp11::mp_plus, mp11::mp_size_t<Offset>>;
+  using LN2 = mp11::mp_transform_q<OffsetAdder, LN>;
+  return sub_tuple_impl(t, LN2());
 }
 
 #define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond)      \
