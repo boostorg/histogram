@@ -330,16 +330,23 @@ constexpr int weight_index() {
   return -1;
 }
 
+template <int Iw, typename S, typename T>
+void fill_storage_impl(mp11::mp_int<Iw>, S& storage, std::size_t i, const T& args) {
+  storage(i, std::get<Iw>(args));
+}
+
+template <typename S, typename T>
+void fill_storage_impl(mp11::mp_int<-1>, S& storage, std::size_t i, const T&) {
+  storage(i);
+}
+
 template <typename S, typename T, typename... Us>
 void fill_impl(S& storage, const T& axes, const std::tuple<Us...>& args) {
-  const int Iw = weight_index<Us...>();
-  const unsigned N = Iw >= 0 ? sizeof...(Us) - 1 : sizeof...(Us);
+  constexpr int Iw = weight_index<Us...>();
+  constexpr unsigned N = Iw >= 0 ? sizeof...(Us) - 1 : sizeof...(Us);
   optional_index idx = args_to_index<(Iw == 0 ? 1 : 0), N>(axes, args);
   if (idx) {
-    static_if_c<(Iw == -1)>(
-      [&](auto) { storage(*idx); },
-      [&](auto) { storage(*idx, std::get<Iw>(args)); },
-      0);
+    fill_storage_impl(mp11::mp_int<Iw>(), storage, *idx, args);
   }
 }
 
