@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/config.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/buffer.hpp>
@@ -130,13 +131,13 @@ struct adaptive_storage {
       using alloc_type =
           typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
       alloc_type a(alloc); // rebind allocator
-#ifdef _MSC_VER
+#if defined(BOOST_MSVC)
 #pragma warning(push)
-#pragma warning(disable : 4244) // possible loss of data
+#pragma warning(disable: 4244) // possible loss of data
 #endif
       return init ? detail::create_buffer_from_iter(a, size, init)
                   : detail::create_buffer(a, size, 0);
-#ifdef _MSC_VER
+#if defined(BOOST_MSVC)
 #pragma warning(pop)
 #endif
     }
@@ -148,13 +149,13 @@ struct adaptive_storage {
       alloc_type a(alloc); // rebound allocator for buffer
       // mp_int has no ctor with an allocator instance, cannot pass state :(
       // typename mp_int::backend_type::allocator_type a2(alloc);
-#ifdef _MSC_VER
+#if defined(BOOST_MSVC)
 #pragma warning(push)
-#pragma warning(disable : 4244) // possible loss of data
+#pragma warning(disable: 4244) // possible loss of data
 #endif
       return init ? detail::create_buffer_from_iter(a, size, init)
                   : detail::create_buffer(a, size, 0);
-#ifdef _MSC_VER
+#if defined(BOOST_MSVC)
 #pragma warning(pop)
 #endif
     }
