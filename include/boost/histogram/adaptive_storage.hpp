@@ -464,6 +464,8 @@ struct adaptive_storage {
       return t == u;
     }
 
+    bool operator()(const mp_int& t, const mp_int& u) { return u == t; }
+
     bool operator()(const mp_int& t, const double& u) {
       return static_cast<double>(t) == u;
     }
