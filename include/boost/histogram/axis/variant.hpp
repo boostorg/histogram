@@ -10,7 +10,7 @@
 #include <boost/core/typeinfo.hpp>
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/iterator.hpp>
-#include <boost/histogram/axis/polymorphic_bin_view.hpp>
+#include <boost/histogram/axis/polymorphic_bin.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -27,11 +27,30 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-struct is_continuous : public boost::static_visitor<bool> {
+struct get_polymorphic_bin_data
+    : public boost::static_visitor<std::tuple<double, double, double>> {
+  int idx;
+  get_polymorphic_bin_data(int i) : idx(i) {}
+
   template <typename A>
-  bool operator()(const A&) const {
-    using T = detail::arg_type<decltype(&A::value)>;
-    return !std::is_integral<T>::value;
+  std::tuple<double, double, double> operator()(const A& a) const {
+    return detail::static_if<
+        detail::has_method_value_with_return_type_convertible_to_double<A>>(
+        [this](const auto& a) {
+          using Arg = detail::unqual<detail::arg_type<detail::unqual<decltype(a)>>>;
+          const auto x = a.value(idx);
+          if (std::is_integral<Arg>::value)
+            return std::tuple<double, double, double>(x, x, 0);
+          else
+            return std::tuple<double, double, double>(x, a.value(idx + 1),
+                                                      a.value(idx + 0.5));
+        },
+        [this](const auto&) -> std::tuple<double, double, double> {
+          throw std::runtime_error(
+              cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                  " has no value method or return type is not convertible to double"));
+        },
+        a);
   }
 };
 
@@ -53,7 +72,7 @@ namespace axis {
 template <typename... Ts>
 class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
   using base_type = boost::variant<Ts...>;
-  using first_bounded_type = mp11::mp_first<base_type>;
+  using first_bounded_type = detail::unqual<mp11::mp_first<base_type>>;
   using metadata_type =
       detail::unqual<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
 
@@ -88,7 +107,7 @@ public:
     visit(
         [this](const auto& u) {
           using U = detail::unqual<decltype(u)>;
-          detail::static_if<mp11::mp_contains<base_type, U>>(
+          detail::static_if<mp11::mp_contains<types, U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
                 throw std::runtime_error(
@@ -141,9 +160,7 @@ public:
                     "cannot return metadata of type ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     " through axis::variant interface which uses type ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type&)),
-                    "; use boost::histogram::axis::get to obtain a reference "
-                    "of this axis type"));
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type&))));
               },
               x);
         },
@@ -163,9 +180,7 @@ public:
                 throw std::invalid_argument(detail::cat(
                     "cannot convert ", boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     " to ", boost::core::demangled_name(BOOST_CORE_TYPEID(expected_t)),
-                    " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                    "; use boost::histogram::axis::get to obtain a reference "
-                    "of this axis type"));
+                    " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A))));
               },
               a);
         },
@@ -178,38 +193,26 @@ public:
     return visit(
         [idx](const auto& a) -> double {
           using A = detail::unqual<decltype(a)>;
-          return detail::static_if<detail::has_method_value<A>>(
+          return detail::static_if<
+              detail::has_method_value_with_return_type_convertible_to_double<A>>(
               [idx](const auto& a) -> double {
-                using A = detail::unqual<decltype(a)>;
-                using U = detail::return_type<decltype(&A::value)>;
-                return detail::static_if<std::is_convertible<U, double>>(
-                    [idx](const auto& a) -> double {
-                      return static_cast<double>(a.value(idx));
-                    },
-                    [](const auto&) -> double {
-                      throw std::runtime_error(detail::cat(
-                          "return value ",
-                          boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " of ",
-                          boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                          "::value(double) is not convertible to double"));
-                    },
-                    a);
+                return static_cast<double>(a.value(idx));
               },
               [](const auto&) -> double {
-                throw std::runtime_error(
-                    detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                                " has no value method"));
+                throw std::runtime_error(detail::cat(
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                    " has no value method or return type is not convertible to double"));
               },
               a);
         },
         *this);
   }
 
-  decltype(auto) operator[](const int idx) const {
-    // using visit here causes internal error in MSVC 2017
-    const bool is_continuous = boost::apply_visitor(detail::is_continuous(),
-                                                    static_cast<const base_type&>(*this));
-    return polymorphic_bin_view<variant>(idx, *this, is_continuous);
+  auto operator[](const int idx) const {
+    // using visit here causes internal error in MSVC 2017, so we work around
+    const auto data = boost::apply_visitor(detail::get_polymorphic_bin_data(idx),
+                                           static_cast<const base_type&>(*this));
+    return polymorphic_bin<double>(idx, data);
   }
 
   bool operator==(const variant& rhs) const {
@@ -258,7 +261,7 @@ public:
 
   template <typename T, typename... Us>
   friend const T* get(const variant<Us...>* v);
-}; // namespace histogram
+};
 
 template <typename Functor, typename... Us>
 auto visit(Functor&& f, variant<Us...>& v)

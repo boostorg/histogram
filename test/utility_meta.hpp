@@ -7,8 +7,10 @@
 #ifndef BOOST_HISTOGRAM_TEST_UTILITY_META_HPP
 #define BOOST_HISTOGRAM_TEST_UTILITY_META_HPP
 
+#include <boost/core/typeinfo.hpp>
 #include <boost/mp11/integral.hpp>
 #include <boost/mp11/tuple.hpp>
+#include <boost/type.hpp>
 #include <ostream>
 #include <tuple>
 #include <vector>
@@ -36,5 +38,19 @@ ostream& operator<<(ostream& os, const tuple<Ts...>& t) {
   return os;
 }
 } // namespace std
+
+namespace boost {
+namespace histogram {
+template <typename T>
+std::string type_name() {
+  return boost::core::demangled_name(BOOST_CORE_TYPEID(boost::type<T>));
+}
+
+template <typename T>
+std::string type_name(T) {
+  return boost::core::demangled_name(BOOST_CORE_TYPEID(boost::type<T>));
+}
+} // namespace histogram
+} // namespace boost
 
 #endif

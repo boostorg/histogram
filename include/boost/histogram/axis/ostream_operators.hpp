@@ -90,15 +90,9 @@ template <typename C, typename T>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const axis::option_type o) {
   switch (o) {
-    case axis::option_type::none:
-      os << "none";
-      break;
-    case axis::option_type::overflow:
-      os << "overflow";
-      break;
-    case axis::option_type::underflow_and_overflow:
-      os << "underflow_and_overflow";
-      break;
+    case axis::option_type::none: os << "none"; break;
+    case axis::option_type::overflow: os << "overflow"; break;
+    case axis::option_type::underflow_and_overflow: os << "underflow_and_overflow"; break;
   }
   return os;
 }
@@ -125,11 +119,11 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
 
 template <typename C, typename T, typename U>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const polymorphic_bin_view<U>& i) {
-  if (i.is_continuous())
-    os << "[" << i.lower() << ", " << i.upper() << ")";
-  else
+                                     const polymorphic_bin<U>& i) {
+  if (i.is_discrete())
     os << i.value();
+  else
+    os << "[" << i.lower() << ", " << i.upper() << ")";
   return os;
 }
 
