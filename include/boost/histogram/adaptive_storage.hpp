@@ -128,7 +128,7 @@ struct adaptive_storage {
 
 #if defined(BOOST_MSVC)
 #pragma warning(push)
-#pragma warning(disable: 4244) // possible loss of data
+#pragma warning(disable : 4244) // possible loss of data
 #endif
 
     template <typename T, typename U>
@@ -463,18 +463,18 @@ struct adaptive_storage {
     bool operator()(const T& t, const U& u) {
       return t == u;
     }
+
     bool operator()(const mp_int& t, const double& u) {
       return static_cast<double>(t) == u;
-    }
-    bool operator()(const double& t, const mp_int& u) {
-      return t == static_cast<double>(u);
     }
 
     bool operator()(const mp_int& t, const float& u) {
       return static_cast<float>(t) == u;
     }
-    bool operator()(const float& t, const mp_int& u) {
-      return t == static_cast<float>(u);
+
+    template <typename T>
+    bool operator()(const T& t, const mp_int& u) {
+      return operator()(u, t);
     }
   };
 
