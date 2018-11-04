@@ -5,8 +5,16 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <array>
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmisleading-indentation"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
