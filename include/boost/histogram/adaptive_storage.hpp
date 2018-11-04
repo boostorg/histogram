@@ -126,20 +126,18 @@ struct adaptive_storage {
     buffer_type(std::size_t s = 0, const allocator_type& a = allocator_type())
         : alloc(a), type(0), size(s), ptr(nullptr) {}
 
+#if defined(BOOST_MSVC)
+#pragma warning(push)
+#pragma warning(disable: 4244) // possible loss of data
+#endif
+
     template <typename T, typename U>
     T* create_impl(T*, const U* init) {
       using alloc_type =
           typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
       alloc_type a(alloc); // rebind allocator
-#if defined(BOOST_MSVC)
-#pragma warning(push)
-#pragma warning(disable: 4244) // possible loss of data
-#endif
       return init ? detail::create_buffer_from_iter(a, size, init)
                   : detail::create_buffer(a, size, 0);
-#if defined(BOOST_MSVC)
-#pragma warning(pop)
-#endif
     }
 
     template <typename U = mp_int>
@@ -149,15 +147,8 @@ struct adaptive_storage {
       alloc_type a(alloc); // rebound allocator for buffer
       // mp_int has no ctor with an allocator instance, cannot pass state :(
       // typename mp_int::backend_type::allocator_type a2(alloc);
-#if defined(BOOST_MSVC)
-#pragma warning(push)
-#pragma warning(disable: 4244) // possible loss of data
-#endif
       return init ? detail::create_buffer_from_iter(a, size, init)
                   : detail::create_buffer(a, size, 0);
-#if defined(BOOST_MSVC)
-#pragma warning(pop)
-#endif
     }
 
     void* create_impl(void*, const void* init) {
@@ -170,6 +161,10 @@ struct adaptive_storage {
     T* create(const U* init = nullptr) {
       return create_impl(static_cast<T*>(nullptr), init);
     }
+
+#if defined(BOOST_MSVC)
+#pragma warning(pop)
+#endif
 
     template <typename T>
     void set(T* p) {
