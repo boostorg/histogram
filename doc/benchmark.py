@@ -27,7 +27,7 @@ for line in open("perf.dat"):
 	data[dim].append((label, dist, time))
 
 plt.figure(figsize=(10, 8))
-plt.subplots_adjust(left=0.12, right=0.92, top=0.95, bottom=0.1)
+plt.subplots_adjust(left=0.15, right=0.92, top=0.95, bottom=0.1)
 i = 0
 for dim in sorted(data):
 	v = data[dim]
@@ -77,3 +77,4 @@ plt.tick_params("y", left="off", labelleft="off")
 plt.xlabel("time (smaller is better)")
 
 plt.savefig("benchmark.png")
+plt.show()
