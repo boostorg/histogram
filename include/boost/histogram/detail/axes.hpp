@@ -127,12 +127,13 @@ void axes_assign(T& t, const U& u) {
 }
 
 template <typename T, std::size_t N = std::tuple_size<T>::value>
-constexpr std::size_t axes_size(const T&) {
+constexpr std::size_t axes_size(const T&) noexcept {
   return N;
 }
 
+// static to fix gcc warning about mangled names changing in C++17
 template <typename T, typename = decltype(&T::size)>
-std::size_t axes_size(const T& axes) {
+static std::size_t axes_size(const T& axes) noexcept {
   return axes.size();
 }
 
@@ -286,21 +287,20 @@ template <unsigned Offset, unsigned N, typename T, typename U>
 optional_index args_to_index(const std::tuple<T>& axes, const U& args) {
   optional_index idx;
   if (N > 1) {
-    linearize1(idx, std::get<0>(axes), sub_tuple<Offset, N>(args));    
+    linearize1(idx, std::get<0>(axes), sub_tuple<Offset, N>(args));
   } else {
     linearize1(idx, std::get<0>(axes), std::get<Offset>(args));
   }
   return idx;
 }
 
-template <unsigned Offset, unsigned N, typename T0, typename T1, typename... Ts, typename U>
+template <unsigned Offset, unsigned N, typename T0, typename T1, typename... Ts,
+          typename U>
 optional_index args_to_index(const std::tuple<T0, T1, Ts...>& axes, const U& args) {
   static_assert(sizeof...(Ts) + 2 == N, "number of arguments != histogram rank");
   optional_index idx;
   mp11::mp_for_each<mp11::mp_iota_c<N>>(
-      [&](auto I) {
-        linearize1(idx, std::get<I>(axes), std::get<(Offset + I)>(args));
-      });    
+      [&](auto I) { linearize1(idx, std::get<I>(axes), std::get<(Offset + I)>(args)); });
   return idx;
 }
 
@@ -310,14 +310,11 @@ optional_index args_to_index(const T& axes, const U& args) {
   const unsigned m = axes.size();
   optional_index idx;
   if (m == 1 && N > 1)
-    linearize1(idx, axes[0], sub_tuple<Offset, N>(args));    
+    linearize1(idx, axes[0], sub_tuple<Offset, N>(args));
   else {
-    if (m != N)
-      throw std::invalid_argument("number of arguments != histogram rank");
+    if (m != N) throw std::invalid_argument("number of arguments != histogram rank");
     mp11::mp_for_each<mp11::mp_iota_c<N>>(
-        [&](auto I) {
-          linearize1(idx, axes[I], std::get<(Offset + I)>(args));
-        });
+        [&](auto I) { linearize1(idx, axes[I], std::get<(Offset + I)>(args)); });
   }
   return idx;
 }
@@ -346,9 +343,7 @@ void fill_impl(S& storage, const T& axes, const std::tuple<Us...>& args) {
   constexpr int Iw = weight_index<Us...>();
   constexpr unsigned N = Iw >= 0 ? sizeof...(Us) - 1 : sizeof...(Us);
   optional_index idx = args_to_index<(Iw == 0 ? 1 : 0), N>(axes, args);
-  if (idx) {
-    fill_storage_impl(mp11::mp_int<Iw>(), storage, *idx, args);
-  }
+  if (idx) { fill_storage_impl(mp11::mp_int<Iw>(), storage, *idx, args); }
 }
 
 template <typename A, typename... Us>

@@ -54,13 +54,8 @@ function(compiled_test SRC)
     target_compile_options(${BASENAME} PRIVATE -D_SCL_SECURE_NO_WARNINGS)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0)
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6)
-      # -Wno-noexcept-type needed for callable_traits
-      target_compile_options(${BASENAME} PRIVATE -Wno-noexcept-type)
-    endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0
-                           -D__STRICT_ANSI__)
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0 -D__STRICT_ANSI__)
   endif()
 
   # activate sanitizers for clang builds
