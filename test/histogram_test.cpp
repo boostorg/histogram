@@ -807,23 +807,25 @@ void run_tests() {
     auto h1 = make(Tag(), axis::integer<>(0, 2));
     h1(std::make_tuple(0));                      // as if one had passed 0 directly
     BOOST_TEST_EQ(h1.at(std::make_tuple(0)), 1); // as if one had passed 0 directly
-    // passing 2d tuple is an error
+    // passing 2d tuple is an invalid argument
     BOOST_TEST_THROWS(h1(std::make_tuple(0, 0)), std::invalid_argument);
 
-    struct axis_with_2d_tuple_argument {
+    struct axis_which_accepts_2d_tuple {
       int operator()(std::tuple<int, int> x) const {
         return std::get<0>(x) == 1 && std::get<1>(x) == 2;
       }
       unsigned size() const { return 2; }
     };
-    auto h2 = make(Tag(), axis_with_2d_tuple_argument());
-    h2(std::make_tuple(1, 2)); // forward 2d tuple to axis
-    BOOST_TEST_EQ(h2.at(0), 0);
-    BOOST_TEST_EQ(h2.at(1), 1);
-    // positive side-effect: passing two arguments directly does the right thing
+    auto h2 = make(Tag(), axis_which_accepts_2d_tuple());
+    h2(std::make_tuple(1, 2)); // ok, forwards 2d tuple to axis
+    BOOST_TEST_EQ(h2.at(0), 0); // ok, bin access is still 1d 
+    BOOST_TEST_EQ(h2[std::make_tuple(1)], 1);
+    // passing two arguments directly also works
     h2(1, 2);
     // also works with weights
-    // h2(1, 2, weight(2));
+    h2(1, 2, weight(2));
+    h2(std::make_tuple(weight(3), 1, 2));
+    BOOST_TEST_EQ(h2.at(1), 7);
   }
 
   // bad bin access

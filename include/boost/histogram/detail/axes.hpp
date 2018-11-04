@@ -126,24 +126,19 @@ void axes_assign(T& t, const U& u) {
   t.assign(u.begin(), u.end());
 }
 
-template <typename... Ts>
-constexpr std::size_t axes_size(const std::tuple<Ts...>&) {
-  return sizeof...(Ts);
+template <typename T, std::size_t N = std::tuple_size<T>::value>
+constexpr std::size_t axes_size(const T&) {
+  return N;
 }
 
-template <typename T>
+template <typename T, typename = decltype(&T::size)>
 std::size_t axes_size(const T& axes) {
   return axes.size();
 }
 
-template <int N, typename... Ts>
-void range_check(const std::tuple<Ts...>&) {
-  static_assert(N < sizeof...(Ts), "index out of range");
-}
-
-template <int N, typename T>
-void range_check(const T& axes) {
-  BOOST_ASSERT_MSG(N < axes.size(), "index out of range");
+template <typename T>
+void range_check(const T& axes, const unsigned N) {
+  BOOST_ASSERT_MSG(N < axes_size(axes), "index out of range");
 }
 
 template <typename F, typename... Ts>
@@ -163,27 +158,6 @@ std::size_t bincount(const T& axes) {
   return n;
 }
 
-template <typename... Ts, std::size_t N>
-void dimension_check(const std::tuple<Ts...>&, mp11::mp_size_t<N>) {
-  static_assert(sizeof...(Ts) == N, "number of arguments does not match");
-}
-
-template <typename... Ts>
-void dimension_check(const std::tuple<Ts...>&, std::size_t n) {
-  if (sizeof...(Ts) != n)
-    throw std::invalid_argument("number of arguments does not match");
-}
-
-template <typename... Ts, std::size_t N>
-void dimension_check(const std::vector<Ts...>& axes, mp11::mp_size_t<N>) {
-  if (axes.size() != N) throw std::invalid_argument("number of arguments does not match");
-}
-
-template <typename... Ts>
-void dimension_check(const std::vector<Ts...>& axes, std::size_t n) {
-  if (axes.size() != n) throw std::invalid_argument("number of arguments does not match");
-}
-
 struct shape_collector {
   std::vector<unsigned>::iterator iter;
   shape_collector(std::vector<unsigned>::iterator i) : iter(i) {}
@@ -192,8 +166,6 @@ struct shape_collector {
     *iter++ = axis::traits::extend(t);
   }
 };
-
-namespace {
 
 template <typename LN, typename T>
 struct sub_axes_impl {};
@@ -215,12 +187,10 @@ struct sub_axes_impl<LN, std::vector<Ts...>> {
                 "integer arguments must be strictly ascending");
   using type = std::vector<Ts...>;
 };
-} // namespace
 
 template <typename T, typename... Ns>
 using sub_axes = typename sub_axes_impl<mp11::mp_list<Ns...>, T>::type;
 
-namespace {
 template <typename Src, typename Dst>
 struct sub_static_assign_impl {
   const Src& src;
@@ -230,7 +200,6 @@ struct sub_static_assign_impl {
     std::get<I1::value>(dst) = std::get<I2::value>(src);
   }
 };
-} // namespace
 
 template <typename... Ts, typename... Ns>
 sub_axes<std::tuple<Ts...>, Ns...> make_sub_axes(const std::tuple<Ts...>& t, Ns...) {
@@ -306,93 +275,78 @@ void linearize2(optional_index& out, const T& axis, const int j) {
   linearize(out, a_size, a_shape, j);
 }
 
-template <typename S, typename A, typename... Us>
-void fill_impl(mp11::mp_int<(sizeof...(Us) - 1)>, S& storage, const A& axes,
-               const std::tuple<Us...>& args) {
-  dimension_check(axes, sizeof...(Us) - 1);
+template <unsigned Offset, unsigned N, typename... Ts, typename U>
+optional_index args_to_index(const std::tuple<Ts...>& axes, const U& args) {
+  constexpr unsigned M = sizeof...(Ts);
   optional_index idx;
-  mp11::mp_for_each<mp11::mp_iota_c<(sizeof...(Us) - 1)>>(
-      [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<I>(args)); });
-  if (idx) storage(*idx, std::get<(sizeof...(Us) - 1)>(args));
+  // special case: histogram::operator(tuple(1, 2)) is called on 1d histogram with axis
+  // that accepts 2d tuple, this should work and not fail
+  // - solution is to forward tuples of size > 1 directly to axis for 1d histograms
+  // - has nice side-effect of making histogram::operator(1, 2) work as well
+  // - cannot detect call signature of axis at compile-time in all configurations
+  //   (axis::variant provides generic call interface and hides concrete interface),
+  //   so we throw at runtime if incompatible argument is passed (e.g. 3d tuple)
+  static_if_c<(M == 1 && N > 1)>(
+      [&](auto) {
+        linearize1(idx, std::get<0>(axes), sub_tuple<Offset, N>(args));
+      },
+      [&](auto) {
+        if (M != N)
+          throw std::invalid_argument("number of arguments != histogram rank");
+        mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>(
+            [&](auto I) {
+              linearize1(idx, std::get<I>(axes), std::get<(Offset + I)>(args));
+            });
+      },
+      0);
+  return idx;
 }
 
-template <typename S, typename A, typename... Us>
-void fill_impl(mp11::mp_int<0>, S& storage, const A& axes,
-               const std::tuple<Us...>& args) {
-  dimension_check(axes, sizeof...(Us) - 1);
+// overload of the above for dynamic axes
+template <unsigned Offset, unsigned N, typename T, typename U>
+optional_index args_to_index(const T& axes, const U& args) {
+  const unsigned m = axes_size(axes);
   optional_index idx;
-  mp11::mp_for_each<mp11::mp_iota_c<(sizeof...(Us) - 1)>>(
-      [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<(I + 1)>(args)); });
-  if (idx) storage(*idx, std::get<0>(args));
-}
-
-template <typename S, typename T1, typename T2, typename... Ts, typename... Us>
-void fill_impl(mp11::mp_int<-1>, S& storage, const std::tuple<T1, T2, Ts...>& axes,
-               const std::tuple<Us...>& args) {
-  optional_index idx;
-  dimension_check(axes, sizeof...(Us));
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
-      [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<I>(args)); });
-  if (idx) storage(*idx);
-}
-
-template <typename S, typename T, typename... Us>
-void fill_impl(mp11::mp_int<-1>, S& storage, const std::tuple<T>& axes,
-               const std::tuple<Us...>& args) {
-  // special case that needs handling: 1d histogram, histogram::operator()
-  // called with tuple(2, 1), while histogram may have axis that accepts 2d tuple
-  // - normally would be interpret as two arguments passed, but here is one argument
-  // - cannot check call signature of the axis at compile-time in all configurations
-  //   (axis::variant provides generic call interface and hides concrete interface)
-  // - solution: forward tuples of size > 1 directly to axis for 1d histograms
-  optional_index idx;
-  if (sizeof...(Us) > 1) {
-    linearize1(idx, axis_get<0>(axes), args);
-  } else {
-    dimension_check(axes, sizeof...(Us));
-    linearize1(idx, axis_get<0>(axes), std::get<0>(args));
+  if (m == 1 && N > 1) {
+    linearize1(idx, axes[0], sub_tuple<Offset, N>(args));    
   }
-  if (idx) storage(*idx);
-}
-
-template <typename S, typename A, typename... Us>
-void fill_impl(mp11::mp_int<-1>, S& storage, const A& axes,
-               const std::tuple<Us...>& args) {
-  // special case as above, but for dynamic axes
-  optional_index idx;
-  if (sizeof...(Us) > 1 && axes.size() == 1) {
-    linearize1(idx, axis_get<0>(axes), args);
-  } else {
-    dimension_check(axes, sizeof...(Us));
-    mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
-        [&](auto I) { linearize1(idx, axis_get<I>(axes), std::get<I>(args)); });
+  else {
+    if (m != N)
+      throw std::invalid_argument("number of arguments != histogram rank");
+    mp11::mp_for_each<mp11::mp_iota_c<N>>(
+        [&](auto I) {
+          linearize1(idx, axes[I], std::get<(Offset + I)>(args));
+        });
   }
-  if (idx) storage(*idx);
+  return idx;
 }
 
-template <typename L>
+template <typename... Us>
 constexpr int weight_index() {
-  const int n = mp11::mp_size<L>::value - 1;
-  if (is_weight<mp11::mp_first<L>>::value) return 0;
+  const int n = sizeof...(Us) - 1;
+  using L = mp11::mp_list<Us...>;
+  if (is_weight<mp11::mp_at_c<L, 0>>::value) return 0;
   if (is_weight<mp11::mp_at_c<L, n>>::value) return n;
   return -1;
 }
 
-// generic entry point which analyses args and calls specific
-template <typename S, typename T, typename U>
-void fill_impl(S& s, const T& axes, const U& args) {
-  fill_impl(mp11::mp_int<weight_index<unqual<U>>()>(), s, axes, args);
+template <typename S, typename T, typename... Us>
+void fill_impl(S& storage, const T& axes, const std::tuple<Us...>& args) {
+  constexpr int Iw = weight_index<Us...>();
+  constexpr unsigned N = Iw >= 0 ? sizeof...(Us) - 1 : sizeof...(Us);
+  optional_index idx = args_to_index<(Iw == 0 ? 1 : 0), N>(axes, args);
+  if (idx) {
+    static_if_c<(Iw == -1)>(
+      [&](auto) { storage(*idx); },
+      [&](auto) { storage(*idx, std::get<Iw>(args)); },
+      0);
+  }
 }
-
-/* In all at_impl, we throw instead of asserting when an index is out of
- * bounds, because wrapping code cannot check this condition without spending
- * a lot of extra cycles. For the wrapping code it is much easier to catch
- * the exception and do something sensible.
- */
 
 template <typename A, typename... Us>
 optional_index at_impl(const A& axes, const std::tuple<Us...>& args) {
-  dimension_check(axes, sizeof...(Us));
+  if (axes_size(axes) != sizeof...(Us))
+    throw std::invalid_argument("number of arguments != histogram rank");
   optional_index idx;
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto I) {
     linearize2(idx, axis_get<I>(axes), static_cast<int>(std::get<I>(args)));

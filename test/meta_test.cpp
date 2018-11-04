@@ -444,6 +444,13 @@ int main() {
     BOOST_TEST_EQ(fcn(std::false_type(), not_callable()), 2);
   }
 
+  // sub_tuple
+  {
+    auto a = std::make_tuple(1, 2, 3, 4);
+    auto b = sub_tuple<1, 2>(a);
+    BOOST_TEST_EQ(b, std::make_tuple(2, 3));
+  }
+
   // is_axis_vector
   {
     using A = std::vector<bh::axis::regular<>>;
