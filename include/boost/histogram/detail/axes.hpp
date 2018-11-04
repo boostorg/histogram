@@ -332,8 +332,8 @@ constexpr int weight_index() {
 
 template <typename S, typename T, typename... Us>
 void fill_impl(S& storage, const T& axes, const std::tuple<Us...>& args) {
-  constexpr int Iw = weight_index<Us...>();
-  constexpr unsigned N = Iw >= 0 ? sizeof...(Us) - 1 : sizeof...(Us);
+  const int Iw = weight_index<Us...>();
+  const unsigned N = Iw >= 0 ? sizeof...(Us) - 1 : sizeof...(Us);
   optional_index idx = args_to_index<(Iw == 0 ? 1 : 0), N>(axes, args);
   if (idx) {
     static_if_c<(Iw == -1)>(
