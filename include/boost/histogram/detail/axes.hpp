@@ -328,14 +328,28 @@ constexpr int weight_index() {
   return -1;
 }
 
+template <typename S, typename T>
+void fill_storage_impl(mp11::mp_int<-1>, mp11::mp_int<-1>, S& storage, std::size_t i,
+                       const T&) {
+  storage(i);
+}
+
 template <int Iw, typename S, typename T>
-void fill_storage_impl(mp11::mp_int<Iw>, S& storage, std::size_t i, const T& args) {
+void fill_storage_impl(mp11::mp_int<Iw>, mp11::mp_int<-1>, S& storage, std::size_t i,
+                       const T& args) {
   storage(i, std::get<Iw>(args));
 }
 
-template <typename S, typename T>
-void fill_storage_impl(mp11::mp_int<-1>, S& storage, std::size_t i, const T&) {
-  storage(i);
+template <int Is, typename S, typename T>
+void fill_storage_impl(mp11::mp_int<-1>, mp11::mp_int<Is>, S& storage, std::size_t i,
+                       const T& args) {
+  storage(i, std::get<Is>(args).value);
+}
+
+template <int Iw, int Is, typename S, typename T>
+void fill_storage_impl(mp11::mp_int<Iw>, mp11::mp_int<Is>, S& storage, std::size_t i,
+                       const T& args) {
+  storage(i, std::get<Iw>(args), std::get<Is>(args).value);
 }
 
 template <typename S, typename T, typename... Us>
@@ -343,7 +357,9 @@ void fill_impl(S& storage, const T& axes, const std::tuple<Us...>& args) {
   constexpr int Iw = weight_index<Us...>();
   constexpr unsigned N = Iw >= 0 ? sizeof...(Us) - 1 : sizeof...(Us);
   optional_index idx = args_to_index<(Iw == 0 ? 1 : 0), N>(axes, args);
-  if (idx) { fill_storage_impl(mp11::mp_int<Iw>(), storage, *idx, args); }
+  if (idx) {
+    fill_storage_impl(mp11::mp_int<Iw>(), mp11::mp_int<-1>(), storage, *idx, args);
+  }
 }
 
 template <typename A, typename... Us>

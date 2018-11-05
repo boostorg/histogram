@@ -39,37 +39,40 @@ struct is_accumulator_set<::boost::accumulators::accumulator_set<Ts...>>
     : std::true_type {};
 
 // specialized form for arithmetic types
-template <typename T>
 struct element_adaptor_arithmetic {
-  static void forward(T& t) { ++t; }
-  template <typename U>
+  template <typename T>
+  static void forward(T& t) {
+    ++t;
+  }
+  template <typename T, typename U>
   static void forward(T& t, const weight_type<U>& u) {
-    t += std::forward<U>(u.value);
+    t += u.value;
   }
 };
 
 // specialized form for accumulator_set
-template <typename T>
 struct element_adaptor_accumulator_set {
-  static void forward(T& t) { t(); }
-  template <typename U>
+  template <typename T>
+  static void forward(T& t) {
+    t();
+  }
+  template <typename T, typename W>
+  static void forward(T& t, const weight_type<W>& w) {
+    t(weight = w.value);
+  }
+  template <typename T, typename U>
   static void forward(T& t, const U& u) {
     t(u);
   }
-  template <typename U>
-  static void forward(T& t, const weight_type<U>& u) {
-    t(weight = u.value);
-  }
-  template <typename U, typename W>
+  template <typename T, typename U, typename W>
   static void forward(T& t, const weight_type<W>& w, const U& u) {
     t(u, weight = w.value);
   }
 };
 
 // generic form for aggregator types
-template <typename T>
 struct element_adaptor_generic {
-  template <typename... Us>
+  template <typename T, typename... Us>
   static void forward(T& t, Us&&... us) {
     t(std::forward<Us>(us)...);
   }
@@ -77,9 +80,9 @@ struct element_adaptor_generic {
 
 template <typename T>
 using element_adaptor =
-    mp11::mp_if<std::is_arithmetic<T>, element_adaptor_arithmetic<T>,
-                mp11::mp_if<is_accumulator_set<T>, element_adaptor_accumulator_set<T>,
-                            element_adaptor_generic<T>>>;
+    mp11::mp_if<std::is_arithmetic<T>, element_adaptor_arithmetic,
+                mp11::mp_if<is_accumulator_set<T>, element_adaptor_accumulator_set,
+                            element_adaptor_generic>>;
 
 template <typename T>
 struct ERROR_type_passed_to_storage_adaptor_not_recognized {};

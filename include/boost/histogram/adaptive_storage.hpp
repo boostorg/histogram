@@ -251,11 +251,13 @@ struct adaptive_storage {
 
   std::size_t size() const { return buffer.size; }
 
+  // increase by one
   void operator()(std::size_t i) {
     BOOST_ASSERT(i < size());
     apply(incrementor(), buffer, i);
   }
 
+  // increase by weight
   template <typename T>
   void operator()(std::size_t i, const weight_type<T>& x) {
     BOOST_ASSERT(i < size());

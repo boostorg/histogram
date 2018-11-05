@@ -12,7 +12,6 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
-#include <boost/histogram/weight_counter.hpp>
 #include <cstdlib>
 #include <limits>
 #include <numeric>
