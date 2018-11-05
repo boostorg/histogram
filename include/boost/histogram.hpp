@@ -7,6 +7,8 @@
 #ifndef BOOST_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_HPP
 
+#include <boost/histogram/accumulators/mean.hpp>
+#include <boost/histogram/accumulators/weight.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/circular.hpp>
@@ -17,7 +19,7 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
-#include <boost/histogram/weight_counter.hpp>
+#include <boost/histogram/weight.hpp>
 
 /**
  * \file boost/histogram.hpp

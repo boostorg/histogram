@@ -18,10 +18,11 @@ if ("$ENV{BOOST_ROOT}" STREQUAL "")
 endif()
 
 # setup build
-option(BUILD_BENCHMARKS "Build benchmarks" OFF)
-option(TEST_SERIALIZATION "Test serialization code" OFF)
+option(BUILD_BENCHMARKS "Build benchmarks" ON)
+option(TEST_SERIALIZATION "Test boost.serialization code" OFF)
+option(TEST_ACCUMULATORS "Test boost.accumulators code" OFF)
 
-# serialization is optional
+# serialization support is optional
 if (TEST_SERIALIZATION)
   find_package(Boost ${MIN_BOOST_VERSION} REQUIRED COMPONENTS serialization)
   # needed if Boost version is newer than CMake version
@@ -92,7 +93,7 @@ compiled_test(test/histogram_test.cpp)
 compiled_test(test/index_mapper_test.cpp)
 compiled_test(test/meta_test.cpp)
 compiled_test(test/utility_test.cpp)
-compiled_test(test/weight_counter_test.cpp)
+compiled_test(test/internal_accumulators_test.cpp)
 
 compiled_test(examples/getting_started_listing_01.cpp)
 compiled_test(examples/getting_started_listing_02.cpp)
@@ -121,6 +122,10 @@ if (TEST_SERIALIZATION)
 
   compiled_test(test/histogram_serialization_test.cpp Boost::serialization)
   target_link_libraries(histogram_serialization_test PUBLIC Boost::serialization)
+endif()
+
+if (TEST_ACCUMULATORS) # test the support for external boost::accumulators
+  compiled_test(test/boost_accumulators_test.cpp)
 endif()
 
 if (BUILD_BENCHMARKS)

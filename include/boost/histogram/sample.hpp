@@ -4,23 +4,23 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_WEIGHT_HPP
-#define BOOST_HISTOGRAM_WEIGHT_HPP
+#ifndef BOOST_HISTOGRAM_SAMPLE_HPP
+#define BOOST_HISTOGRAM_SAMPLE_HPP
 
 #include <utility>
 
 namespace boost {
 namespace histogram {
 
-/// Type envelope to mark value as weight
+/// Type envelope to make value as sample
 template <typename T>
-struct weight_type {
+struct sample_type {
   T value;
 };
 
-/// Helper function to mark argument as weight
+/// Helper function to mark argument as sample
 template <typename T>
-weight_type<T> weight(T&& t) {
+sample_type<T> sample(T&& t) {
   return {std::forward<T>(t)};
 }
 

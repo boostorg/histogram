@@ -55,6 +55,19 @@ class variant;
 } // namespace axis
 
 template <typename T>
+struct weight_type;
+
+template <typename T>
+struct sample_type;
+
+namespace accumulators {
+template <typename RealType>
+class weight;
+template <typename RealType>
+class mean;
+} // namespace accumulators
+
+template <typename T>
 struct storage_adaptor;
 
 template <typename Allocator = std::allocator<char>>

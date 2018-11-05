@@ -45,8 +45,6 @@ bool operator==(const polymorphic_bin<Ts...>& t, const value_bin_view<Us...>& u)
 bool operator==(const empty_metadata_type&, const empty_metadata_type&) { return true; }
 } // namespace axis
 
-#define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
-
 } // namespace histogram
 } // namespace boost
 

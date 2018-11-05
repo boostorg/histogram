@@ -18,7 +18,6 @@
 #pragma GCC diagnostic pop
 #endif
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
 #include <functional>
 #include <iterator>
@@ -32,18 +31,8 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <typename T>
-struct remove_reference_impl {
-  using type = std::remove_reference_t<T>;
-};
-
-template <typename T>
-struct remove_reference_impl<std::reference_wrapper<T>> {
-  using type = T;
-};
-
 template <class T>
-using unqual = std::remove_cv_t<typename remove_reference_impl<T>::type>;
+using unqual = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template <class T>
 using mp_size = mp11::mp_size<unqual<T>>;
@@ -213,6 +202,15 @@ struct is_weight_impl<weight_type<T>> : std::true_type {};
 
 template <typename T>
 using is_weight = is_weight_impl<unqual<T>>;
+
+template <typename T>
+struct is_sample_impl : std::false_type {};
+
+template <typename T>
+struct is_sample_impl<sample_type<T>> : std::true_type {};
+
+template <typename T>
+using is_sample = is_sample_impl<unqual<T>>;
 
 struct static_container_tag {};
 struct iterable_container_tag {};

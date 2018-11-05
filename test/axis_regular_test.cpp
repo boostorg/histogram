@@ -13,6 +13,7 @@
 #include <limits>
 #include <sstream>
 #include <string>
+#include "is_close.hpp"
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;

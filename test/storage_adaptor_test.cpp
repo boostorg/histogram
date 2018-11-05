@@ -5,38 +5,16 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <array>
-#include <boost/config/workaround.hpp>
-#if BOOST_WORKAROUND(BOOST_GCC, >= 50000)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmisleading-indentation"
-#endif
-#if defined(BOOST_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics.hpp>
-#if defined(BOOST_CLANG)
-#pragma clang diagnostic pop
-#endif
-#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
-#pragma GCC diagnostic pop
-#endif
-#if BOOST_WORKAROUND(BOOST_GCC, >= 50000)
-#pragma GCC diagnostic pop
-#endif
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/accumulators/mean.hpp>
+#include <boost/histogram/accumulators/weight.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
-#include <boost/histogram/weight_counter.hpp>
 #include <deque>
 #include <limits>
 #include <vector>
+#include "is_close.hpp"
 #include "utility_allocator.hpp"
 
 using namespace boost::histogram;
@@ -219,13 +197,13 @@ int main() {
   mixed_tests<adaptive_storage<>, storage_adaptor<std::vector<unsigned>>>();
   mixed_tests<storage_adaptor<std::vector<unsigned>>, adaptive_storage<>>();
 
-  // with weight_counter
+  // with accumulators::weight
   {
-    auto a = storage_adaptor<std::vector<weight_counter<double>>>();
+    auto a = storage_adaptor<std::vector<accumulators::weight<double>>>();
     a.reset(1);
     a(0);
     a.add(0, 1);
-    a.add(0, weight_counter<double>(1, 0));
+    a.add(0, accumulators::weight<double>(1, 0));
     BOOST_TEST_EQ(a[0].value(), 3);
     BOOST_TEST_EQ(a[0].variance(), 2);
     a(0, weight(2));
@@ -233,25 +211,16 @@ int main() {
     BOOST_TEST_EQ(a[0].variance(), 6);
   }
 
-  // with boost accumulators
+  // with accumulators::mean
   {
-    using namespace boost::accumulators;
-    using element = accumulator_set<double, stats<tag::mean>>;
-    auto a = storage_adaptor<std::vector<element>>();
-    a.reset(3);
+    auto a = storage_adaptor<std::vector<accumulators::mean<double>>>();
+    a.reset(1);
     a(0, 1);
-    a(0, 2);
-    a(0, 3);
-    a(1, 2);
-    a(1, 3);
-    BOOST_TEST_EQ(count(a[0]), 3);
-    BOOST_TEST_EQ(mean(a[0]), 2);
-    BOOST_TEST_EQ(count(a[1]), 2);
-    BOOST_TEST_EQ(mean(a[1]), 2.5);
-    BOOST_TEST_EQ(count(a[2]), 0);
-
-    auto b = a; // copy ok
-    // b += a; // accumulators do not implement operator+=
+    a(0, weight(2), 2);
+    a.add(0, accumulators::mean<double>(1, 0, 0));
+    BOOST_TEST_EQ(a[0].sum(), 4);
+    BOOST_TEST_IS_CLOSE(a[0].value(), 1.25, 1e-3);
+    BOOST_TEST_IS_CLOSE(a[0].variance(), 0.916, 1e-3);
   }
 
   // exceeding array capacity
