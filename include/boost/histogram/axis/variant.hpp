@@ -173,13 +173,13 @@ public:
     return visit(
         [&x](const auto& a) {
           using A = detail::unqual<decltype(a)>;
-          using expected_t = axis::traits::arg<A>;
-          return detail::static_if<std::is_convertible<U, expected_t>>(
+          using arg_t = detail::arg_type<A>;
+          return detail::static_if<std::is_convertible<U, arg_t>>(
               [&x](const auto& a) -> int { return a(x); },
               [](const auto&) -> int {
                 throw std::invalid_argument(detail::cat(
                     "cannot convert ", boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
-                    " to ", boost::core::demangled_name(BOOST_CORE_TYPEID(expected_t)),
+                    " to ", boost::core::demangled_name(BOOST_CORE_TYPEID(arg_t)),
                     " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A))));
               },
               a);

@@ -250,8 +250,8 @@ void linearize1(optional_index& out, const axis::variant<Ts...>& axis, const U& 
 template <typename A, typename U>
 void linearize1(optional_index& out, const A& axis, const U& u) {
   // protect against instantiation with wrong template argument
-  using arg_type = axis::traits::arg<A>;
-  static_if<std::is_convertible<U, arg_type>>(
+  using arg_t = arg_type<A>;
+  static_if<std::is_convertible<U, arg_t>>(
       [&](const auto& u) {
         const auto a_size = axis.size();
         const auto a_shape = axis::traits::extend(axis);
@@ -263,7 +263,7 @@ void linearize1(optional_index& out, const A& axis, const U& u) {
             detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
                         ": cannot convert argument of type ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(arg_type))));
+                        boost::core::demangled_name(BOOST_CORE_TYPEID(arg_t))));
       },
       u);
 }
