@@ -16,9 +16,6 @@ namespace histogram {
 namespace axis {
 namespace traits {
 template <typename T>
-using arg = detail::arg_type<decltype(&T::operator())>;
-
-template <typename T>
 decltype(auto) metadata(T&& t) noexcept {
   return detail::static_if<detail::has_method_metadata<T>>(
       [](auto&& x) -> decltype(auto) { return x.metadata(); },
