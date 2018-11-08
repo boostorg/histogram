@@ -319,13 +319,38 @@ optional_index args_to_index(const T& axes, const U& args) {
   return idx;
 }
 
-template <typename... Us>
-constexpr int weight_index() {
-  const int n = sizeof...(Us) - 1;
-  using L = mp11::mp_list<Us...>;
-  if (is_weight<mp11::mp_at_c<L, 0>>::value) return 0;
-  if (is_weight<mp11::mp_at_c<L, n>>::value) return n;
-  return -1;
+template <typename U>
+constexpr std::pair<int, int> weight_sample_indices() {
+  if (is_weight<U>::value) return std::make_pair(0, -1);
+  if (is_sample<U>::value) return std::make_pair(-1, 0);
+  return std::make_pair(-1, -1);
+}
+
+template <typename U0, typename U1, typename... Us>
+constexpr std::pair<int, int> weight_sample_indices() {
+  using L = mp11::mp_list<U0, U1, Us...>;
+  const int n = sizeof...(Us) + 1;
+  if (is_weight<mp11::mp_at_c<L, 0>>::value) {
+    if (is_sample<mp11::mp_at_c<L, 1>>::value) return std::make_pair(0, 1);
+    if (is_sample<mp11::mp_at_c<L, n>>::value) return std::make_pair(0, n);
+    return std::make_pair(0, -1);
+  }
+  if (is_sample<mp11::mp_at_c<L, 0>>::value) {
+    if (is_weight<mp11::mp_at_c<L, 1>>::value) return std::make_pair(1, 0);
+    if (is_weight<mp11::mp_at_c<L, n>>::value) return std::make_pair(n, 0);
+    return std::make_pair(-1, 0);
+  }
+  if (is_weight<mp11::mp_at_c<L, n>>::value) {
+    // 0, n already covered
+    if (is_sample<mp11::mp_at_c<L, (n - 1)>>::value) return std::make_pair(n, n - 1);
+    return std::make_pair(n, -1);
+  }
+  if (is_sample<mp11::mp_at_c<L, n>>::value) {
+    // n, 0 already covered
+    if (is_weight<mp11::mp_at_c<L, (n - 1)>>::value) return std::make_pair(n - 1, n);
+    return std::make_pair(-1, n);
+  }
+  return std::make_pair(-1, -1);
 }
 
 template <typename S, typename T>
@@ -343,22 +368,28 @@ void fill_storage_impl(mp11::mp_int<Iw>, mp11::mp_int<-1>, S& storage, std::size
 template <int Is, typename S, typename T>
 void fill_storage_impl(mp11::mp_int<-1>, mp11::mp_int<Is>, S& storage, std::size_t i,
                        const T& args) {
-  storage(i, std::get<Is>(args).value);
+  mp11::tuple_apply([&](auto&&... sargs) { storage(i, sargs...); },
+                    std::get<Is>(args).value);
 }
 
 template <int Iw, int Is, typename S, typename T>
-void fill_storage_impl(mp11::mp_int<Iw>, mp11::mp_int<Is>, S& storage, std::size_t i,
+void fill_storage_impl(mp11::mp_int<Iw>, mp11::mp_int<Is>, S&, std::size_t i,
                        const T& args) {
-  storage(i, std::get<Iw>(args), std::get<Is>(args).value);
+  mp11::tuple_apply([&](auto&&... sargs) { storage(i, std::get<Iw>(args), sargs...); },
+                    std::get<Is>(args).value);
 }
 
 template <typename S, typename T, typename... Us>
 void fill_impl(S& storage, const T& axes, const std::tuple<Us...>& args) {
-  constexpr int Iw = weight_index<Us...>();
-  constexpr unsigned N = Iw >= 0 ? sizeof...(Us) - 1 : sizeof...(Us);
-  optional_index idx = args_to_index<(Iw == 0 ? 1 : 0), N>(axes, args);
+  constexpr std::pair<int, int> iws = weight_sample_indices<Us...>();
+  constexpr unsigned n = sizeof...(Us) - (iws.first > -1) - (iws.second > -1);
+  constexpr unsigned offset = (iws.first == 0 || iws.second == 0)
+                                  ? (iws.first == 1 || iws.second == 1 ? 2 : 1)
+                                  : 0;
+  optional_index idx = args_to_index<offset, n>(axes, args);
   if (idx) {
-    fill_storage_impl(mp11::mp_int<Iw>(), mp11::mp_int<-1>(), storage, *idx, args);
+    fill_storage_impl(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(), storage,
+                      *idx, args);
   }
 }
 
