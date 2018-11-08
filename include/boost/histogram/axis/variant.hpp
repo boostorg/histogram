@@ -35,7 +35,7 @@ struct get_polymorphic_bin_data
   template <typename A>
   std::tuple<double, double, double> operator()(const A& a) const {
     return detail::static_if<
-        detail::has_method_value_with_return_type_convertible_to_double<A>>(
+        detail::has_value_method_with_return_type_convertible_to_x<A, double>>(
         [this](const auto& a) {
           using Arg = detail::unqual<detail::arg_type<detail::unqual<decltype(a)>>>;
           const auto x = a.value(idx);
@@ -194,7 +194,7 @@ public:
         [idx](const auto& a) -> double {
           using A = detail::unqual<decltype(a)>;
           return detail::static_if<
-              detail::has_method_value_with_return_type_convertible_to_double<A>>(
+              detail::has_value_method_with_return_type_convertible_to_x<A, double>>(
               [idx](const auto& a) -> double {
                 return static_cast<double>(a.value(idx));
               },

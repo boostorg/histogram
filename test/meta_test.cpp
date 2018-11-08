@@ -287,40 +287,6 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_axis_variant<bh::axis::variant<bh::axis::regular<>>>));
   }
 
-  // classify_container
-  {
-    using A = classify_container<int>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<A, no_container_tag>));
-
-    using B = classify_container<int&>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<B, no_container_tag>));
-
-    using C = classify_container<std::vector<int>>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<C, iterable_container_tag>));
-
-    using D = classify_container<std::vector<int>&>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<D, iterable_container_tag>));
-
-    using E = classify_container<std::pair<int, int>>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<E, static_container_tag>));
-
-    using F = classify_container<std::pair<int, int>&>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<F, static_container_tag>));
-
-    using G = classify_container<std::string>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<G, iterable_container_tag>));
-
-    using H = classify_container<int*>; // has no std::end
-    BOOST_TEST_TRAIT_TRUE((std::is_same<H, no_container_tag>));
-
-    using I = classify_container<std::initializer_list<int>>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<I, iterable_container_tag>));
-
-    auto j = {0, 1};
-    using J = classify_container<decltype(j)>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<J, iterable_container_tag>));
-  }
-
   // bool mask
   {
     auto v1 = bool_mask<i1, i2>(4, false);
