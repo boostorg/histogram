@@ -13,6 +13,8 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/literals.hpp>
+#include <boost/histogram/sample.hpp>
+#include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
 #include <deque>
 #include <iterator>
@@ -47,51 +49,36 @@ int main() {
     BOOST_TEST_EQ(decltype(j213)::value, 213);
   }
 
-  // has_variance_support
-  {
-    struct A {};
-
-    struct B {
-      void value() {}
-    };
-
-    struct C {
-      void variance() {}
-    };
-
-    struct D {
-      void value() {}
-      void variance() {}
-    };
-
-    BOOST_TEST_TRAIT_FALSE((has_variance_support<A>));
-    BOOST_TEST_TRAIT_FALSE((has_variance_support<B>));
-    BOOST_TEST_TRAIT_FALSE((has_variance_support<C>));
-    BOOST_TEST_TRAIT_TRUE((has_variance_support<D>));
-  }
-
   // has_method_value
   {
     struct A {};
     struct B {
-      void value(int) {}
+      A value(int) const { return {}; }
+    };
+    struct C {
+      char value(int) const { return 0; }
     };
 
-    BOOST_TEST_TRAIT_FALSE((has_method_value<A>));
-    BOOST_TEST_TRAIT_TRUE((has_method_value<B>));
+    BOOST_TEST_TRAIT_FALSE((has_method_value<A, double>));
+    BOOST_TEST_TRAIT_TRUE((has_method_value<B, A>));
+    BOOST_TEST_TRAIT_FALSE((has_method_value<B, char>));
+    BOOST_TEST_TRAIT_TRUE((has_method_value<C, char>));
+    BOOST_TEST_TRAIT_FALSE((has_method_value<C, A>));
   }
 
   // has_method_options
   {
     struct A {};
     struct B {
-      bh::axis::option_type options() { return bh::axis::option_type(); }
+      void options() {}
+    };
+    struct C {
+      bh::axis::option_type options() const { return {}; }
     };
 
-    auto foo = static_cast<std::function<bh::axis::option_type(B&)>>(&B::options);
-
     BOOST_TEST_TRAIT_FALSE((has_method_options<A>));
-    BOOST_TEST_TRAIT_TRUE((has_method_options<B>));
+    BOOST_TEST_TRAIT_FALSE((has_method_options<B>));
+    BOOST_TEST_TRAIT_TRUE((has_method_options<C>));
   }
 
   // has_method_metadata
@@ -434,6 +421,28 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<F>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(v)>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(std::move(v))>));
+  }
+
+  // is_weight
+  {
+    struct A {};
+    using B = int;
+    using C = decltype(bh::weight(1));
+    BOOST_TEST_TRAIT_FALSE((is_weight<A>));
+    BOOST_TEST_TRAIT_FALSE((is_weight<B>));
+    BOOST_TEST_TRAIT_TRUE((is_weight<C>));
+  }
+
+  // is_sample
+  {
+    struct A {};
+    using B = int;
+    using C = decltype(bh::sample(1));
+    using D = decltype(bh::sample(1, 2.0));
+    BOOST_TEST_TRAIT_FALSE((is_sample<A>));
+    BOOST_TEST_TRAIT_FALSE((is_sample<B>));
+    BOOST_TEST_TRAIT_TRUE((is_sample<C>));
+    BOOST_TEST_TRAIT_TRUE((is_sample<D>));
   }
 
   return boost::report_errors();

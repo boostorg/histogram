@@ -121,14 +121,6 @@ decltype(auto) sub_tuple(const T& t) {
   template <typename T>                              \
   using name = typename name##_impl<T>::type
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_variance_support,
-                            (std::declval<T&>().value(), std::declval<T&>().variance()));
-
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, (std::declval<T&>().value(0)));
-
-// TODO try casting to more specific pmf with correct return type
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, (std::declval<T&>().options()));
-
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
 
 // resize has two overloads, trying to get pmf in this case always fails
@@ -137,6 +129,28 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_resize, (std::declval<T&>().resize(0)));
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_size, &T::size);
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_clear, &T::clear);
+
+template <typename T, typename X>
+struct has_method_value_impl {
+  template <typename U, typename V = decltype(std::declval<U&>().value(0))>
+  static typename std::is_convertible<V, X>::type Test(void*);
+  template <typename U>
+  static std::false_type Test(...);
+  using type = decltype(Test<T>(nullptr));
+};
+template <typename T, typename X>
+using has_method_value = typename has_method_value_impl<T, X>::type;
+
+template <typename T>
+struct has_method_options_impl {
+  template <typename U, typename V = decltype(std::declval<const U&>().options())>
+  static typename std::is_same<V, axis::option_type>::type Test(void*);
+  template <typename U>
+  static std::false_type Test(...);
+  using type = decltype(Test<T>(nullptr));
+};
+template <typename T>
+using has_method_options = typename has_method_options_impl<T>::type;
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_allocator, &T::get_allocator);
 
@@ -208,18 +222,6 @@ struct is_sample_impl<sample_type<T>> : std::true_type {};
 
 template <typename T>
 using is_sample = is_sample_impl<unqual<T>>;
-
-template <typename T, typename X>
-struct has_value_method_with_return_type_convertible_to_x_impl {
-  template <typename U, typename V = decltype(std::declval<U&>().value(0))>
-  static typename std::is_convertible<V, X>::type Test(void*);
-  template <typename U>
-  static std::false_type Test(...);
-  using type = decltype(Test<T>(nullptr));
-};
-template <typename T, typename X>
-using has_value_method_with_return_type_convertible_to_x =
-    typename has_value_method_with_return_type_convertible_to_x_impl<T, X>::type;
 
 namespace {
 struct bool_mask_impl {

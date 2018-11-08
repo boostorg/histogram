@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_SAMPLE_HPP
 #define BOOST_HISTOGRAM_SAMPLE_HPP
 
+#include <tuple>
 #include <utility>
 
 namespace boost {
@@ -18,10 +19,10 @@ struct sample_type {
   T value;
 };
 
-/// Helper function to mark argument as sample
-template <typename T>
-sample_type<T> sample(T&& t) {
-  return {std::forward<T>(t)};
+/// Helper function to mark arguments as sample
+template <typename... Ts>
+sample_type<std::tuple<Ts...>> sample(Ts&&... ts) {
+  return {std::make_tuple(std::forward<Ts>(ts)...)};
 }
 
 } // namespace histogram

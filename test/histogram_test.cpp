@@ -13,7 +13,9 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
+#include <boost/histogram/sample.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/weight.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <tuple>
@@ -288,19 +290,16 @@ void run_tests() {
   // d1 mean
   {
     auto h = make_s(Tag(), std::vector<accumulators::mean<>>(), axis::integer<>(0, 2));
-    // TODO
-    // h(0, 1);
-    // h(0, 2);
-    // h(0, 3);
-    // h(1, 2);
-    // h(1, 3);
+    h(0, sample(1));
+    h(0, sample(2));
+    h(0, sample(3));
+    h(sample(2), 1);
+    h(sample(3), 1);
 
-    // BOOST_TEST_EQ(h[0].sum(), 3);
-    // BOOST_TEST_EQ(h[0].value(), 2);
-    // BOOST_TEST_IS_CLOSE(h[0].variance(), 0.666, 1e-2);
-    // BOOST_TEST_EQ(h[1].sum(), 2);
-    // BOOST_TEST_EQ(h[1].value(), 2.5);
-    // BOOST_TEST_IS_CLOSE(h[1].variance(), 0.25, 1e-2);
+    BOOST_TEST_EQ(h[0].sum(), 3);
+    BOOST_TEST_EQ(h[0].value(), 2);
+    BOOST_TEST_EQ(h[1].sum(), 2);
+    BOOST_TEST_EQ(h[1].value(), 2.5);
   }
 
   // d2
