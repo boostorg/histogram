@@ -290,15 +290,22 @@ void run_tests() {
   // d1 mean
   {
     auto h = make_s(Tag(), std::vector<accumulators::mean<>>(), axis::integer<>(0, 2));
-    h(0, sample(1));
-    h(0, sample(2));
-    h(0, sample(3));
-    h(sample(2), 1);
-    h(sample(3), 1);
 
-    BOOST_TEST_EQ(h[0].sum(), 3);
-    BOOST_TEST_EQ(h[0].value(), 2);
-    BOOST_TEST_EQ(h[1].sum(), 2);
+    h(0, sample(1));
+    h(sample(1), 0);
+
+    h(0, weight(2), sample(3));
+    h(0, sample(5), weight(2));
+
+    h(weight(2), 1, sample(1));
+    h(sample(2), 1, weight(2));
+
+    h(weight(2), sample(3), 1);
+    h(sample(4), weight(2), 1);
+
+    BOOST_TEST_EQ(h[0].sum(), 6);
+    BOOST_TEST_EQ(h[0].value(), 3);
+    BOOST_TEST_EQ(h[1].sum(), 8);
     BOOST_TEST_EQ(h[1].value(), 2.5);
   }
 

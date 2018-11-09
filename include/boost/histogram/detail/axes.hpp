@@ -373,7 +373,7 @@ void fill_storage_impl(mp11::mp_int<-1>, mp11::mp_int<Is>, S& storage, std::size
 }
 
 template <int Iw, int Is, typename S, typename T>
-void fill_storage_impl(mp11::mp_int<Iw>, mp11::mp_int<Is>, S&, std::size_t i,
+void fill_storage_impl(mp11::mp_int<Iw>, mp11::mp_int<Is>, S& storage, std::size_t i,
                        const T& args) {
   mp11::tuple_apply([&](auto&&... sargs) { storage(i, std::get<Iw>(args), sargs...); },
                     std::get<Is>(args).value);
