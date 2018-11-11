@@ -104,9 +104,9 @@ void run_tests() {
     auto h = make(Tag(), axis::integer<>{0, 2}, axis::integer<>{0, 3});
     h(0, 0);
     auto h2 = decltype(h)(h);
-    BOOST_TEST(h2 == h);
-    auto h3 =
-        histogram<std::tuple<axis::integer<>, axis::integer<>>, std::vector<unsigned>>(h);
+    BOOST_TEST_EQ(h2, h);
+    auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
+                        storage_adaptor<std::vector<unsigned>>>(h);
     BOOST_TEST_EQ(h3, h);
   }
 
@@ -121,8 +121,8 @@ void run_tests() {
     // test self-assign
     h2 = h2;
     BOOST_TEST_EQ(h, h2);
-    auto h3 =
-        histogram<std::tuple<axis::integer<>, axis::integer<>>, std::vector<unsigned>>();
+    auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
+                        storage_adaptor<std::vector<unsigned>>>();
     h3 = h;
     BOOST_TEST_EQ(h, h3);
   }

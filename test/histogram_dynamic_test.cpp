@@ -8,8 +8,8 @@
 #include <array>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
-#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
+#include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <cstdlib>

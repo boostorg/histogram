@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_HISTOGRAM_HPP
 
 #include <boost/histogram/axis/variant.hpp>
-#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/make_histogram.hpp>
 #include <numeric>
 #include <ostream>
 #include <type_traits>
