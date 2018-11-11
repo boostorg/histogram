@@ -77,7 +77,6 @@ Example: Fill a 1d-histogram
 
 int main() {
     namespace bh = boost::histogram;
-    using namespace bh::literals; // enables _c suffix
 
     auto h = bh::make_histogram(
       bh::axis::regular<>(6, -1.0, 2.0, "x")
@@ -89,7 +88,7 @@ int main() {
 
     // iterate over bins
     for (auto it = h.begin(); it != h.end(); ++it) {
-      const auto bin = it.bin(0_c);
+      const auto bin = it.bin(0);
       std::cout << "bin " << it.idx(0) << " x in ["
                 << bin.lower() << ", " << bin.upper() << "): "
                 << *it << std::endl;

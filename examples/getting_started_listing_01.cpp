@@ -7,26 +7,29 @@
 #include <cassert>
 
 int main() {
-  namespace bh = boost::histogram;
-  using namespace bh::literals; // enables _c suffix
+  using namespace boost::histogram;
 
   /*
-    create a static 1d-histogram with an axis that has 6 equidistant
-    bins on the real line from -1.0 to 2.0, and label it as "x"
+    Create a 1d-histogram with an axis that has 6 equidistant
+    bins on the real line from -1.0 to 2.0, and label it as "x".
   */
-  auto h = bh::make_histogram(bh::axis::regular<>(6, -1.0, 2.0, "x"));
+  auto h = make_histogram(axis::regular<>(6, -1.0, 2.0, "x"));
 
-  // Fill histogram with data, typically this happens in a loop.
-  // STL algorithms are supported, but make sure to use std::ref in
-  // the call to std::for_each to avoid copying the argument.
+  /*
+    Fill histogram with data, typically this happens in a loop.
+    STL algorithms are supported. std::for_each is very convenient
+    to fill a histogram from an iterator range. Make sure to
+    use std::ref in the call, otherwise it will fill a copy of
+    the histogram and return it, which is less efficient.
+  */
   auto data = {-0.5, 1.1, 0.3, 1.7};
   std::for_each(data.begin(), data.end(), std::ref(h));
 
   /*
-    a regular axis is a sequence of semi-open bins; extra under- and
-    overflow bins extend the axis in the default configuration
-    index   :     -1    0    1   2   3   4   5   6
-    bin edge:  -inf -1.0 -0.5 0.0 0.5 1.0 1.5 2.0 inf
+    A regular axis is a sequence of semi-open bins. Extra under- and
+    overflow bins extend the axis in the default configuration.
+    index    :      -1     0     1    2    3    4    5    6
+    bin edges:  -inf  -1.0  -0.5  0.0  0.5  1.0  1.5  2.0  inf
   */
   h(-1.5); // put in underflow bin -1
   h(-1.0); // put in bin 0, bin interval is semi-open
@@ -34,13 +37,13 @@ int main() {
   h(20.0); // put in overflow bin 6
 
   /*
-    do a weighted fill using bh::weight, a wrapper for any type,
-    which may appear at the beginning of the argument list
+    Do a weighted fill using the `weight` function as an additional
+    argument. It may appear at the beginning or end of the argument list.
   */
-  h(bh::weight(1.0), 0.1);
+  h(0.1, weight(1.0));
 
   /*
-    iterate over bins with a fancy histogram iterator
+    Iterate over bins with a fancy histogram iterator
     - order in which bins are iterated over is an implementation detail
     - iterator dereferences to histogram::const_reference, which is defined by
       its storage class; for the default storage it is actually a plain double
@@ -55,7 +58,7 @@ int main() {
   std::ostringstream os;
   os.setf(std::ios_base::fixed);
   for (auto it = h.begin(); it != h.end(); ++it) {
-    const auto bin = it.bin(0_c);
+    const auto bin = it.bin(0);
     os << "bin " << std::setw(2) << it.idx(0) << " [" << std::setprecision(1)
        << std::setw(4) << bin.lower() << ", " << std::setw(4)
        << bin.upper() << "): " << *it << "\n";
