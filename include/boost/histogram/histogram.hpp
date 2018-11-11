@@ -233,9 +233,7 @@ private:
 
   template <typename A, typename S>
   friend class histogram;
-  template <typename H>
-  friend class iterator;
-  friend class unsafe_access;
+  friend struct unsafe_access;
 };
 
 } // namespace histogram
