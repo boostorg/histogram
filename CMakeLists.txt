@@ -60,10 +60,10 @@ function(compiled_test SRC)
     target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0 -D__STRICT_ANSI__
-                           -fsanitize=address,undefined,memory
+                           -fsanitize=address,undefined
                            -fsanitize-address-use-after-scope
                            -fno-omit-frame-pointer)
-    target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined,memory
+    target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined
                           -fsanitize-address-use-after-scope)
   endif()
 
