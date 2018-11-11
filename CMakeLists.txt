@@ -50,21 +50,21 @@ function(compiled_test SRC)
     target_link_libraries(${BASENAME} PRIVATE --coverage)
   endif()
 
-  # max warnings
+  # max warnings and activate sanitizers for clang and gcc
   if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(${BASENAME} PRIVATE -D_SCL_SECURE_NO_WARNINGS)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0)
-  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0 -D__STRICT_ANSI__)
-  endif()
-
-  # activate sanitizers for clang builds
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${BASENAME} PRIVATE
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0
                            -fsanitize=address,undefined
                            -fno-omit-frame-pointer)
     target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0 -D__STRICT_ANSI__
+                           -fsanitize=address,undefined,memory
+                           -fsanitize-address-use-after-scope
+                           -fno-omit-frame-pointer)
+    target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined,memory
+                          -fsanitize-address-use-after-scope)
   endif()
 
   if (${BASENAME} MATCHES "_fail")
