@@ -54,11 +54,8 @@ function(compiled_test SRC)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(${BASENAME} PRIVATE -D_SCL_SECURE_NO_WARNINGS)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # cannot use UB sanitizer with gcc < 8
-    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0
-                           -fsanitize=address
-                           -fno-omit-frame-pointer)
-    target_link_libraries(${BASENAME} PRIVATE -fsanitize=address)
+    # cannot use sanitizers with gcc < 8, causes linker errors
+    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0 -D__STRICT_ANSI__
                            -fsanitize=address,undefined
