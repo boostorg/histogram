@@ -67,6 +67,8 @@ template <typename RealType>
 class mean;
 } // namespace accumulators
 
+struct unsafe_access;
+
 template <typename T>
 struct storage_adaptor;
 

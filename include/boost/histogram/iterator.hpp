@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_VALUE_ITERATOR_HPP
 
 #include <boost/histogram/detail/index_cache.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/unsafe_access.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/mp11.hpp>
 
@@ -59,8 +59,8 @@ private:
 
   void advance(int n) noexcept { idx_ += n; }
 
-  typename Histogram::const_reference dereference() const noexcept {
-    return histogram_.storage_[idx_];
+  decltype(auto) dereference() const noexcept {
+    return unsafe_access::storage(histogram_)[idx_];
   }
 
   const Histogram& histogram_;
