@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_TEST_UTILITY_META_HPP
 #define BOOST_HISTOGRAM_TEST_UTILITY_META_HPP
 
+#include <array>
 #include <boost/core/typeinfo.hpp>
 #include <boost/mp11/integral.hpp>
 #include <boost/mp11/tuple.hpp>
@@ -34,6 +35,14 @@ template <typename... Ts>
 ostream& operator<<(ostream& os, const tuple<Ts...>& t) {
   os << "[ ";
   ::boost::mp11::tuple_for_each(t, [&os](const auto& x) { os << x << " "; });
+  os << "]";
+  return os;
+}
+
+template <typename T, std::size_t N>
+ostream& operator<<(ostream& os, const array<T, N>& v) {
+  os << "[ ";
+  for (const auto& x : v) os << x << " ";
   os << "]";
   return os;
 }

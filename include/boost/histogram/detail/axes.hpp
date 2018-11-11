@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_DETAIL_AXES_HPP
 
 #include <algorithm>
+#include <array>
 #include <boost/assert.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
@@ -138,7 +139,7 @@ static std::size_t axes_size(const T& axes) noexcept {
 }
 
 template <typename T>
-void range_check(const T& axes, const unsigned N) {
+void rank_check(const T& axes, const unsigned N) {
   BOOST_ASSERT_MSG(N < axes_size(axes), "index out of range");
 }
 
@@ -159,69 +160,14 @@ std::size_t bincount(const T& axes) {
   return n;
 }
 
-struct shape_collector {
-  std::vector<unsigned>::iterator iter;
-  shape_collector(std::vector<unsigned>::iterator i) : iter(i) {}
-  template <typename T>
-  void operator()(const T& t) {
-    *iter++ = axis::traits::extend(t);
-  }
-};
-
-template <typename LN, typename T>
-struct sub_axes_impl {};
-
-template <typename LN, typename... Ts>
-struct sub_axes_impl<LN, std::tuple<Ts...>> {
-  static_assert(mp11::mp_is_set<LN>::value,
-                "integer arguments must be strictly ascending");
-  static_assert(mp_last<LN>::value < sizeof...(Ts), "index out of range");
-  template <typename I>
-  using at = mp11::mp_at<mp11::mp_list<Ts...>, I>;
-  using L = mp11::mp_rename<LN, std::tuple>;
-  using type = mp11::mp_transform<at, L>;
-};
-
-template <typename LN, typename... Ts>
-struct sub_axes_impl<LN, std::vector<Ts...>> {
-  static_assert(mp11::mp_is_set<LN>::value,
-                "integer arguments must be strictly ascending");
-  using type = std::vector<Ts...>;
-};
-
-template <typename T, typename... Ns>
-using sub_axes = typename sub_axes_impl<mp11::mp_list<Ns...>, T>::type;
-
-template <typename Src, typename Dst>
-struct sub_static_assign_impl {
-  const Src& src;
-  Dst& dst;
-  template <typename I1, typename I2>
-  void operator()(std::pair<I1, I2>) const {
-    std::get<I1::value>(dst) = std::get<I2::value>(src);
-  }
-};
-
-template <typename... Ts, typename... Ns>
-sub_axes<std::tuple<Ts...>, Ns...> make_sub_axes(const std::tuple<Ts...>& t, Ns...) {
-  using T = std::tuple<Ts...>;
-  using U = sub_axes<std::tuple<Ts...>, Ns...>;
-  U u;
-  using N1 = mp11::mp_list<Ns...>;
-  using N2 = mp11::mp_iota<mp11::mp_size<N1>>;
-  using N3 = mp11::mp_transform<std::pair, N2, N1>;
-  mp11::mp_for_each<N3>(sub_static_assign_impl<T, U>{t, u});
-  return u;
+template <typename... Ns, typename... Ts>
+auto make_sub_axes(const std::tuple<Ts...>& t, Ns... ns) {
+  return std::make_tuple(std::get<ns>(t)...);
 }
 
-template <typename... Ts, typename... Ns>
-sub_axes<std::vector<Ts...>, Ns...> make_sub_axes(const std::vector<Ts...>& t, Ns...) {
-  using T = std::vector<Ts...>;
-  T u(t.get_allocator());
-  u.reserve(sizeof...(Ns));
-  using N = mp11::mp_list<Ns...>;
-  mp11::mp_for_each<N>([&](auto I) { u.emplace_back(t[I]); });
-  return u;
+template <typename... Ns, typename... Ts>
+auto make_sub_axes(const std::vector<Ts...>& t, Ns... ns) {
+  return std::vector<Ts...>({t[ns]...}, t.get_allocator());
 }
 
 /// Index with an invalid state

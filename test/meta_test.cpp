@@ -274,15 +274,6 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_axis_variant<bh::axis::variant<bh::axis::regular<>>>));
   }
 
-  // bool mask
-  {
-    auto v1 = bool_mask<i1, i2>(4, false);
-    BOOST_TEST_EQ(v1, std::vector<bool>({true, false, false, true}));
-
-    auto v2 = bool_mask<i1, i3>(4, true);
-    BOOST_TEST_EQ(v2, std::vector<bool>({false, true, false, true}));
-  }
-
   // unqual
   {
     using T1 = int;

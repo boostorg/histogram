@@ -10,6 +10,7 @@
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/weight.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/algorithm/project.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/circular.hpp>
 #include <boost/histogram/axis/integer.hpp>

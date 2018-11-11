@@ -234,15 +234,14 @@ struct storage_adaptor : detail::storage_augmentation<T> {
   using element_adaptor = detail::element_adaptor<value_type>;
   using const_reference = const value_type&;
 
-  using base_type::base_type;
   storage_adaptor() = default;
   storage_adaptor(const storage_adaptor&) = default;
   storage_adaptor& operator=(const storage_adaptor&) = default;
   storage_adaptor(storage_adaptor&&) = default;
   storage_adaptor& operator=(storage_adaptor&&) = default;
 
-  storage_adaptor(const T& t) : base_type(t) {}
   storage_adaptor(T&& t) : base_type(std::move(t)) {}
+  storage_adaptor(const T& t) : base_type(t) {}
 
   template <typename U, typename = detail::requires_storage<U>>
   storage_adaptor(const U& rhs) {

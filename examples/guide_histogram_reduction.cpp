@@ -1,8 +1,8 @@
 //[ guide_histogram_reduction
 
 #include <boost/histogram.hpp>
-#include <sstream>
 #include <cassert>
+#include <sstream>
 
 namespace bh = boost::histogram;
 
@@ -18,15 +18,14 @@ int main() {
   using namespace bh::literals; // enables _c suffix
 
   // make a 2d histogram
-  auto h = bh::make_histogram(bh::axis::regular<>(3, -1, 1),
-                              bh::axis::integer<>(0, 4));
+  auto h = bh::make_histogram(bh::axis::regular<>(3, -1, 1), bh::axis::integer<>(0, 4));
 
   h(-0.9, 0);
   h(0.9, 3);
   h(0.1, 2);
 
-  auto hr0 = h.reduce_to(0_c); // keep only first axis
-  auto hr1 = h.reduce_to(1_c); // keep only second axis
+  auto hr0 = bh::algorithm::project(h, 0_c); // keep only first axis
+  auto hr1 = bh::algorithm::project(h, 1_c); // keep only second axis
 
   /*
       reduce does not remove counts; returned histograms are summed over
@@ -39,11 +38,10 @@ int main() {
     for (auto xi : h.axis(0_c)) { os1 << h.at(xi, yi) << " "; }
     os1 << "\n";
   }
-  assert(os1.str() == 
-         "1 0 0 \n"
-         "0 0 0 \n"
-         "0 1 0 \n"
-         "0 0 1 \n");
+  assert(os1.str() == "1 0 0 \n"
+                      "0 0 0 \n"
+                      "0 1 0 \n"
+                      "0 0 1 \n");
 
   std::ostringstream os2;
   for (auto xi : hr0.axis()) os2 << hr0.at(xi) << " ";

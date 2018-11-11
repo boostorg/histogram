@@ -62,35 +62,6 @@ int main() {
     BOOST_TEST_THROWS(c.axis().value(0), std::runtime_error);
   }
 
-  // reduce
-  {
-    auto h1 = make(dynamic_tag(), axis::integer<>(0, 2), axis::integer<>(0, 3));
-    h1(0, 0);
-    h1(0, 1);
-    h1(1, 0);
-    h1(1, 1);
-    h1(1, 2);
-
-    std::vector<int> x;
-
-    x = {0};
-    auto h1_0 = h1.reduce_to(x.begin(), x.end());
-    BOOST_TEST_EQ(h1_0.rank(), 1);
-    BOOST_TEST_EQ(sum(h1_0), 5);
-    BOOST_TEST_EQ(h1_0.at(0), 2);
-    BOOST_TEST_EQ(h1_0.at(1), 3);
-    BOOST_TEST(h1_0.axis() == h1.axis(0_c));
-
-    x = {1};
-    auto h1_1 = h1.reduce_to(x.begin(), x.end());
-    BOOST_TEST_EQ(h1_1.rank(), 1);
-    BOOST_TEST_EQ(sum(h1_1), 5);
-    BOOST_TEST_EQ(h1_1.at(0), 2);
-    BOOST_TEST_EQ(h1_1.at(1), 2);
-    BOOST_TEST_EQ(h1_1.at(2), 1);
-    BOOST_TEST(h1_1.axis() == h1.axis(1_c));
-  }
-
   // wrong dimension
   {
     auto h1 = make(dynamic_tag(), axis::integer<>(0, 2));

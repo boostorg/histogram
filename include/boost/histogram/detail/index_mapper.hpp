@@ -7,58 +7,38 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_INDEX_MAPPER_HPP
 #define BOOST_HISTOGRAM_DETAIL_INDEX_MAPPER_HPP
 
-#include <algorithm>
+#include <array>
 #include <cstddef>
-#include <vector>
 
 namespace boost {
 namespace histogram {
 namespace detail {
-struct index_mapper {
-  std::size_t first = 0, second = 0;
+class index_mapper : public std::array<std::pair<std::size_t, std::size_t>, 32> {
+public:
+  std::size_t first = 0, second = 0, ntotal = 1;
 
-  index_mapper(const std::vector<unsigned>& nvec,
-               const std::vector<bool>& bvec) {
-    dims.reserve(nvec.size());
-    std::size_t s1 = 1, s2 = 1;
-    auto bi = bvec.begin();
-    for (const auto& ni : nvec) {
-      if (*bi) {
-        dims.push_back({s1, s2});
-        s2 *= ni;
-      } else {
-        dims.push_back({s1, 0});
-      }
-      s1 *= ni;
-      ++bi;
-    }
-    std::sort(dims.begin(), dims.end(), [](const dim& a, const dim& b) {
-      return a.stride1 > b.stride1;
-    });
-    nfirst = s1;
-  }
+  index_mapper(std::size_t n) : dims_end(begin() + n) {}
 
   bool next() {
     ++first;
     second = 0;
     auto f = first;
-    for (const auto& d : dims) {
-      auto i = f / d.stride1;
-      f -= i * d.stride1;
-      second += i * d.stride2;
+    for (auto it = end(); it != begin(); --it) {
+      const auto& d = *(it - 1);
+      auto i = f / d.first;
+      f -= i * d.first;
+      second += i * d.second;
     }
-    return first < nfirst;
+    return first < ntotal;
   }
 
+  iterator end() { return dims_end; }
+
 private:
-  std::size_t nfirst;
-  struct dim {
-    std::size_t stride1, stride2;
-  };
-  std::vector<dim> dims;
+  iterator dims_end;
 };
-}
-}
-}
+} // namespace detail
+} // namespace histogram
+} // namespace boost
 
 #endif
