@@ -15,6 +15,8 @@ template <typename Axis>
 class interval_bin_view {
 public:
   interval_bin_view(int idx, const Axis& axis) : idx_(idx), axis_(axis) {}
+  // avoid viewing a temporary that goes out of scope
+  interval_bin_view(int idx, Axis&& axis) = delete;
 
   int idx() const noexcept { return idx_; }
 
