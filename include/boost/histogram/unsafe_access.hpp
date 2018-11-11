@@ -7,8 +7,6 @@
 #ifndef BOOST_HISTOGRAM_UNSAFE_ACCESS_HPP
 #define BOOST_HISTOGRAM_UNSAFE_ACCESS_HPP
 
-#include <boost/histogram/detail/meta.hpp>
-
 namespace boost {
 namespace histogram {
 

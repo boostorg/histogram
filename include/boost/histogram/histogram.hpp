@@ -103,14 +103,14 @@ public:
   /// Get N-th axis (const version)
   template <std::size_t N>
   decltype(auto) axis(mp11::mp_size_t<N>) const {
-    detail::range_check(axes_, N);
+    detail::rank_check(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis
   template <std::size_t N>
   decltype(auto) axis(mp11::mp_size_t<N>) {
-    detail::range_check(axes_, N);
+    detail::rank_check(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
@@ -122,13 +122,13 @@ public:
 
   /// Get N-th axis with runtime index (const version)
   decltype(auto) axis(std::size_t i) const {
-    detail::range_check(axes_, i);
+    detail::rank_check(axes_, i);
     return detail::axis_get(axes_, i);
   }
 
   /// Get N-th axis with runtime index
   decltype(auto) axis(std::size_t i) {
-    detail::range_check(axes_, i);
+    detail::rank_check(axes_, i);
     return detail::axis_get(axes_, i);
   }
 
@@ -170,54 +170,6 @@ public:
   template <typename T>
   const_reference operator[](const T& t) const {
     return at(t);
-  }
-
-  /// Returns a lower-dimensional histogram
-  // precondition: argument sequence must be strictly ascending axis indices
-  template <std::size_t I, typename... Ns>
-  auto reduce_to(mp11::mp_size_t<I>, Ns...) const
-      -> histogram<detail::sub_axes<axes_type, mp11::mp_size_t<I>, Ns...>, storage_type> {
-    using N = mp11::mp_size_t<I>;
-    using LN = mp11::mp_list<N, Ns...>;
-    detail::range_check(axes_, detail::mp_last<LN>::value);
-    using sub_axes_type = detail::sub_axes<axes_type, N, Ns...>;
-    using HR = histogram<sub_axes_type, storage_type>;
-    auto sub_axes = detail::make_sub_axes(axes_, N(), Ns()...);
-    auto hr = HR(std::move(sub_axes),
-                 detail::static_if<detail::has_allocator<storage_type>>(
-                     [this](auto) { return storage_type(storage_.get_allocator()); },
-                     [](auto) { return storage_type(); }, 0));
-    const auto b = detail::bool_mask<N, Ns...>(rank(), true);
-    std::vector<unsigned> shape(rank());
-    for_each_axis(detail::shape_collector(shape.begin()));
-    detail::index_mapper m(shape, b);
-    do { hr.storage_.add(m.second, storage_[m.first]); } while (m.next());
-    return hr;
-  }
-
-  /// Returns a lower-dimensional histogram
-  // precondition: sequence must be strictly ascending axis indices
-  template <typename Iterator, typename U = axes_type,
-            typename = detail::requires_axis_vector<U>,
-            typename = detail::requires_iterator<Iterator>>
-  histogram reduce_to(Iterator begin, Iterator end) const {
-    BOOST_ASSERT_MSG(std::is_sorted(begin, end, std::less_equal<decltype(*begin)>()),
-                     "integer sequence must be strictly ascending");
-    BOOST_ASSERT_MSG(begin == end || static_cast<unsigned>(*(end - 1)) < rank(),
-                     "index out of range");
-    auto sub_axes = histogram::axes_type(axes_.get_allocator());
-    sub_axes.reserve(std::distance(begin, end));
-    auto b = std::vector<bool>(rank(), false);
-    for (auto it = begin; it != end; ++it) {
-      sub_axes.push_back(axes_[*it]);
-      b[*it] = true;
-    }
-    auto hr = histogram(std::move(sub_axes), storage_type(storage_.get_allocator()));
-    std::vector<unsigned> shape(rank());
-    for_each_axis(detail::shape_collector(shape.begin()));
-    detail::index_mapper m(shape, b);
-    do { hr.storage_.add(m.second, storage_[m.first]); } while (m.next());
-    return hr;
   }
 
   auto begin() const noexcept { return const_iterator(*this, 0); }

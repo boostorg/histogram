@@ -14,5 +14,5 @@ int main() {
   a.push_back(axis::integer<>(1, 2));
   auto h = make_histogram(a);
   auto v = {0, 0};
-  h.reduce_to(v.begin(), v.end());
+  algorithm::project(h, v.begin(), v.end());
 }

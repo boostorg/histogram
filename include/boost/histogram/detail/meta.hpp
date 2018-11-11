@@ -223,24 +223,6 @@ struct is_sample_impl<sample_type<T>> : std::true_type {};
 template <typename T>
 using is_sample = is_sample_impl<unqual<T>>;
 
-namespace {
-struct bool_mask_impl {
-  std::vector<bool>& b;
-  bool v;
-  template <typename Int>
-  void operator()(Int) const {
-    b[Int::value] = v;
-  }
-};
-} // namespace
-
-template <typename... Ns>
-std::vector<bool> bool_mask(unsigned n, bool v) {
-  std::vector<bool> b(n, !v);
-  mp11::mp_for_each<mp11::mp_list<Ns...>>(bool_mask_impl{b, v});
-  return b;
-}
-
 // poor-mans concept checks
 template <typename T, typename = decltype(*std::declval<T&>(), ++std::declval<T&>())>
 struct requires_iterator {};
