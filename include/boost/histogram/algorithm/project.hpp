@@ -15,6 +15,7 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/mp11.hpp>
+#include <iostream>
 #include <stdexcept>
 #include <tuple>
 
@@ -23,9 +24,9 @@ namespace histogram {
 namespace algorithm {
 
 /// Returns a lower-dimensional histogram
-// precondition: argument sequence must be strictly ascending axis indices
 template <typename A, typename S, std::size_t I, typename... Ns>
 auto project(const histogram<A, S>& h, mp11::mp_size_t<I> n, Ns... ns) {
+  // TODO: check that n's are unique
   using LN = mp11::mp_list<mp11::mp_size_t<I>, Ns...>;
 
   const auto& axes = unsafe_access::axes(h);
@@ -62,15 +63,12 @@ auto project(const histogram<A, S>& h, mp11::mp_size_t<I> n, Ns... ns) {
 }
 
 /// Returns a lower-dimensional histogram
-// precondition: sequence must be strictly ascending axis indices
 template <typename A, typename S, typename Iterator,
           typename = detail::requires_axis_vector<A>,
           typename = detail::requires_iterator<Iterator>>
 auto project(const histogram<A, S>& h, Iterator begin, Iterator end) {
+  // TODO: check that n's are unique
   using H = histogram<A, S>;
-
-  BOOST_ASSERT_MSG(std::is_sorted(begin, end, std::less_equal<decltype(*begin)>()),
-                   "integer sequence must be strictly ascending");
 
   const auto& axes = unsafe_access::axes(h);
   auto r_axes = typename H::axes_type(axes.get_allocator());
