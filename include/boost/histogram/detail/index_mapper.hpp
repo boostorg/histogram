@@ -25,9 +25,9 @@ public:
     auto f = first;
     for (auto it = end(); it != begin(); --it) {
       const auto& d = *(it - 1);
-      auto i = f / d.first;
-      f -= i * d.first;
-      second += i * d.second;
+      // compiler usually optimizes div & mod into one div
+      second += f / d.first * d.second;
+      f %= d.first;
     }
     return first < ntotal;
   }
