@@ -56,6 +56,9 @@ function(compiled_test SRC)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # cannot use sanitizers with gcc < 8, causes linker errors
     target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0)
+    if (${BASENAME} MATCHES "parallel")
+      target_compile_options(${BASENAME} PRIVATE -pthread)
+    endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0 -D__STRICT_ANSI__
                            -fsanitize=address,undefined
