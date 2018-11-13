@@ -45,18 +45,20 @@ public:
 
 int main() {
   /*
-    Create histogram with array<std::atomic<std::size_t>, 100> as counter storage
-    for parallel filling in several threads. You cannot use std::vector here,
-    because std::atomic types are not copyable.
+    Create histogram with container of atomic counters for parallel filling
+    in several threads. You cannot use std::atomic here, because std::atomic
+    types are not copyable. Using the copyable_atomic as a work-around is safe,
+    if the storage does not change size while it is filled. This means that
+    growing axis types are not allowed.
   */
-  auto h = bh::make_histogram_with(std::vector<copyable_atomic<unsigned>>(),
+  auto h = bh::make_histogram_with(std::vector<copyable_atomic<std::size_t>>(),
                                    bh::axis::integer<>(0, 10));
 
   /*
     The histogram storage may not be resized in either thread. This is the case
     if you do not use growing axis types. Some notes regarding std::thread.
-    - The templated fill function must be instantiated when passed to std::thread
-      that why we pass fill<decltype(h)>.
+    - The templated fill function must be instantiated when passed to
+      std::thread, do we pass fill<decltype(h)>.
     - std::thread copies the argument. To avoid filling two copies of the
       histogram, we need to pass it via std::ref.
   */
