@@ -291,7 +291,8 @@ void run_tests() {
 
   // d1 mean
   {
-    auto h = make_s(Tag(), std::vector<accumulators::mean<>>(), axis::integer<>(0, 2));
+    auto h =
+        make_s(Tag(), std::vector<accumulators::mean<double>>(), axis::integer<>(0, 2));
 
     h(0, sample(1));
     h(0, sample(2));
@@ -310,7 +311,7 @@ void run_tests() {
 
   // d1 weighted mean
   {
-    auto h = make_s(Tag(), std::vector<accumulators::weighted_mean<>>(),
+    auto h = make_s(Tag(), std::vector<accumulators::weighted_mean<double>>(),
                     axis::integer<>(0, 2));
 
     h(0, sample(1));
