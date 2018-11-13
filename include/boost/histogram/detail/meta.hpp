@@ -189,6 +189,8 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_iterable, (std::begin(std::declval<T&>()),
 BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
                             (std::declval<std::ostream&>() << std::declval<T&>()));
 
+BOOST_HISTOGRAM_MAKE_SFINAE(is_incrementable, (++std::declval<T&>()));
+
 template <typename T>
 struct is_axis_variant_impl : std::false_type {};
 
