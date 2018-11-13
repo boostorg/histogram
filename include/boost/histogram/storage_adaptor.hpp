@@ -38,19 +38,6 @@ template <typename... Ts>
 struct is_accumulator_set<::boost::accumulators::accumulator_set<Ts...>>
     : std::true_type {};
 
-// specialized form for arithmetic types
-struct element_adaptor_arithmetic {
-  template <typename T>
-  static void forward(T& t) {
-    ++t;
-  }
-  template <typename T, typename U>
-  static void forward(T& t, const weight_type<U>& u) {
-    t += u.value;
-  }
-};
-
-// specialized form for accumulator_set
 struct element_adaptor_accumulator_set {
   template <typename T>
   static void forward(T& t) {
@@ -70,7 +57,17 @@ struct element_adaptor_accumulator_set {
   }
 };
 
-// generic form for aggregator types
+struct element_adaptor_incrementable {
+  template <typename T>
+  static void forward(T& t) {
+    ++t;
+  }
+  template <typename T, typename U>
+  static void forward(T& t, const weight_type<U>& u) {
+    t += u.value;
+  }
+};
+
 struct element_adaptor_generic {
   template <typename T, typename... Us>
   static void forward(T& t, Us&&... us) {
@@ -80,8 +77,8 @@ struct element_adaptor_generic {
 
 template <typename T>
 using element_adaptor =
-    mp11::mp_if<std::is_arithmetic<T>, element_adaptor_arithmetic,
-                mp11::mp_if<is_accumulator_set<T>, element_adaptor_accumulator_set,
+    mp11::mp_if<is_accumulator_set<T>, element_adaptor_accumulator_set,
+                mp11::mp_if<detail::is_incrementable<T>, element_adaptor_incrementable,
                             element_adaptor_generic>>;
 
 template <typename T>
