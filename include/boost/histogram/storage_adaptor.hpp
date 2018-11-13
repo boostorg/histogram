@@ -176,9 +176,10 @@ struct map_augmentation : T {
 
   value_type& operator[](std::size_t i) { return T::operator[](i); }
 
-  value_type operator[](std::size_t i) const {
+  const value_type& operator[](std::size_t i) const {
     auto it = this->find(i);
-    return it == this->end() ? value_type() : it->second;
+    static auto null = value_type();
+    return it == this->end() ? null : it->second;
   }
 
   template <typename U>

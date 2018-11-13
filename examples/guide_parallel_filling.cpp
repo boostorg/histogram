@@ -33,6 +33,8 @@ class copyable_atomic : public std::atomic<T> {
 public:
   using std::atomic<T>::atomic;
 
+  copyable_atomic() = default;
+
   // this is potentially not thread-safe
   copyable_atomic(const copyable_atomic& rhs) { this->operator=(rhs); }
 
