@@ -214,7 +214,7 @@ int main() {
 
   // with accumulators::weighted_mean
   {
-    auto a = storage_adaptor<std::vector<accumulators::weighted_mean<>>>();
+    auto a = storage_adaptor<std::vector<accumulators::weighted_mean<double>>>();
     a.reset(1);
     a(0, /* sample */ 1);
     a(0, /* weight */ 2, /* sample */ 2);
