@@ -7,62 +7,50 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 
-#include <boost/histogram/weight.hpp>
+#include <cstddef>
 
 namespace boost {
 namespace histogram {
 namespace accumulators {
 
-/// Holds sum of weights, sum of weighted values, and sum of weighted values squared
-template <typename RealType = double>
+/**
+  Calculates mean and variance of sample.
+
+  Uses Welfords's incremental algorithm to improve the numerical
+  stability of mean and variance computation.
+*/
+template <typename RealType>
 class mean {
 public:
   mean() = default;
-  mean(const mean&) = default;
-  mean(mean&&) = default;
-  mean& operator=(const mean&) = default;
-  mean& operator=(mean&&) = default;
-
-  mean(const RealType& w, const RealType& wx, const RealType& wxx) noexcept
-      : w_(w), wx_(wx), wxx_(wxx) {}
+  mean(const std::size_t n, const RealType& mean, const RealType& variance)
+      : sum_(n), mean_(mean), dsum2_(variance * (sum_ - 1)) {}
 
   void operator()(const RealType& x) noexcept {
-    ++w_;
-    wx_ += x;
-    wxx_ += x * x;
-  }
-
-  template <typename T>
-  void operator()(const ::boost::histogram::weight_type<T>& w,
-                  const RealType& x) noexcept {
-    w_ += w.value;
-    wx_ += w.value * x;
-    wxx_ += w.value * x * x;
+    sum_ += 1;
+    const auto delta = x - mean_;
+    mean_ += delta / sum_;
+    dsum2_ += delta * (x - mean_);
   }
 
   template <typename T>
   mean& operator+=(const mean<T>& rhs) {
-    w_ += static_cast<RealType>(rhs.w_);
-    wx_ += static_cast<RealType>(rhs.wx_);
-    wxx_ += static_cast<RealType>(rhs.wxx_);
+    const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
+    sum_ += static_cast<RealType>(rhs.sum_);
+    mean_ = tmp / sum_;
+    dsum2_ += static_cast<RealType>(rhs.dsum2_);
     return *this;
   }
 
   mean& operator*=(const RealType& s) noexcept {
-    wx_ *= s;
-    wxx_ *= s * s;
+    mean_ *= s;
+    dsum2_ *= s * s;
     return *this;
   }
 
-  bool operator==(const mean& rhs) const noexcept {
-    return w_ == rhs.w_ && wx_ == rhs.wx_ && wxx_ == rhs.wxx_;
-  }
-
-  bool operator!=(const mean& rhs) const noexcept { return !operator==(rhs); }
-
   template <typename T>
   bool operator==(const mean<T>& rhs) const noexcept {
-    return w_ == rhs.w_ && wx_ == rhs.wx_ && wxx_ == rhs.wxx_;
+    return sum_ == rhs.sum_ && mean_ == rhs.mean_ && dsum2_ == rhs.dsum2_;
   }
 
   template <typename T>
@@ -70,47 +58,17 @@ public:
     return !operator==(rhs);
   }
 
-  const RealType& sum() const noexcept { return w_; }
-  RealType value() const noexcept { return wx_ / w_; }
-  RealType variance() const noexcept {
-    return wxx_ / (w_ - 1) - w_ / (w_ - 1) * value() * value();
-  }
+  std::size_t sum() const noexcept { return sum_; }
+  const RealType& value() const noexcept { return mean_; }
+  RealType variance() const noexcept { return dsum2_ / (sum_ - 1); }
 
   template <class Archive>
   void serialize(Archive&, unsigned /* version */);
 
 private:
-  RealType w_ = 0, wx_ = 0, wxx_ = 0;
+  std::size_t sum_ = 0;
+  RealType mean_ = 0, dsum2_ = 0;
 };
-
-template <typename T>
-mean<T> operator+(const mean<T>& a, const mean<T>& b) noexcept {
-  mean<T> c = a;
-  return c += b;
-}
-
-template <typename T>
-mean<T>&& operator+(mean<T>&& a, const mean<T>& b) noexcept {
-  a += b;
-  return std::move(a);
-}
-
-template <typename T>
-mean<T>&& operator+(const mean<T>& a, mean<T>&& b) noexcept {
-  return operator+(std::move(b), a);
-}
-
-template <typename T>
-mean<T> operator+(const mean<T>& a, const T& b) noexcept {
-  auto r = a;
-  return r += b;
-}
-
-template <typename T>
-mean<T> operator+(const T& a, const mean<T>& b) noexcept {
-  auto r = b;
-  return r += a;
-}
 
 } // namespace accumulators
 } // namespace histogram

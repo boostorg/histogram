@@ -15,6 +15,7 @@
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
 #if defined BOOST_CLANG
 #pragma clang diagnostic push
@@ -25,7 +26,6 @@
 #if defined BOOST_CLANG
 #pragma clang diagnostic pop
 #endif
-#include <iostream>
 #include <limits>
 #include <memory>
 #include <type_traits>

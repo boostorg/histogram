@@ -61,10 +61,14 @@ template <typename T>
 struct sample_type;
 
 namespace accumulators {
-template <typename RealType>
+template <typename RealType = double>
+class neumaier;
+template <typename RealType = double>
 class weight;
-template <typename RealType>
+template <typename RealType = double>
 class mean;
+template <typename RealType = double>
+class weighted_mean;
 } // namespace accumulators
 
 struct unsafe_access;
