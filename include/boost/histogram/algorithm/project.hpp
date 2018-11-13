@@ -15,7 +15,6 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/mp11.hpp>
-#include <iostream>
 #include <stdexcept>
 #include <tuple>
 

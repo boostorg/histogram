@@ -8,6 +8,7 @@
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream_operators.hpp>
 #include <boost/histogram/accumulators/weight.hpp>
+#include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/variant.hpp>
@@ -291,6 +292,26 @@ void run_tests() {
   // d1 mean
   {
     auto h = make_s(Tag(), std::vector<accumulators::mean<>>(), axis::integer<>(0, 2));
+
+    h(0, sample(1));
+    h(0, sample(2));
+    h(0, sample(3));
+    h(sample(4), 1);
+    h(sample(5), 1);
+    h(sample(6), 1);
+
+    BOOST_TEST_EQ(h[0].sum(), 3);
+    BOOST_TEST_EQ(h[0].value(), 2);
+    BOOST_TEST_EQ(h[0].variance(), 1);
+    BOOST_TEST_EQ(h[1].sum(), 3);
+    BOOST_TEST_EQ(h[1].value(), 5);
+    BOOST_TEST_EQ(h[1].variance(), 1);
+  }
+
+  // d1 weighted mean
+  {
+    auto h = make_s(Tag(), std::vector<accumulators::weighted_mean<>>(),
+                    axis::integer<>(0, 2));
 
     h(0, sample(1));
     h(sample(1), 0);
@@ -620,22 +641,22 @@ void run_tests() {
     BOOST_TEST_EQ(it.idx(), 1);
     BOOST_TEST_EQ(it.bin(), a[1]);
     BOOST_TEST_EQ(it.bin(0), a[1]);
-    BOOST_TEST_EQ(*it, 2);
+    BOOST_TEST_EQ(it->value(), 2);
     ++it;
     BOOST_TEST_EQ(it.idx(), 2);
     BOOST_TEST_EQ(it.bin(), a[2]);
     BOOST_TEST_EQ(it.bin(0), a[2]);
-    BOOST_TEST_EQ(*it, 0);
+    BOOST_TEST_EQ(it->value(), 0);
     ++it;
     BOOST_TEST_EQ(it.idx(), 3);
     BOOST_TEST_EQ(it.bin(), a[3]);
     BOOST_TEST_EQ(it.bin(0), a[3]);
-    BOOST_TEST_EQ(*it, 0);
+    BOOST_TEST_EQ(it->value(), 0);
     ++it;
     BOOST_TEST_EQ(it.idx(), -1);
     BOOST_TEST_EQ(it.bin(), a[-1]);
     BOOST_TEST_EQ(it.bin(0), a[-1]);
-    BOOST_TEST_EQ(*it, 0);
+    BOOST_TEST_EQ(it->value(), 0);
     ++it;
     BOOST_TEST(it == h.end());
   }
@@ -714,9 +735,9 @@ void run_tests() {
     auto i11 = std::make_tuple(1, 1);
 
     // tuple out
-    BOOST_TEST_EQ(h.at(i00), 1);
-    BOOST_TEST_EQ(h[i00], 1);
-    BOOST_TEST_EQ(h[i11], 1);
+    BOOST_TEST_EQ(h.at(i00).value(), 1);
+    BOOST_TEST_EQ(h[i00].value(), 1);
+    BOOST_TEST_EQ(h[i11].value(), 1);
 
     // tuple with weight
     h(std::make_tuple(weight(2), 0, 2.0));

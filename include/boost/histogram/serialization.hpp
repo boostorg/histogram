@@ -9,6 +9,7 @@
 
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/weight.hpp>
+#include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/category.hpp>
@@ -55,9 +56,18 @@ void weight<RealType>::serialize(Archive& ar, unsigned /* version */) {
 template <typename RealType>
 template <class Archive>
 void mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& w_;
-  ar& wx_;
-  ar& wxx_;
+  ar& sum_;
+  ar& mean_;
+  ar& dsum2_;
+}
+
+template <typename RealType>
+template <class Archive>
+void weighted_mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
+  ar& wsum_;
+  ar& wsum2_;
+  ar& mean_;
+  ar& dsum2_;
 }
 } // namespace accumulators
 

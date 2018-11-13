@@ -73,6 +73,11 @@ struct element_adaptor_generic {
   static void forward(T& t, Us&&... us) {
     t(std::forward<Us>(us)...);
   }
+
+  template <typename T, typename U, typename... Us>
+  static void forward(T& t, const weight_type<U>& u, Us&&... us) {
+    t(u.value, std::forward<Us>(us)...);
+  }
 };
 
 template <typename T>
