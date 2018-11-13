@@ -6,6 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/algorithm/project.hpp>
+#include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/literals.hpp>
@@ -14,7 +15,7 @@
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
-using boost::histogram::algorithm::project;
+using namespace boost::histogram::algorithm;
 
 template <typename Tag>
 void run_tests() {
