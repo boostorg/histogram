@@ -36,7 +36,7 @@ public:
   copyable_atomic() = default;
 
   // this is potentially not thread-safe
-  copyable_atomic(const copyable_atomic& rhs) { this->operator=(rhs); }
+  copyable_atomic(const copyable_atomic& rhs) : std::atomic<T>() { this->operator=(rhs); }
 
   // this is potentially not thread-safe
   copyable_atomic& operator=(const copyable_atomic& rhs) {
