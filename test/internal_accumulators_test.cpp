@@ -118,7 +118,7 @@ int main() {
     BOOST_TEST_EQ(os.str(), std::string("weighted_mean(2, 1.5, 2, 0.8)"));
 
     auto b = a;
-    b += a; // same as feeding 1, 1, 2, 2, 3, 3
+    b += a; // same as feeding all samples twice
 
     BOOST_TEST_EQ(b.sum(), 4);
     BOOST_TEST_EQ(b.value(), 2);
