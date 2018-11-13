@@ -1,3 +1,9 @@
+// Copyright 2015-2018 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 //[ guide_histogram_streaming
 
 #include <boost/histogram.hpp>
@@ -24,7 +30,7 @@ int main() {
 
   std::cout << os.str() << std::endl;
 
-  assert(os.str() == 
+  assert(os.str() ==
     "histogram(\n"
     "  regular(2, -1, 1, options=underflow_and_overflow),\n"
     "  regular_log(2, 1, 10, metadata=\"axis 1\", options=underflow_and_overflow),\n"
