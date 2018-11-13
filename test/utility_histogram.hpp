@@ -17,10 +17,6 @@
 
 namespace boost {
 namespace histogram {
-template <typename Histogram>
-auto sum(const Histogram& h) {
-  return std::accumulate(h.begin(), h.end(), typename Histogram::value_type(0));
-}
 
 template <typename... Ts>
 auto make_axis_vector(Ts&&... ts) {

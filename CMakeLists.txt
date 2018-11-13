@@ -77,6 +77,7 @@ endfunction()
 
 compiled_test(test/adaptive_storage_test.cpp)
 compiled_test(test/algorithm_project_test.cpp)
+compiled_test(test/algorithm_sum_test.cpp)
 compiled_test(test/axis_regular_test.cpp)
 compiled_test(test/axis_circular_test.cpp)
 compiled_test(test/axis_variable_test.cpp)

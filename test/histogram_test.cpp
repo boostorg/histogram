@@ -9,6 +9,7 @@
 #include <boost/histogram/accumulators/ostream_operators.hpp>
 #include <boost/histogram/accumulators/weight.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
@@ -133,12 +134,12 @@ void run_tests() {
     h(0, 0);
     const auto href = h;
     decltype(h) h2(std::move(h));
-    BOOST_TEST_EQ(sum(h), 0);
+    BOOST_TEST_EQ(algorithm::sum(h), 0);
     BOOST_TEST_EQ(h.size(), 0);
     BOOST_TEST_EQ(h2, href);
     decltype(h) h3;
     h3 = std::move(h2);
-    BOOST_TEST_EQ(sum(h2), 0);
+    BOOST_TEST_EQ(algorithm::sum(h2), 0);
     BOOST_TEST_EQ(h2.size(), 0);
     BOOST_TEST_EQ(h3, href);
   }
@@ -224,7 +225,7 @@ void run_tests() {
 
     BOOST_TEST_EQ(h.rank(), 1);
     BOOST_TEST_EQ(h.axis().size(), 2);
-    BOOST_TEST_EQ(sum(h), 4);
+    BOOST_TEST_EQ(algorithm::sum(h), 4);
 
     BOOST_TEST_EQ(h.at(-1), 1);
     BOOST_TEST_EQ(h.at(0), 2);
@@ -242,7 +243,7 @@ void run_tests() {
 
     BOOST_TEST_EQ(h.rank(), 1);
     BOOST_TEST_EQ(h.axis().size(), 2);
-    BOOST_TEST_EQ(sum(h), 2);
+    BOOST_TEST_EQ(algorithm::sum(h), 2);
 
     BOOST_TEST_EQ(h.at(0), 2);
     BOOST_TEST_EQ(h.at(1), 0);
@@ -258,7 +259,7 @@ void run_tests() {
 
     BOOST_TEST_EQ(h.rank(), 1);
     BOOST_TEST_EQ(h.axis().size(), 2);
-    BOOST_TEST_EQ(sum(h), 4);
+    BOOST_TEST_EQ(algorithm::sum(h), 4);
 
     BOOST_TEST_EQ(h.at(0), 1);
     BOOST_TEST_EQ(h.at(1), 1);
@@ -274,8 +275,8 @@ void run_tests() {
     h(1);
     h(weight(2), 2);
 
-    BOOST_TEST_EQ(sum(h).value(), 5.5);
-    BOOST_TEST_EQ(sum(h).variance(), 7.25);
+    BOOST_TEST_EQ(algorithm::sum(h).value(), 5.5);
+    BOOST_TEST_EQ(algorithm::sum(h).variance(), 7.25);
 
     BOOST_TEST_EQ(h[-1].value(), 1);
     BOOST_TEST_EQ(h[-1].variance(), 1);
@@ -321,7 +322,7 @@ void run_tests() {
     BOOST_TEST_EQ(h.rank(), 2);
     BOOST_TEST_EQ(h.axis(0_c).size(), 2);
     BOOST_TEST_EQ(h.axis(1_c).size(), 3);
-    BOOST_TEST_EQ(sum(h), 3);
+    BOOST_TEST_EQ(algorithm::sum(h), 3);
 
     BOOST_TEST_EQ(h.at(-1, 0), 0);
     BOOST_TEST_EQ(h.at(-1, 1), 1);
@@ -350,8 +351,8 @@ void run_tests() {
     h(weight(5), -1, -10); // is ignored
     h(weight(7), -10, 0);  // -> -1, 1
 
-    BOOST_TEST_EQ(sum(h).value(), 18);
-    BOOST_TEST_EQ(sum(h).variance(), 150);
+    BOOST_TEST_EQ(algorithm::sum(h).value(), 18);
+    BOOST_TEST_EQ(algorithm::sum(h).variance(), 150);
 
     BOOST_TEST_EQ(h.at(-1, 0).value(), 0);
     BOOST_TEST_EQ(h.at(-1, 1).value(), 7);
@@ -498,7 +499,7 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(0), 1);
     BOOST_TEST_EQ(h.at(1), 1);
     BOOST_TEST_EQ(h.at(2), 1);
-    BOOST_TEST_EQ(sum(h), 3);
+    BOOST_TEST_EQ(algorithm::sum(h), 3);
 
     auto a = std::vector<double>();
     std::partial_sum(h.begin(), h.end(), std::back_inserter(a));
@@ -562,11 +563,11 @@ void run_tests() {
     h(1);
     BOOST_TEST_EQ(h.at(0), 1);
     BOOST_TEST_EQ(h.at(1), 1);
-    BOOST_TEST_EQ(sum(h), 2);
+    BOOST_TEST_EQ(algorithm::sum(h), 2);
     h.reset();
     BOOST_TEST_EQ(h.at(0), 0);
     BOOST_TEST_EQ(h.at(1), 0);
-    BOOST_TEST_EQ(sum(h), 0);
+    BOOST_TEST_EQ(algorithm::sum(h), 0);
   }
 
   // custom axes
@@ -696,7 +697,7 @@ void run_tests() {
     ++it;
     BOOST_TEST(it == h.end());
 
-    auto v = sum(h);
+    auto v = algorithm::sum(h);
     BOOST_TEST_EQ(v.value(), 4);
     BOOST_TEST_EQ(v.variance(), 6);
   }

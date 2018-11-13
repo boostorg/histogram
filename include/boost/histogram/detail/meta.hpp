@@ -227,28 +227,25 @@ using is_sample = is_sample_impl<unqual<T>>;
 template <typename T, typename = decltype(*std::declval<T&>(), ++std::declval<T&>())>
 struct requires_iterator {};
 
-template <typename T, typename = mp11::mp_if<is_iterable<T>, void>>
+template <typename T, typename = mp11::mp_if<is_iterable<unqual<T>>, void>>
 struct requires_iterable {};
 
-template <typename T, typename = mp11::mp_if<is_tuple<T>, void>>
+template <typename T, typename = mp11::mp_if<is_tuple<unqual<T>>, void>>
 struct requires_tuple {};
 
-template <typename T, typename = mp11::mp_if<is_axis<T>, void>>
+template <typename T, typename = mp11::mp_if<is_axis<unqual<T>>, void>>
 struct requires_axis {};
 
-template <typename T, typename = mp11::mp_if<is_axis_or_axis_variant<T>, void>>
+template <typename T, typename = mp11::mp_if<is_axis_or_axis_variant<unqual<T>>, void>>
 struct requires_axis_or_axis_variant {};
 
-template <typename T, typename = mp11::mp_if<is_axis_vector<T>, void>>
+template <typename T, typename = mp11::mp_if<is_axis_vector<unqual<T>>, void>>
 struct requires_axis_vector {};
 
-template <typename T, typename U, typename = mp11::mp_if<std::is_same<T, U>, void>>
-struct requires_same {};
-
-template <typename T, typename = mp11::mp_if<is_transform<T>, void>>
+template <typename T, typename = mp11::mp_if<is_transform<unqual<T>>, void>>
 struct requires_transform {};
 
-template <typename T, typename = mp11::mp_if<is_storage<T>, void>>
+template <typename T, typename = mp11::mp_if<is_storage<unqual<T>>, void>>
 struct requires_storage {};
 
 } // namespace detail
