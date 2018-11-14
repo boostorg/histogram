@@ -4,18 +4,17 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/core/lightweight_test.hpp>
+#include <array>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/serialization.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <map>
-#include <vector>
-#include <unordered_map>
-#include <array>
 #include <memory>
 #include <sstream>
+#include <unordered_map>
+#include <vector>
 
 using namespace boost::histogram;
 

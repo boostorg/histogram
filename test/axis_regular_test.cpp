@@ -7,7 +7,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/units/quantity.hpp>
 #include <boost/units/systems/si/length.hpp>
 #include <limits>

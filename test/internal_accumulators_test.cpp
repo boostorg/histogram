@@ -6,10 +6,10 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
-#include <boost/histogram/accumulators/neumaier.hpp>
 #include <boost/histogram/accumulators/ostream_operators.hpp>
-#include <boost/histogram/accumulators/weight.hpp>
+#include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
+#include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <sstream>
 #include "is_close.hpp"
 
@@ -17,15 +17,15 @@ using namespace boost::histogram;
 
 int main() {
   {
-    using w_t = accumulators::weight<double>;
+    using w_t = accumulators::weighted_sum<double>;
     w_t w;
     std::ostringstream os;
     os << w;
-    BOOST_TEST_EQ(os.str(), std::string("weight(0, 0)"));
+    BOOST_TEST_EQ(os.str(), std::string("weighted_sum(0, 0)"));
 
     BOOST_TEST_EQ(w, w_t(0));
     BOOST_TEST_NE(w, w_t(1));
-    w = 1;
+    w = w_t(1);
     BOOST_TEST_EQ(w.value(), 1);
     BOOST_TEST_EQ(w.variance(), 1);
     BOOST_TEST_EQ(w, 1);
@@ -115,7 +115,7 @@ int main() {
 
     std::ostringstream os;
     os << a;
-    BOOST_TEST_EQ(os.str(), std::string("weighted_mean(2, 1.5, 2, 0.8)"));
+    BOOST_TEST_EQ(os.str(), std::string("weighted_mean(2, 2, 0.8)"));
 
     auto b = a;
     b += a; // same as feeding all samples twice
@@ -133,16 +133,16 @@ int main() {
     bad_sum += -1e100;
     BOOST_TEST_EQ(bad_sum, 0); // instead of 2
 
-    accumulators::neumaier<double> sum;
+    accumulators::sum<double> sum;
     sum();      // equivalent to sum += 1
     sum(1e100); // equivalent to sum += 1e100
     sum += 1;
     sum += -1e100;
-    BOOST_TEST_EQ(sum.value(), 2);
+    BOOST_TEST_EQ(sum, 2);
   }
 
   {
-    accumulators::weight<accumulators::neumaier<double>> w;
+    accumulators::weighted_sum<accumulators::sum<double>> w;
 
     w();
     w(1e100);

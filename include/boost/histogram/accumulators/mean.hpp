@@ -27,7 +27,7 @@ public:
   mean(const std::size_t n, const RealType& mean, const RealType& variance)
       : sum_(n), mean_(mean), dsum2_(variance * (sum_ - 1)) {}
 
-  void operator()(const RealType& x) noexcept {
+  void operator()(const RealType& x) {
     sum_ += 1;
     const auto delta = x - mean_;
     mean_ += delta / sum_;
@@ -43,7 +43,7 @@ public:
     return *this;
   }
 
-  mean& operator*=(const RealType& s) noexcept {
+  mean& operator*=(const RealType& s) {
     mean_ *= s;
     dsum2_ *= s * s;
     return *this;
@@ -61,7 +61,7 @@ public:
 
   std::size_t sum() const noexcept { return sum_; }
   const RealType& value() const noexcept { return mean_; }
-  RealType variance() const noexcept { return dsum2_ / (sum_ - 1); }
+  RealType variance() const { return dsum2_ / (sum_ - 1); }
 
   template <class Archive>
   void serialize(Archive&, unsigned /* version */);

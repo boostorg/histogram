@@ -24,7 +24,6 @@
 #endif
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <vector>
 

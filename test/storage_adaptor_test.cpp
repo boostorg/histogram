@@ -6,10 +6,9 @@
 
 #include <array>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/accumulators/weight.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
+#include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <deque>
 #include <limits>
@@ -197,13 +196,13 @@ int main() {
   mixed_tests<adaptive_storage<>, storage_adaptor<std::vector<unsigned>>>();
   mixed_tests<storage_adaptor<std::vector<unsigned>>, adaptive_storage<>>();
 
-  // with accumulators::weight
+  // with accumulators::weighted_sum
   {
-    auto a = storage_adaptor<std::vector<accumulators::weight<double>>>();
+    auto a = storage_adaptor<std::vector<accumulators::weighted_sum<double>>>();
     a.reset(1);
     a(0);
     a.add(0, 1);
-    a.add(0, accumulators::weight<double>(1, 0));
+    a.add(0, accumulators::weighted_sum<double>(1, 0));
     BOOST_TEST_EQ(a[0].value(), 3);
     BOOST_TEST_EQ(a[0].variance(), 2);
     auto weight = 2;

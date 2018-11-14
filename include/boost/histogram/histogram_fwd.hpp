@@ -62,9 +62,9 @@ struct sample_type;
 
 namespace accumulators {
 template <typename RealType = double>
-class neumaier;
+class sum;
 template <typename RealType = double>
-class weight;
+class weighted_sum;
 template <typename RealType = double>
 class mean;
 template <typename RealType = double>
@@ -80,6 +80,7 @@ template <typename Allocator = std::allocator<char>>
 struct adaptive_storage;
 
 using default_storage = adaptive_storage<>;
+using weight_storage = storage_adaptor<std::vector<accumulators::weighted_sum<>>>;
 
 template <class Axes, class Storage = default_storage>
 class histogram;
