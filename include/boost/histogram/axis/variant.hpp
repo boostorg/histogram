@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_VARIANT_HPP
 #define BOOST_HISTOGRAM_AXIS_VARIANT_HPP
 
+#include <boost/container/string.hpp> // default meta data
 #include <boost/core/typeinfo.hpp>
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/iterator.hpp>

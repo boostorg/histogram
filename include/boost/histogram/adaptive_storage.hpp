@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
+#include <boost/container/new_allocator.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/buffer.hpp>

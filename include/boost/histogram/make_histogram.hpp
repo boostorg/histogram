@@ -7,12 +7,12 @@
 #ifndef BOOST_HISTOGRAM_MAKE_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_MAKE_HISTOGRAM_HPP
 
+#include <boost/container/vector.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp> // implements default_storage
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <tuple>
-#include <vector>
 
 namespace boost {
 namespace histogram {

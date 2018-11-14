@@ -8,6 +8,8 @@
 #define BOOST_HISTOGRAM_AXIS_CATEGORY_HPP
 
 #include <algorithm>
+#include <boost/container/new_allocator.hpp>
+#include <boost/container/string.hpp> // default meta data
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/value_bin_view.hpp>

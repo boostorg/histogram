@@ -42,7 +42,7 @@ bool operator==(const polymorphic_bin<Ts...>& t, const value_bin_view<Us...>& u)
   return t.idx() == u.idx() && t.value() == u.value();
 }
 
-bool operator==(const empty_metadata_type&, const empty_metadata_type&) { return true; }
+bool operator==(const null_type&, const null_type&) { return true; }
 } // namespace axis
 
 } // namespace histogram

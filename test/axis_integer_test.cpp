@@ -16,7 +16,6 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <limits>
 #include <sstream>
-#include <string>
 #include <type_traits>
 #include "utility_axis.hpp"
 

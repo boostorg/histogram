@@ -35,21 +35,20 @@ int main() {
     BOOST_TEST_EQ(a(10), 2);
     BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a.metadata(), std::string("int"));
+    BOOST_TEST_EQ(a.metadata(), "int");
     BOOST_TEST_EQ(a.options(), axis::option_type::underflow_and_overflow);
 
     a = axis::category<std::string>({"A", "B"}, "cat");
     BOOST_TEST_EQ(a("A"), 0);
     BOOST_TEST_EQ(a("B"), 1);
-    BOOST_TEST_EQ(a.metadata(), std::string("cat"));
+    BOOST_TEST_EQ(a.metadata(), "cat");
     BOOST_TEST_EQ(a.options(), axis::option_type::overflow);
   }
 
   // axis::variant with reference
   {
-    auto a = axis::integer<double, axis::empty_metadata_type>(0, 3, {},
-                                                              axis::option_type::none);
-    using V = axis::variant<axis::integer<double, axis::empty_metadata_type>&>;
+    auto a = axis::integer<double, axis::null_type>(0, 3, {}, axis::option_type::none);
+    using V = axis::variant<axis::integer<double, axis::null_type>&>;
     V v(a);
     BOOST_TEST_EQ(v.size(), 3);
     BOOST_TEST_EQ(v[0], a[0]);
@@ -71,8 +70,7 @@ int main() {
     BOOST_TEST_EQ(axis.size(), 1);
     BOOST_TEST_THROWS(std::ostringstream() << axis, std::runtime_error);
     BOOST_TEST_THROWS(axis.value(0), std::runtime_error);
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<decltype(axis.metadata()), axis::empty_metadata_type&>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(axis.metadata()), axis::null_type&>));
   }
 
   // axis::variant copyable
@@ -128,7 +126,7 @@ int main() {
          "regular_pow(2, 1, 10, metadata=\"regular3\", options=overflow, power=1.5)");
     test(axis::regular<tr::pow<>>(-1.5, 2, 1, 10, "regular4", axis::option_type::none),
          "regular_pow(2, 1, 10, metadata=\"regular4\", options=none, power=-1.5)");
-    test(axis::circular<double, axis::empty_metadata_type>(4, 0.1, 1.0),
+    test(axis::circular<double, axis::null_type>(4, 0.1, 1.0),
          "circular(4, 0.1, 1.1, options=overflow)");
     test(axis::variable<>({-1, 0, 1}, "variable", axis::option_type::none),
          "variable(-1, 0, 1, metadata=\"variable\", options=none)");
