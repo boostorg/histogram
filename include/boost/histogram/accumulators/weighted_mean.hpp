@@ -7,6 +7,8 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_MEAN_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_MEAN_HPP
 
+#include <boost/histogram/histogram_fwd.hpp>
+
 namespace boost {
 namespace histogram {
 namespace accumulators {

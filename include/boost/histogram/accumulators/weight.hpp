@@ -7,7 +7,7 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_WEIGHT_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_WEIGHT_HPP
 
-#include <stdexcept>
+#include <boost/histogram/histogram_fwd.hpp>
 
 namespace boost {
 namespace histogram {

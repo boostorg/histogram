@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 
+#include <boost/histogram/histogram_fwd.hpp>
 #include <cstddef>
 
 namespace boost {
