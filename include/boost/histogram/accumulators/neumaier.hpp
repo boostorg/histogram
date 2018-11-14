@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_NEUMAIER_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_NEUMAIER_HPP
 
+#include <boost/histogram/histogram_fwd.hpp>
 #include <cmath>
 
 namespace boost {

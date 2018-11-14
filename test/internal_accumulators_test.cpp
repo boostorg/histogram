@@ -142,7 +142,7 @@ int main() {
   }
 
   {
-    accumulators::weight<accumulators::neumaier<>> w;
+    accumulators::weight<accumulators::neumaier<double>> w;
 
     w();
     w(1e100);
