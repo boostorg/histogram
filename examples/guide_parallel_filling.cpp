@@ -64,10 +64,14 @@ int main() {
   */
   std::thread t1(fill<decltype(h)>, std::ref(h));
   std::thread t2(fill<decltype(h)>, std::ref(h));
+  std::thread t3(fill<decltype(h)>, std::ref(h));
+  std::thread t4(fill<decltype(h)>, std::ref(h));
   t1.join();
   t2.join();
+  t3.join();
+  t4.join();
 
-  assert(bh::algorithm::sum(h) == 2000);
+  assert(bh::algorithm::sum(h) == 4000);
 }
 
 //]
