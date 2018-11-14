@@ -6,12 +6,10 @@
 
 //[ guide_custom_storage
 
-#include <array>
 #include <atomic>
 #include <boost/histogram.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <cassert>
-#include <chrono>
 #include <functional>
 #include <thread>
 #include <vector>
@@ -33,25 +31,25 @@ class copyable_atomic : public std::atomic<T> {
 public:
   using std::atomic<T>::atomic;
 
-  copyable_atomic() = default;
+  // zero-initialize the atomic T
+  copyable_atomic() noexcept : std::atomic<T>(T()) {}
 
-  // this is potentially not thread-safe
+  // this is potentially not thread-safe, see below
   copyable_atomic(const copyable_atomic& rhs) : std::atomic<T>() { this->operator=(rhs); }
 
-  // this is potentially not thread-safe
+  // this is potentially not thread-safe, see below
   copyable_atomic& operator=(const copyable_atomic& rhs) {
-    if (this != &rhs) { std::atomic<T>::operator=(rhs.load()); }
+    if (this != &rhs) { std::atomic<T>::store(rhs.load()); }
     return *this;
   }
 };
 
 int main() {
   /*
-    Create histogram with container of atomic counters for parallel filling
-    in several threads. You cannot use std::atomic here, because std::atomic
-    types are not copyable. Using the copyable_atomic as a work-around is safe,
-    if the storage does not change size while it is filled. This means that
-    growing axis types are not allowed.
+    Create histogram with container of atomic counters for parallel filling in several
+    threads. You cannot use bare std::atomic here, because std::atomic types are not
+    copyable. Using the copyable_atomic as a work-around is safe, if the storage does not
+    change size while it is filled. This means that growing axis types are not allowed.
   */
   auto h = bh::make_histogram_with(std::vector<copyable_atomic<std::size_t>>(),
                                    bh::axis::integer<>(0, 10));
@@ -59,10 +57,10 @@ int main() {
   /*
     The histogram storage may not be resized in either thread. This is the case
     if you do not use growing axis types. Some notes regarding std::thread.
-    - The templated fill function must be instantiated when passed to
-      std::thread, do we pass fill<decltype(h)>.
-    - std::thread copies the argument. To avoid filling two copies of the
-      histogram, we need to pass it via std::ref.
+    - The templated fill function must be instantiated when passed to std::thread, do we
+      pass fill<decltype(h)>.
+    - std::thread copies the argument. To avoid filling two copies of the histogram, we
+      need to pass it via std::ref.
   */
   std::thread t1(fill<decltype(h)>, std::ref(h));
   std::thread t2(fill<decltype(h)>, std::ref(h));
