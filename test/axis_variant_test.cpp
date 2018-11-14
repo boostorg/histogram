@@ -13,7 +13,6 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -137,9 +136,9 @@ int main() {
          "category(0, 1, 2, metadata=\"category\", options=overflow)");
     test(axis::category<std::string>({"A", "B"}, "category2"),
          "category(\"A\", \"B\", metadata=\"category2\", options=overflow)");
-    const auto ref = detail::cat("integer(-1, 1, metadata=",
-                                 boost::core::demangled_name(BOOST_CORE_TYPEID(user_defined)),
-                                 ", options=none)");
+    const auto ref = detail::cat(
+        "integer(-1, 1, metadata=",
+        boost::core::demangled_name(BOOST_CORE_TYPEID(user_defined)), ", options=none)");
     test(axis::integer<int, user_defined>(-1, 1, {}, axis::option_type::none),
          ref.c_str());
   }

@@ -4,12 +4,11 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/core/lightweight_test.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/histogram/serialization.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/serialization.hpp>
 #include <memory>
 #include <sstream>
 

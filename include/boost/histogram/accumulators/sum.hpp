@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_ACCUMULATORS_NEUMAIER_HPP
-#define BOOST_HISTOGRAM_ACCUMULATORS_NEUMAIER_HPP
+#ifndef BOOST_HISTOGRAM_ACCUMULATORS_SUM_HPP
+#define BOOST_HISTOGRAM_ACCUMULATORS_SUM_HPP
 
 #include <boost/histogram/histogram_fwd.hpp>
 #include <cmath>
@@ -17,31 +17,32 @@ namespace accumulators {
 /**
   Uses Neumaier algorithm to compute accurate sums.
 
-  The algorithm is about four times slower compared to using
-  a simple floating point number to accumulate a sum, but the
-  relative error of the sum for non-negative numbers is
-  constant and at the level of the machine precision.
+  The algorithm uses memory for two floats and is three to
+  five times slower compared to a simple floating point
+  number used to accumulate a sum, but the relative error
+  of the sum is at the level of the machine precision,
+  independent of the number of samples.
 
   A. Neumaier, Zeitschrift fuer Angewandte Mathematik
   und Mechanik 54 (1974) 39–51.
 */
 template <typename RealType>
-class neumaier {
+class sum {
 public:
-  neumaier() = default;
-  neumaier(const RealType& value) noexcept : sum_(value), cor_(0) {}
-  neumaier& operator=(const RealType& value) noexcept {
+  sum() = default;
+  explicit sum(const RealType& value) noexcept : sum_(value), cor_(0) {}
+  sum& operator=(const RealType& value) noexcept {
     sum_ = value;
     cor_ = 0;
     return *this;
   }
 
-  void operator()() noexcept { operator+=(1); }
+  void operator()() { operator+=(1); }
 
-  void operator()(const RealType& x) noexcept { operator+=(x); }
+  void operator()(const RealType& x) { operator+=(x); }
 
-  neumaier& operator+=(const RealType& x) noexcept {
-    volatile auto temp = sum_ + x; // prevent optimization
+  sum& operator+=(const RealType& x) {
+    auto temp = sum_ + x; // prevent optimization
     if (std::abs(sum_) >= std::abs(x))
       cor_ += (sum_ - temp) + x;
     else
@@ -50,27 +51,27 @@ public:
     return *this;
   }
 
-  neumaier& operator*=(const RealType& x) noexcept {
+  sum& operator*=(const RealType& x) {
     sum_ *= x;
     cor_ *= x;
     return *this;
   }
 
   template <typename T>
-  bool operator==(const neumaier<T>& rhs) const noexcept {
+  bool operator==(const sum<T>& rhs) const noexcept {
     return sum_ == rhs.sum_ && cor_ == rhs.cor_;
   }
 
   template <typename T>
-  bool operator!=(const neumaier<T>& rhs) const noexcept {
+  bool operator!=(const T& rhs) const noexcept {
     return !operator==(rhs);
   }
 
-  RealType value() const noexcept { return sum_ + cor_; }
   const RealType& large() const noexcept { return sum_; }
   const RealType& small() const noexcept { return cor_; }
 
-  operator RealType() const noexcept { return value(); }
+  // allow implicit conversion to RealType
+  operator RealType() const { return sum_ + cor_; }
 
   template <class Archive>
   void serialize(Archive&, unsigned /* version */);

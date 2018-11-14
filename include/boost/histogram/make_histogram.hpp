@@ -7,10 +7,12 @@
 #ifndef BOOST_HISTOGRAM_MAKE_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_MAKE_HISTOGRAM_HPP
 
+#include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp> // implements default_storage
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <tuple>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -24,10 +26,17 @@ auto make_histogram_with(C&& c, T&& axis0, Ts&&... axis) {
   return histogram<decltype(axes), S>(std::move(axes), std::forward<C>(c));
 }
 
-/// histogram factory from compile-time axis configuration with standard storage
+/// histogram factory from compile-time axis configuration with default storage
 template <typename T, typename... Ts, typename = detail::requires_axis<T>>
 auto make_histogram(T&& axis0, Ts&&... axis) {
   return make_histogram_with(default_storage(), std::forward<T>(axis0),
+                             std::forward<Ts>(axis)...);
+}
+
+/// histogram factory from compile-time axis configuration with weight storage
+template <typename T, typename... Ts, typename = detail::requires_axis<T>>
+auto make_weighted_histogram(T&& axis0, Ts&&... axis) {
+  return make_histogram_with(weight_storage(), std::forward<T>(axis0),
                              std::forward<Ts>(axis)...);
 }
 
@@ -39,10 +48,16 @@ auto make_histogram_with(C&& c, T&& t) {
   return histogram<detail::unqual<T>, S>(std::forward<T>(t), std::forward<C>(c));
 }
 
-/// dynamic type factory from vector-like with default storage
+/// histogram factory from vector-like with default storage
 template <typename T, typename = detail::requires_axis_vector<T>>
 auto make_histogram(T&& t) {
   return make_histogram_with(default_storage(), std::forward<T>(t));
+}
+
+/// histogram factory from vector-like with default storage
+template <typename T, typename = detail::requires_axis_vector<T>>
+auto make_weighted_histogram(T&& t) {
+  return make_histogram_with(weight_storage(), std::forward<T>(t));
 }
 
 /// histogram factory from iterator range with custom storage
@@ -57,6 +72,12 @@ auto make_histogram_with(C&& c, Iterator begin, Iterator end) {
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 auto make_histogram(Iterator begin, Iterator end) {
   return make_histogram_with(default_storage(), begin, end);
+}
+
+/// dynamic type factory from iterator range with weight storage
+template <typename Iterator, typename = detail::requires_iterator<Iterator>>
+auto make_weighted_histogram(Iterator begin, Iterator end) {
+  return make_histogram_with(weight_storage(), begin, end);
 }
 
 } // namespace histogram

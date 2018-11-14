@@ -14,7 +14,6 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <limits>
 #include <sstream>
 #include <string>

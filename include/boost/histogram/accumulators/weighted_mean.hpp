@@ -25,32 +25,29 @@ public:
   weighted_mean() = default;
   weighted_mean(const RealType& wsum, const RealType& wsum2, const RealType& mean,
                 const RealType& variance)
-      : wsum_(wsum)
-      , wsum2_(wsum2)
-      , mean_(mean)
-      , dsum2_(variance * (wsum_ - wsum2_ / wsum_)) {}
+      : sum_(wsum), sum2_(wsum2), mean_(mean), dsum2_(variance * (sum_ - sum2_ / sum_)) {}
 
-  void operator()(const RealType& x) noexcept { operator()(1, x); }
+  void operator()(const RealType& x) { operator()(1, x); }
 
-  void operator()(const RealType& w, const RealType& x) noexcept {
-    wsum_ += w;
-    wsum2_ += w * w;
+  void operator()(const RealType& w, const RealType& x) {
+    sum_ += w;
+    sum2_ += w * w;
     const auto delta = x - mean_;
-    mean_ += w * delta / wsum_;
+    mean_ += w * delta / sum_;
     dsum2_ += w * delta * (x - mean_);
   }
 
   template <typename T>
   weighted_mean& operator+=(const weighted_mean<T>& rhs) {
-    const auto tmp = mean_ * wsum_ + static_cast<RealType>(rhs.mean_ * rhs.wsum_);
-    wsum_ += static_cast<RealType>(rhs.wsum_);
-    wsum2_ += static_cast<RealType>(rhs.wsum2_);
-    mean_ = tmp / wsum_;
+    const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
+    sum_ += static_cast<RealType>(rhs.sum_);
+    sum2_ += static_cast<RealType>(rhs.sum2_);
+    mean_ = tmp / sum_;
     dsum2_ += static_cast<RealType>(rhs.dsum2_);
     return *this;
   }
 
-  weighted_mean& operator*=(const RealType& s) noexcept {
+  weighted_mean& operator*=(const RealType& s) {
     mean_ *= s;
     dsum2_ *= s * s;
     return *this;
@@ -58,25 +55,24 @@ public:
 
   template <typename T>
   bool operator==(const weighted_mean<T>& rhs) const noexcept {
-    return wsum_ == rhs.wsum_ && wsum2_ == rhs.wsum2_ && mean_ == rhs.mean_ &&
+    return sum_ == rhs.sum_ && sum2_ == rhs.sum2_ && mean_ == rhs.mean_ &&
            dsum2_ == rhs.dsum2_;
   }
 
   template <typename T>
-  bool operator!=(const weighted_mean<T>& rhs) const noexcept {
+  bool operator!=(const T& rhs) const noexcept {
     return !operator==(rhs);
   }
 
-  const RealType& sum() const noexcept { return wsum_; }
-  const RealType& sum2() const noexcept { return wsum2_; }
+  const RealType& sum() const noexcept { return sum_; }
   const RealType& value() const noexcept { return mean_; }
-  RealType variance() const noexcept { return dsum2_ / (wsum_ - wsum2_ / wsum_); }
+  RealType variance() const { return dsum2_ / (sum_ - sum2_ / sum_); }
 
   template <class Archive>
   void serialize(Archive&, unsigned /* version */);
 
 private:
-  RealType wsum_ = 0, wsum2_ = 0, mean_ = 0, dsum2_ = 0;
+  RealType sum_ = RealType(), sum2_ = RealType(), mean_ = RealType(), dsum2_ = RealType();
 };
 
 } // namespace accumulators

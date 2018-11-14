@@ -7,8 +7,8 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream_operators.hpp>
-#include <boost/histogram/accumulators/weight.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
+#include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/variant.hpp>
@@ -269,7 +269,8 @@ void run_tests() {
 
   // d1 weight
   {
-    auto h = make_s(Tag(), std::vector<accumulators::weight<>>(), axis::integer<>(0, 2));
+    auto h =
+        make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 2));
     h(-1);
     h(0);
     h(weight(0.5), 0);
@@ -365,9 +366,9 @@ void run_tests() {
 
   // d2w
   {
-    auto h =
-        make_s(Tag(), std::vector<accumulators::weight<>>(), axis::regular<>(2, -1, 1),
-               axis::integer<>(-1, 2, {}, axis::option_type::none));
+    auto h = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(),
+                    axis::regular<>(2, -1, 1),
+                    axis::integer<>(-1, 2, {}, axis::option_type::none));
     h(-1, 0);              // -> 0, 1
     h(weight(10), -1, -1); // -> 0, 0
     h(weight(5), -1, -10); // is ignored
@@ -411,8 +412,8 @@ void run_tests() {
 
   // d3w
   {
-    auto h = make_s(Tag(), std::vector<accumulators::weight<>>(), axis::integer<>(0, 3),
-                    axis::integer<>(0, 4), axis::integer<>(0, 5));
+    auto h = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(),
+                    axis::integer<>(0, 3), axis::integer<>(0, 4), axis::integer<>(0, 5));
     for (auto i = 0u; i < h.axis(0_c).size(); ++i) {
       for (auto j = 0u; j < h.axis(1_c).size(); ++j) {
         for (auto k = 0u; k < h.axis(2_c).size(); ++k) { h(i, j, k, weight(i + j + k)); }
@@ -454,8 +455,10 @@ void run_tests() {
 
   // add_2
   {
-    auto a = make_s(Tag(), std::vector<accumulators::weight<>>(), axis::integer<>(0, 2));
-    auto b = make_s(Tag(), std::vector<accumulators::weight<>>(), axis::integer<>(0, 2));
+    auto a =
+        make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 2));
+    auto b =
+        make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 2));
 
     a(0);
     BOOST_TEST_EQ(a.at(0).variance(), 1);
@@ -624,7 +627,8 @@ void run_tests() {
 
   // histogram iterator 1D
   {
-    auto h = make_s(Tag(), std::vector<accumulators::weight<>>(), axis::integer<>(0, 3));
+    auto h =
+        make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 3));
     const auto& a = h.axis();
     h(weight(2), 0);
     h(1);
@@ -664,8 +668,9 @@ void run_tests() {
 
   // histogram iterator 2D
   {
-    auto h = make_s(Tag(), std::vector<accumulators::weight<>>(), axis::integer<>(0, 1),
-                    axis::integer<>(2, 4, "", axis::option_type::none));
+    auto h =
+        make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 1),
+               axis::integer<>(2, 4, "", axis::option_type::none));
     const auto& a0 = h.axis(0_c);
     const auto& a1 = h.axis(1_c);
     h(weight(2), 0, 2);
@@ -726,8 +731,8 @@ void run_tests() {
 
   // using static containers
   {
-    auto h = make_s(Tag(), std::vector<accumulators::weight<>>(), axis::integer<>(0, 2),
-                    axis::regular<>(2, 2, 4));
+    auto h = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(),
+                    axis::integer<>(0, 2), axis::regular<>(2, 2, 4));
     // tuple in
     h(std::make_tuple(0, 2.0));
     h(std::make_tuple(1, 3.0));

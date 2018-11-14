@@ -7,7 +7,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/circular.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <limits>
 #include "utility_axis.hpp"
 

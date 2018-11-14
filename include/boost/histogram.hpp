@@ -8,7 +8,9 @@
 #define BOOST_HISTOGRAM_HPP
 
 #include <boost/histogram/accumulators/mean.hpp>
-#include <boost/histogram/accumulators/weight.hpp>
+#include <boost/histogram/accumulators/sum.hpp>
+#include <boost/histogram/accumulators/weighted_mean.hpp>
+#include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/algorithm/project.hpp>
 #include <boost/histogram/axis/category.hpp>

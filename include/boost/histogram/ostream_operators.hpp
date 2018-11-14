@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_OSTREAM_OPERATORS_HPP
 #define BOOST_HISTOGRAM_OSTREAM_OPERATORS_HPP
 
+#include <boost/histogram/accumulators/ostream_operators.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <ostream>
@@ -20,20 +21,6 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   os << "histogram(";
   h.for_each_axis([&](const auto& a) { os << "\n  " << a << ","; });
   os << (h.rank() ? "\n)" : ")");
-  return os;
-}
-
-template <typename CharT, typename Traits, typename W>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const accumulators::weight<W>& x) {
-  os << "weight(" << x.value() << ", " << x.variance() << ")";
-  return os;
-}
-
-template <typename CharT, typename Traits, typename W>
-std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const accumulators::mean<W>& x) {
-  os << "mean(" << x.sum() << ", " << x.value() << ", " << x.variance() << ")";
   return os;
 }
 

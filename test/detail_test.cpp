@@ -13,7 +13,6 @@
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/cat.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <tuple>
 #include <vector>
 #include "utility_meta.hpp"
