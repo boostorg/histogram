@@ -98,8 +98,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
 }
 
 template <typename C, typename T>
-std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const empty_metadata_type&) {
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os, const null_type&) {
   return os; // do nothing
 }
 

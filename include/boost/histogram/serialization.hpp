@@ -7,6 +7,8 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP
 
+#include <boost/container/string.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
@@ -28,8 +30,8 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
-#include <string>
 #include <tuple>
+#include <type_traits>
 
 /** \file boost/histogram/serialization.hpp
  *  \brief Defines the serialization functions, to use with boost.serialize.
@@ -44,6 +46,32 @@ void serialize(Archive& ar, tuple<Ts...>& t, unsigned /* version */) {
 } // namespace std
 
 namespace boost {
+namespace container {
+template <class Archive, class T, class A>
+void serialize(Archive& ar, vector<T, A>& v, unsigned) {
+  std::size_t size = v.size();
+  ar& size;
+  if (Archive::is_loading::value) { v.resize(size); }
+  if (std::is_trivially_copyable<T>::value) {
+    ar& ::boost::serialization::make_array(v.data(), size);
+  } else {
+    for (auto&& x : v) ar& x;
+  }
+}
+
+template <class Archive, class C, class T, class A>
+void serialize(Archive& ar, basic_string<C, T, A>& v, unsigned) {
+  std::size_t size = v.size();
+  ar& size;
+  if (Archive::is_loading::value) v.resize(size);
+  if (std::is_trivially_copyable<T>::value) {
+    ar& ::boost::serialization::make_array(v.data(), size);
+  } else {
+    for (auto&& x : v) ar& x;
+  }
+}
+} // namespace container
+
 namespace histogram {
 
 namespace accumulators {
@@ -123,7 +151,7 @@ void histogram<A, S>::serialize(Archive& ar, unsigned /* version */) {
 
 namespace axis {
 template <class Archive>
-void serialize(Archive&, empty_metadata_type&, unsigned /* version */) {} // noop
+void serialize(Archive&, null_type&, unsigned /* version */) {} // noop
 
 template <typename M>
 template <class Archive>

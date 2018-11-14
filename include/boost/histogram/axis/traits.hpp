@@ -19,8 +19,8 @@ template <typename T>
 decltype(auto) metadata(T&& t) noexcept {
   return detail::static_if<detail::has_method_metadata<T>>(
       [](auto&& x) -> decltype(auto) { return x.metadata(); },
-      [](T &&) -> detail::copy_qualifiers<T, axis::empty_metadata_type> {
-        static axis::empty_metadata_type m;
+      [](T &&) -> detail::copy_qualifiers<T, axis::null_type> {
+        static axis::null_type m;
         return m;
       },
       std::forward<T>(t));

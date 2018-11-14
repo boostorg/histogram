@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_REGULAR_HPP
 #define BOOST_HISTOGRAM_AXIS_REGULAR_HPP
 
+#include <boost/container/string.hpp> // default meta data
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/interval_bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
@@ -152,7 +153,9 @@ public:
   }
 
   /// Access bin at index
-  auto operator[](int idx) const noexcept { return interval_bin_view<regular>(idx, *this); }
+  auto operator[](int idx) const noexcept {
+    return interval_bin_view<regular>(idx, *this);
+  }
 
   bool operator==(const regular& o) const noexcept {
     return base_type::operator==(o) && transform_type::operator==(o) && min_ == o.min_ &&

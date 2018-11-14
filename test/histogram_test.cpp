@@ -218,7 +218,7 @@ void run_tests() {
   // d1
   {
     auto h = make_s(Tag(), std::vector<unsigned>(),
-                    axis::integer<double, axis::empty_metadata_type>{0, 2});
+                    axis::integer<double, axis::null_type>{0, 2});
     h(0);
     h(0);
     h(-1);

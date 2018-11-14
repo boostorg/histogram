@@ -8,6 +8,8 @@
 #define BOOST_HISTOGRAM_AXIS_VARIABLE_HPP
 
 #include <algorithm>
+#include <boost/container/new_allocator.hpp>
+#include <boost/container/string.hpp> // default meta data
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/interval_bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
@@ -158,7 +160,9 @@ public:
     return (1.0 - z) * x_.first()[k] + z * x_.first()[k + 1];
   }
 
-  auto operator[](int idx) const noexcept { return interval_bin_view<variable>(idx, *this); }
+  auto operator[](int idx) const noexcept {
+    return interval_bin_view<variable>(idx, *this);
+  }
 
   bool operator==(const variable& o) const noexcept {
     return base_type::operator==(o) &&

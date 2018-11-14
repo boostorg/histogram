@@ -7,10 +7,11 @@
 #ifndef BOOST_HISTOGRAM_AXIS_INTEGER_HPP
 #define BOOST_HISTOGRAM_AXIS_INTEGER_HPP
 
+#include <boost/container/string.hpp> // default meta data
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/value_bin_view.hpp>
 #include <boost/histogram/axis/interval_bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/value_bin_view.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <cmath>
@@ -31,8 +32,9 @@ class integer : public base<MetaData>, public iterator_mixin<integer<IntType, Me
   using base_type = base<MetaData>;
   using value_type = IntType;
   using metadata_type = MetaData;
-  using bin_view = std::conditional_t<std::is_integral<value_type>::value,
-    value_bin_view<integer>, interval_bin_view<integer>>;
+  using bin_view =
+      std::conditional_t<std::is_integral<value_type>::value, value_bin_view<integer>,
+                         interval_bin_view<integer>>;
 
 public:
   /** Construct over semi-open integer interval [start, stop).
@@ -62,17 +64,13 @@ public:
   value_type value(value_type i) const noexcept {
     if (i < 0) {
       return detail::static_if<std::is_integral<value_type>>(
-        [](auto) { return std::numeric_limits<value_type>::min(); },
-        [](auto) { return -std::numeric_limits<value_type>::infinity(); },
-        0
-      );
+          [](auto) { return std::numeric_limits<value_type>::min(); },
+          [](auto) { return -std::numeric_limits<value_type>::infinity(); }, 0);
     }
     if (i > static_cast<int>(base_type::size())) {
       return detail::static_if<std::is_integral<value_type>>(
-        [](auto) { return std::numeric_limits<value_type>::max(); },
-        [](auto) { return std::numeric_limits<value_type>::infinity(); },
-        0
-      );
+          [](auto) { return std::numeric_limits<value_type>::max(); },
+          [](auto) { return std::numeric_limits<value_type>::infinity(); }, 0);
     }
     return min_ + i;
   }
