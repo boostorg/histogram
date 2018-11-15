@@ -37,7 +37,7 @@ public:
   template <typename T>
   mean& operator+=(const mean<T>& rhs) {
     const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
-    sum_ += static_cast<RealType>(rhs.sum_);
+    sum_ += rhs.sum_;
     mean_ = tmp / sum_;
     dsum2_ += static_cast<RealType>(rhs.dsum2_);
     return *this;

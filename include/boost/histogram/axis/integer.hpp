@@ -46,7 +46,7 @@ public:
    */
   integer(value_type start, value_type stop, metadata_type m = metadata_type(),
           option_type o = option_type::underflow_and_overflow)
-      : base_type(stop - start, std::move(m), o), min_(start) {
+      : base_type(static_cast<unsigned>(stop - start), std::move(m), o), min_(start) {
     if (start >= stop) { throw std::invalid_argument("start < stop required"); }
   }
 
@@ -54,9 +54,8 @@ public:
 
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
-    x = std::floor(x - min_);
-    return x >= 0 ? (x > static_cast<value_type>(base_type::size()) ? base_type::size()
-                                                                    : static_cast<int>(x))
+    const auto i = static_cast<int>(std::floor(x - min_));
+    return i >= 0 ? (i > static_cast<int>(base_type::size()) ? base_type::size() : i)
                   : -1;
   }
 

@@ -30,22 +30,21 @@ namespace histogram {
 namespace detail {
 struct get_polymorphic_bin_data
     : public boost::static_visitor<std::tuple<double, double, double>> {
+  using T = std::tuple<double, double, double>;
   int idx;
   get_polymorphic_bin_data(int i) : idx(i) {}
 
   template <typename A>
-  std::tuple<double, double, double> operator()(const A& a) const {
+  T operator()(const A& a) const {
     return detail::static_if<detail::has_method_value<A, double>>(
-        [this](const auto& a) {
+        [this](const auto& a) -> T {
           using Arg = detail::unqual<detail::arg_type<detail::unqual<decltype(a)>>>;
           const auto x = a.value(idx);
-          if (std::is_integral<Arg>::value)
-            return std::tuple<double, double, double>(x, x, 0);
-          else
-            return std::tuple<double, double, double>(x, a.value(idx + 1),
-                                                      a.value(idx + 0.5));
+          return detail::static_if<std::is_integral<Arg>>(
+              [&](auto) { return T(x, x, 0); },
+              [&](auto) { return T(x, a.value(idx + 1), a.value(idx + 0.5)); }, 0);
         },
-        [](const auto&) -> std::tuple<double, double, double> {
+        [](const auto&) -> T {
           throw std::runtime_error(
               cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
                   " has no value method or return type is not convertible to double"));
