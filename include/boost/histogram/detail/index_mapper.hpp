@@ -7,17 +7,20 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_INDEX_MAPPER_HPP
 #define BOOST_HISTOGRAM_DETAIL_INDEX_MAPPER_HPP
 
-#include <array>
+#include <boost/container/static_vector.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <cstddef>
 
 namespace boost {
 namespace histogram {
 namespace detail {
-class index_mapper : public std::array<std::pair<std::size_t, std::size_t>, 32> {
+class index_mapper
+    : public boost::container::static_vector<std::pair<std::size_t, std::size_t>,
+                                             axis::limit> {
 public:
   std::size_t first = 0, second = 0, ntotal = 1;
 
-  index_mapper(std::size_t n) : dims_end(begin() + n) {}
+  using static_vector<std::pair<std::size_t, std::size_t>, axis::limit>::static_vector;
 
   bool next() {
     ++first;
@@ -31,11 +34,6 @@ public:
     }
     return first < ntotal;
   }
-
-  iterator end() { return dims_end; }
-
-private:
-  iterator dims_end;
 };
 } // namespace detail
 } // namespace histogram

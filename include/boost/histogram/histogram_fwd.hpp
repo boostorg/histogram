@@ -7,11 +7,22 @@
 #ifndef BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 #define BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 
+#include <boost/config.hpp>
 #include <boost/container/container_fwd.hpp>
 
 namespace boost {
 namespace histogram {
 namespace axis {
+
+/* Most of the histogram code is generic and works for any number of axes. Buffers with a
+ * fixed maximum capacity are used in some places, which have a size equal to the rank of
+ * a histogram. The buffers are statically allocated to improve performance, which means
+ * that they need a preset maximum capacity. 48 seems like a safe upper limit for the rank
+ * (you can nevertheless increase it here if necessary): the simplest non-trivial axis has
+ * 2 bins; even if counters are used which need only a byte of storage per bin, this still
+ * corresponds to 256 TB of storage.
+ */
+BOOST_ATTRIBUTE_UNUSED static constexpr unsigned limit = 48;
 
 struct null_type {}; /// empty meta data type
 
