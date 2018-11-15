@@ -5,7 +5,6 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <algorithm>
-#include <array>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/literals.hpp>
