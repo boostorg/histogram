@@ -12,6 +12,7 @@
 #include <boost/histogram/storage_adaptor.hpp>
 #include <deque>
 #include <limits>
+#include <map>
 #include <vector>
 #include "is_close.hpp"
 #include "utility_allocator.hpp"

@@ -208,10 +208,12 @@ struct map_augmentation : T {
     auto it = this->find(i);
     if (u == value_type()) {
       if (it != this->end()) this->erase(it);
-    } else if (it != this->end())
-      it->second = std::forward<U>(u);
-    else
-      T::operator[](i) = std::forward<U>(u);
+    } else {
+      if (it != this->end())
+        it->second = std::forward<U>(u);
+      else
+        T::operator[](i) = std::forward<U>(u);
+    }
   }
 
 private:
