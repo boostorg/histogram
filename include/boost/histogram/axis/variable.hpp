@@ -156,7 +156,7 @@ public:
     if (i < 0) { return -std::numeric_limits<value_type>::infinity(); }
     if (i > base_type::size()) { return std::numeric_limits<value_type>::infinity(); }
     value_type z;
-    const int k = std::modf(i, &z);
+    const auto k = static_cast<int>(std::modf(i, &z));
     return (1.0 - z) * x_.first()[k] + z * x_.first()[k + 1];
   }
 
