@@ -282,7 +282,7 @@ struct storage_adaptor : detail::storage_augmentation<T> {
 
   storage_adaptor& operator/=(const double x) { return operator*=(1.0 / x); }
 
-  template <typename U, typename = detail::requires_storage<U>>
+  template <typename U>
   bool operator==(const U& u) const {
     const auto n = this->size();
     if (n != u.size()) return false;

@@ -12,6 +12,7 @@
 #include <boost/assert.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/index_mapper.hpp>
+#include <boost/histogram/detail/is_set.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/mp11.hpp>
@@ -22,11 +23,19 @@ namespace boost {
 namespace histogram {
 namespace algorithm {
 
-/// Returns a lower-dimensional histogram
+// TODO: make generic reduce, which can sum over axes, shrink, rebin
+
+/**
+  Returns a lower-dimensional histogram, summing over removed axes.
+
+  Arguments are the source histogram and compile-time numbers, representing the indices of
+  axes that are kept. Returns a new histogram which only contains the subset of axes.
+  The source histogram is summed over the removed axes.
+*/
 template <typename A, typename S, std::size_t I, typename... Ns>
 auto project(const histogram<A, S>& h, mp11::mp_size_t<I> n, Ns... ns) {
-  // TODO: check that n's are unique
   using LN = mp11::mp_list<mp11::mp_size_t<I>, Ns...>;
+  static_assert(mp11::mp_is_set<LN>::value, "indices must be unique");
 
   const auto& axes = unsafe_access::axes(h);
   auto r_axes = detail::make_sub_axes(axes, n, ns...);
@@ -61,12 +70,16 @@ auto project(const histogram<A, S>& h, mp11::mp_size_t<I> n, Ns... ns) {
   return r_h;
 }
 
-/// Returns a lower-dimensional histogram
+/**
+  Returns a lower-dimensional histogram, summing over removed axes.
+
+  This version accepts an iterator range that represents the indices which are kept.
+*/
 template <typename A, typename S, typename Iterator,
           typename = detail::requires_axis_vector<A>,
           typename = detail::requires_iterator<Iterator>>
 auto project(const histogram<A, S>& h, Iterator begin, Iterator end) {
-  // TODO: check that n's are unique
+  BOOST_ASSERT_MSG(detail::is_set(begin, end), "indices must be unique");
   using H = histogram<A, S>;
 
   const auto& axes = unsafe_access::axes(h);
