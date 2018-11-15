@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_ALGORITHM_PROJECT_HPP
 
 #include <algorithm>
-#include <array>
 #include <boost/assert.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/index_mapper.hpp>

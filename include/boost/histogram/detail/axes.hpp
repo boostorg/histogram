@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_DETAIL_AXES_HPP
 
 #include <algorithm>
-#include <array>
 #include <boost/assert.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>

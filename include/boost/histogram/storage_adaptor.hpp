@@ -8,16 +8,13 @@
 #define BOOST_HISTOGRAM_STORAGE_ADAPTOR_HPP
 
 #include <algorithm>
-#include <array>
 #include <boost/assert.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/weight.hpp>
-#include <map>
 #include <stdexcept>
 #include <type_traits>
-#include <vector>
 
 // forward declaration for optional boost.accumulators support
 namespace boost {

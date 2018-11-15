@@ -44,8 +44,8 @@ void test_serialization() {
 
 int main() {
   test_serialization<std::vector<int>>();
-  // test_serialization<std::map<std::size_t, double>>();
-  // test_serialization<std::array<unsigned, 10>>();
+  test_serialization<std::map<std::size_t, double>>();
+  test_serialization<std::array<unsigned, 10>>();
 
   return boost::report_errors();
 }
