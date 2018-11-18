@@ -176,11 +176,10 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable_container, (std::declval<T&>()[0], &T::
                                                      std::begin(std::declval<T&>()),
                                                      std::end(std::declval<T&>())));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_tuple, (std::get<0>(std::declval<T&>())));
-
 BOOST_HISTOGRAM_MAKE_SFINAE(is_equal_comparable,
                             (std::declval<T&>() == std::declval<T&>()));
 
+// is_axis is false for axis::variant, because operator() is templated
 BOOST_HISTOGRAM_MAKE_SFINAE(is_axis, (&T::size, &T::operator()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_iterable, (std::begin(std::declval<T&>()),
@@ -190,6 +189,17 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
                             (std::declval<std::ostream&>() << std::declval<T&>()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_incrementable, (++std::declval<T&>()));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_fixed_size, (std::tuple_size<T>::value));
+
+template <typename T>
+struct is_tuple_impl : std::false_type {};
+
+template <typename... Ts>
+struct is_tuple_impl<std::tuple<Ts...>> : std::true_type {};
+
+template <typename T>
+using is_tuple = typename is_tuple_impl<T>::type;
 
 template <typename T>
 struct is_axis_variant_impl : std::false_type {};

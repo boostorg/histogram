@@ -7,6 +7,8 @@
 #ifndef BOOST_HISTOGRAM_AXIS_POLYMORPHIC_BIN_HPP
 #define BOOST_HISTOGRAM_AXIS_POLYMORPHIC_BIN_HPP
 
+#include <cmath>
+#include <stdexcept>
 #include <tuple>
 
 namespace boost {
@@ -64,7 +66,7 @@ public:
 
   explicit operator int() const noexcept { return idx_; }
 
-  bool is_discrete() const noexcept { return std::get<1>(data_) == std::get<0>(data_); }
+  bool is_discrete() const noexcept { return std::isnan(std::get<2>(data_)); }
 
 private:
   const int idx_;

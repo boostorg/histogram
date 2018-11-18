@@ -35,19 +35,26 @@ class integer : public base<MetaData>, public iterator_mixin<integer<IntType, Me
   using bin_view =
       std::conditional_t<std::is_integral<value_type>::value, value_bin_view<integer>,
                          interval_bin_view<integer>>;
+  using index_type = std::conditional_t<std::is_integral<value_type>::value, int, double>;
 
 public:
   /** Construct over semi-open integer interval [start, stop).
    *
    * \param start    first integer of covered range.
-   * \param stop      one past last integer of covered range.
+   * \param stop     one past last integer of covered range.
    * \param metadata description of the axis.
    * \param options  extra bin options.
    */
   integer(value_type start, value_type stop, metadata_type m = metadata_type(),
           option_type o = option_type::underflow_and_overflow)
-      : base_type(static_cast<unsigned>(stop - start), std::move(m), o), min_(start) {
-    if (start >= stop) { throw std::invalid_argument("start < stop required"); }
+      : base_type(static_cast<unsigned>(stop - start > 0 ? stop - start : 0),
+                  std::move(m), o)
+      , min_(start) {}
+
+  /// Constructor used by algorithm::reduce to shrink and rebin.
+  integer(const integer& src, unsigned begin, unsigned end, unsigned merge)
+      : base_type(end - begin, src.metadata(), src.options()), min_(src.min_ + begin) {
+    if (merge > 1) { throw std::invalid_argument("cannot merge bins for integer axis"); }
   }
 
   integer() = default;
@@ -60,7 +67,7 @@ public:
   }
 
   /// Returns axis value for index.
-  value_type value(value_type i) const noexcept {
+  value_type value(index_type i) const noexcept {
     if (i < 0) {
       return detail::static_if<std::is_integral<value_type>>(
           [](auto) { return std::numeric_limits<value_type>::min(); },

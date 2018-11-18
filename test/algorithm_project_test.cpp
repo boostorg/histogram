@@ -150,7 +150,7 @@ int main() {
     std::vector<int> x;
 
     x = {0};
-    auto hx = project(h, x.begin(), x.end());
+    auto hx = project(h, x);
     BOOST_TEST_EQ(hx.rank(), 1);
     BOOST_TEST_EQ(sum(hx), 6);
     BOOST_TEST_EQ(hx.at(0), 2);
@@ -158,7 +158,7 @@ int main() {
     BOOST_TEST(hx.axis() == h.axis(0_c));
 
     x = {1};
-    auto hy = project(h, x.begin(), x.end());
+    auto hy = project(h, x);
     BOOST_TEST_EQ(hy.rank(), 1);
     BOOST_TEST_EQ(sum(hy), 6);
     BOOST_TEST_EQ(hy.at(0), 2);
@@ -167,7 +167,7 @@ int main() {
     BOOST_TEST(hy.axis() == h.axis(1_c));
 
     x = {1, 0};
-    auto hyx = project(h, x.begin(), x.end());
+    auto hyx = project(h, x);
     BOOST_TEST_EQ(hyx.rank(), 2);
     BOOST_TEST_EQ(hyx.axis(0_c), h.axis(1_c));
     BOOST_TEST_EQ(hyx.axis(1_c), h.axis(0_c));
@@ -177,6 +177,9 @@ int main() {
     BOOST_TEST_EQ(hyx.at(0, 1), 1);
     BOOST_TEST_EQ(hyx.at(1, 1), 1);
     BOOST_TEST_EQ(hyx.at(2, 1), 2);
+
+    x = {0, 0};
+    BOOST_TEST_THROWS(project(h, x), std::invalid_argument);
   }
 
   return boost::report_errors();

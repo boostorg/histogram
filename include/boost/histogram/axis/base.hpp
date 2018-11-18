@@ -44,7 +44,7 @@ public:
   void serialize(Archive&, unsigned);
 
 protected:
-  base(unsigned n, metadata_type&& m, option_type opt)
+  base(unsigned n, metadata_type m, option_type opt)
       : size_meta_(n, std::move(m)), opt_(opt) {
     if (size() == 0) { throw std::invalid_argument("bins > 0 required"); }
     const auto max_index =

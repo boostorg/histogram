@@ -126,15 +126,14 @@ void axes_assign(T& t, const U& u) {
   t.assign(u.begin(), u.end());
 }
 
-template <typename T, std::size_t N = std::tuple_size<T>::value>
-constexpr std::size_t axes_size(const T&) noexcept {
-  return N;
-}
-
-// static to fix gcc warning about mangled names changing in C++17
-template <typename T, typename = decltype(&T::size)>
-static std::size_t axes_size(const T& axes) noexcept {
-  return axes.size();
+template <typename T>
+constexpr std::size_t axes_size(const T& axes) noexcept {
+  return static_if<has_fixed_size<unqual<T>>>(
+      [](const auto& a) {
+        using U = unqual<decltype(a)>;
+        return std::tuple_size<U>::value;
+      },
+      [&](const auto& a) { return a.size(); }, axes);
 }
 
 template <typename T>
@@ -150,6 +149,22 @@ void for_each_axis(const std::tuple<Ts...>& axes, F&& f) {
 template <typename F, typename T>
 void for_each_axis(const T& axes, F&& f) {
   for (const auto& x : axes) { axis::visit(std::forward<F>(f), x); }
+}
+
+template <typename T>
+auto make_empty_axes(const T& t) {
+  auto r = T();
+  static_if<is_vector_like<T>>([&](auto) { r.reserve(t.size()); }, [](auto) {}, 0);
+  for_each_axis(t, [&r](const auto& a) {
+    using U = unqual<decltype(a)>;
+    r.emplace_back(U());
+  });
+  return r;
+}
+
+template <typename... Ts>
+auto make_empty_axes(const std::tuple<Ts...>&) {
+  return std::tuple<Ts...>();
 }
 
 template <typename T>
