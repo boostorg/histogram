@@ -107,6 +107,25 @@ public:
            allocator_type a = allocator_type())
       : variable(l.begin(), l.end(), std::move(m), o, std::move(a)) {}
 
+  /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
+  variable(const variable& src, unsigned begin, unsigned end, unsigned merge)
+      : base_type((end - begin) / merge, src.metadata(), src.options()), x_(src.x_) {
+    BOOST_ASSERT((end - begin) % merge == 0);
+    using It = const detail::unqual<decltype(*src.x_.first())>*;
+    struct skip_iterator {
+      It it;
+      unsigned skip;
+      skip_iterator operator++(int) {
+        auto tmp = *this;
+        it += skip;
+        return tmp;
+      }
+      decltype(auto) operator*() { return *it; }
+      bool operator==(const skip_iterator& rhs) const { return it == rhs.it; }
+    } iter{src.x_.first() + begin, merge};
+    x_.first() = detail::create_buffer_from_iter(x_.second(), nx(), iter);
+  }
+
   variable() : x_(nullptr) {}
 
   variable(const variable& o) : base_type(o), x_(o.x_) {
