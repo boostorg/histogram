@@ -53,5 +53,23 @@ int main() {
   // iterators
   { test_axis_iterator(axis::variable<>({1, 2, 3}, ""), 0, 2); }
 
+  // shrink and rebin
+  {
+    using A = axis::variable<>;
+    auto a = A({0, 1, 2, 3, 4, 5});
+    auto b = A(a, 1, 4, 1);
+    BOOST_TEST_EQ(b.size(), 3);
+    BOOST_TEST_EQ(b.value(0), 1);
+    BOOST_TEST_EQ(b.value(3), 4);
+    auto c = A(a, 0, 4, 2);
+    BOOST_TEST_EQ(c.size(), 2);
+    BOOST_TEST_EQ(c.value(0), 0);
+    BOOST_TEST_EQ(c.value(2), 4);
+    auto e = A(a, 1, 5, 2);
+    BOOST_TEST_EQ(e.size(), 2);
+    BOOST_TEST_EQ(e.value(0), 1);
+    BOOST_TEST_EQ(e.value(2), 5);
+  }
+
   return boost::report_errors();
 }

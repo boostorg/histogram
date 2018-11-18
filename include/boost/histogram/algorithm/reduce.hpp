@@ -39,19 +39,30 @@ struct reduce_option_type {
   operator bool() const noexcept { return merge; }
 };
 
-reduce_option_type shrink(unsigned iaxis, double lower, double upper) {
-  return {iaxis, lower, upper, 1};
-}
-
 reduce_option_type shrink_and_rebin(unsigned iaxis, double lower, double upper,
                                     unsigned merge) {
   return {iaxis, lower, upper, merge};
+}
+
+reduce_option_type shrink(unsigned iaxis, double lower, double upper) {
+  return {iaxis, lower, upper, 1};
 }
 
 reduce_option_type rebin(unsigned iaxis, unsigned merge) {
   return {iaxis, std::numeric_limits<double>::quiet_NaN(),
           std::numeric_limits<double>::quiet_NaN(), merge};
 }
+
+/// Convenience overload for when there is only one axis.
+reduce_option_type shrink_and_rebin(double lower, double upper, unsigned merge) {
+  return shrink_and_rebin(0, lower, upper, merge);
+}
+
+/// Convenience overload for when there is only one axis.
+reduce_option_type shrink(double lower, double upper) { return shrink(0, lower, upper); }
+
+/// Convenience overload for when there is only one axis.
+reduce_option_type rebin(unsigned merge) { return rebin(0, merge); }
 
 template <typename A, typename S, typename C, typename = detail::requires_iterable<C>>
 histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {

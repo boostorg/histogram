@@ -114,33 +114,49 @@ void run_tests() {
     BOOST_TEST_EQ(hr2, hr);
   }
 
-  // rebin on integer axis must fail
+  // reduce on integer axis, rebin must fail
   {
     auto h = make(Tag(), axis::integer<>(1, 4));
-    BOOST_TEST_THROWS(reduce(h, rebin(0, 2)), std::invalid_argument);
+    BOOST_TEST_THROWS(reduce(h, rebin(2)), std::invalid_argument);
+    auto hr = reduce(h, shrink(2, 3));
+    BOOST_TEST_EQ(hr.axis().size(), 1);
+    BOOST_TEST_EQ(hr.axis()[0].lower(), 2);
+    BOOST_TEST_EQ(hr.axis()[0].upper(), 3);
   }
 
   // reduce on circular axis, shrink must fail, also rebin with remainder
   {
     auto h = make(Tag(), axis::circular<>(4, 1, 4));
-    BOOST_TEST_THROWS(reduce(h, shrink(0, 0, 2)), std::invalid_argument);
-    BOOST_TEST_THROWS(reduce(h, rebin(0, 3)), std::invalid_argument);
-    auto hr = reduce(h, rebin(0, 2));
+    BOOST_TEST_THROWS(reduce(h, shrink(0, 2)), std::invalid_argument);
+    BOOST_TEST_THROWS(reduce(h, rebin(3)), std::invalid_argument);
+    auto hr = reduce(h, rebin(2));
     BOOST_TEST_EQ(hr.axis().size(), 2);
     BOOST_TEST_EQ(hr.axis()[0].lower(), 1);
     BOOST_TEST_EQ(hr.axis()[1].upper(), 5);
   }
 
+  // reduce on variable axis
+  {
+    auto h = make(Tag(), axis::variable<>({0, 1, 2, 3, 4, 5, 6}));
+    auto hr = reduce(h, shrink_and_rebin(1, 5, 2));
+    BOOST_TEST_EQ(hr.axis().size(), 2);
+    BOOST_TEST_EQ(hr.axis().value(0), 1);
+    BOOST_TEST_EQ(hr.axis().value(1), 3);
+    BOOST_TEST_EQ(hr.axis().value(2), 5);
+  }
+
   // reduce on axis with inverted range
   {
     auto h = make(Tag(), regular(4, 2, -2));
-    auto hr = reduce(h, shrink(0, 1, -1));
+    auto hr = reduce(h, shrink(1, -1));
     BOOST_TEST_EQ(hr.axis().size(), 2);
     BOOST_TEST_EQ(hr.axis()[0].lower(), 1);
     BOOST_TEST_EQ(hr.axis()[1].upper(), -1);
   }
 
-  // reduce does not work with arguments not convertible to double
+  // reduce:
+  // - does not work with arguments not convertible to double
+  // - does not work with category axis, which is not ordered
 }
 
 int main() {
