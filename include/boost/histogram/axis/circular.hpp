@@ -57,6 +57,15 @@ public:
       throw std::invalid_argument("invalid phase or perimeter");
   }
 
+  /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
+  circular(const circular& src, unsigned begin, unsigned end, unsigned merge)
+      : base_type(src.size() / merge, src.metadata(), src.options())
+      , phase_(src.phase_)
+      , delta_(src.delta_ * merge) {
+    if (!(begin == 0 && end == src.size()))
+      throw std::invalid_argument("cannot shrink circular axis");
+  }
+
   circular() = default;
 
   /// Returns the bin index for the passed argument.

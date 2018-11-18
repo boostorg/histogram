@@ -25,15 +25,14 @@ namespace algorithm {
 
 struct reduce_option_type {
   unsigned iaxis = 0;
-  bool has_range = false;
   double lower, upper;
   unsigned merge = 0;
 
   reduce_option_type() noexcept = default;
 
-  reduce_option_type(unsigned i, bool b, double l, double u, unsigned m)
-      : iaxis(i), has_range(b), lower(l), upper(u), merge(m) {
-    if (has_range && l == u) throw std::invalid_argument("lower != upper required");
+  reduce_option_type(unsigned i, double l, double u, unsigned m)
+      : iaxis(i), lower(l), upper(u), merge(m) {
+    if (lower == upper) throw std::invalid_argument("lower != upper required");
     if (merge == 0) throw std::invalid_argument("merge > 0 required");
   }
 
@@ -41,16 +40,17 @@ struct reduce_option_type {
 };
 
 reduce_option_type shrink(unsigned iaxis, double lower, double upper) {
-  return {iaxis, true, lower, upper, 1};
+  return {iaxis, lower, upper, 1};
 }
 
 reduce_option_type shrink_and_rebin(unsigned iaxis, double lower, double upper,
                                     unsigned merge) {
-  return {iaxis, true, lower, upper, merge};
+  return {iaxis, lower, upper, merge};
 }
 
 reduce_option_type rebin(unsigned iaxis, unsigned merge) {
-  return {iaxis, false, 0.0, 0.0, merge};
+  return {iaxis, std::numeric_limits<double>::quiet_NaN(),
+          std::numeric_limits<double>::quiet_NaN(), merge};
 }
 
 template <typename A, typename S, typename C, typename = detail::requires_iterable<C>>
@@ -100,7 +100,8 @@ histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {
       if (opt.lower < opt.upper) {
         while (begin != end && a.value(begin) < opt.lower) ++begin;
         while (end != begin && a.value(end - 1) >= opt.upper) --end;
-      } else if (opt.upper < opt.lower) {
+      } else if (opt.lower > opt.upper) {
+        // for inverted axis::regular
         while (begin != end && a.value(begin) > opt.lower) ++begin;
         while (end != begin && a.value(end - 1) <= opt.upper) --end;
       }
