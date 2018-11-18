@@ -83,8 +83,8 @@ class regular : public base<MetaData>,
   using transform_type = Transform;
   using external_type = detail::return_type<decltype(&Transform::inverse)>;
   using internal_type = detail::return_type<decltype(&Transform::forward)>;
-  static_assert(!std::is_integral<internal_type>::value,
-                "type returned by forward transform cannot be integral");
+  static_assert(std::is_floating_point<internal_type>::value,
+                "forward transform must return floating point number");
   using metadata_type = MetaData;
 
 public:
@@ -102,7 +102,7 @@ public:
       : base_type(n, std::move(m), o)
       , transform_type(std::move(trans))
       , min_(this->forward(start))
-      , delta_((this->forward(stop) - this->forward(start)) / n) {
+      , delta_((this->forward(stop) - min_) / base_type::size()) {
     if (!std::isfinite(min_) || !std::isfinite(delta_))
       throw std::invalid_argument("forward transform of start or stop invalid");
     if (delta_ == 0)
@@ -120,6 +120,15 @@ public:
   regular(unsigned n, external_type start, external_type stop, metadata_type m = {},
           option_type o = option_type::underflow_and_overflow)
       : regular({}, n, start, stop, std::move(m), o) {}
+
+  /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
+  regular(const regular& src, unsigned begin, unsigned end, unsigned merge)
+      : base_type((end - begin) / merge, src.metadata(), src.options())
+      , transform_type(src.transform())
+      , min_(this->forward(src.value(begin)))
+      , delta_(src.delta_ * merge) {
+    BOOST_ASSERT((end - begin) % merge == 0);
+  }
 
   regular() = default;
 

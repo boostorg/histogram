@@ -13,6 +13,7 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
+#include <functional> // for std::ref
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -35,6 +36,8 @@ int main() {
     BOOST_TEST_EQ(a(10), 2);
     BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a[-10].lower(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a[a.size() + 10].upper(), std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.metadata(), "int");
     BOOST_TEST_EQ(a.options(), axis::option_type::underflow_and_overflow);
 
@@ -200,13 +203,12 @@ int main() {
 
   // vector of axes with custom allocators
   {
-    struct null {};
     using M = std::vector<char, tracing_allocator<char>>;
     using T1 = axis::regular<axis::transform::identity<>, M>;
-    using T2 = axis::circular<double, null>;
-    using T3 = axis::variable<double, tracing_allocator<double>, null>;
-    using T4 = axis::integer<int, null>;
-    using T5 = axis::category<long, tracing_allocator<long>, null>;
+    using T2 = axis::circular<double, axis::null_type>;
+    using T3 = axis::variable<double, tracing_allocator<double>, axis::null_type>;
+    using T4 = axis::integer<int, axis::null_type>;
+    using T5 = axis::category<long, tracing_allocator<long>, axis::null_type>;
     using axis_type = axis::variant<T1, T2, T3, T4, T5>; // no heap allocation
     using axes_type = std::vector<axis_type, tracing_allocator<axis_type>>;
 
@@ -257,6 +259,20 @@ int main() {
 
   // iterators
   test_axis_iterator(axis::variant<axis::regular<>>(axis::regular<>(5, 0, 1)), 0, 5);
+
+  // variant of references
+  {
+    using A = axis::integer<int, axis::null_type>;
+    using VARef = axis::variant<A&>;
+    auto a = A(1, 5);
+    VARef ref(a);
+    BOOST_TEST_EQ(ref.size(), 4);
+    BOOST_TEST_EQ(ref.value(0), 1);
+    // change a through ref
+    axis::get<A>(ref) = A(7, 14);
+    BOOST_TEST_EQ(a.size(), 7);
+    BOOST_TEST_EQ(a.value(0), 7);
+  }
 
   return boost::report_errors();
 }

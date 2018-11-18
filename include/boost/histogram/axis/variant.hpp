@@ -41,7 +41,7 @@ struct get_polymorphic_bin_data
           using Arg = detail::unqual<detail::arg_type<detail::unqual<decltype(a)>>>;
           const auto x = a.value(idx);
           return detail::static_if<std::is_integral<Arg>>(
-              [&](auto) { return T(x, x, 0); },
+              [&](auto) { return T(x, 0, std::numeric_limits<double>::quiet_NaN()); },
               [&](auto) { return T(x, a.value(idx + 1), a.value(idx + 0.5)); }, 0);
         },
         [](const auto&) -> T {
@@ -304,20 +304,8 @@ const T* get(const variant<Us...>* v) {
 
 // pass-through version for generic programming, if U is axis instead of variant
 template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
-T& get(U& u) {
-  return static_cast<T&>(u);
-}
-
-// pass-through version for generic programming, if U is axis instead of variant
-template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
-T&& get(U&& u) {
-  return static_cast<T&&>(u);
-}
-
-// pass-through version for generic programming, if U is axis instead of variant
-template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
-const T& get(const U& u) {
-  return static_cast<const T&>(u);
+auto get(U&& u) -> detail::copy_qualifiers<U, T> {
+  return std::forward<U>(u);
 }
 
 // pass-through version for generic programming, if U is axis instead of variant

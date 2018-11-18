@@ -13,6 +13,7 @@
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/is_set.hpp>
 #include <tuple>
 #include <vector>
 #include "utility_meta.hpp"
@@ -57,6 +58,16 @@ int main() {
     BOOST_TEST_NOT(detail::axes_equal(tuple1, tuple2));
     BOOST_TEST_NOT(detail::axes_equal(tuple2, tuple3));
     BOOST_TEST_NOT(detail::axes_equal(std_vector3, tuple3));
+  }
+
+  // axes_size
+  {
+    std::tuple<int, int> a;
+    std::vector<int> b(3);
+    std::array<int, 4> c;
+    BOOST_TEST_EQ(detail::axes_size(a), 2);
+    BOOST_TEST_EQ(detail::axes_size(b), 3);
+    BOOST_TEST_EQ(detail::axes_size(c), 4);
   }
 
   // sequence assign
@@ -105,6 +116,14 @@ int main() {
     BOOST_TEST_EQ(detail::make_sub_axes(axes, i1(), i2()), std::make_tuple(a1, a2));
     BOOST_TEST_EQ(detail::make_sub_axes(axes, i0(), i1(), i2()),
                   std::make_tuple(a0, a1, a2));
+  }
+
+  // is_set
+  {
+    std::vector<int> v({3, 1, 2});
+    BOOST_TEST(detail::is_set(v.begin(), v.end()));
+    v = {3, 1, 2, 1};
+    BOOST_TEST_NOT(detail::is_set(v.begin(), v.end()));
   }
 
   return boost::report_errors();
