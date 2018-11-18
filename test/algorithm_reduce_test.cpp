@@ -7,8 +7,12 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/algorithm/reduce.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
+#include <boost/histogram/axis/category.hpp>
+#include <boost/histogram/axis/circular.hpp>
+#include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <vector>
 #include "utility_histogram.hpp"
@@ -114,6 +118,17 @@ void run_tests() {
   {
     auto h = make(Tag(), axis::integer<>(1, 4));
     BOOST_TEST_THROWS(reduce(h, rebin(0, 2)), std::invalid_argument);
+  }
+
+  // reduce on circular axis, shrink must fail, also rebin with remainder
+  {
+    auto h = make(Tag(), axis::circular<>(4, 1, 4));
+    BOOST_TEST_THROWS(reduce(h, shrink(0, 0, 2)), std::invalid_argument);
+    BOOST_TEST_THROWS(reduce(h, rebin(0, 3)), std::invalid_argument);
+    auto hr = reduce(h, rebin(0, 2));
+    BOOST_TEST_EQ(hr.axis().size(), 2);
+    BOOST_TEST_EQ(hr.axis()[0].lower(), 1);
+    BOOST_TEST_EQ(hr.axis()[1].upper(), 5);
   }
 
   // reduce on axis with inverted range

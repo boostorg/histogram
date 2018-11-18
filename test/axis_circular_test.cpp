@@ -49,5 +49,17 @@ int main() {
   // iterators
   { test_axis_iterator(axis::circular<>(5, 0, 1, ""), 0, 5); }
 
+  // shrink and rebin
+  {
+    using A = axis::circular<>;
+    auto a = A(4, 1, 4);
+    BOOST_TEST_THROWS(A(a, 1, 4, 1), std::invalid_argument);
+    BOOST_TEST_THROWS(A(a, 0, 3, 1), std::invalid_argument);
+    auto b = A(a, 0, 4, 2);
+    BOOST_TEST_EQ(b.size(), 2);
+    BOOST_TEST_EQ(b.value(0), 1);
+    BOOST_TEST_EQ(b.value(2), 5);
+  }
+
   return boost::report_errors();
 }
