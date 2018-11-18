@@ -7,7 +7,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/algorithm/reduce.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
-#include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/circular.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
