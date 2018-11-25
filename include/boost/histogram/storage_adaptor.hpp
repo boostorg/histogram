@@ -78,11 +78,11 @@ struct element_adaptor_generic {
   }
 };
 
+// is_incrementable is used instead of std::is_arithmetic, which also
+// works with wrapped integers like copyable_atomic<int>
 template <typename T>
 using element_adaptor =
     mp11::mp_if<is_accumulator_set<T>, element_adaptor_accumulator_set,
-                // is_incrementable is used instead of std::is_arithmetic, which also
-                // works with wrapped integers like copyable_atomic<int>
                 mp11::mp_if<detail::is_incrementable<T>, element_adaptor_incrementable,
                             element_adaptor_generic>>;
 
