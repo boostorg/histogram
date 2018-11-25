@@ -93,6 +93,36 @@ constexpr decltype(auto) static_if(Ts&&... ts) {
   return static_if_c<B::value>(std::forward<Ts>(ts)...);
 }
 
+template <typename T>
+constexpr T lowest() {
+  return std::numeric_limits<T>::lowest();
+}
+
+template <>
+constexpr double lowest() {
+  return -std::numeric_limits<double>::infinity();
+}
+
+template <>
+constexpr float lowest() {
+  return -std::numeric_limits<float>::infinity();
+}
+
+template <typename T>
+constexpr T highest() {
+  return std::numeric_limits<T>::max();
+}
+
+template <>
+constexpr double highest() {
+  return std::numeric_limits<double>::infinity();
+}
+
+template <>
+constexpr float highest() {
+  return std::numeric_limits<float>::infinity();
+}
+
 template <class... Ns>
 struct sub_tuple_impl {
   template <typename T>

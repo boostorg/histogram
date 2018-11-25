@@ -9,10 +9,7 @@
 
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/make_histogram.hpp>
-#include <numeric>
-#include <ostream>
 #include <type_traits>
-#include <unordered_map>
 #include <vector>
 
 namespace boost {

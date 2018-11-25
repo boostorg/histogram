@@ -13,7 +13,6 @@
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/histogram/iterator.hpp>
 #include <boost/mp11.hpp>
 #include <functional>
 #include <tuple>
@@ -31,8 +30,6 @@ public:
   using axes_type = Axes;
   using storage_type = Storage;
   using value_type = typename storage_type::value_type;
-  using const_reference = typename storage_type::const_reference;
-  using const_iterator = iterator<histogram>;
 
   histogram() = default;
   histogram(const histogram& rhs) = default;
@@ -137,14 +134,13 @@ public:
     detail::for_each_axis(axes_, std::forward<Unary>(unary));
   }
 
-  /// Fill histogram with value tuple and optional weight
+  /// Fill histogram with values and optional weight or sample
   template <typename... Ts>
   void operator()(const Ts&... ts) {
-    // case with one argument needs special treatment, specialized below
     operator()(std::forward_as_tuple(ts...));
   }
 
-  /// Fill histogram with value tuple and optional weight
+  /// Fill histogram with value tuple and optional weight or sample
   template <typename... Ts>
   void operator()(const std::tuple<Ts...>& t) {
     detail::fill_impl(storage_, axes_, t);
@@ -152,28 +148,26 @@ public:
 
   /// Access bin counter at indices
   template <typename... Ts>
-  const_reference at(const Ts&... ts) const {
-    // case with one argument is ambiguous, is specialized below
+  decltype(auto) at(const Ts&... ts) const {
     return at(std::forward_as_tuple(ts...));
   }
 
-  /// Access bin counter at index (specialization for 1D)
+  /// Access bin counter at index tuple
   template <typename... Ts>
-  const_reference at(const std::tuple<Ts...>& t) const {
+  decltype(auto) at(const std::tuple<Ts...>& t) const {
     const auto idx = detail::at_impl(axes_, t);
     if (!idx) throw std::out_of_range("indices out of bounds");
     return storage_[*idx];
   }
 
-  /// Access bin counter at index
+  /// Access bin counter at index (for 1D histograms and passing index tuple)
   template <typename T>
-  const_reference operator[](const T& t) const {
+  decltype(auto) operator[](const T& t) const {
     return at(t);
   }
 
-  auto begin() const noexcept { return const_iterator(*this, 0); }
-
-  auto end() const noexcept { return const_iterator(*this, size()); }
+  auto begin() const noexcept { return storage_.begin(); }
+  auto end() const noexcept { return storage_.end(); }
 
   template <typename Archive>
   void serialize(Archive&, unsigned);

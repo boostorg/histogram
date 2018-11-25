@@ -6,6 +6,9 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/ostream_operators.hpp>
+#include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>

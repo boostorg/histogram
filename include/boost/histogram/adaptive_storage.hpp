@@ -17,6 +17,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/weight.hpp>
+#include <boost/iterator/iterator_facade.hpp>
 #include <boost/mp11.hpp>
 #if defined BOOST_CLANG
 #pragma clang diagnostic push
@@ -102,7 +103,6 @@ struct adaptive_storage {
   struct storage_tag {};
   using allocator_type = Allocator;
   using value_type = double;
-  using const_reference = double;
 
   using mp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<
       0, 0, boost::multiprecision::signed_magnitude, boost::multiprecision::unchecked,
@@ -111,6 +111,32 @@ struct adaptive_storage {
 
   using types =
       mp11::mp_list<void, uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
+
+  class const_iterator
+      : public boost::iterator_facade<const_iterator, value_type,
+                                      boost::random_access_traversal_tag, value_type> {
+  public:
+    const_iterator(const adaptive_storage& parent, std::size_t idx) noexcept
+        : parent_(parent), idx_(idx) {}
+
+  protected:
+    void increment() noexcept { ++idx_; }
+    void decrement() noexcept { --idx_; }
+    void advance(std::ptrdiff_t n) noexcept { idx_ += n; }
+    std::ptrdiff_t distance_to(const_iterator rhs) const noexcept {
+      return rhs.idx_ - idx_;
+    }
+    bool equal(const_iterator rhs) const noexcept {
+      return &parent_ == &rhs.parent_ && idx_ == rhs.idx_;
+    }
+    value_type dereference() const { return parent_[idx_]; }
+
+    friend class ::boost::iterator_core_access;
+
+  private:
+    const adaptive_storage& parent_;
+    std::size_t idx_;
+  };
 
   template <typename T>
   static constexpr char type_index() {
@@ -265,12 +291,12 @@ struct adaptive_storage {
   }
 
   template <typename T>
-  void add(std::size_t i, const T& x) {
+  void add(std::size_t i, T&& x) {
     BOOST_ASSERT(i < size());
     apply(adder(), buffer, i, x);
   }
 
-  const_reference operator[](std::size_t i) const { return apply(getter(), buffer, i); }
+  double operator[](std::size_t i) const { return apply(getter(), buffer, i); }
 
   bool operator==(const adaptive_storage& o) const {
     if (size() != o.size()) return false;
@@ -315,6 +341,9 @@ struct adaptive_storage {
     apply(multiplier(), buffer, x);
     return *this;
   }
+
+  const_iterator begin() const { return {*this, 0}; }
+  const_iterator end() const { return {*this, size()}; }
 
   // used by unit tests, not part of generic storage interface
   template <typename T>

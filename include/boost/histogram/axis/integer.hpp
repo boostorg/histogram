@@ -27,9 +27,10 @@ namespace axis {
  * Binning is a O(1) operation. This axis operates
  * faster than a regular axis.
  */
-template <typename IntType, typename MetaData>
-class integer : public base<MetaData>, public iterator_mixin<integer<IntType, MetaData>> {
-  using base_type = base<MetaData>;
+template <typename IntType, typename MetaData, option_type Options>
+class integer : public base<MetaData, Options>,
+                public iterator_mixin<integer<IntType, MetaData, Options>> {
+  using base_type = base<MetaData, Options>;
   using value_type = IntType;
   using metadata_type = MetaData;
   using bin_view =
@@ -45,15 +46,14 @@ public:
    * \param metadata description of the axis.
    * \param options  extra bin options.
    */
-  integer(value_type start, value_type stop, metadata_type m = metadata_type(),
-          option_type o = option_type::underflow_and_overflow)
+  integer(value_type start, value_type stop, metadata_type m = metadata_type())
       : base_type(static_cast<unsigned>(stop - start > 0 ? stop - start : 0),
-                  std::move(m), o)
+                  std::move(m))
       , min_(start) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin.
   integer(const integer& src, unsigned begin, unsigned end, unsigned merge)
-      : base_type(end - begin, src.metadata(), src.options()), min_(src.min_ + begin) {
+      : base_type(end - begin, src.metadata()), min_(src.min_ + begin) {
     if (merge > 1) { throw std::invalid_argument("cannot merge bins for integer axis"); }
   }
 
@@ -68,16 +68,8 @@ public:
 
   /// Returns axis value for index.
   value_type value(index_type i) const noexcept {
-    if (i < 0) {
-      return detail::static_if<std::is_integral<value_type>>(
-          [](auto) { return std::numeric_limits<value_type>::min(); },
-          [](auto) { return -std::numeric_limits<value_type>::infinity(); }, 0);
-    }
-    if (i > static_cast<int>(base_type::size())) {
-      return detail::static_if<std::is_integral<value_type>>(
-          [](auto) { return std::numeric_limits<value_type>::max(); },
-          [](auto) { return std::numeric_limits<value_type>::infinity(); }, 0);
-    }
+    if (i < 0) { return detail::lowest<value_type>(); }
+    if (i > static_cast<int>(base_type::size())) { return detail::highest<value_type>(); }
     return min_ + i;
   }
 

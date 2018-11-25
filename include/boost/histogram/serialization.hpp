@@ -112,7 +112,7 @@ void serialize(Archive& ar, storage_adaptor<T>& s, unsigned /* version */) {
   auto size = s.size();
   ar& size;
   if (Archive::is_loading::value) { s.reset(size); }
-  ar& static_cast<T&>(s);
+  ar& s.container_;
 }
 
 namespace detail {
@@ -153,12 +153,11 @@ namespace axis {
 template <class Archive>
 void serialize(Archive&, null_type&, unsigned /* version */) {} // noop
 
-template <typename M>
+template <typename M, option_type O>
 template <class Archive>
-void base<M>::serialize(Archive& ar, unsigned /* version */) {
+void base<M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& size_meta_.first();
   ar& size_meta_.second();
-  ar& opt_;
 }
 
 template <typename T>
@@ -167,26 +166,26 @@ void transform::pow<T>::serialize(Archive& ar, unsigned /* version */) {
   ar& power;
 }
 
-template <typename T, typename M>
+template <typename T, typename M, option_type O>
 template <class Archive>
-void regular<T, M>::serialize(Archive& ar, unsigned /* version */) {
+void regular<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
   ar& static_cast<transform_type&>(*this);
   ar& min_;
   ar& delta_;
 }
 
-template <typename R, typename M>
+template <typename R, typename M, option_type O>
 template <class Archive>
-void circular<R, M>::serialize(Archive& ar, unsigned /* version */) {
+void circular<R, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
   ar& phase_;
   ar& delta_;
 }
 
-template <typename R, typename A, typename M>
+template <typename R, typename A, typename M, option_type O>
 template <class Archive>
-void variable<R, A, M>::serialize(Archive& ar, unsigned /* version */) {
+void variable<R, A, M, O>::serialize(Archive& ar, unsigned /* version */) {
   // destroy must happen before base serialization with old size
   if (Archive::is_loading::value) detail::destroy_buffer(x_.second(), x_.first(), nx());
   ar& static_cast<base_type&>(*this);
@@ -195,16 +194,16 @@ void variable<R, A, M>::serialize(Archive& ar, unsigned /* version */) {
   ar& boost::serialization::make_array(x_.first(), nx());
 }
 
-template <typename I, typename M>
+template <typename I, typename M, option_type O>
 template <class Archive>
-void integer<I, M>::serialize(Archive& ar, unsigned /* version */) {
+void integer<I, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
   ar& min_;
 }
 
-template <typename V, typename A, typename M>
+template <typename V, typename A, typename M, option_type O>
 template <class Archive>
-void category<V, A, M>::serialize(Archive& ar, unsigned /* version */) {
+void category<V, A, M, O>::serialize(Archive& ar, unsigned /* version */) {
   // destroy must happen before base serialization with old size
   if (Archive::is_loading::value)
     detail::destroy_buffer(x_.second(), x_.first(), base_type::size());

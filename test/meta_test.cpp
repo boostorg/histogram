@@ -400,16 +400,14 @@ int main() {
     using A = std::vector<bh::axis::regular<>>;
     using B = std::vector<bh::axis::variant<bh::axis::regular<>>>;
     using C = std::vector<int>;
-    using D = bh::axis::regular<>;
-    using E = const std::vector<bh::axis::variant<bh::axis::integer<>>>;
-    using F = const std::vector<bh::axis::variant<bh::axis::integer<>>>&;
+    using D = const std::vector<bh::axis::variant<bh::axis::integer<>>>;
+    using E = const std::vector<bh::axis::variant<bh::axis::integer<>>>&;
     auto v = std::vector<bh::axis::variant<bh::axis::regular<>, bh::axis::integer<>>>();
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<A>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<B>));
     BOOST_TEST_TRAIT_FALSE((is_axis_vector<C>));
-    BOOST_TEST_TRAIT_FALSE((is_axis_vector<D>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_vector<D>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<E>));
-    BOOST_TEST_TRAIT_TRUE((is_axis_vector<F>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(v)>));
     BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(std::move(v))>));
   }

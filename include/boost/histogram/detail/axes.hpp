@@ -13,7 +13,6 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/histogram/weight.hpp>
 #include <boost/mp11.hpp>
 #include <stdexcept>
 #include <tuple>

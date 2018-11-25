@@ -13,6 +13,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/weight.hpp>
+#include <boost/iterator/iterator_facade.hpp>
 #include <stdexcept>
 #include <type_traits>
 
@@ -88,155 +89,201 @@ using element_adaptor =
 template <typename T>
 struct ERROR_type_passed_to_storage_adaptor_not_recognized {};
 
-template <typename T>
-struct vector_augmentation : T {
-  using value_type = typename T::value_type;
+template <typename C>
+struct vector_impl {
+  using value_type = typename C::value_type;
 
-  vector_augmentation(T&& t) : T(std::move(t)) {}
-  vector_augmentation(const T& t) : T(t) {}
+  vector_impl(C&& c) : container_(std::move(c)) {}
+  vector_impl(const C& c) : container_(c) {}
 
-  vector_augmentation() = default;
-  vector_augmentation(vector_augmentation&&) = default;
-  vector_augmentation(const vector_augmentation&) = default;
-  vector_augmentation& operator=(vector_augmentation&&) = default;
-  vector_augmentation& operator=(const vector_augmentation&) = default;
+  vector_impl() = default;
+  vector_impl(vector_impl&&) = default;
+  vector_impl(const vector_impl&) = default;
+  vector_impl& operator=(vector_impl&&) = default;
+  vector_impl& operator=(const vector_impl&) = default;
 
   void reset(std::size_t n) {
-    this->resize(n);
-    std::fill(this->begin(), this->end(), value_type());
+    container_.resize(n);
+    std::fill(container_.begin(), container_.end(), value_type());
   }
+
+  const value_type& operator[](std::size_t i) const noexcept { return container_[i]; }
 
   template <typename U>
   void add(std::size_t i, U&& u) {
-    T::operator[](i) += std::forward<U>(u);
+    container_[i] += std::forward<U>(u);
   }
-
   template <typename U>
-  void set_impl(std::size_t i, U&& u) {
-    T::operator[](i) = std::forward<U>(u);
+  void set(std::size_t i, U&& u) {
+    container_[i] = std::forward<U>(u);
   }
 
-  void mul_impl(std::size_t i, double x) { T::operator[](i) *= x; }
+  std::size_t size() const noexcept { return container_.size(); }
+
+  decltype(auto) begin() const noexcept { return container_.begin(); }
+  decltype(auto) end() const noexcept { return container_.end(); }
+
+  decltype(auto) get_allocator() const noexcept { return container_.get_allocator(); }
+
+  value_type& ref(std::size_t i) noexcept { return container_[i]; }
+  void mul(std::size_t i, double x) { container_[i] *= x; }
+
+  C container_;
 };
 
-template <typename T>
-struct array_augmentation : T {
-  using value_type = typename T::value_type;
+template <typename C>
+struct array_impl {
+  using value_type = typename C::value_type;
 
-  array_augmentation(T&& t) : T(std::move(t)) {}
-  array_augmentation(const T& t) : T(t) {}
+  array_impl(C&& c) : container_(std::move(c)) {}
+  array_impl(const C& c) : container_(c) {}
 
-  array_augmentation() = default;
-  array_augmentation(array_augmentation&&) = default;
-  array_augmentation(const array_augmentation&) = default;
-  array_augmentation& operator=(array_augmentation&&) = default;
-  array_augmentation& operator=(const array_augmentation&) = default;
+  array_impl() = default;
+  array_impl(array_impl&&) = default;
+  array_impl(const array_impl&) = default;
+  array_impl& operator=(array_impl&&) = default;
+  array_impl& operator=(const array_impl&) = default;
 
   void reset(std::size_t n) {
-    if (n > this->max_size()) // for std::array
+    if (n > container_.max_size()) // for std::array
       throw std::runtime_error(
-          detail::cat("size ", n, " exceeds maximum capacity ", this->max_size()));
-    std::fill_n(this->begin(), n, value_type());
+          detail::cat("size ", n, " exceeds maximum capacity ", container_.max_size()));
+    std::fill_n(container_.begin(), n, value_type());
     size_ = n;
   }
 
+  const value_type& operator[](std::size_t i) const noexcept { return container_[i]; }
+
   template <typename U>
   void add(std::size_t i, U&& u) {
-    T::operator[](i) += std::forward<U>(u);
+    container_[i] += std::forward<U>(u);
+  }
+  template <typename U>
+  void set(std::size_t i, U&& u) {
+    container_[i] = std::forward<U>(u);
   }
 
   std::size_t size() const { return size_; }
 
-  template <typename U>
-  void set_impl(std::size_t i, U&& u) {
-    T::operator[](i) = std::forward<U>(u);
-  }
+  decltype(auto) begin() const noexcept { return container_.begin(); }
+  decltype(auto) end() const noexcept { return container_.begin() + size_; }
 
-  void mul_impl(std::size_t i, double x) { T::operator[](i) *= x; }
+  value_type& ref(std::size_t i) { return container_[i]; }
+  void mul(std::size_t i, double x) { container_[i] *= x; }
 
-private:
+  C container_;
   std::size_t size_ = 0;
 };
 
-template <typename T>
-struct map_augmentation : T {
-  static_assert(std::is_same<typename T::key_type, std::size_t>::value,
+template <typename C>
+struct map_impl {
+  static_assert(std::is_same<typename C::key_type, std::size_t>::value,
                 "map must use std::size_t as key_type");
-  using value_type = typename T::mapped_type;
 
-  map_augmentation(T&& t) : T(std::move(t)) {}
-  map_augmentation(const T& t) : T(t) {}
+  using value_type = typename C::mapped_type;
 
-  map_augmentation() = default;
-  map_augmentation(map_augmentation&&) = default;
-  map_augmentation(const map_augmentation&) = default;
-  map_augmentation& operator=(map_augmentation&&) = default;
-  map_augmentation& operator=(const map_augmentation&) = default;
+  class const_iterator : public boost::iterator_facade<const_iterator, value_type,
+                                                       boost::random_access_traversal_tag,
+                                                       const value_type&> {
+  public:
+    const_iterator(const map_impl& parent, std::size_t idx) noexcept
+        : parent_(parent), idx_(idx) {}
+
+  protected:
+    void increment() noexcept { ++idx_; }
+    void decrement() noexcept { --idx_; }
+    void advance(std::ptrdiff_t n) noexcept { idx_ += n; }
+    std::ptrdiff_t distance_to(const_iterator rhs) const noexcept {
+      return rhs.idx_ - idx_;
+    }
+    bool equal(const_iterator rhs) const noexcept {
+      return &parent_ == &rhs.parent_ && idx_ == rhs.idx_;
+    }
+    const value_type& dereference() const { return parent_[idx_]; }
+
+    friend class ::boost::iterator_core_access;
+
+  private:
+    const map_impl& parent_;
+    std::size_t idx_;
+  };
+
+  map_impl(C&& c) : container_(std::move(c)) {}
+  map_impl(const C& c) : container_(c) {}
+
+  map_impl() = default;
+  map_impl(map_impl&&) = default;
+  map_impl(const map_impl&) = default;
+  map_impl& operator=(map_impl&&) = default;
+  map_impl& operator=(const map_impl&) = default;
 
   void reset(std::size_t n) {
-    this->clear();
+    container_.clear();
     size_ = n;
   }
 
-  value_type& operator[](std::size_t i) { return T::operator[](i); }
-
-  const value_type& operator[](std::size_t i) const {
-    auto it = this->find(i);
+  const value_type& operator[](std::size_t i) const noexcept {
+    auto it = container_.find(i);
     static auto null = value_type();
-    return it == this->end() ? null : it->second;
+    return it == container_.end() ? null : it->second;
   }
 
   template <typename U>
   void add(std::size_t i, U&& u) {
     if (u == value_type()) return;
-    auto it = this->find(i);
-    if (it != this->end())
+    auto it = container_.find(i);
+    if (it != container_.end())
       it->second += std::forward<U>(u);
     else
-      T::operator[](i) = std::forward<U>(u);
-  }
-
-  std::size_t size() const { return size_; }
-
-  void mul_impl(std::size_t i, double x) {
-    auto it = this->find(i);
-    if (it != this->end()) it->second *= x;
+      container_[i] = std::forward<U>(u);
   }
 
   template <typename U>
-  void set_impl(std::size_t i, U&& u) {
-    auto it = this->find(i);
+  void set(std::size_t i, U&& u) {
+    auto it = container_.find(i);
     if (u == value_type()) {
-      if (it != this->end()) this->erase(it);
+      if (it != container_.end()) container_.erase(it);
     } else {
-      if (it != this->end())
+      if (it != container_.end())
         it->second = std::forward<U>(u);
       else
-        T::operator[](i) = std::forward<U>(u);
+        container_[i] = std::forward<U>(u);
     }
   }
 
-private:
+  std::size_t size() const noexcept { return size_; }
+
+  const_iterator begin() const noexcept { return {*this, 0}; }
+  const_iterator end() const noexcept { return {*this, size_}; }
+
+  decltype(auto) get_allocator() const noexcept { return container_.get_allocator(); }
+
+  value_type& ref(std::size_t i) { return container_[i]; }
+  void mul(std::size_t i, double x) {
+    auto it = container_.find(i);
+    if (it != container_.end()) it->second *= x;
+  }
+
+  C container_;
   std::size_t size_ = 0;
 };
 
 template <typename T>
-using storage_augmentation = mp11::mp_if<
-    is_vector_like<T>, vector_augmentation<T>,
-    mp11::mp_if<is_array_like<T>, array_augmentation<T>,
-                mp11::mp_if<is_map_like<T>, map_augmentation<T>,
+using storage_adaptor_impl = mp11::mp_if<
+    is_vector_like<T>, vector_impl<T>,
+    mp11::mp_if<is_array_like<T>, array_impl<T>,
+                mp11::mp_if<is_map_like<T>, map_impl<T>,
                             ERROR_type_passed_to_storage_adaptor_not_recognized<T>>>>;
 
 } // namespace detail
 
 /// generic implementation for std::array, vector-like, and map-like containers
 template <typename T>
-struct storage_adaptor : detail::storage_augmentation<T> {
+struct storage_adaptor : detail::storage_adaptor_impl<T> {
   struct storage_tag {};
-  using base_type = detail::storage_augmentation<T>;
+  using base_type = detail::storage_adaptor_impl<T>;
   using value_type = typename base_type::value_type;
   using element_adaptor = detail::element_adaptor<value_type>;
-  using const_reference = const value_type&;
 
   storage_adaptor() = default;
   storage_adaptor(const storage_adaptor&) = default;
@@ -255,34 +302,34 @@ struct storage_adaptor : detail::storage_augmentation<T> {
   template <typename U, typename = detail::requires_storage<U>>
   storage_adaptor& operator=(const U& rhs) {
     this->reset(rhs.size());
-    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->set_impl(i, rhs[i]);
+    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->set(i, rhs[i]);
     return *this;
   }
 
   template <typename... Us>
   void operator()(std::size_t i, Us&&... us) {
     BOOST_ASSERT(i < this->size());
-    element_adaptor::forward((*this)[i], std::forward<Us>(us)...);
+    element_adaptor::forward(this->ref(i), std::forward<Us>(us)...);
   }
 
   // precondition: storages have equal size
   template <typename U, typename = detail::requires_storage<U>>
   storage_adaptor& operator+=(const U& rhs) {
     const auto n = this->size();
-    BOOST_ASSERT_MSG(n == rhs.size(), "sizes must be equal");
+    BOOST_ASSERT(n == rhs.size());
     for (std::size_t i = 0; i < n; ++i) this->add(i, rhs[i]);
     return *this;
   }
 
   storage_adaptor& operator*=(const double x) {
-    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->mul_impl(i, x);
+    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->mul(i, x);
     return *this;
   }
 
   storage_adaptor& operator/=(const double x) { return operator*=(1.0 / x); }
 
   template <typename U>
-  bool operator==(const U& u) const {
+  bool operator==(const U& u) const noexcept {
     const auto n = this->size();
     if (n != u.size()) return false;
     for (std::size_t i = 0; i < n; ++i)

@@ -31,10 +31,12 @@ constexpr double two_pi = 6.283185307179586;
  * It has no underflow bin and the overflow bin merely counts special
  * values like NaN and infinity. Binning is a O(1) operation.
  */
-template <typename RealType, typename MetaData>
-class circular : public base<MetaData>,
-                 public iterator_mixin<circular<RealType, MetaData>> {
-  using base_type = base<MetaData>;
+template <typename RealType, typename MetaData, option_type Options>
+class circular : public base<MetaData, Options>,
+                 public iterator_mixin<circular<RealType, MetaData, Options>> {
+  static_assert(!(Options & option_type::underflow),
+                "circular axis cannot have underflow");
+  using base_type = base<MetaData, Options>;
   using value_type = RealType;
   using metadata_type = MetaData;
 
@@ -48,18 +50,15 @@ public:
    * \param options   extra bin options.
    */
   circular(unsigned n, RealType phase = 0, RealType perimeter = two_pi,
-           MetaData m = MetaData(), option_type o = option_type::overflow)
-      : base_type(n, std::move(m),
-                  o == option_type::underflow_and_overflow ? option_type::overflow : o)
-      , phase_(phase)
-      , delta_(perimeter / n) {
+           MetaData m = MetaData())
+      : base_type(n, std::move(m)), phase_(phase), delta_(perimeter / n) {
     if (!std::isfinite(phase) || !(perimeter > 0))
       throw std::invalid_argument("invalid phase or perimeter");
   }
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   circular(const circular& src, unsigned begin, unsigned end, unsigned merge)
-      : base_type(src.size() / merge, src.metadata(), src.options())
+      : base_type(src.size() / merge, src.metadata())
       , phase_(src.phase_)
       , delta_(src.delta_ * merge) {
     if (!(begin == 0 && end == src.size()))

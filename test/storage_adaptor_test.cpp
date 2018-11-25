@@ -56,7 +56,7 @@ void tests() {
     a.add(1, 5);
     BOOST_TEST_EQ(a[0], 3);
     BOOST_TEST_EQ(a[1], 5);
-    a[1] = 9;
+    a.set(1, 9);
     BOOST_TEST_EQ(a[0], 3);
     BOOST_TEST_EQ(a[1], 9);
     a.reset(0);
@@ -243,27 +243,24 @@ int main() {
     const auto baseline = db.sum.first;
     a.reset(10);
     BOOST_TEST_EQ(db.sum.first, baseline); // nothing allocated yet
-    // query on const reference does not allocate
-    BOOST_TEST_EQ(static_cast<const A&>(a)[0], 0);
-    // query on writeable reference allocates
-    BOOST_TEST_EQ(a[9], 0);
-    BOOST_TEST_EQ(db.sum.first, baseline + 1);
-
-    a(5);
+    // queries do not allocate
     BOOST_TEST_EQ(a[0], 0);
-    BOOST_TEST_EQ(a[5], 1);
     BOOST_TEST_EQ(a[9], 0);
-    BOOST_TEST_EQ(db.sum.first, baseline + 3);
-    a *= 2;
+    BOOST_TEST_EQ(db.sum.first, baseline);
+
+    a(5); // causes one allocation
+    BOOST_TEST_EQ(a[5], 1);
+    BOOST_TEST_EQ(db.sum.first, baseline + 1);
+    a *= 2; // no additional allocations from multiplication
     BOOST_TEST_EQ(a[5], 2);
-    BOOST_TEST_EQ(db.sum.first, baseline + 3);
+    BOOST_TEST_EQ(db.sum.first, baseline + 1);
 
     auto b = storage_adaptor<std::vector<int>>();
     b.reset(5);
     b(2);
     a = b;
     // only one new allocation for non-zero value
-    BOOST_TEST_EQ(db.sum.first, baseline + 4);
+    BOOST_TEST_EQ(db.sum.first, baseline + 2);
   }
 
   return boost::report_errors();

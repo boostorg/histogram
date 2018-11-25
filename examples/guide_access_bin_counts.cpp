@@ -8,7 +8,7 @@
 
 #include <boost/histogram.hpp>
 #include <cassert>
-#include <numeric>
+#include <numeric> // for std::accumulate
 
 namespace bh = boost::histogram;
 
@@ -33,34 +33,38 @@ int main() {
   auto idx = std::make_tuple(0, 1);
   assert(h.at(idx) == 2);
 
-  // histogram also provides bin iterators
+  // histogram has bin iterators which iterate over all bin values including
+  // underflow/overflow; it works with STL algorithms
   auto sum = std::accumulate(h.begin(), h.end(), 0.0);
   assert(sum == 10);
 
-  // bin iterators are fancy iterators with extra methods
-  // (note: iteration order is an implementation detail, don't rely on it)
+  // often you need the multi-dimensional bin index in addition to the bin value, which
+  // indexded(...) provides; it creates a range object, which provides a pair of the index
+  // and the value (note: iteration order is an implementation detail, don't rely on it)
   std::ostringstream os;
-  for (auto it = h.begin(), end = h.end(); it != end; ++it) {
-    os << std::setw(2) << it.idx(0) << " " << std::setw(2) << it.idx(1) << ": " << *it;
+  for (auto b : indexed(h)) {
+    os << std::setw(2) << b.first[0] << " " << std::setw(2) << b.first[1] << ": "
+       << b.second << "\n";
   }
 
-  assert(os.str() ==
-         " 0  0: 1"
-         " 1  0: 3"
-         " 2  0: 0"
-         "-1  0: 0"
-         " 0  1: 2"
-         " 1  1: 4"
-         " 2  1: 0"
-         "-1  1: 0"
-         " 0  2: 0"
-         " 1  2: 0"
-         " 2  2: 0"
-         "-1  2: 0"
-         " 0 -1: 0"
-         " 1 -1: 0"
-         " 2 -1: 0"
-         "-1 -1: 0");
+  std::cout << os.str() << std::flush;
+
+  assert(os.str() == " 0  0: 1\n"
+                     " 1  0: 3\n"
+                     " 2  0: 0\n"
+                     "-1  0: 0\n"
+                     " 0  1: 2\n"
+                     " 1  1: 4\n"
+                     " 2  1: 0\n"
+                     "-1  1: 0\n"
+                     " 0  2: 0\n"
+                     " 1  2: 0\n"
+                     " 2  2: 0\n"
+                     "-1  2: 0\n"
+                     " 0 -1: 0\n"
+                     " 1 -1: 0\n"
+                     " 2 -1: 0\n"
+                     "-1 -1: 0\n");
 }
 
 //]

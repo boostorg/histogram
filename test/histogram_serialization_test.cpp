@@ -8,6 +8,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
+#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <sstream>
@@ -23,8 +24,8 @@ void run_tests() {
     auto a = make(Tag(), axis::regular<>(3, -1, 1, "axis 0"),
                   axis::circular<>(4, 0.0, 1.0, "axis 1"),
                   axis::regular<axis::transform::log<>>(3, 1, 100, "axis 2"),
-                  axis::regular<axis::transform::pow<>>(0.5, 3, 1, 100, "axis 3",
-                                                        axis::option_type::overflow),
+                  axis::regular<axis::transform::pow<>, boost::container::string,
+                                axis::option_type::overflow>(0.5, 3, 1, 100, "axis 3"),
                   axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "axis 4"),
                   axis::category<>{3, 1, 2}, axis::integer<int, axis::null_type>(0, 2));
     a(0.5, 0.2, 20, 20, 0.25, 1, 1);

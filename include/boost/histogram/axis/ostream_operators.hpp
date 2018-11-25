@@ -10,15 +10,12 @@
 #define BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
 
 #include <boost/core/typeinfo.hpp>
-#include <boost/histogram/axis/category.hpp>
-#include <boost/histogram/axis/circular.hpp>
-#include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/interval_bin_view.hpp>
-#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/polymorphic_bin.hpp>
 #include <boost/histogram/axis/value_bin_view.hpp>
-#include <boost/histogram/axis/variable.hpp>
-#include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/histogram_fwd.hpp>
 #include <iomanip>
 #include <ostream>
 #include <type_traits>
@@ -91,8 +88,9 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const axis::option_type o) {
   switch (o) {
     case axis::option_type::none: os << "none"; break;
+    case axis::option_type::underflow: os << "underflow"; break;
     case axis::option_type::overflow: os << "overflow"; break;
-    case axis::option_type::underflow_and_overflow: os << "underflow_and_overflow"; break;
+    case axis::option_type::uoflow: os << "uoflow"; break;
   }
   return os;
 }
@@ -126,9 +124,9 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename... Ts>
+template <typename C, typename T, typename Tr, typename M, option_type O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const regular<Ts...>& a) {
+                                     const regular<Tr, M, O>& a) {
   os << "regular" << detail::to_string(a.transform()) << "(" << a.size() << ", "
      << a.value(0) << ", " << a.value(a.size());
   detail::stream_metadata(os, a.metadata());
@@ -138,9 +136,9 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename... Ts>
+template <typename C, typename T, typename U, typename M, option_type O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const circular<Ts...>& a) {
+                                     const circular<U, M, O>& a) {
   os << "circular(" << a.size() << ", " << a.value(0) << ", " << a.value(a.size());
   detail::stream_metadata(os, a.metadata());
   detail::stream_options(os, a.options());
@@ -148,20 +146,20 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename... Ts>
+template <typename C, typename T, typename U, typename A, typename M, option_type O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const variable<Ts...>& a) {
+                                     const variable<U, A, M, O>& a) {
   os << "variable(" << a.value(0);
-  for (unsigned i = 1; i <= a.size(); ++i) { os << ", " << a.value(i); }
+  for (int i = 1, n = a.size(); i <= n; ++i) { os << ", " << a.value(i); }
   detail::stream_metadata(os, a.metadata());
   detail::stream_options(os, a.options());
   os << ")";
   return os;
 }
 
-template <typename C, typename T, typename... Ts>
+template <typename C, typename T, typename U, typename M, option_type O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const integer<Ts...>& a) {
+                                     const integer<U, M, O>& a) {
   os << "integer(" << a.value(0) << ", " << a.value(a.size());
   detail::stream_metadata(os, a.metadata());
   detail::stream_options(os, a.options());
@@ -169,11 +167,11 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename... Ts>
+template <typename C, typename T, typename U, typename A, typename M, option_type O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const category<Ts...>& a) {
+                                     const category<U, A, M, O>& a) {
   os << "category(";
-  for (unsigned i = 0; i < a.size(); ++i) {
+  for (unsigned i = 0, n = a.size(); i < n; ++i) {
     detail::stream_value(os, a.value(i));
     os << (i == (a.size() - 1) ? "" : ", ");
   }

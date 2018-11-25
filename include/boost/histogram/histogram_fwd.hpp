@@ -8,7 +8,11 @@
 #define BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
 
 #include <boost/config.hpp>
-#include <boost/container/container_fwd.hpp>
+#include <boost/container/container_fwd.hpp> // for string and new_allocator
+
+// Why boost containers as defaults and not std containers?
+// - std::vector does not work with incomplete types, but boost::container::vector does
+// - std::string is very large on MSVC, boost::container::string is small everywhere
 
 namespace boost {
 namespace histogram {
@@ -17,20 +21,35 @@ namespace axis {
 /* Most of the histogram code is generic and works for any number of axes. Buffers with a
  * fixed maximum capacity are used in some places, which have a size equal to the rank of
  * a histogram. The buffers are statically allocated to improve performance, which means
- * that they need a preset maximum capacity. 48 seems like a safe upper limit for the rank
+ * that they need a preset maximum capacity. 32 seems like a safe upper limit for the rank
  * (you can nevertheless increase it here if necessary): the simplest non-trivial axis has
  * 2 bins; even if counters are used which need only a byte of storage per bin, this still
- * corresponds to 256 TB of storage.
+ * corresponds to 4 GB of storage.
  */
-BOOST_ATTRIBUTE_UNUSED static constexpr unsigned limit = 48;
+BOOST_ATTRIBUTE_UNUSED static constexpr unsigned limit =
+#ifdef BOOST_HISTOGRAM_AXES_LIMIT
+    BOOST_HISTOGRAM_AXES_LIMIT;
+#else
+    32;
+#endif
 
-struct null_type {}; /// empty meta data type
+/// empty metadata type
+struct null_type {};
 
 enum class option_type {
   none = 0,
-  overflow = 1,
-  underflow_and_overflow = 2,
+  underflow = 1,
+  overflow = 2,
+  uoflow = 3,
 };
+
+constexpr inline option_type operator|(option_type a, option_type b) {
+  return static_cast<option_type>(static_cast<int>(a) | static_cast<int>(b));
+}
+
+constexpr inline bool operator&(option_type a, option_type b) {
+  return static_cast<int>(a) & static_cast<int>(b);
+}
 
 namespace transform {
 template <typename T = double>
@@ -44,22 +63,27 @@ struct pow;
 } // namespace transform
 
 template <typename Transform = transform::identity<double>,
-          typename MetaData = boost::container::string>
+          typename MetaData = boost::container::string,
+          option_type Options = option_type::uoflow>
 class regular;
 
-template <typename RealType = double, typename MetaData = boost::container::string>
+template <typename RealType = double, typename MetaData = boost::container::string,
+          option_type Options = option_type::overflow>
 class circular;
 
 template <typename RealType = double,
           typename Allocator = boost::container::new_allocator<RealType>,
-          typename MetaData = boost::container::string>
+          typename MetaData = boost::container::string,
+          option_type Options = option_type::uoflow>
 class variable;
 
-template <typename IntType = double, typename MetaData = boost::container::string>
+template <typename IntType = double, typename MetaData = boost::container::string,
+          option_type Options = option_type::uoflow>
 class integer;
 
 template <typename T = int, typename Allocator = boost::container::new_allocator<T>,
-          typename MetaData = boost::container::string>
+          typename MetaData = boost::container::string,
+          option_type Options = option_type::overflow>
 class category;
 
 template <typename... Ts>

@@ -6,11 +6,11 @@
 
 //[ getting_started_listing_01
 
-#include <boost/histogram.hpp>
 #include <algorithm>
+#include <boost/histogram.hpp>
+#include <cassert>
 #include <functional>
 #include <sstream>
-#include <cassert>
 
 int main() {
   using namespace boost::histogram;
@@ -63,25 +63,24 @@ int main() {
   */
   std::ostringstream os;
   os.setf(std::ios_base::fixed);
-  for (auto it = h.begin(); it != h.end(); ++it) {
-    const auto bin = it.bin(0);
-    os << "bin " << std::setw(2) << it.idx(0) << " [" << std::setprecision(1)
-       << std::setw(4) << bin.lower() << ", " << std::setw(4)
-       << bin.upper() << "): " << *it << "\n";
+  for (auto b : indexed(h)) {
+    const auto idx = b.first[0];
+    const auto interval = h.axis()[idx];
+    os << "bin " << std::setw(2) << idx << " [" << std::setprecision(1) << std::setw(4)
+       << interval.lower() << ", " << std::setw(4) << interval.upper()
+       << "): " << b.second << "\n";
   }
 
   std::cout << os.str() << std::endl;
 
-  assert(os.str() ==
-    "bin  0 [-1.0, -0.5): 1.0\n"
-    "bin  1 [-0.5, -0.0): 1.0\n"
-    "bin  2 [-0.0,  0.5): 2.0\n"
-    "bin  3 [ 0.5,  1.0): 0.0\n"
-    "bin  4 [ 1.0,  1.5): 1.0\n"
-    "bin  5 [ 1.5,  2.0): 1.0\n"
-    "bin  6 [ 2.0,  inf): 2.0\n"
-    "bin -1 [-inf, -1.0): 1.0\n"
-  );
+  assert(os.str() == "bin  0 [-1.0, -0.5): 1.0\n"
+                     "bin  1 [-0.5, -0.0): 1.0\n"
+                     "bin  2 [-0.0,  0.5): 2.0\n"
+                     "bin  3 [ 0.5,  1.0): 0.0\n"
+                     "bin  4 [ 1.0,  1.5): 1.0\n"
+                     "bin  5 [ 1.5,  2.0): 1.0\n"
+                     "bin  6 [ 2.0,  inf): 2.0\n"
+                     "bin -1 [-inf, -1.0): 1.0\n");
   // note how under- and overflow bins appear at the end
 }
 

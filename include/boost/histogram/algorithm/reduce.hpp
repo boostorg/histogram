@@ -91,11 +91,15 @@ histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {
     stride[0] *= n;
     auto set_flow = [im_iter](int i, const auto& a) {
       switch (axis::traits::options(a)) {
+        case axis::option_type::underflow:
+          im_iter->overflow[i] = -1;
+          im_iter->underflow[i] = a.size();
+          break;
         case axis::option_type::overflow:
           im_iter->overflow[i] = a.size();
           im_iter->underflow[i] = -1;
           break;
-        case axis::option_type::underflow_and_overflow:
+        case axis::option_type::uoflow:
           im_iter->overflow[i] = a.size();
           im_iter->underflow[i] = a.size() + 1;
           break;
