@@ -272,9 +272,6 @@ struct requires_iterator {};
 template <typename T, typename = mp11::mp_if<is_iterable<unqual<T>>, void>>
 struct requires_iterable {};
 
-template <typename T, typename = mp11::mp_if<is_tuple<unqual<T>>, void>>
-struct requires_tuple {};
-
 template <typename T, typename = mp11::mp_if<is_axis<unqual<T>>, void>>
 struct requires_axis {};
 
@@ -283,12 +280,6 @@ struct requires_axis_or_axis_variant {};
 
 template <typename T, typename = mp11::mp_if<is_axis_vector<unqual<T>>, void>>
 struct requires_axis_vector {};
-
-template <typename T, typename = mp11::mp_if<is_transform<unqual<T>>, void>>
-struct requires_transform {};
-
-template <typename T, typename = mp11::mp_if<is_storage<unqual<T>>, void>>
-struct requires_storage {};
 
 } // namespace detail
 } // namespace histogram

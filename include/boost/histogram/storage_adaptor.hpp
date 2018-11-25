@@ -294,12 +294,12 @@ struct storage_adaptor : detail::storage_adaptor_impl<T> {
   storage_adaptor(T&& t) : base_type(std::move(t)) {}
   storage_adaptor(const T& t) : base_type(t) {}
 
-  template <typename U, typename = detail::requires_storage<U>>
-  storage_adaptor(const U& rhs) {
+  template <typename U>
+  explicit storage_adaptor(const U& rhs) {
     (*this) = rhs;
   }
 
-  template <typename U, typename = detail::requires_storage<U>>
+  template <typename U>
   storage_adaptor& operator=(const U& rhs) {
     this->reset(rhs.size());
     for (std::size_t i = 0, n = this->size(); i < n; ++i) this->set(i, rhs[i]);
@@ -313,7 +313,7 @@ struct storage_adaptor : detail::storage_adaptor_impl<T> {
   }
 
   // precondition: storages have equal size
-  template <typename U, typename = detail::requires_storage<U>>
+  template <typename U>
   storage_adaptor& operator+=(const U& rhs) {
     const auto n = this->size();
     BOOST_ASSERT(n == rhs.size());
