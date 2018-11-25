@@ -15,11 +15,13 @@
 namespace boost {
 namespace histogram {
 namespace algorithm {
-template <
-    typename A, typename S, typename T = typename histogram<A, S>::value_type,
-    typename ReturnType = std::conditional_t<std::is_arithmetic<T>::value, double, T>,
-    typename InternalSum =
-        std::conditional_t<std::is_arithmetic<T>::value, accumulators::sum<double>, T>>
+template <typename A, typename S,
+          typename ReturnType = std::conditional_t<
+              std::is_arithmetic<typename histogram<A, S>::value_type>::value, double,
+              typename histogram<A, S>::value_type>,
+          typename InternalSum = std::conditional_t<
+              std::is_arithmetic<typename histogram<A, S>::value_type>::value,
+              accumulators::sum<double>, typename histogram<A, S>::value_type>>
 ReturnType sum(const histogram<A, S>& h) {
   InternalSum sum;
   for (auto x : h) sum += x;

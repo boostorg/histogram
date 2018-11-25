@@ -11,6 +11,12 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
+#include <boost/histogram/axis/category.hpp>
+#include <boost/histogram/axis/circular.hpp>
+#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/ostream_operators.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
@@ -236,7 +242,8 @@ void run_tests() {
 
   // d1_2
   {
-    auto h = make(Tag(), axis::integer<>(0, 2, "", axis::option_type::none));
+    auto h =
+        make(Tag(), axis::integer<int, axis::null_type, axis::option_type::none>(0, 2));
     h(0);
     h(-0);
     h(-1);
@@ -336,7 +343,7 @@ void run_tests() {
   // d2
   {
     auto h = make(Tag(), axis::regular<>(2, -1, 1),
-                  axis::integer<>(-1, 2, {}, axis::option_type::none));
+                  axis::integer<int, axis::null_type, axis::option_type::none>(-1, 2));
     h(-1, -1);
     h(-1, 0);
     h(-1, -10);
@@ -368,7 +375,7 @@ void run_tests() {
   {
     auto h = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(),
                     axis::regular<>(2, -1, 1),
-                    axis::integer<>(-1, 2, {}, axis::option_type::none));
+                    axis::integer<int, axis::null_type, axis::option_type::none>(-1, 2));
     h(-1, 0);              // -> 0, 1
     h(weight(10), -1, -1); // -> 0, 0
     h(weight(5), -1, -10); // is ignored
@@ -572,18 +579,17 @@ void run_tests() {
     auto a = make(Tag(), axis::regular<>(3, -1, 1, "r"), axis::integer<>(0, 2, "i"));
     std::ostringstream os;
     os << a;
-    BOOST_TEST_EQ(
-        os.str(),
-        std::string(
-            "histogram(\n"
-            "  regular(3, -1, 1, metadata=\"r\", options=underflow_and_overflow),\n"
-            "  integer(0, 2, metadata=\"i\", options=underflow_and_overflow),\n"
-            ")"));
+    BOOST_TEST_EQ(os.str(),
+                  std::string("histogram(\n"
+                              "  regular(3, -1, 1, metadata=\"r\", options=uoflow),\n"
+                              "  integer(0, 2, metadata=\"i\", options=uoflow),\n"
+                              ")"));
   }
 
   // histogram_reset
   {
-    auto h = make(Tag(), axis::integer<>(0, 2, {}, axis::option_type::none));
+    auto h =
+        make(Tag(), axis::integer<int, axis::null_type, axis::option_type::none>(0, 2));
     h(0);
     h(1);
     BOOST_TEST_EQ(h.at(0), 1);
@@ -623,110 +629,6 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(0, 0, 0), 0);
     BOOST_TEST_EQ(h.at(0, 1, 1), 1);
     BOOST_TEST_EQ(h.at(1, 0, 0), 1);
-  }
-
-  // histogram iterator 1D
-  {
-    auto h =
-        make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 3));
-    const auto& a = h.axis();
-    h(weight(2), 0);
-    h(1);
-    h(1);
-
-    auto it = h.begin();
-    BOOST_TEST_EQ(it.rank(), 1);
-
-    BOOST_TEST_EQ(it.idx(), 0);
-    BOOST_TEST_EQ(it.bin(), a[0]);
-    BOOST_TEST_EQ(it.bin(0), a[0]);
-    BOOST_TEST_EQ(it->value(), 2);
-    BOOST_TEST_EQ(it->variance(), 4);
-    ++it;
-    BOOST_TEST_EQ(it.idx(), 1);
-    BOOST_TEST_EQ(it.bin(), a[1]);
-    BOOST_TEST_EQ(it.bin(0), a[1]);
-    BOOST_TEST_EQ(it->value(), 2);
-    ++it;
-    BOOST_TEST_EQ(it.idx(), 2);
-    BOOST_TEST_EQ(it.bin(), a[2]);
-    BOOST_TEST_EQ(it.bin(0), a[2]);
-    BOOST_TEST_EQ(it->value(), 0);
-    ++it;
-    BOOST_TEST_EQ(it.idx(), 3);
-    BOOST_TEST_EQ(it.bin(), a[3]);
-    BOOST_TEST_EQ(it.bin(0), a[3]);
-    BOOST_TEST_EQ(it->value(), 0);
-    ++it;
-    BOOST_TEST_EQ(it.idx(), -1);
-    BOOST_TEST_EQ(it.bin(), a[-1]);
-    BOOST_TEST_EQ(it.bin(0), a[-1]);
-    BOOST_TEST_EQ(it->value(), 0);
-    ++it;
-    BOOST_TEST(it == h.end());
-  }
-
-  // histogram iterator 2D
-  {
-    auto h =
-        make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 1),
-               axis::integer<>(2, 4, "", axis::option_type::none));
-    const auto& a0 = h.axis(0_c);
-    const auto& a1 = h.axis(1_c);
-    h(weight(2), 0, 2);
-    h(-1, 2);
-    h(1, 3);
-
-    auto it = h.begin();
-    BOOST_TEST_EQ(it.rank(), 2);
-
-    BOOST_TEST_EQ(it.idx(0), 0);
-    BOOST_TEST_EQ(it.idx(1), 0);
-    BOOST_TEST_EQ(it.bin(0_c), a0[0]);
-    BOOST_TEST_EQ(it.bin(1_c), a1[0]);
-    BOOST_TEST_EQ(it->value(), 2);
-    BOOST_TEST_EQ(it->variance(), 4);
-    ++it;
-    BOOST_TEST_EQ(it.idx(0), 1);
-    BOOST_TEST_EQ(it.idx(1), 0);
-    BOOST_TEST_EQ(it.bin(0_c), a0[1]);
-    BOOST_TEST_EQ(it.bin(1_c), a1[0]);
-    BOOST_TEST_EQ(it->value(), 0);
-    BOOST_TEST_EQ(it->variance(), 0);
-    ++it;
-    BOOST_TEST_EQ(it.idx(0), -1);
-    BOOST_TEST_EQ(it.idx(1), 0);
-    BOOST_TEST_EQ(it.bin(0_c), a0[-1]);
-    BOOST_TEST_EQ(it.bin(1_c), a1[0]);
-    BOOST_TEST_EQ(it->value(), 1);
-    BOOST_TEST_EQ(it->variance(), 1);
-    ++it;
-    BOOST_TEST_EQ(it.idx(0), 0);
-    BOOST_TEST_EQ(it.idx(1), 1);
-    BOOST_TEST_EQ(it.bin(0_c), a0[0]);
-    BOOST_TEST_EQ(it.bin(1_c), a1[1]);
-    BOOST_TEST_EQ(it->value(), 0);
-    BOOST_TEST_EQ(it->variance(), 0);
-    ++it;
-    BOOST_TEST_EQ(it.idx(0), 1);
-    BOOST_TEST_EQ(it.idx(1), 1);
-    BOOST_TEST_EQ(it.bin(0_c), a0[1]);
-    BOOST_TEST_EQ(it.bin(1_c), a1[1]);
-    BOOST_TEST_EQ(it->value(), 1);
-    BOOST_TEST_EQ(it->variance(), 1);
-    ++it;
-    BOOST_TEST_EQ(it.idx(0), -1);
-    BOOST_TEST_EQ(it.idx(1), 1);
-    BOOST_TEST_EQ(it.bin(0_c), a0[-1]);
-    BOOST_TEST_EQ(it.bin(1_c), a1[1]);
-    BOOST_TEST_EQ(it->value(), 0);
-    BOOST_TEST_EQ(it->variance(), 0);
-    ++it;
-    BOOST_TEST(it == h.end());
-
-    auto v = algorithm::sum(h);
-    BOOST_TEST_EQ(v.value(), 4);
-    BOOST_TEST_EQ(v.variance(), 6);
   }
 
   // using static containers

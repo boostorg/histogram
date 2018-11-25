@@ -39,7 +39,7 @@ int main() {
     BOOST_TEST_EQ(a[-10].lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a[a.size() + 10].upper(), std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.metadata(), "int");
-    BOOST_TEST_EQ(a.options(), axis::option_type::underflow_and_overflow);
+    BOOST_TEST_EQ(a.options(), axis::option_type::uoflow);
 
     a = axis::category<std::string>({"A", "B"}, "cat");
     BOOST_TEST_EQ(a("A"), 0);
@@ -50,8 +50,8 @@ int main() {
 
   // axis::variant with reference
   {
-    auto a = axis::integer<double, axis::null_type>(0, 3, {}, axis::option_type::none);
-    using V = axis::variant<axis::integer<double, axis::null_type>&>;
+    auto a = axis::integer<double, axis::null_type, axis::option_type::none>(0, 3);
+    using V = axis::variant<decltype(a)&>;
     V v(a);
     BOOST_TEST_EQ(v.size(), 3);
     BOOST_TEST_EQ(v[0], a[0]);
@@ -121,17 +121,20 @@ int main() {
     struct user_defined {};
 
     namespace tr = axis::transform;
+    using M = boost::container::string;
     test(axis::regular<>(2, -1, 1, "regular1"),
-         "regular(2, -1, 1, metadata=\"regular1\", options=underflow_and_overflow)");
-    test(axis::regular<tr::log<>>(2, 1, 10, "regular2", axis::option_type::none),
+         "regular(2, -1, 1, metadata=\"regular1\", options=uoflow)");
+    test(axis::regular<tr::log<>, M, axis::option_type::none>(2, 1, 10, "regular2"),
          "regular_log(2, 1, 10, metadata=\"regular2\", options=none)");
-    test(axis::regular<tr::pow<>>(1.5, 2, 1, 10, "regular3", axis::option_type::overflow),
+    test(axis::regular<tr::pow<>, M, axis::option_type::overflow>(1.5, 2, 1, 10,
+                                                                  "regular3"),
          "regular_pow(2, 1, 10, metadata=\"regular3\", options=overflow, power=1.5)");
-    test(axis::regular<tr::pow<>>(-1.5, 2, 1, 10, "regular4", axis::option_type::none),
+    test(axis::regular<tr::pow<>, M, axis::option_type::none>(-1.5, 2, 1, 10, "regular4"),
          "regular_pow(2, 1, 10, metadata=\"regular4\", options=none, power=-1.5)");
     test(axis::circular<double, axis::null_type>(4, 0.1, 1.0),
          "circular(4, 0.1, 1.1, options=overflow)");
-    test(axis::variable<>({-1, 0, 1}, "variable", axis::option_type::none),
+    test(axis::variable<double, boost::container::new_allocator<double>, M,
+                        axis::option_type::none>({-1, 0, 1}, "variable"),
          "variable(-1, 0, 1, metadata=\"variable\", options=none)");
     test(axis::category<>({0, 1, 2}, "category"),
          "category(0, 1, 2, metadata=\"category\", options=overflow)");
@@ -140,8 +143,7 @@ int main() {
     const auto ref = detail::cat(
         "integer(-1, 1, metadata=",
         boost::core::demangled_name(BOOST_CORE_TYPEID(user_defined)), ", options=none)");
-    test(axis::integer<int, user_defined>(-1, 1, {}, axis::option_type::none),
-         ref.c_str());
+    test(axis::integer<int, user_defined, axis::option_type::none>(-1, 1), ref.c_str());
   }
 
   // bin_type operator<<
@@ -164,8 +166,7 @@ int main() {
                                   axis::integer<>>;
     std::vector<variant> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
-    axes.push_back(axis::regular<axis::transform::pow<>>(
-        0.5, 2, 1, 4, "", axis::option_type::underflow_and_overflow));
+    axes.push_back(axis::regular<axis::transform::pow<>>(0.5, 2, 1, 4));
     axes.push_back(axis::circular<>{4});
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>({A, B, C}));
@@ -219,10 +220,9 @@ int main() {
       axes.reserve(5);
       axes.emplace_back(T1(1, 0, 1, M(3, 'c', a)));
       axes.emplace_back(T2(2));
-      axes.emplace_back(
-          T3({0., 1., 2.}, {}, axis::option_type::underflow_and_overflow, a));
+      axes.emplace_back(T3({0., 1., 2.}, {}, a));
       axes.emplace_back(T4(0, 4));
-      axes.emplace_back(T5({1, 2, 3, 4, 5}, {}, axis::option_type::overflow, a));
+      axes.emplace_back(T5({1, 2, 3, 4, 5}, {}, a));
     }
     // 5 axis::variant objects
     BOOST_TEST_EQ(db.at<axis_type>().first, db.at<axis_type>().second);

@@ -32,10 +32,12 @@ namespace axis {
  * Binning is a O(n) operation for n values in the worst case and O(1) in
  * the best case. The value types must be equal-comparable.
  */
-template <typename T, typename Allocator, typename MetaData>
-class category : public base<MetaData>,
-                 public iterator_mixin<category<T, Allocator, MetaData>> {
-  using base_type = base<MetaData>;
+template <typename T, typename Allocator, typename MetaData, option_type Options>
+class category : public base<MetaData, Options>,
+                 public iterator_mixin<category<T, Allocator, MetaData, Options>> {
+  static_assert(!(Options & option_type::underflow),
+                "category axis cannot have underflow");
+  using base_type = base<MetaData, Options>;
   using metadata_type = MetaData;
   using value_type = T;
   using allocator_type = Allocator;
@@ -51,8 +53,8 @@ public:
    */
   template <typename It, typename = detail::requires_iterator<It>>
   category(It begin, It end, metadata_type m = metadata_type(),
-           option_type o = option_type::overflow, allocator_type a = allocator_type())
-      : base_type(std::distance(begin, end), std::move(m), o), x_(nullptr, std::move(a)) {
+           allocator_type a = allocator_type())
+      : base_type(std::distance(begin, end), std::move(m)), x_(nullptr, std::move(a)) {
     x_.first() = detail::create_buffer_from_iter(x_.second(), base_type::size(), begin);
   }
 
@@ -65,9 +67,8 @@ public:
    */
   template <typename C, typename = detail::requires_iterable<C>>
   category(const C& iterable, metadata_type m = metadata_type(),
-           option_type o = option_type::overflow, allocator_type a = allocator_type())
-      : category(std::begin(iterable), std::end(iterable), std::move(m), o,
-                 std::move(a)) {}
+           allocator_type a = allocator_type())
+      : category(std::begin(iterable), std::end(iterable), std::move(m), std::move(a)) {}
 
   /** Construct axis from an initializer list of unique values.
    *
@@ -78,8 +79,8 @@ public:
    */
   template <typename U>
   category(std::initializer_list<U> l, metadata_type m = metadata_type(),
-           option_type o = option_type::overflow, allocator_type a = allocator_type())
-      : category(l.begin(), l.end(), std::move(m), o, std::move(a)) {}
+           allocator_type a = allocator_type())
+      : category(l.begin(), l.end(), std::move(m), std::move(a)) {}
 
   category() : x_(nullptr) {}
 

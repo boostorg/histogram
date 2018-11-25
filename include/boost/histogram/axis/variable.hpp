@@ -31,10 +31,10 @@ namespace axis {
  * Binning is a O(log(N)) operation. If speed matters and the problem
  * domain allows it, prefer a regular axis, possibly with a transform.
  */
-template <typename RealType, typename Allocator, typename MetaData>
-class variable : public base<MetaData>,
-                 public iterator_mixin<variable<RealType, Allocator, MetaData>> {
-  using base_type = base<MetaData>;
+template <typename RealType, typename Allocator, typename MetaData, option_type Options>
+class variable : public base<MetaData, Options>,
+                 public iterator_mixin<variable<RealType, Allocator, MetaData, Options>> {
+  using base_type = base<MetaData, Options>;
   using allocator_type = Allocator;
   using metadata_type = MetaData;
   using value_type = RealType;
@@ -50,9 +50,8 @@ public:
    */
   template <typename It, typename = detail::requires_iterator<It>>
   variable(It begin, It end, metadata_type m = metadata_type(),
-           option_type o = option_type::underflow_and_overflow,
            allocator_type a = allocator_type())
-      : base_type(begin == end ? 0 : std::distance(begin, end) - 1, std::move(m), o)
+      : base_type(begin == end ? 0 : std::distance(begin, end) - 1, std::move(m))
       , x_(nullptr, std::move(a)) {
     using AT = std::allocator_traits<allocator_type>;
     x_.first() = AT::allocate(x_.second(), nx());
@@ -89,10 +88,8 @@ public:
    */
   template <typename U, typename = detail::requires_iterable<U>>
   variable(const U& iterable, metadata_type m = metadata_type(),
-           option_type o = option_type::underflow_and_overflow,
            allocator_type a = allocator_type())
-      : variable(std::begin(iterable), std::end(iterable), std::move(m), o,
-                 std::move(a)) {}
+      : variable(std::begin(iterable), std::end(iterable), std::move(m), std::move(a)) {}
 
   /** Construct variable axis from initializer list of bin edges.
    *
@@ -103,13 +100,12 @@ public:
    */
   template <typename U>
   variable(const std::initializer_list<U>& l, metadata_type m = metadata_type(),
-           option_type o = option_type::underflow_and_overflow,
            allocator_type a = allocator_type())
-      : variable(l.begin(), l.end(), std::move(m), o, std::move(a)) {}
+      : variable(l.begin(), l.end(), std::move(m), std::move(a)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   variable(const variable& src, unsigned begin, unsigned end, unsigned merge)
-      : base_type((end - begin) / merge, src.metadata(), src.options()), x_(src.x_) {
+      : base_type((end - begin) / merge, src.metadata()), x_(src.x_) {
     BOOST_ASSERT((end - begin) % merge == 0);
     using It = const detail::unqual<decltype(*src.x_.first())>*;
     struct skip_iterator {
@@ -172,11 +168,15 @@ public:
 
   /// Returns axis value for fractional index.
   value_type value(value_type i) const noexcept {
-    if (i < 0) { return -std::numeric_limits<value_type>::infinity(); }
-    if (i > base_type::size()) { return std::numeric_limits<value_type>::infinity(); }
-    value_type z;
-    const auto k = static_cast<int>(std::modf(i, &z));
-    return (1.0 - z) * x_.first()[k] + z * x_.first()[k + 1];
+    if (i < 0) { return detail::lowest<value_type>(); }
+    if (i > static_cast<int>(base_type::size())) { return detail::highest<value_type>(); }
+    return detail::static_if<std::is_floating_point<value_type>>(
+        [this](auto i) -> value_type {
+          decltype(i) z;
+          const auto k = static_cast<int>(std::modf(i, &z));
+          return (1.0 - z) * x_.first()[k] + z * x_.first()[k + 1];
+        },
+        [this](auto i) -> value_type { return x_.first()[i]; }, i);
   }
 
   auto operator[](int idx) const noexcept {

@@ -16,14 +16,11 @@ namespace axis {
 
 template <typename Axis>
 class iterator
-    : public iterator_facade<iterator<Axis>, decltype(std::declval<Axis&>()[0]),
-                             random_access_traversal_tag,
-                             decltype(std::declval<Axis&>()[0]), int> {
+    : public boost::iterator_facade<iterator<Axis>, decltype(std::declval<Axis&>()[0]),
+                                    boost::random_access_traversal_tag,
+                                    decltype(std::declval<Axis&>()[0]), int> {
 public:
   explicit iterator(const Axis& axis, int idx) : axis_(axis), idx_(idx) {}
-
-  iterator(const iterator&) = default;
-  iterator& operator=(const iterator&) = default;
 
 protected:
   void increment() noexcept { ++idx_; }
@@ -37,6 +34,7 @@ protected:
 
   friend class ::boost::iterator_core_access;
 
+private:
   const Axis& axis_;
   int idx_;
 };

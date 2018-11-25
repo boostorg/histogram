@@ -23,6 +23,7 @@ namespace boost {
 namespace histogram {
 namespace axis {
 namespace transform {
+
 template <typename T>
 struct identity {
   static T forward(T x) { return x; }
@@ -68,6 +69,7 @@ struct unit {
   T forward(Q x) const { return x / U(); }
   Q inverse(T x) const { return x * U(); }
 };
+
 } // namespace transform
 
 /** Axis for equidistant intervals on the real line.
@@ -75,11 +77,11 @@ struct unit {
  * The most common binning strategy.
  * Very fast. Binning is a O(1) operation.
  */
-template <typename Transform, typename MetaData>
-class regular : public base<MetaData>,
-                public iterator_mixin<regular<Transform, MetaData>>,
+template <typename Transform, typename MetaData, option_type Options>
+class regular : public base<MetaData, Options>,
+                public iterator_mixin<regular<Transform, MetaData, Options>>,
                 protected Transform {
-  using base_type = base<MetaData>;
+  using base_type = base<MetaData, Options>;
   using transform_type = Transform;
   using external_type = detail::return_type<decltype(&Transform::inverse)>;
   using internal_type = detail::return_type<decltype(&Transform::forward)>;
@@ -98,8 +100,8 @@ public:
    * \param options  extra bin options.
    */
   regular(transform_type trans, unsigned n, external_type start, external_type stop,
-          metadata_type m = {}, option_type o = option_type::underflow_and_overflow)
-      : base_type(n, std::move(m), o)
+          metadata_type m = {})
+      : base_type(n, std::move(m))
       , transform_type(std::move(trans))
       , min_(this->forward(start))
       , delta_((this->forward(stop) - min_) / base_type::size()) {
@@ -117,13 +119,12 @@ public:
    * \param metadata description of the axis.
    * \param options  extra bin options.
    */
-  regular(unsigned n, external_type start, external_type stop, metadata_type m = {},
-          option_type o = option_type::underflow_and_overflow)
-      : regular({}, n, start, stop, std::move(m), o) {}
+  regular(unsigned n, external_type start, external_type stop, metadata_type m = {})
+      : regular({}, n, start, stop, std::move(m)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   regular(const regular& src, unsigned begin, unsigned end, unsigned merge)
-      : base_type((end - begin) / merge, src.metadata(), src.options())
+      : base_type((end - begin) / merge, src.metadata())
       , transform_type(src.transform())
       , min_(this->forward(src.value(begin)))
       , delta_(src.delta_ * merge) {
@@ -179,6 +180,7 @@ public:
 private:
   internal_type min_, delta_;
 };
+
 } // namespace axis
 } // namespace histogram
 } // namespace boost

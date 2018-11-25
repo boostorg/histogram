@@ -136,9 +136,11 @@ int main() {
 
   // iterators
   {
-    test_axis_iterator(axis::regular<>(5, 0, 1, "", axis::option_type::none), 0, 5);
+    using tr = axis::transform::identity<>;
     test_axis_iterator(
-        axis::regular<>(5, 0, 1, "", axis::option_type::underflow_and_overflow), 0, 5);
+        axis::regular<tr, axis::null_type, axis::option_type::none>(5, 0, 1), 0, 5);
+    test_axis_iterator(
+        axis::regular<tr, axis::null_type, axis::option_type::uoflow>(5, 0, 1), 0, 5);
   }
 
   // bin_type streamable

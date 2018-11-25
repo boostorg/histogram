@@ -7,8 +7,6 @@
 #ifndef BOOST_HISTOGRAM_OSTREAM_OPERATORS_HPP
 #define BOOST_HISTOGRAM_OSTREAM_OPERATORS_HPP
 
-#include <boost/histogram/accumulators/ostream_operators.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <ostream>
 
