@@ -7,9 +7,8 @@
 #ifndef BOOST_HISTOGRAM_AXIS_POLYMORPHIC_BIN_HPP
 #define BOOST_HISTOGRAM_AXIS_POLYMORPHIC_BIN_HPP
 
-#include <cmath>
-#include <stdexcept>
-#include <tuple>
+#include <boost/histogram/detail/meta.hpp>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -35,42 +34,52 @@ class polymorphic_bin {
   using value_type = T;
 
 public:
-  polymorphic_bin(int idx, std::tuple<value_type, value_type, value_type> data)
-      : idx_(idx), data_(data) {}
+  polymorphic_bin(int idx, value_type value)
+      : idx_(idx), lower_or_value_(value), upper_(value), center_(value) {}
+
+  polymorphic_bin(int idx, value_type lower, value_type upper, value_type center)
+      : idx_(idx), lower_or_value_(lower), upper_(upper), center_(center) {}
 
   int idx() const noexcept { return idx_; }
 
-  value_type value() const {
-    if (!is_discrete())
-      throw std::runtime_error("cannot call value() for continuous axis");
-    return std::get<0>(data_);
-  }
-  value_type lower() const {
-    if (is_discrete()) throw std::runtime_error("cannot call lower() for discrete axis");
-    return std::get<0>(data_);
-  }
-  value_type upper() const {
-    if (is_discrete()) throw std::runtime_error("cannot call upper() for discrete axis");
-    return std::get<1>(data_);
-  }
-  value_type center() const {
-    if (is_discrete()) throw std::runtime_error("cannot call center() for discrete axis");
-    return std::get<2>(data_);
-  }
+  value_type value() const { return lower_or_value_; }
+  value_type lower() const { return lower_or_value_; }
+  value_type upper() const { return upper_; }
+  value_type center() const { return center_; }
   value_type width() const { return upper() - lower(); }
 
-  bool operator==(const polymorphic_bin& rhs) const noexcept {
-    return idx_ == rhs.idx_ && data_ == rhs.data_;
+  template <typename BinType>
+  bool operator==(const BinType& rhs) const noexcept {
+    return idx() == rhs.idx() && equal_impl(rhs, detail::has_method_lower<BinType>());
   }
-  bool operator!=(const polymorphic_bin& rhs) const noexcept { return !operator==(rhs); }
+
+  template <typename BinType>
+  bool operator!=(const BinType& rhs) const noexcept {
+    return !operator==(rhs);
+  }
 
   explicit operator int() const noexcept { return idx_; }
 
-  bool is_discrete() const noexcept { return std::isnan(std::get<2>(data_)); }
+  bool is_discrete() const noexcept { return lower_or_value_ == upper_; }
 
 private:
+  bool equal_impl(const polymorphic_bin& rhs, std::true_type) const noexcept {
+    return lower_or_value_ == rhs.lower_or_value_ && upper_ == rhs.upper_ &&
+           center_ == rhs.center_;
+  }
+
+  template <typename BinType>
+  bool equal_impl(const BinType& rhs, std::true_type) const noexcept {
+    return lower() == rhs.lower() && upper() == rhs.upper();
+  }
+
+  template <typename BinType>
+  bool equal_impl(const BinType& rhs, std::false_type) const noexcept {
+    return is_discrete() && value() == rhs.value();
+  }
+
   const int idx_;
-  const std::tuple<value_type, value_type, value_type> data_;
+  const value_type lower_or_value_, upper_, center_;
 };
 
 } // namespace axis

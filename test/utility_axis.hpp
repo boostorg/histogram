@@ -8,9 +8,6 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_AXIS_HPP
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/axis/interval_bin_view.hpp>
-#include <boost/histogram/axis/polymorphic_bin.hpp>
-#include <boost/histogram/axis/value_bin_view.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 
 namespace boost {
@@ -32,16 +29,6 @@ void test_axis_iterator(const Axis& a, int begin, int end) {
 }
 
 namespace axis {
-template <typename... Ts, typename... Us>
-bool operator==(const polymorphic_bin<Ts...>& t, const interval_bin_view<Us...>& u) {
-  return t.idx() == u.idx() && t.lower() == u.lower() && t.upper() == u.upper();
-}
-
-template <typename... Ts, typename... Us>
-bool operator==(const polymorphic_bin<Ts...>& t, const value_bin_view<Us...>& u) {
-  return t.idx() == u.idx() && t.value() == u.value();
-}
-
 bool operator==(const null_type&, const null_type&) { return true; }
 } // namespace axis
 

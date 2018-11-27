@@ -28,21 +28,21 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-struct get_polymorphic_bin_data
-    : public boost::static_visitor<std::tuple<double, double, double>> {
-  using T = std::tuple<double, double, double>;
+struct get_polymorphic_bin : public boost::static_visitor<axis::polymorphic_bin<double>> {
+  using T = axis::polymorphic_bin<double>;
   int idx;
-  get_polymorphic_bin_data(int i) : idx(i) {}
+  get_polymorphic_bin(int i) : idx(i) {}
 
   template <typename A>
   T operator()(const A& a) const {
     return detail::static_if<detail::has_method_value<A, double>>(
         [this](const auto& a) -> T {
           using Arg = detail::unqual<detail::arg_type<detail::unqual<decltype(a)>>>;
-          const auto x = a.value(idx);
+          const auto i = idx;
+          const auto x = a.value(i);
           return detail::static_if<std::is_integral<Arg>>(
-              [&](auto) { return T(x, 0, std::numeric_limits<double>::quiet_NaN()); },
-              [&](auto) { return T(x, a.value(idx + 1), a.value(idx + 0.5)); }, 0);
+              [&](auto) { return T(i, x); },
+              [&](auto) { return T(i, x, a.value(i + 1), a.value(i + 0.5)); }, 0);
         },
         [](const auto&) -> T {
           throw std::runtime_error(
@@ -208,9 +208,8 @@ public:
 
   auto operator[](const int idx) const {
     // using visit here causes internal error in MSVC 2017, so we work around
-    const auto data = boost::apply_visitor(detail::get_polymorphic_bin_data(idx),
-                                           static_cast<const base_type&>(*this));
-    return polymorphic_bin<double>(idx, data);
+    return boost::apply_visitor(detail::get_polymorphic_bin(idx),
+                                static_cast<const base_type&>(*this));
   }
 
   bool operator==(const variant& rhs) const {

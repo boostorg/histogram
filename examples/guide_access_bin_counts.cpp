@@ -42,9 +42,8 @@ int main() {
   // indexded(...) provides; it creates a range object, which provides a pair of the index
   // and the value (note: iteration order is an implementation detail, don't rely on it)
   std::ostringstream os;
-  for (auto b : indexed(h)) {
-    os << std::setw(2) << b.first[0] << " " << std::setw(2) << b.first[1] << ": "
-       << b.second << "\n";
+  for (auto x : indexed(h)) {
+    os << std::setw(2) << x[0] << " " << std::setw(2) << x[1] << ": " << x.value << "\n";
   }
 
   std::cout << os.str() << std::flush;

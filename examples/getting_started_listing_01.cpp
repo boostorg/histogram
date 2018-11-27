@@ -63,12 +63,10 @@ int main() {
   */
   std::ostringstream os;
   os.setf(std::ios_base::fixed);
-  for (auto b : indexed(h)) {
-    const auto idx = b.first[0];
-    const auto interval = h.axis()[idx];
-    os << "bin " << std::setw(2) << idx << " [" << std::setprecision(1) << std::setw(4)
-       << interval.lower() << ", " << std::setw(4) << interval.upper()
-       << "): " << b.second << "\n";
+  for (auto x : indexed(h)) {
+    os << "bin " << std::setw(2) << x[0] << " [" << std::setprecision(1) << std::setw(4)
+       << x.bin(0).lower() << ", " << std::setw(4) << x.bin(0).upper() << "): " << x.value
+       << "\n";
   }
 
   std::cout << os.str() << std::endl;

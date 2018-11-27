@@ -25,10 +25,18 @@ public:
   decltype(auto) center() const noexcept { return axis_.value(idx_ + 0.5); }
   decltype(auto) width() const noexcept { return upper() - lower(); }
 
-  bool operator==(const interval_bin_view& rhs) const noexcept {
-    return idx_ == rhs.idx_ && axis_ == rhs.axis_;
+  template <typename BinType>
+  bool operator==(const BinType& rhs) const noexcept {
+    return idx() == rhs.idx() && lower() == rhs.lower() && upper() == rhs.upper();
   }
-  bool operator!=(const interval_bin_view& rhs) const noexcept {
+
+  bool operator==(const interval_bin_view& rhs) const noexcept {
+    return idx() == rhs.idx() && (&rhs.axis_ == &rhs.axis_ ||
+                                  (lower() == rhs.lower() && upper() == rhs.upper()));
+  }
+
+  template <typename BinType>
+  bool operator!=(const BinType& rhs) const noexcept {
     return !operator==(rhs);
   }
 
