@@ -19,8 +19,9 @@ endif()
 
 # setup build
 option(BUILD_BENCHMARKS "Build benchmarks" ON)
-option(TEST_SERIALIZATION "Test boost.serialization code" OFF)
-option(TEST_ACCUMULATORS "Test boost.accumulators code" OFF)
+option(TEST_SERIALIZATION "Test serialization code (requires boost.serialization)" ON)
+option(TEST_ACCUMULATORS_SUPPORT "Test support for boost.accumulators" ON)
+option(TEST_RANGE_SUPPORT "Test support for boost.range" ON)
 
 # serialization support is optional
 if (TEST_SERIALIZATION)
@@ -129,8 +130,12 @@ if (TEST_SERIALIZATION)
   target_link_libraries(histogram_serialization_test PUBLIC Boost::serialization)
 endif()
 
-if (TEST_ACCUMULATORS) # test the support for external boost::accumulators
-  compiled_test(test/boost_accumulators_test.cpp)
+if (TEST_ACCUMULATORS_SUPPORT) # test the support for external boost::accumulators
+  compiled_test(test/boost_accumulators_support_test.cpp)
+endif()
+
+if (TEST_RANGE_SUPPORT) # test the support for external boost::range
+  compiled_test(test/boost_range_support_test.cpp)
 endif()
 
 if (BUILD_BENCHMARKS)

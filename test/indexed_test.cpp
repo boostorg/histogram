@@ -6,12 +6,15 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
+#include <boost/histogram/literals.hpp>
 #include <vector>
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;
+using namespace boost::histogram::literals;
 
 template <typename Tag>
 void run_tests() {
@@ -24,22 +27,27 @@ void run_tests() {
 
     auto ind = indexed(h);
     auto it = ind.begin();
-    BOOST_TEST_EQ(it->first.size(), 1);
+    BOOST_TEST_EQ(it->size(), 1);
 
-    BOOST_TEST_EQ(it->first[0], 0);
-    BOOST_TEST_EQ(it->second, 2);
+    BOOST_TEST_EQ(it->operator[](0), 0);
+    BOOST_TEST_EQ(it->value, 2);
+    BOOST_TEST_EQ(it->bin(0), h.axis()[0]);
     ++it;
-    BOOST_TEST_EQ(it->first[0], 1);
-    BOOST_TEST_EQ(it->second, 2);
+    BOOST_TEST_EQ(it->operator[](0), 1);
+    BOOST_TEST_EQ(it->value, 2);
+    BOOST_TEST_EQ(it->bin(0), h.axis()[1]);
     ++it;
-    BOOST_TEST_EQ(it->first[0], 2);
-    BOOST_TEST_EQ(it->second, 0);
+    BOOST_TEST_EQ(it->operator[](0), 2);
+    BOOST_TEST_EQ(it->value, 0);
+    BOOST_TEST_EQ(it->bin(0), h.axis()[2]);
     ++it;
-    BOOST_TEST_EQ(it->first[0], 3);
-    BOOST_TEST_EQ(it->second, 0);
+    BOOST_TEST_EQ(it->operator[](0), 3);
+    BOOST_TEST_EQ(it->value, 0);
+    BOOST_TEST_EQ(it->bin(0), h.axis()[3]);
     ++it;
-    BOOST_TEST_EQ(it->first[0], -1);
-    BOOST_TEST_EQ(it->second, 0);
+    BOOST_TEST_EQ(it->operator[](0), -1);
+    BOOST_TEST_EQ(it->value, 0);
+    BOOST_TEST_EQ(it->bin(0), h.axis()[-1]);
     ++it;
     BOOST_TEST(it == ind.end());
   }
@@ -57,31 +65,43 @@ void run_tests() {
 
     auto ind = indexed(h);
     auto it = ind.begin();
-    BOOST_TEST_EQ(it->first.size(), 2);
+    BOOST_TEST_EQ(it->size(), 2);
 
-    BOOST_TEST_EQ(it->first[0], 0);
-    BOOST_TEST_EQ(it->first[1], 0);
-    BOOST_TEST_EQ(it->second, 2);
+    BOOST_TEST_EQ(it->operator[](0), 0);
+    BOOST_TEST_EQ(it->operator[](1), 0);
+    BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[0]);
+    BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[0]);
+    BOOST_TEST_EQ(it->value, 2);
     ++it;
-    BOOST_TEST_EQ(it->first[0], 1);
-    BOOST_TEST_EQ(it->first[1], 0);
-    BOOST_TEST_EQ(it->second, 0);
+    BOOST_TEST_EQ(it->operator[](0), 1);
+    BOOST_TEST_EQ(it->operator[](1), 0);
+    BOOST_TEST_EQ(it->bin(0), h.axis(0)[1]);
+    BOOST_TEST_EQ(it->bin(1), h.axis(1)[0]);
+    BOOST_TEST_EQ(it->value, 0);
     ++it;
-    BOOST_TEST_EQ(it->first[0], -1);
-    BOOST_TEST_EQ(it->first[1], 0);
-    BOOST_TEST_EQ(it->second, 1);
+    BOOST_TEST_EQ(it->operator[](0), -1);
+    BOOST_TEST_EQ(it->operator[](1), 0);
+    BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[-1]);
+    BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[0]);
+    BOOST_TEST_EQ(it->value, 1);
     ++it;
-    BOOST_TEST_EQ(it->first[0], 0);
-    BOOST_TEST_EQ(it->first[1], 1);
-    BOOST_TEST_EQ(it->second, 0);
+    BOOST_TEST_EQ(it->operator[](0), 0);
+    BOOST_TEST_EQ(it->operator[](1), 1);
+    BOOST_TEST_EQ(it->bin(0), h.axis(0)[0]);
+    BOOST_TEST_EQ(it->bin(1), h.axis(1)[1]);
+    BOOST_TEST_EQ(it->value, 0);
     ++it;
-    BOOST_TEST_EQ(it->first[0], 1);
-    BOOST_TEST_EQ(it->first[1], 1);
-    BOOST_TEST_EQ(it->second, 1);
+    BOOST_TEST_EQ(it->operator[](0), 1);
+    BOOST_TEST_EQ(it->operator[](1), 1);
+    BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[1]);
+    BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[1]);
+    BOOST_TEST_EQ(it->value, 1);
     ++it;
-    BOOST_TEST_EQ(it->first[0], -1);
-    BOOST_TEST_EQ(it->first[1], 1);
-    BOOST_TEST_EQ(it->second, 0);
+    BOOST_TEST_EQ(it->operator[](0), -1);
+    BOOST_TEST_EQ(it->operator[](1), 1);
+    BOOST_TEST_EQ(it->bin(0), h.axis(0)[-1]);
+    BOOST_TEST_EQ(it->bin(1), h.axis(1)[1]);
+    BOOST_TEST_EQ(it->value, 0);
     ++it;
     BOOST_TEST(it == ind.end());
   }

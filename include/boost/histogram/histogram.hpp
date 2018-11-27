@@ -30,6 +30,8 @@ public:
   using axes_type = Axes;
   using storage_type = Storage;
   using value_type = typename storage_type::value_type;
+  using iterator = typename storage_type::const_iterator; // for boost::range_iterator
+  using const_iterator = typename storage_type::const_iterator;
 
   histogram() = default;
   histogram(const histogram& rhs) = default;
@@ -166,8 +168,8 @@ public:
     return at(t);
   }
 
-  auto begin() const noexcept { return storage_.begin(); }
-  auto end() const noexcept { return storage_.end(); }
+  const_iterator begin() const noexcept { return storage_.begin(); }
+  const_iterator end() const noexcept { return storage_.end(); }
 
   template <typename Archive>
   void serialize(Archive&, unsigned);

@@ -158,6 +158,8 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_size, &T::size);
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_clear, &T::clear);
 
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower, &T::lower);
+
 template <typename T, typename X>
 struct has_method_value_impl {
   template <typename U, typename V = decltype(std::declval<U&>().value(0))>

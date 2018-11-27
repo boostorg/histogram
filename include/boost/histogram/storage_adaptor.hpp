@@ -92,6 +92,7 @@ struct ERROR_type_passed_to_storage_adaptor_not_recognized {};
 template <typename C>
 struct vector_impl {
   using value_type = typename C::value_type;
+  using const_iterator = typename C::const_iterator;
 
   vector_impl(C&& c) : container_(std::move(c)) {}
   vector_impl(const C& c) : container_(c) {}
@@ -120,8 +121,8 @@ struct vector_impl {
 
   std::size_t size() const noexcept { return container_.size(); }
 
-  decltype(auto) begin() const noexcept { return container_.begin(); }
-  decltype(auto) end() const noexcept { return container_.end(); }
+  const_iterator begin() const noexcept { return container_.begin(); }
+  const_iterator end() const noexcept { return container_.end(); }
 
   decltype(auto) get_allocator() const noexcept { return container_.get_allocator(); }
 
@@ -134,6 +135,7 @@ struct vector_impl {
 template <typename C>
 struct array_impl {
   using value_type = typename C::value_type;
+  using const_iterator = typename C::const_iterator;
 
   array_impl(C&& c) : container_(std::move(c)) {}
   array_impl(const C& c) : container_(c) {}
@@ -165,8 +167,8 @@ struct array_impl {
 
   std::size_t size() const { return size_; }
 
-  decltype(auto) begin() const noexcept { return container_.begin(); }
-  decltype(auto) end() const noexcept { return container_.begin() + size_; }
+  const_iterator begin() const noexcept { return container_.begin(); }
+  const_iterator end() const noexcept { return container_.begin() + size_; }
 
   value_type& ref(std::size_t i) { return container_[i]; }
   void mul(std::size_t i, double x) { container_[i] *= x; }
@@ -283,6 +285,7 @@ struct storage_adaptor : detail::storage_adaptor_impl<T> {
   struct storage_tag {};
   using base_type = detail::storage_adaptor_impl<T>;
   using value_type = typename base_type::value_type;
+  using const_iterator = typename base_type::const_iterator;
   using element_adaptor = detail::element_adaptor<value_type>;
 
   storage_adaptor() = default;

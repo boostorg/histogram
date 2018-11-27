@@ -25,9 +25,18 @@ public:
   decltype(auto) value() const { return axis_.value(idx_); }
 
   bool operator==(const value_bin_view& rhs) const noexcept {
-    return idx_ == rhs.idx_ && axis_ == rhs.axis_;
+    return idx() == rhs.idx() && (&axis_ == &rhs.axis_ || value() == rhs.value());
   }
-  bool operator!=(const value_bin_view& rhs) const noexcept { return !operator==(rhs); }
+
+  template <typename BinType>
+  bool operator==(const BinType& rhs) const noexcept {
+    return idx() == rhs.idx() && value() == rhs.value();
+  }
+
+  template <typename BinType>
+  bool operator!=(const BinType& rhs) const noexcept {
+    return !operator==(rhs);
+  }
 
   explicit operator int() const noexcept { return idx_; }
 
