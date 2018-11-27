@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/container/static_vector.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -149,6 +150,11 @@ template <typename F, typename T>
 void for_each_axis(const T& axes, F&& f) {
   for (const auto& x : axes) { axis::visit(std::forward<F>(f), x); }
 }
+
+template <typename T, typename A>
+using make_axes_buffer = boost::container::static_vector<
+    T, mp11::mp_eval_if_c<!(has_fixed_size<A>::value), mp11::mp_size_t<axis::limit>,
+                          std::tuple_size, A>::value>;
 
 template <typename T>
 auto make_empty_axes(const T& t) {

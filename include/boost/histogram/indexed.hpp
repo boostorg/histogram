@@ -9,6 +9,7 @@
 
 #include <boost/container/static_vector.hpp>
 #include <boost/histogram/axis/traits.hpp>
+#include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
@@ -22,12 +23,14 @@ namespace histogram {
 template <typename Histogram>
 class indexed_type {
   using storage_type = typename Histogram::storage_type;
-  using index_type = boost::container::static_vector<int, axis::limit>;
+  using axes_type = typename Histogram::axes_type;
+
+  using index_type = detail::make_axes_buffer<int, axes_type>;
   struct stride_t {
     std::size_t stride;
     int underflow;
   };
-  using strides_type = boost::container::static_vector<stride_t, axis::limit>;
+  using strides_type = detail::make_axes_buffer<stride_t, axes_type>;
 
 public:
   using value_type =
