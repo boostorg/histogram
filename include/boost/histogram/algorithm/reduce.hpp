@@ -53,15 +53,15 @@ reduce_option_type rebin(unsigned iaxis, unsigned merge) {
           std::numeric_limits<double>::quiet_NaN(), merge};
 }
 
-/// Convenience overload for when there is only one axis.
+/// Convenience overload for single axis.
 reduce_option_type shrink_and_rebin(double lower, double upper, unsigned merge) {
   return shrink_and_rebin(0, lower, upper, merge);
 }
 
-/// Convenience overload for when there is only one axis.
+/// Convenience overload for single axis.
 reduce_option_type shrink(double lower, double upper) { return shrink(0, lower, upper); }
 
-/// Convenience overload for when there is only one axis.
+/// Convenience overload for single axis.
 reduce_option_type rebin(unsigned merge) { return rebin(0, merge); }
 
 template <typename A, typename S, typename C, typename = detail::requires_iterable<C>>
@@ -87,29 +87,16 @@ histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {
 
     const auto n = axis::traits::extend(a);
     im.total *= n;
+
     im_iter->stride[0] = stride[0];
     stride[0] *= n;
-    auto set_flow = [im_iter](int i, const auto& a) {
-      switch (axis::traits::options(a)) {
-        case axis::option_type::underflow:
-          im_iter->overflow[i] = -1;
-          im_iter->underflow[i] = a.size();
-          break;
-        case axis::option_type::overflow:
-          im_iter->overflow[i] = a.size();
-          im_iter->underflow[i] = -1;
-          break;
-        case axis::option_type::uoflow:
-          im_iter->overflow[i] = a.size();
-          im_iter->underflow[i] = a.size() + 1;
-          break;
-        default: im_iter->underflow[i] = -1; im_iter->overflow[i] = -1;
-      };
-    };
-    set_flow(0, a);
+    im_iter->underflow[0] = axis::traits::underflow_index(a);
+    im_iter->overflow[0] = axis::traits::overflow_index(a);
 
     const auto& opt = options[iaxis];
     unsigned begin = 0, end = a.size(), merge = 1;
+
+    T* tp;
     if (opt) {
       merge = opt.merge;
       if (opt.lower < opt.upper) {
@@ -122,19 +109,19 @@ histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {
       }
       end -= (end - begin) % merge;
       auto a2 = T(a, begin, end, merge);
-      axis::get<T>(detail::axis_get(r_axes, iaxis)) = a2;
-      im_iter->stride[1] = stride[1];
-      stride[1] *= axis::traits::extend(a2);
-      set_flow(1, a2);
+      tp = &(axis::get<T>(detail::axis_get(r_axes, iaxis)) = a2);
     } else {
-      axis::get<T>(detail::axis_get(r_axes, iaxis)) = a;
-      im_iter->stride[1] = stride[1];
-      stride[1] *= axis::traits::extend(a);
-      set_flow(1, a);
+      tp = &(axis::get<T>(detail::axis_get(r_axes, iaxis)) = a);
     }
     im_iter->begin = begin;
     im_iter->end = end;
     im_iter->merge = merge;
+
+    im_iter->stride[1] = stride[1];
+    stride[1] *= axis::traits::extend(*tp);
+    im_iter->underflow[1] = axis::traits::underflow_index(*tp);
+    im_iter->overflow[1] = axis::traits::overflow_index(*tp);
+
     ++im_iter;
     ++iaxis;
   });
