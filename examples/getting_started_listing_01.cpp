@@ -63,22 +63,21 @@ int main() {
       implementation depends on the axis, please look it up in the reference
   */
   std::ostringstream os;
-  os.setf(std::ios_base::fixed);
   for (auto x : indexed(h)) {
-    os << boost::format("bin %2i [%4.1f, %4.1f): %.1f\n") % x[0] % x.bin(0).lower() %
+    os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") % x[0] % x.bin(0).lower() %
               x.bin(0).upper() % x.value;
   }
 
   std::cout << os.str() << std::flush;
 
-  assert(os.str() == "bin  0 [-1.0, -0.5): 1.0\n"
-                     "bin  1 [-0.5, -0.0): 1.0\n"
-                     "bin  2 [-0.0,  0.5): 2.0\n"
-                     "bin  3 [ 0.5,  1.0): 0.0\n"
-                     "bin  4 [ 1.0,  1.5): 1.0\n"
-                     "bin  5 [ 1.5,  2.0): 1.0\n"
-                     "bin  6 [ 2.0,  inf): 2.0\n"
-                     "bin -1 [-inf, -1.0): 1.0\n");
+  assert(os.str() == "bin  0 [-1.0, -0.5): 1\n"
+                     "bin  1 [-0.5, -0.0): 1\n"
+                     "bin  2 [-0.0,  0.5): 2\n"
+                     "bin  3 [ 0.5,  1.0): 0\n"
+                     "bin  4 [ 1.0,  1.5): 1\n"
+                     "bin  5 [ 1.5,  2.0): 1\n"
+                     "bin  6 [ 2.0,  inf): 2\n"
+                     "bin -1 [-inf, -1.0): 1\n");
   // note how under- and overflow bins appear at the end
 }
 
