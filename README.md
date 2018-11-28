@@ -27,23 +27,24 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Extremely customizable multi-dimensional histogram
 * Simple, convenient, STL and Boost-compatible interface
 * Static and dynamic implementations under a common interface
-* Counters with high dynamic range, cannot overflow or be capped (+)
+* Counters with high dynamic range, cannot overflow or be capped (1)
 * Better performance than other libraries (see benchmarks for details)
-* Efficient use of memory (+)
-* Efficient template meta-programming using C++14 features and [Boost.Mp11](https://www.boost.org/doc/libs/release/libs/mp11/)
-* Support for custom mappings of input values to bin indices
+* Efficient use of memory (1)
+* Support for custom axis types: define how input values should map to indices
 * Support for under-/overflow bins (can be disabled to reduce memory consumption)
 * Support for weighted increments
-* Support for custom accumulators in each histogram cell (++)
-* Support for variance estimates (+++)
-* Support for completely stack-based histograms 
+* Support for custom accumulators in each bin (2)
+* Support for variance estimates (3)
+* Support for completely stack-based histograms
 * Support for adding and scaling histograms
 * Support for custom allocators
+* Support for type-safe histograms (4)
 * Optional serialization based on [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
 
-(+) In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/) integer, which is only limited by available memory.
-(++) The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell.
-(+++) Variance estimates are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell-counts.
+1. In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/) integer, which is only limited by available memory.
+2. The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell.
+3. Variance estimates are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell-counts.
+4. Buildin axis types can configured to only accept dimensional quantities from e.g. Boost.Units.
 
 ## Dependencies
 
@@ -73,6 +74,7 @@ Example: Fill a 1d-histogram
 
 ```cpp
 #include <boost/histogram.hpp>
+#include <boost/format.hpp> // used here for printing
 #include <functional> // for std::ref
 
 int main() {
@@ -87,24 +89,23 @@ int main() {
     std::for_each(data.begin(), data.end(), std::ref(h));
 
     // iterate over bins
-    for (auto it = h.begin(); it != h.end(); ++it) {
-      const auto bin = it.bin(0);
-      std::cout << "bin " << it.idx(0) << " x in ["
-                << bin.lower() << ", " << bin.upper() << "): "
-                << *it << std::endl;
+    std::ostringstream os;
+    for (auto x : bh::indexed(h)) {
+      os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") % x[0] % x.bin(0).lower() % x.bin(0).upper() % x.value;
     }
+
+    std::cout << os.str() << std::flush;
 
     /* program output: (note that under- and overflow bins appear at the end)
 
-    bin 0 x in [-1.0, -0.5): 0
-    bin 1 x in [-0.5,  0.0): 1
-    bin 2 x in [ 0.0,  0.5): 1
-    bin 3 x in [ 0.5,  1.0): 0
-    bin 4 x in [ 1.0,  1.5): 1
-    bin 5 x in [ 1.5,  2.0): 1
-    bin 6 x in [ 2.0, inf): 0
-    bin -1 x in [-inf, -1): 0
-
+    bin  0 [-1.0, -0.5): 1
+    bin  1 [-0.5, -0.0): 1
+    bin  2 [-0.0,  0.5): 2
+    bin  3 [ 0.5,  1.0): 0
+    bin  4 [ 1.0,  1.5): 1
+    bin  5 [ 1.5,  2.0): 1
+    bin  6 [ 2.0,  inf): 2
+    bin -1 [-inf, -1.0): 1
     */
 }
 ```
