@@ -65,8 +65,8 @@ int main() {
   os.setf(std::ios_base::fixed);
   for (auto x : indexed(h)) {
     os << "bin " << std::setw(2) << x[0] << " [" << std::setprecision(1) << std::setw(4)
-       << x.bin(0).lower() << ", " << std::setw(4) << x.bin(0).upper() << "): " << x.value
-       << "\n";
+       << x.bin(0).lower() << ", " << std::setw(4) << x.bin(0).upper()
+       << "): " << std::fixed << x.value << "\n";
   }
 
   std::cout << os.str() << std::endl;

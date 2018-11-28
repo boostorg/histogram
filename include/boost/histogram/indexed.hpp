@@ -10,6 +10,7 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/nodiscard.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/iterator/iterator_facade.hpp>
@@ -115,9 +116,6 @@ public:
     });
   }
 
-  indexed_range(const indexed_range&) = default;
-  indexed_range& operator=(const indexed_range& rhs) = default;
-
   const_iterator begin() const { return {*this, 0}; }
   const_iterator end() const { return {*this, storage_.size()}; }
 
@@ -127,6 +125,7 @@ private:
   strides_type strides_;
 };
 
+BOOST_HISTOGRAM_DETAIL_NODISCARD
 template <typename Histogram>
 indexed_range<detail::unqual<Histogram>> indexed(Histogram&& h) {
   return {std::forward<Histogram>(h)};
