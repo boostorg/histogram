@@ -15,6 +15,7 @@
 #include <boost/histogram/detail/nodiscard.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
+#include <boost/throw_exception.hpp>
 #include <functional>
 #include <tuple>
 #include <type_traits>
@@ -76,7 +77,7 @@ public:
   template <typename A, typename S>
   histogram& operator+=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_))
-      throw std::invalid_argument("axes of histograms differ");
+      boost::throw_exception(std::invalid_argument("axes of histograms differ"));
     storage_ += rhs.storage_;
     return *this;
   }
@@ -160,7 +161,7 @@ public:
   template <typename... Ts>
   decltype(auto) at(const std::tuple<Ts...>& t) const {
     const auto idx = detail::at_impl(axes_, t);
-    if (!idx) throw std::out_of_range("indices out of bounds");
+    if (!idx) boost::throw_exception(std::out_of_range("indices out of bounds"));
     return storage_[*idx];
   }
 

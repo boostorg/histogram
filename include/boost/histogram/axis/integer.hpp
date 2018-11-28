@@ -14,6 +14,7 @@
 #include <boost/histogram/axis/value_bin_view.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/throw_exception.hpp>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -54,7 +55,8 @@ public:
   /// Constructor used by algorithm::reduce to shrink and rebin.
   integer(const integer& src, unsigned begin, unsigned end, unsigned merge)
       : base_type(end - begin, src.metadata()), min_(src.min_ + begin) {
-    if (merge > 1) { throw std::invalid_argument("cannot merge bins for integer axis"); }
+    if (merge > 1)
+      boost::throw_exception(std::invalid_argument("cannot merge bins for integer axis"));
   }
 
   integer() = default;

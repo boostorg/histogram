@@ -7,6 +7,7 @@
 //[ getting_started_listing_01
 
 #include <algorithm>
+#include <boost/format.hpp> // only used for printing
 #include <boost/histogram.hpp>
 #include <cassert>
 #include <functional>
@@ -64,12 +65,11 @@ int main() {
   std::ostringstream os;
   os.setf(std::ios_base::fixed);
   for (auto x : indexed(h)) {
-    os << "bin " << std::setw(2) << x[0] << " [" << std::setprecision(1) << std::setw(4)
-       << x.bin(0).lower() << ", " << std::setw(4) << x.bin(0).upper()
-       << "): " << std::fixed << x.value << "\n";
+    os << boost::format("bin %2i [%4.1f, %4.1f): %.1f\n") % x[0] % x.bin(0).lower() %
+              x.bin(0).upper() % x.value;
   }
 
-  std::cout << os.str() << std::endl;
+  std::cout << os.str() << std::flush;
 
   assert(os.str() == "bin  0 [-1.0, -0.5): 1.0\n"
                      "bin  1 [-0.5, -0.0): 1.0\n"

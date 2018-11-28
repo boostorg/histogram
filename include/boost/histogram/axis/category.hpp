@@ -17,6 +17,7 @@
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/throw_exception.hpp>
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
@@ -131,7 +132,8 @@ public:
 
   /// Returns the value for the bin index (performs a range check).
   const value_type& value(unsigned idx) const {
-    if (idx >= base_type::size()) throw std::out_of_range("category index out of range");
+    if (idx >= base_type::size())
+      boost::throw_exception(std::out_of_range("category index out of range"));
     return x_.first()[idx];
   }
 

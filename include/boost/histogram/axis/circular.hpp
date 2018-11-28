@@ -13,6 +13,7 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/throw_exception.hpp>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -53,7 +54,7 @@ public:
            MetaData m = MetaData())
       : base_type(n, std::move(m)), phase_(phase), delta_(perimeter / n) {
     if (!std::isfinite(phase) || !(perimeter > 0))
-      throw std::invalid_argument("invalid phase or perimeter");
+      boost::throw_exception(std::invalid_argument("invalid phase or perimeter"));
   }
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
@@ -62,7 +63,7 @@ public:
       , phase_(src.phase_)
       , delta_(src.delta_ * merge) {
     if (!(begin == 0 && end == src.size()))
-      throw std::invalid_argument("cannot shrink circular axis");
+      boost::throw_exception(std::invalid_argument("cannot shrink circular axis"));
   }
 
   circular() = default;

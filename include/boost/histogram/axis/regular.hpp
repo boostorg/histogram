@@ -14,6 +14,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
+#include <boost/throw_exception.hpp>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -106,9 +107,11 @@ public:
       , min_(this->forward(start))
       , delta_((this->forward(stop) - min_) / base_type::size()) {
     if (!std::isfinite(min_) || !std::isfinite(delta_))
-      throw std::invalid_argument("forward transform of start or stop invalid");
+      boost::throw_exception(
+          std::invalid_argument("forward transform of start or stop invalid"));
     if (delta_ == 0)
-      throw std::invalid_argument("range of forward transformed axis is zero");
+      boost::throw_exception(
+          std::invalid_argument("range of forward transformed axis is zero"));
   }
 
   /** Construct n bins over real range [begin, end).
