@@ -91,7 +91,8 @@ int main() {
     // iterate over bins
     std::ostringstream os;
     for (auto x : bh::indexed(h)) {
-      os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") % x[0] % x.bin(0).lower() % x.bin(0).upper() % x.value;
+      os << boost::format("bin %2i [%4.1f, %4.1f): %i\n")
+        % x[0] % x.bin(0).lower() % x.bin(0).upper() % x.value;
     }
 
     std::cout << os.str() << std::flush;
