@@ -105,7 +105,7 @@ auto project(const histogram<A, S>& h, C c) {
     r_axes.emplace_back(axes[idx]);
     auto& stride_ref = im[idx].stride[1];
     if (stride_ref)
-      boost::throw_exception(std::invalid_argument("indices must be unique"));
+      BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
     else
       stride_ref = stride;
     stride *= axis::traits::extend(axes[idx]);

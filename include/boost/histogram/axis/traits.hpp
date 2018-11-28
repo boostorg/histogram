@@ -72,8 +72,9 @@ double value(const T& t, double idx) {
             [&](const auto& a) -> double { return a.value(idx); }, a);
       },
       [](const auto&) -> double {
-        boost::throw_exception(std::runtime_error(
+        BOOST_THROW_EXCEPTION(std::runtime_error(
             "axis has no value method or return type is not convertible to double"));
+        return 0;
       },
       t);
 }
@@ -88,8 +89,9 @@ double width(const T& t, unsigned idx) {
             [&](const auto& a) -> double { return a.value(idx + 1) - a.value(idx); }, a);
       },
       [](const auto&) -> double {
-        boost::throw_exception(std::runtime_error(
+        BOOST_THROW_EXCEPTION(std::runtime_error(
             "axis has no value method or return type is not convertible to double"));
+        return 0;
       },
       t);
 }

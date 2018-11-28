@@ -41,9 +41,10 @@ struct get_polymorphic_bin : public boost::static_visitor<axis::polymorphic_bin<
 
   template <typename A>
   T impl(const A&, std::false_type) const {
-    boost::throw_exception(std::runtime_error(
+    BOOST_THROW_EXCEPTION(std::runtime_error(
         cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
             " has no value method with return type convertible to double")));
+    return T(0, 0);
   }
 
   template <typename A>
@@ -119,7 +120,7 @@ public:
           detail::static_if<mp11::mp_contains<types, U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
-                boost::throw_exception(std::runtime_error(detail::cat(
+                BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
                     boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     " is not a bounded type of ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(variant)))));
@@ -145,7 +146,7 @@ public:
           return detail::static_if<std::is_same<U, const metadata_type&>>(
               [](const auto& x) -> const metadata_type& { return traits::metadata(x); },
               [](const auto&) -> const metadata_type& {
-                boost::throw_exception(std::runtime_error(detail::cat(
+                BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
                     "cannot return metadata of type ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     " through axis::variant interface which uses type ",
@@ -165,7 +166,7 @@ public:
           return detail::static_if<std::is_same<U, metadata_type&>>(
               [](auto& x) -> metadata_type& { return traits::metadata(x); },
               [](auto&) -> metadata_type& {
-                boost::throw_exception(std::runtime_error(detail::cat(
+                BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
                     "cannot return metadata of type ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     " through axis::variant interface which uses type ",
@@ -186,10 +187,11 @@ public:
           return detail::static_if<std::is_convertible<U, arg_t>>(
               [&x](const auto& a) -> int { return a(x); },
               [](const auto&) -> int {
-                boost::throw_exception(std::invalid_argument(detail::cat(
+                BOOST_THROW_EXCEPTION(std::invalid_argument(detail::cat(
                     "cannot convert ", boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     " to ", boost::core::demangled_name(BOOST_CORE_TYPEID(arg_t)),
                     " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A)))));
+                return 0;
               },
               a);
         },

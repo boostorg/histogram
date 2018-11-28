@@ -54,7 +54,7 @@ public:
            MetaData m = MetaData())
       : base_type(n, std::move(m)), phase_(phase), delta_(perimeter / n) {
     if (!std::isfinite(phase) || !(perimeter > 0))
-      boost::throw_exception(std::invalid_argument("invalid phase or perimeter"));
+      BOOST_THROW_EXCEPTION(std::invalid_argument("invalid phase or perimeter"));
   }
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
@@ -63,7 +63,7 @@ public:
       , phase_(src.phase_)
       , delta_(src.delta_ * merge) {
     if (!(begin == 0 && end == src.size()))
-      boost::throw_exception(std::invalid_argument("cannot shrink circular axis"));
+      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
   circular() = default;

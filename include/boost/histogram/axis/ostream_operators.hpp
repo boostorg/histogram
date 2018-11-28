@@ -191,7 +191,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
         detail::static_if<detail::is_streamable<A>>(
             [&os](const auto& x) { os << x; },
             [](const auto&) {
-              boost::throw_exception(std::runtime_error(
+              BOOST_THROW_EXCEPTION(std::runtime_error(
                   detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
                               " is not streamable")));
             },

@@ -133,7 +133,7 @@ public:
   /// Returns the value for the bin index (performs a range check).
   const value_type& value(unsigned idx) const {
     if (idx >= base_type::size())
-      boost::throw_exception(std::out_of_range("category index out of range"));
+      BOOST_THROW_EXCEPTION(std::out_of_range("category index out of range"));
     return x_.first()[idx];
   }
 

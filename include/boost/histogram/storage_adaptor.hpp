@@ -149,7 +149,7 @@ struct array_impl {
 
   void reset(std::size_t n) {
     if (n > container_.max_size()) // for std::array
-      boost::throw_exception(std::runtime_error(
+      BOOST_THROW_EXCEPTION(std::runtime_error(
           detail::cat("size ", n, " exceeds maximum capacity ", container_.max_size())));
     std::fill_n(container_.begin(), n, value_type());
     size_ = n;
