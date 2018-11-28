@@ -7,6 +7,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
+#include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/literals.hpp>
@@ -104,6 +105,22 @@ void run_tests() {
     BOOST_TEST_EQ(it->value, 0);
     ++it;
     BOOST_TEST(it == ind.end());
+  }
+
+  {
+    auto ax = axis::variable<>({0.0, 0.1, 0.3, 0.6});
+    auto ay = axis::integer<int>(0, 2);
+    auto az = ax;
+    auto h = make_s(Tag(), std::vector<int>(), ax, ay, az);
+
+    // fill uniformly
+    for (auto x : indexed(h)) {
+      h(x.bin(0).center(), x.bin(1).value(), x.bin(2).center());
+    }
+
+    for (auto x : indexed(h)) {
+      BOOST_TEST_EQ(x.density(), x.value / (x.bin(0).width() * x.bin(2).width()));
+    }
   }
 }
 

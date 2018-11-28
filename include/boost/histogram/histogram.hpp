@@ -30,8 +30,9 @@ public:
   using axes_type = Axes;
   using storage_type = Storage;
   using value_type = typename storage_type::value_type;
-  using iterator = typename storage_type::const_iterator; // for boost::range_iterator
-  using const_iterator = typename storage_type::const_iterator;
+  // typedefs for boost::range_iterator
+  using iterator = decltype(std::declval<storage_type&>().begin());
+  using const_iterator = decltype(std::declval<const storage_type&>().begin());
 
   histogram() = default;
   histogram(const histogram& rhs) = default;

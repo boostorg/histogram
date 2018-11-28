@@ -20,6 +20,18 @@
 #include <type_traits>
 #include <vector>
 
+/* Most of the histogram code is generic and works for any number of axes. Buffers with a
+ * fixed maximum capacity are used in some places, which have a size equal to the rank of
+ * a histogram. The buffers are statically allocated to improve performance, which means
+ * that they need a preset maximum capacity. 32 seems like a safe upper limit for the rank
+ * (you can nevertheless increase it here if necessary): the simplest non-trivial axis has
+ * 2 bins; even if counters are used which need only a byte of storage per bin, this still
+ * corresponds to 4 GB of storage.
+ */
+#ifndef BOOST_HISTOGRAM_DETAIL_AXES_LIMIT
+#define BOOST_HISTOGRAM_DETAIL_AXES_LIMIT 32
+#endif
+
 namespace boost {
 namespace histogram {
 namespace detail {
@@ -151,10 +163,11 @@ void for_each_axis(const T& axes, F&& f) {
   for (const auto& x : axes) { axis::visit(std::forward<F>(f), x); }
 }
 
-template <typename T, typename A>
-using make_axes_buffer = boost::container::static_vector<
-    T, mp11::mp_eval_if_c<!(has_fixed_size<A>::value), mp11::mp_size_t<axis::limit>,
-                          std::tuple_size, A>::value>;
+template <typename Axes, typename T>
+using axes_buffer = boost::container::static_vector<
+    T, mp11::mp_eval_if_c<!(has_fixed_size<Axes>::value),
+                          mp11::mp_size_t<BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>,
+                          std::tuple_size, Axes>::value>;
 
 template <typename T>
 auto make_empty_axes(const T& t) {

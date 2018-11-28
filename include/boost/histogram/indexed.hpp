@@ -7,13 +7,13 @@
 #ifndef BOOST_HISTOGRAM_INDEXED_HPP
 #define BOOST_HISTOGRAM_INDEXED_HPP
 
-#include <boost/container/static_vector.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/mp11.hpp>
 #include <utility>
 
 namespace boost {
@@ -29,8 +29,8 @@ class indexed_range {
     std::size_t stride;
     int underflow;
   };
-  using strides_type = detail::make_axes_buffer<stride_t, axes_type>;
-  using index_type = detail::make_axes_buffer<int, axes_type>;
+  using strides_type = detail::axes_buffer<axes_type, stride_t>;
+  using index_type = detail::axes_buffer<axes_type, int>;
   using value_type = decltype(std::declval<storage_type&>()[0]);
 
 public:
@@ -42,11 +42,20 @@ public:
     decltype(auto) bin(mp11::mp_size_t<N>) const {
       return detail::axis_get<N>(axes_)[(*this)[N]];
     }
+
     decltype(auto) bin(unsigned d) const {
       return detail::axis_get(axes_, d)[(*this)[d]];
     }
 
-    value_type value;
+    double density() const {
+      double x = 1;
+      auto it = this->begin();
+      detail::for_each_axis(axes_,
+                            [&](const auto& a) { x *= axis::traits::width(a, *it++); });
+      return value / x;
+    }
+
+    const value_type value;
 
   protected:
     index_value(const axes_type& a, value_type v)

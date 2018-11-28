@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_ALGORITHM_REDUCE_HPP
 
 #include <boost/assert.hpp>
-#include <boost/container/static_vector.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/index_mapper.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -66,8 +65,7 @@ reduce_option_type rebin(unsigned merge) { return rebin(0, merge); }
 
 template <typename A, typename S, typename C, typename = detail::requires_iterable<C>>
 histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {
-  auto options =
-      boost::container::static_vector<reduce_option_type, axis::limit>(h.rank());
+  auto options = detail::axes_buffer<A, reduce_option_type>(h.rank());
   for (const auto& o : c) {
     auto& opt_ref = options[o.iaxis];
     if (opt_ref) throw std::invalid_argument("indices must be unique");
@@ -78,7 +76,7 @@ histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {
 
   auto r_axes = detail::make_empty_axes(unsafe_access::axes(h));
 
-  detail::index_mapper_reduce im(h.rank());
+  detail::index_mapper_reduce<A> im(h.rank());
   auto im_iter = im.begin();
   std::size_t stride[2] = {1, 1};
   unsigned iaxis = 0;

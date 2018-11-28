@@ -16,16 +16,14 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-struct index_mapper_item {
-  std::size_t stride[2];
-};
+template <typename A>
+struct index_mapper {
+  struct item {
+    std::size_t stride[2];
+  };
+  using buffer_type = axes_buffer<A, item>;
 
-class index_mapper
-    : public boost::container::static_vector<index_mapper_item, axis::limit> {
-public:
-  std::size_t total = 1;
-
-  index_mapper(unsigned dim) : static_vector(dim) {}
+  index_mapper(unsigned dim) : buffer(dim) {}
 
   template <typename T, typename U>
   void operator()(T& dst, const U& src) {
@@ -42,19 +40,26 @@ public:
       dst.add(j, src[i]);
     }
   }
-};
 
-struct index_mapper_reduce_item {
-  std::size_t stride[2];
-  int underflow[2], overflow[2], begin, end, merge;
-};
+  decltype(auto) begin() { return buffer.begin(); }
+  decltype(auto) end() { return buffer.end(); }
 
-class index_mapper_reduce
-    : public boost::container::static_vector<index_mapper_reduce_item, axis::limit> {
-public:
+  decltype(auto) operator[](unsigned i) { return buffer[i]; }
+
+  buffer_type buffer;
   std::size_t total = 1;
+};
 
-  index_mapper_reduce(unsigned dim) : static_vector(dim) {}
+template <typename A>
+class index_mapper_reduce {
+public:
+  struct item {
+    std::size_t stride[2];
+    int underflow[2], overflow[2], begin, end, merge;
+  };
+  using buffer_type = axes_buffer<A, item>;
+
+  index_mapper_reduce(unsigned dim) : buffer(dim) {}
 
   template <typename T, typename U>
   void operator()(T& dst, const U& src) {
@@ -80,6 +85,14 @@ public:
       if (!drop) dst.add(j, src[i]);
     }
   }
+
+  decltype(auto) begin() { return buffer.begin(); }
+  decltype(auto) end() { return buffer.end(); }
+
+  decltype(auto) operator[](unsigned i) { return buffer[i]; }
+
+  buffer_type buffer;
+  std::size_t total = 1;
 };
 } // namespace detail
 } // namespace histogram
