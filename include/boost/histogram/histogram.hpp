@@ -12,6 +12,7 @@
 #include <boost/histogram/arithmetic_operators.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/nodiscard.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
 #include <functional>
@@ -22,6 +23,7 @@
 namespace boost {
 namespace histogram {
 
+BOOST_HISTOGRAM_DETAIL_NODISCARD
 template <typename Axes, typename Storage>
 class histogram {
   static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
