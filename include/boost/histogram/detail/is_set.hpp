@@ -10,7 +10,6 @@
 #include <boost/container/flat_set.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/histogram_fwd.hpp> // for axis::limit
 
 namespace boost {
 namespace histogram {
@@ -18,7 +17,7 @@ namespace detail {
 template <class Iterator>
 bool is_set(Iterator begin, Iterator end) {
   using T = iterator_value_type<Iterator>;
-  using C = boost::container::static_vector<T, axis::limit>;
+  using C = boost::container::static_vector<T, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>;
   boost::container::flat_set<T, std::less<T>, C> s(begin, end);
   return static_cast<std::size_t>(std::distance(begin, end)) == s.size();
 }

@@ -39,7 +39,7 @@ auto project(const histogram<A, S>& h, mp11::mp_size_t<I> n, Ns... ns) {
           [&h](auto) { return S(unsafe_access::storage(h).get_allocator()); },
           [](auto) { return S(); }, 0));
 
-  detail::index_mapper im(h.rank());
+  detail::index_mapper<A> im(h.rank());
   auto iter = im.begin();
   std::size_t s = 1;
   h.for_each_axis([&](const auto& a) {
@@ -87,7 +87,7 @@ auto project(const histogram<A, S>& h, C c) {
       axes);
   r_axes.reserve(std::distance(begin, end));
 
-  detail::index_mapper im(h.rank());
+  detail::index_mapper<A> im(h.rank());
   auto iter = im.begin();
   std::size_t stride = 1;
   h.for_each_axis([&](const auto& a) {

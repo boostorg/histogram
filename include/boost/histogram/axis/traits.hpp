@@ -61,6 +61,19 @@ unsigned extend(const T& t) noexcept {
   return t.size() + (opt & option_type::underflow) + (opt & option_type::overflow);
 }
 
+template <typename T>
+double width(const T& t, unsigned idx) {
+  return detail::static_if<detail::has_method_value<detail::unqual<T>, double>>(
+      [&](const auto& a) {
+        using Arg = detail::unqual<detail::arg_type<detail::unqual<decltype(a)>>>;
+        return detail::static_if<std::is_integral<Arg>>(
+            [&](const auto&) -> double { return 1; },
+            [&](const auto& a) -> double { return a.value(idx + 1) - a.value(idx); }, a);
+      },
+      [](const auto&) -> double { throw std::runtime_error("axis has no value method"); },
+      t);
+}
+
 } // namespace traits
 } // namespace axis
 } // namespace histogram
