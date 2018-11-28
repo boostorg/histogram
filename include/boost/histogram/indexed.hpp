@@ -22,7 +22,7 @@ namespace histogram {
 
 /// Range over histogram bins with multi-dimensional index.
 template <typename Histogram>
-class indexed_range {
+class BOOST_HISTOGRAM_DETAIL_NODISCARD indexed_range {
   using storage_type = typename Histogram::storage_type;
   using axes_type = typename Histogram::axes_type;
 
@@ -125,7 +125,6 @@ private:
   strides_type strides_;
 };
 
-BOOST_HISTOGRAM_DETAIL_NODISCARD
 template <typename Histogram>
 indexed_range<detail::unqual<Histogram>> indexed(Histogram&& h) {
   return {std::forward<Histogram>(h)};
