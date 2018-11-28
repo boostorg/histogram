@@ -107,10 +107,10 @@ public:
       , min_(this->forward(start))
       , delta_((this->forward(stop) - min_) / base_type::size()) {
     if (!std::isfinite(min_) || !std::isfinite(delta_))
-      boost::throw_exception(
+      BOOST_THROW_EXCEPTION(
           std::invalid_argument("forward transform of start or stop invalid"));
     if (delta_ == 0)
-      boost::throw_exception(
+      BOOST_THROW_EXCEPTION(
           std::invalid_argument("range of forward transformed axis is zero"));
   }
 

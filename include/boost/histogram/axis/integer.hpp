@@ -56,7 +56,7 @@ public:
   integer(const integer& src, unsigned begin, unsigned end, unsigned merge)
       : base_type(end - begin, src.metadata()), min_(src.min_ + begin) {
     if (merge > 1)
-      boost::throw_exception(std::invalid_argument("cannot merge bins for integer axis"));
+      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for integer axis"));
   }
 
   integer() = default;

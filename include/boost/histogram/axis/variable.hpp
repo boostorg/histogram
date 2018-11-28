@@ -63,7 +63,7 @@ public:
         while (begin != end) {
           if (*begin <= *xit) {
             ++xit; // to make sure catch code works
-            boost::throw_exception(
+            BOOST_THROW_EXCEPTION(
                 std::invalid_argument("input sequence must be strictly ascending"));
           }
           ++xit;

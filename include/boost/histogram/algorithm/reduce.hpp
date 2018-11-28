@@ -33,8 +33,8 @@ struct reduce_option_type {
   reduce_option_type(unsigned i, double l, double u, unsigned m)
       : iaxis(i), lower(l), upper(u), merge(m) {
     if (lower == upper)
-      boost::throw_exception(std::invalid_argument("lower != upper required"));
-    if (merge == 0) boost::throw_exception(std::invalid_argument("merge > 0 required"));
+      BOOST_THROW_EXCEPTION(std::invalid_argument("lower != upper required"));
+    if (merge == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("merge > 0 required"));
   }
 
   operator bool() const noexcept { return merge; }
@@ -70,7 +70,7 @@ histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {
   auto options = detail::axes_buffer<A, reduce_option_type>(h.rank());
   for (const auto& o : c) {
     auto& opt_ref = options[o.iaxis];
-    if (opt_ref) boost::throw_exception(std::invalid_argument("indices must be unique"));
+    if (opt_ref) BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
     opt_ref.lower = o.lower;
     opt_ref.upper = o.upper;
     opt_ref.merge = o.merge;

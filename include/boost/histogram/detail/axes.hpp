@@ -114,7 +114,7 @@ void axes_assign(std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
   static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
       [](auto& a, const auto& b) { a = b; },
       [](auto&, const auto&) {
-        boost::throw_exception(
+        BOOST_THROW_EXCEPTION(
             std::invalid_argument("cannot assign axes, types do not match"));
       },
       t, u);
@@ -239,7 +239,7 @@ void linearize1(optional_index& out, const A& axis, const U& u) {
         linearize(out, a_size, a_shape, j);
       },
       [&](const U&) {
-        boost::throw_exception(std::invalid_argument(
+        BOOST_THROW_EXCEPTION(std::invalid_argument(
             detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
                         ": cannot convert argument of type ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
@@ -293,7 +293,7 @@ optional_index args_to_index(const T& axes, const U& args) {
     linearize1(idx, axes[0], sub_tuple<Offset, N>(args));
   else {
     if (m != N)
-      boost::throw_exception(
+      BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
     mp11::mp_for_each<mp11::mp_iota_c<N>>(
         [&](auto I) { linearize1(idx, axes[I], std::get<(Offset + I)>(args)); });
@@ -378,8 +378,7 @@ void fill_impl(S& storage, const T& axes, const std::tuple<Us...>& args) {
 template <typename A, typename... Us>
 optional_index at_impl(const A& axes, const std::tuple<Us...>& args) {
   if (axes_size(axes) != sizeof...(Us))
-    boost::throw_exception(
-        std::invalid_argument("number of arguments != histogram rank"));
+    BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto I) {
     linearize2(idx, axis_get<I>(axes), static_cast<int>(std::get<I>(args)));
