@@ -35,21 +35,31 @@ struct get_polymorphic_bin : public boost::static_visitor<axis::polymorphic_bin<
 
   template <typename A>
   T operator()(const A& a) const {
-    return detail::static_if<detail::has_method_value<A, double>>(
-        [this](const auto& a) -> T {
-          using Arg = detail::unqual<detail::arg_type<detail::unqual<decltype(a)>>>;
-          const auto i = idx;
-          const auto x = a.value(i);
-          return detail::static_if<std::is_integral<Arg>>(
-              [&](auto) { return T(i, x); },
-              [&](auto) { return T(i, x, a.value(i + 1), a.value(i + 0.5)); }, 0);
-        },
-        [](const auto&) -> T {
-          throw std::runtime_error(
-              cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                  " has no value method or return type is not convertible to double"));
-        },
-        a);
+    // using static_if produces internal compiler error in gcc-5.5 here
+    return impl(a, mp11::mp_int<detail::has_method_value<A, double>::value>());
+  }
+
+  template <typename A>
+  T impl(const A&, mp11::mp_int<0>) const {
+    throw std::runtime_error(
+        cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+            " has no value method with return type convertible to double"));
+  }
+
+  template <typename A>
+  T impl(const A& a, mp11::mp_int<1>) const {
+    using Arg = detail::unqual<detail::arg_type<detail::unqual<A>>>;
+    return impl(a, mp11::mp_int<(2 + std::is_floating_point<Arg>::value)>());
+  }
+
+  template <typename A>
+  T impl(const A& a, mp11::mp_int<2>) const {
+    return T(idx, a.value(idx));
+  }
+
+  template <typename A>
+  T impl(const A& a, mp11::mp_int<3>) const {
+    return T(idx, a.value(idx), a.value(idx + 1), a.value(idx + 0.5));
   }
 };
 
