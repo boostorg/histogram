@@ -23,9 +23,8 @@
 namespace boost {
 namespace histogram {
 
-BOOST_HISTOGRAM_DETAIL_NODISCARD
 template <typename Axes, typename Storage>
-class histogram {
+class BOOST_HISTOGRAM_DETAIL_NODISCARD histogram {
   static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
 
 public:
