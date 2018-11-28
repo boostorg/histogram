@@ -9,6 +9,7 @@
 
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/throw_exception.hpp>
 #include <utility>
 
 namespace boost {
@@ -62,6 +63,22 @@ unsigned extend(const T& t) noexcept {
 }
 
 template <typename T>
+double value(const T& t, double idx) {
+  return detail::static_if<detail::has_method_value<detail::unqual<T>, double>>(
+      [&](const auto& a) {
+        using Arg = detail::unqual<detail::arg_type<detail::unqual<decltype(a)>>>;
+        return detail::static_if<std::is_integral<Arg>>(
+            [&](const auto& a) -> double { return a.value(static_cast<int>(idx)); },
+            [&](const auto& a) -> double { return a.value(idx); }, a);
+      },
+      [](const auto&) -> double {
+        boost::throw_exception(std::runtime_error(
+            "axis has no value method or return type is not convertible to double"));
+      },
+      t);
+}
+
+template <typename T>
 double width(const T& t, unsigned idx) {
   return detail::static_if<detail::has_method_value<detail::unqual<T>, double>>(
       [&](const auto& a) {
@@ -70,7 +87,10 @@ double width(const T& t, unsigned idx) {
             [&](const auto&) -> double { return 1; },
             [&](const auto& a) -> double { return a.value(idx + 1) - a.value(idx); }, a);
       },
-      [](const auto&) -> double { throw std::runtime_error("axis has no value method"); },
+      [](const auto&) -> double {
+        boost::throw_exception(std::runtime_error(
+            "axis has no value method or return type is not convertible to double"));
+      },
       t);
 }
 

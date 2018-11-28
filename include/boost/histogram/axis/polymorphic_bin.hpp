@@ -18,7 +18,8 @@ namespace axis {
   Holds the bin data of a axis::variant.
 
   The interface is a superset of the `value_bin_view` and `interval_bin_view`
-  classes. Calling the wrong set of methods throws `std::runtime_error`.
+  classes. The methods value() and lower() return the same number. For a value bin,
+  upper() and lower() and center() return the same number, width() returns zero.
 
   This is not a view like interval_bin_view or value_bin_view for two reasons.
   - Sequential calls to lower() and upper() would have to each loop through

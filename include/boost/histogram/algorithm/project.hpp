@@ -13,6 +13,7 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/mp11.hpp>
+#include <boost/throw_exception.hpp>
 #include <stdexcept>
 
 namespace boost {
@@ -71,8 +72,8 @@ template <typename A, typename S, typename C, typename = detail::requires_axis_v
 auto project(const histogram<A, S>& h, C c) {
   using H = histogram<A, S>;
 
-  auto begin = std::begin(c);
-  auto end = std::end(c);
+  using std::begin;
+  using std::end;
 
   const auto& axes = unsafe_access::axes(h);
   auto r_axes = detail::static_if<detail::has_allocator<A>>(
@@ -85,7 +86,7 @@ auto project(const histogram<A, S>& h, C c) {
         return T();
       },
       axes);
-  r_axes.reserve(std::distance(begin, end));
+  r_axes.reserve(std::distance(begin(c), end(c)));
 
   detail::index_mapper<A> im(h.rank());
   auto iter = im.begin();
@@ -100,14 +101,14 @@ auto project(const histogram<A, S>& h, C c) {
   });
 
   stride = 1;
-  for (auto it = begin; it != end; ++it) {
-    r_axes.emplace_back(axes[*it]);
-    auto& stride_ref = im[*it].stride[1];
+  for (auto idx : c) {
+    r_axes.emplace_back(axes[idx]);
+    auto& stride_ref = im[idx].stride[1];
     if (stride_ref)
-      throw std::invalid_argument("indices must be unique");
+      boost::throw_exception(std::invalid_argument("indices must be unique"));
     else
       stride_ref = stride;
-    stride *= axis::traits::extend(axes[*it]);
+    stride *= axis::traits::extend(axes[idx]);
   }
 
   auto r_h = H(std::move(r_axes),

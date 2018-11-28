@@ -17,6 +17,7 @@
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/throw_exception.hpp>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -62,7 +63,8 @@ public:
         while (begin != end) {
           if (*begin <= *xit) {
             ++xit; // to make sure catch code works
-            throw std::invalid_argument("input sequence must be strictly ascending");
+            boost::throw_exception(
+                std::invalid_argument("input sequence must be strictly ascending"));
           }
           ++xit;
           AT::construct(x_.second(), xit, *begin++);

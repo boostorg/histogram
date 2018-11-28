@@ -11,6 +11,7 @@
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/throw_exception.hpp>
 #include <limits>
 #include <stdexcept>
 #include <utility>
@@ -45,12 +46,13 @@ public:
 
 protected:
   base(unsigned n, metadata_type m) : size_meta_(n, std::move(m)) {
-    if (size() == 0) { throw std::invalid_argument("bins > 0 required"); }
+    if (size() == 0) boost::throw_exception(std::invalid_argument("bins > 0 required"));
     const auto max_index = static_cast<unsigned>(std::numeric_limits<int>::max() -
                                                  (options() & option_type::underflow) -
                                                  (options() & option_type::overflow));
     if (size() > max_index)
-      throw std::invalid_argument(detail::cat("bins <= ", max_index, " required"));
+      boost::throw_exception(
+          std::invalid_argument(detail::cat("bins <= ", max_index, " required")));
   }
 
   base() : size_meta_(0) {}

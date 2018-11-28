@@ -16,6 +16,7 @@
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/throw_exception.hpp>
 #include <iomanip>
 #include <ostream>
 #include <type_traits>
@@ -190,9 +191,9 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
         detail::static_if<detail::is_streamable<A>>(
             [&os](const auto& x) { os << x; },
             [](const auto&) {
-              throw std::runtime_error(
+              boost::throw_exception(std::runtime_error(
                   detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                              " is not streamable"));
+                              " is not streamable")));
             },
             x);
       },

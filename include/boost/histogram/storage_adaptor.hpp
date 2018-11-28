@@ -14,6 +14,7 @@
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/weight.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/throw_exception.hpp>
 #include <stdexcept>
 #include <type_traits>
 
@@ -148,8 +149,8 @@ struct array_impl {
 
   void reset(std::size_t n) {
     if (n > container_.max_size()) // for std::array
-      throw std::runtime_error(
-          detail::cat("size ", n, " exceeds maximum capacity ", container_.max_size()));
+      boost::throw_exception(std::runtime_error(
+          detail::cat("size ", n, " exceeds maximum capacity ", container_.max_size())));
     std::fill_n(container_.begin(), n, value_type());
     size_ = n;
   }

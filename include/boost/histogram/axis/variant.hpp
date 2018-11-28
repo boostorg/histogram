@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_VARIANT_HPP
 #define BOOST_HISTOGRAM_AXIS_VARIANT_HPP
 
-#include <boost/container/string.hpp> // default meta data
 #include <boost/core/typeinfo.hpp>
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/iterator.hpp>
@@ -17,6 +16,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
+#include <boost/throw_exception.hpp>
 #include <boost/variant.hpp>
 #include <ostream>
 #include <stdexcept>
@@ -41,9 +41,9 @@ struct get_polymorphic_bin : public boost::static_visitor<axis::polymorphic_bin<
 
   template <typename A>
   T impl(const A&, std::false_type) const {
-    throw std::runtime_error(
+    boost::throw_exception(std::runtime_error(
         cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-            " has no value method with return type convertible to double"));
+            " has no value method with return type convertible to double")));
   }
 
   template <typename A>
@@ -119,10 +119,10 @@ public:
           detail::static_if<mp11::mp_contains<types, U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
-                throw std::runtime_error(
-                    detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
-                                " is not a bounded type of ",
-                                boost::core::demangled_name(BOOST_CORE_TYPEID(variant))));
+                boost::throw_exception(std::runtime_error(detail::cat(
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
+                    " is not a bounded type of ",
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(variant)))));
               },
               u);
         },
@@ -145,13 +145,13 @@ public:
           return detail::static_if<std::is_same<U, const metadata_type&>>(
               [](const auto& x) -> const metadata_type& { return traits::metadata(x); },
               [](const auto&) -> const metadata_type& {
-                throw std::runtime_error(detail::cat(
+                boost::throw_exception(std::runtime_error(detail::cat(
                     "cannot return metadata of type ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     " through axis::variant interface which uses type ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(const metadata_type&)),
                     "; use boost::histogram::axis::get to obtain a reference "
-                    "of this axis type"));
+                    "of this axis type")));
               },
               x);
         },
@@ -165,11 +165,11 @@ public:
           return detail::static_if<std::is_same<U, metadata_type&>>(
               [](auto& x) -> metadata_type& { return traits::metadata(x); },
               [](auto&) -> metadata_type& {
-                throw std::runtime_error(detail::cat(
+                boost::throw_exception(std::runtime_error(detail::cat(
                     "cannot return metadata of type ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     " through axis::variant interface which uses type ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type&))));
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type&)))));
               },
               x);
         },
@@ -186,10 +186,10 @@ public:
           return detail::static_if<std::is_convertible<U, arg_t>>(
               [&x](const auto& a) -> int { return a(x); },
               [](const auto&) -> int {
-                throw std::invalid_argument(detail::cat(
+                boost::throw_exception(std::invalid_argument(detail::cat(
                     "cannot convert ", boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
                     " to ", boost::core::demangled_name(BOOST_CORE_TYPEID(arg_t)),
-                    " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A))));
+                    " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A)))));
               },
               a);
         },
@@ -197,23 +197,9 @@ public:
   }
 
   // Only works for axes with value method that returns something convertible to
-  // double and will throw a runtime_error otherwise
+  // double and will throw a runtime_error otherwise, see axis::traits::value
   double value(double idx) const {
-    return visit(
-        [idx](const auto& a) -> double {
-          using A = detail::unqual<decltype(a)>;
-          return detail::static_if<detail::has_method_value<A, double>>(
-              [idx](const auto& a) -> double {
-                return static_cast<double>(a.value(idx));
-              },
-              [](const auto&) -> double {
-                throw std::runtime_error(detail::cat(
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                    " has no value method or return type is not convertible to double"));
-              },
-              a);
-        },
-        *this);
+    return visit([idx](const auto& a) { return axis::traits::value(a, idx); }, *this);
   }
 
   auto operator[](const int idx) const {
