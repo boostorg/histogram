@@ -34,8 +34,6 @@ class indexed_range {
   using value_type = decltype(std::declval<storage_type&>()[0]);
 
 public:
-  class const_iterator;
-
   class index_value : public index_type {
   public:
     template <std::size_t N>
@@ -57,13 +55,11 @@ public:
 
     const value_type value;
 
-  protected:
     index_value(const axes_type& a, value_type v)
         : index_type(detail::axes_size(a)), value(v), axes_(a) {}
 
+  private:
     const axes_type& axes_;
-
-    friend class const_iterator;
   };
 
   class const_iterator

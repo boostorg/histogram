@@ -36,29 +36,29 @@ struct get_polymorphic_bin : public boost::static_visitor<axis::polymorphic_bin<
   template <typename A>
   T operator()(const A& a) const {
     // using static_if produces internal compiler error in gcc-5.5 here
-    return impl(a, mp11::mp_int<detail::has_method_value<A, double>::value>());
+    return impl(a, detail::has_method_value<A, double>());
   }
 
   template <typename A>
-  T impl(const A&, mp11::mp_int<0>) const {
+  T impl(const A&, std::false_type) const {
     throw std::runtime_error(
         cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
             " has no value method with return type convertible to double"));
   }
 
   template <typename A>
-  T impl(const A& a, mp11::mp_int<1>) const {
+  T impl(const A& a, std::true_type) const {
     using Arg = detail::unqual<detail::arg_type<detail::unqual<A>>>;
-    return impl(a, mp11::mp_int<(2 + std::is_floating_point<Arg>::value)>());
+    return impl(a, std::true_type(), std::is_floating_point<Arg>());
   }
 
   template <typename A>
-  T impl(const A& a, mp11::mp_int<2>) const {
+  T impl(const A& a, std::true_type, std::false_type) const {
     return T(idx, a.value(idx));
   }
 
   template <typename A>
-  T impl(const A& a, mp11::mp_int<3>) const {
+  T impl(const A& a, std::true_type, std::true_type) const {
     return T(idx, a.value(idx), a.value(idx + 1), a.value(idx + 0.5));
   }
 };
