@@ -37,18 +37,6 @@ struct VisitorTestFunctor {
 };
 
 int main() {
-  // literals
-  {
-    auto j0 = 0_c;
-    auto j3 = 3_c;
-    auto j10 = 10_c;
-    auto j213 = 213_c;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<i0, decltype(j0)>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<i3, decltype(j3)>));
-    BOOST_TEST_EQ(decltype(j10)::value, 10);
-    BOOST_TEST_EQ(decltype(j213)::value, 213);
-  }
-
   // has_method_value
   {
     struct A {};

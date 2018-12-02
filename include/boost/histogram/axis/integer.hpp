@@ -53,7 +53,7 @@ public:
       , min_(start) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin.
-  integer(const integer& src, unsigned begin, unsigned end, unsigned merge)
+  integer(const integer& src, int begin, int end, unsigned merge)
       : base_type(end - begin, src.metadata()), min_(src.min_ + begin) {
     if (merge > 1)
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for integer axis"));

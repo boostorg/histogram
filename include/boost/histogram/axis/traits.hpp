@@ -57,7 +57,7 @@ int overflow_index(const T& t) noexcept {
 }
 
 template <typename T>
-unsigned extend(const T& t) noexcept {
+int extend(const T& t) noexcept {
   const auto opt = options(t);
   return t.size() + (opt & option_type::underflow) + (opt & option_type::overflow);
 }
@@ -80,7 +80,7 @@ double value(const T& t, double idx) {
 }
 
 template <typename T>
-double width(const T& t, unsigned idx) {
+double width(const T& t, int idx) {
   return detail::static_if<detail::has_method_value<detail::unqual<T>, double>>(
       [&](const auto& a) {
         using Arg = detail::unqual<detail::arg_type<detail::unqual<decltype(a)>>>;

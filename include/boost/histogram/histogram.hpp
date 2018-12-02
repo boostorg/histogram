@@ -10,9 +10,9 @@
 #include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/histogram/arithmetic_operators.hpp>
+#include <boost/histogram/attribute.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/nodiscard.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/mp11.hpp>
 #include <boost/throw_exception.hpp>
@@ -25,7 +25,7 @@ namespace boost {
 namespace histogram {
 
 template <typename Axes, typename Storage>
-class BOOST_HISTOGRAM_DETAIL_NODISCARD histogram {
+class BOOST_HISTOGRAM_NODISCARD histogram {
   static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
 
 public:
@@ -93,7 +93,7 @@ public:
   }
 
   /// Number of axes (dimensions) of histogram
-  std::size_t rank() const noexcept { return detail::axes_size(axes_); }
+  unsigned rank() const noexcept { return detail::axes_size(axes_); }
 
   /// Total number of bins in the histogram (including underflow/overflow)
   std::size_t size() const noexcept { return storage_.size(); }
@@ -102,33 +102,33 @@ public:
   void reset() { storage_.reset(storage_.size()); }
 
   /// Get N-th axis (const version)
-  template <std::size_t N>
-  decltype(auto) axis(mp11::mp_size_t<N>) const {
+  template <unsigned N>
+  decltype(auto) axis(std::integral_constant<unsigned, N>) const {
     detail::rank_check(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis
-  template <std::size_t N>
-  decltype(auto) axis(mp11::mp_size_t<N>) {
+  template <unsigned N>
+  decltype(auto) axis(std::integral_constant<unsigned, N>) {
     detail::rank_check(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get first axis (convenience for 1-d histograms, const version)
-  decltype(auto) axis() const { return axis(mp11::mp_size_t<0>()); }
+  decltype(auto) axis() const { return axis(std::integral_constant<unsigned, 0>()); }
 
   /// Get first axis (convenience for 1-d histograms)
-  decltype(auto) axis() { return axis(mp11::mp_size_t<0>()); }
+  decltype(auto) axis() { return axis(std::integral_constant<unsigned, 0>()); }
 
   /// Get N-th axis with runtime index (const version)
-  decltype(auto) axis(std::size_t i) const {
+  decltype(auto) axis(unsigned i) const {
     detail::rank_check(axes_, i);
     return detail::axis_get(axes_, i);
   }
 
   /// Get N-th axis with runtime index
-  decltype(auto) axis(std::size_t i) {
+  decltype(auto) axis(unsigned i) {
     detail::rank_check(axes_, i);
     return detail::axis_get(axes_, i);
   }

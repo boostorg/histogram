@@ -172,7 +172,7 @@ template <typename C, typename T, typename U, typename A, typename M, option_typ
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const category<U, A, M, O>& a) {
   os << "category(";
-  for (unsigned i = 0, n = a.size(); i < n; ++i) {
+  for (int i = 0, n = a.size(); i < n; ++i) {
     detail::stream_value(os, a.value(i));
     os << (i == (a.size() - 1) ? "" : ", ");
   }

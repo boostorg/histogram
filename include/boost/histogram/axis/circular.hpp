@@ -58,7 +58,7 @@ public:
   }
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
-  circular(const circular& src, unsigned begin, unsigned end, unsigned merge)
+  circular(const circular& src, int begin, int end, unsigned merge)
       : base_type(src.size() / merge, src.metadata())
       , phase_(src.phase_)
       , delta_(src.delta_ * merge) {
