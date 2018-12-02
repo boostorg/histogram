@@ -4,7 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/histogram.hpp>
+#include <boost/histogram/axis.hpp>
 #include <iostream>
 
 #define SHOW_SIZE(x) std::cout << #x << " " << sizeof(x) << std::endl

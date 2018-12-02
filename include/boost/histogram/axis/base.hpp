@@ -27,7 +27,7 @@ public:
   using metadata_type = MetaData;
 
   /// Returns the number of bins, without extra bins.
-  unsigned size() const noexcept { return size_meta_.first(); }
+  int size() const noexcept { return size_meta_.first(); }
   /// Returns the options.
   constexpr option_type options() const noexcept { return Options; }
   /// Returns the metadata.
@@ -47,9 +47,9 @@ public:
 protected:
   base(unsigned n, metadata_type m) : size_meta_(n, std::move(m)) {
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
-    const auto max_index = static_cast<unsigned>(std::numeric_limits<int>::max() -
-                                                 (options() & option_type::underflow) -
-                                                 (options() & option_type::overflow));
+    const auto max_index = std::numeric_limits<int>::max() -
+                           (options() & option_type::underflow) -
+                           (options() & option_type::overflow);
     if (size() > max_index)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument(detail::cat("bins <= ", max_index, " required")));

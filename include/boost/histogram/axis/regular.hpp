@@ -126,7 +126,7 @@ public:
       : regular({}, n, start, stop, std::move(m)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
-  regular(const regular& src, unsigned begin, unsigned end, unsigned merge)
+  regular(const regular& src, int begin, int end, unsigned merge)
       : base_type((end - begin) / merge, src.metadata())
       , transform_type(src.transform())
       , min_(this->forward(src.value(begin)))

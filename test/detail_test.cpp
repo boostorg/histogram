@@ -14,14 +14,26 @@
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/is_set.hpp>
+#include <boost/histogram/literals.hpp>
 #include <tuple>
 #include <vector>
 #include "utility_meta.hpp"
 
 using namespace boost::histogram;
+using namespace boost::histogram::literals;
 
 int main() {
   BOOST_TEST_EQ(detail::cat("foo", 1, "bar"), "foo1bar");
+
+  // literals
+  {
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<std::integral_constant<unsigned, 0>, decltype(0_c)>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<std::integral_constant<unsigned, 3>, decltype(3_c)>));
+    BOOST_TEST_EQ(decltype(10_c)::value, 10);
+    BOOST_TEST_EQ(decltype(213_c)::value, 213);
+  }
 
   // sequence equality
   {
@@ -108,13 +120,13 @@ int main() {
     using boost::mp11::mp_list;
     axis::integer<> a0(0, 1), a1(1, 2), a2(2, 3);
     auto axes = std::make_tuple(a0, a1, a2);
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, i0()), std::make_tuple(a0));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, i1()), std::make_tuple(a1));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, i2()), std::make_tuple(a2));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, i0(), i1()), std::make_tuple(a0, a1));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, i0(), i2()), std::make_tuple(a0, a2));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, i1(), i2()), std::make_tuple(a1, a2));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, i0(), i1(), i2()),
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, 0_c), std::make_tuple(a0));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, 1_c), std::make_tuple(a1));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, 2_c), std::make_tuple(a2));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, 0_c, 1_c), std::make_tuple(a0, a1));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, 0_c, 2_c), std::make_tuple(a0, a2));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, 1_c, 2_c), std::make_tuple(a1, a2));
+    BOOST_TEST_EQ(detail::make_sub_axes(axes, 0_c, 1_c, 2_c),
                   std::make_tuple(a0, a1, a2));
   }
 

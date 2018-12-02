@@ -94,7 +94,8 @@ histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {
     im_iter->overflow[0] = axis::traits::overflow_index(a);
 
     const auto& opt = options[iaxis];
-    unsigned begin = 0, end = a.size(), merge = 1;
+    int begin = 0, end = a.size();
+    unsigned merge = 1;
 
     T* tp;
     if (opt) {

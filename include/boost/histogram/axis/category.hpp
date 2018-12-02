@@ -131,8 +131,8 @@ public:
   }
 
   /// Returns the value for the bin index (performs a range check).
-  const value_type& value(unsigned idx) const {
-    if (idx >= base_type::size())
+  const value_type& value(int idx) const {
+    if (idx < 0 || idx >= base_type::size())
       BOOST_THROW_EXCEPTION(std::out_of_range("category index out of range"));
     return x_.first()[idx];
   }

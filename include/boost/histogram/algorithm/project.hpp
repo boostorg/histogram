@@ -15,6 +15,7 @@
 #include <boost/mp11.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -23,13 +24,13 @@ namespace algorithm {
 /**
   Returns a lower-dimensional histogram, summing over removed axes.
 
-  Arguments are the source histogram and compile-time numbers, representing the indices of
-  axes that are kept. Returns a new histogram which only contains the subset of axes.
-  The source histogram is summed over the removed axes.
+  Arguments are the source histogram and compile-time numbers, the remaining indices of
+  the axes. Returns a new histogram which only contains the subset of axes. The source
+  histogram is summed over the removed axes.
 */
-template <typename A, typename S, std::size_t I, typename... Ns>
-auto project(const histogram<A, S>& h, mp11::mp_size_t<I> n, Ns... ns) {
-  using LN = mp11::mp_list<mp11::mp_size_t<I>, Ns...>;
+template <typename A, typename S, unsigned N, typename... Ns>
+auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N> n, Ns... ns) {
+  using LN = mp11::mp_list<decltype(n), Ns...>;
   static_assert(mp11::mp_is_set<LN>::value, "indices must be unique");
 
   const auto& axes = unsafe_access::axes(h);
@@ -65,15 +66,15 @@ auto project(const histogram<A, S>& h, mp11::mp_size_t<I> n, Ns... ns) {
 /**
   Returns a lower-dimensional histogram, summing over removed axes.
 
-  This version accepts an iterable range that represents the indices which are kept.
+  This version accepts a source histogram and an iterable range containing the remaining
+  indices.
 */
-template <typename A, typename S, typename C, typename = detail::requires_axis_vector<A>,
-          typename = detail::requires_iterable<C>>
-auto project(const histogram<A, S>& h, C c) {
-  using H = histogram<A, S>;
+template <typename A, typename S, typename C, typename = detail::requires_iterable<C>>
+auto project(const histogram<A, S>& h, const C& c) {
+  static_assert(detail::is_axis_vector<A>::value,
+                "dynamic version of project requires a histogram with dynamic axis");
 
-  using std::begin;
-  using std::end;
+  using H = histogram<A, S>;
 
   const auto& axes = unsafe_access::axes(h);
   auto r_axes = detail::static_if<detail::has_allocator<A>>(
@@ -86,6 +87,9 @@ auto project(const histogram<A, S>& h, C c) {
         return T();
       },
       axes);
+
+  using std::begin;
+  using std::end;
   r_axes.reserve(std::distance(begin(c), end(c)));
 
   detail::index_mapper<A> im(h.rank());

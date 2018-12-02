@@ -131,7 +131,7 @@ public:
     return *this;
   }
 
-  unsigned size() const {
+  int size() const {
     return visit([](const auto& x) { return x.size(); }, *this);
   }
 

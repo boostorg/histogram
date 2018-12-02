@@ -50,20 +50,21 @@ int main() {
   h(0.1, weight(1.0));
 
   /*
-    Iterate over bins with a fancy histogram iterator
-    - order in which bins are iterated over is an implementation detail
-    - iterator dereferences to histogram::const_reference, which is defined by
-      its storage class; for the default storage it is actually a plain double
-    - idx(N) method returns the index of the N-th axis
-    - bin(N_c) method returns current bin of N-th axis; the suffx _c turns
-      the argument into a compile-time number, which is needed to return
-      a different `bin_type`s for each axis
-    - `bin_type` usually is a semi-open interval representing the bin, whose
-      edges can be accessed with methods `lower()` and `upper()`, but the
-      implementation depends on the axis, please look it up in the reference
+    Iterate over bins with the `indexed` range adaptor to obtain the current bin index and
+    the bin value via a proxy class. By default, under- and overflow bins are skipped.
+    Passing `true` as second argument iterates over all bins. Notes:
+    - The iteration order is an implementation detail. The range adaptor automatically
+      uses the most efficient iteration order.
+    - Access the bin value with the `value` field of the proxy.
+    - Access the bin index with operator[] of the proxy, passing the dimension d.
+    - Access the corresponding bin interval view with `bin(d)`. Use a compile-time number
+      instead of a normal number, if possible, to make this call more performant. The
+      return type of this call depends on the axis (see the axis reference for details),
+      usually a class that represents a semi-open interval, whose edges can be accessed
+      with methods `lower()` and `upper()`.
   */
   std::ostringstream os;
-  for (auto x : indexed(h)) {
+  for (auto x : indexed(h, true)) {
     os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") % x[0] % x.bin(0).lower() %
               x.bin(0).upper() % x.value;
   }

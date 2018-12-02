@@ -8,18 +8,10 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_META_HPP
 
 #include <array>
-#include <boost/core/typeinfo.hpp>
-#include <boost/mp11/integral.hpp>
 #include <boost/mp11/tuple.hpp>
-#include <boost/type.hpp>
 #include <ostream>
 #include <tuple>
 #include <vector>
-
-using i0 = boost::mp11::mp_size_t<0>;
-using i1 = boost::mp11::mp_size_t<1>;
-using i2 = boost::mp11::mp_size_t<2>;
-using i3 = boost::mp11::mp_size_t<3>;
 
 namespace std {
 // never add to std, we only do it here to get ADL working :(
@@ -47,19 +39,5 @@ ostream& operator<<(ostream& os, const array<T, N>& v) {
   return os;
 }
 } // namespace std
-
-namespace boost {
-namespace histogram {
-template <typename T>
-std::string type_name() {
-  return boost::core::demangled_name(BOOST_CORE_TYPEID(boost::type<T>));
-}
-
-template <typename T>
-std::string type_name(T) {
-  return boost::core::demangled_name(BOOST_CORE_TYPEID(boost::type<T>));
-}
-} // namespace histogram
-} // namespace boost
 
 #endif

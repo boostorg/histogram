@@ -37,45 +37,45 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <int N, typename... Ts>
+template <unsigned N, typename... Ts>
 decltype(auto) axis_get(std::tuple<Ts...>& axes) {
   return std::get<N>(axes);
 }
 
-template <int N, typename... Ts>
+template <unsigned N, typename... Ts>
 decltype(auto) axis_get(const std::tuple<Ts...>& axes) {
   return std::get<N>(axes);
 }
 
-template <int N, typename T>
+template <unsigned N, typename T>
 decltype(auto) axis_get(T& axes) {
   return axes[N];
 }
 
-template <int N, typename T>
+template <unsigned N, typename T>
 decltype(auto) axis_get(const T& axes) {
   return axes[N];
 }
 
 template <typename... Ts>
-decltype(auto) axis_get(std::tuple<Ts...>& axes, std::size_t i) {
+decltype(auto) axis_get(std::tuple<Ts...>& axes, unsigned i) {
   return mp11::mp_with_index<sizeof...(Ts)>(
       i, [&](auto I) { return axis::variant<Ts&...>(std::get<I>(axes)); });
 }
 
 template <typename... Ts>
-decltype(auto) axis_get(const std::tuple<Ts...>& axes, std::size_t i) {
+decltype(auto) axis_get(const std::tuple<Ts...>& axes, unsigned i) {
   return mp11::mp_with_index<sizeof...(Ts)>(
       i, [&](auto I) { return axis::variant<const Ts&...>(std::get<I>(axes)); });
 }
 
 template <typename T>
-decltype(auto) axis_get(T& axes, std::size_t i) {
+decltype(auto) axis_get(T& axes, unsigned i) {
   return axes.at(i);
 }
 
 template <typename T>
-decltype(auto) axis_get(const T& axes, std::size_t i) {
+decltype(auto) axis_get(const T& axes, unsigned i) {
   return axes.at(i);
 }
 

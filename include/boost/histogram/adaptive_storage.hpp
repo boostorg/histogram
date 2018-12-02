@@ -117,7 +117,7 @@ struct adaptive_storage {
                                       boost::random_access_traversal_tag, value_type> {
   public:
     const_iterator(const adaptive_storage& parent, std::size_t idx) noexcept
-        : parent_(parent), idx_(idx) {}
+        : parent_(&parent), idx_(idx) {}
 
   protected:
     void increment() noexcept { ++idx_; }
@@ -127,14 +127,14 @@ struct adaptive_storage {
       return rhs.idx_ - idx_;
     }
     bool equal(const_iterator rhs) const noexcept {
-      return &parent_ == &rhs.parent_ && idx_ == rhs.idx_;
+      return parent_ == rhs.parent_ && idx_ == rhs.idx_;
     }
-    value_type dereference() const { return parent_[idx_]; }
+    value_type dereference() const { return (*parent_)[idx_]; }
 
     friend class ::boost::iterator_core_access;
 
   private:
-    const adaptive_storage& parent_;
+    const adaptive_storage* parent_;
     std::size_t idx_;
   };
 

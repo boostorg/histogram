@@ -421,15 +421,15 @@ void run_tests() {
   {
     auto h = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(),
                     axis::integer<>(0, 3), axis::integer<>(0, 4), axis::integer<>(0, 5));
-    for (auto i = 0u; i < h.axis(0_c).size(); ++i) {
-      for (auto j = 0u; j < h.axis(1_c).size(); ++j) {
-        for (auto k = 0u; k < h.axis(2_c).size(); ++k) { h(i, j, k, weight(i + j + k)); }
+    for (auto i = 0; i < h.axis(0_c).size(); ++i) {
+      for (auto j = 0; j < h.axis(1_c).size(); ++j) {
+        for (auto k = 0; k < h.axis(2_c).size(); ++k) { h(i, j, k, weight(i + j + k)); }
       }
     }
 
-    for (auto i = 0u; i < h.axis(0_c).size(); ++i) {
-      for (auto j = 0u; j < h.axis(1_c).size(); ++j) {
-        for (auto k = 0u; k < h.axis(2_c).size(); ++k) {
+    for (auto i = 0; i < h.axis(0_c).size(); ++i) {
+      for (auto j = 0; j < h.axis(1_c).size(); ++j) {
+        for (auto k = 0; k < h.axis(2_c).size(); ++k) {
           BOOST_TEST_EQ(h.at(i, j, k).value(), i + j + k);
           BOOST_TEST_EQ(h.at(i, j, k).variance(), (i + j + k) * (i + j + k));
         }
@@ -611,14 +611,14 @@ void run_tests() {
 
     struct minimal {
       int operator()(int x) const { return x % 2; }
-      unsigned size() const { return 2; }
+      int size() const { return 2; }
     };
 
     struct axis2d {
       int operator()(std::tuple<double, double> x) const {
         return std::get<0>(x) == 1 && std::get<1>(x) == 2;
       }
-      unsigned size() const { return 2; }
+      int size() const { return 2; }
     };
 
     auto h = make(Tag(), modified_axis(0, 3), minimal(), axis2d());

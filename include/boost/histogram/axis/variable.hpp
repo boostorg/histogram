@@ -106,7 +106,7 @@ public:
       : variable(l.begin(), l.end(), std::move(m), std::move(a)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
-  variable(const variable& src, unsigned begin, unsigned end, unsigned merge)
+  variable(const variable& src, int begin, int end, unsigned merge)
       : base_type((end - begin) / merge, src.metadata()), x_(src.x_) {
     BOOST_ASSERT((end - begin) % merge == 0);
     using It = const detail::unqual<decltype(*src.x_.first())>*;
