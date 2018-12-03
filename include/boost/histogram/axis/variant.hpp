@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_AXIS_VARIANT_HPP
 
 #include <boost/core/typeinfo.hpp>
-#include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/polymorphic_bin.hpp>
 #include <boost/histogram/axis/traits.hpp>
@@ -83,8 +82,6 @@ template <typename... Ts>
 class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
   using base_type = boost::variant<Ts...>;
   using first_bounded_type = detail::unqual<mp11::mp_first<base_type>>;
-  using metadata_type =
-      detail::unqual<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
 
   using types = mp11::mp_transform<detail::unqual, base_type>;
   template <typename T>
@@ -92,6 +89,9 @@ class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts.
       mp11::mp_if<mp11::mp_contains<types, detail::unqual<T>>, void>;
 
 public:
+  using metadata_type =
+      detail::unqual<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
+
   variant() = default;
   variant(const variant&) = default;
   variant& operator=(const variant&) = default;

@@ -668,7 +668,7 @@ void run_tests() {
       int operator()(std::tuple<int, int> x) const {
         return std::get<0>(x) == 1 && std::get<1>(x) == 2;
       }
-      unsigned size() const { return 2; }
+      int size() const { return 2; }
     };
     auto h2 = make(Tag(), axis_which_accepts_2d_tuple());
     h2(std::make_tuple(1, 2));  // ok, forwards 2d tuple to axis
