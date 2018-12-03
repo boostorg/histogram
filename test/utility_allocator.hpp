@@ -36,15 +36,26 @@ struct tracing_allocator {
   tracing_allocator(tracing_allocator_db& x) noexcept : db(&x) {}
   template <class U>
   tracing_allocator(const tracing_allocator<U>& a) noexcept : db(a.db) {}
+  template <class U>
+  tracing_allocator& operator=(const tracing_allocator<U>& a) noexcept {
+    db = a.db;
+    return *this;
+  }
   ~tracing_allocator() noexcept {}
 
   T* allocate(std::size_t n) {
-    if (db) { db->at<T>().first += n; db->sum.first += n; }
+    if (db) {
+      db->at<T>().first += n;
+      db->sum.first += n;
+    }
     return static_cast<T*>(::operator new(n * sizeof(T)));
   }
 
   void deallocate(T* p, std::size_t n) {
-    if (db) { db->at<T>().second += n; db->sum.second += n; }
+    if (db) {
+      db->at<T>().second += n;
+      db->sum.second += n;
+    }
     ::operator delete((void*)p);
   }
 };

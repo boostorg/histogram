@@ -103,7 +103,7 @@ int main() {
     axis::variant<axis::regular<>> b(std::move(a));
     BOOST_TEST_EQ(b, r);
     axis::variant<axis::regular<>> c;
-    BOOST_TEST_NOT(a == c);
+    BOOST_TEST_NE(c, b);
     c = std::move(b);
     BOOST_TEST(c == r);
   }
