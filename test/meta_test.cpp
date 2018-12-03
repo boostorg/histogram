@@ -218,13 +218,13 @@ int main() {
     struct A {};
     struct B {
       int operator()(double);
-      unsigned size() const;
+      int size() const;
     };
     struct C {
       int operator()(double);
     };
     struct D {
-      unsigned size();
+      int size();
     };
     using E = bh::axis::variant<bh::axis::regular<>>;
 

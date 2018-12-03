@@ -64,7 +64,7 @@ int main() {
   {
     struct minimal_axis {
       int operator()(double) const { return 0; }
-      unsigned size() const { return 1; }
+      int size() const { return 1; }
     };
 
     axis::variant<minimal_axis> axis;
@@ -183,7 +183,7 @@ int main() {
   {
     struct minimal_axis {
       int operator()(int x) const { return x % 2; }
-      unsigned size() const { return 2; }
+      int size() const { return 2; }
     };
     axis::variant<axis::category<std::string>, minimal_axis> x =
         axis::category<std::string>({"A", "B"}, "category");
