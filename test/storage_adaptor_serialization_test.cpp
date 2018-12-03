@@ -24,7 +24,6 @@ void test_serialization() {
   a.reset(3);
   a(0);
   a(2);
-  std::ostringstream os;
   std::string buf;
   {
     std::ostringstream os;

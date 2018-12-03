@@ -32,7 +32,6 @@ adaptive_storage_type prepare(std::size_t n) {
 template <typename T>
 void serialization_impl() {
   const auto a = prepare(1, T(1));
-  std::ostringstream os;
   std::string buf;
   {
     std::ostringstream os;
@@ -53,13 +52,12 @@ void serialization_impl() {
 template <>
 void serialization_impl<void>() {
   const auto a = prepare<void>(1);
-  std::ostringstream os;
   std::string buf;
   {
-    std::ostringstream os2;
-    boost::archive::text_oarchive oa(os2);
+    std::ostringstream os;
+    boost::archive::text_oarchive oa(os);
     oa << a;
-    buf = os2.str();
+    buf = os.str();
   }
   adaptive_storage_type b;
   BOOST_TEST(!(a == b));

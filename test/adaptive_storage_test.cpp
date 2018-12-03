@@ -43,7 +43,6 @@ void copy_impl() {
   BOOST_TEST(a == b);
   a(0);
   BOOST_TEST(!(a == b));
-  a = b;
   a = prepare<T>(2);
   BOOST_TEST(!(a == b));
   a = b;
@@ -129,7 +128,7 @@ void convert_array_storage_impl() {
   s.reset(1);
   s(0);
 
-  auto a = aref;
+  auto a(aref);
   a = s;
   BOOST_TEST_EQ(a[0], 1.0);
   BOOST_TEST(a == s);
@@ -152,11 +151,11 @@ void convert_array_storage_impl() {
   t.reset(1);
   t(0);
   while (t[0] < 1e20) t.add(0, t[0]);
-  auto d = aref;
+  auto d(aref);
   d = t;
   BOOST_TEST(d == t);
 
-  auto e = aref;
+  auto e(aref);
   e = s;
   BOOST_TEST_EQ(e[0], 1.0);
   BOOST_TEST(e == s);
@@ -192,14 +191,14 @@ void convert_array_storage_impl<void>() {
   s.reset(1);
   s(0);
 
-  auto a = aref;
+  auto a(aref);
   a = s;
   BOOST_TEST_EQ(a[0], 1.0);
   BOOST_TEST(a == s);
   a(0);
   BOOST_TEST(!(a == s));
 
-  auto c = aref;
+  auto c(aref);
   c.add(0, s[0]);
   BOOST_TEST_EQ(c[0], 1.0);
   BOOST_TEST(c == s);
