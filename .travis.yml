@@ -27,12 +27,12 @@ matrix:
   include:
     - os: linux
       compiler: clang
-      env: SERIAL=OFF
+      env: SERIAL=OFF BENCH=OFF
     - os: linux
       compiler: clang
-      env: SERIAL=ON
+      env: SERIAL=ON BENCH=OFF
     - os: osx
-      env: SERIAL=OFF
+      env: SERIAL=OFF BENCH=OFF
     - os: linux # coverage build
       addons:
         apt:
@@ -63,14 +63,14 @@ script:
   - cd build
   - if [ -n "$GCOV" ]; then
       cmake .. -DBOOST_ROOT=${BOOST_DIR}
-               -DTEST_SERIALIZATION=ON
+               -DBUILD_BENCHMARKS=OFF
                -DCMAKE_BUILD_TYPE=coverage &&
       make -j2 &&
       ctest -V;
     else
       cmake .. -DBOOST_ROOT=${BOOST_DIR}
-               -DBUILD_BENCHMARKS=ON
                -DTEST_SERIALIZATION=${SERIAL}
+               -DBUILD_BENCHMARKS=${BENCH}
                -DCMAKE_BUILD_TYPE=Debug &&
       make -j2 &&
       LSAN_OPTIONS=verbosity=1:log_threads=1 ASAN_OPTIONS=detect_leaks=0:detect_stack_use_after_return=1 ctest -V;

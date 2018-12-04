@@ -49,15 +49,22 @@ public:
       auto it = begin();
       parent_.hist_.for_each_axis(
           [&](const auto& a) { x *= axis::traits::width(a, *it++); });
-      return value / x;
+      return *iter_ / x;
     }
 
-    accessor(const indexed_range& parent, value_type v) : value(v), parent_(parent) {}
+    accessor(const indexed_range& parent, value_iterator i) : parent_(parent), iter_(i) {}
 
-    const value_type value;
+    decltype(auto) operator*() const noexcept {
+      return *iter_;
+    }
+
+    decltype(auto) operator->() const noexcept {
+      return iter_;
+    }
 
   private:
     const indexed_range& parent_;
+    value_iterator iter_;
   };
 
   class const_iterator
@@ -114,7 +121,7 @@ public:
       return &parent_ == &rhs.parent_ && iter_ == rhs.iter_;
     }
 
-    accessor dereference() const noexcept { return {parent_, *iter_}; }
+    accessor dereference() const noexcept { return {parent_, iter_}; }
 
     friend class ::boost::iterator_core_access;
 
