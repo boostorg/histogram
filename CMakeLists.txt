@@ -139,9 +139,7 @@ if (TEST_RANGE_SUPPORT) # test the support for external boost::range
 endif()
 
 if (BUILD_BENCHMARKS)
-  include(ExternalProject)
-
-  find_package(benchmark REQUIRED)
+  find_package(benchmark REQUIRED) # uses Google Benchmark
 
   function(benchmark SRC)
     get_filename_component(BASENAME ${SRC} NAME_WE)
