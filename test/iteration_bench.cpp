@@ -9,7 +9,8 @@
 #include <vector>
 
 struct static_tag {};
-struct dynamic_tag {};
+struct semi_dynamic_tag {};
+struct full_dynamic_tag {};
 
 auto make_histogram(static_tag) {
   using namespace boost::histogram;
@@ -21,9 +22,22 @@ auto make_histogram(static_tag) {
   );
 }
 
-auto make_histogram(dynamic_tag) {
+auto make_histogram(semi_dynamic_tag) {
   using namespace boost::histogram;
   std::vector<axis::integer<>> axes = {
+    axis::integer<>(0, 10),
+    axis::integer<>(0, 10),
+    axis::integer<>(0, 10)
+  };
+  return make_histogram_with(
+    std::vector<unsigned>(),
+    axes
+  );
+}
+
+auto make_histogram(full_dynamic_tag) {
+  using namespace boost::histogram;
+  std::vector<axis::variant<axis::integer<>>> axes = {
     axis::integer<>(0, 10),
     axis::integer<>(0, 10),
     axis::integer<>(0, 10)
@@ -73,18 +87,27 @@ template <class Tag, bool include_all>
 static void IndexedLoop(benchmark::State& state) {
   auto h = make_histogram(Tag());
   for (auto _ : state) {
-    for (auto x : boost::histogram::indexed(h, include_all))
-      benchmark::DoNotOptimize(x);
+    for (auto x : boost::histogram::indexed(h, include_all)) {
+      benchmark::DoNotOptimize(x.value);
+      benchmark::DoNotOptimize(x[0]);
+      benchmark::DoNotOptimize(x[1]);
+      benchmark::DoNotOptimize(x[2]);
+    }
   }
 }
 
 BENCHMARK_TEMPLATE(NaiveForLoop, static_tag);
-BENCHMARK_TEMPLATE(NaiveForLoop, dynamic_tag);
+BENCHMARK_TEMPLATE(NaiveForLoop, semi_dynamic_tag);
+BENCHMARK_TEMPLATE(NaiveForLoop, full_dynamic_tag);
 BENCHMARK_TEMPLATE(LessNaiveForLoop, static_tag);
-BENCHMARK_TEMPLATE(LessNaiveForLoop, dynamic_tag);
+BENCHMARK_TEMPLATE(LessNaiveForLoop, semi_dynamic_tag);
+BENCHMARK_TEMPLATE(LessNaiveForLoop, full_dynamic_tag);
 BENCHMARK_TEMPLATE(InsiderForLoop, static_tag);
-BENCHMARK_TEMPLATE(InsiderForLoop, dynamic_tag);
+BENCHMARK_TEMPLATE(InsiderForLoop, semi_dynamic_tag);
+BENCHMARK_TEMPLATE(InsiderForLoop, full_dynamic_tag);
 BENCHMARK_TEMPLATE(IndexedLoop, static_tag, false);
-BENCHMARK_TEMPLATE(IndexedLoop, dynamic_tag, false);
+BENCHMARK_TEMPLATE(IndexedLoop, semi_dynamic_tag, false);
+BENCHMARK_TEMPLATE(IndexedLoop, full_dynamic_tag, false);
 BENCHMARK_TEMPLATE(IndexedLoop, static_tag, true);
-BENCHMARK_TEMPLATE(IndexedLoop, dynamic_tag, true);
+BENCHMARK_TEMPLATE(IndexedLoop, semi_dynamic_tag, true);
+BENCHMARK_TEMPLATE(IndexedLoop, full_dynamic_tag, true);
