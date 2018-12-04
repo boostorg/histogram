@@ -18,10 +18,10 @@ if ("$ENV{BOOST_ROOT}" STREQUAL "")
 endif()
 
 # setup build
-option(BUILD_BENCHMARKS "Build benchmarks" ON)
 option(TEST_SERIALIZATION "Test serialization code (requires boost.serialization)" ON)
 option(TEST_ACCUMULATORS_SUPPORT "Test support for boost.accumulators" ON)
 option(TEST_RANGE_SUPPORT "Test support for boost.range" ON)
+option(BUILD_BENCHMARKS "Build benchmarks" ON)
 
 # serialization support is optional
 if (TEST_SERIALIZATION)
@@ -44,14 +44,14 @@ enable_testing()
 function(compiled_test SRC)
   get_filename_component(BASENAME ${SRC} NAME_WE)
   add_executable(${BASENAME} ${SRC})
-  target_include_directories(${BASENAME} PUBLIC include ${Boost_INCLUDE_DIR})
+  target_include_directories(${BASENAME} PRIVATE include ${Boost_INCLUDE_DIR})
 
   if(CMAKE_BUILD_TYPE MATCHES coverage)
     target_compile_options(${BASENAME} PRIVATE --coverage)
     target_link_libraries(${BASENAME} PRIVATE --coverage)
   endif()
 
-  # max warnings and activate sanitizers for clang and gcc
+  # max warnings and activate sanitizers for clang
   if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(${BASENAME} PRIVATE -D_SCL_SECURE_NO_WARNINGS)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -118,16 +118,16 @@ compiled_test(examples/guide_parallel_filling.cpp)
 
 if (TEST_SERIALIZATION)
   compiled_test(examples/guide_histogram_serialization.cpp Boost::serialization)
-  target_link_libraries(guide_histogram_serialization PUBLIC Boost::serialization)
+  target_link_libraries(guide_histogram_serialization PRIVATE Boost::serialization)
 
   compiled_test(test/adaptive_storage_serialization_test.cpp Boost::serialization)
-  target_link_libraries(adaptive_storage_serialization_test PUBLIC Boost::serialization)
+  target_link_libraries(adaptive_storage_serialization_test PRIVATE Boost::serialization)
 
   compiled_test(test/storage_adaptor_serialization_test.cpp)
-  target_link_libraries(storage_adaptor_serialization_test PUBLIC Boost::serialization)
+  target_link_libraries(storage_adaptor_serialization_test PRIVATE Boost::serialization)
 
   compiled_test(test/histogram_serialization_test.cpp Boost::serialization)
-  target_link_libraries(histogram_serialization_test PUBLIC Boost::serialization)
+  target_link_libraries(histogram_serialization_test PRIVATE Boost::serialization)
 endif()
 
 if (TEST_ACCUMULATORS_SUPPORT) # test the support for external boost::accumulators
@@ -139,10 +139,26 @@ if (TEST_RANGE_SUPPORT) # test the support for external boost::range
 endif()
 
 if (BUILD_BENCHMARKS)
+  include(ExternalProject)
+
+  find_package(benchmark REQUIRED)
+
+  function(benchmark SRC)
+    get_filename_component(BASENAME ${SRC} NAME_WE)
+    add_executable(${BASENAME} ${SRC})
+    target_include_directories(${BASENAME} PRIVATE include ${Boost_INCLUDE_DIR} benchmark::benchmark)
+    target_compile_definitions(${BASENAME} PRIVATE -DBOOST_DISABLE_ASSERTS)
+    target_compile_options(${BASENAME} PRIVATE -O2)
+    target_link_libraries(${BASENAME} PRIVATE benchmark::benchmark_main)
+  endfunction()
+
+  benchmark(test/iteration_bench.cpp)
+
   add_executable(speed_cpp test/speed_cpp.cpp)
   target_include_directories(speed_cpp PRIVATE include ${Boost_INCLUDE_DIR})
   target_compile_definitions(speed_cpp PRIVATE -DBOOST_DISABLE_ASSERTS)
   target_compile_options(speed_cpp PRIVATE -O3)
+
   add_executable(axis_size test/axis_size.cpp)
   target_include_directories(axis_size PRIVATE include ${Boost_INCLUDE_DIR})
   target_compile_options(axis_size PRIVATE -O3)

@@ -55,77 +55,34 @@ void run_1d_tests(bool include_extra_bins) {
 }
 
 template <typename Tag>
-void run_2d_tests(bool include_extra_bins) {
-  auto h = make_s(Tag(), std::vector<int>(), axis::integer<>(0, 1),
-                  axis::integer<int, axis::null_type, axis::option_type::overflow>(2, 4));
-  h(weight(2), 0, 2);
-  h(-1, 2);
-  h(1, 3);
+void run_3d_tests(bool b) {
+  auto h = make_s(Tag(), std::vector<int>(),
+                  axis::integer<>(0, 2),
+                  axis::integer<int, axis::null_type, axis::option_type::none>(0, 3),
+                  axis::integer<int, axis::null_type, axis::option_type::overflow>(0, 4));
 
-  BOOST_TEST_EQ(axis::traits::extend(h.axis(0)), 3);
-  BOOST_TEST_EQ(axis::traits::extend(h.axis(1)), 3);
+  for (int i = -1; i < 3; ++i)
+  for (int j = -1; j < 4; ++j)
+  for (int k = -1; k < 5; ++k)
+    h(i, j, k, weight(i * 100 + j * 10 + k));
 
-  auto ind = indexed(h, include_extra_bins);
+  auto ind = indexed(h, b);
   auto it = ind.begin();
-  BOOST_TEST_EQ(it->size(), 2);
+  BOOST_TEST_EQ(it->size(), 3);
 
-  BOOST_TEST_EQ(it->operator[](0), 0);
-  BOOST_TEST_EQ(it->operator[](1), 0);
-  BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[0]);
-  BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[0]);
-  BOOST_TEST_EQ(it->value, 2);
-  ++it;
-  if (include_extra_bins) {
-    BOOST_TEST_EQ(it->operator[](0), 1);
-    BOOST_TEST_EQ(it->operator[](1), 0);
-    BOOST_TEST_EQ(it->bin(0), h.axis(0)[1]);
-    BOOST_TEST_EQ(it->bin(1), h.axis(1)[0]);
-    BOOST_TEST_EQ(it->value, 0);
-    ++it;
-    BOOST_TEST_EQ(it->operator[](0), -1);
-    BOOST_TEST_EQ(it->operator[](1), 0);
-    BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[-1]);
-    BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[0]);
-    BOOST_TEST_EQ(it->value, 1);
-    ++it;
-  }
-  BOOST_TEST_EQ(it->operator[](0), 0);
-  BOOST_TEST_EQ(it->operator[](1), 1);
-  BOOST_TEST_EQ(it->bin(0), h.axis(0)[0]);
-  BOOST_TEST_EQ(it->bin(1), h.axis(1)[1]);
-  BOOST_TEST_EQ(it->value, 0);
-  ++it;
-  if (include_extra_bins) {
-    BOOST_TEST_EQ(it->operator[](0), 1);
-    BOOST_TEST_EQ(it->operator[](1), 1);
-    BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[1]);
-    BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[1]);
-    BOOST_TEST_EQ(it->value, 1);
-    ++it;
-    BOOST_TEST_EQ(it->operator[](0), -1);
-    BOOST_TEST_EQ(it->operator[](1), 1);
-    BOOST_TEST_EQ(it->bin(0), h.axis(0)[-1]);
-    BOOST_TEST_EQ(it->bin(1), h.axis(1)[1]);
-    BOOST_TEST_EQ(it->value, 0);
-    ++it;
-    BOOST_TEST_EQ(it->operator[](0), 0);
-    BOOST_TEST_EQ(it->operator[](1), 2);
-    BOOST_TEST_EQ(it->bin(0), h.axis(0)[0]);
-    BOOST_TEST_EQ(it->bin(1), h.axis(1)[2]);
-    BOOST_TEST_EQ(it->value, 0);
-    ++it;
-    BOOST_TEST_EQ(it->operator[](0), 1);
-    BOOST_TEST_EQ(it->operator[](1), 2);
-    BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[1]);
-    BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[2]);
-    BOOST_TEST_EQ(it->value, 0);
-    ++it;
-    BOOST_TEST_EQ(it->operator[](0), -1);
-    BOOST_TEST_EQ(it->operator[](1), 2);
-    BOOST_TEST_EQ(it->bin(0), h.axis(0)[-1]);
-    BOOST_TEST_EQ(it->bin(1), h.axis(1)[2]);
-    BOOST_TEST_EQ(it->value, 0);
-    ++it;
+  // imitate iteration order of indexed loop
+  for (int k = 0; k < 4 + b; ++k)
+    for (int j = 0; j < 3; ++j)
+      for (int i = 0; i < 2 + 2*b; ++i) {
+        const auto i2 = i > 2 ? -1 : i;
+        BOOST_TEST_EQ(it->operator[](0), i2);
+        BOOST_TEST_EQ(it->operator[](1), j);
+        BOOST_TEST_EQ(it->operator[](2), k);
+        BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[i2]);
+        BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[j]);
+        BOOST_TEST_EQ(it->bin(2_c), h.axis(2_c)[k]);
+        BOOST_TEST_EQ(it->value, i2 * 100 + j * 10 + k);
+        ++it;
   }
   BOOST_TEST(it == ind.end());
 }
@@ -149,8 +106,8 @@ int main() {
   for (int b = 0; b < 2; ++b) {
     run_1d_tests<static_tag>(b);
     run_1d_tests<dynamic_tag>(b);
-    run_2d_tests<static_tag>(b);
-    run_2d_tests<dynamic_tag>(b);
+    run_3d_tests<static_tag>(b);
+    run_3d_tests<dynamic_tag>(b);
     run_density_tests<static_tag>(b);
     run_density_tests<dynamic_tag>(b);
   }
