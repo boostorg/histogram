@@ -39,15 +39,19 @@ int main() {
   auto sum = std::accumulate(h.begin(), h.end(), 0.0);
   assert(sum == 10);
 
-  // use the `indexed` range adaptor when you need the multi-dimensional bin index
-  // in addition to the bin value (note: the iteration order is an implementation detail
-  // of the library and may change, do not write code which expects a particular order)
+  // use the `indexed` range adaptor when you need the multi-dimensional bin
+  // index in addition to the bin value; it is more convenient and faster than
+  // a hand-crafted loop
   std::ostringstream os;
   for (auto x : indexed(h)) {
+    // x is an instance of an accessor class, mixing array and pointer semantics
+    const auto i = x[0]; // index along first axis
+    const auto j = x[1]; // index along second axis
     const auto b0 = x.bin(0); // current bin interval along first axis
     const auto b1 = x.bin(1); // current bin interval along second axis
-    os << boost::format("%i %i [%2i, %i) [%2i, %i): %i\n") % x[0] % x[1] % b0.lower() %
-              b0.upper() % b1.lower() % b1.upper() % x.value;
+    const auto v = *x; // "dereference" to get bin value
+    os << boost::format("%i %i [%2i, %i) [%2i, %i): %i\n") % i % j % b0.lower() %
+              b0.upper() % b1.lower() % b1.upper() % *x;
   }
 
   std::cout << os.str() << std::flush;
@@ -61,7 +65,7 @@ int main() {
   // second argument `true` to walk over all bins (bin intervals not shown for brevity)
   std::ostringstream os2;
   for (auto x : indexed(h, true)) {
-    os2 << boost::format("%2i %2i: %i\n") % x[0] % x[1] % x.value;
+    os2 << boost::format("%2i %2i: %i\n") % x[0] % x[1] % *x;
   }
 
   std::cout << os2.str() << std::flush;

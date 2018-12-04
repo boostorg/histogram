@@ -64,9 +64,9 @@ static void LessNaiveForLoop(benchmark::State& state) {
   using namespace boost::histogram::literals;
   auto h = make_histogram(Tag());
   for (auto _ : state) {
-    for (int i = 0; i < h.axis(0_c).size(); ++i)
-      for (int j = 0; j < h.axis(1_c).size(); ++j)
-        for (int k = 0; k < h.axis(2_c).size(); ++k)
+    for (auto i : h.axis(0_c))
+      for (auto j : h.axis(1_c))
+        for (auto k : h.axis(2_c))
           benchmark::DoNotOptimize(h.at(i, j, k));
   }
 }
@@ -76,9 +76,9 @@ static void InsiderForLoop(benchmark::State& state) {
   using namespace boost::histogram::literals;
   auto h = make_histogram(Tag());
   for (auto _ : state) {
-    for (int k = 0; k < h.axis(2_c).size(); ++k)
-      for (int j = 0; j < h.axis(1_c).size(); ++j)
-        for (int i = 0; i < h.axis(0_c).size(); ++i)
+    for (int k = 0, nk = h.axis(2_c).size(); k < nk; ++k)
+      for (int j = 0, nj = h.axis(1_c).size(); j < nj; ++j)
+        for (int i = 0, ni = h.axis(0_c).size(); i < ni; ++i)
           benchmark::DoNotOptimize(h.at(i, j, k));
   }
 }
@@ -88,7 +88,7 @@ static void IndexedLoop(benchmark::State& state) {
   auto h = make_histogram(Tag());
   for (auto _ : state) {
     for (auto x : boost::histogram::indexed(h, include_all)) {
-      benchmark::DoNotOptimize(x.value);
+      benchmark::DoNotOptimize(*x);
       benchmark::DoNotOptimize(x[0]);
       benchmark::DoNotOptimize(x[1]);
       benchmark::DoNotOptimize(x[2]);

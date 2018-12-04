@@ -30,24 +30,24 @@ void run_1d_tests(bool include_extra_bins) {
   BOOST_TEST_EQ(it->size(), 1);
 
   BOOST_TEST_EQ(it->operator[](0), 0);
-  BOOST_TEST_EQ(it->value, 2);
+  BOOST_TEST_EQ(**it, 2);
   BOOST_TEST_EQ(it->bin(0), h.axis()[0]);
   ++it;
   BOOST_TEST_EQ(it->operator[](0), 1);
-  BOOST_TEST_EQ(it->value, 2);
+  BOOST_TEST_EQ(**it, 2);
   BOOST_TEST_EQ(it->bin(0), h.axis()[1]);
   ++it;
   BOOST_TEST_EQ(it->operator[](0), 2);
-  BOOST_TEST_EQ(it->value, 0);
+  BOOST_TEST_EQ(**it, 0);
   BOOST_TEST_EQ(it->bin(0), h.axis()[2]);
   ++it;
   if (include_extra_bins) {
     BOOST_TEST_EQ(it->operator[](0), 3);
-    BOOST_TEST_EQ(it->value, 0);
+    BOOST_TEST_EQ(**it, 0);
     BOOST_TEST_EQ(it->bin(0), h.axis()[3]);
     ++it;
     BOOST_TEST_EQ(it->operator[](0), -1);
-    BOOST_TEST_EQ(it->value, 0);
+    BOOST_TEST_EQ(**it, 0);
     BOOST_TEST_EQ(it->bin(0), h.axis()[-1]);
     ++it;
   }
@@ -81,7 +81,7 @@ void run_3d_tests(bool b) {
         BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[i2]);
         BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[j]);
         BOOST_TEST_EQ(it->bin(2_c), h.axis(2_c)[k]);
-        BOOST_TEST_EQ(it->value, i2 * 100 + j * 10 + k);
+        BOOST_TEST_EQ(**it, i2 * 100 + j * 10 + k);
         ++it;
   }
   BOOST_TEST(it == ind.end());
@@ -98,7 +98,7 @@ void run_density_tests(bool include_extra_bins) {
   for (unsigned i = 0; i < h.size(); ++i) { unsafe_access::storage(h).set(i, 1); }
 
   for (auto x : indexed(h, include_extra_bins)) {
-    BOOST_TEST_EQ(x.density(), x.value / (x.bin(0).width() * x.bin(2).width()));
+    BOOST_TEST_EQ(x.density(), *x / (x.bin(0).width() * x.bin(2).width()));
   }
 }
 

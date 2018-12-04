@@ -66,7 +66,7 @@ int main() {
   std::ostringstream os;
   for (auto x : indexed(h, true)) {
     os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") % x[0] % x.bin(0).lower() %
-              x.bin(0).upper() % x.value;
+              x.bin(0).upper() % *x;
   }
 
   std::cout << os.str() << std::flush;
