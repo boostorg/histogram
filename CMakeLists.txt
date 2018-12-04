@@ -146,7 +146,7 @@ if (BUILD_BENCHMARKS)
     add_executable(${BASENAME} ${SRC})
     target_include_directories(${BASENAME} PRIVATE include ${Boost_INCLUDE_DIR} benchmark::benchmark)
     target_compile_definitions(${BASENAME} PRIVATE -DBOOST_DISABLE_ASSERTS)
-    target_compile_options(${BASENAME} PRIVATE -O2)
+    target_compile_options(${BASENAME} PRIVATE -O3)
     target_link_libraries(${BASENAME} PRIVATE benchmark::benchmark_main)
   endfunction()
 
