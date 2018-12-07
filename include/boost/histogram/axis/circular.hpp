@@ -71,10 +71,8 @@ public:
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
     const auto z = std::floor((x - phase_) / delta_);
-    if (std::isfinite(z)) {
-      const auto i = static_cast<int>(z) % base_type::size();
-      return i + (i < 0) * base_type::size();
-    }
+    if (std::isfinite(z))
+      return static_cast<int>(z - std::floor(z / base_type::size()) * base_type::size());
     return base_type::size();
   }
 
