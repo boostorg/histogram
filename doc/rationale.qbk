@@ -34,7 +34,7 @@ Histograms store axis objects and a storage object. A one-dimensional histogram 
 To understand the need for multi-dimensional histograms, think of point coordinates. If all points that you consider lie on a line, you need only one value to describe the point. If all points lie in a plane, you need two values to describe the position. Three values are needed for a point in space. A histogram puts a discrete grid over the line, the plane or the space, and counts how many points lie in each cell of the grid. To approximate a point distribution on a line, a 1d-histogram is sufficient. To do the same in 3d-space, one needs a 3d-histogram.
 ]
 
-This library supports different axis types, so that the user can customise how the mapping is done exactly, see [link histogram.rationale.structure.axis_types axis types]. Users can furthermore chose between two ways of storing axis types in the histogram.
+This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.structure.axis_types axis types]. Users can furthermore chose between two ways of storing axis types in the histogram.
 
 When the histogram host class is configured to store axis types in a `std::tuple`, we obtain a static histogram. The number and types of the axes are known at compile-time. To access a particular axis, you need to use a compile-time number as index. A static histogram is always faster (see [link histogram.benchmarks benchmark]), because there are no type checks and conversions happening at run-time, and because the compiler can inline more code. Furthermore, many user errors are caught at compile-time rather than run-time.
 
