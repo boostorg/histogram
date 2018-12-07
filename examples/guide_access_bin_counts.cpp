@@ -51,7 +51,7 @@ int main() {
     const auto b1 = x.bin(1); // current bin interval along second axis
     const auto v = *x; // "dereference" to get bin value
     os << boost::format("%i %i [%2i, %i) [%2i, %i): %i\n") % i % j % b0.lower() %
-              b0.upper() % b1.lower() % b1.upper() % *x;
+              b0.upper() % b1.lower() % b1.upper() % v;
   }
 
   std::cout << os.str() << std::flush;

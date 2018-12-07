@@ -23,9 +23,10 @@ struct null_type {};
 
 enum class option_type {
   none = 0,
-  underflow = 1,
-  overflow = 2,
-  uoflow = 3,
+  underflow = 1 << 0,
+  overflow = 1 << 1,
+  uoflow = 1 << 2,
+  circular = 1 << 3,
 };
 
 constexpr inline option_type operator|(option_type a, option_type b) {
