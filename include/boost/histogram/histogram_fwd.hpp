@@ -16,18 +16,16 @@
 
 namespace boost {
 namespace histogram {
+
 namespace axis {
 
 /// empty metadata type
 struct null_type {};
 
-enum class option_type {
-  none = 0,
-  underflow = 1 << 0,
-  overflow = 1 << 1,
-  uoflow = 1 << 2,
-  circular = 1 << 3,
-};
+/// default metadata type
+using string_type = boost::container::string;
+
+enum class option_type;
 
 constexpr inline option_type operator|(option_type a, option_type b) {
   return static_cast<option_type>(static_cast<int>(a) | static_cast<int>(b));
@@ -36,6 +34,14 @@ constexpr inline option_type operator|(option_type a, option_type b) {
 constexpr inline bool operator&(option_type a, option_type b) {
   return static_cast<int>(a) & static_cast<int>(b);
 }
+
+enum class option_type {
+  none = 0,
+  underflow = 1 << 0,
+  overflow = 1 << 1,
+  uoflow = underflow | overflow,
+  circular = 1 << 3,
+};
 
 namespace transform {
 template <typename T = double>
@@ -48,28 +54,28 @@ template <typename T = double>
 struct pow;
 } // namespace transform
 
-template <typename Transform = transform::identity<double>,
-          typename MetaData = boost::container::string,
+// default allocator
+template <typename T>
+using allocator = boost::container::new_allocator<T>;
+
+template <typename TransformOrRealType = double, typename MetaData = string_type,
           option_type Options = option_type::uoflow>
 class regular;
 
-template <typename RealType = double, typename MetaData = boost::container::string,
+template <typename RealType = double, typename MetaData = string_type,
           option_type Options = option_type::overflow>
-class circular;
+using circular = regular<RealType, MetaData, Options | option_type::circular>;
 
-template <typename RealType = double,
-          typename Allocator = boost::container::new_allocator<RealType>,
-          typename MetaData = boost::container::string,
-          option_type Options = option_type::uoflow>
+template <typename RealType = double, typename Allocator = allocator<RealType>,
+          typename MetaData = string_type, option_type Options = option_type::uoflow>
 class variable;
 
-template <typename IntType = double, typename MetaData = boost::container::string,
-          option_type Options = option_type::uoflow>
+template <typename IntType = int, typename MetaData = string_type,
+          option_type Options = option_type::underflow | option_type::overflow>
 class integer;
 
-template <typename T = int, typename Allocator = boost::container::new_allocator<T>,
-          typename MetaData = boost::container::string,
-          option_type Options = option_type::overflow>
+template <typename T = int, typename Allocator = allocator<T>,
+          typename MetaData = string_type, option_type Options = option_type::overflow>
 class category;
 
 template <typename... Ts>

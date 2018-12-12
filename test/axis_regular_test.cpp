@@ -134,13 +134,27 @@ int main() {
     BOOST_TEST_EQ(b(std::numeric_limits<double>::infinity() * meter), 2);
   }
 
+  // axis::regular with circular option
+  {
+    axis::circular<> a{4, 0, 1};
+    BOOST_TEST_EQ(a[-1].lower(), a[a.size() - 1].lower() - 1);
+    BOOST_TEST_EQ(a(-1.0 * 3), 0);
+    BOOST_TEST_EQ(a(0.0), 0);
+    BOOST_TEST_EQ(a(0.25), 1);
+    BOOST_TEST_EQ(a(0.5), 2);
+    BOOST_TEST_EQ(a(0.75), 3);
+    BOOST_TEST_EQ(a(1.0), 0);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a(-std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 4);
+  }
+
   // iterators
   {
-    using tr = axis::transform::identity<>;
+    test_axis_iterator(axis::regular<>(5, 0, 1), 0, 5);
     test_axis_iterator(
-        axis::regular<tr, axis::null_type, axis::option_type::none>(5, 0, 1), 0, 5);
-    test_axis_iterator(
-        axis::regular<tr, axis::null_type, axis::option_type::uoflow>(5, 0, 1), 0, 5);
+        axis::regular<double, axis::null_type, axis::option_type::none>(5, 0, 1), 0, 5);
+    test_axis_iterator(axis::circular<>(5, 0, 1), 0, 5);
   }
 
   // bin_type streamable
@@ -171,6 +185,18 @@ int main() {
     BOOST_TEST_EQ(e.size(), 2);
     BOOST_TEST_EQ(e.value(0), 1);
     BOOST_TEST_EQ(e.value(2), 5);
+  }
+
+  // shrink and rebin with circular option
+  {
+    using A = axis::circular<>;
+    auto a = A(4, 1, 5);
+    BOOST_TEST_THROWS(A(a, 1, 4, 1), std::invalid_argument);
+    BOOST_TEST_THROWS(A(a, 0, 3, 1), std::invalid_argument);
+    auto b = A(a, 0, 4, 2);
+    BOOST_TEST_EQ(b.size(), 2);
+    BOOST_TEST_EQ(b.value(0), 1);
+    BOOST_TEST_EQ(b.value(2), 5);
   }
 
   return boost::report_errors();

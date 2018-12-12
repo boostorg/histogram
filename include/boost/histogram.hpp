@@ -15,12 +15,7 @@
 #include <boost/histogram/algorithm/project.hpp>
 #include <boost/histogram/algorithm/reduce.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
-#include <boost/histogram/axis/category.hpp>
-#include <boost/histogram/axis/circular.hpp>
-#include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/axis/variable.hpp>
-#include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/axis.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/literals.hpp>

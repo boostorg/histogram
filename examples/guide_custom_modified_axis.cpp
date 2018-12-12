@@ -7,8 +7,8 @@
 //[ guide_custom_modified_axis
 
 #include <boost/histogram.hpp>
-#include <sstream>
 #include <cassert>
+#include <sstream>
 
 namespace bh = boost::histogram;
 
@@ -32,18 +32,15 @@ int main() {
   h("9");
 
   std::ostringstream os;
-  for (auto xi : h.axis()) {
-    os << "bin " << xi.idx()
-       << " [" << xi.lower() << ", " << xi.upper() << ") "
-       << h.at(xi) << "\n";
+  for (auto&& b : bh::indexed(h)) {
+    os << "bin " << b[0] << " [" << b.bin(0).value() << "] " << *b << "\n";
   }
 
   std::cout << os.str() << std::endl;
 
-  assert(os.str() ==
-         "bin 0 [3, 4) 1\n"
-         "bin 1 [4, 5) 1\n"
-         "bin 2 [5, 6) 0\n");
+  assert(os.str() == "bin 0 [3] 1\n"
+                     "bin 1 [4] 1\n"
+                     "bin 2 [5] 0\n");
 }
 
 //]

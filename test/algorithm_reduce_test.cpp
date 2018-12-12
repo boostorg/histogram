@@ -7,7 +7,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/algorithm/reduce.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
-#include <boost/histogram/axis/circular.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -21,7 +20,7 @@ using namespace boost::histogram::algorithm;
 
 template <typename Tag>
 void run_tests() {
-  using regular = axis::regular<axis::transform::identity<>, axis::null_type>;
+  using regular = axis::regular<double, axis::null_type>;
   {
     auto h = make(Tag(), regular(4, 1, 5), regular(3, -1, 2));
     h(1, -1);
@@ -119,8 +118,8 @@ void run_tests() {
     BOOST_TEST_THROWS(reduce(h, rebin(2)), std::invalid_argument);
     auto hr = reduce(h, shrink(2, 3));
     BOOST_TEST_EQ(hr.axis().size(), 1);
-    BOOST_TEST_EQ(hr.axis()[0].lower(), 2);
-    BOOST_TEST_EQ(hr.axis()[0].upper(), 3);
+    BOOST_TEST_EQ(hr.axis()[0].value(), 2);
+    BOOST_TEST_EQ(hr.axis()[1].value(), 3);
   }
 
   // reduce on circular axis, shrink must fail, also rebin with remainder
@@ -131,7 +130,7 @@ void run_tests() {
     auto hr = reduce(h, rebin(2));
     BOOST_TEST_EQ(hr.axis().size(), 2);
     BOOST_TEST_EQ(hr.axis()[0].lower(), 1);
-    BOOST_TEST_EQ(hr.axis()[1].upper(), 5);
+    BOOST_TEST_EQ(hr.axis()[1].upper(), 4);
   }
 
   // reduce on variable axis

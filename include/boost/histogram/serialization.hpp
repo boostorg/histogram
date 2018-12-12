@@ -16,7 +16,6 @@
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/category.hpp>
-#include <boost/histogram/axis/circular.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
@@ -150,8 +149,25 @@ void histogram<A, S>::serialize(Archive& ar, unsigned /* version */) {
 }
 
 namespace axis {
+
+namespace transform {
+template <class Archive, class T>
+void serialize(Archive&, identity<T>&, unsigned /* version */) {}
+
+template <class Archive, class T>
+void serialize(Archive&, log<T>&, unsigned /* version */) {}
+
+template <class Archive, class T>
+void serialize(Archive&, sqrt<T>&, unsigned /* version */) {}
+
+template <class Archive, class T>
+void serialize(Archive& ar, pow<T>& t, unsigned /* version */) {
+  ar& t.power;
+}
+} // namespace transform
+
 template <class Archive>
-void serialize(Archive&, null_type&, unsigned /* version */) {} // noop
+void serialize(Archive&, null_type&, unsigned /* version */) {}
 
 template <typename M, option_type O>
 template <class Archive>
@@ -160,11 +176,8 @@ void base<M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& size_meta_.second();
 }
 
-template <typename T>
-template <class Archive>
-void transform::pow<T>::serialize(Archive& ar, unsigned /* version */) {
-  ar& power;
-}
+template <class Archive, class T>
+void serialize(Archive&, transform::unit<T>&, unsigned /* version */) {}
 
 template <typename T, typename M, option_type O>
 template <class Archive>
@@ -172,14 +185,6 @@ void regular<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
   ar& static_cast<transform_type&>(*this);
   ar& min_;
-  ar& delta_;
-}
-
-template <typename R, typename M, option_type O>
-template <class Archive>
-void circular<R, M, O>::serialize(Archive& ar, unsigned /* version */) {
-  ar& static_cast<base_type&>(*this);
-  ar& phase_;
   ar& delta_;
 }
 

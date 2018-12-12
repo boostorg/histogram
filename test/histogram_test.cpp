@@ -11,13 +11,8 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
-#include <boost/histogram/axis/category.hpp>
-#include <boost/histogram/axis/circular.hpp>
-#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
-#include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/axis/variable.hpp>
-#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream_operators.hpp>
@@ -74,35 +69,35 @@ void run_tests() {
   // init_3
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
-                  axis::circular<>{2});
+                  axis::circular<>{2, 0, axis::two_pi});
     BOOST_TEST_EQ(h.rank(), 3);
     BOOST_TEST_EQ(h.size(), 5 * 5 * 3);
     auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
-                     axis::integer<>{-1, 2}, axis::circular<>{2});
+                     axis::integer<>{-1, 2}, axis::circular<>{2, 0, axis::two_pi});
     BOOST_TEST_EQ(h2, h);
   }
 
   // init_4
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
-                  axis::circular<>{2}, axis::variable<>{-1, 0, 1});
+                  axis::circular<>{2, 0, axis::two_pi}, axis::variable<>{-1, 0, 1});
     BOOST_TEST_EQ(h.rank(), 4);
     BOOST_TEST_EQ(h.size(), 5 * 5 * 3 * 4);
-    auto h2 =
-        make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
-               axis::integer<>{-1, 2}, axis::circular<>{2}, axis::variable<>{-1, 0, 1});
+    auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
+                     axis::integer<>{-1, 2}, axis::circular<>{2, 0, axis::two_pi},
+                     axis::variable<>{-1, 0, 1});
     BOOST_TEST_EQ(h2, h);
   }
 
   // init_5
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
-                  axis::circular<>{2}, axis::variable<>{-1, 0, 1},
+                  axis::circular<>{2, 0, axis::two_pi}, axis::variable<>{-1, 0, 1},
                   axis::category<>{{3, 1, 2}});
     BOOST_TEST_EQ(h.rank(), 5);
     BOOST_TEST_EQ(h.size(), 5 * 5 * 3 * 4 * 4);
     auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
-                     axis::integer<>{-1, 2}, axis::circular<>{2},
+                     axis::integer<>{-1, 2}, axis::circular<>{2, 0, axis::two_pi},
                      axis::variable<>{-1, 0, 1}, axis::category<>{{3, 1, 2}});
     BOOST_TEST_EQ(h2, h);
   }
@@ -168,8 +163,8 @@ void run_tests() {
     BOOST_TEST_EQ(b.axis(0_c)[0].lower(), 1);
     BOOST_TEST_EQ(b.axis(0_c)[0].upper(), 2);
     BOOST_TEST_EQ(b.axis(1_c).size(), 2);
-    BOOST_TEST_EQ(b.axis(1_c)[0].lower(), 1);
-    BOOST_TEST_EQ(b.axis(1_c)[0].upper(), 2);
+    BOOST_TEST_EQ(b.axis(1_c)[0].value(), 1);
+    BOOST_TEST_EQ(b.axis(1_c)[1].value(), 2);
     b.axis(1_c).metadata() = "bar";
     BOOST_TEST_EQ(b.axis(0_c).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1_c).metadata(), "bar");
@@ -179,8 +174,8 @@ void run_tests() {
     BOOST_TEST_EQ(b.axis(0)[0].lower(), 1);
     BOOST_TEST_EQ(b.axis(0)[0].upper(), 2);
     BOOST_TEST_EQ(b.axis(1).size(), 2);
-    BOOST_TEST_EQ(b.axis(1)[0].lower(), 1);
-    BOOST_TEST_EQ(b.axis(1)[0].upper(), 2);
+    BOOST_TEST_EQ(b.axis(1)[0].value(), 1);
+    BOOST_TEST_EQ(b.axis(1)[1].value(), 2);
     BOOST_TEST_EQ(b.axis(0).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1).metadata(), "bar");
     b.axis(0).metadata() = "baz";
@@ -579,11 +574,12 @@ void run_tests() {
     auto a = make(Tag(), axis::regular<>(3, -1, 1, "r"), axis::integer<>(0, 2, "i"));
     std::ostringstream os;
     os << a;
-    BOOST_TEST_EQ(os.str(),
-                  std::string("histogram(\n"
-                              "  regular(3, -1, 1, metadata=\"r\", options=uoflow),\n"
-                              "  integer(0, 2, metadata=\"i\", options=uoflow),\n"
-                              ")"));
+    BOOST_TEST_EQ(
+        os.str(),
+        std::string("histogram(\n"
+                    "  regular(3, -1, 1, metadata=\"r\", options=underflow | overflow),\n"
+                    "  integer(0, 2, metadata=\"i\", options=underflow | overflow),\n"
+                    ")"));
   }
 
   // histogram_reset
