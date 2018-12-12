@@ -6,14 +6,8 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/axis/category.hpp>
-#include <boost/histogram/axis/circular.hpp>
-#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
-#include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/axis/variable.hpp>
-#include <boost/histogram/axis/variant.hpp>
-#include <functional> // for std::ref
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -22,11 +16,12 @@
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
+namespace tr = axis::transform;
 
 int main() {
   {
-    axis::variant<axis::integer<>, axis::category<std::string>> a{
-        axis::integer<>(0, 2, "int")};
+    axis::variant<axis::integer<double>, axis::category<std::string>> a{
+        axis::integer<double>(0, 2, "foo")};
     BOOST_TEST_EQ(a(-10), -1);
     BOOST_TEST_EQ(a(-1), -1);
     BOOST_TEST_EQ(a(0), 0);
@@ -38,7 +33,7 @@ int main() {
     BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a[-10].lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a[a.size() + 10].upper(), std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a.metadata(), "int");
+    BOOST_TEST_EQ(a.metadata(), "foo");
     BOOST_TEST_EQ(a.options(), axis::option_type::uoflow);
 
     a = axis::category<std::string>({"A", "B"}, "cat");
@@ -120,21 +115,21 @@ int main() {
 
     struct user_defined {};
 
-    namespace tr = axis::transform;
     using M = boost::container::string;
     test(axis::regular<>(2, -1, 1, "regular1"),
-         "regular(2, -1, 1, metadata=\"regular1\", options=uoflow)");
+         "regular(2, -1, 1, metadata=\"regular1\", options=underflow | overflow)");
     test(axis::regular<tr::log<>, M, axis::option_type::none>(2, 1, 10, "regular2"),
          "regular_log(2, 1, 10, metadata=\"regular2\", options=none)");
-    test(axis::regular<tr::pow<>, M, axis::option_type::overflow>(1.5, 2, 1, 10,
-                                                                  "regular3"),
+    test(axis::regular<tr::pow<>, M, axis::option_type::overflow>(tr::pow<>(1.5), 2, 1,
+                                                                  10, "regular3"),
          "regular_pow(2, 1, 10, metadata=\"regular3\", options=overflow, power=1.5)");
-    test(axis::regular<tr::pow<>, M, axis::option_type::none>(-1.5, 2, 1, 10, "regular4"),
+    test(axis::regular<tr::pow<>, M, axis::option_type::none>(tr::pow<>(-1.5), 2, 1, 10,
+                                                              "regular4"),
          "regular_pow(2, 1, 10, metadata=\"regular4\", options=none, power=-1.5)");
-    test(axis::circular<double, axis::null_type>(4, 0.1, 1.0),
-         "circular(4, 0.1, 1.1, options=overflow)");
-    test(axis::variable<double, boost::container::new_allocator<double>, M,
-                        axis::option_type::none>({-1, 0, 1}, "variable"),
+    test(axis::circular<double, axis::null_type>(4, 0.1, 1.1),
+         "regular(4, 0.1, 1.1, options=overflow | circular)");
+    test(axis::variable<double, axis::allocator<double>, M, axis::option_type::none>(
+             {-1, 0, 1}, "variable"),
          "variable(-1, 0, 1, metadata=\"variable\", options=none)");
     test(axis::category<>({0, 1, 2}, "category"),
          "category(0, 1, 2, metadata=\"category\", options=overflow)");
@@ -166,8 +161,8 @@ int main() {
                                   axis::integer<>>;
     std::vector<variant> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
-    axes.push_back(axis::regular<axis::transform::pow<>>(0.5, 2, 1, 4));
-    axes.push_back(axis::circular<>{4});
+    axes.push_back(axis::regular<tr::pow<>>(tr::pow<>(0.5), 2, 1, 4));
+    axes.push_back(axis::circular<>{4, 0, axis::two_pi});
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>({A, B, C}));
     axes.push_back(axis::integer<>{-1, 1});
@@ -206,7 +201,7 @@ int main() {
   // vector of axes with custom allocators
   {
     using M = std::vector<char, tracing_allocator<char>>;
-    using T1 = axis::regular<axis::transform::identity<>, M>;
+    using T1 = axis::regular<double, M>;
     using T2 = axis::circular<double, axis::null_type>;
     using T3 = axis::variable<double, tracing_allocator<double>, axis::null_type>;
     using T4 = axis::integer<int, axis::null_type>;
@@ -220,7 +215,7 @@ int main() {
       axes_type axes(a);
       axes.reserve(5);
       axes.emplace_back(T1(1, 0, 1, M(3, 'c', a)));
-      axes.emplace_back(T2(2));
+      axes.emplace_back(T2(2, 0, axis::two_pi));
       axes.emplace_back(T3({0., 1., 2.}, {}, a));
       axes.emplace_back(T4(0, 4));
       axes.emplace_back(T5({1, 2, 3, 4, 5}, {}, a));

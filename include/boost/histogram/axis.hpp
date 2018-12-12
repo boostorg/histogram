@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_AXIS_HPP
 
 #include <boost/histogram/axis/category.hpp>
-#include <boost/histogram/axis/circular.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>

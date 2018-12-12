@@ -87,11 +87,24 @@ namespace axis {
 template <typename C, typename T>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const axis::option_type o) {
-  switch (o) {
-    case axis::option_type::none: os << "none"; break;
-    case axis::option_type::underflow: os << "underflow"; break;
-    case axis::option_type::overflow: os << "overflow"; break;
-    case axis::option_type::uoflow: os << "uoflow"; break;
+  using opt = axis::option_type;
+  if (o == opt::none)
+    os << "none";
+  else {
+    bool first = true;
+    for (auto x : {opt::underflow, opt::overflow, opt::circular}) {
+      if (!(o & x)) continue;
+      if (first)
+        first = false;
+      else
+        os << " | ";
+      switch (x) {
+        case axis::option_type::underflow: os << "underflow"; break;
+        case axis::option_type::overflow: os << "overflow"; break;
+        case axis::option_type::circular: os << "circular"; break;
+        default: break;
+      }
+    }
   }
   return os;
 }

@@ -39,6 +39,11 @@ class integer : public base<MetaData, Options>,
                          interval_bin_view<integer>>;
   using index_type = std::conditional_t<std::is_integral<value_type>::value, int, double>;
 
+  static_assert(!(Options & option_type::circular) || !(Options & option_type::underflow),
+                "circular axis cannot have underflow");
+  static_assert(!std::is_integral<IntType>::value || std::is_same<IntType, int>::value,
+                "integer axis requires type floating point type or int");
+
 public:
   /** Construct over semi-open integer interval [start, stop).
    *
@@ -47,7 +52,7 @@ public:
    * \param metadata description of the axis.
    * \param options  extra bin options.
    */
-  integer(value_type start, value_type stop, metadata_type m = metadata_type())
+  integer(value_type start, value_type stop, metadata_type m = {})
       : base_type(static_cast<unsigned>(stop - start > 0 ? stop - start : 0),
                   std::move(m))
       , min_(start) {}
@@ -57,21 +62,23 @@ public:
       : base_type(end - begin, src.metadata()), min_(src.min_ + begin) {
     if (merge > 1)
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for integer axis"));
+    if (Options & option_type::circular && !(begin == 0 && end == src.size()))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
   integer() = default;
 
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
-    const auto i = static_cast<int>(std::floor(x - min_));
-    return i >= 0 ? (i > static_cast<int>(base_type::size()) ? base_type::size() : i)
-                  : -1;
+    return impl(std::is_floating_point<value_type>(), x);
   }
 
   /// Returns axis value for index.
   value_type value(index_type i) const noexcept {
-    if (i < 0) { return detail::lowest<value_type>(); }
-    if (i > static_cast<int>(base_type::size())) { return detail::highest<value_type>(); }
+    if (!(Options & option_type::circular)) {
+      if (i < 0) return detail::lowest<value_type>();
+      if (i > base_type::size()) { return detail::highest<value_type>(); }
+    }
     return min_ + i;
   }
 
@@ -87,8 +94,45 @@ public:
   void serialize(Archive&, unsigned);
 
 private:
+  int impl(std::false_type, int x) const noexcept {
+    const auto z = x - min_;
+    if (Options & option_type::circular) {
+      return z - std::floor(double(z) / base_type::size()) * base_type::size();
+    } else if (z < base_type::size()) {
+      return z >= 0 ? z : -1;
+    }
+    return base_type::size();
+  }
+
+  template <typename T>
+  int impl(std::true_type, T x) const noexcept {
+    const auto z = std::floor(x - min_);
+    if (Options & option_type::circular) {
+      if (std::isfinite(z))
+        return static_cast<int>(z -
+                                std::floor(z / base_type::size()) * base_type::size());
+    } else if (z < base_type::size()) {
+      return z >= 0 ? static_cast<int>(z) : -1;
+    }
+    return base_type::size();
+  }
+
   value_type min_ = 0;
 };
+
+#ifdef __cpp_deduction_guides
+
+template <class T>
+integer(T, T)->integer<detail::convert_integer<T, int>>;
+
+template <class T>
+integer(T, T, const char*)->integer<detail::convert_integer<T, int>>;
+
+template <class T, class M>
+integer(T, T, M)->integer<detail::convert_integer<T, int>, M>;
+
+#endif
+
 } // namespace axis
 } // namespace histogram
 } // namespace boost

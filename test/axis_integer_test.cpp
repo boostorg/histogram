@@ -6,7 +6,6 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/axis/circular.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -28,20 +27,20 @@ int main() {
     BOOST_TEST_THROWS(axis::integer<>(1, -1), std::invalid_argument);
   }
 
-  // axis::integer
+  // axis::integer with double type
   {
-    axis::integer<> a{-1, 2};
+    axis::integer<double> a{-1, 2};
     BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
-    axis::integer<> b;
+    axis::integer<double> b;
     BOOST_TEST_NE(a, b);
     b = a;
     BOOST_TEST_EQ(a, b);
     b = b;
     BOOST_TEST_EQ(a, b);
-    axis::integer<> c = std::move(b);
+    axis::integer<double> c = std::move(b);
     BOOST_TEST_EQ(c, a);
-    axis::integer<> d;
+    axis::integer<double> d;
     BOOST_TEST_NE(c, d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
@@ -52,6 +51,7 @@ int main() {
     BOOST_TEST_EQ(a(1), 2);
     BOOST_TEST_EQ(a(2), 3);
     BOOST_TEST_EQ(a(10), 3);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 3);
   }
 
   // axis::integer with int type
@@ -68,8 +68,44 @@ int main() {
     BOOST_TEST_EQ(a(10), 3);
   }
 
+  // axis::integer int,circular
+  {
+    axis::integer<int, axis::null_type, axis::option_type::circular> a(-1, 1);
+    BOOST_TEST_EQ(a.value(-1), -2);
+    BOOST_TEST_EQ(a.value(0), -1);
+    BOOST_TEST_EQ(a.value(1), 0);
+    BOOST_TEST_EQ(a.value(2), 1);
+    BOOST_TEST_EQ(a.value(3), 2);
+    BOOST_TEST_EQ(a(-2), 1);
+    BOOST_TEST_EQ(a(-1), 0);
+    BOOST_TEST_EQ(a(0), 1);
+    BOOST_TEST_EQ(a(1), 0);
+    BOOST_TEST_EQ(a(2), 1);
+  }
+
+  // axis::integer double,circular
+  {
+    axis::integer<double, axis::null_type, axis::option_type::circular> a(-1, 1);
+    BOOST_TEST_EQ(a.value(-1), -2);
+    BOOST_TEST_EQ(a.value(0), -1);
+    BOOST_TEST_EQ(a.value(1), 0);
+    BOOST_TEST_EQ(a.value(2), 1);
+    BOOST_TEST_EQ(a.value(3), 2);
+    BOOST_TEST_EQ(a(-2), 1);
+    BOOST_TEST_EQ(a(-1), 0);
+    BOOST_TEST_EQ(a(0), 1);
+    BOOST_TEST_EQ(a(1), 0);
+    BOOST_TEST_EQ(a(2), 1);
+    BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 2);
+  }
+
   // iterators
-  { test_axis_iterator(axis::integer<>(0, 4, ""), 0, 4); }
+  {
+    test_axis_iterator(axis::integer<int>(0, 4), 0, 4);
+    test_axis_iterator(axis::integer<double>(0, 4), 0, 4);
+    test_axis_iterator(
+        axis::integer<int, axis::null_type, axis::option_type::circular>(0, 4), 0, 4);
+  }
 
   // shrink and rebin
   {
@@ -87,6 +123,15 @@ int main() {
     BOOST_TEST_EQ(e.size(), 3);
     BOOST_TEST_EQ(e.value(0), 1);
     BOOST_TEST_EQ(e.value(3), 4);
+  }
+
+  // shrink and rebin with circular option
+  {
+    using A = axis::integer<int, axis::null_type, axis::option_type::circular>;
+    auto a = A(1, 5);
+    BOOST_TEST_THROWS(A(a, 1, 4, 1), std::invalid_argument);
+    BOOST_TEST_THROWS(A(a, 0, 3, 1), std::invalid_argument);
+    BOOST_TEST_THROWS(A(a, 0, 4, 2), std::invalid_argument);
   }
 
   return boost::report_errors();

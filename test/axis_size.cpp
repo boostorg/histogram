@@ -13,9 +13,9 @@ int main() {
   using namespace boost::histogram;
 
   using regular = axis::regular<>;
-  using regular_float = axis::regular<axis::transform::identity<float>>;
+  using regular_float = axis::regular<float>;
   using regular_pow = axis::regular<axis::transform::pow<>>;
-  using regular_no_metadata = axis::regular<axis::transform::identity<>, axis::null_type>;
+  using regular_no_metadata = axis::regular<double, axis::null_type>;
   using circular = axis::circular<>;
   using variable = axis::variable<>;
   using integer = axis::integer<>;

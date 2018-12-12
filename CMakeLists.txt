@@ -10,6 +10,7 @@ project(histogram CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(MIN_BOOST_VERSION 1.66)
 
@@ -85,7 +86,6 @@ compiled_test(test/algorithm_project_test.cpp)
 compiled_test(test/algorithm_reduce_test.cpp)
 compiled_test(test/algorithm_sum_test.cpp)
 compiled_test(test/axis_regular_test.cpp)
-compiled_test(test/axis_circular_test.cpp)
 compiled_test(test/axis_variable_test.cpp)
 compiled_test(test/axis_integer_test.cpp)
 compiled_test(test/axis_category_test.cpp)
@@ -130,12 +130,17 @@ if (TEST_SERIALIZATION)
   target_link_libraries(histogram_serialization_test PRIVATE Boost::serialization)
 endif()
 
-if (TEST_ACCUMULATORS_SUPPORT) # test the support for external boost::accumulators
+if (TEST_ACCUMULATORS_SUPPORT) # test support for external boost::accumulators
   compiled_test(test/boost_accumulators_support_test.cpp)
 endif()
 
-if (TEST_RANGE_SUPPORT) # test the support for external boost::range
+if (TEST_RANGE_SUPPORT) # test support for external boost::range
   compiled_test(test/boost_range_support_test.cpp)
+endif()
+
+if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES) # test support for optional C++17 features
+  compiled_test(test/axis_deduction_guide_test.cpp)
+  target_compile_features(axis_deduction_guide_test PRIVATE cxx_std_17)
 endif()
 
 if (BUILD_BENCHMARKS)

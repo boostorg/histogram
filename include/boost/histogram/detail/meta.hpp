@@ -32,6 +32,9 @@ namespace detail {
 template <class T>
 using unqual = std::remove_cv_t<std::remove_reference_t<T>>;
 
+template <class T, class U>
+using convert_integer = mp11::mp_if<std::is_integral<unqual<T>>, U, T>;
+
 template <class T>
 using mp_size = mp11::mp_size<unqual<T>>;
 

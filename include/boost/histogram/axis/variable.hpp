@@ -40,6 +40,11 @@ class variable : public base<MetaData, Options>,
   using metadata_type = MetaData;
   using value_type = RealType;
 
+  static_assert(!(Options & option_type::circular) || !(Options & option_type::underflow),
+                "circular axis cannot have underflow");
+  static_assert(std::is_floating_point<RealType>::value,
+                "variable axis requires floating point type");
+
 public:
   /** Construct from iterator range of bin edges.
    *
@@ -101,7 +106,7 @@ public:
    * \param allocator allocator instance to use.
    */
   template <typename U>
-  variable(const std::initializer_list<U>& l, metadata_type m = metadata_type(),
+  variable(std::initializer_list<U> l, metadata_type m = metadata_type(),
            allocator_type a = allocator_type())
       : variable(l.begin(), l.end(), std::move(m), std::move(a)) {}
 
@@ -122,6 +127,8 @@ public:
       bool operator==(const skip_iterator& rhs) const { return it == rhs.it; }
     } iter{src.x_.first() + begin, merge};
     x_.first() = detail::create_buffer_from_iter(x_.second(), nx(), iter);
+    if (Options & option_type::circular && !(begin == 0 && end == src.size()))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
   variable() : x_(nullptr) {}
@@ -165,20 +172,31 @@ public:
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
     const auto p = x_.first();
+    if (Options & option_type::circular) {
+      const auto a = p[0];
+      const auto b = p[nx() - 1];
+      x -= std::floor((x - a) / (b - a)) * (b - a);
+    }
     return std::upper_bound(p, p + nx(), x) - p - 1;
   }
 
   /// Returns axis value for fractional index.
-  value_type value(value_type i) const noexcept {
-    if (i < 0) { return detail::lowest<value_type>(); }
-    if (i > static_cast<int>(base_type::size())) { return detail::highest<value_type>(); }
-    return detail::static_if<std::is_floating_point<value_type>>(
-        [this](auto i) -> value_type {
-          decltype(i) z;
-          const auto k = static_cast<int>(std::modf(i, &z));
-          return (1.0 - z) * x_.first()[k] + z * x_.first()[k + 1];
-        },
-        [this](auto i) -> value_type { return x_.first()[i]; }, i);
+  value_type value(double i) const noexcept {
+    const auto p = x_.first();
+    if (Options & option_type::circular) {
+      auto shift = std::floor(i / base_type::size());
+      i -= shift * base_type::size();
+      double z;
+      const auto k = static_cast<int>(std::modf(i, &z));
+      const auto a = p[0];
+      const auto b = p[nx() - 1];
+      return (1.0 - z) * p[k] + z * p[k + 1] + shift * (b - a);
+    }
+    if (i < 0) return detail::lowest<value_type>();
+    if (i > static_cast<int>(base_type::size())) return detail::highest<value_type>();
+    double z;
+    const auto k = static_cast<int>(std::modf(i, &z));
+    return (1.0 - z) * p[k] + z * p[k + 1];
   }
 
   auto operator[](int idx) const noexcept {
@@ -200,6 +218,35 @@ private:
   using pointer = typename std::allocator_traits<allocator_type>::pointer;
   detail::compressed_pair<pointer, allocator_type> x_;
 };
+
+#ifdef __cpp_deduction_guides
+
+template <class U, class T = detail::convert_integer<U, double>>
+variable(std::initializer_list<U>)->variable<T, allocator<T>>;
+
+template <class U, class T = detail::convert_integer<U, double>>
+variable(std::initializer_list<U>, const char*)->variable<T, allocator<T>>;
+
+template <class U, class M, class T = detail::convert_integer<U, double>>
+variable(std::initializer_list<U>, M)->variable<T, allocator<T>, M>;
+
+template <class Iterable,
+          class T = detail::convert_integer<
+              detail::unqual<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+variable(Iterable)->variable<T, allocator<T>>;
+
+template <class Iterable,
+          class T = detail::convert_integer<
+              detail::unqual<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+variable(Iterable, const char*)->variable<T, allocator<T>>;
+
+template <class Iterable, class M,
+          class T = detail::convert_integer<
+              detail::unqual<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+variable(Iterable, M)->variable<T, allocator<T>, M>;
+
+#endif
+
 } // namespace axis
 } // namespace histogram
 } // namespace boost
