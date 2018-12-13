@@ -219,7 +219,7 @@ private:
   detail::compressed_pair<pointer, allocator_type> x_;
 };
 
-#ifdef __cpp_deduction_guides
+#if __cpp_deduction_guides >= 201606
 
 template <class U, class T = detail::convert_integer<U, double>>
 variable(std::initializer_list<U>)->variable<T, allocator<T>>;

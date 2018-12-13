@@ -200,7 +200,7 @@ private:
   detail::return_type<decltype(&transform_type::forward)> min_, delta_;
 }; // namespace axis
 
-#ifdef __cpp_deduction_guides
+#if __cpp_deduction_guides >= 201606
 
 template <class T>
 regular(unsigned, T, T)->regular<detail::convert_integer<T, double>>;
