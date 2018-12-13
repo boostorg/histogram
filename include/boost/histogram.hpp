@@ -35,7 +35,7 @@
    time and you don't need to worry about type conversions.
 
    You can freely mix the implementations in your code, they are convertible
-   into each other, and there is a common interface for both. To the extend
+   into each other, and there is a common interface for both. To the extent
    of what is technically possible, the library has been designed to allow
    you to write code that is agnostic of the implementation variant.
 */
