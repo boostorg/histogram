@@ -16,6 +16,7 @@ namespace tr = axis::transform;
 // tests requires a C++17 compatible compiler
 
 int main() {
+#if __cpp_deduction_guides >= 201606
   {
     axis::regular a(1, 0.0, 1.0);
     axis::regular b(1, 0, 1);
@@ -85,5 +86,6 @@ int main() {
         (std::is_same<decltype(i),
                       axis::variable<double, axis::allocator<double>, axis::null_type>>));
   }
+#endif
   return boost::report_errors();
 }

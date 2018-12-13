@@ -120,7 +120,7 @@ private:
   value_type min_ = 0;
 };
 
-#ifdef __cpp_deduction_guides
+#if __cpp_deduction_guides >= 201606
 
 template <class T>
 integer(T, T)->integer<detail::convert_integer<T, int>>;
