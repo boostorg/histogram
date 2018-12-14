@@ -67,6 +67,15 @@ struct unit {
   Q inverse(T x) const { return x * U(); }
 };
 
+#if __cpp_deduction_guides >= 201611
+
+log()->log<>;
+sqrt()->sqrt<>;
+template <class T>
+pow(T)->pow<T>;
+
+#endif
+
 } // namespace transform
 
 /** Axis for equidistant intervals on the real line.

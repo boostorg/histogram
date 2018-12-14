@@ -16,7 +16,7 @@ namespace tr = axis::transform;
 // tests requires a C++17 compatible compiler
 
 int main() {
-#if __cpp_deduction_guides >= 201606
+#if __cpp_deduction_guides >= 201611
   {
     axis::regular a(1, 0.0, 1.0);
     axis::regular b(1, 0, 1);

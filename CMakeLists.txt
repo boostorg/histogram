@@ -144,7 +144,12 @@ if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES) # test support for optional C
 endif()
 
 if (BUILD_BENCHMARKS)
-  find_package(benchmark REQUIRED) # uses Google Benchmark
+  find_package(benchmark) # uses Google Benchmark
+
+  if (NOT TARGET benchmark::benchmark_main)
+    message(FATAL_ERROR "Building benchmarks is requested, but Google Benchmark could not"
+    " be found. Please install Google Benchmark from github or toggle BUILD_BENCHMARKS=OFF.")
+  endif()
 
   function(benchmark SRC)
     get_filename_component(BASENAME ${SRC} NAME_WE)
