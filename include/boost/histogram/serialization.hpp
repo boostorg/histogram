@@ -38,7 +38,7 @@
  */
 
 namespace std {
-template <class Archive, typename... Ts>
+template <class Archive, class... Ts>
 void serialize(Archive& ar, tuple<Ts...>& t, unsigned /* version */) {
   ::boost::mp11::tuple_for_each(t, [&ar](auto& x) { ar& x; });
 }
@@ -74,21 +74,21 @@ void serialize(Archive& ar, basic_string<C, T, A>& v, unsigned) {
 namespace histogram {
 
 namespace accumulators {
-template <typename RealType>
+template <class RealType>
 template <class Archive>
 void sum<RealType>::serialize(Archive& ar, unsigned /* version */) {
   ar& sum_;
   ar& cor_;
 }
 
-template <typename RealType>
+template <class RealType>
 template <class Archive>
 void weighted_sum<RealType>::serialize(Archive& ar, unsigned /* version */) {
   ar& sum_;
   ar& sum2_;
 }
 
-template <typename RealType>
+template <class RealType>
 template <class Archive>
 void mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
   ar& sum_;
@@ -96,7 +96,7 @@ void mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
   ar& dsum2_;
 }
 
-template <typename RealType>
+template <class RealType>
 template <class Archive>
 void weighted_mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
   ar& sum_;
@@ -106,7 +106,7 @@ void weighted_mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
 }
 } // namespace accumulators
 
-template <class Archive, typename T>
+template <class Archive, class T>
 void serialize(Archive& ar, storage_adaptor<T>& s, unsigned /* version */) {
   auto size = s.size();
   ar& size;
@@ -116,7 +116,7 @@ void serialize(Archive& ar, storage_adaptor<T>& s, unsigned /* version */) {
 
 namespace detail {
 struct serializer {
-  template <typename T, typename Buffer, typename Archive>
+  template <class T, class Buffer, class Archive>
   void operator()(T*, Buffer& b, Archive& ar) {
     if (Archive::is_loading::value) {
       // precondition: buffer is destroyed
@@ -125,14 +125,14 @@ struct serializer {
     ar& boost::serialization::make_array(reinterpret_cast<T*>(b.ptr), b.size);
   }
 
-  template <typename Buffer, typename Archive>
+  template <class Buffer, class Archive>
   void operator()(void*, Buffer& b, Archive&) {
     if (Archive::is_loading::value) { b.ptr = nullptr; }
   }
 };
 } // namespace detail
 
-template <class Archive, typename A>
+template <class Archive, class A>
 void serialize(Archive& ar, adaptive_storage<A>& s, unsigned /* version */) {
   using S = adaptive_storage<A>;
   if (Archive::is_loading::value) { S::apply(typename S::destroyer(), s.buffer); }
@@ -141,7 +141,7 @@ void serialize(Archive& ar, adaptive_storage<A>& s, unsigned /* version */) {
   S::apply(detail::serializer(), s.buffer, ar);
 }
 
-template <typename A, typename S>
+template <class A, class S>
 template <class Archive>
 void histogram<A, S>::serialize(Archive& ar, unsigned /* version */) {
   ar& axes_;
@@ -169,7 +169,7 @@ void serialize(Archive& ar, pow<T>& t, unsigned /* version */) {
 template <class Archive>
 void serialize(Archive&, null_type&, unsigned /* version */) {}
 
-template <typename M, option_type O>
+template <class M, option_type O>
 template <class Archive>
 void base<M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& size_meta_.first();
@@ -179,7 +179,7 @@ void base<M, O>::serialize(Archive& ar, unsigned /* version */) {
 template <class Archive, class T>
 void serialize(Archive&, transform::unit<T>&, unsigned /* version */) {}
 
-template <typename T, typename M, option_type O>
+template <class T, class M, option_type O>
 template <class Archive>
 void regular<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
@@ -188,9 +188,16 @@ void regular<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& delta_;
 }
 
-template <typename R, typename A, typename M, option_type O>
+template <class T, class M, option_type O>
 template <class Archive>
-void variable<R, A, M, O>::serialize(Archive& ar, unsigned /* version */) {
+void integer<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
+  ar& static_cast<base_type&>(*this);
+  ar& min_;
+}
+
+template <class T, class M, option_type O, class A>
+template <class Archive>
+void variable<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
   // destroy must happen before base serialization with old size
   if (Archive::is_loading::value) detail::destroy_buffer(x_.second(), x_.first(), nx());
   ar& static_cast<base_type&>(*this);
@@ -199,16 +206,9 @@ void variable<R, A, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& boost::serialization::make_array(x_.first(), nx());
 }
 
-template <typename I, typename M, option_type O>
+template <class T, class M, option_type O, class A>
 template <class Archive>
-void integer<I, M, O>::serialize(Archive& ar, unsigned /* version */) {
-  ar& static_cast<base_type&>(*this);
-  ar& min_;
-}
-
-template <typename V, typename A, typename M, option_type O>
-template <class Archive>
-void category<V, A, M, O>::serialize(Archive& ar, unsigned /* version */) {
+void category<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
   // destroy must happen before base serialization with old size
   if (Archive::is_loading::value)
     detail::destroy_buffer(x_.second(), x_.first(), base_type::size());
@@ -218,7 +218,7 @@ void category<V, A, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& boost::serialization::make_array(x_.first(), base_type::size());
 }
 
-template <typename... Ts>
+template <class... Ts>
 template <class Archive>
 void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);

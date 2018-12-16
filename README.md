@@ -24,7 +24,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 
 ## Features
 
-* Extremely customizable multi-dimensional histogram
+* Extremely customisable multi-dimensional histogram
 * Simple, convenient, STL and Boost-compatible interface
 * Static and dynamic implementations under a common interface
 * Counters with high dynamic range, cannot overflow or be capped (1)
@@ -44,7 +44,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 1. In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/) integer, which is only limited by available memory.
 2. The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell.
 3. Variance estimates are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell-counts.
-4. Buildin axis types can configured to only accept dimensional quantities from e.g. Boost.Units.
+4. Builtin axis types can configured to only accept dimensional quantities, like those from Boost.Units.
 
 ## Dependencies
 
@@ -89,16 +89,16 @@ int main() {
     std::for_each(data.begin(), data.end(), std::ref(h));
 
     // iterate over bins
-    std::ostringstream os;
     for (auto x : bh::indexed(h)) {
-      os << boost::format("bin %2i [%4.1f, %4.1f): %i\n")
-        % x[0] % x.bin(0).lower() % x.bin(0).upper() % x.value;
+      std::cout << boost::format("bin %2i [%4.1f, %4.1f): %i\n")
+        % x[0] % x.bin(0).lower() % x.bin(0).upper() % *x;
     }
 
-    std::cout << os.str() << std::flush;
+    std::cout << std::flush;
 
-    /* program output: (note that under- and overflow bins appear at the end)
+    /* program output:
 
+    bin -1 [-inf, -1.0): 1
     bin  0 [-1.0, -0.5): 1
     bin  1 [-0.5, -0.0): 1
     bin  2 [-0.0,  0.5): 2
@@ -106,7 +106,6 @@ int main() {
     bin  4 [ 1.0,  1.5): 1
     bin  5 [ 1.5,  2.0): 1
     bin  6 [ 2.0,  inf): 2
-    bin -1 [-inf, -1.0): 1
     */
 }
 ```

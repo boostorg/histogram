@@ -529,10 +529,14 @@ void run_tests() {
     BOOST_TEST_EQ(algorithm::sum(h), 3);
 
     auto a = std::vector<double>();
+    // walks over all bins, including underflow and overflow
     std::partial_sum(h.begin(), h.end(), std::back_inserter(a));
-    BOOST_TEST_EQ(a[0], 1);
-    BOOST_TEST_EQ(a[1], 2);
-    BOOST_TEST_EQ(a[2], 3);
+    BOOST_TEST_EQ(a.size(), 5);
+    BOOST_TEST_EQ(a[0], 0);
+    BOOST_TEST_EQ(a[1], 1);
+    BOOST_TEST_EQ(a[2], 2);
+    BOOST_TEST_EQ(a[3], 3);
+    BOOST_TEST_EQ(a[4], 3);
   }
 
   // operators

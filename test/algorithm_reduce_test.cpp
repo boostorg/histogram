@@ -11,7 +11,9 @@
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
+#include <boost/histogram/indexed.hpp>
 #include <boost/histogram/ostream_operators.hpp>
+#include <boost/histogram/unsafe_access.hpp>
 #include <vector>
 #include "utility_histogram.hpp"
 
@@ -22,17 +24,17 @@ template <typename Tag>
 void run_tests() {
   using regular = axis::regular<double, axis::null_type>;
   {
-    auto h = make(Tag(), regular(4, 1, 5), regular(3, -1, 2));
-    h(1, -1);
-    h(1, 0);
-    h(2, 0);
-    h(2, 1);
-    h(2, 1);
-    h(3, -1);
-    h(3, 1);
-    h(4, 1);
-    h(4, 1);
-    h(4, 1);
+    auto h = make_s(Tag(), std::vector<int>(), regular(4, 1, 5), regular(3, -1, 2));
+
+    // not allowed: repeated indices
+    BOOST_TEST_THROWS(reduce(h, rebin(0, 2), rebin(0, 2)), std::invalid_argument);
+    BOOST_TEST_THROWS(reduce(h, shrink(1, 0, 2), shrink(1, 0, 2)), std::invalid_argument);
+    // not allowed: shrink with lower == upper
+    BOOST_TEST_THROWS(reduce(h, shrink(0, 0, 0)), std::invalid_argument);
+    // not allowed: shrink axis to zero size
+    BOOST_TEST_THROWS(reduce(h, shrink(0, 10, 11)), std::invalid_argument);
+    // not allowed: rebin with zero merge
+    BOOST_TEST_THROWS(reduce(h, rebin(0, 0)), std::invalid_argument);
 
     /*
       matrix layout:
@@ -41,6 +43,13 @@ void run_tests() {
     | 1 1 0 0
     v 0 2 1 3
     */
+    unsafe_access::set_value(h, {0, 0}, 1);
+    unsafe_access::set_value(h, {0, 1}, 1);
+    unsafe_access::set_value(h, {1, 1}, 1);
+    unsafe_access::set_value(h, {1, 2}, 2);
+    unsafe_access::set_value(h, {2, 0}, 1);
+    unsafe_access::set_value(h, {2, 2}, 1);
+    unsafe_access::set_value(h, {3, 2}, 3);
 
     // should do nothing, index order does not matter
     auto hr = reduce(h, shrink(1, -1, 2), rebin(0, 1));
@@ -52,17 +61,8 @@ void run_tests() {
     BOOST_TEST_EQ(hr.axis(0)[3].upper(), 5);
     BOOST_TEST_EQ(hr.axis(1)[0].lower(), -1);
     BOOST_TEST_EQ(hr.axis(1)[2].upper(), 2);
+    for (auto x : indexed(h, true)) BOOST_TEST_EQ(hr.at(x), *x);
     BOOST_TEST_EQ(hr, h);
-
-    // not allowed: repeated indices
-    BOOST_TEST_THROWS(reduce(h, rebin(0, 2), rebin(0, 2)), std::invalid_argument);
-    BOOST_TEST_THROWS(reduce(h, shrink(1, 0, 2), shrink(1, 0, 2)), std::invalid_argument);
-    // not allowed: shrink with lower == upper
-    BOOST_TEST_THROWS(reduce(h, shrink(0, 0, 0)), std::invalid_argument);
-    // not allowed: shrink axis to zero size
-    BOOST_TEST_THROWS(reduce(h, shrink(0, 10, 11)), std::invalid_argument);
-    // not allowed: rebin with zero merge
-    BOOST_TEST_THROWS(reduce(h, rebin(0, 0)), std::invalid_argument);
 
     hr = reduce(h, shrink(0, 2, 4));
     BOOST_TEST_EQ(hr.rank(), 2);

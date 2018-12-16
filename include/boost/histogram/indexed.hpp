@@ -12,7 +12,7 @@
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
-#include <boost/iterator/iterator_facade.hpp>
+#include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/mp11.hpp>
 #include <type_traits>
 #include <utility>
@@ -23,19 +23,34 @@ namespace histogram {
 /// Range over histogram bins with multi-dimensional index.
 template <typename Histogram>
 class BOOST_HISTOGRAM_NODISCARD indexed_range {
-  using axes_type = typename Histogram::axes_type;
   using value_type = typename Histogram::value_type;
   using value_iterator = typename Histogram::const_iterator;
-  using axis_data_type = detail::axes_buffer<axes_type, std::pair<int, int>>;
-  using index_type = detail::axes_buffer<axes_type, int>;
+  struct cache_item {
+    int idx, begin, end, extend;
+  };
+  using cache_type = detail::axes_buffer<typename Histogram::axes_type, cache_item>;
 
 public:
   class accessor {
   public:
-    int operator[](unsigned d) const { return parent_.index_[d]; }
-    auto begin() const { return parent_.index_.begin(); }
-    auto end() const { return parent_.index_.end(); }
-    auto size() const { return parent_.index_.size(); }
+    class const_iterator
+        : public boost::iterator_adaptor<const_iterator,
+                                         typename cache_type::const_iterator> {
+    public:
+      const_iterator(typename cache_type::const_iterator i)
+          : const_iterator::iterator_adaptor_(i) {}
+      decltype(auto) operator*() const noexcept {
+        return const_iterator::base_reference()->idx;
+      }
+
+    private:
+      friend class boost::iterator_core_access;
+    };
+
+    int operator[](unsigned d) const { return parent_.cache_[d].idx; }
+    auto begin() const { return const_iterator(parent_.cache_.begin()); }
+    auto end() const { return const_iterator(parent_.cache_.end()); }
+    auto size() const { return parent_.cache_.size(); }
 
     template <unsigned N>
     decltype(auto) bin(std::integral_constant<unsigned, N>) const {
@@ -54,13 +69,8 @@ public:
 
     accessor(const indexed_range& parent, value_iterator i) : parent_(parent), iter_(i) {}
 
-    decltype(auto) operator*() const noexcept {
-      return *iter_;
-    }
-
-    value_iterator operator->() const noexcept {
-      return iter_;
-    }
+    decltype(auto) operator*() const noexcept { return *iter_; }
+    auto operator-> () const noexcept { return iter_; }
 
   private:
     const indexed_range& parent_;
@@ -68,114 +78,74 @@ public:
   };
 
   class const_iterator
-      : public boost::iterator_facade<const_iterator, accessor,
-                                      boost::forward_traversal_tag, accessor> {
+      : public boost::iterator_adaptor<const_iterator, value_iterator, accessor,
+                                       boost::forward_traversal_tag, accessor> {
   public:
     const_iterator(const indexed_range& p, value_iterator i) noexcept
-        : parent_(p), iter_(i) {}
+        : const_iterator::iterator_adaptor_(i), parent_(p) {}
 
-  protected:
-    void increment() noexcept {
-      parent_.include_extra_bins_ ? iter_over_all() : iter_over_inner();
+    auto operator*() const noexcept {
+      return accessor(parent_, const_iterator::base_reference());
     }
-
-    void iter_over_all() noexcept {
-      auto s = parent_.axis_data_.begin();
-      auto i = parent_.index_.begin();
-      if (*i >= 0) {
-        ++*i;
-        if (*i == s->second)
-          *i = -1;
-      } else {
-        *i = s->first;
-      }
-      while (*i == s->first && i < (parent_.index_.end() - 1)) {
-        *i = 0;
-        ++i;
-        ++s;
-        if (*i >= 0) {
-          ++*i;
-          if (*i == s->second)
-            *i = -1;
-        } else {
-          *i = s->first;
-        }
-      }
-
-      std::size_t k = 0, stride = 1;
-      s = parent_.axis_data_.begin();
-      for (auto& x : parent_.index_) {
-        k += (x >= 0 ? x : s->second) * stride;
-        stride *= s->first;
-        ++s;
-      }
-      iter_ = parent_.hist_.begin() + k;
-    }
-
-    void iter_over_inner() noexcept {
-      auto s = parent_.axis_data_.begin();
-      auto i = parent_.index_.begin();
-      ++*i;
-      while (*i == s->second) {
-        if (i == (parent_.index_.end() - 1)) {
-          *i = s->first;
-          break;
-        } else {
-          *i = 0;
-          ++*(++i);
-          ++s;
-        }
-      }
-
-      std::size_t k = 0, stride = 1;
-      s = parent_.axis_data_.begin();
-      for (auto x : parent_.index_) {
-        k += x * stride;
-        stride *= s->first;
-        ++s;
-      }
-      iter_ = parent_.hist_.begin() + k;
-    }
-
-    bool equal(const_iterator rhs) const noexcept {
-      return &parent_ == &rhs.parent_ && iter_ == rhs.iter_;
-    }
-
-    accessor dereference() const noexcept { return {parent_, iter_}; }
-
-    friend class ::boost::iterator_core_access;
 
   private:
+    friend class boost::iterator_core_access;
+
+    void increment() noexcept {
+      std::size_t stride = 1;
+      auto c = parent_.cache_.begin();
+      ++c->idx;
+      ++const_iterator::base_reference();
+      while (c->idx == c->end && ((c + 1) != parent_.cache_.end())) {
+        c->idx = c->begin;
+        const_iterator::base_reference() -= (c->end - c->idx) * stride;
+        stride *= c->extend;
+        ++c;
+        ++c->idx;
+        const_iterator::base_reference() += stride;
+      }
+    }
+
     const indexed_range& parent_;
-    value_iterator iter_;
-    bool skip_;
   };
 
   indexed_range(const Histogram& h, bool include_extra_bins)
       : hist_(h)
       , include_extra_bins_(include_extra_bins)
-      , axis_data_(h.rank())
-      , index_(h.rank(), 0) {
-    auto it = axis_data_.begin();
+      , begin_(hist_.begin())
+      , end_(begin_)
+      , cache_(hist_.rank()) {
+    auto c = cache_.begin();
+    std::size_t stride = 1;
+    const auto extra = include_extra_bins_;
     h.for_each_axis([&](const auto& a) {
-      it->first = axis::traits::extend(a);
-      if (include_extra_bins_) {
-        it->second = axis::traits::underflow_index(a);
-      } else {
-        it->second = a.size();
-      }
-      ++it;
+      const auto opt = axis::traits::options(a);
+      const auto shift = opt & axis::option_type::underflow;
+
+      c->extend = axis::traits::extend(a);
+      c->begin = extra ? -shift : 0;
+      c->end = c->extend - shift - (extra ? 0 : (opt & axis::option_type::overflow));
+      c->idx = c->begin;
+
+      begin_ += (c->begin + shift) * stride;
+      if ((c + 1) < cache_.end())
+        end_ += (c->begin + shift) * stride;
+      else
+        end_ += (c->end + shift) * stride;
+
+      stride *= c->extend;
+      ++c;
     });
   }
 
-  const_iterator begin() const { return {*this, hist_.begin()}; }
-  const_iterator end() const { return {*this, hist_.end()}; }
+  decltype(auto) begin() const { return const_iterator(*this, begin_); }
+  decltype(auto) end() const { return const_iterator(*this, end_); }
 
 private:
   const Histogram& hist_;
   const bool include_extra_bins_;
-  axis_data_type axis_data_;
-  mutable index_type index_;
+  value_iterator begin_, end_;
+  mutable cache_type cache_;
 }; // namespace histogram
 
 template <typename Histogram>

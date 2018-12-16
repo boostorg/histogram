@@ -12,104 +12,107 @@
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/unsafe_access.hpp>
+#include <boost/mp11.hpp>
+#include <iterator>
 #include <vector>
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals;
+using namespace boost::mp11;
 
-template <typename Tag>
-void run_1d_tests(bool include_extra_bins) {
-  auto h = make(Tag(), axis::integer<>(0, 3));
-  h(weight(2), 0);
-  h(1);
-  h(1);
+template <class IsDynamic, class IncludeExtraBins>
+void run_1d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
+  auto h = make(IsDynamic(), axis::integer<>(0, 3));
+  h(-1, weight(1));
+  h(0, weight(2));
+  h(1, weight(3));
+  h(2, weight(4));
+  h(3, weight(5));
 
-  auto ind = indexed(h, include_extra_bins);
+  auto ind = indexed(h, IncludeExtraBins());
   auto it = ind.begin();
   BOOST_TEST_EQ(it->size(), 1);
 
+  if (IncludeExtraBins()) {
+    BOOST_TEST_EQ(it->operator[](0), -1);
+    BOOST_TEST_EQ(**it, 1);
+    BOOST_TEST_EQ(it->bin(0), h.axis()[-1]);
+    ++it;
+  }
   BOOST_TEST_EQ(it->operator[](0), 0);
   BOOST_TEST_EQ(**it, 2);
   BOOST_TEST_EQ(it->bin(0), h.axis()[0]);
   ++it;
   BOOST_TEST_EQ(it->operator[](0), 1);
-  BOOST_TEST_EQ(**it, 2);
+  BOOST_TEST_EQ(**it, 3);
   BOOST_TEST_EQ(it->bin(0), h.axis()[1]);
   ++it;
   BOOST_TEST_EQ(it->operator[](0), 2);
-  BOOST_TEST_EQ(**it, 0);
+  BOOST_TEST_EQ(**it, 4);
   BOOST_TEST_EQ(it->bin(0), h.axis()[2]);
   ++it;
-  if (include_extra_bins) {
+  if (IncludeExtraBins()) {
     BOOST_TEST_EQ(it->operator[](0), 3);
-    BOOST_TEST_EQ(**it, 0);
+    BOOST_TEST_EQ(**it, 5);
     BOOST_TEST_EQ(it->bin(0), h.axis()[3]);
-    ++it;
-    BOOST_TEST_EQ(it->operator[](0), -1);
-    BOOST_TEST_EQ(**it, 0);
-    BOOST_TEST_EQ(it->bin(0), h.axis()[-1]);
     ++it;
   }
   BOOST_TEST(it == ind.end());
 }
 
-template <typename Tag>
-void run_3d_tests(bool b) {
-  auto h = make_s(Tag(), std::vector<int>(),
-                  axis::integer<>(0, 2),
+template <class IsDynamic, class IncludeExtraBins>
+void run_3d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
+  auto h = make_s(IsDynamic(), std::vector<int>(), axis::integer<>(0, 2),
                   axis::integer<int, axis::null_type, axis::option_type::none>(0, 3),
                   axis::integer<int, axis::null_type, axis::option_type::overflow>(0, 4));
 
   for (int i = -1; i < 3; ++i)
-  for (int j = -1; j < 4; ++j)
-  for (int k = -1; k < 5; ++k)
-    h(i, j, k, weight(i * 100 + j * 10 + k));
+    for (int j = -1; j < 4; ++j)
+      for (int k = -1; k < 5; ++k) h(i, j, k, weight(i * 100 + j * 10 + k));
 
-  auto ind = indexed(h, b);
+  auto ind = indexed(h, IncludeExtraBins());
   auto it = ind.begin();
   BOOST_TEST_EQ(it->size(), 3);
 
   // imitate iteration order of indexed loop
-  for (int k = 0; k < 4 + b; ++k)
+  for (int k = 0; k < 4 + IncludeExtraBins(); ++k)
     for (int j = 0; j < 3; ++j)
-      for (int i = 0; i < 2 + 2*b; ++i) {
-        const auto i2 = i > 2 ? -1 : i;
-        BOOST_TEST_EQ(it->operator[](0), i2);
+      for (int i = -IncludeExtraBins(); i < 2 + IncludeExtraBins(); ++i) {
+        BOOST_TEST_EQ(it->operator[](0), i);
         BOOST_TEST_EQ(it->operator[](1), j);
         BOOST_TEST_EQ(it->operator[](2), k);
-        BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[i2]);
+        BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[i]);
         BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[j]);
         BOOST_TEST_EQ(it->bin(2_c), h.axis(2_c)[k]);
-        BOOST_TEST_EQ(**it, i2 * 100 + j * 10 + k);
+        BOOST_TEST_EQ(**it, i * 100 + j * 10 + k);
         ++it;
-  }
+      }
   BOOST_TEST(it == ind.end());
 }
 
-template <typename Tag>
-void run_density_tests(bool include_extra_bins) {
+template <class IsDynamic, class IncludeExtraBins>
+void run_density_tests(mp_list<IsDynamic, IncludeExtraBins>) {
   auto ax = axis::variable<>({0.0, 0.1, 0.3, 0.6});
   auto ay = axis::integer<int>(0, 2);
   auto az = ax;
-  auto h = make_s(Tag(), std::vector<int>(), ax, ay, az);
+  auto h = make_s(IsDynamic(), std::vector<int>(), ax, ay, az);
 
   // fill uniformly
   for (unsigned i = 0; i < h.size(); ++i) { unsafe_access::storage(h).set(i, 1); }
 
-  for (auto x : indexed(h, include_extra_bins)) {
+  for (auto x : indexed(h, IncludeExtraBins())) {
     BOOST_TEST_EQ(x.density(), *x / (x.bin(0).width() * x.bin(2).width()));
   }
 }
 
 int main() {
-  for (int b = 0; b < 2; ++b) {
-    run_1d_tests<static_tag>(b);
-    run_1d_tests<dynamic_tag>(b);
-    run_3d_tests<static_tag>(b);
-    run_3d_tests<dynamic_tag>(b);
-    run_density_tests<static_tag>(b);
-    run_density_tests<dynamic_tag>(b);
-  }
+  mp_for_each<
+      mp_product<mp_list, mp_list<mp_false, mp_true>, mp_list<mp_false, mp_true>>>(
+      [](auto&& x) {
+        run_1d_tests(x);
+        run_3d_tests(x);
+        run_density_tests(x);
+      });
   return boost::report_errors();
 }

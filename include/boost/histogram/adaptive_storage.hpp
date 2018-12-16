@@ -221,10 +221,10 @@ struct adaptive_storage {
 
   ~adaptive_storage() { apply(destroyer(), buffer); }
 
-  adaptive_storage(const adaptive_storage& o) { apply(replacer(), o.buffer, buffer); }
+  adaptive_storage(const adaptive_storage& o) { apply(setter(), o.buffer, buffer); }
 
   adaptive_storage& operator=(const adaptive_storage& o) {
-    if (this != &o) { apply(replacer(), o.buffer, buffer); }
+    if (this != &o) { apply(setter(), o.buffer, buffer); }
     return *this;
   }
 
@@ -291,9 +291,15 @@ struct adaptive_storage {
   }
 
   template <typename T>
-  void add(std::size_t i, T&& x) {
+  void add(std::size_t i, const T& x) {
     BOOST_ASSERT(i < size());
     apply(adder(), buffer, i, x);
+  }
+
+  template <typename T>
+  void set(std::size_t i, const T& x) {
+    BOOST_ASSERT(i < size());
+    apply(setter(), buffer, i, x);
   }
 
   double operator[](std::size_t i) const { return apply(getter(), buffer, i); }
@@ -365,7 +371,7 @@ struct adaptive_storage {
     void operator()(void*, Buffer&) {}
   };
 
-  struct replacer {
+  struct setter {
     template <typename T, typename OBuffer, typename Buffer>
     void operator()(T* optr, const OBuffer& ob, Buffer& b) {
       if (b.size == ob.size && b.type == ob.type) {
@@ -383,6 +389,17 @@ struct adaptive_storage {
       apply(destroyer(), b);
       b.type = 0;
       b.size = ob.size;
+    }
+
+    template <typename T, typename Buffer, typename U>
+    void operator()(T* tp, Buffer& b, std::size_t i, const U& u) {
+      tp[i] = 0;
+      adder()(tp, b, i, u);
+    }
+
+    template <typename Buffer, typename U>
+    void operator()(void* tp, Buffer& b, std::size_t i, const U& u) {
+      adder()(tp, b, i, u);
     }
   };
 

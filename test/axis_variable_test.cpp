@@ -51,9 +51,7 @@ int main() {
 
   // axis::variable circular
   {
-    axis::variable<double, axis::allocator<double>, axis::null_type,
-                   axis::option_type::circular>
-        a{-1, 1, 2};
+    axis::variable<double, axis::null_type, axis::option_type::circular> a{-1, 1, 2};
     BOOST_TEST_EQ(a.value(-2), -4);
     BOOST_TEST_EQ(a.value(-1), -2);
     BOOST_TEST_EQ(a.value(0), -1);
@@ -74,9 +72,9 @@ int main() {
   // iterators
   {
     test_axis_iterator(axis::variable<>{1, 2, 3}, 0, 2);
-    test_axis_iterator(axis::variable<double, axis::allocator<double>, axis::null_type,
-                                      axis::option_type::circular>{1, 2, 3},
-                       0, 2);
+    test_axis_iterator(
+        axis::variable<double, axis::null_type, axis::option_type::circular>{1, 2, 3}, 0,
+        2);
   }
 
   // shrink and rebin
@@ -99,8 +97,7 @@ int main() {
 
   // shrink and rebin with circular option
   {
-    using A = axis::variable<double, axis::allocator<double>, axis::null_type,
-                             axis::option_type::circular>;
+    using A = axis::variable<double, axis::null_type, axis::option_type::circular>;
     auto a = A({1, 2, 3, 4, 5});
     BOOST_TEST_THROWS(A(a, 1, 4, 1), std::invalid_argument);
     BOOST_TEST_THROWS(A(a, 0, 3, 1), std::invalid_argument);

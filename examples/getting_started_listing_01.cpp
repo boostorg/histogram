@@ -71,14 +71,14 @@ int main() {
 
   std::cout << os.str() << std::flush;
 
-  assert(os.str() == "bin  0 [-1.0, -0.5): 1\n"
+  assert(os.str() == "bin -1 [-inf, -1.0): 1\n"
+                     "bin  0 [-1.0, -0.5): 1\n"
                      "bin  1 [-0.5, -0.0): 1\n"
                      "bin  2 [-0.0,  0.5): 2\n"
                      "bin  3 [ 0.5,  1.0): 0\n"
                      "bin  4 [ 1.0,  1.5): 1\n"
                      "bin  5 [ 1.5,  2.0): 1\n"
-                     "bin  6 [ 2.0,  inf): 2\n"
-                     "bin -1 [-inf, -1.0): 1\n");
+                     "bin  6 [ 2.0,  inf): 2\n");
   // note how under- and overflow bins appear at the end
 }
 

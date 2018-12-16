@@ -45,18 +45,6 @@ option_type options(const T& t) noexcept {
 }
 
 template <typename T>
-int underflow_index(const T& t) noexcept {
-  const auto opt = options(t);
-  return opt & option_type::underflow ? t.size() + (opt & option_type::overflow) : -1;
-}
-
-template <typename T>
-int overflow_index(const T& t) noexcept {
-  const auto opt = options(t);
-  return opt & option_type::overflow ? t.size() : -1;
-}
-
-template <typename T>
 int extend(const T& t) noexcept {
   const auto opt = options(t);
   return t.size() + (opt & option_type::underflow) + (opt & option_type::overflow);

@@ -32,13 +32,13 @@ namespace axis {
  * Binning is a O(log(N)) operation. If speed matters and the problem
  * domain allows it, prefer a regular axis, possibly with a transform.
  */
-template <typename RealType, typename Allocator, typename MetaData, option_type Options>
+template <typename RealType, typename MetaData, option_type Options, typename Allocator>
 class variable : public base<MetaData, Options>,
-                 public iterator_mixin<variable<RealType, Allocator, MetaData, Options>> {
+                 public iterator_mixin<variable<RealType, MetaData, Options, Allocator>> {
   using base_type = base<MetaData, Options>;
-  using allocator_type = Allocator;
   using metadata_type = MetaData;
   using value_type = RealType;
+  using allocator_type = Allocator;
 
   static_assert(!(Options & option_type::circular) || !(Options & option_type::underflow),
                 "circular axis cannot have underflow");
@@ -112,8 +112,10 @@ public:
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   variable(const variable& src, int begin, int end, unsigned merge)
-      : base_type((end - begin) / merge, src.metadata()), x_(src.x_) {
+      : base_type((end - begin) / merge, src.metadata()), x_(nullptr) {
     BOOST_ASSERT((end - begin) % merge == 0);
+    if (Options & option_type::circular && !(begin == 0 && end == src.size()))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
     using It = const detail::unqual<decltype(*src.x_.first())>*;
     struct skip_iterator {
       It it;
@@ -127,8 +129,6 @@ public:
       bool operator==(const skip_iterator& rhs) const { return it == rhs.it; }
     } iter{src.x_.first() + begin, merge};
     x_.first() = detail::create_buffer_from_iter(x_.second(), nx(), iter);
-    if (Options & option_type::circular && !(begin == 0 && end == src.size()))
-      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
   variable() : x_(nullptr) {}
@@ -222,28 +222,28 @@ private:
 #if __cpp_deduction_guides >= 201606
 
 template <class U, class T = detail::convert_integer<U, double>>
-variable(std::initializer_list<U>)->variable<T, allocator<T>>;
+variable(std::initializer_list<U>)->variable<T>;
 
 template <class U, class T = detail::convert_integer<U, double>>
-variable(std::initializer_list<U>, const char*)->variable<T, allocator<T>>;
+variable(std::initializer_list<U>, const char*)->variable<T>;
 
 template <class U, class M, class T = detail::convert_integer<U, double>>
-variable(std::initializer_list<U>, M)->variable<T, allocator<T>, M>;
+variable(std::initializer_list<U>, M)->variable<T, M>;
 
 template <class Iterable,
           class T = detail::convert_integer<
               detail::unqual<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
-variable(Iterable)->variable<T, allocator<T>>;
+variable(Iterable)->variable<T>;
 
 template <class Iterable,
           class T = detail::convert_integer<
               detail::unqual<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
-variable(Iterable, const char*)->variable<T, allocator<T>>;
+variable(Iterable, const char*)->variable<T>;
 
 template <class Iterable, class M,
           class T = detail::convert_integer<
               detail::unqual<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
-variable(Iterable, M)->variable<T, allocator<T>, M>;
+variable(Iterable, M)->variable<T, M>;
 
 #endif
 

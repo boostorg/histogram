@@ -54,10 +54,6 @@ template <typename T = double>
 struct pow;
 } // namespace transform
 
-// default allocator
-template <typename T>
-using allocator = boost::container::new_allocator<T>;
-
 template <typename TransformOrRealType = double, typename MetaData = string_type,
           option_type Options = option_type::uoflow>
 class regular;
@@ -66,16 +62,18 @@ template <typename RealType = double, typename MetaData = string_type,
           option_type Options = option_type::overflow>
 using circular = regular<RealType, MetaData, Options | option_type::circular>;
 
-template <typename RealType = double, typename Allocator = allocator<RealType>,
-          typename MetaData = string_type, option_type Options = option_type::uoflow>
-class variable;
-
 template <typename IntType = int, typename MetaData = string_type,
           option_type Options = option_type::underflow | option_type::overflow>
 class integer;
 
-template <typename T = int, typename Allocator = allocator<T>,
-          typename MetaData = string_type, option_type Options = option_type::overflow>
+template <typename RealType = double, typename MetaData = string_type,
+          option_type Options = option_type::uoflow,
+          typename Allocator = boost::container::new_allocator<RealType>>
+class variable;
+
+template <typename T = int, typename MetaData = string_type,
+          option_type Options = option_type::overflow,
+          typename Allocator = boost::container::new_allocator<T>>
 class category;
 
 template <typename... Ts>

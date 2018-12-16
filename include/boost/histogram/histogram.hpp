@@ -92,13 +92,13 @@ public:
     return *this;
   }
 
-  /// Number of axes (dimensions) of histogram
+  /// Number of axes (dimensions)
   unsigned rank() const noexcept { return detail::axes_size(axes_); }
 
-  /// Total number of bins in the histogram (including underflow/overflow)
+  /// Total number of bins (including underflow/overflow)
   std::size_t size() const noexcept { return storage_.size(); }
 
-  /// Reset bin counters to zero
+  /// Reset values to zero
   void reset() { storage_.reset(storage_.size()); }
 
   /// Get N-th axis (const version)
@@ -151,13 +151,13 @@ public:
     detail::fill_impl(storage_, axes_, t);
   }
 
-  /// Access bin counter at indices
+  /// Access value at indices
   template <typename... Ts>
   decltype(auto) at(const Ts&... ts) const {
     return at(std::forward_as_tuple(ts...));
   }
 
-  /// Access bin counter at index tuple
+  /// Access value at index tuple
   template <typename... Ts>
   decltype(auto) at(const std::tuple<Ts...>& t) const {
     const auto idx = detail::at_impl(axes_, t);
@@ -165,7 +165,15 @@ public:
     return storage_[*idx];
   }
 
-  /// Access bin counter at index (for 1D histograms and passing index tuple)
+  /// Access value at index iterable
+  template <typename Iterable, typename = detail::requires_iterable<Iterable>>
+  decltype(auto) at(const Iterable& c) const {
+    const auto idx = detail::at_impl(axes_, c);
+    if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
+    return storage_[*idx];
+  }
+
+  /// Access value at index (number for rank=1 or index tuple|iterable)
   template <typename T>
   decltype(auto) operator[](const T& t) const {
     return at(t);
