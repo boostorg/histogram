@@ -23,6 +23,7 @@
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unsafe_access.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/map.hpp>
@@ -132,22 +133,6 @@ struct serializer {
 };
 } // namespace detail
 
-template <class Archive, class A>
-void serialize(Archive& ar, adaptive_storage<A>& s, unsigned /* version */) {
-  using S = adaptive_storage<A>;
-  if (Archive::is_loading::value) { S::apply(typename S::destroyer(), s.buffer); }
-  ar& s.buffer.type;
-  ar& s.buffer.size;
-  S::apply(detail::serializer(), s.buffer, ar);
-}
-
-template <class A, class S>
-template <class Archive>
-void histogram<A, S>::serialize(Archive& ar, unsigned /* version */) {
-  ar& axes_;
-  ar& storage_;
-}
-
 namespace axis {
 
 namespace transform {
@@ -224,6 +209,21 @@ void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
 }
 } // namespace axis
+
+template <class Archive, class A>
+void serialize(Archive& ar, adaptive_storage<A>& s, unsigned /* version */) {
+  using S = adaptive_storage<A>;
+  if (Archive::is_loading::value) { S::apply(typename S::destroyer(), s.buffer); }
+  ar& s.buffer.type;
+  ar& s.buffer.size;
+  S::apply(detail::serializer(), s.buffer, ar);
+}
+
+template <class Archive, class A, class S>
+void serialize(Archive& ar, histogram<A, S>& h, unsigned /* version */) {
+  ar& unsafe_access::axes(h);
+  ar& unsafe_access::storage(h);
+}
 
 } // namespace histogram
 } // namespace boost
