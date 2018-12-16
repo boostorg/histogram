@@ -182,9 +182,6 @@ public:
   const_iterator begin() const noexcept { return storage_.begin(); }
   const_iterator end() const noexcept { return storage_.end(); }
 
-  template <typename Archive>
-  void serialize(Archive&, unsigned);
-
 private:
   axes_type axes_;
   storage_type storage_;
