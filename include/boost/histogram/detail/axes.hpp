@@ -172,9 +172,9 @@ using axes_buffer = boost::container::static_vector<
                           std::tuple_size, Axes>::value>;
 
 template <typename T>
-auto make_empty_axes(const T& t) {
-  auto r = T();
-  static_if<is_vector_like<T>>([&](auto) { r.reserve(t.size()); }, [](auto) {}, 0);
+auto make_empty_axes(const std::vector<T>& t) {
+  auto r = std::vector<T>(t.get_allocator());
+  r.reserve(t.size());
   for_each_axis(t, [&r](const auto& a) {
     using U = unqual<decltype(a)>;
     r.emplace_back(U());

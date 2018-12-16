@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "utility_allocator.hpp"
 #include "utility_meta.hpp"
 
 namespace bh = boost::histogram;
@@ -433,6 +434,18 @@ int main() {
     BOOST_TEST_NOT(has_fixed_size<B>::value);
     BOOST_TEST(has_fixed_size<C>::value);
     BOOST_TEST(has_fixed_size<D>::value);
+  }
+
+  // make_default
+  {
+    struct A {};
+    auto a = make_default(A());
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(a), A>));
+    bh::tracing_allocator_db db;
+    using B = std::vector<int, bh::tracing_allocator<int>>;
+    B b = make_default(B(bh::tracing_allocator<int>(db)));
+    b.resize(100);
+    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, 100);
   }
 
   return boost::report_errors();

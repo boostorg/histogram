@@ -117,14 +117,14 @@ public:
       , cache_(hist_.rank()) {
     auto c = cache_.begin();
     std::size_t stride = 1;
-    const auto extra = include_extra_bins_;
-    h.for_each_axis([&](const auto& a) {
+    h.for_each_axis([&, this](const auto& a) {
       const auto opt = axis::traits::options(a);
       const auto shift = opt & axis::option_type::underflow;
 
       c->extend = axis::traits::extend(a);
-      c->begin = extra ? -shift : 0;
-      c->end = c->extend - shift - (extra ? 0 : (opt & axis::option_type::overflow));
+      c->begin = include_extra_bins_ ? -shift : 0;
+      c->end = c->extend - shift -
+               (include_extra_bins_ ? 0 : (opt & axis::option_type::overflow));
       c->idx = c->begin;
 
       begin_ += (c->begin + shift) * stride;

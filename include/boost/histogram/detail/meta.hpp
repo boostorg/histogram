@@ -284,6 +284,13 @@ struct requires_axis_or_axis_variant {};
 template <typename T, typename = mp11::mp_if<is_axis_vector<unqual<T>>, void>>
 struct requires_axis_vector {};
 
+template <typename T>
+T make_default(const T& t) {
+  using U = unqual<T>;
+  return static_if<has_allocator<U>>([](const auto& t) { return U(t.get_allocator()); },
+                                     [](const auto&) { return U(); }, t);
+}
+
 } // namespace detail
 } // namespace histogram
 } // namespace boost

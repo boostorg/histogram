@@ -27,7 +27,6 @@ alias run-tests :
     [ run histogram_mixed_test.cpp ]
     [ run histogram_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
     [ run histogram_test.cpp ]
-    [ run index_mapper_test.cpp ]
     [ run meta_test.cpp ]
     [ run storage_adaptor_test.cpp ]
     [ run storage_adaptor_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]

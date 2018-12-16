@@ -9,8 +9,9 @@
 
 #include <algorithm>
 #include <boost/histogram/detail/axes.hpp>
-#include <boost/histogram/detail/index_mapper.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/mp11.hpp>
 #include <boost/throw_exception.hpp>
@@ -29,38 +30,22 @@ namespace algorithm {
   histogram is summed over the removed axes.
 */
 template <typename A, typename S, unsigned N, typename... Ns>
-auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N> n, Ns... ns) {
+auto project(const histogram<A, S>& hist, std::integral_constant<unsigned, N> n,
+             Ns... ns) {
   using LN = mp11::mp_list<decltype(n), Ns...>;
   static_assert(mp11::mp_is_set<LN>::value, "indices must be unique");
 
-  const auto& axes = unsafe_access::axes(h);
-  auto r_axes = detail::make_sub_axes(axes, n, ns...);
-  auto r_h = histogram<decltype(r_axes), S>(
-      std::move(r_axes),
-      detail::static_if<detail::has_allocator<S>>(
-          [&h](auto) { return S(unsafe_access::storage(h).get_allocator()); },
-          [](auto) { return S(); }, 0));
+  auto axes = detail::make_sub_axes(unsafe_access::axes(hist), n, ns...);
+  auto result = histogram<decltype(axes), S>(
+      std::move(axes), detail::make_default(unsafe_access::storage(hist)));
 
-  detail::index_mapper<A> im(h.rank());
-  auto iter = im.begin();
-  std::size_t s = 1;
-  h.for_each_axis([&](const auto& a) {
-    const auto n = axis::traits::extend(a);
-    im.total *= n;
-    iter->stride[0] = s;
-    s *= n;
-    iter->stride[1] = 0;
-    ++iter;
-  });
-
-  s = 1;
-  mp11::mp_for_each<LN>([&](auto J) {
-    im[J].stride[1] = s;
-    s *= axis::traits::extend(detail::axis_get<J>(axes));
-  });
-
-  im(unsafe_access::storage(r_h), unsafe_access::storage(h));
-  return r_h;
+  detail::axes_buffer<typename decltype(result)::axes_type, int> idx(result.rank());
+  for (auto x : indexed(hist, true)) {
+    auto i = idx.begin();
+    mp11::mp_for_each<LN>([&i, &x](auto I) { *i++ = x[I]; });
+    unsafe_access::add_value(result, idx, *x);
+  }
+  return result;
 }
 
 /**
@@ -69,59 +54,32 @@ auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N> n, Ns
   This version accepts a source histogram and an iterable range containing the remaining
   indices.
 */
-template <typename A, typename S, typename C, typename = detail::requires_iterable<C>>
-auto project(const histogram<A, S>& h, const C& c) {
+template <typename A, typename S, typename Iterable,
+          typename = detail::requires_iterable<Iterable>>
+auto project(const histogram<A, S>& hist, const Iterable& c) {
   static_assert(detail::is_axis_vector<A>::value,
                 "dynamic version of project requires a histogram with dynamic axis");
 
-  using H = histogram<A, S>;
-
-  const auto& axes = unsafe_access::axes(h);
-  auto r_axes = detail::static_if<detail::has_allocator<A>>(
-      [](const auto& axes) {
-        using T = detail::unqual<decltype(axes)>;
-        return T(axes.get_allocator());
-      },
-      [](const auto& axes) {
-        using T = detail::unqual<decltype(axes)>;
-        return T();
-      },
-      axes);
-
-  using std::begin;
-  using std::end;
-  r_axes.reserve(std::distance(begin(c), end(c)));
-
-  detail::index_mapper<A> im(h.rank());
-  auto iter = im.begin();
-  std::size_t stride = 1;
-  h.for_each_axis([&](const auto& a) {
-    const auto n = axis::traits::extend(a);
-    im.total *= n;
-    iter->stride[0] = stride;
-    stride *= n;
-    iter->stride[1] = 0;
-    ++iter;
-  });
-
-  stride = 1;
-  for (auto idx : c) {
-    r_axes.emplace_back(axes[idx]);
-    auto& stride_ref = im[idx].stride[1];
-    if (stride_ref)
-      BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
-    else
-      stride_ref = stride;
-    stride *= axis::traits::extend(axes[idx]);
+  const auto& hist_axes = unsafe_access::axes(hist);
+  auto axes = detail::make_default(hist_axes);
+  axes.reserve(c.size());
+  detail::axes_buffer<A, bool> seen(hist_axes.size(), false);
+  for (auto d : c) {
+    if (seen[d]) BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
+    seen[d] = true;
+    axes.emplace_back(hist_axes[d]);
   }
 
-  auto r_h = H(std::move(r_axes),
-               detail::static_if<detail::has_allocator<S>>(
-                   [&h](auto) { return S(unsafe_access::storage(h).get_allocator()); },
-                   [](auto) { return S(); }, 0));
+  auto result = histogram<A, S>(std::move(axes),
+                                detail::make_default(unsafe_access::storage(hist)));
 
-  im(unsafe_access::storage(r_h), unsafe_access::storage(h));
-  return r_h;
+  detail::axes_buffer<A, int> idx(result.rank());
+  for (auto x : indexed(hist, true)) {
+    auto i = idx.begin();
+    for (auto d : c) *i++ = x[d];
+    unsafe_access::add_value(result, idx, *x);
+  }
+  return result;
 }
 
 } // namespace algorithm
