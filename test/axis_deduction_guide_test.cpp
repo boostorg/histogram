@@ -71,20 +71,16 @@ int main() {
     axis::variable i(vi, axis::null_type{});
 
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(a), axis::variable<>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<decltype(b), axis::variable<float, axis::allocator<float>>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(b), axis::variable<float>>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(c), axis::variable<>>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(d), axis::variable<>>));
     BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<decltype(e),
-                      axis::variable<double, axis::allocator<double>, axis::null_type>>));
+        (std::is_same<decltype(e), axis::variable<double, axis::null_type>>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(f), axis::variable<>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<decltype(g), axis::variable<float, axis::allocator<float>>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(g), axis::variable<float>>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(h), axis::variable<>>));
     BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<decltype(i),
-                      axis::variable<double, axis::allocator<double>, axis::null_type>>));
+        (std::is_same<decltype(i), axis::variable<double, axis::null_type>>));
   }
 #endif
   return boost::report_errors();

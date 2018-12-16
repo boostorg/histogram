@@ -98,6 +98,7 @@ compiled_test(test/indexed_test.cpp)
 compiled_test(test/internal_accumulators_test.cpp)
 compiled_test(test/meta_test.cpp)
 compiled_test(test/storage_adaptor_test.cpp)
+compiled_test(test/unsafe_access_test.cpp)
 compiled_test(test/utility_test.cpp)
 
 compiled_test(examples/getting_started_listing_01.cpp)

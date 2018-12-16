@@ -128,8 +128,7 @@ int main() {
          "regular_pow(2, 1, 10, metadata=\"regular4\", options=none, power=-1.5)");
     test(axis::circular<double, axis::null_type>(4, 0.1, 1.1),
          "regular(4, 0.1, 1.1, options=overflow | circular)");
-    test(axis::variable<double, axis::allocator<double>, M, axis::option_type::none>(
-             {-1, 0, 1}, "variable"),
+    test(axis::variable<double, M, axis::option_type::none>({-1, 0, 1}, "variable"),
          "variable(-1, 0, 1, metadata=\"variable\", options=none)");
     test(axis::category<>({0, 1, 2}, "category"),
          "category(0, 1, 2, metadata=\"category\", options=overflow)");
@@ -203,9 +202,11 @@ int main() {
     using M = std::vector<char, tracing_allocator<char>>;
     using T1 = axis::regular<double, M>;
     using T2 = axis::circular<double, axis::null_type>;
-    using T3 = axis::variable<double, tracing_allocator<double>, axis::null_type>;
+    using T3 = axis::variable<double, axis::null_type, axis::option_type::uoflow,
+                              tracing_allocator<double>>;
     using T4 = axis::integer<int, axis::null_type>;
-    using T5 = axis::category<long, tracing_allocator<long>, axis::null_type>;
+    using T5 = axis::category<long, axis::null_type, axis::option_type::overflow,
+                              tracing_allocator<long>>;
     using axis_type = axis::variant<T1, T2, T3, T4, T5>; // no heap allocation
     using axes_type = std::vector<axis_type, tracing_allocator<axis_type>>;
 

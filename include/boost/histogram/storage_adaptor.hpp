@@ -94,9 +94,11 @@ template <typename C>
 struct vector_impl {
   using value_type = typename C::value_type;
   using const_iterator = typename C::const_iterator;
+  using allocator_type = typename C::allocator_type;
 
   vector_impl(C&& c) : container_(std::move(c)) {}
   vector_impl(const C& c) : container_(c) {}
+  vector_impl(allocator_type a) : container_(a) {}
 
   vector_impl() = default;
   vector_impl(vector_impl&&) = default;
@@ -112,12 +114,12 @@ struct vector_impl {
   const value_type& operator[](std::size_t i) const noexcept { return container_[i]; }
 
   template <typename U>
-  void add(std::size_t i, U&& u) {
-    container_[i] += std::forward<U>(u);
+  void add(std::size_t i, const U& u) {
+    container_[i] += u;
   }
   template <typename U>
-  void set(std::size_t i, U&& u) {
-    container_[i] = std::forward<U>(u);
+  void set(std::size_t i, const U& u) {
+    container_[i] = u;
   }
 
   std::size_t size() const noexcept { return container_.size(); }
@@ -158,12 +160,12 @@ struct array_impl {
   const value_type& operator[](std::size_t i) const noexcept { return container_[i]; }
 
   template <typename U>
-  void add(std::size_t i, U&& u) {
-    container_[i] += std::forward<U>(u);
+  void add(std::size_t i, const U& u) {
+    container_[i] += u;
   }
   template <typename U>
-  void set(std::size_t i, U&& u) {
-    container_[i] = std::forward<U>(u);
+  void set(std::size_t i, const U& u) {
+    container_[i] = u;
   }
 
   std::size_t size() const { return size_; }
@@ -184,7 +186,6 @@ struct map_impl {
                 "map must use std::size_t as key_type");
 
   using value_type = typename C::mapped_type;
-
   class const_iterator : public boost::iterator_facade<const_iterator, value_type,
                                                        boost::random_access_traversal_tag,
                                                        const value_type&> {
@@ -210,9 +211,11 @@ struct map_impl {
     const map_impl& parent_;
     std::size_t idx_;
   };
+  using allocator_type = typename C::allocator_type;
 
   map_impl(C&& c) : container_(std::move(c)) {}
   map_impl(const C& c) : container_(c) {}
+  map_impl(allocator_type a) : container_(a) {}
 
   map_impl() = default;
   map_impl(map_impl&&) = default;
@@ -232,25 +235,25 @@ struct map_impl {
   }
 
   template <typename U>
-  void add(std::size_t i, U&& u) {
+  void add(std::size_t i, const U& u) {
     if (u == value_type()) return;
     auto it = container_.find(i);
     if (it != container_.end())
-      it->second += std::forward<U>(u);
+      it->second += u;
     else
-      container_[i] = std::forward<U>(u);
+      container_[i] = u;
   }
 
   template <typename U>
-  void set(std::size_t i, U&& u) {
+  void set(std::size_t i, const U& u) {
     auto it = container_.find(i);
     if (u == value_type()) {
       if (it != container_.end()) container_.erase(it);
     } else {
       if (it != container_.end())
-        it->second = std::forward<U>(u);
+        it->second = u;
       else
-        container_[i] = std::forward<U>(u);
+        container_[i] = u;
     }
   }
 
@@ -286,7 +289,6 @@ struct storage_adaptor : detail::storage_adaptor_impl<T> {
   struct storage_tag {};
   using base_type = detail::storage_adaptor_impl<T>;
   using value_type = typename base_type::value_type;
-  using const_iterator = typename base_type::const_iterator;
   using element_adaptor = detail::element_adaptor<value_type>;
 
   storage_adaptor() = default;
@@ -297,16 +299,19 @@ struct storage_adaptor : detail::storage_adaptor_impl<T> {
 
   storage_adaptor(T&& t) : base_type(std::move(t)) {}
   storage_adaptor(const T& t) : base_type(t) {}
+  template <class U = T, typename = typename U::allocator_type>
+  storage_adaptor(typename U::allocator_type a) : base_type(a) {}
 
-  template <typename U>
+  template <typename U, typename = detail::requires_iterable<U>>
   explicit storage_adaptor(const U& rhs) {
     (*this) = rhs;
   }
 
-  template <typename U>
+  template <typename U, typename = detail::requires_iterable<U>>
   storage_adaptor& operator=(const U& rhs) {
     this->reset(rhs.size());
-    for (std::size_t i = 0, n = this->size(); i < n; ++i) this->set(i, rhs[i]);
+    std::size_t i = 0;
+    for (auto&& x : rhs) this->set(i++, x);
     return *this;
   }
 

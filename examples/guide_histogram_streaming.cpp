@@ -23,8 +23,8 @@ int main() {
       axis::regular<>(2, -1, 1),
       axis::regular<axis::transform::log<>>(2, 1, 10, "axis 1"),
       axis::circular<double, axis::null_type>(4, 0, 360), // axis without metadata
-      axis::variable<double, std::allocator<double>, std::string,
-                     axis::option_type::none>({-1, 0, 1}, "axis 3"),
+      axis::variable<double, std::string, axis::option_type::none,
+                     std::allocator<double>>({-1, 0, 1}, "axis 3"),
       axis::category<>({2, 1, 3}, "axis 4"), axis::integer<>(-1, 1, "axis 5"));
 
   std::ostringstream os;

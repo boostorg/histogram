@@ -15,6 +15,7 @@ namespace boost {
 namespace histogram {
 namespace detail {
 template <class Iterator>
+// TODO: remove this
 bool is_set(Iterator begin, Iterator end) {
   using T = iterator_value_type<Iterator>;
   using C = boost::container::static_vector<T, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>;

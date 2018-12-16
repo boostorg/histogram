@@ -212,48 +212,49 @@ struct optional_index {
   std::size_t operator*() const { return idx; }
 };
 
-inline void linearize(optional_index& out, const int axis_size, const int axis_shape,
-                      int j) noexcept {
-  BOOST_ASSERT_MSG(out.stride == 0 || (-1 <= j && j <= axis_size),
-                   "index must be in bounds for this algorithm");
-  if (j < 0) j += (axis_size + 2); // wrap around if j < 0
+inline void linearize(optional_index& out, const int axis_shape, int j) noexcept {
+  // j is internal index, which is potentially shifted by +1 wrt external index
   out.idx += j * out.stride;
   // set stride to 0, if j is invalid
-  out.stride *= (j < axis_shape) * axis_shape;
-}
-
-template <typename... Ts, typename U>
-void linearize1(optional_index& out, const axis::variant<Ts...>& axis, const U& u) {
-  axis::visit([&](const auto& a) { linearize1(out, a, u); }, axis);
+  out.stride *= (0 <= j && j < axis_shape) * axis_shape;
 }
 
 template <typename A, typename U>
-void linearize1(optional_index& out, const A& axis, const U& u) {
+void linearize_value(std::true_type, optional_index& out, const A& axis, const U& u) {
+  const auto extend = axis::traits::extend(axis);
+  const auto opt = axis::traits::options(axis);
+  const auto j = axis(u) + (opt & axis::option_type::underflow);
+  return linearize(out, extend, j);
+}
+
+template <typename A, typename U>
+void linearize_value(std::false_type, optional_index&, const A&, const U&) {
   // protect against instantiation with wrong template argument
   using arg_t = arg_type<A>;
-  static_if<std::is_convertible<U, arg_t>>(
-      [&](const auto& u) {
-        const auto a_size = axis.size();
-        const auto a_shape = axis::traits::extend(axis);
-        const auto j = axis(u);
-        linearize(out, a_size, a_shape, j);
-      },
-      [&](const U&) {
-        BOOST_THROW_EXCEPTION(std::invalid_argument(
-            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                        ": cannot convert argument of type ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(arg_t)))));
-      },
-      u);
+  BOOST_THROW_EXCEPTION(std::invalid_argument(
+      detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
+                  ": cannot convert argument of type ",
+                  boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
+                  boost::core::demangled_name(BOOST_CORE_TYPEID(arg_t)))));
+}
+
+template <typename A, typename U>
+void linearize_value(optional_index& out, const A& axis, const U& u) {
+  // protect against instantiation with wrong template argument
+  using arg_t = arg_type<A>;
+  return linearize_value(std::is_convertible<U, arg_t>(), out, axis, u);
+}
+
+template <typename... Ts, typename U>
+void linearize_value(optional_index& out, const axis::variant<Ts...>& axis, const U& u) {
+  axis::visit([&](const auto& a) { linearize_value(out, a, u); }, axis);
 }
 
 template <typename T>
-void linearize2(optional_index& out, const T& axis, const int j) {
-  const auto a_size = static_cast<int>(axis.size());
-  const auto a_shape = axis::traits::extend(axis);
-  out.stride *= (-1 <= j && j <= a_size); // set stride to 0, if j is invalid
-  linearize(out, a_size, a_shape, j);
+void linearize_index(optional_index& out, const T& axis, const int j) {
+  const auto extend = axis::traits::extend(axis);
+  const auto opt = axis::traits::options(axis);
+  linearize(out, extend, j + (opt & axis::option_type::underflow));
 }
 
 // special case: histogram::operator(tuple(1, 2)) is called on 1d histogram with axis
@@ -267,9 +268,9 @@ template <unsigned Offset, unsigned N, typename T, typename U>
 optional_index args_to_index(const std::tuple<T>& axes, const U& args) {
   optional_index idx;
   if (N > 1) {
-    linearize1(idx, std::get<0>(axes), sub_tuple<Offset, N>(args));
+    linearize_value(idx, std::get<0>(axes), sub_tuple<Offset, N>(args));
   } else {
-    linearize1(idx, std::get<0>(axes), std::get<Offset>(args));
+    linearize_value(idx, std::get<0>(axes), std::get<Offset>(args));
   }
   return idx;
 }
@@ -279,8 +280,9 @@ template <unsigned Offset, unsigned N, typename T0, typename T1, typename... Ts,
 optional_index args_to_index(const std::tuple<T0, T1, Ts...>& axes, const U& args) {
   static_assert(sizeof...(Ts) + 2 == N, "number of arguments != histogram rank");
   optional_index idx;
-  mp11::mp_for_each<mp11::mp_iota_c<N>>(
-      [&](auto I) { linearize1(idx, std::get<I>(axes), std::get<(Offset + I)>(args)); });
+  mp11::mp_for_each<mp11::mp_iota_c<N>>([&](auto I) {
+    linearize_value(idx, std::get<I>(axes), std::get<(Offset + I)>(args));
+  });
   return idx;
 }
 
@@ -290,13 +292,13 @@ optional_index args_to_index(const T& axes, const U& args) {
   const unsigned m = axes.size();
   optional_index idx;
   if (m == 1 && N > 1)
-    linearize1(idx, axes[0], sub_tuple<Offset, N>(args));
+    linearize_value(idx, axes[0], sub_tuple<Offset, N>(args));
   else {
     if (m != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
     mp11::mp_for_each<mp11::mp_iota_c<N>>(
-        [&](auto I) { linearize1(idx, axes[I], std::get<(Offset + I)>(args)); });
+        [&](auto I) { linearize_value(idx, axes[I], std::get<(Offset + I)>(args)); });
   }
   return idx;
 }
@@ -381,8 +383,20 @@ optional_index at_impl(const A& axes, const std::tuple<Us...>& args) {
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto I) {
-    linearize2(idx, axis_get<I>(axes), static_cast<int>(std::get<I>(args)));
+    linearize_index(idx, axis_get<I>(axes), static_cast<int>(std::get<I>(args)));
   });
+  return idx;
+}
+
+template <typename A, typename U>
+optional_index at_impl(const A& axes, const U& args) {
+  if (axes_size(axes) != args.size())
+    BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
+  optional_index idx;
+  using std::begin;
+  auto it = begin(args);
+  for_each_axis(axes,
+                [&](const auto& a) { linearize_index(idx, a, static_cast<int>(*it++)); });
   return idx;
 }
 

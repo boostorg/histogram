@@ -152,27 +152,6 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
 
 template <typename C, typename T, typename U, typename M, option_type O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const circular<U, M, O>& a) {
-  os << "circular(" << a.size() << ", " << a.value(0) << ", " << a.value(a.size());
-  detail::stream_metadata(os, a.metadata());
-  detail::stream_options(os, a.options());
-  os << ")";
-  return os;
-}
-
-template <typename C, typename T, typename U, typename A, typename M, option_type O>
-std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const variable<U, A, M, O>& a) {
-  os << "variable(" << a.value(0);
-  for (int i = 1, n = a.size(); i <= n; ++i) { os << ", " << a.value(i); }
-  detail::stream_metadata(os, a.metadata());
-  detail::stream_options(os, a.options());
-  os << ")";
-  return os;
-}
-
-template <typename C, typename T, typename U, typename M, option_type O>
-std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const integer<U, M, O>& a) {
   os << "integer(" << a.value(0) << ", " << a.value(a.size());
   detail::stream_metadata(os, a.metadata());
@@ -181,9 +160,20 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename U, typename A, typename M, option_type O>
+template <typename C, typename T, typename U, typename M, option_type O, typename A>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const category<U, A, M, O>& a) {
+                                     const variable<U, M, O, A>& a) {
+  os << "variable(" << a.value(0);
+  for (int i = 1, n = a.size(); i <= n; ++i) { os << ", " << a.value(i); }
+  detail::stream_metadata(os, a.metadata());
+  detail::stream_options(os, a.options());
+  os << ")";
+  return os;
+}
+
+template <typename C, typename T, typename U, typename M, option_type O, typename A>
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
+                                     const category<U, M, O, A>& a) {
   os << "category(";
   for (int i = 0, n = a.size(); i < n; ++i) {
     detail::stream_value(os, a.value(i));

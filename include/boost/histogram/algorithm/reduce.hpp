@@ -12,7 +12,9 @@
 #include <boost/histogram/detail/index_mapper.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
+
 #include <boost/throw_exception.hpp>
 #include <cmath>
 #include <limits>
@@ -36,12 +38,10 @@ struct reduce_option_type {
       BOOST_THROW_EXCEPTION(std::invalid_argument("lower != upper required"));
     if (merge == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("merge > 0 required"));
   }
-
-  operator bool() const noexcept { return merge; }
 };
 
 inline reduce_option_type shrink_and_rebin(unsigned iaxis, double lower, double upper,
-                                    unsigned merge) {
+                                           unsigned merge) {
   return {iaxis, lower, upper, merge};
 }
 
@@ -60,81 +60,85 @@ inline reduce_option_type shrink_and_rebin(double lower, double upper, unsigned 
 }
 
 /// Convenience overload for single axis.
-inline reduce_option_type shrink(double lower, double upper) { return shrink(0, lower, upper); }
+inline reduce_option_type shrink(double lower, double upper) {
+  return shrink(0, lower, upper);
+}
 
 /// Convenience overload for single axis.
 inline reduce_option_type rebin(unsigned merge) { return rebin(0, merge); }
 
 template <typename A, typename S, typename C, typename = detail::requires_iterable<C>>
-histogram<A, S> reduce(const histogram<A, S>& h, const C& c) {
-  auto options = detail::axes_buffer<A, reduce_option_type>(h.rank());
-  for (const auto& o : c) {
-    auto& opt_ref = options[o.iaxis];
-    if (opt_ref) BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
-    opt_ref.lower = o.lower;
-    opt_ref.upper = o.upper;
-    opt_ref.merge = o.merge;
+histogram<A, S> reduce(const histogram<A, S>& hist, const C& options) {
+  struct option_item : reduce_option_type {
+    int begin, end;
+    bool is_set() const noexcept { return reduce_option_type::merge > 0; }
+  };
+
+  auto options_internal = detail::axes_buffer<A, option_item>(hist.rank());
+  for (const auto& o : options) {
+    auto& oi = options_internal[o.iaxis];
+    if (oi.is_set()) // did we already set the option for this axis?
+      BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
+    oi.lower = o.lower;
+    oi.upper = o.upper;
+    oi.merge = o.merge;
   }
 
-  auto r_axes = detail::make_empty_axes(unsafe_access::axes(h));
+  auto axes = detail::make_empty_axes(unsafe_access::axes(hist));
 
-  detail::index_mapper_reduce<A> im(h.rank());
-  auto im_iter = im.begin();
-  std::size_t stride[2] = {1, 1};
   unsigned iaxis = 0;
-  h.for_each_axis([&](const auto& a) {
+  hist.for_each_axis([&](const auto& a) {
     using T = detail::unqual<decltype(a)>;
 
-    const auto n = axis::traits::extend(a);
-    im.total *= n;
-
-    im_iter->stride[0] = stride[0];
-    stride[0] *= n;
-    im_iter->underflow[0] = axis::traits::underflow_index(a);
-    im_iter->overflow[0] = axis::traits::overflow_index(a);
-
-    const auto& opt = options[iaxis];
-    int begin = 0, end = a.size();
-    unsigned merge = 1;
-
-    T* tp;
-    if (opt) {
-      merge = opt.merge;
-      if (opt.lower < opt.upper) {
-        while (begin != end && a.value(begin) < opt.lower) ++begin;
-        while (end != begin && a.value(end - 1) >= opt.upper) --end;
-      } else if (opt.lower > opt.upper) {
+    auto& o = options_internal[iaxis];
+    o.begin = 0;
+    o.end = a.size();
+    if (o.is_set()) {
+      if (o.lower < o.upper) {
+        while (o.begin != o.end && a.value(o.begin) < o.lower) ++o.begin;
+        while (o.end != o.begin && a.value(o.end - 1) >= o.upper) --o.end;
+      } else if (o.lower > o.upper) {
         // for inverted axis::regular
-        while (begin != end && a.value(begin) > opt.lower) ++begin;
-        while (end != begin && a.value(end - 1) <= opt.upper) --end;
+        while (o.begin != o.end && a.value(o.begin) > o.lower) ++o.begin;
+        while (o.end != o.begin && a.value(o.end - 1) <= o.upper) --o.end;
       }
-      end -= (end - begin) % merge;
-      auto a2 = T(a, begin, end, merge);
-      tp = &(axis::get<T>(detail::axis_get(r_axes, iaxis)) = a2);
+      o.end -= (o.end - o.begin) % o.merge;
+      auto a2 = T(a, o.begin, o.end, o.merge);
+      axis::get<T>(detail::axis_get(axes, iaxis)) = a2;
     } else {
-      tp = &(axis::get<T>(detail::axis_get(r_axes, iaxis)) = a);
+      o.merge = 1;
+      axis::get<T>(detail::axis_get(axes, iaxis)) = a;
     }
-    im_iter->begin = begin;
-    im_iter->end = end;
-    im_iter->merge = merge;
-
-    im_iter->stride[1] = stride[1];
-    stride[1] *= axis::traits::extend(*tp);
-    im_iter->underflow[1] = axis::traits::underflow_index(*tp);
-    im_iter->overflow[1] = axis::traits::overflow_index(*tp);
-
-    ++im_iter;
     ++iaxis;
   });
 
-  auto h_r = histogram<A, S>(
-      std::move(r_axes),
-      detail::static_if<detail::has_allocator<S>>(
-          [&h](auto) { return S(unsafe_access::storage(h).get_allocator()); },
-          [](auto) { return S(); }, 0));
+  const auto& storage = unsafe_access::storage(hist);
+  using storage_type = detail::unqual<decltype(storage)>;
+  auto result = histogram<A, S>(
+      std::move(axes), detail::static_if<detail::has_allocator<storage_type>>(
+                           [](auto& x) { return storage_type(x.get_allocator()); },
+                           [](auto&) { return storage_type(); }, storage));
 
-  im(unsafe_access::storage(h_r), unsafe_access::storage(h));
-  return h_r;
+  detail::axes_buffer<A, int> idx(hist.rank());
+  for (auto x : indexed(hist, true)) {
+    auto i = idx.begin();
+    auto o = options_internal.begin();
+    for (auto j : x) {
+      *i = (j - o->begin);
+      if (*i <= -1)
+        *i = -1;
+      else {
+        *i /= o->merge;
+        const int end = (o->end - o->begin) / o->merge;
+        if (*i > end) *i = end;
+      }
+      ++i;
+      ++o;
+    }
+    unsafe_access::add_value(result, idx, *x);
+  }
+
+  return result;
 }
 
 template <typename A, typename S, typename... Ts>
