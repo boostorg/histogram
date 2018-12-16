@@ -12,29 +12,29 @@ struct static_tag {};
 struct semi_dynamic_tag {};
 struct full_dynamic_tag {};
 
-auto make_histogram(static_tag) {
+auto make_histogram(static_tag, unsigned n) {
   using namespace boost::histogram;
-  return make_histogram_with(std::vector<unsigned>(), axis::integer<>(0, 20),
-                             axis::integer<>(0, 20), axis::integer<>(0, 20));
+  return make_histogram_with(std::vector<unsigned>(), axis::integer<>(0, n),
+                             axis::integer<>(0, n), axis::integer<>(0, n));
 }
 
-auto make_histogram(semi_dynamic_tag) {
+auto make_histogram(semi_dynamic_tag, unsigned n) {
   using namespace boost::histogram;
-  std::vector<axis::integer<>> axes = {axis::integer<>(0, 20), axis::integer<>(0, 20),
-                                       axis::integer<>(0, 20)};
+  std::vector<axis::integer<>> axes = {axis::integer<>(0, n), axis::integer<>(0, n),
+                                       axis::integer<>(0, n)};
   return make_histogram_with(std::vector<unsigned>(), axes);
 }
 
-auto make_histogram(full_dynamic_tag) {
+auto make_histogram(full_dynamic_tag, unsigned n) {
   using namespace boost::histogram;
   std::vector<axis::variant<axis::integer<>>> axes = {
-      axis::integer<>(0, 20), axis::integer<>(0, 20), axis::integer<>(0, 20)};
+      axis::integer<>(0, n), axis::integer<>(0, n), axis::integer<>(0, n)};
   return make_histogram_with(std::vector<unsigned>(), axes);
 }
 
 template <class Tag, bool include_extra_bins>
 static void NaiveForLoop(benchmark::State& state) {
-  auto h = make_histogram(Tag());
+  auto h = make_histogram(Tag(), state.range(0));
   for (auto _ : state) {
     for (int i = -include_extra_bins; i < h.axis(0).size() + include_extra_bins; ++i)
       for (int j = -include_extra_bins; j < h.axis(1).size() + include_extra_bins; ++j)
@@ -44,21 +44,9 @@ static void NaiveForLoop(benchmark::State& state) {
 }
 
 template <class Tag, bool include_extra_bins>
-static void LessNaiveForLoop(benchmark::State& state) {
-  static_assert(!include_extra_bins, "cannot include extra bins here");
-  using namespace boost::histogram::literals;
-  auto h = make_histogram(Tag());
-  for (auto _ : state) {
-    for (auto i : h.axis(0_c))
-      for (auto j : h.axis(1_c))
-        for (auto k : h.axis(2_c)) benchmark::DoNotOptimize(h.at(i, j, k));
-  }
-}
-
-template <class Tag, bool include_extra_bins>
 static void InsiderForLoop(benchmark::State& state) {
   using namespace boost::histogram::literals;
-  auto h = make_histogram(Tag());
+  auto h = make_histogram(Tag(), state.range(0));
   for (auto _ : state) {
     for (int k = -include_extra_bins, nk = h.axis(2_c).size() + include_extra_bins;
          k < nk; ++k)
@@ -72,7 +60,7 @@ static void InsiderForLoop(benchmark::State& state) {
 
 template <class Tag, bool include_extra_bins>
 static void IndexedLoop(benchmark::State& state) {
-  auto h = make_histogram(Tag());
+  auto h = make_histogram(Tag(), state.range(0));
   for (auto _ : state) {
     for (auto x : boost::histogram::indexed(h, include_extra_bins)) {
       benchmark::DoNotOptimize(*x);
@@ -83,29 +71,50 @@ static void IndexedLoop(benchmark::State& state) {
   }
 }
 
-BENCHMARK_TEMPLATE(NaiveForLoop, static_tag, false);
-BENCHMARK_TEMPLATE(LessNaiveForLoop, static_tag, false);
-BENCHMARK_TEMPLATE(InsiderForLoop, static_tag, false);
-BENCHMARK_TEMPLATE(IndexedLoop, static_tag, false);
+BENCHMARK_TEMPLATE(NaiveForLoop, static_tag, false)->RangeMultiplier(2)->Range(4, 128);
+BENCHMARK_TEMPLATE(InsiderForLoop, static_tag, false)->RangeMultiplier(2)->Range(4, 128);
+BENCHMARK_TEMPLATE(IndexedLoop, static_tag, false)->RangeMultiplier(2)->Range(4, 128);
 
-BENCHMARK_TEMPLATE(NaiveForLoop, static_tag, true);
-BENCHMARK_TEMPLATE(InsiderForLoop, static_tag, true);
-BENCHMARK_TEMPLATE(IndexedLoop, static_tag, true);
+BENCHMARK_TEMPLATE(NaiveForLoop, static_tag, true)->RangeMultiplier(2)->Range(4, 128);
+BENCHMARK_TEMPLATE(InsiderForLoop, static_tag, true)->RangeMultiplier(2)->Range(4, 128);
+BENCHMARK_TEMPLATE(IndexedLoop, static_tag, true)->RangeMultiplier(2)->Range(4, 128);
 
-BENCHMARK_TEMPLATE(NaiveForLoop, semi_dynamic_tag, false);
-BENCHMARK_TEMPLATE(LessNaiveForLoop, semi_dynamic_tag, false);
-BENCHMARK_TEMPLATE(InsiderForLoop, semi_dynamic_tag, false);
-BENCHMARK_TEMPLATE(IndexedLoop, semi_dynamic_tag, false);
+BENCHMARK_TEMPLATE(NaiveForLoop, semi_dynamic_tag, false)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
+BENCHMARK_TEMPLATE(InsiderForLoop, semi_dynamic_tag, false)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
+BENCHMARK_TEMPLATE(IndexedLoop, semi_dynamic_tag, false)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
 
-BENCHMARK_TEMPLATE(NaiveForLoop, semi_dynamic_tag, true);
-BENCHMARK_TEMPLATE(InsiderForLoop, semi_dynamic_tag, true);
-BENCHMARK_TEMPLATE(IndexedLoop, semi_dynamic_tag, true);
+BENCHMARK_TEMPLATE(NaiveForLoop, semi_dynamic_tag, true)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
+BENCHMARK_TEMPLATE(InsiderForLoop, semi_dynamic_tag, true)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
+BENCHMARK_TEMPLATE(IndexedLoop, semi_dynamic_tag, true)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
 
-BENCHMARK_TEMPLATE(NaiveForLoop, full_dynamic_tag, false);
-BENCHMARK_TEMPLATE(LessNaiveForLoop, full_dynamic_tag, false);
-BENCHMARK_TEMPLATE(InsiderForLoop, full_dynamic_tag, false);
-BENCHMARK_TEMPLATE(IndexedLoop, full_dynamic_tag, false);
+BENCHMARK_TEMPLATE(NaiveForLoop, full_dynamic_tag, false)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
+BENCHMARK_TEMPLATE(InsiderForLoop, full_dynamic_tag, false)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
+BENCHMARK_TEMPLATE(IndexedLoop, full_dynamic_tag, false)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
 
-BENCHMARK_TEMPLATE(NaiveForLoop, full_dynamic_tag, true);
-BENCHMARK_TEMPLATE(InsiderForLoop, full_dynamic_tag, true);
-BENCHMARK_TEMPLATE(IndexedLoop, full_dynamic_tag, true);
+BENCHMARK_TEMPLATE(NaiveForLoop, full_dynamic_tag, true)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
+BENCHMARK_TEMPLATE(InsiderForLoop, full_dynamic_tag, true)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
+BENCHMARK_TEMPLATE(IndexedLoop, full_dynamic_tag, true)
+    ->RangeMultiplier(2)
+    ->Range(4, 128);
