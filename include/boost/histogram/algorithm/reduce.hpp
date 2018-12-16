@@ -9,7 +9,6 @@
 
 #include <boost/assert.hpp>
 #include <boost/histogram/detail/axes.hpp>
-#include <boost/histogram/detail/index_mapper.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/histogram/indexed.hpp>
@@ -112,12 +111,8 @@ histogram<A, S> reduce(const histogram<A, S>& hist, const C& options) {
     ++iaxis;
   });
 
-  const auto& storage = unsafe_access::storage(hist);
-  using storage_type = detail::unqual<decltype(storage)>;
-  auto result = histogram<A, S>(
-      std::move(axes), detail::static_if<detail::has_allocator<storage_type>>(
-                           [](auto& x) { return storage_type(x.get_allocator()); },
-                           [](auto&) { return storage_type(); }, storage));
+  auto result = histogram<A, S>(std::move(axes),
+                                detail::make_default(unsafe_access::storage(hist)));
 
   detail::axes_buffer<A, int> idx(hist.rank());
   for (auto x : indexed(hist, true)) {
