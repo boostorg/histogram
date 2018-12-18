@@ -108,6 +108,9 @@ struct adaptive_storage;
 using default_storage = adaptive_storage<>;
 using weight_storage =
     storage_adaptor<boost::container::vector<accumulators::weighted_sum<>>>;
+using profile_storage = storage_adaptor<boost::container::vector<accumulators::mean<>>>;
+using weighted_profile_storage =
+    storage_adaptor<boost::container::vector<accumulators::weighted_mean<>>>;
 
 template <class Axes, class Storage = default_storage>
 class histogram;

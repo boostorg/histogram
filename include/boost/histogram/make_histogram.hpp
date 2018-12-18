@@ -10,20 +10,24 @@
 #include <boost/container/vector.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp> // implements default_storage
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/mp11.hpp>
 #include <tuple>
 
 namespace boost {
 namespace histogram {
 
 /// histogram factory from compile-time axis configuration with custom storage
-template <typename C, typename T, typename... Ts, typename = detail::requires_axis<T>>
-auto make_histogram_with(C&& c, T&& axis0, Ts&&... axis) {
-  using CU = detail::unqual<C>;
-  using S = mp11::mp_if<detail::is_storage<CU>, CU, storage_adaptor<CU>>;
+template <typename StorageOrContainer, typename T, typename... Ts,
+          typename = detail::requires_axis<T>>
+auto make_histogram_with(StorageOrContainer&& s, T&& axis0, Ts&&... axis) {
   auto axes = std::make_tuple(std::forward<T>(axis0), std::forward<Ts>(axis)...);
-  return histogram<decltype(axes), S>(std::move(axes), std::forward<C>(c));
+  using U = detail::unqual<StorageOrContainer>;
+  using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
+  return histogram<decltype(axes), S>(std::move(axes),
+                                      S(std::forward<StorageOrContainer>(s)));
 }
 
 /// histogram factory from compile-time axis configuration with default storage
@@ -41,31 +45,34 @@ auto make_weighted_histogram(T&& axis0, Ts&&... axis) {
 }
 
 /// histogram factory from vector-like with custom storage
-template <typename C, typename T, typename = detail::requires_axis_vector<T>>
-auto make_histogram_with(C&& c, T&& t) {
-  using CU = detail::unqual<C>;
-  using S = mp11::mp_if<detail::is_storage<CU>, CU, storage_adaptor<CU>>;
-  return histogram<detail::unqual<T>, S>(std::forward<T>(t), std::forward<C>(c));
+template <typename StorageOrContainer, typename Iterable,
+          typename = detail::requires_axis_vector<Iterable>>
+auto make_histogram_with(StorageOrContainer&& s, Iterable&& c) {
+  using U = detail::unqual<StorageOrContainer>;
+  using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
+  return histogram<detail::unqual<Iterable>, S>(std::forward<Iterable>(c),
+                                                S(std::forward<StorageOrContainer>(s)));
 }
 
 /// histogram factory from vector-like with default storage
-template <typename T, typename = detail::requires_axis_vector<T>>
-auto make_histogram(T&& t) {
-  return make_histogram_with(default_storage(), std::forward<T>(t));
+template <typename Iterable, typename = detail::requires_axis_vector<Iterable>>
+auto make_histogram(Iterable&& c) {
+  return make_histogram_with(default_storage(), std::forward<Iterable>(c));
 }
 
 /// histogram factory from vector-like with default storage
-template <typename T, typename = detail::requires_axis_vector<T>>
-auto make_weighted_histogram(T&& t) {
-  return make_histogram_with(weight_storage(), std::forward<T>(t));
+template <typename Iterable, typename = detail::requires_axis_vector<Iterable>>
+auto make_weighted_histogram(Iterable&& c) {
+  return make_histogram_with(weight_storage(), std::forward<Iterable>(c));
 }
 
 /// histogram factory from iterator range with custom storage
-template <typename C, typename Iterator, typename = detail::requires_iterator<Iterator>>
-auto make_histogram_with(C&& c, Iterator begin, Iterator end) {
+template <typename StorageOrContainer, typename Iterator,
+          typename = detail::requires_iterator<Iterator>>
+auto make_histogram_with(StorageOrContainer&& s, Iterator begin, Iterator end) {
   using T = detail::iterator_value_type<Iterator>;
-  auto axes = std::vector<T>(begin, end);
-  return make_histogram_with(std::forward<C>(c), std::move(axes));
+  return make_histogram_with(std::forward<StorageOrContainer>(s),
+                             boost::container::vector<T>(begin, end));
 }
 
 /// dynamic type factory from iterator range with default storage

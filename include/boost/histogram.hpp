@@ -20,6 +20,7 @@
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>
+#include <boost/histogram/make_profile.hpp>
 #include <boost/histogram/sample.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/weight.hpp>

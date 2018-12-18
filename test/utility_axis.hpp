@@ -16,14 +16,13 @@ namespace histogram {
 template <typename Axis>
 void test_axis_iterator(const Axis& a, int begin, int end) {
   for (auto bin : a) {
-    BOOST_TEST_EQ(bin.idx(), begin);
     BOOST_TEST_EQ(bin, a[begin]);
     ++begin;
   }
   BOOST_TEST_EQ(begin, end);
   auto rit = a.rbegin();
   for (; rit != a.rend(); ++rit) {
-    BOOST_TEST_EQ(rit->idx(), --begin);
+    --begin;
     BOOST_TEST_EQ(*rit, a[begin]);
   }
 }

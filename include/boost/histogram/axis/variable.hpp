@@ -11,7 +11,7 @@
 #include <boost/container/new_allocator.hpp>
 #include <boost/container/string.hpp> // default meta data
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/interval_bin_view.hpp>
+#include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
@@ -199,9 +199,7 @@ public:
     return (1.0 - z) * p[k] + z * p[k + 1];
   }
 
-  auto operator[](int idx) const noexcept {
-    return interval_bin_view<variable>(idx, *this);
-  }
+  auto operator[](int idx) const noexcept { return interval_view<variable>(*this, idx); }
 
   bool operator==(const variable& o) const noexcept {
     return base_type::operator==(o) &&

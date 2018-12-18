@@ -118,8 +118,8 @@ void run_tests() {
     BOOST_TEST_THROWS(reduce(h, rebin(2)), std::invalid_argument);
     auto hr = reduce(h, shrink(2, 3));
     BOOST_TEST_EQ(hr.axis().size(), 1);
-    BOOST_TEST_EQ(hr.axis()[0].value(), 2);
-    BOOST_TEST_EQ(hr.axis()[1].value(), 3);
+    BOOST_TEST_EQ(hr.axis()[0], 2);
+    BOOST_TEST_EQ(hr.axis()[1], 3);
   }
 
   // reduce on circular axis, shrink must fail, also rebin with remainder

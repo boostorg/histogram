@@ -9,7 +9,7 @@
 
 #include <boost/container/string.hpp> // default meta data
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/interval_bin_view.hpp>
+#include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
@@ -188,8 +188,8 @@ public:
   }
 
   /// Access bin at index
-  auto operator[](int idx) const noexcept {
-    return interval_bin_view<regular>(idx, *this);
+  decltype(auto) operator[](int idx) const noexcept {
+    return interval_view<regular>(*this, idx);
   }
 
   bool operator==(const regular& o) const noexcept {

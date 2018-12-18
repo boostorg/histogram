@@ -35,31 +35,28 @@ class polymorphic_bin {
   using value_type = T;
 
 public:
-  polymorphic_bin(int idx, value_type value)
-      : idx_(idx), lower_or_value_(value), upper_(value), center_(value) {}
+  polymorphic_bin(value_type value)
+      : lower_or_value_(value), upper_(value), center_(value) {}
 
-  polymorphic_bin(int idx, value_type lower, value_type upper, value_type center)
-      : idx_(idx), lower_or_value_(lower), upper_(upper), center_(center) {}
+  polymorphic_bin(value_type lower, value_type upper, value_type center)
+      : lower_or_value_(lower), upper_(upper), center_(center) {}
 
-  int idx() const noexcept { return idx_; }
+  operator value_type() const noexcept { return lower_or_value_; }
 
-  value_type value() const { return lower_or_value_; }
-  value_type lower() const { return lower_or_value_; }
-  value_type upper() const { return upper_; }
-  value_type center() const { return center_; }
-  value_type width() const { return upper() - lower(); }
+  value_type lower() const noexcept { return lower_or_value_; }
+  value_type upper() const noexcept { return upper_; }
+  value_type center() const noexcept { return center_; }
+  value_type width() const noexcept { return upper() - lower(); }
 
   template <typename BinType>
   bool operator==(const BinType& rhs) const noexcept {
-    return idx() == rhs.idx() && equal_impl(rhs, detail::has_method_lower<BinType>());
+    return equal_impl(rhs, detail::has_method_lower<BinType>());
   }
 
   template <typename BinType>
   bool operator!=(const BinType& rhs) const noexcept {
     return !operator==(rhs);
   }
-
-  explicit operator int() const noexcept { return idx_; }
 
   bool is_discrete() const noexcept { return lower_or_value_ == upper_; }
 
@@ -76,10 +73,9 @@ private:
 
   template <typename BinType>
   bool equal_impl(const BinType& rhs, std::false_type) const noexcept {
-    return is_discrete() && value() == rhs.value();
+    return is_discrete() && static_cast<value_type>(*this) == rhs;
   }
 
-  const int idx_;
   const value_type lower_or_value_, upper_, center_;
 };
 

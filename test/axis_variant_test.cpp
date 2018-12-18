@@ -193,7 +193,7 @@ int main() {
         axis::category<std::string>({"A", "B", "C"}));
     BOOST_TEST_THROWS(a[0], std::runtime_error);
     auto b = axis::variant<axis::category<int>>(axis::category<int>({2, 1, 3}));
-    BOOST_TEST_EQ(b[0].value(), 2);
+    BOOST_TEST_EQ(b[0], 2);
     BOOST_TEST_EQ(b[0].lower(), b[0].upper()); // lower == upper for bin without interval
   }
 

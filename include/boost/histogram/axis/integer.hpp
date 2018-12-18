@@ -9,9 +9,7 @@
 
 #include <boost/container/string.hpp> // default meta data
 #include <boost/histogram/axis/base.hpp>
-#include <boost/histogram/axis/interval_bin_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
-#include <boost/histogram/axis/value_bin_view.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
 #include <boost/throw_exception.hpp>
@@ -34,9 +32,6 @@ class integer : public base<MetaData, Options>,
   using base_type = base<MetaData, Options>;
   using value_type = IntType;
   using metadata_type = MetaData;
-  using bin_view =
-      std::conditional_t<std::is_integral<value_type>::value, value_bin_view<integer>,
-                         interval_bin_view<integer>>;
   using index_type = std::conditional_t<std::is_integral<value_type>::value, int, double>;
 
   static_assert(!(Options & option_type::circular) || !(Options & option_type::underflow),
@@ -70,7 +65,7 @@ public:
 
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
-    return impl(std::is_floating_point<value_type>(), x);
+    return index_impl(std::is_floating_point<value_type>(), x);
   }
 
   /// Returns axis value for index.
@@ -82,7 +77,9 @@ public:
     return min_ + i;
   }
 
-  decltype(auto) operator[](int idx) const noexcept { return bin_view(idx, *this); }
+  decltype(auto) operator[](int idx) const noexcept {
+    return subscript_impl(std::is_same<index_type, double>(), idx);
+  }
 
   bool operator==(const integer& o) const noexcept {
     return base_type::operator==(o) && min_ == o.min_;
@@ -94,7 +91,7 @@ public:
   void serialize(Archive&, unsigned);
 
 private:
-  int impl(std::false_type, int x) const noexcept {
+  int index_impl(std::false_type, int x) const noexcept {
     const auto z = x - min_;
     if (Options & option_type::circular) {
       return z - std::floor(double(z) / base_type::size()) * base_type::size();
@@ -105,7 +102,7 @@ private:
   }
 
   template <typename T>
-  int impl(std::true_type, T x) const noexcept {
+  int index_impl(std::true_type, T x) const noexcept {
     const auto z = std::floor(x - min_);
     if (Options & option_type::circular) {
       if (std::isfinite(z))
@@ -115,6 +112,14 @@ private:
       return z >= 0 ? static_cast<int>(z) : -1;
     }
     return base_type::size();
+  }
+
+  decltype(auto) subscript_impl(std::true_type, int idx) const noexcept {
+    return interval_view<integer>(*this, idx);
+  }
+
+  decltype(auto) subscript_impl(std::false_type, int idx) const noexcept {
+    return value(idx);
   }
 
   value_type min_ = 0;

@@ -6,25 +6,30 @@
 
 //[ getting_started_listing_02
 
+#include <boost/format.hpp>
 #include <boost/histogram.hpp>
-#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <sstream>
 #include <string>
 
 namespace bh = boost::histogram;
 
 int main() {
   /*
-      Create a dynamic histogram with the factory `make_dynamic_histogram`.
-      - axis can be passed directly just like for `make_static_histogram`
-      - in addition, the factory also accepts iterators over a sequence of
-        axis::variant, the polymorphic type that can hold concrete axis types
+    Create a histogram which can be configured dynamically at run-time. The axis
+    configuration is first collected in a vector of the boost::histogram::axis::variant
+    type, which can hold different axis types (those in its template argument list).
+    Here, we use a variant that can store a regular and a category axis.
   */
-  std::vector<bh::axis::variant<bh::axis::regular<>, bh::axis::category<std::string> > >
-      axes;
-  axes.emplace_back(bh::axis::category<std::string>({"red", "blue"}));
-  axes.emplace_back(bh::axis::regular<>(3, 0, 1, "x"));
-  axes.emplace_back(bh::axis::regular<>(3, 0, 1, "y"));
-  auto h = bh::make_histogram(axes.begin(), axes.end());
+  using reg = bh::axis::regular<>;
+  using cat = bh::axis::category<std::string>;
+  using variant = bh::axis::variant<bh::axis::regular<>, bh::axis::category<std::string>>;
+  std::vector<variant> axes;
+  axes.emplace_back(cat({"red", "blue"}));
+  axes.emplace_back(reg(3, 0, 1, "x"));
+  axes.emplace_back(reg(3, 0, 1, "y"));
+  auto h = bh::make_histogram(axes); // passing an iterator range also works
 
   // fill histogram with data, usually this happens in a loop
   h("red", 0.1, 0.2);
@@ -33,28 +38,39 @@ int main() {
   h("red", 0.7, 0.7);
 
   /*
-      Print dynamic histogram by iterating over bins.
-      If the [bin type] of the axis is not convertible to a
-      double interval, you need to cast axis::variant before looping;
-      this is here the case for the category axis.
+    Print histogram by iterating over bins.
+    Since the [bin type] of the category axis cannot be converted into a double, it cannot
+    be handled by the polymorphic interface of boost::histogram::axis::variant. We use
+    boost::histogram::axis::get to "cast" the variant type to the actual category type.
   */
-  using cas = bh::axis::category<std::string>;
-  for (auto cbin : bh::axis::get<cas>(h.axis(0))) {
-    for (auto ybin : h.axis(2)) {   // rows
-      for (auto xbin : h.axis(1)) { // columns
-        const auto v = h.at(cbin, xbin, ybin);
-        if (v)
-          std::printf("(%i, %i, %i) %4s [%3.1f, %3.1f) [%3.1f, %3.1f) %3.0f\n",
-                      cbin.idx(), xbin.idx(), ybin.idx(), cbin.value().c_str(),
-                      xbin.lower(), xbin.upper(), ybin.lower(), ybin.upper(), v);
-      }
-    }
+
+  const auto& cat_axis = bh::axis::get<cat>(h.axis(0)); // get reference to category axis
+  std::ostringstream os;
+  for (auto x : bh::indexed(h)) {
+    os << boost::format("(%i, %i, %i) %4s [%3.1f, %3.1f) [%3.1f, %3.1f) %3.0f\n") % x[0] %
+              x[1] % x[2] % cat_axis[x[0]] % x.bin(1).lower() % x.bin(1).upper() %
+              x.bin(2).lower() % x.bin(2).upper() % *x;
   }
 
-  assert(h.at(0, 0, 0) == 1);
-  assert(h.at(0, 0, 2) == 1);
-  assert(h.at(0, 2, 2) == 1);
-  assert(h.at(1, 2, 0) == 1);
+  std::cout << os.str() << std::flush;
+  assert(os.str() == "(0, 0, 0)  red [0.0, 0.3) [0.0, 0.3)   1\n"
+                     "(1, 0, 0) blue [0.0, 0.3) [0.0, 0.3)   0\n"
+                     "(0, 1, 0)  red [0.3, 0.7) [0.0, 0.3)   0\n"
+                     "(1, 1, 0) blue [0.3, 0.7) [0.0, 0.3)   0\n"
+                     "(0, 2, 0)  red [0.7, 1.0) [0.0, 0.3)   0\n"
+                     "(1, 2, 0) blue [0.7, 1.0) [0.0, 0.3)   1\n"
+                     "(0, 0, 1)  red [0.0, 0.3) [0.3, 0.7)   0\n"
+                     "(1, 0, 1) blue [0.0, 0.3) [0.3, 0.7)   0\n"
+                     "(0, 1, 1)  red [0.3, 0.7) [0.3, 0.7)   0\n"
+                     "(1, 1, 1) blue [0.3, 0.7) [0.3, 0.7)   0\n"
+                     "(0, 2, 1)  red [0.7, 1.0) [0.3, 0.7)   0\n"
+                     "(1, 2, 1) blue [0.7, 1.0) [0.3, 0.7)   0\n"
+                     "(0, 0, 2)  red [0.0, 0.3) [0.7, 1.0)   1\n"
+                     "(1, 0, 2) blue [0.0, 0.3) [0.7, 1.0)   0\n"
+                     "(0, 1, 2)  red [0.3, 0.7) [0.7, 1.0)   0\n"
+                     "(1, 1, 2) blue [0.3, 0.7) [0.7, 1.0)   0\n"
+                     "(0, 2, 2)  red [0.7, 1.0) [0.7, 1.0)   1\n"
+                     "(1, 2, 2) blue [0.7, 1.0) [0.7, 1.0)   0\n");
 }
 
 //]

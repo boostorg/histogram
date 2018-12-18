@@ -163,8 +163,8 @@ void run_tests() {
     BOOST_TEST_EQ(b.axis(0_c)[0].lower(), 1);
     BOOST_TEST_EQ(b.axis(0_c)[0].upper(), 2);
     BOOST_TEST_EQ(b.axis(1_c).size(), 2);
-    BOOST_TEST_EQ(b.axis(1_c)[0].value(), 1);
-    BOOST_TEST_EQ(b.axis(1_c)[1].value(), 2);
+    BOOST_TEST_EQ(b.axis(1_c)[0], 1);
+    BOOST_TEST_EQ(b.axis(1_c)[1], 2);
     b.axis(1_c).metadata() = "bar";
     BOOST_TEST_EQ(b.axis(0_c).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1_c).metadata(), "bar");
@@ -174,8 +174,8 @@ void run_tests() {
     BOOST_TEST_EQ(b.axis(0)[0].lower(), 1);
     BOOST_TEST_EQ(b.axis(0)[0].upper(), 2);
     BOOST_TEST_EQ(b.axis(1).size(), 2);
-    BOOST_TEST_EQ(b.axis(1)[0].value(), 1);
-    BOOST_TEST_EQ(b.axis(1)[1].value(), 2);
+    BOOST_TEST_EQ(b.axis(1)[0], 1);
+    BOOST_TEST_EQ(b.axis(1)[1], 2);
     BOOST_TEST_EQ(b.axis(0).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1).metadata(), "bar");
     b.axis(0).metadata() = "baz";
@@ -188,7 +188,7 @@ void run_tests() {
     BOOST_TEST_EQ(c.axis().metadata(), "foo");
     // need to cast here for this to work with Tag == dynamic_tag, too
     auto ca = axis::get<axis::category<C>>(c.axis());
-    BOOST_TEST(ca[0].value() == C::A);
+    BOOST_TEST(ca[0] == C::A);
   }
 
   // equal_compare
