@@ -44,23 +44,20 @@ enum class option_type {
 };
 
 namespace transform {
-template <typename T = double>
-struct identity;
-template <typename T = double>
+struct id;
 struct log;
-template <typename T = double>
 struct sqrt;
-template <typename T = double>
 struct pow;
 } // namespace transform
 
-template <typename TransformOrRealType = double, typename MetaData = string_type,
-          option_type Options = option_type::uoflow>
+template <typename RealType = double, typename Transform = transform::id,
+          typename MetaData = string_type, option_type Options = option_type::uoflow>
 class regular;
 
 template <typename RealType = double, typename MetaData = string_type,
           option_type Options = option_type::overflow>
-using circular = regular<RealType, MetaData, Options | option_type::circular>;
+using circular =
+    regular<RealType, transform::id, MetaData, Options | option_type::circular>;
 
 template <typename IntType = int, typename MetaData = string_type,
           option_type Options = option_type::underflow | option_type::overflow>

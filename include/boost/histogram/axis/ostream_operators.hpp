@@ -10,11 +10,9 @@
 #define BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
 
 #include <boost/core/typeinfo.hpp>
-#include <boost/histogram/axis/interval_view.hpp>
-#include <boost/histogram/axis/polymorphic_bin.hpp>
+#include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <iomanip>
 #include <ostream>
@@ -24,22 +22,10 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-template <typename T>
-const char* to_string(const axis::transform::identity<T>&) {
-  return "";
-}
-template <typename T>
-const char* to_string(const axis::transform::log<T>&) {
-  return "_log";
-}
-template <typename T>
-const char* to_string(const axis::transform::sqrt<T>&) {
-  return "_sqrt";
-}
-template <typename T>
-const char* to_string(const axis::transform::pow<T>&) {
-  return "_pow";
-}
+inline const char* to_string(const axis::transform::id&) { return ""; }
+inline const char* to_string(const axis::transform::log&) { return "_log"; }
+inline const char* to_string(const axis::transform::sqrt&) { return "_sqrt"; }
+inline const char* to_string(const axis::transform::pow&) { return "_pow"; }
 
 template <typename OStream, typename T>
 void stream_metadata(OStream& os, const T& t) {
@@ -64,8 +50,8 @@ void stream_options(OStream& os, const axis::option_type o) {
 template <typename OStream, typename T>
 void stream_transform(OStream&, const T&) {}
 
-template <typename OStream, typename T>
-void stream_transform(OStream& os, const axis::transform::pow<T>& t) {
+template <typename OStream>
+void stream_transform(OStream& os, const axis::transform::pow& t) {
   os << ", power=" << t.power;
 }
 
@@ -130,9 +116,9 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename Tr, typename M, option_type O>
+template <typename C, typename T, typename V, typename Tr, typename M, option_type O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const regular<Tr, M, O>& a) {
+                                     const regular<V, Tr, M, O>& a) {
   os << "regular" << detail::to_string(a.transform()) << "(" << a.size() << ", "
      << a.value(0) << ", " << a.value(a.size());
   detail::stream_metadata(os, a.metadata());

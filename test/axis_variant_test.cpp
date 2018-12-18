@@ -118,13 +118,13 @@ int main() {
     using M = boost::container::string;
     test(axis::regular<>(2, -1, 1, "regular1"),
          "regular(2, -1, 1, metadata=\"regular1\", options=underflow | overflow)");
-    test(axis::regular<tr::log<>, M, axis::option_type::none>(2, 1, 10, "regular2"),
+    test(axis::regular<double, tr::log, M, axis::option_type::none>(2, 1, 10, "regular2"),
          "regular_log(2, 1, 10, metadata=\"regular2\", options=none)");
-    test(axis::regular<tr::pow<>, M, axis::option_type::overflow>(tr::pow<>(1.5), 2, 1,
-                                                                  10, "regular3"),
+    test(axis::regular<double, tr::pow, M, axis::option_type::overflow>(
+             tr::pow(1.5), 2, 1, 10, "regular3"),
          "regular_pow(2, 1, 10, metadata=\"regular3\", options=overflow, power=1.5)");
-    test(axis::regular<tr::pow<>, M, axis::option_type::none>(tr::pow<>(-1.5), 2, 1, 10,
-                                                              "regular4"),
+    test(axis::regular<double, tr::pow, M, axis::option_type::none>(tr::pow(-1.5), 2, 1,
+                                                                    10, "regular4"),
          "regular_pow(2, 1, 10, metadata=\"regular4\", options=none, power=-1.5)");
     test(axis::circular<double, axis::null_type>(4, 0.1, 1.1),
          "regular(4, 0.1, 1.1, options=overflow | circular)");
@@ -155,12 +155,13 @@ int main() {
   // axis::variant operator==
   {
     enum { A, B, C };
-    using variant = axis::variant<axis::regular<>, axis::regular<axis::transform::pow<>>,
-                                  axis::circular<>, axis::variable<>, axis::category<>,
-                                  axis::integer<>>;
+    using variant =
+        axis::variant<axis::regular<>, axis::regular<double, axis::transform::pow>,
+                      axis::circular<>, axis::variable<>, axis::category<>,
+                      axis::integer<>>;
     std::vector<variant> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
-    axes.push_back(axis::regular<tr::pow<>>(tr::pow<>(0.5), 2, 1, 4));
+    axes.push_back(axis::regular<double, tr::pow>(tr::pow(0.5), 2, 1, 4));
     axes.push_back(axis::circular<>{4, 0, axis::two_pi});
     axes.push_back(axis::variable<>{-1, 0, 1});
     axes.push_back(axis::category<>({A, B, C}));
@@ -200,7 +201,7 @@ int main() {
   // vector of axes with custom allocators
   {
     using M = std::vector<char, tracing_allocator<char>>;
-    using T1 = axis::regular<double, M>;
+    using T1 = axis::regular<double, tr::id, M>;
     using T2 = axis::circular<double, axis::null_type>;
     using T3 = axis::variable<double, axis::null_type, axis::option_type::uoflow,
                               tracing_allocator<double>>;

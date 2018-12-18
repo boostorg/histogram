@@ -136,17 +136,17 @@ struct serializer {
 namespace axis {
 
 namespace transform {
-template <class Archive, class T>
-void serialize(Archive&, identity<T>&, unsigned /* version */) {}
+template <class Archive>
+void serialize(Archive&, id&, unsigned /* version */) {}
 
-template <class Archive, class T>
-void serialize(Archive&, log<T>&, unsigned /* version */) {}
+template <class Archive>
+void serialize(Archive&, log&, unsigned /* version */) {}
 
-template <class Archive, class T>
-void serialize(Archive&, sqrt<T>&, unsigned /* version */) {}
+template <class Archive>
+void serialize(Archive&, sqrt&, unsigned /* version */) {}
 
-template <class Archive, class T>
-void serialize(Archive& ar, pow<T>& t, unsigned /* version */) {
+template <class Archive>
+void serialize(Archive& ar, pow& t, unsigned /* version */) {
   ar& t.power;
 }
 } // namespace transform
@@ -161,12 +161,9 @@ void base<M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& size_meta_.second();
 }
 
-template <class Archive, class T>
-void serialize(Archive&, transform::unit<T>&, unsigned /* version */) {}
-
-template <class T, class M, option_type O>
+template <class T, class Tr, class M, option_type O>
 template <class Archive>
-void regular<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
+void regular<T, Tr, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
   ar& static_cast<transform_type&>(*this);
   ar& min_;
