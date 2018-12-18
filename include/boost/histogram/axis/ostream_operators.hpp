@@ -10,9 +10,8 @@
 #define BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
 
 #include <boost/core/typeinfo.hpp>
-#include <boost/histogram/axis/interval_bin_view.hpp>
+#include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/polymorphic_bin.hpp>
-#include <boost/histogram/axis/value_bin_view.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
@@ -116,15 +115,8 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os, const null_ty
 
 template <typename C, typename T, typename U>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const interval_bin_view<U>& i) {
+                                     const interval_view<U>& i) {
   os << "[" << i.lower() << ", " << i.upper() << ")";
-  return os;
-}
-
-template <typename C, typename T, typename U>
-std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const value_bin_view<U>& i) {
-  os << i.value();
   return os;
 }
 
@@ -132,7 +124,7 @@ template <typename C, typename T, typename U>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const polymorphic_bin<U>& i) {
   if (i.is_discrete())
-    os << i.value();
+    os << i;
   else
     os << "[" << i.lower() << ", " << i.upper() << ")";
   return os;

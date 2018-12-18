@@ -33,7 +33,7 @@ int main() {
 
   std::ostringstream os;
   for (auto&& b : bh::indexed(h)) {
-    os << "bin " << b[0] << " [" << b.bin(0).value() << "] " << *b << "\n";
+    os << "bin " << b[0] << " [" << b.bin(0) << "] " << *b << "\n";
   }
 
   std::cout << os.str() << std::endl;

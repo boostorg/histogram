@@ -43,7 +43,7 @@ struct get_polymorphic_bin : public boost::static_visitor<axis::polymorphic_bin<
     BOOST_THROW_EXCEPTION(std::runtime_error(
         cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
             " has no value method with return type convertible to double")));
-    return T(0, 0);
+    return T(0);
   }
 
   template <typename A>
@@ -54,12 +54,12 @@ struct get_polymorphic_bin : public boost::static_visitor<axis::polymorphic_bin<
 
   template <typename A>
   T impl(const A& a, std::true_type, std::false_type) const {
-    return T(idx, a.value(idx));
+    return T(a.value(idx));
   }
 
   template <typename A>
   T impl(const A& a, std::true_type, std::true_type) const {
-    return T(idx, a.value(idx), a.value(idx + 1), a.value(idx + 0.5));
+    return T(a.value(idx), a.value(idx + 1), a.value(idx + 0.5));
   }
 };
 

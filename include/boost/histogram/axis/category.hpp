@@ -12,7 +12,6 @@
 #include <boost/container/string.hpp> // default meta data
 #include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/iterator.hpp>
-#include <boost/histogram/axis/value_bin_view.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -131,13 +130,13 @@ public:
   }
 
   /// Returns the value for the bin index (performs a range check).
-  const value_type& value(int idx) const {
+  decltype(auto) value(int idx) const {
     if (idx < 0 || idx >= base_type::size())
       BOOST_THROW_EXCEPTION(std::out_of_range("category index out of range"));
     return x_.first()[idx];
   }
 
-  auto operator[](int idx) const noexcept { return value_bin_view<category>(idx, *this); }
+  decltype(auto) operator[](int idx) const noexcept { return value(idx); }
 
   bool operator==(const category& o) const noexcept {
     return base_type::operator==(o) &&

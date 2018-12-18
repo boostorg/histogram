@@ -163,6 +163,7 @@ if (BUILD_BENCHMARKS)
 
   benchmark(test/iteration_bench.cpp)
   benchmark(test/axis_bench.cpp)
+  benchmark(test/parallel_filling_bench.cpp)
 
   add_executable(speed_cpp test/speed_cpp.cpp)
   target_include_directories(speed_cpp PRIVATE include ${Boost_INCLUDE_DIR})

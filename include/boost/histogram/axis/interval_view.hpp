@@ -4,33 +4,28 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_AXIS_VALUE_BIN_VIEW_HPP
-#define BOOST_HISTOGRAM_AXIS_VALUE_BIN_VIEW_HPP
-
-#include <utility>
+#ifndef BOOST_HISTOGRAM_AXIS_INTERVAL_VIEW_HPP
+#define BOOST_HISTOGRAM_AXIS_INTERVAL_VIEW_HPP
 
 namespace boost {
 namespace histogram {
 namespace axis {
 
 template <typename Axis>
-class value_bin_view {
+class interval_view {
 public:
-  value_bin_view(int idx, const Axis& axis) : idx_(idx), axis_(axis) {}
+  interval_view(const Axis& axis, int idx) : axis_(axis), idx_(idx) {}
   // avoid viewing a temporary that goes out of scope
-  value_bin_view(int idx, Axis&& axis) = delete;
+  interval_view(Axis&& axis, int idx) = delete;
 
-  int idx() const noexcept { return idx_; }
-
-  decltype(auto) value() const { return axis_.value(idx_); }
-
-  bool operator==(const value_bin_view& rhs) const noexcept {
-    return idx() == rhs.idx() && (&axis_ == &rhs.axis_ || value() == rhs.value());
-  }
+  decltype(auto) lower() const noexcept { return axis_.value(idx_); }
+  decltype(auto) upper() const noexcept { return axis_.value(idx_ + 1); }
+  decltype(auto) center() const noexcept { return axis_.value(idx_ + 0.5); }
+  decltype(auto) width() const noexcept { return upper() - lower(); }
 
   template <typename BinType>
   bool operator==(const BinType& rhs) const noexcept {
-    return idx() == rhs.idx() && value() == rhs.value();
+    return lower() == rhs.lower() && upper() == rhs.upper();
   }
 
   template <typename BinType>
@@ -38,11 +33,9 @@ public:
     return !operator==(rhs);
   }
 
-  explicit operator int() const noexcept { return idx_; }
-
 private:
-  const int idx_;
   const Axis& axis_;
+  const int idx_;
 };
 
 } // namespace axis

@@ -24,11 +24,11 @@ int main() {
   using namespace bh::literals; // enables _c suffix
 
   // make a 2d histogram
-  auto h = bh::make_histogram(bh::axis::regular<>(3, -1, 1), bh::axis::integer<>(0, 4));
+  auto h = bh::make_histogram(bh::axis::regular<>(3, -1, 1), bh::axis::integer<>(0, 2));
 
   h(-0.9, 0);
-  h(0.9, 3);
-  h(0.1, 2);
+  h(0.9, 1);
+  h(0.1, 0);
 
   auto hr0 = bh::algorithm::project(h, 0_c); // keep only first axis
   auto hr1 = bh::algorithm::project(h, 1_c); // keep only second axis
@@ -40,22 +40,27 @@ int main() {
   assert(sum(h) == 3 && sum(hr0) == 3 && sum(hr1) == 3);
 
   std::ostringstream os1;
-  for (auto yi : h.axis(1_c)) {
-    for (auto xi : h.axis(0_c)) { os1 << h.at(xi, yi) << " "; }
-    os1 << "\n";
-  }
-  assert(os1.str() == "1 0 0 \n"
-                      "0 0 0 \n"
-                      "0 1 0 \n"
-                      "0 0 1 \n");
+  for (auto x : bh::indexed(h)) os1 << "(" << x[0] << ", " << x[1] << "): " << *x << "\n";
+  std::cout << os1.str() << std::flush;
+  assert(os1.str() == "(0, 0): 1\n"
+                      "(1, 0): 1\n"
+                      "(2, 0): 0\n"
+                      "(0, 1): 0\n"
+                      "(1, 1): 0\n"
+                      "(2, 1): 1\n");
 
   std::ostringstream os2;
-  for (auto xi : hr0.axis()) os2 << hr0.at(xi) << " ";
-  assert(os2.str() == "1 1 1 ");
+  for (auto x : bh::indexed(hr0)) os2 << "(" << x[0] << ", -): " << *x << "\n";
+  std::cout << os2.str() << std::flush;
+  assert(os2.str() == "(0, -): 1\n"
+                      "(1, -): 1\n"
+                      "(2, -): 1\n");
 
   std::ostringstream os3;
-  for (auto yi : hr1.axis()) os3 << hr1.at(yi) << " ";
-  assert(os3.str() == "1 0 1 1 ");
+  for (auto x : bh::indexed(hr1)) os3 << "(- ," << x[0] << "): " << *x << "\n";
+  std::cout << os3.str() << std::flush;
+  assert(os3.str() == "(- ,0): 2\n"
+                      "(- ,1): 1\n");
 }
 
 //]

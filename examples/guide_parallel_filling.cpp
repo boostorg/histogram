@@ -56,11 +56,10 @@ int main() {
 
   /*
     The histogram storage may not be resized in either thread. This is the case
-    if you do not use growing axis types. Some notes regarding std::thread.
-    - The templated fill function must be instantiated when passed to std::thread, do we
-      pass fill<decltype(h)>.
-    - std::thread copies the argument. To avoid filling two copies of the histogram, we
-      need to pass it via std::ref.
+    if you do not use growing axis types. Notes regarding usage of std::thread:
+    - templated fill function must be instantiated when passed to std::thread, so we
+      put fill<decltype(h)>
+    - std::thread copies arguments, we use std::ref to avoid filling copies of histogram
   */
   std::thread t1(fill<decltype(h)>, std::ref(h));
   std::thread t2(fill<decltype(h)>, std::ref(h));

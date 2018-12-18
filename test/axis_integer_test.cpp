@@ -57,8 +57,8 @@ int main() {
   // axis::integer with int type
   {
     axis::integer<int> a{-1, 2};
-    BOOST_TEST_EQ(a[-2].value(), std::numeric_limits<int>::min());
-    BOOST_TEST_EQ(a[4].value(), std::numeric_limits<int>::max());
+    BOOST_TEST_EQ(a[-2], std::numeric_limits<int>::min());
+    BOOST_TEST_EQ(a[4], std::numeric_limits<int>::max());
     BOOST_TEST_EQ(a(-10), -1);
     BOOST_TEST_EQ(a(-2), -1);
     BOOST_TEST_EQ(a(-1), 0);
