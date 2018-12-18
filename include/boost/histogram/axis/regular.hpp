@@ -13,14 +13,35 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram_fwd.hpp>
+#include <boost/mp11.hpp>
 #include <boost/throw_exception.hpp>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
-#include <type_traits>
 
 namespace boost {
 namespace histogram {
+
+namespace detail {
+template <typename T>
+using get_value_type = typename T::value_type;
+
+template <typename T>
+using get_unit_type = typename T::unit_type;
+
+struct one {};
+
+template <typename T>
+T operator*(T&& t, const one&) {
+  return std::forward<T>(t);
+}
+
+template <typename T>
+T operator/(T&& t, const one&) {
+  return std::forward<T>(t);
+}
+} // namespace detail
+
 namespace axis {
 
 // two_pi can be found in boost/math, but it is defined here to reduce deps
@@ -28,53 +49,56 @@ constexpr double two_pi = 6.283185307179586;
 
 namespace transform {
 
-template <typename T>
-struct identity {
-  static T forward(T x) { return x; }
-  static T inverse(T x) { return x; }
+struct id {
+  template <typename T>
+  static T forward(T&& x) noexcept {
+    return std::forward<T>(x);
+  }
+  template <typename T>
+  static T inverse(T&& x) noexcept {
+    return std::forward<T>(x);
+  }
 };
 
-template <typename T>
 struct log {
-  static T forward(T x) { return std::log(x); }
-  static T inverse(T x) { return std::exp(x); }
+  template <typename T>
+  static T forward(T x) {
+    return std::log(x);
+  }
+  template <typename T>
+  static T inverse(T x) {
+    return std::exp(x);
+  }
 };
 
-template <typename T>
 struct sqrt {
-  static T forward(T x) { return std::sqrt(x); }
-  static T inverse(T x) { return x * x; }
+  template <typename T>
+  static T forward(T x) {
+    return std::sqrt(x);
+  }
+  template <typename T>
+  static T inverse(T x) {
+    return x * x;
+  }
 };
 
-template <typename T>
 struct pow {
-  T power = 1;
+  double power = 1;
 
-  explicit pow(T p) : power(p) {}
+  explicit pow(double p) : power(p) {}
   pow() = default;
 
-  auto forward(T v) const { return std::pow(v, power); }
-  auto inverse(T v) const { return std::pow(v, 1.0 / power); }
+  template <typename T>
+  auto forward(T v) const {
+    return std::pow(v, power);
+  }
+  template <typename T>
+  auto inverse(T v) const {
+    return std::pow(v, 1.0 / power);
+  }
 
   bool operator==(const pow& o) const noexcept { return power == o.power; }
 };
-
-template <typename Q>
-struct unit {
-  using T = typename Q::value_type;
-  using U = typename Q::unit_type;
-  T forward(Q x) const { return x / U(); }
-  Q inverse(T x) const { return x * U(); }
-};
-
-#if __cpp_deduction_guides >= 201611
-
-log()->log<>;
-sqrt()->sqrt<>;
-template <class T>
-pow(T)->pow<T>;
-
-#endif
 
 } // namespace transform
 
@@ -83,18 +107,17 @@ pow(T)->pow<T>;
  * The most common binning strategy.
  * Very fast. Binning is a O(1) operation.
  */
-template <typename TransformOrT, typename MetaData, option_type Options>
-class regular
-    : public base<MetaData, Options>,
-      public iterator_mixin<regular<TransformOrT, MetaData, Options>>,
-      protected std::conditional_t<detail::is_transform<TransformOrT>::value,
-                                   TransformOrT, transform::identity<TransformOrT>> {
+template <typename RealType, typename Transform, typename MetaData, option_type Options>
+class regular : public base<MetaData, Options>,
+                public iterator_mixin<regular<RealType, Transform, MetaData, Options>>,
+                protected Transform {
   using base_type = base<MetaData, Options>;
   using metadata_type = MetaData;
-  using transform_type =
-      std::conditional_t<detail::is_transform<TransformOrT>::value, TransformOrT,
-                         transform::identity<TransformOrT>>;
-  using value_type = detail::return_type<decltype(&transform_type::inverse)>;
+  using transform_type = Transform;
+  using value_type = RealType;
+  using unit_type = detail::mp_eval_or<detail::get_unit_type, value_type, detail::one>;
+  using internal_type =
+      detail::mp_eval_or<detail::get_value_type, value_type, value_type>;
 
   static_assert(!(Options & option_type::circular) || !(Options & option_type::underflow),
                 "circular axis cannot have underflow");
@@ -113,14 +136,13 @@ public:
           metadata_type m = {})
       : base_type(n, std::move(m))
       , transform_type(std::move(trans))
-      , min_(transform().forward(start))
-      , delta_((transform().forward(stop) - min_) / base_type::size()) {
+      , min_(this->forward(mag(start)))
+      , delta_(this->forward(mag(stop)) - min_) {
     if (!std::isfinite(min_) || !std::isfinite(delta_))
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("forward transform of start or stop invalid"));
     if (delta_ == 0)
-      BOOST_THROW_EXCEPTION(
-          std::invalid_argument("range of forward transformed axis is zero"));
+      BOOST_THROW_EXCEPTION(std::invalid_argument("range of axis is zero"));
   }
 
   /** Construct n bins over real range [begin, end).
@@ -138,8 +160,8 @@ public:
   regular(const regular& src, int begin, int end, unsigned merge)
       : base_type((end - begin) / merge, src.metadata())
       , transform_type(src.transform())
-      , min_(transform().forward(src.value(begin)))
-      , delta_(src.delta_ * merge) {
+      , min_(this->forward(mag(src.value(begin))))
+      , delta_(this->forward(mag(src.value(end))) - min_) {
     BOOST_ASSERT((end - begin) % merge == 0);
     if (Options & option_type::circular && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
@@ -153,16 +175,16 @@ public:
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
     // Runs in hot loop, please measure impact of changes
-    auto z = (this->forward(x) - min_) / delta_;
+    auto z = (this->forward(x / unit_type()) - min_) / delta_;
     if (Options & option_type::circular) {
       if (std::isfinite(z)) {
-        z -= std::floor(z / base_type::size()) * base_type::size();
-        return static_cast<int>(z);
+        z -= std::floor(z);
+        return static_cast<int>(z * base_type::size());
       }
     } else {
-      if (z < base_type::size()) {
+      if (z < 1) {
         if (z >= 0)
-          return static_cast<int>(z);
+          return static_cast<int>(z * base_type::size());
         else
           return -1;
       }
@@ -172,19 +194,15 @@ public:
 
   /// Returns axis value for fractional index.
   value_type value(double i) const noexcept {
-    if (Options & option_type::circular) {
-      i = min_ + i * delta_;
-    } else {
-      if (i < 0)
-        i = std::copysign(std::numeric_limits<double>::infinity(), -delta_);
-      else if (i > base_type::size())
-        i = std::copysign(std::numeric_limits<double>::infinity(), delta_);
-      else {
-        i /= base_type::size();
-        i = (1 - i) * min_ + i * (min_ + delta_ * base_type::size());
-      }
+    auto z = i / base_type::size();
+    if (!(Options & option_type::circular) && z < 0.0)
+      z = -std::numeric_limits<internal_type>::infinity() * delta_;
+    else if ((Options & option_type::circular) || z <= 1.0)
+      z = (1.0 - z) * min_ + z * (min_ + delta_);
+    else {
+      z = std::numeric_limits<internal_type>::infinity() * delta_;
     }
-    return transform().inverse(i);
+    return this->inverse(z) * unit_type();
   }
 
   /// Access bin at index
@@ -194,10 +212,8 @@ public:
 
   bool operator==(const regular& o) const noexcept {
     return base_type::operator==(o) &&
-           detail::static_if<detail::is_equal_comparable<transform_type>>(
-               [&o](auto t) { return t == o.transform(); }, [](auto) { return true; },
-               transform()) &&
-           min_ == o.min_ && delta_ == o.delta_;
+           detail::relaxed_equal(transform(), o.transform()) && min_ == o.min_ &&
+           delta_ == o.delta_;
   }
 
   bool operator!=(const regular& o) const noexcept { return !operator==(o); }
@@ -206,7 +222,9 @@ public:
   void serialize(Archive&, unsigned);
 
 private:
-  detail::return_type<decltype(&transform_type::forward)> min_, delta_;
+  internal_type mag(const value_type& x) const noexcept { return x / unit_type(); }
+
+  internal_type min_, delta_;
 }; // namespace axis
 
 #if __cpp_deduction_guides >= 201606
@@ -218,16 +236,16 @@ template <class T>
 regular(unsigned, T, T, const char*)->regular<detail::convert_integer<T, double>>;
 
 template <class T, class M>
-regular(unsigned, T, T, M)->regular<detail::convert_integer<T, double>, M>;
+regular(unsigned, T, T, M)->regular<detail::convert_integer<T, double>, transform::id, M>;
 
 template <class Tr, class T>
-regular(Tr, unsigned, T, T)->regular<Tr>;
+regular(Tr, unsigned, T, T)->regular<detail::convert_integer<T, double>, Tr>;
 
 template <class Tr, class T>
-regular(Tr, unsigned, T, T, const char*)->regular<Tr>;
+regular(Tr, unsigned, T, T, const char*)->regular<detail::convert_integer<T, double>, Tr>;
 
 template <class Tr, class T, class M>
-regular(Tr, unsigned, T, T, M)->regular<Tr, M>;
+regular(Tr, unsigned, T, T, M)->regular<detail::convert_integer<T, double>, Tr, M>;
 
 #endif
 

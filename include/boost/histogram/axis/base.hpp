@@ -58,10 +58,7 @@ protected:
   base() : size_meta_(0) {}
 
   bool operator==(const base& rhs) const noexcept {
-    return size() == rhs.size() &&
-           detail::static_if<detail::is_equal_comparable<metadata_type>>(
-               [&rhs](const auto& m) { return m == rhs.metadata(); },
-               [](const auto&) { return true; }, metadata());
+    return size() == rhs.size() && detail::relaxed_equal(metadata(), rhs.metadata());
   }
 
 private:

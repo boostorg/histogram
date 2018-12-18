@@ -59,7 +59,7 @@ public:
 
     decltype(auto) bin(unsigned d) const { return parent_.hist_.axis(d)[(*this)[d]]; }
 
-    double density() const {
+    decltype(auto) density() const {
       double x = 1;
       auto it = begin();
       parent_.hist_.for_each_axis(

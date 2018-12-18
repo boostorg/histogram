@@ -32,11 +32,11 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(c), axis::regular<float>>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(d), axis::regular<>>));
     BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<decltype(e), axis::regular<double, axis::null_type>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(f), axis::regular<tr::sqrt<>>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(g), axis::regular<tr::sqrt<>>>));
+        (std::is_same<decltype(e), axis::regular<double, tr::id, axis::null_type>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(f), axis::regular<double, tr::sqrt>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(g), axis::regular<double, tr::sqrt>>));
     BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<decltype(h), axis::regular<tr::sqrt<>, axis::null_type>>));
+        (std::is_same<decltype(h), axis::regular<double, tr::sqrt, axis::null_type>>));
   }
 
   {

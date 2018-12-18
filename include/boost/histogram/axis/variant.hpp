@@ -210,10 +210,6 @@ public:
                                 static_cast<const base_type&>(*this));
   }
 
-  bool operator==(const variant& rhs) const {
-    return base_type::operator==(static_cast<const base_type&>(rhs));
-  }
-
   template <typename... Us>
   bool operator==(const variant<Us...>& u) const {
     return visit([&u](const auto& x) { return u == x; }, *this);
@@ -223,7 +219,7 @@ public:
   bool operator==(const T& t) const {
     // boost::variant::operator==(T) implemented only to fail, cannot use it
     auto tp = boost::relaxed_get<T>(this);
-    return tp && *tp == t;
+    return tp && detail::relaxed_equal(*tp, t);
   }
 
   template <typename T>

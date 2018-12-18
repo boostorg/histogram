@@ -21,7 +21,7 @@ int main() {
 
   auto h = bh::make_histogram(
       axis::regular<>(2, -1, 1),
-      axis::regular<axis::transform::log<>>(2, 1, 10, "axis 1"),
+      axis::regular<double, axis::transform::log>(2, 1, 10, "axis 1"),
       axis::circular<double, axis::null_type>(4, 0, 360), // axis without metadata
       axis::variable<double, std::string, axis::option_type::none,
                      std::allocator<double>>({-1, 0, 1}, "axis 3"),

@@ -22,7 +22,7 @@ using namespace boost::histogram::algorithm;
 
 template <typename Tag>
 void run_tests() {
-  using regular = axis::regular<double, axis::null_type>;
+  using regular = axis::regular<double, axis::transform::id, axis::null_type>;
   {
     auto h = make_s(Tag(), std::vector<int>(), regular(4, 1, 5), regular(3, -1, 2));
 

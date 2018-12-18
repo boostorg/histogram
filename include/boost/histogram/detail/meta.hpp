@@ -41,6 +41,9 @@ using mp_size = mp11::mp_size<unqual<T>>;
 template <typename T, unsigned N>
 using mp_at_c = mp11::mp_at_c<unqual<T>, N>;
 
+template <template <class> class F, typename T, typename E>
+using mp_eval_or = mp11::mp_eval_if_c<!(mp11::mp_valid<F, T>::value), E, F, T>;
+
 template <typename T1, typename T2>
 using copy_qualifiers = mp11::mp_if<
     std::is_rvalue_reference<T1>, T2&&,
@@ -140,6 +143,12 @@ decltype(auto) sub_tuple(const T& t) {
   return mp11::mp_rename<LN2, sub_tuple_impl>::apply(t);
 }
 
+template <typename T>
+using get_storage_tag = typename T::storage_tag;
+
+template <typename T>
+using is_storage = mp11::mp_valid<get_storage_tag, T>;
+
 #define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond)      \
   template <typename U>                              \
   struct name##_impl {                               \
@@ -190,8 +199,6 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_allocator, &T::get_allocator);
 BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable, (std::declval<T&>()[0]));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_transform, (&T::forward, &T::inverse));
-
-BOOST_HISTOGRAM_MAKE_SFINAE(is_storage, (typename T::storage_tag()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(is_vector_like,
                             (std::declval<T&>()[0], &T::size,
@@ -291,6 +298,20 @@ T make_default(const T& t) {
                                      [](const auto&) { return U(); }, t);
 }
 
+template <typename T>
+constexpr bool relaxed_equal_impl(std::true_type, const T& a, const T& b) noexcept {
+  return a == b;
+}
+
+template <typename T>
+constexpr bool relaxed_equal_impl(std::false_type, const T&, const T&) noexcept {
+  return true;
+}
+
+template <typename T>
+constexpr bool relaxed_equal(const T& a, const T& b) noexcept {
+  return relaxed_equal_impl(is_equal_comparable<unqual<T>>(), a, b);
+}
 } // namespace detail
 } // namespace histogram
 } // namespace boost

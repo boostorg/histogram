@@ -7,14 +7,13 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/regular.hpp>
-#include <boost/units/quantity.hpp>
-#include <boost/units/systems/si/length.hpp>
 #include <limits>
 #include <sstream>
 #include "is_close.hpp"
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
+namespace tr = axis::transform;
 
 int main() {
   // bad_ctors
@@ -74,7 +73,7 @@ int main() {
 
   // axis::regular with log transform
   {
-    axis::regular<axis::transform::log<>> b{2, 1e0, 1e2};
+    axis::regular<double, tr::log> b{2, 1e0, 1e2};
     BOOST_TEST_EQ(b[-1].lower(), 0.0);
     BOOST_TEST_IS_CLOSE(b[0].lower(), 1.0, 1e-9);
     BOOST_TEST_IS_CLOSE(b[1].lower(), 10.0, 1e-9);
@@ -93,7 +92,7 @@ int main() {
 
   // axis::regular with sqrt transform
   {
-    axis::regular<axis::transform::sqrt<>> b{2, 0, 4};
+    axis::regular<double, tr::sqrt> b{2, 0, 4};
     // this is weird: -inf * -inf = inf, thus the lower bound
     BOOST_TEST_EQ(b[-1].lower(), std::numeric_limits<double>::infinity());
     BOOST_TEST_IS_CLOSE(b[0].lower(), 0.0, 1e-9);
@@ -109,29 +108,6 @@ int main() {
     BOOST_TEST_EQ(b(4), 2);
     BOOST_TEST_EQ(b(100), 2);
     BOOST_TEST_EQ(b(std::numeric_limits<double>::infinity()), 2);
-  }
-
-  // axis::regular with quantity
-  {
-    using namespace boost::units;
-    using namespace boost::units::si;
-    using Q = quantity<length>;
-
-    axis::regular<axis::transform::unit<Q>> b(2, 0 * meter, 2 * meter);
-    BOOST_TEST_EQ(b[-1].lower() / meter, -std::numeric_limits<double>::infinity());
-    BOOST_TEST_IS_CLOSE(b[0].lower() / meter, 0.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(b[1].lower() / meter, 1.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(b[2].lower() / meter, 2.0, 1e-9);
-    BOOST_TEST_EQ(b[2].upper() / meter, std::numeric_limits<double>::infinity());
-
-    BOOST_TEST_EQ(b(-1 * meter), -1); // produces NaN in conversion
-    BOOST_TEST_EQ(b(0 * meter), 0);
-    BOOST_TEST_EQ(b(0.99 * meter), 0);
-    BOOST_TEST_EQ(b(1 * meter), 1);
-    BOOST_TEST_EQ(b(1.99 * meter), 1);
-    BOOST_TEST_EQ(b(2 * meter), 2);
-    BOOST_TEST_EQ(b(100 * meter), 2);
-    BOOST_TEST_EQ(b(std::numeric_limits<double>::infinity() * meter), 2);
   }
 
   // axis::regular with circular option
@@ -153,7 +129,8 @@ int main() {
   {
     test_axis_iterator(axis::regular<>(5, 0, 1), 0, 5);
     test_axis_iterator(
-        axis::regular<double, axis::null_type, axis::option_type::none>(5, 0, 1), 0, 5);
+        axis::regular<double, tr::id, axis::null_type, axis::option_type::none>(5, 0, 1),
+        0, 5);
     test_axis_iterator(axis::circular<>(5, 0, 1), 0, 5);
   }
 
