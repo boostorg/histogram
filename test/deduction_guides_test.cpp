@@ -6,9 +6,8 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram.hpp>
+#include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
-#include <boost/histogram/ostream_operators.hpp>
 #include <type_traits>
 
 using namespace boost::histogram;
@@ -82,19 +81,6 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(h), axis::variable<>>));
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<decltype(i), axis::variable<double, axis::null_type>>));
-  }
-
-  {
-    auto a = histogram(std::make_tuple(axis::regular(3, -1, 1), axis::integer(0, 4)));
-    BOOST_TEST_EQ(a.rank(), 2);
-    BOOST_TEST_EQ(a.axis(0), axis::regular(3, -1, 1));
-    BOOST_TEST_EQ(a.axis(1), axis::integer(0, 4));
-
-    std::vector<axis::regular<>> axes{{axis::regular(3, -1, 1), axis::regular(5, 0, 5)}};
-    auto b = histogram(axes, weighted_storage());
-    BOOST_TEST_EQ(b.rank(), 2);
-    BOOST_TEST_EQ(b.axis(0), axis::regular(3, -1, 1));
-    BOOST_TEST_EQ(b.axis(1), axis::regular(5, 0, 5));
   }
 #endif
   return boost::report_errors();

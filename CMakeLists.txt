@@ -145,8 +145,8 @@ if (TEST_RANGE_SUPPORT) # test support for external boost::range
 endif()
 
 if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES) # test support for optional C++17 features
-  compiled_test(test/axis_deduction_guide_test.cpp)
-  target_compile_features(axis_deduction_guide_test PRIVATE cxx_std_17)
+  compiled_test(test/deduction_guides_test.cpp)
+  target_compile_features(deduction_guides_test PRIVATE cxx_std_17)
 endif()
 
 if (BUILD_BENCHMARKS)

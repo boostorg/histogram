@@ -191,6 +191,17 @@ private:
   friend struct unsafe_access;
 };
 
+#if __cpp_deduction_guides >= 201606
+
+template <class Axes>
+histogram(Axes&& axes)->histogram<detail::unqual<Axes>, default_storage>;
+
+template <class Axes, class Storage>
+histogram(Axes&& axes, Storage&& storage)
+    ->histogram<detail::unqual<Axes>, detail::unqual<Storage>>;
+
+#endif
+
 } // namespace histogram
 } // namespace boost
 
