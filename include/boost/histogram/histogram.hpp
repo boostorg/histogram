@@ -54,13 +54,14 @@ public:
     return *this;
   }
 
-  explicit histogram(const axes_type& a, storage_type s = {})
-      : axes_(a), storage_(std::move(s)) {
+  template <typename A, typename = detail::requires_axes<A>>
+  explicit histogram(A&& a) : axes_(std::forward<A>(a)) {
     storage_.reset(detail::bincount(axes_));
   }
 
-  explicit histogram(axes_type&& a, storage_type s = {})
-      : axes_(std::move(a)), storage_(std::move(s)) {
+  template <typename A, typename S>
+  explicit histogram(A&& a, S&& s)
+      : axes_(std::forward<A>(a)), storage_(std::forward<S>(s)) {
     storage_.reset(detail::bincount(axes_));
   }
 

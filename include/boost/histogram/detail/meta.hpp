@@ -253,6 +253,9 @@ using is_axis_variant = typename is_axis_variant_impl<T>::type;
 template <typename T>
 using is_axis_or_axis_variant = mp11::mp_or<is_axis<T>, is_axis_variant<T>>;
 
+template <typename T>
+using is_axes = is_axis_or_axis_variant<mp11::mp_first<T>>;
+
 template <typename T, typename U = container_value_type<T>>
 using is_axis_vector =
     mp11::mp_all<is_indexable_container<unqual<T>>, is_axis_or_axis_variant<U>>;
@@ -290,6 +293,9 @@ struct requires_axis_or_axis_variant {};
 
 template <typename T, typename = mp11::mp_if<is_axis_vector<unqual<T>>, void>>
 struct requires_axis_vector {};
+
+template <typename T, typename = mp11::mp_if<is_axes<unqual<T>>, void>>
+struct requires_axes {};
 
 template <typename T>
 T make_default(const T& t) {
