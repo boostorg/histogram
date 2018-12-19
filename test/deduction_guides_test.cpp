@@ -6,9 +6,12 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/axis.hpp>
+#include <boost/histogram.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
+#include <boost/histogram/ostream_operators.hpp>
+#include <tuple>
 #include <type_traits>
+#include <vector>
 
 using namespace boost::histogram;
 namespace tr = axis::transform;
@@ -82,6 +85,24 @@ int main() {
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<decltype(i), axis::variable<double, axis::null_type>>));
   }
+
+  {
+    auto a0 = axis::regular(3, -1, 1, axis::null_type());
+    auto a1 = axis::integer(0, 4, axis::null_type());
+    auto a = histogram(std::make_tuple(a0, a1));
+    BOOST_TEST_EQ(a.rank(), 2);
+    BOOST_TEST_EQ(a.axis(0), a0);
+    BOOST_TEST_EQ(a.axis(1), a1);
+
+    auto a2 = axis::regular(5, 0, 5, axis::null_type());
+    std::vector<decltype(a0)> axes{{a0, a2}};
+    auto b = histogram(axes, weight_storage());
+    BOOST_TEST_EQ(b.rank(), 2);
+    BOOST_TEST_EQ(b.axis(0), a0);
+    BOOST_TEST_EQ(b.axis(1), a2);
+  }
+#else
+#warning "tests are compiled but compiler lacks support"
 #endif
   return boost::report_errors();
 }
