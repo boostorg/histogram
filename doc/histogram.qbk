@@ -40,4 +40,4 @@ Steven Watanabe provided an outstandingly detailed review of the documentation a
 [include concepts.qbk]
 [xinclude autodoc.xml]
 [include changelog.qbk]
-[include references.qbk]
+[include bibliography.qbk]
