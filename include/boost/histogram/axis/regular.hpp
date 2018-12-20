@@ -21,27 +21,6 @@
 
 namespace boost {
 namespace histogram {
-
-namespace detail {
-template <typename T>
-using get_value_type = typename T::value_type;
-
-template <typename T>
-using get_unit_type = typename T::unit_type;
-
-struct one {};
-
-template <typename T>
-T operator*(T&& t, const one&) {
-  return std::forward<T>(t);
-}
-
-template <typename T>
-T operator/(T&& t, const one&) {
-  return std::forward<T>(t);
-}
-} // namespace detail
-
 namespace axis {
 
 // two_pi can be found in boost/math, but it is defined here to reduce deps
@@ -115,9 +94,8 @@ class regular : public base<MetaData, Options>,
   using metadata_type = MetaData;
   using transform_type = Transform;
   using value_type = RealType;
-  using unit_type = detail::mp_eval_or<detail::get_unit_type, value_type, detail::one>;
-  using internal_type =
-      detail::mp_eval_or<detail::get_value_type, value_type, value_type>;
+  using unit_type = detail::get_unit_type<value_type>;
+  using internal_type = detail::get_scale_type<value_type>;
 
   static_assert(!(Options & option_type::circular) || !(Options & option_type::underflow),
                 "circular axis cannot have underflow");
@@ -136,8 +114,8 @@ public:
           metadata_type m = {})
       : base_type(n, std::move(m))
       , transform_type(std::move(trans))
-      , min_(this->forward(mag(start)))
-      , delta_(this->forward(mag(stop)) - min_) {
+      , min_(this->forward(detail::get_scale(start)))
+      , delta_(this->forward(detail::get_scale(stop)) - min_) {
     if (!std::isfinite(min_) || !std::isfinite(delta_))
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("forward transform of start or stop invalid"));
@@ -160,8 +138,8 @@ public:
   regular(const regular& src, int begin, int end, unsigned merge)
       : base_type((end - begin) / merge, src.metadata())
       , transform_type(src.transform())
-      , min_(this->forward(mag(src.value(begin))))
-      , delta_(this->forward(mag(src.value(end))) - min_) {
+      , min_(this->forward(detail::get_scale(src.value(begin))))
+      , delta_(this->forward(detail::get_scale(src.value(end))) - min_) {
     BOOST_ASSERT((end - begin) % merge == 0);
     if (Options & option_type::circular && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
@@ -222,8 +200,6 @@ public:
   void serialize(Archive&, unsigned);
 
 private:
-  internal_type mag(const value_type& x) const noexcept { return x / unit_type(); }
-
   internal_type min_, delta_;
 }; // namespace axis
 

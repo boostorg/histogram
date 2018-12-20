@@ -172,27 +172,17 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_clear, &T::clear);
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower, &T::lower);
 
-template <typename T, typename X>
-struct has_method_value_impl {
-  template <typename U, typename V = decltype(std::declval<U&>().value(0))>
-  static typename std::is_convertible<V, X>::type Test(void*);
-  template <typename U>
-  static std::false_type Test(...);
-  using type = decltype(Test<T>(nullptr));
-};
-template <typename T, typename X>
-using has_method_value = typename has_method_value_impl<T, X>::type;
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, &T::value);
 
 template <typename T>
-struct has_method_options_impl {
-  template <typename U, typename V = decltype(std::declval<const U&>().options())>
-  static typename std::is_same<V, axis::option_type>::type Test(void*);
-  template <typename U>
-  static std::false_type Test(...);
-  using type = decltype(Test<T>(nullptr));
-};
-template <typename T>
-using has_method_options = typename has_method_options_impl<T>::type;
+using get_value_method_return_type_impl = decltype(std::declval<T&>().value(0));
+
+template <typename T, typename R>
+using has_method_value_with_convertible_return_type =
+    typename std::is_convertible<mp_eval_or<get_value_method_return_type_impl, T, void>,
+                                 R>::type;
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, (std::declval<const T&>().options()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_allocator, &T::get_allocator);
 
@@ -318,6 +308,45 @@ template <typename T>
 constexpr bool relaxed_equal(const T& a, const T& b) noexcept {
   return relaxed_equal_impl(is_equal_comparable<unqual<T>>(), a, b);
 }
+
+template <typename T>
+using get_scale_type_helper = typename T::value_type;
+
+template <typename T>
+using get_scale_type = detail::mp_eval_or<detail::get_scale_type_helper, T, T>;
+
+struct one_unit {};
+
+template <typename T>
+T operator*(T&& t, const one_unit&) {
+  return std::forward<T>(t);
+}
+
+template <typename T>
+T operator/(T&& t, const one_unit&) {
+  return std::forward<T>(t);
+}
+
+template <typename T>
+using get_unit_type_helper = typename T::unit_type;
+
+template <typename T>
+using get_unit_type = detail::mp_eval_or<detail::get_unit_type_helper, T, one_unit>;
+
+template <typename T, typename R = get_scale_type<T>>
+R get_scale(const T& t) {
+  return t / get_unit_type<T>();
+}
+
+struct product {
+  auto operator()() { return 1.0; }
+
+  template <class T, class... Ts>
+  auto operator()(T t, Ts... ts) {
+    return t * product()(ts...);
+  }
+};
+
 } // namespace detail
 } // namespace histogram
 } // namespace boost

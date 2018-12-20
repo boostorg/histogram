@@ -59,11 +59,13 @@ public:
 
     decltype(auto) bin(unsigned d) const { return parent_.hist_.axis(d)[(*this)[d]]; }
 
-    decltype(auto) density() const {
+    double density() const {
       double x = 1;
       auto it = begin();
-      parent_.hist_.for_each_axis(
-          [&](const auto& a) { x *= axis::traits::width(a, *it++); });
+      parent_.hist_.for_each_axis([&](const auto& a) {
+        const auto w = axis::traits::width_as<double>(a, *it++);
+        x *= w ? w : 1;
+      });
       return *iter_ / x;
     }
 

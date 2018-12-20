@@ -155,14 +155,25 @@ void rank_check(const T& axes, const unsigned N) {
   BOOST_ASSERT_MSG(N < axes_size(axes), "index out of range");
 }
 
-template <typename F, typename... Ts>
-void for_each_axis(const std::tuple<Ts...>& axes, F&& f) {
-  mp11::tuple_for_each(axes, std::forward<F>(f));
+template <typename F, typename T>
+void for_each_axis_impl(std::true_type, const T& axes, F&& f) {
+  for (const auto& x : axes) { axis::visit(std::forward<F>(f), x); }
+}
+
+template <typename F, typename T>
+void for_each_axis_impl(std::false_type, const T& axes, F&& f) {
+  for (const auto& x : axes) f(x);
 }
 
 template <typename F, typename T>
 void for_each_axis(const T& axes, F&& f) {
-  for (const auto& x : axes) { axis::visit(std::forward<F>(f), x); }
+  using U = mp11::mp_first<unqual<T>>;
+  for_each_axis_impl(is_axis_variant<U>(), axes, std::forward<F>(f));
+}
+
+template <typename F, typename... Ts>
+void for_each_axis(const std::tuple<Ts...>& axes, F&& f) {
+  mp11::tuple_for_each(axes, std::forward<F>(f));
 }
 
 template <typename Axes, typename T>
@@ -172,8 +183,8 @@ using axes_buffer = boost::container::static_vector<
                           std::tuple_size, Axes>::value>;
 
 template <typename T>
-auto make_empty_axes(const std::vector<T>& t) {
-  auto r = std::vector<T>(t.get_allocator());
+auto make_empty_axes(const T& t) {
+  auto r = T(t.get_allocator());
   r.reserve(t.size());
   for_each_axis(t, [&r](const auto& a) {
     using U = unqual<decltype(a)>;
@@ -199,9 +210,9 @@ auto make_sub_axes(const std::tuple<Ts...>& t, Ns... ns) {
   return std::make_tuple(std::get<ns>(t)...);
 }
 
-template <typename... Ns, typename... Ts>
-auto make_sub_axes(const std::vector<Ts...>& t, Ns... ns) {
-  return std::vector<Ts...>({t[ns]...}, t.get_allocator());
+template <typename... Ns, typename T>
+auto make_sub_axes(const T& t, Ns... ns) {
+  return T({t[ns]...}, t.get_allocator());
 }
 
 /// Index with an invalid state

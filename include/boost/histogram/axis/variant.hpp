@@ -27,42 +27,6 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-struct get_polymorphic_bin : public boost::static_visitor<axis::polymorphic_bin<double>> {
-  using T = axis::polymorphic_bin<double>;
-  int idx;
-  get_polymorphic_bin(int i) : idx(i) {}
-
-  template <typename A>
-  T operator()(const A& a) const {
-    // using static_if produces internal compiler error in gcc-5.5 here
-    return impl(a, detail::has_method_value<A, double>());
-  }
-
-  template <typename A>
-  T impl(const A&, std::false_type) const {
-    BOOST_THROW_EXCEPTION(std::runtime_error(
-        cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-            " has no value method with return type convertible to double")));
-    return T(0);
-  }
-
-  template <typename A>
-  T impl(const A& a, std::true_type) const {
-    using Arg = detail::unqual<detail::arg_type<detail::unqual<A>>>;
-    return impl(a, std::true_type(), std::is_floating_point<Arg>());
-  }
-
-  template <typename A>
-  T impl(const A& a, std::true_type, std::false_type) const {
-    return T(a.value(idx));
-  }
-
-  template <typename A>
-  T impl(const A& a, std::true_type, std::true_type) const {
-    return T(a.value(idx), a.value(idx + 1), a.value(idx + 0.5));
-  }
-};
-
 template <typename F, typename R>
 struct functor_wrapper : public boost::static_visitor<R> {
   F& fcn;
@@ -201,13 +165,26 @@ public:
   // Only works for axes with value method that returns something convertible to
   // double and will throw a runtime_error otherwise, see axis::traits::value
   double value(double idx) const {
-    return visit([idx](const auto& a) { return axis::traits::value(a, idx); }, *this);
+    return visit([idx](const auto& a) { return traits::value_as<double>(a, idx); },
+                 *this);
   }
 
   auto operator[](const int idx) const {
     // using visit here causes internal error in MSVC 2017, so we work around
-    return boost::apply_visitor(detail::get_polymorphic_bin(idx),
-                                static_cast<const base_type&>(*this));
+    return visit(
+        [idx](const auto& a) {
+          return detail::value_method_switch_with_return_type<double,
+                                                              polymorphic_bin<double>>(
+              [idx](const auto& a) { // axis is discrete
+                const auto x = a.value(idx);
+                return polymorphic_bin<double>(x, x);
+              },
+              [idx](const auto& a) { // axis is continuous
+                return polymorphic_bin<double>(a.value(idx), a.value(idx + 1));
+              },
+              a);
+        },
+        *this);
   }
 
   template <typename... Us>
@@ -313,14 +290,6 @@ const T* get(const U* u) {
   return std::is_same<T, detail::unqual<U>>::value ? reinterpret_cast<const T*>(u)
                                                    : nullptr;
 }
-
-// pass-through version for generic programming, if U is axis instead of variant
-template <typename Functor, typename T,
-          typename = detail::requires_axis<detail::unqual<T>>>
-decltype(auto) visit(Functor&& f, T&& t) {
-  return std::forward<Functor>(f)(std::forward<T>(t));
-}
-
 } // namespace axis
 } // namespace histogram
 } // namespace boost
