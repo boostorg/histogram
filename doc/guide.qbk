@@ -8,7 +8,7 @@ This library provides a templated [@https://en.wikipedia.org/wiki/Histogram hist
 
 Input for the histogram can be one- or multi-dimensional. In the multi-dimensional case, the input consist of tuples of values which belong together, describing different aspects of the same entity. A point in space is an example. You need three coordinate values to describe a point. The entity here is the point, and to fully characterize a point distribution in space you need three values and therefore a three-dimensional (3d) histogram. The advantage of using a 3d histogram over three separate 1d histograms, one for each coordinate, is that the 3d histogram is able to capture more information. For example, you could have a point distribution that looks like a checker board in three dimensions (a checker cube): high and low densities are alternating along each coordinate. Then the 1d histograms for each separate coordinate would look like flat distributions, completely hiding the complex structure, while the 3d histogram would retain the structure for further analysis.
 
-The term /histogram/ is usually strictly used for something with bins over discrete or continuous data. The histogram class can also process categorical variables and it even allows for non-consecutive bins if that is desired. There is no restriction to numbers as input. Any type can be fed into the histogram, if the user provides a specialized axis class that maps values of this type to a bin index. The only remaining restriction is that bins are non-overlapping, since there must be a unique mapping from input value to bin. The library is not able to automatically ensure this for user-provided axis classes, so the responsibily is on the implementer.
+The term /histogram/ is usually strictly used for something with bins over discrete or continuous data. The histogram class can also process categorical variables and it even allows for non-consecutive bins if that is desired. There is no restriction to numbers as input. Any type can be fed into the histogram, if the user provides a specialized axis class that maps values of this type to a bin index. The only remaining restriction is that bins are non-overlapping, since there must be a unique mapping from input value to bin. The library is not able to automatically ensure this for user-provided axis classes, so the responsibly is on the implementer.
 
 [endsect]
 
@@ -16,28 +16,25 @@ The term /histogram/ is usually strictly used for something with bins over discr
 
 [section Static or dynamic histogram]
 
-The histogram host class can store axis objects in a static or dynamic container, see the [link histogram.rationale.structure.histogram_host rationale] for details. Use the factory functions [funcref boost::histogram::make_static_histogram make_static_histogram] and [funcref boost::histogram::make_dynamic_histogram make_dynamic_histogram] to make the corresponding histograms. Using static histograms is recommended, because they are faster and usage errors are caught at compile-time. Use dynamic histogram, if:
+The histogram host class can store axis objects in a static or dynamic container, see the [link histogram.rationale.structure.histogram_host rationale] for details. Use the convenient factory function [funcref boost::histogram::make_histogram make_histogram] to make the histograms. It will generate the matching histogram type for each input.
 
-* You only know the axis configurations at runtime, not at compile-time.
-* You want to use a single type in your C++ code that operates on histograms and avoid templated functions.
-
-These factory functions create histograms with the default storage type [classref boost::histogram::adaptive_storage], which provides safe counting and is fast and memory efficient. If you think you need another storage type or if you want to create your own, have a look at the section [link histogram.guide.expert Advanced Usage].
-
-Here is an example on how to use [funcref boost::histogram::make_static_histogram make_static_histogram]. You pass one or several axis instances, which define the layout of the histogram.
+Here is an example on how to use it. You pass one or several axis instances, which define the layout of the histogram.
 
 [import ../examples/guide_make_static_histogram.cpp]
 [guide_make_static_histogram]
 
 An axis object defines how input values are mapped to bins, which means that it defines the number of bins along that axis and a mapping function from input values to bins. If you provide one axis, the histogram is one-dimensional. If you provide two, it is two-dimensional, and so on.
 
-When you work with dynamic histograms, you can also create a sequence of axes at run-time and pass them to the factory:
+You get the best performance if the axis types and their number per histogram are known at compile-time. But sometimes you only know the axis configurations at run-time, perhaps because it depends on run-time user input. No problem, you can also create a sequence of axes at run-time and pass them to the factory.
 
 [import ../examples/guide_make_dynamic_histogram.cpp]
 [guide_make_dynamic_histogram]
 
-[funcref boost::histogram::make_static_histogram make_static_histogram] cannot handle this case because a static histogram can only be constructed when the number and types of all axes are known already at compile time. While strictly speaking that is also true in this example, you could have filled the vector also at run-time, based on run-time user input.
+Strictly speaking, the axis configuration was again fixed at compile-time in this example, but you could have filled the vector at run-time, based on run-time user input.
 
-[note Memory for bin counters is allocated lazily, if the default storage policy [classref boost::histogram::adaptive_storage adaptive_storage] is used. Allocation is delayed to the first time, when input values are passed to the histogram. Therefore memory allocation exceptions are not thrown when the histogram is created, but possibly later. This gives you a chance to check how much memory the histogram will allocate and possibly give a warning if that amount is excessively large. Use the method `histogram::size()` to see how many bins your axis layout requires. At the first fill, that many bytes will be allocated. The allocated amount of memory may grow further later when the capacity of the bin counters needs to grow.]
+The factory function [funcref boost::histogram::make_histogram make_histogram] creates histograms with the [classref boost::histogram::default_storage] type, which provides safe counting and is fast and memory efficient. If you want to create a histogram with another storage type, use [funcref boost::histogram::make_histogram_with make_histogram_with]. To learn more about other storage types and how to create your own, have a look at the section [link histogram.guide.expert Advanced Usage].
+
+[note Memory for bin counters is allocated lazily, if the [classref boost::histogram::default_storage default_storage] is used. Allocation is delayed until the first input values are passed to the histogram. Therefore, memory allocation exceptions are not thrown when the histogram is created, but possibly later. This gives you a chance to check how much memory the histogram will allocate and possibly give a warning if that amount is excessively large. Use the method `histogram::size()` to see how many bins your axis layout requires. That many bytes will be allocated at the first fill. The allocated amount of memory may grow further later to a multiple of that.]
 
 [endsect]
 
@@ -188,7 +185,7 @@ Such a minimal axis works, even though it lacks convenience features provided by
 
 [section User-defined storage policy]
 
-Histograms can be created with a different storage policy than the default [classref boost::histogram::adaptive_storage adaptive_storage], using the templated factories [funcref boost::histogram::make_static_histogram_with make_static_histogram_with] and [funcref boost::histogram::make_dynamic_histogram_with make_dynamic_histogram_with].
+Histograms can be created with a custom storage policy with the factory function [funcref boost::histogram::make_histogram_with make_histogram_with].
 
 A simple alternative, [classref boost::histogram::array_storage array_storage], is included in the library. It does not do dynamic counter management, instead it is templated and lets the user statically choose the counter type, which stores the count per bin. Usually, this would be an integral or floating point type. If performance is a concern, you could give this storage policy a try, since it may be faster for low-dimensional histograms (but it can be slower as well, just try it out and measure).
 

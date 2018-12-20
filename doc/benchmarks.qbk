@@ -12,14 +12,14 @@ There are two bars per benchmarked histogram. The upper is for random data from 
 	[[root] [[@https://root.cern.ch ROOT classes] (`TH1I` for 1D, `TH3I` for 3D and `THnI` for 6D)]]
 	[[py:numpy] [numpy functions ([python]`numpy.histogram` for 1D, `numpy.histogramdd` for 2D, 3D, and 6D)]]
 	[[gsl] [[@https://www.gnu.org/software/gsl/doc/html/histogram.html GSL histograms] for 1D and 2D]]
-    [[hs_ss] [[funcref boost::histogram::make_static_histogram static histogram] with [classref std::vector<int>]]]
-	[[hs_sd] [[funcref boost::histogram::make_static_histogram static histogram] with [classref boost::histogram::default_storage]]]
-	[[hd_ss] [[funcref boost::histogram::make_dynamic_histogram dynamic histogram] with [classref std::vector<int>]]]
-	[[hd_sd] [[funcref boost::histogram::make_dynamic_histogram dynamic histogram] with [classref boost::histogram::default_storage]]]
+    [[hs_ss] [Histogram with `std::tuple<axis::regular<>>` and [classref std::vector<int>]]]
+	[[hs_sd] [Histogram with `std::tuple<axis::regular<>>` with [classref boost::histogram::default_storage]]]
+	[[hd_ss] [Histogram with `std::vector<axis::variant<axis::regular<>>>` with [classref std::vector<int>]]]
+	[[hd_sd] [Histogram with `std::vector<axis::variant<axis::regular<>>>` with [classref boost::histogram::default_storage]]]
 ]
 
-A [classref boost::histogram::make_static_histogram static histogram] is always faster than [classref boost::histogram::make_dynamic_histogram dynamic histogram] and safer to use, as more checks are done at compile time. [classref boost::histogram::adaptive_storage] is faster than [classref boost::histogram::default_storage] for histograms with many bins, because it uses the cache more effectively due to its smaller memory consumption per bin. If the number of bins is small, it is slower because of overhead of handling memory in a dynamic way.
+A histogram with compile-time configured axes is always faster than one with run-time configured axes. [classref boost::histogram::default_storage] is faster than a `std::vector<int>` for histograms with many bins, because it uses the cache more effectively due to its smaller memory consumption per bin. If the number of bins is small, it is slower because of the overhead of handling memory dynamically.
 
-The histograms in this library are mostly faster than the competition, in some cases by a factor of 2. Simultaneously they are more flexible, since binning strategies and the counter management can be customised.
+The histograms in this library are mostly faster than the competition, sometimes by a factor of 2. Simultaneously they are more much more flexible, since binning strategies and the counter management can be customised.
 
 [endsect]
