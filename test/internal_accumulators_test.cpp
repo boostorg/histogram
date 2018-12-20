@@ -67,14 +67,14 @@ int main() {
   {
     using m_t = accumulators::mean<double>;
     m_t a;
-    BOOST_TEST_EQ(a.sum(), 0);
+    BOOST_TEST_EQ(a.count(), 0);
 
     a(4);
     a(7);
     a(13);
     a(16);
 
-    BOOST_TEST_EQ(a.sum(), 4);
+    BOOST_TEST_EQ(a.count(), 4);
     BOOST_TEST_EQ(a.value(), 10);
     BOOST_TEST_EQ(a.variance(), 30);
 
@@ -88,14 +88,14 @@ int main() {
     b(1e8 + 13);
     b(1e8 + 16);
 
-    BOOST_TEST_EQ(b.sum(), 4);
+    BOOST_TEST_EQ(b.count(), 4);
     BOOST_TEST_EQ(b.value(), 1e8 + 10);
     BOOST_TEST_EQ(b.variance(), 30);
 
     auto c = a;
     c += a; // same as feeding all samples twice
 
-    BOOST_TEST_EQ(c.sum(), 8);
+    BOOST_TEST_EQ(c.count(), 8);
     BOOST_TEST_EQ(c.value(), 10);
     BOOST_TEST_IS_CLOSE(c.variance(), 25.714, 1e-3);
   }
@@ -103,13 +103,13 @@ int main() {
   {
     using m_t = accumulators::weighted_mean<double>;
     m_t a;
-    BOOST_TEST_EQ(a.sum(), 0);
+    BOOST_TEST_EQ(a.sum_of_weights(), 0);
 
     a(0.5, 1);
     a(1.0, 2);
     a(0.5, 3);
 
-    BOOST_TEST_EQ(a.sum(), 2);
+    BOOST_TEST_EQ(a.sum_of_weights(), 2);
     BOOST_TEST_EQ(a.value(), 2);
     BOOST_TEST_IS_CLOSE(a.variance(), 0.8, 1e-3);
 
@@ -120,7 +120,7 @@ int main() {
     auto b = a;
     b += a; // same as feeding all samples twice
 
-    BOOST_TEST_EQ(b.sum(), 4);
+    BOOST_TEST_EQ(b.sum_of_weights(), 4);
     BOOST_TEST_EQ(b.value(), 2);
     BOOST_TEST_IS_CLOSE(b.variance(), 0.615, 1e-3);
   }

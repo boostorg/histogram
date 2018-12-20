@@ -59,7 +59,7 @@ public:
     return !operator==(rhs);
   }
 
-  std::size_t sum() const noexcept { return sum_; }
+  std::size_t count() const noexcept { return sum_; }
   const RealType& value() const noexcept { return mean_; }
   RealType variance() const { return dsum2_ / (sum_ - 1); }
 
