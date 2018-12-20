@@ -241,7 +241,7 @@ int main() {
     BOOST_TEST_EQ(db.at<long>().first, 5u);
   }
 
-  // testing pass-through versions of get and visit
+  // testing pass-through versions of get
   {
     axis::regular<> a(10, 0, 1);
     axis::integer<> b(0, 3);
@@ -251,8 +251,6 @@ int main() {
     BOOST_TEST_EQ(tb, &b);
     const auto* tc = axis::get<axis::regular<>>(&b);
     BOOST_TEST_EQ(tc, nullptr);
-
-    axis::visit([&](const auto& x) { BOOST_TEST_EQ(a, x); }, a);
   }
 
   // iterators

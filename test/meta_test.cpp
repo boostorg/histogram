@@ -38,7 +38,7 @@ struct VisitorTestFunctor {
 };
 
 int main() {
-  // has_method_value
+  // has_method_value*
   {
     struct A {};
     struct B {
@@ -48,11 +48,15 @@ int main() {
       char value(int) const { return 0; }
     };
 
-    BOOST_TEST_TRAIT_FALSE((has_method_value<A, double>));
-    BOOST_TEST_TRAIT_TRUE((has_method_value<B, A>));
-    BOOST_TEST_TRAIT_FALSE((has_method_value<B, char>));
-    BOOST_TEST_TRAIT_TRUE((has_method_value<C, char>));
-    BOOST_TEST_TRAIT_FALSE((has_method_value<C, A>));
+    BOOST_TEST_TRAIT_FALSE((has_method_value<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_value<B>));
+    BOOST_TEST_TRAIT_TRUE((has_method_value<C>));
+
+    BOOST_TEST_TRAIT_FALSE((has_method_value_with_convertible_return_type<A, double>));
+    BOOST_TEST_TRAIT_TRUE((has_method_value_with_convertible_return_type<B, A>));
+    BOOST_TEST_TRAIT_FALSE((has_method_value_with_convertible_return_type<B, char>));
+    BOOST_TEST_TRAIT_TRUE((has_method_value_with_convertible_return_type<C, int>));
+    BOOST_TEST_TRAIT_FALSE((has_method_value_with_convertible_return_type<C, A>));
   }
 
   // has_method_options

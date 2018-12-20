@@ -30,27 +30,24 @@ namespace axis {
     result in a dangling reference. Rather than specialing the code to handle
     this, it seems easier to just use a value instead of a view here.
 */
-template <typename T>
+template <typename RealType>
 class polymorphic_bin {
-  using value_type = T;
+  using value_type = RealType;
 
 public:
-  polymorphic_bin(value_type value)
-      : lower_or_value_(value), upper_(value), center_(value) {}
-
-  polymorphic_bin(value_type lower, value_type upper, value_type center)
-      : lower_or_value_(lower), upper_(upper), center_(center) {}
+  polymorphic_bin(value_type lower, value_type upper)
+      : lower_or_value_(lower), upper_(upper) {}
 
   operator value_type() const noexcept { return lower_or_value_; }
 
   value_type lower() const noexcept { return lower_or_value_; }
   value_type upper() const noexcept { return upper_; }
-  value_type center() const noexcept { return center_; }
+  value_type center() const noexcept { return 0.5 * (lower() + upper()); }
   value_type width() const noexcept { return upper() - lower(); }
 
   template <typename BinType>
   bool operator==(const BinType& rhs) const noexcept {
-    return equal_impl(rhs, detail::has_method_lower<BinType>());
+    return equal_impl(detail::has_method_lower<BinType>(), rhs);
   }
 
   template <typename BinType>
@@ -61,22 +58,21 @@ public:
   bool is_discrete() const noexcept { return lower_or_value_ == upper_; }
 
 private:
-  bool equal_impl(const polymorphic_bin& rhs, std::true_type) const noexcept {
-    return lower_or_value_ == rhs.lower_or_value_ && upper_ == rhs.upper_ &&
-           center_ == rhs.center_;
+  bool equal_impl(std::true_type, const polymorphic_bin& rhs) const noexcept {
+    return lower_or_value_ == rhs.lower_or_value_ && upper_ == rhs.upper_;
   }
 
   template <typename BinType>
-  bool equal_impl(const BinType& rhs, std::true_type) const noexcept {
+  bool equal_impl(std::true_type, const BinType& rhs) const noexcept {
     return lower() == rhs.lower() && upper() == rhs.upper();
   }
 
   template <typename BinType>
-  bool equal_impl(const BinType& rhs, std::false_type) const noexcept {
+  bool equal_impl(std::false_type, const BinType& rhs) const noexcept {
     return is_discrete() && static_cast<value_type>(*this) == rhs;
   }
 
-  const value_type lower_or_value_, upper_, center_;
+  const value_type lower_or_value_, upper_;
 };
 
 } // namespace axis

@@ -51,13 +51,14 @@ int main() {
     BOOST_TEST_EQ(b.value(3) / si::meter, std::numeric_limits<double>::infinity());
   }
 
-  // histogram with quanity axis
+  // histogram with quantity axis
   {
     auto h = make_histogram(axis::regular<Q>(2, 0 * si::meter, 1 * si::meter),
                             axis::regular<>(2, 0, 1));
+    h(0.1 * si::meter, 0.1); // fills bin (0, 0)
+    BOOST_TEST_EQ(h.at(0, 0), 1);
     for (auto&& x : indexed(h)) {
-      // auto d = x.density(); // NEEDS TO BE FIXED AT LEAST FOR STATIC AXIS
-      // BOOST_TEST_EQ(d * si::meter, 0.25);
+      BOOST_TEST_THROWS(x.density(), std::runtime_error); // cannot use density method
       BOOST_TEST_EQ(x[0], 2.0 * x.bin(0_c).lower() / si::meter);
       BOOST_TEST_EQ(x[1], 2.0 * x.bin(1_c).lower());
     }
