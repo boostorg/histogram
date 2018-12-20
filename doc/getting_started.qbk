@@ -37,7 +37,7 @@ If you care about maximum performance: In this example, `axis::category<std::str
 
 [endsect]
 
-[section Make a 1d-profile]
+[section 1d-profile]
 
 The library was designed to be very flexible and modular. The modularity is used, for example, to also provide profiles. Profiles are generalized histograms. A histogram counts how often an input falls into a particular cell. A profile accepts pairs of input values and a sample value. The profile computes the mean of the samples that end up in each cell. Have a look at the example, which should clear up any confusion.
 

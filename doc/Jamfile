@@ -10,8 +10,9 @@ doxygen autodoc
 :
   ../../../boost/histogram.hpp
   [ glob ../../../boost/histogram/*.hpp ]
+  [ glob ../../../boost/histogram/accumulators/*.hpp ]
+  [ glob ../../../boost/histogram/algorithm/*.hpp ]
   [ glob ../../../boost/histogram/axis/*.hpp ]
-  [ glob ../../../boost/histogram/storage/*.hpp ]
 :
   <doxygen:param>PREDEFINED=BOOST_HISTOGRAM_DOXYGEN
   <doxygen:param>EXTRACT_ALL=NO
