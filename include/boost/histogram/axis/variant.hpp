@@ -170,7 +170,6 @@ public:
   }
 
   auto operator[](const int idx) const {
-    // using visit here causes internal error in MSVC 2017, so we work around
     return visit(
         [idx](const auto& a) {
           return detail::value_method_switch_with_return_type<double,
