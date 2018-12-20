@@ -1,26 +1,48 @@
 [section:getting_started Getting started]
 
-To get you started quickly, here are some heavily commented examples to copy paste from. If you prefer a more traditional, structured exposition, check out the [link histogram.guide full user guide].
+To get you started quickly, here are some commented examples to copy-paste from. If you prefer a traditional structured exposition, go to the [link histogram.guide user guide].
 
-[section Make and use a static 1d-histogram in C++]
+[section 1d-histogram (axis configuration defined at compile-time)]
 
-If possible, use the static histogram. It is faster and user errors are caught at compile time.
+When the axis configuration is known at compile-time, the library generates the fastest and most efficient code for you. Here is the example.
 
 [import ../examples/getting_started_listing_01.cpp]
 [getting_started_listing_01]
 
+We passed the [classref boost::histogram::axis::regular regular] axis type directly to the [funcref boost::histogram::make_histogram make_histogram] function. The library then generates a specialized histogram type with just one regular axis from a generic template.
+
+* Pro: Many user errors are already caught at compile-time, not at run-time.
+* Con: You get template errors if you make a mistake, which may be hard to read. We try to give you useful error messages, but still.
+
 [endsect]
 
-[section Make and use a dynamic 3d-histogram in C++]
+[section 3d-histogram (axis configuration defined at run-time)]
 
-Dynamic histograms are a bit slower than static histograms, but still faster than other libraries. Use a dynamic histogram when you only know at runtime which and how many axis are going to be used, for example, because you wrote a graphical user interface that uses Boost.Histogram underneath.
+Sometimes, you don't know the number or types of axes at compile-time, because it depends on run-time information. Perhaps you want to write a command-line tool that generates histograms from input data, or you use this library as a back-end for a product with a GUI. This is possible as well, here is the example.
 
 [import ../examples/getting_started_listing_02.cpp]
 [getting_started_listing_02]
 
+The axis configuration is passed to `make_histogram` as a `std::vector<axis::variant<...>>`, which can hold arbitrary sequences of axis types from a predefined set.
+
+Run-time configurable histograms are a slower than their compile-time brethren, but still pretty fast.
+
+[note
+If you know already at compile-time, that you will only use one axis type, `axis::regular<>` for example, but not how many per histogram, then you can also pass a `std::vector<axis::regular<>>` to `make_histogram`. You get almost the same speed as in the very first case, where both the axis configuration was fully known at compile-time.
+]
+
 [note
 If you care about maximum performance: In this example, `axis::category<std::string>` is used with two string labels "red" and "blue". It is faster to use an enum, `enum { red, blue };` and a `axis::category<>` axis.
 ]
+
+[endsect]
+
+[section Make a 1d-profile]
+
+The library was designed to be very flexible and modular. The modularity is used, for example, to also provide profiles. Profiles are generalized histograms. A histogram counts how often an input falls into a particular cell. A profile accepts pairs of input values and a sample value. The profile computes the mean of the samples that end up in each cell. Have a look at the example, which should clear up any confusion.
+
+[import ../examples/getting_started_listing_03.cpp]
+[getting_started_listing_03]
 
 [endsect]
 

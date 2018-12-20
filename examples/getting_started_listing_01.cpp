@@ -6,15 +6,15 @@
 
 //[ getting_started_listing_01
 
-#include <algorithm>
-#include <boost/format.hpp> // only used for printing
-#include <boost/histogram.hpp>
-#include <cassert>
-#include <functional>
-#include <sstream>
+#include <algorithm>           // std::for_each
+#include <boost/format.hpp>    // only needed for printing
+#include <boost/histogram.hpp> // make_histogram, weight, indexed
+#include <cassert>             // assert
+#include <functional>          // std::ref
+#include <sstream>             // std::ostringstream, std::cout, std::flush
 
 int main() {
-  using namespace boost::histogram;
+  using namespace boost::histogram; // strip the boost::histogram prefix
 
   /*
     Create a 1d-histogram with an axis that has 6 equidistant
@@ -52,16 +52,15 @@ int main() {
   /*
     Iterate over bins with the `indexed` range adaptor to obtain the current bin index and
     the bin value via a proxy class. By default, under- and overflow bins are skipped.
-    Passing `true` as second argument iterates over all bins. Notes:
-    - The iteration order is an implementation detail. The range adaptor automatically
-      uses the most efficient iteration order.
-    - Access the bin value with the `value` field of the proxy.
+    Passing `true` as second argument iterates over all bins.
+    - Iteration order is implementation defined, `indexed` uses the most efficient one.
     - Access the bin index with operator[] of the proxy, passing the dimension d.
     - Access the corresponding bin interval view with `bin(d)`. Use a compile-time number
       instead of a normal number, if possible, to make this call more performant. The
       return type of this call depends on the axis (see the axis reference for details),
       usually a class that represents a semi-open interval, whose edges can be accessed
       with methods `lower()` and `upper()`.
+    - Access the value with the dereference operator. The proxy acts like a pointer to it.
   */
   std::ostringstream os;
   for (auto x : indexed(h, true)) {
