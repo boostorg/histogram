@@ -304,10 +304,10 @@ void run_tests() {
     h(sample(5), 1);
     h(sample(6), 1);
 
-    BOOST_TEST_EQ(h[0].sum(), 3);
+    BOOST_TEST_EQ(h[0].count(), 3);
     BOOST_TEST_EQ(h[0].value(), 2);
     BOOST_TEST_EQ(h[0].variance(), 1);
-    BOOST_TEST_EQ(h[1].sum(), 3);
+    BOOST_TEST_EQ(h[1].count(), 3);
     BOOST_TEST_EQ(h[1].value(), 5);
     BOOST_TEST_EQ(h[1].variance(), 1);
   }
@@ -329,9 +329,9 @@ void run_tests() {
     h(weight(2), sample(3), 1);
     h(sample(4), weight(2), 1);
 
-    BOOST_TEST_EQ(h[0].sum(), 6);
+    BOOST_TEST_EQ(h[0].sum_of_weights(), 6);
     BOOST_TEST_EQ(h[0].value(), 3);
-    BOOST_TEST_EQ(h[1].sum(), 8);
+    BOOST_TEST_EQ(h[1].sum_of_weights(), 8);
     BOOST_TEST_EQ(h[1].value(), 2.5);
   }
 

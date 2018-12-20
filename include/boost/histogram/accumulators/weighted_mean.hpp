@@ -64,7 +64,7 @@ public:
     return !operator==(rhs);
   }
 
-  const RealType& sum() const noexcept { return sum_; }
+  const RealType& sum_of_weights() const noexcept { return sum_; }
   const RealType& value() const noexcept { return mean_; }
   RealType variance() const { return dsum2_ / (sum_ - sum2_ / sum_); }
 

@@ -104,6 +104,7 @@ compiled_test(test/utility_test.cpp)
 
 compiled_test(examples/getting_started_listing_01.cpp)
 compiled_test(examples/getting_started_listing_02.cpp)
+compiled_test(examples/getting_started_listing_03.cpp)
 compiled_test(examples/guide_access_bin_counts.cpp)
 compiled_test(examples/guide_axis_with_labels.cpp)
 compiled_test(examples/guide_axis_with_uoflow_off.cpp)
