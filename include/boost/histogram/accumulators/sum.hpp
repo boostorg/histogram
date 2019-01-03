@@ -7,8 +7,9 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_SUM_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_SUM_HPP
 
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <cmath>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -83,5 +84,13 @@ private:
 } // namespace accumulators
 } // namespace histogram
 } // namespace boost
+
+namespace std {
+template <class T, class U>
+struct common_type<boost::histogram::accumulators::sum<T>,
+                   boost::histogram::accumulators::sum<U>> {
+  using type = boost::histogram::accumulators::sum<common_type_t<T, U>>;
+};
+} // namespace std
 
 #endif

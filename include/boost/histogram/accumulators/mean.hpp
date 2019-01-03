@@ -7,8 +7,9 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <cstddef>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -74,5 +75,13 @@ private:
 } // namespace accumulators
 } // namespace histogram
 } // namespace boost
+
+namespace std {
+template <class T, class U>
+struct common_type<boost::histogram::accumulators::mean<T>,
+                   boost::histogram::accumulators::mean<U>> {
+  using type = boost::histogram::accumulators::mean<common_type_t<T, U>>;
+};
+} // namespace std
 
 #endif

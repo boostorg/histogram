@@ -7,7 +7,8 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_SUM_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_SUM_HPP
 
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -88,4 +89,11 @@ private:
 } // namespace histogram
 } // namespace boost
 
+namespace std {
+template <class T, class U>
+struct common_type<boost::histogram::accumulators::weighted_sum<T>,
+                   boost::histogram::accumulators::weighted_sum<U>> {
+  using type = boost::histogram::accumulators::weighted_sum<common_type_t<T, U>>;
+};
+} // namespace std
 #endif

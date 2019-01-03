@@ -17,7 +17,7 @@
 #if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
 #pragma GCC diagnostic pop
 #endif
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <boost/mp11.hpp>
 #include <functional>
 #include <iterator>
@@ -57,12 +57,6 @@ using mp_set_union = mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back
 
 template <typename L>
 using mp_last = mp11::mp_at_c<L, (mp_size<L>::value - 1)>;
-
-template <typename T>
-using container_value_type = mp11::mp_first<unqual<T>>;
-
-template <typename T>
-using iterator_value_type = typename std::iterator_traits<T>::value_type;
 
 template <typename T>
 using args_type = mp11::mp_if<std::is_member_function_pointer<T>,
@@ -241,14 +235,18 @@ template <typename T>
 using is_axis_variant = typename is_axis_variant_impl<T>::type;
 
 template <typename T>
-using is_axis_or_axis_variant = mp11::mp_or<is_axis<T>, is_axis_variant<T>>;
+using is_any_axis = mp11::mp_or<is_axis<T>, is_axis_variant<T>>;
 
 template <typename T>
-using is_axes = is_axis_or_axis_variant<mp11::mp_first<T>>;
+using is_sequence_of_axis = mp11::mp_and<is_iterable<T>, is_axis<mp11::mp_first<T>>>;
 
-template <typename T, typename U = container_value_type<T>>
-using is_axis_vector =
-    mp11::mp_all<is_indexable_container<unqual<T>>, is_axis_or_axis_variant<U>>;
+template <typename T>
+using is_sequence_of_axis_variant =
+    mp11::mp_and<is_iterable<T>, is_axis_variant<mp11::mp_first<T>>>;
+
+template <typename T>
+using is_sequence_of_any_axis =
+    mp11::mp_and<is_iterable<T>, is_any_axis<mp11::mp_first<T>>>;
 
 template <typename T>
 struct is_weight_impl : std::false_type {};
@@ -278,13 +276,21 @@ struct requires_iterable {};
 template <typename T, typename = mp11::mp_if<is_axis<unqual<T>>, void>>
 struct requires_axis {};
 
-template <typename T, typename = mp11::mp_if<is_axis_or_axis_variant<unqual<T>>, void>>
-struct requires_axis_or_axis_variant {};
+template <typename T, typename = mp11::mp_if<is_any_axis<unqual<T>>, void>>
+struct requires_any_axis {};
 
-template <typename T, typename = mp11::mp_if<is_axis_vector<unqual<T>>, void>>
-struct requires_axis_vector {};
+template <typename T, typename = mp11::mp_if<is_sequence_of_axis<unqual<T>>, void>>
+struct requires_sequence_of_axis {};
 
-template <typename T, typename = mp11::mp_if<is_axes<unqual<T>>, void>>
+template <typename T,
+          typename = mp11::mp_if<is_sequence_of_axis_variant<unqual<T>>, void>>
+struct requires_sequence_of_axis_variant {};
+
+template <typename T, typename = mp11::mp_if<is_sequence_of_any_axis<unqual<T>>, void>>
+struct requires_sequence_of_any_axis {};
+
+template <typename T,
+          typename = mp11::mp_if<is_any_axis<mp11::mp_first<unqual<T>>>, void>>
 struct requires_axes {};
 
 template <typename T>

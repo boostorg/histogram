@@ -8,7 +8,6 @@
 #include <boost/histogram/algorithm/project.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/literals.hpp>
 #include <vector>
 #include "utility_histogram.hpp"

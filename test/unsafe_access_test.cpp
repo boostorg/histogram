@@ -8,7 +8,6 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/make_histogram.hpp>
-#include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include "utility_histogram.hpp"
 

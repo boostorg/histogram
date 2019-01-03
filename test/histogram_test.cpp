@@ -5,20 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/accumulators/mean.hpp>
-#include <boost/histogram/accumulators/ostream_operators.hpp>
-#include <boost/histogram/accumulators/weighted_mean.hpp>
-#include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
-#include <boost/histogram/algorithm/sum.hpp>
-#include <boost/histogram/axis.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
-#include <boost/histogram/histogram.hpp>
-#include <boost/histogram/literals.hpp>
-#include <boost/histogram/ostream_operators.hpp>
-#include <boost/histogram/sample.hpp>
-#include <boost/histogram/storage_adaptor.hpp>
-#include <boost/histogram/weight.hpp>
+#include <boost/histogram.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <tuple>
@@ -537,40 +524,6 @@ void run_tests() {
     BOOST_TEST_EQ(a[2], 2);
     BOOST_TEST_EQ(a[3], 3);
     BOOST_TEST_EQ(a[4], 3);
-  }
-
-  // operators
-  {
-    auto a = make(Tag(), axis::integer<>(0, 3));
-    auto b = a;
-    a(0);
-    b(1);
-    auto c = a + b;
-    BOOST_TEST_EQ(c.at(0), 1);
-    BOOST_TEST_EQ(c.at(1), 1);
-    c += b;
-    BOOST_TEST_EQ(c.at(0), 1);
-    BOOST_TEST_EQ(c.at(1), 2);
-    auto d = a + b + c;
-    BOOST_TEST_EQ(d.at(0), 2);
-    BOOST_TEST_EQ(d.at(1), 3);
-    auto e = 3 * a;
-    auto f = b * 2;
-    BOOST_TEST_EQ(e.at(0), 3);
-    BOOST_TEST_EQ(e.at(1), 0);
-    BOOST_TEST_EQ(f.at(0), 0);
-    BOOST_TEST_EQ(f.at(1), 2);
-    auto r = a;
-    r += b;
-    r += e;
-    BOOST_TEST_EQ(r.at(0), 4);
-    BOOST_TEST_EQ(r.at(1), 1);
-    BOOST_TEST_EQ(r, a + b + 3 * a);
-    auto s = r / 4;
-    r /= 4;
-    BOOST_TEST_EQ(r.at(0), 1);
-    BOOST_TEST_EQ(r.at(1), 0.25);
-    BOOST_TEST_EQ(r, s);
   }
 
   // histogram_ostream

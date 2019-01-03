@@ -9,12 +9,10 @@
 #include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>
-#include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <cstdlib>
 #include <limits>
@@ -31,7 +29,7 @@ using namespace boost::histogram::literals; // to get _c suffix
 int main() {
   // special stuff that only works with dynamic_tag
 
-  // init
+  // init with vector of axis and vector of axis::variant
   {
     auto v = std::vector<axis::variant<axis::regular<>, axis::integer<>>>();
     v.emplace_back(axis::regular<>(4, -1, 1));

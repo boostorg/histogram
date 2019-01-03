@@ -8,8 +8,6 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
-#include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <sstream>
 #include <string>

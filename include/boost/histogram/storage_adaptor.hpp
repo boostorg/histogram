@@ -11,7 +11,7 @@
 #include <boost/assert.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <boost/histogram/weight.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/throw_exception.hpp>

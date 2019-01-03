@@ -23,24 +23,24 @@ namespace histogram {
 namespace algorithm {
 
 /**
-  Returns a lower-dimensional histogram, summing over removed axes.
+  Returns a lower-dimensional grid, summing over removed axes.
 
   Arguments are the source histogram and compile-time numbers, the remaining indices of
   the axes. Returns a new histogram which only contains the subset of axes. The source
   histogram is summed over the removed axes.
 */
-template <typename A, typename S, unsigned N, typename... Ns>
-auto project(const histogram<A, S>& hist, std::integral_constant<unsigned, N> n,
-             Ns... ns) {
+template <template <class, class> class Grid, class A, class S, unsigned N,
+          typename... Ns>
+auto project(const Grid<A, S>& grid, std::integral_constant<unsigned, N> n, Ns... ns) {
   using LN = mp11::mp_list<decltype(n), Ns...>;
   static_assert(mp11::mp_is_set<LN>::value, "indices must be unique");
 
-  auto axes = detail::make_sub_axes(unsafe_access::axes(hist), n, ns...);
-  auto result = histogram<decltype(axes), S>(
-      std::move(axes), detail::make_default(unsafe_access::storage(hist)));
+  auto axes = detail::make_sub_axes(unsafe_access::axes(grid), n, ns...);
+  auto result = Grid<decltype(axes), S>(
+      std::move(axes), detail::make_default(unsafe_access::storage(grid)));
 
-  detail::axes_buffer<typename decltype(result)::axes_type, int> idx(result.rank());
-  for (auto x : indexed(hist, true)) {
+  detail::axes_buffer<decltype(axes), int> idx(result.rank());
+  for (auto x : indexed(grid, true)) {
     auto i = idx.begin();
     mp11::mp_for_each<LN>([&i, &x](auto I) { *i++ = x[I]; });
     unsafe_access::add_value(result, idx, *x);
@@ -54,27 +54,27 @@ auto project(const histogram<A, S>& hist, std::integral_constant<unsigned, N> n,
   This version accepts a source histogram and an iterable range containing the remaining
   indices.
 */
-template <typename A, typename S, typename Iterable,
-          typename = detail::requires_iterable<Iterable>>
-auto project(const histogram<A, S>& hist, const Iterable& c) {
-  static_assert(detail::is_axis_vector<A>::value,
-                "dynamic version of project requires a histogram with dynamic axis");
+template <template <class, class> class Grid, class A, class S, class Iterable,
+          class = detail::requires_iterable<Iterable>>
+auto project(const Grid<A, S>& grid, const Iterable& c) {
+  static_assert(detail::is_sequence_of_any_axis<A>::value,
+                "dynamic version of project requires a grid with dynamic axis");
 
-  const auto& hist_axes = unsafe_access::axes(hist);
-  auto axes = detail::make_default(hist_axes);
+  const auto& old_axes = unsafe_access::axes(grid);
+  auto axes = detail::make_default(old_axes);
   axes.reserve(c.size());
-  detail::axes_buffer<A, bool> seen(hist_axes.size(), false);
+  detail::axes_buffer<A, bool> seen(old_axes.size(), false);
   for (auto d : c) {
     if (seen[d]) BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
     seen[d] = true;
-    axes.emplace_back(hist_axes[d]);
+    axes.emplace_back(old_axes[d]);
   }
 
-  auto result = histogram<A, S>(std::move(axes),
-                                detail::make_default(unsafe_access::storage(hist)));
+  auto result =
+      Grid<A, S>(std::move(axes), detail::make_default(unsafe_access::storage(grid)));
 
   detail::axes_buffer<A, int> idx(result.rank());
-  for (auto x : indexed(hist, true)) {
+  for (auto x : indexed(grid, true)) {
     auto i = idx.begin();
     for (auto d : c) *i++ = x[d];
     unsafe_access::add_value(result, idx, *x);

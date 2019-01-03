@@ -13,7 +13,7 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <boost/mp11.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/variant.hpp>

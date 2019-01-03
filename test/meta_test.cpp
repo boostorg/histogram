@@ -323,24 +323,6 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<mp_last<L>, long>));
   }
 
-  // container_value_type
-  {
-    using T1 = std::vector<int>;
-    using U1 = container_value_type<T1>;
-    using T2 = const std::vector<const int>&;
-    using U2 = container_value_type<T2>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<U1, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<U2, const int>));
-  }
-
-  // iterator_value_type
-  {
-    using T1 = const char*;
-    using T2 = std::iterator<std::random_access_iterator_tag, int>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<iterator_value_type<T1>, char>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<iterator_value_type<T2>, int>));
-  }
-
   // args_type
   {
     struct Foo {
@@ -388,21 +370,20 @@ int main() {
     BOOST_TEST_EQ(b, std::make_tuple(2, 3));
   }
 
-  // is_axis_vector
+  // is_sequence_of_axis
   {
     using A = std::vector<bh::axis::regular<>>;
     using B = std::vector<bh::axis::variant<bh::axis::regular<>>>;
     using C = std::vector<int>;
-    using D = const std::vector<bh::axis::variant<bh::axis::integer<>>>;
-    using E = const std::vector<bh::axis::variant<bh::axis::integer<>>>&;
     auto v = std::vector<bh::axis::variant<bh::axis::regular<>, bh::axis::integer<>>>();
-    BOOST_TEST_TRAIT_TRUE((is_axis_vector<A>));
-    BOOST_TEST_TRAIT_TRUE((is_axis_vector<B>));
-    BOOST_TEST_TRAIT_FALSE((is_axis_vector<C>));
-    BOOST_TEST_TRAIT_TRUE((is_axis_vector<D>));
-    BOOST_TEST_TRAIT_TRUE((is_axis_vector<E>));
-    BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(v)>));
-    BOOST_TEST_TRAIT_TRUE((is_axis_vector<decltype(std::move(v))>));
+    BOOST_TEST_TRAIT_TRUE((is_sequence_of_any_axis<A>));
+    BOOST_TEST_TRAIT_TRUE((is_sequence_of_axis<A>));
+    BOOST_TEST_TRAIT_FALSE((is_sequence_of_axis_variant<A>));
+    BOOST_TEST_TRAIT_TRUE((is_sequence_of_any_axis<B>));
+    BOOST_TEST_TRAIT_TRUE((is_sequence_of_axis_variant<B>));
+    BOOST_TEST_TRAIT_FALSE((is_sequence_of_axis<B>));
+    BOOST_TEST_TRAIT_FALSE((is_sequence_of_any_axis<C>));
+    BOOST_TEST_TRAIT_TRUE((is_sequence_of_any_axis<decltype(v)>));
   }
 
   // is_weight

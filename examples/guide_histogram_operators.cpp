@@ -24,23 +24,24 @@ int main() {
   auto h3 = h1;
   h3 += h2; // counts are: 1 1
 
-  // adding multiple histograms at once is efficient and does not create
-  // superfluous temporaries since operator+ functions are overloaded to
-  // accept and return rvalue references where possible
+  // adding multiple histograms at once is likely to be optimized by the compiler so that
+  // superfluous temporaries avoided, but no guarantees are given; use this equivalent
+  // code when you want to make sure: h4 = h1; h4 += h2; h4 += h3;
   auto h4 = h1 + h2 + h3; // counts are: 2 2
 
   assert(h4.at(0) == 2 && h4.at(1) == 2);
 
-  // multiply by number
-  h4 *= 2; // counts are: 4 4
+  // multiply by number; h4 *= 2 is not allowed, because the result of a multiplication is
+  // not a histogram anymore, it has the type boost::histogram::grid<...>)
+  auto g4 = h4 * 2; // counts are: 4 4
 
-  // divide by number
-  auto h5 = h4 / 4; // counts are: 1 1
+  // divide by number; g4 /= 4 also works
+  auto g5 = g4 / 4; // counts are: 1 1
 
-  assert(h5.at(0) == 1 && h5.at(1) == 1);
-  assert(h4 != h5 && h4 == 4 * h5);
+  assert(g5.at(0) == 1 && g5.at(1) == 1);
+  assert(g4 != g5 && g4 == 4 * g5);
 
-  // note special effect of multiplication on weighted_sum variance
+  // note special effect of multiplication on weighted_sum
   auto h = bh::make_histogram_with(std::vector<bh::accumulators::weighted_sum<double>>(),
                                    bh::axis::regular<>(2, -1, 1));
   h(-0.5);
@@ -49,14 +50,14 @@ int main() {
   assert(h.at(0).value() == 1 && h.at(1).value() == 0);
 
   auto h_sum = h + h;
-  auto h_mul = 2 * h;
+  auto g_mul = 2 * h;
 
   // equality operator checks variances, so following statement is false
-  assert(h_sum != h_mul);
+  assert(h_sum != g_mul);
 
   // variance is different when histograms are scaled
-  assert(h_sum.at(0).value() == 2 && h_mul.at(0).value() == 2);
-  assert(h_sum.at(0).variance() == 2 && h_mul.at(0).variance() == 4);
+  assert(h_sum.at(0).value() == 2 && g_mul.at(0).value() == 2);
+  assert(h_sum.at(0).variance() == 2 && g_mul.at(0).variance() == 4);
 }
 
 //]

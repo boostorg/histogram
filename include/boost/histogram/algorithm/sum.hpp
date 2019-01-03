@@ -8,21 +8,22 @@
 #define BOOST_HISTOGRAM_ALGORITHM_SUM_HPP
 
 #include <boost/histogram/accumulators/sum.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <numeric>
 #include <type_traits>
 
 namespace boost {
 namespace histogram {
 namespace algorithm {
-template <typename A, typename S,
-          typename ReturnType = std::conditional_t<
-              std::is_arithmetic<typename histogram<A, S>::value_type>::value, double,
-              typename histogram<A, S>::value_type>,
-          typename InternalSum = std::conditional_t<
-              std::is_arithmetic<typename histogram<A, S>::value_type>::value,
-              accumulators::sum<double>, typename histogram<A, S>::value_type>>
-ReturnType sum(const histogram<A, S>& h) {
+template <
+    typename A, typename S,
+    typename ReturnType =
+        std::conditional_t<std::is_arithmetic<typename grid<A, S>::value_type>::value,
+                           double, typename grid<A, S>::value_type>,
+    typename InternalSum =
+        std::conditional_t<std::is_arithmetic<typename grid<A, S>::value_type>::value,
+                           accumulators::sum<double>, typename grid<A, S>::value_type>>
+ReturnType sum(const grid<A, S>& h) {
   InternalSum sum;
   for (auto x : h) sum += x;
   return sum;

@@ -7,8 +7,10 @@
 #ifndef BOOST_HISTOGRAM_TEST_UTILITY_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_TEST_UTILITY_HISTOGRAM_HPP
 
+#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/make_histogram.hpp>
+#include <boost/histogram/ostream_operators.hpp>
 #include <type_traits>
 #include <vector>
 

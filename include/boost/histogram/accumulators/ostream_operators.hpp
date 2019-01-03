@@ -7,7 +7,7 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_OSTREAM_OPERATORS_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_OSTREAM_OPERATORS_HPP
 
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <ostream>
 
 namespace boost {
