@@ -15,7 +15,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <boost/histogram/weight.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/mp11.hpp>

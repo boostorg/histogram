@@ -7,190 +7,113 @@
 #ifndef BOOST_HISTOGRAM_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_HISTOGRAM_HPP
 
-#include <algorithm>
-#include <boost/assert.hpp>
-#include <boost/histogram/arithmetic_operators.hpp>
-#include <boost/histogram/attribute.hpp>
 #include <boost/histogram/detail/axes.hpp>
+#include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
-#include <boost/mp11.hpp>
-#include <boost/throw_exception.hpp>
-#include <functional>
+#include <boost/histogram/fwd.hpp>
+#include <boost/histogram/grid.hpp>
 #include <tuple>
 #include <type_traits>
-#include <utility>
 
 namespace boost {
 namespace histogram {
 
-template <typename Axes, typename Storage>
-class BOOST_HISTOGRAM_NODISCARD histogram {
-  static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
+template <class Axes, class Storage>
+class histogram : public grid<Axes, Storage> {
+  using grid_type = grid<Axes, Storage>;
 
 public:
-  using axes_type = Axes;
-  using storage_type = Storage;
-  using value_type = typename storage_type::value_type;
-  // typedefs for boost::range_iterator
-  using iterator = decltype(std::declval<storage_type&>().begin());
-  using const_iterator = decltype(std::declval<const storage_type&>().begin());
-
   histogram() = default;
   histogram(const histogram& rhs) = default;
   histogram(histogram&& rhs) = default;
   histogram& operator=(const histogram& rhs) = default;
   histogram& operator=(histogram&& rhs) = default;
 
-  template <typename A, typename S>
-  explicit histogram(const histogram<A, S>& rhs) : storage_(rhs.storage_) {
-    detail::axes_assign(axes_, rhs.axes_);
+  template <class A, class S>
+  explicit histogram(const histogram<A, S>& rhs) : grid_type(rhs) {}
+
+  template <class A, class = detail::requires_axes<A>>
+  explicit histogram(A&& a)
+      : grid_type(std::forward<A>(a), typename grid_type::storage_type()) {}
+
+  template <class A, class S>
+  histogram(A&& a, S&& s) : grid_type(std::forward<A>(a), std::forward<S>(s)) {}
+
+  template <class A, class S>
+  histogram& operator=(histogram<A, S>&& rhs) {
+    grid_type::operator=(std::move(rhs));
+    return *this;
   }
 
-  template <typename A, typename S>
+  template <class A, class S>
   histogram& operator=(const histogram<A, S>& rhs) {
-    storage_ = rhs.storage_;
-    detail::axes_assign(axes_, rhs.axes_);
+    grid_type::operator=(rhs);
     return *this;
   }
 
-  template <typename A, typename = detail::requires_axes<A>>
-  explicit histogram(A&& a) : axes_(std::forward<A>(a)) {
-    storage_.reset(detail::bincount(axes_));
-  }
-
-  template <typename A, typename S>
-  explicit histogram(A&& a, S&& s)
-      : axes_(std::forward<A>(a)), storage_(std::forward<S>(s)) {
-    storage_.reset(detail::bincount(axes_));
-  }
-
-  template <typename A, typename S>
-  bool operator==(const histogram<A, S>& rhs) const noexcept {
-    return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
-  }
-
-  template <typename A, typename S>
-  bool operator!=(const histogram<A, S>& rhs) const noexcept {
-    return !operator==(rhs);
-  }
-
-  template <typename A, typename S>
+  /// Add values of another histogram
+  template <class A, class S>
   histogram& operator+=(const histogram<A, S>& rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_))
-      BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
-    storage_ += rhs.storage_;
+    grid_type::operator+=(rhs);
     return *this;
-  }
-
-  histogram& operator*=(const double x) {
-    storage_ *= x;
-    return *this;
-  }
-
-  histogram& operator/=(const double x) {
-    storage_ *= 1.0 / x;
-    return *this;
-  }
-
-  /// Number of axes (dimensions)
-  unsigned rank() const noexcept { return detail::axes_size(axes_); }
-
-  /// Total number of bins (including underflow/overflow)
-  std::size_t size() const noexcept { return storage_.size(); }
-
-  /// Reset values to zero
-  void reset() { storage_.reset(storage_.size()); }
-
-  /// Get N-th axis (const version)
-  template <unsigned N>
-  decltype(auto) axis(std::integral_constant<unsigned, N>) const {
-    detail::rank_check(axes_, N);
-    return detail::axis_get<N>(axes_);
-  }
-
-  /// Get N-th axis
-  template <unsigned N>
-  decltype(auto) axis(std::integral_constant<unsigned, N>) {
-    detail::rank_check(axes_, N);
-    return detail::axis_get<N>(axes_);
-  }
-
-  /// Get first axis (convenience for 1-d histograms, const version)
-  decltype(auto) axis() const { return axis(std::integral_constant<unsigned, 0>()); }
-
-  /// Get first axis (convenience for 1-d histograms)
-  decltype(auto) axis() { return axis(std::integral_constant<unsigned, 0>()); }
-
-  /// Get N-th axis with runtime index (const version)
-  decltype(auto) axis(unsigned i) const {
-    detail::rank_check(axes_, i);
-    return detail::axis_get(axes_, i);
-  }
-
-  /// Get N-th axis with runtime index
-  decltype(auto) axis(unsigned i) {
-    detail::rank_check(axes_, i);
-    return detail::axis_get(axes_, i);
-  }
-
-  /// Apply unary functor/function to each axis
-  template <typename Unary>
-  void for_each_axis(Unary&& unary) const {
-    detail::for_each_axis(axes_, std::forward<Unary>(unary));
   }
 
   /// Fill histogram with values and optional weight or sample
-  template <typename... Ts>
+  template <class... Ts>
   void operator()(const Ts&... ts) {
     operator()(std::forward_as_tuple(ts...));
   }
 
   /// Fill histogram with value tuple and optional weight or sample
-  template <typename... Ts>
+  template <class... Ts>
   void operator()(const std::tuple<Ts...>& t) {
-    detail::fill_impl(storage_, axes_, t);
+    detail::fill_impl(grid_type::storage_, grid_type::axes_, t);
   }
 
-  /// Access value at indices
+  /// Access value at indices (const version)
   template <typename... Ts>
   decltype(auto) at(const Ts&... ts) const {
     return at(std::forward_as_tuple(ts...));
   }
 
-  /// Access value at index tuple
+  /// Access value at index tuple (const version)
   template <typename... Ts>
   decltype(auto) at(const std::tuple<Ts...>& t) const {
-    const auto idx = detail::at_impl(axes_, t);
-    if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
-    return storage_[*idx];
+    return grid_type::at(t);
   }
 
-  /// Access value at index iterable
-  template <typename Iterable, typename = detail::requires_iterable<Iterable>>
+  /// Access value at index iterable (const version)
+  template <class Iterable, class = detail::requires_iterable<Iterable>>
   decltype(auto) at(const Iterable& c) const {
-    const auto idx = detail::at_impl(axes_, c);
-    if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
-    return storage_[*idx];
+    return grid_type::at(c);
   }
 
-  /// Access value at index (number for rank=1 or index tuple|iterable)
-  template <typename T>
+  /// Access value at index (number for rank=1 or index tuple|iterable, const version)
+  template <class T>
   decltype(auto) operator[](const T& t) const {
     return at(t);
   }
 
-  const_iterator begin() const noexcept { return storage_.begin(); }
-  const_iterator end() const noexcept { return storage_.end(); }
-
-private:
-  axes_type axes_;
-  storage_type storage_;
-
-  template <typename A, typename S>
-  friend class histogram;
-  friend struct unsafe_access;
+  auto begin() const noexcept { return grid_type::begin(); }
+  auto end() const noexcept { return grid_type::end(); }
 };
+
+template <class A1, class S1, class A2, class S2>
+auto operator+(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
+  histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>> result = a;
+  result += b;
+  return result;
+}
+
+template <class A, class S>
+auto operator+(histogram<A, S>&& a, const histogram<A, S>& b) {
+  return a += b;
+}
+
+template <class A, class S>
+auto operator+(const histogram<A, S>& a, histogram<A, S>&& b) {
+  return b += a;
+}
 
 #if __cpp_deduction_guides >= 201606
 

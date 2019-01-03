@@ -13,7 +13,6 @@
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/cat.hpp>
-#include <boost/histogram/detail/is_set.hpp>
 #include <boost/histogram/literals.hpp>
 #include <tuple>
 #include <vector>
@@ -35,43 +34,6 @@ int main() {
     BOOST_TEST_EQ(decltype(213_c)::value, 213);
   }
 
-  // sequence equality
-  {
-    enum { A, B, C };
-    std::vector<axis::variant<axis::regular<>, axis::variable<>, axis::category<>,
-                              axis::integer<>>>
-        std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                       axis::category<>{A, B, C}};
-
-    std::vector<axis::variant<axis::regular<>, axis::variable<>, axis::category<>>>
-        std_vector2 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                       axis::category<>{{A, B, C}}};
-
-    std::vector<axis::variant<axis::regular<>, axis::variable<>>> std_vector3 = {
-        axis::variable<>{-1, 0, 1}, axis::regular<>{2, -1, 1}};
-
-    std::vector<axis::variant<axis::variable<>, axis::regular<>>> std_vector4 = {
-        axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1}};
-
-    BOOST_TEST(detail::axes_equal(std_vector1, std_vector2));
-    BOOST_TEST_NOT(detail::axes_equal(std_vector2, std_vector3));
-    BOOST_TEST_NOT(detail::axes_equal(std_vector3, std_vector4));
-
-    auto tuple1 = std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                                  axis::category<>{{A, B, C}});
-
-    auto tuple2 = std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                                  axis::category<>{{A, B}});
-
-    auto tuple3 = std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1});
-
-    BOOST_TEST(detail::axes_equal(std_vector1, tuple1));
-    BOOST_TEST(detail::axes_equal(tuple1, std_vector1));
-    BOOST_TEST_NOT(detail::axes_equal(tuple1, tuple2));
-    BOOST_TEST_NOT(detail::axes_equal(tuple2, tuple3));
-    BOOST_TEST_NOT(detail::axes_equal(std_vector3, tuple3));
-  }
-
   // axes_size
   {
     std::tuple<int, int> a;
@@ -82,60 +44,102 @@ int main() {
     BOOST_TEST_EQ(detail::axes_size(c), 4);
   }
 
+  // sequence equality
+  {
+    using R = axis::regular<>;
+    using I = axis::integer<>;
+    using V = axis::variable<>;
+    auto r = R(2, -1, 1);
+    auto i = I(-1, 1);
+    auto v = V{-1, 0, 1};
+
+    std::vector<axis::variant<R, I, V>> v1 = {r, i};
+    std::vector<axis::variant<R, I>> v2 = {r, i};
+    std::vector<axis::variant<R, I>> v3 = {i, r};
+    std::vector<axis::variant<I, R>> v4 = {r, i};
+    std::vector<axis::variant<R, I>> v5 = {r, r};
+    std::vector<R> v6 = {r, r};
+
+    BOOST_TEST(detail::axes_equal(v1, v2));
+    BOOST_TEST(detail::axes_equal(v1, v4));
+    BOOST_TEST(detail::axes_equal(v5, v6));
+    BOOST_TEST_NOT(detail::axes_equal(v1, v3));
+    BOOST_TEST_NOT(detail::axes_equal(v2, v3));
+    BOOST_TEST_NOT(detail::axes_equal(v3, v4));
+    BOOST_TEST_NOT(detail::axes_equal(v1, v5));
+
+    auto t1 = std::make_tuple(r, i);
+    auto t2 = std::make_tuple(i, r);
+    auto t3 = std::make_tuple(v, i);
+    auto t4 = std::make_tuple(r, r);
+
+    BOOST_TEST(detail::axes_equal(t1, v1));
+    BOOST_TEST(detail::axes_equal(t1, v2));
+    BOOST_TEST(detail::axes_equal(t1, v4));
+    BOOST_TEST(detail::axes_equal(v1, t1));
+    BOOST_TEST(detail::axes_equal(v2, t1));
+    BOOST_TEST(detail::axes_equal(v4, t1));
+    BOOST_TEST(detail::axes_equal(t2, v3));
+    BOOST_TEST(detail::axes_equal(v3, t2));
+    BOOST_TEST(detail::axes_equal(t4, v5));
+    BOOST_TEST(detail::axes_equal(t4, v6));
+    BOOST_TEST_NOT(detail::axes_equal(t1, t2));
+    BOOST_TEST_NOT(detail::axes_equal(t2, t3));
+    BOOST_TEST_NOT(detail::axes_equal(t1, v3));
+    BOOST_TEST_NOT(detail::axes_equal(t1, v3));
+    BOOST_TEST_NOT(detail::axes_equal(t3, v1));
+    BOOST_TEST_NOT(detail::axes_equal(t3, v2));
+    BOOST_TEST_NOT(detail::axes_equal(t3, v3));
+    BOOST_TEST_NOT(detail::axes_equal(t3, v4));
+  }
+
   // sequence assign
   {
-    enum { A, B, C, D };
-    std::vector<axis::variant<axis::regular<>, axis::variable<>, axis::category<>,
-                              axis::integer<>>>
-        std_vector1 = {axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                       axis::category<>{A, B, C}};
+    using R = axis::regular<>;
+    using I = axis::integer<>;
+    using V = axis::variable<>;
+    auto r = R(2, -1, 1);
+    auto i = I(-1, 1);
+    auto v = V{-1, 0, 1};
 
-    std::vector<axis::variant<axis::regular<>, axis::variable<>, axis::category<>>>
-        std_vector2 = {axis::regular<>{2, -2, 2}, axis::variable<>{-2, 0, 2},
-                       axis::category<>{A, B}};
+    std::vector<axis::variant<R, V, I>> v1 = {r, i};
+    std::vector<axis::variant<I, R>> v2;
+    std::vector<R> v3 = {r, r};
 
-    detail::axes_assign(std_vector2, std_vector1);
-    BOOST_TEST(detail::axes_equal(std_vector2, std_vector1));
+    BOOST_TEST_NOT(detail::axes_equal(v2, v1));
+    detail::axes_assign(v2, v1);
+    BOOST_TEST(detail::axes_equal(v2, v1));
+    detail::axes_assign(v2, v3);
+    BOOST_TEST(detail::axes_equal(v2, v3));
 
-    auto tuple1 = std::make_tuple(axis::regular<>{2, -3, 3}, axis::variable<>{-3, 0, 3},
-                                  axis::category<>{A, B, C, D});
+    auto t1 = std::make_tuple(r);
+    detail::axes_assign(v3, t1);
+    BOOST_TEST(detail::axes_equal(v3, t1));
 
-    detail::axes_assign(tuple1, std_vector1);
-    BOOST_TEST(detail::axes_equal(tuple1, std_vector1));
+    auto t2 = std::make_tuple(r, i);
+    detail::axes_assign(v2, t2);
+    BOOST_TEST(detail::axes_equal(v2, t2));
 
-    decltype(std_vector1) std_vector3;
-    BOOST_TEST_NOT(detail::axes_equal(std_vector3, tuple1));
-    detail::axes_assign(std_vector3, tuple1);
-    BOOST_TEST(detail::axes_equal(std_vector3, tuple1));
-
-    auto tuple2 = std::make_tuple(axis::regular<>{2, -1, 1}, axis::variable<>{-1, 0, 1},
-                                  axis::category<>{A, B});
-
-    detail::axes_assign(tuple2, tuple1);
-    BOOST_TEST(detail::axes_equal(tuple2, tuple1));
+    auto t3 = std::make_tuple(R{3, -1, 1}, i);
+    BOOST_TEST_NOT(detail::axes_equal(t2, t3));
+    detail::axes_assign(t2, t3);
+    BOOST_TEST(detail::axes_equal(t2, t3));
   }
 
   // make_sub_axes
   {
+    using I = axis::integer<>;
     using boost::mp11::mp_list;
-    axis::integer<> a0(0, 1), a1(1, 2), a2(2, 3);
-    auto axes = std::make_tuple(a0, a1, a2);
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, 0_c), std::make_tuple(a0));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, 1_c), std::make_tuple(a1));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, 2_c), std::make_tuple(a2));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, 0_c, 1_c), std::make_tuple(a0, a1));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, 0_c, 2_c), std::make_tuple(a0, a2));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, 1_c, 2_c), std::make_tuple(a1, a2));
-    BOOST_TEST_EQ(detail::make_sub_axes(axes, 0_c, 1_c, 2_c),
-                  std::make_tuple(a0, a1, a2));
-  }
 
-  // is_set
-  {
-    std::vector<int> v({3, 1, 2});
-    BOOST_TEST(detail::is_set(v.begin(), v.end()));
-    v = {3, 1, 2, 1};
-    BOOST_TEST_NOT(detail::is_set(v.begin(), v.end()));
+    I a0(0, 1), a1(1, 2), a2(2, 3);
+    auto ax = std::make_tuple(a0, a1, a2);
+    BOOST_TEST_EQ(detail::make_sub_axes(ax, 0_c), std::make_tuple(a0));
+    BOOST_TEST_EQ(detail::make_sub_axes(ax, 1_c), std::make_tuple(a1));
+    BOOST_TEST_EQ(detail::make_sub_axes(ax, 2_c), std::make_tuple(a2));
+    BOOST_TEST_EQ(detail::make_sub_axes(ax, 0_c, 1_c), std::make_tuple(a0, a1));
+    BOOST_TEST_EQ(detail::make_sub_axes(ax, 0_c, 2_c), std::make_tuple(a0, a2));
+    BOOST_TEST_EQ(detail::make_sub_axes(ax, 1_c, 2_c), std::make_tuple(a1, a2));
+    BOOST_TEST_EQ(detail::make_sub_axes(ax, 0_c, 1_c, 2_c), std::make_tuple(a0, a1, a2));
   }
 
   return boost::report_errors();

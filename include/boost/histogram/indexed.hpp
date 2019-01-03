@@ -11,7 +11,7 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/mp11.hpp>
 #include <type_traits>

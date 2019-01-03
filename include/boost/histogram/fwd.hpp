@@ -4,11 +4,11 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
-#define BOOST_HISTOGRAM_HISTOGRAM_FWD_HPP
+#ifndef BOOST_fwd_HPP
+#define BOOST_fwd_HPP
 
-#include <boost/config.hpp>
 #include <boost/container/container_fwd.hpp> // for string and new_allocator
+#include <boost/histogram/attribute.hpp>     // for BOOST_HISTOGRAM_NODISCARD
 
 // Why boost containers as defaults and not std containers?
 // - std::vector does not work with incomplete types, but boost::container::vector does
@@ -109,8 +109,11 @@ using profile_storage = storage_adaptor<boost::container::vector<accumulators::m
 using weighted_profile_storage =
     storage_adaptor<boost::container::vector<accumulators::weighted_mean<>>>;
 
+template <class Axes, class Storage>
+class BOOST_HISTOGRAM_NODISCARD grid;
+
 template <class Axes, class Storage = default_storage>
-class histogram;
+class BOOST_HISTOGRAM_NODISCARD histogram;
 } // namespace histogram
 } // namespace boost
 

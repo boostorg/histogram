@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_AXIS_HPP
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 
 namespace boost {
 namespace histogram {

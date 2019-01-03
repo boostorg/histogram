@@ -9,7 +9,7 @@
 
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
-#include <boost/histogram/histogram_fwd.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <boost/histogram/make_histogram.hpp>
 
 namespace boost {
@@ -30,13 +30,13 @@ auto make_weighted_profile(T&& axis, Ts&&... axes) {
 }
 
 /// profile factory from vector-like
-template <typename Iterable, typename = detail::requires_axis_vector<Iterable>>
+template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_profile(Iterable&& c) {
   return make_histogram_with(profile_storage(), std::forward<Iterable>(c));
 }
 
 /// profile factory from vector-like with weighted mean
-template <typename Iterable, typename = detail::requires_axis_vector<Iterable>>
+template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_weighted_profile(Iterable&& c) {
   return make_histogram_with(weighted_profile_storage(), std::forward<Iterable>(c));
 }

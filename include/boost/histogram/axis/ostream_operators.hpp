@@ -16,6 +16,7 @@
 #include <boost/throw_exception.hpp>
 #include <iomanip>
 #include <ostream>
+#include <stdexcept>
 #include <type_traits>
 
 namespace boost {

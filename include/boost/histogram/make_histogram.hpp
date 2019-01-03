@@ -46,22 +46,25 @@ auto make_weighted_histogram(T&& axis0, Ts&&... axis) {
 
 /// histogram factory from vector-like with custom storage
 template <typename StorageOrContainer, typename Iterable,
-          typename = detail::requires_axis_vector<Iterable>>
+          typename = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_histogram_with(StorageOrContainer&& s, Iterable&& c) {
   using U = detail::unqual<StorageOrContainer>;
   using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
-  return histogram<detail::unqual<Iterable>, S>(std::forward<Iterable>(c),
-                                                S(std::forward<StorageOrContainer>(s)));
+  using It = detail::unqual<Iterable>;
+  using A = mp11::mp_if<detail::is_indexable_container<It>, It,
+                        boost::container::vector<mp11::mp_first<It>>>;
+  return histogram<A, S>(std::forward<Iterable>(c),
+                         S(std::forward<StorageOrContainer>(s)));
 }
 
 /// histogram factory from vector-like with default storage
-template <typename Iterable, typename = detail::requires_axis_vector<Iterable>>
+template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_histogram(Iterable&& c) {
   return make_histogram_with(default_storage(), std::forward<Iterable>(c));
 }
 
 /// histogram factory from vector-like with default storage
-template <typename Iterable, typename = detail::requires_axis_vector<Iterable>>
+template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_weighted_histogram(Iterable&& c) {
   return make_histogram_with(weight_storage(), std::forward<Iterable>(c));
 }
@@ -70,7 +73,7 @@ auto make_weighted_histogram(Iterable&& c) {
 template <typename StorageOrContainer, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
 auto make_histogram_with(StorageOrContainer&& s, Iterator begin, Iterator end) {
-  using T = detail::iterator_value_type<Iterator>;
+  using T = detail::unqual<decltype(*begin)>;
   return make_histogram_with(std::forward<StorageOrContainer>(s),
                              boost::container::vector<T>(begin, end));
 }

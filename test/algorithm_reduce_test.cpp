@@ -8,11 +8,9 @@
 #include <boost/histogram/algorithm/reduce.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/indexed.hpp>
-#include <boost/histogram/ostream_operators.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <vector>
 #include "utility_histogram.hpp"
