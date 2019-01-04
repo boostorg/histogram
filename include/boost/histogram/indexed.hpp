@@ -42,9 +42,6 @@ public:
       decltype(auto) operator*() const noexcept {
         return const_iterator::base_reference()->idx;
       }
-
-    private:
-      friend class boost::iterator_core_access;
     };
 
     int operator[](unsigned d) const { return parent_.cache_[d].idx; }
