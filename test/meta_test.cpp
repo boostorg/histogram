@@ -207,17 +207,6 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_map_like<E>));
   }
 
-  // is_equal_comparable
-  {
-    struct A {};
-    struct B {
-      bool operator==(const B&);
-    };
-    BOOST_TEST_TRAIT_TRUE((is_equal_comparable<int>));
-    BOOST_TEST_TRAIT_FALSE((is_equal_comparable<A>));
-    BOOST_TEST_TRAIT_TRUE((is_equal_comparable<B>));
-  }
-
   // is_axis
   {
     struct A {};
@@ -431,6 +420,32 @@ int main() {
     B b = make_default(B(bh::tracing_allocator<int>(db)));
     b.resize(100);
     BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, 100);
+  }
+
+  // has_operator_equal
+  {
+    struct A {};
+    struct B {
+      bool operator==(const B&) const { return true; }
+    };
+
+    BOOST_TEST_TRAIT_FALSE((has_operator_equal<A, A>));
+    BOOST_TEST_TRAIT_FALSE((has_operator_equal<B, A>));
+    BOOST_TEST_TRAIT_TRUE((has_operator_equal<B, B>));
+    BOOST_TEST_TRAIT_TRUE((has_operator_equal<const B&, const B&>));
+  }
+
+  // has_operator_radd
+  {
+    struct A {};
+    struct B {
+      B& operator+=(const B&) { return *this; }
+    };
+
+    BOOST_TEST_TRAIT_FALSE((has_operator_radd<A, A>));
+    BOOST_TEST_TRAIT_FALSE((has_operator_radd<B, A>));
+    BOOST_TEST_TRAIT_TRUE((has_operator_radd<B, B>));
+    BOOST_TEST_TRAIT_TRUE((has_operator_radd<B&, const B&>));
   }
 
   return boost::report_errors();

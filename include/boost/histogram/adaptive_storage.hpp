@@ -112,32 +112,6 @@ struct adaptive_storage {
   using types =
       mp11::mp_list<void, uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
 
-  class const_iterator
-      : public boost::iterator_facade<const_iterator, value_type,
-                                      boost::random_access_traversal_tag, value_type> {
-  public:
-    const_iterator(const adaptive_storage& parent, std::size_t idx) noexcept
-        : parent_(&parent), idx_(idx) {}
-
-  protected:
-    void increment() noexcept { ++idx_; }
-    void decrement() noexcept { --idx_; }
-    void advance(std::ptrdiff_t n) noexcept { idx_ += n; }
-    std::ptrdiff_t distance_to(const_iterator rhs) const noexcept {
-      return rhs.idx_ - idx_;
-    }
-    bool equal(const_iterator rhs) const noexcept {
-      return parent_ == rhs.parent_ && idx_ == rhs.idx_;
-    }
-    value_type dereference() const { return (*parent_)[idx_]; }
-
-    friend class ::boost::iterator_core_access;
-
-  private:
-    const adaptive_storage* parent_;
-    std::size_t idx_;
-  };
-
   template <typename T>
   static constexpr char type_index() {
     return static_cast<char>(mp11::mp_find<types, T>::value);
@@ -145,12 +119,12 @@ struct adaptive_storage {
 
   struct buffer_type {
     allocator_type alloc;
-    char type;
     std::size_t size;
-    void* ptr;
+    char type = 0;
+    void* ptr = nullptr;
 
     buffer_type(std::size_t s = 0, const allocator_type& a = allocator_type())
-        : alloc(a), type(0), size(s), ptr(nullptr) {}
+        : alloc(a), size(s) {}
 
 #if defined(BOOST_MSVC)
 #pragma warning(push)
@@ -197,6 +171,11 @@ struct adaptive_storage {
       type = type_index<T>();
       ptr = p;
     }
+
+    void set(std::nullptr_t) {
+      type = type_index<void>();
+      ptr = nullptr;
+    }
   };
 
   template <typename F, typename B, typename... Ts>
@@ -219,6 +198,92 @@ struct adaptive_storage {
     return f(b.ptr, b, std::forward<Ts>(ts)...);
   }
 
+  template <class Buffer>
+  class reference_t {
+  public:
+    template <class U, class = mp11::mp_if<std::is_convertible<U, Buffer>, void>>
+    reference_t(const reference_t<U>& rhs) : buffer_(rhs.buffer_), idx_(rhs.idx_) {}
+
+    reference_t(Buffer* b, std::size_t i) : buffer_(b), idx_(i) {}
+
+    operator const double() const { return apply(getter(), *buffer_, idx_); }
+
+    template <class U>
+    bool operator==(const reference_t<U>& rhs) const {
+      return static_cast<double>(*this) == rhs; /* FIXME */
+    }
+
+    template <class U>
+    bool operator!=(const reference_t<U>& rhs) const {
+      return !operator==(rhs);
+    }
+
+  protected:
+    template <class U>
+    friend class reference_t;
+
+    Buffer* buffer_;
+    std::size_t idx_;
+  };
+
+  using const_reference = reference_t<const buffer_type>;
+
+  class reference : public reference_t<buffer_type> {
+    using base_type = reference_t<buffer_type>;
+
+  public:
+    using base_type::base_type;
+
+    template <class T>
+    reference& operator=(const T& t) {
+      apply(setter(), *base_type::buffer_, base_type::idx_, t);
+      return *this;
+    }
+
+    template <class T>
+    reference& operator+=(T&& t) {
+      apply(adder(), *base_type::buffer_, base_type::idx_, t);
+      return *this;
+    }
+
+    reference& operator++() {
+      apply(incrementor(), *base_type::buffer_, base_type::idx_);
+      return *this;
+    }
+  };
+
+  template <class Value, class Reference, class Buffer>
+  class iterator_t
+      : public boost::iterator_adaptor<iterator_t<Value, Reference, Buffer>, std::size_t,
+                                       Value, boost::random_access_traversal_tag,
+                                       Reference, std::ptrdiff_t> {
+
+  public:
+    iterator_t() = default;
+    template <class V, class R, class B>
+    iterator_t(const iterator_t<V, R, B>& it)
+        : iterator_t::iterator_adaptor_(it.base()), buffer_(it.buffer_) {}
+    iterator_t(Buffer* b, std::size_t i) noexcept
+        : iterator_t::iterator_adaptor_(i), buffer_(b) {}
+
+  protected:
+    template <class V, class R, class B>
+    bool equal(const iterator_t<V, R, B>& rhs) const noexcept {
+      return buffer_ == rhs.buffer_ && this->base() == rhs.base();
+    }
+    Reference dereference() const { return {buffer_, this->base()}; }
+
+    friend class ::boost::iterator_core_access;
+    template <class V, class R, class B>
+    friend class iterator_t;
+
+  private:
+    Buffer* buffer_ = nullptr;
+  };
+
+  using const_iterator = iterator_t<const value_type, const_reference, const buffer_type>;
+  using iterator = iterator_t<value_type, reference, buffer_type>;
+
   ~adaptive_storage() { apply(destroyer(), buffer); }
 
   adaptive_storage(const adaptive_storage& o) { apply(setter(), o.buffer, buffer); }
@@ -229,9 +294,8 @@ struct adaptive_storage {
   }
 
   adaptive_storage(adaptive_storage&& o) : buffer(std::move(o.buffer)) {
-    o.buffer.type = 0;
     o.buffer.size = 0;
-    o.buffer.ptr = nullptr;
+    o.buffer.set(nullptr);
   }
 
   adaptive_storage& operator=(adaptive_storage&& o) {
@@ -241,25 +305,17 @@ struct adaptive_storage {
 
   template <typename T>
   adaptive_storage(const storage_adaptor<T>& s) : buffer(s.size()) {
-    // TODO: select appropriate buffer for T
-    buffer.set(buffer.template create<double>());
-    auto it = static_cast<double*>(buffer.ptr);
-    const auto end = it + size();
     std::size_t i = 0;
-    while (it != end) *it++ = s[i++];
+    for (auto&& x : s) apply(setter(), buffer, i++, x);
   }
 
   template <typename T>
   adaptive_storage& operator=(const storage_adaptor<T>& s) {
-    // no check for self-assign needed, since argument is different type
-    // TODO: select appropriate buffer for T instead of double
     apply(destroyer(), buffer);
     buffer.size = s.size();
-    buffer.set(buffer.template create<double>());
-    auto it = static_cast<double*>(buffer.ptr);
-    const auto end = it + size();
+    buffer.set(nullptr);
     std::size_t i = 0;
-    while (it != end) *it++ = s[i++];
+    for (auto&& x : s) apply(setter(), buffer, i++, x);
     return *this;
   }
 
@@ -277,32 +333,8 @@ struct adaptive_storage {
 
   std::size_t size() const { return buffer.size; }
 
-  // increase by one
-  void operator()(std::size_t i) {
-    BOOST_ASSERT(i < size());
-    apply(incrementor(), buffer, i);
-  }
-
-  // increase by weight
-  template <typename T>
-  void operator()(std::size_t i, const weight_type<T>& x) {
-    BOOST_ASSERT(i < size());
-    apply(adder(), buffer, i, x.value);
-  }
-
-  template <typename T>
-  void add(std::size_t i, const T& x) {
-    BOOST_ASSERT(i < size());
-    apply(adder(), buffer, i, x);
-  }
-
-  template <typename T>
-  void set(std::size_t i, const T& x) {
-    BOOST_ASSERT(i < size());
-    apply(setter(), buffer, i, x);
-  }
-
-  double operator[](std::size_t i) const { return apply(getter(), buffer, i); }
+  auto operator[](std::size_t i) { return reference(&buffer, i); }
+  auto operator[](std::size_t i) const { return const_reference(&buffer, i); }
 
   bool operator==(const adaptive_storage& o) const {
     if (size() != o.size()) return false;
@@ -339,7 +371,7 @@ struct adaptive_storage {
   adaptive_storage& operator+=(const S& rhs) {
     const auto n = size();
     BOOST_ASSERT(n == rhs.size());
-    for (std::size_t i = 0; i < n; ++i) add(i, rhs[i]);
+    for (std::size_t i = 0; i < n; ++i) (*this)[i] += rhs[i];
     return *this;
   }
 
@@ -348,8 +380,10 @@ struct adaptive_storage {
     return *this;
   }
 
-  const_iterator begin() const { return {*this, 0}; }
-  const_iterator end() const { return {*this, size()}; }
+  iterator begin() noexcept { return {&buffer, 0}; }
+  iterator end() noexcept { return {&buffer, size()}; }
+  const_iterator begin() const noexcept { return {&buffer, 0}; }
+  const_iterator end() const noexcept { return {&buffer, size()}; }
 
   // used by unit tests, not part of generic storage interface
   template <typename T>

@@ -23,7 +23,7 @@ namespace axis {
 struct null_type {};
 
 /// default metadata type
-using string_type = boost::container::string;
+using default_metadata = boost::container::string;
 
 enum class option_type;
 
@@ -50,67 +50,68 @@ struct sqrt;
 struct pow;
 } // namespace transform
 
-template <typename RealType = double, typename Transform = transform::id,
-          typename MetaData = string_type, option_type Options = option_type::uoflow>
+template <class RealType = double, class Transform = transform::id,
+          class MetaData = default_metadata, option_type Options = option_type::uoflow>
 class regular;
 
-template <typename RealType = double, typename MetaData = string_type,
+template <class RealType = double, class MetaData = default_metadata,
           option_type Options = option_type::overflow>
 using circular =
     regular<RealType, transform::id, MetaData, Options | option_type::circular>;
 
-template <typename IntType = int, typename MetaData = string_type,
+template <class IntType = int, class MetaData = default_metadata,
           option_type Options = option_type::underflow | option_type::overflow>
 class integer;
 
-template <typename RealType = double, typename MetaData = string_type,
+template <class RealType = double, class MetaData = default_metadata,
           option_type Options = option_type::uoflow,
-          typename Allocator = boost::container::new_allocator<RealType>>
+          class Allocator = boost::container::new_allocator<RealType>>
 class variable;
 
-template <typename T = int, typename MetaData = string_type,
+template <class T = int, class MetaData = default_metadata,
           option_type Options = option_type::overflow,
-          typename Allocator = boost::container::new_allocator<T>>
+          class Allocator = boost::container::new_allocator<T>>
 class category;
 
-template <typename... Ts>
+template <class... Ts>
 class variant;
 } // namespace axis
 
-template <typename T>
+template <class T>
 struct weight_type;
 
-template <typename T>
+template <class T>
 struct sample_type;
 
 namespace accumulators {
-template <typename RealType = double>
+template <class RealType = double>
 class sum;
-template <typename RealType = double>
+template <class RealType = double>
 class weighted_sum;
-template <typename RealType = double>
+template <class RealType = double>
 class mean;
-template <typename RealType = double>
+template <class RealType = double>
 class weighted_mean;
 } // namespace accumulators
 
 struct unsafe_access;
 
-template <typename T>
-struct storage_adaptor;
-
-template <typename Allocator = boost::container::new_allocator<void>>
+template <class Allocator = boost::container::new_allocator<void>>
 struct adaptive_storage;
 
-using default_storage = adaptive_storage<>;
-using weight_storage =
-    storage_adaptor<boost::container::vector<accumulators::weighted_sum<>>>;
-using profile_storage = storage_adaptor<boost::container::vector<accumulators::mean<>>>;
-using weighted_profile_storage =
-    storage_adaptor<boost::container::vector<accumulators::weighted_mean<>>>;
+template <class T>
+struct storage_adaptor;
 
-template <class Axes, class Storage>
-class BOOST_HISTOGRAM_NODISCARD grid;
+template <class T, class A = boost::container::new_allocator<T>>
+using dense_storage = storage_adaptor<boost::container::vector<T, A>>;
+
+using default_storage = adaptive_storage<>;
+
+using weight_storage = dense_storage<accumulators::weighted_sum<>>;
+
+using profile_storage = dense_storage<accumulators::mean<>>;
+
+using weighted_profile_storage = dense_storage<accumulators::weighted_mean<>>;
 
 template <class Axes, class Storage = default_storage>
 class BOOST_HISTOGRAM_NODISCARD histogram;

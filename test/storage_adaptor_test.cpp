@@ -38,7 +38,7 @@ void tests() {
     e = std::move(d);
     BOOST_TEST_EQ(e.size(), 2);
 
-    T t;
+    const auto t = T();
     storage_adaptor<T> g(t); // tests converting ctor
   }
 
@@ -46,44 +46,28 @@ void tests() {
   {
     storage_adaptor<T> a;
     a.reset(1);
-    a(0);
-    a(0);
+    ++a[0];
+    ++a[0];
     BOOST_TEST_EQ(a[0], 2);
     a.reset(2);
     BOOST_TEST_EQ(a.size(), 2);
-    a(0);
-    a.add(0, 2);
-    a.add(1, 5);
+    ++a[0];
+    a[0] += 2;
+    a[1] += 5;
     BOOST_TEST_EQ(a[0], 3);
     BOOST_TEST_EQ(a[1], 5);
-    a.set(1, 9);
+    a[1] = 9;
     BOOST_TEST_EQ(a[0], 3);
     BOOST_TEST_EQ(a[1], 9);
     a.reset(0);
     BOOST_TEST_EQ(a.size(), 0);
   }
 
-  // multiply
-  {
-    storage_adaptor<T> a;
-    a.reset(2);
-    a(0);
-    a *= 3;
-    BOOST_TEST_EQ(a[0], 3);
-    BOOST_TEST_EQ(a[1], 0);
-    a.add(1, 2);
-    BOOST_TEST_EQ(a[0], 3);
-    BOOST_TEST_EQ(a[1], 2);
-    a *= 3;
-    BOOST_TEST_EQ(a[0], 9);
-    BOOST_TEST_EQ(a[1], 6);
-  }
-
   // copy
   {
     storage_adaptor<T> a;
     a.reset(1);
-    a(0);
+    ++a[0];
     decltype(a) b;
     b.reset(2);
     BOOST_TEST(!(a == b));
@@ -102,7 +86,7 @@ void tests() {
   {
     storage_adaptor<T> a;
     a.reset(1);
-    a(0);
+    ++a[0];
     decltype(a) b;
     BOOST_TEST(!(a == b));
     b = std::move(a);
@@ -111,31 +95,6 @@ void tests() {
     decltype(a) c(std::move(b));
     BOOST_TEST_EQ(c.size(), 1);
     BOOST_TEST_EQ(c[0], 1);
-  }
-
-  // add
-  {
-    storage_adaptor<T> a;
-    a.reset(2);
-    a(1);
-    auto b = a;
-    b += a;
-    BOOST_TEST_EQ(b[0], 0);
-    BOOST_TEST_EQ(b[1], 2);
-    a += a;
-    // also test self-add
-    BOOST_TEST_EQ(a[0], 0);
-    BOOST_TEST_EQ(a[1], 2);
-  }
-
-  // multiply
-  {
-    storage_adaptor<T> a;
-    a.reset(2);
-    a(1);
-    a *= 2;
-    BOOST_TEST_EQ(a[0], 0);
-    BOOST_TEST_EQ(a[1], 2);
   }
 }
 
@@ -149,13 +108,11 @@ void mixed_tests() {
     B c, d;
     c.reset(1);
     d.reset(2);
-    a(0);
-    b(0);
-    c(0);
-    c(0);
-    d(0);
-    d.add(1, 5);
-    d.add(0, 2);
+    ++a[0];
+    ++b[0];
+    c[0] += 2;
+    d[0] = 3;
+    d[1] = 5;
     BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_EQ(b[0], 1);
     BOOST_TEST_EQ(c[0], 2);
@@ -171,7 +128,7 @@ void mixed_tests() {
   {
     A a;
     a.reset(2);
-    a(1);
+    ++a[1];
     B b(a);
     B c;
     c = a;
@@ -201,13 +158,11 @@ int main() {
   {
     auto a = storage_adaptor<std::vector<accumulators::weighted_sum<double>>>();
     a.reset(1);
-    a(0);
-    a.add(0, 1);
-    a.add(0, accumulators::weighted_sum<double>(1, 0));
-    BOOST_TEST_EQ(a[0].value(), 3);
-    BOOST_TEST_EQ(a[0].variance(), 2);
-    auto weight = 2;
-    a(0, weight);
+    a[0]();
+    a[0](1); // rvalue weight
+    const auto weight = 2;
+    a[0](weight); // lvalue weight
+    a[0] += accumulators::weighted_sum<double>(1, 0);
     BOOST_TEST_EQ(a[0].value(), 5);
     BOOST_TEST_EQ(a[0].variance(), 6);
   }
@@ -216,9 +171,9 @@ int main() {
   {
     auto a = storage_adaptor<std::vector<accumulators::weighted_mean<double>>>();
     a.reset(1);
-    a(0, /* sample */ 1);
-    a(0, /* weight */ 2, /* sample */ 2);
-    a.add(0, accumulators::weighted_mean<>(1, 0, 0, 0));
+    a[0](/* sample */ 1);
+    a[0](/* weight */ 2, /* sample */ 2);
+    a[0] += accumulators::weighted_mean<>(1, 0, 0, 0);
     BOOST_TEST_EQ(a[0].sum_of_weights(), 4);
     BOOST_TEST_IS_CLOSE(a[0].value(), 1.25, 1e-3);
     BOOST_TEST_IS_CLOSE(a[0].variance(), 0.242, 1e-3);
@@ -248,19 +203,22 @@ int main() {
     BOOST_TEST_EQ(a[9], 0);
     BOOST_TEST_EQ(db.sum.first, baseline);
 
-    a(5); // causes one allocation
+    ++a[5]; // causes one allocation
     BOOST_TEST_EQ(a[5], 1);
     BOOST_TEST_EQ(db.sum.first, baseline + 1);
-    a *= 2; // no additional allocations from multiplication
-    BOOST_TEST_EQ(a[5], 2);
-    BOOST_TEST_EQ(db.sum.first, baseline + 1);
+    a[4] += 2; // causes one allocation
+    BOOST_TEST_EQ(a[4], 2);
+    BOOST_TEST_EQ(db.sum.first, baseline + 2);
+    const auto baseline_dealloc = db.sum.second;
+    a[4] = 0; // causes one deallocation
+    BOOST_TEST_EQ(db.sum.second, baseline_dealloc + 1);
 
     auto b = storage_adaptor<std::vector<int>>();
     b.reset(5);
-    b(2);
+    ++b[2];
     a = b;
     // only one new allocation for non-zero value
-    BOOST_TEST_EQ(db.sum.first, baseline + 2);
+    BOOST_TEST_EQ(db.sum.first, baseline + 3);
   }
 
   return boost::report_errors();

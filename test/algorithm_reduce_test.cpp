@@ -41,13 +41,13 @@ void run_tests() {
     | 1 1 0 0
     v 0 2 1 3
     */
-    unsafe_access::set_value(h, {0, 0}, 1);
-    unsafe_access::set_value(h, {0, 1}, 1);
-    unsafe_access::set_value(h, {1, 1}, 1);
-    unsafe_access::set_value(h, {1, 2}, 2);
-    unsafe_access::set_value(h, {2, 0}, 1);
-    unsafe_access::set_value(h, {2, 2}, 1);
-    unsafe_access::set_value(h, {3, 2}, 3);
+    h.at(0, 0) = 1;
+    h.at(0, 1) = 1;
+    h.at(1, 1) = 1;
+    h.at(1, 2) = 2;
+    h.at(2, 0) = 1;
+    h.at(2, 2) = 1;
+    h.at(3, 2) = 3;
 
     // should do nothing, index order does not matter
     auto hr = reduce(h, shrink(1, -1, 2), rebin(0, 1));

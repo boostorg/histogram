@@ -100,7 +100,6 @@ compiled_test(test/indexed_test.cpp)
 compiled_test(test/internal_accumulators_test.cpp)
 compiled_test(test/meta_test.cpp)
 compiled_test(test/storage_adaptor_test.cpp)
-compiled_test(test/unsafe_access_test.cpp)
 compiled_test(test/utility_test.cpp)
 
 compiled_test(examples/getting_started_listing_01.cpp)
@@ -140,6 +139,8 @@ endif()
 
 if (TEST_ACCUMULATORS_SUPPORT) # test support for external boost::accumulators
   compiled_test(test/boost_accumulators_support_test.cpp)
+  target_compile_definitions(boost_accumulators_support_test
+    PRIVATE -DBOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT)
 endif()
 
 if (TEST_RANGE_SUPPORT) # test support for external boost::range
