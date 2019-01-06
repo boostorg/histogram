@@ -400,5 +400,16 @@ int main() {
     // adaptive_storage_type::iterator it3 = aconst.begin();
   }
 
+  // compare reference
+  {
+    auto a = prepare<void>(1);
+    auto b = prepare<uint32_t>(1);
+    BOOST_TEST_EQ(a[0], b[0]);
+    a[0] = 1;
+    BOOST_TEST_NE(a[0], b[0]);
+    b[0] = 1;
+    BOOST_TEST_EQ(a[0], b[0]);
+  }
+
   return boost::report_errors();
 }

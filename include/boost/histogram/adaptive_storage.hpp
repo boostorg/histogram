@@ -210,7 +210,7 @@ struct adaptive_storage {
 
     template <class U>
     bool operator==(const reference_t<U>& rhs) const {
-      return static_cast<double>(*this) == rhs; /* FIXME */
+      return apply(comparer_at_index(), *buffer_, idx_, *rhs.buffer_, rhs.idx_);
     }
 
     template <class U>
@@ -331,12 +331,12 @@ struct adaptive_storage {
     buffer.set(buffer.template create<void>());
   }
 
-  std::size_t size() const { return buffer.size; }
+  std::size_t size() const noexcept { return buffer.size; }
 
-  auto operator[](std::size_t i) { return reference(&buffer, i); }
-  auto operator[](std::size_t i) const { return const_reference(&buffer, i); }
+  reference operator[](std::size_t i) noexcept { return {&buffer, i}; }
+  const_reference operator[](std::size_t i) const noexcept { return {&buffer, i}; }
 
-  bool operator==(const adaptive_storage& o) const {
+  bool operator==(const adaptive_storage& o) const noexcept {
     if (size() != o.size()) return false;
     return apply(comparer(), buffer, o.buffer);
   }
@@ -590,6 +590,32 @@ struct adaptive_storage {
     bool operator()(const T* tp, const Buffer& b, const OBuffer& ob) {
       BOOST_ASSERT(b.size == ob.size);
       return apply(inner(), ob, tp);
+    }
+  };
+
+  struct comparer_at_index {
+    struct inner {
+      template <class OT, class OBuffer, class T>
+      bool operator()(const OT* ptr, const OBuffer&, std::size_t i, T&& t) {
+        return cmp()(ptr[i], t);
+      }
+
+      template <class OBuffer, class T>
+      bool operator()(const void*, const OBuffer&, std::size_t, T&& t) {
+        return cmp()(0u, t);
+      }
+    };
+
+    template <class T, class Buffer, class OBuffer>
+    bool operator()(const T* ptr, const Buffer&, std::size_t i, const OBuffer& ob,
+                    std::size_t oi) {
+      return apply(inner(), ob, oi, ptr[i]);
+    }
+
+    template <class Buffer, class OBuffer>
+    bool operator()(const void*, const Buffer&, std::size_t, const OBuffer& ob,
+                    std::size_t oi) {
+      return apply(inner(), ob, oi, 0u);
     }
   };
 
