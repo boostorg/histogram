@@ -206,7 +206,7 @@ struct adaptive_storage {
 
     reference_t(Buffer* b, std::size_t i) : buffer_(b), idx_(i) {}
 
-    operator const double() const { return apply(getter(), *buffer_, idx_); }
+    operator double() const { return apply(getter(), *buffer_, idx_); }
 
     template <class U>
     bool operator==(const reference_t<U>& rhs) const {

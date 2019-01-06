@@ -82,7 +82,10 @@ struct array_impl : T {
     size_ = n;
   }
 
-  std::size_t size() const { return size_; }
+  typename T::iterator end() noexcept { return T::begin() + size_; }
+  typename T::const_iterator end() const noexcept { return T::begin() + size_; }
+
+  std::size_t size() const noexcept { return size_; }
 
   std::size_t size_ = 0;
 };
