@@ -57,6 +57,11 @@ void run_1d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
     ++it;
   }
   BOOST_TEST(it == ind.end());
+
+  for (auto&& x : indexed(h, IncludeExtraBins())) *x = 0;
+
+  for (auto&& x : indexed(static_cast<const decltype(h)&>(h), IncludeExtraBins()))
+    BOOST_TEST_EQ(*x, 0);
 }
 
 template <class IsDynamic, class IncludeExtraBins>
