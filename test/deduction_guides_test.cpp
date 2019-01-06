@@ -19,7 +19,6 @@ namespace tr = axis::transform;
 // tests requires a C++17 compatible compiler
 
 int main() {
-#if __cpp_deduction_guides >= 201611
   {
     axis::regular a(1, 0.0, 1.0);
     axis::regular b(1, 0, 1);
@@ -95,14 +94,12 @@ int main() {
     BOOST_TEST_EQ(a.axis(1), a1);
 
     auto a2 = axis::regular(5, 0, 5, axis::null_type());
+    // don't use deduction guides for vector, support depends on stdc++ version
     std::vector<decltype(a0)> axes{{a0, a2}};
     auto b = histogram(axes, weight_storage());
     BOOST_TEST_EQ(b.rank(), 2);
     BOOST_TEST_EQ(b.axis(0), a0);
     BOOST_TEST_EQ(b.axis(1), a2);
   }
-#else
-#warning "tests are compiled but compiler lacks support"
-#endif
   return boost::report_errors();
 }
