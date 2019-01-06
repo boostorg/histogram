@@ -147,9 +147,19 @@ if (TEST_RANGE_SUPPORT) # test support for external boost::range
   compiled_test(test/boost_range_support_test.cpp)
 endif()
 
-if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES) # test support for optional C++17 features
-  compiled_test(test/deduction_guides_test.cpp)
-  target_compile_features(deduction_guides_test PRIVATE cxx_std_17)
+if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES) # test C++17 features
+  # check above is not enough: cxx_std_17 is set for gcc-5.5, but there is no support for
+  # deduction guides until gcc-7
+  file(WRITE ${CMAKE_BINARY_DIR}/feature_detect/deduction_guide_support.cpp
+    "template <class T> struct A { A(T) {} }; A(int) -> A<int>; int main() {}")
+  try_compile(COMPILER_HAS_DEDUCTION_GUIDE_SUPPORT
+              ${CMAKE_BINARY_DIR}/feature_detect
+              ${CMAKE_BINARY_DIR}/feature_detect/deduction_guide_support.cpp
+              CXX_STANDARD 17)
+  if (COMPILER_HAS_DEDUCTION_GUIDE_SUPPORT)
+    compiled_test(test/deduction_guides_test.cpp)
+    target_compile_features(deduction_guides_test PRIVATE cxx_std_17)
+  endif()
 endif()
 
 if (BUILD_BENCHMARKS)
