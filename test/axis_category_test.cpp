@@ -5,13 +5,10 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis/category.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
 #include <limits>
 #include <sstream>
 #include <string>
-#include <type_traits>
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;

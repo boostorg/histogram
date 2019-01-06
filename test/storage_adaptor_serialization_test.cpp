@@ -22,8 +22,8 @@ template <typename T>
 void test_serialization() {
   auto a = storage_adaptor<T>();
   a.reset(3);
-  a(0);
-  a(2);
+  a[1] += 1;
+  a[2] += 2;
   std::string buf;
   {
     std::ostringstream os;

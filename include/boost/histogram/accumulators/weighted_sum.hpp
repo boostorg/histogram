@@ -95,5 +95,16 @@ struct common_type<boost::histogram::accumulators::weighted_sum<T>,
                    boost::histogram::accumulators::weighted_sum<U>> {
   using type = boost::histogram::accumulators::weighted_sum<common_type_t<T, U>>;
 };
+
+template <class T, class U>
+struct common_type<boost::histogram::accumulators::weighted_sum<T>, U> {
+  using type = boost::histogram::accumulators::weighted_sum<common_type_t<T, U>>;
+};
+
+template <class T, class U>
+struct common_type<T, boost::histogram::accumulators::weighted_sum<U>> {
+  using type = boost::histogram::accumulators::weighted_sum<common_type_t<T, U>>;
+};
+
 } // namespace std
 #endif

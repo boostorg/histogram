@@ -143,17 +143,29 @@ using get_storage_tag = typename T::storage_tag;
 template <typename T>
 using is_storage = mp11::mp_valid<get_storage_tag, T>;
 
-#define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond)      \
-  template <typename U>                              \
-  struct name##_impl {                               \
-    template <typename T, typename = decltype(cond)> \
-    static std::true_type Test(void*);               \
-    template <typename T>                            \
-    static std::false_type Test(...);                \
-    using type = decltype(Test<U>(nullptr));         \
-  };                                                 \
-  template <typename T>                              \
+#define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond) \
+  template <class TT>                           \
+  struct name##_impl {                          \
+    template <class T, class = decltype(cond)>  \
+    static std::true_type Test(std::nullptr_t); \
+    template <class T>                          \
+    static std::false_type Test(...);           \
+    using type = decltype(Test<TT>(nullptr));   \
+  };                                            \
+  template <class T>                            \
   using name = typename name##_impl<T>::type
+
+#define BOOST_HISTOGRAM_MAKE_BINARY_SFINAE(name, cond)  \
+  template <class TT, class UU>                         \
+  struct name##_impl {                                  \
+    template <class T, class U, class = decltype(cond)> \
+    static std::true_type Test(std::nullptr_t);         \
+    template <class T, class U>                         \
+    static std::false_type Test(...);                   \
+    using type = decltype(Test<TT, UU>(nullptr));       \
+  };                                                    \
+  template <class T, class U = T>                       \
+  using name = typename name##_impl<T, U>::type
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
 
@@ -200,9 +212,6 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable_container, (std::declval<T&>()[0], &T::
                                                      std::begin(std::declval<T&>()),
                                                      std::end(std::declval<T&>())));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_equal_comparable,
-                            (std::declval<T&>() == std::declval<T&>()));
-
 // is_axis is false for axis::variant, because operator() is templated
 BOOST_HISTOGRAM_MAKE_SFINAE(is_axis, (&T::size, &T::operator()));
 
@@ -215,6 +224,16 @@ BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
 BOOST_HISTOGRAM_MAKE_SFINAE(is_incrementable, (++std::declval<T&>()));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_fixed_size, (std::tuple_size<T>::value));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_operator_rmul, (std::declval<T&>() *= 1.0));
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_operator_preincrement, (++std::declval<T&>()));
+
+BOOST_HISTOGRAM_MAKE_BINARY_SFINAE(has_operator_equal, (std::declval<const T&>() ==
+                                                        std::declval<const U&>()));
+
+BOOST_HISTOGRAM_MAKE_BINARY_SFINAE(has_operator_radd,
+                                   (std::declval<T&>() += std::declval<U&>()));
 
 template <typename T>
 struct is_tuple_impl : std::false_type {};
@@ -267,52 +286,48 @@ template <typename T>
 using is_sample = is_sample_impl<unqual<T>>;
 
 // poor-mans concept checks
-template <typename T, typename = decltype(*std::declval<T&>(), ++std::declval<T&>())>
+template <class B>
+using requires = std::enable_if_t<B::value>;
+
+template <class T, class = decltype(*std::declval<T&>(), ++std::declval<T&>())>
 struct requires_iterator {};
 
-template <typename T, typename = mp11::mp_if<is_iterable<unqual<T>>, void>>
+template <class T, class = requires<is_iterable<unqual<T>>>>
 struct requires_iterable {};
 
-template <typename T, typename = mp11::mp_if<is_axis<unqual<T>>, void>>
+template <class T, class = requires<is_axis<unqual<T>>>>
 struct requires_axis {};
 
-template <typename T, typename = mp11::mp_if<is_any_axis<unqual<T>>, void>>
+template <class T, class = requires<is_any_axis<unqual<T>>>>
 struct requires_any_axis {};
 
-template <typename T, typename = mp11::mp_if<is_sequence_of_axis<unqual<T>>, void>>
+template <class T, class = requires<is_sequence_of_axis<unqual<T>>>>
 struct requires_sequence_of_axis {};
 
-template <typename T,
-          typename = mp11::mp_if<is_sequence_of_axis_variant<unqual<T>>, void>>
+template <class T, class = requires<is_sequence_of_axis_variant<unqual<T>>>>
 struct requires_sequence_of_axis_variant {};
 
-template <typename T, typename = mp11::mp_if<is_sequence_of_any_axis<unqual<T>>, void>>
+template <class T, class = requires<is_sequence_of_any_axis<unqual<T>>>>
 struct requires_sequence_of_any_axis {};
 
-template <typename T,
-          typename = mp11::mp_if<is_any_axis<mp11::mp_first<unqual<T>>>, void>>
+template <class T, class = requires<is_any_axis<mp11::mp_first<unqual<T>>>>>
 struct requires_axes {};
 
+template <class T, class U, class = requires<std::is_convertible<T, U>>>
+struct requires_convertible {};
+
 template <typename T>
-T make_default(const T& t) {
+auto make_default(const T& t) {
   using U = unqual<T>;
   return static_if<has_allocator<U>>([](const auto& t) { return U(t.get_allocator()); },
                                      [](const auto&) { return U(); }, t);
 }
 
 template <typename T>
-constexpr bool relaxed_equal_impl(std::true_type, const T& a, const T& b) noexcept {
-  return a == b;
-}
-
-template <typename T>
-constexpr bool relaxed_equal_impl(std::false_type, const T&, const T&) noexcept {
-  return true;
-}
-
-template <typename T>
 constexpr bool relaxed_equal(const T& a, const T& b) noexcept {
-  return relaxed_equal_impl(is_equal_comparable<unqual<T>>(), a, b);
+  return static_if<has_operator_equal<unqual<T>>>(
+      [](const auto& a, const auto& b) { return a == b; },
+      [](const auto&, const auto&) { return true; }, a, b);
 }
 
 template <typename T>
@@ -345,13 +360,13 @@ R get_scale(const T& t) {
 }
 
 struct product {
-  auto operator()() { return 1.0; }
+  auto operator()() { return 1.0; } // namespace detail
 
   template <class T, class... Ts>
   auto operator()(T t, Ts... ts) {
     return t * product()(ts...);
   }
-};
+}; // namespace histogram
 
 } // namespace detail
 } // namespace histogram

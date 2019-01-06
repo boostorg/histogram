@@ -13,7 +13,6 @@
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
-
 #include <boost/throw_exception.hpp>
 #include <cmath>
 #include <limits>
@@ -66,16 +65,16 @@ inline reduce_option_type shrink(double lower, double upper) {
 /// Convenience overload for single axis.
 inline reduce_option_type rebin(unsigned merge) { return rebin(0, merge); }
 
-template <typename Grid, typename C, typename = detail::requires_iterable<C>>
-decltype(auto) reduce(const Grid& grid, const C& options) {
-  using axes_type = typename Grid::axes_type;
+template <class Histogram, class C, class = detail::requires_iterable<C>>
+decltype(auto) reduce(const Histogram& h, const C& options) {
+  using axes_type = typename Histogram::axes_type;
 
   struct option_item : reduce_option_type {
     int begin, end;
     bool is_set() const noexcept { return reduce_option_type::merge > 0; }
   };
 
-  auto options_internal = detail::axes_buffer<axes_type, option_item>(grid.rank());
+  auto options_internal = detail::axes_buffer<axes_type, option_item>(h.rank());
   for (const auto& o : options) {
     auto& oi = options_internal[o.iaxis];
     if (oi.is_set()) // did we already set the option for this axis?
@@ -85,10 +84,10 @@ decltype(auto) reduce(const Grid& grid, const C& options) {
     oi.merge = o.merge;
   }
 
-  auto axes = detail::make_empty_axes(unsafe_access::axes(grid));
+  auto axes = detail::make_empty_axes(unsafe_access::axes(h));
 
   unsigned iaxis = 0;
-  grid.for_each_axis([&](const auto& a) {
+  h.for_each_axis([&](const auto& a) {
     using T = detail::unqual<decltype(a)>;
 
     auto& o = options_internal[iaxis];
@@ -113,10 +112,11 @@ decltype(auto) reduce(const Grid& grid, const C& options) {
     ++iaxis;
   });
 
-  auto result = Grid(std::move(axes), detail::make_default(unsafe_access::storage(grid)));
+  auto result =
+      Histogram(std::move(axes), detail::make_default(unsafe_access::storage(h)));
 
-  detail::axes_buffer<axes_type, int> idx(grid.rank());
-  for (auto x : indexed(grid, true)) {
+  detail::axes_buffer<axes_type, int> idx(h.rank());
+  for (auto x : indexed(h, true)) {
     auto i = idx.begin();
     auto o = options_internal.begin();
     for (auto j : x) {
@@ -131,16 +131,16 @@ decltype(auto) reduce(const Grid& grid, const C& options) {
       ++i;
       ++o;
     }
-    unsafe_access::add_value(result, idx, *x);
+    result.at(idx) += *x;
   }
 
   return result;
 }
 
-template <class Grid, class... Ts>
-decltype(auto) reduce(const Grid& grid, const reduce_option_type& t, Ts&&... ts) {
+template <class Histogram, class... Ts>
+decltype(auto) reduce(const Histogram& h, const reduce_option_type& t, Ts&&... ts) {
   // this must be in one line, because any of the ts could be a temporary
-  return reduce(grid, std::initializer_list<reduce_option_type>{t, ts...});
+  return reduce(h, std::initializer_list<reduce_option_type>{t, ts...});
 }
 
 } // namespace algorithm

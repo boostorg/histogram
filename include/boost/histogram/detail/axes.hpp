@@ -1,4 +1,4 @@
-// Copyright 2015-2017 Hans Dembinski
+// Copyright 2015-2018 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -20,6 +20,9 @@
 #include <tuple>
 #include <type_traits>
 #include <vector>
+#ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
+#include <boost/accumulators/accumulators.hpp>
+#endif
 
 /* Most of the histogram code is generic and works for any number of axes. Buffers with a
  * fixed maximum capacity are used in some places, which have a size equal to the rank of
@@ -36,6 +39,15 @@
 namespace boost {
 namespace histogram {
 namespace detail {
+
+template <typename T>
+struct is_accumulator_set : std::false_type {};
+
+#ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
+template <typename... Ts>
+struct is_accumulator_set<::boost::accumulators::accumulator_set<Ts...>>
+    : std::true_type {};
+#endif
 
 template <unsigned N, typename... Ts>
 decltype(auto) axis_get(std::tuple<Ts...>& axes) {
@@ -268,8 +280,8 @@ void linearize_index(optional_index& out, const T& axis, const int j) {
   linearize(out, extend, j + (opt & axis::option_type::underflow));
 }
 
-// special case: histogram::operator(tuple(1, 2)) is called on 1d histogram with axis
-// that accepts 2d tuple, this should work and not fail
+// special case: if histogram::operator()(tuple(1, 2)) is called on 1d histogram with axis
+// that accepts 2d tuple, this should not fail
 // - solution is to forward tuples of size > 1 directly to axis for 1d histograms
 // - has nice side-effect of making histogram::operator(1, 2) work as well
 // - cannot detect call signature of axis at compile-time in all configurations
@@ -348,30 +360,52 @@ constexpr std::pair<int, int> weight_sample_indices() {
   return std::make_pair(-1, -1);
 }
 
-template <typename S, typename T>
-void fill_storage_impl(mp11::mp_int<-1>, mp11::mp_int<-1>, S& storage, std::size_t i,
-                       const T&) {
-  storage(i);
+template <class T, class U>
+void fill_storage_impl(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, U&&) {
+  static_if<is_incrementable<T>>([](auto&& t) { ++t; }, [](auto&& t) { t(); },
+                                 std::forward<T>(t));
 }
 
-template <int Iw, typename S, typename T>
-void fill_storage_impl(mp11::mp_int<Iw>, mp11::mp_int<-1>, S& storage, std::size_t i,
-                       const T& args) {
-  storage(i, std::get<Iw>(args));
+template <class IW, class T, class U>
+void fill_storage_impl(IW, mp11::mp_int<-1>, T&& t, U&& args) {
+  static_if<is_incrementable<T>>(
+      [](auto&& t, const auto& w) { t += w; },
+      [](auto&& t, const auto& w) {
+#ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
+        static_if<is_accumulator_set<unqual<T>>>(
+            [w](auto&& t) { t(::boost::accumulators::weight = w); },
+            [w](auto&& t) { t(w); }, t);
+#else
+        t(w);
+#endif
+      },
+      std::forward<T>(t), std::get<IW::value>(args).value);
 }
 
-template <int Is, typename S, typename T>
-void fill_storage_impl(mp11::mp_int<-1>, mp11::mp_int<Is>, S& storage, std::size_t i,
-                       const T& args) {
-  mp11::tuple_apply([&](auto&&... sargs) { storage(i, sargs...); },
-                    std::get<Is>(args).value);
+template <class IS, class T, class U>
+void fill_storage_impl(mp11::mp_int<-1>, IS, T&& t, U&& args) {
+  mp11::tuple_apply([&t](auto&&... args) { t(args...); },
+                    std::get<IS::value>(args).value);
 }
 
-template <int Iw, int Is, typename S, typename T>
-void fill_storage_impl(mp11::mp_int<Iw>, mp11::mp_int<Is>, S& storage, std::size_t i,
-                       const T& args) {
-  mp11::tuple_apply([&](auto&&... sargs) { storage(i, std::get<Iw>(args), sargs...); },
-                    std::get<Is>(args).value);
+template <class IW, class IS, class T, class U>
+void fill_storage_impl(IW, IS, T&& t, U&& args) {
+#ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
+  static_if<is_accumulator_set<unqual<T>>>(
+      [](auto&& t, const auto& w, const auto& s) {
+        mp11::tuple_apply(
+            [&](auto&&... args) { t(args..., ::boost::accumulators::weight = w); }, s);
+      },
+      [](auto&& t, const auto& w, const auto& s) {
+        mp11::tuple_apply([&](auto&&... args) { t(w, args...); }, s);
+      },
+      std::forward<T>(t), std::get<IW::value>(args).value,
+      std::get<IS::value>(args).value);
+#else
+  mp11::tuple_apply(
+      [&](auto&&... args2) { t(std::get<IW::value>(args).value, args2...); },
+      std::get<IS::value>(args).value);
+#endif
 }
 
 template <typename S, typename T, typename... Us>
@@ -383,8 +417,8 @@ void fill_impl(S& storage, const T& axes, const std::tuple<Us...>& args) {
                                   : 0;
   optional_index idx = args_to_index<offset, n>(axes, args);
   if (idx) {
-    fill_storage_impl(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(), storage,
-                      *idx, args);
+    fill_storage_impl(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(),
+                      storage[*idx], args);
   }
 }
 

@@ -112,7 +112,7 @@ void serialize(Archive& ar, storage_adaptor<T>& s, unsigned /* version */) {
   auto size = s.size();
   ar& size;
   if (Archive::is_loading::value) { s.reset(size); }
-  ar& s.container_;
+  ar& static_cast<T&>(s);
 }
 
 namespace detail {

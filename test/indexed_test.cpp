@@ -10,7 +10,6 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/literals.hpp>
-#include <boost/histogram/unsafe_access.hpp>
 #include <boost/mp11.hpp>
 #include <iterator>
 #include <vector>
@@ -98,7 +97,7 @@ void run_density_tests(mp_list<IsDynamic, IncludeExtraBins>) {
   auto h = make_s(IsDynamic(), std::vector<int>(), ax, ay, az);
 
   // fill uniformly
-  for (unsigned i = 0; i < h.size(); ++i) { unsafe_access::storage(h).set(i, 1); }
+  for (auto&& x : h) x = 1;
 
   for (auto x : indexed(h, IncludeExtraBins())) {
     BOOST_TEST_EQ(x.density(), *x / (x.bin(0).width() * x.bin(2).width()));

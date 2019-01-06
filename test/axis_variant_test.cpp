@@ -7,7 +7,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
 #include <sstream>
 #include <string>
 #include <type_traits>

@@ -6,7 +6,6 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/axis/regular.hpp>

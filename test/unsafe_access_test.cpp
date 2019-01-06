@@ -17,7 +17,7 @@ template <typename Tag>
 void run_tests() {
   using reg = axis::regular<>;
   auto h = make(Tag(), reg(4, 1, 5), reg(3, -1, 2));
-  for (std::size_t i = 0; i < h.size(); ++i) unsafe_access::storage(h).set(i, 1);
+  for (auto&& x : h) x = 1;
 
   unsafe_access::set_value(h, {0, 0}, 5);
   BOOST_TEST_EQ(h.at(0, 0), 5);
