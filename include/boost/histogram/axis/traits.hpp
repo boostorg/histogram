@@ -30,15 +30,14 @@ axis::option_type options_impl(const T& t, std::true_type) {
 
 template <typename FIntArg, typename FDoubleArg, typename T>
 decltype(auto) value_method_switch(FIntArg&& iarg, FDoubleArg&& darg, const T& t) {
-  using U = unqual<T>;
-  return static_if<has_method_value<U>>(
+  return static_if<has_method_value<T>>(
       [](FIntArg&& iarg, FDoubleArg&& darg, const auto& t) {
-        using A = unqual<decltype(t)>;
+        using A = naked<decltype(t)>;
         return static_if<std::is_same<arg_type<decltype(&A::value), 0>, int>>(
             std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
       },
       [](FIntArg&&, FDoubleArg&&, const auto& t) {
-        using A = unqual<decltype(t)>;
+        using A = naked<decltype(t)>;
         BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
             boost::core::demangled_name(BOOST_CORE_TYPEID(A)), " has no value method")));
         return 0;
@@ -48,16 +47,15 @@ decltype(auto) value_method_switch(FIntArg&& iarg, FDoubleArg&& darg, const T& t
 
 template <typename R1, typename R2, typename FIntArg, typename FDoubleArg, typename T>
 R2 value_method_switch_with_return_type(FIntArg&& iarg, FDoubleArg&& darg, const T& t) {
-  using U = unqual<T>;
-  return static_if<has_method_value_with_convertible_return_type<U, R1>>(
+  return static_if<has_method_value_with_convertible_return_type<T, R1>>(
       [](FIntArg&& iarg, FDoubleArg&& darg, const auto& t) -> R2 {
-        using A = unqual<decltype(t)>;
+        using A = naked<decltype(t)>;
         return static_if<std::is_same<arg_type<decltype(&A::value), 0>, int>>(
             std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
       },
       [](FIntArg&&, FDoubleArg&&, const auto&) -> R2 {
         BOOST_THROW_EXCEPTION(std::runtime_error(
-            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
+            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
                         " has no value method or return type is not convertible to ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(R1)))));
       },
@@ -69,7 +67,7 @@ namespace axis {
 namespace traits {
 template <typename T>
 decltype(auto) metadata(T&& t) noexcept {
-  return detail::static_if<detail::has_method_metadata<T>>(
+  return detail::static_if<detail::has_method_metadata<detail::naked<T>>>(
       [](auto&& x) -> decltype(auto) { return x.metadata(); },
       [](T &&) -> detail::copy_qualifiers<T, axis::null_type> {
         static axis::null_type m;

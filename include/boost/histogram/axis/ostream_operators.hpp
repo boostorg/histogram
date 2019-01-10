@@ -37,8 +37,7 @@ void stream_metadata(OStream& os, const T& t) {
         if (!oss.str().empty()) { os << ", metadata=" << std::quoted(oss.str()); }
       },
       [&os](const auto&) {
-        using U = detail::unqual<T>;
-        os << ", metadata=" << boost::core::demangled_name(BOOST_CORE_TYPEID(U));
+        os << ", metadata=" << boost::core::demangled_name(BOOST_CORE_TYPEID(T));
       },
       t);
 }
@@ -111,7 +110,7 @@ template <typename C, typename T, typename U>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const polymorphic_bin<U>& i) {
   if (i.is_discrete())
-    os << i;
+    os << static_cast<double>(i);
   else
     os << "[" << i.lower() << ", " << i.upper() << ")";
   return os;
@@ -169,7 +168,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const variant<Ts...>& v) {
   visit(
       [&os](const auto& x) {
-        using A = detail::unqual<decltype(x)>;
+        using A = detail::naked<decltype(x)>;
         detail::static_if<detail::is_streamable<A>>(
             [&os](const auto& x) { os << x; },
             [](const auto&) {

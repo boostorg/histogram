@@ -45,16 +45,16 @@ namespace axis {
 template <typename... Ts>
 class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
   using base_type = boost::variant<Ts...>;
-  using first_bounded_type = detail::unqual<mp11::mp_first<base_type>>;
+  using first_bounded_type = detail::naked<mp11::mp_first<base_type>>;
 
-  using types = mp11::mp_transform<detail::unqual, base_type>;
+  using types = mp11::mp_transform<detail::naked, base_type>;
   template <typename T>
   using requires_bounded_type =
-      mp11::mp_if<mp11::mp_contains<types, detail::unqual<T>>, void>;
+      mp11::mp_if<mp11::mp_contains<types, detail::naked<T>>, void>;
 
 public:
   using metadata_type =
-      detail::unqual<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
+      detail::naked<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
 
   variant() = default;
   variant(const variant&) = default;
@@ -80,7 +80,7 @@ public:
   variant& operator=(const variant<Us...>& u) {
     visit(
         [this](const auto& u) {
-          using U = detail::unqual<decltype(u)>;
+          using U = detail::naked<decltype(u)>;
           detail::static_if<mp11::mp_contains<types, U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
@@ -146,7 +146,7 @@ public:
   int operator()(U&& x) const {
     return visit(
         [&x](const auto& a) {
-          using A = detail::unqual<decltype(a)>;
+          using A = detail::naked<decltype(a)>;
           using arg_t = detail::arg_type<A>;
           return detail::static_if<std::is_convertible<U, arg_t>>(
               [&x](const auto& a) -> int { return a(x); },
@@ -272,21 +272,21 @@ const T* get(const variant<Us...>* v) {
 }
 
 // pass-through version for generic programming, if U is axis instead of variant
-template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
+template <typename T, typename U, typename = detail::requires_axis<detail::naked<U>>>
 auto get(U&& u) -> detail::copy_qualifiers<U, T> {
   return std::forward<U>(u);
 }
 
 // pass-through version for generic programming, if U is axis instead of variant
-template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
+template <typename T, typename U, typename = detail::requires_axis<detail::naked<U>>>
 T* get(U* u) {
-  return std::is_same<T, detail::unqual<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
+  return std::is_same<T, detail::naked<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
 }
 
 // pass-through version for generic programming, if U is axis instead of variant
-template <typename T, typename U, typename = detail::requires_axis<detail::unqual<U>>>
+template <typename T, typename U, typename = detail::requires_axis<detail::naked<U>>>
 const T* get(const U* u) {
-  return std::is_same<T, detail::unqual<U>>::value ? reinterpret_cast<const T*>(u)
+  return std::is_same<T, detail::naked<U>>::value ? reinterpret_cast<const T*>(u)
                                                    : nullptr;
 }
 } // namespace axis

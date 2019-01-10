@@ -8,9 +8,9 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_META_HPP
 
 #include <array>
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <ostream>
-#include <tuple>
 #include <vector>
 
 namespace std {
@@ -23,18 +23,11 @@ ostream& operator<<(ostream& os, const vector<T>& v) {
   return os;
 }
 
-template <typename... Ts>
-ostream& operator<<(ostream& os, const tuple<Ts...>& t) {
+template <class T,
+          class = boost::mp11::mp_if<boost::histogram::detail::has_fixed_size<T>, void>>
+ostream& operator<<(ostream& os, const T& t) {
   os << "[ ";
   ::boost::mp11::tuple_for_each(t, [&os](const auto& x) { os << x << " "; });
-  os << "]";
-  return os;
-}
-
-template <typename T, std::size_t N>
-ostream& operator<<(ostream& os, const array<T, N>& v) {
-  os << "[ ";
-  for (const auto& x : v) os << x << " ";
   os << "]";
   return os;
 }

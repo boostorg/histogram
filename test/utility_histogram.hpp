@@ -19,7 +19,7 @@ namespace histogram {
 
 template <typename... Ts>
 auto make_axis_vector(Ts&&... ts) {
-  using T = axis::variant<detail::unqual<Ts>...>;
+  using T = axis::variant<detail::naked<Ts>...>;
   return std::vector<T>({T(std::forward<Ts>(ts))...});
 }
 

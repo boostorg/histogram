@@ -7,6 +7,18 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_META_HPP
 #define BOOST_HISTOGRAM_DETAIL_META_HPP
 
+/* Most of the histogram code is generic and works for any number of axes. Buffers with a
+ * fixed maximum capacity are used in some places, which have a size equal to the rank of
+ * a histogram. The buffers are statically allocated to improve performance, which means
+ * that they need a preset maximum capacity. 32 seems like a safe upper limit for the rank
+ * (you can nevertheless increase it here if necessary): the simplest non-trivial axis has
+ * 2 bins; even if counters are used which need only a byte of storage per bin, this still
+ * corresponds to 4 GB of storage.
+ */
+#ifndef BOOST_HISTOGRAM_DETAIL_AXES_LIMIT
+#define BOOST_HISTOGRAM_DETAIL_AXES_LIMIT 32
+#endif
+
 #include <boost/config/workaround.hpp>
 #if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
 #pragma GCC diagnostic push
@@ -17,6 +29,7 @@
 #if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
 #pragma GCC diagnostic pop
 #endif
+#include <boost/container/static_vector.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11.hpp>
 #include <functional>
@@ -30,16 +43,10 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-using unqual = std::remove_cv_t<std::remove_reference_t<T>>;
+using naked = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template <class T, class U>
-using convert_integer = mp11::mp_if<std::is_integral<unqual<T>>, U, T>;
-
-template <class T>
-using mp_size = mp11::mp_size<unqual<T>>;
-
-template <typename T, unsigned N>
-using mp_at_c = mp11::mp_at_c<unqual<T>, N>;
+using convert_integer = mp11::mp_if<std::is_integral<naked<T>>, U, T>;
 
 template <template <class> class F, typename T, typename E>
 using mp_eval_or = mp11::mp_eval_if_c<!(mp11::mp_valid<F, T>::value), E, F, T>;
@@ -56,12 +63,11 @@ template <typename S, typename L>
 using mp_set_union = mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back, S>, L>;
 
 template <typename L>
-using mp_last = mp11::mp_at_c<L, (mp_size<L>::value - 1)>;
+using mp_last = mp11::mp_at_c<L, (mp11::mp_size<L>::value - 1)>;
 
-template <typename T>
-using args_type = mp11::mp_if<std::is_member_function_pointer<T>,
-                              mp11::mp_pop_front<boost::callable_traits::args_t<T>>,
-                              boost::callable_traits::args_t<T>>;
+template <class T, class Args = boost::callable_traits::args_t<T>>
+using args_type =
+    mp11::mp_if<std::is_member_function_pointer<T>, mp11::mp_pop_front<Args>, Args>;
 
 template <typename T, std::size_t N = 0>
 using arg_type = typename mp11::mp_at_c<args_type<T>, N>;
@@ -71,9 +77,8 @@ using return_type = typename boost::callable_traits::return_type<T>::type;
 
 template <typename V>
 struct variant_first_arg_qualified_impl {
-  using UV = unqual<V>;
-  using T0 = mp11::mp_first<UV>;
-  using type = copy_qualifiers<V, unqual<T0>>;
+  using T0 = mp11::mp_first<naked<V>>;
+  using type = copy_qualifiers<V, naked<T0>>;
 };
 
 template <typename F, typename V,
@@ -121,20 +126,15 @@ constexpr float highest() {
   return std::numeric_limits<float>::infinity();
 }
 
-template <class... Ns>
-struct sub_tuple_impl {
-  template <typename T>
-  static decltype(auto) apply(const T& t) {
-    return std::forward_as_tuple(std::get<Ns::value>(t)...);
-  }
-};
+template <std::size_t I, class T, std::size_t... N>
+decltype(auto) tuple_slice_impl(T&& t, mp11::index_sequence<N...>) {
+  return std::forward_as_tuple(std::get<(N + I)>(std::forward<T>(t))...);
+}
 
-template <std::size_t Offset, std::size_t N, typename T>
-decltype(auto) sub_tuple(const T& t) {
-  using LN = mp11::mp_iota_c<N>;
-  using OffsetAdder = mp11::mp_bind_front<mp11::mp_plus, mp11::mp_size_t<Offset>>;
-  using LN2 = mp11::mp_transform_q<OffsetAdder, LN>;
-  return mp11::mp_rename<LN2, sub_tuple_impl>::apply(t);
+template <std::size_t I, std::size_t N, class T>
+decltype(auto) tuple_slice(T&& t) {
+  static_assert(I + N <= mp11::mp_size<naked<T>>::value, "I and N must describe a slice");
+  return tuple_slice_impl<I>(std::forward<T>(t), mp11::make_index_sequence<N>{});
 }
 
 template <typename T>
@@ -179,6 +179,8 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_clear, &T::clear);
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower, &T::lower);
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, &T::value);
+
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_update, &T::update);
 
 template <typename T>
 using get_value_method_return_type_impl = decltype(std::declval<T&>().value(0));
@@ -274,7 +276,7 @@ template <typename T>
 struct is_weight_impl<weight_type<T>> : std::true_type {};
 
 template <typename T>
-using is_weight = is_weight_impl<unqual<T>>;
+using is_weight = is_weight_impl<naked<T>>;
 
 template <typename T>
 struct is_sample_impl : std::false_type {};
@@ -283,7 +285,7 @@ template <typename T>
 struct is_sample_impl<sample_type<T>> : std::true_type {};
 
 template <typename T>
-using is_sample = is_sample_impl<unqual<T>>;
+using is_sample = is_sample_impl<naked<T>>;
 
 // poor-mans concept checks
 template <class B>
@@ -292,40 +294,67 @@ using requires = std::enable_if_t<B::value>;
 template <class T, class = decltype(*std::declval<T&>(), ++std::declval<T&>())>
 struct requires_iterator {};
 
-template <class T, class = requires<is_iterable<unqual<T>>>>
+template <class T, class = requires<is_iterable<naked<T>>>>
 struct requires_iterable {};
 
-template <class T, class = requires<is_axis<unqual<T>>>>
+template <class T, class = requires<is_axis<naked<T>>>>
 struct requires_axis {};
 
-template <class T, class = requires<is_any_axis<unqual<T>>>>
+template <class T, class = requires<is_any_axis<naked<T>>>>
 struct requires_any_axis {};
 
-template <class T, class = requires<is_sequence_of_axis<unqual<T>>>>
+template <class T, class = requires<is_sequence_of_axis<naked<T>>>>
 struct requires_sequence_of_axis {};
 
-template <class T, class = requires<is_sequence_of_axis_variant<unqual<T>>>>
+template <class T, class = requires<is_sequence_of_axis_variant<naked<T>>>>
 struct requires_sequence_of_axis_variant {};
 
-template <class T, class = requires<is_sequence_of_any_axis<unqual<T>>>>
+template <class T, class = requires<is_sequence_of_any_axis<naked<T>>>>
 struct requires_sequence_of_any_axis {};
 
-template <class T, class = requires<is_any_axis<mp11::mp_first<unqual<T>>>>>
+template <class T, class = requires<is_any_axis<mp11::mp_first<naked<T>>>>>
 struct requires_axes {};
 
 template <class T, class U, class = requires<std::is_convertible<T, U>>>
 struct requires_convertible {};
 
-template <typename T>
+template <class T>
 auto make_default(const T& t) {
-  using U = unqual<T>;
-  return static_if<has_allocator<U>>([](const auto& t) { return U(t.get_allocator()); },
-                                     [](const auto&) { return U(); }, t);
+  return static_if<has_allocator<T>>([](const auto& t) { return T(t.get_allocator()); },
+                                     [](const auto&) { return T(); }, t);
+}
+
+template <class T>
+using get_tuple_size = typename std::tuple_size<T>::type;
+
+template <class T>
+std::size_t get_size_impl(std::true_type, const T&) noexcept {
+  return get_tuple_size<T>::value;
+}
+
+template <class T>
+std::size_t get_size_impl(std::false_type, const T& t) noexcept {
+  return t.size();
+}
+
+template <class T>
+std::size_t get_size(const T& t) noexcept {
+  return get_size_impl(mp11::mp_valid<get_tuple_size, T>(), t);
+}
+
+template <class U, class T>
+using stack_buffer = boost::container::static_vector<
+    U, mp_eval_or<get_tuple_size, T,
+                  mp11::mp_size_t<BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>>::value>;
+
+template <class U, class T, class... Ts>
+auto make_stack_buffer(const T& t, Ts... ts) {
+  return stack_buffer<U, T>(get_size(t), std::forward<Ts>(ts)...);
 }
 
 template <typename T>
 constexpr bool relaxed_equal(const T& a, const T& b) noexcept {
-  return static_if<has_operator_equal<unqual<T>>>(
+  return static_if<has_operator_equal<T>>(
       [](const auto& a, const auto& b) { return a == b; },
       [](const auto&, const auto&) { return true; }, a, b);
 }

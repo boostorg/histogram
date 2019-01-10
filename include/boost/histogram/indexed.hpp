@@ -23,13 +23,14 @@ namespace histogram {
 /// Range over histogram bins with multi-dimensional index.
 template <class Histogram>
 class BOOST_HISTOGRAM_NODISCARD indexed_range {
-  using value_type = typename detail::unqual<Histogram>::value_type;
-  using value_iterator = detail::unqual<decltype(std::declval<Histogram&>().begin())>;
+  using histogram_iterator =
+      mp11::mp_if<std::is_const<Histogram>, typename Histogram::const_iterator,
+                  typename Histogram::iterator>;
   struct cache_item {
     int idx, begin, end, extend;
   };
   using cache_type =
-      detail::axes_buffer<typename detail::unqual<Histogram>::axes_type, cache_item>;
+      detail::stack_buffer<cache_item, typename detail::naked<Histogram>::axes_type>;
 
 public:
   class accessor {
@@ -65,21 +66,21 @@ public:
       return *iter_ / x;
     }
 
-    accessor(indexed_range* parent, value_iterator i) : parent_(parent), iter_(i) {}
+    accessor(indexed_range* parent, histogram_iterator i) : parent_(parent), iter_(i) {}
 
     decltype(auto) operator*() const noexcept { return *iter_; }
     auto operator-> () const noexcept { return iter_; }
 
   private:
     indexed_range* parent_;
-    value_iterator iter_;
+    histogram_iterator iter_;
   };
 
   class range_iterator
-      : public boost::iterator_adaptor<range_iterator, value_iterator, accessor,
+      : public boost::iterator_adaptor<range_iterator, histogram_iterator, accessor,
                                        boost::forward_traversal_tag, accessor> {
   public:
-    range_iterator(indexed_range* p, value_iterator i) noexcept
+    range_iterator(indexed_range* p, histogram_iterator i) noexcept
         : range_iterator::iterator_adaptor_(i), parent_(p) {}
 
     accessor operator*() const noexcept { return {parent_, range_iterator::base()}; }
@@ -94,7 +95,7 @@ public:
       ++range_iterator::base_reference();
       while (c->idx == c->end && ((c + 1) != parent_->cache_.end())) {
         c->idx = c->begin;
-        range_iterator::base_reference() -= (c->end - c->idx) * stride;
+        range_iterator::base_reference() -= (c->end - c->begin) * stride;
         stride *= c->extend;
         ++c;
         ++c->idx;
@@ -140,7 +141,7 @@ public:
 private:
   Histogram& hist_;
   const bool include_extra_bins_;
-  value_iterator begin_, end_;
+  histogram_iterator begin_, end_;
   mutable cache_type cache_;
 }; // namespace histogram
 

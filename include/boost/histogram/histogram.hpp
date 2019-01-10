@@ -9,6 +9,7 @@
 
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/common_type.hpp>
+#include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11.hpp>
@@ -74,7 +75,7 @@ public:
   explicit histogram(A&& a) : histogram(std::forward<A>(a), storage_type()) {}
 
   /// Number of axes (dimensions)
-  unsigned rank() const noexcept { return detail::axes_size(axes_); }
+  unsigned rank() const noexcept { return detail::get_size(axes_); }
 
   /// Total number of bins (including underflow/overflow)
   std::size_t size() const noexcept { return storage_.size(); }
@@ -85,14 +86,14 @@ public:
   /// Get N-th axis
   template <unsigned N>
   decltype(auto) axis(std::integral_constant<unsigned, N>) {
-    detail::rank_check(axes_, N);
+    detail::axis_index_is_valid(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis (const version)
   template <unsigned N>
   decltype(auto) axis(std::integral_constant<unsigned, N>) const {
-    detail::rank_check(axes_, N);
+    detail::axis_index_is_valid(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
@@ -104,13 +105,13 @@ public:
 
   /// Get N-th axis with runtime index
   decltype(auto) axis(unsigned i) {
-    detail::rank_check(axes_, i);
+    detail::axis_index_is_valid(axes_, i);
     return detail::axis_get(axes_, i);
   }
 
   /// Get N-th axis with runtime index (const version)
   decltype(auto) axis(unsigned i) const {
-    detail::rank_check(axes_, i);
+    detail::axis_index_is_valid(axes_, i);
     return detail::axis_get(axes_, i);
   }
 
@@ -266,11 +267,11 @@ auto operator+(const histogram<A, S>& a, histogram<A, S>&& b) {
 #if __cpp_deduction_guides >= 201606
 
 template <class Axes>
-histogram(Axes&& axes)->histogram<detail::unqual<Axes>, default_storage>;
+histogram(Axes&& axes)->histogram<detail::naked<Axes>, default_storage>;
 
 template <class Axes, class Storage>
 histogram(Axes&& axes, Storage&& storage)
-    ->histogram<detail::unqual<Axes>, detail::unqual<Storage>>;
+    ->histogram<detail::naked<Axes>, detail::naked<Storage>>;
 
 #endif
 

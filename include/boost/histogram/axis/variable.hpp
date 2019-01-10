@@ -116,7 +116,7 @@ public:
     BOOST_ASSERT((end - begin) % merge == 0);
     if (Options & option_type::circular && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
-    using It = const detail::unqual<decltype(*src.x_.first())>*;
+    using It = const detail::naked<decltype(*src.x_.first())>*;
     struct skip_iterator {
       It it;
       unsigned skip;
@@ -230,17 +230,17 @@ variable(std::initializer_list<U>, M)->variable<T, M>;
 
 template <class Iterable,
           class T = detail::convert_integer<
-              detail::unqual<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+              detail::naked<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable)->variable<T>;
 
 template <class Iterable,
           class T = detail::convert_integer<
-              detail::unqual<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+              detail::naked<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable, const char*)->variable<T>;
 
 template <class Iterable, class M,
           class T = detail::convert_integer<
-              detail::unqual<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+              detail::naked<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable, M)->variable<T, M>;
 
 #endif

@@ -33,16 +33,6 @@ int main() {
     BOOST_TEST_EQ(decltype(213_c)::value, 213);
   }
 
-  // axes_size
-  {
-    std::tuple<int, int> a;
-    std::vector<int> b(3);
-    std::array<int, 4> c;
-    BOOST_TEST_EQ(detail::axes_size(a), 2);
-    BOOST_TEST_EQ(detail::axes_size(b), 3);
-    BOOST_TEST_EQ(detail::axes_size(c), 4);
-  }
-
   // sequence equality
   {
     using R = axis::regular<>;
@@ -123,22 +113,6 @@ int main() {
     BOOST_TEST_NOT(detail::axes_equal(t2, t3));
     detail::axes_assign(t2, t3);
     BOOST_TEST(detail::axes_equal(t2, t3));
-  }
-
-  // make_sub_axes
-  {
-    using I = axis::integer<>;
-    using boost::mp11::mp_list;
-
-    I a0(0, 1), a1(1, 2), a2(2, 3);
-    auto ax = std::make_tuple(a0, a1, a2);
-    BOOST_TEST_EQ(detail::make_sub_axes(ax, 0_c), std::make_tuple(a0));
-    BOOST_TEST_EQ(detail::make_sub_axes(ax, 1_c), std::make_tuple(a1));
-    BOOST_TEST_EQ(detail::make_sub_axes(ax, 2_c), std::make_tuple(a2));
-    BOOST_TEST_EQ(detail::make_sub_axes(ax, 0_c, 1_c), std::make_tuple(a0, a1));
-    BOOST_TEST_EQ(detail::make_sub_axes(ax, 0_c, 2_c), std::make_tuple(a0, a2));
-    BOOST_TEST_EQ(detail::make_sub_axes(ax, 1_c, 2_c), std::make_tuple(a1, a2));
-    BOOST_TEST_EQ(detail::make_sub_axes(ax, 0_c, 1_c, 2_c), std::make_tuple(a0, a1, a2));
   }
 
   return boost::report_errors();

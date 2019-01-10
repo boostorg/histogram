@@ -67,33 +67,44 @@ inline reduce_option_type rebin(unsigned merge) { return rebin(0, merge); }
 
 template <class Histogram, class C, class = detail::requires_iterable<C>>
 decltype(auto) reduce(const Histogram& h, const C& options) {
-  using axes_type = typename Histogram::axes_type;
+  const auto& old_axes = unsafe_access::axes(h);
 
   struct option_item : reduce_option_type {
     int begin, end;
-    bool is_set() const noexcept { return reduce_option_type::merge > 0; }
   };
 
-  auto options_internal = detail::axes_buffer<axes_type, option_item>(h.rank());
+  auto opts = detail::make_stack_buffer<option_item>(old_axes);
   for (const auto& o : options) {
-    auto& oi = options_internal[o.iaxis];
-    if (oi.is_set()) // did we already set the option for this axis?
+    auto& oi = opts[o.iaxis];
+    if (oi.merge > 0) // did we already set the option for this axis?
       BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
     oi.lower = o.lower;
     oi.upper = o.upper;
     oi.merge = o.merge;
   }
 
-  auto axes = detail::make_empty_axes(unsafe_access::axes(h));
+  auto axes = detail::static_if<detail::is_tuple<detail::naked<decltype(old_axes)>>>(
+      [](const auto& c) { return detail::naked<decltype(c)>(); },
+      [](const auto& c) {
+        using A = detail::naked<decltype(c)>;
+        auto axes = A(c.get_allocator());
+        axes.reserve(c.size());
+        detail::for_each_axis(c, [&axes](const auto& a) {
+          using U = detail::naked<decltype(a)>;
+          axes.emplace_back(U());
+        });
+        return axes;
+      },
+      old_axes);
 
   unsigned iaxis = 0;
   h.for_each_axis([&](const auto& a) {
-    using T = detail::unqual<decltype(a)>;
+    using T = detail::naked<decltype(a)>;
 
-    auto& o = options_internal[iaxis];
+    auto& o = opts[iaxis];
     o.begin = 0;
     o.end = a.size();
-    if (o.is_set()) {
+    if (o.merge > 0) { // option is set?
       if (o.lower < o.upper) {
         while (o.begin != o.end && a.value(o.begin) < o.lower) ++o.begin;
         while (o.end != o.begin && a.value(o.end - 1) >= o.upper) --o.end;
@@ -112,13 +123,13 @@ decltype(auto) reduce(const Histogram& h, const C& options) {
     ++iaxis;
   });
 
-  auto result =
-      Histogram(std::move(axes), detail::make_default(unsafe_access::storage(h)));
+  auto storage = detail::make_default(unsafe_access::storage(h));
+  auto result = Histogram(std::move(axes), std::move(storage));
 
-  detail::axes_buffer<axes_type, int> idx(h.rank());
+  auto idx = detail::make_stack_buffer<int>(unsafe_access::axes(result));
   for (auto x : indexed(h, true)) {
     auto i = idx.begin();
-    auto o = options_internal.begin();
+    auto o = opts.begin();
     for (auto j : x) {
       *i = (j - o->begin);
       if (*i <= -1)

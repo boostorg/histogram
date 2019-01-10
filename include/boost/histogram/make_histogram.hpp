@@ -24,7 +24,7 @@ template <typename StorageOrContainer, typename T, typename... Ts,
           typename = detail::requires_axis<T>>
 auto make_histogram_with(StorageOrContainer&& s, T&& axis0, Ts&&... axis) {
   auto axes = std::make_tuple(std::forward<T>(axis0), std::forward<Ts>(axis)...);
-  using U = detail::unqual<StorageOrContainer>;
+  using U = detail::naked<StorageOrContainer>;
   using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
   return histogram<decltype(axes), S>(std::move(axes),
                                       S(std::forward<StorageOrContainer>(s)));
@@ -48,9 +48,9 @@ auto make_weighted_histogram(T&& axis0, Ts&&... axis) {
 template <typename StorageOrContainer, typename Iterable,
           typename = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_histogram_with(StorageOrContainer&& s, Iterable&& c) {
-  using U = detail::unqual<StorageOrContainer>;
+  using U = detail::naked<StorageOrContainer>;
   using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
-  using It = detail::unqual<Iterable>;
+  using It = detail::naked<Iterable>;
   using A = mp11::mp_if<detail::is_indexable_container<It>, It,
                         boost::container::vector<mp11::mp_first<It>>>;
   return histogram<A, S>(std::forward<Iterable>(c),
@@ -73,7 +73,7 @@ auto make_weighted_histogram(Iterable&& c) {
 template <typename StorageOrContainer, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
 auto make_histogram_with(StorageOrContainer&& s, Iterator begin, Iterator end) {
-  using T = detail::unqual<decltype(*begin)>;
+  using T = detail::naked<decltype(*begin)>;
   return make_histogram_with(std::forward<StorageOrContainer>(s),
                              boost::container::vector<T>(begin, end));
 }

@@ -38,7 +38,7 @@ public:
   polymorphic_bin(value_type lower, value_type upper)
       : lower_or_value_(lower), upper_(upper) {}
 
-  operator value_type() const noexcept { return lower_or_value_; }
+  operator const value_type&() const noexcept { return lower_or_value_; }
 
   value_type lower() const noexcept { return lower_or_value_; }
   value_type upper() const noexcept { return upper_; }

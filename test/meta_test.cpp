@@ -256,7 +256,7 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_axis_variant<bh::axis::variant<bh::axis::regular<>>>));
   }
 
-  // unqual
+  // naked
   {
     using T1 = int;
     using T2 = int&&;
@@ -266,26 +266,14 @@ int main() {
     using T6 = volatile int&&;
     using T7 = volatile const int;
     using T8 = volatile const int&;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T1>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T2>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T3>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T4>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T5>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T6>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T7>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<unqual<T8>, int>));
-  }
-
-  // mp_size
-  {
-    using T1 = std::tuple<int>;
-    using T2 = const std::tuple<int, int&>;
-    using T3 = std::tuple<int, int&, int*>&;
-    using T4 = const std::tuple<int, int&, int*, volatile int>&;
-    BOOST_TEST_EQ(mp_size<T1>::value, 1);
-    BOOST_TEST_EQ(mp_size<T2>::value, 2);
-    BOOST_TEST_EQ(mp_size<T3>::value, 3);
-    BOOST_TEST_EQ(mp_size<T4>::value, 4);
+    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T1>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T2>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T3>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T4>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T5>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T6>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T7>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T8>, int>));
   }
 
   // copy_qualifiers
@@ -352,10 +340,10 @@ int main() {
     BOOST_TEST_EQ(fcn(std::false_type(), not_callable()), 2);
   }
 
-  // sub_tuple
+  // tuple_slice
   {
     auto a = std::make_tuple(1, 2, 3, 4);
-    auto b = sub_tuple<1, 2>(a);
+    auto b = tuple_slice<1, 2>(a);
     BOOST_TEST_EQ(b, std::make_tuple(2, 3));
   }
 
@@ -446,6 +434,18 @@ int main() {
     BOOST_TEST_TRAIT_FALSE((has_operator_radd<B, A>));
     BOOST_TEST_TRAIT_TRUE((has_operator_radd<B, B>));
     BOOST_TEST_TRAIT_TRUE((has_operator_radd<B&, const B&>));
+  }
+
+  // get_size
+  {
+    std::tuple<int, int> a;
+    std::vector<int> b(3);
+    std::array<int, 4> c;
+    const std::tuple<int> d;
+    BOOST_TEST_EQ(get_size(a), 2);
+    BOOST_TEST_EQ(get_size(b), 3);
+    BOOST_TEST_EQ(get_size(c), 4);
+    BOOST_TEST_EQ(get_size(d), 1);
   }
 
   return boost::report_errors();
