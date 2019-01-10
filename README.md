@@ -132,6 +132,5 @@ Read more about the design choices in the [documentation](http://hdembinski.gith
 
 The histogram is nearly feature-complete. More than 500 individual tests make sure that the implementation works as expected. Full documentation is available. User feedback is appreciated!
 
-We are finalising the interface for the review process, so code-breaking changes of the interface are currently happening on the master. If you want to use the library in production code, please use the [latest release](https://github.com/HDembinski/histogram/releases) instead of the master. After the library is accepted as part of Boost, the interface will be kept stable, of course.
+The library was reviewed in September 2018 by the Boost Community under review manager Mateusz Loskot. It was conditionally accepted with requests to improve the interface and documentation. Current development is focusing on implementing these requests. Code-breaking changes of the interface are currently happening on the develop branch. If you want to use the library in production code, please use the [latest release](https://github.com/HDembinski/histogram/releases). After the library is released as part of Boost, the interface will be kept stable. The first release is planned for in April 2019 with Boost-1.70.
 
-Review of the library is planned in September 2018.
