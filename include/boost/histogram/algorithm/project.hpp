@@ -29,17 +29,17 @@ namespace algorithm {
   histogram is summed over the removed axes.
 */
 template <class A, class S, unsigned N, typename... Ns>
-auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N> I, Ns... Is) {
-  using LN = mp11::mp_list<decltype(I), Ns...>;
+auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N>, Ns...) {
+  using LN = mp11::mp_list<std::integral_constant<unsigned, N>, Ns...>;
   static_assert(mp11::mp_is_set<LN>::value, "indices must be unique");
 
   const auto& old_axes = unsafe_access::axes(h);
   auto axes = detail::static_if<detail::is_tuple<A>>(
       [&](const auto& old_axes) {
-        return std::make_tuple(std::get<I>(old_axes), std::get<Is>(old_axes)...);
+        return std::make_tuple(std::get<N>(old_axes), std::get<Ns::value>(old_axes)...);
       },
       [&](const auto& old_axes) {
-        return detail::naked<decltype(old_axes)>({old_axes[I], old_axes[Is]...});
+        return detail::naked<decltype(old_axes)>({old_axes[N], old_axes[Ns::value]...});
       },
       old_axes);
 
