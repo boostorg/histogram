@@ -36,7 +36,7 @@ struct growing_axis {
 
 template <typename Tag>
 void run_tests() {
-  auto h = make(Tag(), growing_axis());
+  auto h = make_s(Tag(), std::vector<int>(), growing_axis());
   h(0);
   BOOST_TEST_EQ(h.size(), 1);
   BOOST_TEST_EQ(h[0], 1);

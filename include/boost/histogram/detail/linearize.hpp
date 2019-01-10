@@ -117,7 +117,7 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   for (const auto& x : storage) {
     auto ns = new_storage.begin();
     sit = shifts.begin();
-    for (const auto& d : data) { ns += (d.idx + std::max(*sit++, 9)) * d.stride; }
+    for (const auto& d : data) { ns += (d.idx - std::min(*sit++, 0)) * d.stride; }
     auto dit = data.begin();
     const auto last = data.end() - 1;
     ++dit->idx;
