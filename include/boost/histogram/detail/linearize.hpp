@@ -165,7 +165,7 @@ struct size_or_zero<std::tuple<Ts...>> : mp11::mp_size_t<sizeof...(Ts)> {};
 //   (axis::variant provides generic call interface and hides concrete interface),
 //   so we throw at runtime if incompatible argument is passed (e.g. 3d tuple)
 template <unsigned I, unsigned N, class S, class T, class U>
-optional_index args_to_index(std::false_type, S& storage, T& axes, const U& args) {
+optional_index args_to_index(std::false_type, S&, T& axes, const U& args) {
   optional_index idx;
   int dummy;
   const auto rank = get_size(axes);
@@ -186,7 +186,7 @@ optional_index args_to_index(std::false_type, S& storage, T& axes, const U& args
 template <unsigned I, unsigned N, class S, class T, class U>
 optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args) {
   optional_index idx;
-  auto shifts = make_stack_buffer<int>(axes);
+  auto shifts = make_stack_buffer<int>(axes, 0);
   const auto rank = get_size(axes);
   if (rank == 1 && N > 1)
     linearize_value(idx, shifts[0], axis_get<0>(axes), tuple_slice<I, N>(args));
@@ -238,13 +238,13 @@ constexpr auto weight_sample_indices() {
 }
 
 template <class T, class U>
-void fill_storage_impl(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, U&&) {
+void fill_storage(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, U&&) {
   static_if<is_incrementable<naked<T>>>([](auto&& t) { ++t; }, [](auto&& t) { t(); },
                                         std::forward<T>(t));
 }
 
 template <class IW, class T, class U>
-void fill_storage_impl(IW, mp11::mp_int<-1>, T&& t, U&& args) {
+void fill_storage(IW, mp11::mp_int<-1>, T&& t, U&& args) {
   static_if<is_incrementable<naked<T>>>(
       [](auto&& t, const auto& w) { t += w; },
       [](auto&& t, const auto& w) {
@@ -260,13 +260,13 @@ void fill_storage_impl(IW, mp11::mp_int<-1>, T&& t, U&& args) {
 }
 
 template <class IS, class T, class U>
-void fill_storage_impl(mp11::mp_int<-1>, IS, T&& t, U&& args) {
+void fill_storage(mp11::mp_int<-1>, IS, T&& t, U&& args) {
   mp11::tuple_apply([&t](auto&&... args) { t(args...); },
                     std::get<IS::value>(args).value);
 }
 
 template <class IW, class IS, class T, class U>
-void fill_storage_impl(IW, IS, T&& t, U&& args) {
+void fill_storage(IW, IS, T&& t, U&& args) {
 #ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
   static_if<is_accumulator_set<naked<T>>>(
       [](auto&& t, const auto& w, const auto& s) {
@@ -286,7 +286,7 @@ void fill_storage_impl(IW, IS, T&& t, U&& args) {
 }
 
 template <class S, class A, class... Us>
-void fill_impl(S& storage, A& axes, const std::tuple<Us...>& args) {
+void fill(S& storage, A& axes, const std::tuple<Us...>& args) {
   constexpr std::pair<int, int> iws = weight_sample_indices<Us...>();
   constexpr unsigned n = sizeof...(Us) - (iws.first > -1) - (iws.second > -1);
   constexpr unsigned i = (iws.first == 0 || iws.second == 0)
@@ -294,13 +294,13 @@ void fill_impl(S& storage, A& axes, const std::tuple<Us...>& args) {
                              : 0;
   optional_index idx = args_to_index<i, n>(has_growing_axis<A>(), storage, axes, args);
   if (idx) {
-    fill_storage_impl(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(),
-                      storage[*idx], args);
+    fill_storage(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(), storage[*idx],
+                 args);
   }
 }
 
 template <typename A, typename... Us>
-optional_index at_impl(const A& axes, const std::tuple<Us...>& args) {
+optional_index at(const A& axes, const std::tuple<Us...>& args) {
   if (get_size(axes) != sizeof...(Us))
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
@@ -311,7 +311,7 @@ optional_index at_impl(const A& axes, const std::tuple<Us...>& args) {
 }
 
 template <typename A, typename U>
-optional_index at_impl(const A& axes, const U& args) {
+optional_index at(const A& axes, const U& args) {
   if (get_size(axes) != args.size())
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;

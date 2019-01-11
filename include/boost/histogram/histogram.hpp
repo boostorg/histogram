@@ -130,7 +130,7 @@ public:
   /// Fill histogram with value tuple and optional weight or sample
   template <class... Ts>
   void operator()(const std::tuple<Ts...>& t) {
-    detail::fill_impl(storage_, axes_, t);
+    detail::fill(storage_, axes_, t);
   }
 
   /// Add values of another histogram
@@ -166,7 +166,7 @@ public:
   /// Access value at index tuple
   template <typename... Ts>
   decltype(auto) at(const std::tuple<Ts...>& t) {
-    const auto idx = detail::at_impl(axes_, t);
+    const auto idx = detail::at(axes_, t);
     if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
     return storage_[*idx];
   }
@@ -174,7 +174,7 @@ public:
   /// Access value at index tuple (const version)
   template <typename... Ts>
   decltype(auto) at(const std::tuple<Ts...>& t) const {
-    const auto idx = detail::at_impl(axes_, t);
+    const auto idx = detail::at(axes_, t);
     if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
     return storage_[*idx];
   }
@@ -182,7 +182,7 @@ public:
   /// Access value at index iterable
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   decltype(auto) at(const Iterable& c) {
-    const auto idx = detail::at_impl(axes_, c);
+    const auto idx = detail::at(axes_, c);
     if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
     return storage_[*idx];
   }
@@ -190,7 +190,7 @@ public:
   /// Access value at index iterable (const version)
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   decltype(auto) at(const Iterable& c) const {
-    const auto idx = detail::at_impl(axes_, c);
+    const auto idx = detail::at(axes_, c);
     if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
     return storage_[*idx];
   }
