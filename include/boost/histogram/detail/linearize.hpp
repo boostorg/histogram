@@ -37,6 +37,27 @@ struct is_accumulator_set<::boost::accumulators::accumulator_set<Ts...>>
     : std::true_type {};
 #endif
 
+template <class T>
+struct has_growing_axis_impl;
+
+template <template <class, class...> class Container, class T, class... Us>
+struct has_growing_axis_impl<Container<T, Us...>> {
+  using type = has_method_update<T>;
+};
+
+template <template <class, class...> class Container, class... Ts, class... Us>
+struct has_growing_axis_impl<Container<axis::variant<Ts...>, Us...>> {
+  using type = mp11::mp_or<has_method_update<Ts>...>;
+};
+
+template <class... Ts>
+struct has_growing_axis_impl<std::tuple<Ts...>> {
+  using type = mp11::mp_or<has_method_update<Ts>...>;
+};
+
+template <class T>
+using has_growing_axis = typename has_growing_axis_impl<T>::type;
+
 /// Index with an invalid state
 struct optional_index {
   std::size_t idx = 0;
@@ -144,7 +165,26 @@ struct size_or_zero<std::tuple<Ts...>> : mp11::mp_size_t<sizeof...(Ts)> {};
 //   (axis::variant provides generic call interface and hides concrete interface),
 //   so we throw at runtime if incompatible argument is passed (e.g. 3d tuple)
 template <unsigned I, unsigned N, class S, class T, class U>
-optional_index args_to_index(S& storage, T& axes, const U& args) {
+optional_index args_to_index(std::false_type, S& storage, T& axes, const U& args) {
+  optional_index idx;
+  int dummy;
+  const auto rank = get_size(axes);
+  if (rank == 1 && N > 1)
+    linearize_value(idx, dummy, axis_get<0>(axes), tuple_slice<I, N>(args));
+  else {
+    if (rank != N)
+      BOOST_THROW_EXCEPTION(
+          std::invalid_argument("number of arguments != histogram rank"));
+    constexpr unsigned M = size_or_zero<naked<decltype(axes)>>::value;
+    mp11::mp_for_each<mp11::mp_iota_c<(M == 0 ? N : M)>>([&](auto J) {
+      linearize_value(idx, dummy, axis_get<J>(axes), std::get<(J + I)>(args));
+    });
+  }
+  return idx;
+}
+
+template <unsigned I, unsigned N, class S, class T, class U>
+optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args) {
   optional_index idx;
   auto shifts = make_stack_buffer<int>(axes);
   const auto rank = get_size(axes);
@@ -252,7 +292,7 @@ void fill_impl(S& storage, A& axes, const std::tuple<Us...>& args) {
   constexpr unsigned i = (iws.first == 0 || iws.second == 0)
                              ? (iws.first == 1 || iws.second == 1 ? 2 : 1)
                              : 0;
-  optional_index idx = args_to_index<i, n>(storage, axes, args);
+  optional_index idx = args_to_index<i, n>(has_growing_axis<A>(), storage, axes, args);
   if (idx) {
     fill_storage_impl(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(),
                       storage[*idx], args);

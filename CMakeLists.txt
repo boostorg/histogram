@@ -100,6 +100,7 @@ compiled_test(test/histogram_test.cpp)
 compiled_test(test/indexed_test.cpp)
 compiled_test(test/internal_accumulators_test.cpp)
 compiled_test(test/meta_test.cpp)
+compiled_test(test/linearize_test.cpp)
 compiled_test(test/storage_adaptor_test.cpp)
 compiled_test(test/utility_test.cpp)
 
