@@ -70,8 +70,9 @@ template <class... Ts, class... Us>
 bool axes_equal(const std::tuple<Ts...>& ts, const std::tuple<Us...>& us) {
   return static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
       [](const auto& ts, const auto& us) {
+        using N = mp11::mp_size<naked<decltype(ts)>>;
         bool equal = true;
-        mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(
+        mp11::mp_for_each<mp11::mp_iota<N>>(
             [&](auto I) { equal &= relaxed_equal(std::get<I>(ts), std::get<I>(us)); });
         return equal;
       },

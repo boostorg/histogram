@@ -57,12 +57,13 @@ class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts.
   using base_type = boost::variant<Ts...>;
   using first_bounded_type = detail::naked<mp11::mp_first<base_type>>;
 
-  template <class T>
-  using is_convertible_ =
-      mp11::mp_any_of_q<base_type, mp11::mp_bind_front<std::is_convertible, T>>;
+  using naked_types = mp11::mp_transform<detail::naked, base_type>;
 
   template <class T>
-  using requires_convertible = std::enable_if_t<is_convertible_<T>::value>;
+  using is_bounded_type = mp11::mp_contains<naked_types, detail::naked<T>>;
+
+  template <typename T>
+  using requires_bounded_type = std::enable_if_t<is_bounded_type<T>::value>;
 
 public:
   using metadata_type =
@@ -75,10 +76,10 @@ public:
   variant(variant&&) = default;
   variant& operator=(variant&&) = default;
 
-  template <typename T, typename = requires_convertible<T>>
+  template <typename T, typename = requires_bounded_type<T>>
   variant(T&& t) : base_type(std::forward<T>(t)) {}
 
-  template <typename T, typename = requires_convertible<T>>
+  template <typename T, typename = requires_bounded_type<T>>
   variant& operator=(T&& t) {
     base_type::operator=(std::forward<T>(t));
     return *this;
@@ -94,7 +95,7 @@ public:
     visit(
         [this](const auto& u) {
           using U = detail::naked<decltype(u)>;
-          detail::static_if<is_convertible_<U>>(
+          detail::static_if<is_bounded_type<U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
                 BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
