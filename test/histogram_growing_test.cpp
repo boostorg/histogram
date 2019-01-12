@@ -6,13 +6,15 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include "utility_histogram.hpp"
 #include "utility_meta.hpp"
 
 using namespace boost::histogram;
 
-struct growing_axis {
+struct regular {
   int operator()(int x) const { return x - min_; }
 
   auto update(int x) {
@@ -34,9 +36,28 @@ struct growing_axis {
   int size_ = 1;
 };
 
+struct category {
+  int operator()(const std::string& x) const {
+    auto it = set_.find(x);
+    if (it != set_.end()) return it->second;
+    return set_.size();
+  }
+
+  auto update(const std::string& x) {
+    const auto i = (*this)(x);
+    if (i < size()) return std::make_pair(i, 0);
+    set_.emplace(x, i);
+    return std::make_pair(i, 1);
+  }
+
+  int size() const { return set_.size(); }
+
+  std::unordered_map<std::string, int> set_;
+};
+
 template <typename Tag>
 void run_tests() {
-  auto h = make_s(Tag(), std::vector<int>(), growing_axis());
+  auto h = make_s(Tag(), std::vector<int>(), regular());
   h(0);
   BOOST_TEST_EQ(h.size(), 1);
   BOOST_TEST_EQ(h[0], 1);
@@ -58,14 +79,30 @@ void run_tests() {
 }
 
 int main() {
-  // {
-  //   growing_axis a;
-  //   BOOST_TEST_EQ(a.update(0), std::make_pair(0, 0));
-  //   BOOST_TEST_EQ(a.size(), 1);
-  //   BOOST_TEST_EQ(a.update(2), std::make_pair(2, 2));
-  //   BOOST_TEST_EQ(a.size(), 3);
-  //   BOOST_TEST_EQ(a.update(-2), std::make_pair(0, -2));
-  // }
+  {
+    regular a;
+    BOOST_TEST_EQ(a.update(0), std::make_pair(0, 0));
+    BOOST_TEST_EQ(a.size(), 1);
+    BOOST_TEST_EQ(a.update(2), std::make_pair(2, 2));
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(a.update(2), std::make_pair(2, 0));
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(a.update(-2), std::make_pair(0, -2));
+    BOOST_TEST_EQ(a.size(), 5);
+  }
+
+  {
+    category a;
+    BOOST_TEST_EQ(a.size(), 0);
+    BOOST_TEST_EQ(a.update("x"), std::make_pair(0, 1));
+    BOOST_TEST_EQ(a.size(), 1);
+    BOOST_TEST_EQ(a.update("y"), std::make_pair(1, 1));
+    BOOST_TEST_EQ(a.size(), 2);
+    BOOST_TEST_EQ(a.update("x"), std::make_pair(0, 0));
+    BOOST_TEST_EQ(a.size(), 2);
+    BOOST_TEST_EQ(a.update("z"), std::make_pair(2, 1));
+    BOOST_TEST_EQ(a.size(), 3);
+  }
 
   run_tests<static_tag>();
   run_tests<dynamic_tag>();
