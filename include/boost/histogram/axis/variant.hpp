@@ -66,8 +66,20 @@ public:
   using metadata_type =
       detail::naked<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
 
-  using base_type::base_type;
-  using base_type::operator=;
+  variant() = default;
+  variant(const variant&) = default;
+  variant& operator=(const variant&) = default;
+  variant(variant&&) = default;
+  variant& operator=(variant&&) = default;
+
+  template <typename T, typename = requires_bounded_type<T>>
+  variant(T&& t) : base_type(std::forward<T>(t)) {}
+
+  template <typename T, typename = requires_bounded_type<T>>
+  variant& operator=(T&& t) {
+    base_type::operator=(std::forward<T>(t));
+    return *this;
+  }
 
   template <class... Us>
   variant(const variant<Us...>& u) {
