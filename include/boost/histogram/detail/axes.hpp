@@ -65,16 +65,15 @@ decltype(auto) axis_get(const T& axes, unsigned i) {
 }
 
 template <class... Ts, class... Us>
-bool axes_equal(const std::tuple<Ts...>&, const std::tuple<Us...>&) {
-  return false;
-}
-
-template <class... Ts>
-bool axes_equal(const std::tuple<Ts...>& t, const std::tuple<Ts...>& u) {
-  bool equal = true;
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(
-      [&](auto I) { equal &= relaxed_equal(std::get<I>(t), std::get<I>(u)); });
-  return equal;
+bool axes_equal(const std::tuple<Ts...>& ts, const std::tuple<Us...>& us) {
+  return static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
+      [](const auto& ts, const auto& us) {
+        bool equal = true;
+        mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(
+            [&](auto I) { equal &= relaxed_equal(std::get<I>(ts), std::get<I>(us)); });
+        return equal;
+      },
+      [](const std::tuple<Ts...>&, const std::tuple<Us...>&) { return false; }, ts, us);
 }
 
 template <class... Ts, class U>

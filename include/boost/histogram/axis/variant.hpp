@@ -72,10 +72,10 @@ public:
   variant(variant&&) = default;
   variant& operator=(variant&&) = default;
 
-  template <typename T, typename = requires_bounded_type<T>>
+  template <typename T, typename = requires_convertible<T>>
   variant(T&& t) : base_type(std::forward<T>(t)) {}
 
-  template <typename T, typename = requires_bounded_type<T>>
+  template <typename T, typename = requires_convertible<T>>
   variant& operator=(T&& t) {
     base_type::operator=(std::forward<T>(t));
     return *this;
