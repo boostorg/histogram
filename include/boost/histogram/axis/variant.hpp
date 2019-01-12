@@ -66,6 +66,7 @@ public:
   using metadata_type =
       detail::naked<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
 
+  // cannot import ctors with using directive, it breaks gcc and msvc
   variant() = default;
   variant(const variant&) = default;
   variant& operator=(const variant&) = default;
