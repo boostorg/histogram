@@ -15,7 +15,6 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/sample.hpp>
 #include <boost/histogram/weight.hpp>
-#include <boost/mp11.hpp>
 #include <deque>
 #include <iterator>
 #include <map>
@@ -30,7 +29,6 @@
 namespace bh = boost::histogram;
 using namespace bh::detail;
 using namespace bh::literals;
-namespace mp11 = boost::mp11;
 
 struct VisitorTestFunctor {
   template <typename T>
@@ -285,18 +283,9 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&&, long>, long&&>));
   }
 
-  // mp_set_union
-  {
-    using L1 = mp11::mp_list<int, char, long>;
-    using L2 = mp11::mp_list<char, int, char, char*>;
-    using result = mp_set_union<L1, L2>;
-    using expected = mp11::mp_list<int, char, long, char*>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<result, expected>));
-  }
-
   // mp_last
   {
-    using L = mp11::mp_list<int, char, long>;
+    using L = std::tuple<int, char, long>;
     BOOST_TEST_TRAIT_TRUE((std::is_same<mp_last<L>, long>));
   }
 

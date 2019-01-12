@@ -9,7 +9,8 @@
 
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/utility.hpp>
 #include <tuple>
 #include <type_traits>
 
@@ -24,7 +25,7 @@ using common_axes = mp11::mp_cond<
   is_tuple<U>, U,
   is_sequence_of_axis<T>, T,
   is_sequence_of_axis<U>, U,
-  mp11::mp_true, T
+  std::true_type, T
 >;
 // clang-format on
 

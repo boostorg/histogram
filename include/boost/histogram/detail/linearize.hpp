@@ -15,7 +15,11 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/function.hpp>
+#include <boost/mp11/integral.hpp>
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/tuple.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
 #include <tuple>

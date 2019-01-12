@@ -10,6 +10,7 @@
 #include <array>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/mp11/tuple.hpp>
+#include <boost/mp11/utility.hpp>
 #include <ostream>
 #include <vector>
 

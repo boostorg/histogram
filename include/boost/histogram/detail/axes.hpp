@@ -12,7 +12,9 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/tuple.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
 #include <tuple>
@@ -73,7 +75,7 @@ bool axes_equal(const std::tuple<Ts...>& ts, const std::tuple<Us...>& us) {
             [&](auto I) { equal &= relaxed_equal(std::get<I>(ts), std::get<I>(us)); });
         return equal;
       },
-      [](const std::tuple<Ts...>&, const std::tuple<Us...>&) { return false; }, ts, us);
+      [](const auto&, const auto&) { return false; }, ts, us);
 }
 
 template <class... Ts, class U>

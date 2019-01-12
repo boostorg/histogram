@@ -31,7 +31,11 @@
 #endif
 #include <boost/container/static_vector.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/function.hpp>
+#include <boost/mp11/integer_sequence.hpp>
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/utility.hpp>
 #include <functional>
 #include <iterator>
 #include <limits>
@@ -58,9 +62,6 @@ using copy_qualifiers = mp11::mp_if<
                 mp11::mp_if<std::is_const<typename std::remove_reference<T1>::type>,
                             const T2&, T2&>,
                 mp11::mp_if<std::is_const<T1>, const T2, T2>>>;
-
-template <class S, class L>
-using mp_set_union = mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back, S>, L>;
 
 template <class L>
 using mp_last = mp11::mp_at_c<L, (mp11::mp_size<L>::value - 1)>;

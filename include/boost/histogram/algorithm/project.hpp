@@ -12,7 +12,9 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/set.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
 #include <type_traits>

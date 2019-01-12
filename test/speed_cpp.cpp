@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <boost/histogram.hpp>
-#include <boost/mp11.hpp>
 #include <cstdio>
 #include <ctime>
 #include <limits>
@@ -15,7 +14,6 @@
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;
-using boost::mp11::mp_list;
 
 std::unique_ptr<double[]> random_array(unsigned n, int type) {
   std::unique_ptr<double[]> r(new double[n]);

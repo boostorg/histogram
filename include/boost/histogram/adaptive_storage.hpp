@@ -18,7 +18,8 @@
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/weight.hpp>
 #include <boost/iterator/iterator_facade.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/list.hpp>
 #if defined BOOST_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"

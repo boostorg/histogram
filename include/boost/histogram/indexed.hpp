@@ -13,7 +13,6 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/iterator/iterator_adaptor.hpp>
-#include <boost/mp11.hpp>
 #include <type_traits>
 #include <utility>
 
@@ -23,9 +22,9 @@ namespace histogram {
 /// Range over histogram bins with multi-dimensional index.
 template <class Histogram>
 class BOOST_HISTOGRAM_NODISCARD indexed_range {
-  using histogram_iterator =
-      mp11::mp_if<std::is_const<Histogram>, typename Histogram::const_iterator,
-                  typename Histogram::iterator>;
+  using histogram_iterator = std::conditional_t<std::is_const<Histogram>::value,
+                                                typename Histogram::const_iterator,
+                                                typename Histogram::iterator>;
   struct cache_item {
     int idx, begin, end, extend;
   };

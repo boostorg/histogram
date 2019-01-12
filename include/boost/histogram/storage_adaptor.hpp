@@ -14,6 +14,7 @@
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/weight.hpp>
 #include <boost/iterator/iterator_adaptor.hpp>
+#include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
 #include <type_traits>

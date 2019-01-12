@@ -14,7 +14,9 @@
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/bind.hpp>
+#include <boost/mp11/function.hpp>
+#include <boost/mp11/list.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/get.hpp>

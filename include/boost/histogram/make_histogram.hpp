@@ -13,7 +13,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/utility.hpp>
 #include <tuple>
 
 namespace boost {

@@ -12,7 +12,7 @@
 #include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/list.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
 #include <tuple>

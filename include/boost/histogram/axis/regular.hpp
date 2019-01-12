@@ -13,7 +13,6 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11.hpp>
 #include <boost/throw_exception.hpp>
 #include <cmath>
 #include <limits>
