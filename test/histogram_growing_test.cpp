@@ -68,7 +68,7 @@ int main() {
   // }
 
   run_tests<static_tag>();
-  // run_tests<dynamic_tag>();
+  run_tests<dynamic_tag>();
 
   return boost::report_errors();
 }

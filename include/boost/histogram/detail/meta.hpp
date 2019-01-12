@@ -48,10 +48,10 @@ using naked = std::remove_cv_t<std::remove_reference_t<T>>;
 template <class T, class U>
 using convert_integer = mp11::mp_if<std::is_integral<naked<T>>, U, T>;
 
-template <template <class> class F, typename T, typename E>
+template <template <class> class F, class T, class E>
 using mp_eval_or = mp11::mp_eval_if_c<!(mp11::mp_valid<F, T>::value), E, F, T>;
 
-template <typename T1, typename T2>
+template <class T1, class T2>
 using copy_qualifiers = mp11::mp_if<
     std::is_rvalue_reference<T1>, T2&&,
     mp11::mp_if<std::is_lvalue_reference<T1>,
@@ -59,30 +59,23 @@ using copy_qualifiers = mp11::mp_if<
                             const T2&, T2&>,
                 mp11::mp_if<std::is_const<T1>, const T2, T2>>>;
 
-template <typename S, typename L>
+template <class S, class L>
 using mp_set_union = mp11::mp_apply_q<mp11::mp_bind_front<mp11::mp_set_push_back, S>, L>;
 
-template <typename L>
+template <class L>
 using mp_last = mp11::mp_at_c<L, (mp11::mp_size<L>::value - 1)>;
 
 template <class T, class Args = boost::callable_traits::args_t<T>>
 using args_type =
     mp11::mp_if<std::is_member_function_pointer<T>, mp11::mp_pop_front<Args>, Args>;
 
-template <typename T, std::size_t N = 0>
+template <class T, std::size_t N = 0>
 using arg_type = typename mp11::mp_at_c<args_type<T>, N>;
 
-template <typename T>
+template <class T>
 using return_type = typename boost::callable_traits::return_type<T>::type;
 
-template <typename V>
-struct variant_first_arg_qualified_impl {
-  using T0 = mp11::mp_first<naked<V>>;
-  using type = copy_qualifiers<V, naked<T0>>;
-};
-
-template <typename F, typename V,
-          typename T = typename variant_first_arg_qualified_impl<V>::type>
+template <class F, class V, class T = copy_qualifiers<V, mp11::mp_first<naked<V>>>>
 using visitor_return_type = decltype(std::declval<F>()(std::declval<T>()));
 
 template <bool B, typename T, typename F, typename... Ts>
@@ -352,38 +345,38 @@ auto make_stack_buffer(const T& t, Ts... ts) {
   return stack_buffer<U, T>(get_size(t), std::forward<Ts>(ts)...);
 }
 
-template <typename T>
+template <class T>
 constexpr bool relaxed_equal(const T& a, const T& b) noexcept {
   return static_if<has_operator_equal<T>>(
       [](const auto& a, const auto& b) { return a == b; },
       [](const auto&, const auto&) { return true; }, a, b);
 }
 
-template <typename T>
+template <class T>
 using get_scale_type_helper = typename T::value_type;
 
-template <typename T>
+template <class T>
 using get_scale_type = detail::mp_eval_or<detail::get_scale_type_helper, T, T>;
 
 struct one_unit {};
 
-template <typename T>
+template <class T>
 T operator*(T&& t, const one_unit&) {
   return std::forward<T>(t);
 }
 
-template <typename T>
+template <class T>
 T operator/(T&& t, const one_unit&) {
   return std::forward<T>(t);
 }
 
-template <typename T>
+template <class T>
 using get_unit_type_helper = typename T::unit_type;
 
-template <typename T>
+template <class T>
 using get_unit_type = detail::mp_eval_or<detail::get_unit_type_helper, T, one_unit>;
 
-template <typename T, typename R = get_scale_type<T>>
+template <class T, class R = get_scale_type<T>>
 R get_scale(const T& t) {
   return t / get_unit_type<T>();
 }

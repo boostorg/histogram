@@ -16,7 +16,10 @@
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11.hpp>
 #include <boost/throw_exception.hpp>
-#include <boost/variant.hpp>
+#include <boost/variant/apply_visitor.hpp>
+#include <boost/variant/get.hpp>
+#include <boost/variant/static_visitor.hpp>
+#include <boost/variant/variant.hpp>
 #include <ostream>
 #include <stdexcept>
 #include <tuple>
@@ -27,12 +30,11 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-template <typename F, typename R>
+template <class F, class R>
 struct functor_wrapper : public boost::static_visitor<R> {
-  F& fcn;
-  functor_wrapper(F& f) : fcn(f) {}
-
-  template <typename T>
+  F fcn;
+  functor_wrapper(F f) : fcn(f) {}
+  template <class T>
   R operator()(T&& t) const {
     return fcn(std::forward<T>(t));
   }
@@ -41,52 +43,48 @@ struct functor_wrapper : public boost::static_visitor<R> {
 
 namespace axis {
 
+template <class T, class... Us>
+T* get_if(variant<Us...>* v);
+
+template <class T, class... Us>
+const T* get_if(const variant<Us...>* v);
+
 /// Polymorphic axis type
-template <typename... Ts>
+template <class... Ts>
 class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
   using base_type = boost::variant<Ts...>;
   using first_bounded_type = detail::naked<mp11::mp_first<base_type>>;
 
-  using types = mp11::mp_transform<detail::naked, base_type>;
-  template <typename T>
-  using requires_bounded_type =
-      mp11::mp_if<mp11::mp_contains<types, detail::naked<T>>, void>;
+  template <class T>
+  using is_convertible_ =
+      mp11::mp_any_of_q<base_type, mp11::mp_bind_front<std::is_convertible, T>>;
+
+  template <class T>
+  using requires_convertible = std::enable_if_t<is_convertible_<T>::value>;
 
 public:
   using metadata_type =
       detail::naked<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
 
-  variant() = default;
-  variant(const variant&) = default;
-  variant& operator=(const variant&) = default;
-  variant(variant&&) = default;
-  variant& operator=(variant&&) = default;
+  using base_type::base_type;
+  using base_type::operator=;
 
-  template <typename T, typename = requires_bounded_type<T>>
-  variant(T&& t) : base_type(std::forward<T>(t)) {}
-
-  template <typename T, typename = requires_bounded_type<T>>
-  variant& operator=(T&& t) {
-    base_type::operator=(std::forward<T>(t));
-    return *this;
-  }
-
-  template <typename... Us>
+  template <class... Us>
   variant(const variant<Us...>& u) {
     this->operator=(u);
   }
 
-  template <typename... Us>
+  template <class... Us>
   variant& operator=(const variant<Us...>& u) {
     visit(
         [this](const auto& u) {
           using U = detail::naked<decltype(u)>;
-          detail::static_if<mp11::mp_contains<types, U>>(
+          detail::static_if<is_convertible_<U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
                 BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
                     boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
-                    " is not a bounded type of ",
+                    " is not convertible to a bounded type of ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(variant)))));
               },
               u);
@@ -105,10 +103,10 @@ public:
 
   const metadata_type& metadata() const {
     return visit(
-        [](const auto& x) -> const metadata_type& {
-          using U = decltype(traits::metadata(x));
+        [](const auto& a) -> const metadata_type& {
+          using U = decltype(traits::metadata(a));
           return detail::static_if<std::is_same<U, const metadata_type&>>(
-              [](const auto& x) -> const metadata_type& { return traits::metadata(x); },
+              [](const auto& a) -> const metadata_type& { return traits::metadata(a); },
               [](const auto&) -> const metadata_type& {
                 BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
                     "cannot return metadata of type ",
@@ -118,48 +116,41 @@ public:
                     "; use boost::histogram::axis::get to obtain a reference "
                     "of this axis type")));
               },
-              x);
+              a);
         },
         *this);
   }
 
   metadata_type& metadata() {
     return visit(
-        [](auto& x) -> metadata_type& {
-          using U = decltype(traits::metadata(x));
-          return detail::static_if<std::is_same<U, metadata_type&>>(
-              [](auto& x) -> metadata_type& { return traits::metadata(x); },
+        [](auto& a) -> metadata_type& {
+          using M = decltype(traits::metadata(a));
+          return detail::static_if<std::is_same<M, metadata_type&>>(
+              [](auto& a) -> metadata_type& { return traits::metadata(a); },
               [](auto&) -> metadata_type& {
                 BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
                     "cannot return metadata of type ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(M)),
                     " through axis::variant interface which uses type ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type&)))));
-              },
-              x);
-        },
-        *this);
-  }
-
-  // Will throw invalid_argument exception if axis has incompatible call signature
-  template <typename U>
-  int operator()(U&& x) const {
-    return visit(
-        [&x](const auto& a) {
-          using A = detail::naked<decltype(a)>;
-          using arg_t = detail::arg_type<A>;
-          return detail::static_if<std::is_convertible<U, arg_t>>(
-              [&x](const auto& a) -> int { return a(x); },
-              [](const auto&) -> int {
-                BOOST_THROW_EXCEPTION(std::invalid_argument(detail::cat(
-                    "cannot convert ", boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
-                    " to ", boost::core::demangled_name(BOOST_CORE_TYPEID(arg_t)),
-                    " for ", boost::core::demangled_name(BOOST_CORE_TYPEID(A)))));
-                return 0;
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type&)),
+                    "; use boost::histogram::axis::get to obtain a reference "
+                    "of this axis type")));
               },
               a);
         },
         *this);
+  }
+
+  // Throws invalid_argument exception if axis has incompatible call signature
+  template <class U>
+  int operator()(const U& u) const {
+    return visit([&u](const auto& a) { return traits::index(a, u); }, *this);
+  }
+
+  // Throws invalid_argument exception if axis has incompatible call signature
+  template <class U>
+  std::pair<int, int> update(const U& u) {
+    return visit([&u](auto& a) { return traits::update(a, u); }, *this);
   }
 
   // Only works for axes with value method that returns something convertible to
@@ -186,108 +177,101 @@ public:
         *this);
   }
 
-  template <typename... Us>
+  template <class... Us>
   bool operator==(const variant<Us...>& u) const {
     return visit([&u](const auto& x) { return u == x; }, *this);
   }
 
-  template <typename T>
+  template <class T>
   bool operator==(const T& t) const {
     // boost::variant::operator==(T) implemented only to fail, cannot use it
-    auto tp = boost::relaxed_get<T>(this);
+    auto tp = get_if<T>(this);
     return tp && detail::relaxed_equal(*tp, t);
   }
 
-  template <typename T>
+  template <class T>
   bool operator!=(const T& t) const {
     return !operator==(t);
   }
 
-  template <typename Archive>
+  template <class Archive>
   void serialize(Archive& ar, unsigned);
 
-  template <typename Functor, typename... Us>
-  friend auto visit(Functor&& f, variant<Us...>& v)
-      -> detail::visitor_return_type<Functor, variant<Us...>&>;
+  template <class Functor, class Variant>
+  friend auto visit(Functor&&, Variant &&)
+      -> detail::visitor_return_type<Functor, Variant>;
 
-  template <typename Functor, typename... Us>
-  friend auto visit(Functor&& f, const variant<Us...>& v)
-      -> detail::visitor_return_type<Functor, const variant<Us...>&>;
-
-  template <typename T, typename... Us>
+  template <class T, class... Us>
   friend T& get(variant<Us...>& v);
 
-  template <typename T, typename... Us>
+  template <class T, class... Us>
   friend const T& get(const variant<Us...>& v);
 
-  template <typename T, typename... Us>
+  template <class T, class... Us>
   friend T&& get(variant<Us...>&& v);
 
-  template <typename T, typename... Us>
-  friend T* get(variant<Us...>* v);
+  template <class T, class... Us>
+  friend T* get_if(variant<Us...>* v);
 
-  template <typename T, typename... Us>
-  friend const T* get(const variant<Us...>* v);
+  template <class T, class... Us>
+  friend const T* get_if(const variant<Us...>* v);
 };
 
-template <typename Functor, typename... Us>
-auto visit(Functor&& f, variant<Us...>& v)
-    -> detail::visitor_return_type<Functor, variant<Us...>&> {
-  using R = detail::visitor_return_type<Functor, variant<Us...>&>;
-  return boost::apply_visitor(detail::functor_wrapper<Functor, R>(f),
-                              static_cast<typename variant<Us...>::base_type&>(v));
+template <class Functor, class Variant>
+auto visit(Functor&& f, Variant&& v) -> detail::visitor_return_type<Functor, Variant> {
+  using R = detail::visitor_return_type<Functor, Variant>;
+  using BT = typename detail::naked<Variant>::base_type;
+  using B = detail::copy_qualifiers<Variant, BT>;
+  return boost::apply_visitor(detail::functor_wrapper<Functor, R>(f), static_cast<B>(v));
 }
 
-template <typename Functor, typename... Us>
-auto visit(Functor&& f, const variant<Us...>& v)
-    -> detail::visitor_return_type<Functor, const variant<Us...>&> {
-  using R = detail::visitor_return_type<Functor, const variant<Us...>&>;
-  return boost::apply_visitor(detail::functor_wrapper<Functor, R>(f),
-                              static_cast<const typename variant<Us...>::base_type&>(v));
-}
-
-template <typename T, typename... Us>
+template <class T, class... Us>
 T& get(variant<Us...>& v) {
-  return boost::get<T>(static_cast<typename variant<Us...>::base_type&>(v));
+  using B = typename variant<Us...>::base_type;
+  return boost::get<T>(static_cast<B&>(v));
 }
 
-template <typename T, typename... Us>
+template <class T, class... Us>
 T&& get(variant<Us...>&& v) {
-  return boost::get<T>(static_cast<typename variant<Us...>::base_type&&>(v));
+  using B = typename variant<Us...>::base_type;
+  return boost::get<T>(static_cast<B&&>(v));
 }
 
-template <typename T, typename... Us>
+template <class T, class... Us>
 const T& get(const variant<Us...>& v) {
-  return boost::get<T>(static_cast<const typename variant<Us...>::base_type&>(v));
+  using B = typename variant<Us...>::base_type;
+  return boost::get<T>(static_cast<const B&>(v));
 }
 
-template <typename T, typename... Us>
-T* get(variant<Us...>* v) {
-  return boost::relaxed_get<T>(static_cast<typename variant<Us...>::base_type*>(v));
+template <class T, class... Us>
+T* get_if(variant<Us...>* v) {
+  using B = typename variant<Us...>::base_type;
+  return boost::relaxed_get<T>(static_cast<B*>(v));
 }
 
-template <typename T, typename... Us>
-const T* get(const variant<Us...>* v) {
-  return boost::relaxed_get<T>(static_cast<const typename variant<Us...>::base_type*>(v));
-}
-
-// pass-through version for generic programming, if U is axis instead of variant
-template <typename T, typename U, typename = detail::requires_axis<detail::naked<U>>>
-auto get(U&& u) -> detail::copy_qualifiers<U, T> {
-  return std::forward<U>(u);
+template <class T, class... Us>
+const T* get_if(const variant<Us...>* v) {
+  using B = typename variant<Us...>::base_type;
+  return boost::relaxed_get<T>(static_cast<const B*>(v));
 }
 
 // pass-through version for generic programming, if U is axis instead of variant
-template <typename T, typename U, typename = detail::requires_axis<detail::naked<U>>>
-T* get(U* u) {
+template <class T, class U>
+decltype(auto) get(U&& u) {
+  return static_cast<detail::copy_qualifiers<U, T>>(u);
+}
+
+// pass-through version for generic programming, if U is axis instead of variant
+template <class T, class U>
+T* get_if(U* u) {
   return std::is_same<T, detail::naked<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
 }
 
 // pass-through version for generic programming, if U is axis instead of variant
-template <typename T, typename U, typename = detail::requires_axis<detail::naked<U>>>
-const T* get(const U* u) {
+template <class T, class U>
+const T* get_if(const U* u) {
   return std::is_same<T, detail::naked<U>>::value ? reinterpret_cast<const T*>(u)
-                                                   : nullptr;
+                                                  : nullptr;
 }
 } // namespace axis
 } // namespace histogram

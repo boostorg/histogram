@@ -75,37 +75,15 @@ inline void linearize(optional_index& out, const int axis_shape, int j) noexcept
 
 template <class A, class V>
 void linearize_value(optional_index& out, int& shift, A& axis, const V& value) {
-  using T = arg_type<A>;
-  // turn instantiation with wrong template argument into runtime error
-  static_if<std::is_convertible<V, T>>(
-      [&](auto& axis, const V& value) {
-        const auto opt = axis::traits::options(axis);
-        const auto j = static_if<has_method_update<naked<decltype(axis)>>>(
-                           [&shift](auto& axis, const V& value) {
-                             int j;
-                             std::tie(j, shift) = axis.update(value);
-                             return j;
-                           },
-                           [](const auto& axis, const V& value) { return axis(value); },
-                           axis, value) +
-                       (opt & axis::option_type::underflow);
-        linearize(out, axis::traits::extend(axis), j);
-      },
-      [](A&, const V&) {
-        using T = arg_type<A>;
-        BOOST_THROW_EXCEPTION(std::invalid_argument(
-            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                        ": cannot convert argument of type ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(V)), " to ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(T)))));
-      },
-      axis, value);
+  int j;
+  std::tie(j, shift) = axis::traits::update(axis, value);
+  j += (axis::traits::options(axis) & axis::option_type::underflow);
+  linearize(out, axis::traits::extend(axis), j);
 }
 
 template <class... Ts, class V>
-void linearize_value(optional_index& out, int& s, axis::variant<Ts...>& axis,
-                     const V& v) {
-  axis::visit([&](auto& a) { linearize_value(out, s, a, v); }, axis);
+void linearize_value(optional_index& o, int& s, axis::variant<Ts...>& a, const V& v) {
+  axis::visit([&o, &s, &v](auto& a) { linearize_value(o, s, a, v); }, a);
 }
 
 template <class T>

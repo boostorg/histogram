@@ -64,12 +64,15 @@ function(compiled_test SRC)
       target_link_libraries(${BASENAME} PRIVATE -pthread)
     endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${BASENAME} PRIVATE -Wall -Wextra -g -O0 -D__STRICT_ANSI__
-                           -fsanitize=address,undefined
-                           -fsanitize-address-use-after-scope
-                           -fno-omit-frame-pointer)
-    target_link_libraries(${BASENAME} PRIVATE -fsanitize=address,undefined
-                          -fsanitize-address-use-after-scope)
+    target_compile_options(${BASENAME} PRIVATE
+      -Wall -Wextra -g -O0 -D__STRICT_ANSI__
+      -fsanitize=address,undefined
+      -fsanitize-address-use-after-scope
+      -fno-omit-frame-pointer
+      -ftemplate-backtrace-limit=0)
+    target_link_libraries(${BASENAME} PRIVATE
+      -fsanitize=address,undefined
+      -fsanitize-address-use-after-scope)
   endif()
 
   if (${BASENAME} MATCHES "_fail")

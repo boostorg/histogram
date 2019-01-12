@@ -216,9 +216,9 @@ int main() {
     axis::integer<> b(0, 3);
     const auto& ta = axis::get<axis::regular<>>(a);
     BOOST_TEST_EQ(ta, a);
-    const auto* tb = axis::get<axis::integer<>>(&b);
+    const auto* tb = axis::get_if<axis::integer<>>(&b);
     BOOST_TEST_EQ(tb, &b);
-    const auto* tc = axis::get<axis::regular<>>(&b);
+    const auto* tc = axis::get_if<axis::regular<>>(&b);
     BOOST_TEST_EQ(tc, nullptr);
   }
 
