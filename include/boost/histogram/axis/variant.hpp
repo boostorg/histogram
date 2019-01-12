@@ -236,8 +236,7 @@ public:
 template <class Functor, class Variant>
 auto visit(Functor&& f, Variant&& v) -> detail::visitor_return_type<Functor, Variant> {
   using R = detail::visitor_return_type<Functor, Variant>;
-  using BT = typename detail::naked<Variant>::base_type;
-  using B = detail::copy_qualifiers<Variant, BT>;
+  using B = detail::copy_qualifiers<Variant, typename detail::naked<Variant>::base_type>;
   return boost::apply_visitor(detail::functor_wrapper<Functor, R>(f), static_cast<B>(v));
 }
 
