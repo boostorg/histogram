@@ -50,32 +50,57 @@ struct category {
     return std::make_pair(i, 1);
   }
 
-  int size() const { return set_.size(); }
+  int size() const { return static_cast<int>(set_.size()); }
 
   std::unordered_map<std::string, int> set_;
 };
 
 template <typename Tag>
 void run_tests() {
-  auto h = make_s(Tag(), std::vector<int>(), regular());
-  h(0);
-  BOOST_TEST_EQ(h.size(), 1);
-  BOOST_TEST_EQ(h[0], 1);
+  {
+    auto h = make_s(Tag(), std::vector<int>(), regular());
+    h(0);
+    BOOST_TEST_EQ(h.size(), 1);
+    BOOST_TEST_EQ(h[0], 1);
 
-  h(2);
-  BOOST_TEST_EQ(h.size(), 3);
-  BOOST_TEST_EQ(h.axis(0).size(), 3);
-  BOOST_TEST_EQ(h[0], 1);
-  BOOST_TEST_EQ(h[1], 0);
-  BOOST_TEST_EQ(h[2], 1);
+    h(2);
+    BOOST_TEST_EQ(h.size(), 3);
+    BOOST_TEST_EQ(h.axis(0).size(), 3);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 0);
+    BOOST_TEST_EQ(h[2], 1);
 
-  h(-2);
-  BOOST_TEST_EQ(h.size(), 5);
-  BOOST_TEST_EQ(h[0], 1);
-  BOOST_TEST_EQ(h[1], 0);
-  BOOST_TEST_EQ(h[2], 1);
-  BOOST_TEST_EQ(h[3], 0);
-  BOOST_TEST_EQ(h[4], 1);
+    h(-2);
+    BOOST_TEST_EQ(h.size(), 5);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 0);
+    BOOST_TEST_EQ(h[2], 1);
+    BOOST_TEST_EQ(h[3], 0);
+    BOOST_TEST_EQ(h[4], 1);
+  }
+
+  {
+    auto h = make_s(Tag(), std::vector<int>(), regular(), category());
+    const auto& a = h.axis(0);
+    const auto& b = h.axis(1);
+    BOOST_TEST_EQ(a.size(), 1);
+    BOOST_TEST_EQ(b.size(), 0);
+    BOOST_TEST_EQ(h.size(), 0);
+    h(0, "x");
+    BOOST_TEST_EQ(h.size(), 1);
+    h(2, "x");
+    BOOST_TEST_EQ(h.size(), 3);
+    h(1, "y");
+    BOOST_TEST_EQ(h.size(), 6);
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(b.size(), 2);
+    BOOST_TEST_EQ(h.at(a(0), b("x")), 1);
+    BOOST_TEST_EQ(h.at(a(1), b("x")), 0);
+    BOOST_TEST_EQ(h.at(a(2), b("x")), 1);
+    BOOST_TEST_EQ(h.at(a(0), b("y")), 0);
+    BOOST_TEST_EQ(h.at(a(1), b("y")), 1);
+    BOOST_TEST_EQ(h.at(a(2), b("y")), 0);
+  }
 }
 
 int main() {
@@ -98,7 +123,7 @@ int main() {
     BOOST_TEST_EQ(a.size(), 1);
     BOOST_TEST_EQ(a.update("y"), std::make_pair(1, 1));
     BOOST_TEST_EQ(a.size(), 2);
-    BOOST_TEST_EQ(a.update("x"), std::make_pair(0, 0));
+    BOOST_TEST_EQ(a.update("y"), std::make_pair(1, 0));
     BOOST_TEST_EQ(a.size(), 2);
     BOOST_TEST_EQ(a.update("z"), std::make_pair(2, 1));
     BOOST_TEST_EQ(a.size(), 3);
