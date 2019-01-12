@@ -110,8 +110,7 @@ struct adaptive_storage {
       typename std::allocator_traits<Allocator>::template rebind_alloc<
           boost::multiprecision::limb_type>>>;
 
-  using types =
-      mp11::mp_list<void, uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
+  using types = mp11::mp_list<uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
 
   template <typename T>
   static constexpr char type_index() {
@@ -124,7 +123,8 @@ struct adaptive_storage {
     char type = 0;
     void* ptr = nullptr;
 
-    buffer_type(std::size_t s = 0, const allocator_type& a = allocator_type())
+    // no allocation here
+    buffer_type(std::size_t s = 0, const allocator_type& a = allocator_type()) noexcept
         : alloc(a), size(s) {}
 
 #if defined(BOOST_MSVC)
@@ -152,12 +152,6 @@ struct adaptive_storage {
                   : detail::create_buffer(a, size, 0);
     }
 
-    void* create_impl(void*, const void* init) {
-      boost::ignore_unused(init);
-      BOOST_ASSERT(!init); // init is always a nullptr in this specialization
-      return nullptr;
-    }
-
     template <typename T, typename U = T>
     T* create(const U* init = nullptr) {
       return create_impl(static_cast<T*>(nullptr), init);
@@ -171,11 +165,6 @@ struct adaptive_storage {
     void set(T* p) {
       type = type_index<T>();
       ptr = p;
-    }
-
-    void set(std::nullptr_t) {
-      type = type_index<void>();
-      ptr = nullptr;
     }
   };
 
@@ -192,11 +181,7 @@ struct adaptive_storage {
       return f(reinterpret_cast<uint64_t*>(b.ptr), b, std::forward<Ts>(ts)...);
     if (b.type == type_index<mp_int>())
       return f(reinterpret_cast<mp_int*>(b.ptr), b, std::forward<Ts>(ts)...);
-    if (b.type == type_index<double>())
-      return f(reinterpret_cast<double*>(b.ptr), b, std::forward<Ts>(ts)...);
-    // b.type == 0 is intentionally the last in the chain,
-    // because it is rarely triggered
-    return f(b.ptr, b, std::forward<Ts>(ts)...);
+    return f(reinterpret_cast<double*>(b.ptr), b, std::forward<Ts>(ts)...);
   }
 
   template <class Buffer>
@@ -296,7 +281,7 @@ struct adaptive_storage {
 
   adaptive_storage(adaptive_storage&& o) : buffer(std::move(o.buffer)) {
     o.buffer.size = 0;
-    o.buffer.set(nullptr);
+    o.buffer.ptr = nullptr;
   }
 
   adaptive_storage& operator=(adaptive_storage&& o) {
@@ -306,6 +291,7 @@ struct adaptive_storage {
 
   template <typename T>
   adaptive_storage(const storage_adaptor<T>& s) : buffer(s.size()) {
+    buffer.set(buffer.template create<uint8_t>());
     std::size_t i = 0;
     for (auto&& x : s) apply(setter(), buffer, i++, x);
   }
@@ -314,22 +300,20 @@ struct adaptive_storage {
   adaptive_storage& operator=(const storage_adaptor<T>& s) {
     apply(destroyer(), buffer);
     buffer.size = s.size();
-    buffer.set(nullptr);
+    buffer.set(buffer.template create<uint8_t>());
     std::size_t i = 0;
     for (auto&& x : s) apply(setter(), buffer, i++, x);
     return *this;
   }
 
-  explicit adaptive_storage(const allocator_type& a = allocator_type()) : buffer(0, a) {
-    buffer.set(buffer.template create<void>());
-  }
+  explicit adaptive_storage(const allocator_type& a = allocator_type()) : buffer(0, a) {}
 
   allocator_type get_allocator() const { return buffer.alloc; }
 
   void reset(std::size_t s) {
     apply(destroyer(), buffer);
     buffer.size = s;
-    buffer.set(buffer.template create<void>());
+    buffer.set(buffer.template create<uint8_t>());
   }
 
   std::size_t size() const noexcept { return buffer.size; }
@@ -401,9 +385,6 @@ struct adaptive_storage {
       alloc_type a(b.alloc); // rebind allocator
       detail::destroy_buffer(a, tp, b.size);
     }
-
-    template <typename Buffer>
-    void operator()(void*, Buffer&) {}
   };
 
   struct setter {
@@ -419,21 +400,9 @@ struct adaptive_storage {
       }
     }
 
-    template <typename OBuffer, typename Buffer>
-    void operator()(void*, const OBuffer& ob, Buffer& b) {
-      apply(destroyer(), b);
-      b.type = 0;
-      b.size = ob.size;
-    }
-
     template <typename T, typename Buffer, typename U>
     void operator()(T* tp, Buffer& b, std::size_t i, const U& u) {
       tp[i] = 0;
-      adder()(tp, b, i, u);
-    }
-
-    template <typename Buffer, typename U>
-    void operator()(void* tp, Buffer& b, std::size_t i, const U& u) {
       adder()(tp, b, i, u);
     }
   };
@@ -448,13 +417,6 @@ struct adaptive_storage {
         b.set(ptr);
         ++reinterpret_cast<U*>(b.ptr)[i];
       }
-    }
-
-    template <typename Buffer>
-    void operator()(void*, Buffer& b, std::size_t i) {
-      using U = mp11::mp_at_c<types, 1>;
-      b.set(b.template create<U>());
-      ++reinterpret_cast<U*>(b.ptr)[i];
     }
 
     template <typename Buffer>
@@ -502,13 +464,6 @@ struct adaptive_storage {
     }
 
     template <typename Buffer, typename U>
-    void operator()(void*, Buffer& b, std::size_t i, const U& x) {
-      using V = mp11::mp_at_c<types, 1>;
-      b.set(b.template create<V>());
-      operator()(reinterpret_cast<V*>(b.ptr), b, i, x);
-    }
-
-    template <typename Buffer, typename U>
     void operator()(double* tp, Buffer&, std::size_t i, const U& x) {
       tp[i] += x;
     }
@@ -524,20 +479,12 @@ struct adaptive_storage {
     void operator()(T* tp, const OBuffer&, Buffer& b) {
       for (std::size_t i = 0; i < b.size; ++i) { apply(adder(), b, i, tp[i]); }
     }
-
-    template <typename OBuffer, typename Buffer>
-    void operator()(void*, const OBuffer&, Buffer&) {}
   };
 
   struct getter {
     template <typename T, typename Buffer>
     double operator()(T* tp, Buffer&, std::size_t i) {
       return static_cast<double>(tp[i]);
-    }
-
-    template <typename Buffer>
-    double operator()(void*, Buffer&, std::size_t) {
-      return 0.0;
     }
   };
 
@@ -570,21 +517,6 @@ struct adaptive_storage {
       bool operator()(const U* optr, const OBuffer& ob, const T* tp) {
         return std::equal(optr, optr + ob.size, tp, cmp());
       }
-
-      template <typename U, typename OBuffer>
-      bool operator()(const U* optr, const OBuffer& ob, const void*) {
-        return std::all_of(optr, optr + ob.size, [](const U& x) { return x == 0; });
-      }
-
-      template <typename OBuffer, typename T>
-      bool operator()(const void*, const OBuffer& ob, const T* tp) {
-        return std::all_of(tp, tp + ob.size, [](const T& x) { return x == 0; });
-      }
-
-      template <typename OBuffer>
-      bool operator()(const void*, const OBuffer&, const void*) {
-        return true;
-      }
     };
 
     template <typename T, typename Buffer, typename OBuffer>
@@ -600,23 +532,12 @@ struct adaptive_storage {
       bool operator()(const OT* ptr, const OBuffer&, std::size_t i, T&& t) {
         return cmp()(ptr[i], t);
       }
-
-      template <class OBuffer, class T>
-      bool operator()(const void*, const OBuffer&, std::size_t, T&& t) {
-        return cmp()(0u, t);
-      }
     };
 
     template <class T, class Buffer, class OBuffer>
     bool operator()(const T* ptr, const Buffer&, std::size_t i, const OBuffer& ob,
                     std::size_t oi) {
       return apply(inner(), ob, oi, ptr[i]);
-    }
-
-    template <class Buffer, class OBuffer>
-    bool operator()(const void*, const Buffer&, std::size_t, const OBuffer& ob,
-                    std::size_t oi) {
-      return apply(inner(), ob, oi, 0u);
     }
   };
 
@@ -627,13 +548,6 @@ struct adaptive_storage {
       auto c = cmp();
       for (std::size_t i = 0; i < b.size; ++i)
         if (!c(ptr[i], u[i])) return false;
-      return true;
-    }
-
-    template <typename Buffer, typename U>
-    bool operator()(const void*, const Buffer& b, const U& u) {
-      for (std::size_t i = 0; i < b.size; ++i)
-        if (!(0 == u[i])) return false;
       return true;
     }
   };
@@ -647,9 +561,6 @@ struct adaptive_storage {
       b.set(ptr);
       operator()(reinterpret_cast<double*>(b.ptr), b, x);
     }
-
-    template <typename Buffer>
-    void operator()(void*, Buffer&, const double) {}
 
     template <typename Buffer>
     void operator()(double* tp, Buffer& b, const double x) {

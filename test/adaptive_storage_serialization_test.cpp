@@ -49,30 +49,9 @@ void serialization_impl() {
   BOOST_TEST(a == b);
 }
 
-template <>
-void serialization_impl<void>() {
-  const auto a = prepare<void>(1);
-  std::string buf;
-  {
-    std::ostringstream os;
-    boost::archive::text_oarchive oa(os);
-    oa << a;
-    buf = os.str();
-  }
-  adaptive_storage_type b;
-  BOOST_TEST(!(a == b));
-  {
-    std::istringstream is(buf);
-    boost::archive::text_iarchive ia(is);
-    ia >> b;
-  }
-  BOOST_TEST(a == b);
-}
-
 int main() {
   // serialization_test
   {
-    serialization_impl<void>();
     serialization_impl<uint8_t>();
     serialization_impl<uint16_t>();
     serialization_impl<uint32_t>();

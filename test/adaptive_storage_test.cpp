@@ -18,8 +18,8 @@ using adaptive_storage_type = bh::adaptive_storage<>;
 template <typename T>
 using vector_storage = bh::storage_adaptor<std::vector<T>>;
 
-template <typename T>
-adaptive_storage_type prepare(std::size_t n, const T x) {
+template <typename T = std::uint8_t>
+adaptive_storage_type prepare(std::size_t n, T x = T()) {
   std::unique_ptr<T[]> v(new T[n]);
   std::fill(v.get(), v.get() + n, static_cast<T>(0));
   v.get()[0] = x;
@@ -27,12 +27,7 @@ adaptive_storage_type prepare(std::size_t n, const T x) {
 }
 
 template <typename T>
-adaptive_storage_type prepare(std::size_t n) {
-  return adaptive_storage_type(n, static_cast<T*>(nullptr));
-}
-
-template <typename T>
-void copy_impl() {
+void copy() {
   const auto b = prepare<T>(1);
   auto a(b);
   BOOST_TEST(a == b);
@@ -49,8 +44,8 @@ void copy_impl() {
 }
 
 template <typename T>
-void equal_1_impl() {
-  auto a = prepare<void>(1);
+void equal_1() {
+  auto a = prepare(1);
   auto b = prepare(1, T(0));
   BOOST_TEST_EQ(a[0], 0.0);
   BOOST_TEST(a == b);
@@ -58,29 +53,8 @@ void equal_1_impl() {
   BOOST_TEST(!(a == b));
 }
 
-template <>
-void equal_1_impl<void>() {
-  auto a = prepare<void>(1);
-  auto b = prepare<uint8_t>(1, 0);
-  auto c = prepare<uint8_t>(2, 0);
-  auto d = prepare<unsigned>(1);
-  BOOST_TEST_EQ(a[0], 0.0);
-  BOOST_TEST(a == b);
-  BOOST_TEST(b == a);
-  BOOST_TEST(a == d);
-  BOOST_TEST(d == a);
-  BOOST_TEST(!(a == c));
-  BOOST_TEST(!(c == a));
-  ++b[0];
-  BOOST_TEST(!(a == b));
-  BOOST_TEST(!(b == a));
-  ++d[0];
-  BOOST_TEST(!(a == d));
-  BOOST_TEST(!(d == a));
-}
-
 template <typename T, typename U>
-void equal_2_impl() {
+void equal_2() {
   auto a = prepare<T>(1);
   vector_storage<U> b;
   b.reset(1);
@@ -90,7 +64,7 @@ void equal_2_impl() {
 }
 
 template <typename T>
-void increase_and_grow_impl() {
+void increase_and_grow() {
   auto tmax = std::numeric_limits<T>::max();
   auto s = prepare(2, tmax);
   auto n = s;
@@ -98,7 +72,7 @@ void increase_and_grow_impl() {
 
   ++n[0];
 
-  auto x = prepare<void>(2);
+  auto x = prepare(2);
   ++x[0];
   n2[0] += x[0];
 
@@ -110,19 +84,9 @@ void increase_and_grow_impl() {
   BOOST_TEST_EQ(n2[1], 0.0);
 }
 
-template <>
-void increase_and_grow_impl<void>() {
-  auto s = prepare<void>(2);
-  BOOST_TEST_EQ(s[0], 0);
-  BOOST_TEST_EQ(s[1], 0);
-  ++s[0];
-  BOOST_TEST_EQ(s[0], 1);
-  BOOST_TEST_EQ(s[1], 0);
-}
-
 template <typename T>
-void convert_array_storage_impl() {
-  const auto aref = prepare(1, T(0));
+void convert_array_storage() {
+  const auto aref = prepare<T>(1);
   vector_storage<uint8_t> s;
   s.reset(1);
   ++s[0];
@@ -180,58 +144,24 @@ void convert_array_storage_impl() {
   BOOST_TEST(h == u);
 }
 
-template <>
-void convert_array_storage_impl<void>() {
-  const auto aref = prepare<void>(1);
-  BOOST_TEST_EQ(aref[0], 0.0);
-  vector_storage<uint8_t> s;
-  s.reset(1);
-  ++s[0];
-
-  auto a(aref);
-  a = s;
-  BOOST_TEST_EQ(a[0], 1.0);
-  BOOST_TEST(a == s);
-  ++a[0];
-  BOOST_TEST(!(a == s));
-
-  auto c(aref);
-  c[0] += s[0];
-  BOOST_TEST_EQ(c[0], 1.0);
-  BOOST_TEST(c == s);
-
-  vector_storage<uint8_t> t;
-  t.reset(2);
-  ++t[0];
-  auto d = aref;
-  BOOST_TEST(!(d == t));
-}
-
 template <typename LHS, typename RHS>
-void add_impl() {
+void add() {
   auto a = prepare<LHS>(2);
   auto b = prepare<RHS>(2);
-  if (std::is_same<RHS, void>::value) {
-    a += b;
-    BOOST_TEST_EQ(a[0], 0);
-    BOOST_TEST_EQ(a[1], 0);
-  } else {
-    b[0] += 2;
-    a += b;
-    BOOST_TEST_EQ(a[0], 2);
-    BOOST_TEST_EQ(a[1], 0);
-  }
+  b[0] += 2;
+  a += b;
+  BOOST_TEST_EQ(a[0], 2);
+  BOOST_TEST_EQ(a[1], 0);
 }
 
 template <typename LHS>
-void add_impl_all_rhs() {
-  add_impl<LHS, void>();
-  add_impl<LHS, uint8_t>();
-  add_impl<LHS, uint16_t>();
-  add_impl<LHS, uint32_t>();
-  add_impl<LHS, uint64_t>();
-  add_impl<LHS, adaptive_storage_type::mp_int>();
-  add_impl<LHS, double>();
+void add_all_rhs() {
+  add<LHS, uint8_t>();
+  add<LHS, uint16_t>();
+  add<LHS, uint32_t>();
+  add<LHS, uint64_t>();
+  add<LHS, adaptive_storage_type::mp_int>();
+  add<LHS, double>();
 }
 
 int main() {
@@ -265,34 +195,31 @@ int main() {
 
   // copy
   {
-    copy_impl<double>();
-    copy_impl<void>();
-    copy_impl<uint8_t>();
-    copy_impl<uint16_t>();
-    copy_impl<uint32_t>();
-    copy_impl<uint64_t>();
-    copy_impl<adaptive_storage_type::mp_int>();
+    copy<uint8_t>();
+    copy<uint16_t>();
+    copy<uint32_t>();
+    copy<uint64_t>();
+    copy<adaptive_storage_type::mp_int>();
+    copy<double>();
   }
 
   // equal_operator
   {
-    equal_1_impl<void>();
-    equal_1_impl<uint8_t>();
-    equal_1_impl<uint16_t>();
-    equal_1_impl<uint32_t>();
-    equal_1_impl<uint64_t>();
-    equal_1_impl<adaptive_storage_type::mp_int>();
-    equal_1_impl<double>();
+    equal_1<uint8_t>();
+    equal_1<uint16_t>();
+    equal_1<uint32_t>();
+    equal_1<uint64_t>();
+    equal_1<adaptive_storage_type::mp_int>();
+    equal_1<double>();
 
-    equal_2_impl<void, unsigned>();
-    equal_2_impl<uint8_t, unsigned>();
-    equal_2_impl<uint16_t, unsigned>();
-    equal_2_impl<uint32_t, unsigned>();
-    equal_2_impl<uint64_t, unsigned>();
-    equal_2_impl<adaptive_storage_type::mp_int, unsigned>();
-    equal_2_impl<double, unsigned>();
+    equal_2<uint8_t, unsigned>();
+    equal_2<uint16_t, unsigned>();
+    equal_2<uint32_t, unsigned>();
+    equal_2<uint64_t, unsigned>();
+    equal_2<adaptive_storage_type::mp_int, unsigned>();
+    equal_2<double, unsigned>();
 
-    equal_2_impl<adaptive_storage_type::mp_int, double>();
+    equal_2<adaptive_storage_type::mp_int, double>();
 
     auto a = prepare<double>(1);
     auto b = prepare<adaptive_storage_type::mp_int>(1);
@@ -303,11 +230,10 @@ int main() {
 
   // increase_and_grow
   {
-    increase_and_grow_impl<void>();
-    increase_and_grow_impl<uint8_t>();
-    increase_and_grow_impl<uint16_t>();
-    increase_and_grow_impl<uint32_t>();
-    increase_and_grow_impl<uint64_t>();
+    increase_and_grow<uint8_t>();
+    increase_and_grow<uint16_t>();
+    increase_and_grow<uint32_t>();
+    increase_and_grow<uint64_t>();
 
     // only increase for mp_int
     auto a = prepare<adaptive_storage_type::mp_int>(2, 1);
@@ -320,23 +246,22 @@ int main() {
 
   // add
   {
-    add_impl_all_rhs<void>();
-    add_impl_all_rhs<uint8_t>();
-    add_impl_all_rhs<uint16_t>();
-    add_impl_all_rhs<uint32_t>();
-    add_impl_all_rhs<uint64_t>();
-    add_impl_all_rhs<adaptive_storage_type::mp_int>();
-    add_impl_all_rhs<double>();
+    add_all_rhs<uint8_t>();
+    add_all_rhs<uint16_t>();
+    add_all_rhs<uint32_t>();
+    add_all_rhs<uint64_t>();
+    add_all_rhs<adaptive_storage_type::mp_int>();
+    add_all_rhs<double>();
   }
 
   // add_and_grow
   {
-    auto a = prepare<void>(1);
+    auto a = prepare(1);
     a += a;
     BOOST_TEST_EQ(a[0], 0);
     ++a[0];
     double x = 1;
-    auto b = prepare<void>(1);
+    auto b = prepare(1);
     ++b[0];
     BOOST_TEST_EQ(b[0], x);
     for (unsigned i = 0; i < 80; ++i) {
@@ -345,12 +270,12 @@ int main() {
       b += b;
       BOOST_TEST_EQ(a[0], x);
       BOOST_TEST_EQ(b[0], x);
-      auto c = prepare<void>(1);
+      auto c = prepare(1);
       c[0] += a[0];
       BOOST_TEST_EQ(c[0], x);
       c[0] += 0;
       BOOST_TEST_EQ(c[0], x);
-      auto d = prepare<void>(1);
+      auto d = prepare(1);
       d[0] += x;
       BOOST_TEST_EQ(d[0], x);
     }
@@ -358,7 +283,7 @@ int main() {
 
   // multiply
   {
-    auto a = prepare<void>(2);
+    auto a = prepare(2);
     ++a[0];
     a *= 3;
     BOOST_TEST_EQ(a[0], 3);
@@ -371,18 +296,17 @@ int main() {
 
   // convert_array_storage
   {
-    convert_array_storage_impl<void>();
-    convert_array_storage_impl<uint8_t>();
-    convert_array_storage_impl<uint16_t>();
-    convert_array_storage_impl<uint32_t>();
-    convert_array_storage_impl<uint64_t>();
-    convert_array_storage_impl<adaptive_storage_type::mp_int>();
-    convert_array_storage_impl<double>();
+    convert_array_storage<uint8_t>();
+    convert_array_storage<uint16_t>();
+    convert_array_storage<uint32_t>();
+    convert_array_storage<uint64_t>();
+    convert_array_storage<adaptive_storage_type::mp_int>();
+    convert_array_storage<double>();
   }
 
   // iterators
   {
-    auto a = prepare<void>(2);
+    auto a = prepare(2);
     for (auto&& x : a) BOOST_TEST_EQ(x, 0);
 
     std::vector<double> b(2, 1);
@@ -402,7 +326,7 @@ int main() {
 
   // compare reference
   {
-    auto a = prepare<void>(1);
+    auto a = prepare(1);
     auto b = prepare<uint32_t>(1);
     BOOST_TEST_EQ(a[0], b[0]);
     a[0] = 1;
