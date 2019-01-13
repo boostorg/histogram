@@ -33,13 +33,6 @@ struct VisitorTestFunctor {
   T operator()(T&&);
 };
 
-template <bool B>
-struct OptionalUpdate {
-  using value_type = int;
-  template <bool BB = B, class = std::enable_if_t<BB>>
-  void update(value_type) {}
-};
-
 int main() {
   // has_method_value*
   {
@@ -88,16 +81,13 @@ int main() {
   {
     struct A {};
     struct B {
-      using value_type = int;
-      void update(value_type) {}
+      void update(int) {}
     };
     using C = axis::integer<int, axis::null_type, axis::option::defaults>;
     using D = axis::integer<int, axis::null_type, axis::option::growth>;
 
     BOOST_TEST_TRAIT_FALSE((has_method_update<A>));
     BOOST_TEST_TRAIT_TRUE((has_method_update<B>));
-    BOOST_TEST_TRAIT_FALSE((has_method_update<OptionalUpdate<false>>));
-    BOOST_TEST_TRAIT_TRUE((has_method_update<OptionalUpdate<true>>));
     BOOST_TEST_TRAIT_FALSE((has_method_update<C>));
     BOOST_TEST_TRAIT_TRUE((has_method_update<D>));
   }

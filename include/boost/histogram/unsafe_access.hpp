@@ -13,25 +13,25 @@ namespace histogram {
 /// Unsafe read/write access to classes that potentially break consistency
 struct unsafe_access {
   /// Get axes
-  template <typename T>
+  template <class T>
   static typename T::axes_type& axes(T& t) {
     return t.axes_;
   }
 
   /// Get axes (const version)
-  template <typename T>
+  template <class T>
   static const typename T::axes_type& axes(const T& t) {
     return t.axes_;
   }
 
   /// Get storage
-  template <typename T>
+  template <class T>
   static typename T::storage_type& storage(T& t) {
     return t.storage_;
   }
 
   /// Get storage (const version)
-  template <typename T>
+  template <class T>
   static const typename T::storage_type& storage(const T& t) {
     return t.storage_;
   }

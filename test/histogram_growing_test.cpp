@@ -17,8 +17,6 @@ using namespace boost::histogram;
 using integer = axis::integer<int, axis::null_type, axis::option::growth>;
 
 struct category {
-  using value_type = std::string;
-
   int operator()(const std::string& x) const {
     auto it = set_.find(x);
     if (it != set_.end()) return it->second;

@@ -174,9 +174,7 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower, &T::lower);
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, &T::value);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(
-    has_method_update,
-    (std::declval<T>().update(std::declval<typename T::value_type&>())));
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_update, (&T::update));
 
 template <typename T>
 using get_value_method_return_type_impl = decltype(std::declval<T&>().value(0));

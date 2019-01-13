@@ -172,7 +172,7 @@ void regular<T, Tr, M, O>::serialize(Archive& ar, unsigned /* version */) {
 
 template <class T, class M, option O>
 template <class Archive>
-void integer<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
+void integer_base<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
   ar& min_;
 }
