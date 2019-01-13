@@ -25,23 +25,41 @@ struct null_type {};
 /// default metadata type
 using default_metadata = boost::container::string;
 
-enum class option_type;
-
-constexpr inline option_type operator|(option_type a, option_type b) {
-  return static_cast<option_type>(static_cast<int>(a) | static_cast<int>(b));
-}
-
-constexpr inline bool operator&(option_type a, option_type b) {
-  return static_cast<int>(a) & static_cast<int>(b);
-}
-
-enum class option_type {
+enum class option {
   none = 0,
   underflow = 1 << 0,
   overflow = 1 << 1,
-  uoflow = underflow | overflow,
-  circular = 1 << 3,
+  circular = 1 << 2,
+  growth = 1 << 3,
+  defaults = static_cast<int>(underflow) | static_cast<int>(overflow),
 };
+
+constexpr inline option operator~(option a) {
+  return static_cast<option>(~static_cast<int>(a));
+}
+
+constexpr inline option operator&(option a, option b) {
+  return static_cast<option>(static_cast<int>(a) & static_cast<int>(b));
+}
+
+constexpr inline option operator|(option a, option b) {
+  return static_cast<option>(static_cast<int>(a) | static_cast<int>(b));
+}
+
+constexpr bool test(option a, option b) {
+  return static_cast<int>(a) & static_cast<int>(b);
+}
+
+constexpr inline option join(option a, option b) {
+  // growth turns off *flow and circular, circular turns off underflow, underflow turns
+  // off circular and growth, overflow turns of growth
+  a = a | b;
+  if (test(b, option::underflow)) a = a & ~option::circular & ~option::growth;
+  if (test(b, option::overflow)) a = a & ~option::growth;
+  if (test(b, option::circular)) a = a & ~option::underflow & ~option::growth;
+  if (test(b, option::growth)) return option::growth;
+  return a;
+}
 
 namespace transform {
 struct id;
@@ -51,25 +69,25 @@ struct pow;
 } // namespace transform
 
 template <class RealType = double, class Transform = transform::id,
-          class MetaData = default_metadata, option_type Options = option_type::uoflow>
+          class MetaData = default_metadata, option Options = option::defaults>
 class regular;
 
 template <class RealType = double, class MetaData = default_metadata,
-          option_type Options = option_type::overflow>
+          option Options = option::overflow>
 using circular =
-    regular<RealType, transform::id, MetaData, Options | option_type::circular>;
+    regular<RealType, transform::id, MetaData, join(Options, option::circular)>;
 
 template <class IntType = int, class MetaData = default_metadata,
-          option_type Options = option_type::underflow | option_type::overflow>
+          option Options = option::defaults>
 class integer;
 
 template <class RealType = double, class MetaData = default_metadata,
-          option_type Options = option_type::uoflow,
+          option Options = option::defaults,
           class Allocator = boost::container::new_allocator<RealType>>
 class variable;
 
 template <class T = int, class MetaData = default_metadata,
-          option_type Options = option_type::overflow,
+          option Options = option::overflow,
           class Allocator = boost::container::new_allocator<T>>
 class category;
 

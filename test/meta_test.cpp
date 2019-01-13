@@ -64,7 +64,7 @@ int main() {
       void options() {}
     };
     struct C {
-      bh::axis::option_type options() const { return {}; }
+      bh::axis::option options() const { return {}; }
     };
 
     BOOST_TEST_TRAIT_FALSE((has_method_options<A>));

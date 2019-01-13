@@ -25,7 +25,7 @@ void run_tests() {
         axis::circular<>(4, 0.0, 1.0, "axis 1"),
         axis::regular<double, tr::log>(3, 1, 100, "axis 2"),
         axis::regular<double, tr::pow, boost::container::string,
-                      axis::option_type::overflow>(tr::pow(0.5), 3, 1, 100, "axis 3"),
+                      axis::option::overflow>(tr::pow(0.5), 3, 1, 100, "axis 3"),
         axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "axis 4"), axis::category<>{3, 1, 2},
         axis::integer<int, axis::null_type>(0, 2));
     a(0.5, 0.2, 20, 20, 0.25, 1, 1);

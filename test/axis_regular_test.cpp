@@ -128,7 +128,7 @@ int main() {
   {
     test_axis_iterator(axis::regular<>(5, 0, 1), 0, 5);
     test_axis_iterator(
-        axis::regular<double, tr::id, axis::null_type, axis::option_type::none>(5, 0, 1),
+        axis::regular<double, tr::id, axis::null_type, axis::option::none>(5, 0, 1),
         0, 5);
     test_axis_iterator(axis::circular<>(5, 0, 1), 0, 5);
   }

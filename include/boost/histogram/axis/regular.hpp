@@ -85,7 +85,7 @@ struct pow {
  * The most common binning strategy.
  * Very fast. Binning is a O(1) operation.
  */
-template <typename RealType, typename Transform, typename MetaData, option_type Options>
+template <typename RealType, typename Transform, typename MetaData, option Options>
 class regular : public base<MetaData, Options>,
                 public iterator_mixin<regular<RealType, Transform, MetaData, Options>>,
                 protected Transform {
@@ -96,7 +96,7 @@ class regular : public base<MetaData, Options>,
   using unit_type = detail::get_unit_type<value_type>;
   using internal_type = detail::get_scale_type<value_type>;
 
-  static_assert(!(Options & option_type::circular) || !(Options & option_type::underflow),
+  static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
 
 public:
@@ -107,7 +107,6 @@ public:
    * \param start    low edge of first bin.
    * \param stop     high edge of last bin.
    * \param metadata description of the axis.
-   * \param options  extra bin options.
    */
   regular(transform_type trans, unsigned n, value_type start, value_type stop,
           metadata_type m = {})
@@ -128,7 +127,6 @@ public:
    * \param start    low edge of first bin.
    * \param stop     high edge of last bin.
    * \param metadata description of the axis.
-   * \param options  extra bin options.
    */
   regular(unsigned n, value_type start, value_type stop, metadata_type m = {})
       : regular({}, n, start, stop, std::move(m)) {}
@@ -140,7 +138,7 @@ public:
       , min_(this->forward(detail::get_scale(src.value(begin))))
       , delta_(this->forward(detail::get_scale(src.value(end))) - min_) {
     BOOST_ASSERT((end - begin) % merge == 0);
-    if (Options & option_type::circular && !(begin == 0 && end == src.size()))
+    if (test(Options, option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
@@ -153,7 +151,7 @@ public:
   int operator()(value_type x) const noexcept {
     // Runs in hot loop, please measure impact of changes
     auto z = (this->forward(x / unit_type()) - min_) / delta_;
-    if (Options & option_type::circular) {
+    if (test(Options, option::circular)) {
       if (std::isfinite(z)) {
         z -= std::floor(z);
         return static_cast<int>(z * base_type::size());
@@ -172,9 +170,9 @@ public:
   /// Returns axis value for fractional index.
   value_type value(double i) const noexcept {
     auto z = i / base_type::size();
-    if (!(Options & option_type::circular) && z < 0.0)
+    if (!test(Options, option::circular) && z < 0.0)
       z = -std::numeric_limits<internal_type>::infinity() * delta_;
-    else if ((Options & option_type::circular) || z <= 1.0)
+    else if (test(Options, option::circular) || z <= 1.0)
       z = (1.0 - z) * min_ + z * (min_ + delta_);
     else {
       z = std::numeric_limits<internal_type>::infinity() * delta_;

@@ -113,7 +113,7 @@ public:
     return visit([](const auto& x) { return x.size(); }, *this);
   }
 
-  option_type options() const {
+  option options() const {
     return visit([](const auto& x) { return axis::traits::options(x); }, *this);
   }
 

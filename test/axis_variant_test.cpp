@@ -38,13 +38,13 @@ int main() {
     BOOST_TEST_EQ(a.metadata(), "foo");
     a.metadata() = "bar";
     BOOST_TEST_EQ(a.metadata(), "bar");
-    BOOST_TEST_EQ(a.options(), axis::option_type::uoflow);
+    BOOST_TEST_EQ(a.options(), axis::option::defaults);
 
     a = axis::category<std::string>({"A", "B"}, "cat");
     BOOST_TEST_EQ(a("A"), 0);
     BOOST_TEST_EQ(a("B"), 1);
     BOOST_TEST_EQ(a.metadata(), "cat");
-    BOOST_TEST_EQ(a.options(), axis::option_type::overflow);
+    BOOST_TEST_EQ(a.options(), axis::option::overflow);
   }
 
   // axis::variant with reference
@@ -112,7 +112,7 @@ int main() {
     const auto ref = detail::cat(
         "integer(-1, 1, metadata=",
         boost::core::demangled_name(BOOST_CORE_TYPEID(user_defined)), ", options=none)");
-    test(axis::integer<int, user_defined, axis::option_type::none>(-1, 1), ref.c_str());
+    test(axis::integer<int, user_defined, axis::option::none>(-1, 1), ref.c_str());
   }
 
   // bin_type operator<<
@@ -183,7 +183,7 @@ int main() {
     using M = std::vector<char, tracing_allocator<char>>;
     using T1 = axis::regular<double, tr::id, M>;
     using T2 = axis::integer<int, axis::null_type>;
-    using T3 = axis::category<long, axis::null_type, axis::option_type::overflow,
+    using T3 = axis::category<long, axis::null_type, axis::option::overflow,
                               tracing_allocator<long>>;
     using axis_type = axis::variant<T1, T2, T3>; // no heap allocation
     using axes_type = std::vector<axis_type, tracing_allocator<axis_type>>;

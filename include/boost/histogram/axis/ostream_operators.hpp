@@ -9,6 +9,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
 #define BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
 
+#include <boost/assert.hpp>
 #include <boost/core/typeinfo.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/detail/cat.hpp>
@@ -43,7 +44,7 @@ void stream_metadata(OStream& os, const T& t) {
 }
 
 template <typename OStream>
-void stream_options(OStream& os, const axis::option_type o) {
+void stream_options(OStream& os, const axis::option o) {
   os << ", options=" << o;
 }
 
@@ -70,24 +71,24 @@ void stream_value(OStream& os, const std::basic_string<Ts...>& t) {
 namespace axis {
 
 template <typename C, typename T>
-std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
-                                     const axis::option_type o) {
-  using opt = axis::option_type;
+std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os, const axis::option o) {
+  using opt = axis::option;
   if (o == opt::none)
     os << "none";
   else {
     bool first = true;
-    for (auto x : {opt::underflow, opt::overflow, opt::circular}) {
-      if (!(o & x)) continue;
+    for (auto x : {opt::underflow, opt::overflow, opt::circular, opt::growth}) {
+      if (!test(o, x)) continue;
       if (first)
         first = false;
       else
         os << " | ";
       switch (x) {
-        case axis::option_type::underflow: os << "underflow"; break;
-        case axis::option_type::overflow: os << "overflow"; break;
-        case axis::option_type::circular: os << "circular"; break;
-        default: break;
+        case axis::option::underflow: os << "underflow"; break;
+        case axis::option::overflow: os << "overflow"; break;
+        case axis::option::circular: os << "circular"; break;
+        case axis::option::growth: os << "growth"; break;
+        default: BOOST_ASSERT(false); // never arrive here
       }
     }
   }
@@ -116,7 +117,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename V, typename Tr, typename M, option_type O>
+template <typename C, typename T, typename V, typename Tr, typename M, option O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const regular<V, Tr, M, O>& a) {
   os << "regular" << detail::to_string(a.transform()) << "(" << a.size() << ", "
@@ -128,7 +129,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename U, typename M, option_type O>
+template <typename C, typename T, typename U, typename M, option O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const integer<U, M, O>& a) {
   os << "integer(" << a.value(0) << ", " << a.value(a.size());
@@ -138,7 +139,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename U, typename M, option_type O, typename A>
+template <typename C, typename T, typename U, typename M, option O, typename A>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const variable<U, M, O, A>& a) {
   os << "variable(" << a.value(0);
@@ -149,7 +150,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
   return os;
 }
 
-template <typename C, typename T, typename U, typename M, option_type O, typename A>
+template <typename C, typename T, typename U, typename M, option O, typename A>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const category<U, M, O, A>& a) {
   os << "category(";

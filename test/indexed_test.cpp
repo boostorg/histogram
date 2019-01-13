@@ -68,8 +68,8 @@ void run_1d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
 template <class IsDynamic, class IncludeExtraBins>
 void run_3d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
   auto h = make_s(IsDynamic(), std::vector<int>(), axis::integer<>(0, 2),
-                  axis::integer<int, axis::null_type, axis::option_type::none>(0, 3),
-                  axis::integer<int, axis::null_type, axis::option_type::overflow>(0, 4));
+                  axis::integer<int, axis::null_type, axis::option::none>(0, 3),
+                  axis::integer<int, axis::null_type, axis::option::overflow>(0, 4));
 
   for (int i = -1; i < 3; ++i)
     for (int j = -1; j < 4; ++j)

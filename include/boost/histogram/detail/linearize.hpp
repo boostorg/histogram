@@ -81,7 +81,7 @@ template <class A, class V>
 void linearize_value(optional_index& out, int& shift, A& axis, const V& value) {
   int j;
   std::tie(j, shift) = axis::traits::update(axis, value);
-  j += (axis::traits::options(axis) & axis::option_type::underflow);
+  j += test(axis::traits::options(axis), axis::option::underflow);
   linearize(out, axis::traits::extend(axis), j);
 }
 
@@ -94,7 +94,7 @@ template <class T>
 void linearize_index(optional_index& out, const T& axis, const int j) {
   const auto extend = axis::traits::extend(axis);
   const auto opt = axis::traits::options(axis);
-  linearize(out, extend, j + (opt & axis::option_type::underflow));
+  linearize(out, extend, j + test(opt, axis::option::underflow));
 }
 
 template <class S, class A, class T>

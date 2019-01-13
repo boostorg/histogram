@@ -21,7 +21,7 @@ namespace histogram {
 namespace axis {
 
 /// Base class for all axes
-template <typename MetaData, option_type Options>
+template <typename MetaData, option Options>
 class base {
 public:
   using metadata_type = MetaData;
@@ -29,7 +29,7 @@ public:
   /// Returns the number of bins, without extra bins.
   int size() const noexcept { return size_meta_.first(); }
   /// Returns the options.
-  constexpr option_type options() const noexcept { return Options; }
+  constexpr option options() const noexcept { return Options; }
   /// Returns the metadata.
   metadata_type& metadata() noexcept { return size_meta_.second(); }
   /// Returns the metadata (const version).
@@ -48,8 +48,8 @@ protected:
   base(unsigned n, metadata_type m) : size_meta_(n, std::move(m)) {
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
     const auto max_index = std::numeric_limits<int>::max() -
-                           (options() & option_type::underflow) -
-                           (options() & option_type::overflow);
+                           test(Options, option::underflow) -
+                           test(Options, option::overflow);
     if (size() > max_index)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument(detail::cat("bins <= ", max_index, " required")));
@@ -63,7 +63,7 @@ protected:
 
 private:
   detail::compressed_pair<int, metadata_type> size_meta_;
-}; // namespace axis
+};
 
 } // namespace axis
 } // namespace histogram

@@ -23,14 +23,14 @@ namespace boost {
 namespace histogram {
 namespace algorithm {
 
-struct reduce_option_type {
+struct reduce_option {
   unsigned iaxis = 0;
   double lower, upper;
   unsigned merge = 0;
 
-  reduce_option_type() noexcept = default;
+  reduce_option() noexcept = default;
 
-  reduce_option_type(unsigned i, double l, double u, unsigned m)
+  reduce_option(unsigned i, double l, double u, unsigned m)
       : iaxis(i), lower(l), upper(u), merge(m) {
     if (lower == upper)
       BOOST_THROW_EXCEPTION(std::invalid_argument("lower != upper required"));
@@ -38,38 +38,38 @@ struct reduce_option_type {
   }
 };
 
-inline reduce_option_type shrink_and_rebin(unsigned iaxis, double lower, double upper,
+inline reduce_option shrink_and_rebin(unsigned iaxis, double lower, double upper,
                                            unsigned merge) {
   return {iaxis, lower, upper, merge};
 }
 
-inline reduce_option_type shrink(unsigned iaxis, double lower, double upper) {
+inline reduce_option shrink(unsigned iaxis, double lower, double upper) {
   return {iaxis, lower, upper, 1};
 }
 
-inline reduce_option_type rebin(unsigned iaxis, unsigned merge) {
+inline reduce_option rebin(unsigned iaxis, unsigned merge) {
   return {iaxis, std::numeric_limits<double>::quiet_NaN(),
           std::numeric_limits<double>::quiet_NaN(), merge};
 }
 
 /// Convenience overload for single axis.
-inline reduce_option_type shrink_and_rebin(double lower, double upper, unsigned merge) {
+inline reduce_option shrink_and_rebin(double lower, double upper, unsigned merge) {
   return shrink_and_rebin(0, lower, upper, merge);
 }
 
 /// Convenience overload for single axis.
-inline reduce_option_type shrink(double lower, double upper) {
+inline reduce_option shrink(double lower, double upper) {
   return shrink(0, lower, upper);
 }
 
 /// Convenience overload for single axis.
-inline reduce_option_type rebin(unsigned merge) { return rebin(0, merge); }
+inline reduce_option rebin(unsigned merge) { return rebin(0, merge); }
 
 template <class Histogram, class C, class = detail::requires_iterable<C>>
 decltype(auto) reduce(const Histogram& h, const C& options) {
   const auto& old_axes = unsafe_access::axes(h);
 
-  struct option_item : reduce_option_type {
+  struct option_item : reduce_option {
     int begin, end;
   };
 
@@ -149,9 +149,9 @@ decltype(auto) reduce(const Histogram& h, const C& options) {
 }
 
 template <class Histogram, class... Ts>
-decltype(auto) reduce(const Histogram& h, const reduce_option_type& t, Ts&&... ts) {
+decltype(auto) reduce(const Histogram& h, const reduce_option& t, Ts&&... ts) {
   // this must be in one line, because any of the ts could be a temporary
-  return reduce(h, std::initializer_list<reduce_option_type>{t, ts...});
+  return reduce(h, std::initializer_list<reduce_option>{t, ts...});
 }
 
 } // namespace algorithm

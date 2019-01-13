@@ -68,16 +68,16 @@ decltype(auto) metadata(T&& t) noexcept {
 }
 
 template <class T>
-option_type options(const T& axis) noexcept {
+option options(const T& axis) noexcept {
   return detail::static_if<detail::has_method_options<T>>(
       [](const auto& a) { return a.options(); },
-      [](const T&) { return axis::option_type::none; }, axis);
+      [](const T&) { return axis::option::none; }, axis);
 }
 
 template <class T>
 int extend(const T& t) noexcept {
   const auto opt = options(t);
-  return t.size() + (opt & option_type::underflow) + (opt & option_type::overflow);
+  return t.size() + test(opt, option::underflow) + test(opt, option::overflow);
 }
 
 template <class T>

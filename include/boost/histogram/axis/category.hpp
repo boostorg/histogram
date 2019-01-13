@@ -32,11 +32,10 @@ namespace axis {
  * Binning is a O(n) operation for n values in the worst case and O(1) in
  * the best case. The value types must be equal-comparable.
  */
-template <typename T, typename MetaData, option_type Options, typename Allocator>
+template <typename T, typename MetaData, option Options, typename Allocator>
 class category : public base<MetaData, Options>,
                  public iterator_mixin<category<T, MetaData, Options, Allocator>> {
-  static_assert(!(Options & option_type::underflow),
-                "category axis cannot have underflow");
+  static_assert(!test(Options, option::underflow), "category axis cannot have underflow");
   using base_type = base<MetaData, Options>;
   using metadata_type = MetaData;
   using value_type = T;

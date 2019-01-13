@@ -14,7 +14,7 @@ namespace bh = boost::histogram;
 int main() {
   // create a 1d-histogram for dice throws with integer values from 1 to 6
   auto h = bh::make_histogram(
-      bh::axis::integer<int, std::string, bh::axis::option_type::none>(1, 7, "eyes"));
+      bh::axis::integer<int, std::string, bh::axis::option::none>(1, 7, "eyes"));
 
   // do something with h
 }

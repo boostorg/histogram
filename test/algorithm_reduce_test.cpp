@@ -105,7 +105,7 @@ void run_tests() {
     BOOST_TEST_EQ(hr.at(0, 0), 5);
     BOOST_TEST_EQ(hr.at(1, 0), 3); // overflow
 
-    std::vector<reduce_option_type> opts{{shrink_and_rebin(0, 2, 5, 2), rebin(1, 3)}};
+    std::vector<reduce_option> opts{{shrink_and_rebin(0, 2, 5, 2), rebin(1, 3)}};
     auto hr2 = reduce(h, opts);
     BOOST_TEST_EQ(hr2, hr);
   }

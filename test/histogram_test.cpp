@@ -225,7 +225,7 @@ void run_tests() {
   // d1_2
   {
     auto h =
-        make(Tag(), axis::integer<int, axis::null_type, axis::option_type::none>(0, 2));
+        make(Tag(), axis::integer<int, axis::null_type, axis::option::none>(0, 2));
     h(0);
     h(-0);
     h(-1);
@@ -325,7 +325,7 @@ void run_tests() {
   // d2
   {
     auto h = make(Tag(), axis::regular<>(2, -1, 1),
-                  axis::integer<int, axis::null_type, axis::option_type::none>(-1, 2));
+                  axis::integer<int, axis::null_type, axis::option::none>(-1, 2));
     h(-1, -1);
     h(-1, 0);
     h(-1, -10);
@@ -357,7 +357,7 @@ void run_tests() {
   {
     auto h = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(),
                     axis::regular<>(2, -1, 1),
-                    axis::integer<int, axis::null_type, axis::option_type::none>(-1, 2));
+                    axis::integer<int, axis::null_type, axis::option::none>(-1, 2));
     h(-1, 0);              // -> 0, 1
     h(weight(10), -1, -1); // -> 0, 0
     h(weight(5), -1, -10); // is ignored
@@ -542,7 +542,7 @@ void run_tests() {
   // histogram_reset
   {
     auto h =
-        make(Tag(), axis::integer<int, axis::null_type, axis::option_type::none>(0, 2));
+        make(Tag(), axis::integer<int, axis::null_type, axis::option::none>(0, 2));
     h(0);
     h(1);
     BOOST_TEST_EQ(h.at(0), 1);

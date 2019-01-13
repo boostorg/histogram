@@ -154,14 +154,14 @@ void serialize(Archive& ar, pow& t, unsigned /* version */) {
 template <class Archive>
 void serialize(Archive&, null_type&, unsigned /* version */) {}
 
-template <class M, option_type O>
+template <class M, option O>
 template <class Archive>
 void base<M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& size_meta_.first();
   ar& size_meta_.second();
 }
 
-template <class T, class Tr, class M, option_type O>
+template <class T, class Tr, class M, option O>
 template <class Archive>
 void regular<T, Tr, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
@@ -170,14 +170,14 @@ void regular<T, Tr, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& delta_;
 }
 
-template <class T, class M, option_type O>
+template <class T, class M, option O>
 template <class Archive>
 void integer<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& static_cast<base_type&>(*this);
   ar& min_;
 }
 
-template <class T, class M, option_type O, class A>
+template <class T, class M, option O, class A>
 template <class Archive>
 void variable<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
   // destroy must happen before base serialization with old size
@@ -188,7 +188,7 @@ void variable<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
   ar& boost::serialization::make_array(x_.first(), nx());
 }
 
-template <class T, class M, option_type O, class A>
+template <class T, class M, option O, class A>
 template <class Archive>
 void category<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
   // destroy must happen before base serialization with old size

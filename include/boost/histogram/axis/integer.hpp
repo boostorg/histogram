@@ -26,7 +26,7 @@ namespace axis {
  * Binning is a O(1) operation. This axis operates
  * faster than a regular axis.
  */
-template <typename IntType, typename MetaData, option_type Options>
+template <typename IntType, typename MetaData, option Options>
 class integer : public base<MetaData, Options>,
                 public iterator_mixin<integer<IntType, MetaData, Options>> {
   using base_type = base<MetaData, Options>;
@@ -34,7 +34,7 @@ class integer : public base<MetaData, Options>,
   using metadata_type = MetaData;
   using index_type = std::conditional_t<std::is_integral<value_type>::value, int, double>;
 
-  static_assert(!(Options & option_type::circular) || !(Options & option_type::underflow),
+  static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
   static_assert(!std::is_integral<IntType>::value || std::is_same<IntType, int>::value,
                 "integer axis requires type floating point type or int");
@@ -57,7 +57,7 @@ public:
       : base_type(end - begin, src.metadata()), min_(src.min_ + begin) {
     if (merge > 1)
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for integer axis"));
-    if (Options & option_type::circular && !(begin == 0 && end == src.size()))
+    if (test(Options, option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
@@ -70,7 +70,7 @@ public:
 
   /// Returns axis value for index.
   value_type value(index_type i) const noexcept {
-    if (!(Options & option_type::circular)) {
+    if (!test(Options, option::circular)) {
       if (i < 0) return detail::lowest<value_type>();
       if (i > base_type::size()) { return detail::highest<value_type>(); }
     }
@@ -93,7 +93,7 @@ public:
 private:
   int index_impl(std::false_type, int x) const noexcept {
     const auto z = x - min_;
-    if (Options & option_type::circular) {
+    if (test(Options, option::circular)) {
       return z - std::floor(double(z) / base_type::size()) * base_type::size();
     } else if (z < base_type::size()) {
       return z >= 0 ? z : -1;
@@ -104,7 +104,7 @@ private:
   template <typename T>
   int index_impl(std::true_type, T x) const noexcept {
     const auto z = std::floor(x - min_);
-    if (Options & option_type::circular) {
+    if (test(Options, option::circular)) {
       if (std::isfinite(z))
         return static_cast<int>(z -
                                 std::floor(z / base_type::size()) * base_type::size());

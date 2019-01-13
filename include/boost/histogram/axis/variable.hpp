@@ -32,7 +32,7 @@ namespace axis {
  * Binning is a O(log(N)) operation. If speed matters and the problem
  * domain allows it, prefer a regular axis, possibly with a transform.
  */
-template <typename RealType, typename MetaData, option_type Options, typename Allocator>
+template <typename RealType, typename MetaData, option Options, typename Allocator>
 class variable : public base<MetaData, Options>,
                  public iterator_mixin<variable<RealType, MetaData, Options, Allocator>> {
   using base_type = base<MetaData, Options>;
@@ -40,7 +40,7 @@ class variable : public base<MetaData, Options>,
   using value_type = RealType;
   using allocator_type = Allocator;
 
-  static_assert(!(Options & option_type::circular) || !(Options & option_type::underflow),
+  static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
   static_assert(std::is_floating_point<RealType>::value,
                 "variable axis requires floating point type");
@@ -51,7 +51,6 @@ public:
    * \param begin     begin of edge sequence.
    * \param end       end of edge sequence.
    * \param metadata  description of the axis.
-   * \param options   extra bin options.
    * \param allocator allocator instance to use.
    */
   template <typename It, typename = detail::requires_iterator<It>>
@@ -90,7 +89,6 @@ public:
    *
    * \param iterable  iterable range of bin edges.
    * \param metadata  description of the axis.
-   * \param options   extra bin options.
    * \param allocator allocator instance to use.
    */
   template <typename U, typename = detail::requires_iterable<U>>
@@ -102,7 +100,6 @@ public:
    *
    * \param edgelist  list of of bin edges.
    * \param metadata  description of the axis.
-   * \param options   extra bin options.
    * \param allocator allocator instance to use.
    */
   template <typename U>
@@ -114,7 +111,7 @@ public:
   variable(const variable& src, int begin, int end, unsigned merge)
       : base_type((end - begin) / merge, src.metadata()), x_(nullptr) {
     BOOST_ASSERT((end - begin) % merge == 0);
-    if (Options & option_type::circular && !(begin == 0 && end == src.size()))
+    if (test(Options, option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
     using It = const detail::naked<decltype(*src.x_.first())>*;
     struct skip_iterator {
@@ -172,7 +169,7 @@ public:
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
     const auto p = x_.first();
-    if (Options & option_type::circular) {
+    if (test(Options, option::circular)) {
       const auto a = p[0];
       const auto b = p[nx() - 1];
       x -= std::floor((x - a) / (b - a)) * (b - a);
@@ -183,7 +180,7 @@ public:
   /// Returns axis value for fractional index.
   value_type value(double i) const noexcept {
     const auto p = x_.first();
-    if (Options & option_type::circular) {
+    if (test(Options, option::circular)) {
       auto shift = std::floor(i / base_type::size());
       i -= shift * base_type::size();
       double z;

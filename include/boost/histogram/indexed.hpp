@@ -115,12 +115,12 @@ public:
     std::size_t stride = 1;
     h.for_each_axis([&, this](const auto& a) {
       const auto opt = axis::traits::options(a);
-      const auto shift = opt & axis::option_type::underflow;
+      const auto shift = test(opt, axis::option::underflow);
 
       c->extend = axis::traits::extend(a);
       c->begin = include_extra_bins_ ? -shift : 0;
       c->end = c->extend - shift -
-               (include_extra_bins_ ? 0 : (opt & axis::option_type::overflow));
+               (include_extra_bins_ ? 0 : test(opt, axis::option::overflow));
       c->idx = c->begin;
 
       begin_ += (c->begin + shift) * stride;
