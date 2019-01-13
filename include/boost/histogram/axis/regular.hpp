@@ -17,6 +17,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <utility>
 
 namespace boost {
 namespace histogram {
@@ -85,19 +86,22 @@ struct pow {
  * The most common binning strategy.
  * Very fast. Binning is a O(1) operation.
  */
-template <typename RealType, typename Transform, typename MetaData, option Options>
+template <class RealType, class Transform, class MetaData, option Options>
 class regular : public base<MetaData, Options>,
                 public iterator_mixin<regular<RealType, Transform, MetaData, Options>>,
                 protected Transform {
-  using base_type = base<MetaData, Options>;
-  using metadata_type = MetaData;
-  using transform_type = Transform;
-  using value_type = RealType;
-  using unit_type = detail::get_unit_type<value_type>;
-  using internal_type = detail::get_scale_type<value_type>;
-
   static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
+  using base_type = base<MetaData, Options>;
+
+public:
+  using value_type = RealType;
+  using transform_type = Transform;
+  using metadata_type = MetaData;
+
+private:
+  using unit_type = detail::get_unit_type<value_type>;
+  using internal_type = detail::get_scale_type<value_type>;
 
 public:
   /** Construct n bins over real transformed range [begin, end).
@@ -167,6 +171,32 @@ public:
     return base_type::size(); // also returned if x is NaN
   }
 
+  // /// Returns index and shift (if axis has grown) for the passed argument.
+  // template <option O = Options, class = std::enable_if_t<test(O, option::growth)>>
+  // auto update(value_type x) {
+  //   auto z = (this->forward(x / unit_type()) - min_) / delta_;
+  //   if (std::isfinite(z)) {
+  //     if (0 <= z) {
+  //       if (z < 1) return std::make_pair(static_cast<int>(z * base_type::size()), 0);
+  //       const auto i = static_cast<int>(z * base_type::size());
+  //       const auto shift = i - base_type::size() + 1;
+  //       delta_ /= base_type::size();
+  //       base_type::grow(shift);
+  //       delta_ *= base_type::size();
+  //       return std::make_pair(i, shift);
+  //     }
+  //     z = std::floor(z);
+  //     const auto i = static_cast<int>(z * base_type::size());
+  //     min_ += delta_ * z;
+  //     delta_ /= base_type::size();
+  //     base_type::grow(-i);
+  //     delta_ *= base_type::size();
+  //     return std::make_pair(0, i);
+  //   }
+  //   BOOST_THROW_EXCEPTION(std::invalid_argument("argument is not finite"));
+  //   return std::make_pair(0, 0);
+  // }
+
   /// Returns axis value for fractional index.
   value_type value(double i) const noexcept {
     auto z = i / base_type::size();
@@ -198,7 +228,7 @@ public:
 
 private:
   internal_type min_, delta_;
-}; // namespace axis
+};
 
 #if __cpp_deduction_guides >= 201606
 

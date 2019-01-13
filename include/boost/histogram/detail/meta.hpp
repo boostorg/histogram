@@ -174,7 +174,9 @@ BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower, &T::lower);
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, &T::value);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_update, &T::update);
+BOOST_HISTOGRAM_MAKE_SFINAE(
+    has_method_update,
+    (std::declval<T>().update(std::declval<typename T::value_type&>())));
 
 template <typename T>
 using get_value_method_return_type_impl = decltype(std::declval<T&>().value(0));
@@ -184,7 +186,7 @@ using has_method_value_with_convertible_return_type =
     typename std::is_convertible<mp_eval_or<get_value_method_return_type_impl, T, void>,
                                  R>::type;
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, (std::declval<const T&>().options()));
+BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, (&T::options));
 
 BOOST_HISTOGRAM_MAKE_SFINAE(has_allocator, &T::get_allocator);
 

@@ -90,12 +90,30 @@ int main() {
     BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 2);
   }
 
+  // axis::integer with growth
+  {
+    axis::integer<double, axis::null_type, axis::option::growth> a;
+    BOOST_TEST_EQ(a.size(), 0);
+    BOOST_TEST_EQ(a.update(0), std::make_pair(0, -1));
+    BOOST_TEST_EQ(a.size(), 1);
+    BOOST_TEST_EQ(a.update(1), std::make_pair(1, -1));
+    BOOST_TEST_EQ(a.size(), 2);
+    BOOST_TEST_EQ(a.update(-1), std::make_pair(0, 1));
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_THROWS(a.update(std::numeric_limits<double>::infinity()),
+                      std::invalid_argument);
+    BOOST_TEST_THROWS(a.update(-std::numeric_limits<double>::infinity()),
+                      std::invalid_argument);
+    BOOST_TEST_THROWS(a.update(std::numeric_limits<double>::quiet_NaN()),
+                      std::invalid_argument);
+  }
+
   // iterators
   {
     test_axis_iterator(axis::integer<int>(0, 4), 0, 4);
     test_axis_iterator(axis::integer<double>(0, 4), 0, 4);
-    test_axis_iterator(
-        axis::integer<int, axis::null_type, axis::option::circular>(0, 4), 0, 4);
+    test_axis_iterator(axis::integer<int, axis::null_type, axis::option::circular>(0, 4),
+                       0, 4);
   }
 
   // shrink and rebin

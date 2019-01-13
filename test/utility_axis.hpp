@@ -10,6 +10,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/ostream_operators.hpp>
 #include <boost/histogram/fwd.hpp>
+#include "utility_meta.hpp"
 
 namespace boost {
 namespace histogram {

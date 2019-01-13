@@ -17,7 +17,8 @@
 using namespace boost::histogram;
 
 struct growing_axis {
-  auto update(int) { return std::make_pair(0, 0); }
+  using value_type = int;
+  auto update(value_type) { return std::make_pair(0, 0); }
 };
 
 int main() {

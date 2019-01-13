@@ -17,6 +17,7 @@
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 namespace boost {
 namespace histogram {
@@ -29,17 +30,22 @@ namespace axis {
 template <typename IntType, typename MetaData, option Options>
 class integer : public base<MetaData, Options>,
                 public iterator_mixin<integer<IntType, MetaData, Options>> {
-  using base_type = base<MetaData, Options>;
-  using value_type = IntType;
-  using metadata_type = MetaData;
-  using index_type = std::conditional_t<std::is_integral<value_type>::value, int, double>;
-
   static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
   static_assert(!std::is_integral<IntType>::value || std::is_same<IntType, int>::value,
                 "integer axis requires type floating point type or int");
+  using base_type = base<MetaData, Options>;
 
 public:
+  using metadata_type = MetaData;
+  using value_type = IntType;
+
+private:
+  using index_type = std::conditional_t<std::is_integral<value_type>::value, int, double>;
+
+public:
+  integer() = default;
+
   /** Construct over semi-open integer interval [start, stop).
    *
    * \param start    first integer of covered range.
@@ -61,11 +67,14 @@ public:
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
-  integer() = default;
-
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
     return index_impl(std::is_floating_point<value_type>(), x);
+  }
+
+  template <option O = Options, class = std::enable_if_t<test(O, option::growth)>>
+  auto update(value_type x) {
+    return update_impl(std::is_floating_point<value_type>(), x);
   }
 
   /// Returns axis value for index.
@@ -90,19 +99,18 @@ public:
   template <class Archive>
   void serialize(Archive&, unsigned);
 
-private:
+protected:
   int index_impl(std::false_type, int x) const noexcept {
     const auto z = x - min_;
-    if (test(Options, option::circular)) {
-      return z - std::floor(double(z) / base_type::size()) * base_type::size();
-    } else if (z < base_type::size()) {
-      return z >= 0 ? z : -1;
-    }
+    if (test(Options, option::circular))
+      return z - std::floor(float(z) / base_type::size()) * base_type::size();
+    if (z < base_type::size()) return z >= 0 ? z : -1;
     return base_type::size();
   }
 
   template <typename T>
   int index_impl(std::true_type, T x) const noexcept {
+    // need to handle NaN, cannot simply cast to int and call int-implementation
     const auto z = std::floor(x - min_);
     if (test(Options, option::circular)) {
       if (std::isfinite(z))
@@ -114,6 +122,27 @@ private:
     return base_type::size();
   }
 
+  auto update_impl(std::false_type, int x) noexcept {
+    const auto i = x - min_;
+    if (i >= 0) {
+      if (i < base_type::size()) return std::make_pair(i, 0);
+      const auto n = i - base_type::size() + 1;
+      base_type::grow(n);
+      return std::make_pair(i, -n);
+    }
+    min_ += i;
+    base_type::grow(-i);
+    return std::make_pair(0, -i);
+  }
+
+  template <class T>
+  auto update_impl(std::true_type, T x) {
+    if (std::isfinite(x))
+      return update_impl(std::false_type{}, static_cast<int>(std::floor(x)));
+    BOOST_THROW_EXCEPTION(std::invalid_argument("argument is not finite"));
+    return std::make_pair(0, 0);
+  }
+
   decltype(auto) subscript_impl(std::true_type, int idx) const noexcept {
     return interval_view<integer>(*this, idx);
   }
@@ -122,7 +151,7 @@ private:
     return value(idx);
   }
 
-  value_type min_ = 0;
+  int min_ = 0;
 };
 
 #if __cpp_deduction_guides >= 201606

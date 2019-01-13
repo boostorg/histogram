@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_BASE_HPP
 #define BOOST_HISTOGRAM_AXIS_BASE_HPP
 
+#include <boost/assert.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -29,7 +30,7 @@ public:
   /// Returns the number of bins, without extra bins.
   int size() const noexcept { return size_meta_.first(); }
   /// Returns the options.
-  constexpr option options() const noexcept { return Options; }
+  static constexpr option options() noexcept { return Options; }
   /// Returns the metadata.
   metadata_type& metadata() noexcept { return size_meta_.second(); }
   /// Returns the metadata (const version).
@@ -45,6 +46,8 @@ public:
   void serialize(Archive&, unsigned);
 
 protected:
+  base() = default;
+
   base(unsigned n, metadata_type m) : size_meta_(n, std::move(m)) {
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
     const auto max_index = std::numeric_limits<int>::max() -
@@ -55,14 +58,17 @@ protected:
           std::invalid_argument(detail::cat("bins <= ", max_index, " required")));
   }
 
-  base() : size_meta_(0) {}
-
   bool operator==(const base& rhs) const noexcept {
     return size() == rhs.size() && detail::relaxed_equal(metadata(), rhs.metadata());
   }
 
+  void grow(int n) {
+    BOOST_ASSERT(n > 0);
+    size_meta_.first() += n;
+  }
+
 private:
-  detail::compressed_pair<int, metadata_type> size_meta_;
+  detail::compressed_pair<int, metadata_type> size_meta_{0};
 };
 
 } // namespace axis

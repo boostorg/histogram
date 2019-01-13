@@ -120,7 +120,7 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   for (const auto& x : storage) {
     auto ns = new_storage.begin();
     sit = shifts.begin();
-    for (const auto& d : data) { ns += (d.idx - std::min(*sit++, 0)) * d.stride; }
+    for (const auto& d : data) { ns += (d.idx + std::max(*sit++, 0)) * d.stride; }
     auto dit = data.begin();
     const auto last = data.end() - 1;
     ++dit->idx;
@@ -168,7 +168,7 @@ optional_index args_to_index(std::false_type, S&, T& axes, const U& args) {
 template <unsigned I, unsigned N, class S, class T, class U>
 optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args) {
   optional_index idx;
-  auto shifts = make_stack_buffer<int>(axes, 0);
+  auto shifts = make_stack_buffer<int>(axes);
   const auto rank = get_size(axes);
   if (rank == 1 && N > 1)
     linearize_value(idx, shifts[0], axis_get<0>(axes), tuple_slice<I, N>(args));
