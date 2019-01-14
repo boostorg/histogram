@@ -192,12 +192,8 @@ template <class T, class M, option O, class A>
 template <class Archive>
 void category<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
   // destroy must happen before base serialization with old size
-  if (Archive::is_loading::value)
-    detail::destroy_buffer(x_.second(), x_.first(), base_type::size());
-  ar& static_cast<base_type&>(*this);
-  if (Archive::is_loading::value)
-    x_.first() = boost::histogram::detail::create_buffer(x_.second(), base_type::size());
-  ar& boost::serialization::make_array(x_.first(), base_type::size());
+  ar& vec_meta_.first();
+  ar& vec_meta_.second();
 }
 
 template <class... Ts>

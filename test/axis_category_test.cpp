@@ -50,6 +50,20 @@ int main() {
     BOOST_TEST_THROWS(a.value(3), std::out_of_range);
   }
 
+  // axis::category with growth
+  {
+    axis::category<int, axis::null_type, axis::option::growth> a;
+    BOOST_TEST_EQ(a.size(), 0);
+    BOOST_TEST_EQ(a.update(5), std::make_pair(0, -1));
+    BOOST_TEST_EQ(a.size(), 1);
+    BOOST_TEST_EQ(a.update(1), std::make_pair(1, -1));
+    BOOST_TEST_EQ(a.size(), 2);
+    BOOST_TEST_EQ(a.update(10), std::make_pair(2, -1));
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(a.update(10), std::make_pair(2, 0));
+    BOOST_TEST_EQ(a.size(), 3);
+  }
+
   // iterators
   {
     test_axis_iterator(axis::category<>({3, 1, 2}, ""), 0, 3);

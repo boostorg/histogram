@@ -7,7 +7,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include "utility_histogram.hpp"
 #include "utility_meta.hpp"
@@ -15,25 +14,7 @@
 using namespace boost::histogram;
 
 using integer = axis::integer<int, axis::null_type, axis::option::growth>;
-
-struct category {
-  int operator()(const std::string& x) const {
-    auto it = set_.find(x);
-    if (it != set_.end()) return it->second;
-    return set_.size();
-  }
-
-  auto update(const std::string& x) {
-    const auto i = (*this)(x);
-    if (i < size()) return std::make_pair(i, 0);
-    set_.emplace(x, i);
-    return std::make_pair(i, -1);
-  }
-
-  int size() const { return static_cast<int>(set_.size()); }
-
-  std::unordered_map<std::string, int> set_;
-};
+using category = axis::category<std::string, axis::null_type, axis::option::growth>;
 
 template <typename Tag>
 void run_tests() {
@@ -88,21 +69,8 @@ void run_tests() {
 }
 
 int main() {
-  {
-    category a;
-    BOOST_TEST_EQ(a.size(), 0);
-    BOOST_TEST_EQ(a.update("x"), std::make_pair(0, -1));
-    BOOST_TEST_EQ(a.size(), 1);
-    BOOST_TEST_EQ(a.update("y"), std::make_pair(1, -1));
-    BOOST_TEST_EQ(a.size(), 2);
-    BOOST_TEST_EQ(a.update("y"), std::make_pair(1, 0));
-    BOOST_TEST_EQ(a.size(), 2);
-    BOOST_TEST_EQ(a.update("z"), std::make_pair(2, -1));
-    BOOST_TEST_EQ(a.size(), 3);
-  }
-
   run_tests<static_tag>();
-  // run_tests<dynamic_tag>();
+  run_tests<dynamic_tag>();
 
   return boost::report_errors();
 }

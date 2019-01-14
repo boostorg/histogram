@@ -86,14 +86,28 @@ int main() {
   }
 
   {
-    auto a0 = axis::regular(3, -1, 1, axis::null_type());
-    auto a1 = axis::integer(0, 4, axis::null_type());
+    axis::category a{1, 2};
+    axis::category b{"x", "y"};
+    axis::category c{{1, 2}, "foo"};
+    axis::category d{{1, 2}, axis::null_type{}};
+
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(a), axis::category<int>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<decltype(b), axis::category<boost::container::string>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(c), axis::category<int>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<decltype(d), axis::category<int, axis::null_type>>));
+  }
+
+  {
+    auto a0 = axis::regular(3, -1, 1, axis::null_type{});
+    auto a1 = axis::integer(0, 4, axis::null_type{});
     auto a = histogram(std::make_tuple(a0, a1));
     BOOST_TEST_EQ(a.rank(), 2);
     BOOST_TEST_EQ(a.axis(0), a0);
     BOOST_TEST_EQ(a.axis(1), a1);
 
-    auto a2 = axis::regular(5, 0, 5, axis::null_type());
+    auto a2 = axis::regular(5, 0, 5, axis::null_type{});
     // don't use deduction guides for vector, support depends on stdc++ version
     std::vector<decltype(a0)> axes{{a0, a2}};
     auto b = histogram(axes, weight_storage());
