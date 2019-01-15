@@ -19,6 +19,12 @@ namespace histogram {
 
 namespace axis {
 
+/// Integral type for axis indices
+using index_type = int;
+
+/// Real type for axis indices
+using real_index_type = double;
+
 /// empty metadata type
 struct null_type {};
 

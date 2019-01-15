@@ -10,10 +10,9 @@
 #include <algorithm>
 #include <boost/container/new_allocator.hpp>
 #include <boost/container/string.hpp> // default meta data
-#include <boost/histogram/axis/base.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
-#include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -27,25 +26,33 @@
 namespace boost {
 namespace histogram {
 namespace axis {
+
+template <class, class, bool>
+class optional_variable_mixin {};
+
 /** Axis for non-equidistant bins on the real line.
  *
  * Binning is a O(log(N)) operation. If speed matters and the problem
  * domain allows it, prefer a regular axis, possibly with a transform.
  */
-template <typename RealType, typename MetaData, option Options, typename Allocator>
-class variable : public base<MetaData, Options>,
-                 public iterator_mixin<variable<RealType, MetaData, Options, Allocator>> {
-  using base_type = base<MetaData, Options>;
-  using metadata_type = MetaData;
-  using value_type = RealType;
-  using allocator_type = Allocator;
-
+template <class Value, class MetaData, option Options, class Allocator>
+class variable
+    : public iterator_mixin<variable<Value, MetaData, Options, Allocator>>,
+      public optional_variable_mixin<variable<Value, MetaData, Options, Allocator>, Value,
+                                     test(Options, option::growth)> {
   static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
-  static_assert(std::is_floating_point<RealType>::value,
+  static_assert(std::is_floating_point<Value>::value,
                 "variable axis requires floating point type");
 
+  using metadata_type = MetaData;
+  using value_type = Value;
+  using allocator_type = Allocator;
+  using vec_type = boost::container::vector<Value, allocator_type>;
+
 public:
+  variable() = default;
+
   /** Construct from iterator range of bin edges.
    *
    * \param begin     begin of edge sequence.
@@ -53,35 +60,20 @@ public:
    * \param metadata  description of the axis.
    * \param allocator allocator instance to use.
    */
-  template <typename It, typename = detail::requires_iterator<It>>
-  variable(It begin, It end, metadata_type m = metadata_type(),
-           allocator_type a = allocator_type())
-      : base_type(begin == end ? 0 : std::distance(begin, end) - 1, std::move(m))
-      , x_(nullptr, std::move(a)) {
-    using AT = std::allocator_traits<allocator_type>;
-    x_.first() = AT::allocate(x_.second(), nx());
-    try {
-      auto xit = x_.first();
-      try {
-        AT::construct(x_.second(), xit, *begin++);
-        while (begin != end) {
-          if (*begin <= *xit) {
-            ++xit; // to make sure catch code works
-            BOOST_THROW_EXCEPTION(
-                std::invalid_argument("input sequence must be strictly ascending"));
-          }
-          ++xit;
-          AT::construct(x_.second(), xit, *begin++);
-        }
-      } catch (...) {
-        // release resources that were already acquired before rethrowing
-        while (xit != x_.first()) AT::destroy(x_.second(), --xit);
-        throw;
-      }
-    } catch (...) {
-      // release resources that were already acquired before rethrowing
-      AT::deallocate(x_.second(), x_.first(), nx());
-      throw;
+  template <class It, class = detail::requires_iterator<It>>
+  variable(It begin, It end, metadata_type m = {}, allocator_type a = {})
+      : vec_meta_(vec_type(std::move(a)), std::move(m)) {
+    if (std::distance(begin, end) <= 1)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
+
+    auto& v = vec_meta_.first();
+    v.reserve(std::distance(begin, end));
+    v.emplace_back(*begin++);
+    while (begin != end) {
+      if (*begin <= v.back())
+        BOOST_THROW_EXCEPTION(
+            std::invalid_argument("input sequence must be strictly ascending"));
+      v.emplace_back(*begin++);
     }
   }
 
@@ -91,9 +83,8 @@ public:
    * \param metadata  description of the axis.
    * \param allocator allocator instance to use.
    */
-  template <typename U, typename = detail::requires_iterable<U>>
-  variable(const U& iterable, metadata_type m = metadata_type(),
-           allocator_type a = allocator_type())
+  template <class U, class = detail::requires_iterable<U>>
+  variable(const U& iterable, metadata_type m = {}, allocator_type a = {})
       : variable(std::begin(iterable), std::end(iterable), std::move(m), std::move(a)) {}
 
   /** Construct variable axis from initializer list of bin edges.
@@ -102,116 +93,79 @@ public:
    * \param metadata  description of the axis.
    * \param allocator allocator instance to use.
    */
-  template <typename U>
-  variable(std::initializer_list<U> l, metadata_type m = metadata_type(),
-           allocator_type a = allocator_type())
+  template <class U>
+  variable(std::initializer_list<U> l, metadata_type m = {}, allocator_type a = {})
       : variable(l.begin(), l.end(), std::move(m), std::move(a)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
-  variable(const variable& src, int begin, int end, unsigned merge)
-      : base_type((end - begin) / merge, src.metadata()), x_(nullptr) {
+  variable(const variable& src, index_type begin, index_type end, unsigned merge)
+      : vec_meta_(vec_type(src.get_allocator()), src.metadata()) {
     BOOST_ASSERT((end - begin) % merge == 0);
     if (test(Options, option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
-    using It = const detail::naked<decltype(*src.x_.first())>*;
-    struct skip_iterator {
-      It it;
-      unsigned skip;
-      skip_iterator operator++(int) {
-        auto tmp = *this;
-        it += skip;
-        return tmp;
-      }
-      decltype(auto) operator*() { return *it; }
-      bool operator==(const skip_iterator& rhs) const { return it == rhs.it; }
-    } iter{src.x_.first() + begin, merge};
-    x_.first() = detail::create_buffer_from_iter(x_.second(), nx(), iter);
+    auto& vec = vec_meta_.first();
+    vec.reserve((end - begin) / merge);
+    const auto beg = src.vec_meta_.first().begin();
+    for (index_type i = begin; i <= end; i += merge) vec.emplace_back(*(beg + i));
   }
-
-  variable() : x_(nullptr) {}
-
-  variable(const variable& o) : base_type(o), x_(o.x_) {
-    x_.first() = detail::create_buffer_from_iter(x_.second(), nx(), o.x_.first());
-  }
-
-  variable& operator=(const variable& o) {
-    if (this != &o) {
-      if (base_type::size() == o.size()) {
-        base_type::operator=(o);
-        std::copy(o.x_.first(), o.x_.first() + nx(), x_.first());
-      } else {
-        detail::destroy_buffer(x_.second(), x_.first(), nx());
-        base_type::operator=(o);
-        x_.second() = o.x_.second();
-        x_.first() = detail::create_buffer_from_iter(x_.second(), nx(), o.x_.first());
-      }
-    }
-    return *this;
-  }
-
-  variable(variable&& o) : variable() {
-    using std::swap;
-    swap(static_cast<base_type&>(*this), static_cast<base_type&>(o));
-    swap(x_, o.x_);
-  }
-
-  variable& operator=(variable&& o) {
-    if (this != &o) {
-      using std::swap;
-      swap(static_cast<base_type&>(*this), static_cast<base_type&>(o));
-      swap(x_, o.x_);
-    }
-    return *this;
-  }
-
-  ~variable() { detail::destroy_buffer(x_.second(), x_.first(), nx()); }
 
   /// Returns the bin index for the passed argument.
   int operator()(value_type x) const noexcept {
-    const auto p = x_.first();
+    const auto& v = vec_meta_.first();
     if (test(Options, option::circular)) {
-      const auto a = p[0];
-      const auto b = p[nx() - 1];
+      const auto a = v[0];
+      const auto b = v[size()];
       x -= std::floor((x - a) / (b - a)) * (b - a);
     }
-    return std::upper_bound(p, p + nx(), x) - p - 1;
+    return std::upper_bound(v.begin(), v.end(), x) - v.begin() - 1;
   }
 
   /// Returns axis value for fractional index.
-  value_type value(double i) const noexcept {
-    const auto p = x_.first();
+  value_type value(real_index_type i) const noexcept {
+    const auto& v = vec_meta_.first();
     if (test(Options, option::circular)) {
-      auto shift = std::floor(i / base_type::size());
-      i -= shift * base_type::size();
+      auto shift = std::floor(i / size());
+      i -= shift * size();
       double z;
-      const auto k = static_cast<int>(std::modf(i, &z));
-      const auto a = p[0];
-      const auto b = p[nx() - 1];
-      return (1.0 - z) * p[k] + z * p[k + 1] + shift * (b - a);
+      const auto k = static_cast<index_type>(std::modf(i, &z));
+      const auto a = v[0];
+      const auto b = v[size()];
+      return (1.0 - z) * v[k] + z * v[k + 1] + shift * (b - a);
     }
     if (i < 0) return detail::lowest<value_type>();
-    if (i > static_cast<int>(base_type::size())) return detail::highest<value_type>();
+    if (i > static_cast<index_type>(size())) return detail::highest<value_type>();
     double z;
-    const auto k = static_cast<int>(std::modf(i, &z));
-    return (1.0 - z) * p[k] + z * p[k + 1];
+    const auto k = static_cast<index_type>(std::modf(i, &z));
+    return (1.0 - z) * v[k] + z * v[k + 1];
   }
 
-  auto operator[](int idx) const noexcept { return interval_view<variable>(*this, idx); }
+  auto operator[](index_type idx) const noexcept {
+    return interval_view<variable>(*this, idx);
+  }
 
+  /// Returns the number of bins, without extra bins.
+  index_type size() const noexcept { return vec_meta_.first().size() - 1; }
+  /// Returns the options.
+  static constexpr option options() noexcept { return Options; }
+  /// Returns the metadata.
+  metadata_type& metadata() noexcept { return vec_meta_.second(); }
+  /// Returns the metadata (const version).
+  const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
   bool operator==(const variable& o) const noexcept {
-    return base_type::operator==(o) &&
-           std::equal(x_.first(), x_.first() + nx(), o.x_.first());
+    const auto& a = vec_meta_.first();
+    const auto& b = o.vec_meta_.first();
+    return std::equal(a.begin(), a.end(), b.begin(), b.end()) &&
+           detail::relaxed_equal(metadata(), o.metadata());
   }
-
   bool operator!=(const variable<>& o) const noexcept { return !operator==(o); }
+
+  allocator_type get_allocator() const { return vec_meta_.first().get_allocator(); }
 
   template <class Archive>
   void serialize(Archive&, unsigned);
 
 private:
-  int nx() const { return base_type::size() + 1; }
-  using pointer = typename std::allocator_traits<allocator_type>::pointer;
-  detail::compressed_pair<pointer, allocator_type> x_;
+  detail::compressed_pair<vec_type, metadata_type> vec_meta_;
 };
 
 #if __cpp_deduction_guides >= 201606

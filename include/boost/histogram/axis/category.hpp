@@ -118,6 +118,8 @@ public:
   }
   bool operator!=(const category& o) const noexcept { return !operator==(o); }
 
+  allocator_type get_allocator() const { return vec_meta_.first().get_allocator(); }
+
   template <class Archive>
   void serialize(Archive&, unsigned);
 

@@ -14,7 +14,6 @@
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp>
-#include <boost/histogram/axis/base.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -154,18 +153,12 @@ void serialize(Archive& ar, pow& t, unsigned /* version */) {
 template <class Archive>
 void serialize(Archive&, null_type&, unsigned /* version */) {}
 
-template <class M, option O>
-template <class Archive>
-void base<M, O>::serialize(Archive& ar, unsigned /* version */) {
-  ar& size_meta_.first();
-  ar& size_meta_.second();
-}
-
 template <class T, class Tr, class M, option O>
 template <class Archive>
 void regular<T, Tr, M, O>::serialize(Archive& ar, unsigned /* version */) {
-  ar& static_cast<base_type&>(*this);
   ar& static_cast<transform_type&>(*this);
+  ar& size_meta_.first();
+  ar& size_meta_.second();
   ar& min_;
   ar& delta_;
 }
@@ -173,25 +166,21 @@ void regular<T, Tr, M, O>::serialize(Archive& ar, unsigned /* version */) {
 template <class T, class M, option O>
 template <class Archive>
 void integer<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
-  ar& static_cast<base_type&>(*this);
+  ar& size_meta_.first();
+  ar& size_meta_.second();
   ar& min_;
 }
 
 template <class T, class M, option O, class A>
 template <class Archive>
 void variable<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
-  // destroy must happen before base serialization with old size
-  if (Archive::is_loading::value) detail::destroy_buffer(x_.second(), x_.first(), nx());
-  ar& static_cast<base_type&>(*this);
-  if (Archive::is_loading::value)
-    x_.first() = boost::histogram::detail::create_buffer(x_.second(), nx());
-  ar& boost::serialization::make_array(x_.first(), nx());
+  ar& vec_meta_.first();
+  ar& vec_meta_.second();
 }
 
 template <class T, class M, option O, class A>
 template <class Archive>
 void category<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
-  // destroy must happen before base serialization with old size
   ar& vec_meta_.first();
   ar& vec_meta_.second();
 }

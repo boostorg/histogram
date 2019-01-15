@@ -23,6 +23,7 @@ int main() {
   // axis::variable
   {
     axis::variable<> a{-1, 0, 1};
+    BOOST_TEST_EQ(a.size(), 2);
     BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
     axis::variable<> b;
@@ -73,8 +74,7 @@ int main() {
   {
     test_axis_iterator(axis::variable<>{1, 2, 3}, 0, 2);
     test_axis_iterator(
-        axis::variable<double, axis::null_type, axis::option::circular>{1, 2, 3}, 0,
-        2);
+        axis::variable<double, axis::null_type, axis::option::circular>{1, 2, 3}, 0, 2);
   }
 
   // shrink and rebin
