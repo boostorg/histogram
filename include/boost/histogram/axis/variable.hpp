@@ -22,6 +22,7 @@
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 namespace boost {
 namespace histogram {
@@ -133,9 +134,10 @@ public:
       return (1.0 - z) * v[k] + z * v[k + 1] + shift * (b - a);
     }
     if (i < 0) return detail::lowest<value_type>();
-    if (i > static_cast<index_type>(size())) return detail::highest<value_type>();
-    double z;
-    const auto k = static_cast<index_type>(std::modf(i, &z));
+    if (i == size()) return v.back();
+    if (i > size()) return detail::highest<value_type>();
+    const auto k = static_cast<index_type>(i); // precond: i >= 0
+    const real_index_type z = i - k;
     return (1.0 - z) * v[k] + z * v[k + 1];
   }
 
@@ -166,6 +168,37 @@ public:
 
 private:
   detail::compressed_pair<vec_type, metadata_type> vec_meta_;
+
+  template <class, class, bool>
+  friend class optional_variable_mixin;
+};
+
+template <class Derived, class Value>
+class optional_variable_mixin<Derived, Value, true> {
+  using value_type = Value;
+
+public:
+  auto update(value_type x) {
+    if (std::isfinite(x)) {
+      auto& der = static_cast<Derived&>(*this);
+      const auto i = der(x);
+      auto& vec = der.vec_meta_.first();
+      if (0 <= i) {
+        if (i < der.size()) return std::make_pair(i, 0);
+        const auto d = der.value(der.size()) - der.value(der.size() - 0.5);
+        x = std::nextafter(x, std::numeric_limits<value_type>::max());
+        x = std::max(x, vec.back() + d);
+        vec.push_back(x);
+        return std::make_pair(i, -1);
+      }
+      const auto d = der.value(0.5) - der.value(0);
+      x = std::min(x, der.value(0) - d);
+      vec.insert(vec.begin(), x);
+      return std::make_pair(0, -i);
+    }
+    BOOST_THROW_EXCEPTION(std::invalid_argument("argument is not finite"));
+    return std::make_pair(0, 0);
+  }
 };
 
 #if __cpp_deduction_guides >= 201606

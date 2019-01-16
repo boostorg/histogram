@@ -98,8 +98,8 @@ public:
   const metadata_type& metadata() const noexcept { return size_meta_.second(); }
 
   bool operator==(const integer& o) const noexcept {
-    return size_meta_.first() == o.size_meta_.first() &&
-           detail::relaxed_equal(metadata(), o.metadata()) && min_ == o.min_;
+    return size() == o.size() && detail::relaxed_equal(metadata(), o.metadata()) &&
+           min_ == o.min_;
   }
 
   bool operator!=(const integer& o) const noexcept { return !operator==(o); }

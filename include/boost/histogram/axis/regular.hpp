@@ -203,8 +203,7 @@ public:
   const metadata_type& metadata() const noexcept { return size_meta_.second(); }
 
   bool operator==(const regular& o) const noexcept {
-    return detail::relaxed_equal(transform(), o.transform()) &&
-           size_meta_.first() == o.size_meta_.first() &&
+    return detail::relaxed_equal(transform(), o.transform()) && size() == o.size() &&
            detail::relaxed_equal(metadata(), o.metadata()) && min_ == o.min_ &&
            delta_ == o.delta_;
   }
@@ -229,7 +228,7 @@ class optional_regular_mixin<Axis, Value, true> {
 public:
   /// Returns index and shift (if axis has grown) for the passed argument.
   auto update(value_type x) {
-    auto& der = *static_cast<Axis*>(this);
+    auto& der = static_cast<Axis&>(*this);
     auto z = (der.forward(x / typename Axis::unit_type{}) - der.min_) / der.delta_;
     if (std::isfinite(z)) {
       auto i = static_cast<index_type>(z);
