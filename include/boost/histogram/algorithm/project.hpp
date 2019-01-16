@@ -49,7 +49,7 @@ auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N>, Ns..
   using A2 = decltype(axes);
   auto result = histogram<A2, S>(std::move(axes), detail::make_default(old_storage));
   auto idx = detail::make_stack_buffer<int>(unsafe_access::axes(result));
-  for (auto x : indexed(h, true)) {
+  for (auto x : indexed(h, coverage::all)) {
     auto i = idx.begin();
     mp11::mp_for_each<LN>([&i, &x](auto J) { *i++ = x[J]; });
     result.at(idx) += *x;
@@ -81,7 +81,7 @@ auto project(const histogram<A, S>& h, const Iterable& c) {
   const auto& old_storage = unsafe_access::storage(h);
   auto result = histogram<A, S>(std::move(axes), detail::make_default(old_storage));
   auto idx = detail::make_stack_buffer<int>(unsafe_access::axes(result));
-  for (auto x : indexed(h, true)) {
+  for (auto x : indexed(h, coverage::all)) {
     auto i = idx.begin();
     for (auto d : c) *i++ = x[d];
     result.at(idx) += *x;

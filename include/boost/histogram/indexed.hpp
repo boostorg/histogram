@@ -19,6 +19,8 @@
 namespace boost {
 namespace histogram {
 
+enum class coverage { inner, all, use_default = inner };
+
 /// Range over histogram bins with multi-dimensional index.
 template <class Histogram>
 class BOOST_HISTOGRAM_NODISCARD indexed_range {
@@ -105,32 +107,31 @@ public:
     mutable indexed_range* parent_;
   };
 
-  indexed_range(Histogram& h, bool include_extra_bins)
+  indexed_range(Histogram& h, coverage c)
       : hist_(h)
-      , include_extra_bins_(include_extra_bins)
+      , cover_all_(c == coverage::all)
       , begin_(hist_.begin())
       , end_(begin_)
       , cache_(hist_.rank()) {
-    auto c = cache_.begin();
+    auto ca = cache_.begin();
     std::size_t stride = 1;
     h.for_each_axis([&, this](const auto& a) {
       const auto opt = axis::traits::options(a);
       const auto shift = test(opt, axis::option::underflow);
 
-      c->extend = axis::traits::extend(a);
-      c->begin = include_extra_bins_ ? -shift : 0;
-      c->end = c->extend - shift -
-               (include_extra_bins_ ? 0 : test(opt, axis::option::overflow));
-      c->idx = c->begin;
+      ca->extend = axis::traits::extend(a);
+      ca->begin = cover_all_ ? -shift : 0;
+      ca->end = ca->extend - shift - (cover_all_ ? 0 : test(opt, axis::option::overflow));
+      ca->idx = ca->begin;
 
-      begin_ += (c->begin + shift) * stride;
-      if ((c + 1) < cache_.end())
-        end_ += (c->begin + shift) * stride;
+      begin_ += (ca->begin + shift) * stride;
+      if ((ca + 1) < cache_.end())
+        end_ += (ca->begin + shift) * stride;
       else
-        end_ += (c->end + shift) * stride;
+        end_ += (ca->end + shift) * stride;
 
-      stride *= c->extend;
-      ++c;
+      stride *= ca->extend;
+      ++ca;
     });
   }
 
@@ -139,15 +140,15 @@ public:
 
 private:
   Histogram& hist_;
-  const bool include_extra_bins_;
+  const bool cover_all_;
   histogram_iterator begin_, end_;
   mutable cache_type cache_;
 }; // namespace histogram
 
 template <typename Histogram>
 indexed_range<std::remove_reference_t<Histogram>> indexed(
-    Histogram&& h, bool include_extra_bins = false) {
-  return {std::forward<Histogram>(h), include_extra_bins};
+    Histogram&& h, coverage c = coverage::use_default) {
+  return {std::forward<Histogram>(h), c};
 }
 
 } // namespace histogram

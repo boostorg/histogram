@@ -83,7 +83,7 @@ int main() {
     struct B {
       void update(int) {}
     };
-    using C = axis::integer<int, axis::null_type, axis::option::defaults>;
+    using C = axis::integer<int, axis::null_type, axis::option::use_default>;
     using D = axis::integer<int, axis::null_type, axis::option::growth>;
 
     BOOST_TEST_TRAIT_FALSE((has_method_update<A>));

@@ -39,7 +39,7 @@ struct reduce_option {
 };
 
 inline reduce_option shrink_and_rebin(unsigned iaxis, double lower, double upper,
-                                           unsigned merge) {
+                                      unsigned merge) {
   return {iaxis, lower, upper, merge};
 }
 
@@ -127,7 +127,7 @@ decltype(auto) reduce(const Histogram& h, const C& options) {
   auto result = Histogram(std::move(axes), std::move(storage));
 
   auto idx = detail::make_stack_buffer<int>(unsafe_access::axes(result));
-  for (auto x : indexed(h, true)) {
+  for (auto x : indexed(h, coverage::all)) {
     auto i = idx.begin();
     auto o = opts.begin();
     for (auto j : x) {

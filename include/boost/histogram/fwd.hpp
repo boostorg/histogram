@@ -10,8 +10,8 @@
 #include <boost/container/container_fwd.hpp> // for string and new_allocator
 #include <boost/histogram/attribute.hpp>     // for BOOST_HISTOGRAM_NODISCARD
 
-// Why boost containers as defaults and not std containers?
-// - std::vector does not work with incomplete types, but boost::container::vector does
+// Why boost containers and not std containers?
+// - boost has the static_vector specialization, which is internally used a lot
 // - std::string is very large on MSVC, boost::container::string is small everywhere
 
 namespace boost {
@@ -33,11 +33,11 @@ using default_metadata = boost::container::string;
 
 enum class option {
   none = 0,
-  underflow = 1 << 0,
-  overflow = 1 << 1,
-  circular = 1 << 2,
-  growth = 1 << 3,
-  defaults = static_cast<int>(underflow) | static_cast<int>(overflow),
+  underflow = 0b1,
+  overflow = 0b10,
+  circular = 0b100,
+  growth = 0b1000,
+  use_default = static_cast<int>(underflow) | static_cast<int>(overflow),
 };
 
 constexpr inline option operator~(option a) {
@@ -75,7 +75,7 @@ struct pow;
 } // namespace transform
 
 template <class Value = double, class Transform = transform::id,
-          class MetaData = default_metadata, option Options = option::defaults>
+          class MetaData = default_metadata, option Options = option::use_default>
 class regular;
 
 template <class Value = double, class MetaData = default_metadata,
@@ -83,11 +83,11 @@ template <class Value = double, class MetaData = default_metadata,
 using circular = regular<Value, transform::id, MetaData, join(Options, option::circular)>;
 
 template <class Value = int, class MetaData = default_metadata,
-          option Options = option::defaults>
+          option Options = option::use_default>
 class integer;
 
 template <class Value = double, class MetaData = default_metadata,
-          option Options = option::defaults,
+          option Options = option::use_default,
           class Allocator = boost::container::new_allocator<Value>>
 class variable;
 

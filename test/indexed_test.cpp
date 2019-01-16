@@ -13,6 +13,7 @@
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
 #include <iterator>
+#include <type_traits>
 #include <vector>
 #include "utility_histogram.hpp"
 
@@ -20,8 +21,8 @@ using namespace boost::histogram;
 using namespace boost::histogram::literals;
 using namespace boost::mp11;
 
-template <class IsDynamic, class IncludeExtraBins>
-void run_1d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
+template <class IsDynamic, class Coverage>
+void run_1d_tests(mp_list<IsDynamic, Coverage>) {
   auto h = make(IsDynamic(), axis::integer<>(0, 3));
   h(-1, weight(1));
   h(0, weight(2));
@@ -29,11 +30,11 @@ void run_1d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
   h(2, weight(4));
   h(3, weight(5));
 
-  auto ind = indexed(h, IncludeExtraBins());
+  auto ind = indexed(h, Coverage());
   auto it = ind.begin();
   BOOST_TEST_EQ(it->size(), 1);
 
-  if (IncludeExtraBins()) {
+  if (Coverage() == coverage::all) {
     BOOST_TEST_EQ(it->operator[](0), -1);
     BOOST_TEST_EQ(**it, 1);
     BOOST_TEST_EQ(it->bin(0), h.axis()[-1]);
@@ -51,7 +52,7 @@ void run_1d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
   BOOST_TEST_EQ(**it, 4);
   BOOST_TEST_EQ(it->bin(0), h.axis()[2]);
   ++it;
-  if (IncludeExtraBins()) {
+  if (Coverage() == coverage::all) {
     BOOST_TEST_EQ(it->operator[](0), 3);
     BOOST_TEST_EQ(**it, 5);
     BOOST_TEST_EQ(it->bin(0), h.axis()[3]);
@@ -59,14 +60,14 @@ void run_1d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
   }
   BOOST_TEST(it == ind.end());
 
-  for (auto&& x : indexed(h, IncludeExtraBins())) *x = 0;
+  for (auto&& x : indexed(h, Coverage())) *x = 0;
 
-  for (auto&& x : indexed(static_cast<const decltype(h)&>(h), IncludeExtraBins()))
+  for (auto&& x : indexed(static_cast<const decltype(h)&>(h), Coverage()))
     BOOST_TEST_EQ(*x, 0);
 }
 
-template <class IsDynamic, class IncludeExtraBins>
-void run_3d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
+template <class IsDynamic, class Coverage>
+void run_3d_tests(mp_list<IsDynamic, Coverage>) {
   auto h = make_s(IsDynamic(), std::vector<int>(), axis::integer<>(0, 2),
                   axis::integer<int, axis::null_type, axis::option::none>(0, 3),
                   axis::integer<int, axis::null_type, axis::option::overflow>(0, 4));
@@ -75,14 +76,16 @@ void run_3d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
     for (int j = -1; j < 4; ++j)
       for (int k = -1; k < 5; ++k) h(i, j, k, weight(i * 100 + j * 10 + k));
 
-  auto ind = indexed(h, IncludeExtraBins());
+  auto ind = indexed(h, Coverage());
   auto it = ind.begin();
   BOOST_TEST_EQ(it->size(), 3);
 
+  const int d = Coverage() == coverage::all;
+
   // imitate iteration order of indexed loop
-  for (int k = 0; k < 4 + IncludeExtraBins(); ++k)
+  for (int k = 0; k < 4 + d; ++k)
     for (int j = 0; j < 3; ++j)
-      for (int i = -IncludeExtraBins(); i < 2 + IncludeExtraBins(); ++i) {
+      for (int i = -d; i < 2 + d; ++i) {
         BOOST_TEST_EQ(it->operator[](0), i);
         BOOST_TEST_EQ(it->operator[](1), j);
         BOOST_TEST_EQ(it->operator[](2), k);
@@ -95,8 +98,8 @@ void run_3d_tests(mp_list<IsDynamic, IncludeExtraBins>) {
   BOOST_TEST(it == ind.end());
 }
 
-template <class IsDynamic, class IncludeExtraBins>
-void run_density_tests(mp_list<IsDynamic, IncludeExtraBins>) {
+template <class IsDynamic, class Coverage>
+void run_density_tests(mp_list<IsDynamic, Coverage>) {
   auto ax = axis::variable<>({0.0, 0.1, 0.3, 0.6});
   auto ay = axis::integer<int>(0, 2);
   auto az = ax;
@@ -105,14 +108,15 @@ void run_density_tests(mp_list<IsDynamic, IncludeExtraBins>) {
   // fill uniformly
   for (auto&& x : h) x = 1;
 
-  for (auto x : indexed(h, IncludeExtraBins())) {
+  for (auto x : indexed(h, Coverage())) {
     BOOST_TEST_EQ(x.density(), *x / (x.bin(0).width() * x.bin(2).width()));
   }
 }
 
 int main() {
-  mp_for_each<
-      mp_product<mp_list, mp_list<mp_false, mp_true>, mp_list<mp_false, mp_true>>>(
+  mp_for_each<mp_product<mp_list, mp_list<mp_false, mp_true>,
+                         mp_list<std::integral_constant<coverage, coverage::inner>,
+                                 std::integral_constant<coverage, coverage::all>>>>(
       [](auto&& x) {
         run_1d_tests(x);
         run_3d_tests(x);

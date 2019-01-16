@@ -11,17 +11,16 @@
 #include <cassert>
 #include <numeric> // for std::accumulate
 
-namespace bh = boost::histogram;
+using namespace boost::histogram;
 
 int main() {
   // make histogram with 2 x 2 = 4 bins (not counting under-/overflow bins)
-  auto h =
-      bh::make_histogram(bh::axis::regular<>(2, -1, 1), bh::axis::regular<>(2, 2, 4));
+  auto h = make_histogram(axis::regular<>(2, -1, 1), axis::regular<>(2, 2, 4));
 
-  h(bh::weight(1), -0.5, 2.5); // bin index 0, 0
-  h(bh::weight(2), -0.5, 3.5); // bin index 0, 1
-  h(bh::weight(3), 0.5, 2.5);  // bin index 1, 0
-  h(bh::weight(4), 0.5, 3.5);  // bin index 1, 1
+  h(weight(1), -0.5, 2.5); // bin index 0, 0
+  h(weight(2), -0.5, 3.5); // bin index 0, 1
+  h(weight(3), 0.5, 2.5);  // bin index 1, 0
+  h(weight(4), 0.5, 3.5);  // bin index 1, 1
 
   // histogram has bin iterators which iterate over all bin values including
   // underflow/overflow; it works with STL algorithms
@@ -60,9 +59,9 @@ int main() {
                      "1 1 [ 0, 1) [ 3, 4): 4\n");
 
   // `indexed` skips underflow and overflow bins by default, but can be called with the
-  // second argument `true` to walk over all bins
+  // second argument `coverage::all` to walk over all bins
   std::ostringstream os2;
-  for (auto x : indexed(h, true)) {
+  for (auto x : indexed(h, coverage::all)) {
     os2 << boost::format("%2i %2i: %i\n") % x[0] % x[1] % *x;
   }
 

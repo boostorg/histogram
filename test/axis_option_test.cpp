@@ -11,18 +11,18 @@
 using namespace boost::histogram::axis;
 
 int main() {
-  BOOST_TEST_EQ(option::defaults, option::underflow | option::overflow);
-  BOOST_TEST(test(option::defaults, option::underflow));
-  BOOST_TEST(test(option::defaults, option::overflow));
-  BOOST_TEST_NOT(test(option::defaults, option::circular));
-  BOOST_TEST_NOT(test(option::defaults, option::growth));
-  BOOST_TEST_EQ(join(option::defaults, option::underflow), option::defaults);
-  BOOST_TEST_EQ(join(option::defaults, option::overflow), option::defaults);
-  BOOST_TEST_EQ(join(option::defaults, option::circular),
+  BOOST_TEST_EQ(option::use_default, option::underflow | option::overflow);
+  BOOST_TEST(test(option::use_default, option::underflow));
+  BOOST_TEST(test(option::use_default, option::overflow));
+  BOOST_TEST_NOT(test(option::use_default, option::circular));
+  BOOST_TEST_NOT(test(option::use_default, option::growth));
+  BOOST_TEST_EQ(join(option::use_default, option::underflow), option::use_default);
+  BOOST_TEST_EQ(join(option::use_default, option::overflow), option::use_default);
+  BOOST_TEST_EQ(join(option::use_default, option::circular),
                 option::overflow | option::circular);
-  BOOST_TEST_EQ(join(option::defaults, option::growth), option::growth);
+  BOOST_TEST_EQ(join(option::use_default, option::growth), option::growth);
   BOOST_TEST_EQ(join(option::growth, option::underflow), option::underflow);
   BOOST_TEST_EQ(join(option::growth, option::overflow), option::overflow);
-  BOOST_TEST_EQ(join(option::growth, option::defaults), option::defaults);
+  BOOST_TEST_EQ(join(option::growth, option::use_default), option::use_default);
   return boost::report_errors();
 }

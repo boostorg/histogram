@@ -38,7 +38,7 @@ int main() {
     BOOST_TEST_EQ(a.metadata(), "foo");
     a.metadata() = "bar";
     BOOST_TEST_EQ(a.metadata(), "bar");
-    BOOST_TEST_EQ(a.options(), axis::option::defaults);
+    BOOST_TEST_EQ(a.options(), axis::option::use_default);
 
     a = axis::category<std::string>({"A", "B"}, "cat");
     BOOST_TEST_EQ(a("A"), 0);
