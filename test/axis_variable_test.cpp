@@ -8,6 +8,7 @@
 #include <boost/histogram/axis/variable.hpp>
 #include <limits>
 #include <vector>
+#include "is_close.hpp"
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
@@ -89,6 +90,13 @@ int main() {
     BOOST_TEST_EQ(a.update(-0.1), std::make_pair(0, 1));
     BOOST_TEST_EQ(a.value(0), -0.5);
     BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(a.update(10), std::make_pair(3, -1));
+    BOOST_TEST_EQ(a.size(), 4);
+    BOOST_TEST_IS_CLOSE(a.value(4), 10, 1e-9);
+    BOOST_TEST_EQ(a.update(-10), std::make_pair(0, 1));
+    BOOST_TEST_EQ(a.size(), 5);
+    BOOST_TEST_IS_CLOSE(a.value(0), -10, 1e-9);
+
     BOOST_TEST_THROWS(a.update(std::numeric_limits<double>::infinity()),
                       std::invalid_argument);
     BOOST_TEST_THROWS(a.update(-std::numeric_limits<double>::infinity()),
