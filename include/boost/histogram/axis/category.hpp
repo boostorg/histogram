@@ -36,14 +36,15 @@ class optional_category_mixin {};
  * small N (the typical use case) it beats other kinds of lookup.
  * Value types must be equal-omparable.
  */
-template <class T, class MetaData, option Options, class Allocator>
-class category : public iterator_mixin<category<T, MetaData, Options, Allocator>>,
-                 public optional_category_mixin<category<T, MetaData, Options, Allocator>,
-                                                T, test(Options, option::growth)> {
+template <class Value, class MetaData, option Options, class Allocator>
+class category
+    : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,
+      public optional_category_mixin<category<Value, MetaData, Options, Allocator>, Value,
+                                     test(Options, option::growth)> {
   static_assert(!test(Options, option::underflow), "category axis cannot have underflow");
   static_assert(!test(Options, option::circular), "category axis cannot be circular");
   using metadata_type = MetaData;
-  using value_type = T;
+  using value_type = Value;
   using allocator_type = Allocator;
   using vector_type = boost::container::vector<value_type, allocator_type>;
 
