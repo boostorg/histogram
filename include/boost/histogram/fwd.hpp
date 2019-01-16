@@ -19,6 +19,12 @@ namespace histogram {
 
 namespace axis {
 
+/// Integral type for axis indices
+using index_type = int;
+
+/// Real type for axis indices
+using real_index_type = double;
+
 /// empty metadata type
 struct null_type {};
 
@@ -68,27 +74,26 @@ struct sqrt;
 struct pow;
 } // namespace transform
 
-template <class RealType = double, class Transform = transform::id,
+template <class Value = double, class Transform = transform::id,
           class MetaData = default_metadata, option Options = option::defaults>
 class regular;
 
-template <class RealType = double, class MetaData = default_metadata,
+template <class Value = double, class MetaData = default_metadata,
           option Options = option::overflow>
-using circular =
-    regular<RealType, transform::id, MetaData, join(Options, option::circular)>;
+using circular = regular<Value, transform::id, MetaData, join(Options, option::circular)>;
 
-template <class IntType = int, class MetaData = default_metadata,
+template <class Value = int, class MetaData = default_metadata,
           option Options = option::defaults>
 class integer;
 
-template <class RealType = double, class MetaData = default_metadata,
+template <class Value = double, class MetaData = default_metadata,
           option Options = option::defaults,
-          class Allocator = boost::container::new_allocator<RealType>>
+          class Allocator = boost::container::new_allocator<Value>>
 class variable;
 
-template <class T = int, class MetaData = default_metadata,
+template <class Value = int, class MetaData = default_metadata,
           option Options = option::overflow,
-          class Allocator = boost::container::new_allocator<T>>
+          class Allocator = boost::container::new_allocator<Value>>
 class category;
 
 template <class... Ts>
@@ -102,13 +107,13 @@ template <class T>
 struct sample_type;
 
 namespace accumulators {
-template <class RealType = double>
+template <class Value = double>
 class sum;
-template <class RealType = double>
+template <class Value = double>
 class weighted_sum;
-template <class RealType = double>
+template <class Value = double>
 class mean;
-template <class RealType = double>
+template <class Value = double>
 class weighted_mean;
 } // namespace accumulators
 

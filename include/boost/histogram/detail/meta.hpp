@@ -137,44 +137,32 @@ using get_storage_tag = typename T::storage_tag;
 template <typename T>
 using is_storage = mp11::mp_valid<get_storage_tag, T>;
 
-#define BOOST_HISTOGRAM_MAKE_SFINAE(name, cond) \
-  template <class TT>                           \
-  struct name##_impl {                          \
-    template <class T, class = decltype(cond)>  \
-    static std::true_type Test(std::nullptr_t); \
-    template <class T>                          \
-    static std::false_type Test(...);           \
-    using type = decltype(Test<TT>(nullptr));   \
-  };                                            \
-  template <class T>                            \
-  using name = typename name##_impl<T>::type
+#define BOOST_HISTOGRAM_DETECT(name, cond)   \
+  template <class T, class = decltype(cond)> \
+  struct name##_impl {};                     \
+  template <class T>                         \
+  using name = typename mp11::mp_valid<name##_impl, T>
 
-#define BOOST_HISTOGRAM_MAKE_BINARY_SFINAE(name, cond)  \
-  template <class TT, class UU>                         \
-  struct name##_impl {                                  \
-    template <class T, class U, class = decltype(cond)> \
-    static std::true_type Test(std::nullptr_t);         \
-    template <class T, class U>                         \
-    static std::false_type Test(...);                   \
-    using type = decltype(Test<TT, UU>(nullptr));       \
-  };                                                    \
-  template <class T, class U = T>                       \
-  using name = typename name##_impl<T, U>::type
+#define BOOST_HISTOGRAM_DETECT_BINARY(name, cond)     \
+  template <class T, class U, class = decltype(cond)> \
+  struct name##_impl {};                              \
+  template <class T, class U = T>                     \
+  using name = typename mp11::mp_valid<name##_impl, T, U>
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_metadata, (std::declval<T&>().metadata()));
+BOOST_HISTOGRAM_DETECT(has_method_metadata, (std::declval<T&>().metadata()));
 
 // resize has two overloads, trying to get pmf in this case always fails
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_resize, (std::declval<T&>().resize(0)));
+BOOST_HISTOGRAM_DETECT(has_method_resize, (std::declval<T&>().resize(0)));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_size, &T::size);
+BOOST_HISTOGRAM_DETECT(has_method_size, &T::size);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_clear, &T::clear);
+BOOST_HISTOGRAM_DETECT(has_method_clear, &T::clear);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_lower, &T::lower);
+BOOST_HISTOGRAM_DETECT(has_method_lower, &T::lower);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_value, &T::value);
+BOOST_HISTOGRAM_DETECT(has_method_value, &T::value);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_update, &T::update);
+BOOST_HISTOGRAM_DETECT(has_method_update, (&T::update));
 
 template <typename T>
 using get_value_method_return_type_impl = decltype(std::declval<T&>().value(0));
@@ -184,52 +172,51 @@ using has_method_value_with_convertible_return_type =
     typename std::is_convertible<mp_eval_or<get_value_method_return_type_impl, T, void>,
                                  R>::type;
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_method_options, (std::declval<const T&>().options()));
+BOOST_HISTOGRAM_DETECT(has_method_options, (&T::options));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_allocator, &T::get_allocator);
+BOOST_HISTOGRAM_DETECT(has_allocator, &T::get_allocator);
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable, (std::declval<T&>()[0]));
+BOOST_HISTOGRAM_DETECT(is_indexable, (std::declval<T&>()[0]));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_transform, (&T::forward, &T::inverse));
+BOOST_HISTOGRAM_DETECT(is_transform, (&T::forward, &T::inverse));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_vector_like,
-                            (std::declval<T&>()[0], &T::size,
-                             std::declval<T&>().resize(0), &T::cbegin, &T::cend));
+BOOST_HISTOGRAM_DETECT(is_vector_like,
+                       (std::declval<T&>()[0], &T::size, std::declval<T&>().resize(0),
+                        &T::cbegin, &T::cend));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_array_like,
-                            (std::declval<T&>()[0], &T::size, std::tuple_size<T>::value,
-                             &T::cbegin, &T::cend));
+BOOST_HISTOGRAM_DETECT(is_array_like, (std::declval<T&>()[0], &T::size,
+                                       std::tuple_size<T>::value, &T::cbegin, &T::cend));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_map_like,
-                            (typename T::key_type(), typename T::mapped_type(),
-                             std::declval<T&>().begin(), std::declval<T&>().end()));
+BOOST_HISTOGRAM_DETECT(is_map_like,
+                       (typename T::key_type(), typename T::mapped_type(),
+                        std::declval<T&>().begin(), std::declval<T&>().end()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_indexable_container, (std::declval<T&>()[0], &T::size,
-                                                     std::begin(std::declval<T&>()),
-                                                     std::end(std::declval<T&>())));
+BOOST_HISTOGRAM_DETECT(is_indexable_container,
+                       (std::declval<T&>()[0], &T::size, std::begin(std::declval<T&>()),
+                        std::end(std::declval<T&>())));
 
 // is_axis is false for axis::variant, because operator() is templated
-BOOST_HISTOGRAM_MAKE_SFINAE(is_axis, (&T::size, &T::operator()));
+BOOST_HISTOGRAM_DETECT(is_axis, (&T::size, &T::operator()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_iterable, (std::begin(std::declval<T&>()),
-                                          std::end(std::declval<T&>())));
+BOOST_HISTOGRAM_DETECT(is_iterable,
+                       (std::begin(std::declval<T&>()), std::end(std::declval<T&>())));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_streamable,
-                            (std::declval<std::ostream&>() << std::declval<T&>()));
+BOOST_HISTOGRAM_DETECT(is_streamable,
+                       (std::declval<std::ostream&>() << std::declval<T&>()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(is_incrementable, (++std::declval<T&>()));
+BOOST_HISTOGRAM_DETECT(is_incrementable, (++std::declval<T&>()));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_fixed_size, (std::tuple_size<T>::value));
+BOOST_HISTOGRAM_DETECT(has_fixed_size, (std::tuple_size<T>::value));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_operator_rmul, (std::declval<T&>() *= 1.0));
+BOOST_HISTOGRAM_DETECT(has_operator_rmul, (std::declval<T&>() *= 1.0));
 
-BOOST_HISTOGRAM_MAKE_SFINAE(has_operator_preincrement, (++std::declval<T&>()));
+BOOST_HISTOGRAM_DETECT(has_operator_preincrement, (++std::declval<T&>()));
 
-BOOST_HISTOGRAM_MAKE_BINARY_SFINAE(has_operator_equal, (std::declval<const T&>() ==
-                                                        std::declval<const U&>()));
+BOOST_HISTOGRAM_DETECT_BINARY(has_operator_equal,
+                              (std::declval<const T&>() == std::declval<const U&>()));
 
-BOOST_HISTOGRAM_MAKE_BINARY_SFINAE(has_operator_radd,
-                                   (std::declval<T&>() += std::declval<U&>()));
+BOOST_HISTOGRAM_DETECT_BINARY(has_operator_radd,
+                              (std::declval<T&>() += std::declval<U&>()));
 
 template <typename T>
 struct is_tuple_impl : std::false_type {};

@@ -12,7 +12,6 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/literals.hpp>
 #include <boost/histogram/sample.hpp>
 #include <boost/histogram/weight.hpp>
 #include <deque>
@@ -26,9 +25,8 @@
 #include "utility_allocator.hpp"
 #include "utility_meta.hpp"
 
-namespace bh = boost::histogram;
-using namespace bh::detail;
-using namespace bh::literals;
+using namespace boost::histogram;
+using namespace boost::histogram::detail;
 
 struct VisitorTestFunctor {
   template <typename T>
@@ -63,13 +61,9 @@ int main() {
     struct B {
       void options() {}
     };
-    struct C {
-      bh::axis::option options() const { return {}; }
-    };
 
     BOOST_TEST_TRAIT_FALSE((has_method_options<A>));
-    BOOST_TEST_TRAIT_FALSE((has_method_options<B>));
-    BOOST_TEST_TRAIT_TRUE((has_method_options<C>));
+    BOOST_TEST_TRAIT_TRUE((has_method_options<B>));
   }
 
   // has_method_metadata
@@ -81,6 +75,21 @@ int main() {
 
     BOOST_TEST_TRAIT_FALSE((has_method_metadata<A>));
     BOOST_TEST_TRAIT_TRUE((has_method_metadata<B>));
+  }
+
+  // has_method_update
+  {
+    struct A {};
+    struct B {
+      void update(int) {}
+    };
+    using C = axis::integer<int, axis::null_type, axis::option::defaults>;
+    using D = axis::integer<int, axis::null_type, axis::option::growth>;
+
+    BOOST_TEST_TRAIT_FALSE((has_method_update<A>));
+    BOOST_TEST_TRAIT_TRUE((has_method_update<B>));
+    BOOST_TEST_TRAIT_FALSE((has_method_update<C>));
+    BOOST_TEST_TRAIT_TRUE((has_method_update<D>));
   }
 
   // has_method_resize
@@ -134,7 +143,7 @@ int main() {
   // is_storage
   {
     struct A {};
-    using B = bh::adaptive_storage<>;
+    using B = adaptive_storage<>;
 
     BOOST_TEST_TRAIT_FALSE((is_storage<A>));
     BOOST_TEST_TRAIT_TRUE((is_storage<B>));
@@ -218,7 +227,7 @@ int main() {
     struct D {
       int size();
     };
-    using E = bh::axis::variant<bh::axis::regular<>>;
+    using E = axis::variant<axis::regular<>>;
 
     BOOST_TEST_TRAIT_FALSE((is_axis<A>));
     BOOST_TEST_TRAIT_TRUE((is_axis<B>));
@@ -250,8 +259,8 @@ int main() {
   {
     struct A {};
     BOOST_TEST_TRAIT_FALSE((is_axis_variant<A>));
-    BOOST_TEST_TRAIT_TRUE((is_axis_variant<bh::axis::variant<>>));
-    BOOST_TEST_TRAIT_TRUE((is_axis_variant<bh::axis::variant<bh::axis::regular<>>>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_variant<axis::variant<>>));
+    BOOST_TEST_TRAIT_TRUE((is_axis_variant<axis::variant<axis::regular<>>>));
   }
 
   // naked
@@ -304,9 +313,9 @@ int main() {
 
   // visitor_return_type
   {
-    using V1 = bh::axis::variant<char>;
-    using V2 = bh::axis::variant<int>&;
-    using V3 = const bh::axis::variant<long>&;
+    using V1 = axis::variant<char>;
+    using V2 = axis::variant<int>&;
+    using V3 = const axis::variant<long>&;
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<visitor_return_type<VisitorTestFunctor, V1>, char>));
     BOOST_TEST_TRAIT_TRUE(
@@ -338,10 +347,10 @@ int main() {
 
   // is_sequence_of_axis
   {
-    using A = std::vector<bh::axis::regular<>>;
-    using B = std::vector<bh::axis::variant<bh::axis::regular<>>>;
+    using A = std::vector<axis::regular<>>;
+    using B = std::vector<axis::variant<axis::regular<>>>;
     using C = std::vector<int>;
-    auto v = std::vector<bh::axis::variant<bh::axis::regular<>, bh::axis::integer<>>>();
+    auto v = std::vector<axis::variant<axis::regular<>, axis::integer<>>>();
     BOOST_TEST_TRAIT_TRUE((is_sequence_of_any_axis<A>));
     BOOST_TEST_TRAIT_TRUE((is_sequence_of_axis<A>));
     BOOST_TEST_TRAIT_FALSE((is_sequence_of_axis_variant<A>));
@@ -356,7 +365,7 @@ int main() {
   {
     struct A {};
     using B = int;
-    using C = decltype(bh::weight(1));
+    using C = decltype(weight(1));
     BOOST_TEST_TRAIT_FALSE((is_weight<A>));
     BOOST_TEST_TRAIT_FALSE((is_weight<B>));
     BOOST_TEST_TRAIT_TRUE((is_weight<C>));
@@ -366,8 +375,8 @@ int main() {
   {
     struct A {};
     using B = int;
-    using C = decltype(bh::sample(1));
-    using D = decltype(bh::sample(1, 2.0));
+    using C = decltype(sample(1));
+    using D = decltype(sample(1, 2.0));
     BOOST_TEST_TRAIT_FALSE((is_sample<A>));
     BOOST_TEST_TRAIT_FALSE((is_sample<B>));
     BOOST_TEST_TRAIT_TRUE((is_sample<C>));
@@ -392,9 +401,9 @@ int main() {
     struct A {};
     auto a = make_default(A());
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(a), A>));
-    bh::tracing_allocator_db db;
-    using B = std::vector<int, bh::tracing_allocator<int>>;
-    B b = make_default(B(bh::tracing_allocator<int>(db)));
+    tracing_allocator_db db;
+    using B = std::vector<int, tracing_allocator<int>>;
+    B b = make_default(B(tracing_allocator<int>(db)));
     b.resize(100);
     BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, 100);
   }

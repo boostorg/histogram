@@ -19,6 +19,16 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+template <class T>
+constexpr axis::option options_impl(std::true_type, const T& t) noexcept {
+  return t.options();
+}
+
+template <class T>
+constexpr axis::option options_impl(std::false_type, const T&) noexcept {
+  return axis::option::none;
+}
+
 template <class FIntArg, class FDoubleArg, class T>
 decltype(auto) value_method_switch(FIntArg&& iarg, FDoubleArg&& darg, const T& t) {
   return static_if<has_method_value<T>>(
@@ -68,10 +78,8 @@ decltype(auto) metadata(T&& t) noexcept {
 }
 
 template <class T>
-option options(const T& axis) noexcept {
-  return detail::static_if<detail::has_method_options<T>>(
-      [](const auto& a) { return a.options(); },
-      [](const T&) { return axis::option::none; }, axis);
+constexpr option options(const T& t) noexcept {
+  return detail::options_impl(detail::has_method_options<T>(), t);
 }
 
 template <class T>
