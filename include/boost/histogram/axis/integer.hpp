@@ -85,7 +85,7 @@ public:
   decltype(auto) operator[](local_index_type idx) const noexcept {
     return detail::static_if<std::is_floating_point<local_index_type>>(
         [this](auto idx) { return interval_view<integer>(*this, idx); },
-        [this](auto idx) { return value(idx); }, idx);
+        [this](auto idx) { return this->value(idx); }, idx);
   }
 
   /// Returns the number of bins, without extra bins.

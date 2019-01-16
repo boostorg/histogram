@@ -88,8 +88,8 @@ int main() {
   {
     axis::category a{1, 2};
     axis::category b{"x", "y"};
-    axis::category c{{1, 2}, "foo"};
-    axis::category d{{1, 2}, axis::null_type{}};
+    axis::category c({1, 2}, "foo");
+    axis::category d({1, 2}, axis::null_type{});
 
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(a), axis::category<int>>));
     BOOST_TEST_TRAIT_TRUE(
