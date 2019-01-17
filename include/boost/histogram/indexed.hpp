@@ -45,11 +45,19 @@ public:
       decltype(auto) operator*() const noexcept { return index_iterator::base()->idx; }
     };
 
+    // pointer interface for value
+    decltype(auto) operator*() const noexcept { return *iter_; }
+    decltype(auto) get() const noexcept { return *iter_; }
+    decltype(auto) operator-> () const noexcept { return iter_; }
+
+    // array interface for ND index
     int operator[](unsigned d) const { return parent_->cache_[d].idx; }
+    int at(unsigned d) const { return parent_->cache_.at(d).idx; }
     auto begin() const { return index_iterator(parent_->cache_.begin()); }
     auto end() const { return index_iterator(parent_->cache_.end()); }
     auto size() const { return parent_->cache_.size(); }
 
+    // convenience interface
     template <unsigned N>
     decltype(auto) bin(std::integral_constant<unsigned, N>) const {
       return parent_->hist_.axis(std::integral_constant<unsigned, N>())[(*this)[N]];
@@ -67,14 +75,13 @@ public:
       return *iter_ / x;
     }
 
+  private:
     accessor(indexed_range* parent, histogram_iterator i) : parent_(parent), iter_(i) {}
 
-    decltype(auto) operator*() const noexcept { return *iter_; }
-    auto operator-> () const noexcept { return iter_; }
-
-  private:
     indexed_range* parent_;
     histogram_iterator iter_;
+
+    friend class indexed_range;
   };
 
   class range_iterator
