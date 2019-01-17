@@ -59,7 +59,7 @@ void run_tests() {
     BOOST_TEST_EQ(hr.axis(0)[3].upper(), 5);
     BOOST_TEST_EQ(hr.axis(1)[0].lower(), -1);
     BOOST_TEST_EQ(hr.axis(1)[2].upper(), 2);
-    for (auto x : indexed(h, coverage::all)) BOOST_TEST_EQ(hr.at(x), *x);
+    for (auto x : indexed(h, coverage::all)) BOOST_TEST_EQ(hr.at(x.indices()), *x);
     BOOST_TEST_EQ(hr, h);
 
     hr = reduce(h, shrink(0, 2, 4));

@@ -130,7 +130,7 @@ decltype(auto) reduce(const Histogram& h, const C& options) {
   for (auto x : indexed(h, coverage::all)) {
     auto i = idx.begin();
     auto o = opts.begin();
-    for (auto j : x) {
+    for (auto j : x.indices()) {
       *i = (j - o->begin);
       if (*i <= -1)
         *i = -1;

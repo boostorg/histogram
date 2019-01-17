@@ -62,9 +62,9 @@ static void IndexedLoop(benchmark::State& state) {
   for (auto _ : state) {
     for (auto x : boost::histogram::indexed(h, cov)) {
       benchmark::DoNotOptimize(*x);
-      benchmark::DoNotOptimize(x[0]);
-      benchmark::DoNotOptimize(x[1]);
-      benchmark::DoNotOptimize(x[2]);
+      benchmark::DoNotOptimize(x.index(0));
+      benchmark::DoNotOptimize(x.index(1));
+      benchmark::DoNotOptimize(x.index(2));
     }
   }
 }

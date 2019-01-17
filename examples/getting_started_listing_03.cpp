@@ -35,8 +35,8 @@ int main() {
   */
   std::ostringstream os;
   for (auto x : bh::indexed(p)) {
-    os << boost::format("bin %i [%3.1f, %3.1f) count %i mean %g\n") % x[0] %
-              x.bin(0).lower() % x.bin(0).upper() % x->count() % x->value();
+    os << boost::format("bin %i [%3.1f, %3.1f) count %i mean %g\n") % x.index() %
+              x.bin().lower() % x.bin().upper() % x->count() % x->value();
   }
 
   std::cout << os.str() << std::flush;

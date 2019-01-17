@@ -40,7 +40,8 @@ int main() {
   assert(sum(h) == 3 && sum(hr0) == 3 && sum(hr1) == 3);
 
   std::ostringstream os1;
-  for (auto x : bh::indexed(h)) os1 << "(" << x[0] << ", " << x[1] << "): " << *x << "\n";
+  for (auto x : bh::indexed(h))
+    os1 << "(" << x.index(0) << ", " << x.index(1) << "): " << *x << "\n";
   std::cout << os1.str() << std::flush;
   assert(os1.str() == "(0, 0): 1\n"
                       "(1, 0): 1\n"
@@ -50,14 +51,14 @@ int main() {
                       "(2, 1): 1\n");
 
   std::ostringstream os2;
-  for (auto x : bh::indexed(hr0)) os2 << "(" << x[0] << ", -): " << *x << "\n";
+  for (auto x : bh::indexed(hr0)) os2 << "(" << x.index(0) << ", -): " << *x << "\n";
   std::cout << os2.str() << std::flush;
   assert(os2.str() == "(0, -): 1\n"
                       "(1, -): 1\n"
                       "(2, -): 1\n");
 
   std::ostringstream os3;
-  for (auto x : bh::indexed(hr1)) os3 << "(- ," << x[0] << "): " << *x << "\n";
+  for (auto x : bh::indexed(hr1)) os3 << "(- ," << x.index(0) << "): " << *x << "\n";
   std::cout << os3.str() << std::flush;
   assert(os3.str() == "(- ,0): 2\n"
                       "(- ,1): 1\n");

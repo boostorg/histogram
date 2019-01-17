@@ -36,13 +36,27 @@ class BOOST_HISTOGRAM_NODISCARD indexed_range {
 public:
   class accessor {
   public:
-    class index_iterator
-        : public boost::iterator_adaptor<index_iterator,
-                                         typename cache_type::const_iterator> {
+    class indices_view {
     public:
-      index_iterator(typename cache_type::const_iterator i)
-          : index_iterator::iterator_adaptor_(i) {}
-      decltype(auto) operator*() const noexcept { return index_iterator::base()->idx; }
+      class index_iterator
+          : public boost::iterator_adaptor<index_iterator,
+                                           typename cache_type::const_iterator> {
+      public:
+        index_iterator(typename cache_type::const_iterator i)
+            : index_iterator::iterator_adaptor_(i) {}
+        decltype(auto) operator*() const noexcept { return index_iterator::base()->idx; }
+      };
+
+      auto begin() const { return index_iterator(cache_.begin()); }
+      auto end() const { return index_iterator(cache_.end()); }
+      auto size() const { return cache_.size(); }
+      int operator[](unsigned d) const { return cache_[d].idx; }
+      int at(unsigned d) const { return cache_.at(d).idx; }
+
+    private:
+      indices_view(const cache_type& c) : cache_(c) {}
+      const cache_type& cache_;
+      friend class accessor;
     };
 
     // pointer interface for value
@@ -50,26 +64,22 @@ public:
     decltype(auto) get() const noexcept { return *iter_; }
     decltype(auto) operator-> () const noexcept { return iter_; }
 
-    // array interface for ND index
-    int operator[](unsigned d) const { return parent_->cache_[d].idx; }
-    int at(unsigned d) const { return parent_->cache_.at(d).idx; }
-    auto begin() const { return index_iterator(parent_->cache_.begin()); }
-    auto end() const { return index_iterator(parent_->cache_.end()); }
-    auto size() const { return parent_->cache_.size(); }
-
     // convenience interface
-    template <unsigned N>
-    decltype(auto) bin(std::integral_constant<unsigned, N>) const {
-      return parent_->hist_.axis(std::integral_constant<unsigned, N>())[(*this)[N]];
+    int index(unsigned d = 0) const { return parent_->cache_[d].idx; }
+    auto indices() const { return indices_view(parent_->cache_); }
+
+    template <unsigned N = 0>
+    decltype(auto) bin(std::integral_constant<unsigned, N> = {}) const {
+      return parent_->hist_.axis(std::integral_constant<unsigned, N>())[index(N)];
     }
 
-    decltype(auto) bin(unsigned d) const { return parent_->hist_.axis(d)[(*this)[d]]; }
+    decltype(auto) bin(unsigned d) const { return parent_->hist_.axis(d)[index(d)]; }
 
     double density() const {
       double x = 1;
-      auto it = begin();
+      auto it = parent_->cache_.begin();
       parent_->hist_.for_each_axis([&](const auto& a) {
-        const auto w = axis::traits::width_as<double>(a, *it++);
+        const auto w = axis::traits::width_as<double>(a, it++->idx);
         x *= w ? w : 1;
       });
       return *iter_ / x;
@@ -77,10 +87,8 @@ public:
 
   private:
     accessor(indexed_range* parent, histogram_iterator i) : parent_(parent), iter_(i) {}
-
     indexed_range* parent_;
     histogram_iterator iter_;
-
     friend class indexed_range;
   };
 

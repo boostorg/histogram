@@ -42,11 +42,11 @@ int main() {
   std::ostringstream os;
   for (auto x : indexed(h)) {
     // x is a special accessor object
-    const auto i = x[0];      // current index along first axis
-    const auto j = x[1];      // current index along second axis
-    const auto b0 = x.bin(0); // current bin interval along first axis
-    const auto b1 = x.bin(1); // current bin interval along second axis
-    const auto v = *x;        // "dereference" to get the bin value
+    const auto i = x.index(0); // current index along first axis
+    const auto j = x.index(1); // current index along second axis
+    const auto b0 = x.bin(0);  // current bin interval along first axis
+    const auto b1 = x.bin(1);  // current bin interval along second axis
+    const auto v = *x;         // "dereference" to get the bin value
     os << boost::format("%i %i [%2i, %i) [%2i, %i): %i\n") % i % j % b0.lower() %
               b0.upper() % b1.lower() % b1.upper() % v;
   }
@@ -62,7 +62,7 @@ int main() {
   // second argument `coverage::all` to walk over all bins
   std::ostringstream os2;
   for (auto x : indexed(h, coverage::all)) {
-    os2 << boost::format("%2i %2i: %i\n") % x[0] % x[1] % *x;
+    os2 << boost::format("%2i %2i: %i\n") % x.index(0) % x.index(1) % *x;
   }
 
   std::cout << os2.str() << std::flush;

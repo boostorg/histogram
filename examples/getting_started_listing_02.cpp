@@ -47,9 +47,10 @@ int main() {
   const auto& cat_axis = bh::axis::get<cat>(h.axis(0)); // get reference to category axis
   std::ostringstream os;
   for (auto x : bh::indexed(h)) {
-    os << boost::format("(%i, %i, %i) %4s [%3.1f, %3.1f) [%3.1f, %3.1f) %3.0f\n") % x[0] %
-              x[1] % x[2] % cat_axis[x[0]] % x.bin(1).lower() % x.bin(1).upper() %
-              x.bin(2).lower() % x.bin(2).upper() % *x;
+    os << boost::format("(%i, %i, %i) %4s [%3.1f, %3.1f) [%3.1f, %3.1f) %3.0f\n") %
+              x.index(0) % x.index(1) % x.index(2) % cat_axis[x.index(0)] %
+              x.bin(1).lower() % x.bin(1).upper() % x.bin(2).lower() % x.bin(2).upper() %
+              *x;
   }
 
   std::cout << os.str() << std::flush;

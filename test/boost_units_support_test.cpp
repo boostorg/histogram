@@ -59,8 +59,8 @@ int main() {
     BOOST_TEST_EQ(h.at(0, 0), 1);
     for (auto&& x : indexed(h)) {
       BOOST_TEST_THROWS(x.density(), std::runtime_error); // cannot use density method
-      BOOST_TEST_EQ(x[0], 2.0 * x.bin(0_c).lower() / si::meter);
-      BOOST_TEST_EQ(x[1], 2.0 * x.bin(1_c).lower());
+      BOOST_TEST_EQ(x.index(0), 2.0 * x.bin(0_c).lower() / si::meter);
+      BOOST_TEST_EQ(x.index(1), 2.0 * x.bin(1_c).lower());
     }
   }
 

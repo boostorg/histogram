@@ -84,24 +84,18 @@ public:
   void reset() { storage_.reset(storage_.size()); }
 
   /// Get N-th axis
-  template <unsigned N>
-  decltype(auto) axis(std::integral_constant<unsigned, N>) {
+  template <unsigned N = 0>
+  decltype(auto) axis(std::integral_constant<unsigned, N> = {}) {
     detail::axis_index_is_valid(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis (const version)
-  template <unsigned N>
-  decltype(auto) axis(std::integral_constant<unsigned, N>) const {
+  template <unsigned N = 0>
+  decltype(auto) axis(std::integral_constant<unsigned, N> = {}) const {
     detail::axis_index_is_valid(axes_, N);
     return detail::axis_get<N>(axes_);
   }
-
-  /// Get first axis (convenience for 1-d histograms)
-  decltype(auto) axis() { return axis(std::integral_constant<unsigned, 0>()); }
-
-  /// Get first axis (convenience for 1-d histograms, const version)
-  decltype(auto) axis() const { return axis(std::integral_constant<unsigned, 0>()); }
 
   /// Get N-th axis with runtime index
   decltype(auto) axis(unsigned i) {

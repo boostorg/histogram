@@ -32,28 +32,28 @@ void run_1d_tests(mp_list<IsDynamic, Coverage>) {
 
   auto ind = indexed(h, Coverage());
   auto it = ind.begin();
-  BOOST_TEST_EQ(it->size(), 1);
+  BOOST_TEST_EQ(it->indices().size(), 1);
 
   if (Coverage() == coverage::all) {
-    BOOST_TEST_EQ(it->operator[](0), -1);
+    BOOST_TEST_EQ(it->index(0), -1);
     BOOST_TEST_EQ(**it, 1);
     BOOST_TEST_EQ(it->bin(0), h.axis()[-1]);
     ++it;
   }
-  BOOST_TEST_EQ(it->operator[](0), 0);
+  BOOST_TEST_EQ(it->index(0), 0);
   BOOST_TEST_EQ(**it, 2);
   BOOST_TEST_EQ(it->bin(0), h.axis()[0]);
   ++it;
-  BOOST_TEST_EQ(it->operator[](0), 1);
+  BOOST_TEST_EQ(it->index(0), 1);
   BOOST_TEST_EQ(**it, 3);
   BOOST_TEST_EQ(it->bin(0), h.axis()[1]);
   ++it;
-  BOOST_TEST_EQ(it->operator[](0), 2);
+  BOOST_TEST_EQ(it->index(0), 2);
   BOOST_TEST_EQ(**it, 4);
   BOOST_TEST_EQ(it->bin(0), h.axis()[2]);
   ++it;
   if (Coverage() == coverage::all) {
-    BOOST_TEST_EQ(it->operator[](0), 3);
+    BOOST_TEST_EQ(it->index(0), 3);
     BOOST_TEST_EQ(**it, 5);
     BOOST_TEST_EQ(it->bin(0), h.axis()[3]);
     ++it;
@@ -78,7 +78,7 @@ void run_3d_tests(mp_list<IsDynamic, Coverage>) {
 
   auto ind = indexed(h, Coverage());
   auto it = ind.begin();
-  BOOST_TEST_EQ(it->size(), 3);
+  BOOST_TEST_EQ(it->indices().size(), 3);
 
   const int d = Coverage() == coverage::all;
 
@@ -86,9 +86,9 @@ void run_3d_tests(mp_list<IsDynamic, Coverage>) {
   for (int k = 0; k < 4 + d; ++k)
     for (int j = 0; j < 3; ++j)
       for (int i = -d; i < 2 + d; ++i) {
-        BOOST_TEST_EQ(it->operator[](0), i);
-        BOOST_TEST_EQ(it->operator[](1), j);
-        BOOST_TEST_EQ(it->operator[](2), k);
+        BOOST_TEST_EQ(it->index(0), i);
+        BOOST_TEST_EQ(it->index(1), j);
+        BOOST_TEST_EQ(it->index(2), k);
         BOOST_TEST_EQ(it->bin(0_c), h.axis(0_c)[i]);
         BOOST_TEST_EQ(it->bin(1_c), h.axis(1_c)[j]);
         BOOST_TEST_EQ(it->bin(2_c), h.axis(2_c)[k]);

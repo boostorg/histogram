@@ -56,7 +56,7 @@ int main() {
     Passing `coverage::all` as the optional second argument iterates over all bins.
 
     - Access the value with the dereference operator. The proxy acts like a pointer to it.
-    - Access the current index with operator[] of the accessor, passing the dimension d.
+    - Access the current index with `index(d)` of the accessor, passing the dimension d.
     - Access the corresponding bin interval view with `bin(d)`. Use a compile-time number
       like 1_c instead of a normal number like 1, if possible, to make this call more
       efficent. The return type depends on the axis type (see the axis reference for
@@ -68,8 +68,8 @@ int main() {
 
   std::ostringstream os;
   for (auto x : indexed(h, coverage::all)) {
-    os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") % x[0] % x.bin(0_c).lower() %
-              x.bin(0_c).upper() % *x;
+    os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") % x.index() % x.bin().lower() %
+              x.bin().upper() % *x;
   }
 
   std::cout << os.str() << std::flush;
