@@ -162,7 +162,7 @@ public:
           BOOST_THROW_EXCEPTION(std::invalid_argument("argument is not finite"));
           return std::make_pair(0, 0);
         },
-        impl, *static_cast<Derived*>(this), x);
+        impl, static_cast<Derived&>(*this), x);
   }
 };
 

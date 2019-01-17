@@ -136,7 +136,7 @@ class optional_category_mixin<Derived, T, true> {
 
 public:
   auto update(const value_type& x) {
-    auto& der = *static_cast<Derived*>(this);
+    auto& der = static_cast<Derived&>(*this);
     const auto i = der(x);
     if (i < der.size()) return std::make_pair(i, 0);
     der.vec_meta_.first().emplace_back(x);
