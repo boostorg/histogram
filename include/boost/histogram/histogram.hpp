@@ -111,20 +111,20 @@ public:
 
   /// Apply unary functor/function to each axis
   template <class Unary>
-  void for_each_axis(Unary&& unary) const {
-    detail::for_each_axis(axes_, std::forward<Unary>(unary));
+  auto for_each_axis(Unary&& unary) const {
+    return detail::for_each_axis(axes_, std::forward<Unary>(unary));
   }
 
   /// Fill histogram with values and optional weight or sample
   template <class... Ts>
-  void operator()(const Ts&... ts) {
-    operator()(std::forward_as_tuple(ts...));
+  auto operator()(const Ts&... ts) {
+    return operator()(std::forward_as_tuple(ts...));
   }
 
   /// Fill histogram with value tuple and optional weight or sample
   template <class... Ts>
-  void operator()(const std::tuple<Ts...>& t) {
-    detail::fill(storage_, axes_, t);
+  auto operator()(const std::tuple<Ts...>& t) {
+    return detail::fill(storage_, axes_, t);
   }
 
   /// Add values of another histogram

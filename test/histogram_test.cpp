@@ -208,9 +208,12 @@ void run_tests() {
     auto h = make_s(Tag(), std::vector<unsigned>(),
                     axis::integer<double, axis::null_type>{0, 2});
     h(0);
-    h(0);
-    h(-1);
-    h(10);
+    auto i = h(0);
+    BOOST_TEST(i == h.begin() + 1); // +1 because of underflow
+    i = h(-1);
+    BOOST_TEST(i == h.begin()); // underflow
+    i = h(10);
+    BOOST_TEST(i == h.end() - 1); // overflow
 
     BOOST_TEST_EQ(h.rank(), 1);
     BOOST_TEST_EQ(h.axis().size(), 2);
@@ -224,12 +227,14 @@ void run_tests() {
 
   // d1_2
   {
-    auto h =
-        make(Tag(), axis::integer<int, axis::null_type, axis::option::none>(0, 2));
+    auto h = make(Tag(), axis::integer<int, axis::null_type, axis::option::none>(0, 2));
     h(0);
-    h(-0);
-    h(-1);
-    h(10);
+    auto i = h(-0);
+    BOOST_TEST(i == h.begin());
+    i = h(-1);
+    BOOST_TEST(i == h.end());
+    i = h(10);
+    BOOST_TEST(i == h.end());
 
     BOOST_TEST_EQ(h.rank(), 1);
     BOOST_TEST_EQ(h.axis().size(), 2);
@@ -541,8 +546,7 @@ void run_tests() {
 
   // histogram_reset
   {
-    auto h =
-        make(Tag(), axis::integer<int, axis::null_type, axis::option::none>(0, 2));
+    auto h = make(Tag(), axis::integer<int, axis::null_type, axis::option::none>(0, 2));
     h(0);
     h(1);
     BOOST_TEST_EQ(h.at(0), 1);

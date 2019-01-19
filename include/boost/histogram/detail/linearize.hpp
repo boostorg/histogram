@@ -268,7 +268,7 @@ void fill_storage(IW, IS, T&& t, U&& args) {
 }
 
 template <class S, class A, class... Us>
-void fill(S& storage, A& axes, const std::tuple<Us...>& args) {
+auto fill(S& storage, A& axes, const std::tuple<Us...>& args) {
   constexpr std::pair<int, int> iws = weight_sample_indices<Us...>();
   constexpr unsigned n = sizeof...(Us) - (iws.first > -1) - (iws.second > -1);
   constexpr unsigned i = (iws.first == 0 || iws.second == 0)
@@ -278,7 +278,9 @@ void fill(S& storage, A& axes, const std::tuple<Us...>& args) {
   if (idx) {
     fill_storage(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(), storage[*idx],
                  args);
+    return storage.begin() + *idx;
   }
+  return storage.end();
 }
 
 template <typename A, typename... Us>
