@@ -81,6 +81,18 @@ struct pow {
 
 } // namespace transform
 
+/// Type envelope to make value as step size
+template <typename T>
+struct step_type {
+  T value;
+};
+
+/// Helper function to mark argument as step size
+template <typename T>
+step_type<T&&> step(T&& t) {
+  return {std::forward<T>(t)};
+}
+
 template <class, class, bool>
 class optional_regular_mixin {};
 
@@ -110,18 +122,18 @@ private:
 public:
   regular() = default;
 
-  /** Construct n bins over real transformed range [begin, end).
+  /** Construct n bins over real transformed range [start, stop).
    *
    * \param trans    transform instance to use.
    * \param n        number of bins.
    * \param start    low edge of first bin.
    * \param stop     high edge of last bin.
-   * \param metadata description of the axis.
+   * \param meta     description of the axis (optional).
    */
   regular(transform_type trans, unsigned n, value_type start, value_type stop,
-          metadata_type m = {})
+          metadata_type meta = {})
       : transform_type(std::move(trans))
-      , size_meta_(static_cast<index_type>(n), std::move(m))
+      , size_meta_(static_cast<index_type>(n), std::move(meta))
       , min_(this->forward(detail::get_scale(start)))
       , delta_((this->forward(detail::get_scale(stop)) - min_)) {
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
@@ -133,15 +145,49 @@ public:
     delta_ /= size();
   }
 
-  /** Construct n bins over real range [begin, end).
+  /** Construct n bins over real range [start, stop).
    *
    * \param n        number of bins.
    * \param start    low edge of first bin.
    * \param stop     high edge of last bin.
-   * \param metadata description of the axis.
+   * \param meta     description of the axis (optional).
    */
-  regular(unsigned n, value_type start, value_type stop, metadata_type m = {})
-      : regular({}, n, start, stop, std::move(m)) {}
+  regular(unsigned n, value_type start, value_type stop, metadata_type meta = {})
+      : regular({}, n, start, stop, std::move(meta)) {}
+
+  /** Construct bins with the given step size over real transformed range [start, stop).
+   *
+   * \param trans   transform instance to use.
+   * \param step    width of a single bin.
+   * \param start   low edge of first bin.
+   * \param stop    upper limit of high edge of last bin (see below).
+   * \param meta    description of the axis (optional).
+   *
+   * The axis computes the number of bins as n = abs(stop - start) / step, rounded down.
+   * This means that stop is an upper limit to the actual value (start + n * step).
+   */
+  template <class T>
+  regular(transform_type trans, const step_type<T>& step, value_type start,
+          value_type stop, metadata_type meta = {})
+      : regular(
+            trans, static_cast<int>(std::abs(stop - start) / step.value), start,
+            start + static_cast<int>(std::abs(stop - start) / step.value) * step.value,
+            std::move(meta)) {}
+
+  /** Construct bins with the given step size over real range [start, stop).
+   *
+   * \param step    width of a single bin.
+   * \param start   low edge of first bin.
+   * \param stop    upper limit of high edge of last bin (see below).
+   * \param meta    description of the axis (optional).
+   *
+   * The axis computes the number of bins as n = abs(stop - start) / step, rounded down.
+   * This means that stop is an upper limit to the actual value (start + n * step).
+   */
+  template <class T>
+  regular(const step_type<T>& step, value_type start, value_type stop,
+          metadata_type meta = {})
+      : regular({}, step, start, stop, std::move(meta)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   regular(const regular& src, index_type begin, index_type end, unsigned merge)
