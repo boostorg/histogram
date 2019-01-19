@@ -4,51 +4,66 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/histogram/axis.hpp>
 #include <benchmark/benchmark.h>
+#include <boost/histogram/axis.hpp>
 
 using namespace boost::histogram;
 
 template <bool include_extra_bins>
 static void null(benchmark::State& state) {
   for (auto _ : state) {
-    for (volatile int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i);
+    for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i)
+      volatile int j = 0;
   }
 }
 
 template <bool include_extra_bins>
 static void regular(benchmark::State& state) {
-  auto a = axis::regular<>(10, 0, 10);
+  volatile auto start = 0;
+  volatile auto stop = 10;
+  auto a = axis::regular<>(stop - start, start, stop);
   for (auto _ : state) {
-    for (int i = 0 - include_extra_bins; i < a.size() + include_extra_bins; ++i)
+    for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i) {
+      volatile int j;
       benchmark::DoNotOptimize(a(i));
+    }
   }
 }
 
 template <bool include_extra_bins>
 static void circular(benchmark::State& state) {
-  auto a = axis::circular<>(10, 0, 10);
+  volatile auto start = 0;
+  volatile auto stop = 10;
+  auto a = axis::circular<>(stop - start, start, stop);
   for (auto _ : state) {
-    for (int i = 0 - include_extra_bins; i < a.size() + include_extra_bins; ++i)
+    for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i) {
       benchmark::DoNotOptimize(a(i));
+    }
   }
 }
 
 template <bool include_extra_bins>
 static void integer_int(benchmark::State& state) {
-  auto a = axis::integer<int>(0, 10);
+  volatile auto start = 0;
+  volatile auto stop = 10;
+  auto a = axis::integer<int>(start, stop);
   for (auto _ : state) {
-    for (int i = 0 - include_extra_bins; i < a.size() + include_extra_bins; ++i)
+    for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i) {
+      volatile int j;
       benchmark::DoNotOptimize(a(i));
+    }
   }
 }
 
 template <bool include_extra_bins>
 static void integer_double(benchmark::State& state) {
-  auto a = axis::integer<double>(0, 10);
+  volatile auto start = 0;
+  volatile auto stop = 10;
+  auto a = axis::integer<double>(start, stop);
   for (auto _ : state) {
-    for (int i = 0 - include_extra_bins; i < a.size() + include_extra_bins; ++i)
+    for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i) {
       benchmark::DoNotOptimize(a(i));
+    }
   }
 }
 
@@ -56,7 +71,7 @@ template <bool include_extra_bins>
 static void variable(benchmark::State& state) {
   auto a = axis::variable<>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
   for (auto _ : state) {
-    for (int i = 0 - include_extra_bins; i < a.size() + include_extra_bins; ++i)
+    for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i)
       benchmark::DoNotOptimize(a(i));
   }
 }
@@ -65,7 +80,7 @@ template <bool include_extra_bins>
 static void category(benchmark::State& state) {
   auto a = axis::category<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
   for (auto _ : state) {
-    for (int i = 0 - include_extra_bins; i < a.size() + include_extra_bins; ++i)
+    for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i)
       benchmark::DoNotOptimize(a(i));
   }
 }
@@ -74,7 +89,7 @@ template <bool include_extra_bins>
 static void variant(benchmark::State& state) {
   auto a = axis::variant<axis::regular<>>(axis::regular<>(10, 0, 10));
   for (auto _ : state) {
-    for (int i = 0 - include_extra_bins; i < a.size() + include_extra_bins; ++i)
+    for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i)
       benchmark::DoNotOptimize(a(i));
   }
 }
