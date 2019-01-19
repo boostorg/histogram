@@ -21,8 +21,8 @@ struct sample_type {
 
 /// Helper function to mark arguments as sample
 template <typename... Ts>
-sample_type<std::tuple<Ts...>> sample(Ts&&... ts) {
-  return {std::make_tuple(std::forward<Ts>(ts)...)};
+sample_type<std::tuple<Ts&&...>> sample(Ts&&... ts) noexcept {
+  return {std::forward_as_tuple(std::forward<Ts>(ts)...)};
 }
 
 } // namespace histogram
