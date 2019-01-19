@@ -41,8 +41,12 @@ class category
     : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,
       public optional_category_mixin<category<Value, MetaData, Options, Allocator>, Value,
                                      test(Options, option::growth)> {
+  static_assert(!std::is_floating_point<Value>::value,
+                "category axis cannot have floating point value type");
   static_assert(!test(Options, option::underflow), "category axis cannot have underflow");
   static_assert(!test(Options, option::circular), "category axis cannot be circular");
+  static_assert(!test(Options, option::growth) || !test(Options, option::overflow),
+                "growing category axis cannot have overflow");
   using metadata_type = MetaData;
   using value_type = Value;
   using allocator_type = Allocator;

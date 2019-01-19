@@ -178,10 +178,10 @@ class optional_variable_mixin<Derived, Value, true> {
   using value_type = Value;
 
 public:
-  auto update(value_type x) {
+  auto update(value_type x) noexcept {
+    auto& der = static_cast<Derived&>(*this);
+    const auto i = der(x);
     if (std::isfinite(x)) {
-      auto& der = static_cast<Derived&>(*this);
-      const auto i = der(x);
       auto& vec = der.vec_meta_.first();
       if (0 <= i) {
         if (i < der.size()) return std::make_pair(i, 0);
@@ -196,8 +196,7 @@ public:
       vec.insert(vec.begin(), x);
       return std::make_pair(0, -i);
     }
-    BOOST_THROW_EXCEPTION(std::invalid_argument("argument is not finite"));
-    return std::make_pair(0, 0);
+    return std::make_pair(x < 0 ? -1 : der.size(), 0);
   }
 };
 

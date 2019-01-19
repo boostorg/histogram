@@ -13,7 +13,9 @@
 
 using namespace boost::histogram;
 
-using integer = axis::integer<int, axis::null_type, axis::option::growth>;
+using integer = axis::integer<double, axis::null_type,
+                              axis::option::underflow | axis::option::overflow |
+                                  axis::option::growth>;
 using category = axis::category<std::string, axis::null_type, axis::option::growth>;
 
 template <typename Tag>
@@ -21,25 +23,37 @@ void run_tests() {
   {
     auto h = make_s(Tag(), std::vector<int>(), integer());
     const auto& a = h.axis();
-    BOOST_TEST_EQ(h.size(), 0);
+    h(-std::numeric_limits<double>::infinity());
+    h(std::numeric_limits<double>::quiet_NaN());
+    h(std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.size(), 0);
+    BOOST_TEST_EQ(h.size(), 2);
+    BOOST_TEST_EQ(h[-1], 1);
+    BOOST_TEST_EQ(h[0], 2);
     h(0);
-    BOOST_TEST_EQ(h.size(), 1);
-    BOOST_TEST_EQ(h[0], 1);
-    h(2);
+    BOOST_TEST_EQ(a.size(), 1);
     BOOST_TEST_EQ(h.size(), 3);
+    BOOST_TEST_EQ(h[-1], 1);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 2);
+    h(2);
     BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(h.size(), 5);
+    BOOST_TEST_EQ(h[-1], 1);
     BOOST_TEST_EQ(h[0], 1);
     BOOST_TEST_EQ(h[1], 0);
     BOOST_TEST_EQ(h[2], 1);
+    BOOST_TEST_EQ(h[3], 2);
     h(-2);
-    BOOST_TEST_EQ(h.size(), 5);
     BOOST_TEST_EQ(a.size(), 5);
+    BOOST_TEST_EQ(h.size(), 7);
+    // BOOST_TEST_EQ(h[-1], 1)
     BOOST_TEST_EQ(h[0], 1);
     BOOST_TEST_EQ(h[1], 0);
     BOOST_TEST_EQ(h[2], 1);
     BOOST_TEST_EQ(h[3], 0);
     BOOST_TEST_EQ(h[4], 1);
+    BOOST_TEST_EQ(h[5], 2);
   }
 
   {
@@ -50,15 +64,24 @@ void run_tests() {
     BOOST_TEST_EQ(b.size(), 0);
     BOOST_TEST_EQ(h.size(), 0);
     h(0, "x");
+    h(-std::numeric_limits<double>::infinity(), "x");
+    h(std::numeric_limits<double>::infinity(), "x");
+    h(std::numeric_limits<double>::quiet_NaN(), "x");
     BOOST_TEST_EQ(a.size(), 1);
     BOOST_TEST_EQ(b.size(), 1);
-    BOOST_TEST_EQ(h.size(), 1);
-    h(2, "x");
     BOOST_TEST_EQ(h.size(), 3);
+    h(2, "x");
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(b.size(), 1);
+    BOOST_TEST_EQ(h.size(), 5);
     h(1, "y");
-    BOOST_TEST_EQ(h.size(), 6);
     BOOST_TEST_EQ(a.size(), 3);
     BOOST_TEST_EQ(b.size(), 2);
+    BOOST_TEST_EQ(h.size(), 10);
+    BOOST_TEST_EQ(h.at(-1, 0), 1);
+    BOOST_TEST_EQ(h.at(-1, 1), 0);
+    BOOST_TEST_EQ(h.at(3, 0), 2);
+    BOOST_TEST_EQ(h.at(3, 1), 0);
     BOOST_TEST_EQ(h.at(a(0), b("x")), 1);
     BOOST_TEST_EQ(h.at(a(1), b("x")), 0);
     BOOST_TEST_EQ(h.at(a(2), b("x")), 1);

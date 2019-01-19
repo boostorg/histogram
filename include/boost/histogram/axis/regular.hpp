@@ -135,14 +135,13 @@ public:
       : transform_type(std::move(trans))
       , size_meta_(static_cast<index_type>(n), std::move(meta))
       , min_(this->forward(detail::get_scale(start)))
-      , delta_((this->forward(detail::get_scale(stop)) - min_)) {
+      , delta_(this->forward(detail::get_scale(stop)) - min_) {
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
     if (!std::isfinite(min_) || !std::isfinite(delta_))
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("forward transform of start or stop invalid"));
     if (delta_ == 0)
       BOOST_THROW_EXCEPTION(std::invalid_argument("range of axis is zero"));
-    delta_ /= size();
   }
 
   /** Construct n bins over real range [start, stop).
@@ -169,10 +168,11 @@ public:
   template <class T>
   regular(transform_type trans, const step_type<T>& step, value_type start,
           value_type stop, metadata_type meta = {})
-      : regular(
-            trans, static_cast<int>(std::abs(stop - start) / step.value), start,
-            start + static_cast<int>(std::abs(stop - start) / step.value) * step.value,
-            std::move(meta)) {}
+      : regular(trans, static_cast<index_type>(std::abs(stop - start) / step.value),
+                start,
+                start + static_cast<index_type>(std::abs(stop - start) / step.value) *
+                            step.value,
+                std::move(meta)) {}
 
   /** Construct bins with the given step size over real range [start, stop).
    *
@@ -207,13 +207,13 @@ public:
     auto z = (this->forward(x / unit_type()) - min_) / delta_;
     if (test(Options, option::circular)) {
       if (std::isfinite(z)) {
-        z -= std::floor(z / size()) * size();
-        return static_cast<index_type>(z);
+        z -= std::floor(z);
+        return static_cast<index_type>(z * size());
       }
     } else {
-      if (z < size()) {
+      if (z < 1) {
         if (z >= 0)
-          return static_cast<index_type>(z);
+          return static_cast<index_type>(z * size());
         else
           return -1;
       }
@@ -227,7 +227,7 @@ public:
     if (!test(Options, option::circular) && z < 0.0)
       z = -std::numeric_limits<internal_value_type>::infinity() * delta_;
     else if (test(Options, option::circular) || z <= 1.0)
-      z = (1.0 - z) * min_ + z * (min_ + size() * delta_);
+      z = (1.0 - z) * min_ + z * (min_ + delta_);
     else {
       z = std::numeric_limits<internal_value_type>::infinity() * delta_;
     }
@@ -273,25 +273,36 @@ class optional_regular_mixin<Axis, Value, true> {
 
 public:
   /// Returns index and shift (if axis has grown) for the passed argument.
-  auto update(value_type x) {
+  auto update(value_type x) noexcept {
     auto& der = static_cast<Axis&>(*this);
-    auto z = (der.forward(x / typename Axis::unit_type{}) - der.min_) / der.delta_;
-    if (std::isfinite(z)) {
-      auto i = static_cast<index_type>(z);
-      if (0 <= z) { // don't use i here!
-        if (i < der.size()) return std::make_pair(i, 0);
-        const auto n = i - der.size() + 1;
-        der.size_meta_.first() += n;
-        return std::make_pair(i, -n);
-      } else {
-        i -= 1; // correct after integral cast which rounds negative number towards zero
-        der.min_ += der.delta_ * i;
+    const auto z = (der.forward(x / typename Axis::unit_type{}) - der.min_) / der.delta_;
+    if (z < 1) { // don't use i here!
+      if (0 <= z) {
+        const auto i = static_cast<index_type>(z * der.size());
+        return std::make_pair(i, 0);
+      }
+      if (z != -std::numeric_limits<typename Axis::internal_value_type>::infinity()) {
+        const auto stop = der.min_ + der.delta_;
+        const auto i = static_cast<index_type>(z * der.size());
+        der.min_ += i * (der.delta_ / der.size());
+        der.delta_ = stop - der.min_;
         der.size_meta_.first() -= i;
         return std::make_pair(0, -i);
       }
+      // z is -infinity
+      return std::make_pair(-1, 0);
     }
-    BOOST_THROW_EXCEPTION(std::invalid_argument("argument is not finite"));
-    return std::make_pair(0, 0);
+    // z either beyond range, infinite, or NaN
+    if (z < std::numeric_limits<typename Axis::internal_value_type>::infinity()) {
+      const auto i = static_cast<index_type>(z * der.size());
+      const auto n = i - der.size() + 1;
+      der.delta_ /= der.size();
+      der.delta_ *= der.size() + n;
+      der.size_meta_.first() += n;
+      return std::make_pair(i, -n);
+    }
+    // z either infinite or NaN
+    return std::make_pair(der.size(), 0);
   }
 };
 

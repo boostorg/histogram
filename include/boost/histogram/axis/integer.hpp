@@ -51,11 +51,10 @@ public:
    *
    * \param start    first integer of covered range.
    * \param stop     one past last integer of covered range.
-   * \param metadata description of the axis.
-   * \param options  extra bin options.
+   * \param meta     description of the axis.
    */
-  integer(value_type start, value_type stop, metadata_type m = {})
-      : size_meta_(static_cast<index_type>(stop - start), std::move(m)), min_(start) {
+  integer(value_type start, value_type stop, metadata_type meta = {})
+      : size_meta_(static_cast<index_type>(stop - start), std::move(meta)), min_(start) {
     if (stop <= start) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
   }
 
@@ -142,7 +141,7 @@ class optional_integer_mixin<Derived, Value, true> {
 
 public:
   /// Returns index and shift (if axis has grown) for the passed argument.
-  auto update(value_type x) {
+  auto update(value_type x) noexcept {
     auto impl = [](auto& der, index_type x) {
       const auto i = x - der.min_;
       if (i >= 0) {
@@ -159,8 +158,7 @@ public:
     return detail::static_if<std::is_floating_point<value_type>>(
         [impl](auto& der, auto x) {
           if (std::isfinite(x)) return impl(der, static_cast<index_type>(std::floor(x)));
-          BOOST_THROW_EXCEPTION(std::invalid_argument("argument is not finite"));
-          return std::make_pair(0, 0);
+          return std::make_pair(x < 0 ? -1 : der.size(), 0);
         },
         impl, static_cast<Derived&>(*this), x);
   }

@@ -97,12 +97,12 @@ int main() {
     BOOST_TEST_EQ(a.size(), 5);
     BOOST_TEST_IS_CLOSE(a.value(0), -10, 1e-9);
 
-    BOOST_TEST_THROWS(a.update(std::numeric_limits<double>::infinity()),
-                      std::invalid_argument);
-    BOOST_TEST_THROWS(a.update(-std::numeric_limits<double>::infinity()),
-                      std::invalid_argument);
-    BOOST_TEST_THROWS(a.update(std::numeric_limits<double>::quiet_NaN()),
-                      std::invalid_argument);
+    BOOST_TEST_EQ(a.update(-std::numeric_limits<double>::infinity()),
+                  std::make_pair(-1, 0));
+    BOOST_TEST_EQ(a.update(std::numeric_limits<double>::infinity()),
+                  std::make_pair(a.size(), 0));
+    BOOST_TEST_EQ(a.update(std::numeric_limits<double>::quiet_NaN()),
+                  std::make_pair(a.size(), 0));
   }
 
   // iterators

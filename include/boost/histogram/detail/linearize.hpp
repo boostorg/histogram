@@ -103,8 +103,8 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   for (int s : shifts) update_needed |= s != 0;
   if (!update_needed) return;
   struct item {
-    int idx, size;
-    std::size_t stride;
+    int idx, old_extend;
+    std::size_t new_stride;
   };
   auto data = make_stack_buffer<item>(axes);
   auto sit = shifts.begin();
@@ -112,23 +112,44 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   std::size_t s = 1;
   for_each_axis(axes, [&](const auto& a) {
     const auto n = axis::traits::extend(a);
-    *dit++ = {0, n, s};
-    s *= n - std::abs(*sit++);
+    *dit++ = {0, n - std::abs(*sit++), s};
+    s *= n;
   });
   auto new_storage = make_default(storage);
   new_storage.reset(detail::bincount(axes));
   for (const auto& x : storage) {
     auto ns = new_storage.begin();
     sit = shifts.begin();
-    for (const auto& d : data) { ns += (d.idx + std::max(*sit++, 0)) * d.stride; }
-    auto dit = data.begin();
+    dit = data.begin();
+    for_each_axis(axes, [&](const auto& a) {
+      if (axis::test(axis::traits::options(a), axis::option::underflow)) {
+        if (dit->idx == 0) {
+          // noop
+          ++dit;
+          ++sit;
+          return;
+        }
+      }
+      if (axis::test(axis::traits::options(a), axis::option::overflow)) {
+        if (dit->idx == dit->old_extend - 1) {
+          ns += (axis::traits::extend(a) - 1) * dit->new_stride;
+          ++dit;
+          ++sit;
+          return;
+        }
+      }
+      ns += (dit->idx + std::max(*sit, 0)) * dit->new_stride;
+      ++dit;
+      ++sit;
+    });
+    *ns = x;
+    dit = data.begin();
     const auto last = data.end() - 1;
     ++dit->idx;
-    while (dit != last && dit->idx == dit->size) {
+    while (dit != last && dit->idx == dit->old_extend) {
       dit->idx = 0;
       ++(++dit)->idx;
     }
-    *ns = x;
   }
   storage = std::move(new_storage);
 }

@@ -155,14 +155,20 @@ int main() {
     BOOST_TEST_EQ(a.size(), 2);
     BOOST_TEST_EQ(a.value(0), 0);
     BOOST_TEST_EQ(a.value(2), 2);
-    BOOST_TEST_EQ(a.update(-0.99), std::make_pair(0, 1));
+    BOOST_TEST_EQ(a.update(-1), std::make_pair(0, 1));
     BOOST_TEST_EQ(a.size(), 3);
-    BOOST_TEST_THROWS(a.update(std::numeric_limits<double>::infinity()),
-                      std::invalid_argument);
-    BOOST_TEST_THROWS(a.update(-std::numeric_limits<double>::infinity()),
-                      std::invalid_argument);
-    BOOST_TEST_THROWS(a.update(std::numeric_limits<double>::quiet_NaN()),
-                      std::invalid_argument);
+    BOOST_TEST_EQ(a.value(0), -1);
+    BOOST_TEST_EQ(a.value(3), 2);
+    BOOST_TEST_EQ(a.update(-10), std::make_pair(0, 9));
+    BOOST_TEST_EQ(a.size(), 12);
+    BOOST_TEST_EQ(a.value(0), -10);
+    BOOST_TEST_EQ(a.value(12), 2);
+    BOOST_TEST_EQ(a.update(std::numeric_limits<double>::infinity()),
+                  std::make_pair(a.size(), 0));
+    BOOST_TEST_EQ(a.update(std::numeric_limits<double>::quiet_NaN()),
+                  std::make_pair(a.size(), 0));
+    BOOST_TEST_EQ(a.update(-std::numeric_limits<double>::infinity()),
+                  std::make_pair(-1, 0));
   }
 
   // iterators

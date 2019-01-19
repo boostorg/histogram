@@ -52,18 +52,15 @@ constexpr inline option operator|(option a, option b) {
   return static_cast<option>(static_cast<int>(a) | static_cast<int>(b));
 }
 
-constexpr bool test(option a, option b) {
+constexpr inline bool test(option a, option b) {
   return static_cast<int>(a) & static_cast<int>(b);
 }
 
 constexpr inline option join(option a, option b) {
-  // growth turns off *flow and circular, circular turns off underflow, underflow turns
-  // off circular and growth, overflow turns of growth
+  // circular turns off underflow and vice versa
   a = a | b;
-  if (test(b, option::underflow)) a = a & ~option::circular & ~option::growth;
-  if (test(b, option::overflow)) a = a & ~option::growth;
-  if (test(b, option::circular)) a = a & ~option::underflow & ~option::growth;
-  if (test(b, option::growth)) return option::growth;
+  if (test(b, option::underflow)) a = a & ~option::circular;
+  if (test(b, option::circular)) a = a & ~option::underflow;
   return a;
 }
 

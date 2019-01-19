@@ -20,9 +20,9 @@ int main() {
   BOOST_TEST_EQ(join(option::use_default, option::overflow), option::use_default);
   BOOST_TEST_EQ(join(option::use_default, option::circular),
                 option::overflow | option::circular);
-  BOOST_TEST_EQ(join(option::use_default, option::growth), option::growth);
-  BOOST_TEST_EQ(join(option::growth, option::underflow), option::underflow);
-  BOOST_TEST_EQ(join(option::growth, option::overflow), option::overflow);
-  BOOST_TEST_EQ(join(option::growth, option::use_default), option::use_default);
+  BOOST_TEST_EQ(join(option::use_default, option::growth),
+                option::use_default | option::growth);
+  BOOST_TEST_EQ(join(option::growth, option::use_default),
+                option::growth | option::use_default);
   return boost::report_errors();
 }
