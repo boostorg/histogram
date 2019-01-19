@@ -16,7 +16,7 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <typename AT, typename... Ts>
+template <class AT, class... Ts>
 void create_buffer_impl(std::true_type, typename AT::allocator_type& a, std::size_t n,
                         typename AT::pointer it, Ts&&... ts) {
   // never throws
@@ -24,7 +24,7 @@ void create_buffer_impl(std::true_type, typename AT::allocator_type& a, std::siz
     AT::construct(a, it, std::forward<Ts>(ts)...);
 }
 
-template <typename AT, typename... Ts>
+template <class AT, class... Ts>
 void create_buffer_impl(std::false_type, typename AT::allocator_type& a, std::size_t n,
                         typename AT::pointer it, Ts&&... ts) {
   const auto ptr = it;
@@ -39,19 +39,19 @@ void create_buffer_impl(std::false_type, typename AT::allocator_type& a, std::si
   }
 }
 
-template <typename AT, typename Iterator, typename... Ts>
+template <class AT, class Iterator, class... Ts>
 void create_buffer_from_iter_impl(std::true_type, typename AT::allocator_type& a,
-                                  std::size_t n, typename AT::pointer it,
-                                  Iterator iter, Ts&&... ts) {
+                                  std::size_t n, typename AT::pointer it, Iterator iter,
+                                  Ts&&... ts) {
   // never throws
   for (const auto end = it + n; it != end; ++it)
     AT::construct(a, it, *iter++, std::forward<Ts>(ts)...);
 }
 
-template <typename AT, typename Iterator, typename... Ts>
+template <class AT, class Iterator, class... Ts>
 void create_buffer_from_iter_impl(std::false_type, typename AT::allocator_type& a,
-                                  std::size_t n, typename AT::pointer it,
-                                  Iterator iter, Ts&&... ts) {
+                                  std::size_t n, typename AT::pointer it, Iterator iter,
+                                  Ts&&... ts) {
   const auto ptr = it;
   try {
     for (const auto end = it + n; it != end; ++it)
@@ -64,7 +64,7 @@ void create_buffer_from_iter_impl(std::false_type, typename AT::allocator_type& 
   }
 }
 
-template <typename Allocator, typename... Ts>
+template <class Allocator, class... Ts>
 typename std::allocator_traits<Allocator>::pointer create_buffer(Allocator& a,
                                                                  std::size_t n,
                                                                  Ts&&... ts) {
@@ -76,23 +76,24 @@ typename std::allocator_traits<Allocator>::pointer create_buffer(Allocator& a,
   return ptr;
 }
 
-template <typename Allocator, typename Iterator, typename... Ts>
-typename std::allocator_traits<Allocator>::pointer create_buffer_from_iter(
-    Allocator& a, std::size_t n, Iterator iter, Ts&&... ts) {
+template <class Allocator, class Iterator, class... Ts>
+typename std::allocator_traits<Allocator>::pointer create_buffer_from_iter(Allocator& a,
+                                                                           std::size_t n,
+                                                                           Iterator iter,
+                                                                           Ts&&... ts) {
   using AT = std::allocator_traits<Allocator>;
   using T = typename AT::value_type;
   using U = decltype(*iter);
   auto ptr = AT::allocate(a, n); // may throw
-  create_buffer_from_iter_impl<AT>(std::is_nothrow_constructible<T, U>(), a, n, ptr,
-                                   iter, std::forward<Ts>(ts)...);
+  create_buffer_from_iter_impl<AT>(std::is_nothrow_constructible<T, U>(), a, n, ptr, iter,
+                                   std::forward<Ts>(ts)...);
   return ptr;
 }
 
-template <typename Allocator>
+template <class Allocator>
 void destroy_buffer(Allocator& a, typename std::allocator_traits<Allocator>::pointer p,
                     std::size_t n) {
-  if (!p)
-    return;
+  if (!p) return;
   using AT = std::allocator_traits<Allocator>;
   auto it = p + n;
   const auto end = p;
