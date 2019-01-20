@@ -12,7 +12,6 @@
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/histogram/weight.hpp>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
@@ -240,10 +239,12 @@ using storage_adaptor_impl = mp11::mp_if<
 
 } // namespace detail
 
-/// adaptor for std::array, vector-like, and map-like containers
+/// Turns any vector-like array-like, and map-like container into a storage type.
 template <typename T>
-struct storage_adaptor : detail::storage_adaptor_impl<T> {
+class storage_adaptor : public detail::storage_adaptor_impl<T> {
   using base_type = detail::storage_adaptor_impl<T>;
+
+public:
   using base_type::base_type;
   using base_type::operator=;
 

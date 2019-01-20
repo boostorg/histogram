@@ -22,25 +22,41 @@
 
 namespace boost {
 namespace histogram {
+namespace detail {
+template <class, class, bool>
+class category_mixin {};
+
+template <class Derived, class T>
+class category_mixin<Derived, T, true> {
+  using value_type = T;
+
+public:
+  auto update(const value_type& x) {
+    auto& der = static_cast<Derived&>(*this);
+    const auto i = der(x);
+    if (i < der.size()) return std::make_pair(i, 0);
+    der.vec_meta_.first().emplace_back(x);
+    return std::make_pair(i, -1);
+  }
+};
+} // namespace detail
+
 namespace axis {
 
-template <class, class, bool>
-class optional_category_mixin {};
-
-/** Axis which maps unique values to bins (one on one).
+/** Maps at a set of unique values to bin indices.
  *
- * The axis maps a set of values to bins, following the order of
- * arguments in the constructor. There is an optional overflow bin
- * for this axis, which counts values that are not part of the set.
- * Binning has a O(N) complexity, but with a very small factor. For
- * small N (the typical use case) it beats other kinds of lookup.
- * Value types must be equal-omparable.
+ * The axis maps a set of values to bins, following the order of arguments in the
+ * constructor. There is an optional overflow bin for this axis, which counts values that
+ * are not part of the set. Binning has a O(N) complexity, but with a very small factor.
+ * For small N (the typical use case) it beats other kinds of lookup.
+ *
+ * Value types must be equal-comparable.
  */
 template <class Value, class MetaData, option Options, class Allocator>
 class category
     : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,
-      public optional_category_mixin<category<Value, MetaData, Options, Allocator>, Value,
-                                     test(Options, option::growth)> {
+      public detail::category_mixin<category<Value, MetaData, Options, Allocator>, Value,
+                                    test(Options, option::growth)> {
   static_assert(!std::is_floating_point<Value>::value,
                 "category axis cannot have floating point value type");
   static_assert(!test(Options, option::underflow), "category axis cannot have underflow");
@@ -59,37 +75,36 @@ public:
    *
    * \param begin     begin of category range of unique values.
    * \param end       end of category range of unique values.
-   * \param metadata  description of the axis.
-   * \param options   extra bin options.
-   * \param allocator allocator instance to use.
+   * \param meta      description of the axis.
+   * \param alloc     allocator instance to use.
    */
   template <class It, class = detail::requires_iterator<It>>
-  category(It begin, It end, metadata_type m = {}, allocator_type a = {})
-      : vec_meta_(vector_type(begin, end, a), std::move(m)) {
+  category(It begin, It end, metadata_type meta = {}, allocator_type alloc = {})
+      : vec_meta_(vector_type(begin, end, alloc), std::move(meta)) {
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
   }
 
   /** Construct axis from iterable sequence of unique values.
    *
-   * \param seq sequence of unique values.
-   * \param metadata description of the axis.
-   * \param options   extra bin options.
-   * \param allocator allocator instance to use.
+   * \param iterable sequence of unique values.
+   * \param meta     description of the axis.
+   * \param alloc    allocator instance to use.
    */
   template <class C, class = detail::requires_iterable<C>>
-  category(const C& iterable, metadata_type m = {}, allocator_type a = {})
-      : category(std::begin(iterable), std::end(iterable), std::move(m), std::move(a)) {}
+  category(const C& iterable, metadata_type meta = {}, allocator_type alloc = {})
+      : category(std::begin(iterable), std::end(iterable), std::move(meta),
+                 std::move(alloc)) {}
 
   /** Construct axis from an initializer list of unique values.
    *
-   * \param seq sequence of unique values.
-   * \param metadata description of the axis.
-   * \param options   extra bin options.
-   * \param allocator allocator instance to use.
+   * \param list   std::initializer_list of unique values.
+   * \param meta   description of the axis.
+   * \param alloc  allocator instance to use.
    */
   template <class U>
-  category(std::initializer_list<U> l, metadata_type m = {}, allocator_type a = {})
-      : category(l.begin(), l.end(), std::move(m), std::move(a)) {}
+  category(std::initializer_list<U> list, metadata_type meta = {},
+           allocator_type alloc = {})
+      : category(list.begin(), list.end(), std::move(meta), std::move(alloc)) {}
 
   /// Returns the bin index for the passed argument.
   int operator()(const value_type& x) const noexcept {
@@ -131,21 +146,7 @@ public:
 private:
   detail::compressed_pair<vector_type, metadata_type> vec_meta_;
   template <class, class, bool>
-  friend class optional_category_mixin;
-};
-
-template <class Derived, class T>
-class optional_category_mixin<Derived, T, true> {
-  using value_type = T;
-
-public:
-  auto update(const value_type& x) {
-    auto& der = static_cast<Derived&>(*this);
-    const auto i = der(x);
-    if (i < der.size()) return std::make_pair(i, 0);
-    der.vec_meta_.first().emplace_back(x);
-    return std::make_pair(i, -1);
-  }
+  friend class detail::category_mixin;
 };
 
 #if __cpp_deduction_guides >= 201606

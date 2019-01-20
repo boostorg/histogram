@@ -7,34 +7,54 @@
 #ifndef BOOST_HISTOGRAM_UNSAFE_ACCESS_HPP
 #define BOOST_HISTOGRAM_UNSAFE_ACCESS_HPP
 
+#include <boost/histogram/detail/axes.hpp>
+#include <type_traits>
+
 namespace boost {
 namespace histogram {
 
 /// Unsafe read/write access to classes that potentially break consistency
 struct unsafe_access {
-  /// Get axes
+  /// Get axes.
+  //@{
   template <class T>
-  static typename T::axes_type& axes(T& t) {
+  static auto& axes(T& t) {
     return t.axes_;
   }
 
-  /// Get axes (const version)
   template <class T>
-  static const typename T::axes_type& axes(const T& t) {
+  static const auto& axes(const T& t) {
     return t.axes_;
   }
+  //@}
 
-  /// Get storage
+  /// Get mutable axis reference with compile-time or run-time number.
+  //@{
   template <class T>
-  static typename T::storage_type& storage(T& t) {
+  static decltype(auto) axis(T& t, unsigned i) {
+    detail::axis_index_is_valid(t.axes_, i);
+    return detail::axis_get(t.axes_, i);
+  }
+
+  template <class T, unsigned N = 0>
+  static decltype(auto) axis(T& t, std::integral_constant<unsigned, N> = {}) {
+    detail::axis_index_is_valid(t.axes_, N);
+    return detail::axis_get<N>(t.axes_);
+  }
+  //@}
+
+  /// Get storage.
+  //@{
+  template <class T>
+  static auto& storage(T& t) {
     return t.storage_;
   }
 
-  /// Get storage (const version)
   template <class T>
-  static const typename T::storage_type& storage(const T& t) {
+  static const auto& storage(const T& t) {
     return t.storage_;
   }
+  //@}
 };
 
 } // namespace histogram

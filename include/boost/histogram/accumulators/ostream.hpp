@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_ACCUMULATORS_OSTREAM_OPERATORS_HPP
-#define BOOST_HISTOGRAM_ACCUMULATORS_OSTREAM_OPERATORS_HPP
+#ifndef BOOST_HISTOGRAM_ACCUMULATORS_OSTREAM_HPP
+#define BOOST_HISTOGRAM_ACCUMULATORS_OSTREAM_HPP
 
 #include <boost/histogram/fwd.hpp>
 #include <ostream>

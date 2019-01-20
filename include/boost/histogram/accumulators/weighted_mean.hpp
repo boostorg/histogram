@@ -80,12 +80,15 @@ private:
 } // namespace histogram
 } // namespace boost
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 namespace std {
 template <class T, class U>
+/// Specialization for boost::histogram::accumulators::weighted_mean.
 struct common_type<boost::histogram::accumulators::weighted_mean<T>,
                    boost::histogram::accumulators::weighted_mean<U>> {
   using type = boost::histogram::accumulators::weighted_mean<common_type_t<T, U>>;
 };
 } // namespace std
+#endif
 
 #endif

@@ -21,10 +21,43 @@
 
 namespace boost {
 namespace histogram {
-namespace axis {
-
+namespace detail {
 template <class, class, bool>
-class optional_integer_mixin {};
+class integer_mixin {};
+template <class Derived, class Value>
+
+class integer_mixin<Derived, Value, true> {
+  using value_type = Value;
+
+public:
+  /// Returns index and shift (if axis has grown) for the passed argument.
+  auto update(value_type x) noexcept {
+    auto impl = [](auto& der, axis::index_type x) {
+      const auto i = x - der.min_;
+      if (i >= 0) {
+        if (i < der.size()) return std::make_pair(i, 0);
+        const auto n = i - der.size() + 1;
+        der.size_meta_.first() += n;
+        return std::make_pair(i, -n);
+      }
+      der.min_ += i;
+      der.size_meta_.first() -= i;
+      return std::make_pair(0, -i);
+    };
+
+    return detail::static_if<std::is_floating_point<value_type>>(
+        [impl](auto& der, auto x) {
+          if (std::isfinite(x))
+            return impl(der, static_cast<axis::index_type>(std::floor(x)));
+          return std::make_pair(x < 0 ? -1 : der.size(), 0);
+        },
+        impl, static_cast<Derived&>(*this), x);
+  }
+};
+
+} // namespace detail
+
+namespace axis {
 
 /** Axis for an interval of integer values with unit steps.
  *
@@ -33,8 +66,8 @@ class optional_integer_mixin {};
  */
 template <class Value, class MetaData, option Options>
 class integer : public iterator_mixin<integer<Value, MetaData, Options>>,
-                public optional_integer_mixin<integer<Value, MetaData, Options>, Value,
-                                              test(Options, option::growth)> {
+                public detail::integer_mixin<integer<Value, MetaData, Options>, Value,
+                                             test(Options, option::growth)> {
   static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
   static_assert(!std::is_integral<Value>::value || std::is_same<Value, index_type>::value,
@@ -132,36 +165,7 @@ private:
   index_type min_{0};
 
   template <class, class, bool>
-  friend class optional_integer_mixin;
-};
-
-template <class Derived, class Value>
-class optional_integer_mixin<Derived, Value, true> {
-  using value_type = Value;
-
-public:
-  /// Returns index and shift (if axis has grown) for the passed argument.
-  auto update(value_type x) noexcept {
-    auto impl = [](auto& der, index_type x) {
-      const auto i = x - der.min_;
-      if (i >= 0) {
-        if (i < der.size()) return std::make_pair(i, 0);
-        const auto n = i - der.size() + 1;
-        der.size_meta_.first() += n;
-        return std::make_pair(i, -n);
-      }
-      der.min_ += i;
-      der.size_meta_.first() -= i;
-      return std::make_pair(0, -i);
-    };
-
-    return detail::static_if<std::is_floating_point<value_type>>(
-        [impl](auto& der, auto x) {
-          if (std::isfinite(x)) return impl(der, static_cast<index_type>(std::floor(x)));
-          return std::make_pair(x < 0 ? -1 : der.size(), 0);
-        },
-        impl, static_cast<Derived&>(*this), x);
-  }
+  friend class detail::integer_mixin;
 };
 
 #if __cpp_deduction_guides >= 201606

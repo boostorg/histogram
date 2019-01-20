@@ -21,13 +21,58 @@
 
 namespace boost {
 namespace histogram {
+namespace detail {
+template <class, class, bool>
+class regular_mixin {};
+
+template <class Axis, class Value>
+class regular_mixin<Axis, Value, true> {
+  using value_type = Value;
+
+public:
+  /// Returns index and shift (if axis has grown) for the passed argument.
+  auto update(value_type x) noexcept {
+    auto& der = static_cast<Axis&>(*this);
+    const auto z = (der.forward(x / typename Axis::unit_type{}) - der.min_) / der.delta_;
+    if (z < 1) { // don't use i here!
+      if (0 <= z) {
+        const auto i = static_cast<axis::index_type>(z * der.size());
+        return std::make_pair(i, 0);
+      }
+      if (z != -std::numeric_limits<typename Axis::internal_value_type>::infinity()) {
+        const auto stop = der.min_ + der.delta_;
+        const auto i = static_cast<axis::index_type>(z * der.size());
+        der.min_ += i * (der.delta_ / der.size());
+        der.delta_ = stop - der.min_;
+        der.size_meta_.first() -= i;
+        return std::make_pair(0, -i);
+      }
+      // z is -infinity
+      return std::make_pair(-1, 0);
+    }
+    // z either beyond range, infinite, or NaN
+    if (z < std::numeric_limits<typename Axis::internal_value_type>::infinity()) {
+      const auto i = static_cast<axis::index_type>(z * der.size());
+      const auto n = i - der.size() + 1;
+      der.delta_ /= der.size();
+      der.delta_ *= der.size() + n;
+      der.size_meta_.first() += n;
+      return std::make_pair(i, -n);
+    }
+    // z either infinite or NaN
+    return std::make_pair(der.size(), 0);
+  }
+};
+} // namespace detail
+
 namespace axis {
 
-// two_pi can be found in boost/math, but it is defined here to reduce deps
+/// two_pi can be found in boost/math, but it is defined here to reduce dependencies
 constexpr double two_pi = 6.283185307179586;
 
 namespace transform {
 
+/// Identity transform for equidistant bins.
 struct id {
   template <typename T>
   static T forward(T&& x) noexcept {
@@ -39,6 +84,7 @@ struct id {
   }
 };
 
+/// Log transform for equidistant bins in log-space.
 struct log {
   template <typename T>
   static T forward(T x) {
@@ -50,6 +96,7 @@ struct log {
   }
 };
 
+/// Sqrt transform for equidistant bins in sqrt-space.
 struct sqrt {
   template <typename T>
   static T forward(T x) {
@@ -61,6 +108,7 @@ struct sqrt {
   }
 };
 
+/// Pow transform for equidistant bins in pow-space.
 struct pow {
   double power = 1;
 
@@ -84,29 +132,24 @@ struct pow {
 /// Type envelope to make value as step size
 template <typename T>
 struct step_type {
-  T value;
+  T value; /**< @private */
 };
 
 /// Helper function to mark argument as step size
 template <typename T>
-step_type<T&&> step(T&& t) {
-  return {std::forward<T>(t)};
+auto step(T&& t) {
+  return step_type<T&&>{std::forward<T>(t)};
 }
-
-template <class, class, bool>
-class optional_regular_mixin {};
 
 /** Axis for equidistant intervals on the real line.
  *
- * The most common binning strategy.
- * Very fast. Binning is a O(1) operation.
+ * The most common binning strategy. Very fast. Binning is a O(1) operation.
  */
 template <class Value, class Transform, class MetaData, option Options>
-class regular
-    : public iterator_mixin<regular<Value, Transform, MetaData, Options>>,
-      public optional_regular_mixin<regular<Value, Transform, MetaData, Options>, Value,
-                                    test(Options, option::growth)>,
-      protected Transform {
+class regular : public iterator_mixin<regular<Value, Transform, MetaData, Options>>,
+                public detail::regular_mixin<regular<Value, Transform, MetaData, Options>,
+                                             Value, test(Options, option::growth)>,
+                protected Transform {
   static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
 
@@ -124,11 +167,11 @@ public:
 
   /** Construct n bins over real transformed range [start, stop).
    *
-   * \param trans    transform instance to use.
-   * \param n        number of bins.
-   * \param start    low edge of first bin.
-   * \param stop     high edge of last bin.
-   * \param meta     description of the axis (optional).
+   * @param trans    transform instance to use.
+   * @param n        number of bins.
+   * @param start    low edge of first bin.
+   * @param stop     high edge of last bin.
+   * @param meta     description of the axis (optional).
    */
   regular(transform_type trans, unsigned n, value_type start, value_type stop,
           metadata_type meta = {})
@@ -146,21 +189,21 @@ public:
 
   /** Construct n bins over real range [start, stop).
    *
-   * \param n        number of bins.
-   * \param start    low edge of first bin.
-   * \param stop     high edge of last bin.
-   * \param meta     description of the axis (optional).
+   * @param n        number of bins.
+   * @param start    low edge of first bin.
+   * @param stop     high edge of last bin.
+   * @param meta     description of the axis (optional).
    */
   regular(unsigned n, value_type start, value_type stop, metadata_type meta = {})
       : regular({}, n, start, stop, std::move(meta)) {}
 
   /** Construct bins with the given step size over real transformed range [start, stop).
    *
-   * \param trans   transform instance to use.
-   * \param step    width of a single bin.
-   * \param start   low edge of first bin.
-   * \param stop    upper limit of high edge of last bin (see below).
-   * \param meta    description of the axis (optional).
+   * @param trans   transform instance to use.
+   * @param step    width of a single bin.
+   * @param start   low edge of first bin.
+   * @param stop    upper limit of high edge of last bin (see below).
+   * @param meta    description of the axis (optional).
    *
    * The axis computes the number of bins as n = abs(stop - start) / step, rounded down.
    * This means that stop is an upper limit to the actual value (start + n * step).
@@ -176,10 +219,10 @@ public:
 
   /** Construct bins with the given step size over real range [start, stop).
    *
-   * \param step    width of a single bin.
-   * \param start   low edge of first bin.
-   * \param stop    upper limit of high edge of last bin (see below).
-   * \param meta    description of the axis (optional).
+   * @param step    width of a single bin.
+   * @param start   low edge of first bin.
+   * @param stop    upper limit of high edge of last bin (see below).
+   * @param meta    description of the axis (optional).
    *
    * The axis computes the number of bins as n = abs(stop - start) / step, rounded down.
    * This means that stop is an upper limit to the actual value (start + n * step).
@@ -264,46 +307,7 @@ private:
   internal_value_type min_{0}, delta_{1};
 
   template <class, class, bool>
-  friend class optional_regular_mixin;
-};
-
-template <class Axis, class Value>
-class optional_regular_mixin<Axis, Value, true> {
-  using value_type = Value;
-
-public:
-  /// Returns index and shift (if axis has grown) for the passed argument.
-  auto update(value_type x) noexcept {
-    auto& der = static_cast<Axis&>(*this);
-    const auto z = (der.forward(x / typename Axis::unit_type{}) - der.min_) / der.delta_;
-    if (z < 1) { // don't use i here!
-      if (0 <= z) {
-        const auto i = static_cast<index_type>(z * der.size());
-        return std::make_pair(i, 0);
-      }
-      if (z != -std::numeric_limits<typename Axis::internal_value_type>::infinity()) {
-        const auto stop = der.min_ + der.delta_;
-        const auto i = static_cast<index_type>(z * der.size());
-        der.min_ += i * (der.delta_ / der.size());
-        der.delta_ = stop - der.min_;
-        der.size_meta_.first() -= i;
-        return std::make_pair(0, -i);
-      }
-      // z is -infinity
-      return std::make_pair(-1, 0);
-    }
-    // z either beyond range, infinite, or NaN
-    if (z < std::numeric_limits<typename Axis::internal_value_type>::infinity()) {
-      const auto i = static_cast<index_type>(z * der.size());
-      const auto n = i - der.size() + 1;
-      der.delta_ /= der.size();
-      der.delta_ *= der.size() + n;
-      der.size_meta_.first() += n;
-      return std::make_pair(i, -n);
-    }
-    // z either infinite or NaN
-    return std::make_pair(der.size(), 0);
-  }
+  friend class detail::regular_mixin;
 };
 
 #if __cpp_deduction_guides >= 201606

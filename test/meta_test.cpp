@@ -12,8 +12,7 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/sample.hpp>
-#include <boost/histogram/weight.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <deque>
 #include <iterator>
 #include <map>
@@ -316,12 +315,21 @@ int main() {
     using V1 = axis::variant<char>;
     using V2 = axis::variant<int>&;
     using V3 = const axis::variant<long>&;
+    using V4 = axis::variant<const char&>;
+    using V5 = axis::variant<const char&>&;
+    using V6 = const axis::variant<const char&>&;
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<visitor_return_type<VisitorTestFunctor, V1>, char>));
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<visitor_return_type<VisitorTestFunctor, V2>, int&>));
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<visitor_return_type<VisitorTestFunctor, V3>, const long&>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<visitor_return_type<VisitorTestFunctor, V4>, const char&>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<visitor_return_type<VisitorTestFunctor, V5>, const char&>));
+    BOOST_TEST_TRAIT_TRUE(
+        (std::is_same<visitor_return_type<VisitorTestFunctor, V6>, const char&>));
   }
 
   // static_if

@@ -19,7 +19,12 @@
 namespace boost {
 namespace histogram {
 
-enum class coverage { inner, all, use_default = inner };
+/// Coverage mode of the indexed range generator.
+enum class coverage {
+  inner,              /*!< iterate over inner bins, exclude underflow and overflow */
+  all,                /*!< iterate over all bins, including underflow and overflow */
+  use_default = inner /*!< default setting */
+};
 
 /// Range over histogram bins with multi-dimensional index.
 template <class Histogram>
@@ -34,8 +39,10 @@ class BOOST_HISTOGRAM_NODISCARD indexed_range {
       detail::stack_buffer<cache_item, typename detail::naked<Histogram>::axes_type>;
 
 public:
+  /// Pointer-like class to access value and index of current cell.
   class accessor {
   public:
+    /// Array-like view into the current multi-dimensional index.
     class indices_view {
     public:
       class index_iterator
@@ -158,12 +165,18 @@ private:
   const bool cover_all_;
   histogram_iterator begin_, end_;
   mutable cache_type cache_;
-}; // namespace histogram
+};
 
+/**
+  Generates a range over the histogram entries.
+
+  @param hist Reference to the histogram.
+  @param cov  Iterate over all or only inner bins (optional, default: inner).
+ */
 template <typename Histogram>
-indexed_range<std::remove_reference_t<Histogram>> indexed(
-    Histogram&& h, coverage c = coverage::use_default) {
-  return {std::forward<Histogram>(h), c};
+auto indexed(Histogram&& hist, coverage cov = coverage::use_default) {
+  return indexed_range<std::remove_reference_t<Histogram>>{std::forward<Histogram>(hist),
+                                                           cov};
 }
 
 } // namespace histogram

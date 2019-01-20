@@ -32,10 +32,14 @@
 #include <tuple>
 #include <type_traits>
 
-/** \file boost/histogram/serialization.hpp
- *  \brief Defines the serialization functions, to use with boost.serialize.
- *
+/**
+  \file boost/histogram/serialization.hpp
+
+  Implemenations of the serialization functions using
+  [Boost.Serialization](https://www.boost.org/doc/libs/develop/libs/serialization/doc/index.html).
  */
+
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 namespace std {
 template <class Archive, class... Ts>
@@ -192,13 +196,13 @@ void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
 }
 } // namespace axis
 
-template <class Archive, class A>
-void serialize(Archive& ar, adaptive_storage<A>& s, unsigned /* version */) {
-  using S = adaptive_storage<A>;
-  if (Archive::is_loading::value) { S::apply(typename S::destroyer(), s.buffer); }
-  ar& s.buffer.type;
-  ar& s.buffer.size;
-  S::apply(detail::serializer(), s.buffer, ar);
+template <class A>
+template <class Archive>
+void adaptive_storage<A>::serialize(Archive& ar, unsigned /* version */) {
+  if (Archive::is_loading::value) { apply(destroyer(), buffer); }
+  ar& buffer.type;
+  ar& buffer.size;
+  apply(detail::serializer(), buffer, ar);
 }
 
 template <class Archive, class A, class S>
@@ -209,5 +213,7 @@ void serialize(Archive& ar, histogram<A, S>& h, unsigned /* version */) {
 
 } // namespace histogram
 } // namespace boost
+
+#endif
 
 #endif

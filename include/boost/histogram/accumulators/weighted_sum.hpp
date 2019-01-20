@@ -89,6 +89,7 @@ private:
 } // namespace histogram
 } // namespace boost
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 namespace std {
 template <class T, class U>
 struct common_type<boost::histogram::accumulators::weighted_sum<T>,
@@ -105,6 +106,7 @@ template <class T, class U>
 struct common_type<T, boost::histogram::accumulators::weighted_sum<U>> {
   using type = boost::histogram::accumulators::weighted_sum<common_type_t<T, U>>;
 };
-
 } // namespace std
+#endif
+
 #endif

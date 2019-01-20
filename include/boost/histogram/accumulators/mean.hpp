@@ -15,13 +15,12 @@ namespace boost {
 namespace histogram {
 namespace accumulators {
 
-/**
-  Calculates mean and variance of sample.
+/** Calculates mean and variance of sample.
 
   Uses Welfords's incremental algorithm to improve the numerical
   stability of mean and variance computation.
 */
-template <typename RealType>
+template <class RealType>
 class mean {
 public:
   mean() = default;
@@ -35,7 +34,7 @@ public:
     dsum2_ += delta * (x - mean_);
   }
 
-  template <typename T>
+  template <class T>
   mean& operator+=(const mean<T>& rhs) {
     const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
     sum_ += rhs.sum_;
@@ -50,12 +49,12 @@ public:
     return *this;
   }
 
-  template <typename T>
+  template <class T>
   bool operator==(const mean<T>& rhs) const noexcept {
     return sum_ == rhs.sum_ && mean_ == rhs.mean_ && dsum2_ == rhs.dsum2_;
   }
 
-  template <typename T>
+  template <class T>
   bool operator!=(const mean<T>& rhs) const noexcept {
     return !operator==(rhs);
   }
@@ -76,12 +75,15 @@ private:
 } // namespace histogram
 } // namespace boost
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 namespace std {
 template <class T, class U>
+/// Specialization for boost::histogram::accumulators::mean.
 struct common_type<boost::histogram::accumulators::mean<T>,
                    boost::histogram::accumulators::mean<U>> {
   using type = boost::histogram::accumulators::mean<common_type_t<T, U>>;
 };
 } // namespace std
+#endif
 
 #endif

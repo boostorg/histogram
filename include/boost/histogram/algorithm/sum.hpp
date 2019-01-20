@@ -9,23 +9,30 @@
 
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/fwd.hpp>
+#include <boost/mp11/utility.hpp>
 #include <numeric>
 #include <type_traits>
 
 namespace boost {
 namespace histogram {
 namespace algorithm {
-template <class A, class S,
-          class ReturnType = std::conditional_t<
-              std::is_arithmetic<typename histogram<A, S>::value_type>::value, double,
-              typename histogram<A, S>::value_type>,
-          class InternalSum = std::conditional_t<
-              std::is_arithmetic<typename histogram<A, S>::value_type>::value,
-              accumulators::sum<double>, typename histogram<A, S>::value_type>>
-ReturnType sum(const histogram<A, S>& h) {
-  InternalSum sum;
+/** Compute the sum over all histogram cells, including underflow/overflow bins.
+
+  If the value type of the histogram is an integral or floating point type,
+  boost::accumulators::sum<double> is used to compute the sum, else the original value
+  type is used. Compilation fails, if the value type does not support operator+=.
+
+  Return type is double if the value type of the histogram is integral or floating point,
+  and the original value type otherwise.
+ */
+template <class A, class S>
+auto sum(const histogram<A, S>& h) {
+  using T = typename histogram<A, S>::value_type;
+  using Sum = mp11::mp_if<std::is_arithmetic<T>, accumulators::sum<double>, T>;
+  Sum sum;
   for (auto x : h) sum += x;
-  return sum;
+  using R = mp11::mp_if<std::is_arithmetic<T>, double, T>;
+  return static_cast<R>(sum);
 }
 } // namespace algorithm
 } // namespace histogram

@@ -140,7 +140,7 @@ void run_tests() {
     BOOST_TEST_EQ(a.axis()[0].lower(), 1);
     BOOST_TEST_EQ(a.axis()[0].upper(), 2);
     BOOST_TEST_EQ(a.axis().metadata(), "foo");
-    a.axis().metadata() = "bar";
+    unsafe_access::axis(a, 0).metadata() = "bar";
     BOOST_TEST_EQ(a.axis().metadata(), "bar");
 
     auto b = make(Tag(), axis::regular<>(1, 1, 2, "foo"), axis::integer<>(1, 3));
@@ -152,7 +152,7 @@ void run_tests() {
     BOOST_TEST_EQ(b.axis(1_c).size(), 2);
     BOOST_TEST_EQ(b.axis(1_c)[0], 1);
     BOOST_TEST_EQ(b.axis(1_c)[1], 2);
-    b.axis(1_c).metadata() = "bar";
+    unsafe_access::axis(b, 1_c).metadata() = "bar";
     BOOST_TEST_EQ(b.axis(0_c).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1_c).metadata(), "bar");
 
@@ -165,13 +165,13 @@ void run_tests() {
     BOOST_TEST_EQ(b.axis(1)[1], 2);
     BOOST_TEST_EQ(b.axis(0).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1).metadata(), "bar");
-    b.axis(0).metadata() = "baz";
+    unsafe_access::axis(b, 0).metadata() = "baz";
     BOOST_TEST_EQ(b.axis(0).metadata(), "baz");
 
     enum class C { A = 3, B = 5 };
     auto c = make(Tag(), axis::category<C>({C::A, C::B}));
     BOOST_TEST_EQ(c.axis().size(), 2);
-    c.axis().metadata() = "foo";
+    unsafe_access::axis(c, 0).metadata() = "foo";
     BOOST_TEST_EQ(c.axis().metadata(), "foo");
     // need to cast here for this to work with Tag == dynamic_tag, too
     auto ca = axis::get<axis::category<C>>(c.axis());

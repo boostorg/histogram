@@ -26,10 +26,40 @@
 
 namespace boost {
 namespace histogram {
-namespace axis {
-
+namespace detail {
 template <class, class, bool>
-class optional_variable_mixin {};
+class variable_mixin {};
+
+template <class Derived, class Value>
+class variable_mixin<Derived, Value, true> {
+  using value_type = Value;
+
+public:
+  auto update(value_type x) noexcept {
+    auto& der = static_cast<Derived&>(*this);
+    const auto i = der(x);
+    if (std::isfinite(x)) {
+      auto& vec = der.vec_meta_.first();
+      if (0 <= i) {
+        if (i < der.size()) return std::make_pair(i, 0);
+        const auto d = der.value(der.size()) - der.value(der.size() - 0.5);
+        x = std::nextafter(x, std::numeric_limits<value_type>::max());
+        x = std::max(x, vec.back() + d);
+        vec.push_back(x);
+        return std::make_pair(i, -1);
+      }
+      const auto d = der.value(0.5) - der.value(0);
+      x = std::min(x, der.value(0) - d);
+      vec.insert(vec.begin(), x);
+      return std::make_pair(0, -i);
+    }
+    return std::make_pair(x < 0 ? -1 : der.size(), 0);
+  }
+};
+
+} // namespace detail
+
+namespace axis {
 
 /** Axis for non-equidistant bins on the real line.
  *
@@ -39,8 +69,8 @@ class optional_variable_mixin {};
 template <class Value, class MetaData, option Options, class Allocator>
 class variable
     : public iterator_mixin<variable<Value, MetaData, Options, Allocator>>,
-      public optional_variable_mixin<variable<Value, MetaData, Options, Allocator>, Value,
-                                     test(Options, option::growth)> {
+      public detail::variable_mixin<variable<Value, MetaData, Options, Allocator>, Value,
+                                    test(Options, option::growth)> {
   static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
   static_assert(std::is_floating_point<Value>::value,
@@ -56,14 +86,14 @@ public:
 
   /** Construct from iterator range of bin edges.
    *
-   * \param begin     begin of edge sequence.
-   * \param end       end of edge sequence.
-   * \param metadata  description of the axis.
-   * \param allocator allocator instance to use.
+   * \param begin begin of edge sequence.
+   * \param end   end of edge sequence.
+   * \param meta  description of the axis.
+   * \param alloc allocator instance to use.
    */
   template <class It, class = detail::requires_iterator<It>>
-  variable(It begin, It end, metadata_type m = {}, allocator_type a = {})
-      : vec_meta_(vec_type(std::move(a)), std::move(m)) {
+  variable(It begin, It end, metadata_type meta = {}, allocator_type alloc = {})
+      : vec_meta_(vec_type(std::move(alloc)), std::move(meta)) {
     if (std::distance(begin, end) <= 1)
       BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
 
@@ -80,23 +110,25 @@ public:
 
   /** Construct variable axis from iterable range of bin edges.
    *
-   * \param iterable  iterable range of bin edges.
-   * \param metadata  description of the axis.
-   * \param allocator allocator instance to use.
+   * \param iterable iterable range of bin edges.
+   * \param meta     description of the axis.
+   * \param alloc    allocator instance to use.
    */
   template <class U, class = detail::requires_iterable<U>>
-  variable(const U& iterable, metadata_type m = {}, allocator_type a = {})
-      : variable(std::begin(iterable), std::end(iterable), std::move(m), std::move(a)) {}
+  variable(const U& iterable, metadata_type meta = {}, allocator_type alloc = {})
+      : variable(std::begin(iterable), std::end(iterable), std::move(meta),
+                 std::move(alloc)) {}
 
   /** Construct variable axis from initializer list of bin edges.
    *
-   * \param edgelist  list of of bin edges.
-   * \param metadata  description of the axis.
-   * \param allocator allocator instance to use.
+   * @param list  std::initializer_list of bin edges.
+   * @param meta  description of the axis.
+   * @param alloc allocator instance to use.
    */
   template <class U>
-  variable(std::initializer_list<U> l, metadata_type m = {}, allocator_type a = {})
-      : variable(l.begin(), l.end(), std::move(m), std::move(a)) {}
+  variable(std::initializer_list<U> list, metadata_type meta = {},
+           allocator_type alloc = {})
+      : variable(list.begin(), list.end(), std::move(meta), std::move(alloc)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   variable(const variable& src, index_type begin, index_type end, unsigned merge)
@@ -170,34 +202,7 @@ private:
   detail::compressed_pair<vec_type, metadata_type> vec_meta_;
 
   template <class, class, bool>
-  friend class optional_variable_mixin;
-};
-
-template <class Derived, class Value>
-class optional_variable_mixin<Derived, Value, true> {
-  using value_type = Value;
-
-public:
-  auto update(value_type x) noexcept {
-    auto& der = static_cast<Derived&>(*this);
-    const auto i = der(x);
-    if (std::isfinite(x)) {
-      auto& vec = der.vec_meta_.first();
-      if (0 <= i) {
-        if (i < der.size()) return std::make_pair(i, 0);
-        const auto d = der.value(der.size()) - der.value(der.size() - 0.5);
-        x = std::nextafter(x, std::numeric_limits<value_type>::max());
-        x = std::max(x, vec.back() + d);
-        vec.push_back(x);
-        return std::make_pair(i, -1);
-      }
-      const auto d = der.value(0.5) - der.value(0);
-      x = std::min(x, der.value(0) - d);
-      vec.insert(vec.begin(), x);
-      return std::make_pair(0, -i);
-    }
-    return std::make_pair(x < 0 ? -1 : der.size(), 0);
-  }
+  friend class detail::variable_mixin;
 };
 
 #if __cpp_deduction_guides >= 201606

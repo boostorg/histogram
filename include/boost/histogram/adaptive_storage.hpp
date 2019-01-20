@@ -16,7 +16,6 @@
 #include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/histogram/weight.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
@@ -94,22 +93,36 @@ bool safe_radd(T& t, const boost::multiprecision::number<U>& u) {
 }
 } // namespace detail
 
+/**
+  Memory-efficient storage for integral counters which cannot overflow.
+
+  This storage implementation keeps a contiguous array of elemental counters, one for each
+  cell. If an operation is requested, which would overflow a counter, the whole array is
+  replaced with another of a wider integral type, then the operation is executed. The
+  storage uses integers of 8, 16, 32, 64 bits, and then switches to a multiprecision
+  integral type, cpp_int from
+  [Boost.Multiprecision](https://www.boost.org/doc/libs/develop/libs/multiprecision/doc/html/index.html).
+  A scaling operation turns the elements into doubles.
+*/
 template <class Allocator>
-struct adaptive_storage {
+class adaptive_storage {
   static_assert(
       std::is_same<typename std::allocator_traits<Allocator>::pointer,
                    typename std::allocator_traits<Allocator>::value_type*>::value,
       "adaptive_storage requires allocator with trivial pointer type");
 
+public:
   struct storage_tag {};
   using allocator_type = Allocator;
   using value_type = double;
 
+  /// @private
   using mp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<
       0, 0, boost::multiprecision::signed_magnitude, boost::multiprecision::unchecked,
       typename std::allocator_traits<Allocator>::template rebind_alloc<
           boost::multiprecision::limb_type>>>;
 
+private:
   using types = mp11::mp_list<uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
 
   template <typename T>
@@ -141,16 +154,8 @@ struct adaptive_storage {
                   : detail::create_buffer(a, size, 0);
     }
 
-    template <typename U = mp_int>
-    mp_int* create_impl(mp_int*, const U* init) {
-      using alloc_type =
-          typename std::allocator_traits<allocator_type>::template rebind_alloc<mp_int>;
-      alloc_type a(alloc); // rebound allocator for buffer
-      // mp_int has no ctor with an allocator instance, cannot pass state :(
-      // typename mp_int::backend_type::allocator_type a2(alloc);
-      return init ? detail::create_buffer_from_iter(a, size, init)
-                  : detail::create_buffer(a, size, 0);
-    }
+    // create_impl: no specialization for mp_int, it has no ctor which accepts
+    // allocator, cannot pass state :(
 
     template <typename T, typename U = T>
     T* create(const U* init = nullptr) {
@@ -212,6 +217,7 @@ struct adaptive_storage {
     std::size_t idx_;
   };
 
+public:
   using const_reference = reference_t<const buffer_type>;
 
   class reference : public reference_t<buffer_type> {
@@ -238,6 +244,7 @@ struct adaptive_storage {
     }
   };
 
+private:
   template <class Value, class Reference, class Buffer>
   class iterator_t
       : public boost::iterator_adaptor<iterator_t<Value, Reference, Buffer>, std::size_t,
@@ -267,6 +274,7 @@ struct adaptive_storage {
     Buffer* buffer_ = nullptr;
   };
 
+public:
   using const_iterator = iterator_t<const value_type, const_reference, const buffer_type>;
   using iterator = iterator_t<value_type, reference, buffer_type>;
 
@@ -296,11 +304,16 @@ struct adaptive_storage {
     for (auto&& x : s) apply(setter(), buffer, i++, x);
   }
 
-  template <typename T>
-  adaptive_storage& operator=(const storage_adaptor<T>& s) {
+  template <class C, class = detail::requires_iterable<C>>
+  adaptive_storage& operator=(const C& s) {
     apply(destroyer(), buffer);
     buffer.size = s.size();
-    buffer.set(buffer.template create<uint8_t>());
+    using V = detail::naked<decltype(s[0])>;
+    const unsigned ti = type_index<V>();
+    if (ti < mp11::mp_size<types>::value)
+      buffer.set(buffer.template create<V>());
+    else
+      buffer.set(buffer.template create<double>());
     std::size_t i = 0;
     for (auto&& x : s) apply(setter(), buffer, i++, x);
     return *this;
@@ -370,13 +383,17 @@ struct adaptive_storage {
   const_iterator begin() const noexcept { return {&buffer, 0}; }
   const_iterator end() const noexcept { return {&buffer, size()}; }
 
-  // used by unit tests, not part of generic storage interface
+  /// @private used by unit tests, not part of generic storage interface
   template <typename T>
   adaptive_storage(std::size_t s, const T* p, const allocator_type& a = allocator_type())
       : buffer(s, a) {
     buffer.set(buffer.template create<T>(p));
   }
 
+  template <class Archive>
+  void serialize(Archive&, unsigned);
+
+private:
   struct destroyer {
     template <typename T, typename Buffer>
     void operator()(T* tp, Buffer& b) {

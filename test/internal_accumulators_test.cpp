@@ -6,7 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
-#include <boost/histogram/accumulators/ostream_operators.hpp>
+#include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>

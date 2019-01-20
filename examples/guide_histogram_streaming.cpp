@@ -7,8 +7,8 @@
 //[ guide_histogram_streaming
 
 #include <boost/histogram.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
-#include <boost/histogram/ostream_operators.hpp>
+#include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/ostream.hpp>
 #include <cassert>
 #include <memory>
 #include <sstream>

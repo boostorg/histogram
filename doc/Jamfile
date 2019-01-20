@@ -8,32 +8,40 @@ import quickbook ;
 
 doxygen autodoc
 :
-  ../../../boost/histogram.hpp
-  [ glob ../../../boost/histogram/*.hpp ]
-  [ glob ../../../boost/histogram/accumulators/*.hpp ]
-  [ glob ../../../boost/histogram/algorithm/*.hpp ]
-  [ glob ../../../boost/histogram/axis/*.hpp ]
+  ../include/boost/histogram.hpp
+  [ glob ../include/boost/histogram/*.hpp ]
+  [ glob ../include/boost/histogram/accumulators/*.hpp ]
+  [ glob ../include/boost/histogram/algorithm/*.hpp ]
+  [ glob ../include/boost/histogram/axis/*.hpp ]
 :
-  <doxygen:param>PREDEFINED=BOOST_HISTOGRAM_DOXYGEN
-  <doxygen:param>EXTRACT_ALL=NO
-  <doxygen:param>EXTRACT_PRIVATE=NO
-  <doxygen:param>HIDE_UNDOC_MEMBERS=YES
-  <doxygen:param>HIDE_UNDOC_CLASSES=YES
+  <doxygen:param>"PREDEFINED=\"BOOST_HISTOGRAM_DOXYGEN_INVOKED\" \\
+                             \"BOOST_HISTOGRAM_NODISCARD\" \\
+                             "
+  <doxygen:param>EXTRACT_ALL=YES
+  <doxygen:param>HIDE_FRIEND_COMPOUNDS=YES
   <doxygen:param>ENABLE_PREPROCESSING=YES
   <doxygen:param>MACRO_EXPANSION=YES
-  <doxygen:param>EXPAND_ONLY_PREDEF=YES
-  <doxygen:param>SEARCH_INCLUDES=NO
   <doxygen:param>JAVADOC_AUTOBRIEF=YES
-  <doxygen:param>USE_MATHJAX=YES
-  <doxygen:param>SORT_MEMBER_DOCS=NO
+  <doxygen:param>USE_MATHJAX=NO
+  <doxygen:param>SEARCH_INCLUDES=NO
+  <doxygen:param>"EXCLUDE=\"../include/boost/histogram/fwd.hpp\" \\
+                          \"../include/boost/histogram/ostream.hpp\" \\
+                          \"../include/boost/histogram/axis/ostream.hpp\" \\
+                          \"../include/boost/histogram/accumulators/ostream.hpp\" \\
+                          \"../include/boost/histogram/attribute.hpp\" \\
+                          "
+  <doxygen:param>EXCLUDE_SYMBOLS=detail
+  <doxygen:param>WARNINGS=YES
+  <doxygen:param>WARN_IF_DOC_ERROR=YES
+  <doxygen:param>WARN_LOGFILE=doxygen.log
 ;
 
-exe speed
-  : ../test/speed_cpp.cpp
-  : <variant>release
-    <c++-template-depth>256
-    <cxxflags>"-std=c++11"
-  ;
+# exe speed
+#   : ../test/speed_cpp.cpp
+#   : <variant>release
+#     <c++-template-depth>256
+#     <cxxflags>"-std=c++11"
+#   ;
 
 boostbook histogram
 :
@@ -41,11 +49,9 @@ boostbook histogram
 :
   <dependency>autodoc
 
-  #<format>html:<xsl:param>boost.root=../../../..
   <format>html:<xsl:param>boost.root=../..
   <format>html:<xsl:param>boost.libraries=../../../../libs/libraries.htm
   <xsl:param>generate.section.toc.level=3
   <xsl:param>chunk.first.sections=1
   <xsl:param>boost.mathjax=1
-
 ;

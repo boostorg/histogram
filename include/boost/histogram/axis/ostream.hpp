@@ -6,8 +6,8 @@
 //
 // String representations here evaluate correctly in Python.
 
-#ifndef BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
-#define BOOST_HISTOGRAM_AXIS_OSTREAM_OPERATORS_HPP
+#ifndef BOOST_HISTOGRAM_AXIS_OSTREAM_HPP
+#define BOOST_HISTOGRAM_AXIS_OSTREAM_HPP
 
 #include <boost/assert.hpp>
 #include <boost/core/typeinfo.hpp>

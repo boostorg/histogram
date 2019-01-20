@@ -4,8 +4,13 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_fwd_HPP
-#define BOOST_fwd_HPP
+#ifndef BOOST_HISTOGRAM_FWD_HPP
+#define BOOST_HISTOGRAM_FWD_HPP
+
+/**
+  \file boost/histogram/fwd.hpp
+  Forward declarations, basic typedefs, and default template arguments for main classes.
+*/
 
 #include <boost/container/container_fwd.hpp> // for string and new_allocator
 #include <boost/histogram/attribute.hpp>     // for BOOST_HISTOGRAM_NODISCARD
@@ -114,13 +119,23 @@ template <class Value = double>
 class weighted_mean;
 } // namespace accumulators
 
+template <class T>
+struct weight_type {
+  T value;
+};
+
+template <class T>
+struct sample_type {
+  T value;
+};
+
 struct unsafe_access;
 
 template <class Allocator = boost::container::new_allocator<void>>
-struct adaptive_storage;
+class adaptive_storage;
 
 template <class T>
-struct storage_adaptor;
+class storage_adaptor;
 
 template <class T, class A = boost::container::new_allocator<T>>
 using dense_storage = storage_adaptor<boost::container::vector<T, A>>;

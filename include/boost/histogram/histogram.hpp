@@ -22,6 +22,20 @@
 namespace boost {
 namespace histogram {
 
+/** Central class of the histogram library.
+
+  Histogram uses the call operator to insert data, it follows accumulator semantics like
+  [Boost.Accumulators](https://www.boost.org/doc/libs/develop/doc/html/accumulators.html).
+  All other methods query information about the histogram.
+
+  Use the factory functions in [make_histogram.hpp](boost/histogram/make_histogram.html)
+  and [make_profile.hpp](boost/histogram/make_profile.html) to conveniently create
+  histograms.
+
+  Use the [indexed](boost/histogram/indexed.html) range generator to iterate over filled
+  histograms, which is convenient and faster than hand-written loops for multi-dimensional
+  histograms.
+ */
 template <class Axes, class Storage>
 class histogram {
 public:
@@ -74,60 +88,72 @@ public:
   template <class A, class = detail::requires_axes<A>>
   explicit histogram(A&& a) : histogram(std::forward<A>(a), storage_type()) {}
 
-  /// Number of axes (dimensions)
+  /// Number of axes (dimensions).
   unsigned rank() const noexcept { return detail::get_size(axes_); }
 
-  /// Total number of bins (including underflow/overflow)
+  /// Total number of bins (including underflow/overflow).
   std::size_t size() const noexcept { return storage_.size(); }
 
-  /// Reset values to zero
+  /// Reset all bins to default initialized values.
   void reset() { storage_.reset(storage_.size()); }
 
-  /// Get N-th axis
-  template <unsigned N = 0>
-  decltype(auto) axis(std::integral_constant<unsigned, N> = {}) {
-    detail::axis_index_is_valid(axes_, N);
-    return detail::axis_get<N>(axes_);
-  }
-
-  /// Get N-th axis (const version)
+  /// Get N-th axis using a compile-time number.
+  /// This version is more efficient than the one accepting a run-time number.
   template <unsigned N = 0>
   decltype(auto) axis(std::integral_constant<unsigned, N> = {}) const {
     detail::axis_index_is_valid(axes_, N);
     return detail::axis_get<N>(axes_);
   }
 
-  /// Get N-th axis with runtime index
-  decltype(auto) axis(unsigned i) {
-    detail::axis_index_is_valid(axes_, i);
-    return detail::axis_get(axes_, i);
-  }
-
-  /// Get N-th axis with runtime index (const version)
+  /// Get N-th axis with run-time number.
+  /// Use version that accepts a compile-time number, if possible.
   decltype(auto) axis(unsigned i) const {
     detail::axis_index_is_valid(axes_, i);
     return detail::axis_get(axes_, i);
   }
 
-  /// Apply unary functor/function to each axis
+  /// Apply unary functor/function to each axis.
   template <class Unary>
   auto for_each_axis(Unary&& unary) const {
     return detail::for_each_axis(axes_, std::forward<Unary>(unary));
   }
 
-  /// Fill histogram with values and optional weight or sample
+  /** Fill histogram with values and optional weight or sample.
+
+   Arguments are passed in order to the axis objects. Passing an argument type that is
+   not convertible to the value type accepted by the axis or passing the wrong number
+   of arguments causes a throw of std::invalid_argument.
+
+   # Axis with multiple arguments
+   If the histogram contains an axis which accepts a std::tuple of arguments, the
+   arguments for that axis need to passed as a std::tuple, for example,
+   std::make_tuple(1.2, 2.3). If the histogram contains only this axis and no other,
+   the arguments can be passed directly.
+
+   # Weights
+   An optional weight can be passed as the first or last argument with the weight
+   helper function. Compilation fails if the storage elements do not support weights.
+
+   # Samples
+   If the storage elements accept samples, pass them with the sample helper function
+   in addition to the axis arguments, which can be the first or last argument. The
+   sample helper function can pass one or more arguments to the storage element. If
+   samples and weights are used together, they can be passed in any order at the beginning
+   or end of the argument list.
+  */
+  //@{
   template <class... Ts>
   auto operator()(const Ts&... ts) {
     return operator()(std::forward_as_tuple(ts...));
   }
 
-  /// Fill histogram with value tuple and optional weight or sample
   template <class... Ts>
   auto operator()(const std::tuple<Ts...>& t) {
     return detail::fill(storage_, axes_, t);
   }
+  //@}
 
-  /// Add values of another histogram
+  /// Add values of another histogram.
   template <class A, class S>
   histogram& operator+=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, rhs.axes_))
@@ -136,28 +162,37 @@ public:
     return *this;
   }
 
-  /// Multiply all values with scalar
+  /// Multiply all values with scalar.
   histogram& operator*=(const double x) {
     storage_ *= x;
     return *this;
   }
 
-  /// Divide all values by scalar
+  /// Divide all values by scalar.
   histogram& operator/=(const double x) { return operator*=(1.0 / x); }
 
-  /// Access value at indices
+  /// Access cell value at integral indices.
+  /**
+    You can pass indices as individual arguments, as a std::tuple of integers, or as an
+    interable range of integers. Passing the wrong number of arguments causes a throw of
+    std::invalid_argument. Passing an index which is out of bounds causes a throw of
+    std::out_of_range.
+  */
   template <class... Ts>
   decltype(auto) at(int t, Ts... ts) {
     return at(std::forward_as_tuple(t, ts...));
   }
 
-  /// Access value at indices (const version)
+  /// Access cell value at integral indices (read-only).
+  /// @copydoc at(int t, Ts... ts)
   template <class... Ts>
   decltype(auto) at(int t, Ts... ts) const {
     return at(std::forward_as_tuple(t, ts...));
   }
+  //@}
 
-  /// Access value at index tuple
+  /// Access cell value at integral indices stored in std::tuple.
+  /// @copydoc at(int t, Ts... ts)
   template <typename... Ts>
   decltype(auto) at(const std::tuple<Ts...>& t) {
     const auto idx = detail::at(axes_, t);
@@ -165,7 +200,8 @@ public:
     return storage_[*idx];
   }
 
-  /// Access value at index tuple (const version)
+  /// Access cell value at integral indices stored in std::tuple (read-only).
+  /// @copydoc at(int t, Ts... ts)
   template <typename... Ts>
   decltype(auto) at(const std::tuple<Ts...>& t) const {
     const auto idx = detail::at(axes_, t);
@@ -173,7 +209,8 @@ public:
     return storage_[*idx];
   }
 
-  /// Access value at index iterable
+  /// Access cell value at integral indices stored in iterable.
+  /// @copydoc at(int t, Ts... ts)
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   decltype(auto) at(const Iterable& c) {
     const auto idx = detail::at(axes_, c);
@@ -181,7 +218,8 @@ public:
     return storage_[*idx];
   }
 
-  /// Access value at index iterable (const version)
+  /// Access cell value at integral indices stored in iterable (read-only).
+  /// @copydoc at(int t, Ts... ts)
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   decltype(auto) at(const Iterable& c) const {
     const auto idx = detail::at(axes_, c);
@@ -189,23 +227,25 @@ public:
     return storage_[*idx];
   }
 
-  /// Access value at index (number for rank=1 or index tuple|iterable)
+  /// Access value at index (number for rank = 1, else std::tuple or iterable).
   template <class T>
   decltype(auto) operator[](const T& t) {
     return at(t);
   }
 
-  /// Access value at index (number for rank=1 or index tuple|iterable, const version)
+  /// Access value at index (number for rank = 1, else std::tuple or iterable; read-only).
   template <class T>
   decltype(auto) operator[](const T& t) const {
     return at(t);
   }
 
+  /// Equality operator, tests equality for all axes and the storage.
   template <class A, class S>
   bool operator==(const histogram<A, S>& rhs) const noexcept {
     return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
   }
 
+  /// Negation of the equality operator.
   template <class A, class S>
   bool operator!=(const histogram<A, S>& rhs) const noexcept {
     return !operator==(rhs);
@@ -268,6 +308,18 @@ histogram(Axes&& axes, Storage&& storage)
     ->histogram<detail::naked<Axes>, detail::naked<Storage>>;
 
 #endif
+
+/// Helper function to mark argument as weight
+template <typename T>
+auto weight(T&& t) noexcept {
+  return weight_type<T>{std::forward<T>(t)};
+}
+
+/// Helper function to mark arguments as sample
+template <typename... Ts>
+auto sample(Ts&&... ts) noexcept {
+  return sample_type<std::tuple<Ts&&...>>{std::forward_as_tuple(std::forward<Ts>(ts)...)};
+}
 
 } // namespace histogram
 } // namespace boost

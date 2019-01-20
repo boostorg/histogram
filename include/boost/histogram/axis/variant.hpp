@@ -55,8 +55,6 @@ const T* get_if(const variant<Us...>* v);
 template <class... Ts>
 class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
   using base_type = boost::variant<Ts...>;
-  using first_bounded_type = detail::naked<mp11::mp_first<base_type>>;
-
   using naked_types = mp11::mp_transform<detail::naked, base_type>;
 
   template <class T>
@@ -66,8 +64,9 @@ class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts.
   using requires_bounded_type = std::enable_if_t<is_bounded_type<T>::value>;
 
 public:
-  using metadata_type =
-      detail::naked<decltype(traits::metadata(std::declval<first_bounded_type&>()))>;
+  // maybe metadata_type or const metadata_type, if bounded type is const
+  using metadata_type = std::remove_reference_t<decltype(
+      traits::metadata(std::declval<mp11::mp_first<base_type>>()))>;
 
   // cannot import ctors with using directive, it breaks gcc and msvc
   variant() = default;
@@ -120,15 +119,15 @@ public:
   const metadata_type& metadata() const {
     return visit(
         [](const auto& a) -> const metadata_type& {
-          using U = decltype(traits::metadata(a));
-          return detail::static_if<std::is_same<U, const metadata_type&>>(
+          using M = decltype(traits::metadata(a));
+          return detail::static_if<std::is_same<M, const metadata_type&>>(
               [](const auto& a) -> const metadata_type& { return traits::metadata(a); },
               [](const auto&) -> const metadata_type& {
                 BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
                     "cannot return metadata of type ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(U)),
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(M)),
                     " through axis::variant interface which uses type ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(const metadata_type&)),
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type)),
                     "; use boost::histogram::axis::get to obtain a reference "
                     "of this axis type")));
               },
@@ -140,15 +139,15 @@ public:
   metadata_type& metadata() {
     return visit(
         [](auto& a) -> metadata_type& {
-          using M = decltype(traits::metadata(a));
-          return detail::static_if<std::is_same<M, metadata_type&>>(
+          using M = std::remove_reference_t<decltype(traits::metadata(a))>;
+          return detail::static_if<std::is_same<M, metadata_type>>(
               [](auto& a) -> metadata_type& { return traits::metadata(a); },
               [](auto&) -> metadata_type& {
                 BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
                     "cannot return metadata of type ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(M)),
                     " through axis::variant interface which uses type ",
-                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type&)),
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type)),
                     "; use boost::histogram::axis::get to obtain a reference "
                     "of this axis type")));
               },

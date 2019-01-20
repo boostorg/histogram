@@ -7,8 +7,8 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram.hpp>
-#include <boost/histogram/axis/ostream_operators.hpp>
-#include <boost/histogram/ostream_operators.hpp>
+#include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/ostream.hpp>
 #include <tuple>
 #include <type_traits>
 #include <vector>

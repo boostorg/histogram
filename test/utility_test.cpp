@@ -29,7 +29,6 @@ int main() {
     os << v;
     BOOST_TEST_EQ(os.str(), std::string("[ 1 2.5 hi ]"));
   }
-  return boost::report_errors();
 
   // tracing_allocator
   {
@@ -46,4 +45,6 @@ int main() {
     BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, 3);
     BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].second, 3);
   }
+
+  return boost::report_errors();
 }

@@ -1,4 +1,4 @@
-// Copyright 2015-2017 Hans Dembinski
+// Copyright 2015-2018 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -6,6 +6,17 @@
 
 #ifndef BOOST_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_HPP
+
+/**
+  \file boost/histogram.hpp
+  Includes all standard headers of the Boost.histogram library.
+
+  Extra headers not automatically included are:
+    - boost/histogram/accumulators/ostream.hpp
+    - boost/histogram/axis/ostream.hpp
+    - boost/histogram/ostream.hpp
+    - boost/histogram/serialization.hpp
+*/
 
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
@@ -21,24 +32,6 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/make_profile.hpp>
-#include <boost/histogram/sample.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
-#include <boost/histogram/weight.hpp>
-
-/**
- * \file boost/histogram.hpp
-   \brief Includes all standard headers of the Boost.histogram library.
-
-   The library consists of two histogram implementations, a static and a
-   dynamic one. If you need to configure histograms at runtime, choose the
-   dynamic one, otherwise use the static one. The static one is faster,
-   and a little more convenient, since some errors can be caught at compile
-   time and you don't need to worry about type conversions.
-
-   You can freely mix the implementations in your code, they are convertible
-   into each other, and there is a common interface for both. To the extent
-   of what is technically possible, the library has been designed to allow
-   you to write code that is agnostic of the implementation variant.
-*/
 
 #endif
