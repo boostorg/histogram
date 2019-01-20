@@ -28,9 +28,10 @@ namespace histogram {
   [Boost.Accumulators](https://www.boost.org/doc/libs/develop/doc/html/accumulators.html).
   All other methods query information about the histogram.
 
-  Use the factory functions in [make_histogram.hpp](boost/histogram/make_histogram.html)
-  and [make_profile.hpp](boost/histogram/make_profile.html) to conveniently create
-  histograms.
+  Use factory functions like
+  [make_histogram](histogram/reference.html#header.boost.histogram.make_histogram_hpp) and
+  [make_profile](histogram/reference.html#header.boost.histogram.make_profile_hpp) to
+  conveniently create histograms.
 
   Use the [indexed](boost/histogram/indexed.html) range generator to iterate over filled
   histograms, which is convenient and faster than hand-written loops for multi-dimensional

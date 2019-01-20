@@ -33,7 +33,6 @@ doxygen autodoc
   <doxygen:param>EXCLUDE_SYMBOLS=detail
   <doxygen:param>WARNINGS=YES
   <doxygen:param>WARN_IF_DOC_ERROR=YES
-  <doxygen:param>WARN_LOGFILE=doxygen.log
 ;
 
 # exe speed
