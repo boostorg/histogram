@@ -139,8 +139,8 @@ public:
   metadata_type& metadata() {
     return visit(
         [](auto& a) -> metadata_type& {
-          using M = std::remove_reference_t<decltype(traits::metadata(a))>;
-          return detail::static_if<std::is_same<M, metadata_type>>(
+          using M = decltype(traits::metadata(a));
+          return detail::static_if<std::is_same<M, metadata_type&>>(
               [](auto& a) -> metadata_type& { return traits::metadata(a); },
               [](auto&) -> metadata_type& {
                 BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
