@@ -125,6 +125,7 @@ compiled_test(examples/guide_histogram_streaming.cpp)
 compiled_test(examples/guide_make_dynamic_histogram.cpp)
 compiled_test(examples/guide_make_static_histogram.cpp)
 compiled_test(examples/guide_parallel_filling.cpp)
+compiled_test(examples/guide_stdlib_algorithms.cpp)
 
 if (TEST_SERIALIZATION)
   compiled_test(examples/guide_histogram_serialization.cpp Boost::serialization)
