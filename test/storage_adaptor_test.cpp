@@ -158,10 +158,9 @@ int main() {
   {
     auto a = storage_adaptor<std::vector<accumulators::weighted_sum<double>>>();
     a.reset(1);
-    a[0]();
-    a[0](1); // rvalue weight
-    const auto weight = 2;
-    a[0](weight); // lvalue weight
+    ++a[0];
+    a[0] += 1;
+    a[0] += 2;
     a[0] += accumulators::weighted_sum<double>(1, 0);
     BOOST_TEST_EQ(a[0].value(), 5);
     BOOST_TEST_EQ(a[0].variance(), 6);

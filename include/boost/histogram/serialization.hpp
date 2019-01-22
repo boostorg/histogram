@@ -81,15 +81,15 @@ namespace accumulators {
 template <class RealType>
 template <class Archive>
 void sum<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& sum_;
-  ar& cor_;
+  ar& large_;
+  ar& small_;
 }
 
 template <class RealType>
 template <class Archive>
 void weighted_sum<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& sum_;
-  ar& sum2_;
+  ar& sum_of_weights_;
+  ar& sum_of_weights_squared_;
 }
 
 template <class RealType>

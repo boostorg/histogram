@@ -110,7 +110,7 @@ struct sqrt {
 
 /// Pow transform for equidistant bins in pow-space.
 struct pow {
-  double power = 1;
+  double power = 1; /**< power index */
 
   explicit pow(double p) : power(p) {}
   pow() = default;

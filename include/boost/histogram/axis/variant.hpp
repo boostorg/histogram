@@ -162,11 +162,11 @@ public:
     return visit([&u](const auto& a) { return traits::index(a, u); }, *this);
   }
 
-  // Throws invalid_argument exception if axis has incompatible call signature
-  template <class U>
-  std::pair<int, int> update(const U& u) {
-    return visit([&u](auto& a) { return traits::update(a, u); }, *this);
-  }
+  // // Throws invalid_argument exception if axis has incompatible call signature
+  // template <class U>
+  // std::pair<int, int> update(const U& u) {
+  //   return visit([&u](auto& a) { return traits::update(a, u); }, *this);
+  // }
 
   // Only works for axes with value method that returns something convertible to
   // double and will throw a runtime_error otherwise, see axis::traits::value
@@ -212,9 +212,9 @@ public:
   template <class Archive>
   void serialize(Archive& ar, unsigned);
 
-  template <class Functor, class Variant>
-  friend auto visit(Functor&&, Variant &&)
-      -> detail::visitor_return_type<Functor, Variant>;
+  template <class Visitor, class Variant>
+  friend auto visit(Visitor&&, Variant &&)
+      -> detail::visitor_return_type<Visitor, Variant>;
 
   template <class T, class... Us>
   friend T& get(variant<Us...>& v);
@@ -232,43 +232,52 @@ public:
   friend const T* get_if(const variant<Us...>* v);
 };
 
-template <class Functor, class Variant>
-auto visit(Functor&& f, Variant&& v) -> detail::visitor_return_type<Functor, Variant> {
-  using R = detail::visitor_return_type<Functor, Variant>;
+/// Apply visitor to variant
+template <class Visitor, class Variant>
+auto visit(Visitor&& vis, Variant&& var)
+    -> detail::visitor_return_type<Visitor, Variant> {
+  using R = detail::visitor_return_type<Visitor, Variant>;
   using B = detail::copy_qualifiers<Variant, typename detail::naked<Variant>::base_type>;
-  return boost::apply_visitor(detail::functor_wrapper<Functor, R>(f), static_cast<B>(v));
+  return boost::apply_visitor(detail::functor_wrapper<Visitor, R>(vis),
+                              static_cast<B>(var));
 }
 
+/// Return lvalue reference to T, throws unspecified exception if type does not match
 template <class T, class... Us>
 T& get(variant<Us...>& v) {
   using B = typename variant<Us...>::base_type;
   return boost::get<T>(static_cast<B&>(v));
 }
 
+/// Return rvalue reference to T, throws unspecified exception if type does not match
 template <class T, class... Us>
 T&& get(variant<Us...>&& v) {
   using B = typename variant<Us...>::base_type;
   return boost::get<T>(static_cast<B&&>(v));
 }
 
+/// Return const reference to T, throws unspecified exception if type does not match
 template <class T, class... Us>
 const T& get(const variant<Us...>& v) {
   using B = typename variant<Us...>::base_type;
   return boost::get<T>(static_cast<const B&>(v));
 }
 
+/// Returns pointer to T in variant or null pointer if type does not match
 template <class T, class... Us>
 T* get_if(variant<Us...>* v) {
   using B = typename variant<Us...>::base_type;
   return boost::relaxed_get<T>(static_cast<B*>(v));
 }
 
+/// Returns pointer to const T in variant or null pointer if type does not match
 template <class T, class... Us>
 const T* get_if(const variant<Us...>* v) {
   using B = typename variant<Us...>::base_type;
   return boost::relaxed_get<T>(static_cast<const B*>(v));
 }
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 // pass-through version for generic programming, if U is axis instead of variant
 template <class T, class U>
 decltype(auto) get(U&& u) {
@@ -287,6 +296,8 @@ const T* get_if(const U* u) {
   return std::is_same<T, detail::naked<U>>::value ? reinterpret_cast<const T*>(u)
                                                   : nullptr;
 }
+#endif
+
 } // namespace axis
 } // namespace histogram
 } // namespace boost

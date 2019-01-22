@@ -31,7 +31,7 @@ int main() {
     BOOST_TEST_EQ(w, 1);
     BOOST_TEST_NE(w, 2);
 
-    w(2);
+    w += 2;
     BOOST_TEST_EQ(w.value(), 3);
     BOOST_TEST_EQ(w.variance(), 5);
     BOOST_TEST_EQ(w, w_t(3, 5));
@@ -44,19 +44,13 @@ int main() {
     // consistency: a weighted counter increased by weight 1 multiplied
     // by 2 must be the same as a weighted counter increased by weight 2
     w_t u(0);
-    u(1);
+    ++u;
     u *= 2;
     BOOST_TEST_EQ(u, w_t(2, 4));
 
     w_t v(0);
-    v(2);
+    v += 2;
     BOOST_TEST_EQ(u, v);
-
-    // consistency : a weight counter increased by a real number x
-    // is the same was adding x times weight(1)
-    w_t x(0);
-    x += 2;
-    BOOST_TEST_EQ(x, w_t(2, 2));
 
     // conversion to RealType
     w_t y(1, 2);
@@ -134,9 +128,9 @@ int main() {
     BOOST_TEST_EQ(bad_sum, 0); // instead of 2
 
     accumulators::sum<double> sum;
-    sum();      // equivalent to sum += 1
-    sum(1e100); // equivalent to sum += 1e100
-    sum += 1;
+    ++sum;
+    sum += 1e100;
+    ++sum;
     sum += -1e100;
     BOOST_TEST_EQ(sum, 2);
   }
@@ -144,10 +138,10 @@ int main() {
   {
     accumulators::weighted_sum<accumulators::sum<double>> w;
 
-    w();
-    w(1e100);
-    w();
-    w(-1e100);
+    ++w;
+    w += 1e100;
+    ++w;
+    w += -1e100;
 
     BOOST_TEST_EQ(w.value(), 2);
     BOOST_TEST_EQ(w.variance(), 2e200);

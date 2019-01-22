@@ -81,8 +81,7 @@ public:
   }
 
   template <class A, class S>
-  explicit histogram(A&& a, S&& s)
-      : axes_(std::forward<A>(a)), storage_(std::forward<S>(s)) {
+  histogram(A&& a, S&& s) : axes_(std::forward<A>(a)), storage_(std::forward<S>(s)) {
     storage_.reset(detail::bincount(axes_));
   }
 
@@ -125,34 +124,33 @@ public:
    not convertible to the value type accepted by the axis or passing the wrong number
    of arguments causes a throw of std::invalid_argument.
 
-   # Axis with multiple arguments
+   **Axis with multiple arguments**
    If the histogram contains an axis which accepts a std::tuple of arguments, the
    arguments for that axis need to passed as a std::tuple, for example,
    std::make_tuple(1.2, 2.3). If the histogram contains only this axis and no other,
    the arguments can be passed directly.
 
-   # Weights
+   **Weights**
    An optional weight can be passed as the first or last argument with the weight
    helper function. Compilation fails if the storage elements do not support weights.
 
-   # Samples
+   **Samples**
    If the storage elements accept samples, pass them with the sample helper function
    in addition to the axis arguments, which can be the first or last argument. The
    sample helper function can pass one or more arguments to the storage element. If
    samples and weights are used together, they can be passed in any order at the beginning
    or end of the argument list.
   */
-  //@{
   template <class... Ts>
   auto operator()(const Ts&... ts) {
     return operator()(std::forward_as_tuple(ts...));
   }
 
+  /// Fill histogram with values and optional weight or sample from a tuple.
   template <class... Ts>
   auto operator()(const std::tuple<Ts...>& t) {
     return detail::fill(storage_, axes_, t);
   }
-  //@}
 
   /// Add values of another histogram.
   template <class A, class S>
@@ -190,7 +188,6 @@ public:
   decltype(auto) at(int t, Ts... ts) const {
     return at(std::forward_as_tuple(t, ts...));
   }
-  //@}
 
   /// Access cell value at integral indices stored in std::tuple.
   /// @copydoc at(int t, Ts... ts)
@@ -252,11 +249,23 @@ public:
     return !operator==(rhs);
   }
 
+  /// Return value iterator to the beginning of the histogram.
   iterator begin() noexcept { return storage_.begin(); }
+
+  /// Return value iterator to the end in the histogram.
   iterator end() noexcept { return storage_.end(); }
 
+  /// Return value iterator to the beginning of the histogram (read-only).
   const_iterator begin() const noexcept { return storage_.begin(); }
+
+  /// Return value iterator to the end in the histogram (read-only).
   const_iterator end() const noexcept { return storage_.end(); }
+
+  /// Return value iterator to the beginning of the histogram (read-only).
+  const_iterator cbegin() const noexcept { return storage_.begin(); }
+
+  /// Return value iterator to the end in the histogram (read-only).
+  const_iterator cend() const noexcept { return storage_.end(); }
 
 private:
   axes_type axes_;

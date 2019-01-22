@@ -31,36 +31,41 @@ template <typename RealType>
 class sum {
 public:
   sum() = default;
-  explicit sum(const RealType& value) noexcept : sum_(value), cor_(0) {}
+
+  /// Initialize sum to value
+  explicit sum(const RealType& value) noexcept : large_(value) {}
+
+  /// Set sum to value
   sum& operator=(const RealType& value) noexcept {
-    sum_ = value;
-    cor_ = 0;
+    large_ = value;
+    small_ = 0;
     return *this;
   }
 
-  void operator()() { operator+=(1); }
+  /// Increment sum by one
+  sum& operator++() { return operator+=(1); }
 
-  void operator()(const RealType& x) { operator+=(x); }
-
-  sum& operator+=(const RealType& x) {
-    auto temp = sum_ + x; // prevent optimization
-    if (std::abs(sum_) >= std::abs(x))
-      cor_ += (sum_ - temp) + x;
+  /// Increment sum by value
+  sum& operator+=(const RealType& value) {
+    auto temp = large_ + value; // prevent optimization
+    if (std::abs(large_) >= std::abs(value))
+      small_ += (large_ - temp) + value;
     else
-      cor_ += (x - temp) + sum_;
-    sum_ = temp;
+      small_ += (value - temp) + large_;
+    large_ = temp;
     return *this;
   }
 
-  sum& operator*=(const RealType& x) {
-    sum_ *= x;
-    cor_ *= x;
+  /// Scale by value
+  sum& operator*=(const RealType& value) {
+    large_ *= value;
+    small_ *= value;
     return *this;
   }
 
   template <typename T>
   bool operator==(const sum<T>& rhs) const noexcept {
-    return sum_ == rhs.sum_ && cor_ == rhs.cor_;
+    return large_ == rhs.large_ && small_ == rhs.small_;
   }
 
   template <typename T>
@@ -68,17 +73,21 @@ public:
     return !operator==(rhs);
   }
 
-  const RealType& large() const noexcept { return sum_; }
-  const RealType& small() const noexcept { return cor_; }
+  /// Return large part of the sum.
+  const RealType& large() const { return large_; }
+
+  /// Return small part of the sum.
+  const RealType& small() const { return small_; }
 
   // allow implicit conversion to RealType
-  operator RealType() const { return sum_ + cor_; }
+  operator RealType() const { return large_ + small_; }
 
   template <class Archive>
   void serialize(Archive&, unsigned /* version */);
 
 private:
-  RealType sum_ = 0, cor_ = 0;
+  RealType large_ = RealType();
+  RealType small_ = RealType();
 };
 
 } // namespace accumulators
