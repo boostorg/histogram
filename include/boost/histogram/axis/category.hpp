@@ -97,7 +97,7 @@ public:
 
   /** Construct axis from an initializer list of unique values.
    *
-   * \param list   std::initializer_list of unique values.
+   * \param list   `std::initializer_list` of unique values.
    * \param meta   description of the axis.
    * \param alloc  allocator instance to use.
    */
@@ -106,30 +106,33 @@ public:
            allocator_type alloc = {})
       : category(list.begin(), list.end(), std::move(meta), std::move(alloc)) {}
 
-  /// Returns the bin index for the passed argument.
-  int operator()(const value_type& x) const noexcept {
+  /// Return index for value argument.
+  index_type operator()(const value_type& x) const noexcept {
     const auto beg = vec_meta_.first().begin();
     const auto end = vec_meta_.first().end();
     return std::distance(beg, std::find(beg, end, x));
   }
 
-  /// Returns the value for the bin index (performs a range check).
-  decltype(auto) value(int idx) const {
+  /// Return value for index argument.
+  /// Throws `std::out_of_range` if the index is out of bounds.
+  decltype(auto) value(index_type idx) const {
     if (idx < 0 || idx >= size())
       BOOST_THROW_EXCEPTION(std::out_of_range("category index out of range"));
     return vec_meta_.first()[idx];
   }
 
-  decltype(auto) operator[](int idx) const noexcept { return value(idx); }
+  /// Return value for index argument.
+  decltype(auto) operator[](index_type idx) const noexcept { return value(idx); }
 
-  /// Returns the number of bins, without extra bins.
-  int size() const noexcept { return vec_meta_.first().size(); }
+  /// Returns the number of bins, without over- or underflow.
+  index_type size() const noexcept { return vec_meta_.first().size(); }
   /// Returns the options.
   static constexpr option options() noexcept { return Options; }
-  /// Returns the metadata.
+  /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return vec_meta_.second(); }
-  /// Returns the metadata (const version).
+  /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
+
   bool operator==(const category& o) const noexcept {
     const auto& a = vec_meta_.first();
     const auto& b = o.vec_meta_.first();

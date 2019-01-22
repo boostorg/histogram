@@ -38,11 +38,16 @@ public:
   polymorphic_bin(value_type lower, value_type upper)
       : lower_or_value_(lower), upper_(upper) {}
 
+  /// Implicitly convert to bin value (for axis with discrete values).
   operator const value_type&() const noexcept { return lower_or_value_; }
 
+  /// Return lower edge of bin.
   value_type lower() const noexcept { return lower_or_value_; }
+  /// Return upper edge of bin.
   value_type upper() const noexcept { return upper_; }
+  /// Return center of bin.
   value_type center() const noexcept { return 0.5 * (lower() + upper()); }
+  /// Return width of bin.
   value_type width() const noexcept { return upper() - lower(); }
 
   template <typename BinType>
@@ -55,6 +60,7 @@ public:
     return !operator==(rhs);
   }
 
+  /// Return true if bin is discrete.
   bool is_discrete() const noexcept { return lower_or_value_ == upper_; }
 
 private:

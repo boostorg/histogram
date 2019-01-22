@@ -121,7 +121,7 @@ public:
 
   /** Construct variable axis from initializer list of bin edges.
    *
-   * @param list  std::initializer_list of bin edges.
+   * @param list  `std::initializer_list` of bin edges.
    * @param meta  description of the axis.
    * @param alloc allocator instance to use.
    */
@@ -142,8 +142,8 @@ public:
     for (index_type i = begin; i <= end; i += merge) vec.emplace_back(*(beg + i));
   }
 
-  /// Returns the bin index for the passed argument.
-  int operator()(value_type x) const noexcept {
+  /// Return index for value argument.
+  index_type operator()(value_type x) const noexcept {
     const auto& v = vec_meta_.first();
     if (test(Options, option::circular)) {
       const auto a = v[0];
@@ -153,7 +153,7 @@ public:
     return std::upper_bound(v.begin(), v.end(), x) - v.begin() - 1;
   }
 
-  /// Returns axis value for fractional index.
+  /// Return value for fractional index argument.
   value_type value(real_index_type i) const noexcept {
     const auto& v = vec_meta_.first();
     if (test(Options, option::circular)) {
@@ -173,18 +173,20 @@ public:
     return (1.0 - z) * v[k] + z * v[k + 1];
   }
 
+  /// Return bin for index argument.
   auto operator[](index_type idx) const noexcept {
     return interval_view<variable>(*this, idx);
   }
 
-  /// Returns the number of bins, without extra bins.
+  /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return vec_meta_.first().size() - 1; }
   /// Returns the options.
   static constexpr option options() noexcept { return Options; }
-  /// Returns the metadata.
+  /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return vec_meta_.second(); }
-  /// Returns the metadata (const version).
+  /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
+
   bool operator==(const variable& o) const noexcept {
     const auto& a = vec_meta_.first();
     const auto& b = o.vec_meta_.first();
@@ -193,6 +195,7 @@ public:
   }
   bool operator!=(const variable<>& o) const noexcept { return !operator==(o); }
 
+  /// Return allocator instance.
   allocator_type get_allocator() const { return vec_meta_.first().get_allocator(); }
 
   template <class Archive>

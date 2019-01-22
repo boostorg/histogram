@@ -100,12 +100,12 @@ public:
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
-  /// Returns the bin index for the passed argument.
+  /// Return index for value argument.
   index_type operator()(value_type x) const noexcept {
     return index_impl(std::is_floating_point<value_type>(), x);
   }
 
-  /// Returns axis value for index.
+  /// Return value for index argument.
   value_type value(local_index_type i) const noexcept {
     if (!test(Options, option::circular)) {
       if (i < 0) return detail::lowest<value_type>();
@@ -114,19 +114,20 @@ public:
     return min_ + i;
   }
 
+  /// Return bin for index argument.
   decltype(auto) operator[](local_index_type idx) const noexcept {
     return detail::static_if<std::is_floating_point<local_index_type>>(
         [this](auto idx) { return interval_view<integer>(*this, idx); },
         [this](auto idx) { return this->value(idx); }, idx);
   }
 
-  /// Returns the number of bins, without extra bins.
-  int size() const noexcept { return size_meta_.first(); }
+  /// Returns the number of bins, without over- or underflow.
+  index_type size() const noexcept { return size_meta_.first(); }
   /// Returns the options.
   static constexpr option options() noexcept { return Options; }
-  /// Returns the metadata.
+  /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return size_meta_.second(); }
-  /// Returns the metadata (const version).
+  /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return size_meta_.second(); }
 
   bool operator==(const integer& o) const noexcept {

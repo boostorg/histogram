@@ -108,14 +108,17 @@ public:
     return *this;
   }
 
-  int size() const {
+  /// Return size of axis.
+  index_type size() const {
     return visit([](const auto& x) { return x.size(); }, *this);
   }
 
+  /// Return options of axis or option::none if axis has no options.
   option options() const {
     return visit([](const auto& x) { return axis::traits::options(x); }, *this);
   }
 
+  /// Return reference to const metadata or instance of null_type if axis has no metadata.
   const metadata_type& metadata() const {
     return visit(
         [](const auto& a) -> const metadata_type& {
@@ -136,6 +139,7 @@ public:
         *this);
   }
 
+  /// Return reference to metadata or instance of null_type if axis has no metadata.
   metadata_type& metadata() {
     return visit(
         [](auto& a) -> metadata_type& {
@@ -156,26 +160,25 @@ public:
         *this);
   }
 
-  // Throws invalid_argument exception if axis has incompatible call signature
+  /// Return index for value argument.
+  /// Throws std::invalid_argument if axis has incompatible call signature.
   template <class U>
-  int operator()(const U& u) const {
+  index_type operator()(const U& u) const {
     return visit([&u](const auto& a) { return traits::index(a, u); }, *this);
   }
 
-  // // Throws invalid_argument exception if axis has incompatible call signature
-  // template <class U>
-  // std::pair<int, int> update(const U& u) {
-  //   return visit([&u](auto& a) { return traits::update(a, u); }, *this);
-  // }
-
-  // Only works for axes with value method that returns something convertible to
-  // double and will throw a runtime_error otherwise, see axis::traits::value
-  double value(double idx) const {
+  /// Return value for index argument.
+  /// Only works for axes with value method that returns something convertible to
+  /// double and will throw a runtime_error otherwise, see axis::traits::value().
+  double value(real_index_type idx) const {
     return visit([idx](const auto& a) { return traits::value_as<double>(a, idx); },
                  *this);
   }
 
-  auto operator[](const int idx) const {
+  /// Return bin for index argument.
+  /// Only works for axes with value method that returns something convertible to
+  /// double and will throw a runtime_error otherwise, see axis::traits::value().
+  auto operator[](index_type idx) const {
     return visit(
         [idx](const auto& a) {
           return detail::value_method_switch_with_return_type<double,
@@ -232,7 +235,7 @@ public:
   friend const T* get_if(const variant<Us...>* v);
 };
 
-/// Apply visitor to variant
+/// Apply visitor to variant.
 template <class Visitor, class Variant>
 auto visit(Visitor&& vis, Variant&& var)
     -> detail::visitor_return_type<Visitor, Variant> {
@@ -242,35 +245,35 @@ auto visit(Visitor&& vis, Variant&& var)
                               static_cast<B>(var));
 }
 
-/// Return lvalue reference to T, throws unspecified exception if type does not match
+/// Return lvalue reference to T, throws unspecified exception if type does not match.
 template <class T, class... Us>
 T& get(variant<Us...>& v) {
   using B = typename variant<Us...>::base_type;
   return boost::get<T>(static_cast<B&>(v));
 }
 
-/// Return rvalue reference to T, throws unspecified exception if type does not match
+/// Return rvalue reference to T, throws unspecified exception if type does not match.
 template <class T, class... Us>
 T&& get(variant<Us...>&& v) {
   using B = typename variant<Us...>::base_type;
   return boost::get<T>(static_cast<B&&>(v));
 }
 
-/// Return const reference to T, throws unspecified exception if type does not match
+/// Return const reference to T, throws unspecified exception if type does not match.
 template <class T, class... Us>
 const T& get(const variant<Us...>& v) {
   using B = typename variant<Us...>::base_type;
   return boost::get<T>(static_cast<const B&>(v));
 }
 
-/// Returns pointer to T in variant or null pointer if type does not match
+/// Returns pointer to T in variant or null pointer if type does not match.
 template <class T, class... Us>
 T* get_if(variant<Us...>* v) {
   using B = typename variant<Us...>::base_type;
   return boost::relaxed_get<T>(static_cast<B*>(v));
 }
 
-/// Returns pointer to const T in variant or null pointer if type does not match
+/// Returns pointer to const T in variant or null pointer if type does not match.
 template <class T, class... Us>
 const T* get_if(const variant<Us...>* v) {
   using B = typename variant<Us...>::base_type;
@@ -278,19 +281,17 @@ const T* get_if(const variant<Us...>* v) {
 }
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-// pass-through version for generic programming, if U is axis instead of variant
+// pass-through versions of get and get_if for generic programming
 template <class T, class U>
 decltype(auto) get(U&& u) {
   return static_cast<detail::copy_qualifiers<U, T>>(u);
 }
 
-// pass-through version for generic programming, if U is axis instead of variant
 template <class T, class U>
 T* get_if(U* u) {
   return std::is_same<T, detail::naked<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
 }
 
-// pass-through version for generic programming, if U is axis instead of variant
 template <class T, class U>
 const T* get_if(const U* u) {
   return std::is_same<T, detail::naked<U>>::value ? reinterpret_cast<const T*>(u)

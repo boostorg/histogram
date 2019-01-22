@@ -241,10 +241,10 @@ public:
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
-  /// Returns instance of the transform type
+  /// Return instance of the transform type.
   const transform_type& transform() const noexcept { return *this; }
 
-  /// Returns the bin index for the passed argument.
+  /// Return index for value argument.
   index_type operator()(value_type x) const noexcept {
     // Runs in hot loop, please measure impact of changes
     auto z = (this->forward(x / unit_type()) - min_) / delta_;
@@ -264,7 +264,7 @@ public:
     return size(); // also returned if x is NaN
   }
 
-  /// Returns axis value for fractional index.
+  /// Return value for fractional index argument.
   value_type value(real_index_type i) const noexcept {
     auto z = i / size();
     if (!test(Options, option::circular) && z < 0.0)
@@ -277,18 +277,18 @@ public:
     return this->inverse(z) * unit_type();
   }
 
-  /// Access bin at index
+  /// Return bin for index argument.
   decltype(auto) operator[](index_type idx) const noexcept {
     return interval_view<regular>(*this, idx);
   }
 
-  /// Returns the number of bins, without extra bins.
+  /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return size_meta_.first(); }
   /// Returns the options.
   static constexpr option options() noexcept { return Options; }
-  /// Returns the metadata.
+  /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return size_meta_.second(); }
-  /// Returns the metadata (const version).
+  /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return size_meta_.second(); }
 
   bool operator==(const regular& o) const noexcept {
@@ -296,7 +296,6 @@ public:
            detail::relaxed_equal(metadata(), o.metadata()) && min_ == o.min_ &&
            delta_ == o.delta_;
   }
-
   bool operator!=(const regular& o) const noexcept { return !operator==(o); }
 
   template <class Archive>
