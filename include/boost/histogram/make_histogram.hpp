@@ -36,8 +36,7 @@ auto make_histogram_with(StorageOrContainer&& s, T&& axis, Ts&&... axes) {
   auto a = std::make_tuple(std::forward<T>(axis), std::forward<Ts>(axes)...);
   using U = detail::naked<StorageOrContainer>;
   using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
-  return histogram<decltype(axes), S>(std::move(a),
-                                      S(std::forward<StorageOrContainer>(s)));
+  return histogram<decltype(a), S>(std::move(a), S(std::forward<StorageOrContainer>(s)));
 }
 
 /**
