@@ -27,8 +27,8 @@ int main() {
   using variant = bh::axis::variant<bh::axis::regular<>, bh::axis::category<std::string>>;
   std::vector<variant> axes;
   axes.emplace_back(cat({"red", "blue"}));
-  axes.emplace_back(reg(3, 0, 1, "x"));
-  axes.emplace_back(reg(3, 0, 1, "y"));
+  axes.emplace_back(reg(3, 0.0, 1.0, "x"));
+  axes.emplace_back(reg(3, 0.0, 1.0, "y"));
   auto h = bh::make_histogram(std::move(axes)); // passing an iterator range also works
 
   // fill histogram with data, usually this happens in a loop

@@ -10,13 +10,13 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/histogram.hpp>
 #include <boost/histogram/serialization.hpp> // includes serialization code
-#include <sstream>
 #include <cassert>
+#include <sstream>
 
 namespace bh = boost::histogram;
 
 int main() {
-  auto a = bh::make_histogram(bh::axis::regular<>(3, -1, 1, "axis 0"),
+  auto a = bh::make_histogram(bh::axis::regular<>(3, -1.0, 1.0, "axis 0"),
                               bh::axis::integer<>(0, 2, "axis 1"));
   a(0.5, 1);
 

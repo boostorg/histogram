@@ -19,7 +19,7 @@ int main() {
     Create a profile. Profiles does not only count entries in each cell, but also compute
     the mean of a sample value in each cell.
   */
-  auto p = bh::make_profile(bh::axis::regular<>(5, 0, 1));
+  auto p = bh::make_profile(bh::axis::regular<>(5, 0.0, 1.0));
 
   /*
     Fill profile with data, usually this happens in a loop. You pass the sample with the

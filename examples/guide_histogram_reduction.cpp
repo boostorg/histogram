@@ -15,16 +15,18 @@ namespace bh = boost::histogram;
 // example of a generic function for histograms, this one sums all entries
 template <typename... Ts>
 auto sum(const bh::histogram<Ts...>& h) {
-  auto result = typename bh::histogram<Ts...>::value_type(0);
+  auto result = typename bh::histogram<Ts...>::value_type();
   for (auto x : h) result += x;
   return result;
 }
+// note: boost/histogram/algorithm/sum.hpp is a better implementation
 
 int main() {
   using namespace bh::literals; // enables _c suffix
 
   // make a 2d histogram
-  auto h = bh::make_histogram(bh::axis::regular<>(3, -1, 1), bh::axis::integer<>(0, 2));
+  auto h =
+      bh::make_histogram(bh::axis::regular<>(3, -1.0, 1.0), bh::axis::integer<>(0, 2));
 
   h(-0.9, 0);
   h(0.9, 1);
@@ -33,10 +35,8 @@ int main() {
   auto hr0 = bh::algorithm::project(h, 0_c); // keep only first axis
   auto hr1 = bh::algorithm::project(h, 1_c); // keep only second axis
 
-  /*
-      reduce does not remove counts; returned histograms are summed over
-      the removed axes, so h, hr0, and hr1 have same number of total counts
-  */
+  // reduce does not remove counts; returned histograms are summed over
+  // the removed axes, so h, hr0, and hr1 have same number of total counts
   assert(sum(h) == 3 && sum(hr0) == 3 && sum(hr1) == 3);
 
   std::ostringstream os1;

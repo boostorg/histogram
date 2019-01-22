@@ -15,7 +15,7 @@ using namespace boost::histogram;
 
 int main() {
   // make histogram with 2 x 2 = 4 bins (not counting under-/overflow bins)
-  auto h = make_histogram(axis::regular<>(2, -1, 1), axis::regular<>(2, 2, 4));
+  auto h = make_histogram(axis::regular<>(2, -1.0, 1.0), axis::regular<>(2, 2.0, 4.0));
 
   h(weight(1), -0.5, 2.5); // bin index 0, 0
   h(weight(2), -0.5, 3.5); // bin index 0, 1

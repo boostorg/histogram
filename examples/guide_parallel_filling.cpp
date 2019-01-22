@@ -16,6 +16,7 @@
 
 namespace bh = boost::histogram;
 
+// dummy fill function, to be executed in parallel by several threads
 template <typename Histogram>
 void fill(Histogram& h) {
   for (unsigned i = 0; i < 1000; ++i) { h(i % 10); }
@@ -55,16 +56,14 @@ int main() {
                                    bh::axis::integer<>(0, 10));
 
   /*
-    The histogram storage may not be resized in either thread. This is the case
-    if you do not use growing axis types. Notes regarding usage of std::thread:
-    - templated fill function must be instantiated when passed to std::thread, so we
-      put fill<decltype(h)>
-    - std::thread copies arguments, we use std::ref to avoid filling copies of histogram
+    The histogram storage may not be resized in either thread.
+    This is the case, if you do not use growing axis types.
   */
-  std::thread t1(fill<decltype(h)>, std::ref(h));
-  std::thread t2(fill<decltype(h)>, std::ref(h));
-  std::thread t3(fill<decltype(h)>, std::ref(h));
-  std::thread t4(fill<decltype(h)>, std::ref(h));
+  auto fill_h = [&h]() { fill(h); };
+  std::thread t1(fill_h);
+  std::thread t2(fill_h);
+  std::thread t3(fill_h);
+  std::thread t4(fill_h);
   t1.join();
   t2.join();
   t3.join();

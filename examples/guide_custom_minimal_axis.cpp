@@ -26,11 +26,11 @@ struct threshold_axis {
 };
 
 int main() {
-  auto h = bh::make_histogram(even_odd_axis(), threshold_axis(3));
+  auto h = bh::make_histogram(even_odd_axis(), threshold_axis(3.0));
 
-  h(0, 2);
-  h(1, 4);
-  h(2, 4);
+  h(0, 2.0);
+  h(1, 4.0);
+  h(2, 4.0);
 
   assert(h.at(0, 0) == 1); // even, below threshold
   assert(h.at(0, 1) == 1); // even, above threshold

@@ -14,8 +14,8 @@ namespace bh = boost::histogram;
 
 int main() {
   // make two histograms
-  auto h1 = bh::make_histogram(bh::axis::regular<>(2, -1, 1));
-  auto h2 = bh::make_histogram(bh::axis::regular<>(2, -1, 1));
+  auto h1 = bh::make_histogram(bh::axis::regular<>(2, -1.0, 1.0));
+  auto h2 = bh::make_histogram(bh::axis::regular<>(2, -1.0, 1.0));
 
   h1(-0.5); // counts are: 1 0
   h2(0.5);  // counts are: 0 1
@@ -43,20 +43,20 @@ int main() {
 
   // note special effect of multiplication on weighted_sum
   auto h = bh::make_histogram_with(std::vector<bh::accumulators::weighted_sum<double>>(),
-                                   bh::axis::regular<>(2, -1, 1));
+                                   bh::axis::regular<>(2, -1.0, 1.0));
   h(-0.5);
 
   // counts are: 1 0
   assert(h.at(0).value() == 1 && h.at(1).value() == 0);
 
-  auto h_sum = h + h;
-  auto g_mul = 2 * h;
+  auto h_sum = h + h; // value 2 0 variance 2 0
+  auto g_mul = 2 * h; // value 2 0 variance 4 0
 
   // equality operator checks variances, so following statement is false
   assert(h_sum != g_mul);
 
   // variance is different when histograms are scaled
-  assert(h_sum.at(0).value() == 2 && g_mul.at(0).value() == 2);
+  assert(h_sum.at(0).value() == g_mul.at(0).value());
   assert(h_sum.at(0).variance() == 2 && g_mul.at(0).variance() == 4);
 }
 
