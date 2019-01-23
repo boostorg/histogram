@@ -63,12 +63,12 @@ public:
     return *this;
   }
 
-  template <typename T>
+  template <class T>
   bool operator==(const sum<T>& rhs) const noexcept {
     return large_ == rhs.large_ && small_ == rhs.small_;
   }
 
-  template <typename T>
+  template <class T>
   bool operator!=(const T& rhs) const noexcept {
     return !operator==(rhs);
   }

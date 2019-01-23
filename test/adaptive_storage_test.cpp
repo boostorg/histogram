@@ -329,8 +329,15 @@ int main() {
     auto a = prepare(1);
     auto b = prepare<uint32_t>(1);
     BOOST_TEST_EQ(a[0], b[0]);
+    BOOST_TEST_GE(a[0], b[0]);
+    BOOST_TEST_LE(a[0], b[0]);
     a[0] = 1;
     BOOST_TEST_NE(a[0], b[0]);
+    BOOST_TEST_LT(b[0], a[0]);
+    BOOST_TEST_GT(a[0], b[0]);
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_GE(a[0], 1);
+    BOOST_TEST_LE(a[0], 1);
     b[0] = 1;
     BOOST_TEST_EQ(a[0], b[0]);
   }

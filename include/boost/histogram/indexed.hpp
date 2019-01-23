@@ -103,13 +103,11 @@ public:
       : public boost::iterator_adaptor<range_iterator, histogram_iterator, accessor,
                                        boost::forward_traversal_tag, accessor> {
   public:
-    range_iterator(indexed_range* p, histogram_iterator i) noexcept
-        : range_iterator::iterator_adaptor_(i), parent_(p) {}
-
     accessor operator*() const noexcept { return {parent_, range_iterator::base()}; }
 
   private:
-    friend class boost::iterator_core_access;
+    range_iterator(indexed_range* p, histogram_iterator i) noexcept
+        : range_iterator::iterator_adaptor_(i), parent_(p) {}
 
     void increment() noexcept {
       std::size_t stride = 1;
@@ -127,6 +125,9 @@ public:
     }
 
     mutable indexed_range* parent_;
+
+    friend class boost::iterator_core_access;
+    friend class indexed_range;
   };
 
   indexed_range(Histogram& h, coverage c)
@@ -158,7 +159,7 @@ public:
   }
 
   range_iterator begin() noexcept { return {this, begin_}; }
-  range_iterator end() noexcept { return {this, end_}; }
+  range_iterator end() noexcept { return {nullptr, end_}; }
 
 private:
   Histogram& hist_;

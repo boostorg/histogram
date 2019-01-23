@@ -132,7 +132,15 @@ int main() {
     sum += 1e100;
     ++sum;
     sum += -1e100;
-    BOOST_TEST_EQ(sum, 2);
+    BOOST_TEST_EQ(sum, 2); // correct answer
+
+    accumulators::sum<double> a(3), b(2), c(3);
+    BOOST_TEST_LT(b, c);
+    BOOST_TEST_LE(b, c);
+    BOOST_TEST_LE(a, c);
+    BOOST_TEST_GT(a, b);
+    BOOST_TEST_GE(a, b);
+    BOOST_TEST_GE(a, c);
   }
 
   {

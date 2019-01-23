@@ -123,6 +123,63 @@ public:
           boost::multiprecision::limb_type>>>;
 
 private:
+  struct equal_to {
+    bool operator()(const mp_int& a, const mp_int& b) const noexcept { return a == b; }
+
+    template <class T>
+    bool operator()(const mp_int& a, const T& b) const noexcept {
+      return static_cast<double>(a) == b;
+    }
+
+    template <class T>
+    bool operator()(const T& a, const mp_int& b) const noexcept {
+      return operator()(b, a);
+    }
+
+    template <class T, class U>
+    bool operator()(const T& a, const U& b) const noexcept {
+      return a == b;
+    }
+  };
+
+  struct less {
+    bool operator()(const mp_int& a, const mp_int& b) const noexcept { return a < b; }
+
+    template <class T>
+    bool operator()(const mp_int& a, const T& b) const noexcept {
+      return static_cast<double>(a) < b;
+    }
+
+    template <class T>
+    bool operator()(const T& a, const mp_int& b) const noexcept {
+      return a < static_cast<double>(b);
+    }
+
+    template <class T, class U>
+    bool operator()(const T& a, const U& b) const noexcept {
+      return a < b;
+    }
+  };
+
+  struct greater {
+    bool operator()(const mp_int& a, const mp_int& b) const noexcept { return a > b; }
+
+    template <class T>
+    bool operator()(const mp_int& a, const T& b) const noexcept {
+      return static_cast<double>(a) > b;
+    }
+
+    template <class T>
+    bool operator()(const T& a, const mp_int& b) const noexcept {
+      return a > static_cast<double>(b);
+    }
+
+    template <class T, class U>
+    bool operator()(const T& a, const U& b) const noexcept {
+      return a > b;
+    }
+  };
+
   using types = mp11::mp_list<uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
 
   template <typename T>
@@ -192,16 +249,25 @@ private:
   template <class Buffer>
   class reference_t {
   public:
-    template <class U, class = mp11::mp_if<std::is_convertible<U, Buffer>, void>>
-    reference_t(const reference_t<U>& rhs) : buffer_(rhs.buffer_), idx_(rhs.idx_) {}
-
     reference_t(Buffer* b, std::size_t i) : buffer_(b), idx_(i) {}
 
-    operator double() const { return apply(getter(), *buffer_, idx_); }
+    reference_t(const reference_t&) = default;
+    reference_t& operator=(const reference_t&) = delete; // references do not rebind
+    reference_t& operator=(reference_t&&) = delete;      // references do not rebind
 
     template <class U>
     bool operator==(const reference_t<U>& rhs) const {
-      return apply(comparer_at_index(), *buffer_, idx_, *rhs.buffer_, rhs.idx_);
+      return op<equal_to>(rhs);
+    }
+
+    template <class U>
+    bool operator<(const reference_t<U>& rhs) const {
+      return op<less>(rhs);
+    }
+
+    template <class U>
+    bool operator>(const reference_t<U>& rhs) const {
+      return op<greater>(rhs);
     }
 
     template <class U>
@@ -209,7 +275,32 @@ private:
       return !operator==(rhs);
     }
 
+    template <class U>
+    bool operator>=(const reference_t<U>& rhs) const {
+      return !operator<(rhs);
+    }
+
+    template <class U>
+    bool operator<=(const reference_t<U>& rhs) const {
+      return !operator<(rhs);
+    }
+
+    operator double() const { return apply(getter(), *buffer_, idx_); }
+
   protected:
+    template <class Binary, class U>
+    bool op(const reference_t<U>& rhs) const {
+      const auto i = idx_;
+      const auto j = rhs.idx_;
+      return apply(
+          [i, j, &rhs](const auto* ptr, const U&) {
+            const auto& pi = ptr[i];
+            return apply([pi, j](const auto* q, const U&) { return Binary()(pi, q[j]); },
+                         *rhs.buffer_);
+          },
+          *buffer_);
+    }
+
     template <class U>
     friend class reference_t;
 
@@ -226,6 +317,11 @@ public:
   public:
     using base_type::base_type;
 
+    reference& operator=(const reference& t) {
+      apply(setter(), *base_type::buffer_, base_type::idx_, t);
+      return *this;
+    }
+
     template <class T>
     reference& operator=(const T& t) {
       apply(setter(), *base_type::buffer_, base_type::idx_, t);
@@ -233,7 +329,7 @@ public:
     }
 
     template <class T>
-    reference& operator+=(T&& t) {
+    reference& operator+=(const T& t) {
       apply(adder(), *base_type::buffer_, base_type::idx_, t);
       return *this;
     }
@@ -336,13 +432,25 @@ public:
 
   bool operator==(const adaptive_storage& o) const noexcept {
     if (size() != o.size()) return false;
-    return apply(comparer(), buffer, o.buffer);
+    return apply(
+        [&o](const auto* ptr, const buffer_type&) {
+          return apply(
+              [ptr](const auto* optr, const buffer_type& ob) {
+                return std::equal(ptr, ptr + ob.size, optr, equal_to());
+              },
+              o.buffer);
+        },
+        buffer);
   }
 
   template <typename T>
   bool operator==(const T& o) const {
     if (size() != o.size()) return false;
-    return apply(comparer_extern(), buffer, o);
+    return apply(
+        [&o](const auto* ptr, const buffer_type&) {
+          return std::equal(ptr, ptr + o.size(), std::begin(o), equal_to());
+        },
+        buffer);
   }
 
   // precondition: storages have same size
@@ -502,70 +610,6 @@ private:
     template <typename T, typename Buffer>
     double operator()(T* tp, Buffer&, std::size_t i) {
       return static_cast<double>(tp[i]);
-    }
-  };
-
-  struct cmp {
-    template <typename T, typename U>
-    bool operator()(const T& t, const U& u) {
-      return t == u;
-    }
-
-    bool operator()(const mp_int& t, const mp_int& u) { return u == t; }
-
-    bool operator()(const mp_int& t, const double& u) {
-      return static_cast<double>(t) == u;
-    }
-
-    bool operator()(const mp_int& t, const float& u) {
-      return static_cast<float>(t) == u;
-    }
-
-    template <typename T>
-    bool operator()(const T& t, const mp_int& u) {
-      return operator()(u, t);
-    }
-  };
-
-  // precondition: buffers already have same size
-  struct comparer {
-    struct inner {
-      template <typename U, typename OBuffer, typename T>
-      bool operator()(const U* optr, const OBuffer& ob, const T* tp) {
-        return std::equal(optr, optr + ob.size, tp, cmp());
-      }
-    };
-
-    template <typename T, typename Buffer, typename OBuffer>
-    bool operator()(const T* tp, const Buffer& b, const OBuffer& ob) {
-      BOOST_ASSERT(b.size == ob.size);
-      return apply(inner(), ob, tp);
-    }
-  };
-
-  struct comparer_at_index {
-    struct inner {
-      template <class OT, class OBuffer, class T>
-      bool operator()(const OT* ptr, const OBuffer&, std::size_t i, T&& t) {
-        return cmp()(ptr[i], t);
-      }
-    };
-
-    template <class T, class Buffer, class OBuffer>
-    bool operator()(const T* ptr, const Buffer&, std::size_t i, const OBuffer& ob,
-                    std::size_t oi) {
-      return apply(inner(), ob, oi, ptr[i]);
-    }
-  };
-
-  // precondition: buffers already have same size
-  struct comparer_extern {
-    template <typename T, typename Buffer, typename U>
-    bool operator()(const T* ptr, const Buffer& b, const U& u) {
-      auto c = cmp();
-      for (std::size_t i = 0; i < b.size; ++i)
-        if (!c(ptr[i], u[i])) return false;
-      return true;
     }
   };
 
