@@ -12,19 +12,21 @@
 
 namespace bh = boost::histogram;
 
-// custom axis, which adapts builtin integer axis
-struct custom_axis : public bh::axis::integer<> {
-  using value_type = const char*; // type that is fed to the axis
-
-  using integer::integer; // inherit ctors of base
-
-  // the customization point
-  // - accept const char* and convert to int
-  // - then call index method of base class
-  int operator()(value_type s) const { return integer::operator()(std::atoi(s)); }
-};
-
 int main() {
+  // custom axis, which adapts builtin integer axis
+  struct custom_axis : public bh::axis::integer<> {
+    using value_type = const char*; // type that is fed to the axis
+
+    using integer::integer; // inherit ctors of base
+
+    // the customization point
+    // - accept const char* and convert to int
+    // - then call index method of base class
+    bh::axis::index_type operator()(value_type s) const {
+      return integer::operator()(std::atoi(s));
+    }
+  };
+
   auto h = bh::make_histogram(custom_axis(3, 6));
   h("-10");
   h("3");

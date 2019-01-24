@@ -11,21 +11,21 @@
 
 namespace bh = boost::histogram;
 
-// stateless axis which returns 1 if the input is even and 0 otherwise
-struct even_odd_axis {
-  int operator()(int x) const { return x % 2; }
-  int size() const { return 2; }
-};
-
-// threshold axis which returns 1 if the input is above threshold
-struct threshold_axis {
-  threshold_axis(double x) : thr(x) {}
-  int operator()(double x) const { return x >= thr; }
-  int size() const { return 2; }
-  double thr;
-};
-
 int main() {
+  // stateless axis which returns 1 if the input is even and 0 otherwise
+  struct even_odd_axis {
+    bh::axis::index_type operator()(int x) const { return x % 2; }
+    bh::axis::index_type size() const { return 2; }
+  };
+
+  // threshold axis which returns 1 if the input is above threshold
+  struct threshold_axis {
+    threshold_axis(double x) : thr(x) {}
+    bh::axis::index_type operator()(double x) const { return x >= thr; }
+    bh::axis::index_type size() const { return 2; }
+    double thr;
+  };
+
   auto h = bh::make_histogram(even_odd_axis(), threshold_axis(3.0));
 
   h(0, 2.0);
