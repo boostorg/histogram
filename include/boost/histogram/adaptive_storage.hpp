@@ -344,8 +344,8 @@ private:
   template <class Value, class Reference, class Buffer>
   class iterator_t
       : public boost::iterator_adaptor<iterator_t<Value, Reference, Buffer>, std::size_t,
-                                       Value, boost::random_access_traversal_tag,
-                                       Reference, std::ptrdiff_t> {
+                                       Value, std::random_access_iterator_tag, Reference,
+                                       std::ptrdiff_t> {
 
   public:
     iterator_t() = default;

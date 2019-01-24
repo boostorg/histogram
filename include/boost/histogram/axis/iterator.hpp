@@ -20,7 +20,7 @@ template <typename Axis>
 class iterator
     : public boost::iterator_adaptor<iterator<Axis>, int,
                                      decltype(std::declval<const Axis&>()[0]),
-                                     boost::random_access_traversal_tag,
+                                     std::random_access_iterator_tag,
                                      decltype(std::declval<const Axis&>()[0]), int> {
 public:
   explicit iterator(const Axis& axis, int idx)

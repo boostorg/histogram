@@ -161,7 +161,7 @@ struct map_impl : T {
   template <class Value, class Reference, class MapPtr>
   struct iterator_t
       : boost::iterator_adaptor<iterator_t<Value, Reference, MapPtr>, std::size_t, Value,
-                                boost::random_access_traversal_tag, Reference,
+                                std::random_access_iterator_tag, Reference,
                                 std::ptrdiff_t> {
     iterator_t() = default;
     template <class V, class R, class M, class = requires_convertible<M, MapPtr>>

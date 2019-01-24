@@ -19,20 +19,22 @@ int main() {
   // make histogram and set all cells to 0.25, simulating a perfectly uniform PDF,
   // this includes underflow and overflow cells
   auto a = bh::make_histogram(bh::axis::regular<>(4, 1.0, 3.0));
-  std::fill(a.begin(), a.end(), 0.25); // set all counters to 0.25
-  // reset under- and overflow to zero
+  std::fill(a.begin(), a.end(), 0.25); // set all counters to 0.25, including *flow cells
+  // reset *flow cells to zero
   a.at(-1) = a.at(4) = 0;
 
-  // compute CDF, overriding histogram entries
+  // compute CDF, overriding cell values
   std::partial_sum(a.begin(), a.end(), a.begin());
 
+  assert(a.at(-1) == 0.0);
   assert(a.at(0) == 0.25);
   assert(a.at(1) == 0.50);
   assert(a.at(2) == 0.75);
   assert(a.at(3) == 1.00);
+  assert(a.at(4) == 1.00);
 
-  // use any_of to check if any small elements are smaller than 0.1,
-  // and use indexed() to skip underflow and overflow bins
+  // use any_of to check if any cell values are smaller than 0.1,
+  // and use indexed() to skip underflow and overflow cells
   auto a_ind = indexed(a);
   const auto any_small =
       std::any_of(a_ind.begin(), a_ind.end(), [](const auto& x) { return *x < 0.1; });
@@ -40,11 +42,11 @@ int main() {
 
   // find maximum element
   const auto max_it = std::max_element(a.begin(), a.end());
-  assert(*max_it == 1);
+  assert(max_it == a.end() - 2);
 
   // find minimum element
   const auto min_it = std::min_element(a.begin(), a.end());
-  assert(*min_it == 0);
+  assert(min_it == a.begin());
 
   // make second PDF
   auto b = bh::make_histogram(bh::axis::regular<>(4, 1.0, 4.0));

@@ -101,7 +101,7 @@ public:
 
   class range_iterator
       : public boost::iterator_adaptor<range_iterator, histogram_iterator, accessor,
-                                       boost::forward_traversal_tag, accessor> {
+                                       std::forward_iterator_tag, accessor> {
   public:
     accessor operator*() const noexcept { return {parent_, range_iterator::base()}; }
 
