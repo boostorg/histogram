@@ -25,7 +25,7 @@ ostream& operator<<(ostream& os, const vector<T>& v) {
 }
 
 template <class T,
-          class = boost::mp11::mp_if<boost::histogram::detail::has_fixed_size<T>, void>>
+          class = std::enable_if_t<boost::histogram::detail::has_fixed_size<T>::value>>
 ostream& operator<<(ostream& os, const T& t) {
   os << "[ ";
   ::boost::mp11::tuple_for_each(t, [&os](const auto& x) { os << x << " "; });

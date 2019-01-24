@@ -26,17 +26,17 @@ namespace histogram {
 
 /**
   Make histogram from compile-time axis configuration and custom storage.
-  @param s    Storage or container with standard interface (any vector, array, or map).
+  @param storage Storage or container with standard interface (any vector, array, or map).
   @param axis First axis instance.
   @param axes Other axis instances.
 */
-template <typename StorageOrContainer, typename T, typename... Ts,
+template <typename Storage, typename T, typename... Ts,
           typename = detail::requires_axis<T>>
-auto make_histogram_with(StorageOrContainer&& s, T&& axis, Ts&&... axes) {
+auto make_histogram_with(Storage&& storage, T&& axis, Ts&&... axes) {
   auto a = std::make_tuple(std::forward<T>(axis), std::forward<Ts>(axes)...);
-  using U = detail::naked<StorageOrContainer>;
+  using U = detail::naked<Storage>;
   using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
-  return histogram<decltype(a), S>(std::move(a), S(std::forward<StorageOrContainer>(s)));
+  return histogram<decltype(a), S>(std::move(a), S(std::forward<Storage>(storage)));
 }
 
 /**
@@ -63,50 +63,50 @@ auto make_weighted_histogram(T&& axis, Ts&&... axes) {
 
 /**
   Make histogram from iterable range and custom storage.
-  @param s Storage or container with standard interface (any vector, array, or map).
-  @param c Iterable range of axis objects.
+  @param storage Storage or container with standard interface (any vector, array, or map).
+  @param iterable Iterable range of axis objects.
 */
-template <typename StorageOrContainer, typename Iterable,
+template <typename Storage, typename Iterable,
           typename = detail::requires_sequence_of_any_axis<Iterable>>
-auto make_histogram_with(StorageOrContainer&& s, Iterable&& c) {
-  using U = detail::naked<StorageOrContainer>;
+auto make_histogram_with(Storage&& storage, Iterable&& iterable) {
+  using U = detail::naked<Storage>;
   using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
   using It = detail::naked<Iterable>;
   using A = mp11::mp_if<detail::is_indexable_container<It>, It,
                         boost::container::vector<mp11::mp_first<It>>>;
-  return histogram<A, S>(std::forward<Iterable>(c),
-                         S(std::forward<StorageOrContainer>(s)));
+  return histogram<A, S>(std::forward<Iterable>(iterable),
+                         S(std::forward<Storage>(storage)));
 }
 
 /**
   Make histogram from iterable range and default storage.
-  @param c Iterable range of axis objects.
+  @param iterable Iterable range of axis objects.
 */
 template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
-auto make_histogram(Iterable&& c) {
-  return make_histogram_with(default_storage(), std::forward<Iterable>(c));
+auto make_histogram(Iterable&& iterable) {
+  return make_histogram_with(default_storage(), std::forward<Iterable>(iterable));
 }
 
 /**
   Make histogram from iterable range and weight-counting storage.
-  @param c Iterable range of axis objects.
+  @param iterable Iterable range of axis objects.
 */
 template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
-auto make_weighted_histogram(Iterable&& c) {
-  return make_histogram_with(weight_storage(), std::forward<Iterable>(c));
+auto make_weighted_histogram(Iterable&& iterable) {
+  return make_histogram_with(weight_storage(), std::forward<Iterable>(iterable));
 }
 
 /**
   Make histogram from iterator interval and custom storage.
-  @param s     Storage or container with standard interface (any vector, array, or map).
+  @param storage Storage or container with standard interface (any vector, array, or map).
   @param begin Iterator to range of axis objects.
   @param end   Iterator to range of axis objects.
 */
-template <typename StorageOrContainer, typename Iterator,
+template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
-auto make_histogram_with(StorageOrContainer&& s, Iterator begin, Iterator end) {
+auto make_histogram_with(Storage&& storage, Iterator begin, Iterator end) {
   using T = detail::naked<decltype(*begin)>;
-  return make_histogram_with(std::forward<StorageOrContainer>(s),
+  return make_histogram_with(std::forward<Storage>(storage),
                              boost::container::vector<T>(begin, end));
 }
 

@@ -122,7 +122,8 @@ struct map_impl : T {
       return *this;
     }
 
-    template <class U, class V = value_type, class = requires<has_operator_radd<V, U>>>
+    template <class U, class V = value_type,
+              class = std::enable_if_t<has_operator_radd<V, U>::value>>
     reference& operator+=(U&& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
@@ -132,7 +133,8 @@ struct map_impl : T {
       return *this;
     }
 
-    template <class V = value_type, class = requires<has_operator_preincrement<V>>>
+    template <class V = value_type,
+              class = std::enable_if_t<has_operator_preincrement<V>::value>>
     reference& operator++() {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
@@ -147,7 +149,7 @@ struct map_impl : T {
       return map->operator[](idx)(std::forward<Ts>(args)...);
     }
 
-    template <class V = value_type, class = requires<has_operator_rmul<V>>>
+    template <class V = value_type, class = std::enable_if_t<has_operator_rmul<V>::value>>
     reference& operator*=(double x) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end()) it->second *= x;
@@ -264,7 +266,7 @@ public:
   }
 
   template <class V = typename base_type::value_type,
-            class = detail::requires<detail::has_operator_rmul<V>>>
+            class = std::enable_if_t<detail::has_operator_rmul<V>::value>>
   storage_adaptor& operator*=(double v) {
     for (auto&& x : *this) x *= v;
     return *this;

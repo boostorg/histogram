@@ -201,6 +201,9 @@ BOOST_HISTOGRAM_DETECT(is_axis, (&T::size, &T::operator()));
 BOOST_HISTOGRAM_DETECT(is_iterable,
                        (std::begin(std::declval<T&>()), std::end(std::declval<T&>())));
 
+BOOST_HISTOGRAM_DETECT(is_iterator,
+                       (typename std::iterator_traits<T>::iterator_category()));
+
 BOOST_HISTOGRAM_DETECT(is_streamable,
                        (std::declval<std::ostream&>() << std::declval<T&>()));
 
@@ -269,34 +272,31 @@ template <typename T>
 using is_sample = is_sample_impl<naked<T>>;
 
 // poor-mans concept checks
-template <class B>
-using requires = std::enable_if_t<B::value>;
-
-template <class T, class = decltype(*std::declval<T&>(), ++std::declval<T&>())>
+template <class T, class = std::enable_if_t<is_iterator<naked<T>>::value>>
 struct requires_iterator {};
 
-template <class T, class = requires<is_iterable<naked<T>>>>
+template <class T, class = std::enable_if_t<is_iterable<naked<T>>::value>>
 struct requires_iterable {};
 
-template <class T, class = requires<is_axis<naked<T>>>>
+template <class T, class = std::enable_if_t<is_axis<naked<T>>::value>>
 struct requires_axis {};
 
-template <class T, class = requires<is_any_axis<naked<T>>>>
+template <class T, class = std::enable_if_t<is_any_axis<naked<T>>::value>>
 struct requires_any_axis {};
 
-template <class T, class = requires<is_sequence_of_axis<naked<T>>>>
+template <class T, class = std::enable_if_t<is_sequence_of_axis<naked<T>>::value>>
 struct requires_sequence_of_axis {};
 
-template <class T, class = requires<is_sequence_of_axis_variant<naked<T>>>>
+template <class T, class = std::enable_if_t<is_sequence_of_axis_variant<naked<T>>::value>>
 struct requires_sequence_of_axis_variant {};
 
-template <class T, class = requires<is_sequence_of_any_axis<naked<T>>>>
+template <class T, class = std::enable_if_t<is_sequence_of_any_axis<naked<T>>::value>>
 struct requires_sequence_of_any_axis {};
 
-template <class T, class = requires<is_any_axis<mp11::mp_first<naked<T>>>>>
+template <class T, class = std::enable_if_t<is_any_axis<mp11::mp_first<naked<T>>>::value>>
 struct requires_axes {};
 
-template <class T, class U, class = requires<std::is_convertible<T, U>>>
+template <class T, class U, class = std::enable_if_t<std::is_convertible<T, U>::value>>
 struct requires_convertible {};
 
 template <class T>
