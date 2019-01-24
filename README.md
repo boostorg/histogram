@@ -16,7 +16,7 @@ This **header-only** open-source library provides a state-of-the-art multi-dimen
 
 The histogram is very customizable through a templated modular design, but the default options were carefully chosen so that most users don't need to customize anything. It is easy to use for the casual user and does not restrict the power-user. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: cell counts *cannot overflow* or *be capped*. The library is safe to use, convenient, memory conserving, and very fast (see benchmarks).
 
-The histogram class can be configured in several variants from fully *static* to fully *dynamic*. *Static* variants provide more performance, at the cost of run-time flexibility and potentially larger binaries. *Dynamic* variants are slower, but fully configurable at run-time and may produce smaller binaries.
+The histogram class can be configured in several variants from fully *static* to fully *dynamic*. *Static* variants provide more performance, at the cost of run-time flexibility and potentially larger binaries. *Dynamic* variants are slower, but fully configurable at run-time and may produce smaller binaries. Static variants can be configured to be completely stack-based, without any dynamic memory allocation.
 
 This project was developed for inclusion in [Boost](http://www.boost.org) and passed Boost review in September 2018. The plan is to have a first official Boost-release in April 2019 with the upcoming version 1.70. Of course, you can use it already now. The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
