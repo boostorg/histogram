@@ -12,11 +12,11 @@ develop | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg
 3. Visual Studio 15 2017
 
 
-This `C++14` **header-only** open-source library provides a state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to counts things. Actually, this histogram can do more than counting. It can be equipped with arbitrary accumulators to compute means, medians, and whatever you fancy in each cell. Several parallelization options are provided. Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
+This **header-only** open-source library provides a state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to counts things. This histogram class can do more than counting. It can be equipped with arbitrary accumulators to compute means, medians, and whatever you fancy in each cell. Several parallelization options are provided. Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
 
-The histogram is very customisable through a templated modular design, but the default options were carefully chosen so that most users don't need to customize anything. It is easy to use for the casual user, but does not restrict the power-user. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: bin counts *cannot overflow* or *be capped*. While being safe to use, the library also has a convenient interface, is memory conserving, and faster than other libraries (see benchmarks).
+The histogram is very customizable through a templated modular design, but the default options were carefully chosen so that most users don't need to customize anything. It is easy to use for the casual user and does not restrict the power-user. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: cell counts *cannot overflow* or *be capped*. The library is safe to use, convenient, memory conserving, and very fast (see benchmarks).
 
-The histogram class can be configured in several variants from fully *static* to fully *dynamic*. *Static* variants provides more preformance, at the cost of runtime flexibility and potentially larger executables. *Dynamic* variants are slower, but fully configurable at run-time and may produce smaller executables. A dynamic variant is used in the [Python bindings](https://github.com/hdembinski/histogram-python) to this library.
+The histogram class can be configured in several variants from fully *static* to fully *dynamic*. *Static* variants provide more performance, at the cost of run-time flexibility and potentially larger binaries. *Dynamic* variants are slower, but fully configurable at run-time and may produce smaller binaries.
 
 This project was developed for inclusion in [Boost](http://www.boost.org) and passed Boost review in September 2018. The plan is to have a first official Boost-release in April 2019 with the upcoming version 1.70. Of course, you can use it already now. The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
@@ -91,7 +91,7 @@ int main() {
     // iterate over bins
     for (auto x : bh::indexed(h)) {
       std::cout << boost::format("bin %2i [%4.1f, %4.1f): %i\n")
-        % x[0] % x.bin(0).lower() % x.bin(0).upper() % *x;
+        % x.index() % x.bin().lower() % x.bin().upper() % *x;
     }
 
     std::cout << std::flush;
@@ -122,15 +122,8 @@ Thanks to meta-programming and dynamic memory management, this library is not on
 
 *"I just wanted to say 'thanks' for your awesome Histogram library. I'm working on a software package for processing meteorology data and I'm using it to generate wind roses with the help of Qt and QwtPolar. Looks like you thought of just about everything here &ndash; the circular axis type was practically designed for this application, everything 'just worked'."*
 
-## Rationale
-
-There is a lack of a widely-used free histogram class in C++. While it is easy to write a one-dimensional histogram, writing a general multi-dimensional histogram is not trivial. In high-energy physics, the [ROOT framework](https://root.cern.ch) from CERN is widely used, but it comes with a large dependency. This histogram class is designed to be more convenient, flexible, and faster than the equivalent ROOT histograms. It is easy to integrate in your project if you already use Boost. The library comes in a C++14 design which follows the STL and Boost styles, and the general advice given by well-respected C++ experts ([Meyers](http://www.aristeia.com/books.html), [Sutter and Alexandrescu](http://www.gotw.ca/publications/c++cs.htm), [Stroustrup](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines) and others).
-
-Read more about the design choices in the [documentation](http://hdembinski.github.io/histogram/doc/html/histogram/rationale.html)
-
 ## State of project
 
-The histogram is nearly feature-complete. More than 500 individual tests make sure that the implementation works as expected. Full documentation is available. User feedback is appreciated!
+Development is currently targets the 4.0 release, the first one to appear officially in Boost (**Boost-1.70** is planned for April 2019). More than 500 individual tests make sure that the implementation works as expected. Full documentation is available. User feedback is appreciated!
 
-The library was reviewed in September 2018 by the Boost Community under review manager Mateusz Loskot. It was **conditionally accepted** with requests to improve the interface and documentation. Current development is focusing on implementing these requests. Code-breaking changes of the interface are currently happening on the develop branch. If you want to use the library in production code, please use the [latest release](https://github.com/HDembinski/histogram/releases). After the library is released as part of Boost, the interface will be kept stable. The first release is planned for in April 2019 with **Boost-1.70**.
-
+The library was reviewed in September 2018 by the Boost Community under review manager Mateusz Loskot. It was **conditionally accepted** with requests to improve aspects of the interface and documentation. Current development is focusing on implementing these requests. Code-breaking changes of the interface are currently happening on the develop branch. If you want to use the library in production code, please use the [latest release](https://github.com/HDembinski/histogram/releases). After the library is released as part of Boost, the interface will be kept stable.
