@@ -41,7 +41,7 @@ matrix:
         - MATRIX_EVAL="GCOV=gcov-5 && CC=gcc-5 && CXX=g++-5"
 
 git:
-  depth: 1
+  depth: 3
 
 before_install:
     - eval "${MATRIX_EVAL}"
