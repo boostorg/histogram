@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import json
 from collections import defaultdict
 import re
+import sys
 
-data = json.load(open("doc/iteration.perf"))
+data = json.load(open(sys.argv[1]))
 
 bench = defaultdict(lambda:[])
 for x in data["benchmarks"]:
@@ -12,28 +13,26 @@ for x in data["benchmarks"]:
         continue
     if x["aggregate_name"] != "mean":
         continue
-    name, arg = x["run_name"].split("/")
-    m = re.match("(\S+)<(\S+), *(\S+)>", name)
-    name = m.group(1)
-    hist = m.group(2)
-    extra = m.group(3)
-    bench[(name, hist, extra)].append((int(arg) ** 3, x["cpu_time"]))
+    name, args, nbins = x["run_name"].split("/")
+    # "run_name": "Naive/(tuple, 3, false)/4",
+    m = re.match("\((\S+), d(\d), (\S+)\)", args)
+    hist = m.group(1)
+    dim = int(m.group(2))
+    cov = m.group(3)
+    bench[(name, hist, dim, extra)].append((int(nbins) ** dim, x["cpu_time"]))
 
 plt.figure(figsize=(7, 6))
 handles = []
-for (name, axis, extra), v in bench.items():
+for (name, axis, cov), v in bench.items():
     v = np.sort(v).T
     # if "semi_dynamic" in axis: continue
-    if "LessNaive" in name: continue
-    if extra == "false": continue
+    if cov == "all": continue
     lw = 3 if "Indexed" in name else 1.5
-    col = {"NaiveForLoop": "r", "InsiderForLoop": "C0", "IndexedLoop": "k"}.get(name, "k")
-    ls = {"static_tag": "-", "semi_dynamic_tag": "--", "full_dynamic_tag": ":"}[axis]
-    name2 = {"NaiveForLoop": "nested for (naive)", "InsiderForLoop" : "nested for (opt.)", "IndexedLoop": "indexed"}.get(name, name)
-    axis2 = {"static_tag": "tuple", "semi_dynamic_tag": "vector",
-             "full_dynamic_tag": "vector of variant"}.get(axis, axis)
+    col = {"Naive": "r", "Insider": "C0", "Indexed": "k"}.get(name, "k")
+    ls = {"tuple": "-", "vector": "--", "vector_of_variant": ":"}[axis]
+    name2 = {"Naive": "nested for (naive)", "Insider" : "nested for (opt.)", "Indexed": "indexed"}.get(name, name)
     h = plt.plot(v[0], v[1], lw=lw, ls=ls, color=col,
-                 label=r"%s: ${\mathit{axes}}$ = %s" % (name2, axis2))[0]
+                 label=r"%s: ${\mathit{axes}}$ = %s" % (name2, axis))[0]
     handles.append(h)
 handles.sort(key=lambda x: x.get_label())
 plt.loglog()
