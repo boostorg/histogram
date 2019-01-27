@@ -306,11 +306,11 @@ auto make_default(const T& t) {
 }
 
 template <class T>
-using get_tuple_size = typename std::tuple_size<T>::type;
+using tuple_size_t = typename std::tuple_size<T>::type;
 
 template <class T>
 std::size_t get_size_impl(std::true_type, const T&) noexcept {
-  return get_tuple_size<T>::value;
+  return std::tuple_size<T>::value;
 }
 
 template <class T>
@@ -320,12 +320,12 @@ std::size_t get_size_impl(std::false_type, const T& t) noexcept {
 
 template <class T>
 std::size_t get_size(const T& t) noexcept {
-  return get_size_impl(mp11::mp_valid<get_tuple_size, T>(), t);
+  return get_size_impl(mp11::mp_valid<tuple_size_t, T>(), t);
 }
 
 template <class U, class T>
 using stack_buffer = boost::container::static_vector<
-    U, mp_eval_or<get_tuple_size, T,
+    U, mp_eval_or<tuple_size_t, T,
                   mp11::mp_size_t<BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>>::value>;
 
 template <class U, class T, class... Ts>
@@ -368,15 +368,6 @@ template <class T, class R = get_scale_type<T>>
 R get_scale(const T& t) {
   return t / get_unit_type<T>();
 }
-
-struct product {
-  auto operator()() { return 1.0; } // namespace detail
-
-  template <class T, class... Ts>
-  auto operator()(T t, Ts... ts) {
-    return t * product()(ts...);
-  }
-}; // namespace histogram
 
 } // namespace detail
 } // namespace histogram
