@@ -12,6 +12,7 @@
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
+#include <boost/histogram/unsafe_access.hpp>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <type_traits>
 #include <utility>
@@ -29,9 +30,7 @@ enum class coverage {
 /// Range over histogram bins with multi-dimensional index.
 template <class Histogram>
 class BOOST_HISTOGRAM_NODISCARD indexed_range {
-  using histogram_iterator = std::conditional_t<std::is_const<Histogram>::value,
-                                                typename Histogram::const_iterator,
-                                                typename Histogram::iterator>;
+  using value_iterator = decltype(std::declval<Histogram>().begin());
   struct cache_item {
     int idx, begin, end, extend;
   };
@@ -54,10 +53,10 @@ public:
         decltype(auto) operator*() const noexcept { return index_iterator::base()->idx; }
       };
 
-      auto begin() const { return index_iterator(cache_.begin()); }
-      auto end() const { return index_iterator(cache_.end()); }
-      auto size() const { return cache_.size(); }
-      int operator[](unsigned d) const { return cache_[d].idx; }
+      auto begin() const noexcept { return index_iterator(cache_.begin()); }
+      auto end() const noexcept { return index_iterator(cache_.end()); }
+      auto size() const noexcept { return cache_.size(); }
+      int operator[](unsigned d) const noexcept { return cache_[d].idx; }
       int at(unsigned d) const { return cache_.at(d).idx; }
 
     private:
@@ -72,20 +71,20 @@ public:
     decltype(auto) operator-> () const noexcept { return iter_; }
 
     // convenience interface
-    int index(unsigned d = 0) const { return parent_->cache_[d].idx; }
-    auto indices() const { return indices_view(parent_->cache_); }
+    int index(unsigned d = 0) const noexcept { return parent_.cache_[d].idx; }
+    auto indices() const noexcept { return indices_view(parent_.cache_); }
 
     template <unsigned N = 0>
     decltype(auto) bin(std::integral_constant<unsigned, N> = {}) const {
-      return parent_->hist_.axis(std::integral_constant<unsigned, N>())[index(N)];
+      return parent_.hist_.axis(std::integral_constant<unsigned, N>())[index(N)];
     }
 
-    decltype(auto) bin(unsigned d) const { return parent_->hist_.axis(d)[index(d)]; }
+    decltype(auto) bin(unsigned d) const { return parent_.hist_.axis(d)[index(d)]; }
 
     double density() const {
       double x = 1;
       auto it = parent_->cache_.begin();
-      parent_->hist_.for_each_axis([&](const auto& a) {
+      parent_.hist_.for_each_axis([&](const auto& a) {
         const auto w = axis::traits::width_as<double>(a, it++->idx);
         x *= w ? w : 1;
       });
@@ -93,20 +92,20 @@ public:
     }
 
   private:
-    accessor(indexed_range* parent, histogram_iterator i) : parent_(parent), iter_(i) {}
-    indexed_range* parent_;
-    histogram_iterator iter_;
+    accessor(indexed_range& p, value_iterator i) : parent_(p), iter_(i) {}
+    indexed_range& parent_;
+    value_iterator iter_;
     friend class indexed_range;
   };
 
   class range_iterator
-      : public boost::iterator_adaptor<range_iterator, histogram_iterator, accessor,
+      : public boost::iterator_adaptor<range_iterator, value_iterator, accessor,
                                        std::forward_iterator_tag, accessor> {
   public:
-    accessor operator*() const noexcept { return {parent_, range_iterator::base()}; }
+    accessor operator*() const noexcept { return {*parent_, range_iterator::base()}; }
 
   private:
-    range_iterator(indexed_range* p, histogram_iterator i) noexcept
+    range_iterator(indexed_range* p, value_iterator i) noexcept
         : range_iterator::iterator_adaptor_(i), parent_(p) {}
 
     void increment() noexcept {
@@ -164,7 +163,7 @@ public:
 private:
   Histogram& hist_;
   const bool cover_all_;
-  histogram_iterator begin_, end_;
+  value_iterator begin_, end_;
   mutable cache_type cache_;
 };
 

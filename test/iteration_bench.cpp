@@ -10,6 +10,7 @@
 #include <vector>
 
 using namespace boost::histogram;
+using namespace boost::histogram::literals;
 
 struct tuple {};
 struct vector {};
@@ -55,7 +56,7 @@ static void Naive(benchmark::State& state, Tag, d1, coverage cov) {
   auto h = make_histogram(Tag(), d1(), state.range(0));
   const int d = cov == coverage::all;
   for (auto _ : state) {
-    for (int i = -d; i < h.axis(0).size() + d; ++i) benchmark::DoNotOptimize(h.at(i));
+    for (int i = -d; i < h.axis().size() + d; ++i) benchmark::DoNotOptimize(h.at(i));
   }
 }
 
@@ -64,8 +65,8 @@ static void Naive(benchmark::State& state, Tag, d2, coverage cov) {
   auto h = make_histogram(Tag(), d2(), state.range(0));
   const int d = cov == coverage::all;
   for (auto _ : state) {
-    for (int i = -d; i < h.axis(0).size() + d; ++i)
-      for (int j = -d; j < h.axis(1).size() + d; ++j)
+    for (int i = -d; i < h.axis(0_c).size() + d; ++i)
+      for (int j = -d; j < h.axis(1_c).size() + d; ++j)
         benchmark::DoNotOptimize(h.at(i, j));
   }
 }
@@ -75,34 +76,9 @@ static void Naive(benchmark::State& state, Tag, d3, coverage cov) {
   auto h = make_histogram(Tag(), d3(), state.range(0));
   const int d = cov == coverage::all;
   for (auto _ : state) {
-    for (int i = -d; i < h.axis(0).size() + d; ++i)
-      for (int j = -d; j < h.axis(1).size() + d; ++j)
-        for (int k = -d; k < h.axis(2).size() + d; ++k)
-          benchmark::DoNotOptimize(h.at(i, j, k));
-  }
-}
-
-template <class Tag>
-static void Insider(benchmark::State& state, Tag, d2, coverage cov) {
-  using namespace literals;
-  auto h = make_histogram(Tag(), d2(), state.range(0));
-  const int d = cov == coverage::all;
-  for (auto _ : state) {
-    for (int j = -d, nj = h.axis(1_c).size() + d; j < nj; ++j)
-      for (int i = -d, ni = h.axis(0_c).size() + d; i < ni; ++i)
-        benchmark::DoNotOptimize(h.at(i, j));
-  }
-}
-
-template <class Tag>
-static void Insider(benchmark::State& state, Tag, d3, coverage cov) {
-  using namespace literals;
-  auto h = make_histogram(Tag(), d3(), state.range(0));
-  const int d = cov == coverage::all;
-  for (auto _ : state) {
-    for (int k = -d, nk = h.axis(2_c).size() + d; k < nk; ++k)
-      for (int j = -d, nj = h.axis(1_c).size() + d; j < nj; ++j)
-        for (int i = -d, ni = h.axis(0_c).size() + d; i < ni; ++i)
+    for (int i = -d; i < h.axis(0_c).size() + d; ++i)
+      for (int j = -d; j < h.axis(1_c).size() + d; ++j)
+        for (int k = -d; k < h.axis(2_c).size() + d; ++k)
           benchmark::DoNotOptimize(h.at(i, j, k));
   }
 }
@@ -151,26 +127,26 @@ static void Indexed(benchmark::State& state, Tag, d3, coverage cov) {
 BENCH(Naive, tuple, 1, inner);
 BENCH(Indexed, tuple, 1, inner);
 
-BENCH(Naive, vector, 1, inner);
-BENCH(Indexed, vector, 1, inner);
-
-BENCH(Naive, vector_of_variant, 1, inner);
-BENCH(Indexed, vector_of_variant, 1, inner);
+// BENCH(Naive, vector, 1, inner);
+// BENCH(Indexed, vector, 1, inner);
+//
+// BENCH(Naive, vector_of_variant, 1, inner);
+// BENCH(Indexed, vector_of_variant, 1, inner);
 
 BENCH(Naive, tuple, 2, inner);
 BENCH(Indexed, tuple, 2, inner);
 
-BENCH(Naive, vector, 2, inner);
-BENCH(Indexed, vector, 2, inner);
-
-BENCH(Naive, vector_of_variant, 2, inner);
-BENCH(Indexed, vector_of_variant, 2, inner);
-
-BENCH(Naive, tuple, 3, inner);
-BENCH(Indexed, tuple, 3, inner);
-
-BENCH(Naive, vector, 3, inner);
-BENCH(Indexed, vector, 3, inner);
-
-BENCH(Naive, vector_of_variant, 3, inner);
-BENCH(Indexed, vector_of_variant, 3, inner);
+// BENCH(Naive, vector, 2, inner);
+// BENCH(Indexed, vector, 2, inner);
+//
+// BENCH(Naive, vector_of_variant, 2, inner);
+// BENCH(Indexed, vector_of_variant, 2, inner);
+//
+// BENCH(Naive, tuple, 3, inner);
+// BENCH(Indexed, tuple, 3, inner);
+//
+// BENCH(Naive, vector, 3, inner);
+// BENCH(Indexed, vector, 3, inner);
+//
+// BENCH(Naive, vector_of_variant, 3, inner);
+// BENCH(Indexed, vector_of_variant, 3, inner);
