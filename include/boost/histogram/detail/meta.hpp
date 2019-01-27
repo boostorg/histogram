@@ -196,7 +196,7 @@ BOOST_HISTOGRAM_DETECT(is_indexable_container,
                         std::end(std::declval<T&>())));
 
 // is_axis is false for axis::variant, because operator() is templated
-BOOST_HISTOGRAM_DETECT(is_axis, (&T::size, &T::operator()));
+BOOST_HISTOGRAM_DETECT(is_axis, (&T::size, &T::index));
 
 BOOST_HISTOGRAM_DETECT(is_iterable,
                        (std::begin(std::declval<T&>()), std::end(std::declval<T&>())));

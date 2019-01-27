@@ -217,11 +217,11 @@ int main() {
   {
     struct A {};
     struct B {
-      int operator()(double);
+      int index(double);
       int size() const;
     };
     struct C {
-      int operator()(double);
+      int index(double);
     };
     struct D {
       int size();
@@ -297,7 +297,7 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<mp_last<L>, long>));
   }
 
-  // args_type
+  // args_type, arg_type
   {
     struct Foo {
       static int f1(char);
@@ -308,6 +308,8 @@ int main() {
         (std::is_same<args_type<decltype(&Foo::f1)>, std::tuple<char>>));
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<args_type<decltype(&Foo::f2)>, std::tuple<long>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<arg_type<decltype(&Foo::f1)>, char>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<arg_type<decltype(&Foo::f2)>, long>));
   }
 
   // visitor_return_type

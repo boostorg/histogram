@@ -41,90 +41,90 @@ int main() {
   // input, output
   {
     axis::regular<> a{4, -2, 2};
-    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a(-10.), -1);
-    BOOST_TEST_EQ(a(-2.1), -1);
-    BOOST_TEST_EQ(a(-2.0), 0);
-    BOOST_TEST_EQ(a(-1.1), 0);
-    BOOST_TEST_EQ(a(0.0), 2);
-    BOOST_TEST_EQ(a(0.9), 2);
-    BOOST_TEST_EQ(a(1.0), 3);
-    BOOST_TEST_EQ(a(10.), 4);
-    BOOST_TEST_EQ(a(-std::numeric_limits<double>::infinity()), -1);
-    BOOST_TEST_EQ(a(std::numeric_limits<double>::infinity()), 4);
-    BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 4);
+    BOOST_TEST_EQ(a.bin(-1).lower(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(a.size()).upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.index(-10.), -1);
+    BOOST_TEST_EQ(a.index(-2.1), -1);
+    BOOST_TEST_EQ(a.index(-2.0), 0);
+    BOOST_TEST_EQ(a.index(-1.1), 0);
+    BOOST_TEST_EQ(a.index(0.0), 2);
+    BOOST_TEST_EQ(a.index(0.9), 2);
+    BOOST_TEST_EQ(a.index(1.0), 3);
+    BOOST_TEST_EQ(a.index(10.), 4);
+    BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 4);
   }
 
   // with inverted range
   {
     axis::regular<> a{2, 1, -2};
-    BOOST_TEST_EQ(a[-1].lower(), std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[0].lower(), 1);
-    BOOST_TEST_EQ(a[1].lower(), -0.5);
-    BOOST_TEST_EQ(a[2].lower(), -2);
-    BOOST_TEST_EQ(a[2].upper(), -std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a(2), -1);
-    BOOST_TEST_EQ(a(1.001), -1);
-    BOOST_TEST_EQ(a(1), 0);
-    BOOST_TEST_EQ(a(0), 0);
-    BOOST_TEST_EQ(a(-0.499), 0);
-    BOOST_TEST_EQ(a(-0.5), 1);
-    BOOST_TEST_EQ(a(-1), 1);
-    BOOST_TEST_EQ(a(-2), 2);
-    BOOST_TEST_EQ(a(-20), 2);
+    BOOST_TEST_EQ(a.bin(-1).lower(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(0).lower(), 1);
+    BOOST_TEST_EQ(a.bin(1).lower(), -0.5);
+    BOOST_TEST_EQ(a.bin(2).lower(), -2);
+    BOOST_TEST_EQ(a.bin(2).upper(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.index(2), -1);
+    BOOST_TEST_EQ(a.index(1.001), -1);
+    BOOST_TEST_EQ(a.index(1), 0);
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(-0.499), 0);
+    BOOST_TEST_EQ(a.index(-0.5), 1);
+    BOOST_TEST_EQ(a.index(-1), 1);
+    BOOST_TEST_EQ(a.index(-2), 2);
+    BOOST_TEST_EQ(a.index(-20), 2);
   }
 
   // with log transform
   {
     axis::regular<double, tr::log> b{2, 1e0, 1e2};
-    BOOST_TEST_EQ(b[-1].lower(), 0.0);
-    BOOST_TEST_IS_CLOSE(b[0].lower(), 1.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(b[1].lower(), 10.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(b[2].lower(), 100.0, 1e-9);
-    BOOST_TEST_EQ(b[2].upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(b.bin(-1).lower(), 0.0);
+    BOOST_TEST_IS_CLOSE(b.bin(0).lower(), 1.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(b.bin(1).lower(), 10.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(b.bin(2).lower(), 100.0, 1e-9);
+    BOOST_TEST_EQ(b.bin(2).upper(), std::numeric_limits<double>::infinity());
 
-    BOOST_TEST_EQ(b(-1), 2); // produces NaN in conversion
-    BOOST_TEST_EQ(b(0), -1);
-    BOOST_TEST_EQ(b(1), 0);
-    BOOST_TEST_EQ(b(9), 0);
-    BOOST_TEST_EQ(b(10), 1);
-    BOOST_TEST_EQ(b(90), 1);
-    BOOST_TEST_EQ(b(100), 2);
-    BOOST_TEST_EQ(b(std::numeric_limits<double>::infinity()), 2);
+    BOOST_TEST_EQ(b.index(-1), 2); // produces NaN in conversion
+    BOOST_TEST_EQ(b.index(0), -1);
+    BOOST_TEST_EQ(b.index(1), 0);
+    BOOST_TEST_EQ(b.index(9), 0);
+    BOOST_TEST_EQ(b.index(10), 1);
+    BOOST_TEST_EQ(b.index(90), 1);
+    BOOST_TEST_EQ(b.index(100), 2);
+    BOOST_TEST_EQ(b.index(std::numeric_limits<double>::infinity()), 2);
   }
 
   // with sqrt transform
   {
     axis::regular<double, tr::sqrt> a(2, 0, 4);
     // this is weird, but -inf * -inf = inf, thus the lower bound
-    BOOST_TEST_EQ(a[-1].lower(), std::numeric_limits<double>::infinity());
-    BOOST_TEST_IS_CLOSE(a[0].lower(), 0.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(a[1].lower(), 1.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(a[2].lower(), 4.0, 1e-9);
-    BOOST_TEST_EQ(a[2].upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(-1).lower(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_IS_CLOSE(a.bin(0).lower(), 0.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(a.bin(1).lower(), 1.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(a.bin(2).lower(), 4.0, 1e-9);
+    BOOST_TEST_EQ(a.bin(2).upper(), std::numeric_limits<double>::infinity());
 
-    BOOST_TEST_EQ(a(-1), 2); // produces NaN in conversion
-    BOOST_TEST_EQ(a(0), 0);
-    BOOST_TEST_EQ(a(0.99), 0);
-    BOOST_TEST_EQ(a(1), 1);
-    BOOST_TEST_EQ(a(3.99), 1);
-    BOOST_TEST_EQ(a(4), 2);
-    BOOST_TEST_EQ(a(100), 2);
-    BOOST_TEST_EQ(a(std::numeric_limits<double>::infinity()), 2);
+    BOOST_TEST_EQ(a.index(-1), 2); // produces NaN in conversion
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(0.99), 0);
+    BOOST_TEST_EQ(a.index(1), 1);
+    BOOST_TEST_EQ(a.index(3.99), 1);
+    BOOST_TEST_EQ(a.index(4), 2);
+    BOOST_TEST_EQ(a.index(100), 2);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
   }
 
   // with step
   {
     axis::regular<> a(axis::step(0.5), 1, 3);
     BOOST_TEST_EQ(a.size(), 4);
-    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(-1).lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.value(0), 1);
     BOOST_TEST_EQ(a.value(1), 1.5);
     BOOST_TEST_EQ(a.value(2), 2);
     BOOST_TEST_EQ(a.value(3), 2.5);
     BOOST_TEST_EQ(a.value(4), 3);
-    BOOST_TEST_EQ(a[4].upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(4).upper(), std::numeric_limits<double>::infinity());
 
     axis::regular<> b(axis::step(0.5), 1, 3.1);
     BOOST_TEST_EQ(a, b);
@@ -133,16 +133,16 @@ int main() {
   // with circular option
   {
     axis::circular<> a{4, 0, 1};
-    BOOST_TEST_EQ(a[-1].lower(), a[a.size() - 1].lower() - 1);
-    BOOST_TEST_EQ(a(-1.0 * 3), 0);
-    BOOST_TEST_EQ(a(0.0), 0);
-    BOOST_TEST_EQ(a(0.25), 1);
-    BOOST_TEST_EQ(a(0.5), 2);
-    BOOST_TEST_EQ(a(0.75), 3);
-    BOOST_TEST_EQ(a(1.0), 0);
-    BOOST_TEST_EQ(a(std::numeric_limits<double>::infinity()), 4);
-    BOOST_TEST_EQ(a(-std::numeric_limits<double>::infinity()), 4);
-    BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 4);
+    BOOST_TEST_EQ(a.bin(-1).lower(), a.bin(a.size() - 1).lower() - 1);
+    BOOST_TEST_EQ(a.index(-1.0 * 3), 0);
+    BOOST_TEST_EQ(a.index(0.0), 0);
+    BOOST_TEST_EQ(a.index(0.25), 1);
+    BOOST_TEST_EQ(a.index(0.5), 2);
+    BOOST_TEST_EQ(a.index(0.75), 3);
+    BOOST_TEST_EQ(a.index(1.0), 0);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), 4);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 4);
   }
 
   // with growth
@@ -189,7 +189,7 @@ int main() {
     };
 
     auto a = axis::regular<>(2, 0, 1);
-    test(a[0], "[0, 0.5)");
+    test(a.bin(0), "[0, 0.5)");
   }
 
   // shrink and rebin

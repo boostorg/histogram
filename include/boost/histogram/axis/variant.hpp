@@ -163,7 +163,7 @@ public:
   /// Return index for value argument.
   /// Throws std::invalid_argument if axis has incompatible call signature.
   template <class U>
-  index_type operator()(const U& u) const {
+  index_type index(const U& u) const {
     return visit([&u](const auto& a) { return traits::index(a, u); }, *this);
   }
 
@@ -178,7 +178,7 @@ public:
   /// Return bin for index argument.
   /// Only works for axes with value method that returns something convertible to
   /// double and will throw a runtime_error otherwise, see axis::traits::value().
-  auto operator[](index_type idx) const {
+  auto bin(index_type idx) const {
     return visit(
         [idx](const auto& a) {
           return detail::value_method_switch_with_return_type<double,

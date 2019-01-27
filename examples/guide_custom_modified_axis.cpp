@@ -22,8 +22,8 @@ int main() {
     // the customization point
     // - accept const char* and convert to int
     // - then call index method of base class
-    bh::axis::index_type operator()(value_type s) const {
-      return integer::operator()(std::atoi(s));
+    bh::axis::index_type index(value_type s) const {
+      return integer::index(std::atoi(s));
     }
   };
 

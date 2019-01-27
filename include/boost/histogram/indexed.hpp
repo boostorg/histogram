@@ -77,9 +77,9 @@ public:
     // access current bins
     template <unsigned N = 0>
     decltype(auto) bin(std::integral_constant<unsigned, N> = {}) const {
-      return parent_.hist_.axis(std::integral_constant<unsigned, N>())[index(N)];
+      return parent_.hist_.axis(std::integral_constant<unsigned, N>()).bin(index(N));
     }
-    decltype(auto) bin(unsigned d) const { return parent_.hist_.axis(d)[index(d)]; }
+    decltype(auto) bin(unsigned d) const { return parent_.hist_.axis(d).bin(index(d)); }
 
     // convenience interface
     double density() const {

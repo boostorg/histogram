@@ -25,7 +25,7 @@ static void regular(benchmark::State& state) {
   for (auto _ : state) {
     for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i) {
       volatile int j;
-      benchmark::DoNotOptimize(a(i));
+      benchmark::DoNotOptimize(a.index(i));
     }
   }
 }
@@ -37,7 +37,7 @@ static void circular(benchmark::State& state) {
   auto a = axis::circular<>(stop - start, start, stop);
   for (auto _ : state) {
     for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i) {
-      benchmark::DoNotOptimize(a(i));
+      benchmark::DoNotOptimize(a.index(i));
     }
   }
 }
@@ -50,7 +50,7 @@ static void integer_int(benchmark::State& state) {
   for (auto _ : state) {
     for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i) {
       volatile int j;
-      benchmark::DoNotOptimize(a(i));
+      benchmark::DoNotOptimize(a.index(i));
     }
   }
 }
@@ -62,7 +62,7 @@ static void integer_double(benchmark::State& state) {
   auto a = axis::integer<double>(start, stop);
   for (auto _ : state) {
     for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i) {
-      benchmark::DoNotOptimize(a(i));
+      benchmark::DoNotOptimize(a.index(i));
     }
   }
 }
@@ -72,7 +72,7 @@ static void variable(benchmark::State& state) {
   auto a = axis::variable<>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
   for (auto _ : state) {
     for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i)
-      benchmark::DoNotOptimize(a(i));
+      benchmark::DoNotOptimize(a.index(i));
   }
 }
 
@@ -81,7 +81,7 @@ static void category(benchmark::State& state) {
   auto a = axis::category<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
   for (auto _ : state) {
     for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i)
-      benchmark::DoNotOptimize(a(i));
+      benchmark::DoNotOptimize(a.index(i));
   }
 }
 
@@ -90,7 +90,7 @@ static void variant(benchmark::State& state) {
   auto a = axis::variant<axis::regular<>>(axis::regular<>(10, 0, 10));
   for (auto _ : state) {
     for (int i = 0 - include_extra_bins; i < 10 + include_extra_bins; ++i)
-      benchmark::DoNotOptimize(a(i));
+      benchmark::DoNotOptimize(a.index(i));
   }
 }
 

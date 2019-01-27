@@ -19,24 +19,23 @@ namespace axis {
 template <typename Axis>
 class iterator
     : public boost::iterator_adaptor<iterator<Axis>, int,
-                                     decltype(std::declval<const Axis&>()[0]),
+                                     decltype(std::declval<const Axis&>().bin(0)),
                                      std::random_access_iterator_tag,
-                                     decltype(std::declval<const Axis&>()[0]), int> {
+                                     decltype(std::declval<const Axis&>().bin(0)), int> {
 public:
   explicit iterator(const Axis& axis, int idx)
       : iterator::iterator_adaptor_(idx), axis_(axis) {}
 
 protected:
   bool equal(const iterator& other) const noexcept {
-    return &axis_ == &other.axis_ && this->base_reference() == other.base_reference();
+    return &axis_ == &other.axis_ && this->base() == other.base();
   }
 
-  decltype(auto) dereference() const { return axis_[this->base_reference()]; }
-
-  friend class boost::iterator_core_access;
+  decltype(auto) dereference() const { return axis_.bin(this->base()); }
 
 private:
   const Axis& axis_;
+  friend class boost::iterator_core_access;
 };
 
 /// Uses CRTP to inject iterator logic into Derived.

@@ -97,15 +97,15 @@ decltype(auto) value(const T& axis, double idx) {
 
 template <class... Ts, class U>
 auto index(const axis::variant<Ts...>& axis, const U& value) {
-  return axis(value);
+  return axis.index(value);
 }
 
 template <class T, class U>
 auto index(const T& axis, const U& value) {
-  return detail::static_if<std::is_convertible<U, detail::arg_type<T>>>(
-      [&value](const auto& axis) { return axis(value); },
+  using V = detail::arg_type<decltype(&T::index)>;
+  return detail::static_if<std::is_convertible<U, V>>(
+      [&value](const auto& axis) { return axis.index(value); },
       [](const T&) {
-        using V = detail::arg_type<T>;
         BOOST_THROW_EXCEPTION(std::invalid_argument(
             detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
                         ": cannot convert argument of type ",
@@ -123,14 +123,14 @@ auto update(axis::variant<Ts...>& t, const U& u) {
 
 template <class T, class U>
 std::pair<int, int> update(T& axis, const U& value) {
-  return detail::static_if<std::is_convertible<U, detail::arg_type<T>>>(
+  using V = detail::arg_type<decltype(&T::index)>;
+  return detail::static_if<std::is_convertible<U, V>>(
       [&value](auto& a) {
         return detail::static_if<detail::has_method_update<detail::naked<decltype(a)>>>(
             [&value](auto& a) { return a.update(value); },
-            [&value](const auto& a) { return std::make_pair(a(value), 0); }, a);
+            [&value](const auto& a) { return std::make_pair(a.index(value), 0); }, a);
       },
       [](T&) {
-        using V = detail::arg_type<T>;
         BOOST_THROW_EXCEPTION(std::invalid_argument(
             detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
                         ": cannot convert argument of type ",

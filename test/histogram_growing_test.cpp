@@ -82,12 +82,12 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(-1, 1), 0);
     BOOST_TEST_EQ(h.at(3, 0), 2);
     BOOST_TEST_EQ(h.at(3, 1), 0);
-    BOOST_TEST_EQ(h.at(a(0), b("x")), 1);
-    BOOST_TEST_EQ(h.at(a(1), b("x")), 0);
-    BOOST_TEST_EQ(h.at(a(2), b("x")), 1);
-    BOOST_TEST_EQ(h.at(a(0), b("y")), 0);
-    BOOST_TEST_EQ(h.at(a(1), b("y")), 1);
-    BOOST_TEST_EQ(h.at(a(2), b("y")), 0);
+    BOOST_TEST_EQ(h.at(a.index(0), b.index("x")), 1);
+    BOOST_TEST_EQ(h.at(a.index(1), b.index("x")), 0);
+    BOOST_TEST_EQ(h.at(a.index(2), b.index("x")), 1);
+    BOOST_TEST_EQ(h.at(a.index(0), b.index("y")), 0);
+    BOOST_TEST_EQ(h.at(a.index(1), b.index("y")), 1);
+    BOOST_TEST_EQ(h.at(a.index(2), b.index("y")), 0);
   }
 }
 

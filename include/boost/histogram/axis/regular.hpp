@@ -245,7 +245,7 @@ public:
   const transform_type& transform() const noexcept { return *this; }
 
   /// Return index for value argument.
-  index_type operator()(value_type x) const noexcept {
+  index_type index(value_type x) const noexcept {
     // Runs in hot loop, please measure impact of changes
     auto z = (this->forward(x / unit_type()) - min_) / delta_;
     if (test(Options, option::circular)) {
@@ -278,7 +278,7 @@ public:
   }
 
   /// Return bin for index argument.
-  decltype(auto) operator[](index_type idx) const noexcept {
+  decltype(auto) bin(index_type idx) const noexcept {
     return interval_view<regular>(*this, idx);
   }
 

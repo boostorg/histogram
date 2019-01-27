@@ -40,10 +40,10 @@ int main() {
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
     BOOST_TEST_EQ(a.size(), 3);
-    BOOST_TEST_EQ(a(A), 0);
-    BOOST_TEST_EQ(a(B), 1);
-    BOOST_TEST_EQ(a(C), 2);
-    BOOST_TEST_EQ(a(other), 3);
+    BOOST_TEST_EQ(a.index(A), 0);
+    BOOST_TEST_EQ(a.index(B), 1);
+    BOOST_TEST_EQ(a.index(C), 2);
+    BOOST_TEST_EQ(a.index(other), 3);
     BOOST_TEST_EQ(a.value(0), A);
     BOOST_TEST_EQ(a.value(1), B);
     BOOST_TEST_EQ(a.value(2), C);

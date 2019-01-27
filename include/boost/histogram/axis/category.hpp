@@ -31,7 +31,7 @@ class category_mixin<Derived, T, true> {
 public:
   auto update(const value_type& x) {
     auto& der = static_cast<Derived&>(*this);
-    const auto i = der(x);
+    const auto i = der.index(x);
     if (i < der.size()) return std::make_pair(i, 0);
     der.vec_meta_.first().emplace_back(x);
     return std::make_pair(i, -1);
@@ -113,7 +113,7 @@ public:
   }
 
   /// Return index for value argument.
-  index_type operator()(const value_type& x) const noexcept {
+  index_type index(const value_type& x) const noexcept {
     const auto beg = vec_meta_.first().begin();
     const auto end = vec_meta_.first().end();
     return std::distance(beg, std::find(beg, end, x));
@@ -128,7 +128,7 @@ public:
   }
 
   /// Return value for index argument.
-  decltype(auto) operator[](index_type idx) const noexcept { return value(idx); }
+  decltype(auto) bin(index_type idx) const noexcept { return value(idx); }
 
   /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return vec_meta_.first().size(); }

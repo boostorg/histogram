@@ -24,25 +24,25 @@ int main() {
   {
     axis::variant<axis::integer<double>, axis::category<std::string>> a{
         axis::integer<double>(0, 2, "foo")};
-    BOOST_TEST_EQ(a(-10), -1);
-    BOOST_TEST_EQ(a(-1), -1);
-    BOOST_TEST_EQ(a(0), 0);
-    BOOST_TEST_EQ(a(0.5), 0);
-    BOOST_TEST_EQ(a(1), 1);
-    BOOST_TEST_EQ(a(2), 2);
-    BOOST_TEST_EQ(a(10), 2);
-    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[-10].lower(), -std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[a.size() + 10].upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.index(-10), -1);
+    BOOST_TEST_EQ(a.index(-1), -1);
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(0.5), 0);
+    BOOST_TEST_EQ(a.index(1), 1);
+    BOOST_TEST_EQ(a.index(2), 2);
+    BOOST_TEST_EQ(a.index(10), 2);
+    BOOST_TEST_EQ(a.bin(-1).lower(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(a.size()).upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(-10).lower(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(a.size() + 10).upper(), std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.metadata(), "foo");
     a.metadata() = "bar";
     BOOST_TEST_EQ(a.metadata(), "bar");
     BOOST_TEST_EQ(a.options(), axis::option::use_default);
 
     a = axis::category<std::string>({"A", "B"}, "cat");
-    BOOST_TEST_EQ(a("A"), 0);
-    BOOST_TEST_EQ(a("B"), 1);
+    BOOST_TEST_EQ(a.index("A"), 0);
+    BOOST_TEST_EQ(a.index("B"), 1);
     BOOST_TEST_EQ(a.metadata(), "cat");
     BOOST_TEST_EQ(a.options(), axis::option::overflow);
   }
@@ -121,7 +121,7 @@ int main() {
       using T = detail::naked<decltype(a)>;
       axis::variant<T> axis(std::move(a));
       std::ostringstream os;
-      os << axis[0];
+      os << axis.bin(0);
       BOOST_TEST_EQ(os.str(), std::string(ref));
     };
 
@@ -152,29 +152,30 @@ int main() {
   {
     auto a = axis::variant<axis::category<std::string>>(
         axis::category<std::string>({"A", "B", "C"}));
-    BOOST_TEST_THROWS(a[0], std::runtime_error);
+    BOOST_TEST_THROWS(a.bin(0), std::runtime_error);
     auto b = axis::variant<axis::category<int>>(axis::category<int>({2, 1, 3}));
-    BOOST_TEST_EQ(b[0], 2);
-    BOOST_TEST_EQ(b[0].lower(), b[0].upper()); // lower == upper for bin without interval
+    BOOST_TEST_EQ(b.bin(0), 2);
+    BOOST_TEST_EQ(b.bin(0).lower(),
+                  b.bin(0).upper()); // lower == upper for bin without interval
   }
 
   // axis::variant support for user-defined axis types
   {
     struct minimal_axis {
-      int operator()(int x) const { return x % 2; }
+      int index(int x) const { return x % 2; }
       int size() const { return 2; }
     };
 
     axis::variant<minimal_axis, axis::category<std::string>> axis;
-    BOOST_TEST_EQ(axis(0), 0);
-    BOOST_TEST_EQ(axis(9), 1);
+    BOOST_TEST_EQ(axis.index(0), 0);
+    BOOST_TEST_EQ(axis.index(9), 1);
     BOOST_TEST_EQ(axis.size(), 2);
     BOOST_TEST_EQ(axis.metadata(), axis::null_type{});
     BOOST_TEST_THROWS(std::ostringstream() << axis, std::runtime_error);
     BOOST_TEST_THROWS(axis.value(0), std::runtime_error);
 
     axis = axis::category<std::string>({"A", "B"}, "category");
-    BOOST_TEST_EQ(axis("B"), 1);
+    BOOST_TEST_EQ(axis.index("B"), 1);
     BOOST_TEST_THROWS(axis.value(0), std::runtime_error);
   }
 

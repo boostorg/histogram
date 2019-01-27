@@ -36,7 +36,7 @@ class variable_mixin<Derived, Value, true> {
 public:
   auto update(value_type x) noexcept {
     auto& der = static_cast<Derived&>(*this);
-    const auto i = der(x);
+    const auto i = der.index(x);
     if (std::isfinite(x)) {
       auto& vec = der.vec_meta_.first();
       if (0 <= i) {
@@ -142,7 +142,7 @@ public:
   }
 
   /// Return index for value argument.
-  index_type operator()(value_type x) const noexcept {
+  index_type index(value_type x) const noexcept {
     const auto& v = vec_meta_.first();
     if (test(Options, option::circular)) {
       const auto a = v[0];
@@ -173,9 +173,7 @@ public:
   }
 
   /// Return bin for index argument.
-  auto operator[](index_type idx) const noexcept {
-    return interval_view<variable>(*this, idx);
-  }
+  auto bin(index_type idx) const noexcept { return interval_view<variable>(*this, idx); }
 
   /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return vec_meta_.first().size() - 1; }

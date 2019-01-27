@@ -78,6 +78,18 @@ inline void linearize(optional_index& out, const int axis_shape, int j) noexcept
 }
 
 template <class A, class V>
+void linearize_value(optional_index& out, const A& axis, const V& value) {
+  const auto j = axis::traits::index(axis, value) +
+                 test(axis::traits::options(axis), axis::option::underflow);
+  linearize(out, axis::traits::extend(axis), j);
+}
+
+template <class... Ts, class V>
+void linearize_value(optional_index& o, const axis::variant<Ts...>& a, const V& v) {
+  axis::visit([&o, &v](const auto& a) { linearize_value(o, a, v); }, a);
+}
+
+template <class A, class V>
 void linearize_value(optional_index& out, int& shift, A& axis, const V& value) {
   int j;
   std::tie(j, shift) = axis::traits::update(axis, value);
@@ -167,19 +179,18 @@ struct size_or_zero<std::tuple<Ts...>> : mp11::mp_size_t<sizeof...(Ts)> {};
 //   (axis::variant provides generic call interface and hides concrete interface),
 //   so we throw at runtime if incompatible argument is passed (e.g. 3d tuple)
 template <unsigned I, unsigned N, class S, class T, class U>
-optional_index args_to_index(std::false_type, S&, T& axes, const U& args) {
+optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) {
   optional_index idx;
-  int dummy;
   const auto rank = get_size(axes);
   if (rank == 1 && N > 1)
-    linearize_value(idx, dummy, axis_get<0>(axes), tuple_slice<I, N>(args));
+    linearize_value(idx, axis_get<0>(axes), tuple_slice<I, N>(args));
   else {
     if (rank != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
     constexpr unsigned M = size_or_zero<naked<decltype(axes)>>::value;
     mp11::mp_for_each<mp11::mp_iota_c<(M == 0 ? N : M)>>([&](auto J) {
-      linearize_value(idx, dummy, axis_get<J>(axes), std::get<(J + I)>(args));
+      linearize_value(idx, axis_get<J>(axes), std::get<(J + I)>(args));
     });
   }
   return idx;

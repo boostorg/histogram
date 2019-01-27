@@ -14,14 +14,14 @@ namespace bh = boost::histogram;
 int main() {
   // stateless axis which returns 1 if the input is even and 0 otherwise
   struct even_odd_axis {
-    bh::axis::index_type operator()(int x) const { return x % 2; }
+    bh::axis::index_type index(int x) const { return x % 2; }
     bh::axis::index_type size() const { return 2; }
   };
 
   // threshold axis which returns 1 if the input is above threshold
   struct threshold_axis {
     threshold_axis(double x) : thr(x) {}
-    bh::axis::index_type operator()(double x) const { return x >= thr; }
+    bh::axis::index_type index(double x) const { return x >= thr; }
     bh::axis::index_type size() const { return 2; }
     double thr;
   };

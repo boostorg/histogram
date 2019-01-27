@@ -14,7 +14,7 @@ namespace bh = boost::histogram;
 int main() {
   // axis which returns 1 if the input falls inside the unit circle and zero otherwise
   struct circle_axis {
-    bh::axis::index_type operator()(std::tuple<double, double> point) const {
+    bh::axis::index_type index(std::tuple<double, double> point) const {
       const auto x = std::get<0>(point);
       const auto y = std::get<1>(point);
       return x * x + y * y <= 1.0;

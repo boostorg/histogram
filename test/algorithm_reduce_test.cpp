@@ -55,10 +55,10 @@ void run_tests() {
     BOOST_TEST_EQ(sum(hr), 10);
     BOOST_TEST_EQ(hr.axis(0).size(), h.axis(0).size());
     BOOST_TEST_EQ(hr.axis(1).size(), h.axis(1).size());
-    BOOST_TEST_EQ(hr.axis(0)[0].lower(), 1);
-    BOOST_TEST_EQ(hr.axis(0)[3].upper(), 5);
-    BOOST_TEST_EQ(hr.axis(1)[0].lower(), -1);
-    BOOST_TEST_EQ(hr.axis(1)[2].upper(), 2);
+    BOOST_TEST_EQ(hr.axis(0).bin(0).lower(), 1);
+    BOOST_TEST_EQ(hr.axis(0).bin(3).upper(), 5);
+    BOOST_TEST_EQ(hr.axis(1).bin(0).lower(), -1);
+    BOOST_TEST_EQ(hr.axis(1).bin(2).upper(), 2);
     for (auto x : indexed(h, coverage::all)) BOOST_TEST_EQ(hr.at(x.indices()), *x);
     BOOST_TEST_EQ(hr, h);
 
@@ -67,10 +67,10 @@ void run_tests() {
     BOOST_TEST_EQ(sum(hr), 10);
     BOOST_TEST_EQ(hr.axis(0).size(), 2);
     BOOST_TEST_EQ(hr.axis(1).size(), h.axis(1).size());
-    BOOST_TEST_EQ(hr.axis(0)[0].lower(), 2);
-    BOOST_TEST_EQ(hr.axis(0)[1].upper(), 4);
-    BOOST_TEST_EQ(hr.axis(1)[0].lower(), -1);
-    BOOST_TEST_EQ(hr.axis(1)[2].upper(), 2);
+    BOOST_TEST_EQ(hr.axis(0).bin(0).lower(), 2);
+    BOOST_TEST_EQ(hr.axis(0).bin(1).upper(), 4);
+    BOOST_TEST_EQ(hr.axis(1).bin(0).lower(), -1);
+    BOOST_TEST_EQ(hr.axis(1).bin(2).upper(), 2);
     BOOST_TEST_EQ(hr.at(-1, 0), 1); // underflow
     BOOST_TEST_EQ(hr.at(0, 0), 0);
     BOOST_TEST_EQ(hr.at(1, 0), 1);
@@ -97,10 +97,10 @@ void run_tests() {
     BOOST_TEST_EQ(sum(hr), 10);
     BOOST_TEST_EQ(hr.axis(0).size(), 1);
     BOOST_TEST_EQ(hr.axis(1).size(), 1);
-    BOOST_TEST_EQ(hr.axis(0)[0].lower(), 2);
-    BOOST_TEST_EQ(hr.axis(0)[0].upper(), 4);
-    BOOST_TEST_EQ(hr.axis(1)[0].lower(), -1);
-    BOOST_TEST_EQ(hr.axis(1)[0].upper(), 2);
+    BOOST_TEST_EQ(hr.axis(0).bin(0).lower(), 2);
+    BOOST_TEST_EQ(hr.axis(0).bin(0).upper(), 4);
+    BOOST_TEST_EQ(hr.axis(1).bin(0).lower(), -1);
+    BOOST_TEST_EQ(hr.axis(1).bin(0).upper(), 2);
     BOOST_TEST_EQ(hr.at(-1, 0), 2); // underflow
     BOOST_TEST_EQ(hr.at(0, 0), 5);
     BOOST_TEST_EQ(hr.at(1, 0), 3); // overflow
@@ -116,8 +116,8 @@ void run_tests() {
     BOOST_TEST_THROWS(reduce(h, rebin(2)), std::invalid_argument);
     auto hr = reduce(h, shrink(2, 3));
     BOOST_TEST_EQ(hr.axis().size(), 1);
-    BOOST_TEST_EQ(hr.axis()[0], 2);
-    BOOST_TEST_EQ(hr.axis()[1], 3);
+    BOOST_TEST_EQ(hr.axis().bin(0), 2);
+    BOOST_TEST_EQ(hr.axis().bin(1), 3);
   }
 
   // reduce on circular axis, shrink must fail, also rebin with remainder
@@ -127,8 +127,8 @@ void run_tests() {
     BOOST_TEST_THROWS(reduce(h, rebin(3)), std::invalid_argument);
     auto hr = reduce(h, rebin(2));
     BOOST_TEST_EQ(hr.axis().size(), 2);
-    BOOST_TEST_EQ(hr.axis()[0].lower(), 1);
-    BOOST_TEST_EQ(hr.axis()[1].upper(), 4);
+    BOOST_TEST_EQ(hr.axis().bin(0).lower(), 1);
+    BOOST_TEST_EQ(hr.axis().bin(1).upper(), 4);
   }
 
   // reduce on variable axis
@@ -146,8 +146,8 @@ void run_tests() {
     auto h = make(Tag(), regular(4, 2, -2));
     auto hr = reduce(h, shrink(1, -1));
     BOOST_TEST_EQ(hr.axis().size(), 2);
-    BOOST_TEST_EQ(hr.axis()[0].lower(), 1);
-    BOOST_TEST_EQ(hr.axis()[1].upper(), -1);
+    BOOST_TEST_EQ(hr.axis().bin(0).lower(), 1);
+    BOOST_TEST_EQ(hr.axis().bin(1).upper(), -1);
   }
 
   // reduce:

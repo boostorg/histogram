@@ -137,8 +137,8 @@ void run_tests() {
   {
     auto a = make(Tag(), axis::regular<>(1, 1, 2, "foo"));
     BOOST_TEST_EQ(a.axis().size(), 1);
-    BOOST_TEST_EQ(a.axis()[0].lower(), 1);
-    BOOST_TEST_EQ(a.axis()[0].upper(), 2);
+    BOOST_TEST_EQ(a.axis().bin(0).lower(), 1);
+    BOOST_TEST_EQ(a.axis().bin(0).upper(), 2);
     BOOST_TEST_EQ(a.axis().metadata(), "foo");
     unsafe_access::axis(a, 0).metadata() = "bar";
     BOOST_TEST_EQ(a.axis().metadata(), "bar");
@@ -147,22 +147,22 @@ void run_tests() {
 
     // check static access
     BOOST_TEST_EQ(b.axis(0_c).size(), 1);
-    BOOST_TEST_EQ(b.axis(0_c)[0].lower(), 1);
-    BOOST_TEST_EQ(b.axis(0_c)[0].upper(), 2);
+    BOOST_TEST_EQ(b.axis(0_c).bin(0).lower(), 1);
+    BOOST_TEST_EQ(b.axis(0_c).bin(0).upper(), 2);
     BOOST_TEST_EQ(b.axis(1_c).size(), 2);
-    BOOST_TEST_EQ(b.axis(1_c)[0], 1);
-    BOOST_TEST_EQ(b.axis(1_c)[1], 2);
+    BOOST_TEST_EQ(b.axis(1_c).bin(0), 1);
+    BOOST_TEST_EQ(b.axis(1_c).bin(1), 2);
     unsafe_access::axis(b, 1_c).metadata() = "bar";
     BOOST_TEST_EQ(b.axis(0_c).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1_c).metadata(), "bar");
 
     // check dynamic access
     BOOST_TEST_EQ(b.axis(0).size(), 1);
-    BOOST_TEST_EQ(b.axis(0)[0].lower(), 1);
-    BOOST_TEST_EQ(b.axis(0)[0].upper(), 2);
+    BOOST_TEST_EQ(b.axis(0).bin(0).lower(), 1);
+    BOOST_TEST_EQ(b.axis(0).bin(0).upper(), 2);
     BOOST_TEST_EQ(b.axis(1).size(), 2);
-    BOOST_TEST_EQ(b.axis(1)[0], 1);
-    BOOST_TEST_EQ(b.axis(1)[1], 2);
+    BOOST_TEST_EQ(b.axis(1).bin(0), 1);
+    BOOST_TEST_EQ(b.axis(1).bin(1), 2);
     BOOST_TEST_EQ(b.axis(0).metadata(), "foo");
     BOOST_TEST_EQ(b.axis(1).metadata(), "bar");
     unsafe_access::axis(b, 0).metadata() = "baz";
@@ -175,7 +175,7 @@ void run_tests() {
     BOOST_TEST_EQ(c.axis().metadata(), "foo");
     // need to cast here for this to work with Tag == dynamic_tag, too
     auto ca = axis::get<axis::category<C>>(c.axis());
-    BOOST_TEST(ca[0] == C::A);
+    BOOST_TEST(ca.bin(0) == C::A);
   }
 
   // equal_compare
@@ -563,19 +563,19 @@ void run_tests() {
     struct modified_axis : public axis::integer<> {
       using integer::integer; // inherit ctors of base
       // customization point: convert argument and call base class
-      int operator()(const char* s) const { return integer::operator()(std::atoi(s)); }
+      axis::index_type index(const char* s) const { return integer::index(std::atoi(s)); }
     };
 
     struct minimal {
-      int operator()(int x) const { return x % 2; }
-      int size() const { return 2; }
+      axis::index_type index(int x) const { return x % 2; }
+      axis::index_type size() const { return 2; }
     };
 
     struct axis2d {
-      int operator()(std::tuple<double, double> x) const {
+      axis::index_type index(std::tuple<double, double> x) const {
         return std::get<0>(x) == 1 && std::get<1>(x) == 2;
       }
-      int size() const { return 2; }
+      axis::index_type size() const { return 2; }
     };
 
     auto h = make(Tag(), modified_axis(0, 3), minimal(), axis2d());
@@ -621,13 +621,13 @@ void run_tests() {
     // passing 2d tuple is an invalid argument
     BOOST_TEST_THROWS(h1(std::make_tuple(0, 0)), std::invalid_argument);
 
-    struct axis_which_accepts_2d_tuple {
-      int operator()(std::tuple<int, int> x) const {
+    struct axis2d {
+      axis::index_type index(std::tuple<int, int> x) const {
         return std::get<0>(x) == 1 && std::get<1>(x) == 2;
       }
-      int size() const { return 2; }
+      axis::index_type size() const { return 2; }
     };
-    auto h2 = make(Tag(), axis_which_accepts_2d_tuple());
+    auto h2 = make(Tag(), axis2d());
     h2(std::make_tuple(1, 2));  // ok, forwards 2d tuple to axis
     BOOST_TEST_EQ(h2.at(0), 0); // ok, bin access is still 1d
     BOOST_TEST_EQ(h2[std::make_tuple(1)], 1);

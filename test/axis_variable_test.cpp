@@ -25,8 +25,8 @@ int main() {
   {
     axis::variable<> a{-1, 0, 1};
     BOOST_TEST_EQ(a.size(), 2);
-    BOOST_TEST_EQ(a[-1].lower(), -std::numeric_limits<double>::infinity());
-    BOOST_TEST_EQ(a[a.size()].upper(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(-1).lower(), -std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.bin(a.size()).upper(), std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.value(0), -1);
     BOOST_TEST_EQ(a.value(0.5), -0.5);
     BOOST_TEST_EQ(a.value(1), 0);
@@ -46,14 +46,14 @@ int main() {
     BOOST_TEST_EQ(d, a);
     axis::variable<> e{-2, 0, 2};
     BOOST_TEST_NE(a, e);
-    BOOST_TEST_EQ(a(-10), -1);
-    BOOST_TEST_EQ(a(-1), 0);
-    BOOST_TEST_EQ(a(0), 1);
-    BOOST_TEST_EQ(a(1), 2);
-    BOOST_TEST_EQ(a(10), 2);
-    BOOST_TEST_EQ(a(-std::numeric_limits<double>::infinity()), -1);
-    BOOST_TEST_EQ(a(std::numeric_limits<double>::infinity()), 2);
-    BOOST_TEST_EQ(a(std::numeric_limits<double>::quiet_NaN()), 2);
+    BOOST_TEST_EQ(a.index(-10), -1);
+    BOOST_TEST_EQ(a.index(-1), 0);
+    BOOST_TEST_EQ(a.index(0), 1);
+    BOOST_TEST_EQ(a.index(1), 2);
+    BOOST_TEST_EQ(a.index(10), 2);
+    BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
   }
 
   // axis::variable circular
@@ -66,14 +66,14 @@ int main() {
     BOOST_TEST_EQ(a.value(2), 2);
     BOOST_TEST_EQ(a.value(3), 4);
     BOOST_TEST_EQ(a.value(4), 5);
-    BOOST_TEST_EQ(a(-3), 0); // -3 + 3 = 0
-    BOOST_TEST_EQ(a(-2), 1); // -2 + 3 = 1
-    BOOST_TEST_EQ(a(-1), 0);
-    BOOST_TEST_EQ(a(0), 0);
-    BOOST_TEST_EQ(a(1), 1);
-    BOOST_TEST_EQ(a(2), 0);
-    BOOST_TEST_EQ(a(3), 0); // 3 - 3 = 0
-    BOOST_TEST_EQ(a(4), 1); // 4 - 3 = 1
+    BOOST_TEST_EQ(a.index(-3), 0); // -3 + 3 = 0
+    BOOST_TEST_EQ(a.index(-2), 1); // -2 + 3 = 1
+    BOOST_TEST_EQ(a.index(-1), 0);
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(1), 1);
+    BOOST_TEST_EQ(a.index(2), 0);
+    BOOST_TEST_EQ(a.index(3), 0); // 3 - 3 = 0
+    BOOST_TEST_EQ(a.index(4), 1); // 4 - 3 = 1
   }
 
   // axis::regular with growth
