@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_INTEGER_HPP
 #define BOOST_HISTOGRAM_AXIS_INTEGER_HPP
 
-#include <boost/container/string.hpp> // default meta data
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>

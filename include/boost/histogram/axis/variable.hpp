@@ -8,9 +8,7 @@
 #define BOOST_HISTOGRAM_AXIS_VARIABLE_HPP
 
 #include <algorithm>
-#include <boost/container/new_allocator.hpp>
-#include <boost/container/string.hpp> // default meta data
-#include <boost/container/vector.hpp>
+#include <boost/assert.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
@@ -23,6 +21,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -79,7 +78,7 @@ class variable
   using metadata_type = MetaData;
   using value_type = Value;
   using allocator_type = Allocator;
-  using vec_type = boost::container::vector<Value, allocator_type>;
+  using vec_type = std::vector<Value, allocator_type>;
 
 public:
   variable() = default;

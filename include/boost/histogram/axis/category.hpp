@@ -8,9 +8,6 @@
 #define BOOST_HISTOGRAM_AXIS_CATEGORY_HPP
 
 #include <algorithm>
-#include <boost/container/new_allocator.hpp>
-#include <boost/container/string.hpp> // default meta data
-#include <boost/container/vector.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -19,6 +16,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -66,7 +64,7 @@ class category
   using metadata_type = MetaData;
   using value_type = Value;
   using allocator_type = Allocator;
-  using vector_type = boost::container::vector<value_type, allocator_type>;
+  using vector_type = std::vector<value_type, allocator_type>;
 
 public:
   category() = default;
@@ -105,6 +103,14 @@ public:
   category(std::initializer_list<U> list, metadata_type meta = {},
            allocator_type alloc = {})
       : category(list.begin(), list.end(), std::move(meta), std::move(alloc)) {}
+
+  /// Constructor used by algorithm::reduce to shrink and rebin.
+  category(const category& src, index_type begin, index_type end, unsigned merge)
+      : category(src.vec_meta_.first().begin() + begin,
+                 src.vec_meta_.first().begin() + end, src.metadata()) {
+    if (merge > 1)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for category axis"));
+  }
 
   /// Return index for value argument.
   index_type operator()(const value_type& x) const noexcept {
@@ -157,7 +163,7 @@ private:
 template <class T>
 category(std::initializer_list<T>)->category<T>;
 
-category(std::initializer_list<const char*>)->category<boost::container::string>;
+category(std::initializer_list<const char*>)->category<std::string>;
 
 template <class T>
 category(std::initializer_list<T>, const char*)->category<T>;

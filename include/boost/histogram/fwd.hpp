@@ -12,12 +12,9 @@
   Forward declarations, basic typedefs, and default template arguments for main classes.
 */
 
-#include <boost/container/container_fwd.hpp> // string, vector, new_allocator
-#include <boost/histogram/attribute.hpp>     // BOOST_HISTOGRAM_NODISCARD
-
-// Why boost containers and not std containers?
-// - boost has the static_vector specialization, which is internally used a lot
-// - std::string is very large on MSVC, boost::container::string is small everywhere
+#include <boost/histogram/attribute.hpp> // BOOST_HISTOGRAM_NODISCARD
+#include <string>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -34,7 +31,7 @@ using real_index_type = double;
 struct null_type {};
 
 /// default metadata type
-using default_metadata = boost::container::string;
+using default_metadata = std::string;
 
 enum class option {
   none = 0,
@@ -89,13 +86,11 @@ template <class Value = int, class MetaData = default_metadata,
 class integer;
 
 template <class Value = double, class MetaData = default_metadata,
-          option Options = option::use_default,
-          class Allocator = boost::container::new_allocator<Value>>
+          option Options = option::use_default, class Allocator = std::allocator<Value>>
 class variable;
 
 template <class Value = int, class MetaData = default_metadata,
-          option Options = option::overflow,
-          class Allocator = boost::container::new_allocator<Value>>
+          option Options = option::overflow, class Allocator = std::allocator<Value>>
 class category;
 
 template <class... Ts>
@@ -121,14 +116,14 @@ class weighted_mean;
 
 struct unsafe_access;
 
-template <class Allocator = boost::container::new_allocator<void>>
+template <class Allocator = std::allocator<void>>
 class adaptive_storage;
 
 template <class T>
 class storage_adaptor;
 
-template <class T, class A = boost::container::new_allocator<T>>
-using dense_storage = storage_adaptor<boost::container::vector<T, A>>;
+template <class T, class A = std::allocator<T>>
+using dense_storage = storage_adaptor<std::vector<T, A>>;
 
 using default_storage = adaptive_storage<>;
 

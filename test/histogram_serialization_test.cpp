@@ -20,14 +20,14 @@ void run_tests() {
   // histogram_serialization
   {
     namespace tr = axis::transform;
-    auto a = make(
-        Tag(), axis::regular<>(3, -1, 1, "axis 0"),
-        axis::circular<>(4, 0.0, 1.0, "axis 1"),
-        axis::regular<double, tr::log>(3, 1, 100, "axis 2"),
-        axis::regular<double, tr::pow, boost::container::string,
-                      axis::option::overflow>(tr::pow(0.5), 3, 1, 100, "axis 3"),
-        axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "axis 4"), axis::category<>{3, 1, 2},
-        axis::integer<int, axis::null_type>(0, 2));
+    auto a =
+        make(Tag(), axis::regular<>(3, -1, 1, "axis 0"),
+             axis::circular<>(4, 0.0, 1.0, "axis 1"),
+             axis::regular<double, tr::log>(3, 1, 100, "axis 2"),
+             axis::regular<double, tr::pow, std::vector<int>, axis::option::overflow>(
+                 tr::pow(0.5), 3, 1, 100, {1, 2, 3}),
+             axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "axis 4"),
+             axis::category<>{3, 1, 2}, axis::integer<int, axis::null_type>(0, 2));
     a(0.5, 0.2, 20, 20, 0.25, 1, 1);
     std::string buf;
     {

@@ -92,8 +92,7 @@ int main() {
     axis::category d({1, 2}, axis::null_type{});
 
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(a), axis::category<int>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<decltype(b), axis::category<boost::container::string>>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(b), axis::category<std::string>>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(c), axis::category<int>>));
     BOOST_TEST_TRAIT_TRUE(
         (std::is_same<decltype(d), axis::category<int, axis::null_type>>));

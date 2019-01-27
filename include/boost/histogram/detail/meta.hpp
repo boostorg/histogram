@@ -29,7 +29,7 @@
 #if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
 #pragma GCC diagnostic pop
 #endif
-#include <boost/container/static_vector.hpp>
+#include <array>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/function.hpp>
@@ -323,13 +323,31 @@ std::size_t get_size(const T& t) noexcept {
   return get_size_impl(mp11::mp_valid<tuple_size_t, T>(), t);
 }
 
+template <class T>
+using buffer_size =
+    mp_eval_or<tuple_size_t, T,
+               std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>>;
+
+template <class T, std::size_t N>
+class subarray : public std::array<T, N> {
+public:
+  explicit subarray(std::size_t s) : size_(s) {}
+  subarray(std::size_t s, T value) : size_(s) { std::array<T, N>::fill(value); }
+
+  auto end() noexcept { return std::array<T, N>::begin() + size_; }
+  auto end() const noexcept { return std::array<T, N>::begin() + size_; }
+
+  auto size() const noexcept { return size_; }
+
+private:
+  std::size_t size_ = N;
+};
+
 template <class U, class T>
-using stack_buffer = boost::container::static_vector<
-    U, mp_eval_or<tuple_size_t, T,
-                  mp11::mp_size_t<BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>>::value>;
+using stack_buffer = subarray<U, buffer_size<T>::value>;
 
 template <class U, class T, class... Ts>
-auto make_stack_buffer(const T& t, Ts... ts) {
+auto make_stack_buffer(const T& t, Ts&&... ts) {
   return stack_buffer<U, T>(get_size(t), std::forward<Ts>(ts)...);
 }
 

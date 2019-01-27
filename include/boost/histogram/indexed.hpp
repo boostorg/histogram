@@ -30,38 +30,36 @@ enum class coverage {
 /// Range over histogram bins with multi-dimensional index.
 template <class Histogram>
 class BOOST_HISTOGRAM_NODISCARD indexed_range {
+  using max_dim = mp11::mp_size_t<
+      detail::buffer_size<typename detail::naked<Histogram>::axes_type>::value>;
   using value_iterator = decltype(std::declval<Histogram>().begin());
   struct cache_item {
     int idx, begin, end, extend;
   };
-  using cache_type =
-      detail::stack_buffer<cache_item, typename detail::naked<Histogram>::axes_type>;
 
 public:
   /// Pointer-like class to access value and index of current cell.
   class accessor {
   public:
     /// Array-like view into the current multi-dimensional index.
-    class indices_view {
+    class index_view {
     public:
       class index_iterator
-          : public boost::iterator_adaptor<index_iterator,
-                                           typename cache_type::const_iterator> {
+          : public boost::iterator_adaptor<index_iterator, const cache_item*> {
       public:
-        index_iterator(typename cache_type::const_iterator i)
-            : index_iterator::iterator_adaptor_(i) {}
+        index_iterator(const cache_item* i) : index_iterator::iterator_adaptor_(i) {}
         decltype(auto) operator*() const noexcept { return index_iterator::base()->idx; }
       };
 
-      auto begin() const noexcept { return index_iterator(cache_.begin()); }
-      auto end() const noexcept { return index_iterator(cache_.end()); }
-      auto size() const noexcept { return cache_.size(); }
-      int operator[](unsigned d) const noexcept { return cache_[d].idx; }
-      int at(unsigned d) const { return cache_.at(d).idx; }
+      auto begin() const noexcept { return index_iterator(begin_); }
+      auto end() const noexcept { return index_iterator(end_); }
+      auto size() const noexcept { return static_cast<std::size_t>(end_ - begin_); }
+      int operator[](unsigned d) const noexcept { return begin_[d].idx; }
+      int at(unsigned d) const { return begin_[d].idx; }
 
     private:
-      indices_view(const cache_type& c) : cache_(c) {}
-      const cache_type& cache_;
+      index_view(const cache_item* b, const cache_item* e) : begin_(b), end_(e) {}
+      const cache_item *begin_, *end_;
       friend class accessor;
     };
 
@@ -72,7 +70,9 @@ public:
 
     // convenience interface
     int index(unsigned d = 0) const noexcept { return parent_.cache_[d].idx; }
-    auto indices() const noexcept { return indices_view(parent_.cache_); }
+    auto indices() const noexcept {
+      return index_view(parent_.cache_, parent_.cache_ + parent_.hist_.rank());
+    }
 
     template <unsigned N = 0>
     decltype(auto) bin(std::integral_constant<unsigned, N> = {}) const {
@@ -83,7 +83,7 @@ public:
 
     double density() const {
       double x = 1;
-      auto it = parent_->cache_.begin();
+      auto it = parent_.cache_;
       parent_.hist_.for_each_axis([&](const auto& a) {
         const auto w = axis::traits::width_as<double>(a, it++->idx);
         x *= w ? w : 1;
@@ -110,10 +110,10 @@ public:
 
     void increment() noexcept {
       std::size_t stride = 1;
-      auto c = parent_->cache_.begin();
+      auto c = parent_->cache_;
       ++c->idx;
       ++range_iterator::base_reference();
-      while (c->idx == c->end && ((c + 1) != parent_->cache_.end())) {
+      while (c->idx == c->end && (c != (parent_->cache_ + parent_->hist_.rank() - 1))) {
         c->idx = c->begin;
         range_iterator::base_reference() -= (c->end - c->begin) * stride;
         stride *= c->extend;
@@ -130,12 +130,9 @@ public:
   };
 
   indexed_range(Histogram& h, coverage c)
-      : hist_(h)
-      , cover_all_(c == coverage::all)
-      , begin_(hist_.begin())
-      , end_(begin_)
-      , cache_(hist_.rank()) {
-    auto ca = cache_.begin();
+      : hist_(h), cover_all_(c == coverage::all), begin_(hist_.begin()), end_(begin_) {
+    auto ca = cache_;
+    const auto clast = ca + hist_.rank() - 1;
     std::size_t stride = 1;
     h.for_each_axis([&, this](const auto& a) {
       const auto opt = axis::traits::options(a);
@@ -147,7 +144,7 @@ public:
       ca->idx = ca->begin;
 
       begin_ += (ca->begin + shift) * stride;
-      if ((ca + 1) < cache_.end())
+      if (ca < clast)
         end_ += (ca->begin + shift) * stride;
       else
         end_ += (ca->end + shift) * stride;
@@ -164,7 +161,7 @@ private:
   Histogram& hist_;
   const bool cover_all_;
   value_iterator begin_, end_;
-  mutable cache_type cache_;
+  mutable cache_item cache_[max_dim::value];
 };
 
 /**

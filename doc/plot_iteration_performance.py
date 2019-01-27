@@ -28,7 +28,7 @@ for iaxis, axis_type in enumerate(("tuple", "vector", "vector_of_variant")):
     for (name, axis_t, dim, cov), v in bench.items():
         if axis_t != axis_type: continue
         if cov != "inner": continue
-        v = np.sort(v).T
+        v = np.sort(v, axis=0).T
         # if "semi_dynamic" in axis: continue
         name2, col, ls = {
             "Naive": ("nested for", "r", "--"),

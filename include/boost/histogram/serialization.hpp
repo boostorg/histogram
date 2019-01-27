@@ -7,8 +7,6 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP
 
-#include <boost/container/string.hpp>
-#include <boost/container/vector.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
@@ -49,32 +47,6 @@ void serialize(Archive& ar, tuple<Ts...>& t, unsigned /* version */) {
 } // namespace std
 
 namespace boost {
-namespace container {
-template <class Archive, class T, class A>
-void serialize(Archive& ar, vector<T, A>& v, unsigned) {
-  std::size_t size = v.size();
-  ar& size;
-  if (Archive::is_loading::value) { v.resize(size); }
-  if (std::is_trivially_copyable<T>::value) {
-    ar& ::boost::serialization::make_array(v.data(), size);
-  } else {
-    for (auto&& x : v) ar& x;
-  }
-}
-
-template <class Archive, class C, class T, class A>
-void serialize(Archive& ar, basic_string<C, T, A>& v, unsigned) {
-  std::size_t size = v.size();
-  ar& size;
-  if (Archive::is_loading::value) v.resize(size);
-  if (std::is_trivially_copyable<T>::value) {
-    ar& ::boost::serialization::make_array(v.data(), size);
-  } else {
-    for (auto&& x : v) ar& x;
-  }
-}
-} // namespace container
-
 namespace histogram {
 
 namespace accumulators {

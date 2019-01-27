@@ -12,7 +12,6 @@
   Collection of factory functions to conveniently create histograms.
 */
 
-#include <boost/container/vector.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/adaptive_storage.hpp> // implements default_storage
 #include <boost/histogram/detail/meta.hpp>
@@ -20,6 +19,7 @@
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/mp11/utility.hpp>
 #include <tuple>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -73,7 +73,7 @@ auto make_histogram_with(Storage&& storage, Iterable&& iterable) {
   using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
   using It = detail::naked<Iterable>;
   using A = mp11::mp_if<detail::is_indexable_container<It>, It,
-                        boost::container::vector<mp11::mp_first<It>>>;
+                        std::vector<mp11::mp_first<It>>>;
   return histogram<A, S>(std::forward<Iterable>(iterable),
                          S(std::forward<Storage>(storage)));
 }
@@ -106,8 +106,7 @@ template <typename Storage, typename Iterator,
           typename = detail::requires_iterator<Iterator>>
 auto make_histogram_with(Storage&& storage, Iterator begin, Iterator end) {
   using T = detail::naked<decltype(*begin)>;
-  return make_histogram_with(std::forward<Storage>(storage),
-                             boost::container::vector<T>(begin, end));
+  return make_histogram_with(std::forward<Storage>(storage), std::vector<T>(begin, end));
 }
 
 /**

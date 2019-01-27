@@ -100,15 +100,15 @@ void linearize_index(optional_index& out, const T& axis, const int j) {
 template <class S, class A, class T>
 void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   bool update_needed = false;
-  for (int s : shifts) update_needed |= s != 0;
+  auto sh = shifts;
+  for_each_axis(axes, [&](const auto&) { update_needed |= *sh++; });
   if (!update_needed) return;
   struct item {
     int idx, old_extend;
     std::size_t new_stride;
-  };
-  auto data = make_stack_buffer<item>(axes);
-  auto sit = shifts.begin();
-  auto dit = data.begin();
+  } data[buffer_size<A>::value];
+  auto sit = shifts;
+  auto dit = data;
   std::size_t s = 1;
   for_each_axis(axes, [&](const auto& a) {
     const auto n = axis::traits::extend(a);
@@ -119,8 +119,8 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   new_storage.reset(detail::bincount(axes));
   for (const auto& x : storage) {
     auto ns = new_storage.begin();
-    sit = shifts.begin();
-    dit = data.begin();
+    sit = shifts;
+    dit = data;
     for_each_axis(axes, [&](const auto& a) {
       if (axis::test(axis::traits::options(a), axis::option::underflow)) {
         if (dit->idx == 0) {
@@ -143,10 +143,9 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
       ++sit;
     });
     *ns = x;
-    dit = data.begin();
-    const auto last = data.end() - 1;
+    dit = data;
     ++dit->idx;
-    while (dit != last && dit->idx == dit->old_extend) {
+    while (dit != (data + get_size(axes) - 1) && dit->idx == dit->old_extend) {
       dit->idx = 0;
       ++(++dit)->idx;
     }
@@ -189,7 +188,7 @@ optional_index args_to_index(std::false_type, S&, T& axes, const U& args) {
 template <unsigned I, unsigned N, class S, class T, class U>
 optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args) {
   optional_index idx;
-  auto shifts = make_stack_buffer<int>(axes);
+  int shifts[buffer_size<T>::value];
   const auto rank = get_size(axes);
   if (rank == 1 && N > 1)
     linearize_value(idx, shifts[0], axis_get<0>(axes), tuple_slice<I, N>(args));

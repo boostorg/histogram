@@ -127,26 +127,26 @@ static void Indexed(benchmark::State& state, Tag, d3, coverage cov) {
 BENCH(Naive, tuple, 1, inner);
 BENCH(Indexed, tuple, 1, inner);
 
-// BENCH(Naive, vector, 1, inner);
-// BENCH(Indexed, vector, 1, inner);
-//
-// BENCH(Naive, vector_of_variant, 1, inner);
-// BENCH(Indexed, vector_of_variant, 1, inner);
+BENCH(Naive, vector, 1, inner);
+BENCH(Indexed, vector, 1, inner);
+
+BENCH(Naive, vector_of_variant, 1, inner);
+BENCH(Indexed, vector_of_variant, 1, inner);
 
 BENCH(Naive, tuple, 2, inner);
 BENCH(Indexed, tuple, 2, inner);
 
-// BENCH(Naive, vector, 2, inner);
-// BENCH(Indexed, vector, 2, inner);
-//
-// BENCH(Naive, vector_of_variant, 2, inner);
-// BENCH(Indexed, vector_of_variant, 2, inner);
-//
-// BENCH(Naive, tuple, 3, inner);
-// BENCH(Indexed, tuple, 3, inner);
-//
-// BENCH(Naive, vector, 3, inner);
-// BENCH(Indexed, vector, 3, inner);
-//
-// BENCH(Naive, vector_of_variant, 3, inner);
-// BENCH(Indexed, vector_of_variant, 3, inner);
+BENCH(Naive, vector, 2, inner);
+BENCH(Indexed, vector, 2, inner);
+
+BENCH(Naive, vector_of_variant, 2, inner);
+BENCH(Indexed, vector_of_variant, 2, inner);
+
+BENCH(Naive, tuple, 3, inner);
+BENCH(Indexed, tuple, 3, inner);
+
+BENCH(Naive, vector, 3, inner);
+BENCH(Indexed, vector, 3, inner);
+
+BENCH(Naive, vector_of_variant, 3, inner);
+BENCH(Indexed, vector_of_variant, 3, inner);
