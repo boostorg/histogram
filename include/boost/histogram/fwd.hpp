@@ -12,8 +12,8 @@
   Forward declarations, basic typedefs, and default template arguments for main classes.
 */
 
-#include <boost/container/container_fwd.hpp> // for string and new_allocator
-#include <boost/histogram/attribute.hpp>     // for BOOST_HISTOGRAM_NODISCARD
+#include <boost/container/container_fwd.hpp> // string, vector, new_allocator
+#include <boost/histogram/attribute.hpp>     // BOOST_HISTOGRAM_NODISCARD
 
 // Why boost containers and not std containers?
 // - boost has the static_vector specialization, which is internally used a lot
@@ -118,16 +118,6 @@ class mean;
 template <class Value = double>
 class weighted_mean;
 } // namespace accumulators
-
-template <class T>
-struct weight_type {
-  T value;
-};
-
-template <class T>
-struct sample_type {
-  T value;
-};
 
 struct unsafe_access;
 

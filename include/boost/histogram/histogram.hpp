@@ -334,6 +334,16 @@ auto sample(Ts&&... ts) noexcept {
   return sample_type<std::tuple<Ts&&...>>{std::forward_as_tuple(std::forward<Ts>(ts)...)};
 }
 
+template <class T>
+struct weight_type {
+  T value;
+};
+
+template <class T>
+struct sample_type {
+  T value;
+};
+
 } // namespace histogram
 } // namespace boost
 
