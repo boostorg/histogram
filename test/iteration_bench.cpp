@@ -15,13 +15,17 @@ struct tuple {};
 struct vector {};
 struct vector_of_variant {};
 
-using d1 = boost::mp11::mp_int<1>;
-using d2 = boost::mp11::mp_int<2>;
-using d3 = boost::mp11::mp_int<3>;
+template <unsigned I>
+using Dim_t = boost::mp11::mp_int<I>;
+
+using d1 = Dim_t<1>;
+using d2 = Dim_t<2>;
+using d3 = Dim_t<3>;
 
 auto make_histogram(tuple, d1, unsigned n) {
   return make_histogram_with(std::vector<unsigned>(), axis::integer<>(0, n));
 }
+
 auto make_histogram(tuple, d2, unsigned n) {
   return make_histogram_with(std::vector<unsigned>(), axis::integer<>(0, n),
                              axis::integer<>(0, n));
@@ -139,40 +143,34 @@ static void Indexed(benchmark::State& state, Tag, d3, coverage cov) {
   }
 }
 
-#define BENCH(Type, Tag, Dim, Cov)                                      \
-  BENCHMARK_CAPTURE(Type, (Tag, Dim, Cov), Tag{}, Dim{}, coverage::Cov) \
-      ->RangeMultiplier(2)                                              \
+#define BENCH(Type, Tag, Dim, Cov)                                             \
+  BENCHMARK_CAPTURE(Type, (Tag, Dim, Cov), Tag{}, Dim_t<Dim>{}, coverage::Cov) \
+      ->RangeMultiplier(2)                                                     \
       ->Range(4, 128)
 
-BENCH(Naive, tuple, d3, inner);
-BENCH(Insider, tuple, d3, inner);
-BENCH(Indexed, tuple, d3, inner);
+BENCH(Naive, tuple, 1, inner);
+BENCH(Indexed, tuple, 1, inner);
 
-BENCH(Naive, vector, d3, inner);
-// BENCH(Insider, vector, d3, inner);
-BENCH(Indexed, vector, d3, inner);
+BENCH(Naive, vector, 1, inner);
+BENCH(Indexed, vector, 1, inner);
 
-BENCH(Naive, vector_of_variant, d3, inner);
-// BENCH(Insider, vector_of_variant, d3, inner);
-BENCH(Indexed, vector_of_variant, d3, inner);
+BENCH(Naive, vector_of_variant, 1, inner);
+BENCH(Indexed, vector_of_variant, 1, inner);
 
-BENCH(Naive, tuple, d2, inner);
-// BENCH(Insider, tuple, d2, inner);
-BENCH(Indexed, tuple, d2, inner);
+BENCH(Naive, tuple, 2, inner);
+BENCH(Indexed, tuple, 2, inner);
 
-BENCH(Naive, vector, d2, inner);
-// BENCH(Insider, vector, d2, inner);
-BENCH(Indexed, vector, d2, inner);
+BENCH(Naive, vector, 2, inner);
+BENCH(Indexed, vector, 2, inner);
 
-BENCH(Naive, vector_of_variant, d2, inner);
-// BENCH(Insider, vector_of_variant, d2, inner);
-BENCH(Indexed, vector_of_variant, d2, inner);
+BENCH(Naive, vector_of_variant, 2, inner);
+BENCH(Indexed, vector_of_variant, 2, inner);
 
-BENCH(Naive, tuple, d1, inner);
-BENCH(Indexed, tuple, d1, inner);
+BENCH(Naive, tuple, 3, inner);
+BENCH(Indexed, tuple, 3, inner);
 
-BENCH(Naive, vector, d1, inner);
-BENCH(Indexed, vector, d1, inner);
+BENCH(Naive, vector, 3, inner);
+BENCH(Indexed, vector, 3, inner);
 
-BENCH(Naive, vector_of_variant, d1, inner);
-BENCH(Indexed, vector_of_variant, d1, inner);
+BENCH(Naive, vector_of_variant, 3, inner);
+BENCH(Indexed, vector_of_variant, 3, inner);

@@ -5,40 +5,41 @@ from collections import defaultdict
 import re
 import sys
 
-data = json.load(open(sys.argv[1]))
-
 bench = defaultdict(lambda:[])
-for x in data["benchmarks"]:
-    if x["run_type"] != "aggregate":
+for iline, line in enumerate(open(sys.argv[1])):
+    if iline < 3:
         continue
-    if x["aggregate_name"] != "mean":
-        continue
-    name, args, nbins = x["run_name"].split("/")
-    # "run_name": "Naive/(tuple, 3, false)/4",
-    m = re.match("\((\S+), d(\d), (\S+)\)", args)
-    hist = m.group(1)
-    dim = int(m.group(2))
-    cov = m.group(3)
-    bench[(name, hist, dim, extra)].append((int(nbins) ** dim, x["cpu_time"]))
+    # Naive/(tuple, 3, inner)/4    3.44 ns
+    m = re.match("(\S+)/\((\S+), (\d), (\S+)\)/(\d+)\s*([0-9\.]+) ns", line)
+    name = m.group(1)
+    hist = m.group(2)
+    dim = int(m.group(3))
+    cov = m.group(4)
+    nbins = int(m.group(5))
+    time = float(m.group(6))
+    bench[(name, hist, dim, cov)].append((int(nbins) ** dim, time))
 
-plt.figure(figsize=(7, 6))
-handles = []
-for (name, axis, cov), v in bench.items():
-    v = np.sort(v).T
-    # if "semi_dynamic" in axis: continue
-    if cov == "all": continue
-    lw = 3 if "Indexed" in name else 1.5
-    col = {"Naive": "r", "Insider": "C0", "Indexed": "k"}.get(name, "k")
-    ls = {"tuple": "-", "vector": "--", "vector_of_variant": ":"}[axis]
-    name2 = {"Naive": "nested for (naive)", "Insider" : "nested for (opt.)", "Indexed": "indexed"}.get(name, name)
-    h = plt.plot(v[0], v[1], lw=lw, ls=ls, color=col,
-                 label=r"%s: ${\mathit{axes}}$ = %s" % (name2, axis))[0]
-    handles.append(h)
-handles.sort(key=lambda x: x.get_label())
-plt.loglog()
-plt.legend(handles=handles, fontsize="xx-small")
-plt.ylabel("CPU time (less is better)")
-plt.xlabel("number of bins in 3D histogram")
-plt.tight_layout()
-plt.savefig("iteration_performance.svg")
+fig, ax = plt.subplots(1, 3, figsize=(10, 5), sharex=True, sharey=True)
+plt.subplots_adjust(bottom=0.18)
+for iaxis, axis_type in enumerate(("tuple", "vector", "vector_of_variant")):
+    plt.sca(ax[iaxis])
+    plt.title(axis_type, y=1.02)
+    handles = []
+    for (name, axis_t, dim, cov), v in bench.items():
+        if axis_t != axis_type: continue
+        if cov != "inner": continue
+        v = np.sort(v).T
+        # if "semi_dynamic" in axis: continue
+        name2, col, ls = {
+            "Naive": ("nested for", "r", "--"),
+            "Indexed": ("indexed", "b", ":")}.get(name, (name, "k", "-"))
+        h = plt.plot(v[0], v[1] / v[0], color=col, ls=ls, lw=dim,
+                     label=r"%s: $D=%i$" % (name2, dim))[0]
+        handles.append(h)
+        handles.sort(key=lambda x: x.get_label())
+    plt.loglog()
+    plt.legend(handles=handles, fontsize="xx-small")
+    plt.ylabel("CPU time in ns per bin")
+    # plt.savefig("iteration_performance.svg")
+plt.figtext(0.5, 0.05, "number of bins", ha="center")
 plt.show()
