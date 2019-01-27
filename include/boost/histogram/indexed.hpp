@@ -68,19 +68,20 @@ public:
     decltype(auto) get() const noexcept { return *iter_; }
     decltype(auto) operator-> () const noexcept { return iter_; }
 
-    // convenience interface
+    // access current indices
     int index(unsigned d = 0) const noexcept { return parent_.cache_[d].idx; }
     auto indices() const noexcept {
       return index_view(parent_.cache_, parent_.cache_ + parent_.hist_.rank());
     }
 
+    // access current bins
     template <unsigned N = 0>
     decltype(auto) bin(std::integral_constant<unsigned, N> = {}) const {
       return parent_.hist_.axis(std::integral_constant<unsigned, N>())[index(N)];
     }
-
     decltype(auto) bin(unsigned d) const { return parent_.hist_.axis(d)[index(d)]; }
 
+    // convenience interface
     double density() const {
       double x = 1;
       auto it = parent_.cache_;
