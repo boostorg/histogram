@@ -92,7 +92,7 @@ In a sense, [classref boost::histogram::adaptive_storage adaptive_storage] is th
 
 [section:uoflow Under- and overflow bins]
 
-Axis instances by default add extra bins that count values which fall below or above the range covered by the axis (for those types where that makes sense). These extra bins are called under- and overflow bins, respectively. The extra bins can be turned off individually for each axis to conserve memory, but it is generally recommended to have them. The extra bins do not interfere with normal bin counting. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively.
+Axis instances by default add extra bins that count values which fall below or above the range covered by the axis (for those types where that makes sense). These extra bins are called under- and overflow bins, respectively. The extra bins can be turned off individually for each axis to conserve memory, but it is generally recommended to have them. The normal bins, excluding under- and overflow, are called *inner bins*.
 
 Under- and overflow bins are useful in one-dimensional histograms, and nearly essential in multi-dimensional histograms. Here are the advantages:
 
@@ -100,7 +100,27 @@ Under- and overflow bins are useful in one-dimensional histograms, and nearly es
 
 * Diagnosis: Unexpected extreme values show up in the extra bins, which otherwise may be overlooked.
 
-* Ability to reduce histograms: In multi-dimensional histograms, an out-of-range value along one axis may be paired with an in-range value along another axis. If under- and overflow bins are missing, such a value pair is lost completely. If you apply a `reduce` operation on a histogram, which removes some axes by summing all counts along that dimension, this would lead to distortions of the histogram along the remaining axes. When under- and overflow bins are present, the `reduce` operation always produces a sub-histogram identical to one obtained if it was filled from scratch with the original data.
+* Ability to reduce histograms: In multi-dimensional histograms, an out-of-range value along one axis may be paired with an in-range value along another axis. If under- and overflow bins are missing, such a value pair is lost completely. If you apply a `reduce` operation on a histogram, which removes some axes by summing all counts along that dimension, this would lead to distortions of the histogram along the remaining axes. When under- and overflow bins are present, the `reduce` operation always produces a sub-histogram identical to one obtained, if it was filled with the original data.
+
+The presence of the extra bins does not interfere with normal indexing. On an axis with `n` bins, the first bin has the index `0`, the last bin `n-1`, while the under- and overflow bins are accessible at the indices `-1` and `n`, respectively. This choice is optimized for users who are unaware of the existence of these extra bins. They would find the other indexing scheme surprising, where you start with `0` at the underflow bin and the first normal bin is at `1`. Also, the chosen scheme allows one to turn off the extra bins in the code where the histogram is created, without changing any code downstream that addresses inner bins with indices.
+
+[endsect]
+
+[section:index_type Axis size is a signed integer]
+
+As explained in the [link histogram.rationale.uoflow section about under- and overflow], a histogram axis may have an optional underflow bin, which is addressed by the index `-1`. It follows that the index type must be signed integer for all axis types.
+
+The `size()` method of an axis also returns this signed integer type. This seems weird, since a size cannot be negative. All containers in the standard library use unsigned integer types for the size. But all containers in the standard library also use only unsigned integers for indexing, which is possible since indices are never negative.
+
+Here, `size()` returns a signed integer type, because indices may be negative and comparisons between indices and comparisons between the value returned by `size()` and an index are frequent. If `size()` returned unsigned integral type, compilers would produce warnings for each comparisons, and rightly so. If `size()` returns the index type, it is automatically assured that the value returned by `size()` is a valid index itself, which may address the overflow bin.
+
+[endsect]
+
+[section:real_index_type Continuous axes accept real-valued indices]
+
+An axis has a method which converts an index into the equivalent value at that index. If the axis is continuous, there are many possible values in the interval between two adjacent integer indices. User often want to access the center of such an interval. The easiest and most efficient way to compute the center value is to accept real-valued indices in the conversion method. Then, the center of the first bin between index `i` and `i+1` is simply obtained by passing `i+0.5` to the method which computes the value.
+
+This scheme is computationally efficient and intuitive. It is so useful that each continuous axis is required to accept a real-valued index. Library code relies on this to detect whether an axis is continuous or discrete. It introspects the argument type of the conversion function and checks whether it is a floating point or integral type, respectively.
 
 [endsect]
 
