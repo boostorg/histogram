@@ -1,6 +1,6 @@
 [section Rationale]
 
-[section Philosophy and principles]
+[section Guidelines]
 
 This library was written based on a decade of experience collected in working with big data, more precisely in the field of particle physics and astroparticle physics. The design is guided by advice from people like Bjarne Stroustrup, Scott Meyers, Herb Sutter, and Andrei Alexandrescu, and Chandler Carruth. I also like the [@https://www.python.org/dev/peps/pep-0020 Zen of Python] (also applies to other languages). I also borrowed ideas from the [@https://eigen.tuxfamily.org/ Eigen library].
 
@@ -10,9 +10,9 @@ Design goals of the library:
 
 * Provide the same interface for one-dimensional and multi-dimensional histograms. This makes the interface easier to learn, and makes it easier to move a project from one-dimensional to multi-dimensional analysis.
 
-* Hide the details of how the bin counters work. Other implementations, notably those in the [@https://root.cern.ch ROOT framework] expose this, which forces the user to make a choice which is potentially dangerous. At best, the choice is merely inefficient. In the worst case, it can lead to information loss in form of overflowing or capped counters.
+* Hide the details of how the bin counters work. This design allows for interesting implementations, such as the default storage that provides a no-overflow-guarantee, which no other library offers.
 
-* STL compatibility. If the histogram is compatible with STL algorithms, many tasks are one-liners. It should also feel familiar to users of [@boost:/libs/accumulators/index.html Boost.Accumulators]. That's why values are filled with `operator()`.
+* STL and Boost compatibility. The library should be compatible with STL algorithms and other Boost libraries, especially [@boost:/libs/accumulators/index.html Boost.Accumulators] and [@boost:/libs/range/index.html Boost.Range]. This potentiates what one can do with the library. Features provided by compatible libraries do not need to be explicitly implemented in this library.
 
 [endsect]
 
@@ -20,9 +20,9 @@ Design goals of the library:
 
 The library consists of three orthogonal components:
 
-* [link histogram.rationale.structure.histogram_host histogram host class]: The histogram host class defines the public user interface and holds axis objects (one for each dimension) and a storage object. The user can chose whether axis objects are stored in a static tuple or a dynamic vector.
+* [link histogram.rationale.structure.histogram_host histogram host class]: The histogram host class defines the public user interface and holds axis objects (one for each dimension) and a storage object. The user can chose whether axis objects are stored in a static tuple, a vector, or a vector of variants.
 
-* [link histogram.rationale.structure.axis_types axis types]: Defines how input values are mapped to bins. Several axis types are provided which implement different specializations. Users can make their own axis types following the axis concept and use them with the library.
+* [link histogram.rationale.structure.axis_types axis types]: Defines how input values are mapped to bins. Several axis types are provided which implement different specializations. Users can make their own axis types following the axis concept and use them with the library. A variant type is provided, which can hold one of several concrete axis types.
 
 * [link histogram.rationale.structure.storage_types storage types]: Manages a collection of bin counters. The requirements for a storage differ from those of an STL container, it needs to follow the storage concept. Two implementations are provided.
 
@@ -34,39 +34,49 @@ Histograms store axis objects and a storage object. A one-dimensional histogram 
 To understand the need for multi-dimensional histograms, think of point coordinates. If all points that you consider lie on a line, you need only one value to describe the point. If all points lie in a plane, you need two values to describe the position. Three values are needed for a point in space. A histogram puts a discrete grid over the line, the plane or the space, and counts how many points lie in each cell of the grid. To approximate a point distribution on a line, a 1d-histogram is sufficient. To do the same in 3d-space, one needs a 3d-histogram.
 ]
 
-This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.structure.axis_types axis types]. Users can furthermore chose between two ways of storing axis types in the histogram.
+This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.structure.axis_types axis types]. Users can furthermore chose between several ways of storing axis types in the histogram.
 
-When the histogram host class is configured to store axis types in a `std::tuple`, we obtain a static histogram. The number and types of the axes are known at compile-time. To access a particular axis, you need to use a compile-time number as index. A static histogram is always faster (see [link histogram.benchmarks benchmark]), because there are no type checks and conversions happening at run-time, and because the compiler can inline more code. Furthermore, many user errors are caught at compile-time rather than run-time.
+When the number and types of the axes are known at compile-time, the histogram host class stores axis types in a `std::tuple`. We call this a *static histogram*. To access a particular axis, one should use a compile-time number as index (a run-time index also works with some limitations). A static histogram is extremely fast (see [link histogram.benchmarks benchmark]), because there is no overhead and the compiler can inline code, unroll loops, and more. Also nice: many user errors are can be caught at compile-time rather than run-time.
 
-The static histogram is generally preferable, but cannot be used when the axis configuration is only known at run-time. This is the case, for example, when histograms are created at run-time from Python. Therefore, axis types can also be stored in a variant-like `boost::histogram::axis::any` type, which can be put in a `std::vector`. When the histogram host class is configured to store axis types like this, we obtain a dynamic histogram. The dynamic histogram is a single type that can store arbitrary sequences of axes types, which are generated at run-time. The polymorphic behavior of the generic `boost::histogram::axis::any` type has a run-time cost, however.
+Static histograms are the best kind, but cannot be used when histograms are to be created with an axis configuration that is only known at run-time. This is the case, for example, when histograms are created at run-time from Python.
+
+There are two levels of dynamism. Firstly, the histogram can hold instances of a single axis type in a `std::vector`. Now the number of axis instances per histogram can vary at run-time, but the axis type must be the same for all instances. We call this *semi-dynamic histogram*.
+
+If also the axis type should vary, one can use the `boost::histogram::axis::variant` type, which can hold one of a set of different concrete axis types and can be placed in a `std::vector`. When the histogram is configured to store axis types like this, we obtain a *dynamic histogram*. The dynamic histogram is a single type that can store arbitrary sequences of different axes types, which may be generated at run-time. The polymorphic behavior of the generic `boost::histogram::axis::variant` type has a run-time cost, however. Typically, the performance is reduced by a factor of two compared to a static histogram.
 
 [note
-The design decision to store axis types in the variant-like type `boost::histogram::axis::any` has several advantages over forms of run-time polymorphism based on vtables. Firstly, it guarantees that axis objects are local in memory, which reduces cache misses when the histogram iterates over axis objects in a tight loop, which it often does. Secondly, each axis may accept a different value type. Classic polymorphism with vtables assumes that all overloads provided by derived classes share the same method signature, but that is not the case here. One axis may convert numbers to indices, another strings. The method signatures are different and so classic run-time polymorphism does not work, but variants do.
+The design decision to store axis types in the variant-like type `boost::histogram::axis::variant` has several advantages over forms of run-time polymorphism. Firstly, it guarantees that axis objects which belong to the same histogram are stored locally together in memory, which reduces cache misses when the histogram iterates over axis objects in a tight loop, which it often does. Secondly, each axis can accept a different value type in this scheme. Classic polymorphism with vtables requires that all overloads provided by derived classes share the same method call signature, but that was found to be too restrictive for this library. In this library, the first axis of a histogram may convert numbers to indices, the second strings. The method signatures of different axis types are allowed to differ. Classic run-time polymorphism does not work, but variants do.
 ]
 
 [endsect]
 
 [section:axis_types Axis types]
 
-An axis defines which range of input values is mapped to which bin. The logic is encapsulated in an axis type. Users can create their own axis classes and use them with the library, by providing a class compatible with the [link histogram.concepts.axis axis concept]. The library comes with five builtin types, which implement different specializations.
+An axis defines an injective mapping of (a range of) input values to a bin. The logic is encapsulated in an axis type. Users can create their own axis classes and use them with the library, by providing a class compatible with the [link histogram.concepts.axis axis concept]. The library comes with four builtin types, which implement different specializations.
 
-* [classref boost::histogram::axis::regular] sorts real numbers into bins with equal width.
+* [classref boost::histogram::axis::regular] sorts real numbers into bins with equal width. The regular axis also supports monotonic transforms, which are applied when the input values are passed to the axis. This can be used to make a fast logarithmic axis, where the bins have equal width in the logarithm of the variable.
 * [classref boost::histogram::axis::variable] sorts real numbers into bins with varying width.
-* [classref boost::histogram::axis::circular] is a specialization of a regular axis for angles and similar values defined on a closed circle.
-* [classref boost::histogram::axis::integer] is a specialization of a regular axis for a range of integers with unit bin width.
-* [classref boost::histogram::axis::category] is a one-on-one mapping of a set of unique values onto bins. This can be used to count labels, like "red", "green", "blue".
+* [classref boost::histogram::axis::integer] is a specialization of a regular axis for a range of integers with unit bin width. It is much faster than a regular axis.
+* [classref boost::histogram::axis::category] is a bijective mapping of unique values onto bin indices and vice versa. This can be used with discrete categorical data, like "red", "green", "blue", for example.
+
+Each builtin axis type has a few compile-time options, which change its behavior.
+
+* All axis types can have an optional overflow bin. When the overflow bin is enabled and an input value is above the range covered by the axis, it is not discarded but counted in the overflow bin.
+* All axis types except the category axis can have an optional underflow bin. When the underflow bin is enabled and an input value is below the range covered by the axis, it is not discarded but counted in the underflow bin.
+* All axis types except the category axis can be circular, meaning that the axis range is periodic. This is useful for periodic data like polar angles.
+* All axis types can optionally grow. When an input value is outside of the range of an axis which is configured to grow, the range of the axis is extended until the value is in range. This option is incompatible with the circular option, only either can be active.
 
 [endsect]
 
 [section:storage_types Storage types]
 
-A storage type stores the actual bin counters. It uses a one-dimensional index for lookup, computed by the histogram host from the indices generated from all its axes. The storage needs to know nothing about axes. Users can integrate their own storage classes with the library, by providing a class compatible with the [link histogram.concepts.storage storage concept].
+A storage type stores the actual cell values. It uses a one-dimensional index for cell lookup, computed by the histogram host from the indices generated from all its axes. The storage needs to know nothing about axes. Users can integrate their own storage classes with the library, by providing a class compatible with the [link histogram.concepts.storage storage concept]. Standard containers are automatically adapted by the library to storage types.
 
-The builtin storage types are optimized for fast look-up of the random-access variety and use dense (aka contiguous) storage in memory. Bin lookup is often happening in a tight loop. [classref boost::histogram::array_storage] implements a simple storage based on a heap-allocated array of a static counter type. That could be the end of story, but there are some issues with this approach. It is not convenient, because the user has to decide what type to use to hold the bin counts and it is not an obvious choice. An integer type needs to be large enough to avoid counter overflow, but only a fraction of the bits are used if it is too large. Using an integral type that is too large is a waste of memory. This is still a concern today since the performance of modern CPUs depends on effective utilization of the CPU cache, which is small. Using floating point numbers instead of integers is also dangerous. They don't overflow, but cap the bin count when the bits in the mantissa are used up.
+Most storage types are optimized for fast look-up of the random-access variety. They use dense (aka contiguous) storage of cell values in memory. Cell lookup is often happening in a tight loop. A normal `std::vector` can be adapted to serve as a storage using the [classref boost::histogram::storage_adaptor]. Sometimes this is the best solution, but there are some caveats to this approach. The user has to decide which type should represents the cell counts and it is not an obvious choice. An integer type needs to be large enough to avoid counter overflow, but only a fraction of the bits are used if it is too large. Using an integral type that is too large is a waste of memory. When memory is wasted, more cache misses occur and performance is noticeably degraded. The performance of modern CPUs depends a lot on effective utilization of the CPU cache, which is small. Using floating point numbers instead of integers is also dangerous. They don't overflow, but cap the bin count when the bits in the mantissa are used up.
 
-The standard storage used in the library is [classref boost::histogram::adaptive_storage]. It solves these issues with a dynamic counter type management, based on the following insight. The [@https://en.wikipedia.org/wiki/Curse_of_dimensionality curse of dimensionality] makes the total number of bins grow very fast as the dimension of the histogram grows. However, having many bins also reduces the number of counts per bin, since the input values are spread over many more bins now.
+The default storage used in the library is [classref boost::histogram::adaptive_storage]. It solves these issues with a dynamic counter type management, based on the following insight. The [@https://en.wikipedia.org/wiki/Curse_of_dimensionality curse of dimensionality] makes the total number of bins grow very fast as the dimension of the histogram grows. However, having many bins also reduces the number of counts per bin, since the input values are spread over many more bins now. This means a small counter is often sufficient for high-dimensional histograms.
 
-We therefore start with a minimum amount of memory per bin counter by using the smallest integer type to hold a count. If the bin counter is about to overflow, we switch to the next larger integer type. We start with 1 byte per bin counter and then double the size as needed, until 8 byte per bin are reached. The following images illustrate this progression for a storage of 3 bin counters. A new memory block is always allocated for all counters, when the first one of them hits its capacity limit.
+The default storage therefore starts with a minimum amount of memory per cell, it uses an 1 byte integer type to hold a count. If the count in any cell is about to overflow, all cells switch to the next larger integer type. The capacity per cell is doubled whenever this happens, until 8 byte per bin are reached. The following images illustrate this progression for a storage of 3 bin counters. A new memory block is always allocated for all counters, when the first one of them hits its capacity limit.
 
 [$../storage_3_uint8.svg]
 
@@ -76,21 +86,27 @@ We therefore start with a minimum amount of memory per bin counter by using the 
 
 [$../storage_3_uint64.svg]
 
-When even that is not enough, we switch to the [@boost:/libs/multiprecision/index.html Boost.Multiprecision] type `cpp_int`, whose capacity is limited only by available memory. The following image is not to scale:
+When even that is not enough, the default storage switches to the [@boost:/libs/multiprecision/index.html Boost.Multiprecision] type `cpp_int`, whose capacity is limited only by available memory. The following image is not to scale:
 
 [$../storage_3_cpp_int.svg]
 
-This approach is not only memory conserving, but also allows us to give the strong guarantee that bin counters cannot overflow.
+This approach is not only memory conserving, but also provides the strong guarantee that bin counters cannot overflow.
 
-And now comes the best part: this approach is even faster in the multi-dimensional case despite the run-time overheads of handling the counter type dynamically. The benchmarks show that gains from better cache usage outweigh the run-time overheads of dynamic dispatching to the right bin counter type and the additional allocation costs. Doubling the size of the bin counters each time helps, too, because then allocations happen only O(logN) times for N bin increments.
+[note
+The no-overflow-guarantee only applies when the histogram is not using weighted fills or if all weights are integral numbers. When floating point weights are used, the default storage switches to a double counter per cell to store the sum of such weights. A double cannot provide the no-overflow-guarantee.
+]
 
-In a sense, [classref boost::histogram::adaptive_storage adaptive_storage] is the opposite of a `std::vector`, which keeps the size of the stored type constant, but grows to hold a larger number of elements. Here, the number of elements remains the same, but the storage grows to hold a uniform collection of larger and larger elements.
+The best part: this approach is even faster for a histogram with sufficient size despite the run-time overheads of handling the counter type dynamically. The benchmarks show that the gains from better cache usage outweigh the run-time overheads of dynamic dispatching to the right bin counter type and the occasional allocation costs. Doubling the size of the bin counters each time helps, too, because the allocations happen only O(logN) times for N increments.
+
+[note
+In a sense, [classref boost::histogram::adaptive_storage] is the opposite of a `std::vector`, which keeps the size of the stored type constant, but grows to hold a larger number of elements. Here, the number of elements remains the same, but the storage grows to hold a uniform collection of larger and larger elements.
+]
 
 [endsect]
 
 [endsect]
 
-[section:no_lambdas Why lambdas are not allowed as axis types]
+[section:no_lambdas No lambdas as axis types]
 
 It was considered whether histograms should accept lambdas as axis types, which simply implemented the mapping from the argument, the value type, to an integral index. The problem is that this wouldn't be enough be enough. The histogram frequently needs to query the size of axis without calling the lambda function. Because of this, the idea to allow lambdas as axis types was rejected.
 
@@ -114,7 +130,7 @@ The presence of the extra bins does not interfere with normal indexing. On an ax
 
 [endsect]
 
-[section:index_type Size method of an axis returns a signed integer]
+[section:index_type Size method of axis returns signed integer]
 
 The standard library returns a container size as an unsigned integer, because a container size cannot be negative. The `size()` method of the histogram class follows this rule, but the `size()` methods of axis types return a signed integral type. Why?
 
@@ -132,7 +148,7 @@ The advantages clearly override the disadvantages of this choice.
 
 [endsect]
 
-[section:real_index_type Continuous axes map real-valued indices to values]
+[section:real_index_type Continuous axis maps real-valued indices to values]
 
 An axis has a method which converts an index into the equivalent value at that index. If the axis is continuous, there are many possible values in the interval between two adjacent integer indices. User often want to access the center of such an interval. The easiest and most efficient way to compute the center value is to accept real-valued indices in the conversion method. Then, the center of the first bin between index `i` and `i+1` is simply obtained by passing `i+0.5` to the method which computes the value.
 
@@ -184,6 +200,18 @@ Python is a popular scripting language in the data science community. Thus, the 
 
 [endsect]
 
+[section Support of Boost.Accumulators]
+
+Boost.Histogram can be configured to use arbitrary accumulators as cells, in particular the accumulators from [@boost:/libs/accumulators/index.html Boost.Accumulators]. Sample values can be passed to the cell accumulator, which it may use to compute the mean, median, variance or other statistics of the samples sorted into each cell.
+
+[endsect]
+
+[section Support of Boost.Range]
+
+The histogram class is a valid range and can be used with the [@boost:/libs/range/index.html Boost.Range] library. This library provides a custom adaptor generator, `indexed`, analog to the corresponding adaptor generator in Boost.Range, but with a potentially multi-dimensional index.
+
+[endsect]
+
 [section Serialization]
 
 Serialization is implemented using [@boost:/libs/serialization/index.html Boost.Serialization]. It would be great to have a portable binary archive with support for floating point data to store and retrieve histograms efficiently, which is currently not available. The library has to be open for other serialization libraries.
@@ -212,7 +240,9 @@ Recommendation:
 
 [section Why is Boost.Histogram not built on top of Boost.MultiArray?]
 
-Boost.MultiArray implements a multi-dimensional array, it also converts an index tuple into a global index that is used to access an element in the array. Boost.Histogram and Boost.MultiArray share this functionality, but Boost.Histogram cannot use Boost.MultiArray as a back-end. Boost.MultiArray does not allow to change the element type dynamically, like it is needed to implement the adaptive storage mentioned further up. Using a variant type as the element type of a Boost.MultiArray would not work, because it creates this wasteful layout:
+Boost.MultiArray implements a multi-dimensional array, it also converts an index tuple into a global index that is used to access an element in the array. Boost.Histogram and Boost.MultiArray share this functionality, but Boost.Histogram cannot use Boost.MultiArray as a back-end. Boost.MultiArray makes the rank of the array a compile-time property, while this library needs the rank to be dynamic.
+
+Boost.MultiArray also does not allow to change the element type dynamically. This is needed to implement the adaptive storage mentioned further up. Using a variant type as the element type of a Boost.MultiArray would not work, because it creates this wasteful layout:
 
 `[type-index 1][value 1][type-index 2][value 2]...`
 

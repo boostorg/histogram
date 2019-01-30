@@ -185,18 +185,22 @@ Such a minimal axis works, even though it lacks convenience features provided by
 
 [section User-defined storage policy]
 
-Histograms can be created with a custom storage policy with the factory function [funcref boost::histogram::make_histogram_with make_histogram_with].
+Histograms can be created which use a custom storage class with the factory function [funcref boost::histogram::make_histogram_with]. This factory function accepts many standard containers as storage: vectors, arrays, and maps. These are automatically wrapped with a [classref boost::histogram::storage_adaptor] to provide the storage interface needed by the library.
 
-A simple alternative, [classref boost::histogram::array_storage array_storage], is included in the library. It does not do dynamic counter management, instead it is templated and lets the user statically choose the counter type, which stores the count per bin. Usually, this would be an integral or floating point type. If performance is a concern, you could give this storage policy a try, since it may be faster for low-dimensional histograms (but it can be slower as well, just try it out and measure).
+A `std::vector` may provide higher performance in some cases than the default storage. The counter type can then be chosen by the user. Usually, this would be an integral or floating point type. This storage may be faster than the default storage for low-dimensional histograms (or not, one has to measure).
 
-If you work exclusively with weighted fills, [classref boost::histogram::array_storage array_storage] will be faster than [classref boost::histogram::adaptive_storage adaptive_storage]. If you want to have a variance estimate for weighted fills, use [classref boost::histogram::weight_counter weight_counter] as the template argument for [classref boost::histogram::array_storage array_storage].
+[warning The no-overflow-guarantee is only valid if the [classref boost::histogram::adaptive_storage default storage] is used. If you change the storage policy, you need to know what you are doing.]
 
-Here is an example of a histogram construced with an alternative storage policy.
+Users who work exclusively with weighted fills should use a `std::vector<double>`, it will be faster than using the default storage. Users may also store complex accumulators in the vector. [classref boost::histogram::accumulators::weighted_sum] tracks a variance estimate together with the sum of weights. [classref boost::histogram::accumulators::mean] computes the mean of samples are sorted into the cell.
+
+An interesting alternative to a `std::vector` is to use a `std::array`. The latter provides a storage with a fixed maximum capacity (the size of the array). `std::array` allocates the memory on the stack. Using this in combination with a static histogram allows one to create histograms completely on the stack, which is very fast.
+
+Finally, a `std::map` and `std::unordered_map` is adapted into a sparse storage, where empty cells do not consume any memory, but the memory consumption per cell is much larger than for a vector or array, and the cells are usually not located in a contiguous memory section.
+
+Here is an example of a histogram constructed with an alternative storage policy.
 
 [import ../examples/guide_custom_storage.cpp]
 [guide_custom_storage]
-
-[warning The guarantees regarding protection against overflow and count capping are only valid if the default [classref boost::histogram::adaptive_storage adaptive_storage] is used. If you change the storage policy, you need to know what you are doing.]
 
 [endsect]
 
