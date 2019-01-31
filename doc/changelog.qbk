@@ -1,9 +1,17 @@
-[section Changelog]
+[section:history Revision history]
 
-[master]
+[heading 4.0 (first boost release)]
 
 * Removed Python bindings, will be developed in separate repository
   github.com/hdembinski/histogram-python
+* Make all axis optionally circular (except category axis)
+* Removed circular axis (which is just a circular regular axis)
+* Added indexed adaptor generator for convenient and fast iteration over histograms
+* Support for axes that can grow in range
+* Support for axes which accept multiple values (example: hexagonal binning)
+* Support for profiles and more generally, arbitrary accumulators in each cell
+* Added compatibility with Boost.Range, Boost.Units, and Boost.Accumulators
+* Performance improvements
 
 [heading 3.2 (not in boost)]
 

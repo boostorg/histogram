@@ -35,13 +35,6 @@ doxygen autodoc
   <doxygen:param>WARN_IF_DOC_ERROR=YES
 ;
 
-# exe speed
-#   : ../test/speed_cpp.cpp
-#   : <variant>release
-#     <c++-template-depth>256
-#     <cxxflags>"-std=c++11"
-#   ;
-
 boostbook histogram
 :
   histogram.qbk
@@ -50,7 +43,8 @@ boostbook histogram
 
   <format>html:<xsl:param>boost.root=../..
   <format>html:<xsl:param>boost.libraries=../../../../libs/libraries.htm
-  <xsl:param>generate.section.toc.level=3
-  <xsl:param>chunk.first.sections=1
   <xsl:param>boost.mathjax=1
+  <xsl:param>chunk.first.sections=1
+  <xsl:param>generate.section.toc.level=1
+  <xsl:param>generate.toc="chapter nop section nop"
 ;

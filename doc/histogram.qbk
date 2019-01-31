@@ -1,7 +1,8 @@
 [library Boost.Histogram
     [quickbook 1.6]
+    [copyright 2016 - 2019 Hans Dembinski]
+    [purpose Histogram library]
     [authors [Dembinski, Hans]]
-    [copyright 2016-2017 Hans Dembinski]
     [id histogram]
     [dirname histogram]
     [license
@@ -11,33 +12,73 @@
     ]
 ]
 
-[section Abstract]
+Boost.Histogram provides an easy-to-use, very fast, and extensible multi-dimensional histograms and profiles.
 
-This C++14 library provides an easy-to-use and multi-dimensional [@https://en.wikipedia.org/wiki/Histogram histogram] template class for your counting and statistics needs. It is very customisable through policy classes, but the default policies were carefully crafted so that most users won't need to customize anything. The histogram has a convenient interface, designed to work well for the one- and multi-dimensional cases. If the default policies are used, the histogram is guaranteed to be safe to use as a black box, memory efficient, and very fast. Safe means that bin counts *cannot overflow* or be capped at some large value, which is generally not guaranteed in other implementations.
+[variablelist
+  [
+    [
+      [link histogram.overview Overview]
+    ]
+    [
+      An overview of the features included in Boost.Histogram, the motivation and rationale.
+    ]
+  ]
+  [
+    [
+      [link histogram.getting_started Getting started]
+    ]
+    [
+      See Boost.Histogram in action in a few heavily commented examples. Copy/paste from these examples to jump-start your project.
+    ]
+  ]
+  [
+    [
+      [link histogram.guide User guide]
+    ]
+    [
+      A user guide that introduces all aspects of the library, starting simple and ending with the advanced features.
+    ]
+  ]
+  [
+    [
+      [link histogram.reference Reference]
+    ]
+    [
+      Detailed class and function reference.
+    ]
+  ]
+  [
+    [
+      [link histogram.concepts Concepts]
+    ]
+    [
+      Explains the axis and storage type concepts, the behavior and interface you need to implemented when you make a new axis or storage type for Boost.Histogram.
+    ]
+  ]
+  [
+    [
+      [link histogram.history Revision history]
+    ]
+    [
+      Log of Boost.Histogram changes.
+    ]
+  ]
+]
 
-The histogram class comes in two variants, which share a common interface. The *static* variant uses a maximum of compile-time information to provide maximum performance, at the cost of reduced runtime flexibility and potentially larger executables, if many different histograms are instantiated. The *dynamic* variant is a bit slower, but configurable at run-time, and does not increase the size of the executable if several different configurations are used. Optional serialization support is implemented with [@boost:/libs/serialization/index.html Boost.Serialization].
-
-My goal is to submit this project to [@http://www.boost.org Boost], thus it uses the Boost directory structure and namespace. The code is released under the [@http://www.boost.org/LICENSE_1_0.txt Boost Software License].
-
-[endsect]
-
-[section Acknowledgments]
-
-Klemens Morgenstern helped me to make this library boost-compliant, converting the documentation and adding Jamfiles, and provided code improvements.
-
-Mateusz Loskot kindly agreed to be the Review Manager for this library and contributed various patches, for example, better Jamfiles.
-
-Steven Watanabe provided an outstandingly detailed review of the documentation and code of the library.
-
-[endsect]
-
-[include motivation.qbk]
-[include build.qbk]
+[include overview.qbk]
 [include getting_started.qbk]
 [include guide.qbk]
 [include benchmarks.qbk]
-[include rationale.qbk]
 [include concepts.qbk]
 [xinclude autodoc.xml]
 [include changelog.qbk]
-[include bibliography.qbk]
+
+[*Acknowledgments]
+
+Klemens Morgenstern helped to make this library Boost-compliant, converting the documentation and adding Jamfiles, and provided code improvements.
+
+Mateusz Loskot kindly agreed to fill the role of the Review Manager for this library and contributed various patches.
+
+Steven Watanabe provided a very detailed review of the documentation and code of the library. Great reviews were submitted by Bjorn Reese, Jim Pivarski, Klemens Morgenstern, and Alex Hagen-Zanker. Comments and suggestions were provided by Andrea Bocci, degksi, Glen Fernandes, Gavin Lambert, Seth, and Mateusz Loskot.
+
+The members of the [@http://www.scikit-hep.org Scikit-HEP project], in particular Henry Schreiner and Jim Pivarski, provided valuable feedback and input on the design of this library.
