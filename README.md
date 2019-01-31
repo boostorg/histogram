@@ -2,6 +2,8 @@
 
 **Fast multi-dimensional histogram with convenient interface for C++14 and Python**
 
+Coded with :heart:, powered by the Boost community and the [Scikit-HEP Project](http://scikit-hep.org).
+
 Branch  | Linux [1] and OSX [2] | Windows [3] | Coverage
 ------- | --------------------- |------------ | --------
 master  | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/master?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/master) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master&service=github)](https://coveralls.io/github/HDembinski/histogram?branch=master)
@@ -10,7 +12,6 @@ develop | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg
 1. gcc-5.5.0, clang-5.0.0
 2. Xcode 9.4
 3. Visual Studio 15 2017
-
 
 This **header-only** open-source library provides a state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to counts things. This histogram class can do more than counting. It can be equipped with arbitrary accumulators to compute means, medians, and whatever you fancy in each cell. Several parallelization options are provided. Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
 
