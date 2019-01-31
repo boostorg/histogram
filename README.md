@@ -2,7 +2,7 @@
 
 **Fast multi-dimensional histogram with convenient interface for C++14 and Python**
 
-Coded with ❤. Powered by the Boost community and the [Scikit-HEP Project](http://scikit-hep.org).
+Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org).
 
 Branch  | Linux [1] and OSX [2] | Windows [3] | Coverage
 ------- | --------------------- |------------ | --------
