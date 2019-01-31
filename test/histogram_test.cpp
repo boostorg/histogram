@@ -563,19 +563,19 @@ void run_tests() {
     struct modified_axis : public axis::integer<> {
       using integer::integer; // inherit ctors of base
       // customization point: convert argument and call base class
-      axis::index_type index(const char* s) const { return integer::index(std::atoi(s)); }
+      auto index(const char* s) const { return integer::index(std::atoi(s)); }
     };
 
     struct minimal {
-      axis::index_type index(int x) const { return x % 2; }
-      axis::index_type size() const { return 2; }
+      auto index(int x) const { return static_cast<axis::index_type>(x % 2); }
+      auto size() const { return axis::index_type{2}; }
     };
 
     struct axis2d {
-      axis::index_type index(std::tuple<double, double> x) const {
-        return std::get<0>(x) == 1 && std::get<1>(x) == 2;
+      auto index(std::tuple<double, double> x) const {
+        return axis::index_type{std::get<0>(x) == 1 && std::get<1>(x) == 2};
       }
-      axis::index_type size() const { return 2; }
+      auto size() const { return axis::index_type{2}; }
     };
 
     auto h = make(Tag(), modified_axis(0, 3), minimal(), axis2d());
@@ -622,10 +622,10 @@ void run_tests() {
     BOOST_TEST_THROWS(h1(std::make_tuple(0, 0)), std::invalid_argument);
 
     struct axis2d {
-      axis::index_type index(std::tuple<int, int> x) const {
-        return std::get<0>(x) == 1 && std::get<1>(x) == 2;
+      auto index(std::tuple<int, int> x) const {
+        return axis::index_type{std::get<0>(x) == 1 && std::get<1>(x) == 2};
       }
-      axis::index_type size() const { return 2; }
+      auto size() const { return axis::index_type{2}; }
     };
     auto h2 = make(Tag(), axis2d());
     h2(std::make_tuple(1, 2));  // ok, forwards 2d tuple to axis
