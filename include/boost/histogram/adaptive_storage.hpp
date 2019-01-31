@@ -95,13 +95,16 @@ bool safe_radd(T& t, const boost::multiprecision::number<U>& u) {
 /**
   Memory-efficient storage for integral counters which cannot overflow.
 
-  This storage implementation keeps a contiguous array of elemental counters, one for each
-  cell. If an operation is requested, which would overflow a counter, the whole array is
-  replaced with another of a wider integral type, then the operation is executed. The
-  storage uses integers of 8, 16, 32, 64 bits, and then switches to a multiprecision
+  This storage provides a no-overflow-guarantee if it is filled with integral weights
+  only. This storage implementation keeps a contiguous array of elemental counters, one
+  for each cell. If an operation is requested, which would overflow a counter, the whole
+  array is replaced with another of a wider integral type, then the operation is executed.
+  The storage uses integers of 8, 16, 32, 64 bits, and then switches to a multiprecision
   integral type, cpp_int from
   [Boost.Multiprecision](https://www.boost.org/doc/libs/develop/libs/multiprecision/doc/html/index.html).
-  A scaling operation turns the elements into doubles.
+
+  A scaling operation or adding a floating point number turns the elements into doubles,
+  which voids the no-overflow-guarantee.
 */
 template <class Allocator>
 class adaptive_storage {
