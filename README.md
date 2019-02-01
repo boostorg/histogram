@@ -44,7 +44,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 1. In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/) integer, which is only limited by available memory.
 2. An axis can be configured to grow when a value is encountered that is outside of its range. It then grows new bins towards this value so that the value ends up in the new highest or lowest bin.
 3. The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell. This can be used to compute variance estimates for each cell. These are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell values.
-4. Builtin axis types can configured to only accept dimensional quantities, like those from Boost.Units. This means you get an error if you try to use fill a length when the histogram axis expects a time, for example.
+4. Builtin axis types can configured to only accept dimensional quantities, like those from Boost.Units. This means you get an error if you try to fill a length when the histogram axis expects a time, for example.
 
 ## Dependencies
 
