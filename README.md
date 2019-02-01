@@ -32,7 +32,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Efficient use of memory (1)
 * Support for custom axis types: define how input values should map to indices
 * Support for under-/overflow bins (can be disabled individually to reduce memory consumption)
-* Support for axis that grow automatically with input values (2)
+* Support for axes that grow automatically with input values (2)
 * Support for weighted increments
 * Support for profiles and user-defined accumulators in histogram cells (3)
 * Support for completely stack-based histograms
