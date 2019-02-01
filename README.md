@@ -13,15 +13,11 @@ develop | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg
 2. Xcode 9.4
 3. Visual Studio 15 2017
 
-This **header-only** open-source library provides a state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to counts things. This histogram class can do more than counting. It can be equipped with arbitrary accumulators to compute means, medians, and whatever you fancy in each cell. Several parallelization options are provided. Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
+This **header-only** open-source library provides an easy-to-use state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to counts things. The histogram is easy to use for the casual user and yet very customizable. It does not restrict the power-user. The library offers a unique safety guarantee: cell counts *cannot overflow* or *be capped* in the standard configuration. And it can do more than counting. The histogram can be equipped with arbitrary accumulators to compute means, medians, and whatever you fancy in each cell. The library is very fast single-threaded (see benchmarks) and several parallelization options are provided for multi-threaded programming.
 
-The histogram is very customizable through a templated modular design, but the default options were carefully chosen so that most users don't need to customize anything. It is easy to use for the casual user and does not restrict the power-user. In the standard configuration, this library offers a unique safety guarantee not found elsewhere: cell counts *cannot overflow* or *be capped*. The library is safe to use, convenient, memory conserving, and very fast (see benchmarks).
+This project was developed for inclusion in [Boost](http://www.boost.org) and passed Boost review in September 2018. The plan is to have a first official Boost-release in April 2019 with the upcoming version 1.70. Of course, you can use it already now (but pick the latest release!). The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
-The histogram class can be configured in several variants from fully *static* to fully *dynamic*. *Static* variants provide more performance, at the cost of run-time flexibility and potentially larger binaries. *Dynamic* variants are slower, but fully configurable at run-time and may produce smaller binaries. Static variants can be configured to be completely stack-based, without any dynamic memory allocation.
-
-This project was developed for inclusion in [Boost](http://www.boost.org) and passed Boost review in September 2018. The plan is to have a first official Boost-release in April 2019 with the upcoming version 1.70. Of course, you can use it already now. The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
-
-Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/). Highlights are given below.
+Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
 
 ## Features
 
@@ -48,7 +44,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 
 ## Dependencies
 
-* [Boost >= 1.66](http://www.boost.org) *header-only installation*
+* [Boost >= 1.66](http://www.boost.org) *header-only installation is sufficient*
 * Optional: [CMake >= 3.5](https://cmake.org) [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)  [Boost.Accumulators](https://www.boost.org/doc/libs/release/libs/accumulators/) [Boost.Range](https://www.boost.org/doc/libs/release/libs/range/) [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/)
 
 ## Build instructions
