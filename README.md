@@ -27,30 +27,29 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 
 * Extremely customisable multi-dimensional histogram
 * Simple, convenient, STL and Boost-compatible interface
-* Static and dynamic implementations under a common interface
 * Counters with high dynamic range, cannot overflow or be capped (1)
 * Better performance than other libraries (see benchmarks for details)
 * Efficient use of memory (1)
 * Support for custom axis types: define how input values should map to indices
-* Support for under-/overflow bins (can be disabled to reduce memory consumption)
+* Support for under-/overflow bins (can be disabled individually to reduce memory consumption)
+* Support for axis that grow automatically with input values (2)
 * Support for weighted increments
-* Support for custom accumulators in each bin (2)
-* Support for variance estimates (3)
+* Support for profiles and user-defined accumulators in histogram cells (3)
 * Support for completely stack-based histograms
 * Support for adding and scaling histograms
 * Support for custom allocators
-* Support for type-safe histograms (4)
+* Support for type-safe histograms (3)
 * Optional serialization based on [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
 
 1. In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/) integer, which is only limited by available memory.
-2. The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell.
-3. Variance estimates are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell-counts.
+2. An axis can be configured to grow when a value is encountered that is outside of its range. It then grows new bins towards this value so that the value ends up in the new highest or lowest bin.
+3. The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell. This can be used to compute variance estimates for each cell. These are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell values.
 4. Builtin axis types can configured to only accept dimensional quantities, like those from Boost.Units.
 
 ## Dependencies
 
 * [Boost >= 1.66](http://www.boost.org) *header-only installation*
-* Optional: [CMake >= 3.5](https://cmake.org) [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
+* Optional: [CMake >= 3.5](https://cmake.org) [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)  [Boost.Accumulators](https://www.boost.org/doc/libs/release/libs/accumulators/) [Boost.Range](https://www.boost.org/doc/libs/release/libs/range/) [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/)
 
 ## Build instructions
 
