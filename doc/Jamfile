@@ -6,7 +6,7 @@
 import doxygen ;
 import quickbook ;
 
-doxygen autodoc
+doxygen reference
 :
   ../include/boost/histogram.hpp
   [ glob ../include/boost/histogram/*.hpp ]
@@ -39,7 +39,7 @@ boostbook histogram
 :
   histogram.qbk
 :
-  <dependency>autodoc
+  <dependency>reference
 
   <format>html:<xsl:param>boost.root=../..
   <format>html:<xsl:param>boost.libraries=../../../../libs/libraries.htm

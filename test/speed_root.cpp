@@ -9,10 +9,9 @@
 #include <TH3I.h>
 #include <THn.h>
 
-#include <algorithm>
+#include <cassert>
 #include <cstdio>
 #include <ctime>
-#include <limits>
 #include <memory>
 #include <random>
 
@@ -29,91 +28,69 @@ std::unique_ptr<double[]> random_array(unsigned n, int type) {
   return r;
 }
 
-void compare_1d(unsigned n, int distrib) {
+double compare_1d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
-
-  double best_root = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 20; ++k) {
-    TH1I hroot("", "", 100, 0, 1);
-    auto t = clock();
-    for (unsigned i = 0; i < n; ++i) hroot.Fill(r[i]);
-    t = clock() - t;
-    best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
-  }
-  printf("root %.3f\n", best_root);
+  TH1I h("", "", 100, 0, 1);
+  double t = clock();
+  for (auto it = r.get(), end = r.get() + n; it != end;) h.Fill(*it++);
+  t = (clock() - t) / CLOCKS_PER_SEC / n * 1e9;
+  assert(distrib != 0 || h.GetSumOfWeights() == n);
+  return t;
 }
 
-void compare_2d(unsigned n, int distrib) {
+double compare_2d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
-
-  double best_root = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 20; ++k) {
-    TH2I hroot("", "", 100, 0, 1, 100, 0, 1);
-    auto t = clock();
-    for (unsigned i = 0; i < n / 2; ++i) hroot.Fill(r[2 * i], r[2 * i + 1]);
-    t = clock() - t;
-    best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
+  TH2I h("", "", 100, 0, 1, 100, 0, 1);
+  double t = clock();
+  for (auto it = r.get(), end = r.get() + n; it != end;) {
+    const auto x = *it++;
+    const auto y = *it++;
+    h.Fill(x, y);
   }
-  printf("root %.3f\n", best_root);
+  t = (double(clock()) - t) / CLOCKS_PER_SEC / n * 1e9;
+  assert(distrib != 0 || h.GetSumOfWeights() == n / 2);
+  return t;
 }
 
-void compare_3d(unsigned n, int distrib) {
+double compare_3d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
-
-  double best_root = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 20; ++k) {
-    TH3I hroot("", "", 100, 0, 1, 100, 0, 1, 100, 0, 1);
-    auto t = clock();
-    for (unsigned i = 0; i < n / 3; ++i)
-      hroot.Fill(r[3 * i], r[3 * i + 1], r[3 * i + 2]);
-    t = clock() - t;
-    best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
+  TH3I h("", "", 100, 0, 1, 100, 0, 1, 100, 0, 1);
+  double t = clock();
+  for (auto it = r.get(), end = r.get() + n; it != end;) {
+    const auto x = *it++;
+    const auto y = *it++;
+    const auto z = *it++;
+    h.Fill(x, y, z);
   }
-  printf("root %.3f\n", best_root);
+  t = (double(clock()) - t) / CLOCKS_PER_SEC / n * 1e9;
+  assert(distrib != 0 || h.GetSumOfWeights() == n / 3);
+  return t;
 }
 
-void compare_6d(unsigned n, int distrib) {
+#include <iostream>
+
+double compare_6d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
-
-  double best_root = std::numeric_limits<double>::max();
-  for (unsigned k = 0; k < 20; ++k) {
-    std::vector<int> bin(6, 10);
-    std::vector<double> min(6, 0);
-    std::vector<double> max(6, 1);
-    THnI hroot("", "", 6, &bin.front(), &min.front(), &max.front());
-
-    auto t = clock();
-    for (unsigned i = 0; i < n / 6; ++i) { hroot.Fill(r.get() + 6 * i); }
-    t = clock() - t;
-    best_root = std::min(best_root, double(t) / CLOCKS_PER_SEC);
-  }
-  printf("root %.3f\n", best_root);
+  int bin[] = {10, 10, 10, 10, 10, 10};
+  double min[] = {0, 0, 0, 0, 0, 0};
+  double max[] = {1, 1, 1, 1, 1, 1};
+  THnI h("", "", 6, bin, min, max);
+  double t = clock();
+  for (auto it = r.get(), end = r.get() + n; it != end; it += 6) { h.Fill(it); }
+  t = (double(clock()) - t) / CLOCKS_PER_SEC / n * 1e9;
+  TH1D* h1 = h.Projection(0);
+  assert(distrib != 0 || h1->GetSumOfWeights() == n / 6);
+  delete h1;
+  return t;
 }
 
 int main(int argc, char** argv) {
   constexpr unsigned nfill = 6000000;
-
-  printf("1D\n");
-  printf("uniform distribution\n");
-  compare_1d(nfill, 0);
-  printf("normal distribution\n");
-  compare_1d(nfill, 1);
-
-  printf("2D\n");
-  printf("uniform distribution\n");
-  compare_2d(nfill, 0);
-  printf("normal distribution\n");
-  compare_2d(nfill, 1);
-
-  printf("3D\n");
-  printf("uniform distribution\n");
-  compare_3d(nfill, 0);
-  printf("normal distribution\n");
-  compare_3d(nfill, 1);
-
-  printf("6D\n");
-  printf("uniform distribution\n");
-  compare_6d(nfill, 0);
-  printf("normal distribution\n");
-  compare_6d(nfill, 1);
+  for (int itype = 0; itype < 2; ++itype) {
+    auto d = itype == 0 ? "uniform" : "normal ";
+    printf("1D-root-%s %5.1f\n", d, compare_1d(nfill, itype));
+    printf("2D-root-%s %5.1f\n", d, compare_2d(nfill, itype));
+    printf("3D-root-%s %5.1f\n", d, compare_3d(nfill, itype));
+    printf("6D-root-%s %5.1f\n", d, compare_6d(nfill, itype));
+  }
 }

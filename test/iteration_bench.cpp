@@ -56,7 +56,10 @@ static void Naive(benchmark::State& state, Tag, d1, coverage cov) {
   auto h = make_histogram(Tag(), d1(), state.range(0));
   const int d = cov == coverage::all;
   for (auto _ : state) {
-    for (int i = -d; i < h.axis().size() + d; ++i) benchmark::DoNotOptimize(h.at(i));
+    for (int i = -d; i < h.axis().size() + d; ++i) {
+      benchmark::DoNotOptimize(i);
+      benchmark::DoNotOptimize(h.at(i));
+    }
   }
 }
 
@@ -65,9 +68,13 @@ static void Naive(benchmark::State& state, Tag, d2, coverage cov) {
   auto h = make_histogram(Tag(), d2(), state.range(0));
   const int d = cov == coverage::all;
   for (auto _ : state) {
-    for (int i = -d; i < h.axis(0_c).size() + d; ++i)
-      for (int j = -d; j < h.axis(1_c).size() + d; ++j)
+    for (int i = -d; i < h.axis(0_c).size() + d; ++i) {
+      for (int j = -d; j < h.axis(1_c).size() + d; ++j) {
+        benchmark::DoNotOptimize(i);
+        benchmark::DoNotOptimize(j);
         benchmark::DoNotOptimize(h.at(i, j));
+      }
+    }
   }
 }
 
@@ -76,10 +83,16 @@ static void Naive(benchmark::State& state, Tag, d3, coverage cov) {
   auto h = make_histogram(Tag(), d3(), state.range(0));
   const int d = cov == coverage::all;
   for (auto _ : state) {
-    for (int i = -d; i < h.axis(0_c).size() + d; ++i)
-      for (int j = -d; j < h.axis(1_c).size() + d; ++j)
-        for (int k = -d; k < h.axis(2_c).size() + d; ++k)
+    for (int i = -d; i < h.axis(0_c).size() + d; ++i) {
+      for (int j = -d; j < h.axis(1_c).size() + d; ++j) {
+        for (int k = -d; k < h.axis(2_c).size() + d; ++k) {
+          benchmark::DoNotOptimize(i);
+          benchmark::DoNotOptimize(j);
+          benchmark::DoNotOptimize(k);
           benchmark::DoNotOptimize(h.at(i, j, k));
+        }
+      }
+    }
   }
 }
 

@@ -12,7 +12,7 @@
     ]
 ]
 
-Boost.Histogram provides an easy-to-use, very fast, and extensible multi-dimensional histograms and profiles.
+Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional histograms and profiles.
 
 [variablelist
   [
@@ -57,6 +57,14 @@ Boost.Histogram provides an easy-to-use, very fast, and extensible multi-dimensi
   ]
   [
     [
+      [link histogram.benchmarks Benchmarks]
+    ]
+    [
+      The performance of Boost.Histogram is compared with other libraries.
+    ]
+  ]
+  [
+    [
       [link histogram.history Revision history]
     ]
     [
@@ -70,7 +78,7 @@ Boost.Histogram provides an easy-to-use, very fast, and extensible multi-dimensi
 [include guide.qbk]
 [include benchmarks.qbk]
 [include concepts.qbk]
-[xinclude autodoc.xml]
+[xinclude reference.xml]
 [include changelog.qbk]
 
 [*Acknowledgments]
@@ -81,4 +89,4 @@ Mateusz Loskot kindly agreed to fill the role of the Review Manager for this lib
 
 Steven Watanabe provided a very detailed review of the documentation and code of the library. Great reviews were submitted by Bjorn Reese, Jim Pivarski, Klemens Morgenstern, and Alex Hagen-Zanker. Comments and suggestions were provided by Andrea Bocci, degksi, Glen Fernandes, Gavin Lambert, Seth, and Mateusz Loskot.
 
-The members of the [@http://www.scikit-hep.org Scikit-HEP project], in particular Henry Schreiner and Jim Pivarski, provided valuable feedback and input on the design of this library.
+The members of the [@http://www.scikit-hep.org Scikit-HEP project] provided valuable feedback and input on the design of this library, special thanks go to Henry Schreiner and Jim Pivarski.

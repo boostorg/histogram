@@ -1,9 +1,12 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import json
 from collections import defaultdict
+import os
 import re
 import sys
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.rcParams.update(mpl.rcParamsDefault)
 
 bench = defaultdict(lambda:[])
 for iline, line in enumerate(open(sys.argv[1])):
@@ -20,10 +23,15 @@ for iline, line in enumerate(open(sys.argv[1])):
     bench[(name, hist, dim, cov)].append((int(nbins) ** dim, time))
 
 fig, ax = plt.subplots(1, 3, figsize=(10, 5), sharex=True, sharey=True)
-plt.subplots_adjust(bottom=0.18)
+if os.path.exists("/proc/cpuinfo"):
+	cpuinfo = open("/proc/cpuinfo").read()
+	m = re.search("model name\s*:\s*(.+)\n", cpuinfo)
+	if m:
+		plt.suptitle(m.group(1))
+plt.subplots_adjust(bottom=0.18, wspace=0, top=0.85, right=0.98, left=0.07)
 for iaxis, axis_type in enumerate(("tuple", "vector", "vector_of_variant")):
     plt.sca(ax[iaxis])
-    plt.title(axis_type, y=1.02)
+    plt.title(axis_type.replace("_", " "), y=1.02)
     handles = []
     for (name, axis_t, dim, cov), v in bench.items():
         if axis_t != axis_type: continue
@@ -38,8 +46,9 @@ for iaxis, axis_type in enumerate(("tuple", "vector", "vector_of_variant")):
         handles.append(h)
         handles.sort(key=lambda x: x.get_label())
     plt.loglog()
-    plt.legend(handles=handles, fontsize="xx-small")
-    plt.ylabel("CPU time in ns per bin")
-    # plt.savefig("iteration_performance.svg")
+plt.sca(ax[0])
+plt.ylabel("CPU time in ns per bin")
+plt.legend(handles=handles, fontsize="x-small", frameon=False, handlelength=4, ncol=2)
 plt.figtext(0.5, 0.05, "number of bins", ha="center")
+plt.savefig("iteration_performance.svg")
 plt.show()

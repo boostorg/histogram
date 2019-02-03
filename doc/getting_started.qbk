@@ -1,10 +1,12 @@
 [section:getting_started Getting started]
 
-To get you started quickly, here are some commented examples to copy-paste from. If you prefer a traditional structured exposition, go to the [link histogram.guide user guide].
+Here are some commented examples to copy-paste from, this should allow you to kick off a project with Boost.Histogram. If you prefer a traditional structured exposition, go to the [link histogram.guide user guide].
 
-[section 1d-histogram (axis configuration defined at compile-time)]
+Boost.Histogram uses /axis/ objects to convert input values into indices. The library comes with several builtin axis types, which can be configured via template parameters. This already gives you a lot of flexibility should you need it, otherwise just use the defaults. Beyond that, you can easily write your own axis type.
 
-When the axis configuration is known at compile-time, the library generates the fastest and most efficient code for you. Here is the example.
+[section 1d-histogram with axis types known at compile-time]
+
+When the axis types for the histogram are known at compile-time, the library generates the fastest and most efficient code for you. Here is such an example.
 
 [import ../examples/getting_started_listing_01.cpp]
 [getting_started_listing_01]
