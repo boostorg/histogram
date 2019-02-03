@@ -4,11 +4,14 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/xml_iarchive.hpp>
+#include <boost/archive/xml_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
 #include <boost/histogram/serialization.hpp>
+#include <cassert>
+#include <cmath>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include "utility_histogram.hpp"
@@ -16,40 +19,52 @@
 using namespace boost::histogram;
 
 template <typename Tag>
-void run_tests() {
+void run_tests(const char* filename) {
   // histogram_serialization
-  {
-    namespace tr = axis::transform;
-    auto a =
-        make(Tag(), axis::regular<>(3, -1, 1, "axis 0"),
-             axis::circular<>(4, 0.0, 1.0, "axis 1"),
-             axis::regular<double, tr::log>(3, 1, 100, "axis 2"),
+  namespace tr = axis::transform;
+  auto a =
+      make_s(Tag(), std::map<std::size_t, int>(), axis::regular<>(3, -1, 1, "reg"),
+             axis::circular<>(2, 0.0, 1.0, "cir"),
+             axis::regular<double, tr::log>(3, 1, std::exp(2), "reg-log"),
              axis::regular<double, tr::pow, std::vector<int>, axis::option::overflow>(
                  tr::pow(0.5), 3, 1, 100, {1, 2, 3}),
-             axis::variable<>({0.1, 0.2, 0.3, 0.4, 0.5}, "axis 4"),
-             axis::category<>{3, 1, 2}, axis::integer<int, axis::null_type>(0, 2));
-    a(0.5, 0.2, 20, 20, 0.25, 1, 1);
-    std::string buf;
-    {
-      std::ostringstream os;
-      boost::archive::text_oarchive oa(os);
-      oa << a;
-      buf = os.str();
+             axis::variable<>({1.0, 2.0, 3.0}, "var"), axis::category<>{3, 1, 2},
+             axis::integer<int, axis::null_type>(0, 2));
+  a(0.5, 0.2, 20, 20, 2.5, 1, 1);
+
+  std::string ref;
+  {
+    std::ifstream file;
+    file.open(filename);
+    if (!file.is_open()) file.open(std::string("../test/") + filename);
+    assert(file.is_open());
+    while (file.good()) {
+      char buf[1024];
+      file.read(buf, 1024);
+      ref.append(buf, file.gcount());
     }
-    auto b = decltype(a)();
-    BOOST_TEST_NE(a, b);
-    {
-      std::istringstream is(buf);
-      boost::archive::text_iarchive ia(is);
-      ia >> b;
-    }
-    BOOST_TEST_EQ(a, b);
   }
+
+  std::ostringstream os;
+  {
+    boost::archive::xml_oarchive oa(os);
+    oa << boost::serialization::make_nvp("hist", a);
+  }
+  BOOST_TEST_EQ(os.str(), ref);
+
+  auto b = decltype(a)();
+  BOOST_TEST_NE(a, b);
+  {
+    std::istringstream is(os.str());
+    boost::archive::xml_iarchive ia(is);
+    ia >> boost::serialization::make_nvp("hist", b);
+  }
+  BOOST_TEST_EQ(a, b);
 }
 
 int main() {
-  run_tests<static_tag>();
-  run_tests<dynamic_tag>();
+  run_tests<static_tag>("histogram_serialization_test_static.xml");
+  run_tests<dynamic_tag>("histogram_serialization_test_dynamic.xml");
 
   return boost::report_errors();
 }
