@@ -574,6 +574,7 @@ private:
           typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
       alloc_type a(b.alloc); // rebind allocator
       detail::destroy_buffer(a, tp, b.size);
+      b.ptr = nullptr;
     }
   };
 

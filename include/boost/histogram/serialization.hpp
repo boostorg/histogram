@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_SERIALIZATION_HPP
 #define BOOST_HISTOGRAM_SERIALIZATION_HPP
 
+#include <boost/assert.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
@@ -69,16 +70,16 @@ template <class Archive>
 void mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
   ar& sum_;
   ar& mean_;
-  ar& dsum2_;
+  ar& sum_of_deltas_squared_;
 }
 
 template <class RealType>
 template <class Archive>
 void weighted_mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& sum_;
-  ar& sum2_;
-  ar& mean_;
-  ar& dsum2_;
+  ar& sum_of_weights_;
+  ar& sum_of_weights_squared_;
+  ar& weighted_mean_;
+  ar& sum_of_weighted_deltas_squared_;
 }
 } // namespace accumulators
 
@@ -95,15 +96,10 @@ struct serializer {
   template <class T, class Buffer, class Archive>
   void operator()(T*, Buffer& b, Archive& ar) {
     if (Archive::is_loading::value) {
-      // precondition: buffer is destroyed
+      BOOST_ASSERT(b.ptr == nullptr);
       b.set(b.template create<T>());
     }
     ar& boost::serialization::make_array(reinterpret_cast<T*>(b.ptr), b.size);
-  }
-
-  template <class Buffer, class Archive>
-  void operator()(void*, Buffer& b, Archive&) {
-    if (Archive::is_loading::value) { b.ptr = nullptr; }
   }
 };
 } // namespace detail
@@ -171,10 +167,24 @@ void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
 template <class A>
 template <class Archive>
 void adaptive_storage<A>::serialize(Archive& ar, unsigned /* version */) {
-  if (Archive::is_loading::value) { apply(destroyer(), buffer); }
-  ar& buffer.type;
-  ar& buffer.size;
-  apply(detail::serializer(), buffer, ar);
+  if (Archive::is_loading::value) {
+    apply(destroyer(), buffer);
+    try {
+      ar& buffer.type;
+      ar& buffer.size;
+      apply(detail::serializer(), buffer, ar);
+    } catch (...) {
+      if (buffer.ptr == nullptr) {
+        buffer.size = 0;
+        buffer.type = 0;
+      }
+      throw;
+    }
+  } else {
+    ar& buffer.type;
+    ar& buffer.size;
+    apply(detail::serializer(), buffer, ar);
+  }
 }
 
 template <class Archive, class A, class S>

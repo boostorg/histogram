@@ -26,38 +26,46 @@ public:
   weighted_mean() = default;
   weighted_mean(const RealType& wsum, const RealType& wsum2, const RealType& mean,
                 const RealType& variance)
-      : sum_(wsum), sum2_(wsum2), mean_(mean), dsum2_(variance * (sum_ - sum2_ / sum_)) {}
+      : sum_of_weights_(wsum)
+      , sum_of_weights_squared_(wsum2)
+      , weighted_mean_(mean)
+      , sum_of_weighted_deltas_squared_(
+            variance * (sum_of_weights_ - sum_of_weights_squared_ / sum_of_weights_)) {}
 
   void operator()(const RealType& x) { operator()(1, x); }
 
   void operator()(const RealType& w, const RealType& x) {
-    sum_ += w;
-    sum2_ += w * w;
-    const auto delta = x - mean_;
-    mean_ += w * delta / sum_;
-    dsum2_ += w * delta * (x - mean_);
+    sum_of_weights_ += w;
+    sum_of_weights_squared_ += w * w;
+    const auto delta = x - weighted_mean_;
+    weighted_mean_ += w * delta / sum_of_weights_;
+    sum_of_weighted_deltas_squared_ += w * delta * (x - weighted_mean_);
   }
 
   template <typename T>
   weighted_mean& operator+=(const weighted_mean<T>& rhs) {
-    const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
-    sum_ += static_cast<RealType>(rhs.sum_);
-    sum2_ += static_cast<RealType>(rhs.sum2_);
-    mean_ = tmp / sum_;
-    dsum2_ += static_cast<RealType>(rhs.dsum2_);
+    const auto tmp = weighted_mean_ * sum_of_weights_ +
+                     static_cast<RealType>(rhs.weighted_mean_ * rhs.sum_of_weights_);
+    sum_of_weights_ += static_cast<RealType>(rhs.sum_of_weights_);
+    sum_of_weights_squared_ += static_cast<RealType>(rhs.sum_of_weights_squared_);
+    weighted_mean_ = tmp / sum_of_weights_;
+    sum_of_weighted_deltas_squared_ +=
+        static_cast<RealType>(rhs.sum_of_weighted_deltas_squared_);
     return *this;
   }
 
   weighted_mean& operator*=(const RealType& s) {
-    mean_ *= s;
-    dsum2_ *= s * s;
+    weighted_mean_ *= s;
+    sum_of_weighted_deltas_squared_ *= s * s;
     return *this;
   }
 
   template <typename T>
   bool operator==(const weighted_mean<T>& rhs) const noexcept {
-    return sum_ == rhs.sum_ && sum2_ == rhs.sum2_ && mean_ == rhs.mean_ &&
-           dsum2_ == rhs.dsum2_;
+    return sum_of_weights_ == rhs.sum_of_weights_ &&
+           sum_of_weights_squared_ == rhs.sum_of_weights_squared_ &&
+           weighted_mean_ == rhs.weighted_mean_ &&
+           sum_of_weighted_deltas_squared_ == rhs.sum_of_weighted_deltas_squared_;
   }
 
   template <typename T>
@@ -65,15 +73,19 @@ public:
     return !operator==(rhs);
   }
 
-  const RealType& sum_of_weights() const noexcept { return sum_; }
-  const RealType& value() const noexcept { return mean_; }
-  RealType variance() const { return dsum2_ / (sum_ - sum2_ / sum_); }
+  const RealType& sum_of_weights() const noexcept { return sum_of_weights_; }
+  const RealType& value() const noexcept { return weighted_mean_; }
+  RealType variance() const {
+    return sum_of_weighted_deltas_squared_ /
+           (sum_of_weights_ - sum_of_weights_squared_ / sum_of_weights_);
+  }
 
   template <class Archive>
   void serialize(Archive&, unsigned /* version */);
 
 private:
-  RealType sum_ = RealType(), sum2_ = RealType(), mean_ = RealType(), dsum2_ = RealType();
+  RealType sum_of_weights_ = RealType(), sum_of_weights_squared_ = RealType(),
+           weighted_mean_ = RealType(), sum_of_weighted_deltas_squared_ = RealType();
 };
 
 } // namespace accumulators
