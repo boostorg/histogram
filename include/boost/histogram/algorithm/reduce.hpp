@@ -124,20 +124,17 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
     oi.merge = o.merge;
   }
 
-  auto axes = detail::static_if<detail::is_tuple<detail::naked<decltype(old_axes)>>>(
-      [](const auto& c) { return detail::naked<decltype(c)>(); },
-      [](const auto& c) {
-        using A = detail::naked<decltype(c)>;
-        auto axes = A(c.get_allocator());
-        axes.reserve(c.size());
-        detail::for_each_axis(c, [&axes](const auto& a) {
-          using U = detail::naked<decltype(a)>;
-          axes.emplace_back(U());
-        });
-        return axes;
+  // make new axes container with default-constructed axis instances
+  auto axes = detail::make_default(old_axes);
+  detail::static_if<detail::is_tuple<decltype(axes)>>(
+      [](auto&, const auto&) {},
+      [](auto& axes, const auto& old_axes) {
+        axes.reserve(old_axes.size());
+        for (const auto& a : old_axes) axes.emplace_back(detail::make_default(a));
       },
-      old_axes);
+      axes, old_axes);
 
+  // override default-constructed axis instances with modified instances
   unsigned iaxis = 0;
   hist.for_each_axis([&](const auto& a) {
     using T = detail::naked<decltype(a)>;

@@ -81,7 +81,7 @@ class variable
   using vec_type = std::vector<Value, allocator_type>;
 
 public:
-  variable() = default;
+  explicit variable(allocator_type alloc = {}) : vec_meta_(std::move(alloc)) {}
 
   /** Construct from iterator range of bin edges.
    *

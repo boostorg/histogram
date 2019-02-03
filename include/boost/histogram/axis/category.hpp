@@ -67,7 +67,7 @@ class category
   using vector_type = std::vector<value_type, allocator_type>;
 
 public:
-  category() = default;
+  explicit category(allocator_type alloc = {}) : vec_meta_(vector_type(alloc)) {}
 
   /** Construct from iterator range of unique values.
    *
