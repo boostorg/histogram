@@ -18,7 +18,6 @@ int main() {
   {
     auto empty = std::vector<int>(0);
     BOOST_TEST_THROWS((axis::category<>(empty)), std::invalid_argument);
-    BOOST_TEST_THROWS((axis::category<>({})), std::invalid_argument);
   }
 
   // axis::category
