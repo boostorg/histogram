@@ -1,3 +1,5 @@
+doc/html
+doc/reference.xml
 *build*
 histogram.sublime-workspace
 CMakeSettings.json
