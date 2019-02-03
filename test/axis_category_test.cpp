@@ -16,8 +16,9 @@ using namespace boost::histogram;
 int main() {
   // bad_ctors
   {
-    auto empty = std::vector<double>(0);
+    auto empty = std::vector<int>(0);
     BOOST_TEST_THROWS((axis::category<>(empty)), std::invalid_argument);
+    BOOST_TEST_THROWS((axis::category<>({})), std::invalid_argument);
   }
 
   // axis::category
