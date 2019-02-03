@@ -20,11 +20,14 @@
 namespace boost {
 namespace histogram {
 
-/// Coverage mode of the indexed range generator.
+/**
+  Coverage mode of the indexed range generator.
+
+  Defines options for the iteration strategy.
+*/
 enum class coverage {
-  inner,              /*!< iterate over inner bins, exclude underflow and overflow */
-  all,                /*!< iterate over all bins, including underflow and overflow */
-  use_default = inner /*!< default setting */
+  inner, /*!< iterate over inner bins, exclude underflow and overflow */
+  all,   /*!< iterate over all bins, including underflow and overflow */
 };
 
 /// Range over histogram bins with multi-dimensional index.
@@ -38,18 +41,25 @@ class BOOST_HISTOGRAM_NODISCARD indexed_range {
   };
 
 public:
-  /// Pointer-like class to access value and index of current cell.
+  /**
+    Pointer-like class to access value and index of current cell.
+
+    Its methods allow one to query the current indices and bins. Furthermore, it acts like
+    a pointer to the cell value.
+  */
   class accessor {
   public:
     /// Array-like view into the current multi-dimensional index.
     class index_view {
     public:
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
       class index_iterator
           : public boost::iterator_adaptor<index_iterator, const cache_item*> {
       public:
         index_iterator(const cache_item* i) : index_iterator::iterator_adaptor_(i) {}
         decltype(auto) operator*() const noexcept { return index_iterator::base()->idx; }
       };
+#endif
 
       auto begin() const noexcept { return index_iterator(begin_); }
       auto end() const noexcept { return index_iterator(end_); }
@@ -63,25 +73,39 @@ public:
       friend class accessor;
     };
 
-    // pointer interface for value
+    /// Returns the cell value.
     decltype(auto) operator*() const noexcept { return *iter_; }
+    /// Returns the cell value.
     decltype(auto) get() const noexcept { return *iter_; }
+    /// Access fields and methods of the cell object.
     decltype(auto) operator-> () const noexcept { return iter_; }
 
-    // access current indices
+    /// Access current index.
+    /// @param d axis dimension.
     int index(unsigned d = 0) const noexcept { return parent_.cache_[d].idx; }
+
+    /// Access indices as an iterable range.
     auto indices() const noexcept {
       return index_view(parent_.cache_, parent_.cache_ + parent_.hist_.rank());
     }
 
-    // access current bins
+    /// Access current bin.
+    /// @tparam N axis dimension.
     template <unsigned N = 0>
     decltype(auto) bin(std::integral_constant<unsigned, N> = {}) const {
       return parent_.hist_.axis(std::integral_constant<unsigned, N>()).bin(index(N));
     }
+
+    /// Access current bin.
+    /// @param d axis dimension.
     decltype(auto) bin(unsigned d) const { return parent_.hist_.axis(d).bin(index(d)); }
 
-    // convenience interface
+    /**
+      Computes density in current cell.
+
+      The density is computed as the cell value divided by the product of bin widths. Axes
+      without bin widths, like axis::category, are treated as having unit bin with.
+    */
     double density() const {
       double x = 1;
       auto it = parent_.cache_;
@@ -168,11 +192,20 @@ private:
 /**
   Generates a range over the histogram entries.
 
+  Use this in a range-based for loop:
+
+  ```
+  for (auto x : indexed(hist)) { ... }
+  ```
+
+  The iterators dereference to an indexed_range::accessor, which has methods to query the
+  current indices and bins, and acts like a pointer to the cell value.
+
   @param hist Reference to the histogram.
   @param cov  Iterate over all or only inner bins (optional, default: inner).
  */
 template <typename Histogram>
-auto indexed(Histogram&& hist, coverage cov = coverage::use_default) {
+auto indexed(Histogram&& hist, coverage cov = coverage::inner) {
   return indexed_range<std::remove_reference_t<Histogram>>{std::forward<Histogram>(hist),
                                                            cov};
 }

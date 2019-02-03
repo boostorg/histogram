@@ -24,20 +24,21 @@ namespace histogram {
 
 /** Central class of the histogram library.
 
-  Histogram uses the call operator to insert data, it follows accumulator semantics like
+  Histogram uses the call operator to insert data, like the
   [Boost.Accumulators](https://www.boost.org/doc/libs/develop/doc/html/accumulators.html).
-  All other methods query information about the histogram.
 
-  Use factory functions like
-  [make_histogram](histogram/reference.html#header.boost.histogram.make_histogram_hpp) and
-  [make_profile](histogram/reference.html#header.boost.histogram.make_profile_hpp) to
-  conveniently create histograms.
+  Use factory functions (see
+  [make_histogram.hpp](histogram/reference.html#header.boost.histogram.make_histogram_hpp)
+  and
+  [make_profile.hpp](histogram/reference.html#header.boost.histogram.make_profile_hpp)) to
+  conveniently create histograms rather than calling the ctors directly.
 
   Use the [indexed](boost/histogram/indexed.html) range generator to iterate over filled
   histograms, which is convenient and faster than hand-written loops for multi-dimensional
   histograms.
 
-
+  @tparam Axes std::tuple of axis types OR std::vector of an axis type or axis::variant
+  @tparam Storage class that implements the storage interface
  */
 template <class Axes, class Storage>
 class histogram {
