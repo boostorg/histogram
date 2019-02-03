@@ -12,7 +12,7 @@
   Forward declarations, basic typedefs, and default template arguments for main classes.
 */
 
-#include <boost/histogram/attribute.hpp> // BOOST_HISTOGRAM_NODISCARD
+#include <boost/histogram/detail/attribute.hpp> // BOOST_HISTOGRAM_DETAIL_NODISCARD
 #include <string>
 #include <vector>
 
@@ -134,7 +134,7 @@ using profile_storage = dense_storage<accumulators::mean<>>;
 using weighted_profile_storage = dense_storage<accumulators::weighted_mean<>>;
 
 template <class Axes, class Storage = default_storage>
-class BOOST_HISTOGRAM_NODISCARD histogram;
+class BOOST_HISTOGRAM_DETAIL_NODISCARD histogram;
 } // namespace histogram
 } // namespace boost
 

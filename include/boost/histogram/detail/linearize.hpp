@@ -70,11 +70,12 @@ struct optional_index {
   std::size_t operator*() const { return idx; }
 };
 
-inline void linearize(optional_index& out, const int axis_shape, int j) noexcept {
+inline void linearize(optional_index& out, const axis::index_type extend,
+                      axis::index_type j) noexcept {
   // j is internal index, shifted by +1 wrt external index if axis has underflow bin
   out.idx += j * out.stride;
   // set stride to 0, if j is invalid
-  out.stride *= (0 <= j && j < axis_shape) * axis_shape;
+  out.stride *= (0 <= j && j < extend) * extend;
 }
 
 template <class A, class V>
@@ -90,20 +91,22 @@ void linearize_value(optional_index& o, const axis::variant<Ts...>& a, const V& 
 }
 
 template <class A, class V>
-void linearize_value(optional_index& out, int& shift, A& axis, const V& value) {
-  int j;
+void linearize_value(optional_index& out, axis::index_type& shift, A& axis,
+                     const V& value) {
+  axis::index_type j;
   std::tie(j, shift) = axis::traits::update(axis, value);
   j += test(axis::traits::options(axis), axis::option::underflow);
   linearize(out, axis::traits::extend(axis), j);
 }
 
 template <class... Ts, class V>
-void linearize_value(optional_index& o, int& s, axis::variant<Ts...>& a, const V& v) {
+void linearize_value(optional_index& o, axis::index_type& s, axis::variant<Ts...>& a,
+                     const V& v) {
   axis::visit([&o, &s, &v](auto& a) { linearize_value(o, s, a, v); }, a);
 }
 
 template <class T>
-void linearize_index(optional_index& out, const T& axis, const int j) {
+void linearize_index(optional_index& out, const T& axis, const axis::index_type j) {
   const auto extend = axis::traits::extend(axis);
   const auto opt = axis::traits::options(axis);
   linearize(out, extend, j + test(opt, axis::option::underflow));
@@ -116,7 +119,7 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   for_each_axis(axes, [&](const auto&) { update_needed |= *sh++; });
   if (!update_needed) return;
   struct item {
-    int idx, old_extend;
+    axis::index_type idx, old_extend;
     std::size_t new_stride;
   } data[buffer_size<A>::value];
   auto sit = shifts;
@@ -199,7 +202,7 @@ optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) 
 template <unsigned I, unsigned N, class S, class T, class U>
 optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args) {
   optional_index idx;
-  int shifts[buffer_size<T>::value];
+  axis::index_type shifts[buffer_size<T>::value];
   const auto rank = get_size(axes);
   if (rank == 1 && N > 1)
     linearize_value(idx, shifts[0], axis_get<0>(axes), tuple_slice<I, N>(args));
@@ -300,7 +303,7 @@ void fill_storage(IW, IS, T&& t, U&& args) {
 
 template <class S, class A, class... Us>
 auto fill(S& storage, A& axes, const std::tuple<Us...>& args) {
-  constexpr std::pair<int, int> iws = weight_sample_indices<Us...>();
+  constexpr auto iws = weight_sample_indices<Us...>();
   constexpr unsigned n = sizeof...(Us) - (iws.first > -1) - (iws.second > -1);
   constexpr unsigned i = (iws.first == 0 || iws.second == 0)
                              ? (iws.first == 1 || iws.second == 1 ? 2 : 1)
@@ -320,7 +323,8 @@ optional_index at(const A& axes, const std::tuple<Us...>& args) {
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto I) {
-    linearize_index(idx, axis_get<I>(axes), static_cast<int>(std::get<I>(args)));
+    linearize_index(idx, axis_get<I>(axes),
+                    static_cast<axis::index_type>(std::get<I>(args)));
   });
   return idx;
 }
@@ -332,8 +336,9 @@ optional_index at(const A& axes, const U& args) {
   optional_index idx;
   using std::begin;
   auto it = begin(args);
-  for_each_axis(axes,
-                [&](const auto& a) { linearize_index(idx, a, static_cast<int>(*it++)); });
+  for_each_axis(axes, [&](const auto& a) {
+    linearize_index(idx, a, static_cast<axis::index_type>(*it++));
+  });
   return idx;
 }
 

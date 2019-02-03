@@ -136,16 +136,17 @@ public:
 
    __Optional weight__
 
-   An optional weight can be passed as the first or last argument with the weight
-   helper function. Compilation fails if the storage elements do not support weights.
+   An optional weight can be passed as the first or last argument
+   with the [weight](boost/histogram/weight.html) helper function. Compilation fails if
+   the storage elements do not support weights.
 
    __Samples__
 
    If the storage elements accept samples, pass them with the sample helper function
    in addition to the axis arguments, which can be the first or last argument. The
-   sample helper function can pass one or more arguments to the storage element. If
-   samples and weights are used together, they can be passed in any order at the beginning
-   or end of the argument list.
+   [sample](boost/histogram/sample.html) helper function can pass one or more arguments to
+   the storage element. If samples and weights are used together, they can be passed in
+   any order at the beginning or end of the argument list.
   */
   template <class... Ts>
   auto operator()(const Ts&... ts) {
@@ -193,19 +194,19 @@ public:
     std::out_of_range.
   */
   template <class... Ts>
-  decltype(auto) at(int t, Ts... ts) {
+  decltype(auto) at(axis::index_type t, Ts... ts) {
     return at(std::forward_as_tuple(t, ts...));
   }
 
   /// Access cell value at integral indices (read-only).
-  /// @copydoc at(int t, Ts... ts)
+  /// @copydoc at(axis::index_type t, Ts... ts)
   template <class... Ts>
-  decltype(auto) at(int t, Ts... ts) const {
+  decltype(auto) at(axis::index_type t, Ts... ts) const {
     return at(std::forward_as_tuple(t, ts...));
   }
 
   /// Access cell value at integral indices stored in `std::tuple`.
-  /// @copydoc at(int t, Ts... ts)
+  /// @copydoc at(axis::index_type t, Ts... ts)
   template <typename... Ts>
   decltype(auto) at(const std::tuple<Ts...>& t) {
     const auto idx = detail::at(axes_, t);
@@ -214,7 +215,7 @@ public:
   }
 
   /// Access cell value at integral indices stored in `std::tuple` (read-only).
-  /// @copydoc at(int t, Ts... ts)
+  /// @copydoc at(axis::index_type t, Ts... ts)
   template <typename... Ts>
   decltype(auto) at(const std::tuple<Ts...>& t) const {
     const auto idx = detail::at(axes_, t);
@@ -223,7 +224,7 @@ public:
   }
 
   /// Access cell value at integral indices stored in iterable.
-  /// @copydoc at(int t, Ts... ts)
+  /// @copydoc at(axis::index_type t, Ts... ts)
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   decltype(auto) at(const Iterable& c) {
     const auto idx = detail::at(axes_, c);
@@ -232,7 +233,7 @@ public:
   }
 
   /// Access cell value at integral indices stored in iterable (read-only).
-  /// @copydoc at(int t, Ts... ts)
+  /// @copydoc at(axis::index_type t, Ts... ts)
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   decltype(auto) at(const Iterable& c) const {
     const auto idx = detail::at(axes_, c);
@@ -330,18 +331,21 @@ histogram(Axes&& axes, Storage&& storage)
 
 #endif
 
-/// Helper function to mark argument as weight
+/// Helper function to mark argument as weight.
+/// @param t argument to be forward to the histogram.
 template <typename T>
 auto weight(T&& t) noexcept {
   return weight_type<T>{std::forward<T>(t)};
 }
 
-/// Helper function to mark arguments as sample
+/// Helper function to mark arguments as sample.
+/// @param ts arguments to be forwarded to the accumulator.
 template <typename... Ts>
 auto sample(Ts&&... ts) noexcept {
   return sample_type<std::tuple<Ts&&...>>{std::forward_as_tuple(std::forward<Ts>(ts)...)};
 }
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 template <class T>
 struct weight_type {
   T value;
@@ -351,6 +355,7 @@ template <class T>
 struct sample_type {
   T value;
 };
+#endif
 
 } // namespace histogram
 } // namespace boost

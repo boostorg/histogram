@@ -7,8 +7,8 @@
 #ifndef BOOST_HISTOGRAM_INDEXED_HPP
 #define BOOST_HISTOGRAM_INDEXED_HPP
 
-#include <boost/histogram/attribute.hpp>
 #include <boost/histogram/axis/traits.hpp>
+#include <boost/histogram/detail/attribute.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -32,7 +32,7 @@ enum class coverage {
 
 /// Range over histogram bins with multi-dimensional index.
 template <class Histogram>
-class BOOST_HISTOGRAM_NODISCARD indexed_range {
+class BOOST_HISTOGRAM_DETAIL_NODISCARD indexed_range {
   using max_dim = mp11::mp_size_t<
       detail::buffer_size<typename detail::naked<Histogram>::axes_type>::value>;
   using value_iterator = decltype(std::declval<Histogram>().begin());

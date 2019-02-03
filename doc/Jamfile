@@ -15,7 +15,7 @@ doxygen reference
   [ glob ../include/boost/histogram/axis/*.hpp ]
 :
   <doxygen:param>"PREDEFINED=\"BOOST_HISTOGRAM_DOXYGEN_INVOKED\" \\
-                             \"BOOST_HISTOGRAM_NODISCARD\" \\
+                             \"BOOST_HISTOGRAM_DETAIL_NODISCARD\" \\
                              "
   <doxygen:param>EXTRACT_ALL=YES
   <doxygen:param>HIDE_FRIEND_COMPOUNDS=YES
