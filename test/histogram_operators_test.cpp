@@ -25,9 +25,17 @@ void run_tests() {
   BOOST_TEST_EQ(c.at(0), 1);
   BOOST_TEST_EQ(c.at(1), 2);
   auto d = a + b + c;
+  BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(d), decltype(a)>));
   BOOST_TEST_EQ(d.at(0), 2);
   BOOST_TEST_EQ(d.at(1), 3);
-  BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(d), decltype(a)>));
+  auto d2 = d - a - b - c;
+  BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(d2), decltype(a)>));
+  BOOST_TEST_EQ(d2.at(0), 0);
+  BOOST_TEST_EQ(d2.at(1), 0);
+  d2 -= a;
+  BOOST_TEST_EQ(d2.at(0), -1);
+  BOOST_TEST_EQ(d2.at(1), 0);
+
   auto e = 3 * a;
   auto f = b * 2;
   BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(e), decltype(a)>));

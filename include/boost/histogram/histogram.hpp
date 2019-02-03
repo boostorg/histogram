@@ -36,6 +36,8 @@ namespace histogram {
   Use the [indexed](boost/histogram/indexed.html) range generator to iterate over filled
   histograms, which is convenient and faster than hand-written loops for multi-dimensional
   histograms.
+
+
  */
 template <class Axes, class Storage>
 class histogram {
@@ -161,6 +163,15 @@ public:
     if (!detail::axes_equal(axes_, rhs.axes_))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     storage_ += rhs.storage_;
+    return *this;
+  }
+
+  /// Subtract values of another histogram.
+  template <class A, class S>
+  histogram& operator-=(const histogram<A, S>& rhs) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
+    storage_ -= rhs.storage_;
     return *this;
   }
 
@@ -301,14 +312,10 @@ auto operator+(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
   return r += b;
 }
 
-template <class A, class S>
-auto operator+(histogram<A, S>&& a, const histogram<A, S>& b) {
-  return a += b;
-}
-
-template <class A, class S>
-auto operator+(const histogram<A, S>& a, histogram<A, S>&& b) {
-  return b += a;
+template <class A1, class S1, class A2, class S2>
+auto operator-(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
+  auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
+  return r -= b;
 }
 
 #if __cpp_deduction_guides >= 201606

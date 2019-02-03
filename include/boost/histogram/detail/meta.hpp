@@ -221,6 +221,9 @@ BOOST_HISTOGRAM_DETECT_BINARY(has_operator_equal,
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_radd,
                               (std::declval<T&>() += std::declval<U&>()));
 
+BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rsub,
+                              (std::declval<T&>() -= std::declval<U&>()));
+
 template <typename T>
 struct is_tuple_impl : std::false_type {};
 

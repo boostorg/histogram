@@ -35,7 +35,11 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-template <typename T>
+
+template <class T>
+struct is_unsigned_integral : mp11::mp_and<std::is_integral<T>, std::is_unsigned<T>> {};
+
+template <class T>
 bool safe_increment(T& t) {
   if (t < std::numeric_limits<T>::max()) {
     ++t;
@@ -44,52 +48,53 @@ bool safe_increment(T& t) {
   return false;
 }
 
-template <typename T, typename U>
-bool safe_assign(T& t, const U& u) {
-  if (std::numeric_limits<T>::max() < std::numeric_limits<U>::max() &&
-      std::numeric_limits<T>::max() < u)
+template <class T, class U>
+bool safe_radd(std::true_type, T& t, const U& u) {
+  if ((std::numeric_limits<T>::max() - t) >= u) {
+    t += static_cast<T>(u); // static_cast to suppress conversion warning
+    return true;
+  }
+  return false;
+}
+
+template <class T, class U>
+bool safe_radd(std::false_type, T& t, const U& u) {
+  static_assert(std::is_integral<U>::value, "U must be integral type");
+  if (u >= 0) {
+    if (std::numeric_limits<T>::max() - t >= static_cast<std::make_unsigned_t<U>>(u)) {
+      t += static_cast<T>(u);
+      return true;
+    }
     return false;
-  t = static_cast<T>(u);
-  return true;
+  }
+  if (t >= static_cast<std::make_unsigned_t<U>>(-u)) {
+    t -= static_cast<T>(-u);
+    return true;
+  }
+  return false;
 }
 
-template <typename T, typename B>
-struct make_unsigned_impl;
+template <class T, class U>
+bool safe_radd(std::false_type, T& t, const boost::multiprecision::number<U>& u) {
+  if (u >= 0) {
+    if (std::numeric_limits<T>::max() - t > u) {
+      t += static_cast<T>(u);
+      return true;
+    }
+  }
+  if (t + u >= 0) {
+    t -= static_cast<T>(-u);
+    return true;
+  }
+  return false;
+}
 
-template <typename T>
-struct make_unsigned_impl<T, std::true_type> {
-  using type = typename std::make_unsigned<T>::type;
-};
-
-template <typename T>
-struct make_unsigned_impl<T, std::false_type> {
-  using type = T;
-};
-
-template <typename T>
-using make_unsigned =
-    typename make_unsigned_impl<T, typename std::is_signed<T>::type>::type;
-
-template <typename T, typename U>
+template <class T, class U>
 bool safe_radd(T& t, const U& u) {
-  BOOST_ASSERT(t >= 0);
-  BOOST_ASSERT(u >= 0);
-  using V = make_unsigned<U>;
-  // static_cast converts back from signed to unsigned integer
-  if (static_cast<T>(std::numeric_limits<T>::max() - t) < static_cast<V>(u)) return false;
-  t += static_cast<T>(u); // static_cast to suppress conversion warning
-  return true;
+  static_assert(is_unsigned_integral<T>::value, "T must be unsigned integral type");
+  return safe_radd(is_unsigned_integral<U>{}, t, u);
 }
 
-template <typename T, typename U>
-bool safe_radd(T& t, const boost::multiprecision::number<U>& u) {
-  BOOST_ASSERT(t >= 0);
-  BOOST_ASSERT(u >= 0);
-  // static_cast converts back from signed to unsigned integer
-  if (static_cast<T>(std::numeric_limits<T>::max() - t) < u) return false;
-  t += static_cast<T>(u); // static_cast to suppress conversion warning
-  return true;
-}
 } // namespace detail
 
 /**
@@ -138,9 +143,14 @@ private:
       return operator()(b, a);
     }
 
+    template <class T>
+    bool operator()(const T& a, const T& b) const noexcept {
+      return a == b;
+    }
+
     template <class T, class U>
     bool operator()(const T& a, const U& b) const noexcept {
-      return a == b;
+      return static_cast<double>(a) == static_cast<double>(b);
     }
   };
 
@@ -157,9 +167,14 @@ private:
       return a < static_cast<double>(b);
     }
 
+    template <class T>
+    bool operator()(const T& a, const T& b) const noexcept {
+      return a < b;
+    }
+
     template <class T, class U>
     bool operator()(const T& a, const U& b) const noexcept {
-      return a < b;
+      return static_cast<double>(a) < static_cast<double>(b);
     }
   };
 
@@ -176,15 +191,29 @@ private:
       return a > static_cast<double>(b);
     }
 
+    template <class T>
+    bool operator()(const T& a, const T& b) const noexcept {
+      return a > b;
+    }
+
     template <class T, class U>
     bool operator()(const T& a, const U& b) const noexcept {
-      return a > b;
+      return static_cast<double>(a) > static_cast<double>(b);
     }
   };
 
   using types = mp11::mp_list<uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
 
-  template <typename T>
+  static inline auto negate(const uint8_t& t) { return -static_cast<int16_t>(t); }
+  static inline auto negate(const uint16_t& t) { return -static_cast<int32_t>(t); }
+  static inline auto negate(const uint32_t& t) { return -static_cast<int64_t>(t); }
+  static inline mp_int negate(const uint64_t& t) { return -static_cast<mp_int>(t); }
+  template <class T>
+  static inline auto negate(const T& t) {
+    return -t;
+  }
+
+  template <class T>
   static constexpr char type_index() {
     return static_cast<char>(mp11::mp_find<types, T>::value);
   }
@@ -204,7 +233,7 @@ private:
 #pragma warning(disable : 4244) // possible loss of data
 #endif
 
-    template <typename T, typename U>
+    template <class T, class U>
     T* create_impl(T*, const U* init) {
       using alloc_type =
           typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
@@ -216,7 +245,7 @@ private:
     // create_impl: no specialization for mp_int, it has no ctor which accepts
     // allocator, cannot pass state :(
 
-    template <typename T, typename U = T>
+    template <class T, class U = T>
     T* create(const U* init = nullptr) {
       return create_impl(static_cast<T*>(nullptr), init);
     }
@@ -225,14 +254,14 @@ private:
 #pragma warning(pop)
 #endif
 
-    template <typename T>
+    template <class T>
     void set(T* p) {
       type = type_index<T>();
       ptr = p;
     }
   };
 
-  template <typename F, typename B, typename... Ts>
+  template <class F, class B, class... Ts>
   static decltype(auto) apply(F&& f, B&& b, Ts&&... ts) {
     // this is intentionally not a switch, the if-chain is faster in benchmarks
     if (b.type == type_index<uint8_t>())
@@ -336,6 +365,12 @@ public:
       return *this;
     }
 
+    template <class T>
+    reference& operator-=(const T& t) {
+      apply(adder(), *base_type::buffer_, base_type::idx_, negate(t));
+      return *this;
+    }
+
     reference& operator++() {
       apply(incrementor(), *base_type::buffer_, base_type::idx_);
       return *this;
@@ -395,7 +430,7 @@ public:
     return *this;
   }
 
-  template <typename T>
+  template <class T>
   adaptive_storage(const storage_adaptor<T>& s) : buffer(s.size()) {
     buffer.set(buffer.template create<uint8_t>());
     std::size_t i = 0;
@@ -445,7 +480,7 @@ public:
         buffer);
   }
 
-  template <typename T>
+  template <class T>
   bool operator==(const T& o) const {
     if (size() != o.size()) return false;
     return apply(
@@ -455,31 +490,49 @@ public:
         buffer);
   }
 
-  // precondition: storages have same size
-  adaptive_storage& operator+=(const adaptive_storage& o) {
-    BOOST_ASSERT(o.size() == size());
-    if (this == &o) {
+  adaptive_storage& operator+=(const adaptive_storage& rhs) {
+    BOOST_ASSERT(size() == rhs.size());
+    if (this == &rhs) {
       /*
-        Self-adding is a special-case, because the source buffer ptr may be
-        invalided by growth. We avoid this by making a copy of the source.
-        This is the simplest solution, but expensive. The cost is ok, because
-        self-adding is only used by the unit-tests. It does not occur
-        frequently in real applications.
+        Self-adding is a special-case, because the source buffer ptr may be invalided by
+        growth. We avoid this by making a copy of the source. This is the simplest
+        solution, but expensive. The cost is ok, since this is not likely to happen a lot
+        in user code, but the unit-tests do this a lot.
       */
-      const auto copy = o;
+      const auto copy = rhs;
       apply(buffer_adder(), copy.buffer, buffer);
     } else {
-      apply(buffer_adder(), o.buffer, buffer);
+      apply(buffer_adder(), rhs.buffer, buffer);
     }
     return *this;
   }
 
-  // precondition: storages have same size
-  template <typename S>
+  template <class S>
   adaptive_storage& operator+=(const S& rhs) {
-    const auto n = size();
-    BOOST_ASSERT(n == rhs.size());
-    for (std::size_t i = 0; i < n; ++i) (*this)[i] += rhs[i];
+    BOOST_ASSERT(size() == rhs.size());
+    for (std::size_t i = 0, n = size(); i < n; ++i) (*this)[i] += rhs[i];
+    return *this;
+  }
+
+  adaptive_storage& operator-=(const adaptive_storage& rhs) {
+    BOOST_ASSERT(size() == rhs.size());
+    if (this == &rhs) {
+      /*
+        Self-subtracting is a special-case, because the source buffer ptr may be
+        invalided by growth. We avoid this by making a copy of the source.
+      */
+      const auto copy = rhs;
+      apply(buffer_subtractor(), copy.buffer, buffer);
+    } else {
+      apply(buffer_subtractor(), rhs.buffer, buffer);
+    }
+    return *this;
+  }
+
+  template <class S>
+  adaptive_storage& operator-=(const S& rhs) {
+    BOOST_ASSERT(size() == rhs.size());
+    for (std::size_t i = 0, n = size(); i < n; ++i) (*this)[i] -= rhs[i];
     return *this;
   }
 
@@ -494,7 +547,7 @@ public:
   const_iterator end() const noexcept { return {&buffer, size()}; }
 
   /// @private used by unit tests, not part of generic storage interface
-  template <typename T>
+  template <class T>
   adaptive_storage(std::size_t s, const T* p, const allocator_type& a = allocator_type())
       : buffer(s, a) {
     buffer.set(buffer.template create<T>(p));
@@ -505,7 +558,7 @@ public:
 
 private:
   struct destroyer {
-    template <typename T, typename Buffer>
+    template <class T, class Buffer>
     void operator()(T* tp, Buffer& b) {
       using alloc_type =
           typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
@@ -515,19 +568,18 @@ private:
   };
 
   struct setter {
-    template <typename T, typename OBuffer, typename Buffer>
+    template <class T, class OBuffer, class Buffer>
     void operator()(T* optr, const OBuffer& ob, Buffer& b) {
       if (b.size == ob.size && b.type == ob.type) {
         std::copy(optr, optr + ob.size, reinterpret_cast<T*>(b.ptr));
       } else {
         apply(destroyer(), b);
-        b.alloc = ob.alloc;
         b.size = ob.size;
         b.set(b.template create<T>(optr));
       }
     }
 
-    template <typename T, typename Buffer, typename U>
+    template <class T, class Buffer, class U>
     void operator()(T* tp, Buffer& b, std::size_t i, const U& u) {
       tp[i] = 0;
       adder()(tp, b, i, u);
@@ -535,7 +587,7 @@ private:
   };
 
   struct incrementor {
-    template <typename T, typename Buffer>
+    template <class T, class Buffer>
     void operator()(T* tp, Buffer& b, std::size_t i) {
       if (!detail::safe_increment(tp[i])) {
         using U = mp11::mp_at_c<types, (type_index<T>() + 1)>;
@@ -546,36 +598,39 @@ private:
       }
     }
 
-    template <typename Buffer>
+    template <class Buffer>
     void operator()(mp_int* tp, Buffer&, std::size_t i) {
       ++tp[i];
     }
 
-    template <typename Buffer>
+    template <class Buffer>
     void operator()(double* tp, Buffer&, std::size_t i) {
       ++tp[i];
     }
   };
 
   struct adder {
-    template <typename Buffer, typename U>
+    template <class Buffer, class U>
     void if_U_is_integral(std::true_type, mp_int* tp, Buffer&, std::size_t i,
                           const U& x) {
-      tp[i] += static_cast<mp_int>(x);
+      tp[i] += x;
     }
 
-    template <typename T, typename Buffer, typename U>
+    template <class T, class Buffer, class U>
     void if_U_is_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
-      if (!detail::safe_radd(tp[i], x)) {
+      if (detail::safe_radd(tp[i], x)) return;
+      if (x >= 0) {
         using V = mp11::mp_at_c<types, (type_index<T>() + 1)>;
         auto ptr = b.template create<V>(tp);
         destroyer()(tp, b);
         b.set(ptr);
-        if_U_is_integral(std::true_type(), static_cast<V*>(b.ptr), b, i, x);
+        if_U_is_integral(std::true_type{}, static_cast<V*>(b.ptr), b, i, x);
+      } else {
+        if_U_is_integral(std::false_type{}, tp, b, i, x);
       }
     }
 
-    template <typename T, typename Buffer, typename U>
+    template <class T, class Buffer, class U>
     void if_U_is_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
       auto ptr = b.template create<double>(tp);
       destroyer()(tp, b);
@@ -583,40 +638,40 @@ private:
       operator()(static_cast<double*>(b.ptr), b, i, x);
     }
 
-    template <typename T, typename Buffer, typename U>
+    template <class T, class Buffer, class U>
     void operator()(T* tp, Buffer& b, std::size_t i, const U& x) {
-      if_U_is_integral(
-          mp11::mp_bool<(std::is_integral<U>::value || std::is_same<U, mp_int>::value)>(),
-          tp, b, i, x);
+      if_U_is_integral(std::is_integral<U>{}, tp, b, i, x);
     }
 
-    template <typename Buffer, typename U>
+    template <class Buffer, class U>
     void operator()(double* tp, Buffer&, std::size_t i, const U& x) {
-      tp[i] += x;
-    }
-
-    template <typename Buffer>
-    void operator()(double* tp, Buffer&, std::size_t i, const mp_int& x) {
       tp[i] += static_cast<double>(x);
     }
   };
 
   struct buffer_adder {
-    template <typename T, typename OBuffer, typename Buffer>
+    template <class T, class OBuffer, class Buffer>
     void operator()(T* tp, const OBuffer&, Buffer& b) {
       for (std::size_t i = 0; i < b.size; ++i) { apply(adder(), b, i, tp[i]); }
     }
   };
 
+  struct buffer_subtractor {
+    template <class T, class OBuffer, class Buffer>
+    void operator()(T* tp, const OBuffer&, Buffer& b) {
+      for (std::size_t i = 0; i < b.size; ++i) { apply(adder(), b, i, negate(tp[i])); }
+    }
+  };
+
   struct getter {
-    template <typename T, typename Buffer>
+    template <class T, class Buffer>
     double operator()(T* tp, Buffer&, std::size_t i) {
       return static_cast<double>(tp[i]);
     }
   };
 
   struct multiplier {
-    template <typename T, typename Buffer>
+    template <class T, class Buffer>
     void operator()(T* tp, Buffer& b, const double x) {
       // potential lossy conversion that cannot be avoided
       auto ptr = b.template create<double>(tp);
@@ -625,7 +680,7 @@ private:
       operator()(reinterpret_cast<double*>(b.ptr), b, x);
     }
 
-    template <typename Buffer>
+    template <class Buffer>
     void operator()(double* tp, Buffer& b, const double x) {
       for (auto end = tp + b.size; tp != end; ++tp) *tp *= x;
     }

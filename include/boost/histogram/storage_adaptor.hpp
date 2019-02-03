@@ -133,6 +133,17 @@ struct map_impl : T {
       return *this;
     }
 
+    template <class U, class V = value_type,
+              class = std::enable_if_t<has_operator_rsub<V, U>::value>>
+    reference& operator-=(U&& u) {
+      auto it = map->find(idx);
+      if (it != static_cast<T*>(map)->end())
+        it->second -= std::forward<U>(u);
+      else
+        map->emplace(idx, -u);
+      return *this;
+    }
+
     template <class V = value_type,
               class = std::enable_if_t<has_operator_preincrement<V>::value>>
     reference& operator++() {
@@ -262,6 +273,14 @@ public:
     BOOST_ASSERT(this->size() == u.size());
     auto it = this->begin();
     for (auto&& x : u) *it++ += x;
+    return *this;
+  }
+
+  template <class U, class = detail::requires_iterable<U>>
+  storage_adaptor& operator-=(const U& u) {
+    BOOST_ASSERT(this->size() == u.size());
+    auto it = this->begin();
+    for (auto&& x : u) *it++ -= x;
     return *this;
   }
 

@@ -42,7 +42,7 @@ void tests() {
     storage_adaptor<T> g(t); // tests converting ctor
   }
 
-  // increment, add, set, reset
+  // increment, add, sub, set, reset
   {
     storage_adaptor<T> a;
     a.reset(1);
@@ -56,8 +56,12 @@ void tests() {
     a[1] += 5;
     BOOST_TEST_EQ(a[0], 3);
     BOOST_TEST_EQ(a[1], 5);
+    a[0] -= 2;
+    a[1] -= 5;
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_EQ(a[1], 0);
     a[1] = 9;
-    BOOST_TEST_EQ(a[0], 3);
+    BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_EQ(a[1], 9);
     a.reset(0);
     BOOST_TEST_EQ(a.size(), 0);
@@ -143,16 +147,16 @@ void mixed_tests() {
 }
 
 int main() {
-  tests<std::vector<unsigned>>();
-  tests<std::array<unsigned, 100>>();
+  tests<std::vector<int>>();
+  tests<std::array<int, 100>>();
   tests<std::deque<int>>();
-  tests<std::map<std::size_t, unsigned>>();
-  tests<std::unordered_map<std::size_t, unsigned>>();
+  tests<std::map<std::size_t, int>>();
+  tests<std::unordered_map<std::size_t, int>>();
 
-  mixed_tests<storage_adaptor<std::vector<unsigned>>,
+  mixed_tests<storage_adaptor<std::vector<int>>,
               storage_adaptor<std::array<double, 100>>>();
-  mixed_tests<adaptive_storage<>, storage_adaptor<std::vector<unsigned>>>();
-  mixed_tests<storage_adaptor<std::vector<unsigned>>, adaptive_storage<>>();
+  mixed_tests<adaptive_storage<>, storage_adaptor<std::vector<int>>>();
+  mixed_tests<storage_adaptor<std::vector<int>>, adaptive_storage<>>();
 
   // with accumulators::weighted_sum
   {
