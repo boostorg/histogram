@@ -123,11 +123,22 @@ public:
   using allocator_type = Allocator;
   using value_type = double;
 
-  /// @private
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
   using mp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<
       0, 0, boost::multiprecision::signed_magnitude, boost::multiprecision::unchecked,
       typename std::allocator_traits<Allocator>::template rebind_alloc<
           boost::multiprecision::limb_type>>>;
+
+  static inline auto negate(const uint8_t& t) { return -static_cast<int16_t>(t); }
+  static inline auto negate(const uint16_t& t) { return -static_cast<int32_t>(t); }
+  static inline auto negate(const uint32_t& t) { return -static_cast<int64_t>(t); }
+  static inline mp_int negate(const uint64_t& t) { return -mp_int(t); }
+  static inline mp_int negate(const mp_int& t) { return -t; }
+  template <class T>
+  static inline auto negate(const T& t) {
+    return -t;
+  }
+#endif
 
 private:
   struct equal_to {
@@ -204,15 +215,6 @@ private:
 
   using types = mp11::mp_list<uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
 
-  static inline auto negate(const uint8_t& t) { return -static_cast<int16_t>(t); }
-  static inline auto negate(const uint16_t& t) { return -static_cast<int32_t>(t); }
-  static inline auto negate(const uint32_t& t) { return -static_cast<int64_t>(t); }
-  static inline mp_int negate(const uint64_t& t) { return -static_cast<mp_int>(t); }
-  template <class T>
-  static inline auto negate(const T& t) {
-    return -t;
-  }
-
   template <class T>
   static constexpr char type_index() {
     return static_cast<char>(mp11::mp_find<types, T>::value);
@@ -287,32 +289,32 @@ private:
     reference_t& operator=(reference_t&&) = delete;      // references do not rebind
 
     template <class U>
-    bool operator==(const reference_t<U>& rhs) const {
+    bool operator==(const U& rhs) const {
       return op<equal_to>(rhs);
     }
 
     template <class U>
-    bool operator<(const reference_t<U>& rhs) const {
+    bool operator<(const U& rhs) const {
       return op<less>(rhs);
     }
 
     template <class U>
-    bool operator>(const reference_t<U>& rhs) const {
+    bool operator>(const U& rhs) const {
       return op<greater>(rhs);
     }
 
     template <class U>
-    bool operator!=(const reference_t<U>& rhs) const {
+    bool operator!=(const U& rhs) const {
       return !operator==(rhs);
     }
 
     template <class U>
-    bool operator>=(const reference_t<U>& rhs) const {
+    bool operator>=(const U& rhs) const {
       return !operator<(rhs);
     }
 
     template <class U>
-    bool operator<=(const reference_t<U>& rhs) const {
+    bool operator<=(const U& rhs) const {
       return !operator<(rhs);
     }
 
@@ -324,11 +326,19 @@ private:
       const auto i = idx_;
       const auto j = rhs.idx_;
       return apply(
-          [i, j, &rhs](const auto* ptr, const U&) {
+          [i, j, &rhs](const auto* ptr, const Buffer&) {
             const auto& pi = ptr[i];
-            return apply([pi, j](const auto* q, const U&) { return Binary()(pi, q[j]); },
+            return apply([&pi, j](const auto* q, const U&) { return Binary()(pi, q[j]); },
                          *rhs.buffer_);
           },
+          *buffer_);
+    }
+
+    template <class Binary, class U>
+    bool op(const U& rhs) const {
+      const auto i = idx_;
+      return apply(
+          [i, &rhs](const auto* tp, const auto&) { return Binary()(tp[i], rhs); },
           *buffer_);
     }
 

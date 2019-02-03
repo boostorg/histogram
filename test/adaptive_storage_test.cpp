@@ -26,6 +26,16 @@ adaptive_storage_type prepare(std::size_t n, T x = T()) {
   return adaptive_storage_type(n, v.get());
 }
 
+template <class T>
+auto max() {
+  return std::numeric_limits<T>::max();
+}
+
+template <>
+inline auto max<adaptive_storage_type::mp_int>() {
+  return adaptive_storage_type::mp_int(1e300);
+}
+
 template <typename T>
 void copy() {
   const auto b = prepare<T>(1);
@@ -166,6 +176,17 @@ void add() {
   a -= b;
   BOOST_TEST_EQ(a[0], -2);
   BOOST_TEST_EQ(a[1], 0);
+
+  auto c = prepare<RHS>(2);
+  c[0] = max<RHS>();
+  auto d = prepare<LHS>(2);
+  d += c;
+  BOOST_TEST_EQ(d[0], max<RHS>());
+  BOOST_TEST_EQ(d[1], 0);
+  auto e = prepare<LHS>(2);
+  e -= c;
+  BOOST_TEST_EQ(e[0], adaptive_storage_type::negate(max<RHS>()));
+  BOOST_TEST_EQ(e[1], 0);
 }
 
 template <typename LHS>
