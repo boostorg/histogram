@@ -17,8 +17,13 @@ template <typename CharT, typename Traits, typename A, typename S>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const histogram<A, S>& h) {
   os << "histogram(";
-  h.for_each_axis([&](const auto& a) { os << "\n  " << a << ","; });
-  os << (h.rank() ? "\n)" : ")");
+  unsigned n = 0;
+  h.for_each_axis([&](const auto& a) {
+    if (h.rank() > 1) os << "\n  ";
+    os << a;
+    if (++n < h.rank()) os << ",";
+  });
+  os << (h.rank() > 1 ? "\n)" : ")");
   return os;
 }
 

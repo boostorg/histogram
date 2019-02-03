@@ -531,19 +531,6 @@ void run_tests() {
     BOOST_TEST_EQ(a[4], 3);
   }
 
-  // histogram_ostream
-  {
-    auto a = make(Tag(), axis::regular<>(3, -1, 1, "r"), axis::integer<>(0, 2, "i"));
-    std::ostringstream os;
-    os << a;
-    BOOST_TEST_EQ(
-        os.str(),
-        std::string("histogram(\n"
-                    "  regular(3, -1, 1, metadata=\"r\", options=underflow | overflow),\n"
-                    "  integer(0, 2, metadata=\"i\", options=underflow | overflow),\n"
-                    ")"));
-  }
-
   // histogram_reset
   {
     auto h = make(Tag(), axis::integer<int, axis::null_type, axis::option::none>(0, 2));

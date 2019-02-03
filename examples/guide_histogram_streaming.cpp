@@ -39,7 +39,7 @@ int main() {
          "  regular(4, 0, 360, options=overflow | circular),\n"
          "  variable(-1, 0, 1, metadata=\"axis 3\", options=none),\n"
          "  category(2, 1, 3, metadata=\"axis 4\", options=overflow),\n"
-         "  integer(-1, 1, metadata=\"axis 5\", options=underflow | overflow),\n"
+         "  integer(-1, 1, metadata=\"axis 5\", options=underflow | overflow)\n"
          ")");
 }
 
