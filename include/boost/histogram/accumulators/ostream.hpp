@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_OSTREAM_HPP
 
 #include <boost/histogram/fwd.hpp>
-#include <ostream>
+#include <iosfwd>
 
 namespace boost {
 namespace histogram {

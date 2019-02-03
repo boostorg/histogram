@@ -16,7 +16,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/throw_exception.hpp>
 #include <iomanip>
-#include <ostream>
+#include <iosfwd>
 #include <stdexcept>
 #include <type_traits>
 
