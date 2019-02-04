@@ -469,7 +469,14 @@ public:
   void reset(std::size_t s) {
     apply(destroyer(), buffer);
     buffer.size = s;
-    buffer.set(buffer.template create<uint8_t>());
+    try {
+      buffer.set(buffer.template create<uint8_t>());
+    } catch (...) {
+      buffer.size = 0;
+      buffer.type = 0;
+      buffer.ptr = nullptr;
+      throw;
+    }
   }
 
   std::size_t size() const noexcept { return buffer.size; }
