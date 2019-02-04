@@ -13,7 +13,6 @@
 namespace boost {
 namespace histogram {
 namespace detail {
-namespace {
 BOOST_ATTRIBUTE_UNUSED inline void cat_impl(std::ostringstream&) {}
 
 template <typename T, typename... Ts>
@@ -21,7 +20,6 @@ void cat_impl(std::ostringstream& os, const T& t, const Ts&... ts) {
   os << t;
   cat_impl(os, ts...);
 }
-} // namespace
 
 template <typename... Ts>
 std::string cat(const Ts&... args) {
