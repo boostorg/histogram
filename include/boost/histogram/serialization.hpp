@@ -18,7 +18,6 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
-#include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unsafe_access.hpp>
@@ -147,18 +146,6 @@ void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
 } // namespace axis
 
 namespace detail {
-struct serializer {
-  template <class T, class Buffer, class Archive>
-  void operator()(T*, Buffer& b, Archive& ar) {
-    if (Archive::is_loading::value) {
-      BOOST_ASSERT(b.ptr == nullptr);
-      b.set(b.template create<T>());
-    }
-    ar& serialization::make_nvp(
-        "buffer", serialization::make_array(reinterpret_cast<T*>(b.ptr), b.size));
-  }
-};
-
 template <class Archive, class T>
 void serialize(Archive& ar, vector_impl<T>& impl, unsigned /* version */) {
   ar& serialization::make_nvp("vector", static_cast<T&>(impl));
@@ -187,23 +174,25 @@ template <class A>
 template <class Archive>
 void adaptive_storage<A>::serialize(Archive& ar, unsigned /* version */) {
   if (Archive::is_loading::value) {
-    apply(destroyer(), buffer);
-    try {
-      ar& serialization::make_nvp("type", buffer.type);
-      ar& serialization::make_nvp("size", buffer.size);
-      apply(detail::serializer(), buffer, ar);
-    } catch (...) {
-      if (buffer.ptr == nullptr) {
-        buffer.size = 0;
-        buffer.type = 0;
-      }
-      throw;
-    }
+    buffer_type dummy(0, buffer.alloc);
+    std::size_t size;
+    ar& serialization::make_nvp("type", dummy.type);
+    ar& serialization::make_nvp("size", size);
+    dummy.apply([this, size](auto* tp) {
+      BOOST_ASSERT(tp == nullptr);
+      using T = detail::naked<decltype(*tp)>;
+      buffer.template make<T>(size);
+    });
   } else {
     ar& serialization::make_nvp("type", buffer.type);
     ar& serialization::make_nvp("size", buffer.size);
-    apply(detail::serializer(), buffer, ar);
   }
+  buffer.apply([this, &ar](auto* tp) {
+    using T = detail::naked<decltype(*tp)>;
+    ar& serialization::make_nvp(
+        "buffer",
+        serialization::make_array(reinterpret_cast<T*>(buffer.ptr), buffer.size));
+  });
 }
 
 template <class Archive, class A, class S>

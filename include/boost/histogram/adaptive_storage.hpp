@@ -12,7 +12,6 @@
 #include <boost/config.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/histogram/detail/buffer.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/iterator/iterator_facade.hpp>
@@ -93,6 +92,56 @@ template <class T, class U>
 bool safe_radd(T& t, const U& u) {
   static_assert(is_unsigned_integral<T>::value, "T must be unsigned integral type");
   return safe_radd(is_unsigned_integral<U>{}, t, u);
+}
+
+template <class Allocator>
+auto create_buffer(Allocator& a, std::size_t n) {
+  using AT = std::allocator_traits<Allocator>;
+  auto ptr = AT::allocate(a, n); // may throw
+  static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
+                "ptr must be trivially copyable");
+  auto it = ptr;
+  const auto end = ptr + n;
+  try {
+    // this loop may throw
+    while (it != end) AT::construct(a, it++, typename AT::value_type{});
+  } catch (...) {
+    // release resources that were already acquired before rethrowing
+    while (it != ptr) AT::destroy(a, --it);
+    AT::deallocate(a, ptr, n);
+    throw;
+  }
+  return ptr;
+}
+
+template <class Allocator, class Iterator>
+auto create_buffer(Allocator& a, std::size_t n, Iterator iter) {
+  using AT = std::allocator_traits<Allocator>;
+  auto ptr = AT::allocate(a, n); // may throw
+  static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
+                "ptr must be trivially copyable");
+  auto it = ptr;
+  const auto end = ptr + n;
+  try {
+    // this loop may throw
+    while (it != end) AT::construct(a, it++, *iter++);
+  } catch (...) {
+    // release resources that were already acquired before rethrowing
+    while (it != ptr) AT::destroy(a, --it);
+    AT::deallocate(a, ptr, n);
+    throw;
+  }
+  return ptr;
+}
+
+template <class Allocator>
+void destroy_buffer(Allocator& a, typename std::allocator_traits<Allocator>::pointer p,
+                    std::size_t n) {
+  BOOST_ASSERT(p);
+  using AT = std::allocator_traits<Allocator>;
+  auto it = p + n;
+  while (it != p) AT::destroy(a, --it);
+  AT::deallocate(a, p, n);
 }
 
 } // namespace detail
@@ -216,68 +265,137 @@ private:
   using types = mp11::mp_list<uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
 
   template <class T>
-  static constexpr char type_index() {
+  static constexpr char type_index() noexcept {
     return static_cast<char>(mp11::mp_find<types, T>::value);
   }
 
   struct buffer_type {
     allocator_type alloc;
-    std::size_t size;
+    std::size_t size = 0;
     char type = 0;
     void* ptr = nullptr;
 
-    // no allocation here
-    buffer_type(std::size_t s = 0, const allocator_type& a = allocator_type()) noexcept
-        : alloc(a), size(s) {}
+    template <class F, class... Ts>
+    decltype(auto) apply(F&& f, Ts&&... ts) const {
+      // this is intentionally not a switch, the if-chain is faster in benchmarks
+      if (type == type_index<uint8_t>())
+        return f(reinterpret_cast<uint8_t*>(ptr), std::forward<Ts>(ts)...);
+      if (type == type_index<uint16_t>())
+        return f(reinterpret_cast<uint16_t*>(ptr), std::forward<Ts>(ts)...);
+      if (type == type_index<uint32_t>())
+        return f(reinterpret_cast<uint32_t*>(ptr), std::forward<Ts>(ts)...);
+      if (type == type_index<uint64_t>())
+        return f(reinterpret_cast<uint64_t*>(ptr), std::forward<Ts>(ts)...);
+      if (type == type_index<mp_int>())
+        return f(reinterpret_cast<mp_int*>(ptr), std::forward<Ts>(ts)...);
+      return f(reinterpret_cast<double*>(ptr), std::forward<Ts>(ts)...);
+    }
+
+    buffer_type(std::size_t s = 0, allocator_type a = {})
+        : alloc(std::move(a)), size(s), type(type_index<uint8_t>()) {
+      if (size > 0) {
+        // rebind allocator
+        using alloc_type = typename std::allocator_traits<
+            allocator_type>::template rebind_alloc<uint8_t>;
+        alloc_type a(alloc);
+        try {
+          ptr = detail::create_buffer(a, size); // may throw
+        } catch (...) {
+          size = 0;
+          throw;
+        }
+      }
+    }
+
+    buffer_type(buffer_type&& o) noexcept
+        : alloc(std::move(o.alloc)), size(o.size), type(o.type), ptr(o.ptr) {
+      o.size = 0;
+      o.type = 0;
+      o.ptr = nullptr;
+    }
+
+    buffer_type& operator=(buffer_type&& o) noexcept {
+      if (this != &o) {
+        using std::swap;
+        swap(alloc, o.alloc);
+        swap(size, o.size);
+        swap(type, o.type);
+        swap(ptr, o.ptr);
+      }
+      return *this;
+    }
+
+    buffer_type(const buffer_type& o) : alloc(o.alloc) {
+      o.apply([this, &o](auto* otp) {
+        using T = detail::naked<decltype(*otp)>;
+        this->template make<T>(o.size, otp);
+      });
+    }
+
+    buffer_type& operator=(const buffer_type& o) {
+      *this = buffer_type(o);
+      return *this;
+    }
+
+    ~buffer_type() noexcept { destroy(); }
+
+    void destroy() noexcept {
+      BOOST_ASSERT((ptr == nullptr) == (size == 0));
+      if (ptr == nullptr) return;
+      apply([this](auto* tp) {
+        using T = detail::naked<decltype(*tp)>;
+        using alloc_type =
+            typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
+        alloc_type a(alloc); // rebind allocator
+        detail::destroy_buffer(a, tp, size);
+      });
+      size = 0;
+      type = 0;
+      ptr = nullptr;
+    }
 
 #if defined(BOOST_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4244) // possible loss of data
 #endif
 
-    template <class T, class U>
-    T* create_impl(T*, const U* init) {
-      using alloc_type =
-          typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
-      alloc_type a(alloc); // rebind allocator
-      return init ? detail::create_buffer_from_iter(a, size, init)
-                  : detail::create_buffer(a, size, 0);
+    template <class T>
+    void make(std::size_t n) {
+      // note: order of commands is to not leave buffer in invalid state upon throw
+      destroy();
+      if (n > 0) {
+        // rebind allocator
+        using alloc_type =
+            typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
+        alloc_type a(alloc);
+        ptr = detail::create_buffer(a, n); // may throw
+      }
+      size = n;
+      type = type_index<T>();
     }
 
-    // create_impl: no specialization for mp_int, it has no ctor which accepts
-    // allocator, cannot pass state :(
-
-    template <class T, class U = T>
-    T* create(const U* init = nullptr) {
-      return create_impl(static_cast<T*>(nullptr), init);
+    template <class T, class U>
+    void make(std::size_t n, U iter) {
+      // note: iter may be current ptr, so create new buffer before deleting old buffer
+      T* new_ptr = nullptr;
+      const auto new_type = type_index<T>();
+      if (n > 0) {
+        // rebind allocator
+        using alloc_type =
+            typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
+        alloc_type a(alloc);
+        new_ptr = detail::create_buffer(a, n, iter); // may throw
+      }
+      destroy();
+      size = n;
+      type = new_type;
+      ptr = new_ptr;
     }
 
 #if defined(BOOST_MSVC)
 #pragma warning(pop)
 #endif
-
-    template <class T>
-    void set(T* p) {
-      type = type_index<T>();
-      ptr = p;
-    }
   };
-
-  template <class F, class B, class... Ts>
-  static decltype(auto) apply(F&& f, B&& b, Ts&&... ts) {
-    // this is intentionally not a switch, the if-chain is faster in benchmarks
-    if (b.type == type_index<uint8_t>())
-      return f(reinterpret_cast<uint8_t*>(b.ptr), b, std::forward<Ts>(ts)...);
-    if (b.type == type_index<uint16_t>())
-      return f(reinterpret_cast<uint16_t*>(b.ptr), b, std::forward<Ts>(ts)...);
-    if (b.type == type_index<uint32_t>())
-      return f(reinterpret_cast<uint32_t*>(b.ptr), b, std::forward<Ts>(ts)...);
-    if (b.type == type_index<uint64_t>())
-      return f(reinterpret_cast<uint64_t*>(b.ptr), b, std::forward<Ts>(ts)...);
-    if (b.type == type_index<mp_int>())
-      return f(reinterpret_cast<mp_int*>(b.ptr), b, std::forward<Ts>(ts)...);
-    return f(reinterpret_cast<double*>(b.ptr), b, std::forward<Ts>(ts)...);
-  }
 
   template <class Buffer>
   class reference_t {
@@ -318,28 +436,26 @@ private:
       return !operator<(rhs);
     }
 
-    operator double() const { return apply(getter(), *buffer_, idx_); }
+    operator double() const {
+      return buffer_->apply(
+          [this](const auto* tp) { return static_cast<double>(tp[idx_]); });
+    }
 
   protected:
     template <class Binary, class U>
     bool op(const reference_t<U>& rhs) const {
       const auto i = idx_;
       const auto j = rhs.idx_;
-      return apply(
-          [i, j, &rhs](const auto* ptr, const Buffer&) {
-            const auto& pi = ptr[i];
-            return apply([&pi, j](const auto* q, const U&) { return Binary()(pi, q[j]); },
-                         *rhs.buffer_);
-          },
-          *buffer_);
+      return buffer_->apply([i, j, &rhs](const auto* ptr) {
+        const auto& pi = ptr[i];
+        return rhs.buffer_->apply([&pi, j](const auto* q) { return Binary()(pi, q[j]); });
+      });
     }
 
     template <class Binary, class U>
     bool op(const U& rhs) const {
       const auto i = idx_;
-      return apply(
-          [i, &rhs](const auto* tp, const auto&) { return Binary()(tp[i], rhs); },
-          *buffer_);
+      return buffer_->apply([i, &rhs](const auto* tp) { return Binary()(tp[i], rhs); });
     }
 
     template <class U>
@@ -359,30 +475,33 @@ public:
     using base_type::base_type;
 
     reference& operator=(const reference& t) {
-      apply(setter(), *base_type::buffer_, base_type::idx_, t);
+      t.buffer_->apply([this, &t](const auto* otp) { *this = otp[t.idx_]; });
       return *this;
     }
 
     template <class T>
     reference& operator=(const T& t) {
-      apply(setter(), *base_type::buffer_, base_type::idx_, t);
+      base_type::buffer_->apply([this, &t](auto* tp) {
+        tp[base_type::idx_] = 0;
+        adder()(tp, *base_type::buffer_, base_type::idx_, t);
+      });
       return *this;
     }
 
     template <class T>
     reference& operator+=(const T& t) {
-      apply(adder(), *base_type::buffer_, base_type::idx_, t);
+      base_type::buffer_->apply(adder(), *base_type::buffer_, base_type::idx_, t);
       return *this;
     }
 
     template <class T>
     reference& operator-=(const T& t) {
-      apply(adder(), *base_type::buffer_, base_type::idx_, negate(t));
+      base_type::buffer_->apply(adder(), *base_type::buffer_, base_type::idx_, negate(t));
       return *this;
     }
 
     reference& operator++() {
-      apply(incrementor(), *base_type::buffer_, base_type::idx_);
+      base_type::buffer_->apply(incrementor(), *base_type::buffer_, base_type::idx_);
       return *this;
     }
   };
@@ -421,63 +540,32 @@ public:
   using const_iterator = iterator_t<const value_type, const_reference, const buffer_type>;
   using iterator = iterator_t<value_type, reference, buffer_type>;
 
-  ~adaptive_storage() { apply(destroyer(), buffer); }
-
-  adaptive_storage(const adaptive_storage& o) { apply(setter(), o.buffer, buffer); }
-
-  adaptive_storage& operator=(const adaptive_storage& o) {
-    if (this != &o) { apply(setter(), o.buffer, buffer); }
-    return *this;
-  }
-
-  adaptive_storage(adaptive_storage&& o) : buffer(std::move(o.buffer)) {
-    o.buffer.size = 0;
-    o.buffer.ptr = nullptr;
-  }
-
-  adaptive_storage& operator=(adaptive_storage&& o) {
-    if (this != &o) { std::swap(buffer, o.buffer); }
-    return *this;
-  }
+  explicit adaptive_storage(allocator_type a = {}) : buffer(0, std::move(a)) {}
+  adaptive_storage(const adaptive_storage&) = default;
+  adaptive_storage& operator=(const adaptive_storage&) = default;
+  adaptive_storage(adaptive_storage&&) = default;
+  adaptive_storage& operator=(adaptive_storage&&) = default;
 
   template <class T>
-  adaptive_storage(const storage_adaptor<T>& s) : buffer(s.size()) {
-    buffer.set(buffer.template create<uint8_t>());
-    std::size_t i = 0;
-    for (auto&& x : s) apply(setter(), buffer, i++, x);
+  adaptive_storage(const storage_adaptor<T>& s) {
+    using V = detail::naked<decltype(s[0])>;
+    constexpr auto ti = type_index<V>();
+    if (ti < mp11::mp_size<types>::value)
+      buffer.template make<V>(s.size(), s.begin());
+    else {
+      buffer.template make<double>(s.size(), s.begin());
+    }
   }
 
-  template <class C, class = detail::requires_iterable<C>>
-  adaptive_storage& operator=(const C& s) {
-    apply(destroyer(), buffer);
-    buffer.size = s.size();
-    using V = detail::naked<decltype(s[0])>;
-    const unsigned ti = type_index<V>();
-    if (ti < mp11::mp_size<types>::value)
-      buffer.set(buffer.template create<V>());
-    else
-      buffer.set(buffer.template create<double>());
-    std::size_t i = 0;
-    for (auto&& x : s) apply(setter(), buffer, i++, x);
+  template <class Iterable, class = detail::requires_iterable<Iterable>>
+  adaptive_storage& operator=(const Iterable& s) {
+    *this = adaptive_storage(s);
     return *this;
   }
-
-  explicit adaptive_storage(const allocator_type& a = allocator_type()) : buffer(0, a) {}
 
   allocator_type get_allocator() const { return buffer.alloc; }
 
-  void reset(std::size_t s) {
-    apply(destroyer(), buffer);
-    buffer.size = s;
-    try {
-      buffer.set(buffer.template create<uint8_t>());
-    } catch (...) {
-      buffer.size = 0;
-      buffer.type = 0;
-      buffer.ptr = nullptr;
-      throw;
-    }
-  }
+  void reset(std::size_t s) { buffer.template make<uint8_t>(s); }
 
   std::size_t size() const noexcept { return buffer.size; }
 
@@ -486,29 +574,27 @@ public:
 
   bool operator==(const adaptive_storage& o) const noexcept {
     if (size() != o.size()) return false;
-    return apply(
-        [&o](const auto* ptr, const buffer_type&) {
-          return apply(
-              [ptr](const auto* optr, const buffer_type& ob) {
-                return std::equal(ptr, ptr + ob.size, optr, equal_to());
-              },
-              o.buffer);
-        },
-        buffer);
+    return buffer.apply([&o](const auto* ptr) {
+      return o.buffer.apply([ptr, &o](const auto* optr) {
+        return std::equal(ptr, ptr + o.size(), optr, equal_to());
+      });
+    });
   }
 
   template <class T>
   bool operator==(const T& o) const {
     if (size() != o.size()) return false;
-    return apply(
-        [&o](const auto* ptr, const buffer_type&) {
-          return std::equal(ptr, ptr + o.size(), std::begin(o), equal_to());
-        },
-        buffer);
+    return buffer.apply([&o](const auto* ptr) {
+      return std::equal(ptr, ptr + o.size(), std::begin(o), equal_to());
+    });
   }
 
   adaptive_storage& operator+=(const adaptive_storage& rhs) {
     BOOST_ASSERT(size() == rhs.size());
+    auto add = [this](auto* otp) {
+      for (std::size_t i = 0; i < buffer.size; ++i)
+        buffer.apply(adder(), buffer, i, otp[i]);
+    };
     if (this == &rhs) {
       /*
         Self-adding is a special-case, because the source buffer ptr may be invalided by
@@ -517,9 +603,9 @@ public:
         in user code, but the unit-tests do this a lot.
       */
       const auto copy = rhs;
-      apply(buffer_adder(), copy.buffer, buffer);
+      copy.buffer.apply(add);
     } else {
-      apply(buffer_adder(), rhs.buffer, buffer);
+      rhs.buffer.apply(add);
     }
     return *this;
   }
@@ -533,15 +619,19 @@ public:
 
   adaptive_storage& operator-=(const adaptive_storage& rhs) {
     BOOST_ASSERT(size() == rhs.size());
+    auto sub = [this](auto* otp) {
+      for (std::size_t i = 0; i < buffer.size; ++i)
+        buffer.apply(adder(), buffer, i, negate(otp[i]));
+    };
     if (this == &rhs) {
       /*
         Self-subtracting is a special-case, because the source buffer ptr may be
         invalided by growth. We avoid this by making a copy of the source.
       */
       const auto copy = rhs;
-      apply(buffer_subtractor(), copy.buffer, buffer);
+      copy.buffer.apply(sub);
     } else {
-      apply(buffer_subtractor(), rhs.buffer, buffer);
+      rhs.buffer.apply(sub);
     }
     return *this;
   }
@@ -554,7 +644,7 @@ public:
   }
 
   adaptive_storage& operator*=(const double x) {
-    apply(multiplier(), buffer, x);
+    buffer.apply(multiplier(), buffer, x);
     return *this;
   }
 
@@ -565,53 +655,21 @@ public:
 
   /// @private used by unit tests, not part of generic storage interface
   template <class T>
-  adaptive_storage(std::size_t s, const T* p, const allocator_type& a = allocator_type())
-      : buffer(s, a) {
-    buffer.set(buffer.template create<T>(p));
+  adaptive_storage(std::size_t s, const T* p, allocator_type a = {})
+      : buffer(0, std::move(a)) {
+    buffer.template make<T>(s, p);
   }
 
   template <class Archive>
   void serialize(Archive&, unsigned);
 
 private:
-  struct destroyer {
-    template <class T, class Buffer>
-    void operator()(T* tp, Buffer& b) {
-      using alloc_type =
-          typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
-      alloc_type a(b.alloc); // rebind allocator
-      detail::destroy_buffer(a, tp, b.size);
-      b.ptr = nullptr;
-    }
-  };
-
-  struct setter {
-    template <class T, class OBuffer, class Buffer>
-    void operator()(T* optr, const OBuffer& ob, Buffer& b) {
-      if (b.size == ob.size && b.type == ob.type) {
-        std::copy(optr, optr + ob.size, reinterpret_cast<T*>(b.ptr));
-      } else {
-        apply(destroyer(), b);
-        b.size = ob.size;
-        b.set(b.template create<T>(optr));
-      }
-    }
-
-    template <class T, class Buffer, class U>
-    void operator()(T* tp, Buffer& b, std::size_t i, const U& u) {
-      tp[i] = 0;
-      adder()(tp, b, i, u);
-    }
-  };
-
   struct incrementor {
     template <class T, class Buffer>
     void operator()(T* tp, Buffer& b, std::size_t i) {
       if (!detail::safe_increment(tp[i])) {
         using U = mp11::mp_at_c<types, (type_index<T>() + 1)>;
-        U* ptr = b.template create<U>(tp);
-        destroyer()(tp, b);
-        b.set(ptr);
+        b.template make<U>(b.size, tp);
         ++reinterpret_cast<U*>(b.ptr)[i];
       }
     }
@@ -639,9 +697,7 @@ private:
       if (detail::safe_radd(tp[i], x)) return;
       if (x >= 0) {
         using V = mp11::mp_at_c<types, (type_index<T>() + 1)>;
-        auto ptr = b.template create<V>(tp);
-        destroyer()(tp, b);
-        b.set(ptr);
+        b.template make<V>(b.size, tp);
         if_U_is_integral(std::true_type{}, static_cast<V*>(b.ptr), b, i, x);
       } else {
         if_U_is_integral(std::false_type{}, tp, b, i, x);
@@ -650,9 +706,7 @@ private:
 
     template <class T, class Buffer, class U>
     void if_U_is_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
-      auto ptr = b.template create<double>(tp);
-      destroyer()(tp, b);
-      b.set(ptr);
+      b.template make<double>(b.size, tp);
       operator()(static_cast<double*>(b.ptr), b, i, x);
     }
 
@@ -667,34 +721,11 @@ private:
     }
   };
 
-  struct buffer_adder {
-    template <class T, class OBuffer, class Buffer>
-    void operator()(T* tp, const OBuffer&, Buffer& b) {
-      for (std::size_t i = 0; i < b.size; ++i) { apply(adder(), b, i, tp[i]); }
-    }
-  };
-
-  struct buffer_subtractor {
-    template <class T, class OBuffer, class Buffer>
-    void operator()(T* tp, const OBuffer&, Buffer& b) {
-      for (std::size_t i = 0; i < b.size; ++i) { apply(adder(), b, i, negate(tp[i])); }
-    }
-  };
-
-  struct getter {
-    template <class T, class Buffer>
-    double operator()(T* tp, Buffer&, std::size_t i) {
-      return static_cast<double>(tp[i]);
-    }
-  };
-
   struct multiplier {
     template <class T, class Buffer>
     void operator()(T* tp, Buffer& b, const double x) {
       // potential lossy conversion that cannot be avoided
-      auto ptr = b.template create<double>(tp);
-      destroyer()(tp, b);
-      b.set(ptr);
+      b.template make<double>(b.size, tp);
       operator()(reinterpret_cast<double*>(b.ptr), b, x);
     }
 
