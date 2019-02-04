@@ -1,4 +1,4 @@
-// Copyright 2015-2017 Hans Dembinski
+// Copyright 2015-2019 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -11,6 +11,11 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
+/**
+  Lightweight bin view.
+
+  Represents the current bin interval.
+*/
 template <typename Axis>
 class interval_view {
 public:

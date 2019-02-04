@@ -335,7 +335,7 @@ histogram(Axes&& axes, Storage&& storage)
 /// @param t argument to be forward to the histogram.
 template <typename T>
 auto weight(T&& t) noexcept {
-  return weight_type<T>{std::forward<T>(t)};
+  return weight_type<T&&>{std::forward<T>(t)};
 }
 
 /// Helper function to mark arguments as sample.
