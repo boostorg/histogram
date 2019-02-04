@@ -116,6 +116,7 @@ auto create_buffer(Allocator& a, std::size_t n) {
 
 template <class Allocator, class Iterator>
 auto create_buffer(Allocator& a, std::size_t n, Iterator iter) {
+  BOOST_ASSERT(n > 0);
   using AT = std::allocator_traits<Allocator>;
   auto ptr = AT::allocate(a, n); // may throw
   static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
@@ -138,6 +139,7 @@ template <class Allocator>
 void destroy_buffer(Allocator& a, typename std::allocator_traits<Allocator>::pointer p,
                     std::size_t n) {
   BOOST_ASSERT(p);
+  BOOST_ASSERT(n > 0);
   using AT = std::allocator_traits<Allocator>;
   auto it = p + n;
   while (it != p) AT::destroy(a, --it);
