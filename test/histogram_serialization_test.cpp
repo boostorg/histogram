@@ -45,17 +45,18 @@ void run_tests(const char* filename) {
     }
   }
 
-  std::ostringstream os;
   {
-    boost::archive::xml_oarchive oa(os);
+    std::string ofn(filename);
+    ofn.append(".new");
+    std::ofstream of(ofn);
+    boost::archive::xml_oarchive oa(of);
     oa << boost::serialization::make_nvp("hist", a);
   }
-  BOOST_TEST_EQ(os.str(), ref);
 
   auto b = decltype(a)();
   BOOST_TEST_NE(a, b);
   {
-    std::istringstream is(os.str());
+    std::istringstream is(ref);
     boost::archive::xml_iarchive ia(is);
     ia >> boost::serialization::make_nvp("hist", b);
   }

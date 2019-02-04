@@ -31,7 +31,6 @@ void test_serialization(const char* ref) {
     boost::archive::xml_oarchive oa(os);
     oa << boost::serialization::make_nvp("storage", a);
   }
-  BOOST_TEST_EQ(os.str(), std::string(ref));
 
   auto b = storage_adaptor<T>();
   BOOST_TEST(!(a == b));
