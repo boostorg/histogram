@@ -32,16 +32,16 @@ public:
   /// Returns index and shift (if axis has grown) for the passed argument.
   auto update(value_type x) noexcept {
     auto impl = [](auto& der, long x) {
-      const auto i = x - der.min_;
+      const axis::index_type i = x - der.min_;
       if (i >= 0) {
-        if (i < der.size()) return std::make_pair(static_cast<axis::index_type>(i), 0);
-        const auto n = static_cast<axis::index_type>(i - der.size() + 1);
+        if (i < der.size()) return std::make_pair(i, 0);
+        const auto n = i - der.size() + 1;
         der.size_meta_.first() += n;
-        return std::make_pair(static_cast<axis::index_type>(i), -n);
+        return std::make_pair(i, -n);
       }
       der.min_ += i;
       der.size_meta_.first() -= i;
-      return std::make_pair(0, static_cast<axis::index_type>(-i));
+      return std::make_pair(0, -i);
     };
 
     return detail::static_if<std::is_floating_point<value_type>>(
