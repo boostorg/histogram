@@ -115,5 +115,12 @@ int main() {
     BOOST_TEST(detail::axes_equal(t2, t3));
   }
 
+  // bincount overflow
+  {
+    auto v = std::vector<axis::integer<>>(
+        100, axis::integer<>(0, std::numeric_limits<int>::max() - 2));
+    BOOST_TEST_THROWS(detail::bincount(v), std::overflow_error);
+  }
+
   return boost::report_errors();
 }

@@ -120,6 +120,7 @@ void axes_assign(std::tuple<Ts...>& t, const U& u) {
 
 template <class T, class... Us>
 void axes_assign(T& t, const std::tuple<Us...>& u) {
+  // resize instead of reserve, because t may not be empty and we want exact capacity
   t.resize(sizeof...(Us));
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
       [&](auto I) { t[I] = std::get<I>(u); });
@@ -159,7 +160,12 @@ void for_each_axis(const std::tuple<Ts...>& axes, F&& f) {
 template <typename T>
 std::size_t bincount(const T& axes) {
   std::size_t n = 1;
-  for_each_axis(axes, [&n](const auto& a) { n *= axis::traits::extend(a); });
+  for_each_axis(axes, [&n](const auto& a) {
+    const auto old = n;
+    const auto s = axis::traits::extend(a);
+    n *= s;
+    if (s > 0 && n < old) BOOST_THROW_EXCEPTION(std::overflow_error("bincount overflow"));
+  });
   return n;
 }
 
