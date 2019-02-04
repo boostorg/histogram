@@ -24,10 +24,10 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
-inline const char* to_string(const axis::transform::id&) { return ""; }
-inline const char* to_string(const axis::transform::log&) { return "_log"; }
-inline const char* to_string(const axis::transform::sqrt&) { return "_sqrt"; }
-inline const char* to_string(const axis::transform::pow&) { return "_pow"; }
+inline const char* axis_suffix(const axis::transform::id&) { return ""; }
+inline const char* axis_suffix(const axis::transform::log&) { return "_log"; }
+inline const char* axis_suffix(const axis::transform::sqrt&) { return "_sqrt"; }
+inline const char* axis_suffix(const axis::transform::pow&) { return "_pow"; }
 
 template <typename OStream, typename T>
 void stream_metadata(OStream& os, const T& t) {
@@ -120,7 +120,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
 template <typename C, typename T, typename V, typename Tr, typename M, option O>
 std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const regular<V, Tr, M, O>& a) {
-  os << "regular" << detail::to_string(a.transform()) << "(" << a.size() << ", "
+  os << "regular" << detail::axis_suffix(a.transform()) << "(" << a.size() << ", "
      << a.value(0) << ", " << a.value(a.size());
   detail::stream_metadata(os, a.metadata());
   detail::stream_options(os, a.options());
