@@ -74,10 +74,13 @@ namespace transform {
 
 /// Identity transform for equidistant bins.
 struct id {
+  /// Pass-through.
   template <typename T>
   static T forward(T&& x) noexcept {
     return std::forward<T>(x);
   }
+
+  /// Pass-through.
   template <typename T>
   static T inverse(T&& x) noexcept {
     return std::forward<T>(x);
@@ -86,10 +89,13 @@ struct id {
 
 /// Log transform for equidistant bins in log-space.
 struct log {
+  /// Convert external value to internal log-space value.
   template <typename T>
   static T forward(T x) {
     return std::log(x);
   }
+
+  /// Convert internal log-space value to external space.
   template <typename T>
   static T inverse(T x) {
     return std::exp(x);
@@ -98,10 +104,13 @@ struct log {
 
 /// Sqrt transform for equidistant bins in sqrt-space.
 struct sqrt {
+  /// Convert external value to internal sqrt-space value.
   template <typename T>
   static T forward(T x) {
     return std::sqrt(x);
   }
+
+  /// Convert internal sqrt-space value to external space.
   template <typename T>
   static T inverse(T x) {
     return x * x;
@@ -112,13 +121,17 @@ struct sqrt {
 struct pow {
   double power = 1; /**< power index */
 
+  /// Make transform with index p.
   explicit pow(double p) : power(p) {}
   pow() = default;
 
+  /// Convert external value to internal pow-space value.
   template <typename T>
   auto forward(T v) const {
     return std::pow(v, power);
   }
+
+  /// Convert internal pow-space value to external space.
   template <typename T>
   auto inverse(T v) const {
     return std::pow(v, 1.0 / power);
@@ -129,13 +142,16 @@ struct pow {
 
 } // namespace transform
 
-/// Type envelope to make value as step size
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+// Type envelope to mark value as step size
 template <typename T>
 struct step_type {
-  T value; /**< @private */
+  T value;
 };
+#endif
 
-/// Helper function to mark argument as step size
+/** Helper function to mark argument as step size.
+ */
 template <typename T>
 auto step(T&& t) {
   return step_type<T&&>{std::forward<T>(t)};
