@@ -112,7 +112,7 @@ Boost.Histogram is more flexible and faster than other C/C++ libraries:
  - [GNU Scientific Library](https://www.gnu.org/software/gsl)
  - [ROOT framework from CERN](https://root.cern.ch)
 
-Details on the benchmark are given in the [documentation](http://hdembinski.github.io/histogram/doc/html/histogram/benchmarks.html)
+Details on the benchmark are given in the [documentation](http://hdembinski.github.io/histogram/doc/html/histogram/benchmarks.html).
 
 ## What users say
 
