@@ -75,15 +75,7 @@ function(compiled_test SRC)
       -fsanitize-address-use-after-scope)
   endif()
 
-  list(FIND ARGN ARGS IDX)
-  if(IDX GREATER 0)
-    foreach(I RANGE IDX)
-      list(REMOVE_AT ARGN 0)
-    endforeach()
-    list(REMOVE_AT ARGN 0)
-    list(LENGTH ARGN N)
-  endif()
-  add_test(NAME ${BASENAME} COMMAND ${BASENAME} ${ARGN})
+  add_test(NAME ${BASENAME} COMMAND ${BASENAME})
 endfunction()
 
 compiled_test(test/adaptive_storage_test.cpp)
@@ -140,7 +132,10 @@ if (TEST_SERIALIZATION)
   compiled_test(test/storage_adaptor_serialization_test.cpp)
   target_link_libraries(storage_adaptor_serialization_test PRIVATE Boost::serialization)
 
-  compiled_test(test/histogram_serialization_test.cpp Boost::serialization ARGS ${PROJECT_SOURCE_DIR}/test/histogram_serialization_test_static.xml ${PROJECT_SOURCE_DIR}/test/histogram_serialization_test_dynamic.xml)
+  compiled_test(test/histogram_serialization_test.cpp Boost::serialization)
+  target_compile_definitions(histogram_serialization_test PRIVATE
+    -DSTATIC_XML="${PROJECT_SOURCE_DIR}/test/histogram_serialization_test_static.xml"
+    -DDYNAMIC_XML="${PROJECT_SOURCE_DIR}/test/histogram_serialization_test_dynamic.xml")
   target_link_libraries(histogram_serialization_test PRIVATE Boost::serialization)
 endif()
 
