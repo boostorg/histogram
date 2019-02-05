@@ -174,6 +174,7 @@ public:
   struct storage_tag {};
   using allocator_type = Allocator;
   using value_type = double;
+  class reference; // forward declare
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
   using mp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<
@@ -444,7 +445,7 @@ private:
           [this](const auto* tp) { return static_cast<double>(tp[idx_]); });
     }
 
-  protected:
+  private:
     template <class Binary, class U>
     bool op(const reference_t<U>& rhs) const {
       const auto i = idx_;
@@ -463,6 +464,7 @@ private:
 
     template <class U>
     friend class reference_t;
+    friend class reference;
 
     Buffer* buffer_;
     std::size_t idx_;
