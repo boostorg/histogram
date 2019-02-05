@@ -108,9 +108,11 @@ int main() {
 
 ## Benchmarks
 
-Thanks to meta-programming and dynamic memory management, this library is not only safer, more flexible and convenient to use, but also faster than the competition. In the plot below, its speed is compared to classes from the [GNU Scientific Library](https://www.gnu.org/software/gsl), the [ROOT framework from CERN](https://root.cern.ch), and to the histogram functions in [Numpy](http://www.numpy.org). The orange to red items are different compile-time configurations of the histogram in this library. More details on the benchmark are given in the [documentation](http://hdembinski.github.io/histogram/doc/html/histogram/benchmarks.html)
+Boost.Histogram is more flexible and faster than other C/C++ libraries:
+ - [GNU Scientific Library](https://www.gnu.org/software/gsl)
+ - [ROOT framework from CERN](https://root.cern.ch)
 
-![alt benchmark](doc/benchmark.png)
+Details on the benchmark are given in the [documentation](http://hdembinski.github.io/histogram/doc/html/histogram/benchmarks.html)
 
 ## What users say
 
