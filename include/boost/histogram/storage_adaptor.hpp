@@ -108,15 +108,15 @@ struct map_impl : T {
     }
 
     template <class U, class = requires_convertible<U, value_type>>
-    reference& operator=(U&& u) {
+    reference& operator=(const U& u) {
       auto it = map->find(idx);
       if (u == value_type()) {
         if (it != static_cast<T*>(map)->end()) map->erase(it);
       } else {
         if (it != static_cast<T*>(map)->end())
-          it->second = std::forward<U>(u);
+          it->second = u;
         else {
-          map->emplace(idx, std::forward<U>(u));
+          map->emplace(idx, u);
         }
       }
       return *this;
@@ -124,23 +124,42 @@ struct map_impl : T {
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_radd<V, U>::value>>
-    reference& operator+=(U&& u) {
+    reference& operator+=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
-        it->second += std::forward<U>(u);
+        it->second += u;
       else
-        map->emplace(idx, std::forward<U>(u));
+        map->emplace(idx, u);
       return *this;
     }
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_rsub<V, U>::value>>
-    reference& operator-=(U&& u) {
+    reference& operator-=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
-        it->second -= std::forward<U>(u);
+        it->second -= u;
       else
         map->emplace(idx, -u);
+      return *this;
+    }
+
+    template <class U, class V = value_type,
+              class = std::enable_if_t<has_operator_radd<V, U>::value>>
+    reference& operator*=(const U& u) {
+      auto it = map->find(idx);
+      if (it != static_cast<T*>(map)->end()) it->second *= u;
+      return *this;
+    }
+
+    template <class U, class V = value_type,
+              class = std::enable_if_t<has_operator_rsub<V, U>::value>>
+    reference& operator/=(const U& u) {
+      auto it = map->find(idx);
+      if (it != static_cast<T*>(map)->end())
+        it->second /= u;
+      else
+        map->emplace(idx, 0.0 / u);
       return *this;
     }
 
@@ -266,22 +285,6 @@ public:
     using std::begin;
     using std::end;
     return std::equal(this->begin(), this->end(), begin(u), end(u));
-  }
-
-  template <class U, class = detail::requires_iterable<U>>
-  storage_adaptor& operator+=(const U& u) {
-    BOOST_ASSERT(this->size() == u.size());
-    auto it = this->begin();
-    for (auto&& x : u) *it++ += x;
-    return *this;
-  }
-
-  template <class U, class = detail::requires_iterable<U>>
-  storage_adaptor& operator-=(const U& u) {
-    BOOST_ASSERT(this->size() == u.size());
-    auto it = this->begin();
-    for (auto&& x : u) *it++ -= x;
-    return *this;
   }
 
   template <class V = typename base_type::value_type,

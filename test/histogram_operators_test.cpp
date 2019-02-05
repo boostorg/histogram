@@ -31,6 +31,7 @@ void run_tests() {
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(d), decltype(a)>));
     BOOST_TEST_EQ(d.at(0), 2);
     BOOST_TEST_EQ(d.at(1), 3);
+
     auto d2 = d - a - b - c;
     BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(d2), decltype(a)>));
     BOOST_TEST_EQ(d2.at(0), 0);
@@ -39,8 +40,23 @@ void run_tests() {
     BOOST_TEST_EQ(d2.at(0), -1);
     BOOST_TEST_EQ(d2.at(1), 0);
 
-    auto e = 3 * a;
-    auto f = b * 2;
+    auto d3 = d;
+    d3 *= d;
+    BOOST_TEST_EQ(d3.at(0), 4);
+    BOOST_TEST_EQ(d3.at(1), 9);
+    auto d4 = d3 * (1 * d); // converted return type
+    BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(d4), decltype(d3)>));
+    BOOST_TEST_EQ(d4.at(0), 8);
+    BOOST_TEST_EQ(d4.at(1), 27);
+    d4 /= d;
+    BOOST_TEST_EQ(d4.at(0), 4);
+    BOOST_TEST_EQ(d4.at(1), 9);
+    auto d5 = d4 / d;
+    BOOST_TEST_EQ(d5.at(0), 2);
+    BOOST_TEST_EQ(d5.at(1), 3);
+
+    auto e = 3 * a; // converted return type
+    auto f = b * 2; // converted return type
     BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(e), decltype(a)>));
     BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(f), decltype(a)>));
     BOOST_TEST_EQ(e.at(0), 3);

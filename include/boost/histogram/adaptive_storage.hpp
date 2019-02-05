@@ -174,7 +174,6 @@ public:
   struct storage_tag {};
   using allocator_type = Allocator;
   using value_type = double;
-  class reference; // forward declare
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
   using mp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<
@@ -283,16 +282,16 @@ private:
     decltype(auto) apply(F&& f, Ts&&... ts) const {
       // this is intentionally not a switch, the if-chain is faster in benchmarks
       if (type == type_index<uint8_t>())
-        return f(reinterpret_cast<uint8_t*>(ptr), std::forward<Ts>(ts)...);
+        return f(static_cast<uint8_t*>(ptr), std::forward<Ts>(ts)...);
       if (type == type_index<uint16_t>())
-        return f(reinterpret_cast<uint16_t*>(ptr), std::forward<Ts>(ts)...);
+        return f(static_cast<uint16_t*>(ptr), std::forward<Ts>(ts)...);
       if (type == type_index<uint32_t>())
-        return f(reinterpret_cast<uint32_t*>(ptr), std::forward<Ts>(ts)...);
+        return f(static_cast<uint32_t*>(ptr), std::forward<Ts>(ts)...);
       if (type == type_index<uint64_t>())
-        return f(reinterpret_cast<uint64_t*>(ptr), std::forward<Ts>(ts)...);
+        return f(static_cast<uint64_t*>(ptr), std::forward<Ts>(ts)...);
       if (type == type_index<mp_int>())
-        return f(reinterpret_cast<mp_int*>(ptr), std::forward<Ts>(ts)...);
-      return f(reinterpret_cast<double*>(ptr), std::forward<Ts>(ts)...);
+        return f(static_cast<mp_int*>(ptr), std::forward<Ts>(ts)...);
+      return f(static_cast<double*>(ptr), std::forward<Ts>(ts)...);
     }
 
     buffer_type(std::size_t s = 0, allocator_type a = {})
@@ -445,7 +444,7 @@ private:
           [this](const auto* tp) { return static_cast<double>(tp[idx_]); });
     }
 
-  private:
+  protected:
     template <class Binary, class U>
     bool op(const reference_t<U>& rhs) const {
       const auto i = idx_;
@@ -464,7 +463,6 @@ private:
 
     template <class U>
     friend class reference_t;
-    friend class reference;
 
     Buffer* buffer_;
     std::size_t idx_;
@@ -502,6 +500,19 @@ public:
     template <class T>
     reference& operator-=(const T& t) {
       base_type::buffer_->apply(adder(), *base_type::buffer_, base_type::idx_, negate(t));
+      return *this;
+    }
+
+    template <class T>
+    reference& operator*=(const T& t) {
+      base_type::buffer_->apply(multiplier(), *base_type::buffer_, base_type::idx_, t);
+      return *this;
+    }
+
+    template <class T>
+    reference& operator/=(const T& t) {
+      base_type::buffer_->apply(multiplier(), *base_type::buffer_, base_type::idx_,
+                                1.0 / static_cast<double>(t));
       return *this;
     }
 
@@ -594,60 +605,6 @@ public:
     });
   }
 
-  adaptive_storage& operator+=(const adaptive_storage& rhs) {
-    BOOST_ASSERT(size() == rhs.size());
-    auto add = [this](auto* otp) {
-      for (std::size_t i = 0; i < buffer.size; ++i)
-        buffer.apply(adder(), buffer, i, otp[i]);
-    };
-    if (this == &rhs) {
-      /*
-        Self-adding is a special-case, because the source buffer ptr may be invalided by
-        growth. We avoid this by making a copy of the source. This is the simplest
-        solution, but expensive. The cost is ok, since this is not likely to happen a lot
-        in user code, but the unit-tests do this a lot.
-      */
-      const auto copy = rhs;
-      copy.buffer.apply(add);
-    } else {
-      rhs.buffer.apply(add);
-    }
-    return *this;
-  }
-
-  template <class S>
-  adaptive_storage& operator+=(const S& rhs) {
-    BOOST_ASSERT(size() == rhs.size());
-    for (std::size_t i = 0, n = size(); i < n; ++i) (*this)[i] += rhs[i];
-    return *this;
-  }
-
-  adaptive_storage& operator-=(const adaptive_storage& rhs) {
-    BOOST_ASSERT(size() == rhs.size());
-    auto sub = [this](auto* otp) {
-      for (std::size_t i = 0; i < buffer.size; ++i)
-        buffer.apply(adder(), buffer, i, negate(otp[i]));
-    };
-    if (this == &rhs) {
-      /*
-        Self-subtracting is a special-case, because the source buffer ptr may be
-        invalided by growth. We avoid this by making a copy of the source.
-      */
-      const auto copy = rhs;
-      copy.buffer.apply(sub);
-    } else {
-      rhs.buffer.apply(sub);
-    }
-    return *this;
-  }
-
-  template <class S>
-  adaptive_storage& operator-=(const S& rhs) {
-    BOOST_ASSERT(size() == rhs.size());
-    for (std::size_t i = 0, n = size(); i < n; ++i) (*this)[i] -= rhs[i];
-    return *this;
-  }
-
   adaptive_storage& operator*=(const double x) {
     buffer.apply(multiplier(), buffer, x);
     return *this;
@@ -675,7 +632,7 @@ private:
       if (!detail::safe_increment(tp[i])) {
         using U = mp11::mp_at_c<types, (type_index<T>() + 1)>;
         b.template make<U>(b.size, tp);
-        ++reinterpret_cast<U*>(b.ptr)[i];
+        ++static_cast<U*>(b.ptr)[i];
       }
     }
 
@@ -731,12 +688,23 @@ private:
     void operator()(T* tp, Buffer& b, const double x) {
       // potential lossy conversion that cannot be avoided
       b.template make<double>(b.size, tp);
-      operator()(reinterpret_cast<double*>(b.ptr), b, x);
+      operator()(static_cast<double*>(b.ptr), b, x);
     }
 
     template <class Buffer>
     void operator()(double* tp, Buffer& b, const double x) {
       for (auto end = tp + b.size; tp != end; ++tp) *tp *= x;
+    }
+
+    template <class T, class Buffer, class U>
+    void operator()(T* tp, Buffer& b, std::size_t i, const U& x) {
+      b.template make<double>(b.size, tp);
+      operator()(static_cast<double*>(b.ptr), b, i, x);
+    }
+
+    template <class Buffer, class U>
+    void operator()(double* tp, Buffer&, std::size_t i, const U& x) {
+      tp[i] *= static_cast<double>(x);
     }
   };
 

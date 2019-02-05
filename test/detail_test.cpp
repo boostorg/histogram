@@ -6,13 +6,16 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/literals.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
 #include <tuple>
 #include <vector>
 #include "utility_meta.hpp"
@@ -121,6 +124,30 @@ int main() {
         100, axis::integer<>(0, std::numeric_limits<int>::max() - 2));
     BOOST_TEST_THROWS(detail::bincount(v), std::overflow_error);
   }
+
+  // common_container
+  {
+    using A = std::array<int, 10>;
+    using B = std::vector<int>;
+    using C = std::map<std::size_t, int>;
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<A, B>, A>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<B, A>, A>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<A, C>, A>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<C, A>, A>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<C, B>, B>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<B, C>, B>));
+  }
+
+  // // common_storage
+  // {
+  //   using A = storage_adaptor<std::array<int, 10>>;
+  //   using B = storage_adaptor<std::vector<long>>;
+  //   using C = storage_adaptor<std::map<std::size_t, double>>;
+  //   BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_storage<A, B>,
+  //                                       storage_adaptor<std::array<long, 10>>>));
+  //   BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_storage<B, C>,
+  //                                       storage_adaptor<std::vector<double>>>));
+  // }
 
   return boost::report_errors();
 }

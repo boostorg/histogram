@@ -159,33 +159,6 @@ public:
     return detail::fill(storage_, axes_, t);
   }
 
-  /// Add values of another histogram.
-  template <class A, class S>
-  histogram& operator+=(const histogram<A, S>& rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_))
-      BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
-    storage_ += rhs.storage_;
-    return *this;
-  }
-
-  /// Subtract values of another histogram.
-  template <class A, class S>
-  histogram& operator-=(const histogram<A, S>& rhs) {
-    if (!detail::axes_equal(axes_, rhs.axes_))
-      BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
-    storage_ -= rhs.storage_;
-    return *this;
-  }
-
-  /// Multiply all values with scalar.
-  histogram& operator*=(const double x) {
-    storage_ *= x;
-    return *this;
-  }
-
-  /// Divide all values by scalar.
-  histogram& operator/=(const double x) { return operator*=(1.0 / x); }
-
   /// Access cell value at integral indices.
   /**
     You can pass indices as individual arguments, as a std::tuple of integers, or as an
@@ -265,6 +238,55 @@ public:
     return !operator==(rhs);
   }
 
+  /// Add values of another histogram.
+  template <class A, class S>
+  histogram& operator+=(const histogram<A, S>& rhs) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
+    auto rit = rhs.storage_.begin();
+    std::for_each(storage_.begin(), storage_.end(), [&rit](auto&& x) { x += *rit++; });
+    return *this;
+  }
+
+  /// Subtract values of another histogram.
+  template <class A, class S>
+  histogram& operator-=(const histogram<A, S>& rhs) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
+    auto rit = rhs.storage_.begin();
+    std::for_each(storage_.begin(), storage_.end(), [&rit](auto&& x) { x -= *rit++; });
+    return *this;
+  }
+
+  /// Multiply by values of another histogram.
+  template <class A, class S>
+  histogram& operator*=(const histogram<A, S>& rhs) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
+    auto rit = rhs.storage_.begin();
+    std::for_each(storage_.begin(), storage_.end(), [&rit](auto&& x) { x *= *rit++; });
+    return *this;
+  }
+
+  /// Divide by values of another histogram.
+  template <class A, class S>
+  histogram& operator/=(const histogram<A, S>& rhs) {
+    if (!detail::axes_equal(axes_, rhs.axes_))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
+    auto rit = rhs.storage_.begin();
+    std::for_each(storage_.begin(), storage_.end(), [&rit](auto&& x) { x /= *rit++; });
+    return *this;
+  }
+
+  /// Multiply all values with scalar.
+  histogram& operator*=(const double x) {
+    storage_ *= x;
+    return *this;
+  }
+
+  /// Divide all values by scalar.
+  histogram& operator/=(const double x) { return operator*=(1.0 / x); }
+
   /// Return value iterator to the beginning of the histogram.
   iterator begin() noexcept { return storage_.begin(); }
 
@@ -292,6 +314,30 @@ private:
   friend struct unsafe_access;
 };
 
+template <class A1, class S1, class A2, class S2>
+auto operator+(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
+  auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
+  return r += b;
+}
+
+template <class A1, class S1, class A2, class S2>
+auto operator*(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
+  auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
+  return r *= b;
+}
+
+template <class A1, class S1, class A2, class S2>
+auto operator-(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
+  auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
+  return r -= b;
+}
+
+template <class A1, class S1, class A2, class S2>
+auto operator/(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
+  auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
+  return r /= b;
+}
+
 template <class A, class S>
 auto operator*(const histogram<A, S>& h, double x) {
   auto r = histogram<A, detail::common_storage<S, dense_storage<double>>>(h);
@@ -306,18 +352,6 @@ auto operator*(double x, const histogram<A, S>& h) {
 template <class A, class S>
 auto operator/(const histogram<A, S>& h, double x) {
   return h * (1.0 / x);
-}
-
-template <class A1, class S1, class A2, class S2>
-auto operator+(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
-  auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
-  return r += b;
-}
-
-template <class A1, class S1, class A2, class S2>
-auto operator-(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
-  auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
-  return r -= b;
 }
 
 #if __cpp_deduction_guides >= 201606

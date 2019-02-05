@@ -118,75 +118,65 @@ void convert_array_storage() {
 
   // test radd
   auto c = prepare<T>(1);
-  c += s;
+  c[0] += s[0];
   BOOST_TEST_EQ(c[0], 1);
   BOOST_TEST(c == s);
-  c += s;
+  c[0] += s[0];
   BOOST_TEST_EQ(c[0], 2);
   BOOST_TEST_NOT(c == s);
 
   // test assign from float
   vector_storage<float> t;
-  t.reset(2);
+  t.reset(1);
   t[0] = 1.5;
   auto d = prepare<T>(1);
   d = t;
   BOOST_TEST(d == t);
   BOOST_TEST(d[0] == 1.5);
-  BOOST_TEST(d[1] == 0);
 
   // test "copy" ctor from float
   adaptive_storage_type f(t);
   BOOST_TEST_EQ(f[0], 1.5);
-  BOOST_TEST_EQ(f[1], 0);
   BOOST_TEST(f == t);
 
   // test radd from float
-  auto g = prepare<T>(2);
+  auto g = prepare<T>(1);
   g[0] += t[0];
   BOOST_TEST_EQ(g[0], 1.5);
   BOOST_TEST(g == t);
 
   vector_storage<int8_t> u;
-  u.reset(2);
+  u.reset(1);
   u[0] = -10;
-  u[1] = 10;
   auto h = prepare<T>(1);
   BOOST_TEST_NOT(h == u);
   h = u;
   BOOST_TEST(h == u);
   BOOST_TEST_EQ(h[0], -10);
-  BOOST_TEST_EQ(h[1], 10);
-  h -= u;
+  h[0] -= u[0];
   BOOST_TEST_EQ(h[0], 0);
-  BOOST_TEST_EQ(h[1], 0);
 }
 
 template <typename LHS, typename RHS>
 void add() {
-  auto a = prepare<LHS>(2);
-  auto b = prepare<RHS>(2);
+  auto a = prepare<LHS>(1);
+  auto b = prepare<RHS>(1);
   b[0] += 2;
-  a += b;
+  a[0] += b[0];
   BOOST_TEST_EQ(a[0], 2);
-  BOOST_TEST_EQ(a[1], 0);
-  a -= b;
+  a[0] -= b[0];
   BOOST_TEST_EQ(a[0], 0);
-  BOOST_TEST_EQ(a[1], 0);
-  a -= b;
+  a[0] -= b[0];
   BOOST_TEST_EQ(a[0], -2);
-  BOOST_TEST_EQ(a[1], 0);
 
-  auto c = prepare<RHS>(2);
+  auto c = prepare<RHS>(1);
   c[0] = max<RHS>();
-  auto d = prepare<LHS>(2);
-  d += c;
+  auto d = prepare<LHS>(1);
+  d[0] += c[0];
   BOOST_TEST_EQ(d[0], max<RHS>());
-  BOOST_TEST_EQ(d[1], 0);
-  auto e = prepare<LHS>(2);
-  e -= c;
+  auto e = prepare<LHS>(1);
+  e[0] -= c[0];
   BOOST_TEST_EQ(e[0], adaptive_storage_type::negate(max<RHS>()));
-  BOOST_TEST_EQ(e[1], 0);
 }
 
 template <typename LHS>
@@ -308,7 +298,7 @@ int main() {
   // add_and_grow
   {
     auto a = prepare(1);
-    a += a;
+    a[0] += a[0];
     BOOST_TEST_EQ(a[0], 0);
     ++a[0];
     double x = 1;
@@ -318,7 +308,7 @@ int main() {
     for (unsigned i = 0; i < 80; ++i) {
       x += x;
       a[0] += a[0];
-      b += b;
+      b[0] += b[0];
       BOOST_TEST_EQ(a[0], x);
       BOOST_TEST_EQ(b[0], x);
       auto c = prepare(1);
