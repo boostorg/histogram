@@ -1,6 +1,6 @@
 # Histogram
 
-**Fast multi-dimensional histogram with convenient interface for C++14 and Python**
+**Fast multi-dimensional histogram with convenient interface for C++14**
 
 Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org).
 
