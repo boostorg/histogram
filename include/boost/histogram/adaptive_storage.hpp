@@ -49,7 +49,7 @@ bool safe_increment(T& t) {
 
 template <class T, class U>
 bool safe_radd(std::true_type, T& t, const U& u) {
-  if ((std::numeric_limits<T>::max() - t) >= u) {
+  if (static_cast<T>(std::numeric_limits<T>::max() - t) >= u) {
     t += static_cast<T>(u); // static_cast to suppress conversion warning
     return true;
   }
@@ -60,7 +60,8 @@ template <class T, class U>
 bool safe_radd(std::false_type, T& t, const U& u) {
   static_assert(std::is_integral<U>::value, "U must be integral type");
   if (u >= 0) {
-    if (std::numeric_limits<T>::max() - t >= static_cast<std::make_unsigned_t<U>>(u)) {
+    if (static_cast<T>(std::numeric_limits<T>::max() - t) >=
+        static_cast<std::make_unsigned_t<U>>(u)) {
       t += static_cast<T>(u);
       return true;
     }
