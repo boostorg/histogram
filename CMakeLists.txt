@@ -75,7 +75,8 @@ function(compiled_test SRC)
       -fsanitize-address-use-after-scope)
   endif()
 
-  add_test(NAME ${BASENAME} COMMAND ${BASENAME})
+  # simple form required on windows
+  add_test(${BASENAME} ${BASENAME})
 endfunction()
 
 compiled_test(test/adaptive_storage_test.cpp)
