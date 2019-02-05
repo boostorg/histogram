@@ -487,8 +487,8 @@ public:
     template <class T>
     reference& operator=(const T& t) {
       base_type::buffer_->apply([this, &t](auto* tp) {
-        tp[base_type::idx_] = 0;
-        adder()(tp, *base_type::buffer_, base_type::idx_, t);
+        tp[this->idx_] = 0;
+        adder()(tp, *(this->buffer_), this->idx_, t);
       });
       return *this;
     }
