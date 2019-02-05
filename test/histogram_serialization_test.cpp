@@ -36,7 +36,6 @@ void run_tests(const char* filename) {
   {
     std::ifstream file;
     file.open(filename);
-    if (!file.is_open()) file.open(std::string("../test/") + filename);
     assert(file.is_open());
     while (file.good()) {
       char buf[1024];
@@ -47,6 +46,7 @@ void run_tests(const char* filename) {
 
   {
     std::string ofn(filename);
+    ofn.erase(0, ofn.rfind("/") + 1);
     ofn.append(".new");
     std::ofstream of(ofn);
     boost::archive::xml_oarchive oa(of);
@@ -63,9 +63,9 @@ void run_tests(const char* filename) {
   BOOST_TEST_EQ(a, b);
 }
 
-int main() {
-  run_tests<static_tag>("histogram_serialization_test_static.xml");
-  run_tests<dynamic_tag>("histogram_serialization_test_dynamic.xml");
-
+int main(int argc, char** argv) {
+  assert(argc == 3);
+  run_tests<static_tag>(argv[1]);
+  run_tests<dynamic_tag>(argv[2]);
   return boost::report_errors();
 }
