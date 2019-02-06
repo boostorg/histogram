@@ -12,7 +12,7 @@
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -172,7 +172,7 @@ void serialize(Archive& ar, storage_adaptor<T>& s, unsigned /* version */) {
 
 template <class A>
 template <class Archive>
-void adaptive_storage<A>::serialize(Archive& ar, unsigned /* version */) {
+void unlimited_storage<A>::serialize(Archive& ar, unsigned /* version */) {
   if (Archive::is_loading::value) {
     buffer_type dummy(0, buffer.alloc);
     std::size_t size;

@@ -98,7 +98,7 @@ double compare_6d(unsigned n, int distrib) {
 int main() {
   const unsigned nfill = 6000000;
   using SStore = std::vector<int>;
-  using DStore = adaptive_storage<>;
+  using DStore = unlimited_storage<>;
 
   printf("baseline %.1f\n", baseline(nfill));
 

@@ -4,13 +4,12 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_ADAPTIVE_STORAGE_HPP
-#define BOOST_HISTOGRAM_ADAPTIVE_STORAGE_HPP
+#ifndef BOOST_HISTOGRAM_UNLIMTED_STORAGE_HPP
+#define BOOST_HISTOGRAM_UNLIMTED_STORAGE_HPP
 
 #include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <boost/core/ignore_unused.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -164,11 +163,11 @@ void destroy_buffer(Allocator& a, typename std::allocator_traits<Allocator>::poi
   which voids the no-overflow-guarantee.
 */
 template <class Allocator>
-class adaptive_storage {
+class unlimited_storage {
   static_assert(
       std::is_same<typename std::allocator_traits<Allocator>::pointer,
                    typename std::allocator_traits<Allocator>::value_type*>::value,
-      "adaptive_storage requires allocator with trivial pointer type");
+      "unlimited_storage requires allocator with trivial pointer type");
 
 public:
   struct storage_tag {};
@@ -556,14 +555,14 @@ public:
   using const_iterator = iterator_t<const value_type, const_reference, const buffer_type>;
   using iterator = iterator_t<value_type, reference, buffer_type>;
 
-  explicit adaptive_storage(allocator_type a = {}) : buffer(0, std::move(a)) {}
-  adaptive_storage(const adaptive_storage&) = default;
-  adaptive_storage& operator=(const adaptive_storage&) = default;
-  adaptive_storage(adaptive_storage&&) = default;
-  adaptive_storage& operator=(adaptive_storage&&) = default;
+  explicit unlimited_storage(allocator_type a = {}) : buffer(0, std::move(a)) {}
+  unlimited_storage(const unlimited_storage&) = default;
+  unlimited_storage& operator=(const unlimited_storage&) = default;
+  unlimited_storage(unlimited_storage&&) = default;
+  unlimited_storage& operator=(unlimited_storage&&) = default;
 
   template <class T>
-  adaptive_storage(const storage_adaptor<T>& s) {
+  unlimited_storage(const storage_adaptor<T>& s) {
     using V = detail::naked<decltype(s[0])>;
     constexpr auto ti = type_index<V>();
     if (ti < mp11::mp_size<types>::value)
@@ -574,8 +573,8 @@ public:
   }
 
   template <class Iterable, class = detail::requires_iterable<Iterable>>
-  adaptive_storage& operator=(const Iterable& s) {
-    *this = adaptive_storage(s);
+  unlimited_storage& operator=(const Iterable& s) {
+    *this = unlimited_storage(s);
     return *this;
   }
 
@@ -588,7 +587,7 @@ public:
   reference operator[](std::size_t i) noexcept { return {&buffer, i}; }
   const_reference operator[](std::size_t i) const noexcept { return {&buffer, i}; }
 
-  bool operator==(const adaptive_storage& o) const noexcept {
+  bool operator==(const unlimited_storage& o) const noexcept {
     if (size() != o.size()) return false;
     return buffer.apply([&o](const auto* ptr) {
       return o.buffer.apply([ptr, &o](const auto* optr) {
@@ -605,7 +604,7 @@ public:
     });
   }
 
-  adaptive_storage& operator*=(const double x) {
+  unlimited_storage& operator*=(const double x) {
     buffer.apply(multiplier(), buffer, x);
     return *this;
   }
@@ -617,7 +616,7 @@ public:
 
   /// @private used by unit tests, not part of generic storage interface
   template <class T>
-  adaptive_storage(std::size_t s, const T* p, allocator_type a = {})
+  unlimited_storage(std::size_t s, const T* p, allocator_type a = {})
       : buffer(0, std::move(a)) {
     buffer.template make<T>(s, p);
   }

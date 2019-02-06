@@ -8,8 +8,8 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <deque>
 #include <limits>
 #include <map>
@@ -155,8 +155,8 @@ int main() {
 
   mixed_tests<storage_adaptor<std::vector<int>>,
               storage_adaptor<std::array<double, 100>>>();
-  mixed_tests<adaptive_storage<>, storage_adaptor<std::vector<int>>>();
-  mixed_tests<storage_adaptor<std::vector<int>>, adaptive_storage<>>();
+  mixed_tests<unlimited_storage<>, storage_adaptor<std::vector<int>>>();
+  mixed_tests<storage_adaptor<std::vector<int>>, unlimited_storage<>>();
 
   // with accumulators::weighted_sum
   {

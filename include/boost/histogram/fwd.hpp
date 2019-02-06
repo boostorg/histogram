@@ -117,7 +117,7 @@ class weighted_mean;
 struct unsafe_access;
 
 template <class Allocator = std::allocator<void>>
-class adaptive_storage;
+class unlimited_storage;
 
 template <class T>
 class storage_adaptor;
@@ -125,7 +125,7 @@ class storage_adaptor;
 template <class T, class A = std::allocator<T>>
 using dense_storage = storage_adaptor<std::vector<T, A>>;
 
-using default_storage = adaptive_storage<>;
+using default_storage = unlimited_storage<>;
 
 using weight_storage = dense_storage<accumulators::weighted_sum<>>;
 

@@ -7,7 +7,7 @@
 #include <array>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
@@ -142,7 +142,7 @@ int main() {
   // is_storage
   {
     struct A {};
-    using B = adaptive_storage<>;
+    using B = unlimited_storage<>;
 
     BOOST_TEST_TRAIT_FALSE((is_storage<A>));
     BOOST_TEST_TRAIT_TRUE((is_storage<B>));

@@ -21,16 +21,16 @@ The benchmarks are compiled with g++-7.3.0 and -O3.
 
 	[[boost:SS] [Histogram with `std::tuple<axis::regular<>>` and `std::vector<int>`]]
 
-	[[boost:SD] [Histogram with `std::tuple<axis::regular<>>` with [classref boost::histogram::adaptive_storage]]]
+	[[boost:SD] [Histogram with `std::tuple<axis::regular<>>` with [classref boost::histogram::unlimited_storage]]]
 
 	[[boost:DS] [Histogram with `std::vector<axis::variant<axis::regular<>>>` with `std::vector<int>`]]
 
-	[[boost:DD] [Histogram with `std::vector<axis::variant<axis::regular<>>>` with [classref boost::histogram::adaptive_storage]]]
+	[[boost:DD] [Histogram with `std::vector<axis::variant<axis::regular<>>>` with [classref boost::histogram::unlimited_storage]]]
 ]
 
 Boost.Histogram is mostly faster than the competition. Simultaneously, it is much more flexible, since the axis and storage types can be customized.
 
-A histogram with compile-time configured axes is always faster than one with run-time configured axes. [classref boost::histogram::adaptive_storage] is faster than a `std::vector<int>` for histograms with many bins, because it uses the cache more effectively due to its smaller memory consumption per bin. If the number of bins is small, it is slower because of the overhead of handling memory dynamically.
+A histogram with compile-time configured axes is always faster than one with run-time configured axes. [classref boost::histogram::unlimited_storage] is faster than a `std::vector<int>` for histograms with many bins, because it uses the cache more effectively due to its smaller memory consumption per bin. If the number of bins is small, it is slower because of the overhead of handling memory dynamically.
 
 [endsect]
 

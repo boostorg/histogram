@@ -22,7 +22,7 @@
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/algorithm/project.hpp>
 #include <boost/histogram/algorithm/reduce.hpp>
 #include <boost/histogram/algorithm/sum.hpp>

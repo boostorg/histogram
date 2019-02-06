@@ -14,8 +14,8 @@ project histogram-test
     ;
 
 alias run-tests :
-    [ run adaptive_storage_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
-    [ run adaptive_storage_test.cpp ]
+    [ run unlimited_storage_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
+    [ run unlimited_storage_test.cpp ]
     [ run axis_regular_test.cpp ]
     [ run axis_circular_test.cpp ]
     [ run axis_variable_test.cpp ]

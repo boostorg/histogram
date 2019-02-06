@@ -179,7 +179,7 @@ Histograms can be created which use a custom storage class with the factory func
 
 A `std::vector` may provide higher performance in some cases than the default storage. The counter type can then be chosen by the user. Usually, this would be an integral or floating point type. This storage may be faster than the default storage for low-dimensional histograms (or not, one has to measure).
 
-[warning The no-overflow-guarantee is only valid if the [classref boost::histogram::adaptive_storage default storage] is used. If you change the storage policy, you need to know what you are doing.]
+[warning The no-overflow-guarantee is only valid if the [classref boost::histogram::unlimited_storage default storage] is used. If you change the storage policy, you need to know what you are doing.]
 
 Users who work exclusively with weighted fills should use a `std::vector<double>`, it will be faster than using the default storage. Users may also store complex accumulators in the vector. [classref boost::histogram::accumulators::weighted_sum] tracks a variance estimate together with the sum of weights. [classref boost::histogram::accumulators::mean] computes the mean of samples are sorted into the cell.
 

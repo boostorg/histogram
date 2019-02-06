@@ -6,7 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>

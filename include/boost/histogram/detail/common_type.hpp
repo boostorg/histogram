@@ -71,19 +71,19 @@ struct common_storage_impl<storage_adaptor<T>, storage_adaptor<U>> {
 };
 
 template <class C, class A>
-struct common_storage_impl<storage_adaptor<C>, adaptive_storage<A>> {
+struct common_storage_impl<storage_adaptor<C>, unlimited_storage<A>> {
   using V = std::common_type_t<typename storage_adaptor<C>::value_type,
-                               typename adaptive_storage<A>::value_type>;
+                               typename unlimited_storage<A>::value_type>;
   using type = storage_adaptor<replace_container_value<C, V>>;
 };
 
 template <class C, class A>
-struct common_storage_impl<adaptive_storage<A>, storage_adaptor<C>>
-    : common_storage_impl<storage_adaptor<C>, adaptive_storage<A>> {};
+struct common_storage_impl<unlimited_storage<A>, storage_adaptor<C>>
+    : common_storage_impl<storage_adaptor<C>, unlimited_storage<A>> {};
 
 template <class A1, class A2>
-struct common_storage_impl<adaptive_storage<A1>, adaptive_storage<A2>> {
-  using type = adaptive_storage<A1>;
+struct common_storage_impl<unlimited_storage<A1>, unlimited_storage<A2>> {
+  using type = unlimited_storage<A1>;
 };
 
 template <class A, class B>

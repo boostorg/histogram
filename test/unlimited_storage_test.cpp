@@ -6,24 +6,24 @@
 
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/adaptive_storage.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <limits>
 #include <memory>
 #include <sstream>
 #include <vector>
 
 namespace bh = boost::histogram;
-using adaptive_storage_type = bh::adaptive_storage<>;
+using unlimited_storage_type = bh::unlimited_storage<>;
 template <typename T>
 using vector_storage = bh::storage_adaptor<std::vector<T>>;
 
 template <typename T = std::uint8_t>
-adaptive_storage_type prepare(std::size_t n, T x = T()) {
+unlimited_storage_type prepare(std::size_t n, T x = T()) {
   std::unique_ptr<T[]> v(new T[n]);
   std::fill(v.get(), v.get() + n, static_cast<T>(0));
   v.get()[0] = x;
-  return adaptive_storage_type(n, v.get());
+  return unlimited_storage_type(n, v.get());
 }
 
 template <class T>
@@ -32,8 +32,8 @@ auto max() {
 }
 
 template <>
-inline auto max<adaptive_storage_type::mp_int>() {
-  return adaptive_storage_type::mp_int(1e300);
+inline auto max<unlimited_storage_type::mp_int>() {
+  return unlimited_storage_type::mp_int(1e300);
 }
 
 template <typename T>
@@ -102,7 +102,7 @@ void convert_array_storage() {
   BOOST_TEST_EQ(s[0], 1);
 
   // test "copy" ctor
-  adaptive_storage_type b(s);
+  unlimited_storage_type b(s);
   BOOST_TEST_EQ(b[0], 1.0);
   BOOST_TEST(b == s);
   ++b[0];
@@ -135,7 +135,7 @@ void convert_array_storage() {
   BOOST_TEST(d[0] == 1.5);
 
   // test "copy" ctor from float
-  adaptive_storage_type f(t);
+  unlimited_storage_type f(t);
   BOOST_TEST_EQ(f[0], 1.5);
   BOOST_TEST(f == t);
 
@@ -176,7 +176,7 @@ void add() {
   BOOST_TEST_EQ(d[0], max<RHS>());
   auto e = prepare<LHS>(1);
   e[0] -= c[0];
-  BOOST_TEST_EQ(e[0], adaptive_storage_type::negate(max<RHS>()));
+  BOOST_TEST_EQ(e[0], unlimited_storage_type::negate(max<RHS>()));
 }
 
 template <typename LHS>
@@ -185,7 +185,7 @@ void add_all_rhs() {
   add<LHS, uint16_t>();
   add<LHS, uint32_t>();
   add<LHS, uint64_t>();
-  add<LHS, adaptive_storage_type::mp_int>();
+  add<LHS, unlimited_storage_type::mp_int>();
   add<LHS, double>();
 }
 
@@ -230,7 +230,7 @@ int main() {
 
   // empty state
   {
-    adaptive_storage_type a;
+    unlimited_storage_type a;
     BOOST_TEST_EQ(a.size(), 0);
   }
 
@@ -240,7 +240,7 @@ int main() {
     copy<uint16_t>();
     copy<uint32_t>();
     copy<uint64_t>();
-    copy<adaptive_storage_type::mp_int>();
+    copy<unlimited_storage_type::mp_int>();
     copy<double>();
   }
 
@@ -250,20 +250,20 @@ int main() {
     equal_1<uint16_t>();
     equal_1<uint32_t>();
     equal_1<uint64_t>();
-    equal_1<adaptive_storage_type::mp_int>();
+    equal_1<unlimited_storage_type::mp_int>();
     equal_1<double>();
 
     equal_2<uint8_t, unsigned>();
     equal_2<uint16_t, unsigned>();
     equal_2<uint32_t, unsigned>();
     equal_2<uint64_t, unsigned>();
-    equal_2<adaptive_storage_type::mp_int, unsigned>();
+    equal_2<unlimited_storage_type::mp_int, unsigned>();
     equal_2<double, unsigned>();
 
-    equal_2<adaptive_storage_type::mp_int, double>();
+    equal_2<unlimited_storage_type::mp_int, double>();
 
     auto a = prepare<double>(1);
-    auto b = prepare<adaptive_storage_type::mp_int>(1);
+    auto b = prepare<unlimited_storage_type::mp_int>(1);
     BOOST_TEST(a == b);
     ++a[0];
     BOOST_TEST_NOT(a == b);
@@ -277,7 +277,7 @@ int main() {
     increase_and_grow<uint64_t>();
 
     // only increase for mp_int
-    auto a = prepare<adaptive_storage_type::mp_int>(2, 1);
+    auto a = prepare<unlimited_storage_type::mp_int>(2, 1);
     BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_EQ(a[1], 0);
     ++a[0];
@@ -291,7 +291,7 @@ int main() {
     add_all_rhs<uint16_t>();
     add_all_rhs<uint32_t>();
     add_all_rhs<uint64_t>();
-    add_all_rhs<adaptive_storage_type::mp_int>();
+    add_all_rhs<unlimited_storage_type::mp_int>();
     add_all_rhs<double>();
   }
 
@@ -341,7 +341,7 @@ int main() {
     convert_array_storage<uint16_t>();
     convert_array_storage<uint32_t>();
     convert_array_storage<uint64_t>();
-    convert_array_storage<adaptive_storage_type::mp_int>();
+    convert_array_storage<unlimited_storage_type::mp_int>();
     convert_array_storage<double>();
   }
 
@@ -379,13 +379,13 @@ int main() {
     const auto aconst = a;
     BOOST_TEST(std::equal(aconst.begin(), aconst.end(), b.begin(), b.end()));
 
-    adaptive_storage_type::iterator it1 = a.begin();
+    unlimited_storage_type::iterator it1 = a.begin();
     *it1 = 3;
-    adaptive_storage_type::const_iterator it2 = a.begin();
+    unlimited_storage_type::const_iterator it2 = a.begin();
     BOOST_TEST_EQ(*it2, 3);
-    adaptive_storage_type::const_iterator it3 = aconst.begin();
+    unlimited_storage_type::const_iterator it3 = aconst.begin();
     BOOST_TEST_EQ(*it3, 1);
-    // adaptive_storage_type::iterator it3 = aconst.begin();
+    // unlimited_storage_type::iterator it3 = aconst.begin();
   }
 
   return boost::report_errors();
