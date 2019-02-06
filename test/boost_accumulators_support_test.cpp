@@ -7,13 +7,13 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #endif
-#if defined(BOOST_CLANG)
+#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
-#if defined(BOOST_CLANG)
+#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
 #pragma clang diagnostic pop
 #endif
 #if BOOST_WORKAROUND(BOOST_GCC, >= 60000)

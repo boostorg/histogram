@@ -9,20 +9,20 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
-#include <boost/config.hpp>
+#include <boost/config/workaround.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
-#if defined BOOST_CLANG
+#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 // warning-ignore required in Boost-1.66 for cpp_int.hpp:822
 #include <boost/multiprecision/cpp_int.hpp>
-#if defined BOOST_CLANG
+#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
 #pragma clang diagnostic pop
 #endif
 #include <limits>
