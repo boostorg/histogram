@@ -6,7 +6,6 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -16,6 +15,8 @@
 #include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
+#include <map>
 #include <tuple>
 #include <vector>
 #include "utility_meta.hpp"
