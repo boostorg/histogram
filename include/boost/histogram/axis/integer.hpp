@@ -57,10 +57,14 @@ public:
 
 namespace axis {
 
-/** Axis for an interval of integer values with unit steps.
- *
- * Binning is a O(1) operation. This axis operates
- * faster than a regular axis.
+/**
+  Axis for an interval of integer values with unit steps.
+
+  Binning is a O(1) operation. This axis bins faster than a regular axis.
+
+  @tparam Value input value type. Must be integer or floating point.
+  @tparam MetaData type to store meta data.
+  @tparam Options whether axis has an under- and/or overflow bin, is circular, or growing.
  */
 template <class Value, class MetaData, option Options>
 class integer : public iterator_mixin<integer<Value, MetaData, Options>>,

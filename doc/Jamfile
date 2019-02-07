@@ -23,7 +23,7 @@ doxygen reference
   <doxygen:param>MACRO_EXPANSION=YES
   <doxygen:param>JAVADOC_AUTOBRIEF=YES
   <doxygen:param>USE_MATHJAX=NO
-  <doxygen:param>SEARCH_INCLUDES=NO
+  <doxygen:param>SEARCH_INCLUDES=YES
   <doxygen:param>"EXCLUDE=\"../include/boost/histogram/fwd.hpp\" \\
                           \"../include/boost/histogram/ostream.hpp\" \\
                           \"../include/boost/histogram/axis/ostream.hpp\" \\

@@ -1,6 +1,6 @@
-[section Rationale]
+[section:rationale Rationale]
 
-[section Guidelines]
+[section:guidelines Guidelines]
 
 This library was written based on a decade of experience collected in working with big data, more precisely in the field of particle physics and astroparticle physics. The design is guided by advice from people like Bjarne Stroustrup, Scott Meyers, Herb Sutter, and Andrei Alexandrescu, and Chandler Carruth. I also like the [@https://www.python.org/dev/peps/pep-0020 Zen of Python] (also applies to other languages). I also borrowed ideas from the [@https://eigen.tuxfamily.org/ Eigen library].
 
@@ -20,13 +20,13 @@ Design goals of the library:
 
 The library consists of three orthogonal components:
 
-* [link histogram.rationale.structure.histogram_host histogram host class]: The histogram host class defines the public user interface and holds axis objects (one for each dimension) and a storage object. The user can chose whether axis objects are stored in a static tuple, a vector, or a vector of variants.
+* [link histogram.overview.rationale.structure.host histogram host class]: The histogram host class defines the public user interface and holds axis objects (one for each dimension) and a storage object. The user can chose whether axis objects are stored in a static tuple, a vector, or a vector of variants.
 
-* [link histogram.rationale.structure.axis_types axis types]: Defines how input values are mapped to bins. Several axis types are provided which implement different specializations. Users can make their own axis types following the axis concept and use them with the library. A variant type is provided, which can hold one of several concrete axis types.
+* [link histogram.overview.rationale.structure.axis axis types]: Defines how input values are mapped to bins. Several axis types are provided which implement different specializations. Users can make their own axis types following the axis concept and use them with the library. A variant type is provided, which can hold one of several concrete axis types.
 
-* [link histogram.rationale.structure.storage_types storage types]: Manages a collection of bin counters. The requirements for a storage differ from those of an STL container, it needs to follow the storage concept. Two implementations are provided.
+* [link histogram.overview.rationale.structure.storage storage types]: Manages a collection of bin counters. The requirements for a storage differ from those of an STL container, it needs to follow the storage concept. Two implementations are provided.
 
-[section:histogram_host Histogram host class]
+[section:host Histogram host class]
 
 Histograms store axis objects and a storage object. A one-dimensional histogram has one axis, a multi-dimensional histogram has several. When you pass an input tuple, say (v1, v2, v3), then the first axis will map v1 onto index i1, the second axis v2 onto i2, and so on, to generate the index tuple (i1, i2, i3). The histogram host class then converts these indices into a linear global index that is used to address bin counter in the storage object.
 
@@ -34,7 +34,7 @@ Histograms store axis objects and a storage object. A one-dimensional histogram 
 To understand the need for multi-dimensional histograms, think of point coordinates. If all points that you consider lie on a line, you need only one value to describe the point. If all points lie in a plane, you need two values to describe the position. Three values are needed for a point in space. A histogram puts a discrete grid over the line, the plane or the space, and counts how many points lie in each cell of the grid. To approximate a point distribution on a line, a 1d-histogram is sufficient. To do the same in 3d-space, one needs a 3d-histogram.
 ]
 
-This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.rationale.structure.axis_types axis types]. Users can furthermore chose between several ways of storing axis types in the histogram.
+This library supports different axis types, so that the user can customize how the mapping is done exactly, see [link histogram.overview.rationale.structure.axis axis types]. Users can furthermore chose between several ways of storing axis types in the histogram.
 
 When the number and types of the axes are known at compile-time, the histogram host class stores axis types in a `std::tuple`. We call this a /static histogram/. To access a particular axis, one should use a compile-time number as index (a run-time index also works with some limitations). A static histogram is extremely fast (see [link histogram.benchmarks benchmark]), because there is no overhead and the compiler can inline code, unroll loops, and more. Also nice: many user errors are can be caught at compile-time rather than run-time.
 
@@ -50,7 +50,7 @@ The design decision to store axis types in the variant-like type `boost::histogr
 
 [endsect]
 
-[section:axis_types Axis types]
+[section:axis Axis types]
 
 An axis defines an injective mapping of (a range of) input values to a bin. The logic is encapsulated in an axis type. Users can create their own axis classes and use them with the library, by providing a class compatible with the [link histogram.concepts.axis axis concept]. The library comes with four builtin types, which implement different specializations.
 
@@ -68,7 +68,7 @@ Each builtin axis type has a few compile-time options, which change its behavior
 
 [endsect]
 
-[section:storage_types Storage types]
+[section:storage Storage types]
 
 A storage type stores the actual cell values. It uses a one-dimensional index for cell lookup, computed by the histogram host from the indices generated from all its axes. The storage needs to know nothing about axes. Users can integrate their own storage classes with the library, by providing a class compatible with the [link histogram.concepts.storage storage concept]. Standard containers are automatically adapted by the library to storage types.
 
@@ -99,7 +99,7 @@ The no-overflow-guarantee only applies when the histogram is not using weighted 
 The best part: this approach is even faster for a histogram with sufficient size despite the run-time overheads of handling the counter type dynamically. The benchmarks show that the gains from better cache usage outweigh the run-time overheads of dynamic dispatching to the right bin counter type and the occasional allocation costs. Doubling the size of the bin counters each time helps, too, because the allocations happen only O(logN) times for N increments.
 
 [note
-In a sense, [classref boost::histogram::unlimited_storage] is the opposite of a `std::vector`, which keeps the size of the stored type constant, but grows to hold a larger number of elements. Here, the number of elements remains the same, but the storage grows to hold a uniform collection of larger and larger elements.
+In a sense, [classref boost::histogram::unlimited_storage] is the complement of a `std::vector`, which keeps the size of the stored type constant, but grows to hold a larger number of elements. Here, the number of elements remains the same, but the storage grows to hold a uniform collection of larger and larger elements.
 ]
 
 [endsect]
@@ -134,7 +134,7 @@ The presence of the extra bins does not interfere with normal indexing. On an ax
 
 The standard library returns a container size as an unsigned integer, because a container size cannot be negative. The `size()` method of the histogram class follows this rule, but the `size()` methods of axis types return a signed integral type. Why?
 
-As explained in the [link histogram.rationale.uoflow section about under- and overflow], a histogram axis may have an optional underflow bin, which is addressed by the index `-1`. It follows that the index type must be signed integer for all axis types.
+As explained in the [link histogram.overview.rationale.uoflow section about under- and overflow], a histogram axis may have an optional underflow bin, which is addressed by the index `-1`. It follows that the index type must be signed integer for all axis types.
 
 The `size()` method of any axis returns the same signed integer type. The size of an axis cannot be negative, but this choice has two advantages. Firstly, the value returned by `size()` itself is guaranteed to be a valid index, which is good since it may address the overflow bin. Secondly, comparisons between an index and the value returned by `size()` are frequent. If `size()` returned an unsigned integral type, compilers would produce a warning for each comparisons, and rightly so. [@https://www.youtube.com/watch?v=wvtFGa6XJDU Something awful happens] on most machines when you compare `-1` with an unsigned integer, `-1 < 1u == false`, which causes a serious bug in the following innocent-looking loop:
 ```
@@ -183,7 +183,7 @@ Now, if the number returned by the `variance()` method is just the same as the n
 
 [section:weights Support of weighted fills]
 
-A histogram sorts input values into bins and increments a bin counter if an input value falls into the range covered by that bin. The [classref boost::histogram::unlimited_storage standard storage] uses integer types to store these counts, see the [link histogram.rationale.structure.storage_types storage section] how integer overflow is avoided. However, sometimes histograms need to be filled with values that have a weight ['w] attached to them. In this case, the corresponding bin counter is not increased by one, but by the weight value ['w].
+A histogram sorts input values into bins and increments a bin counter if an input value falls into the range covered by that bin. The [classref boost::histogram::unlimited_storage standard storage] uses integer types to store these counts, see the [link histogram.overview.rationale.structure.storage storage section] how integer overflow is avoided. However, sometimes histograms need to be filled with values that have a weight ['w] attached to them. In this case, the corresponding bin counter is not increased by one, but by the weight value ['w].
 [note
 There are several use-cases for weighted increments. The main use in particle physics is to adapt simulated data of an experiment to real data. Simulations are needed to determine various corrections and efficiencies, but a simulated experiment is almost never a perfect replica of the real experiment. In addition, simulations are expensive to do. So, when deviations in a simulated distribution of a variable are found, one typically does not rerun the simulations, but assigns weights to match the simulated distribution to the real one.
 ]

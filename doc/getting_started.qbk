@@ -11,7 +11,7 @@ When the axis types for the histogram are known at compile-time, the library gen
 [import ../examples/getting_started_listing_01.cpp]
 [getting_started_listing_01]
 
-We passed the [classref boost::histogram::axis::regular regular] axis type directly to the [funcref boost::histogram::make_histogram make_histogram] function. The library then generates a specialized histogram type with just one regular axis from a generic template.
+We passed the [classref boost::histogram::axis::regular regular] axis type directly to the [funcref boost::histogram::make_histogram() make_histogram] function. The library then generates a specialized histogram type with just one regular axis from a generic template.
 
 * Pro: Many user errors are already caught at compile-time, not at run-time.
 * Con: You get template errors if you make a mistake, which may be hard to read. We try to give you useful error messages, but still.

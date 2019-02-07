@@ -60,10 +60,16 @@ public:
 
 namespace axis {
 
-/** Axis for non-equidistant bins on the real line.
- *
- * Binning is a O(log(N)) operation. If speed matters and the problem
- * domain allows it, prefer a regular axis, possibly with a transform.
+/**
+  Axis for non-equidistant bins on the real line.
+
+  Binning is a O(log(N)) operation. If speed matters and the problem domain allows it,
+  prefer a regular axis, possibly with a transform.
+
+  @tparam Value input value type, must be floating point.
+  @tparam MetaData type to store meta data.
+  @tparam Options whether axis has an under- and/or overflow bin, is circular, or growing.
+  @tparam Allocator allocator to use for dynamic memory management.
  */
 template <class Value, class MetaData, option Options, class Allocator>
 class variable

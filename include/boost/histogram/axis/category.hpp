@@ -41,15 +41,19 @@ public:
 
 namespace axis {
 
-/** Maps at a set of unique values to bin indices.
- *
- * The axis maps a set of values to bins, following the order of arguments in the
- * constructor. There is an optional overflow bin for this axis, which counts values that
- * are not part of the set. Binning has a O(N) complexity, but with a very small factor.
- * For small N (the typical use case) it beats other kinds of lookup.
- *
- * Value types must be equal-comparable.
- */
+/**
+  Maps at a set of unique values to bin indices.
+
+  The axis maps a set of values to bins, following the order of arguments in the
+  constructor. The optional overflow bin for this axis counts input values that
+  are not part of the set. Binning has O(N) complexity, but with a very small factor.
+  For small N (the typical use case) it beats other kinds of lookup.
+
+  @tparam Value input value type, must be equal-comparable.
+  @tparam MetaData type to store meta data.
+  @tparam Options whether axis has an overflow bin or is growing.
+  @tparam Allocator allocator to use for dynamic memory management.
+*/
 template <class Value, class MetaData, option Options, class Allocator>
 class category
     : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,

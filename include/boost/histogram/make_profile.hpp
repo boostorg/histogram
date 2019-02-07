@@ -24,17 +24,17 @@ namespace boost {
 namespace histogram {
 
 /// profile factory from compile-time axis configuration
-template <typename T, typename... Ts, typename = detail::requires_axis<T>>
-auto make_profile(T&& axis, Ts&&... axes) {
-  return make_histogram_with(profile_storage(), std::forward<T>(axis),
-                             std::forward<Ts>(axes)...);
+template <typename Axis, typename... Axes, typename = detail::requires_axis<Axis>>
+auto make_profile(Axis&& axis, Axes&&... axes) {
+  return make_histogram_with(profile_storage(), std::forward<Axis>(axis),
+                             std::forward<Axes>(axes)...);
 }
 
 /// profile factory from compile-time axis configuration with weighted mean
-template <typename T, typename... Ts, typename = detail::requires_axis<T>>
-auto make_weighted_profile(T&& axis, Ts&&... axes) {
-  return make_histogram_with(weighted_profile_storage(), std::forward<T>(axis),
-                             std::forward<Ts>(axes)...);
+template <typename Axis, typename... Axes, typename = detail::requires_axis<Axis>>
+auto make_weighted_profile(Axis&& axis, Axes&&... axes) {
+  return make_histogram_with(weighted_profile_storage(), std::forward<Axis>(axis),
+                             std::forward<Axes>(axes)...);
 }
 
 /// profile factory from vector-like

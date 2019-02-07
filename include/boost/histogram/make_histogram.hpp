@@ -13,10 +13,10 @@
 */
 
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <boost/histogram/unlimited_storage.hpp> // implements default_storage
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unlimited_storage.hpp> // = default_storage
 #include <boost/mp11/utility.hpp>
 #include <tuple>
 #include <vector>
@@ -30,10 +30,9 @@ namespace histogram {
   @param axis First axis instance.
   @param axes Other axis instances.
 */
-template <typename Storage, typename T, typename... Ts,
-          typename = detail::requires_axis<T>>
-auto make_histogram_with(Storage&& storage, T&& axis, Ts&&... axes) {
-  auto a = std::make_tuple(std::forward<T>(axis), std::forward<Ts>(axes)...);
+template <class Storage, class Axis, class... Axes, class = detail::requires_axis<Axis>>
+auto make_histogram_with(Storage&& storage, Axis&& axis, Axes&&... axes) {
+  auto a = std::make_tuple(std::forward<Axis>(axis), std::forward<Axes>(axes)...);
   using U = detail::naked<Storage>;
   using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
   return histogram<decltype(a), S>(std::move(a), S(std::forward<Storage>(storage)));
@@ -44,10 +43,10 @@ auto make_histogram_with(Storage&& storage, T&& axis, Ts&&... axes) {
   @param axis First axis instance.
   @param axes Other axis instances.
 */
-template <typename T, typename... Ts, typename = detail::requires_axis<T>>
-auto make_histogram(T&& axis, Ts&&... axes) {
-  return make_histogram_with(default_storage(), std::forward<T>(axis),
-                             std::forward<Ts>(axes)...);
+template <class Axis, class... Axes, class = detail::requires_axis<Axis>>
+auto make_histogram(Axis&& axis, Axes&&... axes) {
+  return make_histogram_with(default_storage(), std::forward<Axis>(axis),
+                             std::forward<Axes>(axes)...);
 }
 
 /**
@@ -55,10 +54,10 @@ auto make_histogram(T&& axis, Ts&&... axes) {
   @param axis First axis instance.
   @param axes Other axis instances.
 */
-template <typename T, typename... Ts, typename = detail::requires_axis<T>>
-auto make_weighted_histogram(T&& axis, Ts&&... axes) {
-  return make_histogram_with(weight_storage(), std::forward<T>(axis),
-                             std::forward<Ts>(axes)...);
+template <class Axis, class... Axes, class = detail::requires_axis<Axis>>
+auto make_weighted_histogram(Axis&& axis, Axes&&... axes) {
+  return make_histogram_with(weight_storage(), std::forward<Axis>(axis),
+                             std::forward<Axes>(axes)...);
 }
 
 /**
@@ -66,8 +65,8 @@ auto make_weighted_histogram(T&& axis, Ts&&... axes) {
   @param storage Storage or container with standard interface (any vector, array, or map).
   @param iterable Iterable range of axis objects.
 */
-template <typename Storage, typename Iterable,
-          typename = detail::requires_sequence_of_any_axis<Iterable>>
+template <class Storage, class Iterable,
+          class = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_histogram_with(Storage&& storage, Iterable&& iterable) {
   using U = detail::naked<Storage>;
   using S = mp11::mp_if<detail::is_storage<U>, U, storage_adaptor<U>>;
@@ -82,7 +81,7 @@ auto make_histogram_with(Storage&& storage, Iterable&& iterable) {
   Make histogram from iterable range and default storage.
   @param iterable Iterable range of axis objects.
 */
-template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
+template <class Iterable, class = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_histogram(Iterable&& iterable) {
   return make_histogram_with(default_storage(), std::forward<Iterable>(iterable));
 }
@@ -91,7 +90,7 @@ auto make_histogram(Iterable&& iterable) {
   Make histogram from iterable range and weight-counting storage.
   @param iterable Iterable range of axis objects.
 */
-template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
+template <class Iterable, class = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_weighted_histogram(Iterable&& iterable) {
   return make_histogram_with(weight_storage(), std::forward<Iterable>(iterable));
 }
@@ -102,8 +101,7 @@ auto make_weighted_histogram(Iterable&& iterable) {
   @param begin Iterator to range of axis objects.
   @param end   Iterator to range of axis objects.
 */
-template <typename Storage, typename Iterator,
-          typename = detail::requires_iterator<Iterator>>
+template <class Storage, class Iterator, class = detail::requires_iterator<Iterator>>
 auto make_histogram_with(Storage&& storage, Iterator begin, Iterator end) {
   using T = detail::naked<decltype(*begin)>;
   return make_histogram_with(std::forward<Storage>(storage), std::vector<T>(begin, end));
@@ -114,7 +112,7 @@ auto make_histogram_with(Storage&& storage, Iterator begin, Iterator end) {
   @param begin Iterator to range of axis objects.
   @param end   Iterator to range of axis objects.
 */
-template <typename Iterator, typename = detail::requires_iterator<Iterator>>
+template <class Iterator, class = detail::requires_iterator<Iterator>>
 auto make_histogram(Iterator begin, Iterator end) {
   return make_histogram_with(default_storage(), begin, end);
 }
@@ -124,7 +122,7 @@ auto make_histogram(Iterator begin, Iterator end) {
   @param begin Iterator to range of axis objects.
   @param end   Iterator to range of axis objects.
 */
-template <typename Iterator, typename = detail::requires_iterator<Iterator>>
+template <class Iterator, class = detail::requires_iterator<Iterator>>
 auto make_weighted_histogram(Iterator begin, Iterator end) {
   return make_histogram_with(weight_storage(), begin, end);
 }

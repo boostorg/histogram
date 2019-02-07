@@ -12,13 +12,13 @@
   Forward declarations, basic typedefs, and default template arguments for main classes.
 */
 
+#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/attribute.hpp> // BOOST_HISTOGRAM_DETAIL_NODISCARD
 #include <string>
 #include <vector>
 
 namespace boost {
 namespace histogram {
-
 namespace axis {
 
 /// Integral type for axis indices
@@ -32,39 +32,6 @@ struct null_type {};
 
 /// default metadata type
 using default_metadata = std::string;
-
-enum class option {
-  none = 0,
-  underflow = 0b1,
-  overflow = 0b10,
-  circular = 0b100,
-  growth = 0b1000,
-  use_default = static_cast<int>(underflow) | static_cast<int>(overflow),
-};
-
-constexpr inline option operator~(option a) {
-  return static_cast<option>(~static_cast<int>(a));
-}
-
-constexpr inline option operator&(option a, option b) {
-  return static_cast<option>(static_cast<int>(a) & static_cast<int>(b));
-}
-
-constexpr inline option operator|(option a, option b) {
-  return static_cast<option>(static_cast<int>(a) | static_cast<int>(b));
-}
-
-constexpr inline bool test(option a, option b) {
-  return static_cast<int>(a) & static_cast<int>(b);
-}
-
-constexpr inline option join(option a, option b) {
-  // circular turns off underflow and vice versa
-  a = a | b;
-  if (test(b, option::underflow)) a = a & ~option::circular;
-  if (test(b, option::circular)) a = a & ~option::underflow;
-  return a;
-}
 
 namespace transform {
 struct id;

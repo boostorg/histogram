@@ -15,46 +15,57 @@ namespace histogram {
 
 /// Unsafe read/write access to classes that potentially break consistency
 struct unsafe_access {
-  /// Get axes.
-  //@{
-  template <class T>
-  static auto& axes(T& t) {
-    return t.axes_;
+  /**
+    Get axes.
+    @param hist histogram.
+  */
+  template <class Histogram>
+  static auto& axes(Histogram& hist) {
+    return hist.axes_;
   }
 
-  template <class T>
-  static const auto& axes(const T& t) {
-    return t.axes_;
-  }
-  //@}
-
-  /// Get mutable axis reference with compile-time or run-time number.
-  //@{
-  template <class T>
-  static decltype(auto) axis(T& t, unsigned i) {
-    detail::axis_index_is_valid(t.axes_, i);
-    return detail::axis_get(t.axes_, i);
+  /// @copydoc axes()
+  template <class Histogram>
+  static const auto& axes(const Histogram& hist) {
+    return hist.axes_;
   }
 
-  template <class T, unsigned N = 0>
-  static decltype(auto) axis(T& t, std::integral_constant<unsigned, N> = {}) {
-    detail::axis_index_is_valid(t.axes_, N);
-    return detail::axis_get<N>(t.axes_);
-  }
-  //@}
-
-  /// Get storage.
-  //@{
-  template <class T>
-  static auto& storage(T& t) {
-    return t.storage_;
+  /**
+    Get mutable axis reference with compile-time number.
+    @param hist histogram.
+    @tparam I axis index (optional, default: 0).
+  */
+  template <class Histogram, unsigned I = 0>
+  static decltype(auto) axis(Histogram& hist, std::integral_constant<unsigned, I> = {}) {
+    detail::axis_index_is_valid(hist.axes_, I);
+    return detail::axis_get<I>(hist.axes_);
   }
 
-  template <class T>
-  static const auto& storage(const T& t) {
-    return t.storage_;
+  /**
+    Get mutable axis reference with run-time number.
+    @param hist histogram.
+    @param i axis index.
+  */
+  template <class Histogram>
+  static decltype(auto) axis(Histogram& hist, unsigned i) {
+    detail::axis_index_is_valid(hist.axes_, i);
+    return detail::axis_get(hist.axes_, i);
   }
-  //@}
+
+  /**
+    Get storage.
+    @param hist histogram.
+  */
+  template <class Histogram>
+  static auto& storage(Histogram& hist) {
+    return hist.storage_;
+  }
+
+  /// @copydoc storage()
+  template <class Histogram>
+  static const auto& storage(const Histogram& hist) {
+    return hist.storage_;
+  }
 };
 
 } // namespace histogram

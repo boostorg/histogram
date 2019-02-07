@@ -17,6 +17,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 namespace boost {
@@ -157,9 +158,15 @@ auto step(T&& t) {
   return step_type<T&&>{std::forward<T>(t)};
 }
 
-/** Axis for equidistant intervals on the real line.
- *
- * The most common binning strategy. Very fast. Binning is a O(1) operation.
+/**
+  Axis for equidistant intervals on the real line.
+
+  The most common binning strategy. Very fast. Binning is a O(1) operation.
+
+  @tparam Value input value type, must be floating point.
+  @tparam Transform builtin or user-defined transform type.
+  @tparam MetaData type to store meta data.
+  @tparam Options whether axis has an under- and/or overflow bin, is circular, or growing.
  */
 template <class Value, class Transform, class MetaData, option Options>
 class regular : public iterator_mixin<regular<Value, Transform, MetaData, Options>>,
@@ -177,6 +184,8 @@ public:
 private:
   using unit_type = detail::get_unit_type<value_type>;
   using internal_value_type = detail::get_scale_type<value_type>;
+  static_assert(std::is_floating_point<internal_value_type>::value,
+                "variable axis requires floating point type");
 
 public:
   regular() = default;
