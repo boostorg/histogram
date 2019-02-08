@@ -6,7 +6,7 @@
 
 import testing ;
 
-project histogram-example
+project
     : requirements
     <include>$(BOOST_ROOT)
     <include>.
