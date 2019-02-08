@@ -6,8 +6,8 @@ Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the 
 
 Branch  | Linux [1] and OSX [2] | Windows [3] | Coverage
 ------- | --------------------- |------------ | --------
-master  | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/master?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/master) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master&service=github)](https://coveralls.io/github/HDembinski/histogram?branch=master)
-develop | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=develop)](https://travis-ci.org/HDembinski/histogram?branch=develop) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/develop?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/develop) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop&service=github)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
+master  | [![Build Status Travis](https://travis-ci.org/boostorg/histogram.svg?branch=master)](https://travis-ci.org/boostorg/histogram?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/master?svg=true)](https://ci.appveyor.com/project/boostorg/histogram/branch/master) | [![Coverage Status](https://coveralls.io/repos/github/boostorg/histogram/badge.svg?branch=master&service=github)](https://coveralls.io/github/boostorg/histogram?branch=master)
+develop | [![Build Status Travis](https://travis-ci.org/boostorg/histogram.svg?branch=develop)](https://travis-ci.org/boostorg/histogram?branch=develop) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/develop?svg=true)](https://ci.appveyor.com/project/boostorg/histogram/branch/develop) | [![Coverage Status](https://coveralls.io/repos/github/boostorg/histogram/badge.svg?branch=develop&service=github)](https://coveralls.io/github/boostorg/histogram?branch=develop)
 
 1. gcc-5.5.0, clang-5.0.0
 2. Xcode 9.4
@@ -54,7 +54,7 @@ If you don't want to run the tests, there is nothing to build. Just copy the con
 The tests can be build with `b2` from the Boost project or `cmake`. If you are not a Boost developer, use `cmake`.
 
 ```sh
-git clone https://github.com/HDembinski/histogram.git
+git clone https://github.com/boostorg/histogram.git
 mkdir build && cd build
 cmake ..
 make
@@ -124,4 +124,4 @@ Details on the benchmark are given in the [documentation](http://hdembinski.gith
 
 Development is currently targets the 4.0 release, the first one to appear officially in Boost (**Boost-1.70** is planned for April 2019). More than 500 individual tests make sure that the implementation works as expected. Full documentation is available. User feedback is appreciated!
 
-The library was reviewed in September 2018 by the Boost Community under review manager Mateusz Loskot. It was **conditionally accepted** with requests to improve aspects of the interface and documentation. Current development is focusing on implementing these requests. Code-breaking changes of the interface are currently happening on the develop branch. If you want to use the library in production code, please use the [latest release](https://github.com/HDembinski/histogram/releases). After the library is released as part of Boost, the interface will be kept stable.
+The library was reviewed in September 2018 by the Boost Community under review manager Mateusz Loskot. It was **conditionally accepted** with requests to improve aspects of the interface and documentation. Current development is focusing on implementing these requests. Code-breaking changes of the interface are currently happening on the develop branch. If you want to use the library in production code, please use the [latest release](https://github.com/boostorg/histogram/releases). After the library is released as part of Boost, the interface will be kept stable.
