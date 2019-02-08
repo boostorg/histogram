@@ -35,7 +35,7 @@ alias run-tests :
     [ run histogram_growing_test.cpp ]
     [ run histogram_mixed_test.cpp ]
     [ run histogram_operators_test.cpp ]
-    [ run histogram_serialization_test.cpp /boost/serialization//boost_serialization/<link>static ]
+    [ run histogram_serialization_test.cpp /boost/serialization//boost_serialization/<link>static : <define>STATIC_XML=histogram_serialization_test_static.xml <define>DYNAMIC_XML=histogram_serialization_test_dynamic.xml ]
     [ run histogram_test.cpp ]
     [ run indexed_test.cpp ]
     [ run internal_accumulators_test.cpp ]
