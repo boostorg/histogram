@@ -63,8 +63,9 @@ void run_tests(const char* filename) {
   BOOST_TEST_EQ(a, b);
 }
 
-int main() {
-  run_tests<static_tag>(STATIC_XML);
-  run_tests<dynamic_tag>(DYNAMIC_XML);
+int main(int argc, char** argv) {
+  assert(argc == 3);
+  run_tests<dynamic_tag>(argv[1]);
+  run_tests<static_tag>(argv[2]);
   return boost::report_errors();
 }

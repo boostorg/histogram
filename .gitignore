@@ -9,3 +9,5 @@ doc/html/.nojekyll
 doc/html/objects.inv
 .DS_Store
 .vs*
+test/*.xml.new
+test/*.xml.new
