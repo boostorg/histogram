@@ -7,7 +7,7 @@
 
 import testing ;
 
-project histogram-benchmark
+project
     : requirements
     <include>$(BOOST_ROOT)
     <include>.
@@ -17,4 +17,11 @@ alias run-speed-test :
     [ run speed_boost.cpp ]
     ;
 
+alias run-google-benchmarks :
+    [ run axis_index.cpp ]
+    [ run histogram_iteration.cpp ]
+    [ run histogram_parallel_filling.cpp ]
+    ;
+
 explicit run-speed-test ;
+explicit run-google-benchmarks ;
