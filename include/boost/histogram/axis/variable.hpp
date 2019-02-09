@@ -227,17 +227,17 @@ variable(std::initializer_list<U>, M)->variable<T, M>;
 
 template <class Iterable,
           class T = detail::convert_integer<
-              detail::naked<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+              detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable)->variable<T>;
 
 template <class Iterable,
           class T = detail::convert_integer<
-              detail::naked<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+              detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable, const char*)->variable<T>;
 
 template <class Iterable, class M,
           class T = detail::convert_integer<
-              detail::naked<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+              detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable, M)->variable<T, M>;
 
 #endif

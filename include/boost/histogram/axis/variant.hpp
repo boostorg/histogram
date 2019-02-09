@@ -55,10 +55,10 @@ const T* get_if(const variant<Us...>* v);
 template <class... Ts>
 class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
   using base_type = boost::variant<Ts...>;
-  using naked_types = mp11::mp_transform<detail::naked, base_type>;
+  using remove_cvref_t_types = mp11::mp_transform<detail::remove_cvref_t, base_type>;
 
   template <class T>
-  using is_bounded_type = mp11::mp_contains<naked_types, detail::naked<T>>;
+  using is_bounded_type = mp11::mp_contains<remove_cvref_t_types, detail::remove_cvref_t<T>>;
 
   template <typename T>
   using requires_bounded_type = std::enable_if_t<is_bounded_type<T>::value>;
@@ -93,7 +93,7 @@ public:
   variant& operator=(const variant<Us...>& u) {
     visit(
         [this](const auto& u) {
-          using U = detail::naked<decltype(u)>;
+          using U = detail::remove_cvref_t<decltype(u)>;
           detail::static_if<is_bounded_type<U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
@@ -240,7 +240,7 @@ template <class Visitor, class Variant>
 auto visit(Visitor&& vis, Variant&& var)
     -> detail::visitor_return_type<Visitor, Variant> {
   using R = detail::visitor_return_type<Visitor, Variant>;
-  using B = detail::copy_qualifiers<Variant, typename detail::naked<Variant>::base_type>;
+  using B = detail::copy_qualifiers<Variant, typename detail::remove_cvref_t<Variant>::base_type>;
   return boost::apply_visitor(detail::functor_wrapper<Visitor, R>(vis),
                               static_cast<B>(var));
 }
@@ -289,12 +289,12 @@ decltype(auto) get(U&& u) {
 
 template <class T, class U>
 T* get_if(U* u) {
-  return std::is_same<T, detail::naked<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
+  return std::is_same<T, detail::remove_cvref_t<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
 }
 
 template <class T, class U>
 const T* get_if(const U* u) {
-  return std::is_same<T, detail::naked<U>>::value ? reinterpret_cast<const T*>(u)
+  return std::is_same<T, detail::remove_cvref_t<U>>::value ? reinterpret_cast<const T*>(u)
                                                   : nullptr;
 }
 #endif

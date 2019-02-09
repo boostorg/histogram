@@ -262,7 +262,7 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_axis_variant<axis::variant<axis::regular<>>>));
   }
 
-  // naked
+  // remove_cvref_t
   {
     using T1 = int;
     using T2 = int&&;
@@ -272,14 +272,14 @@ int main() {
     using T6 = volatile int&&;
     using T7 = volatile const int;
     using T8 = volatile const int&;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T1>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T2>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T3>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T4>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T5>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T6>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T7>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<naked<T8>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T1>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T2>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T3>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T4>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T5>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T6>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T7>, int>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T8>, int>));
   }
 
   // copy_qualifiers

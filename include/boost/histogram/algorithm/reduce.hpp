@@ -151,7 +151,7 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
   // override default-constructed axis instances with modified instances
   unsigned iaxis = 0;
   hist.for_each_axis([&](const auto& a) {
-    using T = detail::naked<decltype(a)>;
+    using T = detail::remove_cvref_t<decltype(a)>;
 
     auto& o = opts[iaxis];
     o.begin = 0;

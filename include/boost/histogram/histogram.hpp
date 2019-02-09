@@ -359,11 +359,11 @@ auto operator/(const histogram<A, S>& h, double x) {
 #if __cpp_deduction_guides >= 201606
 
 template <class Axes>
-histogram(Axes&& axes)->histogram<detail::naked<Axes>, default_storage>;
+histogram(Axes&& axes)->histogram<detail::remove_cvref_t<Axes>, default_storage>;
 
 template <class Axes, class Storage>
 histogram(Axes&& axes, Storage&& storage)
-    ->histogram<detail::naked<Axes>, detail::naked<Storage>>;
+    ->histogram<detail::remove_cvref_t<Axes>, detail::remove_cvref_t<Storage>>;
 
 #endif
 
