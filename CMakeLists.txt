@@ -15,6 +15,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(MIN_BOOST_VERSION 1.66)
 
 if ("$ENV{BOOST_ROOT}" STREQUAL "")
+  # assume that we are inside the boost-superproject
   set(BOOST_INCLUDEDIR "${PROJECT_SOURCE_DIR}/../..")
 endif()
 
@@ -186,11 +187,11 @@ if (BUILD_BENCHMARKS)
     target_link_libraries(${BASENAME} PRIVATE benchmark::benchmark_main)
   endfunction()
 
-  benchmark(test/iteration_bench.cpp)
-  benchmark(test/axis_bench.cpp)
-  benchmark(test/parallel_filling_bench.cpp)
+  benchmark(benchmark/axis_index.cpp)
+  benchmark(benchmark/histogram_iteration.cpp)
+  benchmark(benchmark/histogram_parallel_filling.cpp)
 
-  add_executable(speed_boost test/speed_boost.cpp)
+  add_executable(speed_boost benchmark/speed_boost.cpp)
   target_include_directories(speed_boost PRIVATE include ${Boost_INCLUDE_DIR})
   target_compile_definitions(speed_boost PRIVATE -DBOOST_DISABLE_ASSERTS)
   target_compile_options(speed_boost PRIVATE -O3)

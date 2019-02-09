@@ -9,7 +9,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
 #include <boost/histogram/serialization.hpp>
-#include <cassert>
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -63,9 +62,8 @@ void run_tests(const char* filename) {
   BOOST_TEST_EQ(a, b);
 }
 
-int main(int argc, char** argv) {
-  assert(argc == 3);
-  run_tests<dynamic_tag>(argv[1]);
-  run_tests<static_tag>(argv[2]);
+int main() {
+  run_tests<static_tag>(STATIC_XML);
+  run_tests<dynamic_tag>(DYNAMIC_XML);
   return boost::report_errors();
 }

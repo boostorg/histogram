@@ -5,7 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/histogram.hpp>
-#include "utility_histogram.hpp"
+#include "../test/utility_histogram.hpp"
 
 #include <cassert>
 #include <cstdio>
