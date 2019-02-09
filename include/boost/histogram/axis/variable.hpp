@@ -155,7 +155,8 @@ public:
       const auto b = v[size()];
       x -= std::floor((x - a) / (b - a)) * (b - a);
     }
-    return std::upper_bound(v.begin(), v.end(), x) - v.begin() - 1;
+    return static_cast<index_type>(std::upper_bound(v.begin(), v.end(), x) - v.begin() -
+                                   1);
   }
 
   /// Return value for fractional index argument.
@@ -182,7 +183,9 @@ public:
   auto bin(index_type idx) const noexcept { return interval_view<variable>(*this, idx); }
 
   /// Returns the number of bins, without over- or underflow.
-  index_type size() const noexcept { return vec_meta_.first().size() - 1; }
+  index_type size() const noexcept {
+    return static_cast<index_type>(vec_meta_.first().size()) - 1;
+  }
   /// Returns the options.
   static constexpr option options() noexcept { return Options; }
   /// Returns reference to metadata.

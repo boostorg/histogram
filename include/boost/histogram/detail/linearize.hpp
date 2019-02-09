@@ -116,7 +116,7 @@ template <class S, class A, class T>
 void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   bool update_needed = false;
   auto sh = shifts;
-  for_each_axis(axes, [&](const auto&) { update_needed |= *sh++; });
+  for_each_axis(axes, [&](const auto&) { update_needed |= (*sh++ != 0); });
   if (!update_needed) return;
   struct item {
     axis::index_type idx, old_extend;

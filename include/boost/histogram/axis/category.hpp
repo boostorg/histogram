@@ -120,7 +120,7 @@ public:
   index_type index(const value_type& x) const noexcept {
     const auto beg = vec_meta_.first().begin();
     const auto end = vec_meta_.first().end();
-    return std::distance(beg, std::find(beg, end, x));
+    return static_cast<index_type>(std::distance(beg, std::find(beg, end, x)));
   }
 
   /// Return value for index argument.
@@ -135,7 +135,9 @@ public:
   decltype(auto) bin(index_type idx) const noexcept { return value(idx); }
 
   /// Returns the number of bins, without over- or underflow.
-  index_type size() const noexcept { return vec_meta_.first().size(); }
+  index_type size() const noexcept {
+    return static_cast<index_type>(vec_meta_.first().size());
+  }
   /// Returns the options.
   static constexpr option options() noexcept { return Options; }
   /// Returns reference to metadata.

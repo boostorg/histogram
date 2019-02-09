@@ -32,16 +32,20 @@ public:
   /// Returns index and shift (if axis has grown) for the passed argument.
   auto update(value_type x) noexcept {
     auto impl = [](auto& der, long x) {
-      const axis::index_type i = x - der.min_;
+      const auto i = x - der.min_;
       if (i >= 0) {
-        if (i < der.size()) return std::make_pair(i, 0);
-        const auto n = i - der.size() + 1;
+        const auto k = static_cast<axis::index_type>(i);
+        if (k < der.size()) return std::make_pair(k, 0);
+        const auto n = k - der.size() + 1;
         der.size_meta_.first() += n;
-        return std::make_pair(i, -n);
+        return std::make_pair(k, -n);
       }
-      der.min_ += i;
-      der.size_meta_.first() -= i;
-      return std::make_pair(0, -i);
+      const auto k =
+          static_cast<axis::index_type>(static_if<std::is_floating_point<value_type>>(
+              [](auto x) { return std::floor(x); }, [](auto x) { return x; }, i));
+      der.min_ += k;
+      der.size_meta_.first() -= k;
+      return std::make_pair(0, -k);
     };
 
     return detail::static_if<std::is_floating_point<value_type>>(
@@ -117,7 +121,7 @@ public:
   }
 
   /// Return bin for index argument.
-  decltype(auto) bin(local_index_type idx) const noexcept {
+  decltype(auto) bin(index_type idx) const noexcept {
     return detail::static_if<std::is_floating_point<local_index_type>>(
         [this](auto idx) { return interval_view<integer>(*this, idx); },
         [this](auto idx) { return this->value(idx); }, idx);
@@ -146,7 +150,7 @@ private:
   index_type index_impl(std::false_type, int x) const noexcept {
     const auto z = x - min_;
     if (test(Options, option::circular))
-      return z - std::floor(float(z) / size()) * size();
+      return static_cast<index_type>(z - std::floor(float(z) / size()) * size());
     if (z < size()) return z >= 0 ? z : -1;
     return size();
   }

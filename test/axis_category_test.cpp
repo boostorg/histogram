@@ -31,7 +31,6 @@ int main() {
     b = axis::category<std::string>{{B, A, C}};
     BOOST_TEST_NE(a, b);
     b = a;
-    b = b;
     BOOST_TEST_EQ(a, b);
     axis::category<std::string> c = std::move(b);
     BOOST_TEST_EQ(c, a);

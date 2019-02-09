@@ -28,8 +28,6 @@ int main() {
     BOOST_TEST_NE(a, b);
     b = a;
     BOOST_TEST_EQ(a, b);
-    b = b;
-    BOOST_TEST_EQ(a, b);
     axis::regular<> c = std::move(b);
     BOOST_TEST_EQ(c, a);
     axis::regular<> d;

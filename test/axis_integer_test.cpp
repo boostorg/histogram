@@ -27,8 +27,6 @@ int main() {
     BOOST_TEST_NE(a, b);
     b = a;
     BOOST_TEST_EQ(a, b);
-    b = b;
-    BOOST_TEST_EQ(a, b);
     axis::integer<double> c = std::move(b);
     BOOST_TEST_EQ(c, a);
     axis::integer<double> d;

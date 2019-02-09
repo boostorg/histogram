@@ -108,9 +108,6 @@ void run_tests() {
     BOOST_TEST_NE(h, h2);
     h2 = h;
     BOOST_TEST_EQ(h, h2);
-    // test self-assign
-    h2 = h2;
-    BOOST_TEST_EQ(h, h2);
     auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
                         storage_adaptor<std::vector<unsigned>>>();
     h3 = h;
