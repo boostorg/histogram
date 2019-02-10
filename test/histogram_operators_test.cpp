@@ -4,11 +4,10 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/core/is_same.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram.hpp>
-#include <boost/histogram/detail/meta.hpp>
-#include <type_traits>
 #include "utility_histogram.hpp"
 #include "utility_meta.hpp"
 
@@ -46,7 +45,7 @@ void run_tests() {
     BOOST_TEST_EQ(d3.at(0), 4);
     BOOST_TEST_EQ(d3.at(1), 9);
     auto d4 = d3 * (1 * d); // converted return type
-    BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(d4), decltype(d3)>));
+    BOOST_TEST_TRAIT_FALSE((boost::core::is_same<decltype(d4), decltype(d3)>));
     BOOST_TEST_EQ(d4.at(0), 8);
     BOOST_TEST_EQ(d4.at(1), 27);
     d4 /= d;
@@ -58,8 +57,8 @@ void run_tests() {
 
     auto e = 3 * a; // converted return type
     auto f = b * 2; // converted return type
-    BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(e), decltype(a)>));
-    BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(f), decltype(a)>));
+    BOOST_TEST_TRAIT_FALSE((boost::core::is_same<decltype(e), decltype(a)>));
+    BOOST_TEST_TRAIT_FALSE((boost::core::is_same<decltype(f), decltype(a)>));
     BOOST_TEST_EQ(e.at(0), 3);
     BOOST_TEST_EQ(e.at(1), 0);
     BOOST_TEST_EQ(f.at(0), 0);
@@ -75,6 +74,88 @@ void run_tests() {
     BOOST_TEST_EQ(r.at(0), 1);
     BOOST_TEST_EQ(r.at(1), 0.25);
     BOOST_TEST_EQ(r, s);
+  }
+
+  // arithmetic operators with mixed storage: unlimited vs. vector<unsigned>
+  {
+    auto ia = axis::integer<int, axis::null_type, axis::option::none>(0, 2);
+    auto a = make(Tag(), ia);
+    a(0, weight(2));
+    a(1, weight(2));
+    auto b = a;
+    auto c = make_s(Tag(), std::vector<unsigned>(), ia);
+    c(0, weight(2));
+    c(1, weight(2));
+    auto a2 = a;
+    a2 += c;
+    BOOST_TEST_EQ(a2, (a + b));
+    auto a3 = a;
+    a3 *= c;
+    BOOST_TEST_EQ(a3, (a * b));
+    auto a4 = a;
+    a4 -= c;
+    BOOST_TEST_EQ(a4, (a - b));
+    auto a5 = a;
+    a5 /= c;
+    BOOST_TEST_EQ(a5, (a / b));
+  }
+
+  // arithmetic operators with mixed storage: vector<unsigned char> vs. vector<unsigned>
+  {
+    auto ia = axis::integer<int, axis::null_type, axis::option::none>(0, 2);
+    auto a = make_s(Tag(), std::vector<unsigned char>{}, ia);
+    auto c = make_s(Tag(), std::vector<unsigned>(), ia);
+    a(0, weight(2));
+    a(1, weight(2));
+    auto b = a;
+    c(0, weight(2));
+    c(1, weight(2));
+    auto a2 = a;
+    a2 += c;
+    BOOST_TEST_EQ(a2, (a + b));
+    auto a3 = a;
+    a3 *= c;
+    BOOST_TEST_EQ(a3, (a * b));
+    auto a4 = a;
+    a4 -= c;
+    BOOST_TEST_EQ(a4, (a - b));
+    auto a5 = a;
+    a5 /= c;
+    BOOST_TEST_EQ(a5, (a / b));
+  }
+
+  // add operators with weighted storage
+  {
+    auto ia = axis::integer<int, axis::null_type, axis::option::none>(0, 2);
+    auto a = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), ia);
+    auto b = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), ia);
+
+    a(0);
+    BOOST_TEST_EQ(a.at(0).variance(), 1);
+    b(weight(3), 1);
+    BOOST_TEST_EQ(b.at(1).variance(), 9);
+    auto c = a;
+    c += b;
+    BOOST_TEST_EQ(c.at(0).value(), 1);
+    BOOST_TEST_EQ(c.at(0).variance(), 1);
+    BOOST_TEST_EQ(c.at(1).value(), 3);
+    BOOST_TEST_EQ(c.at(1).variance(), 9);
+    auto d = a;
+    d += b;
+    BOOST_TEST_EQ(d.at(0).value(), 1);
+    BOOST_TEST_EQ(d.at(0).variance(), 1);
+    BOOST_TEST_EQ(d.at(1).value(), 3);
+    BOOST_TEST_EQ(d.at(1).variance(), 9);
+  }
+
+  // bad operations
+  {
+    auto a = make(Tag(), axis::integer<>(0, 2));
+    auto b = make(Tag(), axis::integer<>(0, 3));
+    BOOST_TEST_THROWS(a += b, std::invalid_argument);
+    BOOST_TEST_THROWS(a -= b, std::invalid_argument);
+    BOOST_TEST_THROWS(a *= b, std::invalid_argument);
+    BOOST_TEST_THROWS(a /= b, std::invalid_argument);
   }
 
   // histogram_ostream

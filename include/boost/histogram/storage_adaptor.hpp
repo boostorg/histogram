@@ -66,7 +66,7 @@ struct array_impl : T {
   array_impl& operator=(const U& u) {
     size_ = u.size();
     if (size_ > T::max_size()) // for std::array
-      BOOST_THROW_EXCEPTION(std::runtime_error(
+      BOOST_THROW_EXCEPTION(std::length_error(
           detail::cat("size ", size_, " exceeds maximum capacity ", T::max_size())));
     auto it = T::begin();
     for (auto&& x : u) *it++ = x;
@@ -76,7 +76,7 @@ struct array_impl : T {
   void reset(std::size_t n) {
     using value_type = typename T::value_type;
     if (n > T::max_size()) // for std::array
-      BOOST_THROW_EXCEPTION(std::runtime_error(
+      BOOST_THROW_EXCEPTION(std::length_error(
           detail::cat("size ", n, " exceeds maximum capacity ", T::max_size())));
     std::fill_n(T::begin(), n, value_type());
     size_ = n;
@@ -158,8 +158,8 @@ struct map_impl : T {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
         it->second /= u;
-      else
-        map->emplace(idx, 0.0 / u);
+      else if (!(value_type{} / u == value_type{}))
+        map->emplace(idx, value_type{} / u);
       return *this;
     }
 

@@ -25,6 +25,7 @@ void tests() {
   {
     storage_adaptor<T> a;
     a.reset(2);
+    BOOST_TEST_EQ(std::distance(a.begin(), a.end()), 2);
     storage_adaptor<T> b(a);
     storage_adaptor<T> c;
     c = a;
@@ -186,7 +187,10 @@ int main() {
   {
     auto a = storage_adaptor<std::array<int, 10>>();
     a.reset(10); // should not throw
-    BOOST_TEST_THROWS(a.reset(11), std::runtime_error);
+    BOOST_TEST_THROWS(a.reset(11), std::length_error);
+    auto b = storage_adaptor<std::vector<int>>();
+    b.reset(11);
+    BOOST_TEST_THROWS(a = b, std::length_error);
   }
 
   // test sparsity of map backend
@@ -212,6 +216,13 @@ int main() {
     a[4] += 2; // causes one allocation
     BOOST_TEST_EQ(a[4], 2);
     BOOST_TEST_EQ(db.sum.first, baseline + 2);
+    a[3] -= 2; // causes one allocation
+    BOOST_TEST_EQ(a[3], -2);
+    BOOST_TEST_EQ(db.sum.first, baseline + 3);
+    a[2] *= 2; // no allocation
+    BOOST_TEST_EQ(db.sum.first, baseline + 3);
+    a[2] /= 2; // no allocation
+    BOOST_TEST_EQ(db.sum.first, baseline + 3);
     const auto baseline_dealloc = db.sum.second;
     a[4] = 0; // causes one deallocation
     BOOST_TEST_EQ(db.sum.second, baseline_dealloc + 1);
@@ -221,7 +232,7 @@ int main() {
     ++b[2];
     a = b;
     // only one new allocation for non-zero value
-    BOOST_TEST_EQ(db.sum.first, baseline + 3);
+    BOOST_TEST_EQ(db.sum.first, baseline + 4);
   }
 
   return boost::report_errors();
