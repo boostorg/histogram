@@ -16,7 +16,7 @@ namespace bh = boost::histogram;
 int main(int argc, char** argv) {
   // read axis config from command-line: [nbins start stop] ...
   // and create vector of regular axes, the number of axis is not known at compile-time
-  assert(argc - 1 % 3 == 0);
+  assert((argc - 1) % 3 == 0);
   auto v1 = std::vector<bh::axis::regular<>>();
   for (int iarg = 1; iarg < argc;) {
     const auto bins = boost::lexical_cast<unsigned>(argv[iarg++]);
