@@ -157,24 +157,24 @@ A circular axis cannot have an underflow bin, passing both options together gene
 
 To-do.
 
-[endsect] # options
+[endsect] [/ options]
 
-[endsect] # axis configuration
+[endsect] [/ axis configuration]
 
-[endsect] # choose the right axis
+[endsect] [/ choose the right axis]
 
-[endsect] # make a histogram
+[endsect] [/ make a histogram]
 
-[section Fill histogram]
+[section Fill a histogram]
 
-After you created a histogram, you want to insert tuples of possibly multi-dimensional and heterogenous values. This is done with the flexible `histogram(...)` call, which you typically do in a loop. Some extra parameters can be passed to the method as shown in the next example.
+After you created a histogram, you want to insert tuples of possibly multi-dimensional and values of different types. This is done with the flexible `operator()` call, which you typically do in a loop. Some extra parameters can be passed to the method as shown in the next example.
 
 [import ../examples/guide_fill_histogram.cpp]
 [guide_fill_histogram]
 
-`histogram(...)` either takes `N` arguments or a container with `N` elements, where `N` is equal to the number of axes of the histogram. It finds the corresponding bin, and increments the bin counter by one.
+`operator()` either takes `N` arguments or a container with `N` elements, where `N` is equal to the number of axes of the histogram. It finds the corresponding bin, and increments the bin counter by one.
 
-`histogram(weight(x), ...)` does the same as the first call, but increments the bin counter by the value `x`. The type of `x` is not restricted, usually it is a real number. The `weight(x)` helper class must be first argument. You can freely mix calls with and without a `weight`. Calls without a `weight` act like the weight is `1`.
+`operator()(weight(x), ...)` does the same as the first call, but increments the bin counter by the value `x`. The type of `x` is not restricted, usually it is a real number. The `weight(x)` helper class must be first argument. You can freely mix calls with and without a `weight`. Calls without a `weight` act like the weight is `1`.
 
 Why weighted increments are sometimes useful, especially in a scientific context, is explained [link histogram.overview.rationale.weights in the rationale]. If you don't see the point, you can just ignore this type of call. This feature does not affect the performance of the histogram if you don't use it.
 
