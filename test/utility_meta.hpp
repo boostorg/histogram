@@ -36,40 +36,12 @@ ostream& operator<<(ostream& os, const T& t) {
 }
 } // namespace std
 
-namespace boost {
-namespace detail {
-
-template <class T>
-inline bool test_trait_same_impl_(T) {
-  return T::value;
-}
-
-template <class T1, class T2>
-inline void test_trait_same_impl(char const* types, boost::core::is_same<T1, T2> same,
-                                 char const* file, int line, char const* function) {
-  if (test_trait_same_impl_(same)) {
-    test_results();
-  } else {
-    BOOST_LIGHTWEIGHT_TEST_OSTREAM
-        << file << "(" << line << "): test 'is_same<" << types << ">'"
-        << " failed in function '" << function << "' ('"
-        << boost::core::demangled_name(BOOST_CORE_TYPEID(T1)) << "' != '"
-        << boost::core::demangled_name(BOOST_CORE_TYPEID(T2)) << "')" << std::endl;
-
-    ++test_results().errors();
-  }
-}
-
-} // namespace detail
-} // namespace boost
-
 #ifndef BOOST_TEST_TRAIT_SAME
-// temporary copy of macro implementation from boost::core develop branch
-// so that BOOST_TEST_TRAIT_SAME also works on travis and appveyor with boost-1.69.0
-#define BOOST_TEST_TRAIT_SAME(...)                                              \
-  (::boost::detail::test_trait_same_impl(#__VA_ARGS__,                          \
-                                         ::boost::core::is_same<__VA_ARGS__>(), \
-                                         __FILE__, __LINE__, BOOST_CURRENT_FUNCTION))
+// temporary macro implementation so that BOOST_TEST_TRAIT_SAME already works on travis
+// and appveyor with old boost-1.69.0
+
+#define BOOST_TEST_TRAIT_SAME(...) \
+  BOOST_TEST_TRAIT_TRUE((::boost::core::is_same<__VA_ARGS__>))
 #endif
 
 #endif
