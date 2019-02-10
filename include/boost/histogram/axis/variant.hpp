@@ -55,10 +55,10 @@ const T* get_if(const variant<Us...>* v);
 template <class... Ts>
 class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
   using base_type = boost::variant<Ts...>;
-  using remove_cvref_t_types = mp11::mp_transform<detail::remove_cvref_t, base_type>;
+  using raw_types = mp11::mp_transform<detail::remove_cvref_t, base_type>;
 
   template <class T>
-  using is_bounded_type = mp11::mp_contains<remove_cvref_t_types, detail::remove_cvref_t<T>>;
+  using is_bounded_type = mp11::mp_contains<raw_types, detail::remove_cvref_t<T>>;
 
   template <typename T>
   using requires_bounded_type = std::enable_if_t<is_bounded_type<T>::value>;
@@ -240,7 +240,8 @@ template <class Visitor, class Variant>
 auto visit(Visitor&& vis, Variant&& var)
     -> detail::visitor_return_type<Visitor, Variant> {
   using R = detail::visitor_return_type<Visitor, Variant>;
-  using B = detail::copy_qualifiers<Variant, typename detail::remove_cvref_t<Variant>::base_type>;
+  using B = detail::copy_qualifiers<Variant,
+                                    typename detail::remove_cvref_t<Variant>::base_type>;
   return boost::apply_visitor(detail::functor_wrapper<Visitor, R>(vis),
                               static_cast<B>(var));
 }
@@ -281,21 +282,24 @@ const T* get_if(const variant<Us...>* v) {
 }
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-// pass-through versions of get and get_if for generic programming
+// pass-through version of get for generic programming
 template <class T, class U>
 decltype(auto) get(U&& u) {
   return static_cast<detail::copy_qualifiers<U, T>>(u);
 }
 
+// pass-through version of get_if for generic programming
 template <class T, class U>
 T* get_if(U* u) {
-  return std::is_same<T, detail::remove_cvref_t<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
+  return std::is_same<T, detail::remove_cvref_t<U>>::value ? reinterpret_cast<T*>(u)
+                                                           : nullptr;
 }
 
+// pass-through version of get_if for generic programming
 template <class T, class U>
 const T* get_if(const U* u) {
   return std::is_same<T, detail::remove_cvref_t<U>>::value ? reinterpret_cast<const T*>(u)
-                                                  : nullptr;
+                                                           : nullptr;
 }
 #endif
 
