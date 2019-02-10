@@ -27,6 +27,12 @@ It is recommended to take a look at the existing axis types, like [classref boos
 
 [endsect]
 
+[section:transform TransformType]
+
+To do, explain the Transform concept.
+
+[endsect]
+
 [section:storage StorageType]
 
 A `StorageType` handles memory for the bin counters and provides a uniform interface for incrementing bin counters and reading their values.
