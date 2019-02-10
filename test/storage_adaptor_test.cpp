@@ -130,7 +130,7 @@ void mixed_tests() {
     BOOST_TEST(!(a == d));
   }
 
-  // ctor, copy, move
+  // ctor, copy, move, assign
   {
     A a;
     a.reset(2);
@@ -161,8 +161,8 @@ int main() {
               storage_adaptor<std::array<double, 100>>>();
   mixed_tests<unlimited_storage<>, storage_adaptor<std::vector<int>>>();
   mixed_tests<storage_adaptor<std::vector<int>>, unlimited_storage<>>();
-  mixed_tests<storage_adaptor<std::map<std::size_t, int>>,
-              storage_adaptor<std::vector<int>>>();
+  mixed_tests<storage_adaptor<std::vector<int>>,
+              storage_adaptor<std::map<std::size_t, int>>>();
 
   // special case for division of and map
   {
