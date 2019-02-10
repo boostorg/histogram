@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_META_HPP
 
 #include <array>
+#include <boost/core/is_same.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/mp11/tuple.hpp>
