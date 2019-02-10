@@ -19,7 +19,7 @@ This **header-only** open-source library provides an easy-to-use state-of-the-ar
 
 This project was developed for inclusion in [Boost](http://www.boost.org) and passed Boost review in September 2018. The plan is to have a first official Boost-release in April 2019 with the upcoming version 1.70. Of course, you can use it already now (but pick the latest release!). The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
-Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
+Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/index.html). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
 
 ## Features
 
