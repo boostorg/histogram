@@ -74,10 +74,14 @@ template <class Value, class MetaData, option Options>
 class integer : public iterator_mixin<integer<Value, MetaData, Options>>,
                 public detail::integer_mixin<integer<Value, MetaData, Options>, Value,
                                              test(Options, option::growth)> {
+  static_assert(std::is_integral<Value>::value || std::is_floating_point<Value>::value,
+                "integer axis requires type floating point or integral type");
   static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
                 "circular axis cannot have underflow");
-  static_assert(std::is_integral<Value>::value || std::is_floating_point<Value>::value,
-                "integer axis requires type floating point type or index_type");
+  static_assert(!test(Options, option::circular) ||
+                    std::is_floating_point<Value>::value ||
+                    !test(Options, option::overflow),
+                "integer axis with integral type cannot have overflow");
   using metadata_type = MetaData;
   using value_type = Value;
   using local_index_type = std::conditional_t<std::is_integral<value_type>::value,
