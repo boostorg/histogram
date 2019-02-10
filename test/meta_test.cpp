@@ -7,12 +7,12 @@
 #include <array>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/histogram.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <deque>
 #include <iterator>
 #include <map>
@@ -272,29 +272,29 @@ int main() {
     using T6 = volatile int&&;
     using T7 = volatile const int;
     using T8 = volatile const int&;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T1>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T2>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T3>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T4>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T5>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T6>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T7>, int>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<remove_cvref_t<T8>, int>));
+    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T1>, int);
+    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T2>, int);
+    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T3>, int);
+    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T4>, int);
+    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T5>, int);
+    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T6>, int);
+    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T7>, int);
+    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T8>, int);
   }
 
   // copy_qualifiers
   {
-    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int, long>, long>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<const int, long>, const long>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&, long>, long&>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<const int&, long>, const long&>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<copy_qualifiers<int&&, long>, long&&>));
+    BOOST_TEST_TRAIT_SAME(copy_qualifiers<int, long>, long);
+    BOOST_TEST_TRAIT_SAME(copy_qualifiers<const int, long>, const long);
+    BOOST_TEST_TRAIT_SAME(copy_qualifiers<int&, long>, long&);
+    BOOST_TEST_TRAIT_SAME(copy_qualifiers<const int&, long>, const long&);
+    BOOST_TEST_TRAIT_SAME(copy_qualifiers<int&&, long>, long&&);
   }
 
   // mp_last
   {
     using L = std::tuple<int, char, long>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<mp_last<L>, long>));
+    BOOST_TEST_TRAIT_SAME(mp_last<L>, long);
   }
 
   // args_type, arg_type
@@ -304,12 +304,10 @@ int main() {
       int f2(long) const;
     };
 
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<args_type<decltype(&Foo::f1)>, std::tuple<char>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<args_type<decltype(&Foo::f2)>, std::tuple<long>>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<arg_type<decltype(&Foo::f1)>, char>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<arg_type<decltype(&Foo::f2)>, long>));
+    BOOST_TEST_TRAIT_SAME(args_type<decltype(&Foo::f1)>, std::tuple<char>);
+    BOOST_TEST_TRAIT_SAME(args_type<decltype(&Foo::f2)>, std::tuple<long>);
+    BOOST_TEST_TRAIT_SAME(arg_type<decltype(&Foo::f1)>, char);
+    BOOST_TEST_TRAIT_SAME(arg_type<decltype(&Foo::f2)>, long);
   }
 
   // visitor_return_type
@@ -320,18 +318,12 @@ int main() {
     using V4 = axis::variant<const char&>;
     using V5 = axis::variant<const char&>&;
     using V6 = const axis::variant<const char&>&;
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<visitor_return_type<VisitorTestFunctor, V1>, char>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<visitor_return_type<VisitorTestFunctor, V2>, int&>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<visitor_return_type<VisitorTestFunctor, V3>, const long&>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<visitor_return_type<VisitorTestFunctor, V4>, const char&>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<visitor_return_type<VisitorTestFunctor, V5>, const char&>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<visitor_return_type<VisitorTestFunctor, V6>, const char&>));
+    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V1>, char);
+    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V2>, int&);
+    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V3>, const long&);
+    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V4>, const char&);
+    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V5>, const char&);
+    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V6>, const char&);
   }
 
   // static_if
@@ -410,7 +402,7 @@ int main() {
   {
     struct A {};
     auto a = make_default(A());
-    BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(a), A>));
+    BOOST_TEST_TRAIT_SAME(decltype(a), A);
     tracing_allocator_db db;
     using B = std::vector<int, tracing_allocator<int>>;
     B b = make_default(B(tracing_allocator<int>(db)));
