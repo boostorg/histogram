@@ -20,7 +20,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
       [link histogram.overview Overview]
     ]
     [
-      An overview of the features included in Boost.Histogram, the motivation and rationale.
+      An overview of the features included in the library, the motivation and rationale.
     ]
   ]
   [
@@ -28,7 +28,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
       [link histogram.getting_started Getting started]
     ]
     [
-      See Boost.Histogram in action in a few heavily commented examples. Copy/paste from these examples to jump-start your project.
+      See the library in action in a few heavily commented examples. Copy/paste from these examples to kick-start your project.
     ]
   ]
   [
@@ -36,7 +36,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
       [link histogram.guide User guide]
     ]
     [
-      A user guide that introduces all aspects of the library, starting simple and ending with the advanced features.
+      An in-depth user guide that introduces all aspects of the library, starting simple and ending with the advanced features.
     ]
   ]
   [
@@ -52,7 +52,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
       [link histogram.concepts Concepts]
     ]
     [
-      Explains the axis and storage type concepts, the behavior and interface you need to implemented when you make a new axis or storage type for Boost.Histogram.
+      Read this if you want to make custom axis types, storage types, and more that work with the library. Concepts define the expected behavior and interfaces you need to implement.
     ]
   ]
   [
@@ -60,7 +60,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
       [link histogram.benchmarks Benchmarks]
     ]
     [
-      The performance of Boost.Histogram is compared with other libraries.
+      The performance of this library is compared with other popular libraries.
     ]
   ]
   [
@@ -68,7 +68,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
       [link histogram.history Revision history]
     ]
     [
-      Log of Boost.Histogram changes.
+      Log of code changes.
     ]
   ]
 ]
