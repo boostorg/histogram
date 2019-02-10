@@ -21,7 +21,8 @@ int main() {
   auto h = make_histogram(
       axis::regular<>(2, -1.0, 1.0),
       axis::regular<double, tr::log>(2, 1.0, 10.0, "axis 1"),
-      axis::regular<double, tr::pow>(tr::pow{1.5}, 2, 1.0, 10.0, "axis 2"),
+      axis::regular<double, tr::pow, axis::default_metadata, axis::option::growth>(
+          tr::pow{1.5}, 2, 1.0, 10.0, "axis 2"),
       axis::circular<double, axis::null_type>(4, 0.0, 360.0), // axis without metadata
       axis::variable<double, std::string, axis::option::none, std::allocator<double>>(
           {-1.0, 0.0, 1.0}, "axis 4"),
@@ -38,8 +39,7 @@ int main() {
          "histogram(\n"
          "  regular(2, -1, 1, options=underflow | overflow),\n"
          "  regular_log(2, 1, 10, metadata=\"axis 1\", options=underflow | overflow),\n"
-         "  regular_pow(2, 1, 10, metadata=\"axis 2\", options=underflow | overflow, "
-         "power=1.5),\n"
+         "  regular_pow(2, 1, 10, metadata=\"axis 2\", options=growth, power=1.5),\n"
          "  regular(4, 0, 360, options=overflow | circular),\n"
          "  variable(-1, 0, 1, metadata=\"axis 4\", options=none),\n"
          "  category(2, 1, 3, metadata=\"axis 5\", options=overflow),\n"
