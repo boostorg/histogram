@@ -279,13 +279,6 @@ public:
     using std::end;
     return std::equal(this->begin(), this->end(), begin(u), end(u));
   }
-
-  template <class V = typename base_type::value_type,
-            class = std::enable_if_t<detail::has_operator_rmul<V>::value>>
-  storage_adaptor& operator*=(double v) {
-    for (auto&& x : *this) x *= v;
-    return *this;
-  }
 };
 
 } // namespace histogram

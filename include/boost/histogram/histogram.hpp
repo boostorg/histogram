@@ -245,6 +245,9 @@ public:
   /// Add values of another histogram.
   template <class A, class S>
   histogram& operator+=(const histogram<A, S>& rhs) {
+    static_assert(detail::has_operator_radd<value_type,
+                                            typename histogram<A, S>::value_type>::value,
+                  "cell value does not support adding value of right-hand-side");
     if (!detail::axes_equal(axes_, rhs.axes_))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = rhs.storage_.begin();
@@ -255,6 +258,9 @@ public:
   /// Subtract values of another histogram.
   template <class A, class S>
   histogram& operator-=(const histogram<A, S>& rhs) {
+    static_assert(detail::has_operator_rsub<value_type,
+                                            typename histogram<A, S>::value_type>::value,
+                  "cell value does not support subtracting value of right-hand-side");
     if (!detail::axes_equal(axes_, rhs.axes_))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = rhs.storage_.begin();
@@ -265,6 +271,9 @@ public:
   /// Multiply by values of another histogram.
   template <class A, class S>
   histogram& operator*=(const histogram<A, S>& rhs) {
+    static_assert(detail::has_operator_rmul<value_type,
+                                            typename histogram<A, S>::value_type>::value,
+                  "cell value does not support multiplying by value of right-hand-side");
     if (!detail::axes_equal(axes_, rhs.axes_))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = rhs.storage_.begin();
@@ -275,6 +284,9 @@ public:
   /// Divide by values of another histogram.
   template <class A, class S>
   histogram& operator/=(const histogram<A, S>& rhs) {
+    static_assert(detail::has_operator_rdiv<value_type,
+                                            typename histogram<A, S>::value_type>::value,
+                  "cell value does not support dividing by value of right-hand-side");
     if (!detail::axes_equal(axes_, rhs.axes_))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = rhs.storage_.begin();
@@ -282,14 +294,26 @@ public:
     return *this;
   }
 
-  /// Multiply all values with scalar.
+  /// Multiply all values with a scalar.
+  template <class V = value_type,
+            class = std::enable_if_t<detail::has_operator_rmul<V, double>::value>>
   histogram& operator*=(const double x) {
-    storage_ *= x;
+    // use special implementation of scaling if available
+    detail::static_if<detail::has_operator_rmul<storage_type, double>>(
+        [](storage_type& s, auto x) { s *= x; },
+        [](storage_type& s, auto x) {
+          for (auto&& si : s) si *= x;
+        },
+        storage_, x);
     return *this;
   }
 
-  /// Divide all values by scalar.
-  histogram& operator/=(const double x) { return operator*=(1.0 / x); }
+  /// Divide all values by a scalar.
+  template <class V = value_type,
+            class = std::enable_if_t<detail::has_operator_rmul<V, double>::value>>
+  histogram& operator/=(const double x) {
+    return operator*=(1.0 / x);
+  }
 
   /// Return value iterator to the beginning of the histogram.
   iterator begin() noexcept { return storage_.begin(); }

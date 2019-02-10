@@ -187,6 +187,9 @@ int main() {
     a[0] += accumulators::weighted_sum<double>(1, 0);
     BOOST_TEST_EQ(a[0].value(), 5);
     BOOST_TEST_EQ(a[0].variance(), 6);
+    a[0] *= 2;
+    BOOST_TEST_EQ(a[0].value(), 10);
+    BOOST_TEST_EQ(a[0].variance(), 24);
   }
 
   // with accumulators::weighted_mean
