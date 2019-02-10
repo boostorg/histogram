@@ -174,7 +174,7 @@ int main() {
     a[0] /= 2;
     BOOST_TEST_EQ(a[0], 1);
     a[1] /= 0.0;
-    BOOST_TEST(std::isnan(a[1]));
+    BOOST_TEST(std::isnan(static_cast<double>(a[1])));
   }
 
   // with accumulators::weighted_sum
