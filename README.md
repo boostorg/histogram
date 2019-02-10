@@ -6,7 +6,7 @@ Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the 
 
 Branch  | Linux [1] and OSX [2] | Windows [3] | Coverage
 ------- | --------------------- |------------ | --------
-develop | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=develop)](https://travis-ci.org/HDembinski/histogram?branch=develop) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/develop?svg=true)](https://ci.appveyor.com/project/hdembinski/histogram/branch/develop) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
+develop | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=develop)](https://travis-ci.org/HDembinski/histogram?branch=develop) | [![Build status](https://ci.appveyor.com/api/projects/status/400lx25l3jdpk96b/branch/develop?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/develop) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
 
 <!--
 master  | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/master?svg=true)](https://ci.appveyor.com/project/hdembinski/histogram/branch/master) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master)](https://coveralls.io/github/HDembinski/histogram?branch=master) -->
