@@ -10,6 +10,7 @@
 #include <boost/histogram/detail/meta.hpp>
 #include <type_traits>
 #include "utility_histogram.hpp"
+#include "utility_meta.hpp"
 
 using namespace boost::histogram;
 
