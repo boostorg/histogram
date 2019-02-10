@@ -44,6 +44,8 @@ template <class Axes, class Storage>
 class histogram {
 public:
   static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
+  static_assert(std::is_same<detail::remove_cvref_t<Storage>, Storage>::value,
+                "Storage may not be a reference or const or volatile");
 
 public:
   using axes_type = Axes;
