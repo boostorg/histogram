@@ -5,6 +5,7 @@
 
 import doxygen ;
 import quickbook ;
+import boostbook : boostbook ;
 
 doxygen reference
 :
@@ -28,7 +29,6 @@ doxygen reference
                           \"../include/boost/histogram/ostream.hpp\" \\
                           \"../include/boost/histogram/axis/ostream.hpp\" \\
                           \"../include/boost/histogram/accumulators/ostream.hpp\" \\
-                          \"../include/boost/histogram/attribute.hpp\" \\
                           "
   <doxygen:param>EXCLUDE_SYMBOLS=detail
   <doxygen:param>WARNINGS=YES
@@ -40,9 +40,13 @@ boostbook histogram
   histogram.qbk
 :
   <dependency>reference
-
-  <format>html:<xsl:param>boost.root=../..
-  <format>html:<xsl:param>boost.libraries=../../../../libs/libraries.htm
+# for the final product
+#  <format>html:<xsl:param>boost.root=../../../..
+# for now keep links to local resources so it works on gh-pages
+  <xsl:param>boost.root=../..
+  <xsl:param>boost.image.src=../src/images/boost.png
+# rest is the same either way
+  <xsl:param>boost.libraries=../../../libraries.htm
   <xsl:param>boost.mathjax=1
   <xsl:param>chunk.first.sections=1
   <xsl:param>generate.section.toc.level=1

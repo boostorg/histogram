@@ -8,6 +8,8 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_META_HPP
 
 #include <array>
+#include <boost/core/is_same.hpp>
+#include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/mp11/utility.hpp>
@@ -33,5 +35,13 @@ ostream& operator<<(ostream& os, const T& t) {
   return os;
 }
 } // namespace std
+
+#ifndef BOOST_TEST_TRAIT_SAME
+// temporary macro implementation so that BOOST_TEST_TRAIT_SAME already works on travis
+// and appveyor with old boost-1.69.0
+
+#define BOOST_TEST_TRAIT_SAME(...) \
+  BOOST_TEST_TRAIT_TRUE((::boost::core::is_same<__VA_ARGS__>))
+#endif
 
 #endif

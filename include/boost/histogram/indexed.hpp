@@ -34,7 +34,7 @@ enum class coverage {
 template <class Histogram>
 class BOOST_HISTOGRAM_DETAIL_NODISCARD indexed_range {
   using max_dim = mp11::mp_size_t<
-      detail::buffer_size<typename detail::naked<Histogram>::axes_type>::value>;
+      detail::buffer_size<typename detail::remove_cvref_t<Histogram>::axes_type>::value>;
   using value_iterator = decltype(std::declval<Histogram>().begin());
   struct cache_item {
     int idx, begin, end, extend;

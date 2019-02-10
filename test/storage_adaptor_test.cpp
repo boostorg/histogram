@@ -10,6 +10,7 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
+#include <cmath>
 #include <deque>
 #include <limits>
 #include <map>
@@ -28,6 +29,7 @@ void tests() {
     storage_adaptor<T> b(a);
     storage_adaptor<T> c;
     c = a;
+    BOOST_TEST_EQ(std::distance(a.begin(), a.end()), 2);
     BOOST_TEST_EQ(a.size(), 2);
     BOOST_TEST_EQ(b.size(), 2);
     BOOST_TEST_EQ(c.size(), 2);
@@ -138,6 +140,8 @@ void mixed_tests() {
     c = a;
     BOOST_TEST_EQ(c[0], 0);
     BOOST_TEST_EQ(c[1], 1);
+    c = A();
+    BOOST_TEST_EQ(c.size(), 0);
     B d(std::move(a));
     B e;
     e = std::move(d);
@@ -157,6 +161,21 @@ int main() {
               storage_adaptor<std::array<double, 100>>>();
   mixed_tests<unlimited_storage<>, storage_adaptor<std::vector<int>>>();
   mixed_tests<storage_adaptor<std::vector<int>>, unlimited_storage<>>();
+  mixed_tests<storage_adaptor<std::map<std::size_t, int>>,
+              storage_adaptor<std::vector<int>>>();
+
+  // special case for division of and map
+  {
+    auto a = storage_adaptor<std::map<std::size_t, double>>();
+    a.reset(2);
+    a[0] /= 2;
+    BOOST_TEST_EQ(a[0], 0);
+    a[0] = 2;
+    a[0] /= 2;
+    BOOST_TEST_EQ(a[0], 1);
+    a[1] /= 0.0;
+    BOOST_TEST(std::isnan(static_cast<double>(a[1])));
+  }
 
   // with accumulators::weighted_sum
   {
@@ -168,6 +187,9 @@ int main() {
     a[0] += accumulators::weighted_sum<double>(1, 0);
     BOOST_TEST_EQ(a[0].value(), 5);
     BOOST_TEST_EQ(a[0].variance(), 6);
+    a[0] *= 2;
+    BOOST_TEST_EQ(a[0].value(), 10);
+    BOOST_TEST_EQ(a[0].variance(), 24);
   }
 
   // with accumulators::weighted_mean
@@ -186,7 +208,10 @@ int main() {
   {
     auto a = storage_adaptor<std::array<int, 10>>();
     a.reset(10); // should not throw
-    BOOST_TEST_THROWS(a.reset(11), std::runtime_error);
+    BOOST_TEST_THROWS(a.reset(11), std::length_error);
+    auto b = storage_adaptor<std::vector<int>>();
+    b.reset(11);
+    BOOST_TEST_THROWS(a = b, std::length_error);
   }
 
   // test sparsity of map backend
@@ -212,6 +237,13 @@ int main() {
     a[4] += 2; // causes one allocation
     BOOST_TEST_EQ(a[4], 2);
     BOOST_TEST_EQ(db.sum.first, baseline + 2);
+    a[3] -= 2; // causes one allocation
+    BOOST_TEST_EQ(a[3], -2);
+    BOOST_TEST_EQ(db.sum.first, baseline + 3);
+    a[2] *= 2; // no allocation
+    BOOST_TEST_EQ(db.sum.first, baseline + 3);
+    a[2] /= 2; // no allocation
+    BOOST_TEST_EQ(db.sum.first, baseline + 3);
     const auto baseline_dealloc = db.sum.second;
     a[4] = 0; // causes one deallocation
     BOOST_TEST_EQ(db.sum.second, baseline_dealloc + 1);
@@ -221,7 +253,7 @@ int main() {
     ++b[2];
     a = b;
     // only one new allocation for non-zero value
-    BOOST_TEST_EQ(db.sum.first, baseline + 3);
+    BOOST_TEST_EQ(db.sum.first, baseline + 4);
   }
 
   return boost::report_errors();

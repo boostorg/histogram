@@ -33,12 +33,12 @@ template <class FIntArg, class FDoubleArg, class T>
 decltype(auto) value_method_switch(FIntArg&& iarg, FDoubleArg&& darg, const T& t) {
   return static_if<has_method_value<T>>(
       [](FIntArg&& iarg, FDoubleArg&& darg, const auto& t) {
-        using A = naked<decltype(t)>;
+        using A = remove_cvref_t<decltype(t)>;
         return static_if<std::is_same<arg_type<decltype(&A::value), 0>, int>>(
             std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
       },
       [](FIntArg&&, FDoubleArg&&, const auto& t) {
-        using A = naked<decltype(t)>;
+        using A = remove_cvref_t<decltype(t)>;
         BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
             boost::core::demangled_name(BOOST_CORE_TYPEID(A)), " has no value method")));
         return 0;
@@ -50,7 +50,7 @@ template <class R1, class R2, class FIntArg, class FDoubleArg, class T>
 R2 value_method_switch_with_return_type(FIntArg&& iarg, FDoubleArg&& darg, const T& t) {
   return static_if<has_method_value_with_convertible_return_type<T, R1>>(
       [](FIntArg&& iarg, FDoubleArg&& darg, const auto& t) -> R2 {
-        using A = naked<decltype(t)>;
+        using A = remove_cvref_t<decltype(t)>;
         return static_if<std::is_same<arg_type<decltype(&A::value), 0>, int>>(
             std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
       },
@@ -68,7 +68,7 @@ namespace axis {
 namespace traits {
 template <class T>
 decltype(auto) metadata(T&& t) noexcept {
-  return detail::static_if<detail::has_method_metadata<detail::naked<T>>>(
+  return detail::static_if<detail::has_method_metadata<detail::remove_cvref_t<T>>>(
       [](auto&& x) -> decltype(auto) { return x.metadata(); },
       [](T &&) -> detail::copy_qualifiers<T, axis::null_type> {
         static axis::null_type m;
@@ -126,7 +126,7 @@ std::pair<int, int> update(T& axis, const U& value) {
   using V = detail::arg_type<decltype(&T::index)>;
   return detail::static_if<std::is_convertible<U, V>>(
       [&value](auto& a) {
-        return detail::static_if<detail::has_method_update<detail::naked<decltype(a)>>>(
+        return detail::static_if<detail::has_method_update<detail::remove_cvref_t<decltype(a)>>>(
             [&value](auto& a) { return a.update(value); },
             [&value](const auto& a) { return std::make_pair(a.index(value), 0); }, a);
       },

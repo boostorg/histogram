@@ -47,10 +47,10 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-using naked = std::remove_cv_t<std::remove_reference_t<T>>;
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template <class T, class U>
-using convert_integer = mp11::mp_if<std::is_integral<naked<T>>, U, T>;
+using convert_integer = mp11::mp_if<std::is_integral<remove_cvref_t<T>>, U, T>;
 
 template <template <class> class F, class T, class E>
 using mp_eval_or = mp11::mp_eval_if_c<!(mp11::mp_valid<F, T>::value), E, F, T>;
@@ -76,7 +76,8 @@ using arg_type = typename mp11::mp_at_c<args_type<T>, N>;
 template <class T>
 using return_type = typename boost::callable_traits::return_type<T>::type;
 
-template <class F, class V, class T = copy_qualifiers<V, mp11::mp_first<naked<V>>>>
+template <class F, class V,
+          class T = copy_qualifiers<V, mp11::mp_first<remove_cvref_t<V>>>>
 using visitor_return_type = decltype(std::declval<F>()(std::declval<T>()));
 
 template <bool B, typename T, typename F, typename... Ts>
@@ -127,7 +128,8 @@ decltype(auto) tuple_slice_impl(T&& t, mp11::index_sequence<N...>) {
 
 template <std::size_t I, std::size_t N, class T>
 decltype(auto) tuple_slice(T&& t) {
-  static_assert(I + N <= mp11::mp_size<naked<T>>::value, "I and N must describe a slice");
+  static_assert(I + N <= mp11::mp_size<remove_cvref_t<T>>::value,
+                "I and N must describe a slice");
   return tuple_slice_impl<I>(std::forward<T>(t), mp11::make_index_sequence<N>{});
 }
 
@@ -211,8 +213,6 @@ BOOST_HISTOGRAM_DETECT(is_incrementable, (++std::declval<T&>()));
 
 BOOST_HISTOGRAM_DETECT(has_fixed_size, (std::tuple_size<T>::value));
 
-BOOST_HISTOGRAM_DETECT(has_operator_rmul, (std::declval<T&>() *= 1.0));
-
 BOOST_HISTOGRAM_DETECT(has_operator_preincrement, (++std::declval<T&>()));
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_equal,
@@ -223,6 +223,12 @@ BOOST_HISTOGRAM_DETECT_BINARY(has_operator_radd,
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rsub,
                               (std::declval<T&>() -= std::declval<U&>()));
+
+BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rmul,
+                              (std::declval<T&>() *= std::declval<U&>()));
+
+BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rdiv,
+                              (std::declval<T&>() /= std::declval<U&>()));
 
 template <typename T>
 struct is_tuple_impl : std::false_type {};
@@ -263,7 +269,7 @@ template <typename T>
 struct is_weight_impl<weight_type<T>> : std::true_type {};
 
 template <typename T>
-using is_weight = is_weight_impl<naked<T>>;
+using is_weight = is_weight_impl<remove_cvref_t<T>>;
 
 template <typename T>
 struct is_sample_impl : std::false_type {};
@@ -272,31 +278,35 @@ template <typename T>
 struct is_sample_impl<sample_type<T>> : std::true_type {};
 
 template <typename T>
-using is_sample = is_sample_impl<naked<T>>;
+using is_sample = is_sample_impl<remove_cvref_t<T>>;
 
 // poor-mans concept checks
-template <class T, class = std::enable_if_t<is_iterator<naked<T>>::value>>
+template <class T, class = std::enable_if_t<is_iterator<remove_cvref_t<T>>::value>>
 struct requires_iterator {};
 
-template <class T, class = std::enable_if_t<is_iterable<naked<T>>::value>>
+template <class T, class = std::enable_if_t<is_iterable<remove_cvref_t<T>>::value>>
 struct requires_iterable {};
 
-template <class T, class = std::enable_if_t<is_axis<naked<T>>::value>>
+template <class T, class = std::enable_if_t<is_axis<remove_cvref_t<T>>::value>>
 struct requires_axis {};
 
-template <class T, class = std::enable_if_t<is_any_axis<naked<T>>::value>>
+template <class T, class = std::enable_if_t<is_any_axis<remove_cvref_t<T>>::value>>
 struct requires_any_axis {};
 
-template <class T, class = std::enable_if_t<is_sequence_of_axis<naked<T>>::value>>
+template <class T,
+          class = std::enable_if_t<is_sequence_of_axis<remove_cvref_t<T>>::value>>
 struct requires_sequence_of_axis {};
 
-template <class T, class = std::enable_if_t<is_sequence_of_axis_variant<naked<T>>::value>>
+template <class T,
+          class = std::enable_if_t<is_sequence_of_axis_variant<remove_cvref_t<T>>::value>>
 struct requires_sequence_of_axis_variant {};
 
-template <class T, class = std::enable_if_t<is_sequence_of_any_axis<naked<T>>::value>>
+template <class T,
+          class = std::enable_if_t<is_sequence_of_any_axis<remove_cvref_t<T>>::value>>
 struct requires_sequence_of_any_axis {};
 
-template <class T, class = std::enable_if_t<is_any_axis<mp11::mp_first<naked<T>>>::value>>
+template <class T,
+          class = std::enable_if_t<is_any_axis<mp11::mp_first<remove_cvref_t<T>>>::value>>
 struct requires_axes {};
 
 template <class T, class U, class = std::enable_if_t<std::is_convertible<T, U>::value>>

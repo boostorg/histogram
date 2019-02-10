@@ -169,7 +169,7 @@ std::basic_ostream<C, T>& operator<<(std::basic_ostream<C, T>& os,
                                      const variant<Ts...>& v) {
   visit(
       [&os](const auto& x) {
-        using A = detail::naked<decltype(x)>;
+        using A = detail::remove_cvref_t<decltype(x)>;
         detail::static_if<detail::is_streamable<A>>(
             [&os](const auto& x) { os << x; },
             [](const auto&) {

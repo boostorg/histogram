@@ -41,7 +41,7 @@ auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N>, Ns..
         return std::make_tuple(std::get<N>(old_axes), std::get<Ns::value>(old_axes)...);
       },
       [&](const auto& old_axes) {
-        return detail::naked<decltype(old_axes)>({old_axes[N], old_axes[Ns::value]...});
+        return detail::remove_cvref_t<decltype(old_axes)>({old_axes[N], old_axes[Ns::value]...});
       },
       old_axes);
 

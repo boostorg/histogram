@@ -329,7 +329,7 @@ private:
 
     buffer_type(const buffer_type& o) : alloc(o.alloc) {
       o.apply([this, &o](auto* otp) {
-        using T = detail::naked<decltype(*otp)>;
+        using T = detail::remove_cvref_t<decltype(*otp)>;
         this->template make<T>(o.size, otp);
       });
     }
@@ -345,7 +345,7 @@ private:
       BOOST_ASSERT((ptr == nullptr) == (size == 0));
       if (ptr == nullptr) return;
       apply([this](auto* tp) {
-        using T = detail::naked<decltype(*tp)>;
+        using T = detail::remove_cvref_t<decltype(*tp)>;
         using alloc_type =
             typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
         alloc_type a(alloc); // rebind allocator
@@ -563,7 +563,7 @@ public:
 
   template <class T>
   unlimited_storage(const storage_adaptor<T>& s) {
-    using V = detail::naked<decltype(s[0])>;
+    using V = detail::remove_cvref_t<decltype(s[0])>;
     constexpr auto ti = type_index<V>();
     if (ti < mp11::mp_size<types>::value)
       buffer.template make<V>(s.size(), s.begin());

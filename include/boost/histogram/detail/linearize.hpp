@@ -191,7 +191,7 @@ optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) 
     if (rank != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    constexpr unsigned M = size_or_zero<naked<decltype(axes)>>::value;
+    constexpr unsigned M = size_or_zero<remove_cvref_t<decltype(axes)>>::value;
     mp11::mp_for_each<mp11::mp_iota_c<(M == 0 ? N : M)>>([&](auto J) {
       linearize_value(idx, axis_get<J>(axes), std::get<(J + I)>(args));
     });
@@ -210,7 +210,7 @@ optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args)
     if (rank != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    constexpr unsigned M = size_or_zero<naked<decltype(axes)>>::value;
+    constexpr unsigned M = size_or_zero<remove_cvref_t<decltype(axes)>>::value;
     mp11::mp_for_each<mp11::mp_iota_c<(M == 0 ? N : M)>>([&](auto J) {
       linearize_value(idx, shifts[J], axis_get<J>(axes), std::get<(J + I)>(args));
     });
@@ -255,17 +255,17 @@ constexpr auto weight_sample_indices() {
 
 template <class T, class U>
 void fill_storage(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, U&&) {
-  static_if<is_incrementable<naked<T>>>([](auto&& t) { ++t; }, [](auto&& t) { t(); },
+  static_if<is_incrementable<remove_cvref_t<T>>>([](auto&& t) { ++t; }, [](auto&& t) { t(); },
                                         std::forward<T>(t));
 }
 
 template <class IW, class T, class U>
 void fill_storage(IW, mp11::mp_int<-1>, T&& t, U&& args) {
-  static_if<is_incrementable<naked<T>>>(
+  static_if<is_incrementable<remove_cvref_t<T>>>(
       [](auto&& t, const auto& w) { t += w; },
       [](auto&& t, const auto& w) {
 #ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
-        static_if<is_accumulator_set<naked<T>>>(
+        static_if<is_accumulator_set<remove_cvref_t<T>>>(
             [w](auto&& t) { t(::boost::accumulators::weight = w); },
             [w](auto&& t) { t(w); }, t);
 #else
@@ -284,7 +284,7 @@ void fill_storage(mp11::mp_int<-1>, IS, T&& t, U&& args) {
 template <class IW, class IS, class T, class U>
 void fill_storage(IW, IS, T&& t, U&& args) {
 #ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
-  static_if<is_accumulator_set<naked<T>>>(
+  static_if<is_accumulator_set<remove_cvref_t<T>>>(
       [](auto&& t, const auto& w, const auto& s) {
         mp11::tuple_apply(
             [&](auto&&... args) { t(args..., ::boost::accumulators::weight = w); }, s);

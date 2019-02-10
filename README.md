@@ -6,8 +6,10 @@ Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the 
 
 Branch  | Linux [1] and OSX [2] | Windows [3] | Coverage
 ------- | --------------------- |------------ | --------
-master  | [![Build Status Travis](https://travis-ci.org/hdembinski/histogram.svg?branch=master)](https://travis-ci.org/hdembinski/histogram?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/master?svg=true)](https://ci.appveyor.com/project/hdembinski/histogram/branch/master) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master)](https://coveralls.io/github/HDembinski/histogram?branch=master)
-develop | [![Build Status Travis](https://travis-ci.org/hdembinski/histogram.svg?branch=develop)](https://travis-ci.org/hdembinski/histogram?branch=develop) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/develop?svg=true)](https://ci.appveyor.com/project/hdembinski/histogram/branch/develop) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
+develop | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=develop)](https://travis-ci.org/HDembinski/histogram?branch=develop) | [![Build status](https://ci.appveyor.com/api/projects/status/400lx25l3jdpk96b/branch/develop?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/develop) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=develop)](https://coveralls.io/github/HDembinski/histogram?branch=develop)
+
+<!--
+master  | [![Build Status Travis](https://travis-ci.org/HDembinski/histogram.svg?branch=master)](https://travis-ci.org/HDembinski/histogram?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/6a15ga3upiv9ca51/branch/master?svg=true)](https://ci.appveyor.com/project/hdembinski/histogram/branch/master) | [![Coverage Status](https://coveralls.io/repos/github/HDembinski/histogram/badge.svg?branch=master)](https://coveralls.io/github/HDembinski/histogram?branch=master) -->
 
 1. gcc-5.5.0, clang-5.0.0
 2. Xcode 9.4
@@ -17,7 +19,7 @@ This **header-only** open-source library provides an easy-to-use state-of-the-ar
 
 This project was developed for inclusion in [Boost](http://www.boost.org) and passed Boost review in September 2018. The plan is to have a first official Boost-release in April 2019 with the upcoming version 1.70. Of course, you can use it already now (but pick the latest release!). The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
-Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
+Check out the [full documentation](http://hdembinski.github.io/histogram/doc/html/index.html). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
 
 ## Features
 
@@ -30,7 +32,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 * Support for under-/overflow bins (can be disabled individually to reduce memory consumption)
 * Support for axes that grow automatically with input values (2)
 * Support for weighted increments
-* Support for profiles and user-defined accumulators in histogram cells (3)
+* Support for profiles and more generally, user-defined accumulators in cells (3)
 * Support for completely stack-based histograms
 * Support for adding and scaling histograms
 * Support for custom allocators
@@ -40,7 +42,7 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 1. In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/) integer, which is only limited by available memory.
 2. An axis can be configured to grow when a value is encountered that is outside of its range. It then grows new bins towards this value so that the value ends up in the new highest or lowest bin.
 3. The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell. This can be used to compute variance estimates for each cell. These are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell values.
-4. Builtin axis types can configured to only accept dimensional quantities, like those from Boost.Units. This means you get an error if you try to fill a length when the histogram axis expects a time, for example.
+4. Builtin axis types can configured to only accept dimensional quantities, like those from [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/). This means you get an error if you try to fill a length when the histogram axis expects a time, for example.
 
 ## Dependencies
 

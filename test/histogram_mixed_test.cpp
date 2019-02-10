@@ -5,12 +5,12 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;
@@ -29,19 +29,34 @@ void run_tests() {
     BOOST_TEST_NE(a, b3);
   }
 
-  // add
+  // operators
   {
     auto a = make(T1{}, axis::integer<>{0, 2});
     auto b = make(T2{}, axis::integer<>{0, 2});
     BOOST_TEST_EQ(a, b);
-    a(0);   // 1 0
-    b(1);   // 0 1
-    a += b; // 1 1
+    a(0); // 1 0
+    b(1); // 0 1
+    a += b;
     BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_EQ(a[1], 1);
+    a *= b;
+    BOOST_TEST_EQ(a[0], 0);
+    BOOST_TEST_EQ(a[1], 1);
+    a -= b;
+    BOOST_TEST_EQ(a[0], 0);
+    BOOST_TEST_EQ(a[1], 0);
+    a[0] = 2;
+    a[1] = 4;
+    b[0] = 2;
+    b[1] = 2;
+    a /= b;
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_EQ(a[1], 2);
 
-    auto c = make(T2{}, axis::integer<>{0, 3});
-    BOOST_TEST_THROWS(a += c, std::invalid_argument);
+    BOOST_TEST_THROWS(a += make(T2{}, axis::integer<>{0, 3}), std::invalid_argument);
+    BOOST_TEST_THROWS(a -= make(T2{}, axis::integer<>{0, 3}), std::invalid_argument);
+    BOOST_TEST_THROWS(a *= make(T2{}, axis::integer<>{0, 3}), std::invalid_argument);
+    BOOST_TEST_THROWS(a /= make(T2{}, axis::integer<>{0, 3}), std::invalid_argument);
   }
 
   // copy_assign

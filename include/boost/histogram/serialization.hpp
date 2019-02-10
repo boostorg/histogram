@@ -180,7 +180,7 @@ void unlimited_storage<A>::serialize(Archive& ar, unsigned /* version */) {
     ar& serialization::make_nvp("size", size);
     dummy.apply([this, size](auto* tp) {
       BOOST_ASSERT(tp == nullptr);
-      using T = detail::naked<decltype(*tp)>;
+      using T = detail::remove_cvref_t<decltype(*tp)>;
       buffer.template make<T>(size);
     });
   } else {
@@ -188,7 +188,7 @@ void unlimited_storage<A>::serialize(Archive& ar, unsigned /* version */) {
     ar& serialization::make_nvp("size", buffer.size);
   }
   buffer.apply([this, &ar](auto* tp) {
-    using T = detail::naked<decltype(*tp)>;
+    using T = detail::remove_cvref_t<decltype(*tp)>;
     ar& serialization::make_nvp(
         "buffer",
         serialization::make_array(reinterpret_cast<T*>(buffer.ptr), buffer.size));

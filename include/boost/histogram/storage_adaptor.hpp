@@ -66,7 +66,7 @@ struct array_impl : T {
   array_impl& operator=(const U& u) {
     size_ = u.size();
     if (size_ > T::max_size()) // for std::array
-      BOOST_THROW_EXCEPTION(std::runtime_error(
+      BOOST_THROW_EXCEPTION(std::length_error(
           detail::cat("size ", size_, " exceeds maximum capacity ", T::max_size())));
     auto it = T::begin();
     for (auto&& x : u) *it++ = x;
@@ -76,7 +76,7 @@ struct array_impl : T {
   void reset(std::size_t n) {
     using value_type = typename T::value_type;
     if (n > T::max_size()) // for std::array
-      BOOST_THROW_EXCEPTION(std::runtime_error(
+      BOOST_THROW_EXCEPTION(std::length_error(
           detail::cat("size ", n, " exceeds maximum capacity ", T::max_size())));
     std::fill_n(T::begin(), n, value_type());
     size_ = n;
@@ -145,7 +145,7 @@ struct map_impl : T {
     }
 
     template <class U, class V = value_type,
-              class = std::enable_if_t<has_operator_radd<V, U>::value>>
+              class = std::enable_if_t<has_operator_rmul<V, U>::value>>
     reference& operator*=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end()) it->second *= u;
@@ -153,13 +153,13 @@ struct map_impl : T {
     }
 
     template <class U, class V = value_type,
-              class = std::enable_if_t<has_operator_rsub<V, U>::value>>
+              class = std::enable_if_t<has_operator_rdiv<V, U>::value>>
     reference& operator/=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
         it->second /= u;
-      else
-        map->emplace(idx, 0.0 / u);
+      else if (!(value_type{} / u == value_type{}))
+        map->emplace(idx, value_type{} / u);
       return *this;
     }
 
@@ -177,13 +177,6 @@ struct map_impl : T {
     template <class... Ts>
     decltype(auto) operator()(Ts&&... args) {
       return map->operator[](idx)(std::forward<Ts>(args)...);
-    }
-
-    template <class V = value_type, class = std::enable_if_t<has_operator_rmul<V>::value>>
-    reference& operator*=(double x) {
-      auto it = map->find(idx);
-      if (it != static_cast<T*>(map)->end()) it->second *= x;
-      return *this;
     }
 
     map_impl* map;
@@ -243,7 +236,7 @@ struct map_impl : T {
   reference operator[](std::size_t i) noexcept { return {this, i}; }
   const_reference operator[](std::size_t i) const noexcept {
     auto it = T::find(i);
-    static const value_type null = value_type();
+    static const value_type null = value_type{};
     if (it == T::end()) return null;
     return it->second;
   }
@@ -285,13 +278,6 @@ public:
     using std::begin;
     using std::end;
     return std::equal(this->begin(), this->end(), begin(u), end(u));
-  }
-
-  template <class V = typename base_type::value_type,
-            class = std::enable_if_t<detail::has_operator_rmul<V>::value>>
-  storage_adaptor& operator*=(double v) {
-    for (auto&& x : *this) x *= v;
-    return *this;
   }
 };
 

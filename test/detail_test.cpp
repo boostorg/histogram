@@ -29,10 +29,8 @@ int main() {
 
   // literals
   {
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<std::integral_constant<unsigned, 0>, decltype(0_c)>));
-    BOOST_TEST_TRAIT_TRUE(
-        (std::is_same<std::integral_constant<unsigned, 3>, decltype(3_c)>));
+    BOOST_TEST_TRAIT_SAME(std::integral_constant<unsigned, 0>, decltype(0_c));
+    BOOST_TEST_TRAIT_SAME(std::integral_constant<unsigned, 3>, decltype(3_c));
     BOOST_TEST_EQ(decltype(10_c)::value, 10);
     BOOST_TEST_EQ(decltype(213_c)::value, 213);
   }
@@ -131,24 +129,13 @@ int main() {
     using A = std::array<int, 10>;
     using B = std::vector<int>;
     using C = std::map<std::size_t, int>;
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<A, B>, A>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<B, A>, A>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<A, C>, A>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<C, A>, A>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<C, B>, B>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_container<B, C>, B>));
+    BOOST_TEST_TRAIT_SAME(detail::common_container<A, B>, A);
+    BOOST_TEST_TRAIT_SAME(detail::common_container<B, A>, A);
+    BOOST_TEST_TRAIT_SAME(detail::common_container<A, C>, A);
+    BOOST_TEST_TRAIT_SAME(detail::common_container<C, A>, A);
+    BOOST_TEST_TRAIT_SAME(detail::common_container<C, B>, B);
+    BOOST_TEST_TRAIT_SAME(detail::common_container<B, C>, B);
   }
-
-  // // common_storage
-  // {
-  //   using A = storage_adaptor<std::array<int, 10>>;
-  //   using B = storage_adaptor<std::vector<long>>;
-  //   using C = storage_adaptor<std::map<std::size_t, double>>;
-  //   BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_storage<A, B>,
-  //                                       storage_adaptor<std::array<long, 10>>>));
-  //   BOOST_TEST_TRAIT_TRUE((std::is_same<detail::common_storage<B, C>,
-  //                                       storage_adaptor<std::vector<double>>>));
-  // }
 
   return boost::report_errors();
 }
