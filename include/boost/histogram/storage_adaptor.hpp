@@ -145,7 +145,7 @@ struct map_impl : T {
     }
 
     template <class U, class V = value_type,
-              class = std::enable_if_t<has_operator_radd<V, U>::value>>
+              class = std::enable_if_t<has_operator_rmul<V, U>::value>>
     reference& operator*=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end()) it->second *= u;
@@ -153,7 +153,7 @@ struct map_impl : T {
     }
 
     template <class U, class V = value_type,
-              class = std::enable_if_t<has_operator_rsub<V, U>::value>>
+              class = std::enable_if_t<has_operator_rdiv<V, U>::value>>
     reference& operator/=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
@@ -177,13 +177,6 @@ struct map_impl : T {
     template <class... Ts>
     decltype(auto) operator()(Ts&&... args) {
       return map->operator[](idx)(std::forward<Ts>(args)...);
-    }
-
-    template <class V = value_type, class = std::enable_if_t<has_operator_rmul<V>::value>>
-    reference& operator*=(double x) {
-      auto it = map->find(idx);
-      if (it != static_cast<T*>(map)->end()) it->second *= x;
-      return *this;
     }
 
     map_impl* map;

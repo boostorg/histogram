@@ -213,8 +213,6 @@ BOOST_HISTOGRAM_DETECT(is_incrementable, (++std::declval<T&>()));
 
 BOOST_HISTOGRAM_DETECT(has_fixed_size, (std::tuple_size<T>::value));
 
-BOOST_HISTOGRAM_DETECT(has_operator_rmul, (std::declval<T&>() *= 1.0));
-
 BOOST_HISTOGRAM_DETECT(has_operator_preincrement, (++std::declval<T&>()));
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_equal,
@@ -225,6 +223,12 @@ BOOST_HISTOGRAM_DETECT_BINARY(has_operator_radd,
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rsub,
                               (std::declval<T&>() -= std::declval<U&>()));
+
+BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rmul,
+                              (std::declval<T&>() *= std::declval<U&>()));
+
+BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rdiv,
+                              (std::declval<T&>() /= std::declval<U&>()));
 
 template <typename T>
 struct is_tuple_impl : std::false_type {};

@@ -10,6 +10,7 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
+#include <cmath>
 #include <deque>
 #include <limits>
 #include <map>
@@ -25,10 +26,10 @@ void tests() {
   {
     storage_adaptor<T> a;
     a.reset(2);
-    BOOST_TEST_EQ(std::distance(a.begin(), a.end()), 2);
     storage_adaptor<T> b(a);
     storage_adaptor<T> c;
     c = a;
+    BOOST_TEST_EQ(std::distance(a.begin(), a.end()), 2);
     BOOST_TEST_EQ(a.size(), 2);
     BOOST_TEST_EQ(b.size(), 2);
     BOOST_TEST_EQ(c.size(), 2);
@@ -139,6 +140,8 @@ void mixed_tests() {
     c = a;
     BOOST_TEST_EQ(c[0], 0);
     BOOST_TEST_EQ(c[1], 1);
+    c = A();
+    BOOST_TEST_EQ(c.size(), 0);
     B d(std::move(a));
     B e;
     e = std::move(d);
@@ -158,6 +161,21 @@ int main() {
               storage_adaptor<std::array<double, 100>>>();
   mixed_tests<unlimited_storage<>, storage_adaptor<std::vector<int>>>();
   mixed_tests<storage_adaptor<std::vector<int>>, unlimited_storage<>>();
+  mixed_tests<storage_adaptor<std::map<std::size_t, int>>,
+              storage_adaptor<std::vector<int>>>();
+
+  // special case for division of and map
+  {
+    auto a = storage_adaptor<std::map<std::size_t, double>>();
+    a.reset(2);
+    a[0] /= 2;
+    BOOST_TEST_EQ(a[0], 0);
+    a[0] = 2;
+    a[0] /= 2;
+    BOOST_TEST_EQ(a[0], 1);
+    a[1] /= 0.0;
+    BOOST_TEST(std::isnan(a[1]));
+  }
 
   // with accumulators::weighted_sum
   {
