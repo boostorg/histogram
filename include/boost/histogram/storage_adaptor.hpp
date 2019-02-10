@@ -236,7 +236,7 @@ struct map_impl : T {
   reference operator[](std::size_t i) noexcept { return {this, i}; }
   const_reference operator[](std::size_t i) const noexcept {
     auto it = T::find(i);
-    static const value_type null = value_type();
+    static const value_type null = value_type{};
     if (it == T::end()) return null;
     return it->second;
   }
