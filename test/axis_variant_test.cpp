@@ -22,7 +22,8 @@ namespace tr = axis::transform;
 
 int main() {
   {
-    axis::variant<axis::integer<double>, axis::category<std::string>> a{
+    using meta_type = std::vector<int>;
+    auto a = axis::variant<axis::integer<double>, axis::category<std::string, meta_type>>{
         axis::integer<double>(0, 2, "foo")};
     BOOST_TEST_EQ(a.index(-10), -1);
     BOOST_TEST_EQ(a.index(-1), -1);
@@ -40,10 +41,10 @@ int main() {
     BOOST_TEST_EQ(a.metadata(), "bar");
     BOOST_TEST_EQ(a.options(), axis::option::use_default);
 
-    a = axis::category<std::string>({"A", "B"}, "cat");
+    a = axis::category<std::string, meta_type>({"A", "B"}, {1, 2, 3});
     BOOST_TEST_EQ(a.index("A"), 0);
     BOOST_TEST_EQ(a.index("B"), 1);
-    BOOST_TEST_EQ(a.metadata(), "cat");
+    BOOST_TEST_THROWS(a.metadata(), std::runtime_error);
     BOOST_TEST_EQ(a.options(), axis::option::overflow);
   }
 

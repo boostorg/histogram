@@ -19,6 +19,7 @@ int main() {
     auto empty = std::vector<double>(0);
     BOOST_TEST_THROWS((axis::variable<>(empty)), std::invalid_argument);
     BOOST_TEST_THROWS(axis::variable<>({1.0}), std::invalid_argument);
+    BOOST_TEST_THROWS(axis::variable<>({1.0, -1.0}), std::invalid_argument);
   }
 
   // axis::variable
