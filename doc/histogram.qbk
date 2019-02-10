@@ -52,7 +52,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
       [link histogram.concepts Concepts]
     ]
     [
-      Read this if you want to make custom axis types, storage types, and more that work with the library. Concepts define the expected behavior and interfaces you need to implement.
+      Read this if you want to make custom axis types, storage types, and more that work with the library.
     ]
   ]
   [
