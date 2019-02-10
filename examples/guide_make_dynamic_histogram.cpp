@@ -7,21 +7,24 @@
 //[ guide_make_dynamic_histogram
 
 #include <boost/histogram.hpp>
-#include <boost/lexical_cast.hpp> // convert strings to numbers
 #include <cassert>
+#include <sstream>
 #include <vector>
+
+const char* config = "4 1.0 2.0\n"
+                     "5 3.0 4.0\n";
 
 namespace bh = boost::histogram;
 
-int main(int argc, char** argv) {
-  // read axis config from command-line: [nbins start stop] ...
+int main() {
+  // read axis config from a config file (mocked here with std::istringstream)
   // and create vector of regular axes, the number of axis is not known at compile-time
-  assert((argc - 1) % 3 == 0);
+  std::istringstream is(config);
   auto v1 = std::vector<bh::axis::regular<>>();
-  for (int iarg = 1; iarg < argc;) {
-    const auto bins = boost::lexical_cast<unsigned>(argv[iarg++]);
-    const auto start = boost::lexical_cast<double>(argv[iarg++]);
-    const auto stop = boost::lexical_cast<double>(argv[iarg++]);
+  while (is.good()) {
+    unsigned bins;
+    double start, stop;
+    is >> bins >> start >> stop;
     v1.emplace_back(bins, start, stop);
   }
 
