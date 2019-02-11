@@ -83,7 +83,7 @@ class weighted_mean;
 
 struct unsafe_access;
 
-template <class Allocator = std::allocator<void>>
+template <class Allocator = std::allocator<char>>
 class unlimited_storage;
 
 template <class T>
