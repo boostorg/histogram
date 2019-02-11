@@ -75,26 +75,48 @@ int main() {
 
   // with log transform
   {
-    axis::regular<double, tr::log> b{2, 1e0, 1e2};
-    BOOST_TEST_EQ(b.bin(-1).lower(), 0.0);
-    BOOST_TEST_IS_CLOSE(b.bin(0).lower(), 1.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(b.bin(1).lower(), 10.0, 1e-9);
-    BOOST_TEST_IS_CLOSE(b.bin(2).lower(), 100.0, 1e-9);
-    BOOST_TEST_EQ(b.bin(2).upper(), std::numeric_limits<double>::infinity());
+    auto a = axis::regular<double, tr::log>{2, 1e0, 1e2};
+    BOOST_TEST_EQ(a.bin(-1).lower(), 0.0);
+    BOOST_TEST_IS_CLOSE(a.bin(0).lower(), 1.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(a.bin(1).lower(), 10.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(a.bin(2).lower(), 100.0, 1e-9);
+    BOOST_TEST_EQ(a.bin(2).upper(), std::numeric_limits<double>::infinity());
 
-    BOOST_TEST_EQ(b.index(-1), 2); // produces NaN in conversion
-    BOOST_TEST_EQ(b.index(0), -1);
-    BOOST_TEST_EQ(b.index(1), 0);
-    BOOST_TEST_EQ(b.index(9), 0);
-    BOOST_TEST_EQ(b.index(10), 1);
-    BOOST_TEST_EQ(b.index(90), 1);
-    BOOST_TEST_EQ(b.index(100), 2);
-    BOOST_TEST_EQ(b.index(std::numeric_limits<double>::infinity()), 2);
+    BOOST_TEST_EQ(a.index(-1), 2); // produces NaN in conversion
+    BOOST_TEST_EQ(a.index(0), -1);
+    BOOST_TEST_EQ(a.index(1), 0);
+    BOOST_TEST_EQ(a.index(9), 0);
+    BOOST_TEST_EQ(a.index(10), 1);
+    BOOST_TEST_EQ(a.index(90), 1);
+    BOOST_TEST_EQ(a.index(100), 2);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
+
+    BOOST_TEST_THROWS((axis::regular<double, tr::log>{2, -1, 0}), std::invalid_argument);
   }
 
   // with sqrt transform
   {
     axis::regular<double, tr::sqrt> a(2, 0, 4);
+    // this is weird, but -inf * -inf = inf, thus the lower bound
+    BOOST_TEST_EQ(a.bin(-1).lower(), std::numeric_limits<double>::infinity());
+    BOOST_TEST_IS_CLOSE(a.bin(0).lower(), 0.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(a.bin(1).lower(), 1.0, 1e-9);
+    BOOST_TEST_IS_CLOSE(a.bin(2).lower(), 4.0, 1e-9);
+    BOOST_TEST_EQ(a.bin(2).upper(), std::numeric_limits<double>::infinity());
+
+    BOOST_TEST_EQ(a.index(-1), 2); // produces NaN in conversion
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(0.99), 0);
+    BOOST_TEST_EQ(a.index(1), 1);
+    BOOST_TEST_EQ(a.index(3.99), 1);
+    BOOST_TEST_EQ(a.index(4), 2);
+    BOOST_TEST_EQ(a.index(100), 2);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
+  }
+
+  // with pow transform
+  {
+    axis::regular<double, tr::pow> a(tr::pow{0.5}, 2, 0, 4);
     // this is weird, but -inf * -inf = inf, thus the lower bound
     BOOST_TEST_EQ(a.bin(-1).lower(), std::numeric_limits<double>::infinity());
     BOOST_TEST_IS_CLOSE(a.bin(0).lower(), 0.0, 1e-9);

@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2017 Klemens D. Morgenstern, Hans Dembinski
+# Copyright (c) 2016-2019 Klemens D. Morgenstern, Hans Dembinski
 #
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -9,11 +9,11 @@ import boostbook : boostbook ;
 
 doxygen reference
 :
-  ../include/boost/histogram.hpp
-  [ glob ../include/boost/histogram/*.hpp ]
-  [ glob ../include/boost/histogram/accumulators/*.hpp ]
-  [ glob ../include/boost/histogram/algorithm/*.hpp ]
-  [ glob ../include/boost/histogram/axis/*.hpp ]
+  ../../../boost/histogram.hpp
+  [ glob ../../../boost/histogram/*.hpp ]
+  [ glob ../../../boost/histogram/accumulators/*.hpp ]
+  [ glob ../../../boost/histogram/algorithm/*.hpp ]
+  [ glob ../../../boost/histogram/axis/*.hpp ]
 :
   <doxygen:param>"PREDEFINED=\"BOOST_HISTOGRAM_DOXYGEN_INVOKED\" \\
                              \"BOOST_HISTOGRAM_DETAIL_NODISCARD\" \\
@@ -25,30 +25,35 @@ doxygen reference
   <doxygen:param>JAVADOC_AUTOBRIEF=YES
   <doxygen:param>USE_MATHJAX=NO
   <doxygen:param>SEARCH_INCLUDES=YES
-  <doxygen:param>"EXCLUDE=\"../include/boost/histogram/fwd.hpp\" \\
-                          \"../include/boost/histogram/ostream.hpp\" \\
-                          \"../include/boost/histogram/axis/ostream.hpp\" \\
-                          \"../include/boost/histogram/accumulators/ostream.hpp\" \\
+  <doxygen:param>"EXCLUDE=\"../../../boost/histogram/fwd.hpp\" \\
+                          \"../../../boost/histogram/ostream.hpp\" \\
+                          \"../../../boost/histogram/axis/ostream.hpp\" \\
+                          \"../../../boost/histogram/accumulators/ostream.hpp\" \\
                           "
   <doxygen:param>EXCLUDE_SYMBOLS=detail
   <doxygen:param>WARNINGS=YES
   <doxygen:param>WARN_IF_DOC_ERROR=YES
 ;
 
-boostbook histogram
+boostbook standalone
 :
   histogram.qbk
 :
   <dependency>reference
-# for the final product
-#  <format>html:<xsl:param>boost.root=../../../..
-# for now keep links to local resources so it works on gh-pages
-  <xsl:param>boost.root=../..
-  <xsl:param>boost.image.src=../src/images/boost.png
-# rest is the same either way
+  <xsl:param>boost.root=../../../..
   <xsl:param>boost.libraries=../../../libraries.htm
   <xsl:param>boost.mathjax=1
   <xsl:param>chunk.first.sections=1
   <xsl:param>generate.section.toc.level=1
   <xsl:param>generate.toc="chapter nop section nop"
 ;
+
+alias boostdoc ;
+explicit boostdoc ;
+alias boostrelease : standalone ;
+explicit boostrelease ;
+
+#alias gh-pages : standalone : :
+#  <xsl:param>boost.root=../..
+#  <xsl:param>boost.image.src=../src/images/boost.png
+#  ;

@@ -10,12 +10,12 @@
 #include <cassert>
 #include <vector>
 
-namespace bh = boost::histogram;
-
 int main() {
+  using namespace boost::histogram;
+
   // make two histograms
-  auto h1 = bh::make_histogram(bh::axis::regular<>(2, -1.0, 1.0));
-  auto h2 = bh::make_histogram(bh::axis::regular<>(2, -1.0, 1.0));
+  auto h1 = make_histogram(axis::regular<>(2, -1.0, 1.0));
+  auto h2 = make_histogram(axis::regular<>(2, -1.0, 1.0));
 
   h1(-0.5); // counts are: 1 0
   h2(0.5);  // counts are: 0 1
@@ -42,8 +42,8 @@ int main() {
   assert(g4 != g5 && g4 == 4 * g5);
 
   // note special effect of multiplication on weighted_sum
-  auto h = bh::make_histogram_with(std::vector<bh::accumulators::weighted_sum<double>>(),
-                                   bh::axis::regular<>(2, -1.0, 1.0));
+  auto h = make_histogram_with(std::vector<accumulators::weighted_sum<double>>(),
+                               axis::regular<>(2, -1.0, 1.0));
   h(-0.5);
 
   // counts are: 1 0

@@ -10,18 +10,21 @@
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <sstream>
+#include <boost/lexical_cast.hpp>
 #include "is_close.hpp"
 
 using namespace boost::histogram;
+
+template <class T>
+auto str(const T& t) {
+  return boost::lexical_cast<std::string>(t);
+}
 
 int main() {
   {
     using w_t = accumulators::weighted_sum<double>;
     w_t w;
-    std::ostringstream os;
-    os << w;
-    BOOST_TEST_EQ(os.str(), std::string("weighted_sum(0, 0)"));
+    BOOST_TEST_EQ(str(w), std::string("weighted_sum(0, 0)"));
 
     BOOST_TEST_EQ(w, w_t(0));
     BOOST_TEST_NE(w, w_t(1));
@@ -72,9 +75,7 @@ int main() {
     BOOST_TEST_EQ(a.value(), 10);
     BOOST_TEST_EQ(a.variance(), 30);
 
-    std::ostringstream os;
-    os << a;
-    BOOST_TEST_EQ(os.str(), std::string("mean(4, 10, 30)"));
+    BOOST_TEST_EQ(str(a), std::string("mean(4, 10, 30)"));
 
     m_t b;
     b(1e8 + 4);
@@ -107,9 +108,7 @@ int main() {
     BOOST_TEST_EQ(a.value(), 2);
     BOOST_TEST_IS_CLOSE(a.variance(), 0.8, 1e-3);
 
-    std::ostringstream os;
-    os << a;
-    BOOST_TEST_EQ(os.str(), std::string("weighted_mean(2, 2, 0.8)"));
+    BOOST_TEST_EQ(str(a), std::string("weighted_mean(2, 2, 0.8)"));
 
     auto b = a;
     b += a; // same as feeding all samples twice
@@ -129,10 +128,18 @@ int main() {
 
     accumulators::sum<double> sum;
     ++sum;
+    BOOST_TEST_EQ(sum.large(), 1);
+    BOOST_TEST_EQ(sum.small(), 0);
+    BOOST_TEST_EQ(str(sum), std::string("sum(1 + 0)"));
     sum += 1e100;
+    BOOST_TEST_EQ(str(sum), std::string("sum(1e+100 + 1)"));
     ++sum;
+    BOOST_TEST_EQ(str(sum), std::string("sum(1e+100 + 2)"));
     sum += -1e100;
+    BOOST_TEST_EQ(str(sum), std::string("sum(0 + 2)"));
     BOOST_TEST_EQ(sum, 2); // correct answer
+    BOOST_TEST_EQ(sum.large(), 0);
+    BOOST_TEST_EQ(sum.small(), 2);
 
     accumulators::sum<double> a(3), b(2), c(3);
     BOOST_TEST_LT(b, c);
