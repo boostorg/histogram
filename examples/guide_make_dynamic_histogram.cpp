@@ -7,6 +7,7 @@
 //[ guide_make_dynamic_histogram
 
 #include <boost/histogram.hpp>
+#include <boost/lexical_cast.hpp> // convert strings to numbers
 #include <cassert>
 #include <sstream>
 #include <vector>
