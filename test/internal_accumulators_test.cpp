@@ -10,14 +10,16 @@
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <boost/lexical_cast.hpp>
+#include <sstream>
 #include "is_close.hpp"
 
 using namespace boost::histogram;
 
 template <class T>
 auto str(const T& t) {
-  return boost::lexical_cast<std::string>(t);
+  std::ostringstream os;
+  os << t;
+  return os.str();
 }
 
 int main() {
