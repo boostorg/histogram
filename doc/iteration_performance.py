@@ -24,10 +24,10 @@ for iline, line in enumerate(open(sys.argv[1])):
 
 fig, ax = plt.subplots(1, 3, figsize=(10, 5), sharex=True, sharey=True)
 if os.path.exists("/proc/cpuinfo"):
-	cpuinfo = open("/proc/cpuinfo").read()
-	m = re.search("model name\s*:\s*(.+)\n", cpuinfo)
-	if m:
-		plt.suptitle(m.group(1))
+    cpuinfo = open("/proc/cpuinfo").read()
+    m = re.search("model name\s*:\s*(.+)\n", cpuinfo)
+    if m:
+        plt.suptitle(m.group(1))
 plt.subplots_adjust(bottom=0.18, wspace=0, top=0.85, right=0.98, left=0.07)
 for iaxis, axis_type in enumerate(("tuple", "vector", "vector_of_variant")):
     plt.sca(ax[iaxis])

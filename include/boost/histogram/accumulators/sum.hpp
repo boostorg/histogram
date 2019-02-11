@@ -25,7 +25,7 @@ namespace accumulators {
   independent of the number of samples.
 
   A. Neumaier, Zeitschrift fuer Angewandte Mathematik
-  und Mechanik 54 (1974) 39–51.
+  und Mechanik 54 (1974) 39-51.
 */
 template <typename RealType>
 class sum {
