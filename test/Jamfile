@@ -48,7 +48,11 @@ alias run-tests :
     [ run linearize_test.cpp ]
     [ run meta_test.cpp ]
     [ run storage_adaptor_serialization_test.cpp
-      /boost/serialization//boost_serialization/<link>static ]
+      /boost/serialization//boost_serialization/<link>static : : :
+      <define>VECTOR_INT_XML=\\\"$(THIS_PATH)/storage_adaptor_serialization_test_vector_int.xml\\\"
+      <define>ARRAY_UNSIGNED_XML=\\\"$(THIS_PATH)/storage_adaptor_serialization_test_array_unsigned.xml\\\"
+      <define>MAP_DOUBLE_XML=\\\"$(THIS_PATH)/storage_adaptor_serialization_test_map_double.xml\\\"
+    ]
     [ run storage_adaptor_test.cpp ]
     [ run unlimited_storage_serialization_test.cpp
       /boost/serialization//boost_serialization/<link>static ]

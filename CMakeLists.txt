@@ -136,6 +136,10 @@ if (TEST_SERIALIZATION)
 
   compiled_test(test/storage_adaptor_serialization_test.cpp)
   target_link_libraries(storage_adaptor_serialization_test PRIVATE Boost::serialization)
+  target_compile_definitions(storage_adaptor_serialization_test PRIVATE
+    -DVECTOR_INT_XML="${PROJECT_SOURCE_DIR}/test/storage_adaptor_serialization_test_vector_int.xml"
+    -DARRAY_UNSIGNED_XML="${PROJECT_SOURCE_DIR}/test/storage_adaptor_serialization_test_array_unsigned.xml"
+    -DMAP_DOUBLE_XML="${PROJECT_SOURCE_DIR}/test/storage_adaptor_serialization_test_map_double.xml")
 
   compiled_test(test/histogram_serialization_test.cpp Boost::serialization)
   target_compile_definitions(histogram_serialization_test PRIVATE

@@ -4,16 +4,12 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/archive/xml_iarchive.hpp>
-#include <boost/archive/xml_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <cmath>
-#include <fstream>
-#include <sstream>
-#include <string>
 #include "utility_histogram.hpp"
+#include "utility_serialization.hpp"
 
 using namespace boost::histogram;
 
@@ -30,35 +26,11 @@ void run_tests(const char* filename) {
              axis::variable<>({1.0, 2.0, 3.0}, "var"), axis::category<>{3, 1, 2},
              axis::integer<int, axis::null_type>(0, 2));
   a(0.5, 0.2, 20, 20, 2.5, 1, 1);
-
-  std::string ref;
-  {
-    std::ifstream file;
-    file.open(filename);
-    assert(file.is_open());
-    while (file.good()) {
-      char buf[1024];
-      file.read(buf, 1024);
-      ref.append(buf, file.gcount());
-    }
-  }
-
-  {
-    std::string ofn(filename);
-    ofn.erase(0, ofn.rfind("/") + 1);
-    ofn.append(".new");
-    std::ofstream of(ofn);
-    boost::archive::xml_oarchive oa(of);
-    oa << boost::serialization::make_nvp("hist", a);
-  }
+  save_xml(filename, a);
 
   auto b = decltype(a)();
   BOOST_TEST_NE(a, b);
-  {
-    std::istringstream is(ref);
-    boost::archive::xml_iarchive ia(is);
-    ia >> boost::serialization::make_nvp("hist", b);
-  }
+  load_xml(filename, b);
   BOOST_TEST_EQ(a, b);
 }
 
