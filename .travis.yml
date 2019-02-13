@@ -74,10 +74,11 @@ matrix:
         - echo $OTHER_LIBS
         - eval "$LCOV --remove $TRAVIS_BUILD_DIR/coveralls/coverage.info $OTHER_LIBS -o $TRAVIS_BUILD_DIR/coveralls/coverage.info"
 
-        # Sending data to Coveralls
-        - cd $TRAVIS_BUILD_DIR
+        # Sending data to Coveralls, must be in folder with git repo
+        - cat $TRAVIS_BUILD_DIR/coveralls/coverage.info
+        - cd libs/$LIBRARY_DIR
         - gem install coveralls-lcov
-        - coveralls-lcov coveralls/coverage.info
+        - coveralls-lcov $TRAVIS_BUILD_DIR/coveralls/coverage.info
 
 before_install:
   # Cloning minimal set of Boost libraries
