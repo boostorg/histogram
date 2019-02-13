@@ -11,7 +11,7 @@
 #
 
 sudo: false
-language: generic
+language: cpp
 os: linux
 cache:
   directories:
@@ -47,7 +47,7 @@ matrix:
     # - os: osx
 
     - name: "clang++"
-      env: B2_ARGS='cxxstd=14,1z toolset=clang cxxflags="-stdlib=libc++"'
+      env: B2_ARGS='cxxstd=14,1z toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++"'
       addons:
         apt:
           packages: libc++-dev
