@@ -11,7 +11,7 @@
 #include <boost/archive/xml_oarchive.hpp>
 #include <cassert>
 #include <fstream>
-#include <string>
+#include <iostream>
 
 template <class T>
 void load_xml(const char* filename, T& t) {
@@ -22,13 +22,11 @@ void load_xml(const char* filename, T& t) {
 }
 
 template <class T>
-void save_xml(const char* filename, const T& t) {
-  std::string mod(filename);
-  mod.erase(0, mod.rfind("/") + 1);
-  mod.append(".new");
-  std::ofstream ofs(mod);
-  boost::archive::xml_oarchive oa(ofs);
+void print_xml(const char* filename, const T& t) {
+  std::cout << filename << "\n";
+  boost::archive::xml_oarchive oa(std::cout);
   oa << boost::serialization::make_nvp("item", t);
+  std::cout << std::flush;
 }
 
 #endif

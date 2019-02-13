@@ -26,7 +26,7 @@ void run_tests(const char* filename) {
              axis::variable<>({1.0, 2.0, 3.0}, "var"), axis::category<>{3, 1, 2},
              axis::integer<int, axis::null_type>(0, 2));
   a(0.5, 0.2, 20, 20, 2.5, 1, 1);
-  save_xml(filename, a);
+  print_xml(filename, a);
 
   auto b = decltype(a)();
   BOOST_TEST_NE(a, b);

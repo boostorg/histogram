@@ -20,7 +20,7 @@ void test_serialization(const char* filename) {
   a.reset(3);
   a[1] += 1;
   a[2] += 2;
-  save_xml(filename, a);
+  print_xml(filename, a);
 
   auto b = storage_adaptor<T>();
   BOOST_TEST_NOT(a == b);
