@@ -38,8 +38,9 @@ matrix:
       env: B2_ARGS='cxxstd=14,1z toolset=clang cxxflags="-stdlib=libc++ -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="-lc++ -lasan -lubsan"'
       addons:
         apt:
-          sources: ubuntu-toolchain-r-test
-          packages: clang-5.0 libc++-dev libasan5 liblsan0 libubsan1 libtsan0
+          sources:
+            - ubuntu-toolchain-r-test
+          packages: libc++-dev libasan5 liblsan0 libubsan1 libtsan0
 
     - name: "gcc-8: coverage"
       env: B2_ARGS='toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="--coverage -lasan -lubsan"'
