@@ -10,6 +10,9 @@ import feature ;
 
 project
     : requirements
+    <toolset>gcc:<cxxflags>"-Wall -Wextra -Wno-noexcept-type"
+    <toolset>clang:<cxxflags>"-Wall -Wextra"
+    <toolset>darwin:<cxxflags>"-Wall -Wextra"
     <include>$(BOOST_ROOT)
     <include>.
     ;

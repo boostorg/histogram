@@ -3,11 +3,7 @@ doc/reference.xml
 *build*
 histogram.sublime-workspace
 CMakeSettings.json
-doc/html/.buildinfo
-doc/html/.doctrees
-doc/html/.nojekyll
-doc/html/objects.inv
 .DS_Store
 .vs*
-test/*.xml.new
-test/*.xml.new
+*.xml.new
+*.xml.new

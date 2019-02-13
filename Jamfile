@@ -6,12 +6,9 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 
 project
-    :
-    requirements
-        <toolset>gcc:<cxxflags>"-std=c++14 -Wall -Wextra -Wno-noexcept-type"
-        <toolset>clang:<cxxflags>"-std=c++14 -Wall -Wextra"
-        <toolset>darwin:<cxxflags>"-std=c++14 -Wall -Wextra"
-    ;
+    : requirements
+    <cxxstd>14
+;
 
 build-project test ;
 build-project examples ;
