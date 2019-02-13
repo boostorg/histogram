@@ -13,6 +13,9 @@
 
 using namespace boost::histogram;
 
+using regular =
+    axis::regular<double, axis::transform::id, axis::null_type, axis::option::growth>;
+
 using integer = axis::integer<double, axis::null_type,
                               axis::option::underflow | axis::option::overflow |
                                   axis::option::growth>;
@@ -20,6 +23,39 @@ using category = axis::category<std::string, axis::null_type, axis::option::grow
 
 template <typename Tag>
 void run_tests() {
+  {
+    auto h = make(Tag(), regular(2, 0, 1));
+    const auto& a = h.axis();
+    BOOST_TEST_EQ(a.size(), 2);
+    BOOST_TEST_EQ(h.size(), 2);
+    // [0.0, 0.5, 1.0]
+    h(0.1);
+    h(0.9);
+    BOOST_TEST_EQ(a.size(), 2);
+    BOOST_TEST_EQ(h.size(), 2);
+    h(-std::numeric_limits<double>::infinity());
+    h(std::numeric_limits<double>::quiet_NaN());
+    h(std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.size(), 2);
+    BOOST_TEST_EQ(h.size(), 2);
+    h(-0.3);
+    // [-0.5, 0.0, 0.5, 1.0]
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(h.size(), 3);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 1);
+    BOOST_TEST_EQ(h[2], 1);
+    h(1.9);
+    // [-0.5, 0.0, 0.5, 1.0, 1.5, 2.0]
+    BOOST_TEST_EQ(a.size(), 5);
+    BOOST_TEST_EQ(h.size(), 5);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 1);
+    BOOST_TEST_EQ(h[2], 1);
+    BOOST_TEST_EQ(h[3], 0);
+    BOOST_TEST_EQ(h[4], 1);
+  }
+
   {
     auto h = make_s(Tag(), std::vector<int>(), integer());
     const auto& a = h.axis();

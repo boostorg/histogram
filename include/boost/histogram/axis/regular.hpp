@@ -42,7 +42,7 @@ public:
       }
       if (z != -std::numeric_limits<typename Axis::internal_value_type>::infinity()) {
         const auto stop = der.min_ + der.delta_;
-        const auto i = static_cast<axis::index_type>(z * der.size());
+        const auto i = static_cast<axis::index_type>(std::floor(z * der.size()));
         der.min_ += i * (der.delta_ / der.size());
         der.delta_ = stop - der.min_;
         der.size_meta_.first() -= i;
