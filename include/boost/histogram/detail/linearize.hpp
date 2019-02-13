@@ -255,8 +255,8 @@ constexpr auto weight_sample_indices() {
 
 template <class T, class U>
 void fill_storage(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, U&&) {
-  static_if<is_incrementable<remove_cvref_t<T>>>([](auto&& t) { ++t; }, [](auto&& t) { t(); },
-                                        std::forward<T>(t));
+  static_if<is_incrementable<remove_cvref_t<T>>>(
+      [](auto&& t) { ++t; }, [](auto&& t) { t(); }, std::forward<T>(t));
 }
 
 template <class IW, class T, class U>
