@@ -54,7 +54,7 @@ matrix:
           packages: g++-8
       after_success:
         - pip install --user cpp-coveralls urllib3[secure];
-        - coveralls -r libs/$LIBRARY_DIR -b . --include include/boost/histogram/ --gcov=`which gcov-6` --gcov-options '\-lpbc';
+        - coveralls -r . -b bin.v2/libs/histogram/ --gcov=`which gcov-6` --gcov-options='\-lpbc';
 
 before_install:
   # Cloning minimal set of Boost libraries
@@ -73,7 +73,7 @@ before_install:
   - ./b2 headers
 
 script:
-  - sh -c "./b2 -j2 $B2_ARGS libs/histogram/test libs/histogram/examples"
+  - sh -c "./b2 -j2 -q $B2_ARGS libs/histogram/test libs/histogram/examples"
   - if [ -n $B2_ARSG_SERIAL ]; then
-      sh -c "./b2 -j2 $B2_ARGS_SERIAL libs/histogram/test//serial libs/histogram/examples//serial";
+      sh -c "./b2 -j2 -q $B2_ARGS_SERIAL libs/histogram/test//serial libs/histogram/examples//serial";
     fi
