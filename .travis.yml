@@ -11,18 +11,18 @@
 #
 
 sudo: false
-language: cpp
+language: generic
 os: linux
 cache:
   directories:
     - ${TRAVIS_BUILD_DIR}/../boost
 
-addons:
-  apt:
-    sources: &base_sources
-      - ubuntu-toolchain-r-test
-    packages: &base_packages
-      - libstdc++6
+# addons:
+#   apt:
+#     sources: &base_sources
+#       - ubuntu-toolchain-r-test
+#     packages: &base_packages
+#       - libstdc++-6-dev libgcc-6-dev libstdc++6
 
 env:
   global:
@@ -47,8 +47,10 @@ matrix:
     # - os: osx
 
     - name: "clang++"
-      env: B2_ARGS='cxxstd=14,1z toolset=clang'
-      compiler: clang
+      env: B2_ARGS='cxxstd=14,1z toolset=clang cxxflags="-stdlib=libc++"'
+      addons:
+        apt:
+          packages: libc++-dev
 
   #   - name: "gcc-8: no rtti, coverage, asan, ubsan"
   #     env: B2_ARGS='toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined -fno-rtti" linkflags="--coverage -lasan -lubsan"'
