@@ -51,12 +51,12 @@ alias run-tests :
     [ run utility_test.cpp ]
     ;
 
-alias serial : /boost/serialization//boost_serialization : <link>static ;
+alias libserial : /boost/serialization//boost_serialization : <link>static ;
 
-alias run-serialization-tests :
-    [ run storage_adaptor_serialization_test.cpp serial ]
-    [ run histogram_serialization_test.cpp serial ]
-    [ run unlimited_storage_serialization_test.cpp serial ]
+alias serial :
+    [ run storage_adaptor_serialization_test.cpp libserial ]
+    [ run histogram_serialization_test.cpp libserial ]
+    [ run unlimited_storage_serialization_test.cpp libserial ]
     ;
 
-explicit run-serialization-tests ;
+explicit serial ;

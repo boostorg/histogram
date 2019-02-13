@@ -9,7 +9,6 @@ import testing ;
 project
     : requirements
     <include>$(BOOST_ROOT)
-    <include>.
     ;
 
 run getting_started_listing_01.cpp ;
@@ -29,9 +28,16 @@ run guide_custom_storage.cpp ;
 run guide_fill_histogram.cpp ;
 run guide_histogram_operators.cpp ;
 run guide_histogram_reduction.cpp ;
-run guide_histogram_serialization.cpp /boost/serialization//boost_serialization/<link>static ;
 run guide_histogram_streaming.cpp ;
 run guide_make_dynamic_histogram.cpp ;
 run guide_make_static_histogram.cpp ;
 run guide_parallel_filling.cpp ;
 run guide_stdlib_algorithms.cpp ;
+
+alias libserial : /boost/serialization//boost_serialization : <link>static ;
+
+alias serial :
+    [ run guide_histogram_serialization.cpp libserial ]
+    ;
+
+explicit serial ;
