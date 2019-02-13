@@ -12,9 +12,11 @@ path-constant THIS_PATH : . ;
 
 project
     : requirements
-    <toolset>gcc:<cxxflags>"-Wall -Wextra -Wno-noexcept-type"
-    <toolset>clang:<cxxflags>"-Wall -Wextra"
-    <toolset>darwin:<cxxflags>"-Wall -Wextra"
+    <toolset>gcc:<warnings>all
+    <toolset>gcc:<cxxflags>-Wno-noexcept-type
+    <toolset>gcc:<cxxflags>-Wno-pedantic # until fix for boost.multiprecision is available
+    <toolset>clang:<warnings>all
+    <toolset>darwin:<warnings>all
     <include>$(BOOST_ROOT)
     <include>.
     <define>XML_PATH=\\\"$(THIS_PATH)/\\\"
