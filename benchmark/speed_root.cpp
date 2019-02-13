@@ -67,8 +67,6 @@ double compare_3d(unsigned n, int distrib) {
   return t;
 }
 
-#include <iostream>
-
 double compare_6d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
   int bin[] = {10, 10, 10, 10, 10, 10};
