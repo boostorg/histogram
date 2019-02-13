@@ -17,6 +17,7 @@ run getting_started_listing_03.cpp ;
 run guide_access_bin_counts.cpp ;
 run guide_axis_basic_demo.cpp ;
 run guide_axis_circular.cpp ;
+run guide_axis_growing.cpp ;
 run guide_axis_with_labels.cpp ;
 run guide_axis_with_transform.cpp ;
 run guide_axis_with_uoflow_off.cpp ;
@@ -40,4 +41,5 @@ alias serial :
     [ run guide_histogram_serialization.cpp libserial ]
     ;
 
+explicit libserial ;
 explicit serial ;

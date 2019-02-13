@@ -59,4 +59,5 @@ alias serial :
     [ run unlimited_storage_serialization_test.cpp libserial ]
     ;
 
+explicit libserial ;
 explicit serial ;

@@ -46,8 +46,8 @@ matrix:
     # ubsan+asan disabled in serial tests, because of bug in boost/serialization
     - name: "gcc-8"
       env:
-        - B2_ARGS='cxxstd=14,1z toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="--coverage -lasan -lubsan"'
-        - B2_ARGS_SERIAL='cxxstd=14,1z toolset=gcc-8 cxxflags="--coverage" linkflags="--coverage"'
+        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="--coverage -lasan -lubsan"'
+        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-8 cxxflags="--coverage" linkflags="--coverage"'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
