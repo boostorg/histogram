@@ -13,6 +13,9 @@
 sudo: false
 language: cpp
 os: linux
+cache:
+  directories:
+    - ${TRAVIS_BUILD_DIR}/../boost
 
 addons:
   apt:
@@ -23,8 +26,11 @@ addons:
 
 env:
   global:
-    # Autodetect Boost branch
-    - BRANCH=develop && [ "$TRAVIS_BRANCH" == "master" ] && BRANCH=master || true
+    - if [ "$TRAVIS_BRANCH" == "master" ]; then
+        BRANCH=master;
+      else
+        BRANCH=develop;
+      fi
 
     # Files, which coverage results must be ignored (files from other projects).
     # Example: - IGNORE_COVERAGE='*/boost/progress.hpp */filesystem/src/*'
@@ -38,11 +44,11 @@ env:
 
 matrix:
   include:
-    - os: osx
+    # - os: osx
 
-    # - name: "clang++"
-    #   env: B2_ARGS='cxxstd=14 toolset=clang'
-    #   compiler: clang
+    - name: "clang++"
+      env: B2_ARGS='cxxstd=14,1z toolset=clang'
+      compiler: clang
 
   #   - name: "gcc-8: no rtti, coverage, asan, ubsan"
   #     env: B2_ARGS='toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined -fno-rtti" linkflags="--coverage -lasan -lubsan"'
@@ -93,20 +99,6 @@ before_install:
   # Adding missing toolsets and preparing Boost headers
   - ./bootstrap.sh
   - ./b2 headers
-  # - |-
-  #   echo "using gcc ;" >> ~/user-config.jam
-  #   echo "using clang ;" >> ~/user-config.jam
-  #   echo "using clang : 3.8 : clang++-3.8 ;" >> ~/user-config.jam
-  #   echo "using clang : 4 : clang++-4.0 ;" >> ~/user-config.jam
-  #   echo "using clang : 5 : clang++-5.0 ;" >> ~/user-config.jam
-  #   echo "using clang : 6 : clang++-6.0 ;" >> ~/user-config.jam
-  #   echo "using clang : 7 : clang++-7.0 ;" >> ~/user-config.jam
-  #   echo "using clang : 8 : clang++-8.0 ;" >> ~/user-config.jam
-  #   echo "using clang : libc++ : clang++-libc++ ;" >> ~/user-config.jam
 
 script:
-  - ./b2 -j2 $B2_ARGS libs/$LIBRARY_DIR/test
-  - EXAMPLE_DIR=`ls libs/$LIBRARY_DIR/example*`
-  - if [ -e $EXAMPLE_DIR ]; then
-      ./b2 -j2 $B2_ARSG $EXAMPLE_DIR;
-    fi
+  - ./b2 -j2 $B2_ARGS libs/histogram/test libs/histogram/examples
