@@ -14,6 +14,13 @@ sudo: false
 language: cpp
 os: linux
 
+addons:
+  apt:
+    sources: &base_sources
+      - ubuntu-toolchain-r-test
+    packages: &base_packages
+      - libstdc++6
+
 env:
   global:
     # Autodetect Boost branch
@@ -31,11 +38,11 @@ env:
 
 matrix:
   include:
-    # - os: osx
+    - os: osx
 
-    - name: "clang++"
-      env: B2_ARGS='toolset=clang'
-      compiler: clang
+    # - name: "clang++"
+    #   env: B2_ARGS='cxxstd=14 toolset=clang'
+    #   compiler: clang
 
   #   - name: "gcc-8: no rtti, coverage, asan, ubsan"
   #     env: B2_ARGS='toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined -fno-rtti" linkflags="--coverage -lasan -lubsan"'
