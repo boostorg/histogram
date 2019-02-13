@@ -14,13 +14,6 @@ sudo: false
 language: cpp
 os: linux
 
-# addons:
-#   apt:
-#     sources: &base_sources
-#       - ubuntu-toolchain-r-test
-#     packages: &base_packages
-#       - libstdc++-6-dev libgcc-6-dev libstdc++6
-
 env:
   global:
     - if [ "$TRAVIS_BRANCH" == "master" ]; then
@@ -29,27 +22,26 @@ env:
         BRANCH=develop;
       fi
 
-    # Files, which coverage results must be ignored (files from other projects).
-    # Example: - IGNORE_COVERAGE='*/boost/progress.hpp */filesystem/src/*'
-    - IGNORE_COVERAGE=''
-
     - LIBRARY_DIR=$(basename $TRAVIS_BUILD_DIR)
 
     # Global options for sanitizers
+    # detect_leaks=0 is required on container builds by travis :(
     - UBSAN_OPTIONS=print_stacktrace=1
     - LSAN_OPTIONS=verbosity=1:log_threads=1
+    - ASAN_OPTIONS=detect_leaks=0:detect_stack_use_after_return=1
 
 matrix:
   include:
     # - os: osx
 
-    - name: "clang++: asan, ubsan"
+    - name: "clang"
       env: B2_ARGS='cxxstd=14,1z toolset=clang cxxflags="-stdlib=libc++ -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="-lc++ -lasan -lubsan"'
       addons:
         apt:
-          packages: libc++-dev
+          sources: llvm-toolchain-trusty-5.0
+          packages: clang-5.0 libc++-dev
 
-    - name: "gcc-8: no rtti, coverage, asan, ubsan"
+    - name: "gcc-8: no rtti, coverage"
       env: B2_ARGS='toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined -fno-rtti" linkflags="--coverage -lasan -lubsan"'
       addons:
         apt:
