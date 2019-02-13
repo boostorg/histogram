@@ -41,8 +41,8 @@ matrix:
           sources: llvm-toolchain-trusty-5.0
           packages: clang-5.0 libc++-dev
 
-    - name: "gcc-8: no rtti, coverage"
-      env: B2_ARGS='toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined -fno-rtti" linkflags="--coverage -lasan -lubsan"'
+    - name: "gcc-8: coverage"
+      env: B2_ARGS='toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="--coverage -lasan -lubsan"'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
