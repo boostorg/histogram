@@ -73,6 +73,7 @@ matrix:
 
 before_install:
   # Cloning minimal set of Boost libraries
+  - cd ..
   - git clone -b $BRANCH --depth 10 https://github.com/boostorg/boost.git
   - cd boost
   - git submodule update --init --depth 10 tools/build tools/boostdep
