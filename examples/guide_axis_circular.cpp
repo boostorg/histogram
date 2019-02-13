@@ -12,24 +12,23 @@
 int main() {
   using namespace boost::histogram;
 
-  // make a circular regular axis ... [1, 2), [2, 3), [3, 4), [1, 2) ....
+  // make a circular regular axis ... [0, 180), [180, 360), [0, 180) ....
   auto r = axis::regular<double, axis::transform::id, axis::default_metadata,
                          axis::join(axis::option::use_default, axis::option::circular)>{
-      3, 1., 4.};
-  assert(r.index(0.01) == 2);
-  assert(r.index(1.01) == 0);
-  assert(r.index(2.01) == 1);
-  assert(r.index(3.01) == 2);
-  assert(r.index(4.01) == 0);
-  assert(r.index(5.01) == 1);
-  assert(r.index(6.01) == 2);
+      2, 0., 360.};
+  assert(r.index(-180) == 1);
+  assert(r.index(0) == 0);
+  assert(r.index(180) == 1);
+  assert(r.index(360) == 0);
+  assert(r.index(540) == 1);
+  assert(r.index(720) == 0);
   // special values are mapped to the overflow bin index
-  assert(r.index(std::numeric_limits<double>::infinity()) == 3);
-  assert(r.index(-std::numeric_limits<double>::infinity()) == 3);
-  assert(r.index(std::numeric_limits<double>::quiet_NaN()) == 3);
+  assert(r.index(std::numeric_limits<double>::infinity()) == 2);
+  assert(r.index(-std::numeric_limits<double>::infinity()) == 2);
+  assert(r.index(std::numeric_limits<double>::quiet_NaN()) == 2);
 
   // since the regular axis is the most common circular axis, there exists an alias
-  auto c = axis::circular<>{3, 1., 4.};
+  auto c = axis::circular<>{2, 0., 360.};
   assert(r == c);
 
   // make a circular integer axis
