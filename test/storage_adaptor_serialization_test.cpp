@@ -29,9 +29,12 @@ void test_serialization(const char* filename) {
 }
 
 int main() {
-  test_serialization<std::vector<int>>(VECTOR_INT_XML);
-  test_serialization<std::array<unsigned, 10>>(ARRAY_UNSIGNED_XML);
-  test_serialization<std::map<std::size_t, double>>(MAP_DOUBLE_XML);
+  test_serialization<std::vector<int>>(
+      XML_PATH "storage_adaptor_serialization_test_vector_int.xml");
+  test_serialization<std::array<unsigned, 10>>(
+      XML_PATH "storage_adaptor_serialization_test_array_unsigned.xml");
+  test_serialization<std::map<std::size_t, double>>(
+      XML_PATH "storage_adaptor_serialization_test_map_double.xml");
 
   return boost::report_errors();
 }

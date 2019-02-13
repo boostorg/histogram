@@ -35,7 +35,7 @@ void run_tests(const char* filename) {
 }
 
 int main() {
-  run_tests<static_tag>(STATIC_XML);
-  run_tests<dynamic_tag>(DYNAMIC_XML);
+  run_tests<static_tag>(XML_PATH "histogram_serialization_test_static.xml");
+  run_tests<dynamic_tag>(XML_PATH "histogram_serialization_test_dynamic.xml");
   return boost::report_errors();
 }

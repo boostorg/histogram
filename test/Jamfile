@@ -8,6 +8,8 @@
 import testing ;
 import feature ;
 
+path-constant THIS_PATH : . ;
+
 project
     : requirements
     <toolset>gcc:<cxxflags>"-Wall -Wextra -Wno-noexcept-type"
@@ -15,9 +17,8 @@ project
     <toolset>darwin:<cxxflags>"-Wall -Wextra"
     <include>$(BOOST_ROOT)
     <include>.
+    <define>XML_PATH=\\\"$(THIS_PATH)/\\\"
     ;
-
-path-constant THIS_PATH : . ;
 
 alias run-tests :
     [ run algorithm_project_test.cpp ]
@@ -40,25 +41,23 @@ alias run-tests :
     [ run histogram_growing_test.cpp ]
     [ run histogram_mixed_test.cpp ]
     [ run histogram_operators_test.cpp ]
-    [ run histogram_serialization_test.cpp
-      /boost/serialization//boost_serialization/<link>static : : :
-      <define>STATIC_XML=\\\"$(THIS_PATH)/histogram_serialization_test_static.xml\\\"
-      <define>DYNAMIC_XML=\\\"$(THIS_PATH)/histogram_serialization_test_dynamic.xml\\\"
-    ]
     [ run histogram_test.cpp ]
     [ run indexed_test.cpp ]
     [ run internal_accumulators_test.cpp ]
     [ run linearize_test.cpp ]
     [ run meta_test.cpp ]
-    [ run storage_adaptor_serialization_test.cpp
-      /boost/serialization//boost_serialization/<link>static : : :
-      <define>VECTOR_INT_XML=\\\"$(THIS_PATH)/storage_adaptor_serialization_test_vector_int.xml\\\"
-      <define>ARRAY_UNSIGNED_XML=\\\"$(THIS_PATH)/storage_adaptor_serialization_test_array_unsigned.xml\\\"
-      <define>MAP_DOUBLE_XML=\\\"$(THIS_PATH)/storage_adaptor_serialization_test_map_double.xml\\\"
-    ]
     [ run storage_adaptor_test.cpp ]
-    [ run unlimited_storage_serialization_test.cpp
-      /boost/serialization//boost_serialization/<link>static ]
     [ run unlimited_storage_test.cpp ]
     [ run utility_test.cpp ]
     ;
+
+alias run-serialization-tests :
+    [ run storage_adaptor_serialization_test.cpp
+      /boost/serialization//boost_serialization/<link>static ]
+    [ run histogram_serialization_test.cpp
+      /boost/serialization//boost_serialization/<link>static ]
+    [ run unlimited_storage_serialization_test.cpp
+      /boost/serialization//boost_serialization/<link>static ]
+    ;
+
+explicit run-serialization-tests ;
