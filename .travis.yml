@@ -102,4 +102,4 @@ before_install:
   - ./b2 headers
 
 script:
-  - ./b2 -j2 $B2_ARGS libs/histogram/test libs/histogram/examples
+  - sh -c "./b2 -j2 $B2_ARGS libs/histogram/test libs/histogram/examples"
