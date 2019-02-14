@@ -43,28 +43,28 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: libc++-dev
 
-    - name: "gcc-5: coverage"
+    - name: "gcc-5"
       env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-5 cxxflags="--coverage" linkflags="--coverage"'
-        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-5 cxxflags="--coverage" linkflags="--coverage"'
-        - GCOV=gcov-5
+        - B2_ARGS='cxxstd=14 toolset=gcc-5'
+        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-5'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
-      after_success:
-        - cd libs/histogram
-        - tools/cov.sh
 
     # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-    - name: "gcc-8: ubsan, asan"
+    - name: "gcc-8: ubsan, asan, coverage"
       env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="-fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="-lasan -lubsan"'
-        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-8'
+        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="-fsanitize=address,leak,undefined -fno-sanitize-recover=undefined --coverage" linkflags="-lasan -lubsan --coverage"'
+        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-8 cxxflags="--coverage" linkflags="--coverage"'
+        - GCOV=gcov-8
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
+      after_success:
+        - cd libs/histogram
+        - tools/cov.sh
 
 before_install:
   # Cloning minimal set of Boost libraries
