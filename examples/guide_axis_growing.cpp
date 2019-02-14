@@ -30,7 +30,7 @@ int main() {
   assert(h1.axis().bin(0).lower() == 0.0);
   assert(h1.axis().bin(1).upper() == 1.0);
 
-  // value below range: axis grows new bins until value is in range, all indices shift
+  // value below range: axis grows new bins until value is in range
   h1(-0.3);
   // state: [-0.5, 0.0): 1, [0, 0.5): 1, [0.5, 1.0): 1
   std::cout << h1.axis().size() << std::endl;
@@ -45,6 +45,21 @@ int main() {
   assert(h1.axis().size() == 5);
   assert(h1.axis().bin(0).lower() == -0.5);
   assert(h1.axis().bin(4).upper() == 2.0);
+
+  // make a growing category axis (here strings)
+  // - empty axis is allowed: very useful if categories are not known at the beginning
+  auto h2 = make_histogram(axis::category<std::string,
+                                          axis::default_metadata,
+                                          axis::option::growth>());
+  assert(h2.size() == 0); // histogram is empty
+  h2("foo"); // new bin foo, index 0
+  assert(h2.size() == 1);
+  h2("bar"); // new bin bar, index 1
+  assert(h2.size() == 2);
+  h2("foo");
+  assert(h2.size() == 2);
+  assert(h2[0] == 2);
+  assert(h2[1] == 1);
 }
 
 //]
