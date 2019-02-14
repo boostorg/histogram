@@ -17,6 +17,7 @@
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
 #include <cmath>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <type_traits>
@@ -391,78 +392,6 @@ public:
       typename std::allocator_traits<allocator_type>::template rebind_alloc<uint64_t>>;
 
 private:
-  struct equal_to {
-    bool operator()(const mp_int& a, const mp_int& b) const noexcept { return a == b; }
-
-    template <class T>
-    bool operator()(const mp_int& a, const T& b) const noexcept {
-      return static_cast<double>(a) == b;
-    }
-
-    template <class T>
-    bool operator()(const T& a, const mp_int& b) const noexcept {
-      return operator()(b, a);
-    }
-
-    template <class T>
-    bool operator()(const T& a, const T& b) const noexcept {
-      return a == b;
-    }
-
-    template <class T, class U>
-    bool operator()(const T& a, const U& b) const noexcept {
-      return static_cast<double>(a) == static_cast<double>(b);
-    }
-  };
-
-  struct less {
-    bool operator()(const mp_int& a, const mp_int& b) const noexcept { return a < b; }
-
-    template <class T>
-    bool operator()(const mp_int& a, const T& b) const noexcept {
-      return static_cast<double>(a) < b;
-    }
-
-    template <class T>
-    bool operator()(const T& a, const mp_int& b) const noexcept {
-      return a < static_cast<double>(b);
-    }
-
-    template <class T>
-    bool operator()(const T& a, const T& b) const noexcept {
-      return a < b;
-    }
-
-    template <class T, class U>
-    bool operator()(const T& a, const U& b) const noexcept {
-      return static_cast<double>(a) < static_cast<double>(b);
-    }
-  };
-
-  struct greater {
-    bool operator()(const mp_int& a, const mp_int& b) const noexcept { return a > b; }
-
-    template <class T>
-    bool operator()(const mp_int& a, const T& b) const noexcept {
-      return static_cast<double>(a) > b;
-    }
-
-    template <class T>
-    bool operator()(const T& a, const mp_int& b) const noexcept {
-      return a > static_cast<double>(b);
-    }
-
-    template <class T>
-    bool operator()(const T& a, const T& b) const noexcept {
-      return a > b;
-    }
-
-    template <class T, class U>
-    bool operator()(const T& a, const U& b) const noexcept {
-      return static_cast<double>(a) > static_cast<double>(b);
-    }
-  };
-
   using types = mp11::mp_list<uint8_t, uint16_t, uint32_t, uint64_t, mp_int, double>;
 
   template <class T>
@@ -609,17 +538,17 @@ private:
 
     template <class U>
     bool operator==(const U& rhs) const {
-      return op<equal_to>(rhs);
+      return op<std::equal_to<>>(rhs);
     }
 
     template <class U>
     bool operator<(const U& rhs) const {
-      return op<less>(rhs);
+      return op<std::less<>>(rhs);
     }
 
     template <class U>
     bool operator>(const U& rhs) const {
-      return op<greater>(rhs);
+      return op<std::greater<>>(rhs);
     }
 
     template <class U>
@@ -791,7 +720,7 @@ public:
     if (size() != o.size()) return false;
     return buffer.apply([&o](const auto* ptr) {
       return o.buffer.apply([ptr, &o](const auto* optr) {
-        return std::equal(ptr, ptr + o.size(), optr, equal_to());
+        return std::equal(ptr, ptr + o.size(), optr, std::equal_to<>());
       });
     });
   }
@@ -800,7 +729,7 @@ public:
   bool operator==(const T& o) const {
     if (size() != o.size()) return false;
     return buffer.apply([&o](const auto* ptr) {
-      return std::equal(ptr, ptr + o.size(), std::begin(o), equal_to());
+      return std::equal(ptr, ptr + o.size(), std::begin(o), std::equal_to<>());
     });
   }
 
