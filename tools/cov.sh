@@ -1,4 +1,7 @@
-# must be executed in test folder
-mkdir -p cov
-cp -r ../../../bin.v2/libs/histogram/test/* cov
-bash <(curl -s https://codecov.io/bash)
+#!/bin/sh
+# must be executed in project folder
+mkdir -p test/cov
+mkdir -p examples/cov
+cp -r ../../bin.v2/libs/histogram/test/* test/cov
+cp -r ../../bin.v2/libs/histogram/examples/* examples/cov
+curl -s https://codecov.io/bash | bash -s -

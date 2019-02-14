@@ -52,8 +52,8 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
       after_success:
-        - cd libs/histogram/test
-        - bash ../tools/cov.sh
+        - cd libs/histogram
+        - tools/cov.sh
 
     # ubsan+asan disabled in serial tests, because of bug in boost/serialization
     - name: "gcc-8: ubsan, asan"
