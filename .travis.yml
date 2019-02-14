@@ -35,24 +35,18 @@ matrix:
     # - os: osx
 
     - name: "clang"
-      env:
-        - B2_ARGS='cxxstd=14 toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++"'
+      env: B2_ARGS='cxxstd=14 toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++"'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: libc++-dev
 
-    - name: "gcc-5: coverage"
-      env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-5 cxxflags="--coverage" linkflags="--coverage"'
-        - GCOV=gcov-5
+    - name: "gcc-5"
+      env: B2_ARGS='cxxstd=14 toolset=gcc-5'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
-      after_success:
-        - cd libs/histogram
-        - tools/cov.sh
 
     - name: "gcc-7: coverage"
       env:
