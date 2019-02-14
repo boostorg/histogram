@@ -47,6 +47,7 @@ matrix:
       env:
         - B2_ARGS='cxxstd=14 toolset=gcc-5 cxxflags="--coverage" linkflags="--coverage"'
         - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-5 cxxflags="--coverage" linkflags="--coverage"'
+        - GCOV=gcov-5
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
