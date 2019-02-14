@@ -13,18 +13,10 @@
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/iterator/iterator_facade.hpp>
+#include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
-// warning-ignore required in Boost-1.66 for cpp_int.hpp:822
-#include <boost/multiprecision/cpp_int.hpp>
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
-#pragma clang diagnostic pop
-#endif
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <type_traits>
@@ -33,6 +25,9 @@ namespace boost {
 namespace histogram {
 
 namespace detail {
+
+template <class Allocator>
+struct mp_int;
 
 template <class T>
 struct is_unsigned_integral : mp11::mp_and<std::is_integral<T>, std::is_unsigned<T>> {};
@@ -73,15 +68,15 @@ bool safe_radd(std::false_type, T& t, const U& u) {
   return false;
 }
 
-template <class T, class U>
-bool safe_radd(std::false_type, T& t, const boost::multiprecision::number<U>& u) {
+template <class T, class A>
+bool safe_radd(std::false_type, T& t, const mp_int<A>& u) {
   if (u >= 0) {
     if (std::numeric_limits<T>::max() - t > u) {
       t += static_cast<T>(u);
       return true;
     }
   }
-  if (t + u >= 0) {
+  if (u + t >= 0) {
     t -= static_cast<T>(-u);
     return true;
   }
@@ -93,6 +88,225 @@ bool safe_radd(T& t, const U& u) {
   static_assert(is_unsigned_integral<T>::value, "T must be unsigned integral type");
   return safe_radd(is_unsigned_integral<U>{}, t, u);
 }
+
+// use boost.multiprecision.cpp_int in your own code, it is much more sophisticated
+// than this implementation; we use it here to reduce coupling between boost libs
+template <class Allocator>
+struct mp_int {
+  explicit mp_int(Allocator a = {}) : data(1, 0, std::move(a)) {}
+  explicit mp_int(uint64_t v, Allocator a = {}) : data(1, v, std::move(a)) {}
+  mp_int(const mp_int&) = default;
+  mp_int& operator=(const mp_int&) = default;
+  mp_int(mp_int&&) = default;
+  mp_int& operator=(mp_int&&) = default;
+
+  mp_int& operator=(uint64_t o) {
+    data = decltype(data)(1, o);
+    return *this;
+  }
+
+  mp_int& operator++() {
+    BOOST_ASSERT(data.size() >= 1);
+    std::size_t i = 0;
+    while (!safe_increment(data[i])) {
+      data[i] = 0;
+      ++i;
+      if (i == data.size()) {
+        data.push_back(1);
+        break;
+      }
+    }
+    return *this;
+  }
+
+  mp_int& operator+=(const mp_int& o) {
+    if (this == &o) {
+      auto tmp{o};
+      return operator+=(tmp);
+    }
+    bool carry = false;
+    std::size_t i = 0;
+    for (uint64_t oi : o.data) {
+      auto& di = maybe_extend(i);
+      if (carry) {
+        if (safe_increment(oi))
+          carry = false;
+        else {
+          ++i;
+          continue;
+        }
+      }
+      if (!safe_radd(di, oi)) {
+        add_remainder(di, oi);
+        carry = true;
+      }
+      ++i;
+    }
+    while (carry) {
+      auto& di = maybe_extend(i);
+      if (safe_increment(di)) break;
+      di = 0;
+      ++i;
+    }
+    return *this;
+  }
+
+  mp_int& operator+=(uint64_t o) {
+    BOOST_ASSERT(data.size() >= 1);
+    if (safe_radd(data[0], o)) return *this;
+    add_remainder(data[0], o);
+    // carry the one, data may grow several times
+    std::size_t i = 1;
+    while (true) {
+      auto& di = maybe_extend(i);
+      if (safe_increment(di)) break;
+      di = 0;
+      ++i;
+    }
+    return *this;
+  }
+
+  operator double() const noexcept {
+    BOOST_ASSERT(data.size() >= 1);
+    double result = data[0];
+    std::size_t i = 0;
+    while (++i < data.size())
+      result += static_cast<double>(data[i]) * std::pow(2.0, i * 64);
+    return result;
+  }
+
+  bool operator<(uint64_t o) const noexcept {
+    BOOST_ASSERT(data.size() >= 1);
+    return data.size() == 1 && data[0] < o;
+  }
+
+  bool operator>(uint64_t o) const noexcept {
+    BOOST_ASSERT(data.size() >= 1);
+    return data.size() > 1 || data[0] > o;
+  }
+
+  bool operator==(uint64_t o) const noexcept {
+    BOOST_ASSERT(data.size() >= 1);
+    return data.size() == 1 && data[0] == o;
+  }
+
+  bool operator<(double o) const noexcept { return operator double() < o; }
+
+  bool operator>(double o) const noexcept { return operator double() > o; }
+
+  bool operator==(double o) const noexcept { return operator double() == o; }
+
+  bool operator<(const mp_int& o) const noexcept {
+    if (data.size() < o.data.size()) return true;
+    if (data.size() > o.data.size()) return false;
+    auto s = data.size();
+    while (s > 0) {
+      --s;
+      if (data[s] < o.data[s]) return true;
+      if (data[s] > o.data[s]) return false;
+    }
+    return false; // args are equal
+  }
+
+  bool operator>(const mp_int& o) const noexcept {
+    if (data.size() > o.data.size()) return true;
+    if (data.size() < o.data.size()) return false;
+    auto s = data.size();
+    while (s > 0) {
+      --s;
+      if (data[s] > o.data[s]) return true;
+      if (data[s] < o.data[s]) return false;
+    }
+    return false; // args are equal
+  }
+
+  bool operator==(const mp_int& o) const noexcept {
+    if (data.size() != o.data.size()) return false;
+    for (std::size_t s = 0; s < data.size(); ++s)
+      if (data[s] != o.data[s]) return false;
+    return true; // args are equal
+  }
+
+  template <class T>
+  bool operator<(const T& o) const noexcept {
+    return std::is_integral<T>::value ? operator<(static_cast<uint64_t>(o)) :
+                                      operator<(static_cast<double>(o));
+  }
+
+  template <class T>
+  bool operator>(const T& o) const noexcept {
+    return std::is_integral<T>::value ? operator>(static_cast<uint64_t>(o)) :
+                                      operator>(static_cast<double>(o));
+  }
+
+  template <class T>
+  bool operator==(const T& o) const noexcept {
+    return std::is_integral<T>::value ? operator==(static_cast<uint64_t>(o)) :
+                                      operator==(static_cast<double>(o));
+  }
+
+  template <class T>
+  bool operator<=(const T& o) const noexcept {
+    return !operator>(o);
+  }
+
+  template <class T>
+  bool operator>=(const T& o) const noexcept {
+    return !operator<(o);
+  }
+
+  template <class T>
+  bool operator!=(const T& o) const noexcept {
+    return !operator==(o);
+  }
+
+  template <class T>
+  friend bool operator<(const T& a, const mp_int& b) noexcept {
+    return !(b >= a);
+  }
+
+  template <class T>
+  friend bool operator>(const T& a, const mp_int& b) noexcept {
+    return !(b <= a);
+  }
+
+  template <class T>
+  friend bool operator<=(const T& a, const mp_int& b) noexcept {
+    return !(b > a);
+  }
+
+  template <class T>
+  friend bool operator>=(const T& a, const mp_int& b) noexcept {
+    return !(b < a);
+  }
+
+  template <class T>
+  friend bool operator==(const T& a, const mp_int& b) noexcept {
+    return b == a;
+  }
+
+  template <class T>
+  friend bool operator!=(const T& a, const mp_int& b) noexcept {
+    return b != a;
+  }
+
+  uint64_t& maybe_extend(std::size_t i) {
+    while (i >= data.size()) data.push_back(0);
+    return data[i];
+  }
+
+  static void add_remainder(uint64_t& d, const uint64_t o) noexcept {
+    BOOST_ASSERT(d > 0);
+    // in decimal system it would look like this:
+    // 8 + 8 = 6 = 8 - (9 - 8) - 1
+    // 9 + 1 = 0 = 9 - (9 - 1) - 1
+    auto tmp = std::numeric_limits<uint64_t>::max();
+    tmp -= o;
+    --d -= tmp;
+  }
+
+  std::vector<uint64_t, Allocator> data;
+};
 
 template <class Allocator>
 auto create_buffer(Allocator& a, std::size_t n) {
@@ -173,23 +387,8 @@ public:
   struct storage_tag {};
   using allocator_type = Allocator;
   using value_type = double;
-
-#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-  using mp_int = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<
-      0, 0, boost::multiprecision::signed_magnitude, boost::multiprecision::unchecked,
-      typename std::allocator_traits<Allocator>::template rebind_alloc<
-          boost::multiprecision::limb_type>>>;
-
-  static inline auto negate(const uint8_t& t) { return -static_cast<int16_t>(t); }
-  static inline auto negate(const uint16_t& t) { return -static_cast<int32_t>(t); }
-  static inline auto negate(const uint32_t& t) { return -static_cast<int64_t>(t); }
-  static inline mp_int negate(const uint64_t& t) { return -mp_int(t); }
-  static inline mp_int negate(const mp_int& t) { return -t; }
-  template <class T>
-  static inline auto negate(const T& t) {
-    return -t;
-  }
-#endif
+  using mp_int = detail::mp_int<
+      typename std::allocator_traits<allocator_type>::template rebind_alloc<uint64_t>>;
 
 private:
   struct equal_to {
@@ -498,7 +697,8 @@ public:
 
     template <class T>
     reference& operator-=(const T& t) {
-      base_type::buffer_->apply(adder(), *base_type::buffer_, base_type::idx_, negate(t));
+      base_type::buffer_->apply(adder(), *base_type::buffer_, base_type::idx_,
+                                -static_cast<double>(t));
       return *this;
     }
 
@@ -709,6 +909,7 @@ private:
 
   buffer_type buffer;
 };
+
 } // namespace histogram
 } // namespace boost
 

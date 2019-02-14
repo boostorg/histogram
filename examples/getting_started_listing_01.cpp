@@ -11,7 +11,8 @@
 #include <boost/histogram.hpp> // make_histogram, regular, weight, indexed
 #include <cassert>             // assert
 #include <functional>          // std::ref
-#include <sstream>             // std::ostringstream, std::cout, std::flush
+#include <iostream>            // std::cout, std::cout, std::flush
+#include <sstream>             // std::ostringstream
 
 int main() {
   using namespace boost::histogram; // strip the boost::histogram prefix

@@ -12,11 +12,19 @@
 #include <memory>
 #include <sstream>
 #include <vector>
+#include "utility_meta.hpp"
 
 namespace bh = boost::histogram;
 using unlimited_storage_type = bh::unlimited_storage<>;
 template <typename T>
 using vector_storage = bh::storage_adaptor<std::vector<T>>;
+using mp_int = unlimited_storage_type::mp_int;
+
+std::ostream& operator<<(std::ostream& os, const mp_int& x) {
+  os << "mp_int";
+  os << x.data;
+  return os;
+}
 
 template <typename T = std::uint8_t>
 unlimited_storage_type prepare(std::size_t n, T x = T()) {
@@ -32,8 +40,15 @@ auto max() {
 }
 
 template <>
-inline auto max<unlimited_storage_type::mp_int>() {
-  return unlimited_storage_type::mp_int(1e300);
+inline auto max<mp_int>() {
+  return mp_int(std::numeric_limits<uint64_t>::max());
+}
+
+template <class... Ts>
+auto make_mp_int(Ts... ts) {
+  mp_int r;
+  r.data = {static_cast<uint64_t>(ts)...};
+  return r;
 }
 
 template <typename T>
@@ -176,7 +191,7 @@ void add() {
   BOOST_TEST_EQ(d[0], max<RHS>());
   auto e = prepare<LHS>(1);
   e[0] -= c[0];
-  BOOST_TEST_EQ(e[0], unlimited_storage_type::negate(max<RHS>()));
+  BOOST_TEST_EQ(e[0], -double(max<RHS>()));
 }
 
 template <typename LHS>
@@ -185,7 +200,7 @@ void add_all_rhs() {
   add<LHS, uint16_t>();
   add<LHS, uint32_t>();
   add<LHS, uint64_t>();
-  add<LHS, unlimited_storage_type::mp_int>();
+  add<LHS, mp_int>();
   add<LHS, double>();
 }
 
@@ -228,6 +243,87 @@ int main() {
     BOOST_TEST_EQ(i, 0u);
   }
 
+  // mp_int
+  {
+    const auto vmax = max<uint64_t>();
+
+    BOOST_TEST_EQ(mp_int(), 0);
+    BOOST_TEST_EQ(mp_int(), 0.0);
+    BOOST_TEST_EQ(mp_int(1), 1);
+    BOOST_TEST_NE(mp_int(1), 2);
+    BOOST_TEST_LT(mp_int(1), 2);
+    BOOST_TEST_LE(mp_int(1), 2);
+    BOOST_TEST_LE(mp_int(1), 1);
+    BOOST_TEST_GT(mp_int(1), 0);
+    BOOST_TEST_GE(mp_int(1), 0);
+    BOOST_TEST_GE(mp_int(1), 1);
+
+    auto a = mp_int();
+    ++a;
+    BOOST_TEST_EQ(a.data.size(), 1);
+    BOOST_TEST_EQ(a.data[0], 1);
+    ++a;
+    BOOST_TEST_EQ(a.data[0], 2);
+    a = vmax;
+    BOOST_TEST_EQ(a, vmax);
+    BOOST_TEST_EQ(a, static_cast<double>(vmax));
+    ++a;
+    BOOST_TEST_EQ(a.data.size(), 2);
+    BOOST_TEST_EQ(a.data[0], 0);
+    BOOST_TEST_EQ(a.data[1], 1);
+    ++a;
+    BOOST_TEST_EQ(a.data.size(), 2);
+    BOOST_TEST_EQ(a.data[0], 1);
+    BOOST_TEST_EQ(a.data[1], 1);
+    a += a;
+    BOOST_TEST_EQ(a.data.size(), 2);
+    BOOST_TEST_EQ(a.data[0], 2);
+    BOOST_TEST_EQ(a.data[1], 2);
+    BOOST_TEST_EQ(a, 2 * static_cast<double>(vmax) + 2);
+    a.data[0] = vmax - 1;
+    a.data[1] = vmax;
+    ++a;
+    BOOST_TEST_EQ(a.data.size(), 2);
+    BOOST_TEST_EQ(a.data[0], vmax);
+    BOOST_TEST_EQ(a.data[1], vmax);
+    // carry two times A
+    ++a;
+    BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
+    // carry two times B
+    a = make_mp_int(vmax, vmax);
+    a += 1;
+    BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
+    // carry two times C
+    a = make_mp_int(vmax, vmax);
+    a += mp_int(1);
+    BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
+
+    a = make_mp_int(vmax, vmax);
+    a += a;
+    BOOST_TEST_EQ(a, make_mp_int(vmax - 1, vmax, 1));
+
+    // add smaller to larger
+    a = make_mp_int(1, 1, 1);
+    a += make_mp_int(1, 1);
+    BOOST_TEST_EQ(a, make_mp_int(2, 2, 1));
+
+    // add larger to smaller
+    a = make_mp_int(1, 1);
+    a += make_mp_int(1, 1, 1);
+    BOOST_TEST_EQ(a, make_mp_int(2, 2, 1));
+
+    a = mp_int(1);
+    auto b = 1.0;
+    BOOST_TEST_EQ(a, b);
+    for (unsigned i = 0; i < 80; ++i) {
+      b += b;
+      BOOST_TEST_NE(a, b);
+      a += a;
+      BOOST_TEST_EQ(a, b);
+    }
+    BOOST_TEST_GT(a.data.size(), 1);
+  }
+
   // empty state
   {
     unlimited_storage_type a;
@@ -240,7 +336,7 @@ int main() {
     copy<uint16_t>();
     copy<uint32_t>();
     copy<uint64_t>();
-    copy<unlimited_storage_type::mp_int>();
+    copy<mp_int>();
     copy<double>();
   }
 
@@ -250,20 +346,20 @@ int main() {
     equal_1<uint16_t>();
     equal_1<uint32_t>();
     equal_1<uint64_t>();
-    equal_1<unlimited_storage_type::mp_int>();
+    equal_1<mp_int>();
     equal_1<double>();
 
     equal_2<uint8_t, unsigned>();
     equal_2<uint16_t, unsigned>();
     equal_2<uint32_t, unsigned>();
     equal_2<uint64_t, unsigned>();
-    equal_2<unlimited_storage_type::mp_int, unsigned>();
+    equal_2<mp_int, unsigned>();
     equal_2<double, unsigned>();
 
-    equal_2<unlimited_storage_type::mp_int, double>();
+    equal_2<mp_int, double>();
 
     auto a = prepare<double>(1);
-    auto b = prepare<unlimited_storage_type::mp_int>(1);
+    auto b = prepare<mp_int>(1);
     BOOST_TEST(a == b);
     ++a[0];
     BOOST_TEST_NOT(a == b);
@@ -277,7 +373,7 @@ int main() {
     increase_and_grow<uint64_t>();
 
     // only increase for mp_int
-    auto a = prepare<unlimited_storage_type::mp_int>(2, 1);
+    auto a = prepare<mp_int>(2, static_cast<mp_int>(1));
     BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_EQ(a[1], 0);
     ++a[0];
@@ -291,7 +387,7 @@ int main() {
     add_all_rhs<uint16_t>();
     add_all_rhs<uint32_t>();
     add_all_rhs<uint64_t>();
-    add_all_rhs<unlimited_storage_type::mp_int>();
+    add_all_rhs<mp_int>();
     add_all_rhs<double>();
   }
 
@@ -341,7 +437,7 @@ int main() {
     convert_array_storage<uint16_t>();
     convert_array_storage<uint32_t>();
     convert_array_storage<uint64_t>();
-    convert_array_storage<unlimited_storage_type::mp_int>();
+    convert_array_storage<mp_int>();
     convert_array_storage<double>();
   }
 

@@ -10,6 +10,7 @@
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <cassert>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>

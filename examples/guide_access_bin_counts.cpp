@@ -9,7 +9,9 @@
 #include <boost/format.hpp>
 #include <boost/histogram.hpp>
 #include <cassert>
+#include <iostream>
 #include <numeric> // for std::accumulate
+#include <sstream>
 
 using namespace boost::histogram;
 
