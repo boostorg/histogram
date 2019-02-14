@@ -50,7 +50,7 @@ matrix:
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
-          packages: g++-5
+          packages: g++-5 lcov
       after_success:
         - cd libs/histogram
         - tools/cov.sh
