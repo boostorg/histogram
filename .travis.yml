@@ -55,7 +55,7 @@ matrix:
     # ubsan+asan disabled in serial tests, because of bug in boost/serialization
     - name: "gcc-8: ubsan, asan, coverage"
       env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="-fsanitize=address,leak,undefined -fno-sanitize-recover=undefined --coverage" linkflags="-lasan -lubsan --coverage"'
+        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="--coverage -lasan -lubsan"'
         - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-8 cxxflags="--coverage" linkflags="--coverage"'
         - GCOV=gcov-8
       addons:
