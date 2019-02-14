@@ -54,7 +54,7 @@ matrix:
           packages: g++-8
       after_success:
         - pip install --user cpp-coveralls urllib3[secure];
-        - coveralls -r . -b bin.v2/libs/histogram/ --gcov=`which gcov-6` --gcov-options='\-lpbc';
+        - coveralls -r . -b bin.v2/libs/histogram/ --gcov=`which gcov-6` --gcov-options '\-lpbc';
 
 before_install:
   # Cloning minimal set of Boost libraries
