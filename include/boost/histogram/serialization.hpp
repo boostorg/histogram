@@ -163,6 +163,11 @@ void serialize(Archive& ar, map_impl<T>& impl, unsigned /* version */) {
   ar& serialization::make_nvp("size", impl.size_);
   ar& serialization::make_nvp("map", static_cast<T&>(impl));
 }
+
+template <class Archive, class Allocator>
+void serialize(Archive& ar, mp_int<Allocator>& x, unsigned /* version */) {
+  ar& serialization::make_nvp("data", x.data);
+}
 } // namespace detail
 
 template <class Archive, class T>

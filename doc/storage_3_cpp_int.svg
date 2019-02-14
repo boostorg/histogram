@@ -88,7 +88,7 @@
            y="294.53796"
            x="10.379871"
            id="tspan4168"
-           sodipodi:role="line">multiprecision::cpp_int (32 byte)</tspan></text>
+           sodipodi:role="line">mp_int (24-32 byte)</tspan></text>
     </g>
     <use
        x="0"

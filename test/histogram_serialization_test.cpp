@@ -18,13 +18,12 @@ void run_tests(const char* filename) {
   // histogram_serialization
   namespace tr = axis::transform;
   auto a =
-      make_s(Tag(), std::map<std::size_t, int>(), axis::regular<>(3, -1, 1, "reg"),
-             axis::circular<>(2, 0.0, 1.0, "cir"),
-             axis::regular<double, tr::log>(3, 1, std::exp(2), "reg-log"),
-             axis::regular<double, tr::pow, std::vector<int>, axis::option::overflow>(
-                 tr::pow(0.5), 3, 1, 100, {1, 2, 3}),
-             axis::variable<>({1.0, 2.0, 3.0}, "var"), axis::category<>{3, 1, 2},
-             axis::integer<int, axis::null_type>(0, 2));
+      make(Tag(), axis::regular<>(3, -1, 1, "reg"), axis::circular<>(2, 0.0, 1.0, "cir"),
+           axis::regular<double, tr::log>(3, 1, std::exp(2), "reg-log"),
+           axis::regular<double, tr::pow, std::vector<int>, axis::option::overflow>(
+               tr::pow(0.5), 3, 1, 100, {1, 2, 3}),
+           axis::variable<>({1.0, 2.0, 3.0}, "var"), axis::category<>{3, 1, 2},
+           axis::integer<int, axis::null_type>(0, 2));
   a(0.5, 0.2, 20, 20, 2.5, 1, 1);
   print_xml(filename, a);
 

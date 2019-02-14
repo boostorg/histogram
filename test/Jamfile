@@ -16,7 +16,6 @@ project
     ]
     <toolset>gcc:<warnings>all
     <toolset>gcc:<cxxflags>-Wno-noexcept-type
-    <toolset>gcc:<cxxflags>-Wno-pedantic # until fix for boost.multiprecision is available
     <toolset>clang:<warnings>all
     <toolset>darwin:<warnings>all
     <include>$(BOOST_ROOT)

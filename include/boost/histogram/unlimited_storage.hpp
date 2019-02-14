@@ -370,7 +370,7 @@ void destroy_buffer(Allocator& a, typename std::allocator_traits<Allocator>::poi
   for each cell. If an operation is requested, which would overflow a counter, the whole
   array is replaced with another of a wider integral type, then the operation is executed.
   The storage uses integers of 8, 16, 32, 64 bits, and then switches to a multiprecision
-  integral type, cpp_int from
+  integral type, similar to those in
   [Boost.Multiprecision](https://www.boost.org/doc/libs/develop/libs/multiprecision/doc/html/index.html).
 
   A scaling operation or adding a floating point number turns the elements into doubles,
