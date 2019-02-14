@@ -54,8 +54,9 @@ int main() {
   assert(h.at(-1, 2) == 0);  // underflow for axis 0, overflow for axis 1
   assert(h.at(3, 1) == 1);   // overflow for axis 0, normal bin for axis 1
 
-  // - iteration over values works, but see next example for a better way
+  // iteration over values works, but see next example for a better way
   // - iteration using begin() and end() includes under- and overflow bins
+  // - iteration order is an implementation detail and may change in future versions
   const double sum = std::accumulate(h.begin(), h.end(), 0.0);
   assert(sum == 7);
 }
