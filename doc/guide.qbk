@@ -13,13 +13,13 @@ Use the convenient factory function [funcref boost::histogram::make_histogram ma
 
 An axis object defines how input values are mapped to bins, which means that it defines the number of bins along that axis and a mapping function from input values to bins. If you provide one axis, the histogram is one-dimensional. If you provide two, it is two-dimensional, and so on.
 
-In the example above, the compiler knows the number of axes and their type at compile-time, the information can be deduced from the arguments to [funcref boost::histogram::make_histogram make_histogram]. This gives you the best performance, but sometimes you only know the axis configuration at run-time, usually because it depends on run-time user input. You can also create a sequence of axes at run-time and pass them to an overload of the factory function. Here is an example.
+In the example above, the compiler knows the number of axes and their type at compile-time, the information can be deduced from the arguments to [funcref boost::histogram::make_histogram make_histogram]. This gives the best performance, but sometimes you only know the axis configuration at run-time, because it depends on information that's only available at run-time. So you can also create axes at run-time and pass them to an overload of the [funcref boost::histogram::make_histogram make_histogram] function. Here is an example.
 
 [import ../examples/guide_make_dynamic_histogram.cpp]
 [guide_make_dynamic_histogram]
 
 [note
-When the axis types are known at compile-time, the histogram stores them in a `std::tuple`. If they are only known at run-time, it uses a `std::vector`. For the most part, the two variants of the histogram act identically, except that the compile-time version is faster. The [link histogram.overview.rationale.structure.host rationale] has more details on this point.
+When the axis types are known at compile-time, the histogram internally holds them in a `std::tuple`, which is very efficient and avoids a memory allocation from the heap. If they are only known at run-time, it stores the axes in a `std::vector`. The interface hides this difference, but not perfectly. There are a corner cases where the difference becomes apparent. The [link histogram.overview.rationale.structure.host rationale] has more details on this point.
 ]
 
 The factory function [funcref boost::histogram::make_histogram make_histogram] uses the default storage type, which provides safe counting, is fast, and memory efficient. If you want to create a histogram with another storage type, use [funcref boost::histogram::make_histogram_with make_histogram_with]. To learn more about other storage types and how to create your own, have a look at the section [link histogram.guide.expert Advanced Usage].
@@ -167,7 +167,7 @@ So this feature is very convenient, but before you use it all the time, keep two
 * If you have unexpected outliers in your data which are far away from the normal range,
   the axis could grow to a huge size and the corresponding huge memory request could bring your computer to its knees. This can be a major issue, and it is the reason why growing axis are not the default.
 
-A growing axis can have under- and overflow bins, but these only count special floating point values: +-infinity and NaN.
+A growing axis can have under- and overflow bins, but these only count the special floating point values +-infinity and NaN.
 
 [endsect] [/ options]
 
@@ -179,31 +179,37 @@ A growing axis can have under- and overflow bins, but these only count special f
 
 [section Fill a histogram]
 
-After you created a histogram, you want to insert tuples of possibly multi-dimensional and values of different types. This is done with the flexible `operator()` call, which you typically use in a loop. Some extra parameters can be passed to the method as shown in the next example.
+After you created a histogram, you want to insert tuples of possibly multi-dimensional and values of different types. This is done with the flexible `operator()` call, which you typically use in a loop. After the histogram has been filled, you want to access the counts per bin at some point. To access each bin, you use a multi-dimensional index, which consists of a sequence of bin indices for each axis in order. Example:
 
 [import ../examples/guide_fill_histogram.cpp]
 [guide_fill_histogram]
 
 `operator()` either takes `N` arguments or a container with `N` elements, where `N` is equal to the number of axes of the histogram. It finds the corresponding bin for the input and increments the bin counter by one.
 
-`operator()(..., weight(w))` does the same, but increments the bin counter by the value `w`. The type of `w` should be integer or floating point. The helper function `weight()` generates a special type that makes the argument as a weight, so that it can be distinguished from other input values. It can be passed as the first or last argument. You can freely mix calls with and without a `weight`. Calls without `weight` act like the weight is `1`. Why weighted increments are sometimes useful is explained [link histogram.overview.rationale.weights in the rationale].
+`operator()(..., weight(w))` or `operator()(weight(w), ...)` does the same, but increments the bin counter by the value `w`, which may be an integer or floating point type. The helper function `weight()` just marks this argument as a weight, so that it can be distinguished from the other inputs. It may be the first or last argument. You can freely mix calls with and without a `weight`. Calls without `weight` act like the weight is `1`. Why weighted increments are sometimes useful is explained [link histogram.overview.rationale.weights in the rationale].
 
 [note The default storage loses its no-overflow-guarantee when you pass floating point weights, but maintains it for integer weights.]
 
+The method `histogram::at(...)` (in analogy to `std::vector::at`). It accepts integral indices, one for each axis of the histogram, and returns the cell value.
+
+If you want to iterate over all cells, use the [funcref boost::histogram::indexed indexed] range generator, which is convenient and faster than a naive for loop:
+
+[import ../examples/guide_indexed_access.cpp]
+[guide_indexed_access]
+
 [endsect]
 
-[section Access bin counts]
+[section Fill a profile or any histogram with accumulators]
 
-After the histogram has been filled, you want to access the counts per bin at some point. You may want to visualize the counts, or compute some quantities like the mean from the data distribution approximated by the histogram.
+You can do more than just counting with this library. Histogram cells can be filled with arbitrary accumulators which may accept a sample. When the accumulator computes the mean of the samples, the data structure is called a /profile/. Profiles can be generated with the factory function [boost::histogram::make_profile make_profile]. Example:
 
-To access each bin, you use a multi-dimensional index, which consists of a sequence of bin indices for each axis in order. You can use this index to access the value for each and the variance estimate, using the method `histogram::at(...)` (in analogy to `std::vector::at`). It accepts integral indices, one for each axis of the histogram, and returns the associated bin counter type. The bin counter type then allows you to access the count value and its variance.
+[import ../examples/guide_fill_profile.cpp]
+[guide_fill_profile]
 
-The calls are demonstrated in the next example.
+Just like `weight()`, `sample()` is a marker function. And like `weight()`, it must be the first or last argument. Accumulators may accept more than a single sample value, and they may also accept a weight. Example:
 
-[import ../examples/guide_access_bin_counts.cpp]
-[guide_access_bin_counts]
-
-[note The numbers returned by `value()` and `variance()` are always equal, if weighted fills are not used. The internal structure, which handles the bin counters, has been optimised for this common case. Internally only a single integral number per bin is used until a weighted fill, then the counters internally switch to storing two real numbers per bin. If the very first call to `histogram(...)` is already a weighted increment, the two real numbers per bin are allocated directly without any superfluous conversion from integral counters to double counters. This special case is efficiently handled.]
+[import ../examples/guide_fill_accumulator.cpp]
+[guide_fill_accumulator]
 
 [endsect]
 
