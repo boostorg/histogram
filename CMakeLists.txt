@@ -104,47 +104,18 @@ compiled_test(test/linearize_test.cpp)
 compiled_test(test/storage_adaptor_test.cpp)
 compiled_test(test/utility_test.cpp)
 
-compiled_test(examples/getting_started_listing_01.cpp)
-compiled_test(examples/getting_started_listing_02.cpp)
-compiled_test(examples/getting_started_listing_03.cpp)
-compiled_test(examples/guide_access_bin_counts.cpp)
-compiled_test(examples/guide_axis_basic_demo.cpp)
-compiled_test(examples/guide_axis_circular.cpp)
-compiled_test(examples/guide_axis_with_labels.cpp)
-compiled_test(examples/guide_axis_with_transform.cpp)
-compiled_test(examples/guide_axis_with_uoflow_off.cpp)
-compiled_test(examples/guide_custom_modified_axis.cpp)
-compiled_test(examples/guide_custom_minimal_axis.cpp)
-compiled_test(examples/guide_custom_2d_axis.cpp)
-compiled_test(examples/guide_custom_storage.cpp)
-compiled_test(examples/guide_custom_accumulators.cpp)
-compiled_test(examples/guide_fill_histogram.cpp)
-compiled_test(examples/guide_histogram_operators.cpp)
-compiled_test(examples/guide_histogram_reduction.cpp)
-compiled_test(examples/guide_histogram_streaming.cpp)
-compiled_test(examples/guide_make_dynamic_histogram.cpp)
-compiled_test(examples/guide_make_static_histogram.cpp)
-compiled_test(examples/guide_parallel_filling.cpp)
-compiled_test(examples/guide_stdlib_algorithms.cpp)
-
 if (TEST_SERIALIZATION)
-  compiled_test(examples/guide_histogram_serialization.cpp Boost::serialization)
-  target_link_libraries(guide_histogram_serialization PRIVATE Boost::serialization)
-
   compiled_test(test/unlimited_storage_serialization_test.cpp Boost::serialization)
   target_link_libraries(unlimited_storage_serialization_test PRIVATE Boost::serialization)
 
   compiled_test(test/storage_adaptor_serialization_test.cpp)
   target_link_libraries(storage_adaptor_serialization_test PRIVATE Boost::serialization)
   target_compile_definitions(storage_adaptor_serialization_test PRIVATE
-    -DVECTOR_INT_XML="${PROJECT_SOURCE_DIR}/test/storage_adaptor_serialization_test_vector_int.xml"
-    -DARRAY_UNSIGNED_XML="${PROJECT_SOURCE_DIR}/test/storage_adaptor_serialization_test_array_unsigned.xml"
-    -DMAP_DOUBLE_XML="${PROJECT_SOURCE_DIR}/test/storage_adaptor_serialization_test_map_double.xml")
+  -DXML_PATH="${PROJECT_SOURCE_DIR}/test/")
 
   compiled_test(test/histogram_serialization_test.cpp Boost::serialization)
   target_compile_definitions(histogram_serialization_test PRIVATE
-    -DSTATIC_XML="${PROJECT_SOURCE_DIR}/test/histogram_serialization_test_static.xml"
-    -DDYNAMIC_XML="${PROJECT_SOURCE_DIR}/test/histogram_serialization_test_dynamic.xml")
+  -DXML_PATH="${PROJECT_SOURCE_DIR}/test/")
   target_link_libraries(histogram_serialization_test PRIVATE Boost::serialization)
 endif()
 
