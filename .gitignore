@@ -5,5 +5,4 @@ histogram.sublime-workspace
 CMakeSettings.json
 .DS_Store
 .vs*
-*.xml.new
-*.xml.new
+*.info
