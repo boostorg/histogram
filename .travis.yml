@@ -37,16 +37,14 @@ matrix:
     - name: "clang"
       env:
         - B2_ARGS='cxxstd=14 toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++"'
-        - B2_ARGS_SERIAL='cxxstd=14 toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++"'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: libc++-dev
 
-    - name: "gcc-5"
+    - name: "gcc-5: coverage"
       env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-5 cxxflags="--coverage" linkflags="--coverage"'
-        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-5 cxxflags="--coverage" linkflags="--coverage"'
+        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="--coverage" linkflags="--coverage"'
         - GCOV=gcov-5
       addons:
         apt:
@@ -56,19 +54,27 @@ matrix:
         - cd libs/histogram
         - tools/cov.sh
 
-    # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-    - name: "gcc-8: ubsan, asan, coverage"
+    - name: "gcc-7: coverage"
       env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="--coverage -fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="--coverage -lasan -lubsan"'
-        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-8 cxxflags="--coverage" linkflags="--coverage"'
-        - GCOV=gcov-8
+        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="--coverage" linkflags="--coverage"'
+        - GCOV=gcov-7
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-7
+      after_success:
+        - cd libs/histogram
+        - tools/cov.sh
+
+    # ubsan+asan disabled in serial tests, because of bug in boost/serialization
+    - name: "gcc-8: ubsan, asan"
+      env:
+        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="-fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="-lasan -lubsan"'
+        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-8'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
-      after_success:
-        - cd libs/histogram
-        - tools/cov.sh
 
 before_install:
   # Cloning minimal set of Boost libraries
@@ -88,6 +94,6 @@ before_install:
 
 script:
   - sh -c "./b2 -j2 -q $B2_ARGS libs/histogram/test libs/histogram/examples"
-  - if [ -n $B2_ARSG_SERIAL ]; then
-      sh -c "./b2 -j2 -q $B2_ARGS_SERIAL libs/histogram/test//serial libs/histogram/examples//serial";
+  - if [ -z $B2_ARGS_SERIAL ]; then export B2_ARGS_SERIAL=$B2_ARGS; fi
+  - sh -c "./b2 -j2 -q $B2_ARGS_SERIAL libs/histogram/test//serial libs/histogram/examples//serial";
     fi
