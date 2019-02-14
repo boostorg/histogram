@@ -45,19 +45,15 @@ matrix:
 
     - name: "gcc-5: coverage"
       env:
+        - B2_ARGS='cxxstd=14 toolset=gcc-5 --coverage'
+        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-5 --coverage'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
-      script:
-        - ./b2 install --prefix=`pwd`/install --with-serialization | grep -v -e common\.copy -e common\.mkdir
-        - cd install
-        - CXX=g++-5 cmake ../libs/histogram -DCMAKE_BUILD_TYPE=coverage -DBOOST_ROOT=`pwd` -DTEST_SERIALIZATION=ON &&
-          make -j2 &&
-          ctest -j2;
       after_success:
-        - pip install --user cpp-coveralls urllib3[secure];
-        - coveralls -r ../libs/histogram -b . --gcov=`which gcov-5`;
+        - cd libs/histogram/test
+        - bash ../tools/cov.sh
 
     # ubsan+asan disabled in serial tests, because of bug in boost/serialization
     - name: "gcc-8: ubsan, asan"
