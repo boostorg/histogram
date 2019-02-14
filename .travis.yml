@@ -44,7 +44,7 @@ matrix:
 
     - name: "gcc-5: coverage"
       env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="--coverage" linkflags="--coverage"'
+        - B2_ARGS='cxxstd=14 toolset=gcc-5 cxxflags="--coverage" linkflags="--coverage"'
         - GCOV=gcov-5
       addons:
         apt:
@@ -56,7 +56,7 @@ matrix:
 
     - name: "gcc-7: coverage"
       env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="--coverage" linkflags="--coverage"'
+        - B2_ARGS='cxxstd=14 toolset=gcc-7 cxxflags="--coverage" linkflags="--coverage"'
         - GCOV=gcov-7
       addons:
         apt:
