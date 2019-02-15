@@ -33,6 +33,8 @@ env:
 matrix:
   include:
     - os: osx
+      script:
+        - ../../b2 -j2 -q test examples test//serial examples//serial
 
     # - name: "clang: minimal"
     #   addons:
@@ -43,15 +45,14 @@ matrix:
     #     - ./b2 -j2 -q toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++" libs/histogram
 
     - name: "gcc-5: ubasan"
-      env: B2_ARGS='cxxstd=14 toolset=gcc-5 ubasan'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
       script:
-        - ./b2 -j2 -q toolset=gcc-5 ubasan libs/histogram/test libs/histogram/examples
+        - ../../b2 -j2 -q toolset=gcc-5 ubasan test examples
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ./b2 -j2 -q toolset=gcc-5 debug libs/histogram/test//serial libs/histogram/examples//serial
+        - ../../b2 -j2 -q toolset=gcc-5 debug test//serial examples//serial
 
     - name: "gcc-7: coverage"
       addons:
@@ -59,23 +60,21 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-7
       script:
-        - ./b2 -j2 -q toolset=gcc-7 coverage libs/histogram/test libs/histogram/examples libs/histogram/test//serial libs/histogram/examples//serial
-      after_success:
-        - cd libs/histogram
+        - ../../b2 -j2 -q toolset=gcc-7 coverage
+          test examples test//serial examples//serial
         - GCOV=gcov-7 tools/cov.sh
 
-    - name: "gcc-8: ubasan, cxx17"
+    - name: "gcc-8: ubasan, c++17"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ./b2 -j2 -q cxxstd=17 toolset=gcc-7 ubasan libs/histogram/test libs/histogram/examples
+        - ../../b2 -j2 -q cxxstd=17 toolset=gcc-7 ubasan test examples
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ./b2 -j2 -q cxxstd=17 toolset=gcc-7 libs/histogram/test//serial libs/histogram/examples//serial
+        - ../../b2 -j2 -q cxxstd=17 toolset=gcc-7 test//serial examples//serial
 
-
-before_install:
+before_script:
   # Cloning minimal set of Boost libraries
   - cd ..
   - git clone -b $BRANCH --depth 10 https://github.com/boostorg/boost.git
@@ -90,6 +89,7 @@ before_install:
   # Adding missing toolsets and preparing Boost headers
   - ./bootstrap.sh
   - ./b2 headers
+  - cd libs/histogram
 
 notifications:
   email: false
