@@ -71,7 +71,7 @@ matrix:
           packages: g++-8
       script:
         # ubasan variant doesn't work on travis, some linker problem, workaround:
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 cxxflags="-fsanitize=address,leak,undefined -fno-sanitize-recover=address,undefined" linkflags="-lubsan -lasan" test examples
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 ubasan test examples
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
         - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 test//serial examples//serial
 

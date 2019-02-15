@@ -16,7 +16,9 @@ variant coverage : debug :
 
 variant ubasan : debug :
     <cxxflags>"-fno-omit-frame-pointer -fsanitize=address,leak,undefined -fno-sanitize-recover=address,undefined"
-    <linkflags>"-fsanitize=address,leak,undefined"
+    # correct linkflags don't work on travis, use workaround
+    # <linkflags>"-fsanitize=address,leak,undefined"
+    <linkflags>"-lasan -lubsan"
     ;
 
 project
