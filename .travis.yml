@@ -70,9 +70,9 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ../../b2 -j2 -q cxxstd=17 toolset=gcc-7 ubasan test examples
+        - ../../b2 -j2 -q toolset=gcc-7 cxxstd=17 ubasan test examples
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q cxxstd=17 toolset=gcc-7 test//serial examples//serial
+        - ../../b2 -j2 -q toolset=gcc-7 cxxstd=17 test//serial examples//serial
 
 before_script:
   # Cloning minimal set of Boost libraries
