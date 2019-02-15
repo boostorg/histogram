@@ -90,3 +90,6 @@ script:
   - sh -c "./b2 -j2 -q $B2_ARGS libs/histogram/test libs/histogram/examples"
   - if [ -z $B2_ARGS_SERIAL ]; then export B2_ARGS_SERIAL=$B2_ARGS; fi
   - sh -c "./b2 -j2 -q $B2_ARGS_SERIAL libs/histogram/test//serial libs/histogram/examples//serial"
+
+notifications:
+  email: false
