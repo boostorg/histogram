@@ -7,7 +7,7 @@
 
 import common ;
 import testing ;
-import ../../config/checks/config : requires ;
+import ../config/checks/config : requires ;
 
 variant coverage : debug :
     <cxxflags>"--coverage"

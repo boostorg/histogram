@@ -12,7 +12,8 @@ if [ ! -e $LCOV_EXE ]; then
   cd ..
 fi
 
-LCOV="$LCOV_EXE --gcov-tool=${GCOV} --rc lcov_branch_coverage=1"
+# LCOV="$LCOV_EXE --gcov-tool=${GCOV} --rc lcov_branch_coverage=1"
+LCOV="$LCOV_EXE --gcov-tool=${GCOV}" # no branch coverage
 
 if [ ! -e coverage.info ]; then
   # collect raw data
