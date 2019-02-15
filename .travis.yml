@@ -32,43 +32,48 @@ env:
 
 matrix:
   include:
-    # - os: osx
+    - os: osx
 
-    - name: "clang"
-      env: B2_ARGS='cxxstd=14 toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++"'
-      addons:
-        apt:
-          sources: ubuntu-toolchain-r-test
-          packages: libc++-dev
+    # - name: "clang: minimal"
+    #   addons:
+    #     apt:
+    #       sources: ubuntu-toolchain-r-test
+    #       packages: libc++-dev
+    #   script:
+    #     - ./b2 -j2 -q toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++" libs/histogram
 
-    - name: "gcc-5"
-      env: B2_ARGS='cxxstd=14 toolset=gcc-5'
+    - name: "gcc-5: ubasan"
+      env: B2_ARGS='cxxstd=14 toolset=gcc-5 ubasan'
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
+      script:
+        - ./b2 -j2 -q toolset=gcc-5 ubasan libs/histogram/test libs/histogram/examples
+        # ubsan+asan disabled in serial tests, because of bug in boost/serialization
+        - ./b2 -j2 -q toolset=gcc-5 debug libs/histogram/test//serial libs/histogram/examples//serial
 
     - name: "gcc-7: coverage"
-      env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-7 cxxflags="--coverage" linkflags="--coverage"'
-        - GCOV=gcov-7
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-7
+      script:
+        - ./b2 -j2 -q toolset=gcc-7 coverage libs/histogram/test libs/histogram/examples libs/histogram/test//serial libs/histogram/examples//serial
       after_success:
         - cd libs/histogram
-        - tools/cov.sh
+        - GCOV=gcov-7 tools/cov.sh
 
-    # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-    - name: "gcc-8: ubsan, asan"
-      env:
-        - B2_ARGS='cxxstd=14 toolset=gcc-8 cxxflags="-fsanitize=address,leak,undefined -fno-sanitize-recover=undefined" linkflags="-lasan -lubsan"'
-        - B2_ARGS_SERIAL='cxxstd=14 toolset=gcc-8'
+    - name: "gcc-8: ubasan, cxx17"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
+      script:
+        - ./b2 -j2 -q cxxstd=17 toolset=gcc-7 ubasan libs/histogram/test libs/histogram/examples
+        # ubsan+asan disabled in serial tests, because of bug in boost/serialization
+        - ./b2 -j2 -q cxxstd=17 toolset=gcc-7 libs/histogram/test//serial libs/histogram/examples//serial
+
 
 before_install:
   # Cloning minimal set of Boost libraries
@@ -85,11 +90,6 @@ before_install:
   # Adding missing toolsets and preparing Boost headers
   - ./bootstrap.sh
   - ./b2 headers
-
-script:
-  - sh -c "./b2 -j2 -q $B2_ARGS libs/histogram/test libs/histogram/examples"
-  - if [ -z $B2_ARGS_SERIAL ]; then export B2_ARGS_SERIAL=$B2_ARGS; fi
-  - sh -c "./b2 -j2 -q $B2_ARGS_SERIAL libs/histogram/test//serial libs/histogram/examples//serial"
 
 notifications:
   email: false

@@ -5,21 +5,12 @@
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
-import ../../config/checks/config : requires ;
-
 path-constant THIS_PATH : . ;
 
 project
-    : requirements [ requires
-        cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
-        # list could go on...
-    ]
-    <toolset>gcc:<warnings>all
-    <toolset>gcc:<cxxflags>-Wno-noexcept-type
-    <toolset>clang:<warnings>all
-    <toolset>darwin:<warnings>all
+    : requirements
     <include>$(BOOST_ROOT)
-    <include>.
+    <include>$(THIS_PATH)
     <define>XML_PATH=\\\"$(THIS_PATH)/\\\"
     ;
 
@@ -34,10 +25,8 @@ run axis_size.cpp ;
 run axis_traits_test.cpp ;
 run axis_variable_test.cpp ;
 run axis_variant_test.cpp ;
-# run boost_accumulators_support_test.cpp ; # disabled until boost.parameter use is fixed
 run boost_range_support_test.cpp ;
 run boost_units_support_test.cpp ;
-# run deduction_guides_test.cpp ; # disabled until conditional compilation works
 run detail_test.cpp ;
 run histogram_dynamic_test.cpp ;
 run histogram_growing_test.cpp ;
@@ -52,6 +41,12 @@ run storage_adaptor_test.cpp ;
 run unlimited_storage_test.cpp ;
 run utility_test.cpp ;
 
+# has additional requirements only available on develop branch
+alias deduction_guides : [ run deduction_guides_test.cpp ] ;
+
+# disabled until boost.parameter usage is fixed
+alias accumulator : [ run boost_accumulators_support_test.cpp  ] ;
+
 alias libserial : /boost/serialization//boost_serialization : <link>static ;
 
 alias serial :
@@ -62,3 +57,5 @@ alias serial :
 
 explicit libserial ;
 explicit serial ;
+explicit accumulator ;
+explicit deduction_guides ;

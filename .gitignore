@@ -6,4 +6,4 @@ CMakeSettings.json
 .DS_Store
 .vs*
 *.info
-lcov-*
+tools/lcov-*

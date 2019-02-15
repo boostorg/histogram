@@ -42,17 +42,17 @@ struct is_accumulator_set<::boost::accumulators::accumulator_set<Ts...>>
 #endif
 
 template <class T>
-struct has_growing_axis_impl;
-
-template <template <class, class...> class Container, class T, class... Us>
-struct has_growing_axis_impl<Container<T, Us...>> {
+struct has_growing_axis_impl2 {
   using type = has_method_update<T>;
 };
 
-template <template <class, class...> class Container, class... Ts, class... Us>
-struct has_growing_axis_impl<Container<axis::variant<Ts...>, Us...>> {
+template <class... Ts>
+struct has_growing_axis_impl2<axis::variant<Ts...>> {
   using type = mp11::mp_or<has_method_update<Ts>...>;
 };
+
+template <class T>
+struct has_growing_axis_impl : has_growing_axis_impl2<mp11::mp_first<T>> {};
 
 template <class... Ts>
 struct has_growing_axis_impl<std::tuple<Ts...>> {

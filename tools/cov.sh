@@ -3,20 +3,33 @@
 if [ -z $GCOV ]; then
   GCOV=gcov
 fi
-LCOV_OPTS="--gcov-tool=${GCOV} --rc lcov_branch_coverage=1"
 
-wget https://github.com/linux-test-project/lcov/releases/download/v1.13/lcov-1.13.tar.gz
-tar xzf lcov-1.13.tar.gz
-LCOV="`pwd`/lcov-1.13/bin/lcov ${LCOV_OPTS}"
+LCOV_EXE="tools/lcov-1.13/bin/lcov"
 
-$LCOV --base-directory `pwd`/test --directory `pwd`/../../bin.v2/libs/histogram/test --capture --output-file test.info
-$LCOV --base-directory `pwd`/examples --directory `pwd`/../../bin.v2/libs/histogram/examples --capture --output-file examples.info
+if [ ! -e $LCOV_EXE ]; then
+  cd tools
+  wget -O - https://github.com/linux-test-project/lcov/releases/download/v1.13/lcov-1.13.tar.gz | tar zxf -
+  cd ..
+fi
 
-# merge files
-$LCOV -a test.info -a examples.info -o all.info
+LCOV="$LCOV_EXE --gcov-tool=${GCOV} --rc lcov_branch_coverage=1"
 
-# remove uninteresting entries
-$LCOV --extract all.info "*/boost/histogram/*" --output-file coverage.info
+if [ ! -e coverage.info ]; then
+  # collect raw data
+  $LCOV --base-directory `pwd`/test --directory `pwd`/../../bin.v2/libs/histogram/test --capture --output-file test.info
+  $LCOV --base-directory `pwd`/examples --directory `pwd`/../../bin.v2/libs/histogram/examples --capture --output-file examples.info
 
-# upload
-curl -s https://codecov.io/bash | bash -s - -f coverage.info -X gcov -x $GCOV
+  # merge files
+  $LCOV -a test.info -a examples.info -o all.info
+
+  # remove uninteresting entries
+  $LCOV --extract all.info "*/boost/histogram/*" --output-file coverage.info
+fi
+
+if [ $CI ]; then
+  # upload if on CI
+  curl -s https://codecov.io/bash | bash -s - -f coverage.info -X gcov -x $GCOV
+else
+  # otherwise just print
+  $LCOV --list coverage.info
+fi
