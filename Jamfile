@@ -28,7 +28,9 @@ project
       # list could go on...
     ]
     <implicit-dependency>/boost//headers
+    : default-build
     <warnings>all
+    <warnings-as-errors>on
     #<toolset>gcc:<cxxflags>-Wno-noexcept-type
     ;
 

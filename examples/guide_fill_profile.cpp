@@ -25,9 +25,11 @@ int main() {
   h(0.45, sample(1.2)); // 1.2 goes to bin 1
   h(sample(3.4), 0.51); // 3.4 goes to bin 1, sample be at the front
 
-  // fills from tuples are also supported, 2.4 goes to bin 2
-  auto xs = std::make_tuple(0.8, sample(1.8));
-  h(xs);
+  // fills from tuples are also supported, 1.3 and 1.9 go to bin 2
+  auto xs1 = std::make_tuple(0.81, sample(1.3));
+  auto xs2 = std::make_tuple(0.86, sample(1.9));
+  h(xs1);
+  h(xs2);
 
   // builtin accumulators have methods to access their state
   std::ostringstream os;
@@ -45,7 +47,7 @@ int main() {
 
   assert(os.str() == "bin 0 count 2 value 3.0 variance 0.5\n"
                      "bin 1 count 2 value 2.3 variance 2.4\n"
-                     "bin 2 count 1 value 1.8 variance -nan\n");
+                     "bin 2 count 2 value 1.6 variance 0.2\n");
 }
 
 //]
