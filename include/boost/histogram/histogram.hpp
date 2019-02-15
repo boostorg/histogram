@@ -397,14 +397,14 @@ histogram(Axes&& axes, Storage&& storage)
 /// @param t argument to be forward to the histogram.
 template <typename T>
 auto weight(T&& t) noexcept {
-  return weight_type<T&&>{std::forward<T>(t)};
+  return weight_type<T>{std::forward<T>(t)};
 }
 
 /// Helper function to mark arguments as sample.
 /// @param ts arguments to be forwarded to the accumulator.
 template <typename... Ts>
 auto sample(Ts&&... ts) noexcept {
-  return sample_type<std::tuple<Ts&&...>>{std::forward_as_tuple(std::forward<Ts>(ts)...)};
+  return sample_type<std::tuple<Ts...>>{std::forward_as_tuple(std::forward<Ts>(ts)...)};
 }
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
