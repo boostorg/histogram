@@ -181,6 +181,7 @@ struct size_or_zero<std::tuple<Ts...>> : mp11::mp_size_t<sizeof...(Ts)> {};
 // - cannot detect call signature of axis at compile-time in all configurations
 //   (axis::variant provides generic call interface and hides concrete interface),
 //   so we throw at runtime if incompatible argument is passed (e.g. 3d tuple)
+// histogram has only non-growing axes
 template <unsigned I, unsigned N, class S, class T, class U>
 optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) {
   optional_index idx;
@@ -199,6 +200,7 @@ optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) 
   return idx;
 }
 
+// histogram has growing axes
 template <unsigned I, unsigned N, class S, class T, class U>
 optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args) {
   optional_index idx;

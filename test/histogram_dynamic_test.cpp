@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -14,6 +13,7 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <cstdlib>
 #include <limits>
 #include <numeric>
@@ -52,10 +52,15 @@ int main() {
     BOOST_TEST_EQ(h3.axis(1), v2[1]);
   }
 
-  // bad fill argument
+  // bad fill
   {
-    auto h = make(dynamic_tag(), axis::integer<>(0, 3));
-    BOOST_TEST_THROWS(h(std::string()), std::invalid_argument);
+    auto a = axis::integer<>(0, 1);
+    auto b = make(dynamic_tag(), a);
+    BOOST_TEST_THROWS(b(0, 0), std::invalid_argument);
+    auto c = make(dynamic_tag(), a, a);
+    BOOST_TEST_THROWS(c(0), std::invalid_argument);
+    auto d = make(dynamic_tag(), a);
+    BOOST_TEST_THROWS(d(std::string()), std::invalid_argument);
   }
 
   // axis methods
