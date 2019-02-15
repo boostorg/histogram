@@ -50,9 +50,9 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
       script:
-        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 ubasan test examples
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 test//serial examples//serial
+        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 ubasan test examples &&
+          ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 test//serial examples//serial
 
     - name: "gcc-7: coverage"
       addons:
@@ -62,6 +62,7 @@ matrix:
       script:
         - ../../b2 -j2 -q toolset=gcc-7 coverage
           test examples test//serial examples//serial
+      after_success:
         - GCOV=gcov-7 tools/cov.sh
 
     - name: "gcc-8: ubasan, c++17"
@@ -70,10 +71,9 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        # ubasan variant doesn't work on travis, some linker problem, workaround:
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 ubasan test examples
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 test//serial examples//serial
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 ubasan test examples &&
+          ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 test//serial examples//serial
 
 before_script:
   # Cloning minimal set of Boost libraries

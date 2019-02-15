@@ -28,10 +28,10 @@ project
       # list could go on...
     ]
     <implicit-dependency>/boost//headers
+    <threading>multi
     : default-build
     <warnings>all
-    <warnings-as-errors>on
-    #<toolset>gcc:<cxxflags>-Wno-noexcept-type
+    #<warnings-as-errors>on
     ;
 
 build-project test ;
