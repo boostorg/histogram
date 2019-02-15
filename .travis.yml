@@ -34,7 +34,7 @@ matrix:
   include:
     - os: osx
       script:
-        - ../../b2 -j2 -q test examples test//serial examples//serial
+        - ../../b2 -j2 -q cxxstd=14 test examples test//serial examples//serial
 
     # - name: "clang: minimal"
     #   addons:
