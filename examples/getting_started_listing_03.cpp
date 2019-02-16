@@ -12,29 +12,30 @@
 #include <iostream>
 #include <sstream>
 
-namespace bh = boost::histogram;
-
 int main() {
-  /*
-    Create a profile. Profiles does not only count entries in each cell, but also compute
-    the mean of a sample value in each cell.
-  */
-  auto p = bh::make_profile(bh::axis::regular<>(5, 0.0, 1.0));
+  using namespace boost::histogram;
 
   /*
-    Fill profile with data, usually this happens in a loop. You pass the sample with the
-    `sample` helper function. The sample can be the first or last argument.
+    Create a profile. Profiles does not only count entries in each cell, but
+    also compute the mean of a sample value in each cell.
   */
-  p(0.1, bh::sample(1));
-  p(0.15, bh::sample(3));
-  p(0.2, bh::sample(4));
-  p(0.9, bh::sample(5));
+  auto p = make_profile(axis::regular<>(5, 0.0, 1.0));
+
+  /*
+    Fill profile with data, usually this happens in a loop. You pass the sample
+    with the `sample` helper function. The sample can be the first or last
+    argument.
+  */
+  p(0.1, sample(1));
+  p(0.15, sample(3));
+  p(0.2, sample(4));
+  p(0.9, sample(5));
 
   /*
     Iterate over bins and print profile.
   */
   std::ostringstream os;
-  for (auto x : bh::indexed(p)) {
+  for (auto x : indexed(p)) {
     os << boost::format("bin %i [%3.1f, %3.1f) count %i mean %g\n") % x.index() %
               x.bin().lower() % x.bin().upper() % x->count() % x->value();
   }

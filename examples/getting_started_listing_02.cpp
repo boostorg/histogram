@@ -13,23 +13,24 @@
 #include <sstream>
 #include <string>
 
-namespace bh = boost::histogram;
-
 int main() {
+  using namespace boost::histogram;
+
   /*
     Create a histogram which can be configured dynamically at run-time. The axis
-    configuration is first collected in a vector of the boost::histogram::axis::variant
-    type, which can hold different axis types (those in its template argument list).
-    Here, we use a variant that can store a regular and a category axis.
+    configuration is first collected in a vector of axis::variant type, which
+    can hold different axis types (those in its template argument list). Here,
+    we use a variant that can store a regular and a category axis.
   */
-  using reg = bh::axis::regular<>;
-  using cat = bh::axis::category<std::string>;
-  using variant = bh::axis::variant<bh::axis::regular<>, bh::axis::category<std::string>>;
+  using reg = axis::regular<>;
+  using cat = axis::category<std::string>;
+  using variant = axis::variant<axis::regular<>, axis::category<std::string>>;
   std::vector<variant> axes;
   axes.emplace_back(cat({"red", "blue"}));
   axes.emplace_back(reg(3, 0.0, 1.0, "x"));
   axes.emplace_back(reg(3, 0.0, 1.0, "y"));
-  auto h = bh::make_histogram(std::move(axes)); // passing an iterator range also works
+  // passing an iterator range also works here
+  auto h = make_histogram(std::move(axes));
 
   // fill histogram with data, usually this happens in a loop
   h("red", 0.1, 0.2);
@@ -39,14 +40,15 @@ int main() {
 
   /*
     Print histogram by iterating over bins.
-    Since the [bin type] of the category axis cannot be converted into a double, it cannot
-    be handled by the polymorphic interface of boost::histogram::axis::variant. We use
-    boost::histogram::axis::get to "cast" the variant type to the actual category type.
+    Since the [bin type] of the category axis cannot be converted into a double,
+    it cannot be handled by the polymorphic interface of axis::variant. We use
+    axis::get to "cast" the variant type to the actual category type.
   */
 
-  const auto& cat_axis = bh::axis::get<cat>(h.axis(0)); // get reference to category axis
+  // get reference to category axis, performs a run-time checked static cast
+  const auto& cat_axis = axis::get<cat>(h.axis(0));
   std::ostringstream os;
-  for (auto x : bh::indexed(h)) {
+  for (auto x : indexed(h)) {
     os << boost::format("(%i, %i, %i) %4s [%3.1f, %3.1f) [%3.1f, %3.1f) %3.0f\n") %
               x.index(0) % x.index(1) % x.index(2) % cat_axis.bin(x.index(0)) %
               x.bin(1).lower() % x.bin(1).upper() % x.bin(2).lower() % x.bin(2).upper() %

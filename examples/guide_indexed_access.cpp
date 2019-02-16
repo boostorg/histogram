@@ -45,8 +45,8 @@ int main() {
                      "0 1 [-1, 0) [ 3, 4): 2\n"
                      "1 1 [ 0, 1) [ 3, 4): 4\n");
 
-  // `indexed` skips underflow and overflow bins by default, but can be called with the
-  // second argument `coverage::all` to walk over all bins
+  // `indexed` skips underflow and overflow bins by default, but can be called
+  // with the second argument `coverage::all` to walk over all bins
   std::ostringstream os2;
   for (auto x : indexed(h, coverage::all)) {
     os2 << boost::format("%2i %2i: %i\n") % x.index(0) % x.index(1) % *x;

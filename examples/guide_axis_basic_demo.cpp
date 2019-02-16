@@ -72,7 +72,7 @@ int main() {
   assert(c.index(Bar::blue) == 1);
   // c.index(12) is a compile-time error, since the argument must be of type `Bar`
 
-  // a category axis can be created for any copyable and equal-comparable type
+  // category axis can be created for any copyable and equal-comparable type
   auto c_str = axis::category<std::string>{"red", "blue"};
   assert(c_str.index("red") == 0);
   assert(c_str.index("blue") == 1);
