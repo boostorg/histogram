@@ -47,7 +47,7 @@ namespace detail {
 constexpr inline unsigned join_impl(unsigned a) { return a; }
 
 template <class T, class... Ts>
-constexpr unsigned join_impl(unsigned a, T t, Ts... ts) {
+constexpr unsigned join_impl(const unsigned a, T t, Ts... ts) {
   using namespace axis::option;
   const auto o = T::value;
   const auto c = a | o;
@@ -62,8 +62,8 @@ constexpr unsigned join_impl(unsigned a, T t, Ts... ts) {
 
 namespace axis {
 /// Combines options and corrects for mutually exclusive options.
-template <class T, class... Ts>
-using join = axis::option_set<detail::join_impl(T::value, Ts{}...)>;
+template <class... Ts>
+using join = axis::option_set<detail::join_impl(0u, Ts{}...)>;
 
 /// Test whether the bits in b are also set in a.
 template <class T, class U>
