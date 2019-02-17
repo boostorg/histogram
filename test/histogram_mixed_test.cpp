@@ -62,7 +62,7 @@ void run_tests() {
   // copy_assign
   {
     auto a = make(T1{}, axis::regular<>{3, 0, 3}, axis::integer<>{0, 2});
-    auto b = make_s(T2{}, std::vector<unsigned>(), axis::regular<>{3, 0, 3},
+    auto b = make_s(T2{}, std::vector<double>(), axis::regular<>{3, 0, 3},
                     axis::integer<>{0, 2});
     a(1, 1);
     BOOST_TEST_NE(a, b);
