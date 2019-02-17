@@ -100,7 +100,8 @@ public:
     return detail::static_if<std::is_floating_point<value_type>>(
         [this, impl](auto x) {
           if (std::isfinite(x)) return impl(static_cast<long>(std::floor(x)));
-          return std::make_pair(x < 0 ? -1 : size(), 0);
+          // this->size() is workaround for gcc-5 bug
+          return std::make_pair(x < 0 ? -1 : this->size(), 0);
         },
         impl, x);
   }
