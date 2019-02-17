@@ -129,6 +129,7 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   });
   auto new_storage = make_default(storage);
   new_storage.reset(detail::bincount(axes));
+  const auto dlast = data + get_size(axes) - 1;
   for (const auto& x : storage) {
     auto ns = new_storage.begin();
     sit = shifts;
@@ -137,7 +138,8 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
       using opt = axis::traits::static_options<decltype(a)>;
       if (axis::test<opt, axis::option::underflow>::value) {
         if (dit->idx == 0) {
-          // noop
+          // axis has underflow and we are in the underflow bin:
+          // keep storage pointer unchanged
           ++dit;
           ++sit;
           return;
@@ -145,20 +147,26 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
       }
       if (axis::test<opt, axis::option::overflow>::value) {
         if (dit->idx == dit->old_extend - 1) {
+          // axis has overflow and we are in the overflow bin:
+          // move storage pointer to corresponding overflow bin position
           ns += (axis::traits::extend(a) - 1) * dit->new_stride;
           ++dit;
           ++sit;
           return;
         }
       }
+      // we are in a normal bin:
+      // move storage pointer to index position, apply positive shifts
       ns += (dit->idx + std::max(*sit, 0)) * dit->new_stride;
       ++dit;
       ++sit;
     });
+    // assign old value to new location
     *ns = x;
+    // advance multi-dimensional index
     dit = data;
     ++dit->idx;
-    while (dit != (data + get_size(axes) - 1) && dit->idx == dit->old_extend) {
+    while (dit != dlast && dit->idx == dit->old_extend) {
       dit->idx = 0;
       ++(++dit)->idx;
     }
