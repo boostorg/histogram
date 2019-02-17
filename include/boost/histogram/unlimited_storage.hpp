@@ -303,7 +303,31 @@ struct mp_int {
 
   template <class T>
   friend bool operator!=(const T& a, const mp_int& b) noexcept {
-    return !b.operator==(a);
+    return b.operator!=(a);
+  }
+
+  friend bool operator<(const mp_int& a, const mp_int& b) noexcept {
+    return a.operator<(b);
+  }
+
+  friend bool operator>(const mp_int& a, const mp_int& b) noexcept {
+    return a.operator>(b);
+  }
+
+  friend bool operator<=(const mp_int& a, const mp_int& b) noexcept {
+    return b.operator<(a);
+  }
+
+  friend bool operator>=(const mp_int& a, const mp_int& b) noexcept {
+    return b.operator>(a);
+  }
+
+  friend bool operator==(const mp_int& a, const mp_int& b) noexcept {
+    return a.operator==(b);
+  }
+
+  friend bool operator!=(const mp_int& a, const mp_int& b) noexcept {
+    return a.operator!=(b);
   }
 
   uint64_t& maybe_extend(std::size_t i) {
