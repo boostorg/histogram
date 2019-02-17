@@ -436,21 +436,7 @@ private:
       return f(static_cast<double*>(ptr), std::forward<Ts>(ts)...);
     }
 
-    buffer_type(std::size_t s = 0, allocator_type a = {})
-        : alloc(std::move(a)), size(s), type(type_index<uint8_t>()) {
-      if (size > 0) {
-        // rebind allocator
-        using alloc_type = typename std::allocator_traits<
-            allocator_type>::template rebind_alloc<uint8_t>;
-        alloc_type a(alloc);
-        try {
-          ptr = detail::create_buffer(a, size); // may throw
-        } catch (...) {
-          size = 0;
-          throw;
-        }
-      }
-    }
+    buffer_type(allocator_type a = {}) : alloc(std::move(a)) {}
 
     buffer_type(buffer_type&& o) noexcept
         : alloc(std::move(o.alloc)), size(o.size), type(o.type), ptr(o.ptr) {
@@ -699,7 +685,7 @@ public:
   using const_iterator = iterator_t<const value_type, const_reference, const buffer_type>;
   using iterator = iterator_t<value_type, reference, buffer_type>;
 
-  explicit unlimited_storage(allocator_type a = {}) : buffer(0, std::move(a)) {}
+  explicit unlimited_storage(allocator_type a = {}) : buffer(std::move(a)) {}
   unlimited_storage(const unlimited_storage&) = default;
   unlimited_storage& operator=(const unlimited_storage&) = default;
   unlimited_storage(unlimited_storage&&) = default;
@@ -761,7 +747,7 @@ public:
   /// @private used by unit tests, not part of generic storage interface
   template <class T>
   unlimited_storage(std::size_t s, const T* p, allocator_type a = {})
-      : buffer(0, std::move(a)) {
+      : buffer(std::move(a)) {
     buffer.template make<T>(s, p);
   }
 
