@@ -336,7 +336,7 @@ optional_index at(const A& axes, const std::tuple<Us...>& args) {
 
 template <typename A, typename U>
 optional_index at(const A& axes, const U& args) {
-  if (get_size(axes) != args.size())
+  if (get_size(axes) != get_size(args))
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
   using std::begin;

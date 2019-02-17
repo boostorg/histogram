@@ -328,7 +328,9 @@ std::size_t get_size_impl(std::true_type, const T&) noexcept {
 
 template <class T>
 std::size_t get_size_impl(std::false_type, const T& t) noexcept {
-  return t.size();
+  using std::begin;
+  using std::end;
+  return static_cast<std::size_t>(std::distance(begin(t), end(t)));
 }
 
 template <class T>
