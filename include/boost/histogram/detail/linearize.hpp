@@ -112,14 +112,14 @@ void linearize_index(optional_index& out, const A& axis, const axis::index_type 
 template <class S, class A, class T>
 void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   bool update_needed = false;
-  auto sh = shifts;
-  for_each_axis(axes, [&](const auto&) { update_needed |= (*sh++ != 0); });
+  auto sit = shifts;
+  for_each_axis(axes, [&](const auto&) { update_needed |= (*sit++ != 0); });
   if (!update_needed) return;
   struct item {
     axis::index_type idx, old_extend;
     std::size_t new_stride;
   } data[buffer_size<A>::value];
-  auto sit = shifts;
+  sit = shifts;
   auto dit = data;
   std::size_t s = 1;
   for_each_axis(axes, [&](const auto& a) {
@@ -134,7 +134,7 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
     sit = shifts;
     dit = data;
     for_each_axis(axes, [&](const auto& a) {
-      using opt = axis::traits::static_options<remove_cvref_t<decltype(a)>>;
+      using opt = axis::traits::static_options<decltype(a)>;
       if (axis::test<opt, axis::option::underflow>::value) {
         if (dit->idx == 0) {
           // noop
