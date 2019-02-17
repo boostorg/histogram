@@ -25,15 +25,21 @@ using category = axis::category<std::string, def, axis::option::growth>;
 
 class custom_2d_axis {
 public:
-  auto index(double x, double y) const {
+  auto index(std::tuple<double, double> xy) const {
+    const auto x = std::get<0>(xy);
+    const auto y = std::get<1>(xy);
     const auto r = std::sqrt(x * x + y * y);
     return std::min(static_cast<axis::index_type>(r), size());
   }
 
-  auto update(double x, double y) {
+  auto update(std::tuple<double, double> xy) {
+    const auto x = std::get<0>(xy);
+    const auto y = std::get<1>(xy);
     const auto r = std::sqrt(x * x + y * y);
     const auto n = static_cast<int>(r);
-    return std::make_pair(n, std::max(size_ - n - 1, 0));
+    const auto old = size_;
+    if (n >= size_) size_ = n + 1;
+    return std::make_pair(n, old - size_);
   }
 
   axis::index_type size() const { return size_; }
@@ -145,6 +151,22 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(a.index(0), b.index("y")), 0);
     BOOST_TEST_EQ(h.at(a.index(1), b.index("y")), 1);
     BOOST_TEST_EQ(h.at(a.index(2), b.index("y")), 0);
+  }
+
+  {
+    auto h = make_s(Tag{}, std::vector<int>{}, custom_2d_axis{});
+    BOOST_TEST_EQ(h.size(), 0);
+    h(0, 0);
+    BOOST_TEST_EQ(h.size(), 1);
+    h(1, 0);
+    h(0, 1);
+    BOOST_TEST_EQ(h.size(), 2);
+    h(10, 0);
+    BOOST_TEST_EQ(h.size(), 11);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 2);
+    BOOST_TEST_EQ(h[10], 1);
+    BOOST_TEST_THROWS(h(0), std::invalid_argument);
   }
 }
 
