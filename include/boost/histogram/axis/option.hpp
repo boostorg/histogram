@@ -62,8 +62,8 @@ constexpr unsigned join_impl(unsigned a, axis::option::bit<N>, Ts... ts) {
 
 namespace axis {
 /// Combines options and corrects for mutually exclusive options.
-template <class T, class... Ts>
-using join = axis::option_set<detail::join_impl(T::value, Ts()...)>;
+template <class T, class U, class... Ts>
+using join = axis::option_set<detail::join_impl(T::value, U{}, Ts{}...)>;
 
 /// Test whether the bits in b are also set in a.
 template <class T, class U>
