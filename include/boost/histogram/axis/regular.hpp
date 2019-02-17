@@ -286,7 +286,7 @@ public:
     else {
       z = std::numeric_limits<internal_value_type>::infinity() * delta_;
     }
-    return this->inverse(z) * unit_type();
+    return static_cast<value_type>(this->inverse(z) * unit_type());
   }
 
   /// Return bin for index argument.

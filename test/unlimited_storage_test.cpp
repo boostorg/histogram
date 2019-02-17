@@ -101,7 +101,7 @@ void increase_and_grow() {
   ++x[0];
   n2[0] += x[0];
 
-  double v = tmax;
+  auto v = static_cast<double>(tmax);
   ++v;
   BOOST_TEST_EQ(n[0], v);
   BOOST_TEST_EQ(n2[0], v);

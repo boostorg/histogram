@@ -109,7 +109,7 @@ void run_tests() {
     h2 = h;
     BOOST_TEST_EQ(h, h2);
     auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
-                        storage_adaptor<std::vector<unsigned>>>();
+                        storage_adaptor<std::vector<double>>>();
     h3 = h;
     BOOST_TEST_EQ(h, h3);
   }

@@ -112,7 +112,7 @@ template <class T, class U>
 auto index(const T& axis, const U& value) {
   using V = detail::arg_type<decltype(&T::index)>;
   return detail::static_if<std::is_convertible<U, V>>(
-      [&value](const auto& axis) { return axis.index(value); },
+      [&value](const auto& axis) { return axis.index(static_cast<V>(value)); },
       [](const T&) {
         BOOST_THROW_EXCEPTION(std::invalid_argument(
             detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
