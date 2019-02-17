@@ -47,6 +47,19 @@ namespace detail {
 
 template <class T, class U>
 struct join_impl : axis::option_set<(T::value | U::value)> {};
+template <class T>
+struct join_impl<T, axis::option::underflow>
+    : axis::option_set<(T::value & ~axis::option::circular::value |
+                        axis::option::underflow::value)> {};
+template <class T>
+struct join_impl<T, axis::option::circular>
+    : axis::option_set<(
+          T::value & ~(axis::option::growth::value | axis::option::underflow::value) |
+          axis::option::circular::value)> {};
+template <class T>
+struct join_impl<T, axis::option::growth>
+    : axis::option_set<(T::value & ~axis::option::circular::value |
+                        axis::option::growth::value)> {};
 
 } // namespace detail
 
