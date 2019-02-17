@@ -56,22 +56,22 @@ void run_tests() {
   // init_3
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
-                  axis::circular<>{2, 0, axis::two_pi});
+                  axis::circular<>{2, 0, 360});
     BOOST_TEST_EQ(h.rank(), 3);
     BOOST_TEST_EQ(h.size(), 5 * 5 * 3);
     auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
-                     axis::integer<>{-1, 2}, axis::circular<>{2, 0, axis::two_pi});
+                     axis::integer<>{-1, 2}, axis::circular<>{2, 0, 360});
     BOOST_TEST_EQ(h2, h);
   }
 
   // init_4
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
-                  axis::circular<>{2, 0, axis::two_pi}, axis::variable<>{-1, 0, 1});
+                  axis::circular<>{2, 0, 360}, axis::variable<>{-1, 0, 1});
     BOOST_TEST_EQ(h.rank(), 4);
     BOOST_TEST_EQ(h.size(), 5 * 5 * 3 * 4);
     auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
-                     axis::integer<>{-1, 2}, axis::circular<>{2, 0, axis::two_pi},
+                     axis::integer<>{-1, 2}, axis::circular<>{2, 0, 360},
                      axis::variable<>{-1, 0, 1});
     BOOST_TEST_EQ(h2, h);
   }
@@ -79,12 +79,12 @@ void run_tests() {
   // init_5
   {
     auto h = make(Tag(), axis::regular<>{3, -1, 1}, axis::integer<>{-1, 2},
-                  axis::circular<>{2, 0, axis::two_pi}, axis::variable<>{-1, 0, 1},
+                  axis::circular<>{2, 0, 360}, axis::variable<>{-1, 0, 1},
                   axis::category<>{{3, 1, 2}});
     BOOST_TEST_EQ(h.rank(), 5);
     BOOST_TEST_EQ(h.size(), 5 * 5 * 3 * 4 * 4);
     auto h2 = make_s(Tag(), std::vector<unsigned>(), axis::regular<>{3, -1, 1},
-                     axis::integer<>{-1, 2}, axis::circular<>{2, 0, axis::two_pi},
+                     axis::integer<>{-1, 2}, axis::circular<>{2, 0, 360},
                      axis::variable<>{-1, 0, 1}, axis::category<>{{3, 1, 2}});
     BOOST_TEST_EQ(h2, h);
   }

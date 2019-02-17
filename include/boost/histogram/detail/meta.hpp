@@ -197,7 +197,7 @@ BOOST_HISTOGRAM_DETECT(is_indexable_container,
                        (std::declval<T&>()[0], &T::size, std::begin(std::declval<T&>()),
                         std::end(std::declval<T&>())));
 
-// is_axis is false for axis::variant, because operator() is templated
+// ok: is_axis is false for axis::variant, operator() is templated
 BOOST_HISTOGRAM_DETECT(is_axis, (&T::size, &T::index));
 
 BOOST_HISTOGRAM_DETECT(is_iterable,
@@ -342,11 +342,12 @@ using buffer_size =
                std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>>;
 
 template <class T, std::size_t N>
-class subarray : public std::array<T, N> {
+class sub_array : public std::array<T, N> {
 public:
-  explicit subarray(std::size_t s) : size_(s) {}
-  subarray(std::size_t s, T value) : size_(s) { std::array<T, N>::fill(value); }
+  explicit sub_array(std::size_t s) : size_(s) {}
+  sub_array(std::size_t s, T value) : size_(s) { std::array<T, N>::fill(value); }
 
+  // need to override both versions of std::array
   auto end() noexcept { return std::array<T, N>::begin() + size_; }
   auto end() const noexcept { return std::array<T, N>::begin() + size_; }
 
@@ -357,7 +358,7 @@ private:
 };
 
 template <class U, class T>
-using stack_buffer = subarray<U, buffer_size<T>::value>;
+using stack_buffer = sub_array<U, buffer_size<T>::value>;
 
 template <class U, class T, class... Ts>
 auto make_stack_buffer(const T& t, Ts&&... ts) {
@@ -399,6 +400,9 @@ template <class T, class R = get_scale_type<T>>
 R get_scale(const T& t) {
   return t / get_unit_type<T>();
 }
+
+template <class T, class Default>
+using replace_default = mp11::mp_if<std::is_same<T, use_default>, Default, T>;
 
 } // namespace detail
 } // namespace histogram

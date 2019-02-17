@@ -11,6 +11,7 @@
 #include <boost/assert.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -25,64 +26,28 @@
 
 namespace boost {
 namespace histogram {
-namespace detail {
-template <class, class, bool>
-class variable_mixin {};
-
-template <class Derived, class Value>
-class variable_mixin<Derived, Value, true> {
-  using value_type = Value;
-
-public:
-  auto update(value_type x) noexcept {
-    auto& der = static_cast<Derived&>(*this);
-    const auto i = der.index(x);
-    if (std::isfinite(x)) {
-      auto& vec = der.vec_meta_.first();
-      if (0 <= i) {
-        if (i < der.size()) return std::make_pair(i, 0);
-        const auto d = der.value(der.size()) - der.value(der.size() - 0.5);
-        x = std::nextafter(x, std::numeric_limits<value_type>::max());
-        x = std::max(x, vec.back() + d);
-        vec.push_back(x);
-        return std::make_pair(i, -1);
-      }
-      const auto d = der.value(0.5) - der.value(0);
-      x = std::min(x, der.value(0) - d);
-      vec.insert(vec.begin(), x);
-      return std::make_pair(0, -i);
-    }
-    return std::make_pair(x < 0 ? -1 : der.size(), 0);
-  }
-};
-
-} // namespace detail
-
 namespace axis {
 
 /**
   Axis for non-equidistant bins on the real line.
 
-  Binning is a O(log(N)) operation. If speed matters and the problem domain allows it,
-  prefer a regular axis, possibly with a transform.
+  Binning is a O(log(N)) operation. If speed matters and the problem domain
+  allows it, prefer a regular axis, possibly with a transform.
 
   @tparam Value input value type, must be floating point.
   @tparam MetaData type to store meta data.
-  @tparam Options whether axis has an under- and/or overflow bin, is circular, or growing.
+  @tparam Options see boost::histogram::axis::option (all values allowed).
   @tparam Allocator allocator to use for dynamic memory management.
  */
-template <class Value, class MetaData, option Options, class Allocator>
-class variable
-    : public iterator_mixin<variable<Value, MetaData, Options, Allocator>>,
-      public detail::variable_mixin<variable<Value, MetaData, Options, Allocator>, Value,
-                                    test(Options, option::growth)> {
-  static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
-                "circular axis cannot have underflow");
+template <class Value, class MetaData, class Options, class Allocator>
+class variable : public iterator_mixin<variable<Value, MetaData, Options, Allocator>> {
   static_assert(std::is_floating_point<Value>::value,
                 "variable axis requires floating point type");
 
-  using metadata_type = MetaData;
   using value_type = Value;
+  using metadata_type = detail::replace_default<MetaData, std::string>;
+  using options_type =
+      detail::replace_default<Options, join<option::underflow, option::overflow>>;
   using allocator_type = Allocator;
   using vec_type = std::vector<Value, allocator_type>;
 
@@ -139,7 +104,7 @@ public:
   variable(const variable& src, index_type begin, index_type end, unsigned merge)
       : vec_meta_(vec_type(src.get_allocator()), src.metadata()) {
     BOOST_ASSERT((end - begin) % merge == 0);
-    if (test(Options, option::circular) && !(begin == 0 && end == src.size()))
+    if (test<options_type, option::circular>::value && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
     auto& vec = vec_meta_.first();
     vec.reserve((end - begin) / merge);
@@ -150,7 +115,7 @@ public:
   /// Return index for value argument.
   index_type index(value_type x) const noexcept {
     const auto& v = vec_meta_.first();
-    if (test(Options, option::circular)) {
+    if (test<options_type, option::circular>::value) {
       const auto a = v[0];
       const auto b = v[size()];
       x -= std::floor((x - a) / (b - a)) * (b - a);
@@ -159,10 +124,30 @@ public:
                                    1);
   }
 
+  auto update(value_type x) noexcept {
+    const auto i = index(x);
+    if (std::isfinite(x)) {
+      auto& vec = vec_meta_.first();
+      if (0 <= i) {
+        if (i < size()) return std::make_pair(i, 0);
+        const auto d = value(size()) - value(size() - 0.5);
+        x = std::nextafter(x, std::numeric_limits<value_type>::max());
+        x = std::max(x, vec.back() + d);
+        vec.push_back(x);
+        return std::make_pair(i, -1);
+      }
+      const auto d = value(0.5) - value(0);
+      x = std::min(x, value(0) - d);
+      vec.insert(vec.begin(), x);
+      return std::make_pair(0, -i);
+    }
+    return std::make_pair(x < 0 ? -1 : size(), 0);
+  }
+
   /// Return value for fractional index argument.
   value_type value(real_index_type i) const noexcept {
     const auto& v = vec_meta_.first();
-    if (test(Options, option::circular)) {
+    if (test<options_type, option::circular>::value) {
       auto shift = std::floor(i / size());
       i -= shift * size();
       double z;
@@ -187,19 +172,24 @@ public:
     return static_cast<index_type>(vec_meta_.first().size()) - 1;
   }
   /// Returns the options.
-  static constexpr option options() noexcept { return Options; }
+  static constexpr unsigned options() noexcept { return options_type::value; }
   /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return vec_meta_.second(); }
   /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
 
-  bool operator==(const variable& o) const noexcept {
+  template <class V, class M, class O, class A>
+  bool operator==(const variable<V, M, O, A>& o) const noexcept {
     const auto& a = vec_meta_.first();
     const auto& b = o.vec_meta_.first();
     return std::equal(a.begin(), a.end(), b.begin(), b.end()) &&
            detail::relaxed_equal(metadata(), o.metadata());
   }
-  bool operator!=(const variable<>& o) const noexcept { return !operator==(o); }
+
+  template <class V, class M, class O, class A>
+  bool operator!=(const variable<V, M, O, A>& o) const noexcept {
+    return !operator==(o);
+  }
 
   /// Return allocator instance.
   allocator_type get_allocator() const { return vec_meta_.first().get_allocator(); }
@@ -210,8 +200,8 @@ public:
 private:
   detail::compressed_pair<vec_type, metadata_type> vec_meta_;
 
-  template <class, class, bool>
-  friend class detail::variable_mixin;
+  template <class V, class M, class O, class A>
+  friend class variable;
 };
 
 #if __cpp_deduction_guides >= 201606
@@ -225,19 +215,22 @@ variable(std::initializer_list<U>, const char*)->variable<T>;
 template <class U, class M, class T = detail::convert_integer<U, double>>
 variable(std::initializer_list<U>, M)->variable<T, M>;
 
-template <class Iterable,
-          class T = detail::convert_integer<
-              detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+template <
+    class Iterable,
+    class T = detail::convert_integer<
+        detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable)->variable<T>;
 
-template <class Iterable,
-          class T = detail::convert_integer<
-              detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+template <
+    class Iterable,
+    class T = detail::convert_integer<
+        detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable, const char*)->variable<T>;
 
-template <class Iterable, class M,
-          class T = detail::convert_integer<
-              detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+template <
+    class Iterable, class M,
+    class T = detail::convert_integer<
+        detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable, M)->variable<T, M>;
 
 #endif

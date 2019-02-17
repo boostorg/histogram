@@ -136,6 +136,8 @@ int main() {
   {
     using A = axis::integer<int, axis::null_type, axis::option::circular>;
     auto a = A(1, 5);
+    auto b = A(a, 0, 4, 1);
+    BOOST_TEST_EQ(a, b);
     BOOST_TEST_THROWS(A(a, 1, 4, 1), std::invalid_argument);
     BOOST_TEST_THROWS(A(a, 0, 3, 1), std::invalid_argument);
     BOOST_TEST_THROWS(A(a, 0, 4, 2), std::invalid_argument);

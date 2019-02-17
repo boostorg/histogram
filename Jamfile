@@ -1,16 +1,37 @@
-# Copyright Klemens David Morgenstern, Hans P. Dembinski 2016-2017
 # Copyright (c) 2018 Mateusz Loskot <mateusz@loskot.net>
+# Copyright Klemens David Morgenstern, Hans P. Dembinski 2016-2017
 #
 # Use, modification and distribution is subject to the Boost Software License,
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+import common ;
+import testing ;
+import ../config/checks/config : requires ;
+
+variant coverage : debug :
+    <cxxflags>"--coverage"
+    <linkflags>"--coverage"
+    ;
+
+variant ubasan : debug :
+    <cxxflags>"-fno-omit-frame-pointer -fsanitize=address,leak,undefined -fno-sanitize-recover=address,undefined"
+    # correct linkflags don't work on travis, use workaround
+    # <linkflags>"-fsanitize=address,leak,undefined"
+    <linkflags>"-lasan -lubsan"
+    ;
+
 project
-    :
-    requirements
-        <toolset>gcc:<cxxflags>"-std=c++14 -Wall -Wextra -Wno-noexcept-type"
-        <toolset>clang:<cxxflags>"-std=c++14 -Wall -Wextra"
-        <toolset>darwin:<cxxflags>"-std=c++14 -Wall -Wextra"
+    : requirements
+    [ requires
+      cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
+      # list could go on...
+    ]
+    <implicit-dependency>/boost//headers
+    <threading>multi
+    : default-build
+    <warnings>all
+    #<warnings-as-errors>on
     ;
 
 build-project test ;

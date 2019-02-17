@@ -4,12 +4,14 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-//[ guide_access_bin_counts
+//[ guide_indexed_access
 
 #include <boost/format.hpp>
 #include <boost/histogram.hpp>
 #include <cassert>
+#include <iostream>
 #include <numeric> // for std::accumulate
+#include <sstream>
 
 using namespace boost::histogram;
 
@@ -21,21 +23,6 @@ int main() {
   h(weight(2), -0.5, 3.5); // bin index 0, 1
   h(weight(3), 0.5, 2.5);  // bin index 1, 0
   h(weight(4), 0.5, 3.5);  // bin index 1, 1
-
-  // histogram has bin iterators which iterate over all bin values including
-  // underflow/overflow; it works with STL algorithms
-  auto sum = std::accumulate(h.begin(), h.end(), 0.0);
-  assert(sum == 10);
-
-  // access individual bins with `at`
-  assert(h.at(0, 0) == 1);
-  assert(h.at(0, 1) == 2);
-  assert(h.at(1, 0) == 3);
-  assert(h.at(1, 1) == 4);
-
-  // index tuples are also supported
-  auto idx = std::make_tuple(0, 1);
-  assert(h.at(idx) == 2);
 
   // use the `indexed` range adaptor to iterate over all bins;
   // it is not only more convenient but also faster than a hand-crafted loop!
@@ -58,8 +45,8 @@ int main() {
                      "0 1 [-1, 0) [ 3, 4): 2\n"
                      "1 1 [ 0, 1) [ 3, 4): 4\n");
 
-  // `indexed` skips underflow and overflow bins by default, but can be called with the
-  // second argument `coverage::all` to walk over all bins
+  // `indexed` skips underflow and overflow bins by default, but can be called
+  // with the second argument `coverage::all` to walk over all bins
   std::ostringstream os2;
   for (auto x : indexed(h, coverage::all)) {
     os2 << boost::format("%2i %2i: %i\n") % x.index(0) % x.index(1) % *x;

@@ -1,90 +1,96 @@
-# Copyright Hans Dembinski 2016-2017
-# Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
+# Use, modification, and distribution are
+# subject to the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# Copyright Antony Polukhin 2014-2019.
+# Copyright Hans Dembinski 2019.
+
+#
+# See https://svn.boost.org/trac/boost/wiki/TravisCoverals for description of the
+# original file and how it can be used with Boost libraries.
+#
 
 sudo: false
 language: cpp
+os: linux
 
-cache:
-  pip: true
-  directories:
-    - ${TRAVIS_BUILD_DIR}/deps/boost-1.66.0
+env:
+  global:
+    - if [ "$TRAVIS_BRANCH" == "master" ]; then
+        BRANCH=master;
+      else
+        BRANCH=develop;
+      fi
 
-branches:
-  only:
-    - master
-    - develop
+    - LIBRARY_DIR=$(basename $TRAVIS_BUILD_DIR)
 
-# g++-5 also needed for clang to see C++14 stdlib
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - libstdc++-5-dev libgcc-5-dev libstdc++6 libasan2 libtsan0 libubsan0
+    # Global options for sanitizers
+    # detect_leaks=0 is required on container builds by travis :(
+    - UBSAN_OPTIONS=print_stacktrace=1
+    - LSAN_OPTIONS=verbosity=1:log_threads=1
+    - ASAN_OPTIONS=detect_leaks=0:detect_stack_use_after_return=1
 
 matrix:
   include:
-    - os: linux
-      compiler: clang
-      env: SERIAL=ON BENCH=OFF
     - os: osx
-      env: SERIAL=OFF BENCH=OFF
-    - os: linux # coverage build
+      script:
+        - ../../b2 -j2 -q cxxstd=14 test examples test//serial examples//serial
+
+    # - name: "clang: minimal"
+    #   addons:
+    #     apt:
+    #       sources: ubuntu-toolchain-r-test
+    #       packages: libc++-dev
+    #   script:
+    #     - ./b2 -j2 -q toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++" libs/histogram
+
+    - name: "gcc-5: ubasan"
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
-      env:
-        - MATRIX_EVAL="GCOV=gcov-5 && CC=gcc-5 && CXX=g++-5"
+          sources: ubuntu-toolchain-r-test
+          packages: g++-5
+      script:
+        # ubsan+asan disabled in serial tests, because of bug in boost/serialization
+        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 ubasan test examples &&
+          ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 test//serial examples//serial
 
-git:
-  depth: 3
+    - name: "gcc-7: coverage"
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-7
+      script:
+        - ../../b2 -j2 -q toolset=gcc-7 coverage
+          test examples test//serial examples//serial
+      after_success:
+        - GCOV=gcov-7 tools/cov.sh
 
-before_install:
-    - eval "${MATRIX_EVAL}"
+    - name: "gcc-8: ubasan, c++17"
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-8
+      script:
+        # ubsan+asan disabled in serial tests, because of bug in boost/serialization
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 ubasan test examples &&
+          ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 test//serial examples//serial
 
-# install packages (pre-installed: pytest)
-install:
-  - source tools/travis_install_boost.sh
+before_script:
+  # Cloning minimal set of Boost libraries
+  - cd ..
+  - git clone -b $BRANCH --depth 10 https://github.com/boostorg/boost.git
+  - cd boost
+  - git submodule update --init --depth 10 tools/build tools/boostdep
 
-  - if [ -n "$GCOV" ]; then
-      pip install --user cpp-coveralls urllib3[secure];
-    fi
+  # Replacing Boost module with this project and installing Boost dependencies
+  - rm -rf libs/$LIBRARY_DIR || true
+  - mv $TRAVIS_BUILD_DIR libs/$LIBRARY_DIR
+  - python tools/boostdep/depinst/depinst.py --git_args "--depth 10 --jobs 2" $LIBRARY_DIR
 
-# detect_leaks=0 is required on container builds by travis :(
-script:
-  - mkdir build
-  - cd build
-  - if [ -n "$GCOV" ]; then
-      cmake .. -DBOOST_ROOT=${BOOST_DIR}
-               -DBUILD_BENCHMARKS=OFF
-               -DCMAKE_BUILD_TYPE=coverage &&
-      make -j2 &&
-      ctest -V;
-    else
-      cmake .. -DBOOST_ROOT=${BOOST_DIR}
-               -DTEST_SERIALIZATION=${SERIAL}
-               -DBUILD_BENCHMARKS=${BENCH}
-               -DCMAKE_BUILD_TYPE=Debug &&
-      make -j2 &&
-      LSAN_OPTIONS=verbosity=1:log_threads=1 ASAN_OPTIONS=detect_leaks=0:detect_stack_use_after_return=1 ctest -V;
-    fi
-
-# Calculate coverage
-after_success:
-  if [ -n "$GCOV" ]; then
-    coveralls -r .. -b . --verbose --exclude ${TRAVIS_BUILD_DIR}/deps  --gcov=`which ${GCOV}` --gcov-options '\-lpbc';
-  fi
-
-# after_failure:
-  # - otool -L histogram.so
-  # - printf "r\nbt" > gdb.cmd
-  # - for x in *_test; do
-  #     $x || gdb $x --batch -x gdb.cmd;
-  #   done
+  # Adding missing toolsets and preparing Boost headers
+  - ./bootstrap.sh
+  - ./b2 headers
+  - cd libs/$LIBRARY_DIR
 
 notifications:
   email: false

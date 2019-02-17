@@ -39,13 +39,14 @@ int main() {
     BOOST_TEST_EQ(a.metadata(), "foo");
     a.metadata() = "bar";
     BOOST_TEST_EQ(a.metadata(), "bar");
-    BOOST_TEST_EQ(a.options(), axis::option::use_default);
+    BOOST_TEST_EQ(a.options(),
+                  (axis::join<axis::option::underflow, axis::option::overflow>::value));
 
     a = axis::category<std::string, meta_type>({"A", "B"}, {1, 2, 3});
     BOOST_TEST_EQ(a.index("A"), 0);
     BOOST_TEST_EQ(a.index("B"), 1);
     BOOST_TEST_THROWS(a.metadata(), std::runtime_error);
-    BOOST_TEST_EQ(a.options(), axis::option::overflow);
+    BOOST_TEST_EQ(a.options(), axis::option::overflow::value);
   }
 
   // axis::variant with reference

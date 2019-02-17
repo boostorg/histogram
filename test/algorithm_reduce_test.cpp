@@ -25,14 +25,15 @@ void run_tests() {
     auto h = make_s(Tag(), std::vector<int>(), regular(4, 1, 5), regular(3, -1, 2));
 
     // not allowed: repeated indices
-    BOOST_TEST_THROWS(reduce(h, rebin(0, 2), rebin(0, 2)), std::invalid_argument);
-    BOOST_TEST_THROWS(reduce(h, shrink(1, 0, 2), shrink(1, 0, 2)), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, rebin(0, 2), rebin(0, 2)), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, shrink(1, 0, 2), shrink(1, 0, 2)),
+                      std::invalid_argument);
     // not allowed: shrink with lower == upper
-    BOOST_TEST_THROWS(reduce(h, shrink(0, 0, 0)), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, shrink(0, 0, 0)), std::invalid_argument);
     // not allowed: shrink axis to zero size
-    BOOST_TEST_THROWS(reduce(h, shrink(0, 10, 11)), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, shrink(0, 10, 11)), std::invalid_argument);
     // not allowed: rebin with zero merge
-    BOOST_TEST_THROWS(reduce(h, rebin(0, 0)), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, rebin(0, 0)), std::invalid_argument);
 
     /*
       matrix layout:
@@ -113,7 +114,7 @@ void run_tests() {
   // reduce on integer axis, rebin must fail
   {
     auto h = make(Tag(), axis::integer<>(1, 4));
-    BOOST_TEST_THROWS(reduce(h, rebin(2)), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, rebin(2)), std::invalid_argument);
     auto hr = reduce(h, shrink(2, 3));
     BOOST_TEST_EQ(hr.axis().size(), 1);
     BOOST_TEST_EQ(hr.axis().bin(0), 2);
@@ -123,8 +124,8 @@ void run_tests() {
   // reduce on circular axis, shrink must fail, also rebin with remainder
   {
     auto h = make(Tag(), axis::circular<>(4, 1, 4));
-    BOOST_TEST_THROWS(reduce(h, shrink(0, 2)), std::invalid_argument);
-    BOOST_TEST_THROWS(reduce(h, rebin(3)), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, shrink(0, 2)), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, rebin(3)), std::invalid_argument);
     auto hr = reduce(h, rebin(2));
     BOOST_TEST_EQ(hr.axis().size(), 2);
     BOOST_TEST_EQ(hr.axis().bin(0).lower(), 1);

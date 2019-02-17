@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_AXIS_INTEGER_HPP
 
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -20,45 +21,6 @@
 
 namespace boost {
 namespace histogram {
-namespace detail {
-template <class, class, bool>
-class integer_mixin {};
-template <class Derived, class Value>
-
-class integer_mixin<Derived, Value, true> {
-  using value_type = Value;
-
-public:
-  /// Returns index and shift (if axis has grown) for the passed argument.
-  auto update(value_type x) noexcept {
-    auto impl = [](auto& der, long x) {
-      const auto i = x - der.min_;
-      if (i >= 0) {
-        const auto k = static_cast<axis::index_type>(i);
-        if (k < der.size()) return std::make_pair(k, 0);
-        const auto n = k - der.size() + 1;
-        der.size_meta_.first() += n;
-        return std::make_pair(k, -n);
-      }
-      const auto k =
-          static_cast<axis::index_type>(static_if<std::is_floating_point<value_type>>(
-              [](auto x) { return std::floor(x); }, [](auto x) { return x; }, i));
-      der.min_ += k;
-      der.size_meta_.first() -= k;
-      return std::make_pair(0, -k);
-    };
-
-    return detail::static_if<std::is_floating_point<value_type>>(
-        [impl](auto& der, auto x) {
-          if (std::isfinite(x)) return impl(der, static_cast<long>(std::floor(x)));
-          return std::make_pair(x < 0 ? -1 : der.size(), 0);
-        },
-        impl, static_cast<Derived&>(*this), x);
-  }
-};
-
-} // namespace detail
-
 namespace axis {
 
 /**
@@ -68,27 +30,28 @@ namespace axis {
 
   @tparam Value input value type. Must be integer or floating point.
   @tparam MetaData type to store meta data.
-  @tparam Options whether axis has an under- and/or overflow bin, is circular, or growing.
+  @tparam Options see boost::histogram::axis::option (all values allowed).
  */
-template <class Value, class MetaData, option Options>
-class integer : public iterator_mixin<integer<Value, MetaData, Options>>,
-                public detail::integer_mixin<integer<Value, MetaData, Options>, Value,
-                                             test(Options, option::growth)> {
+template <class Value, class MetaData, class Options>
+class integer : public iterator_mixin<integer<Value, MetaData, Options>> {
   static_assert(std::is_integral<Value>::value || std::is_floating_point<Value>::value,
                 "integer axis requires type floating point or integral type");
-  static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
-                "circular axis cannot have underflow");
-  static_assert(!test(Options, option::circular) ||
-                    std::is_floating_point<Value>::value ||
-                    !test(Options, option::overflow),
-                "integer axis with integral type cannot have overflow");
-  using metadata_type = MetaData;
+
   using value_type = Value;
   using local_index_type = std::conditional_t<std::is_integral<value_type>::value,
                                               index_type, real_index_type>;
 
+  using metadata_type = detail::replace_default<MetaData, std::string>;
+  using options_type =
+      detail::replace_default<Options, join<option::underflow, option::overflow>>;
+
+  static_assert(!test<options_type, option::circular>::value ||
+                    std::is_floating_point<value_type>::value ||
+                    !test<options_type, option::overflow>::value,
+                "integer axis with integral type cannot have overflow");
+
 public:
-  integer() = default;
+  constexpr integer() = default;
 
   /** Construct over semi-open integer interval [start, stop).
    *
@@ -106,7 +69,7 @@ public:
       : integer(src.value(begin), src.value(end), src.metadata()) {
     if (merge > 1)
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for integer axis"));
-    if (test(Options, option::circular) && !(begin == 0 && end == src.size()))
+    if (test<options_type, option::circular>::value && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
@@ -115,9 +78,37 @@ public:
     return index_impl(std::is_floating_point<value_type>(), x);
   }
 
+  /// Returns index and shift (if axis has grown) for the passed argument.
+  auto update(value_type x) noexcept {
+    auto impl = [this](long x) {
+      const auto i = x - min_;
+      if (i >= 0) {
+        const auto k = static_cast<axis::index_type>(i);
+        if (k < size()) return std::make_pair(k, 0);
+        const auto n = k - size() + 1;
+        size_meta_.first() += n;
+        return std::make_pair(k, -n);
+      }
+      const auto k = static_cast<axis::index_type>(
+          detail::static_if<std::is_floating_point<value_type>>(
+              [](auto x) { return std::floor(x); }, [](auto x) { return x; }, i));
+      min_ += k;
+      size_meta_.first() -= k;
+      return std::make_pair(0, -k);
+    };
+
+    return detail::static_if<std::is_floating_point<value_type>>(
+        [this, impl](auto x) {
+          if (std::isfinite(x)) return impl(static_cast<long>(std::floor(x)));
+          // this->size() is workaround for gcc-5 bug
+          return std::make_pair(x < 0 ? -1 : this->size(), 0);
+        },
+        impl, x);
+  }
+
   /// Return value for index argument.
   value_type value(local_index_type i) const noexcept {
-    if (!test(Options, option::circular)) {
+    if (!test<options_type, option::circular>::value) {
       if (i < 0) return detail::lowest<value_type>();
       if (i > size()) { return detail::highest<value_type>(); }
     }
@@ -134,18 +125,22 @@ public:
   /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return size_meta_.first(); }
   /// Returns the options.
-  static constexpr option options() noexcept { return Options; }
+  static constexpr unsigned options() noexcept { return options_type::value; }
   /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return size_meta_.second(); }
   /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return size_meta_.second(); }
 
-  bool operator==(const integer& o) const noexcept {
+  template <class V, class M, class O>
+  bool operator==(const integer<V, M, O>& o) const noexcept {
     return size() == o.size() && detail::relaxed_equal(metadata(), o.metadata()) &&
            min_ == o.min_;
   }
 
-  bool operator!=(const integer& o) const noexcept { return !operator==(o); }
+  template <class V, class M, class O>
+  bool operator!=(const integer<V, M, O>& o) const noexcept {
+    return !operator==(o);
+  }
 
   template <class Archive>
   void serialize(Archive&, unsigned);
@@ -153,7 +148,7 @@ public:
 private:
   index_type index_impl(std::false_type, int x) const noexcept {
     const auto z = x - min_;
-    if (test(Options, option::circular))
+    if (test<options_type, option::circular>::value)
       return static_cast<index_type>(z - std::floor(float(z) / size()) * size());
     if (z < size()) return z >= 0 ? z : -1;
     return size();
@@ -163,7 +158,7 @@ private:
   index_type index_impl(std::true_type, T x) const noexcept {
     // need to handle NaN, cannot simply cast to int and call int-implementation
     const auto z = x - min_;
-    if (test(Options, option::circular)) {
+    if (test<options_type, option::circular>::value) {
       if (std::isfinite(z))
         return static_cast<index_type>(std::floor(z) - std::floor(z / size()) * size());
     } else if (z < size()) {
@@ -175,8 +170,8 @@ private:
   detail::compressed_pair<index_type, metadata_type> size_meta_{0};
   value_type min_{0};
 
-  template <class, class, bool>
-  friend class detail::integer_mixin;
+  template <class V, class M, class O>
+  friend class integer;
 };
 
 #if __cpp_deduction_guides >= 201606

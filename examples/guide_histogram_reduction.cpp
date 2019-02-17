@@ -8,6 +8,7 @@
 
 #include <boost/histogram.hpp>
 #include <cassert>
+#include <iostream>
 #include <sstream>
 
 namespace bh = boost::histogram;

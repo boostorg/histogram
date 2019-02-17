@@ -12,7 +12,6 @@
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -20,6 +19,7 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/serialization/array.hpp>
@@ -106,7 +106,7 @@ void serialize(Archive& ar, pow& t, unsigned /* version */) {
 template <class Archive>
 void serialize(Archive&, null_type&, unsigned /* version */) {}
 
-template <class T, class Tr, class M, option O>
+template <class T, class Tr, class M, class O>
 template <class Archive>
 void regular<T, Tr, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& serialization::make_nvp("transform", static_cast<transform_type&>(*this));
@@ -116,7 +116,7 @@ void regular<T, Tr, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& serialization::make_nvp("delta", delta_);
 }
 
-template <class T, class M, option O>
+template <class T, class M, class O>
 template <class Archive>
 void integer<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& serialization::make_nvp("size", size_meta_.first());
@@ -124,14 +124,14 @@ void integer<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
   ar& serialization::make_nvp("min", min_);
 }
 
-template <class T, class M, option O, class A>
+template <class T, class M, class O, class A>
 template <class Archive>
 void variable<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
   ar& serialization::make_nvp("seq", vec_meta_.first());
   ar& serialization::make_nvp("meta", vec_meta_.second());
 }
 
-template <class T, class M, option O, class A>
+template <class T, class M, class O, class A>
 template <class Archive>
 void category<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
   ar& serialization::make_nvp("seq", vec_meta_.first());
@@ -162,6 +162,11 @@ template <class Archive, class T>
 void serialize(Archive& ar, map_impl<T>& impl, unsigned /* version */) {
   ar& serialization::make_nvp("size", impl.size_);
   ar& serialization::make_nvp("map", static_cast<T&>(impl));
+}
+
+template <class Archive, class Allocator>
+void serialize(Archive& ar, mp_int<Allocator>& x, unsigned /* version */) {
+  ar& serialization::make_nvp("data", x.data);
 }
 } // namespace detail
 

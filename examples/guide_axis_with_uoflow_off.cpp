@@ -19,10 +19,9 @@ int main() {
   // ... but histogram has size 8, because of overflow and underflow bins
   assert(h1.size() == 8);
 
-  // create a 1d-histogram for throws of a six-sided die without extra bins, since the
-  // values cannot be smaller than 1 or larger than 6
-  auto h2 = make_histogram(
-      axis::integer<int, axis::default_metadata, axis::option::none>(1, 7));
+  // create a 1d-histogram for throws of a six-sided die without extra bins,
+  // since the values cannot be smaller than 1 or larger than 6
+  auto h2 = make_histogram(axis::integer<int, use_default, axis::option::none>(1, 7));
   // now size of axis and histogram is equal
   assert(h2.axis().size() == 6);
   assert(h2.size() == 6);

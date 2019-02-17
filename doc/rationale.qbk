@@ -86,7 +86,7 @@ The default storage therefore starts with a minimum amount of memory per cell, i
 
 [$../storage_3_uint64.svg]
 
-When even that is not enough, the default storage switches to the [@boost:/libs/multiprecision/index.html Boost.Multiprecision] type `cpp_int`, whose capacity is limited only by available memory. The following image is not to scale:
+When even that is not enough, the default storage switches to a multiprecision type similar to those in [@boost:/libs/multiprecision/index.html Boost.Multiprecision], whose capacity is limited only by available memory. The following image is not to scale:
 
 [$../storage_3_cpp_int.svg]
 

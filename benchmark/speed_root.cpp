@@ -67,8 +67,6 @@ double compare_3d(unsigned n, int distrib) {
   return t;
 }
 
-#include <iostream>
-
 double compare_6d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
   int bin[] = {10, 10, 10, 10, 10, 10};
@@ -76,7 +74,7 @@ double compare_6d(unsigned n, int distrib) {
   double max[] = {1, 1, 1, 1, 1, 1};
   THnI h("", "", 6, bin, min, max);
   double t = clock();
-  for (auto it = r.get(), end = r.get() + n; it != end; it += 6) { h.Fill(it); }
+  for (auto it = r.get(), end = r.get() + n; it != end; it += 6) h.Fill(it);
   t = (double(clock()) - t) / CLOCKS_PER_SEC / n * 1e9;
   TH1D* h1 = h.Projection(0);
   assert(distrib != 0 || h1->GetSumOfWeights() == n / 6);

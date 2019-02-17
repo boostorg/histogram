@@ -178,7 +178,7 @@ int main() {
     BOOST_TEST_EQ(hyx.at(2, 1), 2);
 
     x = {0, 0};
-    BOOST_TEST_THROWS(project(h, x), std::invalid_argument);
+    BOOST_TEST_THROWS((void)project(h, x), std::invalid_argument);
   }
 
   return boost::report_errors();

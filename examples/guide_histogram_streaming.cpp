@@ -10,6 +10,7 @@
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <cassert>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -21,10 +22,10 @@ int main() {
   auto h = make_histogram(
       axis::regular<>(2, -1.0, 1.0),
       axis::regular<double, tr::log>(2, 1.0, 10.0, "axis 1"),
-      axis::regular<double, tr::pow, axis::default_metadata, axis::option::growth>(
+      axis::regular<double, tr::pow, use_default, axis::option::growth>(
           tr::pow{1.5}, 2, 1.0, 10.0, "axis 2"),
       axis::circular<double, axis::null_type>(4, 0.0, 360.0), // axis without metadata
-      axis::variable<double, std::string, axis::option::none, std::allocator<double>>(
+      axis::variable<double, use_default, axis::option::none, std::allocator<double>>(
           {-1.0, 0.0, 1.0}, "axis 4"),
       axis::category<>({2, 1, 3}, "axis 5"),
       axis::category<std::string>({"red", "blue"}, "axis 6"),

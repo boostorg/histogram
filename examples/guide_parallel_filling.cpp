@@ -14,8 +14,6 @@
 #include <thread>
 #include <vector>
 
-namespace bh = boost::histogram;
-
 // dummy fill function, to be executed in parallel by several threads
 template <typename Histogram>
 void fill(Histogram& h) {
@@ -46,14 +44,17 @@ public:
 };
 
 int main() {
+  using namespace boost::histogram;
+
   /*
-    Create histogram with container of atomic counters for parallel filling in several
-    threads. You cannot use bare std::atomic here, because std::atomic types are not
-    copyable. Using the copyable_atomic as a work-around is safe, if the storage does not
-    change size while it is filled. This means that growing axis types are not allowed.
+    Create histogram with container of atomic counters for parallel filling in
+    several threads. You cannot use bare std::atomic here, because std::atomic
+    types are not copyable. Using the copyable_atomic as a work-around is safe,
+    if the storage does not change size while it is filled. This means that
+    growing axis types are not allowed.
   */
-  auto h = bh::make_histogram_with(std::vector<copyable_atomic<std::size_t>>(),
-                                   bh::axis::integer<>(0, 10));
+  auto h = make_histogram_with(std::vector<copyable_atomic<std::size_t>>(),
+                               axis::integer<>(0, 10));
 
   /*
     The histogram storage may not be resized in either thread.
@@ -69,7 +70,7 @@ int main() {
   t3.join();
   t4.join();
 
-  assert(bh::algorithm::sum(h) == 4000);
+  assert(algorithm::sum(h) == 4000);
 }
 
 //]

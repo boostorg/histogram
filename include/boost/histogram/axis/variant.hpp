@@ -114,11 +114,12 @@ public:
   }
 
   /// Return options of axis or option::none if axis has no options.
-  option options() const {
+  unsigned options() const {
     return visit([](const auto& x) { return axis::traits::options(x); }, *this);
   }
 
-  /// Return reference to const metadata or instance of null_type if axis has no metadata.
+  /// Return reference to const metadata or instance of null_type if axis has no
+  /// metadata.
   const metadata_type& metadata() const {
     return visit(
         [](const auto& a) -> const metadata_type& {
@@ -139,7 +140,8 @@ public:
         *this);
   }
 
-  /// Return reference to metadata or instance of null_type if axis has no metadata.
+  /// Return reference to metadata or instance of null_type if axis has no
+  /// metadata.
   metadata_type& metadata() {
     return visit(
         [](auto& a) -> metadata_type& {
@@ -168,16 +170,18 @@ public:
   }
 
   /// Return value for index argument.
-  /// Only works for axes with value method that returns something convertible to
-  /// double and will throw a runtime_error otherwise, see axis::traits::value().
+  /// Only works for axes with value method that returns something convertible
+  /// to double and will throw a runtime_error otherwise, see
+  /// axis::traits::value().
   double value(real_index_type idx) const {
     return visit([idx](const auto& a) { return traits::value_as<double>(a, idx); },
                  *this);
   }
 
   /// Return bin for index argument.
-  /// Only works for axes with value method that returns something convertible to
-  /// double and will throw a runtime_error otherwise, see axis::traits::value().
+  /// Only works for axes with value method that returns something convertible
+  /// to double and will throw a runtime_error otherwise, see
+  /// axis::traits::value().
   auto bin(index_type idx) const {
     return visit(
         [idx](const auto& a) {
@@ -246,21 +250,24 @@ auto visit(Visitor&& vis, Variant&& var)
                               static_cast<B>(var));
 }
 
-/// Return lvalue reference to T, throws unspecified exception if type does not match.
+/// Return lvalue reference to T, throws unspecified exception if type does not
+/// match.
 template <class T, class... Us>
 T& get(variant<Us...>& v) {
   using B = typename variant<Us...>::base_type;
   return boost::get<T>(static_cast<B&>(v));
 }
 
-/// Return rvalue reference to T, throws unspecified exception if type does not match.
+/// Return rvalue reference to T, throws unspecified exception if type does not
+/// match.
 template <class T, class... Us>
 T&& get(variant<Us...>&& v) {
   using B = typename variant<Us...>::base_type;
   return boost::get<T>(static_cast<B&&>(v));
 }
 
-/// Return const reference to T, throws unspecified exception if type does not match.
+/// Return const reference to T, throws unspecified exception if type does not
+/// match.
 template <class T, class... Us>
 const T& get(const variant<Us...>& v) {
   using B = typename variant<Us...>::base_type;
@@ -274,7 +281,8 @@ T* get_if(variant<Us...>* v) {
   return boost::relaxed_get<T>(static_cast<B*>(v));
 }
 
-/// Returns pointer to const T in variant or null pointer if type does not match.
+/// Returns pointer to const T in variant or null pointer if type does not
+/// match.
 template <class T, class... Us>
 const T* get_if(const variant<Us...>* v) {
   using B = typename variant<Us...>::base_type;
