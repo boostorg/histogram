@@ -164,7 +164,7 @@ public:
       const auto shift = axis::test<opt, axis::option::underflow>::value;
 
       ca->extend = axis::traits::extend(a);
-      ca->begin = cover_all_ ? -shift : 0;
+      ca->begin = (cover_all_ ? -shift : 0);
       ca->end = ca->extend - shift -
                 (cover_all_ ? 0 : axis::test<opt, axis::option::overflow>::value);
       ca->idx = ca->begin;

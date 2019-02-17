@@ -169,7 +169,7 @@ struct mp_int {
 
   operator double() const noexcept {
     BOOST_ASSERT(data.size() >= 1);
-    double result = data[0];
+    double result = static_cast<double>(data[0]);
     std::size_t i = 0;
     while (++i < data.size())
       result += static_cast<double>(data[i]) * std::pow(2.0, i * 64);
