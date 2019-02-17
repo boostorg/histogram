@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_OPTION_HPP
 #define BOOST_HISTOGRAM_AXIS_OPTION_HPP
 
+#include <boost/mp11.hpp>
 #include <type_traits>
 
 /**
@@ -44,26 +45,15 @@ using growth = bit<3>;
 
 namespace detail {
 
-constexpr inline unsigned join_impl(unsigned a) { return a; }
-
-template <class T, class... Ts>
-constexpr unsigned join_impl(const unsigned a, T t, Ts... ts) {
-  using namespace axis::option;
-  const auto o = T::value;
-  const auto c = a | o;
-  if (o == underflow::value) return join_impl(c & ~circular::value, ts...);
-  if (o == circular::value)
-    return join_impl(c & ~(underflow::value | growth::value), ts...);
-  if (o == growth::value) return join_impl(c & ~circular::value, ts...);
-  return join_impl(c, ts...);
-}
+template <class T, class U>
+struct join_impl : axis::option_set<(T::value | U::value)> {};
 
 } // namespace detail
 
 namespace axis {
 /// Combines options and corrects for mutually exclusive options.
 template <class... Ts>
-using join = axis::option_set<detail::join_impl(0u, Ts{}...)>;
+using join = mp11::mp_fold<mp11::mp_list<Ts...>, option_set<0>, detail::join_impl>;
 
 /// Test whether the bits in b are also set in a.
 template <class T, class U>
