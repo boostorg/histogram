@@ -174,12 +174,6 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   storage = std::move(new_storage);
 }
 
-template <class T>
-struct size_or_zero : mp11::mp_size_t<0> {};
-
-template <class... Ts>
-struct size_or_zero<std::tuple<Ts...>> : mp11::mp_size_t<sizeof...(Ts)> {};
-
 // special case: if histogram::operator()(tuple(1, 2)) is called on 1d histogram
 // with axis that accepts 2d tuple, this should not fail
 // - solution is to forward tuples of size > 1 directly to axis for 1d
@@ -200,8 +194,8 @@ optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) 
     if (rank != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    constexpr unsigned M = size_or_zero<remove_cvref_t<decltype(axes)>>::value;
-    mp11::mp_for_each<mp11::mp_iota_c<(M == 0 ? N : M)>>([&](auto J) {
+    constexpr unsigned M = buffer_size<remove_cvref_t<decltype(axes)>>::value;
+    mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
       linearize_value(idx, axis_get<J>(axes), std::get<(J + I)>(args));
     });
   }
@@ -220,8 +214,8 @@ optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args)
     if (rank != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    constexpr unsigned M = size_or_zero<remove_cvref_t<decltype(axes)>>::value;
-    mp11::mp_for_each<mp11::mp_iota_c<(M == 0 ? N : M)>>([&](auto J) {
+    constexpr unsigned M = buffer_size<remove_cvref_t<decltype(axes)>>::value;
+    mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
       linearize_value(idx, shifts[J], axis_get<J>(axes), std::get<(J + I)>(args));
     });
   }
