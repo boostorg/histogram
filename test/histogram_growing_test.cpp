@@ -151,6 +151,8 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(a.index(0), b.index("y")), 0);
     BOOST_TEST_EQ(h.at(a.index(1), b.index("y")), 1);
     BOOST_TEST_EQ(h.at(a.index(2), b.index("y")), 0);
+
+    BOOST_TEST_THROWS(h(0, "x", 42), std::invalid_argument);
   }
 
   {

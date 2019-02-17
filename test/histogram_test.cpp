@@ -6,6 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
+#include <boost/histogram/accumulators/ostream.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <tuple>
@@ -485,7 +486,7 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(1, 0, 0), 1);
   }
 
-  // using static containers
+  // using containers or input and output
   {
     auto h = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(),
                     axis::integer<>(0, 2), axis::regular<>(2, 2, 4));
@@ -500,6 +501,13 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(i00).value(), 1);
     BOOST_TEST_EQ(h[i00].value(), 1);
     BOOST_TEST_EQ(h[i11].value(), 1);
+
+    // iterable out
+    int j11[] = {1, 1};
+    int j111[] = {1, 1, 1};
+    BOOST_TEST_EQ(h.at(j11), 1);
+    BOOST_TEST_EQ(h[j11], 1);
+    BOOST_TEST_THROWS((void)h.at(j111), std::invalid_argument);
 
     // tuple with weight
     h(std::make_tuple(weight(2), 0, 2.0));
