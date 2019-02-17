@@ -52,8 +52,9 @@ using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 template <class T, class U>
 using convert_integer = mp11::mp_if<std::is_integral<remove_cvref_t<T>>, U, T>;
 
-template <template <class> class F, class T, class E>
-using mp_eval_or = mp11::mp_eval_if_c<!(mp11::mp_valid<F, T>::value), E, F, T>;
+// to be replaced by official version from mp11
+template <class E, template <class...> class F, class... Ts>
+using mp_eval_or = mp11::mp_eval_if_c<!(mp11::mp_valid<F, Ts...>::value), E, F, Ts...>;
 
 template <class T1, class T2>
 using copy_qualifiers = mp11::mp_if<
@@ -171,7 +172,7 @@ using get_value_method_return_type_impl = decltype(std::declval<T&>().value(0));
 
 template <typename T, typename R>
 using has_method_value_with_convertible_return_type =
-    typename std::is_convertible<mp_eval_or<get_value_method_return_type_impl, T, void>,
+    typename std::is_convertible<mp_eval_or<void, get_value_method_return_type_impl, T>,
                                  R>::type;
 
 BOOST_HISTOGRAM_DETECT(has_method_options, (&T::options));
@@ -340,8 +341,8 @@ std::size_t get_size(const T& t) noexcept {
 
 template <class T>
 using buffer_size =
-    mp_eval_or<tuple_size_t, T,
-               std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>>;
+    mp_eval_or<std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>,
+               tuple_size_t, T>;
 
 template <class T, std::size_t N>
 class sub_array : public std::array<T, N> {
@@ -378,7 +379,7 @@ template <class T>
 using get_scale_type_helper = typename T::value_type;
 
 template <class T>
-using get_scale_type = detail::mp_eval_or<detail::get_scale_type_helper, T, T>;
+using get_scale_type = mp_eval_or<T, detail::get_scale_type_helper, T>;
 
 struct one_unit {};
 
@@ -396,7 +397,7 @@ template <class T>
 using get_unit_type_helper = typename T::unit_type;
 
 template <class T>
-using get_unit_type = detail::mp_eval_or<detail::get_unit_type_helper, T, one_unit>;
+using get_unit_type = mp_eval_or<one_unit, detail::get_unit_type_helper, T>;
 
 template <class T, class R = get_scale_type<T>>
 R get_scale(const T& t) {
@@ -405,6 +406,13 @@ R get_scale(const T& t) {
 
 template <class T, class Default>
 using replace_default = mp11::mp_if<std::is_same<T, use_default>, Default, T>;
+
+template <class T, class U>
+using is_convertible_helper =
+    mp11::mp_apply<mp11::mp_all, mp11::mp_transform<std::is_convertible, T, U>>;
+
+template <class T, class U>
+using is_convertible = mp_eval_or<std::false_type, is_convertible_helper, T, U>;
 
 } // namespace detail
 } // namespace histogram

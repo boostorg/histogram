@@ -73,9 +73,9 @@ decltype(auto) metadata(T&& t) noexcept {
 
 template <class T>
 using static_options =
-    detail::mp_eval_or<detail::static_options_impl, detail::remove_cvref_t<T>,
-                       mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<T>>,
-                                   axis::option::growth, axis::option::none>>;
+    detail::mp_eval_or<mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<T>>,
+                                   axis::option::growth, axis::option::none>,
+                       detail::static_options_impl, detail::remove_cvref_t<T>>;
 
 template <class T>
 constexpr unsigned options(const T& t) noexcept {
