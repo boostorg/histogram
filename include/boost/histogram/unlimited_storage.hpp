@@ -107,7 +107,7 @@ struct mp_int {
   }
 
   mp_int& operator++() {
-    BOOST_ASSERT(data.size() >= 1);
+    BOOST_ASSERT(data.size() > 0);
     std::size_t i = 0;
     while (!safe_increment(data[i])) {
       data[i] = 0;
@@ -153,7 +153,7 @@ struct mp_int {
   }
 
   mp_int& operator+=(uint64_t o) {
-    BOOST_ASSERT(data.size() >= 1);
+    BOOST_ASSERT(data.size() > 0);
     if (safe_radd(data[0], o)) return *this;
     add_remainder(data[0], o);
     // carry the one, data may grow several times
@@ -168,7 +168,7 @@ struct mp_int {
   }
 
   operator double() const noexcept {
-    BOOST_ASSERT(data.size() >= 1);
+    BOOST_ASSERT(data.size() > 0);
     double result = static_cast<double>(data[0]);
     std::size_t i = 0;
     while (++i < data.size())
@@ -177,17 +177,17 @@ struct mp_int {
   }
 
   bool operator<(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() >= 1);
+    BOOST_ASSERT(data.size() > 0);
     return data.size() == 1 && data[0] < o;
   }
 
   bool operator>(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() >= 1);
+    BOOST_ASSERT(data.size() > 0);
     return data.size() > 1 || data[0] > o;
   }
 
   bool operator==(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() >= 1);
+    BOOST_ASSERT(data.size() > 0);
     return data.size() == 1 && data[0] == o;
   }
 
@@ -198,6 +198,11 @@ struct mp_int {
   bool operator==(double o) const noexcept { return operator double() == o; }
 
   bool operator<(const mp_int& o) const noexcept {
+    BOOST_ASSERT(data.size() > 0);
+    BOOST_ASSERT(o.data.size() > 0);
+    // no leading zeros allowed
+    BOOST_ASSERT(data.size() == 1 || data.back() > 0);
+    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0);
     if (data.size() < o.data.size()) return true;
     if (data.size() > o.data.size()) return false;
     auto s = data.size();
@@ -210,6 +215,11 @@ struct mp_int {
   }
 
   bool operator>(const mp_int& o) const noexcept {
+    BOOST_ASSERT(data.size() > 0);
+    BOOST_ASSERT(o.data.size() > 0);
+    // no leading zeros allowed
+    BOOST_ASSERT(data.size() == 1 || data.back() > 0);
+    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0);
     if (data.size() > o.data.size()) return true;
     if (data.size() < o.data.size()) return false;
     auto s = data.size();
@@ -222,6 +232,11 @@ struct mp_int {
   }
 
   bool operator==(const mp_int& o) const noexcept {
+    BOOST_ASSERT(data.size() > 0);
+    BOOST_ASSERT(o.data.size() > 0);
+    // no leading zeros allowed
+    BOOST_ASSERT(data.size() == 1 || data.back() > 0);
+    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0);
     if (data.size() != o.data.size()) return false;
     for (std::size_t s = 0; s < data.size(); ++s)
       if (data[s] != o.data[s]) return false;
@@ -263,32 +278,32 @@ struct mp_int {
 
   template <class T>
   friend bool operator<(const T& a, const mp_int& b) noexcept {
-    return !(b >= a);
+    return b.operator>=(a);
   }
 
   template <class T>
   friend bool operator>(const T& a, const mp_int& b) noexcept {
-    return !(b <= a);
+    return b.operator<=(a);
   }
 
   template <class T>
   friend bool operator<=(const T& a, const mp_int& b) noexcept {
-    return !(b > a);
+    return b.operator>(a);
   }
 
   template <class T>
   friend bool operator>=(const T& a, const mp_int& b) noexcept {
-    return !(b < a);
+    return b.operator<(a);
   }
 
   template <class T>
   friend bool operator==(const T& a, const mp_int& b) noexcept {
-    return b == a;
+    return b.operator==(a);
   }
 
   template <class T>
   friend bool operator!=(const T& a, const mp_int& b) noexcept {
-    return b != a;
+    return !b.operator==(a);
   }
 
   uint64_t& maybe_extend(std::size_t i) {
