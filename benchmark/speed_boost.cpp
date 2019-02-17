@@ -51,8 +51,6 @@ double compare_1d(unsigned n, int distrib) {
 template <typename Tag, typename Storage>
 double compare_2d(unsigned n, int distrib) {
   auto r = random_array(n, distrib);
-
-  auto best = std::numeric_limits<double>::max();
   auto h = make_s(Tag(), Storage(), reg(100, 0, 1), reg(100, 0, 1));
   auto t = clock();
   for (auto it = r.get(), end = r.get() + n; it != end;) {
