@@ -113,9 +113,9 @@ auto index(const T& axis, const U& value) {
   using V = detail::arg_type<decltype(&T::index)>;
   return detail::static_if<std::is_convertible<U, V>>(
       [&value](const auto& axis) {
-        using T = detail::remove_cvref_t<decltype(axis)>;
-        using V = detail::arg_type<decltype(&T::index)>;
-        return axis.index(static_cast<V>(value));
+        using A = detail::remove_cvref_t<decltype(axis)>;
+        using V2 = detail::arg_type<decltype(&A::index)>;
+        return axis.index(static_cast<V2>(value));
       },
       [](const T&) {
         BOOST_THROW_EXCEPTION(std::invalid_argument(
