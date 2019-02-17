@@ -247,27 +247,27 @@ int main() {
   {
     const auto vmax = max<uint64_t>();
 
-    BOOST_TEST_EQ(mp_int(), 0);
-    BOOST_TEST_EQ(mp_int(1), 1);
+    BOOST_TEST_EQ(mp_int(), 0u);
+    BOOST_TEST_EQ(mp_int(1), 1u);
     BOOST_TEST_EQ(mp_int(1), 1.0);
-    BOOST_TEST_EQ(mp_int(1), mp_int(1));
-    BOOST_TEST_NE(mp_int(1), 2);
+    BOOST_TEST_EQ(mp_int(1), mp_int(1u));
+    BOOST_TEST_NE(mp_int(1), 2u);
     BOOST_TEST_NE(mp_int(1), 2.0);
-    BOOST_TEST_NE(mp_int(1), mp_int(2));
-    BOOST_TEST_LT(mp_int(1), 2);
+    BOOST_TEST_NE(mp_int(1), mp_int(2u));
+    BOOST_TEST_LT(mp_int(1), 2u);
     BOOST_TEST_LT(mp_int(1), 2.0);
-    BOOST_TEST_LT(mp_int(1), mp_int(2));
-    BOOST_TEST_LE(mp_int(1), 2);
+    BOOST_TEST_LT(mp_int(1), mp_int(2u));
+    BOOST_TEST_LE(mp_int(1), 2u);
     BOOST_TEST_LE(mp_int(1), 2.0);
-    BOOST_TEST_LE(mp_int(1), mp_int(2));
-    BOOST_TEST_LE(mp_int(1), 1);
-    BOOST_TEST_GT(mp_int(1), 0);
+    BOOST_TEST_LE(mp_int(1), mp_int(2u));
+    BOOST_TEST_LE(mp_int(1), 1u);
+    BOOST_TEST_GT(mp_int(1), 0u);
     BOOST_TEST_GT(mp_int(1), 0.0);
-    BOOST_TEST_GT(mp_int(1), mp_int(0));
-    BOOST_TEST_GE(mp_int(1), 0);
+    BOOST_TEST_GT(mp_int(1), mp_int(0u));
+    BOOST_TEST_GE(mp_int(1), 0u);
     BOOST_TEST_GE(mp_int(1), 0.0);
-    BOOST_TEST_GE(mp_int(1), 1);
-    BOOST_TEST_GE(mp_int(1), mp_int(0));
+    BOOST_TEST_GE(mp_int(1), 1u);
+    BOOST_TEST_GE(mp_int(1), mp_int(0u));
 
     auto a = mp_int();
     ++a;
@@ -343,7 +343,7 @@ int main() {
       a += a;
       BOOST_TEST_EQ(a, b);
     }
-    BOOST_TEST_GT(a.data.size(), 1);
+    BOOST_TEST_GT(a.data.size(), 1u);
   }
 
   // empty state

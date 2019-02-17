@@ -107,7 +107,7 @@ struct mp_int {
   }
 
   mp_int& operator++() {
-    BOOST_ASSERT(data.size() > 0);
+    BOOST_ASSERT(data.size() > 0u);
     std::size_t i = 0;
     while (!safe_increment(data[i])) {
       data[i] = 0;
@@ -153,7 +153,7 @@ struct mp_int {
   }
 
   mp_int& operator+=(uint64_t o) {
-    BOOST_ASSERT(data.size() > 0);
+    BOOST_ASSERT(data.size() > 0u);
     if (safe_radd(data[0], o)) return *this;
     add_remainder(data[0], o);
     // carry the one, data may grow several times
@@ -168,7 +168,7 @@ struct mp_int {
   }
 
   operator double() const noexcept {
-    BOOST_ASSERT(data.size() > 0);
+    BOOST_ASSERT(data.size() > 0u);
     double result = static_cast<double>(data[0]);
     std::size_t i = 0;
     while (++i < data.size())
@@ -177,17 +177,17 @@ struct mp_int {
   }
 
   bool less(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() > 0);
+    BOOST_ASSERT(data.size() > 0u);
     return data.size() == 1 && data[0] < o;
   }
 
   bool greater(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() > 0);
+    BOOST_ASSERT(data.size() > 0u);
     return data.size() > 1 || data[0] > o;
   }
 
   bool equal(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() > 0);
+    BOOST_ASSERT(data.size() > 0u);
     return data.size() == 1 && data[0] == o;
   }
 
@@ -198,15 +198,15 @@ struct mp_int {
   bool equal(double o) const noexcept { return operator double() == o; }
 
   bool less(const mp_int& o) const noexcept {
-    BOOST_ASSERT(data.size() > 0);
-    BOOST_ASSERT(o.data.size() > 0);
+    BOOST_ASSERT(data.size() > 0u);
+    BOOST_ASSERT(o.data.size() > 0u);
     // no leading zeros allowed
-    BOOST_ASSERT(data.size() == 1 || data.back() > 0);
-    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0);
+    BOOST_ASSERT(data.size() == 1 || data.back() > 0u);
+    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0u);
     if (data.size() < o.data.size()) return true;
     if (data.size() > o.data.size()) return false;
     auto s = data.size();
-    while (s > 0) {
+    while (s > 0u) {
       --s;
       if (data[s] < o.data[s]) return true;
       if (data[s] > o.data[s]) return false;
@@ -215,15 +215,15 @@ struct mp_int {
   }
 
   bool greater(const mp_int& o) const noexcept {
-    BOOST_ASSERT(data.size() > 0);
-    BOOST_ASSERT(o.data.size() > 0);
+    BOOST_ASSERT(data.size() > 0u);
+    BOOST_ASSERT(o.data.size() > 0u);
     // no leading zeros allowed
-    BOOST_ASSERT(data.size() == 1 || data.back() > 0);
-    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0);
+    BOOST_ASSERT(data.size() == 1 || data.back() > 0u);
+    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0u);
     if (data.size() > o.data.size()) return true;
     if (data.size() < o.data.size()) return false;
     auto s = data.size();
-    while (s > 0) {
+    while (s > 0u) {
       --s;
       if (data[s] > o.data[s]) return true;
       if (data[s] < o.data[s]) return false;
@@ -232,11 +232,11 @@ struct mp_int {
   }
 
   bool equal(const mp_int& o) const noexcept {
-    BOOST_ASSERT(data.size() > 0);
-    BOOST_ASSERT(o.data.size() > 0);
+    BOOST_ASSERT(data.size() > 0u);
+    BOOST_ASSERT(o.data.size() > 0u);
     // no leading zeros allowed
-    BOOST_ASSERT(data.size() == 1 || data.back() > 0);
-    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0);
+    BOOST_ASSERT(data.size() == 1 || data.back() > 0u);
+    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0u);
     if (data.size() != o.data.size()) return false;
     for (std::size_t s = 0; s < data.size(); ++s)
       if (data[s] != o.data[s]) return false;
@@ -332,7 +332,7 @@ struct mp_int {
   }
 
   static void add_remainder(uint64_t& d, const uint64_t o) noexcept {
-    BOOST_ASSERT(d > 0);
+    BOOST_ASSERT(d > 0u);
     // in decimal system it would look like this:
     // 8 + 8 = 6 = 8 - (9 - 8) - 1
     // 9 + 1 = 0 = 9 - (9 - 1) - 1
@@ -366,7 +366,7 @@ auto create_buffer(Allocator& a, std::size_t n) {
 
 template <class Allocator, class Iterator>
 auto create_buffer(Allocator& a, std::size_t n, Iterator iter) {
-  BOOST_ASSERT(n > 0);
+  BOOST_ASSERT(n > 0u);
   using AT = std::allocator_traits<Allocator>;
   auto ptr = AT::allocate(a, n); // may throw
   static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
@@ -389,7 +389,7 @@ template <class Allocator>
 void destroy_buffer(Allocator& a, typename std::allocator_traits<Allocator>::pointer p,
                     std::size_t n) {
   BOOST_ASSERT(p);
-  BOOST_ASSERT(n > 0);
+  BOOST_ASSERT(n > 0u);
   using AT = std::allocator_traits<Allocator>;
   auto it = p + n;
   while (it != p) AT::destroy(a, --it);
