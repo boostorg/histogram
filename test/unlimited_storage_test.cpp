@@ -216,31 +216,12 @@ int main() {
     c = 0;
     BOOST_TEST_EQ(bh::detail::safe_radd(c, 255u), true);
     BOOST_TEST_EQ(c, 255);
-    c = 0;
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, 255), true);
-    BOOST_TEST_EQ(c, 255);
     c = 1;
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, 255), false);
-    BOOST_TEST_EQ(c, 1);
     BOOST_TEST_EQ(bh::detail::safe_radd(c, 255u), false);
     BOOST_TEST_EQ(c, 1);
     c = 255;
     BOOST_TEST_EQ(bh::detail::safe_radd(c, 1u), false);
     BOOST_TEST_EQ(c, 255);
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, 1), false);
-    BOOST_TEST_EQ(c, 255);
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, -255), true);
-    BOOST_TEST_EQ(c, 0);
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, -1), false);
-    BOOST_TEST_EQ(c, 0);
-
-    uint32_t i = 0;
-    BOOST_TEST_EQ(bh::detail::safe_radd(i, 2), true);
-    BOOST_TEST_EQ(i, 2u);
-    BOOST_TEST_EQ(bh::detail::safe_radd(i, -2), true);
-    BOOST_TEST_EQ(i, 0u);
-    BOOST_TEST_EQ(bh::detail::safe_radd(i, -2), false);
-    BOOST_TEST_EQ(i, 0u);
   }
 
   // mp_int

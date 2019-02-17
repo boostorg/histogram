@@ -43,51 +43,14 @@ bool safe_increment(T& t) {
 }
 
 template <class T, class U>
-bool safe_radd(std::true_type, T& t, const U& u) {
+bool safe_radd(T& t, const U& u) {
+  static_assert(is_unsigned_integral<T>::value, "T must be unsigned integral type");
+  static_assert(is_unsigned_integral<U>::value, "T must be unsigned integral type");
   if (static_cast<T>(std::numeric_limits<T>::max() - t) >= u) {
     t += static_cast<T>(u); // static_cast to suppress conversion warning
     return true;
   }
   return false;
-}
-
-template <class T, class U>
-bool safe_radd(std::false_type, T& t, const U& u) {
-  static_assert(std::is_integral<U>::value, "U must be integral type");
-  if (u >= 0) {
-    if (static_cast<T>(std::numeric_limits<T>::max() - t) >=
-        static_cast<std::make_unsigned_t<U>>(u)) {
-      t += static_cast<T>(u);
-      return true;
-    }
-    return false;
-  }
-  if (t >= static_cast<std::make_unsigned_t<U>>(-u)) {
-    t -= static_cast<T>(-u);
-    return true;
-  }
-  return false;
-}
-
-template <class T, class A>
-bool safe_radd(std::false_type, T& t, const mp_int<A>& u) {
-  if (u >= 0) {
-    if (std::numeric_limits<T>::max() - t > u) {
-      t += static_cast<T>(u);
-      return true;
-    }
-  }
-  if (u + t >= 0) {
-    t -= static_cast<T>(-u);
-    return true;
-  }
-  return false;
-}
-
-template <class T, class U>
-bool safe_radd(T& t, const U& u) {
-  static_assert(is_unsigned_integral<T>::value, "T must be unsigned integral type");
-  return safe_radd(is_unsigned_integral<U>{}, t, u);
 }
 
 // use boost.multiprecision.cpp_int in your own code, it is much more sophisticated
@@ -647,9 +610,7 @@ public:
 
     template <class T>
     reference& operator-=(const T& t) {
-      base_type::buffer_->apply(adder(), *base_type::buffer_, base_type::idx_,
-                                -static_cast<double>(t));
-      return *this;
+      return operator+=(-t);
     }
 
     template <class T>
@@ -798,37 +759,49 @@ private:
 
   struct adder {
     template <class Buffer, class U>
-    void if_U_is_integral(std::true_type, mp_int* tp, Buffer&, std::size_t i,
-                          const U& x) {
-      tp[i] += x;
+    void operator()(double* tp, Buffer&, std::size_t i, const U& x) {
+      tp[i] += static_cast<double>(x);
     }
 
     template <class T, class Buffer, class U>
-    void if_U_is_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
-      if (detail::safe_radd(tp[i], x)) return;
-      if (x >= 0) {
-        using V = mp11::mp_at_c<types, (type_index<T>() + 1)>;
-        b.template make<V>(b.size, tp);
-        if_U_is_integral(std::true_type{}, static_cast<V*>(b.ptr), b, i, x);
-      } else {
-        if_U_is_integral(std::false_type{}, tp, b, i, x);
-      }
+    void operator()(T* tp, Buffer& b, std::size_t i, const U& x) {
+      U_is_integral(std::is_integral<U>{}, tp, b, i, x);
     }
 
     template <class T, class Buffer, class U>
-    void if_U_is_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
+    void U_is_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
       b.template make<double>(b.size, tp);
       operator()(static_cast<double*>(b.ptr), b, i, x);
     }
 
     template <class T, class Buffer, class U>
-    void operator()(T* tp, Buffer& b, std::size_t i, const U& x) {
-      if_U_is_integral(std::is_integral<U>{}, tp, b, i, x);
+    void U_is_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
+      U_is_unsigned_integral(std::is_unsigned<U>{}, tp, b, i, x);
+    }
+
+    template <class T, class Buffer, class U>
+    void U_is_unsigned_integral(std::false_type, T* tp, Buffer& b, std::size_t i,
+                                const U& x) {
+      if (x >= 0)
+        U_is_unsigned_integral(std::true_type{}, tp, b, i,
+                               static_cast<typename std::make_unsigned<U>::type>(x));
+      else
+        U_is_integral(std::false_type{}, tp, b, i, static_cast<double>(x));
     }
 
     template <class Buffer, class U>
-    void operator()(double* tp, Buffer&, std::size_t i, const U& x) {
-      tp[i] += static_cast<double>(x);
+    void U_is_unsigned_integral(std::true_type, mp_int* tp, Buffer&, std::size_t i,
+                                const U& x) {
+      tp[i] += x;
+    }
+
+    template <class T, class Buffer, class U>
+    void U_is_unsigned_integral(std::true_type, T* tp, Buffer& b, std::size_t i,
+                                const U& x) {
+      if (detail::safe_radd(tp[i], x)) return;
+      using V = mp11::mp_at_c<types, (type_index<T>() + 1)>;
+      b.template make<V>(b.size, tp);
+      U_is_unsigned_integral(std::true_type{}, static_cast<V*>(b.ptr), b, i, x);
     }
   };
 

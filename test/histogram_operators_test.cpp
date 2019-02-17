@@ -83,7 +83,7 @@ void run_tests() {
     a(0, weight(2));
     a(1, weight(2));
     auto b = a;
-    auto c = make_s(Tag(), std::vector<unsigned>(), ia);
+    auto c = make_s(Tag(), std::vector<int>(), ia);
     c(0, weight(2));
     c(1, weight(2));
     auto a2 = a;
