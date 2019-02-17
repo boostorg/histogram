@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_AXIS_TRAITS_HPP
 
 #include <boost/core/typeinfo.hpp>
+#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -20,14 +21,7 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-constexpr axis::option options_impl(std::true_type, const T& t) noexcept {
-  return t.options();
-}
-
-template <class T>
-constexpr axis::option options_impl(std::false_type, const T&) noexcept {
-  return axis::option::none;
-}
+using static_options_impl = axis::option_set<T::options()>;
 
 template <class FIntArg, class FDoubleArg, class T>
 decltype(auto) value_method_switch(FIntArg&& iarg, FDoubleArg&& darg, const T& t) {
@@ -78,14 +72,28 @@ decltype(auto) metadata(T&& t) noexcept {
 }
 
 template <class T>
-constexpr option options(const T& t) noexcept {
-  return detail::options_impl(detail::has_method_options<T>(), t);
+using static_options =
+    detail::mp_eval_or<detail::static_options_impl, detail::remove_cvref_t<T>,
+                       mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<T>>,
+                                   axis::option::growth, axis::option::none>>;
+
+template <class T>
+constexpr unsigned options(const T& t) noexcept {
+  // cannot reuse static_options here, because this should also work for axis::variant
+  return detail::static_if<detail::has_method_options<T>>(
+      [](const auto& t) { return t.options(); },
+      [](const auto&) {
+        return detail::has_method_update<T>::value ? axis::option::growth::value
+                                                   : axis::option::none::value;
+      },
+      t);
 }
 
 template <class T>
-int extend(const T& t) noexcept {
+constexpr axis::index_type extend(const T& t) noexcept {
   const auto opt = options(t);
-  return t.size() + test(opt, option::underflow) + test(opt, option::overflow);
+  return t.size() + static_cast<bool>(opt & option::underflow::value) +
+         static_cast<bool>(opt & option::overflow::value);
 }
 
 template <class T>
@@ -126,7 +134,8 @@ std::pair<int, int> update(T& axis, const U& value) {
   using V = detail::arg_type<decltype(&T::index)>;
   return detail::static_if<std::is_convertible<U, V>>(
       [&value](auto& a) {
-        return detail::static_if<detail::has_method_update<detail::remove_cvref_t<decltype(a)>>>(
+        return detail::static_if<
+            detail::has_method_update<detail::remove_cvref_t<decltype(a)>>>(
             [&value](auto& a) { return a.update(value); },
             [&value](const auto& a) { return std::make_pair(a.index(value), 0); }, a);
       },

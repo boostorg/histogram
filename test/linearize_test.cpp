@@ -16,14 +16,12 @@
 
 using namespace boost::histogram;
 
-struct growing_axis {
-  using value_type = int;
-  auto update(value_type) { return std::make_pair(0, 0); }
-};
-
 int main() {
   {
-    using G = growing_axis;
+    struct growing {
+      auto update(int) { return std::make_pair(0, 0); }
+    };
+    using G = growing;
     using I = axis::integer<>;
 
     using A = std::tuple<I, G>;

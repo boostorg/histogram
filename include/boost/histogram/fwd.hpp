@@ -12,13 +12,16 @@
   Forward declarations, basic typedefs, and default template arguments for main classes.
 */
 
-#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/attribute.hpp> // BOOST_HISTOGRAM_DETAIL_NODISCARD
 #include <string>
 #include <vector>
 
 namespace boost {
 namespace histogram {
+
+/// tag type to indicate use of a default type
+struct use_default {};
+
 namespace axis {
 
 /// Integral type for axis indices
@@ -30,9 +33,6 @@ using real_index_type = double;
 /// empty metadata type
 struct null_type {};
 
-/// default metadata type
-using default_metadata = std::string;
-
 namespace transform {
 struct id;
 struct log;
@@ -40,24 +40,19 @@ struct sqrt;
 struct pow;
 } // namespace transform
 
-template <class Value = double, class Transform = transform::id,
-          class MetaData = default_metadata, option Options = option::use_default>
+template <class Value = double, class Transform = use_default,
+          class MetaData = use_default, class Options = use_default>
 class regular;
 
-template <class Value = double, class MetaData = default_metadata,
-          option Options = option::overflow>
-using circular = regular<Value, transform::id, MetaData, join(Options, option::circular)>;
-
-template <class Value = int, class MetaData = default_metadata,
-          option Options = option::use_default>
+template <class Value = int, class MetaData = use_default, class Options = use_default>
 class integer;
 
-template <class Value = double, class MetaData = default_metadata,
-          option Options = option::use_default, class Allocator = std::allocator<Value>>
+template <class Value = double, class MetaData = use_default, class Options = use_default,
+          class Allocator = std::allocator<Value>>
 class variable;
 
-template <class Value = int, class MetaData = default_metadata,
-          option Options = option::overflow, class Allocator = std::allocator<Value>>
+template <class Value = int, class MetaData = use_default, class Options = use_default,
+          class Allocator = std::allocator<Value>>
 class category;
 
 template <class... Ts>

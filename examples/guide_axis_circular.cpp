@@ -13,8 +13,8 @@ int main() {
   using namespace boost::histogram;
 
   // make a circular regular axis ... [0, 180), [180, 360), [0, 180) ....
-  auto r = axis::regular<double, axis::transform::id, axis::default_metadata,
-                         axis::join(axis::option::use_default, axis::option::circular)>{
+  auto r = axis::regular<double, use_default, use_default,
+                         axis::join<axis::option::overflow, axis::option::circular>>{
       2, 0., 360.};
   assert(r.index(-180) == 1);
   assert(r.index(0) == 0);
@@ -32,7 +32,7 @@ int main() {
   assert(r == c);
 
   // make a circular integer axis
-  auto i = axis::integer<int, axis::default_metadata, axis::option::circular>{1, 4};
+  auto i = axis::integer<int, use_default, axis::option::circular>{1, 4};
   assert(i.index(0) == 2);
   assert(i.index(1) == 0);
   assert(i.index(2) == 1);

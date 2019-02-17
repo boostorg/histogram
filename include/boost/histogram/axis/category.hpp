@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -20,25 +21,6 @@
 
 namespace boost {
 namespace histogram {
-namespace detail {
-template <class, class, bool>
-class category_mixin {};
-
-template <class Derived, class T>
-class category_mixin<Derived, T, true> {
-  using value_type = T;
-
-public:
-  auto update(const value_type& x) {
-    auto& der = static_cast<Derived&>(*this);
-    const auto i = der.index(x);
-    if (i < der.size()) return std::make_pair(i, 0);
-    der.vec_meta_.first().emplace_back(x);
-    return std::make_pair(i, -1);
-  }
-};
-} // namespace detail
-
 namespace axis {
 
 /**
@@ -46,27 +28,29 @@ namespace axis {
 
   The axis maps a set of values to bins, following the order of arguments in the
   constructor. The optional overflow bin for this axis counts input values that
-  are not part of the set. Binning has O(N) complexity, but with a very small factor.
-  For small N (the typical use case) it beats other kinds of lookup.
+  are not part of the set. Binning has O(N) complexity, but with a very small
+  factor. For small N (the typical use case) it beats other kinds of lookup.
 
   @tparam Value input value type, must be equal-comparable.
   @tparam MetaData type to store meta data.
-  @tparam Options whether axis has an overflow bin or is growing.
+  @tparam Options see boost::histogram::axis::option.
   @tparam Allocator allocator to use for dynamic memory management.
+
+  The options `underflow` and `circular` are not allowed. The options `growth`
+  and `overflow` are mutually exclusive.
 */
-template <class Value, class MetaData, option Options, class Allocator>
-class category
-    : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,
-      public detail::category_mixin<category<Value, MetaData, Options, Allocator>, Value,
-                                    test(Options, option::growth)> {
-  static_assert(!std::is_floating_point<Value>::value,
-                "category axis cannot have floating point value type");
-  static_assert(!test(Options, option::underflow), "category axis cannot have underflow");
-  static_assert(!test(Options, option::circular), "category axis cannot be circular");
-  static_assert(!test(Options, option::growth) || !test(Options, option::overflow),
-                "growing category axis cannot have overflow");
-  using metadata_type = MetaData;
+template <class Value, class MetaData, class Options, class Allocator>
+class category : public iterator_mixin<category<Value, MetaData, Options, Allocator>> {
   using value_type = Value;
+  using metadata_type = detail::replace_default<MetaData, std::string>;
+  using options_type = detail::replace_default<Options, option::overflow>;
+  static_assert(!test<options_type, option::underflow>::value,
+                "category axis cannot have underflow");
+  static_assert(!test<options_type, option::circular>::value,
+                "category axis cannot be circular");
+  static_assert(!test<options_type, option::growth>::value ||
+                    !test<options_type, option::overflow>::value,
+                "growing category axis cannot have overflow");
   using allocator_type = Allocator;
   using vector_type = std::vector<value_type, allocator_type>;
 
@@ -123,6 +107,14 @@ public:
     return static_cast<index_type>(std::distance(beg, std::find(beg, end, x)));
   }
 
+  /// Returns index and shift (if axis has grown) for the passed argument.
+  auto update(const value_type& x) {
+    const auto i = index(x);
+    if (i < size()) return std::make_pair(i, 0);
+    vec_meta_.first().emplace_back(x);
+    return std::make_pair(i, -1);
+  }
+
   /// Return value for index argument.
   /// Throws `std::out_of_range` if the index is out of bounds.
   decltype(auto) value(index_type idx) const {
@@ -139,19 +131,24 @@ public:
     return static_cast<index_type>(vec_meta_.first().size());
   }
   /// Returns the options.
-  static constexpr option options() noexcept { return Options; }
+  static constexpr unsigned options() noexcept { return options_type::value; }
   /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return vec_meta_.second(); }
   /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
 
-  bool operator==(const category& o) const noexcept {
+  template <class V, class M, class O, class A>
+  bool operator==(const category<V, M, O, A>& o) const noexcept {
     const auto& a = vec_meta_.first();
     const auto& b = o.vec_meta_.first();
     return std::equal(a.begin(), a.end(), b.begin(), b.end()) &&
            detail::relaxed_equal(metadata(), o.metadata());
   }
-  bool operator!=(const category& o) const noexcept { return !operator==(o); }
+
+  template <class V, class M, class O, class A>
+  bool operator!=(const category<V, M, O, A>& o) const noexcept {
+    return !operator==(o);
+  }
 
   allocator_type get_allocator() const { return vec_meta_.first().get_allocator(); }
 
@@ -160,8 +157,9 @@ public:
 
 private:
   detail::compressed_pair<vector_type, metadata_type> vec_meta_;
-  template <class, class, bool>
-  friend class detail::category_mixin;
+
+  template <class V, class M, class O, class A>
+  friend class category;
 };
 
 #if __cpp_deduction_guides >= 201606

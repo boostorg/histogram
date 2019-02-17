@@ -19,8 +19,8 @@ int main() {
   // make a growing regular axis
   // - it grows new bins with its constant bin width until the value is covered
   auto h1 = make_histogram(axis::regular<double,
-                                         axis::transform::id,
-                                         axis::default_metadata,
+                                         use_default,
+                                         use_default,
                                          axis::option::growth>{2, 0., 1.});
   // nothing special happens here
   h1(0.1);
@@ -49,7 +49,7 @@ int main() {
   // make a growing category axis (here strings)
   // - empty axis is allowed: very useful if categories are not known at the beginning
   auto h2 = make_histogram(axis::category<std::string,
-                                          axis::default_metadata,
+                                          use_default,
                                           axis::option::growth>());
   assert(h2.size() == 0); // histogram is empty
   h2("foo"); // new bin foo, index 0

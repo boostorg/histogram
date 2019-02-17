@@ -42,25 +42,21 @@ struct is_accumulator_set<::boost::accumulators::accumulator_set<Ts...>>
 #endif
 
 template <class T>
-struct has_growing_axis_impl2 {
-  using type = has_method_update<T>;
-};
-
-template <class... Ts>
-struct has_growing_axis_impl2<axis::variant<Ts...>> {
-  using type = mp11::mp_or<has_method_update<Ts>...>;
-};
+using has_underflow =
+    axis::test<axis::traits::static_options<T>, axis::option::underflow>;
 
 template <class T>
-struct has_growing_axis_impl : has_growing_axis_impl2<mp11::mp_first<T>> {};
+struct is_growing : axis::test<axis::traits::static_options<T>, axis::option::growth> {};
 
 template <class... Ts>
-struct has_growing_axis_impl<std::tuple<Ts...>> {
-  using type = mp11::mp_or<has_method_update<Ts>...>;
-};
+struct is_growing<std::tuple<Ts...>> : mp11::mp_or<is_growing<Ts>...> {};
+
+template <class... Ts>
+struct is_growing<axis::variant<Ts...>> : mp11::mp_or<is_growing<Ts>...> {};
 
 template <class T>
-using has_growing_axis = typename has_growing_axis_impl<T>::type;
+using has_growing_axis =
+    mp11::mp_if<is_vector_like<T>, is_growing<mp11::mp_first<T>>, is_growing<T>>;
 
 /// Index with an invalid state
 struct optional_index {
@@ -72,44 +68,45 @@ struct optional_index {
 
 inline void linearize(optional_index& out, const axis::index_type extend,
                       axis::index_type j) noexcept {
-  // j is internal index, shifted by +1 wrt external index if axis has underflow bin
+  // j is internal index shifted by +1 if axis has underflow bin
   out.idx += j * out.stride;
   // set stride to 0, if j is invalid
   out.stride *= (0 <= j && j < extend) * extend;
 }
 
-template <class A, class V>
-void linearize_value(optional_index& out, const A& axis, const V& value) {
-  const auto j = axis::traits::index(axis, value) +
-                 test(axis::traits::options(axis), axis::option::underflow);
-  linearize(out, axis::traits::extend(axis), j);
+template <class Axis, class Value>
+void linearize_value(optional_index& o, const Axis& a, const Value& v) {
+  using B = axis::test<axis::traits::static_options<Axis>, axis::option::underflow>;
+  const auto j = axis::traits::index(a, v) + B::value;
+  linearize(o, axis::traits::extend(a), j);
 }
 
-template <class... Ts, class V>
-void linearize_value(optional_index& o, const axis::variant<Ts...>& a, const V& v) {
+template <class... Ts, class Value>
+void linearize_value(optional_index& o, const axis::variant<Ts...>& a, const Value& v) {
   axis::visit([&o, &v](const auto& a) { linearize_value(o, a, v); }, a);
 }
 
-template <class A, class V>
-void linearize_value(optional_index& out, axis::index_type& shift, A& axis,
-                     const V& value) {
+template <class Axis, class Value>
+void linearize_value(optional_index& o, axis::index_type& s, Axis& a, const Value& v) {
   axis::index_type j;
-  std::tie(j, shift) = axis::traits::update(axis, value);
-  j += test(axis::traits::options(axis), axis::option::underflow);
-  linearize(out, axis::traits::extend(axis), j);
+  std::tie(j, s) = axis::traits::update(a, v);
+  j += has_underflow<Axis>::value;
+  linearize(o, axis::traits::extend(a), j);
 }
 
-template <class... Ts, class V>
+template <class... Ts, class Value>
 void linearize_value(optional_index& o, axis::index_type& s, axis::variant<Ts...>& a,
-                     const V& v) {
+                     const Value& v) {
   axis::visit([&o, &s, &v](auto& a) { linearize_value(o, s, a, v); }, a);
 }
 
-template <class T>
-void linearize_index(optional_index& out, const T& axis, const axis::index_type j) {
-  const auto extend = axis::traits::extend(axis);
+template <class A>
+void linearize_index(optional_index& out, const A& axis, const axis::index_type j) {
+  // A may be axis or variant, cannot use static option detection here
   const auto opt = axis::traits::options(axis);
-  linearize(out, extend, j + test(opt, axis::option::underflow));
+  const auto shift = opt & axis::option::underflow::value ? 1 : 0;
+  const auto extend = axis.size() + shift + (opt & axis::option::overflow::value ? 1 : 0);
+  linearize(out, extend, j + shift);
 }
 
 template <class S, class A, class T>
@@ -137,7 +134,8 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
     sit = shifts;
     dit = data;
     for_each_axis(axes, [&](const auto& a) {
-      if (axis::test(axis::traits::options(a), axis::option::underflow)) {
+      using opt = axis::traits::static_options<remove_cvref_t<decltype(a)>>;
+      if (axis::test<opt, axis::option::underflow>::value) {
         if (dit->idx == 0) {
           // noop
           ++dit;
@@ -145,7 +143,7 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
           return;
         }
       }
-      if (axis::test(axis::traits::options(a), axis::option::overflow)) {
+      if (axis::test<opt, axis::option::overflow>::value) {
         if (dit->idx == dit->old_extend - 1) {
           ns += (axis::traits::extend(a) - 1) * dit->new_stride;
           ++dit;
@@ -174,13 +172,15 @@ struct size_or_zero : mp11::mp_size_t<0> {};
 template <class... Ts>
 struct size_or_zero<std::tuple<Ts...>> : mp11::mp_size_t<sizeof...(Ts)> {};
 
-// special case: if histogram::operator()(tuple(1, 2)) is called on 1d histogram with axis
-// that accepts 2d tuple, this should not fail
-// - solution is to forward tuples of size > 1 directly to axis for 1d histograms
+// special case: if histogram::operator()(tuple(1, 2)) is called on 1d histogram
+// with axis that accepts 2d tuple, this should not fail
+// - solution is to forward tuples of size > 1 directly to axis for 1d
+// histograms
 // - has nice side-effect of making histogram::operator(1, 2) work as well
 // - cannot detect call signature of axis at compile-time in all configurations
-//   (axis::variant provides generic call interface and hides concrete interface),
-//   so we throw at runtime if incompatible argument is passed (e.g. 3d tuple)
+//   (axis::variant provides generic call interface and hides concrete
+//   interface), so we throw at runtime if incompatible argument is passed (e.g.
+//   3d tuple)
 // histogram has only non-growing axes
 template <unsigned I, unsigned N, class S, class T, class U>
 optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) {
@@ -325,6 +325,7 @@ optional_index at(const A& axes, const std::tuple<Us...>& args) {
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto I) {
+    // axes_get works with static and dynamic axes
     linearize_index(idx, axis_get<I>(axes),
                     static_cast<axis::index_type>(std::get<I>(args)));
   });

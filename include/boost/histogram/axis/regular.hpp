@@ -10,9 +10,11 @@
 #include <boost/assert.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
+#include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
 #include <cmath>
 #include <limits>
@@ -22,54 +24,7 @@
 
 namespace boost {
 namespace histogram {
-namespace detail {
-template <class, class, bool>
-class regular_mixin {};
-
-template <class Axis, class Value>
-class regular_mixin<Axis, Value, true> {
-  using value_type = Value;
-
-public:
-  /// Returns index and shift (if axis has grown) for the passed argument.
-  auto update(value_type x) noexcept {
-    auto& der = static_cast<Axis&>(*this);
-    const auto z = (der.forward(x / typename Axis::unit_type{}) - der.min_) / der.delta_;
-    if (z < 1) { // don't use i here!
-      if (0 <= z) {
-        const auto i = static_cast<axis::index_type>(z * der.size());
-        return std::make_pair(i, 0);
-      }
-      if (z != -std::numeric_limits<typename Axis::internal_value_type>::infinity()) {
-        const auto stop = der.min_ + der.delta_;
-        const auto i = static_cast<axis::index_type>(std::floor(z * der.size()));
-        der.min_ += i * (der.delta_ / der.size());
-        der.delta_ = stop - der.min_;
-        der.size_meta_.first() -= i;
-        return std::make_pair(0, -i);
-      }
-      // z is -infinity
-      return std::make_pair(-1, 0);
-    }
-    // z either beyond range, infinite, or NaN
-    if (z < std::numeric_limits<typename Axis::internal_value_type>::infinity()) {
-      const auto i = static_cast<axis::index_type>(z * der.size());
-      const auto n = i - der.size() + 1;
-      der.delta_ /= der.size();
-      der.delta_ *= der.size() + n;
-      der.size_meta_.first() += n;
-      return std::make_pair(i, -n);
-    }
-    // z either infinite or NaN
-    return std::make_pair(der.size(), 0);
-  }
-};
-} // namespace detail
-
 namespace axis {
-
-/// two_pi can be found in boost/math, but it is defined here to reduce dependencies
-constexpr double two_pi = 6.283185307179586;
 
 namespace transform {
 
@@ -90,13 +45,13 @@ struct id {
 
 /// Log transform for equidistant bins in log-space.
 struct log {
-  /// Convert external value to internal log-space value.
+  /// Returns log(x) of external value x.
   template <typename T>
   static T forward(T x) {
     return std::log(x);
   }
 
-  /// Convert internal log-space value to external space.
+  /// Returns exp(x) for internal value x.
   template <typename T>
   static T inverse(T x) {
     return std::exp(x);
@@ -105,13 +60,13 @@ struct log {
 
 /// Sqrt transform for equidistant bins in sqrt-space.
 struct sqrt {
-  /// Convert external value to internal sqrt-space value.
+  /// Returns sqrt(x) of external value x.
   template <typename T>
   static T forward(T x) {
     return std::sqrt(x);
   }
 
-  /// Convert internal sqrt-space value to external space.
+  /// Returns x^2 of internal value x.
   template <typename T>
   static T inverse(T x) {
     return x * x;
@@ -126,16 +81,16 @@ struct pow {
   explicit pow(double p) : power(p) {}
   pow() = default;
 
-  /// Convert external value to internal pow-space value.
+  /// Returns pow(x, power) of external value x.
   template <typename T>
-  auto forward(T v) const {
-    return std::pow(v, power);
+  auto forward(T x) const {
+    return std::pow(x, power);
   }
 
-  /// Convert internal pow-space value to external space.
+  /// Returns pow(x, 1/power) of external value x.
   template <typename T>
-  auto inverse(T v) const {
-    return std::pow(v, 1.0 / power);
+  auto inverse(T x) const {
+    return std::pow(x, 1.0 / power);
   }
 
   bool operator==(const pow& o) const noexcept { return power == o.power; }
@@ -151,7 +106,8 @@ struct step_type {
 };
 #endif
 
-/** Helper function to mark argument as step size.
+/**
+  Helper function to mark argument as step size.
  */
 template <typename T>
 auto step(T&& t) {
@@ -166,29 +122,24 @@ auto step(T&& t) {
   @tparam Value input value type, must be floating point.
   @tparam Transform builtin or user-defined transform type.
   @tparam MetaData type to store meta data.
-  @tparam Options whether axis has an under- and/or overflow bin, is circular, or growing.
+  @tparam Options see boost::histogram::axis::option (all values allowed).
  */
-template <class Value, class Transform, class MetaData, option Options>
+template <class Value, class Transform, class MetaData, class Options>
 class regular : public iterator_mixin<regular<Value, Transform, MetaData, Options>>,
-                public detail::regular_mixin<regular<Value, Transform, MetaData, Options>,
-                                             Value, test(Options, option::growth)>,
-                protected Transform {
-  static_assert(!test(Options, option::circular) || !test(Options, option::underflow),
-                "circular axis cannot have underflow");
-
-public:
+                protected detail::replace_default<Transform, transform::id> {
   using value_type = Value;
-  using transform_type = Transform;
-  using metadata_type = MetaData;
+  using transform_type = detail::replace_default<Transform, transform::id>;
+  using metadata_type = detail::replace_default<MetaData, std::string>;
+  using options_type =
+      detail::replace_default<Options, join<option::underflow, option::overflow>>;
 
-private:
   using unit_type = detail::get_unit_type<value_type>;
   using internal_value_type = detail::get_scale_type<value_type>;
   static_assert(std::is_floating_point<internal_value_type>::value,
                 "variable axis requires floating point type");
 
 public:
-  regular() = default;
+  constexpr regular() = default;
 
   /** Construct n bins over real transformed range [start, stop).
    *
@@ -222,7 +173,8 @@ public:
   regular(unsigned n, value_type start, value_type stop, metadata_type meta = {})
       : regular({}, n, start, stop, std::move(meta)) {}
 
-  /** Construct bins with the given step size over real transformed range [start, stop).
+  /** Construct bins with the given step size over real transformed range
+   * [start, stop).
    *
    * @param trans   transform instance to use.
    * @param step    width of a single bin.
@@ -230,8 +182,9 @@ public:
    * @param stop    upper limit of high edge of last bin (see below).
    * @param meta    description of the axis (optional).
    *
-   * The axis computes the number of bins as n = abs(stop - start) / step, rounded down.
-   * This means that stop is an upper limit to the actual value (start + n * step).
+   * The axis computes the number of bins as n = abs(stop - start) / step,
+   * rounded down. This means that stop is an upper limit to the actual value
+   * (start + n * step).
    */
   template <class T>
   regular(transform_type trans, const step_type<T>& step, value_type start,
@@ -249,8 +202,9 @@ public:
    * @param stop    upper limit of high edge of last bin (see below).
    * @param meta    description of the axis (optional).
    *
-   * The axis computes the number of bins as n = abs(stop - start) / step, rounded down.
-   * This means that stop is an upper limit to the actual value (start + n * step).
+   * The axis computes the number of bins as n = abs(stop - start) / step,
+   * rounded down. This means that stop is an upper limit to the actual value
+   * (start + n * step).
    */
   template <class T>
   regular(const step_type<T>& step, value_type start, value_type stop,
@@ -262,7 +216,7 @@ public:
       : regular(src.transform(), (end - begin) / merge, src.value(begin), src.value(end),
                 src.metadata()) {
     BOOST_ASSERT((end - begin) % merge == 0);
-    if (test(Options, option::circular) && !(begin == 0 && end == src.size()))
+    if (test<options_type, option::circular>::value && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
@@ -272,8 +226,8 @@ public:
   /// Return index for value argument.
   index_type index(value_type x) const noexcept {
     // Runs in hot loop, please measure impact of changes
-    auto z = (this->forward(x / unit_type()) - min_) / delta_;
-    if (test(Options, option::circular)) {
+    auto z = (this->forward(x / unit_type{}) - min_) / delta_;
+    if (test<options_type, option::circular>::value) {
       if (std::isfinite(z)) {
         z -= std::floor(z);
         return static_cast<index_type>(z * size());
@@ -289,12 +243,45 @@ public:
     return size(); // also returned if x is NaN
   }
 
+  /// Returns index and shift (if axis has grown) for the passed argument.
+  auto update(value_type x) noexcept {
+    BOOST_ASSERT((test<options_type, option::growth>::value));
+    const auto z = (this->forward(x / unit_type{}) - min_) / delta_;
+    if (z < 1) { // don't use i here!
+      if (z >= 0) {
+        const auto i = static_cast<axis::index_type>(z * size());
+        return std::make_pair(i, 0);
+      }
+      if (z != -std::numeric_limits<internal_value_type>::infinity()) {
+        const auto stop = min_ + delta_;
+        const auto i = static_cast<axis::index_type>(std::floor(z * size()));
+        min_ += i * (delta_ / size());
+        delta_ = stop - min_;
+        size_meta_.first() -= i;
+        return std::make_pair(0, -i);
+      }
+      // z is -infinity
+      return std::make_pair(-1, 0);
+    }
+    // z either beyond range, infinite, or NaN
+    if (z < std::numeric_limits<internal_value_type>::infinity()) {
+      const auto i = static_cast<axis::index_type>(z * size());
+      const auto n = i - size() + 1;
+      delta_ /= size();
+      delta_ *= size() + n;
+      size_meta_.first() += n;
+      return std::make_pair(i, -n);
+    }
+    // z either infinite or NaN
+    return std::make_pair(size(), 0);
+  }
+
   /// Return value for fractional index argument.
   value_type value(real_index_type i) const noexcept {
     auto z = i / size();
-    if (!test(Options, option::circular) && z < 0.0)
+    if (!test<options_type, option::circular>::value && z < 0.0)
       z = -std::numeric_limits<internal_value_type>::infinity() * delta_;
-    else if (test(Options, option::circular) || z <= 1.0)
+    else if (test<options_type, option::circular>::value || z <= 1.0)
       z = (1.0 - z) * min_ + z * (min_ + delta_);
     else {
       z = std::numeric_limits<internal_value_type>::infinity() * delta_;
@@ -310,18 +297,22 @@ public:
   /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return size_meta_.first(); }
   /// Returns the options.
-  static constexpr option options() noexcept { return Options; }
+  static constexpr unsigned options() noexcept { return options_type::value; }
   /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return size_meta_.second(); }
   /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return size_meta_.second(); }
 
-  bool operator==(const regular& o) const noexcept {
+  template <class V, class T, class M, class O>
+  bool operator==(const regular<V, T, M, O>& o) const noexcept {
     return detail::relaxed_equal(transform(), o.transform()) && size() == o.size() &&
            detail::relaxed_equal(metadata(), o.metadata()) && min_ == o.min_ &&
            delta_ == o.delta_;
   }
-  bool operator!=(const regular& o) const noexcept { return !operator==(o); }
+  template <class V, class T, class M, class O>
+  bool operator!=(const regular<V, T, M, O>& o) const noexcept {
+    return !operator==(o);
+  }
 
   template <class Archive>
   void serialize(Archive&, unsigned);
@@ -330,8 +321,8 @@ private:
   detail::compressed_pair<index_type, metadata_type> size_meta_{0};
   internal_value_type min_{0}, delta_{1};
 
-  template <class, class, bool>
-  friend class detail::regular_mixin;
+  template <class V, class T, class M, class O>
+  friend class regular;
 };
 
 #if __cpp_deduction_guides >= 201606
@@ -355,6 +346,11 @@ template <class Tr, class T, class M>
 regular(Tr, unsigned, T, T, M)->regular<detail::convert_integer<T, double>, Tr, M>;
 
 #endif
+
+template <class Value = double, class MetaData = use_default, class Options = use_default>
+using circular =
+    regular<Value, transform::id, MetaData,
+            join<detail::replace_default<Options, option::overflow>, option::circular>>;
 
 } // namespace axis
 } // namespace histogram

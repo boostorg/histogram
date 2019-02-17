@@ -160,12 +160,13 @@ public:
     const auto clast = ca + hist_.rank() - 1;
     std::size_t stride = 1;
     h.for_each_axis([&, this](const auto& a) {
-      const auto opt = axis::traits::options(a);
-      const auto shift = test(opt, axis::option::underflow);
+      using opt = axis::traits::static_options<detail::remove_cvref_t<decltype(a)>>;
+      const auto shift = axis::test<opt, axis::option::underflow>::value;
 
       ca->extend = axis::traits::extend(a);
       ca->begin = cover_all_ ? -shift : 0;
-      ca->end = ca->extend - shift - (cover_all_ ? 0 : test(opt, axis::option::overflow));
+      ca->end = ca->extend - shift -
+                (cover_all_ ? 0 : axis::test<opt, axis::option::overflow>::value);
       ca->idx = ca->begin;
 
       begin_ += (ca->begin + shift) * stride;

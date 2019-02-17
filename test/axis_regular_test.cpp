@@ -15,6 +15,8 @@ using namespace boost::histogram;
 namespace tr = axis::transform;
 
 int main() {
+  using def = use_default;
+
   // bad_ctors
   {
     BOOST_TEST_THROWS(axis::regular<>(1, 0, 0), std::invalid_argument);
@@ -167,7 +169,7 @@ int main() {
 
   // with growth
   {
-    axis::regular<double, tr::id, axis::null_type, axis::option::growth> a{1, 0, 1};
+    axis::regular<double, def, def, axis::option::growth> a{1, 0, 1};
     BOOST_TEST_EQ(a.size(), 1);
     BOOST_TEST_EQ(a.update(0), std::make_pair(0, 0));
     BOOST_TEST_EQ(a.size(), 1);
@@ -194,9 +196,8 @@ int main() {
   // iterators
   {
     test_axis_iterator(axis::regular<>(5, 0, 1), 0, 5);
-    test_axis_iterator(
-        axis::regular<double, tr::id, axis::null_type, axis::option::none>(5, 0, 1), 0,
-        5);
+    test_axis_iterator(axis::regular<double, def, def, axis::option::none>(5, 0, 1), 0,
+                       5);
     test_axis_iterator(axis::circular<>(5, 0, 1), 0, 5);
   }
 
