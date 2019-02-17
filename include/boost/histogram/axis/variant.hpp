@@ -53,14 +53,12 @@ const T* get_if(const variant<Us...>* v);
 
 /// Polymorphic axis type
 template <class... Ts>
-class variant : private boost::variant<Ts...>,
-                public iterator_mixin<variant<Ts...>> {
+class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
   using base_type = boost::variant<Ts...>;
   using raw_types = mp11::mp_transform<detail::remove_cvref_t, base_type>;
 
   template <class T>
-  using is_bounded_type =
-      mp11::mp_contains<raw_types, detail::remove_cvref_t<T>>;
+  using is_bounded_type = mp11::mp_contains<raw_types, detail::remove_cvref_t<T>>;
 
   template <typename T>
   using requires_bounded_type = std::enable_if_t<is_bounded_type<T>::value>;
@@ -127,16 +125,13 @@ public:
         [](const auto& a) -> const metadata_type& {
           using M = decltype(traits::metadata(a));
           return detail::static_if<std::is_same<M, const metadata_type&>>(
-              [](const auto& a) -> const metadata_type& {
-                return traits::metadata(a);
-              },
+              [](const auto& a) -> const metadata_type& { return traits::metadata(a); },
               [](const auto&) -> const metadata_type& {
                 BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
                     "cannot return metadata of type ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(M)),
                     " through axis::variant interface which uses type ",
-                    boost::core::demangled_name(
-                        BOOST_CORE_TYPEID(metadata_type)),
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type)),
                     "; use boost::histogram::axis::get to obtain a reference "
                     "of this axis type")));
               },
@@ -158,8 +153,7 @@ public:
                     "cannot return metadata of type ",
                     boost::core::demangled_name(BOOST_CORE_TYPEID(M)),
                     " through axis::variant interface which uses type ",
-                    boost::core::demangled_name(
-                        BOOST_CORE_TYPEID(metadata_type)),
+                    boost::core::demangled_name(BOOST_CORE_TYPEID(metadata_type)),
                     "; use boost::histogram::axis::get to obtain a reference "
                     "of this axis type")));
               },
@@ -180,9 +174,8 @@ public:
   /// to double and will throw a runtime_error otherwise, see
   /// axis::traits::value().
   double value(real_index_type idx) const {
-    return visit(
-        [idx](const auto& a) { return traits::value_as<double>(a, idx); },
-        *this);
+    return visit([idx](const auto& a) { return traits::value_as<double>(a, idx); },
+                 *this);
   }
 
   /// Return bin for index argument.
@@ -192,9 +185,8 @@ public:
   auto bin(index_type idx) const {
     return visit(
         [idx](const auto& a) {
-          return detail::value_method_switch_with_return_type<
-              double,
-              polymorphic_bin<double>>(
+          return detail::value_method_switch_with_return_type<double,
+                                                              polymorphic_bin<double>>(
               [idx](const auto& a) { // axis is discrete
                 const auto x = a.value(idx);
                 return polymorphic_bin<double>(x, x);
@@ -252,8 +244,8 @@ template <class Visitor, class Variant>
 auto visit(Visitor&& vis, Variant&& var)
     -> detail::visitor_return_type<Visitor, Variant> {
   using R = detail::visitor_return_type<Visitor, Variant>;
-  using B = detail::copy_qualifiers<
-      Variant, typename detail::remove_cvref_t<Variant>::base_type>;
+  using B = detail::copy_qualifiers<Variant,
+                                    typename detail::remove_cvref_t<Variant>::base_type>;
   return boost::apply_visitor(detail::functor_wrapper<Visitor, R>(vis),
                               static_cast<B>(var));
 }
@@ -307,17 +299,15 @@ decltype(auto) get(U&& u) {
 // pass-through version of get_if for generic programming
 template <class T, class U>
 T* get_if(U* u) {
-  return std::is_same<T, detail::remove_cvref_t<U>>::value
-             ? reinterpret_cast<T*>(u)
-             : nullptr;
+  return std::is_same<T, detail::remove_cvref_t<U>>::value ? reinterpret_cast<T*>(u)
+                                                           : nullptr;
 }
 
 // pass-through version of get_if for generic programming
 template <class T, class U>
 const T* get_if(const U* u) {
-  return std::is_same<T, detail::remove_cvref_t<U>>::value
-             ? reinterpret_cast<const T*>(u)
-             : nullptr;
+  return std::is_same<T, detail::remove_cvref_t<U>>::value ? reinterpret_cast<const T*>(u)
+                                                           : nullptr;
 }
 #endif
 
