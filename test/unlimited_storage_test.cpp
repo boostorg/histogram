@@ -301,8 +301,8 @@ int main() {
     // carry once C
     a.data[0] = vmax;
     a.data[1] = 1;
-    a += mp_int(1);
-    BOOST_TEST_EQ(a, make_mp_int(0, 2));
+    a += make_mp_int(1, 1);
+    BOOST_TEST_EQ(a, make_mp_int(0, 3));
 
     a.data[0] = vmax - 1;
     a.data[1] = vmax;
