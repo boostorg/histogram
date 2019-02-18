@@ -13,31 +13,40 @@
 
 using namespace boost::histogram;
 
-using regular =
-    axis::regular<double, axis::transform::id, axis::null_type, axis::option::growth>;
+using def = use_default;
 
-// using integer = axis::integer<double, axis::null_type,
-//                               axis::option::underflow |
-//                               axis::option::overflow
-//                                   | axis::option::growth>;
-// using category =
-//     axis::category<std::string, axis::null_type, axis::option::growth>;
+using regular = axis::regular<double, def, def, axis::option::growth>;
 
-// class custom_2d_axis {
-// public:
-//   auto index(double x, double y) const {
-//     const auto r = std::sqrt(x * x + y * y);
-//     return std::min(static_cast<axis::index_type>(r), size());
-//   }
-//
-//   auto update(double x, double y) { const auto r = std::sqrt(x * x + y * y);
-//   }
-//
-//   axis::index_type size() const { return size_; }
-//
-// private:
-//   axis::index_type size_ = 0;
-// };
+using integer = axis::integer<
+    double, def,
+    axis::join<axis::option::underflow, axis::option::overflow, axis::option::growth>>;
+
+using category = axis::category<std::string, def, axis::option::growth>;
+
+class custom_2d_axis {
+public:
+  auto index(std::tuple<double, double> xy) const {
+    const auto x = std::get<0>(xy);
+    const auto y = std::get<1>(xy);
+    const auto r = std::sqrt(x * x + y * y);
+    return std::min(static_cast<axis::index_type>(r), size());
+  }
+
+  auto update(std::tuple<double, double> xy) {
+    const auto x = std::get<0>(xy);
+    const auto y = std::get<1>(xy);
+    const auto r = std::sqrt(x * x + y * y);
+    const auto n = static_cast<int>(r);
+    const auto old = size_;
+    if (n >= size_) size_ = n + 1;
+    return std::make_pair(n, old - size_);
+  }
+
+  axis::index_type size() const { return size_; }
+
+private:
+  axis::index_type size_ = 0;
+};
 
 template <typename Tag>
 void run_tests() {
@@ -74,75 +83,93 @@ void run_tests() {
     BOOST_TEST_EQ(h[4], 1);
   }
 
-  // {
-  //   auto h = make_s(Tag(), std::vector<int>(), integer());
-  //   const auto& a = h.axis();
-  //   h(-std::numeric_limits<double>::infinity());
-  //   h(std::numeric_limits<double>::quiet_NaN());
-  //   h(std::numeric_limits<double>::infinity());
-  //   BOOST_TEST_EQ(a.size(), 0);
-  //   BOOST_TEST_EQ(h.size(), 2);
-  //   BOOST_TEST_EQ(h[-1], 1);
-  //   BOOST_TEST_EQ(h[0], 2);
-  //   h(0);
-  //   BOOST_TEST_EQ(a.size(), 1);
-  //   BOOST_TEST_EQ(h.size(), 3);
-  //   BOOST_TEST_EQ(h[-1], 1);
-  //   BOOST_TEST_EQ(h[0], 1);
-  //   BOOST_TEST_EQ(h[1], 2);
-  //   h(2);
-  //   BOOST_TEST_EQ(a.size(), 3);
-  //   BOOST_TEST_EQ(h.size(), 5);
-  //   BOOST_TEST_EQ(h[-1], 1);
-  //   BOOST_TEST_EQ(h[0], 1);
-  //   BOOST_TEST_EQ(h[1], 0);
-  //   BOOST_TEST_EQ(h[2], 1);
-  //   BOOST_TEST_EQ(h[3], 2);
-  //   h(-2);
-  //   BOOST_TEST_EQ(a.size(), 5);
-  //   BOOST_TEST_EQ(h.size(), 7);
-  //   // BOOST_TEST_EQ(h[-1], 1)
-  //   BOOST_TEST_EQ(h[0], 1);
-  //   BOOST_TEST_EQ(h[1], 0);
-  //   BOOST_TEST_EQ(h[2], 1);
-  //   BOOST_TEST_EQ(h[3], 0);
-  //   BOOST_TEST_EQ(h[4], 1);
-  //   BOOST_TEST_EQ(h[5], 2);
-  // }
-  //
-  // {
-  //   auto h = make_s(Tag(), std::vector<int>(), integer(), category());
-  //   const auto& a = h.axis(0);
-  //   const auto& b = h.axis(1);
-  //   BOOST_TEST_EQ(a.size(), 0);
-  //   BOOST_TEST_EQ(b.size(), 0);
-  //   BOOST_TEST_EQ(h.size(), 0);
-  //   h(0, "x");
-  //   h(-std::numeric_limits<double>::infinity(), "x");
-  //   h(std::numeric_limits<double>::infinity(), "x");
-  //   h(std::numeric_limits<double>::quiet_NaN(), "x");
-  //   BOOST_TEST_EQ(a.size(), 1);
-  //   BOOST_TEST_EQ(b.size(), 1);
-  //   BOOST_TEST_EQ(h.size(), 3);
-  //   h(2, "x");
-  //   BOOST_TEST_EQ(a.size(), 3);
-  //   BOOST_TEST_EQ(b.size(), 1);
-  //   BOOST_TEST_EQ(h.size(), 5);
-  //   h(1, "y");
-  //   BOOST_TEST_EQ(a.size(), 3);
-  //   BOOST_TEST_EQ(b.size(), 2);
-  //   BOOST_TEST_EQ(h.size(), 10);
-  //   BOOST_TEST_EQ(h.at(-1, 0), 1);
-  //   BOOST_TEST_EQ(h.at(-1, 1), 0);
-  //   BOOST_TEST_EQ(h.at(3, 0), 2);
-  //   BOOST_TEST_EQ(h.at(3, 1), 0);
-  //   BOOST_TEST_EQ(h.at(a.index(0), b.index("x")), 1);
-  //   BOOST_TEST_EQ(h.at(a.index(1), b.index("x")), 0);
-  //   BOOST_TEST_EQ(h.at(a.index(2), b.index("x")), 1);
-  //   BOOST_TEST_EQ(h.at(a.index(0), b.index("y")), 0);
-  //   BOOST_TEST_EQ(h.at(a.index(1), b.index("y")), 1);
-  //   BOOST_TEST_EQ(h.at(a.index(2), b.index("y")), 0);
-  // }
+  {
+    auto h = make_s(Tag(), std::vector<int>(), integer());
+    const auto& a = h.axis();
+    h(-std::numeric_limits<double>::infinity());
+    h(std::numeric_limits<double>::quiet_NaN());
+    h(std::numeric_limits<double>::infinity());
+    BOOST_TEST_EQ(a.size(), 0);
+    BOOST_TEST_EQ(h.size(), 2);
+    BOOST_TEST_EQ(h[-1], 1);
+    BOOST_TEST_EQ(h[0], 2);
+    h(0);
+    BOOST_TEST_EQ(a.size(), 1);
+    BOOST_TEST_EQ(h.size(), 3);
+    BOOST_TEST_EQ(h[-1], 1);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 2);
+    h(2);
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(h.size(), 5);
+    BOOST_TEST_EQ(h[-1], 1);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 0);
+    BOOST_TEST_EQ(h[2], 1);
+    BOOST_TEST_EQ(h[3], 2);
+    h(-2);
+    BOOST_TEST_EQ(a.size(), 5);
+    BOOST_TEST_EQ(h.size(), 7);
+    // BOOST_TEST_EQ(h[-1], 1)
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 0);
+    BOOST_TEST_EQ(h[2], 1);
+    BOOST_TEST_EQ(h[3], 0);
+    BOOST_TEST_EQ(h[4], 1);
+    BOOST_TEST_EQ(h[5], 2);
+  }
+
+  {
+    auto h = make_s(Tag(), std::vector<int>(), integer(), category());
+    const auto& a = h.axis(0);
+    const auto& b = h.axis(1);
+    BOOST_TEST_EQ(a.size(), 0);
+    BOOST_TEST_EQ(b.size(), 0);
+    BOOST_TEST_EQ(h.size(), 0);
+    h(0, "x");
+    h(-std::numeric_limits<double>::infinity(), "x");
+    h(std::numeric_limits<double>::infinity(), "x");
+    h(std::numeric_limits<double>::quiet_NaN(), "x");
+    BOOST_TEST_EQ(a.size(), 1);
+    BOOST_TEST_EQ(b.size(), 1);
+    BOOST_TEST_EQ(h.size(), 3);
+    h(2, "x");
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(b.size(), 1);
+    BOOST_TEST_EQ(h.size(), 5);
+    h(1, "y");
+    BOOST_TEST_EQ(a.size(), 3);
+    BOOST_TEST_EQ(b.size(), 2);
+    BOOST_TEST_EQ(h.size(), 10);
+    BOOST_TEST_EQ(h.at(-1, 0), 1);
+    BOOST_TEST_EQ(h.at(-1, 1), 0);
+    BOOST_TEST_EQ(h.at(3, 0), 2);
+    BOOST_TEST_EQ(h.at(3, 1), 0);
+    BOOST_TEST_EQ(h.at(a.index(0), b.index("x")), 1);
+    BOOST_TEST_EQ(h.at(a.index(1), b.index("x")), 0);
+    BOOST_TEST_EQ(h.at(a.index(2), b.index("x")), 1);
+    BOOST_TEST_EQ(h.at(a.index(0), b.index("y")), 0);
+    BOOST_TEST_EQ(h.at(a.index(1), b.index("y")), 1);
+    BOOST_TEST_EQ(h.at(a.index(2), b.index("y")), 0);
+
+    BOOST_TEST_THROWS(h(0, "x", 42), std::invalid_argument);
+  }
+
+  {
+    auto h = make_s(Tag{}, std::vector<int>{}, custom_2d_axis{});
+    BOOST_TEST_EQ(h.size(), 0);
+    h(0, 0);
+    BOOST_TEST_EQ(h.size(), 1);
+    h(1, 0);
+    h(0, 1);
+    BOOST_TEST_EQ(h.size(), 2);
+    h(10, 0);
+    BOOST_TEST_EQ(h.size(), 11);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 2);
+    BOOST_TEST_EQ(h[10], 1);
+    BOOST_TEST_THROWS(h(0), std::invalid_argument);
+  }
 }
 
 int main() {

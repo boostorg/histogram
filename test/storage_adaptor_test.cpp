@@ -159,7 +159,7 @@ int main() {
 
   mixed_tests<storage_adaptor<std::vector<int>>,
               storage_adaptor<std::array<double, 100>>>();
-  mixed_tests<unlimited_storage<>, storage_adaptor<std::vector<int>>>();
+  mixed_tests<unlimited_storage<>, storage_adaptor<std::vector<double>>>();
   mixed_tests<storage_adaptor<std::vector<int>>, unlimited_storage<>>();
   mixed_tests<storage_adaptor<std::vector<int>>,
               storage_adaptor<std::map<std::size_t, int>>>();

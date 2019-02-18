@@ -73,9 +73,9 @@ decltype(auto) metadata(T&& t) noexcept {
 
 template <class T>
 using static_options =
-    detail::mp_eval_or<detail::static_options_impl, detail::remove_cvref_t<T>,
-                       mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<T>>,
-                                   axis::option::growth, axis::option::none>>;
+    detail::mp_eval_or<mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<T>>,
+                                   axis::option::growth, axis::option::none>,
+                       detail::static_options_impl, detail::remove_cvref_t<T>>;
 
 template <class T>
 constexpr unsigned options(const T& t) noexcept {
@@ -112,7 +112,11 @@ template <class T, class U>
 auto index(const T& axis, const U& value) {
   using V = detail::arg_type<decltype(&T::index)>;
   return detail::static_if<std::is_convertible<U, V>>(
-      [&value](const auto& axis) { return axis.index(value); },
+      [&value](const auto& axis) {
+        using A = detail::remove_cvref_t<decltype(axis)>;
+        using V2 = detail::arg_type<decltype(&A::index)>;
+        return axis.index(static_cast<V2>(value));
+      },
       [](const T&) {
         BOOST_THROW_EXCEPTION(std::invalid_argument(
             detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),

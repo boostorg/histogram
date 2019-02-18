@@ -14,47 +14,52 @@ project
     <define>XML_PATH=\\\"$(THIS_PATH)/\\\"
     ;
 
-run algorithm_project_test.cpp ;
-run algorithm_reduce_test.cpp ;
-run algorithm_sum_test.cpp ;
-run axis_category_test.cpp ;
-run axis_integer_test.cpp ;
-run axis_option_test.cpp ;
-run axis_regular_test.cpp ;
-run axis_size.cpp ;
-run axis_traits_test.cpp ;
-run axis_variable_test.cpp ;
-run axis_variant_test.cpp ;
-run boost_range_support_test.cpp ;
-run boost_units_support_test.cpp ;
-run detail_test.cpp ;
-run histogram_dynamic_test.cpp ;
-run histogram_growing_test.cpp ;
-run histogram_mixed_test.cpp ;
-run histogram_operators_test.cpp ;
-run histogram_test.cpp ;
-run indexed_test.cpp ;
-run internal_accumulators_test.cpp ;
-run linearize_test.cpp ;
-run meta_test.cpp ;
-run storage_adaptor_test.cpp ;
-run unlimited_storage_test.cpp ;
-run utility_test.cpp ;
+test-suite minimal :
+    [ run algorithm_project_test.cpp ]
+    [ run algorithm_reduce_test.cpp ]
+    [ run algorithm_sum_test.cpp ]
+    [ run axis_category_test.cpp ]
+    [ run axis_integer_test.cpp ]
+    [ run axis_option_test.cpp ]
+    [ run axis_regular_test.cpp ]
+    [ run axis_size.cpp ]
+    [ run axis_traits_test.cpp ]
+    [ run axis_variable_test.cpp ]
+    [ run axis_variant_test.cpp ]
+    [ run boost_range_support_test.cpp ]
+    [ run boost_units_support_test.cpp ]
+    [ run detail_test.cpp ]
+    [ run histogram_dynamic_test.cpp ]
+    [ run histogram_growing_test.cpp ]
+    [ run histogram_mixed_test.cpp ]
+    [ run histogram_operators_test.cpp ]
+    [ run histogram_test.cpp ]
+    [ run indexed_test.cpp ]
+    [ run internal_accumulators_test.cpp ]
+    [ run linearize_test.cpp ]
+    [ run meta_test.cpp ]
+    [ run storage_adaptor_test.cpp ]
+    [ run unlimited_storage_test.cpp ]
+    [ run utility_test.cpp ]
+    ;
 
 # has additional requirements only available on develop branch
-alias deduction_guides : [ run deduction_guides_test.cpp ] ;
+test-suite deduction_guides : [ run deduction_guides_test.cpp ] ;
 
 # disabled until boost.parameter usage is fixed
-alias accumulator : [ run boost_accumulators_support_test.cpp  ] ;
+test-suite accumulator : [ run boost_accumulators_support_test.cpp  ] ;
 
 alias libserial : /boost/serialization//boost_serialization : <link>static ;
 
-alias serial :
+test-suite serial :
     [ run storage_adaptor_serialization_test.cpp libserial ]
     [ run histogram_serialization_test.cpp libserial ]
     [ run unlimited_storage_serialization_test.cpp libserial ]
     ;
 
+test-suite all : minimal serial ;
+
+explicit minimal ;
 explicit libserial ;
 explicit serial ;
 explicit accumulator ;

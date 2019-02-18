@@ -43,51 +43,14 @@ bool safe_increment(T& t) {
 }
 
 template <class T, class U>
-bool safe_radd(std::true_type, T& t, const U& u) {
+bool safe_radd(T& t, const U& u) {
+  static_assert(is_unsigned_integral<T>::value, "T must be unsigned integral type");
+  static_assert(is_unsigned_integral<U>::value, "T must be unsigned integral type");
   if (static_cast<T>(std::numeric_limits<T>::max() - t) >= u) {
     t += static_cast<T>(u); // static_cast to suppress conversion warning
     return true;
   }
   return false;
-}
-
-template <class T, class U>
-bool safe_radd(std::false_type, T& t, const U& u) {
-  static_assert(std::is_integral<U>::value, "U must be integral type");
-  if (u >= 0) {
-    if (static_cast<T>(std::numeric_limits<T>::max() - t) >=
-        static_cast<std::make_unsigned_t<U>>(u)) {
-      t += static_cast<T>(u);
-      return true;
-    }
-    return false;
-  }
-  if (t >= static_cast<std::make_unsigned_t<U>>(-u)) {
-    t -= static_cast<T>(-u);
-    return true;
-  }
-  return false;
-}
-
-template <class T, class A>
-bool safe_radd(std::false_type, T& t, const mp_int<A>& u) {
-  if (u >= 0) {
-    if (std::numeric_limits<T>::max() - t > u) {
-      t += static_cast<T>(u);
-      return true;
-    }
-  }
-  if (u + t >= 0) {
-    t -= static_cast<T>(-u);
-    return true;
-  }
-  return false;
-}
-
-template <class T, class U>
-bool safe_radd(T& t, const U& u) {
-  static_assert(is_unsigned_integral<T>::value, "T must be unsigned integral type");
-  return safe_radd(is_unsigned_integral<U>{}, t, u);
 }
 
 // use boost.multiprecision.cpp_int in your own code, it is much more sophisticated
@@ -107,7 +70,7 @@ struct mp_int {
   }
 
   mp_int& operator++() {
-    BOOST_ASSERT(data.size() >= 1);
+    BOOST_ASSERT(data.size() > 0u);
     std::size_t i = 0;
     while (!safe_increment(data[i])) {
       data[i] = 0;
@@ -153,7 +116,7 @@ struct mp_int {
   }
 
   mp_int& operator+=(uint64_t o) {
-    BOOST_ASSERT(data.size() >= 1);
+    BOOST_ASSERT(data.size() > 0u);
     if (safe_radd(data[0], o)) return *this;
     add_remainder(data[0], o);
     // carry the one, data may grow several times
@@ -168,40 +131,45 @@ struct mp_int {
   }
 
   operator double() const noexcept {
-    BOOST_ASSERT(data.size() >= 1);
-    double result = data[0];
+    BOOST_ASSERT(data.size() > 0u);
+    double result = static_cast<double>(data[0]);
     std::size_t i = 0;
     while (++i < data.size())
       result += static_cast<double>(data[i]) * std::pow(2.0, i * 64);
     return result;
   }
 
-  bool operator<(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() >= 1);
+  bool less(uint64_t o) const noexcept {
+    BOOST_ASSERT(data.size() > 0u);
     return data.size() == 1 && data[0] < o;
   }
 
-  bool operator>(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() >= 1);
+  bool greater(uint64_t o) const noexcept {
+    BOOST_ASSERT(data.size() > 0u);
     return data.size() > 1 || data[0] > o;
   }
 
-  bool operator==(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() >= 1);
+  bool equal(uint64_t o) const noexcept {
+    BOOST_ASSERT(data.size() > 0u);
     return data.size() == 1 && data[0] == o;
   }
 
-  bool operator<(double o) const noexcept { return operator double() < o; }
+  bool less(double o) const noexcept { return operator double() < o; }
 
-  bool operator>(double o) const noexcept { return operator double() > o; }
+  bool greater(double o) const noexcept { return operator double() > o; }
 
-  bool operator==(double o) const noexcept { return operator double() == o; }
+  bool equal(double o) const noexcept { return operator double() == o; }
 
-  bool operator<(const mp_int& o) const noexcept {
+  bool less(const mp_int& o) const noexcept {
+    BOOST_ASSERT(data.size() > 0u);
+    BOOST_ASSERT(o.data.size() > 0u);
+    // no leading zeros allowed
+    BOOST_ASSERT(data.size() == 1 || data.back() > 0u);
+    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0u);
     if (data.size() < o.data.size()) return true;
     if (data.size() > o.data.size()) return false;
     auto s = data.size();
-    while (s > 0) {
+    while (s > 0u) {
       --s;
       if (data[s] < o.data[s]) return true;
       if (data[s] > o.data[s]) return false;
@@ -209,11 +177,16 @@ struct mp_int {
     return false; // args are equal
   }
 
-  bool operator>(const mp_int& o) const noexcept {
+  bool greater(const mp_int& o) const noexcept {
+    BOOST_ASSERT(data.size() > 0u);
+    BOOST_ASSERT(o.data.size() > 0u);
+    // no leading zeros allowed
+    BOOST_ASSERT(data.size() == 1 || data.back() > 0u);
+    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0u);
     if (data.size() > o.data.size()) return true;
     if (data.size() < o.data.size()) return false;
     auto s = data.size();
-    while (s > 0) {
+    while (s > 0u) {
       --s;
       if (data[s] > o.data[s]) return true;
       if (data[s] < o.data[s]) return false;
@@ -221,7 +194,12 @@ struct mp_int {
     return false; // args are equal
   }
 
-  bool operator==(const mp_int& o) const noexcept {
+  bool equal(const mp_int& o) const noexcept {
+    BOOST_ASSERT(data.size() > 0u);
+    BOOST_ASSERT(o.data.size() > 0u);
+    // no leading zeros allowed
+    BOOST_ASSERT(data.size() == 1 || data.back() > 0u);
+    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0u);
     if (data.size() != o.data.size()) return false;
     for (std::size_t s = 0; s < data.size(); ++s)
       if (data[s] != o.data[s]) return false;
@@ -229,66 +207,86 @@ struct mp_int {
   }
 
   template <class T>
-  bool operator<(const T& o) const noexcept {
-    return std::is_integral<T>::value ? operator<(static_cast<uint64_t>(o)) :
-                                      operator<(static_cast<double>(o));
+  bool less(const T& o) const noexcept {
+    return std::is_integral<T>::value ? less(static_cast<uint64_t>(o))
+                                      : less(static_cast<double>(o));
   }
 
   template <class T>
-  bool operator>(const T& o) const noexcept {
-    return std::is_integral<T>::value ? operator>(static_cast<uint64_t>(o)) :
-                                      operator>(static_cast<double>(o));
+  bool greater(const T& o) const noexcept {
+    return std::is_integral<T>::value ? greater(static_cast<uint64_t>(o))
+                                      : greater(static_cast<double>(o));
   }
 
   template <class T>
-  bool operator==(const T& o) const noexcept {
-    return std::is_integral<T>::value ? operator==(static_cast<uint64_t>(o)) :
-                                      operator==(static_cast<double>(o));
+  bool equal(const T& o) const noexcept {
+    return std::is_integral<T>::value ? equal(static_cast<uint64_t>(o))
+                                      : equal(static_cast<double>(o));
   }
 
   template <class T>
-  bool operator<=(const T& o) const noexcept {
-    return !operator>(o);
+  friend bool operator<(const mp_int& a, const T& o) noexcept {
+    return a.less(o);
   }
-
   template <class T>
-  bool operator>=(const T& o) const noexcept {
-    return !operator<(o);
+  friend bool operator>(const mp_int& a, const T& o) noexcept {
+    return a.greater(o);
   }
-
   template <class T>
-  bool operator!=(const T& o) const noexcept {
-    return !operator==(o);
+  friend bool operator==(const mp_int& a, const T& o) noexcept {
+    return a.equal(o);
+  }
+  template <class T>
+  friend bool operator<=(const mp_int& a, const T& o) noexcept {
+    return !a.greater(o);
+  }
+  template <class T>
+  friend bool operator>=(const mp_int& a, const T& o) noexcept {
+    return !a.less(o);
+  }
+  template <class T>
+  friend bool operator!=(const mp_int& a, const T& o) noexcept {
+    return !a.equal(o);
   }
 
   template <class T>
   friend bool operator<(const T& a, const mp_int& b) noexcept {
-    return !(b >= a);
+    // a < b == b >= a == !(b < a)
+    return !b.less(a);
   }
-
   template <class T>
   friend bool operator>(const T& a, const mp_int& b) noexcept {
-    return !(b <= a);
+    // a > b == b <= a == !(b > a)
+    return !b.greater(a);
   }
-
   template <class T>
   friend bool operator<=(const T& a, const mp_int& b) noexcept {
-    return !(b > a);
+    return b.greater(a);
   }
-
   template <class T>
   friend bool operator>=(const T& a, const mp_int& b) noexcept {
-    return !(b < a);
+    return b.less(a);
   }
-
   template <class T>
   friend bool operator==(const T& a, const mp_int& b) noexcept {
-    return b == a;
+    return b.equal(a);
   }
-
   template <class T>
   friend bool operator!=(const T& a, const mp_int& b) noexcept {
-    return b != a;
+    return !b.equal(a);
+  }
+
+  friend bool operator<(const mp_int& a, const mp_int& b) noexcept { return a.less(b); }
+  friend bool operator>(const mp_int& a, const mp_int& b) noexcept {
+    return a.greater(b);
+  }
+  friend bool operator<=(const mp_int& a, const mp_int& b) noexcept {
+    return b.greater(a);
+  }
+  friend bool operator>=(const mp_int& a, const mp_int& b) noexcept { return b.less(a); }
+  friend bool operator==(const mp_int& a, const mp_int& b) noexcept { return a.equal(b); }
+  friend bool operator!=(const mp_int& a, const mp_int& b) noexcept {
+    return !a.equal(b);
   }
 
   uint64_t& maybe_extend(std::size_t i) {
@@ -297,7 +295,7 @@ struct mp_int {
   }
 
   static void add_remainder(uint64_t& d, const uint64_t o) noexcept {
-    BOOST_ASSERT(d > 0);
+    BOOST_ASSERT(d > 0u);
     // in decimal system it would look like this:
     // 8 + 8 = 6 = 8 - (9 - 8) - 1
     // 9 + 1 = 0 = 9 - (9 - 1) - 1
@@ -331,7 +329,7 @@ auto create_buffer(Allocator& a, std::size_t n) {
 
 template <class Allocator, class Iterator>
 auto create_buffer(Allocator& a, std::size_t n, Iterator iter) {
-  BOOST_ASSERT(n > 0);
+  BOOST_ASSERT(n > 0u);
   using AT = std::allocator_traits<Allocator>;
   auto ptr = AT::allocate(a, n); // may throw
   static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
@@ -354,7 +352,7 @@ template <class Allocator>
 void destroy_buffer(Allocator& a, typename std::allocator_traits<Allocator>::pointer p,
                     std::size_t n) {
   BOOST_ASSERT(p);
-  BOOST_ASSERT(n > 0);
+  BOOST_ASSERT(n > 0u);
   using AT = std::allocator_traits<Allocator>;
   auto it = p + n;
   while (it != p) AT::destroy(a, --it);
@@ -421,21 +419,7 @@ private:
       return f(static_cast<double*>(ptr), std::forward<Ts>(ts)...);
     }
 
-    buffer_type(std::size_t s = 0, allocator_type a = {})
-        : alloc(std::move(a)), size(s), type(type_index<uint8_t>()) {
-      if (size > 0) {
-        // rebind allocator
-        using alloc_type = typename std::allocator_traits<
-            allocator_type>::template rebind_alloc<uint8_t>;
-        alloc_type a(alloc);
-        try {
-          ptr = detail::create_buffer(a, size); // may throw
-        } catch (...) {
-          size = 0;
-          throw;
-        }
-      }
-    }
+    buffer_type(allocator_type a = {}) : alloc(std::move(a)) {}
 
     buffer_type(buffer_type&& o) noexcept
         : alloc(std::move(o.alloc)), size(o.size), type(o.type), ptr(o.ptr) {
@@ -626,9 +610,7 @@ public:
 
     template <class T>
     reference& operator-=(const T& t) {
-      base_type::buffer_->apply(adder(), *base_type::buffer_, base_type::idx_,
-                                -static_cast<double>(t));
-      return *this;
+      return operator+=(-t);
     }
 
     template <class T>
@@ -684,7 +666,7 @@ public:
   using const_iterator = iterator_t<const value_type, const_reference, const buffer_type>;
   using iterator = iterator_t<value_type, reference, buffer_type>;
 
-  explicit unlimited_storage(allocator_type a = {}) : buffer(0, std::move(a)) {}
+  explicit unlimited_storage(allocator_type a = {}) : buffer(std::move(a)) {}
   unlimited_storage(const unlimited_storage&) = default;
   unlimited_storage& operator=(const unlimited_storage&) = default;
   unlimited_storage(unlimited_storage&&) = default;
@@ -746,7 +728,7 @@ public:
   /// @private used by unit tests, not part of generic storage interface
   template <class T>
   unlimited_storage(std::size_t s, const T* p, allocator_type a = {})
-      : buffer(0, std::move(a)) {
+      : buffer(std::move(a)) {
     buffer.template make<T>(s, p);
   }
 
@@ -777,37 +759,49 @@ private:
 
   struct adder {
     template <class Buffer, class U>
-    void if_U_is_integral(std::true_type, mp_int* tp, Buffer&, std::size_t i,
-                          const U& x) {
-      tp[i] += x;
+    void operator()(double* tp, Buffer&, std::size_t i, const U& x) {
+      tp[i] += static_cast<double>(x);
     }
 
     template <class T, class Buffer, class U>
-    void if_U_is_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
-      if (detail::safe_radd(tp[i], x)) return;
-      if (x >= 0) {
-        using V = mp11::mp_at_c<types, (type_index<T>() + 1)>;
-        b.template make<V>(b.size, tp);
-        if_U_is_integral(std::true_type{}, static_cast<V*>(b.ptr), b, i, x);
-      } else {
-        if_U_is_integral(std::false_type{}, tp, b, i, x);
-      }
+    void operator()(T* tp, Buffer& b, std::size_t i, const U& x) {
+      U_is_integral(std::is_integral<U>{}, tp, b, i, x);
     }
 
     template <class T, class Buffer, class U>
-    void if_U_is_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
+    void U_is_integral(std::false_type, T* tp, Buffer& b, std::size_t i, const U& x) {
       b.template make<double>(b.size, tp);
       operator()(static_cast<double*>(b.ptr), b, i, x);
     }
 
     template <class T, class Buffer, class U>
-    void operator()(T* tp, Buffer& b, std::size_t i, const U& x) {
-      if_U_is_integral(std::is_integral<U>{}, tp, b, i, x);
+    void U_is_integral(std::true_type, T* tp, Buffer& b, std::size_t i, const U& x) {
+      U_is_unsigned_integral(std::is_unsigned<U>{}, tp, b, i, x);
+    }
+
+    template <class T, class Buffer, class U>
+    void U_is_unsigned_integral(std::false_type, T* tp, Buffer& b, std::size_t i,
+                                const U& x) {
+      if (x >= 0)
+        U_is_unsigned_integral(std::true_type{}, tp, b, i,
+                               static_cast<typename std::make_unsigned<U>::type>(x));
+      else
+        U_is_integral(std::false_type{}, tp, b, i, static_cast<double>(x));
     }
 
     template <class Buffer, class U>
-    void operator()(double* tp, Buffer&, std::size_t i, const U& x) {
-      tp[i] += static_cast<double>(x);
+    void U_is_unsigned_integral(std::true_type, mp_int* tp, Buffer&, std::size_t i,
+                                const U& x) {
+      tp[i] += x;
+    }
+
+    template <class T, class Buffer, class U>
+    void U_is_unsigned_integral(std::true_type, T* tp, Buffer& b, std::size_t i,
+                                const U& x) {
+      if (detail::safe_radd(tp[i], x)) return;
+      using V = mp11::mp_at_c<types, (type_index<T>() + 1)>;
+      b.template make<V>(b.size, tp);
+      U_is_unsigned_integral(std::true_type{}, static_cast<V*>(b.ptr), b, i, x);
     }
   };
 

@@ -112,14 +112,14 @@ void linearize_index(optional_index& out, const A& axis, const axis::index_type 
 template <class S, class A, class T>
 void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   bool update_needed = false;
-  auto sh = shifts;
-  for_each_axis(axes, [&](const auto&) { update_needed |= (*sh++ != 0); });
+  auto sit = shifts;
+  for_each_axis(axes, [&](const auto&) { update_needed |= (*sit++ != 0); });
   if (!update_needed) return;
   struct item {
     axis::index_type idx, old_extend;
     std::size_t new_stride;
   } data[buffer_size<A>::value];
-  auto sit = shifts;
+  sit = shifts;
   auto dit = data;
   std::size_t s = 1;
   for_each_axis(axes, [&](const auto& a) {
@@ -129,15 +129,17 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   });
   auto new_storage = make_default(storage);
   new_storage.reset(detail::bincount(axes));
+  const auto dlast = data + get_size(axes) - 1;
   for (const auto& x : storage) {
     auto ns = new_storage.begin();
     sit = shifts;
     dit = data;
     for_each_axis(axes, [&](const auto& a) {
-      using opt = axis::traits::static_options<remove_cvref_t<decltype(a)>>;
+      using opt = axis::traits::static_options<decltype(a)>;
       if (axis::test<opt, axis::option::underflow>::value) {
         if (dit->idx == 0) {
-          // noop
+          // axis has underflow and we are in the underflow bin:
+          // keep storage pointer unchanged
           ++dit;
           ++sit;
           return;
@@ -145,32 +147,32 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
       }
       if (axis::test<opt, axis::option::overflow>::value) {
         if (dit->idx == dit->old_extend - 1) {
+          // axis has overflow and we are in the overflow bin:
+          // move storage pointer to corresponding overflow bin position
           ns += (axis::traits::extend(a) - 1) * dit->new_stride;
           ++dit;
           ++sit;
           return;
         }
       }
+      // we are in a normal bin:
+      // move storage pointer to index position, apply positive shifts
       ns += (dit->idx + std::max(*sit, 0)) * dit->new_stride;
       ++dit;
       ++sit;
     });
+    // assign old value to new location
     *ns = x;
+    // advance multi-dimensional index
     dit = data;
     ++dit->idx;
-    while (dit != (data + get_size(axes) - 1) && dit->idx == dit->old_extend) {
+    while (dit != dlast && dit->idx == dit->old_extend) {
       dit->idx = 0;
       ++(++dit)->idx;
     }
   }
   storage = std::move(new_storage);
 }
-
-template <class T>
-struct size_or_zero : mp11::mp_size_t<0> {};
-
-template <class... Ts>
-struct size_or_zero<std::tuple<Ts...>> : mp11::mp_size_t<sizeof...(Ts)> {};
 
 // special case: if histogram::operator()(tuple(1, 2)) is called on 1d histogram
 // with axis that accepts 2d tuple, this should not fail
@@ -192,8 +194,8 @@ optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) 
     if (rank != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    constexpr unsigned M = size_or_zero<remove_cvref_t<decltype(axes)>>::value;
-    mp11::mp_for_each<mp11::mp_iota_c<(M == 0 ? N : M)>>([&](auto J) {
+    constexpr unsigned M = buffer_size<remove_cvref_t<decltype(axes)>>::value;
+    mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
       linearize_value(idx, axis_get<J>(axes), std::get<(J + I)>(args));
     });
   }
@@ -212,8 +214,8 @@ optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args)
     if (rank != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    constexpr unsigned M = size_or_zero<remove_cvref_t<decltype(axes)>>::value;
-    mp11::mp_for_each<mp11::mp_iota_c<(M == 0 ? N : M)>>([&](auto J) {
+    constexpr unsigned M = buffer_size<remove_cvref_t<decltype(axes)>>::value;
+    mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
       linearize_value(idx, shifts[J], axis_get<J>(axes), std::get<(J + I)>(args));
     });
   }
@@ -334,7 +336,7 @@ optional_index at(const A& axes, const std::tuple<Us...>& args) {
 
 template <typename A, typename U>
 optional_index at(const A& axes, const U& args) {
-  if (get_size(axes) != args.size())
+  if (get_size(axes) != get_size(args))
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
   using std::begin;

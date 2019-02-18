@@ -160,20 +160,23 @@ public:
     const auto clast = ca + hist_.rank() - 1;
     std::size_t stride = 1;
     h.for_each_axis([&, this](const auto& a) {
-      using opt = axis::traits::static_options<detail::remove_cvref_t<decltype(a)>>;
-      const auto shift = axis::test<opt, axis::option::underflow>::value;
+      using opt = axis::traits::static_options<decltype(a)>;
+      constexpr auto under = axis::test<opt, axis::option::underflow>::value ? 1 : 0;
+      constexpr auto over = axis::test<opt, axis::option::overflow>::value ? 1 : 0;
+      const auto size = a.size();
 
-      ca->extend = axis::traits::extend(a);
-      ca->begin = cover_all_ ? -shift : 0;
-      ca->end = ca->extend - shift -
-                (cover_all_ ? 0 : axis::test<opt, axis::option::overflow>::value);
+      ca->extend = size + under + over;
+      // -1 if underflow and cover all, else 0
+      ca->begin = cover_all_ ? -under : 0;
+      // size + 1 if overflow and cover all, else size
+      ca->end = cover_all_ ? size + over : size;
       ca->idx = ca->begin;
 
-      begin_ += (ca->begin + shift) * stride;
+      begin_ += (ca->begin + under) * stride;
       if (ca < clast)
-        end_ += (ca->begin + shift) * stride;
+        end_ += (ca->begin + under) * stride;
       else
-        end_ += (ca->end + shift) * stride;
+        end_ += (ca->end + under) * stride;
 
       stride *= ca->extend;
       ++ca;

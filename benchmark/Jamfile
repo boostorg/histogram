@@ -11,6 +11,7 @@ project
     : requirements
     <include>$(BOOST_ROOT)
     <include>.
+    <variant>release
     ;
 
 alias run-speed-test :

@@ -36,14 +36,6 @@ matrix:
       script:
         - ../../b2 -j2 -q cxxstd=14 test examples test//serial examples//serial
 
-    # - name: "clang: minimal"
-    #   addons:
-    #     apt:
-    #       sources: ubuntu-toolchain-r-test
-    #       packages: libc++-dev
-    #   script:
-    #     - ./b2 -j2 -q toolset=clang cxxflags="-stdlib=libc++" linkflags="-lc++" libs/histogram
-
     - name: "gcc-5: ubasan"
       addons:
         apt:
@@ -51,8 +43,10 @@ matrix:
           packages: g++-5
       script:
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 ubasan test examples &&
-          ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 test//serial examples//serial
+        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 ubasan
+          test//minimal examples//minimal &&
+          ../../b2 -j2 -q toolset=gcc-5 cxxstd=14
+          test//serial examples//serial
 
     - name: "gcc-7: coverage"
       addons:
@@ -61,7 +55,6 @@ matrix:
           packages: g++-7
       script:
         - ../../b2 -j2 -q toolset=gcc-7 coverage
-          test examples test//serial examples//serial
       after_success:
         - GCOV=gcov-7 tools/cov.sh
 
@@ -72,8 +65,10 @@ matrix:
           packages: g++-8
       script:
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 ubasan test examples &&
-          ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 test//serial examples//serial
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 ubasan
+          test//minimal examples//minimal &&
+          ../../b2 -j2 -q toolset=gcc-8 cxxstd=17
+          test//serial examples//serial
 
 before_script:
   # Cloning minimal set of Boost libraries

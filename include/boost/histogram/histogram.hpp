@@ -154,7 +154,7 @@ public:
   */
   template <class... Ts>
   auto operator()(const Ts&... ts) {
-    return operator()(std::forward_as_tuple(ts...));
+    return operator()(std::make_tuple(ts...));
   }
 
   /// Fill histogram with values, an optional weight, and/or a sample from a `std::tuple`.

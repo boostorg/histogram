@@ -101,7 +101,7 @@ void increase_and_grow() {
   ++x[0];
   n2[0] += x[0];
 
-  double v = tmax;
+  auto v = static_cast<double>(tmax);
   ++v;
   BOOST_TEST_EQ(n[0], v);
   BOOST_TEST_EQ(n2[0], v);
@@ -216,47 +216,41 @@ int main() {
     c = 0;
     BOOST_TEST_EQ(bh::detail::safe_radd(c, 255u), true);
     BOOST_TEST_EQ(c, 255);
-    c = 0;
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, 255), true);
-    BOOST_TEST_EQ(c, 255);
     c = 1;
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, 255), false);
-    BOOST_TEST_EQ(c, 1);
     BOOST_TEST_EQ(bh::detail::safe_radd(c, 255u), false);
     BOOST_TEST_EQ(c, 1);
     c = 255;
     BOOST_TEST_EQ(bh::detail::safe_radd(c, 1u), false);
     BOOST_TEST_EQ(c, 255);
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, 1), false);
-    BOOST_TEST_EQ(c, 255);
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, -255), true);
-    BOOST_TEST_EQ(c, 0);
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, -1), false);
-    BOOST_TEST_EQ(c, 0);
-
-    uint32_t i = 0;
-    BOOST_TEST_EQ(bh::detail::safe_radd(i, 2), true);
-    BOOST_TEST_EQ(i, 2u);
-    BOOST_TEST_EQ(bh::detail::safe_radd(i, -2), true);
-    BOOST_TEST_EQ(i, 0u);
-    BOOST_TEST_EQ(bh::detail::safe_radd(i, -2), false);
-    BOOST_TEST_EQ(i, 0u);
   }
 
   // mp_int
   {
     const auto vmax = max<uint64_t>();
 
-    BOOST_TEST_EQ(mp_int(), 0);
-    BOOST_TEST_EQ(mp_int(), 0.0);
-    BOOST_TEST_EQ(mp_int(1), 1);
-    BOOST_TEST_NE(mp_int(1), 2);
-    BOOST_TEST_LT(mp_int(1), 2);
-    BOOST_TEST_LE(mp_int(1), 2);
-    BOOST_TEST_LE(mp_int(1), 1);
-    BOOST_TEST_GT(mp_int(1), 0);
-    BOOST_TEST_GE(mp_int(1), 0);
-    BOOST_TEST_GE(mp_int(1), 1);
+    BOOST_TEST_EQ(mp_int(), 0u);
+    BOOST_TEST_EQ(mp_int(1u), 1u);
+    BOOST_TEST_EQ(mp_int(1u), 1.0);
+    BOOST_TEST_EQ(mp_int(1u), mp_int(1u));
+    BOOST_TEST_NE(mp_int(1u), 2u);
+    BOOST_TEST_NE(mp_int(1u), 2.0);
+    BOOST_TEST_NE(mp_int(1u), mp_int(2u));
+    BOOST_TEST_LT(mp_int(1u), 2u);
+    BOOST_TEST_LT(mp_int(1u), 2.0);
+    BOOST_TEST_LT(mp_int(1u), mp_int(2u));
+    BOOST_TEST_LE(mp_int(1u), 2u);
+    BOOST_TEST_LE(mp_int(1u), 2.0);
+    BOOST_TEST_LE(mp_int(1u), mp_int(2u));
+    BOOST_TEST_LE(mp_int(1u), 1u);
+    BOOST_TEST_GT(mp_int(1u), 0u);
+    BOOST_TEST_GT(mp_int(1u), 0.0);
+    BOOST_TEST_GT(mp_int(1u), mp_int(0u));
+    BOOST_TEST_GE(mp_int(1u), 0u);
+    BOOST_TEST_GE(mp_int(1u), 0.0);
+    BOOST_TEST_GE(mp_int(1u), 1u);
+    BOOST_TEST_GE(mp_int(1u), mp_int(0u));
+    BOOST_TEST_NOT(mp_int(1u) < mp_int(1u));
+    BOOST_TEST_NOT(mp_int(1u) > mp_int(1u));
 
     auto a = mp_int();
     ++a;
@@ -268,24 +262,34 @@ int main() {
     BOOST_TEST_EQ(a, vmax);
     BOOST_TEST_EQ(a, static_cast<double>(vmax));
     ++a;
-    BOOST_TEST_EQ(a.data.size(), 2);
-    BOOST_TEST_EQ(a.data[0], 0);
-    BOOST_TEST_EQ(a.data[1], 1);
+    BOOST_TEST_EQ(a, make_mp_int(0, 1));
     ++a;
-    BOOST_TEST_EQ(a.data.size(), 2);
-    BOOST_TEST_EQ(a.data[0], 1);
-    BOOST_TEST_EQ(a.data[1], 1);
+    BOOST_TEST_EQ(a, make_mp_int(1, 1));
     a += a;
-    BOOST_TEST_EQ(a.data.size(), 2);
-    BOOST_TEST_EQ(a.data[0], 2);
-    BOOST_TEST_EQ(a.data[1], 2);
+    BOOST_TEST_EQ(a, make_mp_int(2, 2));
     BOOST_TEST_EQ(a, 2 * static_cast<double>(vmax) + 2);
+
+    // carry once A
+    a.data[0] = vmax;
+    a.data[1] = 1;
+    ++a;
+    BOOST_TEST_EQ(a, make_mp_int(0, 2));
+    // carry once B
+    a.data[0] = vmax;
+    a.data[1] = 1;
+    a += 1;
+    BOOST_TEST_EQ(a, make_mp_int(0, 2));
+    // carry once C
+    a.data[0] = vmax;
+    a.data[1] = 1;
+    a += make_mp_int(1, 1);
+    BOOST_TEST_EQ(a, make_mp_int(0, 3));
+
     a.data[0] = vmax - 1;
     a.data[1] = vmax;
     ++a;
-    BOOST_TEST_EQ(a.data.size(), 2);
-    BOOST_TEST_EQ(a.data[0], vmax);
-    BOOST_TEST_EQ(a.data[1], vmax);
+    BOOST_TEST_EQ(a, make_mp_int(vmax, vmax));
+
     // carry two times A
     ++a;
     BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
@@ -298,6 +302,7 @@ int main() {
     a += mp_int(1);
     BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
 
+    // carry and enlarge
     a = make_mp_int(vmax, vmax);
     a += a;
     BOOST_TEST_EQ(a, make_mp_int(vmax - 1, vmax, 1));
@@ -321,7 +326,7 @@ int main() {
       a += a;
       BOOST_TEST_EQ(a, b);
     }
-    BOOST_TEST_GT(a.data.size(), 1);
+    BOOST_TEST_GT(a.data.size(), 1u);
   }
 
   // empty state

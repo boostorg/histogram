@@ -179,7 +179,7 @@ template <class A>
 template <class Archive>
 void unlimited_storage<A>::serialize(Archive& ar, unsigned /* version */) {
   if (Archive::is_loading::value) {
-    buffer_type dummy(0, buffer.alloc);
+    buffer_type dummy(buffer.alloc);
     std::size_t size;
     ar& serialization::make_nvp("type", dummy.type);
     ar& serialization::make_nvp("size", size);
