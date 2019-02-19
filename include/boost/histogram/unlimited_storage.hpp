@@ -139,28 +139,8 @@ struct mp_int {
     return result;
   }
 
-  bool less(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() > 0u);
-    return data.size() == 1 && data[0] < o;
-  }
-
-  bool greater(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() > 0u);
-    return data.size() > 1 || data[0] > o;
-  }
-
-  bool equal(uint64_t o) const noexcept {
-    BOOST_ASSERT(data.size() > 0u);
-    return data.size() == 1 && data[0] == o;
-  }
-
-  bool less(double o) const noexcept { return operator double() < o; }
-
-  bool greater(double o) const noexcept { return operator double() > o; }
-
-  bool equal(double o) const noexcept { return operator double() == o; }
-
-  bool less(const mp_int& o) const noexcept {
+  // total ordering for mp_int, mp_int
+  bool operator<(const mp_int& o) const noexcept {
     BOOST_ASSERT(data.size() > 0u);
     BOOST_ASSERT(o.data.size() > 0u);
     // no leading zeros allowed
@@ -177,116 +157,84 @@ struct mp_int {
     return false; // args are equal
   }
 
-  bool greater(const mp_int& o) const noexcept {
-    BOOST_ASSERT(data.size() > 0u);
-    BOOST_ASSERT(o.data.size() > 0u);
-    // no leading zeros allowed
-    BOOST_ASSERT(data.size() == 1 || data.back() > 0u);
-    BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0u);
-    if (data.size() > o.data.size()) return true;
-    if (data.size() < o.data.size()) return false;
-    auto s = data.size();
-    while (s > 0u) {
-      --s;
-      if (data[s] > o.data[s]) return true;
-      if (data[s] < o.data[s]) return false;
-    }
-    return false; // args are equal
-  }
-
-  bool equal(const mp_int& o) const noexcept {
+  bool operator==(const mp_int& o) const noexcept {
     BOOST_ASSERT(data.size() > 0u);
     BOOST_ASSERT(o.data.size() > 0u);
     // no leading zeros allowed
     BOOST_ASSERT(data.size() == 1 || data.back() > 0u);
     BOOST_ASSERT(o.data.size() == 1 || o.data.back() > 0u);
     if (data.size() != o.data.size()) return false;
-    for (std::size_t s = 0; s < data.size(); ++s)
-      if (data[s] != o.data[s]) return false;
-    return true; // args are equal
+    return std::equal(data.begin(), data.end(), o.data.begin());
   }
 
-  template <class T>
-  bool less(const T& o) const noexcept {
-    return std::is_integral<T>::value ? less(static_cast<uint64_t>(o))
-                                      : less(static_cast<double>(o));
+  // copied from boost/operators.hpp
+  friend bool operator>(const mp_int& x, const mp_int& y) { return y < x; }
+  friend bool operator<=(const mp_int& x, const mp_int& y) {
+    return !static_cast<bool>(y < x);
+  }
+  friend bool operator>=(const mp_int& x, const mp_int& y) {
+    return !static_cast<bool>(x < y);
+  }
+  friend bool operator!=(const mp_int& x, const mp_int& y) {
+    return !static_cast<bool>(x == y);
   }
 
-  template <class T>
-  bool greater(const T& o) const noexcept {
-    return std::is_integral<T>::value ? greater(static_cast<uint64_t>(o))
-                                      : greater(static_cast<double>(o));
+  // total ordering for mp_int, uint64;  partial ordering for mp_int, double
+  template <class U>
+  bool operator<(const U& o) const noexcept {
+    BOOST_ASSERT(data.size() > 0u);
+    return static_if<is_unsigned_integral<U>>(
+        [this](uint64_t o) { return data.size() == 1 && data[0] < o; },
+        [this](double o) { return operator double() < o; }, o);
   }
 
-  template <class T>
-  bool equal(const T& o) const noexcept {
-    return std::is_integral<T>::value ? equal(static_cast<uint64_t>(o))
-                                      : equal(static_cast<double>(o));
+  template <class U>
+  bool operator>(const U& o) const noexcept {
+    BOOST_ASSERT(data.size() > 0u);
+    BOOST_ASSERT(data.back() > 0u); // no leading zeros allowed
+    return static_if<is_unsigned_integral<U>>(
+        [this](uint64_t o) { return data.size() > 1 || data[0] > o; },
+        [this](double o) { return operator double() > o; }, o);
   }
 
-  template <class T>
-  friend bool operator<(const mp_int& a, const T& o) noexcept {
-    return a.less(o);
-  }
-  template <class T>
-  friend bool operator>(const mp_int& a, const T& o) noexcept {
-    return a.greater(o);
-  }
-  template <class T>
-  friend bool operator==(const mp_int& a, const T& o) noexcept {
-    return a.equal(o);
-  }
-  template <class T>
-  friend bool operator<=(const mp_int& a, const T& o) noexcept {
-    return !a.greater(o);
-  }
-  template <class T>
-  friend bool operator>=(const mp_int& a, const T& o) noexcept {
-    return !a.less(o);
-  }
-  template <class T>
-  friend bool operator!=(const mp_int& a, const T& o) noexcept {
-    return !a.equal(o);
+  template <class U>
+  bool operator==(const U& o) const noexcept {
+    BOOST_ASSERT(data.size() > 0u);
+    return static_if<is_unsigned_integral<U>>(
+        [this](uint64_t o) { return data.size() == 1 && data[0] == o; },
+        [this](double o) { return operator double() == o; }, o);
   }
 
-  template <class T>
-  friend bool operator<(const T& a, const mp_int& b) noexcept {
-    // a < b == b >= a == !(b < a)
-    return !b.less(a);
+  // adapted copy from boost/operators.hpp
+  template <class U>
+  friend bool operator<=(const mp_int& x, const U& y) {
+    if (is_unsigned_integral<U>::value) return !static_cast<bool>(x > y);
+    return static_cast<bool>(x < y) || static_cast<bool>(x == y);
   }
-  template <class T>
-  friend bool operator>(const T& a, const mp_int& b) noexcept {
-    // a > b == b <= a == !(b > a)
-    return !b.greater(a);
+  template <class U>
+  friend bool operator>=(const mp_int& x, const U& y) {
+    if (is_unsigned_integral<U>::value) return !static_cast<bool>(x < y);
+    return static_cast<bool>(x > y) || static_cast<bool>(x == y);
   }
-  template <class T>
-  friend bool operator<=(const T& a, const mp_int& b) noexcept {
-    return b.greater(a);
+  template <class U>
+  friend bool operator>(const U& x, const mp_int& y) {
+    if (is_unsigned_integral<U>::value) return y < x;
+    return y < x;
   }
-  template <class T>
-  friend bool operator>=(const T& a, const mp_int& b) noexcept {
-    return b.less(a);
+  template <class U>
+  friend bool operator<(const U& x, const mp_int& y) {
+    if (is_unsigned_integral<U>::value) return y > x;
+    return y > x;
   }
-  template <class T>
-  friend bool operator==(const T& a, const mp_int& b) noexcept {
-    return b.equal(a);
+  template <class U>
+  friend bool operator<=(const U& x, const mp_int& y) {
+    if (is_unsigned_integral<U>::value) return !static_cast<bool>(y < x);
+    return static_cast<bool>(y > x) || static_cast<bool>(y == x);
   }
-  template <class T>
-  friend bool operator!=(const T& a, const mp_int& b) noexcept {
-    return !b.equal(a);
-  }
-
-  friend bool operator<(const mp_int& a, const mp_int& b) noexcept { return a.less(b); }
-  friend bool operator>(const mp_int& a, const mp_int& b) noexcept {
-    return a.greater(b);
-  }
-  friend bool operator<=(const mp_int& a, const mp_int& b) noexcept {
-    return b.greater(a);
-  }
-  friend bool operator>=(const mp_int& a, const mp_int& b) noexcept { return b.less(a); }
-  friend bool operator==(const mp_int& a, const mp_int& b) noexcept { return a.equal(b); }
-  friend bool operator!=(const mp_int& a, const mp_int& b) noexcept {
-    return !a.equal(b);
+  template <class U>
+  friend bool operator>=(const U& x, const mp_int& y) {
+    if (is_unsigned_integral<U>::value) return !static_cast<bool>(y > x);
+    return static_cast<bool>(y < x) || static_cast<bool>(y == x);
   }
 
   uint64_t& maybe_extend(std::size_t i) {
