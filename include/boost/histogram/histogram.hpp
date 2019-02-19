@@ -90,6 +90,9 @@ public:
     storage_.reset(detail::bincount(axes_));
   }
 
+  template <class A, class = detail::requires_axes<A>>
+  explicit histogram(A&& a) : histogram(std::forward<A>(a), storage_type()) {}
+
   /// Number of axes (dimensions).
   constexpr unsigned rank() const noexcept {
     return static_cast<unsigned>(detail::get_size(axes_));
@@ -346,15 +349,15 @@ auto operator+(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
 }
 
 template <class A1, class S1, class A2, class S2>
-auto operator-(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
-  auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
-  return r -= b;
-}
-
-template <class A1, class S1, class A2, class S2>
 auto operator*(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
   auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
   return r *= b;
+}
+
+template <class A1, class S1, class A2, class S2>
+auto operator-(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
+  auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
+  return r -= b;
 }
 
 template <class A1, class S1, class A2, class S2>
