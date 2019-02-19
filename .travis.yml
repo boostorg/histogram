@@ -43,7 +43,7 @@ matrix:
           packages: g++-5
       script:
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 variant=ubasan2
+        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 variant=histogram_ubasan
           test//minimal examples//minimal &&
           ../../b2 -j2 -q toolset=gcc-5 cxxstd=14
           test//serial examples//serial
@@ -54,7 +54,7 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-7
       script:
-        - ../../b2 -j2 -q toolset=gcc-7 variant=coverage2
+        - ../../b2 -j2 -q toolset=gcc-7 variant=histogram_coverage
       after_success:
         - GCOV=gcov-7 tools/cov.sh
 
@@ -65,7 +65,7 @@ matrix:
           packages: g++-8
       script:
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 variant=ubasan2
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 variant=histogram_ubasan
           test//minimal examples//minimal &&
           ../../b2 -j2 -q toolset=gcc-8 cxxstd=17
           test//serial examples//serial

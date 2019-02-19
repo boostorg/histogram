@@ -9,12 +9,12 @@ import common ;
 import testing ;
 import ../config/checks/config : requires ;
 
-variant coverage2 : debug :
+variant histogram_coverage : debug :
     <cxxflags>"--coverage"
     <linkflags>"--coverage"
     ;
 
-variant ubasan2 : debug :
+variant histogram_ubasan : debug :
     <cxxflags>"-fno-omit-frame-pointer -fsanitize=address,leak,undefined -fno-sanitize-recover=address,undefined"
     # correct linkflags don't work on travis, use workaround
     # <linkflags>"-fsanitize=address,leak,undefined"
