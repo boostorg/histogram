@@ -169,15 +169,9 @@ struct mp_int {
 
   // copied from boost/operators.hpp
   friend bool operator>(const mp_int& x, const mp_int& y) { return y < x; }
-  friend bool operator<=(const mp_int& x, const mp_int& y) {
-    return !static_cast<bool>(y < x);
-  }
-  friend bool operator>=(const mp_int& x, const mp_int& y) {
-    return !static_cast<bool>(x < y);
-  }
-  friend bool operator!=(const mp_int& x, const mp_int& y) {
-    return !static_cast<bool>(x == y);
-  }
+  friend bool operator<=(const mp_int& x, const mp_int& y) { return !(y < x); }
+  friend bool operator>=(const mp_int& x, const mp_int& y) { return !(x < y); }
+  friend bool operator!=(const mp_int& x, const mp_int& y) { return !(x == y); }
 
   // total ordering for mp_int, uint64;  partial ordering for mp_int, double
   template <class U>
@@ -208,13 +202,13 @@ struct mp_int {
   // adapted copy from boost/operators.hpp
   template <class U>
   friend bool operator<=(const mp_int& x, const U& y) {
-    if (is_unsigned_integral<U>::value) return !static_cast<bool>(x > y);
-    return static_cast<bool>(x < y) || static_cast<bool>(x == y);
+    if (is_unsigned_integral<U>::value) return !(x > y);
+    return (x < y) || (x == y);
   }
   template <class U>
   friend bool operator>=(const mp_int& x, const U& y) {
-    if (is_unsigned_integral<U>::value) return !static_cast<bool>(x < y);
-    return static_cast<bool>(x > y) || static_cast<bool>(x == y);
+    if (is_unsigned_integral<U>::value) return !(x < y);
+    return (x > y) || (x == y);
   }
   template <class U>
   friend bool operator>(const U& x, const mp_int& y) {
@@ -228,13 +222,25 @@ struct mp_int {
   }
   template <class U>
   friend bool operator<=(const U& x, const mp_int& y) {
-    if (is_unsigned_integral<U>::value) return !static_cast<bool>(y < x);
-    return static_cast<bool>(y > x) || static_cast<bool>(y == x);
+    if (is_unsigned_integral<U>::value) return !(y < x);
+    return (y > x) || (y == x);
   }
   template <class U>
   friend bool operator>=(const U& x, const mp_int& y) {
-    if (is_unsigned_integral<U>::value) return !static_cast<bool>(y > x);
-    return static_cast<bool>(y < x) || static_cast<bool>(y == x);
+    if (is_unsigned_integral<U>::value) return !(y > x);
+    return (y < x) || (y == x);
+  }
+  template <class U>
+  friend bool operator==(const U& y, const mp_int& x) {
+    return x == y;
+  }
+  template <class U>
+  friend bool operator!=(const U& y, const mp_int& x) {
+    return !(x == y);
+  }
+  template <class U>
+  friend bool operator!=(const mp_int& y, const U& x) {
+    return !(y == x);
   }
 
   uint64_t& maybe_extend(std::size_t i) {
@@ -468,10 +474,15 @@ private:
     reference_t& operator=(const reference_t&) = delete; // references do not rebind
     reference_t& operator=(reference_t&&) = delete;      // references do not rebind
 
-    template <class U>
-    bool operator==(const U& rhs) const {
-      return op<std::equal_to<>>(rhs);
-    }
+    // minimal operators for partial ordering
+    bool operator<(reference_t rhs) const { return op<std::less<>>(rhs); }
+    bool operator>(reference_t rhs) const { return op<std::greater<>>(rhs); }
+    bool operator==(reference_t rhs) const { return op<std::equal_to<>>(rhs); }
+
+    // adapted copy from boost/operators.hpp for partial ordering
+    friend bool operator<=(reference_t x, reference_t y) { return !(y < x); }
+    friend bool operator>=(reference_t x, reference_t y) { return !(y > x); }
+    friend bool operator!=(reference_t y, reference_t x) { return !(x == y); }
 
     template <class U>
     bool operator<(const U& rhs) const {
@@ -484,18 +495,50 @@ private:
     }
 
     template <class U>
-    bool operator!=(const U& rhs) const {
-      return !operator==(rhs);
+    bool operator==(const U& rhs) const {
+      return op<std::equal_to<>>(rhs);
     }
 
+    // adapted copy from boost/operators.hpp
     template <class U>
-    bool operator>=(const U& rhs) const {
-      return !operator<(rhs);
+    friend bool operator<=(reference_t x, const U& y) {
+      if (detail::is_unsigned_integral<U>::value) return !(x > y);
+      return (x < y) || (x == y);
     }
-
     template <class U>
-    bool operator<=(const U& rhs) const {
-      return !operator<(rhs);
+    friend bool operator>=(reference_t x, const U& y) {
+      if (detail::is_unsigned_integral<U>::value) return !(x < y);
+      return (x > y) || (x == y);
+    }
+    template <class U>
+    friend bool operator>(const U& x, reference_t y) {
+      return y < x;
+    }
+    template <class U>
+    friend bool operator<(const U& x, reference_t y) {
+      return y > x;
+    }
+    template <class U>
+    friend bool operator<=(const U& x, reference_t y) {
+      if (detail::is_unsigned_integral<U>::value) return !(y < x);
+      return (y > x) || (y == x);
+    }
+    template <class U>
+    friend bool operator>=(const U& x, reference_t y) {
+      if (detail::is_unsigned_integral<U>::value) return !(y > x);
+      return (y < x) || (y == x);
+    }
+    template <class U>
+    friend bool operator==(const U& y, reference_t x) {
+      return x == y;
+    }
+    template <class U>
+    friend bool operator!=(const U& y, reference_t x) {
+      return !(x == y);
+    }
+    template <class U>
+    friend bool operator!=(reference_t y, const U& x) {
+      return !(y == x);
     }
 
     operator double() const {
@@ -536,13 +579,18 @@ public:
   public:
     using base_type::base_type;
 
-    reference& operator=(const reference& t) {
+    reference operator=(reference t) {
       t.buffer_->apply([this, &t](const auto* otp) { *this = otp[t.idx_]; });
       return *this;
     }
 
-    template <class T>
-    reference& operator=(const T& t) {
+    reference operator=(const_reference t) {
+      t.buffer_->apply([this, &t](const auto* otp) { *this = otp[t.idx_]; });
+      return *this;
+    }
+
+    template <class U>
+    reference operator=(const U& t) {
       base_type::buffer_->apply([this, &t](auto* tp) {
         tp[this->idx_] = 0;
         adder()(tp, *(this->buffer_), this->idx_, t);
@@ -550,34 +598,42 @@ public:
       return *this;
     }
 
-    template <class T>
-    reference& operator+=(const T& t) {
+    template <class U>
+    reference operator+=(const U& t) {
       base_type::buffer_->apply(adder(), *base_type::buffer_, base_type::idx_, t);
       return *this;
     }
 
-    template <class T>
-    reference& operator-=(const T& t) {
-      return operator+=(-t);
-    }
-
-    template <class T>
-    reference& operator*=(const T& t) {
+    template <class U>
+    reference operator*=(const U& t) {
       base_type::buffer_->apply(multiplier(), *base_type::buffer_, base_type::idx_, t);
       return *this;
     }
 
-    template <class T>
-    reference& operator/=(const T& t) {
-      base_type::buffer_->apply(multiplier(), *base_type::buffer_, base_type::idx_,
-                                1.0 / static_cast<double>(t));
-      return *this;
+    template <class U>
+    reference operator-=(const U& t) {
+      return operator+=(-t);
     }
 
-    reference& operator++() {
+    template <class U>
+    reference operator/=(const U& t) {
+      return operator*=(1.0 / static_cast<double>(t));
+    }
+
+    reference operator++() {
       base_type::buffer_->apply(incrementor(), *base_type::buffer_, base_type::idx_);
       return *this;
     }
+
+    // minimal operators for partial ordering
+    bool operator<(reference rhs) const { return base_type::operator<(rhs); }
+    bool operator>(reference rhs) const { return base_type::operator>(rhs); }
+    bool operator==(reference rhs) const { return base_type::operator==(rhs); }
+
+    // adapted copy from boost/operators.hpp for partial ordering
+    friend bool operator<=(reference x, reference y) { return !(y < x); }
+    friend bool operator>=(reference x, reference y) { return !(y > x); }
+    friend bool operator!=(reference y, reference x) { return !(x == y); }
   };
 
 private:
