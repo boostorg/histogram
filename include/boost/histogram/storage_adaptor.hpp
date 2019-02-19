@@ -101,7 +101,10 @@ struct map_impl : T {
   struct reference {
     reference(map_impl* m, std::size_t i) noexcept : map(m), idx(i) {}
     reference(const reference&) noexcept = default;
-    reference& operator=(const reference&) noexcept = default;
+    reference operator=(reference o) {
+      if (this != &o) operator=(static_cast<const_reference>(o));
+      return *this;
+    }
 
     operator const_reference() const noexcept {
       return static_cast<const map_impl*>(map)->operator[](idx);
@@ -124,7 +127,7 @@ struct map_impl : T {
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_radd<V, U>::value>>
-    reference& operator+=(const U& u) {
+    reference operator+=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
         it->second += u;
@@ -135,7 +138,7 @@ struct map_impl : T {
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_rsub<V, U>::value>>
-    reference& operator-=(const U& u) {
+    reference operator-=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
         it->second -= u;
@@ -146,7 +149,7 @@ struct map_impl : T {
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_rmul<V, U>::value>>
-    reference& operator*=(const U& u) {
+    reference operator*=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end()) it->second *= u;
       return *this;
@@ -154,7 +157,7 @@ struct map_impl : T {
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_rdiv<V, U>::value>>
-    reference& operator/=(const U& u) {
+    reference operator/=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
         it->second /= u;
@@ -165,13 +168,21 @@ struct map_impl : T {
 
     template <class V = value_type,
               class = std::enable_if_t<has_operator_preincrement<V>::value>>
-    reference& operator++() {
+    reference operator++() {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end())
         ++it->second;
       else
         map->emplace(idx, 1);
       return *this;
+    }
+
+    template <class V = value_type,
+              class = std::enable_if_t<has_operator_preincrement<V>::value>>
+    value_type operator++(int) {
+      const value_type tmp = operator const_reference();
+      operator++();
+      return tmp;
     }
 
     template <class... Ts>
