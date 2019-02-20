@@ -44,12 +44,13 @@ void tests() {
     storage_adaptor<T> g(t); // tests converting ctor
   }
 
-  // increment, add, sub, set, reset
+  // increment, add, sub, set, reset, compare
   {
     storage_adaptor<T> a;
     a.reset(1);
     ++a[0];
-    ++a[0];
+    const auto save = a[0]++;
+    BOOST_TEST_EQ(save, 1);
     BOOST_TEST_EQ(a[0], 2);
     a.reset(2);
     BOOST_TEST_EQ(a.size(), 2);
@@ -65,6 +66,13 @@ void tests() {
     a[1] = 9;
     BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_EQ(a[1], 9);
+    BOOST_TEST_LT(a[0], 2);
+    BOOST_TEST_LT(0, a[1]);
+    BOOST_TEST_GT(a[1], 4);
+    BOOST_TEST_GT(3, a[0]);
+    a[1] = a[0];
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_EQ(a[1], 1);
     a.reset(0);
     BOOST_TEST_EQ(a.size(), 0);
   }

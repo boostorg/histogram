@@ -34,7 +34,9 @@ matrix:
   include:
     - os: osx
       script:
-        - ../../b2 -j2 -q cxxstd=14 test examples test//serial examples//serial
+        - ../../b2 -j2 -q cxxstd=14
+          warnings-as-errors=on
+          test examples test//serial examples//serial
 
     - name: "gcc-5: ubasan"
       addons:
@@ -44,8 +46,10 @@ matrix:
       script:
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
         - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 variant=histogram_ubasan
+          warnings-as-errors=on
           test//minimal examples//minimal &&
           ../../b2 -j2 -q toolset=gcc-5 cxxstd=14
+          warnings-as-errors=on
           test//serial examples//serial
 
     - name: "gcc-7: coverage"
@@ -54,7 +58,7 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-7
       script:
-        - ../../b2 -j2 -q toolset=gcc-7 variant=histogram_coverage
+        - ../../b2 -j2 -q toolset=gcc-7 variant=histogram_coverage warnings-as-errors=on
       after_success:
         - GCOV=gcov-7 tools/cov.sh
 
@@ -66,8 +70,10 @@ matrix:
       script:
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
         - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 variant=histogram_ubasan
+          warnings-as-errors=on
           test//minimal examples//minimal &&
           ../../b2 -j2 -q toolset=gcc-8 cxxstd=17
+          warnings-as-errors=on
           test//serial examples//serial
 
 before_script:
