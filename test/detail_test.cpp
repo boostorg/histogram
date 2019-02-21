@@ -6,6 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -135,6 +136,29 @@ int main() {
     BOOST_TEST_TRAIT_SAME(detail::common_container<C, A>, A);
     BOOST_TEST_TRAIT_SAME(detail::common_container<C, B>, B);
     BOOST_TEST_TRAIT_SAME(detail::common_container<B, C>, B);
+  }
+
+  // common_storage
+  {
+    BOOST_TEST_TRAIT_SAME(
+        detail::common_storage<unlimited_storage<>, unlimited_storage<>>,
+        unlimited_storage<>);
+    BOOST_TEST_TRAIT_SAME(
+        detail::common_storage<dense_storage<double>, dense_storage<double>>,
+        dense_storage<double>);
+    BOOST_TEST_TRAIT_SAME(
+        detail::common_storage<dense_storage<int>, dense_storage<double>>,
+        dense_storage<double>);
+    BOOST_TEST_TRAIT_SAME(
+        detail::common_storage<dense_storage<double>, dense_storage<int>>,
+        dense_storage<double>);
+    BOOST_TEST_TRAIT_SAME(
+        detail::common_storage<dense_storage<double>, unlimited_storage<>>,
+        dense_storage<double>);
+    BOOST_TEST_TRAIT_SAME(detail::common_storage<dense_storage<int>, unlimited_storage<>>,
+                          unlimited_storage<>);
+    BOOST_TEST_TRAIT_SAME(detail::common_storage<dense_storage<double>, weight_storage>,
+                          weight_storage);
   }
 
   return boost::report_errors();

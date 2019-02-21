@@ -37,44 +37,27 @@ using common_container = mp11::mp_cond<
 >;
 // clang-format on
 
-template <class B, class C, class V>
-struct replace_container_value_impl;
-
-template <template <class, class, class...> class Map, class V1, class... Ts, class V2>
-struct replace_container_value_impl<std::true_type, Map<std::size_t, V1, Ts...>, V2> {
-  using type = Map<std::size_t, V2, Ts...>;
-};
-
-template <template <class, std::size_t> class Array, std::size_t N, class V1, class V2>
-struct replace_container_value_impl<std::false_type, Array<V1, N>, V2> {
-  using type = Array<V2, N>;
-};
-
-template <template <class, class...> class Vector, class V1, class... Ts, class V2>
-struct replace_container_value_impl<std::false_type, Vector<V1, Ts...>, V2> {
-  using type = Vector<V2, Ts...>;
-};
-
-template <class C, class T>
-using replace_container_value =
-    typename replace_container_value_impl<is_map_like<C>, C, T>::type;
+template <class T>
+using type_score = mp11::mp_size_t<((!std::is_pod<T>::value) * 1000 +
+                                    std::is_floating_point<T>::value * 50 + sizeof(T))>;
 
 template <class T, class U>
 struct common_storage_impl;
 
 template <class T, class U>
 struct common_storage_impl<storage_adaptor<T>, storage_adaptor<U>> {
-  using C = common_container<T, U>;
-  using V = std::common_type_t<typename storage_adaptor<T>::value_type,
-                               typename storage_adaptor<U>::value_type>;
-  using type = storage_adaptor<replace_container_value<C, V>>;
+  using type =
+      mp11::mp_if_c<(type_score<typename storage_adaptor<T>::value_type>::value >=
+                     type_score<typename storage_adaptor<U>::value_type>::value),
+                    storage_adaptor<T>, storage_adaptor<U>>;
 };
 
-template <class C, class A>
-struct common_storage_impl<storage_adaptor<C>, unlimited_storage<A>> {
-  using V = std::common_type_t<typename storage_adaptor<C>::value_type,
-                               typename unlimited_storage<A>::value_type>;
-  using type = storage_adaptor<replace_container_value<C, V>>;
+template <class T, class A>
+struct common_storage_impl<storage_adaptor<T>, unlimited_storage<A>> {
+  using type =
+      mp11::mp_if_c<(type_score<typename storage_adaptor<T>::value_type>::value >=
+                     type_score<typename unlimited_storage<A>::value_type>::value),
+                    storage_adaptor<T>, unlimited_storage<A>>;
 };
 
 template <class C, class A>
