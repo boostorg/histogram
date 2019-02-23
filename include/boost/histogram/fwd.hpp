@@ -12,6 +12,7 @@
   Forward declarations, basic typedefs, and default template arguments for main classes.
 */
 
+#include <boost/core/use_default.hpp>
 #include <boost/histogram/detail/attribute.hpp> // BOOST_HISTOGRAM_DETAIL_NODISCARD
 #include <string>
 #include <vector>
@@ -20,7 +21,7 @@ namespace boost {
 namespace histogram {
 
 /// tag type to indicate use of a default type
-struct use_default {};
+using boost::use_default;
 
 namespace axis {
 
