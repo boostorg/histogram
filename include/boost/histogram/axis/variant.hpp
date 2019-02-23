@@ -207,7 +207,8 @@ public:
   void serialize(Archive& ar, unsigned);
 
   template <class Visitor, class Variant>
-  friend decltype(auto) visit(Visitor&&, Variant&&);
+  friend auto visit(Visitor&&, Variant &&)
+      -> detail::visitor_return_type<Visitor, Variant>;
 
   template <class T, class... Us>
   friend T& get(variant<Us...>& v);
@@ -227,7 +228,8 @@ public:
 
 /// Apply visitor to variant.
 template <class Visitor, class Variant>
-decltype(auto) visit(Visitor&& vis, Variant&& var) {
+auto visit(Visitor&& vis, Variant&& var)
+    -> detail::visitor_return_type<Visitor, Variant> {
   using B = detail::copy_qualifiers<Variant,
                                     typename detail::remove_cvref_t<Variant>::base_type>;
   return boost::apply_visitor(std::forward<Visitor>(vis), static_cast<B>(var));
