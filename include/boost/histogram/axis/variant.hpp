@@ -30,19 +30,6 @@
 
 namespace boost {
 namespace histogram {
-
-namespace detail {
-template <class F, class R>
-struct functor_wrapper : public boost::static_visitor<R> {
-  F fcn;
-  functor_wrapper(F f) : fcn(f) {}
-  template <class T>
-  R operator()(T&& t) const {
-    return fcn(std::forward<T>(t));
-  }
-};
-} // namespace detail
-
 namespace axis {
 
 template <class T, class... Us>
@@ -144,7 +131,7 @@ public:
   /// metadata.
   metadata_type& metadata() {
     return visit(
-        [](auto& a) -> metadata_type& {
+        [](auto&& a) -> metadata_type& {
           using M = decltype(traits::metadata(a));
           return detail::static_if<std::is_same<M, metadata_type&>>(
               [](auto& a) -> metadata_type& { return traits::metadata(a); },
@@ -220,8 +207,7 @@ public:
   void serialize(Archive& ar, unsigned);
 
   template <class Visitor, class Variant>
-  friend auto visit(Visitor&&, Variant &&)
-      -> detail::visitor_return_type<Visitor, Variant>;
+  friend decltype(auto) visit(Visitor&&, Variant&&);
 
   template <class T, class... Us>
   friend T& get(variant<Us...>& v);
@@ -241,13 +227,10 @@ public:
 
 /// Apply visitor to variant.
 template <class Visitor, class Variant>
-auto visit(Visitor&& vis, Variant&& var)
-    -> detail::visitor_return_type<Visitor, Variant> {
-  using R = detail::visitor_return_type<Visitor, Variant>;
+decltype(auto) visit(Visitor&& vis, Variant&& var) {
   using B = detail::copy_qualifiers<Variant,
                                     typename detail::remove_cvref_t<Variant>::base_type>;
-  return boost::apply_visitor(detail::functor_wrapper<Visitor, R>(vis),
-                              static_cast<B>(var));
+  return boost::apply_visitor(std::forward<Visitor>(vis), static_cast<B>(var));
 }
 
 /// Return lvalue reference to T, throws unspecified exception if type does not

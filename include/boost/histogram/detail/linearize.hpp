@@ -97,7 +97,7 @@ void linearize_value(optional_index& o, axis::index_type& s, Axis& a, const Valu
 template <class... Ts, class Value>
 void linearize_value(optional_index& o, axis::index_type& s, axis::variant<Ts...>& a,
                      const Value& v) {
-  axis::visit([&o, &s, &v](auto& a) { linearize_value(o, s, a, v); }, a);
+  axis::visit([&o, &s, &v](auto&& a) { linearize_value(o, s, a, v); }, a);
 }
 
 template <class A>
