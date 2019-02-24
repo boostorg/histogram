@@ -44,26 +44,6 @@ Check out the [full documentation](http://hdembinski.github.io/histogram/doc/htm
 3. The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell. This can be used to compute variance estimates for each cell. These are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell values.
 4. Builtin axis types can configured to only accept dimensional quantities, like those from [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/). This means you get an error if you try to fill a length when the histogram axis expects a time, for example.
 
-## Dependencies
-
-* [Boost >= 1.66](http://www.boost.org) *header-only installation is sufficient*
-* Optional: [CMake >= 3.5](https://cmake.org) [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)  [Boost.Accumulators](https://www.boost.org/doc/libs/release/libs/accumulators/) [Boost.Range](https://www.boost.org/doc/libs/release/libs/range/) [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/)
-
-## Build instructions
-
-If you don't want to run the tests, there is nothing to build. Just copy the content of the include folder to a place where your project can find it.
-
-The tests can be build with `b2` from the Boost project or `cmake`. If you are not a Boost developer, use `cmake`.
-
-```sh
-git clone https://github.com/boostorg/histogram.git
-mkdir build && cd build
-cmake ..
-make
-```
-
-To run the tests, do `make test` or `ctest -v` for more output.
-
 ## Code example
 
 The following stripped-down example was taken from the [Getting started](http://hdembinski.github.io/histogram/doc/html/histogram/getting_started.html) section in the documentation. Have a look into the docs to see the full version with comments and more examples.

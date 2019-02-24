@@ -27,7 +27,7 @@ Use `clang-format -style=file`, which should pick up the `.clang-format` file of
 
 ## Running Tests
 
-To build the tests you can use `cmake` or `b2`. If you use `cmake`, the tests can be run by executing the `ctest` command from the build directory. To run the tests with `b2`, just go the test folder and execute `b2`.
+To run the tests, `cd` into the `test` folder and execute `b2`. You can also test the examples by executing `b2` in the `examples` folder.
 
 Please report any tests failures to the issue tracker along with the test
 output and information on your system.
