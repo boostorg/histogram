@@ -24,7 +24,7 @@ install:
   - b2 headers
 
 test_script:
-  - b2 -j3 libs\histogram\test
+  - b2 -j2 -q libs\histogram\test
 
 on_failure:
   # Stop VM and enable interactive login

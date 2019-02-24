@@ -71,7 +71,7 @@ matrix:
         # ubsan+asan disabled in serial tests, because of bug in boost/serialization
         - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 variant=histogram_ubasan
           warnings-as-errors=on
-          test//minimal examples//minimal &&
+          test//minimal test//deduction_guides examples//minimal &&
           ../../b2 -j2 -q toolset=gcc-8 cxxstd=17
           warnings-as-errors=on
           test//serial examples//serial
