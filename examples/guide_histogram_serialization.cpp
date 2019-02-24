@@ -13,11 +13,11 @@
 #include <cassert>
 #include <sstream>
 
-namespace bh = boost::histogram;
-
 int main() {
-  auto a = bh::make_histogram(bh::axis::regular<>(3, -1.0, 1.0, "axis 0"),
-                              bh::axis::integer<>(0, 2, "axis 1"));
+  using namespace boost::histogram;
+
+  auto a = make_histogram(axis::regular<>(3, -1.0, 1.0, "axis 0"),
+                          axis::integer<>(0, 2, "axis 1"));
   a(0.5, 1);
 
   std::string buf; // to hold persistent representation

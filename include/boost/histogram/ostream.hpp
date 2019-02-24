@@ -7,6 +7,8 @@
 #ifndef BOOST_HISTOGRAM_OSTREAM_HPP
 #define BOOST_HISTOGRAM_OSTREAM_HPP
 
+#include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <iosfwd>
 

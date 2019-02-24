@@ -9,13 +9,12 @@
 #include <boost/histogram.hpp>
 #include <cassert>
 
-namespace bh = boost::histogram;
-
 int main() {
+  using namespace boost::histogram;
 
   // create a 1d-histogram in default configuration which
   // covers the real line from -1 to 1 in 100 bins
-  auto h = bh::make_histogram(bh::axis::regular<>(100, -1.0, 1.0));
+  auto h = make_histogram(axis::regular<>(100, -1.0, 1.0));
 
   // rank is the number of axes
   assert(h.rank() == 1);
