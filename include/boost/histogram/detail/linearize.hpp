@@ -24,9 +24,6 @@
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
-#ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
-#include <boost/accumulators/accumulators.hpp>
-#endif
 
 namespace boost {
 namespace histogram {
@@ -34,12 +31,6 @@ namespace detail {
 
 template <class T>
 struct is_accumulator_set : std::false_type {};
-
-#ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
-template <class... Ts>
-struct is_accumulator_set<::boost::accumulators::accumulator_set<Ts...>>
-    : std::true_type {};
-#endif
 
 template <class T>
 using has_underflow =
@@ -287,22 +278,9 @@ void fill_storage(mp11::mp_int<-1>, IS, T&& t, U&& args) {
 
 template <class IW, class IS, class T, class U>
 void fill_storage(IW, IS, T&& t, U&& args) {
-#ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
-  static_if<is_accumulator_set<remove_cvref_t<T>>>(
-      [](auto&& t, const auto& w, const auto& s) {
-        mp11::tuple_apply(
-            [&](auto&&... args) { t(args..., ::boost::accumulators::weight = w); }, s);
-      },
-      [](auto&& t, const auto& w, const auto& s) {
-        mp11::tuple_apply([&](auto&&... args) { t(w, args...); }, s);
-      },
-      std::forward<T>(t), std::get<IW::value>(args).value,
-      std::get<IS::value>(args).value);
-#else
   mp11::tuple_apply(
       [&](auto&&... args2) { t(std::get<IW::value>(args).value, args2...); },
       std::get<IS::value>(args).value);
-#endif
 }
 
 template <class S, class A, class... Us>

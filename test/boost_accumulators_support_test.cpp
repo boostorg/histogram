@@ -1,3 +1,9 @@
+// Copyright 2018-2019 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #include <boost/config/workaround.hpp>
 #if BOOST_WORKAROUND(BOOST_GCC, >= 50000)
 #pragma GCC diagnostic push
@@ -12,7 +18,8 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 #include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics.hpp>
+#include <boost/accumulators/statistics/mean.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
 #if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
 #pragma clang diagnostic pop
 #endif
@@ -25,16 +32,17 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
-#include <vector>
-#include "utility_histogram.hpp"
 
 namespace ba = boost::accumulators;
-using namespace boost::histogram;
 
 int main() {
+  using namespace boost::histogram;
+
+  // mean
   {
-    using element = ba::accumulator_set<double, ba::stats<ba::tag::mean>>;
-    auto h = make_histogram_with(dense_storage<element>(), axis::integer<>(0, 2));
+    using mean = ba::accumulator_set<double, ba::stats<ba::tag::mean>>;
+
+    auto h = make_histogram_with(dense_storage<mean>(), axis::integer<>(0, 2));
     h(0, sample(1));
     h(0, sample(2));
     h(0, sample(3));
@@ -52,15 +60,6 @@ int main() {
     BOOST_TEST_EQ(ba::count(h2[1]), 2);
     BOOST_TEST_EQ(ba::mean(h2[1]), 2.5);
     BOOST_TEST_EQ(ba::count(h2[2]), 0);
-  }
-
-  {
-    using element =
-        ba::accumulator_set<double, ba::stats<ba::tag::weighted_mean>, double>;
-    auto h = make_histogram_with(dense_storage<element>(), axis::integer<>(0, 2));
-    h(0, sample(1), weight(3));
-    // BOOST_TEST_EQ(ba::count(h[0]), 3);
-    // BOOST_TEST_EQ(ba::mean(h[0]), 1);
   }
   return boost::report_errors();
 }

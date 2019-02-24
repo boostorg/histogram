@@ -39,6 +39,7 @@ test-suite minimal :
     [ run axis_traits_test.cpp ]
     [ run axis_variable_test.cpp ]
     [ run axis_variant_test.cpp ]
+    [ run boost_accumulators_support_test.cpp  ]
     [ run boost_range_support_test.cpp ]
     [ run boost_units_support_test.cpp ]
     [ run detail_test.cpp ]
@@ -58,9 +59,6 @@ test-suite minimal :
 
 # has additional requirements only available on develop branch
 test-suite deduction_guides : [ run deduction_guides_test.cpp ] ;
-
-# disabled until boost.parameter usage is fixed
-test-suite accumulator : [ run boost_accumulators_support_test.cpp  ] ;
 
 alias libserial : /boost/serialization//boost_serialization : <link>static ;
 
