@@ -5,13 +5,26 @@
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+import os ;
+import regex ;
+
 path-constant THIS_PATH : . ;
+
+local XML_PATH ;
+
+if [ os.on-windows ]
+{
+  XML_PATH = [ regex.replace "$(THIS_PATH)\\" "\\\\" "\\\\\\\\" ] ;
+}
+else {
+  XML_PATH = "$(THIS_PATH)/" ;
+}
 
 project
     : requirements
     <include>$(BOOST_ROOT)
     <include>$(THIS_PATH)
-    <define>XML_PATH=\\\"$(THIS_PATH)/\\\"
+    <define>XML_PATH=\\\"$(XML_PATH)\\\"
     ;
 
 test-suite minimal :
