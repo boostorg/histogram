@@ -9,21 +9,21 @@
 #include <boost/histogram.hpp>
 #include <cassert>
 
-namespace bh = boost::histogram;
-
 int main() {
+  using namespace boost::histogram;
+
   // axis which returns 1 if the input falls inside the unit circle and zero otherwise
   struct circle_axis {
-    bh::axis::index_type index(std::tuple<double, double> point) const {
+    axis::index_type index(std::tuple<double, double> point) const {
       const auto x = std::get<0>(point);
       const auto y = std::get<1>(point);
       return x * x + y * y <= 1.0;
     }
 
-    bh::axis::index_type size() const { return 2; }
+    axis::index_type size() const { return 2; }
   };
 
-  auto h1 = bh::make_histogram(circle_axis());
+  auto h1 = make_histogram(circle_axis());
 
   // call looks like for a histogram with N 1d axes if histogram has only one Nd axis
   h1(0, 0);   // in
@@ -37,8 +37,7 @@ int main() {
   assert(h1.at(0) == 2); // out
   assert(h1.at(1) == 5); // in
 
-  auto h2 =
-      bh::make_histogram(circle_axis(), bh::axis::category<std::string>({"red", "blue"}));
+  auto h2 = make_histogram(circle_axis(), axis::category<std::string>({"red", "blue"}));
 
   // pass arguments for first axis as std::tuple
   h2(std::make_tuple(0, 0), "red");

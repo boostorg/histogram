@@ -23,39 +23,61 @@
 namespace boost {
 namespace histogram {
 
-/// profile factory from compile-time axis configuration
+/**
+  Make profle from compile-time axis configuration.
+  @param axis First axis instance.
+  @param axes Other axis instances.
+*/
 template <typename Axis, typename... Axes, typename = detail::requires_axis<Axis>>
 auto make_profile(Axis&& axis, Axes&&... axes) {
   return make_histogram_with(profile_storage(), std::forward<Axis>(axis),
                              std::forward<Axes>(axes)...);
 }
 
-/// profile factory from compile-time axis configuration with weighted mean
+/**
+  Make profle from compile-time axis configuration which accepts weights.
+  @param axis First axis instance.
+  @param axes Other axis instances.
+*/
 template <typename Axis, typename... Axes, typename = detail::requires_axis<Axis>>
 auto make_weighted_profile(Axis&& axis, Axes&&... axes) {
   return make_histogram_with(weighted_profile_storage(), std::forward<Axis>(axis),
                              std::forward<Axes>(axes)...);
 }
 
-/// profile factory from vector-like
+/**
+  Make profile from iterable range.
+  @param iterable Iterable range of axis objects.
+*/
 template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_profile(Iterable&& c) {
   return make_histogram_with(profile_storage(), std::forward<Iterable>(c));
 }
 
-/// profile factory from vector-like with weighted mean
+/**
+  Make profile from iterable range which accepts weights.
+  @param iterable Iterable range of axis objects.
+*/
 template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
 auto make_weighted_profile(Iterable&& c) {
   return make_histogram_with(weighted_profile_storage(), std::forward<Iterable>(c));
 }
 
-/// profile factory from iterator range
+/**
+  Make profile from iterator interval.
+  @param begin Iterator to range of axis objects.
+  @param end   Iterator to range of axis objects.
+*/
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 auto make_profile(Iterator begin, Iterator end) {
   return make_histogram_with(profile_storage(), begin, end);
 }
 
-/// profile factory from iterator range with weighted mean
+/**
+  Make profile from iterator interval which accepts weights.
+  @param begin Iterator to range of axis objects.
+  @param end   Iterator to range of axis objects.
+*/
 template <typename Iterator, typename = detail::requires_iterator<Iterator>>
 auto make_weighted_profile(Iterator begin, Iterator end) {
   return make_histogram_with(weighted_profile_storage(), begin, end);

@@ -4,7 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-//[ guide_custom_storage
+//[ guide_parallel_filling
 
 #include <atomic>
 #include <boost/histogram.hpp>

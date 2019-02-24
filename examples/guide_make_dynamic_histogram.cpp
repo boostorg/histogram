@@ -28,13 +28,13 @@ int main() {
     v1.emplace_back(bins, start, stop);
   }
 
-  // create dynamic histogram from iterator range
+  // create histogram from iterator range
   // (copying or moving the vector also works, move is shown below)
   auto h1 = bh::make_histogram(v1.begin(), v1.end());
   assert(h1.rank() == v1.size());
 
-  // create second vector of axis::variant, a polymorphic axis type that can hold concrete
-  // axis types, the types and the number of axis can now vary at run-time
+  // with a vector of axis::variant (polymorphic axis type that can hold any one of the
+  // template arguments at a time) the types and number of axis can vary at run-time
   auto v2 = std::vector<bh::axis::variant<bh::axis::regular<>, bh::axis::integer<>>>();
   v2.emplace_back(bh::axis::regular<>(100, -1.0, 1.0));
   v2.emplace_back(bh::axis::integer<>(1, 7));

@@ -41,23 +41,23 @@ int main() {
   assert(g5.at(0) == 1 && g5.at(1) == 1);
   assert(g4 != g5 && g4 == 4 * g5);
 
-  // note special effect of multiplication on weighted_sum
-  auto h = make_histogram_with(std::vector<accumulators::weighted_sum<double>>(),
-                               axis::regular<>(2, -1.0, 1.0));
+  // note the special effect of multiplication on weight_storage
+  auto h = make_histogram_with(weight_storage(), axis::regular<>(2, -1.0, 1.0));
   h(-0.5);
 
   // counts are: 1 0
   assert(h.at(0).value() == 1 && h.at(1).value() == 0);
 
-  auto h_sum = h + h; // value 2 0 variance 2 0
-  auto g_mul = 2 * h; // value 2 0 variance 4 0
+  auto h_sum = h + h;
+  auto g_mul = 2 * h;
 
-  // equality operator checks variances, so following statement is false
-  assert(h_sum != g_mul);
-
-  // variance is different when histograms are scaled
+  // values are the same as expected...
   assert(h_sum.at(0).value() == g_mul.at(0).value());
+  // ... but variances differ
   assert(h_sum.at(0).variance() == 2 && g_mul.at(0).variance() == 4);
+
+  // equality operator checks variances, so histograms are not equal
+  assert(h_sum != g_mul);
 }
 
 //]

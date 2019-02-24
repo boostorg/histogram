@@ -40,8 +40,8 @@ int main() {
   assert(r_sqrt.index(-1) == 3);
 
   // make a regular axis with a power transform x^1/3 over [1, 8), [8, 27), [27, 64)
-  using pow = axis::transform::pow;
-  axis::regular<double, pow> r_pow(pow{1. / 3.}, 3, 1., 64.);
+  using pow_trans = axis::transform::pow;
+  axis::regular<double, pow_trans> r_pow(pow_trans{1. / 3.}, 3, 1., 64.);
   // pow transform:
   // - generalization of the sqrt transform, power index is first argument of ctor
   // - starting the axis at value == 0 is ok, 0^p == 0 for p != 0

@@ -11,11 +11,11 @@
 #include <iostream>
 #include <sstream>
 
-namespace bh = boost::histogram;
-
 int main() {
+  using namespace boost::histogram;
+
   // custom axis, which adapts builtin integer axis
-  struct custom_axis : public bh::axis::integer<> {
+  struct custom_axis : public axis::integer<> {
     using value_type = const char*; // type that is fed to the axis
 
     using integer::integer; // inherit ctors of base
@@ -23,19 +23,17 @@ int main() {
     // the customization point
     // - accept const char* and convert to int
     // - then call index method of base class
-    bh::axis::index_type index(value_type s) const {
-      return integer::index(std::atoi(s));
-    }
+    axis::index_type index(value_type s) const { return integer::index(std::atoi(s)); }
   };
 
-  auto h = bh::make_histogram(custom_axis(3, 6));
+  auto h = make_histogram(custom_axis(3, 6));
   h("-10");
   h("3");
   h("4");
   h("9");
 
   std::ostringstream os;
-  for (auto&& b : bh::indexed(h)) {
+  for (auto&& b : indexed(h)) {
     os << "bin " << b.index() << " [" << b.bin() << "] " << *b << "\n";
   }
 

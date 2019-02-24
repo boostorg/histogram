@@ -39,9 +39,9 @@ int main() {
                       "1 count 2 mean 3.5 variance 0.5\n"
                       "2 count 0 mean 0.0 variance 0.0\n");
 
-  // Let's make a custom accumulator. It must have a call operator that accepts
-  // the argument of the `sample` function. Any return value of the call
-  // operator is ignored.
+  // Let's make a custom accumulator, which tracks the maximum of the samples. It must
+  // have a call operator that accepts the argument of the `sample` function. The return
+  // value of the call operator is ignored.
   struct max {
     void operator()(double x) {
       if (x > value) value = x;
@@ -65,23 +65,6 @@ int main() {
   assert(os2.str() == "0 value 2.5\n"
                       "1 value 4.0\n"
                       "2 value 0.0\n");
-
-  // // Let's go meta and use the histogram itself as an accumulator, just for
-  // fun. auto h_nested = make_histogram(axis); auto h2 =
-  // make_histogram_with(dense_storage<decltype(h_nested)>(h_nested), axis);
-  // h2(0.0, sample(2));   // sample 2 goes to first bin
-  // h2(0.1, sample(2.5)); // sample 2.5 goes to first bin
-  // h2(0.4, sample(3));   // sample 3 goes to second bin
-  // h2(0.5, sample(4));   // sample 4 goes to second bin
-  //
-  // std::ostringstream os2;
-  // for (auto x : indexed(h2)) {
-  //   os2 << boost::format("%i value %.1f\n") % x.index() % x->value;
-  // }
-  // std::cout << os2.str() << std::flush;
-  // assert(os2.str() == "0 value 2.5\n"
-  //                     "1 value 4.0\n"
-  //                     "2 value 0.0\n");
 }
 
 //]

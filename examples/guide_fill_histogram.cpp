@@ -19,9 +19,9 @@ int main() {
   auto h = make_histogram(axis::integer<>(0, 3), axis::regular<>(2, 0.0, 1.0));
 
   // fill histogram, number of arguments must be equal to number of axes,
-  // types must be convertible to axis value type (here double)
-  h(0, 0.2);            // increases bin counter by one
-  h(2, 0.5, weight(2)); // increase bin counter by 2 instead of 1
+  // types must be convertible to axis value type (here integer and double)
+  h(0, 0.2); // increase a cell value by one
+  h(2, 0.5); // increase another cell value by one
 
   // fills from a tuple are also supported; passing a tuple of wrong size
   // causes an error at compile-time or an assertion at runtime in debug mode
@@ -48,7 +48,7 @@ int main() {
   assert(h.at(1, 0) == 1);
   assert(h.at(1, 1) == 0);
   assert(h.at(2, 0) == 1);
-  assert(h.at(2, 1) == 2);
+  assert(h.at(2, 1) == 1);
   assert(h.at(-1, -1) == 0); // underflow for axis 0 and 1
   assert(h.at(-1, 0) == 0);  // underflow for axis 0, normal bin for axis 1
   assert(h.at(-1, 2) == 0);  // underflow for axis 0, overflow for axis 1
@@ -58,7 +58,7 @@ int main() {
   // - iteration using begin() and end() includes under- and overflow bins
   // - iteration order is an implementation detail and may change in future versions
   const double sum = std::accumulate(h.begin(), h.end(), 0.0);
-  assert(sum == 7);
+  assert(sum == 6);
 }
 
 //]

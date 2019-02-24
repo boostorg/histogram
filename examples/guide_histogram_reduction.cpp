@@ -8,61 +8,31 @@
 
 #include <boost/histogram.hpp>
 #include <cassert>
-#include <iostream>
-#include <sstream>
-
-namespace bh = boost::histogram;
-
-// example of a generic function for histograms, this one sums all entries
-template <typename... Ts>
-auto sum(const bh::histogram<Ts...>& h) {
-  auto result = typename bh::histogram<Ts...>::value_type();
-  for (auto x : h) result += x;
-  return result;
-}
-// note: boost/histogram/algorithm/sum.hpp is a better implementation
 
 int main() {
-  using namespace bh::literals; // enables _c suffix
+  using namespace boost::histogram;
 
   // make a 2d histogram
-  auto h =
-      bh::make_histogram(bh::axis::regular<>(3, -1.0, 1.0), bh::axis::integer<>(0, 2));
+  auto h = make_histogram(axis::regular<>(4, 0.0, 4.0), axis::regular<>(4, -1.0, 1.0));
 
-  h(-0.9, 0);
-  h(0.9, 1);
-  h(0.1, 0);
+  h(0, -0.9);
+  h(1, 0.9);
+  h(2, 0.1);
+  h(3, 0.1);
 
-  auto hr0 = bh::algorithm::project(h, 0_c); // keep only first axis
-  auto hr1 = bh::algorithm::project(h, 1_c); // keep only second axis
+  // shrink the first axis to remove the highest bin
+  // rebin the second axis by merging pairs of adjacent bins
+  auto h2 = algorithm::reduce(h, algorithm::shrink(0, 0.0, 3.0), algorithm::rebin(1, 2));
 
-  // reduce does not remove counts; returned histograms are summed over
-  // the removed axes, so h, hr0, and hr1 have same number of total counts
-  assert(sum(h) == 3 && sum(hr0) == 3 && sum(hr1) == 3);
+  // reduce does not remove counts if the histogram has underflow/overflow bins
+  assert(algorithm::sum(h) == 4 && algorithm::sum(h2) == 4);
 
-  std::ostringstream os1;
-  for (auto x : bh::indexed(h))
-    os1 << "(" << x.index(0) << ", " << x.index(1) << "): " << *x << "\n";
-  std::cout << os1.str() << std::flush;
-  assert(os1.str() == "(0, 0): 1\n"
-                      "(1, 0): 1\n"
-                      "(2, 0): 0\n"
-                      "(0, 1): 0\n"
-                      "(1, 1): 0\n"
-                      "(2, 1): 1\n");
-
-  std::ostringstream os2;
-  for (auto x : bh::indexed(hr0)) os2 << "(" << x.index(0) << ", -): " << *x << "\n";
-  std::cout << os2.str() << std::flush;
-  assert(os2.str() == "(0, -): 1\n"
-                      "(1, -): 1\n"
-                      "(2, -): 1\n");
-
-  std::ostringstream os3;
-  for (auto x : bh::indexed(hr1)) os3 << "(- ," << x.index(0) << "): " << *x << "\n";
-  std::cout << os3.str() << std::flush;
-  assert(os3.str() == "(- ,0): 2\n"
-                      "(- ,1): 1\n");
+  assert(h2.axis(0).size() == 3);
+  assert(h2.axis(0).bin(0).lower() == 0.0);
+  assert(h2.axis(0).bin(2).upper() == 3.0);
+  assert(h2.axis(1).size() == 2);
+  assert(h2.axis(1).bin(0).lower() == -1.0);
+  assert(h2.axis(1).bin(1).upper() == 1.0);
 }
 
 //]

@@ -9,24 +9,24 @@
 #include <boost/histogram.hpp>
 #include <cassert>
 
-namespace bh = boost::histogram;
-
 int main() {
+  using namespace boost::histogram;
+
   // stateless axis which returns 1 if the input is even and 0 otherwise
   struct even_odd_axis {
-    bh::axis::index_type index(int x) const { return x % 2; }
-    bh::axis::index_type size() const { return 2; }
+    axis::index_type index(int x) const { return x % 2; }
+    axis::index_type size() const { return 2; }
   };
 
   // threshold axis which returns 1 if the input is above threshold
   struct threshold_axis {
     threshold_axis(double x) : thr(x) {}
-    bh::axis::index_type index(double x) const { return x >= thr; }
-    bh::axis::index_type size() const { return 2; }
+    axis::index_type index(double x) const { return x >= thr; }
+    axis::index_type size() const { return 2; }
     double thr;
   };
 
-  auto h = bh::make_histogram(even_odd_axis(), threshold_axis(3.0));
+  auto h = make_histogram(even_odd_axis(), threshold_axis(3.0));
 
   h(0, 2.0);
   h(1, 4.0);

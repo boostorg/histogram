@@ -33,9 +33,6 @@ int main() {
   // value below range: axis grows new bins until value is in range
   h1(-0.3);
   // state: [-0.5, 0.0): 1, [0, 0.5): 1, [0.5, 1.0): 1
-  std::cout << h1.axis().size() << std::endl;
-  std::cout << h1.axis().bin(0).lower() << std::endl;
-  std::cout << h1.axis().bin(2).upper() << std::endl;
   assert(h1.axis().size() == 3);
   assert(h1.axis().bin(0).lower() == -0.5);
   assert(h1.axis().bin(2).upper() == 1.0);

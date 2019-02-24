@@ -11,7 +11,7 @@
 #include <type_traits>
 
 /**
-  \file Options for builtin axis types.
+  \file option.hpp Options for builtin axis types.
 
   Options circular and growth are mutually exclusive.
   Options circular and underflow are mutually exclusive.
@@ -64,11 +64,11 @@ struct join_impl<T, axis::option::growth>
 } // namespace detail
 
 namespace axis {
-/// Combines options and corrects for mutually exclusive options.
+/// Metafunction that combines options and corrects for mutually exclusive flags.
 template <class... Ts>
 using join = mp11::mp_fold<mp11::mp_list<Ts...>, option_set<0>, detail::join_impl>;
 
-/// Test whether the bits in b are also set in a.
+/// Metafunction that tests whether the bits in b are also set in a.
 template <class T, class U>
 using test = std::integral_constant<bool, (T::value & U::value ? 1 : 0)>;
 } // namespace axis

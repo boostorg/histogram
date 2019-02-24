@@ -14,9 +14,10 @@ int main() {
 
   // make a regular axis with 10 bins over interval from 1.5 to 2.5
   auto r = axis::regular<>{10, 1.5, 2.5};
-  // `<>` is needed because the axis is templated, you can drop this on a C++17 compiler
+  // `<>` is needed in C++14 because the axis is templated,
+  // in C++17 you can do: auto r = axis::regular{10, 1.5, 2.5};
   assert(r.size() == 10);
-  // you can also make a regular axis by defining the step size with the `step` marker
+  // alternatively, you can define the step size with the `step` marker
   auto r_step = axis::regular<>{axis::step(0.1), 1.5, 2.5};
   assert(r_step == r);
 
