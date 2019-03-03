@@ -10,6 +10,8 @@
 #include <boost/histogram/fwd.hpp>
 #include <iosfwd>
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+
 namespace boost {
 namespace histogram {
 namespace accumulators {
@@ -44,5 +46,7 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
 } // namespace accumulators
 } // namespace histogram
 } // namespace boost
+
+#endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 #endif

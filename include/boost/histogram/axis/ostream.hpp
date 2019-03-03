@@ -21,6 +21,8 @@
 #include <stdexcept>
 #include <type_traits>
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+
 namespace boost {
 namespace histogram {
 
@@ -185,5 +187,7 @@ std::basic_ostream<Ts...>& operator<<(std::basic_ostream<Ts...>& os,
 } // namespace axis
 } // namespace histogram
 } // namespace boost
+
+#endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 #endif

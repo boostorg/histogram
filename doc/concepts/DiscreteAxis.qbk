@@ -13,7 +13,7 @@ A [*DiscreteAxis] is one of two optional refinements of the [link histogram.conc
 * `a` is a value of type `A`
 * `V` is the type accepted for conversion into an index
 * `v` is a value of type `V`
-* `i` is a value of type `boost::histogram::index_type`
+* `i` is a value of type [headerref boost/histogram/fwd.hpp `boost::histogram::index_type`]
 
 [table Valid expressions
 [[Expression] [Return type] [Semantics, Pre/Post-conditions]]
@@ -36,6 +36,6 @@ A [*DiscreteAxis] is one of two optional refinements of the [link histogram.conc
 [heading Models]
 
 * [classref boost::histogram::axis::category]
-* [classref boost::histogram::axis::integer], if first template parameter is `boost::histogram::index_type`
+* [classref boost::histogram::axis::integer], if first template parameter is [headerref boost/histogram/fwd.hpp `boost::histogram::index_type`]
 
 [endsect]

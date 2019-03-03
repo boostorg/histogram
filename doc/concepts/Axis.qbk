@@ -11,10 +11,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 
 * `A` is a type meeting the requirements of [*Axis]
 * `a` is a value of type `A`
-* `V` is the type accepted for conversion into an index
-* `v` is a value of type `V`
-* `I` is an alias for `boost::histogram::index_type`
-* `i` is a value of type `I`
+* `I` is an alias for [headerref boost/histogram/fwd.hpp `boost::histogram::index_type`]
 
 [table Valid expressions
 [[Expression] [Return type] [Semantics, Pre/Post-conditions]]
@@ -29,7 +26,14 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   [`a.index(v)`]
   [`I`]
   [
-    Const member function which maps a value to an index. The mapping must be injective: each value must be uniquely mapped to one index. If the value is not covered by the axis, return either `-1` or `a.size()`. The value `-1` indicates that the value is lower than the lowest value covered by the axis. The value `a.size()` indicates that the value is above the uppermost value covered by the axis. By convention, /NaN/-values are mapped to `a.size()`.
+    Const member function which maps a value `v` to an index. The mapping must be injective: each value must be uniquely mapped to one index. If the value is not covered by the axis, return either `-1` or `a.size()`. The value `-1` indicates that the value is lower than the lowest value covered by the axis. The value `a.size()` indicates that the value is above the uppermost value covered by the axis. By convention, /NaN/-values are mapped to `a.size()`.
+  ]
+]
+[
+  [`a.get_allocator()`]
+  [`Alloc`]
+  [
+    Const member function which returns the allocator `Alloc` used by this axis. May be omitted if `A` does not use allocators. If this member function exists, also a special constructor must exists so that `A(a.get_allocator())` is a valid expression.
   ]
 ]
 ]
@@ -37,11 +41,8 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 [heading Optional features]
 
 * `A` is a type meeting the requirements of [*Axis]
-* `a,b` are a values of type `A`
+* `a` and `b` are a values of type `A`
 * `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable]
-* `Alloc` is the allocator type of `A`, if `A` uses an allocator
-* `os` is a value of type `std::basic_ostream<CharT, Traits>`
-* `ar` is a value of an archive with Boost.Serialization semantics
 
 [table Valid expressions
 [[Expression] [Return type] [Semantics, Pre/Post-conditions]]
@@ -61,23 +62,23 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 ]
 [
   [`a.metadata()`]
-  [`M`, `const M&`, or `M&`]
+  [`M` or `const M&`]
   [
-    Const member function which a copy of or a const reference to the metadata associated with the axis, usually a label string. On top of that, a non-const member function may be provided which returns a non-const reference to the metadata, which allows to modify it.
+    Const member function which returns a copy of or a const reference to the metadata associated with the axis, usually a label string.
   ]
 ]
 [
-  [`a.get_allocator()`]
-  [`Alloc`]
+  [`a.metadata()`]
+  [`M&`]
   [
-    Const member function which returns the allocator used by this axis. If this member function exists, also a constructor must exists so that `A(a.get_allocator())` is a valid expression.
+    Likewise, but non-const member function which returns a reference to the metadata. If this member function exists, also the previous one must exist.
   ]
 ]
 [
   [`a == b`]
   [`bool`]
   [
-     Compares two instances of `A` types and returns `true` if they have the same state. If `a` and `b` have attached metadata, they should only compare equal only if their metadata compare equal. Implementing `a == b` requires that you implement `a != b` as well. If the equality operator is not implemented, the library considers two axis instances equal if they have the same type, and unequal otherwise.
+     `b` is another value of type `A`. Returns `true` if all state variables compare equal, including any metadata. Otherwise returns `false`. If `a == b` is implemented, also `a != b` must be implemented. If this binary operator is not implemented, the library considers the arguments equal, if and only if their types are the same.
   ]
 ]
 [
@@ -91,14 +92,14 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   [`os << a`]
   [`std::basic_ostream<CharT, Traits>&`]
   [
-    Streams a text representation of the axis. May not mutate `a`.
+    `os` is a value of type `std::basic_ostream<CharT, Traits>`. Streams a text representation of the axis. May not mutate `a`.
   ]
 ]
 [
   [`ar & a`]
   []
   [
-    Serializes `a` to the archive or loads serialized state from the archive.
+    `ar` is a value of an archive with Boost.Serialization semantics. Serializes `a` to the archive or loads serialized state from the archive.
   ]
 ]
 ]

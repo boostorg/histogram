@@ -14,8 +14,8 @@ A [*IntervalAxis] is one of two optional refinements of the [link histogram.conc
 * `V` is the type accepted for conversion into an index
 * `B` is the type that represents the bin interval
 * `v` is a value of type `V`
-* `i` is a value of type `boost::histogram::index_type`
-* `j` is a value of type `boost::histogram::real_index_type`
+* `i` is a value of type [headerref boost/histogram/fwd.hpp `boost::histogram::index_type`]
+* `j` is a value of type [headerref boost/histogram/fwd.hpp `boost::histogram::real_index_type`]
 
 [table Valid expressions
 [[Expression] [Return type] [Semantics, Pre/Post-conditions]]

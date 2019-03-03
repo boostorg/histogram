@@ -12,6 +12,8 @@
 #include <boost/histogram/fwd.hpp>
 #include <iosfwd>
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+
 namespace boost {
 namespace histogram {
 
@@ -31,5 +33,7 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
 
 } // namespace histogram
 } // namespace boost
+
+#endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 #endif

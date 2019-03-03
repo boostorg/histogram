@@ -27,11 +27,6 @@ doxygen reference
   <doxygen:param>JAVADOC_AUTOBRIEF=YES
   <doxygen:param>USE_MATHJAX=NO
   <doxygen:param>SEARCH_INCLUDES=YES
-  <doxygen:param>"EXCLUDE=\"../../../boost/histogram/fwd.hpp\" \\
-                          \"../../../boost/histogram/ostream.hpp\" \\
-                          \"../../../boost/histogram/axis/ostream.hpp\" \\
-                          \"../../../boost/histogram/accumulators/ostream.hpp\" \\
-                          "
   <doxygen:param>EXCLUDE_SYMBOLS=detail
   <doxygen:param>WARNINGS=YES
   <doxygen:param>WARN_IF_DOC_ERROR=YES
