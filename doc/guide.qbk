@@ -4,7 +4,7 @@ Boost.Histogram is designed to make simple things simple, yet complex things pos
 
 [section Make a histogram]
 
-A histogram consists of a [link histogram.concepts.storage storage] and a sequence of [link histogram.concepts.axis axis] objects. The storage represents a grid of cells of counters. The axis objects maps input values to indices, which are used to look up the cell. You don't normally have to worry about the storage, since the library provides a very good default. There are many interesting axis types to choose from, but for now let us stick to the most common axis, the [classref boost::histogram::axis::regular regular] axis. It represents equidistant intervals on the real line.
+A histogram consists of a [link histogram.concepts.storage storage] and a sequence of [link histogram.concepts.Axis axis objects]. The storage represents a grid of cells of counters. The axis objects maps input values to indices, which are used to look up the cell. You don't normally have to worry about the storage, since the library provides a very good default. There are many interesting axis types to choose from, but for now let us stick to the most common axis, the [classref boost::histogram::axis::regular regular] axis. It represents equidistant intervals on the real line.
 
 Use the convenient factory function [headerref boost/histogram/make_histogram.hpp make_histogram] to make the histograms. In the following example, a histogram with a single axis is created.
 
@@ -319,7 +319,7 @@ The library currently does not provide a builtin thread-safe storage yet (one wi
 
 [section User-defined axes]
 
-It is easy to make custom axis classes that work with the library. The custom axis class must meet the requirements of the [link histogram.concepts.axis axis concept].
+It is easy to make custom axis classes that work with the library. The custom axis class must meet the requirements of the [link histogram.concepts.Axis Axis concept].
 
 Users can create a custom axis by derive from a builtin axis type and customize its behavior. The following examples demonstrates a modification of the [classref boost::histogram::axis::integer integer axis].
 

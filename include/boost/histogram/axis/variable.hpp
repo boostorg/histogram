@@ -192,7 +192,7 @@ public:
   }
 
   /// Return allocator instance.
-  allocator_type get_allocator() const { return vec_meta_.first().get_allocator(); }
+  auto get_allocator() const { return vec_meta_.first().get_allocator(); }
 
   template <class Archive>
   void serialize(Archive&, unsigned);

@@ -2,68 +2,11 @@
 
 Users can extend the library with various new types whose concepts are defined here.
 
-[section:axis AxisType]
-
-An `AxisType` converts input values into bin indices.
-
-An `AxisType` is required to:
-
-* be default/copy/move constructable
-* be copy/move assignable
-* be equal comparable
-* have a nested type `value_type` reflecting the type of the input values (may be a const reference if the input value is expensive to copy)
-* have a nested type `bin_type`, which is a type that represents the bin, typically a semi-open interval (may be a const reference if the bin type is expensive to copy)
-* have the following methods:
-  * `int index(value_type x) const`: takes an input value and returns the bin index
-  * `bin_type operator[](int index) const`: takes an index and returns the corresponding bin instance
-* optionally, be streamable by implementation a free function
-  * `std::ostream operator<<(std::ostream&, const axis_type&)`
-* optionally, be serializable, by implementing a member function template
-  * `template <class Archive> void serialize(Archive& ar, unsigned /* version */)`
-
-The latter two are not needed, if the histogram that uses the custom axis type is never serialized or streamed.
-
-It is recommended to take a look at the existing axis types, like [classref boost::histogram::axis::integer], which serve as templates to create new ones.
-
-[endsect]
-
-[section:transform TransformType]
-
-To do, explain the Transform concept.
-
-[endsect]
-
-[section:storage StorageType]
-
-A `StorageType` handles memory for the bin counters and provides a uniform interface for incrementing bin counters and reading their values.
-
-A `StorageType` is required to:
-
-* be default/copy/move constructable
-* be copy/move assignable
-* be equal comparable
-* have nested types
-  * `allocator_type`
-  * `element_type`, which represent the bin count
-  * `const_reference`, const reference of bin count
-  * `scale_type`, type to scale the storage counters
-* have the following methods and operators:
-  * `void reset(std::size_t n)` which prepares n counters initialized to zero
-  * `std::size_t size() const` get number of counters
-  * `void increase(std::size_t index)` increment bin counter
-  * `template <typename T> void add(std::size_t index, const T& x)` add value to bin counter
-  * `const_reference operator[](std::size_t index) const` read bin counter
-  * `storage_type& operator+=(const storage_type& other)` add another storage
-  * `storage_type& operator*=(const scale_type& x)` multiply by scale type
-* optionally, it can have the following method to support weighted increments:
-  * `template <typename T> void add(std::size_t index, const boost::histogram::detail::weight_type<T>& w)`
-
-[endsect]
-
-[section:accumulator AccumulatorType]
-
-TODO
-
-[endsect]
+[include concepts/Axis.qbk]
+[include concepts/DiscreteAxis.qbk]
+[include concepts/IntervalAxis.qbk]
+[include concepts/Transform.qbk]
+[include concepts/Storage.qbk]
+[include concepts/Accumulator.qbk]
 
 [endsect]

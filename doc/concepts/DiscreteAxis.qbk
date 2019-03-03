@@ -1,0 +1,41 @@
+[section:DiscreteAxis DiscreteAxis]
+
+A [*DiscreteAxis] is one of two optional refinements of the [link histogram.concepts.Axis [*Axis]] concept, the other one is the [link histogram.concepts.IntervalAxis IntervalAxis]. This concept is for values that do not form intervals, and for axes with intervals that contain exactly one value.
+
+[heading Associated Types]
+
+* [link histogram.concepts.Axis [*Axis]]
+* [link histogram.concepts.IntervalAxis [*IntervalAxis]]
+
+[heading Requirements]
+
+* `A` is a type meeting the requirements of [*DiscreteAxis]
+* `a` is a value of type `A`
+* `V` is the type accepted for conversion into an index
+* `v` is a value of type `V`
+* `i` is a value of type `boost::histogram::index_type`
+
+[table Valid expressions
+[[Expression] [Return type] [Semantics, Pre/Post-conditions]]
+[
+  [`a.value(i)`]
+  [`V`]
+  [
+    Const member function which maps an index to a value. The mapping must be injective: each index must be uniquely mapped to one value. The effect must be exactly the inverse of `a.index(v)`. The return value may be a const reference, if the lifetime of the referred object is equal to the lifetime of the axis.
+  ]
+]
+[
+  [`a.bin(i)`]
+  [`V`]
+  [
+    Must have the same effect as `a.value(i)`.
+  ]
+]
+]
+
+[heading Models]
+
+* [classref boost::histogram::axis::category]
+* [classref boost::histogram::axis::integer], if first template parameter is `boost::histogram::index_type`
+
+[endsect]
