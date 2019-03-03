@@ -129,7 +129,7 @@ A common need is a regular binning in the logarithm of the input value. This can
 
 As shown in the example, due to the finite precision of floating point calculations, the bin edges of a transformed regular axis may not be exactly at the expected values. If you need exact correspondence, use a [classref boost::histogram::axis::variable variable] axis.
 
-Users may write their own transforms and use them with the builtin [classref boost::histogram::axis::regular regular] axis, by implementing a type that matches the [link histogram.concepts.transform transform concept].
+Users may write their own transforms and use them with the builtin [classref boost::histogram::axis::regular regular] axis, by implementing a type that matches the [link histogram.concepts.Transform [*Transform] concept].
 
 [endsect]
 
@@ -319,7 +319,7 @@ The library currently does not provide a builtin thread-safe storage yet (one wi
 
 [section User-defined axes]
 
-It is easy to make custom axis classes that work with the library. The custom axis class must meet the requirements of the [link histogram.concepts.Axis Axis concept].
+It is easy to make custom axis classes that work with the library. The custom axis class must meet the requirements of the [link histogram.concepts.Axis [*Axis] concept].
 
 Users can create a custom axis by derive from a builtin axis type and customize its behavior. The following examples demonstrates a modification of the [classref boost::histogram::axis::integer integer axis].
 
@@ -380,7 +380,7 @@ The library provides several accumulators:
 * [classref boost::histogram::accumulators::mean mean] accepts a sample and computes the mean of the samples. [funcref boost::histogram::make_profile make_profile] uses this accumulator.
 * [classref boost::histogram::accumulators::weighted_mean weighted_mean] accepts a sample and a weight. It computes the weighted mean of the samples. [funcref boost::histogram::make_weighted_profile make_weighted_profile] uses this accumulator.
 
-Users can easily write their own accumulators and plug them into the histogram, if they adhere to the [link histogram.concepts.transform accumulator concept].
+Users can easily write their own accumulators and plug them into the histogram, if they adhere to the [link histogram.concepts.Transform [*Accumulator] concept].
 
 [import ../examples/guide_custom_accumulators.cpp]
 [guide_custom_accumulators]

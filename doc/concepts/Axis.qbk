@@ -41,7 +41,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 * `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable]
 * `Alloc` is the allocator type of `A`, if `A` uses an allocator
 * `os` is a value of type `std::basic_ostream<CharT, Traits>`
-* `r` is a value of an archive with Boost.Serialization semantics
+* `ar` is a value of an archive with Boost.Serialization semantics
 
 [table Valid expressions
 [[Expression] [Return type] [Semantics, Pre/Post-conditions]]
@@ -75,14 +75,14 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 ]
 [
   [`a == b`]
-  [bool]
+  [`bool`]
   [
-     Compares two instances of the same type and in addition possibly two instances of different types. Return true if axis are semantically equal. If `a` and `b` have attached metadata, they should only compare equal only if their metadata compare equal. Implementing `a == b` requires that you implement `a != b` as well. If no equality operator is not implemented, the library considers two axis instances equal if they have the same type, and unequal otherwise.
+     Compares two instances of `A` types and returns `true` if they have the same state. If `a` and `b` have attached metadata, they should only compare equal only if their metadata compare equal. Implementing `a == b` requires that you implement `a != b` as well. If the equality operator is not implemented, the library considers two axis instances equal if they have the same type, and unequal otherwise.
   ]
 ]
 [
   [`a != b`]
-  [bool]
+  [`bool`]
   [
     Must be implemented if `a == b` is implemented and must be equal to `!(a == b)`.
   ]
@@ -95,7 +95,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   ]
 ]
 [
-  [`r & a`]
+  [`ar & a`]
   []
   [
     Serializes `a` to the archive or loads serialized state from the archive.
