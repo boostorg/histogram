@@ -6,8 +6,6 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 
 import common ;
-import testing ;
-import ../config/checks/config : requires ;
 
 variant histogram_coverage : debug :
     <cxxflags>"--coverage"
@@ -23,12 +21,8 @@ variant histogram_ubasan : debug :
 
 project
     : requirements
-    [ requires
-      cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
-      # list could go on...
-    ]
     <implicit-dependency>/boost//headers
-    <threading>multi
+    <include>$(BOOST_ROOT)
     : default-build
     <warnings>all
     #<warnings-as-errors>on

@@ -4,6 +4,18 @@
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+import testing ;
+import ../../config/checks/config : requires ;
+
+project
+    : requirements
+    [ requires
+      cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
+      # list could go on...
+    ]
+    <threading>multi
+    ;
+
 test-suite minimal :
     [ run getting_started_listing_01.cpp ]
     [ run getting_started_listing_02.cpp ]

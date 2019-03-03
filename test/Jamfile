@@ -7,6 +7,8 @@
 
 import os ;
 import regex ;
+import testing ;
+import ../../config/checks/config : requires ;
 
 path-constant THIS_PATH : . ;
 
@@ -22,9 +24,13 @@ else {
 
 project
     : requirements
-    <include>$(BOOST_ROOT)
     <include>$(THIS_PATH)
     <define>XML_PATH=\\\"$(XML_PATH)\\\"
+    [ requires
+      cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
+      # list could go on...
+    ]
+    <threading>multi
     ;
 
 test-suite minimal :
