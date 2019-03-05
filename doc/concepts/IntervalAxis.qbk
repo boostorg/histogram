@@ -16,6 +16,8 @@ A [*IntervalAxis] is one of two optional refinements of the [link histogram.conc
 * `v` is a value of type `V`
 * `i` is a value of type [headerref boost/histogram/fwd.hpp `boost::histogram::index_type`]
 * `j` is a value of type [headerref boost/histogram/fwd.hpp `boost::histogram::real_index_type`]
+* `AxisIter` is an /RandomAccessIterator/ over the bins of `A`
+* `ReAxisIter` is a reverse /RandomAccessIterator/ over the bins of `A`
 
 [table Valid expressions
 [[Expression] [Return type] [Semantics, Pre/Post-conditions]]
@@ -33,7 +35,37 @@ A [*IntervalAxis] is one of two optional refinements of the [link histogram.conc
     Const member function which returns an instance that represents the current bin. Nothing about the type is required, but it is recommended that the type has the methods `B::lower()`, `B::upper()`, and `B::center()` similar to the types used by the builtin axis models. The return value may be a const reference, if the lifetime of the referred object is equal to the lifetime of the axis.
   ]
 ]
+[
+  [`s.begin()`]
+  [`AxisIter`]
+  [
+    Const member function which return an iterator to the bin with index `0`.
+  ]
 ]
+[
+  [`s.end()`]
+  [`AxisIter`]
+  [
+    Const member function which returns an iterator to the bin with index `s.size()`.
+  ]
+]
+[
+  [`s.rbegin()`]
+  [`ReAxisIter`]
+  [
+    Const member function which return a reverse iterator to the bin with index `s.size()-1`.
+  ]
+]
+[
+  [`s.rend()`]
+  [`ReAxisIter`]
+  [
+    Const member function which returns an iterator to the bin with index `-1`.
+  ]
+]
+]
+
+[tip The complete iterator interface can be added to a user-defined axis which implements `a.bin(i)` by inheriting from the [classref boost::histogram::axis::iterator_mixin iterator_mixin].]
 
 [heading Models]
 
