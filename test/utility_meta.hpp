@@ -26,12 +26,17 @@ ostream& operator<<(ostream& os, const vector<T>& v) {
   return os;
 }
 
-template <class T,
-          class = std::enable_if_t<boost::histogram::detail::has_fixed_size<T>::value>>
-ostream& operator<<(ostream& os, const T& t) {
+template <class... Ts>
+ostream& operator<<(ostream& os, const std::tuple<Ts...>& t) {
   os << "[ ";
   ::boost::mp11::tuple_for_each(t, [&os](const auto& x) { os << x << " "; });
   os << "]";
+  return os;
+}
+
+template <class T, class U>
+ostream& operator<<(ostream& os, const std::pair<T, U>& t) {
+  os << "[ " << t.first << " " << t.second << " ]";
   return os;
 }
 } // namespace std
