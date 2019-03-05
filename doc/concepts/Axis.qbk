@@ -41,7 +41,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 [heading Optional features]
 
 * `A` is a type meeting the requirements of [*Axis]
-* `a` and `b` are a values of type `A`
+* `a` and `b` are values of type `A`
 * `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable]
 
 [table Valid expressions

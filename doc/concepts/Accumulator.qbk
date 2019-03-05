@@ -5,7 +5,7 @@ An [*Accumulator] is a functor which consumes the argument to update some intern
 [heading Required features]
 
 * `A` is a type meeting the requirements of [*Accumulator]
-* `a` and `b` are a values of type `A`
+* `a` and `b` are values of type `A`
 * `ts...` is a pack of values
 
 [table Valid expressions
@@ -36,7 +36,7 @@ An [*Accumulator] is a functor which consumes the argument to update some intern
 [heading Optional features]
 
 * `A` is a type meeting the requirements of [*Accumulator]
-* `a` and `b` are a values of type `A`
+* `a` and `b` are values of type `A`
 
 [table Valid expressions
 [[Expression] [Return type] [Semantics, Pre/Post-conditions]]
