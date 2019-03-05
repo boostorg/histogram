@@ -140,10 +140,12 @@ int main() {
   // is_storage
   {
     struct A {};
-    using B = unlimited_storage<>;
+    using B = std::vector<int>;
+    using C = unlimited_storage<>;
 
     BOOST_TEST_TRAIT_FALSE((is_storage<A>));
-    BOOST_TEST_TRAIT_TRUE((is_storage<B>));
+    BOOST_TEST_TRAIT_FALSE((is_storage<B>));
+    BOOST_TEST_TRAIT_TRUE((is_storage<C>));
   }
 
   // is_indexable
@@ -381,19 +383,6 @@ int main() {
     BOOST_TEST_TRAIT_FALSE((is_sample<B>));
     BOOST_TEST_TRAIT_TRUE((is_sample<C>));
     BOOST_TEST_TRAIT_TRUE((is_sample<D>));
-  }
-
-  // has_fixed_size
-  {
-    struct A {};
-    using B = std::vector<int>;
-    using C = std::tuple<int, int>;
-    using D = std::array<int, 2>;
-
-    BOOST_TEST_NOT(has_fixed_size<A>::value);
-    BOOST_TEST_NOT(has_fixed_size<B>::value);
-    BOOST_TEST(has_fixed_size<C>::value);
-    BOOST_TEST(has_fixed_size<D>::value);
   }
 
   // make_default

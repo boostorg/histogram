@@ -134,12 +134,6 @@ decltype(auto) tuple_slice(T&& t) {
   return tuple_slice_impl<I>(std::forward<T>(t), mp11::make_index_sequence<N>{});
 }
 
-template <typename T>
-using get_storage_tag = typename T::storage_tag;
-
-template <typename T>
-using is_storage = mp11::mp_valid<get_storage_tag, T>;
-
 #define BOOST_HISTOGRAM_DETECT(name, cond)   \
   template <class T, class = decltype(cond)> \
   struct name##_impl {};                     \
@@ -167,6 +161,8 @@ BOOST_HISTOGRAM_DETECT(has_method_value, &T::value);
 
 BOOST_HISTOGRAM_DETECT(has_method_update, (&T::update));
 
+BOOST_HISTOGRAM_DETECT(has_method_reset, (std::declval<T>().reset(0)));
+
 template <typename T>
 using get_value_method_return_type_impl = decltype(std::declval<T&>().value(0));
 
@@ -183,20 +179,22 @@ BOOST_HISTOGRAM_DETECT(is_indexable, (std::declval<T&>()[0]));
 
 BOOST_HISTOGRAM_DETECT(is_transform, (&T::forward, &T::inverse));
 
-BOOST_HISTOGRAM_DETECT(is_vector_like,
-                       (std::declval<T&>()[0], &T::size, std::declval<T&>().resize(0),
-                        &T::cbegin, &T::cend));
+BOOST_HISTOGRAM_DETECT(is_indexable_container,
+                       (std::declval<T>()[0], &T::size, std::begin(std::declval<T>()),
+                        std::end(std::declval<T>())));
 
-BOOST_HISTOGRAM_DETECT(is_array_like, (std::declval<T&>()[0], &T::size,
-                                       std::tuple_size<T>::value, &T::cbegin, &T::cend));
+BOOST_HISTOGRAM_DETECT(is_vector_like,
+                       (std::declval<T>()[0], &T::size, std::declval<T>().resize(0),
+                        std::begin(std::declval<T>()), std::end(std::declval<T>())));
+
+BOOST_HISTOGRAM_DETECT(is_array_like,
+                       (std::declval<T>()[0], &T::size, std::tuple_size<T>::value,
+                        std::begin(std::declval<T>()), std::end(std::declval<T>())));
 
 BOOST_HISTOGRAM_DETECT(is_map_like,
-                       (typename T::key_type(), typename T::mapped_type(),
-                        std::declval<T&>().begin(), std::declval<T&>().end()));
-
-BOOST_HISTOGRAM_DETECT(is_indexable_container,
-                       (std::declval<T&>()[0], &T::size, std::begin(std::declval<T&>()),
-                        std::end(std::declval<T&>())));
+                       (std::declval<typename T::key_type>(),
+                        std::declval<typename T::mapped_type>(),
+                        std::begin(std::declval<T>()), std::end(std::declval<T>())));
 
 // ok: is_axis is false for axis::variant, operator() is templated
 BOOST_HISTOGRAM_DETECT(is_axis, (&T::size, &T::index));
@@ -211,8 +209,6 @@ BOOST_HISTOGRAM_DETECT(is_streamable,
                        (std::declval<std::ostream&>() << std::declval<T&>()));
 
 BOOST_HISTOGRAM_DETECT(is_incrementable, (++std::declval<T&>()));
-
-BOOST_HISTOGRAM_DETECT(has_fixed_size, (std::tuple_size<T>::value));
 
 BOOST_HISTOGRAM_DETECT(has_operator_preincrement, (++std::declval<T&>()));
 
@@ -230,6 +226,10 @@ BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rmul,
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rdiv,
                               (std::declval<T&>() /= std::declval<U&>()));
+
+template <typename T>
+using is_storage =
+    mp11::mp_bool<(is_indexable_container<T>::value && has_method_reset<T>::value)>;
 
 template <typename T>
 struct is_tuple_impl : std::false_type {};
@@ -323,7 +323,7 @@ template <class T>
 using tuple_size_t = typename std::tuple_size<T>::type;
 
 template <class T>
-std::size_t get_size_impl(std::true_type, const T&) noexcept {
+constexpr std::size_t get_size_impl(std::true_type, const T&) noexcept {
   return std::tuple_size<T>::value;
 }
 

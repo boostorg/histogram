@@ -50,8 +50,8 @@ auto make_weighted_profile(Axis&& axis, Axes&&... axes) {
   @param iterable Iterable range of axis objects.
 */
 template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
-auto make_profile(Iterable&& c) {
-  return make_histogram_with(profile_storage(), std::forward<Iterable>(c));
+auto make_profile(Iterable&& iterable) {
+  return make_histogram_with(profile_storage(), std::forward<Iterable>(iterable));
 }
 
 /**
@@ -59,8 +59,9 @@ auto make_profile(Iterable&& c) {
   @param iterable Iterable range of axis objects.
 */
 template <typename Iterable, typename = detail::requires_sequence_of_any_axis<Iterable>>
-auto make_weighted_profile(Iterable&& c) {
-  return make_histogram_with(weighted_profile_storage(), std::forward<Iterable>(c));
+auto make_weighted_profile(Iterable&& iterable) {
+  return make_histogram_with(weighted_profile_storage(),
+                             std::forward<Iterable>(iterable));
 }
 
 /**

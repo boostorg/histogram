@@ -337,7 +337,6 @@ class unlimited_storage {
       "unlimited_storage requires allocator with trivial pointer type");
 
 public:
-  struct storage_tag {};
   using allocator_type = Allocator;
   using value_type = double;
   using mp_int = detail::mp_int<

@@ -9,7 +9,7 @@
 
 /**
   \file boost/histogram/fwd.hpp
-  Forward declarations, basic typedefs, and default template arguments for main classes.
+  Forward declarations, tag types and type aliases.
 */
 
 #include <boost/core/use_default.hpp>
@@ -20,7 +20,7 @@
 namespace boost {
 namespace histogram {
 
-/// tag type to indicate use of a default type
+/// Tag type to indicate use of a default type
 using boost::use_default;
 
 namespace axis {
@@ -31,8 +31,10 @@ using index_type = int;
 /// Real type for axis indices
 using real_index_type = double;
 
-/// empty metadata type
+/// Empty metadata type
 struct null_type {};
+
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 namespace transform {
 struct id;
@@ -58,8 +60,12 @@ class category;
 
 template <class... Ts>
 class variant;
+
+#endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
+
 } // namespace axis
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 template <class T>
 struct weight_type;
 
@@ -85,19 +91,28 @@ class unlimited_storage;
 template <class T>
 class storage_adaptor;
 
+#endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
+
+/// Vector-like storage for fast zero-overhead access to cells
 template <class T, class A = std::allocator<T>>
 using dense_storage = storage_adaptor<std::vector<T, A>>;
 
+/// Default storage, optimized for unweighted histograms
 using default_storage = unlimited_storage<>;
 
+/// Dense storage which tracks sums of weights and a variance estimate
 using weight_storage = dense_storage<accumulators::weighted_sum<>>;
 
+/// Dense storage which tracks means of samples in each cell
 using profile_storage = dense_storage<accumulators::mean<>>;
 
+/// Dense storage which tracks means of weighted samples in each cell
 using weighted_profile_storage = dense_storage<accumulators::weighted_mean<>>;
 
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 template <class Axes, class Storage = default_storage>
 class BOOST_HISTOGRAM_DETAIL_NODISCARD histogram;
+#endif
 } // namespace histogram
 } // namespace boost
 
