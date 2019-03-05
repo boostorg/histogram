@@ -78,7 +78,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   [`a == b`]
   [`bool`]
   [
-     `b` is another value of type `A`. Returns `true` if all state variables compare equal, including any metadata. Otherwise returns `false`. If `a == b` is implemented, also `a != b` must be implemented. If this binary operator is not implemented, the library considers the arguments equal, if and only if their types are the same.
+     Returns `true` if all state variables compare equal, including any metadata. Otherwise returns `false`. If `a == b` is implemented, also `a != b` must be implemented. If this binary operator is not implemented, the library considers the arguments equal, if and only if their types are the same.
   ]
 ]
 [
