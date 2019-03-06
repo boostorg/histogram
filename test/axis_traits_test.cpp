@@ -26,9 +26,9 @@ int main() {
     BOOST_TEST_EQ(traits::value(b, 0), 1);
     BOOST_TEST_EQ(traits::width(b, 0), 1);
     auto& b1 = b;
-    BOOST_TEST((test<traits::static_options<decltype(b1)>, option::underflow>::value));
+    BOOST_TEST(traits::static_options<decltype(b1)>::test(option::underflow));
     const auto& b2 = b;
-    BOOST_TEST((test<traits::static_options<decltype(b2)>, option::underflow>::value));
+    BOOST_TEST(traits::static_options<decltype(b2)>::test(option::underflow));
 
     auto c = category<std::string>{"red", "blue"};
     BOOST_TEST_EQ(traits::index(c, "blue"), 1);
@@ -38,39 +38,38 @@ int main() {
 
   {
     using A = integer<>;
-    BOOST_TEST_EQ((test<traits::static_options<A>, option::growth>::value), false);
-    BOOST_TEST_EQ((test<traits::static_options<A&>, option::growth>::value), false);
-    BOOST_TEST_EQ((test<traits::static_options<const A&>, option::growth>::value), false);
-    BOOST_TEST_EQ(traits::options(A{}),
-                  option::underflow::value | option::overflow::value);
+    BOOST_TEST_EQ(traits::static_options<A>::test(option::growth), false);
+    BOOST_TEST_EQ(traits::static_options<A&>::test(option::growth), false);
+    BOOST_TEST_EQ(traits::static_options<const A&>::test(option::growth), false);
+    BOOST_TEST_EQ(traits::options(A{}), option::underflow | option::overflow);
 
-    using B = integer<int, null_type, option::growth>;
-    BOOST_TEST_EQ((test<traits::static_options<B>, option::growth>::value), true);
-    BOOST_TEST_EQ((test<traits::static_options<B&>, option::growth>::value), true);
-    BOOST_TEST_EQ((test<traits::static_options<const B&>, option::growth>::value), true);
-    BOOST_TEST_EQ(traits::options(B{}), option::growth::value);
+    using B = integer<int, null_type, option::growth_t>;
+    BOOST_TEST_EQ(traits::static_options<B>::test(option::growth), true);
+    BOOST_TEST_EQ(traits::static_options<B&>::test(option::growth), true);
+    BOOST_TEST_EQ(traits::static_options<const B&>::test(option::growth), true);
+    BOOST_TEST_EQ(traits::options(B{}), option::growth);
 
     struct growing {
       auto update(double) { return std::make_pair(0, 0); }
     };
     using C = growing;
-    BOOST_TEST_EQ((test<traits::static_options<C>, option::growth>::value), true);
-    BOOST_TEST_EQ((test<traits::static_options<C&>, option::growth>::value), true);
-    BOOST_TEST_EQ((test<traits::static_options<const C&>, option::growth>::value), true);
-    BOOST_TEST_EQ(traits::options(C{}), option::growth::value);
+    BOOST_TEST_EQ(traits::static_options<C>::test(option::growth), true);
+    BOOST_TEST_EQ(traits::static_options<C&>::test(option::growth), true);
+    BOOST_TEST_EQ(traits::static_options<const C&>::test(option::growth), true);
+    BOOST_TEST_EQ(traits::options(C{}), option::growth);
 
     struct notgrowing {
       auto index(double) { return 0; }
     };
     using D = notgrowing;
-    BOOST_TEST_EQ((test<traits::static_options<D>, option::growth>::value), false);
-    BOOST_TEST_EQ((test<traits::static_options<D&>, option::growth>::value), false);
-    BOOST_TEST_EQ((test<traits::static_options<const D&>, option::growth>::value), false);
-    BOOST_TEST_EQ(traits::options(D{}), option::none::value);
+    BOOST_TEST_EQ(traits::static_options<D>::test(option::growth), false);
+    BOOST_TEST_EQ(traits::static_options<D&>::test(option::growth), false);
+    BOOST_TEST_EQ(traits::static_options<const D&>::test(option::growth), false);
+    BOOST_TEST_EQ(traits::options(D{}), option::none);
   }
 
   {
-    auto a = integer<int, null_type, option::growth>();
+    auto a = integer<int, null_type, option::growth_t>();
     BOOST_TEST_EQ(traits::update(a, 0), (std::pair<index_type, index_type>(0, -1)));
     BOOST_TEST_THROWS(traits::update(a, "foo"), std::invalid_argument);
   }

@@ -21,7 +21,7 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-using static_options_impl = axis::option_set<T::options()>;
+using static_options_impl = axis::option::bitset<T::options()>;
 
 template <class FIntArg, class FDoubleArg, class T>
 decltype(auto) value_method_switch(FIntArg&& iarg, FDoubleArg&& darg, const T& t) {
@@ -74,7 +74,7 @@ decltype(auto) metadata(T&& t) noexcept {
 template <class T>
 using static_options =
     detail::mp_eval_or<mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<T>>,
-                                   axis::option::growth, axis::option::none>,
+                                   axis::option::growth_t, axis::option::none_t>,
                        detail::static_options_impl, detail::remove_cvref_t<T>>;
 
 template <class T>
@@ -83,8 +83,8 @@ constexpr unsigned options(const T& t) noexcept {
   return detail::static_if<detail::has_method_options<T>>(
       [](const auto& t) { return t.options(); },
       [](const auto&) {
-        return detail::has_method_update<T>::value ? axis::option::growth::value
-                                                   : axis::option::none::value;
+        return detail::has_method_update<T>::value ? axis::option::growth_t::value
+                                                   : axis::option::none_t::value;
       },
       t);
 }
@@ -92,8 +92,8 @@ constexpr unsigned options(const T& t) noexcept {
 template <class T>
 constexpr axis::index_type extend(const T& t) noexcept {
   const auto opt = options(t);
-  return t.size() + static_cast<bool>(opt & option::underflow::value) +
-         static_cast<bool>(opt & option::overflow::value);
+  return t.size() + static_cast<bool>(opt & option::underflow_t::value) +
+         static_cast<bool>(opt & option::overflow_t::value);
 }
 
 template <class T>

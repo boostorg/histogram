@@ -13,64 +13,68 @@
 /**
   \file option.hpp Options for builtin axis types.
 
-  Options circular and growth are mutually exclusive.
-  Options circular and underflow are mutually exclusive.
+  Options `circular` and `growth` are mutually exclusive.
+  Options `circular` and `underflow` are mutually exclusive.
 */
 
 namespace boost {
 namespace histogram {
 namespace axis {
+namespace option {
 
 /// Holder of axis options.
 template <unsigned Bits>
-struct option_set : std::integral_constant<unsigned, Bits> {};
+struct bitset : std::integral_constant<unsigned, Bits> {
+  /// Returns true if all option flags in the argument are set and false otherwise.
+  template <unsigned B>
+  static constexpr auto test(bitset<B>) {
+    return std::integral_constant<bool, static_cast<bool>(Bits & B)>{};
+  }
+};
 
-namespace option {
-template <unsigned N>
-struct bit : option_set<(1 << N)> {};
+/// Set union of the axis option arguments.
+template <unsigned B1, unsigned B2>
+constexpr auto operator|(bitset<B1>, bitset<B2>) {
+  return bitset<(B1 | B2)>{};
+}
 
-/// All bits set to zero.
-using none = option_set<0>;
-/// Axis has underflow bin. Mutually exclusive with circular.
-using underflow = bit<0>;
+/// Set intersection of the option arguments.
+template <unsigned B1, unsigned B2>
+constexpr auto operator&(bitset<B1>, bitset<B2>) {
+  return bitset<(B1 & B2)>{};
+}
+
+/// Set difference of the option arguments.
+template <unsigned B1, unsigned B2>
+constexpr auto operator-(bitset<B1>, bitset<B2>) {
+  return bitset<(B1 & ~B2)>{};
+}
+
+/**
+  Single option flag.
+
+  @tparam Pos position of the bit in the set.
+*/
+template <unsigned Pos>
+struct bit : bitset<(1 << Pos)> {};
+
+/// All options off.
+using none_t = bitset<0>;
+constexpr none_t none{}; ///< Instance of `none_t`.
+/// Axis has an underflow bin. Mutually exclusive with `circular`.
+using underflow_t = bit<0>;
+constexpr underflow_t underflow{}; ///< Instance of `underflow_t`.
 /// Axis has overflow bin.
-using overflow = bit<1>;
-/// Axis is circular. Mutually exclusive with growth and underflow.
-using circular = bit<2>;
-/// Axis can grow. Mutually exclusive with circular.
-using growth = bit<3>;
+using overflow_t = bit<1>;
+constexpr overflow_t overflow{}; ///< Instance of `overflow_t`.
+/// Axis is circular. Mutually exclusive with `growth` and `underflow`.
+using circular_t = bit<2>;
+constexpr circular_t circular{}; ///< Instance of `circular_t`.
+/// Axis can grow. Mutually exclusive with `circular`.
+using growth_t = bit<3>;
+constexpr growth_t growth{}; ///< Instance of `growth_t`.
+
 } // namespace option
-
-} // namespace axis
-
-namespace detail {
-
-template <class T, class U>
-struct join_impl : axis::option_set<(T::value | U::value)> {};
-template <class T>
-struct join_impl<T, axis::option::underflow>
-    : axis::option_set<((T::value & ~axis::option::circular::value) |
-                        axis::option::underflow::value)> {};
-template <class T>
-struct join_impl<T, axis::option::circular>
-    : axis::option_set<(
-          (T::value & ~(axis::option::growth::value | axis::option::underflow::value)) |
-          axis::option::circular::value)> {};
-template <class T>
-struct join_impl<T, axis::option::growth>
-    : axis::option_set<((T::value & ~axis::option::circular::value) |
-                        axis::option::growth::value)> {};
-
-} // namespace detail
-
-namespace axis {
-/// Metafunction that combines options and corrects for mutually exclusive flags.
-template <class... Ts>
-using join = mp11::mp_fold<mp11::mp_list<Ts...>, option_set<0>, detail::join_impl>;
-
-/// Metafunction that tests whether the bits in b are also set in a.
-template <class T, class U>
-using test = std::integral_constant<bool, (T::value & U::value ? 1 : 0)>;
 } // namespace axis
 } // namespace histogram
 } // namespace boost

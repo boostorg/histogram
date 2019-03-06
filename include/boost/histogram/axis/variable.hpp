@@ -47,7 +47,7 @@ class variable : public iterator_mixin<variable<Value, MetaData, Options, Alloca
   using value_type = Value;
   using metadata_type = detail::replace_default<MetaData, std::string>;
   using options_type =
-      detail::replace_default<Options, join<option::underflow, option::overflow>>;
+      detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
   using allocator_type = Allocator;
   using vec_type = std::vector<Value, allocator_type>;
 
@@ -104,7 +104,7 @@ public:
   variable(const variable& src, index_type begin, index_type end, unsigned merge)
       : vec_meta_(vec_type(src.get_allocator()), src.metadata()) {
     BOOST_ASSERT((end - begin) % merge == 0);
-    if (test<options_type, option::circular>::value && !(begin == 0 && end == src.size()))
+    if (options_type::test(option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
     auto& vec = vec_meta_.first();
     vec.reserve((end - begin) / merge);
@@ -115,7 +115,7 @@ public:
   /// Return index for value argument.
   index_type index(value_type x) const noexcept {
     const auto& v = vec_meta_.first();
-    if (test<options_type, option::circular>::value) {
+    if (options_type::test(option::circular)) {
       const auto a = v[0];
       const auto b = v[size()];
       x -= std::floor((x - a) / (b - a)) * (b - a);
@@ -147,7 +147,7 @@ public:
   /// Return value for fractional index argument.
   value_type value(real_index_type i) const noexcept {
     const auto& v = vec_meta_.first();
-    if (test<options_type, option::circular>::value) {
+    if (options_type::test(option::circular)) {
       auto shift = std::floor(i / size());
       i -= shift * size();
       double z;

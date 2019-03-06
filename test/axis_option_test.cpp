@@ -11,40 +11,45 @@
 using namespace boost::histogram::axis;
 
 template <unsigned N, unsigned M>
-bool operator==(option_set<N>, option_set<M>) {
+bool operator==(option::bitset<N>, option::bitset<M>) {
   return N == M;
 }
 
 template <unsigned N>
-std::ostream& operator<<(std::ostream& os, option_set<N>) {
-  os << "underflow " << bool(N & option::underflow::value) << " "
-     << "overflow " << bool(N & option::overflow::value) << " "
-     << "circular " << bool(N & option::circular::value) << " "
-     << "growth " << bool(N & option::growth::value);
+std::ostream& operator<<(std::ostream& os, option::bitset<N>) {
+  os << "underflow " << static_cast<bool>(N & option::underflow) << " "
+     << "overflow " << static_cast<bool>(N & option::overflow) << " "
+     << "circular " << static_cast<bool>(N & option::circular) << " "
+     << "growth " << static_cast<bool>(N & option::growth);
   return os;
 }
 
 int main() {
   using namespace option;
-  using uoflow = join<underflow, overflow>;
-  constexpr auto uoflow_growth = join<uoflow, growth>{};
-  constexpr auto overflow_growth = join<overflow, growth>{};
-  constexpr auto overflow_circular = join<overflow, circular>{};
+  using uoflow = decltype(underflow | overflow);
+  constexpr auto uoflow_growth = uoflow{} | growth;
 
-  BOOST_TEST_EQ(uoflow::value, underflow::value | overflow::value);
-  BOOST_TEST((test<uoflow, underflow>::value));
-  BOOST_TEST((test<uoflow, overflow>::value));
-  BOOST_TEST_NOT((test<uoflow, circular>::value));
-  BOOST_TEST_NOT((test<uoflow, growth>::value));
-  BOOST_TEST((test<underflow, underflow>::value));
+  BOOST_TEST_EQ(uoflow::value, underflow | overflow);
+  BOOST_TEST_EQ(underflow | overflow, overflow | underflow);
 
-  BOOST_TEST_EQ((join<growth, circular>{}), circular{});
-  BOOST_TEST_EQ((join<circular, underflow>{}), underflow{});
-  BOOST_TEST_EQ((join<underflow, underflow, overflow>{}), uoflow{});
-  BOOST_TEST_EQ((join<circular, overflow, underflow, growth>{}), uoflow_growth);
-  BOOST_TEST_EQ((join<uoflow, circular, growth>{}), overflow_growth);
-  BOOST_TEST_EQ((join<growth, overflow, underflow, circular>{}), overflow_circular);
-  BOOST_TEST_EQ((join<uoflow, growth, circular>{}), overflow_circular);
-  BOOST_TEST_EQ((join<growth, circular, overflow, underflow>{}), uoflow{});
+  BOOST_TEST(underflow.test(underflow));
+  BOOST_TEST_NOT(underflow.test(overflow));
+  BOOST_TEST(uoflow::test(underflow));
+  BOOST_TEST(uoflow::test(overflow));
+  BOOST_TEST_NOT(uoflow::test(circular));
+  BOOST_TEST_NOT(uoflow::test(growth));
+  BOOST_TEST(uoflow_growth.test(underflow));
+  BOOST_TEST(uoflow_growth.test(overflow));
+  BOOST_TEST(uoflow_growth.test(growth));
+  BOOST_TEST_NOT(uoflow_growth.test(circular));
+
+  BOOST_TEST_EQ(uoflow_growth & uoflow_growth, uoflow_growth);
+  BOOST_TEST_EQ(uoflow_growth & growth, growth);
+  BOOST_TEST_EQ(uoflow_growth & uoflow{}, uoflow::value);
+
+  BOOST_TEST_EQ(uoflow_growth - growth, uoflow{});
+  BOOST_TEST_EQ(uoflow_growth - uoflow{}, growth);
+  BOOST_TEST_EQ(uoflow_growth - underflow, growth | overflow);
+
   return boost::report_errors();
 }

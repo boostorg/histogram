@@ -69,8 +69,8 @@ void run_1d_tests(mp_list<IsDynamic, Coverage>) {
 template <class IsDynamic, class Coverage>
 void run_3d_tests(mp_list<IsDynamic, Coverage>) {
   auto h = make_s(IsDynamic(), std::vector<int>(), axis::integer<>(0, 2),
-                  axis::integer<int, axis::null_type, axis::option::none>(0, 3),
-                  axis::integer<int, axis::null_type, axis::option::overflow>(0, 4));
+                  axis::integer<int, axis::null_type, axis::option::none_t>(0, 3),
+                  axis::integer<int, axis::null_type, axis::option::overflow_t>(0, 4));
 
   for (int i = -1; i < 3; ++i)
     for (int j = -1; j < 4; ++j)

@@ -34,10 +34,11 @@ struct is_accumulator_set : std::false_type {};
 
 template <class T>
 using has_underflow =
-    axis::test<axis::traits::static_options<T>, axis::option::underflow>;
+    decltype(axis::traits::static_options<T>::test(axis::option::underflow));
 
 template <class T>
-struct is_growing : axis::test<axis::traits::static_options<T>, axis::option::growth> {};
+struct is_growing
+    : decltype(axis::traits::static_options<T>::test(axis::option::growth)) {};
 
 template <class... Ts>
 struct is_growing<std::tuple<Ts...>> : mp11::mp_or<is_growing<Ts>...> {};
@@ -67,7 +68,7 @@ inline void linearize(optional_index& out, const axis::index_type extend,
 
 template <class Axis, class Value>
 void linearize_value(optional_index& o, const Axis& a, const Value& v) {
-  using B = axis::test<axis::traits::static_options<Axis>, axis::option::underflow>;
+  using B = decltype(axis::traits::static_options<Axis>::test(axis::option::underflow));
   const auto j = axis::traits::index(a, v) + B::value;
   linearize(o, axis::traits::extend(a), j);
 }
@@ -95,8 +96,9 @@ template <class A>
 void linearize_index(optional_index& out, const A& axis, const axis::index_type j) {
   // A may be axis or variant, cannot use static option detection here
   const auto opt = axis::traits::options(axis);
-  const auto shift = opt & axis::option::underflow::value ? 1 : 0;
-  const auto extend = axis.size() + shift + (opt & axis::option::overflow::value ? 1 : 0);
+  const auto shift = opt & axis::option::underflow_t::value ? 1 : 0;
+  const auto extend =
+      axis.size() + shift + (opt & axis::option::overflow_t::value ? 1 : 0);
   linearize(out, extend, j + shift);
 }
 
@@ -127,7 +129,7 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
     dit = data;
     for_each_axis(axes, [&](const auto& a) {
       using opt = axis::traits::static_options<decltype(a)>;
-      if (axis::test<opt, axis::option::underflow>::value) {
+      if (opt::test(axis::option::underflow)) {
         if (dit->idx == 0) {
           // axis has underflow and we are in the underflow bin:
           // keep storage pointer unchanged
@@ -136,7 +138,7 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
           return;
         }
       }
-      if (axis::test<opt, axis::option::overflow>::value) {
+      if (opt::test(axis::option::overflow)) {
         if (dit->idx == dit->old_extend - 1) {
           // axis has overflow and we are in the overflow bin:
           // move storage pointer to corresponding overflow bin position

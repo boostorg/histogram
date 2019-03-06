@@ -51,7 +51,7 @@ int main() {
 
   // axis::category with growth
   {
-    axis::category<int, axis::null_type, axis::option::growth> a;
+    axis::category<int, axis::null_type, axis::option::growth_t> a;
     BOOST_TEST_EQ(a.size(), 0);
     BOOST_TEST_EQ(a.update(5), std::make_pair(0, -1));
     BOOST_TEST_EQ(a.size(), 1);

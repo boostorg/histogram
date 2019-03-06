@@ -41,7 +41,7 @@ void run_tests() {
 
   // auto h5 =
   //     make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 1),
-  //            axis::integer<int, axis::null_type, axis::option::none>(2, 4));
+  //            axis::integer<int, axis::null_type, axis::option::none_t>(2, 4));
   // h5(weight(2), 0, 2);
   // h5(-1, 2);
   // h5(1, 3);
