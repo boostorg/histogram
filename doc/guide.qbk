@@ -135,7 +135,7 @@ Users may write their own transforms and use them with the builtin [classref boo
 
 [section Options]
 
-A set of options can be used to configure each axis type, by [headerref boost/histogram/axis/option.hpp joining options].
+[headerref boost/histogram/axis/option.hpp Options] can be used to configure each axis type. The option flags are implemented as tag types with the suffix `_t`, the corresponding values have the same name without the suffix. The values behave a set of booleans. You can compute the union with `operator|` and the intersection with `operator&`. When you pass a single option flag to an axis, you should to use the tag type, for example, [classref boost::axis::histogram::option::growth_t]. When you need to pass the union of several options to an axis as a template parameter, place them in a `decltype`, like shown in the examples below.
 
 [*Under- and overflow bins]
 

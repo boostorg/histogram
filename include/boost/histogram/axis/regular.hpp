@@ -131,7 +131,7 @@ class regular : public iterator_mixin<regular<Value, Transform, MetaData, Option
   using transform_type = detail::replace_default<Transform, transform::id>;
   using metadata_type = detail::replace_default<MetaData, std::string>;
   using options_type =
-      detail::replace_default<Options, join<option::underflow, option::overflow>>;
+      detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
 
   using unit_type = detail::get_unit_type<value_type>;
   using internal_value_type = detail::get_scale_type<value_type>;
@@ -216,7 +216,7 @@ public:
       : regular(src.transform(), (end - begin) / merge, src.value(begin), src.value(end),
                 src.metadata()) {
     BOOST_ASSERT((end - begin) % merge == 0);
-    if (test<options_type, option::circular>::value && !(begin == 0 && end == src.size()))
+    if (options_type::test(option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
@@ -227,7 +227,7 @@ public:
   index_type index(value_type x) const noexcept {
     // Runs in hot loop, please measure impact of changes
     auto z = (this->forward(x / unit_type{}) - min_) / delta_;
-    if (test<options_type, option::circular>::value) {
+    if (options_type::test(option::circular)) {
       if (std::isfinite(z)) {
         z -= std::floor(z);
         return static_cast<index_type>(z * size());
@@ -245,7 +245,7 @@ public:
 
   /// Returns index and shift (if axis has grown) for the passed argument.
   auto update(value_type x) noexcept {
-    BOOST_ASSERT((test<options_type, option::growth>::value));
+    BOOST_ASSERT(options_type::test(option::growth));
     const auto z = (this->forward(x / unit_type{}) - min_) / delta_;
     if (z < 1) { // don't use i here!
       if (z >= 0) {
@@ -279,9 +279,9 @@ public:
   /// Return value for fractional index argument.
   value_type value(real_index_type i) const noexcept {
     auto z = i / size();
-    if (!test<options_type, option::circular>::value && z < 0.0)
+    if (!options_type::test(option::circular) && z < 0.0)
       z = -std::numeric_limits<internal_value_type>::infinity() * delta_;
-    else if (test<options_type, option::circular>::value || z <= 1.0)
+    else if (options_type::test(option::circular) || z <= 1.0)
       z = (1.0 - z) * min_ + z * (min_ + delta_);
     else {
       z = std::numeric_limits<internal_value_type>::infinity() * delta_;
@@ -348,9 +348,9 @@ regular(Tr, unsigned, T, T, M)->regular<detail::convert_integer<T, double>, Tr, 
 #endif
 
 template <class Value = double, class MetaData = use_default, class Options = use_default>
-using circular =
-    regular<Value, transform::id, MetaData,
-            join<detail::replace_default<Options, option::overflow>, option::circular>>;
+using circular = regular<Value, transform::id, MetaData,
+                         decltype(detail::replace_default<Options, option::overflow_t>{} |
+                                  option::circular)>;
 
 } // namespace axis
 } // namespace histogram

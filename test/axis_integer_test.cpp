@@ -59,7 +59,7 @@ int main() {
 
   // axis::integer int,circular
   {
-    axis::integer<int, axis::null_type, axis::option::circular> a(-1, 1);
+    axis::integer<int, axis::null_type, axis::option::circular_t> a(-1, 1);
     BOOST_TEST_EQ(a.value(-1), -2);
     BOOST_TEST_EQ(a.value(0), -1);
     BOOST_TEST_EQ(a.value(1), 0);
@@ -74,7 +74,7 @@ int main() {
 
   // axis::integer double,circular
   {
-    axis::integer<double, axis::null_type, axis::option::circular> a(-1, 1);
+    axis::integer<double, axis::null_type, axis::option::circular_t> a(-1, 1);
     BOOST_TEST_EQ(a.value(-1), -2);
     BOOST_TEST_EQ(a.value(0), -1);
     BOOST_TEST_EQ(a.value(1), 0);
@@ -90,7 +90,7 @@ int main() {
 
   // axis::integer with growth
   {
-    axis::integer<double, axis::null_type, axis::option::growth> a;
+    axis::integer<double, axis::null_type, axis::option::growth_t> a;
     BOOST_TEST_EQ(a.size(), 0);
     BOOST_TEST_EQ(a.update(0), std::make_pair(0, -1));
     BOOST_TEST_EQ(a.size(), 1);
@@ -110,7 +110,7 @@ int main() {
   {
     test_axis_iterator(axis::integer<int>(0, 4), 0, 4);
     test_axis_iterator(axis::integer<double>(0, 4), 0, 4);
-    test_axis_iterator(axis::integer<int, axis::null_type, axis::option::circular>(0, 4),
+    test_axis_iterator(axis::integer<int, axis::null_type, axis::option::circular_t>(0, 4),
                        0, 4);
   }
 
@@ -134,7 +134,7 @@ int main() {
 
   // shrink and rebin with circular option
   {
-    using A = axis::integer<int, axis::null_type, axis::option::circular>;
+    using A = axis::integer<int, axis::null_type, axis::option::circular_t>;
     auto a = A(1, 5);
     auto b = A(a, 0, 4, 1);
     BOOST_TEST_EQ(a, b);

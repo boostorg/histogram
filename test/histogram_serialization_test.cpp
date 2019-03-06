@@ -18,15 +18,15 @@ void run_tests(const char* filename) {
   // histogram_serialization
   namespace tr = axis::transform;
   using def = use_default;
-  using axis::option::none;
-  auto a = make(Tag(), axis::regular<double, def, def, none>(1, -1, 1, "reg"),
-                axis::circular<float, def, none>(1, 0.0, 1.0, "cir"),
-                axis::regular<double, tr::log, def, none>(1, 1, std::exp(2), "reg-log"),
-                axis::regular<double, tr::pow, std::vector<int>, axis::option::overflow>(
+  using axis::option::none_t;
+  auto a = make(Tag(), axis::regular<double, def, def, none_t>(1, -1, 1, "reg"),
+                axis::circular<float, def, none_t>(1, 0.0, 1.0, "cir"),
+                axis::regular<double, tr::log, def, none_t>(1, 1, std::exp(2), "reg-log"),
+                axis::regular<double, tr::pow, std::vector<int>, axis::option::overflow_t>(
                     tr::pow(0.5), 1, 1, 100, {1, 2, 3}),
-                axis::variable<double, def, none>({1.5, 2.5}, "var"),
-                axis::category<int, def, none>{3, 1},
-                axis::integer<int, axis::null_type, none>(1, 2));
+                axis::variable<double, def, none_t>({1.5, 2.5}, "var"),
+                axis::category<int, def, none_t>{3, 1},
+                axis::integer<int, axis::null_type, none_t>(1, 2));
   a(0.5, 0.2, 2, 20, 2.2, 1, 1);
   print_xml(filename, a);
 

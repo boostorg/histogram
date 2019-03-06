@@ -43,11 +43,11 @@ class integer : public iterator_mixin<integer<Value, MetaData, Options>> {
 
   using metadata_type = detail::replace_default<MetaData, std::string>;
   using options_type =
-      detail::replace_default<Options, join<option::underflow, option::overflow>>;
+      detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
 
-  static_assert(!test<options_type, option::circular>::value ||
+  static_assert(!options_type::test(option::circular) ||
                     std::is_floating_point<value_type>::value ||
-                    !test<options_type, option::overflow>::value,
+                    !options_type::test(option::overflow),
                 "integer axis with integral type cannot have overflow");
 
 public:
@@ -69,7 +69,7 @@ public:
       : integer(src.value(begin), src.value(end), src.metadata()) {
     if (merge > 1)
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for integer axis"));
-    if (test<options_type, option::circular>::value && !(begin == 0 && end == src.size()))
+    if (options_type::test(option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
 
@@ -108,7 +108,7 @@ public:
 
   /// Return value for index argument.
   value_type value(local_index_type i) const noexcept {
-    if (!test<options_type, option::circular>::value) {
+    if (!options_type::test(option::circular)) {
       if (i < 0) return detail::lowest<value_type>();
       if (i > size()) { return detail::highest<value_type>(); }
     }
@@ -148,7 +148,7 @@ public:
 private:
   index_type index_impl(std::false_type, int x) const noexcept {
     const auto z = x - min_;
-    if (test<options_type, option::circular>::value)
+    if (options_type::test(option::circular))
       return static_cast<index_type>(z - std::floor(float(z) / size()) * size());
     if (z < size()) return z >= 0 ? z : -1;
     return size();
@@ -158,7 +158,7 @@ private:
   index_type index_impl(std::true_type, T x) const noexcept {
     // need to handle NaN, cannot simply cast to int and call int-implementation
     const auto z = x - min_;
-    if (test<options_type, option::circular>::value) {
+    if (options_type::test(option::circular)) {
       if (std::isfinite(z))
         return static_cast<index_type>(std::floor(z) - std::floor(z / size()) * size());
     } else if (z < size()) {

@@ -21,7 +21,7 @@ int main() {
   auto h1 = make_histogram(axis::regular<double,
                                          use_default,
                                          use_default,
-                                         axis::option::growth>{2, 0., 1.});
+                                         axis::option::growth_t>{2, 0., 1.});
   // nothing special happens here
   h1(0.1);
   h1(0.9);
@@ -47,7 +47,7 @@ int main() {
   // - empty axis is allowed: very useful if categories are not known at the beginning
   auto h2 = make_histogram(axis::category<std::string,
                                           use_default,
-                                          axis::option::growth>());
+                                          axis::option::growth_t>());
   assert(h2.size() == 0); // histogram is empty
   h2("foo"); // new bin foo, index 0
   assert(h2.size() == 1);

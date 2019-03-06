@@ -100,7 +100,7 @@ public:
     return visit([](const auto& x) { return x.size(); }, *this);
   }
 
-  /// Return options of axis or option::none if axis has no options.
+  /// Return options of axis or option::none_t if axis has no options.
   unsigned options() const {
     return visit([](const auto& x) { return axis::traits::options(x); }, *this);
   }

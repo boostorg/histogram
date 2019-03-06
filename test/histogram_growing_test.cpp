@@ -15,13 +15,13 @@ using namespace boost::histogram;
 
 using def = use_default;
 
-using regular = axis::regular<double, def, def, axis::option::growth>;
+using regular = axis::regular<double, def, def, axis::option::growth_t>;
 
-using integer = axis::integer<
-    double, def,
-    axis::join<axis::option::underflow, axis::option::overflow, axis::option::growth>>;
+using integer = axis::integer<double, def,
+                              decltype(axis::option::underflow | axis::option::overflow |
+                                       axis::option::growth)>;
 
-using category = axis::category<std::string, def, axis::option::growth>;
+using category = axis::category<std::string, def, axis::option::growth_t>;
 
 class custom_2d_axis {
 public:

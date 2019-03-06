@@ -52,7 +52,7 @@ void stream_options(OStream& os, const unsigned bits) {
   bool first = true;
 
 #define BOOST_HISTOGRAM_AXIS_OPTION_OSTREAM(x) \
-  if (bits & axis::option::x::value) {         \
+  if (bits & axis::option::x) {                \
     if (first)                                 \
       first = false;                           \
     else {                                     \

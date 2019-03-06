@@ -78,7 +78,7 @@ void run_tests() {
 
   // arithmetic operators with mixed storage: unlimited vs. vector<unsigned>
   {
-    auto ia = axis::integer<int, axis::null_type, axis::option::none>(0, 2);
+    auto ia = axis::integer<int, axis::null_type, axis::option::none_t>(0, 2);
     auto a = make(Tag(), ia);
     a(0, weight(2));
     a(1, weight(2));
@@ -102,7 +102,7 @@ void run_tests() {
 
   // arithmetic operators with mixed storage: vector<unsigned char> vs. vector<unsigned>
   {
-    auto ia = axis::integer<int, axis::null_type, axis::option::none>(0, 2);
+    auto ia = axis::integer<int, axis::null_type, axis::option::none_t>(0, 2);
     auto a = make_s(Tag(), std::vector<unsigned char>{}, ia);
     auto c = make_s(Tag(), std::vector<unsigned>(), ia);
     a(0, weight(2));
@@ -126,7 +126,7 @@ void run_tests() {
 
   // add operators with weighted storage
   {
-    auto ia = axis::integer<int, axis::null_type, axis::option::none>(0, 2);
+    auto ia = axis::integer<int, axis::null_type, axis::option::none_t>(0, 2);
     auto a = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), ia);
     auto b = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), ia);
 

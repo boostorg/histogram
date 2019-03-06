@@ -161,8 +161,8 @@ public:
     std::size_t stride = 1;
     h.for_each_axis([&, this](const auto& a) {
       using opt = axis::traits::static_options<decltype(a)>;
-      constexpr auto under = axis::test<opt, axis::option::underflow>::value ? 1 : 0;
-      constexpr auto over = axis::test<opt, axis::option::overflow>::value ? 1 : 0;
+      constexpr int under = opt::test(axis::option::underflow);
+      constexpr int over = opt::test(axis::option::overflow);
       const auto size = a.size();
 
       ca->extend = size + under + over;

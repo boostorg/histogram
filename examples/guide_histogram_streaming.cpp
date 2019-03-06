@@ -17,18 +17,19 @@ int main() {
   using namespace boost::histogram;
   namespace tr = axis::transform;
 
-  auto h = make_histogram(
-      axis::regular<>(2, -1.0, 1.0),
-      axis::regular<double, tr::log>(2, 1.0, 10.0, "axis 1"),
-      axis::regular<double, tr::pow, use_default, axis::option::growth>(
-          tr::pow{1.5}, 2, 1.0, 10.0, "axis 2"),
-      // axis without metadata
-      axis::circular<double, axis::null_type>(4, 0.0, 360.0),
-      // axis without under-/overflow bins
-      axis::variable<double, use_default, axis::option::none>({-1.0, 0.0, 1.0}, "axis 4"),
-      axis::category<>({2, 1, 3}, "axis 5"),
-      axis::category<std::string>({"red", "blue"}, "axis 6"),
-      axis::integer<>(-1, 1, "axis 7"));
+  auto h =
+      make_histogram(axis::regular<>(2, -1.0, 1.0),
+                     axis::regular<double, tr::log>(2, 1.0, 10.0, "axis 1"),
+                     axis::regular<double, tr::pow, use_default, axis::option::growth_t>(
+                         tr::pow{1.5}, 2, 1.0, 10.0, "axis 2"),
+                     // axis without metadata
+                     axis::circular<double, axis::null_type>(4, 0.0, 360.0),
+                     // axis without under-/overflow bins
+                     axis::variable<double, use_default, axis::option::none_t>(
+                         {-1.0, 0.0, 1.0}, "axis 4"),
+                     axis::category<>({2, 1, 3}, "axis 5"),
+                     axis::category<std::string>({"red", "blue"}, "axis 6"),
+                     axis::integer<>(-1, 1, "axis 7"));
 
   std::ostringstream os;
   os << h;

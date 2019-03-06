@@ -57,7 +57,7 @@ int main() {
 
   // axis::variable circular
   {
-    axis::variable<double, axis::null_type, axis::option::circular> a{-1, 1, 2};
+    axis::variable<double, axis::null_type, axis::option::circular_t> a{-1, 1, 2};
     BOOST_TEST_EQ(a.value(-2), -4);
     BOOST_TEST_EQ(a.value(-1), -2);
     BOOST_TEST_EQ(a.value(0), -1);
@@ -77,7 +77,7 @@ int main() {
 
   // axis::regular with growth
   {
-    axis::variable<double, axis::null_type, axis::option::growth> a{0, 1};
+    axis::variable<double, axis::null_type, axis::option::growth_t> a{0, 1};
     BOOST_TEST_EQ(a.size(), 1);
     BOOST_TEST_EQ(a.update(0), std::make_pair(0, 0));
     BOOST_TEST_EQ(a.size(), 1);
@@ -108,7 +108,7 @@ int main() {
   {
     test_axis_iterator(axis::variable<>{1, 2, 3}, 0, 2);
     test_axis_iterator(
-        axis::variable<double, axis::null_type, axis::option::circular>{1, 2, 3}, 0, 2);
+        axis::variable<double, axis::null_type, axis::option::circular_t>{1, 2, 3}, 0, 2);
   }
 
   // shrink and rebin
@@ -131,7 +131,7 @@ int main() {
 
   // shrink and rebin with circular option
   {
-    using A = axis::variable<double, axis::null_type, axis::option::circular>;
+    using A = axis::variable<double, axis::null_type, axis::option::circular_t>;
     auto a = A({1, 2, 3, 4, 5});
     BOOST_TEST_THROWS(A(a, 1, 4, 1), std::invalid_argument);
     BOOST_TEST_THROWS(A(a, 0, 3, 1), std::invalid_argument);
