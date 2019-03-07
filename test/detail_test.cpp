@@ -36,6 +36,15 @@ int main() {
     BOOST_TEST_EQ(decltype(213_c)::value, 213);
   }
 
+  // dynamic axis_get with tuples
+  {
+    auto a1 = axis::integer<>(0, 1);
+    auto a2 = axis::integer<>(1, 2);
+    auto tup = std::make_tuple(a1, a2);
+    using E1 = axis::variant<axis::integer<>&>;
+    BOOST_TEST_TRAIT_SAME(decltype(detail::axis_get(tup, 0)), E1);
+  }
+
   // sequence equality
   {
     using R = axis::regular<>;
