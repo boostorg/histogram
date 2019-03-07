@@ -31,8 +31,8 @@ void run_tests() {
 
   // operators
   {
-    auto a = make(T1{}, axis::integer<>{0, 2});
-    auto b = make(T2{}, axis::integer<>{0, 2});
+    auto a = make(T1{}, axis::integer<int, use_default, axis::option::none_t>{0, 2});
+    auto b = make(T2{}, axis::integer<int, use_default, axis::option::none_t>{0, 2});
     BOOST_TEST_EQ(a, b);
     a(0); // 1 0
     b(1); // 0 1
