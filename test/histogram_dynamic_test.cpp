@@ -6,14 +6,7 @@
 
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/axis/category.hpp>
-#include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/axis/variant.hpp>
-#include <boost/histogram/literals.hpp>
-#include <boost/histogram/make_histogram.hpp>
-#include <boost/histogram/storage_adaptor.hpp>
-#include <boost/histogram/unlimited_storage.hpp>
+#include <boost/histogram.hpp>
 #include <cstdlib>
 #include <limits>
 #include <numeric>
@@ -31,20 +24,27 @@ int main() {
 
   // init with vector of axis and vector of axis::variant
   {
-    auto v = std::vector<axis::variant<axis::regular<>, axis::integer<>>>();
-    v.emplace_back(axis::regular<>(4, -1, 1));
-    v.emplace_back(axis::integer<>(1, 7));
+    using R = axis::regular<>;
+    using I = axis::integer<>;
+    using V = axis::variable<>;
+
+    auto v = std::vector<axis::variant<R, I, V>>();
+    v.emplace_back(R{4, -1, 1});
+    v.emplace_back(I{1, 7});
+    v.emplace_back(V{1, 2, 3});
     auto h = make_histogram(v.begin(), v.end());
-    BOOST_TEST_EQ(h.rank(), 2);
+    BOOST_TEST_EQ(h.rank(), 3);
     BOOST_TEST_EQ(h.axis(0), v[0]);
     BOOST_TEST_EQ(h.axis(1), v[1]);
+    BOOST_TEST_EQ(h.axis(2), v[2]);
 
     auto h2 = make_histogram_with(std::vector<int>(), v);
-    BOOST_TEST_EQ(h2.rank(), 2);
+    BOOST_TEST_EQ(h2.rank(), 3);
     BOOST_TEST_EQ(h2.axis(0), v[0]);
     BOOST_TEST_EQ(h2.axis(1), v[1]);
+    BOOST_TEST_EQ(h2.axis(2), v[2]);
 
-    auto v2 = std::vector<axis::regular<>>();
+    auto v2 = std::vector<R>();
     v2.emplace_back(10, 0, 1);
     v2.emplace_back(20, 0, 2);
     auto h3 = make_histogram(v2);

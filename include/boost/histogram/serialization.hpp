@@ -141,7 +141,7 @@ void category<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
 template <class... Ts>
 template <class Archive>
 void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
-  ar& serialization::make_nvp("variant", static_cast<base_type&>(*this));
+  ar& serialization::make_nvp("variant", impl);
 }
 } // namespace axis
 

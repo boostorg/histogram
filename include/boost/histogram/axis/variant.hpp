@@ -40,9 +40,9 @@ const T* get_if(const variant<Us...>* v);
 
 /// Polymorphic axis type
 template <class... Ts>
-class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts...>> {
-  using base_type = boost::variant<Ts...>;
-  using raw_types = mp11::mp_transform<detail::remove_cvref_t, base_type>;
+class variant : public iterator_mixin<variant<Ts...>> {
+  using impl_type = boost::variant<Ts...>;
+  using raw_types = mp11::mp_transform<detail::remove_cvref_t, impl_type>;
 
   template <class T>
   using is_bounded_type = mp11::mp_contains<raw_types, detail::remove_cvref_t<T>>;
@@ -53,7 +53,7 @@ class variant : private boost::variant<Ts...>, public iterator_mixin<variant<Ts.
 public:
   // maybe metadata_type or const metadata_type, if bounded type is const
   using metadata_type = std::remove_reference_t<decltype(
-      traits::metadata(std::declval<mp11::mp_first<base_type>>()))>;
+      traits::metadata(std::declval<mp11::mp_first<impl_type>>()))>;
 
   // cannot import ctors with using directive, it breaks gcc and msvc
   variant() = default;
@@ -63,11 +63,11 @@ public:
   variant& operator=(variant&&) = default;
 
   template <typename T, typename = requires_bounded_type<T>>
-  variant(T&& t) : base_type(std::forward<T>(t)) {}
+  variant(T&& t) : impl(std::forward<T>(t)) {}
 
   template <typename T, typename = requires_bounded_type<T>>
   variant& operator=(T&& t) {
-    base_type::operator=(std::forward<T>(t));
+    impl = std::forward<T>(t);
     return *this;
   }
 
@@ -224,54 +224,50 @@ public:
 
   template <class T, class... Us>
   friend const T* get_if(const variant<Us...>* v);
+
+private:
+  boost::variant<Ts...> impl;
 };
 
 /// Apply visitor to variant.
 template <class Visitor, class Variant>
 auto visit(Visitor&& vis, Variant&& var)
     -> detail::visitor_return_type<Visitor, Variant> {
-  using B = detail::copy_qualifiers<Variant,
-                                    typename detail::remove_cvref_t<Variant>::base_type>;
-  return boost::apply_visitor(std::forward<Visitor>(vis), static_cast<B>(var));
+  return boost::apply_visitor(std::forward<Visitor>(vis), var.impl);
 }
 
 /// Return lvalue reference to T, throws unspecified exception if type does not
 /// match.
 template <class T, class... Us>
 T& get(variant<Us...>& v) {
-  using B = typename variant<Us...>::base_type;
-  return boost::get<T>(static_cast<B&>(v));
+  return boost::get<T>(v.impl);
 }
 
 /// Return rvalue reference to T, throws unspecified exception if type does not
 /// match.
 template <class T, class... Us>
 T&& get(variant<Us...>&& v) {
-  using B = typename variant<Us...>::base_type;
-  return boost::get<T>(static_cast<B&&>(v));
+  return boost::get<T>(std::move(v.impl));
 }
 
 /// Return const reference to T, throws unspecified exception if type does not
 /// match.
 template <class T, class... Us>
 const T& get(const variant<Us...>& v) {
-  using B = typename variant<Us...>::base_type;
-  return boost::get<T>(static_cast<const B&>(v));
+  return boost::get<T>(v.impl);
 }
 
 /// Returns pointer to T in variant or null pointer if type does not match.
 template <class T, class... Us>
 T* get_if(variant<Us...>* v) {
-  using B = typename variant<Us...>::base_type;
-  return boost::relaxed_get<T>(static_cast<B*>(v));
+  return boost::relaxed_get<T>(&(v->impl));
 }
 
 /// Returns pointer to const T in variant or null pointer if type does not
 /// match.
 template <class T, class... Us>
 const T* get_if(const variant<Us...>* v) {
-  using B = typename variant<Us...>::base_type;
-  return boost::relaxed_get<T>(static_cast<const B*>(v));
+  return boost::relaxed_get<T>(&(v->impl));
 }
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
