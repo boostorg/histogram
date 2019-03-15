@@ -58,19 +58,19 @@ struct optional_index {
   std::size_t operator*() const { return idx; }
 };
 
-inline void linearize(optional_index& out, const axis::index_type extend,
-                      axis::index_type j) noexcept {
+inline void linearize(optional_index& out, const axis::index_type extent,
+                      const axis::index_type j) noexcept {
   // j is internal index shifted by +1 if axis has underflow bin
   out.idx += j * out.stride;
   // set stride to 0, if j is invalid
-  out.stride *= (0 <= j && j < extend) * extend;
+  out.stride *= (0 <= j && j < extent) * extent;
 }
 
 template <class Axis, class Value>
 void linearize_value(optional_index& o, const Axis& a, const Value& v) {
   using B = decltype(axis::traits::static_options<Axis>::test(axis::option::underflow));
   const auto j = axis::traits::index(a, v) + B::value;
-  linearize(o, axis::traits::extend(a), j);
+  linearize(o, axis::traits::extent(a), j);
 }
 
 template <class... Ts, class Value>
@@ -83,7 +83,7 @@ void linearize_value(optional_index& o, axis::index_type& s, Axis& a, const Valu
   axis::index_type j;
   std::tie(j, s) = axis::traits::update(a, v);
   j += has_underflow<Axis>::value;
-  linearize(o, axis::traits::extend(a), j);
+  linearize(o, axis::traits::extent(a), j);
 }
 
 template <class... Ts, class Value>
@@ -96,10 +96,9 @@ template <class A>
 void linearize_index(optional_index& out, const A& axis, const axis::index_type j) {
   // A may be axis or variant, cannot use static option detection here
   const auto opt = axis::traits::options(axis);
-  const auto shift = opt & axis::option::underflow_t::value ? 1 : 0;
-  const auto extend =
-      axis.size() + shift + (opt & axis::option::overflow_t::value ? 1 : 0);
-  linearize(out, extend, j + shift);
+  const auto shift = opt & axis::option::underflow ? 1 : 0;
+  const auto n = axis.size() + (opt & axis::option::overflow ? 1 : 0);
+  linearize(out, n + shift, j + shift);
 }
 
 template <class S, class A, class T>
@@ -109,14 +108,14 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
   for_each_axis(axes, [&](const auto&) { update_needed |= (*sit++ != 0); });
   if (!update_needed) return;
   struct item {
-    axis::index_type idx, old_extend;
+    axis::index_type idx, old_extent;
     std::size_t new_stride;
   } data[buffer_size<A>::value];
   sit = shifts;
   auto dit = data;
   std::size_t s = 1;
   for_each_axis(axes, [&](const auto& a) {
-    const auto n = axis::traits::extend(a);
+    const auto n = axis::traits::extent(a);
     *dit++ = {0, n - std::abs(*sit++), s};
     s *= n;
   });
@@ -139,10 +138,10 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
         }
       }
       if (opt::test(axis::option::overflow)) {
-        if (dit->idx == dit->old_extend - 1) {
+        if (dit->idx == dit->old_extent - 1) {
           // axis has overflow and we are in the overflow bin:
           // move storage pointer to corresponding overflow bin position
-          ns += (axis::traits::extend(a) - 1) * dit->new_stride;
+          ns += (axis::traits::extent(a) - 1) * dit->new_stride;
           ++dit;
           ++sit;
           return;
@@ -159,7 +158,7 @@ void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
     // advance multi-dimensional index
     dit = data;
     ++dit->idx;
-    while (dit != dlast && dit->idx == dit->old_extend) {
+    while (dit != dlast && dit->idx == dit->old_extent) {
       dit->idx = 0;
       ++(++dit)->idx;
     }

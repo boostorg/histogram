@@ -162,7 +162,7 @@ std::size_t bincount(const T& axes) {
   std::size_t n = 1;
   for_each_axis(axes, [&n](const auto& a) {
     const auto old = n;
-    const auto s = axis::traits::extend(a);
+    const auto s = axis::traits::extent(a);
     n *= s;
     if (s > 0 && n < old) BOOST_THROW_EXCEPTION(std::overflow_error("bincount overflow"));
   });

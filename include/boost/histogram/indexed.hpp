@@ -37,7 +37,7 @@ class BOOST_HISTOGRAM_DETAIL_NODISCARD indexed_range {
       detail::buffer_size<typename detail::remove_cvref_t<Histogram>::axes_type>::value>;
   using value_iterator = decltype(std::declval<Histogram>().begin());
   struct cache_item {
-    int idx, begin, end, extend;
+    int idx, begin, end, extent;
   };
 
 public:
@@ -141,7 +141,7 @@ public:
       while (c->idx == c->end && (c != (parent_->cache_ + parent_->hist_.rank() - 1))) {
         c->idx = c->begin;
         range_iterator::base_reference() -= (c->end - c->begin) * stride;
-        stride *= c->extend;
+        stride *= c->extent;
         ++c;
         ++c->idx;
         range_iterator::base_reference() += stride;
@@ -165,7 +165,7 @@ public:
       constexpr int over = opt::test(axis::option::overflow);
       const auto size = a.size();
 
-      ca->extend = size + under + over;
+      ca->extent = size + under + over;
       // -1 if underflow and cover all, else 0
       ca->begin = cover_all_ ? -under : 0;
       // size + 1 if overflow and cover all, else size
@@ -178,7 +178,7 @@ public:
       else
         end_ += (ca->end + under) * stride;
 
-      stride *= ca->extend;
+      stride *= ca->extent;
       ++ca;
     });
   }
