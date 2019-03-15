@@ -90,7 +90,7 @@ constexpr unsigned options(const T& t) noexcept {
 }
 
 template <class T>
-constexpr axis::index_type extend(const T& t) noexcept {
+constexpr axis::index_type extent(const T& t) noexcept {
   const auto opt = options(t);
   return t.size() + static_cast<bool>(opt & option::underflow_t::value) +
          static_cast<bool>(opt & option::overflow_t::value);
