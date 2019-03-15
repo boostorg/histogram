@@ -38,7 +38,7 @@ int main() {
     );
 
     // fill histogram
-    auto data = { -0.4, 1.1, 0.3, 1.7 };
+    auto data = { -10, -0.4, 1.1, 0.3, 1.3 };
     std::for_each(data.begin(), data.end(), std::ref(h));
 
     // iterate over bins
@@ -52,13 +52,13 @@ int main() {
     /* program output:
 
     bin -1 [-inf, -1.0): 1
-    bin  0 [-1.0, -0.5): 1
+    bin  0 [-1.0, -0.5): 0
     bin  1 [-0.5, -0.0): 1
-    bin  2 [-0.0,  0.5): 2
+    bin  2 [-0.0,  0.5): 1
     bin  3 [ 0.5,  1.0): 0
-    bin  4 [ 1.0,  1.5): 1
-    bin  5 [ 1.5,  2.0): 1
-    bin  6 [ 2.0,  inf): 2
+    bin  4 [ 1.0,  1.5): 2
+    bin  5 [ 1.5,  2.0): 0
+    bin  6 [ 2.0,  inf): 0
     */
 }
 ```
