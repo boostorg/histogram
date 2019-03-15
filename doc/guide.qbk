@@ -105,7 +105,7 @@ All builtin axis types have template arguments for customization. All arguments 
   [
     [Options]
     [
-       [headerref boost/histogram/axis/option.hpp Compile-time options] for the axis. This is used to enable/disable under- and overflow bins, to make an axis circular, or to enable dynamic grow of the axis beyond the initial range.
+       [headerref boost/histogram/axis/option.hpp Compile-time options] for the axis. This is used to enable/disable under- and overflow bins, to make an axis circular, or to enable dynamic growth of the axis beyond the initial range.
     ]
   ]
   [
