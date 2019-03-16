@@ -9,11 +9,6 @@ import common ;
 
 path-constant THIS_PATH : . ;
 
-variant histogram_coverage : debug :
-    <cxxflags>"--coverage"
-    <linkflags>"--coverage"
-    ;
-
 # only works with clang because of -fsanitize-blacklist
 variant histogram_ubasan : debug :
     <cxxflags>"-fno-omit-frame-pointer -O0 -fno-inline -fsanitize=address,leak,undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(THIS_PATH)/tools/blacklist.supp"
