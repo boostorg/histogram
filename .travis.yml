@@ -46,9 +46,9 @@ matrix:
       script:
         - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 warnings-as-errors=on test examples
 
-    - name: "clang-5"
+    - name: "clang-5: sanitizers"
       script:
-        - ../../b2 -j2 -q toolset=clang-5 cxxstd=14 cxxflags="-stdlib=libc++"
+        - ../../b2 -j2 -q toolset=clang-5 cxxstd=14
           variant=histogram_ubasan warnings-as-errors=on test examples
 
     - name: "gcc-8: coverage, c++17"
