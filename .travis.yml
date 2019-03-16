@@ -29,7 +29,6 @@ matrix:
     - os: osx
       script:
         - ../../b2 -j2 -q cxxstd=14 warnings-as-errors=on
-          test examples
 
     - name: "gcc-5"
       addons:
@@ -38,7 +37,6 @@ matrix:
           packages: g++-5
       script:
         - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 warnings-as-errors=on
-          test examples
 
     - name: "clang-5: sanitizers"
       sudo: required # Required by leak sanitizer
@@ -52,7 +50,6 @@ matrix:
           ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1
           ../../b2 -j2 -q toolset=clang-5 cxxstd=14
           variant=histogram_ubasan warnings-as-errors=on
-          test examples
 
     - name: "gcc-8: coverage, c++17"
       addons:
