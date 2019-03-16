@@ -38,43 +38,27 @@ matrix:
           warnings-as-errors=on
           test examples
 
-    - name: "gcc-5: ubasan"
+    - name: "gcc-5"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
       script:
-        # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 variant=histogram_ubasan
-          warnings-as-errors=on
-          test//minimal examples//minimal &&
-          ../../b2 -j2 -q toolset=gcc-5 cxxstd=14
-          warnings-as-errors=on
-          test//serial examples//serial
+        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 warnings-as-errors=on test examples
 
-    - name: "gcc-7: coverage"
-      addons:
-        apt:
-          sources: ubuntu-toolchain-r-test
-          packages: g++-7
+    - name: "clang-5"
       script:
-        - ../../b2 -j2 -q toolset=gcc-7 variant=histogram_coverage warnings-as-errors=on
-      after_success:
-        - GCOV=gcov-7 tools/cov.sh
+        - ../../b2 -j2 -q toolset=clang-5 cxxstd=14 cxxflags="-stdlib=libc++"
+          variant=histogram_ubasan warnings-as-errors=on test examples
 
-    - name: "gcc-8: ubasan, c++17"
+    - name: "gcc-8: coverage, c++17"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 variant=histogram_ubasan
-          warnings-as-errors=on
-          test//minimal test//deduction_guides examples//minimal &&
-          ../../b2 -j2 -q toolset=gcc-8 cxxstd=17
-          warnings-as-errors=on
-          test//serial examples//serial
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 variant=histogram_coverage
+          warnings-as-errors=on test examples test//deduction_guides
 
 before_script:
   # Cloning minimal set of Boost libraries

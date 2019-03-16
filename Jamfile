@@ -14,8 +14,9 @@ variant histogram_coverage : debug :
     <linkflags>"--coverage"
     ;
 
+# only works with clang because of -fsanitize-blacklist
 variant histogram_ubasan : debug :
-    <cxxflags>"-fno-omit-frame-pointer -O0 -fno-inline -fsanitize=address,leak,undefined -fno-sanitize-recover=all"
+    <cxxflags>"-fno-omit-frame-pointer -O0 -fno-inline -fsanitize=address,leak,undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(THIS_PATH)/tools/blacklist.supp"
     # correct linkflags don't work on travis, use workaround
     <linkflags>"-fsanitize=address,leak,undefined"
     # <linkflags>"-lasan -lubsan"
