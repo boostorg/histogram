@@ -172,7 +172,7 @@ int main() {
   mixed_tests<storage_adaptor<std::vector<int>>,
               storage_adaptor<std::map<std::size_t, int>>>();
 
-  // special case for division of and map
+  // special case for division of map-based storage_adaptor
   {
     auto a = storage_adaptor<std::map<std::size_t, double>>();
     a.reset(2);
@@ -181,7 +181,7 @@ int main() {
     a[0] = 2;
     a[0] /= 2;
     BOOST_TEST_EQ(a[0], 1);
-    a[1] /= 0.0;
+    a[1] /= std::numeric_limits<double>::quiet_NaN();
     BOOST_TEST(std::isnan(static_cast<double>(a[1])));
   }
 

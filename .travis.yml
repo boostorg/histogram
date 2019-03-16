@@ -24,57 +24,43 @@ env:
 
     - LIBRARY_DIR=$(basename $TRAVIS_BUILD_DIR)
 
-    # Global options for sanitizers
-    # detect_leaks=0 is required on container builds by travis :(
-    - UBSAN_OPTIONS=print_stacktrace=1
-    - LSAN_OPTIONS=verbosity=1:log_threads=1
-    - ASAN_OPTIONS=detect_leaks=0:detect_stack_use_after_return=1
-
 matrix:
   include:
     - os: osx
       script:
-        - ../../b2 -j2 -q cxxstd=14
-          warnings-as-errors=on
-          test examples test//serial examples//serial
+        - ../../b2 -j2 -q cxxstd=14 warnings-as-errors=on
 
-    - name: "gcc-5: ubasan"
+    - name: "gcc-5"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
       script:
-        # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 variant=histogram_ubasan
-          warnings-as-errors=on
-          test//minimal examples//minimal &&
-          ../../b2 -j2 -q toolset=gcc-5 cxxstd=14
-          warnings-as-errors=on
-          test//serial examples//serial
+        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 warnings-as-errors=on
 
-    - name: "gcc-7: coverage"
-      addons:
-        apt:
-          sources: ubuntu-toolchain-r-test
-          packages: g++-7
-      script:
-        - ../../b2 -j2 -q toolset=gcc-7 variant=histogram_coverage warnings-as-errors=on
-      after_success:
-        - GCOV=gcov-7 tools/cov.sh
-
-    - name: "gcc-8: ubasan, c++17"
+    - name: "clang-5: sanitizers"
+      sudo: required # Required by leak sanitizer
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        # ubsan+asan disabled in serial tests, because of bug in boost/serialization
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 variant=histogram_ubasan
+        - UBSAN_OPTIONS=print_stacktrace=1
+          LSAN_OPTIONS=verbosity=1:log_threads=1
+          ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1
+          ../../b2 -j2 -q toolset=clang-5 cxxstd=14
+          variant=histogram_ubasan warnings-as-errors=on
+
+    - name: "gcc-8: coverage, c++17"
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-8
+      script:
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17
+          cxxflags="--coverage" linkflags="--coverage"
           warnings-as-errors=on
-          test//minimal test//deduction_guides examples//minimal &&
-          ../../b2 -j2 -q toolset=gcc-8 cxxstd=17
-          warnings-as-errors=on
-          test//serial examples//serial
+          test examples test//deduction_guides
 
 before_script:
   # Cloning minimal set of Boost libraries

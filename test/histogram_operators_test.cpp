@@ -17,7 +17,7 @@ template <typename Tag>
 void run_tests() {
   // arithmetic operators
   {
-    auto a = make(Tag(), axis::integer<>(0, 2));
+    auto a = make(Tag(), axis::integer<int, use_default, axis::option::none_t>(0, 2));
     auto b = a;
     a(0);
     b(1);

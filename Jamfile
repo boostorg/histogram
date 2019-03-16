@@ -7,16 +7,14 @@
 
 import common ;
 
-variant histogram_coverage : debug :
-    <cxxflags>"--coverage"
-    <linkflags>"--coverage"
-    ;
+path-constant THIS_PATH : . ;
 
+# only works with clang because of -fsanitize-blacklist
 variant histogram_ubasan : debug :
-    <cxxflags>"-fno-omit-frame-pointer -fsanitize=address,leak,undefined -fno-sanitize-recover=address,undefined"
+    <cxxflags>"-fno-omit-frame-pointer -O0 -fno-inline -fsanitize=address,leak,undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(THIS_PATH)/tools/blacklist.supp"
     # correct linkflags don't work on travis, use workaround
-    # <linkflags>"-fsanitize=address,leak,undefined"
-    <linkflags>"-lasan -lubsan"
+    <linkflags>"-fsanitize=address,leak,undefined"
+    # <linkflags>"-lasan -lubsan"
     ;
 
 project
