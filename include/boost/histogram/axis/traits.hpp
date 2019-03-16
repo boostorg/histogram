@@ -60,66 +60,130 @@ R2 value_method_switch_with_return_type(FIntArg&& iarg, FDoubleArg&& darg, const
 
 namespace axis {
 namespace traits {
-template <class T>
-decltype(auto) metadata(T&& t) noexcept {
-  return detail::static_if<detail::has_method_metadata<detail::remove_cvref_t<T>>>(
-      [](auto&& x) -> decltype(auto) { return x.metadata(); },
-      [](T &&) -> detail::copy_qualifiers<T, axis::null_type> {
-        static axis::null_type m;
+
+/** Returns reference to metadata of an axis.
+
+  If the expression x.metadata() for an axis instance `x` (maybe const) is valid, return
+  the result. Otherwise, return a reference to a static instance of
+  boost::histogram::axis::null_type.
+
+  @param axis any axis instance
+*/
+template <class Axis>
+decltype(auto) metadata(Axis&& axis) noexcept {
+  return detail::static_if<
+      detail::has_method_metadata<const detail::remove_cvref_t<Axis>>>(
+      [](auto&& a) -> decltype(auto) { return a.metadata(); },
+      [](auto &&) -> detail::copy_qualifiers<Axis, null_type> {
+        static null_type m;
         return m;
       },
-      std::forward<T>(t));
+      std::forward<Axis>(axis));
 }
 
-template <class T>
-using static_options =
-    detail::mp_eval_or<mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<T>>,
-                                   axis::option::growth_t, axis::option::none_t>,
-                       detail::static_options_impl, detail::remove_cvref_t<T>>;
+/** Generates static axis option type for axis type.
 
-template <class T>
-constexpr unsigned options(const T& t) noexcept {
+  WARNING: Doxygen does not render the synopsis correctly. This is a templated using
+  directive, which accepts axis type and returns boost::histogram::axis::option::bitset.
+
+  If Axis::options() is valid and constexpr, return the corresponding option type.
+  Otherwise, return boost::histogram::axis::option::growth_t, if the axis has a method
+  `update`, else return boost::histogram::axis::option::none_t.
+
+  @tparam Axis axis type
+*/
+template <class Axis>
+using static_options = detail::mp_eval_or<
+    mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<Axis>>, option::growth_t,
+                option::none_t>,
+    detail::static_options_impl, detail::remove_cvref_t<Axis>>;
+
+/** Returns axis options as unsigned integer.
+
+  If axis.options() is valid, return the result.
+  Otherwise, return boost::histogram::axis::option::growth as unsigned, if the axis has
+  a method `update`, else return boost::histogram::axis::option::none as unsigned.
+
+  @param axis any axis instance
+*/
+template <class Axis>
+constexpr unsigned options(const Axis& axis) noexcept {
   // cannot reuse static_options here, because this should also work for axis::variant
-  return detail::static_if<detail::has_method_options<T>>(
-      [](const auto& t) { return t.options(); },
+  return detail::static_if<detail::has_method_options<Axis>>(
+      [](const auto& a) { return a.options(); },
       [](const auto&) {
-        return detail::has_method_update<T>::value ? axis::option::growth_t::value
-                                                   : axis::option::none_t::value;
+        return detail::has_method_update<Axis>::value ? option::growth_t::value
+                                                      : option::none_t::value;
       },
-      t);
+      axis);
 }
 
-template <class T>
-constexpr axis::index_type extent(const T& t) noexcept {
-  const auto opt = options(t);
-  return t.size() + static_cast<bool>(opt & option::underflow_t::value) +
-         static_cast<bool>(opt & option::overflow_t::value);
+/** Returns axis size plus any extra bins for under- and overflow.
+
+  @param axis any axis instance
+*/
+template <class Axis>
+constexpr index_type extent(const Axis& axis) noexcept {
+  const auto opt = options(axis);
+  return axis.size() + (opt & option::underflow ? 1 : 0) +
+         (opt & option::overflow ? 1 : 0);
 }
 
-template <class T>
-decltype(auto) value(const T& axis, double idx) {
+/** Returns axis value for index.
+
+  If the axis has no `value` method, throw std::runtime_error. If the method exists and
+  accepts a floating point index, pass the index and return the result. If the method
+  exists but accepts only integer indices, cast the floating point index to int, pass this
+  index and return the result.
+
+  @param axis any axis instance
+  @param index floating point axis index
+*/
+template <class Axis>
+decltype(auto) value(const Axis& axis, real_index_type index) {
   return detail::value_method_switch(
-      [idx](const auto& a) { return a.value(static_cast<int>(idx)); },
-      [idx](const auto& a) { return a.value(idx); }, axis);
+      [index](const auto& a) { return a.value(static_cast<int>(index)); },
+      [index](const auto& a) { return a.value(index); }, axis);
 }
 
-template <class... Ts, class U>
-auto index(const axis::variant<Ts...>& axis, const U& value) {
-  return axis.index(value);
+/** Returns axis value for index if it is convertible to target type or throws.
+
+  Like boost::histogram::axis::traits::value, but converts the result into the requested
+  return type. If the conversion is not possible, throws std::runtime_error.
+
+  @tparam Result requested return type
+  @tparam Axis axis type
+  @param axis any axis instance
+  @param index floating point axis index
+*/
+template <class Result, class Axis>
+Result value_as(const Axis& axis, real_index_type index) {
+  return detail::value_method_switch_with_return_type<Result, Result>(
+      [index](const auto& a) {
+        return static_cast<Result>(a.value(static_cast<int>(index)));
+      },
+      [index](const auto& a) { return static_cast<Result>(a.value(index)); }, axis);
 }
 
-template <class T, class U>
-auto index(const T& axis, const U& value) {
-  using V = detail::arg_type<decltype(&T::index)>;
+/** Returns axis index for value.
+
+  Throws std::invalid_argument if the value argument is not implicitly convertible.
+
+  @param axis any axis instance
+  @param value argument to be passed to `index` method
+*/
+template <class Axis, class U>
+auto index(const Axis& axis, const U& value) {
+  using V = detail::arg_type<decltype(&Axis::index)>;
   return detail::static_if<std::is_convertible<U, V>>(
       [&value](const auto& axis) {
         using A = detail::remove_cvref_t<decltype(axis)>;
         using V2 = detail::arg_type<decltype(&A::index)>;
         return axis.index(static_cast<V2>(value));
       },
-      [](const T&) {
+      [](const Axis&) {
         BOOST_THROW_EXCEPTION(std::invalid_argument(
-            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
+            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(Axis)),
                         ": cannot convert argument of type ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(V)))));
@@ -128,24 +192,35 @@ auto index(const T& axis, const U& value) {
       axis);
 }
 
+/// @copydoc index(const Axis&, const U& value)
 template <class... Ts, class U>
-auto update(axis::variant<Ts...>& t, const U& u) {
-  return t.update(u);
+auto index(const variant<Ts...>& axis, const U& value) {
+  return axis.index(value);
 }
 
-template <class T, class U>
-std::pair<int, int> update(T& axis, const U& value) {
-  using V = detail::arg_type<decltype(&T::index)>;
+/** Returns pair of axis index and shift for the value argument.
+
+  Throws `std::invalid_argument` if the value argument is not implicitly convertible to
+  the argument expected by the `index` method. If `update` method exists, pass argument
+  and return the result. Otherwise, call `index` and return the pair of the result and a
+  zero shift.
+
+  @param axis any axis instance
+  @param value argument to be passed to `update` or `index` method
+*/
+template <class Axis, class U>
+std::pair<int, int> update(Axis& axis, const U& value) {
+  using V = detail::arg_type<decltype(&Axis::index)>;
   return detail::static_if<std::is_convertible<U, V>>(
       [&value](auto& a) {
-        return detail::static_if<
-            detail::has_method_update<detail::remove_cvref_t<decltype(a)>>>(
+        using A = detail::remove_cvref_t<decltype(a)>;
+        return detail::static_if<detail::has_method_update<A>>(
             [&value](auto& a) { return a.update(value); },
-            [&value](const auto& a) { return std::make_pair(a.index(value), 0); }, a);
+            [&value](auto& a) { return std::make_pair(a.index(value), 0); }, a);
       },
-      [](T&) {
+      [](Axis&) {
         BOOST_THROW_EXCEPTION(std::invalid_argument(
-            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
+            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(Axis)),
                         ": cannot convert argument of type ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(V)))));
@@ -154,25 +229,44 @@ std::pair<int, int> update(T& axis, const U& value) {
       axis);
 }
 
-template <class R, class T>
-R value_as(const T& t, double idx) {
-  return detail::value_method_switch_with_return_type<R, R>(
-      [idx](const auto& a) -> R { return a.value(static_cast<int>(idx)); },
-      [idx](const auto& a) -> R { return a.value(idx); }, t);
+/// @copydoc update(Axis& axis, const U& value)
+template <class... Ts, class U>
+auto update(variant<Ts...>& axis, const U& value) {
+  return axis.update(value);
 }
 
-template <class T>
-decltype(auto) width(const T& t, int idx) {
+/** Returns bin width at axis index.
+
+  If the axis has no `value` method, throw std::runtime_error. If the method exists and
+  accepts a floating point index, return the result of `axis.value(index + 1) -
+  axis.value(index)`. If the method exists but accepts only integer indices, return 0.
+
+  @param axis any axis instance
+  @param index bin index
+ */
+template <class Axis>
+decltype(auto) width(const Axis& axis, index_type index) {
   return detail::value_method_switch(
       [](const auto&) { return 0; },
-      [idx](const auto& a) { return a.value(idx + 1) - a.value(idx); }, t);
+      [index](const auto& a) { return a.value(index + 1) - a.value(index); }, axis);
 }
 
-template <class R, class T>
-R width_as(const T& t, int idx) {
-  return detail::value_method_switch_with_return_type<R, R>(
-      [](const auto&) { return R(); },
-      [idx](const auto& a) -> R { return a.value(idx + 1) - a.value(idx); }, t);
+/** Returns bin width at axis index.
+
+  Like boost::histogram::axis::traits::width, but converts the result into the requested
+  return type. If the conversion is not possible, throw std::runtime_error.
+
+  @param axis any axis instance
+  @param index bin index
+ */
+template <class Result, class Axis>
+Result width_as(const Axis& axis, index_type index) {
+  return detail::value_method_switch_with_return_type<Result, Result>(
+      [](const auto&) { return Result{}; },
+      [index](const auto& a) {
+        return static_cast<Result>(a.value(index + 1) - a.value(index));
+      },
+      axis);
 }
 
 } // namespace traits

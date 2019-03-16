@@ -62,9 +62,9 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 ]
 [
   [`a.metadata()`]
-  [`M` or `const M&`]
+  [`const M&`]
   [
-    Const member function which returns a copy of or a const reference to the metadata associated with the axis, usually a label string.
+    Const member function which returns a const reference to the metadata associated with the axis (usually a string).
   ]
 ]
 [
