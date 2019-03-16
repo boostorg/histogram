@@ -35,13 +35,17 @@ matrix:
       script:
         - ../../b2 -j2 -q cxxstd=14 warnings-as-errors=on
 
-    - name: "gcc-5"
+    # lcov does not understand gcc-8 output, so we use gcc-5 to generate coverage data
+    - name: "gcc-5: coverage"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-5
       script:
         - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 warnings-as-errors=on
+          cxxflags="--coverage" linkflags="--coverage"
+      after_success:
+        - GCOV=gcov-5 tools/cov.sh
 
     - name: "clang-5: sanitizers"
       sudo: required # Required by leak sanitizer
@@ -56,15 +60,13 @@ matrix:
           ../../b2 -j2 -q toolset=clang-5 cxxstd=14
           variant=histogram_ubasan warnings-as-errors=on
 
-    - name: "gcc-8: coverage, c++17"
+    - name: "gcc-8: c++17"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17
-          cxxflags="--coverage" linkflags="--coverage"
-          warnings-as-errors=on
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 warnings-as-errors=on
           test examples test//deduction_guides
 
 before_script:
