@@ -36,7 +36,7 @@ matrix:
       script:
         - ../../b2 -j2 -q cxxstd=14
           warnings-as-errors=on
-          test examples test//serial examples//serial
+          test examples
 
     - name: "gcc-5: ubasan"
       addons:
