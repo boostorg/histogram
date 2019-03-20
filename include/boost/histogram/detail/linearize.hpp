@@ -66,6 +66,7 @@ inline void linearize(optional_index& out, const axis::index_type extent,
   out.stride *= (0 <= j && j < extent) * extent;
 }
 
+// for non-growing axis
 template <class Axis, class Value>
 void linearize_value(optional_index& o, const Axis& a, const Value& v) {
   using B = decltype(axis::traits::static_options<Axis>::test(axis::option::underflow));
@@ -73,11 +74,13 @@ void linearize_value(optional_index& o, const Axis& a, const Value& v) {
   linearize(o, axis::traits::extent(a), j);
 }
 
+// for variant that does not contain any growing axis
 template <class... Ts, class Value>
 void linearize_value(optional_index& o, const axis::variant<Ts...>& a, const Value& v) {
   axis::visit([&o, &v](const auto& a) { linearize_value(o, a, v); }, a);
 }
 
+// for growing axis
 template <class Axis, class Value>
 void linearize_value(optional_index& o, axis::index_type& s, Axis& a, const Value& v) {
   axis::index_type j;
@@ -86,6 +89,7 @@ void linearize_value(optional_index& o, axis::index_type& s, Axis& a, const Valu
   linearize(o, axis::traits::extent(a), j);
 }
 
+// for variant which contains at least one growing axis
 template <class... Ts, class Value>
 void linearize_value(optional_index& o, axis::index_type& s, axis::variant<Ts...>& a,
                      const Value& v) {

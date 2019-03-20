@@ -100,9 +100,8 @@ using static_options = detail::mp_eval_or<
 
 /** Returns axis options as unsigned integer.
 
-  If axis.options() is valid, return the result.
-  Otherwise, return boost::histogram::axis::option::growth as unsigned, if the axis has
-  a method `update`, else return boost::histogram::axis::option::none as unsigned.
+  If axis.options() is valid, return the result. Otherwise, return
+  boost::histogram::axis::traits::static_options<decltype(axis)>::value.
 
   @param axis any axis instance
 */
@@ -111,11 +110,7 @@ constexpr unsigned options(const Axis& axis) noexcept {
   // cannot reuse static_options here, because this should also work for axis::variant
   return detail::static_if<detail::has_method_options<Axis>>(
       [](const auto& a) { return a.options(); },
-      [](const auto&) {
-        return detail::has_method_update<Axis>::value ? option::growth_t::value
-                                                      : option::none_t::value;
-      },
-      axis);
+      [](const auto&) { return static_options<Axis>::value; }, axis);
 }
 
 /** Returns axis size plus any extra bins for under- and overflow.
@@ -201,9 +196,10 @@ auto index(const variant<Ts...>& axis, const U& value) {
 /** Returns pair of axis index and shift for the value argument.
 
   Throws `std::invalid_argument` if the value argument is not implicitly convertible to
-  the argument expected by the `index` method. If `update` method exists, pass argument
-  and return the result. Otherwise, call `index` and return the pair of the result and a
-  zero shift.
+  the argument expected by the `index` method. If the result of
+  boost::histogram::axis::traits::static_options<decltype(axis)> has the growth flag set,
+  call `update` method with the argument and return the result. Otherwise, call `index`
+  and return the pair of the result and a zero shift.
 
   @param axis any axis instance
   @param value argument to be passed to `update` or `index` method
@@ -214,7 +210,7 @@ std::pair<int, int> update(Axis& axis, const U& value) {
   return detail::static_if<std::is_convertible<U, V>>(
       [&value](auto& a) {
         using A = detail::remove_cvref_t<decltype(a)>;
-        return detail::static_if<detail::has_method_update<A>>(
+        return detail::static_if_c<static_options<A>::test(option::growth)>(
             [&value](auto& a) { return a.update(value); },
             [&value](auto& a) { return std::make_pair(a.index(value), 0); }, a);
       },

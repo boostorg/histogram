@@ -170,6 +170,27 @@ void run_tests() {
     BOOST_TEST_EQ(h[10], 1);
     BOOST_TEST_THROWS(h(0), std::invalid_argument);
   }
+
+  // mix of a growing and a non-growing axis
+  {
+    using reg_nogrow = axis::regular<>;
+    auto h = make(Tag(), reg_nogrow{2, 0.0, 1.0}, regular{2, 0.0, 1.0});
+    BOOST_TEST_EQ(h.size(), 4 * 2);
+    h(0.0, 0.0);
+    BOOST_TEST_EQ(h.size(), 4 * 2);
+    BOOST_TEST_EQ(h.at(0, 0), 1);
+    h(-1.0, -0.1);
+    BOOST_TEST_EQ(h.size(), 4 * 3);
+    BOOST_TEST_EQ(h.at(-1, 0), 1);
+    h(2.0, 1.1);
+    BOOST_TEST_EQ(h.size(), 4 * 4);
+    // axis 0: [0.0, 0.5, 1.0] + under/overflow
+    // axis 1: [-0.5, 0.0, 0.5, 1.0, 1.5]
+    BOOST_TEST_EQ(h.at(-1, 0), 1);
+    BOOST_TEST_EQ(h.at(0, 1), 1);
+    BOOST_TEST_EQ(h.at(2, 3), 1);
+    BOOST_TEST_EQ(algorithm::sum(h), 3);
+  }
 }
 
 int main() {
