@@ -222,6 +222,26 @@ int main() {
     c = 255;
     BOOST_TEST_EQ(bh::detail::safe_radd(c, 1u), false);
     BOOST_TEST_EQ(c, 255);
+
+    auto eq = bh::detail::equal{};
+    BOOST_TEST(eq(-1, -1));
+    BOOST_TEST(eq(1, 1u));
+    BOOST_TEST(eq(1u, 1));
+    BOOST_TEST(eq(1u, 1u));
+    BOOST_TEST_NOT(eq(-1, (unsigned)-1));
+    BOOST_TEST_NOT(eq((unsigned)-1, -1));
+
+    auto lt = bh::detail::less{};
+    BOOST_TEST(lt(1u, 2u));
+    BOOST_TEST(lt(-1, (unsigned)-1));
+    BOOST_TEST(lt(1u, 2));
+    BOOST_TEST(lt(-2, -1));
+
+    auto gt = bh::detail::greater{};
+    BOOST_TEST(gt(2u, 1u));
+    BOOST_TEST(gt(2, 1u));
+    BOOST_TEST(gt((unsigned)-1, -1));
+    BOOST_TEST(gt(-1, -2));
   }
 
   // mp_int

@@ -103,13 +103,13 @@ void run_tests() {
   // arithmetic operators with mixed storage: vector<unsigned char> vs. vector<unsigned>
   {
     auto ia = axis::integer<int, axis::null_type, axis::option::none_t>(0, 2);
-    auto a = make_s(Tag(), std::vector<unsigned char>{}, ia);
+    auto a = make_s(Tag(), std::vector<unsigned long>{}, ia);
     auto c = make_s(Tag(), std::vector<unsigned>(), ia);
-    a(0, weight(2));
-    a(1, weight(2));
+    a(0, weight(2u));
+    a(1, weight(2u));
     auto b = a;
-    c(0, weight(2));
-    c(1, weight(2));
+    c(0, weight(2u));
+    c(1, weight(2u));
     auto a2 = a;
     a2 += c;
     BOOST_TEST_EQ(a2, (a + b));

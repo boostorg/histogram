@@ -414,6 +414,21 @@ using is_convertible_helper =
 template <class T, class U>
 using is_convertible = mp_eval_or<std::false_type, is_convertible_helper, T, U>;
 
+template <class T>
+auto make_unsigned_impl(std::true_type, const T t) noexcept {
+  return static_cast<typename std::make_unsigned<T>::type>(t);
+}
+
+template <class T>
+auto make_unsigned_impl(std::false_type, const T t) noexcept {
+  return t;
+}
+
+template <class T>
+auto make_unsigned(const T t) noexcept {
+  return make_unsigned_impl(std::is_integral<T>{}, t);
+}
+
 } // namespace detail
 } // namespace histogram
 } // namespace boost

@@ -97,7 +97,7 @@ void run_tests() {
     auto h2 = decltype(h)(h);
     BOOST_TEST_EQ(h2, h);
     auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
-                        storage_adaptor<std::vector<unsigned>>>(h);
+                        storage_adaptor<std::vector<double>>>(h);
     BOOST_TEST_EQ(h3, h);
   }
 

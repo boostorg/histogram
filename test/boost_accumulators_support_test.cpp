@@ -5,6 +5,11 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/config/workaround.hpp>
+
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4459) // declaration of 'sum' hides global
+#endif
 #if BOOST_WORKAROUND(BOOST_GCC, >= 50000)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -28,6 +33,9 @@
 #endif
 #if BOOST_WORKAROUND(BOOST_GCC, >= 50000)
 #pragma GCC diagnostic pop
+#endif
+#if defined(_MSC_VER)
+#pragma warning(pop)
 #endif
 
 #include <boost/core/lightweight_test.hpp>

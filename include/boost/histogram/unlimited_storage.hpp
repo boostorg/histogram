@@ -27,6 +27,90 @@ namespace histogram {
 
 namespace detail {
 
+// version of std::equal_to<> which handles comparison of signed and unsigned
+struct equal {
+  template <class T, class U>
+  bool operator()(const T& t, const U& u) const noexcept {
+    return impl(std::is_signed<T>{}, std::is_signed<U>{}, t, u);
+  }
+
+  template <class T, class U>
+  bool impl(std::false_type, std::false_type, const T& t, const U& u) const noexcept {
+    return t == u;
+  }
+
+  template <class T, class U>
+  bool impl(std::false_type, std::true_type, const T& t, const U& u) const noexcept {
+    return u >= 0 && t == make_unsigned(u);
+  }
+
+  template <class T, class U>
+  bool impl(std::true_type, std::false_type, const T& t, const U& u) const noexcept {
+    return t >= 0 && make_unsigned(t) == u;
+  }
+
+  template <class T, class U>
+  bool impl(std::true_type, std::true_type, const T& t, const U& u) const noexcept {
+    return t == u;
+  }
+};
+
+// version of std::less<> which handles comparison of signed and unsigned
+struct less {
+  template <class T, class U>
+  bool operator()(const T& t, const U& u) const noexcept {
+    return impl(std::is_signed<T>{}, std::is_signed<U>{}, t, u);
+  }
+
+  template <class T, class U>
+  bool impl(std::false_type, std::false_type, const T& t, const U& u) const noexcept {
+    return t < u;
+  }
+
+  template <class T, class U>
+  bool impl(std::false_type, std::true_type, const T& t, const U& u) const noexcept {
+    return u >= 0 && t < make_unsigned(u);
+  }
+
+  template <class T, class U>
+  bool impl(std::true_type, std::false_type, const T& t, const U& u) const noexcept {
+    return t < 0 || make_unsigned(t) < u;
+  }
+
+  template <class T, class U>
+  bool impl(std::true_type, std::true_type, const T& t, const U& u) const noexcept {
+    return t < u;
+  }
+};
+
+// version of std::greater<> which handles comparison of signed and unsigned
+struct greater {
+  template <class T, class U>
+  bool operator()(const T& t, const U& u) const noexcept {
+    return impl(std::is_signed<T>{}, std::is_signed<U>{}, t, u);
+  }
+
+  template <class T, class U>
+  bool impl(std::false_type, std::false_type, const T& t, const U& u) const noexcept {
+    return t > u;
+  }
+
+  template <class T, class U>
+  bool impl(std::false_type, std::true_type, const T& t, const U& u) const noexcept {
+    return u < 0 || t > make_unsigned(u);
+  }
+
+  template <class T, class U>
+  bool impl(std::true_type, std::false_type, const T& t, const U& u) const noexcept {
+    return t >= 0 && make_unsigned(t) > u;
+  }
+
+  template <class T, class U>
+  bool impl(std::true_type, std::true_type, const T& t, const U& u) const noexcept {
+    return t > u;
+  }
+};
+
 template <class Allocator>
 struct mp_int;
 
@@ -421,7 +505,7 @@ private:
       ptr = nullptr;
     }
 
-#if defined(BOOST_MSVC)
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4244) // possible loss of data
 #endif
@@ -459,7 +543,7 @@ private:
       ptr = new_ptr;
     }
 
-#if defined(BOOST_MSVC)
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
   };
@@ -474,9 +558,9 @@ private:
     reference_t& operator=(reference_t&&) = delete;      // references do not rebind
 
     // minimal operators for partial ordering
-    bool operator<(reference_t rhs) const { return op<std::less<>>(rhs); }
-    bool operator>(reference_t rhs) const { return op<std::greater<>>(rhs); }
-    bool operator==(reference_t rhs) const { return op<std::equal_to<>>(rhs); }
+    bool operator<(reference_t rhs) const { return op<detail::less>(rhs); }
+    bool operator>(reference_t rhs) const { return op<detail::greater>(rhs); }
+    bool operator==(reference_t rhs) const { return op<detail::equal>(rhs); }
 
     // adapted copy from boost/operators.hpp for partial ordering
     friend bool operator<=(reference_t x, reference_t y) { return !(y < x); }
@@ -485,17 +569,17 @@ private:
 
     template <class U>
     bool operator<(const U& rhs) const {
-      return op<std::less<>>(rhs);
+      return op<detail::less>(rhs);
     }
 
     template <class U>
     bool operator>(const U& rhs) const {
-      return op<std::greater<>>(rhs);
+      return op<detail::greater>(rhs);
     }
 
     template <class U>
     bool operator==(const U& rhs) const {
-      return op<std::equal_to<>>(rhs);
+      return op<detail::equal>(rhs);
     }
 
     // adapted copy from boost/operators.hpp
@@ -679,11 +763,9 @@ public:
   unlimited_storage(const storage_adaptor<T>& s) {
     using V = detail::remove_cvref_t<decltype(s[0])>;
     constexpr auto ti = type_index<V>();
-    if (ti < mp11::mp_size<types>::value)
-      buffer.template make<V>(s.size(), s.begin());
-    else {
-      buffer.template make<double>(s.size(), s.begin());
-    }
+    detail::static_if_c<(ti < mp11::mp_size<types>::value)>(
+        [&](auto) { buffer.template make<V>(s.size(), s.begin()); },
+        [&](auto) { buffer.template make<double>(s.size(), s.begin()); }, 0);
   }
 
   template <class Iterable, class = detail::requires_iterable<Iterable>>
@@ -705,7 +787,7 @@ public:
     if (size() != o.size()) return false;
     return buffer.apply([&o](const auto* ptr) {
       return o.buffer.apply([ptr, &o](const auto* optr) {
-        return std::equal(ptr, ptr + o.size(), optr, std::equal_to<>());
+        return std::equal(ptr, ptr + o.size(), optr, detail::equal{});
       });
     });
   }
@@ -714,7 +796,7 @@ public:
   bool operator==(const T& o) const {
     if (size() != o.size()) return false;
     return buffer.apply([&o](const auto* ptr) {
-      return std::equal(ptr, ptr + o.size(), std::begin(o), std::equal_to<>());
+      return std::equal(ptr, ptr + o.size(), std::begin(o), detail::equal{});
     });
   }
 
@@ -786,8 +868,7 @@ private:
     void U_is_unsigned_integral(std::false_type, T* tp, Buffer& b, std::size_t i,
                                 const U& x) {
       if (x >= 0)
-        U_is_unsigned_integral(std::true_type{}, tp, b, i,
-                               static_cast<typename std::make_unsigned<U>::type>(x));
+        U_is_unsigned_integral(std::true_type{}, tp, b, i, detail::make_unsigned(x));
       else
         U_is_integral(std::false_type{}, tp, b, i, static_cast<double>(x));
     }

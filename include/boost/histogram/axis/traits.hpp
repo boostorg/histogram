@@ -31,11 +31,13 @@ decltype(auto) value_method_switch(FIntArg&& iarg, FDoubleArg&& darg, const T& t
         return static_if<std::is_same<arg_type<decltype(&A::value), 0>, int>>(
             std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
       },
-      [](FIntArg&&, FDoubleArg&&, const auto& t) {
+      [](FIntArg&&, FDoubleArg&&, const auto& t) -> double {
         using A = remove_cvref_t<decltype(t)>;
         BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
             boost::core::demangled_name(BOOST_CORE_TYPEID(A)), " has no value method")));
-        return 0;
+#ifndef _MSC_VER // msvc warns about unreachable return
+        return double{};
+#endif
       },
       std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
 }
@@ -53,6 +55,10 @@ R2 value_method_switch_with_return_type(FIntArg&& iarg, FDoubleArg&& darg, const
             detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
                         " has no value method or return type is not convertible to ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(R1)))));
+#ifndef _MSC_VER // msvc warns about unreachable return
+        // conjure a value out of thin air to satisfy syntactic requirement
+        return *reinterpret_cast<R2*>(0);
+#endif
       },
       std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
 }
@@ -176,13 +182,15 @@ auto index(const Axis& axis, const U& value) {
         using V2 = detail::arg_type<decltype(&A::index)>;
         return axis.index(static_cast<V2>(value));
       },
-      [](const Axis&) {
+      [](const Axis&) -> index_type {
         BOOST_THROW_EXCEPTION(std::invalid_argument(
             detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(Axis)),
                         ": cannot convert argument of type ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(V)))));
-        return 0;
+#ifndef _MSC_VER // msvc warns about unreachable return
+        return index_type{};
+#endif
       },
       axis);
 }
@@ -214,13 +222,15 @@ std::pair<int, int> update(Axis& axis, const U& value) {
             [&value](auto& a) { return a.update(value); },
             [&value](auto& a) { return std::make_pair(a.index(value), 0); }, a);
       },
-      [](Axis&) {
+      [](Axis&) -> std::pair<index_type, index_type> {
         BOOST_THROW_EXCEPTION(std::invalid_argument(
             detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(Axis)),
                         ": cannot convert argument of type ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
                         boost::core::demangled_name(BOOST_CORE_TYPEID(V)))));
-        return std::make_pair(0, 0);
+#ifndef _MSC_VER // msvc warns about unreachable return
+        return std::make_pair(index_type{}, index_type{});
+#endif
       },
       axis);
 }
