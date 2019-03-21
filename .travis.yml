@@ -14,6 +14,11 @@ sudo: false
 language: cpp
 os: linux
 
+branches:
+  only:
+    - master
+    - develop
+
 env:
   global:
     - if [ "$TRAVIS_BRANCH" == "master" ]; then
