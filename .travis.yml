@@ -52,7 +52,7 @@ matrix:
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
-          packages: g++-8
+          packages: libstdc++-7-dev
       script:
         - UBSAN_OPTIONS=print_stacktrace=1
           LSAN_OPTIONS=verbosity=1:log_threads=1
