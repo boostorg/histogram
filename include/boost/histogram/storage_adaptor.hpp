@@ -15,6 +15,7 @@
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
+#include <mutex>
 #include <stdexcept>
 #include <type_traits>
 
@@ -22,9 +23,14 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <class T>
+template <class T, bool ThreadSafe>
 struct vector_impl : T {
   vector_impl() = default;
+  explicit vector_impl(const vector_impl& t) : T(t) {}
+  vector_impl& operator=(const vector_impl& t) {
+    T::operator=(t);
+    return *this;
+  }
 
   explicit vector_impl(const T& t) : T(t) {}
   explicit vector_impl(typename T::allocator_type a) : T(a) {}
@@ -49,11 +55,19 @@ struct vector_impl : T {
     T::resize(n, value_type());
     std::fill_n(T::begin(), std::min(n, old_size), value_type());
   }
+
+  std::mutex mutex_;
 };
 
-template <class T>
+template <class T, bool ThreadSafe>
 struct array_impl : T {
   array_impl() = default;
+  array_impl(const array_impl& t) : T(t), size_(t.size_) {}
+  array_impl& operator=(const array_impl& t) {
+    T::operator=(t);
+    size_ = t.size_;
+    return *this;
+  }
 
   explicit array_impl(const T& t) : T(t) {}
   template <class U, class = requires_iterable<U>>
@@ -88,9 +102,10 @@ struct array_impl : T {
   std::size_t size() const noexcept { return size_; }
 
   std::size_t size_ = 0;
+  std::mutex mutex_;
 };
 
-template <class T>
+template <class T, bool ThreadSafe>
 struct map_impl : T {
   static_assert(std::is_same<typename T::key_type, std::size_t>::value,
                 "requires std::size_t as key_type");
@@ -216,6 +231,12 @@ struct map_impl : T {
   using const_iterator = iterator_t<const value_type, const_reference, const map_impl*>;
 
   map_impl() = default;
+  map_impl(const map_impl& t) : T(t), size_(t.size_) {}
+  map_impl& operator=(const map_impl& t) {
+    T::operator=(t);
+    size_ = t.size_;
+    return *this;
+  }
 
   explicit map_impl(const T& t) : T(t) {}
   explicit map_impl(typename T::allocator_type a) : T(a) {}
@@ -261,30 +282,31 @@ struct map_impl : T {
   std::size_t size() const noexcept { return size_; }
 
   std::size_t size_ = 0;
+  std::mutex mutex_;
 };
 
-template <typename T>
+template <class T>
 struct ERROR_type_passed_to_storage_adaptor_not_recognized;
 
-template <typename T>
+template <class T, bool IsThreadSafe>
 using storage_adaptor_impl = mp11::mp_if<
-    is_vector_like<T>, vector_impl<T>,
-    mp11::mp_if<is_array_like<T>, array_impl<T>,
-                mp11::mp_if<is_map_like<T>, map_impl<T>,
+    is_vector_like<T>, vector_impl<T, IsThreadSafe>,
+    mp11::mp_if<is_array_like<T>, array_impl<T, IsThreadSafe>,
+                mp11::mp_if<is_map_like<T>, map_impl<T, IsThreadSafe>,
                             ERROR_type_passed_to_storage_adaptor_not_recognized<T>>>>;
 
 } // namespace detail
 
 /// Turns any vector-like array-like, and map-like container into a storage type.
-template <typename T>
-class storage_adaptor : public detail::storage_adaptor_impl<T> {
-  using base_type = detail::storage_adaptor_impl<T>;
+template <class T, bool IsThreadSafe>
+class storage_adaptor : public detail::storage_adaptor_impl<T, IsThreadSafe> {
+  using base_type = detail::storage_adaptor_impl<T, IsThreadSafe>;
 
 public:
   using base_type::base_type;
   using base_type::operator=;
 
-  template <class U, class = detail::requires_iterable<U>>
+  template <class U>
   bool operator==(const U& u) const {
     using std::begin;
     using std::end;

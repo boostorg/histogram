@@ -17,6 +17,7 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/detail/make_scoped_lock.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
@@ -146,20 +147,20 @@ void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
 } // namespace axis
 
 namespace detail {
-template <class Archive, class T>
-void serialize(Archive& ar, vector_impl<T>& impl, unsigned /* version */) {
+template <class Archive, class T, bool B>
+void serialize(Archive& ar, vector_impl<T, B>& impl, unsigned /* version */) {
   ar& serialization::make_nvp("vector", static_cast<T&>(impl));
 }
 
-template <class Archive, class T>
-void serialize(Archive& ar, array_impl<T>& impl, unsigned /* version */) {
+template <class Archive, class T, bool B>
+void serialize(Archive& ar, array_impl<T, B>& impl, unsigned /* version */) {
   ar& serialization::make_nvp("size", impl.size_);
   ar& serialization::make_nvp("array",
                               serialization::make_array(&impl.front(), impl.size_));
 }
 
-template <class Archive, class T>
-void serialize(Archive& ar, map_impl<T>& impl, unsigned /* version */) {
+template <class Archive, class T, bool B>
+void serialize(Archive& ar, map_impl<T, B>& impl, unsigned /* version */) {
   ar& serialization::make_nvp("size", impl.size_);
   ar& serialization::make_nvp("map", static_cast<T&>(impl));
 }
@@ -171,8 +172,16 @@ void serialize(Archive& ar, mp_int<Allocator>& x, unsigned /* version */) {
 } // namespace detail
 
 template <class Archive, class T>
-void serialize(Archive& ar, storage_adaptor<T>& s, unsigned /* version */) {
-  ar& serialization::make_nvp("impl", static_cast<detail::storage_adaptor_impl<T>&>(s));
+void serialize(Archive& ar, storage_adaptor<T, false>& s, unsigned /* version */) {
+  using impl_t = detail::storage_adaptor_impl<T, false>;
+  ar& serialization::make_nvp("impl", static_cast<impl_t&>(s));
+}
+
+template <class Archive, class T>
+void serialize(Archive& ar, storage_adaptor<T, true>& s, unsigned /* version */) {
+  using impl_t = detail::storage_adaptor_impl<T, true>;
+  auto sl = detail::make_scoped_lock(s.mutex_);
+  ar& serialization::make_nvp("impl", static_cast<impl_t&>(s));
 }
 
 template <class A>

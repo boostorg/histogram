@@ -1,4 +1,4 @@
-// Copyright 2015-2017 Hans Dembinski
+// Copyright 2015-2019 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -12,6 +12,7 @@
   Forward declarations, tag types and type aliases.
 */
 
+#include <atomic>
 #include <boost/core/use_default.hpp>
 #include <boost/histogram/detail/attribute.hpp> // BOOST_HISTOGRAM_DETAIL_NODISCARD
 #include <string>
@@ -89,25 +90,29 @@ struct unsafe_access;
 template <class Allocator = std::allocator<char>>
 class unlimited_storage;
 
-template <class T>
+template <class T, bool IsThreadSafe = false>
 class storage_adaptor;
 
 #endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
-/// Vector-like storage for fast zero-overhead access to cells
+/// Vector-like storage for fast zero-overhead access to cells. Not thread-safe.
 template <class T, class A = std::allocator<T>>
 using dense_storage = storage_adaptor<std::vector<T, A>>;
+
+/// Thread-safe vector-like storage for fast zero-overhead access to cells.
+template <class T, class A = std::allocator<std::atomic<T>>>
+using dense_storage_mt = storage_adaptor<std::vector<std::atomic<T>, A>, true>;
 
 /// Default storage, optimized for unweighted histograms
 using default_storage = unlimited_storage<>;
 
-/// Dense storage which tracks sums of weights and a variance estimate
+/// Dense storage which tracks sums of weights and a variance estimate.
 using weight_storage = dense_storage<accumulators::weighted_sum<>>;
 
-/// Dense storage which tracks means of samples in each cell
+/// Dense storage which tracks means of samples in each cell.
 using profile_storage = dense_storage<accumulators::mean<>>;
 
-/// Dense storage which tracks means of weighted samples in each cell
+/// Dense storage which tracks means of weighted samples in each cell.
 using weighted_profile_storage = dense_storage<accumulators::weighted_mean<>>;
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
