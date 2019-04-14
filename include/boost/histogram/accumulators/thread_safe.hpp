@@ -20,7 +20,7 @@ class thread_safe : public std::atomic<T> {
 public:
   using super_t = std::atomic<T>;
 
-  thread_safe() noexcept : super_t(T()) {}
+  thread_safe() noexcept : super_t(static_cast<T>(0)) {}
   // non-atomic copy and assign is allowed, because storage is locked in this case
   thread_safe(const thread_safe& o) noexcept : super_t(o.load()) {}
   thread_safe& operator=(const thread_safe& o) noexcept {
@@ -34,8 +34,8 @@ public:
     return *this;
   }
 
-  T operator+=(T arg) { return super_t::fetch_add(arg, std::memory_order_relaxed); }
-  T operator++() { return operator+=(static_cast<T>(1)); }
+  void operator+=(T arg) { super_t::fetch_add(arg, std::memory_order_relaxed); }
+  void operator++() { operator+=(static_cast<T>(1)); }
 };
 
 } // namespace accumulators
