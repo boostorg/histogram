@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_VARIANT_HPP
 #define BOOST_HISTOGRAM_AXIS_VARIANT_HPP
 
+#include <boost/config/workaround.hpp>
 #include <boost/core/typeinfo.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/polymorphic_bin.hpp>
@@ -18,10 +19,17 @@
 #include <boost/mp11/function.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/throw_exception.hpp>
+#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/get.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/variant.hpp>
+#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
+#pragma clang diagnostic pop
+#endif
 #include <ostream>
 #include <stdexcept>
 #include <tuple>
