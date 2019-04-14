@@ -71,12 +71,12 @@ int main() {
 * Support for weighted increments
 * Support for profiles and more generally, user-defined accumulators in cells [[3]](#note3)
 * Support for completely stack-based histograms
-* Support for adding and scaling histograms
+* Support for adding, subtracting, multiplying, dividing, and scaling histograms
 * Support for custom allocators
 * Support for programming with units [[4]](#note4)
 * Optional serialization based on [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
 
-<b id="note1">Note 1</b> Footnote content goes here [1]: In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a multiprecision integer similar to those in [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/), which is only limited by available memory.
+<b id="note1">Note 1</b> In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a multiprecision integer similar to those in [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/), which is only limited by available memory.
 
 <b id="note2">Note 2</b> An axis can be configured to grow when a value is encountered that is outside of its range. It then grows new bins towards this value so that the value ends up in the new highest or lowest bin.
 
