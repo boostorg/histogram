@@ -52,7 +52,7 @@ class variable : public iterator_mixin<variable<Value, MetaData, Options, Alloca
   using vec_type = std::vector<Value, allocator_type>;
 
 public:
-  explicit variable(allocator_type alloc = {}) : vec_meta_(std::move(alloc)) {}
+  explicit variable(allocator_type alloc = {}) : vec_meta_(vec_type{alloc}) {}
 
   /** Construct from iterator range of bin edges.
    *

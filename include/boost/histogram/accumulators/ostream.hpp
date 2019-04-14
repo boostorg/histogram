@@ -15,32 +15,39 @@
 namespace boost {
 namespace histogram {
 namespace accumulators {
-template <typename CharT, typename Traits, typename W>
+template <class CharT, class Traits, class W>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const sum<W>& x) {
   os << "sum(" << x.large() << " + " << x.small() << ")";
   return os;
 }
 
-template <typename CharT, typename Traits, typename W>
+template <class CharT, class Traits, class W>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const weighted_sum<W>& x) {
   os << "weighted_sum(" << x.value() << ", " << x.variance() << ")";
   return os;
 }
 
-template <typename CharT, typename Traits, typename W>
+template <class CharT, class Traits, class W>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const mean<W>& x) {
   os << "mean(" << x.count() << ", " << x.value() << ", " << x.variance() << ")";
   return os;
 }
 
-template <typename CharT, typename Traits, typename W>
+template <class CharT, class Traits, class W>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const weighted_mean<W>& x) {
   os << "weighted_mean(" << x.sum_of_weights() << ", " << x.value() << ", "
      << x.variance() << ")";
+  return os;
+}
+
+template <class CharT, class Traits, class T>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
+                                              const thread_safe<T>& x) {
+  os << x.load();
   return os;
 }
 } // namespace accumulators

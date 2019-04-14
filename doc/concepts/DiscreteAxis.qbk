@@ -18,7 +18,7 @@ A [*DiscreteAxis] is one of two optional refinements of the [link histogram.conc
 * `ReAxisIter` is a reverse /RandomAccessIterator/ over the bins of `A`
 
 [table Valid expressions
-[[Expression] [Return type] [Semantics, Pre/Post-conditions]]
+[[Expression] [Returns] [Semantics, Pre/Post-conditions]]
 [
   [`a.value(i)`]
   [`V`]

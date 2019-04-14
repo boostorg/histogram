@@ -96,8 +96,8 @@ void run_tests() {
     h(0, 0);
     auto h2 = decltype(h)(h);
     BOOST_TEST_EQ(h2, h);
-    auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
-                        storage_adaptor<std::vector<double>>>(h);
+    auto h3 =
+        histogram<std::tuple<axis::integer<>, axis::integer<>>, dense_storage<double>>(h);
     BOOST_TEST_EQ(h3, h);
   }
 
@@ -109,8 +109,8 @@ void run_tests() {
     BOOST_TEST_NE(h, h2);
     h2 = h;
     BOOST_TEST_EQ(h, h2);
-    auto h3 = histogram<std::tuple<axis::integer<>, axis::integer<>>,
-                        storage_adaptor<std::vector<double>>>();
+    auto h3 =
+        histogram<std::tuple<axis::integer<>, axis::integer<>>, dense_storage<double>>();
     h3 = h;
     BOOST_TEST_EQ(h, h3);
   }

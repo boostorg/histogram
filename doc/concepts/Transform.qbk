@@ -12,7 +12,7 @@ A [*Transform] implements a monotonic mapping between two real-valued domains, e
 * `y` is a value of type `Y`
 
 [table Valid expressions
-[[Expression] [Return type] [Semantics, Pre/Post-conditions]]
+[[Expression] [Returns] [Semantics, Pre/Post-conditions]]
 [
   [`t.forward(x)`]
   [`Y`]
@@ -43,7 +43,7 @@ A [*Transform] implements a monotonic mapping between two real-valued domains, e
 * `ar` is a value of an archive with Boost.Serialization semantics
 
 [table Valid expressions
-[[Expression] [Return type] [Semantics, Pre/Post-conditions]]
+[[Expression] [Returns] [Semantics, Pre/Post-conditions]]
 [
   [`ar & t`]
   []

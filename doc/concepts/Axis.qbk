@@ -14,7 +14,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 * `I` is an alias for [headerref boost/histogram/fwd.hpp `boost::histogram::index_type`]
 
 [table Valid expressions
-[[Expression] [Return type] [Semantics, Pre/Post-conditions]]
+[[Expression] [Returns] [Semantics, Pre/Post-conditions]]
 [
   [`a.size()`]
   [`I`]
@@ -45,7 +45,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 * `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable]
 
 [table Valid expressions
-[[Expression] [Return type] [Semantics, Pre/Post-conditions]]
+[[Expression] [Returns] [Semantics, Pre/Post-conditions]]
 [
   [`a.update(v)`]
   [`std::pair<I, I>`]

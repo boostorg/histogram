@@ -9,11 +9,13 @@
 
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/common_type.hpp>
+#include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/throw_exception.hpp>
+#include <mutex>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -56,38 +58,56 @@ public:
   using const_iterator = typename storage_type::const_iterator;
 
   histogram() = default;
-  histogram(const histogram& rhs) = default;
-  histogram(histogram&& rhs) = default;
-  histogram& operator=(const histogram& rhs) = default;
-  histogram& operator=(histogram&& rhs) = default;
-
-  template <class A, class S>
-  explicit histogram(histogram<A, S>&& rhs) : storage_(std::move(rhs.storage_)) {
-    detail::axes_assign(axes_, rhs.axes_);
+  histogram(const histogram& rhs)
+      : axes_(rhs.axes_), storage_and_mutex_(rhs.storage_and_mutex_.first()) {}
+  histogram(histogram&& rhs)
+      : axes_(std::move(rhs.axes_))
+      , storage_and_mutex_(std::move(rhs.storage_and_mutex_.first())) {}
+  histogram& operator=(histogram&& rhs) {
+    if (this != &rhs) {
+      axes_ = std::move(rhs.axes_);
+      storage_and_mutex_.first() = std::move(rhs.storage_and_mutex_.first());
+    }
+    return *this;
+  }
+  histogram& operator=(const histogram& rhs) {
+    if (this != &rhs) {
+      axes_ = rhs.axes_;
+      storage_and_mutex_.first() = rhs.storage_and_mutex_.first();
+    }
+    return *this;
   }
 
   template <class A, class S>
-  explicit histogram(const histogram<A, S>& rhs) : storage_(rhs.storage_) {
-    detail::axes_assign(axes_, rhs.axes_);
+  explicit histogram(histogram<A, S>&& rhs)
+      : storage_and_mutex_(std::move(unsafe_access::storage(rhs))) {
+    detail::axes_assign(axes_, std::move(unsafe_access::axes(rhs)));
+  }
+
+  template <class A, class S>
+  explicit histogram(const histogram<A, S>& rhs)
+      : storage_and_mutex_(unsafe_access::storage(rhs)) {
+    detail::axes_assign(axes_, unsafe_access::axes(rhs));
   }
 
   template <class A, class S>
   histogram& operator=(histogram<A, S>&& rhs) {
-    detail::axes_assign(axes_, std::move(rhs.axes_));
-    storage_ = std::move(rhs.storage_);
+    detail::axes_assign(axes_, std::move(unsafe_access::axes(rhs)));
+    storage_and_mutex_.first() = std::move(unsafe_access::storage(rhs));
     return *this;
   }
 
   template <class A, class S>
   histogram& operator=(const histogram<A, S>& rhs) {
-    detail::axes_assign(axes_, rhs.axes_);
-    storage_ = rhs.storage_;
+    detail::axes_assign(axes_, unsafe_access::axes(rhs));
+    storage_and_mutex_.first() = unsafe_access::storage(rhs);
     return *this;
   }
 
   template <class A, class S>
-  histogram(A&& a, S&& s) : axes_(std::forward<A>(a)), storage_(std::forward<S>(s)) {
-    storage_.reset(detail::bincount(axes_));
+  histogram(A&& a, S&& s)
+      : axes_(std::forward<A>(a)), storage_and_mutex_(std::forward<S>(s)) {
+    storage_and_mutex_.first().reset(detail::bincount(axes_));
   }
 
   template <class A, class = detail::requires_axes<A>>
@@ -99,10 +119,10 @@ public:
   }
 
   /// Total number of bins (including underflow/overflow).
-  std::size_t size() const noexcept { return storage_.size(); }
+  std::size_t size() const noexcept { return storage_and_mutex_.first().size(); }
 
   /// Reset all bins to default initialized values.
-  void reset() { storage_.reset(storage_.size()); }
+  void reset() { storage_and_mutex_.first().reset(size()); }
 
   /// Get N-th axis using a compile-time number.
   /// This version is more efficient than the one accepting a run-time number.
@@ -113,7 +133,7 @@ public:
   }
 
   /// Get N-th axis with run-time number.
-  /// Use version that accepts a compile-time number, if possible.
+  /// Use the version that accepts a compile-time number, if possible.
   decltype(auto) axis(unsigned i) const {
     detail::axis_index_is_valid(axes_, i);
     return detail::axis_get(axes_, i);
@@ -160,7 +180,7 @@ public:
   /// Fill histogram with values, an optional weight, and/or a sample from a `std::tuple`.
   template <class... Ts>
   auto operator()(const std::tuple<Ts...>& t) {
-    return detail::fill(storage_, axes_, t);
+    return detail::fill(storage_and_mutex_, axes_, t);
   }
 
   /// Access cell value at integral indices.
@@ -188,7 +208,7 @@ public:
   decltype(auto) at(const std::tuple<Ts...>& t) {
     const auto idx = detail::at(axes_, t);
     if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
-    return storage_[*idx];
+    return storage_and_mutex_.first()[*idx];
   }
 
   /// Access cell value at integral indices stored in `std::tuple` (read-only).
@@ -197,7 +217,7 @@ public:
   decltype(auto) at(const std::tuple<Ts...>& t) const {
     const auto idx = detail::at(axes_, t);
     if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
-    return storage_[*idx];
+    return storage_and_mutex_.first()[*idx];
   }
 
   /// Access cell value at integral indices stored in iterable.
@@ -206,7 +226,7 @@ public:
   decltype(auto) at(const Iterable& c) {
     const auto idx = detail::at(axes_, c);
     if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
-    return storage_[*idx];
+    return storage_and_mutex_.first()[*idx];
   }
 
   /// Access cell value at integral indices stored in iterable (read-only).
@@ -215,7 +235,7 @@ public:
   decltype(auto) at(const Iterable& c) const {
     const auto idx = detail::at(axes_, c);
     if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
-    return storage_[*idx];
+    return storage_and_mutex_.first()[*idx];
   }
 
   /// Access value at index (number for rank = 1, else `std::tuple` or iterable).
@@ -233,7 +253,8 @@ public:
   /// Equality operator, tests equality for all axes and the storage.
   template <class A, class S>
   bool operator==(const histogram<A, S>& rhs) const noexcept {
-    return detail::axes_equal(axes_, rhs.axes_) && storage_ == rhs.storage_;
+    return detail::axes_equal(axes_, unsafe_access::axes(rhs)) &&
+           storage_and_mutex_.first() == unsafe_access::storage(rhs);
   }
 
   /// Negation of the equality operator.
@@ -248,10 +269,11 @@ public:
     static_assert(detail::has_operator_radd<value_type,
                                             typename histogram<A, S>::value_type>::value,
                   "cell value does not support adding value of right-hand-side");
-    if (!detail::axes_equal(axes_, rhs.axes_))
+    if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
-    auto rit = rhs.storage_.begin();
-    std::for_each(storage_.begin(), storage_.end(), [&rit](auto&& x) { x += *rit++; });
+    auto rit = unsafe_access::storage(rhs).begin();
+    auto& s = storage_and_mutex_.first();
+    std::for_each(s.begin(), s.end(), [&rit](auto&& x) { x += *rit++; });
     return *this;
   }
 
@@ -261,10 +283,11 @@ public:
     static_assert(detail::has_operator_rsub<value_type,
                                             typename histogram<A, S>::value_type>::value,
                   "cell value does not support subtracting value of right-hand-side");
-    if (!detail::axes_equal(axes_, rhs.axes_))
+    if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
-    auto rit = rhs.storage_.begin();
-    std::for_each(storage_.begin(), storage_.end(), [&rit](auto&& x) { x -= *rit++; });
+    auto rit = unsafe_access::storage(rhs).begin();
+    auto& s = storage_and_mutex_.first();
+    std::for_each(s.begin(), s.end(), [&rit](auto&& x) { x -= *rit++; });
     return *this;
   }
 
@@ -274,10 +297,11 @@ public:
     static_assert(detail::has_operator_rmul<value_type,
                                             typename histogram<A, S>::value_type>::value,
                   "cell value does not support multiplying by value of right-hand-side");
-    if (!detail::axes_equal(axes_, rhs.axes_))
+    if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
-    auto rit = rhs.storage_.begin();
-    std::for_each(storage_.begin(), storage_.end(), [&rit](auto&& x) { x *= *rit++; });
+    auto rit = unsafe_access::storage(rhs).begin();
+    auto& s = storage_and_mutex_.first();
+    std::for_each(s.begin(), s.end(), [&rit](auto&& x) { x *= *rit++; });
     return *this;
   }
 
@@ -287,10 +311,11 @@ public:
     static_assert(detail::has_operator_rdiv<value_type,
                                             typename histogram<A, S>::value_type>::value,
                   "cell value does not support dividing by value of right-hand-side");
-    if (!detail::axes_equal(axes_, rhs.axes_))
+    if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
-    auto rit = rhs.storage_.begin();
-    std::for_each(storage_.begin(), storage_.end(), [&rit](auto&& x) { x /= *rit++; });
+    auto rit = unsafe_access::storage(rhs).begin();
+    auto& s = storage_and_mutex_.first();
+    std::for_each(s.begin(), s.end(), [&rit](auto&& x) { x /= *rit++; });
     return *this;
   }
 
@@ -304,7 +329,7 @@ public:
         [](storage_type& s, auto x) {
           for (auto&& si : s) si *= x;
         },
-        storage_, x);
+        storage_and_mutex_.first(), x);
     return *this;
   }
 
@@ -316,29 +341,37 @@ public:
   }
 
   /// Return value iterator to the beginning of the histogram.
-  iterator begin() noexcept { return storage_.begin(); }
+  iterator begin() noexcept { return storage_and_mutex_.first().begin(); }
 
   /// Return value iterator to the end in the histogram.
-  iterator end() noexcept { return storage_.end(); }
+  iterator end() noexcept { return storage_and_mutex_.first().end(); }
 
   /// Return value iterator to the beginning of the histogram (read-only).
-  const_iterator begin() const noexcept { return storage_.begin(); }
+  const_iterator begin() const noexcept { return storage_and_mutex_.first().begin(); }
 
   /// Return value iterator to the end in the histogram (read-only).
-  const_iterator end() const noexcept { return storage_.end(); }
+  const_iterator end() const noexcept { return storage_and_mutex_.first().end(); }
 
   /// Return value iterator to the beginning of the histogram (read-only).
-  const_iterator cbegin() const noexcept { return storage_.begin(); }
+  const_iterator cbegin() const noexcept { return begin(); }
 
   /// Return value iterator to the end in the histogram (read-only).
-  const_iterator cend() const noexcept { return storage_.end(); }
+  const_iterator cend() const noexcept { return end(); }
 
 private:
   axes_type axes_;
-  storage_type storage_;
 
-  template <class A, class S>
-  friend class histogram;
+  struct noop_mutex {
+    bool try_lock() noexcept { return true; }
+    void lock() noexcept {}
+    void unlock() noexcept {}
+  };
+  using mutex_type = mp11::mp_if_c<(storage_type::has_threading_support &&
+                                    detail::has_growing_axis<axes_type>::value),
+                                   std::mutex, noop_mutex>;
+
+  detail::compressed_pair<storage_type, mutex_type> storage_and_mutex_;
+
   friend struct unsafe_access;
 };
 

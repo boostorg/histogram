@@ -1,4 +1,4 @@
-// Copyright 2018 Hans Dembinski
+// Copyright 2018-2019 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -8,13 +8,13 @@
 #define BOOST_HISTOGRAM_STORAGE_ADAPTOR_HPP
 
 #include <algorithm>
-#include <boost/assert.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
+#include <iosfwd>
 #include <stdexcept>
 #include <type_traits>
 
@@ -24,10 +24,18 @@ namespace detail {
 
 template <class T>
 struct vector_impl : T {
-  vector_impl() = default;
+  static constexpr bool has_threading_support =
+      accumulators::is_thread_safe<typename T::value_type>::value;
 
-  explicit vector_impl(const T& t) : T(t) {}
+  vector_impl() = default;
+  vector_impl(const vector_impl& t) : T(t) {}
+  vector_impl& operator=(const vector_impl& t) {
+    T::operator=(t);
+    return *this;
+  }
+
   explicit vector_impl(typename T::allocator_type a) : T(a) {}
+  explicit vector_impl(const T& t) : T(t) {}
 
   template <class U, class = requires_iterable<U>>
   explicit vector_impl(const U& u) {
@@ -53,7 +61,16 @@ struct vector_impl : T {
 
 template <class T>
 struct array_impl : T {
+  static constexpr bool has_threading_support =
+      accumulators::is_thread_safe<typename T::value_type>::value;
+
   array_impl() = default;
+  array_impl(const array_impl& t) : T(t), size_(t.size_) {}
+  array_impl& operator=(const array_impl& t) {
+    T::operator=(t);
+    size_ = t.size_;
+    return *this;
+  }
 
   explicit array_impl(const T& t) : T(t) {}
   template <class U, class = requires_iterable<U>>
@@ -98,10 +115,17 @@ struct map_impl : T {
   using value_type = typename T::mapped_type;
   using const_reference = const value_type&;
 
+  static constexpr bool has_threading_support = false;
+  static_assert(
+      !accumulators::is_thread_safe<value_type>::value,
+      "std::map and std::unordered_map do not support thread-safe element access. "
+      "If you have a map with thread-safe element access, please file an issue and"
+      "support will be added.");
+
   struct reference {
     reference(map_impl* m, std::size_t i) noexcept : map(m), idx(i) {}
     reference(const reference&) noexcept = default;
-    reference operator=(reference o) {
+    reference& operator=(const reference& o) {
       if (this != &o) operator=(static_cast<const_reference>(o));
       return *this;
     }
@@ -110,15 +134,14 @@ struct map_impl : T {
       return static_cast<const map_impl*>(map)->operator[](idx);
     }
 
-    template <class U, class = requires_convertible<U, value_type>>
-    reference& operator=(const U& u) {
+    reference& operator=(const_reference u) {
       auto it = map->find(idx);
-      if (u == value_type()) {
-        if (it != static_cast<T*>(map)->end()) map->erase(it);
+      if (u == value_type{}) {
+        if (it != static_cast<T*>(map)->end()) { map->erase(it); }
       } else {
-        if (it != static_cast<T*>(map)->end())
+        if (it != static_cast<T*>(map)->end()) {
           it->second = u;
-        else {
+        } else {
           map->emplace(idx, u);
         }
       }
@@ -127,29 +150,31 @@ struct map_impl : T {
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_radd<V, U>::value>>
-    reference operator+=(const U& u) {
+    reference& operator+=(const U& u) {
       auto it = map->find(idx);
-      if (it != static_cast<T*>(map)->end())
+      if (it != static_cast<T*>(map)->end()) {
         it->second += u;
-      else
+      } else {
         map->emplace(idx, u);
+      }
       return *this;
     }
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_rsub<V, U>::value>>
-    reference operator-=(const U& u) {
+    reference& operator-=(const U& u) {
       auto it = map->find(idx);
-      if (it != static_cast<T*>(map)->end())
+      if (it != static_cast<T*>(map)->end()) {
         it->second -= u;
-      else
+      } else {
         map->emplace(idx, -u);
+      }
       return *this;
     }
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_rmul<V, U>::value>>
-    reference operator*=(const U& u) {
+    reference& operator*=(const U& u) {
       auto it = map->find(idx);
       if (it != static_cast<T*>(map)->end()) it->second *= u;
       return *this;
@@ -157,12 +182,13 @@ struct map_impl : T {
 
     template <class U, class V = value_type,
               class = std::enable_if_t<has_operator_rdiv<V, U>::value>>
-    reference operator/=(const U& u) {
+    reference& operator/=(const U& u) {
       auto it = map->find(idx);
-      if (it != static_cast<T*>(map)->end())
+      if (it != static_cast<T*>(map)->end()) {
         it->second /= u;
-      else if (!(value_type{} / u == value_type{}))
+      } else if (!(value_type{} / u == value_type{})) {
         map->emplace(idx, value_type{} / u);
+      }
       return *this;
     }
 
@@ -170,19 +196,39 @@ struct map_impl : T {
               class = std::enable_if_t<has_operator_preincrement<V>::value>>
     reference operator++() {
       auto it = map->find(idx);
-      if (it != static_cast<T*>(map)->end())
+      if (it != static_cast<T*>(map)->end()) {
         ++it->second;
-      else
-        map->emplace(idx, 1);
+      } else {
+        value_type tmp{};
+        ++tmp;
+        map->emplace(idx, tmp);
+      }
       return *this;
     }
 
     template <class V = value_type,
               class = std::enable_if_t<has_operator_preincrement<V>::value>>
     value_type operator++(int) {
-      const value_type tmp = operator const_reference();
+      const value_type tmp = *this;
       operator++();
       return tmp;
+    }
+
+    template <class U, class = std::enable_if_t<has_operator_equal<value_type, U>::value>>
+    bool operator==(const U& rhs) const {
+      return operator const_reference() == rhs;
+    }
+
+    template <class U, class = std::enable_if_t<has_operator_equal<value_type, U>::value>>
+    bool operator!=(const U& rhs) const {
+      return !operator==(rhs);
+    }
+
+    template <typename CharT, typename Traits>
+    friend std::basic_ostream<CharT, Traits>& operator<<(
+        std::basic_ostream<CharT, Traits>& os, reference x) {
+      os << static_cast<const_reference>(x);
+      return os;
     }
 
     template <class... Ts>
@@ -216,6 +262,12 @@ struct map_impl : T {
   using const_iterator = iterator_t<const value_type, const_reference, const map_impl*>;
 
   map_impl() = default;
+  map_impl(const map_impl& t) : T(t), size_(t.size_) {}
+  map_impl& operator=(const map_impl& t) {
+    T::operator=(t);
+    size_ = t.size_;
+    return *this;
+  }
 
   explicit map_impl(const T& t) : T(t) {}
   explicit map_impl(typename T::allocator_type a) : T(a) {}
@@ -263,26 +315,49 @@ struct map_impl : T {
   std::size_t size_ = 0;
 };
 
-template <typename T>
+template <class T>
 struct ERROR_type_passed_to_storage_adaptor_not_recognized;
 
-template <typename T>
-using storage_adaptor_impl = mp11::mp_if<
+// clang-format off
+template <class T>
+using storage_adaptor_impl =
+  mp11::mp_cond<
     is_vector_like<T>, vector_impl<T>,
-    mp11::mp_if<is_array_like<T>, array_impl<T>,
-                mp11::mp_if<is_map_like<T>, map_impl<T>,
-                            ERROR_type_passed_to_storage_adaptor_not_recognized<T>>>>;
-
+    is_array_like<T>, array_impl<T>,
+    is_map_like<T>, map_impl<T>,
+    std::true_type, ERROR_type_passed_to_storage_adaptor_not_recognized<T>
+  >;
+// clang-format on
 } // namespace detail
 
-/// Turns any vector-like array-like, and map-like container into a storage type.
-template <typename T>
+/// Turns any vector-like, array-like, and map-like container into a storage type.
+template <class T>
 class storage_adaptor : public detail::storage_adaptor_impl<T> {
+public:
   using base_type = detail::storage_adaptor_impl<T>;
 
-public:
-  using base_type::base_type;
-  using base_type::operator=;
+  // standard default, copy, move, assign
+  storage_adaptor() = default;
+  storage_adaptor(storage_adaptor&&) = default;
+  storage_adaptor(const storage_adaptor&) = default;
+  storage_adaptor& operator=(storage_adaptor&&) = default;
+  storage_adaptor& operator=(const storage_adaptor&) = default;
+
+  // allow move from adapted object
+  storage_adaptor(T&& t) : base_type(std::move(t)) {}
+  storage_adaptor& operator=(T&& t) {
+    base_type::operator=(std::move(t));
+    return *this;
+  }
+
+  // conversion ctor and assign
+  template <class U>
+  storage_adaptor(const U& u) : base_type(u) {}
+  template <class U>
+  storage_adaptor& operator=(const U& u) {
+    base_type::operator=(u);
+    return *this;
+  }
 
   template <class U, class = detail::requires_iterable<U>>
   bool operator==(const U& u) const {

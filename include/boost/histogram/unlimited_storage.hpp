@@ -421,6 +421,8 @@ class unlimited_storage {
       "unlimited_storage requires allocator with trivial pointer type");
 
 public:
+  static constexpr bool has_threading_support = false;
+
   using allocator_type = Allocator;
   using value_type = double;
   using mp_int = detail::mp_int<

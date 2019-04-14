@@ -21,6 +21,7 @@
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/throw_exception.hpp>
+#include <mutex>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -82,18 +83,20 @@ void linearize_value(optional_index& o, const axis::variant<Ts...>& a, const Val
 
 // for growing axis
 template <class Axis, class Value>
-void linearize_value(optional_index& o, axis::index_type& s, Axis& a, const Value& v) {
+bool linearize_value(optional_index& o, axis::index_type& s, Axis& a, const Value& v) {
   axis::index_type j;
   std::tie(j, s) = axis::traits::update(a, v);
   j += has_underflow<Axis>::value;
   linearize(o, axis::traits::extent(a), j);
+  return s != 0;
 }
 
 // for variant which contains at least one growing axis
 template <class... Ts, class Value>
-void linearize_value(optional_index& o, axis::index_type& s, axis::variant<Ts...>& a,
+bool linearize_value(optional_index& o, axis::index_type& s, axis::variant<Ts...>& a,
                      const Value& v) {
   axis::visit([&o, &s, &v](auto&& a) { linearize_value(o, s, a, v); }, a);
+  return s != 0;
 }
 
 template <class A>
@@ -105,17 +108,13 @@ void linearize_index(optional_index& out, const A& axis, const axis::index_type 
   linearize(out, n + shift, j + shift);
 }
 
-template <class S, class A, class T>
-void maybe_replace_storage(S& storage, const A& axes, const T& shifts) {
-  bool update_needed = false;
-  auto sit = shifts;
-  for_each_axis(axes, [&](const auto&) { update_needed |= (*sit++ != 0); });
-  if (!update_needed) return;
+template <class S, class A>
+void grow_storage(S& storage, const A& axes, const axis::index_type* shifts) {
   struct item {
     axis::index_type idx, old_extent;
     std::size_t new_stride;
   } data[buffer_size<A>::value];
-  sit = shifts;
+  const auto* sit = shifts;
   auto dit = data;
   std::size_t s = 1;
   for_each_axis(axes, [&](const auto& a) {
@@ -200,22 +199,28 @@ optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) 
 
 // histogram has growing axes
 template <unsigned I, unsigned N, class S, class T, class U>
-optional_index args_to_index(std::true_type, S& storage, T& axes, const U& args) {
+optional_index args_to_index(std::true_type, S& storage_and_mutex, T& axes,
+                             const U& args) {
   optional_index idx;
   axis::index_type shifts[buffer_size<T>::value];
   const auto rank = get_size(axes);
+  std::lock_guard<typename S::second_type> lk{storage_and_mutex.second()};
+  bool update_needed = false;
   if (rank == 1 && N > 1)
-    linearize_value(idx, shifts[0], axis_get<0>(axes), tuple_slice<I, N>(args));
+    update_needed =
+        linearize_value(idx, shifts[0], axis_get<0>(axes), tuple_slice<I, N>(args));
   else {
     if (rank != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
     constexpr unsigned M = buffer_size<remove_cvref_t<decltype(axes)>>::value;
     mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
-      linearize_value(idx, shifts[J], axis_get<J>(axes), std::get<(J + I)>(args));
+      update_needed |=
+          linearize_value(idx, shifts[J], axis_get<J>(axes), std::get<(J + I)>(args));
     });
   }
-  maybe_replace_storage(storage, axes, shifts);
+
+  if (update_needed) grow_storage(storage_and_mutex.first(), axes, shifts);
   return idx;
 }
 
@@ -289,19 +294,20 @@ void fill_storage(IW, IS, T&& t, U&& args) {
 }
 
 template <class S, class A, class... Us>
-auto fill(S& storage, A& axes, const std::tuple<Us...>& args) {
+auto fill(S& storage_and_mutex, A& axes, const std::tuple<Us...>& args) {
   constexpr auto iws = weight_sample_indices<Us...>();
   constexpr unsigned n = sizeof...(Us) - (iws.first > -1) - (iws.second > -1);
   constexpr unsigned i = (iws.first == 0 || iws.second == 0)
                              ? (iws.first == 1 || iws.second == 1 ? 2 : 1)
                              : 0;
-  optional_index idx = args_to_index<i, n>(has_growing_axis<A>(), storage, axes, args);
+  optional_index idx =
+      args_to_index<i, n>(has_growing_axis<A>(), storage_and_mutex, axes, args);
   if (idx) {
-    fill_storage(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(), storage[*idx],
-                 args);
-    return storage.begin() + *idx;
+    fill_storage(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(),
+                 storage_and_mutex.first()[*idx], args);
+    return storage_and_mutex.first().begin() + *idx;
   }
-  return storage.end();
+  return storage_and_mutex.first().end();
 }
 
 template <typename A, typename... Us>

@@ -14,11 +14,20 @@
 #include <deque>
 #include <limits>
 #include <map>
+#include <sstream>
 #include <vector>
 #include "is_close.hpp"
 #include "utility_allocator.hpp"
 
 using namespace boost::histogram;
+using namespace std::literals;
+
+template <class T>
+auto str(const T& t) {
+  std::ostringstream os;
+  os << t;
+  return os.str();
+}
 
 template <typename T>
 void tests() {
@@ -109,6 +118,13 @@ void tests() {
     decltype(a) c(std::move(b));
     BOOST_TEST_EQ(c.size(), 1);
     BOOST_TEST_EQ(c[0], 1);
+  }
+
+  {
+    storage_adaptor<T> a;
+    a.reset(1);
+    a[0] += 2;
+    BOOST_TEST_EQ(str(a[0]), "2"s);
   }
 }
 

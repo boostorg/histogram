@@ -171,8 +171,9 @@ void serialize(Archive& ar, mp_int<Allocator>& x, unsigned /* version */) {
 } // namespace detail
 
 template <class Archive, class T>
-void serialize(Archive& ar, storage_adaptor<T>& s, unsigned /* version */) {
-  ar& serialization::make_nvp("impl", static_cast<detail::storage_adaptor_impl<T>&>(s));
+void serialize(Archive& ar, storage_adaptor<T>& x, unsigned /* version */) {
+  using impl_t = typename storage_adaptor<T>::base_type;
+  ar& serialization::make_nvp("impl", static_cast<impl_t&>(x));
 }
 
 template <class A>

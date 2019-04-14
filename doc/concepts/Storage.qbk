@@ -9,7 +9,7 @@ A [*Storage] handles memory for the bin counters and provides a uniform vector-l
 * `i` and `n` are values of type `std::size_t`
 
 [table Valid expressions
-[[Expression] [Return type] [Semantics, Pre/Post-conditions]]
+[[Expression] [Returns] [Semantics, Pre/Post-conditions]]
 [
   [`S::value_type`]
   []
@@ -43,6 +43,14 @@ A [*Storage] handles memory for the bin counters and provides a uniform vector-l
   []
   [
     Returns an STL-compliant iterator type which dereferences to `S::const_reference`.
+  ]
+]
+[
+  [`S::has_threading_support`]
+  [bool]
+  [
+    Static constexpr member. True, if storage supports parallel read-write access to all cells.
+    False, if such parallel access would either cause data corruption or require synchronization so that effectively only one cell can be accessed at a time, making cell-access single-threaded.
   ]
 ]
 [
@@ -125,7 +133,7 @@ A [*Storage] handles memory for the bin counters and provides a uniform vector-l
 * `ar` is a value of an archive with Boost.Serialization semantics
 
 [table Valid expressions
-[[Expression] [Return type] [Semantics, Pre/Post-conditions]]
+[[Expression] [Returns] [Semantics, Pre/Post-conditions]]
 [
   [`s *= x`]
   [`S&`]

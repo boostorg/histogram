@@ -20,40 +20,62 @@ class compressed_pair_impl;
 template <typename T1, typename T2>
 class compressed_pair_impl<T1, T2, true> : protected T2 {
 public:
-  template <typename U1, typename U2>
-  compressed_pair_impl(U1&& u1, U2&& u2)
-      : T2(std::forward<U2>(u2)), first_(std::forward<U1>(u1)) {}
-  template <typename U1>
-  compressed_pair_impl(U1&& u1) : first_(std::forward<U1>(u1)) {}
-  compressed_pair_impl() = default;
+  using first_type = T1;
+  using second_type = T2;
 
-  T1& first() { return first_; }
-  T2& second() { return static_cast<T2&>(*this); }
-  const T1& first() const { return first_; }
-  const T2& second() const { return static_cast<const T2&>(*this); }
+  compressed_pair_impl() = default;
+  compressed_pair_impl(compressed_pair_impl&&) = default;
+  compressed_pair_impl(const compressed_pair_impl&) = default;
+  compressed_pair_impl& operator=(compressed_pair_impl&&) = default;
+  compressed_pair_impl& operator=(const compressed_pair_impl&) = default;
+
+  compressed_pair_impl(const first_type& x, const second_type& y)
+      : T2(std::move(y)), first_(std::move(x)) {}
+
+  compressed_pair_impl(first_type&& x, second_type&& y)
+      : T2(std::move(y)), first_(std::move(x)) {}
+
+  compressed_pair_impl(first_type&& x) : first_(std::move(x)) {}
+  compressed_pair_impl(const first_type& x) : first_(x) {}
+
+  first_type& first() { return first_; }
+  second_type& second() { return static_cast<second_type&>(*this); }
+  const first_type& first() const { return first_; }
+  const second_type& second() const { return static_cast<const second_type&>(*this); }
 
 private:
-  T1 first_;
+  first_type first_;
 };
 
 template <typename T1, typename T2>
 class compressed_pair_impl<T1, T2, false> {
 public:
-  template <typename U1, typename U2>
-  compressed_pair_impl(U1&& u1, U2&& u2)
-      : first_(std::forward<U1>(u1)), second_(std::forward<U2>(u2)) {}
-  template <typename U1>
-  compressed_pair_impl(U1&& u1) : first_(std::forward<U1>(u1)) {}
-  compressed_pair_impl() = default;
+  using first_type = T1;
+  using second_type = T2;
 
-  T1& first() { return first_; }
-  T2& second() { return second_; }
-  const T1& first() const { return first_; }
-  const T2& second() const { return second_; }
+  compressed_pair_impl() = default;
+  compressed_pair_impl(compressed_pair_impl&&) = default;
+  compressed_pair_impl(const compressed_pair_impl&) = default;
+  compressed_pair_impl& operator=(compressed_pair_impl&&) = default;
+  compressed_pair_impl& operator=(const compressed_pair_impl&) = default;
+
+  compressed_pair_impl(first_type&& x, second_type&& y)
+      : first_(std::move(x)), second_(std::move(y)) {}
+
+  compressed_pair_impl(const first_type& x, const second_type& y)
+      : first_(x), second_(y) {}
+
+  compressed_pair_impl(first_type&& x) : first_(std::move(x)) {}
+  compressed_pair_impl(const first_type& x) : first_(x) {}
+
+  first_type& first() { return first_; }
+  second_type& second() { return second_; }
+  const first_type& first() const { return first_; }
+  const second_type& second() const { return second_; }
 
 private:
-  T1 first_;
-  T2 second_;
+  first_type first_;
+  second_type second_;
 };
 
 template <typename... Ts>

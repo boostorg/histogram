@@ -54,11 +54,13 @@ test-suite minimal :
     [ run histogram_mixed_test.cpp ]
     [ run histogram_operators_test.cpp ]
     [ run histogram_test.cpp ]
+    [ run histogram_threaded_test.cpp ]    
     [ run indexed_test.cpp ]
     [ run internal_accumulators_test.cpp ]
     [ run linearize_test.cpp ]
     [ run meta_test.cpp ]
     [ run storage_adaptor_test.cpp ]
+    [ run storage_adaptor_threaded_test.cpp ]
     [ run unlimited_storage_test.cpp ]
     [ run utility_test.cpp ]
     ;

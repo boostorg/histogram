@@ -8,12 +8,14 @@
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
+#include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <sstream>
 #include "is_close.hpp"
 
 using namespace boost::histogram;
+using namespace std::literals;
 
 template <class T>
 auto str(const T& t) {
@@ -26,7 +28,7 @@ int main() {
   {
     using w_t = accumulators::weighted_sum<double>;
     w_t w;
-    BOOST_TEST_EQ(str(w), std::string("weighted_sum(0, 0)"));
+    BOOST_TEST_EQ(str(w), "weighted_sum(0, 0)"s);
 
     BOOST_TEST_EQ(w, w_t(0));
     BOOST_TEST_NE(w, w_t(1));
@@ -77,7 +79,7 @@ int main() {
     BOOST_TEST_EQ(a.value(), 10);
     BOOST_TEST_EQ(a.variance(), 30);
 
-    BOOST_TEST_EQ(str(a), std::string("mean(4, 10, 30)"));
+    BOOST_TEST_EQ(str(a), "mean(4, 10, 30)"s);
 
     m_t b;
     b(1e8 + 4);
@@ -110,7 +112,7 @@ int main() {
     BOOST_TEST_EQ(a.value(), 2);
     BOOST_TEST_IS_CLOSE(a.variance(), 0.8, 1e-3);
 
-    BOOST_TEST_EQ(str(a), std::string("weighted_mean(2, 2, 0.8)"));
+    BOOST_TEST_EQ(str(a), "weighted_mean(2, 2, 0.8)"s);
 
     auto b = a;
     b += a; // same as feeding all samples twice
@@ -132,13 +134,13 @@ int main() {
     ++sum;
     BOOST_TEST_EQ(sum.large(), 1);
     BOOST_TEST_EQ(sum.small(), 0);
-    BOOST_TEST_EQ(str(sum), std::string("sum(1 + 0)"));
+    BOOST_TEST_EQ(str(sum), "sum(1 + 0)"s);
     sum += 1e100;
-    BOOST_TEST_EQ(str(sum), std::string("sum(1e+100 + 1)"));
+    BOOST_TEST_EQ(str(sum), "sum(1e+100 + 1)"s);
     ++sum;
-    BOOST_TEST_EQ(str(sum), std::string("sum(1e+100 + 2)"));
+    BOOST_TEST_EQ(str(sum), "sum(1e+100 + 2)"s);
     sum += -1e100;
-    BOOST_TEST_EQ(str(sum), std::string("sum(0 + 2)"));
+    BOOST_TEST_EQ(str(sum), "sum(0 + 2)"s);
     BOOST_TEST_EQ(sum, 2); // correct answer
     BOOST_TEST_EQ(sum.large(), 0);
     BOOST_TEST_EQ(sum.small(), 2);
@@ -162,6 +164,15 @@ int main() {
 
     BOOST_TEST_EQ(w.value(), 2);
     BOOST_TEST_EQ(w.variance(), 2e200);
+  }
+
+  {
+    accumulators::thread_safe<int> i;
+    ++i;
+    i += 1000;
+
+    BOOST_TEST_EQ(i, 1001);
+    BOOST_TEST_EQ(str(i), "1001"s);
   }
 
   return boost::report_errors();
