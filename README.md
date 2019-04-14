@@ -67,7 +67,7 @@ int main() {
 * Efficient use of memory [[1]](#note1)
 * Support for custom axis types: define how input values should map to indices
 * Support for under-/overflow bins (can be disabled individually to reduce memory consumption)
-* Support for axes that grow automatically with input values [[2]](#note1)
+* Support for axes that grow automatically with input values [[2]](#note2)
 * Support for weighted increments
 * Support for profiles and more generally, user-defined accumulators in cells [[3]](#note3)
 * Support for completely stack-based histograms
