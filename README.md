@@ -4,18 +4,16 @@
 
 Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org).
 
-Branch  | Linux [1] and OSX [2] | Windows [3] | Coverage
-------- | --------------------- |------------ | --------
+Branch  | Linux and OSX | Windows | Coverage
+------- | ------------- |-------- | --------
 develop | [![Build Status Travis](https://travis-ci.com/HDembinski/histogram.svg?branch=develop)](https://travis-ci.com/HDembinski/histogram?branch=develop) | [![Build status](https://ci.appveyor.com/api/projects/status/400lx25l3jdpk96b/branch/develop?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/develop) | [![codecov](https://codecov.io/gh/HDembinski/histogram/branch/develop/graph/badge.svg)](https://codecov.io/gh/HDembinski/histogram/branch/develop)
 master  | [![Build Status Travis](https://travis-ci.com/HDembinski/histogram.svg?branch=master)](https://travis-ci.com/HDembinski/histogram?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/400lx25l3jdpk96b/branch/master?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/master) | [![codecov](https://codecov.io/gh/HDembinski/histogram/branch/master/graph/badge.svg)](https://codecov.io/gh/HDembinski/histogram/branch/master)
 
-1. gcc-5.5.0, clang-5.0.0
-2. Xcode 9.4
-3. Visual Studio 15 2017
+**Supported compiler versions** gcc >= 5.5, clang >= 3.8, msvc >= 14.1
 
 This **header-only** open-source library provides an easy-to-use state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to count things. The histogram is easy to use for the casual user and yet very customizable. It does not restrict the power-user. The library offers a unique safety guarantee: cell counts *cannot overflow* or *be capped* in the standard configuration. And it can do more than counting. The histogram can be equipped with arbitrary accumulators to compute means, medians, and whatever you fancy in each cell. The library is very fast single-threaded (see benchmarks) and several parallelization options are provided for multi-threaded programming.
 
-The project has passed Boost review in September 2018 and is going to be first released with [Boost-1.70](http://www.boost.org) in April. The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
+The library passed Boost review in September 2018 and was first released with [Boost-1.70](http://www.boost.org) on April 12th, 2019. The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
 Check out the [full documentation](https://www.boost.org/doc/libs/develop/libs/histogram/doc/html/index.html). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
 
@@ -23,27 +21,28 @@ Check out the [full documentation](https://www.boost.org/doc/libs/develop/libs/h
 
 The following stripped-down example was taken from the [Getting started](https://www.boost.org/doc/libs/develop/libs/histogram/doc/html/histogram/getting_started.html) section in the documentation. Have a look into the docs to see the full version with comments and more examples.
 
-Example: Fill a 1d-histogram
+Example: Make and fill a 1d-histogram ([try it live on Wandbox](https://wandbox.org/permlink/FfVtlXg6fC5b52rn))
 
 ```cpp
 #include <boost/histogram.hpp>
 #include <boost/format.hpp> // used here for printing
-#include <functional> // for std::ref
+#include <iostream>
 
 int main() {
     using namespace boost::histogram;
 
+    // make 1d histogram with 4 regular bins from 0 to 2 on an axis called "x"
     auto h = make_histogram(
-      axis::regular<>(6, -1.0, 2.0, "x")
+      axis::regular<>(4, 0.0, 2.0, "x")
     );
 
-    // fill histogram
-    auto data = { -10, -0.4, 1.1, 0.3, 1.3 };
-    std::for_each(data.begin(), data.end(), std::ref(h));
+    // push some values into the histogram
+    for (auto value : { 0.4, 1.1, 0.3, 1.7, 10. })
+      h(value);
 
     // iterate over bins
     for (auto x : indexed(h)) {
-      std::cout << boost::format("bin %2i [%4.1f, %4.1f): %i\n")
+      std::cout << boost::format("bin %i [ %.1f, %.1f ): %i\n")
         % x.index() % x.bin().lower() % x.bin().upper() % *x;
     }
 
@@ -51,14 +50,10 @@ int main() {
 
     /* program output:
 
-    bin -1 [-inf, -1.0): 1
-    bin  0 [-1.0, -0.5): 0
-    bin  1 [-0.5, -0.0): 1
-    bin  2 [-0.0,  0.5): 1
-    bin  3 [ 0.5,  1.0): 0
-    bin  4 [ 1.0,  1.5): 2
-    bin  5 [ 1.5,  2.0): 0
-    bin  6 [ 2.0,  inf): 0
+    bin 0 [ 0.0, 0.5 ): 2
+    bin 1 [ 0.5, 1.0 ): 0
+    bin 2 [ 1.0, 1.5 ): 1
+    bin 3 [ 1.5, 2.0 ): 1
     */
 }
 ```
