@@ -80,7 +80,7 @@ int main() {
 
 <b id="note2">Note 2</b> An axis can be configured to grow when a value is encountered that is outside of its range. It then grows new bins towards this value so that the value ends up in the new highest or lowest bin.
 
-<b id="note3">Note 3</b> The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell. This can be used to compute variance estimates for each cell. These are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell values.
+<b id="note3">Note 3</b> The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell. This feature can be used to calculate variance estimates for each cell, which are useful when you need to fit a statistical model to the cell values.
 
 <b id="note4">Note 4</b> Builtin axis types can be configured to only accept dimensional quantities, like those from [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/). This means you get a useful error if you accidentally try to fill a length where the histogram axis expects a time, for example.
 
