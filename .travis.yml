@@ -31,9 +31,14 @@ env:
 
 matrix:
   include:
-    - os: osx
+    - name: "clang-osx"
+      os: osx
+      before_script:
+        - mkdir build
+        - cd build
+        - cmake ..
       script:
-        - ../../b2 -j2 -q cxxstd=14 warnings-as-errors=on
+        - ctest -j2
 
     # lcov does not understand gcc-8 output, so we use gcc-5 to generate coverage data
     - name: "gcc-5: coverage"
