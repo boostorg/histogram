@@ -19,16 +19,6 @@
 #define BOOST_HISTOGRAM_DETAIL_AXES_LIMIT 32
 #endif
 
-#include <boost/config/workaround.hpp>
-#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnoexcept-type"
-#endif
-#include <boost/callable_traits/args.hpp>
-#include <boost/callable_traits/return_type.hpp>
-#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
-#pragma GCC diagnostic pop
-#endif
 #include <array>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
@@ -67,15 +57,24 @@ using copy_qualifiers = mp11::mp_if<
 template <class L>
 using mp_last = mp11::mp_at_c<L, (mp11::mp_size<L>::value - 1)>;
 
-template <class T, class Args = boost::callable_traits::args_t<T>>
-using args_type =
-    mp11::mp_if<std::is_member_function_pointer<T>, mp11::mp_pop_front<Args>, Args>;
+template <class T>
+struct args_type_impl;
 
-template <class T, std::size_t N = 0>
-using arg_type = typename mp11::mp_at_c<args_type<T>, N>;
+template <class R, class C, class... Args>
+struct args_type_impl<R (C::*)(Args...)> {
+  using result_type = R;
+  using args_type = std::tuple<Args...>;
+};
+
+template <class R, class C, class... Args>
+struct args_type_impl<R (C::*)(Args...) const> {
+  using result_type = R;
+  using args_type = std::tuple<Args...>;
+};
 
 template <class T>
-using return_type = typename boost::callable_traits::return_type<T>::type;
+using arg_type =
+    typename std::tuple_element<0, typename args_type_impl<T>::args_type>::type;
 
 template <class F, class V,
           class T = copy_qualifiers<V, mp11::mp_first<remove_cvref_t<V>>>>

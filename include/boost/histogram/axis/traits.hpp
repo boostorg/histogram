@@ -28,7 +28,7 @@ decltype(auto) value_method_switch(FIntArg&& iarg, FDoubleArg&& darg, const T& t
   return static_if<has_method_value<T>>(
       [](FIntArg&& iarg, FDoubleArg&& darg, const auto& t) {
         using A = remove_cvref_t<decltype(t)>;
-        return static_if<std::is_same<arg_type<decltype(&A::value), 0>, int>>(
+        return static_if<std::is_same<arg_type<decltype(&A::value)>, int>>(
             std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
       },
       [](FIntArg&&, FDoubleArg&&, const auto& t) -> double {
@@ -47,7 +47,7 @@ R2 value_method_switch_with_return_type(FIntArg&& iarg, FDoubleArg&& darg, const
   return static_if<has_method_value_with_convertible_return_type<T, R1>>(
       [](FIntArg&& iarg, FDoubleArg&& darg, const auto& t) -> R2 {
         using A = remove_cvref_t<decltype(t)>;
-        return static_if<std::is_same<arg_type<decltype(&A::value), 0>, int>>(
+        return static_if<std::is_same<arg_type<decltype(&A::value)>, int>>(
             std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
       },
       [](FIntArg&&, FDoubleArg&&, const auto&) -> R2 {

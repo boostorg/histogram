@@ -297,15 +297,13 @@ int main() {
     BOOST_TEST_TRAIT_SAME(mp_last<L>, long);
   }
 
-  // args_type, arg_type
+  // arg_type
   {
     struct Foo {
-      static int f1(char);
-      int f2(long) const;
+      int f1(char);
+      int f2(long, char) const;
     };
 
-    BOOST_TEST_TRAIT_SAME(args_type<decltype(&Foo::f1)>, std::tuple<char>);
-    BOOST_TEST_TRAIT_SAME(args_type<decltype(&Foo::f2)>, std::tuple<long>);
     BOOST_TEST_TRAIT_SAME(arg_type<decltype(&Foo::f1)>, char);
     BOOST_TEST_TRAIT_SAME(arg_type<decltype(&Foo::f2)>, long);
   }
