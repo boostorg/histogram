@@ -11,7 +11,7 @@ master  | [![Build Status Travis](https://travis-ci.com/HDembinski/histogram.svg
 
 **Supported compiler versions** gcc >= 5.5, clang >= 3.8, msvc >= 14.1
 
-This **header-only** open-source library provides an easy-to-use state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to count things. The histogram is easy to use for the casual user and yet very customizable. It does not restrict the power-user. The library offers a unique safety guarantee: cell counts *cannot overflow* or *be capped* in the standard configuration. And it can do more than counting. The histogram can be equipped with arbitrary accumulators to compute means, medians, and whatever you fancy in each cell. The library is very fast single-threaded (see benchmarks) and several parallelization options are provided for multi-threaded programming.
+This **header-only** open-source library provides an easy-to-use state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to count things. The histogram is easy to use for the casual user and yet so customizable that it does not restrict the power-user. The library offers a unique safety guarantee: cell counts *cannot overflow* or *be capped* in the standard configuration [[1]](#note1). And it can do more than counting. The histogram can be equipped with arbitrary accumulators to compute means, medians, and whatever you fancy in each cell. The library is very fast single-threaded (see benchmarks) and several parallelization options are provided for multi-threaded programming.
 
 The library passed Boost review in September 2018 and was first released with [Boost-1.70](http://www.boost.org) on April 12th, 2019. The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
@@ -62,24 +62,27 @@ int main() {
 
 * Extremely customisable multi-dimensional histogram
 * Simple, convenient, STL and Boost-compatible interface
-* Counters with high dynamic range, cannot overflow or be capped (1)
+* Counters with high dynamic range, cannot overflow or be capped [[1]](#note1)
 * Better performance than other libraries (see benchmarks for details)
-* Efficient use of memory (1)
+* Efficient use of memory [[1]](#note1)
 * Support for custom axis types: define how input values should map to indices
 * Support for under-/overflow bins (can be disabled individually to reduce memory consumption)
-* Support for axes that grow automatically with input values (2)
+* Support for axes that grow automatically with input values [[2]](#note1)
 * Support for weighted increments
-* Support for profiles and more generally, user-defined accumulators in cells (3)
+* Support for profiles and more generally, user-defined accumulators in cells [[3]](#note3)
 * Support for completely stack-based histograms
 * Support for adding and scaling histograms
 * Support for custom allocators
-* Support for programming with units (4)
+* Support for programming with units [[4]](#note4)
 * Optional serialization based on [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
 
-1. In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a multiprecision integer similar to those in [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/), which is only limited by available memory.
-2. An axis can be configured to grow when a value is encountered that is outside of its range. It then grows new bins towards this value so that the value ends up in the new highest or lowest bin.
-3. The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell. This can be used to compute variance estimates for each cell. These are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell values.
-4. Builtin axis types can configured to only accept dimensional quantities, like those from [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/). This means you get an error if you try to fill a length when the histogram axis expects a time, for example.
+<b id="note1">Note 1</b> Footnote content goes here [1]: In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a multiprecision integer similar to those in [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/), which is only limited by available memory.
+
+<b id="note2">Note 2</b> An axis can be configured to grow when a value is encountered that is outside of its range. It then grows new bins towards this value so that the value ends up in the new highest or lowest bin.
+
+<b id="note3">Note 3</b> The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell. This can be used to compute variance estimates for each cell. These are useful when histograms are to be compared quantitatively and if a statistical model is fitted to the cell values.
+
+<b id="note4">Note 4</b> Builtin axis types can be configured to only accept dimensional quantities, like those from [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/). This means you get a useful error if you accidentally try to fill a length where the histogram axis expects a time, for example.
 
 ## Benchmarks
 
