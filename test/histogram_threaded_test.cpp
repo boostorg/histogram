@@ -46,21 +46,17 @@ void fill_test(const A1& a1, const A2& a2, const X& x, const Y& y) {
 template <class T>
 void tests() {
   std::mt19937 gen(1);
-  std::uniform_real_distribution<> rd(-5, 5);
   std::uniform_int_distribution<> id(-5, 5);
-  std::vector<double> vd(n_fill);
-  std::generate(vd.begin(), vd.end(), [&] { return rd(gen); });
-  std::vector<int> vi(n_fill);
+  std::vector<int> vi(n_fill), vj(n_fill);
   std::generate(vi.begin(), vi.end(), [&] { return id(gen); });
+  std::generate(vj.begin(), vj.end(), [&] { return id(gen); });
 
-  using r = axis::regular<>;
   using i = axis::integer<>;
-  using rg = axis::regular<double, use_default, use_default, axis::option::growth_t>;
   using ig = axis::integer<int, use_default, axis::option::growth_t>;
-  fill_test<T>(r(2, 0, 1), i{0, 1}, vd, vi);
-  fill_test<T>(rg(2, 0, 1), i{0, 1}, vd, vi);
-  fill_test<T>(r(2, 0, 1), ig{0, 1}, vd, vi);
-  fill_test<T>(rg(2, 0, 1), ig{0, 1}, vd, vi);
+  fill_test<T>(i{0, 1}, i{0, 1}, vi, vj);
+  fill_test<T>(ig{0, 1}, i{0, 1}, vi, vj);
+  fill_test<T>(i{0, 1}, ig{0, 1}, vi, vj);
+  fill_test<T>(ig{0, 1}, ig{0, 1}, vi, vj);
 }
 
 int main() {
