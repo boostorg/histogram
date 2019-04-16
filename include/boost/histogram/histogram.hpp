@@ -12,6 +12,7 @@
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/throw_exception.hpp>

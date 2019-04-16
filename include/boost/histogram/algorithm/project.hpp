@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>

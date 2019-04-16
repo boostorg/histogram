@@ -14,6 +14,7 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/bind.hpp>
 #include <boost/mp11/function.hpp>
@@ -180,14 +181,18 @@ public:
   auto bin(index_type idx) const {
     return visit(
         [idx](const auto& a) {
-          return detail::value_method_switch_with_return_type<double,
-                                                              polymorphic_bin<double>>(
+          return detail::value_method_switch(
               [idx](const auto& a) { // axis is discrete
-                const auto x = a.value(idx);
+                const double x =
+                    detail::try_cast<double, std::runtime_error>(a.value(idx));
                 return polymorphic_bin<double>(x, x);
               },
               [idx](const auto& a) { // axis is continuous
-                return polymorphic_bin<double>(a.value(idx), a.value(idx + 1));
+                const double x1 =
+                    detail::try_cast<double, std::runtime_error>(a.value(idx));
+                const double x2 =
+                    detail::try_cast<double, std::runtime_error>(a.value(idx + 1));
+                return polymorphic_bin<double>(x1, x2);
               },
               a);
         },

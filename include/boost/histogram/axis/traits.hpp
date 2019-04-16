@@ -11,6 +11,8 @@
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/static_if.hpp>
+#include <boost/histogram/detail/try_cast.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
@@ -23,45 +25,38 @@ namespace detail {
 template <class T>
 using static_options_impl = axis::option::bitset<T::options()>;
 
-template <class FIntArg, class FDoubleArg, class T>
-decltype(auto) value_method_switch(FIntArg&& iarg, FDoubleArg&& darg, const T& t) {
-  return static_if<has_method_value<T>>(
-      [](FIntArg&& iarg, FDoubleArg&& darg, const auto& t) {
-        using A = remove_cvref_t<decltype(t)>;
-        return static_if<std::is_same<arg_type<decltype(&A::value), 0>, int>>(
-            std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
-      },
-      [](FIntArg&&, FDoubleArg&&, const auto& t) -> double {
-        using A = remove_cvref_t<decltype(t)>;
-        BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
-            boost::core::demangled_name(BOOST_CORE_TYPEID(A)), " has no value method")));
-#ifndef _MSC_VER // msvc warns about unreachable return
-        return double{};
-#endif
-      },
-      std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
+template <class I, class D, class A>
+decltype(auto) value_method_switch_impl2(std::true_type, I&& f, D&&, const A& a) {
+  return std::forward<I>(f)(a);
 }
 
-template <class R1, class R2, class FIntArg, class FDoubleArg, class T>
-R2 value_method_switch_with_return_type(FIntArg&& iarg, FDoubleArg&& darg, const T& t) {
-  return static_if<has_method_value_with_convertible_return_type<T, R1>>(
-      [](FIntArg&& iarg, FDoubleArg&& darg, const auto& t) -> R2 {
-        using A = remove_cvref_t<decltype(t)>;
-        return static_if<std::is_same<arg_type<decltype(&A::value), 0>, int>>(
-            std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
-      },
-      [](FIntArg&&, FDoubleArg&&, const auto&) -> R2 {
-        BOOST_THROW_EXCEPTION(std::runtime_error(
-            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
-                        " has no value method or return type is not convertible to ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(R1)))));
-#ifndef _MSC_VER // msvc warns about unreachable return
-        // conjure a value out of thin air to satisfy syntactic requirement
-        return *reinterpret_cast<R2*>(0);
-#endif
-      },
-      std::forward<FIntArg>(iarg), std::forward<FDoubleArg>(darg), t);
+template <class I, class D, class A>
+decltype(auto) value_method_switch_impl2(std::false_type, I&&, D&& f, const A& a) {
+  return std::forward<D>(f)(a);
 }
+
+template <class I, class D, class A>
+double value_method_switch_impl1(std::false_type, I&&, D&&, const A&) {
+  BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
+      boost::core::demangled_name(BOOST_CORE_TYPEID(A)), " has no value method")));
+#ifndef _MSC_VER // msvc warns about unreachable return
+  return double{};
+#endif
+}
+
+template <class I, class D, class A>
+decltype(auto) value_method_switch_impl1(std::true_type, I&& i, D&& d, const A& a) {
+  using T = arg_type<decltype(&A::value)>;
+  return value_method_switch_impl2(std::is_same<T, axis::index_type>{},
+                                   std::forward<I>(i), std::forward<D>(d), a);
+}
+
+template <class I, class D, class A>
+decltype(auto) value_method_switch(I&& i, D&& d, const A& a) {
+  return value_method_switch_impl1(has_method_value<A>{}, std::forward<I>(i),
+                                   std::forward<D>(d), a);
+}
+
 } // namespace detail
 
 namespace axis {
@@ -143,7 +138,7 @@ constexpr index_type extent(const Axis& axis) noexcept {
 template <class Axis>
 decltype(auto) value(const Axis& axis, real_index_type index) {
   return detail::value_method_switch(
-      [index](const auto& a) { return a.value(static_cast<int>(index)); },
+      [index](const auto& a) { return a.value(static_cast<index_type>(index)); },
       [index](const auto& a) { return a.value(index); }, axis);
 }
 
@@ -159,11 +154,8 @@ decltype(auto) value(const Axis& axis, real_index_type index) {
 */
 template <class Result, class Axis>
 Result value_as(const Axis& axis, real_index_type index) {
-  return detail::value_method_switch_with_return_type<Result, Result>(
-      [index](const auto& a) {
-        return static_cast<Result>(a.value(static_cast<int>(index)));
-      },
-      [index](const auto& a) { return static_cast<Result>(a.value(index)); }, axis);
+  return detail::try_cast<Result, std::runtime_error>(
+      value(axis, index)); // avoid conversion warning
 }
 
 /** Returns axis index for value.
@@ -175,24 +167,8 @@ Result value_as(const Axis& axis, real_index_type index) {
 */
 template <class Axis, class U>
 auto index(const Axis& axis, const U& value) {
-  using V = detail::arg_type<decltype(&Axis::index)>;
-  return detail::static_if<std::is_convertible<U, V>>(
-      [&value](const auto& axis) {
-        using A = detail::remove_cvref_t<decltype(axis)>;
-        using V2 = detail::arg_type<decltype(&A::index)>;
-        return axis.index(static_cast<V2>(value));
-      },
-      [](const Axis&) -> index_type {
-        BOOST_THROW_EXCEPTION(std::invalid_argument(
-            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(Axis)),
-                        ": cannot convert argument of type ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(V)))));
-#ifndef _MSC_VER // msvc warns about unreachable return
-        return index_type{};
-#endif
-      },
-      axis);
+  using V = detail::remove_cvref_t<detail::arg_type<decltype(&Axis::index)>>;
+  return axis.index(detail::try_cast<V, std::invalid_argument>(value));
 }
 
 /// @copydoc index(const Axis&, const U& value)
@@ -213,26 +189,13 @@ auto index(const variant<Ts...>& axis, const U& value) {
   @param value argument to be passed to `update` or `index` method
 */
 template <class Axis, class U>
-std::pair<int, int> update(Axis& axis, const U& value) {
-  using V = detail::arg_type<decltype(&Axis::index)>;
-  return detail::static_if<std::is_convertible<U, V>>(
+std::pair<index_type, index_type> update(Axis& axis, const U& value) {
+  using V = detail::remove_cvref_t<detail::arg_type<decltype(&Axis::index)>>;
+  return detail::static_if_c<static_options<Axis>::test(option::growth)>(
       [&value](auto& a) {
-        using A = detail::remove_cvref_t<decltype(a)>;
-        return detail::static_if_c<static_options<A>::test(option::growth)>(
-            [&value](auto& a) { return a.update(value); },
-            [&value](auto& a) { return std::make_pair(a.index(value), 0); }, a);
+        return a.update(detail::try_cast<V, std::invalid_argument>(value));
       },
-      [](Axis&) -> std::pair<index_type, index_type> {
-        BOOST_THROW_EXCEPTION(std::invalid_argument(
-            detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(Axis)),
-                        ": cannot convert argument of type ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(U)), " to ",
-                        boost::core::demangled_name(BOOST_CORE_TYPEID(V)))));
-#ifndef _MSC_VER // msvc warns about unreachable return
-        return std::make_pair(index_type{}, index_type{});
-#endif
-      },
-      axis);
+      [&value](auto& a) { return std::make_pair(index(a, value), index_type{0}); }, axis);
 }
 
 /// @copydoc update(Axis& axis, const U& value)
@@ -267,10 +230,11 @@ decltype(auto) width(const Axis& axis, index_type index) {
  */
 template <class Result, class Axis>
 Result width_as(const Axis& axis, index_type index) {
-  return detail::value_method_switch_with_return_type<Result, Result>(
+  return detail::value_method_switch(
       [](const auto&) { return Result{}; },
       [index](const auto& a) {
-        return static_cast<Result>(a.value(index + 1) - a.value(index));
+        return detail::try_cast<Result, std::runtime_error>(a.value(index + 1) -
+                                                            a.value(index));
       },
       axis);
 }

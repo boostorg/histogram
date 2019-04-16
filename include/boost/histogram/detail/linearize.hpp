@@ -13,6 +13,7 @@
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/mp11/algorithm.hpp>

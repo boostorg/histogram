@@ -12,6 +12,7 @@
 #include <boost/config/workaround.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/mp11/algorithm.hpp>

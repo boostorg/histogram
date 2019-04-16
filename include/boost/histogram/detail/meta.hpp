@@ -30,6 +30,7 @@
 #pragma GCC diagnostic pop
 #endif
 #include <array>
+#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/function.hpp>
@@ -80,17 +81,6 @@ using return_type = typename boost::callable_traits::return_type<T>::type;
 template <class F, class V,
           class T = copy_qualifiers<V, mp11::mp_first<remove_cvref_t<V>>>>
 using visitor_return_type = decltype(std::declval<F>()(std::declval<T>()));
-
-template <bool B, typename T, typename F, typename... Ts>
-constexpr decltype(auto) static_if_c(T&& t, F&& f, Ts&&... ts) {
-  return std::get<(B ? 0 : 1)>(std::forward_as_tuple(
-      std::forward<T>(t), std::forward<F>(f)))(std::forward<Ts>(ts)...);
-}
-
-template <typename B, typename... Ts>
-constexpr decltype(auto) static_if(Ts&&... ts) {
-  return static_if_c<B::value>(std::forward<Ts>(ts)...);
-}
 
 template <typename T>
 constexpr T lowest() {
@@ -404,13 +394,6 @@ R get_scale(const T& t) {
 
 template <class T, class Default>
 using replace_default = mp11::mp_if<std::is_same<T, use_default>, Default, T>;
-
-template <class T, class U>
-using is_convertible_helper =
-    mp11::mp_apply<mp11::mp_all, mp11::mp_transform<std::is_convertible, T, U>>;
-
-template <class T, class U>
-using is_convertible = mp_eval_or<std::false_type, is_convertible_helper, T, U>;
 
 template <class T>
 auto make_unsigned_impl(std::true_type, const T t) noexcept {
