@@ -31,6 +31,12 @@ boost_test(TYPE run SOURCES storage_adaptor_test.cpp LIBRARIES Boost::histogram 
 boost_test(TYPE run SOURCES unlimited_storage_test.cpp LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES utility_test.cpp LIBRARIES Boost::histogram Boost::core)
 
+find_package(Threads)
+if (Threads_FOUND)
+  boost_test(TYPE run SOURCES histogram_threaded_test.cpp LIBRARIES Boost::histogram Boost::core Threads::Threads)
+  boost_test(TYPE run SOURCES storage_adaptor_threaded_test.cpp LIBRARIES Boost::histogram Boost::core Threads::Threads)
+endif()
+
 # boost_test(TYPE run SOURCES deduction_guides_test.cpp LIBRARIES Boost::histogram Boost::core)
 
 # boost_test(TYPE run SOURCES unlimited_storage_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)

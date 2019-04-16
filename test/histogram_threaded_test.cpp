@@ -6,7 +6,6 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
-#include <chrono>
 #include <iostream>
 #include <random>
 #include <thread>
@@ -22,7 +21,6 @@ void fill_test(const A1& a1, const A2& a2, const X& x, const Y& y) {
   for (unsigned i = 0; i != n_fill; ++i) h1(x[i], y[i]);
   auto h2 = make_s(Tag{}, dense_storage<accumulators::thread_safe<int>>(), a1, a2);
   auto run = [&h2, &x, &y](int k) {
-    std::this_thread::sleep_for(std::chrono::nanoseconds(10));
     constexpr auto shift = n_fill / 4;
     auto xit = x.cbegin() + k * shift;
     auto yit = y.cbegin() + k * shift;
