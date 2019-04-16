@@ -181,7 +181,7 @@ public:
   /// Fill histogram with values, an optional weight, and/or a sample from a `std::tuple`.
   template <class... Ts>
   auto operator()(const std::tuple<Ts...>& t) {
-    return detail::fill(storage_and_mutex_, axes_, t);
+    return detail::fill(axes_, storage_and_mutex_, t);
   }
 
   /// Access cell value at integral indices.

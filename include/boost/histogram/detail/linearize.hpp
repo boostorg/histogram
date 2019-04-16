@@ -107,7 +107,7 @@ void linearize_index(optional_index& out, const A& axis, const axis::index_type 
 }
 
 template <class S, class A>
-void grow_storage(S& storage, const A& axes, const axis::index_type* shifts) {
+void grow_storage(const A& axes, S& storage, const axis::index_type* shifts) {
   struct item {
     axis::index_type idx, old_extent;
     std::size_t new_stride;
@@ -177,8 +177,8 @@ void grow_storage(S& storage, const A& axes, const axis::index_type* shifts) {
 //   interface), so we throw at runtime if incompatible argument is passed (e.g.
 //   3d tuple)
 // histogram has only non-growing axes
-template <unsigned I, unsigned N, class S, class T, class U>
-optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) {
+template <unsigned I, unsigned N, class T, class S, class U>
+optional_index to_index(std::false_type, const T& axes, S&, const U& args) {
   optional_index idx;
   const auto rank = get_size(axes);
   if (rank == 1 && N > 1)
@@ -196,13 +196,12 @@ optional_index args_to_index(std::false_type, S&, const T& axes, const U& args) 
 }
 
 // histogram has growing axes
-template <unsigned I, unsigned N, class S, class T, class U>
-optional_index args_to_index(std::true_type, S& storage_and_mutex, T& axes,
-                             const U& args) {
+template <unsigned I, unsigned N, class T, class S, class U>
+optional_index to_index(std::true_type, T& axes, S& storage, const U& args) {
   optional_index idx;
-  axis::index_type shifts[buffer_size<T>::value];
+  constexpr unsigned M = buffer_size<T>::value;
+  axis::index_type shifts[M];
   const auto rank = get_size(axes);
-  std::lock_guard<typename S::second_type> lk{storage_and_mutex.second()};
   bool update_needed = false;
   if (rank == 1 && N > 1)
     update_needed =
@@ -211,14 +210,13 @@ optional_index args_to_index(std::true_type, S& storage_and_mutex, T& axes,
     if (rank != N)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    constexpr unsigned M = buffer_size<remove_cvref_t<decltype(axes)>>::value;
     mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
       update_needed |=
           linearize_value(idx, shifts[J], axis_get<J>(axes), std::get<(J + I)>(args));
     });
   }
 
-  if (update_needed) grow_storage(storage_and_mutex.first(), axes, shifts);
+  if (update_needed) grow_storage(axes, storage, shifts);
   return idx;
 }
 
@@ -257,57 +255,58 @@ constexpr auto weight_sample_indices() {
 }
 
 template <class T>
-void fill_storage2(std::true_type, T&& t) {
+void fill_impl2(std::true_type, T&& t) {
   ++t;
 }
 
 template <class T, class U>
-void fill_storage2(std::true_type, T&& t, const U& u) {
+void fill_impl2(std::true_type, T&& t, const U& u) {
   t += u;
 }
 
 template <class T, class... Us>
-void fill_storage2(std::false_type, T&& t, const Us&... us) {
+void fill_impl2(std::false_type, T&& t, const Us&... us) {
   t(us...);
 }
 
 template <class T, class U>
-void fill_storage(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, const U&) {
-  fill_storage2(has_operator_preincrement<remove_cvref_t<T>>{}, t);
+void fill_impl1(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, const U&) {
+  fill_impl2(has_operator_preincrement<remove_cvref_t<T>>{}, t);
 }
 
 template <class IW, class T, class U>
-void fill_storage(IW, mp11::mp_int<-1>, T&& t, const U& u) {
-  fill_storage2(has_operator_preincrement<remove_cvref_t<T>>{}, t,
-                std::get<IW::value>(u).value);
+void fill_impl1(IW, mp11::mp_int<-1>, T&& t, const U& u) {
+  fill_impl2(has_operator_preincrement<remove_cvref_t<T>>{}, t,
+             std::get<IW::value>(u).value);
 }
 
 template <class IS, class T, class U>
-void fill_storage(mp11::mp_int<-1>, IS, T&& t, const U& u) {
+void fill_impl1(mp11::mp_int<-1>, IS, T&& t, const U& u) {
   mp11::tuple_apply([&t](auto&&... args) { t(args...); }, std::get<IS::value>(u).value);
 }
 
 template <class IW, class IS, class T, class U>
-void fill_storage(IW, IS, T&& t, const U& u) {
+void fill_impl1(IW, IS, T&& t, const U& u) {
   mp11::tuple_apply([&](auto&&... args2) { t(std::get<IW::value>(u).value, args2...); },
                     std::get<IS::value>(u).value);
 }
 
-template <class S, class A, class... Us>
-auto fill(S& storage_and_mutex, A& axes, const std::tuple<Us...>& args) {
+template <class A, class SM, class... Us>
+typename SM::first_type::iterator fill(A& axes, SM& sm, const std::tuple<Us...>& tus) {
   constexpr auto iws = weight_sample_indices<Us...>();
   constexpr unsigned n = sizeof...(Us) - (iws.first > -1) - (iws.second > -1);
   constexpr unsigned i = (iws.first == 0 || iws.second == 0)
                              ? (iws.first == 1 || iws.second == 1 ? 2 : 1)
                              : 0;
-  optional_index idx =
-      args_to_index<i, n>(has_growing_axis<A>(), storage_and_mutex, axes, args);
+  std::lock_guard<typename SM::second_type> lk{sm.second()};
+  auto& storage = sm.first();
+  optional_index idx = to_index<i, n>(has_growing_axis<A>(), axes, storage, tus);
   if (idx) {
-    fill_storage(mp11::mp_int<iws.first>{}, mp11::mp_int<iws.second>{},
-                 storage_and_mutex.first()[*idx], args);
-    return storage_and_mutex.first().begin() + *idx;
+    using mp11::mp_int;
+    fill_impl1(mp_int<iws.first>{}, mp_int<iws.second>{}, storage[*idx], tus);
+    return storage.begin() + *idx;
   }
-  return storage_and_mutex.first().end();
+  return storage.end();
 }
 
 template <typename A, typename... Us>
