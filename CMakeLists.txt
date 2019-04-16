@@ -89,8 +89,6 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   boost_fetch(boostorg/utility TAG develop)
   boost_fetch(boostorg/variant TAG develop)
 
-  add_subdirectory(test)
-
   enable_testing()
   add_custom_target(histogram_check
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>
@@ -150,7 +148,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   #   DESTINATION ${CONFIG_INSTALL_DIR}
   #   NAMESPACE Boost::
   #   FILE ${PROJECT_NAME}Config.cmake)
-  # 
+  #
   # install(DIRECTORY include/ DESTINATION include)
 
+endif()
+
+if (COMMAND boost_test)
+  add_subdirectory(test)
 endif()
