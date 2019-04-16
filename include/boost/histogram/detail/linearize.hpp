@@ -32,9 +32,6 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-struct is_accumulator_set : std::false_type {};
-
-template <class T>
 using has_underflow =
     decltype(axis::traits::static_options<T>::test(axis::option::underflow));
 
@@ -259,39 +256,41 @@ constexpr auto weight_sample_indices() {
   return std::make_pair(-1, -1);
 }
 
+template <class T>
+void fill_storage2(std::true_type, T&& t) {
+  ++t;
+}
+
 template <class T, class U>
-void fill_storage(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, U&&) {
-  static_if<has_operator_preincrement<remove_cvref_t<T>>>(
-      [](auto&& t) { ++t; }, [](auto&& t) { t(); }, std::forward<T>(t));
+void fill_storage2(std::true_type, T&& t, const U& u) {
+  t += u;
+}
+
+template <class T, class... Us>
+void fill_storage2(std::false_type, T&& t, const Us&... us) {
+  t(us...);
+}
+
+template <class T, class U>
+void fill_storage(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, const U&) {
+  fill_storage2(has_operator_preincrement<remove_cvref_t<T>>{}, t);
 }
 
 template <class IW, class T, class U>
-void fill_storage(IW, mp11::mp_int<-1>, T&& t, U&& args) {
-  static_if<has_operator_preincrement<remove_cvref_t<T>>>(
-      [](auto&& t, const auto& w) { t += w; },
-      [](auto&& t, const auto& w) {
-#ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT
-        static_if<is_accumulator_set<remove_cvref_t<T>>>(
-            [w](auto&& t) { t(::boost::accumulators::weight = w); },
-            [w](auto&& t) { t(w); }, t);
-#else
-        t(w);
-#endif
-      },
-      std::forward<T>(t), std::get<IW::value>(args).value);
+void fill_storage(IW, mp11::mp_int<-1>, T&& t, const U& u) {
+  fill_storage2(has_operator_preincrement<remove_cvref_t<T>>{}, t,
+                std::get<IW::value>(u).value);
 }
 
 template <class IS, class T, class U>
-void fill_storage(mp11::mp_int<-1>, IS, T&& t, U&& args) {
-  mp11::tuple_apply([&t](auto&&... args) { t(args...); },
-                    std::get<IS::value>(args).value);
+void fill_storage(mp11::mp_int<-1>, IS, T&& t, const U& u) {
+  mp11::tuple_apply([&t](auto&&... args) { t(args...); }, std::get<IS::value>(u).value);
 }
 
 template <class IW, class IS, class T, class U>
-void fill_storage(IW, IS, T&& t, U&& args) {
-  mp11::tuple_apply(
-      [&](auto&&... args2) { t(std::get<IW::value>(args).value, args2...); },
-      std::get<IS::value>(args).value);
+void fill_storage(IW, IS, T&& t, const U& u) {
+  mp11::tuple_apply([&](auto&&... args2) { t(std::get<IW::value>(u).value, args2...); },
+                    std::get<IS::value>(u).value);
 }
 
 template <class S, class A, class... Us>
@@ -304,7 +303,7 @@ auto fill(S& storage_and_mutex, A& axes, const std::tuple<Us...>& args) {
   optional_index idx =
       args_to_index<i, n>(has_growing_axis<A>(), storage_and_mutex, axes, args);
   if (idx) {
-    fill_storage(mp11::mp_int<iws.first>(), mp11::mp_int<iws.second>(),
+    fill_storage(mp11::mp_int<iws.first>{}, mp11::mp_int<iws.second>{},
                  storage_and_mutex.first()[*idx], args);
     return storage_and_mutex.first().begin() + *idx;
   }
