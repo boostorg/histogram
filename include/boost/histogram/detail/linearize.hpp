@@ -260,13 +260,13 @@ constexpr auto weight_sample_indices() {
 
 template <class T, class U>
 void fill_storage(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, U&&) {
-  static_if<is_incrementable<remove_cvref_t<T>>>(
+  static_if<has_operator_preincrement<remove_cvref_t<T>>>(
       [](auto&& t) { ++t; }, [](auto&& t) { t(); }, std::forward<T>(t));
 }
 
 template <class IW, class T, class U>
 void fill_storage(IW, mp11::mp_int<-1>, T&& t, U&& args) {
-  static_if<is_incrementable<remove_cvref_t<T>>>(
+  static_if<has_operator_preincrement<remove_cvref_t<T>>>(
       [](auto&& t, const auto& w) { t += w; },
       [](auto&& t, const auto& w) {
 #ifdef BOOST_HISTOGRAM_WITH_ACCUMULATORS_SUPPORT

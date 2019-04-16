@@ -208,8 +208,6 @@ BOOST_HISTOGRAM_DETECT(is_iterator,
 BOOST_HISTOGRAM_DETECT(is_streamable,
                        (std::declval<std::ostream&>() << std::declval<T&>()));
 
-BOOST_HISTOGRAM_DETECT(is_incrementable, (++std::declval<T&>()));
-
 BOOST_HISTOGRAM_DETECT(has_operator_preincrement, (++std::declval<T&>()));
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_equal,
