@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from __future__ import print_function
 import sys
 import glob
@@ -8,7 +9,7 @@ exit_code = 0
 
 for dir in ("test", "examples"):
     cpp = set([os.path.basename(x) for x in glob.glob(dir + "/*.cpp")])
-    
+
     for build_file in ("Jamfile", "CMakeLists.txt"):
         filename = os.path.join(dir, build_file)
         if not os.path.exists(filename): continue
