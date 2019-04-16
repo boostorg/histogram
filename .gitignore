@@ -1,6 +1,14 @@
+*/test
+*/*cmake
+*/Modules
+*/Testing
+*/_deps
+*/fetch_and_include
+CMakeFiles
+CMakeCache.txt
+Makefile
 doc/html
 doc/reference.xml
-*build*
 histogram.sublime-workspace
 CMakeSettings.json
 .DS_Store
