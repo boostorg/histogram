@@ -13,7 +13,7 @@
 */
 
 #include <boost/core/use_default.hpp>
-#include <boost/histogram/detail/attribute.hpp> // BOOST_HISTOGRAM_DETAIL_NODISCARD
+#include <boost/histogram/detail/attribute.hpp> // BOOST_HISTOGRAM_NODISCARD
 #include <string>
 #include <vector>
 
@@ -121,7 +121,7 @@ using weighted_profile_storage = dense_storage<accumulators::weighted_mean<>>;
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 template <class Axes, class Storage = default_storage>
-class BOOST_HISTOGRAM_DETAIL_NODISCARD histogram;
+class BOOST_HISTOGRAM_NODISCARD histogram;
 
 #endif
 } // namespace histogram

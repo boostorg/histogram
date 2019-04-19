@@ -11,10 +11,10 @@
 #include <boost/assert.hpp>
 #include <boost/config/workaround.hpp>
 #include <boost/cstdint.hpp>
+#include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
 #include <cmath>
@@ -724,11 +724,8 @@ public:
 
 private:
   template <class Value, class Reference, class Buffer>
-  class iterator_t
-      : public boost::iterator_adaptor<iterator_t<Value, Reference, Buffer>, std::size_t,
-                                       Value, std::random_access_iterator_tag, Reference,
-                                       std::ptrdiff_t> {
-
+  class iterator_t : public detail::iterator_adaptor<iterator_t<Value, Reference, Buffer>,
+                                                     std::size_t, Reference, Value> {
   public:
     iterator_t() = default;
     template <class V, class R, class B>
@@ -737,19 +734,12 @@ private:
     iterator_t(Buffer* b, std::size_t i) noexcept
         : iterator_t::iterator_adaptor_(i), buffer_(b) {}
 
-  protected:
-    template <class V, class R, class B>
-    bool equal(const iterator_t<V, R, B>& rhs) const noexcept {
-      return buffer_ == rhs.buffer_ && this->base() == rhs.base();
-    }
-    Reference dereference() const { return {buffer_, this->base()}; }
+    Reference operator*() const noexcept { return {buffer_, this->base()}; }
 
-    friend class ::boost::iterator_core_access;
+    Buffer* buffer_ = nullptr;
+
     template <class V, class R, class B>
     friend class iterator_t;
-
-  private:
-    Buffer* buffer_ = nullptr;
   };
 
 public:

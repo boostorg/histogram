@@ -9,9 +9,9 @@
 
 #include <algorithm>
 #include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
 #include <iosfwd>
@@ -242,9 +242,7 @@ struct map_impl : T {
 
   template <class Value, class Reference, class MapPtr>
   struct iterator_t
-      : boost::iterator_adaptor<iterator_t<Value, Reference, MapPtr>, std::size_t, Value,
-                                std::random_access_iterator_tag, Reference,
-                                std::ptrdiff_t> {
+      : iterator_adaptor<iterator_t<Value, Reference, MapPtr>, std::size_t, Reference> {
     iterator_t() = default;
     template <class V, class R, class M, class = requires_convertible<M, MapPtr>>
     iterator_t(const iterator_t<V, R, M>& it) noexcept : iterator_t(it.map_, it.base()) {}
@@ -254,7 +252,7 @@ struct map_impl : T {
     bool equal(const iterator_t<V, R, M>& rhs) const noexcept {
       return map_ == rhs.map_ && iterator_t::base() == rhs.base();
     }
-    decltype(auto) dereference() const { return (*map_)[iterator_t::base()]; }
+    Reference operator*() const { return (*map_)[iterator_t::base()]; }
     MapPtr map_ = nullptr;
   };
 

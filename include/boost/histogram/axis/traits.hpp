@@ -84,8 +84,11 @@ decltype(auto) metadata(Axis&& axis) noexcept {
 
 /** Generates static axis option type for axis type.
 
-  WARNING: Doxygen does not render the synopsis correctly. This is a templated using
-  directive, which accepts axis type and returns boost::histogram::axis::option::bitset.
+  WARNING: Doxygen does not render the synopsis correctly. This is a meta-function
+
+  `template <class Axis> using static_options = implementation`
+
+  It accepts an axis type and returns boost::histogram::axis::option::bitset.
 
   If Axis::options() is valid and constexpr, return the corresponding option type.
   Otherwise, return boost::histogram::axis::option::growth_t, if the axis has a method
@@ -93,11 +96,16 @@ decltype(auto) metadata(Axis&& axis) noexcept {
 
   @tparam Axis axis type
 */
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 template <class Axis>
 using static_options = detail::mp_eval_or<
     mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<Axis>>, option::growth_t,
                 option::none_t>,
     detail::static_options_impl, detail::remove_cvref_t<Axis>>;
+#else
+template <class Axis>
+struct static_options;
+#endif
 
 /** Returns axis options as unsigned integer.
 
@@ -108,7 +116,7 @@ using static_options = detail::mp_eval_or<
 */
 template <class Axis>
 constexpr unsigned options(const Axis& axis) noexcept {
-  // cannot reuse static_options here, because this should also work for axis::variant
+  // cannot reuse static_options here, must also work for axis::variant
   return detail::static_if<detail::has_method_options<Axis>>(
       [](const auto& a) { return a.options(); },
       [](const auto&) { return static_options<Axis>::value; }, axis);

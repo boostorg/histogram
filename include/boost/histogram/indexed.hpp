@@ -10,10 +10,11 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/attribute.hpp>
 #include <boost/histogram/detail/axes.hpp>
+#include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/workaround.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
-#include <boost/iterator/iterator_adaptor.hpp>
 #include <type_traits>
 #include <utility>
 
@@ -32,20 +33,25 @@ enum class coverage {
 
 /// Range over histogram bins with multi-dimensional index.
 template <class Histogram>
-class BOOST_HISTOGRAM_DETAIL_NODISCARD indexed_range {
+class BOOST_HISTOGRAM_NODISCARD indexed_range {
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
   using max_dim = mp11::mp_size_t<
       detail::buffer_size<typename detail::remove_cvref_t<Histogram>::axes_type>::value>;
-  using value_iterator = decltype(std::declval<Histogram>().begin());
   struct cache_item {
     int idx, begin, end, extent;
   };
+#endif
 
 public:
+  using value_iterator =
+      BOOST_HISTOGRAM_IMPDEF(decltype(std::declval<Histogram>().begin()));
+  using value_reference = typename value_iterator::reference;
+
   /**
     Pointer-like class to access value and index of current cell.
 
-    Its methods allow one to query the current indices and bins. Furthermore, it acts like
-    a pointer to the cell value.
+    Its methods allow one to query the current indices and bins. Furthermore, it acts
+    like a pointer to the cell value.
   */
   class accessor {
   public:
@@ -54,10 +60,11 @@ public:
     public:
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
       class index_iterator
-          : public boost::iterator_adaptor<index_iterator, const cache_item*> {
+          : public detail::iterator_adaptor<index_iterator, const cache_item*,
+                                            const int&> {
       public:
         index_iterator(const cache_item* i) : index_iterator::iterator_adaptor_(i) {}
-        decltype(auto) operator*() const noexcept { return index_iterator::base()->idx; }
+        const int& operator*() const noexcept { return index_iterator::base()->idx; }
       };
 #endif
 
@@ -74,11 +81,11 @@ public:
     };
 
     /// Returns the cell value.
-    decltype(auto) operator*() const noexcept { return *iter_; }
+    value_reference operator*() const noexcept { return *iter_; }
     /// Returns the cell value.
-    decltype(auto) get() const noexcept { return *iter_; }
+    value_reference get() const noexcept { return *iter_; }
     /// Access fields and methods of the cell object.
-    decltype(auto) operator-> () const noexcept { return iter_; }
+    value_iterator operator->() const noexcept { return iter_; }
 
     /// Access current index.
     /// @param d axis dimension.
@@ -117,40 +124,60 @@ public:
     }
 
   private:
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
     accessor(indexed_range& p, value_iterator i) : parent_(p), iter_(i) {}
+#endif
     indexed_range& parent_;
     value_iterator iter_;
     friend class indexed_range;
   };
 
-  class range_iterator
-      : public boost::iterator_adaptor<range_iterator, value_iterator, accessor,
-                                       std::forward_iterator_tag, accessor> {
+  class range_iterator {
+    using operator_arrow_dispatch = detail::operator_arrow_dispatch_t<accessor>;
+
   public:
-    accessor operator*() const noexcept { return {*parent_, range_iterator::base()}; }
+    using value_type = typename value_iterator::value_type;
+    using reference = accessor;
+    using pointer = BOOST_HISTOGRAM_IMPDEF(typename operator_arrow_dispatch::result_type);
+    using difference_type = void;
+    using iterator_category = std::input_iterator_tag;
 
-  private:
-    range_iterator(indexed_range* p, value_iterator i) noexcept
-        : range_iterator::iterator_adaptor_(i), parent_(p) {}
+    accessor operator*() const noexcept { return {*parent_, iter_}; }
+    pointer operator->() const noexcept {
+      return operator_arrow_dispatch::apply(operator*());
+    }
 
-    void increment() noexcept {
+    range_iterator& operator++() {
       std::size_t stride = 1;
       auto c = parent_->cache_;
       ++c->idx;
-      ++range_iterator::base_reference();
+      ++iter_;
       while (c->idx == c->end && (c != (parent_->cache_ + parent_->hist_.rank() - 1))) {
         c->idx = c->begin;
-        range_iterator::base_reference() -= (c->end - c->begin) * stride;
+        iter_ -= (c->end - c->begin) * stride;
         stride *= c->extent;
         ++c;
         ++c->idx;
-        range_iterator::base_reference() += stride;
+        iter_ += stride;
       }
+      return *this;
     }
 
-    mutable indexed_range* parent_;
+    range_iterator operator++(int) {
+      auto tmp = *this;
+      operator++();
+      return tmp;
+    }
 
-    friend class boost::iterator_core_access;
+    bool operator==(const range_iterator& x) const noexcept { return iter_ == x.iter_; }
+    bool operator!=(const range_iterator& x) const noexcept { return !operator==(x); }
+
+  private:
+    range_iterator(indexed_range* p, value_iterator i) noexcept : parent_(p), iter_(i) {}
+
+    mutable indexed_range* parent_;
+    value_iterator iter_;
+
     friend class indexed_range;
   };
 

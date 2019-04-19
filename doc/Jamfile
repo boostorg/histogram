@@ -9,27 +9,25 @@ import doxygen ;
 import quickbook ;
 import boostbook : boostbook ;
 
+path-constant THIS_PATH : . ;
+
 doxygen reference
 :
-  ../../../boost/histogram.hpp
-  [ glob ../../../boost/histogram/*.hpp ]
-  [ glob ../../../boost/histogram/accumulators/*.hpp ]
-  [ glob ../../../boost/histogram/algorithm/*.hpp ]
-  [ glob ../../../boost/histogram/axis/*.hpp ]
+  $(THIS_PATH)/../../../boost/histogram.hpp
+  [ glob $(THIS_PATH)/../../../boost/histogram/*.hpp ]
+  [ glob $(THIS_PATH)/../../../boost/histogram/accumulators/*.hpp ]
+  [ glob $(THIS_PATH)/../../../boost/histogram/algorithm/*.hpp ]
+  [ glob $(THIS_PATH)/../../../boost/histogram/axis/*.hpp ]
 :
-  <doxygen:param>"PREDEFINED=\"BOOST_HISTOGRAM_DOXYGEN_INVOKED\" \\
-                             \"BOOST_HISTOGRAM_DETAIL_NODISCARD\" \\
-                             "
   <doxygen:param>EXTRACT_ALL=YES
-  <doxygen:param>HIDE_FRIEND_COMPOUNDS=YES
   <doxygen:param>ENABLE_PREPROCESSING=YES
   <doxygen:param>MACRO_EXPANSION=YES
+  <doxygen:param>EXPAND_ONLY_PREDEF=YES
   <doxygen:param>JAVADOC_AUTOBRIEF=YES
-  <doxygen:param>USE_MATHJAX=NO
-  <doxygen:param>SEARCH_INCLUDES=YES
   <doxygen:param>EXCLUDE_SYMBOLS=detail
-  <doxygen:param>WARNINGS=YES
-  <doxygen:param>WARN_IF_DOC_ERROR=YES
+  <doxygen:param>"PREDEFINED=\"BOOST_HISTOGRAM_DOXYGEN_INVOKED\" \\
+                             \"BOOST_HISTOGRAM_NODISCARD\" \\
+                             \"BOOST_HISTOGRAM_IMPDEF(T)=implementation_defined\""
 ;
 
 boostbook histogram

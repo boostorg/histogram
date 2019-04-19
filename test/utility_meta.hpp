@@ -41,12 +41,4 @@ ostream& operator<<(ostream& os, const std::pair<T, U>& t) {
 }
 } // namespace std
 
-#ifndef BOOST_TEST_TRAIT_SAME
-// temporary macro implementation so that BOOST_TEST_TRAIT_SAME already works on travis
-// and appveyor with old boost-1.69.0
-
-#define BOOST_TEST_TRAIT_SAME(...) \
-  BOOST_TEST_TRAIT_TRUE((::boost::core::is_same<__VA_ARGS__>))
-#endif
-
 #endif

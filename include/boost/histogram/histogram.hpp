@@ -12,6 +12,7 @@
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/noop_mutex.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/list.hpp>
@@ -362,14 +363,9 @@ public:
 private:
   axes_type axes_;
 
-  struct noop_mutex {
-    bool try_lock() noexcept { return true; }
-    void lock() noexcept {}
-    void unlock() noexcept {}
-  };
   using mutex_type = mp11::mp_if_c<(storage_type::has_threading_support &&
                                     detail::has_growing_axis<axes_type>::value),
-                                   std::mutex, noop_mutex>;
+                                   std::mutex, detail::noop_mutex>;
 
   detail::compressed_pair<storage_type, mutex_type> storage_and_mutex_;
 

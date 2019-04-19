@@ -15,20 +15,21 @@ namespace histogram {
 namespace axis {
 
 /**
-  Holds the bin data of a axis::variant.
+  Holds the bin data of an axis::variant.
 
-  The interface is a superset of the `value_bin_view` and `interval_bin_view`
-  classes. The methods value() and lower() return the same number. For a value bin,
-  upper() and lower() and center() return the same number, width() returns zero.
+  The interface is a superset of the axis::interval_view
+  class. In addition, the object is implicitly convertible to the value type,
+  returning the equivalent of a call to lower(). For discrete axes, lower() ==
+  upper(), and width() returns zero.
 
-  This is not a view like interval_bin_view or value_bin_view for two reasons.
+  This is not a view like axis::interval_view for two reasons.
   - Sequential calls to lower() and upper() would have to each loop through
     the variant types. This is likely to be slower than filling all the data in
     one loop.
   - polymorphic_bin may be created from a temporary instance of axis::variant,
     like in the call histogram::axis(0). Storing a reference to the axis would
     result in a dangling reference. Rather than specialing the code to handle
-    this, it seems easier to just use a value instead of a view here.
+    this, it seems easier to just use a value instead of a view.
 */
 template <typename RealType>
 class polymorphic_bin {

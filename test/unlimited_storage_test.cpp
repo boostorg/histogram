@@ -6,10 +6,12 @@
 
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
+#include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <sstream>
 #include <vector>
 #include "utility_meta.hpp"
@@ -25,6 +27,20 @@ std::ostream& operator<<(std::ostream& os, const mp_int& x) {
   os << x.data;
   return os;
 }
+
+namespace boost {
+namespace histogram {
+std::ostream& operator<<(std::ostream& os, unlimited_storage_type::iterator it) {
+  os << "iterator[" << it.buffer_ << ", " << it.base() << "]";
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, unlimited_storage_type::const_iterator it) {
+  os << "const_iterator[" << it.buffer_ << ", " << it.base() << "]";
+  return os;
+}
+} // namespace histogram
+} // namespace boost
 
 template <typename T = std::uint8_t>
 unlimited_storage_type prepare(std::size_t n, T x = T()) {
@@ -487,10 +503,21 @@ int main() {
     BOOST_TEST_EQ(a[0], 3);
     a[0] -= 10;
     BOOST_TEST_EQ(a[0], -7);
+    auto c = prepare(2);
+    c[0] = c[1] = 1;
+    BOOST_TEST_EQ(c[0], 1);
+    BOOST_TEST_EQ(c[1], 1);
   }
 
   // iterators
   {
+    using iterator = typename unlimited_storage_type::iterator;
+    using value_type = typename std::iterator_traits<iterator>::value_type;
+    using reference = typename std::iterator_traits<iterator>::reference;
+
+    BOOST_TEST_TRAIT_SAME(value_type, double);
+    BOOST_TEST_TRAIT_FALSE((std::is_same<reference, double&>));
+
     auto a = prepare(2);
     for (auto&& x : a) BOOST_TEST_EQ(x, 0);
 
@@ -501,12 +528,18 @@ int main() {
     BOOST_TEST(std::equal(aconst.begin(), aconst.end(), b.begin(), b.end()));
 
     unlimited_storage_type::iterator it1 = a.begin();
+    BOOST_TEST_EQ(*it1, 1);
     *it1 = 3;
+    BOOST_TEST_EQ(*it1, 3);
     unlimited_storage_type::const_iterator it2 = a.begin();
     BOOST_TEST_EQ(*it2, 3);
     unlimited_storage_type::const_iterator it3 = aconst.begin();
     BOOST_TEST_EQ(*it3, 1);
-    // unlimited_storage_type::iterator it3 = aconst.begin();
+
+    std::copy(b.begin(), b.end(), a.begin());
+    std::partial_sum(a.begin(), a.end(), a.begin());
+    BOOST_TEST_EQ(a[0], 1);
+    BOOST_TEST_EQ(a[1], 2);
   }
 
   return boost::report_errors();

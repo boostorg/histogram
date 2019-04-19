@@ -347,6 +347,7 @@ regular(Tr, unsigned, T, T, M)->regular<detail::convert_integer<T, double>, Tr, 
 
 #endif
 
+/// Regular axis with circular option already set.
 template <class Value = double, class MetaData = use_default, class Options = use_default>
 using circular = regular<Value, transform::id, MetaData,
                          decltype(detail::replace_default<Options, option::overflow_t>{} |

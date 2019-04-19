@@ -8,9 +8,9 @@
 #define BOOST_HISTOGRAM_DETAIL_ATTRIBUTE_HPP
 
 #if __cplusplus >= 201703L
-#define BOOST_HISTOGRAM_DETAIL_NODISCARD [[nodiscard]]
+#define BOOST_HISTOGRAM_NODISCARD [[nodiscard]]
 #else
-#define BOOST_HISTOGRAM_DETAIL_NODISCARD
+#define BOOST_HISTOGRAM_NODISCARD
 #endif
 
 #endif
