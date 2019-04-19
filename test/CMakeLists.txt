@@ -25,12 +25,6 @@ boost_test(TYPE run SOURCES axis_variable_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES axis_variant_test.cpp
   LIBRARIES Boost::histogram Boost::core)
-# boost_test(TYPE run SOURCES boost_accumulators_support_test.cpp
-#  LIBRARIES Boost::histogram Boost::core Boost::accumulators)
-# boost_test(TYPE run SOURCES boost_range_support_test.cpp
-#  LIBRARIES Boost::histogram Boost::core Boost::range)
-# boost_test(TYPE run SOURCES boost_units_support_test.cpp
-#  LIBRARIES Boost::histogram Boost::core Boost::units)
 boost_test(TYPE run SOURCES detail_misc_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_meta_test.cpp
@@ -60,6 +54,12 @@ boost_test(TYPE run SOURCES unlimited_storage_test.cpp
 boost_test(TYPE run SOURCES utility_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 
+if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+  boost_test(TYPE run SOURCES deduction_guides_test.cpp
+    LIBRARIES Boost::histogram Boost::core)
+  target_compile_features(BoostHistogram-deduction_guides_test_cpp PRIVATE cxx_std_17)
+endif()
+
 find_package(Threads)
 if (Threads_FOUND)
   boost_test(TYPE run SOURCES histogram_threaded_test.cpp
@@ -68,8 +68,13 @@ if (Threads_FOUND)
     LIBRARIES Boost::histogram Boost::core Threads::Threads)
 endif()
 
-# boost_test(TYPE run SOURCES deduction_guides_test.cpp LIBRARIES Boost::histogram Boost::core)
-
+## No cmake support yet
+# boost_test(TYPE run SOURCES boost_accumulators_support_test.cpp
+#  LIBRARIES Boost::histogram Boost::core Boost::accumulators)
+# boost_test(TYPE run SOURCES boost_range_support_test.cpp
+#  LIBRARIES Boost::histogram Boost::core Boost::range)
+# boost_test(TYPE run SOURCES boost_units_support_test.cpp
+#  LIBRARIES Boost::histogram Boost::core Boost::units)
 # boost_test(TYPE run SOURCES unlimited_storage_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES storage_adaptor_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES histogram_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)

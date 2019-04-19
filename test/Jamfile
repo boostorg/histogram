@@ -1,5 +1,6 @@
-# Copyright (c) 2018 Mateusz Loskot <mateusz@loskot.net>
-# Copyright Klemens David Morgenstern, Hans P. Dembinski 2016-2017
+# Copyright 2016-2017 Klemens David Morgenstern
+# Copyright 2018 Mateusz Loskot <mateusz@loskot.net>
+# Copyright 2018-2019 Hans Dembinski
 #
 # Use, modification and distribution is subject to the Boost Software License,
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -16,10 +17,10 @@ local XML_PATH ;
 
 if [ os.on-windows ]
 {
-  XML_PATH = [ regex.replace "$(THIS_PATH)\\" "\\\\" "\\\\\\\\" ] ;
+    XML_PATH = [ regex.replace "$(THIS_PATH)\\" "\\\\" "\\\\\\\\" ] ;
 }
 else {
-  XML_PATH = "$(THIS_PATH)/" ;
+    XML_PATH = "$(THIS_PATH)/" ;
 }
 
 project
@@ -30,10 +31,9 @@ project
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
     ]
-    <threading>multi
     ;
 
-test-suite minimal :
+alias cxx14 :
     [ run algorithm_project_test.cpp ]
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
@@ -45,9 +45,6 @@ test-suite minimal :
     [ run axis_traits_test.cpp ]
     [ run axis_variable_test.cpp ]
     [ run axis_variant_test.cpp ]
-    [ run boost_accumulators_support_test.cpp  ]
-    [ run boost_range_support_test.cpp ]
-    [ run boost_units_support_test.cpp ]
     [ run detail_meta_test.cpp ]
     [ run detail_misc_test.cpp ]
     [ run detail_iterator_adaptor_test.cpp ]
@@ -57,30 +54,46 @@ test-suite minimal :
     [ run histogram_mixed_test.cpp ]
     [ run histogram_operators_test.cpp ]
     [ run histogram_test.cpp ]
-    [ run histogram_threaded_test.cpp ]
     [ run indexed_test.cpp ]
     [ run internal_accumulators_test.cpp ]
     [ run storage_adaptor_test.cpp ]
-    [ run storage_adaptor_threaded_test.cpp ]
     [ run unlimited_storage_test.cpp ]
     [ run utility_test.cpp ]
     ;
 
-# has additional requirements only available on develop branch
-test-suite deduction_guides : [ run deduction_guides_test.cpp ] ;
+alias cxx17 :
+    [ run deduction_guides_test.cpp ] :
+    [ requires cpp_deduction_guides ]
+    ;
 
-alias libserial : /boost/serialization//boost_serialization : <link>static ;
+alias threading :
+    [ run histogram_threaded_test.cpp ]
+    [ run storage_adaptor_threaded_test.cpp ] :
+    <threading>multi
+    ;
 
-test-suite serial :
+alias accumulators : [ run boost_accumulators_support_test.cpp ] ;
+alias range : [ run boost_range_support_test.cpp ] ;
+alias units : [ run boost_units_support_test.cpp ] ;
+
+alias serialization :
     [ run storage_adaptor_serialization_test.cpp libserial ]
     [ run histogram_serialization_test.cpp libserial ]
     [ run unlimited_storage_serialization_test.cpp libserial ]
     ;
 
-test-suite all : minimal serial ;
+alias libserial :
+    /boost/serialization//boost_serialization :
+    <link>static ;
 
-explicit minimal ;
+alias all : cxx14 cxx17 threading accumulators range units serialization ;
+alias minimal : cxx14 cxx17 threading ;
+
+explicit cxx14 ;
+explicit cxx17 ;
+explicit threading ;
+explicit accumulators ;
+explicit range ;
+explicit units ;
+explicit serialization ;
 explicit libserial ;
-explicit serial ;
-explicit accumulator ;
-explicit deduction_guides ;

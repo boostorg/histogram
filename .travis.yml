@@ -72,7 +72,7 @@ matrix:
           packages: g++-8
       script:
         - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 warnings-as-errors=on
-          test examples test//deduction_guides
+          test examples
 
 before_script:
   # Cloning minimal set of Boost libraries

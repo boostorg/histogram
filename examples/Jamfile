@@ -1,4 +1,5 @@
 # Copyright (c) 2018 Mateusz Loskot <mateusz@loskot.net>
+# Copyright (c) 2019 Hans Dembinski
 #
 # Use, modification and distribution is subject to the Boost Software License,
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -13,10 +14,9 @@ project
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
     ]
-    <threading>multi
     ;
 
-test-suite minimal :
+alias cxx14 :
     [ run getting_started_listing_01.cpp ]
     [ run getting_started_listing_02.cpp ]
     [ run getting_started_listing_03.cpp ]
@@ -41,18 +41,23 @@ test-suite minimal :
     [ run guide_indexed_access.cpp ]
     [ run guide_make_dynamic_histogram.cpp ]
     [ run guide_make_static_histogram.cpp ]
-    [ run guide_parallel_filling.cpp ]
     [ run guide_stdlib_algorithms.cpp ]
+    ;
+
+alias threading :
+    [ run guide_parallel_filling.cpp ] :
+    <threading>multi
     ;
 
 alias libserial : /boost/serialization//boost_serialization : <link>static ;
 
-test-suite serial :
+alias serial :
     [ run guide_histogram_serialization.cpp libserial ]
     ;
 
-test-suite all : minimal serial ;
+alias all : cxx14 threading serial ;
 
-explicit minimal ;
+explicit cxx14 ;
+explicit threading ;
 explicit libserial ;
 explicit serial ;

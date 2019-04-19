@@ -28,7 +28,6 @@ target_link_libraries(boost_histogram
         Boost::mp11
         Boost::callable_traits
         Boost::variant
-        Boost::iterator
         Boost::throw_exception
 )
 
@@ -56,38 +55,32 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   fetch_and_include(cmake/boost_test.cmake)
   fetch_and_include(cmake/boost_fetch.cmake)
 
-  # boost_fetch(boostorg/accumulators TAG develop)
   boost_fetch(boostorg/assert TAG develop)
   boost_fetch(boostorg/bind TAG develop)
   boost_fetch(hdembinski/callable_traits TAG origin/fix_cmake)
-  boost_fetch(boostorg/concept_check TAG develop)
   boost_fetch(boostorg/config TAG develop)
   boost_fetch(boostorg/container_hash TAG develop)
-  boost_fetch(boostorg/conversion TAG develop)
   boost_fetch(boostorg/core TAG develop)
   boost_fetch(boostorg/detail TAG develop)
-  boost_fetch(boostorg/function_types TAG develop)
-  boost_fetch(boostorg/fusion TAG develop)
   boost_fetch(boostorg/integer TAG develop)
-  boost_fetch(boostorg/iterator TAG develop)
   boost_fetch(boostorg/move TAG develop)
   boost_fetch(boostorg/mp11 TAG develop)
   boost_fetch(boostorg/mpl TAG develop)
-  boost_fetch(boostorg/optional TAG develop)
   boost_fetch(boostorg/predef TAG develop)
   boost_fetch(boostorg/preprocessor TAG develop)
-  # boost_fetch(boostorg/range TAG develop)
-  # boost_fetch(boostorg/serialization TAG develop)
   boost_fetch(boostorg/smart_ptr TAG develop)
   boost_fetch(boostorg/static_assert TAG develop)
   boost_fetch(boostorg/throw_exception TAG develop)
-  boost_fetch(boostorg/tuple TAG develop)
   boost_fetch(boostorg/type_index TAG develop)
   boost_fetch(boostorg/type_traits TAG develop)
-  boost_fetch(boostorg/typeof TAG develop)
-  # boost_fetch(boostorg/units TAG develop)
   boost_fetch(boostorg/utility TAG develop)
   boost_fetch(boostorg/variant TAG develop)
+
+  ## No cmake support yet
+  # boost_fetch(boostorg/accumulators TAG develop)
+  # boost_fetch(boostorg/range TAG develop)
+  # boost_fetch(boostorg/serialization TAG develop)
+  # boost_fetch(boostorg/units TAG develop)
 
   enable_testing()
   add_custom_target(histogram_check
