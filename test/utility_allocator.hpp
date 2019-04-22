@@ -32,7 +32,10 @@ struct tracing_allocator {
 
   tracing_allocator_db* db = nullptr;
 
-  tracing_allocator() noexcept {}
+  tracing_allocator() noexcept = default;
+  tracing_allocator(const tracing_allocator&) noexcept = default;
+  tracing_allocator(tracing_allocator&&) noexcept = default;
+
   tracing_allocator(tracing_allocator_db& x) noexcept : db(&x) {}
   template <class U>
   tracing_allocator(const tracing_allocator<U>& a) noexcept : db(a.db) {}
@@ -69,6 +72,54 @@ constexpr bool operator==(const tracing_allocator<T>&,
 template <class T, class U>
 constexpr bool operator!=(const tracing_allocator<T>& t,
                           const tracing_allocator<U>& u) noexcept {
+  return !operator==(t, u);
+}
+
+template <class T>
+struct failing_allocator {
+  using value_type = T;
+
+  std::size_t nfail = 0;
+  std::size_t* nbytes = nullptr;
+
+  failing_allocator() noexcept = default;
+  failing_allocator(const failing_allocator& x) noexcept = default;
+
+  explicit failing_allocator(std::size_t nf, std::size_t& nb) noexcept
+      : nfail(nf), nbytes(&nb) {}
+  template <class U>
+  failing_allocator(const failing_allocator<U>& a) noexcept
+      : nfail(a.nfail), nbytes(a.nbytes) {}
+  template <class U>
+  failing_allocator& operator=(const failing_allocator<U>& a) noexcept {
+    nfail = a.nfail;
+    nbytes = a.nbytes;
+    return *this;
+  }
+  ~failing_allocator() noexcept {}
+
+  T* allocate(std::size_t n) {
+    if (nbytes) {
+      if (*nbytes + n * sizeof(T) > nfail) throw std::bad_alloc{};
+      *nbytes += n * sizeof(T);
+    }
+    return static_cast<T*>(::operator new(n * sizeof(T)));
+  }
+
+  void deallocate(T* p, std::size_t n) {
+    if (nbytes) *nbytes -= n * sizeof(T);
+    ::operator delete((void*)p);
+  }
+};
+
+template <class T, class U>
+constexpr bool operator==(const failing_allocator<T>&,
+                          const failing_allocator<U>&) noexcept {
+  return true;
+}
+
+template <class T, class U>
+bool operator!=(const failing_allocator<T>& t, const failing_allocator<U>& u) noexcept {
   return !operator==(t, u);
 }
 

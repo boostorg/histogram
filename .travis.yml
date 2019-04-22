@@ -65,26 +65,25 @@ matrix:
           ../../b2 -j2 -q toolset=clang-5 cxxstd=14
           variant=histogram_ubasan warnings-as-errors=on
 
-    - name: "gcc-8: c++17"
+    - name: "gcc-8: c++latest"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=17 warnings-as-errors=on
-          test examples
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=latest warnings-as-errors=on
 
 before_script:
   # Cloning minimal set of Boost libraries
   - cd ..
-  - git clone -b $BRANCH --depth 10 https://github.com/boostorg/boost.git
+  - git clone -b $BRANCH --depth 5 https://github.com/boostorg/boost.git
   - cd boost
-  - git submodule update --init --depth 10 tools/build tools/boostdep
+  - git submodule update --init --depth 5 tools/build tools/boostdep
 
   # Replacing Boost module with this project and installing Boost dependencies
   - rm -rf libs/$LIBRARY_DIR || true
   - mv $TRAVIS_BUILD_DIR libs/$LIBRARY_DIR
-  - python tools/boostdep/depinst/depinst.py --git_args "--depth 10 --jobs 2" $LIBRARY_DIR
+  - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" $LIBRARY_DIR
 
   # Adding missing toolsets and preparing Boost headers
   - ./bootstrap.sh

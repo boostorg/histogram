@@ -31,31 +31,39 @@ auto str(const T& t) {
 
 template <typename T>
 void tests() {
+  using Storage = storage_adaptor<T>;
   // ctor, copy, move
   {
-    storage_adaptor<T> a;
+    Storage a;
     a.reset(2);
-    storage_adaptor<T> b(a);
-    storage_adaptor<T> c;
+    Storage b(a);
+    Storage c;
     c = a;
     BOOST_TEST_EQ(std::distance(a.begin(), a.end()), 2);
     BOOST_TEST_EQ(a.size(), 2);
     BOOST_TEST_EQ(b.size(), 2);
     BOOST_TEST_EQ(c.size(), 2);
 
-    storage_adaptor<T> d(std::move(a));
+    Storage d(std::move(a));
     BOOST_TEST_EQ(d.size(), 2);
-    storage_adaptor<T> e;
+    Storage e;
     e = std::move(d);
     BOOST_TEST_EQ(e.size(), 2);
 
     const auto t = T();
     storage_adaptor<T> g(t); // tests converting ctor
+    BOOST_TEST_EQ(g.size(), 0);
+    const auto u = std::vector<typename Storage::value_type>(3, 1);
+    Storage h(u); // tests converting ctor
+    BOOST_TEST_EQ(h.size(), 3);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 1);
+    BOOST_TEST_EQ(h[2], 1);
   }
 
   // increment, add, sub, set, reset, compare
   {
-    storage_adaptor<T> a;
+    Storage a;
     a.reset(1);
     ++a[0];
     const auto save = a[0]++;
@@ -88,10 +96,10 @@ void tests() {
 
   // copy
   {
-    storage_adaptor<T> a;
+    Storage a;
     a.reset(1);
     ++a[0];
-    decltype(a) b;
+    Storage b;
     b.reset(2);
     BOOST_TEST(!(a == b));
     b = a;
@@ -99,7 +107,7 @@ void tests() {
     BOOST_TEST_EQ(b.size(), 1);
     BOOST_TEST_EQ(b[0], 1);
 
-    decltype(a) c(a);
+    Storage c(a);
     BOOST_TEST(a == c);
     BOOST_TEST_EQ(c.size(), 1);
     BOOST_TEST_EQ(c[0], 1);
@@ -107,21 +115,21 @@ void tests() {
 
   // move
   {
-    storage_adaptor<T> a;
+    Storage a;
     a.reset(1);
     ++a[0];
-    decltype(a) b;
+    Storage b;
     BOOST_TEST(!(a == b));
     b = std::move(a);
     BOOST_TEST_EQ(b.size(), 1);
     BOOST_TEST_EQ(b[0], 1);
-    decltype(a) c(std::move(b));
+    Storage c(std::move(b));
     BOOST_TEST_EQ(c.size(), 1);
     BOOST_TEST_EQ(c[0], 1);
   }
 
   {
-    storage_adaptor<T> a;
+    Storage a;
     a.reset(1);
     a[0] += 2;
     BOOST_TEST_EQ(str(a[0]), "2"s);
@@ -242,10 +250,10 @@ int main() {
   {
     tracing_allocator_db db;
     tracing_allocator<char> alloc(db);
-    using map = std::map<std::size_t, double, std::less<std::size_t>,
-                         tracing_allocator<std::pair<const std::size_t, double>>>;
-    using A = storage_adaptor<map>;
-    auto a = A(map(alloc));
+    using map_t = std::map<std::size_t, double, std::less<std::size_t>,
+                           tracing_allocator<std::pair<const std::size_t, double>>>;
+    using A = storage_adaptor<map_t>;
+    auto a = A(alloc);
     // MSVC implementation allocates some structures for debugging
     const auto baseline = db.sum.first;
     a.reset(10);

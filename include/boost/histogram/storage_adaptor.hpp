@@ -24,24 +24,23 @@ namespace detail {
 
 template <class T>
 struct vector_impl : T {
+  using allocator_type = typename T::allocator_type;
+
   static constexpr bool has_threading_support =
       accumulators::is_thread_safe<typename T::value_type>::value;
 
-  vector_impl() = default;
-  vector_impl(const vector_impl& t) : T(t) {}
-  vector_impl& operator=(const vector_impl& t) {
-    T::operator=(t);
-    return *this;
-  }
+  vector_impl(const allocator_type& a = {}) : T(a) {}
+  vector_impl(const vector_impl&) = default;
+  vector_impl& operator=(const vector_impl&) = default;
+  vector_impl(vector_impl&&) = default;
+  vector_impl& operator=(vector_impl&&) = default;
 
-  explicit vector_impl(typename T::allocator_type a) : T(a) {}
+  explicit vector_impl(T&& t) : T(std::move(t)) {}
   explicit vector_impl(const T& t) : T(t) {}
 
   template <class U, class = requires_iterable<U>>
-  explicit vector_impl(const U& u) {
-    T::reserve(u.size());
-    for (auto&& x : u) T::emplace_back(x);
-  }
+  explicit vector_impl(const U& u, const allocator_type& a = {})
+      : T(std::begin(u), std::end(u), a) {}
 
   template <class U, class = requires_iterable<U>>
   vector_impl& operator=(const U& u) {
@@ -57,7 +56,7 @@ struct vector_impl : T {
     T::resize(n, value_type());
     std::fill_n(T::begin(), std::min(n, old_size), value_type());
   }
-};
+}; // namespace detail
 
 template <class T>
 struct array_impl : T {
@@ -72,11 +71,14 @@ struct array_impl : T {
     return *this;
   }
 
+  explicit array_impl(T&& t) : T(std::move(t)) {}
   explicit array_impl(const T& t) : T(t) {}
+
   template <class U, class = requires_iterable<U>>
   explicit array_impl(const U& u) : size_(u.size()) {
-    std::size_t i = 0;
-    for (auto&& x : u) T::operator[](i++) = x;
+    using std::begin;
+    using std::end;
+    std::copy(begin(u), end(u), this->begin());
   }
 
   template <class U, class = requires_iterable<U>>
@@ -124,6 +126,7 @@ struct map_impl : T {
 
   struct reference {
     reference(map_impl* m, std::size_t i) noexcept : map(m), idx(i) {}
+
     reference(const reference&) noexcept = default;
     reference& operator=(const reference& o) {
       if (this != &o) operator=(static_cast<const_reference>(o));
@@ -259,19 +262,20 @@ struct map_impl : T {
   using iterator = iterator_t<value_type, reference, map_impl*>;
   using const_iterator = iterator_t<const value_type, const_reference, const map_impl*>;
 
-  map_impl() = default;
-  map_impl(const map_impl& t) : T(t), size_(t.size_) {}
-  map_impl& operator=(const map_impl& t) {
-    T::operator=(t);
-    size_ = t.size_;
-    return *this;
-  }
+  using allocator_type = typename T::allocator_type;
 
-  explicit map_impl(const T& t) : T(t) {}
-  explicit map_impl(typename T::allocator_type a) : T(a) {}
+  map_impl(const allocator_type& a = {}) : T(a) {}
+
+  map_impl(const map_impl&) = default;
+  map_impl& operator=(const map_impl&) = default;
+  map_impl(map_impl&&) = default;
+  map_impl& operator=(map_impl&&) = default;
+
+  map_impl(const T& t) : T(t), size_(t.size()) {}
+  map_impl(T&& t) : T(std::move(t)), size_(t.size()) {}
 
   template <class U, class = requires_iterable<U>>
-  explicit map_impl(const U& u) : size_(u.size()) {
+  explicit map_impl(const U& u, const allocator_type& a = {}) : T(a), size_(u.size()) {
     using std::begin;
     using std::end;
     std::copy(begin(u), end(u), this->begin());
@@ -334,26 +338,20 @@ class storage_adaptor : public detail::storage_adaptor_impl<T> {
 public:
   using base_type = detail::storage_adaptor_impl<T>;
 
-  // standard default, copy, move, assign
-  storage_adaptor() = default;
+  // standard copy, move, assign
   storage_adaptor(storage_adaptor&&) = default;
   storage_adaptor(const storage_adaptor&) = default;
   storage_adaptor& operator=(storage_adaptor&&) = default;
   storage_adaptor& operator=(const storage_adaptor&) = default;
 
-  // allow move from adapted object
-  storage_adaptor(T&& t) : base_type(std::move(t)) {}
-  storage_adaptor& operator=(T&& t) {
-    base_type::operator=(std::move(t));
-    return *this;
-  }
+  // forwarding constructor
+  template <class... Ts>
+  storage_adaptor(Ts&&... ts) : base_type(std::forward<Ts>(ts)...) {}
 
-  // conversion ctor and assign
+  // forwarding assign
   template <class U>
-  storage_adaptor(const U& u) : base_type(u) {}
-  template <class U>
-  storage_adaptor& operator=(const U& u) {
-    base_type::operator=(u);
+  storage_adaptor& operator=(U&& u) {
+    base_type::operator=(std::forward<U>(u));
     return *this;
   }
 

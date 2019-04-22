@@ -9,41 +9,31 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
+#include <boost/histogram/unsafe_access.hpp>
+#include <boost/mp11.hpp>
+#include <iosfwd>
 #include <limits>
 #include <memory>
 #include <numeric>
-#include <sstream>
 #include <vector>
+#include "utility_allocator.hpp"
 #include "utility_meta.hpp"
 
-namespace bh = boost::histogram;
-using unlimited_storage_type = bh::unlimited_storage<>;
-template <typename T>
-using vector_storage = bh::storage_adaptor<std::vector<T>>;
-using mp_int = unlimited_storage_type::mp_int;
+using namespace boost::histogram;
 
-std::ostream& operator<<(std::ostream& os, const mp_int& x) {
-  os << "mp_int";
+using unlimited_storage_type = unlimited_storage<>;
+template <typename T>
+using vector_storage = storage_adaptor<std::vector<T>>;
+using large_int = unlimited_storage_type::large_int;
+
+std::ostream& operator<<(std::ostream& os, const large_int& x) {
+  os << "large_int";
   os << x.data;
   return os;
 }
 
-namespace boost {
-namespace histogram {
-std::ostream& operator<<(std::ostream& os, unlimited_storage_type::iterator it) {
-  os << "iterator[" << it.buffer_ << ", " << it.base() << "]";
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, unlimited_storage_type::const_iterator it) {
-  os << "const_iterator[" << it.buffer_ << ", " << it.base() << "]";
-  return os;
-}
-} // namespace histogram
-} // namespace boost
-
 template <typename T = std::uint8_t>
-unlimited_storage_type prepare(std::size_t n, T x = T()) {
+unlimited_storage_type prepare(std::size_t n, T x = T{}) {
   std::unique_ptr<T[]> v(new T[n]);
   std::fill(v.get(), v.get() + n, static_cast<T>(0));
   v.get()[0] = x;
@@ -56,15 +46,8 @@ auto max() {
 }
 
 template <>
-inline auto max<mp_int>() {
-  return mp_int(std::numeric_limits<uint64_t>::max());
-}
-
-template <class... Ts>
-auto make_mp_int(Ts... ts) {
-  mp_int r;
-  r.data = {static_cast<uint64_t>(ts)...};
-  return r;
+inline auto max<large_int>() {
+  return large_int(std::numeric_limits<uint64_t>::max());
 }
 
 template <typename T>
@@ -106,7 +89,7 @@ void equal_2() {
 
 template <typename T>
 void increase_and_grow() {
-  auto tmax = std::numeric_limits<T>::max();
+  auto tmax = max<T>();
   auto s = prepare(2, tmax);
   auto n = s;
   auto n2 = s;
@@ -188,58 +171,68 @@ void convert_array_storage() {
   BOOST_TEST_EQ(h[0], 0);
 }
 
-template <typename LHS, typename RHS>
-void add() {
-  auto a = prepare<LHS>(1);
-  auto b = prepare<RHS>(1);
-  b[0] += 2;
-  a[0] += b[0];
-  BOOST_TEST_EQ(a[0], 2);
-  a[0] -= b[0];
-  BOOST_TEST_EQ(a[0], 0);
-  a[0] -= b[0];
-  BOOST_TEST_EQ(a[0], -2);
-
-  auto c = prepare<RHS>(1);
-  c[0] = max<RHS>();
-  auto d = prepare<LHS>(1);
-  d[0] += c[0];
-  BOOST_TEST_EQ(d[0], max<RHS>());
-  auto e = prepare<LHS>(1);
-  e[0] -= c[0];
-  BOOST_TEST_EQ(e[0], -double(max<RHS>()));
-}
-
-template <typename LHS>
-void add_all_rhs() {
-  add<LHS, uint8_t>();
-  add<LHS, uint16_t>();
-  add<LHS, uint32_t>();
-  add<LHS, uint64_t>();
-  add<LHS, mp_int>();
-  add<LHS, double>();
-}
+struct adder {
+  template <class LHS, class RHS>
+  void operator()(boost::mp11::mp_list<LHS, RHS>) {
+    using buffer_type =
+        std::remove_reference_t<decltype(unsafe_access::unlimited_storage_buffer(
+            std::declval<unlimited_storage_type&>()))>;
+    constexpr auto iLHS = buffer_type::template type_index<LHS>();
+    constexpr auto iRHS = buffer_type::template type_index<RHS>();
+    {
+      auto a = prepare<LHS>(1);
+      BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type, iLHS);
+      a[0] += static_cast<RHS>(2);
+      // LHS is never downgraded, only upgraded to RHS.
+      // If RHS is normal integer, LHS doesn't change.
+      BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
+                    iRHS < 4 ? iLHS : std::max(iLHS, iRHS));
+      BOOST_TEST_EQ(a[0], 2);
+    }
+    {
+      auto a = prepare<LHS>(1);
+      a[0] += 2;
+      BOOST_TEST_EQ(a[0], 2);
+      // subtracting converts to double
+      a[0] -= 2;
+      BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type, 5);
+      BOOST_TEST_EQ(a[0], 0);
+    }
+    {
+      auto a = prepare<LHS>(1);
+      auto b = prepare<RHS>(1, static_cast<RHS>(2u));
+      // LHS is never downgraded, only upgraded to RHS.
+      // If RHS is normal integer, LHS doesn't change.
+      a[0] += b[0];
+      BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
+                    iRHS < 4 ? iLHS : std::max(iLHS, iRHS));
+      BOOST_TEST_EQ(a[0], 2);
+      a[0] -= b[0];
+      BOOST_TEST_EQ(a[0], 0);
+      a[0] -= b[0];
+      BOOST_TEST_EQ(a[0], -2);
+    }
+    {
+      auto a = prepare<LHS>(1);
+      auto b = max<RHS>();
+      // LHS is never downgraded, only upgraded to RHS.
+      // If RHS is normal integer, LHS doesn't change.
+      a[0] += b;
+      // BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
+      //               iRHS < 4 ? iLHS : std::max(iLHS, iRHS));
+      BOOST_TEST_EQ(a[0], max<RHS>());
+      a[0] += prepare<RHS>(1, b)[0];
+      // BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
+      //               iRHS < 4 ? iLHS + 1 : std::max(iLHS, iRHS));
+      BOOST_TEST_EQ(a[0], 2 * double(max<RHS>()));
+    }
+  }
+};
 
 int main() {
   // low-level tools
   {
-    uint8_t c = 0;
-    BOOST_TEST_EQ(bh::detail::safe_increment(c), true);
-    BOOST_TEST_EQ(c, 1);
-    c = 255;
-    BOOST_TEST_EQ(bh::detail::safe_increment(c), false);
-    BOOST_TEST_EQ(c, 255);
-    c = 0;
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, 255u), true);
-    BOOST_TEST_EQ(c, 255);
-    c = 1;
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, 255u), false);
-    BOOST_TEST_EQ(c, 1);
-    c = 255;
-    BOOST_TEST_EQ(bh::detail::safe_radd(c, 1u), false);
-    BOOST_TEST_EQ(c, 255);
-
-    auto eq = bh::detail::equal{};
+    auto eq = detail::equal{};
     BOOST_TEST(eq(-1, -1));
     BOOST_TEST(eq(1, 1u));
     BOOST_TEST(eq(1u, 1));
@@ -247,122 +240,17 @@ int main() {
     BOOST_TEST_NOT(eq(-1, (unsigned)-1));
     BOOST_TEST_NOT(eq((unsigned)-1, -1));
 
-    auto lt = bh::detail::less{};
+    auto lt = detail::less{};
     BOOST_TEST(lt(1u, 2u));
     BOOST_TEST(lt(-1, (unsigned)-1));
     BOOST_TEST(lt(1u, 2));
     BOOST_TEST(lt(-2, -1));
 
-    auto gt = bh::detail::greater{};
+    auto gt = detail::greater{};
     BOOST_TEST(gt(2u, 1u));
     BOOST_TEST(gt(2, 1u));
     BOOST_TEST(gt((unsigned)-1, -1));
     BOOST_TEST(gt(-1, -2));
-  }
-
-  // mp_int
-  {
-    const auto vmax = max<uint64_t>();
-
-    BOOST_TEST_EQ(mp_int(), 0u);
-    BOOST_TEST_EQ(mp_int(1u), 1u);
-    BOOST_TEST_EQ(mp_int(1u), 1.0);
-    BOOST_TEST_EQ(mp_int(1u), mp_int(1u));
-    BOOST_TEST_NE(mp_int(1u), 2u);
-    BOOST_TEST_NE(mp_int(1u), 2.0);
-    BOOST_TEST_NE(mp_int(1u), mp_int(2u));
-    BOOST_TEST_LT(mp_int(1u), 2u);
-    BOOST_TEST_LT(mp_int(1u), 2.0);
-    BOOST_TEST_LT(mp_int(1u), mp_int(2u));
-    BOOST_TEST_LE(mp_int(1u), 2u);
-    BOOST_TEST_LE(mp_int(1u), 2.0);
-    BOOST_TEST_LE(mp_int(1u), mp_int(2u));
-    BOOST_TEST_LE(mp_int(1u), 1u);
-    BOOST_TEST_GT(mp_int(1u), 0u);
-    BOOST_TEST_GT(mp_int(1u), 0.0);
-    BOOST_TEST_GT(mp_int(1u), mp_int(0u));
-    BOOST_TEST_GE(mp_int(1u), 0u);
-    BOOST_TEST_GE(mp_int(1u), 0.0);
-    BOOST_TEST_GE(mp_int(1u), 1u);
-    BOOST_TEST_GE(mp_int(1u), mp_int(0u));
-    BOOST_TEST_NOT(mp_int(1u) < mp_int(1u));
-    BOOST_TEST_NOT(mp_int(1u) > mp_int(1u));
-
-    auto a = mp_int();
-    ++a;
-    BOOST_TEST_EQ(a.data.size(), 1);
-    BOOST_TEST_EQ(a.data[0], 1);
-    ++a;
-    BOOST_TEST_EQ(a.data[0], 2);
-    a = vmax;
-    BOOST_TEST_EQ(a, vmax);
-    BOOST_TEST_EQ(a, static_cast<double>(vmax));
-    ++a;
-    BOOST_TEST_EQ(a, make_mp_int(0, 1));
-    ++a;
-    BOOST_TEST_EQ(a, make_mp_int(1, 1));
-    a += a;
-    BOOST_TEST_EQ(a, make_mp_int(2, 2));
-    BOOST_TEST_EQ(a, 2 * static_cast<double>(vmax) + 2);
-
-    // carry once A
-    a.data[0] = vmax;
-    a.data[1] = 1;
-    ++a;
-    BOOST_TEST_EQ(a, make_mp_int(0, 2));
-    // carry once B
-    a.data[0] = vmax;
-    a.data[1] = 1;
-    a += 1;
-    BOOST_TEST_EQ(a, make_mp_int(0, 2));
-    // carry once C
-    a.data[0] = vmax;
-    a.data[1] = 1;
-    a += make_mp_int(1, 1);
-    BOOST_TEST_EQ(a, make_mp_int(0, 3));
-
-    a.data[0] = vmax - 1;
-    a.data[1] = vmax;
-    ++a;
-    BOOST_TEST_EQ(a, make_mp_int(vmax, vmax));
-
-    // carry two times A
-    ++a;
-    BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
-    // carry two times B
-    a = make_mp_int(vmax, vmax);
-    a += 1;
-    BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
-    // carry two times C
-    a = make_mp_int(vmax, vmax);
-    a += mp_int(1);
-    BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
-
-    // carry and enlarge
-    a = make_mp_int(vmax, vmax);
-    a += a;
-    BOOST_TEST_EQ(a, make_mp_int(vmax - 1, vmax, 1));
-
-    // add smaller to larger
-    a = make_mp_int(1, 1, 1);
-    a += make_mp_int(1, 1);
-    BOOST_TEST_EQ(a, make_mp_int(2, 2, 1));
-
-    // add larger to smaller
-    a = make_mp_int(1, 1);
-    a += make_mp_int(1, 1, 1);
-    BOOST_TEST_EQ(a, make_mp_int(2, 2, 1));
-
-    a = mp_int(1);
-    auto b = 1.0;
-    BOOST_TEST_EQ(a, b);
-    for (unsigned i = 0; i < 80; ++i) {
-      b += b;
-      BOOST_TEST_NE(a, b);
-      a += a;
-      BOOST_TEST_EQ(a, b);
-    }
-    BOOST_TEST_GT(a.data.size(), 1u);
   }
 
   // empty state
@@ -377,7 +265,7 @@ int main() {
     copy<uint16_t>();
     copy<uint32_t>();
     copy<uint64_t>();
-    copy<mp_int>();
+    copy<large_int>();
     copy<double>();
   }
 
@@ -387,20 +275,20 @@ int main() {
     equal_1<uint16_t>();
     equal_1<uint32_t>();
     equal_1<uint64_t>();
-    equal_1<mp_int>();
+    equal_1<large_int>();
     equal_1<double>();
 
     equal_2<uint8_t, unsigned>();
     equal_2<uint16_t, unsigned>();
     equal_2<uint32_t, unsigned>();
     equal_2<uint64_t, unsigned>();
-    equal_2<mp_int, unsigned>();
+    equal_2<large_int, unsigned>();
     equal_2<double, unsigned>();
 
-    equal_2<mp_int, double>();
+    equal_2<large_int, double>();
 
     auto a = prepare<double>(1);
-    auto b = prepare<mp_int>(1);
+    auto b = prepare<large_int>(1);
     BOOST_TEST(a == b);
     ++a[0];
     BOOST_TEST_NOT(a == b);
@@ -413,8 +301,8 @@ int main() {
     increase_and_grow<uint32_t>();
     increase_and_grow<uint64_t>();
 
-    // only increase for mp_int
-    auto a = prepare<mp_int>(2, static_cast<mp_int>(1));
+    // only increase for large_int
+    auto a = prepare<large_int>(2, static_cast<large_int>(1));
     BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_EQ(a[1], 0);
     ++a[0];
@@ -424,12 +312,9 @@ int main() {
 
   // add
   {
-    add_all_rhs<uint8_t>();
-    add_all_rhs<uint16_t>();
-    add_all_rhs<uint32_t>();
-    add_all_rhs<uint64_t>();
-    add_all_rhs<mp_int>();
-    add_all_rhs<double>();
+    using namespace boost::mp11;
+    using L = mp_list<uint8_t, uint16_t, uint64_t, large_int, double>;
+    mp_for_each<mp_product<mp_list, L, L>>(adder());
   }
 
   // add_and_grow
@@ -478,7 +363,7 @@ int main() {
     convert_array_storage<uint16_t>();
     convert_array_storage<uint32_t>();
     convert_array_storage<uint64_t>();
-    convert_array_storage<mp_int>();
+    convert_array_storage<large_int>();
     convert_array_storage<double>();
   }
 
@@ -496,6 +381,16 @@ int main() {
     BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_GE(a[0], 1);
     BOOST_TEST_LE(a[0], 1);
+    BOOST_TEST_NE(a[0], 2);
+    BOOST_TEST_GT(2, a[0]);
+    BOOST_TEST_LT(0, a[0]);
+    BOOST_TEST_GE(1, a[0]);
+    BOOST_TEST_GE(2, a[0]);
+    BOOST_TEST_LE(0, a[0]);
+    BOOST_TEST_LE(1, a[0]);
+    BOOST_TEST_EQ(1, a[0]);
+    BOOST_TEST_NE(2, a[0]);
+
     ++b[0];
     BOOST_TEST_EQ(a[0], b[0]);
     b[0] += 2;
@@ -507,6 +402,14 @@ int main() {
     c[0] = c[1] = 1;
     BOOST_TEST_EQ(c[0], 1);
     BOOST_TEST_EQ(c[1], 1);
+
+    auto d = prepare(2);
+    d[1] = unlimited_storage_type::large_int{2};
+    BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(d).type, 4);
+    d[0] = -2;
+    BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(d).type, 5);
+    BOOST_TEST_EQ(d[0], -2);
+    BOOST_TEST_EQ(d[1], 2);
   }
 
   // iterators
@@ -540,6 +443,63 @@ int main() {
     std::partial_sum(a.begin(), a.end(), a.begin());
     BOOST_TEST_EQ(a[0], 1);
     BOOST_TEST_EQ(a[1], 2);
+  }
+
+  // memory exhaustion
+  {
+    using S = unlimited_storage<failing_allocator<char>>;
+    using alloc_t = typename S::allocator_type;
+    std::size_t large_int_nbytes = 0;
+    typename S::large_int li{1, alloc_t{1024, large_int_nbytes}};
+    BOOST_TEST_GT(large_int_nbytes, 0);
+    const auto n = sizeof(li) + large_int_nbytes;
+    std::size_t nbytes = 0;
+    S s(alloc_t{n, nbytes});
+    s.reset(n); // should work
+    BOOST_TEST_EQ(nbytes, n);
+    bool bad_alloc = false;
+    try {
+      s.reset(n + 1); // should not work
+    } catch (std::bad_alloc&) { bad_alloc = true; }
+    BOOST_TEST(bad_alloc);
+
+    // storage must be still in valid state
+    BOOST_TEST_EQ(s.size(), 0);
+    auto& buffer = unsafe_access::unlimited_storage_buffer(s);
+    BOOST_TEST_EQ(buffer.ptr, nullptr);
+    BOOST_TEST_EQ(buffer.type, 0);
+    // all allocated memory should have returned
+    BOOST_TEST_EQ(nbytes, 0);
+
+    // scenario in which the constructor of large_int fails
+    bad_alloc = false;
+    li.data.resize(10, 1);
+    s.reset(2);
+    const auto old_ptr = buffer.ptr;
+    try {
+      s[0] += li;
+    } catch (std::bad_alloc&) { bad_alloc = true; }
+    BOOST_TEST(bad_alloc);
+
+    // storage still in valid state
+    BOOST_TEST_EQ(s.size(), 2);
+    BOOST_TEST_EQ(buffer.ptr, old_ptr);
+    BOOST_TEST_EQ(buffer.type, 0);
+    BOOST_TEST_EQ(nbytes, 2);
+
+    // buffer.make<large_int>(n) may be called by serialization
+    bad_alloc = false;
+    try {
+      buffer.make<typename S::large_int>(2);
+    } catch (std::bad_alloc&) { bad_alloc = true; }
+    BOOST_TEST(bad_alloc);
+
+    // storage still in valid state
+    BOOST_TEST_EQ(s.size(), 0);
+    BOOST_TEST_EQ(buffer.ptr, nullptr);
+    BOOST_TEST_EQ(buffer.type, 0);
+    // all memory returned
+    BOOST_TEST_EQ(nbytes, 0);
   }
 
   return boost::report_errors();

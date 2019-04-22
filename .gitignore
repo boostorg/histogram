@@ -15,3 +15,4 @@ CMakeSettings.json
 .vs*
 *.info
 tools/lcov-*
+coverage-report

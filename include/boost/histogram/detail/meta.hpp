@@ -301,6 +301,9 @@ struct requires_axes {};
 template <class T, class U, class = std::enable_if_t<std::is_convertible<T, U>::value>>
 struct requires_convertible {};
 
+template <class T, class = std::enable_if_t<std::is_arithmetic<T>::value>>
+struct requires_arithmetic {};
+
 template <class T>
 auto make_default(const T& t) {
   return static_if<has_allocator<T>>([](const auto& t) { return T(t.get_allocator()); },
@@ -394,21 +397,6 @@ R get_scale(const T& t) {
 
 template <class T, class Default>
 using replace_default = mp11::mp_if<std::is_same<T, use_default>, Default, T>;
-
-template <class T>
-auto make_unsigned_impl(std::true_type, const T t) noexcept {
-  return static_cast<typename std::make_unsigned<T>::type>(t);
-}
-
-template <class T>
-auto make_unsigned_impl(std::false_type, const T t) noexcept {
-  return t;
-}
-
-template <class T>
-auto make_unsigned(const T t) noexcept {
-  return make_unsigned_impl(std::is_integral<T>{}, t);
-}
 
 } // namespace detail
 } // namespace histogram

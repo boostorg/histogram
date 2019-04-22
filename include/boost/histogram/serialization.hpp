@@ -165,7 +165,7 @@ void serialize(Archive& ar, map_impl<T>& impl, unsigned /* version */) {
 }
 
 template <class Archive, class Allocator>
-void serialize(Archive& ar, mp_int<Allocator>& x, unsigned /* version */) {
+void serialize(Archive& ar, large_int<Allocator>& x, unsigned /* version */) {
   ar& serialization::make_nvp("data", x.data);
 }
 } // namespace detail
@@ -176,15 +176,16 @@ void serialize(Archive& ar, storage_adaptor<T>& x, unsigned /* version */) {
   ar& serialization::make_nvp("impl", static_cast<impl_t&>(x));
 }
 
-template <class A>
-template <class Archive>
-void unlimited_storage<A>::serialize(Archive& ar, unsigned /* version */) {
+template <class Allocator, class Archive>
+void serialize(Archive& ar, unlimited_storage<Allocator>& s, unsigned /* version */) {
+  auto& buffer = unsafe_access::unlimited_storage_buffer(s);
+  using buffer_t = std::remove_reference_t<decltype(buffer)>;
   if (Archive::is_loading::value) {
-    buffer_type dummy(buffer.alloc);
+    buffer_t helper(buffer.alloc);
     std::size_t size;
-    ar& serialization::make_nvp("type", dummy.type);
+    ar& serialization::make_nvp("type", helper.type);
     ar& serialization::make_nvp("size", size);
-    dummy.apply([this, size](auto* tp) {
+    helper.visit([&buffer, size](auto* tp) {
       BOOST_ASSERT(tp == nullptr);
       using T = detail::remove_cvref_t<decltype(*tp)>;
       buffer.template make<T>(size);
@@ -193,7 +194,7 @@ void unlimited_storage<A>::serialize(Archive& ar, unsigned /* version */) {
     ar& serialization::make_nvp("type", buffer.type);
     ar& serialization::make_nvp("size", buffer.size);
   }
-  buffer.apply([this, &ar](auto* tp) {
+  buffer.visit([&buffer, &ar](auto* tp) {
     using T = detail::remove_cvref_t<decltype(*tp)>;
     ar& serialization::make_nvp(
         "buffer",

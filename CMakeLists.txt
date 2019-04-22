@@ -109,33 +109,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   #
   # install(TARGETS boost_histogram
   #   boost_assert
-  #   boost_bind
-  #   boost_callable_traits
-  #   boost_concept_check
   #   boost_config
-  #   boost_container_hash
-  #   boost_conversion
   #   boost_core
-  #   boost_detail
-  #   boost_function_types
-  #   boost_fusion
-  #   boost_integer
-  #   boost_iterator
-  #   boost_move
   #   boost_mp11
-  #   boost_mpl
-  #   boost_optional
-  #   boost_predef
-  #   boost_preprocessor
-  #   boost_smart_ptr
-  #   boost_static_assert
-  #   boost_throw_exception
-  #   boost_tuple
-  #   boost_type_index
-  #   boost_type_traits
-  #   boost_typeof
-  #   boost_utility
+  #   boost_callable_traits
   #   boost_variant
+  #   boost_throw_exception
   #   EXPORT ${PROJECT_NAME}Targets)
   # install(EXPORT ${PROJECT_NAME}Targets
   #   DESTINATION ${CONFIG_INSTALL_DIR}

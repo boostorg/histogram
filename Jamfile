@@ -15,12 +15,19 @@ variant histogram_ubasan : debug :
     <linkflags>"-fsanitize=address,leak,undefined"
     ;
 
+# only works with gcc-5
+variant histogram_coverage : debug :
+    <cxxstd>latest
+    <cxxflags>"--coverage"
+    <linkflags>"--coverage"
+    ;
+
 project
     : requirements
     <implicit-dependency>/boost//headers
     <include>$(BOOST_ROOT)
-    <toolset>clang:<cxxflags>"-pedantic -Wextra -fstrict-aliasing"
-    <toolset>gcc:<cxxflags>"-pedantic -Wextra -fstrict-aliasing"
+    <toolset>clang:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing"
+    <toolset>gcc:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing"
     : default-build
     <warnings>all
     #<warnings-as-errors>on

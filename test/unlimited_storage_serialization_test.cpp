@@ -56,7 +56,7 @@ int main() {
     serialization_impl<uint16_t>();
     serialization_impl<uint32_t>();
     serialization_impl<uint64_t>();
-    serialization_impl<unlimited_storage_type::mp_int>();
+    serialization_impl<unlimited_storage_type::large_int>();
     serialization_impl<double>();
   }
 
