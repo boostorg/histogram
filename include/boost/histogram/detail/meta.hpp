@@ -301,9 +301,6 @@ struct requires_axes {};
 template <class T, class U, class = std::enable_if_t<std::is_convertible<T, U>::value>>
 struct requires_convertible {};
 
-template <class T, class = std::enable_if_t<std::is_arithmetic<T>::value>>
-struct requires_arithmetic {};
-
 template <class T>
 auto make_default(const T& t) {
   return static_if<has_allocator<T>>([](const auto& t) { return T(t.get_allocator()); },

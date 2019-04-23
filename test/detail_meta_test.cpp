@@ -394,7 +394,7 @@ int main() {
     using B = std::vector<int, tracing_allocator<int>>;
     B b = make_default(B(tracing_allocator<int>(db)));
     b.resize(100);
-    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, 100);
+    BOOST_TEST_EQ(db.at<int>().first, 100);
   }
 
   // has_operator_equal

@@ -11,6 +11,7 @@
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/safe_comparison.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
@@ -359,7 +360,7 @@ public:
   bool operator==(const U& u) const {
     using std::begin;
     using std::end;
-    return std::equal(this->begin(), this->end(), begin(u), end(u));
+    return std::equal(this->begin(), this->end(), begin(u), end(u), detail::equal{});
   }
 };
 

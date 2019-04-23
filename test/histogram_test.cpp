@@ -569,14 +569,14 @@ void run_tests() {
     }
 
     // int allocation for std::vector
-    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, db[&BOOST_CORE_TYPEID(int)].second);
-    BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(int)].first, 1002u);
+    BOOST_TEST_EQ(db.at<int>().first, 0);
+    BOOST_TEST_EQ(db.at<int>().second, 1002);
 
     if (Tag()) { // axis::variant allocation, only for dynamic histogram
       using T = axis::variant<axis::integer<>>;
-      BOOST_TEST_EQ(db[&BOOST_CORE_TYPEID(T)].first, db[&BOOST_CORE_TYPEID(T)].second);
-      BOOST_TEST_LE(db[&BOOST_CORE_TYPEID(T)].first,
-                    1u); // zero if vector uses small-vector-optimisation
+      BOOST_TEST_EQ(db.at<T>().first, 0);
+      // may be zero if vector uses small-vector-optimisation
+      BOOST_TEST_LE(db.at<T>().second, 1);
     }
   }
 }

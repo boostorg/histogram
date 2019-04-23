@@ -237,20 +237,44 @@ int main() {
     BOOST_TEST(eq(1, 1u));
     BOOST_TEST(eq(1u, 1));
     BOOST_TEST(eq(1u, 1u));
-    BOOST_TEST_NOT(eq(-1, (unsigned)-1));
-    BOOST_TEST_NOT(eq((unsigned)-1, -1));
+    BOOST_TEST(eq(1.0, 1));
+    BOOST_TEST(eq(1, 1.0));
+    BOOST_TEST(eq(1.0, 1u));
+    BOOST_TEST(eq(1u, 1.0));
+    BOOST_TEST_NOT(eq(-1, static_cast<unsigned>(-1)));
+    BOOST_TEST_NOT(eq(static_cast<unsigned>(-1), -1));
 
     auto lt = detail::less{};
     BOOST_TEST(lt(1u, 2u));
-    BOOST_TEST(lt(-1, (unsigned)-1));
+    BOOST_TEST(lt(-1, 1u));
     BOOST_TEST(lt(1u, 2));
     BOOST_TEST(lt(-2, -1));
+    BOOST_TEST(lt(-2.0, -1));
+    BOOST_TEST(lt(1, 2.0));
+    BOOST_TEST(lt(-1.0, 1u));
+    BOOST_TEST(lt(1u, 2.0));
+    BOOST_TEST_NOT(lt(1u, 1));
+    BOOST_TEST_NOT(lt(1, 1u));
+    BOOST_TEST_NOT(lt(1.0, 1));
+    BOOST_TEST_NOT(lt(1, 1.0));
+    BOOST_TEST_NOT(lt(1.0, 1u));
+    BOOST_TEST_NOT(lt(1u, 1.0));
 
     auto gt = detail::greater{};
     BOOST_TEST(gt(2u, 1u));
+    BOOST_TEST(gt(1u, -1));
     BOOST_TEST(gt(2, 1u));
-    BOOST_TEST(gt((unsigned)-1, -1));
     BOOST_TEST(gt(-1, -2));
+    BOOST_TEST(gt(-1, -2.0));
+    BOOST_TEST(gt(2.0, 1));
+    BOOST_TEST(gt(1u, -1.0));
+    BOOST_TEST(gt(2.0, 1u));
+    BOOST_TEST_NOT(gt(1u, 1));
+    BOOST_TEST_NOT(gt(1, 1u));
+    BOOST_TEST_NOT(gt(1.0, 1));
+    BOOST_TEST_NOT(gt(1, 1.0));
+    BOOST_TEST_NOT(gt(1.0, 1u));
+    BOOST_TEST_NOT(gt(1u, 1.0));
   }
 
   // empty state
@@ -427,7 +451,7 @@ int main() {
     std::vector<double> b(2, 1);
     std::copy(b.begin(), b.end(), a.begin());
 
-    const auto aconst = a;
+    const auto& aconst = a;
     BOOST_TEST(std::equal(aconst.begin(), aconst.end(), b.begin(), b.end()));
 
     unlimited_storage_type::iterator it1 = a.begin();
@@ -437,7 +461,7 @@ int main() {
     unlimited_storage_type::const_iterator it2 = a.begin();
     BOOST_TEST_EQ(*it2, 3);
     unlimited_storage_type::const_iterator it3 = aconst.begin();
-    BOOST_TEST_EQ(*it3, 1);
+    BOOST_TEST_EQ(*it3, 3);
 
     std::copy(b.begin(), b.end(), a.begin());
     std::partial_sum(a.begin(), a.end(), a.begin());
@@ -447,21 +471,22 @@ int main() {
 
   // memory exhaustion
   {
-    using S = unlimited_storage<failing_allocator<char>>;
+    using S = unlimited_storage<tracing_allocator<char>>;
     using alloc_t = typename S::allocator_type;
-    std::size_t large_int_nbytes = 0;
-    typename S::large_int li{1, alloc_t{1024, large_int_nbytes}};
-    BOOST_TEST_GT(large_int_nbytes, 0);
-    const auto n = sizeof(li) + large_int_nbytes;
-    std::size_t nbytes = 0;
-    S s(alloc_t{n, nbytes});
-    s.reset(n); // should work
-    BOOST_TEST_EQ(nbytes, n);
-    bool bad_alloc = false;
-    try {
-      s.reset(n + 1); // should not work
-    } catch (std::bad_alloc&) { bad_alloc = true; }
-    BOOST_TEST(bad_alloc);
+    {
+      // check that large_int allocates in ctor
+      tracing_allocator_db db;
+      typename S::large_int li{1, alloc_t{db}};
+      BOOST_TEST_GT(db.first, 0);
+    }
+
+    tracing_allocator_db db;
+    db.tracing = true;
+    S s(alloc_t{db});
+    s.reset(10); // should work
+    BOOST_TEST_EQ(db.at<uint8_t>().first, 10);
+    db.failure_countdown = 0;
+    BOOST_TEST_THROWS(s.reset(5), std::bad_alloc);
 
     // storage must be still in valid state
     BOOST_TEST_EQ(s.size(), 0);
@@ -469,37 +494,30 @@ int main() {
     BOOST_TEST_EQ(buffer.ptr, nullptr);
     BOOST_TEST_EQ(buffer.type, 0);
     // all allocated memory should have returned
-    BOOST_TEST_EQ(nbytes, 0);
+    BOOST_TEST_EQ(db.first, 0);
 
-    // scenario in which the constructor of large_int fails
-    bad_alloc = false;
-    li.data.resize(10, 1);
-    s.reset(2);
+    // test failure in buffer.make<large_int>(n, iter), AT::construct
+    s.reset(3);
+    s[1] = std::numeric_limits<std::uint64_t>::max();
+    db.failure_countdown = 2;
     const auto old_ptr = buffer.ptr;
-    try {
-      s[0] += li;
-    } catch (std::bad_alloc&) { bad_alloc = true; }
-    BOOST_TEST(bad_alloc);
+    BOOST_TEST_THROWS(++s[1], std::bad_alloc);
 
-    // storage still in valid state
-    BOOST_TEST_EQ(s.size(), 2);
+    // storage remains in previous state
+    BOOST_TEST_EQ(buffer.size, 3);
     BOOST_TEST_EQ(buffer.ptr, old_ptr);
-    BOOST_TEST_EQ(buffer.type, 0);
-    BOOST_TEST_EQ(nbytes, 2);
+    BOOST_TEST_EQ(buffer.type, 3);
 
-    // buffer.make<large_int>(n) may be called by serialization
-    bad_alloc = false;
-    try {
-      buffer.make<typename S::large_int>(2);
-    } catch (std::bad_alloc&) { bad_alloc = true; }
-    BOOST_TEST(bad_alloc);
+    // test buffer.make<large_int>(n), AT::construct, called by serialization code
+    db.failure_countdown = 1;
+    BOOST_TEST_THROWS(buffer.make<typename S::large_int>(2), std::bad_alloc);
 
     // storage still in valid state
     BOOST_TEST_EQ(s.size(), 0);
     BOOST_TEST_EQ(buffer.ptr, nullptr);
     BOOST_TEST_EQ(buffer.type, 0);
     // all memory returned
-    BOOST_TEST_EQ(nbytes, 0);
+    BOOST_TEST_EQ(db.first, 0);
   }
 
   return boost::report_errors();

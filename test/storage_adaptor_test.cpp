@@ -255,37 +255,35 @@ int main() {
     using A = storage_adaptor<map_t>;
     auto a = A(alloc);
     // MSVC implementation allocates some structures for debugging
-    const auto baseline = db.sum.first;
+    const auto baseline = db.second;
     a.reset(10);
-    BOOST_TEST_EQ(db.sum.first, baseline); // nothing allocated yet
+    BOOST_TEST_EQ(db.first, baseline); // nothing allocated yet
     // queries do not allocate
     BOOST_TEST_EQ(a[0], 0);
     BOOST_TEST_EQ(a[9], 0);
-    BOOST_TEST_EQ(db.sum.first, baseline);
-
+    BOOST_TEST_EQ(db.first, baseline);
     ++a[5]; // causes one allocation
+    const auto node = db.first - baseline;
     BOOST_TEST_EQ(a[5], 1);
-    BOOST_TEST_EQ(db.sum.first, baseline + 1);
     a[4] += 2; // causes one allocation
     BOOST_TEST_EQ(a[4], 2);
-    BOOST_TEST_EQ(db.sum.first, baseline + 2);
+    BOOST_TEST_EQ(db.first, baseline + 2 * node);
     a[3] -= 2; // causes one allocation
     BOOST_TEST_EQ(a[3], -2);
-    BOOST_TEST_EQ(db.sum.first, baseline + 3);
+    BOOST_TEST_EQ(db.first, baseline + 3 * node);
     a[2] *= 2; // no allocation
-    BOOST_TEST_EQ(db.sum.first, baseline + 3);
+    BOOST_TEST_EQ(db.first, baseline + 3 * node);
     a[2] /= 2; // no allocation
-    BOOST_TEST_EQ(db.sum.first, baseline + 3);
-    const auto baseline_dealloc = db.sum.second;
+    BOOST_TEST_EQ(db.first, baseline + 3 * node);
     a[4] = 0; // causes one deallocation
-    BOOST_TEST_EQ(db.sum.second, baseline_dealloc + 1);
+    BOOST_TEST_EQ(db.first, baseline + 2 * node);
 
     auto b = storage_adaptor<std::vector<int>>();
     b.reset(5);
     ++b[2];
     a = b;
     // only one new allocation for non-zero value
-    BOOST_TEST_EQ(db.sum.first, baseline + 4);
+    BOOST_TEST_EQ(db.first, baseline + node);
   }
 
   return boost::report_errors();

@@ -200,16 +200,16 @@ int main() {
       axes.emplace_back(T3({1, 2, 3, 4, 5}, {}, a));
     }
     // 3 axis::variant objects
-    BOOST_TEST_EQ(db.at<axis_type>().first, db.at<axis_type>().second);
-    BOOST_TEST_EQ(db.at<axis_type>().first, 3);
+    BOOST_TEST_EQ(db.at<axis_type>().first, 0);
+    BOOST_TEST_EQ(db.at<axis_type>().second, 3);
 
     // label of T1
-    BOOST_TEST_EQ(db.at<char>().first, db.at<char>().second);
-    BOOST_TEST_EQ(db.at<char>().first, 3);
+    BOOST_TEST_EQ(db.at<char>().first, 0);
+    BOOST_TEST_EQ(db.at<char>().second, 3);
 
     // T3 allocates storage for long array
-    BOOST_TEST_EQ(db.at<long>().first, db.at<long>().second);
-    BOOST_TEST_EQ(db.at<long>().first, 5u);
+    BOOST_TEST_EQ(db.at<long>().first, 0);
+    BOOST_TEST_EQ(db.at<long>().second, 5);
   }
 
   // testing pass-through versions of get

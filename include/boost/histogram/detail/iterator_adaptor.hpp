@@ -56,7 +56,7 @@ public:
   using reference = Reference;
   using value_type = std::remove_const_t<Value>;
   using pointer = typename operator_arrow_dispatch::result_type;
-  using difference_type = decltype(std::declval<Base>() - std::declval<Base>());
+  using difference_type = std::ptrdiff_t;
   using iterator_category = std::random_access_iterator_tag;
 
   iterator_adaptor() = default;

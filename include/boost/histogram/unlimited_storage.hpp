@@ -1,4 +1,4 @@
-// Copyright 2015-2017 Hans Dembinski
+// Copyright 2015-2019 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -13,10 +13,12 @@
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/safe_comparison.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
+#include <boost/mp11/utility.hpp>
 #include <cmath>
 #include <functional>
 #include <memory>
@@ -26,107 +28,34 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <class T>
-auto make_unsigned_impl(std::true_type, const T t) noexcept {
-  return static_cast<typename std::make_unsigned<T>::type>(t);
-}
-
-template <class T>
-auto make_unsigned_impl(std::false_type, const T t) noexcept {
-  return t;
-}
-
-template <class T>
-auto make_unsigned(const T t) noexcept {
-  return make_unsigned_impl(std::is_integral<T>{}, t);
-}
+template <class T, class = std::enable_if_t<(std::is_arithmetic<T>::value ||
+                                             is_large_int<T>::value)>>
+struct requires_arithmetic {};
 
 template <class L, class T>
 using next_type = mp11::mp_at_c<L, (mp11::mp_find<L, T>::value + 1)>;
 
-// version of std::equal_to<> which handles comparison of signed and unsigned
-struct equal {
-  template <class T, class U>
-  bool operator()(const T& t, const U& u) const noexcept {
-    return impl(std::is_signed<T>{}, std::is_signed<U>{}, t, u);
-  }
+template <class Allocator, class T>
+void buffer_construct(std::true_type, Allocator&, T* ptr, std::size_t n) {
+  std::fill(ptr, ptr + n, T{});
+}
 
-  template <class T, class U>
-  bool impl(std::false_type, std::false_type, const T& t, const U& u) const noexcept {
-    return t == u;
+template <class Allocator, class T>
+void buffer_construct(std::false_type, Allocator& a, T* ptr, std::size_t n) {
+  using AT = std::allocator_traits<Allocator>;
+  auto pit = ptr;
+  const auto end = ptr + n;
+  try {
+    // this loop may throw, T is large_int, call default constructor with allocator
+    for (; pit != end; ++pit) AT::construct(a, pit, a);
+  } catch (...) {
+    // release resources that were already acquired before rethrowing
+    // pointer location is at first invalid cell
+    while (pit != ptr) AT::destroy(a, --pit);
+    AT::deallocate(a, ptr, n);
+    throw;
   }
-
-  template <class T, class U>
-  bool impl(std::false_type, std::true_type, const T& t, const U& u) const noexcept {
-    return u >= 0 && t == make_unsigned(u);
-  }
-
-  template <class T, class U>
-  bool impl(std::true_type, std::false_type, const T& t, const U& u) const noexcept {
-    return t >= 0 && make_unsigned(t) == u;
-  }
-
-  template <class T, class U>
-  bool impl(std::true_type, std::true_type, const T& t, const U& u) const noexcept {
-    return t == u;
-  }
-};
-
-// version of std::less<> which handles comparison of signed and unsigned
-struct less {
-  template <class T, class U>
-  bool operator()(const T& t, const U& u) const noexcept {
-    return impl(std::is_signed<T>{}, std::is_signed<U>{}, t, u);
-  }
-
-  template <class T, class U>
-  bool impl(std::false_type, std::false_type, const T& t, const U& u) const noexcept {
-    return t < u;
-  }
-
-  template <class T, class U>
-  bool impl(std::false_type, std::true_type, const T& t, const U& u) const noexcept {
-    return u >= 0 && t < make_unsigned(u);
-  }
-
-  template <class T, class U>
-  bool impl(std::true_type, std::false_type, const T& t, const U& u) const noexcept {
-    return t < 0 || make_unsigned(t) < u;
-  }
-
-  template <class T, class U>
-  bool impl(std::true_type, std::true_type, const T& t, const U& u) const noexcept {
-    return t < u;
-  }
-};
-
-// version of std::greater<> which handles comparison of signed and unsigned
-struct greater {
-  template <class T, class U>
-  bool operator()(const T& t, const U& u) const noexcept {
-    return impl(std::is_signed<T>{}, std::is_signed<U>{}, t, u);
-  }
-
-  template <class T, class U>
-  bool impl(std::false_type, std::false_type, const T& t, const U& u) const noexcept {
-    return t > u;
-  }
-
-  template <class T, class U>
-  bool impl(std::false_type, std::true_type, const T& t, const U& u) const noexcept {
-    return u < 0 || t > make_unsigned(u);
-  }
-
-  template <class T, class U>
-  bool impl(std::true_type, std::false_type, const T& t, const U& u) const noexcept {
-    return t >= 0 && make_unsigned(t) > u;
-  }
-
-  template <class T, class U>
-  bool impl(std::true_type, std::true_type, const T& t, const U& u) const noexcept {
-    return t > u;
-  }
-};
+}
 
 template <class Allocator>
 void* buffer_create(Allocator& a, std::size_t n) {
@@ -134,17 +63,7 @@ void* buffer_create(Allocator& a, std::size_t n) {
   auto ptr = AT::allocate(a, n); // may throw
   static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
                 "ptr must be trivially copyable");
-  auto it = ptr;
-  const auto end = ptr + n;
-  try {
-    // this loop may throw
-    while (it != end) AT::construct(a, it++, typename AT::value_type{});
-  } catch (...) {
-    // release resources that were already acquired before rethrowing
-    while (it != ptr) AT::destroy(a, --it);
-    AT::deallocate(a, ptr, n);
-    throw;
-  }
+  buffer_construct(std::is_trivial<typename AT::value_type>{}, a, ptr, n);
   return static_cast<void*>(ptr);
 }
 
@@ -156,14 +75,15 @@ auto buffer_create(Allocator& a, std::size_t n, Iterator iter) {
   auto ptr = AT::allocate(a, n); // may throw
   static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
                 "ptr must be trivially copyable");
-  auto it = ptr;
+  auto pit = ptr;
   const auto end = ptr + n;
   try {
     // this loop may throw
-    while (it != end) AT::construct(a, it++, static_cast<T>(*iter++));
+    for (; pit != end; ++pit) AT::construct(a, pit, static_cast<T>(*iter++));
   } catch (...) {
     // release resources that were already acquired before rethrowing
-    while (it != ptr) AT::destroy(a, --it);
+    // pointer location is at first invalid cell
+    while (pit != ptr) AT::destroy(a, --pit);
     AT::deallocate(a, ptr, n);
     throw;
   }
@@ -176,8 +96,8 @@ void buffer_destroy(Allocator& a, typename std::allocator_traits<Allocator>::poi
   BOOST_ASSERT(p);
   BOOST_ASSERT(n > 0u);
   using AT = std::allocator_traits<Allocator>;
-  auto it = p + n;
-  while (it != p) AT::destroy(a, --it);
+  auto pit = p + n;
+  while (pit != p) AT::destroy(a, --pit);
   AT::deallocate(a, p, n);
 }
 
@@ -420,10 +340,8 @@ public:
   private:
     template <class Binary>
     bool op(const const_reference& x) const {
-      return bref_.visit([i = idx_, ix = x.idx_, &x](const auto* p) {
-        return x.bref_.visit(
-            [pi = p[i], ix](const auto* xp) { return Binary()(pi, xp[ix]); });
-      });
+      return x.bref_.visit(
+          [this, ix = x.idx_](const auto* xp) { return this->op<Binary>(xp[ix]); });
     }
 
     template <class Binary, class U>

@@ -256,6 +256,12 @@ struct large_int {
   std::vector<std::uint64_t, Allocator> data;
 };
 
+template <class T>
+struct is_large_int : std::false_type {};
+
+template <class Allocator>
+struct is_large_int<large_int<Allocator>> : std::true_type {};
+
 } // namespace detail
 } // namespace histogram
 } // namespace boost

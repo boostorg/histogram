@@ -8,22 +8,51 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_ALLOCATOR_HPP
 
 #include <algorithm>
+#include <boost/config.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/typeinfo.hpp>
+#include <iostream>
 #include <unordered_map>
 #include <utility>
 
 namespace boost {
 namespace histogram {
 
-struct tracing_allocator_db : std::unordered_map<const boost::core::typeinfo*,
-                                                 std::pair<std::size_t, std::size_t>> {
-  template <typename T>
-  std::pair<std::size_t, std::size_t>& at() {
-    return this->operator[](&BOOST_CORE_TYPEID(T));
+struct tracing_allocator_db : std::pair<int, int> {
+  template <class T>
+  auto& at() {
+    return map_[&BOOST_CORE_TYPEID(T)];
   }
 
-  std::pair<std::size_t, std::size_t> sum;
+  void clear() {
+    map_.clear();
+    this->first = 0;
+    this->second = 0;
+  }
+
+  int failure_countdown = -1;
+  bool tracing = false;
+
+  template <class... Ts>
+  void log(Ts&&... ts) {
+    if (!tracing) return;
+    log_impl(std::forward<Ts>(ts)...);
+    std::cerr << std::endl;
+  }
+
+  std::size_t size() const { return map_.size(); }
+
+private:
+  using map_t = std::unordered_map<const boost::core::typeinfo*, std::pair<int, int>>;
+  map_t map_;
+
+  BOOST_ATTRIBUTE_UNUSED inline void log_impl() {}
+
+  template <class T, class... Ts>
+  inline void log_impl(T&& t, Ts&&... ts) {
+    std::cerr << t;
+    log_impl(std::forward<Ts>(ts)...);
+  }
 };
 
 template <class T>
@@ -48,18 +77,50 @@ struct tracing_allocator {
 
   T* allocate(std::size_t n) {
     if (db) {
-      db->at<T>().first += n;
-      db->sum.first += n;
+      if (db->failure_countdown >= 0) {
+        const auto count = db->failure_countdown--;
+        db->log("allocator +", n, " ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
+                " [failure in ", count, "]");
+        if (count == 0) throw std::bad_alloc{};
+      } else
+        db->log("allocator +", n, " ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)));
+      auto& p = db->at<T>();
+      p.first += n;
+      p.second += n;
+      db->first += n * sizeof(T);
+      db->second += n * sizeof(T);
     }
     return static_cast<T*>(::operator new(n * sizeof(T)));
   }
 
   void deallocate(T* p, std::size_t n) {
     if (db) {
-      db->at<T>().second += n;
-      db->sum.second += n;
+      db->at<T>().first -= n;
+      db->first -= n * sizeof(T);
+      db->log("allocator -", n, " ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)));
     }
     ::operator delete((void*)p);
+  }
+
+  template <class... Ts>
+  void construct(T* p, Ts&&... ts) {
+    if (db) {
+      if (db->failure_countdown >= 0) {
+        const auto count = db->failure_countdown--;
+        db->log("allocator construct ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
+                "[ failure in ", count, "]");
+        if (count == 0) throw std::bad_alloc{};
+      } else
+        db->log("allocator construct ",
+                boost::core::demangled_name(BOOST_CORE_TYPEID(T)));
+    }
+    ::new (static_cast<void*>(p)) T(std::forward<Ts>(ts)...);
+  }
+
+  void destroy(T* p) {
+    if (db)
+      db->log("allocator destroy ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)));
+    p->~T();
   }
 };
 
@@ -72,54 +133,6 @@ constexpr bool operator==(const tracing_allocator<T>&,
 template <class T, class U>
 constexpr bool operator!=(const tracing_allocator<T>& t,
                           const tracing_allocator<U>& u) noexcept {
-  return !operator==(t, u);
-}
-
-template <class T>
-struct failing_allocator {
-  using value_type = T;
-
-  std::size_t nfail = 0;
-  std::size_t* nbytes = nullptr;
-
-  failing_allocator() noexcept = default;
-  failing_allocator(const failing_allocator& x) noexcept = default;
-
-  explicit failing_allocator(std::size_t nf, std::size_t& nb) noexcept
-      : nfail(nf), nbytes(&nb) {}
-  template <class U>
-  failing_allocator(const failing_allocator<U>& a) noexcept
-      : nfail(a.nfail), nbytes(a.nbytes) {}
-  template <class U>
-  failing_allocator& operator=(const failing_allocator<U>& a) noexcept {
-    nfail = a.nfail;
-    nbytes = a.nbytes;
-    return *this;
-  }
-  ~failing_allocator() noexcept {}
-
-  T* allocate(std::size_t n) {
-    if (nbytes) {
-      if (*nbytes + n * sizeof(T) > nfail) throw std::bad_alloc{};
-      *nbytes += n * sizeof(T);
-    }
-    return static_cast<T*>(::operator new(n * sizeof(T)));
-  }
-
-  void deallocate(T* p, std::size_t n) {
-    if (nbytes) *nbytes -= n * sizeof(T);
-    ::operator delete((void*)p);
-  }
-};
-
-template <class T, class U>
-constexpr bool operator==(const failing_allocator<T>&,
-                          const failing_allocator<U>&) noexcept {
-  return true;
-}
-
-template <class T, class U>
-bool operator!=(const failing_allocator<T>& t, const failing_allocator<U>& u) noexcept {
   return !operator==(t, u);
 }
 
