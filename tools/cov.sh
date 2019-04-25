@@ -1,7 +1,7 @@
 #!/bin/sh
 # must be executed in project root folder
 if [ -z $GCOV ]; then
-  GCOV=gcov-5
+  GCOV=gcov
 fi
 
 LCOV_VERSION="1.13"
@@ -9,7 +9,7 @@ LCOV_DIR="tools/lcov-${LCOV_VERSION}"
 
 if [ ! -e $LCOV_DIR ]; then
   cd tools
-  wget -O - https://github.com/linux-test-project/lcov/releases/download/v${LCOV_VERSION}/lcov-${LCOV_VERSION}.tar.gz | tar zxf -
+  curl -L https://github.com/linux-test-project/lcov/releases/download/v${LCOV_VERSION}/lcov-${LCOV_VERSION}.tar.gz | tar zxf -
   cd ..
 fi
 
