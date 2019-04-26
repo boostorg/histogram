@@ -145,7 +145,9 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
       [](auto&, const auto&) {},
       [](auto& axes, const auto& old_axes) {
         axes.reserve(old_axes.size());
-        for (const auto& a : old_axes) axes.emplace_back(detail::make_default(a));
+        detail::for_each_axis(old_axes, [&axes](const auto& a) {
+          axes.emplace_back(detail::make_default(a));
+        });
       },
       axes, old_axes);
 

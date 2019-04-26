@@ -20,6 +20,10 @@ using namespace boost::histogram::algorithm;
 
 template <typename Tag>
 void run_tests() {
+  // reduce:
+  // - does not work with arguments not convertible to double
+  // - does not work with category axis, which is not ordered
+
   using regular = axis::regular<double, axis::transform::id, axis::null_type>;
   {
     auto h = make_s(Tag(), std::vector<int>(), regular(4, 1, 5), regular(3, -1, 2));
@@ -111,6 +115,20 @@ void run_tests() {
     BOOST_TEST_EQ(hr2, hr);
   }
 
+  // mixed axis types
+  {
+    axis::regular<> r(5, 0.0, 1.0);
+    axis::variable<> v{{1., 2., 3.}};
+    auto h = make(Tag(), r, v);
+    auto hr = algorithm::reduce(h, shrink(0, 0.2, 0.7));
+    BOOST_TEST_EQ(hr.axis(0).size(), 3);
+    BOOST_TEST_EQ(hr.axis(0).bin(0).lower(), 0.2);
+    BOOST_TEST_EQ(hr.axis(0).bin(2).upper(), 0.8);
+    BOOST_TEST_EQ(hr.axis(1).size(), 2);
+    BOOST_TEST_EQ(hr.axis(1).bin(0).lower(), 1);
+    BOOST_TEST_EQ(hr.axis(1).bin(1).upper(), 3);
+  }
+
   // reduce on integer axis, rebin must fail
   {
     auto h = make(Tag(), axis::integer<>(1, 4));
@@ -150,10 +168,6 @@ void run_tests() {
     BOOST_TEST_EQ(hr.axis().bin(0).lower(), 1);
     BOOST_TEST_EQ(hr.axis().bin(1).upper(), -1);
   }
-
-  // reduce:
-  // - does not work with arguments not convertible to double
-  // - does not work with category axis, which is not ordered
 }
 
 int main() {
