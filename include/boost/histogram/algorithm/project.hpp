@@ -8,17 +8,19 @@
 #define BOOST_HISTOGRAM_ALGORITHM_PROJECT_HPP
 
 #include <algorithm>
+#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
-#include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/set.hpp>
+#include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
 #include <type_traits>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -67,21 +69,22 @@ auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N>, Ns..
 */
 template <class A, class S, class Iterable, class = detail::requires_iterable<Iterable>>
 auto project(const histogram<A, S>& h, const Iterable& c) {
-  static_assert(detail::is_sequence_of_any_axis<A>::value,
-                "this version of project requires histogram with non-static axes");
-
+  using namespace boost::mp11;
   const auto& old_axes = unsafe_access::axes(h);
-  auto axes = detail::make_default(old_axes);
+
+  // axes is always std::vector<...>, even if A is tuple
+  auto axes = detail::make_empty_dynamic_axes(old_axes);
   axes.reserve(c.size());
   auto seen = detail::make_stack_buffer<bool>(old_axes, false);
   for (auto d : c) {
     if (seen[d]) BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
     seen[d] = true;
-    axes.emplace_back(old_axes[d]);
+    axes.emplace_back(detail::axis_get(old_axes, d));
   }
 
   const auto& old_storage = unsafe_access::storage(h);
-  auto result = histogram<A, S>(std::move(axes), detail::make_default(old_storage));
+  auto result =
+      histogram<decltype(axes), S>(std::move(axes), detail::make_default(old_storage));
   auto idx = detail::make_stack_buffer<int>(unsafe_access::axes(result));
   for (auto x : indexed(h, coverage::all)) {
     auto i = idx.begin();

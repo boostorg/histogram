@@ -131,11 +131,6 @@ void run_tests() {
     BOOST_TEST_EQ(h_210.at(2, 0, 0), 1);
     BOOST_TEST_EQ(h_210.at(2, 0, 1), 1);
   }
-}
-
-int main() {
-  run_tests<static_tag>();
-  run_tests<dynamic_tag>();
 
   {
     auto h = make(dynamic_tag(), axis::integer<>(0, 2), axis::integer<>(0, 3));
@@ -180,6 +175,11 @@ int main() {
     x = {0, 0};
     BOOST_TEST_THROWS((void)project(h, x), std::invalid_argument);
   }
+}
+
+int main() {
+  run_tests<static_tag>();
+  run_tests<dynamic_tag>();
 
   return boost::report_errors();
 }

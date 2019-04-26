@@ -304,7 +304,7 @@ struct requires_convertible {};
 template <class T>
 auto make_default(const T& t) {
   return static_if<has_allocator<T>>([](const auto& t) { return T(t.get_allocator()); },
-                                     [](const auto&) { return T(); }, t);
+                                     [](const auto&) { return T{}; }, t);
 }
 
 template <class T>

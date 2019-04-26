@@ -136,6 +136,20 @@ void axes_assign(T& t, const U& u) {
   t.assign(u.begin(), u.end());
 }
 
+// create empty dynamic axis which can store any axes types from the argument
+template <class T>
+auto make_empty_dynamic_axes(const T& axes) {
+  return make_default(axes);
+}
+
+template <class... Ts>
+auto make_empty_dynamic_axes(const std::tuple<Ts...>&) {
+  using namespace ::boost::mp11;
+  using L = mp_unique<axis::variant<Ts...>>;
+  // return std::vector<axis::variant<Axis0, Axis1, ...>> or std::vector<Axis0>
+  return std::vector<mp_if_c<(mp_size<L>::value == 1), mp_first<L>, L>>{};
+}
+
 template <typename T>
 void axis_index_is_valid(const T& axes, const unsigned N) {
   BOOST_ASSERT_MSG(N < get_size(axes), "index out of range");
