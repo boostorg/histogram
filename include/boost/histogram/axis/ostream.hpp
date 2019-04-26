@@ -10,11 +10,11 @@
 #define BOOST_HISTOGRAM_AXIS_OSTREAM_HPP
 
 #include <boost/assert.hpp>
-#include <boost/core/typeinfo.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
+#include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <iomanip>
@@ -41,10 +41,7 @@ void stream_metadata(OStream& os, const T& t) {
         oss << t;
         if (!oss.str().empty()) { os << ", metadata=" << std::quoted(oss.str()); }
       },
-      [&os](const auto&) {
-        os << ", metadata=" << boost::core::demangled_name(BOOST_CORE_TYPEID(T));
-      },
-      t);
+      [&os](const auto&) { os << ", metadata=" << detail::type_name<T>(); }, t);
 }
 
 template <class OStream>
@@ -176,8 +173,7 @@ std::basic_ostream<Ts...>& operator<<(std::basic_ostream<Ts...>& os,
             [&os](const auto& x) { os << x; },
             [](const auto&) {
               BOOST_THROW_EXCEPTION(std::runtime_error(
-                  detail::cat(boost::core::demangled_name(BOOST_CORE_TYPEID(A)),
-                              " is not streamable")));
+                  detail::cat(detail::type_name<A>(), " is not streamable")));
             },
             x);
       },

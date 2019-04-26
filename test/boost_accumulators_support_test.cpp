@@ -39,7 +39,10 @@
 #endif
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram.hpp>
+#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/make_histogram.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
 
 namespace ba = boost::accumulators;
 

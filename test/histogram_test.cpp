@@ -5,8 +5,13 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram.hpp>
+#include <boost/histogram/accumulators.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/algorithm/sum.hpp>
+#include <boost/histogram/axis.hpp>
+#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/literals.hpp>
+#include <boost/histogram/make_histogram.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <tuple>

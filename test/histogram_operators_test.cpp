@@ -7,7 +7,10 @@
 #include <boost/core/is_same.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram.hpp>
+#include <boost/histogram/axis.hpp>
+#include <boost/histogram/histogram.hpp>
+#include <string>
+#include <vector>
 #include "utility_histogram.hpp"
 #include "utility_meta.hpp"
 

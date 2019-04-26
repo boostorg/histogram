@@ -10,6 +10,8 @@
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/type_name.hpp>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -111,8 +113,7 @@ int main() {
 
     struct user_defined {};
     const auto ref = detail::cat(
-        "integer(-1, 1, metadata=",
-        boost::core::demangled_name(BOOST_CORE_TYPEID(user_defined)), ", options=none)");
+        "integer(-1, 1, metadata=", detail::type_name<user_defined>(), ", options=none)");
     test(axis::integer<int, user_defined, axis::option::none_t>(-1, 1), ref.c_str());
   }
 

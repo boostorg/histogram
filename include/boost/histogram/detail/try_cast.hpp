@@ -8,8 +8,8 @@
 #define BOOST_HISTOGRAM_DETAIL_TRY_CAST_HPP
 
 #include <boost/core/demangle.hpp>
-#include <boost/core/typeinfo.hpp>
 #include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/type_name.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
 #include <type_traits>
@@ -19,9 +19,7 @@ namespace histogram {
 namespace detail {
 template <class T, class E, class U>
 T try_cast_impl(std::false_type, U&&) {
-  BOOST_THROW_EXCEPTION(
-      E(detail::cat("cannot cast ", core::demangled_name(BOOST_CORE_TYPEID(T)), " to ",
-                    core::demangled_name(BOOST_CORE_TYPEID(U)))));
+  BOOST_THROW_EXCEPTION(E(cat("cannot cast ", type_name<T>(), " to ", type_name<U>())));
 }
 
 template <class T, class E, class U>

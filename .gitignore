@@ -1,3 +1,4 @@
+*.gcov
 */test
 */*cmake
 */Modules

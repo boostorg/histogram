@@ -11,7 +11,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 
 * `A` is a type meeting the requirements of [*Axis]
 * `a` is a value of type `A`
-* `I` is an alias for [headerref boost/histogram/fwd.hpp `boost::histogram::index_type`]
+* `I` is an alias for [headerref boost/histogram/fwd.hpp `boost::histogram::axis::index_type`]
 
 [table Valid expressions
 [[Expression] [Returns] [Semantics, Pre/Post-conditions]]
@@ -42,6 +42,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 
 * `A` is a type meeting the requirements of [*Axis]
 * `a` and `b` are values of type `A`
+* `i` and `j` are indices of type [headerref boost/histogram/fwd.hpp `boost::histogram::axis::index_type`]
 * `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable]
 
 [table Valid expressions
@@ -51,6 +52,13 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   [`std::pair<I, I>`]
   [
     Non-const member function which maps a value to an index (first argument of the returned pair) and offset (second argument of the returned pair). If the value is not covered by the axis, this method may grow the current axis size (`old_size`) by the number of bins needed to contain the value or more (`new_size`). If the value is below the lowest value covered by the axis, return index `0` and offset `new_size - old_size`. If the value is above the uppermost value covered by the axis, return index `new_size - 1` and a negative offset `old_size - new_size`. If the value is outside, but the axis is not enlarged, then return an index equivalent to  `a.index(v)` and offset `0`.
+  ]
+]
+[
+  [`A(a, i, j, n)`]
+  []
+  [
+    Special constructor used by the reduce algorithm. `a` is the original axis instance, `i` and `j` are the index range to keep in the reduced axis. If `n` is larger than 1, `n` adjacent bins are merged into one larger cell. If this constructor is not implemented, [funcref boost::histogram::algorithm::reduce] throws an exception on an attempt to reduce this axis.
   ]
 ]
 [

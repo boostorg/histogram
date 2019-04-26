@@ -7,6 +7,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/algorithm/reduce.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
+#include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
@@ -119,7 +120,8 @@ void run_tests() {
   {
     axis::regular<> r(5, 0.0, 1.0);
     axis::variable<> v{{1., 2., 3.}};
-    auto h = make(Tag(), r, v);
+    axis::category<int> c{{1, 2, 3}};
+    auto h = make(Tag(), r, v, c);
     auto hr = algorithm::reduce(h, shrink(0, 0.2, 0.7));
     BOOST_TEST_EQ(hr.axis(0).size(), 3);
     BOOST_TEST_EQ(hr.axis(0).bin(0).lower(), 0.2);
@@ -127,6 +129,7 @@ void run_tests() {
     BOOST_TEST_EQ(hr.axis(1).size(), 2);
     BOOST_TEST_EQ(hr.axis(1).bin(0).lower(), 1);
     BOOST_TEST_EQ(hr.axis(1).bin(1).upper(), 3);
+    BOOST_TEST_THROWS((void)algorithm::reduce(h, rebin(2, 2)), std::invalid_argument);
   }
 
   // reduce on integer axis, rebin must fail

@@ -11,6 +11,7 @@
 #include <boost/config.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/typeinfo.hpp>
+#include <boost/histogram/detail/type_name.hpp>
 #include <iostream>
 #include <unordered_map>
 #include <utility>
@@ -79,11 +80,11 @@ struct tracing_allocator {
     if (db) {
       if (db->failure_countdown >= 0) {
         const auto count = db->failure_countdown--;
-        db->log("allocator +", n, " ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
-                " [failure in ", count, "]");
+        db->log("allocator +", n, " ", detail::type_name<T>(), " [failure in ", count,
+                "]");
         if (count == 0) throw std::bad_alloc{};
       } else
-        db->log("allocator +", n, " ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)));
+        db->log("allocator +", n, " ", detail::type_name<T>());
       auto& p = db->at<T>();
       p.first += n;
       p.second += n;
@@ -97,7 +98,7 @@ struct tracing_allocator {
     if (db) {
       db->at<T>().first -= n;
       db->first -= n * sizeof(T);
-      db->log("allocator -", n, " ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)));
+      db->log("allocator -", n, " ", detail::type_name<T>());
     }
     ::operator delete((void*)p);
   }
@@ -107,19 +108,17 @@ struct tracing_allocator {
     if (db) {
       if (db->failure_countdown >= 0) {
         const auto count = db->failure_countdown--;
-        db->log("allocator construct ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)),
-                "[ failure in ", count, "]");
+        db->log("allocator construct ", detail::type_name<T>(), "[ failure in ", count,
+                "]");
         if (count == 0) throw std::bad_alloc{};
       } else
-        db->log("allocator construct ",
-                boost::core::demangled_name(BOOST_CORE_TYPEID(T)));
+        db->log("allocator construct ", detail::type_name<T>());
     }
     ::new (static_cast<void*>(p)) T(std::forward<Ts>(ts)...);
   }
 
   void destroy(T* p) {
-    if (db)
-      db->log("allocator destroy ", boost::core::demangled_name(BOOST_CORE_TYPEID(T)));
+    if (db) db->log("allocator destroy ", detail::type_name<T>());
     p->~T();
   }
 };

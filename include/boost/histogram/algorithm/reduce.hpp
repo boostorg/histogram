@@ -8,9 +8,12 @@
 #define BOOST_HISTOGRAM_ALGORITHM_REDUCE_HPP
 
 #include <boost/assert.hpp>
+#include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
+#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
+#include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
@@ -154,26 +157,34 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
   // override default-constructed axis instances with modified instances
   unsigned iaxis = 0;
   hist.for_each_axis([&](const auto& a) {
-    using T = detail::remove_cvref_t<decltype(a)>;
-
+    using A = detail::remove_cvref_t<decltype(a)>;
     auto& o = opts[iaxis];
     o.begin = 0;
     o.end = a.size();
     if (o.merge > 0) { // option is set?
-      if (o.lower < o.upper) {
-        while (o.begin != o.end && a.value(o.begin) < o.lower) ++o.begin;
-        while (o.end != o.begin && a.value(o.end - 1) >= o.upper) --o.end;
-      } else if (o.lower > o.upper) {
-        // for inverted axis::regular
-        while (o.begin != o.end && a.value(o.begin) > o.lower) ++o.begin;
-        while (o.end != o.begin && a.value(o.end - 1) <= o.upper) --o.end;
-      }
-      o.end -= (o.end - o.begin) % o.merge;
-      auto a2 = T(a, o.begin, o.end, o.merge);
-      axis::get<T>(detail::axis_get(axes, iaxis)) = a2;
+      detail::static_if_c<axis::traits::is_reducible<A>::value>(
+          [&o](auto&& aout, const auto& ain) {
+            using A = detail::remove_cvref_t<decltype(ain)>;
+            if (o.lower < o.upper) {
+              while (o.begin != o.end && ain.value(o.begin) < o.lower) ++o.begin;
+              while (o.end != o.begin && ain.value(o.end - 1) >= o.upper) --o.end;
+            } else if (o.lower > o.upper) {
+              // for inverted axis::regular
+              while (o.begin != o.end && ain.value(o.begin) > o.lower) ++o.begin;
+              while (o.end != o.begin && ain.value(o.end - 1) <= o.upper) --o.end;
+            }
+            o.end -= (o.end - o.begin) % o.merge;
+            aout = A(ain, o.begin, o.end, o.merge);
+          },
+          [](auto&&, const auto& ain) {
+            using A = detail::remove_cvref_t<decltype(ain)>;
+            BOOST_THROW_EXCEPTION(std::invalid_argument(
+                detail::cat(detail::type_name<A>(), " is not reducible")));
+          },
+          axis::get<A>(detail::axis_get(axes, iaxis)), a);
     } else {
       o.merge = 1;
-      axis::get<T>(detail::axis_get(axes, iaxis)) = a;
+      axis::get<A>(detail::axis_get(axes, iaxis)) = a;
     }
     ++iaxis;
   });

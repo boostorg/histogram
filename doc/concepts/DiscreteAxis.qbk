@@ -13,7 +13,7 @@ A [*DiscreteAxis] is one of two optional refinements of the [link histogram.conc
 * `a` is a value of type `A`
 * `V` is the type accepted for conversion into an index
 * `v` is a value of type `V`
-* `i` is a value of type [headerref boost/histogram/fwd.hpp `boost::histogram::index_type`]
+* `i` is a value of type [headerref boost/histogram/fwd.hpp `boost::histogram::axis::index_type`]
 * `AxisIter` is an /RandomAccessIterator/ over the bins of `A`
 * `ReAxisIter` is a reverse /RandomAccessIterator/ over the bins of `A`
 

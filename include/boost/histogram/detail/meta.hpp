@@ -128,13 +128,13 @@ decltype(auto) tuple_slice(T&& t) {
   template <class T, class = decltype(cond)> \
   struct name##_impl {};                     \
   template <class T>                         \
-  using name = typename mp11::mp_valid<name##_impl, T>
+  struct name : mp11::mp_valid<name##_impl, T>::type {}
 
 #define BOOST_HISTOGRAM_DETECT_BINARY(name, cond)     \
   template <class T, class U, class = decltype(cond)> \
   struct name##_impl {};                              \
   template <class T, class U = T>                     \
-  using name = typename mp11::mp_valid<name##_impl, T, U>
+  struct name : mp11::mp_valid<name##_impl, T, U>::type {}
 
 BOOST_HISTOGRAM_DETECT(has_method_metadata, (std::declval<T&>().metadata()));
 

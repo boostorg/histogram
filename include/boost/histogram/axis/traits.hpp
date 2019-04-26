@@ -7,12 +7,12 @@
 #ifndef BOOST_HISTOGRAM_AXIS_TRAITS_HPP
 #define BOOST_HISTOGRAM_AXIS_TRAITS_HPP
 
-#include <boost/core/typeinfo.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/try_cast.hpp>
+#include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
@@ -37,8 +37,7 @@ decltype(auto) value_method_switch_impl2(std::false_type, I&&, D&& f, const A& a
 
 template <class I, class D, class A>
 double value_method_switch_impl1(std::false_type, I&&, D&&, const A&) {
-  BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
-      boost::core::demangled_name(BOOST_CORE_TYPEID(A)), " has no value method")));
+  BOOST_THROW_EXCEPTION(std::runtime_error(cat(type_name<A>(), " has no value method")));
 #ifndef _MSC_VER // msvc warns about unreachable return
   return double{};
 #endif
@@ -246,6 +245,11 @@ Result width_as(const Axis& axis, index_type index) {
       },
       axis);
 }
+
+/** Meta-function to detect whether an axis is reducible.
+ */
+BOOST_HISTOGRAM_DETECT(is_reducible, (T(std::declval<const T>(), axis::index_type{},
+                                        axis::index_type{}, 0u)));
 
 } // namespace traits
 } // namespace axis

@@ -92,14 +92,6 @@ public:
            allocator_type alloc = {})
       : category(list.begin(), list.end(), std::move(meta), std::move(alloc)) {}
 
-  /// Constructor used by algorithm::reduce to shrink and rebin.
-  category(const category& src, index_type begin, index_type end, unsigned merge)
-      : category(src.vec_meta_.first().begin() + begin,
-                 src.vec_meta_.first().begin() + end, src.metadata()) {
-    if (merge > 1)
-      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for category axis"));
-  }
-
   /// Return index for value argument.
   index_type index(const value_type& x) const noexcept {
     const auto beg = vec_meta_.first().begin();
