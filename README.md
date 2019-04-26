@@ -4,6 +4,8 @@
 
 Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org).
 
+💡 Boost.Histogram is a mature library, but there are still many ways to improve. Tell us what you want to do with Boost.Histogram that can't be done right now, or how to improve the documentation by [submitting an issue](https://github.com/boostorg/histogram/issues). Or chat with us on the [Boost channel on Slack](https://cpplang.slack.com) or on [Gitter](https://gitter.im/boostorg/histogram).
+
 Branch  | Linux and OSX | Windows | Coverage
 ------- | ------------- |-------- | --------
 develop | [![Build Status Travis](https://travis-ci.com/HDembinski/histogram.svg?branch=develop)](https://travis-ci.com/HDembinski/histogram?branch=develop) | [![Build status](https://ci.appveyor.com/api/projects/status/400lx25l3jdpk96b/branch/develop?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram/branch/develop) | [![codecov](https://codecov.io/gh/HDembinski/histogram/branch/develop/graph/badge.svg)](https://codecov.io/gh/HDembinski/histogram/branch/develop)
@@ -13,7 +15,7 @@ master  | [![Build Status Travis](https://travis-ci.com/HDembinski/histogram.svg
 
 This **header-only** open-source library provides an easy-to-use state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the professional statistician and everyone who needs to count things. The histogram is easy to use for the casual user and yet so customizable that it does not restrict the power-user. The library offers a unique safety guarantee: cell counts *cannot overflow* or *be capped* in the standard configuration [[1]](#note1). And it can do more than counting. The histogram can be equipped with arbitrary accumulators to compute means, medians, and whatever you fancy in each cell. The library is very fast single-threaded (see benchmarks) and several parallelization options are provided for multi-threaded programming.
 
-The library passed Boost review in September 2018 and was first released with [Boost-1.70](http://www.boost.org) on April 12th, 2019. The source code is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
+The library passed Boost review in September 2018 and was first released with [Boost-1.70](http://www.boost.org) on April 12th, 2019. The library is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
 Check out the [full documentation](https://www.boost.org/doc/libs/develop/libs/histogram/doc/html/index.html). [Python bindings](https://github.com/hdembinski/histogram-python) to this library are available elsewhere.
 
