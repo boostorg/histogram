@@ -6,7 +6,9 @@
 
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram.hpp>
+#include <boost/histogram/axis.hpp>
+#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/make_histogram.hpp>
 #include <cstdlib>
 #include <limits>
 #include <numeric>
@@ -17,7 +19,6 @@
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;
-using namespace boost::histogram::literals; // to get _c suffix
 
 int main() {
   // special stuff that only works with dynamic_tag
