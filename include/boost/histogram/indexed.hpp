@@ -12,7 +12,6 @@
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/workaround.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <type_traits>
@@ -34,17 +33,15 @@ enum class coverage {
 /// Range over histogram bins with multi-dimensional index.
 template <class Histogram>
 class BOOST_HISTOGRAM_NODISCARD indexed_range {
-#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+private:
   using max_dim = mp11::mp_size_t<
       detail::buffer_size<typename detail::remove_cvref_t<Histogram>::axes_type>::value>;
   struct cache_item {
-    int idx, begin, end, extent;
+    axis::index_type idx, begin, end, extent;
   };
-#endif
 
 public:
-  using value_iterator =
-      BOOST_HISTOGRAM_IMPDEF(decltype(std::declval<Histogram>().begin()));
+  using value_iterator = decltype(std::declval<Histogram>().begin());
   using value_reference = typename value_iterator::reference;
 
   /**
@@ -58,24 +55,33 @@ public:
     /// Array-like view into the current multi-dimensional index.
     class index_view {
     public:
-#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-      class index_iterator
-          : public detail::iterator_adaptor<index_iterator, const cache_item*,
-                                            const int&> {
+      /// implementation detail
+      class const_iterator
+          : public detail::iterator_adaptor<const_iterator, const cache_item*,
+                                            const axis::index_type&> {
       public:
-        index_iterator(const cache_item* i) : index_iterator::iterator_adaptor_(i) {}
-        const int& operator*() const noexcept { return index_iterator::base()->idx; }
-      };
-#endif
+        const axis::index_type& operator*() const noexcept {
+          return const_iterator::base()->idx;
+        }
 
-      auto begin() const noexcept { return index_iterator(begin_); }
-      auto end() const noexcept { return index_iterator(end_); }
-      auto size() const noexcept { return static_cast<std::size_t>(end_ - begin_); }
-      int operator[](unsigned d) const noexcept { return begin_[d].idx; }
-      int at(unsigned d) const { return begin_[d].idx; }
+      private:
+        explicit const_iterator(const cache_item* i) noexcept
+            : const_iterator::iterator_adaptor_(i) {}
+        friend class accessor;
+      };
+
+      const_iterator begin() const noexcept { return const_iterator{begin_}; }
+      const_iterator end() const noexcept { return const_iterator{end_}; }
+      std::size_t size() const noexcept {
+        return static_cast<std::size_t>(end_ - begin_);
+      }
+      axis::index_type operator[](unsigned d) const noexcept { return begin_[d].idx; }
+      axis::index_type at(unsigned d) const { return begin_[d].idx; }
 
     private:
+      /// implementation detail
       index_view(const cache_item* b, const cache_item* e) : begin_(b), end_(e) {}
+
       const cache_item *begin_, *end_;
       friend class accessor;
     };
@@ -89,11 +95,13 @@ public:
 
     /// Access current index.
     /// @param d axis dimension.
-    int index(unsigned d = 0) const noexcept { return parent_.cache_[d].idx; }
+    axis::index_type index(unsigned d = 0) const noexcept {
+      return parent_.cache_[d].idx;
+    }
 
     /// Access indices as an iterable range.
-    auto indices() const noexcept {
-      return index_view(parent_.cache_, parent_.cache_ + parent_.hist_.rank());
+    index_view indices() const noexcept {
+      return {parent_.cache_, parent_.cache_ + parent_.hist_.rank()};
     }
 
     /// Access current bin.
@@ -124,28 +132,27 @@ public:
     }
 
   private:
-#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+    /// implementation detail
     accessor(indexed_range& p, value_iterator i) : parent_(p), iter_(i) {}
-#endif
+
     indexed_range& parent_;
     value_iterator iter_;
     friend class indexed_range;
   };
 
+  /// implementation detail
   class range_iterator {
-    using operator_arrow_dispatch = detail::operator_arrow_dispatch_t<accessor>;
+    using detail_pointer = detail::operator_arrow_dispatch_t<accessor>;
 
   public:
     using value_type = typename value_iterator::value_type;
     using reference = accessor;
-    using pointer = BOOST_HISTOGRAM_IMPDEF(typename operator_arrow_dispatch::result_type);
+    using pointer = typename detail_pointer::result_type;
     using difference_type = void;
     using iterator_category = std::input_iterator_tag;
 
     accessor operator*() const noexcept { return {*parent_, iter_}; }
-    pointer operator->() const noexcept {
-      return operator_arrow_dispatch::apply(operator*());
-    }
+    pointer operator->() const noexcept { return detail_pointer::apply(operator*()); }
 
     range_iterator& operator++() {
       std::size_t stride = 1;
@@ -231,6 +238,8 @@ private:
 
   The iterators dereference to an indexed_range::accessor, which has methods to query the
   current indices and bins, and acts like a pointer to the cell value.
+
+  @returns indexed_range
 
   @param hist Reference to the histogram.
   @param cov  Iterate over all or only inner bins (optional, default: inner).

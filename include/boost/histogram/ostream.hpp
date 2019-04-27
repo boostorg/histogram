@@ -12,6 +12,17 @@
 #include <boost/histogram/fwd.hpp>
 #include <iosfwd>
 
+/**
+  \file boost/histogram/ostream.hpp
+
+  A simple streaming operator for the histogram type. The text representation is
+  rudimentary and not guaranteed to be stable between versions of Boost.Histogram. This
+  header is not included by any other header and must be explicitly included to use the
+  streaming operator.
+
+  To you use your own, simply include your own implementation instead of this header.
+ */
+
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 namespace boost {

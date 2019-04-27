@@ -22,6 +22,18 @@
 #include <stdexcept>
 #include <type_traits>
 
+/**
+  \file boost/histogram/axis/ostream.hpp
+  Simple streaming operators for the builtin axis types.
+
+  The text representation is not guaranteed to be stable between versions of
+  Boost.Histogram. This header is only included by
+  [boost/histogram/ostream.hpp](histogram/reference.html#header.boost.histogram.ostream_hpp).
+  To you use your own, include your own implementation instead of this header and do not
+  include
+  [boost/histogram/ostream.hpp](histogram/reference.html#header.boost.histogram.ostream_hpp).
+ */
+
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 namespace boost {

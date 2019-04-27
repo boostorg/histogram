@@ -16,10 +16,10 @@ namespace histogram {
 /** Unsafe read/write access to private data that potentially breaks consistency.
 
   This struct enables access to private data of some classes. It is intended for library
-  developers who need this to implement algorithms which require this, for example,
-  serialization. Users should not use this. If you are a user who relies on
-  unsafe_access to get a specific effect, please submit an issue on Github. In this case,
-  the interface should be extended.
+  developers who need this to implement algorithms efficiently, for example,
+  serialization. Users should not use this. If you are a user who absolutely needs this to
+  get a specific effect, please submit an issue on Github. This means that the public
+  interface is insufficient.
 */
 struct unsafe_access {
   /**

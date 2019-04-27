@@ -19,22 +19,29 @@ doxygen reference
   [ glob $(THIS_PATH)/../../../boost/histogram/algorithm/*.hpp ]
   [ glob $(THIS_PATH)/../../../boost/histogram/axis/*.hpp ]
 :
-  <doxygen:param>EXTRACT_ALL=YES
+  <doxygen:param>EXTRACT_PRIVATE=NO
+  <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+  <doxygen:param>HIDE_UNDOC_CLASSES=YES
   <doxygen:param>ENABLE_PREPROCESSING=YES
   <doxygen:param>MACRO_EXPANSION=YES
   <doxygen:param>EXPAND_ONLY_PREDEF=YES
   <doxygen:param>JAVADOC_AUTOBRIEF=YES
   <doxygen:param>EXCLUDE_SYMBOLS=detail
   <doxygen:param>"PREDEFINED=\"BOOST_HISTOGRAM_DOXYGEN_INVOKED\" \\
-                             \"BOOST_HISTOGRAM_NODISCARD\" \\
-                             \"BOOST_HISTOGRAM_IMPDEF(T)=implementation_defined\""
+                             \"BOOST_HISTOGRAM_NODISCARD\""
 ;
+
+make reference_pp.xml : reference.xml : @doxygen_postprocessing ;
+actions doxygen_postprocessing
+{
+  python $(THIS_PATH)/doxygen_postprocessing.py $(>) $(<)
+}
 
 boostbook histogram
 :
   histogram.qbk
+  reference_pp.xml
 :
-  <dependency>reference
   <xsl:param>boost.root=../../../..
   <xsl:param>boost.libraries=../../../libraries.htm
   <xsl:param>boost.mathjax=1

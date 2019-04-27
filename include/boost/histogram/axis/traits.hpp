@@ -81,28 +81,24 @@ decltype(auto) metadata(Axis&& axis) noexcept {
       std::forward<Axis>(axis));
 }
 
-/** Generates static axis option type for axis type.
+/** Get static axis options for axis type.
 
-  WARNING: Doxygen does not render the synopsis correctly. This is a meta-function
+  Doxygen does not render this well. This is a meta-function, it accepts an axis
+  type and represents its boost::histogram::axis::option::bitset.
 
-  `template <class Axis> using static_options = implementation`
-
-  It accepts an axis type and returns boost::histogram::axis::option::bitset.
-
-  If Axis::options() is valid and constexpr, return the corresponding option type.
-  Otherwise, return boost::histogram::axis::option::growth_t, if the axis has a method
-  `update`, else return boost::histogram::axis::option::none_t.
+  If Axis::options() is valid and constexpr, static_options is the corresponding
+  option type. Otherwise, it is boost::histogram::axis::option::growth_t, if the
+  axis has a method `update`, else boost::histogram::axis::option::none_t.
 
   @tparam Axis axis type
 */
+template <class Axis>
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-template <class Axis>
-using static_options = detail::mp_eval_or<
-    mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<Axis>>, option::growth_t,
-                option::none_t>,
-    detail::static_options_impl, detail::remove_cvref_t<Axis>>;
+using static_options =
+    mp11::mp_eval_or<mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<Axis>>,
+                                 option::growth_t, option::none_t>,
+                     detail::static_options_impl, detail::remove_cvref_t<Axis>>;
 #else
-template <class Axis>
 struct static_options;
 #endif
 
@@ -178,7 +174,7 @@ auto index(const Axis& axis, const U& value) {
   return axis.index(detail::try_cast<V, std::invalid_argument>(value));
 }
 
-/// @copydoc index(const Axis&, const U& value)
+// specialization for variant
 template <class... Ts, class U>
 auto index(const variant<Ts...>& axis, const U& value) {
   return axis.index(value);
@@ -205,9 +201,9 @@ std::pair<index_type, index_type> update(Axis& axis, const U& value) {
       [&value](auto& a) { return std::make_pair(index(a, value), index_type{0}); }, axis);
 }
 
-/// @copydoc update(Axis& axis, const U& value)
+// specialization for variant
 template <class... Ts, class U>
-auto update(variant<Ts...>& axis, const U& value) {
+std::pair<index_type, index_type> update(variant<Ts...>& axis, const U& value) {
   return axis.update(value);
 }
 
@@ -247,9 +243,20 @@ Result width_as(const Axis& axis, index_type index) {
 }
 
 /** Meta-function to detect whether an axis is reducible.
+
+  Doxygen does not render this well. This is a meta-function, it accepts an axis
+  type and represents std::true_type or std::false_type, depending on whether the axis can
+  be reduced with boost::histogram::algorithm::reduce().
+
+  @tparam Axis axis type.
  */
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 BOOST_HISTOGRAM_DETECT(is_reducible, (T(std::declval<const T>(), axis::index_type{},
                                         axis::index_type{}, 0u)));
+#else
+template <class Axis>
+struct is_reducible;
+#endif
 
 } // namespace traits
 } // namespace axis

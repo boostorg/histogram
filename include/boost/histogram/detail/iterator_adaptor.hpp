@@ -28,20 +28,20 @@ template <class Reference>
 struct operator_arrow_dispatch_t // proxy references
 {
   struct proxy {
-    explicit proxy(Reference const& x) : m_ref(x) {}
-    Reference* operator->() { return std::addressof(m_ref); }
+    explicit proxy(Reference const& x) noexcept : m_ref(x) {}
+    Reference* operator->() noexcept { return std::addressof(m_ref); }
     Reference m_ref;
   };
 
   using result_type = proxy;
-  static result_type apply(Reference const& x) { return proxy(x); }
+  static result_type apply(Reference const& x) noexcept { return proxy(x); }
 };
 
 template <class T>
 struct operator_arrow_dispatch_t<T&> // "real" references
 {
   using result_type = T*;
-  static result_type apply(T& x) { return std::addressof(x); }
+  static result_type apply(T& x) noexcept { return std::addressof(x); }
 };
 
 // only for random access Base
@@ -63,7 +63,7 @@ public:
 
   explicit iterator_adaptor(base_type const& iter) : iter_(iter) {}
 
-  pointer operator->() const {
+  pointer operator->() const noexcept {
     return operator_arrow_dispatch::apply(this->derived().operator*());
   }
   reference operator[](difference_type n) const { return (*this + n).operator*(); }
@@ -140,15 +140,15 @@ public:
 
   friend Derived operator+(difference_type n, const Derived& x) { return x + n; }
 
-  Base const& base() const { return iter_; }
+  Base const& base() const noexcept { return iter_; }
 
 protected:
   // for convenience in derived classes
   using iterator_adaptor_ = iterator_adaptor;
 
 private:
-  Derived& derived() { return *static_cast<Derived*>(this); }
-  const Derived& derived() const { return *static_cast<Derived const*>(this); }
+  Derived& derived() noexcept { return *static_cast<Derived*>(this); }
+  const Derived& derived() const noexcept { return *static_cast<Derived const*>(this); }
 
   Base iter_;
 
