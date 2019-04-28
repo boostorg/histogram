@@ -15,6 +15,7 @@
 #include <boost/histogram/detail/noop_mutex.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/throw_exception.hpp>
 #include <mutex>
@@ -22,6 +23,7 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -135,7 +137,7 @@ public:
   }
 
   /// Get N-th axis with run-time number.
-  /// Use the version that accepts a compile-time number, if possible.
+  /// Prefer the version that accepts a compile-time number, if you can use it.
   decltype(auto) axis(unsigned i) const {
     detail::axis_index_is_valid(axes_, i);
     return detail::axis_get(axes_, i);
@@ -153,13 +155,6 @@ public:
    not convertible to the value type accepted by the axis or passing the wrong number
    of arguments causes a throw of `std::invalid_argument`.
 
-   __Axis with multiple arguments__
-
-   If the histogram contains an axis which accepts a `std::tuple` of arguments, the
-   arguments for that axis need to passed as a `std::tuple`, for example,
-   `std::make_tuple(1.2, 2.3)`. If the histogram contains only this axis and no other,
-   the arguments can be passed directly.
-
    __Optional weight__
 
    An optional weight can be passed as the first or last argument
@@ -173,83 +168,93 @@ public:
    [sample](boost/histogram/sample.html) helper function can pass one or more arguments to
    the storage element. If samples and weights are used together, they can be passed in
    any order at the beginning or end of the argument list.
+
+   __Axis with multiple arguments__
+
+   If the histogram contains an axis which accepts a `std::tuple` of arguments, the
+   arguments for that axis need to passed as a `std::tuple`, for example,
+   `std::make_tuple(1.2, 2.3)`. If the histogram contains only this axis and no other,
+   the arguments can be passed directly.
   */
   template <class... Ts>
-  auto operator()(const Ts&... ts) {
+  iterator operator()(const Ts&... ts) {
     return operator()(std::make_tuple(ts...));
   }
 
   /// Fill histogram with values, an optional weight, and/or a sample from a `std::tuple`.
   template <class... Ts>
-  auto operator()(const std::tuple<Ts...>& t) {
+  iterator operator()(const std::tuple<Ts...>& t) {
     return detail::fill(axes_, storage_and_mutex_, t);
   }
 
-  /// Access cell value at integral indices.
-  /**
+  /** Access cell value at integral indices.
+
     You can pass indices as individual arguments, as a std::tuple of integers, or as an
     interable range of integers. Passing the wrong number of arguments causes a throw of
     std::invalid_argument. Passing an index which is out of bounds causes a throw of
     std::out_of_range.
+
+    @param i index of first axis.
+    @param is indices of second, third, ... axes.
+    @returns reference to cell value.
   */
-  template <class... Ts>
-  decltype(auto) at(axis::index_type t, Ts... ts) {
-    return at(std::forward_as_tuple(t, ts...));
+  template <class... Indices>
+  decltype(auto) at(axis::index_type i, Indices... is) {
+    return at(std::make_tuple(i, is...));
   }
 
   /// Access cell value at integral indices (read-only).
-  /// @copydoc at(axis::index_type t, Ts... ts)
-  template <class... Ts>
-  decltype(auto) at(axis::index_type t, Ts... ts) const {
-    return at(std::forward_as_tuple(t, ts...));
+  template <class... Indices>
+  decltype(auto) at(axis::index_type i, Indices... is) const {
+    return at(std::make_tuple(i, is...));
   }
 
   /// Access cell value at integral indices stored in `std::tuple`.
-  /// @copydoc at(axis::index_type t, Ts... ts)
-  template <typename... Ts>
-  decltype(auto) at(const std::tuple<Ts...>& t) {
-    const auto idx = detail::at(axes_, t);
-    if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
+  template <typename... Indices>
+  decltype(auto) at(const std::tuple<axis::index_type, Indices...>& is) {
+    const auto idx = detail::at(axes_, is);
+    if (!idx)
+      BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
   }
 
   /// Access cell value at integral indices stored in `std::tuple` (read-only).
-  /// @copydoc at(axis::index_type t, Ts... ts)
-  template <typename... Ts>
-  decltype(auto) at(const std::tuple<Ts...>& t) const {
-    const auto idx = detail::at(axes_, t);
-    if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
+  template <typename... Indices>
+  decltype(auto) at(const std::tuple<axis::index_type, Indices...>& is) const {
+    const auto idx = detail::at(axes_, is);
+    if (!idx)
+      BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
   }
 
   /// Access cell value at integral indices stored in iterable.
-  /// @copydoc at(axis::index_type t, Ts... ts)
   template <class Iterable, class = detail::requires_iterable<Iterable>>
-  decltype(auto) at(const Iterable& c) {
-    const auto idx = detail::at(axes_, c);
-    if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
+  decltype(auto) at(const Iterable& is) {
+    const auto idx = detail::at(axes_, is);
+    if (!idx)
+      BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
   }
 
   /// Access cell value at integral indices stored in iterable (read-only).
-  /// @copydoc at(axis::index_type t, Ts... ts)
   template <class Iterable, class = detail::requires_iterable<Iterable>>
-  decltype(auto) at(const Iterable& c) const {
-    const auto idx = detail::at(axes_, c);
-    if (!idx) BOOST_THROW_EXCEPTION(std::out_of_range("indices out of bounds"));
+  decltype(auto) at(const Iterable& is) const {
+    const auto idx = detail::at(axes_, is);
+    if (!idx)
+      BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
   }
 
   /// Access value at index (number for rank = 1, else `std::tuple` or iterable).
-  template <class T>
-  decltype(auto) operator[](const T& t) {
-    return at(t);
+  template <class Indices>
+  decltype(auto) operator[](const Indices& is) {
+    return at(is);
   }
 
-  /// @copydoc operator[]
-  template <class T>
-  decltype(auto) operator[](const T& t) const {
-    return at(t);
+  /// Access value at index (read-only).
+  template <class Indices>
+  decltype(auto) operator[](const Indices& is) const {
+    return at(is);
   }
 
   /// Equality operator, tests equality for all axes and the storage.
@@ -266,11 +271,10 @@ public:
   }
 
   /// Add values of another histogram.
-  template <class A, class S>
+  template <class A, class S,
+            class = std::enable_if_t<detail::has_operator_radd<
+                value_type, typename histogram<A, S>::value_type>::value>>
   histogram& operator+=(const histogram<A, S>& rhs) {
-    static_assert(detail::has_operator_radd<value_type,
-                                            typename histogram<A, S>::value_type>::value,
-                  "cell value does not support adding value of right-hand-side");
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = unsafe_access::storage(rhs).begin();
@@ -280,11 +284,10 @@ public:
   }
 
   /// Subtract values of another histogram.
-  template <class A, class S>
+  template <class A, class S,
+            class = std::enable_if_t<detail::has_operator_rsub<
+                value_type, typename histogram<A, S>::value_type>::value>>
   histogram& operator-=(const histogram<A, S>& rhs) {
-    static_assert(detail::has_operator_rsub<value_type,
-                                            typename histogram<A, S>::value_type>::value,
-                  "cell value does not support subtracting value of right-hand-side");
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = unsafe_access::storage(rhs).begin();
@@ -294,11 +297,10 @@ public:
   }
 
   /// Multiply by values of another histogram.
-  template <class A, class S>
+  template <class A, class S,
+            class = std::enable_if_t<detail::has_operator_rmul<
+                value_type, typename histogram<A, S>::value_type>::value>>
   histogram& operator*=(const histogram<A, S>& rhs) {
-    static_assert(detail::has_operator_rmul<value_type,
-                                            typename histogram<A, S>::value_type>::value,
-                  "cell value does not support multiplying by value of right-hand-side");
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = unsafe_access::storage(rhs).begin();
@@ -308,11 +310,10 @@ public:
   }
 
   /// Divide by values of another histogram.
-  template <class A, class S>
+  template <class A, class S,
+            class = std::enable_if_t<detail::has_operator_rdiv<
+                value_type, typename histogram<A, S>::value_type>::value>>
   histogram& operator/=(const histogram<A, S>& rhs) {
-    static_assert(detail::has_operator_rdiv<value_type,
-                                            typename histogram<A, S>::value_type>::value,
-                  "cell value does not support dividing by value of right-hand-side");
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = unsafe_access::storage(rhs).begin();
@@ -372,41 +373,72 @@ private:
   friend struct unsafe_access;
 };
 
+/**
+  Pairwise add cells of two histograms and return histogram with the sum.
+
+  The returned histogram type is the most efficient and safest one constructible from the
+  inputs, if they are not the same type. If one histogram has a tuple axis, the result has
+  a tuple axis. The chosen storage is the one with the larger dynamic range.
+*/
 template <class A1, class S1, class A2, class S2>
 auto operator+(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
   auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
   return r += b;
 }
 
+/** Pairwise multiply cells of two histograms and return histogram with the product.
+
+  For notes on the returned histogram type, see operator+.
+*/
 template <class A1, class S1, class A2, class S2>
 auto operator*(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
   auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
   return r *= b;
 }
 
+/** Pairwise subtract cells of two histograms and return histogram with the difference.
+
+  For notes on the returned histogram type, see operator+.
+*/
 template <class A1, class S1, class A2, class S2>
 auto operator-(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
   auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
   return r -= b;
 }
 
+/** Pairwise divide cells of two histograms and return histogram with the quotient.
+
+  For notes on the returned histogram type, see operator+.
+*/
 template <class A1, class S1, class A2, class S2>
 auto operator/(const histogram<A1, S1>& a, const histogram<A2, S2>& b) {
   auto r = histogram<detail::common_axes<A1, A2>, detail::common_storage<S1, S2>>(a);
   return r /= b;
 }
 
+/** Multiply all cells of the histogram by a number and return a new histogram.
+
+  If the original histogram has integer cells, the result has double cells.
+*/
 template <class A, class S>
 auto operator*(const histogram<A, S>& h, double x) {
   auto r = histogram<A, detail::common_storage<S, dense_storage<double>>>(h);
   return r *= x;
 }
 
+/** Multiply all cells of the histogram by a number and return a new histogram.
+
+  If the original histogram has integer cells, the result has double cells.
+*/
 template <class A, class S>
 auto operator*(double x, const histogram<A, S>& h) {
   return h * x;
 }
 
+/** Divide all cells of the histogram by a number and return a new histogram.
+
+  If the original histogram has integer cells, the result has double cells.
+*/
 template <class A, class S>
 auto operator/(const histogram<A, S>& h, double x) {
   return h * (1.0 / x);
@@ -423,21 +455,24 @@ histogram(Axes&& axes, Storage&& storage)
 
 #endif
 
-/// Helper function to mark argument as weight.
-/// @param t argument to be forward to the histogram.
+/** Helper function to mark argument as weight.
+
+  @param t argument to be forward to the histogram.
+*/
 template <typename T>
 auto weight(T&& t) noexcept {
   return weight_type<T>{std::forward<T>(t)};
 }
 
-/// Helper function to mark arguments as sample.
-/// @param ts arguments to be forwarded to the accumulator.
+/** Helper function to mark arguments as sample.
+
+  @param ts arguments to be forwarded to the accumulator.
+*/
 template <typename... Ts>
 auto sample(Ts&&... ts) noexcept {
   return sample_type<std::tuple<Ts...>>{std::forward_as_tuple(std::forward<Ts>(ts)...)};
 }
 
-#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 template <class T>
 struct weight_type {
   T value;
@@ -447,7 +482,6 @@ template <class T>
 struct sample_type {
   T value;
 };
-#endif
 
 } // namespace histogram
 } // namespace boost

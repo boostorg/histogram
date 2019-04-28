@@ -513,6 +513,8 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(j11), 1);
     BOOST_TEST_EQ(h[j11], 1);
     BOOST_TEST_THROWS((void)h.at(j111), std::invalid_argument);
+    int j13[] = {1, 3};
+    BOOST_TEST_THROWS((void)h.at(j13), std::out_of_range);
 
     // tuple with weight
     h(std::make_tuple(weight(2), 0, 2.0));

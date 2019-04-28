@@ -132,7 +132,6 @@ public:
   using large_int = detail::large_int<
       typename std::allocator_traits<allocator_type>::template rebind_alloc<uint64_t>>;
 
-private:
   struct buffer_type {
     // cannot be moved outside of scope of unlimited_storage, large_int is dependent type
     using types = mp11::mp_list<uint8_t, uint16_t, uint32_t, uint64_t, large_int, double>;
@@ -246,12 +245,14 @@ private:
     mutable void* ptr = nullptr;
   };
 
-public:
   class reference; // forward declare to make friend of const_reference
 
+  /// implementation detail
   class const_reference {
   public:
-    const_reference(buffer_type& b, std::size_t i) : bref_(b), idx_(i) {}
+    const_reference(buffer_type& b, std::size_t i) : bref_(b), idx_(i) {
+      BOOST_ASSERT(idx_ < bref_.size);
+    }
 
     const_reference(const const_reference&) = default;
 
@@ -355,6 +356,7 @@ public:
     friend class reference;
   };
 
+  /// implementation detail
   class reference : public const_reference {
   public:
     reference(buffer_type& b, std::size_t i) : const_reference(b, i) {}
@@ -425,28 +427,28 @@ public:
 
 private:
   template <class Value, class Reference>
-  class iterator_t : public detail::iterator_adaptor<iterator_t<Value, Reference>,
-                                                     std::size_t, Reference, Value> {
+  class iterator_impl : public detail::iterator_adaptor<iterator_impl<Value, Reference>,
+                                                        std::size_t, Reference, Value> {
   public:
-    iterator_t() = default;
+    iterator_impl() = default;
     template <class V, class R>
-    iterator_t(const iterator_t<V, R>& it)
-        : iterator_t::iterator_adaptor_(it.base()), buffer_(it.buffer_) {}
-    iterator_t(buffer_type* b, std::size_t i) noexcept
-        : iterator_t::iterator_adaptor_(i), buffer_(b) {}
+    iterator_impl(const iterator_impl<V, R>& it)
+        : iterator_impl::iterator_adaptor_(it.base()), buffer_(it.buffer_) {}
+    iterator_impl(buffer_type* b, std::size_t i) noexcept
+        : iterator_impl::iterator_adaptor_(i), buffer_(b) {}
 
     Reference operator*() const noexcept { return {*buffer_, this->base()}; }
 
     template <class V, class R>
-    friend class iterator_t;
+    friend class iterator_impl;
 
   private:
     mutable buffer_type* buffer_ = nullptr;
   };
 
 public:
-  using const_iterator = iterator_t<const value_type, const_reference>;
-  using iterator = iterator_t<value_type, reference>;
+  using const_iterator = iterator_impl<const value_type, const_reference>;
+  using iterator = iterator_impl<value_type, reference>;
 
   explicit unlimited_storage(const allocator_type& a = {}) : buffer_(a) {}
   unlimited_storage(const unlimited_storage&) = default;
@@ -517,6 +519,7 @@ private:
   struct incrementor {
     template <class T>
     void operator()(T* tp, buffer_type& b, std::size_t i) {
+      BOOST_ASSERT(tp && i < b.size);
       if (!detail::safe_increment(tp[i])) {
         using U = detail::next_type<typename buffer_type::types, T>;
         b.template make<U>(b.size, tp);

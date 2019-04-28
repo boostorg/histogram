@@ -40,7 +40,6 @@ actions doxygen_postprocessing
 boostbook histogram
 :
   histogram.qbk
-  reference_pp.xml
 :
   <xsl:param>boost.root=../../../..
   <xsl:param>boost.libraries=../../../libraries.htm
@@ -48,6 +47,7 @@ boostbook histogram
   <xsl:param>chunk.first.sections=1
   <xsl:param>generate.section.toc.level=1
   <xsl:param>generate.toc="chapter nop section nop"
+  <dependency>reference_pp.xml
 ;
 
 alias boostdoc ;

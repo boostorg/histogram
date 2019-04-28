@@ -34,6 +34,8 @@ project
     ;
 
 alias cxx14 :
+    [ compile-fail make_histogram_fail0.cpp ]
+    [ compile-fail make_histogram_fail1.cpp ]
     [ run algorithm_project_test.cpp ]
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]

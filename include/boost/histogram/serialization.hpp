@@ -172,8 +172,8 @@ void serialize(Archive& ar, large_int<Allocator>& x, unsigned /* version */) {
 
 template <class Archive, class T>
 void serialize(Archive& ar, storage_adaptor<T>& x, unsigned /* version */) {
-  using impl_t = typename storage_adaptor<T>::base_type;
-  ar& serialization::make_nvp("impl", static_cast<impl_t&>(x));
+  auto& impl = unsafe_access::storage_adaptor_impl(x);
+  ar& serialization::make_nvp("impl", impl);
 }
 
 template <class Allocator, class Archive>

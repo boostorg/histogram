@@ -215,9 +215,18 @@ BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rmul,
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rdiv,
                               (std::declval<T&>() /= std::declval<U&>()));
 
+BOOST_HISTOGRAM_DETECT(has_threading_support, (T::has_threading_support));
+
 template <typename T>
-using is_storage =
-    mp11::mp_bool<(is_indexable_container<T>::value && has_method_reset<T>::value)>;
+using is_storage = mp11::mp_and<is_indexable_container<T>, has_method_reset<T>,
+                                has_threading_support<T>>;
+
+template <class T>
+using is_adaptible = mp11::mp_or<is_vector_like<T>, is_array_like<T>, is_map_like<T>>;
+
+template <class T, class _ = remove_cvref_t<T>,
+          class = std::enable_if_t<(is_storage<_>::value || is_adaptible<_>::value)>>
+struct requires_storage_or_adaptible {};
 
 template <typename T>
 struct is_tuple_impl : std::false_type {};

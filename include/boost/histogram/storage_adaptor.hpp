@@ -336,9 +336,9 @@ using storage_adaptor_impl =
 /// Turns any vector-like, array-like, and map-like container into a storage type.
 template <class T>
 class storage_adaptor : public detail::storage_adaptor_impl<T> {
-public:
-  using base_type = detail::storage_adaptor_impl<T>;
+  using impl_type = detail::storage_adaptor_impl<T>;
 
+public:
   // standard copy, move, assign
   storage_adaptor(storage_adaptor&&) = default;
   storage_adaptor(const storage_adaptor&) = default;
@@ -347,12 +347,12 @@ public:
 
   // forwarding constructor
   template <class... Ts>
-  storage_adaptor(Ts&&... ts) : base_type(std::forward<Ts>(ts)...) {}
+  storage_adaptor(Ts&&... ts) : impl_type(std::forward<Ts>(ts)...) {}
 
   // forwarding assign
   template <class U>
   storage_adaptor& operator=(U&& u) {
-    base_type::operator=(std::forward<U>(u));
+    impl_type::operator=(std::forward<U>(u));
     return *this;
   }
 
@@ -362,6 +362,9 @@ public:
     using std::end;
     return std::equal(this->begin(), this->end(), begin(u), end(u), detail::equal{});
   }
+
+private:
+  friend struct unsafe_access;
 };
 
 } // namespace histogram

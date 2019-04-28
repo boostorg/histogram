@@ -82,6 +82,15 @@ struct unsafe_access {
   static constexpr auto& unlimited_storage_buffer(unlimited_storage<Allocator>& storage) {
     return storage.buffer_;
   }
+
+  /**
+    Get implementation of storage_adaptor.
+    @param storage instance of storage_adaptor.
+  */
+  template <class T>
+  static constexpr auto& storage_adaptor_impl(storage_adaptor<T>& storage) {
+    return static_cast<typename storage_adaptor<T>::impl_type&>(storage);
+  }
 };
 
 } // namespace histogram

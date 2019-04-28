@@ -3,6 +3,8 @@
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 # keep in sync with Jamfile
+boost_test(TYPE compile-fail SOURCES make_histogram_fail0.cpp)
+boost_test(TYPE compile-fail SOURCES make_histogram_fail1.cpp)
 boost_test(TYPE run SOURCES algorithm_project_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES algorithm_reduce_test.cpp

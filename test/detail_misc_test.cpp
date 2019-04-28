@@ -134,19 +134,6 @@ int main() {
     BOOST_TEST_THROWS(detail::bincount(v), std::overflow_error);
   }
 
-  // common_container
-  {
-    using A = std::array<int, 10>;
-    using B = std::vector<int>;
-    using C = std::map<std::size_t, int>;
-    BOOST_TEST_TRAIT_SAME(detail::common_container<A, B>, A);
-    BOOST_TEST_TRAIT_SAME(detail::common_container<B, A>, A);
-    BOOST_TEST_TRAIT_SAME(detail::common_container<A, C>, A);
-    BOOST_TEST_TRAIT_SAME(detail::common_container<C, A>, A);
-    BOOST_TEST_TRAIT_SAME(detail::common_container<C, B>, B);
-    BOOST_TEST_TRAIT_SAME(detail::common_container<B, C>, B);
-  }
-
   // common_storage
   {
     BOOST_TEST_TRAIT_SAME(
