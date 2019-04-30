@@ -22,14 +22,15 @@ install:
 
   # Replacing Boost module with this project and installing Boost dependencies
   - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram\
-  - python tools\boostdep\depinst\depinst.py --git_args "--depth 10 --jobs 2" histogram
+  - python tools\boostdep\depinst\depinst.py -N units -N range -N accumulators --git_args "--depth 10 --jobs 2" histogram
 
   # Adding missing toolsets and preparing Boost headers
   - cmd /c bootstrap
   - b2 headers
 
 test_script:
-  - b2 -j2 -q libs\histogram\test
+  - cd libs\histogram\test
+  - ..\..\..\b2 -j2 -q minimal serialization
 
 on_failure:
   ## Uncomment the following line to stop VM and enable interactive login

@@ -17,6 +17,7 @@
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/throw_exception.hpp>
+#include <functional>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -47,18 +48,19 @@ decltype(auto) axis_get(const T& axes) {
 
 template <class... Ts>
 decltype(auto) axis_get(std::tuple<Ts...>& axes, unsigned i) {
+  using namespace boost::mp11;
   constexpr auto S = sizeof...(Ts);
-  using L = mp11::mp_unique<mp11::mp_list<Ts&...>>;
-  using V = mp11::mp_rename<L, axis::variant>;
-  return mp11::mp_with_index<S>(i, [&](auto I) { return V(std::get<I>(axes)); });
+  using V = mp_unique<axis::variant<std::reference_wrapper<Ts>...>>;
+  return mp_with_index<S>(i, [&](auto I) { return V(std::ref(std::get<I>(axes))); });
 }
 
 template <class... Ts>
 decltype(auto) axis_get(const std::tuple<Ts...>& axes, unsigned i) {
+  using namespace boost::mp11;
   constexpr auto S = sizeof...(Ts);
-  using L = mp11::mp_unique<mp11::mp_list<const Ts&...>>;
-  using V = mp11::mp_rename<L, axis::variant>;
-  return mp11::mp_with_index<S>(i, [&](auto I) { return V(std::get<I>(axes)); });
+  using L = mp_unique<mp_list<std::reference_wrapper<const Ts>...>>;
+  using V = mp_rename<L, axis::variant>;
+  return mp_with_index<S>(i, [&](auto I) { return V(std::cref(std::get<I>(axes))); });
 }
 
 template <class T>
@@ -84,17 +86,17 @@ bool axes_equal(const std::tuple<Ts...>& ts, const std::tuple<Us...>& us) {
       [](const auto&, const auto&) { return false; }, ts, us);
 }
 
-template <class... Ts, class U>
-bool axes_equal(const std::tuple<Ts...>& t, const U& u) {
-  if (sizeof...(Ts) != u.size()) return false;
+template <class T, class... Us>
+bool axes_equal(const T& t, const std::tuple<Us...>& u) {
+  if (t.size() != sizeof...(Us)) return false;
   bool equal = true;
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>(
-      [&](auto I) { equal &= u[I] == std::get<I>(t); });
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
+      [&](auto I) { equal &= t[I] == std::get<I>(u); });
   return equal;
 }
 
-template <class T, class... Us>
-bool axes_equal(const T& t, const std::tuple<Us...>& u) {
+template <class... Ts, class U>
+bool axes_equal(const std::tuple<Ts...>& t, const U& u) {
   return axes_equal(u, t);
 }
 

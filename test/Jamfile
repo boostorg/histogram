@@ -34,8 +34,6 @@ project
     ;
 
 alias cxx14 :
-    [ compile-fail make_histogram_fail0.cpp ]
-    [ compile-fail make_histogram_fail1.cpp ]
     [ run algorithm_project_test.cpp ]
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
@@ -52,6 +50,7 @@ alias cxx14 :
     [ run detail_iterator_adaptor_test.cpp ]
     [ run detail_large_int_test.cpp ]
     [ run detail_linearize_test.cpp ]
+    [ run detail_variant_test.cpp ]
     [ run histogram_dynamic_test.cpp ]
     [ run histogram_growing_test.cpp ]
     [ run histogram_mixed_test.cpp ]
@@ -68,6 +67,12 @@ alias cxx17 :
     [ run deduction_guides_test.cpp ] :
     [ requires cpp_deduction_guides ]
     ;
+    
+# check that useful error messages are produced when library is used incorrectly
+alias failure :
+    [ compile-fail make_histogram_fail0.cpp ]
+    [ compile-fail make_histogram_fail1.cpp ]
+    ;
 
 alias threading :
     [ run histogram_threaded_test.cpp ]
@@ -83,17 +88,20 @@ alias serialization :
     [ run storage_adaptor_serialization_test.cpp libserial ]
     [ run histogram_serialization_test.cpp libserial ]
     [ run unlimited_storage_serialization_test.cpp libserial ]
+    [ run detail_variant_serialization_test.cpp libserial ]
     ;
 
 alias libserial :
     /boost/serialization//boost_serialization :
     <link>static ;
 
+# "failure" not included in "all", because it is distracting
 alias all : cxx14 cxx17 threading accumulators range units serialization ;
 alias minimal : cxx14 cxx17 threading ;
 
 explicit cxx14 ;
 explicit cxx17 ;
+explicit failure ;
 explicit threading ;
 explicit accumulators ;
 explicit range ;

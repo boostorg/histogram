@@ -18,8 +18,12 @@ namespace histogram {
   This struct enables access to private data of some classes. It is intended for library
   developers who need this to implement algorithms efficiently, for example,
   serialization. Users should not use this. If you are a user who absolutely needs this to
-  get a specific effect, please submit an issue on Github. This means that the public
-  interface is insufficient.
+  get a specific effect, please submit an issue on Github. Perhaps the public
+  interface is insufficient and should be extended for your use case.
+
+  Unlike the normal interface, the unsafe_access interface may change between versions.
+  If your code relies on unsafe_access, it may or may not break when you update Boost.
+  This is another reason to not use it unless you are ok with these conditions.
 */
 struct unsafe_access {
   /**
@@ -90,6 +94,15 @@ struct unsafe_access {
   template <class T>
   static constexpr auto& storage_adaptor_impl(storage_adaptor<T>& storage) {
     return static_cast<typename storage_adaptor<T>::impl_type&>(storage);
+  }
+
+  /**
+    Get implementation of axis::variant.
+    @param axis instance of axis::variant.
+  */
+  template <class Variant>
+  static constexpr auto& axis_variant_impl(Variant& axis) {
+    return axis.impl;
   }
 };
 

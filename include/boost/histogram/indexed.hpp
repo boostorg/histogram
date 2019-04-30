@@ -13,7 +13,6 @@
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/histogram/unsafe_access.hpp>
 #include <type_traits>
 #include <utility>
 

@@ -27,11 +27,6 @@
 using namespace boost::histogram;
 using namespace boost::histogram::detail;
 
-struct VisitorTestFunctor {
-  template <typename T>
-  T operator()(T&&);
-};
-
 int main() {
   // has_method_value*
   {
@@ -308,22 +303,6 @@ int main() {
     BOOST_TEST_TRAIT_SAME(args_type<decltype(&Foo::f2)>, std::tuple<long>);
     BOOST_TEST_TRAIT_SAME(arg_type<decltype(&Foo::f1)>, char);
     BOOST_TEST_TRAIT_SAME(arg_type<decltype(&Foo::f2)>, long);
-  }
-
-  // visitor_return_type
-  {
-    using V1 = axis::variant<char>;
-    using V2 = axis::variant<int>&;
-    using V3 = const axis::variant<long>&;
-    using V4 = axis::variant<const char&>;
-    using V5 = axis::variant<const char&>&;
-    using V6 = const axis::variant<const char&>&;
-    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V1>, char);
-    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V2>, int&);
-    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V3>, const long&);
-    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V4>, const char&);
-    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V5>, const char&);
-    BOOST_TEST_TRAIT_SAME(visitor_return_type<VisitorTestFunctor, V6>, const char&);
   }
 
   // static_if

@@ -10,6 +10,7 @@
 #include <boost/core/demangle.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/type_name.hpp>
+#include <boost/mp11/integral.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
 #include <type_traits>
@@ -18,20 +19,28 @@ namespace boost {
 namespace histogram {
 namespace detail {
 template <class T, class E, class U>
-T try_cast_impl(std::false_type, U&&) {
+T try_cast_impl(mp11::mp_int<0>, U&&) {
   BOOST_THROW_EXCEPTION(E(cat("cannot cast ", type_name<T>(), " to ", type_name<U>())));
 }
 
 template <class T, class E, class U>
-T try_cast_impl(std::true_type, U&& u) {
+T try_cast_impl(mp11::mp_int<1>, U&& u) {
   return static_cast<T>(u);
 }
 
-// cast fails at runtime with exception E instead of compile-time
 template <class T, class E, class U>
-T try_cast(U&& u) {
-  return try_cast_impl<T, E>(std::is_convertible<U, T>{}, std::forward<U>(u));
+decltype(auto) try_cast_impl(mp11::mp_int<2>, U&& u) {
+  return std::forward<U>(u);
 }
+
+// cast fails at runtime with exception E instead of compile-time, T must be a value
+template <class T, class E, class U>
+decltype(auto) try_cast(U&& u) {
+  return try_cast_impl<T, E>(mp11::mp_int<(std::is_convertible<U, T>::value +
+                                           std::is_same<T, std::decay_t<U>>::value)>{},
+                             std::forward<U>(u));
+}
+
 } // namespace detail
 } // namespace histogram
 } // namespace boost

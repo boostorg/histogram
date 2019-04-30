@@ -17,6 +17,7 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/detail/variant_serialization.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
@@ -26,7 +27,6 @@
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/string.hpp>
-#include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 #include <tuple>
 #include <type_traits>
@@ -138,9 +138,9 @@ void category<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
   ar& serialization::make_nvp("meta", vec_meta_.second());
 }
 
-template <class... Ts>
-template <class Archive>
-void variant<Ts...>::serialize(Archive& ar, unsigned /* version */) {
+template <class Archive, class... Ts>
+void serialize(Archive& ar, variant<Ts...>& v, unsigned /* version */) {
+  auto& impl = unsafe_access::axis_variant_impl(v);
   ar& serialization::make_nvp("variant", impl);
 }
 } // namespace axis

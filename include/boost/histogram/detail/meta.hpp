@@ -50,6 +50,19 @@ namespace detail {
 template <class T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
+template <class T>
+struct unref_impl {
+  using type = T;
+};
+
+template <class T>
+struct unref_impl<std::reference_wrapper<T>> {
+  using type = T;
+};
+
+template <class T>
+using unref_t = typename unref_impl<T>::type;
+
 template <class T, class U>
 using convert_integer = mp11::mp_if<std::is_integral<remove_cvref_t<T>>, U, T>;
 
@@ -77,10 +90,6 @@ using arg_type = typename mp11::mp_at_c<args_type<T>, N>;
 
 template <class T>
 using return_type = typename boost::callable_traits::return_type<T>::type;
-
-template <class F, class V,
-          class T = copy_qualifiers<V, mp11::mp_first<remove_cvref_t<V>>>>
-using visitor_return_type = decltype(std::declval<F>()(std::declval<T>()));
 
 template <typename T>
 constexpr T lowest() {
