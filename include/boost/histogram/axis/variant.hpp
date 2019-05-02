@@ -33,50 +33,52 @@ namespace detail {
 
 template <class T, class U>
 struct ref_handler_impl {
-  static constexpr bool is_ref = false;
   using type = T;
+  template <class V>
+  static V unpack(V&& v) {
+    return std::forward<V>(v);
+  }
 };
 
 template <class T, class U>
 struct ref_handler_impl<T, std::reference_wrapper<U>> {
-  static constexpr bool is_ref = true;
   using type = std::reference_wrapper<T>;
+  template <class V>
+  static auto unpack(V&& v) {
+    return v ? &(v->get()) : nullptr;
+  }
 };
 
 template <class T, class U>
 struct ref_handler_impl<T, std::reference_wrapper<const U>> {
-  static constexpr bool is_ref = true;
   using type = std::reference_wrapper<const T>;
+  template <class V>
+  static auto unpack(V&& v) {
+    return v ? &(v->get()) : nullptr;
+  }
 };
 
 template <class T, class V>
-using ref_handler = ref_handler_impl<T, mp11::mp_first<remove_cvref_t<V>>>;
+using ref_handler = ref_handler_impl<T, mp11::mp_first<V>>;
 
 struct variant_access {
   template <class T, class Variant>
-  static decltype(auto) get(Variant&& v) {
-    using H = ref_handler<T, Variant>;
-    auto&& ref = v.impl.template get<typename H::type>();
-    return static_if_c<H::is_ref>([](auto&& ref) -> decltype(auto) { return ref.get(); },
-                                  [](auto&& ref) -> decltype(auto) { return ref; }, ref);
+  static auto get_if(Variant&& v) noexcept {
+    using H = ref_handler<T, remove_cvref_t<Variant>>;
+    return H::unpack(v.impl.template get_if<typename H::type>());
   }
 
   template <class T, class Variant>
-  static auto get_if(Variant&& v) noexcept {
-    using H = ref_handler<T, Variant>;
-    auto p = v.impl.template get_if<typename H::type>();
-    return static_if_c<H::is_ref>([](auto p) -> auto { return p ? &p->get() : nullptr; },
-                                  [](auto p) -> auto { return p; }, p);
+  static decltype(auto) get(Variant&& v) {
+    using H = ref_handler<T, remove_cvref_t<Variant>>;
+    return *H::unpack(&v.impl.template get<typename H::type>());
   }
 
   template <class Visitor, class Variant>
   static decltype(auto) apply(Visitor&& vis, Variant&& v) {
-    using H = ref_handler<char, Variant>;
-    return static_if_c<H::is_ref>(
-        [](auto&& vis, auto&& v) -> decltype(auto) {
-          return v.apply([&vis](auto&& ref) -> decltype(auto) { return vis(ref.get()); });
-        },
-        [](auto&& vis, auto&& v) -> decltype(auto) { return v.apply(vis); }, vis, v.impl);
+    using H = ref_handler<void, remove_cvref_t<Variant>>;
+    return v.impl.apply(
+        [&vis](auto&& x) -> decltype(auto) { return vis(*H::unpack(&x)); });
   }
 };
 
