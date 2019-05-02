@@ -23,11 +23,10 @@ target_include_directories(boost_histogram
 target_link_libraries(boost_histogram
     INTERFACE
         Boost::assert
+        Boost::callable_traits
         Boost::config
         Boost::core
         Boost::mp11
-        Boost::callable_traits
-        Boost::variant
         Boost::throw_exception
 )
 
@@ -56,25 +55,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   fetch_and_include(cmake/boost_fetch.cmake)
 
   boost_fetch(boostorg/assert TAG develop)
-  boost_fetch(boostorg/bind TAG develop)
   boost_fetch(hdembinski/callable_traits TAG origin/fix_cmake)
   boost_fetch(boostorg/config TAG develop)
-  boost_fetch(boostorg/container_hash TAG develop)
   boost_fetch(boostorg/core TAG develop)
-  boost_fetch(boostorg/detail TAG develop)
-  boost_fetch(boostorg/integer TAG develop)
-  boost_fetch(boostorg/move TAG develop)
   boost_fetch(boostorg/mp11 TAG develop)
-  boost_fetch(boostorg/mpl TAG develop)
-  boost_fetch(boostorg/predef TAG develop)
-  boost_fetch(boostorg/preprocessor TAG develop)
-  boost_fetch(boostorg/smart_ptr TAG develop)
-  boost_fetch(boostorg/static_assert TAG develop)
   boost_fetch(boostorg/throw_exception TAG develop)
-  boost_fetch(boostorg/type_index TAG develop)
-  boost_fetch(boostorg/type_traits TAG develop)
-  boost_fetch(boostorg/utility TAG develop)
-  boost_fetch(boostorg/variant TAG develop)
 
   ## No cmake support yet
   # boost_fetch(boostorg/accumulators TAG develop)
