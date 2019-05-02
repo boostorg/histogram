@@ -22,13 +22,12 @@ T launder_cast(U&& u) {
   return reinterpret_cast<T>(std::forward<U>(u));
 }
 
-// Simple C++14 variant without external boost dependencies.
+// Simple C++14 variant that only depends on boost.mp11 and boost.throw_exception.
 //
-// * No empty state, first type must have default ctor that never throws;
-//   if it throws anyway, the program aborts
-// * All types must have copy ctors and copy assignment
-// * All types must have noexcept move ctors and noexcept move assignment
-// * If the current type is a reference, assignment passes through, no rebind
+// * No empty state, first type should have a default ctor that never throws;
+//   if it throws anyway, the program aborts.
+// * All types must have copy ctors and copy assignment.
+// * All types must have noexcept move ctors and noexcept move assignment.
 //
 template <class... Ts>
 class variant {

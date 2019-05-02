@@ -33,11 +33,11 @@ void load(Archive& ar, histogram::detail::variant<Ts...>& v, unsigned) {
   ar >> BOOST_SERIALIZATION_NVP(which);
   constexpr unsigned N = sizeof...(Ts);
   if (which < 0 || static_cast<unsigned>(which) >= N)
-    // throw on invalid which, which >= 0 can happen if type was removed from variant
+    // throw on invalid which, which >= N can happen if type was removed from variant
     boost::serialization::throw_exception(boost::archive::archive_exception(
         boost::archive::archive_exception::unsupported_version));
-  mp11::mp_with_index<N>(static_cast<unsigned>(which), [&ar, &v](auto I) {
-    using T = mp11::mp_at_c<histogram::detail::variant<Ts...>, I>;
+  mp11::mp_with_index<N>(static_cast<unsigned>(which), [&ar, &v](auto i) {
+    using T = mp11::mp_at_c<histogram::detail::variant<Ts...>, i>;
     T value;
     ar >> BOOST_SERIALIZATION_NVP(value);
     v = std::move(value);
