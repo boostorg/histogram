@@ -64,7 +64,6 @@ if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
   target_compile_features(BoostHistogram-deduction_guides_test_cpp PRIVATE cxx_std_17)
 endif()
 
-find_package(Threads)
 if (Threads_FOUND)
   boost_test(TYPE run SOURCES histogram_threaded_test.cpp
     LIBRARIES Boost::histogram Boost::core Threads::Threads)

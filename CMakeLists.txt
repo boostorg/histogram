@@ -67,6 +67,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   # boost_fetch(boostorg/serialization TAG develop)
   # boost_fetch(boostorg/units TAG develop)
 
+  find_package(Threads) # for optional multi-threaded tests
+
   enable_testing()
   add_custom_target(histogram_check
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>
@@ -112,4 +114,8 @@ endif()
 
 if (COMMAND boost_test)
   add_subdirectory(test)
+endif()
+
+if (COMMAND boost_fetch)
+  add_subdirectory(benchmark)
 endif()
