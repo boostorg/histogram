@@ -21,6 +21,7 @@
 #include <boost/mp11/utility.hpp>
 #include <cmath>
 #include <functional>
+#include <iterator>
 #include <memory>
 #include <type_traits>
 
@@ -456,14 +457,24 @@ public:
   unlimited_storage(unlimited_storage&&) = default;
   unlimited_storage& operator=(unlimited_storage&&) = default;
 
-  template <class T>
-  unlimited_storage(const storage_adaptor<T>& s) {
-    using V = detail::remove_cvref_t<decltype(s[0])>;
+  // TODO
+  // template <class Allocator>
+  // unlimited_storage(const unlimited_storage<Allocator>& s)
+
+  template <class Iterable, class = detail::requires_iterable<Iterable>>
+  explicit unlimited_storage(const Iterable& s) {
+    using std::begin;
+    using std::end;
+    auto s_begin = begin(s);
+    auto s_end = end(s);
+    using V = typename std::iterator_traits<decltype(begin(s))>::value_type;
     constexpr auto ti = buffer_type::template type_index<V>();
     constexpr auto nt = mp11::mp_size<typename buffer_type::types>::value;
+    const std::size_t size = static_cast<std::size_t>(std::distance(s_begin, s_end));
     detail::static_if_c<(ti < nt)>(
-        [&](auto) { buffer_.template make<V>(s.size(), s.begin()); },
-        [&](auto) { buffer_.template make<double>(s.size(), s.begin()); }, 0);
+        [this, &size, &s_begin](auto) { buffer_.template make<V>(size, s_begin); },
+        [this, &size, &s_begin](auto) { buffer_.template make<double>(size, s_begin); },
+        0);
   }
 
   template <class Iterable, class = detail::requires_iterable<Iterable>>

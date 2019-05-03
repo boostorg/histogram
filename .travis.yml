@@ -48,7 +48,7 @@ matrix:
           packages: g++-5
       script:
         - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 warnings-as-errors=on
-          cxxflags="--coverage" linkflags="--coverage"
+          histogram_coverage
       after_success:
         - GCOV=gcov-5 tools/cov.sh
 

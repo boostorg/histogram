@@ -29,6 +29,6 @@ if [ $CI ]; then
   # upload if on CI
   curl -s https://codecov.io/bash | bash -s - -f coverage.info -X gcov -x $GCOV
 else
-  # otherwise just print
+  # otherwise generate html report
   $LCOV_DIR/bin/genhtml coverage.info -o coverage-report
 fi

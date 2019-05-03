@@ -109,18 +109,29 @@ void increase_and_grow() {
 }
 
 template <typename T>
-void convert_array_storage() {
+void convert_foreign_storage() {
+
+  {
+    vector_storage<T> s;
+    s.reset(1);
+    ++s[0];
+    BOOST_TEST_EQ(s[0], 1);
+
+    // test converting copy ctor
+    unlimited_storage_type u(s);
+    using buffer_t = std::decay_t<decltype(unsafe_access::unlimited_storage_buffer(u))>;
+    BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(u).type,
+                  buffer_t::template type_index<T>());
+    BOOST_TEST(u == s);
+    BOOST_TEST_EQ(u.size(), 1u);
+    BOOST_TEST_EQ(u[0], 1.0);
+    ++s[0];
+    BOOST_TEST_NOT(u == s);
+  }
+
   vector_storage<uint8_t> s;
   s.reset(1);
   ++s[0];
-  BOOST_TEST_EQ(s[0], 1);
-
-  // test "copy" ctor
-  unlimited_storage_type b(s);
-  BOOST_TEST_EQ(b[0], 1.0);
-  BOOST_TEST(b == s);
-  ++b[0];
-  BOOST_TEST_NOT(b == s);
 
   // test assign and equal
   auto a = prepare<T>(1);
@@ -381,14 +392,14 @@ int main() {
     BOOST_TEST_EQ(a[1], 6);
   }
 
-  // convert_array_storage
+  // convert_foreign_storage
   {
-    convert_array_storage<uint8_t>();
-    convert_array_storage<uint16_t>();
-    convert_array_storage<uint32_t>();
-    convert_array_storage<uint64_t>();
-    convert_array_storage<large_int>();
-    convert_array_storage<double>();
+    convert_foreign_storage<uint8_t>();
+    convert_foreign_storage<uint16_t>();
+    convert_foreign_storage<uint32_t>();
+    convert_foreign_storage<uint64_t>();
+    convert_foreign_storage<large_int>();
+    convert_foreign_storage<double>();
   }
 
   // reference
@@ -481,7 +492,7 @@ int main() {
     }
 
     tracing_allocator_db db;
-    db.tracing = true;
+    // db.tracing = true; // uncomment this to monitor allocator activity
     S s(alloc_t{db});
     s.reset(10); // should work
     BOOST_TEST_EQ(db.at<uint8_t>().first, 10);
