@@ -32,6 +32,8 @@ void run_1d_tests(mp_list<IsDynamic, Coverage>) {
 
   auto ind = indexed(h, Coverage());
   auto it = ind.begin();
+  // calling begin second time yields end iterator but does not confuse the original range
+  BOOST_TEST(ind.begin() == ind.end());
   BOOST_TEST_EQ(it->indices().size(), 1);
 
   if (Coverage() == coverage::all) {

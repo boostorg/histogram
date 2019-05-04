@@ -96,11 +96,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   #
   # install(TARGETS boost_histogram
   #   boost_assert
+  #   boost_callable_traits
   #   boost_config
   #   boost_core
   #   boost_mp11
-  #   boost_callable_traits
-  #   boost_variant
   #   boost_throw_exception
   #   EXPORT ${PROJECT_NAME}Targets)
   # install(EXPORT ${PROJECT_NAME}Targets

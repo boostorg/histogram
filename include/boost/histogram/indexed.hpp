@@ -29,7 +29,12 @@ enum class coverage {
   all,   /*!< iterate over all bins, including underflow and overflow */
 };
 
-/// Range over histogram bins with multi-dimensional index.
+/** Forward range over histogram bins with multi-dimensional index.
+
+  The iterator returned by begin() can only be incremented. begin() may only be called
+  once, calling it a second time returns the end() iterator. The iterator provided by
+  end() must not be incremented.
+*/
 template <class Histogram>
 class BOOST_HISTOGRAM_NODISCARD indexed_range {
 private:
@@ -42,6 +47,7 @@ private:
 public:
   using value_iterator = decltype(std::declval<Histogram>().begin());
   using value_reference = typename value_iterator::reference;
+  class range_iterator;
 
   /**
     Pointer-like class to access value and index of current cell.
@@ -85,34 +91,37 @@ public:
       friend class accessor;
     };
 
-    /// Returns the cell value.
-    value_reference operator*() const noexcept { return *iter_; }
-    /// Returns the cell value.
-    value_reference get() const noexcept { return *iter_; }
+    /// Returns the cell reference.
+    value_reference get() const noexcept { return *(iter_.iter_); }
+    /// @copydoc get()
+    value_reference operator*() const noexcept { return get(); }
     /// Access fields and methods of the cell object.
-    value_iterator operator->() const noexcept { return iter_; }
+    value_iterator operator->() const noexcept { return iter_.iter_; }
 
     /// Access current index.
     /// @param d axis dimension.
     axis::index_type index(unsigned d = 0) const noexcept {
-      return parent_.cache_[d].idx;
+      return iter_.parent_->cache_[d].idx;
     }
 
     /// Access indices as an iterable range.
     index_view indices() const noexcept {
-      return {parent_.cache_, parent_.cache_ + parent_.hist_.rank()};
+      return {iter_.parent_->cache_, iter_.parent_->cache_ + iter_.parent_->hist_.rank()};
     }
 
     /// Access current bin.
     /// @tparam N axis dimension.
     template <unsigned N = 0>
     decltype(auto) bin(std::integral_constant<unsigned, N> = {}) const {
-      return parent_.hist_.axis(std::integral_constant<unsigned, N>()).bin(index(N));
+      return iter_.parent_->hist_.axis(std::integral_constant<unsigned, N>())
+          .bin(index(N));
     }
 
     /// Access current bin.
     /// @param d axis dimension.
-    decltype(auto) bin(unsigned d) const { return parent_.hist_.axis(d).bin(index(d)); }
+    decltype(auto) bin(unsigned d) const {
+      return iter_.parent_->hist_.axis(d).bin(index(d));
+    }
 
     /**
       Computes density in current cell.
@@ -122,39 +131,39 @@ public:
     */
     double density() const {
       double x = 1;
-      auto it = parent_.cache_;
-      parent_.hist_.for_each_axis([&](const auto& a) {
+      auto it = iter_.parent_->cache_;
+      iter_.parent_->hist_.for_each_axis([&](const auto& a) {
         const auto w = axis::traits::width_as<double>(a, it++->idx);
         x *= w ? w : 1;
       });
-      return *iter_ / x;
+      return get() / x;
     }
 
   private:
     /// implementation detail
-    accessor(indexed_range& p, value_iterator i) : parent_(p), iter_(i) {}
+    accessor(range_iterator i) : iter_(i) {}
 
-    indexed_range& parent_;
-    value_iterator iter_;
-    friend class indexed_range;
+    range_iterator iter_;
+    friend class range_iterator;
   };
 
   /// implementation detail
   class range_iterator {
-    using detail_pointer = detail::operator_arrow_dispatch_t<accessor>;
+    using detail_arrow_t = detail::operator_arrow_dispatch_t<accessor>;
 
   public:
     using value_type = typename value_iterator::value_type;
     using reference = accessor;
-    using pointer = typename detail_pointer::result_type;
+    using pointer = typename detail_arrow_t::result_type;
     using difference_type = void;
     using iterator_category = std::input_iterator_tag;
 
-    accessor operator*() const noexcept { return {*parent_, iter_}; }
-    pointer operator->() const noexcept { return detail_pointer::apply(operator*()); }
+    accessor operator*() const noexcept { return {*this}; }
+    pointer operator->() const noexcept { return detail_arrow_t::apply(operator*()); }
 
     range_iterator& operator++() {
       std::size_t stride = 1;
+      BOOST_ASSERT(parent_);
       auto c = parent_->cache_;
       ++c->idx;
       ++iter_;
@@ -187,12 +196,12 @@ public:
     friend class indexed_range;
   };
 
-  indexed_range(Histogram& h, coverage c)
-      : hist_(h), cover_all_(c == coverage::all), begin_(hist_.begin()), end_(begin_) {
+  indexed_range(Histogram& hist, coverage cov)
+      : hist_(hist), begin_(hist_.begin()), end_(begin_) {
     auto ca = cache_;
     const auto clast = ca + hist_.rank() - 1;
     std::size_t stride = 1;
-    h.for_each_axis([&, this](const auto& a) {
+    hist_.for_each_axis([ca, clast, cov, &stride, this](const auto& a) mutable {
       using opt = axis::traits::static_options<decltype(a)>;
       constexpr int under = opt::test(axis::option::underflow);
       constexpr int over = opt::test(axis::option::overflow);
@@ -200,9 +209,9 @@ public:
 
       ca->extent = size + under + over;
       // -1 if underflow and cover all, else 0
-      ca->begin = cover_all_ ? -under : 0;
+      ca->begin = cov == coverage::all ? -under : 0;
       // size + 1 if overflow and cover all, else size
-      ca->end = cover_all_ ? size + over : size;
+      ca->end = cov == coverage::all ? size + over : size;
       ca->idx = ca->begin;
 
       begin_ += (ca->begin + under) * stride;
@@ -216,12 +225,15 @@ public:
     });
   }
 
-  range_iterator begin() noexcept { return {this, begin_}; }
+  range_iterator begin() noexcept {
+    auto begin = begin_;
+    begin_ = end_;
+    return begin == end_ ? end() : range_iterator{this, begin};
+  }
   range_iterator end() noexcept { return {nullptr, end_}; }
 
 private:
   Histogram& hist_;
-  const bool cover_all_;
   value_iterator begin_, end_;
   mutable cache_item cache_[max_dim::value];
 };
@@ -236,7 +248,10 @@ private:
   ```
 
   The iterators dereference to an indexed_range::accessor, which has methods to query the
-  current indices and bins, and acts like a pointer to the cell value.
+  current indices and bins and acts like a pointer to the cell value. Accessors, like
+  pointers, are cheap to copy but get invalidated when the forward range
+  iterator is incremented. For example, one cannot store accessors in a container for
+  later use.
 
   @returns indexed_range
 
