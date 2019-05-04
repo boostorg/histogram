@@ -33,10 +33,8 @@ Example: Make and fill a 1d-histogram ([try it live on Wandbox](https://wandbox.
 int main() {
     using namespace boost::histogram;
 
-    // make 1d histogram with 4 regular bins from 0 to 2 on an axis called "x"
-    auto h = make_histogram(
-      axis::regular<>(4, 0.0, 2.0, "x")
-    );
+    // make 1d histogram with 4 regular bins from 0 to 2
+    auto h = make_histogram( axis::regular<>(4, 0.0, 2.0) );
 
     // push some values into the histogram
     for (auto value : { 0.4, 1.1, 0.3, 1.7, 10. })
