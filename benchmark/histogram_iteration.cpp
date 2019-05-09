@@ -100,7 +100,7 @@ template <class Tag>
 static void Indexed(benchmark::State& state, Tag, d1, coverage cov) {
   auto h = make_histogram(Tag(), d1(), state.range(0));
   for (auto _ : state) {
-    for (auto x : indexed(h, cov)) {
+    for (auto&& x : indexed(h, cov)) {
       benchmark::DoNotOptimize(*x);
       benchmark::DoNotOptimize(x.index());
     }
@@ -111,7 +111,7 @@ template <class Tag>
 static void Indexed(benchmark::State& state, Tag, d2, coverage cov) {
   auto h = make_histogram(Tag(), d2(), state.range(0));
   for (auto _ : state) {
-    for (auto x : indexed(h, cov)) {
+    for (auto&& x : indexed(h, cov)) {
       benchmark::DoNotOptimize(*x);
       benchmark::DoNotOptimize(x.index(0));
       benchmark::DoNotOptimize(x.index(1));
@@ -123,7 +123,7 @@ template <class Tag>
 static void Indexed(benchmark::State& state, Tag, d3, coverage cov) {
   auto h = make_histogram(Tag(), d3(), state.range(0));
   for (auto _ : state) {
-    for (auto x : indexed(h, cov)) {
+    for (auto&& x : indexed(h, cov)) {
       benchmark::DoNotOptimize(*x);
       benchmark::DoNotOptimize(x.index(0));
       benchmark::DoNotOptimize(x.index(1));
@@ -134,8 +134,8 @@ static void Indexed(benchmark::State& state, Tag, d3, coverage cov) {
 
 #define BENCH(Type, Tag, Dim, Cov)                                             \
   BENCHMARK_CAPTURE(Type, (Tag, Dim, Cov), Tag{}, Dim_t<Dim>{}, coverage::Cov) \
-      ->RangeMultiplier(2)                                                     \
-      ->Range(4, 128)
+      ->RangeMultiplier(4)                                                     \
+      ->Range(4, 256)
 
 BENCH(Naive, tuple, 1, inner);
 BENCH(Indexed, tuple, 1, inner);

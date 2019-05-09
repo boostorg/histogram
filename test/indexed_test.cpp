@@ -35,6 +35,7 @@ void run_1d_tests(mp_list<IsDynamic, Coverage>) {
   // calling begin second time yields end iterator but does not confuse the original range
   BOOST_TEST(ind.begin() == ind.end());
   BOOST_TEST_EQ(it->indices().size(), 1);
+  BOOST_TEST_EQ(it->indices()[0], Coverage() == coverage::all ? -1 : 0);
 
   if (Coverage() == coverage::all) {
     BOOST_TEST_EQ(it->index(0), -1);
@@ -50,10 +51,11 @@ void run_1d_tests(mp_list<IsDynamic, Coverage>) {
   BOOST_TEST_EQ(**it, 3);
   BOOST_TEST_EQ(it->bin(0), h.axis().bin(1));
   ++it;
-  BOOST_TEST_EQ(it->index(0), 2);
-  BOOST_TEST_EQ(**it, 4);
-  BOOST_TEST_EQ(it->bin(0), h.axis().bin(2));
-  ++it;
+  // check post-increment
+  auto prev = *it++;
+  BOOST_TEST_EQ(prev.index(0), 2);
+  BOOST_TEST_EQ(*prev, 4);
+  BOOST_TEST_EQ(prev.bin(0), h.axis().bin(2));
   if (Coverage() == coverage::all) {
     BOOST_TEST_EQ(it->index(0), 3);
     BOOST_TEST_EQ(**it, 5);

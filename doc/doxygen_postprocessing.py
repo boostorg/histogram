@@ -5,7 +5,7 @@ import re
 
 
 def log(*args):
-    print("PP:", *args)
+    print("post-processing:", *args)
 
 
 def select(condition, *tags):
@@ -74,7 +74,8 @@ for item in select(lambda x:True, "class", "struct", "function"):
         parent = parent_map[item]
         log("removing undocumented", item.tag, item.get("name"), "from",
             parent.tag, parent.get("name"))
-        parent_map[item].remove(item)
+        if item in parent_map[item]:
+            parent_map[item].remove(item)
     elif purpose.text.strip().lower() == "implementation detail":
         log("replacing", item.tag, item.get("name"), "with unspecified typedef")
         name = item.get("name")
@@ -84,6 +85,8 @@ for item in select(lambda x:True, "class", "struct", "function"):
         type = ET.Element("type")
         type.append(unspecified)
         item.append(type)
+
+parent_map = {c:p for p in tree.iter() for c in p}
 
 # hide methods and constructors explicitly declared as "implementation detail"
 for item in select(is_detail, "constructor", "method"):

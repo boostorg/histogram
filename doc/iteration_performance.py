@@ -9,17 +9,17 @@ import matplotlib as mpl
 mpl.rcParams.update(mpl.rcParamsDefault)
 
 bench = defaultdict(lambda:[])
-for iline, line in enumerate(open(sys.argv[1])):
-    if iline < 3:
-        continue
+data = json.load(open(sys.argv[1]))
+
+for benchmark in data["benchmarks"]:
     # Naive/(tuple, 3, inner)/4    3.44 ns
-    m = re.match("(\S+)/\((\S+), (\d), (\S+)\)/(\d+)\s*([0-9\.]+) ns", line)
+    m = re.match("(\S+)/\((\S+), (\d), (\S+)\)/(\d+)", benchmark["name"])
     name = m.group(1)
     hist = m.group(2)
     dim = int(m.group(3))
     cov = m.group(4)
     nbins = int(m.group(5))
-    time = float(m.group(6))
+    time = benchmark["cpu_time"]
     bench[(name, hist, dim, cov)].append((int(nbins) ** dim, time))
 
 fig, ax = plt.subplots(1, 3, figsize=(10, 5), sharex=True, sharey=True)
@@ -39,8 +39,8 @@ for iaxis, axis_type in enumerate(("tuple", "vector", "vector_of_variant")):
         v = np.sort(v, axis=0).T
         # if "semi_dynamic" in axis: continue
         name2, col, ls = {
-            "Naive": ("nested for", "r", "--"),
-            "Indexed": ("indexed", "b", ":")}.get(name, (name, "k", "-"))
+            "Naive": ("nested for", "0.5", ":"),
+            "Indexed": ("indexed", "r", "-")}.get(name, (name, "k", "-"))
         h = plt.plot(v[0], v[1] / v[0], color=col, ls=ls, lw=dim,
                      label=r"%s: $D=%i$" % (name2, dim))[0]
         handles.append(h)
@@ -50,5 +50,4 @@ plt.sca(ax[0])
 plt.ylabel("CPU time in ns per bin")
 plt.legend(handles=handles, fontsize="x-small", frameon=False, handlelength=4, ncol=2)
 plt.figtext(0.5, 0.05, "number of bins", ha="center")
-plt.savefig("iteration_performance.svg")
 plt.show()
