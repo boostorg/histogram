@@ -1,10 +1,10 @@
-// Copyright 2015-2017 Hans Dembinski
+// Copyright 2019 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
-
-// Uses code segments from based on boost/iterator/iterator_adaptor.hpp
+//
+// Uses code segments from boost/iterator/iterator_adaptor.hpp
 // and boost/iterator/iterator_fascade.hpp
 
 #ifndef BOOST_HISTOGRAM_DETAIL_ITERATOR_ADAPTOR_HPP
@@ -66,7 +66,7 @@ public:
   pointer operator->() const noexcept {
     return operator_arrow_dispatch::apply(this->derived().operator*());
   }
-  reference operator[](difference_type n) const { return (*this + n).operator*(); }
+  reference operator[](difference_type n) const { return *(this->derived() + n); }
 
   Derived& operator++() {
     ++iter_;
