@@ -30,7 +30,6 @@ project
     <toolset>gcc:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing"
     : default-build
     <warnings>all
-    #<warnings-as-errors>on
     ;
 
 build-project test ;

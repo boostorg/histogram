@@ -67,7 +67,7 @@ alias cxx17 :
     [ run deduction_guides_test.cpp ] :
     [ requires cpp_deduction_guides ]
     ;
-    
+
 # check that useful error messages are produced when library is used incorrectly
 alias failure :
     [ compile-fail make_histogram_fail0.cpp ]
@@ -76,24 +76,29 @@ alias failure :
 
 alias threading :
     [ run histogram_threaded_test.cpp ]
-    [ run storage_adaptor_threaded_test.cpp ] :
+    [ run storage_adaptor_threaded_test.cpp ]
+    :
     <threading>multi
     ;
 
-alias accumulators : [ run boost_accumulators_support_test.cpp ] ;
-alias range : [ run boost_range_support_test.cpp ] ;
-alias units : [ run boost_units_support_test.cpp ] ;
-
+# warnings are off for these other boost libraries, which tend to be not warning-free
+alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off ;
+alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
+alias units : [ run boost_units_support_test.cpp ] : <warnings>off ;
 alias serialization :
     [ run storage_adaptor_serialization_test.cpp libserial ]
     [ run histogram_serialization_test.cpp libserial ]
     [ run unlimited_storage_serialization_test.cpp libserial ]
     [ run detail_variant_serialization_test.cpp libserial ]
+    :
+    <warnings>off
     ;
 
 alias libserial :
-    /boost/serialization//boost_serialization :
-    <link>static ;
+    /boost/serialization//boost_serialization
+    :
+    <link>static <warnings>off
+    ;
 
 # "failure" not included in "all", because it is distracting
 alias all : cxx14 cxx17 threading accumulators range units serialization ;

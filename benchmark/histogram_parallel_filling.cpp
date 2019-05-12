@@ -5,7 +5,10 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <benchmark/benchmark.h>
-#include <boost/histogram.hpp>
+#include <boost/histogram/accumulators/thread_safe.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/make_histogram.hpp>
 #include <chrono>
 #include <functional>
 #include <mutex>

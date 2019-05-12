@@ -37,6 +37,8 @@ boost_test(TYPE run SOURCES detail_linearize_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_iterator_adaptor_test.cpp
   LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_variant_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES histogram_dynamic_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES histogram_growing_test.cpp
@@ -81,3 +83,5 @@ endif()
 # boost_test(TYPE run SOURCES unlimited_storage_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES storage_adaptor_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES histogram_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
+# boost_test(TYPE run SOURCES detail_variant_serialization_test.cpp
+#   LIBRARIES Boost::histogram Boost::core Boost::serialization)

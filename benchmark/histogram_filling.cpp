@@ -5,7 +5,9 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <benchmark/benchmark.h>
-#include <boost/histogram.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <random>
 #include "../test/utility_histogram.hpp"
 

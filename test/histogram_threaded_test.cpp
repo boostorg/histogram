@@ -5,7 +5,10 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram.hpp>
+#include <boost/histogram/accumulators/thread_safe.hpp>
+#include <boost/histogram/algorithm/sum.hpp>
+#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
 #include <iostream>
 #include <random>
 #include <thread>

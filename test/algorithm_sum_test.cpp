@@ -6,7 +6,6 @@
 
 #include <array>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
@@ -15,7 +14,6 @@
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;
-using namespace boost::histogram::literals; // to get _c suffix
 using boost::histogram::algorithm::sum;
 
 template <typename Tag>
@@ -39,16 +37,16 @@ void run_tests() {
   for (unsigned i = 0; i < 100; ++i) h4(i);
   BOOST_TEST_EQ(sum(h4), 100);
 
-  // auto h5 =
-  //     make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 1),
-  //            axis::integer<int, axis::null_type, axis::option::none_t>(2, 4));
-  // h5(weight(2), 0, 2);
-  // h5(-1, 2);
-  // h5(1, 3);
+  auto h5 =
+      make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 1),
+             axis::integer<int, axis::null_type, axis::option::none_t>(2, 4));
+  h5(weight(2), 0, 2);
+  h5(-1, 2);
+  h5(1, 3);
 
-  // const auto v = algorithm::sum(h5);
-  // BOOST_TEST_EQ(v.value(), 4);
-  // BOOST_TEST_EQ(v.variance(), 6);
+  const auto v = algorithm::sum(h5);
+  BOOST_TEST_EQ(v.value(), 4);
+  BOOST_TEST_EQ(v.variance(), 6);
 }
 
 int main() {

@@ -6,6 +6,7 @@
 */_deps
 */fetch_and_include
 */benchmark
+compile_commands.json
 CMakeFiles
 CMakeCache.txt
 Makefile

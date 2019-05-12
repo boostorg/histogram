@@ -21,7 +21,6 @@
 #include <cmath>
 #include <initializer_list>
 #include <stdexcept>
-#include <type_traits>
 
 namespace boost {
 namespace histogram {

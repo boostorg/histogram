@@ -6,9 +6,13 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram.hpp>
+#include <boost/histogram/accumulators/weighted_sum.hpp>
+#include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/ostream.hpp>
+#include <boost/histogram/storage_adaptor.hpp>
+#include <boost/histogram/unlimited_storage.hpp>
 #include <tuple>
 #include <type_traits>
 #include <vector>
