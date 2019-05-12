@@ -86,10 +86,10 @@ alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
 alias units : [ run boost_units_support_test.cpp ] : <warnings>off ;
 alias serialization :
-    [ run storage_adaptor_serialization_test.cpp libserial ]
+    [ run axis_variant_serialization_test.cpp libserial ]
     [ run histogram_serialization_test.cpp libserial ]
+    [ run storage_adaptor_serialization_test.cpp libserial ]
     [ run unlimited_storage_serialization_test.cpp libserial ]
-    [ run detail_variant_serialization_test.cpp libserial ]
     :
     <warnings>off
     ;

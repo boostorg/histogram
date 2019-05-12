@@ -83,5 +83,5 @@ endif()
 # boost_test(TYPE run SOURCES unlimited_storage_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES storage_adaptor_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES histogram_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
-# boost_test(TYPE run SOURCES detail_variant_serialization_test.cpp
+# boost_test(TYPE run SOURCES axis_variant_serialization_test.cpp
 #   LIBRARIES Boost::histogram Boost::core Boost::serialization)

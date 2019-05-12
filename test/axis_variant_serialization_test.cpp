@@ -7,25 +7,30 @@
 // This test is inspired by the corresponding boost/beast test of detail_variant.
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/detail/variant.hpp>
-#include <boost/histogram/detail/variant_serialization.hpp>
+#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/serialization.hpp>
+#include "utility_axis.hpp"
 #include "utility_serialization.hpp"
 
-using namespace boost::histogram::detail;
+using namespace boost::histogram::axis;
 
 int main() {
-  const char* filename = XML_PATH "detail_variant_serialization_test.xml";
+  const char* filename = XML_PATH "axis_variant_serialization_test.xml";
+
+  using R = regular<>;
+  using I = integer<>;
 
   {
-    variant<int, double> a(1.0);
-    print_xml(filename, a);
-
-    variant<int, double> b(42);
+    variant<I, R> a(I(0, 3));
+    variant<I, R> b(R(1, 0, 1));
+    print_xml(filename, b);
     BOOST_TEST_NE(a, b);
-    load_xml(filename, b);
+    load_xml(filename, a);
     BOOST_TEST_EQ(a, b);
 
-    variant<int> c; // load incompatible version
+    variant<I> c; // load incompatible version
     BOOST_TEST_THROWS(load_xml(filename, c), boost::archive::archive_exception);
   }
 

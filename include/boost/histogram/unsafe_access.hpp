@@ -95,15 +95,6 @@ struct unsafe_access {
   static constexpr auto& storage_adaptor_impl(storage_adaptor<T>& storage) {
     return static_cast<typename storage_adaptor<T>::impl_type&>(storage);
   }
-
-  /**
-    Get implementation of axis::variant.
-    @param axis instance of axis::variant.
-  */
-  template <class Variant>
-  static constexpr auto& axis_variant_impl(Variant& axis) {
-    return axis.impl;
-  }
 };
 
 } // namespace histogram

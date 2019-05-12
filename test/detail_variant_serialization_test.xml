@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
-<!DOCTYPE boost_serialization>
-<boost_serialization signature="serialization::archive" version="17">
-<item class_id="0" tracking_level="1" version="0" object_id="_0">
-	<which>1</which>
-	<value>1.00000000000000000e+00</value>
-</item>
-</boost_serialization>
