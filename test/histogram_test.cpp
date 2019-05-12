@@ -9,6 +9,7 @@
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>
@@ -509,12 +510,14 @@ void run_tests() {
 
     // iterable out
     int j11[] = {1, 1};
-    int j111[] = {1, 1, 1};
     BOOST_TEST_EQ(h.at(j11), 1);
     BOOST_TEST_EQ(h[j11], 1);
+#ifndef BOOST_NO_EXCEPTIONS
+    int j111[] = {1, 1, 1};
     BOOST_TEST_THROWS((void)h.at(j111), std::invalid_argument);
     int j13[] = {1, 3};
     BOOST_TEST_THROWS((void)h.at(j13), std::out_of_range);
+#endif
 
     // tuple with weight
     h(std::make_tuple(weight(2), 0, 2.0));

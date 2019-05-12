@@ -14,6 +14,7 @@
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/common_type.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>

@@ -5,6 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <sstream>
 #include <tuple>
 #include <vector>

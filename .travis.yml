@@ -71,7 +71,9 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=latest warnings-as-errors=on
+        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=latest warnings-as-errors=on &&
+          ../../b2 -j2 -aq toolset=gcc-8 cxxstd=latest warnings-as-errors=on
+          cxxflags="-fno-exceptions -fno-rtti -DBOOST_NO_EXCEPTIONS" test//minimal
 
 before_script:
   # Cloning minimal set of Boost libraries

@@ -1,5 +1,12 @@
+// Copyright 2018-2019 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/range/adaptor/filtered.hpp>

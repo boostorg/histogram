@@ -10,6 +10,7 @@
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/serialization.hpp>
 #include "utility_axis.hpp"
 #include "utility_serialization.hpp"

@@ -7,6 +7,7 @@
 #include <array>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/thread_safe.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <map>

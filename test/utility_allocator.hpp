@@ -12,6 +12,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/typeinfo.hpp>
 #include <boost/histogram/detail/type_name.hpp>
+#include <boost/throw_exception.hpp>
 #include <iostream>
 #include <unordered_map>
 #include <utility>
@@ -82,7 +83,7 @@ struct tracing_allocator {
         const auto count = db->failure_countdown--;
         db->log("allocator +", n, " ", detail::type_name<T>(), " [failure in ", count,
                 "]");
-        if (count == 0) throw std::bad_alloc{};
+        if (count == 0) BOOST_THROW_EXCEPTION(std::bad_alloc{});
       } else
         db->log("allocator +", n, " ", detail::type_name<T>());
       auto& p = db->at<T>();
@@ -110,7 +111,7 @@ struct tracing_allocator {
         const auto count = db->failure_countdown--;
         db->log("allocator construct ", detail::type_name<T>(), "[ failure in ", count,
                 "]");
-        if (count == 0) throw std::bad_alloc{};
+        if (count == 0) BOOST_THROW_EXCEPTION(std::bad_alloc{});
       } else
         db->log("allocator construct ", detail::type_name<T>());
     }

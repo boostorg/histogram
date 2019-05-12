@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/cstdint.hpp>
+#include <boost/histogram/detail/exception.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -46,15 +47,16 @@ void buffer_construct(std::false_type, Allocator& a, T* ptr, std::size_t n) {
   using AT = std::allocator_traits<Allocator>;
   auto pit = ptr;
   const auto end = ptr + n;
-  try {
+  BOOST_HISTOGRAM_DETAIL_TRY {
     // this loop may throw, T is large_int, call default constructor with allocator
     for (; pit != end; ++pit) AT::construct(a, pit, a);
-  } catch (...) {
+  }
+  BOOST_HISTOGRAM_DETAIL_CATCH_ANY {
     // release resources that were already acquired before rethrowing
     // pointer location is at first invalid cell
     while (pit != ptr) AT::destroy(a, --pit);
     AT::deallocate(a, ptr, n);
-    throw;
+    BOOST_HISTOGRAM_DETAIL_RETHROW;
   }
 }
 
@@ -78,15 +80,16 @@ auto buffer_create(Allocator& a, std::size_t n, Iterator iter) {
                 "ptr must be trivially copyable");
   auto pit = ptr;
   const auto end = ptr + n;
-  try {
+  BOOST_HISTOGRAM_DETAIL_TRY {
     // this loop may throw
     for (; pit != end; ++pit) AT::construct(a, pit, static_cast<T>(*iter++));
-  } catch (...) {
+  }
+  BOOST_HISTOGRAM_DETAIL_CATCH_ANY {
     // release resources that were already acquired before rethrowing
     // pointer location is at first invalid cell
     while (pit != ptr) AT::destroy(a, --pit);
     AT::deallocate(a, ptr, n);
-    throw;
+    BOOST_HISTOGRAM_DETAIL_RETHROW;
   }
   return ptr;
 }

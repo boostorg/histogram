@@ -7,6 +7,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/variable.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/literals.hpp>

@@ -8,6 +8,7 @@
 #include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <iostream>
 #include <random>

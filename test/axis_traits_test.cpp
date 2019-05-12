@@ -8,6 +8,7 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/traits.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/mp11.hpp>
 #include "utility_axis.hpp"
 

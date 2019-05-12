@@ -6,6 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <limits>
 #include "utility_axis.hpp"
 
@@ -110,8 +111,8 @@ int main() {
   {
     test_axis_iterator(axis::integer<int>(0, 4), 0, 4);
     test_axis_iterator(axis::integer<double>(0, 4), 0, 4);
-    test_axis_iterator(axis::integer<int, axis::null_type, axis::option::circular_t>(0, 4),
-                       0, 4);
+    test_axis_iterator(
+        axis::integer<int, axis::null_type, axis::option::circular_t>(0, 4), 0, 4);
   }
 
   // shrink and rebin

@@ -11,6 +11,7 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <functional>
 #include <sstream>

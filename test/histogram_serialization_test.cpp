@@ -6,6 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <cmath>
 #include "utility_histogram.hpp"

@@ -8,7 +8,9 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/detail/variant.hpp>
+#include <boost/throw_exception.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -21,7 +23,7 @@ struct Q {
   Q() noexcept { ++Q::count; }
   Q(const Q& q) : data(q.data) {
     if (q.data == 0xBAD) // simulate failing copy ctor
-      throw std::bad_alloc{};
+      BOOST_THROW_EXCEPTION(std::bad_alloc{});
     ++Q::count;
   }
   Q(Q&& q) noexcept {
@@ -31,7 +33,7 @@ struct Q {
   }
   Q& operator=(const Q& q) {
     if (q.data == 0xBAD) // simulate failing copy ctor
-      throw std::bad_alloc{};
+      BOOST_THROW_EXCEPTION(std::bad_alloc{});
     data = q.data;
     return *this;
   }
@@ -179,9 +181,11 @@ int main() {
     BOOST_TEST_EQ(Q<2>::count, 2);
 
     BOOST_TEST_EQ(v.index(), 1);
+#ifndef BOOST_NO_EXCEPTIONS
     Q<3> q3(0xBAD);
     BOOST_TEST_THROWS(v = q3, std::bad_alloc);
     BOOST_TEST_EQ(v.index(), 0); // is now in default state
+#endif
   }
   BOOST_TEST_EQ(Q<1>::count, 0);
   BOOST_TEST_EQ(Q<2>::count, 0);

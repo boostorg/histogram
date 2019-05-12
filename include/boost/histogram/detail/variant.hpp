@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_VARIANT_HPP
 #define BOOST_HISTOGRAM_DETAIL_VARIANT_HPP
 
+#include <boost/histogram/detail/exception.hpp>
 #include <boost/mp11.hpp>
 #include <boost/throw_exception.hpp>
 #include <iosfwd>
@@ -100,12 +101,13 @@ public:
       *ptr(mp11::mp_identity<T>{}, i) = x;
     } else {
       destroy(); // now in invalid state
-      try {
+      BOOST_HISTOGRAM_DETAIL_TRY {
         // if this throws, need to return to valid state
         init_i<T>(i, x);
-      } catch (...) {
+      }
+      BOOST_HISTOGRAM_DETAIL_CATCH_ANY {
         init_default();
-        throw;
+        BOOST_HISTOGRAM_DETAIL_RETHROW;
       }
     }
     return *this;

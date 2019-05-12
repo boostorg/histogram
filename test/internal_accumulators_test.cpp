@@ -11,6 +11,7 @@
 #include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <sstream>
 #include "is_close.hpp"
 

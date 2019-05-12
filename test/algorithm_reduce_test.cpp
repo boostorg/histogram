@@ -11,6 +11,7 @@
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <vector>
 #include "utility_histogram.hpp"

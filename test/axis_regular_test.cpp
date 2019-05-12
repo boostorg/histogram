@@ -6,6 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <limits>
 #include <sstream>
 #include "is_close.hpp"

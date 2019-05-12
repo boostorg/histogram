@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/unsafe_access.hpp>
@@ -496,9 +497,10 @@ int main() {
     S s(alloc_t{db});
     s.reset(10); // should work
     BOOST_TEST_EQ(db.at<uint8_t>().first, 10);
+
+#ifndef BOOST_NO_EXCEPTIONS
     db.failure_countdown = 0;
     BOOST_TEST_THROWS(s.reset(5), std::bad_alloc);
-
     // storage must be still in valid state
     BOOST_TEST_EQ(s.size(), 0);
     auto& buffer = unsafe_access::unlimited_storage_buffer(s);
@@ -529,6 +531,7 @@ int main() {
     BOOST_TEST_EQ(buffer.type, 0);
     // all memory returned
     BOOST_TEST_EQ(db.first, 0);
+#endif
   }
 
   return boost::report_errors();
