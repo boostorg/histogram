@@ -1,4 +1,4 @@
-// Copyright 2018 Hans Dembinski
+// Copyright 2018-2019 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -25,9 +25,7 @@
 
 namespace boost {
 namespace histogram {
-namespace algorithm {
-
-/// implementation detail
+namespace detail {
 struct reduce_option {
   unsigned iaxis = 0;
   bool indices_set = false;
@@ -36,9 +34,17 @@ struct reduce_option {
   double lower = 0.0, upper = 0.0;
   unsigned merge = 0;
 };
+} // namespace detail
+
+namespace algorithm {
+
+using reduce_option = detail::reduce_option;
 
 /**
-  Shrink and rebin option.
+  Shrink and rebin option to be used in reduce().
+
+  To shrink and rebin in one command. Equivalent to passing both the shrink() and the
+  rebin() option for the same axis to reduce.
 
   @param iaxis which axis to operate on.
   @param lower lowest bound that should be kept.
@@ -54,6 +60,17 @@ inline reduce_option shrink_and_rebin(unsigned iaxis, double lower, double upper
   return {iaxis, false, 0, 0, true, lower, upper, merge};
 }
 
+/**
+  Slice and rebin option to be used in reduce().
+
+  To slice and rebin in one command. Equivalent to passing both the slice() and the
+  rebin() option for the same axis to reduce.
+
+  @param iaxis which axis to operate on.
+  @param begin first index that should be kept.
+  @param end one past the last index that should be kept.
+  @param merge how many adjacent bins to merge into one.
+ */
 inline reduce_option slice_and_rebin(unsigned iaxis, axis::index_type begin,
                                      axis::index_type end, unsigned merge) {
   if (!(begin < end))
@@ -63,7 +80,7 @@ inline reduce_option slice_and_rebin(unsigned iaxis, axis::index_type begin,
 }
 
 /**
-  Shrink option.
+  Shrink option to be used in reduce().
 
   @param iaxis which axis to operate on.
   @param lower lowest bound that should be kept.
@@ -74,12 +91,19 @@ inline reduce_option shrink(unsigned iaxis, double lower, double upper) {
   return shrink_and_rebin(iaxis, lower, upper, 1);
 }
 
+/**
+  Slice option to be used in reduce().
+
+  @param iaxis which axis to operate on.
+  @param begin first index that should be kept.
+  @param end one past the last index that should be kept.
+ */
 inline reduce_option slice(unsigned iaxis, axis::index_type begin, axis::index_type end) {
   return slice_and_rebin(iaxis, begin, end, 1);
 }
 
 /**
-  Rebin option.
+  Rebin option to be used in reduce().
 
   @param iaxis which axis to operate on.
   @param merge how many adjacent bins to merge into one.
@@ -90,7 +114,8 @@ inline reduce_option rebin(unsigned iaxis, unsigned merge) {
 }
 
 /**
-  Convenience overload for single axis.
+  Shrink and rebin option to be used in reduce() (onvenience overload for
+  single axis).
 
   @param lower lowest bound that should be kept.
   @param upper highest bound that should be kept. If upper is inside bin interval, the
@@ -101,13 +126,20 @@ inline reduce_option shrink_and_rebin(double lower, double upper, unsigned merge
   return shrink_and_rebin(0, lower, upper, merge);
 }
 
+/**
+  Slice and rebin option to be used in reduce() (convenience for 1D histograms).
+
+  @param begin first index that should be kept.
+  @param end one past the last index that should be kept.
+  @param merge how many adjacent bins to merge into one.
+*/
 inline reduce_option slice_and_rebin(axis::index_type begin, axis::index_type end,
                                      unsigned merge) {
   return slice_and_rebin(0, begin, end, merge);
 }
 
 /**
-  Convenience overload for single axis.
+  Shrink option to be used in reduce() (convenience for 1D histograms).
 
   @param lower lowest bound that should be kept.
   @param upper highest bound that should be kept. If upper is inside bin interval, the
@@ -117,12 +149,18 @@ inline reduce_option shrink(double lower, double upper) {
   return shrink(0, lower, upper);
 }
 
+/**
+  Slice option to be used in reduce() (convenience for 1D histograms).
+
+  @param begin first index that should be kept.
+  @param end one past the last index that should be kept.
+*/
 inline reduce_option slice(axis::index_type begin, axis::index_type end) {
   return slice(0, begin, end);
 }
 
 /**
-  Convenience overload for single axis.
+  Rebin option to be used in reduce() (convenience for 1D histograms).
 
   @param merge how many adjacent bins to merge into one.
 */
@@ -256,7 +294,11 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
 /**
   Shrink, slice, and/or rebin axes of a histogram.
 
-  Returns the modified copy.
+  Returns the reduced copy of the histogram.
+
+  Shrinking only works with axes that accept double values. Some axis types do not support
+  the reduce operation, for example, the builtin category axis, which is not ordered.
+  Custom axis types must implement a special constructor (see concepts) to be reducible.
 
   @param hist original histogram.
   @param opt  reduce option generated by shrink_and_rebin(), shrink(), and rebin().
