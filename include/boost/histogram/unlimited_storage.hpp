@@ -80,7 +80,13 @@ auto buffer_create(Allocator& a, std::size_t n, Iterator iter) {
   static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
                 "ptr must be trivially copyable");
   construct_guard<Allocator> guard(a, ptr, n);
-  boost::alloc_construct_n(a, ptr, n, iter);
+  using T = typename std::allocator_traits<Allocator>::value_type;
+  struct casting_iterator {
+    void operator++() { ++iter_; }
+    T operator*() { return static_cast<T>(*iter_); } // silence conversion warnings
+    Iterator iter_;
+  };
+  boost::alloc_construct_n(a, ptr, n, casting_iterator{iter});
   guard.release();
   return ptr;
 }
