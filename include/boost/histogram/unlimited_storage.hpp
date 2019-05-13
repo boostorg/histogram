@@ -10,7 +10,6 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
-#include <boost/cstdint.hpp>
 #include <boost/core/alloc_construct.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
@@ -22,6 +21,7 @@
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/utility.hpp>
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <iterator>
 #include <memory>
