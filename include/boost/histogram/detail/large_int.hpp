@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_DETAIL_LARGE_INT_HPP
 
 #include <boost/assert.hpp>
+#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <cmath>
 #include <cstdint>
@@ -20,14 +21,8 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <bool B, class T>
-struct is_unsigned_integral_impl : std::false_type {};
-
 template <class T>
-struct is_unsigned_integral_impl<true, T> : std::is_unsigned<T> {};
-
-template <class T>
-using is_unsigned_integral = is_unsigned_integral_impl<std::is_integral<T>::value, T>;
+using is_unsigned_integral = mp_eval_and<T, std::is_integral, std::is_unsigned>;
 
 template <class T>
 bool safe_increment(T& t) {

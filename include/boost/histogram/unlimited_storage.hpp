@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/core/alloc_construct.hpp>
+#include <boost/core/exchange.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -115,6 +116,10 @@ class unlimited_storage {
       std::is_same<typename std::allocator_traits<Allocator>::pointer,
                    typename std::allocator_traits<Allocator>::value_type*>::value,
       "unlimited_storage requires allocator with trivial pointer type");
+  using U8 = std::uint8_t;
+  using U16 = std::uint16_t;
+  using U32 = std::uint32_t;
+  using U64 = std::uint64_t;
 
 public:
   static constexpr bool has_threading_support = false;
@@ -122,11 +127,11 @@ public:
   using allocator_type = Allocator;
   using value_type = double;
   using large_int = detail::large_int<
-      typename std::allocator_traits<allocator_type>::template rebind_alloc<uint64_t>>;
+      typename std::allocator_traits<allocator_type>::template rebind_alloc<U64>>;
 
   struct buffer_type {
     // cannot be moved outside of scope of unlimited_storage, large_int is dependent type
-    using types = mp11::mp_list<uint8_t, uint16_t, uint32_t, uint64_t, large_int, double>;
+    using types = mp11::mp_list<U8, U16, U32, U64, large_int, double>;
 
     template <class T>
     static constexpr unsigned type_index() noexcept {
@@ -136,14 +141,14 @@ public:
     template <class F, class... Ts>
     decltype(auto) visit(F&& f, Ts&&... ts) const {
       // this is intentionally not a switch, the if-chain is faster in benchmarks
-      if (type == type_index<uint8_t>())
-        return f(static_cast<uint8_t*>(ptr), std::forward<Ts>(ts)...);
-      if (type == type_index<uint16_t>())
-        return f(static_cast<uint16_t*>(ptr), std::forward<Ts>(ts)...);
-      if (type == type_index<uint32_t>())
-        return f(static_cast<uint32_t*>(ptr), std::forward<Ts>(ts)...);
-      if (type == type_index<uint64_t>())
-        return f(static_cast<uint64_t*>(ptr), std::forward<Ts>(ts)...);
+      if (type == type_index<U8>())
+        return f(static_cast<U8*>(ptr), std::forward<Ts>(ts)...);
+      if (type == type_index<U16>())
+        return f(static_cast<U16*>(ptr), std::forward<Ts>(ts)...);
+      if (type == type_index<U32>())
+        return f(static_cast<U32*>(ptr), std::forward<Ts>(ts)...);
+      if (type == type_index<U64>())
+        return f(static_cast<U64*>(ptr), std::forward<Ts>(ts)...);
       if (type == type_index<large_int>())
         return f(static_cast<large_int*>(ptr), std::forward<Ts>(ts)...);
       return f(static_cast<double*>(ptr), std::forward<Ts>(ts)...);
@@ -152,20 +157,17 @@ public:
     buffer_type(const allocator_type& a = {}) : alloc(a) {}
 
     buffer_type(buffer_type&& o) noexcept
-        : alloc(std::move(o.alloc)), size(o.size), type(o.type), ptr(o.ptr) {
-      o.size = 0;
-      o.type = 0;
-      o.ptr = nullptr;
-    }
+        : alloc(std::move(o.alloc))
+        , size(boost::exchange(o.size, 0))
+        , type(boost::exchange(o.type, 0))
+        , ptr(boost::exchange(o.ptr, nullptr)) {}
 
     buffer_type& operator=(buffer_type&& o) noexcept {
-      if (this != &o) {
-        using std::swap;
-        swap(alloc, o.alloc);
-        swap(size, o.size);
-        swap(type, o.type);
-        swap(ptr, o.ptr);
-      }
+      using std::swap;
+      swap(alloc, o.alloc);
+      swap(size, o.size);
+      swap(type, o.type);
+      swap(ptr, o.ptr);
       return *this;
     }
 
@@ -476,7 +478,7 @@ public:
 
   allocator_type get_allocator() const { return buffer_.alloc; }
 
-  void reset(std::size_t n) { buffer_.template make<uint8_t>(n); }
+  void reset(std::size_t n) { buffer_.template make<U8>(n); }
 
   std::size_t size() const noexcept { return buffer_.size; }
 

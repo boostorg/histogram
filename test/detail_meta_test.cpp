@@ -287,12 +287,6 @@ int main() {
     BOOST_TEST_TRAIT_SAME(copy_qualifiers<int&&, long>, long&&);
   }
 
-  // mp_last
-  {
-    using L = std::tuple<int, char, long>;
-    BOOST_TEST_TRAIT_SAME(mp_last<L>, long);
-  }
-
   // args_type, arg_type
   {
     struct Foo {

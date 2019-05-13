@@ -25,7 +25,6 @@
 #pragma GCC diagnostic ignored "-Wnoexcept-type"
 #endif
 #include <boost/callable_traits/args.hpp>
-#include <boost/callable_traits/return_type.hpp>
 #if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
 #pragma GCC diagnostic pop
 #endif
@@ -50,6 +49,9 @@ namespace detail {
 template <class T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
+template <class T, template <class> class... F>
+using mp_eval_and = mp11::mp_and<F<T>...>;
+
 template <class T>
 struct unref_impl {
   using type = T;
@@ -66,10 +68,6 @@ using unref_t = typename unref_impl<T>::type;
 template <class T, class U>
 using convert_integer = mp11::mp_if<std::is_integral<remove_cvref_t<T>>, U, T>;
 
-// to be replaced by official version from mp11
-template <class E, template <class...> class F, class... Ts>
-using mp_eval_or = mp11::mp_eval_if_c<!(mp11::mp_valid<F, Ts...>::value), E, F, Ts...>;
-
 template <class T1, class T2>
 using copy_qualifiers = mp11::mp_if<
     std::is_rvalue_reference<T1>, T2&&,
@@ -78,18 +76,12 @@ using copy_qualifiers = mp11::mp_if<
                             const T2&, T2&>,
                 mp11::mp_if<std::is_const<T1>, const T2, T2>>>;
 
-template <class L>
-using mp_last = mp11::mp_at_c<L, (mp11::mp_size<L>::value - 1)>;
-
 template <class T, class Args = boost::callable_traits::args_t<T>>
 using args_type =
     mp11::mp_if<std::is_member_function_pointer<T>, mp11::mp_pop_front<Args>, Args>;
 
 template <class T, std::size_t N = 0>
 using arg_type = typename mp11::mp_at_c<args_type<T>, N>;
-
-template <class T>
-using return_type = typename boost::callable_traits::return_type<T>::type;
 
 template <typename T>
 constexpr T lowest() {
@@ -166,9 +158,8 @@ template <typename T>
 using get_value_method_return_type_impl = decltype(std::declval<T&>().value(0));
 
 template <typename T, typename R>
-using has_method_value_with_convertible_return_type =
-    typename std::is_convertible<mp_eval_or<void, get_value_method_return_type_impl, T>,
-                                 R>::type;
+using has_method_value_with_convertible_return_type = typename std::is_convertible<
+    mp11::mp_eval_or<void, get_value_method_return_type_impl, T>, R>::type;
 
 BOOST_HISTOGRAM_DETECT(has_method_options, (&T::options));
 
@@ -346,9 +337,9 @@ std::size_t get_size(const T& t) noexcept {
 }
 
 template <class T>
-using buffer_size =
-    mp_eval_or<std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>,
-               tuple_size_t, T>;
+using buffer_size = mp11::mp_eval_or<
+    std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>, tuple_size_t,
+    T>;
 
 template <class T, std::size_t N>
 class sub_array : public std::array<T, N> {
@@ -385,7 +376,7 @@ template <class T>
 using get_scale_type_helper = typename T::value_type;
 
 template <class T>
-using get_scale_type = mp_eval_or<T, detail::get_scale_type_helper, T>;
+using get_scale_type = mp11::mp_eval_or<T, detail::get_scale_type_helper, T>;
 
 struct one_unit {};
 
@@ -403,7 +394,7 @@ template <class T>
 using get_unit_type_helper = typename T::unit_type;
 
 template <class T>
-using get_unit_type = mp_eval_or<one_unit, detail::get_unit_type_helper, T>;
+using get_unit_type = mp11::mp_eval_or<one_unit, detail::get_unit_type_helper, T>;
 
 template <class T, class R = get_scale_type<T>>
 R get_scale(const T& t) {
