@@ -1,4 +1,5 @@
 // Copyright 2015-2019 Hans Dembinski
+// Copyright 2019 Glen Joseph Fernandes (glenjofe@gmail.com)
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -10,7 +11,7 @@
 #include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/histogram/detail/exception.hpp>
+#include <boost/core/alloc_construct.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
 #include <boost/histogram/detail/meta.hpp>
@@ -37,60 +38,53 @@ struct requires_arithmetic {};
 template <class L, class T>
 using next_type = mp11::mp_at_c<L, (mp11::mp_find<L, T>::value + 1)>;
 
-template <class Allocator, class T>
-void buffer_construct(std::true_type, Allocator&, T* ptr, std::size_t n) {
-  std::fill(ptr, ptr + n, T{});
-}
+template<class Allocator>
+class construct_guard {
+public:
+  using pointer = typename std::allocator_traits<Allocator>::pointer;
 
-template <class Allocator, class T>
-void buffer_construct(std::false_type, Allocator& a, T* ptr, std::size_t n) {
-  using AT = std::allocator_traits<Allocator>;
-  auto pit = ptr;
-  const auto end = ptr + n;
-  BOOST_HISTOGRAM_DETAIL_TRY {
-    // this loop may throw, T is large_int, call default constructor with allocator
-    for (; pit != end; ++pit) AT::construct(a, pit, a);
+  construct_guard(Allocator& a, pointer p, std::size_t n) noexcept
+    : a_(a), p_(p), n_(n) {}
+
+  ~construct_guard() {
+    if (p_) {
+      a_.deallocate(p_, n_);
+    }
   }
-  BOOST_HISTOGRAM_DETAIL_CATCH_ANY {
-    // release resources that were already acquired before rethrowing
-    // pointer location is at first invalid cell
-    while (pit != ptr) AT::destroy(a, --pit);
-    AT::deallocate(a, ptr, n);
-    BOOST_HISTOGRAM_DETAIL_RETHROW;
+
+  void release() {
+    p_ = pointer();
   }
-}
+
+  construct_guard(const construct_guard&) = delete;
+  construct_guard& operator=(const construct_guard&) = delete;
+
+private:
+  Allocator& a_;
+  pointer p_;
+  std::size_t n_;
+};
 
 template <class Allocator>
 void* buffer_create(Allocator& a, std::size_t n) {
-  using AT = std::allocator_traits<Allocator>;
-  auto ptr = AT::allocate(a, n); // may throw
+  auto ptr = a.allocate(n); // may throw
   static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
                 "ptr must be trivially copyable");
-  buffer_construct(std::is_trivial<typename AT::value_type>{}, a, ptr, n);
+  construct_guard<Allocator> guard(a, ptr, n);
+  boost::alloc_construct_n(a, ptr, n);
+  guard.release();
   return static_cast<void*>(ptr);
 }
 
 template <class Allocator, class Iterator>
 auto buffer_create(Allocator& a, std::size_t n, Iterator iter) {
   BOOST_ASSERT(n > 0u);
-  using AT = std::allocator_traits<Allocator>;
-  using T = typename AT::value_type;
-  auto ptr = AT::allocate(a, n); // may throw
+  auto ptr = a.allocate(n); // may throw
   static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
                 "ptr must be trivially copyable");
-  auto pit = ptr;
-  const auto end = ptr + n;
-  BOOST_HISTOGRAM_DETAIL_TRY {
-    // this loop may throw
-    for (; pit != end; ++pit) AT::construct(a, pit, static_cast<T>(*iter++));
-  }
-  BOOST_HISTOGRAM_DETAIL_CATCH_ANY {
-    // release resources that were already acquired before rethrowing
-    // pointer location is at first invalid cell
-    while (pit != ptr) AT::destroy(a, --pit);
-    AT::deallocate(a, ptr, n);
-    BOOST_HISTOGRAM_DETAIL_RETHROW;
-  }
+  construct_guard<Allocator> guard(a, ptr, n);
+  boost::alloc_construct_n(a, ptr, n, iter);
+  guard.release();
   return ptr;
 }
 
@@ -99,10 +93,8 @@ void buffer_destroy(Allocator& a, typename std::allocator_traits<Allocator>::poi
                     std::size_t n) {
   BOOST_ASSERT(p);
   BOOST_ASSERT(n > 0u);
-  using AT = std::allocator_traits<Allocator>;
-  auto pit = p + n;
-  while (pit != p) AT::destroy(a, --pit);
-  AT::deallocate(a, p, n);
+  boost::alloc_destroy_n(a, p, n);
+  a.deallocate(p, n);
 }
 
 } // namespace detail

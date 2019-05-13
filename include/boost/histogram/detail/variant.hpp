@@ -1,4 +1,5 @@
 // Copyright (c) 2019 Hans Dembinski
+// Copyright (c) 2019 Glen Joseph Fernandes (glenjofe@gmail.com)
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -7,7 +8,6 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_VARIANT_HPP
 #define BOOST_HISTOGRAM_DETAIL_VARIANT_HPP
 
-#include <boost/histogram/detail/exception.hpp>
 #include <boost/mp11.hpp>
 #include <boost/throw_exception.hpp>
 #include <iosfwd>
@@ -101,14 +101,8 @@ public:
       *ptr(mp11::mp_identity<T>{}, i) = x;
     } else {
       destroy(); // now in invalid state
-      BOOST_HISTOGRAM_DETAIL_TRY {
-        // if this throws, need to return to valid state
-        init_i<T>(i, x);
-      }
-      BOOST_HISTOGRAM_DETAIL_CATCH_ANY {
-        init_default();
-        BOOST_HISTOGRAM_DETAIL_RETHROW;
-      }
+      init_guard guard(*this, i);
+      init_i<T>(i, x);
     }
     return *this;
   }
@@ -184,6 +178,25 @@ public:
   }
 
 private:
+  class init_guard {
+  public:
+    init_guard(variant& v, unsigned i) noexcept
+      : v_(v), i_(i) {}
+
+    ~init_guard() {
+      if (v_.index_ != i_) {
+        v_.init_default();
+      }
+    }
+
+    init_guard(const init_guard&) = delete;
+    init_guard& operator=(const init_guard&) = delete;
+
+  private:
+    variant& v_;
+    unsigned i_;
+  };
+
   template <class Functor>
   decltype(auto) internal_apply(Functor&& functor) const {
     return mp11::mp_with_index<sizeof...(Ts)>(index_, functor);
