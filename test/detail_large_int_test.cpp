@@ -21,7 +21,7 @@ std::ostream& operator<<(std::ostream& os, const large_int& x) {
 }
 
 template <class... Ts>
-auto make_mp_int(Ts... ts) {
+auto make_large_int(Ts... ts) {
   large_int r;
   r.data = {static_cast<uint64_t>(ts)...};
   return r;
@@ -49,6 +49,21 @@ int main() {
 
   const auto vmax = std::numeric_limits<std::uint64_t>::max();
 
+  // ctors, assign
+  {
+    large_int a(42);
+    large_int b(a);
+    BOOST_TEST_EQ(b.data.front(), 42);
+    large_int c(std::move(b));
+    BOOST_TEST_EQ(c.data.front(), 42);
+    large_int d, e;
+    d = a;
+    BOOST_TEST_EQ(d.data.front(), 42);
+    e = std::move(c);
+    BOOST_TEST_EQ(e.data.front(), 42);
+  }
+
+  // comparison
   BOOST_TEST_EQ(large_int(), 0u);
   BOOST_TEST_EQ(large_int(1u), 1u);
   BOOST_TEST_EQ(large_int(1u), 1.0);
@@ -78,6 +93,7 @@ int main() {
   BOOST_TEST_LE(-1, large_int());
   BOOST_TEST_NE(1, large_int());
 
+  // increment
   auto a = large_int();
   ++a;
   BOOST_TEST_EQ(a.data.size(), 1);
@@ -88,60 +104,60 @@ int main() {
   BOOST_TEST_EQ(a, vmax);
   BOOST_TEST_EQ(a, static_cast<double>(vmax));
   ++a;
-  BOOST_TEST_EQ(a, make_mp_int(0, 1));
+  BOOST_TEST_EQ(a, make_large_int(0, 1));
   ++a;
-  BOOST_TEST_EQ(a, make_mp_int(1, 1));
+  BOOST_TEST_EQ(a, make_large_int(1, 1));
   a += a;
-  BOOST_TEST_EQ(a, make_mp_int(2, 2));
+  BOOST_TEST_EQ(a, make_large_int(2, 2));
   BOOST_TEST_EQ(a, 2 * static_cast<double>(vmax) + 2);
 
   // carry once A
   a.data[0] = vmax;
   a.data[1] = 1;
   ++a;
-  BOOST_TEST_EQ(a, make_mp_int(0, 2));
+  BOOST_TEST_EQ(a, make_large_int(0, 2));
   // carry once B
   a.data[0] = vmax;
   a.data[1] = 1;
   a += 1;
-  BOOST_TEST_EQ(a, make_mp_int(0, 2));
+  BOOST_TEST_EQ(a, make_large_int(0, 2));
   // carry once C
   a.data[0] = vmax;
   a.data[1] = 1;
-  a += make_mp_int(1, 1);
-  BOOST_TEST_EQ(a, make_mp_int(0, 3));
+  a += make_large_int(1, 1);
+  BOOST_TEST_EQ(a, make_large_int(0, 3));
 
   a.data[0] = vmax - 1;
   a.data[1] = vmax;
   ++a;
-  BOOST_TEST_EQ(a, make_mp_int(vmax, vmax));
+  BOOST_TEST_EQ(a, make_large_int(vmax, vmax));
 
   // carry two times A
   ++a;
-  BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
+  BOOST_TEST_EQ(a, make_large_int(0, 0, 1));
   // carry two times B
-  a = make_mp_int(vmax, vmax);
+  a = make_large_int(vmax, vmax);
   a += 1;
-  BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
+  BOOST_TEST_EQ(a, make_large_int(0, 0, 1));
   // carry two times C
-  a = make_mp_int(vmax, vmax);
+  a = make_large_int(vmax, vmax);
   a += large_int(1);
-  BOOST_TEST_EQ(a, make_mp_int(0, 0, 1));
+  BOOST_TEST_EQ(a, make_large_int(0, 0, 1));
 
   // carry and enlarge
-  a = make_mp_int(vmax, vmax);
+  a = make_large_int(vmax, vmax);
   a += a;
-  BOOST_TEST_EQ(a, make_mp_int(vmax - 1, vmax, 1));
+  BOOST_TEST_EQ(a, make_large_int(vmax - 1, vmax, 1));
 
   // add smaller to larger
-  a = make_mp_int(1, 1, 1);
-  a += make_mp_int(1, 1);
-  BOOST_TEST_EQ(a, make_mp_int(2, 2, 1));
+  a = make_large_int(1, 1, 1);
+  a += make_large_int(1, 1);
+  BOOST_TEST_EQ(a, make_large_int(2, 2, 1));
 
   // add larger to smaller
-  a = make_mp_int(1, 1);
-  a += make_mp_int(1, 1, 1);
-  BOOST_TEST_EQ(a, make_mp_int(2, 2, 1));
+  a = make_large_int(1, 1);
+  a += make_large_int(1, 1, 1);
+  BOOST_TEST_EQ(a, make_large_int(2, 2, 1));
 
   a = large_int(1);
   auto b = 1.0;
