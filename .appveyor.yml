@@ -16,7 +16,7 @@ branches:
 install:
   # Cloning minimal set of Boost libraries
   - cd ..
-  - git clone -b master --depth 10 https://github.com/boostorg/boost.git
+  - git clone -b {branch} --depth 10 https://github.com/boostorg/boost.git
   - cd boost
   - git submodule update --init --depth 10 tools/build tools/boostdep
 
@@ -30,7 +30,7 @@ install:
 
 test_script:
   - cd libs\histogram\test
-  - ..\..\..\b2 -j2 -q minimal serialization
+  - ..\..\..\b2 -j2 -q minimal serialization warnings-as-errors=on
 
 on_failure:
   ## Uncomment the following line to stop VM and enable interactive login
