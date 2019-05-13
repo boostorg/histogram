@@ -40,7 +40,7 @@ matrix:
       script:
         - ctest -j2
 
-    # lcov does not understand gcc-8 output, so we use gcc-5 to generate coverage data
+    # gcc-7 and gcc-8 produce broken coverage data, so we use gcc-5
     - name: "gcc-5: coverage"
       addons:
         apt:
@@ -65,7 +65,7 @@ matrix:
           ../../b2 -j2 -q toolset=clang-5 cxxstd=14
           variant=histogram_ubasan warnings-as-errors=on
 
-    - name: "gcc-8: c++latest"
+    - name: "gcc-8: c++latest, (no-)exceptions, (no-)rtti"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
