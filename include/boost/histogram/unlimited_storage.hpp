@@ -38,23 +38,19 @@ struct requires_arithmetic {};
 template <class L, class T>
 using next_type = mp11::mp_at_c<L, (mp11::mp_find<L, T>::value + 1)>;
 
-template<class Allocator>
+template <class Allocator>
 class construct_guard {
 public:
   using pointer = typename std::allocator_traits<Allocator>::pointer;
 
   construct_guard(Allocator& a, pointer p, std::size_t n) noexcept
-    : a_(a), p_(p), n_(n) {}
+      : a_(a), p_(p), n_(n) {}
 
   ~construct_guard() {
-    if (p_) {
-      a_.deallocate(p_, n_);
-    }
+    if (p_) { a_.deallocate(p_, n_); }
   }
 
-  void release() {
-    p_ = pointer();
-  }
+  void release() { p_ = pointer(); }
 
   construct_guard(const construct_guard&) = delete;
   construct_guard& operator=(const construct_guard&) = delete;
