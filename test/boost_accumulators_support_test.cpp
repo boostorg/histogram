@@ -4,44 +4,12 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/config/workaround.hpp>
-
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4459) // declaration of 'sum' hides global
-#endif
-#if BOOST_WORKAROUND(BOOST_GCC, >= 50000)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmisleading-indentation"
-#endif
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
-#pragma clang diagnostic pop
-#endif
-#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
-#pragma GCC diagnostic pop
-#endif
-#if BOOST_WORKAROUND(BOOST_GCC, >= 50000)
-#pragma GCC diagnostic pop
-#endif
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/detail/throw_exception.hpp>
-#include <boost/histogram/histogram.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 

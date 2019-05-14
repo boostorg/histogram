@@ -90,8 +90,6 @@ alias serialization :
     [ run histogram_serialization_test.cpp libserial ]
     [ run storage_adaptor_serialization_test.cpp libserial ]
     [ run unlimited_storage_serialization_test.cpp libserial ]
-    :
-    <warnings>off
     ;
 
 alias libserial :

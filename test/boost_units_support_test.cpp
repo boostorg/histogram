@@ -4,16 +4,6 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/config/workaround.hpp>
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wlanguage-extension-token"
-#endif
-#include <boost/units/quantity.hpp>
-#include <boost/units/systems/si/length.hpp>
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 1)
-#pragma clang diagnostic pop
-#endif
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
@@ -23,6 +13,8 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/ostream.hpp>
+#include <boost/units/quantity.hpp>
+#include <boost/units/systems/si/length.hpp>
 #include <limits>
 #include "is_close.hpp"
 
