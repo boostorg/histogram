@@ -56,6 +56,11 @@ struct Q {
 template <int N>
 int Q<N>::count = 0;
 
+template <class... Ts, class U>
+bool operator==(const variant<Ts...>& v, const U& u) {
+  return v.visit([&u](const auto& x) { return x == u; });
+}
+
 int main() {
   // test Q
   BOOST_TEST_EQ(Q<1>::count, 0);
@@ -176,16 +181,14 @@ int main() {
     v = q2;
     BOOST_TEST_EQ(v.index(), 1);
     BOOST_TEST_EQ(v, q2);
-    BOOST_TEST_NOT(v.get<Q<2>>().moved);
     BOOST_TEST_EQ(Q<1>::count, 1);
     BOOST_TEST_EQ(Q<2>::count, 2);
 
     BOOST_TEST_EQ(v.index(), 1);
-#ifndef BOOST_NO_EXCEPTIONS
     Q<3> q3(0xBAD);
     BOOST_TEST_THROWS(v = q3, std::bad_alloc);
-    BOOST_TEST_EQ(v.index(), 0); // is now in default state
-#endif
+    BOOST_TEST_EQ(v.index(), 1); // still in previous state
+    BOOST_TEST_EQ(v, q2);
   }
   BOOST_TEST_EQ(Q<1>::count, 0);
   BOOST_TEST_EQ(Q<2>::count, 0);
@@ -214,17 +217,17 @@ int main() {
     BOOST_TEST_NOT(crv.get_if<int>());
   }
 
-  // apply
+  // visit
   {
     variant<Q<1>, Q<2>> v;
     v = Q<1>(1);
-    v.apply([](auto& x) {
+    v.visit([](auto& x) {
       BOOST_TEST_EQ(x, 1);
       BOOST_TEST_TRAIT_SAME(decltype(x), Q<1>&);
     });
     v = Q<2>(2);
     const auto& crv = v;
-    crv.apply([](const auto& x) {
+    crv.visit([](const auto& x) {
       BOOST_TEST_EQ(x, 2);
       BOOST_TEST_TRAIT_SAME(decltype(x), const Q<2>&);
     });

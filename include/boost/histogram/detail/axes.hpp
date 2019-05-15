@@ -17,7 +17,6 @@
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/throw_exception.hpp>
-#include <functional>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -50,17 +49,16 @@ template <class... Ts>
 decltype(auto) axis_get(std::tuple<Ts...>& axes, unsigned i) {
   using namespace boost::mp11;
   constexpr auto S = sizeof...(Ts);
-  using V = mp_unique<axis::variant<std::reference_wrapper<Ts>...>>;
-  return mp_with_index<S>(i, [&](auto I) { return V(std::ref(std::get<I>(axes))); });
+  using V = mp_unique<axis::variant<Ts*...>>;
+  return mp_with_index<S>(i, [&axes](auto i) { return V(&std::get<i>(axes)); });
 }
 
 template <class... Ts>
 decltype(auto) axis_get(const std::tuple<Ts...>& axes, unsigned i) {
   using namespace boost::mp11;
   constexpr auto S = sizeof...(Ts);
-  using L = mp_unique<mp_list<std::reference_wrapper<const Ts>...>>;
-  using V = mp_rename<L, axis::variant>;
-  return mp_with_index<S>(i, [&](auto I) { return V(std::cref(std::get<I>(axes))); });
+  using V = mp_unique<axis::variant<const Ts*...>>;
+  return mp_with_index<S>(i, [&axes](auto i) { return V(&std::get<i>(axes)); });
 }
 
 template <class T>

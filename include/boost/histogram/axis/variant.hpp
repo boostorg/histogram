@@ -16,14 +16,12 @@
 #include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/detail/variant.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11/bind.hpp>
 #include <boost/mp11/function.hpp>
 #include <boost/mp11/list.hpp>
+#include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
-#include <functional>
 #include <ostream>
 #include <stdexcept>
-#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -31,54 +29,39 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <class T, class U>
-struct ref_handler_impl {
-  using type = T;
-  template <class V>
-  static V unpack(V&& v) {
-    return std::forward<V>(v);
-  }
-};
-
-template <class T, class U>
-struct ref_handler_impl<T, std::reference_wrapper<U>> {
-  using type = std::reference_wrapper<T>;
-  template <class V>
-  static auto unpack(V&& v) {
-    return v ? &(v->get()) : nullptr;
-  }
-};
-
-template <class T, class U>
-struct ref_handler_impl<T, std::reference_wrapper<const U>> {
-  using type = std::reference_wrapper<const T>;
-  template <class V>
-  static auto unpack(V&& v) {
-    return v ? &(v->get()) : nullptr;
-  }
-};
-
-template <class T, class V>
-using ref_handler = ref_handler_impl<T, mp11::mp_first<V>>;
-
 struct variant_access {
-  template <class T, class Variant>
-  static auto get_if(Variant&& v) noexcept {
-    using H = ref_handler<T, remove_cvref_t<Variant>>;
-    return H::unpack(v.impl.template get_if<typename H::type>());
+  template <class T, class T0, class Variant>
+  static auto get_if_impl(mp11::mp_list<T, T0>, Variant* v) noexcept {
+    return v->impl.template get_if<T>();
+  }
+
+  template <class T, class T0, class Variant>
+  static auto get_if_impl(mp11::mp_list<T, T0*>, Variant* v) noexcept {
+    auto tp = v->impl.template get_if<mp11::mp_if<std::is_const<T0>, const T*, T*>>();
+    return tp ? *tp : nullptr;
   }
 
   template <class T, class Variant>
-  static decltype(auto) get(Variant&& v) {
-    using H = ref_handler<T, remove_cvref_t<Variant>>;
-    return *H::unpack(&v.impl.template get<typename H::type>());
+  static auto get_if(Variant* v) noexcept {
+    using T0 = mp11::mp_first<std::decay_t<Variant>>;
+    return get_if_impl(mp11::mp_list<T, T0>{}, v);
+  }
+
+  template <class T0, class Visitor, class Variant>
+  static decltype(auto) visit_impl(mp11::mp_identity<T0>, Visitor&& vis, Variant&& v) {
+    return v.impl.visit(vis);
+  }
+
+  template <class T0, class Visitor, class Variant>
+  static decltype(auto) visit_impl(mp11::mp_identity<T0*>, Visitor&& vis, Variant&& v) {
+    return v.impl.visit([&vis](auto&& x) -> decltype(auto) { return vis(*x); });
   }
 
   template <class Visitor, class Variant>
-  static decltype(auto) apply(Visitor&& vis, Variant&& v) {
-    using H = ref_handler<void, remove_cvref_t<Variant>>;
-    return v.impl.apply(
-        [&vis](auto&& x) -> decltype(auto) { return vis(*H::unpack(&x)); });
+  static decltype(auto) visit(Visitor&& vis, Variant&& v) {
+    using T0 = mp11::mp_first<std::decay_t<Variant>>;
+    return visit_impl(mp11::mp_identity<T0>{}, std::forward<Visitor>(vis),
+                      std::forward<Variant>(v));
   }
 };
 
@@ -99,7 +82,7 @@ class variant : public iterator_mixin<variant<Ts...>> {
 
   // maybe metadata_type or const metadata_type, if bounded type is const
   using metadata_type = std::remove_reference_t<decltype(
-      traits::metadata(std::declval<detail::unref_t<mp11::mp_first<impl_type>>>()))>;
+      traits::metadata(std::declval<std::remove_pointer_t<mp11::mp_first<variant>>>()))>;
 
 public:
   // cannot import ctors with using directive, it breaks gcc and msvc
@@ -238,7 +221,7 @@ public:
 
   template <class T>
   bool operator==(const T& t) const {
-    const T* tp = detail::variant_access::template get_if<T>(*this);
+    const T* tp = detail::variant_access::template get_if<T>(this);
     return tp && detail::relaxed_equal(*tp, t);
   }
 
@@ -261,49 +244,55 @@ class variant<> {};
 /// Apply visitor to variant (reference).
 template <class Visitor, class... Us>
 decltype(auto) visit(Visitor&& vis, variant<Us...>& var) {
-  return detail::variant_access::apply(vis, var);
+  return detail::variant_access::visit(vis, var);
 }
 
 /// Apply visitor to variant (movable reference).
 template <class Visitor, class... Us>
 decltype(auto) visit(Visitor&& vis, variant<Us...>&& var) {
-  return detail::variant_access::apply(vis, std::move(var));
+  return detail::variant_access::visit(vis, std::move(var));
 }
 
 /// Apply visitor to variant (const reference).
 template <class Visitor, class... Us>
 decltype(auto) visit(Visitor&& vis, const variant<Us...>& var) {
-  return detail::variant_access::apply(vis, var);
-}
-
-/// Return reference to T, throws unspecified exception if type does not match.
-template <class T, class... Us>
-decltype(auto) get(variant<Us...>& v) {
-  return detail::variant_access::template get<T>(v);
-}
-
-/// Return movable reference to T, throws unspecified exception if type does not match.
-template <class T, class... Us>
-decltype(auto) get(variant<Us...>&& v) {
-  return std::move(detail::variant_access::template get<T>(v));
-}
-
-/// Return const reference to T, throws unspecified exception if type does not match.
-template <class T, class... Us>
-decltype(auto) get(const variant<Us...>& v) {
-  return detail::variant_access::template get<T>(v);
+  return detail::variant_access::visit(vis, var);
 }
 
 /// Returns pointer to T in variant or null pointer if type does not match.
 template <class T, class... Us>
 T* get_if(variant<Us...>* v) {
-  return detail::variant_access::template get_if<T>(*v);
+  return detail::variant_access::template get_if<T>(v);
 }
 
 /// Returns pointer to const T in variant or null pointer if type does not match.
 template <class T, class... Us>
 const T* get_if(const variant<Us...>* v) {
-  return detail::variant_access::template get_if<T>(*v);
+  return detail::variant_access::template get_if<T>(v);
+}
+
+/// Return reference to T, throws std::runtime_error if type does not match.
+template <class T, class... Us>
+decltype(auto) get(variant<Us...>& v) {
+  auto tp = get_if<T>(&v);
+  if (!tp) BOOST_THROW_EXCEPTION(std::runtime_error("T is not the held type"));
+  return *tp;
+}
+
+/// Return movable reference to T, throws unspecified exception if type does not match.
+template <class T, class... Us>
+decltype(auto) get(variant<Us...>&& v) {
+  auto tp = get_if<T>(&v);
+  if (!tp) BOOST_THROW_EXCEPTION(std::runtime_error("T is not the held type"));
+  return std::move(*tp);
+}
+
+/// Return const reference to T, throws unspecified exception if type does not match.
+template <class T, class... Us>
+decltype(auto) get(const variant<Us...>& v) {
+  auto tp = get_if<T>(&v);
+  if (!tp) BOOST_THROW_EXCEPTION(std::runtime_error("T is not the held type"));
+  return *tp;
 }
 
 // pass-through version of get for generic programming

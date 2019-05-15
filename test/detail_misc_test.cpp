@@ -42,7 +42,7 @@ int main() {
     auto a1 = axis::integer<>(0, 1);
     auto a2 = axis::integer<>(1, 2);
     auto tup = std::make_tuple(a1, a2);
-    using E1 = axis::variant<std::reference_wrapper<axis::integer<>>>;
+    using E1 = axis::variant<axis::integer<>*>;
     BOOST_TEST_TRAIT_SAME(decltype(detail::axis_get(tup, 0)), E1);
     BOOST_TEST_EQ(detail::axis_get(tup, 0), a1);
     BOOST_TEST_EQ(detail::axis_get(tup, 1), a2);

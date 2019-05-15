@@ -13,7 +13,6 @@
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/throw_exception.hpp>
 #include <boost/histogram/detail/type_name.hpp>
-#include <functional>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -23,14 +22,6 @@
 
 using namespace boost::histogram;
 namespace tr = axis::transform;
-
-namespace std {
-template <class T>
-ostream& operator<<(ostream& os, const reference_wrapper<T>& t) {
-  os << t.get();
-  return os;
-}
-} // namespace std
 
 int main() {
   { (void)axis::variant<>{}; }
@@ -62,13 +53,13 @@ int main() {
     BOOST_TEST_EQ(a.options(), axis::option::overflow_t::value);
   }
 
-  // axis::variant with std::reference_wrapper
+  // axis::variant with pointers
   {
     using A = axis::integer<>;
     using B = axis::regular<>;
     auto a = A(1, 5, "foo");
     auto b = B(3, 1, 5, "bar");
-    axis::variant<std::reference_wrapper<A>, std::reference_wrapper<B>> r1(std::ref(a));
+    axis::variant<A*, B*> r1(&a);
     BOOST_TEST_EQ(r1, a);
     BOOST_TEST_NE(r1, A(2, 4));
     BOOST_TEST_NE(r1, b);
@@ -79,11 +70,10 @@ int main() {
     // change original through r1
     axis::get<A>(r1).metadata() = "bar";
     BOOST_TEST_EQ(a.metadata(), "bar");
-    r1 = std::ref(b);
+    r1 = &b;
     BOOST_TEST_EQ(r1, b);
 
-    axis::variant<std::reference_wrapper<const A>, std::reference_wrapper<const B>> r2(
-        std::cref(b));
+    axis::variant<const A*, const B*> r2(static_cast<const B*>(&b));
     BOOST_TEST_EQ(r2, b);
     BOOST_TEST_NE(r2, B(4, 1, 5));
     BOOST_TEST_NE(r2, a);
