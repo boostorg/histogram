@@ -260,8 +260,8 @@ The library was designed to work with algorithms from the C++ standard library. 
 
 The histogram class has standard random-access iterators which can be used with various algorithms from the standard library. Some things need to be kept in mind:
 
-* The histogram iterators also walk over the under- and overflow bins, if they are present. If this is inconvenient, the corresponding axis options may be disabled. A way to skip the extra bins is to use the iterators from the [funcref boost::histogram::indexed] range generator instead of the raw histogram iterators, but the values then need to be accessed through an extra dereference operation.
-* The iteration order for histograms with several axes is an implementation-detail, but for histograms with one axis it is guaranteed to be the unsurprising order: bins are sequentially increasing, the upper edge of the current bin is the lower edge of the next bin.
+* The histogram iterators also walk over the under- and overflow bins, if they are present. To skip the extra bins one should use the fast iterators from the [funcref boost::histogram::indexed] range generator instead, but the values then need to be accessed through an extra dereference operation.
+* The iteration order for histograms with several axes is an implementation-detail, but for histograms with one axis it is guaranteed to be the obvious order: bins are accessed in order from the lowest to the highest index.
 
 [import ../examples/guide_stdlib_algorithms.cpp]
 [guide_stdlib_algorithms]
@@ -270,15 +270,17 @@ The histogram class has standard random-access iterators which can be used with 
 
 [section Summation]
 
-It is easy to iterate over all histogram cells to compute the sum of cell values by hand or to use an algorithm from the standard library to do so, but it is not safe. The result may not be accurate or overflow, if the sum is represented by an integer type. The library provides [funcref boost::histogram::algorithm::sum] as a safer, albeit slower, alternative. It uses the [@https://en.wikipedia.org/wiki/Kahan_summation_algorithm Neumaier algorithm] in double precision for integers and floating point types, and does the naive sum otherwise.
+It is easy to iterate over all histogram cells to compute the sum of cell values by hand or to use an algorithm from the standard library to do so, but it is not safe. The result may not be accurate or overflow, if the sum is represented by an integer type. The library provides [funcref boost::histogram::algorithm::sum] as a safer, albeit slower, alternative. It uses the [@https://en.wikipedia.org/wiki/Kahan_summation_algorithm Neumaier algorithm] in double precision for integers and floating point cells, and does the naive sum otherwise.
 
 [endsect]
 
 [section Projection]
 
-Sometimes you want to remove some axes from a high-dimensional histogram and obtain the equivalent lower-dimensional version, that one gets by summing up the bin contents of the removed axes. This is called a /projection/. This is useful if you found out that there is no interesting structure along an axis, so it is not worth keeping that axis around, or if you want to visualize 1d or 2d projections of a high-dimensional histogram.
+It is sometimes convenient to generate a high-dimensional histogram first and then extract smaller or lower-dimensional versions from it. One useful way to obtain a lower-dimensional histogram is to sum the bin contents of the removed axes. This is called a /projection/. When the histogram has under- and overflow bins along all axes, this operation creates a histogram that is exactly equal to one obtained, if it was filled with the original data from the start.
 
-The library provides the [funcref boost::histogram::algorithm::project] function for this purpose, which returns the reduced histogram. It accepts the original histogram and the indices (one or more) of the axes that are kept. If your histogram is static, meaning the axis configuration is known at compile-time, you need to use compile-time numbers as indices, while the histogram with a dynamic axis configuration can also accepts run-time indices and even an iterators over indices.
+Projection is useful if you found out that there is no interesting structure along an axis, so it is not worth keeping that axis around, or if you want to visualize 1d or 2d projections of a high-dimensional histogram.
+
+The library provides the [funcref boost::histogram::algorithm::project] function for this purpose. It accepts the original histogram and the indices (one or more) of the axes that are kept and returns the lower-dimensional histogram. If the histogram is static, meaning the axis configuration is known at compile-time, compile-time numbers should be used as indices to obtain another static histogram. Using normal numbers or iterators over indices produces a histogram with a dynamic axis configuration.
 
 [import ../examples/guide_histogram_projection.cpp]
 [guide_histogram_projection]
@@ -287,9 +289,9 @@ The library provides the [funcref boost::histogram::algorithm::project] function
 
 [section Reduction]
 
-A projection removes an axis completely. Another way to obtain a smaller histogram which consume less memory is the [funcref boost::histogram::algorithm::reduce] function to /shrink/ and /rebin/ axes.
+A projection removes an axis completely. Another way to obtain a smaller histogram is the [funcref boost::histogram::algorithm::reduce] function to /slice/, /shrink/ or /rebin/ axes.
 
-Shrinking means that the range of an axis is reduced and the number of bins along this axis. Rebinning means that adjacent bins are merged. For each set of adjacent bins, new bin is formed which covers the interval of the merged bins and has their added content. These two operations can be combined and applied to several axes at once (which is more efficient than doing it sequentially).
+Shrinking means that the range of an axis is reduced and the number of bins along this axis. Slicing means the same, but is based on axis indices instead of their values. Rebinning means that adjacent bins are piece-wise merged into larger bins. For N adjacent bins, a new bin is formed which covers the interval of the merged bins and has their added content. These two operations can be combined and applied to several axes at once (which is much more efficient than doing it sequentially).
 
 [import ../examples/guide_histogram_reduction.cpp]
 [guide_histogram_reduction]
@@ -306,11 +308,13 @@ The library is customizable and extensible by users. Users can create new axis t
 
 There are two ways to generate a single histogram using several threads.
 
-1. Each thread has its own copy of the histogram. Each copy is independently filled. The copies are then added in the main thread. Use this when you can afford having `N` copies of the histogram in memory for `N` threads.
+1. Each thread has its own copy of the histogram. Each copy is independently filled. The copies are then added in the main thread. Use this as the default when you can afford having `N` copies of the histogram in memory for `N` threads, because it allows each thread to work on its thread-local memory and utilize the CPU cache without the need to synchronize memory access. The highest performance gains are obtained in this way.
 
-2. Each thread is filling the same histogram, concurrently. This requires a thread-safe storage that can handle concurrent writes and a histogram made entirely of non-growing axes (the second requirement may be relaxed in the future).
+2. There is only one histogram which is filled concurrently by several threads. This requires using a thread-safe storage that can handle concurrent writes. The library provides the [classref boost::histogram::accumulators::thread_safe] accumulator, which combined with the [classref boost::histogram::dense_storage] provides a thread-safe storage.
 
-The library currently does not provide a builtin thread-safe storage yet (one will be added in the future), but a provisional one can be made with `std::atomic` counters, as shown in the next example.
+[note Filling a histogram with growing axes in a multi-threaded environment is safe, but will have poor performance since the storage must be locked on each fill of a growing axis to see whether an extension of the storage is needed. Even without growing axes, there is a performance gain of filling a histogram in parallel only if the histogram is either very large or when significant time is spend in preparing the value to fill. For small histograms, threads frequently access the same cell, whose state has to be synchronized between the threads. This is slow even with atomic counters, since different threads are usually executed on different cores and the synchronization causes cache misses that eat up the performance gained by doing some calculations in parallel.]
+
+The next example demonstrates option 2 (option 1 is straight-forward to implement).
 
 [import ../examples/guide_parallel_filling.cpp]
 [guide_parallel_filling]
