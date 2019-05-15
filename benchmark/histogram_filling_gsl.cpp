@@ -7,6 +7,8 @@
 #include <benchmark/benchmark.h>
 #include <random>
 
+#include <boost/histogram/detail/throw_exception.hpp>
+
 #include <gsl/gsl_histogram.h>
 #include <gsl/gsl_histogram2d.h>
 
