@@ -176,26 +176,32 @@ public:
         *this);
   }
 
-  /// Return index for value argument.
-  /// Throws std::invalid_argument if axis has incompatible call signature.
+  /** Return index for value argument.
+
+    Throws std::invalid_argument if axis has incompatible call signature.
+  */
   template <class U>
   index_type index(const U& u) const {
     return visit([&u](const auto& a) { return traits::index(a, u); }, *this);
   }
 
-  /// Return value for index argument.
-  /// Only works for axes with value method that returns something convertible
-  /// to double and will throw a runtime_error otherwise, see
-  /// axis::traits::value().
+  /** Return value for index argument.
+
+    Only works for axes with value method that returns something convertible
+    to double and will throw a runtime_error otherwise, see
+    axis::traits::value().
+  */
   double value(real_index_type idx) const {
     return visit([idx](const auto& a) { return traits::value_as<double>(a, idx); },
                  *this);
   }
 
-  /// Return bin for index argument.
-  /// Only works for axes with value method that returns something convertible
-  /// to double and will throw a runtime_error otherwise, see
-  /// axis::traits::value().
+  /** Return bin for index argument.
+
+    Only works for axes with value method that returns something convertible
+    to double and will throw a runtime_error otherwise, see
+    axis::traits::value().
+  */
   auto bin(index_type idx) const {
     return visit(
         [idx](const auto& a) {
@@ -214,17 +220,28 @@ public:
         *this);
   }
 
+  /** Compare two variants.
+
+    Return true if the variants point to the same concrete axis type and the types compare
+    equal. Otherwise return false.
+  */
   template <class... Us>
   bool operator==(const variant<Us...>& u) const {
     return visit([&u](const auto& x) { return u == x; }, *this);
   }
 
+  /** Compare variant with a concrete axis type.
+
+    Return true if the variant point to the same concrete axis type and the types compare
+    equal. Otherwise return false.
+  */
   template <class T>
   bool operator==(const T& t) const {
     const T* tp = detail::variant_access::template get_if<T>(this);
     return tp && detail::relaxed_equal(*tp, t);
   }
 
+  /// The negation of operator==.
   template <class T>
   bool operator!=(const T& t) const {
     return !operator==(t);
