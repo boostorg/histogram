@@ -23,7 +23,7 @@ endif()
 
 macro(add_benchmark name)
   add_executable(${name} "${name}.cpp")
-  target_compile_options(${name} PRIVATE -g -O3 -march=native -fno-exceptions -fno-rtti)
+  target_compile_options(${name} PRIVATE -O3 -march=native -fno-exceptions -fno-rtti)
   target_link_libraries(${name} PRIVATE Boost::histogram benchmark_main)
 endmacro()
 

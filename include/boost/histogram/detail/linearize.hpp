@@ -195,23 +195,23 @@ optional_index to_index(std::false_type, const A& axes, S&, const U& args) {
 }
 
 // histogram has growing axes
-template <unsigned I, unsigned N, class T, class S, class U>
+template <class T, class S, class U>
 optional_index to_index(std::true_type, T& axes, S& storage, const U& args) {
   optional_index idx;
-  constexpr unsigned M = buffer_size<T>::value;
-  axis::index_type shifts[M];
+  constexpr unsigned nbuf = buffer_size<T>::value;
+  axis::index_type shifts[nbuf];
   const auto rank = axes_rank(axes);
+  constexpr auto nargs = static_cast<unsigned>(std::tuple_size<U>::value);
   bool update_needed = false;
-  if (rank == 1 && N > 1)
-    update_needed =
-        linearize_value(idx, shifts[0], axis_get<0>(axes), tuple_slice<I, N>(args));
+  if (rank == 1 && nargs > 1)
+    update_needed = linearize_value(idx, shifts[0], axis_get<0>(axes), args);
   else {
-    if (rank != N)
+    if (rank != nargs)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
+    mp11::mp_for_each<mp11::mp_iota_c<(nargs < nbuf ? nargs : nbuf)>>([&](auto i) {
       update_needed |=
-          linearize_value(idx, shifts[J], axis_get<J>(axes), std::get<(J + I)>(args));
+          linearize_value(idx, shifts[i], axis_get<i>(axes), std::get<i>(args));
     });
   }
 
