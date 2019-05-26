@@ -176,20 +176,20 @@ void grow_storage(const A& axes, S& storage, const axis::index_type* shifts) {
 //   interface), so we throw at runtime if incompatible argument is passed (e.g.
 //   3d tuple)
 // histogram has only non-growing axes
-template <unsigned I, unsigned N, class T, class S, class U>
-optional_index to_index(std::false_type, const T& axes, S&, const U& args) {
+template <class A, class S, class U>
+optional_index to_index(std::false_type, const A& axes, S&, const U& args) {
   optional_index idx;
   const auto rank = axes_rank(axes);
-  if (rank == 1 && N > 1)
-    linearize_value(idx, axis_get<0>(axes), tuple_slice<I, N>(args));
+  constexpr auto nargs = static_cast<unsigned>(std::tuple_size<U>::value);
+  if (rank == 1 && nargs > 1)
+    linearize_value(idx, axis_get<0>(axes), args);
   else {
-    if (rank != N)
+    if (rank != nargs)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    constexpr unsigned M = buffer_size<remove_cvref_t<decltype(axes)>>::value;
-    mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
-      linearize_value(idx, axis_get<J>(axes), std::get<(J + I)>(args));
-    });
+    constexpr auto nbuf = buffer_size<A>::value;
+    mp11::mp_for_each<mp11::mp_iota_c<(nargs < nbuf ? nargs : nbuf)>>(
+        [&](auto i) { linearize_value(idx, axis_get<i>(axes), std::get<i>(args)); });
   }
   return idx;
 }
@@ -291,7 +291,7 @@ typename S::iterator fill(A& axes, S& storage, const std::tuple<Us...>& tus) {
   constexpr unsigned i = (iws.first == 0 || iws.second == 0)
                              ? (iws.first == 1 || iws.second == 1 ? 2 : 1)
                              : 0;
-  const auto idx = to_index<i, n>(has_growing_axis<A>(), axes, storage, tus);
+  const auto idx = to_index(has_growing_axis<A>(), axes, storage, tuple_slice<i, n>(tus));
   if (idx) {
     fill_impl(mp11::mp_int<iws.first>{}, mp11::mp_int<iws.second>{},
               has_operator_preincrement<typename S::value_type>{}, storage[*idx], tus);

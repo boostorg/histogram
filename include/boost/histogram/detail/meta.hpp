@@ -101,16 +101,16 @@ constexpr float highest() {
   return std::numeric_limits<float>::infinity();
 }
 
-template <std::size_t I, class T, std::size_t... N>
-decltype(auto) tuple_slice_impl(T&& t, mp11::index_sequence<N...>) {
-  return std::forward_as_tuple(std::get<(N + I)>(std::forward<T>(t))...);
+template <std::size_t I, class T, std::size_t... K>
+decltype(auto) tuple_slice_impl(T&& t, mp11::index_sequence<K...>) {
+  return std::forward_as_tuple(std::get<(I + K)>(std::forward<T>(t))...);
 }
 
-template <std::size_t I, std::size_t N, class T>
-decltype(auto) tuple_slice(T&& t) {
-  static_assert(I + N <= mp11::mp_size<remove_cvref_t<T>>::value,
-                "I and N must describe a slice");
-  return tuple_slice_impl<I>(std::forward<T>(t), mp11::make_index_sequence<N>{});
+template <std::size_t I, std::size_t N, class Tuple>
+decltype(auto) tuple_slice(Tuple&& t) {
+  constexpr auto S = std::tuple_size<std::decay_t<Tuple>>::value;
+  static_assert(I + N <= S, "I and N must describe a slice");
+  return tuple_slice_impl<I>(std::forward<Tuple>(t), mp11::make_index_sequence<N>{});
 }
 
 #define BOOST_HISTOGRAM_DETECT(name, cond)   \
