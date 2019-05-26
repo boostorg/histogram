@@ -1,0 +1,144 @@
+// Copyright 2015-2019 Hans Dembinski
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+#include <benchmark/benchmark.h>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/traits.hpp>
+#include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/detail/axes.hpp>
+#include <boost/histogram/detail/throw_exception.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <random>
+#include <tuple>
+#include <type_traits>
+#include <vector>
+
+using namespace boost::histogram;
+using reg = axis::regular<>;
+using uniform = std::uniform_real_distribution<>;
+using normal = std::normal_distribution<>;
+
+template <class T, class... Ts>
+auto make_storage(const std::tuple<Ts...>& axes) {
+  return std::vector<T>(detail::bincount(axes), 0);
+}
+
+template <class Axes, class Storage, class Tuple>
+void fill_b(const Axes& axes, Storage& storage, const Tuple& t) {
+  using namespace boost::mp11;
+  std::size_t stride = 1, index = 0;
+  mp_for_each<mp_iota<mp_size<Tuple>>>([&](auto i) {
+    const auto& a = boost::histogram::detail::axis_get<i>(axes);
+    const auto& v = std::get<i>(t);
+    index += (a.index(v) + 1) * stride;
+    stride *= axis::traits::extent(a);
+  });
+  ++storage[index];
+}
+
+template <class Axes, class Storage, class Tuple>
+void fill_c(const Axes& axes, const std::size_t* strides, Storage& storage,
+            const Tuple& t) {
+  using namespace boost::mp11;
+  std::size_t index = 0;
+  mp_for_each<mp_iota<mp_size<Tuple>>>([&](auto i) {
+    const auto& a = boost::histogram::detail::axis_get<i>(axes);
+    const auto& v = std::get<i>(t);
+    index += (a.index(v) + 1) * *strides++;
+  });
+  ++storage[index];
+}
+
+template <class Distribution>
+Distribution init();
+
+template <>
+uniform init<uniform>() {
+  return uniform{0.0, 1.0};
+}
+
+template <>
+normal init<normal>() {
+  return normal{0.5, 0.3};
+}
+
+template <class T, class Distribution>
+static void fill_1d_a(benchmark::State& state) {
+  auto axes = std::make_tuple(reg(100, 0, 1));
+  std::default_random_engine gen(1);
+  Distribution dis = init<Distribution>();
+  auto storage = make_storage<T>(axes);
+  for (auto _ : state) {
+    const auto i = std::get<0>(axes).index(dis(gen));
+    ++storage[i + 1];
+  }
+}
+
+template <class T, class Distribution>
+static void fill_1d_b(benchmark::State& state) {
+  auto axes = std::make_tuple(reg(100, 0, 1));
+  std::default_random_engine gen(1);
+  Distribution dis = init<Distribution>();
+  auto storage = make_storage<T>(axes);
+  for (auto _ : state) { fill_b(axes, storage, std::forward_as_tuple(dis(gen))); }
+}
+
+template <class T, class Distribution>
+static void fill_1d_c(benchmark::State& state) {
+  auto axes = std::make_tuple(reg(100, 0, 1));
+  std::default_random_engine gen(1);
+  Distribution dis = init<Distribution>();
+  auto storage = make_storage<T>(axes);
+  std::vector<std::size_t> strides(detail::axes_rank(axes), 1);
+  auto sit = strides.begin();
+  detail::for_each_axis(axes, [&](const auto& a) { *sit++ *= axis::traits::extent(a); });
+  for (auto _ : state) {
+    fill_c(axes, strides.data(), storage, std::forward_as_tuple(dis(gen)));
+  }
+}
+
+template <class T, class Distribution>
+static void fill_2d_a(benchmark::State& state) {
+  auto axes = std::make_tuple(reg(100, 0, 1), reg(100, 0, 1));
+  std::default_random_engine gen(1);
+  Distribution dis = init<Distribution>();
+  auto storage = make_storage<T>(axes);
+  for (auto _ : state) {
+    const auto i0 = std::get<0>(axes).index(dis(gen));
+    const auto i1 = std::get<1>(axes).index(dis(gen));
+    const auto stride = axis::traits::extent(std::get<0>(axes));
+    ++storage[(i0 + 1) * stride + (i1 + 1)];
+  }
+}
+
+template <class T, class Distribution>
+static void fill_2d_b(benchmark::State& state) {
+  auto axes = std::make_tuple(reg(100, 0, 1), reg(100, 0, 1));
+  std::default_random_engine gen(1);
+  Distribution dis = init<Distribution>();
+  auto storage = make_storage<T>(axes);
+  for (auto _ : state) {
+    fill_b(axes, storage, std::forward_as_tuple(dis(gen), dis(gen)));
+  }
+}
+
+BENCHMARK_TEMPLATE(fill_1d_a, int, uniform);
+BENCHMARK_TEMPLATE(fill_1d_a, double, uniform);
+BENCHMARK_TEMPLATE(fill_1d_b, double, uniform);
+BENCHMARK_TEMPLATE(fill_1d_c, double, uniform);
+BENCHMARK_TEMPLATE(fill_1d_a, double, normal);
+BENCHMARK_TEMPLATE(fill_1d_b, double, normal);
+BENCHMARK_TEMPLATE(fill_1d_c, double, normal);
+
+BENCHMARK_TEMPLATE(fill_2d_a, double, uniform);
+BENCHMARK_TEMPLATE(fill_2d_b, double, uniform);
+BENCHMARK_TEMPLATE(fill_2d_a, double, normal);
+BENCHMARK_TEMPLATE(fill_2d_b, double, normal);
+
+// BENCHMARK_TEMPLATE(fill_1d_0, dynamic_tag, int, uniform);
+// BENCHMARK_TEMPLATE(fill_1d_0, dynamic_tag, int, uniform);
+// BENCHMARK_TEMPLATE(fill_1d_0, dynamic_tag, int, normal);
+// BENCHMARK_TEMPLATE(fill_1d_0, dynamic_tag, int, normal);

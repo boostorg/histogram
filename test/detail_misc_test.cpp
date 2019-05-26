@@ -131,6 +131,18 @@ int main() {
     BOOST_TEST(detail::axes_equal(t2, t3));
   }
 
+  // axes_rank
+  {
+    std::tuple<int, int> a;
+    std::vector<int> b(3);
+    std::array<int, 4> c;
+    const std::tuple<int> d;
+    BOOST_TEST_EQ(detail::axes_rank(a), 2);
+    BOOST_TEST_EQ(detail::axes_rank(b), 3);
+    BOOST_TEST_EQ(detail::axes_rank(c), 4);
+    BOOST_TEST_EQ(detail::axes_rank(d), 1);
+  }
+
   // bincount overflow
   {
     auto v = std::vector<axis::integer<>>(

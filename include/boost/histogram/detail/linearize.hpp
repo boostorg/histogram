@@ -120,8 +120,8 @@ void grow_storage(const A& axes, S& storage, const axis::index_type* shifts) {
     s *= n;
   });
   auto new_storage = make_default(storage);
-  new_storage.reset(detail::bincount(axes));
-  const auto dlast = data + get_size(axes) - 1;
+  new_storage.reset(bincount(axes));
+  const auto dlast = data + axes_rank(axes) - 1;
   for (const auto& x : storage) {
     auto ns = new_storage.begin();
     sit = shifts;
@@ -179,7 +179,7 @@ void grow_storage(const A& axes, S& storage, const axis::index_type* shifts) {
 template <unsigned I, unsigned N, class T, class S, class U>
 optional_index to_index(std::false_type, const T& axes, S&, const U& args) {
   optional_index idx;
-  const auto rank = get_size(axes);
+  const auto rank = axes_rank(axes);
   if (rank == 1 && N > 1)
     linearize_value(idx, axis_get<0>(axes), tuple_slice<I, N>(args));
   else {
@@ -200,7 +200,7 @@ optional_index to_index(std::true_type, T& axes, S& storage, const U& args) {
   optional_index idx;
   constexpr unsigned M = buffer_size<T>::value;
   axis::index_type shifts[M];
-  const auto rank = get_size(axes);
+  const auto rank = axes_rank(axes);
   bool update_needed = false;
   if (rank == 1 && N > 1)
     update_needed =
@@ -310,7 +310,7 @@ typename SM::first_type::iterator fill(A& axes, SM& sm, const std::tuple<Us...>&
 
 template <typename A, typename... Us>
 optional_index at(const A& axes, const std::tuple<Us...>& args) {
-  if (get_size(axes) != sizeof...(Us))
+  if (axes_rank(axes) != sizeof...(Us))
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
   mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto I) {
@@ -323,7 +323,7 @@ optional_index at(const A& axes, const std::tuple<Us...>& args) {
 
 template <typename A, typename U>
 optional_index at(const A& axes, const U& args) {
-  if (get_size(axes) != get_size(args))
+  if (axes_rank(axes) != axes_rank(args))
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
   using std::begin;

@@ -119,9 +119,7 @@ public:
   explicit histogram(A&& a) : histogram(std::forward<A>(a), storage_type()) {}
 
   /// Number of axes (dimensions).
-  constexpr unsigned rank() const noexcept {
-    return static_cast<unsigned>(detail::get_size(axes_));
-  }
+  constexpr unsigned rank() const noexcept { return detail::axes_rank(axes_); }
 
   /// Total number of bins (including underflow/overflow).
   std::size_t size() const noexcept { return storage_and_mutex_.first().size(); }
