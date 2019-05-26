@@ -533,8 +533,6 @@ void run_tests() {
     auto h1 = make(Tag(), axis::integer<>(0, 2));
     h1(std::make_tuple(0));                      // as if one had passed 0 directly
     BOOST_TEST_EQ(h1.at(std::make_tuple(0)), 1); // as if one had passed 0 directly
-    // passing 2d tuple is an invalid argument
-    BOOST_TEST_THROWS(h1(std::make_tuple(0, 0)), std::invalid_argument);
 
     struct axis2d {
       auto index(std::tuple<int, int> x) const {
