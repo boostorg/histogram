@@ -7,10 +7,11 @@
 #ifndef BOOST_HISTOGRAM_TEST_UTILITY_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_TEST_UTILITY_HISTOGRAM_HPP
 
+#include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>
-#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/ostream.hpp>
+#include <boost/mp11/algorithm.hpp>
 #include <type_traits>
 #include <vector>
 
@@ -18,32 +19,35 @@ namespace boost {
 namespace histogram {
 
 template <typename... Ts>
-auto make_axis_vector(Ts&&... ts) {
-  using T = axis::variant<detail::remove_cvref_t<Ts>...>;
-  return std::vector<T>({T(std::forward<Ts>(ts))...});
+auto make_axis_vector(const Ts&... ts) {
+  using R = axis::regular<>;
+  using I = axis::integer<>;
+  using V = axis::variable<>;
+  using Var = boost::mp11::mp_unique<axis::variant<R, I, V, Ts...>>;
+  return std::vector<Var>({Var(ts)...});
 }
 
 using static_tag = std::false_type;
 using dynamic_tag = std::true_type;
 
 template <typename... Axes>
-auto make(static_tag, Axes&&... axes) {
-  return make_histogram(std::forward<Axes>(axes)...);
+auto make(static_tag, const Axes&... axes) {
+  return make_histogram(axes...);
 }
 
 template <typename S, typename... Axes>
-auto make_s(static_tag, S&& s, Axes&&... axes) {
-  return make_histogram_with(s, std::forward<Axes>(axes)...);
+auto make_s(static_tag, S&& s, const Axes&... axes) {
+  return make_histogram_with(s, axes...);
 }
 
 template <typename... Axes>
-auto make(dynamic_tag, Axes&&... axes) {
-  return make_histogram(make_axis_vector(std::forward<Axes>(axes)...));
+auto make(dynamic_tag, const Axes&... axes) {
+  return make_histogram(make_axis_vector(axes...));
 }
 
 template <typename S, typename... Axes>
-auto make_s(dynamic_tag, S&& s, Axes&&... axes) {
-  return make_histogram_with(s, make_axis_vector(std::forward<Axes>(axes)...));
+auto make_s(dynamic_tag, S&& s, const Axes&... axes) {
+  return make_histogram_with(s, make_axis_vector(axes...));
 }
 
 } // namespace histogram
