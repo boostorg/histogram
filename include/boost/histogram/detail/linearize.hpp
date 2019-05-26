@@ -219,14 +219,14 @@ optional_index to_index(std::true_type, T& axes, S& storage, const U& args) {
   return idx;
 }
 
-template <typename U>
+template <class U>
 constexpr auto weight_sample_indices() {
   if (is_weight<U>::value) return std::make_pair(0, -1);
   if (is_sample<U>::value) return std::make_pair(-1, 0);
   return std::make_pair(-1, -1);
 }
 
-template <typename U0, typename U1, typename... Us>
+template <class U0, class U1, class... Us>
 constexpr auto weight_sample_indices() {
   using L = mp11::mp_list<U0, U1, Us...>;
   const int n = sizeof...(Us) + 1;
@@ -253,39 +253,33 @@ constexpr auto weight_sample_indices() {
   return std::make_pair(-1, -1);
 }
 
-template <class T>
-void fill_impl2(std::true_type, T&& t) {
+template <class T, class U>
+void fill_impl(mp11::mp_int<-1>, mp11::mp_int<-1>, std::false_type, T&& t, const U&) {
+  t();
+}
+
+template <class T, class U>
+void fill_impl(mp11::mp_int<-1>, mp11::mp_int<-1>, std::true_type, T&& t, const U&) {
   ++t;
 }
 
-template <class T, class U>
-void fill_impl2(std::true_type, T&& t, const U& u) {
-  t += u;
-}
-
-template <class T, class... Us>
-void fill_impl2(std::false_type, T&& t, const Us&... us) {
-  t(us...);
-}
-
-template <class T, class U>
-void fill_impl1(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, const U&) {
-  fill_impl2(has_operator_preincrement<remove_cvref_t<T>>{}, t);
+template <class IW, class T, class U>
+void fill_impl(IW, mp11::mp_int<-1>, std::false_type, T&& t, const U& u) {
+  t(std::get<IW::value>(u).value);
 }
 
 template <class IW, class T, class U>
-void fill_impl1(IW, mp11::mp_int<-1>, T&& t, const U& u) {
-  fill_impl2(has_operator_preincrement<remove_cvref_t<T>>{}, t,
-             std::get<IW::value>(u).value);
+void fill_impl(IW, mp11::mp_int<-1>, std::true_type, T&& t, const U& u) {
+  t += std::get<IW::value>(u).value;
 }
 
 template <class IS, class T, class U>
-void fill_impl1(mp11::mp_int<-1>, IS, T&& t, const U& u) {
+void fill_impl(mp11::mp_int<-1>, IS, std::false_type, T&& t, const U& u) {
   mp11::tuple_apply([&t](auto&&... args) { t(args...); }, std::get<IS::value>(u).value);
 }
 
 template <class IW, class IS, class T, class U>
-void fill_impl1(IW, IS, T&& t, const U& u) {
+void fill_impl(IW, IS, std::false_type, T&& t, const U& u) {
   mp11::tuple_apply([&](auto&&... args2) { t(std::get<IW::value>(u).value, args2...); },
                     std::get<IS::value>(u).value);
 }
@@ -301,27 +295,28 @@ typename SM::first_type::iterator fill(A& axes, SM& sm, const std::tuple<Us...>&
   auto& storage = sm.first();
   optional_index idx = to_index<i, n>(has_growing_axis<A>(), axes, storage, tus);
   if (idx) {
-    using mp11::mp_int;
-    fill_impl1(mp_int<iws.first>{}, mp_int<iws.second>{}, storage[*idx], tus);
+    fill_impl(mp11::mp_int<iws.first>{}, mp11::mp_int<iws.second>{},
+              has_operator_preincrement<typename SM::first_type::value_type>{},
+              storage[*idx], tus);
     return storage.begin() + *idx;
   }
   return storage.end();
 }
 
-template <typename A, typename... Us>
+template <class A, class... Us>
 optional_index at(const A& axes, const std::tuple<Us...>& args) {
   if (axes_rank(axes) != sizeof...(Us))
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto I) {
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto i) {
     // axes_get works with static and dynamic axes
-    linearize_index(idx, axis_get<I>(axes),
-                    static_cast<axis::index_type>(std::get<I>(args)));
+    linearize_index(idx, axis_get<i>(axes),
+                    static_cast<axis::index_type>(std::get<i>(args)));
   });
   return idx;
 }
 
-template <typename A, typename U>
+template <class A, class U>
 optional_index at(const A& axes, const U& args) {
   if (axes_rank(axes) != axes_rank(args))
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
