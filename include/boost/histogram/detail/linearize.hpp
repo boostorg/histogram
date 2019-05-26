@@ -284,20 +284,17 @@ void fill_impl(IW, IS, std::false_type, T&& t, const U& u) {
                     std::get<IS::value>(u).value);
 }
 
-template <class A, class SM, class... Us>
-typename SM::first_type::iterator fill(A& axes, SM& sm, const std::tuple<Us...>& tus) {
+template <class A, class S, class... Us>
+typename S::iterator fill(A& axes, S& storage, const std::tuple<Us...>& tus) {
   constexpr auto iws = weight_sample_indices<Us...>();
   constexpr unsigned n = sizeof...(Us) - (iws.first > -1) - (iws.second > -1);
   constexpr unsigned i = (iws.first == 0 || iws.second == 0)
                              ? (iws.first == 1 || iws.second == 1 ? 2 : 1)
                              : 0;
-  std::lock_guard<typename SM::second_type> lk{sm.second()};
-  auto& storage = sm.first();
-  optional_index idx = to_index<i, n>(has_growing_axis<A>(), axes, storage, tus);
+  const auto idx = to_index<i, n>(has_growing_axis<A>(), axes, storage, tus);
   if (idx) {
     fill_impl(mp11::mp_int<iws.first>{}, mp11::mp_int<iws.second>{},
-              has_operator_preincrement<typename SM::first_type::value_type>{},
-              storage[*idx], tus);
+              has_operator_preincrement<typename S::value_type>{}, storage[*idx], tus);
     return storage.begin() + *idx;
   }
   return storage.end();
