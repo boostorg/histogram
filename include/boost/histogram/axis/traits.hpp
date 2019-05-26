@@ -169,14 +169,14 @@ Result value_as(const Axis& axis, real_index_type index) {
   @param value argument to be passed to `index` method
 */
 template <class Axis, class U>
-auto index(const Axis& axis, const U& value) {
+axis::index_type index(const Axis& axis, const U& value) {
   using V = detail::remove_cvref_t<detail::arg_type<decltype(&Axis::index)>>;
   return axis.index(detail::try_cast<V, std::invalid_argument>(value));
 }
 
 // specialization for variant
 template <class... Ts, class U>
-auto index(const variant<Ts...>& axis, const U& value) {
+axis::index_type index(const variant<Ts...>& axis, const U& value) {
   return axis.index(value);
 }
 

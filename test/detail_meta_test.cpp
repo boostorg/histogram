@@ -397,17 +397,5 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((has_operator_radd<B&, const B&>));
   }
 
-  // get_size
-  {
-    std::tuple<int, int> a;
-    std::vector<int> b(3);
-    std::array<int, 4> c;
-    const std::tuple<int> d;
-    BOOST_TEST_EQ(get_size(a), 2);
-    BOOST_TEST_EQ(get_size(b), 3);
-    BOOST_TEST_EQ(get_size(c), 4);
-    BOOST_TEST_EQ(get_size(d), 1);
-  }
-
   return boost::report_errors();
 }

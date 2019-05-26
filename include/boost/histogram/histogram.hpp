@@ -119,9 +119,7 @@ public:
   explicit histogram(A&& a) : histogram(std::forward<A>(a), storage_type()) {}
 
   /// Number of axes (dimensions).
-  constexpr unsigned rank() const noexcept {
-    return static_cast<unsigned>(detail::get_size(axes_));
-  }
+  constexpr unsigned rank() const noexcept { return detail::axes_rank(axes_); }
 
   /// Total number of bins (including underflow/overflow).
   std::size_t size() const noexcept { return storage_and_mutex_.first().size(); }
@@ -179,13 +177,14 @@ public:
   */
   template <class... Ts>
   iterator operator()(const Ts&... ts) {
-    return operator()(std::make_tuple(ts...));
+    return operator()(std::forward_as_tuple(ts...));
   }
 
   /// Fill histogram with values, an optional weight, and/or a sample from a `std::tuple`.
   template <class... Ts>
   iterator operator()(const std::tuple<Ts...>& t) {
-    return detail::fill(axes_, storage_and_mutex_, t);
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    return detail::fill(axes_, storage_and_mutex_.first(), t);
   }
 
   /** Access cell value at integral indices.
@@ -201,18 +200,18 @@ public:
   */
   template <class... Indices>
   decltype(auto) at(axis::index_type i, Indices... is) {
-    return at(std::make_tuple(i, is...));
+    return at(std::forward_as_tuple(i, is...));
   }
 
   /// Access cell value at integral indices (read-only).
   template <class... Indices>
   decltype(auto) at(axis::index_type i, Indices... is) const {
-    return at(std::make_tuple(i, is...));
+    return at(std::forward_as_tuple(i, is...));
   }
 
   /// Access cell value at integral indices stored in `std::tuple`.
   template <typename... Indices>
-  decltype(auto) at(const std::tuple<axis::index_type, Indices...>& is) {
+  decltype(auto) at(const std::tuple<Indices...>& is) {
     const auto idx = detail::at(axes_, is);
     if (!idx)
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
@@ -221,7 +220,7 @@ public:
 
   /// Access cell value at integral indices stored in `std::tuple` (read-only).
   template <typename... Indices>
-  decltype(auto) at(const std::tuple<axis::index_type, Indices...>& is) const {
+  decltype(auto) at(const std::tuple<Indices...>& is) const {
     const auto idx = detail::at(axes_, is);
     if (!idx)
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));

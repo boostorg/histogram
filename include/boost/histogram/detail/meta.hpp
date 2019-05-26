@@ -7,18 +7,6 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_META_HPP
 #define BOOST_HISTOGRAM_DETAIL_META_HPP
 
-/* Most of the histogram code is generic and works for any number of axes. Buffers with a
- * fixed maximum capacity are used in some places, which have a size equal to the rank of
- * a histogram. The buffers are statically allocated to improve performance, which means
- * that they need a preset maximum capacity. 32 seems like a safe upper limit for the rank
- * (you can nevertheless increase it here if necessary): the simplest non-trivial axis has
- * 2 bins; even if counters are used which need only a byte of storage per bin, this still
- * corresponds to 4 GB of storage.
- */
-#ifndef BOOST_HISTOGRAM_DETAIL_AXES_LIMIT
-#define BOOST_HISTOGRAM_DETAIL_AXES_LIMIT 32
-#endif
-
 #include <boost/config/workaround.hpp>
 #if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
 #pragma GCC diagnostic push
@@ -113,16 +101,16 @@ constexpr float highest() {
   return std::numeric_limits<float>::infinity();
 }
 
-template <std::size_t I, class T, std::size_t... N>
-decltype(auto) tuple_slice_impl(T&& t, mp11::index_sequence<N...>) {
-  return std::forward_as_tuple(std::get<(N + I)>(std::forward<T>(t))...);
+template <std::size_t I, class T, std::size_t... K>
+decltype(auto) tuple_slice_impl(T&& t, mp11::index_sequence<K...>) {
+  return std::forward_as_tuple(std::get<(I + K)>(std::forward<T>(t))...);
 }
 
-template <std::size_t I, std::size_t N, class T>
-decltype(auto) tuple_slice(T&& t) {
-  static_assert(I + N <= mp11::mp_size<remove_cvref_t<T>>::value,
-                "I and N must describe a slice");
-  return tuple_slice_impl<I>(std::forward<T>(t), mp11::make_index_sequence<N>{});
+template <std::size_t I, std::size_t N, class Tuple>
+decltype(auto) tuple_slice(Tuple&& t) {
+  constexpr auto S = std::tuple_size<std::decay_t<Tuple>>::value;
+  static_assert(I + N <= S, "I and N must describe a slice");
+  return tuple_slice_impl<I>(std::forward<Tuple>(t), mp11::make_index_sequence<N>{});
 }
 
 #define BOOST_HISTOGRAM_DETECT(name, cond)   \
@@ -314,55 +302,6 @@ template <class T>
 auto make_default(const T& t) {
   return static_if<has_allocator<T>>([](const auto& t) { return T(t.get_allocator()); },
                                      [](const auto&) { return T{}; }, t);
-}
-
-template <class T>
-using tuple_size_t = typename std::tuple_size<T>::type;
-
-template <class T>
-constexpr std::size_t get_size_impl(std::true_type, const T&) noexcept {
-  return std::tuple_size<T>::value;
-}
-
-template <class T>
-std::size_t get_size_impl(std::false_type, const T& t) noexcept {
-  using std::begin;
-  using std::end;
-  return static_cast<std::size_t>(std::distance(begin(t), end(t)));
-}
-
-template <class T>
-std::size_t get_size(const T& t) noexcept {
-  return get_size_impl(mp11::mp_valid<tuple_size_t, T>(), t);
-}
-
-template <class T>
-using buffer_size = mp11::mp_eval_or<
-    std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>, tuple_size_t,
-    T>;
-
-template <class T, std::size_t N>
-class sub_array : public std::array<T, N> {
-public:
-  explicit sub_array(std::size_t s) : size_(s) {}
-  sub_array(std::size_t s, T value) : size_(s) { std::array<T, N>::fill(value); }
-
-  // need to override both versions of std::array
-  auto end() noexcept { return std::array<T, N>::begin() + size_; }
-  auto end() const noexcept { return std::array<T, N>::begin() + size_; }
-
-  auto size() const noexcept { return size_; }
-
-private:
-  std::size_t size_ = N;
-};
-
-template <class U, class T>
-using stack_buffer = sub_array<U, buffer_size<T>::value>;
-
-template <class U, class T, class... Ts>
-auto make_stack_buffer(const T& t, Ts&&... ts) {
-  return stack_buffer<U, T>(get_size(t), std::forward<Ts>(ts)...);
 }
 
 template <class T>

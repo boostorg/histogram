@@ -21,12 +21,12 @@ int main() {
     struct growing {
       auto update(int) { return std::make_pair(0, 0); }
     };
-    using G = growing;
+    using T = growing;
     using I = axis::integer<>;
 
-    using A = std::tuple<I, G>;
-    using B = std::vector<G>;
-    using C = std::vector<axis::variant<I, G>>;
+    using A = std::tuple<I, T>;
+    using B = std::vector<T>;
+    using C = std::vector<axis::variant<I, T>>;
     using D = std::tuple<I>;
     using E = std::vector<I>;
     using F = std::vector<axis::variant<I>>;
@@ -37,6 +37,28 @@ int main() {
     BOOST_TEST_TRAIT_FALSE((detail::has_growing_axis<D>));
     BOOST_TEST_TRAIT_FALSE((detail::has_growing_axis<E>));
     BOOST_TEST_TRAIT_FALSE((detail::has_growing_axis<F>));
+  }
+
+  {
+    struct multidim {
+      auto index(const std::tuple<int>&) { return 0; }
+    };
+    using T = multidim;
+    using I = axis::integer<>;
+
+    using A = std::tuple<I, T>;
+    using B = std::vector<T>;
+    using C = std::vector<axis::variant<I, T>>;
+    using D = std::tuple<I>;
+    using E = std::vector<I>;
+    using F = std::vector<axis::variant<I>>;
+
+    BOOST_TEST_TRAIT_TRUE((detail::has_multidim_axis<A>));
+    BOOST_TEST_TRAIT_TRUE((detail::has_multidim_axis<B>));
+    BOOST_TEST_TRAIT_TRUE((detail::has_multidim_axis<C>));
+    BOOST_TEST_TRAIT_FALSE((detail::has_multidim_axis<D>));
+    BOOST_TEST_TRAIT_FALSE((detail::has_multidim_axis<E>));
+    BOOST_TEST_TRAIT_FALSE((detail::has_multidim_axis<F>));
   }
   return boost::report_errors();
 }

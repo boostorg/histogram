@@ -63,20 +63,31 @@ int main() {
     BOOST_TEST_THROWS(c(0), std::invalid_argument);
     auto d = make(dynamic_tag(), a);
     BOOST_TEST_THROWS(d(std::string()), std::invalid_argument);
+
+    struct axis2d {
+      auto index(const std::tuple<double, double>& x) const {
+        return axis::index_type{std::get<0>(x) == 1 && std::get<1>(x) == 2};
+      }
+      auto size() const { return axis::index_type{2}; }
+    } e;
+
+    auto f = make(dynamic_tag(), a, e);
+    BOOST_TEST_THROWS(f(0, 0, 0), std::invalid_argument);
+    BOOST_TEST_THROWS(f(0, std::make_tuple(0, 0), 1), std::invalid_argument);
   }
 
-  // axis methods
-  {
-    auto c = make(dynamic_tag(), axis::category<std::string>({"A", "B"}));
-    BOOST_TEST_THROWS(c.axis().value(0), std::runtime_error);
-  }
-
-  // wrong dimension
+  // bad at
   {
     auto h1 = make(dynamic_tag(), axis::integer<>(0, 2));
     h1(1);
     BOOST_TEST_THROWS(h1.at(0, 0), std::invalid_argument);
     BOOST_TEST_THROWS(h1.at(std::make_tuple(0, 0)), std::invalid_argument);
+  }
+
+  // incompatible axis variant methods
+  {
+    auto c = make(dynamic_tag(), axis::category<std::string>({"A", "B"}));
+    BOOST_TEST_THROWS(c.axis().value(0), std::runtime_error);
   }
 
   {

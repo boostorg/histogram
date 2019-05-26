@@ -35,18 +35,29 @@ using has_underflow =
     decltype(axis::traits::static_options<T>::test(axis::option::underflow));
 
 template <class T>
-struct is_growing
-    : decltype(axis::traits::static_options<T>::test(axis::option::growth)) {};
-
-template <class... Ts>
-struct is_growing<std::tuple<Ts...>> : mp11::mp_or<is_growing<Ts>...> {};
-
-template <class... Ts>
-struct is_growing<axis::variant<Ts...>> : mp11::mp_or<is_growing<Ts>...> {};
+using is_growing = decltype(axis::traits::static_options<T>::test(axis::option::growth));
 
 template <class T>
-using has_growing_axis =
-    mp11::mp_if<is_vector_like<T>, is_growing<mp11::mp_first<T>>, is_growing<T>>;
+using is_multidim = is_tuple<std::decay_t<arg_type<decltype(&T::index)>>>;
+
+template <template <class> class Trait, class T>
+struct has_special_axis_impl : Trait<T> {};
+
+template <template <class> class Trait, class... Ts>
+struct has_special_axis_impl<Trait, std::tuple<Ts...>> : mp11::mp_or<Trait<Ts>...> {};
+
+template <template <class> class Trait, class... Ts>
+struct has_special_axis_impl<Trait, axis::variant<Ts...>> : mp11::mp_or<Trait<Ts>...> {};
+
+template <template <class> class Trait, class T>
+using has_special_axis =
+    has_special_axis_impl<Trait, mp11::mp_if<is_vector_like<T>, mp11::mp_first<T>, T>>;
+
+template <class T>
+using has_multidim_axis = has_special_axis<is_multidim, T>;
+
+template <class T>
+using has_growing_axis = has_special_axis<is_growing, T>;
 
 /// Index with an invalid state
 struct optional_index {
@@ -56,53 +67,83 @@ struct optional_index {
   std::size_t operator*() const { return idx; }
 };
 
-inline void linearize(optional_index& out, const axis::index_type extent,
-                      const axis::index_type j) noexcept {
-  // j is internal index shifted by +1 if axis has underflow bin
-  out.idx += j * out.stride;
-  // set stride to 0, if j is invalid
-  out.stride *= (0 <= j && j < extent) * extent;
+inline void linearize(std::false_type, std::false_type, optional_index& out,
+                      const axis::index_type size, const axis::index_type i) noexcept {
+  out.idx += i * out.stride;
+  out.stride *= i >= 0 && i < size ? size : 0;
+}
+
+inline void linearize(std::false_type, std::true_type, optional_index& out,
+                      const axis::index_type size, const axis::index_type i) noexcept {
+  out.idx += i * out.stride;
+  out.stride *= i >= 0 ? size + 1 : 0;
+}
+
+inline void linearize(std::true_type, std::false_type, optional_index& out,
+                      const axis::index_type size, const axis::index_type i) noexcept {
+  // internal index must be shifted by +1 since axis has underflow bin
+  out.idx += (i + 1) * out.stride;
+  out.stride *= i < size ? size + 1 : 0;
+}
+
+inline void linearize(std::true_type, std::true_type, optional_index& out,
+                      const axis::index_type size, const axis::index_type i) noexcept {
+  // internal index must be shifted by +1 since axis has underflow bin
+  out.idx += (i + 1) * out.stride;
+  out.stride *= size + 2;
 }
 
 // for non-growing axis
 template <class Axis, class Value>
 void linearize_value(optional_index& o, const Axis& a, const Value& v) {
-  using B = decltype(axis::traits::static_options<Axis>::test(axis::option::underflow));
-  const auto j = axis::traits::index(a, v) + B::value;
-  linearize(o, axis::traits::extent(a), j);
+  using O = axis::traits::static_options<Axis>;
+  using V = detail::remove_cvref_t<detail::arg_type<decltype(&Axis::index)>>;
+  linearize(O::test(axis::option::underflow), O::test(axis::option::overflow), o,
+            a.size(), a.index(static_cast<V>(v)));
 }
 
 // for variant that does not contain any growing axis
 template <class... Ts, class Value>
 void linearize_value(optional_index& o, const axis::variant<Ts...>& a, const Value& v) {
-  axis::visit([&o, &v](const auto& a) { linearize_value(o, a, v); }, a);
+  axis::visit(
+      [&o, &v](const auto& a) {
+        using A = std::decay_t<decltype(a)>;
+        using O = axis::traits::static_options<A>;
+        // axis::traits::index uses try_cast which is needed here
+        linearize(O::test(axis::option::underflow), O::test(axis::option::overflow), o,
+                  a.size(), axis::traits::index(a, v));
+      },
+      a);
 }
 
 // for growing axis
 template <class Axis, class Value>
-bool linearize_value(optional_index& o, axis::index_type& s, Axis& a, const Value& v) {
-  axis::index_type j;
-  std::tie(j, s) = axis::traits::update(a, v);
-  j += has_underflow<Axis>::value;
-  linearize(o, axis::traits::extent(a), j);
+bool linearize_with_growth_value(optional_index& o, axis::index_type& s, Axis& a,
+                                 const Value& v) {
+  using O = axis::traits::static_options<Axis>;
+  axis::index_type i;
+  std::tie(i, s) = axis::traits::update(a, v);
+  linearize(O::test(axis::option::underflow), O::test(axis::option::overflow), o,
+            a.size(), i);
   return s != 0;
 }
 
 // for variant which contains at least one growing axis
 template <class... Ts, class Value>
-bool linearize_value(optional_index& o, axis::index_type& s, axis::variant<Ts...>& a,
-                     const Value& v) {
-  axis::visit([&o, &s, &v](auto&& a) { linearize_value(o, s, a, v); }, a);
+bool linearize_with_growth_value(optional_index& o, axis::index_type& s,
+                                 axis::variant<Ts...>& a, const Value& v) {
+  axis::visit([&o, &s, &v](auto&& a) { linearize_with_growth_value(o, s, a, v); }, a);
   return s != 0;
 }
 
 template <class A>
-void linearize_index(optional_index& out, const A& axis, const axis::index_type j) {
+void linearize_index(optional_index& out, const A& axis, const axis::index_type i) {
   // A may be axis or variant, cannot use static option detection here
   const auto opt = axis::traits::options(axis);
   const auto shift = opt & axis::option::underflow ? 1 : 0;
-  const auto n = axis.size() + (opt & axis::option::overflow ? 1 : 0);
-  linearize(out, n + shift, j + shift);
+  const auto extent = axis.size() + (opt & axis::option::overflow ? 1 : 0) + shift;
+  // i may be arbitrarily out of range
+  linearize(std::false_type{}, std::false_type{}, out, extent, i + shift);
 }
 
 template <class S, class A>
@@ -120,8 +161,8 @@ void grow_storage(const A& axes, S& storage, const axis::index_type* shifts) {
     s *= n;
   });
   auto new_storage = make_default(storage);
-  new_storage.reset(detail::bincount(axes));
-  const auto dlast = data + get_size(axes) - 1;
+  new_storage.reset(bincount(axes));
+  const auto dlast = data + axes_rank(axes) - 1;
   for (const auto& x : storage) {
     auto ns = new_storage.begin();
     sit = shifts;
@@ -166,6 +207,30 @@ void grow_storage(const A& axes, S& storage, const axis::index_type* shifts) {
   storage = std::move(new_storage);
 }
 
+// histogram has no growing and no multidim axis, axis rank known at compile-time
+template <class S, class... As, class... Us>
+optional_index index(std::false_type, std::false_type, const std::tuple<As...>& axes, S&,
+                     const std::tuple<Us...>& args) {
+  optional_index idx;
+  static_assert(sizeof...(As) == sizeof...(Us), "number of arguments != histogram rank");
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(As)>>(
+      [&](auto i) { linearize_value(idx, axis_get<i>(axes), std::get<i>(args)); });
+  return idx;
+}
+
+// histogram has no growing and no multidim axis, axis rank known at run-time
+template <class A, class S, class U>
+optional_index index(std::false_type, std::false_type, const A& axes, S&, const U& args) {
+  constexpr auto nargs = static_cast<unsigned>(std::tuple_size<U>::value);
+  optional_index idx;
+  if (axes_rank(axes) != nargs)
+    BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
+  constexpr auto nbuf = buffer_size<A>::value;
+  mp11::mp_for_each<mp11::mp_iota_c<(nargs < nbuf ? nargs : nbuf)>>(
+      [&](auto i) { linearize_value(idx, axis_get<i>(axes), std::get<i>(args)); });
+  return idx;
+}
+
 // special case: if histogram::operator()(tuple(1, 2)) is called on 1d histogram
 // with axis that accepts 2d tuple, this should not fail
 // - solution is to forward tuples of size > 1 directly to axis for 1d
@@ -175,43 +240,60 @@ void grow_storage(const A& axes, S& storage, const axis::index_type* shifts) {
 //   (axis::variant provides generic call interface and hides concrete
 //   interface), so we throw at runtime if incompatible argument is passed (e.g.
 //   3d tuple)
-// histogram has only non-growing axes
-template <unsigned I, unsigned N, class T, class S, class U>
-optional_index to_index(std::false_type, const T& axes, S&, const U& args) {
+
+// histogram has no growing multidim axis, axis rank == 1 known at compile-time
+template <class S, class A, class U>
+optional_index index(std::false_type, std::true_type, const std::tuple<A>& axes, S&,
+                     const U& args) {
   optional_index idx;
-  const auto rank = get_size(axes);
-  if (rank == 1 && N > 1)
-    linearize_value(idx, axis_get<0>(axes), tuple_slice<I, N>(args));
+  linearize_value(idx, axis_get<0>(axes), args);
+  return idx;
+}
+
+// histogram has no growing multidim axis, axis rank > 1 known at compile-time
+template <class S, class U, class A0, class A1, class... As>
+optional_index index(std::false_type, std::true_type,
+                     const std::tuple<A0, A1, As...>& axes, S& s, const U& args) {
+  return index(std::false_type{}, std::false_type{}, axes, s, args);
+}
+
+// histogram has no growing multidim axis, axis rank known at run-time
+template <class A, class S, class U>
+optional_index index(std::false_type, std::true_type, const A& axes, S&, const U& args) {
+  optional_index idx;
+  const auto rank = axes_rank(axes);
+  constexpr auto nargs = static_cast<unsigned>(std::tuple_size<U>::value);
+  if (rank == 1 && nargs > 1)
+    linearize_value(idx, axis_get<0>(axes), args);
   else {
-    if (rank != N)
+    if (rank != nargs)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    constexpr unsigned M = buffer_size<remove_cvref_t<decltype(axes)>>::value;
-    mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
-      linearize_value(idx, axis_get<J>(axes), std::get<(J + I)>(args));
-    });
+    constexpr auto nbuf = buffer_size<A>::value;
+    mp11::mp_for_each<mp11::mp_iota_c<(nargs < nbuf ? nargs : nbuf)>>(
+        [&](auto i) { linearize_value(idx, axis_get<i>(axes), std::get<i>(args)); });
   }
   return idx;
 }
 
-// histogram has growing axes
-template <unsigned I, unsigned N, class T, class S, class U>
-optional_index to_index(std::true_type, T& axes, S& storage, const U& args) {
+// histogram has growing axis
+template <class B, class T, class S, class U>
+optional_index index(std::true_type, B, T& axes, S& storage, const U& args) {
   optional_index idx;
-  constexpr unsigned M = buffer_size<T>::value;
-  axis::index_type shifts[M];
-  const auto rank = get_size(axes);
+  constexpr unsigned nbuf = buffer_size<T>::value;
+  axis::index_type shifts[nbuf];
+  const auto rank = axes_rank(axes);
+  constexpr auto nargs = static_cast<unsigned>(std::tuple_size<U>::value);
   bool update_needed = false;
-  if (rank == 1 && N > 1)
-    update_needed =
-        linearize_value(idx, shifts[0], axis_get<0>(axes), tuple_slice<I, N>(args));
+  if (rank == 1 && nargs > 1)
+    update_needed = linearize_with_growth_value(idx, shifts[0], axis_get<0>(axes), args);
   else {
-    if (rank != N)
+    if (rank != nargs)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    mp11::mp_for_each<mp11::mp_iota_c<(N < M ? N : M)>>([&](auto J) {
-      update_needed |=
-          linearize_value(idx, shifts[J], axis_get<J>(axes), std::get<(J + I)>(args));
+    mp11::mp_for_each<mp11::mp_iota_c<(nargs < nbuf ? nargs : nbuf)>>([&](auto i) {
+      update_needed |= linearize_with_growth_value(idx, shifts[i], axis_get<i>(axes),
+                                                   std::get<i>(args));
     });
   }
 
@@ -219,15 +301,15 @@ optional_index to_index(std::true_type, T& axes, S& storage, const U& args) {
   return idx;
 }
 
-template <typename U>
-constexpr auto weight_sample_indices() {
+template <class U>
+constexpr auto weight_sample_indices() noexcept {
   if (is_weight<U>::value) return std::make_pair(0, -1);
   if (is_sample<U>::value) return std::make_pair(-1, 0);
   return std::make_pair(-1, -1);
 }
 
-template <typename U0, typename U1, typename... Us>
-constexpr auto weight_sample_indices() {
+template <class U0, class U1, class... Us>
+constexpr auto weight_sample_indices() noexcept {
   using L = mp11::mp_list<U0, U1, Us...>;
   const int n = sizeof...(Us) + 1;
   if (is_weight<mp11::mp_at_c<L, 0>>::value) {
@@ -253,77 +335,72 @@ constexpr auto weight_sample_indices() {
   return std::make_pair(-1, -1);
 }
 
-template <class T>
-void fill_impl2(std::true_type, T&& t) {
+template <class T, class U>
+void fill_impl(mp11::mp_int<-1>, mp11::mp_int<-1>, std::false_type, T&& t,
+               const U&) noexcept {
+  t();
+}
+
+template <class T, class U>
+void fill_impl(mp11::mp_int<-1>, mp11::mp_int<-1>, std::true_type, T&& t,
+               const U&) noexcept {
   ++t;
 }
 
-template <class T, class U>
-void fill_impl2(std::true_type, T&& t, const U& u) {
-  t += u;
-}
-
-template <class T, class... Us>
-void fill_impl2(std::false_type, T&& t, const Us&... us) {
-  t(us...);
-}
-
-template <class T, class U>
-void fill_impl1(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, const U&) {
-  fill_impl2(has_operator_preincrement<remove_cvref_t<T>>{}, t);
+template <class IW, class T, class U>
+void fill_impl(IW, mp11::mp_int<-1>, std::false_type, T&& t, const U& u) noexcept {
+  t(std::get<IW::value>(u).value);
 }
 
 template <class IW, class T, class U>
-void fill_impl1(IW, mp11::mp_int<-1>, T&& t, const U& u) {
-  fill_impl2(has_operator_preincrement<remove_cvref_t<T>>{}, t,
-             std::get<IW::value>(u).value);
+void fill_impl(IW, mp11::mp_int<-1>, std::true_type, T&& t, const U& u) noexcept {
+  t += std::get<IW::value>(u).value;
 }
 
 template <class IS, class T, class U>
-void fill_impl1(mp11::mp_int<-1>, IS, T&& t, const U& u) {
+void fill_impl(mp11::mp_int<-1>, IS, std::false_type, T&& t, const U& u) noexcept {
   mp11::tuple_apply([&t](auto&&... args) { t(args...); }, std::get<IS::value>(u).value);
 }
 
 template <class IW, class IS, class T, class U>
-void fill_impl1(IW, IS, T&& t, const U& u) {
+void fill_impl(IW, IS, std::false_type, T&& t, const U& u) noexcept {
   mp11::tuple_apply([&](auto&&... args2) { t(std::get<IW::value>(u).value, args2...); },
                     std::get<IS::value>(u).value);
 }
 
-template <class A, class SM, class... Us>
-typename SM::first_type::iterator fill(A& axes, SM& sm, const std::tuple<Us...>& tus) {
+template <class A, class S, class... Us>
+typename S::iterator fill(A& axes, S& storage, const std::tuple<Us...>& tus) {
   constexpr auto iws = weight_sample_indices<Us...>();
   constexpr unsigned n = sizeof...(Us) - (iws.first > -1) - (iws.second > -1);
   constexpr unsigned i = (iws.first == 0 || iws.second == 0)
                              ? (iws.first == 1 || iws.second == 1 ? 2 : 1)
                              : 0;
-  std::lock_guard<typename SM::second_type> lk{sm.second()};
-  auto& storage = sm.first();
-  optional_index idx = to_index<i, n>(has_growing_axis<A>(), axes, storage, tus);
+  const auto idx = index(has_growing_axis<A>{}, has_multidim_axis<A>{}, axes, storage,
+                         tuple_slice<i, n>(tus));
   if (idx) {
-    using mp11::mp_int;
-    fill_impl1(mp_int<iws.first>{}, mp_int<iws.second>{}, storage[*idx], tus);
+    fill_impl(mp11::mp_int<iws.first>{}, mp11::mp_int<iws.second>{},
+              has_operator_preincrement<typename S::value_type>{}, storage[*idx], tus);
     return storage.begin() + *idx;
   }
   return storage.end();
 }
 
-template <typename A, typename... Us>
+template <class A, class... Us>
 optional_index at(const A& axes, const std::tuple<Us...>& args) {
-  if (get_size(axes) != sizeof...(Us))
+  if (axes_rank(axes) != sizeof...(Us))
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto I) {
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>([&](auto i) {
     // axes_get works with static and dynamic axes
-    linearize_index(idx, axis_get<I>(axes),
-                    static_cast<axis::index_type>(std::get<I>(args)));
+    linearize_index(idx, axis_get<i>(axes),
+                    static_cast<axis::index_type>(std::get<i>(args)));
   });
   return idx;
 }
 
-template <typename A, typename U>
+template <class A, class U>
 optional_index at(const A& axes, const U& args) {
-  if (get_size(axes) != get_size(args))
+  if (axes_rank(axes) != axes_rank(args))
     BOOST_THROW_EXCEPTION(std::invalid_argument("number of arguments != histogram rank"));
   optional_index idx;
   using std::begin;
