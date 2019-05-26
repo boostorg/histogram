@@ -20,10 +20,7 @@ namespace histogram {
 
 template <typename... Ts>
 auto make_axis_vector(const Ts&... ts) {
-  using R = axis::regular<>;
-  using I = axis::integer<>;
-  using V = axis::variable<>;
-  using Var = boost::mp11::mp_unique<axis::variant<R, I, V, Ts...>>;
+  using Var = boost::mp11::mp_unique<axis::variant<Ts...>>;
   return std::vector<Var>({Var(ts)...});
 }
 
