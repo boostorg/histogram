@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/unsafe_access.hpp>

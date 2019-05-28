@@ -11,7 +11,7 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <deque>

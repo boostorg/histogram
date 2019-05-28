@@ -9,7 +9,7 @@
 #include <boost/accumulators/statistics/stats.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 

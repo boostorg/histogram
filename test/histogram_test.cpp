@@ -9,7 +9,7 @@
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>

@@ -8,7 +8,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <boost/histogram/detail/variant.hpp>
 #include <boost/throw_exception.hpp>
 #include <sstream>

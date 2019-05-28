@@ -6,7 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/variable.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <limits>
 #include <type_traits>
 #include <vector>

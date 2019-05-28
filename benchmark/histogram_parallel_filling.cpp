@@ -7,7 +7,7 @@
 #include <benchmark/benchmark.h>
 #include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <chrono>

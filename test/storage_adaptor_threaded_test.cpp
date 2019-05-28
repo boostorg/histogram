@@ -7,7 +7,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/accumulators/thread_safe.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <boost/histogram/storage_adaptor.hpp>
 
 #include <array>

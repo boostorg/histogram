@@ -9,7 +9,7 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <boost/histogram/storage_adaptor.hpp>

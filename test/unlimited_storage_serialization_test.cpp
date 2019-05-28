@@ -7,7 +7,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/detail/throw_exception.hpp>
+#include "throw_exception.hpp"
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <memory>
