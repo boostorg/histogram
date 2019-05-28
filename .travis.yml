@@ -38,10 +38,6 @@ matrix:
 
     # gcc-7 and gcc-8 produce broken coverage data, so we use gcc-5
     - name: "gcc-5: coverage"
-      addons:
-        apt:
-          sources: ubuntu-toolchain-r-test
-          packages: g++-5
       script:
         - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 warnings-as-errors=on
           histogram_coverage
