@@ -9,14 +9,16 @@
 #include <boost/histogram/detail/throw_exception.hpp>
 #include <limits>
 #include <sstream>
+#include <type_traits>
 #include "is_close.hpp"
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
 namespace tr = axis::transform;
+using def = use_default;
 
 int main() {
-  using def = use_default;
+  BOOST_TEST(std::is_nothrow_move_assignable<axis::regular<>>::value);
 
   // bad_ctors
   {

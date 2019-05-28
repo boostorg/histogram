@@ -8,11 +8,14 @@
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/detail/throw_exception.hpp>
 #include <limits>
+#include <type_traits>
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
 
 int main() {
+  BOOST_TEST(std::is_nothrow_move_assignable<axis::integer<>>::value);
+
   // bad_ctor
   {
     BOOST_TEST_THROWS(axis::integer<>(1, 1), std::invalid_argument);

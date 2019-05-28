@@ -10,11 +10,15 @@
 #include <limits>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
 
 int main() {
+  BOOST_TEST(std::is_nothrow_move_assignable<axis::category<int>>::value);
+  BOOST_TEST(std::is_nothrow_move_assignable<axis::category<std::string>>::value);
+
   // bad_ctors
   {
     auto empty = std::vector<int>(0);
