@@ -8,6 +8,7 @@
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/detail/throw_exception.hpp>
 #include <limits>
+#include <type_traits>
 #include <vector>
 #include "is_close.hpp"
 #include "utility_axis.hpp"
@@ -15,6 +16,8 @@
 using namespace boost::histogram;
 
 int main() {
+  BOOST_TEST(std::is_nothrow_move_assignable<axis::variable<>>::value);
+
   // bad_ctors
   {
     auto empty = std::vector<double>(0);
