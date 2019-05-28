@@ -140,6 +140,31 @@ class regular : public iterator_mixin<regular<Value, Transform, MetaData, Option
 
 public:
   constexpr regular() = default;
+  regular(const regular&) = default;
+  regular& operator=(const regular&) = default;
+  regular(regular&& o) noexcept
+      : transform_type(std::move(o))
+      , size_meta_(std::move(o.size_meta_))
+      , min_(o.min_)
+      , delta_(o.delta_) {
+    static_assert(std::is_nothrow_move_constructible<transform_type>::value, "");
+    // std::string explicitly guarantees nothrow only in C++17
+    static_assert(std::is_same<metadata_type, std::string>::value ||
+                      std::is_nothrow_move_constructible<metadata_type>::value,
+                  "");
+  }
+  regular& operator=(regular&& o) noexcept {
+    static_assert(std::is_nothrow_move_assignable<transform_type>::value, "");
+    // std::string explicitly guarantees nothrow only in C++17
+    static_assert(std::is_same<metadata_type, std::string>::value ||
+                      std::is_nothrow_move_assignable<metadata_type>::value,
+                  "");
+    transform_type::operator=(std::move(o));
+    size_meta_ = std::move(o.size_meta_);
+    min_ = o.min_;
+    delta_ = o.delta_;
+    return *this;
+  }
 
   /** Construct n bins over real transformed range [start, stop).
    *

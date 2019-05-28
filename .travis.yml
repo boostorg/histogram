@@ -38,12 +38,8 @@ matrix:
 
     # gcc-7 and gcc-8 produce broken coverage data, so we use gcc-5
     - name: "gcc-5: coverage"
-      addons:
-        apt:
-          sources: ubuntu-toolchain-r-test
-          packages: g++-5
       script:
-        - ../../b2 -j2 -q toolset=gcc-5 cxxstd=14 warnings-as-errors=on
+        - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on
           histogram_coverage
       after_success:
         - GCOV=gcov-5 tools/cov.sh
@@ -58,7 +54,7 @@ matrix:
         - UBSAN_OPTIONS=print_stacktrace=1
           LSAN_OPTIONS=verbosity=1:log_threads=1
           ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1
-          ../../b2 -j2 -q toolset=clang-5 cxxstd=14
+          ../../b2 -j2 toolset=clang-5 cxxstd=14
           variant=histogram_ubasan warnings-as-errors=on
 
     - name: "gcc-8: c++latest, (no-)exceptions, (no-)rtti"
@@ -67,8 +63,8 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ../../b2 -j2 -q toolset=gcc-8 cxxstd=latest warnings-as-errors=on &&
-          ../../b2 -j2 -aq toolset=gcc-8 cxxstd=latest warnings-as-errors=on
+        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on &&
+          ../../b2 -j2 -a toolset=gcc-8 cxxstd=latest warnings-as-errors=on
           cxxflags="-fno-exceptions -fno-rtti -DBOOST_NO_EXCEPTIONS" test//minimal
 
 before_script:

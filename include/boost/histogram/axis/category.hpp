@@ -56,6 +56,22 @@ class category : public iterator_mixin<category<Value, MetaData, Options, Alloca
 
 public:
   explicit category(allocator_type alloc = {}) : vec_meta_(vector_type(alloc)) {}
+  category(const category&) = default;
+  category& operator=(const category&) = default;
+  category(category&& o) noexcept : vec_meta_(std::move(o.vec_meta_)) {
+    // std::string explicitly guarantees nothrow only in C++17
+    static_assert(std::is_same<metadata_type, std::string>::value ||
+                      std::is_nothrow_move_constructible<metadata_type>::value,
+                  "");
+  }
+  category& operator=(category&& o) noexcept {
+    // std::string explicitly guarantees nothrow only in C++17
+    static_assert(std::is_same<metadata_type, std::string>::value ||
+                      std::is_nothrow_move_assignable<metadata_type>::value,
+                  "");
+    vec_meta_ = std::move(o.vec_meta_);
+    return *this;
+  }
 
   /** Construct from iterator range of unique values.
    *

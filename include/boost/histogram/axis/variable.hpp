@@ -53,6 +53,22 @@ class variable : public iterator_mixin<variable<Value, MetaData, Options, Alloca
 
 public:
   explicit variable(allocator_type alloc = {}) : vec_meta_(vec_type{alloc}) {}
+  variable(const variable&) = default;
+  variable& operator=(const variable&) = default;
+  variable(variable&& o) noexcept : vec_meta_(std::move(o.vec_meta_)) {
+    // std::string explicitly guarantees nothrow only in C++17
+    static_assert(std::is_same<metadata_type, std::string>::value ||
+                      std::is_nothrow_move_constructible<metadata_type>::value,
+                  "");
+  }
+  variable& operator=(variable&& o) noexcept {
+    // std::string explicitly guarantees nothrow only in C++17
+    static_assert(std::is_same<metadata_type, std::string>::value ||
+                      std::is_nothrow_move_assignable<metadata_type>::value,
+                  "");
+    vec_meta_ = std::move(o.vec_meta_);
+    return *this;
+  }
 
   /** Construct from iterator range of bin edges.
    *

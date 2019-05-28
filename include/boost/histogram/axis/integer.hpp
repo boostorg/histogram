@@ -53,6 +53,23 @@ class integer : public iterator_mixin<integer<Value, MetaData, Options>> {
 
 public:
   constexpr integer() = default;
+  integer(const integer&) = default;
+  integer& operator=(const integer&) = default;
+  integer(integer&& o) noexcept : size_meta_(std::move(o.size_meta_)), min_(o.min_) {
+    // std::string explicitly guarantees nothrow only in C++17
+    static_assert(std::is_same<metadata_type, std::string>::value ||
+                      std::is_nothrow_move_constructible<metadata_type>::value,
+                  "");
+  }
+  integer& operator=(integer&& o) noexcept {
+    // std::string explicitly guarantees nothrow only in C++17
+    static_assert(std::is_same<metadata_type, std::string>::value ||
+                      std::is_nothrow_move_assignable<metadata_type>::value,
+                  "");
+    size_meta_ = std::move(o.size_meta_);
+    min_ = o.min_;
+    return *this;
+  }
 
   /** Construct over semi-open integer interval [start, stop).
    *
