@@ -45,6 +45,7 @@ alias cxx14 :
     [ run axis_traits_test.cpp ]
     [ run axis_variable_test.cpp ]
     [ run axis_variant_test.cpp ]
+    [ run detail_compressed_pair_test.cpp ]
     [ run detail_meta_test.cpp ]
     [ run detail_misc_test.cpp ]
     [ run detail_iterator_adaptor_test.cpp ]

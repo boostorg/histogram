@@ -27,6 +27,8 @@ boost_test(TYPE run SOURCES axis_variable_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES axis_variant_test.cpp
   LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_compressed_pair_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_misc_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_meta_test.cpp
