@@ -1,6 +1,6 @@
 [section:Axis Axis]
 
-An [*Axis] maps input values to indices. It holds state specific to that axis, like the number of bins and any metadata. Must be [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable].
+An [*Axis] maps input values to indices. It holds state specific to that axis, like the number of bins and any metadata. Must be [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible], [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable], and *nothrow* [@https://en.cppreference.com/w/cpp/named_req/MoveAssignable MoveAssignable].
 
 [heading Associated Types]
 
@@ -43,7 +43,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 * `A` is a type meeting the requirements of [*Axis]
 * `a` and `b` are values of type `A`
 * `i` and `j` are indices of type [headerref boost/histogram/fwd.hpp `boost::histogram::axis::index_type`]
-* `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable]
+* `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable] and *nothrow* [@https://en.cppreference.com/w/cpp/named_req/MoveAssignable MoveAssignable].
 
 [table Valid expressions
 [[Expression] [Returns] [Semantics, Pre/Post-conditions]]
