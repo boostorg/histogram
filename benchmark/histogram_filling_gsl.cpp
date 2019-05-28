@@ -34,7 +34,7 @@ static void fill_1d(benchmark::State& state) {
   gsl_histogram_set_ranges_uniform(h, 0, 1);
   std::default_random_engine gen(1);
   Distribution dis = init<Distribution>();
-  for (auto _ : state) gsl_histogram_increment(h, dis(gen));
+  for (auto _ : state) benchmark::DoNotOptimize(gsl_histogram_increment(h, dis(gen)));
   gsl_histogram_free(h);
 }
 
@@ -44,7 +44,8 @@ static void fill_2d(benchmark::State& state) {
   gsl_histogram2d_set_ranges_uniform(h, 0, 1, 0, 1);
   std::default_random_engine gen(1);
   Distribution dis = init<Distribution>();
-  for (auto _ : state) gsl_histogram2d_increment(h, dis(gen), dis(gen));
+  for (auto _ : state)
+    benchmark::DoNotOptimize(gsl_histogram2d_increment(h, dis(gen), dis(gen)));
   gsl_histogram2d_free(h);
 }
 

@@ -33,7 +33,7 @@ static void fill_1d(benchmark::State& state) {
   TH1I h("", "", 100, 0, 1);
   std::default_random_engine gen(1);
   Distribution dis = init<Distribution>();
-  for (auto _ : state) h.Fill(dis(gen));
+  for (auto _ : state) benchmark::DoNotOptimize(h.Fill(dis(gen)));
 }
 
 template <class Distribution>
@@ -41,7 +41,7 @@ static void fill_2d(benchmark::State& state) {
   TH2I h("", "", 100, 0, 1, 100, 0, 1);
   std::default_random_engine gen(1);
   Distribution dis = init<Distribution>();
-  for (auto _ : state) h.Fill(dis(gen), dis(gen));
+  for (auto _ : state) benchmark::DoNotOptimize(h.Fill(dis(gen), dis(gen)));
 }
 
 template <class Distribution>
@@ -49,7 +49,7 @@ static void fill_3d(benchmark::State& state) {
   TH3I h("", "", 100, 0, 1, 100, 0, 1, 100, 0, 1);
   std::default_random_engine gen(1);
   Distribution dis = init<Distribution>();
-  for (auto _ : state) { h.Fill(dis(gen), dis(gen), dis(gen)); }
+  for (auto _ : state) benchmark::DoNotOptimize(h.Fill(dis(gen), dis(gen), dis(gen)));
 }
 
 template <class Distribution>
@@ -62,7 +62,7 @@ static void fill_6d(benchmark::State& state) {
   Distribution dis = init<Distribution>();
   for (auto _ : state) {
     const double buf[6] = {dis(gen), dis(gen), dis(gen), dis(gen), dis(gen), dis(gen)};
-    h.Fill(buf);
+    benchmark::DoNotOptimize(h.Fill(buf));
   }
 }
 

@@ -36,7 +36,7 @@ static void fill_1d(benchmark::State& state) {
   auto h = make_s(Tag(), Storage(), reg(100, 0, 1));
   std::default_random_engine gen(1);
   Distribution dis = init<Distribution>();
-  for (auto _ : state) h(dis(gen));
+  for (auto _ : state) benchmark::DoNotOptimize(h(dis(gen)));
 }
 
 template <class Tag, class Storage, class Distribution>
@@ -44,7 +44,7 @@ static void fill_2d(benchmark::State& state) {
   auto h = make_s(Tag(), Storage(), reg(100, 0, 1), reg(100, 0, 1));
   std::default_random_engine gen(1);
   Distribution dis = init<Distribution>();
-  for (auto _ : state) { h(dis(gen), dis(gen)); }
+  for (auto _ : state) benchmark::DoNotOptimize(h(dis(gen), dis(gen)));
 }
 
 template <class Tag, class Storage, class Distribution>
@@ -52,7 +52,7 @@ static void fill_3d(benchmark::State& state) {
   auto h = make_s(Tag(), Storage(), reg(100, 0, 1), reg(100, 0, 1), reg(100, 0, 1));
   std::default_random_engine gen(1);
   Distribution dis = init<Distribution>();
-  for (auto _ : state) { h(dis(gen), dis(gen), dis(gen)); }
+  for (auto _ : state) benchmark::DoNotOptimize(h(dis(gen), dis(gen), dis(gen)));
 }
 
 template <class Tag, class Storage, class Distribution>
@@ -61,7 +61,9 @@ static void fill_6d(benchmark::State& state) {
                   reg(10, 0, 1), reg(10, 0, 1), reg(10, 0, 1));
   std::default_random_engine gen(1);
   Distribution dis = init<Distribution>();
-  for (auto _ : state) { h(dis(gen), dis(gen), dis(gen), dis(gen), dis(gen), dis(gen)); }
+  for (auto _ : state)
+    benchmark::DoNotOptimize(
+        h(dis(gen), dis(gen), dis(gen), dis(gen), dis(gen), dis(gen)));
 }
 
 using SStore = std::vector<int>;
