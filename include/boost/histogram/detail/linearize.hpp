@@ -67,28 +67,36 @@ struct optional_index {
   std::size_t operator*() const { return idx; }
 };
 
+// no underflow, no overflow
 inline void linearize(std::false_type, std::false_type, optional_index& out,
                       const axis::index_type size, const axis::index_type i) noexcept {
   out.idx += i * out.stride;
   out.stride *= i >= 0 && i < size ? size : 0;
 }
 
+// no underflow, overflow
 inline void linearize(std::false_type, std::true_type, optional_index& out,
                       const axis::index_type size, const axis::index_type i) noexcept {
+  BOOST_ASSERT(i <= size);
   out.idx += i * out.stride;
   out.stride *= i >= 0 ? size + 1 : 0;
 }
 
+// underflow, no overflow
 inline void linearize(std::true_type, std::false_type, optional_index& out,
                       const axis::index_type size, const axis::index_type i) noexcept {
   // internal index must be shifted by +1 since axis has underflow bin
+  BOOST_ASSERT(i + 1 >= 0);
   out.idx += (i + 1) * out.stride;
   out.stride *= i < size ? size + 1 : 0;
 }
 
+// underflow, overflow
 inline void linearize(std::true_type, std::true_type, optional_index& out,
                       const axis::index_type size, const axis::index_type i) noexcept {
   // internal index must be shifted by +1 since axis has underflow bin
+  BOOST_ASSERT(i + 1 >= 0);
+  BOOST_ASSERT(i <= size);
   out.idx += (i + 1) * out.stride;
   out.stride *= size + 2;
 }
