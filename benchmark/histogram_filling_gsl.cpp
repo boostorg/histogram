@@ -5,36 +5,17 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <benchmark/benchmark.h>
-#include <random>
-
-#include "throw_exception.hpp"
-
 #include <gsl/gsl_histogram.h>
 #include <gsl/gsl_histogram2d.h>
-
-using uniform = std::uniform_real_distribution<>;
-using normal = std::normal_distribution<>;
-
-template <class Distribution>
-Distribution init();
-
-template <>
-uniform init<uniform>() {
-  return uniform{0.0, 1.0};
-}
-
-template <>
-normal init<normal>() {
-  return normal{0.5, 0.3};
-}
+#include "../test/throw_exception.hpp"
+#include "generator.hpp"
 
 template <class Distribution>
 static void fill_1d(benchmark::State& state) {
   gsl_histogram* h = gsl_histogram_alloc(100);
   gsl_histogram_set_ranges_uniform(h, 0, 1);
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
-  for (auto _ : state) benchmark::DoNotOptimize(gsl_histogram_increment(h, dis(gen)));
+  generator<Distribution> gen;
+  for (auto _ : state) benchmark::DoNotOptimize(gsl_histogram_increment(h, gen()));
   gsl_histogram_free(h);
 }
 
@@ -42,10 +23,9 @@ template <class Distribution>
 static void fill_2d(benchmark::State& state) {
   gsl_histogram2d* h = gsl_histogram2d_alloc(100, 100);
   gsl_histogram2d_set_ranges_uniform(h, 0, 1, 0, 1);
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  generator<Distribution> gen;
   for (auto _ : state)
-    benchmark::DoNotOptimize(gsl_histogram2d_increment(h, dis(gen), dis(gen)));
+    benchmark::DoNotOptimize(gsl_histogram2d_increment(h, gen(), gen()));
   gsl_histogram2d_free(h);
 }
 

@@ -6,7 +6,7 @@
 
 #include <benchmark/benchmark.h>
 #include <boost/histogram/axis.hpp>
-#include "throw_exception.hpp"
+#include "../test/throw_exception.hpp"
 
 using namespace boost::histogram;
 

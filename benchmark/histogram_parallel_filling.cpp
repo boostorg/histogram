@@ -7,7 +7,6 @@
 #include <benchmark/benchmark.h>
 #include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/axis/regular.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <chrono>
@@ -17,6 +16,7 @@
 #include <random>
 #include <thread>
 #include <vector>
+#include "../test/throw_exception.hpp"
 
 using namespace boost::histogram;
 using namespace std::chrono_literals;

@@ -41,6 +41,7 @@ if (ROOT_FOUND)
   target_include_directories(histogram_filling_root PRIVATE ${ROOT_INCLUDE_DIRS})
   target_link_libraries(histogram_filling_root
     PRIVATE ${ROOT_LIBRARIES} benchmark_main)
+  target_compile_options(histogram_filling_root PRIVATE -frtti -fexceptions)
   # target_link_options(histogram_filling_root
   #   PRIVATE ${ROOT_EXE_LINKER_FLAGS})
 endif()
