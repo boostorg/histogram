@@ -6,64 +6,46 @@
 
 #include <benchmark/benchmark.h>
 #include <boost/histogram/axis/regular.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
-
-#include <random>
+#include "../test/throw_exception.hpp"
 #include "../test/utility_histogram.hpp"
+#include "generator.hpp"
+
+#include <memory>
+#include <random>
 
 using namespace boost::histogram;
 using reg = axis::regular<>;
-using uniform = std::uniform_real_distribution<>;
-using normal = std::normal_distribution<>;
-
-template <class Distribution>
-Distribution init();
-
-template <>
-uniform init<uniform>() {
-  return uniform{0.0, 1.0};
-}
-
-template <>
-normal init<normal>() {
-  return normal{0.5, 0.3};
-}
 
 template <class Tag, class Storage, class Distribution>
 static void fill_1d(benchmark::State& state) {
   auto h = make_s(Tag(), Storage(), reg(100, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
-  for (auto _ : state) benchmark::DoNotOptimize(h(dis(gen)));
+  auto gen = generator<Distribution>();
+  for (auto _ : state) benchmark::DoNotOptimize(h(gen()));
 }
 
 template <class Tag, class Storage, class Distribution>
 static void fill_2d(benchmark::State& state) {
   auto h = make_s(Tag(), Storage(), reg(100, 0, 1), reg(100, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
-  for (auto _ : state) benchmark::DoNotOptimize(h(dis(gen), dis(gen)));
+  auto gen = generator<Distribution>();
+  for (auto _ : state) benchmark::DoNotOptimize(h(gen(), gen()));
 }
 
 template <class Tag, class Storage, class Distribution>
 static void fill_3d(benchmark::State& state) {
   auto h = make_s(Tag(), Storage(), reg(100, 0, 1), reg(100, 0, 1), reg(100, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
-  for (auto _ : state) benchmark::DoNotOptimize(h(dis(gen), dis(gen), dis(gen)));
+  auto gen = generator<Distribution>();
+  for (auto _ : state) benchmark::DoNotOptimize(h(gen(), gen(), gen()));
 }
 
 template <class Tag, class Storage, class Distribution>
 static void fill_6d(benchmark::State& state) {
   auto h = make_s(Tag(), Storage(), reg(10, 0, 1), reg(10, 0, 1), reg(10, 0, 1),
                   reg(10, 0, 1), reg(10, 0, 1), reg(10, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  auto gen = generator<Distribution>();
   for (auto _ : state)
-    benchmark::DoNotOptimize(
-        h(dis(gen), dis(gen), dis(gen), dis(gen), dis(gen), dis(gen)));
+    benchmark::DoNotOptimize(h(gen(), gen(), gen(), gen(), gen(), gen()));
 }
 
 using SStore = std::vector<int>;

@@ -8,20 +8,18 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
-#include "throw_exception.hpp"
 #include <boost/mp11/algorithm.hpp>
-#include <random>
 #include <tuple>
 #include <type_traits>
 #include <vector>
+#include "../test/throw_exception.hpp"
+#include "generator.hpp"
 
 using namespace boost::histogram;
 using reg = axis::regular<>;
 using integ = axis::integer<>;
 using var = axis::variable<>;
 using vector_of_variant = std::vector<axis::variant<reg, integ, var>>;
-using uniform = std::uniform_real_distribution<>;
-using normal = std::normal_distribution<>;
 
 template <class T, class U>
 auto make_storage(const U& axes) {
@@ -64,27 +62,13 @@ void fill_c(const Axes& axes, const std::size_t* strides, Storage& storage,
   ++storage[index];
 }
 
-template <class Distribution>
-Distribution init();
-
-template <>
-uniform init<uniform>() {
-  return uniform{0.0, 1.0};
-}
-
-template <>
-normal init<normal>() {
-  return normal{0.5, 0.3};
-}
-
 template <class T, class Distribution>
 static void fill_1d_a(benchmark::State& state) {
   auto axes = std::make_tuple(reg(100, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
   for (auto _ : state) {
-    const auto i = std::get<0>(axes).index(dis(gen));
+    const auto i = std::get<0>(axes).index(gen());
     ++storage[i + 1];
   }
 }
@@ -92,45 +76,41 @@ static void fill_1d_a(benchmark::State& state) {
 template <class T, class Distribution>
 static void fill_1d_b(benchmark::State& state) {
   auto axes = std::make_tuple(reg(100, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
-  for (auto _ : state) { fill_b(axes, storage, std::forward_as_tuple(dis(gen))); }
+  for (auto _ : state) { fill_b(axes, storage, std::forward_as_tuple(gen())); }
 }
 
 template <class T, class Distribution>
 static void fill_1d_c(benchmark::State& state) {
   auto axes = std::make_tuple(reg(100, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
   auto strides = make_strides(axes);
   for (auto _ : state) {
-    fill_c(axes, strides.data(), storage, std::forward_as_tuple(dis(gen)));
+    fill_c(axes, strides.data(), storage, std::forward_as_tuple(gen()));
   }
 }
 
 template <class T, class Distribution>
 static void fill_1d_c_dyn(benchmark::State& state) {
   auto axes = vector_of_variant({reg(100, 0, 1)});
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
   auto strides = make_strides(axes);
   for (auto _ : state) {
-    fill_c(axes, strides.data(), storage, std::forward_as_tuple(dis(gen)));
+    fill_c(axes, strides.data(), storage, std::forward_as_tuple(gen()));
   }
 }
 
 template <class T, class Distribution>
 static void fill_2d_a(benchmark::State& state) {
   auto axes = std::make_tuple(reg(100, 0, 1), reg(100, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
   for (auto _ : state) {
-    const auto i0 = std::get<0>(axes).index(dis(gen));
-    const auto i1 = std::get<1>(axes).index(dis(gen));
+    const auto i0 = std::get<0>(axes).index(gen());
+    const auto i1 = std::get<1>(axes).index(gen());
     const auto stride = axis::traits::extent(std::get<0>(axes));
     ++storage[(i0 + 1) * stride + (i1 + 1)];
   }
@@ -139,41 +119,36 @@ static void fill_2d_a(benchmark::State& state) {
 template <class T, class Distribution>
 static void fill_2d_b(benchmark::State& state) {
   auto axes = std::make_tuple(reg(100, 0, 1), reg(100, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
-  for (auto _ : state) {
-    fill_b(axes, storage, std::forward_as_tuple(dis(gen), dis(gen)));
-  }
+  for (auto _ : state) { fill_b(axes, storage, std::forward_as_tuple(gen(), gen())); }
 }
 
 template <class T, class Distribution>
 static void fill_2d_c(benchmark::State& state) {
   auto axes = std::make_tuple(reg(100, 0, 1), reg(100, 0, 1));
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
   auto strides = make_strides(axes);
   assert(strides.size() == 3);
   assert(strides[0] == 1);
   assert(strides[1] == 102);
   for (auto _ : state) {
-    fill_c(axes, strides.data(), storage, std::forward_as_tuple(dis(gen), dis(gen)));
+    fill_c(axes, strides.data(), storage, std::forward_as_tuple(gen(), gen()));
   }
 }
 
 template <class T, class Distribution>
 static void fill_2d_c_dyn(benchmark::State& state) {
   auto axes = vector_of_variant({reg(100, 0, 1), reg(100, 0, 1)});
-  std::default_random_engine gen(1);
-  Distribution dis = init<Distribution>();
+  generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
   auto strides = make_strides(axes);
   assert(strides.size() == 3);
   assert(strides[0] == 1);
   assert(strides[1] == 102);
   for (auto _ : state) {
-    fill_c(axes, strides.data(), storage, std::forward_as_tuple(dis(gen), dis(gen)));
+    fill_c(axes, strides.data(), storage, std::forward_as_tuple(gen(), gen()));
   }
 }
 
