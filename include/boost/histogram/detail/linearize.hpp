@@ -101,47 +101,32 @@ inline void linearize(std::true_type, std::true_type, optional_index& out,
   out.stride *= size + 2;
 }
 
-// for non-growing axis
 template <class Axis, class Value>
 void linearize_value(optional_index& o, const Axis& a, const Value& v) {
   using O = axis::traits::static_options<Axis>;
-  using V = detail::remove_cvref_t<detail::arg_type<decltype(&Axis::index)>>;
   linearize(O::test(axis::option::underflow), O::test(axis::option::overflow), o,
-            a.size(), a.index(static_cast<V>(v)));
+            a.size(), axis::traits::index(a, v));
 }
 
-// for variant that does not contain any growing axis
 template <class... Ts, class Value>
 void linearize_value(optional_index& o, const axis::variant<Ts...>& a, const Value& v) {
-  axis::visit(
-      [&o, &v](const auto& a) {
-        using A = std::decay_t<decltype(a)>;
-        using O = axis::traits::static_options<A>;
-        // axis::traits::index uses try_cast which is needed here
-        linearize(O::test(axis::option::underflow), O::test(axis::option::overflow), o,
-                  a.size(), axis::traits::index(a, v));
-      },
-      a);
+  axis::visit([&o, &v](const auto& a) { linearize_value(o, a, v); }, a);
 }
 
-// for growing axis
 template <class Axis, class Value>
-bool linearize_with_growth_value(optional_index& o, axis::index_type& s, Axis& a,
-                                 const Value& v) {
+axis::index_type linearize_value_growth(optional_index& o, Axis& a, const Value& v) {
   using O = axis::traits::static_options<Axis>;
-  axis::index_type i;
+  axis::index_type i, s;
   std::tie(i, s) = axis::traits::update(a, v);
   linearize(O::test(axis::option::underflow), O::test(axis::option::overflow), o,
             a.size(), i);
-  return s != 0;
+  return s;
 }
 
-// for variant which contains at least one growing axis
 template <class... Ts, class Value>
-bool linearize_with_growth_value(optional_index& o, axis::index_type& s,
-                                 axis::variant<Ts...>& a, const Value& v) {
-  axis::visit([&o, &s, &v](auto&& a) { linearize_with_growth_value(o, s, a, v); }, a);
-  return s != 0;
+axis::index_type linearize_value_growth(optional_index& o, axis::variant<Ts...>& a,
+                                        const Value& v) {
+  return axis::visit([&o, &v](auto& a) { return linearize_value_growth(o, a, v); }, a);
 }
 
 template <class A>
@@ -292,16 +277,18 @@ optional_index index(std::true_type, B, T& axes, S& storage, const U& args) {
   axis::index_type shifts[nbuf];
   const auto rank = axes_rank(axes);
   constexpr auto nargs = static_cast<unsigned>(std::tuple_size<U>::value);
+
   bool update_needed = false;
-  if (rank == 1 && nargs > 1)
-    update_needed = linearize_with_growth_value(idx, shifts[0], axis_get<0>(axes), args);
-  else {
+  if (rank == 1 && nargs > 1) {
+    shifts[0] = linearize_value_growth(idx, axis_get<0>(axes), args);
+    update_needed = (shifts[0] != 0);
+  } else {
     if (rank != nargs)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
     mp11::mp_for_each<mp11::mp_iota_c<(nargs < nbuf ? nargs : nbuf)>>([&](auto i) {
-      update_needed |= linearize_with_growth_value(idx, shifts[i], axis_get<i>(axes),
-                                                   std::get<i>(args));
+      shifts[i] = linearize_value_growth(idx, axis_get<i>(axes), std::get<i>(args));
+      update_needed |= (shifts[i] != 0);
     });
   }
 
