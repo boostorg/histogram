@@ -15,6 +15,13 @@
 #include <vector>
 #include "../test/throw_exception.hpp"
 
+#include <boost/assert.hpp>
+struct assert_check {
+  assert_check() {
+    BOOST_ASSERT(false); // don't run with asserts enabled
+  }
+} _;
+
 using namespace boost::histogram;
 using namespace boost::histogram::literals;
 

@@ -8,10 +8,11 @@
 #include <random>
 
 using uniform = std::uniform_real_distribution<>;
+using uniform_int = std::uniform_int_distribution<>;
 using normal = std::normal_distribution<>;
 
-template <class Distribution>
-Distribution init();
+template <class Distribution, class... Ts>
+Distribution init(Ts...);
 
 template <>
 uniform init<uniform>() {
@@ -23,11 +24,17 @@ normal init<normal>() {
   return normal{0.5, 0.3};
 }
 
-template <class Distribution, std::size_t N = 4096>
+template <>
+uniform_int init<uniform_int, int>(int n) {
+  return uniform_int{0, n};
+}
+
+template <class Distribution, std::size_t N = 1 << 15>
 struct generator {
-  generator() {
+  template <class... Ts>
+  generator(Ts... ts) {
     std::default_random_engine rng(1);
-    auto dis = init<Distribution>();
+    auto dis = init<Distribution>(ts...);
     std::generate(buffer_, buffer_ + N, [&] { return dis(rng); });
   }
 

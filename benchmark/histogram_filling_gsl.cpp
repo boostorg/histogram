@@ -10,6 +10,13 @@
 #include "../test/throw_exception.hpp"
 #include "generator.hpp"
 
+#include <boost/assert.hpp>
+struct assert_check {
+  assert_check() {
+    BOOST_ASSERT(false); // don't run with asserts enabled
+  }
+} _;
+
 template <class Distribution>
 static void fill_1d(benchmark::State& state) {
   gsl_histogram* h = gsl_histogram_alloc(100);

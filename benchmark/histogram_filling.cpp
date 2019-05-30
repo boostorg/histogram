@@ -8,12 +8,17 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
+#include <memory>
 #include "../test/throw_exception.hpp"
 #include "../test/utility_histogram.hpp"
 #include "generator.hpp"
 
-#include <memory>
-#include <random>
+#include <boost/assert.hpp>
+struct assert_check {
+  assert_check() {
+    BOOST_ASSERT(false); // don't run with asserts enabled
+  }
+} _;
 
 using namespace boost::histogram;
 using reg = axis::regular<>;
@@ -52,35 +57,35 @@ using SStore = std::vector<int>;
 using DStore = unlimited_storage<>;
 
 BENCHMARK_TEMPLATE(fill_1d, static_tag, SStore, uniform);
-BENCHMARK_TEMPLATE(fill_1d, dynamic_tag, SStore, uniform);
 BENCHMARK_TEMPLATE(fill_1d, static_tag, DStore, uniform);
+BENCHMARK_TEMPLATE(fill_1d, dynamic_tag, SStore, uniform);
 BENCHMARK_TEMPLATE(fill_1d, dynamic_tag, DStore, uniform);
 BENCHMARK_TEMPLATE(fill_2d, static_tag, SStore, uniform);
-BENCHMARK_TEMPLATE(fill_2d, dynamic_tag, SStore, uniform);
 BENCHMARK_TEMPLATE(fill_2d, static_tag, DStore, uniform);
+BENCHMARK_TEMPLATE(fill_2d, dynamic_tag, SStore, uniform);
 BENCHMARK_TEMPLATE(fill_2d, dynamic_tag, DStore, uniform);
 BENCHMARK_TEMPLATE(fill_3d, static_tag, SStore, uniform);
-BENCHMARK_TEMPLATE(fill_3d, dynamic_tag, SStore, uniform);
 BENCHMARK_TEMPLATE(fill_3d, static_tag, DStore, uniform);
+BENCHMARK_TEMPLATE(fill_3d, dynamic_tag, SStore, uniform);
 BENCHMARK_TEMPLATE(fill_3d, dynamic_tag, DStore, uniform);
 BENCHMARK_TEMPLATE(fill_6d, static_tag, SStore, uniform);
-BENCHMARK_TEMPLATE(fill_6d, dynamic_tag, SStore, uniform);
 BENCHMARK_TEMPLATE(fill_6d, static_tag, DStore, uniform);
+BENCHMARK_TEMPLATE(fill_6d, dynamic_tag, SStore, uniform);
 BENCHMARK_TEMPLATE(fill_6d, dynamic_tag, DStore, uniform);
 
 BENCHMARK_TEMPLATE(fill_1d, static_tag, SStore, normal);
-BENCHMARK_TEMPLATE(fill_1d, dynamic_tag, SStore, normal);
 BENCHMARK_TEMPLATE(fill_1d, static_tag, DStore, normal);
+BENCHMARK_TEMPLATE(fill_1d, dynamic_tag, SStore, normal);
 BENCHMARK_TEMPLATE(fill_1d, dynamic_tag, DStore, normal);
 BENCHMARK_TEMPLATE(fill_2d, static_tag, SStore, normal);
-BENCHMARK_TEMPLATE(fill_2d, dynamic_tag, SStore, normal);
 BENCHMARK_TEMPLATE(fill_2d, static_tag, DStore, normal);
+BENCHMARK_TEMPLATE(fill_2d, dynamic_tag, SStore, normal);
 BENCHMARK_TEMPLATE(fill_2d, dynamic_tag, DStore, normal);
 BENCHMARK_TEMPLATE(fill_3d, static_tag, SStore, normal);
-BENCHMARK_TEMPLATE(fill_3d, dynamic_tag, SStore, normal);
 BENCHMARK_TEMPLATE(fill_3d, static_tag, DStore, normal);
+BENCHMARK_TEMPLATE(fill_3d, dynamic_tag, SStore, normal);
 BENCHMARK_TEMPLATE(fill_3d, dynamic_tag, DStore, normal);
 BENCHMARK_TEMPLATE(fill_6d, static_tag, SStore, normal);
-BENCHMARK_TEMPLATE(fill_6d, dynamic_tag, SStore, normal);
 BENCHMARK_TEMPLATE(fill_6d, static_tag, DStore, normal);
+BENCHMARK_TEMPLATE(fill_6d, dynamic_tag, SStore, normal);
 BENCHMARK_TEMPLATE(fill_6d, dynamic_tag, DStore, normal);

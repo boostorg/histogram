@@ -11,6 +11,13 @@
 #include <benchmark/benchmark.h>
 #include "generator.hpp"
 
+#include <boost/assert.hpp>
+struct assert_check {
+  assert_check() {
+    BOOST_ASSERT(false); // don't run with asserts enabled
+  }
+} _;
+
 template <class Distribution>
 static void fill_1d(benchmark::State& state) {
   TH1I h("", "", 100, 0, 1);
