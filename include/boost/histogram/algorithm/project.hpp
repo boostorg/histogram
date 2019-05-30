@@ -9,7 +9,8 @@
 
 #include <algorithm>
 #include <boost/histogram/axis/variant.hpp>
-#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/detect.hpp>
+#include <boost/histogram/detail/make_default.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
@@ -44,8 +45,7 @@ auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N>, Ns..
         return std::make_tuple(std::get<N>(old_axes), std::get<Ns::value>(old_axes)...);
       },
       [&](const auto& old_axes) {
-        return detail::remove_cvref_t<decltype(old_axes)>(
-            {old_axes[N], old_axes[Ns::value]...});
+        return std::decay_t<decltype(old_axes)>({old_axes[N], old_axes[Ns::value]...});
       },
       old_axes);
 

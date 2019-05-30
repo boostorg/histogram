@@ -9,7 +9,6 @@
 
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <iterator>
 
 namespace boost {

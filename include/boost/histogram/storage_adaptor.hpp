@@ -9,8 +9,8 @@
 
 #include <algorithm>
 #include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/safe_comparison.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/utility.hpp>

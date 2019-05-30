@@ -9,6 +9,7 @@
 
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/cat.hpp>
+#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/try_cast.hpp>
@@ -56,6 +57,18 @@ decltype(auto) value_method_switch(I&& i, D&& d, const A& a) {
                                    std::forward<D>(d), a);
 }
 
+static axis::null_type null_value;
+
+template <class T>
+axis::null_type& get_null_type(T&) {
+  return null_value;
+}
+
+template <class T>
+const axis::null_type& get_null_type(const T&) {
+  return null_value;
+}
+
 } // namespace detail
 
 namespace axis {
@@ -71,13 +84,9 @@ namespace traits {
 */
 template <class Axis>
 decltype(auto) metadata(Axis&& axis) noexcept {
-  return detail::static_if<
-      detail::has_method_metadata<const detail::remove_cvref_t<Axis>>>(
+  return detail::static_if<detail::has_method_metadata<std::decay_t<Axis>>>(
       [](auto&& a) -> decltype(auto) { return a.metadata(); },
-      [](auto &&) -> detail::copy_qualifiers<Axis, null_type> {
-        static null_type m;
-        return m;
-      },
+      [](auto&& a) -> decltype(auto) { return detail::get_null_type(a); },
       std::forward<Axis>(axis));
 }
 
@@ -95,9 +104,9 @@ decltype(auto) metadata(Axis&& axis) noexcept {
 template <class Axis>
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 using static_options =
-    mp11::mp_eval_or<mp11::mp_if<detail::has_method_update<detail::remove_cvref_t<Axis>>,
+    mp11::mp_eval_or<mp11::mp_if<detail::has_method_update<std::decay_t<Axis>>,
                                  option::growth_t, option::none_t>,
-                     detail::static_options_impl, detail::remove_cvref_t<Axis>>;
+                     detail::static_options_impl, std::decay_t<Axis>>;
 #else
 struct static_options;
 #endif
@@ -170,7 +179,7 @@ Result value_as(const Axis& axis, real_index_type index) {
 */
 template <class Axis, class U>
 axis::index_type index(const Axis& axis, const U& value) {
-  using V = detail::remove_cvref_t<detail::arg_type<decltype(&Axis::index)>>;
+  using V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>;
   return axis.index(detail::try_cast<V, std::invalid_argument>(value));
 }
 
@@ -193,7 +202,7 @@ axis::index_type index(const variant<Ts...>& axis, const U& value) {
 */
 template <class Axis, class U>
 std::pair<index_type, index_type> update(Axis& axis, const U& value) {
-  using V = detail::remove_cvref_t<detail::arg_type<decltype(&Axis::index)>>;
+  using V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>;
   return detail::static_if_c<static_options<Axis>::test(option::growth)>(
       [&value](auto& a) {
         return a.update(detail::try_cast<V, std::invalid_argument>(value));

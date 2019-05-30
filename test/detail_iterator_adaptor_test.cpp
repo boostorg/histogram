@@ -7,8 +7,8 @@
 
 //  See http://www.boost.org for most recent version including documentation.
 
+#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include "utility_iterator.hpp"
 #include "utility_meta.hpp"
 

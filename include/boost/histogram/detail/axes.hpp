@@ -11,7 +11,6 @@
 #include <boost/assert.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
@@ -101,7 +100,7 @@ template <class... Ts, class... Us>
 bool axes_equal(const std::tuple<Ts...>& ts, const std::tuple<Us...>& us) {
   return static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
       [](const auto& ts, const auto& us) {
-        using N = mp11::mp_size<remove_cvref_t<decltype(ts)>>;
+        using N = mp11::mp_size<std::decay_t<decltype(ts)>>;
         bool equal = true;
         mp11::mp_for_each<mp11::mp_iota<N>>(
             [&](auto I) { equal &= relaxed_equal(std::get<I>(ts), std::get<I>(us)); });

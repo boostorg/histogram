@@ -14,7 +14,6 @@
 #include <boost/core/exchange.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/safe_comparison.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -179,7 +178,7 @@ public:
 
     buffer_type(const buffer_type& x) : alloc(x.alloc) {
       x.visit([this, n = x.size](const auto* xp) {
-        using T = detail::remove_cvref_t<decltype(*xp)>;
+        using T = std::decay_t<decltype(*xp)>;
         this->template make<T>(n, xp);
       });
     }
@@ -195,7 +194,7 @@ public:
       BOOST_ASSERT((ptr == nullptr) == (size == 0));
       if (ptr == nullptr) return;
       visit([this](auto* p) {
-        using T = detail::remove_cvref_t<decltype(*p)>;
+        using T = std::decay_t<decltype(*p)>;
         using alloc_type =
             typename std::allocator_traits<allocator_type>::template rebind_alloc<T>;
         alloc_type a(alloc); // rebind allocator

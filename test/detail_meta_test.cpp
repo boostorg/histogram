@@ -10,8 +10,8 @@
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/detail/make_default.hpp>
 #include <boost/histogram/detail/meta.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <deque>
@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "throw_exception.hpp"
 #include "utility_allocator.hpp"
 #include "utility_meta.hpp"
 
@@ -42,12 +43,6 @@ int main() {
     BOOST_TEST_TRAIT_FALSE((has_method_value<A>));
     BOOST_TEST_TRAIT_TRUE((has_method_value<B>));
     BOOST_TEST_TRAIT_TRUE((has_method_value<C>));
-
-    BOOST_TEST_TRAIT_FALSE((has_method_value_with_convertible_return_type<A, double>));
-    BOOST_TEST_TRAIT_TRUE((has_method_value_with_convertible_return_type<B, A>));
-    BOOST_TEST_TRAIT_FALSE((has_method_value_with_convertible_return_type<B, char>));
-    BOOST_TEST_TRAIT_TRUE((has_method_value_with_convertible_return_type<C, int>));
-    BOOST_TEST_TRAIT_FALSE((has_method_value_with_convertible_return_type<C, A>));
   }
 
   // has_method_options
@@ -256,35 +251,6 @@ int main() {
     BOOST_TEST_TRAIT_FALSE((is_axis_variant<A>));
     BOOST_TEST_TRAIT_TRUE((is_axis_variant<axis::variant<>>));
     BOOST_TEST_TRAIT_TRUE((is_axis_variant<axis::variant<axis::regular<>>>));
-  }
-
-  // remove_cvref_t
-  {
-    using T1 = int;
-    using T2 = int&&;
-    using T3 = const int;
-    using T4 = const int&;
-    using T5 = volatile int;
-    using T6 = volatile int&&;
-    using T7 = volatile const int;
-    using T8 = volatile const int&;
-    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T1>, int);
-    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T2>, int);
-    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T3>, int);
-    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T4>, int);
-    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T5>, int);
-    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T6>, int);
-    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T7>, int);
-    BOOST_TEST_TRAIT_SAME(remove_cvref_t<T8>, int);
-  }
-
-  // copy_qualifiers
-  {
-    BOOST_TEST_TRAIT_SAME(copy_qualifiers<int, long>, long);
-    BOOST_TEST_TRAIT_SAME(copy_qualifiers<const int, long>, const long);
-    BOOST_TEST_TRAIT_SAME(copy_qualifiers<int&, long>, long&);
-    BOOST_TEST_TRAIT_SAME(copy_qualifiers<const int&, long>, const long&);
-    BOOST_TEST_TRAIT_SAME(copy_qualifiers<int&&, long>, long&&);
   }
 
   // args_type, arg_type

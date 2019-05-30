@@ -11,7 +11,6 @@
 #include <boost/histogram/detail/attribute.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <type_traits>
 #include <utility>
@@ -38,8 +37,8 @@ template <class Histogram>
 class BOOST_HISTOGRAM_NODISCARD indexed_range {
 private:
   using histogram_type = Histogram;
-  static constexpr std::size_t buffer_size = detail::buffer_size<
-      typename detail::remove_cvref_t<histogram_type>::axes_type>::value;
+  static constexpr std::size_t buffer_size =
+      detail::buffer_size<typename std::decay_t<histogram_type>::axes_type>::value;
 
 public:
   using value_iterator = decltype(std::declval<Histogram>().begin());

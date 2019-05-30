@@ -13,6 +13,8 @@
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/relaxed_equal.hpp>
+#include <boost/histogram/detail/replace_default.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>

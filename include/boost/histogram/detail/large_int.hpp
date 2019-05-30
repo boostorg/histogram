@@ -8,8 +8,8 @@
 #define BOOST_HISTOGRAM_DETAIL_LARGE_INT_HPP
 
 #include <boost/assert.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
+#include <boost/mp11/function.hpp>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -22,7 +22,7 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-using is_unsigned_integral = mp_eval_and<T, std::is_integral, std::is_unsigned>;
+using is_unsigned_integral = mp11::mp_and<std::is_integral<T>, std::is_unsigned<T>>;
 
 template <class T>
 bool safe_increment(T& t) {

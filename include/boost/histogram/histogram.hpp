@@ -11,7 +11,6 @@
 #include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/linearize.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/noop_mutex.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -51,7 +50,7 @@ template <class Axes, class Storage>
 class histogram {
 public:
   static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
-  static_assert(std::is_same<detail::remove_cvref_t<Storage>, Storage>::value,
+  static_assert(std::is_same<std::decay_t<Storage>, Storage>::value,
                 "Storage may not be a reference or const or volatile");
 
 public:
@@ -447,11 +446,11 @@ auto operator/(const histogram<A, S>& h, double x) {
 #if __cpp_deduction_guides >= 201606
 
 template <class Axes>
-histogram(Axes&& axes)->histogram<detail::remove_cvref_t<Axes>, default_storage>;
+histogram(Axes&& axes)->histogram<std::decay_t<Axes>, default_storage>;
 
 template <class Axes, class Storage>
 histogram(Axes&& axes, Storage&& storage)
-    ->histogram<detail::remove_cvref_t<Axes>, detail::remove_cvref_t<Storage>>;
+    ->histogram<std::decay_t<Axes>, std::decay_t<Storage>>;
 
 #endif
 

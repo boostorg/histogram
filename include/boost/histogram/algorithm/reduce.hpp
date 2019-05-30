@@ -11,7 +11,7 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/cat.hpp>
-#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/make_default.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -224,12 +224,12 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
   // override default-constructed axis instances with modified instances
   unsigned iaxis = 0;
   hist.for_each_axis([&](const auto& a) {
-    using A = detail::remove_cvref_t<decltype(a)>;
+    using A = std::decay_t<decltype(a)>;
     auto& o = opts[iaxis];
     if (o.merge > 0) { // option is set?
       detail::static_if_c<axis::traits::is_reducible<A>::value>(
           [&o](auto&& aout, const auto& ain) {
-            using A = detail::remove_cvref_t<decltype(ain)>;
+            using A = std::decay_t<decltype(ain)>;
             if (o.indices_set) {
               o.begin = std::max(0, o.begin);
               o.end = std::min(o.end, ain.size());
@@ -251,7 +251,7 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
             aout = A(ain, o.begin, o.end, o.merge);
           },
           [](auto&&, const auto& ain) {
-            using A = detail::remove_cvref_t<decltype(ain)>;
+            using A = std::decay_t<decltype(ain)>;
             BOOST_THROW_EXCEPTION(std::invalid_argument(
                 detail::cat(detail::type_name<A>(), " is not reducible")));
           },

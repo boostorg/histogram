@@ -10,7 +10,6 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_ITERATOR_ADAPTOR_HPP
 #define BOOST_HISTOGRAM_DETAIL_ITERATOR_ADAPTOR_HPP
 
-#include <boost/histogram/detail/meta.hpp>
 #include <iterator>
 #include <memory>
 #include <type_traits>
@@ -46,7 +45,7 @@ struct operator_arrow_dispatch_t<T&> // "real" references
 
 // only for random access Base
 template <class Derived, class Base, class Reference = std::remove_pointer_t<Base>&,
-          class Value = remove_cvref_t<Reference>>
+          class Value = std::decay_t<Reference>>
 class iterator_adaptor {
   using operator_arrow_dispatch = operator_arrow_dispatch_t<Reference>;
 
