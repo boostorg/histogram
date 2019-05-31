@@ -7,7 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_POLYMORPHIC_BIN_HPP
 #define BOOST_HISTOGRAM_AXIS_POLYMORPHIC_BIN_HPP
 
-#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/detect.hpp>
 #include <type_traits>
 
 namespace boost {

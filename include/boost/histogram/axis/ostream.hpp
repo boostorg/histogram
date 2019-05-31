@@ -12,7 +12,6 @@
 #include <boost/assert.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/detail/cat.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -180,7 +179,7 @@ std::basic_ostream<Ts...>& operator<<(std::basic_ostream<Ts...>& os,
                                       const variant<Us...>& v) {
   visit(
       [&os](const auto& x) {
-        using A = detail::remove_cvref_t<decltype(x)>;
+        using A = std::decay_t<decltype(x)>;
         detail::static_if<detail::is_streamable<A>>(
             [&os](const auto& x) { os << x; },
             [](const auto&) {

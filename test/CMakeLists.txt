@@ -27,7 +27,19 @@ boost_test(TYPE run SOURCES axis_variable_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES axis_variant_test.cpp
   LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_args_type_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_axes_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_convert_integer_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_compressed_pair_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_detect_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_limits_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_make_default_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_misc_test.cpp
   LIBRARIES Boost::histogram Boost::core)
@@ -38,6 +50,12 @@ boost_test(TYPE run SOURCES detail_large_int_test.cpp
 boost_test(TYPE run SOURCES detail_linearize_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_iterator_adaptor_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_relaxed_equal_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_replace_default_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_tuple_slice_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_variant_test.cpp
   LIBRARIES Boost::histogram Boost::core)

@@ -7,7 +7,7 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_COMMON_TYPE_HPP
 #define BOOST_HISTOGRAM_DETAIL_COMMON_TYPE_HPP
 
-#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/utility.hpp>

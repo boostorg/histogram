@@ -14,7 +14,6 @@
 
 #include <boost/core/use_default.hpp>
 #include <boost/histogram/detail/attribute.hpp> // BOOST_HISTOGRAM_NODISCARD
-#include <string>
 #include <vector>
 
 namespace boost {

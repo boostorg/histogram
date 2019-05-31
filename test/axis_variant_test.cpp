@@ -119,7 +119,7 @@ int main() {
   // axis::variant streamable
   {
     auto test = [](auto&& a, const char* ref) {
-      using T = detail::remove_cvref_t<decltype(a)>;
+      using T = std::decay_t<decltype(a)>;
       axis::variant<T> axis(std::move(a));
       std::ostringstream os;
       os << axis;
@@ -138,7 +138,7 @@ int main() {
   // bin_type operator<<
   {
     auto test = [](auto&& a, const char* ref) {
-      using T = detail::remove_cvref_t<decltype(a)>;
+      using T = std::decay_t<decltype(a)>;
       axis::variant<T> axis(std::move(a));
       std::ostringstream os;
       os << axis.bin(0);

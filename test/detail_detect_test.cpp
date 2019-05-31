@@ -9,15 +9,14 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
-#include <boost/histogram/detail/args_type.hpp>
-#include <boost/histogram/detail/make_default.hpp>
-#include <boost/histogram/histogram.hpp>
+#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <deque>
-#include <iterator>
+#include <initializer_list>
 #include <map>
-#include <tuple>
+#include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
@@ -253,40 +252,6 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_axis_variant<axis::variant<axis::regular<>>>));
   }
 
-  // args_type, arg_type
-  {
-    struct Foo {
-      static int f1(char);
-      int f2(long) const;
-    };
-
-    BOOST_TEST_TRAIT_SAME(args_type<decltype(&Foo::f1)>, std::tuple<char>);
-    BOOST_TEST_TRAIT_SAME(args_type<decltype(&Foo::f2)>, std::tuple<long>);
-    BOOST_TEST_TRAIT_SAME(arg_type<decltype(&Foo::f1)>, char);
-    BOOST_TEST_TRAIT_SAME(arg_type<decltype(&Foo::f2)>, long);
-  }
-
-  // static_if
-  {
-    struct callable {
-      int operator()() { return 1; };
-    };
-    struct not_callable {};
-    auto fcn = [](auto b, auto x) {
-      return static_if<decltype(b)>([](auto x) { return x(); }, [](auto) { return 2; },
-                                    x);
-    };
-    BOOST_TEST_EQ(fcn(std::true_type(), callable()), 1);
-    BOOST_TEST_EQ(fcn(std::false_type(), not_callable()), 2);
-  }
-
-  // tuple_slice
-  {
-    auto a = std::make_tuple(1, 2, 3, 4);
-    auto b = tuple_slice<1, 2>(a);
-    BOOST_TEST_EQ(b, std::make_tuple(2, 3));
-  }
-
   // is_sequence_of_axis
   {
     using A = std::vector<axis::regular<>>;
@@ -307,7 +272,7 @@ int main() {
   {
     struct A {};
     using B = int;
-    using C = decltype(weight(1));
+    using C = weight_type<int>;
     BOOST_TEST_TRAIT_FALSE((is_weight<A>));
     BOOST_TEST_TRAIT_FALSE((is_weight<B>));
     BOOST_TEST_TRAIT_TRUE((is_weight<C>));
@@ -317,24 +282,10 @@ int main() {
   {
     struct A {};
     using B = int;
-    using C = decltype(sample(1));
-    using D = decltype(sample(1, 2.0));
+    using C = sample_type<int>;
     BOOST_TEST_TRAIT_FALSE((is_sample<A>));
     BOOST_TEST_TRAIT_FALSE((is_sample<B>));
     BOOST_TEST_TRAIT_TRUE((is_sample<C>));
-    BOOST_TEST_TRAIT_TRUE((is_sample<D>));
-  }
-
-  // make_default
-  {
-    struct A {};
-    auto a = make_default(A());
-    BOOST_TEST_TRAIT_SAME(decltype(a), A);
-    tracing_allocator_db db;
-    using B = std::vector<int, tracing_allocator<int>>;
-    B b = make_default(B(tracing_allocator<int>(db)));
-    b.resize(100);
-    BOOST_TEST_EQ(db.at<int>().first, 100);
   }
 
   // has_operator_equal

@@ -11,7 +11,7 @@
 #include <boost/histogram/axis/polymorphic_bin.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/cat.hpp>
-#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/detail/variant.hpp>
@@ -75,7 +75,7 @@ class variant : public iterator_mixin<variant<Ts...>> {
   using impl_type = detail::variant<Ts...>;
 
   template <class T>
-  using is_bounded_type = mp11::mp_contains<variant, detail::remove_cvref_t<T>>;
+  using is_bounded_type = mp11::mp_contains<variant, std::decay_t<T>>;
 
   template <typename T>
   using requires_bounded_type = std::enable_if_t<is_bounded_type<T>::value>;
@@ -110,7 +110,7 @@ public:
   variant& operator=(const variant<Us...>& u) {
     visit(
         [this](const auto& u) {
-          using U = detail::remove_cvref_t<decltype(u)>;
+          using U = std::decay_t<decltype(u)>;
           detail::static_if<is_bounded_type<U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
@@ -315,21 +315,20 @@ decltype(auto) get(const variant<Us...>& v) {
 // pass-through version of get for generic programming
 template <class T, class U>
 decltype(auto) get(U&& u) {
-  return static_cast<detail::copy_qualifiers<U, T>>(u);
+  return std::forward<U>(u);
 }
 
 // pass-through version of get_if for generic programming
 template <class T, class U>
 T* get_if(U* u) {
-  return std::is_same<T, detail::remove_cvref_t<U>>::value ? reinterpret_cast<T*>(u)
-                                                           : nullptr;
+  return std::is_same<T, std::decay_t<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
 }
 
 // pass-through version of get_if for generic programming
 template <class T, class U>
 const T* get_if(const U* u) {
-  return std::is_same<T, detail::remove_cvref_t<U>>::value ? reinterpret_cast<const T*>(u)
-                                                           : nullptr;
+  return std::is_same<T, std::decay_t<U>>::value ? reinterpret_cast<const T*>(u)
+                                                 : nullptr;
 }
 
 } // namespace axis

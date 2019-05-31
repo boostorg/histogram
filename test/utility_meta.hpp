@@ -10,7 +10,6 @@
 #include <array>
 #include <boost/core/is_same.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/detail/meta.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/mp11/utility.hpp>
 #include <ostream>

@@ -12,7 +12,9 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
-#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/convert_integer.hpp>
+#include <boost/histogram/detail/relaxed_equal.hpp>
+#include <boost/histogram/detail/replace_default.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
@@ -24,6 +26,39 @@
 
 namespace boost {
 namespace histogram {
+namespace detail {
+
+template <class T>
+using get_scale_type_helper = typename T::value_type;
+
+template <class T>
+using get_scale_type = mp11::mp_eval_or<T, detail::get_scale_type_helper, T>;
+
+struct one_unit {};
+
+template <class T>
+T operator*(T&& t, const one_unit&) {
+  return std::forward<T>(t);
+}
+
+template <class T>
+T operator/(T&& t, const one_unit&) {
+  return std::forward<T>(t);
+}
+
+template <class T>
+using get_unit_type_helper = typename T::unit_type;
+
+template <class T>
+using get_unit_type = mp11::mp_eval_or<one_unit, detail::get_unit_type_helper, T>;
+
+template <class T, class R = get_scale_type<T>>
+R get_scale(const T& t) {
+  return t / get_unit_type<T>();
+}
+
+} // namespace detail
+
 namespace axis {
 
 namespace transform {

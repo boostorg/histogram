@@ -11,7 +11,9 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
-#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/detect.hpp>
+#include <boost/histogram/detail/relaxed_equal.hpp>
+#include <boost/histogram/detail/replace_default.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>

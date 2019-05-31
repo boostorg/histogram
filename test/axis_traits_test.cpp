@@ -8,8 +8,8 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/traits.hpp>
-#include "throw_exception.hpp"
 #include <boost/mp11.hpp>
+#include "throw_exception.hpp"
 #include "utility_axis.hpp"
 
 using namespace boost::histogram::axis;

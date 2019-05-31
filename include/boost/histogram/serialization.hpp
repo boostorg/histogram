@@ -162,7 +162,7 @@ struct variant_proxy {
   void save(Archive& ar, unsigned /* version */) const {
     visit(
         [&ar](auto& value) {
-          using T = detail::remove_cvref_t<decltype(value)>;
+          using T = std::decay_t<decltype(value)>;
           int which = static_cast<int>(mp11::mp_find<Variant, T>::value);
           ar << serialization::make_nvp("which", which);
           ar << serialization::make_nvp("value", value);
@@ -239,7 +239,7 @@ void serialize(Archive& ar, unlimited_storage<Allocator>& s, unsigned /* version
     ar& serialization::make_nvp("size", size);
     helper.visit([&buffer, size](auto* tp) {
       BOOST_ASSERT(tp == nullptr);
-      using T = detail::remove_cvref_t<decltype(*tp)>;
+      using T = std::decay_t<decltype(*tp)>;
       buffer.template make<T>(size);
     });
   } else {
@@ -247,7 +247,7 @@ void serialize(Archive& ar, unlimited_storage<Allocator>& s, unsigned /* version
     ar& serialization::make_nvp("size", buffer.size);
   }
   buffer.visit([&buffer, &ar](auto* tp) {
-    using T = detail::remove_cvref_t<decltype(*tp)>;
+    using T = std::decay_t<decltype(*tp)>;
     ar& serialization::make_nvp(
         "buffer",
         serialization::make_array(reinterpret_cast<T*>(buffer.ptr), buffer.size));

@@ -13,7 +13,11 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
-#include <boost/histogram/detail/meta.hpp>
+#include <boost/histogram/detail/convert_integer.hpp>
+#include <boost/histogram/detail/detect.hpp>
+#include <boost/histogram/detail/limits.hpp>
+#include <boost/histogram/detail/relaxed_equal.hpp>
+#include <boost/histogram/detail/replace_default.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <cmath>
@@ -231,22 +235,19 @@ variable(std::initializer_list<U>, const char*)->variable<T>;
 template <class U, class M, class T = detail::convert_integer<U, double>>
 variable(std::initializer_list<U>, M)->variable<T, M>;
 
-template <
-    class Iterable,
-    class T = detail::convert_integer<
-        detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+template <class Iterable,
+          class T = detail::convert_integer<
+              std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable)->variable<T>;
 
-template <
-    class Iterable,
-    class T = detail::convert_integer<
-        detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+template <class Iterable,
+          class T = detail::convert_integer<
+              std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable, const char*)->variable<T>;
 
-template <
-    class Iterable, class M,
-    class T = detail::convert_integer<
-        detail::remove_cvref_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
+template <class Iterable, class M,
+          class T = detail::convert_integer<
+              std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
 variable(Iterable, M)->variable<T, M>;
 
 #endif

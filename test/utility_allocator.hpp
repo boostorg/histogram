@@ -4,9 +4,6 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_TEST_UTILITY_ALLOCATOR_HPP
-#define BOOST_HISTOGRAM_TEST_UTILITY_ALLOCATOR_HPP
-
 #include <algorithm>
 #include <boost/config.hpp>
 #include <boost/core/lightweight_test.hpp>
@@ -16,9 +13,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <utility>
-
-namespace boost {
-namespace histogram {
 
 struct tracing_allocator_db : std::pair<int, int> {
   template <class T>
@@ -81,11 +75,11 @@ struct tracing_allocator {
     if (db) {
       if (db->failure_countdown >= 0) {
         const auto count = db->failure_countdown--;
-        db->log("allocator +", n, " ", detail::type_name<T>(), " [failure in ", count,
-                "]");
+        db->log("allocator +", n, " ", boost::histogram::detail::type_name<T>(),
+                " [failure in ", count, "]");
         if (count == 0) BOOST_THROW_EXCEPTION(std::bad_alloc{});
       } else
-        db->log("allocator +", n, " ", detail::type_name<T>());
+        db->log("allocator +", n, " ", boost::histogram::detail::type_name<T>());
       auto& p = db->at<T>();
       p.first += n;
       p.second += n;
@@ -99,7 +93,7 @@ struct tracing_allocator {
     if (db) {
       db->at<T>().first -= n;
       db->first -= n * sizeof(T);
-      db->log("allocator -", n, " ", detail::type_name<T>());
+      db->log("allocator -", n, " ", boost::histogram::detail::type_name<T>());
     }
     ::operator delete((void*)p);
   }
@@ -109,17 +103,17 @@ struct tracing_allocator {
     if (db) {
       if (db->failure_countdown >= 0) {
         const auto count = db->failure_countdown--;
-        db->log("allocator construct ", detail::type_name<T>(), "[ failure in ", count,
-                "]");
+        db->log("allocator construct ", boost::histogram::detail::type_name<T>(),
+                "[ failure in ", count, "]");
         if (count == 0) BOOST_THROW_EXCEPTION(std::bad_alloc{});
       } else
-        db->log("allocator construct ", detail::type_name<T>());
+        db->log("allocator construct ", boost::histogram::detail::type_name<T>());
     }
     ::new (static_cast<void*>(p)) T(std::forward<Ts>(ts)...);
   }
 
   void destroy(T* p) {
-    if (db) db->log("allocator destroy ", detail::type_name<T>());
+    if (db) db->log("allocator destroy ", boost::histogram::detail::type_name<T>());
     p->~T();
   }
 };
@@ -135,8 +129,3 @@ constexpr bool operator!=(const tracing_allocator<T>& t,
                           const tracing_allocator<U>& u) noexcept {
   return !operator==(t, u);
 }
-
-} // namespace histogram
-} // namespace boost
-
-#endif
