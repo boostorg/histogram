@@ -159,12 +159,11 @@ Result value_as(const Axis& axis, real_index_type index) {
   @param axis any axis instance
   @param value argument to be passed to `index` method
 */
-template <class Axis, class U>
-axis::index_type index(const Axis& axis, const U& value) noexcept(
-    std::is_convertible<U,
-                        std::decay_t<detail::arg_type<decltype(&Axis::index)>>>::value) {
-  using V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>;
-  return axis.index(detail::try_cast<V, std::invalid_argument>(value));
+template <class Axis, class U,
+          class _V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>>
+axis::index_type index(const Axis& axis,
+                       const U& value) noexcept(std::is_convertible<U, _V>::value) {
+  return axis.index(detail::try_cast<_V, std::invalid_argument>(value));
 }
 
 // specialization for variant
@@ -184,14 +183,13 @@ axis::index_type index(const variant<Ts...>& axis, const U& value) {
   @param axis any axis instance
   @param value argument to be passed to `update` or `index` method
 */
-template <class Axis, class U>
+template <class Axis, class U,
+          class _V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>>
 std::pair<index_type, index_type> update(Axis& axis, const U& value) noexcept(
-    std::is_convertible<U,
-                        std::decay_t<detail::arg_type<decltype(&Axis::index)>>>::value) {
-  using V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>;
+    std::is_convertible<U, _V>::value) {
   return detail::static_if_c<static_options<Axis>::test(option::growth)>(
       [&value](auto& a) {
-        return a.update(detail::try_cast<V, std::invalid_argument>(value));
+        return a.update(detail::try_cast<_V, std::invalid_argument>(value));
       },
       [&value](auto& a) { return std::make_pair(index(a, value), index_type{0}); }, axis);
 }
