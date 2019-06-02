@@ -27,16 +27,6 @@ template <class T>
 using static_options_impl = axis::option::bitset<T::options()>;
 
 template <class I, class D, class A>
-decltype(auto) value_method_switch_impl2(std::true_type, I&& f, D&&, const A& a) {
-  return std::forward<I>(f)(a);
-}
-
-template <class I, class D, class A>
-decltype(auto) value_method_switch_impl2(std::false_type, I&&, D&& f, const A& a) {
-  return std::forward<D>(f)(a);
-}
-
-template <class I, class D, class A>
 double value_method_switch_impl1(std::false_type, I&&, D&&, const A&) {
   BOOST_THROW_EXCEPTION(std::runtime_error(cat(type_name<A>(), " has no value method")));
 #ifndef _MSC_VER // msvc warns about unreachable return
@@ -47,8 +37,8 @@ double value_method_switch_impl1(std::false_type, I&&, D&&, const A&) {
 template <class I, class D, class A>
 decltype(auto) value_method_switch_impl1(std::true_type, I&& i, D&& d, const A& a) {
   using T = arg_type<decltype(&A::value)>;
-  return value_method_switch_impl2(std::is_same<T, axis::index_type>{},
-                                   std::forward<I>(i), std::forward<D>(d), a);
+  return static_if<std::is_same<T, axis::index_type>>(std::forward<I>(i),
+                                                      std::forward<D>(d), a);
 }
 
 template <class I, class D, class A>
