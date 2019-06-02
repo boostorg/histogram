@@ -65,7 +65,7 @@ matrix:
       script:
         - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on &&
           ../../b2 -j2 -a toolset=gcc-8 cxxstd=latest warnings-as-errors=on
-          cxxflags="-fno-exceptions -fno-rtti -DBOOST_NO_EXCEPTIONS" test//minimal
+          cxxflags="-fno-exceptions -fno-rtti" test//minimal
 
 before_script:
   # Cloning minimal set of Boost libraries

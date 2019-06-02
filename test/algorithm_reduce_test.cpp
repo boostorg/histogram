@@ -9,11 +9,13 @@
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
-#include "throw_exception.hpp"
+#include <boost/histogram/ostream.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <vector>
+#include "throw_exception.hpp"
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;

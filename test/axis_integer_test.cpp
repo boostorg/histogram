@@ -6,9 +6,10 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include "throw_exception.hpp"
+#include <boost/histogram/axis/ostream.hpp>
 #include <limits>
 #include <type_traits>
+#include "throw_exception.hpp"
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
@@ -24,7 +25,11 @@ int main() {
 
   // axis::integer with double type
   {
-    axis::integer<double> a{-1, 2};
+    axis::integer<double> a{-1, 2, "foo"};
+    BOOST_TEST_EQ(a.metadata(), "foo");
+    BOOST_TEST_EQ(static_cast<const axis::integer<double>&>(a).metadata(), "foo");
+    a.metadata() = "bar";
+    BOOST_TEST_EQ(static_cast<const axis::integer<double>&>(a).metadata(), "bar");
     BOOST_TEST_EQ(a.bin(-1).lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.bin(a.size()).upper(), std::numeric_limits<double>::infinity());
     axis::integer<double> b;

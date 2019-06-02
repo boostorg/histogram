@@ -7,10 +7,12 @@
 #ifndef BOOST_HISTOGRAM_TEST_UTILITY_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_TEST_UTILITY_HISTOGRAM_HPP
 
-#include <boost/histogram/axis.hpp>
-#include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/axis/category.hpp>
+#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variable.hpp>
+#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/make_histogram.hpp>
-#include <boost/histogram/ostream.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <type_traits>
 #include <vector>
@@ -20,7 +22,12 @@ namespace histogram {
 
 template <typename... Ts>
 auto make_axis_vector(const Ts&... ts) {
-  using Var = boost::mp11::mp_unique<axis::variant<Ts...>>;
+  // make sure the variant is never trivial (contains only one type)
+  using R = axis::regular<>;
+  using I = axis::integer<>;
+  using V = axis::variable<>;
+  using C = axis::category<>;
+  using Var = boost::mp11::mp_unique<axis::variant<Ts..., R, I, V, C>>;
   return std::vector<Var>({Var(ts)...});
 }
 

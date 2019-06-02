@@ -8,15 +8,16 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/cat.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/detail/type_name.hpp>
 #include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
+#include "throw_exception.hpp"
 #include "utility_allocator.hpp"
 #include "utility_axis.hpp"
 
@@ -28,8 +29,9 @@ int main() {
 
   {
     using meta_type = std::vector<int>;
-    auto a = axis::variant<axis::integer<double>, axis::category<std::string, meta_type>>{
-        axis::integer<double>(0, 2, "foo")};
+    using variant_type =
+        axis::variant<axis::integer<double>, axis::category<std::string, meta_type>>;
+    auto a = variant_type{axis::integer<double>(0, 2, "foo")};
     BOOST_TEST_EQ(a.index(-10), -1);
     BOOST_TEST_EQ(a.index(-1), -1);
     BOOST_TEST_EQ(a.index(0), 0);
@@ -43,13 +45,14 @@ int main() {
     BOOST_TEST_EQ(a.bin(a.size() + 10).upper(), std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.metadata(), "foo");
     a.metadata() = "bar";
-    BOOST_TEST_EQ(a.metadata(), "bar");
+    BOOST_TEST_EQ(static_cast<const variant_type&>(a).metadata(), "bar");
     BOOST_TEST_EQ(a.options(), axis::option::underflow | axis::option::overflow);
 
     a = axis::category<std::string, meta_type>({"A", "B"}, {1, 2, 3});
     BOOST_TEST_EQ(a.index("A"), 0);
     BOOST_TEST_EQ(a.index("B"), 1);
     BOOST_TEST_THROWS(a.metadata(), std::runtime_error);
+    BOOST_TEST_THROWS(static_cast<const variant_type&>(a).metadata(), std::runtime_error);
     BOOST_TEST_EQ(a.options(), axis::option::overflow_t::value);
   }
 

@@ -6,11 +6,12 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/category.hpp>
-#include "throw_exception.hpp"
+#include <boost/histogram/axis/ostream.hpp>
 #include <limits>
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include "throw_exception.hpp"
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
@@ -28,7 +29,13 @@ int main() {
   // axis::category
   {
     std::string A("A"), B("B"), C("C"), other;
-    axis::category<std::string> a({A, B, C});
+
+    axis::category<std::string> a({A, B, C}, "foo");
+    BOOST_TEST_EQ(a.metadata(), "foo");
+    BOOST_TEST_EQ(static_cast<const axis::category<std::string>&>(a).metadata(), "foo");
+    a.metadata() = "bar";
+    BOOST_TEST_EQ(static_cast<const axis::category<std::string>&>(a).metadata(), "bar");
+
     axis::category<std::string> b;
     BOOST_TEST_NE(a, b);
     b = a;

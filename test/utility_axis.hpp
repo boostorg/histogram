@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_AXIS_HPP
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/fwd.hpp>
 #include "utility_meta.hpp"
 

@@ -6,16 +6,18 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/variable.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/literals.hpp>
+#include <boost/histogram/ostream.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
 #include <iterator>
 #include <type_traits>
 #include <vector>
+#include "throw_exception.hpp"
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;

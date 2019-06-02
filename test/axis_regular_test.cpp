@@ -5,12 +5,13 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
-#include "throw_exception.hpp"
 #include <limits>
 #include <sstream>
 #include <type_traits>
 #include "is_close.hpp"
+#include "throw_exception.hpp"
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
@@ -43,7 +44,11 @@ int main() {
 
   // input, output
   {
-    axis::regular<> a{4, -2, 2};
+    axis::regular<> a{4, -2, 2, "foo"};
+    BOOST_TEST_EQ(a.metadata(), "foo");
+    BOOST_TEST_EQ(static_cast<const axis::regular<>&>(a).metadata(), "foo");
+    a.metadata() = "bar";
+    BOOST_TEST_EQ(static_cast<const axis::regular<>&>(a).metadata(), "bar");
     BOOST_TEST_EQ(a.bin(-1).lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.bin(a.size()).upper(), std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.index(-10.), -1);

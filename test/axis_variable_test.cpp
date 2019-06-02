@@ -5,12 +5,13 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/variable.hpp>
-#include "throw_exception.hpp"
 #include <limits>
 #include <type_traits>
 #include <vector>
 #include "is_close.hpp"
+#include "throw_exception.hpp"
 #include "utility_axis.hpp"
 
 using namespace boost::histogram;
@@ -28,8 +29,12 @@ int main() {
 
   // axis::variable
   {
-    axis::variable<> a{-1, 0, 1};
+    axis::variable<> a{{-1, 0, 1}, "foo"};
     BOOST_TEST_EQ(a.size(), 2);
+    BOOST_TEST_EQ(a.metadata(), "foo");
+    BOOST_TEST_EQ(static_cast<const axis::variable<>&>(a).metadata(), "foo");
+    a.metadata() = "bar";
+    BOOST_TEST_EQ(static_cast<const axis::variable<>&>(a).metadata(), "bar");
     BOOST_TEST_EQ(a.bin(-1).lower(), -std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.bin(a.size()).upper(), std::numeric_limits<double>::infinity());
     BOOST_TEST_EQ(a.value(0), -1);

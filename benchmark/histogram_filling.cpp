@@ -7,7 +7,6 @@
 #include <benchmark/benchmark.h>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
-#include <boost/histogram/unlimited_storage.hpp>
 #include <memory>
 #include "../test/throw_exception.hpp"
 #include "../test/utility_histogram.hpp"
@@ -19,6 +18,17 @@ struct assert_check {
     BOOST_ASSERT(false); // don't run with asserts enabled
   }
 } _;
+
+using SStore = std::vector<int>;
+
+// make benchmark compatible with older versions of the library
+#if __has_include(<boost/histogram/unlimited_storage.hpp>)
+#include <boost/histogram/unlimited_storage.hpp>
+using DStore = boost::histogram::unlimited_storage<>;
+#else
+#include <boost/histogram/adaptive_storage.hpp>
+using DStore = boost::histogram::adaptive_storage<>;
+#endif
 
 using namespace boost::histogram;
 using reg = axis::regular<>;
@@ -52,9 +62,6 @@ static void fill_6d(benchmark::State& state) {
   for (auto _ : state)
     benchmark::DoNotOptimize(h(gen(), gen(), gen(), gen(), gen(), gen()));
 }
-
-using SStore = std::vector<int>;
-using DStore = unlimited_storage<>;
 
 BENCHMARK_TEMPLATE(fill_1d, static_tag, SStore, uniform);
 BENCHMARK_TEMPLATE(fill_1d, static_tag, DStore, uniform);

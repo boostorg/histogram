@@ -8,10 +8,11 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variant.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/serialization.hpp>
+#include "throw_exception.hpp"
 #include "utility_axis.hpp"
 #include "utility_serialization.hpp"
 

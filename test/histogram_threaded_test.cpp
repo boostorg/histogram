@@ -8,11 +8,13 @@
 #include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include "throw_exception.hpp"
+#include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/ostream.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <iostream>
 #include <random>
 #include <thread>
+#include "throw_exception.hpp"
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;

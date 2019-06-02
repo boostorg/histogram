@@ -6,13 +6,15 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
+#include <boost/histogram/ostream.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <vector>
+#include "throw_exception.hpp"
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;

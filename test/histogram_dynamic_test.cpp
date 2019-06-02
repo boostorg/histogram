@@ -7,9 +7,10 @@
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis.hpp>
-#include "throw_exception.hpp"
+#include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/make_histogram.hpp>
+#include <boost/histogram/ostream.hpp>
 #include <cstdlib>
 #include <limits>
 #include <numeric>
@@ -17,6 +18,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include "throw_exception.hpp"
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;
