@@ -130,12 +130,14 @@ public:
 
   template <class T>
   T* get_if() noexcept {
+    static_assert(mp11::mp_count<variant, T>::value <= 1, "no unique match for T");
     constexpr auto i = mp11::mp_find<variant, T>{};
     return i == index_ ? &ref<T>() : nullptr;
   }
 
   template <class T>
   const T* get_if() const noexcept {
+    static_assert(mp11::mp_count<variant, T>::value <= 1, "no unique match for T");
     constexpr auto i = mp11::mp_find<variant, T>{};
     return i == index_ ? &ref<T>() : nullptr;
   }
