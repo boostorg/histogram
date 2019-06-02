@@ -44,8 +44,13 @@ matrix:
       after_success:
         - GCOV=gcov-5 tools/cov.sh
 
+    - name: "gcc-5: no-exceptions, no-rtti"
+      script:
+        - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on
+          cxxflags="-fno-exceptions -fno-rtti" test//minimal
+
     - name: "clang-5: sanitizers"
-      sudo: required # Required by leak sanitizer
+      sudo: required # by leak sanitizer
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
@@ -57,15 +62,13 @@ matrix:
           ../../b2 -j2 toolset=clang-5 cxxstd=14
           variant=histogram_ubasan warnings-as-errors=on
 
-    - name: "gcc-8: c++latest, (no-)exceptions, (no-)rtti"
+    - name: "gcc-8: c++latest"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on &&
-          ../../b2 -j2 -a toolset=gcc-8 cxxstd=latest warnings-as-errors=on
-          cxxflags="-fno-exceptions -fno-rtti" test//minimal
+        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on
 
 before_script:
   # Cloning minimal set of Boost libraries
