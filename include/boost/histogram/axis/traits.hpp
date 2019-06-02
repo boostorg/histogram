@@ -160,7 +160,9 @@ Result value_as(const Axis& axis, real_index_type index) {
   @param value argument to be passed to `index` method
 */
 template <class Axis, class U>
-axis::index_type index(const Axis& axis, const U& value) {
+axis::index_type index(const Axis& axis, const U& value) noexcept(
+    std::is_convertible<U,
+                        std::decay_t<detail::arg_type<decltype(&Axis::index)>>>::value) {
   using V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>;
   return axis.index(detail::try_cast<V, std::invalid_argument>(value));
 }
@@ -183,7 +185,9 @@ axis::index_type index(const variant<Ts...>& axis, const U& value) {
   @param value argument to be passed to `update` or `index` method
 */
 template <class Axis, class U>
-std::pair<index_type, index_type> update(Axis& axis, const U& value) {
+std::pair<index_type, index_type> update(Axis& axis, const U& value) noexcept(
+    std::is_convertible<U,
+                        std::decay_t<detail::arg_type<decltype(&Axis::index)>>>::value) {
   using V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>;
   return detail::static_if_c<static_options<Axis>::test(option::growth)>(
       [&value](auto& a) {
