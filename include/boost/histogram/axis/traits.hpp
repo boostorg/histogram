@@ -241,11 +241,11 @@ Result width_as(const Axis& axis, index_type index) {
 
   @tparam Axis axis type.
  */
-#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-BOOST_HISTOGRAM_DETECT(is_reducible, (T(std::declval<const T>(), axis::index_type{},
-                                        axis::index_type{}, 0u)));
-#else
 template <class Axis>
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+using is_reducible = std::is_constructible<Axis, const Axis&, axis::index_type,
+                                           axis::index_type, unsigned>;
+#else
 struct is_reducible;
 #endif
 
