@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.6)
 
-project(BoostHistogram VERSION 1.70.0 LANGUAGES CXX)
+project(BoostHistogram VERSION 1.71.0 LANGUAGES CXX)
 
 add_library(boost_histogram INTERFACE)
 set_property(TARGET boost_histogram PROPERTY EXPORT_NAME histogram)

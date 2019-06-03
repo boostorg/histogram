@@ -105,3 +105,5 @@ endif()
 # boost_test(TYPE run SOURCES histogram_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES axis_variant_serialization_test.cpp
 #   LIBRARIES Boost::histogram Boost::core Boost::serialization)
+
+boost_test(SOURCES check_cmake_version.cpp ARGUMENTS ${PROJECT_VERSION} LIBRARIES Boost::core Boost::config)
