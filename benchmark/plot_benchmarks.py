@@ -24,7 +24,7 @@ def get_benchmarks(results):
                 benchmarks[name].append((commits.index(hash), time))
     return benchmarks
 
-with shelve.open(sys.argv[1]) as results:
+with shelve.open("benchmark_results") as results:
     benchmarks = get_benchmarks(results)
 
 fig, ax = plt.subplots(4, 1, figsize=(10, 10), sharex=True)
@@ -80,7 +80,7 @@ def onpick(event):
 
     def worker(fig, ax, hash, lock):
         with lock:
-            with shelve.open(sys.argv[1]) as results:
+            with shelve.open("benchmark_results") as results:
                 del results[hash]
                 run(results, comments, hash)
                 benchmarks = get_benchmarks(results)
