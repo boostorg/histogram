@@ -1,0 +1,136 @@
+{
+  "context": {
+    "date": "2019-06-03 22:33:49",
+    "host_name": "hfm-1608b",
+    "executable": "./benchmark/histogram_filling_root",
+    "num_cpus": 4,
+    "mhz_per_cpu": 2900,
+    "cpu_scaling_enabled": false,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 32768000,
+        "num_sharing": 2
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 32768000,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 262144000,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 3145728000,
+        "num_sharing": 4
+      }
+    ],
+    "load_avg": [2.11182,2.0083,1.92334],
+    "library_build_type": "release"
+  },
+  "benchmarks": [
+    {
+      "name": "fill_1d<uniform>",
+      "run_name": "fill_1d<uniform>",
+      "run_type": "iteration",
+      "repetitions": 0,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 55636361,
+      "real_time": 9.5863430571955472e+00,
+      "cpu_time": 9.5218305165573280e+00,
+      "time_unit": "ns"
+    },
+    {
+      "name": "fill_2d<uniform>",
+      "run_name": "fill_2d<uniform>",
+      "run_type": "iteration",
+      "repetitions": 0,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 43799000,
+      "real_time": 1.5803449599415702e+01,
+      "cpu_time": 1.5788305669079202e+01,
+      "time_unit": "ns"
+    },
+    {
+      "name": "fill_3d<uniform>",
+      "run_name": "fill_3d<uniform>",
+      "run_type": "iteration",
+      "repetitions": 0,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 16820939,
+      "real_time": 3.5477811732387629e+01,
+      "cpu_time": 3.5454263284588336e+01,
+      "time_unit": "ns"
+    },
+    {
+      "name": "fill_6d<uniform>",
+      "run_name": "fill_6d<uniform>",
+      "run_type": "iteration",
+      "repetitions": 0,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 9258035,
+      "real_time": 6.5875588502446192e+01,
+      "cpu_time": 6.5811049536969804e+01,
+      "time_unit": "ns"
+    },
+    {
+      "name": "fill_1d<normal>",
+      "run_name": "fill_1d<normal>",
+      "run_type": "iteration",
+      "repetitions": 0,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 53033115,
+      "real_time": 1.1722145663142236e+01,
+      "cpu_time": 1.1640557036862727e+01,
+      "time_unit": "ns"
+    },
+    {
+      "name": "fill_2d<normal>",
+      "run_name": "fill_2d<normal>",
+      "run_type": "iteration",
+      "repetitions": 0,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 41097660,
+      "real_time": 1.7116834291723340e+01,
+      "cpu_time": 1.7074402776216466e+01,
+      "time_unit": "ns"
+    },
+    {
+      "name": "fill_3d<normal>",
+      "run_name": "fill_3d<normal>",
+      "run_type": "iteration",
+      "repetitions": 0,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 21762650,
+      "real_time": 3.1504170172533939e+01,
+      "cpu_time": 3.1479530296172520e+01,
+      "time_unit": "ns"
+    },
+    {
+      "name": "fill_6d<normal>",
+      "run_name": "fill_6d<normal>",
+      "run_type": "iteration",
+      "repetitions": 0,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 8018511,
+      "real_time": 7.8335543968218118e+01,
+      "cpu_time": 7.8266775464921039e+01,
+      "time_unit": "ns"
+    }
+  ]
+}

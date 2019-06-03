@@ -2,6 +2,7 @@ import os
 import numpy as np
 import sys
 import re
+import json
 from collections import defaultdict, OrderedDict
 from matplotlib.patches import Rectangle
 from matplotlib.lines import Line2D
@@ -12,12 +13,18 @@ import matplotlib as mpl
 mpl.rcParams.update(mpl.rcParamsDefault)
 
 data = defaultdict(lambda:[])
-for line in open(sys.argv[1]):
-    if line.startswith("baseline"):
-        continue
-    descr, time = [x for x in line.split() if x]
-    dim, label, dist = descr.split("-")
-    data[int(dim[0])].append((label, dist, float(time)))
+for fn in sys.argv[1:]:
+    for bench in json.load(open(fn))["benchmarks"]:
+        name = bench["name"]
+        time = min(bench["cpu_time"], bench["real_time"])
+        m = re.match("fill_([0-9])d<([^>]+)>", name)
+        tags = m.group(2).split(", ")
+        dim = int(m.group(1))
+        label = re.search("fill_([a-z]+).json", fn).group(1)
+        dist = tags[0]
+        if label == "boost":
+            label += "-" + {"dynamic_tag":"D", "static_tag":"S"}[tags[1]] + tags[2][0]
+        data[dim].append((label, dist, time / dim))
 
 plt.figure()
 if os.path.exists("/proc/cpuinfo"):
@@ -48,8 +55,10 @@ for dim in sorted(data):
             col = "0.6"
         if "gsl" in label:
             col = "0.3"
-        r1 = Rectangle((0, i), t1, 0.5, facecolor=col)
-        r2 = Rectangle((0, i+0.5), t2, 0.5, facecolor=col)
+        tmin = min(t1, t2)
+        tmax = max(t1, t2)
+        r1 = Rectangle((0, i), tmin, 1, facecolor=col)
+        r2 = Rectangle((tmin, i+0.5), tmax-tmin, 0.5, facecolor=col)
         plt.gca().add_artist(r1)
         plt.gca().add_artist(r2)
         tx = Text(-0.1, i+0.5, "%s" % label,
@@ -63,10 +72,10 @@ for dim in sorted(data):
               fontproperties=font0, va="center", ha="right", clip_on=False)
     plt.gca().add_artist(tx)
 plt.ylim(0, i)
-plt.xlim(0, 30)
+plt.xlim(0, 20)
 
 plt.tick_params("y", left=False, labelleft=False)
-plt.xlabel("fill time per random number in nanoseconds (smaller is better)")
+plt.xlabel("fill time per random input value in nanoseconds (smaller is better)")
 
 plt.savefig("fill_performance.svg")
 plt.show()
