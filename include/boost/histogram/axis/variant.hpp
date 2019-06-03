@@ -14,12 +14,12 @@
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
-#include <boost/histogram/detail/variant.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/function.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/variant2/variant.hpp>
 #include <ostream>
 #include <stdexcept>
 #include <type_traits>
@@ -32,12 +32,13 @@ namespace detail {
 struct variant_access {
   template <class T, class T0, class Variant>
   static auto get_if_impl(mp11::mp_list<T, T0>, Variant* v) noexcept {
-    return v->impl.template get_if<T>();
+    return boost::variant2::get_if<T>(&(v->impl));
   }
 
   template <class T, class T0, class Variant>
   static auto get_if_impl(mp11::mp_list<T, T0*>, Variant* v) noexcept {
-    auto tp = v->impl.template get_if<mp11::mp_if<std::is_const<T0>, const T*, T*>>();
+    auto tp =
+        boost::variant2::get_if<mp11::mp_if<std::is_const<T0>, const T*, T*>>(&(v->impl));
     return tp ? *tp : nullptr;
   }
 
@@ -49,12 +50,14 @@ struct variant_access {
 
   template <class T0, class Visitor, class Variant>
   static decltype(auto) visit_impl(mp11::mp_identity<T0>, Visitor&& vis, Variant&& v) {
-    return v.impl.visit(vis);
+    return boost::variant2::visit(std::forward<Visitor>(vis), v.impl);
   }
 
   template <class T0, class Visitor, class Variant>
   static decltype(auto) visit_impl(mp11::mp_identity<T0*>, Visitor&& vis, Variant&& v) {
-    return v.impl.visit([&vis](auto&& x) -> decltype(auto) { return vis(*x); });
+    return boost::variant2::visit(
+        [&vis](auto&& x) -> decltype(auto) { return std::forward<Visitor>(vis)(*x); },
+        v.impl);
   }
 
   template <class Visitor, class Variant>
@@ -72,7 +75,7 @@ namespace axis {
 /// Polymorphic axis type
 template <class... Ts>
 class variant : public iterator_mixin<variant<Ts...>> {
-  using impl_type = detail::variant<Ts...>;
+  using impl_type = boost::variant2::variant<Ts...>;
 
   template <class T>
   using is_bounded_type = mp11::mp_contains<variant, std::decay_t<T>>;
@@ -237,8 +240,15 @@ public:
   */
   template <class T>
   bool operator==(const T& t) const {
-    const T* tp = detail::variant_access::template get_if<T>(this);
-    return tp && detail::relaxed_equal(*tp, t);
+    return detail::static_if_c<(mp11::mp_contains<impl_type, T>::value ||
+                                mp11::mp_contains<impl_type, T*>::value ||
+                                mp11::mp_contains<impl_type, const T*>::value)>(
+        [&](const auto& t) {
+          using U = std::decay_t<decltype(t)>;
+          const U* tp = detail::variant_access::template get_if<U>(this);
+          return tp && detail::relaxed_equal(*tp, t);
+        },
+        [&](const auto&) { return false; }, t);
   }
 
   /// The negation of operator==.

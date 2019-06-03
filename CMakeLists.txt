@@ -28,6 +28,7 @@ target_link_libraries(boost_histogram
         Boost::core
         Boost::mp11
         Boost::throw_exception
+        Boost::variant2
 )
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -60,6 +61,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   boost_fetch(boostorg/core TAG develop)
   boost_fetch(boostorg/mp11 TAG develop)
   boost_fetch(boostorg/throw_exception TAG develop)
+  boost_fetch(boostorg/variant2 TAG develop)
 
   ## No cmake support yet
   # boost_fetch(boostorg/accumulators TAG develop)

@@ -60,7 +60,6 @@ alias cxx14 :
     [ run detail_relaxed_equal_test.cpp ]
     [ run detail_replace_default_test.cpp ]
     [ run detail_tuple_slice_test.cpp ]
-    [ run detail_variant_test.cpp ]
     [ run histogram_dynamic_test.cpp ]
     [ run histogram_growing_test.cpp ]
     [ run histogram_mixed_test.cpp ]
