@@ -28,6 +28,8 @@ using static_options_impl = axis::option::bitset<T::options()>;
 
 template <class I, class D, class A>
 double value_method_switch_impl1(std::false_type, I&&, D&&, const A&) {
+  // comma trick to make all compilers happy; some would complain about
+  // unreachable code after the throw, others about a missing return
   return BOOST_THROW_EXCEPTION(
              std::runtime_error(cat(type_name<A>(), " has no value method"))),
          double{};
