@@ -8,8 +8,9 @@ from collections import defaultdict
 from run_benchmarks import get_commits, run
 import numpy as np
 import threading
-threads = []
-shelve_lock = threading.Lock()
+
+thread = None
+current_index = 0
 
 commits, comments = get_commits()
 
@@ -35,7 +36,7 @@ for name, xy in benchmarks.items():
     if "uniform" in name: continue
     if "_1d" in name:
         x, y = np.transpose(xy)
-        plt.plot(x, y, ".-", label=name, picker=5)
+        plt.plot(x, y, ".-", label=name)
 plt.legend(fontsize="xx-small")
 
 plt.sca(ax[1])
@@ -43,7 +44,7 @@ for name, xy in benchmarks.items():
     if "uniform" in name: continue
     if "_2d" in name:
         x, y = np.transpose(xy)
-        plt.plot(x, y, ".-", label=name, picker=5)
+        plt.plot(x, y, ".-", label=name)
 plt.legend(fontsize="xx-small")
 
 plt.sca(ax[2])
@@ -51,7 +52,7 @@ for name, xy in benchmarks.items():
     if "uniform" in name: continue
     if "_3d" in name:
         x, y = np.transpose(xy)
-        plt.plot(x, y, ".-", label=name, picker=5)
+        plt.plot(x, y, ".-", label=name)
 plt.legend(fontsize="xx-small")
 
 plt.sca(ax[3])
@@ -59,48 +60,48 @@ for name, xy in benchmarks.items():
     if "uniform" in name: continue
     if "_6d" in name:
         x, y = np.transpose(xy)
-        plt.plot(x, y, ".-", label=name, picker=5)
+        plt.plot(x, y, ".-", label=name)
 plt.legend(fontsize="xx-small")
 
 plt.figtext(0.01, 0.5, "time per loop / ns [smaller is better]", rotation=90, va="center")
 
 def format_coord(x, y):
-    ind = max(0, min(int(x + 0.5), len(commits) - 1))
-    hash = commits[ind]
+    global current_index
+    current_index = max(0, min(int(x + 0.5), len(commits) - 1))
+    hash = commits[current_index]
     comment = comments[hash]
     return f"{hash} {comment}"
 
 for axi in ax.flatten():
     axi.format_coord = format_coord
 
-def onpick(event):
-    thisline = event.artist
-    ind = event.ind[0]
-    hash = commits[int(thisline.get_xdata()[ind])]
+def on_key_press(event):
+    global thread
+    if thread and thread.is_alive(): return
 
-    def worker(fig, ax, hash, lock):
-        with lock:
-            with shelve.open("benchmark_results") as results:
-                del results[hash]
-                run(results, comments, hash)
-                benchmarks = get_benchmarks(results)
+    if event.key != "r": return
 
-            for name in benchmarks:
-                bench = benchmarks[name]
-                _, y = bench[ind]
-                for axi in ax.flatten():
-                    for artist in axi.get_children():
-                        if isinstance(artist, lines.Line2D) and artist.get_label() == name:
-                            ydata = artist.get_ydata()
-                            ydata[ind] = y
-                            artist.set_ydata(ydata)
-            fig.canvas.draw()
+    hash = commits[current_index]
 
-    print("updating", hash)
-    t = threading.Thread(target=worker, args=(fig, ax, hash, shelve_lock))
-    threads.append(t)
-    t.start()
+    def worker(fig, ax, hash):
+        with shelve.open("benchmark_results") as results:
+            run(results, comments, hash, True)
+            benchmarks = get_benchmarks(results)
 
-fig.canvas.mpl_connect('pick_event', onpick)
+        for name in benchmarks:
+            xy = benchmarks[name]
+            x, y = np.transpose(xy)
+            for axi in ax.flatten():
+                for artist in axi.get_children():
+                    if isinstance(artist, lines.Line2D) and artist.get_label() == name:
+                        artist.set_xdata(x)
+                        artist.set_ydata(y)
+
+        fig.canvas.draw()
+
+    thread = threading.Thread(target=worker, args=(fig, ax, hash))
+    thread.start()
+
+fig.canvas.mpl_connect('key_press_event', on_key_press)
 
 plt.show()
