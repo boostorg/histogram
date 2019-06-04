@@ -46,11 +46,10 @@ int main() {
     void operator()(double x) {
       if (x > value) value = x;
     }
-    double value = 0;
+    double value = 0; // value is initialized to zero
   };
 
-  // Create a histogram with the custom accumulator, initialize the accumulators
-  // to 1.
+  // Create a histogram that uses the custom accumulator.
   auto h2 = make_histogram_with(dense_storage<max>(), axis);
   h2(0.0, sample(2));   // sample 2 goes to first bin
   h2(0.1, sample(2.5)); // sample 2.5 goes to first bin
