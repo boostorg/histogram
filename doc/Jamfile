@@ -47,8 +47,8 @@ boostbook histogram
   <xsl:param>boost.libraries=../../../libraries.htm
   <xsl:param>boost.mathjax=1
   <xsl:param>chunk.first.sections=1
-  <xsl:param>generate.section.toc.level=1
-  <xsl:param>generate.toc="chapter nop section nop"
+  <xsl:param>generate.toc="chapter nop section toc"
+  <xsl:param>toc.section.depth=3
   <dependency>reference_pp.xml
 ;
 
