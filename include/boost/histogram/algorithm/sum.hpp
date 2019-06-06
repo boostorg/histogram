@@ -30,7 +30,7 @@ auto sum(const histogram<A, S>& h) {
   using T = typename histogram<A, S>::value_type;
   using Sum = mp11::mp_if<std::is_arithmetic<T>, accumulators::sum<double>, T>;
   Sum sum;
-  for (auto x : h) sum += x;
+  for (auto&& x : h) sum += x;
   using R = mp11::mp_if<std::is_arithmetic<T>, double, T>;
   return static_cast<R>(sum);
 }

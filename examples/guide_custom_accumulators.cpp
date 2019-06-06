@@ -27,7 +27,7 @@ int main() {
   h1(0.5, sample(4)); // sample 4 goes to second bin
 
   std::ostringstream os1;
-  for (auto x : indexed(h1)) {
+  for (auto&& x : indexed(h1)) {
     // Accumulators usually have methods to access their state. Use the arrow
     // operator to access them. Here, `count()` gives the number of samples,
     // `value()` the mean, and `variance()` the variance estimate of the mean.
@@ -57,7 +57,7 @@ int main() {
   h2(0.5, sample(4));   // sample 4 goes to second bin
 
   std::ostringstream os2;
-  for (auto x : indexed(h2)) {
+  for (auto&& x : indexed(h2)) {
     os2 << boost::format("%i value %.1f\n") % x.index() % x->value;
   }
   std::cout << os2.str() << std::flush;

@@ -269,7 +269,7 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
   auto result = Histogram(std::move(axes), std::move(storage));
 
   auto idx = detail::make_stack_buffer<int>(unsafe_access::axes(result));
-  for (auto x : indexed(hist, coverage::all)) {
+  for (auto&& x : indexed(hist, coverage::all)) {
     auto i = idx.begin();
     auto o = opts.begin();
     for (auto j : x.indices()) {

@@ -33,7 +33,7 @@ The factory function named [headerref boost/histogram/make_histogram.hpp make_hi
 The library provides a number of useful axis types. The builtin axis types can be configured to fit many needs. If you still need something more exotic, no problem, it is easy to write your own axis types, see [link histogram.guide.expert Advanced usage]. In the following, we give some advice when to use which of the builtin axis types.
 
 [section Overview]
- 
+
 [variablelist
   [
     [
@@ -203,7 +203,7 @@ When the weights come from a stochastic process, it is useful to keep track of t
 [import ../examples/guide_fill_weighted_histogram.cpp]
 [guide_fill_weighted_histogram]
 
-When iterating over all cells, using [memberref boost::histogram::histogram::at histogram::at] can be inconvenient. The [funcref boost::histogram::indexed indexed] range generator is provided for this case, which is very convenient and /faster/ than naive for-loops.
+To iterate over all cells, the [funcref boost::histogram::indexed indexed] range generator is very convenient and also efficient. For almost all configurations, the range generator iterates /faster/ than a naive for-loop. Under- and overflow are skipped by default.
 
 [import ../examples/guide_indexed_access.cpp]
 [guide_indexed_access]
@@ -212,7 +212,7 @@ When iterating over all cells, using [memberref boost::histogram::histogram::at 
 
 [section Using profiles]
 
-Histograms from this library can do more than counting, they can hold arbitrary accumulators which accept samples. A histogram is called a /profile/, if it computes the means of the samples in each cell. 
+Histograms from this library can do more than counting, they can hold arbitrary accumulators which accept samples. A histogram is called a /profile/, if it computes the means of the samples in each cell.
 
 Profiles can be generated with the factory function [funcref boost::histogram::make_profile make_profile].
 

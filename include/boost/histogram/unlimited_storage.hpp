@@ -106,16 +106,16 @@ void buffer_destroy(Allocator& a, typename std::allocator_traits<Allocator>::poi
 /**
   Memory-efficient storage for integral counters which cannot overflow.
 
-  This storage provides a no-overflow-guarantee if it is filled with integral weights
-  only. This storage implementation keeps a contiguous array of elemental counters, one
-  for each cell. If an operation is requested, which would overflow a counter, the whole
-  array is replaced with another of a wider integral type, then the operation is executed.
-  The storage uses integers of 8, 16, 32, 64 bits, and then switches to a multiprecision
+  This storage provides a no-overflow-guarantee if the counters are incremented with
+  integer weights. It maintains a contiguous array of elemental counters, one for each
+  cell. If an operation is requested which would overflow a counter, the array is
+  replaced with another of a wider integral type, then the operation is executed. The
+  storage uses integers of 8, 16, 32, 64 bits, and then switches to a multiprecision
   integral type, similar to those in
   [Boost.Multiprecision](https://www.boost.org/doc/libs/develop/libs/multiprecision/doc/html/index.html).
 
-  A scaling operation or adding a floating point number turns the elements into doubles,
-  which voids the no-overflow-guarantee.
+  A scaling operation or adding a floating point number triggers a conversion of the
+  elemental counters into doubles, which voids the no-overflow-guarantee.
 */
 template <class Allocator>
 class unlimited_storage {
@@ -525,7 +525,7 @@ public:
   const_iterator begin() const noexcept { return {&buffer_, 0}; }
   const_iterator end() const noexcept { return {&buffer_, size()}; }
 
-  /// @private used by unit tests, not part of generic storage interface
+  /// implementation detail; used by unit tests, not part of generic storage interface
   template <class T>
   unlimited_storage(std::size_t s, const T* p, const allocator_type& a = {})
       : buffer_(std::move(a)) {

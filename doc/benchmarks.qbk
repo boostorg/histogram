@@ -46,7 +46,7 @@ for (int i = 0; i < h.axis(0).size(); ++i) {
 }
 
 // same, with indexed range generator
-for (auto x : boost::histogram::indexed(h)) {
+for (auto&& x : boost::histogram::indexed(h)) {
   std::cout << x.index(0) << " " << x.index(1) << " " << *x << std::endl;
 }
 ```

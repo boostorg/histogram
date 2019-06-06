@@ -33,7 +33,7 @@ int main() {
 
   // builtin accumulators have methods to access their state
   std::ostringstream os;
-  for (auto x : indexed(h)) {
+  for (auto&& x : indexed(h)) {
     // use `.` to access methods of accessor, like `index()`
     // use `->` to access methods of accumulator
     const auto i = x.index();

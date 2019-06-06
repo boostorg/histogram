@@ -35,7 +35,7 @@ int main() {
     Iterate over bins and print profile.
   */
   std::ostringstream os;
-  for (auto x : indexed(p)) {
+  for (auto&& x : indexed(p)) {
     os << boost::format("bin %i [%3.1f, %3.1f) count %i mean %g\n") % x.index() %
               x.bin().lower() % x.bin().upper() % x->count() % x->value();
   }

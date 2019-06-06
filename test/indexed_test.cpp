@@ -4,6 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <algorithm>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
@@ -15,6 +16,7 @@
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
 #include <iterator>
+#include <ostream>
 #include <type_traits>
 #include <vector>
 #include "throw_exception.hpp"
@@ -35,8 +37,6 @@ void run_1d_tests(mp_list<IsDynamic, Coverage>) {
 
   auto ind = indexed(h, Coverage());
   auto it = ind.begin();
-  // calling begin second time yields end iterator but does not confuse the original range
-  BOOST_TEST(ind.begin() == ind.end());
   BOOST_TEST_EQ(it->indices().size(), 1);
   BOOST_TEST_EQ(it->indices()[0], Coverage() == coverage::all ? -1 : 0);
 
@@ -55,10 +55,10 @@ void run_1d_tests(mp_list<IsDynamic, Coverage>) {
   BOOST_TEST_EQ(it->bin(0), h.axis().bin(1));
   ++it;
   // check post-increment
-  auto prev = *it++;
-  BOOST_TEST_EQ(prev.index(0), 2);
-  BOOST_TEST_EQ(*prev, 4);
-  BOOST_TEST_EQ(prev.bin(0), h.axis().bin(2));
+  auto prev = it++;
+  BOOST_TEST_EQ(prev->index(0), 2);
+  BOOST_TEST_EQ(**prev, 4);
+  BOOST_TEST_EQ(prev->bin(0), h.axis().bin(2));
   if (Coverage() == coverage::all) {
     BOOST_TEST_EQ(it->index(0), 3);
     BOOST_TEST_EQ(**it, 5);
@@ -115,8 +115,44 @@ void run_density_tests(mp_list<IsDynamic, Coverage>) {
   // fill uniformly
   for (auto&& x : h) x = 1;
 
-  for (auto x : indexed(h, Coverage())) {
+  for (auto&& x : indexed(h, Coverage())) {
     BOOST_TEST_EQ(x.density(), *x / (x.bin(0).width() * x.bin(2).width()));
+  }
+}
+
+template <class IsDynamic, class Coverage>
+void run_stdlib_tests(mp_list<IsDynamic, Coverage>) {
+  auto ax = axis::regular<>(3, 0, 1);
+  auto ay = axis::integer<>(0, 2);
+  auto h = make_s(IsDynamic(), std::vector<int>(), ax, ay);
+
+  struct generator {
+    int i = 0;
+    int operator()() { return ++i; }
+  };
+
+  auto ind = indexed(h, Coverage());
+  std::generate(ind.begin(), ind.end(), generator{});
+
+  {
+    int i = 0;
+    for (auto&& x : ind) BOOST_TEST_EQ(*x, ++i);
+  }
+
+  {
+    auto it = std::min_element(ind.begin(), ind.end());
+    BOOST_TEST(it == ind.begin());
+    BOOST_TEST(it != ind.end());
+  }
+
+  {
+    auto it = std::max_element(ind.begin(), ind.end());
+    // get last before end()
+    auto it2 = ind.begin();
+    auto it3 = it2;
+    while (it2 != ind.end()) it3 = it2++;
+    BOOST_TEST(it == it3);
+    BOOST_TEST(it != ind.begin());
   }
 }
 
@@ -128,6 +164,7 @@ int main() {
         run_1d_tests(x);
         run_3d_tests(x);
         run_density_tests(x);
+        run_stdlib_tests(x);
       });
   return boost::report_errors();
 }

@@ -27,7 +27,7 @@ int main() {
   // use the `indexed` range adaptor to iterate over all bins;
   // it is not only more convenient but also faster than a hand-crafted loop!
   std::ostringstream os;
-  for (auto x : indexed(h)) {
+  for (auto&& x : indexed(h)) {
     // x is a special accessor object
     const auto i = x.index(0); // current index along first axis
     const auto j = x.index(1); // current index along second axis
@@ -48,7 +48,7 @@ int main() {
   // `indexed` skips underflow and overflow bins by default, but can be called
   // with the second argument `coverage::all` to walk over all bins
   std::ostringstream os2;
-  for (auto x : indexed(h, coverage::all)) {
+  for (auto&& x : indexed(h, coverage::all)) {
     os2 << boost::format("%2i %2i: %i\n") % x.index(0) % x.index(1) % *x;
   }
 

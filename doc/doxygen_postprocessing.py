@@ -30,7 +30,14 @@ def is_detail(x):
 
     p = x.find("purpose")
     if p is not None:
-        return p.text.lower().strip() == "implementation detail"
+        return p.text.lower().lstrip().startswith("implementation detail")
+    return False
+
+
+def is_deprecated(x):
+    p = x.find("purpose")
+    if p is not None:
+        return p.text.lower().lstrip().startswith("deprecated")
     return False
 
 
@@ -59,6 +66,12 @@ for item in select(is_detail, "type"):
     log("replacing", '"%s"' % item.text, 'with "unspecified"')
     item.clear()
     item.append(unspecified)
+
+# hide everything that's deprecated
+for item in select(is_deprecated, "typedef"):
+    parent = parent_map[item]
+    log("removing deprecated", item.tag, item.get("name"), "from", parent.tag, parent.get("name"))
+    parent.remove(item)
 
 # hide private member functions
 for item in select(lambda x: x.get("name") == "private member functions", "method-group"):

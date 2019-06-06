@@ -223,19 +223,25 @@ using buffer_size = mp11::mp_eval_or<
 
 template <class T, std::size_t N>
 class sub_array : public std::array<T, N> {
+  using base_type = std::array<T, N>;
+
 public:
-  explicit sub_array(std::size_t s) : size_(s) {
+  explicit sub_array(std::size_t s) noexcept(
+      std::is_nothrow_default_constructible<T>::value)
+      : size_(s) {
     BOOST_ASSERT_MSG(size_ <= N, "requested size exceeds size of static buffer");
   }
 
-  sub_array(std::size_t s, const T& value) : size_(s) {
+  sub_array(std::size_t s,
+            const T& value) noexcept(std::is_nothrow_copy_constructible<T>::value)
+      : size_(s) {
     BOOST_ASSERT_MSG(size_ <= N, "requested size exceeds size of static buffer");
     std::array<T, N>::fill(value);
   }
 
   // need to override both versions of std::array
-  auto end() noexcept { return std::array<T, N>::begin() + size_; }
-  auto end() const noexcept { return std::array<T, N>::begin() + size_; }
+  auto end() noexcept { return base_type::begin() + size_; }
+  auto end() const noexcept { return base_type::begin() + size_; }
 
   auto size() const noexcept { return size_; }
 

@@ -37,11 +37,11 @@ int main() {
     auto h = make_histogram( axis::regular<>(4, 0.0, 2.0) );
 
     // push some values into the histogram
-    for (auto value : { 0.4, 1.1, 0.3, 1.7, 10. })
+    for (auto&& value : { 0.4, 1.1, 0.3, 1.7, 10. })
       h(value);
 
     // iterate over bins
-    for (auto x : indexed(h)) {
+    for (auto&& x : indexed(h)) {
       std::cout << boost::format("bin %i [ %.1f, %.1f ): %i\n")
         % x.index() % x.bin().lower() % x.bin().upper() % *x;
     }
