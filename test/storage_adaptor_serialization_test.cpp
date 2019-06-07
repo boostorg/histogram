@@ -5,19 +5,20 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <array>
+#include <boost/assert.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/thread_safe.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <map>
 #include <vector>
+#include "throw_exception.hpp"
 #include "utility_serialization.hpp"
 
 using namespace boost::histogram;
 
 template <typename T>
-void test_serialization(const char* filename) {
+void test_serialization(const std::string& filename) {
   auto a = storage_adaptor<T>();
   a.reset(3);
   a[1] += 1;
@@ -30,15 +31,17 @@ void test_serialization(const char* filename) {
   BOOST_TEST(a == b);
 }
 
-int main() {
+int main(int argc, char** argv) {
+  BOOST_ASSERT(argc == 2);
+
   test_serialization<std::vector<int>>(
-      XML_PATH "storage_adaptor_serialization_test_vector_int.xml");
+      join(argv[1], "storage_adaptor_serialization_test_vector_int.xml"));
   test_serialization<std::array<unsigned, 10>>(
-      XML_PATH "storage_adaptor_serialization_test_array_unsigned.xml");
+      join(argv[1], "storage_adaptor_serialization_test_array_unsigned.xml"));
   test_serialization<std::map<std::size_t, double>>(
-      XML_PATH "storage_adaptor_serialization_test_map_double.xml");
+      join(argv[1], "storage_adaptor_serialization_test_map_double.xml"));
   test_serialization<std::vector<accumulators::thread_safe<int>>>(
-      XML_PATH "storage_adaptor_serialization_test_vector_thread_safe_int.xml");
+      join(argv[1], "storage_adaptor_serialization_test_vector_thread_safe_int.xml"));
 
   return boost::report_errors();
 }

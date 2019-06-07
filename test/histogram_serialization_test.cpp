@@ -4,12 +4,14 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/assert.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <cmath>
+#include <string>
 #include "throw_exception.hpp"
 #include "utility_histogram.hpp"
 #include "utility_serialization.hpp"
@@ -17,7 +19,7 @@
 using namespace boost::histogram;
 
 template <typename Tag>
-void run_tests(const char* filename) {
+void run_tests(const std::string& filename) {
   // histogram_serialization
   namespace tr = axis::transform;
   using def = use_default;
@@ -40,8 +42,9 @@ void run_tests(const char* filename) {
   BOOST_TEST_EQ(a, b);
 }
 
-int main() {
-  run_tests<static_tag>(XML_PATH "histogram_serialization_test_static.xml");
-  run_tests<dynamic_tag>(XML_PATH "histogram_serialization_test_dynamic.xml");
+int main(int argc, char** argv) {
+  BOOST_ASSERT(argc == 2);
+  run_tests<static_tag>(join(argv[1], "histogram_serialization_test_static.xml"));
+  run_tests<dynamic_tag>(join(argv[1], "histogram_serialization_test_dynamic.xml"));
   return boost::report_errors();
 }
