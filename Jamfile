@@ -7,6 +7,16 @@
 
 import common ;
 
+project
+    : requirements
+    <implicit-dependency>/boost//headers
+    <include>$(BOOST_ROOT)
+    <toolset>clang:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing"
+    <toolset>gcc:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing"
+    : default-build
+    <warnings>all
+    ;
+
 path-constant THIS_PATH : . ;
 
 # only works with clang because of -fsanitize-blacklist
@@ -22,14 +32,9 @@ variant histogram_coverage : debug :
     <linkflags>"--coverage"
     ;
 
-project
-    : requirements
-    <implicit-dependency>/boost//headers
-    <include>$(BOOST_ROOT)
-    <toolset>clang:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing"
-    <toolset>gcc:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing"
-    : default-build
-    <warnings>all
+variant histogram_no_exceptions : debug :
+    <cxxstd>latest
+    <exception-handling>off
     ;
 
 build-project test ;
