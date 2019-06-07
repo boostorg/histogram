@@ -4,6 +4,10 @@
 
 If you like Boost.Histogram, please star the project on Github! We want Boost.Histogram to be the best histogram library out there. If you give it a star, it becomes more visible and will gain more users. More users mean more user feedback to make the library even better.
 
+## Support
+
+Feel free to ask questions on https://gitter.im/boostorg/histogram.
+
 ## Reporting Issues
 
 We value your feedback about issues you encounter. The more information you provide the easier it is for developers to resolve the problem.
@@ -27,6 +31,16 @@ https://github.com/boostorg/boost/wiki/Getting-Started.
 To build the documentation, you need to install a few extra things, see
 https://www.boost.org/doc/libs/1_70_0/doc/html/quickbook/install.html.
 
+## Running Tests
+
+To run the tests from the project folder, do `b2 cxxstd=14 test`. You can also test the examples by executing `b2 cxxstd=14 examples`.
+
+Please report any tests failures to the issue tracker along with the test
+output and information on your system:
+
+* platform (Linux, Windows, OSX, ...)
+* compiler and version
+
 ## Coding Style
 
 Follow the [Boost Library Requirements and Guidelines](https://www.boost.org/development/requirements.html) and the established style in Boost.Histogram.
@@ -38,17 +52,3 @@ Using `clang-format -style=file` is recommended, which should pick up the `.clan
 ### Documentation
 
 Doxygen comments should be added for all user-facing functions and methods. Implementation details are not documented (everything in the `boost::histogram::detail` namespace is an implementation detail that can change at any time).
-
-## Running Tests
-
-To run the tests from the project folder, do `b2 cxxstd=14 test`. You can also test the examples by executing `b2 cxxstd=14 examples`.
-
-Please report any tests failures to the issue tracker along with the test
-output and information on your system:
-
-* platform (Linux, Windows, OSX, ...)
-* compiler and version
-
-## Support
-
-Feel free to ask questions on https://gitter.im/boostorg/histogram.
