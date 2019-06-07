@@ -13,20 +13,9 @@ import ../../config/checks/config : requires ;
 
 path-constant THIS_PATH : . ;
 
-local XML_PATH ;
-
-if [ os.on-windows ]
-{
-    XML_PATH = [ regex.replace "$(THIS_PATH)\\" "\\\\" "\\\\\\\\" ] ;
-}
-else {
-    XML_PATH = "$(THIS_PATH)/" ;
-}
-
 project
     : requirements
     <include>$(THIS_PATH)
-    <define>XML_PATH=\\\"$(XML_PATH)\\\"
     [ requires
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
@@ -95,12 +84,10 @@ alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
 alias units : [ run boost_units_support_test.cpp ] : <warnings>off ;
 alias serialization :
-    [ run axis_variant_serialization_test.cpp libserial ]
-    [ run histogram_serialization_test.cpp libserial ]
-    [ run storage_adaptor_serialization_test.cpp libserial ]
-    [ run unlimited_storage_serialization_test.cpp libserial ]
-    :
-    <rtti>on # required by Boost.Serialization
+    [ run axis_variant_serialization_test.cpp libserial : $(THIS_PATH) ]
+    [ run histogram_serialization_test.cpp libserial : $(THIS_PATH) ]
+    [ run storage_adaptor_serialization_test.cpp libserial : $(THIS_PATH) ]
+    [ run unlimited_storage_serialization_test.cpp libserial : $(THIS_PATH) ]
     ;
 
 alias libserial :

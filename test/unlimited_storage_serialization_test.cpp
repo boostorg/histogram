@@ -6,12 +6,14 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/assert.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <memory>
 #include <sstream>
+#include "throw_exception.hpp"
+#include "utility_serialization.hpp"
 
 using unlimited_storage_type = boost::histogram::unlimited_storage<>;
 
@@ -31,35 +33,25 @@ unlimited_storage_type prepare(std::size_t n) {
 }
 
 template <typename T>
-void serialization_impl() {
+void run_test(const std::string& filename) {
   const auto a = prepare(1, T(1));
-  std::string buf;
-  {
-    std::ostringstream os;
-    boost::archive::text_oarchive oa(os);
-    oa << a;
-    buf = os.str();
-  }
+  print_xml(filename, a);
   unlimited_storage_type b;
   BOOST_TEST(!(a == b));
-  {
-    std::istringstream is(buf);
-    boost::archive::text_iarchive ia(is);
-    ia >> b;
-  }
+  load_xml(filename, b);
   BOOST_TEST(a == b);
 }
 
-int main() {
-  // serialization_test
-  {
-    serialization_impl<uint8_t>();
-    serialization_impl<uint16_t>();
-    serialization_impl<uint32_t>();
-    serialization_impl<uint64_t>();
-    serialization_impl<unlimited_storage_type::large_int>();
-    serialization_impl<double>();
-  }
+int main(int argc, char** argv) {
+  BOOST_ASSERT(argc == 2);
+
+  run_test<uint8_t>(join(argv[1], "unlimited_storage_serialization_test_u8.xml"));
+  run_test<uint16_t>(join(argv[1], "unlimited_storage_serialization_test_u16.xml"));
+  run_test<uint32_t>(join(argv[1], "unlimited_storage_serialization_test_u32.xml"));
+  run_test<uint64_t>(join(argv[1], "unlimited_storage_serialization_test_u64.xml"));
+  run_test<unlimited_storage_type::large_int>(
+      join(argv[1], "unlimited_storage_serialization_test_large_int.xml"));
+  run_test<double>(join(argv[1], "unlimited_storage_serialization_test_double.xml"));
 
   return boost::report_errors();
 }
