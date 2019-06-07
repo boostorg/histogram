@@ -99,12 +99,14 @@ alias serialization :
     [ run histogram_serialization_test.cpp libserial ]
     [ run storage_adaptor_serialization_test.cpp libserial ]
     [ run unlimited_storage_serialization_test.cpp libserial ]
+    :
+    <rtti>on # required by Boost.Serialization
     ;
 
 alias libserial :
     /boost/serialization//boost_serialization
     :
-    <link>static <warnings>off
+    <link>static <warnings>off <rtti>on
     ;
 
 # "failure" not included in "all", because it is distracting

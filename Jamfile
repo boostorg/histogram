@@ -27,14 +27,14 @@ variant histogram_ubasan : debug :
 
 # only works with gcc-5
 variant histogram_coverage : debug :
-    <cxxstd>latest
     <cxxflags>"--coverage"
     <linkflags>"--coverage"
     ;
 
-variant histogram_no_exceptions : debug :
-    <cxxstd>latest
+# for restricted environments without rtti and exceptions
+variant histogram_restricted : debug :
     <exception-handling>off
+    <rtti>off
     ;
 
 build-project test ;
