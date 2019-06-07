@@ -17,21 +17,38 @@ Don't be shy: if you are friendly, we are friendly! And we care, issues are usua
 
 ## Submitting Pull Requests
 
-Base your changes on `develop`. The `master` branch is only used for releases.
+Fork the main repository. Base your changes on the `develop` branch. Make a new branch for any feature or bug-fix in your fork. Start developing. You can start a pull request when you feel the change is ready for review.
 
-Please rebase your changes on the current develop branch before submitting (which may have diverged from your fork in the meantime).
+Please rebase your branch to the original `develop` branch before submitting (which may have diverged from your fork in the meantime).
+
+For general advice on how to set up the Boost project for development, see
+https://github.com/boostorg/boost/wiki/Getting-Started.
+
+To build the documentation, you need to install a few extra things, see
+https://www.boost.org/doc/libs/1_70_0/doc/html/quickbook/install.html.
 
 ## Coding Style
 
-Use `clang-format -style=file`, which should pick up the `.clang-format` file of the project. We follow the naming conventions of the C++ standard library. Names start with a small letter, except for template parameters which are capitalized.
+Follow the [Boost Library Requirements and Guidelines](https://www.boost.org/development/requirements.html) and the established style in Boost.Histogram.
+
+### Code formatting
+
+Using `clang-format -style=file` is recommended, which should pick up the `.clang-format` file of the project. All names are written with small letters and `_`. Template parameters are capitalized and in camel-case.
+
+### Documentation
+
+Doxygen comments should be added for all user-facing functions and methods. Implementation details are not documented (everything in the `boost::histogram::detail` namespace is an implementation detail that can change at any time).
 
 ## Running Tests
 
-To run the tests, `cd` into the `test` folder and execute `b2`. You can also test the examples by executing `b2` in the `examples` folder.
+To run the tests from the project folder, do `b2 cxxstd=14 test`. You can also test the examples by executing `b2 cxxstd=14 examples`.
 
 Please report any tests failures to the issue tracker along with the test
-output and information on your system.
+output and information on your system:
+
+* platform (Linux, Windows, OSX, ...)
+* compiler and version
 
 ## Support
 
-Feel free to send an email to hans.dembinski@gmail.com with any problems or questions.
+Feel free to ask questions on https://gitter.im/boostorg/histogram.
