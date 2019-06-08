@@ -52,7 +52,6 @@ def run(results, comments, hash, update):
     if not update and hash in results:
         return
     print(hash, comments[hash])
-    results[hash] = None
     subp.call(("rm", "-rf", "../include"))
     if subp.call(("git", "checkout", hash, "--", "../include")) != 0:
         print("[Benchmark] Cannot checkout include folder\n")

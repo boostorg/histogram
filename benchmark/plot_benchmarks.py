@@ -79,7 +79,7 @@ def on_key_press(event):
     global thread
     if thread and thread.is_alive(): return
 
-    if event.key != "r": return
+    if event.key != "u": return
 
     hash = commits[current_index]
 
