@@ -7,10 +7,12 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/variable.hpp>
+#include <boost/histogram/detail/cat.hpp>
 #include <limits>
 #include <type_traits>
 #include <vector>
 #include "is_close.hpp"
+#include "std_ostream.hpp"
 #include "throw_exception.hpp"
 #include "utility_axis.hpp"
 
@@ -42,6 +44,18 @@ int main() {
     BOOST_TEST_EQ(a.value(1), 0);
     BOOST_TEST_EQ(a.value(1.5), 0.5);
     BOOST_TEST_EQ(a.value(2), 1);
+    BOOST_TEST_EQ(a.index(-10), -1);
+    BOOST_TEST_EQ(a.index(-1), 0);
+    BOOST_TEST_EQ(a.index(0), 1);
+    BOOST_TEST_EQ(a.index(1), 2);
+    BOOST_TEST_EQ(a.index(10), 2);
+    BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
+    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
+
+    BOOST_TEST_EQ(detail::cat(a),
+                  "variable(-1, 0, 1, metadata=\"bar\", options=underflow | overflow)");
+
     axis::variable<> b;
     BOOST_TEST_NE(a, b);
     b = a;
@@ -54,14 +68,6 @@ int main() {
     BOOST_TEST_EQ(d, a);
     axis::variable<> e{-2, 0, 2};
     BOOST_TEST_NE(a, e);
-    BOOST_TEST_EQ(a.index(-10), -1);
-    BOOST_TEST_EQ(a.index(-1), 0);
-    BOOST_TEST_EQ(a.index(0), 1);
-    BOOST_TEST_EQ(a.index(1), 2);
-    BOOST_TEST_EQ(a.index(10), 2);
-    BOOST_TEST_EQ(a.index(-std::numeric_limits<double>::infinity()), -1);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
-    BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
   }
 
   // axis::variable circular

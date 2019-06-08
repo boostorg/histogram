@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 #include "throw_exception.hpp"
-#include "utility_meta.hpp"
+#include "std_ostream.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::detail;

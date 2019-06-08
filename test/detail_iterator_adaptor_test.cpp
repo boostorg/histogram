@@ -7,10 +7,12 @@
 
 //  See http://www.boost.org for most recent version including documentation.
 
+#include <boost/core/lightweight_test.hpp>
+#include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
+#include "std_ostream.hpp"
 #include "utility_iterator.hpp"
-#include "utility_meta.hpp"
 
 #include <deque>
 #include <set>

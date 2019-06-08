@@ -8,7 +8,7 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/detail/args_type.hpp>
 #include <tuple>
-#include "utility_meta.hpp"
+#include "std_ostream.hpp"
 
 using namespace boost::histogram::detail;
 

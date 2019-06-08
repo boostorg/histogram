@@ -40,7 +40,7 @@ matrix:
     - name: "gcc-5: coverage"
       script:
         - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on
-          histogram_coverage
+          histogram_coverage test
       after_success:
         - GCOV=gcov-5 tools/cov.sh
 

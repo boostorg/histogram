@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <iosfwd>
 #include <limits>
-#include "utility_meta.hpp"
+#include "std_ostream.hpp"
 
 using namespace boost::histogram;
 

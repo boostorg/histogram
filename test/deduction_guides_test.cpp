@@ -17,7 +17,7 @@
 #include <tuple>
 #include <type_traits>
 #include <vector>
-#include "utility_meta.hpp"
+#include "std_ostream.hpp"
 
 using namespace boost::histogram;
 namespace tr = axis::transform;

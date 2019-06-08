@@ -24,7 +24,7 @@
 #include "utility_allocator.hpp"
 #include "utility_axis.hpp"
 #include "utility_histogram.hpp"
-#include "utility_meta.hpp"
+#include "std_ostream.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix

@@ -7,7 +7,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/detail/replace_default.hpp>
-#include "utility_meta.hpp"
+#include "std_ostream.hpp"
 
 using namespace boost::histogram::detail;
 

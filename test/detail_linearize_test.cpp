@@ -12,7 +12,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include "utility_meta.hpp"
+#include "std_ostream.hpp"
 
 using namespace boost::histogram;
 

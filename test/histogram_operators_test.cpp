@@ -14,9 +14,9 @@
 #include <boost/throw_exception.hpp>
 #include <string>
 #include <vector>
+#include "std_ostream.hpp"
 #include "throw_exception.hpp"
 #include "utility_histogram.hpp"
-#include "utility_meta.hpp"
 
 using namespace boost::histogram;
 

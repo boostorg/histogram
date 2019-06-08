@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/unsafe_access.hpp>
@@ -17,8 +16,9 @@
 #include <memory>
 #include <numeric>
 #include <vector>
+#include "std_ostream.hpp"
+#include "throw_exception.hpp"
 #include "utility_allocator.hpp"
-#include "utility_meta.hpp"
 
 using namespace boost::histogram;
 
@@ -265,12 +265,14 @@ int main() {
     BOOST_TEST(lt(1, 2.0));
     BOOST_TEST(lt(-1.0, 1u));
     BOOST_TEST(lt(1u, 2.0));
+    BOOST_TEST(lt(1.0, 2.0));
     BOOST_TEST_NOT(lt(1u, 1));
     BOOST_TEST_NOT(lt(1, 1u));
     BOOST_TEST_NOT(lt(1.0, 1));
     BOOST_TEST_NOT(lt(1, 1.0));
     BOOST_TEST_NOT(lt(1.0, 1u));
     BOOST_TEST_NOT(lt(1u, 1.0));
+    BOOST_TEST_NOT(lt(1.0, 1.0));
 
     auto gt = detail::greater{};
     BOOST_TEST(gt(2u, 1u));

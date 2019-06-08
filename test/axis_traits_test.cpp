@@ -9,6 +9,7 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/mp11.hpp>
+#include "std_ostream.hpp"
 #include "throw_exception.hpp"
 #include "utility_axis.hpp"
 

@@ -10,7 +10,7 @@
 #include <tuple>
 #include <vector>
 #include "utility_allocator.hpp"
-#include "utility_meta.hpp"
+#include "std_ostream.hpp"
 
 using namespace boost::histogram;
 

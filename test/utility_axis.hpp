@@ -1,4 +1,4 @@
-// Copyright 2018 Hans Dembinski
+// Copyright 2018-2019 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -9,7 +9,6 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/fwd.hpp>
-#include "utility_meta.hpp"
 
 namespace boost {
 namespace histogram {

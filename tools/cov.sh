@@ -19,7 +19,6 @@ LCOV="${LCOV_DIR}/bin/lcov --gcov-tool=${GCOV}" # no branch coverage
 # collect raw data
 $LCOV --base-directory `pwd` \
   --directory `pwd`/../../bin.v2/libs/histogram/test \
-  --directory `pwd`/../../bin.v2/libs/histogram/examples \
   --capture --output-file coverage.info
 
 # remove uninteresting entries
