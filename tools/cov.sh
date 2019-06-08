@@ -24,11 +24,17 @@ $LCOV --base-directory `pwd` \
 # remove uninteresting entries
 $LCOV --extract coverage.info "*/boost/histogram/*" --output-file coverage.info
 
-if [ -n $CI ] || [ -n $CODECOV_TOKEN ]; then
-  # upload if on CI
-  curl -s https://codecov.io/bash > tools/codecov
-  chmod u+x tools/codecov
-  tools/codecov -f coverage.info -X gcov
+if [ $CI ] || [ $1 ]; then
+  # upload if on CI or when token is passed as argument
+  if [ ! -e tools/codecov ]; then
+    curl -s https://codecov.io/bash > tools/codecov
+    chmod u+x tools/codecov
+  fi
+  if [ $1 ]; then
+    tools/codecov -f coverage.info -X gcov -t $1
+  else
+    tools/codecov -f coverage.info -X gcov
+  fi
 else
   # otherwise generate html report
   $LCOV_DIR/bin/genhtml coverage.info -o coverage-report
