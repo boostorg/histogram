@@ -4,14 +4,16 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+// clang-format off
+
 //[ getting_started_listing_01
 
 #include <algorithm>           // std::for_each
 #include <boost/format.hpp>    // only needed for printing
 #include <boost/histogram.hpp> // make_histogram, regular, weight, indexed
-#include <cassert>             // assert
+#include <cassert>             // assert (used to test this example for correctness)
 #include <functional>          // std::ref
-#include <iostream>            // std::cout, std::cout, std::flush
+#include <iostream>            // std::cout, std::flush
 #include <sstream>             // std::ostringstream
 
 int main() {
@@ -39,6 +41,7 @@ int main() {
   */
   auto data = {-0.5, 1.1, 0.3, 1.7};
   std::for_each(data.begin(), data.end(), std::ref(h));
+  // let's fill some more values manually
   h(-1.5); // is placed in underflow bin -1
   h(-1.0); // is placed in bin 0, bin interval is semi-open
   h(2.0);  // is placed in overflow bin 6, bin interval is semi-open
@@ -71,8 +74,8 @@ int main() {
 
   std::ostringstream os;
   for (auto&& x : indexed(h, coverage::all)) {
-    os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") % x.index() % x.bin().lower() %
-              x.bin().upper() % *x;
+    os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") 
+          % x.index() % x.bin().lower() % x.bin().upper() % *x;
   }
 
   std::cout << os.str() << std::flush;
