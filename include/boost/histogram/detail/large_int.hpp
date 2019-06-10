@@ -8,8 +8,12 @@
 #define BOOST_HISTOGRAM_DETAIL_LARGE_INT_HPP
 
 #include <boost/assert.hpp>
-#include <boost/histogram/detail/static_if.hpp>
+#include <boost/histogram/detail/operators.hpp>
+#include <boost/histogram/detail/safe_comparison.hpp>
+#include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/function.hpp>
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/utility.hpp>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -48,7 +52,8 @@ bool safe_radd(T& t, const U& u) {
 // Use boost.multiprecision.cpp_int in your own code, it is much more sophisticated.
 // We use it only to reduce coupling between boost libs.
 template <class Allocator>
-struct large_int {
+struct large_int : totally_ordered<large_int<Allocator>, large_int<Allocator>>,
+                   partially_ordered<large_int<Allocator>, void> {
   explicit large_int(const Allocator& a = {}) : data(1, 0, a) {}
   explicit large_int(std::uint64_t v, const Allocator& a = {}) : data(1, v, a) {}
 
@@ -123,7 +128,7 @@ struct large_int {
     return *this;
   }
 
-  operator double() const noexcept {
+  explicit operator double() const noexcept {
     BOOST_ASSERT(data.size() > 0u);
     double result = static_cast<double>(data[0]);
     std::size_t i = 0;
@@ -132,7 +137,6 @@ struct large_int {
     return result;
   }
 
-  // total ordering for large_int, large_int
   bool operator<(const large_int& o) const noexcept {
     BOOST_ASSERT(data.size() > 0u);
     BOOST_ASSERT(o.data.size() > 0u);
@@ -160,77 +164,42 @@ struct large_int {
     return std::equal(data.begin(), data.end(), o.data.begin());
   }
 
-  // copied from boost/operators.hpp
-  friend bool operator>(const large_int& x, const large_int& y) { return y < x; }
-  friend bool operator<=(const large_int& x, const large_int& y) { return !(y < x); }
-  friend bool operator>=(const large_int& x, const large_int& y) { return !(x < y); }
-  friend bool operator!=(const large_int& x, const large_int& y) { return !(x == y); }
-
-  // total ordering for large_int, uint64;  partial ordering for large_int, double
   template <class U>
-  bool operator<(const U& o) const noexcept {
+  std::enable_if_t<std::is_integral<U>::value, bool> operator<(const U& o) const
+      noexcept {
     BOOST_ASSERT(data.size() > 0u);
-    return static_if<is_unsigned_integral<U>>(
-        [this](std::uint64_t o) { return data.size() == 1 && data[0] < o; },
-        [this](double o) { return operator double() < o; }, o);
+    return data.size() == 1 && safe_less()(data[0], o);
   }
 
   template <class U>
-  bool operator>(const U& o) const noexcept {
+  std::enable_if_t<std::is_integral<U>::value, bool> operator>(const U& o) const
+      noexcept {
     BOOST_ASSERT(data.size() > 0u);
     BOOST_ASSERT(data.size() == 1 || data.back() > 0u); // no leading zeros allowed
-    return static_if<is_unsigned_integral<U>>(
-        [this](std::uint64_t o) { return data.size() > 1 || data[0] > o; },
-        [this](double o) { return operator double() > o; }, o);
+    return data.size() > 1 || safe_less()(o, data[0]);
   }
 
   template <class U>
-  bool operator==(const U& o) const noexcept {
+  std::enable_if_t<std::is_integral<U>::value, bool> operator==(const U& o) const
+      noexcept {
     BOOST_ASSERT(data.size() > 0u);
-    return static_if<is_unsigned_integral<U>>(
-        [this](std::uint64_t o) { return data.size() == 1 && data[0] == o; },
-        [this](double o) { return operator double() == o; }, o);
+    return data.size() == 1 && safe_equal()(data[0], o);
   }
 
   template <class U>
-  bool operator!=(const U& x) const noexcept {
-    return !operator==(x);
-  }
-
-  // adapted copy from boost/operators.hpp
-  template <class U>
-  friend bool operator<=(const large_int& x, const U& y) {
-    if (is_unsigned_integral<U>::value) return !(x > y);
-    return (x < y) || (x == y);
+  std::enable_if_t<std::is_floating_point<U>::value, bool> operator<(const U& o) const
+      noexcept {
+    return operator double() < o;
   }
   template <class U>
-  friend bool operator>=(const large_int& x, const U& y) {
-    if (is_unsigned_integral<U>::value) return !(x < y);
-    return (x > y) || (x == y);
+  std::enable_if_t<std::is_floating_point<U>::value, bool> operator>(const U& o) const
+      noexcept {
+    return operator double() > o;
   }
   template <class U>
-  friend bool operator>(const U& x, const large_int& y) {
-    return y.operator<(x);
-  }
-  template <class U>
-  friend bool operator<(const U& x, const large_int& y) {
-    return y.operator>(x);
-  }
-  template <class U>
-  friend bool operator<=(const U& x, const large_int& y) {
-    return y >= x;
-  }
-  template <class U>
-  friend bool operator>=(const U& x, const large_int& y) {
-    return y <= x;
-  }
-  template <class U>
-  friend bool operator==(const U& y, const large_int& x) {
-    return x.operator==(y);
-  }
-  template <class U>
-  friend bool operator!=(const U& y, const large_int& x) {
-    return x.operator!=(y);
+  std::enable_if_t<std::is_floating_point<U>::value, bool> operator==(const U& o) const
+      noexcept {
+    return operator double() == o;
   }
 
   std::uint64_t& maybe_extend(std::size_t i) {
@@ -250,12 +219,6 @@ struct large_int {
 
   std::vector<std::uint64_t, Allocator> data;
 };
-
-template <class T>
-struct is_large_int : std::false_type {};
-
-template <class Allocator>
-struct is_large_int<large_int<Allocator>> : std::true_type {};
 
 } // namespace detail
 } // namespace histogram

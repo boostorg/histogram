@@ -14,22 +14,28 @@ namespace histogram {
 namespace detail {
 
 template <class T, class F, class... Args>
-constexpr decltype(auto) static_if_impl(std::true_type, T&& t, F&&, Args&&... args) {
+constexpr decltype(auto) static_if_impl(
+    std::true_type, T&& t, F&&,
+    Args&&... args) noexcept(noexcept(std::declval<T>()(std::declval<Args>()...))) {
   return std::forward<T>(t)(std::forward<Args>(args)...);
 }
 
 template <class T, class F, class... Args>
-constexpr decltype(auto) static_if_impl(std::false_type, T&&, F&& f, Args&&... args) {
+constexpr decltype(auto) static_if_impl(
+    std::false_type, T&&, F&& f,
+    Args&&... args) noexcept(noexcept(std::declval<F>()(std::declval<Args>()...))) {
   return std::forward<F>(f)(std::forward<Args>(args)...);
 }
 
 template <bool B, class... Ts>
-constexpr decltype(auto) static_if_c(Ts&&... ts) {
+constexpr decltype(auto) static_if_c(Ts&&... ts) noexcept(
+    noexcept(static_if_impl(std::integral_constant<bool, B>{}, std::declval<Ts>()...))) {
   return static_if_impl(std::integral_constant<bool, B>{}, std::forward<Ts>(ts)...);
 }
 
 template <class Bool, class... Ts>
-constexpr decltype(auto) static_if(Ts&&... ts) {
+constexpr decltype(auto) static_if(Ts&&... ts) noexcept(
+    noexcept(static_if_impl(Bool{}, std::declval<Ts>()...))) {
   return static_if_impl(Bool{}, std::forward<Ts>(ts)...);
 }
 

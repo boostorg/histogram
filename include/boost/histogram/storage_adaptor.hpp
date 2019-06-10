@@ -360,7 +360,7 @@ public:
   bool operator==(const U& u) const {
     using std::begin;
     using std::end;
-    return std::equal(this->begin(), this->end(), begin(u), end(u), detail::equal{});
+    return std::equal(this->begin(), this->end(), begin(u), end(u), detail::safe_equal{});
   }
 
 private:

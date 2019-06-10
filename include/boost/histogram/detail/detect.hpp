@@ -90,19 +90,22 @@ BOOST_HISTOGRAM_DETECT(is_streamable,
 BOOST_HISTOGRAM_DETECT(has_operator_preincrement, (++std::declval<T&>()));
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_equal,
-                              (std::declval<const T&>() == std::declval<const U&>()));
+                              (std::declval<const T&>() == std::declval<const U>()));
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_radd,
-                              (std::declval<T&>() += std::declval<U&>()));
+                              (std::declval<T&>() += std::declval<U>()));
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rsub,
-                              (std::declval<T&>() -= std::declval<U&>()));
+                              (std::declval<T&>() -= std::declval<U>()));
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rmul,
-                              (std::declval<T&>() *= std::declval<U&>()));
+                              (std::declval<T&>() *= std::declval<U>()));
 
 BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rdiv,
-                              (std::declval<T&>() /= std::declval<U&>()));
+                              (std::declval<T&>() /= std::declval<U>()));
+
+BOOST_HISTOGRAM_DETECT_BINARY(
+    has_method_eq, (std::declval<const T>().operator==(std::declval<const U>())));
 
 BOOST_HISTOGRAM_DETECT(has_threading_support, (T::has_threading_support));
 

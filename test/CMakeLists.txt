@@ -55,6 +55,8 @@ boost_test(TYPE run SOURCES detail_relaxed_equal_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_replace_default_test.cpp
   LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_safe_comparison_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_tuple_slice_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES histogram_dynamic_test.cpp

@@ -14,6 +14,7 @@
 #include <boost/core/exchange.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
+#include <boost/histogram/detail/operators.hpp>
 #include <boost/histogram/detail/safe_comparison.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -31,8 +32,7 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <class T, class = std::enable_if_t<(std::is_arithmetic<T>::value ||
-                                             is_large_int<T>::value)>>
+template <class T, class = std::enable_if_t<std::is_arithmetic<T>::value>>
 struct requires_arithmetic {};
 
 template <class L, class T>
@@ -249,7 +249,8 @@ public:
   class reference; // forward declare to make friend of const_reference
 
   /// implementation detail
-  class const_reference {
+  class const_reference
+      : detail::partially_ordered<const_reference, const_reference, large_int, void> {
   public:
     const_reference(buffer_type& b, std::size_t i) noexcept : bref_(b), idx_(i) {
       BOOST_ASSERT(idx_ < bref_.size);
@@ -266,94 +267,55 @@ public:
           [this](const auto* p) { return static_cast<double>(p[this->idx_]); });
     }
 
-    // minimal operators for partial ordering
-    bool operator<(const const_reference& rhs) const noexcept {
-      return op<detail::less>(rhs);
+    bool operator<(const const_reference& o) const noexcept {
+      return apply_binary<detail::safe_less>(o);
     }
+
+    bool operator<(const large_int& o) const noexcept {
+      return apply_binary<detail::safe_less>(o);
+    }
+
+    template <class U>
+    bool operator<(const U& o) const noexcept {
+      return apply_binary<detail::safe_less>(o);
+    }
+
     bool operator>(const const_reference& rhs) const noexcept {
-      return op<detail::greater>(rhs);
-    }
-    bool operator==(const const_reference& rhs) const noexcept {
-      return op<detail::equal>(rhs);
+      return apply_binary<detail::safe_greater>(rhs);
     }
 
-    // adapted copy from boost/operators.hpp for partial ordering
-    friend bool operator<=(const const_reference& x, const const_reference& y) noexcept {
-      return !(y < x);
-    }
-    friend bool operator>=(const const_reference& x, const const_reference& y) noexcept {
-      return !(y > x);
-    }
-    friend bool operator!=(const const_reference& y, const const_reference& x) noexcept {
-      return !(x == y);
+    bool operator>(const large_int& rhs) const noexcept {
+      return apply_binary<detail::safe_greater>(rhs);
     }
 
-    template <class U, class = detail::requires_arithmetic<U>>
-    bool operator<(const U& rhs) const noexcept {
-      return op<detail::less>(rhs);
+    template <class U>
+    bool operator>(const U& o) const noexcept {
+      return apply_binary<detail::safe_greater>(o);
     }
 
-    template <class U, class = detail::requires_arithmetic<U>>
-    bool operator>(const U& rhs) const noexcept {
-      return op<detail::greater>(rhs);
+    bool operator==(const const_reference& o) const noexcept {
+      return apply_binary<detail::safe_equal>(o);
     }
 
-    template <class U, class = detail::requires_arithmetic<U>>
-    bool operator==(const U& rhs) const noexcept {
-      return op<detail::equal>(rhs);
+    bool operator==(const large_int& rhs) const noexcept {
+      return apply_binary<detail::safe_equal>(rhs);
     }
 
-    // adapted copy from boost/operators.hpp
-    template <class U, class = detail::requires_arithmetic<U>>
-    friend bool operator<=(const const_reference& x, const U& y) noexcept {
-      if (detail::is_unsigned_integral<U>::value) return !(x > y);
-      return (x < y) || (x == y);
-    }
-    template <class U, class = detail::requires_arithmetic<U>>
-    friend bool operator>=(const const_reference& x, const U& y) noexcept {
-      if (detail::is_unsigned_integral<U>::value) return !(x < y);
-      return (x > y) || (x == y);
-    }
-    template <class U, class = detail::requires_arithmetic<U>>
-    friend bool operator>(const U& x, const const_reference& y) noexcept {
-      return y < x;
-    }
-    template <class U, class = detail::requires_arithmetic<U>>
-    friend bool operator<(const U& x, const const_reference& y) noexcept {
-      return y > x;
-    }
-    template <class U, class = detail::requires_arithmetic<U>>
-    friend bool operator<=(const U& x, const const_reference& y) noexcept {
-      if (detail::is_unsigned_integral<U>::value) return !(y < x);
-      return (y > x) || (y == x);
-    }
-    template <class U, class = detail::requires_arithmetic<U>>
-    friend bool operator>=(const U& x, const const_reference& y) noexcept {
-      if (detail::is_unsigned_integral<U>::value) return !(y > x);
-      return (y < x) || (y == x);
-    }
-    template <class U, class = detail::requires_arithmetic<U>>
-    friend bool operator==(const U& y, const const_reference& x) noexcept {
-      return x == y;
-    }
-    template <class U, class = detail::requires_arithmetic<U>>
-    friend bool operator!=(const U& y, const const_reference& x) noexcept {
-      return !(x == y);
-    }
-    template <class U, class = detail::requires_arithmetic<U>>
-    friend bool operator!=(const const_reference& y, const U& x) noexcept {
-      return !(y == x);
+    template <class U>
+    bool operator==(const U& o) const noexcept {
+      return apply_binary<detail::safe_equal>(o);
     }
 
   private:
     template <class Binary>
-    bool op(const const_reference& x) const noexcept {
-      return x.bref_.visit(
-          [this, ix = x.idx_](const auto* xp) { return this->op<Binary>(xp[ix]); });
+    bool apply_binary(const const_reference& x) const noexcept {
+      return x.bref_.visit([this, ix = x.idx_](const auto* xp) {
+        return this->apply_binary<Binary>(xp[ix]);
+      });
     }
 
     template <class Binary, class U>
-    bool op(const U& x) const noexcept {
+    bool apply_binary(const U& x) const noexcept {
       return bref_.visit([i = idx_, &x](const auto* p) { return Binary()(p[i], x); });
     }
 
@@ -364,7 +326,9 @@ public:
   };
 
   /// implementation detail
-  class reference : public const_reference {
+  class reference : public const_reference,
+                    public detail::partially_ordered<reference, reference,
+                                                     const_reference, large_int, void> {
   public:
     reference(buffer_type& b, std::size_t i) noexcept : const_reference(b, i) {}
 
@@ -377,17 +341,15 @@ public:
     }
 
     reference& operator=(const const_reference& x) {
-      x.bref_.visit([this, ix = x.idx_](const auto* xp) {
-        auto xi = xp[ix]; // convert reference to value
-        this->operator=(xi);
-      });
+      // safe for self-assignment, assigning matching type doesn't invalide buffer
+      x.bref_.visit([this, ix = x.idx_](const auto* xp) { this->operator=(xp[ix]); });
       return *this;
     }
 
     template <class U, class = detail::requires_arithmetic<U>>
     reference& operator=(const U& x) {
       this->bref_.visit([this, &x](auto* p) {
-        p[this->idx_] = 0;
+        p[this->idx_] = 0; // LCOV_EXCL_LINE gcc-8 optimizes this away even at -O0
         adder()(p, this->bref_, this->idx_, x);
       });
       return *this;
@@ -395,10 +357,57 @@ public:
 
     reference& operator=(const large_int& x) {
       this->bref_.visit([this, &x](auto* p) {
-        p[this->idx_] = 0;
+        p[this->idx_] = 0; // LCOV_EXCL_LINE gcc-8 optimizes this away even at -O0
         adder()(p, this->bref_, this->idx_, x);
       });
       return *this;
+    }
+
+    bool operator<(const const_reference& o) const noexcept {
+      return const_reference::operator<(o);
+    }
+
+    bool operator>(const const_reference& o) const noexcept {
+      return const_reference::operator>(o);
+    }
+
+    bool operator==(const const_reference& o) const noexcept {
+      return const_reference::operator==(o);
+    }
+
+    bool operator<(const reference& o) const noexcept {
+      return const_reference::operator<(static_cast<const const_reference&>(o));
+    }
+
+    bool operator==(const reference& o) const noexcept {
+      return const_reference::operator==(static_cast<const const_reference&>(o));
+    }
+
+    bool operator<(const large_int& o) const noexcept {
+      return const_reference::operator<(o);
+    }
+
+    bool operator>(const large_int& o) const noexcept {
+      return const_reference::operator>(o);
+    }
+
+    bool operator==(const large_int& o) const noexcept {
+      return const_reference::operator==(o);
+    }
+
+    template <class U, class = detail::requires_arithmetic<U>>
+    bool operator<(const U& o) const noexcept {
+      return static_cast<const const_reference&>(*this) < o;
+    }
+
+    template <class U, class = detail::requires_arithmetic<U>>
+    bool operator>(const U& o) const noexcept {
+      return static_cast<const const_reference&>(*this) > o;
+    }
+
+    template <class U, class = detail::requires_arithmetic<U>>
+    bool operator==(const U& o) const noexcept {
+      return static_cast<const const_reference&>(*this) == o;
     }
 
     reference& operator+=(const const_reference& x) {
@@ -502,7 +511,7 @@ public:
     if (size() != x.size()) return false;
     return buffer_.visit([&x](const auto* p) {
       return x.buffer_.visit([p, n = x.size()](const auto* xp) {
-        return std::equal(p, p + n, xp, detail::equal{});
+        return std::equal(p, p + n, xp, detail::safe_equal{});
       });
     });
   }
@@ -511,7 +520,8 @@ public:
   bool operator==(const Iterable& iterable) const {
     if (size() != iterable.size()) return false;
     return buffer_.visit([&iterable](const auto* p) {
-      return std::equal(p, p + iterable.size(), std::begin(iterable), detail::equal{});
+      return std::equal(p, p + iterable.size(), std::begin(iterable),
+                        detail::safe_equal{});
     });
   }
 

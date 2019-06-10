@@ -12,6 +12,7 @@
 #include <boost/histogram/detail/attribute.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
+#include <boost/histogram/detail/operators.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <type_traits>
 #include <utility>
@@ -59,7 +60,7 @@ public:
     accessor. Accessors are not copyable. They cannot be stored in containers, but
     range_iterators can be stored.
   */
-  class accessor {
+  class accessor : detail::mirrored<accessor, void> {
   public:
     /// Array-like view into the current multi-dimensional index.
     class index_view {
@@ -165,6 +166,12 @@ public:
     }
 
     // forward all comparison operators to the value
+    bool operator<(const accessor& o) noexcept { return get() < o.get(); }
+    bool operator>(const accessor& o) noexcept { return get() > o.get(); }
+    bool operator==(const accessor& o) noexcept { return get() == o.get(); }
+    bool operator!=(const accessor& o) noexcept { return get() != o.get(); }
+    bool operator<=(const accessor& o) noexcept { return get() <= o.get(); }
+    bool operator>=(const accessor& o) noexcept { return get() >= o.get(); }
 
     template <class U>
     bool operator<(const U& o) const noexcept {
@@ -194,60 +201,6 @@ public:
     template <class U>
     bool operator>=(const U& o) const noexcept {
       return get() >= o;
-    }
-
-    template <class U>
-    friend bool operator<(const U& x, const accessor& y) noexcept {
-      return y.operator>(x);
-    }
-
-    template <class U>
-    friend bool operator>(const U& x, const accessor& y) noexcept {
-      return y.operator<(x);
-    }
-
-    template <class U>
-    friend bool operator<=(const U& x, const accessor& y) noexcept {
-      return y.operator>=(x);
-    }
-
-    template <class U>
-    friend bool operator>=(const U& x, const accessor& y) noexcept {
-      return y.operator<=(x);
-    }
-
-    template <class U>
-    friend bool operator==(const U& x, const accessor& y) noexcept {
-      return y.operator==(x);
-    }
-
-    template <class U>
-    friend bool operator!=(const U& x, const accessor& y) noexcept {
-      return y.operator!=(x);
-    }
-
-    friend bool operator<(const accessor& x, const accessor& y) noexcept {
-      return x.operator<(y.get());
-    }
-
-    friend bool operator>(const accessor& x, const accessor& y) noexcept {
-      return x.operator>(y.get());
-    }
-
-    friend bool operator==(const accessor& x, const accessor& y) noexcept {
-      return x.operator==(y.get());
-    }
-
-    friend bool operator!=(const accessor& x, const accessor& y) noexcept {
-      return x.operator!=(y.get());
-    }
-
-    friend bool operator<=(const accessor& x, const accessor& y) noexcept {
-      return x.operator<=(y.get());
-    }
-
-    friend bool operator>=(const accessor& x, const accessor& y) noexcept {
-      return x.operator>=(y.get());
     }
 
     operator value_type() const noexcept { return get(); }

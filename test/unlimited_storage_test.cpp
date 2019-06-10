@@ -20,18 +20,25 @@
 #include "throw_exception.hpp"
 #include "utility_allocator.hpp"
 
+namespace boost {
+namespace histogram {
+namespace detail {
+template <class Allocator>
+std::ostream& operator<<(std::ostream& os, const large_int<Allocator>& x) {
+  os << "large_int";
+  os << x.data;
+  return os;
+}
+} // namespace detail
+} // namespace histogram
+} // namespace boost
+
 using namespace boost::histogram;
 
 using unlimited_storage_type = unlimited_storage<>;
 template <typename T>
 using vector_storage = storage_adaptor<std::vector<T>>;
 using large_int = unlimited_storage_type::large_int;
-
-std::ostream& operator<<(std::ostream& os, const large_int& x) {
-  os << "large_int";
-  os << x.data;
-  return os;
-}
 
 template <typename T = std::uint8_t>
 unlimited_storage_type prepare(std::size_t n, T x = T{}) {
@@ -242,55 +249,6 @@ struct adder {
 };
 
 int main() {
-  // low-level tools
-  {
-    auto eq = detail::equal{};
-    BOOST_TEST(eq(-1, -1));
-    BOOST_TEST(eq(1, 1u));
-    BOOST_TEST(eq(1u, 1));
-    BOOST_TEST(eq(1u, 1u));
-    BOOST_TEST(eq(1.0, 1));
-    BOOST_TEST(eq(1, 1.0));
-    BOOST_TEST(eq(1.0, 1u));
-    BOOST_TEST(eq(1u, 1.0));
-    BOOST_TEST_NOT(eq(-1, static_cast<unsigned>(-1)));
-    BOOST_TEST_NOT(eq(static_cast<unsigned>(-1), -1));
-
-    auto lt = detail::less{};
-    BOOST_TEST(lt(1u, 2u));
-    BOOST_TEST(lt(-1, 1u));
-    BOOST_TEST(lt(1u, 2));
-    BOOST_TEST(lt(-2, -1));
-    BOOST_TEST(lt(-2.0, -1));
-    BOOST_TEST(lt(1, 2.0));
-    BOOST_TEST(lt(-1.0, 1u));
-    BOOST_TEST(lt(1u, 2.0));
-    BOOST_TEST(lt(1.0, 2.0));
-    BOOST_TEST_NOT(lt(1u, 1));
-    BOOST_TEST_NOT(lt(1, 1u));
-    BOOST_TEST_NOT(lt(1.0, 1));
-    BOOST_TEST_NOT(lt(1, 1.0));
-    BOOST_TEST_NOT(lt(1.0, 1u));
-    BOOST_TEST_NOT(lt(1u, 1.0));
-    BOOST_TEST_NOT(lt(1.0, 1.0));
-
-    auto gt = detail::greater{};
-    BOOST_TEST(gt(2u, 1u));
-    BOOST_TEST(gt(1u, -1));
-    BOOST_TEST(gt(2, 1u));
-    BOOST_TEST(gt(-1, -2));
-    BOOST_TEST(gt(-1, -2.0));
-    BOOST_TEST(gt(2.0, 1));
-    BOOST_TEST(gt(1u, -1.0));
-    BOOST_TEST(gt(2.0, 1u));
-    BOOST_TEST_NOT(gt(1u, 1));
-    BOOST_TEST_NOT(gt(1, 1u));
-    BOOST_TEST_NOT(gt(1.0, 1));
-    BOOST_TEST_NOT(gt(1, 1.0));
-    BOOST_TEST_NOT(gt(1.0, 1u));
-    BOOST_TEST_NOT(gt(1u, 1.0));
-  }
-
   // empty state
   {
     unlimited_storage_type a;
