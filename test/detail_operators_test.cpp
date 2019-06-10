@@ -51,17 +51,19 @@ void test_nan(std::false_type) {}
 
 template <class T, class U>
 void test_nan(std::true_type) {
-  // the Standard says: any comparison with nan is always false, except != which is always
-
   const U nan = std::numeric_limits<U>::quiet_NaN();
 
-  // some of these tests fail on MSVC 19.10 to 19.14
-  // BOOST_TEST_NOT(nan < nan);
-  // BOOST_TEST_NOT(nan > nan);
-  // BOOST_TEST_NOT(nan == nan);
-  // BOOST_TEST_NOT(nan <= nan);
-  // BOOST_TEST_NOT(nan >= nan);
-  // BOOST_TEST(nan != nan);
+  // IEEE 754: Any comparison with nan is false, except != which is true.
+  // But some of the following tests fail on MSVC:
+  //   BOOST_TEST_NOT(nan < nan); // true, should be false
+  //   BOOST_TEST_NOT(nan > nan);
+  //   BOOST_TEST_NOT(nan == nan);
+  //   BOOST_TEST_NOT(nan <= nan); // true, should be false
+  //   BOOST_TEST_NOT(nan >= nan);
+  //   BOOST_TEST(nan != nan);
+  // Probably related:
+  // https://developercommunity.visualstudio.com/content/problem/445462/nan-nan-is-constant-folded-to-true-but-should-prob.html
+  // The tests below don't fail probably because constant-folding doesn't happen.
 
   BOOST_TEST_NOT(T(1.0) < T(nan));
   BOOST_TEST_NOT(T(1.0) > T(nan));
