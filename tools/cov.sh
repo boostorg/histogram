@@ -1,7 +1,12 @@
 #!/bin/sh
 # must be executed in project root folder
 if [ -z $GCOV ]; then
-  GCOV=gcov
+  for i in 9 8 5; do
+    if test $(which gcov-$i); then
+      GCOV=gcov-$i
+      break;
+    fi;
+  done
 fi
 
 LCOV_VERSION="1.14"
