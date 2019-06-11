@@ -15,16 +15,6 @@ branches:
     - master
     - develop
 
-env:
-  global:
-    - if [ "$TRAVIS_BRANCH" == "master" ]; then
-        BRANCH=master;
-      else
-        BRANCH=develop;
-      fi
-
-    - LIBRARY_DIR=$(basename $TRAVIS_BUILD_DIR)
-
 matrix:
   include:
     - name: "clang-osx"
@@ -39,8 +29,7 @@ matrix:
     # gcc-7 and gcc-8 produce broken coverage data, so we use gcc-5
     - name: "gcc-5: coverage"
       script:
-        - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on
-          histogram_coverage test
+        - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on coverage=on test
         - GCOV=gcov-5 tools/cov.sh
 
     - name: "gcc-5: no-exceptions, no-rtti"
@@ -48,17 +37,13 @@ matrix:
         - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on
           cxxflags="-fno-exceptions -fno-rtti" test//minimal
 
-    - name: "clang-5: sanitizers"
+    - name: "clang: sanitizers"
       sudo: required # by leak sanitizer
-      addons:
-        apt:
-          sources: ubuntu-toolchain-r-test
-          packages: libstdc++-7-dev
       script:
         - UBSAN_OPTIONS=print_stacktrace=1
           LSAN_OPTIONS=verbosity=1:log_threads=1
           ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1
-          ../../b2 -j2 toolset=clang-5 cxxstd=14
+          ../../b2 -j2 toolset=clang cxxstd=14
           variant=histogram_ubasan warnings-as-errors=on
 
     - name: "gcc-8: c++latest"
@@ -70,21 +55,22 @@ matrix:
         - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on
 
 before_script:
-  # Cloning minimal set of Boost libraries
-  - cd ..
-  - git clone -b $BRANCH --depth 5 https://github.com/boostorg/boost.git
-  - cd boost
+  # clone minimal set of Boost libraries
+  - test "$TRAVIS_BRANCH" == "master" && BRANCH=master || BRANCH=develop
+  - git clone -b $BRANCH --depth 5 https://github.com/boostorg/boost.git ../boost
+  - cd ../boost
   - git submodule update --init --depth 5 tools/build tools/boostdep
 
-  # Replacing Boost module with this project and installing Boost dependencies
-  - rm -rf libs/$LIBRARY_DIR || true
-  - mv $TRAVIS_BUILD_DIR libs/$LIBRARY_DIR
-  - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" $LIBRARY_DIR
+  # replace Boost module with this project and install Boost dependencies
+  - LIBRARY=$(basename $TRAVIS_BUILD_DIR)
+  - rm -rf libs/$LIBRARY
+  - mv $TRAVIS_BUILD_DIR libs/$LIBRARY
+  - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" $LIBRARY
 
-  # Adding missing toolsets and preparing Boost headers
+  # add missing toolsets and preparing Boost headers
   - ./bootstrap.sh
   - ./b2 headers
-  - cd libs/$LIBRARY_DIR
+  - cd libs/$LIBRARY
 
 notifications:
   email: false

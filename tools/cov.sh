@@ -18,8 +18,9 @@ if [ ! -e $LCOV_DIR ]; then
   cd ..
 fi
 
-# LCOV="$LCOV_EXE --gcov-tool=${GCOV} --rc lcov_branch_coverage=1"
-LCOV="${LCOV_DIR}/bin/lcov --gcov-tool=${GCOV}" # no branch coverage
+# --rc lcov_branch_coverage=1 doesn't work on travis
+# LCOV="${LCOV_DIR}/bin/lcov --gcov-tool=${GCOV} --rc lcov_branch_coverage=1"
+LCOV="${LCOV_DIR}/bin/lcov --gcov-tool=${GCOV}"
 
 # collect raw data
 $LCOV --base-directory `pwd` \
@@ -39,5 +40,5 @@ if [ $CI ] || [ $1 ]; then
   fi
 else
   # otherwise generate html report
-  $LCOV_DIR/bin/genhtml coverage.info -o coverage-report
+  $LCOV_DIR/bin/genhtml coverage.info --demangle-cpp -o coverage-report
 fi
