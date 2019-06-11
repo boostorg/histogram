@@ -71,9 +71,10 @@ int main() {
 * Support for weighted increments
 * Support for profiles and more generally, user-defined accumulators in cells [[3]](#note3)
 * Support for completely stack-based histograms
+* Support for compilation without exceptions or RTTI [[4]](#note4)
 * Support for adding, subtracting, multiplying, dividing, and scaling histograms
 * Support for custom allocators
-* Support for programming with units [[4]](#note4)
+* Support for programming with units [[5]](#note5)
 * Optional serialization based on [Boost.Serialization](https://www.boost.org/doc/libs/release/libs/serialization/)
 
 <b id="note1">Note 1</b> In the standard configuration, if you don't use weighted increments. The counter capacity is increased dynamically as the cell counts grow. When even the largest plain integral type would overflow, the storage switches to a multiprecision integer similar to those in [Boost.Multiprecision](https://www.boost.org/doc/libs/release/libs/multiprecision/), which is only limited by available memory.
@@ -82,7 +83,9 @@ int main() {
 
 <b id="note3">Note 3</b> The histogram can be configured to hold an arbitrary accumulator in each cell instead of a simple counter. Extra values can be passed to the histogram, for example, to compute the mean and variance of values which fall into the same cell. This feature can be used to calculate variance estimates for each cell, which are useful when you need to fit a statistical model to the cell values.
 
-<b id="note4">Note 4</b> Builtin axis types can be configured to only accept dimensional quantities, like those from [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/). This means you get a useful error if you accidentally try to fill a length where the histogram axis expects a time, for example.
+<b id="note4">Note 4</b> The library throws exceptions when exceptions are enabled. When exceptions are disabled, a user-defined exception handler is called instead upon a throw and the program terminates, see [boost::throw_exception](https://www.boost.org/doc/libs/master/libs/exception/doc/throw_exception.html) for details. Disabling exceptions improves performance by 10 % to 20 % in benchmarks. The library does not use RTTI (only CTTI) so disabling it has no effect.
+
+<b id="note5">Note 5</b> Builtin axis types can be configured to only accept dimensional quantities, like those from [Boost.Units](https://www.boost.org/doc/libs/release/libs/units/). This means you get a useful error if you accidentally try to fill a length where the histogram axis expects a time, for example.
 
 ## Benchmarks
 
