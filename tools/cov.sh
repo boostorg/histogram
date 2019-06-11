@@ -31,14 +31,11 @@ $LCOV --extract coverage.info "*/boost/histogram/*" --output-file coverage.info
 
 if [ $CI ] || [ $1 ]; then
   # upload if on CI or when token is passed as argument
-  if [ ! -e tools/codecov ]; then
-    curl -s https://codecov.io/bash > tools/codecov
-    chmod u+x tools/codecov
-  fi
+  which cpp-coveralls || pip install --user cpp-coveralls
   if [ $1 ]; then
-    tools/codecov -f coverage.info -X gcov -t $1
+    cpp-coveralls -l coverage.info -r ../.. -n -t $1
   else
-    tools/codecov -f coverage.info -X gcov
+    cpp-coveralls -l coverage.info -r ../.. -n
   fi
 else
   # otherwise generate html report

@@ -41,7 +41,6 @@ matrix:
       script:
         - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on
           histogram_coverage test
-      after_success:
         - GCOV=gcov-5 tools/cov.sh
 
     - name: "gcc-5: no-exceptions, no-rtti"
