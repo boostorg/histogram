@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
 import os
 import numpy as np
-import sys
+import glob
 import re
 import json
 from collections import defaultdict, OrderedDict
@@ -13,7 +14,7 @@ import matplotlib as mpl
 mpl.rcParams.update(mpl.rcParamsDefault)
 
 data = defaultdict(lambda:[])
-for fn in sys.argv[1:]:
+for fn in glob.glob("fill_*.json"):
     for bench in json.load(open(fn))["benchmarks"]:
         name = bench["name"]
         time = min(bench["cpu_time"], bench["real_time"])
@@ -57,8 +58,8 @@ for dim in sorted(data):
             col = "0.3"
         tmin = min(t1, t2)
         tmax = max(t1, t2)
-        r1 = Rectangle((0, i), tmin, 1, facecolor=col)
-        r2 = Rectangle((tmin, i+0.5), tmax-tmin, 0.5, facecolor=col)
+        r1 = Rectangle((0, i), tmax, 1, facecolor=col)
+        r2 = Rectangle((tmin, i), tmax-tmin, 1, facecolor="none", edgecolor="w", hatch="//////")
         plt.gca().add_artist(r1)
         plt.gca().add_artist(r2)
         tx = Text(-0.1, i+0.5, "%s" % label,

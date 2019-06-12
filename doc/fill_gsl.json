@@ -1,8 +1,8 @@
 {
   "context": {
-    "date": "2019-06-03 22:33:28",
-    "host_name": "hfm-1608b",
-    "executable": "./benchmark/histogram_filling_gsl",
+    "date": "2019-06-12 15:07:42",
+    "host_name": "hfm-1608b.dhcp.mpi-hd.mpg.de",
+    "executable": "./histogram_filling_gsl",
     "num_cpus": 4,
     "mhz_per_cpu": 2900,
     "cpu_scaling_enabled": false,
@@ -32,7 +32,7 @@
         "num_sharing": 4
       }
     ],
-    "load_avg": [2.18213,2.01025,1.92334],
+    "load_avg": [1.89209,1.73828,1.89551],
     "library_build_type": "release"
   },
   "benchmarks": [
@@ -43,9 +43,9 @@
       "repetitions": 0,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 93827491,
-      "real_time": 7.4210463860594267e+00,
-      "cpu_time": 7.4120920488004947e+00,
+      "iterations": 92225399,
+      "real_time": 7.3727007131844076e+00,
+      "cpu_time": 7.3568670600167314e+00,
       "time_unit": "ns"
     },
     {
@@ -55,9 +55,9 @@
       "repetitions": 0,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 40047370,
-      "real_time": 1.7006033155376219e+01,
-      "cpu_time": 1.6964709542724034e+01,
+      "iterations": 41455441,
+      "real_time": 1.6783869479827938e+01,
+      "cpu_time": 1.6761635704225167e+01,
       "time_unit": "ns"
     },
     {
@@ -67,9 +67,9 @@
       "repetitions": 0,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 81505286,
-      "real_time": 8.3697460800122077e+00,
-      "cpu_time": 8.3077556466705715e+00,
+      "iterations": 88302449,
+      "real_time": 7.8366695917512184e+00,
+      "cpu_time": 7.8247206937601472e+00,
       "time_unit": "ns"
     },
     {
@@ -79,9 +79,9 @@
       "repetitions": 0,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 40861834,
-      "real_time": 1.7504649522226590e+01,
-      "cpu_time": 1.7429369420863488e+01,
+      "iterations": 36811687,
+      "real_time": 1.8602898475683215e+01,
+      "cpu_time": 1.8578963794840472e+01,
       "time_unit": "ns"
     }
   ]
