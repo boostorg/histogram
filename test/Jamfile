@@ -91,6 +91,7 @@ alias serialization :
     [ run histogram_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run storage_adaptor_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run unlimited_storage_serialization_test.cpp libserial : $(THIS_PATH) ]
+    [ run display_serialization_test.cpp libserial : $(THIS_PATH) ]
     ;
 
 alias libserial :
