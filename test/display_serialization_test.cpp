@@ -66,10 +66,9 @@ const std::string expected_3 =
 } // namespace
 
 void run_tests(const std::string& filename, const std::string& expected) {
-  auto h1 = make_histogram(axis::regular<>(1, -0.5, 2.0));
-  h1(0.5);
+  auto h1 = make_histogram(axis::regular<>()); // create an empty histogram
 
-  auto h2 = decltype(h1)();
+  auto h2 = decltype(h1)(); // create a default-constructed second histogram
   BOOST_TEST_NE(h1, h2);
   load_xml(filename, h2);
 
