@@ -153,21 +153,6 @@ std::string get_external_line(const unsigned int labels_width) {
   return external_line.str();
 }
 
-std::string get_top_line(const unsigned int labels_width,
-                         const std::vector<int>& values) {
-  std::stringstream top_line;
-
-  const unsigned int min = 0;
-  auto max_value = std::max_element(values.begin(), values.end());
-  const float max = *max_value / max_bin_coefficient;
-
-  std::string min_max = str(boost::format("%-i %.1f") % min %
-                            boost::io::group(std::setw(histogram_width), max));
-
-  top_line << draw_line(labels_width, ' ', false) << " " << min_max;
-  return top_line.str();
-}
-
 visualization_data precalculate_visual_data(extract& h_data){
   const unsigned int additional_offset = 8; // 8 white characters  
   const auto scale_factors = calculate_scale_factors(h_data.values_);
