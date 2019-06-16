@@ -23,28 +23,40 @@
 
 using namespace boost::histogram;
 
-void run_tests(const std::string& filename) {
+  namespace {
+  const std::string expected_1 = "\n"
+  "                  +------------------------------------------------------------+\n"
+  "  [-inf, -0.5)  0 |                                                            |\n"
+  "  [-0.5,  0.0)  1 |***********                                                 |\n"
+  "  [ 0.0,  0.5)  5 |*********************************************************   |\n"
+  "  [ 0.5,  1.0)  3 |**********************************                          |\n"
+  "  [ 1.0,  1.5)  0 |                                                            |\n"
+  "  [ 1.5,  2.0)  1 |***********                                                 |\n"
+  "  [ 2.0,  inf]  0 |                                                            |\n"
+  "                  +------------------------------------------------------------+\n\n";
+  }
+  
+
+void run_tests(const std::string& filename, const std::string& expected) {
   auto h1 = make_histogram(axis::regular<>(1, -0.5, 2.0));
   h1(0.5);
-  
-  display::display(h1);
 
   auto h2 = decltype(h1)();
   BOOST_TEST_NE(h1, h2);
   load_xml(filename, h2);
 
-  display::display(h2);
-  BOOST_TEST_NE(h1, h2);
+  std::ostringstream os;  
+  display::display(h2, os);
+
+  BOOST_TEST_EQ(os.str(), expected);
 }
 
 int main(int argc, char** argv) {
   BOOST_ASSERT(argc == 2);
-  run_tests(join(argv[1], "display_serialization_test_1.xml"));
+
+  run_tests(join(argv[1], "display_serialization_test_1.xml"), expected_1);
   
-  // std::ostringstream os;
-  // std::vector<int> v = {1, 3, 2};
-  // os << v;
-  // BOOST_TEST_EQ(os.str(), std::string("[ 1 3 2 ]"));
+  
   
   return boost::report_errors();
 }
