@@ -6,11 +6,11 @@
 
 #include <boost/assert.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/display.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <sstream>
 #include <string>
-#include "../include/boost/histogram/display.hpp"
 #include "throw_exception.hpp"
 #include "utility_allocator.hpp"
 #include "utility_serialization.hpp"
