@@ -56,9 +56,9 @@ extract extract_data(const histogram& h) {
   auto data = indexed(h, coverage::all);
 
   extract ex;  
-  for (auto x : data) {
-    lower = str( boost::format("%.1f") % x.bin().lower() );
-    upper = str( boost::format("%.1f") % x.bin().upper() );
+  for (const auto& x : data) {
+    lower = ( boost::format("%.1f") % x.bin().lower() ).str();
+    upper = ( boost::format("%.1f") % x.bin().upper() ).str();
     ex.lower_bounds_.push_back(lower);
     ex.upper_bounds_.push_back(upper);
     ex.values_.push_back(*x);
@@ -80,9 +80,9 @@ std::string get_single_label(const extract& data,
     parenthesis = ')';
 
   label = '[' 
-        + str(boost::format("%s") % boost::io::group(std::setw(column_width1), lower))
+        + (boost::format("%s") % boost::io::group(std::setw(column_width1), lower)).str()
         + ", "
-        + str(boost::format("%s") % boost::io::group(std::setw(column_width2), upper))
+        + (boost::format("%s") % boost::io::group(std::setw(column_width2), upper)).str()
         + parenthesis;
   return label;
 }
@@ -92,7 +92,7 @@ std::string get_single_str_value(const std::vector<std::string>& str_values,
                                  const unsigned int column_width) {
   std::string str_value = str_values.at(index);
   str_value =
-      str(boost::format("%-s") % boost::io::group(std::setw(column_width), str_value));
+      (boost::format("%-s") % boost::io::group(std::setw(column_width), str_value)).str();
   return str_value;
 }
 
