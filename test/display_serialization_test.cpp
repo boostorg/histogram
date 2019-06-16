@@ -74,7 +74,7 @@ void run_tests(const std::string& filename, const std::string& expected) {
   load_xml(filename, h2);
 
   std::ostringstream os;
-  display::display(h2, os);
+  display(h2, os);
   std::cout << os.str();
   BOOST_TEST_EQ(os.str(), expected);
 }
