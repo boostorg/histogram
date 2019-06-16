@@ -17,7 +17,8 @@
 #include <string>
 #include <vector>
 
-namespace boost::histogram {
+namespace boost {
+namespace histogram {
 namespace detail {
 
 const unsigned int histogram_width = 60; // 60 characters
@@ -197,6 +198,7 @@ void display(const histogram& h, std::ostream& output = std::cout) {
   output << draw_histogram(histogram_data, visualization_data);
 }
 
-} // ns boost::histogram
+} // ns histogram
+} // ns boost
 
 #endif
