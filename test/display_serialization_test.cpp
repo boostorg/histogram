@@ -31,15 +31,15 @@ int main(int argc, char** argv) {
   for (auto value : {0.5, 0.5, 0.3, -0.2, 1.6, 0.0, 0.1, 0.1, 0.6, 0.4}) 
     h1(value);
   
-  //display::display(h);
+  display::display(h1);
 
-  const auto filename = join(argv[1], "display_serialization_test_2.xml");
-  print_xml(filename, h1);
-  // auto h2 = decltype(h1)();
-  // BOOST_TEST_NE(h1, h2);
-  // load_xml(filename, h2);
-  
-  // BOOST_TEST_EQ(h1, h2);
+  const auto filename = join(argv[1], "display_serialization_test_1.xml");
+  auto h2 = decltype(h1)();
+  BOOST_TEST_NE(h1, h2);
+  load_xml(filename, h2);
+
+  display::display(h2);
+  BOOST_TEST_EQ(h1, h2);
 
   // std::ostringstream os;
   // std::vector<int> v = {1, 3, 2};
