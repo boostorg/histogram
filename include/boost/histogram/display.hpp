@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_DISPLAY_HPP
 #define BOOST_HISTOGRAM_DISPLAY_HPP
 
-#include <boost/format.hpp>
 #include <boost/histogram.hpp>
 
 #include <algorithm>
@@ -72,10 +71,11 @@ extract extract_data(const Histogram& h) {
   return ex;
 }
 
-std::string get_single_label(const extract& data, const unsigned int index,
+std::ostream& get_single_label(std::ostream& label, 
+                             const extract& data, 
+                             const unsigned int index,
                              const unsigned int column_width1,
                              const unsigned int column_width2) {
-  std::string label = "";
   char parenthesis = ' ';
   std::string lower = data.lower_bounds_.at(index);
   std::string upper = data.upper_bounds_.at(index);
@@ -84,21 +84,18 @@ std::string get_single_label(const extract& data, const unsigned int index,
   else
     parenthesis = ')';
 
-  label =
-      '[' +
-      (boost::format("%s") % boost::io::group(std::setw(column_width1), lower)).str() +
-      ", " +
-      (boost::format("%s") % boost::io::group(std::setw(column_width2), upper)).str() +
-      parenthesis;
+  label << '[' << std::right << std::setw(column_width1) << lower << ", "
+               << std::right << std::setw(column_width2) << upper << parenthesis;
+
   return label;
 }
 
-std::string get_single_str_value(const std::vector<std::string>& str_values,
+std::ostream& get_single_str_value(std::ostream& str_value, 
+                                 const std::vector<std::string>& str_values,
                                  const unsigned int index,
                                  const unsigned int column_width) {
-  std::string str_value = str_values.at(index);
-  str_value =
-      (boost::format("%-s") % boost::io::group(std::setw(column_width), str_value)).str();
+
+  str_value << std::left << std::setw(column_width) << str_values.at(index);
   return str_value;
 }
 
@@ -132,30 +129,33 @@ std::vector<std::string> convert_to_str_vec(const std::vector<int>& values) {
   return string_values;
 }
 
-std::string draw_line(const unsigned int num, const char c = '*', bool complete = true) {
-  std::stringstream line;
+std::ostream& draw_line(std::ostream& line, const unsigned int num, const char c = '*', bool complete = true) {
   unsigned int i = 0;
   for (; i < num; ++i) line << c;
 
   if (complete == true) {
     for (; i < histogram_width; ++i) line << ' ';
   }
-  return line.str();
+  return line;
 }
 
-std::string get_single_histogram_line(const std::vector<int>& values,
+std::ostream& get_single_histogram_line(std::ostream& line, 
+                                      const std::vector<int>& values,
                                       const unsigned int index) {
-  std::stringstream line;
-  line << "|" << draw_line(values.at(index)) << '|';
-  return line.str();
+
+  line << "|";
+  draw_line(line, values.at(index));
+  line << '|';
+  return line;
 }
 
-std::string get_external_line(const unsigned int labels_width) {
-  std::stringstream external_line;
-
-  external_line << draw_line(labels_width, ' ', false) << " +"
-                << draw_line(histogram_width, '-') << '+';
-  return external_line.str();
+std::ostream& get_external_line(std::ostream& external_line, const unsigned int labels_width) {
+  
+  draw_line(external_line, labels_width, ' ', false);
+  external_line << " +";
+  draw_line(external_line, histogram_width, '-');
+  external_line << '+';
+  return external_line;
 }
 
 visualization_data precalculate_visual_data(extract& h_data) {
@@ -173,22 +173,24 @@ visualization_data precalculate_visual_data(extract& h_data) {
   return v_data;
 }
 
-std::string draw_histogram(const extract& h_data, const visualization_data& v_data) {
-  std::stringstream visualisation;
+std::ostream& draw_histogram(std::ostream& visualisation, const extract& h_data, const visualization_data& v_data) {
+  visualisation << "\n";
+  get_external_line(visualisation, v_data.external_line_shift_); 
+  visualisation << "\n";
 
-  visualisation << "\n" << get_external_line(v_data.external_line_shift_) << "\n";
-
-  for (unsigned int i = 0; i < h_data.size(); i++)
-    visualisation << "  "
-                  << get_single_label(h_data, i, v_data.lower_bounds_width_,
-                                      v_data.upper_bounds_width_)
-                  << "  "
-                  << get_single_str_value(v_data.str_values_, i, v_data.str_values_width_)
-                  << " "
-                  << get_single_histogram_line(v_data.scale_factors_, i) << "\n";
-
-  visualisation << get_external_line(v_data.external_line_shift_) << "\n\n";
-  return visualisation.str();
+  for (unsigned int i = 0; i < h_data.size(); i++) {
+    visualisation << "  ";
+    get_single_label(visualisation, h_data, i, v_data.lower_bounds_width_, v_data.upper_bounds_width_);
+    visualisation << "  ";
+    get_single_str_value(visualisation, v_data.str_values_, i, v_data.str_values_width_);
+    visualisation << " ";
+    get_single_histogram_line(visualisation, v_data.scale_factors_, i);
+    visualisation << "\n";
+  }
+  get_external_line(visualisation, v_data.external_line_shift_);
+  visualisation << "\n\n";
+  
+  return visualisation;
 }
 
 template <class Histogram>
@@ -196,7 +198,7 @@ void display_histogram(std::ostream& out, const Histogram& h) {
   auto histogram_data = detail::extract_data(h);
   auto visualization_data = detail::precalculate_visual_data(histogram_data);
 
-  out << draw_histogram(histogram_data, visualization_data);
+  draw_histogram(out, histogram_data, visualization_data);
 }
 } // ns detail
 
