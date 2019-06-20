@@ -51,19 +51,23 @@ struct visualization_data {
       , external_line_shift_{external_line_shift} {}
 };
 
-template <class histogram>
-extract extract_data(const histogram& h) {
-  std::string lower, upper;
+template <class Histogram>
+extract extract_data(const Histogram& h) {
+  std::stringstream lower, upper;
+  lower << std::fixed << std::setprecision(1);
+  upper << std::fixed << std::setprecision(1);
 
   auto data = indexed(h, coverage::all);
 
   extract ex;
   for (const auto& x : data) {
-    lower = (boost::format("%.1f") % x.bin().lower()).str();
-    upper = (boost::format("%.1f") % x.bin().upper()).str();
-    ex.lower_bounds_.push_back(lower);
-    ex.upper_bounds_.push_back(upper);
+    lower << x.bin().lower();
+    upper << x.bin().upper();
+    ex.lower_bounds_.push_back(lower.str());
+    ex.upper_bounds_.push_back(upper.str());
     ex.values_.push_back(*x);
+    lower.str("");
+    upper.str("");
   }
   return ex;
 }
@@ -187,18 +191,41 @@ std::string draw_histogram(const extract& h_data, const visualization_data& v_da
   return visualisation.str();
 }
 
-} // ns detail
-
-template <class histogram>
-void display(const histogram& h, std::ostream& output = std::cout) {
-
+template <class Histogram>
+void display_histogram(std::ostream& out, const Histogram& h) {
   auto histogram_data = detail::extract_data(h);
   auto visualization_data = detail::precalculate_visual_data(histogram_data);
 
-  output << draw_histogram(histogram_data, visualization_data);
+  out << draw_histogram(histogram_data, visualization_data);
 }
+} // ns detail
+
+namespace os {
+
+// template <class Histogram>
+// struct display_t {
+//    const Histogram& histogram_;
+//    unsigned terminal_width_;
+// };
+
+// template <class Histogram>
+// auto display(const Histogram& h, unsigned terminal_width = 0) {
+//    return display_t<Histogram>{h, terminal_width == 0 ? 60 : terminal_width};
+// }
+
+// template <class Histogram>
+// std::ostream& operator<<(std::ostream& os, const display_t<Histogram>& dh) {
+//    // call your main display function here
+//    detail::display_histogram(os, dh.histogram_, dh.terminal_width_);
+//    return os;
+// }
+
+template <class Histogram>
+std::ostream& operator<<(std::ostream& out, const Histogram& h) {
+  return out << detail::display_histogram(h);
+}
+} // ns os
 
 } // ns histogram
 } // ns boost
-
 #endif
