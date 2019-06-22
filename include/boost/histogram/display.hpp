@@ -20,8 +20,8 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-const unsigned int histogram_width = 60; // 60 characters
-const float max_bin_coefficient = 0.95;  // 95% of histogram_width
+const unsigned int histogram_width = 60;  // 60 characters
+const float max_bin_coefficient = 0.95f;  // 95% of histogram_width
 
 struct extract {
   std::vector<std::string> upper_bounds_;
@@ -101,13 +101,13 @@ std::ostream& get_single_str_value(std::ostream& str_value,
 
 std::vector<int> calculate_scale_factors(const std::vector<int>& values) {
   std::vector<int> scale_factors{};
-  const unsigned int longest_bin = max_bin_coefficient * histogram_width;
+  const float longest_bin = max_bin_coefficient * histogram_width;
 
   auto max_value = std::max_element(values.begin(), values.end());
 
   for (const auto& x : values) {
-    int result = x * longest_bin / (*max_value);
-    scale_factors.push_back(result);
+    float result = x * longest_bin / (*max_value);
+    scale_factors.push_back(static_cast<int>(result));
   }
   return scale_factors;
 }
@@ -150,7 +150,6 @@ std::ostream& get_single_histogram_line(std::ostream& line,
 }
 
 std::ostream& get_external_line(std::ostream& external_line, const unsigned int labels_width) {
-  
   draw_line(external_line, labels_width, ' ', false);
   external_line << " +";
   draw_line(external_line, histogram_width, '-');
