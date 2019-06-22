@@ -21,12 +21,12 @@ namespace histogram {
 namespace detail {
 
 const unsigned int histogram_width = 60;  // 60 characters
-const float max_bin_coefficient = 0.95f;  // 95% of histogram_width
+const double max_bin_coefficient = 0.95;  // 95% of histogram_width
 
 struct extract {
   std::vector<std::string> upper_bounds_;
   std::vector<std::string> lower_bounds_;
-  std::vector<int> values_;
+  std::vector<double> values_;
   unsigned int size() const { return values_.size(); }
 };
 
@@ -99,14 +99,14 @@ std::ostream& get_single_str_value(std::ostream& str_value,
   return str_value;
 }
 
-std::vector<int> calculate_scale_factors(const std::vector<int>& values) {
+std::vector<int> calculate_scale_factors(const std::vector<double>& values) {
   std::vector<int> scale_factors{};
-  const float longest_bin = max_bin_coefficient * histogram_width;
+  const double longest_bin = max_bin_coefficient * histogram_width;
 
   auto max_value = std::max_element(values.begin(), values.end());
 
   for (const auto& x : values) {
-    float result = x * longest_bin / (*max_value);
+    double result = x * longest_bin / (*max_value);
     scale_factors.push_back(static_cast<int>(result));
   }
   return scale_factors;
@@ -120,12 +120,17 @@ size_t get_max_width(const std::vector<std::string>& container) {
   return max_length;
 }
 
-std::vector<std::string> convert_to_str_vec(const std::vector<int>& values) {
+std::vector<std::string> convert_to_str_vec(const std::vector<double>& values) {
   std::vector<std::string> string_values;
   string_values.reserve(values.size());
 
+
   std::transform(values.begin(), values.end(), std::back_inserter(string_values),
-                 [](int i) { return std::to_string(i); });
+                 [](double d) {
+                    std::ostringstream tmp;
+                    tmp << std::defaultfloat << d;
+                    return tmp.str();
+                   });
   return string_values;
 }
 
