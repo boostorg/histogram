@@ -50,13 +50,25 @@ struct visualization_data {
       , external_line_shift_{external_line_shift} {}
 };
 
+
 template <class Histogram>
+double get_lower_bound(typename indexed_range<const Histogram>::range_iterator ri) {
+  std::cout << ri->bin().lower();
+}
+
+template <typename Histogram>
 extract extract_data(const Histogram& h) {
   std::stringstream lower, upper;
   lower << std::fixed << std::setprecision(1);
   upper << std::fixed << std::setprecision(1);
 
+  std::remove_reference_t<Histogram> a;
   auto data = indexed(h, coverage::all);
+  auto v = (data.begin()); //value
+  std::cout << *(v) << "\n";
+  std::cout << "lower bound: " << v->bin().lower() << "\n";
+
+  get_lower_bound<Histogram>(data.begin());
 
   extract ex;
   for (const auto& x : data) {
@@ -70,6 +82,7 @@ extract extract_data(const Histogram& h) {
   }
   return ex;
 }
+
 
 std::ostream& get_single_label(std::ostream& label, 
                              const extract& data, 
