@@ -90,6 +90,9 @@ int main() {
     auto a = integer<int, null_type, option::growth_t>();
     BOOST_TEST_EQ(traits::update(a, 0), (std::pair<index_type, index_type>(0, -1)));
     BOOST_TEST_THROWS(traits::update(a, "foo"), std::invalid_argument);
+
+    variant<integer<int, null_type, option::growth_t>, integer<>> v(a);
+    BOOST_TEST_EQ(traits::update(v, 0), (std::pair<index_type, index_type>(0, 0)));
   }
 
   // metadata

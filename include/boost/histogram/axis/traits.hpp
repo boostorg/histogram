@@ -15,7 +15,11 @@
 #include <boost/histogram/detail/try_cast.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/variant2/variant.hpp>
 #include <stdexcept>
 #include <utility>
 
@@ -49,6 +53,44 @@ decltype(auto) value_method_switch(I&& i, D&& d, const A& a) {
 }
 
 static axis::null_type null_value;
+
+struct variant_access {
+  template <class T, class T0, class Variant>
+  static auto get_if_impl(mp11::mp_list<T, T0>, Variant* v) noexcept {
+    return variant2::get_if<T>(&(v->impl));
+  }
+
+  template <class T, class T0, class Variant>
+  static auto get_if_impl(mp11::mp_list<T, T0*>, Variant* v) noexcept {
+    auto tp = variant2::get_if<mp11::mp_if<std::is_const<T0>, const T*, T*>>(&(v->impl));
+    return tp ? *tp : nullptr;
+  }
+
+  template <class T, class Variant>
+  static auto get_if(Variant* v) noexcept {
+    using T0 = mp11::mp_first<std::decay_t<Variant>>;
+    return get_if_impl(mp11::mp_list<T, T0>{}, v);
+  }
+
+  template <class T0, class Visitor, class Variant>
+  static decltype(auto) visit_impl(mp11::mp_identity<T0>, Visitor&& vis, Variant&& v) {
+    return variant2::visit(std::forward<Visitor>(vis), v.impl);
+  }
+
+  template <class T0, class Visitor, class Variant>
+  static decltype(auto) visit_impl(mp11::mp_identity<T0*>, Visitor&& vis, Variant&& v) {
+    return variant2::visit(
+        [&vis](auto&& x) -> decltype(auto) { return std::forward<Visitor>(vis)(*x); },
+        v.impl);
+  }
+
+  template <class Visitor, class Variant>
+  static decltype(auto) visit(Visitor&& vis, Variant&& v) {
+    using T0 = mp11::mp_first<std::decay_t<Variant>>;
+    return visit_impl(mp11::mp_identity<T0>{}, std::forward<Visitor>(vis),
+                      std::forward<Variant>(v));
+  }
+};
 
 } // namespace detail
 
@@ -199,7 +241,7 @@ std::pair<index_type, index_type> update(Axis& axis, const U& value) noexcept(
 // specialization for variant
 template <class... Ts, class U>
 std::pair<index_type, index_type> update(variant<Ts...>& axis, const U& value) {
-  return axis.update(value);
+  return visit([&value](auto& a) { return a.update(value); }, axis);
 }
 
 /** Returns bin width at axis index.

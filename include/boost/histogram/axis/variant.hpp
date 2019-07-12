@@ -27,49 +27,6 @@
 
 namespace boost {
 namespace histogram {
-namespace detail {
-
-struct variant_access {
-  template <class T, class T0, class Variant>
-  static auto get_if_impl(mp11::mp_list<T, T0>, Variant* v) noexcept {
-    return boost::variant2::get_if<T>(&(v->impl));
-  }
-
-  template <class T, class T0, class Variant>
-  static auto get_if_impl(mp11::mp_list<T, T0*>, Variant* v) noexcept {
-    auto tp =
-        boost::variant2::get_if<mp11::mp_if<std::is_const<T0>, const T*, T*>>(&(v->impl));
-    return tp ? *tp : nullptr;
-  }
-
-  template <class T, class Variant>
-  static auto get_if(Variant* v) noexcept {
-    using T0 = mp11::mp_first<std::decay_t<Variant>>;
-    return get_if_impl(mp11::mp_list<T, T0>{}, v);
-  }
-
-  template <class T0, class Visitor, class Variant>
-  static decltype(auto) visit_impl(mp11::mp_identity<T0>, Visitor&& vis, Variant&& v) {
-    return boost::variant2::visit(std::forward<Visitor>(vis), v.impl);
-  }
-
-  template <class T0, class Visitor, class Variant>
-  static decltype(auto) visit_impl(mp11::mp_identity<T0*>, Visitor&& vis, Variant&& v) {
-    return boost::variant2::visit(
-        [&vis](auto&& x) -> decltype(auto) { return std::forward<Visitor>(vis)(*x); },
-        v.impl);
-  }
-
-  template <class Visitor, class Variant>
-  static decltype(auto) visit(Visitor&& vis, Variant&& v) {
-    using T0 = mp11::mp_first<std::decay_t<Variant>>;
-    return visit_impl(mp11::mp_identity<T0>{}, std::forward<Visitor>(vis),
-                      std::forward<Variant>(v));
-  }
-};
-
-} // namespace detail
-
 namespace axis {
 
 /// Polymorphic axis type
