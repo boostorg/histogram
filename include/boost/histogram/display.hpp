@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 namespace boost {
 namespace histogram {
@@ -52,8 +53,21 @@ struct visualization_data {
 
 
 template <class Histogram>
-double get_lower_bound(typename indexed_range<const Histogram>::range_iterator ri) {
-  std::cout << ri->bin().lower();
+std::ostream& get_lower_bound(std::ostream& os, 
+                              typename indexed_range<const Histogram>::range_iterator ri,
+                              unsigned int prec = 1) {
+  os << std::fixed << std::setprecision(prec);
+  os << ri->bin().lower();
+  return os;
+}
+
+template <class Histogram>
+std::ostream& get_upper_bound(std::ostream& os,
+                              typename indexed_range<const Histogram>::range_iterator ri,
+                              unsigned int prec = 1) {
+  os << std::fixed << std::setprecision(prec);
+  os << ri->bin().upper();
+  return os;
 }
 
 template <typename Histogram>
@@ -62,13 +76,12 @@ extract extract_data(const Histogram& h) {
   lower << std::fixed << std::setprecision(1);
   upper << std::fixed << std::setprecision(1);
 
-  std::remove_reference_t<Histogram> a;
+  //std::remove_reference_t<Histogram> a;
   auto data = indexed(h, coverage::all);
   auto v = (data.begin()); //value
   std::cout << *(v) << "\n";
   std::cout << "lower bound: " << v->bin().lower() << "\n";
 
-  get_lower_bound<Histogram>(data.begin());
 
   extract ex;
   for (const auto& x : data) {
@@ -83,24 +96,25 @@ extract extract_data(const Histogram& h) {
   return ex;
 }
 
-
-std::ostream& get_single_label(std::ostream& label, 
-                             const extract& data, 
-                             const unsigned int index,
-                             const unsigned int column_width1,
-                             const unsigned int column_width2) {
+template <typename Histogram>
+std::ostream& get_single_label(std::ostream& out, 
+                                  typename indexed_range<const Histogram>::range_iterator ri,
+                                  const unsigned int column_width1,
+                                  const unsigned int column_width2) {
   char parenthesis = ' ';
-  std::string lower = data.lower_bounds_.at(index);
-  std::string upper = data.upper_bounds_.at(index);
-  if (index == data.size() - 1)
-    parenthesis = ']';
-  else
+  if ( std::isfinite(ri->bin().upper()) )
     parenthesis = ')';
+  else
+    parenthesis = ']';
 
-  label << '[' << std::right << std::setw(column_width1) << lower << ", "
-               << std::right << std::setw(column_width2) << upper << parenthesis;
+  out << '[' << std::right << std::setw(column_width1);
+  get_lower_bound<Histogram>(out, ri); 
+  out << ", ";
+  out << std::right << std::setw(column_width2);
+  get_upper_bound<Histogram>(out, ri);
+  out << parenthesis;
 
-  return label;
+  return out;
 }
 
 std::ostream& get_single_str_value(std::ostream& str_value, 
@@ -190,14 +204,18 @@ visualization_data precalculate_visual_data(extract& h_data) {
   return v_data;
 }
 
-std::ostream& draw_histogram(std::ostream& visualisation, const extract& h_data, const visualization_data& v_data) {
+template <class Histogram>
+std::ostream& draw_histogram(std::ostream& visualisation, const extract& h_data, const visualization_data& v_data, const Histogram& h) {
   visualisation << "\n";
   get_external_line(visualisation, v_data.external_line_shift_); 
   visualisation << "\n";
 
-  for (unsigned int i = 0; i < h_data.size(); i++) {
+  auto data = indexed(h, coverage::all);
+  auto it = data.begin();
+
+  for (unsigned int i = 0; i < h_data.size(); i++, ++it) {
     visualisation << "  ";
-    get_single_label(visualisation, h_data, i, v_data.lower_bounds_width_, v_data.upper_bounds_width_);
+    get_single_label<Histogram>(visualisation, it, v_data.lower_bounds_width_, v_data.upper_bounds_width_);
     visualisation << "  ";
     get_single_str_value(visualisation, v_data.str_values_, i, v_data.str_values_width_);
     visualisation << " ";
@@ -215,7 +233,7 @@ void display_histogram(std::ostream& out, const Histogram& h) {
   auto histogram_data = detail::extract_data(h);
   auto visualization_data = detail::precalculate_visual_data(histogram_data);
 
-  draw_histogram(out, histogram_data, visualization_data);
+  draw_histogram(out, histogram_data, visualization_data, h);
 }
 } // ns detail
 
