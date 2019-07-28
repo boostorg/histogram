@@ -117,12 +117,14 @@ std::ostream& get_single_label(std::ostream& out,
   return out;
 }
 
+template <typename Histogram>
 std::ostream& get_single_str_value(std::ostream& out, 
-                                 const std::vector<std::string>& str_values,
-                                 const unsigned int index,
+                                 typename indexed_range<const Histogram>::range_iterator ri,
                                  const unsigned int column_width) {
 
-  out << std::left << std::setw(column_width) << str_values.at(index);
+  std::ostringstream tmp;
+  tmp << std::defaultfloat << *(ri);
+  out << std::left << std::setw(column_width) << tmp.str();
   return out;
 }
 
@@ -217,7 +219,7 @@ std::ostream& draw_histogram(std::ostream& out, const extract& h_data, const vis
     out << "  ";
     get_single_label<Histogram>(out, it, v_data.lower_bounds_width_, v_data.upper_bounds_width_);
     out << "  ";
-    get_single_str_value(out, v_data.str_values_, i, v_data.str_values_width_);
+    get_single_str_value<Histogram>(out, it, v_data.str_values_width_);
     out << " ";
     get_single_histogram_line(out, v_data.scale_factors_, i);
     out << "\n";
