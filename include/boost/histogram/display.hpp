@@ -33,18 +33,15 @@ struct extract {
 
 struct visualization_data {
   std::vector<std::string> str_values_;
-  std::vector<int> scale_factors_;
 
   size_t lower_bounds_width_ = 0;
   size_t upper_bounds_width_ = 0;
   size_t str_values_width_ = 0;
   size_t external_line_shift_ = 0;
   visualization_data(const std::vector<std::string>& str_values,
-                     const std::vector<int>& scale_factors,
                      const size_t& lower_bounds_width, const size_t& upper_bounds_width,
                      const size_t& str_values_width, const size_t& external_line_shift)
       : str_values_{str_values}
-      , scale_factors_{scale_factors}
       , lower_bounds_width_{lower_bounds_width}
       , upper_bounds_width_{upper_bounds_width}
       , str_values_width_{str_values_width}
@@ -78,10 +75,6 @@ extract extract_data(const Histogram& h) {
 
   //std::remove_reference_t<Histogram> a;
   auto data = indexed(h, coverage::all);
-  auto v = (data.begin()); //value
-  std::cout << *(v) << "\n";
-  std::cout << "lower bound: " << v->bin().lower() << "\n";
-
 
   extract ex;
   for (const auto& x : data) {
@@ -97,7 +90,7 @@ extract extract_data(const Histogram& h) {
 }
 
 template <typename Histogram>
-std::ostream& get_single_label(std::ostream& out, 
+std::ostream& get_label(std::ostream& out, 
                                   typename indexed_range<const Histogram>::range_iterator ri,
                                   const unsigned int column_width1,
                                   const unsigned int column_width2) {
@@ -118,7 +111,7 @@ std::ostream& get_single_label(std::ostream& out,
 }
 
 template <typename Histogram>
-std::ostream& get_single_str_value(std::ostream& out, 
+std::ostream& get_value(std::ostream& out, 
                                  typename indexed_range<const Histogram>::range_iterator ri,
                                  const unsigned int column_width) {
 
@@ -126,19 +119,6 @@ std::ostream& get_single_str_value(std::ostream& out,
   tmp << std::defaultfloat << *(ri);
   out << std::left << std::setw(column_width) << tmp.str();
   return out;
-}
-
-std::vector<int> calculate_scale_factors(const std::vector<double>& values) {
-  std::vector<int> scale_factors{};
-  const double longest_bin = max_bin_coefficient * histogram_width;
-
-  auto max_value = std::max_element(values.begin(), values.end());
-
-  for (const auto& x : values) {
-    double result = x * longest_bin / (*max_value);
-    scale_factors.push_back(static_cast<int>(result));
-  }
-  return scale_factors;
 }
 
 size_t get_max_width(const std::vector<std::string>& container) {
@@ -173,12 +153,24 @@ std::ostream& draw_line(std::ostream& out, const unsigned int num, const char c 
   return out;
 }
 
-std::ostream& get_single_histogram_line(std::ostream& out, 
-                                      const std::vector<int>& values,
-                                      const unsigned int index) {
+template <class Histogram>
+unsigned int calculate_scale_f(typename indexed_range<const Histogram>::range_iterator ri,
+                               const double& max_value) {
+  
+  const double longest_bin = max_bin_coefficient * histogram_width;
+  double result = *ri * longest_bin / max_value;
+  return std::round(result);
+}
+
+template <typename Histogram>
+std::ostream& get_histogram_line(std::ostream& out,                                  
+                                 typename indexed_range<const Histogram>::range_iterator ri,
+                                 const double& max_value) {
+  
+  const auto scaled_value = calculate_scale_f<Histogram>(ri, max_value);
 
   out << "|";
-  draw_line(out, values.at(index));
+  draw_line(out, scaled_value);
   out << '|';
   return out;
 }
@@ -193,7 +185,6 @@ std::ostream& get_external_line(std::ostream& out, const unsigned int labels_wid
 
 visualization_data precalculate_visual_data(extract& h_data) {
   const unsigned int additional_offset = 8; // 8 white characters
-  const auto scale_factors = calculate_scale_factors(h_data.values_);
   const auto str_values = convert_to_str_vec(h_data.values_);
   const auto lower_width = get_max_width(h_data.lower_bounds_);
   const auto upper_width = get_max_width(h_data.upper_bounds_);
@@ -201,27 +192,27 @@ visualization_data precalculate_visual_data(extract& h_data) {
   const auto hist_shift =
       lower_width + upper_width + str_values_width + additional_offset;
 
-  visualization_data v_data(str_values, scale_factors, lower_width, upper_width,
+  visualization_data v_data(str_values, lower_width, upper_width,
                             str_values_width, hist_shift);
   return v_data;
 }
 
 template <class Histogram>
-std::ostream& draw_histogram(std::ostream& out, const extract& h_data, const visualization_data& v_data, const Histogram& h) {
+std::ostream& draw_histogram(std::ostream& out, const Histogram& h, const visualization_data& v_data) {
+  auto data = indexed(h, coverage::all);
+  const auto max_v = *std::max_element(h.begin(), h.end());
+
   out << "\n";
   get_external_line(out, v_data.external_line_shift_); 
   out << "\n";
 
-  auto data = indexed(h, coverage::all);
-  auto it = data.begin();
-
-  for (unsigned int i = 0; i < h_data.size(); i++, ++it) {
+  for (auto it = data.begin(); it != data.end(); ++it) {
     out << "  ";
-    get_single_label<Histogram>(out, it, v_data.lower_bounds_width_, v_data.upper_bounds_width_);
+    get_label<Histogram>(out, it, v_data.lower_bounds_width_, v_data.upper_bounds_width_);
     out << "  ";
-    get_single_str_value<Histogram>(out, it, v_data.str_values_width_);
+    get_value<Histogram>(out, it, v_data.str_values_width_);
     out << " ";
-    get_single_histogram_line(out, v_data.scale_factors_, i);
+    get_histogram_line<Histogram>(out, it, max_v);
     out << "\n";
   }
   get_external_line(out, v_data.external_line_shift_);
@@ -235,7 +226,7 @@ void display_histogram(std::ostream& out, const Histogram& h) {
   auto histogram_data = detail::extract_data(h);
   auto visualization_data = detail::precalculate_visual_data(histogram_data);
 
-  draw_histogram(out, histogram_data, visualization_data, h);
+  draw_histogram(out, h, visualization_data);
 }
 } // ns detail
 
