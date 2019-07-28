@@ -117,13 +117,13 @@ std::ostream& get_single_label(std::ostream& out,
   return out;
 }
 
-std::ostream& get_single_str_value(std::ostream& str_value, 
+std::ostream& get_single_str_value(std::ostream& out, 
                                  const std::vector<std::string>& str_values,
                                  const unsigned int index,
                                  const unsigned int column_width) {
 
-  str_value << std::left << std::setw(column_width) << str_values.at(index);
-  return str_value;
+  out << std::left << std::setw(column_width) << str_values.at(index);
+  return out;
 }
 
 std::vector<int> calculate_scale_factors(const std::vector<double>& values) {
@@ -161,32 +161,32 @@ std::vector<std::string> convert_to_str_vec(const std::vector<double>& values) {
   return string_values;
 }
 
-std::ostream& draw_line(std::ostream& line, const unsigned int num, const char c = '*', bool complete = true) {
+std::ostream& draw_line(std::ostream& out, const unsigned int num, const char c = '*', bool complete = true) {
   unsigned int i = 0;
-  for (; i < num; ++i) line << c;
+  for (; i < num; ++i) out << c;
 
   if (complete == true) {
-    for (; i < histogram_width; ++i) line << ' ';
+    for (; i < histogram_width; ++i) out << ' ';
   }
-  return line;
+  return out;
 }
 
-std::ostream& get_single_histogram_line(std::ostream& line, 
+std::ostream& get_single_histogram_line(std::ostream& out, 
                                       const std::vector<int>& values,
                                       const unsigned int index) {
 
-  line << "|";
-  draw_line(line, values.at(index));
-  line << '|';
-  return line;
+  out << "|";
+  draw_line(out, values.at(index));
+  out << '|';
+  return out;
 }
 
-std::ostream& get_external_line(std::ostream& external_line, const unsigned int labels_width) {
-  draw_line(external_line, labels_width, ' ', false);
-  external_line << " +";
-  draw_line(external_line, histogram_width, '-');
-  external_line << '+';
-  return external_line;
+std::ostream& get_external_line(std::ostream& out, const unsigned int labels_width) {
+  draw_line(out, labels_width, ' ', false);
+  out << " +";
+  draw_line(out, histogram_width, '-');
+  out << '+';
+  return out;
 }
 
 visualization_data precalculate_visual_data(extract& h_data) {
@@ -205,27 +205,27 @@ visualization_data precalculate_visual_data(extract& h_data) {
 }
 
 template <class Histogram>
-std::ostream& draw_histogram(std::ostream& visualisation, const extract& h_data, const visualization_data& v_data, const Histogram& h) {
-  visualisation << "\n";
-  get_external_line(visualisation, v_data.external_line_shift_); 
-  visualisation << "\n";
+std::ostream& draw_histogram(std::ostream& out, const extract& h_data, const visualization_data& v_data, const Histogram& h) {
+  out << "\n";
+  get_external_line(out, v_data.external_line_shift_); 
+  out << "\n";
 
   auto data = indexed(h, coverage::all);
   auto it = data.begin();
 
   for (unsigned int i = 0; i < h_data.size(); i++, ++it) {
-    visualisation << "  ";
-    get_single_label<Histogram>(visualisation, it, v_data.lower_bounds_width_, v_data.upper_bounds_width_);
-    visualisation << "  ";
-    get_single_str_value(visualisation, v_data.str_values_, i, v_data.str_values_width_);
-    visualisation << " ";
-    get_single_histogram_line(visualisation, v_data.scale_factors_, i);
-    visualisation << "\n";
+    out << "  ";
+    get_single_label<Histogram>(out, it, v_data.lower_bounds_width_, v_data.upper_bounds_width_);
+    out << "  ";
+    get_single_str_value(out, v_data.str_values_, i, v_data.str_values_width_);
+    out << " ";
+    get_single_histogram_line(out, v_data.scale_factors_, i);
+    out << "\n";
   }
-  get_external_line(visualisation, v_data.external_line_shift_);
-  visualisation << "\n\n";
+  get_external_line(out, v_data.external_line_shift_);
+  out << "\n\n";
   
-  return visualisation;
+  return out;
 }
 
 template <class Histogram>
