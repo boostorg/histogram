@@ -159,7 +159,7 @@ unsigned int calculate_scale_f(typename indexed_range<const Histogram>::range_it
   
   const double longest_bin = max_bin_coefficient * histogram_width;
   double result = *ri * longest_bin / max_value;
-  return std::round(result);
+  return std::lround(result);
 }
 
 template <typename Histogram>
