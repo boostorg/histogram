@@ -1,3 +1,10 @@
+[/
+            Copyright Hans Dembinski 2018 - 2019.
+   Distributed under the Boost Software License, Version 1.0.
+      (See accompanying file LICENSE_1_0.txt or copy at
+            https://www.boost.org/LICENSE_1_0.txt)
+]
+
 [section:guide User guide]
 
 Boost.Histogram is designed to make simple things simple, yet complex things possible. Correspondingly, this guides covers the basic usage first, and the advanced usage in later sections. For an alternative quick start guide, have a look at the [link histogram.getting_started Getting started] section.

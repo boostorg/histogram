@@ -1,3 +1,10 @@
+[/
+            Copyright Hans Dembinski 2018 - 2019.
+   Distributed under the Boost Software License, Version 1.0.
+      (See accompanying file LICENSE_1_0.txt or copy at
+            https://www.boost.org/LICENSE_1_0.txt)
+]
+
 [section:DiscreteAxis DiscreteAxis]
 
 A [*DiscreteAxis] is one of two optional refinements of the [link histogram.concepts.Axis [*Axis]] concept, the other one is the [link histogram.concepts.IntervalAxis IntervalAxis]. This concept is for values that do not form intervals, and for axes with intervals that contain exactly one value.
