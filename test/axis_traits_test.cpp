@@ -16,16 +16,18 @@
 using namespace boost::histogram::axis;
 
 int main() {
-  // index, value, width
+  // index, rank, value, width
   {
     auto a = integer<>(1, 3);
     BOOST_TEST_EQ(traits::index(a, 1), 0);
+    BOOST_TEST_EQ(traits::rank(a), 1);
     BOOST_TEST_EQ(traits::value(a, 0), 1);
     BOOST_TEST_EQ(traits::width(a, 0), 0);
     BOOST_TEST_EQ(traits::width(a, 0), 0);
 
     auto b = integer<double>(1, 3);
     BOOST_TEST_EQ(traits::index(b, 1), 0);
+    BOOST_TEST_EQ(traits::rank(b), 1);
     BOOST_TEST_EQ(traits::value(b, 0), 1);
     BOOST_TEST_EQ(traits::width(b, 0), 1);
     auto& b1 = b;
@@ -35,8 +37,24 @@ int main() {
 
     auto c = category<std::string>{"red", "blue"};
     BOOST_TEST_EQ(traits::index(c, "blue"), 1);
+    BOOST_TEST_EQ(traits::rank(c), 1);
     BOOST_TEST_EQ(traits::value(c, 0), std::string("red"));
     BOOST_TEST_EQ(traits::width(c, 0), 0);
+
+    struct D {
+      index_type index(const std::tuple<int, double>& args) const {
+        return static_cast<index_type>(std::get<0>(args) + std::get<1>(args));
+      }
+      index_type size() const { return 5u; }
+    } d;
+    BOOST_TEST_EQ(traits::index(d, std::make_tuple(1, 2.0)), 3.0);
+    BOOST_TEST_EQ(traits::rank(d), 2u);
+
+    variant<D, integer<>> v;
+    v = a;
+    BOOST_TEST_EQ(traits::rank(v), 1u);
+    v = d;
+    BOOST_TEST_EQ(traits::rank(v), 2u);
   }
 
   // static_options, options()

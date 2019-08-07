@@ -216,6 +216,25 @@ axis::index_type index(const variant<Ts...>& axis, const U& value) {
   return axis.index(value);
 }
 
+/** Return axis rank (how many arguments it processes).
+
+  @param axis any axis instance
+*/
+template <class Axis>
+constexpr unsigned rank(const Axis& /* axis */) {
+  using namespace ::boost::mp11;
+  using Args = detail::args_type<decltype(&Axis::index)>;
+  using First = std::decay_t<mp_at_c<Args, 0>>;
+  return mp_eval_if_c<(mp_size<Args>::value != 1 || !detail::is_tuple<First>::value),
+                      mp_size<Args>, mp_size, First>::value;
+}
+
+// specialization for variant
+template <class... Ts>
+unsigned rank(const axis::variant<Ts...>& axis) {
+  return detail::variant_access::visit([](const auto& a) { return rank(a); }, axis);
+}
+
 /** Returns pair of axis index and shift for the value argument.
 
   Throws `std::invalid_argument` if the value argument is not implicitly convertible to
