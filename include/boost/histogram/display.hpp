@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <limits>
 
 namespace boost {
 namespace histogram {
@@ -23,70 +24,48 @@ namespace detail {
 
 const unsigned int histogram_width = 60;  // 60 characters
 const double max_bin_coefficient = 0.95;  // 95% of histogram_width
-
-struct extract {
-  std::vector<std::string> upper_bounds_;
-  std::vector<std::string> lower_bounds_;
-  std::vector<double> values_;
-  unsigned int size() const { return values_.size(); }
-};
-
-struct visualization_data {
-  std::vector<std::string> str_values_;
-
-  size_t lower_bounds_width_ = 0;
-  size_t upper_bounds_width_ = 0;
-  size_t str_values_width_ = 0;
-  size_t external_line_shift_ = 0;
-  visualization_data(const std::vector<std::string>& str_values,
-                     const size_t& lower_bounds_width, const size_t& upper_bounds_width,
-                     const size_t& str_values_width, const size_t& external_line_shift)
-      : str_values_{str_values}
-      , lower_bounds_width_{lower_bounds_width}
-      , upper_bounds_width_{upper_bounds_width}
-      , str_values_width_{str_values_width}
-      , external_line_shift_{external_line_shift} {}
-};
-
+const unsigned int precision = 1; //precision of upper and lower bounds
 
 template <class Histogram>
 std::ostream& get_lower_bound(std::ostream& os, 
-                              typename indexed_range<const Histogram>::range_iterator ri,
-                              unsigned int prec = 1) {
-  os << std::fixed << std::setprecision(prec);
+                              typename indexed_range<const Histogram>::range_iterator ri) {
+  os << std::fixed << std::setprecision(precision);
   os << ri->bin().lower();
   return os;
 }
 
 template <class Histogram>
 std::ostream& get_upper_bound(std::ostream& os,
-                              typename indexed_range<const Histogram>::range_iterator ri,
-                              unsigned int prec = 1) {
-  os << std::fixed << std::setprecision(prec);
+                              typename indexed_range<const Histogram>::range_iterator ri) {
+  os << std::fixed << std::setprecision(precision);
   os << ri->bin().upper();
   return os;
 }
 
 template <typename Histogram>
-extract extract_data(const Histogram& h) {
-  std::stringstream lower, upper;
-  lower << std::fixed << std::setprecision(1);
-  upper << std::fixed << std::setprecision(1);
+std::ostream& get_value(std::ostream& out, 
+                                 typename indexed_range<const Histogram>::range_iterator ri,
+                                 const unsigned int column_width) {
 
-  //std::remove_reference_t<Histogram> a;
-  auto data = indexed(h, coverage::all);
+  std::ostringstream tmp;
+  tmp << std::defaultfloat << *(ri);
+  out << std::left << std::setw(column_width) << tmp.str();
+  return out;
+}
 
-  extract ex;
-  for (const auto& x : data) {
-    lower << x.bin().lower();
-    upper << x.bin().upper();
-    ex.lower_bounds_.push_back(lower.str());
-    ex.upper_bounds_.push_back(upper.str());
-    ex.values_.push_back(*x);
-    lower.str("");
-    upper.str("");
-  }
-  return ex;
+template <class Histogram>
+float get_lower_bound(typename indexed_range<const Histogram>::range_iterator ri) {
+  return ri->bin().lower();
+}
+
+template <class Histogram>
+float get_upper_bound(typename indexed_range<const Histogram>::range_iterator ri) {
+  return ri->bin().upper();
+}
+
+template <class Histogram>
+float get_value(typename indexed_range<const Histogram>::range_iterator ri) {
+  return *ri;
 }
 
 template <typename Histogram>
@@ -110,37 +89,70 @@ std::ostream& get_label(std::ostream& out,
   return out;
 }
 
-template <typename Histogram>
-std::ostream& get_value(std::ostream& out, 
-                                 typename indexed_range<const Histogram>::range_iterator ri,
-                                 const unsigned int column_width) {
+unsigned int getNumOfChars(float number) {
+  int counter = 0;
+  if(number < 0) {
+    ++counter; // minus sign
+    number *= -1;
+  }
 
-  std::ostringstream tmp;
-  tmp << std::defaultfloat << *(ri);
-  out << std::left << std::setw(column_width) << tmp.str();
-  return out;
+  if(number == std::numeric_limits<float>::infinity()){
+    counter += 3;
+    return counter;
+  }
+
+  if(number > 0 && number < 1)
+    ++counter; // extra for 0.1 - 0.9 range
+  
+  if(floor(number) != number){
+    ++counter; // dot
+    number *= std::pow(10, precision);
+  }
+
+  while(number > 1){
+    number /= 10;
+    ++counter;
+  }
+  return counter;
 }
 
-size_t get_max_width(const std::vector<std::string>& container) {
-  size_t max_length = 0;
-
-  for (const auto& line : container)
-    if (line.length() > max_length) max_length = line.length();
+template <typename Histogram>
+unsigned int get_max_upperb_width(const Histogram& h) {
+  auto data = indexed(h, coverage::all);
+  unsigned int max_length = 0;
+  unsigned int temp = 0;
+  for (auto ri = data.begin(); ri != data.end(); ++ri) {
+    temp = getNumOfChars(get_upper_bound<Histogram>(ri));
+    if (temp > max_length) 
+      max_length = temp; 
+  }
   return max_length;
 }
 
-std::vector<std::string> convert_to_str_vec(const std::vector<double>& values) {
-  std::vector<std::string> string_values;
-  string_values.reserve(values.size());
+template <typename Histogram>
+unsigned int get_max_lowerb_width(const Histogram& h) {
+  auto data = indexed(h, coverage::all);
+  unsigned int max_length = 0;
+  unsigned int temp = 0;
+  for (auto ri = data.begin(); ri != data.end(); ++ri) {
+    temp = getNumOfChars(get_lower_bound<Histogram>(ri));
+    if (temp > max_length) 
+      max_length = temp; 
+  }
+  return max_length;
+}
 
-
-  std::transform(values.begin(), values.end(), std::back_inserter(string_values),
-                 [](double d) {
-                    std::ostringstream tmp;
-                    tmp << std::defaultfloat << d;
-                    return tmp.str();
-                   });
-  return string_values;
+template <typename Histogram>
+unsigned int get_max_value_width(const Histogram& h) {
+  auto data = indexed(h, coverage::all);
+  unsigned int max_length = 0;
+  unsigned int temp = 0;
+  for (auto ri = data.begin(); ri != data.end(); ++ri) {
+    temp = getNumOfChars(get_value<Histogram>(ri));
+    if (temp > max_length) 
+      max_length = temp; 
+  }
+  return max_length;
 }
 
 std::ostream& draw_line(std::ostream& out, const unsigned int num, const char c = '*', bool complete = true) {
@@ -183,39 +195,30 @@ std::ostream& get_external_line(std::ostream& out, const unsigned int labels_wid
   return out;
 }
 
-visualization_data precalculate_visual_data(extract& h_data) {
-  const unsigned int additional_offset = 8; // 8 white characters
-  const auto str_values = convert_to_str_vec(h_data.values_);
-  const auto lower_width = get_max_width(h_data.lower_bounds_);
-  const auto upper_width = get_max_width(h_data.upper_bounds_);
-  const auto str_values_width = get_max_width(str_values);
-  const auto hist_shift =
-      lower_width + upper_width + str_values_width + additional_offset;
-
-  visualization_data v_data(str_values, lower_width, upper_width,
-                            str_values_width, hist_shift);
-  return v_data;
-}
-
 template <class Histogram>
-std::ostream& draw_histogram(std::ostream& out, const Histogram& h, const visualization_data& v_data) {
+std::ostream& draw_histogram(std::ostream& out, 
+                              const Histogram& h, 
+                              const unsigned int u_bounds_width, 
+                              const unsigned int l_bounds_width, 
+                              const unsigned int values_width, 
+                              const unsigned int hist_shift) {
   auto data = indexed(h, coverage::all);
   const auto max_v = *std::max_element(h.begin(), h.end());
 
   out << "\n";
-  get_external_line(out, v_data.external_line_shift_); 
+  get_external_line(out, hist_shift); 
   out << "\n";
 
   for (auto it = data.begin(); it != data.end(); ++it) {
     out << "  ";
-    get_label<Histogram>(out, it, v_data.lower_bounds_width_, v_data.upper_bounds_width_);
+    get_label<Histogram>(out, it, u_bounds_width, l_bounds_width);
     out << "  ";
-    get_value<Histogram>(out, it, v_data.str_values_width_);
+    get_value<Histogram>(out, it, values_width);
     out << " ";
     get_histogram_line<Histogram>(out, it, max_v);
     out << "\n";
   }
-  get_external_line(out, v_data.external_line_shift_);
+  get_external_line(out, hist_shift);
   out << "\n\n";
   
   return out;
@@ -223,10 +226,13 @@ std::ostream& draw_histogram(std::ostream& out, const Histogram& h, const visual
 
 template <class Histogram>
 void display_histogram(std::ostream& out, const Histogram& h) {
-  auto histogram_data = detail::extract_data(h);
-  auto visualization_data = detail::precalculate_visual_data(histogram_data);
+  const auto additional_offset = 8; // 8 white characters
+  const auto l_bounds_width = get_max_lowerb_width(h);
+  const auto u_bounds_width = get_max_upperb_width(h);
+  const auto values_width = get_max_value_width(h);
+  const auto hist_shift = l_bounds_width + u_bounds_width + values_width + additional_offset;
 
-  draw_histogram(out, h, visualization_data);
+  draw_histogram(out, h, u_bounds_width, l_bounds_width, values_width, hist_shift);
 }
 } // ns detail
 
