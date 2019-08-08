@@ -8,15 +8,12 @@
 #define BOOST_HISTOGRAM_DISPLAY_HPP
 
 #include <boost/histogram.hpp>
-
-#include <algorithm>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <cmath>
-#include <limits>
+#include <algorithm> //max_element
+#include <iomanip>   //setw
+#include <iostream>  //cout
+#include <sstream>   //ostringstream
+#include <cmath>     //floor, pow
+#include <limits>    //infinity
 
 namespace boost {
 namespace histogram {
@@ -44,8 +41,8 @@ std::ostream& get_upper_bound(std::ostream& os,
 
 template <typename Histogram>
 std::ostream& get_value(std::ostream& out, 
-                                 typename indexed_range<const Histogram>::range_iterator ri,
-                                 const unsigned int column_width) {
+                        typename indexed_range<const Histogram>::range_iterator ri,
+                        const unsigned int column_width) {
 
   std::ostringstream tmp;
   tmp << std::defaultfloat << *(ri);
@@ -70,9 +67,9 @@ float get_value(typename indexed_range<const Histogram>::range_iterator ri) {
 
 template <typename Histogram>
 std::ostream& get_label(std::ostream& out, 
-                                  typename indexed_range<const Histogram>::range_iterator ri,
-                                  const unsigned int column_width1,
-                                  const unsigned int column_width2) {
+                        typename indexed_range<const Histogram>::range_iterator ri,
+                        const unsigned int column_width1,
+                        const unsigned int column_width2) {
   char parenthesis = ' ';
   if ( std::isfinite(ri->bin().upper()) )
     parenthesis = ')';
@@ -104,7 +101,7 @@ unsigned int getNumOfChars(float number) {
   if(number > 0 && number < 1)
     ++counter; // extra for 0.1 - 0.9 range
   
-  if(floor(number) != number){
+  if(std::floor(number) != number){
     ++counter; // dot
     number *= std::pow(10, precision);
   }
@@ -155,7 +152,10 @@ unsigned int get_max_value_width(const Histogram& h) {
   return max_length;
 }
 
-std::ostream& draw_line(std::ostream& out, const unsigned int num, const char c = '*', bool complete = true) {
+std::ostream& draw_line(std::ostream& out,
+                        const unsigned int num,
+                        const char c = '*',
+                        bool complete = true) {
   unsigned int i = 0;
   for (; i < num; ++i) out << c;
 
