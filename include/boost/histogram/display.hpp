@@ -42,7 +42,7 @@ std::ostream& get_upper_bound(std::ostream& os,
 template <typename Histogram>
 std::ostream& get_value(std::ostream& out, 
                         typename indexed_range<const Histogram>::range_iterator ri,
-                        const unsigned int column_width) {
+                        const unsigned int& column_width) {
 
   std::ostringstream tmp;
   tmp << std::defaultfloat << *(ri);
@@ -68,8 +68,8 @@ float get_value_f(typename indexed_range<const Histogram>::range_iterator ri) {
 template <typename Histogram>
 std::ostream& get_label(std::ostream& out, 
                         typename indexed_range<const Histogram>::range_iterator ri,
-                        const unsigned int column_width1,
-                        const unsigned int column_width2) {
+                        const unsigned int& column_width1,
+                        const unsigned int& column_width2) {
   char parenthesis = ' ';
   if ( std::isfinite(ri->bin().upper()) )
     parenthesis = ')';
@@ -128,8 +128,8 @@ unsigned int get_max_width(const Histogram& h,
 }
 
 std::ostream& draw_line(std::ostream& out,
-                        const unsigned int num,
-                        const char c = '*',
+                        const unsigned int& num,
+                        const char& c = '*',
                         bool complete = true) {
   unsigned int i = 0;
   for (; i < num; ++i) out << c;
@@ -162,7 +162,8 @@ std::ostream& get_histogram_line(std::ostream& out,
   return out;
 }
 
-std::ostream& get_external_line(std::ostream& out, const unsigned int labels_width) {
+std::ostream& get_external_line(std::ostream& out,
+                                const unsigned int& labels_width) {
   draw_line(out, labels_width, ' ', false);
   out << " +";
   draw_line(out, histogram_width, '-');
@@ -173,10 +174,10 @@ std::ostream& get_external_line(std::ostream& out, const unsigned int labels_wid
 template <class Histogram>
 std::ostream& draw_histogram(std::ostream& out, 
                               const Histogram& h, 
-                              const unsigned int u_bounds_width, 
-                              const unsigned int l_bounds_width, 
-                              const unsigned int values_width, 
-                              const unsigned int hist_shift) {
+                              const unsigned int& u_bounds_width,
+                              const unsigned int& l_bounds_width,
+                              const unsigned int& values_width,
+                              const unsigned int& hist_shift) {
   auto data = indexed(h, coverage::all);
   const auto max_v = *std::max_element(h.begin(), h.end());
 
