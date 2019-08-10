@@ -51,17 +51,17 @@ std::ostream& get_value(std::ostream& out,
 }
 
 template <class Histogram>
-float get_lower_bound(typename indexed_range<const Histogram>::range_iterator ri) {
+float get_lower_bound_f(typename indexed_range<const Histogram>::range_iterator ri) {
   return ri->bin().lower();
 }
 
 template <class Histogram>
-float get_upper_bound(typename indexed_range<const Histogram>::range_iterator ri) {
+float get_upper_bound_f(typename indexed_range<const Histogram>::range_iterator ri) {
   return ri->bin().upper();
 }
 
 template <class Histogram>
-float get_value(typename indexed_range<const Histogram>::range_iterator ri) {
+float get_value_f(typename indexed_range<const Histogram>::range_iterator ri) {
   return *ri;
 }
 
@@ -86,8 +86,8 @@ std::ostream& get_label(std::ostream& out,
   return out;
 }
 
-unsigned int getNumOfChars(float number) {
-  int counter = 0;
+unsigned int get_num_of_chars(float number) {
+  unsigned int counter = 0;
   if(number < 0) {
     ++counter; // minus sign
     number *= -1;
@@ -99,7 +99,7 @@ unsigned int getNumOfChars(float number) {
   }
 
   if(number > 0 && number < 1)
-    ++counter; // extra for 0.1 - 0.9 range
+    ++counter; // extra +, for 0.1 - 0.9 range
   
   if(std::floor(number) != number){
     ++counter; // dot
@@ -114,38 +114,13 @@ unsigned int getNumOfChars(float number) {
 }
 
 template <typename Histogram>
-unsigned int get_max_upperb_width(const Histogram& h) {
+unsigned int get_max_width(const Histogram& h,
+                           std::function<float(typename indexed_range<const Histogram>::range_iterator)> fcn) {
   auto data = indexed(h, coverage::all);
   unsigned int max_length = 0;
   unsigned int temp = 0;
   for (auto ri = data.begin(); ri != data.end(); ++ri) {
-    temp = getNumOfChars(get_upper_bound<Histogram>(ri));
-    if (temp > max_length) 
-      max_length = temp; 
-  }
-  return max_length;
-}
-
-template <typename Histogram>
-unsigned int get_max_lowerb_width(const Histogram& h) {
-  auto data = indexed(h, coverage::all);
-  unsigned int max_length = 0;
-  unsigned int temp = 0;
-  for (auto ri = data.begin(); ri != data.end(); ++ri) {
-    temp = getNumOfChars(get_lower_bound<Histogram>(ri));
-    if (temp > max_length) 
-      max_length = temp; 
-  }
-  return max_length;
-}
-
-template <typename Histogram>
-unsigned int get_max_value_width(const Histogram& h) {
-  auto data = indexed(h, coverage::all);
-  unsigned int max_length = 0;
-  unsigned int temp = 0;
-  for (auto ri = data.begin(); ri != data.end(); ++ri) {
-    temp = getNumOfChars(get_value<Histogram>(ri));
+    temp = get_num_of_chars(fcn(ri));
     if (temp > max_length) 
       max_length = temp; 
   }
@@ -166,8 +141,8 @@ std::ostream& draw_line(std::ostream& out,
 }
 
 template <class Histogram>
-unsigned int calculate_scale_f(typename indexed_range<const Histogram>::range_iterator ri,
-                               const double& max_value) {
+unsigned int calculate_scale_factor(typename indexed_range<const Histogram>::range_iterator ri,
+                                    const double& max_value) {
   
   const double longest_bin = max_bin_coefficient * histogram_width;
   double result = *ri * longest_bin / max_value;
@@ -179,7 +154,7 @@ std::ostream& get_histogram_line(std::ostream& out,
                                  typename indexed_range<const Histogram>::range_iterator ri,
                                  const double& max_value) {
   
-  const auto scaled_value = calculate_scale_f<Histogram>(ri, max_value);
+  const auto scaled_value = calculate_scale_factor<Histogram>(ri, max_value);
 
   out << "|";
   draw_line(out, scaled_value);
@@ -227,9 +202,9 @@ std::ostream& draw_histogram(std::ostream& out,
 template <class Histogram>
 void display_histogram(std::ostream& out, const Histogram& h) {
   const auto additional_offset = 8; // 8 white characters
-  const auto l_bounds_width = get_max_lowerb_width(h);
-  const auto u_bounds_width = get_max_upperb_width(h);
-  const auto values_width = get_max_value_width(h);
+  const auto l_bounds_width = get_max_width(h, get_lower_bound_f<Histogram>);
+  const auto u_bounds_width = get_max_width(h, get_upper_bound_f<Histogram>);
+  const auto values_width = get_max_width(h, get_value_f<Histogram>);
   const auto hist_shift = l_bounds_width + u_bounds_width + values_width + additional_offset;
 
   draw_histogram(out, h, u_bounds_width, l_bounds_width, values_width, hist_shift);
