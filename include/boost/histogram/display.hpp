@@ -51,17 +51,17 @@ std::ostream& get_value(std::ostream& out,
 }
 
 template <class Histogram>
-float get_lower_bound_f(typename indexed_range<const Histogram>::range_iterator ri) {
+double get_lower_bound_d(typename indexed_range<const Histogram>::range_iterator ri) {
   return ri->bin().lower();
 }
 
 template <class Histogram>
-float get_upper_bound_f(typename indexed_range<const Histogram>::range_iterator ri) {
+double get_upper_bound_d(typename indexed_range<const Histogram>::range_iterator ri) {
   return ri->bin().upper();
 }
 
 template <class Histogram>
-float get_value_f(typename indexed_range<const Histogram>::range_iterator ri) {
+double get_value_d(typename indexed_range<const Histogram>::range_iterator ri) {
   return *ri;
 }
 
@@ -86,14 +86,14 @@ std::ostream& get_label(std::ostream& out,
   return out;
 }
 
-unsigned int get_num_of_chars(float number) {
+unsigned int get_num_of_chars(double number) {
   unsigned int counter = 0;
   if(number < 0) {
     ++counter; // minus sign
     number *= -1;
   }
 
-  if(number == std::numeric_limits<float>::infinity()){
+  if(number == std::numeric_limits<double>::infinity()){
     counter += 3;
     return counter;
   }
@@ -115,7 +115,7 @@ unsigned int get_num_of_chars(float number) {
 
 template <typename Histogram>
 unsigned int get_max_width(const Histogram& h,
-                           std::function<float(typename indexed_range<const Histogram>::range_iterator)> fcn) {
+                           std::function<double(typename indexed_range<const Histogram>::range_iterator)> fcn) {
   auto data = indexed(h, coverage::all);
   unsigned int max_length = 0;
   unsigned int temp = 0;
@@ -203,9 +203,9 @@ std::ostream& draw_histogram(std::ostream& out,
 template <class Histogram>
 void display_histogram(std::ostream& out, const Histogram& h) {
   const auto additional_offset = 8; // 8 white characters
-  const auto l_bounds_width = get_max_width(h, get_lower_bound_f<Histogram>);
-  const auto u_bounds_width = get_max_width(h, get_upper_bound_f<Histogram>);
-  const auto values_width = get_max_width(h, get_value_f<Histogram>);
+  const auto l_bounds_width = get_max_width(h, get_lower_bound_d<Histogram>);
+  const auto u_bounds_width = get_max_width(h, get_upper_bound_d<Histogram>);
+  const auto values_width = get_max_width(h, get_value_d<Histogram>);
   const auto hist_shift = l_bounds_width + u_bounds_width + values_width + additional_offset;
 
   draw_histogram(out, h, u_bounds_width, l_bounds_width, values_width, hist_shift);
