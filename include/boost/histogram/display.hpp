@@ -201,7 +201,7 @@ std::ostream& draw_histogram(std::ostream& out,
 }
 
 template <class Histogram>
-void display_histogram(std::ostream& out, const Histogram& h) {
+void display_histogram(std::ostream& out, const Histogram& h, const unsigned int& terminal_width) {
   const auto additional_offset = 8; // 8 white characters
   const auto l_bounds_width = get_max_width(h, get_lower_bound_d<Histogram>);
   const auto u_bounds_width = get_max_width(h, get_upper_bound_d<Histogram>);
@@ -212,33 +212,30 @@ void display_histogram(std::ostream& out, const Histogram& h) {
 }
 } // ns detail
 
+template <class Histogram>
+struct display_t {
+  const Histogram& histogram_;
+  unsigned int terminal_width_;
+};
 
+template <class Histogram>
+auto display(const Histogram& h, unsigned int terminal_width = 0){
+  return display_t<Histogram>{h, terminal_width == 0 ? 60 : terminal_width};
+}
 
-// template <class Histogram>
-// struct display_t {
-//    const Histogram& histogram_;
-//    unsigned terminal_width_;
-// };
-
-// template <class Histogram>
-// auto display(const Histogram& h, unsigned terminal_width = 0) {
-//    return display_t<Histogram>{h, terminal_width == 0 ? 60 : terminal_width};
-// }
-
-// template <class Histogram>
-// std::ostream& operator<<(std::ostream& os, const display_t<Histogram>& dh) {
-//    // call your main display function here
-//    detail::display_histogram(os, dh.histogram_, dh.terminal_width_);
-//    return os;
-// }
-
+template <class Histogram>
+std::ostream& operator<<(std::ostream& os, const display_t<Histogram>& dh) {
+  detail::display_histogram(os, dh.histogram_, dh.terminal_width_);
+  return os;
+}
 
 template <typename CharT, typename Traits, typename A, typename S>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const histogram<A, S>& h) {
-  detail::display_histogram(os, h);
+  os << display(h);
   return os;
 }
+
 
 } // ns histogram
 } // ns boost
