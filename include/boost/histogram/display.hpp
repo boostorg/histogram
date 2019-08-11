@@ -19,7 +19,7 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-const unsigned int histogram_width = 60;  // 60 characters
+unsigned int histogram_width = 60;  // 60 characters
 const double max_bin_coefficient = 0.95;  // 95% of histogram_width
 const unsigned int precision = 1; //precision of upper and lower bounds
 
@@ -203,12 +203,11 @@ std::ostream& draw_histogram(std::ostream& out,
 template <class Histogram>
 void display_histogram(std::ostream& out, const Histogram& h, const unsigned int& terminal_width) {
   const auto additional_offset = 8; // 8 white characters
+  histogram_width = terminal_width;
   const auto l_bounds_width = get_max_width(h, get_lower_bound_d<Histogram>);
   const auto u_bounds_width = get_max_width(h, get_upper_bound_d<Histogram>);
   const auto values_width = get_max_width(h, get_value_d<Histogram>);
   const auto hist_shift = l_bounds_width + u_bounds_width + values_width + additional_offset;
-
-  std::cout << terminal_width;
 
   draw_histogram(out, h, u_bounds_width, l_bounds_width, values_width, hist_shift);
 }
