@@ -208,6 +208,8 @@ void display_histogram(std::ostream& out, const Histogram& h, const unsigned int
   const auto values_width = get_max_width(h, get_value_d<Histogram>);
   const auto hist_shift = l_bounds_width + u_bounds_width + values_width + additional_offset;
 
+  std::cout << terminal_width;
+
   draw_histogram(out, h, u_bounds_width, l_bounds_width, values_width, hist_shift);
 }
 } // ns detail
@@ -235,7 +237,6 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   os << display(h);
   return os;
 }
-
 
 } // ns histogram
 } // ns boost
