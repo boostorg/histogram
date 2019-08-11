@@ -212,7 +212,7 @@ void display_histogram(std::ostream& out, const Histogram& h) {
 }
 } // ns detail
 
-namespace os {
+
 
 // template <class Histogram>
 // struct display_t {
@@ -232,11 +232,13 @@ namespace os {
 //    return os;
 // }
 
-template <class Histogram>
-std::ostream& operator<<(std::ostream& out, const Histogram& h) {
-  return out << detail::display_histogram(h);
+
+template <typename CharT, typename Traits, typename A, typename S>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
+                                              const histogram<A, S>& h) {
+  detail::display_histogram(os, h);
+  return os;
 }
-} // ns os
 
 } // ns histogram
 } // ns boost

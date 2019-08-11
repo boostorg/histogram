@@ -7,7 +7,7 @@
 #include <boost/assert.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/display.hpp>
-#include <boost/histogram/ostream.hpp>
+//#include <boost/histogram/ostream.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <sstream>
 #include <string>
@@ -68,16 +68,14 @@ const std::string expected_3 =
 void run_tests(const std::string& filename, const std::string& expected) {
 
   auto h1 = make_histogram(axis::regular<>()); // create an empty histogram
-
   auto h2 = decltype(h1)(); // create a default-constructed second histogram
+
   BOOST_TEST_NE(h1, h2);
   load_xml(filename, h2);
+  std::cout << h2;
 
   std::ostringstream os;
-  detail::display_histogram(os, h2);
-  std::cout << h2;
-  std::cout << os.str();
-
+  os << h2;
   BOOST_TEST_EQ(os.str(), expected);
 }
 
