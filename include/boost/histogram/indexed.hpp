@@ -8,8 +8,8 @@
 #define BOOST_HISTOGRAM_INDEXED_HPP
 
 #include <array>
+#include <boost/config.hpp>
 #include <boost/histogram/axis/traits.hpp>
-#include <boost/histogram/detail/attribute.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/operators.hpp>
@@ -29,6 +29,11 @@ enum class coverage {
   all,   /*!< iterate over all bins, including underflow and overflow */
 };
 
+#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++17-extensions"
+#endif
+
 /** Input iterator range over histogram bins with multi-dimensional index.
 
   The iterator returned by begin() can only be incremented. begin() may only be called
@@ -36,7 +41,7 @@ enum class coverage {
   input iterators exist, the other copies become invalid if one of them is incremented.
 */
 template <class Histogram>
-class BOOST_HISTOGRAM_NODISCARD indexed_range {
+class BOOST_ATTRIBUTE_NODISCARD indexed_range {
 private:
   using histogram_type = Histogram;
   static constexpr std::size_t buffer_size =
@@ -54,11 +59,10 @@ public:
 
     Its methods provide access to the current indices and bins and it acts like a pointer
     to the cell value. To interoperate with the algorithms of the standard library, the
-    accessor is implicitly convertible to a cell value. Assignments and comparisons
-    are passed through to the cell. The accessor is coupled to its parent
-    iterator. Moving the parent iterator forward also updates the linked
-    accessor. Accessors are not copyable. They cannot be stored in containers, but
-    range_iterators can be stored.
+    accessor is implicitly convertible to a cell value. Assignments and comparisons are
+    passed through to the cell. The accessor is coupled to its parent iterator. Moving the
+    parent iterator forward also updates the linked accessor. Accessors are not copyable.
+    They cannot be stored in containers, but range_iterators can be stored.
   */
   class accessor : detail::mirrored<accessor, void> {
   public:
@@ -315,6 +319,10 @@ public:
 private:
   iterator begin_, end_;
 };
+
+#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
+#pragma GCC diagnostic pop
+#endif
 
 /** Generates an indexed range of <a
   href="https://en.cppreference.com/w/cpp/named_req/ForwardIterator">forward iterators</a>

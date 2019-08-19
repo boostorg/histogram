@@ -168,19 +168,17 @@ void run_tests() {
   // histogram_ostream
   {
     auto a = make(Tag(), axis::regular<>(3, -1, 1, "r"));
-    std::ostringstream os1;
-    os1 << a;
-    BOOST_TEST_EQ(os1.str(), std::string("histogram(regular(3, -1, 1, metadata=\"r\", "
-                                         "options=underflow | overflow))"));
-
-    auto b = make(Tag(), axis::regular<>(3, -1, 1, "r"), axis::integer<>(0, 2, "i"));
-    std::ostringstream os2;
-    os2 << b;
+    std::ostringstream os;
+    os << a;
     BOOST_TEST_EQ(
-        os2.str(),
+        os.str(),
         std::string("histogram(\n"
                     "  regular(3, -1, 1, metadata=\"r\", options=underflow | overflow),\n"
-                    "  integer(0, 2, metadata=\"i\", options=underflow | overflow)\n"
+                    "  0: 0\n"
+                    "  1: 0\n"
+                    "  2: 0\n"
+                    "  3: 0\n"
+                    "  4: 0\n"
                     ")"));
   }
 }
@@ -190,6 +188,7 @@ int main() {
   run_tests<dynamic_tag>();
 
   {
+    // cannot make empty static histogram
     auto h = histogram<std::vector<axis::regular<>>>();
     std::ostringstream os;
     os << h;

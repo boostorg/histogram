@@ -7,10 +7,13 @@
 #ifndef BOOST_HISTOGRAM_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_HISTOGRAM_HPP
 
+#include <boost/histogram/detail/at.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
-#include <boost/histogram/detail/linearize.hpp>
+#include <boost/histogram/detail/fill.hpp>
+#include <boost/histogram/detail/fill_n.hpp>
+#include <boost/histogram/detail/non_member_container_access.hpp>
 #include <boost/histogram/detail/noop_mutex.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -149,41 +152,144 @@ public:
 
   /** Fill histogram with values, an optional weight, and/or a sample.
 
-   Arguments are passed in order to the axis objects. Passing an argument type that is
-   not convertible to the value type accepted by the axis or passing the wrong number
-   of arguments causes a throw of `std::invalid_argument`.
+    Arguments are passed in order to the axis objects. Passing an argument type that is
+    not convertible to the value type accepted by the axis or passing the wrong number
+    of arguments causes a throw of `std::invalid_argument`.
 
-   __Optional weight__
+    __Optional weight__
 
-   An optional weight can be passed as the first or last argument
-   with the [weight](boost/histogram/weight.html) helper function. Compilation fails if
-   the storage elements do not support weights.
+    An optional weight can be passed as the first or last argument
+    with the [weight](boost/histogram/weight.html) helper function. Compilation fails if
+    the storage elements do not support weights.
 
-   __Samples__
+    __Samples__
 
-   If the storage elements accept samples, pass them with the sample helper function
-   in addition to the axis arguments, which can be the first or last argument. The
-   [sample](boost/histogram/sample.html) helper function can pass one or more arguments to
-   the storage element. If samples and weights are used together, they can be passed in
-   any order at the beginning or end of the argument list.
+    If the storage elements accept samples, pass them with the sample helper function
+    in addition to the axis arguments, which can be the first or last argument. The
+    [sample](boost/histogram/sample.html) helper function can pass one or more arguments
+    to the storage element. If samples and weights are used together, they can be passed
+    in any order at the beginning or end of the argument list.
 
-   __Axis with multiple arguments__
+    __Axis with multiple arguments__
 
-   If the histogram contains an axis which accepts a `std::tuple` of arguments, the
-   arguments for that axis need to passed as a `std::tuple`, for example,
-   `std::make_tuple(1.2, 2.3)`. If the histogram contains only this axis and no other,
-   the arguments can be passed directly.
+    If the histogram contains an axis which accepts a `std::tuple` of arguments, the
+    arguments for that axis need to passed as a `std::tuple`, for example,
+    `std::make_tuple(1.2, 2.3)`. If the histogram contains only this axis and no other,
+    the arguments can be passed directly.
   */
-  template <class... Ts>
-  iterator operator()(const Ts&... ts) {
-    return operator()(std::forward_as_tuple(ts...));
+  template <class... Args>
+  iterator operator()(const Args&... args) {
+    return operator()(std::forward_as_tuple(args...));
   }
 
   /// Fill histogram with values, an optional weight, and/or a sample from a `std::tuple`.
   template <class... Ts>
-  iterator operator()(const std::tuple<Ts...>& t) {
+  iterator operator()(const std::tuple<Ts...>& args) {
     std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    return detail::fill(axes_, storage_and_mutex_.first(), t);
+    return detail::fill(storage_and_mutex_.first(), axes_, args);
+  }
+
+  /** Fill histogram with several values at once.
+
+    In general, the argument must be an iterable with the same length as the rank of the
+    histogram. The elements of the iterable may be either identical sub-iterables over
+    values or a variant. The variant may hold sub-iterables over values or single values.
+    All sub-iterables must have the same length.
+
+    Values in sub-iterables are passed to the corresponding histogram axis. A single
+    value is treated as if a sub-iterable was passed that is filled with copies of this
+    value.
+
+    If the histogram has only one axis, a sub-iterable may be passed directly in place of
+    the main iterable.
+
+    @param args iterable as explained in the long description.
+  */
+  template <class Iterable, class = detail::requires_iterable<Iterable>>
+  void fill(const Iterable& args) {
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    detail::fill_n(storage_and_mutex_.first(), axes_, detail::data(args),
+                   detail::size(args));
+  }
+
+  /** Fill histogram with several values and weights at once.
+
+    @param weights single weight or an iterable of weights.
+    @param args iterable of values.
+  */
+  template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
+  void fill(const weight_type<T>& weights, const Iterable& args) {
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    detail::fill_n(storage_and_mutex_.first(), axes_, detail::data(args),
+                   detail::size(args), weights);
+  }
+
+  /** Fill histogram with several values and weights at once.
+
+    @param args iterable of values.
+    @param weights single weight or an iterable of weights.
+  */
+  template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
+  void fill(const Iterable& args, const weight_type<T>& weights) {
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    detail::fill_n(storage_and_mutex_.first(), axes_, detail::data(args),
+                   detail::size(args), weights);
+  }
+
+  /** Fill histogram with several values and samples at once.
+
+    @param samples single sample or an iterable of samples.
+    @param args iterable of values.
+  */
+  template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
+  void fill(const sample_type<T>& samples, const Iterable& args) {
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    detail::fill_n(storage_and_mutex_.first(), axes_, detail::data(args),
+                   detail::size(args), samples);
+  }
+
+  /** Fill histogram with several values and samples at once.
+
+    @param args iterable of values.
+    @param samples single sample or an iterable of samples.
+  */
+  template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
+  void fill(const Iterable& args, const sample_type<T>& samples) {
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    detail::fill_n(storage_and_mutex_.first(), axes_, detail::data(args),
+                   detail::size(args), samples);
+  }
+
+  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
+  void fill(const sample_type<T>& samples, const weight_type<U>& weights,
+            const Iterable& args) {
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    detail::fill_n(storage_and_mutex_.first(), axes_, detail::data(args),
+                   detail::size(args), weights, samples);
+  }
+
+  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
+  void fill(const weight_type<T>& weights, const sample_type<U>& samples,
+            const Iterable& args) {
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    detail::fill_n(storage_and_mutex_.first(), axes_, detail::data(args),
+                   detail::size(args), weights, samples);
+  }
+
+  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
+  void fill(const Iterable& args, const sample_type<T>& samples,
+            const weight_type<U>& weights) {
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    detail::fill_n(storage_and_mutex_.first(), axes_, detail::data(args),
+                   detail::size(args), weights, samples);
+  }
+
+  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
+  void fill(const Iterable& args, const weight_type<T>& weights,
+            const sample_type<U>& samples) {
+    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    detail::fill_n(storage_and_mutex_.first(), axes_, detail::data(args),
+                   detail::size(args), weights, samples);
   }
 
   /** Access cell value at integral indices.
@@ -209,10 +315,13 @@ public:
   }
 
   /// Access cell value at integral indices stored in `std::tuple`.
-  template <typename... Indices>
+  template <class... Indices>
   decltype(auto) at(const std::tuple<Indices...>& is) {
+    if (rank() != sizeof...(Indices))
+      BOOST_THROW_EXCEPTION(
+          std::invalid_argument("number of arguments != histogram rank"));
     const auto idx = detail::at(axes_, is);
-    if (!idx)
+    if (!idx.valid())
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
   }
@@ -220,8 +329,11 @@ public:
   /// Access cell value at integral indices stored in `std::tuple` (read-only).
   template <typename... Indices>
   decltype(auto) at(const std::tuple<Indices...>& is) const {
+    if (rank() != sizeof...(Indices))
+      BOOST_THROW_EXCEPTION(
+          std::invalid_argument("number of arguments != histogram rank"));
     const auto idx = detail::at(axes_, is);
-    if (!idx)
+    if (!idx.valid())
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
   }
@@ -229,8 +341,11 @@ public:
   /// Access cell value at integral indices stored in iterable.
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   decltype(auto) at(const Iterable& is) {
+    if (rank() != detail::axes_rank(is))
+      BOOST_THROW_EXCEPTION(
+          std::invalid_argument("number of arguments != histogram rank"));
     const auto idx = detail::at(axes_, is);
-    if (!idx)
+    if (!idx.valid())
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
   }
@@ -238,8 +353,11 @@ public:
   /// Access cell value at integral indices stored in iterable (read-only).
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   decltype(auto) at(const Iterable& is) const {
+    if (rank() != detail::axes_rank(is))
+      BOOST_THROW_EXCEPTION(
+          std::invalid_argument("number of arguments != histogram rank"));
     const auto idx = detail::at(axes_, is);
-    if (!idx)
+    if (!idx.valid())
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
   }

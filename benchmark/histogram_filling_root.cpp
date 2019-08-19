@@ -23,6 +23,7 @@ static void fill_1d(benchmark::State& state) {
   TH1I h("", "", 100, 0, 1);
   generator<Distribution> gen;
   for (auto _ : state) benchmark::DoNotOptimize(h.Fill(gen()));
+  state.SetItemsProcessed(state.iterations());
 }
 
 template <class Distribution>
@@ -30,6 +31,7 @@ static void fill_2d(benchmark::State& state) {
   TH2I h("", "", 100, 0, 1, 100, 0, 1);
   generator<Distribution> gen;
   for (auto _ : state) benchmark::DoNotOptimize(h.Fill(gen(), gen()));
+  state.SetItemsProcessed(state.iterations() * 2);
 }
 
 template <class Distribution>
@@ -37,6 +39,7 @@ static void fill_3d(benchmark::State& state) {
   TH3I h("", "", 100, 0, 1, 100, 0, 1, 100, 0, 1);
   generator<Distribution> gen;
   for (auto _ : state) benchmark::DoNotOptimize(h.Fill(gen(), gen(), gen()));
+  state.SetItemsProcessed(state.iterations() * 3);
 }
 
 template <class Distribution>
@@ -50,6 +53,7 @@ static void fill_6d(benchmark::State& state) {
     const double buf[6] = {gen(), gen(), gen(), gen(), gen(), gen()};
     benchmark::DoNotOptimize(h.Fill(buf));
   }
+  state.SetItemsProcessed(state.iterations() * 6);
 }
 
 BENCHMARK_TEMPLATE(fill_1d, uniform);

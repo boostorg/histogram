@@ -9,6 +9,7 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/common_type.hpp>
+#include <boost/histogram/detail/non_member_container_access.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
@@ -16,10 +17,12 @@
 #include "std_ostream.hpp"
 
 using namespace boost::histogram;
+using namespace boost::histogram::detail;
 using namespace boost::histogram::literals;
 
 int main() {
-  BOOST_TEST_EQ(detail::cat("foo", 1, "bar"), "foo1bar");
+  // cat
+  { BOOST_TEST_EQ(cat("foo", 1, "bar"), "foo1bar"); }
 
   // literals
   {
@@ -31,25 +34,43 @@ int main() {
 
   // common_storage
   {
-    BOOST_TEST_TRAIT_SAME(
-        detail::common_storage<unlimited_storage<>, unlimited_storage<>>,
-        unlimited_storage<>);
-    BOOST_TEST_TRAIT_SAME(
-        detail::common_storage<dense_storage<double>, dense_storage<double>>,
-        dense_storage<double>);
-    BOOST_TEST_TRAIT_SAME(
-        detail::common_storage<dense_storage<int>, dense_storage<double>>,
-        dense_storage<double>);
-    BOOST_TEST_TRAIT_SAME(
-        detail::common_storage<dense_storage<double>, dense_storage<int>>,
-        dense_storage<double>);
-    BOOST_TEST_TRAIT_SAME(
-        detail::common_storage<dense_storage<double>, unlimited_storage<>>,
-        dense_storage<double>);
-    BOOST_TEST_TRAIT_SAME(detail::common_storage<dense_storage<int>, unlimited_storage<>>,
+    BOOST_TEST_TRAIT_SAME(common_storage<unlimited_storage<>, unlimited_storage<>>,
                           unlimited_storage<>);
-    BOOST_TEST_TRAIT_SAME(detail::common_storage<dense_storage<double>, weight_storage>,
+    BOOST_TEST_TRAIT_SAME(common_storage<dense_storage<double>, dense_storage<double>>,
+                          dense_storage<double>);
+    BOOST_TEST_TRAIT_SAME(common_storage<dense_storage<int>, dense_storage<double>>,
+                          dense_storage<double>);
+    BOOST_TEST_TRAIT_SAME(common_storage<dense_storage<double>, dense_storage<int>>,
+                          dense_storage<double>);
+    BOOST_TEST_TRAIT_SAME(common_storage<dense_storage<double>, unlimited_storage<>>,
+                          dense_storage<double>);
+    BOOST_TEST_TRAIT_SAME(common_storage<dense_storage<int>, unlimited_storage<>>,
+                          unlimited_storage<>);
+    BOOST_TEST_TRAIT_SAME(common_storage<dense_storage<double>, weight_storage>,
                           weight_storage);
+  }
+
+  // size & data
+  {
+    char a[4] = {1, 2, 3, 4};
+    BOOST_TEST_EQ(size(a), 4u);
+    BOOST_TEST_EQ(data(a), a);
+    auto b = {1, 2};
+    BOOST_TEST_EQ(size(b), 2u);
+    BOOST_TEST_EQ(data(b), b.begin());
+    struct C {
+      unsigned size() const { return 3; }
+      int* data() { return buf; }
+      const int* data() const { return buf; }
+      int buf[1];
+    } c;
+    BOOST_TEST_EQ(size(c), 3u);
+    BOOST_TEST_EQ(data(c), c.buf);
+    BOOST_TEST_EQ(data(static_cast<const C&>(c)), c.buf);
+    struct {
+      int size() const { return 5; }
+    } d;
+    BOOST_TEST_EQ(size(d), 5u);
   }
 
   return boost::report_errors();

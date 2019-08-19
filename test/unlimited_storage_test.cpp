@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <boost/histogram/unsafe_access.hpp>
@@ -406,6 +407,8 @@ int main() {
     BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(d).type, 5);
     BOOST_TEST_EQ(d[0], -2);
     BOOST_TEST_EQ(d[1], 2);
+
+    BOOST_TEST_TRAIT_TRUE((detail::has_operator_preincrement<decltype(d[0])>));
   }
 
   // iterators

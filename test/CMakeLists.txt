@@ -2,7 +2,10 @@
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-# keep in sync with Jamfile
+boost_test(SOURCES check_cmake_version.cpp ARGUMENTS ${PROJECT_VERSION}
+  LIBRARIES Boost::core Boost::config)
+
+# keep in sync with Jamfile, this should be automatized...
 boost_test(TYPE compile-fail SOURCES make_histogram_fail0.cpp)
 boost_test(TYPE compile-fail SOURCES make_histogram_fail1.cpp)
 boost_test(TYPE run SOURCES algorithm_project_test.cpp
@@ -43,13 +46,11 @@ boost_test(TYPE run SOURCES detail_make_default_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_misc_test.cpp
   LIBRARIES Boost::histogram Boost::core)
-boost_test(TYPE run SOURCES detail_meta_test.cpp
-  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_large_int_test.cpp
   LIBRARIES Boost::histogram Boost::core)
-boost_test(TYPE run SOURCES detail_linearize_test.cpp
-  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_iterator_adaptor_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_operators_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_relaxed_equal_test.cpp
   LIBRARIES Boost::histogram Boost::core)
@@ -57,9 +58,15 @@ boost_test(TYPE run SOURCES detail_replace_default_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_safe_comparison_test.cpp
   LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_static_if_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_tuple_slice_test.cpp
   LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES histogram_custom_axis_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES histogram_dynamic_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES histogram_fill_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES histogram_growing_test.cpp
   LIBRARIES Boost::histogram Boost::core)
@@ -105,5 +112,3 @@ endif()
 # boost_test(TYPE run SOURCES histogram_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES axis_variant_serialization_test.cpp
 #   LIBRARIES Boost::histogram Boost::core Boost::serialization)
-
-boost_test(SOURCES check_cmake_version.cpp ARGUMENTS ${PROJECT_VERSION} LIBRARIES Boost::core Boost::config)

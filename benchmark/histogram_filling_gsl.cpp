@@ -24,6 +24,7 @@ static void fill_1d(benchmark::State& state) {
   generator<Distribution> gen;
   for (auto _ : state) benchmark::DoNotOptimize(gsl_histogram_increment(h, gen()));
   gsl_histogram_free(h);
+  state.SetItemsProcessed(state.iterations());
 }
 
 template <class Distribution>
@@ -34,6 +35,7 @@ static void fill_2d(benchmark::State& state) {
   for (auto _ : state)
     benchmark::DoNotOptimize(gsl_histogram2d_increment(h, gen(), gen()));
   gsl_histogram2d_free(h);
+  state.SetItemsProcessed(state.iterations() * 2);
 }
 
 BENCHMARK_TEMPLATE(fill_1d, uniform);

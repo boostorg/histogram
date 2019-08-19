@@ -47,8 +47,8 @@ boost_fetch(hdembinski/benchmark)
 
 macro(add_benchmark name)
   add_executable(${name} "${name}.cpp")
-  target_compile_options(${name}
-    PRIVATE -DNDEBUG -O3 ${BENCHMARK_FLAGS} -funsafe-math-optimizations)
+  target_compile_options(${name} PRIVATE
+    -DNDEBUG -O3 -march=native ${BENCHMARK_FLAGS} -funsafe-math-optimizations)
   target_link_libraries(${name} PRIVATE Boost::histogram benchmark_main)
 endmacro()
 

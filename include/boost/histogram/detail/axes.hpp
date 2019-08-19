@@ -71,38 +71,39 @@ decltype(auto) axis_get(const T& axes) {
 }
 
 template <class... Ts>
-decltype(auto) axis_get(std::tuple<Ts...>& axes, unsigned i) {
-  using namespace boost::mp11;
+decltype(auto) axis_get(std::tuple<Ts...>& axes, const unsigned i) {
+  using namespace ::boost::mp11;
   constexpr auto S = sizeof...(Ts);
   using V = mp_unique<axis::variant<Ts*...>>;
   return mp_with_index<S>(i, [&axes](auto i) { return V(&std::get<i>(axes)); });
 }
 
 template <class... Ts>
-decltype(auto) axis_get(const std::tuple<Ts...>& axes, unsigned i) {
-  using namespace boost::mp11;
+decltype(auto) axis_get(const std::tuple<Ts...>& axes, const unsigned i) {
+  using namespace ::boost::mp11;
   constexpr auto S = sizeof...(Ts);
   using V = mp_unique<axis::variant<const Ts*...>>;
   return mp_with_index<S>(i, [&axes](auto i) { return V(&std::get<i>(axes)); });
 }
 
 template <class T>
-decltype(auto) axis_get(T& axes, unsigned i) {
-  return axes.at(i);
+decltype(auto) axis_get(T& axes, const unsigned i) {
+  return axes[i];
 }
 
 template <class T>
-decltype(auto) axis_get(const T& axes, unsigned i) {
-  return axes.at(i);
+decltype(auto) axis_get(const T& axes, const unsigned i) {
+  return axes[i];
 }
 
 template <class... Ts, class... Us>
 bool axes_equal(const std::tuple<Ts...>& ts, const std::tuple<Us...>& us) {
-  return static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
+  using namespace ::boost::mp11;
+  return static_if<std::is_same<mp_list<Ts...>, mp_list<Us...>>>(
       [](const auto& ts, const auto& us) {
-        using N = mp11::mp_size<std::decay_t<decltype(ts)>>;
+        using N = mp_size<std::decay_t<decltype(ts)>>;
         bool equal = true;
-        mp11::mp_for_each<mp11::mp_iota<N>>(
+        mp_for_each<mp_iota<N>>(
             [&](auto I) { equal &= relaxed_equal(std::get<I>(ts), std::get<I>(us)); });
         return equal;
       },
@@ -111,10 +112,10 @@ bool axes_equal(const std::tuple<Ts...>& ts, const std::tuple<Us...>& us) {
 
 template <class T, class... Us>
 bool axes_equal(const T& t, const std::tuple<Us...>& u) {
+  using namespace ::boost::mp11;
   if (t.size() != sizeof...(Us)) return false;
   bool equal = true;
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
-      [&](auto I) { equal &= t[I] == std::get<I>(u); });
+  mp_for_each<mp_iota_c<sizeof...(Us)>>([&](auto I) { equal &= t[I] == std::get<I>(u); });
   return equal;
 }
 
@@ -131,7 +132,8 @@ bool axes_equal(const T& t, const U& u) {
 
 template <class... Ts, class... Us>
 void axes_assign(std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
-  static_if<std::is_same<mp11::mp_list<Ts...>, mp11::mp_list<Us...>>>(
+  using namespace ::boost::mp11;
+  static_if<std::is_same<mp_list<Ts...>, mp_list<Us...>>>(
       [](auto& a, const auto& b) { a = b; },
       [](auto&, const auto&) {
         BOOST_THROW_EXCEPTION(
@@ -142,8 +144,9 @@ void axes_assign(std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
 
 template <class... Ts, class U>
 void axes_assign(std::tuple<Ts...>& t, const U& u) {
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Ts)>>([&](auto I) {
-    using T = mp11::mp_at_c<std::tuple<Ts...>, I>;
+  using namespace ::boost::mp11;
+  mp_for_each<mp_iota_c<sizeof...(Ts)>>([&](auto I) {
+    using T = mp_at_c<std::tuple<Ts...>, I>;
     std::get<I>(t) = axis::get<T>(u[I]);
   });
 }
@@ -152,8 +155,8 @@ template <class T, class... Us>
 void axes_assign(T& t, const std::tuple<Us...>& u) {
   // resize instead of reserve, because t may not be empty and we want exact capacity
   t.resize(sizeof...(Us));
-  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
-      [&](auto I) { t[I] = std::get<I>(u); });
+  using namespace ::boost::mp11;
+  mp_for_each<mp_iota_c<sizeof...(Us)>>([&](auto I) { t[I] = std::get<I>(u); });
 }
 
 template <typename T, typename U>
@@ -175,30 +178,36 @@ auto make_empty_dynamic_axes(const std::tuple<Ts...>&) {
   return std::vector<mp_if_c<(mp_size<L>::value == 1), mp_first<L>, L>>{};
 }
 
-template <typename T>
+template <class T>
 void axis_index_is_valid(const T& axes, const unsigned N) {
   BOOST_ASSERT_MSG(N < axes_rank(axes), "index out of range");
 }
 
-template <typename F, typename T>
-void for_each_axis_impl(std::true_type, const T& axes, F&& f) {
-  for (const auto& x : axes) { axis::visit(std::forward<F>(f), x); }
+template <class Axes, class V>
+void for_each_axis_impl(std::true_type, Axes&& axes, V&& v) {
+  for (auto&& a : axes) { axis::visit(std::forward<V>(v), a); }
 }
 
-template <typename F, typename T>
-void for_each_axis_impl(std::false_type, const T& axes, F&& f) {
-  for (const auto& x : axes) std::forward<F>(f)(x);
+template <class Axes, class V>
+void for_each_axis_impl(std::false_type, Axes&& axes, V&& v) {
+  for (auto&& a : axes) std::forward<V>(v)(a);
 }
 
-template <typename F, typename T>
-void for_each_axis(const T& axes, F&& f) {
-  using U = mp11::mp_first<T>;
-  for_each_axis_impl(is_axis_variant<U>(), axes, std::forward<F>(f));
+template <class Axes, class V>
+void for_each_axis(Axes&& a, V&& v) {
+  using namespace ::boost::mp11;
+  using T = mp_first<std::decay_t<Axes>>;
+  for_each_axis_impl(is_axis_variant<T>(), std::forward<Axes>(a), std::forward<V>(v));
 }
 
-template <typename F, typename... Ts>
-void for_each_axis(const std::tuple<Ts...>& axes, F&& f) {
-  mp11::tuple_for_each(axes, std::forward<F>(f));
+template <class V, class... Axis>
+void for_each_axis(const std::tuple<Axis...>& a, V&& v) {
+  mp11::tuple_for_each(a, std::forward<V>(v));
+}
+
+template <class V, class... Axis>
+void for_each_axis(std::tuple<Axis...>& a, V&& v) {
+  mp11::tuple_for_each(a, std::forward<V>(v));
 }
 
 template <typename T>
@@ -214,12 +223,12 @@ std::size_t bincount(const T& axes) {
 }
 
 template <class T>
-using tuple_size_t = typename std::tuple_size<T>::type;
+using buffer_size_impl = typename std::tuple_size<T>::type;
 
 template <class T>
 using buffer_size = mp11::mp_eval_or<
-    std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>, tuple_size_t,
-    T>;
+    std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>,
+    buffer_size_impl, T>;
 
 template <class T, std::size_t N>
 class sub_array : public std::array<T, N> {
@@ -256,6 +265,49 @@ template <class U, class T, class... Ts>
 auto make_stack_buffer(const T& t, const Ts&... ts) {
   return stack_buffer<U, T>(axes_rank(t), ts...);
 }
+
+template <class T>
+using has_underflow =
+    decltype(axis::traits::static_options<T>::test(axis::option::underflow));
+
+template <class Axis>
+constexpr auto inclusive_options(Axis&&) {
+  return axis::option::underflow | axis::option::overflow;
+}
+
+template <class... Ts>
+constexpr auto inclusive_options(axis::category<Ts...>&&) {
+  return axis::option::overflow;
+}
+
+template <class T>
+using is_non_inclusive = mp11::mp_not<decltype(
+    axis::traits::static_options<T>::test(inclusive_options(std::declval<T>())))>;
+
+template <class T>
+using is_growing = decltype(axis::traits::static_options<T>::test(axis::option::growth));
+
+template <class T>
+using is_multidim = is_tuple<std::decay_t<arg_type<decltype(&T::index)>>>;
+
+template <template <class> class Trait, class T>
+struct has_special_axis_impl : Trait<T> {};
+
+template <template <class> class Trait, class... Ts>
+struct has_special_axis_impl<Trait, std::tuple<Ts...>> : mp11::mp_or<Trait<Ts>...> {};
+
+template <template <class> class Trait, class... Ts>
+struct has_special_axis_impl<Trait, axis::variant<Ts...>> : mp11::mp_or<Trait<Ts>...> {};
+
+template <template <class> class Trait, class T>
+using has_special_axis = typename has_special_axis_impl<
+    Trait, mp11::mp_if<is_vector_like<T>, mp11::mp_first<T>, T>>::type;
+
+template <class T>
+using has_growing_axis = has_special_axis<is_growing, T>;
+
+template <class T>
+using has_non_inclusive_axis = has_special_axis<is_non_inclusive, T>;
 
 } // namespace detail
 } // namespace histogram

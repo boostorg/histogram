@@ -30,20 +30,21 @@ uniform_int init<uniform_int, int>(int n) {
 }
 
 template <class Distribution, std::size_t N = 1 << 15>
-struct generator {
+struct generator : std::array<double, N> {
+  using base_t = std::array<double, N>;
+
   template <class... Ts>
   generator(Ts... ts) {
     std::default_random_engine rng(1);
     auto dis = init<Distribution>(ts...);
-    std::generate(buffer_, buffer_ + N, [&] { return dis(rng); });
+    std::generate(base_t::begin(), base_t::end(), [&] { return dis(rng); });
   }
 
   const double& operator()() {
     ++ptr_;
-    if (ptr_ == buffer_ + N) ptr_ = buffer_;
+    if (ptr_ == base_t::data() + N) ptr_ = base_t::data();
     return *ptr_;
   }
 
-  double buffer_[N];
-  const double* ptr_ = buffer_ - 1;
+  const double* ptr_ = base_t::data() - 1;
 };

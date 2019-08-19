@@ -21,6 +21,7 @@ for dir in ("test", "examples"):
         run = set(re.findall("([a-zA-Z0-9_]+\.cpp)", open(filename).read()))
 
         diff = cpp - run
+        diff.discard("check_cmake_version.cpp") # ignore
 
         if diff:
             print("NOT TESTED in %s\n  " % filename +

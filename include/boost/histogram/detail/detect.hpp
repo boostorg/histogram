@@ -11,6 +11,7 @@
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/function.hpp>
 #include <boost/mp11/utility.hpp>
+#include <boost/variant2/variant.hpp>
 #include <iterator>
 #include <tuple>
 #include <type_traits>
@@ -19,17 +20,17 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-#define BOOST_HISTOGRAM_DETECT(name, cond)   \
-  template <class T, class = decltype(cond)> \
-  struct name##_impl {};                     \
-  template <class T>                         \
-  struct name : mp11::mp_valid<name##_impl, T>::type {}
+#define BOOST_HISTOGRAM_DETECT(name, cond) \
+  template <class T>                       \
+  using name##_impl = decltype(cond);      \
+  template <class T>                       \
+  using name = typename mp11::mp_valid<name##_impl, T>::type
 
-#define BOOST_HISTOGRAM_DETECT_BINARY(name, cond)     \
-  template <class T, class U, class = decltype(cond)> \
-  struct name##_impl {};                              \
-  template <class T, class U = T>                     \
-  struct name : mp11::mp_valid<name##_impl, T, U>::type {}
+#define BOOST_HISTOGRAM_DETECT_BINARY(name, cond) \
+  template <class T, class U>                     \
+  using name##_impl = decltype(cond);             \
+  template <class T, class U = T>                 \
+  using name = typename mp11::mp_valid<name##_impl, T, U>::type
 
 // metadata has overloads, trying to get pmf in this case always fails
 BOOST_HISTOGRAM_DETECT(has_method_metadata, (std::declval<T&>().metadata()));
@@ -45,12 +46,12 @@ BOOST_HISTOGRAM_DETECT(has_method_lower, &T::lower);
 
 BOOST_HISTOGRAM_DETECT(has_method_value, &T::value);
 
-BOOST_HISTOGRAM_DETECT(has_method_update, (&T::update));
+BOOST_HISTOGRAM_DETECT(has_method_update, &T::update);
 
 // reset has overloads, trying to get pmf in this case always fails
 BOOST_HISTOGRAM_DETECT(has_method_reset, (std::declval<T>().reset(0)));
 
-BOOST_HISTOGRAM_DETECT(has_method_options, (&T::options));
+BOOST_HISTOGRAM_DETECT(has_method_options, &T::options);
 
 BOOST_HISTOGRAM_DETECT(has_allocator, &T::get_allocator);
 
@@ -109,68 +110,77 @@ BOOST_HISTOGRAM_DETECT_BINARY(
 
 BOOST_HISTOGRAM_DETECT(has_threading_support, (T::has_threading_support));
 
-template <typename T>
-struct is_weight_impl : std::false_type {};
+template <class T>
+struct is_weight_impl : mp11::mp_false {};
 
-template <typename T>
-struct is_weight_impl<weight_type<T>> : std::true_type {};
+template <class T>
+struct is_weight_impl<weight_type<T>> : mp11::mp_true {};
 
-template <typename T>
-using is_weight = is_weight_impl<std::decay_t<T>>;
+template <class T>
+using is_weight = is_weight_impl<T>;
 
-template <typename T>
-struct is_sample_impl : std::false_type {};
+template <class T>
+struct is_sample_impl : mp11::mp_false {};
 
-template <typename T>
-struct is_sample_impl<sample_type<T>> : std::true_type {};
+template <class T>
+struct is_sample_impl<sample_type<T>> : mp11::mp_true {};
 
-template <typename T>
-using is_sample = is_sample_impl<std::decay_t<T>>;
+template <class T>
+using is_sample = is_sample_impl<T>;
 
-template <typename T>
+template <class T>
 using is_storage = mp11::mp_and<is_indexable_container<T>, has_method_reset<T>,
                                 has_threading_support<T>>;
 
 template <class T>
 using is_adaptible = mp11::mp_or<is_vector_like<T>, is_array_like<T>, is_map_like<T>>;
 
-template <class T, class _ = std::decay_t<T>,
-          class = std::enable_if_t<(is_storage<_>::value || is_adaptible<_>::value)>>
-struct requires_storage_or_adaptible {};
+template <class T>
+struct is_tuple_impl : mp11::mp_false {};
 
-template <typename T>
-struct is_tuple_impl : std::false_type {};
+template <class... Ts>
+struct is_tuple_impl<std::tuple<Ts...>> : mp11::mp_true {};
 
-template <typename... Ts>
-struct is_tuple_impl<std::tuple<Ts...>> : std::true_type {};
-
-template <typename T>
+template <class T>
 using is_tuple = typename is_tuple_impl<T>::type;
 
-template <typename T>
-struct is_axis_variant_impl : std::false_type {};
+template <class T>
+struct is_variant_impl : mp11::mp_false {};
 
-template <typename... Ts>
-struct is_axis_variant_impl<axis::variant<Ts...>> : std::true_type {};
+template <class... Ts>
+struct is_variant_impl<boost::variant2::variant<Ts...>> : mp11::mp_true {};
 
-template <typename T>
+template <class T>
+using is_variant = typename is_variant_impl<T>::type;
+
+template <class T>
+struct is_axis_variant_impl : mp11::mp_false {};
+
+template <class... Ts>
+struct is_axis_variant_impl<axis::variant<Ts...>> : mp11::mp_true {};
+
+template <class T>
 using is_axis_variant = typename is_axis_variant_impl<T>::type;
 
-template <typename T>
+template <class T>
 using is_any_axis = mp11::mp_or<is_axis<T>, is_axis_variant<T>>;
 
-template <typename T>
+template <class T>
 using is_sequence_of_axis = mp11::mp_and<is_iterable<T>, is_axis<mp11::mp_first<T>>>;
 
-template <typename T>
+template <class T>
 using is_sequence_of_axis_variant =
     mp11::mp_and<is_iterable<T>, is_axis_variant<mp11::mp_first<T>>>;
 
-template <typename T>
+template <class T>
 using is_sequence_of_any_axis =
     mp11::mp_and<is_iterable<T>, is_any_axis<mp11::mp_first<T>>>;
 
 // poor-mans concept checks
+template <class T, class _ = std::decay_t<T>,
+          class = std::enable_if_t<(is_storage<_>::value || is_adaptible<_>::value)>>
+struct requires_storage_or_adaptible {};
+
 template <class T, class = std::enable_if_t<is_iterator<std::decay_t<T>>::value>>
 struct requires_iterator {};
 
