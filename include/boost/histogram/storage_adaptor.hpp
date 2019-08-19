@@ -55,7 +55,7 @@ struct vector_impl : T {
     using value_type = typename T::value_type;
     const auto old_size = T::size();
     T::resize(n, value_type());
-    std::fill_n(T::begin(), std::min(n, old_size), value_type());
+    std::fill_n(T::begin(), (std::min)(n, old_size), value_type());
   }
 }; // namespace detail
 

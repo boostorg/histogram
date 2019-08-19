@@ -1,10 +1,10 @@
+# Copyright Hans Dembinski 2019.
+#
 # Use, modification, and distribution are
 # subject to the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 #
-# Copyright Hans Dembinski 2019.
-#
-# Based on original work by Antony Polukhin, see https://svn.boost.org/trac/boost/wiki/TravisCoveralss
+# Based on original work by Antony Polukhin, see https://svn.boost.org/trac/boost/wiki/TravisCoverals
 
 language: cpp
 os: linux

@@ -9,8 +9,8 @@
 
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
+#include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -30,7 +30,13 @@ std::string join(const char* a, const char* b) {
 template <class T>
 void load_xml(const std::string& filename, T& t) {
   std::ifstream ifs(filename);
-  assert(ifs.is_open());
+  BOOST_ASSERT(ifs.is_open());
+  // manually skip XML comments at the beginning of the stream, because of
+  // https://github.com/boostorg/serialization/issues/169
+  char line[128];
+  do {
+    ifs.getline(line, 128);
+  } while (!ifs.fail() && !ifs.eof() && std::strstr(line, "-->") == nullptr);
   boost::archive::xml_iarchive ia(ifs);
   ia >> boost::serialization::make_nvp("item", t);
 }

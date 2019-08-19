@@ -30,7 +30,7 @@ constexpr float lowest() {
 
 template <typename T>
 constexpr T highest() {
-  return std::numeric_limits<T>::max();
+  return (std::numeric_limits<T>::max)();
 }
 
 template <>

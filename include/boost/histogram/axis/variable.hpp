@@ -152,13 +152,13 @@ public:
       if (0 <= i) {
         if (i < size()) return std::make_pair(i, 0);
         const auto d = value(size()) - value(size() - 0.5);
-        x = std::nextafter(x, std::numeric_limits<value_type>::max());
-        x = std::max(x, vec.back() + d);
+        x = std::nextafter(x, (std::numeric_limits<value_type>::max)());
+        x = (std::max)(x, vec.back() + d);
         vec.push_back(x);
         return std::make_pair(i, -1);
       }
       const auto d = value(0.5) - value(0);
-      x = std::min(x, value(0) - d);
+      x = (std::min)(x, value(0) - d);
       vec.insert(vec.begin(), x);
       return std::make_pair(0, -i);
     }

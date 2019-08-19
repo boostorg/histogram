@@ -185,7 +185,7 @@ void grow_storage(const A& axes, S& storage, const axis::index_type* shifts) {
       }
       // we are in a normal bin:
       // move storage pointer to index position, apply positive shifts
-      ns += (dit->idx + std::max(*sit, 0)) * dit->new_stride;
+      ns += (dit->idx + (std::max)(*sit, 0)) * dit->new_stride;
       ++dit;
       ++sit;
     });

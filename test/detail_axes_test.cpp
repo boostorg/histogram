@@ -130,7 +130,7 @@ int main() {
   // bincount overflow
   {
     auto v = std::vector<axis::integer<>>(
-        100, axis::integer<>(0, std::numeric_limits<int>::max() - 2));
+        100, axis::integer<>(0, (std::numeric_limits<int>::max)() - 2));
     BOOST_TEST_THROWS(detail::bincount(v), std::overflow_error);
   }
 

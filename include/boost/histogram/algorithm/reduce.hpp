@@ -206,7 +206,7 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
       o_out.begin = o_in.begin;
       o_out.end = o_in.end;
     }
-    o_out.merge = std::max(o_in.merge, o_out.merge);
+    o_out.merge = (std::max)(o_in.merge, o_out.merge);
   }
 
   // make new axes container with default-constructed axis instances
@@ -231,8 +231,8 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
           [&o](auto&& aout, const auto& ain) {
             using A = std::decay_t<decltype(ain)>;
             if (o.indices_set) {
-              o.begin = std::max(0, o.begin);
-              o.end = std::min(o.end, ain.size());
+              o.begin = (std::max)(0, o.begin);
+              o.end = (std::min)(o.end, ain.size());
             } else {
               o.begin = 0;
               o.end = ain.size();

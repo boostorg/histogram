@@ -59,8 +59,8 @@ void fill_c(const Axes& axes, const std::size_t* strides, Storage& storage,
             const Tuple& t) {
   using namespace boost::mp11;
   std::size_t index = 0;
-  assert(boost::histogram::detail::axes_rank(axes) ==
-         boost::histogram::detail::axes_rank(t));
+  BOOST_ASSERT(boost::histogram::detail::axes_rank(axes) ==
+               boost::histogram::detail::axes_rank(t));
   mp_for_each<mp_iota<mp_size<Tuple>>>([&](auto i) {
     const auto& a = boost::histogram::detail::axis_get<i>(axes);
     const auto& v = std::get<i>(t);
@@ -137,9 +137,9 @@ static void fill_2d_c(benchmark::State& state) {
   generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
   auto strides = make_strides(axes);
-  assert(strides.size() == 3);
-  assert(strides[0] == 1);
-  assert(strides[1] == 102);
+  BOOST_ASSERT(strides.size() == 3);
+  BOOST_ASSERT(strides[0] == 1);
+  BOOST_ASSERT(strides[1] == 102);
   for (auto _ : state) {
     fill_c(axes, strides.data(), storage, std::forward_as_tuple(gen(), gen()));
   }
@@ -151,9 +151,9 @@ static void fill_2d_c_dyn(benchmark::State& state) {
   generator<Distribution> gen;
   auto storage = make_storage<T>(axes);
   auto strides = make_strides(axes);
-  assert(strides.size() == 3);
-  assert(strides[0] == 1);
-  assert(strides[1] == 102);
+  BOOST_ASSERT(strides.size() == 3);
+  BOOST_ASSERT(strides[0] == 1);
+  BOOST_ASSERT(strides[1] == 102);
   for (auto _ : state) {
     fill_c(axes, strides.data(), storage, std::forward_as_tuple(gen(), gen()));
   }

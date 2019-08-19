@@ -49,13 +49,13 @@ unlimited_storage_type prepare(std::size_t n, T x = T{}) {
 }
 
 template <class T>
-auto max() {
-  return std::numeric_limits<T>::max();
+auto limits_max() {
+  return (std::numeric_limits<T>::max)();
 }
 
 template <>
-inline auto max<large_int>() {
-  return large_int(std::numeric_limits<uint64_t>::max());
+inline auto limits_max<large_int>() {
+  return large_int(limits_max<uint64_t>());
 }
 
 template <typename T>
@@ -97,7 +97,7 @@ void equal_2() {
 
 template <typename T>
 void increase_and_grow() {
-  auto tmax = max<T>();
+  auto tmax = limits_max<T>();
   auto s = prepare(2, tmax);
   auto n = s;
   auto n2 = s;
@@ -205,7 +205,7 @@ struct adder {
       // LHS is never downgraded, only upgraded to RHS.
       // If RHS is normal integer, LHS doesn't change.
       BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
-                    iRHS < 4 ? iLHS : std::max(iLHS, iRHS));
+                    iRHS < 4 ? iLHS : (std::max)(iLHS, iRHS));
       BOOST_TEST_EQ(a[0], 2);
     }
     {
@@ -224,7 +224,7 @@ struct adder {
       // If RHS is normal integer, LHS doesn't change.
       a[0] += b[0];
       BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
-                    iRHS < 4 ? iLHS : std::max(iLHS, iRHS));
+                    iRHS < 4 ? iLHS : (std::max)(iLHS, iRHS));
       BOOST_TEST_EQ(a[0], 2);
       a[0] -= b[0];
       BOOST_TEST_EQ(a[0], 0);
@@ -233,17 +233,17 @@ struct adder {
     }
     {
       auto a = prepare<LHS>(1);
-      auto b = max<RHS>();
+      auto b = limits_max<RHS>();
       // LHS is never downgraded, only upgraded to RHS.
       // If RHS is normal integer, LHS doesn't change.
       a[0] += b;
       // BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
       //               iRHS < 4 ? iLHS : std::max(iLHS, iRHS));
-      BOOST_TEST_EQ(a[0], max<RHS>());
+      BOOST_TEST_EQ(a[0], limits_max<RHS>());
       a[0] += prepare<RHS>(1, b)[0];
       // BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
       //               iRHS < 4 ? iLHS + 1 : std::max(iLHS, iRHS));
-      BOOST_TEST_EQ(a[0], 2 * double(max<RHS>()));
+      BOOST_TEST_EQ(a[0], 2 * double(limits_max<RHS>()));
     }
   }
 };
@@ -471,7 +471,7 @@ int main() {
 
     // test failure in buffer.make<large_int>(n, iter), AT::construct
     s.reset(3);
-    s[1] = std::numeric_limits<std::uint64_t>::max();
+    s[1] = (std::numeric_limits<std::uint64_t>::max)();
     db.failure_countdown = 2;
     const auto old_ptr = buffer.ptr;
     BOOST_TEST_THROWS(++s[1], std::bad_alloc);

@@ -30,7 +30,7 @@ using is_unsigned_integral = mp11::mp_and<std::is_integral<T>, std::is_unsigned<
 
 template <class T>
 bool safe_increment(T& t) {
-  if (t < std::numeric_limits<T>::max()) {
+  if (t < (std::numeric_limits<T>::max)()) {
     ++t;
     return true;
   }
@@ -41,7 +41,7 @@ template <class T, class U>
 bool safe_radd(T& t, const U& u) {
   static_assert(is_unsigned_integral<T>::value, "T must be unsigned integral type");
   static_assert(is_unsigned_integral<U>::value, "T must be unsigned integral type");
-  if (static_cast<T>(std::numeric_limits<T>::max() - t) >= u) {
+  if (static_cast<T>((std::numeric_limits<T>::max)() - t) >= u) {
     t += static_cast<T>(u); // static_cast to suppress conversion warning
     return true;
   }
@@ -212,7 +212,7 @@ struct large_int : totally_ordered<large_int<Allocator>, large_int<Allocator>>,
     // in decimal system it would look like this:
     // 8 + 8 = 6 = 8 - (9 - 8) - 1
     // 9 + 1 = 0 = 9 - (9 - 1) - 1
-    auto tmp = std::numeric_limits<std::uint64_t>::max();
+    auto tmp = (std::numeric_limits<std::uint64_t>::max)();
     tmp -= o;
     --d -= tmp;
   }
