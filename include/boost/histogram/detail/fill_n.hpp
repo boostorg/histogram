@@ -174,7 +174,7 @@ void fill_n_nd(S& storage, A& axes, const T* values, std::size_t vsize, Ts&&... 
   index_type indices[buffer_size];
 
   /*
-    Parallelization options for generic case.
+    Parallelization options.
 
     A) Run the whole fill2 method in parallel, each thread fills its own buffer of
     indices, synchronization (atomics) are needed to synchronize the incrementing of
