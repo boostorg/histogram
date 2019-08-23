@@ -19,35 +19,39 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.rcParams.update(mpl.rcParamsDefault)
 
+cpu_frequency = 0
+
 data = defaultdict(lambda:[])
 for fn in glob.glob("fill_*.json"):
-    for bench in json.load(open(fn))["benchmarks"]:
+    d = json.load(open(fn))
+    cpu_frequency = d["context"]["mhz_per_cpu"]
+    for bench in d["benchmarks"]:
         name = bench["name"]
         time = min(bench["cpu_time"], bench["real_time"])
-        m = re.match("fill_([0-9])d<([^>]+)>", name)
-        tags = m.group(2).split(", ")
-        dim = int(m.group(1))
+        m = re.match("fill_(n_)?([0-9])d<([^>]+)>", name)
+        if m.group(1):
+            time /= 1 << 15
+        tags = m.group(3).split(", ")
+        dim = int(m.group(2))
         label = re.search("fill_([a-z]+).json", fn).group(1)
         dist = tags[0]
         if label == "boost":
             label += "-" + {"dynamic_tag":"D", "static_tag":"S"}[tags[1]] + tags[2][0]
+            label += "-fill" if m.group(1) else "-call"
         data[dim].append((label, dist, time / dim))
 
-plt.figure()
-if os.path.exists("/proc/cpuinfo"):
-    cpuinfo = open("/proc/cpuinfo").read()
-    m = re.search("model name\s*:\s*(.+)\n", cpuinfo)
-    if m:
-        plt.title(m.group(1))
+time_per_cycle_in_ns = 1.0 / (cpu_frequency * 1e6) / 1e-9
+
+plt.figure(figsize=(7, 8))
 i = 0
 for dim in sorted(data):
     v = data[dim]
     labels = OrderedDict()
     for label, dist, time in v:
         if label in labels:
-            labels[label][dist] = time
+            labels[label][dist] = time / time_per_cycle_in_ns
         else:
-            labels[label] = {dist: time}
+            labels[label] = {dist: time / time_per_cycle_in_ns}
     j = 0
     for label, d in labels.items():
         t1 = d["uniform"]
@@ -58,31 +62,37 @@ for dim in sorted(data):
                + z * np.array((1.0, 1.0, 0.0)))
         if label == "root":
             col = "k"
+            label = "ROOT 6"
         if "numpy" in label:
             col = "0.6"
         if "gsl" in label:
             col = "0.3"
+            label = "GSL"
         tmin = min(t1, t2)
         tmax = max(t1, t2)
         r1 = Rectangle((0, i), tmax, 1, facecolor=col)
         r2 = Rectangle((tmin, i), tmax-tmin, 1, facecolor="none", edgecolor="w", hatch="//////")
         plt.gca().add_artist(r1)
         plt.gca().add_artist(r2)
-        tx = Text(-0.1, i+0.5, "%s" % label,
+        font = FontProperties()
+        tx = Text(-0.5, i+0.5, "%s" % label,
+                  fontproperties=font,
                   va="center", ha="right", clip_on=False)
         plt.gca().add_artist(tx)
         j += 1
     i -= 1
-    font0 = FontProperties()
-    font0.set_weight("bold")
-    tx = Text(-0.1, i+0.6, "%iD" % dim,
-              fontproperties=font0, va="center", ha="right", clip_on=False)
+    font = FontProperties()
+    font.set_weight("bold")
+    tx = Text(-0.5, i+0.6, "%iD" % dim,
+              fontproperties=font, va="center", ha="right", clip_on=False)
     plt.gca().add_artist(tx)
 plt.ylim(0, i)
-plt.xlim(0, 20)
+plt.xlim(0, 80)
 
 plt.tick_params("y", left=False, labelleft=False)
-plt.xlabel("fill time per random input value in nanoseconds (smaller is better)")
+plt.xlabel("average CPU cycles per random input value (smaller is better)")
+
+plt.tight_layout()
 
 plt.savefig("fill_performance.svg")
 plt.show()
