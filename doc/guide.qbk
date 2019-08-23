@@ -28,7 +28,7 @@ In the example above, the compiler knows the number of axes and their type at co
 [guide_make_dynamic_histogram]
 
 [note
-When the axis types are known at compile-time, the histogram internally holds them in a `std::tuple`, which is very efficient and avoids a memory allocation from the heap. If they are only known at run-time, it stores the axes in a `std::vector`. The interface hides this difference, but not perfectly. There are a corner cases where the difference becomes apparent. The [link histogram.overview.rationale.structure.host rationale] has more details on this point.
+When the axis types are known at compile-time, the histogram internally holds them in a `std::tuple`, which is very efficient and avoids a memory allocation from the heap. If they are only known at run-time, it stores the axes in a `std::vector`. The interface hides this difference, but not perfectly. There are a corner cases where the difference becomes apparent. The [link histogram.overview.structure.host overview] has more details on this point.
 ]
 
 The factory function named [headerref boost/histogram/make_histogram.hpp make_histogram] uses the default storage type, which provides safe counting, is fast, and memory efficient. If you want to create a histogram with another storage type, use [headerref boost/histogram/make_histogram.hpp make_histogram_with]. To learn more about other storage types and how to create your own, have a look at the section [link histogram.guide.expert Advanced Usage].
@@ -154,7 +154,7 @@ Users may write their own transforms and use them with the builtin [classref boo
 
 [*Under- and overflow bins]
 
-By default, under- and overflow bins are added automatically for each axis (except if adding them makes no sense). If you create an axis with 20 bins, the histogram will actually have 22 bins along that axis. The extra bins are very useful, as explained in the [link histogram.overview.rationale.uoflow rationale]. If the input cannot exceed the axis range, you can disable the extra bins to save memory. Example:
+By default, under- and overflow bins are added automatically for each axis (except if adding them makes no sense). If you create an axis with 20 bins, the histogram will actually have 22 bins along that axis. The extra bins are very useful, as explained in the [link histogram.rationale.uoflow rationale]. If the input cannot exceed the axis range, you can disable the extra bins to save memory. Example:
 
 [import ../examples/guide_axis_with_uoflow_off.cpp]
 [guide_axis_with_uoflow_off]
@@ -201,7 +201,7 @@ After the histogram has been filled, use [memberref boost::histogram::histogram:
 [import ../examples/guide_fill_histogram.cpp]
 [guide_fill_histogram]
 
-For a histogram `hist`, the calls `hist(weight(w), ...)` and `hist(..., weight(w))` increment the bin counter by the value `w` instead, where `w` may be an integer or floating point number. The helper function [funcref boost::histogram::weight() weight()] marks this argument as a weight, so that it can be distinguished from the other inputs. It can be the first or last argument. You can freely mix calls with and without a weight. Calls without `weight` act like the weight is `1`. Why weighted increments are sometimes useful is explained [link histogram.overview.rationale.weights in the rationale].
+For a histogram `hist`, the calls `hist(weight(w), ...)` and `hist(..., weight(w))` increment the bin counter by the value `w` instead, where `w` may be an integer or floating point number. The helper function [funcref boost::histogram::weight() weight()] marks this argument as a weight, so that it can be distinguished from the other inputs. It can be the first or last argument. You can freely mix calls with and without a weight. Calls without `weight` act like the weight is `1`. Why weighted increments are sometimes useful is explained [link histogram.rationale.weights in the rationale].
 
 [note The default storage loses its no-overflow-guarantee when you pass floating point weights, but maintains it for integer weights.]
 

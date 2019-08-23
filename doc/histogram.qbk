@@ -72,6 +72,14 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
   ]
   [
     [
+      [link histogram.rationale Rationale]
+    ]
+    [
+      Thoughts behind the design for contributors and future maintainers of the library.
+    ]
+  ]
+  [
+    [
       [link histogram.history Revision history]
     ]
     [
@@ -86,6 +94,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
 [include benchmarks.qbk]
 [include concepts.qbk]
 [xinclude reference_pp.xml]
+[include rationale.qbk]
 [include changelog.qbk]
 
 [*Acknowledgments]
