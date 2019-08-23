@@ -23,7 +23,6 @@ using std::span;
 
 #include <array>
 #include <boost/assert.hpp>
-#include <boost/config.hpp>
 #include <boost/histogram/detail/non_member_container_access.hpp>
 #include <initializer_list>
 #include <iterator>
@@ -162,25 +161,11 @@ public:
 
   constexpr reference operator[](index_type idx) const { return base::data()[idx]; }
 
-  // constexpr pointer data() const noexcept { return base::data(); }
-  // constexpr std::size_t size() const noexcept { return base::size(); }
-
   constexpr std::size_t size_bytes() const noexcept {
     return base::size() * sizeof(element_type);
   }
 
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc++17-extensions"
-#endif
-
-  BOOST_ATTRIBUTE_NODISCARD constexpr bool empty() const noexcept {
-    return base::size() == 0;
-  }
-
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
-#pragma GCC diagnostic pop
-#endif
+  constexpr bool empty() const noexcept { return base::size() == 0; }
 
   template <std::size_t Count>
   constexpr span<element_type, Count> first() const {
@@ -227,8 +212,6 @@ public:
     BOOST_ASSERT(s <= base::size());
     return span<element_type, dynamic_extent>(base::data() + offset, s);
   }
-
-private:
 };
 
 #endif
