@@ -7,7 +7,8 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_SPAN_HPP
 #define BOOST_HISTOGRAM_DETAIL_SPAN_HPP
 
-#if __has_include(<span>)
+#if __cpp_constexpr >= 201603 && __cpp_deduction_guides >= 201703 && \
+    __cpp_lib_nonmember_container_access >= 201411 && __has_include(<span>)
 #include <span>
 
 namespace boost {
