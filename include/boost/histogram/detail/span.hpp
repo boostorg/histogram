@@ -169,18 +169,9 @@ public:
     return base::size() * sizeof(element_type);
   }
 
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc++17-extensions"
-#endif
-
   BOOST_ATTRIBUTE_NODISCARD constexpr bool empty() const noexcept {
     return base::size() == 0;
   }
-
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
-#pragma GCC diagnostic pop
-#endif
 
   template <std::size_t Count>
   constexpr span<element_type, Count> first() const {
@@ -227,8 +218,6 @@ public:
     BOOST_ASSERT(s <= base::size());
     return span<element_type, dynamic_extent>(base::data() + offset, s);
   }
-
-private:
 };
 
 #endif
