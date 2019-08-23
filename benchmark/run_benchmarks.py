@@ -5,6 +5,9 @@
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 """
+This script runs the benchmarks on previous versions of this library to track changes
+in performance.
+
 Run this from a special build directory that uses the benchmark folder as root
 
     cd my_build_dir
@@ -83,12 +86,21 @@ def run(results, comments, hash, update):
 def main():
     commits, comments = get_commits()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("first", type=str, nargs="?", default=commits[0])
-    parser.add_argument("last", type=str, nargs="?", default=commits[-1])
-    parser.add_argument("-f", action="store_true")
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("first", type=str, default="begin",
+                        help="first commit in range, special value `begin` is allowed")
+    parser.add_argument("last", type=str, default="end",
+                        help="last commit in range, special value `end` is allowed")
+    parser.add_argument("-f", action="store_true",
+                        help="override previous results")
 
     args = parser.parse_args()
+
+    if args.first == "begin":
+        args.first = commits[0]
+    if args.last == "end":
+        args.last = commits[-1]
 
     with shelve.open("benchmark_results") as results:
         a = commits.index(args.first)
