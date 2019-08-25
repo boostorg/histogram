@@ -77,7 +77,9 @@ auto project(const histogram<A, S>& h, const Iterable& c) {
   axes.reserve(c.size());
   auto seen = detail::make_stack_buffer<bool>(old_axes, false);
   for (auto d : c) {
-    if (seen[d]) BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
+    if (static_cast<unsigned>(d) >= h.rank())
+      BOOST_THROW_EXCEPTION(std::invalid_argument("invalid axis index"));
+    if (seen[d]) BOOST_THROW_EXCEPTION(std::invalid_argument("indices are not unique"));
     seen[d] = true;
     axes.emplace_back(detail::axis_get(old_axes, d));
   }
