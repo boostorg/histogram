@@ -74,7 +74,7 @@ auto project(const histogram<A, S>& h, const Iterable& c) {
 
   if (c.size() > h.rank())
     BOOST_THROW_EXCEPTION(
-        std::invalid_argument("number of indices is larger than histogram rank"))
+        std::invalid_argument("number of indices is larger than histogram rank"));
 
   // axes is always std::vector<...>, even if A is tuple
   auto axes = detail::make_empty_dynamic_axes(old_axes);
