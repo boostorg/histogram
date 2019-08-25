@@ -179,8 +179,8 @@ void run_tests() {
     x = {0, 0};
     BOOST_TEST_THROWS((void)project(h, x), std::invalid_argument);
 
-    // number of indices must be smaller than histogram rank
-    x = {0, 1, 2, 3, 4, 5};
+    // indices must be valid
+    x = {2, 1};
     BOOST_TEST_THROWS((void)project(h, x), std::invalid_argument);
   }
 }
