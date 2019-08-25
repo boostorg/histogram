@@ -175,7 +175,12 @@ void run_tests() {
     BOOST_TEST_EQ(hyx.at(1, 1), 1);
     BOOST_TEST_EQ(hyx.at(2, 1), 2);
 
+    // indices must be unique
     x = {0, 0};
+    BOOST_TEST_THROWS((void)project(h, x), std::invalid_argument);
+
+    // number of indices must be smaller than histogram rank
+    x = {0, 1, 2, 3, 4, 5};
     BOOST_TEST_THROWS((void)project(h, x), std::invalid_argument);
   }
 }

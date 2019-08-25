@@ -72,12 +72,16 @@ auto project(const histogram<A, S>& h, const Iterable& c) {
   using namespace boost::mp11;
   const auto& old_axes = unsafe_access::axes(h);
 
+  if (c.size() > h.rank())
+    BOOST_THROW_EXCEPTION(
+        std::invalid_argument("number of indices is larger than histogram rank"))
+
   // axes is always std::vector<...>, even if A is tuple
   auto axes = detail::make_empty_dynamic_axes(old_axes);
   axes.reserve(c.size());
   auto seen = detail::make_stack_buffer<bool>(old_axes, false);
   for (auto d : c) {
-    if (seen[d]) BOOST_THROW_EXCEPTION(std::invalid_argument("indices must be unique"));
+    if (seen[d]) BOOST_THROW_EXCEPTION(std::invalid_argument("indices are not unique"));
     seen[d] = true;
     axes.emplace_back(detail::axis_get(old_axes, d));
   }
