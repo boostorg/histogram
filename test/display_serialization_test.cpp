@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Hans Dembinski
+// Copyright (c) 2019  pb
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt

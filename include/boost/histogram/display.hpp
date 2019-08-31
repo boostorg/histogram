@@ -1,4 +1,4 @@
-// Copyright 2019 Hans Dembinski
+// Copyright (c) 2019  pb
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -19,14 +19,16 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-unsigned int histogram_width = 60;  // 60 characters
-const double max_bin_coefficient = 0.95;  // 95% of histogram_width
-const unsigned int precision = 1; //precision of upper and lower bounds
+struct display_settings {
+  unsigned int histogram_width = 60;       // 60 characters
+  const double max_bin_coefficient = 0.95; // 95% of histogram_width
+  const unsigned int precision = 1;        // precision of upper and lower bounds
+} d_s;
 
 template <class Histogram>
 std::ostream& get_lower_bound(std::ostream& os, 
                               typename indexed_range<const Histogram>::range_iterator ri) {
-  os << std::fixed << std::setprecision(precision);
+  os << std::fixed << std::setprecision(d_s.precision);
   os << ri->bin().lower();
   return os;
 }
@@ -34,7 +36,7 @@ std::ostream& get_lower_bound(std::ostream& os,
 template <class Histogram>
 std::ostream& get_upper_bound(std::ostream& os,
                               typename indexed_range<const Histogram>::range_iterator ri) {
-  os << std::fixed << std::setprecision(precision);
+  os << std::fixed << std::setprecision(d_s.precision);
   os << ri->bin().upper();
   return os;
 }
@@ -42,7 +44,7 @@ std::ostream& get_upper_bound(std::ostream& os,
 template <typename Histogram>
 std::ostream& get_value(std::ostream& out, 
                         typename indexed_range<const Histogram>::range_iterator ri,
-                        const unsigned int& column_width) {
+                        const unsigned int column_width) {
 
   std::ostringstream tmp;
   tmp << std::defaultfloat << *(ri);
@@ -68,8 +70,8 @@ double get_value_d(typename indexed_range<const Histogram>::range_iterator ri) {
 template <typename Histogram>
 std::ostream& get_label(std::ostream& out, 
                         typename indexed_range<const Histogram>::range_iterator ri,
-                        const unsigned int& column_width1,
-                        const unsigned int& column_width2) {
+                        const unsigned int column_width1,
+                        const unsigned int column_width2) {
   char parenthesis = ' ';
   if ( std::isfinite(ri->bin().upper()) )
     parenthesis = ')';
@@ -103,7 +105,7 @@ unsigned int get_num_of_chars(double number) {
   
   if(std::floor(number) != number){
     ++counter; // dot
-    number *= std::pow(10, precision);
+    number *= std::pow(10, d_s.precision);
   }
 
   while(number > 1){
@@ -128,14 +130,14 @@ unsigned int get_max_width(const Histogram& h,
 }
 
 std::ostream& draw_line(std::ostream& out,
-                        const unsigned int& num,
-                        const char& c = '*',
+                        const unsigned int num,
+                        const char c = '*',
                         bool complete = true) {
   unsigned int i = 0;
   for (; i < num; ++i) out << c;
 
   if (complete == true) {
-    for (; i < histogram_width; ++i) out << ' ';
+    for (; i < d_s.histogram_width; ++i) out << ' ';
   }
   return out;
 }
@@ -144,7 +146,7 @@ template <class Histogram>
 unsigned int calculate_scale_factor(typename indexed_range<const Histogram>::range_iterator ri,
                                     const double& max_value) {
   
-  const double longest_bin = max_bin_coefficient * histogram_width;
+  const double longest_bin = d_s.max_bin_coefficient * d_s.histogram_width;
   double result = *ri * longest_bin / max_value;
   return std::lround(result);
 }
@@ -163,10 +165,10 @@ std::ostream& get_histogram_line(std::ostream& out,
 }
 
 std::ostream& get_external_line(std::ostream& out,
-                                const unsigned int& labels_width) {
+                                const unsigned int labels_width) {
   draw_line(out, labels_width, ' ', false);
   out << " +";
-  draw_line(out, histogram_width, '-');
+  draw_line(out, d_s.histogram_width, '-');
   out << '+';
   return out;
 }
@@ -174,10 +176,10 @@ std::ostream& get_external_line(std::ostream& out,
 template <class Histogram>
 std::ostream& draw_histogram(std::ostream& out, 
                               const Histogram& h, 
-                              const unsigned int& u_bounds_width,
-                              const unsigned int& l_bounds_width,
-                              const unsigned int& values_width,
-                              const unsigned int& hist_shift) {
+                              const unsigned int u_bounds_width,
+                              const unsigned int l_bounds_width,
+                              const unsigned int values_width,
+                              const unsigned int hist_shift) {
   auto data = indexed(h, coverage::all);
   const auto max_v = *std::max_element(h.begin(), h.end());
 
@@ -201,9 +203,9 @@ std::ostream& draw_histogram(std::ostream& out,
 }
 
 template <class Histogram>
-void display_histogram(std::ostream& out, const Histogram& h, const unsigned int& terminal_width) {
+void display_histogram(std::ostream& out, const Histogram& h, const unsigned int terminal_width) {
   const auto additional_offset = 8; // 8 white characters
-  histogram_width = terminal_width;
+  d_s.histogram_width = terminal_width;
   const auto l_bounds_width = get_max_width(h, get_lower_bound_d<Histogram>);
   const auto u_bounds_width = get_max_width(h, get_upper_bound_d<Histogram>);
   const auto values_width = get_max_width(h, get_value_d<Histogram>);
