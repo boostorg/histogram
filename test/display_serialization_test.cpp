@@ -76,7 +76,7 @@ const std::string h4_expected_r =
     "\n";
 
 const std::string h4_expected_s =
-    "\n" 
+    "\n"
     "                 +-------------------------------+\n"
     "  [-inf, 0.0)  0 |                               |\n"
     "  [ 0.0, 0.5)  2 |*****************************  |\n"
@@ -88,7 +88,7 @@ const std::string h4_expected_s =
     "\n";
 
 const std::string h4_expected_w = 
-    "\n" 
+    "\n"
     "                 +-----------------------------------------------------------------------+\n"
     "  [-inf, 0.0)  0 |                                                                       |\n"
     "  [ 0.0, 0.5)  2 |*******************************************************************    |\n"
@@ -134,10 +134,10 @@ int main(int argc, char** argv) {
   static auto h4 = make_histogram( axis::regular<>(4, 0.0, 2.0) );
   for (auto&& value : { 0.4, 1.1, 0.3, 1.7, 10. })
     h4(value);
-  
+
   run_simple_test(h4, h4_expected_r);
-  //run_simple_test(h4, h4_expected_s, 50);
-  //run_simple_test(h4, h4_expected_w, 90);
+  run_simple_test(h4, h4_expected_s, 50);
+  run_simple_test(h4, h4_expected_w, 90);
 
   return boost::report_errors();
 }

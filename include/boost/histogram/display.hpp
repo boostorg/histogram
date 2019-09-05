@@ -43,7 +43,7 @@ std::ostream& stream_upper_bound(std::ostream& os,
   return os;
 }
 
-template <typename Histogram>
+template <class Histogram>
 std::ostream& stream_value(std::ostream& out,
                            typename indexed_range<const Histogram>::range_iterator ri,
                            const unsigned int column_width) {
@@ -69,7 +69,7 @@ double get_value(typename indexed_range<const Histogram>::range_iterator ri) {
   return *ri;
 }
 
-template <typename Histogram>
+template <class Histogram>
 std::ostream& stream_label(std::ostream& out,
                            typename indexed_range<const Histogram>::range_iterator ri,
                            const unsigned int l_bounds_width,
@@ -117,9 +117,8 @@ unsigned int get_num_of_chars(double number) {
   return counter;
 }
 
-template <typename Histogram>
-unsigned int get_max_width(const Histogram& h,
-                           std::function<double(typename indexed_range<const Histogram>::range_iterator)> fcn) {
+template <class Histogram, class Getter>
+unsigned int get_max_width(const Histogram& h, const Getter& fcn) {
   auto data = indexed(h, coverage::all);
   unsigned int max_length = 0;
   unsigned int temp = 0;
@@ -153,7 +152,7 @@ unsigned int calculate_scale_factor(typename indexed_range<const Histogram>::ran
   return std::lround(result);
 }
 
-template <typename Histogram>
+template <class Histogram>
 std::ostream& stream_histogram_line(std::ostream& out,
                                     typename indexed_range<const Histogram>::range_iterator ri,
                                     const double& max_value) {
@@ -227,14 +226,13 @@ void display_histogram(std::ostream& out,
 template <typename CharT, typename Traits, typename A, typename S>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const histogram<A, S>& h) {
-  
-  auto saved_flags = os.flags();
-  if (os.width() == 0)
+  auto tmp = os.width();
+  if (tmp == 0)
     detail::display_histogram(os, h);
-  else
-    detail::display_histogram(os, h, os.width());
-  
-  os.flags(saved_flags);
+  else {
+    os.width(0);
+    detail::display_histogram(os, h, tmp);
+  }
   return os;
 }
 
