@@ -23,7 +23,7 @@ int main() {
       mean_y(y);
     }
   };
-  // Note: This is not the most efficient implementation of this accumulator.
+  // Note: There are more efficient implementations of this accumulator.
 
   // Create a 1D histogram that uses the custom accumulator.
   auto h = make_histogram_with(dense_storage<multi_mean>(), axis::integer<>(0, 2));
