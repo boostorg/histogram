@@ -14,7 +14,7 @@
 
 int main() {
   using namespace boost::histogram;
-  using namespace boost::histogram::literals; // for _c suffix to make compile-time number
+  using namespace boost::histogram::literals; // _c suffix creates compile-time numbers
 
   // make 2D weighted profile
   auto h = make_weighted_profile(axis::integer<>(0, 2), axis::integer<>(0, 2));
