@@ -7,6 +7,7 @@
 //[ guide_fill_weighted_histogram
 
 #include <boost/histogram.hpp>
+#include <cassert>
 
 int main() {
   using namespace boost::histogram;
