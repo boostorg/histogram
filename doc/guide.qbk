@@ -401,8 +401,17 @@ The library provides several accumulators:
 
 Users can easily write their own accumulators and plug them into the histogram, if they adhere to the [link histogram.concepts.Accumulator [*Accumulator] concept].
 
-[import ../examples/guide_custom_accumulators.cpp]
-[guide_custom_accumulators]
+The first example shows how to make and use a histogram that uses one of the the builtin accumulators.
+[import ../examples/guide_custom_accumulators_1.cpp]
+[guide_custom_accumulators_1]
+
+The second example shows how to use a simple user-generated accumulator.
+[import ../examples/guide_custom_accumulators_2.cpp]
+[guide_custom_accumulators_2]
+
+The third example shows how to use to make an accumulator that accepts multiple samples at once. Here, we make an accumulator that accepts two samples and computes the mean for each. This is more convenient and more efficient than filling two identical profiles, because the cell lookup has to be done only once.
+[import ../examples/guide_custom_accumulators_3.cpp]
+[guide_custom_accumulators_3]
 
 [endsect]
 
