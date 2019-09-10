@@ -10,6 +10,7 @@
 #include <boost/histogram.hpp>
 #include <cassert>
 #include <iostream>
+#include <sstream>
 
 int main() {
   using namespace boost::histogram;

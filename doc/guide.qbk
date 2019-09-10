@@ -228,7 +228,10 @@ Profiles can be generated with the factory function [funcref boost::histogram::m
 
 Just like [funcref boost::histogram::weight weight()], [funcref boost::histogram::sample sample()] is a marker function. It must be the first or last argument.
 
-Weights and samples may be combined, if the histogram accumulators can handle weights. When both [funcref boost::histogram::weight weight()] and [funcref boost::histogram::sample sample()] appear in [memberref boost::histogram::histogram::operator() histogram::operator()], they can be in any order with respect to other, but they must be the first and/or last arguments. To make a profile which can compute weighted means use the [funcref boost::histogram::make_weighted_profile make_weighted_profile] factory function.
+Weights and samples may be combined, if the histogram accumulators can handle weights. When both [funcref boost::histogram::weight weight()] and [funcref boost::histogram::sample sample()] appear in [memberref boost::histogram::histogram::operator() histogram::operator()], they can be in any order with respect to other, but they must be the first or last arguments. To make a profile which can compute weighted means use the [funcref boost::histogram::make_weighted_profile make_weighted_profile] factory function.
+
+[import ../examples/guide_fill_weighted_profile.cpp]
+[guide_fill_weighted_profile]
 
 [endsect]
 

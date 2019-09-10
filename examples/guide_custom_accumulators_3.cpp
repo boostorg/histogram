@@ -9,6 +9,7 @@
 #include <boost/format.hpp>
 #include <boost/histogram.hpp>
 #include <iostream>
+#include <sstream>
 
 int main() {
   using namespace boost::histogram;
@@ -22,8 +23,9 @@ int main() {
       mean_y(y);
     }
   };
+  // Note: This is not the most efficient implementation of this accumulator.
 
-  // Create a histogram that uses the custom accumulator.
+  // Create a 1D histogram that uses the custom accumulator.
   auto h = make_histogram_with(dense_storage<multi_mean>(), axis::integer<>(0, 2));
   h(0, sample(1, 2)); // samples go to first cell
   h(0, sample(3, 4)); // samples go to first cell
