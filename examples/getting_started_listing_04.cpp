@@ -20,7 +20,8 @@ int main() {
 
   /*
     We make a 3d histogram for color values (r, g, b) in an image. We assume the values
-    are of type char. The value range then is [0, 256).
+    are of type char. The value range then is [0, 256). The integer axis is perfect for
+    color values.
   */
   auto h = make_histogram(
     axis::integer<>(0, 256, "r"),
@@ -36,16 +37,16 @@ int main() {
   h(0, 1, 0);
 
   /*
-    Now let's say we want to know which color is most common. We can use std::max_element on an
-    indexed range for that.
+    Now let's say we want to know which color is most common. We can use std::max_element
+    on an indexed range for that.
   */
   auto ind = indexed(h);
   auto max_it = std::max_element(ind.begin(), ind.end());
 
   /*
-    max_it is the iterator to the maximum counter. This is the special iterator from indexed_range,
-    you can use it to access the cell index as well and the bin values. You need to
-    double-dereference it to get to the cell count.
+    max_it is a special iterator to the histogram cell with the highest count.
+    This iterator allows one to access the cell value, bin indices, and bin values.
+    You need to twice dereference it to get to the cell value.
   */
   std::ostringstream os;
   os << boost::format("count=%i rgb=(%i, %i, %i)")

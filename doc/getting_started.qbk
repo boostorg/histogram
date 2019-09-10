@@ -57,7 +57,7 @@ The library was designed to be very flexible and modular. The modularity is used
 
 [section Standard library algorithms]
 
-The library was designed to work well with the C++ standard library. Here is an example on how to get the maximum highest count in a 3d histogram with `std::max_element`.
+The library was designed to work well with the C++ standard library. Here is an example on how to get the most common color from an image, using a 3d histogram and `std::max_element`.
 
 [import ../examples/getting_started_listing_04.cpp]
 [getting_started_listing_04]

@@ -55,16 +55,17 @@ public:
   class iterator;
   using range_iterator = iterator; ///< deprecated
 
-  /** Pointer-like class to access value and index of current cell.
+  /** Lightweight view to access value and index of current cell.
 
-    Its methods provide access to the current indices and bins and it acts like a pointer
-    to the cell value. To interoperate with the algorithms of the standard library, the
-    accessor is implicitly convertible to a cell value. Assignments and comparisons are
-    passed through to the cell. The accessor is coupled to its parent iterator. Moving the
-    parent iterator forward also updates the linked accessor. Accessors are not copyable.
-    They cannot be stored in containers, but range_iterators can be stored.
+    The methods provide access to the current cell indices and bins. It acts like a
+    pointer to the cell value, and in a limited way also like a reference. To interoperate
+    with the algorithms of the standard library, the accessor is implicitly convertible to
+    a cell value. Assignments and comparisons are passed through to the cell. An accessor
+    is coupled to its parent indexed_range::iterator. Moving the parent iterator
+    forward also updates the linked accessor. Accessors are not copyable. They cannot be
+    stored in containers, but indexed_range::iterator can be stored.
   */
-  class accessor : detail::mirrored<accessor, void> {
+  class BOOST_ATTRIBUTE_NODISCARD accessor : detail::mirrored<accessor, void> {
   public:
     /// Array-like view into the current multi-dimensional index.
     class index_view {
