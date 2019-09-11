@@ -34,6 +34,13 @@ public:
     sum_of_deltas_squared_ += delta * (x - mean_);
   }
 
+  void operator()(const RealType& w, const RealType& x) {
+    sum_ += w;
+    const auto delta = x - mean_;
+    mean_ += w * delta / sum_;
+    sum_of_deltas_squared_ += w * delta * (x - mean_);
+  }
+
   template <class T>
   mean& operator+=(const mean<T>& rhs) {
     const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
