@@ -22,6 +22,7 @@ project
     ;
 
 alias cxx14 :
+    [ run accumulators_test.cpp ]
     [ run algorithm_project_test.cpp ]
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
@@ -57,7 +58,6 @@ alias cxx14 :
     [ run histogram_operators_test.cpp ]
     [ run histogram_test.cpp ]
     [ run indexed_test.cpp ]
-    [ run internal_accumulators_test.cpp ]
     [ run storage_adaptor_test.cpp ]
     [ run unlimited_storage_test.cpp ]
     [ run utility_test.cpp ]
@@ -86,6 +86,7 @@ alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
 alias units : [ run boost_units_support_test.cpp ] : <warnings>off ;
 alias serialization :
+    [ run accumulators_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run axis_variant_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run histogram_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run storage_adaptor_serialization_test.cpp libserial : $(THIS_PATH) ]

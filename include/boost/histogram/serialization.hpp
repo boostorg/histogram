@@ -32,6 +32,7 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/throw_exception.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/version.hpp>
 #include <tuple>
 #include <type_traits>
 
@@ -43,6 +44,18 @@
  */
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+
+namespace boost {
+namespace serialization {
+// version 1 for boost::histogram::accumulators::mean<RealType>
+template <class RealType>
+struct version<::boost::histogram::accumulators::mean<RealType>> {
+  typedef mpl::int_<1> type;
+  typedef mpl::integral_c_tag tag;
+  BOOST_STATIC_CONSTANT(int, value = version::type::value);
+};
+} // namespace serialization
+} // namespace boost
 
 namespace std {
 template <class Archive, class... Ts>
@@ -72,8 +85,14 @@ void weighted_sum<RealType>::serialize(Archive& ar, unsigned /* version */) {
 
 template <class RealType>
 template <class Archive>
-void mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& serialization::make_nvp("sum", sum_);
+void mean<RealType>::serialize(Archive& ar, unsigned version) {
+  if (version == 0 && Archive::is_loading::value) {
+    std::size_t sum;
+    ar& serialization::make_nvp("sum", sum);
+    sum_ = static_cast<RealType>(sum);
+  } else {
+    ar& serialization::make_nvp("sum", sum_);
+  }
   ar& serialization::make_nvp("mean", mean_);
   ar& serialization::make_nvp("sum_of_deltas_squared", sum_of_deltas_squared_);
 }

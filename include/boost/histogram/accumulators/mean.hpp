@@ -28,7 +28,7 @@ public:
       : sum_(n), mean_(mean), sum_of_deltas_squared_(variance * (sum_ - 1)) {}
 
   void operator()(const RealType& x) {
-    sum_ += 1;
+    sum_ += static_cast<RealType>(1);
     const auto delta = x - mean_;
     mean_ += delta / sum_;
     sum_of_deltas_squared_ += delta * (x - mean_);
@@ -67,7 +67,7 @@ public:
     return !operator==(rhs);
   }
 
-  std::size_t count() const noexcept { return sum_; }
+  const RealType& count() const noexcept { return sum_; }
   const RealType& value() const noexcept { return mean_; }
   RealType variance() const { return sum_of_deltas_squared_ / (sum_ - 1); }
 
@@ -75,8 +75,7 @@ public:
   void serialize(Archive&, unsigned /* version */);
 
 private:
-  std::size_t sum_ = 0;
-  RealType mean_ = 0, sum_of_deltas_squared_ = 0;
+  RealType sum_ = 0, mean_ = 0, sum_of_deltas_squared_ = 0;
 };
 
 } // namespace accumulators
