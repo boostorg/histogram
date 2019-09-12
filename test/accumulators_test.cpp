@@ -11,9 +11,9 @@
 #include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include "throw_exception.hpp"
 #include <sstream>
 #include "is_close.hpp"
+#include "throw_exception.hpp"
 
 using namespace boost::histogram;
 using namespace std::literals;
@@ -98,6 +98,15 @@ int main() {
     BOOST_TEST_EQ(c.count(), 8);
     BOOST_TEST_EQ(c.value(), 10);
     BOOST_TEST_IS_CLOSE(c.variance(), 25.714, 1e-3);
+
+    // also same as feeding all samples twice
+    m_t d;
+    d(2, 4);
+    d(2, 7);
+    d(2, 13);
+    d(2, 16);
+
+    BOOST_TEST_EQ(d, c);
   }
 
   {

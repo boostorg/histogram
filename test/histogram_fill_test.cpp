@@ -241,7 +241,7 @@ void run_tests() {
     BOOST_TEST_EQ(h, h2);
   }
 
-  // 1D with samples
+  // 1D profile with samples
   {
     auto h = make_s(Tag(), profile_storage(), in(1, 3));
     auto h2 = h;
@@ -253,9 +253,14 @@ void run_tests() {
     h2.fill(x, sample(x));
 
     BOOST_TEST_EQ(h, h2);
+
+    for (auto&& xi : x) h(xi, sample(xi), weight(xi));
+    h2.fill(x, sample(x), weight(x));
+
+    BOOST_TEST_EQ(h, h2);
   }
 
-  // 2D with samples and weights
+  // 2D weighted profile with samples and weights
   {
     auto h = make_s(Tag(), weighted_profile_storage(), in(1, 3), in0(1, 3));
     auto h2 = h;
