@@ -27,44 +27,38 @@ struct display_settings {
 } d_s;
 
 template <class Histogram>
-std::ostream& stream_lower_bound(std::ostream& os,
-                                 typename indexed_range<const Histogram>::range_iterator ri) {
-  os << std::fixed << std::setprecision(d_s.precision);
-  os << ri->bin().lower();
-  return os;
-}
-
-template <class Histogram>
-std::ostream& stream_upper_bound(std::ostream& os,
-                                 typename indexed_range<const Histogram>::range_iterator ri) {
-  os << std::fixed << std::setprecision(d_s.precision);
-  os << ri->bin().upper();
-  return os;
-}
-
-template <class Histogram>
-std::ostream& stream_value(std::ostream& out,
-                           typename indexed_range<const Histogram>::range_iterator ri,
-                           const unsigned int column_width) {
-
-  out << std::left << std::setw(column_width);
-  out << std::fixed << std::setprecision(0) << *(ri);
-  return out;
-}
-
-template <class Histogram>
-double get_lower_bound(typename indexed_range<const Histogram>::range_iterator ri) {
+double stream_lower_bound(std::ostream& out,
+                          typename indexed_range<const Histogram>::range_iterator ri,
+                          const unsigned int l_bounds_width = 0) {
+  if(l_bounds_width != 0) {
+    out << std::right << std::setw(l_bounds_width);
+    out << std::fixed << std::setprecision(d_s.precision);
+    out << ri->bin().lower();
+  }
   return ri->bin().lower();
 }
 
 template <class Histogram>
-double get_upper_bound(typename indexed_range<const Histogram>::range_iterator ri) {
+double stream_upper_bound(std::ostream& out,
+                          typename indexed_range<const Histogram>::range_iterator ri,
+                          const unsigned int u_bounds_width = 0) {
+  if(u_bounds_width != 0) {
+    out << std::right << std::setw(u_bounds_width);
+    out << std::fixed << std::setprecision(d_s.precision);
+    out << ri->bin().upper();
+  }
   return ri->bin().upper();
 }
 
 template <class Histogram>
-double get_value(typename indexed_range<const Histogram>::range_iterator ri) {
-  return *ri;
+double stream_value(std::ostream& out,
+                    typename indexed_range<const Histogram>::range_iterator ri,
+                    const unsigned int column_width = 0) {
+  if(column_width != 0) {
+    out << std::left << std::setw(column_width);
+    out << std::fixed << std::setprecision(0) << *(ri);
+  }
+  return *(ri);
 }
 
 template <class Histogram>
@@ -78,11 +72,10 @@ std::ostream& stream_label(std::ostream& out,
   else
     parenthesis = ']';
 
-  out << '[' << std::right << std::setw(l_bounds_width);
-  stream_lower_bound<Histogram>(out, ri);
+  out << '[';
+  stream_lower_bound<Histogram>(out, ri, l_bounds_width);
   out << ", ";
-  out << std::right << std::setw(u_bounds_width);
-  stream_upper_bound<Histogram>(out, ri);
+  stream_upper_bound<Histogram>(out, ri, u_bounds_width);
   out << parenthesis;
 
   return out;
@@ -121,7 +114,7 @@ unsigned int get_max_width(const Histogram& h, const Getter& fcn) {
   unsigned int max_length = 0;
   unsigned int temp = 0;
   for (auto ri = data.begin(); ri != data.end(); ++ri) {
-    temp = get_num_of_chars(fcn(ri));
+    temp = get_num_of_chars(fcn(std::cout, ri, 0));
     if (temp > max_length) 
       max_length = temp; 
   }
@@ -210,9 +203,9 @@ void display_histogram(std::ostream& out,
                        const unsigned int terminal_width = d_s.default_max_width) {
   
   const auto additional_offset = 9; // 9 white characters
-  const auto l_bounds_width = get_max_width(h, get_lower_bound<Histogram>);
-  const auto u_bounds_width = get_max_width(h, get_upper_bound<Histogram>);
-  const auto values_width = get_max_width(h, get_value<Histogram>);
+  const auto l_bounds_width = get_max_width(h, stream_lower_bound<Histogram>);
+  const auto u_bounds_width = get_max_width(h, stream_upper_bound<Histogram>);
+  const auto values_width = get_max_width(h, stream_value<Histogram>);
   d_s.histogram_shift = l_bounds_width + u_bounds_width + values_width + additional_offset;
   d_s.histogram_width = adjust_histogram_width(terminal_width);
 
