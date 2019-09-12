@@ -11,7 +11,6 @@
 #include <algorithm> //max_element
 #include <iomanip>   //setw
 #include <iostream>  //cout
-#include <sstream>   //ostringstream
 #include <cmath>     //floor, pow
 #include <limits>    //infinity
 
@@ -48,9 +47,8 @@ std::ostream& stream_value(std::ostream& out,
                            typename indexed_range<const Histogram>::range_iterator ri,
                            const unsigned int column_width) {
 
-  std::ostringstream tmp;
-  tmp << std::defaultfloat << *(ri);
-  out << std::left << std::setw(column_width) << tmp.str();
+  out << std::left << std::setw(column_width);
+  out << std::fixed << std::setprecision(0) << *(ri);
   return out;
 }
 
