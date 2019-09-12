@@ -64,7 +64,7 @@ public:
     parent iterator forward also updates the linked accessor. Accessors are not copyable.
     They cannot be stored in containers, but range_iterators can be stored.
   */
-  class accessor : detail::mirrored<accessor, void> {
+  class BOOST_ATTRIBUTE_NODISCARD accessor : detail::mirrored<accessor, void> {
   public:
     /// Array-like view into the current multi-dimensional index.
     class index_view {
