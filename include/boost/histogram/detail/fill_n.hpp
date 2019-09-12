@@ -30,6 +30,8 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+namespace dtl = boost::histogram::detail;
+
 template <class Index, class Axis>
 struct indexing_visitor {
   using index_type = Index;
@@ -75,7 +77,7 @@ struct indexing_visitor {
         [this](const auto& t) {
           // T is iterable, fill N values
           constexpr auto g = Opt::test(axis::option::growth);
-          const auto tp = data(t) + start_;
+          const auto tp = dtl::data(t) + start_;
           auto it = begin_;
           for (const auto& x : make_span(tp, size_)) this->impl(g, it++, x);
         },
@@ -153,7 +155,7 @@ std::size_t get_total_size(const T* values, std::size_t vsize) {
   auto vis = [&s](const auto& v) {
     using U = std::remove_cv_t<std::remove_reference_t<decltype(v)>>;
     const std::size_t n = static_if<is_iterable<U>>(
-        [](const auto& v) { return size(v); },
+        [](const auto& v) { return dtl::size(v); },
         [](const auto&) { return static_cast<std::size_t>(1); }, v);
     if (s == 1u)
       s = n;
@@ -223,12 +225,12 @@ void fill_n_impl(mp11::mp_true, S& storage, A& axes, const T* values, std::size_
                  const weight_type<U>& weights, const Us&... rest) {
   static_if<is_iterable<std::remove_cv_t<std::remove_reference_t<U>>>>(
       [&](const auto& w, const auto&... rest) {
-        const auto wsize = size(w);
+        const auto wsize = dtl::size(w);
         if (vsize != wsize)
           throw_exception(
               std::invalid_argument("number of arguments must match histogram rank"));
-        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, storage, axes, values, vsize, data(w),
-                    wsize, rest...);
+        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, storage, axes, values, vsize,
+                    dtl::data(w), wsize, rest...);
       },
       [&](const auto w, const auto&... rest) {
         fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, storage, axes, values, vsize, &w,
@@ -244,7 +246,7 @@ void fill_n_impl(mp11::mp_true, S& storage, A& axes, const T* values, std::size_
   mp11::tuple_apply(
       [&](const auto&... sargs) {
         fill_n_impl(mp11::mp_false{}, storage, axes, values, vsize, std::move(wptr),
-                    wsize, data(sargs)...);
+                    wsize, dtl::data(sargs)...);
       },
       s.value);
 }
@@ -256,7 +258,7 @@ void fill_n_impl(mp11::mp_true, S& storage, A& axes, const T* values, std::size_
   using namespace boost::mp11;
   tuple_apply(
       [&](const auto&... sargs) {
-        fill_n_impl(mp_false{}, storage, axes, values, vsize, data(sargs)...);
+        fill_n_impl(mp_false{}, storage, axes, values, vsize, dtl::data(sargs)...);
       },
       samples.value);
 }
