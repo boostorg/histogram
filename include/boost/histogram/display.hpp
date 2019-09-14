@@ -27,38 +27,33 @@ struct display_settings {
 } d_s;
 
 template <class Histogram>
-double stream_lower_bound(std::ostream& out,
-                          typename indexed_range<const Histogram>::range_iterator ri,
-                          const unsigned int l_bounds_width = 0) {
-  if(l_bounds_width != 0) {
+void stream_lower_bound(std::ostream& out,
+                        typename indexed_range<const Histogram>::range_iterator ri,
+                        const unsigned int l_bounds_width = 0) {
+  if(l_bounds_width != 0)
     out << std::right << std::setw(l_bounds_width);
-    out << std::fixed << std::setprecision(d_s.precision);
-    out << ri->bin().lower();
-  }
-  return ri->bin().lower();
+  
+  out << std::fixed << std::setprecision(d_s.precision) << ri->bin().lower();
 }
 
 template <class Histogram>
-double stream_upper_bound(std::ostream& out,
-                          typename indexed_range<const Histogram>::range_iterator ri,
-                          const unsigned int u_bounds_width = 0) {
-  if(u_bounds_width != 0) {
+void stream_upper_bound(std::ostream& out,
+                        typename indexed_range<const Histogram>::range_iterator ri,
+                        const unsigned int u_bounds_width = 0) {
+  if(u_bounds_width != 0)
     out << std::right << std::setw(u_bounds_width);
-    out << std::fixed << std::setprecision(d_s.precision);
-    out << ri->bin().upper();
-  }
-  return ri->bin().upper();
+  
+  out << std::fixed << std::setprecision(d_s.precision) << ri->bin().upper();
 }
 
 template <class Histogram>
-double stream_value(std::ostream& out,
-                    typename indexed_range<const Histogram>::range_iterator ri,
-                    const unsigned int column_width = 0) {
-  if(column_width != 0) {
+void stream_value(std::ostream& out,
+                  typename indexed_range<const Histogram>::range_iterator ri,
+                  const unsigned int column_width = 0) {
+  if(column_width != 0)
     out << std::left << std::setw(column_width);
-    out << std::fixed << std::setprecision(0) << *(ri);
-  }
-  return *(ri);
+
+  out << std::fixed << std::setprecision(0) << *(ri);
 }
 
 template <class Histogram>
@@ -81,41 +76,23 @@ std::ostream& stream_label(std::ostream& out,
   return out;
 }
 
-unsigned int get_num_of_chars(double number) {
-  unsigned int counter = 0;
-  if(number < 0) {
-    ++counter; // minus sign
-    number *= -1;
-  }
-
-  if(number == std::numeric_limits<double>::infinity()){
-    counter += 3;
-    return counter;
-  }
-
-  if(number > 0 && number < 1)
-    ++counter; // extra +, for 0.1 - 0.9 range
-  
-  if(std::floor(number) != number){
-    ++counter; // dot
-    number *= std::pow(10, d_s.precision);
-  }
-
-  while(number > 1){
-    number /= 10;
-    ++counter;
-  }
-  return counter;
+unsigned int get_num_of_chars(std::ostream& out) {
+  const auto result = out.tellp();
+  out.clear();
+  out.seekp(0); //reset
+  return result;
 }
 
 template <class Histogram, class Getter>
-unsigned int get_max_width(const Histogram& h, const Getter& fcn) {
+unsigned int get_max_width(const Histogram& h, const Getter& streamFnPtr) {
   auto data = indexed(h, coverage::all);
   unsigned int max_length = 0;
   unsigned int temp = 0;
+  std::ostringstream s;
   for (auto ri = data.begin(); ri != data.end(); ++ri) {
-    temp = get_num_of_chars(fcn(std::cout, ri, 0));
-    if (temp > max_length) 
+    streamFnPtr(s, ri, 0);
+    temp = get_num_of_chars(s);
+    if (temp > max_length)
       max_length = temp; 
   }
   return max_length;
