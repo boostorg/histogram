@@ -61,6 +61,7 @@ alias cxx14 :
     [ run storage_adaptor_test.cpp ]
     [ run unlimited_storage_test.cpp ]
     [ run utility_test.cpp ]
+    [ run display_test.cpp ]
     ;
 
 alias cxx17 :
@@ -91,7 +92,6 @@ alias serialization :
     [ run histogram_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run storage_adaptor_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run unlimited_storage_serialization_test.cpp libserial : $(THIS_PATH) ]
-    [ run display_serialization_test.cpp libserial : $(THIS_PATH) ]
     ;
 
 alias libserial :
