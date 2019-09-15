@@ -78,7 +78,7 @@ void stream_label(std::ostream& out,
 }
 
 unsigned int get_num_of_chars(std::ostream& out) {
-  const auto result = out.tellp();
+  auto result = out.tellp();
   out.clear();
   out.seekp(0); //reset
   if(result >= 0)
