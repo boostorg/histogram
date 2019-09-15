@@ -81,7 +81,10 @@ unsigned int get_num_of_chars(std::ostream& out) {
   const auto result = out.tellp();
   out.clear();
   out.seekp(0); //reset
-  return result;
+  if(result >= 0)
+    return static_cast<unsigned int>(result);
+  else
+    return 0; //should never happen
 }
 
 template <class Histogram, class Getter>
