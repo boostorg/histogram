@@ -57,10 +57,10 @@ void stream_value(std::ostream& out,
 }
 
 template <class Histogram>
-std::ostream& stream_label(std::ostream& out,
-                           typename indexed_range<const Histogram>::range_iterator ri,
-                           const unsigned int l_bounds_width,
-                           const unsigned int u_bounds_width) {
+void stream_label(std::ostream& out,
+                  typename indexed_range<const Histogram>::range_iterator ri,
+                  const unsigned int l_bounds_width,
+                  const unsigned int u_bounds_width) {
   char parenthesis = ' ';
   if ( std::isfinite(ri->bin().upper()) )
     parenthesis = ')';
@@ -72,8 +72,6 @@ std::ostream& stream_label(std::ostream& out,
   out << ", ";
   stream_upper_bound<Histogram>(out, ri, u_bounds_width);
   out << parenthesis;
-
-  return out;
 }
 
 unsigned int get_num_of_chars(std::ostream& out) {
@@ -88,27 +86,26 @@ unsigned int get_max_width(const Histogram& h, const Getter& streamFnPtr) {
   auto data = indexed(h, coverage::all);
   unsigned int max_length = 0;
   unsigned int temp = 0;
-  std::ostringstream s;
+  std::ostringstream os;
   for (auto ri = data.begin(); ri != data.end(); ++ri) {
-    streamFnPtr(s, ri, 0);
-    temp = get_num_of_chars(s);
+    streamFnPtr(os, ri, 0);
+    temp = get_num_of_chars(os);
     if (temp > max_length)
       max_length = temp; 
   }
   return max_length;
 }
 
-std::ostream& draw_line(std::ostream& out,
-                        const unsigned int num,
-                        const char c = '*',
-                        bool complete = true) {
+void draw_line(std::ostream& out,
+               const unsigned int num,
+               const char c = '*',
+               bool complete = true) {
   unsigned int i = 0;
   for (; i < num; ++i) out << c;
 
   if (complete == true) { //|****<---->|
     for (; i < d_s.histogram_width; ++i) out << ' ';
   }
-  return out;
 }
 
 template <class Histogram>
@@ -121,32 +118,30 @@ unsigned int calculate_scale_factor(typename indexed_range<const Histogram>::ran
 }
 
 template <class Histogram>
-std::ostream& stream_histogram_line(std::ostream& out,
-                                    typename indexed_range<const Histogram>::range_iterator ri,
-                                    const double& max_value) {
+void stream_histogram_line(std::ostream& out,
+                           typename indexed_range<const Histogram>::range_iterator ri,
+                           const double& max_value) {
   
   const auto scaled_value = calculate_scale_factor<Histogram>(ri, max_value);
 
   out << "|";
   draw_line(out, scaled_value);
   out << '|';
-  return out;
 }
 
-std::ostream& stream_external_line(std::ostream& out) {
+void stream_external_line(std::ostream& out) {
   draw_line(out, d_s.histogram_shift, ' ', false);
   out << "+";
   draw_line(out, d_s.histogram_width, '-');
   out << '+';
-  return out;
 }
 
 template <class Histogram>
-std::ostream& draw_histogram(std::ostream& out,
-                             const Histogram& h,
-                             const unsigned int u_bounds_width,
-                             const unsigned int l_bounds_width,
-                             const unsigned int values_width) {
+void draw_histogram(std::ostream& out,
+                    const Histogram& h,
+                    const unsigned int u_bounds_width,
+                    const unsigned int l_bounds_width,
+                    const unsigned int values_width) {
   auto data = indexed(h, coverage::all);
   const auto max_v = *std::max_element(h.begin(), h.end());
 
@@ -165,8 +160,6 @@ std::ostream& draw_histogram(std::ostream& out,
   }
   stream_external_line(out);
   out << "\n\n";
-  
-  return out;
 }
 
 unsigned int adjust_histogram_width(const unsigned int terminal_width) {
