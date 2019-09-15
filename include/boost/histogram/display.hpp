@@ -19,11 +19,14 @@ namespace histogram {
 namespace detail {
 
 struct display_settings {
-  const unsigned int default_max_width = 80;  // default witdth of visualization 
-  unsigned int histogram_width = 60;          // default graph width
-  unsigned int histogram_shift = 0;           // labels and values width 
-  const double max_bin_coefficient = 0.95;    // 95% of histogram_width
-  const unsigned int precision = 1;           // precision of upper and lower bounds
+  const unsigned int default_width = 80;    // default witdth of visualization
+  const unsigned int min_width = 40;        // min width of visualization
+  const unsigned int max_width = 120;       // max width of visualization
+  unsigned int histogram_width = 60;        // default graph width
+  unsigned int histogram_shift = 0;         // labels and values width
+  const double max_bin_coefficient = 0.95;  // 95% of histogram_width
+  const unsigned int bounds_prec = 1;       // precision of upper and lower bounds
+  const unsigned int values_prec = 0;       // precision of values
 } d_s;
 
 template <class Histogram>
@@ -33,7 +36,7 @@ void stream_lower_bound(std::ostream& out,
   if(l_bounds_width != 0)
     out << std::right << std::setw(l_bounds_width);
   
-  out << std::fixed << std::setprecision(d_s.precision) << ri->bin().lower();
+  out << std::fixed << std::setprecision(d_s.bounds_prec) << ri->bin().lower();
 }
 
 template <class Histogram>
@@ -43,7 +46,7 @@ void stream_upper_bound(std::ostream& out,
   if(u_bounds_width != 0)
     out << std::right << std::setw(u_bounds_width);
   
-  out << std::fixed << std::setprecision(d_s.precision) << ri->bin().upper();
+  out << std::fixed << std::setprecision(d_s.bounds_prec) << ri->bin().upper();
 }
 
 template <class Histogram>
@@ -53,7 +56,7 @@ void stream_value(std::ostream& out,
   if(column_width != 0)
     out << std::left << std::setw(column_width);
 
-  out << std::fixed << std::setprecision(0) << *(ri);
+  out << std::fixed << std::setprecision(d_s.values_prec) << *(ri);
 }
 
 template <class Histogram>
@@ -162,20 +165,27 @@ void draw_histogram(std::ostream& out,
   out << "\n\n";
 }
 
-unsigned int adjust_histogram_width(const unsigned int terminal_width) {
+unsigned int adjust_histogram_width(unsigned int terminal_width) {
   const auto frame = 2; // |  |
+
+  if(terminal_width < d_s.min_width)
+    terminal_width = d_s.min_width;
+  else if(terminal_width > d_s.max_width)
+    terminal_width = d_s.max_width;
+  
   return terminal_width - frame - d_s.histogram_shift;
 }
 
 template <class Histogram>
 void display_histogram(std::ostream& out,
                        const Histogram& h,
-                       const unsigned int terminal_width = d_s.default_max_width) {
+                       const unsigned int terminal_width = d_s.default_width) {
   
   const auto additional_offset = 9; // 9 white characters
   const auto l_bounds_width = get_max_width(h, stream_lower_bound<Histogram>);
   const auto u_bounds_width = get_max_width(h, stream_upper_bound<Histogram>);
   const auto values_width = get_max_width(h, stream_value<Histogram>);
+  
   d_s.histogram_shift = l_bounds_width + u_bounds_width + values_width + additional_offset;
   d_s.histogram_width = adjust_histogram_width(terminal_width);
 
@@ -187,12 +197,12 @@ void display_histogram(std::ostream& out,
 template <typename CharT, typename Traits, typename A, typename S>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const histogram<A, S>& h) {
-  auto tmp = os.width();
-  if (tmp == 0)
+  auto exp_width = os.width();
+  if (exp_width == 0)
     detail::display_histogram(os, h);
   else {
-    os.width(0);
-    detail::display_histogram(os, h, tmp);
+    os.width(0); //reset
+    detail::display_histogram(os, h, exp_width);
   }
   return os;
 }

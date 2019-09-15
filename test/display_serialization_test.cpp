@@ -30,7 +30,7 @@ const std::string h1_expected_r = //regular
     "                  +------------------------------------------------------------+\n"
     "\n";
     
-const std::string h2_expected_r = //regular
+const std::string h2_expected_r =
     "\n"
     "                   +-----------------------------------------------------------+\n"
     "  [-inf, -5.0)  0  |                                                           |\n"
@@ -45,7 +45,7 @@ const std::string h2_expected_r = //regular
     "                   +-----------------------------------------------------------+\n"
     "\n";
 
-const std::string h3_expected_r = //regular
+const std::string h3_expected_r =
     "\n"
     "                     +---------------------------------------------------------+\n"
     "  [-inf, -3.0)  0    |                                                         |\n"
@@ -63,6 +63,43 @@ const std::string h3_expected_r = //regular
     "                     +---------------------------------------------------------+\n"
     "\n";
 
+const std::string h3_expected_n = //narrow
+    "\n"
+    "                     +-----------------+\n"
+    "  [-inf, -3.0)  0    |                 |\n"
+    "  [-3.0, -2.4)  819  |***********      |\n"
+    "  [-2.4, -1.8)  1181 |**************** |\n"
+    "  [-1.8, -1.2)  854  |***********      |\n"
+    "  [-1.2, -0.6)  1162 |**************** |\n"
+    "  [-0.6,  0.0)  884  |************     |\n"
+    "  [ 0.0,  0.6)  1037 |**************   |\n"
+    "  [ 0.6,  1.2)  1020 |**************   |\n"
+    "  [ 1.2,  1.8)  1203 |**************** |\n"
+    "  [ 1.8,  2.4)  844  |***********      |\n"
+    "  [ 2.4,  3.0)  996  |*************    |\n"
+    "  [ 3.0,  inf]  0    |                 |\n"
+    "                     +-----------------+\n"
+    "\n";
+
+const std::string h3_expected_w = //wide
+    "\n"
+    "                     +-------------------------------------------------------------------------------------------------+\n"
+    "  [-inf, -3.0)  0    |                                                                                                 |\n"
+    "  [-3.0, -2.4)  819  |***************************************************************                                  |\n"
+    "  [-2.4, -1.8)  1181 |******************************************************************************************       |\n"
+    "  [-1.8, -1.2)  854  |*****************************************************************                                |\n"
+    "  [-1.2, -0.6)  1162 |*****************************************************************************************        |\n"
+    "  [-0.6,  0.0)  884  |********************************************************************                             |\n"
+    "  [ 0.0,  0.6)  1037 |*******************************************************************************                  |\n"
+    "  [ 0.6,  1.2)  1020 |******************************************************************************                   |\n"
+    "  [ 1.2,  1.8)  1203 |********************************************************************************************     |\n"
+    "  [ 1.8,  2.4)  844  |*****************************************************************                                |\n"
+    "  [ 2.4,  3.0)  996  |****************************************************************************                     |\n"
+    "  [ 3.0,  inf]  0    |                                                                                                 |\n"
+    "                     +-------------------------------------------------------------------------------------------------+\n"
+    "\n";
+
+
 const std::string h4_expected_r = 
     "\n"
     "                 +-------------------------------------------------------------+\n"
@@ -75,7 +112,7 @@ const std::string h4_expected_r =
     "                 +-------------------------------------------------------------+\n"
     "\n";
 
-const std::string h4_expected_n = //narow
+const std::string h4_expected_n =
     "\n"
     "                 +-------------------------------+\n"
     "  [-inf, 0.0)  0 |                               |\n"
@@ -87,7 +124,7 @@ const std::string h4_expected_n = //narow
     "                 +-------------------------------+\n"
     "\n";
 
-const std::string h4_expected_w = //wide
+const std::string h4_expected_w =
     "\n"
     "                 +-----------------------------------------------------------------------+\n"
     "  [-inf, 0.0)  0 |                                                                       |\n"
@@ -113,7 +150,7 @@ void run_simple_test(const Histogram& h, const std::string& expected, const unsi
   std::cout << os.str();
 }
 
-void run_tests(const std::string& filename, const std::string& expected) {
+void run_tests(const std::string& filename, const std::string& expected, const unsigned int width = 0) {
 
   auto h1 = make_histogram(axis::regular<>()); // create an empty histogram
   auto h2 = decltype(h1)(); // create a default-constructed second histogram
@@ -121,18 +158,20 @@ void run_tests(const std::string& filename, const std::string& expected) {
   BOOST_TEST_NE(h1, h2);
   load_xml(filename, h2);
 
-  run_simple_test(h2, expected);
+  run_simple_test(h2, expected, width);
 }
 
 int main(int argc, char** argv) {
   BOOST_ASSERT(argc == 2);
   
+  // check: std::cout << h1;
   static auto h1 = make_histogram( axis::regular<>(5, -0.5, 2.0) );
   for (auto& value : { 0.5, 0.5, 0.3, -0.2, 1.6, 0.0, 0.1, 0.1, 0.6, 0.4 })
     h1(value);
   run_simple_test(h1, h1_expected_r);
 
 
+  // check: std::cout << h2;
   const std::vector<double> vec = {-4.9, -4.7, -4.7, -4.6, -4.6, -4.6, -4.6, -4.6
                                   , -4.6, -4.4, -4.4, -4.4, -4.4, -4.4, -4.4, -4.3
                                   , -4.2, -4.2, -4.2, -4, -4, -4, -4, -3.9, -3.8
@@ -152,9 +191,13 @@ int main(int argc, char** argv) {
   run_simple_test(h2, h2_expected_r);
 
 
+  // check: std::cout << h3;
   run_tests(join(argv[1], "display_serialization_test.xml"), h3_expected_r);
+  
 
-
+  // check: std::cout << h4; 
+  // check: std::setw(50) << h4;
+  // check: std::setw(90) << h4;
   static auto h4 = make_histogram( axis::regular<>(4, 0.0, 2.0) );
   for (auto& value : { 0.4, 1.1, 0.3, 1.7, 10. })
     h4(value);
@@ -162,6 +205,15 @@ int main(int argc, char** argv) {
   run_simple_test(h4, h4_expected_r);
   run_simple_test(h4, h4_expected_n, 50);
   run_simple_test(h4, h4_expected_w, 90);
+
+
+  // check: setw() < min_width
+  run_tests(join(argv[1], "display_serialization_test.xml"), h3_expected_n, 35);
+
+
+  // check: setw() > max_width
+  run_tests(join(argv[1], "display_serialization_test.xml"), h3_expected_w, 125);
+
 
   return boost::report_errors();
 }
