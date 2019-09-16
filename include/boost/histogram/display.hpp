@@ -82,8 +82,7 @@ unsigned int get_num_of_chars(std::ostream& out) {
   out.clear();
   out.seekp(0); //reset
   if(result >= 0) {
-    unsigned int tmp = static_cast<unsigned int>(result);
-    return tmp;
+    return static_cast<unsigned int>(result);
   } else
     return 0; //should never happen
 }

@@ -133,6 +133,19 @@ const std::string h4_expected_w =
     "                 +-----------------------------------------------------------------------+\n"
     "\n";
 
+
+const std::string h5_expected_r =
+    "\n"
+    "                 +-------------------------------------------------------------+\n"
+    "  [-inf, 0.0)  0 |                                                             |\n"
+    "  [ 0.0, 0.5)  0 |                                                             |\n"
+    "  [ 0.5, 1.0)  0 |                                                             |\n"
+    "  [ 1.0, 1.5)  0 |                                                             |\n"
+    "  [ 1.5, 2.0)  0 |                                                             |\n"
+    "  [ 2.0, inf]  0 |                                                             |\n"
+    "                 +-------------------------------------------------------------+\n"
+    "\n";
+
 } // namespace
 
 template <class Histogram>
@@ -202,6 +215,10 @@ int main() {
 
   // check: setw() > max_width
   run_simple_test(h3, h3_expected_w, 125);
+
+  // check: empty, std::cout << h5;
+  static auto h5 = make_histogram( axis::regular<>(4, 0.0, 2.0) );
+  run_simple_test(h5, h5_expected_r);
 
   return boost::report_errors();
 }
