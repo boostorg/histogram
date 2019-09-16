@@ -8,11 +8,16 @@
 #define BOOST_HISTOGRAM_DISPLAY_HPP
 
 #include <boost/histogram.hpp>
+#include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/fwd.hpp>
+#include <iosfwd>
 #include <algorithm> //max_element
 #include <iomanip>   //setw
 #include <iostream>  //cout
 #include <cmath>     //floor, pow
 #include <limits>    //infinity
+
 
 namespace boost {
 namespace histogram {
@@ -194,19 +199,44 @@ void display_histogram(std::ostream& out,
 
   draw_histogram(out, h, u_bounds_width, l_bounds_width, values_width);
 }
+
+template <typename CharT, typename Traits, typename A, typename S>
+void old_style_ostream(std::basic_ostream<CharT, Traits>& os,
+                      const histogram<A, S>& h) {
+  os << "histogram(";
+  unsigned n = 0;
+  h.for_each_axis([&](const auto& a) {
+    if (h.rank() > 1) os << "\n  ";
+    os << a;
+    if (++n < h.rank()) os << ",";
+  });
+  os << (h.rank() > 1 ? "\n)" : ")");
+}
+
+template <typename CharT, typename Traits, typename A, typename S>
+void new_style_ostream(std::basic_ostream<CharT, Traits>& os,
+                      const histogram<A, S>& h) {
+  auto exp_width = os.width();
+  if (exp_width == 0)
+    detail::display_histogram(os, h);
+  else {
+    os.width(0); // reset
+    detail::display_histogram(os, h, exp_width);
+  }
+}
+
 } // ns detail
 
 
 template <typename CharT, typename Traits, typename A, typename S>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const histogram<A, S>& h) {
-  auto exp_width = os.width();
-  if (exp_width == 0)
-    detail::display_histogram(os, h);
-  else {
-    os.width(0); //reset
-    detail::display_histogram(os, h, exp_width);
-  }
+
+  if(h.rank() == 1)
+    detail::new_style_ostream(os, h);
+  else
+    detail::old_style_ostream(os, h);
+
   return os;
 }
 

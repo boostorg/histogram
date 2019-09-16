@@ -146,6 +146,13 @@ const std::string h5_expected_r =
     "                 +-------------------------------------------------------------+\n"
     "\n";
 
+const std::string h6_expected = 
+      "histogram(\n"
+      "  regular(3, -1, 1, options=underflow | overflow),\n"
+      "  regular(5, -4, 7, options=underflow | overflow)\n"
+      ")";
+
+
 } // namespace
 
 template <class Histogram>
@@ -219,6 +226,12 @@ int main() {
   // check: empty, std::cout << h5;
   static auto h5 = make_histogram( axis::regular<>(4, 0.0, 2.0) );
   run_simple_test(h5, h5_expected_r);
+
+  // check: 2d-histogram
+  static auto h6 = make_histogram(axis::regular<>(3, -1.0, 1.0), 
+                                  axis::regular<>(5, -4.0, 7.0));
+                             
+  run_simple_test(h6, h6_expected);
 
   return boost::report_errors();
 }
