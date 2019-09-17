@@ -122,10 +122,13 @@ void draw_line(std::ostream& out,
 template <class Histogram>
 unsigned int calculate_scale_factor(typename indexed_range<const Histogram>::range_iterator ri,
                                     const double& max_value) {
-  
-  const double longest_bin = d_s.max_bin_coefficient * d_s.histogram_width;
-  double result = *ri * longest_bin / max_value;
-  return std::lround(result);
+  double result = 0;
+  if(max_value != 0){
+    const double longest_bin = d_s.max_bin_coefficient * d_s.histogram_width;
+    result =  *ri * longest_bin / max_value;
+    result = std::lround(result);
+  }
+  return result;
 }
 
 template <class Histogram>
