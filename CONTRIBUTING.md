@@ -33,7 +33,8 @@ https://www.boost.org/doc/libs/1_70_0/doc/html/quickbook/install.html.
 
 ## Running Tests
 
-To run the tests from the project folder, do `b2 cxxstd=14 test`. You can also test the examples by executing `b2 cxxstd=14 examples`.
+To run the tests from the project folder, do `b2 cxxstd=14 warnings-as-errors=on test`. You can also test the examples by executing `b2 cxxstd=14 examples`.
+More details can be found in [travis](https://github.com/boostorg/histogram/blob/develop/.travis.yml) and [appveyor](https://github.com/boostorg/histogram/blob/develop/.appveyor.yml) config files. 
 
 Please report any tests failures to the issue tracker along with the test
 output and information on your system:
