@@ -126,9 +126,8 @@ unsigned int calculate_scale_factor(typename indexed_range<const Histogram>::ran
   if(max_value != 0){
     const double longest_bin = d_s.max_bin_coefficient * d_s.histogram_width;
     result =  *ri * longest_bin / max_value;
-    result = std::lround(result);
   }
-  return result;
+  return std::lround(result);
 }
 
 template <class Histogram>
