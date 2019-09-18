@@ -83,13 +83,10 @@ void stream_label(std::ostream& out,
 }
 
 unsigned int get_num_of_chars(std::ostream& out) {
-  auto result = out.tellp();
+  auto result = static_cast<unsigned int> ( out.tellp() );
   out.clear();
   out.seekp(0); //reset
-  if(result >= 0) {
-    return static_cast<unsigned int>(result);
-  } else
-    return 0; //should never happen
+  return result;
 }
 
 template <class Histogram, class Getter>
