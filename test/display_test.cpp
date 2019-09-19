@@ -147,11 +147,11 @@ const std::string h5_expected_r =
     "\n";
 
 const std::string h6_expected = 
-      "histogram(\n"
-      "  regular(3, -1, 1, options=underflow | overflow),\n"
-      "  regular(5, -4, 7, options=underflow | overflow)\n"
-      ")";
-
+      "\n"
+      "  histogram(\n"
+      "    regular(3, -1, 1, options=underflow | overflow),\n"
+      "    regular(5, -4, 7, options=underflow | overflow)\n"
+      "  )\n";
 
 } // namespace
 
@@ -159,10 +159,16 @@ template <class Histogram>
 void run_simple_test(const Histogram& h, const std::string& expected, const unsigned int width = 0)
 {
   std::ostringstream os;
-  if(width != 0)
-    os << std::setw(width) << h;
-  else
-    os << h;
+  os << std::setw(width) << h;
+  BOOST_TEST_EQ(os.str(), expected);
+  std::cout << os.str();
+}
+
+template <class Histogram>
+void test_flags(const Histogram& h, const std::string& expected, const unsigned int width = 0)
+{
+  std::ostringstream os;
+  os << "first" << std::setw(width) << h << "second";
   BOOST_TEST_EQ(os.str(), expected);
   std::cout << os.str();
 }
@@ -202,7 +208,7 @@ int main() {
 
   for (const double& value : vec2)
       h3(value);
-  run_simple_test(h3, h3_expected_r);
+    run_simple_test(h3, h3_expected_r);
   
 
   // check: std::cout << h4; 
@@ -227,11 +233,17 @@ int main() {
   static auto h5 = make_histogram( axis::regular<>(4, 0.0, 2.0) );
   run_simple_test(h5, h5_expected_r);
 
-  // check: 2d-histogram
+  // check: 2D histogram
   static auto h6 = make_histogram(axis::regular<>(3, -1.0, 1.0), 
                                   axis::regular<>(5, -4.0, 7.0));
                              
   run_simple_test(h6, h6_expected);
+
+  // check: setw flags influence, 1D
+  test_flags(h4, "first" + h4_expected_n + "second", 50);
+
+  // check: setw flags influence, 2D
+  test_flags(h6, "first" + h6_expected + "second", 50);
 
   return boost::report_errors();
 }

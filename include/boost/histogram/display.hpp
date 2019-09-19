@@ -202,14 +202,19 @@ void display_histogram(std::ostream& out,
 template <typename CharT, typename Traits, typename A, typename S>
 void old_style_ostream(std::basic_ostream<CharT, Traits>& os,
                       const histogram<A, S>& h) {
-  os << "histogram(";
+  if(os.width() != 0)
+      os.width(0); // ignore setw
+
+  os << "\n";
+  os << "  " << "histogram(";
   unsigned n = 0;
   h.for_each_axis([&](const auto& a) {
     if (h.rank() > 1) os << "\n  ";
-    os << a;
+    os << "  " << a;
     if (++n < h.rank()) os << ",";
   });
-  os << (h.rank() > 1 ? "\n)" : ")");
+  os << (h.rank() > 1 ? "\n" : ")");
+  os << "  " << ")\n";
 }
 
 template <typename CharT, typename Traits, typename A, typename S>
