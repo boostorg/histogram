@@ -83,8 +83,7 @@ void stream_label(std::ostream& out,
 }
 
 unsigned int get_num_of_chars(std::ostream& out) {
-  //auto result = static_cast<unsigned int> ( out.tellp() );
-  auto result = 5;
+  auto result = static_cast<unsigned int> ( out.tellp() );
   out.clear();
   out.seekp(0); //reset
   return result;
@@ -216,7 +215,7 @@ void old_style_ostream(std::basic_ostream<CharT, Traits>& os,
 template <typename CharT, typename Traits, typename A, typename S>
 void new_style_ostream(std::basic_ostream<CharT, Traits>& os,
                       const histogram<A, S>& h) {
-  auto exp_width = os.width();
+  const auto exp_width = static_cast< unsigned int >(os.width());
   if (exp_width == 0)
     detail::display_histogram(os, h);
   else {
