@@ -32,6 +32,7 @@ struct display_settings {
   const double max_bin_coefficient = 0.95;  // 95% of histogram_width
   const unsigned int bounds_prec = 1;       // precision of upper and lower bounds
   const unsigned int values_prec = 0;       // precision of values
+  const unsigned int margin = 2;            // margin from left edge
 } d_s;
 
 template <class Histogram>
@@ -160,7 +161,7 @@ void draw_histogram(std::ostream& out,
   out << "\n";
 
   for (auto it = data.begin(); it != data.end(); ++it) {
-    out << "  ";
+    draw_line(out, d_s.margin, ' ', false);
     stream_label<Histogram>(out, it, l_bounds_width, u_bounds_width);
     out << "  ";
     stream_value<Histogram>(out, it, values_width);
@@ -188,44 +189,45 @@ void display_histogram(std::ostream& out,
                        const Histogram& h,
                        const unsigned int terminal_width = d_s.default_width) {
   
-  const auto additional_offset = 9; // 9 white characters
+  const auto additional_offset = 7; // 7 white characters
   const auto l_bounds_width = get_max_width(h, stream_lower_bound<Histogram>);
   const auto u_bounds_width = get_max_width(h, stream_upper_bound<Histogram>);
   const auto values_width = get_max_width(h, stream_value<Histogram>);
   
-  d_s.histogram_shift = l_bounds_width + u_bounds_width + values_width + additional_offset;
+  d_s.histogram_shift = l_bounds_width + u_bounds_width + values_width + additional_offset + d_s.margin;
   d_s.histogram_width = adjust_histogram_width(terminal_width);
 
   draw_histogram(out, h, u_bounds_width, l_bounds_width, values_width);
 }
 
-template <typename CharT, typename Traits, typename A, typename S>
-void old_style_ostream(std::basic_ostream<CharT, Traits>& os,
-                      const histogram<A, S>& h) {
+template <class Histogram>
+void old_style_ostream(std::ostream& os, const Histogram& h) {
   if(os.width() != 0)
       os.width(0); // ignore setw
 
   os << "\n";
-  os << "  " << "histogram(";
+  draw_line(os, d_s.margin, ' ', false);
+  os << "histogram(";
   unsigned n = 0;
   h.for_each_axis([&](const auto& a) {
     if (h.rank() > 1) os << "\n  ";
-    os << "  " << a;
+    draw_line(os, d_s.margin, ' ', false);
+    os  << a;
     if (++n < h.rank()) os << ",";
   });
   os << (h.rank() > 1 ? "\n" : ")");
-  os << "  " << ")\n";
+  draw_line(os, d_s.margin, ' ', false);
+  os << ")\n";
 }
 
-template <typename CharT, typename Traits, typename A, typename S>
-void new_style_ostream(std::basic_ostream<CharT, Traits>& os,
-                      const histogram<A, S>& h) {
+template <class Histogram>
+void new_style_ostream(std::ostream& os, const Histogram& h) {
   const auto exp_width = static_cast< unsigned int >(os.width());
   if (exp_width == 0)
-    detail::display_histogram(os, h);
+    display_histogram(os, h);
   else {
     os.width(0); // reset
-    detail::display_histogram(os, h, exp_width);
+    display_histogram(os, h, exp_width);
   }
 }
 
