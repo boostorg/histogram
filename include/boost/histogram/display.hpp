@@ -105,10 +105,10 @@ unsigned int get_max_width(const Histogram& h, const Getter& streamFnPtr) {
   return max_length;
 }
 
-void draw_line(std::ostream& out,
-               const unsigned int num,
-               const char c = '*',
-               bool complete = true) {
+void stream_line(std::ostream& out,
+                 const unsigned int num,
+                 const char c = '*',
+                 bool complete = true) {
   unsigned int i = 0;
   for (; i < num; ++i) out << c;
 
@@ -136,14 +136,14 @@ void stream_histogram_line(std::ostream& out,
   const auto scaled_value = calculate_scale_factor<Histogram>(ri, max_value);
 
   out << "|";
-  draw_line(out, scaled_value);
+  stream_line(out, scaled_value);
   out << '|';
 }
 
 void stream_external_line(std::ostream& out) {
-  draw_line(out, d_s.histogram_shift, ' ', false);
+  stream_line(out, d_s.histogram_shift, ' ', false);
   out << "+";
-  draw_line(out, d_s.histogram_width, '-');
+  stream_line(out, d_s.histogram_width, '-');
   out << '+';
 }
 
@@ -161,7 +161,7 @@ void draw_histogram(std::ostream& out,
   out << "\n";
 
   for (auto it = data.begin(); it != data.end(); ++it) {
-    draw_line(out, d_s.margin, ' ', false);
+    stream_line(out, d_s.margin, ' ', false);
     stream_label<Histogram>(out, it, l_bounds_width, u_bounds_width);
     out << "  ";
     stream_value<Histogram>(out, it, values_width);
@@ -206,17 +206,17 @@ void old_style_ostream(std::ostream& os, const Histogram& h) {
       os.width(0); // ignore setw
 
   os << "\n";
-  draw_line(os, d_s.margin, ' ', false);
+  stream_line(os, d_s.margin, ' ', false);
   os << "histogram(";
   unsigned n = 0;
   h.for_each_axis([&](const auto& a) {
     if (h.rank() > 1) os << "\n  ";
-    draw_line(os, d_s.margin, ' ', false);
+    stream_line(os, d_s.margin, ' ', false);
     os  << a;
     if (++n < h.rank()) os << ",";
   });
   os << (h.rank() > 1 ? "\n" : ")");
-  draw_line(os, d_s.margin, ' ', false);
+  stream_line(os, d_s.margin, ' ', false);
   os << ")\n";
 }
 
