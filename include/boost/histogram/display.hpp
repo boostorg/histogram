@@ -83,7 +83,8 @@ void stream_label(std::ostream& out,
 }
 
 unsigned int get_num_of_chars(std::ostream& out) {
-  auto result = static_cast<unsigned int> ( out.tellp() );
+  //auto result = static_cast<unsigned int> ( out.tellp() );
+  auto result = 5;
   out.clear();
   out.seekp(0); //reset
   return result;
