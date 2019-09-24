@@ -32,15 +32,13 @@ using get_options_from_method = axis::option::bitset<T::options()>;
 
 template <class Axis>
 struct static_options_impl {
+  static_assert(std::is_same<std::decay_t<Axis>, Axis>::value,
+                "support of static_options for qualified types was removed, please use "
+                "static_options<std::decay_t<...>>");
   using type = mp11::mp_eval_or<
       mp11::mp_if<has_method_update<Axis>, axis::option::growth_t, axis::option::none_t>,
       get_options_from_method, Axis>;
 };
-
-template <class Axis>
-struct [[deprecated("support for references will be removed in 1.75, call "
-                    "static_options<std::decay_t<Axis>>")]] static_options_impl_deprecated
-    : static_options_impl<std::decay_t<Axis>>{};
 
 template <class I, class D, class A>
 double value_method_switch_impl1(std::false_type, I&&, D&&, const A&) {
@@ -163,10 +161,7 @@ struct is_reducible;
 */
 template <class Axis>
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-using static_options =
-    typename mp11::mp_eval_if_not<std::is_reference<Axis>,
-                                  detail::static_options_impl<Axis>,
-                                  detail::static_options_impl_deprecated, Axis>::type;
+using static_options = typename detail::static_options_impl<Axis>::type;
 #else
 struct static_options;
 #endif
