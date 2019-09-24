@@ -5,6 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/detail/cat.hpp>
@@ -64,6 +65,15 @@ int main() {
     BOOST_TEST_NE(c, d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
+
+    enum class Foo { foo };
+
+    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<std::string>>().value(0)),
+                          const std::string&);
+    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<const char*>>().value(0)),
+                          const char*);
+    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<Foo>>().value(0)), Foo);
+    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<int>>().value(0)), int);
   }
 
   // axis::category with growth
