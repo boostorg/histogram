@@ -40,7 +40,7 @@ namespace axis {
 template <class Value, class MetaData, class Options>
 class integer : public iterator_mixin<integer<Value, MetaData, Options>> {
   static_assert(std::is_integral<Value>::value || std::is_floating_point<Value>::value,
-                "integer axis requires type floating point or integral type");
+                "integer axis requires floating point or integral type");
 
   using value_type = Value;
   using local_index_type = std::conditional_t<std::is_integral<value_type>::value,

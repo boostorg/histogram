@@ -89,7 +89,7 @@ struct storage_grower {
       auto sit = shifts;
       auto dit = data_;
       for_each_axis(axes_, [&](const auto& a) {
-        using opt = axis::traits::static_options<decltype(a)>;
+        using opt = axis::traits::static_options<std::decay_t<decltype(a)>>;
         if (opt::test(axis::option::underflow)) {
           if (dit->idx == 0) {
             // axis has underflow and we are in the underflow bin:

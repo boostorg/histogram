@@ -294,7 +294,7 @@ public:
     const auto clast = ca + begin_.indices_.hist_->rank() - 1;
     begin_.indices_.hist_->for_each_axis(
         [ca, clast, cov, &stride, this](const auto& a) mutable {
-          using opt = axis::traits::static_options<decltype(a)>;
+          using opt = axis::traits::static_options<std::decay_t<decltype(a)>>;
           constexpr int under = opt::test(axis::option::underflow);
           constexpr int over = opt::test(axis::option::overflow);
           const auto size = a.size();

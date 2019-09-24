@@ -16,6 +16,38 @@
 using namespace boost::histogram::axis;
 
 int main() {
+  // value_type
+  {
+    BOOST_TEST_TRAIT_SAME(traits::value_type<integer<int>>, int);
+    BOOST_TEST_TRAIT_SAME(traits::value_type<category<int>>, int);
+    BOOST_TEST_TRAIT_SAME(traits::value_type<regular<double>>, double);
+  }
+
+  // is_continuous
+  {
+    BOOST_TEST_TRAIT_TRUE((traits::is_continuous<regular<>>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_continuous<integer<int>>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_continuous<category<int>>));
+    BOOST_TEST_TRAIT_TRUE((traits::is_continuous<integer<double>>));
+  }
+
+  // is_reducible
+  {
+    struct not_reducible {};
+    struct reducible {
+      reducible(const reducible&, index_type, index_type, unsigned);
+    };
+
+    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<reducible>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_reducible<not_reducible>));
+
+    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<regular<>>));
+    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<variable<>>));
+    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<circular<>>));
+    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<integer<>>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_reducible<category<>>));
+  }
+
   // index, rank, value, width
   {
     auto a = integer<>(1, 3);
@@ -30,10 +62,7 @@ int main() {
     BOOST_TEST_EQ(traits::rank(b), 1);
     BOOST_TEST_EQ(traits::value(b, 0), 1);
     BOOST_TEST_EQ(traits::width(b, 0), 1);
-    auto& b1 = b;
-    BOOST_TEST(traits::static_options<decltype(b1)>::test(option::underflow));
-    const auto& b2 = b;
-    BOOST_TEST(traits::static_options<decltype(b2)>::test(option::underflow));
+    BOOST_TEST(traits::static_options<decltype(b)>::test(option::underflow));
 
     auto c = category<std::string>{"red", "blue"};
     BOOST_TEST_EQ(traits::index(c, "blue"), 1);
@@ -61,8 +90,6 @@ int main() {
   {
     using A = integer<>;
     BOOST_TEST_EQ(traits::static_options<A>::test(option::growth), false);
-    BOOST_TEST_EQ(traits::static_options<A&>::test(option::growth), false);
-    BOOST_TEST_EQ(traits::static_options<const A&>::test(option::growth), false);
     auto expected = option::underflow | option::overflow;
     auto a = A{};
     BOOST_TEST_EQ(traits::options(a), expected);
@@ -72,8 +99,6 @@ int main() {
 
     using B = integer<int, null_type, option::growth_t>;
     BOOST_TEST_EQ(traits::static_options<B>::test(option::growth), true);
-    BOOST_TEST_EQ(traits::static_options<B&>::test(option::growth), true);
-    BOOST_TEST_EQ(traits::static_options<const B&>::test(option::growth), true);
     BOOST_TEST_EQ(traits::options(B{}), option::growth);
 
     struct growing {
@@ -81,8 +106,6 @@ int main() {
     };
     using C = growing;
     BOOST_TEST_EQ(traits::static_options<C>::test(option::growth), true);
-    BOOST_TEST_EQ(traits::static_options<C&>::test(option::growth), true);
-    BOOST_TEST_EQ(traits::static_options<const C&>::test(option::growth), true);
     auto c = C{};
     BOOST_TEST_EQ(traits::options(c), option::growth);
     BOOST_TEST_EQ(traits::options(static_cast<C&>(c)), option::growth);
@@ -94,8 +117,6 @@ int main() {
     };
     using D = notgrowing;
     BOOST_TEST_EQ(traits::static_options<D>::test(option::growth), false);
-    BOOST_TEST_EQ(traits::static_options<D&>::test(option::growth), false);
-    BOOST_TEST_EQ(traits::static_options<const D&>::test(option::growth), false);
     auto d = D{};
     BOOST_TEST_EQ(traits::options(d), option::none);
     BOOST_TEST_EQ(traits::options(static_cast<D&>(d)), option::none);
@@ -144,23 +165,6 @@ int main() {
     BOOST_TEST_EQ(traits::metadata(b), 0);
     BOOST_TEST_EQ(traits::metadata(static_cast<Both&>(b)), 0);
     BOOST_TEST_EQ(traits::metadata(static_cast<const Both&>(b)), 0);
-  }
-
-  // is_reducible
-  {
-    struct not_reducible {};
-    struct reducible {
-      reducible(const reducible&, index_type, index_type, unsigned);
-    };
-
-    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<reducible>));
-    BOOST_TEST_TRAIT_FALSE((traits::is_reducible<not_reducible>));
-
-    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<regular<>>));
-    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<variable<>>));
-    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<circular<>>));
-    BOOST_TEST_TRAIT_TRUE((traits::is_reducible<integer<>>));
-    BOOST_TEST_TRAIT_FALSE((traits::is_reducible<category<>>));
   }
 
   return boost::report_errors();
