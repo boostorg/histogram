@@ -28,7 +28,19 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-using static_options_impl = axis::option::bitset<T::options()>;
+using get_options_from_method = axis::option::bitset<T::options()>;
+
+template <class Axis>
+struct static_options_impl {
+  using type = mp11::mp_eval_or<
+      mp11::mp_if<has_method_update<Axis>, axis::option::growth_t, axis::option::none_t>,
+      get_options_from_method, Axis>;
+};
+
+template <class Axis>
+struct [[deprecated("support for references will be removed in 1.75, call "
+                    "static_options<std::decay_t<Axis>>")]] static_options_impl_deprecated
+    : static_options_impl<std::decay_t<Axis>>{};
 
 template <class I, class D, class A>
 double value_method_switch_impl1(std::false_type, I&&, D&&, const A&) {
@@ -97,29 +109,51 @@ struct variant_access {
 namespace axis {
 namespace traits {
 
-/** Returns reference to metadata of an axis.
+/** Get value type for axis type.
 
-  If the expression x.metadata() for an axis instance `x` (maybe const) is valid, return
-  the result. Otherwise, return a reference to a static instance of
-  boost::histogram::axis::null_type.
-
-  @param axis any axis instance
+  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  an axis type and returns the value type.
 */
 template <class Axis>
-decltype(auto) metadata(Axis&& axis) noexcept {
-  return detail::static_if<detail::has_method_metadata<std::decay_t<Axis>>>(
-      [](auto&& a) -> decltype(auto) { return a.metadata(); },
-      [](auto &&) -> mp11::mp_if<std::is_const<std::remove_reference_t<Axis>>,
-                                 axis::null_type const&, axis::null_type&> {
-        return detail::null_value;
-      },
-      std::forward<Axis>(axis));
-}
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+using value_type = std::decay_t<decltype(std::declval<Axis>().value(0))>;
+#else
+struct value_type;
+#endif
+
+/** Whether axis is continuous or discrete.
+
+  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  an axis type and returns a compile-time boolean. If the boolean is true, the axis is
+  continuous. Otherwise it is discrete.
+*/
+template <class Axis>
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+using is_continuous = typename std::is_floating_point<traits::value_type<Axis>>::type;
+#else
+struct is_continuous;
+#endif
+
+/** Meta-function to detect whether an axis is reducible.
+
+  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  an axis type and represents compile-time boolean which is true or false, depending on
+  whether the axis can be reduced with boost::histogram::algorithm::reduce().
+
+  @tparam Axis axis type.
+ */
+template <class Axis>
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+using is_reducible = std::is_constructible<Axis, const Axis&, axis::index_type,
+                                           axis::index_type, unsigned>;
+#else
+struct is_reducible;
+#endif
 
 /** Get static axis options for axis type.
 
-  Doxygen does not render this well. This is a meta-function, it accepts an axis
-  type and represents its boost::histogram::axis::option::bitset.
+  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  an axis type and returns the boost::histogram::axis::option::bitset.
 
   If Axis::options() is valid and constexpr, static_options is the corresponding
   option type. Otherwise, it is boost::histogram::axis::option::growth_t, if the
@@ -130,9 +164,9 @@ decltype(auto) metadata(Axis&& axis) noexcept {
 template <class Axis>
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 using static_options =
-    mp11::mp_eval_or<mp11::mp_if<detail::has_method_update<std::decay_t<Axis>>,
-                                 option::growth_t, option::none_t>,
-                     detail::static_options_impl, std::decay_t<Axis>>;
+    typename mp11::mp_eval_if_not<std::is_reference<Axis>,
+                                  detail::static_options_impl<Axis>,
+                                  detail::static_options_impl_deprecated, Axis>::type;
 #else
 struct static_options;
 #endif
@@ -161,6 +195,25 @@ constexpr index_type extent(const Axis& axis) noexcept {
   const auto opt = options(axis);
   return axis.size() + (opt & option::underflow ? 1 : 0) +
          (opt & option::overflow ? 1 : 0);
+}
+
+/** Returns reference to metadata of an axis.
+
+  If the expression x.metadata() for an axis instance `x` (maybe const) is valid, return
+  the result. Otherwise, return a reference to a static instance of
+  boost::histogram::axis::null_type.
+
+  @param axis any axis instance
+*/
+template <class Axis>
+decltype(auto) metadata(Axis&& axis) noexcept {
+  return detail::static_if<detail::has_method_metadata<std::decay_t<Axis>>>(
+      [](auto&& a) -> decltype(auto) { return a.metadata(); },
+      [](auto &&) -> mp11::mp_if<std::is_const<std::remove_reference_t<Axis>>,
+                                 axis::null_type const&, axis::null_type&> {
+        return detail::null_value;
+      },
+      std::forward<Axis>(axis));
 }
 
 /** Returns axis value for index.
@@ -297,22 +350,6 @@ Result width_as(const Axis& axis, index_type index) {
       },
       axis);
 }
-
-/** Meta-function to detect whether an axis is reducible.
-
-  Doxygen does not render this well. This is a meta-function, it accepts an axis
-  type and represents std::true_type or std::false_type, depending on whether the axis can
-  be reduced with boost::histogram::algorithm::reduce().
-
-  @tparam Axis axis type.
- */
-template <class Axis>
-#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-using is_reducible = std::is_constructible<Axis, const Axis&, axis::index_type,
-                                           axis::index_type, unsigned>;
-#else
-struct is_reducible;
-#endif
 
 } // namespace traits
 } // namespace axis
