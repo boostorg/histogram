@@ -130,7 +130,8 @@ public:
 
   /// Return value for index argument.
   value_type value(local_index_type i) const noexcept {
-    if (!options_type::test(option::circular)) {
+    if (!options_type::test(option::circular) &&
+        std::is_floating_point<value_type>::value) {
       if (i < 0) return detail::lowest<value_type>();
       if (i > size()) { return detail::highest<value_type>(); }
     }
