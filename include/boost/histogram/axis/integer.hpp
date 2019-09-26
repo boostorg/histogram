@@ -133,7 +133,7 @@ public:
     if (!options_type::test(option::circular) &&
         std::is_floating_point<value_type>::value) {
       if (i < 0) return detail::lowest<value_type>();
-      if (i > size()) { return detail::highest<value_type>(); }
+      if (i > size()) return detail::highest<value_type>();
     }
     return min_ + i;
   }
