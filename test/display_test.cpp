@@ -1,4 +1,4 @@
-// Copyright (c) 2019  pb
+// Copyright (c) 2019 Przemyslaw Bartosik
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
