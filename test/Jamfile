@@ -61,6 +61,7 @@ alias cxx14 :
     [ run storage_adaptor_test.cpp ]
     [ run unlimited_storage_test.cpp ]
     [ run utility_test.cpp ]
+    [ run display_test.cpp ]
     ;
 
 alias cxx17 :
