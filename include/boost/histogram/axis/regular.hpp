@@ -146,8 +146,8 @@ struct step_type {
   Helper function to mark argument as step size.
  */
 template <typename T>
-auto step(T&& t) {
-  return step_type<T&&>{std::forward<T>(t)};
+step_type<T> step(T t) {
+  return step_type<T>{t};
 }
 
 /**
@@ -248,8 +248,8 @@ public:
    * (start + n * step).
    */
   template <class T>
-  regular(transform_type trans, const step_type<T>& step, value_type start,
-          value_type stop, metadata_type meta = {})
+  regular(transform_type trans, step_type<T> step, value_type start, value_type stop,
+          metadata_type meta = {})
       : regular(trans, static_cast<index_type>(std::abs(stop - start) / step.value),
                 start,
                 start + static_cast<index_type>(std::abs(stop - start) / step.value) *
@@ -268,8 +268,7 @@ public:
    * (start + n * step).
    */
   template <class T>
-  regular(const step_type<T>& step, value_type start, value_type stop,
-          metadata_type meta = {})
+  regular(step_type<T> step, value_type start, value_type stop, metadata_type meta = {})
       : regular({}, step, start, stop, std::move(meta)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
