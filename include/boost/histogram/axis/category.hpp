@@ -51,8 +51,8 @@ class category : public iterator_mixin<category<Value, MetaData, Options, Alloca
                 "category axis cannot have underflow");
   static_assert(!options_type::test(option::circular),
                 "category axis cannot be circular");
-  static_assert(!options_type::test(option::growth) ||
-                    !options_type::test(option::overflow),
+  static_assert(!(options_type::test(option::growth) &&
+                  options_type::test(option::overflow)),
                 "growing category axis cannot have overflow");
   using allocator_type = Allocator;
   using vector_type = std::vector<value_type, allocator_type>;
