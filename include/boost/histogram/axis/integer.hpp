@@ -140,7 +140,7 @@ public:
 
   /// Return bin for index argument.
   decltype(auto) bin(index_type idx) const noexcept {
-    return detail::static_if<std::is_floating_point<local_index_type>>(
+    return detail::static_if<std::is_floating_point<value_type>>(
         [this](auto idx) { return interval_view<integer>(*this, idx); },
         [this](auto idx) { return this->value(idx); }, idx);
   }
