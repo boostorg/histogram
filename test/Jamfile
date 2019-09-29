@@ -71,6 +71,18 @@ alias cxx17 :
 
 # check that useful error messages are produced when library is used incorrectly
 alias failure :
+    [ compile-fail axis_category_fail0.cpp ]
+    [ compile-fail axis_category_fail1.cpp ]
+    [ compile-fail axis_category_fail2.cpp ]
+    [ compile-fail axis_integer_fail0.cpp ]
+    [ compile-fail axis_integer_fail1.cpp ]
+    [ compile-fail axis_integer_fail2.cpp ]
+    [ compile-fail axis_integer_fail3.cpp ]
+    [ compile-fail axis_integer_fail4.cpp ]
+    [ compile-fail axis_regular_fail0.cpp ]
+    [ compile-fail axis_regular_fail1.cpp ]
+    [ compile-fail axis_variable_fail0.cpp ]
+    [ compile-fail axis_variable_fail1.cpp ]
     [ compile-fail make_histogram_fail0.cpp ]
     [ compile-fail make_histogram_fail1.cpp ]
     ;
@@ -100,8 +112,7 @@ alias libserial :
     <link>static <warnings>off <rtti>on
     ;
 
-# "failure" not included in "all", because it is distracting
-alias all : cxx14 cxx17 threading accumulators range units serialization ;
+alias all : cxx14 cxx17 failure threading accumulators range units serialization ;
 alias minimal : cxx14 cxx17 threading ;
 
 explicit cxx14 ;

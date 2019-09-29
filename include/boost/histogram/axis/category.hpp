@@ -47,15 +47,16 @@ class category : public iterator_mixin<category<Value, MetaData, Options, Alloca
   using value_type = Value;
   using metadata_type = detail::replace_default<MetaData, std::string>;
   using options_type = detail::replace_default<Options, option::overflow_t>;
+  using allocator_type = Allocator;
+  using vector_type = std::vector<value_type, allocator_type>;
+
   static_assert(!options_type::test(option::underflow),
                 "category axis cannot have underflow");
   static_assert(!options_type::test(option::circular),
                 "category axis cannot be circular");
   static_assert(!(options_type::test(option::growth) &&
                   options_type::test(option::overflow)),
-                "growing category axis cannot have overflow");
-  using allocator_type = Allocator;
-  using vector_type = std::vector<value_type, allocator_type>;
+                "growing category axis cannot have entries in overflow bin");
 
 public:
   explicit category(allocator_type alloc = {}) : vec_meta_(vector_type(alloc)) {}
