@@ -172,7 +172,7 @@ class regular : public iterator_mixin<regular<Value, Transform, MetaData, Option
   using unit_type = detail::get_unit_type<value_type>;
   using internal_value_type = detail::get_scale_type<value_type>;
   static_assert(std::is_floating_point<internal_value_type>::value,
-                "variable axis requires floating point type");
+                "regular axis requires floating point type");
 
 public:
   constexpr regular() = default;
