@@ -80,6 +80,7 @@ struct indexing_visitor {
           const auto tp = dtl::data(t) + start_;
           auto it = begin_;
           for (const auto& x : make_span(tp, size_)) this->impl(g, it++, x);
+          BOOST_ASSERT(!g); // TODO need to update offset after axis growth
         },
         [this](const auto& t) {
           // T is value, fill single value N times
@@ -87,6 +88,7 @@ struct indexing_visitor {
           index_type o{0};
           this->impl(g, &o, t);
           for (auto&& i : make_span(begin_, size_)) i += o;
+          BOOST_ASSERT(!g); // TODO need to update offset after axis growth
         },
         t);
   }

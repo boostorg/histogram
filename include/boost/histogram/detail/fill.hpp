@@ -175,7 +175,7 @@ struct args_indices {
 };
 
 template <int S, int N>
-struct argument_loop {
+struct args_loop {
   template <class Index, class A, class Args>
   static void impl(mp11::mp_int<N>, Index&, const std::size_t, A&, const Args&) {}
 
@@ -193,7 +193,7 @@ struct argument_loop {
 };
 
 template <int S>
-struct argument_loop<S, 1> {
+struct args_loop<S, 1> {
   template <class Index, class A, class Args>
   static void apply(Index& o, A& ax, const Args& args) {
     linearize(o, 1, axis_get<0>(ax), std::get<S>(args));
@@ -207,11 +207,11 @@ constexpr unsigned min(const unsigned n) noexcept {
 }
 
 // not growing, only inclusive axes
-template <class S, class A, class Args>
-auto fill(mp11::mp_false, mp11::mp_false, std::size_t idx, S& storage, A& axes,
+template <class S, class Axes, class Args>
+auto fill(mp11::mp_false, mp11::mp_false, std::size_t idx, S& storage, const Axes& axes,
           const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
-  argument_loop<pos::start, min<A>(pos::nargs)>::apply(idx, axes, args);
+  args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
   BOOST_ASSERT(idx < storage.size()); // idx is always valid
   fill_storage_parse_args(typename pos::weight{}, typename pos::sample{}, storage[idx],
                           args);
@@ -219,12 +219,12 @@ auto fill(mp11::mp_false, mp11::mp_false, std::size_t idx, S& storage, A& axes,
 }
 
 // not growing, at least one non-inclusive axis
-template <class S, class A, class Args>
-auto fill(mp11::mp_false, mp11::mp_true, std::size_t offset, S& storage, A& axes,
+template <class S, class Axes, class Args>
+auto fill(mp11::mp_false, mp11::mp_true, std::size_t offset, S& storage, const Axes& axes,
           const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
   optional_index idx{offset};
-  argument_loop<pos::start, min<A>(pos::nargs)>::apply(idx, axes, args);
+  args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
   if (idx.valid()) {
     fill_storage_parse_args(typename pos::weight{}, typename pos::sample{}, storage[*idx],
                             args);
@@ -235,22 +235,40 @@ auto fill(mp11::mp_false, mp11::mp_true, std::size_t offset, S& storage, A& axes
 
 // not growing
 template <class S, class A, class Args>
-auto fill(mp11::mp_false, std::size_t offset, S& storage, A& axes, const Args& args) {
+auto fill(mp11::mp_false, std::size_t offset, S& storage, const A& axes,
+          const Args& args) {
   return fill(mp11::mp_false{}, has_non_inclusive_axis<A>{}, offset, storage, axes, args);
 }
 
 // at least one axis is growing
 template <class S, class A, class Args>
-auto fill(mp11::mp_true, std::size_t offset, S& storage, A& axes, const Args& args) {
+auto fill(mp11::mp_true, std::size_t& offset, S& storage, A& axes, const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
   axis::index_type shifts[pos::nargs];
   optional_index idx{offset};
   std::size_t stride = 1;
   bool update_needed = false;
   mp11::mp_for_each<mp11::mp_iota_c<min<A>(pos::nargs)>>([&](auto i) {
-    stride *= linearize_growth(idx, shifts[i], stride, axis_get<i>(axes),
-                               std::get<(pos::start + i)>(args));
-    update_needed |= (shifts[i] != 0);
+    auto& ax = axis_get<i>(axes);
+    const auto extent =
+        linearize_growth(idx, shifts[i], stride, ax, std::get<(pos::start + i)>(args));
+    // need to update offset when axis size changes and thus the stride:
+    // s[i] = s[i-1] * extent[i] ... stride
+    // u[i] = true is axis is has underflow else false
+    // offset = s[0] * u[0] + s[1] * u[1] + ...
+    // after growth:
+    // offset' = s'[0] * u[0] + s'[1] * u[1] + ...
+    // offset' = offset + (s'[0] - s[0]) * u[0] + ...
+    // s'[i] - s[i] = s'[i - 1] * (extent'[i] - extent[i]) * u[i]
+    // with extent'[i] - extent[i] == abs(shift[i])
+    if (shifts[i] != 0) {
+      update_needed = true;
+      if (axis::traits::options(ax) & axis::option::underflow) {
+        offset += std::abs(shifts[i]) * stride;
+        idx += std::abs(shifts[i]) * stride;
+      }
+    }
+    stride *= extent;
   });
   if (update_needed) {
     storage_grower<A> g(axes);
@@ -292,7 +310,7 @@ decltype(auto) pack_args(mp11::mp_int<-1>, mp11::mp_int<-1>, const Args& args) n
 #endif
 
 template <class S, class A, class Args>
-auto fill(std::size_t offset, S& storage, A& axes, const Args& args) {
+auto fill(std::size_t& offset, S& storage, A& axes, const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
   using growing = has_growing_axis<A>;
 
