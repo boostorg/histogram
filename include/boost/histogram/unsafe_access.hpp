@@ -79,6 +79,21 @@ struct unsafe_access {
   }
 
   /**
+    Get index offset.
+    @param hist histogram
+    */
+  template <class Histogram>
+  static auto& offset(Histogram& hist) {
+    return hist.offset_;
+  }
+
+  /// @copy offset()
+  template <class Histogram>
+  static const auto& offset(const Histogram& hist) {
+    return hist.offset_;
+  }
+
+  /**
     Get buffer of unlimited_storage.
     @param storage instance of unlimited_storage.
   */

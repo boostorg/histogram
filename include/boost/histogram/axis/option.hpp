@@ -28,7 +28,7 @@ struct bitset : std::integral_constant<unsigned, Bits> {
   /// Returns true if all option flags in the argument are set and false otherwise.
   template <unsigned B>
   static constexpr auto test(bitset<B>) {
-    return std::integral_constant<bool, static_cast<bool>(Bits & B)>{};
+    return std::integral_constant<bool, static_cast<bool>((Bits & B) == B)>{};
   }
 };
 

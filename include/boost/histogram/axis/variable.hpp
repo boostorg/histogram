@@ -199,10 +199,13 @@ public:
   index_type size() const noexcept {
     return static_cast<index_type>(vec_meta_.first().size()) - 1;
   }
+
   /// Returns the options.
   static constexpr unsigned options() noexcept { return options_type::value; }
+
   /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return vec_meta_.second(); }
+
   /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
 

@@ -18,87 +18,63 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-// no underflow, no overflow
-inline void linearize(mp11::mp_false, mp11::mp_false, optional_index& out,
-                      const std::size_t stride, const axis::index_type size,
-                      const axis::index_type i) noexcept {
-  if (i >= 0 && i < size)
-    out += i * stride;
+template <class Opts>
+std::size_t linearize(Opts, optional_index& out, const std::size_t stride,
+                      const axis::index_type size, const axis::index_type idx) {
+  constexpr bool u = Opts::test(axis::option::underflow);
+  constexpr bool o = Opts::test(axis::option::overflow);
+  BOOST_ASSERT(idx >= -1);
+  BOOST_ASSERT(idx <= size);
+  if ((u || idx >= 0) && (o || idx < size))
+    out += idx * stride;
   else
-    out = optional_index::invalid;
+    out = invalid_index;
+  return size + u + o;
 }
 
-// no underflow, overflow
-inline void linearize(mp11::mp_false, mp11::mp_true, optional_index& out,
-                      const std::size_t stride, const axis::index_type size,
-                      const axis::index_type i) noexcept {
-  BOOST_ASSERT(i <= size);
-  if (i >= 0)
-    out += i * stride;
-  else
-    out = optional_index::invalid;
+template <class Opts>
+std::size_t linearize(Opts, std::size_t& out, const std::size_t stride,
+                      const axis::index_type size, const axis::index_type idx) {
+  constexpr bool u = Opts::test(axis::option::underflow);
+  constexpr bool o = Opts::test(axis::option::overflow);
+  BOOST_ASSERT(idx >= (u ? -1 : 0));
+  BOOST_ASSERT(idx < (o ? size + 1 : size));
+  out += idx * stride;
+  return size + u + o;
 }
 
-// underflow, no overflow
-inline void linearize(mp11::mp_true, mp11::mp_false, optional_index& out,
-                      const std::size_t stride, const axis::index_type size,
-                      const axis::index_type i) noexcept {
-  // internal index must be shifted by + 1 since axis has underflow bin
-  BOOST_ASSERT(i + 1 >= 0);
-  if (i < size)
-    out += (i + 1) * stride;
-  else
-    out = optional_index::invalid;
-}
-
-// underflow, overflow
-inline void linearize(mp11::mp_true, mp11::mp_true, optional_index& out,
-                      const std::size_t stride, const axis::index_type size,
-                      const axis::index_type i) noexcept {
-  // internal index must be shifted by +1 since axis has underflow bin
-  BOOST_ASSERT(i + 1 >= 0);
-  BOOST_ASSERT(i < size + 1);
-  out += (i + 1) * stride;
-}
-
-template <class HasUnderflow, class HasOverflow>
-inline void linearize(HasUnderflow, HasOverflow, std::size_t& out,
-                      const std::size_t stride, const axis::index_type size,
-                      const axis::index_type i) noexcept {
-  // internal index must be shifted by +1 if axis has underflow bin
-  BOOST_ASSERT((HasUnderflow::value ? i + 1 : i) >= 0);
-  BOOST_ASSERT(i < (HasOverflow::value ? size + 1 : size));
-  out += (HasUnderflow::value ? i + 1 : i) * stride;
+template <class Index, class Axis, class Value>
+std::size_t linearize(Index& out, const std::size_t stride, const Axis& ax,
+                      const Value& v) {
+  // mask options to reduce no. of template instantiations
+  constexpr auto opts = axis::traits::static_options<Axis>{} &
+                        (axis::option::underflow | axis::option::overflow);
+  return linearize(opts, out, stride, ax.size(), axis::traits::index(ax, v));
 }
 
 template <class Axis, class Value>
-std::size_t linearize(optional_index& o, const std::size_t s, const Axis& a,
-                      const Value& v) {
-  using O = axis::traits::static_options<Axis>;
-  linearize(O::test(axis::option::underflow), O::test(axis::option::overflow), o, s,
-            a.size(), axis::traits::index(a, v));
+std::size_t linearize_growth(optional_index& o, axis::index_type& shift,
+                             const std::size_t stride, Axis& a, const Value& v) {
+  // mask options to reduce no. of template instantiations
+  constexpr auto opts = axis::traits::static_options<Axis>{} &
+                        (axis::option::underflow | axis::option::overflow);
+  axis::index_type idx;
+  std::tie(idx, shift) = axis::traits::update(a, v);
+  linearize(opts, o, stride, a.size(), idx);
   return axis::traits::extent(a);
 }
 
-template <class Axis, class Value>
-std::size_t linearize(std::size_t& o, const std::size_t s, const Axis& a,
+template <class Index, class... Ts, class Value>
+std::size_t linearize(Index& o, const std::size_t s, const axis::variant<Ts...>& a,
                       const Value& v) {
-  using O = axis::traits::static_options<Axis>;
-  linearize(O::test(axis::option::underflow), O::test(axis::option::overflow), o, s,
-            a.size(), axis::traits::index(a, v));
-  return axis::traits::extent(a);
-}
-
-template <class... Ts, class Value>
-std::size_t linearize(optional_index& o, const std::size_t s,
-                      const axis::variant<Ts...>& a, const Value& v) {
   return axis::visit([&o, &s, &v](const auto& a) { return linearize(o, s, a, v); }, a);
 }
 
 template <class... Ts, class Value>
-std::size_t linearize(std::size_t& o, const std::size_t s, const axis::variant<Ts...>& a,
-                      const Value& v) {
-  return axis::visit([&o, &s, &v](const auto& a) { return linearize(o, s, a, v); }, a);
+std::size_t linearize_growth(optional_index& o, axis::index_type& sh,
+                             const std::size_t st, axis::variant<Ts...>& a,
+                             const Value& v) {
+  return axis::visit([&](auto& a) { return linearize_growth(o, sh, st, a, v); }, a);
 }
 
 } // namespace detail

@@ -143,10 +143,18 @@ public:
   index_type size() const noexcept {
     return static_cast<index_type>(vec_meta_.first().size());
   }
+
   /// Returns the options.
   static constexpr unsigned options() noexcept { return options_type::value; }
+
+  /// Whether the axis is inclusive (see axis::traits::is_inclusive).
+  static constexpr bool inclusive() noexcept {
+    return options() & (option::overflow | option::growth);
+  }
+
   /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return vec_meta_.second(); }
+
   /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
 

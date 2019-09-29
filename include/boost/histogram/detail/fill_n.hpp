@@ -57,18 +57,18 @@ struct indexing_visitor {
 
   template <class T>
   void impl(mp11::mp_false, iterator it, const T& t) {
-    constexpr auto u = Opt::test(axis::option::underflow);
-    constexpr auto o = Opt::test(axis::option::overflow);
-    linearize(u, o, *it, stride_, axis_.size(), axis::traits::index(axis_, t));
+    // mask options to reduce number of template instantiations
+    constexpr auto opts = Opt{} & (axis::option::underflow | axis::option::overflow);
+    linearize(opts, *it, stride_, axis_.size(), axis::traits::index(axis_, t));
   }
 
   template <class T>
   void impl(mp11::mp_true, iterator it, const T& t) {
-    constexpr auto u = Opt::test(axis::option::underflow);
-    constexpr auto o = Opt::test(axis::option::overflow);
+    // mask options to reduce number of template instantiations
+    constexpr auto opts = Opt{} & (axis::option::underflow | axis::option::overflow);
     const auto p = axis::traits::update(axis_, t);
     maybe_shift_previous_indices(it, p.second);
-    linearize(u, o, *it, stride_, axis_.size(), p.first);
+    linearize(opts, *it, stride_, axis_.size(), p.first);
   }
 
   template <class T>
@@ -94,7 +94,7 @@ struct indexing_visitor {
 
 template <class Index, class S, class A, class T>
 void fill_n_indices(Index* indices, const std::size_t start, const std::size_t size,
-                    S& storage, A& axes, const T* viter) {
+                    const std::size_t offset, S& storage, A& axes, const T* viter) {
   axis::index_type extents[buffer_size<A>::value];
   axis::index_type shifts[buffer_size<A>::value];
   for_each_axis(axes, [eit = extents, sit = shifts](const auto& a) mutable {
@@ -102,7 +102,7 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
     *eit++ = axis::traits::extent(a);
   });
 
-  std::fill(indices, indices + size, 0); // initialize to zero
+  std::fill(indices, indices + size, offset); // initialize to zero
   for_each_axis(axes, [start, size, indices, &viter, stride = static_cast<std::size_t>(1),
                        shift = shifts](auto& axis) mutable {
     using Axis = std::decay_t<decltype(axis)>;
@@ -170,7 +170,8 @@ std::size_t get_total_size(const T* values, std::size_t vsize) {
 
 // general Nd treatment
 template <class S, class A, class T, class... Ts>
-void fill_n_nd(S& storage, A& axes, const T* values, std::size_t vsize, Ts&&... rest) {
+void fill_n_nd(std::size_t offset, S& storage, A& axes, const T* values,
+               std::size_t vsize, Ts&&... rest) {
   constexpr std::size_t buffer_size = 1ul << 14;
   using index_type = mp11::mp_if<has_non_inclusive_axis<A>, optional_index, std::size_t>;
   index_type indices[buffer_size];
@@ -206,7 +207,7 @@ void fill_n_nd(S& storage, A& axes, const T* values, std::size_t vsize, Ts&&... 
   for (std::size_t start = 0; start < vsize; start += buffer_size) {
     const std::size_t n = std::min(buffer_size, vsize - start);
     // fill buffer of indices...
-    fill_n_indices(indices, start, n, storage, axes, values);
+    fill_n_indices(indices, start, n, offset, storage, axes, values);
     // ...and fill corresponding storage cells
     for (auto&& idx : make_span(indices, n))
       fill_n_storage(storage, idx, std::forward<Ts>(rest)...);
@@ -214,57 +215,60 @@ void fill_n_nd(S& storage, A& axes, const T* values, std::size_t vsize, Ts&&... 
 }
 
 template <class S, class A, class T, class... Us>
-void fill_n_impl(mp11::mp_false, S& storage, A& axes, const T* values, std::size_t vsize,
-                 Us&&... rest) {
-  fill_n_nd(storage, axes, values, vsize, std::forward<Us>(rest)...);
+void fill_n_impl(mp11::mp_false, std::size_t offset, S& storage, A& axes, const T* values,
+                 std::size_t vsize, Us&&... rest) {
+  fill_n_nd(offset, storage, axes, values, vsize, std::forward<Us>(rest)...);
 }
 
 // unpack weight argument, can be iterable or value
 template <class S, class A, class T, class U, class... Us>
-void fill_n_impl(mp11::mp_true, S& storage, A& axes, const T* values, std::size_t vsize,
-                 const weight_type<U>& weights, const Us&... rest) {
+void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes, const T* values,
+                 std::size_t vsize, const weight_type<U>& weights, const Us&... rest) {
   static_if<is_iterable<std::remove_cv_t<std::remove_reference_t<U>>>>(
       [&](const auto& w, const auto&... rest) {
         const auto wsize = dtl::size(w);
         if (vsize != wsize)
           throw_exception(
               std::invalid_argument("number of arguments must match histogram rank"));
-        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, storage, axes, values, vsize,
+        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, offset, storage, axes, values, vsize,
                     dtl::data(w), wsize, rest...);
       },
       [&](const auto w, const auto&... rest) {
-        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, storage, axes, values, vsize, &w,
-                    static_cast<std::size_t>(1), rest...);
+        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, offset, storage, axes, values, vsize,
+                    &w, static_cast<std::size_t>(1), rest...);
       },
       weights.value, rest...);
 }
 
 // unpack sample argument after weight was unpacked
 template <class S, class A, class T, class U, class V>
-void fill_n_impl(mp11::mp_true, S& storage, A& axes, const T* values, std::size_t vsize,
-                 const U* wptr, std::size_t wsize, const sample_type<V>& s) {
+void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes, const T* values,
+                 std::size_t vsize, const U* wptr, std::size_t wsize,
+                 const sample_type<V>& s) {
   mp11::tuple_apply(
       [&](const auto&... sargs) {
-        fill_n_impl(mp11::mp_false{}, storage, axes, values, vsize, std::move(wptr),
-                    wsize, dtl::data(sargs)...);
+        fill_n_impl(mp11::mp_false{}, offset, storage, axes, values, vsize,
+                    std::move(wptr), wsize, dtl::data(sargs)...);
       },
       s.value);
 }
 
 // unpack sample argument (no weight argument)
 template <class S, class A, class T, class U>
-void fill_n_impl(mp11::mp_true, S& storage, A& axes, const T* values, std::size_t vsize,
-                 const sample_type<U>& samples) {
+void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes, const T* values,
+                 std::size_t vsize, const sample_type<U>& samples) {
   using namespace boost::mp11;
   tuple_apply(
       [&](const auto&... sargs) {
-        fill_n_impl(mp_false{}, storage, axes, values, vsize, dtl::data(sargs)...);
+        fill_n_impl(mp_false{}, offset, storage, axes, values, vsize,
+                    dtl::data(sargs)...);
       },
       samples.value);
 }
 
 template <class S, class A, class T, class... Us>
-void fill_n(S& storage, A& axes, const T* values, std::size_t vsize, const Us&... rest) {
+void fill_n(std::size_t offset, S& storage, A& axes, const T* values, std::size_t vsize,
+            const Us&... rest) {
   static_assert(!std::is_pointer<T>::value,
                 "passing iterable of pointers not allowed (cannot determine lengths); "
                 "pass iterable of iterables instead");
@@ -276,12 +280,12 @@ void fill_n(S& storage, A& axes, const T* values, std::size_t vsize, const Us&..
         if (axes_rank(axes) != vsize)
           throw_exception(
               std::invalid_argument("number of arguments must match histogram rank"));
-        fill_n_impl(Unpack{}, storage, axes, values, get_total_size(values, vsize),
-                    rest...);
+        fill_n_impl(Unpack{}, offset, storage, axes, values,
+                    get_total_size(values, vsize), rest...);
       },
       [&](const auto& values) {
         auto s = make_span(values, vsize);
-        fill_n_impl(Unpack{}, storage, axes, &s, vsize, rest...);
+        fill_n_impl(Unpack{}, offset, storage, axes, &s, vsize, rest...);
       },
       values);
 }

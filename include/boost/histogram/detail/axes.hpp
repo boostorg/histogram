@@ -211,7 +211,8 @@ void for_each_axis(std::tuple<Axis...>& a, V&& v) {
   mp11::tuple_for_each(a, std::forward<V>(v));
 }
 
-template <typename T>
+// total number of bins including *flow bins
+template <class T>
 std::size_t bincount(const T& axes) {
   std::size_t n = 1;
   for_each_axis(axes, [&n](const auto& a) {
@@ -219,6 +220,17 @@ std::size_t bincount(const T& axes) {
     const auto s = axis::traits::extent(a);
     n *= s;
     if (s > 0 && n < old) BOOST_THROW_EXCEPTION(std::overflow_error("bincount overflow"));
+  });
+  return n;
+}
+
+// initial offset for the linear index
+template <class T>
+std::size_t offset(const T& axes) {
+  std::size_t n = 0;
+  for_each_axis(axes, [&n, stride = 1ull](const auto& a) mutable {
+    if (axis::traits::options(a) & axis::option::underflow) n += stride;
+    stride *= axis::traits::extent(a);
   });
   return n;
 }
@@ -271,22 +283,11 @@ template <class T>
 using has_underflow =
     decltype(axis::traits::static_options<T>::test(axis::option::underflow));
 
-template <class Axis>
-constexpr auto inclusive_options(Axis&&) {
-  return axis::option::underflow | axis::option::overflow;
-}
-
-template <class... Ts>
-constexpr auto inclusive_options(axis::category<Ts...>&&) {
-  return axis::option::overflow;
-}
-
-template <class T>
-using is_non_inclusive = mp11::mp_not<decltype(
-    axis::traits::static_options<T>::test(inclusive_options(std::declval<T>())))>;
-
 template <class T>
 using is_growing = decltype(axis::traits::static_options<T>::test(axis::option::growth));
+
+template <class T>
+using is_not_inclusive = mp11::mp_not<axis::traits::is_inclusive<T>>;
 
 template <class T>
 using is_multidim = is_tuple<std::decay_t<arg_type<decltype(&T::index)>>>;
@@ -308,7 +309,7 @@ template <class T>
 using has_growing_axis = has_special_axis<is_growing, T>;
 
 template <class T>
-using has_non_inclusive_axis = has_special_axis<is_non_inclusive, T>;
+using has_non_inclusive_axis = has_special_axis<is_not_inclusive, T>;
 
 } // namespace detail
 } // namespace histogram

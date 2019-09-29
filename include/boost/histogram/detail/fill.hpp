@@ -28,23 +28,6 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <class Index, class Axis, class Value>
-std::size_t linearize_growth(Index& o, axis::index_type& shift, const std::size_t stride,
-                             Axis& a, const Value& v) {
-  using O = axis::traits::static_options<Axis>;
-  axis::index_type i;
-  std::tie(i, shift) = axis::traits::update(a, v);
-  linearize(O::test(axis::option::underflow), O::test(axis::option::overflow), o, stride,
-            a.size(), i);
-  return axis::traits::extent(a);
-}
-
-template <class Index, class... Ts, class Value>
-std::size_t linearize_growth(Index& o, axis::index_type& sh, const std::size_t st,
-                             axis::variant<Ts...>& a, const Value& v) {
-  return axis::visit([&](auto& a) { return linearize_growth(o, sh, st, a, v); }, a);
-}
-
 template <class A>
 struct storage_grower {
   const A& axes_;
@@ -225,9 +208,9 @@ constexpr unsigned min(const unsigned n) noexcept {
 
 // not growing, only inclusive axes
 template <class S, class A, class Args>
-inline auto fill(mp11::mp_false, mp11::mp_false, S& storage, A& axes, const Args& args) {
+auto fill(mp11::mp_false, mp11::mp_false, std::size_t idx, S& storage, A& axes,
+          const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
-  std::size_t idx = 0;
   argument_loop<pos::start, min<A>(pos::nargs)>::apply(idx, axes, args);
   BOOST_ASSERT(idx < storage.size()); // idx is always valid
   fill_storage_parse_args(typename pos::weight{}, typename pos::sample{}, storage[idx],
@@ -237,9 +220,10 @@ inline auto fill(mp11::mp_false, mp11::mp_false, S& storage, A& axes, const Args
 
 // not growing, at least one non-inclusive axis
 template <class S, class A, class Args>
-inline auto fill(mp11::mp_false, mp11::mp_true, S& storage, A& axes, const Args& args) {
+auto fill(mp11::mp_false, mp11::mp_true, std::size_t offset, S& storage, A& axes,
+          const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
-  optional_index idx{0};
+  optional_index idx{offset};
   argument_loop<pos::start, min<A>(pos::nargs)>::apply(idx, axes, args);
   if (idx.valid()) {
     fill_storage_parse_args(typename pos::weight{}, typename pos::sample{}, storage[*idx],
@@ -249,16 +233,18 @@ inline auto fill(mp11::mp_false, mp11::mp_true, S& storage, A& axes, const Args&
   return storage.end();
 }
 
+// not growing
 template <class S, class A, class Args>
-inline auto fill(mp11::mp_false, S& storage, A& axes, const Args& args) {
-  return fill(mp11::mp_false{}, has_non_inclusive_axis<A>{}, storage, axes, args);
+auto fill(mp11::mp_false, std::size_t offset, S& storage, A& axes, const Args& args) {
+  return fill(mp11::mp_false{}, has_non_inclusive_axis<A>{}, offset, storage, axes, args);
 }
 
+// at least one axis is growing
 template <class S, class A, class Args>
-inline auto fill(mp11::mp_true, S& storage, A& axes, const Args& args) {
+auto fill(mp11::mp_true, std::size_t offset, S& storage, A& axes, const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
   axis::index_type shifts[pos::nargs];
-  optional_index idx{0};
+  optional_index idx{offset};
   std::size_t stride = 1;
   bool update_needed = false;
   mp11::mp_for_each<mp11::mp_iota_c<min<A>(pos::nargs)>>([&](auto i) {
@@ -306,7 +292,7 @@ decltype(auto) pack_args(mp11::mp_int<-1>, mp11::mp_int<-1>, const Args& args) n
 #endif
 
 template <class S, class A, class Args>
-auto fill(S& storage, A& axes, const Args& args) {
+auto fill(std::size_t offset, S& storage, A& axes, const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
   using growing = has_growing_axis<A>;
 
@@ -323,9 +309,9 @@ auto fill(S& storage, A& axes, const Args& args) {
   //   3d tuple)
 
   if (axes_rank(axes) == pos::nargs)
-    return fill(growing{}, storage, axes, args);
+    return fill(growing{}, offset, storage, axes, args);
   else if (axes_rank(axes) == 1 && axis::traits::rank(axis_get<0>(axes)) == pos::nargs)
-    return fill(growing{}, storage, axes,
+    return fill(growing{}, offset, storage, axes,
                 pack_args<pos::start, pos::nargs>(typename pos::weight{},
                                                   typename pos::sample{}, args));
   else

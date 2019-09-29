@@ -40,6 +40,16 @@ struct static_options_impl {
       get_options_from_method, Axis>;
 };
 
+template <class T>
+using get_inclusive_from_method = std::integral_constant<bool, T::inclusive()>;
+
+template <class Axis>
+struct is_inclusive_impl {
+  using type = mp11::mp_eval_or<decltype(static_options_impl<Axis>::type::test(
+                                    axis::option::underflow | axis::option::overflow)),
+                                get_inclusive_from_method, Axis>;
+};
+
 template <class I, class D, class A>
 double value_method_switch_impl1(std::false_type, I&&, D&&, const A&) {
   // comma trick to make all compilers happy; some would complain about
@@ -165,6 +175,35 @@ using static_options = typename detail::static_options_impl<Axis>::type;
 #else
 struct static_options;
 #endif
+
+/** Meta-function to detect whether an axis is inclusive.
+
+  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  an axis type and represents compile-time boolean which is true or false, depending on
+  whether the axis is inclusive or not.
+
+  An inclusive axis has a bin for every possible input value, which means that every
+  possible input is counted in some cell of the histogram. A histogram which consists
+  entirely of inclusive axes can be filled more efficiently, since input values are always
+  end up in a valid cell and there is no need to keep track of input tuples that need to
+  be discarded.
+
+  An axis with underflow and overflow bins is inclusive, but an axis may be inclusive
+  under other conditions. To declare an axis as inclusive, the meta-function checks for
+  the presence of a method constexpr static bool inclusive(), and uses the result. If this
+  method is not present, it uses static_options<Axis> and checks whether the underflow and
+  overflow bits are present.
+
+  @tparam axis type
+*/
+template <class Axis>
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+using is_inclusive = typename detail::is_inclusive_impl<Axis>::type;
+#else
+struct is_inclusive;
+#endif
+
+// specialization for category axis
 
 /** Returns axis options as unsigned integer.
 
