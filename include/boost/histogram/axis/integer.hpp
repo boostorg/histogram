@@ -50,10 +50,18 @@ class integer : public iterator_mixin<integer<Value, MetaData, Options>> {
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
 
-  static_assert(!options_type::test(option::circular) ||
-                    std::is_floating_point<value_type>::value ||
-                    !options_type::test(option::overflow),
-                "integer axis with integral type cannot have overflow");
+  static_assert(
+      (!options_type::test(option::circular) && !options_type::test(option::growth)) ||
+          (options_type::test(option::circular) ^ options_type::test(option::growth)),
+      "circular and growth options are mutually exclusive");
+
+  static_assert(std::is_floating_point<value_type>::value ||
+                    (!options_type::test(option::circular) &&
+                     !options_type::test(option::growth)) ||
+                    (!options_type::test(option::overflow) &&
+                     !options_type::test(option::underflow)),
+                "circular or growing integer axis with integral type "
+                "cannot have entries in underflow or overflow bins");
 
 public:
   constexpr integer() = default;

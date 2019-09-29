@@ -32,9 +32,7 @@ using boost::variant2::variant;
 
 using in = axis::integer<int, axis::null_type>;
 using in0 = axis::integer<int, axis::null_type, axis::option::none_t>;
-using ing = axis::integer<int, axis::null_type,
-                          decltype(axis::option::growth | axis::option::underflow |
-                                   axis::option::overflow)>;
+using ing = axis::integer<int, axis::null_type, axis::option::growth_t>;
 
 struct axis2d {
   auto size() const { return axis::index_type{2}; }
@@ -213,8 +211,8 @@ void run_tests() {
     for (auto&& xi : x) h(xi);
     h2.fill(x);
 
-    BOOST_TEST_EQ(h.size(), 23);
-    BOOST_TEST_EQ(h2.size(), 23);
+    BOOST_TEST_EQ(h.size(), 21);
+    BOOST_TEST_EQ(h2.size(), 21);
     BOOST_TEST_EQ(sum(h), sum(h2));
     BOOST_TEST_EQ(h, h2);
   }
@@ -235,8 +233,8 @@ void run_tests() {
     for (unsigned i = 0; i < ndata + 2; ++i) h(xy[0][i], xy[1][i]);
     h2.fill(xy);
 
-    BOOST_TEST_EQ(h.size(), 4 * 23);
-    BOOST_TEST_EQ(h2.size(), 4 * 23);
+    BOOST_TEST_EQ(h.size(), 4 * 21);
+    BOOST_TEST_EQ(h2.size(), 4 * 21);
     BOOST_TEST_EQ(sum(h), sum(h2));
     BOOST_TEST_EQ(h, h2);
   }

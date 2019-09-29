@@ -46,15 +46,22 @@ namespace axis {
  */
 template <class Value, class MetaData, class Options, class Allocator>
 class variable : public iterator_mixin<variable<Value, MetaData, Options, Allocator>> {
-  static_assert(std::is_floating_point<Value>::value,
-                "variable axis requires floating point type");
-
   using value_type = Value;
   using metadata_type = detail::replace_default<MetaData, std::string>;
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
   using allocator_type = Allocator;
   using vec_type = std::vector<Value, allocator_type>;
+
+  static_assert(
+      std::is_floating_point<value_type>::value,
+      "current version of variable axis requires floating point type; "
+      "if you need a variable axis with an integral type, please submit an issue");
+
+  static_assert(
+      (!options_type::test(option::circular) && !options_type::test(option::growth)) ||
+          (options_type::test(option::circular) ^ options_type::test(option::growth)),
+      "circular and growth options are mutually exclusive");
 
 public:
   explicit variable(allocator_type alloc = {}) : vec_meta_(vec_type{alloc}) {}
