@@ -54,7 +54,6 @@ endmacro()
 
 add_benchmark(axis_index)
 add_benchmark(histogram_filling)
-add_benchmark(histogram_filling_experiments)
 add_benchmark(histogram_iteration)
 if (Threads_FOUND)
   add_benchmark(histogram_parallel_filling)
