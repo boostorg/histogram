@@ -122,37 +122,39 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
 }
 
 template <class... Ts>
-void fold(Ts...) {} // helper to enable operator folding
+void fold(Ts...) noexcept {} // helper to enable operator folding
 
 template <class... Us>
-void increment_pointers(const Us*&&... ptrs) {
+void increment_pointers(const Us*&&... ptrs) noexcept {
   fold(++ptrs...);
 }
 
 template <class T, class... Us>
-void increment_pointers(std::size_t wsize, const T*&& wptr, const Us*&&... sptrs) {
+void increment_pointers(std::size_t wsize, const T*&& wptr,
+                        const Us*&&... sptrs) noexcept {
   fold(++sptrs...);
   if (wsize > 1) ++wptr;
 }
 
 template <class S, class... Us>
-void fill_n_storage_2(S& s, const std::size_t& idx, std::size_t, const Us*&&... ptrs) {
+void fill_n_storage_2(S& s, const std::size_t& idx, std::size_t,
+                      const Us*&&... ptrs) noexcept {
   fill_storage_3(s[idx], *ptrs...);
 }
 
 template <class S, class... Ts>
-void fill_n_storage_2(S& s, const std::size_t& idx, const Ts*&&... ptrs) {
+void fill_n_storage_2(S& s, const std::size_t& idx, const Ts*&&... ptrs) noexcept {
   fill_storage_3(s[idx], *ptrs...);
 }
 
 template <class S, class... Ts>
-void fill_n_storage(S& s, const optional_index& idx, Ts&&... ts) {
+void fill_n_storage(S& s, const optional_index& idx, Ts&&... ts) noexcept {
   if (idx.valid()) fill_n_storage_2(s, *idx, std::forward<Ts>(ts)...);
   increment_pointers(std::forward<Ts>(ts)...);
 }
 
 template <class S, class... Ts>
-void fill_n_storage(S& s, const std::size_t& idx, Ts&&... ts) {
+void fill_n_storage(S& s, const std::size_t& idx, Ts&&... ts) noexcept {
   BOOST_ASSERT(idx < s.size());
   fill_n_storage_2(s, idx, std::forward<Ts>(ts)...);
   increment_pointers(std::forward<Ts>(ts)...);
