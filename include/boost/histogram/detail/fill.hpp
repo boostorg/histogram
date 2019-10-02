@@ -206,38 +206,28 @@ constexpr unsigned min(const unsigned n) noexcept {
   return a < n ? a : n;
 }
 
-// not growing, only inclusive axes
-template <class S, class Axes, class Args>
-auto fill(mp11::mp_false, mp11::mp_false, std::size_t idx, S& storage, const Axes& axes,
-          const Args& args) {
-  using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
-  args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
-  BOOST_ASSERT(idx < storage.size()); // idx is always valid
-  fill_storage_parse_args(typename pos::weight{}, typename pos::sample{}, storage[idx],
-                          args);
-  return storage.begin() + idx;
-}
-
-// not growing, at least one non-inclusive axis
-template <class S, class Axes, class Args>
-auto fill(mp11::mp_false, mp11::mp_true, std::size_t offset, S& storage, const Axes& axes,
-          const Args& args) {
-  using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
-  optional_index idx{offset};
-  args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
-  if (idx.valid()) {
-    fill_storage_parse_args(typename pos::weight{}, typename pos::sample{}, storage[*idx],
-                            args);
-    return storage.begin() + *idx;
-  }
-  return storage.end();
-}
-
 // not growing
-template <class S, class A, class Args>
-auto fill(mp11::mp_false, std::size_t offset, S& storage, const A& axes,
+template <class S, class Axes, class Args>
+auto fill(mp11::mp_false, std::size_t offset, S& storage, const Axes& axes,
           const Args& args) {
-  return fill(mp11::mp_false{}, has_non_inclusive_axis<A>{}, offset, storage, axes, args);
+  using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
+  if (has_non_inclusive_axis<Axes>::value) {
+    optional_index idx{offset};
+    args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
+    if (idx.valid()) {
+      fill_storage_parse_args(typename pos::weight{}, typename pos::sample{},
+                              storage[*idx], args);
+      return storage.begin() + *idx;
+    }
+    return storage.end();
+  } else {
+    std::size_t& idx = offset;
+    args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
+    BOOST_ASSERT(idx < storage.size()); // idx is always valid
+    fill_storage_parse_args(typename pos::weight{}, typename pos::sample{}, storage[idx],
+                            args);
+    return storage.begin() + idx;
+  }
 }
 
 // at least one axis is growing
