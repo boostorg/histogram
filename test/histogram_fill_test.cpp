@@ -35,7 +35,9 @@ constexpr auto ndata = 1 << 20;
 
 using in = axis::integer<int, axis::null_type>;
 using in0 = axis::integer<int, axis::null_type, axis::option::none_t>;
-using ing = axis::integer<int, axis::null_type, axis::option::growth_t>;
+using ing = axis::integer<double, axis::null_type,
+                          decltype(axis::option::growth | axis::option::underflow |
+                                   axis::option::overflow)>;
 
 struct axis2d {
   auto size() const { return axis::index_type{2}; }
