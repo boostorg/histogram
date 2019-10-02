@@ -29,7 +29,7 @@ std::size_t linearize(Opts, Index& out, const std::size_t stride,
     out += idx * stride;
   } else {
     BOOST_ASSERT(idx >= -1);
-    BOOST_ASSERT(idx <= size);
+    BOOST_ASSERT(idx < size + 1);
     if ((u || idx >= 0) && (o || idx < size))
       out += idx * stride;
     else
