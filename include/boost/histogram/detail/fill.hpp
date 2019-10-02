@@ -243,17 +243,18 @@ auto fill(mp11::mp_true, std::size_t& offset, S& storage, A& axes, const Args& a
     const auto extent =
         linearize_growth(idx, shifts[i], stride, ax, std::get<(pos::start + i)>(args));
     // need to update offset when axis size changes and thus the stride:
-    // s[i] = s[i-1] * extent[i] ... stride
-    // u[i] = true is axis is has underflow else false
+    // stride: s[i] = s[i - 1] * extent[i] ..., with s[0] = 1
+    // has_underflow: u[i] = 1 or 0
     // offset = s[0] * u[0] + s[1] * u[1] + ...
     // after growth:
     // offset' = s'[0] * u[0] + s'[1] * u[1] + ...
-    // offset' = offset + (s'[0] - s[0]) * u[0] + ...
-    // s'[i] - s[i] = s'[i - 1] * (extent'[i] - extent[i]) * u[i]
-    // with extent'[i] - extent[i] == abs(shift[i])
+    // offset' = offset + (s'[0] - s[0]) * u[0] + (s'[1] - s[1]) * u[1] + ...
+    //         = offset + (s'[1] - s[1]) * u[1] + ...
+    // s'[i] - s[i] = s[i - 1] * (extent'[i] - extent[i]) * u[i]
+    //    with extent'[i] - extent[i] == abs(shift[i])
     if (shifts[i] != 0) {
       update_needed = true;
-      if (axis::traits::options(ax) & axis::option::underflow) {
+      if (axis::traits::options(ax) & axis::option::underflow && i > 0) {
         offset += std::abs(shifts[i]) * stride;
         idx += std::abs(shifts[i]) * stride;
       }
