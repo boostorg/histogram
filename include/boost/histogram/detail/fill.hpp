@@ -248,16 +248,14 @@ auto fill(mp11::mp_true, std::size_t& offset, S& storage, A& axes, const Args& a
     // offset = s[0] * u[0] + s[1] * u[1] + ...
     // after growth:
     // offset' = s'[0] * u[0] + s'[1] * u[1] + ...
-    // offset' = offset + (s'[0] - s[0]) * u[0] + (s'[1] - s[1]) * u[1] + ...
-    //         = offset + (s'[1] - s[1]) * u[1] + ...
-    // s'[i] - s[i] = s[i - 1] * (extent'[i] - extent[i]) * u[i]
+    // offset' - offset = (s'[0] - s[0]) * u[0] + (s'[1] - s[1]) * u[1] + ...
+    //         = (s'[1] - s[1]) * u[1] + ...
+    // s'[i] - s[i] = s[i - 1] * (extent'[i] - extent[i])
     //    with extent'[i] - extent[i] == abs(shift[i])
-    if (shifts[i] != 0) {
-      update_needed = true;
-      if (axis::traits::options(ax) & axis::option::underflow && i > 0) {
-        offset += std::abs(shifts[i]) * stride;
-        idx += std::abs(shifts[i]) * stride;
-      }
+    update_needed |= shifts[i] != 0;
+    if (axis::traits::options(ax) & axis::option::underflow && i > 0 && shifts[i] != 0) {
+      offset += std::abs(shifts[i]) * stride;
+      idx += std::abs(shifts[i]) * stride;
     }
     stride *= extent;
   });
