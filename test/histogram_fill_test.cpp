@@ -94,7 +94,7 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
                       std::invalid_argument);
   }
 
-  // 1D variant and weight A
+  // 1D variant and weight
   {
     auto h1 = make(Tag(), in{1, 3});
     auto h2 = h1;
