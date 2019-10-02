@@ -113,50 +113,66 @@ struct storage_grower {
 };
 
 template <class T, class... Us>
-inline void fill_storage_impl(mp11::mp_false, T&& t, Us&&... args) noexcept {
+inline void fill_storage_4(mp11::mp_false, T&& t, Us&&... args) noexcept {
   t(std::forward<Us>(args)...);
 }
 
 template <class T>
-inline void fill_storage_impl(mp11::mp_true, T&& t) noexcept {
+inline void fill_storage_4(mp11::mp_true, T&& t) noexcept {
   ++t;
 }
 
 template <class T, class U>
-inline void fill_storage_impl(mp11::mp_true, T&& t, U&& w) noexcept {
+inline void fill_storage_4(mp11::mp_true, T&& t, U&& w) noexcept {
   t += w;
 }
 
 template <class T, class... Us>
-inline void fill_storage(T&& t, Us&&... args) noexcept {
-  fill_storage_impl(has_operator_preincrement<std::decay_t<T>>{}, std::forward<T>(t),
-                    std::forward<Us>(args)...);
+inline void fill_storage_3(T&& t, Us&&... args) noexcept {
+  fill_storage_4(has_operator_preincrement<std::decay_t<T>>{}, std::forward<T>(t),
+                 std::forward<Us>(args)...);
 }
 
 template <class IW, class IS, class T, class U>
-void fill_storage_parse_args(IW, IS, T&& t, U&& u) noexcept {
+void fill_storage_2(IW, IS, T&& t, U&& u) noexcept {
   mp11::tuple_apply(
       [&](auto&&... args) {
-        fill_storage(std::forward<T>(t), std::get<IW::value>(u).value, args...);
+        fill_storage_3(std::forward<T>(t), std::get<IW::value>(u).value, args...);
       },
       std::get<IS::value>(u).value);
 }
 
 template <class IS, class T, class U>
-void fill_storage_parse_args(mp11::mp_int<-1>, IS, T&& t, U&& u) noexcept {
+void fill_storage_2(mp11::mp_int<-1>, IS, T&& t, const U& u) noexcept {
   mp11::tuple_apply(
-      [&](const auto&... args) { fill_storage(std::forward<T>(t), args...); },
+      [&](const auto&... args) { fill_storage_3(std::forward<T>(t), args...); },
       std::get<IS::value>(u).value);
 }
 
 template <class IW, class T, class U>
-void fill_storage_parse_args(IW, mp11::mp_int<-1>, T&& t, U&& u) noexcept {
-  fill_storage(std::forward<T>(t), std::get<IW::value>(u).value);
+void fill_storage_2(IW, mp11::mp_int<-1>, T&& t, const U& u) noexcept {
+  fill_storage_3(std::forward<T>(t), std::get<IW::value>(u).value);
 }
 
 template <class T, class U>
-void fill_storage_parse_args(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, U&&) noexcept {
-  fill_storage(std::forward<T>(t));
+void fill_storage_2(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, const U&) noexcept {
+  fill_storage_3(std::forward<T>(t));
+}
+
+template <class IW, class IS, class Storage, class Args>
+auto fill_storage(IW, IS, Storage& s, const std::size_t idx, const Args& a) noexcept {
+  BOOST_ASSERT(idx < s.size()); // index is always valid
+  fill_storage_2(IW{}, IS{}, s[idx], a);
+  return s.begin() + idx;
+}
+
+template <class IW, class IS, class Storage, class Args>
+auto fill_storage(IW, IS, Storage& s, const optional_index idx, const Args& a) noexcept {
+  if (idx.valid()) {
+    fill_storage_2(IW{}, IS{}, s[*idx], a);
+    return s.begin() + *idx;
+  }
+  return s.end();
 }
 
 template <class L>
@@ -207,69 +223,37 @@ constexpr unsigned min(const unsigned n) noexcept {
 }
 
 // not growing
-template <class S, class Axes, class Args>
-auto fill(mp11::mp_false, std::size_t offset, S& storage, const Axes& axes,
-          const Args& args) {
+template <class Storage, class Axes, class Args>
+auto fill_2(mp11::mp_false, const std::size_t offset, Storage& st, const Axes& axes,
+            const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
-  if (has_non_inclusive_axis<Axes>::value) {
-    optional_index idx{offset};
-    args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
-    if (idx.valid()) {
-      fill_storage_parse_args(typename pos::weight{}, typename pos::sample{},
-                              storage[*idx], args);
-      return storage.begin() + *idx;
-    }
-    return storage.end();
-  } else {
-    std::size_t& idx = offset;
-    args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
-    BOOST_ASSERT(idx < storage.size()); // idx is always valid
-    fill_storage_parse_args(typename pos::weight{}, typename pos::sample{}, storage[idx],
-                            args);
-    return storage.begin() + idx;
-  }
+  mp11::mp_if<has_non_inclusive_axis<Axes>, optional_index, std::size_t> idx{offset};
+  args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
+  return fill_storage(typename pos::weight{}, typename pos::sample{}, st, idx, args);
 }
 
 // at least one axis is growing
-template <class S, class A, class Args>
-auto fill(mp11::mp_true, std::size_t& offset, S& storage, A& axes, const Args& args) {
+template <class Storage, class A, class Args>
+auto fill_2(mp11::mp_true, const std::size_t, Storage& st, A& axes, const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
   axis::index_type shifts[pos::nargs];
-  optional_index idx{offset};
+  // offset must be zero for linearize_growth
+  mp11::mp_if<has_non_inclusive_axis<A>, optional_index, std::size_t> idx{0};
   std::size_t stride = 1;
   bool update_needed = false;
   mp11::mp_for_each<mp11::mp_iota_c<min<A>(pos::nargs)>>([&](auto i) {
     auto& ax = axis_get<i>(axes);
     const auto extent =
         linearize_growth(idx, shifts[i], stride, ax, std::get<(pos::start + i)>(args));
-    // need to update offset when axis size changes and thus the stride:
-    // stride: s[i] = s[i - 1] * extent[i] ..., with s[0] = 1
-    // has_underflow: u[i] = 1 or 0
-    // offset = s[0] * u[0] + s[1] * u[1] + ...
-    // after growth:
-    // offset' = s'[0] * u[0] + s'[1] * u[1] + ...
-    // offset' - offset = (s'[0] - s[0]) * u[0] + (s'[1] - s[1]) * u[1] + ...
-    //         = (s'[1] - s[1]) * u[1] + ...
-    // s'[i] - s[i] = s[i - 1] * (extent'[i] - extent[i])
-    //    with extent'[i] - extent[i] == abs(shift[i])
     update_needed |= shifts[i] != 0;
-    if (axis::traits::options(ax) & axis::option::underflow && i > 0 && shifts[i] != 0) {
-      offset += std::abs(shifts[i]) * stride;
-      idx += std::abs(shifts[i]) * stride;
-    }
     stride *= extent;
   });
   if (update_needed) {
     storage_grower<A> g(axes);
     g.from_shifts(shifts);
-    g.apply(storage, shifts);
+    g.apply(st, shifts);
   }
-  if (idx.valid()) {
-    fill_storage_parse_args(typename pos::weight{}, typename pos::sample{}, storage[*idx],
-                            args);
-    return storage.begin() + *idx;
-  }
-  return storage.end();
+  return fill_storage(typename pos::weight{}, typename pos::sample{}, st, idx, args);
 }
 
 // pack original args tuple into another tuple (which is unpacked later)
@@ -299,7 +283,7 @@ decltype(auto) pack_args(mp11::mp_int<-1>, mp11::mp_int<-1>, const Args& args) n
 #endif
 
 template <class S, class A, class Args>
-auto fill(std::size_t& offset, S& storage, A& axes, const Args& args) {
+auto fill(const std::size_t offset, S& storage, A& axes, const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
   using growing = has_growing_axis<A>;
 
@@ -316,11 +300,11 @@ auto fill(std::size_t& offset, S& storage, A& axes, const Args& args) {
   //   3d tuple)
 
   if (axes_rank(axes) == pos::nargs)
-    return fill(growing{}, offset, storage, axes, args);
+    return fill_2(growing{}, offset, storage, axes, args);
   else if (axes_rank(axes) == 1 && axis::traits::rank(axis_get<0>(axes)) == pos::nargs)
-    return fill(growing{}, offset, storage, axes,
-                pack_args<pos::start, pos::nargs>(typename pos::weight{},
-                                                  typename pos::sample{}, args));
+    return fill_2(growing{}, offset, storage, axes,
+                  pack_args<pos::start, pos::nargs>(typename pos::weight{},
+                                                    typename pos::sample{}, args));
   else
     return (BOOST_THROW_EXCEPTION(
                 std::invalid_argument("number of arguments != histogram rank")),

@@ -32,7 +32,7 @@ namespace detail {
 
 namespace dtl = boost::histogram::detail;
 
-template <class Index, class Axis>
+template <class Index, class Axis, bool Growing>
 struct index_visitor {
   using index_type = Index;
   using pointer = index_type*;
@@ -40,8 +40,7 @@ struct index_visitor {
   using Opt = axis::traits::static_options<Axis>;
 
   Axis& axis_;
-  std::size_t& stride_;
-  const std::size_t start_, size_; // start and size of value collection
+  const std::size_t stride_, start_, size_; // start and size of value collection
   const pointer begin_;
   axis::index_type* shift_;
 
@@ -49,27 +48,18 @@ struct index_visitor {
                 const pointer it, axis::index_type* shift)
       : axis_(a), stride_(str), start_(sta), size_(si), begin_(it), shift_(shift) {}
 
-  void maybe_shift_previous_indices(pointer it, const axis::index_type shift) {
-    if (shift > 0) {
-      while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride_;
-      *shift_ += shift;
-    }
-  }
-
   template <class T>
   void impl(pointer it, const T& t) {
-    // mask options to reduce number of template instantiations
-    constexpr auto opts = Opt{} & (axis::option::underflow | axis::option::overflow);
-    static_if_c<Opt::test(axis::option::growth)>(
-        [&](auto& ax) {
-          const auto p = axis::traits::update(ax, t);
-          maybe_shift_previous_indices(it, p.second);
-          linearize(opts, *it, stride_, ax.size(), p.first);
-        },
-        [&](const auto& ax) {
-          linearize(opts, *it, stride_, ax.size(), axis::traits::index(ax, t));
-        },
-        axis_);
+    if (Growing) { // must use this code for all axes if one of them is growing
+      axis::index_type shift;
+      linearize_growth(*it, shift, stride_, axis_, t);
+      if (shift > 0) { // shift previous indices, because axis zero-point has changed
+        while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride_;
+        *shift_ += shift;
+      }
+    } else {
+      linearize(*it, stride_, axis_, t);
+    }
   }
 
   template <class T>
@@ -92,7 +82,7 @@ struct index_visitor {
 
 template <class Index, class S, class A, class T>
 void fill_n_indices(Index* indices, const std::size_t start, const std::size_t size,
-                    std::size_t& offset, S& storage, A& axes, const T* viter) {
+                    const std::size_t offset, S& storage, A& axes, const T* viter) {
   axis::index_type extents[buffer_size<A>::value];
   axis::index_type shifts[buffer_size<A>::value];
   for_each_axis(axes, [eit = extents, sit = shifts](const auto& a) mutable {
@@ -100,21 +90,24 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
     *eit++ = axis::traits::extent(a);
   });
 
-  std::fill(indices, indices + size, offset);
+  // offset must be zero for growing axes
+  constexpr bool grow = has_growing_axis<A>::value;
+  std::fill(indices, indices + size, grow ? 0 : offset);
   for_each_axis(axes, [&, stride = static_cast<std::size_t>(1),
-                       shift = shifts](auto& axis) mutable {
+                       pshift = shifts](auto& axis) mutable {
     using Axis = std::decay_t<decltype(axis)>;
     static_if<is_variant<T>>(
         [&](const auto& v) {
-          variant2::visit(
-              index_visitor<Index, Axis>{axis, stride, start, size, indices, shift}, v);
+          variant2::visit(index_visitor<Index, Axis, grow>{axis, stride, start, size,
+                                                           indices, pshift},
+                          v);
         },
         [&](const auto& v) {
-          index_visitor<Index, Axis>{axis, stride, start, size, indices, shift}(v);
+          index_visitor<Index, Axis, grow>{axis, stride, start, size, indices, pshift}(v);
         },
         *viter++);
     stride *= static_cast<std::size_t>(axis::traits::extent(axis));
-    ++shift;
+    ++pshift;
   });
 
   bool update_needed = false;
@@ -143,25 +136,25 @@ void increment_pointers(std::size_t wsize, const T*&& wptr, const Us*&&... sptrs
 }
 
 template <class S, class... Us>
-void fill_n_storage2(S& s, const std::size_t& idx, std::size_t, const Us*&&... ptrs) {
-  fill_storage(s[idx], *ptrs...);
+void fill_n_storage_2(S& s, const std::size_t& idx, std::size_t, const Us*&&... ptrs) {
+  fill_storage_3(s[idx], *ptrs...);
 }
 
 template <class S, class... Ts>
-void fill_n_storage2(S& s, const std::size_t& idx, const Ts*&&... ptrs) {
-  fill_storage(s[idx], *ptrs...);
+void fill_n_storage_2(S& s, const std::size_t& idx, const Ts*&&... ptrs) {
+  fill_storage_3(s[idx], *ptrs...);
 }
 
 template <class S, class... Ts>
 void fill_n_storage(S& s, const optional_index& idx, Ts&&... ts) {
-  if (idx.valid()) fill_n_storage2(s, *idx, std::forward<Ts>(ts)...);
+  if (idx.valid()) fill_n_storage_2(s, *idx, std::forward<Ts>(ts)...);
   increment_pointers(std::forward<Ts>(ts)...);
 }
 
 template <class S, class... Ts>
 void fill_n_storage(S& s, const std::size_t& idx, Ts&&... ts) {
   BOOST_ASSERT(idx < s.size());
-  fill_n_storage2(s, idx, std::forward<Ts>(ts)...);
+  fill_n_storage_2(s, idx, std::forward<Ts>(ts)...);
   increment_pointers(std::forward<Ts>(ts)...);
 }
 
@@ -187,7 +180,7 @@ std::size_t get_total_size(const T* values, std::size_t vsize) {
 
 // general Nd treatment
 template <class S, class A, class T, class... Ts>
-void fill_n_nd(std::size_t offset, S& storage, A& axes, std::size_t vsize,
+void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
                const T* values, Ts&&... rest) {
   constexpr std::size_t buffer_size = 1ul << 14;
   using index_type = mp11::mp_if<has_non_inclusive_axis<A>, optional_index, std::size_t>;
@@ -232,15 +225,15 @@ void fill_n_nd(std::size_t offset, S& storage, A& axes, std::size_t vsize,
 }
 
 template <class S, class A, class T, class... Us>
-void fill_n_impl(mp11::mp_false, std::size_t offset, S& storage, A& axes,
-                 std::size_t vsize, const T* values, Us&&... rest) {
+void fill_n_impl(mp11::mp_false, const std::size_t offset, S& storage, A& axes,
+                 const std::size_t vsize, const T* values, Us&&... rest) {
   fill_n_nd(offset, storage, axes, vsize, values, std::forward<Us>(rest)...);
 }
 
 // unpack weight argument, can be iterable or value
 template <class S, class A, class T, class U, class... Us>
-void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes,
-                 std::size_t vsize, const T* values, const weight_type<U>& weights,
+void fill_n_impl(mp11::mp_true, const std::size_t offset, S& storage, A& axes,
+                 const std::size_t vsize, const T* values, const weight_type<U>& weights,
                  const Us&... rest) {
   static_if<is_iterable<std::remove_cv_t<std::remove_reference_t<U>>>>(
       [&](const auto& w, const auto&... rest) {
@@ -261,8 +254,8 @@ void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes,
 // unpack sample argument after weight was unpacked
 template <class S, class A, class T, class U, class V>
 void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes,
-                 std::size_t vsize, const T* values, std::size_t wsize, const U* wptr,
-                 const sample_type<V>& s) {
+                 const std::size_t vsize, const T* values, const std::size_t wsize,
+                 const U* wptr, const sample_type<V>& s) {
   mp11::tuple_apply(
       [&](const auto&... sargs) {
         fill_n_impl(mp11::mp_false{}, offset, storage, axes, vsize, values, wsize,
@@ -273,8 +266,9 @@ void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes,
 
 // unpack sample argument (no weight argument)
 template <class S, class A, class T, class U>
-void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes,
-                 std::size_t vsize, const T* values, const sample_type<U>& samples) {
+void fill_n_impl(mp11::mp_true, const std::size_t offset, S& storage, A& axes,
+                 const std::size_t vsize, const T* values,
+                 const sample_type<U>& samples) {
   using namespace boost::mp11;
   tuple_apply(
       [&](const auto&... sargs) {
@@ -285,8 +279,8 @@ void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes,
 }
 
 template <class S, class A, class T, class... Us>
-void fill_n(std::size_t offset, S& storage, A& axes, const T* values, std::size_t vsize,
-            const Us&... rest) {
+void fill_n(const std::size_t offset, S& storage, A& axes, const T* values,
+            const std::size_t vsize, const Us&... rest) {
   static_assert(!std::is_pointer<T>::value,
                 "passing iterable of pointers not allowed (cannot determine lengths); "
                 "pass iterable of iterables instead");
