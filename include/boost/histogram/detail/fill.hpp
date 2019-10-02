@@ -113,22 +113,22 @@ struct storage_grower {
 };
 
 template <class T, class... Us>
-inline void fill_storage_4(mp11::mp_false, T&& t, Us&&... args) noexcept {
+void fill_storage_4(mp11::mp_false, T&& t, Us&&... args) noexcept {
   t(std::forward<Us>(args)...);
 }
 
 template <class T>
-inline void fill_storage_4(mp11::mp_true, T&& t) noexcept {
+void fill_storage_4(mp11::mp_true, T&& t) noexcept {
   ++t;
 }
 
 template <class T, class U>
-inline void fill_storage_4(mp11::mp_true, T&& t, U&& w) noexcept {
+void fill_storage_4(mp11::mp_true, T&& t, U&& w) noexcept {
   t += w;
 }
 
 template <class T, class... Us>
-inline void fill_storage_3(T&& t, Us&&... args) noexcept {
+void fill_storage_3(T&& t, Us&&... args) noexcept {
   fill_storage_4(has_operator_preincrement<std::decay_t<T>>{}, std::forward<T>(t),
                  std::forward<Us>(args)...);
 }
