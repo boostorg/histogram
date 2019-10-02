@@ -50,7 +50,6 @@ std::size_t linearize(Index& out, const std::size_t stride, const Axis& ax,
 template <class Index, class Axis, class Value>
 std::size_t linearize_growth(Index& out, axis::index_type& shift,
                              const std::size_t stride, Axis& a, const Value& v) {
-  // mask options to reduce no. of template instantiations
   axis::index_type idx;
   std::tie(idx, shift) = axis::traits::update(a, v);
   constexpr bool u = axis::traits::static_options<Axis>::test(axis::option::underflow);
