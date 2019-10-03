@@ -21,24 +21,23 @@ namespace detail {
 
 template <class A>
 std::size_t linearize_index(optional_index& out, const std::size_t stride, const A& ax,
-                            const axis::index_type i) {
+                            const axis::index_type idx) {
   // cannot use static_options here, since A may be variant
   const auto opt = axis::traits::options(ax);
   const axis::index_type begin = opt & axis::option::underflow ? -1 : 0;
   const axis::index_type end = opt & axis::option::overflow ? ax.size() + 1 : ax.size();
   const axis::index_type extent = end - begin;
   // i may be arbitrarily out of range
-  if (begin <= i && i < end)
-    out += i * stride;
+  if (begin <= idx && idx < end)
+    out += (idx - begin) * stride;
   else
     out = invalid_index;
   return extent;
 }
 
 template <class A, class... Us>
-optional_index at(std::size_t offset, const A& axes,
-                  const std::tuple<Us...>& args) noexcept {
-  optional_index idx{offset};
+optional_index at(const A& axes, const std::tuple<Us...>& args) noexcept {
+  optional_index idx{0};
   using namespace boost::mp11;
   mp_for_each<mp_iota_c<sizeof...(Us)>>([&, stride = 1ull](auto i) mutable {
     stride *= linearize_index(idx, stride, axis_get<i>(axes),
@@ -48,8 +47,8 @@ optional_index at(std::size_t offset, const A& axes,
 }
 
 template <class A, class U>
-optional_index at(std::size_t offset, const A& axes, const U& args) noexcept {
-  optional_index idx{offset};
+optional_index at(const A& axes, const U& args) noexcept {
+  optional_index idx{0};
   using std::begin;
   auto it = begin(args);
   for_each_axis(axes, [&, stride = 1ull](const auto& a) mutable {

@@ -52,7 +52,7 @@ matrix:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on
+        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on examples test test//failure
 
 before_script:
   # clone minimal set of Boost libraries

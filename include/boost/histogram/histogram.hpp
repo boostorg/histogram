@@ -331,7 +331,7 @@ public:
     if (rank() != sizeof...(Indices))
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::at(offset_, axes_, is);
+    const auto idx = detail::at(axes_, is);
     if (!idx.valid())
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
@@ -343,7 +343,7 @@ public:
     if (rank() != sizeof...(Indices))
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::at(offset_, axes_, is);
+    const auto idx = detail::at(axes_, is);
     if (!idx.valid())
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
@@ -355,7 +355,7 @@ public:
     if (rank() != detail::axes_rank(is))
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::at(offset_, axes_, is);
+    const auto idx = detail::at(axes_, is);
     if (!idx.valid())
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];
@@ -367,7 +367,7 @@ public:
     if (rank() != detail::axes_rank(is))
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::at(offset_, axes_, is);
+    const auto idx = detail::at(axes_, is);
     if (!idx.valid())
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     return storage_and_mutex_.first()[*idx];

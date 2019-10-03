@@ -112,7 +112,8 @@ alias libserial :
     <link>static <warnings>off <rtti>on
     ;
 
-alias all : cxx14 cxx17 failure threading accumulators range units serialization ;
+# skipping "failure", since expected failure messages during debugging are confusing
+alias all : cxx14 cxx17 threading accumulators range units serialization ;
 alias minimal : cxx14 cxx17 threading ;
 
 explicit cxx14 ;

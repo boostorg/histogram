@@ -12,6 +12,7 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/make_default.hpp>
+#include <boost/histogram/detail/optional_index.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
@@ -229,7 +230,10 @@ template <class T>
 std::size_t offset(const T& axes) {
   std::size_t n = 0;
   for_each_axis(axes, [&n, stride = 1ull](const auto& a) mutable {
-    if (axis::traits::options(a) & axis::option::underflow) n += stride;
+    if (axis::traits::options(a) & axis::option::growth)
+      n = invalid_index;
+    else if (n != invalid_index && axis::traits::options(a) & axis::option::underflow)
+      n += stride;
     stride *= axis::traits::extent(a);
   });
   return n;
