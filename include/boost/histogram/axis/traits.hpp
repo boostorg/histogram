@@ -182,17 +182,15 @@ struct static_options;
   an axis type and represents compile-time boolean which is true or false, depending on
   whether the axis is inclusive or not.
 
-  An inclusive axis has a bin for every possible input value, which means that every
-  possible input is counted in some cell of the histogram. A histogram which consists
-  entirely of inclusive axes can be filled more efficiently, since input values are always
+  An inclusive axis has a bin for every possible input value. A histogram which consists
+  only of inclusive axes can be filled more efficiently, since input values always
   end up in a valid cell and there is no need to keep track of input tuples that need to
   be discarded.
 
-  An axis with underflow and overflow bins is inclusive, but an axis may be inclusive
-  under other conditions. To declare an axis as inclusive, the meta-function checks for
-  the presence of a method constexpr static bool inclusive(), and uses the result. If this
-  method is not present, it uses static_options<Axis> and checks whether the underflow and
-  overflow bits are present.
+  An axis with underflow and overflow bins is always inclusive, but an axis may be
+  inclusive under other conditions. The meta-function checks for the method `constexpr
+  static bool inclusive()`, and uses the result. If this method is not present, it uses
+  static_options<Axis> and checks whether the underflow and overflow bits are present.
 
   @tparam axis type
 */
