@@ -68,7 +68,7 @@ struct index_visitor {
         [this](const auto& t) {
           // T is iterable, fill N values
           auto it = begin_ - 1;
-          for (auto&& t : make_span(dtl::data(t) + start_, size_)) this->impl(++it, t);
+          for (auto&& ti : make_span(dtl::data(t) + start_, size_)) this->impl(++it, ti);
         },
         [this](const auto& t) {
           // T is value, fill single value N times
