@@ -278,8 +278,9 @@ int main() {
   std::mt19937 gen(1);
   std::normal_distribution<> id(0, 1);
   std::vector<int> x(ndata), y(ndata);
-  std::generate(x.begin(), x.end(), [&] { return id(gen); });
-  std::generate(y.begin(), y.end(), [&] { return id(gen); });
+  auto generator = [&] { return static_cast<int>(id(gen)); };
+  std::generate(x.begin(), x.end(), generator);
+  std::generate(y.begin(), y.end(), generator);
   std::vector<double> w(ndata);
   // must be all positive
   std::generate(w.begin(), w.end(), [&] { return 0.5 + std::abs(id(gen)); });
