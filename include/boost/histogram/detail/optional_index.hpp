@@ -44,7 +44,7 @@ struct optional_index {
   }
 };
 
-constexpr inline bool is_valid(std::size_t) noexcept { return true; }
+constexpr inline bool is_valid(const std::size_t) noexcept { return true; }
 
 inline bool is_valid(const optional_index x) noexcept { return x.value != invalid_index; }
 
