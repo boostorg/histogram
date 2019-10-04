@@ -16,7 +16,6 @@
 #include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/detail/make_default.hpp>
 #include <boost/histogram/detail/optional_index.hpp>
-#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/tuple_slice.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11.hpp>
