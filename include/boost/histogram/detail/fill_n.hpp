@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/config/workaround.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
@@ -32,7 +33,7 @@ namespace detail {
 
 namespace dtl = boost::histogram::detail;
 
-template <class Index, class Axis, bool Growing>
+template <class Index, class Axis, class IsGrowing>
 struct index_visitor {
   using index_type = Index;
   using pointer = index_type*;
@@ -48,9 +49,13 @@ struct index_visitor {
                 const pointer it, axis::index_type* shift)
       : axis_(a), stride_(str), start_(sta), size_(si), begin_(it), shift_(shift) {}
 
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#pragma warning(disable : 4127) // disable "warning" about using if constexpr
+#endif
+
   template <class T>
   void impl(pointer it, const T& t) {
-    if (Growing) { // must use this code for all axes if one of them is growing
+    if (IsGrowing::value) { // must use this code for all axes if one of them is growing
       axis::index_type shift;
       linearize_growth(*it, shift, stride_, axis_, t);
       if (shift > 0) { // shift previous indices, because axis zero-point has changed
@@ -61,6 +66,10 @@ struct index_visitor {
       linearize(*it, stride_, axis_, t);
     }
   }
+
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#pragma warning(default : 4127)
+#endif
 
   template <class T>
   void operator()(const T& t) {
@@ -85,30 +94,31 @@ struct index_visitor {
   }
 };
 
-template <class Index, class S, class A, class T>
+template <class Index, class S, class Axes, class T>
 void fill_n_indices(Index* indices, const std::size_t start, const std::size_t size,
-                    const std::size_t offset, S& storage, A& axes, const T* viter) {
-  axis::index_type extents[buffer_size<A>::value];
-  axis::index_type shifts[buffer_size<A>::value];
+                    const std::size_t offset, S& storage, Axes& axes, const T* viter) {
+  axis::index_type extents[buffer_size<Axes>::value];
+  axis::index_type shifts[buffer_size<Axes>::value];
   for_each_axis(axes, [eit = extents, sit = shifts](const auto& a) mutable {
     *sit++ = 0;
     *eit++ = axis::traits::extent(a);
   });
 
   // offset must be zero for growing axes
-  constexpr bool grow = has_growing_axis<A>::value;
-  std::fill(indices, indices + size, grow ? 0 : offset);
+  using IsGrowing = has_growing_axis<Axes>;
+  std::fill(indices, indices + size, IsGrowing::value ? 0 : offset);
   for_each_axis(axes, [&, stride = static_cast<std::size_t>(1),
                        pshift = shifts](auto& axis) mutable {
     using Axis = std::decay_t<decltype(axis)>;
     static_if<is_variant<T>>(
         [&](const auto& v) {
-          variant2::visit(index_visitor<Index, Axis, grow>{axis, stride, start, size,
-                                                           indices, pshift},
+          variant2::visit(index_visitor<Index, Axis, IsGrowing>{axis, stride, start, size,
+                                                                indices, pshift},
                           v);
         },
         [&](const auto& v) {
-          index_visitor<Index, Axis, grow>{axis, stride, start, size, indices, pshift}(v);
+          index_visitor<Index, Axis, IsGrowing>{axis, stride,  start,
+                                                size, indices, pshift}(v);
         },
         *viter++);
     stride *= static_cast<std::size_t>(axis::traits::extent(axis));
@@ -120,7 +130,7 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
     update_needed |= *eit++ != axis::traits::extent(a);
   });
   if (update_needed) {
-    storage_grower<A> g(axes);
+    storage_grower<Axes> g(axes);
     g.from_extents(extents);
     g.apply(storage, shifts);
   }

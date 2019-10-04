@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/config/workaround.hpp>
 #include <boost/core/alloc_construct.hpp>
 #include <boost/core/exchange.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
