@@ -32,10 +32,10 @@ matrix:
         - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on coverage=on test
         - GCOV=gcov-5 tools/cov.sh
 
-    - name: "gcc-5: no-exceptions, no-rtti"
+    - name: "gcc-5: no exceptions, no rtti"
       script:
-        - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on
-          cxxflags="-fno-exceptions -fno-rtti" test//minimal
+        - ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on
+          exception-handling=off rtti=off test//minimal
 
     - name: "clang: sanitizers"
       sudo: required # by leak sanitizer
