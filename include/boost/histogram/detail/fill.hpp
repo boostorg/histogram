@@ -191,7 +191,7 @@ struct args_indices {
 };
 
 template <int S, int N>
-struct args_loop {
+struct linearize_args {
   template <class Index, class A, class Args>
   static void impl(mp11::mp_int<N>, Index&, const std::size_t, A&, const Args&) {}
 
@@ -209,7 +209,7 @@ struct args_loop {
 };
 
 template <int S>
-struct args_loop<S, 1> {
+struct linearize_args<S, 1> {
   template <class Index, class A, class Args>
   static void apply(Index& o, A& ax, const Args& args) {
     linearize(o, 1, axis_get<0>(ax), std::get<S>(args));
@@ -228,7 +228,7 @@ auto fill_2(mp11::mp_false, const std::size_t offset, Storage& st, const Axes& a
             const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
   mp11::mp_if<has_non_inclusive_axis<Axes>, optional_index, std::size_t> idx{offset};
-  args_loop<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
+  linearize_args<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
   return fill_storage(typename pos::weight{}, typename pos::sample{}, st, idx, args);
 }
 
@@ -236,7 +236,7 @@ auto fill_2(mp11::mp_false, const std::size_t offset, Storage& st, const Axes& a
 template <class Storage, class A, class Args>
 auto fill_2(mp11::mp_true, const std::size_t, Storage& st, A& axes, const Args& args) {
   using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
-  axis::index_type shifts[pos::nargs];
+  std::array<axis::index_type, pos::nargs> shifts;
   // offset must be zero for linearize_growth
   mp11::mp_if<has_non_inclusive_axis<A>, optional_index, std::size_t> idx{0};
   std::size_t stride = 1;
