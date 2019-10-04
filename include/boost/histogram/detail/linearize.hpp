@@ -11,6 +11,7 @@
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/detail/constexpr_if.hpp>
 #include <boost/histogram/detail/optional_index.hpp>
 #include <boost/histogram/fwd.hpp>
 
@@ -18,16 +19,19 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+// initial offset to out must be set
 template <class Index, class Opts>
 std::size_t linearize(Opts, Index& out, const std::size_t stride,
                       const axis::index_type size, const axis::index_type idx) {
   constexpr bool u = Opts::test(axis::option::underflow);
   constexpr bool o = Opts::test(axis::option::overflow);
-  if (std::is_same<Index, std::size_t>::value) {
+  BOOST_HISTOGRAM_CONSTEXPR_IF(std::is_same<Index, std::size_t>::value || (u && o)) {
     BOOST_ASSERT(idx >= (u ? -1 : 0));
     BOOST_ASSERT(idx < (o ? size + 1 : size));
+    BOOST_ASSERT(idx >= 0 || static_cast<std::size_t>(-idx * stride) <= out);
     out += idx * stride;
-  } else {
+  }
+  else {
     BOOST_ASSERT(idx >= -1);
     BOOST_ASSERT(idx < size + 1);
     if ((u || idx >= 0) && (o || idx < size))

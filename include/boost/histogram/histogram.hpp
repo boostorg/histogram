@@ -332,9 +332,10 @@ public:
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
     const auto idx = detail::at(axes_, is);
-    if (!idx.valid())
+    if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    return storage_and_mutex_.first()[*idx];
+    BOOST_ASSERT(idx < storage_and_mutex_.first().size());
+    return storage_and_mutex_.first()[idx];
   }
 
   /// Access cell value at integral indices stored in `std::tuple` (read-only).
@@ -344,9 +345,10 @@ public:
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
     const auto idx = detail::at(axes_, is);
-    if (!idx.valid())
+    if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    return storage_and_mutex_.first()[*idx];
+    BOOST_ASSERT(idx < storage_and_mutex_.first().size());
+    return storage_and_mutex_.first()[idx];
   }
 
   /// Access cell value at integral indices stored in iterable.
@@ -356,9 +358,10 @@ public:
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
     const auto idx = detail::at(axes_, is);
-    if (!idx.valid())
+    if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    return storage_and_mutex_.first()[*idx];
+    BOOST_ASSERT(idx < storage_and_mutex_.first().size());
+    return storage_and_mutex_.first()[idx];
   }
 
   /// Access cell value at integral indices stored in iterable (read-only).
@@ -368,9 +371,10 @@ public:
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
     const auto idx = detail::at(axes_, is);
-    if (!idx.valid())
+    if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    return storage_and_mutex_.first()[*idx];
+    BOOST_ASSERT(idx < storage_and_mutex_.first().size());
+    return storage_and_mutex_.first()[idx];
   }
 
   /// Access value at index (number for rank = 1, else `std::tuple` or iterable).

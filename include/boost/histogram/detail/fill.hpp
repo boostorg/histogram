@@ -159,18 +159,12 @@ void fill_storage_2(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, const U&) noexcep
   fill_storage_3(std::forward<T>(t));
 }
 
-template <class IW, class IS, class Storage, class Args>
-auto fill_storage(IW, IS, Storage& s, const std::size_t idx, const Args& a) noexcept {
-  BOOST_ASSERT(idx < s.size()); // index is always valid
-  fill_storage_2(IW{}, IS{}, s[idx], a);
-  return s.begin() + idx;
-}
-
-template <class IW, class IS, class Storage, class Args>
-auto fill_storage(IW, IS, Storage& s, const optional_index idx, const Args& a) noexcept {
-  if (idx.valid()) {
-    fill_storage_2(IW{}, IS{}, s[*idx], a);
-    return s.begin() + *idx;
+template <class IW, class IS, class Storage, class Index, class Args>
+auto fill_storage(IW, IS, Storage& s, const Index idx, const Args& a) noexcept {
+  if (is_valid(idx)) {
+    BOOST_ASSERT(idx < s.size());
+    fill_storage_2(IW{}, IS{}, s[idx], a);
+    return s.begin() + idx;
   }
   return s.end();
 }
@@ -250,8 +244,8 @@ auto fill_2(mp11::mp_true, const std::size_t, Storage& st, A& axes, const Args& 
   });
   if (update_needed) {
     storage_grower<A> g(axes);
-    g.from_shifts(shifts);
-    g.apply(st, shifts);
+    g.from_shifts(shifts.data());
+    g.apply(st, shifts.data());
   }
   return fill_storage(typename pos::weight{}, typename pos::sample{}, st, idx, args);
 }

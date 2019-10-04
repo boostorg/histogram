@@ -72,9 +72,13 @@ struct index_visitor {
         },
         [this](const auto& t) {
           // T is value, fill single value N times
-          index_type delta{0}; // no offset to consider here
+          index_type delta{*begin_};
           this->impl(&delta, t);
-          for (auto&& idx : make_span(begin_, size_)) idx += delta;
+          if (is_valid(delta)) {
+            delta -= *begin_;
+            for (auto&& idx : make_span(begin_, size_)) idx += delta;
+          } else
+            std::fill(begin_, begin_ + size_, invalid_index);
         },
         t);
   }
@@ -147,16 +151,12 @@ void fill_n_storage_2(S& s, const std::size_t& idx, const Ts*&&... ptrs) noexcep
   fill_storage_3(s[idx], *ptrs...);
 }
 
-template <class S, class... Ts>
-void fill_n_storage(S& s, const optional_index& idx, Ts&&... ts) noexcept {
-  if (idx.valid()) fill_n_storage_2(s, *idx, std::forward<Ts>(ts)...);
-  increment_pointers(std::forward<Ts>(ts)...);
-}
-
-template <class S, class... Ts>
-void fill_n_storage(S& s, const std::size_t& idx, Ts&&... ts) noexcept {
-  BOOST_ASSERT(idx < s.size());
-  fill_n_storage_2(s, idx, std::forward<Ts>(ts)...);
+template <class S, class Index, class... Ts>
+void fill_n_storage(S& s, const Index idx, Ts&&... ts) noexcept {
+  if (is_valid(idx)) {
+    BOOST_ASSERT(idx < s.size());
+    fill_n_storage_2(s, idx, std::forward<Ts>(ts)...);
+  }
   increment_pointers(std::forward<Ts>(ts)...);
 }
 
