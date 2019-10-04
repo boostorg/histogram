@@ -86,7 +86,7 @@ struct index_visitor {
           if (is_valid(idx)) {
             const std::intptr_t delta =
                 static_cast<std::size_t>(idx) - static_cast<std::size_t>(*begin_);
-            for (auto&& idx : make_span(begin_, size_)) idx += delta;
+            for (auto&& i : make_span(begin_, size_)) i += delta;
           } else
             std::fill(begin_, begin_ + size_, invalid_index);
         },
