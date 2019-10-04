@@ -8,9 +8,7 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 
 #include <boost/assert.hpp>
-#include <boost/histogram/detail/nan_equal.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <cstddef>
 #include <type_traits>
 
 namespace boost {
@@ -26,8 +24,8 @@ template <class RealType>
 class mean {
 public:
   mean() = default;
-  mean(const std::size_t n, const RealType& mean, const RealType& variance)
-      : sum_(n), mean_(mean), sum_of_deltas_squared_(variance * (sum_ - 1)) {}
+  mean(const RealType& n, const RealType& mean, const RealType& variance)
+      : sum_(n), mean_(mean), sum_of_deltas_squared_(variance * (n - 1)) {}
 
   void operator()(const RealType& x) {
     sum_ += static_cast<RealType>(1);
@@ -63,8 +61,8 @@ public:
 
   template <class T>
   bool operator==(const mean<T>& rhs) const noexcept {
-    return detail::nan_equal(sum_, rhs.sum_) && detail::nan_equal(mean_, rhs.mean_) &&
-           detail::nan_equal(sum_of_deltas_squared_, rhs.sum_of_deltas_squared_);
+    return sum_ == rhs.sum_ && mean_ == rhs.mean_ &&
+           sum_of_deltas_squared_ == rhs.sum_of_deltas_squared_;
   }
 
   template <class T>

@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_MEAN_HPP
 
 #include <boost/assert.hpp>
-#include <boost/histogram/detail/nan_equal.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <type_traits>
 
@@ -66,11 +65,10 @@ public:
 
   template <typename T>
   bool operator==(const weighted_mean<T>& rhs) const noexcept {
-    return detail::nan_equal(sum_of_weights_, rhs.sum_of_weights_) &&
-           detail::nan_equal(sum_of_weights_squared_, rhs.sum_of_weights_squared_) &&
-           detail::nan_equal(weighted_mean_, rhs.weighted_mean_) &&
-           detail::nan_equal(sum_of_weighted_deltas_squared_,
-                             rhs.sum_of_weighted_deltas_squared_);
+    return sum_of_weights_ == rhs.sum_of_weights_ &&
+           sum_of_weights_squared_ == rhs.sum_of_weights_squared_ &&
+           weighted_mean_ == rhs.weighted_mean_ &&
+           sum_of_weighted_deltas_squared_ == rhs.sum_of_weighted_deltas_squared_;
   }
 
   template <typename T>
