@@ -31,7 +31,7 @@ using namespace boost::histogram::algorithm;
 using namespace boost::histogram::literals; // to get _c suffix
 using boost::variant2::variant;
 
-constexpr auto ndata = 1 << 20;
+constexpr auto ndata = 1 << 16; // should be larger than index buffer in fill_n
 
 using in = axis::integer<int, axis::null_type>;
 using in0 = axis::integer<int, axis::null_type, axis::option::none_t>;
@@ -56,7 +56,8 @@ struct axis2d {
 };
 
 template <class Tag>
-void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
+void run_tests(const std::vector<int>& x, const std::vector<int>& y,
+               const std::vector<double>& w) {
 
   // 1D simple
   {
@@ -104,11 +105,11 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
     h1(1);
     for (auto&& xi : x) h1(xi);
 
-    using V = variant<double, std::vector<double>>;
+    using V = variant<int, std::vector<int>>;
     std::vector<V> v(1);
     v[0] = 1;
     h2.fill(v);
-    v[0] = std::vector<double>(x.begin(), x.end());
+    v[0] = x;
     h2.fill(v);
 
     BOOST_TEST_EQ(h1, h2);
@@ -118,15 +119,16 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
 
     BOOST_TEST_EQ(h1, h2);
 
-    std::vector<double> w(y.begin(), y.end());
-
     for (unsigned i = 0; i < ndata; ++i) h1(weight(w[i]), x[i]);
     h2.fill(weight(w), x);
 
     BOOST_TEST_EQ(h1, h2);
 
-    w.resize(ndata - 1);
-    BOOST_TEST_THROWS(h2.fill(v, weight(w)), std::invalid_argument);
+#ifndef BOOST_NO_EXCEPTIONS
+    auto w2 = w;
+    w2.resize(ndata - 1);
+    BOOST_TEST_THROWS(h2.fill(v, weight(w2)), std::invalid_argument);
+#endif
   }
 
   // 2D variant and weight
@@ -135,7 +137,6 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
 
     using V = variant<int, std::vector<int>>;
     V xy[2];
-    std::vector<double> m(x.begin(), x.end());
 
     {
       xy[0] = 3;
@@ -172,8 +173,8 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
       xy[1] = y;
       auto h1 = h;
       auto h2 = h;
-      for (unsigned i = 0; i < ndata; ++i) h1(3, y[i], weight(x[i]));
-      h2.fill(xy, weight(x));
+      for (unsigned i = 0; i < ndata; ++i) h1(3, y[i], weight(w[i]));
+      h2.fill(xy, weight(w));
       BOOST_TEST_EQ(sum(h1), sum(h2));
       BOOST_TEST_EQ(h1, h2);
     }
@@ -212,9 +213,9 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
   {
     auto h = make(Tag(), in(1, 3), ing());
     auto h2 = h;
-    for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i], weight(x[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i], weight(w[i]));
     const auto xy = {x, y};
-    h2.fill(xy, weight(x));
+    h2.fill(xy, weight(w));
     BOOST_TEST_EQ(h, h2);
   }
 
@@ -222,9 +223,9 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
   {
     auto h = make(Tag(), ing(), ing());
     auto h2 = h;
-    for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i], weight(x[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i], weight(w[i]));
     const auto xy = {x, y};
-    h2.fill(xy, weight(x));
+    h2.fill(xy, weight(w));
     BOOST_TEST_EQ(h, h2);
   }
 
@@ -232,13 +233,12 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
   {
     auto h = make_s(Tag(), profile_storage(), in(1, 3));
     auto h2 = h;
-    for (auto&& xi : x) h(xi, sample(static_cast<double>(xi)));
-    std::vector<double> m(x.begin(), x.end());
-    h2.fill(x, sample(m));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(w[i]));
+
+    h2.fill(x, sample(w));
     BOOST_TEST_EQ(h, h2);
-    for (auto&& xi : x)
-      h(xi, sample(static_cast<double>(xi)), weight(static_cast<double>(xi)));
-    h2.fill(x, sample(m), weight(m));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(w[i]), weight(w[i]));
+    h2.fill(x, sample(w), weight(w));
     BOOST_TEST_EQ(h, h2);
   }
 
@@ -246,16 +246,14 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
   {
     auto h = make_s(Tag(), weighted_profile_storage(), in(1, 3), in0(1, 3));
     auto h2 = h;
-    std::vector<double> m(x.begin(), x.end());
 
-    using V = variant<double, std::vector<double>>;
-    std::array<V, 2> v;
-    v[0] = m;
-    v[1] = 3;
+    using V = variant<int, std::vector<int>>;
+    std::array<V, 2> xy;
+    xy[0] = x;
+    xy[1] = 3;
 
-    for (auto&& vi : m)
-      h(vi, 3, sample(static_cast<double>(vi)), weight(static_cast<double>(vi)));
-    h2.fill(v, sample(m), weight(m));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], 3, sample(w[i]), weight(w[i]));
+    h2.fill(xy, sample(w), weight(w));
 
     BOOST_TEST_EQ(h, h2);
   }
@@ -278,13 +276,16 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
 
 int main() {
   std::mt19937 gen(1);
-  std::uniform_int_distribution<> id(-2, 6);
+  std::normal_distribution<> id(0, 1);
   std::vector<int> x(ndata), y(ndata);
   std::generate(x.begin(), x.end(), [&] { return id(gen); });
   std::generate(y.begin(), y.end(), [&] { return id(gen); });
+  std::vector<double> w(ndata);
+  // must be all positive
+  std::generate(w.begin(), w.end(), [&] { return 0.5 + std::abs(id(gen)); });
 
-  run_tests<static_tag>(x, y);
-  run_tests<dynamic_tag>(x, y);
+  run_tests<static_tag>(x, y, w);
+  run_tests<dynamic_tag>(x, y, w);
 
   return boost::report_errors();
 }

@@ -11,6 +11,7 @@
 #include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
+#include <limits>
 #include <sstream>
 #include "is_close.hpp"
 #include "throw_exception.hpp"
@@ -30,6 +31,7 @@ int main() {
     using w_t = accumulators::weighted_sum<double>;
     w_t w;
     BOOST_TEST_EQ(str(w), "weighted_sum(0, 0)"s);
+    BOOST_TEST_EQ(w, w_t{});
 
     BOOST_TEST_EQ(w, w_t(0));
     BOOST_TEST_NE(w, w_t(1));
@@ -70,6 +72,7 @@ int main() {
     using m_t = accumulators::mean<double>;
     m_t a;
     BOOST_TEST_EQ(a.count(), 0);
+    BOOST_TEST_EQ(a, m_t{});
 
     a(4);
     a(7);
@@ -107,12 +110,19 @@ int main() {
     d(2, 16);
 
     BOOST_TEST_EQ(d, c);
+
+    m_t e, f;
+    e(std::numeric_limits<double>::quiet_NaN(), 1);
+    f(std::numeric_limits<double>::quiet_NaN(), 2);
+    BOOST_TEST_EQ(e, f);
+    BOOST_TEST_NE(e, m_t{});
   }
 
   {
     using m_t = accumulators::weighted_mean<double>;
     m_t a;
     BOOST_TEST_EQ(a.sum_of_weights(), 0);
+    BOOST_TEST_EQ(a, m_t{});
 
     a(0.5, 1);
     a(1.0, 2);
@@ -130,6 +140,12 @@ int main() {
     BOOST_TEST_EQ(b.sum_of_weights(), 4);
     BOOST_TEST_EQ(b.value(), 2);
     BOOST_TEST_IS_CLOSE(b.variance(), 0.615, 1e-3);
+
+    m_t c, d;
+    c(std::numeric_limits<double>::quiet_NaN(), 1);
+    d(std::numeric_limits<double>::quiet_NaN(), 2);
+    BOOST_TEST_EQ(c, d);
+    BOOST_TEST_NE(c, m_t{});
   }
 
   {

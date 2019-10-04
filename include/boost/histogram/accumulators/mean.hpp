@@ -7,6 +7,8 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 
+#include <boost/assert.hpp>
+#include <boost/histogram/detail/nan_equal.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <cstddef>
 #include <type_traits>
@@ -30,6 +32,7 @@ public:
   void operator()(const RealType& x) {
     sum_ += static_cast<RealType>(1);
     const auto delta = x - mean_;
+    BOOST_ASSERT(sum_ != 0);
     mean_ += delta / sum_;
     sum_of_deltas_squared_ += delta * (x - mean_);
   }
@@ -37,6 +40,7 @@ public:
   void operator()(const RealType& w, const RealType& x) {
     sum_ += w;
     const auto delta = x - mean_;
+    BOOST_ASSERT(sum_ != 0);
     mean_ += w * delta / sum_;
     sum_of_deltas_squared_ += w * delta * (x - mean_);
   }
@@ -45,6 +49,7 @@ public:
   mean& operator+=(const mean<T>& rhs) {
     const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
     sum_ += rhs.sum_;
+    BOOST_ASSERT(sum_ != 0);
     mean_ = tmp / sum_;
     sum_of_deltas_squared_ += static_cast<RealType>(rhs.sum_of_deltas_squared_);
     return *this;
@@ -58,8 +63,8 @@ public:
 
   template <class T>
   bool operator==(const mean<T>& rhs) const noexcept {
-    return sum_ == rhs.sum_ && mean_ == rhs.mean_ &&
-           sum_of_deltas_squared_ == rhs.sum_of_deltas_squared_;
+    return detail::nan_equal(sum_, rhs.sum_) && detail::nan_equal(mean_, rhs.mean_) &&
+           detail::nan_equal(sum_of_deltas_squared_, rhs.sum_of_deltas_squared_);
   }
 
   template <class T>
