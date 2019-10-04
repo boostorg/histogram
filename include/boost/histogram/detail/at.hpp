@@ -21,12 +21,12 @@ namespace detail {
 
 template <class A, class... Us>
 optional_index at(const A& axes, const std::tuple<Us...>& args) noexcept {
-  optional_index idx{0};
-  using namespace boost::mp11;
-  mp_for_each<mp_iota_c<sizeof...(Us)>>([&, stride = 1ull](auto i) mutable {
-    stride *= linearize_index(idx, stride, axis_get<i>(axes),
-                              static_cast<axis::index_type>(std::get<i>(args)));
-  });
+  optional_index idx{0}; // offset not used by linearize_index
+  mp11::mp_for_each<mp11::mp_iota_c<sizeof...(Us)>>(
+      [&, stride = static_cast<std::size_t>(1)](auto i) mutable {
+        stride *= linearize_index(idx, stride, axis_get<i>(axes),
+                                  static_cast<axis::index_type>(std::get<i>(args)));
+      });
   return idx;
 }
 
@@ -34,8 +34,8 @@ template <class A, class U>
 optional_index at(const A& axes, const U& args) noexcept {
   optional_index idx{0};
   using std::begin;
-  auto it = begin(args);
-  for_each_axis(axes, [&, stride = 1ull](const auto& a) mutable {
+  for_each_axis(axes, [&, it = begin(args),
+                       stride = static_cast<std::size_t>(1)](const auto& a) mutable {
     stride *= linearize_index(idx, stride, a, static_cast<axis::index_type>(*it++));
   });
   return idx;

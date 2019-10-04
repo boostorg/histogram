@@ -229,7 +229,7 @@ std::size_t bincount(const T& axes) {
 template <class T>
 std::size_t offset(const T& axes) {
   std::size_t n = 0;
-  for_each_axis(axes, [&n, stride = 1ull](const auto& a) mutable {
+  for_each_axis(axes, [&n, stride = static_cast<std::size_t>(1)](const auto& a) mutable {
     if (axis::traits::options(a) & axis::option::growth)
       n = invalid_index;
     else if (n != invalid_index && axis::traits::options(a) & axis::option::underflow)
