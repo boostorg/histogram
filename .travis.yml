@@ -27,11 +27,10 @@ matrix:
         - ctest -j2
 
     # earliest supported gcc version
-    - name: "gcc-5"
+    - name: "gcc-5: default and restricted"
       script:
-        - ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on
-        - ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on
-          exception-handling=off rtti=off test//minimal
+        - ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on examples test test//failure &&
+          ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on exception-handling=off rtti=off test//minimal
 
     - name: "clang: sanitizers"
       sudo: required # by leak sanitizer
@@ -39,8 +38,7 @@ matrix:
         - UBSAN_OPTIONS=print_stacktrace=1
           LSAN_OPTIONS=verbosity=1:log_threads=1
           ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1
-          ../../b2 -j2 toolset=clang cxxstd=14
-          variant=histogram_ubasan warnings-as-errors=on
+          ../../b2 -j2 toolset=clang cxxstd=14 variant=histogram_ubasan warnings-as-errors=on
 
     - name: "gcc-8: c++latest and coverage"
       addons:
