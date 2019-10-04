@@ -110,7 +110,7 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
   for_each_axis(axes, [&, stride = static_cast<std::size_t>(1),
                        pshift = shifts](auto& axis) mutable {
     using Axis = std::decay_t<decltype(axis)>;
-    static_if<is_variant<T>>(
+    static_if<is_variant<T>>( // LCOV_EXCL_LINE buggy in gcc-8, works in gcc-5
         [&](const auto& v) {
           variant2::visit(index_visitor<Index, Axis, IsGrowing>{axis, stride, start, size,
                                                                 indices, pshift},

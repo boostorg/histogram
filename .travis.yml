@@ -26,14 +26,10 @@ matrix:
       script:
         - ctest -j2
 
-    # gcc-7 and gcc-8 produce broken coverage data, so we use gcc-5
-    - name: "gcc-5: coverage"
+    # earliest supported gcc version
+    - name: "gcc-5"
       script:
-        - ../../b2 -j2 toolset=gcc-5 cxxstd=14 warnings-as-errors=on coverage=on test
-        - GCOV=gcov-5 tools/cov.sh
-
-    - name: "gcc-5: no exceptions, no rtti"
-      script:
+        - ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on
         - ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on
           exception-handling=off rtti=off test//minimal
 
@@ -46,13 +42,14 @@ matrix:
           ../../b2 -j2 toolset=clang cxxstd=14
           variant=histogram_ubasan warnings-as-errors=on
 
-    - name: "gcc-8: c++latest"
+    - name: "gcc-8: c++latest and coverage"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on examples test test//failure
+        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on coverage=on examples test test//failure
+        - GCOV=gcov-8 tools/cov.sh
 
 before_script:
   # clone minimal set of Boost libraries

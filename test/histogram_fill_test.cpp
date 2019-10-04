@@ -188,7 +188,7 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
     BOOST_TEST_EQ(h, h2);
   }
 
-  // 2D growing with weights
+  // 2D growing A
   {
     auto h = make(Tag(), in(1, 3), ing());
     auto h2 = h;
@@ -198,12 +198,33 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
     BOOST_TEST_EQ(h, h2);
   }
 
+  // 2D growing B
   {
     auto h = make(Tag(), ing(), ing());
     auto h2 = h;
     for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i]);
     const auto xy = {x, y};
     h2.fill(xy);
+    BOOST_TEST_EQ(h, h2);
+  }
+
+  // 2D growing A with weights
+  {
+    auto h = make(Tag(), in(1, 3), ing());
+    auto h2 = h;
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i], weight(x[i]));
+    const auto xy = {x, y};
+    h2.fill(xy, weight(x));
+    BOOST_TEST_EQ(h, h2);
+  }
+
+  // 2D growing B with weights
+  {
+    auto h = make(Tag(), ing(), ing());
+    auto h2 = h;
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i], weight(x[i]));
+    const auto xy = {x, y};
+    h2.fill(xy, weight(x));
     BOOST_TEST_EQ(h, h2);
   }
 
@@ -257,7 +278,7 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y) {
 
 int main() {
   std::mt19937 gen(1);
-  std::uniform_int_distribution<> id(0, 6);
+  std::uniform_int_distribution<> id(-2, 6);
   std::vector<int> x(ndata), y(ndata);
   std::generate(x.begin(), x.end(), [&] { return id(gen); });
   std::generate(y.begin(), y.end(), [&] { return id(gen); });
