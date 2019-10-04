@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_DETAIL_LINEARIZE_HPP
 
 #include <boost/assert.hpp>
+#include <boost/config/workaround.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>

@@ -72,10 +72,11 @@ struct index_visitor {
         },
         [this](const auto& t) {
           // T is value, fill single value N times
-          index_type delta{*begin_};
-          this->impl(&delta, t);
-          if (is_valid(delta)) {
-            delta -= *begin_;
+          index_type idx{*begin_};
+          this->impl(&idx, t);
+          if (is_valid(idx)) {
+            const std::intptr_t delta =
+                static_cast<std::size_t>(idx) - static_cast<std::size_t>(*begin_);
             for (auto&& idx : make_span(begin_, size_)) idx += delta;
           } else
             std::fill(begin_, begin_ + size_, invalid_index);
