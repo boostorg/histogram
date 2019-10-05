@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_TRAITS_HPP
 #define BOOST_HISTOGRAM_AXIS_TRAITS_HPP
 
+#include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/args_type.hpp>
 #include <boost/histogram/detail/cat.hpp>
@@ -119,19 +120,20 @@ namespace traits {
 
 /** Get value type for axis type.
 
-  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  Doxygen does not render this well. This is a meta-function (template alias), it accepts
   an axis type and returns the value type.
 */
 template <class Axis>
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-using value_type = std::decay_t<decltype(std::declval<Axis>().value(0))>;
+using value_type =
+    std::remove_cv_t<std::remove_reference_t<detail::arg_type<decltype(&Axis::index)>>>;
 #else
 struct value_type;
 #endif
 
 /** Whether axis is continuous or discrete.
 
-  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  Doxygen does not render this well. This is a meta-function (template alias), it accepts
   an axis type and returns a compile-time boolean. If the boolean is true, the axis is
   continuous. Otherwise it is discrete.
 */
@@ -144,7 +146,7 @@ struct is_continuous;
 
 /** Meta-function to detect whether an axis is reducible.
 
-  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  Doxygen does not render this well. This is a meta-function (template alias), it accepts
   an axis type and represents compile-time boolean which is true or false, depending on
   whether the axis can be reduced with boost::histogram::algorithm::reduce().
 
@@ -160,7 +162,7 @@ struct is_reducible;
 
 /** Get static axis options for axis type.
 
-  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  Doxygen does not render this well. This is a meta-function (template alias), it accepts
   an axis type and returns the boost::histogram::axis::option::bitset.
 
   If Axis::options() is valid and constexpr, static_options is the corresponding
@@ -178,7 +180,7 @@ struct static_options;
 
 /** Meta-function to detect whether an axis is inclusive.
 
-  Doxygen does not render this well. This is a meta-function (alias template), it accepts
+  Doxygen does not render this well. This is a meta-function (template alias), it accepts
   an axis type and represents compile-time boolean which is true or false, depending on
   whether the axis is inclusive or not.
 
@@ -201,21 +203,23 @@ using is_inclusive = typename detail::is_inclusive_impl<Axis>::type;
 struct is_inclusive;
 #endif
 
-// specialization for category axis
-
 /** Returns axis options as unsigned integer.
 
-  If axis.options() is valid, return the result. Otherwise, return
-  boost::histogram::axis::traits::static_options<decltype(axis)>::value.
+  If axis.options() is a valid expression, return the result. Otherwise, return
+  static_options<Axis>::value.
 
   @param axis any axis instance
 */
 template <class Axis>
 constexpr unsigned options(const Axis& axis) noexcept {
-  // cannot reuse static_options here, must also work for axis::variant
-  return detail::static_if<detail::has_method_options<Axis>>(
-      [](const auto& a) { return a.options(); },
-      [](const auto&) { return static_options<Axis>::value; }, axis);
+  boost::ignore_unused(axis);
+  return static_options<Axis>::value;
+}
+
+// specialization for variant
+template <class... Ts>
+unsigned options(const variant<Ts...>& axis) noexcept {
+  return axis.options();
 }
 
 /** Returns axis size plus any extra bins for under- and overflow.
@@ -223,7 +227,7 @@ constexpr unsigned options(const Axis& axis) noexcept {
   @param axis any axis instance
 */
 template <class Axis>
-constexpr index_type extent(const Axis& axis) noexcept {
+index_type extent(const Axis& axis) noexcept {
   const auto opt = options(axis);
   return axis.size() + (opt & option::underflow ? 1 : 0) +
          (opt & option::overflow ? 1 : 0);
@@ -288,11 +292,10 @@ Result value_as(const Axis& axis, real_index_type index) {
   @param axis any axis instance
   @param value argument to be passed to `index` method
 */
-template <class Axis, class U,
-          class _V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>>
-axis::index_type index(const Axis& axis,
-                       const U& value) noexcept(std::is_convertible<U, _V>::value) {
-  return axis.index(detail::try_cast<_V, std::invalid_argument>(value));
+template <class Axis, class U>
+axis::index_type index(const Axis& axis, const U& value) noexcept(
+    std::is_convertible<U, value_type<Axis>>::value) {
+  return axis.index(detail::try_cast<value_type<Axis>, std::invalid_argument>(value));
 }
 
 // specialization for variant
@@ -306,12 +309,12 @@ axis::index_type index(const variant<Ts...>& axis, const U& value) {
   @param axis any axis instance
 */
 template <class Axis>
-constexpr unsigned rank(const Axis& /* axis */) {
-  using namespace ::boost::mp11;
-  using Args = detail::args_type<decltype(&Axis::index)>;
-  using First = std::decay_t<mp_at_c<Args, 0>>;
-  return mp_eval_if_c<(mp_size<Args>::value != 1 || !detail::is_tuple<First>::value),
-                      mp_size<Args>, mp_size, First>::value;
+constexpr unsigned rank(const Axis& axis) {
+  boost::ignore_unused(axis);
+  using T = value_type<Axis>;
+  // cannot use mp_eval_or, since value type could be a fixed-sized sequence
+  return mp11::mp_eval_if_not<detail::is_tuple<T>, mp11::mp_size_t<1>, mp11::mp_size,
+                              T>::value;
 }
 
 // specialization for variant
@@ -331,13 +334,12 @@ unsigned rank(const axis::variant<Ts...>& axis) {
   @param axis any axis instance
   @param value argument to be passed to `update` or `index` method
 */
-template <class Axis, class U,
-          class _V = std::decay_t<detail::arg_type<decltype(&Axis::index)>>>
+template <class Axis, class U>
 std::pair<index_type, index_type> update(Axis& axis, const U& value) noexcept(
-    std::is_convertible<U, _V>::value) {
+    std::is_convertible<U, value_type<Axis>>::value) {
   return detail::static_if_c<static_options<Axis>::test(option::growth)>(
       [&value](auto& a) {
-        return a.update(detail::try_cast<_V, std::invalid_argument>(value));
+        return a.update(detail::try_cast<value_type<Axis>, std::invalid_argument>(value));
       },
       [&value](auto& a) { return std::make_pair(index(a, value), index_type{0}); }, axis);
 }
