@@ -129,8 +129,9 @@ public:
 
   /// Return value for index argument.
   /// Throws `std::out_of_range` if the index is out of bounds.
-  std::conditional_t<std::is_scalar<value_type>::value, value_type, const value_type&>
-  value(index_type idx) const {
+  auto value(index_type idx) const
+      -> std::conditional_t<std::is_scalar<value_type>::value, value_type,
+                            const value_type&> {
     if (idx < 0 || idx >= size())
       BOOST_THROW_EXCEPTION(std::out_of_range("category index out of range"));
     return vec_meta_.first()[idx];
