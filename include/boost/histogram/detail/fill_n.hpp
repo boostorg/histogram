@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
-#include <boost/config/workaround.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
@@ -49,48 +48,46 @@ struct index_visitor {
                 const pointer it, axis::index_type* shift)
       : axis_(a), stride_(str), start_(sta), size_(si), begin_(it), shift_(shift) {}
 
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(disable : 4127) // disable "warning" about using if constexpr
-#endif
-
   template <class T>
-  void impl(pointer it, const T& t) {
-    if (IsGrowing::value) { // must use this code for all axes if one of them is growing
-      axis::index_type shift;
-      linearize_growth(*it, shift, stride_, axis_, t);
-      if (shift > 0) { // shift previous indices, because axis zero-point has changed
-        while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride_;
-        *shift_ += shift;
-      }
-    } else {
-      linearize(*it, stride_, axis_, t);
+  void call_2(std::true_type, pointer it, const T& x) const {
+    // must use this code for all axes if one of them is growing
+    axis::index_type shift;
+    linearize_growth(*it, shift, stride_, axis_, x);
+    if (shift > 0) { // shift previous indices, because axis zero-point has changed
+      while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride_;
+      *shift_ += shift;
     }
   }
 
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(default : 4127)
-#endif
+  template <class T>
+  void call_2(std::false_type, pointer it, const T& x) const {
+    // no axis is growing
+    linearize(*it, stride_, axis_, x);
+  }
 
   template <class T>
-  void operator()(const T& t) {
-    static_if<is_iterable<T>>(
-        [this](const auto& t) {
-          // T is iterable, fill N values
-          auto it = begin_ - 1;
-          for (auto&& ti : make_span(dtl::data(t) + start_, size_)) this->impl(++it, ti);
-        },
-        [this](const auto& t) {
-          // T is value, fill single value N times
-          index_type idx{*begin_};
-          this->impl(&idx, t);
-          if (is_valid(idx)) {
-            const std::intptr_t delta =
-                static_cast<std::size_t>(idx) - static_cast<std::size_t>(*begin_);
-            for (auto&& i : make_span(begin_, size_)) i += delta;
-          } else
-            std::fill(begin_, begin_ + size_, invalid_index);
-        },
-        t);
+  void call_1(std::true_type, const T& iterable) const {
+    // T is iterable, fill N values
+    auto* tp = dtl::data(iterable) + start_;
+    for (auto it = begin_; it != begin_ + size_; ++it) call_2(IsGrowing{}, it, *tp++);
+  }
+
+  template <class T>
+  void call_1(std::false_type, const T& value) const {
+    // T is value, fill single value N times
+    index_type idx{*begin_};
+    call_2(IsGrowing{}, &idx, value);
+    if (is_valid(idx)) {
+      const auto delta =
+          static_cast<std::intptr_t>(idx) - static_cast<std::intptr_t>(*begin_);
+      for (auto&& i : make_span(begin_, size_)) i += delta;
+    } else
+      std::fill(begin_, begin_ + size_, invalid_index);
+  }
+
+  template <class T>
+  void operator()(const T& iterable_or_value) const {
+    call_1(is_iterable<T>{}, iterable_or_value);
   }
 };
 
