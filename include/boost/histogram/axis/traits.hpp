@@ -45,7 +45,7 @@ template <class T>
 using get_inclusive_from_method = std::integral_constant<bool, T::inclusive()>;
 
 template <class Axis>
-struct is_inclusive_impl {
+struct static_is_inclusive_impl {
   using type = mp11::mp_eval_or<decltype(static_options_impl<Axis>::type::test(
                                     axis::option::underflow | axis::option::overflow)),
                                 get_inclusive_from_method, Axis>;
@@ -198,9 +198,9 @@ struct static_options;
 */
 template <class Axis>
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-using is_inclusive = typename detail::is_inclusive_impl<Axis>::type;
+using static_is_inclusive = typename detail::static_is_inclusive_impl<Axis>::type;
 #else
-struct is_inclusive;
+struct static_is_inclusive;
 #endif
 
 /** Returns axis options as unsigned integer.
@@ -220,6 +220,24 @@ constexpr unsigned options(const Axis& axis) noexcept {
 template <class... Ts>
 unsigned options(const variant<Ts...>& axis) noexcept {
   return axis.options();
+}
+
+/** Returns true if axis is inclusive or false.
+
+  See static_is_inclusive for details.
+
+  @param axis any axis instance
+*/
+template <class Axis>
+constexpr bool inclusive(const Axis& axis) noexcept {
+  boost::ignore_unused(axis);
+  return static_is_inclusive<Axis>::value;
+}
+
+// specialization for variant
+template <class... Ts>
+bool inclusive(const variant<Ts...>& axis) noexcept {
+  return axis.inclusive();
 }
 
 /** Returns axis size plus any extra bins for under- and overflow.

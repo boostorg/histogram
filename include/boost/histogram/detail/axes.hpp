@@ -291,7 +291,7 @@ template <class T>
 using is_growing = decltype(axis::traits::static_options<T>::test(axis::option::growth));
 
 template <class T>
-using is_not_inclusive = mp11::mp_not<axis::traits::is_inclusive<T>>;
+using is_not_inclusive = mp11::mp_not<axis::traits::static_is_inclusive<T>>;
 
 template <class T>
 using is_multidim = is_tuple<std::decay_t<arg_type<decltype(&T::index)>>>;
@@ -300,10 +300,12 @@ template <template <class> class Trait, class T>
 struct has_special_axis_impl : Trait<T> {};
 
 template <template <class> class Trait, class... Ts>
-struct has_special_axis_impl<Trait, std::tuple<Ts...>> : mp11::mp_or<Trait<Ts>...> {};
+struct has_special_axis_impl<Trait, std::tuple<Ts...>>
+    : mp11::mp_or<Trait<std::decay_t<Ts>>...> {};
 
 template <template <class> class Trait, class... Ts>
-struct has_special_axis_impl<Trait, axis::variant<Ts...>> : mp11::mp_or<Trait<Ts>...> {};
+struct has_special_axis_impl<Trait, axis::variant<Ts...>>
+    : mp11::mp_or<Trait<std::decay_t<Ts>>...> {};
 
 template <template <class> class Trait, class T>
 using has_special_axis = typename has_special_axis_impl<

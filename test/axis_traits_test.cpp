@@ -48,7 +48,7 @@ int main() {
     BOOST_TEST_TRAIT_FALSE((traits::is_reducible<category<>>));
   }
 
-  // is_inclusive
+  // static_is_inclusive
   {
     struct empty {};
     struct with_opts_not_inclusive {
@@ -56,40 +56,40 @@ int main() {
       static constexpr bool inclusive() { return false; }
     };
 
-    BOOST_TEST_TRAIT_FALSE((traits::is_inclusive<empty>));
-    BOOST_TEST_TRAIT_FALSE((traits::is_inclusive<with_opts_not_inclusive>));
+    BOOST_TEST_TRAIT_FALSE((traits::static_is_inclusive<empty>));
+    BOOST_TEST_TRAIT_FALSE((traits::static_is_inclusive<with_opts_not_inclusive>));
 
-    BOOST_TEST_TRAIT_TRUE((traits::is_inclusive<regular<>>));
+    BOOST_TEST_TRAIT_TRUE((traits::static_is_inclusive<regular<>>));
     BOOST_TEST_TRAIT_FALSE(
-        (traits::is_inclusive<
+        (traits::static_is_inclusive<
             regular<double, boost::use_default, boost::use_default, option::growth_t>>));
     BOOST_TEST_TRAIT_FALSE(
-        (traits::is_inclusive<regular<double, boost::use_default, boost::use_default,
-                                      option::circular_t>>));
+        (traits::static_is_inclusive<regular<double, boost::use_default,
+                                             boost::use_default, option::circular_t>>));
 
-    BOOST_TEST_TRAIT_TRUE((traits::is_inclusive<variable<>>));
-    BOOST_TEST_TRAIT_FALSE(
-        (traits::is_inclusive<variable<double, boost::use_default, option::growth_t>>));
-    BOOST_TEST_TRAIT_FALSE(
-        (traits::is_inclusive<variable<double, boost::use_default, option::circular_t>>));
+    BOOST_TEST_TRAIT_TRUE((traits::static_is_inclusive<variable<>>));
+    BOOST_TEST_TRAIT_FALSE((traits::static_is_inclusive<
+                            variable<double, boost::use_default, option::growth_t>>));
+    BOOST_TEST_TRAIT_FALSE((traits::static_is_inclusive<
+                            variable<double, boost::use_default, option::circular_t>>));
 
-    BOOST_TEST_TRAIT_TRUE((traits::is_inclusive<integer<int>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (traits::is_inclusive<integer<int, boost::use_default, option::growth_t>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (traits::is_inclusive<integer<int, boost::use_default, option::circular_t>>));
+    BOOST_TEST_TRAIT_TRUE((traits::static_is_inclusive<integer<int>>));
+    BOOST_TEST_TRAIT_TRUE((
+        traits::static_is_inclusive<integer<int, boost::use_default, option::growth_t>>));
+    BOOST_TEST_TRAIT_TRUE((traits::static_is_inclusive<
+                           integer<int, boost::use_default, option::circular_t>>));
 
-    BOOST_TEST_TRAIT_TRUE((traits::is_inclusive<integer<double>>));
-    BOOST_TEST_TRAIT_FALSE(
-        (traits::is_inclusive<integer<double, boost::use_default, option::growth_t>>));
-    BOOST_TEST_TRAIT_FALSE(
-        (traits::is_inclusive<integer<double, boost::use_default, option::circular_t>>));
+    BOOST_TEST_TRAIT_TRUE((traits::static_is_inclusive<integer<double>>));
+    BOOST_TEST_TRAIT_FALSE((traits::static_is_inclusive<
+                            integer<double, boost::use_default, option::growth_t>>));
+    BOOST_TEST_TRAIT_FALSE((traits::static_is_inclusive<
+                            integer<double, boost::use_default, option::circular_t>>));
 
-    BOOST_TEST_TRAIT_TRUE((traits::is_inclusive<category<int>>));
-    BOOST_TEST_TRAIT_TRUE(
-        (traits::is_inclusive<category<int, boost::use_default, option::growth_t>>));
+    BOOST_TEST_TRAIT_TRUE((traits::static_is_inclusive<category<int>>));
+    BOOST_TEST_TRAIT_TRUE((traits::static_is_inclusive<
+                           category<int, boost::use_default, option::growth_t>>));
     BOOST_TEST_TRAIT_FALSE(
-        (traits::is_inclusive<category<int, boost::use_default, option::none_t>>));
+        (traits::static_is_inclusive<category<int, boost::use_default, option::none_t>>));
   }
 
   // index, rank, value, width
