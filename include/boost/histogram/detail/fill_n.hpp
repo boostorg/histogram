@@ -234,56 +234,54 @@ void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t 
   }
 }
 
-template <class S, class A, class T, class... Us>
-void fill_n_impl(mp11::mp_false, const std::size_t offset, S& storage, A& axes,
-                 const std::size_t vsize, const T* values, Us&&... rest) {
+template <class S, class A, class T, class... Us, class L = mp11::mp_list<Us...>>
+std::enable_if_t<(
+    mp11::mp_count_if<L, is_weight>::value + mp11::mp_count_if<L, is_sample>::value == 0)>
+fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
+         const T* values, Us&&... rest) {
   fill_n_nd(offset, storage, axes, vsize, values, std::forward<Us>(rest)...);
 }
 
 // unpack weight argument, can be iterable or value
 template <class S, class A, class T, class U, class... Us>
-void fill_n_impl(mp11::mp_true, const std::size_t offset, S& storage, A& axes,
-                 const std::size_t vsize, const T* values, const weight_type<U>& weights,
-                 const Us&... rest) {
+void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
+              const T* values, const weight_type<U>& weights, const Us&... rest) {
   static_if<is_iterable<std::remove_cv_t<std::remove_reference_t<U>>>>(
       [&](const auto& w, const auto&... rest) {
         const auto wsize = dtl::size(w);
         if (vsize != wsize)
           throw_exception(
               std::invalid_argument("number of arguments must match histogram rank"));
-        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, offset, storage, axes, vsize, values,
-                    wsize, dtl::data(w), rest...);
+        fill_n_1(offset, storage, axes, vsize, values, wsize, dtl::data(w), rest...);
       },
       [&](const auto w, const auto&... rest) {
-        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, offset, storage, axes, vsize, values,
-                    static_cast<std::size_t>(1), &w, rest...);
+        fill_n_1(offset, storage, axes, vsize, values, static_cast<std::size_t>(1), &w,
+                 rest...);
       },
       weights.value, rest...);
 }
 
 // unpack sample argument after weight was unpacked
 template <class S, class A, class T, class U, class V>
-void fill_n_impl(mp11::mp_true, std::size_t offset, S& storage, A& axes,
-                 const std::size_t vsize, const T* values, const std::size_t wsize,
-                 const U* wptr, const sample_type<V>& s) {
+void fill_n_1(std::size_t offset, S& storage, A& axes, const std::size_t vsize,
+              const T* values, const std::size_t wsize, const U* wptr,
+              const sample_type<V>& s) {
   mp11::tuple_apply(
       [&](const auto&... sargs) {
-        fill_n_impl(mp11::mp_false{}, offset, storage, axes, vsize, values, wsize,
-                    std::move(wptr), dtl::data(sargs)...);
+        fill_n_1(offset, storage, axes, vsize, values, wsize, std::move(wptr),
+                 dtl::data(sargs)...);
       },
       s.value);
 }
 
 // unpack sample argument (no weight argument)
 template <class S, class A, class T, class U>
-void fill_n_impl(mp11::mp_true, const std::size_t offset, S& storage, A& axes,
-                 const std::size_t vsize, const T* values,
-                 const sample_type<U>& samples) {
+void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
+              const T* values, const sample_type<U>& samples) {
   using namespace boost::mp11;
   tuple_apply(
       [&](const auto&... sargs) {
-        fill_n_impl(mp_false{}, offset, storage, axes, vsize, values,
-                    dtl::data(sargs)...);
+        fill_n_1(offset, storage, axes, vsize, values, dtl::data(sargs)...);
       },
       samples.value);
 }
@@ -295,19 +293,16 @@ void fill_n(const std::size_t offset, S& storage, A& axes, const T* values,
                 "passing iterable of pointers not allowed (cannot determine lengths); "
                 "pass iterable of iterables instead");
   using namespace boost::mp11;
-  using LUs = mp_list<Us...>;
-  using Unpack = mp_or<mp_count_if<LUs, is_weight>, mp_count_if<LUs, is_sample>>;
   static_if<mp_or<is_iterable<T>, is_variant<T>>>(
       [&](const auto& values) {
         if (axes_rank(axes) != vsize)
           throw_exception(
               std::invalid_argument("number of arguments must match histogram rank"));
-        fill_n_impl(Unpack{}, offset, storage, axes, get_total_size(values, vsize),
-                    values, rest...);
+        fill_n_1(offset, storage, axes, get_total_size(values, vsize), values, rest...);
       },
       [&](const auto& values) {
         auto s = make_span(values, vsize);
-        fill_n_impl(Unpack{}, offset, storage, axes, vsize, &s, rest...);
+        fill_n_1(offset, storage, axes, vsize, &s, rest...);
       },
       values);
 }
