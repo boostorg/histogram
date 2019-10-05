@@ -107,7 +107,7 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
   for_each_axis(axes, [&, stride = static_cast<std::size_t>(1),
                        pshift = shifts](auto& axis) mutable {
     using Axis = std::decay_t<decltype(axis)>;
-    static_if<is_variant<T>>( // LCOV_EXCL_LINE buggy in gcc-8, works in gcc-5
+    static_if<is_variant<T>>( // LCOV_EXCL_LINE: buggy in gcc-8, ok in gcc-5
         [&](const auto& v) {
           variant2::visit(index_visitor<Index, Axis, IsGrowing>{axis, stride, start, size,
                                                                 indices, pshift},
@@ -189,12 +189,11 @@ std::size_t get_total_size(const T* values, std::size_t vsize) {
 }
 
 // general Nd treatment
-template <class S, class A, class T, class... Ts>
+template <class Index, class S, class A, class T, class... Ts>
 void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
                const T* values, Ts&&... rest) {
   constexpr std::size_t buffer_size = 1ul << 14;
-  using index_type = mp11::mp_if<has_non_inclusive_axis<A>, optional_index, std::size_t>;
-  index_type indices[buffer_size];
+  Index indices[buffer_size];
 
   /*
     Parallelization options.
@@ -234,12 +233,44 @@ void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t 
   }
 }
 
+template <class S, class... As, class T, class... Us, class L = mp11::mp_list<Us...>>
+void fill_n_2(const std::size_t offset, S& storage, std::tuple<As...>& axes,
+              const std::size_t vsize, const T* values, Us&&... rest) {
+  using index_type =
+      mp11::mp_if<has_non_inclusive_axis<std::tuple<As...>>, optional_index, std::size_t>;
+  fill_n_nd<index_type>(offset, storage, axes, vsize, values, std::forward<Us>(rest)...);
+}
+
+template <class S, class A, class T, class... Us, class L = mp11::mp_list<Us...>>
+void fill_n_2(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
+              const T* values, Us&&... rest) {
+  bool all_inclusive = true;
+  for_each_axis(axes,
+                [&](const auto& ax) { all_inclusive &= axis::traits::inclusive(ax); });
+  if (axes_rank(axes) == 1) {
+    axis::visit(
+        [&](auto& ax) {
+          std::tuple<decltype(ax)> axes{ax};
+          fill_n_2(offset, storage, axes, vsize, values, std::forward<Us>(rest)...);
+        },
+        axes[0]);
+  } else {
+    if (all_inclusive)
+      fill_n_nd<std::size_t>(offset, storage, axes, vsize, values,
+                             std::forward<Us>(rest)...);
+    else
+      fill_n_nd<optional_index>(offset, storage, axes, vsize, values,
+                                std::forward<Us>(rest)...);
+  }
+}
+
 template <class S, class A, class T, class... Us, class L = mp11::mp_list<Us...>>
 std::enable_if_t<(
     mp11::mp_count_if<L, is_weight>::value + mp11::mp_count_if<L, is_sample>::value == 0)>
 fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
          const T* values, Us&&... rest) {
-  fill_n_nd(offset, storage, axes, vsize, values, std::forward<Us>(rest)...);
+  // select fastest available code in fill_n_2, possibly using run-time information
+  fill_n_2(offset, storage, axes, vsize, values, std::forward<Us>(rest)...);
 }
 
 // unpack weight argument, can be iterable or value
