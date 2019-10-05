@@ -87,7 +87,7 @@ struct unsafe_access {
     return hist.offset_;
   }
 
-  /// @copy offset()
+  /// @copydoc offset()
   template <class Histogram>
   static const auto& offset(const Histogram& hist) {
     return hist.offset_;
