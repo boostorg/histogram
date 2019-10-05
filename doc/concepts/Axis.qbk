@@ -76,6 +76,13 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   ]
 ]
 [
+  [`a.inclusive()`]
+  [`bool`]
+  [
+    Static constexpr member function which returns true, if the axis has a bin for every possible input value, and false otherwise. Faster code can be generated if all axes types in a histogram are inclusive. An axis with underflow and overflow bins is always inclusive. An axis may be inclusive even if underflow or overflow bins are missing. For example, a category axis is inclusive if it has an overflow bin or if it is growing.
+  ]
+]
+[
   [`a.metadata()`]
   [`const M&`]
   [
