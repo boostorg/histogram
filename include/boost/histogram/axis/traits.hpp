@@ -330,7 +330,7 @@ template <class Axis>
 constexpr unsigned rank(const Axis& axis) {
   boost::ignore_unused(axis);
   using T = value_type<Axis>;
-  // cannot use mp_eval_or, since value type could be a fixed-sized sequence
+  // cannot use mp_eval_or since T could be a fixed-sized sequence
   return mp11::mp_eval_if_not<detail::is_tuple<T>, mp11::mp_size_t<1>, mp11::mp_size,
                               T>::value;
 }
