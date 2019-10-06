@@ -293,29 +293,51 @@ using is_growing = decltype(axis::traits::static_options<T>::test(axis::option::
 template <class T>
 using is_not_inclusive = mp11::mp_not<axis::traits::static_is_inclusive<T>>;
 
+// for vector<T>
 template <class T>
-using is_multidim = is_tuple<std::decay_t<arg_type<decltype(&T::index)>>>;
+struct axis_types_impl {
+  using type = mp11::mp_list<std::decay_t<T>>;
+};
 
-template <template <class> class Trait, class T>
-struct has_special_axis_impl : Trait<T> {};
+// for vector<variant<Ts...>>
+template <class... Ts>
+struct axis_types_impl<axis::variant<Ts...>> {
+  using type = mp11::mp_list<std::decay_t<Ts>...>;
+};
 
-template <template <class> class Trait, class... Ts>
-struct has_special_axis_impl<Trait, std::tuple<Ts...>>
-    : mp11::mp_or<Trait<std::decay_t<Ts>>...> {};
-
-template <template <class> class Trait, class... Ts>
-struct has_special_axis_impl<Trait, axis::variant<Ts...>>
-    : mp11::mp_or<Trait<std::decay_t<Ts>>...> {};
-
-template <template <class> class Trait, class T>
-using has_special_axis = typename has_special_axis_impl<
-    Trait, mp11::mp_if<is_vector_like<T>, mp11::mp_first<T>, T>>::type;
-
-template <class T>
-using has_growing_axis = has_special_axis<is_growing, T>;
+// for tuple<Ts...>
+template <class... Ts>
+struct axis_types_impl<std::tuple<Ts...>> {
+  using type = mp11::mp_list<std::decay_t<Ts>...>;
+};
 
 template <class T>
-using has_non_inclusive_axis = has_special_axis<is_not_inclusive, T>;
+using axis_types =
+    typename axis_types_impl<mp11::mp_if<is_vector_like<T>, mp11::mp_first<T>, T>>::type;
+
+template <template <class> class Trait, class Axes>
+using has_special_axis = mp11::mp_any_of<axis_types<Axes>, Trait>;
+
+template <class Axes>
+using has_growing_axis = mp11::mp_any_of<axis_types<Axes>, is_growing>;
+
+template <class Axes>
+using has_non_inclusive_axis = mp11::mp_any_of<axis_types<Axes>, is_not_inclusive>;
+
+template <class T>
+constexpr std::size_t type_score() {
+  return sizeof(T) *
+         (std::is_integral<T>::value ? 1 : std::is_floating_point<T>::value ? 10 : 100);
+}
+
+// arbitrary ordering of types
+template <class T, class U>
+using type_less = mp11::mp_bool<(type_score<T>() < type_score<U>())>;
+
+template <class Axes>
+using value_types = mp11::mp_sort<
+    mp11::mp_unique<mp11::mp_transform<axis::traits::value_type, axis_types<Axes>>>,
+    type_less>;
 
 } // namespace detail
 } // namespace histogram

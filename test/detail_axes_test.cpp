@@ -133,6 +133,7 @@ int main() {
     BOOST_TEST_THROWS(detail::bincount(v), std::overflow_error);
   }
 
+  // has_growing_axis
   {
     struct growing {
       auto update(int) { return std::make_pair(0, 0); }
@@ -153,6 +154,23 @@ int main() {
     BOOST_TEST_TRAIT_FALSE((detail::has_growing_axis<D>));
     BOOST_TEST_TRAIT_FALSE((detail::has_growing_axis<E>));
     BOOST_TEST_TRAIT_FALSE((detail::has_growing_axis<F>));
+  }
+
+  // value_types
+  {
+    using R = axis::regular<float>;
+    using I = axis::integer<int>;
+    using CI = axis::category<int>;
+    using CS = axis::category<std::string>;
+    using A = std::vector<axis::variant<R, I, CS>>;
+    using B = std::vector<axis::variant<CS, I, CI, R>>;
+    using C = std::tuple<I, R, CS>;
+    using D = std::tuple<CS, I, CI, R>;
+    using Expected = boost::mp11::mp_list<int, float, std::string>;
+    BOOST_TEST_TRAIT_SAME(detail::value_types<A>, Expected);
+    BOOST_TEST_TRAIT_SAME(detail::value_types<B>, Expected);
+    BOOST_TEST_TRAIT_SAME(detail::value_types<C>, Expected);
+    BOOST_TEST_TRAIT_SAME(detail::value_types<D>, Expected);
   }
 
   return boost::report_errors();
