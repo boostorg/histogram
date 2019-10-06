@@ -42,12 +42,10 @@ public:
   constexpr std::size_t size() const noexcept { return N; }
 
 protected:
-  constexpr span_base(T* b, std::size_t s) noexcept : begin_(b) {
-    static_assert(N == s, "sizes do not match");
-  }
+  constexpr span_base(T* b, std::size_t s) noexcept : begin_(b) { BOOST_ASSERT(N == s); }
   constexpr void set(T* b, std::size_t s) noexcept {
     begin_ = b;
-    static_assert(N == s, "sizes do not match");
+    BOOST_ASSERT(N == s);
   }
 
 private:
@@ -138,6 +136,11 @@ public:
                                       std::is_convertible<U, element_type>::value)> >
   constexpr span(const span<U, N>& s) noexcept : span(s.data(), s.size()) {}
 
+  template <class U, std::size_t N,
+            class = std::enable_if_t<((extent == dynamic_extent || extent == N) &&
+                                      std::is_convertible<U, element_type>::value)> >
+  constexpr span(span<U, N>& s) noexcept : span(s.data(), s.size()) {}
+
   constexpr span(const span& other) noexcept = default;
 
   constexpr iterator begin() { return base::data(); }
@@ -224,6 +227,17 @@ span<T> make_span(T* begin, T* end) {
 template <class T>
 span<T> make_span(T* begin, std::size_t size) {
   return span<T>{begin, size};
+}
+
+template <class Container, class = decltype(size(std::declval<Container>()),
+                                            data(std::declval<Container>()))>
+auto make_span(const Container& cont) {
+  return make_span(data(cont), size(cont));
+}
+
+template <class T, std::size_t N>
+span<T> make_span(T (&arr)[N]) {
+  return span<T>(arr, N);
 }
 
 } // namespace detail
