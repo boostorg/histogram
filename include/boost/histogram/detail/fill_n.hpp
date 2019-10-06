@@ -145,16 +145,12 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
 }
 
 template <class S, class Index, class... Ts>
-void fill_n_storage(S& s, const Index idx, Ts&&... ptr_size_pairs) noexcept {
+void fill_n_storage(S& s, const Index idx, Ts&&... p) noexcept {
   if (is_valid(idx)) {
     BOOST_ASSERT(idx < s.size());
-    fill_storage_3(s[idx], *ptr_size_pairs.first...);
+    fill_storage_3(s[idx], *p.first...);
   }
-  auto inc = [](auto&& p) {
-    if (p.second > 1) ++p.first;
-    return 0;
-  };
-  fold(inc(ptr_size_pairs)...);
+  fold((p.second > 1 ? ++p.first : 0)...);
 }
 
 // general Nd treatment
@@ -262,6 +258,8 @@ void fill_n_check_extra_args(std::size_t n, Ts&&... ts) {
   };
   fold(check(ts)...);
 }
+
+void fill_n_check_extra_args(std::size_t) noexcept {}
 
 template <class S, class A, class T, class... Us>
 void fill_n(const std::size_t offset, S& storage, A& axes,

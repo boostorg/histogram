@@ -95,6 +95,8 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     BOOST_TEST_THROWS(h2.fill(std::array<std::vector<int>, 2>(
                           {std::vector<int>(2), std::vector<int>(3)})),
                       std::invalid_argument);
+
+    BOOST_TEST_THROWS(h.fill(x), std::invalid_argument);
   }
 
   // 1D variant and weight
