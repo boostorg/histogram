@@ -276,7 +276,7 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
 
 int main() {
   std::mt19937 gen(1);
-  std::normal_distribution<> id(0, 1);
+  std::normal_distribution<> id(0, 2);
   std::vector<int> x(ndata), y(ndata);
   auto generator = [&] { return static_cast<int>(id(gen)); };
   std::generate(x.begin(), x.end(), generator);

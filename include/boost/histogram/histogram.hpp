@@ -202,37 +202,23 @@ public:
 
   /** Fill histogram with several values at once.
 
-    In general, the argument must be an iterable with the same length as the rank of the
-    histogram. The elements of the iterable may be either identical sub-iterables over
-    values or a variant. The variant may hold sub-iterables over values or single values.
-    All sub-iterables must have the same length.
+    The argument must be an iterable with a size that matches the
+    rank of the histogram. The element of an iterable may be 1) a value or 2) an iterable
+    with contiguous storage over values or 3) a variant of 1) and 2). Sub-iterables must
+    have the same length.
 
-    Values in sub-iterables are passed to the corresponding histogram axis. A single
-    value is treated as if a sub-iterable was passed that is filled with copies of this
-    value.
+    Values are passed to the corresponding histogram axis in order. If a single value is
+    passed together with an iterable of values, the single value is treated like an
+    iterable with matching length of copies of this value.
 
-    If the histogram has only one axis, a sub-iterable may be passed directly in place of
-    the main iterable.
+    If the histogram has only one axis, an iterable of values may be passed directly.
 
     @param args iterable as explained in the long description.
   */
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args) {
     std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::data(args),
-                   detail::size(args));
-  }
-
-  /** Fill histogram with several values and weights at once.
-
-    @param weights single weight or an iterable of weights.
-    @param args iterable of values.
-  */
-  template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
-  void fill(const weight_type<T>& weights, const Iterable& args) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::data(args),
-                   detail::size(args), weights);
+    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::make_span(args));
   }
 
   /** Fill histogram with several values and weights at once.
@@ -243,20 +229,18 @@ public:
   template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const weight_type<T>& weights) {
     std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::data(args),
-                   detail::size(args), weights);
+    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::make_span(args),
+                   detail::to_ptr_size(weights.value));
   }
 
-  /** Fill histogram with several values and samples at once.
+  /** Fill histogram with several values and weights at once.
 
-    @param samples single sample or an iterable of samples.
+    @param weights single weight or an iterable of weights.
     @param args iterable of values.
   */
   template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
-  void fill(const sample_type<T>& samples, const Iterable& args) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::data(args),
-                   detail::size(args), samples);
+  void fill(const weight_type<T>& weights, const Iterable& args) {
+    fill(args, weights);
   }
 
   /** Fill histogram with several values and samples at once.
@@ -267,40 +251,53 @@ public:
   template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const sample_type<T>& samples) {
     std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::data(args),
-                   detail::size(args), samples);
+    mp11::tuple_apply(
+        [&](const auto&... sargs) {
+          detail::fill_n(offset_, storage_and_mutex_.first(), axes_,
+                         detail::make_span(args), detail::to_ptr_size(sargs)...);
+        },
+        samples.value);
   }
 
-  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
-  void fill(const sample_type<T>& samples, const weight_type<U>& weights,
-            const Iterable& args) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::data(args),
-                   detail::size(args), weights, samples);
-  }
+  /** Fill histogram with several values and samples at once.
 
-  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
-  void fill(const weight_type<T>& weights, const sample_type<U>& samples,
-            const Iterable& args) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::data(args),
-                   detail::size(args), weights, samples);
-  }
-
-  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
-  void fill(const Iterable& args, const sample_type<T>& samples,
-            const weight_type<U>& weights) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::data(args),
-                   detail::size(args), weights, samples);
+    @param samples single sample or an iterable of samples.
+    @param args iterable of values.
+  */
+  template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
+  void fill(const sample_type<T>& samples, const Iterable& args) {
+    fill(args, samples);
   }
 
   template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const weight_type<T>& weights,
             const sample_type<U>& samples) {
     std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::data(args),
-                   detail::size(args), weights, samples);
+    mp11::tuple_apply(
+        [&](const auto&... sargs) {
+          detail::fill_n(offset_, storage_and_mutex_.first(), axes_,
+                         detail::make_span(args), detail::to_ptr_size(weights.value),
+                         detail::to_ptr_size(sargs)...);
+        },
+        samples.value);
+  }
+
+  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
+  void fill(const sample_type<T>& samples, const weight_type<U>& weights,
+            const Iterable& args) {
+    fill(args, weights, samples);
+  }
+
+  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
+  void fill(const weight_type<T>& weights, const sample_type<U>& samples,
+            const Iterable& args) {
+    fill(args, weights, samples);
+  }
+
+  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
+  void fill(const Iterable& args, const sample_type<T>& samples,
+            const weight_type<U>& weights) {
+    fill(args, weights, samples);
   }
 
   /** Access cell value at integral indices.

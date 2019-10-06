@@ -25,12 +25,23 @@
 #include <boost/variant2/variant.hpp>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 namespace boost {
 namespace histogram {
 namespace detail {
 
 namespace dtl = boost::histogram::detail;
+
+template <class... Ts>
+void fold(Ts&&...) noexcept {} // helper to enable operator folding
+
+template <class T>
+auto to_ptr_size(const T& x) {
+  return static_if<std::is_scalar<T>>(
+      [](const auto& x) { return std::make_pair(&x, static_cast<std::size_t>(1)); },
+      [](const auto& x) { return std::make_pair(dtl::data(x), dtl::size(x)); }, x);
+}
 
 template <class Index, class Axis, class IsGrowing>
 struct index_visitor {
@@ -133,65 +144,23 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
   }
 }
 
-template <class... Ts>
-void fold(Ts...) noexcept {} // helper to enable operator folding
-
-template <class... Us>
-void increment_pointers(const Us*&&... ptrs) noexcept {
-  fold(++ptrs...);
-}
-
-template <class T, class... Us>
-void increment_pointers(std::size_t wsize, const T*&& wptr,
-                        const Us*&&... sptrs) noexcept {
-  fold(++sptrs...);
-  if (wsize > 1) ++wptr;
-}
-
-template <class S, class... Us>
-void fill_n_storage_2(S& s, const std::size_t& idx, std::size_t,
-                      const Us*&&... ptrs) noexcept {
-  fill_storage_3(s[idx], *ptrs...);
-}
-
-template <class S, class... Ts>
-void fill_n_storage_2(S& s, const std::size_t& idx, const Ts*&&... ptrs) noexcept {
-  fill_storage_3(s[idx], *ptrs...);
-}
-
 template <class S, class Index, class... Ts>
-void fill_n_storage(S& s, const Index idx, Ts&&... ts) noexcept {
+void fill_n_storage(S& s, const Index idx, Ts&&... ptr_size_pairs) noexcept {
   if (is_valid(idx)) {
     BOOST_ASSERT(idx < s.size());
-    fill_n_storage_2(s, idx, std::forward<Ts>(ts)...);
+    fill_storage_3(s[idx], *ptr_size_pairs.first...);
   }
-  increment_pointers(std::forward<Ts>(ts)...);
-}
-
-template <class T>
-std::size_t get_total_size(const T* values, std::size_t vsize) {
-  std::size_t s = 1u;
-  auto vis = [&s](const auto& v) {
-    // cannot be replaced by std::decay_t
-    using U = std::remove_cv_t<std::remove_reference_t<decltype(v)>>;
-    const std::size_t n = static_if<is_iterable<U>>(
-        [](const auto& v) { return dtl::size(v); },
-        [](const auto&) { return static_cast<std::size_t>(1); }, v);
-    if (s == 1u)
-      s = n;
-    else if (n > 1u && s != n)
-      throw_exception(std::invalid_argument("spans must have same length"));
+  auto inc = [](auto&& p) {
+    if (p.second > 1) ++p.first;
+    return 0;
   };
-  for (const auto& v : make_span(values, vsize))
-    static_if<is_iterable<T>>([&vis](const auto& v) { vis(v); },
-                              [&vis](const auto& v) { variant2::visit(vis, v); }, v);
-  return s;
+  fold(inc(ptr_size_pairs)...);
 }
 
 // general Nd treatment
 template <class Index, class S, class A, class T, class... Ts>
 void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
-               const T* values, Ts&&... rest) {
+               const T* values, Ts&&... ts) {
   constexpr std::size_t buffer_size = 1ul << 14;
   Index indices[buffer_size];
 
@@ -229,21 +198,21 @@ void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t 
     fill_n_indices(indices, start, n, offset, storage, axes, values);
     // ...and fill corresponding storage cells
     for (auto&& idx : make_span(indices, n))
-      fill_n_storage(storage, idx, std::forward<Ts>(rest)...);
+      fill_n_storage(storage, idx, std::forward<Ts>(ts)...);
   }
 }
 
-template <class S, class... As, class T, class... Us, class L = mp11::mp_list<Us...>>
-void fill_n_2(const std::size_t offset, S& storage, std::tuple<As...>& axes,
-              const std::size_t vsize, const T* values, Us&&... rest) {
+template <class S, class... As, class T, class... Us>
+void fill_n_1(const std::size_t offset, S& storage, std::tuple<As...>& axes,
+              const std::size_t vsize, const T* values, Us&&... us) {
   using index_type =
       mp11::mp_if<has_non_inclusive_axis<std::tuple<As...>>, optional_index, std::size_t>;
-  fill_n_nd<index_type>(offset, storage, axes, vsize, values, std::forward<Us>(rest)...);
+  fill_n_nd<index_type>(offset, storage, axes, vsize, values, std::forward<Us>(us)...);
 }
 
-template <class S, class A, class T, class... Us, class L = mp11::mp_list<Us...>>
-void fill_n_2(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
-              const T* values, Us&&... rest) {
+template <class S, class A, class T, class... Us>
+void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
+              const T* values, Us&&... us) {
   bool all_inclusive = true;
   for_each_axis(axes,
                 [&](const auto& ax) { all_inclusive &= axis::traits::inclusive(ax); });
@@ -251,89 +220,71 @@ void fill_n_2(const std::size_t offset, S& storage, A& axes, const std::size_t v
     axis::visit(
         [&](auto& ax) {
           std::tuple<decltype(ax)> axes{ax};
-          fill_n_2(offset, storage, axes, vsize, values, std::forward<Us>(rest)...);
+          fill_n_1(offset, storage, axes, vsize, values, std::forward<Us>(us)...);
         },
         axes[0]);
   } else {
     if (all_inclusive)
       fill_n_nd<std::size_t>(offset, storage, axes, vsize, values,
-                             std::forward<Us>(rest)...);
+                             std::forward<Us>(us)...);
     else
       fill_n_nd<optional_index>(offset, storage, axes, vsize, values,
-                                std::forward<Us>(rest)...);
+                                std::forward<Us>(us)...);
   }
 }
 
-template <class S, class A, class T, class... Us, class L = mp11::mp_list<Us...>>
-std::enable_if_t<(
-    mp11::mp_count_if<L, is_weight>::value + mp11::mp_count_if<L, is_sample>::value == 0)>
-fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
-         const T* values, Us&&... rest) {
-  // select fastest available code in fill_n_2, possibly using run-time information
-  fill_n_2(offset, storage, axes, vsize, values, std::forward<Us>(rest)...);
+template <class T>
+std::size_t get_total_size(const dtl::span<const T>& values) {
+  std::size_t s = 1u;
+  auto vis = [&s](const auto& v) {
+    // cannot be replaced by std::decay_t
+    using U = std::remove_cv_t<std::remove_reference_t<decltype(v)>>;
+    const std::size_t n = static_if<is_iterable<U>>(
+        [](const auto& v) { return dtl::size(v); },
+        [](const auto&) { return static_cast<std::size_t>(1); }, v);
+    if (s != 1u && n != 1u && s != n)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("spans must have compatible lengths"));
+    s = std::max(s, n);
+  };
+  for (const auto& v : values)
+    static_if<is_iterable<T>>([&vis](const auto& v) { vis(v); },
+                              [&vis](const auto& v) { variant2::visit(vis, v); }, v);
+  return s;
 }
 
-// unpack weight argument, can be iterable or value
-template <class S, class A, class T, class U, class... Us>
-void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
-              const T* values, const weight_type<U>& weights, const Us&... rest) {
-  static_if<is_iterable<std::remove_cv_t<std::remove_reference_t<U>>>>(
-      [&](const auto& w, const auto&... rest) {
-        const auto wsize = dtl::size(w);
-        if (vsize != wsize)
-          throw_exception(
-              std::invalid_argument("number of arguments must match histogram rank"));
-        fill_n_1(offset, storage, axes, vsize, values, wsize, dtl::data(w), rest...);
-      },
-      [&](const auto w, const auto&... rest) {
-        fill_n_1(offset, storage, axes, vsize, values, static_cast<std::size_t>(1), &w,
-                 rest...);
-      },
-      weights.value, rest...);
-}
-
-// unpack sample argument after weight was unpacked
-template <class S, class A, class T, class U, class V>
-void fill_n_1(std::size_t offset, S& storage, A& axes, const std::size_t vsize,
-              const T* values, const std::size_t wsize, const U* wptr,
-              const sample_type<V>& s) {
-  mp11::tuple_apply(
-      [&](const auto&... sargs) {
-        fill_n_1(offset, storage, axes, vsize, values, wsize, std::move(wptr),
-                 dtl::data(sargs)...);
-      },
-      s.value);
-}
-
-// unpack sample argument (no weight argument)
-template <class S, class A, class T, class U>
-void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
-              const T* values, const sample_type<U>& samples) {
-  using namespace boost::mp11;
-  tuple_apply(
-      [&](const auto&... sargs) {
-        fill_n_1(offset, storage, axes, vsize, values, dtl::data(sargs)...);
-      },
-      samples.value);
+template <class... Ts>
+void fill_n_check_extra_args(std::size_t n, Ts&&... ts) {
+  // values of length 1 may not be combined with weights and samples of length > 1
+  auto check = [n](auto&& x) {
+    if (x.second != 1 && n != x.second)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("spans must have compatible lengths"));
+    return 0;
+  };
+  fold(check(ts)...);
 }
 
 template <class S, class A, class T, class... Us>
-void fill_n(const std::size_t offset, S& storage, A& axes, const T* values,
-            const std::size_t vsize, const Us&... rest) {
+void fill_n(const std::size_t offset, S& storage, A& axes,
+            const dtl::span<const T> values, Us&&... us) {
   static_assert(!std::is_pointer<T>::value,
                 "passing iterable of pointers not allowed (cannot determine lengths); "
                 "pass iterable of iterables instead");
-  using namespace boost::mp11;
-  static_if<mp_or<is_iterable<T>, is_variant<T>>>(
+  using Vs = value_types<A>;
+  static_if<mp11::mp_any_of_q<Vs, mp11::mp_bind_front<std::is_convertible, T>>>(
       [&](const auto& values) {
-        if (axes_rank(axes) != vsize)
-          throw_exception(
+        if (axes_rank(axes) != 1)
+          BOOST_THROW_EXCEPTION(
               std::invalid_argument("number of arguments must match histogram rank"));
-        fill_n_1(offset, storage, axes, get_total_size(values, vsize), values, rest...);
+        fill_n_check_extra_args(values.size(), std::forward<Us>(us)...);
+        fill_n_1(offset, storage, axes, values.size(), &values, std::forward<Us>(us)...);
       },
       [&](const auto& values) {
-        auto s = make_span(values, vsize);
-        fill_n_1(offset, storage, axes, vsize, &s, rest...);
+        if (axes_rank(axes) != values.size())
+          BOOST_THROW_EXCEPTION(
+              std::invalid_argument("number of arguments must match histogram rank"));
+        const auto vsize = get_total_size(values);
+        fill_n_check_extra_args(vsize, std::forward<Us>(us)...);
+        fill_n_1(offset, storage, axes, vsize, values.data(), std::forward<Us>(us)...);
       },
       values);
 }
