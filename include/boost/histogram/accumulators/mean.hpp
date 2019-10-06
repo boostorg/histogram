@@ -7,8 +7,8 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 
+#include <boost/assert.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <cstddef>
 #include <type_traits>
 
 namespace boost {
@@ -24,12 +24,13 @@ template <class RealType>
 class mean {
 public:
   mean() = default;
-  mean(const std::size_t n, const RealType& mean, const RealType& variance)
-      : sum_(n), mean_(mean), sum_of_deltas_squared_(variance * (sum_ - 1)) {}
+  mean(const RealType& n, const RealType& mean, const RealType& variance)
+      : sum_(n), mean_(mean), sum_of_deltas_squared_(variance * (n - 1)) {}
 
   void operator()(const RealType& x) {
     sum_ += static_cast<RealType>(1);
     const auto delta = x - mean_;
+    BOOST_ASSERT(sum_ != 0);
     mean_ += delta / sum_;
     sum_of_deltas_squared_ += delta * (x - mean_);
   }
@@ -37,6 +38,7 @@ public:
   void operator()(const RealType& w, const RealType& x) {
     sum_ += w;
     const auto delta = x - mean_;
+    BOOST_ASSERT(sum_ != 0);
     mean_ += w * delta / sum_;
     sum_of_deltas_squared_ += w * delta * (x - mean_);
   }
@@ -45,6 +47,7 @@ public:
   mean& operator+=(const mean<T>& rhs) {
     const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
     sum_ += rhs.sum_;
+    BOOST_ASSERT(sum_ != 0);
     mean_ = tmp / sum_;
     sum_of_deltas_squared_ += static_cast<RealType>(rhs.sum_of_deltas_squared_);
     return *this;

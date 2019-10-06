@@ -129,8 +129,9 @@ public:
 
   /// Return value for index argument.
   /// Throws `std::out_of_range` if the index is out of bounds.
-  std::conditional_t<std::is_scalar<value_type>::value, value_type, const value_type&>
-  value(index_type idx) const {
+  auto value(index_type idx) const
+      -> std::conditional_t<std::is_scalar<value_type>::value, value_type,
+                            const value_type&> {
     if (idx < 0 || idx >= size())
       BOOST_THROW_EXCEPTION(std::out_of_range("category index out of range"));
     return vec_meta_.first()[idx];
@@ -143,10 +144,18 @@ public:
   index_type size() const noexcept {
     return static_cast<index_type>(vec_meta_.first().size());
   }
+
   /// Returns the options.
   static constexpr unsigned options() noexcept { return options_type::value; }
+
+  /// Whether the axis is inclusive (see axis::traits::is_inclusive).
+  static constexpr bool inclusive() noexcept {
+    return options() & (option::overflow | option::growth);
+  }
+
   /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return vec_meta_.second(); }
+
   /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
 

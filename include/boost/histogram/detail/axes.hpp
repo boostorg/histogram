@@ -12,6 +12,7 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/make_default.hpp>
+#include <boost/histogram/detail/optional_index.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
@@ -211,7 +212,8 @@ void for_each_axis(std::tuple<Axis...>& a, V&& v) {
   mp11::tuple_for_each(a, std::forward<V>(v));
 }
 
-template <typename T>
+// total number of bins including *flow bins
+template <class T>
 std::size_t bincount(const T& axes) {
   std::size_t n = 1;
   for_each_axis(axes, [&n](const auto& a) {
@@ -219,6 +221,20 @@ std::size_t bincount(const T& axes) {
     const auto s = axis::traits::extent(a);
     n *= s;
     if (s > 0 && n < old) BOOST_THROW_EXCEPTION(std::overflow_error("bincount overflow"));
+  });
+  return n;
+}
+
+// initial offset for the linear index
+template <class T>
+std::size_t offset(const T& axes) {
+  std::size_t n = 0;
+  for_each_axis(axes, [&n, stride = static_cast<std::size_t>(1)](const auto& a) mutable {
+    if (axis::traits::options(a) & axis::option::growth)
+      n = invalid_index;
+    else if (n != invalid_index && axis::traits::options(a) & axis::option::underflow)
+      n += stride;
+    stride *= axis::traits::extent(a);
   });
   return n;
 }
@@ -271,44 +287,57 @@ template <class T>
 using has_underflow =
     decltype(axis::traits::static_options<T>::test(axis::option::underflow));
 
-template <class Axis>
-constexpr auto inclusive_options(Axis&&) {
-  return axis::option::underflow | axis::option::overflow;
-}
-
-template <class... Ts>
-constexpr auto inclusive_options(axis::category<Ts...>&&) {
-  return axis::option::overflow;
-}
-
-template <class T>
-using is_non_inclusive = mp11::mp_not<decltype(
-    axis::traits::static_options<T>::test(inclusive_options(std::declval<T>())))>;
-
 template <class T>
 using is_growing = decltype(axis::traits::static_options<T>::test(axis::option::growth));
 
 template <class T>
-using is_multidim = is_tuple<std::decay_t<arg_type<decltype(&T::index)>>>;
+using is_not_inclusive = mp11::mp_not<axis::traits::static_is_inclusive<T>>;
 
-template <template <class> class Trait, class T>
-struct has_special_axis_impl : Trait<T> {};
+// for vector<T>
+template <class T>
+struct axis_types_impl {
+  using type = mp11::mp_list<std::decay_t<T>>;
+};
 
-template <template <class> class Trait, class... Ts>
-struct has_special_axis_impl<Trait, std::tuple<Ts...>> : mp11::mp_or<Trait<Ts>...> {};
+// for vector<variant<Ts...>>
+template <class... Ts>
+struct axis_types_impl<axis::variant<Ts...>> {
+  using type = mp11::mp_list<std::decay_t<Ts>...>;
+};
 
-template <template <class> class Trait, class... Ts>
-struct has_special_axis_impl<Trait, axis::variant<Ts...>> : mp11::mp_or<Trait<Ts>...> {};
-
-template <template <class> class Trait, class T>
-using has_special_axis = typename has_special_axis_impl<
-    Trait, mp11::mp_if<is_vector_like<T>, mp11::mp_first<T>, T>>::type;
+// for tuple<Ts...>
+template <class... Ts>
+struct axis_types_impl<std::tuple<Ts...>> {
+  using type = mp11::mp_list<std::decay_t<Ts>...>;
+};
 
 template <class T>
-using has_growing_axis = has_special_axis<is_growing, T>;
+using axis_types =
+    typename axis_types_impl<mp11::mp_if<is_vector_like<T>, mp11::mp_first<T>, T>>::type;
+
+template <template <class> class Trait, class Axes>
+using has_special_axis = mp11::mp_any_of<axis_types<Axes>, Trait>;
+
+template <class Axes>
+using has_growing_axis = mp11::mp_any_of<axis_types<Axes>, is_growing>;
+
+template <class Axes>
+using has_non_inclusive_axis = mp11::mp_any_of<axis_types<Axes>, is_not_inclusive>;
 
 template <class T>
-using has_non_inclusive_axis = has_special_axis<is_non_inclusive, T>;
+constexpr std::size_t type_score() {
+  return sizeof(T) *
+         (std::is_integral<T>::value ? 1 : std::is_floating_point<T>::value ? 10 : 100);
+}
+
+// arbitrary ordering of types
+template <class T, class U>
+using type_less = mp11::mp_bool<(type_score<T>() < type_score<U>())>;
+
+template <class Axes>
+using value_types = mp11::mp_sort<
+    mp11::mp_unique<mp11::mp_transform<axis::traits::value_type, axis_types<Axes>>>,
+    type_less>;
 
 } // namespace detail
 } // namespace histogram

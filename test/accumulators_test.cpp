@@ -30,6 +30,7 @@ int main() {
     using w_t = accumulators::weighted_sum<double>;
     w_t w;
     BOOST_TEST_EQ(str(w), "weighted_sum(0, 0)"s);
+    BOOST_TEST_EQ(w, w_t{});
 
     BOOST_TEST_EQ(w, w_t(0));
     BOOST_TEST_NE(w, w_t(1));
@@ -70,6 +71,7 @@ int main() {
     using m_t = accumulators::mean<double>;
     m_t a;
     BOOST_TEST_EQ(a.count(), 0);
+    BOOST_TEST_EQ(a, m_t{});
 
     a(4);
     a(7);
@@ -113,6 +115,7 @@ int main() {
     using m_t = accumulators::weighted_mean<double>;
     m_t a;
     BOOST_TEST_EQ(a.sum_of_weights(), 0);
+    BOOST_TEST_EQ(a, m_t{});
 
     a(0.5, 1);
     a(1.0, 2);

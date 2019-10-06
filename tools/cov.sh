@@ -6,7 +6,8 @@
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 if [ -z $GCOV ]; then
-  for i in 9 8 5; do
+  # gcov-9, gcov-7, gcov-6 do not work
+  for i in 8 5; do
     if test $(which gcov-$i); then
       GCOV=gcov-$i
       break;

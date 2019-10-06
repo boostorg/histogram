@@ -362,10 +362,13 @@ public:
 
   /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return size_meta_.first(); }
+
   /// Returns the options.
   static constexpr unsigned options() noexcept { return options_type::value; }
+
   /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return size_meta_.second(); }
+
   /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return size_meta_.second(); }
 

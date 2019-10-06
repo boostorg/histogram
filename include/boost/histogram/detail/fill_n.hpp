@@ -25,6 +25,7 @@
 #include <boost/variant2/variant.hpp>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 namespace boost {
 namespace histogram {
@@ -32,92 +33,104 @@ namespace detail {
 
 namespace dtl = boost::histogram::detail;
 
-template <class Index, class Axis>
-struct indexing_visitor {
+template <class... Ts>
+void fold(Ts&&...) noexcept {} // helper to enable operator folding
+
+template <class T>
+auto to_ptr_size(const T& x) {
+  return static_if<std::is_scalar<T>>(
+      [](const auto& x) { return std::make_pair(&x, static_cast<std::size_t>(1)); },
+      [](const auto& x) { return std::make_pair(dtl::data(x), dtl::size(x)); }, x);
+}
+
+template <class Index, class Axis, class IsGrowing>
+struct index_visitor {
   using index_type = Index;
-  using iterator = index_type*;
+  using pointer = index_type*;
 
   using Opt = axis::traits::static_options<Axis>;
 
   Axis& axis_;
   const std::size_t stride_, start_, size_; // start and size of value collection
-  const iterator& begin_;
+  const pointer begin_;
   axis::index_type* shift_;
 
-  indexing_visitor(Axis& a, const std::size_t& str, const std::size_t& sta,
-                   const std::size_t& si, const iterator& it, axis::index_type* shift)
+  index_visitor(Axis& a, std::size_t& str, const std::size_t& sta, const std::size_t& si,
+                const pointer it, axis::index_type* shift)
       : axis_(a), stride_(str), start_(sta), size_(si), begin_(it), shift_(shift) {}
 
-  void maybe_shift_previous_indices(iterator it, const axis::index_type shift) {
-    if (shift > 0) {
+  template <class T>
+  void call_2(std::true_type, pointer it, const T& x) const {
+    // must use this code for all axes if one of them is growing
+    axis::index_type shift;
+    linearize_growth(*it, shift, stride_, axis_, x);
+    if (shift > 0) { // shift previous indices, because axis zero-point has changed
       while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride_;
       *shift_ += shift;
     }
   }
 
   template <class T>
-  void impl(mp11::mp_false, iterator it, const T& t) {
-    constexpr auto u = Opt::test(axis::option::underflow);
-    constexpr auto o = Opt::test(axis::option::overflow);
-    linearize(u, o, *it, stride_, axis_.size(), axis::traits::index(axis_, t));
+  void call_2(std::false_type, pointer it, const T& x) const {
+    // no axis is growing
+    linearize(*it, stride_, axis_, x);
   }
 
   template <class T>
-  void impl(mp11::mp_true, iterator it, const T& t) {
-    constexpr auto u = Opt::test(axis::option::underflow);
-    constexpr auto o = Opt::test(axis::option::overflow);
-    const auto p = axis::traits::update(axis_, t);
-    maybe_shift_previous_indices(it, p.second);
-    linearize(u, o, *it, stride_, axis_.size(), p.first);
+  void call_1(std::true_type, const T& iterable) const {
+    // T is iterable, fill N values
+    auto* tp = dtl::data(iterable) + start_;
+    for (auto it = begin_; it != begin_ + size_; ++it) call_2(IsGrowing{}, it, *tp++);
   }
 
   template <class T>
-  void operator()(const T& t) {
-    static_if<is_iterable<T>>(
-        [this](const auto& t) {
-          // T is iterable, fill N values
-          constexpr auto g = Opt::test(axis::option::growth);
-          const auto tp = dtl::data(t) + start_;
-          auto it = begin_;
-          for (const auto& x : make_span(tp, size_)) this->impl(g, it++, x);
-        },
-        [this](const auto& t) {
-          // T is value, fill single value N times
-          constexpr auto g = Opt::test(axis::option::growth);
-          index_type o{0};
-          this->impl(g, &o, t);
-          for (auto&& i : make_span(begin_, size_)) i += o;
-        },
-        t);
+  void call_1(std::false_type, const T& value) const {
+    // T is value, fill single value N times
+    index_type idx{*begin_};
+    call_2(IsGrowing{}, &idx, value);
+    if (is_valid(idx)) {
+      const auto delta =
+          static_cast<std::intptr_t>(idx) - static_cast<std::intptr_t>(*begin_);
+      for (auto&& i : make_span(begin_, size_)) i += delta;
+    } else
+      std::fill(begin_, begin_ + size_, invalid_index);
+  }
+
+  template <class T>
+  void operator()(const T& iterable_or_value) const {
+    call_1(is_iterable<T>{}, iterable_or_value);
   }
 };
 
-template <class Index, class S, class A, class T>
+template <class Index, class S, class Axes, class T>
 void fill_n_indices(Index* indices, const std::size_t start, const std::size_t size,
-                    S& storage, A& axes, const T* viter) {
-  axis::index_type extents[buffer_size<A>::value];
-  axis::index_type shifts[buffer_size<A>::value];
+                    const std::size_t offset, S& storage, Axes& axes, const T* viter) {
+  axis::index_type extents[buffer_size<Axes>::value];
+  axis::index_type shifts[buffer_size<Axes>::value];
   for_each_axis(axes, [eit = extents, sit = shifts](const auto& a) mutable {
     *sit++ = 0;
     *eit++ = axis::traits::extent(a);
   });
 
-  std::fill(indices, indices + size, 0); // initialize to zero
-  for_each_axis(axes, [start, size, indices, &viter, stride = static_cast<std::size_t>(1),
-                       shift = shifts](auto& axis) mutable {
+  // offset must be zero for growing axes
+  using IsGrowing = has_growing_axis<Axes>;
+  std::fill(indices, indices + size, IsGrowing::value ? 0 : offset);
+  for_each_axis(axes, [&, stride = static_cast<std::size_t>(1),
+                       pshift = shifts](auto& axis) mutable {
     using Axis = std::decay_t<decltype(axis)>;
-    static_if<is_variant<T>>(
+    static_if<is_variant<T>>( // LCOV_EXCL_LINE: buggy in gcc-8, ok in gcc-5
         [&](const auto& v) {
-          variant2::visit(
-              indexing_visitor<Index, Axis>{axis, stride, start, size, indices, shift},
-              v);
+          variant2::visit(index_visitor<Index, Axis, IsGrowing>{axis, stride, start, size,
+                                                                indices, pshift},
+                          v);
         },
         [&](const auto& v) {
-          indexing_visitor<Index, Axis>{axis, stride, start, size, indices, shift}(v);
+          index_visitor<Index, Axis, IsGrowing>{axis, stride,  start,
+                                                size, indices, pshift}(v);
         },
         *viter++);
     stride *= static_cast<std::size_t>(axis::traits::extent(axis));
-    ++shift;
+    ++pshift;
   });
 
   bool update_needed = false;
@@ -125,55 +138,27 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
     update_needed |= *eit++ != axis::traits::extent(a);
   });
   if (update_needed) {
-    storage_grower<A> g(axes);
+    storage_grower<Axes> g(axes);
     g.from_extents(extents);
     g.apply(storage, shifts);
   }
 }
 
-template <class S, class T, class... Us>
-void fill_n_storage(S& s, const std::size_t& idx, const T*&& wptr, std::size_t wsize,
-                    const Us*&&... sptrs) {
-  BOOST_ASSERT(idx < s.size());
-  fill_storage(s[idx], (wsize == 1u ? *wptr : *wptr++), *sptrs++...);
-}
-
-template <class S, class... Ts>
-void fill_n_storage(S& s, const std::size_t& idx, const Ts*&&... sptrs) {
-  BOOST_ASSERT(idx < s.size());
-  fill_storage(s[idx], *sptrs++...);
-}
-
-template <class S, class... Ts>
-void fill_n_storage(S& s, const optional_index& idx, Ts&&... ts) {
-  if (idx.valid()) fill_n_storage(s, *idx, std::forward<Ts>(ts)...);
-}
-
-template <class T>
-std::size_t get_total_size(const T* values, std::size_t vsize) {
-  std::size_t s = 1u;
-  auto vis = [&s](const auto& v) {
-    using U = std::remove_cv_t<std::remove_reference_t<decltype(v)>>;
-    const std::size_t n = static_if<is_iterable<U>>(
-        [](const auto& v) { return dtl::size(v); },
-        [](const auto&) { return static_cast<std::size_t>(1); }, v);
-    if (s == 1u)
-      s = n;
-    else if (n > 1u && s != n)
-      throw_exception(std::invalid_argument("spans must have same length"));
-  };
-  for (const auto& v : make_span(values, vsize))
-    static_if<is_iterable<T>>([&vis](const auto& v) { vis(v); },
-                              [&vis](const auto& v) { variant2::visit(vis, v); }, v);
-  return s;
+template <class S, class Index, class... Ts>
+void fill_n_storage(S& s, const Index idx, Ts&&... p) noexcept {
+  if (is_valid(idx)) {
+    BOOST_ASSERT(idx < s.size());
+    fill_storage_3(s[idx], *p.first...);
+  }
+  fold((p.second > 1 ? ++p.first : 0)...);
 }
 
 // general Nd treatment
-template <class S, class A, class T, class... Ts>
-void fill_n_nd(S& storage, A& axes, const T* values, std::size_t vsize, Ts&&... rest) {
+template <class Index, class S, class A, class T, class... Ts>
+void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
+               const T* values, Ts&&... ts) {
   constexpr std::size_t buffer_size = 1ul << 14;
-  using index_type = mp11::mp_if<has_non_inclusive_axis<A>, optional_index, std::size_t>;
-  index_type indices[buffer_size];
+  Index indices[buffer_size];
 
   /*
     Parallelization options.
@@ -206,82 +191,98 @@ void fill_n_nd(S& storage, A& axes, const T* values, std::size_t vsize, Ts&&... 
   for (std::size_t start = 0; start < vsize; start += buffer_size) {
     const std::size_t n = std::min(buffer_size, vsize - start);
     // fill buffer of indices...
-    fill_n_indices(indices, start, n, storage, axes, values);
+    fill_n_indices(indices, start, n, offset, storage, axes, values);
     // ...and fill corresponding storage cells
     for (auto&& idx : make_span(indices, n))
-      fill_n_storage(storage, idx, std::forward<Ts>(rest)...);
+      fill_n_storage(storage, idx, std::forward<Ts>(ts)...);
   }
 }
 
-template <class S, class A, class T, class... Us>
-void fill_n_impl(mp11::mp_false, S& storage, A& axes, const T* values, std::size_t vsize,
-                 Us&&... rest) {
-  fill_n_nd(storage, axes, values, vsize, std::forward<Us>(rest)...);
-}
-
-// unpack weight argument, can be iterable or value
-template <class S, class A, class T, class U, class... Us>
-void fill_n_impl(mp11::mp_true, S& storage, A& axes, const T* values, std::size_t vsize,
-                 const weight_type<U>& weights, const Us&... rest) {
-  static_if<is_iterable<std::remove_cv_t<std::remove_reference_t<U>>>>(
-      [&](const auto& w, const auto&... rest) {
-        const auto wsize = dtl::size(w);
-        if (vsize != wsize)
-          throw_exception(
-              std::invalid_argument("number of arguments must match histogram rank"));
-        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, storage, axes, values, vsize,
-                    dtl::data(w), wsize, rest...);
-      },
-      [&](const auto w, const auto&... rest) {
-        fill_n_impl(mp11::mp_bool<sizeof...(Us)>{}, storage, axes, values, vsize, &w,
-                    static_cast<std::size_t>(1), rest...);
-      },
-      weights.value, rest...);
-}
-
-// unpack sample argument after weight was unpacked
-template <class S, class A, class T, class U, class V>
-void fill_n_impl(mp11::mp_true, S& storage, A& axes, const T* values, std::size_t vsize,
-                 const U* wptr, std::size_t wsize, const sample_type<V>& s) {
-  mp11::tuple_apply(
-      [&](const auto&... sargs) {
-        fill_n_impl(mp11::mp_false{}, storage, axes, values, vsize, std::move(wptr),
-                    wsize, dtl::data(sargs)...);
-      },
-      s.value);
-}
-
-// unpack sample argument (no weight argument)
-template <class S, class A, class T, class U>
-void fill_n_impl(mp11::mp_true, S& storage, A& axes, const T* values, std::size_t vsize,
-                 const sample_type<U>& samples) {
-  using namespace boost::mp11;
-  tuple_apply(
-      [&](const auto&... sargs) {
-        fill_n_impl(mp_false{}, storage, axes, values, vsize, dtl::data(sargs)...);
-      },
-      samples.value);
+template <class S, class... As, class T, class... Us>
+void fill_n_1(const std::size_t offset, S& storage, std::tuple<As...>& axes,
+              const std::size_t vsize, const T* values, Us&&... us) {
+  using index_type =
+      mp11::mp_if<has_non_inclusive_axis<std::tuple<As...>>, optional_index, std::size_t>;
+  fill_n_nd<index_type>(offset, storage, axes, vsize, values, std::forward<Us>(us)...);
 }
 
 template <class S, class A, class T, class... Us>
-void fill_n(S& storage, A& axes, const T* values, std::size_t vsize, const Us&... rest) {
+void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
+              const T* values, Us&&... us) {
+  bool all_inclusive = true;
+  for_each_axis(axes,
+                [&](const auto& ax) { all_inclusive &= axis::traits::inclusive(ax); });
+  if (axes_rank(axes) == 1) {
+    axis::visit(
+        [&](auto& ax) {
+          std::tuple<decltype(ax)> axes{ax};
+          fill_n_1(offset, storage, axes, vsize, values, std::forward<Us>(us)...);
+        },
+        axes[0]);
+  } else {
+    if (all_inclusive)
+      fill_n_nd<std::size_t>(offset, storage, axes, vsize, values,
+                             std::forward<Us>(us)...);
+    else
+      fill_n_nd<optional_index>(offset, storage, axes, vsize, values,
+                                std::forward<Us>(us)...);
+  }
+}
+
+template <class T>
+std::size_t get_total_size(const dtl::span<const T>& values) {
+  std::size_t s = 1u;
+  auto vis = [&s](const auto& v) {
+    // cannot be replaced by std::decay_t
+    using U = std::remove_cv_t<std::remove_reference_t<decltype(v)>>;
+    const std::size_t n = static_if<is_iterable<U>>(
+        [](const auto& v) { return dtl::size(v); },
+        [](const auto&) { return static_cast<std::size_t>(1); }, v);
+    if (s != 1u && n != 1u && s != n)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("spans must have compatible lengths"));
+    s = std::max(s, n);
+  };
+  for (const auto& v : values)
+    static_if<is_iterable<T>>([&vis](const auto& v) { vis(v); },
+                              [&vis](const auto& v) { variant2::visit(vis, v); }, v);
+  return s;
+}
+
+template <class... Ts>
+void fill_n_check_extra_args(std::size_t n, Ts&&... ts) {
+  // values of length 1 may not be combined with weights and samples of length > 1
+  auto check = [n](auto&& x) {
+    if (x.second != 1 && n != x.second)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("spans must have compatible lengths"));
+    return 0;
+  };
+  fold(check(ts)...);
+}
+
+void fill_n_check_extra_args(std::size_t) noexcept {}
+
+template <class S, class A, class T, class... Us>
+void fill_n(const std::size_t offset, S& storage, A& axes,
+            const dtl::span<const T> values, Us&&... us) {
   static_assert(!std::is_pointer<T>::value,
                 "passing iterable of pointers not allowed (cannot determine lengths); "
                 "pass iterable of iterables instead");
-  using namespace boost::mp11;
-  using LUs = mp_list<Us...>;
-  using Unpack = mp_or<mp_count_if<LUs, is_weight>, mp_count_if<LUs, is_sample>>;
-  static_if<mp_or<is_iterable<T>, is_variant<T>>>(
+  using Vs = value_types<A>;
+  static_if<mp11::mp_any_of_q<Vs, mp11::mp_bind_front<std::is_convertible, T>>>(
       [&](const auto& values) {
-        if (axes_rank(axes) != vsize)
-          throw_exception(
+        if (axes_rank(axes) != 1)
+          BOOST_THROW_EXCEPTION(
               std::invalid_argument("number of arguments must match histogram rank"));
-        fill_n_impl(Unpack{}, storage, axes, values, get_total_size(values, vsize),
-                    rest...);
+        fill_n_check_extra_args(values.size(), std::forward<Us>(us)...);
+        fill_n_1(offset, storage, axes, values.size(), &values, std::forward<Us>(us)...);
       },
       [&](const auto& values) {
-        auto s = make_span(values, vsize);
-        fill_n_impl(Unpack{}, storage, axes, &s, vsize, rest...);
+        if (axes_rank(axes) != values.size())
+          BOOST_THROW_EXCEPTION(
+              std::invalid_argument("number of arguments must match histogram rank"));
+        const auto vsize = get_total_size(values);
+        fill_n_check_extra_args(vsize, std::forward<Us>(us)...);
+        fill_n_1(offset, storage, axes, vsize, values.data(), std::forward<Us>(us)...);
       },
       values);
 }

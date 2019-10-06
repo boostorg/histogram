@@ -94,6 +94,11 @@ public:
     return visit([](const auto& a) { return axis::traits::options(a); }, *this);
   }
 
+  /// Returns true if the axis is inclusive or false.
+  bool inclusive() const {
+    return visit([](const auto& a) { return axis::traits::inclusive(a); }, *this);
+  }
+
   /// Return reference to const metadata or instance of null_type if axis has no
   /// metadata.
   const metadata_type& metadata() const {

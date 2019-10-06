@@ -10,13 +10,13 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/config/workaround.hpp>
 #include <boost/core/alloc_construct.hpp>
 #include <boost/core/exchange.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
 #include <boost/histogram/detail/operators.hpp>
 #include <boost/histogram/detail/safe_comparison.hpp>
-#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
@@ -432,6 +432,10 @@ public:
   // template <class Allocator>
   // unlimited_storage(const unlimited_storage<Allocator>& s)
 
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#pragma warning(disable : 4127) // disable "warning" about using if constexpr
+#endif
+
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   explicit unlimited_storage(const Iterable& s) {
     using std::begin;
@@ -442,11 +446,15 @@ public:
     constexpr auto ti = buffer_type::template type_index<V>();
     constexpr auto nt = mp11::mp_size<typename buffer_type::types>::value;
     const std::size_t size = static_cast<std::size_t>(std::distance(s_begin, s_end));
-    detail::static_if_c<(ti < nt)>(
-        [this, &size, &s_begin](auto) { buffer_.template make<V>(size, s_begin); },
-        [this, &size, &s_begin](auto) { buffer_.template make<double>(size, s_begin); },
-        0);
+    if (ti < nt)
+      buffer_.template make<V>(size, s_begin);
+    else
+      buffer_.template make<double>(size, s_begin);
   }
+
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#pragma warning(default : 4127)
+#endif
 
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   unlimited_storage& operator=(const Iterable& s) {

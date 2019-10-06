@@ -50,10 +50,10 @@ class integer : public iterator_mixin<integer<Value, MetaData, Options>> {
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
 
-  static_assert(
-      (!options_type::test(option::circular) && !options_type::test(option::growth)) ||
-          (options_type::test(option::circular) ^ options_type::test(option::growth)),
-      "circular and growth options are mutually exclusive");
+  static_assert(!options_type::test(option::circular | option::growth) ||
+                    (options_type::test(option::circular) ^
+                     options_type::test(option::growth)),
+                "circular and growth options are mutually exclusive");
 
   static_assert(std::is_floating_point<value_type>::value ||
                     (!options_type::test(option::circular) &&
@@ -155,10 +155,20 @@ public:
 
   /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return size_meta_.first(); }
+
   /// Returns the options.
   static constexpr unsigned options() noexcept { return options_type::value; }
+
+  /// Whether the axis is inclusive (see axis::traits::is_inclusive).
+  static constexpr bool inclusive() noexcept {
+    return (options() & option::underflow || options() & option::overflow) ||
+           (std::is_integral<value_type>::value &&
+            (options() & (option::growth | option::circular)));
+  }
+
   /// Returns reference to metadata.
   metadata_type& metadata() noexcept { return size_meta_.second(); }
+
   /// Returns reference to const metadata.
   const metadata_type& metadata() const noexcept { return size_meta_.second(); }
 

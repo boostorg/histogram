@@ -33,7 +33,7 @@ https://www.boost.org/doc/libs/1_70_0/doc/html/quickbook/install.html.
 
 ## Running Tests
 
-To run the tests from the project folder, do `b2 cxxstd=14 warnings-as-errors=on test`. You can also test the examples by executing `b2 cxxstd=14 examples`.
+To run the tests from the project folder, do `b2 cxxstd=latest warnings-as-errors=on test`. You can also test the examples by executing `b2 cxxstd=latest examples`. To make the tests complete faster, you can use the option `-j4` (or another number) to run builds in parallel.
 More details can be found in [travis](https://github.com/boostorg/histogram/blob/develop/.travis.yml) and [appveyor](https://github.com/boostorg/histogram/blob/develop/.appveyor.yml) config files. 
 
 Please report any tests failures to the issue tracker along with the test
@@ -41,6 +41,12 @@ output and information on your system:
 
 * platform (Linux, Windows, OSX, ...)
 * compiler and version
+
+### Test coverage
+
+Boost.Histogram maintains 100% line coverage. Coverage is automatically checked by CI. To generate a report locally, you need to build the code with gcc-5 and coverage instrumentation enabled, do `b2 toolset=gcc-5 cxxstd=latest coverage=on test`. To generate the coverage report, run `tools/cov.sh` from the project root directory of Boost.Histogram. This will generate a new folder `coverage-report` with a HTML report. Open `coverage-report/index.html` in a browser.
+
+Notes: Generating coverage data is very fickle. You need to use gcc-5 or gcc-8 and a matching version of gcov, other gcc versions (6, 7, 9) are known to be broken or are not supported by lcov, which is used to process the raw coverage data. Generating coverage data with clang and llvm-cov is not supported by lcov. The best results are obtained with gcc-5. gcc-8 is known to report lines as missed which are impossible to miss.
 
 ## Coding Style
 
