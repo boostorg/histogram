@@ -19,7 +19,9 @@ copyright = """// Copyright Hans Dembinski {}
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-""".format(datetime.datetime.today().year)
+""".format(
+    datetime.datetime.today().year
+)
 
 if filename.endswith(".hpp"):
     with open(filename) as f:
@@ -27,9 +29,9 @@ if filename.endswith(".hpp"):
     if not content.startswith("// Copyright"):
         content = copyright + content
 
-    sub = filename[len(project_dir) + 1:]
+    sub = filename[len(project_dir) + 1 :]
     if sub.startswith("include/boost/"):
-        sub = sub[len("include/boost/"):]
+        sub = sub[len("include/boost/") :]
     if sub.startswith("test/"):
         sub = "histogram/" + sub
     guard_name = "BOOST_" + sub.replace(".", "_").replace("/", "_").upper()
@@ -43,7 +45,11 @@ if filename.endswith(".hpp"):
         for start in range(end, len(lines)):
             if lines[start] != "":
                 break
-        lines = lines[:end] + ["", "#ifndef " + guard_name, "#define " + guard_name, ""] + lines[start:]
+        lines = (
+            lines[:end]
+            + ["", "#ifndef " + guard_name, "#define " + guard_name, ""]
+            + lines[start:]
+        )
         while lines[-1] == "":
             lines.pop()
         lines += ["", "#endif // " + guard_name, ""]

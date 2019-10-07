@@ -13,9 +13,10 @@ import re
 import sys
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+
 mpl.rcParams.update(mpl.rcParamsDefault)
 
-bench = defaultdict(lambda:[])
+bench = defaultdict(lambda: [])
 data = json.load(open(sys.argv[1]))
 
 for benchmark in data["benchmarks"]:
@@ -41,15 +42,24 @@ for iaxis, axis_type in enumerate(("tuple", "vector", "vector_of_variant")):
     plt.title(axis_type.replace("_", " "), y=1.02)
     handles = []
     for (name, axis_t, dim, cov), v in bench.items():
-        if axis_t != axis_type: continue
-        if cov != "inner": continue
+        if axis_t != axis_type:
+            continue
+        if cov != "inner":
+            continue
         v = np.sort(v, axis=0).T
         # if "semi_dynamic" in axis: continue
         name2, col, ls = {
             "Naive": ("nested for", "0.5", ":"),
-            "Indexed": ("indexed", "r", "-")}.get(name, (name, "k", "-"))
-        h = plt.plot(v[0], v[1] / v[0], color=col, ls=ls, lw=dim,
-                     label=r"%s: $D=%i$" % (name2, dim))[0]
+            "Indexed": ("indexed", "r", "-"),
+        }.get(name, (name, "k", "-"))
+        h = plt.plot(
+            v[0],
+            v[1] / v[0],
+            color=col,
+            ls=ls,
+            lw=dim,
+            label=r"%s: $D=%i$" % (name2, dim),
+        )[0]
         handles.append(h)
         handles.sort(key=lambda x: x.get_label())
     plt.loglog()
