@@ -9,7 +9,6 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
@@ -18,6 +17,7 @@
 #include <type_traits>
 #include <vector>
 #include "std_ostream.hpp"
+#include "throw_exception.hpp"
 
 using namespace boost::histogram;
 namespace tr = axis::transform;

@@ -9,9 +9,9 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include "throw_exception.hpp"
 #include <unordered_map>
 #include <vector>
+#include "throw_exception.hpp"
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;

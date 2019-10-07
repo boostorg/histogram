@@ -7,7 +7,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/literals.hpp>
@@ -17,6 +16,7 @@
 #include <boost/units/systems/si/length.hpp>
 #include <limits>
 #include "is_close.hpp"
+#include "throw_exception.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals;

@@ -5,12 +5,12 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include "throw_exception.hpp"
 #include <sstream>
 #include <tuple>
 #include <vector>
-#include "utility_allocator.hpp"
 #include "std_ostream.hpp"
+#include "throw_exception.hpp"
+#include "utility_allocator.hpp"
 
 using namespace boost::histogram;
 

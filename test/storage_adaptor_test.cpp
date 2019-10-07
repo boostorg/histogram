@@ -8,7 +8,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <cmath>
@@ -18,6 +17,7 @@
 #include <sstream>
 #include <vector>
 #include "is_close.hpp"
+#include "throw_exception.hpp"
 #include "utility_allocator.hpp"
 
 using namespace boost::histogram;
