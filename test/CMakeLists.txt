@@ -102,6 +102,8 @@ boost_test(TYPE run SOURCES unlimited_storage_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES utility_test.cpp
   LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE link SOURCES link_2_test.cpp link_1_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
 
 if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
   boost_test(TYPE run SOURCES deduction_guides_test.cpp

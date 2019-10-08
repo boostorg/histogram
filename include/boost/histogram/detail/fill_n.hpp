@@ -259,7 +259,7 @@ void fill_n_check_extra_args(std::size_t n, Ts&&... ts) {
   fold(check(ts)...);
 }
 
-void fill_n_check_extra_args(std::size_t) noexcept {}
+inline void fill_n_check_extra_args(std::size_t) noexcept {}
 
 template <class S, class A, class T, class... Us>
 void fill_n(const std::size_t offset, S& storage, A& axes,

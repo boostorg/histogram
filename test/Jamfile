@@ -69,6 +69,11 @@ alias cxx17 :
     [ requires cpp_deduction_guides ]
     ;
 
+# Verify that the compile succeeds when linking (missing inline detection) 
+alias compiles :
+    [ link link_2_test.cpp link_1_test.cpp ]
+    ;
+
 # check that useful error messages are produced when library is used incorrectly
 alias failure :
     [ compile-fail axis_category_fail0.cpp ]
@@ -113,11 +118,12 @@ alias libserial :
     ;
 
 # skipping "failure", since expected failure messages during debugging are confusing
-alias all : cxx14 cxx17 threading accumulators range units serialization ;
-alias minimal : cxx14 cxx17 threading ;
+alias all : cxx14 cxx17 compiles threading accumulators range units serialization ;
+alias minimal : cxx14 cxx17 compiles threading ;
 
 explicit cxx14 ;
 explicit cxx17 ;
+explicit compiles;
 explicit failure ;
 explicit threading ;
 explicit accumulators ;
