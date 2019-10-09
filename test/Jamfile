@@ -21,6 +21,11 @@ project
     ]
     ;
 
+# Verify One Definition Rule by linking two object files which include everything
+alias odr :
+    [ link odr_1_test.cpp odr_2_test.cpp ]
+    ;
+
 alias cxx14 :
     [ run accumulators_test.cpp ]
     [ run algorithm_project_test.cpp ]
@@ -69,11 +74,6 @@ alias cxx17 :
     [ requires cpp_deduction_guides ]
     ;
 
-# Verify that the compile succeeds when linking (missing inline detection) 
-alias compiles :
-    [ link link_2_test.cpp link_1_test.cpp ]
-    ;
-
 # check that useful error messages are produced when library is used incorrectly
 alias failure :
     [ compile-fail axis_category_fail0.cpp ]
@@ -118,12 +118,12 @@ alias libserial :
     ;
 
 # skipping "failure", since expected failure messages during debugging are confusing
-alias all : cxx14 cxx17 compiles threading accumulators range units serialization ;
-alias minimal : cxx14 cxx17 compiles threading ;
+alias all : odr cxx14 cxx17 threading accumulators range units serialization ;
+alias minimal : odr cxx14 cxx17 threading ;
 
+explicit odr ;
 explicit cxx14 ;
 explicit cxx17 ;
-explicit compiles;
 explicit failure ;
 explicit threading ;
 explicit accumulators ;

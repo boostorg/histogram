@@ -36,6 +36,7 @@ void load_xml(const std::string& filename, T& t) {
   char line[128];
   do {
     ifs.getline(line, 128);
+    BOOST_ASSERT(std::strlen(line) != 128);
   } while (!ifs.fail() && !ifs.eof() && std::strstr(line, "-->") == nullptr);
   boost::archive::xml_iarchive ia(ifs);
   ia >> boost::serialization::make_nvp("item", t);
