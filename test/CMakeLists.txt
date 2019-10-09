@@ -78,8 +78,6 @@ boost_test(TYPE run SOURCES detail_static_if_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_tuple_slice_test.cpp
   LIBRARIES Boost::histogram Boost::core)
-boost_test(TYPE run SOURCES display_test.cpp
-  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES histogram_custom_axis_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES histogram_dynamic_test.cpp
