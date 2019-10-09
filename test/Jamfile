@@ -6,10 +6,12 @@
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+import python ;
 import os ;
 import regex ;
 import testing ;
 import ../../config/checks/config : requires ;
+
 
 path-constant THIS_PATH : . ;
 
@@ -22,8 +24,11 @@ project
     ;
 
 # Verify One Definition Rule by linking two object files which include everything
+testing.make-test run-pyd : odr_test.py : : check_odr_test ;
+explicit check_odr ;
 alias odr :
-    [ link odr_1_test.cpp odr_2_test.cpp ]
+    check_odr_test
+    [ link odr_main_test.cpp odr_test.cpp ]
     ;
 
 alias cxx14 :

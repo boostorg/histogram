@@ -4,8 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-// include all headers here
-#include <boost/histogram.hpp>
-#include <boost/histogram/axis/ostream.hpp>
-#include <boost/histogram/display.hpp>
-#include <boost/histogram/ostream.hpp>
+// include all headers again
+#include "odr_test.cpp"
+
+int main() { return 0; }

@@ -9,7 +9,7 @@
 
 /**
   \file boost/histogram.hpp
-  Includes all standard headers of the Boost.histogram library.
+  Includes all standard headers of the Boost.Histogram library.
 
   Extra headers not automatically included are:
     - [boost/histogram/ostream.hpp][1]
@@ -25,14 +25,8 @@
   [5]: histogram/reference.html#header.boost.histogram.display_hpp
 */
 
-#include <boost/histogram/accumulators/mean.hpp>
-#include <boost/histogram/accumulators/sum.hpp>
-#include <boost/histogram/accumulators/thread_safe.hpp>
-#include <boost/histogram/accumulators/weighted_mean.hpp>
-#include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <boost/histogram/algorithm/project.hpp>
-#include <boost/histogram/algorithm/reduce.hpp>
-#include <boost/histogram/algorithm/sum.hpp>
+#include <boost/histogram/accumulators.hpp>
+#include <boost/histogram/algorithm.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/indexed.hpp>
