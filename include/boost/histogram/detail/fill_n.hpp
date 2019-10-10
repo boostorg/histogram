@@ -269,14 +269,14 @@ void fill_n(const std::size_t offset, S& storage, A& axes,
                 "pass iterable of iterables instead");
   using Vs = value_types<A>;
   static_if<mp11::mp_any_of_q<Vs, mp11::mp_bind_front<std::is_convertible, T>>>(
-      [&](const auto& values) {
+      [&](const auto& values, auto&&... us) {
         if (axes_rank(axes) != 1)
           BOOST_THROW_EXCEPTION(
               std::invalid_argument("number of arguments must match histogram rank"));
         fill_n_check_extra_args(values.size(), std::forward<Us>(us)...);
         fill_n_1(offset, storage, axes, values.size(), &values, std::forward<Us>(us)...);
       },
-      [&](const auto& values) {
+      [&](const auto& values, auto&&... us) {
         if (axes_rank(axes) != values.size())
           BOOST_THROW_EXCEPTION(
               std::invalid_argument("number of arguments must match histogram rank"));
@@ -284,7 +284,7 @@ void fill_n(const std::size_t offset, S& storage, A& axes,
         fill_n_check_extra_args(vsize, std::forward<Us>(us)...);
         fill_n_1(offset, storage, axes, vsize, values.data(), std::forward<Us>(us)...);
       },
-      values);
+      values, std::forward<Us>(us)...);
 }
 
 } // namespace detail
