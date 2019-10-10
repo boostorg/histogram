@@ -5,6 +5,7 @@
 boost_test(SOURCES check_cmake_version.cpp ARGUMENTS ${PROJECT_VERSION}
   LIBRARIES Boost::core Boost::config)
 
+# checks that b2 and cmake are in sync
 add_test(NAME check_build_system COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
 
 # keep in sync with Jamfile, this should be automatized...
@@ -100,8 +101,6 @@ boost_test(TYPE run SOURCES unlimited_storage_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES utility_test.cpp
   LIBRARIES Boost::histogram Boost::core)
-boost_test(TYPE link SOURCES link_2_test.cpp link_1_test.cpp
-  LIBRARIES Boost::histogram Boost::core)
 
 if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
   boost_test(TYPE run SOURCES deduction_guides_test.cpp
@@ -117,6 +116,8 @@ if (Threads_FOUND)
 endif()
 
 ## No cmake support yet
+# boost_test(TYPE link SOURCES odr_main_test.cpp odr_test.cpp
+#   LIBRARIES Boost::histogram Boost::core)
 # boost_test(TYPE run SOURCES boost_accumulators_support_test.cpp
 #  LIBRARIES Boost::histogram Boost::core Boost::accumulators)
 # boost_test(TYPE run SOURCES boost_range_support_test.cpp
