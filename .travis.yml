@@ -29,26 +29,37 @@ matrix:
     # earliest supported gcc version
     - name: "gcc-5: default and restricted"
       script:
-        - ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on examples test test//failure &&
-          ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on exception-handling=off rtti=off test//minimal
+        ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on examples test//all &&
+        ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on exception-handling=off rtti=off test//minimal
 
     - name: "clang: sanitizers"
       sudo: required # by leak sanitizer
       script:
-        - UBSAN_OPTIONS=print_stacktrace=1
-          LSAN_OPTIONS=verbosity=1:log_threads=1
-          ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1
-          ../../b2 -j2 toolset=clang cxxstd=14 variant=histogram_ubasan warnings-as-errors=on
+        UBSAN_OPTIONS=print_stacktrace=1
+        LSAN_OPTIONS=verbosity=1:log_threads=1
+        ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1
+        ../../b2 -j2 toolset=clang cxxstd=14 variant=histogram_ubasan warnings-as-errors=on
+        test//all
 
-    - name: "gcc-8: c++latest and coverage"
+    - name: "gcc-8: cxxstd=latest and coverage"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
       script:
-        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on coverage=on examples test test//failure
+        # don't run examples, because full coverage must come from tests alone
+        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on coverage=on test//all
         - GCOV=gcov-8 tools/cov.sh
 
+    - name: "gcc-9: cxxstd=latest"
+      addons:
+        apt:
+          sources: ubuntu-toolchain-r-test
+          packages: g++-9
+      script:
+        ../../b2 -j2 toolset=gcc-9 cxxstd=latest warnings-as-errors=on
+        examples test//all
+ 
 before_script:
   # clone minimal set of Boost libraries
   - test "$TRAVIS_BRANCH" == "master" && BRANCH=master || BRANCH=develop

@@ -6,10 +6,12 @@
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+import python ;
 import os ;
 import regex ;
 import testing ;
 import ../../config/checks/config : requires ;
+
 
 path-constant THIS_PATH : . ;
 
@@ -19,6 +21,13 @@ project
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
     ]
+    ;
+
+# Verify One Definition Rule by linking two object files which include everything
+testing.make-test run-pyd : odr_test.py : : check_odr_test ;
+alias odr :
+    check_odr_test
+    [ link odr_main_test.cpp odr_test.cpp ]
     ;
 
 alias cxx14 :
@@ -61,17 +70,11 @@ alias cxx14 :
     [ run storage_adaptor_test.cpp ]
     [ run unlimited_storage_test.cpp ]
     [ run utility_test.cpp ]
-    [ run display_test.cpp ]
     ;
 
 alias cxx17 :
     [ run deduction_guides_test.cpp ] :
     [ requires cpp_deduction_guides ]
-    ;
-
-# Verify that the compile succeeds when linking (missing inline detection) 
-alias compiles :
-    [ link link_2_test.cpp link_1_test.cpp ]
     ;
 
 # check that useful error messages are produced when library is used incorrectly
@@ -117,13 +120,20 @@ alias libserial :
     <link>static <warnings>off <rtti>on
     ;
 
-# skipping "failure", since expected failure messages during debugging are confusing
-alias all : cxx14 cxx17 compiles threading accumulators range units serialization ;
-alias minimal : cxx14 cxx17 compiles threading ;
+# for builds without optional boost dependencies
+alias minimal : odr cxx14 cxx17 failure threading ;
 
+# all tests
+alias all : minimal accumulators range units serialization ;
+
+# all except "failure", because it is distracting during development
+alias develop : odr cxx14 cxx17 threading accumulators range units serialization ;
+
+explicit minimal ;
+explicit all ;
+explicit odr ;
 explicit cxx14 ;
 explicit cxx17 ;
-explicit compiles;
 explicit failure ;
 explicit threading ;
 explicit accumulators ;

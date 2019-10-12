@@ -7,6 +7,16 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_HPP
 
+/**
+  \file boost/accumulators.hpp
+  Includes all accumulator headers of the Boost.Histogram library.
+
+  Extra header not automatically included:
+    - [boost/histogram/accumulators/ostream.hpp][1]
+
+  [1]: histogram/reference.html#header.boost.histogram.accumulators.ostream_hpp
+*/
+
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/thread_safe.hpp>

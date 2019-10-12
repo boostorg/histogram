@@ -1,4 +1,5 @@
-// Copyright 2015-2017 Hans Dembinski
+// Copyright 2015-2019 Hans Dembinski
+// Copyright (c) 2019 Przemyslaw Bartosik
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -7,10 +8,16 @@
 #ifndef BOOST_HISTOGRAM_OSTREAM_HPP
 #define BOOST_HISTOGRAM_OSTREAM_HPP
 
+#include <algorithm> // max_element
+#include <boost/histogram.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/fwd.hpp>
+#include <cmath>   // floor, pow
+#include <iomanip> // setw
 #include <iosfwd>
+#include <iostream> // cout
+#include <limits>   // infinity
 
 /**
   \file boost/histogram/ostream.hpp
