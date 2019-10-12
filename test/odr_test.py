@@ -31,7 +31,7 @@ while unread_headers:
     included_headers.update(unread_headers)
     for hdr in tuple(unread_headers):
         unread_headers.remove(hdr)
-        for hdr2 in get_headers(include_path + hdr):
+        for hdr2 in get_headers(os.path.join(include_path, hdr)):
             if hdr2 not in included_headers:
                 unread_headers.add(hdr2)
 
