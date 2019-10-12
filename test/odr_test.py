@@ -5,7 +5,7 @@ import re
 this_path = os.path.dirname(__file__)
 
 all_headers = set()
-include_path = this_path + "/../include/"
+include_path = os.path.join(this_path, "..", "include")
 for root, dirs, files in os.walk(include_path):
     for fn in files:
         fn = root + "/" + fn
