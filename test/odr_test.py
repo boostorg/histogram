@@ -8,7 +8,7 @@ all_headers = set()
 include_path = os.path.join(this_path, "..", "include")
 for root, dirs, files in os.walk(include_path):
     for fn in files:
-        fn = root + "/" + fn
+        fn = os.path.join(root,  fn)
         assert fn.startswith(include_path)
         fn = fn[len(include_path) :]
         all_headers.add(fn)
