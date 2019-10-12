@@ -6,8 +6,6 @@
 #
 # Based on original work by Antony Polukhin, see https://svn.boost.org/trac/boost/wiki/TravisCoverals
 
-language: cpp
-os: linux
 dist: xenial
 
 branches:
@@ -17,66 +15,47 @@ branches:
 
 matrix:
   include:
-    - name: "clang-osx"
-      os: osx
+    - os: osx
+      language: cpp
       before_script:
         - mkdir build
         - cd build
         - cmake ..
       script:
-        - ctest -j2
+        ctest -j2
 
-    # earliest supported gcc version
-    - name: "gcc-5: default and restricted"
-      script:
-        ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on examples test//all &&
-        ../../b2 -j2 toolset=gcc-5 cxxstd=latest warnings-as-errors=on exception-handling=off rtti=off test//minimal
-
-    - name: "clang: sanitizers"
-      sudo: required # by leak sanitizer
-      script:
-        UBSAN_OPTIONS=print_stacktrace=1
-        LSAN_OPTIONS=verbosity=1:log_threads=1
-        ASAN_OPTIONS=detect_leaks=1:detect_stack_use_after_return=1
-        ../../b2 -j2 toolset=clang cxxstd=14 variant=histogram_ubasan warnings-as-errors=on
-        test//all
-
-    - name: "gcc-8: cxxstd=latest and coverage"
+    - os: linux
+      language: python
+      python: "3.6"
       addons:
         apt:
           sources: ubuntu-toolchain-r-test
           packages: g++-8
+      before_script:
+        # clone minimal set of Boost libraries
+        - cd ..
+        - git clone -b $TRAVIS_BRANCH --depth 5 https://github.com/boostorg/boost.git
+        - cd boost
+        - git submodule update --init --depth 5 tools/build tools/boostdep
+
+        # replace library with this version and install dependencies
+        - rm -rf libs/histogram
+        - mv $TRAVIS_BUILD_DIR libs/histogram
+        - python3 tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
+
+        # prepare build
+        - ./bootstrap.sh
+        - ./b2 headers
+        - cd libs/histogram
+        - B2="../../b2 -q -j2 warnings-as-errors=on"
+
+        - pip install cpp-coveralls
       script:
-        # don't run examples, because full coverage must come from tests alone
-        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on coverage=on test//all
-        - GCOV=gcov-8 tools/cov.sh
-
-    - name: "gcc-9: cxxstd=latest"
-      addons:
-        apt:
-          sources: ubuntu-toolchain-r-test
-          packages: g++-9
-      script:
-        ../../b2 -j2 toolset=gcc-9 cxxstd=latest warnings-as-errors=on
-        examples test//all
- 
-before_script:
-  # clone minimal set of Boost libraries
-  - test "$TRAVIS_BRANCH" == "master" && BRANCH=master || BRANCH=develop
-  - git clone -b $BRANCH --depth 5 https://github.com/boostorg/boost.git ../boost
-  - cd ../boost
-  - git submodule update --init --depth 5 tools/build tools/boostdep
-
-  # replace Boost module with this project and install Boost dependencies
-  - LIBRARY=$(basename $TRAVIS_BUILD_DIR)
-  - rm -rf libs/$LIBRARY
-  - mv $TRAVIS_BUILD_DIR libs/$LIBRARY
-  - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" $LIBRARY
-
-  # add missing toolsets and preparing Boost headers
-  - ./bootstrap.sh
-  - ./b2 headers
-  - cd libs/$LIBRARY
+        # don't compile examples in coverage build, coverage must come from tests alone
+        $B2 toolset=gcc-5 cxxstd=14 examples test//all &&
+        $B2 toolset=gcc-5 cxxstd=14 exception-handling=off rtti=off test//minimal &&
+        $B2 toolset=gcc-8 cxxstd=latest coverage=on test//all &&
+        GCOV=gcov-8 tools/cov.sh
 
 notifications:
   email: false

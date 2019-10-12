@@ -38,7 +38,7 @@ $LCOV --extract coverage.info "*/boost/histogram/*" --output-file coverage.info
 
 if [ $CI ] || [ $1 ]; then
   # upload if on CI or when token is passed as argument
-  which cpp-coveralls || pip install --user cpp-coveralls
+  which cpp-coveralls || echo "Error: you need to install cpp-coveralls"
   if [ $1 ]; then
     cpp-coveralls -l coverage.info -r ../.. -n -t $1
   else

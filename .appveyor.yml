@@ -3,34 +3,51 @@
 # (See accompanying file LICENSE_1_0.txt or copy at http://boost.org/LICENSE_1_0.txt)
 
 shallow_clone: true
+max_jobs: 2
+matrix:
+  fast_finish: true
 
-image: Visual Studio 2017
-
-build: off
+image:
+  - Visual Studio 2017
+  - Ubuntu
 
 branches:
   only:
     - master
     - develop
 
+build: off
+
+environment:
+  B2_OPTS: -j2 -q warnings-as-errors=on
+  UBSAN_OPTIONS: print_stacktrace=1
+  LSAN_OPTIONS: verbosity=1:log_threads=1
+  ASAN_OPTIONS: detect_leaks=1:detect_stack_use_after_return=1
+
 install:
-  # Cloning minimal set of Boost libraries
+  # clone minimal set of Boost libraries
   - cd ..
-  - git clone -b %APPVEYOR_REPO_BRANCH% --depth 10 https://github.com/boostorg/boost.git
+  - cmd: git clone -b %APPVEYOR_REPO_BRANCH% --depth 5 https://github.com/boostorg/boost.git
+  - sh: git clone -b $APPVEYOR_REPO_BRANCH --depth 5 https://github.com/boostorg/boost.git
   - cd boost
-  - git submodule update --init --depth 10 tools/build tools/boostdep
+  - git submodule update --init --depth 5 tools/build tools/boostdep
 
-  # Replacing Boost module with this project and installing Boost dependencies
-  - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram\
-  - python tools\boostdep\depinst\depinst.py -N units -N range -N accumulators --git_args "--depth 10 --jobs 2" histogram
+  # replace Boost library with this project and install dependencies
+  - cmd: xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram\
+  - cmd: python tools\boostdep\depinst\depinst.py -N units -N range -N accumulators --git_args "--depth 5 --jobs 2" histogram
+  - sh: rm -rf libs/histogram ; mv $APPVEYOR_BUILD_FOLDER libs/histogram
+  - sh: python3 tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 2" histogram
 
-  # Adding missing toolsets and preparing Boost headers
-  - cmd /c bootstrap
-  - b2 headers
+  # prepare Boost build
+  - cmd: cmd /c bootstrap & b2 headers & cd libs\histogram
+  - sh: ./bootstrap.sh; ./b2 headers; cd libs/histogram
 
 test_script:
-  - cd libs\histogram\test
-  - ..\..\..\b2 -j2 -q minimal serialization warnings-as-errors=on
+  - cmd: ..\..\b2 %B2_OPTS% cxxstd=latest test//minimal test//serialization
+  - sh:
+      ../../b2 $B2_OPTS cxxstd=14 exception-handling=off rtti=off test//minimal &&
+      ../../b2 $B2_OPTS toolset=gcc-9 cxxstd=latest examples test//all &&
+      ../../b2 $B2_OPTS toolset=clang cxxstd=14 variant=histogram_ubasan test//all
 
 on_failure:
   ## Uncomment the following line to stop VM and enable interactive login
