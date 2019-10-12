@@ -25,7 +25,6 @@ project
 
 # Verify One Definition Rule by linking two object files which include everything
 testing.make-test run-pyd : odr_test.py : : check_odr_test ;
-explicit check_odr ;
 alias odr :
     check_odr_test
     [ link odr_main_test.cpp odr_test.cpp ]
@@ -121,10 +120,16 @@ alias libserial :
     <link>static <warnings>off <rtti>on
     ;
 
-# skipping "failure", since expected failure messages during debugging are confusing
-alias all : odr cxx14 cxx17 threading accumulators range units serialization ;
-alias minimal : odr cxx14 cxx17 threading ;
+# for builds without optional boost dependencies
+alias minimal : odr cxx14 cxx17 failure threading ;
 
+# all tests
+alias all : minimal accumulators range units serialization ;
+
+# default: all except "failure", because it is distracting during development
+alias default : odr cxx14 cxx17 threading accumulators range units serialization ;
+
+explicit all ;
 explicit odr ;
 explicit cxx14 ;
 explicit cxx17 ;
