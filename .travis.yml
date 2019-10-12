@@ -48,8 +48,7 @@ matrix:
           packages: g++-8
       script:
         # don't run examples, because full coverage must come from tests alone
-        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on coverage=on
-          test//all
+        - ../../b2 -j2 toolset=gcc-8 cxxstd=latest warnings-as-errors=on coverage=on test//all
         - GCOV=gcov-8 tools/cov.sh
 
     - name: "gcc-9: cxxstd=latest"
