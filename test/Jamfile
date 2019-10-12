@@ -126,9 +126,10 @@ alias minimal : odr cxx14 cxx17 failure threading ;
 # all tests
 alias all : minimal accumulators range units serialization ;
 
-# default: all except "failure", because it is distracting during development
-alias default : odr cxx14 cxx17 threading accumulators range units serialization ;
+# all except "failure", because it is distracting during development
+alias develop : odr cxx14 cxx17 threading accumulators range units serialization ;
 
+explicit minimal ;
 explicit all ;
 explicit odr ;
 explicit cxx14 ;
