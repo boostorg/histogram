@@ -59,7 +59,7 @@ matrix:
       script:
         ../../b2 -j2 toolset=gcc-9 cxxstd=latest warnings-as-errors=on
         examples test//all
-
+ 
 before_script:
   # clone minimal set of Boost libraries
   - test "$TRAVIS_BRANCH" == "master" && BRANCH=master || BRANCH=develop
