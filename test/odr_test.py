@@ -24,7 +24,7 @@ def get_headers(filename):
 
 included_headers = set()
 unread_headers = set()
-for hdr in get_headers(this_path + "/odr_test.cpp"):
+for hdr in get_headers(os.path.join(this_path, "/odr_test.cpp")):
     unread_headers.add(hdr)
 
 while unread_headers:
