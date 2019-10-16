@@ -27,20 +27,10 @@ int main() {
 
   assert(os.str() ==
          "histogram(\n"
-         "  regular(2, -1, 1, metadata=\"axis 1\", options=underflow | overflow),\n"
-         "  category(\"red\", \"blue\", metadata=\"axis 2\", options=overflow),\n"
-         "  0: 0\n"
-         "  1: 0\n"
-         "  2: 0\n"
-         "  3: 0\n"
-         "  4: 0\n"
-         "  5: 0\n"
-         "  6: 0\n"
-         "  7: 0\n"
-         "  8: 0\n"
-         "  9: 0\n"
-         "  10: 0\n"
-         "  11: 0\n"
+         "  regular(2, -1, 1, metadata=\"axis 1\", options=underflow | overflow)\n"
+         "  category(\"red\", \"blue\", metadata=\"axis 2\", options=overflow)\n"
+         "  (-1 0): 0 ( 0 0): 0 ( 1 0): 0 ( 2 0): 0 (-1 1): 0 ( 0 1): 0\n"
+         "  ( 1 1): 0 ( 2 1): 0 (-1 2): 0 ( 0 2): 0 ( 1 2): 0 ( 2 2): 0\n"
          ")");
 }
 

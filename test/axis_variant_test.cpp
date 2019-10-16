@@ -124,9 +124,7 @@ int main() {
     auto test = [](auto&& a, const char* ref) {
       using T = std::decay_t<decltype(a)>;
       axis::variant<T> axis(std::move(a));
-      std::ostringstream os;
-      os << axis;
-      BOOST_TEST_EQ(os.str(), std::string(ref));
+      BOOST_TEST_CSTR_EQ(detail::cat(axis).c_str(), ref);
     };
 
     test(axis::regular<>(2, -1, 1, "regular1"),
@@ -143,9 +141,7 @@ int main() {
     auto test = [](auto&& a, const char* ref) {
       using T = std::decay_t<decltype(a)>;
       axis::variant<T> axis(std::move(a));
-      std::ostringstream os;
-      os << axis.bin(0);
-      BOOST_TEST_EQ(os.str(), std::string(ref));
+      BOOST_TEST_CSTR_EQ(detail::cat(axis.bin(0)).c_str(), ref);
     };
 
     test(axis::regular<>(2, 1, 2), "[1, 1.5)");
@@ -194,7 +190,7 @@ int main() {
     BOOST_TEST_EQ(axis.index(9), 1);
     BOOST_TEST_EQ(axis.size(), 2);
     BOOST_TEST_EQ(axis.metadata(), axis::null_type{});
-    BOOST_TEST_THROWS(std::ostringstream() << axis, std::runtime_error);
+    BOOST_TEST_CSTR_EQ(detail::cat(axis).c_str(), "<unstreamable>");
     BOOST_TEST_THROWS(axis.value(0), std::runtime_error);
 
     axis = axis::category<std::string>({"A", "B"}, "category");

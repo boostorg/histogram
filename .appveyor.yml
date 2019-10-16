@@ -50,5 +50,5 @@ test_script:
       ../../b2 $B2_OPTS toolset=clang cxxstd=14 variant=histogram_ubasan test//all
 
 on_failure:
-  ## Uncomment the following line to stop VM and enable interactive login
-  # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  # Uncomment the following line to stop VM and enable interactive login
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

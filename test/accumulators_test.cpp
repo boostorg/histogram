@@ -19,8 +19,13 @@ using namespace boost::histogram;
 using namespace std::literals;
 
 template <class T>
-auto str(const T& t) {
+auto str(const T& t, int w = 0, bool left = true) {
   std::ostringstream os;
+  os.width(w);
+  if (left)
+    os << std::left;
+  else
+    os << std::right;
   os << t;
   return os.str();
 }
@@ -30,6 +35,8 @@ int main() {
     using w_t = accumulators::weighted_sum<double>;
     w_t w;
     BOOST_TEST_EQ(str(w), "weighted_sum(0, 0)"s);
+    BOOST_TEST_EQ(str(w, 20, false), "  weighted_sum(0, 0)"s);
+    BOOST_TEST_EQ(str(w, 20, true), "weighted_sum(0, 0)  "s);
     BOOST_TEST_EQ(w, w_t{});
 
     BOOST_TEST_EQ(w, w_t(0));
@@ -83,6 +90,8 @@ int main() {
     BOOST_TEST_EQ(a.variance(), 30);
 
     BOOST_TEST_EQ(str(a), "mean(4, 10, 30)"s);
+    BOOST_TEST_EQ(str(a, 20, false), "     mean(4, 10, 30)"s);
+    BOOST_TEST_EQ(str(a, 20, true), "mean(4, 10, 30)     "s);
 
     m_t b;
     b(1e8 + 4);
@@ -126,6 +135,8 @@ int main() {
     BOOST_TEST_IS_CLOSE(a.variance(), 0.8, 1e-3);
 
     BOOST_TEST_EQ(str(a), "weighted_mean(2, 2, 0.8)"s);
+    BOOST_TEST_EQ(str(a, 25, false), " weighted_mean(2, 2, 0.8)"s);
+    BOOST_TEST_EQ(str(a, 25, true), "weighted_mean(2, 2, 0.8) "s);
 
     auto b = a;
     b += a; // same as feeding all samples twice
@@ -148,6 +159,9 @@ int main() {
     BOOST_TEST_EQ(sum.large(), 1);
     BOOST_TEST_EQ(sum.small(), 0);
     BOOST_TEST_EQ(str(sum), "sum(1 + 0)"s);
+    BOOST_TEST_EQ(str(sum, 15, false), "     sum(1 + 0)"s);
+    BOOST_TEST_EQ(str(sum, 15, true), "sum(1 + 0)     "s);
+
     sum += 1e100;
     BOOST_TEST_EQ(str(sum), "sum(1e+100 + 1)"s);
     ++sum;

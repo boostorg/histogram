@@ -9,11 +9,13 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/common_type.hpp>
+#include <boost/histogram/detail/counting_streambuf.hpp>
 #include <boost/histogram/detail/non_member_container_access.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
+#include <ostream>
 #include "std_ostream.hpp"
 
 using namespace boost::histogram;
@@ -72,6 +74,18 @@ int main() {
       int size() const { return 5; }
     } d;
     BOOST_TEST_EQ(dtl::size(d), 5u);
+  }
+
+  // counting_streambuf
+  {
+    dtl::counting_streambuf<char> cbuf;
+    std::ostream os(&cbuf);
+    os.put('x');
+    BOOST_TEST_EQ(cbuf.count, 1);
+    os << 12;
+    BOOST_TEST_EQ(cbuf.count, 3);
+    os << "123";
+    BOOST_TEST_EQ(cbuf.count, 6);
   }
 
   return boost::report_errors();

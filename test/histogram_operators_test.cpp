@@ -164,36 +164,11 @@ void run_tests() {
     BOOST_TEST_THROWS(a *= b, std::invalid_argument);
     BOOST_TEST_THROWS(a /= b, std::invalid_argument);
   }
-
-  // histogram_ostream
-  {
-    auto a = make(Tag(), axis::regular<>(3, -1, 1, "r"));
-    std::ostringstream os;
-    os << a;
-    BOOST_TEST_EQ(
-        os.str(),
-        std::string("histogram(\n"
-                    "  regular(3, -1, 1, metadata=\"r\", options=underflow | overflow),\n"
-                    "  0: 0\n"
-                    "  1: 0\n"
-                    "  2: 0\n"
-                    "  3: 0\n"
-                    "  4: 0\n"
-                    ")"));
-  }
 }
 
 int main() {
   run_tests<static_tag>();
   run_tests<dynamic_tag>();
-
-  {
-    // cannot make empty static histogram
-    auto h = histogram<std::vector<axis::regular<>>>();
-    std::ostringstream os;
-    os << h;
-    BOOST_TEST_EQ(os.str(), std::string("histogram()"));
-  }
 
   return boost::report_errors();
 }

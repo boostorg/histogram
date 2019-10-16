@@ -91,6 +91,8 @@ boost_test(TYPE run SOURCES histogram_mixed_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES histogram_operators_test.cpp
   LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES histogram_ostream_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES histogram_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES indexed_test.cpp

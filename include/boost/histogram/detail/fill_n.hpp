@@ -110,7 +110,7 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
   for_each_axis(axes, [eit = extents, sit = shifts](const auto& a) mutable {
     *sit++ = 0;
     *eit++ = axis::traits::extent(a);
-  });
+  }); // LCOV_EXCL_LINE: gcc-8 is missing this line for no reason
 
   // offset must be zero for growing axes
   using IsGrowing = has_growing_axis<Axes>;
@@ -118,7 +118,7 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
   for_each_axis(axes, [&, stride = static_cast<std::size_t>(1),
                        pshift = shifts](auto& axis) mutable {
     using Axis = std::decay_t<decltype(axis)>;
-    static_if<is_variant<T>>( // LCOV_EXCL_LINE: buggy in gcc-8, ok in gcc-5
+    static_if<is_variant<T>>( // LCOV_EXCL_LINE: gcc-8 is missing this line for no reason
         [&](const auto& v) {
           variant2::visit(index_visitor<Index, Axis, IsGrowing>{axis, stride, start, size,
                                                                 indices, pshift},

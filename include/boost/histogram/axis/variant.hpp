@@ -284,6 +284,12 @@ decltype(auto) get(const variant<Us...>& v) {
   return *tp;
 }
 
+// pass-through version of visit for generic programming
+template <class Visitor, class T>
+decltype(auto) visit(Visitor&& vis, T&& var) {
+  return std::forward<Visitor>(vis)(std::forward<T>(var));
+}
+
 // pass-through version of get for generic programming
 template <class T, class U>
 decltype(auto) get(U&& u) {
