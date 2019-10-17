@@ -4,6 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <array>
 #include <boost/config.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators.hpp>
@@ -92,11 +93,14 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
 
     BOOST_TEST_EQ(h, h2);
 
-    BOOST_TEST_THROWS(h2.fill(std::array<std::vector<int>, 2>(
-                          {std::vector<int>(2), std::vector<int>(3)})),
-                      std::invalid_argument);
-
+#ifndef BOOST_NO_EXCEPTIONS
+    // wrong rank
     BOOST_TEST_THROWS(h.fill(x), std::invalid_argument);
+
+    // not rectangular
+    std::array<std::vector<int>, 2> bad = {{std::vector<int>(2), std::vector<int>(3)}};
+    BOOST_TEST_THROWS(h2.fill(bad), std::invalid_argument);
+#endif
   }
 
   // 1D variant and weight

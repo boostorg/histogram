@@ -32,6 +32,8 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+namespace dtl = ::boost::histogram::detail;
+
 static constexpr std::size_t dynamic_extent = ~static_cast<std::size_t>(0);
 
 template <class T, std::size_t N>
@@ -105,31 +107,30 @@ public:
   constexpr span(pointer ptr, index_type count) : base(ptr, count) {}
 
   template <std::size_t N>
-  constexpr span(element_type (&arr)[N]) noexcept : span(data(arr), N) {
+  constexpr span(element_type (&arr)[N]) noexcept : span(dtl::data(arr), N) {
     static_assert(extent == dynamic_extent || extent == N, "static sizes do not match");
   }
 
   template <std::size_t N,
             class = std::enable_if_t<(extent == dynamic_extent || extent == N)> >
-  constexpr span(std::array<value_type, N>& arr) noexcept : span(data(arr), N) {}
+  constexpr span(std::array<value_type, N>& arr) noexcept : span(dtl::data(arr), N) {}
 
   template <std::size_t N,
             class = std::enable_if_t<(extent == dynamic_extent || extent == N)> >
-  constexpr span(const std::array<value_type, N>& arr) noexcept : span(data(arr), N) {}
+  constexpr span(const std::array<value_type, N>& arr) noexcept
+      : span(dtl::data(arr), N) {}
 
-  template <
-      class Container,
-      class = std::enable_if_t<std::is_convertible<
-          decltype(size(std::declval<Container>()), data(std::declval<Container>())),
-          pointer>::value> >
-  constexpr span(const Container& cont) : span(data(cont), size(cont)) {}
+  template <class Container, class = std::enable_if_t<std::is_convertible<
+                                 decltype(dtl::size(std::declval<Container>()),
+                                          dtl::data(std::declval<Container>())),
+                                 pointer>::value> >
+  constexpr span(const Container& cont) : span(dtl::data(cont), dtl::size(cont)) {}
 
-  template <
-      class Container,
-      class = std::enable_if_t<std::is_convertible<
-          decltype(size(std::declval<Container>()), data(std::declval<Container>())),
-          pointer>::value> >
-  constexpr span(Container& cont) : span(data(cont), size(cont)) {}
+  template <class Container, class = std::enable_if_t<std::is_convertible<
+                                 decltype(dtl::size(std::declval<Container>()),
+                                          dtl::data(std::declval<Container>())),
+                                 pointer>::value> >
+  constexpr span(Container& cont) : span(dtl::data(cont), dtl::size(cont)) {}
 
   template <class U, std::size_t N,
             class = std::enable_if_t<((extent == dynamic_extent || extent == N) &&
@@ -229,10 +230,10 @@ span<T> make_span(T* begin, std::size_t size) {
   return span<T>{begin, size};
 }
 
-template <class Container, class = decltype(size(std::declval<Container>()),
-                                            data(std::declval<Container>()))>
+template <class Container, class = decltype(dtl::size(std::declval<Container>()),
+                                            dtl::data(std::declval<Container>()))>
 auto make_span(const Container& cont) {
-  return make_span(data(cont), size(cont));
+  return make_span(dtl::data(cont), dtl::size(cont));
 }
 
 template <class T, std::size_t N>

@@ -47,7 +47,7 @@ test_script:
   - sh:
       ../../b2 $B2_OPTS cxxstd=14 exception-handling=off rtti=off test//minimal &&
       ../../b2 $B2_OPTS toolset=gcc-9 cxxstd=latest examples test//all &&
-      ../../b2 $B2_OPTS toolset=clang cxxstd=14 variant=histogram_ubasan test//all
+      ../../b2 $B2_OPTS toolset=clang cxxstd=latest variant=histogram_ubasan test//all
 
 on_failure:
   # Uncomment the following line to stop VM and enable interactive login

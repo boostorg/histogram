@@ -14,8 +14,11 @@ branches:
     - develop
 
 matrix:
+  fast_finish: true
+
   include:
-    - os: osx
+    - name: osx and cmake
+      os: osx
       language: cpp
       before_script:
         - mkdir build
@@ -23,6 +26,30 @@ matrix:
         - cmake ..
       script:
         ctest -j2
+
+    - name: osx and b2
+      os: osx
+      language: cpp
+      before_script:
+        # clone minimal set of Boost libraries
+        - cd ..
+        - git clone -b $TRAVIS_BRANCH --depth 5 https://github.com/boostorg/boost.git
+        - cd boost
+        - git submodule update --init --depth 5 tools/build tools/boostdep
+
+        # replace library with this version and install dependencies
+        - rm -rf libs/histogram
+        - mv $TRAVIS_BUILD_DIR libs/histogram
+        - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
+
+        # prepare build
+        - ./bootstrap.sh
+        - ./b2 headers
+        - cd libs/histogram
+        - B2="../../b2 -q -j2 warnings-as-errors=on"        
+      script:
+        $B2 cxxstd=latest exception-handling=off test//minimal &&
+        $B2 cxxstd=latest test//all
 
     - os: linux
       language: python
@@ -55,7 +82,7 @@ matrix:
         $B2 toolset=gcc-5 cxxstd=14 examples test//all &&
         $B2 toolset=gcc-5 cxxstd=14 exception-handling=off rtti=off test//minimal &&
         $B2 toolset=gcc-8 cxxstd=latest coverage=on test//all &&
-        GCOV=gcov-8 tools/cov.sh
-
+        GCOV=gcov-8 tools/cov.sh  
+  
 notifications:
   email: false
