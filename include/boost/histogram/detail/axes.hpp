@@ -52,6 +52,19 @@ constexpr unsigned axes_rank(const std::tuple<Ts...>&) {
   return static_cast<unsigned>(sizeof...(Ts));
 }
 
+template <class T>
+void throw_if_axes_is_too_large(const T& axes) {
+  if (axes_rank(axes) > BOOST_HISTOGRAM_DETAIL_AXES_LIMIT)
+    BOOST_THROW_EXCEPTION(
+        std::invalid_argument(cat("length of axis vector exceeds internal buffers, "
+                                  "recompile with -DBOOST_HISTOGRAM_DETAIL_AXES_LIMIT=",
+                                  axes_rank(axes), " to increase internal buffers")));
+}
+
+// tuple is never too large because internal buffers adapt to size of tuple
+template <class... Ts>
+void throw_if_axes_is_too_large(const std::tuple<Ts...>&) {}
+
 template <unsigned N, class... Ts>
 decltype(auto) axis_get(std::tuple<Ts...>& axes) {
   return std::get<N>(axes);
@@ -278,9 +291,16 @@ private:
 template <class U, class T>
 using stack_buffer = sub_array<U, buffer_size<T>::value>;
 
-template <class U, class T, class... Ts>
-auto make_stack_buffer(const T& t, const Ts&... ts) {
-  return stack_buffer<U, T>(axes_rank(t), ts...);
+// make default-constructed buffer (no initialization for POD types)
+template <class U, class T>
+auto make_stack_buffer(const T& t) {
+  return stack_buffer<U, T>(axes_rank(t));
+}
+
+// make buffer with elements initialized to v
+template <class U, class T, class V>
+auto make_stack_buffer(const T& t, V&& v) {
+  return stack_buffer<U, T>(axes_rank(t), std::forward<V>(v));
 }
 
 template <class T>

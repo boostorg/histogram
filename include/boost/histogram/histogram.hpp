@@ -68,12 +68,17 @@ public:
   histogram(const histogram& rhs)
       : axes_(rhs.axes_)
       , storage_and_mutex_(rhs.storage_and_mutex_.first())
-      , offset_(rhs.offset_) {}
+      , offset_(rhs.offset_) {
+    // no checks for too large axes needed
+  }
   histogram(histogram&& rhs)
       : axes_(std::move(rhs.axes_))
       , storage_and_mutex_(std::move(rhs.storage_and_mutex_.first()))
-      , offset_(rhs.offset_) {}
+      , offset_(std::exchange(rhs.offset_, 0)) {
+    // no checks for too large axes needed
+  }
   histogram& operator=(histogram&& rhs) {
+    // no checks for too large axes needed
     if (this != &rhs) {
       axes_ = std::move(rhs.axes_);
       storage_and_mutex_.first() = std::move(rhs.storage_and_mutex_.first());
@@ -82,6 +87,7 @@ public:
     return *this;
   }
   histogram& operator=(const histogram& rhs) {
+    // no checks for too large axes needed
     if (this != &rhs) {
       axes_ = rhs.axes_;
       storage_and_mutex_.first() = rhs.storage_and_mutex_.first();
@@ -95,6 +101,7 @@ public:
       : storage_and_mutex_(std::move(unsafe_access::storage(rhs)))
       , offset_(unsafe_access::offset(rhs)) {
     detail::axes_assign(axes_, std::move(unsafe_access::axes(rhs)));
+    detail::throw_if_axes_is_too_large(axes_);
   }
 
   template <class A, class S>
@@ -102,11 +109,13 @@ public:
       : storage_and_mutex_(unsafe_access::storage(rhs))
       , offset_(unsafe_access::offset(rhs)) {
     detail::axes_assign(axes_, unsafe_access::axes(rhs));
+    detail::throw_if_axes_is_too_large(axes_);
   }
 
   template <class A, class S>
   histogram& operator=(histogram<A, S>&& rhs) {
     detail::axes_assign(axes_, std::move(unsafe_access::axes(rhs)));
+    detail::throw_if_axes_is_too_large(axes_);
     storage_and_mutex_.first() = std::move(unsafe_access::storage(rhs));
     offset_ = unsafe_access::offset(rhs);
     return *this;
@@ -115,6 +124,7 @@ public:
   template <class A, class S>
   histogram& operator=(const histogram<A, S>& rhs) {
     detail::axes_assign(axes_, unsafe_access::axes(rhs));
+    detail::throw_if_axes_is_too_large(axes_);
     storage_and_mutex_.first() = unsafe_access::storage(rhs);
     offset_ = unsafe_access::offset(rhs);
     return *this;
@@ -125,6 +135,7 @@ public:
       : axes_(std::forward<A>(a))
       , storage_and_mutex_(std::forward<S>(s))
       , offset_(detail::offset(axes_)) {
+    detail::throw_if_axes_is_too_large(axes_);
     storage_and_mutex_.first().reset(detail::bincount(axes_));
   }
 

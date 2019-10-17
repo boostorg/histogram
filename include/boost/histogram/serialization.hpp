@@ -277,8 +277,10 @@ template <class Archive, class A, class S>
 void serialize(Archive& ar, histogram<A, S>& h, unsigned /* version */) {
   ar& serialization::make_nvp("axes", unsafe_access::axes(h));
   ar& serialization::make_nvp("storage", unsafe_access::storage(h));
-  if (Archive::is_loading::value)
+  if (Archive::is_loading::value) {
     unsafe_access::offset(h) = detail::offset(unsafe_access::axes(h));
+    detail::throw_if_axes_is_too_large(unsafe_access::axes(h));
+  }
 }
 
 } // namespace histogram

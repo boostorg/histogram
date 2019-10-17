@@ -56,6 +56,23 @@ int main() {
     BOOST_TEST_EQ(h3.axis(1), v2[1]);
   }
 
+  // too many axes
+  {
+    using I = axis::integer<int, axis::null_type, axis::option::none_t>;
+
+    // test edge case
+    auto av = std::vector<I>(BOOST_HISTOGRAM_DETAIL_AXES_LIMIT, I(0, 1));
+    auto h = make_histogram(av);
+    auto inputs = std::vector<std::vector<int>>(BOOST_HISTOGRAM_DETAIL_AXES_LIMIT,
+                                                std::vector<int>(1, 0));
+    h.fill(inputs); // should not crash
+
+#ifndef BOOST_NO_EXCEPTIONS
+    auto bad = std::vector<I>(BOOST_HISTOGRAM_DETAIL_AXES_LIMIT + 1, I(0, 1));
+    BOOST_TEST_THROWS((void)make_histogram(bad), std::invalid_argument);
+#endif
+  }
+
   // bad fill
   {
     auto a = axis::integer<>(0, 1);

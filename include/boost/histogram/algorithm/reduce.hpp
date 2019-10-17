@@ -113,7 +113,7 @@ inline reduce_option rebin(unsigned iaxis, unsigned merge) {
 }
 
 /**
-  Shrink and rebin option to be used in reduce() (onvenience overload for
+  Shrink and rebin option to be used in reduce() (convenience overload for
   single axis).
 
   @param lower lowest bound that should be kept.
