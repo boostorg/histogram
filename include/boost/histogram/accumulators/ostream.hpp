@@ -9,7 +9,7 @@
 
 #include <boost/histogram/detail/counting_streambuf.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <iosfwd>
+#include <ios>
 
 /**
   \file boost/histogram/accumulators/ostream.hpp

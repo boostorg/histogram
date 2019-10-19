@@ -18,6 +18,7 @@
 #include <boost/histogram/indexed.hpp>
 #include <cmath>
 #include <iomanip>
+#include <ios>
 #include <limits>
 #include <numeric>
 #include <ostream>
