@@ -19,7 +19,9 @@ using std::span;
 } // namespace histogram
 } // namespace boost
 
-#else
+#else // C++17 span not available, so we use our implementation
+
+// to be replaced by boost::span
 
 #include <array>
 #include <boost/assert.hpp>
@@ -221,13 +223,13 @@ public:
 #endif
 
 template <class T>
-span<T> make_span(T* begin, T* end) {
-  return span<T>{begin, end};
+auto make_span(T* begin, T* end) {
+  return dtl::span<T>{begin, end};
 }
 
 template <class T>
-span<T> make_span(T* begin, std::size_t size) {
-  return span<T>{begin, size};
+auto make_span(T* begin, std::size_t size) {
+  return dtl::span<T>{begin, size};
 }
 
 template <class Container, class = decltype(dtl::size(std::declval<Container>()),
@@ -237,8 +239,8 @@ auto make_span(const Container& cont) {
 }
 
 template <class T, std::size_t N>
-span<T> make_span(T (&arr)[N]) {
-  return span<T>(arr, N);
+auto make_span(T (&arr)[N]) {
+  return dtl::span<T>(arr, N);
 }
 
 } // namespace detail

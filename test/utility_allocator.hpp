@@ -45,7 +45,7 @@ private:
   BOOST_ATTRIBUTE_UNUSED inline void log_impl() {}
 
   template <class T, class... Ts>
-  inline void log_impl(T&& t, Ts&&... ts) {
+  void log_impl(T&& t, Ts&&... ts) {
     std::cerr << t;
     log_impl(std::forward<Ts>(ts)...);
   }
@@ -81,18 +81,18 @@ struct tracing_allocator {
       } else
         db->log("allocator +", n, " ", boost::histogram::detail::type_name<T>());
       auto& p = db->at<T>();
-      p.first += n;
-      p.second += n;
-      db->first += n * sizeof(T);
-      db->second += n * sizeof(T);
+      p.first += static_cast<int>(n);
+      p.second += static_cast<int>(n);
+      db->first += static_cast<int>(n * sizeof(T));
+      db->second += static_cast<int>(n * sizeof(T));
     }
     return static_cast<T*>(::operator new(n * sizeof(T)));
   }
 
   void deallocate(T* p, std::size_t n) {
     if (db) {
-      db->at<T>().first -= n;
-      db->first -= n * sizeof(T);
+      db->at<T>().first -= static_cast<int>(n);
+      db->first -= static_cast<int>(n * sizeof(T));
       db->log("allocator -", n, " ", boost::histogram::detail::type_name<T>());
     }
     ::operator delete((void*)p);

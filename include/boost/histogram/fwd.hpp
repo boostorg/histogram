@@ -12,8 +12,7 @@
   Forward declarations, tag types and type aliases.
 */
 
-#include <boost/config.hpp>            // BOOST_ATTRIBUTE_NODISCARD
-#include <boost/config/workaround.hpp> // BOOST_WORKAROUND
+#include <boost/config.hpp> // BOOST_ATTRIBUTE_NODISCARD
 #include <boost/core/use_default.hpp>
 #include <vector>
 
@@ -120,17 +119,18 @@ using weighted_profile_storage = dense_storage<accumulators::weighted_mean<>>;
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc++17-extensions"
+// hot-fix until patch is accepted upstream in boost.config
+#ifdef __has_cpp_attribute
+#undef BOOST_ATTRIBUTE_NODISCARD
+#if __has_cpp_attribute(nodiscard) && !(defined(__clang__) && (__cplusplus < 201700))
+#define BOOST_ATTRIBUTE_NODISCARD [[nodiscard]]
+#else
+#define BOOST_ATTRIBUTE_NODISCARD
+#endif
 #endif
 
 template <class Axes, class Storage = default_storage>
 class BOOST_ATTRIBUTE_NODISCARD histogram;
-
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
-#pragma GCC diagnostic pop
-#endif
 
 #endif
 } // namespace histogram

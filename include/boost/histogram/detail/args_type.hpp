@@ -8,12 +8,12 @@
 #define BOOST_HISTOGRAM_DETAIL_ARGS_TYPE_HPP
 
 #include <boost/config/workaround.hpp>
-#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
+#if BOOST_WORKAROUND(BOOST_GCC, >= 65000)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnoexcept-type"
 #endif
 #include <boost/callable_traits/args.hpp>
-#if BOOST_WORKAROUND(BOOST_GCC, >= 60000)
+#if BOOST_WORKAROUND(BOOST_GCC, >= 65000)
 #pragma GCC diagnostic pop
 #endif
 #include <boost/mp11/list.hpp>    // mp_pop_front
