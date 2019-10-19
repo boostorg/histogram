@@ -33,6 +33,9 @@ using real_index_type = double;
 /// Empty metadata type
 struct null_type {};
 
+/// Another alias for an empty metadata type
+using empty_type = null_type;
+
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 namespace transform {

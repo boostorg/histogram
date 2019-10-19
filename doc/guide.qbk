@@ -291,7 +291,7 @@ The library provides the [funcref boost::histogram::algorithm::project] function
 
 A projection removes an axis completely. Another way to obtain a smaller histogram is the [funcref boost::histogram::algorithm::reduce] function to /slice/, /shrink/ or /rebin/ axes.
 
-Shrinking means that the range of an axis is reduced and the number of bins along this axis. Slicing means the same, but is based on axis indices instead of their values. Rebinning means that adjacent bins are piece-wise merged into larger bins. For N adjacent bins, a new bin is formed which covers the interval of the merged bins and has their added content. These two operations can be combined and applied to several axes at once (which is much more efficient than doing it sequentially).
+Shrinking means that the range of an axis is reduced and the number of bins along that axis. Slicing means the same, but is based on axis indices while shrinking is based on the axis values. Rebinning means that adjacent bins are piece-wise merged into larger bins. For N adjacent bins, a new bin is formed which covers the interval of the merged bins and has their added content. These two operations can be combined and applied to several axes at once (which is much more efficient than doing it sequentially).
 
 [import ../examples/guide_histogram_reduction.cpp]
 [guide_histogram_reduction]

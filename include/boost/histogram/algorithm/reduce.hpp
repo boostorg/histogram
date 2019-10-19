@@ -81,10 +81,15 @@ inline reduce_option slice_and_rebin(unsigned iaxis, axis::index_type begin,
 /**
   Shrink option to be used in reduce().
 
+  The shrink is inclusive. The bin which contains the first value starts the range of bins
+  to keep. The bin which contains the second value is the last included in that range.
+  When the second value is exactly equal to a lower bin edge, then the previous bin is
+  the last in the range.
+
   @param iaxis which axis to operate on.
-  @param lower lowest bound that should be kept.
-  @param upper highest bound that should be kept. If upper is inside bin interval, the
-  whole interval is removed.
+  @param lower bin which contains lower is first to be kept.
+  @param upper bin which contains upper is last to be kept, except if upper is equal to
+  the lower edge.
  */
 inline reduce_option shrink(unsigned iaxis, double lower, double upper) {
   return shrink_and_rebin(iaxis, lower, upper, 1);
@@ -230,22 +235,17 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
       detail::static_if_c<axis::traits::is_reducible<A>::value>(
           [&o](auto&& aout, const auto& ain) {
             using A = std::decay_t<decltype(ain)>;
-            if (o.indices_set) {
-              o.begin = (std::max)(0, o.begin);
-              o.end = (std::min)(o.end, ain.size());
-            } else {
+            if (!o.indices_set && !o.values_set) {
               o.begin = 0;
               o.end = ain.size();
+            } else {
               if (o.values_set) {
-                if (o.lower < o.upper) {
-                  while (o.begin != o.end && ain.value(o.begin) < o.lower) ++o.begin;
-                  while (o.end != o.begin && ain.value(o.end - 1) >= o.upper) --o.end;
-                } else if (o.lower > o.upper) {
-                  // for inverted axis::regular
-                  while (o.begin != o.end && ain.value(o.begin) > o.lower) ++o.begin;
-                  while (o.end != o.begin && ain.value(o.end - 1) <= o.upper) --o.end;
-                }
+                o.begin = axis::traits::index(ain, o.lower);
+                o.end = axis::traits::index(ain, o.upper);
+                if (axis::traits::value_as<double>(ain, o.end) != o.upper) ++o.end;
               }
+              o.begin = (std::max)(0, o.begin);
+              o.end = (std::min)(o.end, ain.size());
             }
             o.end -= (o.end - o.begin) % o.merge;
             aout = A(ain, o.begin, o.end, o.merge);
