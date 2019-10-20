@@ -38,6 +38,9 @@ using empty_type = null_type;
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
+template <class Archive>
+void serialize(Archive&, null_type&, unsigned /* version */) {}
+
 namespace transform {
 struct id;
 struct log;

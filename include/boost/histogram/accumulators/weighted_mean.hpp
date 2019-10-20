@@ -8,7 +8,8 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_MEAN_HPP
 
 #include <boost/assert.hpp>
-#include <boost/histogram/fwd.hpp>
+#include <boost/core/nvp.hpp>
+#include <boost/histogram/fwd.hpp> // for weighted_mean<>
 #include <type_traits>
 
 namespace boost {
@@ -84,7 +85,12 @@ public:
   }
 
   template <class Archive>
-  void serialize(Archive&, unsigned /* version */);
+  void serialize(Archive& ar, unsigned /* version */) {
+    ar& make_nvp("sum_of_weights", sum_of_weights_);
+    ar& make_nvp("sum_of_weights_squared", sum_of_weights_squared_);
+    ar& make_nvp("weighted_mean", weighted_mean_);
+    ar& make_nvp("sum_of_weighted_deltas_squared", sum_of_weighted_deltas_squared_);
+  }
 
 private:
   RealType sum_of_weights_ = RealType(), sum_of_weights_squared_ = RealType(),

@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_INTEGER_HPP
 #define BOOST_HISTOGRAM_AXIS_INTEGER_HPP
 
+#include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/compressed_pair.hpp>
@@ -184,7 +185,11 @@ public:
   }
 
   template <class Archive>
-  void serialize(Archive&, unsigned);
+  void serialize(Archive& ar, unsigned /* version */) {
+    ar& make_nvp("size", size_meta_.first());
+    ar& make_nvp("meta", size_meta_.second());
+    ar& make_nvp("min", min_);
+  }
 
 private:
   index_type index_impl(std::false_type, int x) const noexcept {

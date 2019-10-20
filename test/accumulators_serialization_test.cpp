@@ -4,6 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/archive/xml_oarchive.hpp>
 #include <boost/assert.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators.hpp>
@@ -24,6 +25,10 @@ int main(int argc, char** argv) {
     BOOST_TEST_EQ(a.count(), 3);
     BOOST_TEST_EQ(a.value(), 2);
     BOOST_TEST_EQ(a.variance(), 0.5);
+#ifndef BOOST_NO_EXCEPTIONS
+    boost::archive::xml_oarchive oa(std::cout);
+    BOOST_TEST_THROWS(a.serialize(oa, 0), std::runtime_error);
+#endif
   }
 
   // mean

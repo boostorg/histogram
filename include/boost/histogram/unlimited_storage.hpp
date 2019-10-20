@@ -13,10 +13,12 @@
 #include <boost/config/workaround.hpp>
 #include <boost/core/alloc_construct.hpp>
 #include <boost/core/exchange.hpp>
+#include <boost/core/nvp.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
 #include <boost/histogram/detail/operators.hpp>
 #include <boost/histogram/detail/safe_comparison.hpp>
+#include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
@@ -504,6 +506,28 @@ public:
   unlimited_storage(std::size_t s, const T* p, const allocator_type& a = {})
       : buffer_(std::move(a)) {
     buffer_.template make<T>(s, p);
+  }
+
+  template <class Archive>
+  void serialize(Archive& ar, unsigned /* version */) {
+    if (Archive::is_loading::value) {
+      buffer_type tmp(buffer_.alloc);
+      std::size_t size;
+      ar& make_nvp("type", tmp.type);
+      ar& make_nvp("size", size);
+      tmp.visit([this, size](auto* tp) {
+        BOOST_ASSERT(tp == nullptr);
+        using T = std::decay_t<decltype(*tp)>;
+        buffer_.template make<T>(size);
+      });
+    } else {
+      ar& make_nvp("type", buffer_.type);
+      ar& make_nvp("size", buffer_.size);
+    }
+    buffer_.visit([this, &ar](auto* tp) {
+      auto sp = detail::make_span(tp, buffer_.size);
+      ar& make_nvp("buffer", sp);
+    });
   }
 
 private:

@@ -229,8 +229,8 @@ void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t v
   }
 }
 
-template <class T>
-std::size_t get_total_size(const dtl::span<const T>& values) {
+template <class T, std::size_t N>
+std::size_t get_total_size(const dtl::span<const T, N>& values) {
   std::size_t s = 1u;
   auto vis = [&s](const auto& v) {
     // cannot be replaced by std::decay_t
@@ -261,9 +261,9 @@ void fill_n_check_extra_args(std::size_t n, Ts&&... ts) {
 
 inline void fill_n_check_extra_args(std::size_t) noexcept {}
 
-template <class S, class A, class T, class... Us>
+template <class S, class A, class T, std::size_t N, class... Us>
 void fill_n(const std::size_t offset, S& storage, A& axes,
-            const dtl::span<const T> values, Us&&... us) {
+            const dtl::span<const T, N> values, Us&&... us) {
   static_assert(!std::is_pointer<T>::value,
                 "passing iterable of pointers not allowed (cannot determine lengths); "
                 "pass iterable of iterables instead");

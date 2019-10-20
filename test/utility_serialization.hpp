@@ -11,6 +11,7 @@
 #include <boost/archive/xml_oarchive.hpp>
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
+#include <boost/core/nvp.hpp>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -39,14 +40,14 @@ void load_xml(const std::string& filename, T& t) {
     BOOST_ASSERT(std::strlen(line) < 127);
   } while (!ifs.fail() && !ifs.eof() && std::strstr(line, "-->") == nullptr);
   boost::archive::xml_iarchive ia(ifs);
-  ia >> boost::serialization::make_nvp("item", t);
+  ia >> boost::make_nvp("item", t);
 }
 
 template <class T>
 void print_xml(const std::string& filename, const T& t) {
   std::cout << filename << "\n";
   boost::archive::xml_oarchive oa(std::cout);
-  oa << boost::serialization::make_nvp("item", t);
+  oa << boost::make_nvp("item", t);
   std::cout << std::flush;
 }
 

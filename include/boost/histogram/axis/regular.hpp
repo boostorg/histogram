@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_AXIS_REGULAR_HPP
 
 #include <boost/assert.hpp>
+#include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/option.hpp>
@@ -77,6 +78,9 @@ struct id {
   static T inverse(T&& x) noexcept {
     return std::forward<T>(x);
   }
+
+  template <class Archive>
+  void serialize(Archive&, unsigned /* version */) {}
 };
 
 /// Log transform for equidistant bins in log-space.
@@ -92,6 +96,9 @@ struct log {
   static T inverse(T x) {
     return std::exp(x);
   }
+
+  template <class Archive>
+  void serialize(Archive&, unsigned /* version */) {}
 };
 
 /// Sqrt transform for equidistant bins in sqrt-space.
@@ -107,6 +114,9 @@ struct sqrt {
   static T inverse(T x) {
     return x * x;
   }
+
+  template <class Archive>
+  void serialize(Archive&, unsigned /* version */) {}
 };
 
 /// Pow transform for equidistant bins in pow-space.
@@ -130,6 +140,11 @@ struct pow {
   }
 
   bool operator==(const pow& o) const noexcept { return power == o.power; }
+
+  template <class Archive>
+  void serialize(Archive& ar, unsigned /* version */) {
+    ar& make_nvp("power", power);
+  }
 };
 
 } // namespace transform
@@ -384,7 +399,13 @@ public:
   }
 
   template <class Archive>
-  void serialize(Archive&, unsigned);
+  void serialize(Archive& ar, unsigned /* version */) {
+    ar& make_nvp("transform", static_cast<transform_type&>(*this));
+    ar& make_nvp("size", size_meta_.first());
+    ar& make_nvp("meta", size_meta_.second());
+    ar& make_nvp("min", min_);
+    ar& make_nvp("delta", delta_);
+  }
 
 private:
   detail::compressed_pair<index_type, metadata_type> size_meta_{0};

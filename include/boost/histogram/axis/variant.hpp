@@ -1,4 +1,4 @@
-// Copyright 2015-2017 Hans Dembinski
+// Copyright 2015-2019 Hans Dembinski
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_VARIANT_HPP
 #define BOOST_HISTOGRAM_AXIS_VARIANT_HPP
 
+#include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/polymorphic_bin.hpp>
 #include <boost/histogram/axis/traits.hpp>
@@ -14,10 +15,9 @@
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
-#include <boost/histogram/fwd.hpp>
-#include <boost/mp11/function.hpp>
-#include <boost/mp11/list.hpp>
-#include <boost/mp11/utility.hpp>
+#include <boost/histogram/detail/variant_proxy.hpp>
+#include <boost/mp11/algorithm.hpp> // mp_contains
+#include <boost/mp11/list.hpp>      // mp_first
 #include <boost/throw_exception.hpp>
 #include <boost/variant2/variant.hpp>
 #include <ostream>
@@ -217,6 +217,12 @@ public:
   template <class T>
   bool operator!=(const T& t) const {
     return !operator==(t);
+  }
+
+  template <class Archive>
+  void serialize(Archive& ar, unsigned /* version */) {
+    detail::variant_proxy<variant> p{*this};
+    ar& make_nvp("variant", p);
   }
 
 private:

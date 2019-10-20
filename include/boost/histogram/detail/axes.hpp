@@ -9,6 +9,7 @@
 
 #include <array>
 #include <boost/assert.hpp>
+#include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/make_default.hpp>
@@ -177,6 +178,24 @@ void axes_assign(T& t, const std::tuple<Us...>& u) {
 template <typename T, typename U>
 void axes_assign(T& t, const U& u) {
   t.assign(u.begin(), u.end());
+}
+
+template <class Archive, class T>
+void axes_serialize(Archive& ar, T& axes) {
+  ar& make_nvp("axes", axes);
+}
+
+template <class Archive, class... Ts>
+void axes_serialize(Archive& ar, std::tuple<Ts...>& axes) {
+  // needed to keep serialization format backward compatible
+  struct proxy {
+    std::tuple<Ts...>& t;
+    void serialize(Archive& ar, unsigned) {
+      mp11::tuple_for_each(t, [&ar](auto& x) { ar& make_nvp("item", x); });
+    }
+  };
+  proxy p{axes};
+  ar& make_nvp("axes", p);
 }
 
 // create empty dynamic axis which can store any axes types from the argument

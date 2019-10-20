@@ -217,6 +217,11 @@ struct large_int : totally_ordered<large_int<Allocator>, large_int<Allocator>>,
     --d -= tmp;
   }
 
+  template <class Archive>
+  void serialize(Archive& ar, unsigned /* version */) {
+    ar& make_nvp("data", data);
+  }
+
   std::vector<std::uint64_t, Allocator> data;
 };
 

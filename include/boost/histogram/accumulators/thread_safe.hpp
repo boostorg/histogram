@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_THREAD_SAFE_HPP
 
 #include <atomic>
+#include <boost/core/nvp.hpp>
 #include <boost/mp11/utility.hpp>
 #include <type_traits>
 
@@ -48,6 +49,13 @@ public:
 
   void operator+=(T arg) { super_t::fetch_add(arg, std::memory_order_relaxed); }
   void operator++() { operator+=(static_cast<T>(1)); }
+
+  template <class Archive>
+  void serialize(Archive& ar, unsigned /* version */) {
+    auto value = super_t::load();
+    ar& make_nvp("value", value);
+    super_t::store(value);
+  }
 };
 
 } // namespace accumulators

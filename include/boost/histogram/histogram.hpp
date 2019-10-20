@@ -503,6 +503,16 @@ public:
   /// Return value iterator to the end in the histogram (read-only).
   const_iterator cend() const noexcept { return end(); }
 
+  template <class Archive>
+  void serialize(Archive& ar, unsigned /* version */) {
+    detail::axes_serialize(ar, axes_);
+    ar& make_nvp("storage", storage_and_mutex_.first());
+    if (Archive::is_loading::value) {
+      offset_ = detail::offset(axes_);
+      detail::throw_if_axes_is_too_large(axes_);
+    }
+  }
+
 private:
   axes_type axes_;
 

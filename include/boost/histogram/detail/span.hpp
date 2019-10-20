@@ -7,6 +7,11 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_SPAN_HPP
 #define BOOST_HISTOGRAM_DETAIL_SPAN_HPP
 
+#include <boost/assert.hpp>
+#include <boost/core/nvp.hpp>
+#include <boost/histogram/detail/static_if.hpp>
+#include <type_traits>
+
 #if __cpp_constexpr >= 201603 && __cpp_deduction_guides >= 201703 && \
     __cpp_lib_nonmember_container_access >= 201411 && __has_include(<span>)
 #include <span>
@@ -240,7 +245,12 @@ auto make_span(const Container& cont) {
 
 template <class T, std::size_t N>
 auto make_span(T (&arr)[N]) {
-  return dtl::span<T>(arr, N);
+  return dtl::span<T, N>(arr, N);
+}
+
+template <class Archive, class T, std::size_t N>
+void serialize(Archive& ar, dtl::span<T, N>& sp, unsigned /* version */) {
+  for (auto&& x : sp) ar& make_nvp("item", x);
 }
 
 } // namespace detail

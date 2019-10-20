@@ -7,7 +7,8 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_SUM_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_SUM_HPP
 
-#include <boost/histogram/fwd.hpp>
+#include <boost/core/nvp.hpp>
+#include <boost/histogram/fwd.hpp> // for sum<>
 #include <cmath>
 #include <type_traits>
 
@@ -83,7 +84,10 @@ public:
   operator RealType() const { return large_ + small_; }
 
   template <class Archive>
-  void serialize(Archive&, unsigned /* version */);
+  void serialize(Archive& ar, unsigned /* version */) {
+    ar& make_nvp("large", large_);
+    ar& make_nvp("small", small_);
+  }
 
 private:
   RealType large_ = RealType();

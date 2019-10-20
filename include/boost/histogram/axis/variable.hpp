@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/option.hpp>
@@ -226,7 +227,10 @@ public:
   auto get_allocator() const { return vec_meta_.first().get_allocator(); }
 
   template <class Archive>
-  void serialize(Archive&, unsigned);
+  void serialize(Archive& ar, unsigned /* version */) {
+    ar& make_nvp("seq", vec_meta_.first());
+    ar& make_nvp("meta", vec_meta_.second());
+  }
 
 private:
   detail::compressed_pair<vec_type, metadata_type> vec_meta_;

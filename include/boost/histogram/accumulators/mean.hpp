@@ -8,7 +8,10 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 
 #include <boost/assert.hpp>
-#include <boost/histogram/fwd.hpp>
+#include <boost/core/nvp.hpp>
+#include <boost/histogram/fwd.hpp> // for mean<>
+#include <boost/throw_exception.hpp>
+#include <stdexcept>
 #include <type_traits>
 
 namespace boost {
@@ -24,10 +27,10 @@ template <class RealType>
 class mean {
 public:
   mean() = default;
-  mean(const RealType& n, const RealType& mean, const RealType& variance)
+  mean(const RealType& n, const RealType& mean, const RealType& variance) noexcept
       : sum_(n), mean_(mean), sum_of_deltas_squared_(variance * (n - 1)) {}
 
-  void operator()(const RealType& x) {
+  void operator()(const RealType& x) noexcept {
     sum_ += static_cast<RealType>(1);
     const auto delta = x - mean_;
     BOOST_ASSERT(sum_ != 0);
@@ -35,7 +38,7 @@ public:
     sum_of_deltas_squared_ += delta * (x - mean_);
   }
 
-  void operator()(const RealType& w, const RealType& x) {
+  void operator()(const RealType& w, const RealType& x) noexcept {
     sum_ += w;
     const auto delta = x - mean_;
     BOOST_ASSERT(sum_ != 0);
@@ -44,7 +47,7 @@ public:
   }
 
   template <class T>
-  mean& operator+=(const mean<T>& rhs) {
+  mean& operator+=(const mean<T>& rhs) noexcept {
     const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
     sum_ += rhs.sum_;
     BOOST_ASSERT(sum_ != 0);
@@ -53,7 +56,7 @@ public:
     return *this;
   }
 
-  mean& operator*=(const RealType& s) {
+  mean& operator*=(const RealType& s) noexcept {
     mean_ *= s;
     sum_of_deltas_squared_ *= s * s;
     return *this;
@@ -72,10 +75,22 @@ public:
 
   const RealType& count() const noexcept { return sum_; }
   const RealType& value() const noexcept { return mean_; }
-  RealType variance() const { return sum_of_deltas_squared_ / (sum_ - 1); }
+  RealType variance() const noexcept { return sum_of_deltas_squared_ / (sum_ - 1); }
 
   template <class Archive>
-  void serialize(Archive&, unsigned /* version */);
+  void serialize(Archive& ar, unsigned version) {
+    if (version == 0) {
+      if (Archive::is_saving::value)
+        BOOST_THROW_EXCEPTION(std::runtime_error("save must not use version 0"));
+      std::size_t sum;
+      ar& make_nvp("sum", sum);
+      sum_ = static_cast<RealType>(sum);
+    } else {
+      ar& make_nvp("sum", sum_);
+    }
+    ar& make_nvp("mean", mean_);
+    ar& make_nvp("sum_of_deltas_squared", sum_of_deltas_squared_);
+  }
 
 private:
   RealType sum_ = 0, mean_ = 0, sum_of_deltas_squared_ = 0;
@@ -86,6 +101,21 @@ private:
 } // namespace boost
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+
+namespace boost {
+namespace serialization {
+
+template <class T>
+struct version;
+
+// version 1 for boost::histogram::accumulators::mean<RealType>
+template <class RealType>
+struct version<boost::histogram::accumulators::mean<RealType>>
+    : std::integral_constant<int, 1> {};
+
+} // namespace serialization
+} // namespace boost
+
 namespace std {
 template <class T, class U>
 /// Specialization for boost::histogram::accumulators::mean.
@@ -94,6 +124,7 @@ struct common_type<boost::histogram::accumulators::mean<T>,
   using type = boost::histogram::accumulators::mean<common_type_t<T, U>>;
 };
 } // namespace std
+
 #endif
 
 #endif
