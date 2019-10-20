@@ -9,6 +9,7 @@
 
 #include <boost/archive/archive_exception.hpp>
 #include <boost/assert.hpp>
+#include <boost/core/nvp.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
@@ -26,7 +27,6 @@
 #include <boost/mp11/tuple.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/map.hpp>
-#include <boost/serialization/nvp.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <boost/serialization/string.hpp>
@@ -49,21 +49,18 @@ namespace boost {
 namespace serialization {
 // version 1 for boost::histogram::accumulators::mean<RealType>
 template <class RealType>
-struct version<::boost::histogram::accumulators::mean<RealType>> {
+struct version<boost::histogram::accumulators::mean<RealType>> {
   typedef mpl::int_<1> type;
   typedef mpl::integral_c_tag tag;
   BOOST_STATIC_CONSTANT(int, value = version::type::value);
 };
+
+template <class Archive, class... Ts>
+void serialize(Archive& ar, std::tuple<Ts...>& t, unsigned /* version */) {
+  mp11::tuple_for_each(t, [&ar](auto& x) { ar& make_nvp("item", x); });
+}
 } // namespace serialization
 } // namespace boost
-
-namespace std {
-template <class Archive, class... Ts>
-void serialize(Archive& ar, tuple<Ts...>& t, unsigned /* version */) {
-  ::boost::mp11::tuple_for_each(
-      t, [&ar](auto& x) { ar& boost::serialization::make_nvp("item", x); });
-}
-} // namespace std
 
 namespace boost {
 namespace histogram {
@@ -72,15 +69,15 @@ namespace accumulators {
 template <class RealType>
 template <class Archive>
 void sum<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& serialization::make_nvp("large", large_);
-  ar& serialization::make_nvp("small", small_);
+  ar& make_nvp("large", large_);
+  ar& make_nvp("small", small_);
 }
 
 template <class RealType>
 template <class Archive>
 void weighted_sum<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& serialization::make_nvp("sum_of_weights", sum_of_weights_);
-  ar& serialization::make_nvp("sum_of_weights_squared", sum_of_weights_squared_);
+  ar& make_nvp("sum_of_weights", sum_of_weights_);
+  ar& make_nvp("sum_of_weights_squared", sum_of_weights_squared_);
 }
 
 template <class RealType>
@@ -88,29 +85,28 @@ template <class Archive>
 void mean<RealType>::serialize(Archive& ar, unsigned version) {
   if (version == 0 && Archive::is_loading::value) {
     std::size_t sum;
-    ar& serialization::make_nvp("sum", sum);
+    ar& make_nvp("sum", sum);
     sum_ = static_cast<RealType>(sum);
   } else {
-    ar& serialization::make_nvp("sum", sum_);
+    ar& make_nvp("sum", sum_);
   }
-  ar& serialization::make_nvp("mean", mean_);
-  ar& serialization::make_nvp("sum_of_deltas_squared", sum_of_deltas_squared_);
+  ar& make_nvp("mean", mean_);
+  ar& make_nvp("sum_of_deltas_squared", sum_of_deltas_squared_);
 }
 
 template <class RealType>
 template <class Archive>
 void weighted_mean<RealType>::serialize(Archive& ar, unsigned /* version */) {
-  ar& serialization::make_nvp("sum_of_weights", sum_of_weights_);
-  ar& serialization::make_nvp("sum_of_weights_squared", sum_of_weights_squared_);
-  ar& serialization::make_nvp("weighted_mean", weighted_mean_);
-  ar& serialization::make_nvp("sum_of_weighted_deltas_squared",
-                              sum_of_weighted_deltas_squared_);
+  ar& make_nvp("sum_of_weights", sum_of_weights_);
+  ar& make_nvp("sum_of_weights_squared", sum_of_weights_squared_);
+  ar& make_nvp("weighted_mean", weighted_mean_);
+  ar& make_nvp("sum_of_weighted_deltas_squared", sum_of_weighted_deltas_squared_);
 }
 
 template <class Archive, class T>
 void serialize(Archive& ar, thread_safe<T>& t, unsigned /* version */) {
   T value = t;
-  ar& serialization::make_nvp("value", value);
+  ar& make_nvp("value", value);
   t = value;
 }
 } // namespace accumulators
@@ -129,7 +125,7 @@ void serialize(Archive&, sqrt&, unsigned /* version */) {}
 
 template <class Archive>
 void serialize(Archive& ar, pow& t, unsigned /* version */) {
-  ar& serialization::make_nvp("power", t.power);
+  ar& make_nvp("power", t.power);
 }
 } // namespace transform
 
@@ -139,33 +135,33 @@ void serialize(Archive&, null_type&, unsigned /* version */) {}
 template <class T, class Tr, class M, class O>
 template <class Archive>
 void regular<T, Tr, M, O>::serialize(Archive& ar, unsigned /* version */) {
-  ar& serialization::make_nvp("transform", static_cast<transform_type&>(*this));
-  ar& serialization::make_nvp("size", size_meta_.first());
-  ar& serialization::make_nvp("meta", size_meta_.second());
-  ar& serialization::make_nvp("min", min_);
-  ar& serialization::make_nvp("delta", delta_);
+  ar& make_nvp("transform", static_cast<transform_type&>(*this));
+  ar& make_nvp("size", size_meta_.first());
+  ar& make_nvp("meta", size_meta_.second());
+  ar& make_nvp("min", min_);
+  ar& make_nvp("delta", delta_);
 }
 
 template <class T, class M, class O>
 template <class Archive>
 void integer<T, M, O>::serialize(Archive& ar, unsigned /* version */) {
-  ar& serialization::make_nvp("size", size_meta_.first());
-  ar& serialization::make_nvp("meta", size_meta_.second());
-  ar& serialization::make_nvp("min", min_);
+  ar& make_nvp("size", size_meta_.first());
+  ar& make_nvp("meta", size_meta_.second());
+  ar& make_nvp("min", min_);
 }
 
 template <class T, class M, class O, class A>
 template <class Archive>
 void variable<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
-  ar& serialization::make_nvp("seq", vec_meta_.first());
-  ar& serialization::make_nvp("meta", vec_meta_.second());
+  ar& make_nvp("seq", vec_meta_.first());
+  ar& make_nvp("meta", vec_meta_.second());
 }
 
 template <class T, class M, class O, class A>
 template <class Archive>
 void category<T, M, O, A>::serialize(Archive& ar, unsigned /* version */) {
-  ar& serialization::make_nvp("seq", vec_meta_.first());
-  ar& serialization::make_nvp("meta", vec_meta_.second());
+  ar& make_nvp("seq", vec_meta_.first());
+  ar& make_nvp("meta", vec_meta_.second());
 }
 
 // variant_proxy is a workaround to remain backward compatible in the serialization
@@ -183,8 +179,8 @@ struct variant_proxy {
         [&ar](auto& value) {
           using T = std::decay_t<decltype(value)>;
           int which = static_cast<int>(mp11::mp_find<Variant, T>::value);
-          ar << serialization::make_nvp("which", which);
-          ar << serialization::make_nvp("value", value);
+          ar << make_nvp("which", which);
+          ar << make_nvp("value", value);
         },
         v);
   }
@@ -192,7 +188,7 @@ struct variant_proxy {
   template <class Archive>
   void load(Archive& ar, unsigned /* version */) {
     int which = 0;
-    ar >> serialization::make_nvp("which", which);
+    ar >> make_nvp("which", which);
     constexpr unsigned N = mp11::mp_size<Variant>::value;
     if (which < 0 || static_cast<unsigned>(which) >= N)
       // throw on invalid which, which >= N can happen if type was removed from variant
@@ -201,7 +197,7 @@ struct variant_proxy {
     mp11::mp_with_index<N>(static_cast<unsigned>(which), [&ar, this](auto i) {
       using T = mp11::mp_at_c<Variant, i>;
       T value;
-      ar >> serialization::make_nvp("value", value);
+      ar >> make_nvp("value", value);
       v = std::move(value);
       T* new_address = get_if<T>(&v);
       ar.reset_object_address(new_address, &value);
@@ -212,39 +208,38 @@ struct variant_proxy {
 template <class Archive, class... Ts>
 void serialize(Archive& ar, variant<Ts...>& v, unsigned /* version */) {
   variant_proxy<variant<Ts...>> p{v};
-  ar& serialization::make_nvp("variant", p);
+  ar& make_nvp("variant", p);
 }
 } // namespace axis
 
 namespace detail {
 template <class Archive, class T>
 void serialize(Archive& ar, vector_impl<T>& impl, unsigned /* version */) {
-  ar& serialization::make_nvp("vector", static_cast<T&>(impl));
+  ar& make_nvp("vector", static_cast<T&>(impl));
 }
 
 template <class Archive, class T>
 void serialize(Archive& ar, array_impl<T>& impl, unsigned /* version */) {
-  ar& serialization::make_nvp("size", impl.size_);
-  ar& serialization::make_nvp("array",
-                              serialization::make_array(&impl.front(), impl.size_));
+  ar& make_nvp("size", impl.size_);
+  ar& make_nvp("array", serialization::make_array(impl.data(), impl.size_));
 }
 
 template <class Archive, class T>
 void serialize(Archive& ar, map_impl<T>& impl, unsigned /* version */) {
-  ar& serialization::make_nvp("size", impl.size_);
-  ar& serialization::make_nvp("map", static_cast<T&>(impl));
+  ar& make_nvp("size", impl.size_);
+  ar& make_nvp("map", static_cast<T&>(impl));
 }
 
 template <class Archive, class Allocator>
 void serialize(Archive& ar, large_int<Allocator>& x, unsigned /* version */) {
-  ar& serialization::make_nvp("data", x.data);
+  ar& make_nvp("data", x.data);
 }
 } // namespace detail
 
 template <class Archive, class T>
 void serialize(Archive& ar, storage_adaptor<T>& x, unsigned /* version */) {
   auto& impl = unsafe_access::storage_adaptor_impl(x);
-  ar& serialization::make_nvp("impl", impl);
+  ar& make_nvp("impl", impl);
 }
 
 template <class Allocator, class Archive>
@@ -254,29 +249,27 @@ void serialize(Archive& ar, unlimited_storage<Allocator>& s, unsigned /* version
   if (Archive::is_loading::value) {
     buffer_t helper(buffer.alloc);
     std::size_t size;
-    ar& serialization::make_nvp("type", helper.type);
-    ar& serialization::make_nvp("size", size);
+    ar& make_nvp("type", helper.type);
+    ar& make_nvp("size", size);
     helper.visit([&buffer, size](auto* tp) {
       BOOST_ASSERT(tp == nullptr);
       using T = std::decay_t<decltype(*tp)>;
       buffer.template make<T>(size);
     });
   } else {
-    ar& serialization::make_nvp("type", buffer.type);
-    ar& serialization::make_nvp("size", buffer.size);
+    ar& make_nvp("type", buffer.type);
+    ar& make_nvp("size", buffer.size);
   }
   buffer.visit([&buffer, &ar](auto* tp) {
-    using T = std::decay_t<decltype(*tp)>;
-    ar& serialization::make_nvp(
-        "buffer",
-        serialization::make_array(reinterpret_cast<T*>(buffer.ptr), buffer.size));
+    ar& make_nvp("buffer", serialization::make_array(
+                               static_cast<decltype(tp)>(buffer.ptr), buffer.size));
   });
 }
 
 template <class Archive, class A, class S>
 void serialize(Archive& ar, histogram<A, S>& h, unsigned /* version */) {
-  ar& serialization::make_nvp("axes", unsafe_access::axes(h));
-  ar& serialization::make_nvp("storage", unsafe_access::storage(h));
+  ar& make_nvp("axes", unsafe_access::axes(h));
+  ar& make_nvp("storage", unsafe_access::storage(h));
   if (Archive::is_loading::value) {
     unsafe_access::offset(h) = detail::offset(unsafe_access::axes(h));
     detail::throw_if_axes_is_too_large(unsafe_access::axes(h));
