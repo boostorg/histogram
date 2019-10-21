@@ -20,95 +20,97 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-#define BOOST_HISTOGRAM_DETECT(name, cond) \
-  template <class T>                       \
-  using name##_impl = decltype(cond);      \
-  template <class T>                       \
-  using name = typename mp11::mp_valid<name##_impl, T>::type
-
-#define BOOST_HISTOGRAM_DETECT_BINARY(name, cond) \
-  template <class T, class U>                     \
+#define BOOST_HISTOGRAM_DETAIL_DETECT(name, cond) \
+  template <class T>                              \
   using name##_impl = decltype(cond);             \
-  template <class T, class U = T>                 \
-  using name = typename mp11::mp_valid<name##_impl, T, U>::type
+  template <class T>                              \
+  using name = typename boost::mp11::mp_valid<name##_impl, T>::type
+
+#define BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(name, cond) \
+  template <class T, class U>                            \
+  using name##_impl = decltype(cond);                    \
+  template <class T, class U = T>                        \
+  using name = typename boost::mp11::mp_valid<name##_impl, T, U>::type
 
 // metadata has overloads, trying to get pmf in this case always fails
-BOOST_HISTOGRAM_DETECT(has_method_metadata, (std::declval<T&>().metadata()));
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_metadata, (std::declval<T&>().metadata()));
 
 // resize has overloads, trying to get pmf in this case always fails
-BOOST_HISTOGRAM_DETECT(has_method_resize, (std::declval<T&>().resize(0)));
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_resize, (std::declval<T&>().resize(0)));
 
-BOOST_HISTOGRAM_DETECT(has_method_size, &T::size);
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_size, &T::size);
 
-BOOST_HISTOGRAM_DETECT(has_method_clear, &T::clear);
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_clear, &T::clear);
 
-BOOST_HISTOGRAM_DETECT(has_method_lower, &T::lower);
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_lower, &T::lower);
 
-BOOST_HISTOGRAM_DETECT(has_method_value, &T::value);
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_value, &T::value);
 
-BOOST_HISTOGRAM_DETECT(has_method_update, &T::update);
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_update, &T::update);
 
 // reset has overloads, trying to get pmf in this case always fails
-BOOST_HISTOGRAM_DETECT(has_method_reset, (std::declval<T>().reset(0)));
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_reset, (std::declval<T>().reset(0)));
 
-BOOST_HISTOGRAM_DETECT(has_method_options, &T::options);
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_options, &T::options);
 
-BOOST_HISTOGRAM_DETECT(has_allocator, &T::get_allocator);
+BOOST_HISTOGRAM_DETAIL_DETECT(has_allocator, &T::get_allocator);
 
-BOOST_HISTOGRAM_DETECT(is_indexable, (std::declval<T&>()[0]));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_indexable, (std::declval<T&>()[0]));
 
-BOOST_HISTOGRAM_DETECT(is_transform, (&T::forward, &T::inverse));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_transform, (&T::forward, &T::inverse));
 
-BOOST_HISTOGRAM_DETECT(is_indexable_container,
-                       (std::declval<T>()[0], &T::size, std::begin(std::declval<T>()),
-                        std::end(std::declval<T>())));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_indexable_container, (std::declval<T>()[0], &T::size,
+                                                       std::begin(std::declval<T>()),
+                                                       std::end(std::declval<T>())));
 
-BOOST_HISTOGRAM_DETECT(is_vector_like,
-                       (std::declval<T>()[0], &T::size, std::declval<T>().resize(0),
-                        std::begin(std::declval<T>()), std::end(std::declval<T>())));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_vector_like,
+                              (std::declval<T>()[0], &T::size,
+                               std::declval<T>().resize(0), std::begin(std::declval<T>()),
+                               std::end(std::declval<T>())));
 
-BOOST_HISTOGRAM_DETECT(is_array_like,
-                       (std::declval<T>()[0], &T::size, std::tuple_size<T>::value,
-                        std::begin(std::declval<T>()), std::end(std::declval<T>())));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_array_like,
+                              (std::declval<T>()[0], &T::size, std::tuple_size<T>::value,
+                               std::begin(std::declval<T>()),
+                               std::end(std::declval<T>())));
 
-BOOST_HISTOGRAM_DETECT(is_map_like,
-                       (std::declval<typename T::key_type>(),
-                        std::declval<typename T::mapped_type>(),
-                        std::begin(std::declval<T>()), std::end(std::declval<T>())));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_map_like, (std::declval<typename T::key_type>(),
+                                            std::declval<typename T::mapped_type>(),
+                                            std::begin(std::declval<T>()),
+                                            std::end(std::declval<T>())));
 
 // ok: is_axis is false for axis::variant, because T::index is templated
-BOOST_HISTOGRAM_DETECT(is_axis, (&T::size, &T::index));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_axis, (&T::size, &T::index));
 
-BOOST_HISTOGRAM_DETECT(is_iterable,
-                       (std::begin(std::declval<T&>()), std::end(std::declval<T&>())));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_iterable, (std::begin(std::declval<T&>()),
+                                            std::end(std::declval<T&>())));
 
-BOOST_HISTOGRAM_DETECT(is_iterator,
-                       (typename std::iterator_traits<T>::iterator_category()));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_iterator,
+                              (typename std::iterator_traits<T>::iterator_category()));
 
-BOOST_HISTOGRAM_DETECT(is_streamable,
-                       (std::declval<std::ostream&>() << std::declval<T&>()));
+BOOST_HISTOGRAM_DETAIL_DETECT(is_streamable,
+                              (std::declval<std::ostream&>() << std::declval<T&>()));
 
-BOOST_HISTOGRAM_DETECT(has_operator_preincrement, (++std::declval<T&>()));
+BOOST_HISTOGRAM_DETAIL_DETECT(has_operator_preincrement, (++std::declval<T&>()));
 
-BOOST_HISTOGRAM_DETECT_BINARY(has_operator_equal,
-                              (std::declval<const T&>() == std::declval<const U>()));
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_operator_equal, (std::declval<const T&>() ==
+                                                          std::declval<const U>()));
 
-BOOST_HISTOGRAM_DETECT_BINARY(has_operator_radd,
-                              (std::declval<T&>() += std::declval<U>()));
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_operator_radd,
+                                     (std::declval<T&>() += std::declval<U>()));
 
-BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rsub,
-                              (std::declval<T&>() -= std::declval<U>()));
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_operator_rsub,
+                                     (std::declval<T&>() -= std::declval<U>()));
 
-BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rmul,
-                              (std::declval<T&>() *= std::declval<U>()));
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_operator_rmul,
+                                     (std::declval<T&>() *= std::declval<U>()));
 
-BOOST_HISTOGRAM_DETECT_BINARY(has_operator_rdiv,
-                              (std::declval<T&>() /= std::declval<U>()));
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_operator_rdiv,
+                                     (std::declval<T&>() /= std::declval<U>()));
 
-BOOST_HISTOGRAM_DETECT_BINARY(
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(
     has_method_eq, (std::declval<const T>().operator==(std::declval<const U>())));
 
-BOOST_HISTOGRAM_DETECT(has_threading_support, (T::has_threading_support));
+BOOST_HISTOGRAM_DETAIL_DETECT(has_threading_support, (T::has_threading_support));
 
 template <class T>
 struct is_weight_impl : mp11::mp_false {};

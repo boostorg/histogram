@@ -125,16 +125,6 @@ using weighted_profile_storage = dense_storage<accumulators::weighted_mean<>>;
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
-// hot-fix until patch is accepted upstream in boost.config
-#ifdef __has_cpp_attribute
-#undef BOOST_ATTRIBUTE_NODISCARD
-#if __has_cpp_attribute(nodiscard) && !(defined(__clang__) && (__cplusplus < 201700))
-#define BOOST_ATTRIBUTE_NODISCARD [[nodiscard]]
-#else
-#define BOOST_ATTRIBUTE_NODISCARD
-#endif
-#endif
-
 template <class Axes, class Storage = default_storage>
 class BOOST_ATTRIBUTE_NODISCARD histogram;
 
