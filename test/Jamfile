@@ -12,6 +12,10 @@ import regex ;
 import testing ;
 import ../../config/checks/config : requires ;
 
+if ! [ python.configured ]
+{
+    using python ;
+}
 
 path-constant THIS_PATH : . ;
 
@@ -23,10 +27,13 @@ project
     ]
     ;
 
+# Check consistency of build systems
+testing.make-test run-pyd : check_build_system.py :
+    <dependency>Jamfile <dependency>CMakeLists.txt ;
+
 # Verify One Definition Rule by linking two object files which include everything
-testing.make-test run-pyd : odr_test.py : : check_odr_test ;
+testing.make-test run-pyd : check_odr_test.py : <dependency>odr_test.cpp ;
 alias odr :
-    check_odr_test
     [ link odr_main_test.cpp odr_test.cpp ]
     ;
 

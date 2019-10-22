@@ -8,21 +8,52 @@ boost_test(SOURCES check_cmake_version.cpp ARGUMENTS ${PROJECT_VERSION}
 # checks that b2 and cmake are in sync
 add_test(NAME check_build_system COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
 
+# checks that all headers are included in odr test
+add_test(NAME check_odr_test COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
+
 # keep in sync with Jamfile, this should be automatized...
-boost_test(TYPE compile-fail SOURCES axis_category_fail0.cpp)
-boost_test(TYPE compile-fail SOURCES axis_category_fail1.cpp)
-boost_test(TYPE compile-fail SOURCES axis_category_fail2.cpp)
-boost_test(TYPE compile-fail SOURCES axis_integer_fail0.cpp)
-boost_test(TYPE compile-fail SOURCES axis_integer_fail1.cpp)
-boost_test(TYPE compile-fail SOURCES axis_integer_fail2.cpp)
-boost_test(TYPE compile-fail SOURCES axis_integer_fail3.cpp)
-boost_test(TYPE compile-fail SOURCES axis_integer_fail4.cpp)
-boost_test(TYPE compile-fail SOURCES axis_regular_fail0.cpp)
-boost_test(TYPE compile-fail SOURCES axis_regular_fail1.cpp)
-boost_test(TYPE compile-fail SOURCES axis_variable_fail0.cpp)
-boost_test(TYPE compile-fail SOURCES axis_variable_fail1.cpp)
-boost_test(TYPE compile-fail SOURCES make_histogram_fail0.cpp)
-boost_test(TYPE compile-fail SOURCES make_histogram_fail1.cpp)
+boost_test(TYPE compile-fail SOURCES axis_category_fail0.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_category_fail1.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_category_fail2.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_integer_fail0.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_integer_fail1.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_integer_fail2.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_integer_fail3.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_integer_fail4.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_regular_fail0.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_regular_fail1.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_variable_fail0.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES axis_variable_fail1.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES make_histogram_fail0.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES make_histogram_fail1.cpp
+  LIBRARIES Boost::histogram
+)
 boost_test(TYPE run SOURCES accumulators_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES algorithm_project_test.cpp
@@ -119,13 +150,14 @@ endif()
 
 ## No cmake support yet
 # boost_test(TYPE link SOURCES odr_main_test.cpp odr_test.cpp
-#   LIBRARIES Boost::histogram Boost::core)
+#  LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES boost_accumulators_support_test.cpp
 #  LIBRARIES Boost::histogram Boost::core Boost::accumulators)
 # boost_test(TYPE run SOURCES boost_range_support_test.cpp
 #  LIBRARIES Boost::histogram Boost::core Boost::range)
 # boost_test(TYPE run SOURCES boost_units_support_test.cpp
 #  LIBRARIES Boost::histogram Boost::core Boost::units)
+# boost_test(TYPE run SOURCES detail_array_wrapper_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES unlimited_storage_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES storage_adaptor_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
 # boost_test(TYPE run SOURCES histogram_serialization_test.cpp LIBRARIES Boost::histogram Boost::core Boost::serialization)
