@@ -14,11 +14,11 @@
 #include <boost/core/alloc_construct.hpp>
 #include <boost/core/exchange.hpp>
 #include <boost/core/nvp.hpp>
+#include <boost/histogram/detail/array_wrapper.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/large_int.hpp>
 #include <boost/histogram/detail/operators.hpp>
 #include <boost/histogram/detail/safe_comparison.hpp>
-#include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
@@ -525,8 +525,8 @@ public:
       ar& make_nvp("size", buffer_.size);
     }
     buffer_.visit([this, &ar](auto* tp) {
-      auto sp = detail::make_span(tp, buffer_.size);
-      ar& make_nvp("buffer", sp);
+      auto w = detail::make_array_wrapper(tp, this->buffer_.size);
+      ar& make_nvp("buffer", w);
     });
   }
 

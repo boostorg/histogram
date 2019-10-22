@@ -9,11 +9,11 @@
 
 #include <algorithm>
 #include <boost/core/nvp.hpp>
+#include <boost/histogram/detail/array_wrapper.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/safe_comparison.hpp>
-#include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
@@ -116,8 +116,8 @@ struct array_impl : T {
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
     ar& make_nvp("size", size_);
-    auto sp = detail::make_span(T::data(), size_);
-    ar& make_nvp("array", sp);
+    auto w = detail::make_array_wrapper(T::data(), size_);
+    ar& make_nvp("array", w);
   }
 
   std::size_t size_ = 0;

@@ -248,11 +248,6 @@ auto make_span(T (&arr)[N]) {
   return dtl::span<T, N>(arr, N);
 }
 
-template <class Archive, class T, std::size_t N>
-void serialize(Archive& ar, dtl::span<T, N>& sp, unsigned /* version */) {
-  for (auto&& x : sp) ar& make_nvp("item", x);
-}
-
 } // namespace detail
 } // namespace histogram
 } // namespace boost
