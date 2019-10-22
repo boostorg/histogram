@@ -8,6 +8,7 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/cat.hpp>
 #include <limits>
 #include <sstream>
@@ -27,6 +28,24 @@ int main() {
   {
     auto empty = std::vector<int>(0);
     BOOST_TEST_THROWS((axis::category<>(empty)), std::invalid_argument);
+  }
+
+  // value should return copy for arithmetic types and const reference otherwise
+  {
+    enum class Foo { foo };
+
+    BOOST_TEST_TRAIT_SAME(axis::traits::value_type<axis::category<std::string>>,
+                          std::string);
+    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<std::string>>().value(0)),
+                          const std::string&);
+    BOOST_TEST_TRAIT_SAME(axis::traits::value_type<axis::category<const char*>>,
+                          const char*);
+    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<const char*>>().value(0)),
+                          const char*);
+    BOOST_TEST_TRAIT_SAME(axis::traits::value_type<axis::category<Foo>>, Foo);
+    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<Foo>>().value(0)), Foo);
+    BOOST_TEST_TRAIT_SAME(axis::traits::value_type<axis::category<int>>, int);
+    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<int>>().value(0)), int);
   }
 
   // axis::category
@@ -50,30 +69,51 @@ int main() {
 
     BOOST_TEST_EQ(detail::cat(a),
                   "category(\"A\", \"B\", \"C\", metadata=\"bar\", options=overflow)");
+  }
 
-    axis::category<std::string> b;
+  // category<int, axis::null_type>: copy, move
+  {
+    using C = axis::category<int, axis::null_type>;
+    C a({1, 2, 3});
+    C a2(a);
+    BOOST_TEST_EQ(a2, a);
+    C b;
     BOOST_TEST_NE(a, b);
     b = a;
     BOOST_TEST_EQ(a, b);
-    b = axis::category<std::string>{{B, A, C}};
+    b = C{{2, 1, 3}};
     BOOST_TEST_NE(a, b);
     b = a;
     BOOST_TEST_EQ(a, b);
-    axis::category<std::string> c = std::move(b);
+    C c = std::move(b);
     BOOST_TEST_EQ(c, a);
-    axis::category<std::string> d;
+    C d;
     BOOST_TEST_NE(c, d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
+  }
 
-    enum class Foo { foo };
+  // category<std::string>: copy, move
+  {
+    using C = axis::category<std::string>;
 
-    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<std::string>>().value(0)),
-                          const std::string&);
-    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<const char*>>().value(0)),
-                          const char*);
-    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<Foo>>().value(0)), Foo);
-    BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<int>>().value(0)), int);
+    C a({"A", "B", "C"}, "foo");
+    C a2(a);
+    BOOST_TEST_EQ(a2, a);
+    C b;
+    BOOST_TEST_NE(a, b);
+    b = a;
+    BOOST_TEST_EQ(a, b);
+    b = C{{"B", "A", "C"}};
+    BOOST_TEST_NE(a, b);
+    b = a;
+    BOOST_TEST_EQ(a, b);
+    C c = std::move(b);
+    BOOST_TEST_EQ(c, a);
+    C d;
+    BOOST_TEST_NE(c, d);
+    d = std::move(c);
+    BOOST_TEST_EQ(d, a);
   }
 
   // axis::category with growth
