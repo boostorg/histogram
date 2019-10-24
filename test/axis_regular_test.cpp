@@ -22,6 +22,7 @@ using def = use_default;
 
 int main() {
   BOOST_TEST(std::is_nothrow_move_assignable<axis::regular<>>::value);
+  BOOST_TEST(std::is_nothrow_move_constructible<axis::regular<>>::value);
 
   // bad_ctors
   {

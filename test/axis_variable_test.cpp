@@ -20,6 +20,7 @@ using namespace boost::histogram;
 
 int main() {
   BOOST_TEST(std::is_nothrow_move_assignable<axis::variable<>>::value);
+  BOOST_TEST(std::is_nothrow_move_constructible<axis::variable<>>::value);
 
   // bad_ctors
   {

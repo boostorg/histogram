@@ -9,11 +9,10 @@
 
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/metadata_base.hpp>
 #include <boost/histogram/axis/option.hpp>
-#include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/limits.hpp>
-#include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/replace_default.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -39,7 +38,8 @@ namespace axis {
   @tparam Options see boost::histogram::axis::option (all values allowed).
  */
 template <class Value, class MetaData, class Options>
-class integer : public iterator_mixin<integer<Value, MetaData, Options>> {
+class integer : public iterator_mixin<integer<Value, MetaData, Options>>,
+                public metadata_base<MetaData> {
   static_assert(std::is_integral<Value>::value || std::is_floating_point<Value>::value,
                 "integer axis requires floating point or integral type");
 
@@ -47,7 +47,7 @@ class integer : public iterator_mixin<integer<Value, MetaData, Options>> {
   using local_index_type = std::conditional_t<std::is_integral<value_type>::value,
                                               index_type, real_index_type>;
 
-  using metadata_type = detail::replace_default<MetaData, std::string>;
+  using metadata_type = typename metadata_base<MetaData>::metadata_type;
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
 
@@ -66,23 +66,6 @@ class integer : public iterator_mixin<integer<Value, MetaData, Options>> {
 
 public:
   constexpr integer() = default;
-  integer(const integer&) = default;
-  integer& operator=(const integer&) = default;
-  integer(integer&& o) noexcept : size_meta_(std::move(o.size_meta_)), min_(o.min_) {
-    // std::string explicitly guarantees nothrow only in C++17
-    static_assert(std::is_same<metadata_type, std::string>::value ||
-                      std::is_nothrow_move_constructible<metadata_type>::value,
-                  "");
-  }
-  integer& operator=(integer&& o) noexcept {
-    // std::string explicitly guarantees nothrow only in C++17
-    static_assert(std::is_same<metadata_type, std::string>::value ||
-                      std::is_nothrow_move_assignable<metadata_type>::value,
-                  "");
-    size_meta_ = std::move(o.size_meta_);
-    min_ = o.min_;
-    return *this;
-  }
 
   /** Construct over semi-open integer interval [start, stop).
    *
@@ -91,7 +74,9 @@ public:
    * \param meta     description of the axis.
    */
   integer(value_type start, value_type stop, metadata_type meta = {})
-      : size_meta_(static_cast<index_type>(stop - start), std::move(meta)), min_(start) {
+      : metadata_base<MetaData>(std::move(meta))
+      , size_(static_cast<index_type>(stop - start))
+      , min_(start) {
     if (stop <= start) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
   }
 
@@ -117,21 +102,20 @@ public:
         const auto k = static_cast<axis::index_type>(i);
         if (k < size()) return std::make_pair(k, 0);
         const auto n = k - size() + 1;
-        size_meta_.first() += n;
+        size_ += n;
         return std::make_pair(k, -n);
       }
       const auto k = static_cast<axis::index_type>(
           detail::static_if<std::is_floating_point<value_type>>(
               [](auto x) { return std::floor(x); }, [](auto x) { return x; }, i));
       min_ += k;
-      size_meta_.first() -= k;
+      size_ -= k;
       return std::make_pair(0, -k);
     };
 
     return detail::static_if<std::is_floating_point<value_type>>(
         [this, impl](auto x) {
           if (std::isfinite(x)) return impl(static_cast<long>(std::floor(x)));
-          // this->size() is workaround for gcc-5 bug
           return std::make_pair(x < 0 ? -1 : this->size(), 0);
         },
         impl, x);
@@ -155,7 +139,7 @@ public:
   }
 
   /// Returns the number of bins, without over- or underflow.
-  index_type size() const noexcept { return size_meta_.first(); }
+  index_type size() const noexcept { return size_; }
 
   /// Returns the options.
   static constexpr unsigned options() noexcept { return options_type::value; }
@@ -167,16 +151,9 @@ public:
             (options() & (option::growth | option::circular)));
   }
 
-  /// Returns reference to metadata.
-  metadata_type& metadata() noexcept { return size_meta_.second(); }
-
-  /// Returns reference to const metadata.
-  const metadata_type& metadata() const noexcept { return size_meta_.second(); }
-
   template <class V, class M, class O>
   bool operator==(const integer<V, M, O>& o) const noexcept {
-    return size() == o.size() && detail::relaxed_equal(metadata(), o.metadata()) &&
-           min_ == o.min_;
+    return size() == o.size() && min_ == o.min_ && metadata_base<MetaData>::operator==(o);
   }
 
   template <class V, class M, class O>
@@ -186,8 +163,8 @@ public:
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
-    ar& make_nvp("size", size_meta_.first());
-    ar& make_nvp("meta", size_meta_.second());
+    ar& make_nvp("size", size_);
+    ar& make_nvp("meta", this->metadata());
     ar& make_nvp("min", min_);
   }
 
@@ -213,7 +190,7 @@ private:
     return size();
   }
 
-  detail::compressed_pair<index_type, metadata_type> size_meta_{0};
+  index_type size_{0};
   value_type min_{0};
 
   template <class V, class M, class O>

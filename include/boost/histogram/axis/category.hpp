@@ -10,11 +10,8 @@
 #include <algorithm>
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/metadata_base.hpp>
 #include <boost/histogram/axis/option.hpp>
-#include <boost/histogram/detail/compressed_pair.hpp>
-#include <boost/histogram/detail/detect.hpp>
-#include <boost/histogram/detail/relaxed_equal.hpp>
-#include <boost/histogram/detail/replace_default.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
@@ -44,9 +41,10 @@ namespace axis {
   and `overflow` are mutually exclusive.
 */
 template <class Value, class MetaData, class Options, class Allocator>
-class category : public iterator_mixin<category<Value, MetaData, Options, Allocator>> {
+class category : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,
+                 public metadata_base<MetaData> {
   using value_type = Value;
-  using metadata_type = detail::replace_default<MetaData, std::string>;
+  using metadata_type = typename metadata_base<MetaData>::metadata_type;
   using options_type = detail::replace_default<Options, option::overflow_t>;
   using allocator_type = Allocator;
   using vector_type = std::vector<value_type, allocator_type>;
@@ -60,23 +58,8 @@ class category : public iterator_mixin<category<Value, MetaData, Options, Alloca
                 "growing category axis cannot have entries in overflow bin");
 
 public:
-  explicit category(allocator_type alloc = {}) : vec_meta_(vector_type(alloc)) {}
-  category(const category&) = default;
-  category& operator=(const category&) = default;
-  category(category&& o) noexcept : vec_meta_(std::move(o.vec_meta_)) {
-    // std::string explicitly guarantees nothrow only in C++17
-    static_assert(std::is_same<metadata_type, std::string>::value ||
-                      std::is_nothrow_move_constructible<metadata_type>::value,
-                  "");
-  }
-  category& operator=(category&& o) noexcept {
-    // std::string explicitly guarantees nothrow only in C++17
-    static_assert(std::is_same<metadata_type, std::string>::value ||
-                      std::is_nothrow_move_assignable<metadata_type>::value,
-                  "");
-    vec_meta_ = std::move(o.vec_meta_);
-    return *this;
-  }
+  constexpr category() = default;
+  explicit category(allocator_type alloc) : vec_(alloc) {}
 
   /** Construct from iterator range of unique values.
    *
@@ -87,7 +70,7 @@ public:
    */
   template <class It, class = detail::requires_iterator<It>>
   category(It begin, It end, metadata_type meta = {}, allocator_type alloc = {})
-      : vec_meta_(vector_type(begin, end, alloc), std::move(meta)) {
+      : metadata_base<MetaData>(std::move(meta)), vec_(begin, end, alloc) {
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
   }
 
@@ -115,8 +98,8 @@ public:
 
   /// Return index for value argument.
   index_type index(const value_type& x) const noexcept {
-    const auto beg = vec_meta_.first().begin();
-    const auto end = vec_meta_.first().end();
+    const auto beg = vec_.begin();
+    const auto end = vec_.end();
     return static_cast<index_type>(std::distance(beg, std::find(beg, end, x)));
   }
 
@@ -124,7 +107,7 @@ public:
   auto update(const value_type& x) {
     const auto i = index(x);
     if (i < size()) return std::make_pair(i, 0);
-    vec_meta_.first().emplace_back(x);
+    vec_.emplace_back(x);
     return std::make_pair(i, -1);
   }
 
@@ -135,16 +118,14 @@ public:
                             const value_type&> {
     if (idx < 0 || idx >= size())
       BOOST_THROW_EXCEPTION(std::out_of_range("category index out of range"));
-    return vec_meta_.first()[idx];
+    return vec_[idx];
   }
 
   /// Return value for index argument.
   decltype(auto) bin(index_type idx) const noexcept { return value(idx); }
 
   /// Returns the number of bins, without over- or underflow.
-  index_type size() const noexcept {
-    return static_cast<index_type>(vec_meta_.first().size());
-  }
+  index_type size() const noexcept { return static_cast<index_type>(vec_.size()); }
 
   /// Returns the options.
   static constexpr unsigned options() noexcept { return options_type::value; }
@@ -154,18 +135,12 @@ public:
     return options() & (option::overflow | option::growth);
   }
 
-  /// Returns reference to metadata.
-  metadata_type& metadata() noexcept { return vec_meta_.second(); }
-
-  /// Returns reference to const metadata.
-  const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
-
   template <class V, class M, class O, class A>
   bool operator==(const category<V, M, O, A>& o) const noexcept {
-    const auto& a = vec_meta_.first();
-    const auto& b = o.vec_meta_.first();
+    const auto& a = vec_;
+    const auto& b = o.vec_;
     return std::equal(a.begin(), a.end(), b.begin(), b.end()) &&
-           detail::relaxed_equal(metadata(), o.metadata());
+           metadata_base<MetaData>::operator==(o);
   }
 
   template <class V, class M, class O, class A>
@@ -173,16 +148,16 @@ public:
     return !operator==(o);
   }
 
-  auto get_allocator() const { return vec_meta_.first().get_allocator(); }
+  auto get_allocator() const { return vec_.get_allocator(); }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
-    ar& make_nvp("seq", vec_meta_.first());
-    ar& make_nvp("meta", vec_meta_.second());
+    ar& make_nvp("seq", vec_);
+    ar& make_nvp("meta", this->metadata());
   }
 
 private:
-  detail::compressed_pair<vector_type, metadata_type> vec_meta_;
+  vector_type vec_;
 
   template <class V, class M, class O, class A>
   friend class category;

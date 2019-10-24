@@ -12,12 +12,11 @@
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/metadata_base.hpp>
 #include <boost/histogram/axis/option.hpp>
-#include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/limits.hpp>
-#include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/replace_default.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
@@ -46,13 +45,14 @@ namespace axis {
   @tparam Allocator allocator to use for dynamic memory management.
  */
 template <class Value, class MetaData, class Options, class Allocator>
-class variable : public iterator_mixin<variable<Value, MetaData, Options, Allocator>> {
+class variable : public iterator_mixin<variable<Value, MetaData, Options, Allocator>>,
+                 public metadata_base<MetaData> {
   using value_type = Value;
-  using metadata_type = detail::replace_default<MetaData, std::string>;
+  using metadata_type = typename metadata_base<MetaData>::metadata_type;
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
   using allocator_type = Allocator;
-  using vec_type = std::vector<Value, allocator_type>;
+  using vector_type = std::vector<Value, allocator_type>;
 
   static_assert(
       std::is_floating_point<value_type>::value,
@@ -65,23 +65,8 @@ class variable : public iterator_mixin<variable<Value, MetaData, Options, Alloca
       "circular and growth options are mutually exclusive");
 
 public:
-  explicit variable(allocator_type alloc = {}) : vec_meta_(vec_type{alloc}) {}
-  variable(const variable&) = default;
-  variable& operator=(const variable&) = default;
-  variable(variable&& o) noexcept : vec_meta_(std::move(o.vec_meta_)) {
-    // std::string explicitly guarantees nothrow only in C++17
-    static_assert(std::is_same<metadata_type, std::string>::value ||
-                      std::is_nothrow_move_constructible<metadata_type>::value,
-                  "");
-  }
-  variable& operator=(variable&& o) noexcept {
-    // std::string explicitly guarantees nothrow only in C++17
-    static_assert(std::is_same<metadata_type, std::string>::value ||
-                      std::is_nothrow_move_assignable<metadata_type>::value,
-                  "");
-    vec_meta_ = std::move(o.vec_meta_);
-    return *this;
-  }
+  constexpr variable() = default;
+  explicit variable(allocator_type alloc) : vec_(alloc) {}
 
   /** Construct from iterator range of bin edges.
    *
@@ -92,18 +77,17 @@ public:
    */
   template <class It, class = detail::requires_iterator<It>>
   variable(It begin, It end, metadata_type meta = {}, allocator_type alloc = {})
-      : vec_meta_(vec_type(std::move(alloc)), std::move(meta)) {
+      : metadata_base<MetaData>(std::move(meta)), vec_(std::move(alloc)) {
     if (std::distance(begin, end) <= 1)
       BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
 
-    auto& v = vec_meta_.first();
-    v.reserve(std::distance(begin, end));
-    v.emplace_back(*begin++);
+    vec_.reserve(std::distance(begin, end));
+    vec_.emplace_back(*begin++);
     while (begin != end) {
-      if (*begin <= v.back())
+      if (*begin <= vec_.back())
         BOOST_THROW_EXCEPTION(
             std::invalid_argument("input sequence must be strictly ascending"));
-      v.emplace_back(*begin++);
+      vec_.emplace_back(*begin++);
     }
   }
 
@@ -131,43 +115,40 @@ public:
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   variable(const variable& src, index_type begin, index_type end, unsigned merge)
-      : vec_meta_(vec_type(src.get_allocator()), src.metadata()) {
+      : metadata_base<MetaData>(src), vec_(src.get_allocator()) {
     BOOST_ASSERT((end - begin) % merge == 0);
     if (options_type::test(option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
-    auto& vec = vec_meta_.first();
-    vec.reserve((end - begin) / merge);
-    const auto beg = src.vec_meta_.first().begin();
-    for (index_type i = begin; i <= end; i += merge) vec.emplace_back(*(beg + i));
+    vec_.reserve((end - begin) / merge);
+    const auto beg = src.vec_.begin();
+    for (index_type i = begin; i <= end; i += merge) vec_.emplace_back(*(beg + i));
   }
 
   /// Return index for value argument.
   index_type index(value_type x) const noexcept {
-    const auto& v = vec_meta_.first();
     if (options_type::test(option::circular)) {
-      const auto a = v[0];
-      const auto b = v[size()];
+      const auto a = vec_[0];
+      const auto b = vec_[size()];
       x -= std::floor((x - a) / (b - a)) * (b - a);
     }
-    return static_cast<index_type>(std::upper_bound(v.begin(), v.end(), x) - v.begin() -
-                                   1);
+    return static_cast<index_type>(std::upper_bound(vec_.begin(), vec_.end(), x) -
+                                   vec_.begin() - 1);
   }
 
   auto update(value_type x) noexcept {
     const auto i = index(x);
     if (std::isfinite(x)) {
-      auto& vec = vec_meta_.first();
       if (0 <= i) {
         if (i < size()) return std::make_pair(i, 0);
         const auto d = value(size()) - value(size() - 0.5);
         x = std::nextafter(x, (std::numeric_limits<value_type>::max)());
-        x = (std::max)(x, vec.back() + d);
-        vec.push_back(x);
+        x = (std::max)(x, vec_.back() + d);
+        vec_.push_back(x);
         return std::make_pair(i, -1);
       }
       const auto d = value(0.5) - value(0);
       x = (std::min)(x, value(0) - d);
-      vec.insert(vec.begin(), x);
+      vec_.insert(vec_.begin(), x);
       return std::make_pair(0, -i);
     }
     return std::make_pair(x < 0 ? -1 : size(), 0);
@@ -175,47 +156,38 @@ public:
 
   /// Return value for fractional index argument.
   value_type value(real_index_type i) const noexcept {
-    const auto& v = vec_meta_.first();
     if (options_type::test(option::circular)) {
       auto shift = std::floor(i / size());
       i -= shift * size();
       double z;
       const auto k = static_cast<index_type>(std::modf(i, &z));
-      const auto a = v[0];
-      const auto b = v[size()];
-      return (1.0 - z) * v[k] + z * v[k + 1] + shift * (b - a);
+      const auto a = vec_[0];
+      const auto b = vec_[size()];
+      return (1.0 - z) * vec_[k] + z * vec_[k + 1] + shift * (b - a);
     }
     if (i < 0) return detail::lowest<value_type>();
-    if (i == size()) return v.back();
+    if (i == size()) return vec_.back();
     if (i > size()) return detail::highest<value_type>();
     const auto k = static_cast<index_type>(i); // precond: i >= 0
     const real_index_type z = i - k;
-    return (1.0 - z) * v[k] + z * v[k + 1];
+    return (1.0 - z) * vec_[k] + z * vec_[k + 1];
   }
 
   /// Return bin for index argument.
   auto bin(index_type idx) const noexcept { return interval_view<variable>(*this, idx); }
 
   /// Returns the number of bins, without over- or underflow.
-  index_type size() const noexcept {
-    return static_cast<index_type>(vec_meta_.first().size()) - 1;
-  }
+  index_type size() const noexcept { return static_cast<index_type>(vec_.size()) - 1; }
 
   /// Returns the options.
   static constexpr unsigned options() noexcept { return options_type::value; }
 
-  /// Returns reference to metadata.
-  metadata_type& metadata() noexcept { return vec_meta_.second(); }
-
-  /// Returns reference to const metadata.
-  const metadata_type& metadata() const noexcept { return vec_meta_.second(); }
-
   template <class V, class M, class O, class A>
   bool operator==(const variable<V, M, O, A>& o) const noexcept {
-    const auto& a = vec_meta_.first();
-    const auto& b = o.vec_meta_.first();
+    const auto& a = vec_;
+    const auto& b = o.vec_;
     return std::equal(a.begin(), a.end(), b.begin(), b.end()) &&
-           detail::relaxed_equal(metadata(), o.metadata());
+           metadata_base<MetaData>::operator==(o);
   }
 
   template <class V, class M, class O, class A>
@@ -224,16 +196,16 @@ public:
   }
 
   /// Return allocator instance.
-  auto get_allocator() const { return vec_meta_.first().get_allocator(); }
+  auto get_allocator() const { return vec_.get_allocator(); }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
-    ar& make_nvp("seq", vec_meta_.first());
-    ar& make_nvp("meta", vec_meta_.second());
+    ar& make_nvp("seq", vec_);
+    ar& make_nvp("meta", this->metadata());
   }
 
 private:
-  detail::compressed_pair<vec_type, metadata_type> vec_meta_;
+  vector_type vec_;
 
   template <class V, class M, class O, class A>
   friend class variable;

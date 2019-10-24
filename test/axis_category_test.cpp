@@ -21,6 +21,8 @@
 using namespace boost::histogram;
 
 int main() {
+  BOOST_TEST(std::is_nothrow_move_constructible<axis::category<int>>::value);
+  BOOST_TEST(std::is_nothrow_move_constructible<axis::category<std::string>>::value);
   BOOST_TEST(std::is_nothrow_move_assignable<axis::category<int>>::value);
   BOOST_TEST(std::is_nothrow_move_assignable<axis::category<std::string>>::value);
 

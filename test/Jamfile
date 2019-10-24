@@ -53,7 +53,6 @@ alias cxx14 :
     [ run detail_args_type_test.cpp ]
     [ run detail_axes_test.cpp ]
     [ run detail_convert_integer_test.cpp ]
-    [ run detail_compressed_pair_test.cpp ]
     [ run detail_detect_test.cpp ]
     [ run detail_limits_test.cpp ]
     [ run detail_make_default_test.cpp ]

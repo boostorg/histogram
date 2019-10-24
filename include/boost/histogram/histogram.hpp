@@ -10,12 +10,10 @@
 #include <boost/histogram/detail/at.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/common_type.hpp>
-#include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/fill.hpp>
 #include <boost/histogram/detail/fill_n.hpp>
+#include <boost/histogram/detail/mutex_base.hpp>
 #include <boost/histogram/detail/non_member_container_access.hpp>
-#include <boost/histogram/detail/noop_mutex.hpp>
-#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unsafe_access.hpp>
@@ -50,7 +48,9 @@ namespace histogram {
   @tparam Storage class that implements the storage interface
  */
 template <class Axes, class Storage>
-class histogram {
+class histogram : detail::mutex_base<Axes, Storage> {
+  using mutex_base_t = typename detail::mutex_base<Axes, Storage>;
+
 public:
   static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
   static_assert(std::is_same<std::decay_t<Storage>, Storage>::value,
@@ -65,40 +65,10 @@ public:
   using const_iterator = typename storage_type::const_iterator;
 
   histogram() = default;
-  histogram(const histogram& rhs)
-      : axes_(rhs.axes_)
-      , storage_and_mutex_(rhs.storage_and_mutex_.first())
-      , offset_(rhs.offset_) {
-    // no checks for too large axes needed
-  }
-  histogram(histogram&& rhs)
-      : axes_(std::move(rhs.axes_))
-      , storage_and_mutex_(std::move(rhs.storage_and_mutex_.first()))
-      , offset_(std::exchange(rhs.offset_, 0)) {
-    // no checks for too large axes needed
-  }
-  histogram& operator=(histogram&& rhs) {
-    // no checks for too large axes needed
-    if (this != &rhs) {
-      axes_ = std::move(rhs.axes_);
-      storage_and_mutex_.first() = std::move(rhs.storage_and_mutex_.first());
-      offset_ = rhs.offset_;
-    }
-    return *this;
-  }
-  histogram& operator=(const histogram& rhs) {
-    // no checks for too large axes needed
-    if (this != &rhs) {
-      axes_ = rhs.axes_;
-      storage_and_mutex_.first() = rhs.storage_and_mutex_.first();
-      offset_ = rhs.offset_;
-    }
-    return *this;
-  }
 
   template <class A, class S>
   explicit histogram(histogram<A, S>&& rhs)
-      : storage_and_mutex_(std::move(unsafe_access::storage(rhs)))
+      : storage_(std::move(unsafe_access::storage(rhs)))
       , offset_(unsafe_access::offset(rhs)) {
     detail::axes_assign(axes_, std::move(unsafe_access::axes(rhs)));
     detail::throw_if_axes_is_too_large(axes_);
@@ -106,8 +76,7 @@ public:
 
   template <class A, class S>
   explicit histogram(const histogram<A, S>& rhs)
-      : storage_and_mutex_(unsafe_access::storage(rhs))
-      , offset_(unsafe_access::offset(rhs)) {
+      : storage_(unsafe_access::storage(rhs)), offset_(unsafe_access::offset(rhs)) {
     detail::axes_assign(axes_, unsafe_access::axes(rhs));
     detail::throw_if_axes_is_too_large(axes_);
   }
@@ -116,7 +85,7 @@ public:
   histogram& operator=(histogram<A, S>&& rhs) {
     detail::axes_assign(axes_, std::move(unsafe_access::axes(rhs)));
     detail::throw_if_axes_is_too_large(axes_);
-    storage_and_mutex_.first() = std::move(unsafe_access::storage(rhs));
+    storage_ = std::move(unsafe_access::storage(rhs));
     offset_ = unsafe_access::offset(rhs);
     return *this;
   }
@@ -125,7 +94,7 @@ public:
   histogram& operator=(const histogram<A, S>& rhs) {
     detail::axes_assign(axes_, unsafe_access::axes(rhs));
     detail::throw_if_axes_is_too_large(axes_);
-    storage_and_mutex_.first() = unsafe_access::storage(rhs);
+    storage_ = unsafe_access::storage(rhs);
     offset_ = unsafe_access::offset(rhs);
     return *this;
   }
@@ -133,10 +102,10 @@ public:
   template <class A, class S>
   histogram(A&& a, S&& s)
       : axes_(std::forward<A>(a))
-      , storage_and_mutex_(std::forward<S>(s))
+      , storage_(std::forward<S>(s))
       , offset_(detail::offset(axes_)) {
     detail::throw_if_axes_is_too_large(axes_);
-    storage_and_mutex_.first().reset(detail::bincount(axes_));
+    storage_.reset(detail::bincount(axes_));
   }
 
   template <class A, class = detail::requires_axes<A>>
@@ -146,10 +115,10 @@ public:
   constexpr unsigned rank() const noexcept { return detail::axes_rank(axes_); }
 
   /// Total number of bins (including underflow/overflow).
-  std::size_t size() const noexcept { return storage_and_mutex_.first().size(); }
+  std::size_t size() const noexcept { return storage_.size(); }
 
   /// Reset all bins to default initialized values.
-  void reset() { storage_and_mutex_.first().reset(size()); }
+  void reset() { storage_.reset(size()); }
 
   /// Get N-th axis using a compile-time number.
   /// This version is more efficient than the one accepting a run-time number.
@@ -207,8 +176,8 @@ public:
   /// Fill histogram with values, an optional weight, and/or a sample from a `std::tuple`.
   template <class... Ts>
   iterator operator()(const std::tuple<Ts...>& args) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    return detail::fill(offset_, storage_and_mutex_.first(), axes_, args);
+    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
+    return detail::fill(offset_, storage_, axes_, args);
   }
 
   /** Fill histogram with several values at once.
@@ -228,8 +197,8 @@ public:
   */
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::make_span(args));
+    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
+    detail::fill_n(offset_, storage_, axes_, detail::make_span(args));
   }
 
   /** Fill histogram with several values and weights at once.
@@ -239,8 +208,8 @@ public:
   */
   template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const weight_type<T>& weights) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
-    detail::fill_n(offset_, storage_and_mutex_.first(), axes_, detail::make_span(args),
+    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
+    detail::fill_n(offset_, storage_, axes_, detail::make_span(args),
                    detail::to_ptr_size(weights.value));
   }
 
@@ -261,11 +230,11 @@ public:
   */
   template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const sample_type<T>& samples) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
     mp11::tuple_apply(
         [&](const auto&... sargs) {
-          detail::fill_n(offset_, storage_and_mutex_.first(), axes_,
-                         detail::make_span(args), detail::to_ptr_size(sargs)...);
+          detail::fill_n(offset_, storage_, axes_, detail::make_span(args),
+                         detail::to_ptr_size(sargs)...);
         },
         samples.value);
   }
@@ -283,11 +252,11 @@ public:
   template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const weight_type<T>& weights,
             const sample_type<U>& samples) {
-    std::lock_guard<mutex_type> guard{storage_and_mutex_.second()};
+    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
     mp11::tuple_apply(
         [&](const auto&... sargs) {
-          detail::fill_n(offset_, storage_and_mutex_.first(), axes_,
-                         detail::make_span(args), detail::to_ptr_size(weights.value),
+          detail::fill_n(offset_, storage_, axes_, detail::make_span(args),
+                         detail::to_ptr_size(weights.value),
                          detail::to_ptr_size(sargs)...);
         },
         samples.value);
@@ -342,8 +311,8 @@ public:
     const auto idx = detail::at(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    BOOST_ASSERT(idx < storage_and_mutex_.first().size());
-    return storage_and_mutex_.first()[idx];
+    BOOST_ASSERT(idx < storage_.size());
+    return storage_[idx];
   }
 
   /// Access cell value at integral indices stored in `std::tuple` (read-only).
@@ -355,8 +324,8 @@ public:
     const auto idx = detail::at(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    BOOST_ASSERT(idx < storage_and_mutex_.first().size());
-    return storage_and_mutex_.first()[idx];
+    BOOST_ASSERT(idx < storage_.size());
+    return storage_[idx];
   }
 
   /// Access cell value at integral indices stored in iterable.
@@ -368,8 +337,8 @@ public:
     const auto idx = detail::at(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    BOOST_ASSERT(idx < storage_and_mutex_.first().size());
-    return storage_and_mutex_.first()[idx];
+    BOOST_ASSERT(idx < storage_.size());
+    return storage_[idx];
   }
 
   /// Access cell value at integral indices stored in iterable (read-only).
@@ -381,8 +350,8 @@ public:
     const auto idx = detail::at(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    BOOST_ASSERT(idx < storage_and_mutex_.first().size());
-    return storage_and_mutex_.first()[idx];
+    BOOST_ASSERT(idx < storage_.size());
+    return storage_[idx];
   }
 
   /// Access value at index (number for rank = 1, else `std::tuple` or iterable).
@@ -403,7 +372,7 @@ public:
     // testing offset is redundant, but offers fast return if it fails
     return offset_ == unsafe_access::offset(rhs) &&
            detail::axes_equal(axes_, unsafe_access::axes(rhs)) &&
-           storage_and_mutex_.first() == unsafe_access::storage(rhs);
+           storage_ == unsafe_access::storage(rhs);
   }
 
   /// Negation of the equality operator.
@@ -413,89 +382,97 @@ public:
   }
 
   /// Add values of another histogram.
-  template <class A, class S,
-            class = std::enable_if_t<detail::has_operator_radd<
-                value_type, typename histogram<A, S>::value_type>::value>>
-  histogram& operator+=(const histogram<A, S>& rhs) {
+  template <class A, class S>
+  std::enable_if_t<
+      detail::has_operator_radd<value_type, typename histogram<A, S>::value_type>::value,
+      histogram&>
+  operator+=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = unsafe_access::storage(rhs).begin();
-    auto& s = storage_and_mutex_.first();
-    std::for_each(s.begin(), s.end(), [&rit](auto&& x) { x += *rit++; });
+    for (auto&& x : storage_) x += *rit++;
     return *this;
   }
 
   /// Subtract values of another histogram.
-  template <class A, class S,
-            class = std::enable_if_t<detail::has_operator_rsub<
-                value_type, typename histogram<A, S>::value_type>::value>>
-  histogram& operator-=(const histogram<A, S>& rhs) {
+  template <class A, class S>
+  std::enable_if_t<
+      detail::has_operator_rsub<value_type, typename histogram<A, S>::value_type>::value,
+      histogram&>
+  operator-=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = unsafe_access::storage(rhs).begin();
-    auto& s = storage_and_mutex_.first();
-    std::for_each(s.begin(), s.end(), [&rit](auto&& x) { x -= *rit++; });
+    for (auto&& x : storage_) x -= *rit++;
     return *this;
   }
 
   /// Multiply by values of another histogram.
-  template <class A, class S,
-            class = std::enable_if_t<detail::has_operator_rmul<
-                value_type, typename histogram<A, S>::value_type>::value>>
-  histogram& operator*=(const histogram<A, S>& rhs) {
+  template <class A, class S>
+  std::enable_if_t<
+      detail::has_operator_rmul<value_type, typename histogram<A, S>::value_type>::value,
+      histogram&>
+  operator*=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = unsafe_access::storage(rhs).begin();
-    auto& s = storage_and_mutex_.first();
-    std::for_each(s.begin(), s.end(), [&rit](auto&& x) { x *= *rit++; });
+    for (auto&& x : storage_) x *= *rit++;
     return *this;
   }
 
   /// Divide by values of another histogram.
-  template <class A, class S,
-            class = std::enable_if_t<detail::has_operator_rdiv<
-                value_type, typename histogram<A, S>::value_type>::value>>
-  histogram& operator/=(const histogram<A, S>& rhs) {
+  template <class A, class S>
+  std::enable_if_t<
+      detail::has_operator_rdiv<value_type, typename histogram<A, S>::value_type>::value,
+      histogram&>
+  operator/=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = unsafe_access::storage(rhs).begin();
-    auto& s = storage_and_mutex_.first();
-    std::for_each(s.begin(), s.end(), [&rit](auto&& x) { x /= *rit++; });
+    for (auto&& x : storage_) x /= *rit++;
     return *this;
   }
 
   /// Multiply all values with a scalar.
-  template <class V = value_type,
-            class = std::enable_if_t<detail::has_operator_rmul<V, double>::value>>
-  histogram& operator*=(const double x) {
+  template <class V = value_type>
+  std::enable_if_t<(detail::has_operator_rmul<V, double>::value &&
+                    detail::has_operator_rmul<storage_type, double>::value == true),
+                   histogram&>
+  operator*=(const double x) {
     // use special implementation of scaling if available
-    detail::static_if<detail::has_operator_rmul<storage_type, double>>(
-        [](storage_type& s, auto x) { s *= x; },
-        [](storage_type& s, auto x) {
-          for (auto&& si : s) si *= x;
-        },
-        storage_and_mutex_.first(), x);
+    storage_ *= x;
+    return *this;
+  }
+
+  /// Multiply all values with a scalar.
+  template <class V = value_type>
+  std::enable_if_t<(detail::has_operator_rmul<V, double>::value &&
+                    detail::has_operator_rmul<storage_type, double>::value == false),
+                   histogram&>
+  operator*=(const double x) {
+    // generic implementation of scaling
+    for (auto&& si : storage_) si *= x;
     return *this;
   }
 
   /// Divide all values by a scalar.
-  template <class V = value_type,
-            class = std::enable_if_t<detail::has_operator_rmul<V, double>::value>>
-  histogram& operator/=(const double x) {
+  template <class V = value_type>
+  std::enable_if_t<detail::has_operator_rmul<V, double>::value, histogram&> operator/=(
+      const double x) {
     return operator*=(1.0 / x);
   }
 
   /// Return value iterator to the beginning of the histogram.
-  iterator begin() noexcept { return storage_and_mutex_.first().begin(); }
+  iterator begin() noexcept { return storage_.begin(); }
 
   /// Return value iterator to the end in the histogram.
-  iterator end() noexcept { return storage_and_mutex_.first().end(); }
+  iterator end() noexcept { return storage_.end(); }
 
   /// Return value iterator to the beginning of the histogram (read-only).
-  const_iterator begin() const noexcept { return storage_and_mutex_.first().begin(); }
+  const_iterator begin() const noexcept { return storage_.begin(); }
 
   /// Return value iterator to the end in the histogram (read-only).
-  const_iterator end() const noexcept { return storage_and_mutex_.first().end(); }
+  const_iterator end() const noexcept { return storage_.end(); }
 
   /// Return value iterator to the beginning of the histogram (read-only).
   const_iterator cbegin() const noexcept { return begin(); }
@@ -506,7 +483,7 @@ public:
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
     detail::axes_serialize(ar, axes_);
-    ar& make_nvp("storage", storage_and_mutex_.first());
+    ar& make_nvp("storage", storage_);
     if (Archive::is_loading::value) {
       offset_ = detail::offset(axes_);
       detail::throw_if_axes_is_too_large(axes_);
@@ -515,13 +492,7 @@ public:
 
 private:
   axes_type axes_;
-
-  using mutex_type = mp11::mp_if_c<(storage_type::has_threading_support &&
-                                    detail::has_growing_axis<axes_type>::value),
-                                   std::mutex, detail::noop_mutex>;
-
-  detail::compressed_pair<storage_type, mutex_type> storage_and_mutex_;
-
+  storage_type storage_;
   std::size_t offset_ = 0;
 
   friend struct unsafe_access;

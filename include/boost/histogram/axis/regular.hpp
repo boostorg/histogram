@@ -11,8 +11,8 @@
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/metadata_base.hpp>
 #include <boost/histogram/axis/option.hpp>
-#include <boost/histogram/detail/compressed_pair.hpp>
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/replace_default.hpp>
@@ -177,12 +177,16 @@ step_type<T> step(T t) {
  */
 template <class Value, class Transform, class MetaData, class Options>
 class regular : public iterator_mixin<regular<Value, Transform, MetaData, Options>>,
-                protected detail::replace_default<Transform, transform::id> {
+                protected detail::replace_default<Transform, transform::id>,
+                public metadata_base<MetaData> {
   using value_type = Value;
   using transform_type = detail::replace_default<Transform, transform::id>;
-  using metadata_type = detail::replace_default<MetaData, std::string>;
+  using metadata_type = typename metadata_base<MetaData>::metadata_type;
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
+
+  static_assert(std::is_nothrow_move_constructible<transform_type>::value, "");
+  static_assert(std::is_nothrow_move_assignable<transform_type>::value, "");
 
   using unit_type = detail::get_unit_type<value_type>;
   using internal_value_type = detail::get_scale_type<value_type>;
@@ -197,31 +201,6 @@ class regular : public iterator_mixin<regular<Value, Transform, MetaData, Option
 
 public:
   constexpr regular() = default;
-  regular(const regular&) = default;
-  regular& operator=(const regular&) = default;
-  regular(regular&& o) noexcept
-      : transform_type(std::move(o))
-      , size_meta_(std::move(o.size_meta_))
-      , min_(o.min_)
-      , delta_(o.delta_) {
-    static_assert(std::is_nothrow_move_constructible<transform_type>::value, "");
-    // std::string explicitly guarantees nothrow only in C++17
-    static_assert(std::is_same<metadata_type, std::string>::value ||
-                      std::is_nothrow_move_constructible<metadata_type>::value,
-                  "");
-  }
-  regular& operator=(regular&& o) noexcept {
-    static_assert(std::is_nothrow_move_assignable<transform_type>::value, "");
-    // std::string explicitly guarantees nothrow only in C++17
-    static_assert(std::is_same<metadata_type, std::string>::value ||
-                      std::is_nothrow_move_assignable<metadata_type>::value,
-                  "");
-    transform_type::operator=(std::move(o));
-    size_meta_ = std::move(o.size_meta_);
-    min_ = o.min_;
-    delta_ = o.delta_;
-    return *this;
-  }
 
   /** Construct n bins over real transformed range [start, stop).
    *
@@ -234,7 +213,8 @@ public:
   regular(transform_type trans, unsigned n, value_type start, value_type stop,
           metadata_type meta = {})
       : transform_type(std::move(trans))
-      , size_meta_(static_cast<index_type>(n), std::move(meta))
+      , metadata_base<MetaData>(std::move(meta))
+      , size_(static_cast<index_type>(n))
       , min_(this->forward(detail::get_scale(start)))
       , delta_(this->forward(detail::get_scale(stop)) - min_) {
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
@@ -338,7 +318,7 @@ public:
         const auto i = static_cast<axis::index_type>(std::floor(z * size()));
         min_ += i * (delta_ / size());
         delta_ = stop - min_;
-        size_meta_.first() -= i;
+        size_ -= i;
         return std::make_pair(0, -i);
       }
       // z is -infinity
@@ -350,7 +330,7 @@ public:
       const auto n = i - size() + 1;
       delta_ /= size();
       delta_ *= size() + n;
-      size_meta_.first() += n;
+      size_ += n;
       return std::make_pair(i, -n);
     }
     // z either infinite or NaN
@@ -376,22 +356,15 @@ public:
   }
 
   /// Returns the number of bins, without over- or underflow.
-  index_type size() const noexcept { return size_meta_.first(); }
+  index_type size() const noexcept { return size_; }
 
   /// Returns the options.
   static constexpr unsigned options() noexcept { return options_type::value; }
 
-  /// Returns reference to metadata.
-  metadata_type& metadata() noexcept { return size_meta_.second(); }
-
-  /// Returns reference to const metadata.
-  const metadata_type& metadata() const noexcept { return size_meta_.second(); }
-
   template <class V, class T, class M, class O>
   bool operator==(const regular<V, T, M, O>& o) const noexcept {
     return detail::relaxed_equal(transform(), o.transform()) && size() == o.size() &&
-           detail::relaxed_equal(metadata(), o.metadata()) && min_ == o.min_ &&
-           delta_ == o.delta_;
+           min_ == o.min_ && delta_ == o.delta_ && metadata_base<MetaData>::operator==(o);
   }
   template <class V, class T, class M, class O>
   bool operator!=(const regular<V, T, M, O>& o) const noexcept {
@@ -401,14 +374,14 @@ public:
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
     ar& make_nvp("transform", static_cast<transform_type&>(*this));
-    ar& make_nvp("size", size_meta_.first());
-    ar& make_nvp("meta", size_meta_.second());
+    ar& make_nvp("size", size_);
+    ar& make_nvp("meta", this->metadata());
     ar& make_nvp("min", min_);
     ar& make_nvp("delta", delta_);
   }
 
 private:
-  detail::compressed_pair<index_type, metadata_type> size_meta_{0};
+  index_type size_{0};
   internal_value_type min_{0}, delta_{1};
 
   template <class V, class T, class M, class O>

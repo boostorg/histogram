@@ -84,8 +84,6 @@ boost_test(TYPE run SOURCES detail_axes_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_convert_integer_test.cpp
   LIBRARIES Boost::histogram Boost::core)
-boost_test(TYPE run SOURCES detail_compressed_pair_test.cpp
-  LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_detect_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_limits_test.cpp
