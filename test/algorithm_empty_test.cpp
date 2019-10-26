@@ -38,8 +38,8 @@ void run_tests() {
   auto h2 = make_s(Tag(), std::vector<double>(), ax, ax);
   BOOST_TEST(empty(h2, coverage::all));
   BOOST_TEST(empty(h2, coverage::inner));
-  for (unsigned i = -1; i < 11; ++i) {
-    for (unsigned j = -1; j < 11; ++j) {
+  for (int i = -1; i < 11; ++i) {
+    for (int j = -1; j < 11; ++j) {
       h2.reset();
       h2(i, j);
       BOOST_TEST(!empty(h2, coverage::all));
