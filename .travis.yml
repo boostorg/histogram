@@ -46,7 +46,7 @@ matrix:
         - ./bootstrap.sh
         - ./b2 headers
         - cd libs/histogram
-        - B2="../../b2 -q -j2 warnings-as-errors=on"        
+        - B2="../../b2 -q -j2 warnings-as-errors=on"
       script:
         $B2 cxxstd=latest exception-handling=off test//minimal &&
         $B2 cxxstd=latest test//all
@@ -79,10 +79,10 @@ matrix:
         - pip install cpp-coveralls
       script:
         # don't compile examples in coverage build, coverage must come from tests alone
-        $B2 toolset=gcc-5 cxxstd=14 examples test//all &&
         $B2 toolset=gcc-5 cxxstd=14 exception-handling=off rtti=off test//minimal &&
+        $B2 toolset=gcc-5 cxxstd=14 test//all examples &&
         $B2 toolset=gcc-8 cxxstd=latest coverage=on test//all &&
-        GCOV=gcov-8 tools/cov.sh  
-  
+        GCOV=gcov-8 tools/cov.sh
+
 notifications:
   email: false

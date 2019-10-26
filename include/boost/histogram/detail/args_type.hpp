@@ -7,27 +7,51 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_ARGS_TYPE_HPP
 #define BOOST_HISTOGRAM_DETAIL_ARGS_TYPE_HPP
 
-#include <boost/config/workaround.hpp>
-#if BOOST_WORKAROUND(BOOST_GCC, >= 65000)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnoexcept-type"
-#endif
-#include <boost/callable_traits/args.hpp>
-#if BOOST_WORKAROUND(BOOST_GCC, >= 65000)
-#pragma GCC diagnostic pop
-#endif
-#include <boost/mp11/list.hpp>    // mp_pop_front
-#include <boost/mp11/utility.hpp> // mp_if
 #include <tuple>
-#include <type_traits> // is_member_function_pointer
 
 namespace boost {
 namespace histogram {
 namespace detail {
 
-template <class T, class Args = callable_traits::args_t<T>>
-using args_type =
-    mp11::mp_if<std::is_member_function_pointer<T>, mp11::mp_pop_front<Args>, Args>;
+template <class T>
+struct args_type_impl {
+  using T::ERROR_this_should_never_be_instantiated_please_write_an_issue;
+};
+
+template <class R, class T, class... Ts>
+struct args_type_impl<R (T::*)(Ts...)> {
+  using type = std::tuple<Ts...>;
+};
+
+template <class R, class T, class... Ts>
+struct args_type_impl<R (T ::*)(Ts...) const> {
+  using type = std::tuple<Ts...>;
+};
+
+template <class R, class... Ts>
+struct args_type_impl<R (*)(Ts...)> {
+  using type = std::tuple<Ts...>;
+};
+
+#if __cpp_noexcept_function_type >= 201510
+template <class R, class T, class... Ts>
+struct args_type_impl<R (T::*)(Ts...) noexcept> {
+  using type = std::tuple<Ts...>;
+};
+
+template <class R, class T, class... Ts>
+struct args_type_impl<R (T ::*)(Ts...) const noexcept> {
+  using type = std::tuple<Ts...>;
+};
+
+template <class R, class... Ts>
+struct args_type_impl<R (*)(Ts...) noexcept> {
+  using type = std::tuple<Ts...>;
+};
+#endif
+
+template <class FunctionPointer>
+using args_type = typename args_type_impl<FunctionPointer>::type;
 
 template <class T, std::size_t N = 0>
 using arg_type = std::tuple_element_t<N, args_type<T>>;

@@ -45,9 +45,10 @@ install:
 test_script:
   - cmd: ..\..\b2 %B2_OPTS% cxxstd=latest test//minimal test//serialization
   - sh:
-      ../../b2 $B2_OPTS cxxstd=14 exception-handling=off rtti=off test//minimal &&
-      ../../b2 $B2_OPTS toolset=gcc-9 cxxstd=latest examples test//all &&
-      ../../b2 $B2_OPTS toolset=clang cxxstd=latest variant=histogram_ubasan test//all
+      B2="../../b2 ${B2_OPTS}";
+      $B2 toolset=gcc-7 cxxstd=14 exception-handling=off rtti=off test//minimal &&
+      $B2 toolset=gcc-9 cxxstd=latest examples test//all &&
+      $B2 toolset=clang-6 cxxstd=latest variant=histogram_ubasan test//all
 
 ## Uncomment the following to stop VM and enable interactive login.
 ## Instructions how to log into the Appveyor VM are automatically printed.
