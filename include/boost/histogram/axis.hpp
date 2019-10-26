@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_AXIS_HPP
 
 /**
-  \file boost/axis.hpp
+  \file boost/histogram/axis.hpp
   Includes all axis headers of the Boost.Histogram library.
 
   Extra header not automatically included:

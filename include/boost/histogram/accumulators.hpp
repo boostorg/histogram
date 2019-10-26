@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_HPP
 
 /**
-  \file boost/accumulators.hpp
+  \file boost/histogram/accumulators.hpp
   Includes all accumulator headers of the Boost.Histogram library.
 
   Extra header not automatically included:

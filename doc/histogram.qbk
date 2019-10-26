@@ -19,6 +19,8 @@
     ]
 ]
 
+[$../logo/color.svg]
+
 Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional histograms and profiles.
 
 [variablelist

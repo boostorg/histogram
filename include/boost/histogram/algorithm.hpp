@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_ALGORITHM_HPP
 
 /**
-  \file boost/algorithm.hpp
+  \file boost/histogram/algorithm.hpp
   Includes all algorithm headers of the Boost.Histogram library.
 */
 
