@@ -72,6 +72,8 @@ int main() {
     w_t y(1, 2);
     BOOST_TEST_NE(y, 1);
     BOOST_TEST_EQ(static_cast<double>(y), 1);
+
+    BOOST_TEST_EQ(w_t() += w_t(), w_t());
   }
 
   {
@@ -118,6 +120,10 @@ int main() {
     d(2, 16);
 
     BOOST_TEST_EQ(d, c);
+
+    BOOST_TEST_EQ(m_t() += m_t(), m_t());
+    BOOST_TEST_EQ(m_t(1, 2, 3) += m_t(), m_t(1, 2, 3));
+    BOOST_TEST_EQ(m_t() += m_t(1, 2, 3), m_t(1, 2, 3));
   }
 
   {
@@ -131,6 +137,7 @@ int main() {
     a(0.5, 3);
 
     BOOST_TEST_EQ(a.sum_of_weights(), 2);
+    BOOST_TEST_EQ(a.sum_of_weights_squared(), 1.5);
     BOOST_TEST_EQ(a.value(), 2);
     BOOST_TEST_IS_CLOSE(a.variance(), 0.8, 1e-3);
 
@@ -144,6 +151,10 @@ int main() {
     BOOST_TEST_EQ(b.sum_of_weights(), 4);
     BOOST_TEST_EQ(b.value(), 2);
     BOOST_TEST_IS_CLOSE(b.variance(), 0.615, 1e-3);
+
+    BOOST_TEST_EQ(m_t() += m_t(), m_t());
+    BOOST_TEST_EQ(m_t(1, 2, 3, 4) += m_t(), m_t(1, 2, 3, 4));
+    BOOST_TEST_EQ(m_t() += m_t(1, 2, 3, 4), m_t(1, 2, 3, 4));
   }
 
   {
@@ -154,7 +165,8 @@ int main() {
     bad_sum += -1e100;
     BOOST_TEST_EQ(bad_sum, 0); // instead of 2
 
-    accumulators::sum<double> sum;
+    using s_t = accumulators::sum<double>;
+    s_t sum;
     ++sum;
     BOOST_TEST_EQ(sum.large(), 1);
     BOOST_TEST_EQ(sum.small(), 0);
@@ -179,10 +191,13 @@ int main() {
     BOOST_TEST_GT(a, b);
     BOOST_TEST_GE(a, b);
     BOOST_TEST_GE(a, c);
+
+    BOOST_TEST_EQ(s_t() += s_t(), s_t());
   }
 
   {
-    accumulators::weighted_sum<accumulators::sum<double>> w;
+    using s_t = accumulators::weighted_sum<accumulators::sum<double>>;
+    s_t w;
 
     ++w;
     w += 1e100;
@@ -191,15 +206,20 @@ int main() {
 
     BOOST_TEST_EQ(w.value(), 2);
     BOOST_TEST_EQ(w.variance(), 2e200);
+
+    BOOST_TEST_EQ(s_t() += s_t(), s_t());
   }
 
   {
-    accumulators::thread_safe<int> i;
+    using ts_t = accumulators::thread_safe<int>;
+    ts_t i;
     ++i;
     i += 1000;
 
     BOOST_TEST_EQ(i, 1001);
     BOOST_TEST_EQ(str(i), "1001"s);
+
+    BOOST_TEST_EQ(ts_t() += ts_t(), ts_t());
   }
 
   return boost::report_errors();

@@ -40,19 +40,19 @@ public:
     sum_of_weights_ += w;
     sum_of_weights_squared_ += w * w;
     const auto delta = x - weighted_mean_;
-    BOOST_ASSERT(sum_of_weights_ != 0);
     weighted_mean_ += w * delta / sum_of_weights_;
     sum_of_weighted_deltas_squared_ += w * delta * (x - weighted_mean_);
   }
 
   template <typename T>
   weighted_mean& operator+=(const weighted_mean<T>& rhs) {
-    const auto tmp = weighted_mean_ * sum_of_weights_ +
-                     static_cast<RealType>(rhs.weighted_mean_ * rhs.sum_of_weights_);
-    sum_of_weights_ += static_cast<RealType>(rhs.sum_of_weights_);
-    sum_of_weights_squared_ += static_cast<RealType>(rhs.sum_of_weights_squared_);
-    BOOST_ASSERT(sum_of_weights_ != 0);
-    weighted_mean_ = tmp / sum_of_weights_;
+    if (sum_of_weights_ != 0 || rhs.sum_of_weights_ != 0) {
+      const auto tmp = weighted_mean_ * sum_of_weights_ +
+                       static_cast<RealType>(rhs.weighted_mean_ * rhs.sum_of_weights_);
+      sum_of_weights_ += static_cast<RealType>(rhs.sum_of_weights_);
+      sum_of_weights_squared_ += static_cast<RealType>(rhs.sum_of_weights_squared_);
+      weighted_mean_ = tmp / sum_of_weights_;
+    }
     sum_of_weighted_deltas_squared_ +=
         static_cast<RealType>(rhs.sum_of_weighted_deltas_squared_);
     return *this;
@@ -78,6 +78,9 @@ public:
   }
 
   const RealType& sum_of_weights() const noexcept { return sum_of_weights_; }
+  const RealType& sum_of_weights_squared() const noexcept {
+    return sum_of_weights_squared_;
+  }
   const RealType& value() const noexcept { return weighted_mean_; }
   RealType variance() const {
     return sum_of_weighted_deltas_squared_ /

@@ -33,7 +33,6 @@ public:
   void operator()(const RealType& x) noexcept {
     sum_ += static_cast<RealType>(1);
     const auto delta = x - mean_;
-    BOOST_ASSERT(sum_ != 0);
     mean_ += delta / sum_;
     sum_of_deltas_squared_ += delta * (x - mean_);
   }
@@ -41,17 +40,17 @@ public:
   void operator()(const RealType& w, const RealType& x) noexcept {
     sum_ += w;
     const auto delta = x - mean_;
-    BOOST_ASSERT(sum_ != 0);
     mean_ += w * delta / sum_;
     sum_of_deltas_squared_ += w * delta * (x - mean_);
   }
 
   template <class T>
   mean& operator+=(const mean<T>& rhs) noexcept {
-    const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
-    sum_ += rhs.sum_;
-    BOOST_ASSERT(sum_ != 0);
-    mean_ = tmp / sum_;
+    if (sum_ != 0 || rhs.sum_ != 0) {
+      const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
+      sum_ += rhs.sum_;
+      mean_ = tmp / sum_;
+    }
     sum_of_deltas_squared_ += static_cast<RealType>(rhs.sum_of_deltas_squared_);
     return *this;
   }
@@ -80,8 +79,7 @@ public:
   template <class Archive>
   void serialize(Archive& ar, unsigned version) {
     if (version == 0) {
-      if (Archive::is_saving::value)
-        BOOST_THROW_EXCEPTION(std::runtime_error("save must not use version 0"));
+      // read only
       std::size_t sum;
       ar& make_nvp("sum", sum);
       sum_ = static_cast<RealType>(sum);

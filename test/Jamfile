@@ -114,8 +114,8 @@ alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
 alias units : [ run boost_units_support_test.cpp ] : <warnings>off ;
 alias serialization :
-    [ run detail_array_wrapper_serialization_test.cpp libserial ]
     [ run accumulators_serialization_test.cpp libserial : $(THIS_PATH) ]
+    [ run detail_array_wrapper_serialization_test.cpp libserial ]
     [ run axis_variant_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run histogram_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run storage_adaptor_serialization_test.cpp libserial : $(THIS_PATH) ]
