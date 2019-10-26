@@ -29,11 +29,6 @@ enum class coverage {
   all,   /*!< iterate over all bins, including underflow and overflow */
 };
 
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc++17-extensions"
-#endif
-
 /** Input iterator range over histogram bins with multi-dimensional index.
 
   The iterator returned by begin() can only be incremented. begin() may only be called
@@ -320,10 +315,6 @@ public:
 private:
   iterator begin_, end_;
 };
-
-#if BOOST_WORKAROUND(BOOST_CLANG, >= 0)
-#pragma GCC diagnostic pop
-#endif
 
 /** Generates an indexed range of <a
   href="https://en.cppreference.com/w/cpp/named_req/ForwardIterator">forward iterators</a>

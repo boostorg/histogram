@@ -298,10 +298,9 @@ auto fill(const std::size_t offset, S& storage, A& axes, const Args& args) {
     return fill_2(growing{}, offset, storage, axes,
                   pack_args<pos::start, pos::nargs>(typename pos::weight{},
                                                     typename pos::sample{}, args));
-  else
-    return (BOOST_THROW_EXCEPTION(
-                std::invalid_argument("number of arguments != histogram rank")),
-            storage.end());
+  return (BOOST_THROW_EXCEPTION(
+              std::invalid_argument("number of arguments != histogram rank")),
+          storage.end());
 }
 
 #if BOOST_WORKAROUND(BOOST_MSVC, >= 0)

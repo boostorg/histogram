@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_DETAIL_LINEARIZE_HPP
 
 #include <boost/assert.hpp>
-#include <boost/config/workaround.hpp>
+#include <boost/config.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
@@ -19,17 +19,18 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(disable : 4127) // disable "warning" about using if constexpr
-#endif
-
 // initial offset to out must be set
 template <class Index, class Opts>
 std::size_t linearize(Opts, Index& out, const std::size_t stride,
                       const axis::index_type size, const axis::index_type idx) {
   constexpr bool u = Opts::test(axis::option::underflow);
   constexpr bool o = Opts::test(axis::option::overflow);
-  if (std::is_same<Index, std::size_t>::value || (u && o)) {
+#ifdef BOOST_NO_CXX17_IF_CONSTEXPR
+  if
+#else
+  if constexpr
+#endif
+      (std::is_same<Index, std::size_t>::value || (u && o)) {
     BOOST_ASSERT(idx >= (u ? -1 : 0));
     BOOST_ASSERT(idx < (o ? size + 1 : size));
     BOOST_ASSERT(idx >= 0 || static_cast<std::size_t>(-idx * stride) <= out);
@@ -44,10 +45,6 @@ std::size_t linearize(Opts, Index& out, const std::size_t stride,
   }
   return size + u + o;
 }
-
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(default : 4127)
-#endif
 
 template <class Index, class Axis, class Value>
 std::size_t linearize(Index& out, const std::size_t stride, const Axis& ax,

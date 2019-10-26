@@ -10,7 +10,7 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
-#include <boost/config/workaround.hpp>
+#include <boost/config.hpp>
 #include <boost/core/alloc_construct.hpp>
 #include <boost/core/exchange.hpp>
 #include <boost/core/nvp.hpp>
@@ -434,10 +434,6 @@ public:
   // template <class Allocator>
   // unlimited_storage(const unlimited_storage<Allocator>& s)
 
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(disable : 4127) // disable "warning" about using if constexpr
-#endif
-
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   explicit unlimited_storage(const Iterable& s) {
     using std::begin;
@@ -448,15 +444,16 @@ public:
     constexpr auto ti = buffer_type::template type_index<V>();
     constexpr auto nt = mp11::mp_size<typename buffer_type::types>::value;
     const std::size_t size = static_cast<std::size_t>(std::distance(s_begin, s_end));
-    if (ti < nt)
+#ifdef BOOST_NO_CXX17_IF_CONSTEXPR
+    if
+#else
+    if constexpr
+#endif
+        (ti < nt)
       buffer_.template make<V>(size, s_begin);
     else
       buffer_.template make<double>(size, s_begin);
   }
-
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(default : 4127)
-#endif
 
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   unlimited_storage& operator=(const Iterable& s) {
