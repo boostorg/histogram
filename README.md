@@ -9,14 +9,14 @@
 
 **Fast multi-dimensional histogram with convenient interface for C++14**
 
-Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org). The library is licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt). **Supported compiler versions** gcc >= 5.5, clang >= 3.8, msvc >= 14.1
+Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org). Licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
+
+**Supported compiler versions** gcc >= 5.5, clang >= 3.8, msvc >= 14.1
 
 Branch  | Linux and OSX | Windows | Coverage
 ------- | ------------- |-------- | --------
 develop | [![Build Status Travis](https://travis-ci.org/boostorg/histogram.svg?branch=develop)](https://travis-ci.org/boostorg/histogram/branches) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/p27laa26ti1adyf1/branch/develop?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram-d5g5k/branch/develop) | [![Coveralls](https://coveralls.io/repos/github/boostorg/histogram/badge.svg?branch=develop)](https://coveralls.io/github/boostorg/histogram?branch=develop)
 master  | [![Build Status Travis](https://travis-ci.org/boostorg/histogram.svg?branch=master)](https://travis-ci.org/boostorg/histogram/branches) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/p27laa26ti1adyf1/branch/master?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram-d5g5k/branch/master) | [![Coveralls](https://coveralls.io/repos/github/boostorg/histogram/badge.svg?branch=master)](https://coveralls.io/github/boostorg/histogram?branch=master)
-
-💡 Boost.Histogram is a mature library, but if you find some issue or find the documentation lacking, tell us about it by [submitting an issue](https://github.com/boostorg/histogram/issues). Chat with us on the [Boost channel on Slack](https://cpplang.slack.com) and [Gitter](https://gitter.im/boostorg/histogram).
 
 Boost.Histogram is a very fast state-of-the-art multi-dimensional [histogram](https://en.wikipedia.org/wiki/Histogram) class for the beginner and expert alike.
 
@@ -28,11 +28,13 @@ Boost.Histogram is a very fast state-of-the-art multi-dimensional [histogram](ht
 
 Check out the [full documentation](https://www.boost.org/doc/libs/develop/libs/histogram/doc/html/index.html).
 
+💡 Boost.Histogram is a mature library, but if you find some issue or find the documentation lacking, tell us about it by [submitting an issue](https://github.com/boostorg/histogram/issues). Chat with us on the [Boost channel on Slack](https://cpplang.slack.com) and [Gitter](https://gitter.im/boostorg/histogram).
+
 ## Code examples
 
 The following stripped-down example was taken from the [Getting started](https://www.boost.org/doc/libs/develop/libs/histogram/doc/html/histogram/getting_started.html) section in the documentation. Have a look into the docs to see the full version with comments and more examples.
 
-Example: Make and fill a 1d-histogram ([try it live on Wandbox](https://wandbox.org/permlink/NSM2ZiDyntUi6RDC)). The core of this example [compiles into 53 lines of vectorized assembly code](https://godbolt.org/z/632yzE).
+Example: Make and fill a 1d-histogram ([try it live on Wandbox](https://wandbox.org/permlink/NSM2ZiDyntUi6RDC)). The core of this example [compiles into 53 lines of assembly code](https://godbolt.org/z/632yzE).
 
 ```cpp
 #include <boost/histogram.hpp>
