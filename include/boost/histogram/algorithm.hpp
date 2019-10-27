@@ -12,6 +12,7 @@
   Includes all algorithm headers of the Boost.Histogram library.
 */
 
+#include <boost/histogram/algorithm/empty.hpp>
 #include <boost/histogram/algorithm/project.hpp>
 #include <boost/histogram/algorithm/reduce.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
