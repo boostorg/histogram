@@ -44,7 +44,7 @@ void run_tests() {
       h2(i, j);
       BOOST_TEST(!empty(h2, coverage::all));
 
-      if ((i == -1 || i == 10) && (j == -1 || j == 10)) {
+      if ((i == -1 || i == 10) || (j == -1 || j == 10)) {
         BOOST_TEST(empty(h2, coverage::inner));
       } else {
         BOOST_TEST(!empty(h2, coverage::inner));
