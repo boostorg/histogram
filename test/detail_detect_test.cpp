@@ -155,12 +155,13 @@ int main() {
   {
     struct A {};
     struct B {
-      double forward(double);
-      double inverse(double);
+      double forward(A);
+      A inverse(double);
     };
 
-    BOOST_TEST_TRAIT_FALSE((is_transform<A>));
-    BOOST_TEST_TRAIT_TRUE((is_transform<B>));
+    BOOST_TEST_TRAIT_FALSE((is_transform<A, double>));
+    BOOST_TEST_TRAIT_TRUE((is_transform<B, A>));
+    BOOST_TEST_TRAIT_TRUE((is_transform<axis::transform::id, double>));
   }
 
   // is_vector_like

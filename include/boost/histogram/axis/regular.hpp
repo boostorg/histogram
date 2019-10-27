@@ -15,7 +15,7 @@
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
-#include <boost/histogram/detail/replace_default.hpp>
+#include <boost/histogram/detail/replace_type.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
@@ -68,13 +68,13 @@ namespace transform {
 /// Identity transform for equidistant bins.
 struct id {
   /// Pass-through.
-  template <typename T>
+  template <class T>
   static T forward(T&& x) noexcept {
     return std::forward<T>(x);
   }
 
   /// Pass-through.
-  template <typename T>
+  template <class T>
   static T inverse(T&& x) noexcept {
     return std::forward<T>(x);
   }
@@ -86,13 +86,13 @@ struct id {
 /// Log transform for equidistant bins in log-space.
 struct log {
   /// Returns log(x) of external value x.
-  template <typename T>
+  template <class T>
   static T forward(T x) {
     return std::log(x);
   }
 
   /// Returns exp(x) for internal value x.
-  template <typename T>
+  template <class T>
   static T inverse(T x) {
     return std::exp(x);
   }
@@ -104,13 +104,13 @@ struct log {
 /// Sqrt transform for equidistant bins in sqrt-space.
 struct sqrt {
   /// Returns sqrt(x) of external value x.
-  template <typename T>
+  template <class T>
   static T forward(T x) {
     return std::sqrt(x);
   }
 
   /// Returns x^2 of internal value x.
-  template <typename T>
+  template <class T>
   static T inverse(T x) {
     return x * x;
   }
@@ -128,13 +128,13 @@ struct pow {
   pow() = default;
 
   /// Returns pow(x, power) of external value x.
-  template <typename T>
+  template <class T>
   auto forward(T x) const {
     return std::pow(x, power);
   }
 
   /// Returns pow(x, 1/power) of external value x.
-  template <typename T>
+  template <class T>
   auto inverse(T x) const {
     return std::pow(x, 1.0 / power);
   }
@@ -151,7 +151,7 @@ struct pow {
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 // Type envelope to mark value as step size
-template <typename T>
+template <class T>
 struct step_type {
   T value;
 };
@@ -160,7 +160,7 @@ struct step_type {
 /**
   Helper function to mark argument as step size.
  */
-template <typename T>
+template <class T>
 step_type<T> step(T t) {
   return step_type<T>{t};
 }
@@ -391,22 +391,21 @@ private:
 #if __cpp_deduction_guides >= 201606
 
 template <class T>
-regular(unsigned, T, T)->regular<detail::convert_integer<T, double>>;
-
-template <class T>
-regular(unsigned, T, T, const char*)->regular<detail::convert_integer<T, double>>;
+regular(unsigned, T, T)
+    ->regular<detail::convert_integer<T, double>, transform::id, null_type>;
 
 template <class T, class M>
-regular(unsigned, T, T, M)->regular<detail::convert_integer<T, double>, transform::id, M>;
+regular(unsigned, T, T, M)
+    ->regular<detail::convert_integer<T, double>, transform::id,
+              detail::replace_cstring<std::decay_t<M>>>;
 
-template <class Tr, class T>
-regular(Tr, unsigned, T, T)->regular<detail::convert_integer<T, double>, Tr>;
-
-template <class Tr, class T>
-regular(Tr, unsigned, T, T, const char*)->regular<detail::convert_integer<T, double>, Tr>;
+template <class Tr, class T, class = detail::requires_transform<Tr, T>>
+regular(Tr, unsigned, T, T)->regular<detail::convert_integer<T, double>, Tr, null_type>;
 
 template <class Tr, class T, class M>
-regular(Tr, unsigned, T, T, M)->regular<detail::convert_integer<T, double>, Tr, M>;
+regular(Tr, unsigned, T, T, M)
+    ->regular<detail::convert_integer<T, double>, Tr,
+              detail::replace_cstring<std::decay_t<M>>>;
 
 #endif
 

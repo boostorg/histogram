@@ -6,13 +6,15 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/detail/replace_default.hpp>
+#include <boost/histogram/detail/replace_type.hpp>
 #include "std_ostream.hpp"
 
 using namespace boost::histogram::detail;
 
 int main() {
 
+  BOOST_TEST_TRAIT_SAME(replace_type<long, char, int>, long);
+  BOOST_TEST_TRAIT_SAME(replace_type<char, char, int>, int);
   BOOST_TEST_TRAIT_SAME(replace_default<boost::use_default, char>, char);
   BOOST_TEST_TRAIT_SAME(replace_default<int, char>, int);
 

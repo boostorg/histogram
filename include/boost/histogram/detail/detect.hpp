@@ -57,7 +57,9 @@ BOOST_HISTOGRAM_DETAIL_DETECT(has_allocator, &T::get_allocator);
 
 BOOST_HISTOGRAM_DETAIL_DETECT(is_indexable, (std::declval<T&>()[0]));
 
-BOOST_HISTOGRAM_DETAIL_DETECT(is_transform, (&T::forward, &T::inverse));
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(
+    is_transform,
+    (std::declval<T&>().inverse(std::declval<T&>().forward(std::declval<U>()))));
 
 BOOST_HISTOGRAM_DETAIL_DETECT(is_indexable_container, (std::declval<T>()[0], &T::size,
                                                        std::begin(std::declval<T>()),
@@ -135,7 +137,9 @@ using is_storage = mp11::mp_and<is_indexable_container<T>, has_method_reset<T>,
                                 has_threading_support<T>>;
 
 template <class T>
-using is_adaptible = mp11::mp_or<is_vector_like<T>, is_array_like<T>, is_map_like<T>>;
+using is_adaptible =
+    mp11::mp_and<mp11::mp_not<is_storage<T>>,
+                 mp11::mp_or<is_vector_like<T>, is_array_like<T>, is_map_like<T>>>;
 
 template <class T>
 struct is_tuple_impl : mp11::mp_false {};
@@ -179,6 +183,9 @@ using is_sequence_of_any_axis =
     mp11::mp_and<is_iterable<T>, is_any_axis<mp11::mp_first<T>>>;
 
 // poor-mans concept checks
+template <class T, class = std::enable_if_t<is_storage<std::decay_t<T>>::value>>
+struct requires_storage {};
+
 template <class T, class _ = std::decay_t<T>,
           class = std::enable_if_t<(is_storage<_>::value || is_adaptible<_>::value)>>
 struct requires_storage_or_adaptible {};
@@ -213,6 +220,10 @@ struct requires_axes {};
 
 template <class T, class U, class = std::enable_if_t<std::is_convertible<T, U>::value>>
 struct requires_convertible {};
+
+template <class T, class U,
+          class = std::enable_if_t<is_transform<std::decay_t<T>, U>::value>>
+struct requires_transform {};
 
 } // namespace detail
 } // namespace histogram

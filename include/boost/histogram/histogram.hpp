@@ -99,17 +99,21 @@ public:
     return *this;
   }
 
-  template <class A, class S>
-  histogram(A&& a, S&& s)
+  template <class A, class = detail::requires_axes<A>>
+  histogram(A&& a, Storage s)
       : axes_(std::forward<A>(a))
-      , storage_(std::forward<S>(s))
+      , storage_(std::move(s))
       , offset_(detail::offset(axes_)) {
     detail::throw_if_axes_is_too_large(axes_);
     storage_.reset(detail::bincount(axes_));
   }
 
-  template <class A, class = detail::requires_axes<A>>
-  explicit histogram(A&& a) : histogram(std::forward<A>(a), storage_type()) {}
+  explicit histogram(Axes axes) : histogram(axes, storage_type()) {}
+
+  template <class... As, class = detail::requires_axes<std::tuple<std::decay_t<As>...>>>
+  explicit histogram(As&&... as)
+      : histogram(std::tuple<std::decay_t<As>...>(std::forward<As>(as)...),
+                  storage_type()) {}
 
   /// Number of axes (dimensions).
   constexpr unsigned rank() const noexcept { return detail::axes_rank(axes_); }
@@ -571,12 +575,25 @@ auto operator/(const histogram<A, S>& h, double x) {
 
 #if __cpp_deduction_guides >= 201606
 
-template <class Axes>
-histogram(Axes&& axes)->histogram<std::decay_t<Axes>, default_storage>;
+template <class... Axes, class = detail::requires_axes<std::tuple<std::decay_t<Axes>...>>>
+histogram(Axes...)->histogram<std::tuple<std::decay_t<Axes>...>>;
 
-template <class Axes, class Storage>
-histogram(Axes&& axes, Storage&& storage)
-    ->histogram<std::decay_t<Axes>, std::decay_t<Storage>>;
+template <class... Axes, class S, class = detail::requires_storage_or_adaptible<S>>
+histogram(std::tuple<Axes...>, S)
+    ->histogram<std::tuple<Axes...>, std::conditional_t<detail::is_adaptible<S>::value,
+                                                        storage_adaptor<S>, S>>;
+
+template <class Iterable, class = detail::requires_iterable<Iterable>,
+          class = detail::requires_any_axis<typename Iterable::value_type>>
+histogram(Iterable)->histogram<std::vector<typename Iterable::value_type>>;
+
+template <class Iterable, class S, class = detail::requires_iterable<Iterable>,
+          class = detail::requires_any_axis<typename Iterable::value_type>,
+          class = detail::requires_storage_or_adaptible<S>>
+histogram(Iterable, S)
+    ->histogram<
+        std::vector<typename Iterable::value_type>,
+        std::conditional_t<detail::is_adaptible<S>::value, storage_adaptor<S>, S>>;
 
 #endif
 

@@ -13,7 +13,7 @@
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/limits.hpp>
-#include <boost/histogram/detail/replace_default.hpp>
+#include <boost/histogram/detail/replace_type.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
@@ -200,13 +200,12 @@ private:
 #if __cpp_deduction_guides >= 201606
 
 template <class T>
-integer(T, T)->integer<detail::convert_integer<T, index_type>>;
-
-template <class T>
-integer(T, T, const char*)->integer<detail::convert_integer<T, index_type>>;
+integer(T, T)->integer<detail::convert_integer<T, index_type>, null_type>;
 
 template <class T, class M>
-integer(T, T, M)->integer<detail::convert_integer<T, index_type>, M>;
+integer(T, T, M)
+    ->integer<detail::convert_integer<T, index_type>,
+              detail::replace_type<std::decay_t<M>, const char*, std::string>>;
 
 #endif
 

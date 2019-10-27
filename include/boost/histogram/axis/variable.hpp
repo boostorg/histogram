@@ -17,7 +17,7 @@
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/limits.hpp>
-#include <boost/histogram/detail/replace_default.hpp>
+#include <boost/histogram/detail/replace_type.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <cmath>
@@ -213,29 +213,28 @@ private:
 
 #if __cpp_deduction_guides >= 201606
 
-template <class U, class T = detail::convert_integer<U, double>>
-variable(std::initializer_list<U>)->variable<T>;
+template <class T>
+variable(std::initializer_list<T>)
+    ->variable<detail::convert_integer<T, double>, null_type>;
 
-template <class U, class T = detail::convert_integer<U, double>>
-variable(std::initializer_list<U>, const char*)->variable<T>;
+template <class T, class M>
+variable(std::initializer_list<T>, M)
+    ->variable<detail::convert_integer<T, double>,
+               detail::replace_type<std::decay_t<M>, const char*, std::string>>;
 
-template <class U, class M, class T = detail::convert_integer<U, double>>
-variable(std::initializer_list<U>, M)->variable<T, M>;
+template <class Iterable, class = detail::requires_iterable<Iterable>>
+variable(Iterable)
+    ->variable<
+        detail::convert_integer<
+            std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>,
+        null_type>;
 
-template <class Iterable,
-          class T = detail::convert_integer<
-              std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
-variable(Iterable)->variable<T>;
-
-template <class Iterable,
-          class T = detail::convert_integer<
-              std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
-variable(Iterable, const char*)->variable<T>;
-
-template <class Iterable, class M,
-          class T = detail::convert_integer<
-              std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>>
-variable(Iterable, M)->variable<T, M>;
+template <class Iterable, class M>
+variable(Iterable, M)
+    ->variable<
+        detail::convert_integer<
+            std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>,
+        detail::replace_type<std::decay_t<M>, const char*, std::string>>;
 
 #endif
 

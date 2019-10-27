@@ -102,7 +102,7 @@ boost_test(TYPE run SOURCES detail_operators_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_relaxed_equal_test.cpp
   LIBRARIES Boost::histogram Boost::core)
-boost_test(TYPE run SOURCES detail_replace_default_test.cpp
+boost_test(TYPE run SOURCES detail_replace_type_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_safe_comparison_test.cpp
   LIBRARIES Boost::histogram Boost::core)

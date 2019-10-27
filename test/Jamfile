@@ -62,7 +62,7 @@ alias cxx14 :
     [ run detail_large_int_test.cpp ]
     [ run detail_operators_test.cpp ]
     [ run detail_relaxed_equal_test.cpp ]
-    [ run detail_replace_default_test.cpp ]
+    [ run detail_replace_type_test.cpp ]
     [ run detail_safe_comparison_test.cpp ]
     [ run detail_static_if_test.cpp ]
     [ run detail_tuple_slice_test.cpp ]

@@ -166,15 +166,13 @@ private:
 #if __cpp_deduction_guides >= 201606
 
 template <class T>
-category(std::initializer_list<T>)->category<T>;
-
-category(std::initializer_list<const char*>)->category<std::string>;
-
-template <class T>
-category(std::initializer_list<T>, const char*)->category<T>;
+category(std::initializer_list<T>)
+    ->category<detail::replace_cstring<std::decay_t<T>>, null_type>;
 
 template <class T, class M>
-category(std::initializer_list<T>, const M&)->category<T, M>;
+category(std::initializer_list<T>, M)
+    ->category<detail::replace_cstring<std::decay_t<T>>,
+               detail::replace_cstring<std::decay_t<M>>>;
 
 #endif
 

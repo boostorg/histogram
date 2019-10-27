@@ -9,7 +9,7 @@
 
 #include <boost/core/empty_value.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
-#include <boost/histogram/detail/replace_default.hpp>
+#include <boost/histogram/detail/replace_type.hpp>
 #include <string>
 #include <type_traits>
 
