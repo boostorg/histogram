@@ -83,12 +83,14 @@ public:
 
     vec_.reserve(std::distance(begin, end));
     vec_.emplace_back(*begin++);
+    bool strictly_ascending = true;
     while (begin != end) {
-      if (*begin <= vec_.back())
-        BOOST_THROW_EXCEPTION(
-            std::invalid_argument("input sequence must be strictly ascending"));
+      if (*begin <= vec_.back()) strictly_ascending = false;
       vec_.emplace_back(*begin++);
     }
+    if (!strictly_ascending)
+      BOOST_THROW_EXCEPTION(
+          std::invalid_argument("input sequence must be strictly ascending"));
   }
 
   /** Construct variable axis from iterable range of bin edges.

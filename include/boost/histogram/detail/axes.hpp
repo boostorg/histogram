@@ -22,6 +22,7 @@
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <type_traits>
 
@@ -57,9 +58,10 @@ template <class T>
 void throw_if_axes_is_too_large(const T& axes) {
   if (axes_rank(axes) > BOOST_HISTOGRAM_DETAIL_AXES_LIMIT)
     BOOST_THROW_EXCEPTION(
-        std::invalid_argument(cat("length of axis vector exceeds internal buffers, "
-                                  "recompile with -DBOOST_HISTOGRAM_DETAIL_AXES_LIMIT=",
-                                  axes_rank(axes), " to increase internal buffers")));
+        std::invalid_argument("length of axis vector exceeds internal buffers, "
+                              "recompile with "
+                              "-DBOOST_HISTOGRAM_DETAIL_AXES_LIMIT=<new max size> "
+                              "to increase internal buffers"));
 }
 
 // tuple is never too large because internal buffers adapt to size of tuple

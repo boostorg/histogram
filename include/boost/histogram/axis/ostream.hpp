@@ -11,13 +11,13 @@
 
 #include <boost/assert.hpp>
 #include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <iomanip>
 #include <iosfwd>
+#include <sstream>
 #include <stdexcept>
 #include <type_traits>
 

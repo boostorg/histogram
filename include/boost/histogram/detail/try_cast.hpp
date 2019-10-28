@@ -9,11 +9,11 @@
 
 #include <boost/config.hpp>
 #include <boost/core/demangle.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <boost/mp11/integral.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 
 namespace boost {
@@ -21,7 +21,7 @@ namespace histogram {
 namespace detail {
 template <class T, class E, class U>
 BOOST_NORETURN T try_cast_impl(mp11::mp_int<0>, U&&) {
-  BOOST_THROW_EXCEPTION(E(cat("cannot cast ", type_name<T>(), " to ", type_name<U>())));
+  BOOST_THROW_EXCEPTION(E("cannot cast " + type_name<T>() + " to " + type_name<U>()));
 }
 
 template <class T, class E, class U>

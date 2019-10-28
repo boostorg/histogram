@@ -7,7 +7,6 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/detail/counting_streambuf.hpp>
 #include <boost/histogram/detail/non_member_container_access.hpp>
@@ -23,9 +22,6 @@ using namespace boost::histogram::literals;
 namespace dtl = boost::histogram::detail;
 
 int main() {
-  // cat
-  { BOOST_TEST_EQ(dtl::cat("foo", 1, "bar"), "foo1bar"); }
-
   // literals
   {
     BOOST_TEST_TRAIT_SAME(std::integral_constant<unsigned, 0>, decltype(0_c));

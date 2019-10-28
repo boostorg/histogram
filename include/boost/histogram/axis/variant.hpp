@@ -11,7 +11,6 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/polymorphic_bin.hpp>
 #include <boost/histogram/axis/traits.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
@@ -20,7 +19,6 @@
 #include <boost/mp11/list.hpp>      // mp_first
 #include <boost/throw_exception.hpp>
 #include <boost/variant2/variant.hpp>
-#include <ostream>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -74,9 +72,9 @@ public:
           detail::static_if<is_bounded_type<U>>(
               [this](const auto& u) { this->operator=(u); },
               [](const auto&) {
-                BOOST_THROW_EXCEPTION(std::runtime_error(detail::cat(
-                    detail::type_name<U>(), " is not convertible to a bounded type of ",
-                    detail::type_name<variant>())));
+                BOOST_THROW_EXCEPTION(std::runtime_error(
+                    detail::type_name<U>() + " is not convertible to a bounded type of " +
+                    detail::type_name<variant>()));
               },
               u);
         },
@@ -109,11 +107,11 @@ public:
               [](const auto& a) -> const metadata_type& { return traits::metadata(a); },
               [](const auto&) -> const metadata_type& {
                 BOOST_THROW_EXCEPTION(std::runtime_error(
-                    detail::cat("cannot return metadata of type ", detail::type_name<M>(),
-                                " through axis::variant interface which uses type ",
-                                detail::type_name<metadata_type>(),
-                                "; use boost::histogram::axis::get to obtain a reference "
-                                "of this axis type")));
+                    "cannot return metadata of type " + detail::type_name<M>() +
+                    " through axis::variant interface which uses type " +
+                    detail::type_name<metadata_type>() +
+                    "; use boost::histogram::axis::get to obtain a reference "
+                    "of this axis type"));
               },
               a);
         },
@@ -130,11 +128,11 @@ public:
               [](auto& a) -> metadata_type& { return traits::metadata(a); },
               [](auto&) -> metadata_type& {
                 BOOST_THROW_EXCEPTION(std::runtime_error(
-                    detail::cat("cannot return metadata of type ", detail::type_name<M>(),
-                                " through axis::variant interface which uses type ",
-                                detail::type_name<metadata_type>(),
-                                "; use boost::histogram::axis::get to obtain a reference "
-                                "of this axis type")));
+                    "cannot return metadata of type " + detail::type_name<M>() +
+                    " through axis::variant interface which uses type " +
+                    detail::type_name<metadata_type>() +
+                    "; use boost::histogram::axis::get to obtain a reference "
+                    "of this axis type"));
               },
               a);
         },

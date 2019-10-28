@@ -7,16 +7,17 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <limits>
+#include <sstream>
 #include <type_traits>
 #include "std_ostream.hpp"
 #include "throw_exception.hpp"
 #include "utility_axis.hpp"
-
-using namespace boost::histogram;
+#include "utility_str.hpp"
 
 int main() {
+  using namespace boost::histogram;
+
   BOOST_TEST(std::is_nothrow_move_assignable<axis::integer<>>::value);
   BOOST_TEST(std::is_nothrow_move_constructible<axis::integer<>>::value);
 
@@ -44,7 +45,7 @@ int main() {
     BOOST_TEST_EQ(a.index(10), 3);
     BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 3);
 
-    BOOST_TEST_EQ(detail::cat(a),
+    BOOST_TEST_EQ(str(a),
                   "integer(-1, 2, metadata=\"bar\", options=underflow | overflow)");
 
     axis::integer<double> b;
@@ -72,7 +73,7 @@ int main() {
     BOOST_TEST_EQ(a.index(2), 3);
     BOOST_TEST_EQ(a.index(10), 3);
 
-    BOOST_TEST_EQ(detail::cat(a), "integer(-1, 2, options=underflow | overflow)");
+    BOOST_TEST_EQ(str(a), "integer(-1, 2, options=underflow | overflow)");
   }
 
   // axis::integer int,circular
@@ -89,7 +90,7 @@ int main() {
     BOOST_TEST_EQ(a.index(1), 0);
     BOOST_TEST_EQ(a.index(2), 1);
 
-    BOOST_TEST_EQ(detail::cat(a), "integer(-1, 1, options=circular)");
+    BOOST_TEST_EQ(str(a), "integer(-1, 1, options=circular)");
   }
 
   // axis::integer double,circular

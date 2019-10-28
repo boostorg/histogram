@@ -10,7 +10,6 @@
 #include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/args_type.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/try_cast.hpp>
@@ -22,6 +21,7 @@
 #include <boost/throw_exception.hpp>
 #include <boost/variant2/variant.hpp>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace boost {
@@ -56,7 +56,7 @@ double value_method_switch_impl1(std::false_type, I&&, D&&, const A&) {
   // comma trick to make all compilers happy; some would complain about
   // unreachable code after the throw, others about a missing return
   return BOOST_THROW_EXCEPTION(
-             std::runtime_error(cat(type_name<A>(), " has no value method"))),
+             std::runtime_error(type_name<A>() + " has no value method")),
          double{};
 }
 

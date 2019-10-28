@@ -10,10 +10,8 @@
 #include <boost/assert.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/make_default.hpp>
 #include <boost/histogram/detail/static_if.hpp>
-#include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
@@ -21,6 +19,7 @@
 #include <cmath>
 #include <initializer_list>
 #include <stdexcept>
+#include <string>
 
 namespace boost {
 namespace histogram {
@@ -250,10 +249,9 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
             o.end -= (o.end - o.begin) % o.merge;
             aout = A(ain, o.begin, o.end, o.merge);
           },
-          [](auto&&, const auto& ain) {
-            using A = std::decay_t<decltype(ain)>;
-            BOOST_THROW_EXCEPTION(std::invalid_argument(
-                detail::cat(detail::type_name<A>(), " is not reducible")));
+          [iaxis](auto&&, const auto&) {
+            BOOST_THROW_EXCEPTION(std::invalid_argument("axis " + std::to_string(iaxis) +
+                                                        " is not reducible"));
           },
           axis::get<A>(detail::axis_get(axes, iaxis)), a);
     } else {

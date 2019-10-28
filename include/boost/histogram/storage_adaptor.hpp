@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/detail/array_wrapper.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/safe_comparison.hpp>
@@ -90,20 +89,19 @@ struct array_impl : T {
 
   template <class U, class = requires_iterable<U>>
   array_impl& operator=(const U& u) {
+    if (u.size() > T::max_size()) // for std::arra
+      BOOST_THROW_EXCEPTION(std::length_error("argument size exceeds maximum capacity"));
     size_ = u.size();
-    if (size_ > T::max_size()) // for std::array
-      BOOST_THROW_EXCEPTION(std::length_error(
-          detail::cat("size ", size_, " exceeds maximum capacity ", T::max_size())));
-    auto it = T::begin();
-    for (auto&& x : u) *it++ = x;
+    using std::begin;
+    using std::end;
+    std::copy(begin(u), end(u), T::begin());
     return *this;
   }
 
   void reset(std::size_t n) {
     using value_type = typename T::value_type;
     if (n > T::max_size()) // for std::array
-      BOOST_THROW_EXCEPTION(std::length_error(
-          detail::cat("size ", n, " exceeds maximum capacity ", T::max_size())));
+      BOOST_THROW_EXCEPTION(std::length_error("argument size exceeds maximum capacity"));
     std::fill_n(T::begin(), n, value_type());
     size_ = n;
   }

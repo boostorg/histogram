@@ -9,7 +9,6 @@
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/traits.hpp>
-#include <boost/histogram/detail/cat.hpp>
 #include <limits>
 #include <sstream>
 #include <string>
@@ -17,10 +16,11 @@
 #include "std_ostream.hpp"
 #include "throw_exception.hpp"
 #include "utility_axis.hpp"
-
-using namespace boost::histogram;
+#include "utility_str.hpp"
 
 int main() {
+  using namespace boost::histogram;
+
   BOOST_TEST(std::is_nothrow_move_constructible<axis::category<int>>::value);
   BOOST_TEST(std::is_nothrow_move_constructible<axis::category<std::string>>::value);
   BOOST_TEST(std::is_nothrow_move_assignable<axis::category<int>>::value);
@@ -69,7 +69,7 @@ int main() {
     BOOST_TEST_EQ(a.value(2), C);
     BOOST_TEST_THROWS(a.value(3), std::out_of_range);
 
-    BOOST_TEST_EQ(detail::cat(a),
+    BOOST_TEST_EQ(str(a),
                   "category(\"A\", \"B\", \"C\", metadata=\"bar\", options=overflow)");
   }
 
@@ -131,7 +131,7 @@ int main() {
     BOOST_TEST_EQ(a.update(10), std::make_pair(2, 0));
     BOOST_TEST_EQ(a.size(), 3);
 
-    BOOST_TEST_EQ(detail::cat(a), "category(5, 1, 10, options=growth)");
+    BOOST_TEST_EQ(str(a), "category(5, 1, 10, options=growth)");
   }
 
   // iterators
