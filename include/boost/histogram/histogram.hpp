@@ -13,7 +13,7 @@
 #include <boost/histogram/detail/fill.hpp>
 #include <boost/histogram/detail/fill_n.hpp>
 #include <boost/histogram/detail/mutex_base.hpp>
-#include <boost/histogram/detail/non_member_container_access.hpp>
+#include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unsafe_access.hpp>
