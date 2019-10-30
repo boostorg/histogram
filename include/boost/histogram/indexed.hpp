@@ -14,6 +14,7 @@
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/operators.hpp>
 #include <boost/histogram/fwd.hpp>
+#include <iterator>
 #include <type_traits>
 #include <utility>
 
@@ -43,9 +44,11 @@ private:
       detail::buffer_size<typename std::remove_const_t<histogram_type>::axes_type>::value;
 
 public:
-  using value_iterator = decltype(std::declval<histogram_type>().begin());
-  using value_reference = typename value_iterator::reference;
-  using value_type = typename value_iterator::value_type;
+  using value_iterator = std::conditional_t<std::is_const<histogram_type>::value,
+                                            typename histogram_type::const_iterator,
+                                            typename histogram_type::iterator>;
+  using value_reference = typename std::iterator_traits<value_iterator>::reference;
+  using value_type = typename std::iterator_traits<value_iterator>::value_type;
 
   class iterator;
   using range_iterator = iterator; ///< deprecated

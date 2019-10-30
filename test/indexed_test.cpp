@@ -124,7 +124,7 @@ template <class IsDynamic, class Coverage>
 void run_stdlib_tests(mp_list<IsDynamic, Coverage>) {
   auto ax = axis::regular<>(3, 0, 1);
   auto ay = axis::integer<>(0, 2);
-  auto h = make_s(IsDynamic(), std::vector<int>(), ax, ay);
+  auto h = make_s(IsDynamic(), std::array<int, 20>(), ax, ay);
 
   struct generator {
     int i = 0;
