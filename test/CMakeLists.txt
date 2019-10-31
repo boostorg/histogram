@@ -54,6 +54,18 @@ boost_test(TYPE compile-fail SOURCES make_histogram_fail0.cpp
 boost_test(TYPE compile-fail SOURCES make_histogram_fail1.cpp
   LIBRARIES Boost::histogram
 )
+boost_test(TYPE compile-fail SOURCES profile_fail0.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES profile_fail1.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES profile_fail2.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES profile_fail3.cpp
+  LIBRARIES Boost::histogram
+)
 boost_test(TYPE run SOURCES accumulators_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES algorithm_project_test.cpp

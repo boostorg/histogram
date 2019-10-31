@@ -11,6 +11,7 @@
 #include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
+#include <boost/histogram/weight.hpp>
 #include <sstream>
 #include "is_close.hpp"
 #include "throw_exception.hpp"
@@ -114,10 +115,10 @@ int main() {
 
     // also same as feeding all samples twice
     m_t d;
-    d(2, 4);
-    d(2, 7);
-    d(2, 13);
-    d(2, 16);
+    d(weight(2), 4);
+    d(weight(2), 7);
+    d(weight(2), 13);
+    d(weight(2), 16);
 
     BOOST_TEST_EQ(d, c);
 
@@ -132,9 +133,9 @@ int main() {
     BOOST_TEST_EQ(a.sum_of_weights(), 0);
     BOOST_TEST_EQ(a, m_t{});
 
-    a(0.5, 1);
-    a(1.0, 2);
-    a(0.5, 3);
+    a(weight(0.5), 1);
+    a(weight(1.0), 2);
+    a(weight(0.5), 3);
 
     BOOST_TEST_EQ(a.sum_of_weights(), 2);
     BOOST_TEST_EQ(a.sum_of_weights_squared(), 1.5);

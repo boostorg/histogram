@@ -10,6 +10,7 @@
 #include <boost/assert.hpp>
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/fwd.hpp> // for weighted_mean<>
+#include <boost/histogram/weight.hpp>
 #include <type_traits>
 
 namespace boost {
@@ -34,14 +35,14 @@ public:
       , sum_of_weighted_deltas_squared_(
             variance * (sum_of_weights_ - sum_of_weights_squared_ / sum_of_weights_)) {}
 
-  void operator()(const RealType& x) { operator()(1, x); }
+  void operator()(const RealType& x) { operator()(weight(1), x); }
 
-  void operator()(const RealType& w, const RealType& x) {
-    sum_of_weights_ += w;
-    sum_of_weights_squared_ += w * w;
+  void operator()(const weight_type<RealType>& w, const RealType& x) {
+    sum_of_weights_ += w.value;
+    sum_of_weights_squared_ += w.value * w.value;
     const auto delta = x - weighted_mean_;
-    weighted_mean_ += w * delta / sum_of_weights_;
-    sum_of_weighted_deltas_squared_ += w * delta * (x - weighted_mean_);
+    weighted_mean_ += w.value * delta / sum_of_weights_;
+    sum_of_weighted_deltas_squared_ += w.value * delta * (x - weighted_mean_);
   }
 
   template <typename T>

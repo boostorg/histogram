@@ -8,6 +8,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators.hpp>
 #include <boost/histogram/serialization.hpp>
+#include <boost/histogram/weight.hpp>
 #include "throw_exception.hpp"
 #include "utility_serialization.hpp"
 
@@ -31,7 +32,7 @@ int main(int argc, char** argv) {
     const auto filename = join(argv[1], "accumulators_serialization_test_mean.xml");
     accumulators::mean<> a;
     a(1);
-    a(0.5, 2);
+    a(weight(0.5), 2);
     a(3);
     print_xml(filename, a);
 
@@ -61,7 +62,7 @@ int main(int argc, char** argv) {
         join(argv[1], "accumulators_serialization_test_weighted_mean.xml");
     accumulators::weighted_mean<> a;
     a(1);
-    a(0.5, 2);
+    a(weight(0.5), 2);
     a(3);
     print_xml(filename, a);
 

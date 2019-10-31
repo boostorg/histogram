@@ -21,92 +21,40 @@ template <typename Tag>
 void run_tests() {
   auto ax = axis::integer<>(0, 10);
 
-  auto h1 = make(Tag(), ax);
-  BOOST_TEST(empty(h1, coverage::all));
-  BOOST_TEST(empty(h1, coverage::inner));
-  for (int i = -1; i < 11; ++i) {
-    h1.reset();
-    h1(i);
-    BOOST_TEST(!empty(h1, coverage::all));
-    if (i == -1 || i == 10) {
-      BOOST_TEST(empty(h1, coverage::inner));
-    } else {
-      BOOST_TEST(!empty(h1, coverage::inner));
-    }
-  }
-
-  auto h2 = make_s(Tag(), std::vector<double>(), ax, ax);
-  BOOST_TEST(empty(h2, coverage::all));
-  BOOST_TEST(empty(h2, coverage::inner));
-  for (int i = -1; i < 11; ++i) {
-    for (int j = -1; j < 11; ++j) {
-      h2.reset();
-      h2(i, j);
-      BOOST_TEST(!empty(h2, coverage::all));
-
-      if ((i == -1 || i == 10) || (j == -1 || j == 10)) {
-        BOOST_TEST(empty(h2, coverage::inner));
+  {
+    auto h = make(Tag(), ax);
+    BOOST_TEST(empty(h, coverage::all));
+    BOOST_TEST(empty(h, coverage::inner));
+    for (int i = -1; i < 11; ++i) {
+      h.reset();
+      h(i);
+      BOOST_TEST(!empty(h, coverage::all));
+      if (i == -1 || i == 10) {
+        BOOST_TEST(empty(h, coverage::inner));
       } else {
-        BOOST_TEST(!empty(h2, coverage::inner));
+        BOOST_TEST(!empty(h, coverage::inner));
       }
     }
   }
 
-  /* BROKEN, SEE https://github.com/boostorg/histogram/issues/244
-  auto h3 = make_s(Tag(), std::array<int, 12>(), ax);
-  BOOST_TEST(empty(h3, coverage::all));
-  BOOST_TEST(empty(h3, coverage::inner));
-  h3(-2);
-  BOOST_TEST(!empty(h3, coverage::all));
-  BOOST_TEST(empty(h3, coverage::inner));
-  h3(2);
-  BOOST_TEST(!empty(h3, coverage::all));
-  BOOST_TEST(!empty(h3, coverage::inner));
-  */
-
-  auto h4 = make_s(Tag(), std::unordered_map<std::size_t, int>(), ax);
-  BOOST_TEST(empty(h4, coverage::all));
-  BOOST_TEST(empty(h4, coverage::inner));
-  h4(-2);
-  BOOST_TEST(!empty(h4, coverage::all));
-  BOOST_TEST(empty(h4, coverage::inner));
-  h4(2);
-  BOOST_TEST(!empty(h4, coverage::all));
-  BOOST_TEST(!empty(h4, coverage::inner));
-
-  auto h5 = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(),
-                   axis::integer<>(0, 10), axis::integer<>(0, 10));
-  BOOST_TEST(empty(h5, coverage::all));
-  BOOST_TEST(empty(h5, coverage::inner));
-  h5.reset();
-  h5(weight(2), -2, -4);
-  BOOST_TEST(!empty(h5, coverage::all));
-  BOOST_TEST(empty(h5, coverage::inner));
-  h5.reset();
-  h5(weight(1), -4, 2);
-  BOOST_TEST(!empty(h5, coverage::all));
-  BOOST_TEST(empty(h5, coverage::inner));
-  h5.reset();
-  h5(weight(3), 3, 5);
-  BOOST_TEST(!empty(h5, coverage::all));
-  BOOST_TEST(!empty(h5, coverage::inner));
-
-  auto h6 = make_s(Tag(), std::vector<accumulators::weighted_mean<>>(),
-                   axis::integer<>(0, 10), axis::integer<>(0, 10));
-  BOOST_TEST(empty(h6, coverage::all));
-  BOOST_TEST(empty(h6, coverage::inner));
-  h6.reset();
-  h6(weight(2), -2, -4);
-  BOOST_TEST(!empty(h6, coverage::all));
-  BOOST_TEST(empty(h6, coverage::inner));
-  h6.reset();
-  h6(weight(1), -4, 2);
-  BOOST_TEST(!empty(h6, coverage::all));
-  BOOST_TEST(empty(h6, coverage::inner));
-  h6.reset();
-  h6(weight(3), 3, 5);
-  BOOST_TEST(!empty(h6, coverage::all));
-  BOOST_TEST(!empty(h6, coverage::inner));
+  {
+    auto h = make_s(Tag(), std::vector<accumulators::weighted_mean<>>(),
+                    axis::integer<>(0, 10), axis::integer<>(0, 10));
+    BOOST_TEST(empty(h, coverage::all));
+    BOOST_TEST(empty(h, coverage::inner));
+    h.reset();
+    h(weight(2), -2, -4, sample(3));
+    BOOST_TEST(!empty(h, coverage::all));
+    BOOST_TEST(empty(h, coverage::inner));
+    h.reset();
+    h(weight(1), -4, 2, sample(2));
+    BOOST_TEST(!empty(h, coverage::all));
+    BOOST_TEST(empty(h, coverage::inner));
+    h.reset();
+    h(weight(3), 3, 5, sample(1));
+    BOOST_TEST(!empty(h, coverage::all));
+    BOOST_TEST(!empty(h, coverage::inner));
+  }
 }
 
 int main() {

@@ -123,7 +123,7 @@ void fill_storage_4(mp11::mp_true, T&& t) noexcept {
 
 template <class T, class U>
 void fill_storage_4(mp11::mp_true, T&& t, U&& w) noexcept {
-  t += w;
+  t += w.value;
 }
 
 template <class T, class... Us>
@@ -136,7 +136,7 @@ template <class IW, class IS, class T, class U>
 void fill_storage_2(IW, IS, T&& t, U&& u) noexcept {
   mp11::tuple_apply(
       [&](auto&&... args) {
-        fill_storage_3(std::forward<T>(t), std::get<IW::value>(u).value, args...);
+        fill_storage_3(std::forward<T>(t), std::get<IW::value>(u), args...);
       },
       std::get<IS::value>(u).value);
 }
@@ -150,7 +150,7 @@ void fill_storage_2(mp11::mp_int<-1>, IS, T&& t, const U& u) noexcept {
 
 template <class IW, class T, class U>
 void fill_storage_2(IW, mp11::mp_int<-1>, T&& t, const U& u) noexcept {
-  fill_storage_3(std::forward<T>(t), std::get<IW::value>(u).value);
+  fill_storage_3(std::forward<T>(t), std::get<IW::value>(u));
 }
 
 template <class T, class U>

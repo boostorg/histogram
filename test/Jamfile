@@ -101,6 +101,10 @@ alias failure :
     [ compile-fail axis_variable_fail1.cpp ]
     [ compile-fail make_histogram_fail0.cpp ]
     [ compile-fail make_histogram_fail1.cpp ]
+    [ compile-fail profile_fail0.cpp ]
+    [ compile-fail profile_fail1.cpp ]
+    [ compile-fail profile_fail2.cpp ]
+    [ compile-fail profile_fail3.cpp ]
     ;
 
 alias threading :

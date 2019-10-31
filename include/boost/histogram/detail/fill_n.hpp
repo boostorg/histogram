@@ -153,6 +153,17 @@ void fill_n_storage(S& s, const Index idx, Ts&&... p) noexcept {
   fold((p.second > 1 ? ++p.first : 0)...);
 }
 
+template <class S, class Index, class T, class... Ts>
+void fill_n_storage(S& s, const Index idx, weight_type<T>&& w, Ts&&... ps) noexcept {
+  if (is_valid(idx)) {
+    BOOST_ASSERT(idx < s.size());
+    fill_storage_3(s[idx], weight_type<decltype(*w.value.first)>{*w.value.first},
+                   *ps.first...);
+  }
+  if (w.value.second > 1) ++w.value.first;
+  fold((ps.second > 1 ? ++ps.first : 0)...);
+}
+
 // general Nd treatment
 template <class Index, class S, class A, class T, class... Ts>
 void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t vsize,
@@ -257,6 +268,11 @@ void fill_n_check_extra_args(std::size_t n, Ts&&... ts) {
     return 0;
   };
   fold(check(ts)...);
+}
+
+template <class T, class... Ts>
+void fill_n_check_extra_args(std::size_t n, weight_type<T>&& w, Ts&&... ts) {
+  fill_n_check_extra_args(n, w.value, std::forward<Ts>(ts)...);
 }
 
 inline void fill_n_check_extra_args(std::size_t) noexcept {}

@@ -15,8 +15,10 @@
 #include <boost/histogram/detail/mutex_base.hpp>
 #include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/fwd.hpp>
+#include <boost/histogram/sample.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unsafe_access.hpp>
+#include <boost/histogram/weight.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/throw_exception.hpp>
 #include <mutex>
@@ -214,7 +216,7 @@ public:
   void fill(const Iterable& args, const weight_type<T>& weights) {
     std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
     detail::fill_n(offset_, storage_, axes_, detail::make_span(args),
-                   detail::to_ptr_size(weights.value));
+                   weight(detail::to_ptr_size(weights.value)));
   }
 
   /** Fill histogram with several values and weights at once.
@@ -260,7 +262,7 @@ public:
     mp11::tuple_apply(
         [&](const auto&... sargs) {
           detail::fill_n(offset_, storage_, axes_, detail::make_span(args),
-                         detail::to_ptr_size(weights.value),
+                         weight(detail::to_ptr_size(weights.value)),
                          detail::to_ptr_size(sargs)...);
         },
         samples.value);
@@ -596,34 +598,6 @@ histogram(Iterable, S)
         std::conditional_t<detail::is_adaptible<S>::value, storage_adaptor<S>, S>>;
 
 #endif
-
-/** Helper function to mark argument as weight.
-
-  @param t argument to be forward to the histogram.
-*/
-template <typename T>
-auto weight(T&& t) noexcept {
-  return weight_type<T>{std::forward<T>(t)};
-}
-
-/** Helper function to mark arguments as sample.
-
-  @param ts arguments to be forwarded to the accumulator.
-*/
-template <typename... Ts>
-auto sample(Ts&&... ts) noexcept {
-  return sample_type<std::tuple<Ts...>>{std::forward_as_tuple(std::forward<Ts>(ts)...)};
-}
-
-template <class T>
-struct weight_type {
-  T value;
-};
-
-template <class T>
-struct sample_type {
-  T value;
-};
 
 } // namespace histogram
 } // namespace boost

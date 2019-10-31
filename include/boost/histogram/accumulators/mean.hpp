@@ -37,11 +37,11 @@ public:
     sum_of_deltas_squared_ += delta * (x - mean_);
   }
 
-  void operator()(const RealType& w, const RealType& x) noexcept {
-    sum_ += w;
+  void operator()(const weight_type<RealType>& w, const RealType& x) noexcept {
+    sum_ += w.value;
     const auto delta = x - mean_;
-    mean_ += w * delta / sum_;
-    sum_of_deltas_squared_ += w * delta * (x - mean_);
+    mean_ += w.value * delta / sum_;
+    sum_of_deltas_squared_ += w.value * delta * (x - mean_);
   }
 
   template <class T>
