@@ -12,13 +12,18 @@
 #include <boost/config/workaround.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
+#include <boost/histogram/detail/accumulator_traits.hpp>
+#include <boost/histogram/detail/argument_traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/detail/make_default.hpp>
 #include <boost/histogram/detail/optional_index.hpp>
 #include <boost/histogram/detail/tuple_slice.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/integral.hpp>
+#include <boost/mp11/tuple.hpp>
+#include <boost/mp11/utility.hpp>
 #include <mutex>
 #include <tuple>
 #include <type_traits>
@@ -26,6 +31,23 @@
 namespace boost {
 namespace histogram {
 namespace detail {
+
+template <class T, class U>
+struct sample_args_passed_vs_expected;
+
+template <class... Passed, class... Expected>
+struct sample_args_passed_vs_expected<std::tuple<Passed...>, std::tuple<Expected...>> {
+  static_assert(!(sizeof...(Expected) > 0 && sizeof...(Passed) == 0),
+                "error: accumulator requires samples, but sample argument is missing");
+  static_assert(
+      !(sizeof...(Passed) > 0 && sizeof...(Expected) == 0),
+      "error: accumulator does not accept samples, but sample argument is passed");
+  static_assert(sizeof...(Passed) == sizeof...(Expected),
+                "error: numbers of passed and expected sample arguments differ");
+  static_assert(
+      std::is_convertible<std::tuple<Passed...>, std::tuple<Expected...>>::value,
+      "error: sample argument(s) not convertible to accumulator argument(s)");
+};
 
 template <class A>
 struct storage_grower {
@@ -168,21 +190,6 @@ auto fill_storage(IW, IS, Storage& s, const Index idx, const Args& a) noexcept {
   return s.end();
 }
 
-template <class L>
-struct args_indices {
-  static constexpr int _size = static_cast<int>(mp11::mp_size<L>::value);
-  static constexpr int _weight = static_cast<int>(mp11::mp_find_if<L, is_weight>::value);
-  static constexpr int _sample = static_cast<int>(mp11::mp_find_if<L, is_sample>::value);
-
-  static constexpr unsigned nargs = _size - (_weight < _size) - (_sample < _size);
-  static constexpr int start =
-      _weight < _size && _sample < _size && (_weight + _sample < 2)
-          ? 2
-          : ((_weight == 0 || _sample == 0) ? 1 : 0);
-  using weight = mp11::mp_int<(_weight < _size ? _weight : -1)>;
-  using sample = mp11::mp_int<(_sample < _size ? _sample : -1)>;
-};
-
 template <int S, int N>
 struct linearize_args {
   template <class Index, class A, class Args>
@@ -216,54 +223,56 @@ constexpr unsigned min(const unsigned n) noexcept {
 }
 
 // not growing
-template <class Storage, class Axes, class Args>
-auto fill_2(mp11::mp_false, const std::size_t offset, Storage& st, const Axes& axes,
-            const Args& args) {
-  using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
+template <class ArgTraits, class Storage, class Axes, class Args>
+auto fill_2(ArgTraits, mp11::mp_false, const std::size_t offset, Storage& st,
+            const Axes& axes, const Args& args) {
   mp11::mp_if<has_non_inclusive_axis<Axes>, optional_index, std::size_t> idx{offset};
-  linearize_args<pos::start, min<Axes>(pos::nargs)>::apply(idx, axes, args);
-  return fill_storage(typename pos::weight{}, typename pos::sample{}, st, idx, args);
+  linearize_args<ArgTraits::start::value, min<Axes>(ArgTraits::nargs::value)>::apply(
+      idx, axes, args);
+  return fill_storage(typename ArgTraits::wpos{}, typename ArgTraits::spos{}, st, idx,
+                      args);
 }
 
 // at least one axis is growing
-template <class Storage, class A, class Args>
-auto fill_2(mp11::mp_true, const std::size_t, Storage& st, A& axes, const Args& args) {
-  using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
-  std::array<axis::index_type, pos::nargs> shifts;
+template <class ArgTraits, class Storage, class Axes, class Args>
+auto fill_2(ArgTraits, mp11::mp_true, const std::size_t, Storage& st, Axes& axes,
+            const Args& args) {
+  std::array<axis::index_type, ArgTraits::nargs::value> shifts;
   // offset must be zero for linearize_growth
-  mp11::mp_if<has_non_inclusive_axis<A>, optional_index, std::size_t> idx{0};
+  mp11::mp_if<has_non_inclusive_axis<Axes>, optional_index, std::size_t> idx{0};
   std::size_t stride = 1;
   bool update_needed = false;
-  mp11::mp_for_each<mp11::mp_iota_c<min<A>(pos::nargs)>>([&](auto i) {
+  mp11::mp_for_each<mp11::mp_iota_c<min<Axes>(ArgTraits::nargs::value)>>([&](auto i) {
     auto& ax = axis_get<i>(axes);
-    const auto extent =
-        linearize_growth(idx, shifts[i], stride, ax, std::get<(pos::start + i)>(args));
+    const auto extent = linearize_growth(idx, shifts[i], stride, ax,
+                                         std::get<(ArgTraits::start::value + i)>(args));
     update_needed |= shifts[i] != 0;
     stride *= extent;
   });
   if (update_needed) {
-    storage_grower<A> g(axes);
+    storage_grower<Axes> g(axes);
     g.from_shifts(shifts.data());
     g.apply(st, shifts.data());
   }
-  return fill_storage(typename pos::weight{}, typename pos::sample{}, st, idx, args);
+  return fill_storage(typename ArgTraits::wpos{}, typename ArgTraits::spos{}, st, idx,
+                      args);
 }
 
 // pack original args tuple into another tuple (which is unpacked later)
 template <int Start, int Size, class IW, class IS, class Args>
 decltype(auto) pack_args(IW, IS, const Args& args) noexcept {
-  return std::make_tuple(std::get<IW::value>(args), std::get<IS::value>(args),
-                         tuple_slice<Start, Size>(args));
+  return std::make_tuple(tuple_slice<Start, Size>(args), std::get<IW::value>(args),
+                         std::get<IS::value>(args));
 }
 
 template <int Start, int Size, class IW, class Args>
 decltype(auto) pack_args(IW, mp11::mp_int<-1>, const Args& args) noexcept {
-  return std::make_tuple(std::get<IW::value>(args), tuple_slice<Start, Size>(args));
+  return std::make_tuple(tuple_slice<Start, Size>(args), std::get<IW::value>(args));
 }
 
 template <int Start, int Size, class IS, class Args>
 decltype(auto) pack_args(mp11::mp_int<-1>, IS, const Args& args) noexcept {
-  return std::make_tuple(std::get<IS::value>(args), tuple_slice<Start, Size>(args));
+  return std::make_tuple(tuple_slice<Start, Size>(args), std::get<IS::value>(args));
 }
 
 template <int Start, int Size, class Args>
@@ -275,9 +284,9 @@ decltype(auto) pack_args(mp11::mp_int<-1>, mp11::mp_int<-1>, const Args& args) n
 #pragma warning(disable : 4702) // fixing warning would reduce code readability a lot
 #endif
 
-template <class S, class A, class Args>
-auto fill(const std::size_t offset, S& storage, A& axes, const Args& args) {
-  using pos = args_indices<mp11::mp_transform<std::decay_t, Args>>;
+template <class ArgTraits, class S, class A, class Args>
+auto fill(std::true_type, ArgTraits, const std::size_t offset, S& storage, A& axes,
+          const Args& args) {
   using growing = has_growing_axis<A>;
 
   // Sometimes we need to pack the tuple into another tuple:
@@ -292,12 +301,18 @@ auto fill(const std::size_t offset, S& storage, A& axes, const Args& args) {
   //   interface), so we throw at runtime if incompatible argument is passed (e.g.
   //   3d tuple)
 
-  if (axes_rank(axes) == pos::nargs)
-    return fill_2(growing{}, offset, storage, axes, args);
-  else if (axes_rank(axes) == 1 && axis::traits::rank(axis_get<0>(axes)) == pos::nargs)
-    return fill_2(growing{}, offset, storage, axes,
-                  pack_args<pos::start, pos::nargs>(typename pos::weight{},
-                                                    typename pos::sample{}, args));
+  if (axes_rank(axes) == ArgTraits::nargs::value)
+    return fill_2(ArgTraits{}, growing{}, offset, storage, axes, args);
+  else if (axes_rank(axes) == 1 &&
+           axis::traits::rank(axis_get<0>(axes)) == ArgTraits::nargs::value)
+    return fill_2(
+        argument_traits_holder<
+            1, 0, (ArgTraits::wpos::value >= 0 ? 1 : -1),
+            (ArgTraits::spos::value >= 0 ? (ArgTraits::wpos::value >= 0 ? 2 : 1) : -1),
+            typename ArgTraits::sargs>{},
+        growing{}, offset, storage, axes,
+        pack_args<ArgTraits::start::value, ArgTraits::nargs::value>(
+            typename ArgTraits::wpos{}, typename ArgTraits::spos{}, args));
   return (BOOST_THROW_EXCEPTION(
               std::invalid_argument("number of arguments != histogram rank")),
           storage.end());
@@ -306,6 +321,12 @@ auto fill(const std::size_t offset, S& storage, A& axes, const Args& args) {
 #if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
 #pragma warning(default : 4702)
 #endif
+
+// empty implementation for bad arguments to stop compiler from showing internals
+template <class ArgTraits, class S, class A, class Args>
+auto fill(std::false_type, ArgTraits, const std::size_t, S& storage, A&, const Args&) {
+  return storage.end();
+}
 
 } // namespace detail
 } // namespace histogram

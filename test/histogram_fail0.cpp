@@ -5,10 +5,16 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/make_profile.hpp>
+#include <boost/histogram/make_histogram.hpp>
 
 int main() {
   using namespace boost::histogram;
-  auto h = make_profile(axis::integer<>(0, 5));
-  h(0, weight(1)); // profile requires a sample
+
+  auto h = make_histogram(axis::integer<>(0, 5));
+
+  // invalid sample argument
+  h(0, sample(1));
+
+  auto values = {0, 1};
+  h.fill(values, sample(values)); // invalid sample argument
 }

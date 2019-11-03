@@ -269,26 +269,6 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_sequence_of_any_axis<decltype(v)>));
   }
 
-  // is_weight
-  {
-    struct A {};
-    using B = int;
-    using C = weight_type<int>;
-    BOOST_TEST_TRAIT_FALSE((is_weight<A>));
-    BOOST_TEST_TRAIT_FALSE((is_weight<B>));
-    BOOST_TEST_TRAIT_TRUE((is_weight<C>));
-  }
-
-  // is_sample
-  {
-    struct A {};
-    using B = int;
-    using C = sample_type<int>;
-    BOOST_TEST_TRAIT_FALSE((is_sample<A>));
-    BOOST_TEST_TRAIT_FALSE((is_sample<B>));
-    BOOST_TEST_TRAIT_TRUE((is_sample<C>));
-  }
-
   // has_operator_equal
   {
     struct A {};

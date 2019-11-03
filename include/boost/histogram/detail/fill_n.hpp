@@ -20,7 +20,9 @@
 #include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/bind.hpp>
+#include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/variant2/variant.hpp>
 #include <stdexcept>
@@ -278,7 +280,7 @@ void fill_n_check_extra_args(std::size_t n, weight_type<T>&& w, Ts&&... ts) {
 inline void fill_n_check_extra_args(std::size_t) noexcept {}
 
 template <class S, class A, class T, std::size_t N, class... Us>
-void fill_n(const std::size_t offset, S& storage, A& axes,
+void fill_n(std::true_type, const std::size_t offset, S& storage, A& axes,
             const dtl::span<const T, N> values, Us&&... us) {
   static_assert(!std::is_pointer<T>::value,
                 "passing iterable of pointers not allowed (cannot determine lengths); "
@@ -302,6 +304,10 @@ void fill_n(const std::size_t offset, S& storage, A& axes,
       },
       values, std::forward<Us>(us)...);
 }
+
+// empty implementation for bad arguments to stop compiler from showing internals
+template <class... Ts>
+void fill_n(std::false_type, Ts...) {}
 
 } // namespace detail
 } // namespace histogram

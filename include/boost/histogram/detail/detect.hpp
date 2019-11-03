@@ -115,24 +115,6 @@ BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(
 BOOST_HISTOGRAM_DETAIL_DETECT(has_threading_support, (T::has_threading_support));
 
 template <class T>
-struct is_weight_impl : mp11::mp_false {};
-
-template <class T>
-struct is_weight_impl<weight_type<T>> : mp11::mp_true {};
-
-template <class T>
-using is_weight = is_weight_impl<T>;
-
-template <class T>
-struct is_sample_impl : mp11::mp_false {};
-
-template <class T>
-struct is_sample_impl<sample_type<T>> : mp11::mp_true {};
-
-template <class T>
-using is_sample = is_sample_impl<T>;
-
-template <class T>
 using is_storage = mp11::mp_and<is_indexable_container<T>, has_method_reset<T>,
                                 has_threading_support<T>>;
 

@@ -12,7 +12,7 @@
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/fwd.hpp>
-#include <boost/mp11.hpp>
+#include <boost/mp11/algorithm.hpp>
 #include <tuple>
 
 namespace boost {

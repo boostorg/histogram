@@ -51,6 +51,8 @@ alias cxx14 :
     [ run axis_traits_test.cpp ]
     [ run axis_variable_test.cpp ]
     [ run axis_variant_test.cpp ]
+    [ run detail_accumulator_traits_test.cpp ]
+    [ run detail_argument_traits_test.cpp ]
     [ run detail_args_type_test.cpp ]
     [ run detail_axes_test.cpp ]
     [ run detail_convert_integer_test.cpp ]
@@ -101,10 +103,11 @@ alias failure :
     [ compile-fail axis_variable_fail1.cpp ]
     [ compile-fail make_histogram_fail0.cpp ]
     [ compile-fail make_histogram_fail1.cpp ]
-    [ compile-fail profile_fail0.cpp ]
-    [ compile-fail profile_fail1.cpp ]
-    [ compile-fail profile_fail2.cpp ]
-    [ compile-fail profile_fail3.cpp ]
+    [ compile-fail histogram_fail0.cpp ]
+    [ compile-fail histogram_fail1.cpp ]
+    [ compile-fail histogram_fail2.cpp ]
+    [ compile-fail histogram_fail3.cpp ]
+    [ compile-fail histogram_fail4.cpp ]
     ;
 
 alias threading :

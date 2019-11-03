@@ -7,19 +7,24 @@
 #ifndef BOOST_HISTOGRAM_HISTOGRAM_HPP
 #define BOOST_HISTOGRAM_HISTOGRAM_HPP
 
+#include <boost/histogram/detail/accumulator_traits.hpp>
+#include <boost/histogram/detail/argument_traits.hpp>
 #include <boost/histogram/detail/at.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/detail/fill.hpp>
 #include <boost/histogram/detail/fill_n.hpp>
 #include <boost/histogram/detail/mutex_base.hpp>
+#include <boost/histogram/detail/non_member_container_access.hpp>
 #include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/sample.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/histogram/weight.hpp>
+#include <boost/mp11/integral.hpp>
 #include <boost/mp11/list.hpp>
+#include <boost/mp11/tuple.hpp>
 #include <boost/throw_exception.hpp>
 #include <mutex>
 #include <stdexcept>
@@ -51,12 +56,9 @@ namespace histogram {
  */
 template <class Axes, class Storage>
 class histogram : detail::mutex_base<Axes, Storage> {
-  using mutex_base_t = typename detail::mutex_base<Axes, Storage>;
-
-public:
-  static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
   static_assert(std::is_same<std::decay_t<Storage>, Storage>::value,
                 "Storage may not be a reference or const or volatile");
+  static_assert(mp11::mp_size<Axes>::value > 0, "at least one axis required");
 
 public:
   using axes_type = Axes;
@@ -66,6 +68,10 @@ public:
   using iterator = typename storage_type::iterator;
   using const_iterator = typename storage_type::const_iterator;
 
+private:
+  using mutex_base = typename detail::mutex_base<axes_type, storage_type>;
+
+public:
   histogram() = default;
 
   template <class A, class S>
@@ -174,16 +180,28 @@ public:
     `std::make_tuple(1.2, 2.3)`. If the histogram contains only this axis and no other,
     the arguments can be passed directly.
   */
-  template <class... Args>
-  iterator operator()(const Args&... args) {
-    return operator()(std::forward_as_tuple(args...));
+  template <class Arg0, class... Args>
+  std::enable_if_t<(detail::is_tuple<Arg0>::value == false || sizeof...(Args) > 0),
+                   iterator>
+  operator()(const Arg0& arg0, const Args&... args) {
+    return operator()(std::forward_as_tuple(arg0, args...));
   }
 
   /// Fill histogram with values, an optional weight, and/or a sample from a `std::tuple`.
   template <class... Ts>
   iterator operator()(const std::tuple<Ts...>& args) {
-    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
-    return detail::fill(offset_, storage_, axes_, args);
+    using arg_traits = detail::argument_traits<std::decay_t<Ts>...>;
+    using acc_traits = detail::accumulator_traits<value_type>;
+    constexpr bool weight_valid =
+        arg_traits::wpos::value == -1 || acc_traits::wsupport::value;
+    static_assert(weight_valid, "error: accumulator does not support weights");
+    detail::sample_args_passed_vs_expected<typename arg_traits::sargs,
+                                           typename acc_traits::args>();
+    constexpr bool sample_valid =
+        std::is_convertible<typename arg_traits::sargs, typename acc_traits::args>::value;
+    std::lock_guard<typename mutex_base::type> guard{mutex_base::get()};
+    return detail::fill(mp11::mp_bool<(weight_valid && sample_valid)>{}, arg_traits{},
+                        offset_, storage_, axes_, args);
   }
 
   /** Fill histogram with several values at once.
@@ -203,8 +221,14 @@ public:
   */
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args) {
-    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
-    detail::fill_n(offset_, storage_, axes_, detail::make_span(args));
+    using acc_traits = detail::accumulator_traits<value_type>;
+    constexpr unsigned n_sample_args_expected =
+        std::tuple_size<typename acc_traits::args>::value;
+    static_assert(n_sample_args_expected == 0,
+                  "sample argument is missing but required by accumulator");
+    std::lock_guard<typename mutex_base::type> guard{mutex_base::get()};
+    detail::fill_n(mp11::mp_bool<(n_sample_args_expected == 0)>{}, offset_, storage_,
+                   axes_, detail::make_span(args));
   }
 
   /** Fill histogram with several values and weights at once.
@@ -214,8 +238,15 @@ public:
   */
   template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const weight_type<T>& weights) {
-    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
-    detail::fill_n(offset_, storage_, axes_, detail::make_span(args),
+    using acc_traits = detail::accumulator_traits<value_type>;
+    constexpr bool weight_valid = acc_traits::wsupport::value;
+    static_assert(weight_valid, "error: accumulator does not support weights");
+    detail::sample_args_passed_vs_expected<std::tuple<>, typename acc_traits::args>();
+    constexpr bool sample_valid =
+        std::is_convertible<std::tuple<>, typename acc_traits::args>::value;
+    std::lock_guard<typename mutex_base::type> guard{mutex_base::get()};
+    detail::fill_n(mp11::mp_bool<(weight_valid && sample_valid)>{}, offset_, storage_,
+                   axes_, detail::make_span(args),
                    weight(detail::to_ptr_size(weights.value)));
   }
 
@@ -234,13 +265,20 @@ public:
     @param args iterable of values.
     @param samples single sample or an iterable of samples.
   */
-  template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
-  void fill(const Iterable& args, const sample_type<T>& samples) {
-    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
+  template <class Iterable, class... Ts, class = detail::requires_iterable<Iterable>,
+            class = mp11::mp_list<detail::requires_iterable<Ts>...>>
+  void fill(const Iterable& args, const sample_type<std::tuple<Ts...>>& samples) {
+    using acc_traits = detail::accumulator_traits<value_type>;
+    using sample_args_passed = std::tuple<decltype(*detail::data(std::declval<Ts>()))...>;
+    detail::sample_args_passed_vs_expected<sample_args_passed,
+                                           typename acc_traits::args>();
+    std::lock_guard<typename mutex_base::type> guard{mutex_base::get()};
     mp11::tuple_apply(
         [&](const auto&... sargs) {
-          detail::fill_n(offset_, storage_, axes_, detail::make_span(args),
-                         detail::to_ptr_size(sargs)...);
+          constexpr bool sample_valid =
+              std::is_convertible<sample_args_passed, typename acc_traits::args>::value;
+          detail::fill_n(mp11::mp_bool<(sample_valid)>{}, offset_, storage_, axes_,
+                         detail::make_span(args), detail::to_ptr_size(sargs)...);
         },
         samples.value);
   }
@@ -255,13 +293,23 @@ public:
     fill(args, samples);
   }
 
-  template <class Iterable, class T, class U, class = detail::requires_iterable<Iterable>>
+  template <class Iterable, class T, class... Ts,
+            class = detail::requires_iterable<Iterable>,
+            class = mp11::mp_list<detail::requires_iterable<Ts>...>>
   void fill(const Iterable& args, const weight_type<T>& weights,
-            const sample_type<U>& samples) {
-    std::lock_guard<typename mutex_base_t::type> guard{mutex_base_t::get()};
+            const sample_type<std::tuple<Ts...>>& samples) {
+    using acc_traits = detail::accumulator_traits<value_type>;
+    using sample_args = std::tuple<decltype(*detail::data(std::declval<Ts>()))...>;
+    detail::sample_args_passed_vs_expected<sample_args, typename acc_traits::args>();
+    std::lock_guard<typename mutex_base::type> guard{mutex_base::get()};
     mp11::tuple_apply(
         [&](const auto&... sargs) {
-          detail::fill_n(offset_, storage_, axes_, detail::make_span(args),
+          constexpr bool weight_valid = acc_traits::wsupport::value;
+          static_assert(weight_valid, "error: accumulator does not support weights");
+          constexpr bool sample_valid =
+              std::is_convertible<sample_args, typename acc_traits::args>::value;
+          detail::fill_n(mp11::mp_bool<(weight_valid && sample_valid)>{}, offset_,
+                         storage_, axes_, detail::make_span(args),
                          weight(detail::to_ptr_size(weights.value)),
                          detail::to_ptr_size(sargs)...);
         },

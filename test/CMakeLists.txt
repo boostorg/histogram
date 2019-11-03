@@ -54,16 +54,19 @@ boost_test(TYPE compile-fail SOURCES make_histogram_fail0.cpp
 boost_test(TYPE compile-fail SOURCES make_histogram_fail1.cpp
   LIBRARIES Boost::histogram
 )
-boost_test(TYPE compile-fail SOURCES profile_fail0.cpp
+boost_test(TYPE compile-fail SOURCES histogram_fail0.cpp
   LIBRARIES Boost::histogram
 )
-boost_test(TYPE compile-fail SOURCES profile_fail1.cpp
+boost_test(TYPE compile-fail SOURCES histogram_fail1.cpp
   LIBRARIES Boost::histogram
 )
-boost_test(TYPE compile-fail SOURCES profile_fail2.cpp
+boost_test(TYPE compile-fail SOURCES histogram_fail2.cpp
   LIBRARIES Boost::histogram
 )
-boost_test(TYPE compile-fail SOURCES profile_fail3.cpp
+boost_test(TYPE compile-fail SOURCES histogram_fail3.cpp
+  LIBRARIES Boost::histogram
+)
+boost_test(TYPE compile-fail SOURCES histogram_fail4.cpp
   LIBRARIES Boost::histogram
 )
 boost_test(TYPE run SOURCES accumulators_test.cpp
@@ -91,6 +94,10 @@ boost_test(TYPE run SOURCES axis_traits_test.cpp
 boost_test(TYPE run SOURCES axis_variable_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES axis_variant_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_accumulator_traits_test.cpp
+  LIBRARIES Boost::histogram Boost::core)
+boost_test(TYPE run SOURCES detail_argument_traits_test.cpp
   LIBRARIES Boost::histogram Boost::core)
 boost_test(TYPE run SOURCES detail_args_type_test.cpp
   LIBRARIES Boost::histogram Boost::core)

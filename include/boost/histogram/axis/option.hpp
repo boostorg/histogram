@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_OPTION_HPP
 #define BOOST_HISTOGRAM_AXIS_OPTION_HPP
 
-#include <boost/mp11.hpp>
 #include <type_traits>
 
 /**
