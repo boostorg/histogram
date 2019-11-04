@@ -19,6 +19,8 @@
 namespace boost {
 namespace histogram {
 namespace detail {
+using std::data;
+using std::size;
 using std::span;
 } // namespace detail
 } // namespace histogram
@@ -225,7 +227,17 @@ public:
   }
 };
 
+} // namespace detail
+} // namespace histogram
+} // namespace boost
+
 #endif
+
+namespace boost {
+namespace histogram {
+namespace detail {
+
+namespace dtl = ::boost::histogram::detail;
 
 template <class T>
 auto make_span(T* begin, T* end) {
