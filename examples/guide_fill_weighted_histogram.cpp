@@ -20,12 +20,17 @@ int main() {
   h(0.4, weight(3)); // weight 3 goes to second bin
   h(0.5, weight(4)); // weight 4 goes to second bin
 
+  // chunk-wise filling is also supported
+  auto x = {0.2, 0.6};
+  auto w = {5, 6};
+  h.fill(x, weight(w));
+
   // Weight counters have methods to access the value (sum of weights) and the variance
   // (sum of weights squared, why this gives the variance is explained in the rationale)
-  assert(h[0].value() == 1 + 2);
-  assert(h[0].variance() == 1 * 1 + 2 * 2);
-  assert(h[1].value() == 3 + 4);
-  assert(h[1].variance() == 3 * 3 + 4 * 4);
+  assert(h[0].value() == 1 + 2 + 5);
+  assert(h[0].variance() == 1 * 1 + 2 * 2 + 5 * 5);
+  assert(h[1].value() == 3 + 4 + 6);
+  assert(h[1].variance() == 3 * 3 + 4 * 4 + 6 * 6);
 }
 
 //]
