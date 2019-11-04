@@ -7,11 +7,6 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_SPAN_HPP
 #define BOOST_HISTOGRAM_DETAIL_SPAN_HPP
 
-#include <boost/assert.hpp>
-#include <boost/core/nvp.hpp>
-#include <boost/histogram/detail/static_if.hpp>
-#include <type_traits>
-
 #if __cpp_constexpr >= 201603 && __cpp_deduction_guides >= 201703 && \
     __cpp_lib_nonmember_container_access >= 201411 && __has_include(<span>)
 #include <span>
@@ -225,7 +220,20 @@ public:
   }
 };
 
+} // namespace detail
+} // namespace histogram
+} // namespace boost
+
 #endif
+
+#include <boost/histogram/detail/non_member_container_access.hpp>
+#include <utility>
+
+namespace boost {
+namespace histogram {
+namespace detail {
+
+namespace dtl = ::boost::histogram::detail;
 
 template <class T>
 auto make_span(T* begin, T* end) {
