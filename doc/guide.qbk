@@ -194,9 +194,9 @@ A growing axis can have under- and overflow bins, but these only count the speci
 
 [section Filling histograms and accessing cells]
 
-A histogram has been created and now you want to insert values. This is done with the flexible [memberref boost::histogram::histogram::operator() histogram::operator()], which you typically use in a loop. It accepts `N` arguments or a `std::tuple` with `N` elements, where `N` is equal to the number of axes of the histogram. It finds the corresponding bin for the input and increments the bin counter by one.
+A histogram has been created and now you want to insert values. This is done with the flexible [memberref boost::histogram::histogram::operator() call operator] or the [memberref boost::histogram::histogram::fill fill method], which you typically call in a loop. [memberref boost::histogram::histogram::operator() The call operator] accepts `N` arguments or a `std::tuple` with `N` elements, where `N` is equal to the number of axes of the histogram. It finds the corresponding bin for the input and increments the bin counter by one. The [memberref boost::histogram::histogram::fill fill method] accepts a single iterable over other iterables (which must have have elements contiguous in memory) or values, see the method documentation for details.
 
-After the histogram has been filled, use [memberref boost::histogram::histogram::at histogram::at] (in analogy to `std::vector::at`) to access the cell values. It accepts integer indices, one for each axis of the histogram.
+After the histogram has been filled, use the [memberref boost::histogram::histogram::at at method] (in analogy to `std::vector::at`) to access the cell values. It accepts integer indices, one for each axis of the histogram.
 
 [import ../examples/guide_fill_histogram.cpp]
 [guide_fill_histogram]
@@ -228,7 +228,7 @@ Profiles can be generated with the factory function [funcref boost::histogram::m
 
 Just like [funcref boost::histogram::weight weight()], [funcref boost::histogram::sample sample()] is a marker function. It must be the first or last argument.
 
-Weights and samples may be combined, if the histogram accumulators can handle weights. When both [funcref boost::histogram::weight weight()] and [funcref boost::histogram::sample sample()] appear in [memberref boost::histogram::histogram::operator() histogram::operator()], they can be in any order with respect to other, but they must be the first or last arguments. To make a profile which can compute weighted means use the [funcref boost::histogram::make_weighted_profile make_weighted_profile] factory function.
+Weights and samples may be combined, if the histogram accumulators can handle weights. When both [funcref boost::histogram::weight weight()] and [funcref boost::histogram::sample sample()] appear in the [memberref boost::histogram::histogram::operator() call operator] or the [memberref boost::histogram::histogram::fill fill method], they can be in any order with respect to other, but they must be the first or last arguments. To make a profile which can compute weighted means use the [funcref boost::histogram::make_weighted_profile make_weighted_profile] factory function.
 
 [import ../examples/guide_fill_weighted_profile.cpp]
 [guide_fill_weighted_profile]
@@ -302,7 +302,7 @@ Shrinking means that the range of an axis is reduced and the number of bins alon
 
 [section Streaming]
 
-Simple ostream operators are shipped with the library, which are internally used by the unit tests. These give text representations of axis and histogram configurations, but do not show the histogram content. They may be useful for debugging and more useful text representations are planned for the future. Since user may want to use their own implementations, the headers with the builtin implementations are not included by the super header `#include <boost/histogram.hpp>`. The following example shows the effect of output streaming.
+Simple ostream operators are shipped with the library, which are internally used by the unit tests. These give text representations of axis and histogram configurations and show the histogram content. One-dimensional histograms are rendered as ASCII art. The text representations may be useful for debugging or more, but user may want to use their own implementations. Therefore, the headers with the builtin implementations are not included by any other header of the library. The following example shows the effect of output streaming.
 
 [import ../examples/guide_histogram_streaming.cpp]
 [guide_histogram_streaming]
@@ -397,7 +397,7 @@ A storage can hold arbitrary accumulators which may accept an arbitrary number o
 
 The library provides several accumulators:
 
-* [classref boost::histogram::accumulators::sum sum] accepts no samples, but accepts a weight. It is an alternative to a plain arithmetic type as a counter. It provides an advantage when histograms are filled with weights that differ dramatically in magnitude. The sum of weights is computed incrementally with the Neumaier algorithm, which is more accurate than a normal sum of arithmetic types.
+* [classref boost::histogram::accumulators::sum sum] accepts no samples, but accepts a weight. It is an alternative to a plain arithmetic type as a counter. It provides an advantage when histograms are filled with weights that differ dramatically in magnitude. The sum of weights is computed incrementally with the Neumaier algorithm. The algorithm is more accurate, but consumes more CPU and memory (memory is doubled compared to a normal sum of floating point numbers).
 * [classref boost::histogram::accumulators::weighted_sum weighted_sum] accepts no samples, but accepts a weight. It computes the sum of weights and the sum of weights squared, the variance estimate of the sum of weights. This type is used by the [funcref boost::histogram::make_weighted_histogram make_weighted_histogram].
 * [classref boost::histogram::accumulators::mean mean] accepts a sample and computes the mean of the samples. [funcref boost::histogram::make_profile make_profile] uses this accumulator.
 * [classref boost::histogram::accumulators::weighted_mean weighted_mean] accepts a sample and a weight. It computes the weighted mean of the samples. [funcref boost::histogram::make_weighted_profile make_weighted_profile] uses this accumulator.
@@ -412,7 +412,7 @@ The second example shows how to use a simple user-generated accumulator.
 [import ../examples/guide_custom_accumulators_2.cpp]
 [guide_custom_accumulators_2]
 
-The third example shows how to use to make an accumulator that accepts multiple samples at once. Here, we make an accumulator that accepts two samples and computes the mean for each. This is more convenient and more efficient than filling two identical profiles, because the cell lookup has to be done only once.
+The third example shows how to make and use an accumulator that accepts multiple samples at once and an optional weight. Our accumulator accepts two samples and independently computes the mean for each. This is more convenient and more efficient than filling two identical profiles, because the cell lookup has to be done only once.
 [import ../examples/guide_custom_accumulators_3.cpp]
 [guide_custom_accumulators_3]
 
