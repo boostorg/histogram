@@ -118,10 +118,10 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   ]
 ]
 [
-  [`ar & a`]
+  [`a.serialize(ar, n)`]
   []
   [
-    `ar` is a value of an archive with Boost.Serialization semantics. Serializes `a` to the archive or loads serialized state from the archive.
+    `ar` is a value of an archive with Boost.Serialization semantics and `n` is an unsigned integral value. Saves to the archive or loads serialized state from the archive. The version number `n` is the stored version when the object is loaded or the current version when the object is saved.
   ]
 ]
 ]

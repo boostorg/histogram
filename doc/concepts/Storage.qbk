@@ -149,10 +149,10 @@ A [*Storage] handles memory for the bin counters and provides a uniform vector-l
   ]
 ]
 [
-  [`ar & s`]
+  [`s.serialize(ar, n)`]
   []
   [
-    Serializes `s` to the archive or loads serialized state from the archive.
+    `ar` is a value of an archive with Boost.Serialization semantics and `n` is an unsigned integral value. Saves to the archive or loads serialized state from the archive. The version number `n` is the stored version when the object is loaded or the current version when the object is saved.
   ]
 ]
 ]

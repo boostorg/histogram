@@ -52,10 +52,10 @@ A [*Transform] implements a monotonic mapping between two real-valued domains, e
 [table Valid expressions
 [[Expression] [Returns] [Semantics, Pre/Post-conditions]]
 [
-  [`ar & t`]
+  [`t.serialize(ar, n)`]
   []
   [
-    Serializes `a` to the archive or loads serialized state from the archive. Can be omitted if `T` is stateless.
+    `ar` is a value of an archive with Boost.Serialization semantics and `n` is an unsigned integral value. Saves to the archive or loads serialized state from the archive. The version number `n` is the stored version when the object is loaded or the current version when the object is saved.
   ]
 ]
 ]
