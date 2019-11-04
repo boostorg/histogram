@@ -13,7 +13,7 @@ An [*Accumulator] is a functor which consumes the argument to update some intern
 
 * `A` is a type meeting the requirements of [*Accumulator]
 * `a` and `b` are values of type `A`
-* `ts...` is a pack of values
+* `ts...` is a pack of values of arbitrary types
 
 [table Valid expressions
 [[Expression] [Returns] [Semantics, Pre/Post-conditions]]
@@ -21,7 +21,7 @@ An [*Accumulator] is a functor which consumes the argument to update some intern
   [`a(ts...)` or `++a`]
   []
   [
-    Either a call operator accepting a fixed number of arguments must be implemented, or the pre-increment operator.
+    Either a call operator accepting a fixed number of arguments must be implemented, or the pre-increment operator. The call operator may not be templated and not overloaded, except to support weights as described under optional features.
   ]
 ]
 [
@@ -44,9 +44,19 @@ An [*Accumulator] is a functor which consumes the argument to update some intern
 
 * `A` is a type meeting the requirements of [*Accumulator]
 * `a` and `b` are values of type `A`
+* `w` is a value of type [classref boost::histogram::weight_type], where `T` is a number type
+* `ts...` is a pack of values of arbitrary types
+* `v` is a number value (integral or floating point)
 
 [table Valid expressions
 [[Expression] [Return] [Semantics, Pre/Post-conditions]]
+[
+  [`a += v` or `a(w, ts...)`]
+  []
+  [
+    Does a weighted fill of the accumulator. Use this to implement weight support for an accumulator that is normally filled with `++a` or `a(ts...)`, respectively. Only the corresponding matching form may be implemented: `a += v` for `++a`, `a(w, ts...)` for `a(ts...)`. The implementations may not be templated and not overloaded.
+  ]
+]
 [
   [`a += b`]
   [`A&`]
@@ -69,10 +79,10 @@ An [*Accumulator] is a functor which consumes the argument to update some intern
   ]
 ]
 [
-  [`ar & a`]
+  [`a.serialize(ar, n)`]
   []
   [
-    `ar` is a value of an archive with Boost.Serialization semantics. Serializes `a` to the archive or loads serialized state from the archive.
+    `ar` is a value of an archive with Boost.Serialization semantics and `n` is an unsigned integral value. Saves to the archive or loads serialized state from the archive. The version number `n` is the stored version when the object is loaded or the current version when the object is saved.
   ]
 ]
 ]
