@@ -36,7 +36,7 @@ int main() {
   assert(h1.at(4) == 0.00);
 
   // use any_of to check if any cell values are smaller than 0.1,
-  auto b = std::any_of(ind.begin(), ind.end(), [](const auto& x) { return *x < 0.1; });
+  auto b = std::any_of(ind.begin(), ind.end(), [](const auto& x) { return x < 0.1; });
   assert(b == false); // under- and overflow cells are zero, but skipped
 
   // find minimum element

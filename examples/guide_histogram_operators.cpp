@@ -31,15 +31,14 @@ int main() {
 
   assert(h4.at(0) == 2 && h4.at(1) == 2);
 
-  // multiply by number; h4 *= 2 is not allowed, because the result of a multiplication is
-  // not a histogram anymore, it has the type boost::histogram::grid<...>)
-  auto g4 = h4 * 2; // counts are: 4 4
+  // multiply by number, h4 *= 2 also works
+  auto h5 = h4 * 2; // counts are: 4 4
 
-  // divide by number; g4 /= 4 also works
-  auto g5 = g4 / 4; // counts are: 1 1
+  // divide by number; s4 /= 4 also works
+  auto h6 = h5 / 4; // counts are: 1 1
 
-  assert(g5.at(0) == 1 && g5.at(1) == 1);
-  assert(g4 != g5 && g4 == 4 * g5);
+  assert(h6.at(0) == 1 && h6.at(1) == 1);
+  assert(h6 != h5 && h5 == 4 * h6);
 
   // note the special effect of multiplication on weight_storage
   auto h = make_histogram_with(weight_storage(), axis::regular<>(2, -1.0, 1.0));
@@ -49,15 +48,15 @@ int main() {
   assert(h.at(0).value() == 1 && h.at(1).value() == 0);
 
   auto h_sum = h + h;
-  auto g_mul = 2 * h;
+  auto h_mul = 2 * h;
 
   // values are the same as expected...
-  assert(h_sum.at(0).value() == g_mul.at(0).value());
+  assert(h_sum.at(0).value() == h_mul.at(0).value());
   // ... but variances differ
-  assert(h_sum.at(0).variance() == 2 && g_mul.at(0).variance() == 4);
+  assert(h_sum.at(0).variance() == 2 && h_mul.at(0).variance() == 4);
 
   // equality operator checks variances, so histograms are not equal
-  assert(h_sum != g_mul);
+  assert(h_sum != h_mul);
 }
 
 //]
