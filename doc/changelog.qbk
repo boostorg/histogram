@@ -7,6 +7,52 @@
 
 [section:history Revision history]
 
+[heading Boost 1.72]
+
+* New features
+  * Better deduction guides for axis types and histogram type on C++17 compilers
+  * performance improvements in the indexing code
+  * new histogram::fill method for accelerated filling from chunks of values
+  * ASCII bar charts for 1D histograms when boost/histogram/ostream.hpp is included (contributed by Przemyslaw Bartosik)
+  * Passing invalid axis options causes user-friendly compile-time errors
+  * Wrong usage of weight() and sample() causes user-friendly compile-time errors
+  * algorithm::empty returns true if all histogram values are equal to the default value (contributed by Henry Schreiner)
+  * algorithm::reduce with shrink is now well defined when values are not bin edges
+  * axis::traits::rank returns the number of values that this axis accepts
+  * axis::traits::is_continuous returns whether an axis is continuous or discrete
+  * axis::traits::is_inclusive returns whether an axis has a bin for any possible input
+  * limited weight support for mean accumulator
+  * accumulators::weighted_mean::sum_of_weights_squared method added
+
+* Fixes
+  * Support of -std=c++2a and -stdlib=libc++ on clang, compatibility with gcc-9
+  * Fixed: weight could be passed instead of a sample during filling without triggering an error
+  * Fixed: segfault when too many indices were passed to algorithm::project
+  * Fixed: indexed range generator did not work with storage based on std::array
+  * Fixed: weighted_mean() + weighted_mean() != weighted_mean() (discovered and reported by Henry Schreiner)
+  * Fixed: axis::option::test(...) returned true if any bits in the test mask were set (now returns true if all bits in the test mask are set)
+  * Protecting calls to min, max with against macro expansion
+  * Replaced all crlf with lf in concepts.qbk
+  * Missing throw of std::invalid_argument when user passes too many axes to histogram
+  * Corrected documentation of serialization support in concepts section
+  * Resolved warnings for various compiler versions
+
+* Other
+  * Added Boost.Histogram logo
+  * Added missing copyright notices
+  * axis::category::value returns copy for scalar types and const reference otherwise
+  * std::ostringstream not used anymore to generate exception messages to reduces code bloat
+  * Documentation improvements
+    * Restructured overview section in documentation
+    * Updated user guide to demonstrate new features
+    * Updated accumulator examples
+    * Concepts explain how accumulators can optionally accept weights
+  * Updated benchmark code
+  * New test checks consistency of b2 and cmake build systems
+  * New test checks One-Definition-Rule (fails if non-templated function is not declared inline)
+  * Serialization code decoupled from Boost.Serialization
+  * Removed dependency on Boost.CallableTraits
+
 [heading Boost 1.71]
 
 * New features
