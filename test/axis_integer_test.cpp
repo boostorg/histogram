@@ -22,10 +22,7 @@ int main() {
   BOOST_TEST(std::is_nothrow_move_constructible<axis::integer<>>::value);
 
   // bad_ctor
-  {
-    BOOST_TEST_THROWS(axis::integer<>(1, 1), std::invalid_argument);
-    BOOST_TEST_THROWS(axis::integer<>(1, -1), std::invalid_argument);
-  }
+  { BOOST_TEST_THROWS(axis::integer<>(1, -1), std::invalid_argument); }
 
   // axis::integer with double type
   {
@@ -58,6 +55,34 @@ int main() {
     BOOST_TEST_NE(c, d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
+  }
+
+  // empty axis::integer
+  {
+    axis::integer<> a;
+    BOOST_TEST_EQ(a.size(), 0);
+    BOOST_TEST_EQ(a.bin(1), 1);
+    BOOST_TEST_EQ(a.bin(0), 0);
+    BOOST_TEST_EQ(a.bin(-1), -1);
+    BOOST_TEST_EQ(a.index(-10), -1);
+    BOOST_TEST_EQ(a.index(-1), -1);
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(10), 0);
+
+    BOOST_TEST_EQ(str(a), "integer(0, 0, options=underflow | overflow)");
+
+    axis::integer<> b{1, 1};
+    BOOST_TEST_EQ(b.size(), 0);
+    BOOST_TEST_EQ(b.bin(1), 2);
+    BOOST_TEST_EQ(b.bin(0), 1);
+    BOOST_TEST_EQ(b.bin(-1), 0);
+    BOOST_TEST_EQ(b.index(-10), -1);
+    BOOST_TEST_EQ(b.index(-1), -1);
+    BOOST_TEST_EQ(b.index(0), -1);
+    BOOST_TEST_EQ(b.index(1), 0);
+    BOOST_TEST_EQ(b.index(10), 0);
+
+    BOOST_TEST_EQ(str(b), "integer(1, 1, options=underflow | overflow)");
   }
 
   // axis::integer with int type

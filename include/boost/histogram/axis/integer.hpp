@@ -77,7 +77,8 @@ public:
       : metadata_base<MetaData>(std::move(meta))
       , size_(static_cast<index_type>(stop - start))
       , min_(start) {
-    if (stop <= start) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
+    if (!(stop >= start))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("stop >= start required"));
   }
 
   /// Constructor used by algorithm::reduce to shrink and rebin.

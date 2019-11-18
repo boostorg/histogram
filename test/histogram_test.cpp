@@ -4,6 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/core/ignore_unused.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
@@ -441,12 +442,12 @@ void run_tests() {
     int j11[] = {1, 1};
     BOOST_TEST_EQ(h.at(j11), 1);
     BOOST_TEST_EQ(h[j11], 1);
-#ifndef BOOST_NO_EXCEPTIONS
     int j111[] = {1, 1, 1};
+    boost::ignore_unused(j111);
     BOOST_TEST_THROWS((void)h.at(j111), std::invalid_argument);
     int j13[] = {1, 3};
+    boost::ignore_unused(j13);
     BOOST_TEST_THROWS((void)h.at(j13), std::out_of_range);
-#endif
 
     // tuple with weight
     h(std::make_tuple(weight(2), 0, 2.0));

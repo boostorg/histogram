@@ -6,6 +6,7 @@
 
 #include <array>
 #include <boost/config.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
@@ -74,12 +75,12 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     BOOST_TEST_EQ(h, h2);
     BOOST_TEST_EQ(h, h3);
 
-#ifndef BOOST_NO_EXCEPTIONS
     int bad1[2][4];
+    boost::ignore_unused(bad1);
     std::vector<std::array<int, 4>> bad2;
+    boost::ignore_unused(bad2);
     BOOST_TEST_THROWS(h.fill(bad1), std::invalid_argument);
     BOOST_TEST_THROWS(h.fill(bad2), std::invalid_argument);
-#endif
   }
 
   // 2D simple
@@ -93,14 +94,13 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
 
     BOOST_TEST_EQ(h, h2);
 
-#ifndef BOOST_NO_EXCEPTIONS
     // wrong rank
     BOOST_TEST_THROWS(h.fill(x), std::invalid_argument);
 
     // not rectangular
     std::array<std::vector<int>, 2> bad = {{std::vector<int>(2), std::vector<int>(3)}};
+    boost::ignore_unused(bad);
     BOOST_TEST_THROWS(h2.fill(bad), std::invalid_argument);
-#endif
   }
 
   // 1D variant and weight
@@ -130,11 +130,10 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
 
     BOOST_TEST_EQ(h1, h2);
 
-#ifndef BOOST_NO_EXCEPTIONS
     auto w2 = w;
     w2.resize(ndata - 1);
+    boost::ignore_unused(w2);
     BOOST_TEST_THROWS(h2.fill(v, weight(w2)), std::invalid_argument);
-#endif
   }
 
   // 2D variant and weight

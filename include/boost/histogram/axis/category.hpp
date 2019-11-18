@@ -70,8 +70,12 @@ public:
    */
   template <class It, class = detail::requires_iterator<It>>
   category(It begin, It end, metadata_type meta = {}, allocator_type alloc = {})
-      : metadata_base<MetaData>(std::move(meta)), vec_(begin, end, alloc) {
-    if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
+      : metadata_base<MetaData>(std::move(meta)), vec_(alloc) {
+    if (std::distance(begin, end) < 0)
+      BOOST_THROW_EXCEPTION(
+          std::invalid_argument("end must be reachable by incrementing begin"));
+    vec_.reserve(std::distance(begin, end));
+    while (begin != end) vec_.emplace_back(*begin++);
   }
 
   /** Construct axis from iterable sequence of unique values.

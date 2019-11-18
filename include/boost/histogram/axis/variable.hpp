@@ -78,7 +78,7 @@ public:
   template <class It, class = detail::requires_iterator<It>>
   variable(It begin, It end, metadata_type meta = {}, allocator_type alloc = {})
       : metadata_base<MetaData>(std::move(meta)), vec_(std::move(alloc)) {
-    if (std::distance(begin, end) <= 1)
+    if (std::distance(begin, end) < 2)
       BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
 
     vec_.reserve(std::distance(begin, end));

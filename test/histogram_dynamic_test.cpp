@@ -5,6 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <algorithm>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>
@@ -67,10 +68,9 @@ int main() {
                                                 std::vector<int>(1, 0));
     h.fill(inputs); // should not crash
 
-#ifndef BOOST_NO_EXCEPTIONS
     auto bad = std::vector<I>(BOOST_HISTOGRAM_DETAIL_AXES_LIMIT + 1, I(0, 1));
+    boost::ignore_unused(bad);
     BOOST_TEST_THROWS((void)make_histogram(bad), std::invalid_argument);
-#endif
   }
 
   // bad fill

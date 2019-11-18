@@ -4,6 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/core/ignore_unused.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis/category.hpp>
@@ -26,10 +27,11 @@ int main() {
   BOOST_TEST(std::is_nothrow_move_assignable<axis::category<int>>::value);
   BOOST_TEST(std::is_nothrow_move_assignable<axis::category<std::string>>::value);
 
-  // bad_ctors
+  // bad ctor
   {
-    auto empty = std::vector<int>(0);
-    BOOST_TEST_THROWS((axis::category<>(empty)), std::invalid_argument);
+    int x[2];
+    boost::ignore_unused(x);
+    BOOST_TEST_THROWS(axis::category<int>(x + 1, x), std::invalid_argument);
   }
 
   // value should return copy for arithmetic types and const reference otherwise
@@ -48,6 +50,17 @@ int main() {
     BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<Foo>>().value(0)), Foo);
     BOOST_TEST_TRAIT_SAME(axis::traits::value_type<axis::category<int>>, int);
     BOOST_TEST_TRAIT_SAME(decltype(std::declval<axis::category<int>>().value(0)), int);
+  }
+
+  // empty axis::category
+  {
+    axis::category<int> a;
+    axis::category<int> b(std::vector<int>(0));
+    BOOST_TEST_EQ(a, b);
+    BOOST_TEST_EQ(a.size(), 0);
+    BOOST_TEST_EQ(a.index(-1), 0);
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(1), 0);
   }
 
   // axis::category
