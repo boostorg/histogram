@@ -35,6 +35,10 @@ namespace detail {
 
 namespace dtl = boost::histogram::detail;
 
+template <class Axes, class T>
+using is_convertible_to_any_value_type =
+    mp11::mp_any_of_q<value_types<Axes>, mp11::mp_bind_front<std::is_convertible, T>>;
+
 template <class... Ts>
 void fold(Ts&&...) noexcept {} // helper to enable operator folding
 
@@ -45,11 +49,21 @@ auto to_ptr_size(const T& x) {
       [](const auto& x) { return std::make_pair(dtl::data(x), dtl::size(x)); }, x);
 }
 
+template <class F, class V>
+decltype(auto) maybe_visit(F&& f, V&& v) {
+  return static_if<is_variant<std::decay_t<V>>>(
+      [](auto&& f, auto&& v) {
+        return variant2::visit(std::forward<F>(f), std::forward<V>(v));
+      },
+      [](auto&& f, auto&& v) { return std::forward<F>(f)(std::forward<V>(v)); },
+      std::forward<F>(f), std::forward<V>(v));
+}
+
 template <class Index, class Axis, class IsGrowing>
 struct index_visitor {
   using index_type = Index;
   using pointer = index_type*;
-
+  using value_type = axis::traits::value_type<Axis>;
   using Opt = axis::traits::static_options<Axis>;
 
   Axis& axis_;
@@ -65,7 +79,8 @@ struct index_visitor {
   void call_2(std::true_type, pointer it, const T& x) const {
     // must use this code for all axes if one of them is growing
     axis::index_type shift;
-    linearize_growth(*it, shift, stride_, axis_, x);
+    linearize_growth(*it, shift, stride_, axis_,
+                     try_cast<value_type, std::invalid_argument>(x));
     if (shift > 0) { // shift previous indices, because axis zero-point has changed
       while (it != begin_) *--it += static_cast<std::size_t>(shift) * stride_;
       *shift_ += shift;
@@ -75,19 +90,19 @@ struct index_visitor {
   template <class T>
   void call_2(std::false_type, pointer it, const T& x) const {
     // no axis is growing
-    linearize(*it, stride_, axis_, x);
+    linearize(*it, stride_, axis_, try_cast<value_type, std::invalid_argument>(x));
   }
 
   template <class T>
-  void call_1(std::true_type, const T& iterable) const {
-    // T is iterable, fill N values
+  void call_1(std::false_type, const T& iterable) const {
+    // T is iterable; fill N values
     auto* tp = dtl::data(iterable) + start_;
     for (auto it = begin_; it != begin_ + size_; ++it) call_2(IsGrowing{}, it, *tp++);
   }
 
   template <class T>
-  void call_1(std::false_type, const T& value) const {
-    // T is value, fill single value N times
+  void call_1(std::true_type, const T& value) const {
+    // T is compatible value; fill single value N times
     index_type idx{*begin_};
     call_2(IsGrowing{}, &idx, value);
     if (is_valid(idx)) {
@@ -100,7 +115,9 @@ struct index_visitor {
 
   template <class T>
   void operator()(const T& iterable_or_value) const {
-    call_1(is_iterable<T>{}, iterable_or_value);
+    call_1(mp11::mp_bool<(std::is_convertible<T, value_type>::value ||
+                          !is_iterable<T>::value)>{},
+           iterable_or_value);
   }
 };
 
@@ -120,16 +137,8 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
   for_each_axis(axes, [&, stride = static_cast<std::size_t>(1),
                        pshift = shifts](auto& axis) mutable {
     using Axis = std::decay_t<decltype(axis)>;
-    static_if<is_variant<T>>( // LCOV_EXCL_LINE: gcc-8 is missing this line for no reason
-        [&](const auto& v) {
-          variant2::visit(index_visitor<Index, Axis, IsGrowing>{axis, stride, start, size,
-                                                                indices, pshift},
-                          v);
-        },
-        [&](const auto& v) {
-          index_visitor<Index, Axis, IsGrowing>{axis, stride,  start,
-                                                size, indices, pshift}(v);
-        },
+    maybe_visit(
+        index_visitor<Index, Axis, IsGrowing>{axis, stride, start, size, indices, pshift},
         *viter++);
     stride *= static_cast<std::size_t>(axis::traits::extent(axis));
     ++pshift;
@@ -242,34 +251,40 @@ void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t v
   }
 }
 
-template <class T, std::size_t N>
-std::size_t get_total_size(const dtl::span<const T, N>& values) {
-  std::size_t s = 1u;
-  auto vis = [&s](const auto& v) {
-    // cannot be replaced by std::decay_t
-    using U = std::remove_cv_t<std::remove_reference_t<decltype(v)>>;
-    const std::size_t n = static_if<is_iterable<U>>(
-        [](const auto& v) { return dtl::size(v); },
-        [](const auto&) { return static_cast<std::size_t>(1); }, v);
-    if (s != 1u && n != 1u && s != n)
-      BOOST_THROW_EXCEPTION(std::invalid_argument("spans must have compatible lengths"));
-    s = std::max(s, n);
-  };
-  for (const auto& v : values)
-    static_if<is_iterable<T>>([&vis](const auto& v) { vis(v); },
-                              [&vis](const auto& v) { variant2::visit(vis, v); }, v);
-  return s;
+template <class A, class T, std::size_t N>
+std::size_t get_total_size(const A& axes, const dtl::span<const T, N>& values) {
+  // supported cases (T = value type; CT = containter of T; V<T, CT, ...> = variant):
+  // - span<CT, N>: for any histogram, N == rank
+  // - span<V<T, CT>, N>: for any histogram, N == rank
+  BOOST_ASSERT(axes_rank(axes) == values.size());
+  std::size_t size = 1u;
+  for_each_axis(axes, [&size, vit = values.begin()](const auto& ax) mutable {
+    using AV = axis::traits::value_type<std::decay_t<decltype(ax)>>;
+    auto vis = [&size](const auto& v) {
+      // v is either convertible to value or a sequence of values
+      using V = std::remove_const_t<std::remove_reference_t<decltype(v)>>;
+      const std::size_t n = static_if_c<(std::is_convertible<decltype(v), AV>::value ||
+                                         !is_iterable<V>::value)>(
+          [](const auto&) { return static_cast<std::size_t>(1); },
+          [](const auto& v) { return dtl::size(v); }, v);
+      if (size != 1u && n != 1u && size != n)
+        BOOST_THROW_EXCEPTION(
+            std::invalid_argument("spans must have compatible lengths"));
+      size = std::max(size, n);
+    };
+    maybe_visit(vis, *vit++);
+  });
+  return size;
 }
 
-template <class... Ts>
-void fill_n_check_extra_args(std::size_t n, Ts&&... ts) {
+inline void fill_n_check_extra_args(std::size_t) noexcept {}
+
+template <class T, class... Ts>
+void fill_n_check_extra_args(std::size_t n, T&& x, Ts&&... ts) {
   // values of length 1 may not be combined with weights and samples of length > 1
-  auto check = [n](auto&& x) {
-    if (x.second != 1 && n != x.second)
-      BOOST_THROW_EXCEPTION(std::invalid_argument("spans must have compatible lengths"));
-    return 0;
-  };
-  fold(check(ts)...);
+  if (x.second != 1 && n != x.second)
+    BOOST_THROW_EXCEPTION(std::invalid_argument("spans must have compatible lengths"));
+  fill_n_check_extra_args(n, std::forward<Ts>(ts)...);
 }
 
 template <class T, class... Ts>
@@ -277,17 +292,16 @@ void fill_n_check_extra_args(std::size_t n, weight_type<T>&& w, Ts&&... ts) {
   fill_n_check_extra_args(n, w.value, std::forward<Ts>(ts)...);
 }
 
-inline void fill_n_check_extra_args(std::size_t) noexcept {}
-
 template <class S, class A, class T, std::size_t N, class... Us>
 void fill_n(std::true_type, const std::size_t offset, S& storage, A& axes,
             const dtl::span<const T, N> values, Us&&... us) {
-  static_assert(!std::is_pointer<T>::value,
-                "passing iterable of pointers not allowed (cannot determine lengths); "
-                "pass iterable of iterables instead");
-  using Vs = value_types<A>;
-  static_if<mp11::mp_any_of_q<Vs, mp11::mp_bind_front<std::is_convertible, T>>>(
+  // supported cases (T = value type; CT = containter of T; V<T, CT, ...> = variant):
+  // - span<T, N>: only valid for 1D histogram, N > 1 allowed
+  // - span<CT, N>: for any histogram, N == rank
+  // - span<V<T, CT>, N>: for any histogram, N == rank
+  static_if<is_convertible_to_any_value_type<A, T>>(
       [&](const auto& values, auto&&... us) {
+        // T matches one of the axis value types, must be 1D special case
         if (axes_rank(axes) != 1)
           BOOST_THROW_EXCEPTION(
               std::invalid_argument("number of arguments must match histogram rank"));
@@ -295,10 +309,11 @@ void fill_n(std::true_type, const std::size_t offset, S& storage, A& axes,
         fill_n_1(offset, storage, axes, values.size(), &values, std::forward<Us>(us)...);
       },
       [&](const auto& values, auto&&... us) {
+        // generic ND case
         if (axes_rank(axes) != values.size())
           BOOST_THROW_EXCEPTION(
               std::invalid_argument("number of arguments must match histogram rank"));
-        const auto vsize = get_total_size(values);
+        const auto vsize = get_total_size(axes, values);
         fill_n_check_extra_args(vsize, std::forward<Us>(us)...);
         fill_n_1(offset, storage, axes, vsize, values.data(), std::forward<Us>(us)...);
       },

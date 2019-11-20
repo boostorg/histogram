@@ -11,7 +11,8 @@
 #include <boost/histogram/accumulators.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
-#include <boost/histogram/axis.hpp>
+#include <boost/histogram/axis/category.hpp>
+#include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
@@ -40,6 +41,8 @@ using in0 = axis::integer<int, axis::null_type, axis::option::none_t>;
 using ing = axis::integer<double, axis::null_type,
                           decltype(axis::option::growth | axis::option::underflow |
                                    axis::option::overflow)>;
+using cs = axis::category<std::string, axis::null_type>;
+using csg = axis::category<std::string, axis::null_type, axis::option::growth_t>;
 
 struct axis2d {
   auto size() const { return axis::index_type{2}; }
@@ -81,6 +84,24 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     boost::ignore_unused(bad2);
     BOOST_TEST_THROWS(h.fill(bad1), std::invalid_argument);
     BOOST_TEST_THROWS(h.fill(bad2), std::invalid_argument);
+  }
+
+  // 1D with category axis
+  {
+    auto h = make(Tag(), cs{"A", "B"});
+
+    auto s = {"A", "B", "C"};
+    h.fill(s);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 1);
+    BOOST_TEST_EQ(h[2], 1);
+
+    variant<std::string, std::vector<std::string>> v[1];
+    v[0] = "ABC";
+    h.fill(v);
+    BOOST_TEST_EQ(h[0], 1);
+    BOOST_TEST_EQ(h[1], 1);
+    BOOST_TEST_EQ(h[2], 2);
   }
 
   // 2D simple
@@ -214,7 +235,7 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     BOOST_TEST_EQ(h, h2);
   }
 
-  // 2D growing A with weights
+  // 2D growing with weights A
   {
     auto h = make(Tag(), in(1, 3), ing());
     auto h2 = h;
@@ -224,13 +245,25 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     BOOST_TEST_EQ(h, h2);
   }
 
-  // 2D growing B with weights
+  // 2D growing with weights B
   {
     auto h = make(Tag(), ing(), ing());
     auto h2 = h;
     for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i], weight(w[i]));
     const auto xy = {x, y};
     h2.fill(xy, weight(w));
+    BOOST_TEST_EQ(h, h2);
+  }
+
+  // 2D growing and variant
+  {
+    auto h = make(Tag(), csg{}, in{1, 2});
+    auto h2 = h;
+    using V = variant<std::string, std::vector<std::string>, int, std::vector<int>>;
+    const auto xy = {V("foo"), V(std::vector<int>{1, 2})};
+    h.fill(xy);
+    h2("foo", 1);
+    h2("foo", 2);
     BOOST_TEST_EQ(h, h2);
   }
 
