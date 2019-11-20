@@ -23,7 +23,7 @@ struct dummy_array_wrapper {
   T* ptr;
   std::size_t size;
   template <class Archive>
-  void serialize(Archive& ar, unsigned) {
+  void serialize(Archive& ar, unsigned /* version */) {
     for (auto&& x : dtl::make_span(ptr, size)) ar& x;
   }
 };

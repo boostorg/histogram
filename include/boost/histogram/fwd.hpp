@@ -31,15 +31,15 @@ using index_type = int;
 using real_index_type = double;
 
 /// Empty metadata type
-struct null_type {};
+struct null_type {
+  template <class Archive>
+  void serialize(Archive&, unsigned /* version */) {}
+};
 
 /// Another alias for an empty metadata type
 using empty_type = null_type;
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-
-template <class Archive>
-void serialize(Archive&, null_type&, unsigned /* version */) {}
 
 namespace transform {
 struct id;

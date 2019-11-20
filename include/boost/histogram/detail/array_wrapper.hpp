@@ -36,7 +36,7 @@ struct array_wrapper {
   std::size_t size;
 
   template <class Archive>
-  void serialize(Archive& ar, unsigned) {
+  void serialize(Archive& ar, unsigned /* version */) {
     static_if_c<(has_array_optimization<Archive>::value &&
                  std::is_trivially_copyable<T>::value)>(
         [this](auto& ar) {

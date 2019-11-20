@@ -192,7 +192,7 @@ void axes_serialize(Archive& ar, std::tuple<Ts...>& axes) {
   // needed to keep serialization format backward compatible
   struct proxy {
     std::tuple<Ts...>& t;
-    void serialize(Archive& ar, unsigned) {
+    void serialize(Archive& ar, unsigned /* version */) {
       mp11::tuple_for_each(t, [&ar](auto& x) { ar& make_nvp("item", x); });
     }
   };
