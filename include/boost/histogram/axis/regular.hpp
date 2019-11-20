@@ -185,8 +185,10 @@ class regular : public iterator_mixin<regular<Value, Transform, MetaData, Option
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
 
-  static_assert(std::is_nothrow_move_constructible<transform_type>::value, "");
-  static_assert(std::is_nothrow_move_assignable<transform_type>::value, "");
+  static_assert(std::is_nothrow_move_constructible<transform_type>::value,
+                "transform must be no-throw move constructible");
+  static_assert(std::is_nothrow_move_assignable<transform_type>::value,
+                "transform must be no-throw move assignable");
 
   using unit_type = detail::get_unit_type<value_type>;
   using internal_value_type = detail::get_scale_type<value_type>;
