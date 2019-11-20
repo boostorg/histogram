@@ -89,19 +89,17 @@ decltype(auto) axis_get(const T& axes) {
 }
 
 template <class... Ts>
-decltype(auto) axis_get(std::tuple<Ts...>& axes, const unsigned i) {
-  using namespace ::boost::mp11;
+auto axis_get(std::tuple<Ts...>& axes, const unsigned i) {
   constexpr auto S = sizeof...(Ts);
-  using V = mp_unique<axis::variant<Ts*...>>;
-  return mp_with_index<S>(i, [&axes](auto i) { return V(&std::get<i>(axes)); });
+  using V = mp11::mp_unique<axis::variant<Ts*...>>;
+  return mp11::mp_with_index<S>(i, [&axes](auto i) { return V(&std::get<i>(axes)); });
 }
 
 template <class... Ts>
-decltype(auto) axis_get(const std::tuple<Ts...>& axes, const unsigned i) {
-  using namespace ::boost::mp11;
+auto axis_get(const std::tuple<Ts...>& axes, const unsigned i) {
   constexpr auto S = sizeof...(Ts);
-  using V = mp_unique<axis::variant<const Ts*...>>;
-  return mp_with_index<S>(i, [&axes](auto i) { return V(&std::get<i>(axes)); });
+  using V = mp11::mp_unique<axis::variant<const Ts*...>>;
+  return mp11::mp_with_index<S>(i, [&axes](auto i) { return V(&std::get<i>(axes)); });
 }
 
 template <class T>

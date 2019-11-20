@@ -254,13 +254,13 @@ decltype(auto) visit(Visitor&& vis, const variant<Us...>& var) {
 
 /// Returns pointer to T in variant or null pointer if type does not match.
 template <class T, class... Us>
-T* get_if(variant<Us...>* v) {
+auto get_if(variant<Us...>* v) {
   return detail::variant_access::template get_if<T>(v);
 }
 
 /// Returns pointer to const T in variant or null pointer if type does not match.
 template <class T, class... Us>
-const T* get_if(const variant<Us...>* v) {
+auto get_if(const variant<Us...>* v) {
   return detail::variant_access::template get_if<T>(v);
 }
 
@@ -302,15 +302,15 @@ decltype(auto) get(U&& u) {
 
 // pass-through version of get_if for generic programming
 template <class T, class U>
-T* get_if(U* u) {
-  return std::is_same<T, std::decay_t<U>>::value ? reinterpret_cast<T*>(u) : nullptr;
+auto get_if(U* u) {
+  return reinterpret_cast<T*>(std::is_same<T, std::decay_t<U>>::value ? u : nullptr);
 }
 
 // pass-through version of get_if for generic programming
 template <class T, class U>
-const T* get_if(const U* u) {
-  return std::is_same<T, std::decay_t<U>>::value ? reinterpret_cast<const T*>(u)
-                                                 : nullptr;
+auto get_if(const U* u) {
+  return reinterpret_cast<const T*>(std::is_same<T, std::decay_t<U>>::value ? u
+                                                                            : nullptr);
 }
 
 } // namespace axis

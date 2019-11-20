@@ -76,21 +76,16 @@ decltype(auto) value_method_switch(I&& i, D&& d, const A& a) {
 static axis::null_type null_value;
 
 struct variant_access {
-  template <class T, class T0, class Variant>
-  static auto get_if_impl(mp11::mp_list<T, T0>, Variant* v) noexcept {
-    return variant2::get_if<T>(&(v->impl));
-  }
-
-  template <class T, class T0, class Variant>
-  static auto get_if_impl(mp11::mp_list<T, T0*>, Variant* v) noexcept {
-    auto tp = variant2::get_if<mp11::mp_if<std::is_const<T0>, const T*, T*>>(&(v->impl));
-    return tp ? *tp : nullptr;
-  }
-
   template <class T, class Variant>
   static auto get_if(Variant* v) noexcept {
     using T0 = mp11::mp_first<std::decay_t<Variant>>;
-    return get_if_impl(mp11::mp_list<T, T0>{}, v);
+    return static_if<std::is_pointer<T0>>(
+        [](auto* vptr) {
+          using TP = mp11::mp_if<std::is_const<std::remove_pointer_t<T0>>, const T*, T*>;
+          auto ptp = variant2::get_if<TP>(vptr);
+          return ptp ? *ptp : nullptr;
+        },
+        [](auto* vptr) { return variant2::get_if<T>(vptr); }, &(v->impl));
   }
 
   template <class T0, class Visitor, class Variant>
