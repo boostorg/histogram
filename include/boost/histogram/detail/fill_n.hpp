@@ -45,7 +45,7 @@ void fold(Ts&&...) noexcept {} // helper to enable operator folding
 template <class T>
 auto to_ptr_size(const T& x) {
   return static_if<std::is_scalar<T>>(
-      [](const auto& x) { return std::make_pair(&x, static_cast<std::size_t>(1)); },
+      [](const auto& x) { return std::make_pair(&x, static_cast<std::size_t>(0)); },
       [](const auto& x) { return std::make_pair(dtl::data(x), dtl::size(x)); }, x);
 }
 
@@ -96,7 +96,7 @@ struct index_visitor {
   template <class T>
   void call_1(std::false_type, const T& iterable) const {
     // T is iterable; fill N values
-    auto* tp = dtl::data(iterable) + start_;
+    const auto* tp = dtl::data(iterable) + start_;
     for (auto it = begin_; it != begin_ + size_; ++it) call_2(IsGrowing{}, it, *tp++);
   }
 
@@ -161,7 +161,7 @@ void fill_n_storage(S& s, const Index idx, Ts&&... p) noexcept {
     BOOST_ASSERT(idx < s.size());
     fill_storage_3(s[idx], *p.first...);
   }
-  fold((p.second > 1 ? ++p.first : 0)...);
+  fold((p.second ? ++p.first : 0)...);
 }
 
 template <class S, class Index, class T, class... Ts>
@@ -171,8 +171,8 @@ void fill_n_storage(S& s, const Index idx, weight_type<T>&& w, Ts&&... ps) noexc
     fill_storage_3(s[idx], weight_type<decltype(*w.value.first)>{*w.value.first},
                    *ps.first...);
   }
-  if (w.value.second > 1) ++w.value.first;
-  fold((ps.second > 1 ? ++ps.first : 0)...);
+  if (w.value.second) ++w.value.first;
+  fold((ps.second ? ++ps.first : 0)...);
 }
 
 // general Nd treatment
@@ -257,39 +257,48 @@ std::size_t get_total_size(const A& axes, const dtl::span<const T, N>& values) {
   // - span<CT, N>: for any histogram, N == rank
   // - span<V<T, CT>, N>: for any histogram, N == rank
   BOOST_ASSERT(axes_rank(axes) == values.size());
-  std::size_t size = 1u;
+  constexpr auto unset = static_cast<std::size_t>(-1);
+  std::size_t size = unset;
   for_each_axis(axes, [&size, vit = values.begin()](const auto& ax) mutable {
     using AV = axis::traits::value_type<std::decay_t<decltype(ax)>>;
-    auto vis = [&size](const auto& v) {
-      // v is either convertible to value or a sequence of values
-      using V = std::remove_const_t<std::remove_reference_t<decltype(v)>>;
-      const std::size_t n = static_if_c<(std::is_convertible<decltype(v), AV>::value ||
-                                         !is_iterable<V>::value)>(
-          [](const auto&) { return static_cast<std::size_t>(1); },
-          [](const auto& v) { return dtl::size(v); }, v);
-      if (size != 1u && n != 1u && size != n)
-        BOOST_THROW_EXCEPTION(
-            std::invalid_argument("spans must have compatible lengths"));
-      size = std::max(size, n);
-    };
-    maybe_visit(vis, *vit++);
+    maybe_visit(
+        [&size](const auto& v) {
+          // v is either convertible to value or a sequence of values
+          using V = std::remove_const_t<std::remove_reference_t<decltype(v)>>;
+          static_if_c<(std::is_convertible<decltype(v), AV>::value ||
+                       !is_iterable<V>::value)>(
+              [](const auto&) {},
+              [&size](const auto& v) {
+                const auto n = dtl::size(v);
+                // must repeat this here for msvc :(
+                constexpr auto unset = static_cast<std::size_t>(-1);
+                if (size == unset)
+                  size = dtl::size(v);
+                else if (size != n)
+                  BOOST_THROW_EXCEPTION(
+                      std::invalid_argument("spans must have compatible lengths"));
+              },
+              v);
+        },
+        *vit++);
   });
-  return size;
+  // if all arguments are not iterables, return size of 1
+  return size == unset ? 1 : size;
 }
 
 inline void fill_n_check_extra_args(std::size_t) noexcept {}
 
 template <class T, class... Ts>
-void fill_n_check_extra_args(std::size_t n, T&& x, Ts&&... ts) {
-  // values of length 1 may not be combined with weights and samples of length > 1
-  if (x.second != 1 && n != x.second)
+void fill_n_check_extra_args(std::size_t size, T&& x, Ts&&... ts) {
+  // sequences must have same lengths, but sequences of length 0 are broadcast
+  if (x.second != 0 && x.second != size)
     BOOST_THROW_EXCEPTION(std::invalid_argument("spans must have compatible lengths"));
-  fill_n_check_extra_args(n, std::forward<Ts>(ts)...);
+  fill_n_check_extra_args(size, std::forward<Ts>(ts)...);
 }
 
 template <class T, class... Ts>
-void fill_n_check_extra_args(std::size_t n, weight_type<T>&& w, Ts&&... ts) {
-  fill_n_check_extra_args(n, w.value, std::forward<Ts>(ts)...);
+void fill_n_check_extra_args(std::size_t size, weight_type<T>&& w, Ts&&... ts) {
+  fill_n_check_extra_args(size, w.value, std::forward<Ts>(ts)...);
 }
 
 template <class S, class A, class T, std::size_t N, class... Us>

@@ -64,44 +64,92 @@ template <class Tag>
 void run_tests(const std::vector<int>& x, const std::vector<int>& y,
                const std::vector<double>& w) {
 
-  // 1D simple
+  // 1D simple A
   {
     auto h = make(Tag(), in{1, 3});
-    auto h3 = h;
     auto h2 = h;
-
     for (auto&& xi : x) h(xi);
-    h2.fill(x); // uses 1D specialization
-    const auto vx = {x};
-    h3.fill(vx); // uses generic form
-
+    // uses 1D specialization
+    h2.fill(x);
     BOOST_TEST_EQ(h, h2);
-    BOOST_TEST_EQ(h, h3);
+  }
+
+  // 1D simple B
+  {
+    auto h = make(Tag(), in{1, 3});
+    auto h2 = h;
+    for (auto&& xi : x) h(xi);
+    // uses generic form
+    const auto vx = {x};
+    h2.fill(vx);
+    BOOST_TEST_EQ(h, h2);
+  }
+
+  // 1D simple C
+  {
+    auto h = make(Tag(), in{1, 3});
+    auto h2 = h;
+    h(1);
+    for (auto&& xi : x) h(xi);
+    // uses variant
+    boost::variant2::variant<int, std::vector<int>, std::string> v[1];
+    v[0] = 1;
+    h2.fill(v);
+    v[0] = x;
+    h2.fill(v);
+    BOOST_TEST_EQ(h, h2);
+  }
+
+  // 1D bad arguments
+  {
+    auto h = make(Tag(), in{1, 3});
 
     int bad1[2][4];
     boost::ignore_unused(bad1);
+    BOOST_TEST_THROWS(h.fill(bad1), std::invalid_argument);
+
     std::vector<std::array<int, 4>> bad2;
     boost::ignore_unused(bad2);
-    BOOST_TEST_THROWS(h.fill(bad1), std::invalid_argument);
     BOOST_TEST_THROWS(h.fill(bad2), std::invalid_argument);
   }
 
   // 1D with category axis
   {
     auto h = make(Tag(), cs{"A", "B"});
+    auto h2 = h;
 
-    auto s = {"A", "B", "C"};
-    h.fill(s);
-    BOOST_TEST_EQ(h[0], 1);
-    BOOST_TEST_EQ(h[1], 1);
-    BOOST_TEST_EQ(h[2], 1);
+    const auto s = {"A", "B", "C"};
+    for (auto&& si : s) h(si);
+    h2.fill(s);
 
-    variant<std::string, std::vector<std::string>> v[1];
-    v[0] = "ABC";
-    h.fill(v);
-    BOOST_TEST_EQ(h[0], 1);
-    BOOST_TEST_EQ(h[1], 1);
-    BOOST_TEST_EQ(h[2], 2);
+    variant<int, std::string, std::vector<std::string>> v[1];
+    h("B");
+    v[0] = "B";
+    h2.fill(v);
+
+    v[0] = std::vector<std::string>(s.begin(), s.end());
+    for (auto&& si : s) h(si);
+    h2.fill(v);
+
+    BOOST_TEST_EQ(h, h2);
+  }
+
+  // 1D weight
+  {
+    auto h = make(Tag(), in{1, 3});
+    auto h2 = h;
+
+    for (auto&& xi : x) h(weight(2), xi);
+    h2.fill(weight(2), x);
+
+    for (unsigned i = 0; i < ndata; ++i) h(weight(w[i]), x[i]);
+    h2.fill(weight(w), x);
+
+    BOOST_TEST_EQ(h, h2);
+
+    auto w2 = {1};
+    boost::ignore_unused(w2);
+    BOOST_TEST_THROWS(h2.fill(x, weight(w2)), std::invalid_argument);
   }
 
   // 2D simple
@@ -119,49 +167,16 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     BOOST_TEST_THROWS(h.fill(x), std::invalid_argument);
 
     // not rectangular
-    std::array<std::vector<int>, 2> bad = {{std::vector<int>(2), std::vector<int>(3)}};
+    std::array<std::vector<int>, 2> bad = {{std::vector<int>(1), std::vector<int>(2)}};
     boost::ignore_unused(bad);
     BOOST_TEST_THROWS(h2.fill(bad), std::invalid_argument);
-  }
-
-  // 1D variant and weight
-  {
-    auto h1 = make(Tag(), in{1, 3});
-    auto h2 = h1;
-
-    h1(1);
-    for (auto&& xi : x) h1(xi);
-
-    using V = variant<int, std::vector<int>>;
-    std::vector<V> v(1);
-    v[0] = 1;
-    h2.fill(v);
-    v[0] = x;
-    h2.fill(v);
-
-    BOOST_TEST_EQ(h1, h2);
-
-    for (auto&& xi : x) h1(weight(2), xi);
-    h2.fill(weight(2), x);
-
-    BOOST_TEST_EQ(h1, h2);
-
-    for (unsigned i = 0; i < ndata; ++i) h1(weight(w[i]), x[i]);
-    h2.fill(weight(w), x);
-
-    BOOST_TEST_EQ(h1, h2);
-
-    auto w2 = w;
-    w2.resize(ndata - 1);
-    boost::ignore_unused(w2);
-    BOOST_TEST_THROWS(h2.fill(v, weight(w2)), std::invalid_argument);
   }
 
   // 2D variant and weight
   {
     auto h = make(Tag(), in{1, 3}, in0{1, 5});
 
-    using V = variant<int, std::vector<int>>;
+    using V = variant<int, std::vector<int>, std::string>;
     V xy[2];
 
     {
@@ -249,9 +264,9 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
   {
     auto h = make(Tag(), ing(), ing());
     auto h2 = h;
-    for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i], weight(w[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], y[i], weight(2));
     const auto xy = {x, y};
-    h2.fill(xy, weight(w));
+    h2.fill(xy, weight(2));
     BOOST_TEST_EQ(h, h2);
   }
 
@@ -259,24 +274,36 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
   {
     auto h = make(Tag(), csg{}, in{1, 2});
     auto h2 = h;
+
+    h("foo", 1);
+    h("foo", 2);
+
     using V = variant<std::string, std::vector<std::string>, int, std::vector<int>>;
     const auto xy = {V("foo"), V(std::vector<int>{1, 2})};
-    h.fill(xy);
-    h2("foo", 1);
-    h2("foo", 2);
+    h2.fill(xy);
+
     BOOST_TEST_EQ(h, h2);
+
+    const auto bad = {V(std::vector<std::string>(1, "foo")), V(std::vector<int>{1, 2})};
+    boost::ignore_unused(bad);
+    BOOST_TEST_THROWS(h.fill(bad), std::invalid_argument);
   }
 
   // 1D profile with samples
   {
     auto h = make_s(Tag(), profile_storage(), in(1, 3));
     auto h2 = h;
+
     for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(w[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(w[i]), weight(w[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(2), weight(w[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(w[i]), weight(2));
 
     h2.fill(x, sample(w));
-    BOOST_TEST_EQ(h, h2);
-    for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(w[i]), weight(w[i]));
     h2.fill(x, sample(w), weight(w));
+    h2.fill(x, sample(2), weight(w));
+    h2.fill(x, sample(w), weight(2));
+
     BOOST_TEST_EQ(h, h2);
   }
 
@@ -285,13 +312,17 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     auto h = make_s(Tag(), weighted_profile_storage(), in(1, 3), in0(1, 3));
     auto h2 = h;
 
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], 3, sample(w[i]), weight(w[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], 3, sample(2), weight(w[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], 3, sample(w[i]), weight(2));
+
     using V = variant<int, std::vector<int>>;
     std::array<V, 2> xy;
     xy[0] = x;
     xy[1] = 3;
-
-    for (unsigned i = 0; i < ndata; ++i) h(x[i], 3, sample(w[i]), weight(w[i]));
     h2.fill(xy, sample(w), weight(w));
+    h2.fill(xy, sample(2), weight(w));
+    h2.fill(xy, sample(w), weight(2));
 
     BOOST_TEST_EQ(h, h2);
   }

@@ -265,11 +265,11 @@ public:
     @param args iterable of values.
     @param samples single sample or an iterable of samples.
   */
-  template <class Iterable, class... Ts, class = detail::requires_iterable<Iterable>,
-            class = mp11::mp_list<detail::requires_iterable<Ts>...>>
+  template <class Iterable, class... Ts, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const sample_type<std::tuple<Ts...>>& samples) {
     using acc_traits = detail::accumulator_traits<value_type>;
-    using sample_args_passed = std::tuple<decltype(*detail::data(std::declval<Ts>()))...>;
+    using sample_args_passed =
+        std::tuple<decltype(*detail::to_ptr_size(std::declval<Ts>()).first)...>;
     detail::sample_args_passed_vs_expected<sample_args_passed,
                                            typename acc_traits::args>();
     std::lock_guard<typename mutex_base::type> guard{mutex_base::get()};
@@ -294,20 +294,21 @@ public:
   }
 
   template <class Iterable, class T, class... Ts,
-            class = detail::requires_iterable<Iterable>,
-            class = mp11::mp_list<detail::requires_iterable<Ts>...>>
+            class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const weight_type<T>& weights,
             const sample_type<std::tuple<Ts...>>& samples) {
     using acc_traits = detail::accumulator_traits<value_type>;
-    using sample_args = std::tuple<decltype(*detail::data(std::declval<Ts>()))...>;
-    detail::sample_args_passed_vs_expected<sample_args, typename acc_traits::args>();
+    using sample_args_passed =
+        std::tuple<decltype(*detail::to_ptr_size(std::declval<Ts>()).first)...>;
+    detail::sample_args_passed_vs_expected<sample_args_passed,
+                                           typename acc_traits::args>();
     std::lock_guard<typename mutex_base::type> guard{mutex_base::get()};
     mp11::tuple_apply(
         [&](const auto&... sargs) {
           constexpr bool weight_valid = acc_traits::wsupport::value;
           static_assert(weight_valid, "error: accumulator does not support weights");
           constexpr bool sample_valid =
-              std::is_convertible<sample_args, typename acc_traits::args>::value;
+              std::is_convertible<sample_args_passed, typename acc_traits::args>::value;
           detail::fill_n(mp11::mp_bool<(weight_valid && sample_valid)>{}, offset_,
                          storage_, axes_, detail::make_span(args),
                          weight(detail::to_ptr_size(weights.value)),
