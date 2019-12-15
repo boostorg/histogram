@@ -263,26 +263,44 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
     ++iaxis;
   });
 
-  auto storage = detail::make_default(unsafe_access::storage(hist));
-  auto result = Histogram(std::move(axes), std::move(storage));
-
-  auto idx = detail::make_stack_buffer<int>(unsafe_access::axes(result));
+  auto idx = detail::make_stack_buffer<int>(axes);
+  auto irange = detail::make_stack_buffer<std::pair<int, int>>(axes);
+  detail::for_each_axis(axes, [it = irange.begin()](const auto& a) mutable {
+    using A = std::decay_t<decltype(a)>;
+    it->first = axis::traits::static_options<A>::test(axis::option::underflow) ? -1 : 0;
+    it->second = axis::traits::static_options<A>::test(axis::option::overflow)
+                     ? a.size() + 1
+                     : a.size();
+    ++it;
+  });
+  auto result =
+      Histogram(std::move(axes), detail::make_default(unsafe_access::storage(hist)));
   for (auto&& x : indexed(hist, coverage::all)) {
     auto i = idx.begin();
     auto o = opts.begin();
+    auto ir = irange.begin();
+    bool valid = true;
+
     for (auto j : x.indices()) {
       *i = (j - o->begin);
-      if (*i <= -1)
+      if (*i <= -1) {
         *i = -1;
-      else {
+        if (*i < ir->first) valid = false;
+      } else {
         *i /= o->merge;
         const int end = (o->end - o->begin) / o->merge;
-        if (*i > end) *i = end;
+        if (*i >= end) {
+          *i = end;
+          if (*i >= ir->second) valid = false;
+        }
       }
+
       ++i;
       ++o;
+      ++ir;
     }
-    result.at(idx) += *x;
+
+    if (valid) result.at(idx) += *x;
   }
 
   return result;

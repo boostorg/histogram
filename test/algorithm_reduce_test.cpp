@@ -224,6 +224,43 @@ void run_tests() {
     BOOST_TEST_EQ(reduce(h, shrink(2, -1.001)).axis(), R(4, 2, -2));
     BOOST_TEST_EQ(reduce(h, shrink(2, -1)).axis(), R(3, 2, -1));
   }
+
+  // reduce on histogram with axis without flow bins, see GitHub issue #257
+  {
+    auto h = make(Tag(), axis::integer<int, use_default, axis::option::underflow_t>(0, 3),
+                  axis::integer<int, use_default, axis::option::overflow_t>(0, 3));
+
+    std::fill(h.begin(), h.end(), 1);
+
+    /*
+    Original histogram:
+                x
+         -1  0  1  2
+       -------------
+      0|  1  1  1  1
+    x 1|  1  1  1  1
+      2|  1  1  1  1
+      3|  1  1  1  1
+
+    Shrunk histogram:
+         -1  0
+       -------
+      0|  2  1
+      1|  4  2
+    */
+
+    auto hr = reduce(h, slice(0, 1, 2), slice(1, 1, 2));
+    BOOST_TEST_EQ(hr.size(), 2 * 2);
+    BOOST_TEST_EQ(hr.axis(0).size(), 1);
+    BOOST_TEST_EQ(hr.axis(1).size(), 1);
+    BOOST_TEST_EQ(hr.axis(0).bin(0), 1);
+    BOOST_TEST_EQ(hr.axis(1).bin(0), 1);
+
+    BOOST_TEST_EQ(hr.at(-1, 0), 2);
+    BOOST_TEST_EQ(hr.at(0, 0), 1);
+    BOOST_TEST_EQ(hr.at(-1, 1), 4);
+    BOOST_TEST_EQ(hr.at(0, 1), 2);
+  }
 }
 
 int main() {
