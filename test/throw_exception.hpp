@@ -6,16 +6,20 @@
 
 #ifdef BOOST_NO_EXCEPTIONS
 
+#include <boost/assert/source_location.hpp>
 #include <cstdlib> // std::abort
 #include <exception>
 #include <iostream>
 
 namespace boost {
+
 // dummy implementation for user-defined function from boost/throw_exception.hpp
-inline void throw_exception(std::exception const& e) {
-  std::cerr << e.what() << std::endl;
+inline void throw_exception(std::exception const& e, boost::source_location const& l) {
+  std::cerr << l.file_name() << ":" << l.line() << ":" << l.column() << ": exception in '"
+            << l.function_name() << " \"" << e.what() << "\"" << std::endl;
   std::abort();
 }
+
 } // namespace boost
 
 #endif
