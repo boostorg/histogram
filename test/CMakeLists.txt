@@ -5,11 +5,14 @@
 boost_test(SOURCES check_cmake_version.cpp ARGUMENTS ${PROJECT_VERSION}
   LIBRARIES Boost::core Boost::config)
 
-# checks that b2 and cmake are in sync
-add_test(NAME check_build_system COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
+find_package(PythonInterp)
+if (PYTHONINTERP_FOUND)
+  # checks that b2 and cmake are in sync
+  add_test(NAME runpy-${PROJECT_NAME}_check_build_system COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
 
-# checks that all headers are included in odr test
-add_test(NAME check_odr_test COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
+  # checks that all headers are included in odr test
+  add_test(NAME runpy-${PROJECT_NAME}_check_odr_test COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
+endif()
 
 # keep in sync with Jamfile, this should be automatized...
 boost_test(TYPE compile-fail SOURCES axis_category_fail0.cpp
