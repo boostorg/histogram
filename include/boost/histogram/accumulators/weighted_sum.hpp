@@ -16,9 +16,12 @@ namespace histogram {
 namespace accumulators {
 
 /// Holds sum of weights and its variance estimate
-template <typename RealType>
+template <class RealType>
 class weighted_sum {
 public:
+  using value_type = RealType;
+  using const_reference = const RealType&;
+
   weighted_sum() = default;
   explicit weighted_sum(const RealType& value) noexcept
       : sum_of_weights_(value), sum_of_weights_squared_(value) {}
@@ -67,16 +70,13 @@ public:
   }
 
   /// Return value of the sum.
-  const RealType& value() const noexcept { return sum_of_weights_; }
+  const_reference value() const noexcept { return sum_of_weights_; }
 
   /// Return estimated variance of the sum.
-  const RealType& variance() const noexcept { return sum_of_weights_squared_; }
+  const_reference variance() const noexcept { return sum_of_weights_squared_; }
 
   // lossy conversion must be explicit
-  template <class T>
-  explicit operator T() const {
-    return static_cast<T>(sum_of_weights_);
-  }
+  explicit operator const_reference() const { return sum_of_weights_; }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
@@ -85,8 +85,8 @@ public:
   }
 
 private:
-  RealType sum_of_weights_ = RealType();
-  RealType sum_of_weights_squared_ = RealType();
+  value_type sum_of_weights_ = value_type();
+  value_type sum_of_weights_squared_ = value_type();
 };
 
 } // namespace accumulators

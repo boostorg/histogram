@@ -48,12 +48,21 @@ public:
 
   /// Increment sum by value
   sum& operator+=(const RealType& value) {
-    auto temp = large_ + value; // prevent optimization
-    if (std::abs(large_) >= std::abs(value))
-      small_ += (large_ - temp) + value;
-    else
-      small_ += (value - temp) + large_;
-    large_ = temp;
+    // prevent compiler optimization from destroying the algorithm
+    // when -ffast-math is enabled
+    volatile RealType l;
+    RealType s;
+    if (std::abs(large_) >= std::abs(value)) {
+      l = large_;
+      s = value;
+    } else {
+      l = value;
+      s = large_;
+    }
+    large_ += value;
+    l -= large_;
+    l += s;
+    small_ += l;
     return *this;
   }
 

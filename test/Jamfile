@@ -38,7 +38,10 @@ alias odr :
     ;
 
 alias cxx14 :
-    [ run accumulators_test.cpp ]
+    [ run accumulators_test.cpp : : :
+      # make sure sum accumulator works even with -ffast-math and optimizations 
+      <toolset>gcc:<cxxflags>"-O3 -ffast-math"
+      <toolset>clang:<cxxflags>"-O3 -ffast-math" ]
     [ run algorithm_project_test.cpp ]
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
