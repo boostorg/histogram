@@ -47,7 +47,7 @@ test_script:
   - sh:
       B2="../../b2 ${B2_OPTS}";
       $B2 toolset=gcc-7 cxxstd=14 exception-handling=off rtti=off test//minimal &&
-      $B2 toolset=gcc-9 cxxstd=latest examples test//all &&
+      $B2 toolset=gcc-9 cxxstd=latest cxxflags="-O3 -funsafe-math-optimizations" examples test//all &&
       $B2 toolset=clang-6 cxxstd=latest variant=histogram_ubasan test//all
 
 ## Uncomment the following to stop VM and enable interactive login.
