@@ -15,9 +15,9 @@ All benchmarks are compiled on a laptop with a 2,9 GHz Intel Core i5 processor w
 
 [section:fill_performance Fill performance]
 
-The fill performance of different configurations of Boost.Histogram are compared with histogram classes and functions from other libraries. Random numbers from a uniform and a normal distribution are filled into histograms with 1, 2, 3, and 6 axes. 100 bins per axis are used for 1, 2, 3 axes. 10 bins per axis for the case with 6 axes. The histogram can be filled with the call operator `operator()` or the more efficient `fill`-method. Results are shown for both. The GSL offers only 1D and 2D histograms, so there are no entries for the higher dimensional benchmarks. Raw timing results are converted to average number of CPU cycles used per input value.
+The fill performance of different configurations of Boost.Histogram are compared with histogram classes and functions from other libraries. Random numbers from a uniform and a normal distribution are filled into histograms with 1, 2, 3, and 6 axes. 100 bins per axis are used for 1, 2, 3 axes. 10 bins per axis for the case with 6 axes. The histogram are filled with the call operator `operator()` and the more efficient `fill`-method, which accepts large chunks of values at once. The GSL offers only 1D and 2D histograms, so there are no entries for the higher dimensional benchmarks. Raw timing results are converted to average number of CPU cycles used per input value.
 
-There is one bar for each benchmark, and the upper end has a hatched part. The full bar is the result when the histograms are filled with random normally distributed data that falls outside of the axis domain in about 10 % of the cases. This makes the branch predictors in the CPU fail every now and then, which degrades performance. The bar without the hatched part is the result when the histograms are filled with uniform random numbers which are always inside the axis range.
+There is one bar for each benchmark and the upper end has a hatched part. The full bar is the result when the histograms are filled with random normally distributed data that falls outside of the axis domain in about 10 % of the cases. This makes the branch predictors in the CPU fail every now and then, which degrades performance. The bar without the hatched part is the result when the histograms are filled with uniform random numbers which are always inside the axis range.
 
 [$../fill_performance.svg]
 
@@ -26,18 +26,12 @@ There is one bar for each benchmark, and the upper end has a hatched part. The f
 
 	[[GSL] [[@https://www.gnu.org/software/gsl/doc/html/histogram.html GSL histograms] for 1D and 2D]]
 
-	[[boost-SS] [Histogram with `std::tuple<axis::regular<>>` and `std::vector<int>`]]
+	[[boost-sta] [Histogram with `std::tuple<axis::regular<>>` and `std::vector<int>` storage]]
 
-	[[boost-SD] [Histogram with `std::tuple<axis::regular<>>` with [classref boost::histogram::unlimited_storage]]]
-
-	[[boost-DS] [Histogram with `std::vector<axis::variant<axis::regular<>>>` with `std::vector<int>`]]
-
-	[[boost-DD] [Histogram with `std::vector<axis::variant<axis::regular<>>>` with [classref boost::histogram::unlimited_storage]]]
+	[[boost-dyn] [Histogram with `std::vector<axis::variant<axis::regular<>>>` and `std::vector<int>` storage]]
 ]
 
-Boost.Histogram is faster than other libraries. Simultaneously, it is much more flexible, since the axis and storage types can be customized.
-
-When `operator()` is used, a histogram with compile-time configured axes is always faster than one with run-time configured axes. The [classref boost::histogram::unlimited_storage] is faster than a `std::vector<int>` for histograms with many bins, because it uses the cache more effectively due to its smaller memory consumption per bin. If the number of bins is small, it is slower because of the overhead of handling memory dynamically. If the `fill` method is used, histograms with run-time configured axes are as fast for 2D histograms and higher. In this case, using `std::vector<int>` for storage is faster in all benchmarks that were carried out, although the performance gap to [classref boost::histogram::unlimited_storage] shrinks for higher dimensions.
+Boost.Histogram is faster than other libraries. Simultaneously, it is much more flexible, since the axis and storage types can be customized. When `operator()` is used, a histogram with compile-time configured axes (boost-sta-...) is always faster than the equivalent alternatives from other libraries. The histogram with run-time configured axes (boost-dyn-...) is comparable or slower than other libraries, but offers a run-time flexibility that the alternatives do not. If the `fill` method is used, filling either type of histogram is much faster (up to a factor 6) than filling histograms in other libraries, and the performance difference between compile-time and run-time configured axes is mostly vanishes.
 
 [endsect]
 

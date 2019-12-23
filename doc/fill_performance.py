@@ -24,9 +24,15 @@ mpl.rcParams.update(mpl.rcParamsDefault)
 cpu_frequency = 0
 
 data = defaultdict(lambda: [])
+hostname = None
 for fn in sys.argv[1:]:
     d = json.load(open(fn))
     cpu_frequency = d["context"]["mhz_per_cpu"]
+    # make sure we don't compare benchmarks from different computers
+    if hostname is None:
+        hostname = d["context"]["host_name"]
+    else:
+        assert hostname == d["context"]["host_name"]
     for bench in d["benchmarks"]:
         name = bench["name"]
         time = min(bench["cpu_time"], bench["real_time"])
@@ -108,6 +114,9 @@ for dim in sorted(data):
     plt.gca().add_artist(tx)
 plt.ylim(0, i)
 plt.xlim(0, 80)
+from matplotlib.ticker import MultipleLocator
+
+plt.gca().xaxis.set_major_locator(MultipleLocator(5))
 
 plt.tick_params("y", left=False, labelleft=False)
 plt.xlabel("average CPU cycles per random input value (smaller is better)")
