@@ -2,9 +2,8 @@
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-# Warning: Boost-CMake support is incomplete; testing works, install target doesn't
-
-cmake_minimum_required(VERSION 3.5...3.16)
+# We support CMake 3.8, but prefer 3.16 policies and behavior
+cmake_minimum_required(VERSION 3.8...3.16)
 
 project(boost_histogram VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
@@ -13,10 +12,7 @@ add_library(Boost::histogram ALIAS boost_histogram)
 
 target_include_directories(boost_histogram INTERFACE include)
 
-target_compile_features(boost_histogram INTERFACE
-  cxx_alias_templates cxx_variadic_templates cxx_decltype_auto
-  cxx_defaulted_functions cxx_generic_lambdas cxx_range_for
-  cxx_relaxed_constexpr cxx_return_type_deduction)
+target_compile_features(boost_histogram INTERFACE cxx_std_14)
 
 target_link_libraries(boost_histogram
   INTERFACE
