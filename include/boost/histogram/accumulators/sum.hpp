@@ -28,7 +28,7 @@ namespace accumulators {
   A. Neumaier, Zeitschrift fuer Angewandte Mathematik
   und Mechanik 54 (1974) 39-51.
 */
-template <typename RealType>
+template <class RealType>
 class sum {
 public:
   sum() = default;

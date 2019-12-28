@@ -92,32 +92,50 @@ public:
 
   /// Return index for value argument.
   index_type index(value_type x) const noexcept {
-    return index_impl(std::is_floating_point<value_type>(), x);
+    return detail::static_if<std::is_floating_point<value_type>>(
+        [this](const auto z) -> index_type {
+          // need to handle NaN, cannot simply cast to int and call int-implementation
+          if (options_type::test(option::circular)) {
+            if (std::isfinite(z))
+              return static_cast<index_type>(std::floor(z) -
+                                             std::floor(z / this->size()) * this->size());
+          } else if (z < this->size())
+            return z >= 0 ? static_cast<index_type>(z) : -1;
+          return this->size();
+        },
+        [this](const auto z) -> index_type {
+          if (options_type::test(option::circular))
+            return static_cast<index_type>(z - std::floor(float(z) / this->size()) *
+                                                   this->size());
+          if (z < this->size()) return z >= 0 ? z : -1;
+          return this->size();
+        },
+        x - min_);
   }
 
   /// Returns index and shift (if axis has grown) for the passed argument.
   auto update(value_type x) noexcept {
-    auto impl = [this](long x) {
+    auto impl = [this](long x) -> std::pair<index_type, index_type> {
       const auto i = x - min_;
       if (i >= 0) {
         const auto k = static_cast<axis::index_type>(i);
-        if (k < size()) return std::make_pair(k, 0);
+        if (k < size()) return {k, 0};
         const auto n = k - size() + 1;
         size_ += n;
-        return std::make_pair(k, -n);
+        return {k, -n};
       }
       const auto k = static_cast<axis::index_type>(
           detail::static_if<std::is_floating_point<value_type>>(
               [](auto x) { return std::floor(x); }, [](auto x) { return x; }, i));
       min_ += k;
       size_ -= k;
-      return std::make_pair(0, -k);
+      return {0, -k};
     };
 
     return detail::static_if<std::is_floating_point<value_type>>(
-        [this, impl](auto x) {
+        [this, impl](auto x) -> std::pair<index_type, index_type> {
           if (std::isfinite(x)) return impl(static_cast<long>(std::floor(x)));
-          return std::make_pair(x < 0 ? -1 : this->size(), 0);
+          return {x < 0 ? -1 : this->size(), 0};
         },
         impl, x);
   }
@@ -170,27 +188,6 @@ public:
   }
 
 private:
-  index_type index_impl(std::false_type, int x) const noexcept {
-    const auto z = x - min_;
-    if (options_type::test(option::circular))
-      return static_cast<index_type>(z - std::floor(float(z) / size()) * size());
-    if (z < size()) return z >= 0 ? z : -1;
-    return size();
-  }
-
-  template <typename T>
-  index_type index_impl(std::true_type, T x) const noexcept {
-    // need to handle NaN, cannot simply cast to int and call int-implementation
-    const auto z = x - min_;
-    if (options_type::test(option::circular)) {
-      if (std::isfinite(z))
-        return static_cast<index_type>(std::floor(z) - std::floor(z / size()) * size());
-    } else if (z < size()) {
-      return z >= 0 ? static_cast<index_type>(z) : -1;
-    }
-    return size();
-  }
-
   index_type size_{0};
   value_type min_{0};
 

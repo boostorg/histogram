@@ -27,7 +27,7 @@ struct icast_identity {
 };
 } // namespace detail
 
-template <typename T>
+template <class T>
 inline T implicit_cast(typename detail::icast_identity<T>::type x) {
   return x;
 }

@@ -354,7 +354,10 @@ std::pair<index_type, index_type> update(Axis& axis, const U& value) noexcept(
       [&value](auto& a) {
         return a.update(detail::try_cast<value_type<Axis>, std::invalid_argument>(value));
       },
-      [&value](auto& a) { return std::make_pair(index(a, value), index_type{0}); }, axis);
+      [&value](auto& a) -> std::pair<index_type, index_type> {
+        return {index(a, value), 0};
+      },
+      axis);
 }
 
 // specialization for variant

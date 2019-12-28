@@ -32,7 +32,7 @@ public:
   weighted_sum& operator++() { return operator+=(1); }
 
   /// Increment by value.
-  template <typename T>
+  template <class T>
   weighted_sum& operator+=(const T& value) {
     sum_of_weights_ += value;
     sum_of_weights_squared_ += value * value;
@@ -40,7 +40,7 @@ public:
   }
 
   /// Added another weighted sum.
-  template <typename T>
+  template <class T>
   weighted_sum& operator+=(const weighted_sum<T>& rhs) {
     sum_of_weights_ += static_cast<RealType>(rhs.sum_of_weights_);
     sum_of_weights_squared_ += static_cast<RealType>(rhs.sum_of_weights_squared_);
@@ -58,13 +58,13 @@ public:
     return sum_of_weights_ == rhs && sum_of_weights_squared_ == rhs;
   }
 
-  template <typename T>
+  template <class T>
   bool operator==(const weighted_sum<T>& rhs) const noexcept {
     return sum_of_weights_ == rhs.sum_of_weights_ &&
            sum_of_weights_squared_ == rhs.sum_of_weights_squared_;
   }
 
-  template <typename T>
+  template <class T>
   bool operator!=(const T& rhs) const noexcept {
     return !operator==(rhs);
   }

@@ -307,13 +307,13 @@ public:
   }
 
   /// Returns index and shift (if axis has grown) for the passed argument.
-  auto update(value_type x) noexcept {
+  std::pair<index_type, index_type> update(value_type x) noexcept {
     BOOST_ASSERT(options_type::test(option::growth));
     const auto z = (this->forward(x / unit_type{}) - min_) / delta_;
     if (z < 1) { // don't use i here!
       if (z >= 0) {
         const auto i = static_cast<axis::index_type>(z * size());
-        return std::make_pair(i, 0);
+        return {i, 0};
       }
       if (z != -std::numeric_limits<internal_value_type>::infinity()) {
         const auto stop = min_ + delta_;
@@ -321,10 +321,10 @@ public:
         min_ += i * (delta_ / size());
         delta_ = stop - min_;
         size_ -= i;
-        return std::make_pair(0, -i);
+        return {0, -i};
       }
       // z is -infinity
-      return std::make_pair(-1, 0);
+      return {-1, 0};
     }
     // z either beyond range, infinite, or NaN
     if (z < std::numeric_limits<internal_value_type>::infinity()) {
@@ -333,10 +333,10 @@ public:
       delta_ /= size();
       delta_ *= size() + n;
       size_ += n;
-      return std::make_pair(i, -n);
+      return {i, -n};
     }
     // z either infinite or NaN
-    return std::make_pair(size(), 0);
+    return {size(), 0};
   }
 
   /// Return value for fractional index argument.

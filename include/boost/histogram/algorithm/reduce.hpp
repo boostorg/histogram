@@ -27,10 +27,9 @@ namespace detail {
 struct reduce_option {
   unsigned iaxis = 0;
   bool indices_set = false;
-  axis::index_type begin = 0, end = 0;
+  axis::index_type begin = 0, end = 0, merge = 0;
   bool values_set = false;
   double lower = 0.0, upper = 0.0;
-  unsigned merge = 0;
 };
 } // namespace detail
 
@@ -55,7 +54,7 @@ inline reduce_option shrink_and_rebin(unsigned iaxis, double lower, double upper
   if (lower == upper)
     BOOST_THROW_EXCEPTION(std::invalid_argument("lower != upper required"));
   if (merge == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("merge > 0 required"));
-  return {iaxis, false, 0, 0, true, lower, upper, merge};
+  return {iaxis, false, 0, 0, static_cast<axis::index_type>(merge), true, lower, upper};
 }
 
 /**
@@ -74,7 +73,7 @@ inline reduce_option slice_and_rebin(unsigned iaxis, axis::index_type begin,
   if (!(begin < end))
     BOOST_THROW_EXCEPTION(std::invalid_argument("begin < end required"));
   if (merge == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("merge > 0 required"));
-  return {iaxis, true, begin, end, false, 0.0, 0.0, merge};
+  return {iaxis, true, begin, end, static_cast<axis::index_type>(merge), false, 0.0, 0.0};
 }
 
 /**
@@ -91,7 +90,7 @@ inline reduce_option slice_and_rebin(unsigned iaxis, axis::index_type begin,
   the lower edge.
  */
 inline reduce_option shrink(unsigned iaxis, double lower, double upper) {
-  return shrink_and_rebin(iaxis, lower, upper, 1);
+  return shrink_and_rebin(iaxis, lower, upper, 1u);
 }
 
 /**
@@ -102,7 +101,7 @@ inline reduce_option shrink(unsigned iaxis, double lower, double upper) {
   @param end one past the last index that should be kept.
  */
 inline reduce_option slice(unsigned iaxis, axis::index_type begin, axis::index_type end) {
-  return slice_and_rebin(iaxis, begin, end, 1);
+  return slice_and_rebin(iaxis, begin, end, 1u);
 }
 
 /**
@@ -113,7 +112,8 @@ inline reduce_option slice(unsigned iaxis, axis::index_type begin, axis::index_t
  */
 inline reduce_option rebin(unsigned iaxis, unsigned merge) {
   if (merge == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("merge > 0 required"));
-  return reduce_option{iaxis, false, 0, 0, false, 0.0, 0.0, merge};
+  return reduce_option{iaxis, false, 0,  0, static_cast<axis::index_type>(merge),
+                       false, 0.0,   0.0};
 }
 
 /**
@@ -243,7 +243,7 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
                 o.end = axis::traits::index(ain, o.upper);
                 if (axis::traits::value_as<double>(ain, o.end) != o.upper) ++o.end;
               }
-              o.begin = (std::max)(0, o.begin);
+              if (o.begin < 0) o.begin = 0;
               o.end = (std::min)(o.end, ain.size());
             }
             o.end -= (o.end - o.begin) % o.merge;
@@ -288,7 +288,7 @@ decltype(auto) reduce(const Histogram& hist, const Iterable& options) {
         if (*i < ir->first) valid = false;
       } else {
         *i /= o->merge;
-        const int end = (o->end - o->begin) / o->merge;
+        const auto end = (o->end - o->begin) / o->merge;
         if (*i >= end) {
           *i = end;
           if (*i >= ir->second) valid = false;

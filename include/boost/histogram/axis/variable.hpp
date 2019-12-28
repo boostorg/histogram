@@ -137,7 +137,7 @@ public:
                                    vec_.begin() - 1);
   }
 
-  auto update(value_type x) noexcept {
+  std::pair<index_type, index_type> update(value_type x) noexcept {
     const auto i = index(x);
     if (std::isfinite(x)) {
       if (0 <= i) {
@@ -146,14 +146,14 @@ public:
         x = std::nextafter(x, (std::numeric_limits<value_type>::max)());
         x = (std::max)(x, vec_.back() + d);
         vec_.push_back(x);
-        return std::make_pair(i, -1);
+        return {i, -1};
       }
       const auto d = value(0.5) - value(0);
       x = (std::min)(x, value(0) - d);
       vec_.insert(vec_.begin(), x);
-      return std::make_pair(0, -i);
+      return {0, -i};
     }
-    return std::make_pair(x < 0 ? -1 : size(), 0);
+    return {x < 0 ? -1 : size(), 0};
   }
 
   /// Return value for fractional index argument.

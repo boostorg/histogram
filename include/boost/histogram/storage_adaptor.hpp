@@ -239,7 +239,7 @@ struct map_impl : T {
       return !operator==(rhs);
     }
 
-    template <typename CharT, typename Traits>
+    template <class CharT, class Traits>
     friend std::basic_ostream<CharT, Traits>& operator<<(
         std::basic_ostream<CharT, Traits>& os, reference x) {
       os << static_cast<const_reference>(x);

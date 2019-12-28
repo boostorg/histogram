@@ -108,11 +108,11 @@ public:
   }
 
   /// Returns index and shift (if axis has grown) for the passed argument.
-  auto update(const value_type& x) {
+  std::pair<index_type, index_type> update(const value_type& x) {
     const auto i = index(x);
-    if (i < size()) return std::make_pair(i, 0);
+    if (i < size()) return {i, 0};
     vec_.emplace_back(x);
-    return std::make_pair(i, -1);
+    return {i, -1};
   }
 
   /// Return value for index argument.

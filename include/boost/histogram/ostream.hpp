@@ -275,7 +275,7 @@ void ostream(OStream& os, const Histogram& h, const bool show_values = true) {
 
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
-template <typename CharT, typename Traits, typename A, typename S>
+template <class CharT, class Traits, class A, class S>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const histogram<A, S>& h) {
   // save fmt

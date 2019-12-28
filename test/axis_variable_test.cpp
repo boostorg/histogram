@@ -94,31 +94,29 @@ int main() {
 
   // axis::regular with growth
   {
+    using pii_t = std::pair<axis::index_type, axis::index_type>;
     axis::variable<double, axis::null_type, axis::option::growth_t> a{0, 1};
     BOOST_TEST_EQ(a.size(), 1);
-    BOOST_TEST_EQ(a.update(0), std::make_pair(0, 0));
+    BOOST_TEST_EQ(a.update(0), pii_t(0, 0));
     BOOST_TEST_EQ(a.size(), 1);
-    BOOST_TEST_EQ(a.update(1.1), std::make_pair(1, -1));
+    BOOST_TEST_EQ(a.update(1.1), pii_t(1, -1));
     BOOST_TEST_EQ(a.size(), 2);
     BOOST_TEST_EQ(a.value(0), 0);
     BOOST_TEST_EQ(a.value(1), 1);
     BOOST_TEST_EQ(a.value(2), 1.5);
-    BOOST_TEST_EQ(a.update(-0.1), std::make_pair(0, 1));
+    BOOST_TEST_EQ(a.update(-0.1), pii_t(0, 1));
     BOOST_TEST_EQ(a.value(0), -0.5);
     BOOST_TEST_EQ(a.size(), 3);
-    BOOST_TEST_EQ(a.update(10), std::make_pair(3, -1));
+    BOOST_TEST_EQ(a.update(10), pii_t(3, -1));
     BOOST_TEST_EQ(a.size(), 4);
     BOOST_TEST_IS_CLOSE(a.value(4), 10, 1e-9);
-    BOOST_TEST_EQ(a.update(-10), std::make_pair(0, 1));
+    BOOST_TEST_EQ(a.update(-10), pii_t(0, 1));
     BOOST_TEST_EQ(a.size(), 5);
     BOOST_TEST_IS_CLOSE(a.value(0), -10, 1e-9);
 
-    BOOST_TEST_EQ(a.update(-std::numeric_limits<double>::infinity()),
-                  std::make_pair(-1, 0));
-    BOOST_TEST_EQ(a.update(std::numeric_limits<double>::infinity()),
-                  std::make_pair(a.size(), 0));
-    BOOST_TEST_EQ(a.update(std::numeric_limits<double>::quiet_NaN()),
-                  std::make_pair(a.size(), 0));
+    BOOST_TEST_EQ(a.update(-std::numeric_limits<double>::infinity()), pii_t(-1, 0));
+    BOOST_TEST_EQ(a.update(std::numeric_limits<double>::infinity()), pii_t(a.size(), 0));
+    BOOST_TEST_EQ(a.update(std::numeric_limits<double>::quiet_NaN()), pii_t(a.size(), 0));
   }
 
   // iterators

@@ -23,7 +23,7 @@ namespace accumulators {
   Uses West's incremental algorithm to improve numerical stability
   of mean and variance computation.
 */
-template <typename RealType>
+template <class RealType>
 class weighted_mean {
 public:
   weighted_mean() = default;
@@ -45,7 +45,7 @@ public:
     sum_of_weighted_deltas_squared_ += w.value * delta * (x - weighted_mean_);
   }
 
-  template <typename T>
+  template <class T>
   weighted_mean& operator+=(const weighted_mean<T>& rhs) {
     if (sum_of_weights_ != 0 || rhs.sum_of_weights_ != 0) {
       const auto tmp = weighted_mean_ * sum_of_weights_ +
@@ -65,7 +65,7 @@ public:
     return *this;
   }
 
-  template <typename T>
+  template <class T>
   bool operator==(const weighted_mean<T>& rhs) const noexcept {
     return sum_of_weights_ == rhs.sum_of_weights_ &&
            sum_of_weights_squared_ == rhs.sum_of_weights_squared_ &&
@@ -73,7 +73,7 @@ public:
            sum_of_weighted_deltas_squared_ == rhs.sum_of_weighted_deltas_squared_;
   }
 
-  template <typename T>
+  template <class T>
   bool operator!=(const T& rhs) const noexcept {
     return !operator==(rhs);
   }

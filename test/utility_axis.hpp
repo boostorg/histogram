@@ -13,8 +13,8 @@
 namespace boost {
 namespace histogram {
 
-template <typename Axis>
-void test_axis_iterator(const Axis& a, int begin, int end) {
+template <class Axis>
+void test_axis_iterator(const Axis& a, axis::index_type begin, axis::index_type end) {
   for (auto bin : a) {
     BOOST_TEST_EQ(bin, a.bin(begin));
     ++begin;

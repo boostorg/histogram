@@ -175,7 +175,7 @@ void axes_assign(T& t, const std::tuple<Us...>& u) {
   mp_for_each<mp_iota_c<sizeof...(Us)>>([&](auto I) { t[I] = std::get<I>(u); });
 }
 
-template <typename T, typename U>
+template <class T, class U>
 void axes_assign(T& t, const U& u) {
   t.assign(u.begin(), u.end());
 }

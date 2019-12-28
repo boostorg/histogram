@@ -371,7 +371,7 @@ public:
   }
 
   /// Access cell value at integral indices stored in `std::tuple` (read-only).
-  template <typename... Indices>
+  template <class... Indices>
   decltype(auto) at(const std::tuple<Indices...>& is) const {
     if (rank() != sizeof...(Indices))
       BOOST_THROW_EXCEPTION(

@@ -133,15 +133,16 @@ int main() {
 
   // axis::category with growth
   {
+    using pii_t = std::pair<axis::index_type, axis::index_type>;
     axis::category<int, axis::null_type, axis::option::growth_t> a;
     BOOST_TEST_EQ(a.size(), 0);
-    BOOST_TEST_EQ(a.update(5), std::make_pair(0, -1));
+    BOOST_TEST_EQ(a.update(5), pii_t(0, -1));
     BOOST_TEST_EQ(a.size(), 1);
-    BOOST_TEST_EQ(a.update(1), std::make_pair(1, -1));
+    BOOST_TEST_EQ(a.update(1), pii_t(1, -1));
     BOOST_TEST_EQ(a.size(), 2);
-    BOOST_TEST_EQ(a.update(10), std::make_pair(2, -1));
+    BOOST_TEST_EQ(a.update(10), pii_t(2, -1));
     BOOST_TEST_EQ(a.size(), 3);
-    BOOST_TEST_EQ(a.update(10), std::make_pair(2, 0));
+    BOOST_TEST_EQ(a.update(10), pii_t(2, 0));
     BOOST_TEST_EQ(a.size(), 3);
 
     BOOST_TEST_EQ(str(a), "category(5, 1, 10, options=growth)");

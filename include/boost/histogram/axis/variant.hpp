@@ -35,7 +35,7 @@ class variant : public iterator_mixin<variant<Ts...>> {
   template <class T>
   using is_bounded_type = mp11::mp_contains<variant, std::decay_t<T>>;
 
-  template <typename T>
+  template <class T>
   using requires_bounded_type = std::enable_if_t<is_bounded_type<T>::value>;
 
   // maybe metadata_type or const metadata_type, if bounded type is const
@@ -84,17 +84,17 @@ public:
 
   /// Return size of axis.
   index_type size() const {
-    return visit([](const auto& a) { return a.size(); }, *this);
+    return visit([](const auto& a) -> index_type { return a.size(); }, *this);
   }
 
   /// Return options of axis or option::none_t if axis has no options.
   unsigned options() const {
-    return visit([](const auto& a) { return axis::traits::options(a); }, *this);
+    return visit([](const auto& a) { return traits::options(a); }, *this);
   }
 
   /// Returns true if the axis is inclusive or false.
   bool inclusive() const {
-    return visit([](const auto& a) { return axis::traits::inclusive(a); }, *this);
+    return visit([](const auto& a) { return traits::inclusive(a); }, *this);
   }
 
   /// Return reference to const metadata or instance of null_type if axis has no

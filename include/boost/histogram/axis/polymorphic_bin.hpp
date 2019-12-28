@@ -31,7 +31,7 @@ namespace axis {
     result in a dangling reference. Rather than specialing the code to handle
     this, it seems easier to just use a value instead of a view.
 */
-template <typename RealType>
+template <class RealType>
 class polymorphic_bin {
   using value_type = RealType;
 
@@ -51,12 +51,12 @@ public:
   /// Return width of bin.
   value_type width() const noexcept { return upper() - lower(); }
 
-  template <typename BinType>
+  template <class BinType>
   bool operator==(const BinType& rhs) const noexcept {
     return equal_impl(detail::has_method_lower<BinType>(), rhs);
   }
 
-  template <typename BinType>
+  template <class BinType>
   bool operator!=(const BinType& rhs) const noexcept {
     return !operator==(rhs);
   }
@@ -69,12 +69,12 @@ private:
     return lower_or_value_ == rhs.lower_or_value_ && upper_ == rhs.upper_;
   }
 
-  template <typename BinType>
+  template <class BinType>
   bool equal_impl(std::true_type, const BinType& rhs) const noexcept {
     return lower() == rhs.lower() && upper() == rhs.upper();
   }
 
-  template <typename BinType>
+  template <class BinType>
   bool equal_impl(std::false_type, const BinType& rhs) const noexcept {
     return is_discrete() && static_cast<value_type>(*this) == rhs;
   }

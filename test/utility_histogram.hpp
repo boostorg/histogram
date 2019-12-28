@@ -20,7 +20,7 @@
 namespace boost {
 namespace histogram {
 
-template <typename... Ts>
+template <class... Ts>
 auto make_axis_vector(const Ts&... ts) {
   // make sure the variant is never trivial (contains only one type)
   using R = axis::regular<double, boost::use_default, axis::null_type>;
@@ -34,22 +34,22 @@ auto make_axis_vector(const Ts&... ts) {
 using static_tag = std::false_type;
 using dynamic_tag = std::true_type;
 
-template <typename... Axes>
+template <class... Axes>
 auto make(static_tag, const Axes&... axes) {
   return make_histogram(axes...);
 }
 
-template <typename S, typename... Axes>
+template <class S, class... Axes>
 auto make_s(static_tag, S&& s, const Axes&... axes) {
   return make_histogram_with(s, axes...);
 }
 
-template <typename... Axes>
+template <class... Axes>
 auto make(dynamic_tag, const Axes&... axes) {
   return make_histogram(make_axis_vector(axes...));
 }
 
-template <typename S, typename... Axes>
+template <class S, class... Axes>
 auto make_s(dynamic_tag, S&& s, const Axes&... axes) {
   return make_histogram_with(s, make_axis_vector(axes...));
 }

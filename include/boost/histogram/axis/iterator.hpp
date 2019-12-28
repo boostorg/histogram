@@ -16,11 +16,12 @@ namespace histogram {
 namespace axis {
 
 template <class Axis>
-class iterator : public detail::iterator_adaptor<iterator<Axis>, int,
+class iterator : public detail::iterator_adaptor<iterator<Axis>, index_type,
                                                  decltype(std::declval<Axis>().bin(0))> {
 public:
   /// Make iterator from axis and index.
-  iterator(const Axis& axis, int idx) : iterator::iterator_adaptor_(idx), axis_(axis) {}
+  iterator(const Axis& axis, index_type idx)
+      : iterator::iterator_adaptor_(idx), axis_(axis) {}
 
   /// Return current bin object.
   decltype(auto) operator*() const { return axis_.bin(this->base()); }
@@ -30,7 +31,7 @@ private:
 };
 
 /// Uses CRTP to inject iterator logic into Derived.
-template <typename Derived>
+template <class Derived>
 class iterator_mixin {
 public:
   using const_iterator = iterator<Derived>;
