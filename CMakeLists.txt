@@ -4,117 +4,85 @@
 
 # Warning: Boost-CMake support is incomplete; testing works, install target doesn't
 
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.5...3.16)
 
-project(BoostHistogram VERSION 1.73.0 LANGUAGES CXX)
+project(boost_histogram VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
 add_library(boost_histogram INTERFACE)
-set_property(TARGET boost_histogram PROPERTY EXPORT_NAME histogram)
-
 add_library(Boost::histogram ALIAS boost_histogram)
+
+target_include_directories(boost_histogram INTERFACE include)
 
 target_compile_features(boost_histogram INTERFACE
   cxx_alias_templates cxx_variadic_templates cxx_decltype_auto
   cxx_defaulted_functions cxx_generic_lambdas cxx_range_for
   cxx_relaxed_constexpr cxx_return_type_deduction)
-target_include_directories(boost_histogram
-  INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+
 target_link_libraries(boost_histogram
-    INTERFACE
-        Boost::assert
-        Boost::config
-        Boost::core
-        Boost::mp11
-        Boost::throw_exception
-        Boost::variant2
-)
+  INTERFACE
+    Boost::assert
+    Boost::config
+    Boost::core
+    Boost::mp11
+    Boost::throw_exception
+    Boost::variant2)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
-  ###########################################################
-  # Setup `check_histogram` target to build and run all tests.
-  ###########################################################
+  # Fetch support files
 
-  # `function` confuses FetchContent, sees empty CMAKE_CURRENT_LIST_DIR
-  macro(fetch_and_include name)
-      message(STATUS "Fetching ${name}")
+  message(STATUS "Fetching BoostFetch.cmake")
 
-      set(fetch_and_include_local_path "${CMAKE_BINARY_DIR}/fetch_and_include/${name}")
-      if(NOT EXISTS ${fetch_and_include_local_path})
-        file(DOWNLOAD
-            "https://raw.githubusercontent.com/boostorg/mincmake/develop/${name}"
-            "${CMAKE_BINARY_DIR}/fetch_and_include/${name}"
-        )
-      endif()
-      include("${CMAKE_BINARY_DIR}/fetch_and_include/${name}")
+  file(DOWNLOAD
+    "https://raw.githubusercontent.com/boostorg/cmake/develop/include/BoostFetch.cmake"
+    "${CMAKE_BINARY_DIR}/fetch_and_include/BoostFetch.cmake"
+  )
 
-  endmacro()
+  include("${CMAKE_BINARY_DIR}/fetch_and_include/BoostFetch.cmake")
 
-  fetch_and_include(cmake/boost_test.cmake)
-  fetch_and_include(cmake/boost_fetch.cmake)
+  boost_fetch(boostorg/cmake TAG develop NO_ADD_SUBDIR)
 
-  boost_fetch(boostorg/assert TAG develop)
-  boost_fetch(boostorg/config TAG develop)
-  boost_fetch(boostorg/core TAG develop)
-  boost_fetch(boostorg/mp11 TAG develop)
-  boost_fetch(boostorg/throw_exception TAG develop)
-  boost_fetch(boostorg/variant2 TAG develop)
+  FetchContent_GetProperties(boostorg_cmake)
 
-  ## No cmake support yet
-  # boost_fetch(boostorg/accumulators TAG develop)
-  # boost_fetch(boostorg/range TAG develop)
-  # boost_fetch(boostorg/serialization TAG develop)
-  # boost_fetch(boostorg/units TAG develop)
+  list(APPEND CMAKE_MODULE_PATH ${boostorg_cmake_SOURCE_DIR}/include)
 
-  find_package(Threads) # for optional multi-threaded tests
+  # Enable testing
 
-  enable_testing()
-  add_custom_target(histogram_check
-    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Build and then run all the tests and examples.")
+  include(CTest)
+  add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>)
 
-  ###########################################################
-  # Setup 'install' target and package config file.
-  ###########################################################
+  if(BUILD_TESTING)
 
-  ## installings targets doesn't work currently, fails with errors like
-  # Target "boost_variant" INTERFACE_INCLUDE_DIRECTORIES property contains
-  # path:
-  #
-  # "/path/to/histogram/build/_deps/boostorg_variant-src/include"
-  #
-  # which is prefixed in the build directory.Target "boost_variant"
-  # INTERFACE_INCLUDE_DIRECTORIES property contains path:
-  #
-  # "/path/to/histogram/build/_deps/boostorg_variant-src/include"
-  #
-  # which is prefixed in the source directory.
+    set(BUILD_TESTING OFF) # hide cache variable
 
-  # set(CONFIG_INSTALL_DIR lib/cmake/${PROJECT_NAME}-${PROJECT_VERSION})
-  #
-  # install(TARGETS boost_histogram
-  #   boost_assert
-  #   boost_config
-  #   boost_core
-  #   boost_mp11
-  #   boost_throw_exception
-  #   boost_variant2
-  #   EXPORT ${PROJECT_NAME}Targets)
-  # install(EXPORT ${PROJECT_NAME}Targets
-  #   DESTINATION ${CONFIG_INSTALL_DIR}
-  #   NAMESPACE Boost::
-  #   FILE ${PROJECT_NAME}Config.cmake)
-  #
-  # install(DIRECTORY include/ DESTINATION include)
+    boost_fetch(boostorg/assert TAG develop EXCLUDE_FROM_ALL)
+    boost_fetch(boostorg/config TAG develop EXCLUDE_FROM_ALL)
+    boost_fetch(boostorg/core TAG develop EXCLUDE_FROM_ALL)
+    boost_fetch(boostorg/mp11 TAG develop EXCLUDE_FROM_ALL)
+    boost_fetch(boostorg/throw_exception TAG develop EXCLUDE_FROM_ALL)
+    boost_fetch(boostorg/variant2 TAG develop EXCLUDE_FROM_ALL)
+    ## No cmake support yet
+    # boost_fetch(boostorg/accumulators TAG develop)
+    # boost_fetch(boostorg/range TAG develop)
+    # boost_fetch(boostorg/serialization TAG develop)
+    # boost_fetch(boostorg/units TAG develop)
+
+    unset(BUILD_TESTING)
+
+  endif()
 
 endif()
 
-if (COMMAND boost_test)
+if(BOOST_SUPERPROJECT_VERSION)
+
+  include(BoostInstall)
+  boost_install(TARGETS boost_histogram HEADER_DIRECTORY include/)
+
+endif()
+
+if (BUILD_TESTING)
+
   add_subdirectory(test)
-endif()
-
-if (COMMAND boost_fetch)
   add_subdirectory(benchmark)
+
 endif()

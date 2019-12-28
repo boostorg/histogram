@@ -2,9 +2,6 @@
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-boost_test(SOURCES check_cmake_version.cpp ARGUMENTS ${PROJECT_VERSION}
-  LIBRARIES Boost::core Boost::config)
-
 find_package(PythonInterp)
 if (PYTHONINTERP_FOUND)
   # checks that b2 and cmake are in sync
@@ -13,6 +10,8 @@ if (PYTHONINTERP_FOUND)
   # checks that all headers are included in odr test
   add_test(NAME runpy-${PROJECT_NAME}_check_odr_test COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
 endif()
+
+include(BoostTest)
 
 # keep in sync with Jamfile, this should be automatized...
 boost_test(TYPE compile-fail SOURCES axis_category_fail0.cpp
@@ -160,7 +159,7 @@ boost_test(TYPE run SOURCES utility_test.cpp
 if (cxx_std_17 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
   boost_test(TYPE run SOURCES deduction_guides_test.cpp
     LIBRARIES Boost::histogram Boost::core)
-  target_compile_features(BoostHistogram-deduction_guides_test_cpp PRIVATE cxx_std_17)
+  target_compile_features(boost_histogram-deduction_guides_test_cpp PRIVATE cxx_std_17)
 endif()
 
 if (Threads_FOUND)
