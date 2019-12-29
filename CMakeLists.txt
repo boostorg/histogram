@@ -79,6 +79,12 @@ endif()
 if (BUILD_TESTING)
 
   add_subdirectory(test)
-  add_subdirectory(benchmark)
+
+  # do not pollute the superproject with the benchmarks
+  if(NOT BOOST_SUPERPROJECT_VERSION)
+
+    add_subdirectory(benchmark)
+
+  endif()
 
 endif()
