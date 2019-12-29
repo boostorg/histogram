@@ -39,7 +39,7 @@ alias odr :
 
 alias cxx14 :
     [ run accumulators_test.cpp : : :
-      # make sure sum accumulator works even with -ffast-math and optimizations 
+      # make sure sum accumulator works even with -ffast-math and optimizations
       <toolset>gcc:<cxxflags>"-O3 -ffast-math"
       <toolset>clang:<cxxflags>"-O3 -ffast-math" ]
     [ run algorithm_project_test.cpp ]
@@ -140,13 +140,13 @@ alias libserial :
     ;
 
 # for builds without optional boost dependencies
-alias minimal : odr cxx14 cxx17 failure threading ;
+alias minimal : cxx14 cxx17 failure threading ;
 
 # all tests
-alias all : minimal accumulators range units serialization ;
+alias all : minimal odr accumulators range units serialization ;
 
 # all except "failure", because it is distracting during development
-alias develop : odr cxx14 cxx17 threading accumulators range units serialization ;
+alias develop : cxx14 cxx17 threading odr accumulators range units serialization ;
 
 explicit minimal ;
 explicit all ;

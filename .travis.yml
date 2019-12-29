@@ -17,7 +17,7 @@ matrix:
   fast_finish: true
 
   include:
-    - name: osx and cmake
+    - name: osx and standalone cmake
       os: osx
       language: cpp
       before_script:
@@ -27,7 +27,7 @@ matrix:
       script:
         ctest -j2
 
-    - name: osx and b2
+    - name: osx and superproject cmake and b2 minimal
       os: osx
       language: cpp
       before_script:
@@ -35,21 +35,26 @@ matrix:
         - cd ..
         - git clone -b $TRAVIS_BRANCH --depth 5 https://github.com/boostorg/boost.git
         - cd boost
-        - git submodule update --init --depth 5 tools/build tools/boostdep
+        - git submodule update --init --depth 5 tools/boostdep
 
         # replace library with this version and install dependencies
         - rm -rf libs/histogram
         - mv $TRAVIS_BUILD_DIR libs/histogram
-        - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
 
-        # prepare build
-        - ./bootstrap.sh
-        - ./b2 headers
-        - cd libs/histogram
-        - B2="../../b2 -q -j2 warnings-as-errors=on"
+        # ignore optional dependencies not currently supported by the cmake build
+        - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram -N accumulators -N range -N serialization -N units
+
+        # WORKAROUND: throw_exception tests have dependencies that depinst.py misses
+        - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" throw_exception
+
       script:
-        $B2 cxxstd=latest exception-handling=off test//minimal &&
-        $B2 cxxstd=latest test//all
+        mkdir build && cd build &&
+        cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 .. &&
+        ctest --output-on-failure -R boost_histogram &&
+        cd .. &&
+        ./bootstrap.sh &&
+        ./b2 headers &&
+        ./b2 -q -j2 warnings-as-errors=on cxxstd=latest libs/histogram/test//minimal
 
     - os: linux
       language: python
