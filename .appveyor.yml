@@ -43,7 +43,9 @@ install:
   - sh: ./bootstrap.sh; ./b2 headers; cd libs/histogram
 
 test_script:
+  # on windows
   - cmd: ..\..\b2 %B2_OPTS% cxxstd=latest test//minimal test//serialization
+  # on linux
   - sh:
       B2="../../b2 ${B2_OPTS}";
       $B2 toolset=gcc-7 cxxstd=14 exception-handling=off rtti=off test//minimal &&

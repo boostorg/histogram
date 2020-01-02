@@ -9,7 +9,7 @@
 
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/fwd.hpp> // for sum<>
-#include <cmath>
+#include <cmath>                   // std::abs
 #include <type_traits>
 
 namespace boost {
@@ -19,35 +19,44 @@ namespace accumulators {
 /**
   Uses Neumaier algorithm to compute accurate sums.
 
-  The algorithm uses memory for two floats and is three to
-  five times slower compared to a simple floating point
-  number used to accumulate a sum, but the relative error
-  of the sum is at the level of the machine precision,
-  independent of the number of samples.
+  The algorithm is an improved Kahan algorithm
+  (https://en.wikipedia.org/wiki/Kahan_summation_algorithm). The algorithm uses memory for
+  two numbers and is three to five times slower compared to using a single number to
+  accumulate a sum, but the relative error of the sum is at the level of the machine
+  precision, independent of the number of samples.
 
-  A. Neumaier, Zeitschrift fuer Angewandte Mathematik
-  und Mechanik 54 (1974) 39-51.
+  A. Neumaier, Zeitschrift fuer Angewandte Mathematik und Mechanik 54 (1974) 39-51.
 */
 template <class RealType>
 class sum {
 public:
+  using value_type = RealType;
+  using const_reference = const value_type&;
+
   sum() = default;
 
-  /// Initialize sum to value
-  explicit sum(const RealType& value) noexcept : large_(value) {}
+  /// Initialize sum to value and allow implicit conversion
+  sum(const_reference value) noexcept : sum(value, 0) {}
 
-  /// Set sum to value
-  sum& operator=(const RealType& value) noexcept {
-    large_ = value;
-    small_ = 0;
+  template <class T>
+  sum(const sum<T>& s) noexcept : sum(s.large(), s.small()) {}
+
+  /// Initialize sum explicitly with large and small parts
+  sum(const_reference large, const_reference small) noexcept
+      : large_(large), small_(small) {}
+
+  template <class T>
+  sum& operator=(const sum<T>& s) noexcept {
+    large_ = s.large_;
+    small_ = s.small_;
     return *this;
   }
 
   /// Increment sum by one
-  sum& operator++() { return operator+=(1); }
+  sum& operator++() noexcept { return operator+=(1); }
 
   /// Increment sum by value
-  sum& operator+=(const RealType& value) {
+  sum& operator+=(const_reference value) noexcept {
     // prevent compiler optimization from destroying the algorithm
     // when -ffast-math is enabled
     volatile RealType l;
@@ -66,31 +75,34 @@ public:
     return *this;
   }
 
+  /// Add another sum
+  sum& operator+=(const sum& s) noexcept {
+    operator+=(s.large_);
+    small_ += s.small_;
+    return *this;
+  }
+
   /// Scale by value
-  sum& operator*=(const RealType& value) {
+  sum& operator*=(const_reference value) noexcept {
     large_ *= value;
     small_ *= value;
     return *this;
   }
 
-  template <class T>
-  bool operator==(const sum<T>& rhs) const noexcept {
-    return large_ == rhs.large_ && small_ == rhs.small_;
+  bool operator==(const sum& rhs) const noexcept {
+    return large_ + small_ == rhs.large_ + rhs.small_;
   }
 
-  template <class T>
-  bool operator!=(const T& rhs) const noexcept {
-    return !operator==(rhs);
-  }
+  bool operator!=(const sum& rhs) const noexcept { return !operator==(rhs); }
 
   /// Return large part of the sum.
-  const RealType& large() const { return large_; }
+  const_reference large() const noexcept { return large_; }
 
   /// Return small part of the sum.
-  const RealType& small() const { return small_; }
+  const_reference small() const noexcept { return small_; }
 
-  // allow implicit conversion to RealType
-  operator RealType() const { return large_ + small_; }
+  // lossy conversion to value type must be explicit
+  explicit operator value_type() const noexcept { return large_ + small_; }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
@@ -98,9 +110,55 @@ public:
     ar& make_nvp("small", small_);
   }
 
+  // begin: extra operators to make sum behave like a regular number
+
+  sum& operator*=(const sum& rhs) noexcept {
+    const auto scale = static_cast<value_type>(rhs);
+    large_ *= scale;
+    small_ *= scale;
+    return *this;
+  }
+
+  sum operator*(const sum& rhs) const noexcept {
+    sum s = *this;
+    s *= rhs;
+    return s;
+  }
+
+  sum& operator/=(const sum& rhs) noexcept {
+    const auto scale = 1.0 / static_cast<value_type>(rhs);
+    large_ *= scale;
+    small_ *= scale;
+    return *this;
+  }
+
+  sum operator/(const sum& rhs) const noexcept {
+    sum s = *this;
+    s /= rhs;
+    return s;
+  }
+
+  bool operator<(const sum& rhs) const noexcept {
+    return operator value_type() < rhs.operator value_type();
+  }
+
+  bool operator>(const sum& rhs) const noexcept {
+    return operator value_type() > rhs.operator value_type();
+  }
+
+  bool operator<=(const sum& rhs) const noexcept {
+    return operator value_type() <= rhs.operator value_type();
+  }
+
+  bool operator>=(const sum& rhs) const noexcept {
+    return operator value_type() >= rhs.operator value_type();
+  }
+
+  // end: extra operators
+
 private:
-  RealType large_ = RealType();
-  RealType small_ = RealType();
+  value_type large_{};
+  value_type small_{};
 };
 
 } // namespace accumulators

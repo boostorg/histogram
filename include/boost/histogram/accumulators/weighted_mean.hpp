@@ -26,18 +26,21 @@ namespace accumulators {
 template <class RealType>
 class weighted_mean {
 public:
+  using value_type = RealType;
+  using const_reference = const value_type&;
+
   weighted_mean() = default;
-  weighted_mean(const RealType& wsum, const RealType& wsum2, const RealType& mean,
-                const RealType& variance)
+  weighted_mean(const_reference wsum, const_reference wsum2, const_reference mean,
+                const_reference variance)
       : sum_of_weights_(wsum)
       , sum_of_weights_squared_(wsum2)
       , weighted_mean_(mean)
       , sum_of_weighted_deltas_squared_(
             variance * (sum_of_weights_ - sum_of_weights_squared_ / sum_of_weights_)) {}
 
-  void operator()(const RealType& x) { operator()(weight(1), x); }
+  void operator()(const_reference x) { operator()(weight(1), x); }
 
-  void operator()(const weight_type<RealType>& w, const RealType& x) {
+  void operator()(const weight_type<value_type>& w, const_reference x) {
     sum_of_weights_ += w.value;
     sum_of_weights_squared_ += w.value * w.value;
     const auto delta = x - weighted_mean_;
@@ -49,9 +52,9 @@ public:
   weighted_mean& operator+=(const weighted_mean<T>& rhs) {
     if (sum_of_weights_ != 0 || rhs.sum_of_weights_ != 0) {
       const auto tmp = weighted_mean_ * sum_of_weights_ +
-                       static_cast<RealType>(rhs.weighted_mean_ * rhs.sum_of_weights_);
-      sum_of_weights_ += static_cast<RealType>(rhs.sum_of_weights_);
-      sum_of_weights_squared_ += static_cast<RealType>(rhs.sum_of_weights_squared_);
+                       static_cast<value_type>(rhs.weighted_mean_ * rhs.sum_of_weights_);
+      sum_of_weights_ += static_cast<value_type>(rhs.sum_of_weights_);
+      sum_of_weights_squared_ += static_cast<value_type>(rhs.sum_of_weights_squared_);
       weighted_mean_ = tmp / sum_of_weights_;
     }
     sum_of_weighted_deltas_squared_ +=
@@ -59,7 +62,7 @@ public:
     return *this;
   }
 
-  weighted_mean& operator*=(const RealType& s) {
+  weighted_mean& operator*=(const_reference s) {
     weighted_mean_ *= s;
     sum_of_weighted_deltas_squared_ *= s * s;
     return *this;
@@ -78,12 +81,12 @@ public:
     return !operator==(rhs);
   }
 
-  const RealType& sum_of_weights() const noexcept { return sum_of_weights_; }
-  const RealType& sum_of_weights_squared() const noexcept {
+  const_reference sum_of_weights() const noexcept { return sum_of_weights_; }
+  const_reference sum_of_weights_squared() const noexcept {
     return sum_of_weights_squared_;
   }
-  const RealType& value() const noexcept { return weighted_mean_; }
-  RealType variance() const {
+  const_reference value() const noexcept { return weighted_mean_; }
+  value_type variance() const {
     return sum_of_weighted_deltas_squared_ /
            (sum_of_weights_ - sum_of_weights_squared_ / sum_of_weights_);
   }
@@ -97,8 +100,10 @@ public:
   }
 
 private:
-  RealType sum_of_weights_ = RealType(), sum_of_weights_squared_ = RealType(),
-           weighted_mean_ = RealType(), sum_of_weighted_deltas_squared_ = RealType();
+  value_type sum_of_weights_{};
+  value_type sum_of_weights_squared_{};
+  value_type weighted_mean_{};
+  value_type sum_of_weighted_deltas_squared_{};
 };
 
 } // namespace accumulators

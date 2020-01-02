@@ -18,6 +18,7 @@
 #include <boost/histogram/detail/linearize.hpp>
 #include <boost/histogram/detail/make_default.hpp>
 #include <boost/histogram/detail/optional_index.hpp>
+#include <boost/histogram/detail/priority.hpp>
 #include <boost/histogram/detail/tuple_slice.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
@@ -134,50 +135,62 @@ struct storage_grower {
 };
 
 template <class T, class... Us>
-void fill_storage_4(mp11::mp_false, T&& t, Us&&... args) noexcept {
-  t(std::forward<Us>(args)...);
-}
-
-template <class T>
-void fill_storage_4(mp11::mp_true, T&& t) noexcept {
-  ++t;
+auto fill_storage_element_impl(priority<2>, T&& t, const Us&... args) noexcept
+    -> decltype(t(args...), void()) {
+  t(args...);
 }
 
 template <class T, class U>
-void fill_storage_4(mp11::mp_true, T&& t, U&& w) noexcept {
+auto fill_storage_element_impl(priority<1>, T&& t, const weight_type<U>& w) noexcept
+    -> decltype(t += w, void()) {
+  t += w;
+}
+
+// fallback for arithmetic types and accumulators that do not handle the weight
+template <class T, class U>
+auto fill_storage_element_impl(priority<0>, T&& t, const weight_type<U>& w) noexcept
+    -> decltype(t += w.value, void()) {
   t += w.value;
 }
 
-template <class T, class... Us>
-void fill_storage_3(T&& t, Us&&... args) noexcept {
-  fill_storage_4(has_operator_preincrement<std::decay_t<T>>{}, std::forward<T>(t),
-                 std::forward<Us>(args)...);
+template <class T>
+auto fill_storage_element_impl(priority<1>, T&& t) noexcept -> decltype(++t, void()) {
+  ++t;
 }
 
+template <class T, class... Us>
+auto fill_storage_element(T&& t, const Us&... args) noexcept {
+  fill_storage_element_impl(priority<2>{}, std::forward<T>(t), args...);
+}
+
+// t may be a proxy and then it is an rvalue reference, not an lvalue reference
 template <class IW, class IS, class T, class U>
 void fill_storage_2(IW, IS, T&& t, U&& u) noexcept {
   mp11::tuple_apply(
-      [&](auto&&... args) {
-        fill_storage_3(std::forward<T>(t), std::get<IW::value>(u), args...);
+      [&](const auto&... args) {
+        fill_storage_element(std::forward<T>(t), std::get<IW::value>(u), args...);
       },
       std::get<IS::value>(u).value);
 }
 
+// t may be a proxy and then it is an rvalue reference, not an lvalue reference
 template <class IS, class T, class U>
 void fill_storage_2(mp11::mp_int<-1>, IS, T&& t, const U& u) noexcept {
   mp11::tuple_apply(
-      [&](const auto&... args) { fill_storage_3(std::forward<T>(t), args...); },
+      [&](const auto&... args) { fill_storage_element(std::forward<T>(t), args...); },
       std::get<IS::value>(u).value);
 }
 
+// t may be a proxy and then it is an rvalue reference, not an lvalue reference
 template <class IW, class T, class U>
 void fill_storage_2(IW, mp11::mp_int<-1>, T&& t, const U& u) noexcept {
-  fill_storage_3(std::forward<T>(t), std::get<IW::value>(u));
+  fill_storage_element(std::forward<T>(t), std::get<IW::value>(u));
 }
 
+// t may be a proxy and then it is an rvalue reference, not an lvalue reference
 template <class T, class U>
 void fill_storage_2(mp11::mp_int<-1>, mp11::mp_int<-1>, T&& t, const U&) noexcept {
-  fill_storage_3(std::forward<T>(t));
+  fill_storage_element(std::forward<T>(t));
 }
 
 template <class IW, class IS, class Storage, class Index, class Args>

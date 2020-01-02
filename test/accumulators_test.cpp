@@ -48,7 +48,7 @@ int main() {
     BOOST_TEST_EQ(w, 1);
     BOOST_TEST_NE(w, 2);
 
-    w += 2;
+    w += weight(2);
     BOOST_TEST_EQ(w.value(), 3);
     BOOST_TEST_EQ(w.variance(), 5);
     BOOST_TEST_EQ(w, w_t(3, 5));
@@ -66,7 +66,7 @@ int main() {
     BOOST_TEST_EQ(u, w_t(2, 4));
 
     w_t v(0);
-    v += 2;
+    v += weight(2);
     BOOST_TEST_EQ(u, v);
 
     // conversion to RealType
@@ -185,6 +185,19 @@ int main() {
     BOOST_TEST_EQ(sum.large(), 0);
     BOOST_TEST_EQ(sum.small(), 2);
 
+    sum = s_t{1e100, 1};
+    sum += s_t{1e100, 1};
+    BOOST_TEST_EQ(sum, (s_t{2e100, 2}));
+    sum = s_t{1e100, 1};
+    sum += s_t{1, 0};
+    BOOST_TEST_EQ(sum, (s_t{1e100, 2}));
+    sum = s_t{1, 0};
+    sum += s_t{1e100, 1};
+    BOOST_TEST_EQ(sum, (s_t{1e100, 2}));
+    sum = s_t{0, 1};
+    sum += s_t{1, 0};
+    BOOST_TEST_EQ(sum, (s_t{1, 1}));
+
     accumulators::sum<double> a(3), b(2), c(3);
     BOOST_TEST_LT(b, c);
     BOOST_TEST_LE(b, c);
@@ -201,9 +214,9 @@ int main() {
     s_t w;
 
     ++w;
-    w += 1e100;
+    w += weight(1e100);
     ++w;
-    w += -1e100;
+    w += weight(-1e100);
 
     BOOST_TEST_EQ(w.value(), 2);
     BOOST_TEST_EQ(w.variance(), 2e200);

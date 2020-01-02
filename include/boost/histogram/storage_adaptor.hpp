@@ -247,8 +247,8 @@ struct map_impl : T {
     }
 
     template <class... Ts>
-    decltype(auto) operator()(Ts&&... args) {
-      return map->operator[](idx)(std::forward<Ts>(args)...);
+    auto operator()(const Ts&... args) -> decltype(std::declval<value_type>()(args...)) {
+      return (*map)[idx](args...);
     }
 
     map_impl* map;

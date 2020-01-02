@@ -25,7 +25,7 @@ matrix:
         - cd build
         - cmake ..
       script:
-        ctest -j2
+        ctest -j2 --output-on-failure
 
     - name: osx and superproject cmake and b2 minimal
       os: osx
@@ -50,7 +50,7 @@ matrix:
       script:
         mkdir build && cd build &&
         cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 .. &&
-        ctest --output-on-failure -R boost_histogram &&
+        ctest -j2 --output-on-failure -R boost_histogram &&
         cd .. &&
         ./bootstrap.sh &&
         ./b2 headers &&

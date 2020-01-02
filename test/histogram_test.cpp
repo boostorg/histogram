@@ -410,7 +410,7 @@ void run_tests() {
     BOOST_TEST_EQ(a[4], 3);
   }
 
-  // histogram_reset
+  // histogram reset
   {
     auto h = make(Tag(), axis::integer<int, axis::null_type, axis::option::none_t>(0, 2));
     h(0);
@@ -424,10 +424,9 @@ void run_tests() {
     BOOST_TEST_EQ(algorithm::sum(h), 0);
   }
 
-  // using containers or input and output
+  // using containers for input and output
   {
-    auto h = make_s(Tag(), weight_storage(), axis::integer<>(0, 2),
-                    axis::integer<double>(2, 4));
+    auto h = make(Tag(), axis::integer<>(0, 2), axis::integer<double>(2, 4));
     // tuple in
     h(std::make_tuple(0, 2.0));
     h(std::make_tuple(1, 3.0));
@@ -436,9 +435,9 @@ void run_tests() {
     auto i11 = std::make_tuple(1, 1);
 
     // tuple out
-    BOOST_TEST_EQ(h.at(i00).value(), 1);
-    BOOST_TEST_EQ(h[i00].value(), 1);
-    BOOST_TEST_EQ(h[i11].value(), 1);
+    BOOST_TEST_EQ(h.at(i00), 1);
+    BOOST_TEST_EQ(h[i00], 1);
+    BOOST_TEST_EQ(h[i11], 1);
 
     // iterable out
     int j11[] = {1, 1};
@@ -455,10 +454,8 @@ void run_tests() {
     h(std::make_tuple(weight(2), 0, 2.0));
     h(std::make_tuple(1, 3.0, weight(2)));
 
-    BOOST_TEST_EQ(h.at(i00).value(), 3);
-    BOOST_TEST_EQ(h[i00].value(), 3);
-    BOOST_TEST_EQ(h.at(i11).variance(), 5);
-    BOOST_TEST_EQ(h[i11].variance(), 5);
+    BOOST_TEST_EQ(h.at(i00), 3);
+    BOOST_TEST_EQ(h[i00], 3);
 
     // test special case of 1-dimensional histogram, which should unpack
     // 1-dimensional tuple normally, but forward larger tuples to the axis

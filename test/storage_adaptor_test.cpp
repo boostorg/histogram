@@ -218,7 +218,7 @@ int main() {
     ++a[0];
     a[0] += 1;
     a[0] += 2;
-    a[0] += accumulators::weighted_sum<double>(1, 0);
+    a[0] += accumulators::weighted_sum<double>(1, 2);
     BOOST_TEST_EQ(a[0].value(), 5);
     BOOST_TEST_EQ(a[0].variance(), 6);
     a[0] *= 2;

@@ -77,8 +77,8 @@ int main(int argc, char** argv) {
     const auto filename =
         join(argv[1], "accumulators_serialization_test_weighted_sum.xml");
     accumulators::weighted_sum<> a;
-    a += 1;
-    a += 10;
+    a += weight(1);
+    a += weight(10);
     print_xml(filename, a);
 
     accumulators::weighted_sum<> b;

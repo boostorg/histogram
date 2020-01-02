@@ -20,54 +20,63 @@ template <class RealType>
 class weighted_sum {
 public:
   using value_type = RealType;
-  using const_reference = const RealType&;
+  using const_reference = const value_type&;
 
   weighted_sum() = default;
-  explicit weighted_sum(const RealType& value) noexcept
-      : sum_of_weights_(value), sum_of_weights_squared_(value) {}
-  weighted_sum(const RealType& value, const RealType& variance) noexcept
+
+  /// Initialize sum to value and allow implicit conversion
+  weighted_sum(const_reference value) noexcept : weighted_sum(value, value) {}
+
+  template <class T>
+  weighted_sum(const weighted_sum<T>& s) noexcept
+      : weighted_sum(s.value(), s.variance()) {}
+
+  /// Initialize sum to value and variance
+  weighted_sum(const_reference value, const_reference variance) noexcept
       : sum_of_weights_(value), sum_of_weights_squared_(variance) {}
 
-  /// Increment by one.
-  weighted_sum& operator++() { return operator+=(1); }
-
-  /// Increment by value.
   template <class T>
-  weighted_sum& operator+=(const T& value) {
-    sum_of_weights_ += value;
-    sum_of_weights_squared_ += value * value;
+  weighted_sum& operator=(const weighted_sum<T>& s) noexcept {
+    sum_of_weights_ = s.sum_of_weights_;
+    sum_of_weights_squared_ = s.sum_of_weights_squared_;
+    return *this;
+  }
+
+  /// Increment by one.
+  weighted_sum& operator++() {
+    ++sum_of_weights_;
+    ++sum_of_weights_squared_;
+    return *this;
+  }
+
+  /// Increment by weight.
+  template <class T>
+  weighted_sum& operator+=(const weight_type<T>& w) {
+    sum_of_weights_ += w.value;
+    sum_of_weights_squared_ += w.value * w.value;
     return *this;
   }
 
   /// Added another weighted sum.
-  template <class T>
-  weighted_sum& operator+=(const weighted_sum<T>& rhs) {
-    sum_of_weights_ += static_cast<RealType>(rhs.sum_of_weights_);
-    sum_of_weights_squared_ += static_cast<RealType>(rhs.sum_of_weights_squared_);
+  weighted_sum& operator+=(const weighted_sum& rhs) {
+    sum_of_weights_ += rhs.sum_of_weights_;
+    sum_of_weights_squared_ += rhs.sum_of_weights_squared_;
     return *this;
   }
 
   /// Scale by value.
-  weighted_sum& operator*=(const RealType& x) {
+  weighted_sum& operator*=(const_reference x) {
     sum_of_weights_ *= x;
     sum_of_weights_squared_ *= x * x;
     return *this;
   }
 
-  bool operator==(const RealType& rhs) const noexcept {
-    return sum_of_weights_ == rhs && sum_of_weights_squared_ == rhs;
-  }
-
-  template <class T>
-  bool operator==(const weighted_sum<T>& rhs) const noexcept {
+  bool operator==(const weighted_sum& rhs) const noexcept {
     return sum_of_weights_ == rhs.sum_of_weights_ &&
            sum_of_weights_squared_ == rhs.sum_of_weights_squared_;
   }
 
-  template <class T>
-  bool operator!=(const T& rhs) const noexcept {
-    return !operator==(rhs);
-  }
+  bool operator!=(const weighted_sum& rhs) const noexcept { return !operator==(rhs); }
 
   /// Return value of the sum.
   const_reference value() const noexcept { return sum_of_weights_; }
@@ -85,8 +94,8 @@ public:
   }
 
 private:
-  value_type sum_of_weights_ = value_type();
-  value_type sum_of_weights_squared_ = value_type();
+  value_type sum_of_weights_{};
+  value_type sum_of_weights_squared_{};
 };
 
 } // namespace accumulators

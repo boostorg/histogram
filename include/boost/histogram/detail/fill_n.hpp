@@ -159,7 +159,7 @@ template <class S, class Index, class... Ts>
 void fill_n_storage(S& s, const Index idx, Ts&&... p) noexcept {
   if (is_valid(idx)) {
     BOOST_ASSERT(idx < s.size());
-    fill_storage_3(s[idx], *p.first...);
+    fill_storage_element(s[idx], *p.first...);
   }
   fold((p.second ? ++p.first : 0)...);
 }
@@ -168,8 +168,7 @@ template <class S, class Index, class T, class... Ts>
 void fill_n_storage(S& s, const Index idx, weight_type<T>&& w, Ts&&... ps) noexcept {
   if (is_valid(idx)) {
     BOOST_ASSERT(idx < s.size());
-    fill_storage_3(s[idx], weight_type<decltype(*w.value.first)>{*w.value.first},
-                   *ps.first...);
+    fill_storage_element(s[idx], weight(*w.value.first), *ps.first...);
   }
   if (w.value.second) ++w.value.first;
   fold((ps.second ? ++ps.first : 0)...);

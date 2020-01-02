@@ -153,6 +153,16 @@ void run_tests() {
     BOOST_TEST_EQ(d.at(0).variance(), 1);
     BOOST_TEST_EQ(d.at(1).value(), 3);
     BOOST_TEST_EQ(d.at(1).variance(), 9);
+
+    // add unweighted histogram
+    auto e = make_s(Tag(), std::vector<int>(), ia);
+    std::fill(e.begin(), e.end(), 2);
+
+    d += e;
+    BOOST_TEST_EQ(d.at(0).value(), 3);
+    BOOST_TEST_EQ(d.at(0).variance(), 3);
+    BOOST_TEST_EQ(d.at(1).value(), 5);
+    BOOST_TEST_EQ(d.at(1).variance(), 11);
   }
 
   // bad operations

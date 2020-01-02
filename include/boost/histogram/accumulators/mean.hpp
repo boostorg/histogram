@@ -26,18 +26,21 @@ namespace accumulators {
 template <class RealType>
 class mean {
 public:
+  using value_type = RealType;
+  using const_reference = const value_type&;
+
   mean() = default;
-  mean(const RealType& n, const RealType& mean, const RealType& variance) noexcept
+  mean(const_reference n, const_reference mean, const_reference variance) noexcept
       : sum_(n), mean_(mean), sum_of_deltas_squared_(variance * (n - 1)) {}
 
-  void operator()(const RealType& x) noexcept {
-    sum_ += static_cast<RealType>(1);
+  void operator()(const_reference x) noexcept {
+    sum_ += static_cast<value_type>(1);
     const auto delta = x - mean_;
     mean_ += delta / sum_;
     sum_of_deltas_squared_ += delta * (x - mean_);
   }
 
-  void operator()(const weight_type<RealType>& w, const RealType& x) noexcept {
+  void operator()(const weight_type<value_type>& w, const_reference x) noexcept {
     sum_ += w.value;
     const auto delta = x - mean_;
     mean_ += w.value * delta / sum_;
@@ -47,15 +50,15 @@ public:
   template <class T>
   mean& operator+=(const mean<T>& rhs) noexcept {
     if (sum_ != 0 || rhs.sum_ != 0) {
-      const auto tmp = mean_ * sum_ + static_cast<RealType>(rhs.mean_ * rhs.sum_);
+      const auto tmp = mean_ * sum_ + static_cast<value_type>(rhs.mean_ * rhs.sum_);
       sum_ += rhs.sum_;
       mean_ = tmp / sum_;
     }
-    sum_of_deltas_squared_ += static_cast<RealType>(rhs.sum_of_deltas_squared_);
+    sum_of_deltas_squared_ += static_cast<value_type>(rhs.sum_of_deltas_squared_);
     return *this;
   }
 
-  mean& operator*=(const RealType& s) noexcept {
+  mean& operator*=(const_reference s) noexcept {
     mean_ *= s;
     sum_of_deltas_squared_ *= s * s;
     return *this;
@@ -72,9 +75,9 @@ public:
     return !operator==(rhs);
   }
 
-  const RealType& count() const noexcept { return sum_; }
-  const RealType& value() const noexcept { return mean_; }
-  RealType variance() const noexcept { return sum_of_deltas_squared_ / (sum_ - 1); }
+  const_reference count() const noexcept { return sum_; }
+  const_reference value() const noexcept { return mean_; }
+  value_type variance() const noexcept { return sum_of_deltas_squared_ / (sum_ - 1); }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned version) {
@@ -82,7 +85,7 @@ public:
       // read only
       std::size_t sum;
       ar& make_nvp("sum", sum);
-      sum_ = static_cast<RealType>(sum);
+      sum_ = static_cast<value_type>(sum);
     } else {
       ar& make_nvp("sum", sum_);
     }
@@ -91,7 +94,9 @@ public:
   }
 
 private:
-  RealType sum_ = 0, mean_ = 0, sum_of_deltas_squared_ = 0;
+  value_type sum_{};
+  value_type mean_{};
+  value_type sum_of_deltas_squared_{};
 };
 
 } // namespace accumulators
