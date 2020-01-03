@@ -9,9 +9,9 @@
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include "throw_exception.hpp"
 #include <unordered_map>
 #include <vector>
+#include "throw_exception.hpp"
 #include "utility_histogram.hpp"
 
 using namespace boost::histogram;
@@ -19,35 +19,56 @@ using boost::histogram::algorithm::sum;
 
 template <typename Tag>
 void run_tests() {
-  auto ax = axis::integer<>(0, 100);
+  auto ax = axis::integer<>(0, 10);
 
-  auto h1 = make(Tag(), ax);
-  for (unsigned i = 0; i < 100; ++i) h1(i);
-  BOOST_TEST_EQ(sum(h1), 100);
+  {
+    auto h = make(Tag(), ax);
+    std::fill(h.begin(), h.end(), 1);
+    BOOST_TEST_EQ(sum(h), 12);
+    BOOST_TEST_EQ(sum(h, coverage::inner), 10);
+  }
 
-  auto h2 = make_s(Tag(), std::vector<double>(), ax, ax);
-  for (unsigned i = 0; i < 100; ++i)
-    for (unsigned j = 0; j < 100; ++j) h2(i, j);
-  BOOST_TEST_EQ(sum(h2), 10000);
+  {
+    auto h = make_s(Tag(), std::array<int, 12>(), ax);
+    std::fill(h.begin(), h.end(), 1);
+    BOOST_TEST_EQ(sum(h), 12);
+    BOOST_TEST_EQ(sum(h, coverage::inner), 10);
+  }
 
-  auto h3 = make_s(Tag(), std::array<int, 102>(), ax);
-  for (unsigned i = 0; i < 100; ++i) h3(i);
-  BOOST_TEST_EQ(sum(h3), 100);
+  {
+    auto h = make_s(Tag(), std::unordered_map<std::size_t, int>(), ax);
+    std::fill(h.begin(), h.end(), 1);
+    BOOST_TEST_EQ(sum(h), 12);
+    BOOST_TEST_EQ(sum(h, coverage::inner), 10);
+  }
 
-  auto h4 = make_s(Tag(), std::unordered_map<std::size_t, int>(), ax);
-  for (unsigned i = 0; i < 100; ++i) h4(i);
-  BOOST_TEST_EQ(sum(h4), 100);
+  {
+    auto h = make_s(Tag(), std::vector<double>(), ax, ax);
+    std::fill(h.begin(), h.end(), 1);
+    BOOST_TEST_EQ(sum(h), 12 * 12);
+    BOOST_TEST_EQ(sum(h, coverage::inner), 10 * 10);
+  }
 
-  auto h5 =
-      make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), axis::integer<>(0, 1),
-             axis::integer<int, axis::null_type, axis::option::none_t>(2, 4));
-  h5(weight(2), 0, 2);
-  h5(-1, 2);
-  h5(1, 3);
+  {
+    using W = accumulators::weighted_sum<>;
+    auto h = make_s(Tag(), std::vector<W>(), axis::integer<>(0, 2),
+                    axis::integer<int, axis::null_type, axis::option::none_t>(2, 4));
+    W w(0, 2);
+    for (auto&& x : h) {
+      x = w;
+      w = W(w.value() + 1, 2);
+    }
 
-  const auto v = algorithm::sum(h5);
-  BOOST_TEST_EQ(v.value(), 4);
-  BOOST_TEST_EQ(v.variance(), 6);
+    // x-axis has 4 bins, y-axis has 2 = 8 bins total with 4 inner bins
+
+    const auto v1 = algorithm::sum(h);
+    BOOST_TEST_EQ(v1.value(), 0 + 1 + 2 + 3 + 4 + 5 + 6 + 7);
+    BOOST_TEST_EQ(v1.variance(), 8 * 2);
+
+    const auto v2 = algorithm::sum(h, coverage::inner);
+    BOOST_TEST_EQ(v2.value(), 1 + 2 + 5 + 6);
+    BOOST_TEST_EQ(v2.variance(), 4 * 2);
+  }
 }
 
 int main() {
