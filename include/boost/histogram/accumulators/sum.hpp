@@ -95,6 +95,9 @@ public:
 
   bool operator!=(const sum& rhs) const noexcept { return !operator==(rhs); }
 
+  /// Return value of the sum.
+  value_type value() const noexcept { return large_ + small_; }
+
   /// Return large part of the sum.
   const_reference large() const noexcept { return large_; }
 
@@ -102,7 +105,7 @@ public:
   const_reference small() const noexcept { return small_; }
 
   // lossy conversion to value type must be explicit
-  explicit operator value_type() const noexcept { return large_ + small_; }
+  explicit operator value_type() const noexcept { return value(); }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {

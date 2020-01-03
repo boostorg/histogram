@@ -169,6 +169,8 @@ int main() {
     using s_t = accumulators::sum<double>;
     s_t sum;
     ++sum;
+    BOOST_TEST_EQ(sum, 1);
+    BOOST_TEST_EQ(sum.value(), 1);
     BOOST_TEST_EQ(sum.large(), 1);
     BOOST_TEST_EQ(sum.small(), 0);
     BOOST_TEST_EQ(str(sum), "sum(1 + 0)"s);
@@ -176,12 +178,13 @@ int main() {
     BOOST_TEST_EQ(str(sum, 15, true), "sum(1 + 0)     "s);
 
     sum += 1e100;
-    BOOST_TEST_EQ(str(sum), "sum(1e+100 + 1)"s);
+    BOOST_TEST_EQ(sum, (s_t{1e100, 1}));
     ++sum;
-    BOOST_TEST_EQ(str(sum), "sum(1e+100 + 2)"s);
+    BOOST_TEST_EQ(sum, (s_t{1e100, 2}));
     sum += -1e100;
-    BOOST_TEST_EQ(str(sum), "sum(0 + 2)"s);
+    BOOST_TEST_EQ(sum, (s_t{0, 2}));
     BOOST_TEST_EQ(sum, 2); // correct answer
+    BOOST_TEST_EQ(sum.value(), 2);
     BOOST_TEST_EQ(sum.large(), 0);
     BOOST_TEST_EQ(sum.small(), 2);
 
@@ -198,7 +201,7 @@ int main() {
     sum += s_t{1, 0};
     BOOST_TEST_EQ(sum, (s_t{1, 1}));
 
-    accumulators::sum<double> a(3), b(2), c(3);
+    accumulators::sum<double> a{3}, b{2}, c{3};
     BOOST_TEST_LT(b, c);
     BOOST_TEST_LE(b, c);
     BOOST_TEST_LE(a, c);
@@ -206,7 +209,7 @@ int main() {
     BOOST_TEST_GE(a, b);
     BOOST_TEST_GE(a, c);
 
-    BOOST_TEST_EQ(s_t() += s_t(), s_t());
+    BOOST_TEST_EQ(s_t{} += s_t{}, s_t{});
   }
 
   {
