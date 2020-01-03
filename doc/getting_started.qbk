@@ -37,7 +37,7 @@ The axis configuration is passed to `make_histogram` as a `std::vector<axis::var
 Run-time configurable histograms are a slower than their compile-time brethren, but still pretty fast.
 
 [note
-If you know already at compile-time, that you will only use one axis type, `axis::regular<>` for example, but not how many per histogram, then you can also pass a `std::vector<axis::regular<>>` to `make_histogram`. You get almost the same speed as in the very first case, where both the axis configuration was fully known at compile-time.
+If you know already at compile-time that you will only use one axis type, `axis::regular<>` for example, but not how many per histogram, then you can also pass a `std::vector<axis::regular<>>` to `make_histogram`. You get almost the same speed as in the very first case, where both the axis configuration was fully known at compile-time.
 ]
 
 [note

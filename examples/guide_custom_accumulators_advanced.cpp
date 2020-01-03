@@ -4,7 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-//[ guide_custom_accumulators_3
+//[ guide_custom_accumulators_advanced
 
 #include <boost/format.hpp>
 #include <boost/histogram.hpp>

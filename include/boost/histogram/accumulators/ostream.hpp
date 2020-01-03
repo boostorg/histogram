@@ -52,32 +52,39 @@ std::basic_ostream<CharT, Traits>& handle_nonzero_width(
 } // namespace detail
 
 namespace accumulators {
-template <class CharT, class Traits, class W>
+
+template <class CharT, class Traits, class U>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const sum<W>& x) {
+                                              const count<U>& x) {
+  return os << x.value();
+}
+
+template <class CharT, class Traits, class U>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
+                                              const sum<U>& x) {
   if (os.width() == 0) return os << "sum(" << x.large() << " + " << x.small() << ")";
   return detail::handle_nonzero_width(os, x);
 }
 
-template <class CharT, class Traits, class W>
+template <class CharT, class Traits, class U>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const weighted_sum<W>& x) {
+                                              const weighted_sum<U>& x) {
   if (os.width() == 0)
     return os << "weighted_sum(" << x.value() << ", " << x.variance() << ")";
   return detail::handle_nonzero_width(os, x);
 }
 
-template <class CharT, class Traits, class W>
+template <class CharT, class Traits, class U>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const mean<W>& x) {
+                                              const mean<U>& x) {
   if (os.width() == 0)
     return os << "mean(" << x.count() << ", " << x.value() << ", " << x.variance() << ")";
   return detail::handle_nonzero_width(os, x);
 }
 
-template <class CharT, class Traits, class W>
+template <class CharT, class Traits, class U>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const weighted_mean<W>& x) {
+                                              const weighted_mean<U>& x) {
   if (os.width() == 0)
     return os << "weighted_mean(" << x.sum_of_weights() << ", " << x.value() << ", "
               << x.variance() << ")";

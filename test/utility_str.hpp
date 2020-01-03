@@ -8,12 +8,18 @@
 #define BOOST_HISTOGRAM_TEST_UTILITY_STR_HPP
 
 #include <sstream>
-#include <string>
 
 template <class T>
-std::string str(const T& t) {
+auto str(const T& t, int w = 0, bool left = true) {
   std::ostringstream os;
+  auto saved = os.width();
+  os.width(w);
+  if (left)
+    os << std::left;
+  else
+    os << std::right;
   os << t;
+  os.width(saved);
   return os.str();
 }
 

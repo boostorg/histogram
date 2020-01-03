@@ -43,10 +43,15 @@ using empty_type = null_type;
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 namespace transform {
+
 struct id;
+
 struct log;
+
 struct sqrt;
+
 struct pow;
+
 } // namespace transform
 
 template <class Value = double, class Transform = use_default,
@@ -80,6 +85,10 @@ template <class T>
 struct sample_type;
 
 namespace accumulators {
+
+template <class ValueType = double>
+class count;
+
 template <class ValueType = double>
 class sum;
 
@@ -99,6 +108,7 @@ template <class T>
 struct is_thread_safe : std::false_type {};
 template <class T>
 struct is_thread_safe<thread_safe<T>> : std::true_type {};
+
 } // namespace accumulators
 
 struct unsafe_access;
@@ -133,7 +143,8 @@ using weighted_profile_storage = dense_storage<accumulators::weighted_mean<>>;
 template <class Axes, class Storage = default_storage>
 class BOOST_ATTRIBUTE_NODISCARD histogram;
 
-#endif
+#endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
+
 } // namespace histogram
 } // namespace boost
 

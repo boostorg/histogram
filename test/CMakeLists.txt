@@ -41,7 +41,12 @@ boost_test(TYPE compile-fail SOURCES histogram_fail4.cpp)
 
 set(BOOST_TEST_LINK_LIBRARIES Boost::histogram Boost::core)
 
-boost_test(TYPE run SOURCES accumulators_test.cpp)
+boost_test(TYPE run SOURCES accumulators_count_test.cpp)
+boost_test(TYPE run SOURCES accumulators_mean_test.cpp)
+boost_test(TYPE run SOURCES accumulators_sum_test.cpp)
+boost_test(TYPE run SOURCES accumulators_thread_safe_test.cpp)
+boost_test(TYPE run SOURCES accumulators_weighted_mean_test.cpp)
+boost_test(TYPE run SOURCES accumulators_weighted_sum_test.cpp)
 boost_test(TYPE run SOURCES algorithm_project_test.cpp)
 boost_test(TYPE run SOURCES algorithm_reduce_test.cpp)
 boost_test(TYPE run SOURCES algorithm_sum_test.cpp)

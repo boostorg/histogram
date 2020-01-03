@@ -16,13 +16,11 @@
     - [boost/histogram/axis/ostream.hpp][2]
     - [boost/histogram/accumulators/ostream.hpp][3]
     - [boost/histogram/serialization.hpp][4]
-    - [boost/histogram/display.hpp][5]
 
   [1]: histogram/reference.html#header.boost.histogram.ostream_hpp
   [2]: histogram/reference.html#header.boost.histogram.axis.ostream_hpp
   [3]: histogram/reference.html#header.boost.histogram.accumulators.ostream_hpp
   [4]: histogram/reference.html#header.boost.histogram.serialization_hpp
-  [5]: histogram/reference.html#header.boost.histogram.display_hpp
 */
 
 #include <boost/histogram/accumulators.hpp>

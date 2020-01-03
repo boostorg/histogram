@@ -4,7 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-//[ guide_custom_accumulators_2
+//[ guide_custom_accumulators_simple
 
 #include <boost/format.hpp>
 #include <boost/histogram.hpp>
@@ -15,14 +15,14 @@
 int main() {
   using namespace boost::histogram;
 
-  // Make a custom accumulator, which tracks the maximum of the samples.
+  // A custom accumulator which tracks the maximum of the samples.
   // It must have a call operator that accepts the argument of the `sample` function.
   struct maximum {
     // return value is ignored, so we use void
     void operator()(double x) {
       if (x > value) value = x;
     }
-    double value = 0; // value is initialized to zero
+    double value = 0; // value is public and initialized to zero
   };
 
   // Create 1D histogram that uses the custom accumulator.

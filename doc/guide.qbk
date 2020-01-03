@@ -402,16 +402,25 @@ The library provides several accumulators:
 Users can easily write their own accumulators and plug them into the histogram, if they adhere to the [link histogram.concepts.Accumulator [*Accumulator] concept].
 
 The first example shows how to make and use a histogram that uses one of the the builtin accumulators.
-[import ../examples/guide_custom_accumulators_1.cpp]
-[guide_custom_accumulators_1]
+[import ../examples/guide_custom_accumulators_builtin.cpp]
+[guide_custom_accumulators_builtin]
 
-The second example shows how to use a simple custom accumulator.
-[import ../examples/guide_custom_accumulators_2.cpp]
-[guide_custom_accumulators_2]
+The simplest way to make a custom accumulator is to inherit from one of the builtin accumulators. The following example shows how to add arbitrary metadata to each histogram cell by inheriting a custom accumulator from a builtin accumulator.
+[import ../examples/guide_custom_accumulators_with_metadata.cpp]
+[guide_custom_accumulators_with_metadata]
 
-The third example shows how to make and use an accumulator that accepts multiple samples at once and an optional weight. The accumulator in the example accepts two samples and independently computes the mean for each one. This is more efficient than filling two separate profiles, because the cell lookup has to be done only once.
-[import ../examples/guide_custom_accumulators_3.cpp]
-[guide_custom_accumulators_3]
+The next example shows how to making a custom accumulators completely from scratch. The library was designed to make this as easy as possible.
+[import ../examples/guide_custom_accumulators_simple.cpp]
+[guide_custom_accumulators_simple]
+
+The next example shows a more complex custom accumulator that accepts two samples at once and an optional weight. It independently computes the mean for each sample. This is more efficient than filling two separate profiles, because the cell lookup has to be done only once.
+[import ../examples/guide_custom_accumulators_advanced.cpp]
+[guide_custom_accumulators_advanced]
+
+And finally, just for fun, we use a histogram as the accumulator for another histogram.
+[import ../examples/guide_custom_accumulators_ouroboros.cpp]
+[guide_custom_accumulators_ouroboros]
+Note that the axis size of the nested histogram differs from bin to bin. Creating a 2D histogram in this way is not as efficient as the normal way, but it allows one to create a histograms with such a non-rectangular layout of cells.
 
 [endsect]
 

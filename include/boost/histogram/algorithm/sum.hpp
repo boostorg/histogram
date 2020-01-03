@@ -11,7 +11,6 @@
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <boost/mp11/utility.hpp>
-#include <numeric>
 #include <type_traits>
 
 namespace boost {

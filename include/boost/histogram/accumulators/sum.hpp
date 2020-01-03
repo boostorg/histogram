@@ -10,14 +10,14 @@
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/fwd.hpp> // for sum<>
 #include <cmath>                   // std::abs
-#include <type_traits>
+#include <type_traits>             // std::is_floating_point, std::common_type
 
 namespace boost {
 namespace histogram {
 namespace accumulators {
 
 /**
-  Uses Neumaier algorithm to compute accurate sums.
+  Uses Neumaier algorithm to compute accurate sums of floats.
 
   The algorithm is an improved Kahan algorithm
   (https://en.wikipedia.org/wiki/Kahan_summation_algorithm). The algorithm uses memory for
@@ -29,6 +29,9 @@ namespace accumulators {
 */
 template <class ValueType>
 class sum {
+  static_assert(std::is_floating_point<ValueType>::value,
+                "ValueType must be a floating point type");
+
 public:
   using value_type = ValueType;
   using const_reference = const value_type&;
