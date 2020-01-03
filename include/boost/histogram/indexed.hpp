@@ -132,8 +132,7 @@ public:
     /// Access indices as an iterable range.
     index_view indices() const noexcept {
       BOOST_ASSERT(iter_.indices_.hist_);
-      return {iter_.indices_.data(),
-              iter_.indices_.data() + iter_.indices_.hist_->rank()};
+      return {iter_.indices_.begin(), iter_.indices_.end()};
     }
 
     /// Access current bin.
@@ -239,18 +238,20 @@ public:
     pointer operator->() noexcept { return pointer_proxy{operator*()}; }
 
     iterator& operator++() {
-      BOOST_ASSERT(indices_.hist_);
-      std::size_t stride = 1;
-      auto c = indices_.begin();
-      ++c->idx;
+      BOOST_ASSERT(iter_ < indices_.hist_->end());
+      const auto cbeg = indices_.begin();
+      auto c = cbeg;
       ++iter_;
-      while (c->idx == c->end && (c != (indices_.end() - 1))) {
-        c->idx = c->begin;
-        iter_ -= (c->end - c->begin) * stride;
-        stride *= c->extent;
-        ++c;
+      ++c->idx;
+      if (c->idx < c->end) return *this;
+      while (c->idx == c->end) {
+        iter_ += c->end_skip;
+        if (++c == indices_.end()) return *this;
         ++c->idx;
-        iter_ += stride;
+      }
+      while (c-- != cbeg) {
+        c->idx = c->begin;
+        iter_ += c->begin_skip;
       }
       return *this;
     }
@@ -264,52 +265,70 @@ public:
     bool operator==(const iterator& x) const noexcept { return iter_ == x.iter_; }
     bool operator!=(const iterator& x) const noexcept { return !operator==(x); }
 
+    // make iterator ready for C++17 sentinels
+    bool operator==(const value_iterator& x) const noexcept { return iter_ == x; }
+    bool operator!=(const value_iterator& x) const noexcept { return !operator==(x); }
+
+    // useful for iterator debugging
+    std::size_t offset() const noexcept { return iter_ - indices_.hist_->begin(); }
+
   private:
-    iterator(histogram_type* h) : iter_(h->begin()), indices_(h) {}
+    iterator(value_iterator i, histogram_type& h) : iter_(i), indices_(&h) {}
 
     value_iterator iter_;
 
     struct index_data {
-      axis::index_type idx, begin, end, extent;
+      axis::index_type idx, begin, end;
+      std::size_t begin_skip, end_skip;
     };
 
-    struct indices_t : std::array<index_data, buffer_size> {
+    struct indices_t : private std::array<index_data, buffer_size> {
       using base_type = std::array<index_data, buffer_size>;
+      using pointer = index_data*;
+      using const_pointer = const index_data*;
 
       indices_t(histogram_type* h) noexcept : hist_{h} {}
 
-      constexpr auto end() noexcept { return base_type::begin() + hist_->rank(); }
-      constexpr auto end() const noexcept { return base_type::begin() + hist_->rank(); }
+      using base_type::operator[];
+      unsigned size() const noexcept { return hist_->rank(); }
+      pointer begin() noexcept { return base_type::data(); }
+      const_pointer begin() const noexcept { return base_type::data(); }
+      pointer end() noexcept { return begin() + size(); }
+      const_pointer end() const noexcept { return begin() + size(); }
+
       histogram_type* hist_;
     } indices_;
 
     friend class indexed_range;
   };
 
-  indexed_range(histogram_type& hist, coverage cov) : begin_(&hist), end_(&hist) {
-    std::size_t stride = 1;
-    auto ca = begin_.indices_.begin();
-    const auto clast = ca + begin_.indices_.hist_->rank() - 1;
-    begin_.indices_.hist_->for_each_axis(
-        [ca, clast, cov, &stride, this](const auto& a) mutable {
-          using opt = axis::traits::static_options<std::decay_t<decltype(a)>>;
-          constexpr int under = opt::test(axis::option::underflow);
-          constexpr int over = opt::test(axis::option::overflow);
-          const auto size = a.size();
+  indexed_range(histogram_type& hist, coverage cov)
+      : begin_(hist.begin(), hist), end_(hist.end(), hist) {
+    begin_.indices_.hist_->for_each_axis([ca = begin_.indices_.begin(), cov,
+                                          stride = std::size_t{1},
+                                          this](const auto& a) mutable {
+      using opt = axis::traits::static_options<std::decay_t<decltype(a)>>;
+      constexpr axis::index_type under = opt::test(axis::option::underflow);
+      constexpr axis::index_type over = opt::test(axis::option::overflow);
+      const auto size = a.size();
 
-          ca->extent = size + under + over;
-          // -1 if underflow and cover all, else 0
-          ca->begin = cov == coverage::all ? -under : 0;
-          // size + 1 if overflow and cover all, else size
-          ca->end = cov == coverage::all ? size + over : size;
-          ca->idx = ca->begin;
+      // -1 if underflow and cover all, else 0
+      ca->begin = cov == coverage::all ? -under : 0;
+      // size + 1 if overflow and cover all, else size
+      ca->end = cov == coverage::all ? size + over : size;
+      ca->idx = ca->begin;
 
-          begin_.iter_ += (ca->begin + under) * stride;
-          end_.iter_ += ((ca < clast ? ca->begin : ca->end) + under) * stride;
+      // if axis has *flow and coverage::all OR axis has no *flow:
+      //   begin + under == 0, size + over - end == 0
+      // if axis has *flow and coverage::inner:
+      //   begin + under == 1, size + over - end == 1
+      ca->begin_skip = static_cast<std::size_t>(ca->begin + under) * stride;
+      ca->end_skip = static_cast<std::size_t>(size + over - ca->end) * stride;
+      begin_.iter_ += ca->begin_skip;
 
-          stride *= ca->extent;
-          ++ca;
-        });
+      stride *= size + under + over;
+      ++ca;
+    });
   }
 
   iterator begin() noexcept { return begin_; }
