@@ -16,10 +16,10 @@ namespace histogram {
 namespace accumulators {
 
 /// Holds sum of weights and its variance estimate
-template <class RealType>
+template <class ValueType>
 class weighted_sum {
 public:
-  using value_type = RealType;
+  using value_type = ValueType;
   using const_reference = const value_type&;
 
   weighted_sum() = default;
@@ -27,6 +27,7 @@ public:
   /// Initialize sum to value and allow implicit conversion
   weighted_sum(const_reference value) noexcept : weighted_sum(value, value) {}
 
+  /// Allow implicit conversion from sum<T>
   template <class T>
   weighted_sum(const weighted_sum<T>& s) noexcept
       : weighted_sum(s.value(), s.variance()) {}
@@ -34,13 +35,6 @@ public:
   /// Initialize sum to value and variance
   weighted_sum(const_reference value, const_reference variance) noexcept
       : sum_of_weights_(value), sum_of_weights_squared_(variance) {}
-
-  template <class T>
-  weighted_sum& operator=(const weighted_sum<T>& s) noexcept {
-    sum_of_weights_ = s.sum_of_weights_;
-    sum_of_weights_squared_ = s.sum_of_weights_squared_;
-    return *this;
-  }
 
   /// Increment by one.
   weighted_sum& operator++() {

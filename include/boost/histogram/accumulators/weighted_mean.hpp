@@ -23,13 +23,23 @@ namespace accumulators {
   Uses West's incremental algorithm to improve numerical stability
   of mean and variance computation.
 */
-template <class RealType>
+template <class ValueType>
 class weighted_mean {
 public:
-  using value_type = RealType;
+  using value_type = ValueType;
   using const_reference = const value_type&;
 
   weighted_mean() = default;
+
+  /// Allow implicit conversion from other weighted_means
+  template <class T>
+  weighted_mean(const weighted_mean<T>& o)
+      : sum_of_weights_{o.sum_of_weights_}
+      , sum_of_weights_squared_{o.sum_of_weights_squared_}
+      , weighted_mean_{o.weighted_mean_}
+      , sum_of_weighted_deltas_squared_{o.sum_of_weighted_deltas_squared_} {}
+
+  /// Initialize to external sum of weights, sum of weights squared, mean, and variance
   weighted_mean(const_reference wsum, const_reference wsum2, const_reference mean,
                 const_reference variance)
       : sum_of_weights_(wsum)
@@ -38,8 +48,10 @@ public:
       , sum_of_weighted_deltas_squared_(
             variance * (sum_of_weights_ - sum_of_weights_squared_ / sum_of_weights_)) {}
 
+  /// Insert sample x
   void operator()(const_reference x) { operator()(weight(1), x); }
 
+  /// Insert sample x with weight w
   void operator()(const weight_type<value_type>& w, const_reference x) {
     sum_of_weights_ += w.value;
     sum_of_weights_squared_ += w.value * w.value;
@@ -48,44 +60,50 @@ public:
     sum_of_weighted_deltas_squared_ += w.value * delta * (x - weighted_mean_);
   }
 
-  template <class T>
-  weighted_mean& operator+=(const weighted_mean<T>& rhs) {
+  /// Add another weighted_mean
+  weighted_mean& operator+=(const weighted_mean& rhs) {
     if (sum_of_weights_ != 0 || rhs.sum_of_weights_ != 0) {
-      const auto tmp = weighted_mean_ * sum_of_weights_ +
-                       static_cast<value_type>(rhs.weighted_mean_ * rhs.sum_of_weights_);
-      sum_of_weights_ += static_cast<value_type>(rhs.sum_of_weights_);
-      sum_of_weights_squared_ += static_cast<value_type>(rhs.sum_of_weights_squared_);
+      const auto tmp =
+          weighted_mean_ * sum_of_weights_ + rhs.weighted_mean_ * rhs.sum_of_weights_;
+      sum_of_weights_ += rhs.sum_of_weights_;
+      sum_of_weights_squared_ += rhs.sum_of_weights_squared_;
       weighted_mean_ = tmp / sum_of_weights_;
     }
-    sum_of_weighted_deltas_squared_ +=
-        static_cast<RealType>(rhs.sum_of_weighted_deltas_squared_);
+    sum_of_weighted_deltas_squared_ += rhs.sum_of_weighted_deltas_squared_;
     return *this;
   }
 
+  /** Scale by value
+
+   This acts as if all samples were scaled by the value.
+  */
   weighted_mean& operator*=(const_reference s) {
     weighted_mean_ *= s;
     sum_of_weighted_deltas_squared_ *= s * s;
     return *this;
   }
 
-  template <class T>
-  bool operator==(const weighted_mean<T>& rhs) const noexcept {
+  bool operator==(const weighted_mean& rhs) const noexcept {
     return sum_of_weights_ == rhs.sum_of_weights_ &&
            sum_of_weights_squared_ == rhs.sum_of_weights_squared_ &&
            weighted_mean_ == rhs.weighted_mean_ &&
            sum_of_weighted_deltas_squared_ == rhs.sum_of_weighted_deltas_squared_;
   }
 
-  template <class T>
-  bool operator!=(const T& rhs) const noexcept {
-    return !operator==(rhs);
-  }
+  bool operator!=(const weighted_mean& rhs) const noexcept { return !operator==(rhs); }
 
+  /// Return sum of weights
   const_reference sum_of_weights() const noexcept { return sum_of_weights_; }
+
+  /// Return sum of weights squared (variance of weight distribution)
   const_reference sum_of_weights_squared() const noexcept {
     return sum_of_weights_squared_;
   }
+
+  /// Return mean of accumulated weighted samples
   const_reference value() const noexcept { return weighted_mean_; }
+
+  /// Return variance of accumulated weighted samples
   value_type variance() const {
     return sum_of_weighted_deltas_squared_ /
            (sum_of_weights_ - sum_of_weights_squared_ / sum_of_weights_);

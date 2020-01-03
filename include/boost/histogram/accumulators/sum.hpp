@@ -27,10 +27,10 @@ namespace accumulators {
 
   A. Neumaier, Zeitschrift fuer Angewandte Mathematik und Mechanik 54 (1974) 39-51.
 */
-template <class RealType>
+template <class ValueType>
 class sum {
 public:
-  using value_type = RealType;
+  using value_type = ValueType;
   using const_reference = const value_type&;
 
   sum() = default;
@@ -38,19 +38,13 @@ public:
   /// Initialize sum to value and allow implicit conversion
   sum(const_reference value) noexcept : sum(value, 0) {}
 
+  /// Allow implicit conversion from sum<T>
   template <class T>
   sum(const sum<T>& s) noexcept : sum(s.large(), s.small()) {}
 
   /// Initialize sum explicitly with large and small parts
   sum(const_reference large, const_reference small) noexcept
       : large_(large), small_(small) {}
-
-  template <class T>
-  sum& operator=(const sum<T>& s) noexcept {
-    large_ = s.large_;
-    small_ = s.small_;
-    return *this;
-  }
 
   /// Increment sum by one
   sum& operator++() noexcept { return operator+=(1); }
@@ -59,8 +53,8 @@ public:
   sum& operator+=(const_reference value) noexcept {
     // prevent compiler optimization from destroying the algorithm
     // when -ffast-math is enabled
-    volatile RealType l;
-    RealType s;
+    volatile value_type l;
+    value_type s;
     if (std::abs(large_) >= std::abs(value)) {
       l = large_;
       s = value;
