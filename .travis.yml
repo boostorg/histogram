@@ -17,17 +17,7 @@ matrix:
   fast_finish: true
 
   include:
-    - name: osx and standalone cmake
-      os: osx
-      language: cpp
-      before_script:
-        - mkdir build
-        - cd build
-        - cmake ..
-      script:
-        ctest -j2 --output-on-failure
-
-    - name: osx and superproject cmake and b2 minimal
+    - name: superproject cmake and b2 minimal
       os: osx
       language: cpp
       before_script:

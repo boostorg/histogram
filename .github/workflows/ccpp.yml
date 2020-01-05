@@ -1,0 +1,27 @@
+name: C++ CI
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths-ignore:
+      - 'doc/**'
+      - 'examples/**'
+      - 'tools/**'
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v1
+    - name: ctest
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        ctest -C Debug --output-on-failure
