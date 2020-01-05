@@ -40,16 +40,15 @@ namespace axis {
 template <class Value, class MetaData, class Options>
 class integer : public iterator_mixin<integer<Value, MetaData, Options>>,
                 public metadata_base<MetaData> {
-  static_assert(std::is_integral<Value>::value || std::is_floating_point<Value>::value,
-                "integer axis requires floating point or integral type");
-
+  // these must be private, so that they are not automatically inherited
   using value_type = Value;
-  using local_index_type = std::conditional_t<std::is_integral<value_type>::value,
-                                              index_type, real_index_type>;
-
   using metadata_type = typename metadata_base<MetaData>::metadata_type;
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
+
+  static_assert(std::is_integral<value_type>::value ||
+                    std::is_floating_point<value_type>::value,
+                "integer axis requires floating point or integral type");
 
   static_assert(!options_type::test(option::circular | option::growth) ||
                     (options_type::test(option::circular) ^
@@ -63,6 +62,9 @@ class integer : public iterator_mixin<integer<Value, MetaData, Options>>,
                      !options_type::test(option::underflow)),
                 "circular or growing integer axis with integral type "
                 "cannot have entries in underflow or overflow bins");
+
+  using local_index_type = std::conditional_t<std::is_integral<value_type>::value,
+                                              index_type, real_index_type>;
 
 public:
   constexpr integer() = default;

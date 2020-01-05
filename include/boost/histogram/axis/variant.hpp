@@ -97,6 +97,11 @@ public:
     return visit([](const auto& a) { return traits::inclusive(a); }, *this);
   }
 
+  /// Returns true if the axis is ordered or false.
+  bool ordered() const {
+    return visit([](const auto& a) { return traits::ordered(a); }, *this);
+  }
+
   /// Return reference to const metadata or instance of null_type if axis has no
   /// metadata.
   const metadata_type& metadata() const {
@@ -178,7 +183,7 @@ public:
                 const double x2 = traits::value_as<double>(a, idx + 1);
                 return polymorphic_bin<double>(x1, x2);
               },
-              a);
+              a, detail::priority<1>{});
         },
         *this);
   }

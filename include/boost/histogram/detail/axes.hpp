@@ -324,13 +324,13 @@ auto make_stack_buffer(const T& t, V&& v) {
 
 template <class T>
 using has_underflow =
-    decltype(axis::traits::static_options<T>::test(axis::option::underflow));
+    decltype(axis::traits::get_options<T>::test(axis::option::underflow));
 
 template <class T>
-using is_growing = decltype(axis::traits::static_options<T>::test(axis::option::growth));
+using is_growing = decltype(axis::traits::get_options<T>::test(axis::option::growth));
 
 template <class T>
-using is_not_inclusive = mp11::mp_not<axis::traits::static_is_inclusive<T>>;
+using is_not_inclusive = mp11::mp_not<axis::traits::is_inclusive<T>>;
 
 // for vector<T>
 template <class T>

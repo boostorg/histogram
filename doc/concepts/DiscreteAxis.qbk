@@ -7,14 +7,18 @@
 
 [section:DiscreteAxis DiscreteAxis]
 
-A [*DiscreteAxis] is one of two optional refinements of the [link histogram.concepts.Axis [*Axis]] concept, the other one is the [link histogram.concepts.IntervalAxis IntervalAxis]. This concept is for values that do not form intervals, and for axes with intervals that contain exactly one value.
+A [*DiscreteAxis] is one of two optional refinements of the [link histogram.concepts.Axis [*Axis]] concept, the other one is the [link histogram.concepts.IntervalAxis IntervalAxis]. This concept is for axes which in which each bin represents a single value instead of an interval.
+
+Discrete axes can be further divided into ordered and unordered. An axis is ordered, when bin indices i < j < k imply that value[i] < value[j] < value[k] or value[i] > value[j] > value[k] for all i, j, k. The [classref boost::histogram::axis::integer integer axis] is ordered and the [classref boost::histogram::axis::category category axis] is unordered.
+
+An unordered discrete axis cannot have an underflow bin. Since there is no order, one can only have one extra bin that counts values not handled by the axis, and by convention the overflow bin is used for that.
 
 [heading Associated Types]
 
 * [link histogram.concepts.Axis [*Axis]]
 * [link histogram.concepts.IntervalAxis [*IntervalAxis]]
 
-[heading Requirements]
+[heading Optional features]
 
 * `A` is a type meeting the requirements of [*DiscreteAxis]
 * `a` is a value of type `A`
@@ -26,6 +30,13 @@ A [*DiscreteAxis] is one of two optional refinements of the [link histogram.conc
 
 [table Valid expressions
 [[Expression] [Returns] [Semantics, Pre/Post-conditions]]
+[
+  [`A::ordered()`]
+  [`bool`]
+  [
+    static constexpr member function which returns true if the axis is ordered and false if it is unordered. If this is absent, the library checks the value type is arithmetic instead, see [funcref boost::histogram::axis::traits::ordered].
+  ]
+]
 [
   [`a.value(i)`]
   [`V`]
@@ -75,6 +86,6 @@ A [*DiscreteAxis] is one of two optional refinements of the [link histogram.conc
 [heading Models]
 
 * [classref boost::histogram::axis::category]
-* [classref boost::histogram::axis::integer], if first template parameter is [headerref boost/histogram/fwd.hpp `boost::histogram::index_type`]
+* [classref boost::histogram::axis::integer], if first template parameter is `int`
 
 [endsect]

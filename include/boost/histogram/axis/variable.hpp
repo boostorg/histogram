@@ -47,6 +47,7 @@ namespace axis {
 template <class Value, class MetaData, class Options, class Allocator>
 class variable : public iterator_mixin<variable<Value, MetaData, Options, Allocator>>,
                  public metadata_base<MetaData> {
+  // these must be private, so that they are not automatically inherited
   using value_type = Value;
   using metadata_type = typename metadata_base<MetaData>::metadata_type;
   using options_type =

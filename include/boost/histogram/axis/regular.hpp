@@ -179,6 +179,7 @@ template <class Value, class Transform, class MetaData, class Options>
 class regular : public iterator_mixin<regular<Value, Transform, MetaData, Options>>,
                 protected detail::replace_default<Transform, transform::id>,
                 public metadata_base<MetaData> {
+  // these must be private, so that they are not automatically inherited
   using value_type = Value;
   using transform_type = detail::replace_default<Transform, transform::id>;
   using metadata_type = typename metadata_base<MetaData>::metadata_type;

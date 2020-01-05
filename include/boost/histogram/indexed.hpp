@@ -51,7 +51,7 @@ public:
   using value_type = typename std::iterator_traits<value_iterator>::value_type;
 
   class iterator;
-  using range_iterator = iterator; ///< deprecated
+  using range_iterator [[deprecated("use iterator instead")]] = iterator; ///< deprecated
 
   /** Lightweight view to access value and index of current cell.
 
@@ -71,7 +71,8 @@ public:
 
     public:
       using const_reference = const axis::index_type&;
-      using reference = const_reference; ///< deprecated
+      using reference [[deprecated("use const_reference instead")]] =
+          const_reference; ///< deprecated
 
       /// implementation detail
       class const_iterator
@@ -307,7 +308,7 @@ public:
     begin_.indices_.hist_->for_each_axis([ca = begin_.indices_.begin(), cov,
                                           stride = std::size_t{1},
                                           this](const auto& a) mutable {
-      using opt = axis::traits::static_options<std::decay_t<decltype(a)>>;
+      using opt = axis::traits::get_options<std::decay_t<decltype(a)>>;
       constexpr axis::index_type under = opt::test(axis::option::underflow);
       constexpr axis::index_type over = opt::test(axis::option::overflow);
       const auto size = a.size();

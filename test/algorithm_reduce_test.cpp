@@ -23,9 +23,7 @@ using namespace boost::histogram::algorithm;
 
 template <typename Tag>
 void run_tests() {
-  // reduce:
-  // - does not work with arguments not convertible to double
-  // - does not work with category axis, which is not ordered
+  // limitations: shrink does not work with arguments not convertible to double
 
   using R = axis::regular<double, axis::transform::id, axis::null_type>;
   using ID = axis::integer<double, axis::null_type>;
@@ -41,7 +39,11 @@ void run_tests() {
     // not allowed: repeated indices
     BOOST_TEST_THROWS((void)reduce(h, slice(1, 0, 2), slice(1, 1, 3)),
                       std::invalid_argument);
+    // two rebin requests for same axis cannot be fused
     BOOST_TEST_THROWS((void)reduce(h, rebin(0, 2), rebin(0, 2)), std::invalid_argument);
+    // rebin and slice_and_rebin with merge > 1 requests for same axis cannot be fused
+    BOOST_TEST_THROWS((void)reduce(h, slice_and_rebin(0, 1, 3, 2), rebin(0, 2)),
+                      std::invalid_argument);
     BOOST_TEST_THROWS((void)reduce(h, shrink(1, 0, 2), shrink(1, 0, 2)),
                       std::invalid_argument);
     // not allowed: slice with begin >= end
@@ -62,13 +64,8 @@ void run_tests() {
     auto h = make(Tag(), ID(0, 3));
     const auto& ax = h.axis();
     BOOST_TEST_EQ(ax.value(0), 0);
-    BOOST_TEST_EQ(ax.value(1), 1);
-    BOOST_TEST_EQ(ax.value(2), 2);
     BOOST_TEST_EQ(ax.value(3), 3);
     BOOST_TEST_EQ(ax.index(-1), -1);
-    BOOST_TEST_EQ(ax.index(0), 0);
-    BOOST_TEST_EQ(ax.index(1), 1);
-    BOOST_TEST_EQ(ax.index(2), 2);
     BOOST_TEST_EQ(ax.index(3), 3);
 
     BOOST_TEST_EQ(reduce(h, shrink(-1, 5)).axis(), ID(0, 3));
@@ -88,10 +85,10 @@ void run_tests() {
 
     /*
       matrix layout:
-      x ->
+      x
     y 1 0 1 0
-    | 1 1 0 0
-    v 0 2 1 3
+      1 1 0 0
+      0 2 1 3
     */
     h.at(0, 0) = 1;
     h.at(0, 1) = 1;
@@ -109,9 +106,11 @@ void run_tests() {
     BOOST_TEST_EQ(hr.axis(1), R(3, -1, 2));
     BOOST_TEST_EQ(hr, h);
 
+    // noop slice
     hr = reduce(h, slice(1, 0, 4), slice(0, 0, 4));
     BOOST_TEST_EQ(hr, h);
 
+    // shrinking along first axis
     hr = reduce(h, shrink(0, 2, 4));
     BOOST_TEST_EQ(hr.rank(), 2);
     BOOST_TEST_EQ(sum(hr), 10);
@@ -152,27 +151,28 @@ void run_tests() {
     BOOST_TEST_EQ(hr.at(1, 0), 3); // overflow
 
     // test overload that accepts iterable and test option fusion
-    std::vector<reduce_option> opts{{shrink(0, 2, 5), rebin(0, 2), rebin(1, 3)}};
+    std::vector<reduce_command> opts{{shrink(0, 2, 5), rebin(0, 2), rebin(1, 3)}};
     auto hr2 = reduce(h, opts);
     BOOST_TEST_EQ(hr2, hr);
-    opts = {rebin(0, 2), slice(0, 1, 4), rebin(1, 3)};
-    auto hr3 = reduce(h, opts);
+    reduce_command opts2[3] = {rebin(1, 3), rebin(0, 2), shrink(0, 2, 5)};
+    auto hr3 = reduce(h, opts2);
     BOOST_TEST_EQ(hr3, hr);
+
+    // test positional args
+    auto hr4 = reduce(h, shrink_and_rebin(2, 5, 2), rebin(3));
+    BOOST_TEST_EQ(hr4, hr);
   }
 
   // mixed axis types
   {
-    R r(5, 0.0, 1.0);
+    R r(5, 0.0, 5.0);
     V v{{1., 2., 3.}};
     CI c{{1, 2, 3}};
     auto h = make(Tag(), r, v, c);
-    auto hr = algorithm::reduce(h, shrink(0, 0.2, 0.7));
-    BOOST_TEST_EQ(hr.axis(0).size(), 3);
-    BOOST_TEST_EQ(hr.axis(0).bin(0).lower(), 0.2);
-    BOOST_TEST_EQ(hr.axis(0).bin(2).upper(), 0.8);
-    BOOST_TEST_EQ(hr.axis(1).size(), 2);
-    BOOST_TEST_EQ(hr.axis(1).bin(0).lower(), 1);
-    BOOST_TEST_EQ(hr.axis(1).bin(1).upper(), 3);
+    auto hr = algorithm::reduce(h, shrink(0, 2, 4), slice(2, 1, 3));
+    BOOST_TEST_EQ(hr.axis(0), (R{2, 2, 4}));
+    BOOST_TEST_EQ(hr.axis(1), (V{{1., 2., 3.}}));
+    BOOST_TEST_EQ(hr.axis(2), (CI{{2, 3}}));
     BOOST_TEST_THROWS((void)algorithm::reduce(h, rebin(2, 2)), std::invalid_argument);
   }
 
@@ -260,6 +260,17 @@ void run_tests() {
     BOOST_TEST_EQ(hr.at(0, 0), 1);
     BOOST_TEST_EQ(hr.at(-1, 1), 4);
     BOOST_TEST_EQ(hr.at(0, 1), 2);
+  }
+
+  // reduce on category axis: removed bins are added to overflow bin
+  {
+    auto h = make(Tag(), CI{{1, 2, 3}});
+    std::fill(h.begin(), h.end(), 1);
+    // original: [1: 1, 2: 1, 3: 1, overflow: 1]
+    auto hr = reduce(h, slice(1, 2));
+    // reduced: [2: 1, overflow: 3]
+    BOOST_TEST_EQ(hr[0], 1);
+    BOOST_TEST_EQ(hr[1], 3);
   }
 }
 

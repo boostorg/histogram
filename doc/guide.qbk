@@ -272,7 +272,7 @@ It is easy to iterate over all histogram cells to compute the sum of cell values
 
 [section Projection]
 
-It is sometimes convenient to generate a high-dimensional histogram first and then extract smaller or lower-dimensional versions from it. Lower-dimensional histograms are obtained by summing the bin contents of the removed axes. This is called a /projection/. When the histogram has under- and overflow bins along all axes, this operation creates a histogram which is identical to one that would have been obtained by filling the original data.
+It is sometimes convenient to generate a high-dimensional histogram first and then extract smaller or lower-dimensional versions from it. Lower-dimensional histograms are obtained by summing the bin contents of the removed axes. This is called a /projection/. If the histogram has under- and overflow bins along all axes, this operation creates a histogram which is identical to one that would have been obtained by filling the original data.
 
 Projection is useful if you found out that there is no interesting structure along an axis, so it is not worth keeping that axis around, or if you want to visualize 1d or 2d summaries of a high-dimensional histogram.
 
@@ -287,7 +287,9 @@ The library provides the [funcref boost::histogram::algorithm::project] function
 
 A projection removes an axis completely. A less drastic way to obtain a smaller histogram is the [funcref boost::histogram::algorithm::reduce] function, which allows one to /slice/, /shrink/ or /rebin/ individual axes.
 
-Shrinking means that the range of an axis is reduced and the number of bins along that axis. Slicing does the same, but is based on axis indices while shrinking is based on the axis values. Rebinning means that adjacent bins are merged into larger bins. For N adjacent bins, a new bin is formed which covers the common interval of the merged bins and has their added content. These two operations can be combined and applied to several axes at once (which is much more efficient than doing it sequentially).
+Shrinking means that the value range of an axis is reduced and the number of bins along that axis. Slicing does the same, but is based on axis indices while shrinking is based on the axis values. To rebin means that adjacent bins are merged into larger bins, the histogram is made coarser. For N adjacent bins, a new bin is formed which covers the common interval of the merged bins and has their added content. These two operations can be combined and applied to several axes at once. Doing it in one step is much more efficient than doing it in several steps.
+
+[funcref boost::histogram::algorithm::reduce] does not change the total count if all modified axes in the histogram have underflow/overflow bins. Counts in removed bins are added to the corresponding under- and overflow bins. As in case of [funcref boost::histogram::algorithm::project], such a reduced histogram is guaranteed to be identical to one obtained from filling the original data.
 
 [import ../examples/guide_histogram_reduction.cpp]
 [guide_histogram_reduction]

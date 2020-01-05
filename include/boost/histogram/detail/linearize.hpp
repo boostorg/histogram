@@ -50,7 +50,7 @@ template <class Index, class Axis, class Value>
 std::size_t linearize(Index& out, const std::size_t stride, const Axis& ax,
                       const Value& v) {
   // mask options to reduce no. of template instantiations
-  constexpr auto opts = axis::traits::static_options<Axis>{} &
+  constexpr auto opts = axis::traits::get_options<Axis>{} &
                         (axis::option::underflow | axis::option::overflow);
   return linearize(opts, out, stride, ax.size(), axis::traits::index(ax, v));
 }
@@ -61,7 +61,7 @@ std::size_t linearize_growth(Index& out, axis::index_type& shift,
                              const std::size_t stride, Axis& a, const Value& v) {
   axis::index_type idx;
   std::tie(idx, shift) = axis::traits::update(a, v);
-  constexpr bool u = axis::traits::static_options<Axis>::test(axis::option::underflow);
+  constexpr bool u = axis::traits::get_options<Axis>::test(axis::option::underflow);
   if (u) ++idx;
   if (std::is_same<Index, std::size_t>::value) {
     BOOST_ASSERT(idx < axis::traits::extent(a));
@@ -79,7 +79,7 @@ std::size_t linearize_growth(Index& out, axis::index_type& shift,
 template <class A>
 std::size_t linearize_index(optional_index& out, const std::size_t stride, const A& ax,
                             const axis::index_type idx) {
-  // cannot use static_options here, since A may be variant
+  // cannot use get_options here, since A may be variant
   const auto opt = axis::traits::options(ax);
   const axis::index_type begin = opt & axis::option::underflow ? -1 : 0;
   const axis::index_type end = opt & axis::option::overflow ? ax.size() + 1 : ax.size();

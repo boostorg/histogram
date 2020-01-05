@@ -94,7 +94,7 @@ struct storage_grower {
       auto sit = shifts;
       auto dit = data_;
       for_each_axis(axes_, [&](const auto& a) {
-        using opt = axis::traits::static_options<std::decay_t<decltype(a)>>;
+        using opt = axis::traits::get_options<std::decay_t<decltype(a)>>;
         if (opt::test(axis::option::underflow)) {
           if (dit->idx == 0) {
             // axis has underflow and we are in the underflow bin:
@@ -159,7 +159,7 @@ auto fill_storage_element_impl(priority<1>, T&& t) noexcept -> decltype(++t, voi
 }
 
 template <class T, class... Us>
-auto fill_storage_element(T&& t, const Us&... args) noexcept {
+void fill_storage_element(T&& t, const Us&... args) noexcept {
   fill_storage_element_impl(priority<2>{}, std::forward<T>(t), args...);
 }
 
@@ -299,7 +299,7 @@ decltype(auto) pack_args(mp11::mp_int<-1>, mp11::mp_int<-1>, const Args& args) n
 
 template <class ArgTraits, class S, class A, class Args>
 auto fill(std::true_type, ArgTraits, const std::size_t offset, S& storage, A& axes,
-          const Args& args) {
+          const Args& args) -> typename S::iterator {
   using growing = has_growing_axis<A>;
 
   // Sometimes we need to pack the tuple into another tuple:
@@ -337,7 +337,8 @@ auto fill(std::true_type, ArgTraits, const std::size_t offset, S& storage, A& ax
 
 // empty implementation for bad arguments to stop compiler from showing internals
 template <class ArgTraits, class S, class A, class Args>
-auto fill(std::false_type, ArgTraits, const std::size_t, S& storage, A&, const Args&) {
+auto fill(std::false_type, ArgTraits, const std::size_t, S& storage, A&, const Args&) ->
+    typename S::iterator {
   return storage.end();
 }
 

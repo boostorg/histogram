@@ -43,6 +43,7 @@ namespace axis {
 template <class Value, class MetaData, class Options, class Allocator>
 class category : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,
                  public metadata_base<MetaData> {
+  // these must be private, so that they are not automatically inherited
   using value_type = Value;
   using metadata_type = typename metadata_base<MetaData>::metadata_type;
   using options_type = detail::replace_default<Options, option::overflow_t>;
@@ -100,6 +101,17 @@ public:
            allocator_type alloc = {})
       : category(list.begin(), list.end(), std::move(meta), std::move(alloc)) {}
 
+  /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
+  category(const category& src, index_type begin, index_type end, unsigned merge)
+      // LCOV_EXCL_START: gcc-8 is missing the delegated ctor for no reason
+      : category(src.vec_.begin() + begin, src.vec_.begin() + end, src.metadata(),
+                 src.get_allocator())
+  // LCOV_EXCL_STOP
+  {
+    if (merge > 1)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for category axis"));
+  }
+
   /// Return index for value argument.
   index_type index(const value_type& x) const noexcept {
     const auto beg = vec_.begin();
@@ -125,8 +137,8 @@ public:
     return vec_[idx];
   }
 
-  /// Return value for index argument.
-  decltype(auto) bin(index_type idx) const noexcept { return value(idx); }
+  /// Return value for index argument; alias for value(...).
+  decltype(auto) bin(index_type idx) const { return value(idx); }
 
   /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return static_cast<index_type>(vec_.size()); }
@@ -138,6 +150,9 @@ public:
   static constexpr bool inclusive() noexcept {
     return options() & (option::overflow | option::growth);
   }
+
+  /// Indicate that the axis is not ordered.
+  static constexpr bool ordered() noexcept { return false; }
 
   template <class V, class M, class O, class A>
   bool operator==(const category<V, M, O, A>& o) const noexcept {
@@ -152,7 +167,7 @@ public:
     return !operator==(o);
   }
 
-  auto get_allocator() const { return vec_.get_allocator(); }
+  allocator_type get_allocator() const { return vec_.get_allocator(); }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {

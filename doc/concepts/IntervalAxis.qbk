@@ -14,7 +14,7 @@ A [*IntervalAxis] is one of two optional refinements of the [link histogram.conc
 * [link histogram.concepts.Axis [*Axis]]
 * [link histogram.concepts.DiscreteAxis [*DiscreteAxis]]
 
-[heading Requirements]
+[heading Optional features]
 
 * `A` is a type meeting the requirements of [*IntervalAxis]
 * `a` is a value of type `A`

@@ -64,7 +64,7 @@ struct index_visitor {
   using index_type = Index;
   using pointer = index_type*;
   using value_type = axis::traits::value_type<Axis>;
-  using Opt = axis::traits::static_options<Axis>;
+  using Opt = axis::traits::get_options<Axis>;
 
   Axis& axis_;
   const std::size_t stride_, start_, size_; // start and size of value collection
