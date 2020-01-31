@@ -27,6 +27,11 @@ namespace detail {
 struct reduce_command {
   static constexpr unsigned unset = static_cast<unsigned>(-1);
   unsigned iaxis;
+  enum class range_t : char {
+    none,
+    indices,
+    values,
+  } range = range_t::none;
   union {
     axis::index_type index;
     double value;
@@ -36,36 +41,169 @@ struct reduce_command {
     double value;
   } end;
   unsigned merge = 0; // default value indicates unset option
-  enum class state_t : char {
-    rebin,
-    slice,
-    shrink,
-  } state;
+  bool crop = false;
   // for internal use by the reduce algorithm
-  bool is_ordered;
-  bool use_underflow_bin;
-  bool use_overflow_bin;
+  bool is_ordered = true;
+  bool use_underflow_bin = true;
+  bool use_overflow_bin = true;
 };
 } // namespace detail
 
 namespace algorithm {
 
-/** Base type for all @ref reduce commands.
+/** Base type for all reduce commands.
 
- Use this type to store commands in a container. The internals of this type are an
- implementation detail. Casting a derived command to this base is safe and never causes
- slicing.
- */
+  Use this type to store commands in a container. The internals of this type are an
+  implementation detail. Casting a derived command to this base is safe and never causes
+  object slicing.
+*/
 using reduce_command = detail::reduce_command;
 
 using reduce_option [[deprecated("use reduce_command instead")]] =
     reduce_command; ///< deprecated
 
+/** Shrink command to be used in reduce().
+
+  Shrinking is based on an inclusive value interval. The bin which contains the first
+  value starts the range of bins to keep. The bin which contains the second value is the
+  last included in that range. When the second value is exactly equal to a lower bin edge,
+  then the previous bin is the last in the range.
+
+  The counts in removed bins are added to the corresponding underflow and overflow bins,
+  if they are present. If they are not present, the counts are discarded. Also see @ref
+  crop, which always discards the counts.
+*/
+struct shrink : reduce_command {
+
+  /** Command is applied to axis with given index.
+
+    @param iaxis which axis to operate on.
+    @param lower bin which contains lower is first to be kept.
+    @param upper bin which contains upper is last to be kept, except if upper is equal to
+    the lower edge.
+  */
+  shrink(unsigned iaxis, double lower, double upper) {
+    if (lower == upper)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("lower != upper required"));
+    reduce_command::iaxis = iaxis;
+    reduce_command::range = reduce_command::range_t::values;
+    reduce_command::begin.value = lower;
+    reduce_command::end.value = upper;
+    reduce_command::merge = 1;
+    reduce_command::crop = false;
+  }
+
+  /** Command is applied to corresponding axis in order of reduce arguments.
+
+    @param lower bin which contains lower is first to be kept.
+    @param upper bin which contains upper is last to be kept, except if upper is equal to
+    the lower edge.
+  */
+  shrink(double lower, double upper) : shrink{reduce_command::unset, lower, upper} {}
+};
+
+/** Crop command to be used in reduce().
+
+  Works like @ref shrink (see shrink documentation for details), but counts in removed
+  bins are always discarded, whether underflow and overflow bins are present or not.
+*/
+struct crop : reduce_command {
+
+  /** Command is applied to axis with given index.
+
+    @param iaxis which axis to operate on.
+    @param lower bin which contains lower is first to be kept.
+    @param upper bin which contains upper is last to be kept, except if upper is equal to
+    the lower edge.
+  */
+  crop(unsigned iaxis, double lower, double upper)
+      : reduce_command{shrink{iaxis, lower, upper}} {
+    reduce_command::crop = true;
+  }
+
+  /** Command is applied to corresponding axis in order of reduce arguments.
+
+    @param lower bin which contains lower is first to be kept.
+    @param upper bin which contains upper is last to be kept, except if upper is equal to
+    the lower edge.
+  */
+  crop(double lower, double upper) : crop{reduce_command::unset, lower, upper} {}
+};
+
+/** Slice command to be used in reduce().
+
+  Slicing works like @ref shrink or @ref crop, but uses bin indices instead of values.
+*/
+struct slice : reduce_command {
+
+  /// Whether to behave like @ref shrink or @ref crop regarding removed bins.
+  enum class mode { shrink, crop };
+
+  /** Command is applied to axis with given index.
+
+    @param iaxis which axis to operate on.
+    @param begin first index that should be kept.
+    @param end one past the last index that should be kept.
+    @param mode whether to behave like @ref shrink or @ref crop regarding removed bins.
+  */
+  slice(unsigned iaxis, axis::index_type begin, axis::index_type end,
+        slice::mode mode = slice::mode::shrink) {
+
+    if (!(begin < end))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("begin < end required"));
+
+    reduce_command::iaxis = iaxis;
+    reduce_command::range = reduce_command::range_t::indices;
+    reduce_command::begin.index = begin;
+    reduce_command::end.index = end;
+    reduce_command::merge = 1;
+    reduce_command::crop = mode == slice::mode::crop;
+  }
+
+  /** Command is applied to corresponding axis in order of reduce arguments.
+
+    @param begin first index that should be kept.
+    @param end one past the last index that should be kept.
+    @param mode whether to behave like @ref shrink or @ref crop regarding removed bins.
+  */
+  slice(axis::index_type begin, axis::index_type end,
+        slice::mode mode = slice::mode::shrink)
+      : slice{reduce_command::unset, begin, end, mode} {}
+};
+
+/** Rebin command to be used in reduce().
+
+  The command merges N adjacent bins into one. This makes the axis coarser and the bins
+  wider. The original number of bins is divided by N. If there is a rest to this devision,
+  the axis is implicitly shrunk at the upper end by that rest.
+*/
+struct rebin : reduce_command {
+
+  /** Command is applied to axis with given index.
+
+    @param iaxis which axis to operate on.
+    @param merge how many adjacent bins to merge into one.
+  */
+  rebin(unsigned iaxis, unsigned merge) {
+    if (merge == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("merge > 0 required"));
+    reduce_command::iaxis = iaxis;
+    reduce_command::merge = merge;
+    reduce_command::range = reduce_command::range_t::none;
+    reduce_command::crop = false;
+  }
+
+  /** Command is applied to corresponding axis in order of reduce arguments.
+
+    @param merge how many adjacent bins to merge into one.
+  */
+  rebin(unsigned merge) : rebin{reduce_command::unset, merge} {}
+};
+
 /** Shrink and rebin command to be used in reduce().
 
   To @ref shrink and @ref rebin in one command (see the respective commands for more
-  details). Equivalent to passing both commands for the same axis to @ref reduce.
- */
+  details). Equivalent to passing both commands for the same axis to reduce().
+*/
 struct shrink_and_rebin : reduce_command {
 
   /** Command is applied to axis with given index.
@@ -76,15 +214,9 @@ struct shrink_and_rebin : reduce_command {
     whole interval is removed.
     @param merge how many adjacent bins to merge into one.
   */
-  shrink_and_rebin(unsigned iaxis, double lower, double upper, unsigned merge) {
-    if (lower == upper)
-      BOOST_THROW_EXCEPTION(std::invalid_argument("lower != upper required"));
-    if (merge == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("merge > 0 required"));
-    reduce_command::iaxis = iaxis;
-    reduce_command::begin.value = lower;
-    reduce_command::end.value = upper;
-    reduce_command::merge = merge;
-    reduce_command::state = reduce_command::state_t::shrink;
+  shrink_and_rebin(unsigned iaxis, double lower, double upper, unsigned merge)
+      : reduce_command{shrink{iaxis, lower, upper}} {
+    reduce_command::merge = rebin{0, merge}.merge;
   }
 
   /** Command is applied to corresponding axis in order of reduce arguments.
@@ -98,11 +230,42 @@ struct shrink_and_rebin : reduce_command {
       : shrink_and_rebin(reduce_command::unset, lower, upper, merge) {}
 };
 
+/** Crop and rebin command to be used in reduce().
+
+  To @ref crop and @ref rebin in one command (see the respective commands for more
+  details). Equivalent to passing both commands for the same axis to reduce().
+*/
+struct crop_and_rebin : reduce_command {
+
+  /** Command is applied to axis with given index.
+
+    @param iaxis which axis to operate on.
+    @param lower lowest bound that should be kept.
+    @param upper highest bound that should be kept. If upper is inside bin interval,
+    the whole interval is removed.
+    @param merge how many adjacent bins to merge into one.
+  */
+  crop_and_rebin(unsigned iaxis, double lower, double upper, unsigned merge)
+      : reduce_command{algorithm::crop{iaxis, lower, upper}} {
+    reduce_command::merge = rebin{0, merge}.merge;
+  }
+
+  /** Command is applied to corresponding axis in order of reduce arguments.
+
+    @param lower lowest bound that should be kept.
+    @param upper highest bound that should be kept. If upper is inside bin interval,
+    the whole interval is removed.
+    @param merge how many adjacent bins to merge into one.
+  */
+  crop_and_rebin(double lower, double upper, unsigned merge)
+      : crop_and_rebin(reduce_command::unset, lower, upper, merge) {}
+};
+
 /** Slice and rebin command to be used in reduce().
 
   To @ref slice and @ref rebin in one command (see the respective commands for more
-  details). Equivalent to passing both commands for the same axis to @ref reduce.
- */
+  details). Equivalent to passing both commands for the same axis to reduce().
+*/
 struct slice_and_rebin : reduce_command {
 
   /** Command is applied to axis with given index.
@@ -111,18 +274,12 @@ struct slice_and_rebin : reduce_command {
     @param begin first index that should be kept.
     @param end one past the last index that should be kept.
     @param merge how many adjacent bins to merge into one.
+    @param mode slice mode, see slice::mode.
   */
   slice_and_rebin(unsigned iaxis, axis::index_type begin, axis::index_type end,
-                  unsigned merge) {
-    if (!(begin < end))
-      BOOST_THROW_EXCEPTION(std::invalid_argument("begin < end required"));
-    if (merge == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("merge > 0 required"));
-
-    reduce_command::iaxis = iaxis;
-    reduce_command::begin.index = begin;
-    reduce_command::end.index = end;
-    reduce_command::merge = merge;
-    reduce_command::state = reduce_command::state_t::slice;
+                  unsigned merge, slice::mode mode = slice::mode::shrink)
+      : reduce_command{slice{iaxis, begin, end, mode}} {
+    reduce_command::merge = rebin{0, merge}.merge;
   }
 
   /** Command is applied to corresponding axis in order of reduce arguments.
@@ -130,89 +287,14 @@ struct slice_and_rebin : reduce_command {
     @param begin first index that should be kept.
     @param end one past the last index that should be kept.
     @param merge how many adjacent bins to merge into one.
+    @param mode slice mode, see slice::mode.
   */
-  slice_and_rebin(axis::index_type begin, axis::index_type end, unsigned merge)
-      : slice_and_rebin(reduce_command::unset, begin, end, merge) {}
+  slice_and_rebin(axis::index_type begin, axis::index_type end, unsigned merge,
+                  slice::mode mode = slice::mode::shrink)
+      : slice_and_rebin(reduce_command::unset, begin, end, merge, mode) {}
 };
 
-/** Shrink command to be used in reduce().
-
-  The shrink is inclusive. The bin which contains the first value starts the range of bins
-  to keep. The bin which contains the second value is the last included in that range.
-  When the second value is exactly equal to a lower bin edge, then the previous bin is
-  the last in the range.
- */
-struct shrink : shrink_and_rebin {
-
-  /** Command is applied to axis with given index.
-
-    @param iaxis which axis to operate on.
-    @param lower bin which contains lower is first to be kept.
-    @param upper bin which contains upper is last to be kept, except if upper is equal to
-    the lower edge.
-  */
-  shrink(unsigned iaxis, double lower, double upper)
-      : shrink_and_rebin{iaxis, lower, upper, 1u} {}
-
-  /** Command is applied to corresponding axis in order of reduce arguments.
-
-    @param lower bin which contains lower is first to be kept.
-    @param upper bin which contains upper is last to be kept, except if upper is equal to
-    the lower edge.
-  */
-  shrink(double lower, double upper) : shrink{reduce_command::unset, lower, upper} {}
-};
-
-/** Slice command to be used in reduce().
-
-  Slicing works like shrinking, but uses bin indices instead of values.
- */
-struct slice : slice_and_rebin {
-  /** Command is applied to axis with given index.
-
-    @param iaxis which axis to operate on.
-    @param begin first index that should be kept.
-    @param end one past the last index that should be kept.
-  */
-  slice(unsigned iaxis, axis::index_type begin, axis::index_type end)
-      : slice_and_rebin{iaxis, begin, end, 1u} {}
-
-  /** Command is applied to corresponding axis in order of reduce arguments.
-
-    @param begin first index that should be kept.
-    @param end one past the last index that should be kept.
-  */
-  slice(axis::index_type begin, axis::index_type end)
-      : slice{reduce_command::unset, begin, end} {}
-};
-
-/** Rebin command to be used in reduce().
-
-  The command merges N adjacent bins into one. This makes the axis coarser and the bins
-  wider. The original number of bins is divided by N. If there is a rest to this devision,
-  the axis is implicitly shrunk at the upper end by that rest.
- */
-struct rebin : reduce_command {
-  /** Command is applied to axis with given index.
-
-    @param iaxis which axis to operate on.
-    @param merge how many adjacent bins to merge into one.
-  */
-  rebin(unsigned iaxis, unsigned merge) {
-    if (merge == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("merge > 0 required"));
-    reduce_command::iaxis = iaxis;
-    reduce_command::merge = merge;
-    reduce_command::state = reduce_command::state_t::rebin;
-  }
-
-  /** Command is applied to corresponding axis in order of reduce arguments.
-
-    @param merge how many adjacent bins to merge into one.
-  */
-  rebin(unsigned merge) : rebin{reduce_command::unset, merge} {}
-};
-
-/** Shrink, slice, and/or rebin axes of a histogram.
+/** Shrink, crop, slice, and/or rebin axes of a histogram.
 
   Returns a new reduced histogram and leaves the original histogram untouched.
 
@@ -227,7 +309,7 @@ struct rebin : reduce_command {
   @param options iterable sequence of reduce commands: shrink_and_rebin, slice_and_rebin,
   @ref shrink, @ref slice, or @ref rebin. The element type of the iterable should be
   <a href="./boost/histogram/algorithm/reduce_command.html">reduce_command</a>.
- */
+*/
 template <class Histogram, class Iterable, class = detail::requires_iterable<Iterable>>
 Histogram reduce(const Histogram& hist, const Iterable& options) {
   using axis::index_type;
@@ -235,6 +317,8 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
   const auto& old_axes = unsafe_access::axes(hist);
 
   auto opts = detail::make_stack_buffer<reduce_command>(old_axes);
+
+  // check for invalid commands, merge commands, and set iaxis for positional commands
   unsigned iaxis = 0;
   for (const reduce_command& o_in : options) {
     BOOST_ASSERT(o_in.merge > 0);
@@ -244,23 +328,22 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
     if (o_out.merge == 0) {
       o_out = o_in;
     } else {
-      // Some option was already set for this axis, see if we can combine requests.
-      // We can combine a rebin and non-rebin request.
-      if (!((o_in.state == reduce_command::state_t::rebin) ^
-            (o_out.state == reduce_command::state_t::rebin)) ||
+      // Some command was already set for this axis, see if we can combine commands.
+      // We can combine a rebin and non-rebin command.
+      if (!((o_in.range == reduce_command::range_t::none) ^
+            (o_out.range == reduce_command::range_t::none)) ||
           (o_out.merge > 1 && o_in.merge > 1))
         BOOST_THROW_EXCEPTION(std::invalid_argument(
-            "multiple non-fuseable reduce requests for axis " +
+            "multiple conflicting reduce commands for axis " +
             std::to_string(o_in.iaxis == reduce_command::unset ? iaxis : o_in.iaxis)));
-      if (o_in.state != reduce_command::state_t::rebin) {
-        o_out.state = o_in.state;
+      if (o_in.range != reduce_command::range_t::none) {
+        o_out.range = o_in.range;
         o_out.begin = o_in.begin;
         o_out.end = o_in.end;
       } else {
         o_out.merge = o_in.merge;
       }
     }
-    o_out.iaxis = reduce_command::unset; // value not used below
     ++iaxis;
   }
 
@@ -284,14 +367,16 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
     auto& o = opts[iaxis];
     o.is_ordered = axis::traits::ordered(a_in);
     if (o.merge > 0) { // option is set?
+      o.use_underflow_bin = !o.crop && AO::test(axis::option::underflow);
+      o.use_overflow_bin = !o.crop && AO::test(axis::option::overflow);
       detail::static_if_c<axis::traits::is_reducible<A>::value>(
           [&o](auto&& a_out, const auto& a_in) {
             using A = std::decay_t<decltype(a_in)>;
-            if (o.state == reduce_command::state_t::rebin) {
+            if (o.range == reduce_command::range_t::none) {
               o.begin.index = 0;
               o.end.index = a_in.size();
             } else {
-              if (o.state == reduce_command::state_t::shrink) {
+              if (o.range == reduce_command::range_t::values) {
                 const auto end_value = o.end.value;
                 o.begin.index = axis::traits::index(a_in, o.begin.value);
                 o.end.index = axis::traits::index(a_in, o.end.value);
@@ -314,17 +399,14 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                                                         " is not reducible"));
           },
           axis::get<A>(detail::axis_get(axes, iaxis)), a_in);
-      // will be configurable with crop()
+    } else {
+      // command was not set for this axis; fill noop values and copy original axis
       o.use_underflow_bin = AO::test(axis::option::underflow);
       o.use_overflow_bin = AO::test(axis::option::overflow);
-    } else {
-      // option was not set for this axis; fill noop values and copy original axis
       o.merge = 1;
       o.begin.index = 0;
       o.end.index = a_in.size();
       axis::get<A>(detail::axis_get(axes, iaxis)) = a_in;
-      o.use_underflow_bin = AO::test(axis::option::underflow);
-      o.use_overflow_bin = AO::test(axis::option::overflow);
     }
     ++iaxis;
   });
@@ -380,7 +462,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
   @param opt first reduce command; one of @ref shrink, @ref slice, @ref rebin,
   shrink_and_rebin, or slice_or_rebin.
   @param opts more reduce commands.
- */
+*/
 template <class Histogram, class... Ts>
 Histogram reduce(const Histogram& hist, const reduce_command& opt, const Ts&... opts) {
   // this must be in one line, because any of the ts could be a temporary
