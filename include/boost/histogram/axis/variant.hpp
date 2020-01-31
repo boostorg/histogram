@@ -14,11 +14,11 @@
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
+#include <boost/histogram/detail/variant2_with_warnings_disabled.hpp>
 #include <boost/histogram/detail/variant_proxy.hpp>
 #include <boost/mp11/algorithm.hpp> // mp_contains
 #include <boost/mp11/list.hpp>      // mp_first
 #include <boost/throw_exception.hpp>
-#include <boost/variant2/variant.hpp>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>

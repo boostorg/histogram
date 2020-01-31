@@ -14,12 +14,12 @@
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/detail/variant2_with_warnings_disabled.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
-#include <boost/variant2/variant.hpp>
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -92,7 +92,7 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     h(1);
     for (auto&& xi : x) h(xi);
     // uses variant
-    boost::variant2::variant<int, std::vector<int>, std::string> v[1];
+    variant<int, std::vector<int>, std::string> v[1];
     v[0] = 1;
     h2.fill(v);
     v[0] = x;

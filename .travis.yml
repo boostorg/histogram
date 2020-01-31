@@ -34,8 +34,10 @@ matrix:
         # ignore optional dependencies not currently supported by the cmake build
         - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram -N accumulators -N range -N serialization -N units
 
-        # WORKAROUND: throw_exception tests have dependencies that depinst.py misses
+        # WORKAROUND: some external tests have extra dependencies that depinst.py misses
         - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" throw_exception
+        - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" smart_ptr
+        - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" move
 
       script:
         mkdir build && cd build &&

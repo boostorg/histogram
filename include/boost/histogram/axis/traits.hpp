@@ -15,12 +15,12 @@
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/try_cast.hpp>
 #include <boost/histogram/detail/type_name.hpp>
+#include <boost/histogram/detail/variant2_with_warnings_disabled.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
-#include <boost/variant2/variant.hpp>
 #include <stdexcept>
 #include <string>
 #include <utility>

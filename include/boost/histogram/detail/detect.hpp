@@ -11,10 +11,17 @@
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/function.hpp>
 #include <boost/mp11/utility.hpp>
-#include <boost/variant2/variant.hpp>
 #include <iterator>
 #include <tuple>
 #include <type_traits>
+
+// forward declaration
+namespace boost {
+namespace variant2 {
+template <class...>
+class variant;
+} // namespace variant2
+} // namespace boost
 
 namespace boost {
 namespace histogram {

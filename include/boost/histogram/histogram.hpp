@@ -489,10 +489,8 @@ public:
   }
 
   /// Multiply all values with a scalar.
-  template <class V = value_type>
-  std::enable_if_t<(detail::has_operator_rmul<V, double>::value &&
-                    detail::has_operator_rmul<storage_type, double>::value == true),
-                   histogram&>
+  template <class S = storage_type>
+  std::enable_if_t<(detail::has_operator_rmul<S, double>::value == true), histogram&>
   operator*=(const double x) {
     // use special implementation of scaling if available
     storage_ *= x;
@@ -500,10 +498,8 @@ public:
   }
 
   /// Multiply all values with a scalar.
-  template <class V = value_type>
-  std::enable_if_t<(detail::has_operator_rmul<V, double>::value &&
-                    detail::has_operator_rmul<storage_type, double>::value == false),
-                   histogram&>
+  template <class S = storage_type>
+  std::enable_if_t<(detail::has_operator_rmul<S, double>::value == false), histogram&>
   operator*=(const double x) {
     // generic implementation of scaling
     for (auto&& si : storage_) si *= x;
