@@ -1,4 +1,14 @@
+// Copyright 2020 John Buonagurio
+//
+// Distributed under the Boost Software License, version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef BOOST_HISTOGRAM_ACCUMULATORS_ROLLING_MEAN_HPP
+#define BOOST_HISTOGRAM_ACCUMULATORS_ROLLING_MEAN_HPP
+
 #include <boost/assert.hpp>
+#include <iterator>
 #include <memory>
 #include <type_traits>
 #include <utility>
@@ -26,12 +36,15 @@ struct circular_buffer
   explicit circular_buffer(const allocator_type& a = {}) : alloc_(a) {}
   
   explicit circular_buffer(size_type buffer_capacity, const allocator_type& a = {}) : alloc_(a) {
-    initialize_buffer(buffer_capacity);
-    first_ = last_ = ptr_;
+    ptr_ = alloc_.allocate(buffer_capacity);
+    end_ = ptr_ + buffer_capacity;
+    first_ = ptr_;
+    last_ = ptr_;
   }
   
   circular_buffer(const circular_buffer& rhs) : alloc_(rhs.alloc_), size_(rhs.size_) {
-    initialize_buffer(rhs.capacity());
+    ptr_ = alloc_.allocate(rhs.capacity());
+    end_ = ptr_ + rhs.capacity();
     first_ = ptr_;
     last_ = std::uninitialized_copy_n(rhs.first_, size_, ptr_);
     if (last_ == end_)
@@ -63,6 +76,60 @@ struct circular_buffer
   
   ~circular_buffer() noexcept { destroy(); }
   
+  struct iterator {
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = circular_buffer::value_type;
+    using pointer = circular_buffer::pointer;
+    using reference = circular_buffer::reference;
+    using size_type = circular_buffer::size_type;
+    using difference_type = circular_buffer::difference_type;
+    
+    iterator(const circular_buffer* cb, const pointer p) : cb_(cb), it_(p) {}
+    
+    iterator& operator=(const iterator& rhs) {
+      cb_ = rhs.cb_;
+      it_ = rhs.it_;
+      return *this;
+    }
+    
+    bool operator==(const iterator& rhs) const noexcept {
+      return cb_ == rhs.cb_ && it_ == rhs.it_;
+    }
+
+    bool operator!=(const iterator& rhs) const noexcept { return !operator==(rhs); }
+
+    reference operator*() const {
+      BOOST_ASSERT(cb_ != nullptr);
+      BOOST_ASSERT(it_ != nullptr);
+      return *it_;
+    }
+
+    pointer operator->() const { return it_; }
+
+    iterator& operator++() {
+      BOOST_ASSERT(cb_ != nullptr);
+      BOOST_ASSERT(it_ != nullptr);
+      cb_->increment(it_);
+      if (it_ == cb_->last_)
+        it_ = nullptr;
+      return *this;
+    }
+
+    iterator operator++(int) {
+      iterator tmp = *this;
+      ++*this;
+      return tmp;
+    }
+    
+  private:
+    const circular_buffer *cb_ = nullptr;
+    pointer it_ = nullptr;
+  };
+  
+  iterator begin() noexcept { return iterator(this, empty() ? nullptr : first_); }
+  
+  iterator end() noexcept { return iterator(this, nullptr); }
+  
   size_type size() const noexcept { return size_; }
   
   size_type capacity() const noexcept { return end_ - ptr_; }
@@ -70,20 +137,7 @@ struct circular_buffer
   bool empty() const noexcept { return size() == 0; }
   
   bool full() const noexcept { return capacity() == size(); }
-  
-  void increment(pointer& p) const {
-    if (++p == end_)
-      p = ptr_;
-  }
-  
-  void replace(pointer p, const value_type& item) {
-    *p = item;
-  }
-  
-  void replace(pointer p, value_type&& item) {
-    *p = std::move(item);
-  }
-  
+
   void push_back(const value_type& item) {
     push_back_impl<const value_type&>(item);
   }
@@ -98,11 +152,6 @@ struct circular_buffer
   }
   
 private:
-  void initialize_buffer(size_type buffer_capacity) {
-    ptr_ = alloc_.allocate(buffer_capacity);
-    end_ = ptr_ + buffer_capacity;
-  }
-  
   void destroy() noexcept {
     BOOST_ASSERT((ptr_ == nullptr) == (capacity() == 0));
     if (ptr_ == nullptr) return;
@@ -112,6 +161,19 @@ private:
     first_ = nullptr;
     last_ = nullptr;
     size_ = 0;
+  }
+
+  void increment(pointer& p) const noexcept {
+    if (++p == end_)
+      p = ptr_;
+  }
+  
+  void replace(pointer p, const value_type& item) noexcept {
+    *p = item;
+  }
+  
+  void replace(pointer p, value_type&& item) noexcept {
+    *p = std::move(item);
   }
 
   template <class U>
@@ -135,6 +197,8 @@ private:
   pointer first_ = nullptr;
   pointer last_ = nullptr;
   size_type size_ = 0;
+  
+  friend iterator;
 };
 
 } // namespace detail
@@ -148,6 +212,12 @@ struct rolling_mean
   
   rolling_mean(std::size_t window_size) : buffer_(window_size) {}
   
+  /// Allow implicit conversion from rolling_mean<T>
+  template <class T>
+  rolling_mean(const rolling_mean<T>& o) noexcept
+    : value_{o.value_}, buffer_{o.buffer_} {}
+  
+  /// Insert sample x
   void operator()(const_reference x) {
     if (buffer_.full()) {
       if (buffer_.front() > x)
@@ -166,6 +236,10 @@ struct rolling_mean
     }
   }
   
+  /// Return how many samples were accumulated
+  const_reference count() const noexcept { return buffer_.size(); }
+  
+  /// Return rolling mean of accumulated samples
   const_reference value() const noexcept { return value_; }
   
 private:
@@ -176,3 +250,15 @@ private:
 } // namespace accumulators
 } // namespace histogram
 } // namespace boost
+
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+namespace std {
+template <class T, class U>
+struct common_type<boost::histogram::accumulators::rolling_mean<T>,
+                   boost::histogram::accumulators::rolling_mean<U>> {
+  using type = boost::histogram::accumulators::rolling_mean<common_type_t<T, U>>;
+};
+} // namespace std
+#endif
+
+#endif
