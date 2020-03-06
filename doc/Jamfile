@@ -3,6 +3,9 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+# How to set up Boost Build for building the documentation:
+# https://www.boost.org/doc/libs/1_72_0/doc/html/quickbook/install.html
+
 project doc/histogram ;
 
 import os ;
