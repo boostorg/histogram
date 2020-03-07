@@ -3,11 +3,16 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+# How to set up Boost Build for building the documentation:
+# https://www.boost.org/doc/libs/1_72_0/doc/html/quickbook/install.html
+
 project doc/histogram ;
 
+import os ;
 import doxygen ;
 import quickbook ;
 import boostbook : boostbook ;
+import notfile ;
 
 path-constant THIS_PATH : . ;
 
@@ -33,26 +38,40 @@ doxygen reference
                              \"BOOST_ATTRIBUTE_NODISCARD\""
 ;
 
-make reference_pp.xml : reference.xml : @doxygen_postprocessing ;
-actions doxygen_postprocessing
+actions doxygen-postprocessing
 {
-  python $(THIS_PATH)/doxygen_postprocessing.py $(>) $(<)
+  python $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
 }
 
-boostbook histogram
+notfile reference-pp : @doxygen-postprocessing : reference.xml ;
+
+xml histogram
 :
-  histogram.qbk
+    histogram.qbk
 :
-  <xsl:param>boost.root=../../../..
-  <xsl:param>boost.libraries=../../../libraries.htm
-  <xsl:param>boost.mathjax=1
-  <xsl:param>chunk.first.sections=1
-  <xsl:param>generate.toc="chapter nop section toc"
-  <xsl:param>toc.section.depth=3
-  <dependency>reference_pp.xml
+    <dependency>reference-pp
 ;
 
-alias boostdoc ;
+path-constant images_location : html ;
+
+boostbook standalone
+:
+    histogram
+:
+    <xsl:param>boost.root=../../../..
+    <xsl:param>boost.libraries=../../../libraries.htm
+    <xsl:param>boost.mathjax=1
+    <xsl:param>chunk.first.sections=1
+    <xsl:param>generate.toc="chapter nop section toc"
+    <xsl:param>toc.section.depth=3
+    <format>pdf:<xsl:param>img.src.path=$(images_location)/
+    <format>pdf:<xsl:param>boost.url.prefix="http://www.boost.org/doc/libs/release/doc/html"
+;
+
+alias boostdoc
+:
+    histogram
+;
 explicit boostdoc ;
-alias boostrelease : histogram ;
+alias boostrelease ;
 explicit boostrelease ;

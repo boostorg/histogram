@@ -2,6 +2,7 @@ build*
 *.gcov
 doc/html
 doc/reference.xml
+doc/reference_pp.xml
 __pycache__
 *.pyc
 .DS_Store

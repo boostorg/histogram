@@ -46,10 +46,13 @@ def is_deprecated(x):
     return False
 
 
-tree = ET.parse(sys.argv[1])
+input_file = sys.argv[1]
+output_file = input_file.replace(".xml", "_pp.xml")
+
+tree = ET.parse(input_file)
 root = tree.getroot()
 
-parent_map = {c:p for p in tree.iter() for c in p}
+parent_map = {c: p for p in tree.iter() for c in p}
 
 unspecified = ET.Element("emphasis")
 unspecified.text = "unspecified"
@@ -75,23 +78,38 @@ for item in select(is_detail, "type"):
 # hide everything that's deprecated
 for item in select(is_deprecated, "typedef"):
     parent = parent_map[item]
-    log("removing deprecated", item.tag, item.get("name"), "from", parent.tag, parent.get("name"))
+    log(
+        "removing deprecated",
+        item.tag,
+        item.get("name"),
+        "from",
+        parent.tag,
+        parent.get("name"),
+    )
     parent.remove(item)
 
 # hide private member functions
-for item in select(lambda x: x.get("name") == "private member functions", "method-group"):
+for item in select(
+    lambda x: x.get("name") == "private member functions", "method-group"
+):
     parent = parent_map[item]
     log("removing private member functions from", parent.tag, parent.get("name"))
     parent.remove(item)
 
 # hide undocumented classes, structs, functions and replace those declared
 # "implementation detail" with typedef to implementation_defined
-for item in select(lambda x:True, "class", "struct", "function"):
+for item in select(lambda x: True, "class", "struct", "function"):
     purpose = item.find("purpose")
     if purpose is None:
         parent = parent_map[item]
-        log("removing undocumented", item.tag, item.get("name"), "from",
-            parent.tag, parent.get("name"))
+        log(
+            "removing undocumented",
+            item.tag,
+            item.get("name"),
+            "from",
+            parent.tag,
+            parent.get("name"),
+        )
         if item in parent_map[item]:
             parent_map[item].remove(item)
     elif purpose.text.strip().lower() == "implementation detail":
@@ -104,13 +122,16 @@ for item in select(lambda x:True, "class", "struct", "function"):
         type.append(unspecified)
         item.append(type)
 
-parent_map = {c:p for p in tree.iter() for c in p}
+parent_map = {c: p for p in tree.iter() for c in p}
 
 # hide methods and constructors explicitly declared as "implementation detail"
 for item in select(is_detail, "constructor", "method"):
     name = item.get("name")
-    log("removing", (item.tag + " " + name) if name is not None else item.tag,
-        "declared as implementation detail")
+    log(
+        "removing",
+        (item.tag + " " + name) if name is not None else item.tag,
+        "declared as implementation detail",
+    )
     parent_map[item].remove(item)
 
-tree.write(sys.argv[2])
+tree.write(output_file)
