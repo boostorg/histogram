@@ -193,7 +193,7 @@ public:
     using arg_traits = detail::argument_traits<std::decay_t<Ts>...>;
     using acc_traits = detail::accumulator_traits<value_type>;
     constexpr bool weight_valid =
-        arg_traits::wpos::value == -1 || acc_traits::wsupport::value;
+        arg_traits::wpos::value == -1 || acc_traits::weight_support;
     static_assert(weight_valid, "error: accumulator does not support weights");
     detail::sample_args_passed_vs_expected<typename arg_traits::sargs,
                                            typename acc_traits::args>();
@@ -239,7 +239,7 @@ public:
   template <class Iterable, class T, class = detail::requires_iterable<Iterable>>
   void fill(const Iterable& args, const weight_type<T>& weights) {
     using acc_traits = detail::accumulator_traits<value_type>;
-    constexpr bool weight_valid = acc_traits::wsupport::value;
+    constexpr bool weight_valid = acc_traits::weight_support;
     static_assert(weight_valid, "error: accumulator does not support weights");
     detail::sample_args_passed_vs_expected<std::tuple<>, typename acc_traits::args>();
     constexpr bool sample_valid =
@@ -305,7 +305,7 @@ public:
     std::lock_guard<typename mutex_base::type> guard{mutex_base::get()};
     mp11::tuple_apply(
         [&](const auto&... sargs) {
-          constexpr bool weight_valid = acc_traits::wsupport::value;
+          constexpr bool weight_valid = acc_traits::weight_support;
           static_assert(weight_valid, "error: accumulator does not support weights");
           constexpr bool sample_valid =
               std::is_convertible<sample_args_passed, typename acc_traits::args>::value;
@@ -623,24 +623,23 @@ auto operator/(const histogram<A, S>& h, double x) {
 #if __cpp_deduction_guides >= 201606
 
 template <class... Axes, class = detail::requires_axes<std::tuple<std::decay_t<Axes>...>>>
-histogram(Axes...)->histogram<std::tuple<std::decay_t<Axes>...>>;
+histogram(Axes...) -> histogram<std::tuple<std::decay_t<Axes>...>>;
 
 template <class... Axes, class S, class = detail::requires_storage_or_adaptible<S>>
 histogram(std::tuple<Axes...>, S)
-    ->histogram<std::tuple<Axes...>, std::conditional_t<detail::is_adaptible<S>::value,
-                                                        storage_adaptor<S>, S>>;
+    -> histogram<std::tuple<Axes...>, std::conditional_t<detail::is_adaptible<S>::value,
+                                                         storage_adaptor<S>, S>>;
 
 template <class Iterable, class = detail::requires_iterable<Iterable>,
           class = detail::requires_any_axis<typename Iterable::value_type>>
-histogram(Iterable)->histogram<std::vector<typename Iterable::value_type>>;
+histogram(Iterable) -> histogram<std::vector<typename Iterable::value_type>>;
 
 template <class Iterable, class S, class = detail::requires_iterable<Iterable>,
           class = detail::requires_any_axis<typename Iterable::value_type>,
           class = detail::requires_storage_or_adaptible<S>>
-histogram(Iterable, S)
-    ->histogram<
-        std::vector<typename Iterable::value_type>,
-        std::conditional_t<detail::is_adaptible<S>::value, storage_adaptor<S>, S>>;
+histogram(Iterable, S) -> histogram<
+    std::vector<typename Iterable::value_type>,
+    std::conditional_t<detail::is_adaptible<S>::value, storage_adaptor<S>, S>>;
 
 #endif
 

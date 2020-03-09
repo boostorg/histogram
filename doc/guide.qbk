@@ -300,7 +300,7 @@ Shrinking means that the value range of an axis is reduced and the number of bin
 
 [section Streaming]
 
-Simple ostream operators are shipped with the library. They are internally used by the unit tests and give simple text representations of axis and histogram configurations and show the histogram content. One-dimensional histograms are rendered as ASCII drawings. The text representations may be useful for debugging or more, but users may want to use their own implementations. Therefore, the headers with the builtin implementations are not included by any other header of the library. The following example shows the effect of output streaming.
+Simple streaming operators are shipped with the library. They are internally used by the unit tests and give simple text representations of axis and histogram configurations and show the histogram content. One-dimensional histograms are rendered as ASCII drawings. The text representations may be useful for debugging or more, but users may want to use their own implementations. Therefore, the headers with the builtin implementations are not included by any other header of the library. The following example shows the effect of output streaming.
 
 [import ../examples/guide_histogram_streaming.cpp]
 [guide_histogram_streaming]
@@ -318,7 +318,7 @@ The library supports serialization via [@boost:/libs/serialization/index.html Bo
 
 [section:expert Advanced usage]
 
-The library is customizable and extensible by users. Users can create new axis types and use them with the histogram, or implement a custom storage policy, or use a builtin storage policy with a custom counter type. The library was designed to make this very easy. This section shows how to do this.
+The library is customisable and extensible by users. Users can create new axis types and use them with the histogram, or implement a custom storage policy, or use a builtin storage policy with a custom counter type. The library was designed to make this very easy. This section shows how to do this.
 
 [section User-defined axes]
 
@@ -355,15 +355,15 @@ The library supports non-orthogonal grids by allowing axis types to accept a `st
 
 Histograms which use a different storage class can easily created with the factory function [headerref boost/histogram/make_histogram.hpp make_histogram_with]. For convenience, this factory function accepts many standard containers as storage backends: vectors, arrays, and maps. These are automatically wrapped with a [classref boost::histogram::storage_adaptor] to provide the storage interface needed by the library. Users may also place custom accumulators in the vector, as described in the next section.
 
-[warning The no-overflow-guarantee is only valid if the [classref boost::histogram::unlimited_storage default storage] is used. If you change the storage policy, you need to know what you are doing.]
+[warning The no-overflow-guarantee is only valid if the [classref boost::histogram::unlimited_storage unlimited_storage] (the default) is used. If you change the storage policy, you need to know what you are doing.]
 
-A `std::vector` may provide higher performance than the default storage with a carefully chosen counter type. Usually, this would be an integral or floating point type. A `std::vector`-based storage may be faster than the default storage for low-dimensional histograms (or not, you need to measure).
+A `std::vector` may provide higher performance than the [classref boost::histogram::unlimited_storage unlimited_storage] with a carefully chosen counter type. Usually, this would be an integral or floating point type. A `std::vector`-based storage may be faster for low-dimensional histograms (or not, you need to measure).
 
-Users who work exclusively with weighted histograms should chose a `std::vector<double>` over the default storage, it will be faster. If they also want to track the variance of the sum of weights, using the factor function [funcref boost::histogram::make_weighted_histogram make_weighted_histogram] is a convenient, which provides a histogram with a vector-based storage of [classref boost::histogram::accumulators::weighted_sum weighted_sum] accumulators.
+Users who work exclusively with weighted histograms should chose a `std::vector<double>`, it will be faster. If they also want to track the variance of the sum of weights, a vector-based storage of [classref boost::histogram::accumulators::weighted_sum weighted_sum] accumulators should be used. The factory function [funcref boost::histogram::make_weighted_histogram make_weighted_histogram] is a convenient way to generate a histogram with this storage.
 
 An interesting alternative to a `std::vector` is to use a `std::array`. The latter provides a storage with a fixed maximum capacity (the size of the array). `std::array` allocates the memory on the stack. In combination with a static axis configuration this allows one to create histograms completely on the stack without any dynamic memory allocation. Small stack-based histograms can be created and destroyed very fast.
 
-Finally, a `std::map` or `std::unordered_map` is adapted into a sparse storage, where empty cells do not consume any memory. This sounds very attractive, but the memory consumption per cell in a map is much larger than for a vector or array. Furthermore, the cells are usually scattered in memory, which increases cache misses and degrades performance. Whether a sparse storage performs better than a dense storage depends strongly on the usage scenario. It is easy switch from dense to sparse storage and back, so one can try both options.
+Finally, a `std::map` or `std::unordered_map` or any other map type that implements the STL interface can be used to generate a histogram with a sparse storage, where empty cells do not consume any memory. This sounds attractive, but the memory consumption per cell in such a data structure is much larger than for a vector or array, so the number of empty cells must be substantial to gain. Moreover, cell lookup in a sparse data structure may be less performant. Whether a sparse storage performs better than a dense storage depends on the use case. The library makes it easy to switch from dense to sparse storage and back, so users are invited to test both options.
 
 The following example shows how histograms are constructed which use an alternative storage classes.
 
@@ -372,16 +372,15 @@ The following example shows how histograms are constructed which use an alternat
 
 [endsect]
 
-
-[section Parallelization options]
+[section Parallelisation options]
 
 There are two ways to generate a single histogram using several threads.
 
-1. Each thread has its own copy of the histogram. Each copy is independently filled. The copies are then added in the main thread. Use this as the default when you can afford having `N` copies of the histogram in memory for `N` threads, because it allows each thread to work on its thread-local memory and utilize the CPU cache without the need to synchronize memory access. The highest performance gains are obtained in this way.
+1. Each thread has its own copy of the histogram. Each copy is independently filled. The copies are then added in the main thread. Use this as the default when you can afford having `N` copies of the histogram in memory for `N` threads, because it allows each thread to work on its thread-local memory and utilise the CPU cache without the need to synchronise memory access. The highest performance gains are obtained in this way.
 
 2. There is only one histogram which is filled concurrently by several threads. This requires using a thread-safe storage that can handle concurrent writes. The library provides the [classref boost::histogram::accumulators::thread_safe] accumulator, which combined with the [classref boost::histogram::dense_storage] provides a thread-safe storage.
 
-[note Filling a histogram with growing axes in a multi-threaded environment is safe, but has poor performance since the histogram must be locked on each fill. The locks are required because an axis could grow each time, which changes the number of cells and cell addressing for all other threads. Even without growing axes, there is only a performance gain of filling a thread-safe histogram in parallel if the histogram is either very large or when significant time is spend in preparing the value to fill. For small histograms, threads frequently access the same cell, whose state has to be synchronized between the threads. This is slow even with atomic counters, since different threads are usually executed on different cores and the synchronization causes cache misses that eat up the performance gained by doing some calculations in parallel.]
+[note Filling a histogram with growing axes in a multi-threaded environment is safe, but has poor performance since the histogram must be locked on each fill. The locks are required because an axis could grow each time, which changes the number of cells and cell addressing for all other threads. Even without growing axes, there is only a performance gain if the histogram is either very large or when significant time is spend in preparing the value to fill. For small histograms, threads frequently access the same cell, whose state has to be synchronised between the threads. This is slow even with atomic counters and made worse by the effect of false sharing.]
 
 The next example demonstrates option 2 (option 1 is straight-forward to implement).
 
@@ -392,7 +391,7 @@ The next example demonstrates option 2 (option 1 is straight-forward to implemen
 
 [section User-defined accumulators]
 
-A storage can hold arbitrary accumulators which may accept an arbitrary number of arguments. The arguments are passed to the accumulator via the [funcref boost::histogram::sample sample] call, for example, `sample(1, 2, 3)` for an accumulator which accepts three arguments. Accumulators are often placed in a vector-based storage, so the library provides an alias, the `boost::histogram::dense_storage`, which is templated on the accumulator type.
+A storage can hold custom accumulators which can accept an arbitrary number of arguments. The arguments are passed to the accumulator via the [funcref boost::histogram::sample sample] call, for example, `sample(1, 2, 3)` for an accumulator which accepts three arguments. Custom accumulators can be combined with any container supported by [classref boost::histogram::storage_adaptor]. For convenience, the alias template `boost::histogram::dense_storage` is provided to make a standard storage with a custom accumulator type.
 
 The library provides several accumulators:
 
@@ -401,7 +400,7 @@ The library provides several accumulators:
 * [classref boost::histogram::accumulators::mean mean] accepts a sample and computes the mean of the samples. [funcref boost::histogram::make_profile make_profile] uses this accumulator.
 * [classref boost::histogram::accumulators::weighted_mean weighted_mean] accepts a sample and a weight. It computes the weighted mean of the samples. [funcref boost::histogram::make_weighted_profile make_weighted_profile] uses this accumulator.
 
-Users can easily write their own accumulators and plug them into the histogram, if they adhere to the [link histogram.concepts.Accumulator [*Accumulator] concept].
+Users can easily write their own accumulators and plug them into the histogram, if they adhere to the [link histogram.concepts.Accumulator [*Accumulator] concept]. All accumulators from [@boost:/libs/accumulators/index.html Boost.Accumulators] that accept a single argument and no weights work out of the box. Other accumulators from Boost.Accumulators can be made to work by using them inside a wrapper class that implements the concept.
 
 The first example shows how to make and use a histogram that uses one of the the builtin accumulators.
 [import ../examples/guide_custom_accumulators_builtin.cpp]

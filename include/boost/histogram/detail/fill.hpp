@@ -12,7 +12,6 @@
 #include <boost/config/workaround.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
-#include <boost/histogram/detail/accumulator_traits.hpp>
 #include <boost/histogram/detail/argument_traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/linearize.hpp>

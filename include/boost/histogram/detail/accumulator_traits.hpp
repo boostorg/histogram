@@ -13,6 +13,7 @@
 
 namespace boost {
 
+// forward declare accumulator_set so that it can be matched below
 namespace accumulators {
 template <class, class, class>
 struct accumulator_set;
@@ -23,36 +24,47 @@ namespace detail {
 
 template <bool WeightSupport, class... Ts>
 struct accumulator_traits_holder {
-  using wsupport = std::integral_constant<bool, WeightSupport>;
+  static constexpr bool weight_support = WeightSupport;
   using args = std::tuple<Ts...>;
 };
 
+// member function pointer with weight_type as first argument is better match
 template <class R, class T, class U, class... Ts>
-accumulator_traits_holder<true, Ts...> accumulator_traits_impl_2(
+accumulator_traits_holder<true, Ts...> accumulator_traits_impl_call_op(
     R (T::*)(boost::histogram::weight_type<U>, Ts...));
 
 template <class R, class T, class U, class... Ts>
-accumulator_traits_holder<true, Ts...> accumulator_traits_impl_2(
+accumulator_traits_holder<true, Ts...> accumulator_traits_impl_call_op(
+    R (T::*)(boost::histogram::weight_type<U>&, Ts...));
+
+template <class R, class T, class U, class... Ts>
+accumulator_traits_holder<true, Ts...> accumulator_traits_impl_call_op(
     R (T::*)(boost::histogram::weight_type<U>&&, Ts...));
 
 template <class R, class T, class U, class... Ts>
-accumulator_traits_holder<true, Ts...> accumulator_traits_impl_2(
+accumulator_traits_holder<true, Ts...> accumulator_traits_impl_call_op(
     R (T::*)(const boost::histogram::weight_type<U>&, Ts...));
 
+// member function pointer only considered if all specializations above fail
 template <class R, class T, class... Ts>
-accumulator_traits_holder<false, Ts...> accumulator_traits_impl_2(R (T::*)(Ts...));
+accumulator_traits_holder<false, Ts...> accumulator_traits_impl_call_op(R (T::*)(Ts...));
 
 template <class T>
 auto accumulator_traits_impl(T&)
     -> decltype(std::declval<T&>() += 0, accumulator_traits_holder<true>{});
 
 template <class T>
-auto accumulator_traits_impl(T&) -> decltype(accumulator_traits_impl_2(&T::operator()));
+auto accumulator_traits_impl(T&)
+    -> decltype(accumulator_traits_impl_call_op(&T::operator()));
 
 // for boost.accumulators compatibility
 template <class S, class F, class W>
 accumulator_traits_holder<false, S> accumulator_traits_impl(
-    boost::accumulators::accumulator_set<S, F, W>&);
+    boost::accumulators::accumulator_set<S, F, W>&) {
+  static_assert(std::is_same<W, void>::value,
+                "accumulator_set with weights is not directly supported, please use "
+                "a wrapper class that implements the Accumulator concept");
+}
 
 template <class T>
 using accumulator_traits = decltype(accumulator_traits_impl(std::declval<T&>()));

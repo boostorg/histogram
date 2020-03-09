@@ -16,66 +16,66 @@ int main() {
   using boost::histogram::weight_type;
 
   struct A1 {
-    void operator()(){};
+    void operator()();
   };
 
-  BOOST_TEST_NOT(dtl::accumulator_traits<A1>::wsupport::value);
+  BOOST_TEST_NOT(dtl::accumulator_traits<A1>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A1>::args, std::tuple<>);
 
   struct A2 {
-    void operator()(int, double) {}
+    void operator()(int, double);
   };
 
-  BOOST_TEST_NOT(dtl::accumulator_traits<A2>::wsupport::value);
+  BOOST_TEST_NOT(dtl::accumulator_traits<A2>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A2>::args,
                         std::tuple<int, double>);
 
   struct A3 {
-    void operator()() {}
-    void operator()(weight_type<int>) {}
+    void operator()();
+    void operator()(weight_type<int>);
   };
 
-  BOOST_TEST(dtl::accumulator_traits<A3>::wsupport::value);
+  BOOST_TEST(dtl::accumulator_traits<A3>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A3>::args, std::tuple<>);
 
   struct A4 {
-    void operator()(int, double, char) {}
-    void operator()(weight_type<int>, int, double, char) {}
+    void operator()(int, double, char);
+    void operator()(weight_type<int>, int, double, char);
   };
 
-  BOOST_TEST(dtl::accumulator_traits<A4>::wsupport::value);
+  BOOST_TEST(dtl::accumulator_traits<A4>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A4>::args,
                         std::tuple<int, double, char>);
 
   struct A5 {
-    void operator()(const weight_type<int>, int) {}
+    void operator()(const weight_type<int>, int);
   };
 
-  BOOST_TEST(dtl::accumulator_traits<A5>::wsupport::value);
+  BOOST_TEST(dtl::accumulator_traits<A5>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A5>::args, std::tuple<int>);
 
   struct A6 {
-    void operator()(const weight_type<int>&, const int) {}
+    void operator()(const weight_type<int>&, const int);
   };
 
-  BOOST_TEST(dtl::accumulator_traits<A6>::wsupport::value);
+  BOOST_TEST(dtl::accumulator_traits<A6>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A6>::args, std::tuple<int>);
 
   struct A7 {
-    void operator()(weight_type<int>&&, int&&) {}
+    void operator()(weight_type<int>&&, int&&);
   };
 
-  BOOST_TEST(dtl::accumulator_traits<A7>::wsupport::value);
+  BOOST_TEST(dtl::accumulator_traits<A7>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A7>::args, std::tuple<int&&>);
 
   struct B {
-    int operator+=(int) { return 0; }
+    int operator+=(int);
   };
 
-  BOOST_TEST(dtl::accumulator_traits<B>::wsupport::value);
+  BOOST_TEST(dtl::accumulator_traits<B>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<B>::args, std::tuple<>);
 
-  BOOST_TEST(dtl::accumulator_traits<int>::wsupport::value);
+  BOOST_TEST(dtl::accumulator_traits<int>::weight_support);
   BOOST_TEST_TRAIT_SAME(dtl::accumulator_traits<int>::args, std::tuple<>);
 
   return boost::report_errors();
