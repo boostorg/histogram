@@ -19,7 +19,7 @@
 #include <boost/histogram/detail/optional_index.hpp>
 #include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/detail/static_if.hpp>
-#include <boost/histogram/detail/variant2_with_warnings_disabled.hpp>
+#include <boost/variant2/variant.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/bind.hpp>
