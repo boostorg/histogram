@@ -219,15 +219,15 @@ void run_tests() {
     BOOST_TEST_EQ(hr.at(1, 0), 1);
 
     // slice with crop mode
-    auto hr2 = reduce(h, slice(1, 3, slice::mode::crop),
-                      slice_and_rebin(1, 3, 2, slice::mode::crop));
+    auto hr2 = reduce(h, slice(1, 3, slice_mode::crop),
+                      slice_and_rebin(1, 3, 2, slice_mode::crop));
     BOOST_TEST_EQ(hr, hr2);
 
     // explicit axis indices
     auto hr3 = reduce(h, crop_and_rebin(1, 2, 4, 2), crop(0, 2, 4));
     BOOST_TEST_EQ(hr, hr3);
-    auto hr4 = reduce(h, slice_and_rebin(1, 1, 3, 2, slice::mode::crop),
-                      slice(0, 1, 3, slice::mode::crop));
+    auto hr4 = reduce(h, slice_and_rebin(1, 1, 3, 2, slice_mode::crop),
+                      slice(0, 1, 3, slice_mode::crop));
     BOOST_TEST_EQ(hr, hr4);
   }
 
