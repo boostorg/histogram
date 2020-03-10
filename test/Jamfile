@@ -116,7 +116,6 @@ alias failure :
     [ compile-fail histogram_fail2.cpp ]
     [ compile-fail histogram_fail3.cpp ]
     [ compile-fail histogram_fail4.cpp ]
-    [ compile-fail histogram_operators_fail0.cpp ]
     ;
 
 alias threading :

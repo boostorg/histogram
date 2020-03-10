@@ -9,6 +9,7 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <boost/throw_exception.hpp>
@@ -195,6 +196,10 @@ void run_tests() {
     BOOST_TEST_EQ(c[0], 1);
     c *= 2; // this calls *= on each element
     BOOST_TEST_EQ(c[0], 2);
+
+    using h_t = decltype(
+        make_s(Tag{}, dummy_storage<unscaleable, false>{}, axis::integer<>(0, 1)));
+    BOOST_TEST_NOT((detail::has_operator_rmul<h_t, double>::value));
   }
 }
 

@@ -38,7 +38,6 @@ boost_test(TYPE compile-fail SOURCES histogram_fail1.cpp)
 boost_test(TYPE compile-fail SOURCES histogram_fail2.cpp)
 boost_test(TYPE compile-fail SOURCES histogram_fail3.cpp)
 boost_test(TYPE compile-fail SOURCES histogram_fail4.cpp)
-boost_test(TYPE compile-fail SOURCES histogram_operators_fail0.cpp)
 
 set(BOOST_TEST_LINK_LIBRARIES Boost::histogram Boost::core)
 
