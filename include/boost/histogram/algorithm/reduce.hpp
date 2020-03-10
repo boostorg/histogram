@@ -11,6 +11,7 @@
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/make_default.hpp>
+#include <boost/histogram/detail/reduce_command.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/indexed.hpp>
@@ -23,32 +24,6 @@
 
 namespace boost {
 namespace histogram {
-namespace detail {
-struct reduce_command {
-  static constexpr unsigned unset = static_cast<unsigned>(-1);
-  unsigned iaxis;
-  enum class range_t : char {
-    none,
-    indices,
-    values,
-  } range = range_t::none;
-  union {
-    axis::index_type index;
-    double value;
-  } begin;
-  union {
-    axis::index_type index;
-    double value;
-  } end;
-  unsigned merge = 0; // default value indicates unset option
-  bool crop = false;
-  // for internal use by the reduce algorithm
-  bool is_ordered = true;
-  bool use_underflow_bin = true;
-  bool use_overflow_bin = true;
-};
-} // namespace detail
-
 namespace algorithm {
 
 /** Holder for a reduce command.
