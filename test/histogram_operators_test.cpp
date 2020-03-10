@@ -14,6 +14,7 @@
 #include <boost/throw_exception.hpp>
 #include <string>
 #include <vector>
+#include "dummy_storage.hpp"
 #include "std_ostream.hpp"
 #include "throw_exception.hpp"
 #include "utility_histogram.hpp"
@@ -173,6 +174,27 @@ void run_tests() {
     BOOST_TEST_THROWS(a -= b, std::invalid_argument);
     BOOST_TEST_THROWS(a *= b, std::invalid_argument);
     BOOST_TEST_THROWS(a /= b, std::invalid_argument);
+  }
+
+  // scaling, check all valid cases (see histogram_operators_fail0.cpp for invalid cases)
+  {
+    auto a = make_s(Tag{}, dummy_storage<unscaleable, true>{}, axis::integer<>(0, 1));
+    a(0);
+    BOOST_TEST_EQ(a[0], 1);
+    a *= 2; // this calls the storage scaling, which intentially does not do anything
+    BOOST_TEST_EQ(a[0], 1);
+
+    auto b = make_s(Tag{}, dummy_storage<double, true>{}, axis::integer<>(0, 1));
+    b(0);
+    BOOST_TEST_EQ(b[0], 1);
+    b *= 2; // still does not do anything
+    BOOST_TEST_EQ(b[0], 1);
+
+    auto c = make_s(Tag{}, dummy_storage<double, false>{}, axis::integer<>(0, 1));
+    c(0);
+    BOOST_TEST_EQ(c[0], 1);
+    c *= 2; // this calls *= on each element
+    BOOST_TEST_EQ(c[0], 2);
   }
 }
 
