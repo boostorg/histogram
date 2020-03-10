@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_ACCUMULATOR_TRAITS_HPP
 #define BOOST_HISTOGRAM_DETAIL_ACCUMULATOR_TRAITS_HPP
 
+#include <boost/histogram/detail/priority.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <tuple>
 #include <type_traits>
@@ -50,24 +51,28 @@ template <class R, class T, class... Ts>
 accumulator_traits_holder<false, Ts...> accumulator_traits_impl_call_op(R (T::*)(Ts...));
 
 template <class T>
-auto accumulator_traits_impl(T&)
+auto accumulator_traits_impl(T&, priority<1>)
+    -> decltype(accumulator_traits_impl_call_op(&T::operator()));
+
+template <class T>
+auto accumulator_traits_impl(T&, priority<1>)
     -> decltype(std::declval<T&>() += 0, accumulator_traits_holder<true>{});
 
 template <class T>
-auto accumulator_traits_impl(T&)
-    -> decltype(accumulator_traits_impl_call_op(&T::operator()));
+auto accumulator_traits_impl(T&, priority<0>) -> accumulator_traits_holder<false>;
 
 // for boost.accumulators compatibility
 template <class S, class F, class W>
 accumulator_traits_holder<false, S> accumulator_traits_impl(
-    boost::accumulators::accumulator_set<S, F, W>&) {
+    boost::accumulators::accumulator_set<S, F, W>&, priority<1>) {
   static_assert(std::is_same<W, void>::value,
                 "accumulator_set with weights is not directly supported, please use "
                 "a wrapper class that implements the Accumulator concept");
 }
 
 template <class T>
-using accumulator_traits = decltype(accumulator_traits_impl(std::declval<T&>()));
+using accumulator_traits =
+    decltype(accumulator_traits_impl(std::declval<T&>(), priority<1>{}));
 
 } // namespace detail
 } // namespace histogram

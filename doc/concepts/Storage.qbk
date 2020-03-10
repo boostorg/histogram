@@ -14,6 +14,7 @@ A [*Storage] handles memory for the bin counters and provides a uniform vector-l
 * `S` is a type meeting the requirements of [*Storage]
 * `s` is a  value of types `S`
 * `i` and `n` are values of type `std::size_t`
+* `Alloc` is an allocator type for `S`
 
 [table Valid expressions
 [[Expression] [Returns] [Semantics, Pre/Post-conditions]]
@@ -127,7 +128,7 @@ A [*Storage] handles memory for the bin counters and provides a uniform vector-l
   [`s.get_allocator()`]
   [`Alloc`]
   [
-    Const member function which returns the allocator `Alloc` used by `S`. May be omitted if `S` does not use allocators. If this member function exists, also a special constructor must exists so that `S(s.get_allocator())` is a valid expression.
+    Const member function which returns the allocator used by `S`. Must be omitted if `S` does not use allocators. If this member function exists, also a special constructor must exist so that `S(s.get_allocator())` is a valid expression.
   ]
 ]
 ]
