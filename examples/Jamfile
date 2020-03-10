@@ -44,6 +44,7 @@ alias cxx14 :
     [ run guide_histogram_reduction.cpp ]
     [ run guide_histogram_projection.cpp ]
     [ run guide_histogram_streaming.cpp ]
+    [ run guide_histogram_in_api.cpp ]
     [ run guide_indexed_access.cpp ]
     [ run guide_make_dynamic_histogram.cpp ]
     [ run guide_make_static_histogram.cpp ]

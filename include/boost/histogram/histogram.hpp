@@ -155,6 +155,8 @@ public:
 
   /** Fill histogram with values, an optional weight, and/or a sample.
 
+    Returns iterator to located cell.
+
     Arguments are passed in order to the axis objects. Passing an argument type that is
     not convertible to the value type accepted by the axis or passing the wrong number
     of arguments causes a throw of `std::invalid_argument`.
@@ -176,14 +178,14 @@ public:
     __Axis with multiple arguments__
 
     If the histogram contains an axis which accepts a `std::tuple` of arguments, the
-    arguments for that axis need to passed as a `std::tuple`, for example,
+    arguments for that axis need to be passed as a `std::tuple`, for example,
     `std::make_tuple(1.2, 2.3)`. If the histogram contains only this axis and no other,
     the arguments can be passed directly.
   */
-  template <class Arg0, class... Args>
-  std::enable_if_t<(detail::is_tuple<Arg0>::value == false || sizeof...(Args) > 0),
-                   iterator>
-  operator()(const Arg0& arg0, const Args&... args) {
+  template <class T0, class... Ts,
+            class = std::enable_if_t<(detail::is_tuple<T0>::value == false ||
+                                      sizeof...(Ts) > 0)>>
+  iterator operator()(const T0& arg0, const Ts&... args) {
     return operator()(std::forward_as_tuple(arg0, args...));
   }
 
@@ -623,23 +625,24 @@ auto operator/(const histogram<A, S>& h, double x) {
 #if __cpp_deduction_guides >= 201606
 
 template <class... Axes, class = detail::requires_axes<std::tuple<std::decay_t<Axes>...>>>
-histogram(Axes...) -> histogram<std::tuple<std::decay_t<Axes>...>>;
+histogram(Axes...)->histogram<std::tuple<std::decay_t<Axes>...>>;
 
 template <class... Axes, class S, class = detail::requires_storage_or_adaptible<S>>
 histogram(std::tuple<Axes...>, S)
-    -> histogram<std::tuple<Axes...>, std::conditional_t<detail::is_adaptible<S>::value,
-                                                         storage_adaptor<S>, S>>;
+    ->histogram<std::tuple<Axes...>, std::conditional_t<detail::is_adaptible<S>::value,
+                                                        storage_adaptor<S>, S>>;
 
 template <class Iterable, class = detail::requires_iterable<Iterable>,
           class = detail::requires_any_axis<typename Iterable::value_type>>
-histogram(Iterable) -> histogram<std::vector<typename Iterable::value_type>>;
+histogram(Iterable)->histogram<std::vector<typename Iterable::value_type>>;
 
 template <class Iterable, class S, class = detail::requires_iterable<Iterable>,
           class = detail::requires_any_axis<typename Iterable::value_type>,
           class = detail::requires_storage_or_adaptible<S>>
-histogram(Iterable, S) -> histogram<
-    std::vector<typename Iterable::value_type>,
-    std::conditional_t<detail::is_adaptible<S>::value, storage_adaptor<S>, S>>;
+histogram(Iterable, S)
+    ->histogram<
+        std::vector<typename Iterable::value_type>,
+        std::conditional_t<detail::is_adaptible<S>::value, storage_adaptor<S>, S>>;
 
 #endif
 
