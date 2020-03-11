@@ -21,6 +21,7 @@ alias cxx14 :
     [ run getting_started_listing_02.cpp ]
     [ run getting_started_listing_03.cpp ]
     [ run getting_started_listing_04.cpp ]
+    [ run getting_started_listing_05.cpp ]
     [ run guide_axis_basic_demo.cpp ]
     [ run guide_axis_circular.cpp ]
     [ run guide_axis_growing.cpp ]
