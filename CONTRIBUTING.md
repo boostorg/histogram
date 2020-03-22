@@ -44,7 +44,7 @@ output and information on your system:
 
 ### Test coverage
 
-Boost.Histogram maintains 100% line coverage. Coverage is automatically checked by CI. To generate a report locally, you need to build the code with gcc-5 and coverage instrumentation enabled, do `b2 toolset=gcc-5 cxxstd=latest coverage=on test`. To generate the coverage report, run `tools/cov.sh` from the project root directory of Boost.Histogram. This will generate a new folder `coverage-report` with a HTML report. Open `coverage-report/index.html` in a browser.
+Boost.Histogram maintains 100% line coverage. Coverage is automatically checked by CI. To generate a report locally, you need to build the code with gcc-8 and coverage instrumentation enabled, do `b2 toolset=gcc-8 cxxstd=latest coverage=on test`. To generate the coverage report, run `tools/cov.sh` from the project root directory of Boost.Histogram. This will generate a new folder `coverage-report` with a HTML report. Open `coverage-report/index.html` in a browser.
 
 Notes: Generating coverage data is very fickle. You need to use gcc-5 or gcc-8 and a matching version of gcov, other gcc versions (6, 7, 9) are known to be broken or are not supported by lcov, which is used to process the raw coverage data. Generating coverage data with clang and llvm-cov is not supported by lcov. The best results are obtained with gcc-5. gcc-8 is known to report lines as missed which are impossible to miss.
 
