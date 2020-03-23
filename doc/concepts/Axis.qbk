@@ -50,7 +50,9 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 * `A` is a type meeting the requirements of [*Axis]
 * `a` and `b` are values of type `A`
 * `i` and `j` are indices of type [headerref boost/histogram/fwd.hpp `boost::histogram::axis::index_type`]
+* `n` is a value of type `unsigned`
 * `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable] and *nothrow* [@https://en.cppreference.com/w/cpp/named_req/MoveAssignable MoveAssignable].
+* `ar` is a value of an archive with Boost.Serialization semantics
 
 [table Valid expressions
 [[Expression] [Returns] [Semantics, Pre/Post-conditions]]
@@ -79,7 +81,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   [`a.inclusive()`]
   [`bool`]
   [
-    Static constexpr member function which returns true, if the axis has a bin for every possible input value, and false otherwise. Faster code can be generated if all axes types in a histogram are inclusive. An axis with underflow and overflow bins is always inclusive. An axis may be inclusive even if underflow or overflow bins are missing. For example, a category axis is inclusive if it has an overflow bin or if it is growing.
+    Static constexpr member function which returns true, if the axis has a bin for every possible input value, and false otherwise. Faster code can be generated if all axes types in a histogram are inclusive. An axis with underflow and overflow bins is always inclusive. An axis may be inclusive even if underflow or overflow bins are missing. For example, a category axis is inclusive if either it has an overflow bin or if it is growing.
   ]
 ]
 [
@@ -100,7 +102,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   [`a == b`]
   [`bool`]
   [
-     Returns `true` if all state variables compare equal, including any metadata. Otherwise returns `false`. If `a == b` is implemented, also `a != b` must be implemented. If this binary operator is not implemented, the library considers the arguments equal, if and only if their types are the same.
+     Returns `true` if all state variables compare equal, including any metadata. Otherwise returns `false`. If `a == b` is implemented, also `a != b` must be implemented. If this binary operator is not implemented, the library considers the axes equal if their types are the same.
   ]
 ]
 [
@@ -121,7 +123,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   [`a.serialize(ar, n)`]
   []
   [
-    `ar` is a value of an archive with Boost.Serialization semantics and `n` is an unsigned integral value. Saves to the archive or loads serialized state from the archive. The version number `n` is the stored version when the object is loaded or the current version when the object is saved.
+    Saves to the archive or loads serialised state from the archive. The version number `n` is the stored version when the object is loaded or the current version when the object is saved.
   ]
 ]
 ]

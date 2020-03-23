@@ -45,33 +45,24 @@ actions doxygen-postprocessing
 
 notfile reference-pp : @doxygen-postprocessing : reference.xml ;
 
-xml histogram
-:
-    histogram.qbk
-:
-    <dependency>reference-pp
-;
-
 path-constant images_location : html ;
 
-boostbook standalone
+boostbook histogram
 :
-    histogram
+  histogram.qbk
 :
-    <xsl:param>boost.root=../../../..
-    <xsl:param>boost.libraries=../../../libraries.htm
-    <xsl:param>boost.mathjax=1
-    <xsl:param>chunk.first.sections=1
-    <xsl:param>generate.toc="chapter nop section toc"
-    <xsl:param>toc.section.depth=3
-    <format>pdf:<xsl:param>img.src.path=$(images_location)/
-    <format>pdf:<xsl:param>boost.url.prefix="http://www.boost.org/doc/libs/release/doc/html"
+  <xsl:param>boost.root=../../../..
+  <xsl:param>boost.libraries=../../../libraries.htm
+  <xsl:param>boost.mathjax=1
+  <xsl:param>chunk.first.sections=1
+  <xsl:param>generate.toc="chapter nop section toc"
+  <xsl:param>toc.section.depth=3
+  <dependency>reference-pp
+  <format>pdf:<xsl:param>img.src.path=$(images_location)/
+  <format>pdf:<xsl:param>boost.url.prefix="http://www.boost.org/doc/libs/release/doc/html"
 ;
 
-alias boostdoc
-:
-    histogram
-;
+alias boostdoc ;
 explicit boostdoc ;
-alias boostrelease ;
+alias boostrelease : histogram ;
 explicit boostrelease ;

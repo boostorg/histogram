@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <array>
+#include <boost/histogram/detail/detect.hpp>
 #include <ostream>
 #include <type_traits>
 
@@ -17,7 +18,8 @@ struct dummy_storage : std::array<ValueType, 10> {
   using base_t = std::array<ValueType, 10>;
 
   static constexpr bool has_threading_support = false;
-  static constexpr bool scaleable = Scaleable;
+  static constexpr bool scaleable =
+      Scaleable && boost::histogram::detail::has_operator_rmul<ValueType, double>::value;
 
   std::size_t size_ = 0;
 

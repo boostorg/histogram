@@ -17,6 +17,7 @@
 #include <boost/histogram/detail/mutex_base.hpp>
 #include <boost/histogram/detail/non_member_container_access.hpp>
 #include <boost/histogram/detail/span.hpp>
+#include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/sample.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
@@ -438,11 +439,18 @@ public:
     return !operator==(rhs);
   }
 
-  /// Add values of another histogram.
+  /** Add values of another histogram.
+
+    This operator is only available if the value_type supports operator+=.
+  */
   template <class A, class S>
+#ifdef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+  histogram&
+#else
   std::enable_if_t<
       detail::has_operator_radd<value_type, typename histogram<A, S>::value_type>::value,
       histogram&>
+#endif
   operator+=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
@@ -451,11 +459,18 @@ public:
     return *this;
   }
 
-  /// Subtract values of another histogram.
+  /** Subtract values of another histogram.
+
+    This operator is only available if the value_type supports operator-=.
+  */
   template <class A, class S>
+#ifdef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+  histogram&
+#else
   std::enable_if_t<
       detail::has_operator_rsub<value_type, typename histogram<A, S>::value_type>::value,
       histogram&>
+#endif
   operator-=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
@@ -464,11 +479,18 @@ public:
     return *this;
   }
 
-  /// Multiply by values of another histogram.
+  /** Multiply by values of another histogram.
+
+    This operator is only available if the value_type supports operator*=.
+  */
   template <class A, class S>
+#ifdef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+  histogram&
+#else
   std::enable_if_t<
       detail::has_operator_rmul<value_type, typename histogram<A, S>::value_type>::value,
       histogram&>
+#endif
   operator*=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
@@ -477,11 +499,18 @@ public:
     return *this;
   }
 
-  /// Divide by values of another histogram.
+  /** Divide by values of another histogram.
+
+    This operator is only available if the value_type supports operator/=.
+  */
   template <class A, class S>
+#ifdef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+  histogram&
+#else
   std::enable_if_t<
       detail::has_operator_rdiv<value_type, typename histogram<A, S>::value_type>::value,
       histogram&>
+#endif
   operator/=(const histogram<A, S>& rhs) {
     if (!detail::axes_equal(axes_, unsafe_access::axes(rhs)))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
@@ -490,31 +519,39 @@ public:
     return *this;
   }
 
-  /// Multiply all values with a scalar.
-  template <class S = storage_type>
-  std::enable_if_t<(detail::has_operator_rmul<S, double>::value == true), histogram&>
+  /** Multiply all values with a scalar.
+
+    This operator is only available if the value_type supports operator*=.
+  */
+#ifdef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+  histogram&
+#else
+  template <class V = value_type>
+  std::enable_if_t<(detail::has_operator_rmul<V, double>::value), histogram&>
+#endif
   operator*=(const double x) {
-    // use special implementation of scaling if available
-    storage_ *= x;
+    // use special storage implementation of scaling if available,
+    // else fallback to scaling item by item
+    detail::static_if<detail::has_operator_rmul<storage_type, double>>(
+        [x](auto& s) { s *= x; },
+        [x](auto& s) {
+          for (auto&& si : s) si *= x;
+        },
+        storage_);
     return *this;
   }
 
-  /// Multiply all values with a scalar.
-  template <class S = storage_type>
-  std::enable_if_t<(detail::has_operator_rmul<S, double>::value == false &&
-                    detail::has_operator_rmul<typename S::value_type, double>::value ==
-                        true),
-                   histogram&>
-  operator*=(const double x) {
-    // generic implementation of scaling
-    for (auto&& si : storage_) si *= x;
-    return *this;
-  }
+  /** Divide all values by a scalar.
 
-  /// Divide all values by a scalar.
+    This operator is only available if operator*= is available.
+  */
+#ifdef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+  histogram&
+#else
   template <class H = histogram>
-  std::enable_if_t<(detail::has_operator_rmul<H, double>::value), histogram&> operator/=(
-      const double x) {
+  std::enable_if_t<(detail::has_operator_rmul<H, double>::value), histogram&>
+#endif
+  operator/=(const double x) {
     return operator*=(1.0 / x);
   }
 
