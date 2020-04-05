@@ -4,6 +4,10 @@
 # (See accompanying file LICENSE_1_0.txt
 # or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+"""
+This test makes sure that all boost.histogram headers are included in the ODR test carried out in odr_main_test.cpp. See that file for details on why this test needed.
+"""
+
 import os
 import sys
 import re
@@ -11,12 +15,20 @@ import re
 this_path = os.path.dirname(__file__)
 
 all_headers = set()
-include_path = os.path.join(this_path, "..", "include")
+# Includes are either in this_path/../include for the standalone version or ...
+include_path = os.path.join(this_path, "..", "include", "boost", "histogram")
+if not os.path.exists(include_path):
+    # ... in this_path/../../.. for the bundled boost release
+    include_path = os.path.join(this_path, "..", "..", "..", "boost", "histogram")
+    assert os.path.exists(include_path)
+
+# this has to be rindex, because any leading path could also be called boost
+root_include_path = include_path[: include_path.rindex("boost")]
+
 for root, dirs, files in os.walk(include_path):
     for fn in files:
         fn = os.path.join(root, fn)
-        assert fn.startswith(include_path)
-        fn = fn[len(include_path) + 1 :]
+        fn = fn[len(root_include_path) :]
         all_headers.add(fn)
 
 
@@ -37,7 +49,7 @@ while unread_headers:
     included_headers.update(unread_headers)
     for hdr in tuple(unread_headers):  # copy needed because unread_headers is modified
         unread_headers.remove(hdr)
-        for hdr2 in get_headers(os.path.join(include_path, hdr)):
+        for hdr2 in get_headers(os.path.join(root_include_path, hdr)):
             if hdr2 not in included_headers:
                 unread_headers.add(hdr2)
 

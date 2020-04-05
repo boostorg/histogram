@@ -70,6 +70,9 @@ matrix:
         # prepare build
         - ./bootstrap.sh
         - ./b2 headers
+        # simulate bundled boost by moving the headers instead of symlinking
+        - rm -rf boost/histogram.pp boost/histogram
+        - mv -f libs/histogram/include/boost/* boost
         - cd libs/histogram
         - B2="../../b2 -q -j2 warnings-as-errors=on"
 
