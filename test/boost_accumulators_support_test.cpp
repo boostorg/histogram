@@ -4,12 +4,6 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#if 1 // test temporarily disabled
-
-int main() { return 0; }
-
-#else
-
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
@@ -49,5 +43,3 @@ int main() {
   }
   return boost::report_errors();
 }
-
-#endif
