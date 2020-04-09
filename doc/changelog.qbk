@@ -7,6 +7,39 @@
 
 [section:history Revision history]
 
+[heading Boost 1.73]
+
+* New features
+  * `reduce` algorithm
+    * `reduce` now supports positional commands
+    * `category` axis now supports `slice` command
+    * New `crop` command, like `shrink`, but discards content of removed bins
+    * renamed `reduce_option` to `reduce_command` (old name available but deprecated)
+  * accumulators
+    * New `count` accumulator, a thin wrapper around a primitive arithmetic type; serves as a base class for users who want to add arbitrary metadata to each bin
+    * `sum` gained a `value()` method for consistency with other accumulators
+    * `sum` gained a new argument, allowing users to select whether to sum over all bins or only the inner bins (excluding underflow and overflow)
+  * axis traits
+    * New  traits `is_ordered` and `ordered` to distinguish between different kinds of DiscreteAxis types; used internally to handle `category` axis and `integer` axis differently
+    * renamed `static_options` to `get_options` and `static_is_inclusive` to `is_inclusive` (old names available but deprecated)
+
+* Fixes
+  * Fixed failing ODR test in bundled Boost due to wrong paths
+  * Fixed a bug in histogram::operator*= that could occur in user-defined accumulators
+  * Fixed a bug in `indexed` which could cause arithmetic past the end position
+  * Fixed a bug where the variance in `accumulators::weighted_sum` was not correctly computed if a normal histogram was added to the histogram that used `accumulators::weighted_sum`
+  * Fixed a bug where compiling with `-ffast-math` would break `accumulators::sum`
+  * Fixed `algorithm::reduce` to work with axes without *flow bins, which did not compile before
+
+* Other
+  * Added an example and documentation on how to use Boost.Histogram as a backend
+  * Improved the docs on how to use custom accumulators and Boost.Accumulators
+  * Many small documentation improvements
+  * Improved docs for `algorithm::reduce`
+  * Improved experimental cmake build support
+  * Use `index_type` consistently everywhere instead of raw `int`
+  * Benchmark update in the docs
+
 [heading Boost 1.72]
 
 * New features
