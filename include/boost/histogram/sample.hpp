@@ -13,6 +13,12 @@
 namespace boost {
 namespace histogram {
 
+/** Sample holder and type envelope.
+
+  You should not construct these directly, use the sample() helper function.
+
+  @tparam Underlying type.
+*/
 template <class T>
 struct sample_type {
   T value;
