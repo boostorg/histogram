@@ -97,7 +97,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
 [include concepts.qbk]
 [xinclude reference_pp.xml]
 [include rationale.qbk]
-[include changelog.qbk]
+[include history.qbk]
 
 [*Acknowledgments]
 
