@@ -33,7 +33,7 @@
   header is not included by any other header and must be explicitly included to use the
   streaming operator.
 
-  To you use your own, simply include your own implementation instead of this header.
+  To use your own, simply include your own implementation instead of this header.
  */
 
 namespace boost {
