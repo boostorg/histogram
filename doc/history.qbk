@@ -10,18 +10,19 @@
 [heading Boost 1.73]
 
 * New features
-  * `reduce` algorithm
-    * `reduce` now supports positional commands
-    * `category` axis now supports `slice` command
-    * New `crop` command, like `shrink`, but discards content of removed bins
-    * renamed `reduce_option` to `reduce_command` (old name available but deprecated)
   * accumulators
     * New `count` accumulator, a thin wrapper around a primitive arithmetic type; serves as a base class for users who want to add arbitrary metadata to each bin
     * `sum` gained a `value()` method for consistency with other accumulators
+  * algorithm
+    * `reduce`
+      * Now supports positional commands
+      * `category` axis now supports `slice` command
+      * Added `crop` command, like `shrink`, but discards content of removed bins
+      * Renamed `reduce_option` to `reduce_command` (old name available but deprecated)
     * `sum` gained a new argument, allowing users to select whether to sum over all bins or only the inner bins (excluding underflow and overflow)
-  * axis traits
-    * New  traits `is_ordered` and `ordered` to distinguish between different kinds of DiscreteAxis types; used internally to handle `category` axis and `integer` axis differently
-    * renamed `static_options` to `get_options` and `static_is_inclusive` to `is_inclusive` (old names available but deprecated)
+  * axis::traits
+    * Added traits `is_ordered` and `ordered` to distinguish between different kinds of DiscreteAxis types; used internally to handle `category` axis and `integer` axis differently
+    * Renamed `static_options` to `get_options` and `static_is_inclusive` to `is_inclusive` (old names available but deprecated)
 
 * Fixes
   * Fixed failing ODR test in bundled Boost due to wrong paths
