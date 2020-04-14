@@ -3,14 +3,13 @@
 #      (See accompanying file LICENSE_1_0.txt or copy at
 #            https://www.boost.org/LICENSE_1_0.txt)
 
-from __future__ import print_function
 import sys
 import xml.etree.ElementTree as ET
 import re
 
 
 def log(*args):
-    print("post-processing:", *args)
+    sys.stdout.write("post-processing:" + " ".join(args) + "\n")
 
 
 def select(condition, *tags):
@@ -46,7 +45,37 @@ def is_deprecated(x):
     return False
 
 
-input_file = sys.argv[1]
+def sort_headers_by(x):
+    name = x.get("name")
+    return name.count("/"), name
+
+
+def tail_stripper(elem):
+    if elem.tail:
+        elem.tail = elem.tail.rstrip()
+    for item in elem:
+        tail_stripper(item)
+
+
+def item_sorter(elem):
+    if elem.tag == "namespace":
+        if len(elem) > 1:
+            items = list(elem)
+            items.sort(key=lambda x: x.get("name"))
+            elem[:] = items
+        for sub in elem:
+            item_sorter(sub)
+
+
+if "ipykernel" in sys.argv[0]:  # used when run interactively in Atom/Hydrogen
+    from pathlib import Path
+
+    for input_file in Path().rglob("reference.xml"):
+        input_file = str(input_file)
+        break
+else:
+    input_file = sys.argv[1]
+
 output_file = input_file.replace(".xml", "_pp.xml")
 
 tree = ET.parse(input_file)
@@ -57,8 +86,12 @@ parent_map = {c: p for p in tree.iter() for c in p}
 unspecified = ET.Element("emphasis")
 unspecified.text = "unspecified"
 
-# hide all unnamed template parameters, these are used for SFINAE
-for item in select(lambda x: x.get("name") == "", "template-type-parameter"):
+# - hide all unnamed template parameters, these are used for SFINAE
+# - hide all template parameters that start with Detail
+for item in select(
+    lambda x: x.get("name") == "" or x.get("name").startswith("Detail"),
+    "template-type-parameter",
+):
     parent = parent_map[item]
     assert parent.tag == "template"
     parent.remove(item)
@@ -97,7 +130,7 @@ for item in select(
     parent.remove(item)
 
 # hide undocumented classes, structs, functions and replace those declared
-# "implementation detail" with typedef to implementation_defined
+# "implementation detail" with typedef to unspecified
 for item in select(lambda x: True, "class", "struct", "function"):
     purpose = item.find("purpose")
     if purpose is None:
@@ -133,5 +166,23 @@ for item in select(is_detail, "constructor", "method"):
         "declared as implementation detail",
     )
     parent_map[item].remove(item)
+
+
+log("sorting headers")
+reference = tree.getroot()
+assert reference.tag == "library-reference"
+reference[:] = sorted(reference, key=sort_headers_by)
+
+
+log("sorting items in each namespace")
+for header in reference:
+    namespace = header.find("namespace")
+    if namespace is None:
+        continue
+    item_sorter(namespace)
+
+
+log("stripping trailing whitespace")
+tail_stripper(reference)
 
 tree.write(output_file)
