@@ -15,12 +15,12 @@
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/try_cast.hpp>
 #include <boost/histogram/detail/type_name.hpp>
-#include <boost/variant2/variant.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/variant2/variant.hpp>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -300,6 +300,24 @@ bool ordered(const variant<Ts...>& axis) noexcept {
   return axis.ordered();
 }
 
+/** Returns true if axis is continuous or false.
+
+  See is_continuous for details.
+
+  @param axis any axis instance
+*/
+template <class Axis>
+constexpr bool continuous(const Axis& axis) noexcept {
+  boost::ignore_unused(axis);
+  return is_continuous<Axis>::value;
+}
+
+// specialization for variant
+template <class... Ts>
+bool continuous(const variant<Ts...>& axis) noexcept {
+  return axis.continuous();
+}
+
 /** Returns axis size plus any extra bins for under- and overflow.
 
   @param axis any axis instance
@@ -323,10 +341,7 @@ template <class Axis>
 decltype(auto) metadata(Axis&& axis) noexcept {
   return detail::static_if<detail::has_method_metadata<std::decay_t<Axis>>>(
       [](auto&& a) -> decltype(auto) { return a.metadata(); },
-      [](auto &&) -> mp11::mp_if<std::is_const<std::remove_reference_t<Axis>>,
-                                 axis::null_type const&, axis::null_type&> {
-        return detail::null_value;
-      },
+      [](auto &&) -> axis::null_type& { return detail::null_value; },
       std::forward<Axis>(axis));
 }
 

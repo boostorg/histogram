@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_DETAIL_NON_MEMBER_CONTAINER_ACCESS_HPP
-#define BOOST_HISTOGRAM_DETAIL_NON_MEMBER_CONTAINER_ACCESS_HPP
+#ifndef BOOST_HISTOGRAM_DETAIL_NONMEMBER_CONTAINER_ACCESS_HPP
+#define BOOST_HISTOGRAM_DETAIL_NONMEMBER_CONTAINER_ACCESS_HPP
 
 #if __cpp_lib_nonmember_container_access >= 201411
 
@@ -22,7 +22,7 @@ using std::size;
 } // namespace histogram
 } // namespace boost
 
-#else
+#else // std implementations are not available
 
 #include <initializer_list>
 #include <type_traits>
@@ -67,4 +67,4 @@ constexpr std::size_t size(const T (&)[N]) noexcept {
 
 #endif
 
-#endif // BOOST_HISTOGRAM_DETAIL_NON_MEMBER_CONTAINER_ACCESS_HPP
+#endif // BOOST_HISTOGRAM_DETAIL_NONMEMBER_CONTAINER_ACCESS_HPP

@@ -36,7 +36,7 @@ using std::span;
 
 #include <array>
 #include <boost/assert.hpp>
-#include <boost/histogram/detail/non_member_container_access.hpp>
+#include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <initializer_list>
 #include <iterator>
 #include <type_traits>
@@ -70,13 +70,14 @@ private:
 template <class T>
 class span_base<T, dynamic_extent> {
 public:
+  constexpr span_base() noexcept : begin_(nullptr), size_(0) {}
+
   constexpr T* data() noexcept { return begin_; }
   constexpr const T* data() const noexcept { return begin_; }
   constexpr std::size_t size() const noexcept { return size_; }
 
 protected:
   constexpr span_base(T* b, std::size_t s) noexcept : begin_(b), size_(s) {}
-
   constexpr void set(T* b, std::size_t s) noexcept {
     begin_ = b;
     size_ = s;
@@ -107,9 +108,7 @@ public:
 
   static constexpr std::size_t extent = Extent;
 
-  template <std::size_t _ = extent,
-            class = std::enable_if_t<(_ == 0 || _ == dynamic_extent)> >
-  constexpr span() noexcept : base(nullptr, 0) {}
+  using base::base;
 
   constexpr span(pointer first, pointer last)
       : span(first, static_cast<std::size_t>(last - first)) {
@@ -134,14 +133,14 @@ public:
       : span(dtl::data(arr), N) {}
 
   template <class Container, class = std::enable_if_t<std::is_convertible<
-                                 decltype(dtl::size(std::declval<Container>()),
-                                          dtl::data(std::declval<Container>())),
+                                 decltype(dtl::size(std::declval<const Container&>()),
+                                          dtl::data(std::declval<const Container&>())),
                                  pointer>::value> >
   constexpr span(const Container& cont) : span(dtl::data(cont), dtl::size(cont)) {}
 
   template <class Container, class = std::enable_if_t<std::is_convertible<
-                                 decltype(dtl::size(std::declval<Container>()),
-                                          dtl::data(std::declval<Container>())),
+                                 decltype(dtl::size(std::declval<Container&>()),
+                                          dtl::data(std::declval<Container&>())),
                                  pointer>::value> >
   constexpr span(Container& cont) : span(dtl::data(cont), dtl::size(cont)) {}
 
@@ -173,8 +172,8 @@ public:
   const_reverse_iterator rend() const { return reverse_iterator(begin()); }
   const_reverse_iterator crend() { return reverse_iterator(begin()); }
 
-  constexpr reference front() { *base::data(); }
-  constexpr reference back() { *(base::data() + base::size() - 1); }
+  constexpr reference front() { return *base::data(); }
+  constexpr reference back() { return *(base::data() + base::size() - 1); }
 
   constexpr reference operator[](index_type idx) const { return base::data()[idx]; }
 
@@ -237,7 +236,7 @@ public:
 
 #endif
 
-#include <boost/histogram/detail/non_member_container_access.hpp>
+#include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <utility>
 
 namespace boost {

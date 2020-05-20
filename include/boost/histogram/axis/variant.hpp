@@ -14,11 +14,11 @@
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
-#include <boost/variant2/variant.hpp>
 #include <boost/histogram/detail/variant_proxy.hpp>
 #include <boost/mp11/algorithm.hpp> // mp_contains
 #include <boost/mp11/list.hpp>      // mp_first
 #include <boost/throw_exception.hpp>
+#include <boost/variant2/variant.hpp>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -38,9 +38,8 @@ class variant : public iterator_mixin<variant<Ts...>> {
   template <class T>
   using requires_bounded_type = std::enable_if_t<is_bounded_type<T>::value>;
 
-  // maybe metadata_type or const metadata_type, if bounded type is const
-  using metadata_type = std::remove_reference_t<decltype(
-      traits::metadata(std::declval<std::remove_pointer_t<mp11::mp_first<variant>>>()))>;
+  using metadata_type = std::remove_const_t<std::remove_reference_t<decltype(
+      traits::metadata(std::declval<std::remove_pointer_t<mp11::mp_first<variant>>>()))>>;
 
 public:
   // cannot import ctors with using directive, it breaks gcc and msvc
@@ -102,15 +101,20 @@ public:
     return visit([](const auto& a) { return traits::ordered(a); }, *this);
   }
 
+  /// Returns true if the axis is continuous or false.
+  bool continuous() const {
+    return visit([](const auto& a) { return traits::continuous(a); }, *this);
+  }
+
   /// Return reference to const metadata or instance of null_type if axis has no
   /// metadata.
-  const metadata_type& metadata() const {
+  metadata_type& metadata() const {
     return visit(
-        [](const auto& a) -> const metadata_type& {
+        [](const auto& a) -> metadata_type& {
           using M = decltype(traits::metadata(a));
-          return detail::static_if<std::is_same<M, const metadata_type&>>(
-              [](const auto& a) -> const metadata_type& { return traits::metadata(a); },
-              [](const auto&) -> const metadata_type& {
+          return detail::static_if<std::is_same<M, metadata_type&>>(
+              [](const auto& a) -> metadata_type& { return traits::metadata(a); },
+              [](const auto&) -> metadata_type& {
                 BOOST_THROW_EXCEPTION(std::runtime_error(
                     "cannot return metadata of type " + detail::type_name<M>() +
                     " through axis::variant interface which uses type " +
@@ -186,40 +190,6 @@ public:
               a, detail::priority<1>{});
         },
         *this);
-  }
-
-  /** Compare two variants.
-
-    Return true if the variants point to the same concrete axis type and the types compare
-    equal. Otherwise return false.
-  */
-  template <class... Us>
-  bool operator==(const variant<Us...>& u) const {
-    return visit([&u](const auto& x) { return u == x; }, *this);
-  }
-
-  /** Compare variant with a concrete axis type.
-
-    Return true if the variant point to the same concrete axis type and the types compare
-    equal. Otherwise return false.
-  */
-  template <class T>
-  bool operator==(const T& t) const {
-    return detail::static_if_c<(mp11::mp_contains<impl_type, T>::value ||
-                                mp11::mp_contains<impl_type, T*>::value ||
-                                mp11::mp_contains<impl_type, const T*>::value)>(
-        [&](const auto& t) {
-          using U = std::decay_t<decltype(t)>;
-          const U* tp = detail::variant_access::template get_if<U>(this);
-          return tp && detail::relaxed_equal(*tp, t);
-        },
-        [&](const auto&) { return false; }, t);
-  }
-
-  /// The negation of operator==.
-  template <class T>
-  bool operator!=(const T& t) const {
-    return !operator==(t);
   }
 
   template <class Archive>
@@ -316,6 +286,58 @@ template <class T, class U>
 auto get_if(const U* u) {
   return reinterpret_cast<const T*>(std::is_same<T, std::decay_t<U>>::value ? u
                                                                             : nullptr);
+}
+
+/** Compare two variants.
+
+  Return true if the variants point to the same concrete axis type and the types compare
+  equal. Otherwise return false.
+*/
+template <class... Us, class... Vs>
+bool operator==(const variant<Us...>& u, const variant<Vs...>& v) noexcept {
+  return visit([&](const auto& vi) { return u == vi; }, v);
+}
+
+/** Compare variant with a concrete axis type.
+
+  Return true if the variant point to the same concrete axis type and the types compare
+  equal. Otherwise return false.
+*/
+template <class... Us, class T>
+bool operator==(const variant<Us...>& u, const T& t) noexcept {
+  using V = variant<Us...>;
+  return detail::static_if_c<(mp11::mp_contains<V, T>::value ||
+                              mp11::mp_contains<V, T*>::value ||
+                              mp11::mp_contains<V, const T*>::value)>(
+      [&](const auto& t) {
+        using U = std::decay_t<decltype(t)>;
+        const U* tp = detail::variant_access::template get_if<U>(&u);
+        return tp && detail::relaxed_equal{}(*tp, t);
+      },
+      [&](const auto&) { return false; }, t);
+}
+
+template <class T, class... Us>
+bool operator==(const T& t, const variant<Us...>& u) noexcept {
+  return u == t;
+}
+
+/// The negation of operator==.
+template <class... Us, class... Ts>
+bool operator!=(const variant<Us...>& u, const variant<Ts...>& t) noexcept {
+  return !(u == t);
+}
+
+/// The negation of operator==.
+template <class... Us, class T>
+bool operator!=(const variant<Us...>& u, const T& t) noexcept {
+  return !(u == t);
+}
+
+/// The negation of operator==.
+template <class T, class... Us>
+bool operator!=(const T& t, const variant<Us...>& u) noexcept {
+  return u != t;
 }
 
 } // namespace axis

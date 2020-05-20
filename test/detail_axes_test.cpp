@@ -61,6 +61,7 @@ int main() {
     auto t3 = std::make_tuple(v, i);
     auto t4 = std::make_tuple(r, r);
 
+    BOOST_TEST(detail::axes_equal(t1, t1));
     BOOST_TEST(detail::axes_equal(t1, v1));
     BOOST_TEST(detail::axes_equal(t1, v2));
     BOOST_TEST(detail::axes_equal(t1, v4));
@@ -112,6 +113,51 @@ int main() {
     BOOST_TEST_NOT(detail::axes_equal(t2, t3));
     detail::axes_assign(t2, t3);
     BOOST_TEST(detail::axes_equal(t2, t3));
+  }
+
+  // axes_transform
+  {
+    using R = axis::regular<>;
+    using I = axis::integer<double>;
+
+    {
+      auto t = std::make_tuple(R(1, 0, 1), R(2, 0, 2), I(0, 3));
+      auto t2 = detail::axes_transform(
+          t, [](std::size_t, const auto& a) { return I(0, a.size()); });
+      BOOST_TEST_EQ(t2, std::make_tuple(I(0, 1), I(0, 2), I(0, 3)));
+    }
+    {
+      auto t = std::vector<I>{{I(0, 1), I(0, 2)}};
+      auto t2 = detail::axes_transform(
+          t, [](std::size_t, const auto& a) { return I(0, a.size() + 1); });
+      auto t3 = std::vector<I>{{I(0, 2), I(0, 3)}};
+      BOOST_TEST(detail::axes_equal(t2, t3));
+    }
+    {
+      using V = axis::variant<R, I>;
+      auto t = std::vector<V>{{V{I(0, 1)}, V{R(2, 0, 2)}}};
+      auto t2 = detail::axes_transform(
+          t, [](std::size_t, const auto& a) { return I(0, a.size() + 1); });
+      auto t3 = std::vector<V>{{I(0, 2), I(0, 3)}};
+      BOOST_TEST(detail::axes_equal(t2, t3));
+    }
+
+    {
+      using V = axis::variant<R, I>;
+      auto t1 = std::vector<V>{{V{I(0, 1)}, V{R(2, 0, 2)}}};
+      auto t2 = std::vector<V>{{V{I(0, 1)}, V{R(2, 0, 2)}}};
+      auto t3 = detail::axes_transform(
+          t1, t2, [](const auto& a, const auto& b) { return I(0, a.size() + b.size()); });
+      auto t4 = std::vector<V>{{I(0, 2), I(0, 4)}};
+      BOOST_TEST(detail::axes_equal(t3, t4));
+    }
+
+    {
+      // test otherwise unreachable code
+      auto a = R(2, 0, 2);
+      auto b = I(0, 2);
+      BOOST_TEST_THROWS(detail::axis_merger{}(a, b), std::invalid_argument);
+    }
   }
 
   // axes_rank

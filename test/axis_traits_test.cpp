@@ -256,7 +256,7 @@ int main() {
     BOOST_TEST_TRAIT_SAME(decltype(traits::metadata(static_cast<None&>(none))),
                           null_type&);
     BOOST_TEST_TRAIT_SAME(decltype(traits::metadata(static_cast<const None&>(none))),
-                          const null_type&);
+                          null_type&);
 
     Const c;
     BOOST_TEST_EQ(traits::metadata(c), 0);

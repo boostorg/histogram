@@ -10,10 +10,8 @@
 
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/axis/ostream.hpp>
-#include <boost/histogram/axis/variant.hpp>
-#include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/counting_streambuf.hpp>
-#include <boost/histogram/detail/detect.hpp>
+#include <boost/histogram/detail/detect.hpp> // is_streamable
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <cmath>

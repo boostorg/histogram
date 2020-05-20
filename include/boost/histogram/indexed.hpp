@@ -41,7 +41,7 @@ class BOOST_ATTRIBUTE_NODISCARD indexed_range {
 private:
   using histogram_type = Histogram;
   static constexpr std::size_t buffer_size =
-      detail::buffer_size<typename std::remove_const_t<histogram_type>::axes_type>::value;
+      detail::buffer_size<typename std::decay_t<histogram_type>::axes_type>::value;
 
 public:
   using value_iterator = std::conditional_t<std::is_const<histogram_type>::value,

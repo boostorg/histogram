@@ -12,6 +12,8 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/metadata_base.hpp>
 #include <boost/histogram/axis/option.hpp>
+#include <boost/histogram/detail/detect.hpp>
+#include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
@@ -42,10 +44,11 @@ namespace axis {
 */
 template <class Value, class MetaData, class Options, class Allocator>
 class category : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,
-                 public metadata_base<MetaData> {
+                 public metadata_base_t<MetaData> {
   // these must be private, so that they are not automatically inherited
   using value_type = Value;
-  using metadata_type = typename metadata_base<MetaData>::metadata_type;
+  using metadata_base = metadata_base_t<MetaData>;
+  using metadata_type = typename metadata_base::metadata_type;
   using options_type = detail::replace_default<Options, option::overflow_t>;
   using allocator_type = Allocator;
   using vector_type = std::vector<value_type, allocator_type>;
@@ -71,7 +74,7 @@ public:
    */
   template <class It, class = detail::requires_iterator<It>>
   category(It begin, It end, metadata_type meta = {}, allocator_type alloc = {})
-      : metadata_base<MetaData>(std::move(meta)), vec_(alloc) {
+      : metadata_base(std::move(meta)), vec_(alloc) {
     if (std::distance(begin, end) < 0)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("end must be reachable by incrementing begin"));
@@ -158,8 +161,8 @@ public:
   bool operator==(const category<V, M, O, A>& o) const noexcept {
     const auto& a = vec_;
     const auto& b = o.vec_;
-    return std::equal(a.begin(), a.end(), b.begin(), b.end()) &&
-           metadata_base<MetaData>::operator==(o);
+    return std::equal(a.begin(), a.end(), b.begin(), b.end(), detail::relaxed_equal{}) &&
+           detail::relaxed_equal{}(this->metadata(), o.metadata());
   }
 
   template <class V, class M, class O, class A>

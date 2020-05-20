@@ -17,6 +17,7 @@
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/limits.hpp>
+#include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/replace_type.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
@@ -46,10 +47,11 @@ namespace axis {
  */
 template <class Value, class MetaData, class Options, class Allocator>
 class variable : public iterator_mixin<variable<Value, MetaData, Options, Allocator>>,
-                 public metadata_base<MetaData> {
+                 public metadata_base_t<MetaData> {
   // these must be private, so that they are not automatically inherited
   using value_type = Value;
-  using metadata_type = typename metadata_base<MetaData>::metadata_type;
+  using metadata_base = metadata_base_t<MetaData>;
+  using metadata_type = typename metadata_base::metadata_type;
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
   using allocator_type = Allocator;
@@ -78,7 +80,7 @@ public:
    */
   template <class It, class = detail::requires_iterator<It>>
   variable(It begin, It end, metadata_type meta = {}, allocator_type alloc = {})
-      : metadata_base<MetaData>(std::move(meta)), vec_(std::move(alloc)) {
+      : metadata_base(std::move(meta)), vec_(std::move(alloc)) {
     if (std::distance(begin, end) < 2)
       BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
 
@@ -118,7 +120,7 @@ public:
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   variable(const variable& src, index_type begin, index_type end, unsigned merge)
-      : metadata_base<MetaData>(src), vec_(src.get_allocator()) {
+      : metadata_base(src), vec_(src.get_allocator()) {
     BOOST_ASSERT((end - begin) % merge == 0);
     if (options_type::test(option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
@@ -190,7 +192,7 @@ public:
     const auto& a = vec_;
     const auto& b = o.vec_;
     return std::equal(a.begin(), a.end(), b.begin(), b.end()) &&
-           metadata_base<MetaData>::operator==(o);
+           detail::relaxed_equal{}(this->metadata(), o.metadata());
   }
 
   template <class V, class M, class O, class A>

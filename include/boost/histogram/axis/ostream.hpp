@@ -11,6 +11,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>

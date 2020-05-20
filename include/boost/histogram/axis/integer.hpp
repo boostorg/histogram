@@ -13,6 +13,7 @@
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/limits.hpp>
+#include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/replace_type.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -39,10 +40,11 @@ namespace axis {
  */
 template <class Value, class MetaData, class Options>
 class integer : public iterator_mixin<integer<Value, MetaData, Options>>,
-                public metadata_base<MetaData> {
+                public metadata_base_t<MetaData> {
   // these must be private, so that they are not automatically inherited
   using value_type = Value;
-  using metadata_type = typename metadata_base<MetaData>::metadata_type;
+  using metadata_base = metadata_base_t<MetaData>;
+  using metadata_type = typename metadata_base::metadata_type;
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
 
@@ -76,7 +78,7 @@ public:
    * \param meta     description of the axis.
    */
   integer(value_type start, value_type stop, metadata_type meta = {})
-      : metadata_base<MetaData>(std::move(meta))
+      : metadata_base(std::move(meta))
       , size_(static_cast<index_type>(stop - start))
       , min_(start) {
     if (!(stop >= start))
@@ -174,7 +176,8 @@ public:
 
   template <class V, class M, class O>
   bool operator==(const integer<V, M, O>& o) const noexcept {
-    return size() == o.size() && min_ == o.min_ && metadata_base<MetaData>::operator==(o);
+    return size() == o.size() && min_ == o.min_ &&
+           detail::relaxed_equal{}(this->metadata(), o.metadata());
   }
 
   template <class V, class M, class O>

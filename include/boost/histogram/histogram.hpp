@@ -9,16 +9,18 @@
 
 #include <boost/histogram/detail/accumulator_traits.hpp>
 #include <boost/histogram/detail/argument_traits.hpp>
-#include <boost/histogram/detail/at.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/detail/fill.hpp>
 #include <boost/histogram/detail/fill_n.hpp>
+#include <boost/histogram/detail/index_translator.hpp>
 #include <boost/histogram/detail/mutex_base.hpp>
-#include <boost/histogram/detail/non_member_container_access.hpp>
+#include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
+#include <boost/histogram/indexed.hpp>
+#include <boost/histogram/multi_index.hpp>
 #include <boost/histogram/sample.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unsafe_access.hpp>
@@ -68,6 +70,7 @@ public:
   // typedefs for boost::range_iterator
   using iterator = typename storage_type::iterator;
   using const_iterator = typename storage_type::const_iterator;
+  using multi_index_type = multi_index<detail::relaxed_tuple_size_t<axes_type>::value>;
 
 private:
   using mutex_base = typename detail::mutex_base<axes_type, storage_type>;
@@ -137,14 +140,14 @@ public:
   /// This version is more efficient than the one accepting a run-time number.
   template <unsigned N = 0>
   decltype(auto) axis(std::integral_constant<unsigned, N> = {}) const {
-    detail::axis_index_is_valid(axes_, N);
+    BOOST_ASSERT_MSG(N < rank(), "index out of range");
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis with run-time number.
   /// Prefer the version that accepts a compile-time number, if you can use it.
   decltype(auto) axis(unsigned i) const {
-    detail::axis_index_is_valid(axes_, i);
+    BOOST_ASSERT_MSG(i < rank(), "index out of range");
     return detail::axis_get(axes_, i);
   }
 
@@ -349,50 +352,23 @@ public:
     @param is indices of second, third, ... axes.
     @returns reference to cell value.
   */
-  template <class... Indices>
-  decltype(auto) at(axis::index_type i, Indices... is) {
-    return at(std::forward_as_tuple(i, is...));
+  template <class... Is>
+  decltype(auto) at(axis::index_type i, Is... is) {
+    return at(multi_index_type{i, static_cast<axis::index_type>(is)...});
   }
 
   /// Access cell value at integral indices (read-only).
-  template <class... Indices>
-  decltype(auto) at(axis::index_type i, Indices... is) const {
-    return at(std::forward_as_tuple(i, is...));
-  }
-
-  /// Access cell value at integral indices stored in `std::tuple`.
-  template <class... Indices>
-  decltype(auto) at(const std::tuple<Indices...>& is) {
-    if (rank() != sizeof...(Indices))
-      BOOST_THROW_EXCEPTION(
-          std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::at(axes_, is);
-    if (!is_valid(idx))
-      BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    BOOST_ASSERT(idx < storage_.size());
-    return storage_[idx];
-  }
-
-  /// Access cell value at integral indices stored in `std::tuple` (read-only).
-  template <class... Indices>
-  decltype(auto) at(const std::tuple<Indices...>& is) const {
-    if (rank() != sizeof...(Indices))
-      BOOST_THROW_EXCEPTION(
-          std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::at(axes_, is);
-    if (!is_valid(idx))
-      BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    BOOST_ASSERT(idx < storage_.size());
-    return storage_[idx];
+  template <class... Is>
+  decltype(auto) at(axis::index_type i, Is... is) const {
+    return at(multi_index_type{i, static_cast<axis::index_type>(is)...});
   }
 
   /// Access cell value at integral indices stored in iterable.
-  template <class Iterable, class = detail::requires_iterable<Iterable>>
-  decltype(auto) at(const Iterable& is) {
-    if (rank() != detail::axes_rank(is))
+  decltype(auto) at(const multi_index_type& is) {
+    if (rank() != is.size())
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::at(axes_, is);
+    const auto idx = detail::linearize_index(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     BOOST_ASSERT(idx < storage_.size());
@@ -400,28 +376,39 @@ public:
   }
 
   /// Access cell value at integral indices stored in iterable (read-only).
-  template <class Iterable, class = detail::requires_iterable<Iterable>>
-  decltype(auto) at(const Iterable& is) const {
-    if (rank() != detail::axes_rank(is))
+  decltype(auto) at(const multi_index_type& is) const {
+    if (rank() != is.size())
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::at(axes_, is);
+    const auto idx = detail::linearize_index(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     BOOST_ASSERT(idx < storage_.size());
     return storage_[idx];
   }
 
-  /// Access value at index (number for rank = 1, else `std::tuple` or iterable).
-  template <class Indices>
-  decltype(auto) operator[](const Indices& is) {
-    return at(is);
+  /// Access value at index (for rank = 1).
+  decltype(auto) operator[](axis::index_type i) {
+    const axis::index_type shift =
+        axis::traits::options(axis()) & axis::option::underflow ? 1 : 0;
+    return storage_[static_cast<std::size_t>(i + shift)];
   }
 
-  /// Access value at index (read-only).
-  template <class Indices>
-  decltype(auto) operator[](const Indices& is) const {
-    return at(is);
+  /// Access value at index (for rank = 1, read-only).
+  decltype(auto) operator[](axis::index_type i) const {
+    const axis::index_type shift =
+        axis::traits::options(axis()) & axis::option::underflow ? 1 : 0;
+    return storage_[static_cast<std::size_t>(i + shift)];
+  }
+
+  /// Access value at index tuple.
+  decltype(auto) operator[](const multi_index_type& is) {
+    return storage_[detail::linearize_index(axes_, is)];
+  }
+
+  /// Access value at index tuple (read-only).
+  decltype(auto) operator[](const multi_index_type& is) const {
+    return storage_[detail::linearize_index(axes_, is)];
   }
 
   /// Equality operator, tests equality for all axes and the storage.
@@ -456,6 +443,31 @@ public:
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes of histograms differ"));
     auto rit = unsafe_access::storage(rhs).begin();
     for (auto&& x : storage_) x += *rit++;
+    return *this;
+  }
+
+  // specialization that allows axes merging
+  template <class S>
+#ifdef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+  histogram&
+#else
+  std::enable_if_t<detail::has_operator_radd<
+                       value_type, typename histogram<axes_type, S>::value_type>::value,
+                   histogram&>
+#endif
+  operator+=(const histogram<axes_type, S>& rhs) {
+    const auto& raxes = unsafe_access::axes(rhs);
+    if (rank() != detail::axes_rank(raxes))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("axes have different length"));
+    auto h = histogram<axes_type, storage_type>(
+        detail::axes_transform(axes_, raxes, detail::axis_merger{}),
+        detail::make_default(storage_));
+    const auto& axes = unsafe_access::axes(h);
+    const auto tr1 = detail::make_index_translator(axes, axes_);
+    for (auto&& x : indexed(*this)) h[tr1(x.indices())] += *x;
+    const auto tr2 = detail::make_index_translator(axes, raxes);
+    for (auto&& x : indexed(rhs)) h[tr2(x.indices())] += *x;
+    operator=(std::move(h));
     return *this;
   }
 

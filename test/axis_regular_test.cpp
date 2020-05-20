@@ -49,9 +49,10 @@ int main() {
   {
     axis::regular<> a{4, -2, 2, "foo"};
     BOOST_TEST_EQ(a.metadata(), "foo");
-    BOOST_TEST_EQ(static_cast<const axis::regular<>&>(a).metadata(), "foo");
-    a.metadata() = "bar";
-    BOOST_TEST_EQ(static_cast<const axis::regular<>&>(a).metadata(), "bar");
+    const auto& cref = a;
+    BOOST_TEST_EQ(cref.metadata(), "foo");
+    cref.metadata() = "bar"; // this is allowed
+    BOOST_TEST_EQ(cref.metadata(), "bar");
     BOOST_TEST_EQ(a.value(0), -2);
     BOOST_TEST_EQ(a.value(1), -1);
     BOOST_TEST_EQ(a.value(2), 0);

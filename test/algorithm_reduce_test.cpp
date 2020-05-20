@@ -34,8 +34,8 @@ template <typename Tag>
 void run_tests() {
   // limitations: shrink does not work with arguments not convertible to double
 
-  using R = axis::regular<double, axis::transform::id, axis::null_type>;
-  using ID = axis::integer<double, axis::null_type>;
+  using R = axis::regular<double>;
+  using ID = axis::integer<double, axis::empty_type>;
   using V = axis::variable<double, axis::empty_type>;
   using CI = axis::category<int, axis::empty_type>;
 
@@ -106,7 +106,7 @@ void run_tests() {
   }
 
   {
-    auto h = make_s(Tag(), std::vector<int>(), R(4, 1, 5), R(3, -1, 2));
+    auto h = make_s(Tag(), std::vector<int>(), R(4, 1, 5, "1"), R(3, -1, 2, "2"));
 
     /*
       matrix layout:
@@ -127,8 +127,8 @@ void run_tests() {
     auto hr = reduce(h, shrink(1, -1, 2), rebin(0, 1));
     BOOST_TEST_EQ(hr.rank(), 2);
     BOOST_TEST_EQ(sum(hr), 10);
-    BOOST_TEST_EQ(hr.axis(0), R(4, 1, 5));
-    BOOST_TEST_EQ(hr.axis(1), R(3, -1, 2));
+    BOOST_TEST_EQ(hr.axis(0), R(4, 1, 5, "1"));
+    BOOST_TEST_EQ(hr.axis(1), R(3, -1, 2, "2"));
     BOOST_TEST_EQ(hr, h);
 
     // noop slice
@@ -139,8 +139,8 @@ void run_tests() {
     hr = reduce(h, shrink(0, 2, 4));
     BOOST_TEST_EQ(hr.rank(), 2);
     BOOST_TEST_EQ(sum(hr), 10);
-    BOOST_TEST_EQ(hr.axis(0), R(2, 2, 4));
-    BOOST_TEST_EQ(hr.axis(1), R(3, -1, 2));
+    BOOST_TEST_EQ(hr.axis(0), R(2, 2, 4, "1"));
+    BOOST_TEST_EQ(hr.axis(1), R(3, -1, 2, "2"));
     BOOST_TEST_EQ(hr.at(-1, 0), 1); // underflow
     BOOST_TEST_EQ(hr.at(0, 0), 0);
     BOOST_TEST_EQ(hr.at(1, 0), 1);
@@ -165,8 +165,8 @@ void run_tests() {
     hr = reduce(h, shrink_and_rebin(0, 2, 5, 2), rebin(1, 3));
     BOOST_TEST_EQ(hr.rank(), 2);
     BOOST_TEST_EQ(sum(hr), 10);
-    BOOST_TEST_EQ(hr.axis(0), R(1, 2, 4));
-    BOOST_TEST_EQ(hr.axis(1), R(1, -1, 2));
+    BOOST_TEST_EQ(hr.axis(0), R(1, 2, 4, "1"));
+    BOOST_TEST_EQ(hr.axis(1), R(1, -1, 2, "2"));
     BOOST_TEST_EQ(hr.at(-1, 0), 2); // underflow
     BOOST_TEST_EQ(hr.at(0, 0), 5);
     BOOST_TEST_EQ(hr.at(1, 0), 3); // overflow

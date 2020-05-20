@@ -9,22 +9,24 @@
 
 #include <algorithm>
 #include <boost/assert.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/fill.hpp>
 #include <boost/histogram/detail/linearize.hpp>
-#include <boost/histogram/detail/non_member_container_access.hpp>
+#include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <boost/histogram/detail/optional_index.hpp>
 #include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/detail/static_if.hpp>
-#include <boost/variant2/variant.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/bind.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/variant2/variant.hpp>
+#include <initializer_list>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -38,9 +40,6 @@ namespace dtl = boost::histogram::detail;
 template <class Axes, class T>
 using is_convertible_to_any_value_type =
     mp11::mp_any_of_q<value_types<Axes>, mp11::mp_bind_front<std::is_convertible, T>>;
-
-template <class... Ts>
-void fold(Ts&&...) noexcept {} // helper to enable operator folding
 
 template <class T>
 auto to_ptr_size(const T& x) {
@@ -161,7 +160,8 @@ void fill_n_storage(S& s, const Index idx, Ts&&... p) noexcept {
     BOOST_ASSERT(idx < s.size());
     fill_storage_element(s[idx], *p.first...);
   }
-  fold((p.second ? ++p.first : 0)...);
+  // operator folding emulation
+  ignore_unused(std::initializer_list<int>{(p.second ? (++p.first, 0) : 0)...});
 }
 
 template <class S, class Index, class T, class... Ts>
@@ -171,7 +171,8 @@ void fill_n_storage(S& s, const Index idx, weight_type<T>&& w, Ts&&... ps) noexc
     fill_storage_element(s[idx], weight(*w.value.first), *ps.first...);
   }
   if (w.value.second) ++w.value.first;
-  fold((ps.second ? ++ps.first : 0)...);
+  // operator folding emulation
+  ignore_unused(std::initializer_list<int>{(ps.second ? (++ps.first, 0) : 0)...});
 }
 
 // general Nd treatment

@@ -9,38 +9,159 @@
 
 #include <array>
 #include <boost/assert.hpp>
+#include <boost/config/workaround.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/make_default.hpp>
+#include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <boost/histogram/detail/optional_index.hpp>
+#include <boost/histogram/detail/priority.hpp>
+#include <boost/histogram/detail/relaxed_tuple_size.hpp>
 #include <boost/histogram/detail/static_if.hpp>
+#include <boost/histogram/detail/sub_array.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/integer_sequence.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/tuple.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
+#include <initializer_list>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <type_traits>
 
-/* Most of the histogram code is generic and works for any number of axes. Buffers with a
- * fixed maximum capacity are used in some places, which have a size equal to the rank of
- * a histogram. The buffers are statically allocated to improve performance, which means
- * that they need a preset maximum capacity. 32 seems like a safe upper limit for the rank
- * (you can nevertheless increase it here if necessary): the simplest non-trivial axis has
- * 2 bins; even if counters are used which need only a byte of storage per bin, this still
- * corresponds to 4 GB of storage.
- */
-#ifndef BOOST_HISTOGRAM_DETAIL_AXES_LIMIT
-#define BOOST_HISTOGRAM_DETAIL_AXES_LIMIT 32
-#endif
-
 namespace boost {
 namespace histogram {
 namespace detail {
+
+template <class T, class Unary>
+void for_each_axis_impl(dynamic_size, T& t, Unary& p) {
+  for (auto& a : t) axis::visit(p, a);
+}
+
+template <class N, class T, class Unary>
+void for_each_axis_impl(N, T& t, Unary& p) {
+  mp11::tuple_for_each(t, p);
+}
+
+// also matches const T and const Unary
+template <class T, class Unary>
+void for_each_axis(T&& t, Unary&& p) {
+  for_each_axis_impl(relaxed_tuple_size(t), t, p);
+}
+
+// merge if a and b are discrete and growing
+struct axis_merger {
+  template <class T>
+  T operator()(const T& a, const T& b) {
+    using O = axis::traits::get_options<T>;
+    constexpr bool discrete_and_growing =
+        axis::traits::is_continuous<T>::value == false && O::test(axis::option::growth);
+    return impl(mp11::mp_bool<discrete_and_growing>{}, a, b);
+  }
+
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#pragma warning(disable : 4702) // fixing warning would reduce code readability a lot
+#endif
+  template <class T, class U>
+  T operator()(const T& a, const U&) {
+    return BOOST_THROW_EXCEPTION(std::invalid_argument("axes not mergable")), a;
+  }
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#pragma warning(default : 4702)
+#endif
+
+  template <class T>
+  T impl(std::false_type, const T& a, const T& b) {
+    if (!relaxed_equal{}(a, b))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("axes not mergable"));
+    return a;
+  }
+
+  template <class T>
+  T impl(std::true_type, const T& a, const T& b) {
+    if (relaxed_equal{}(axis::traits::metadata(a), axis::traits::metadata(b))) {
+      auto r = a;
+      if (axis::traits::is_ordered<T>::value) {
+        r.update(b.value(0));
+        r.update(b.value(b.size() - 1));
+      } else
+        for (auto&& v : b) r.update(v);
+      return r;
+    }
+    return impl(std::false_type{}, a, b);
+  }
+};
+
+// create empty dynamic axis which can store any axes types from the argument
+template <class T>
+auto make_empty_dynamic_axes(const T& axes) {
+  return make_default(axes);
+}
+
+template <class... Ts>
+auto make_empty_dynamic_axes(const std::tuple<Ts...>&) {
+  using namespace ::boost::mp11;
+  using L = mp_unique<axis::variant<Ts...>>;
+  // return std::vector<axis::variant<Axis0, Axis1, ...>> or std::vector<Axis0>
+  return std::vector<mp_if_c<(mp_size<L>::value == 1), mp_first<L>, L>>{};
+}
+
+template <class T, class Functor, std::size_t... Is>
+auto axes_transform_impl(const T& t, Functor&& f, mp11::index_sequence<Is...>) {
+  return std::make_tuple(f(Is, std::get<Is>(t))...);
+}
+
+// warning: sequential order of functor execution is platform-dependent!
+template <class... Ts, class Functor>
+auto axes_transform(const std::tuple<Ts...>& old_axes, Functor&& f) {
+  return axes_transform_impl(old_axes, std::forward<Functor>(f),
+                             mp11::make_index_sequence<sizeof...(Ts)>{});
+}
+
+// changing axes type is not supported
+template <class T, class Functor>
+T axes_transform(const T& old_axes, Functor&& f) {
+  T axes = make_default(old_axes);
+  axes.reserve(old_axes.size());
+  for_each_axis(old_axes, [&](const auto& a) { axes.emplace_back(f(axes.size(), a)); });
+  return axes;
+}
+
+template <class... Ts, class Binary, std::size_t... Is>
+std::tuple<Ts...> axes_transform_impl(const std::tuple<Ts...>& lhs,
+                                      const std::tuple<Ts...>& rhs, Binary&& bin,
+                                      mp11::index_sequence<Is...>) {
+  return std::make_tuple(bin(std::get<Is>(lhs), std::get<Is>(rhs))...);
+}
+
+template <class... Ts, class Binary>
+std::tuple<Ts...> axes_transform(const std::tuple<Ts...>& lhs,
+                                 const std::tuple<Ts...>& rhs, Binary&& bin) {
+  return axes_transform_impl(lhs, rhs, bin, mp11::make_index_sequence<sizeof...(Ts)>{});
+}
+
+template <class T, class Binary>
+T axes_transform(const T& lhs, const T& rhs, Binary&& bin) {
+  T ax = make_default(lhs);
+  ax.reserve(lhs.size());
+  using std::begin;
+  auto ir = begin(rhs);
+  for (auto&& li : lhs) {
+    axis::visit(
+        [&](const auto& li) {
+          axis::visit([&](const auto& ri) { ax.emplace_back(bin(li, ri)); }, *ir);
+        },
+        li);
+    ++ir;
+  }
+  return ax;
+}
 
 template <class T>
 unsigned axes_rank(const T& axes) {
@@ -112,67 +233,93 @@ decltype(auto) axis_get(const T& axes, const unsigned i) {
   return axes[i];
 }
 
-template <class... Ts, class... Us>
-bool axes_equal(const std::tuple<Ts...>& ts, const std::tuple<Us...>& us) {
-  using namespace ::boost::mp11;
-  return static_if<std::is_same<mp_list<Ts...>, mp_list<Us...>>>(
-      [](const auto& ts, const auto& us) {
-        using N = mp_size<std::decay_t<decltype(ts)>>;
-        bool equal = true;
-        mp_for_each<mp_iota<N>>(
-            [&](auto I) { equal &= relaxed_equal(std::get<I>(ts), std::get<I>(us)); });
-        return equal;
-      },
-      [](const auto&, const auto&) { return false; }, ts, us);
+template <class T, class U, std::size_t... Is>
+bool axes_equal_impl(const T& t, const U& u, mp11::index_sequence<Is...>) noexcept {
+  bool result = true;
+  // operator folding emulation
+  ignore_unused(std::initializer_list<bool>{
+      (result &= relaxed_equal{}(std::get<Is>(t), std::get<Is>(u)))...});
+  return result;
 }
 
-template <class T, class... Us>
-bool axes_equal(const T& t, const std::tuple<Us...>& u) {
-  using namespace ::boost::mp11;
-  if (t.size() != sizeof...(Us)) return false;
-  bool equal = true;
-  mp_for_each<mp_iota_c<sizeof...(Us)>>([&](auto I) { equal &= t[I] == std::get<I>(u); });
-  return equal;
+template <class... Ts, class... Us>
+bool axes_equal_impl(const std::tuple<Ts...>& t, const std::tuple<Us...>& u) noexcept {
+  return axes_equal_impl(
+      t, u, mp11::make_index_sequence<std::min(sizeof...(Ts), sizeof...(Us))>{});
 }
 
 template <class... Ts, class U>
-bool axes_equal(const std::tuple<Ts...>& t, const U& u) {
-  return axes_equal(u, t);
+bool axes_equal_impl(const std::tuple<Ts...>& t, const U& u) noexcept {
+  using std::begin;
+  auto iu = begin(u);
+  bool result = true;
+  mp11::tuple_for_each(t, [&](const auto& ti) {
+    axis::visit([&](const auto& ui) { result &= relaxed_equal{}(ti, ui); }, *iu);
+    ++iu;
+  });
+  return result;
+}
+
+template <class T, class... Us>
+bool axes_equal_impl(const T& t, const std::tuple<Us...>& u) noexcept {
+  return axes_equal_impl(u, t);
 }
 
 template <class T, class U>
-bool axes_equal(const T& t, const U& u) {
-  if (t.size() != u.size()) return false;
-  return std::equal(t.begin(), t.end(), u.begin());
+bool axes_equal_impl(const T& t, const U& u) noexcept {
+  using std::begin;
+  auto iu = begin(u);
+  bool result = true;
+  for (auto&& ti : t) {
+    axis::visit(
+        [&](const auto& ti) {
+          axis::visit([&](const auto& ui) { result &= relaxed_equal{}(ti, ui); }, *iu);
+        },
+        ti);
+    ++iu;
+  }
+  return result;
 }
 
+template <class T, class U>
+bool axes_equal(const T& t, const U& u) noexcept {
+  return axes_rank(t) == axes_rank(u) && axes_equal_impl(t, u);
+}
+
+// enable_if_t needed by msvc :(
 template <class... Ts, class... Us>
-void axes_assign(std::tuple<Ts...>& t, const std::tuple<Us...>& u) {
-  using namespace ::boost::mp11;
-  static_if<std::is_same<mp_list<Ts...>, mp_list<Us...>>>(
-      [](auto& a, const auto& b) { a = b; },
-      [](auto&, const auto&) {
-        BOOST_THROW_EXCEPTION(
-            std::invalid_argument("cannot assign axes, types do not match"));
-      },
-      t, u);
+std::enable_if_t<!(std::is_same<std::tuple<Ts...>, std::tuple<Us...>>::value)>
+axes_assign(std::tuple<Ts...>&, const std::tuple<Us...>&) {
+  BOOST_THROW_EXCEPTION(std::invalid_argument("cannot assign axes, types do not match"));
+}
+
+template <class... Ts>
+void axes_assign(std::tuple<Ts...>& t, const std::tuple<Ts...>& u) {
+  t = u;
 }
 
 template <class... Ts, class U>
 void axes_assign(std::tuple<Ts...>& t, const U& u) {
-  using namespace ::boost::mp11;
-  mp_for_each<mp_iota_c<sizeof...(Ts)>>([&](auto I) {
-    using T = mp_at_c<std::tuple<Ts...>, I>;
-    std::get<I>(t) = axis::get<T>(u[I]);
-  });
+  if (sizeof...(Ts) == detail::size(u)) {
+    using std::begin;
+    auto iu = begin(u);
+    mp11::tuple_for_each(t, [&](auto& ti) {
+      using T = std::decay_t<decltype(ti)>;
+      ti = axis::get<T>(*iu);
+      ++iu;
+    });
+    return;
+  }
+  BOOST_THROW_EXCEPTION(std::invalid_argument("cannot assign axes, sizes do not match"));
 }
 
 template <class T, class... Us>
 void axes_assign(T& t, const std::tuple<Us...>& u) {
   // resize instead of reserve, because t may not be empty and we want exact capacity
   t.resize(sizeof...(Us));
-  using namespace ::boost::mp11;
-  mp_for_each<mp_iota_c<sizeof...(Us)>>([&](auto I) { t[I] = std::get<I>(u); });
+  using std::begin;
+  auto it = begin(t);
+  mp11::tuple_for_each(u, [&](const auto& ui) { *it++ = ui; });
 }
 
 template <class T, class U>
@@ -198,52 +345,6 @@ void axes_serialize(Archive& ar, std::tuple<Ts...>& axes) {
   ar& make_nvp("axes", p);
 }
 
-// create empty dynamic axis which can store any axes types from the argument
-template <class T>
-auto make_empty_dynamic_axes(const T& axes) {
-  return make_default(axes);
-}
-
-template <class... Ts>
-auto make_empty_dynamic_axes(const std::tuple<Ts...>&) {
-  using namespace ::boost::mp11;
-  using L = mp_unique<axis::variant<Ts...>>;
-  // return std::vector<axis::variant<Axis0, Axis1, ...>> or std::vector<Axis0>
-  return std::vector<mp_if_c<(mp_size<L>::value == 1), mp_first<L>, L>>{};
-}
-
-template <class T>
-void axis_index_is_valid(const T& axes, const unsigned N) {
-  BOOST_ASSERT_MSG(N < axes_rank(axes), "index out of range");
-}
-
-template <class Axes, class V>
-void for_each_axis_impl(std::true_type, Axes&& axes, V&& v) {
-  for (auto&& a : axes) { axis::visit(std::forward<V>(v), a); }
-}
-
-template <class Axes, class V>
-void for_each_axis_impl(std::false_type, Axes&& axes, V&& v) {
-  for (auto&& a : axes) std::forward<V>(v)(a);
-}
-
-template <class Axes, class V>
-void for_each_axis(Axes&& a, V&& v) {
-  using namespace ::boost::mp11;
-  using T = mp_first<std::decay_t<Axes>>;
-  for_each_axis_impl(is_axis_variant<T>(), std::forward<Axes>(a), std::forward<V>(v));
-}
-
-template <class V, class... Axis>
-void for_each_axis(const std::tuple<Axis...>& a, V&& v) {
-  mp11::tuple_for_each(a, std::forward<V>(v));
-}
-
-template <class V, class... Axis>
-void for_each_axis(std::tuple<Axis...>& a, V&& v) {
-  mp11::tuple_for_each(a, std::forward<V>(v));
-}
-
 // total number of bins including *flow bins
 template <class T>
 std::size_t bincount(const T& axes) {
@@ -261,7 +362,8 @@ std::size_t bincount(const T& axes) {
 template <class T>
 std::size_t offset(const T& axes) {
   std::size_t n = 0;
-  for_each_axis(axes, [&n, stride = static_cast<std::size_t>(1)](const auto& a) mutable {
+  auto stride = static_cast<std::size_t>(1);
+  for_each_axis(axes, [&](const auto& a) {
     if (axis::traits::options(a) & axis::option::growth)
       n = invalid_index;
     else if (n != invalid_index && axis::traits::options(a) & axis::option::underflow)
@@ -272,54 +374,21 @@ std::size_t offset(const T& axes) {
 }
 
 template <class T>
-using buffer_size_impl = typename std::tuple_size<T>::type;
-
-template <class T>
-using buffer_size = mp11::mp_eval_or<
-    std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT>,
-    buffer_size_impl, T>;
-
-template <class T, std::size_t N>
-class sub_array : public std::array<T, N> {
-  using base_type = std::array<T, N>;
-
-public:
-  explicit sub_array(std::size_t s) noexcept(
-      std::is_nothrow_default_constructible<T>::value)
-      : size_(s) {
-    BOOST_ASSERT_MSG(size_ <= N, "requested size exceeds size of static buffer");
-  }
-
-  sub_array(std::size_t s,
-            const T& value) noexcept(std::is_nothrow_copy_constructible<T>::value)
-      : size_(s) {
-    BOOST_ASSERT_MSG(size_ <= N, "requested size exceeds size of static buffer");
-    std::array<T, N>::fill(value);
-  }
-
-  // need to override both versions of std::array
-  auto end() noexcept { return base_type::begin() + size_; }
-  auto end() const noexcept { return base_type::begin() + size_; }
-
-  auto size() const noexcept { return size_; }
-
-private:
-  std::size_t size_;
-};
-
-template <class U, class T>
-using stack_buffer = sub_array<U, buffer_size<T>::value>;
+using buffer_size =
+    std::integral_constant<std::size_t, std::min(relaxed_tuple_size_t<T>::value,
+                                                 static_cast<std::size_t>(
+                                                     BOOST_HISTOGRAM_DETAIL_AXES_LIMIT))>;
 
 // make default-constructed buffer (no initialization for POD types)
-template <class U, class T>
-auto make_stack_buffer(const T& t) {
-  return stack_buffer<U, T>(axes_rank(t));
+template <class T, class A>
+auto make_stack_buffer(const A& a) {
+  return sub_array<T, buffer_size<A>::value>(axes_rank(a));
 }
 
 // make buffer with elements initialized to v
-template <class U, class T, class V>
-auto make_stack_buffer(const T& t, V&& v) {
-  return stack_buffer<U, T>(axes_rank(t), std::forward<V>(v));
+template <class T, class A>
+auto make_stack_buffer(const A& a, const T& t) {
+  return sub_array<T, buffer_size<A>::value>(axes_rank(a), t);
 }
 
 template <class T>

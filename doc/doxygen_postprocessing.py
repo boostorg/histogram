@@ -91,6 +91,7 @@ unspecified.text = "unspecified"
 for item in select(
     lambda x: x.get("name") == "" or x.get("name").startswith("Detail"),
     "template-type-parameter",
+    "template-nontype-parameter",
 ):
     parent = parent_map[item]
     assert parent.tag == "template"

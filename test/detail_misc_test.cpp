@@ -4,18 +4,48 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <algorithm>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
+#include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/detail/counting_streambuf.hpp>
-#include <boost/histogram/detail/non_member_container_access.hpp>
+#include <boost/histogram/detail/index_translator.hpp>
+#include <boost/histogram/detail/nonmember_container_access.hpp>
+#include <boost/histogram/detail/span.hpp>
+#include <boost/histogram/detail/sub_array.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <ostream>
 #include "std_ostream.hpp"
+#include "throw_exception.hpp"
+
+namespace boost {
+namespace histogram {
+template <std::size_t N>
+std::ostream& operator<<(std::ostream& os, const multi_index<N>& mi) {
+  os << "(";
+  bool first = true;
+  for (auto&& x : mi) {
+    if (!first)
+      os << " ";
+    else
+      first = false;
+    os << x << ", ";
+  }
+  os << ")";
+  return os;
+}
+
+template <std::size_t N, std::size_t M>
+bool operator==(const multi_index<N>& a, const multi_index<M>& b) {
+  return std::equal(a.begin(), a.end(), b.begin(), b.end());
+}
+} // namespace histogram
+} // namespace boost
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals;
@@ -82,6 +112,45 @@ int main() {
     BOOST_TEST_EQ(cbuf.count, 3);
     os << "123";
     BOOST_TEST_EQ(cbuf.count, 6);
+  }
+
+  // sub_array and span
+  {
+    dtl::sub_array<int, 2> a(2, 1);
+    a[1] = 2;
+    auto sp = dtl::span<int>(a);
+    BOOST_TEST_EQ(sp.size(), 2);
+    BOOST_TEST_EQ(sp.front(), 1);
+    BOOST_TEST_EQ(sp.back(), 2);
+
+    const auto& ca = a;
+    auto csp = dtl::span<const int>(ca);
+    BOOST_TEST_EQ(csp.size(), 2);
+    BOOST_TEST_EQ(csp.front(), 1);
+    BOOST_TEST_EQ(csp.back(), 2);
+  }
+
+  // index_translator
+  {
+    using I = axis::integer<>;
+
+    {
+      auto t = std::vector<I>{I{0, 1}, I{1, 3}};
+      auto tr = dtl::make_index_translator(t, t);
+      multi_index<static_cast<std::size_t>(-1)> mi{0, 1};
+      BOOST_TEST_EQ(tr(mi), mi);
+      multi_index<2> mi2{0, 1};
+      BOOST_TEST_EQ(tr(mi2), mi);
+    }
+
+    {
+      auto t = std::make_tuple(I{0, 1});
+      auto tr = dtl::make_index_translator(t, t);
+      multi_index<static_cast<std::size_t>(-1)> mi{0};
+      BOOST_TEST_EQ(tr(mi), mi);
+    }
+
+    BOOST_TEST_THROWS(multi_index<1>::create(2), std::invalid_argument);
   }
 
   return boost::report_errors();

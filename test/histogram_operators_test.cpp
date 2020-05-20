@@ -167,14 +167,77 @@ void run_tests() {
     BOOST_TEST_EQ(d.at(1).variance(), 11);
   }
 
+  // merging add
+  {
+    using C = axis::category<int, use_default, axis::option::growth_t>;
+    using I = axis::integer<int, axis::null_type, axis::option::growth_t>;
+
+    {
+      auto empty = std::initializer_list<int>{};
+      auto a = make(Tag(), C(empty, "foo"));
+      auto b = make(Tag(), C(empty, "foo"));
+      a(2);
+      a(1);
+      b(2);
+      b(3);
+      b(4);
+      a += b;
+      BOOST_TEST_EQ(a.axis(), C({2, 1, 3, 4}, "foo"));
+      BOOST_TEST_EQ(a[0], 2);
+      BOOST_TEST_EQ(a[1], 1);
+      BOOST_TEST_EQ(a[2], 1);
+      BOOST_TEST_EQ(a[3], 1);
+    }
+
+    {
+      auto a = make(Tag(), C{1, 2}, I{4, 5});
+      auto b = make(Tag(), C{2, 3}, I{5, 6});
+
+      std::fill(a.begin(), a.end(), 1);
+      std::fill(b.begin(), b.end(), 1);
+
+      a += b;
+
+      BOOST_TEST_EQ(a.axis(0), (C{1, 2, 3}));
+      BOOST_TEST_EQ(a.axis(1), (I{4, 6}));
+      BOOST_TEST_EQ(a.at(0, 0), 1);
+      BOOST_TEST_EQ(a.at(1, 0), 1);
+      BOOST_TEST_EQ(a.at(2, 0), 0); // v=(3, 4) did not exist in a or b
+      BOOST_TEST_EQ(a.at(0, 1), 0); // v=(1, 5) did not exist in a or b
+      BOOST_TEST_EQ(a.at(1, 1), 1);
+      BOOST_TEST_EQ(a.at(2, 1), 1);
+    }
+
+    {
+      // C2 is not growing
+      using C2 = axis::category<int, use_default, axis::option::none_t>;
+      auto a = make(Tag(), C{1, 2}, C2{4, 5});
+      auto b = make(Tag(), C{1, 2}, C2{5, 6});
+      BOOST_TEST_THROWS(a += b, std::invalid_argument);
+
+      b = a;
+      a += b; // OK
+
+      // incompatible labels
+      b.axis(0).metadata() = "foo";
+      BOOST_TEST_THROWS(a += b, std::invalid_argument);
+
+      // incompatible axis types
+      auto c = make(Tag(), C{1, 2}, I{4, 6});
+      BOOST_TEST_THROWS(a += c, std::invalid_argument);
+    }
+  }
+
   // bad operations
   {
-    auto a = make(Tag(), axis::integer<>(0, 2));
-    auto b = make(Tag(), axis::integer<>(0, 3));
+    auto a = make(Tag(), axis::regular<>(2, 0, 4));
+    auto b = make(Tag(), axis::regular<>(2, 0, 2));
     BOOST_TEST_THROWS(a += b, std::invalid_argument);
     BOOST_TEST_THROWS(a -= b, std::invalid_argument);
     BOOST_TEST_THROWS(a *= b, std::invalid_argument);
     BOOST_TEST_THROWS(a /= b, std::invalid_argument);
+    auto c = make(Tag(), axis::regular<>(2, 0, 2), axis::regular<>(2, 0, 4));
+    BOOST_TEST_THROWS(a += c, std::invalid_argument);
   }
 
   // scaling
