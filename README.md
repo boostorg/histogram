@@ -28,7 +28,7 @@ Boost.Histogram is a very fast state-of-the-art multi-dimensional generalised [h
 
 Check out the [full documentation](https://www.boost.org/doc/libs/develop/libs/histogram/doc/html/index.html).
 
-💡 Boost.Histogram is a mature library, but if you find some issue or find the documentation lacking, tell us about it by [submitting an issue](https://github.com/boostorg/histogram/issues). Chat with us on the [Boost channel on Slack](https://cpplang.slack.com) and [Gitter](https://gitter.im/boostorg/histogram).
+💡 Boost.Histogram is a mature library with 100 % of code lines covered by unit tests, benchmarked for performance, and has extensive documentation. If you still find some issue or find the documentation lacking, tell us about it by [submitting an issue](https://github.com/boostorg/histogram/issues). Chat with us on the [Boost channel on Slack](https://cpplang.slack.com) and [Gitter](https://gitter.im/boostorg/histogram).
 
 ## Code examples
 
