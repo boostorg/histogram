@@ -368,7 +368,7 @@ public:
     if (rank() != is.size())
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::linearize_index(axes_, is);
+    const auto idx = detail::linearize_indices(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     BOOST_ASSERT(idx < storage_.size());
@@ -380,7 +380,7 @@ public:
     if (rank() != is.size())
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("number of arguments != histogram rank"));
-    const auto idx = detail::linearize_index(axes_, is);
+    const auto idx = detail::linearize_indices(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
     BOOST_ASSERT(idx < storage_.size());
@@ -403,12 +403,12 @@ public:
 
   /// Access value at index tuple.
   decltype(auto) operator[](const multi_index_type& is) {
-    return storage_[detail::linearize_index(axes_, is)];
+    return storage_[detail::linearize_indices(axes_, is)];
   }
 
   /// Access value at index tuple (read-only).
   decltype(auto) operator[](const multi_index_type& is) const {
-    return storage_[detail::linearize_index(axes_, is)];
+    return storage_[detail::linearize_indices(axes_, is)];
   }
 
   /// Equality operator, tests equality for all axes and the storage.
@@ -464,10 +464,10 @@ public:
         detail::make_default(storage_));
     const auto& axes = unsafe_access::axes(h);
     const auto tr1 = detail::make_index_translator(axes, axes_);
-    for (auto&& x : indexed(*this)) h[tr1(x.indices())] += *x;
+    for (auto&& x : indexed(*this, coverage::all)) h[tr1(x.indices())] += *x;
     const auto tr2 = detail::make_index_translator(axes, raxes);
-    for (auto&& x : indexed(rhs)) h[tr2(x.indices())] += *x;
-    operator=(std::move(h));
+    for (auto&& x : indexed(rhs, coverage::all)) h[tr2(x.indices())] += *x;
+    *this = std::move(h);
     return *this;
   }
 

@@ -7,13 +7,16 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_INDEX_TRANSLATOR_HPP
 #define BOOST_HISTOGRAM_DETAIL_INDEX_TRANSLATOR_HPP
 
+#include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/relaxed_tuple_size.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <boost/histogram/multi_index.hpp>
+#include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/integer_sequence.hpp>
 #include <initializer_list>
 #include <tuple>
@@ -25,40 +28,69 @@ namespace detail {
 
 template <class A>
 struct index_translator {
-  const A& dst;
-  const A& src;
   using index_type = axis::index_type;
   using multi_index_type = multi_index<relaxed_tuple_size_t<A>::value>;
+  using cref = const A&;
+
+  cref dst, src;
+  bool pass_through[buffer_size<A>::value];
+
+  index_translator(cref d, cref s) : dst{d}, src{s} { init(dst, src); }
 
   template <class T>
-  index_type translate(const T& a, const T& b, const index_type& i) const noexcept {
-    return axis::traits::index(a, axis::traits::value(b, i + 0.5));
+  void init(const T& a, const T& b) {
+    std::transform(a.begin(), a.end(), b.begin(), pass_through,
+                   [](const auto& a, const auto& b) {
+                     return axis::visit(
+                         [&](const auto& a) {
+                           using U = std::decay_t<decltype(a)>;
+                           return relaxed_equal{}(a, axis::get<U>(b));
+                         },
+                         a);
+                   });
   }
 
-  template <class T, class It, std::size_t... Is>
-  void impl(const T& a, const T& b, It i, index_type* j,
-            mp11::index_sequence<Is...>) const noexcept {
-    // operator folding emulation
-    ignore_unused(std::initializer_list<index_type>{
-        (*j++ = translate(std::get<Is>(a), std::get<Is>(b), *i++))...});
+  template <class... Ts>
+  void init(const std::tuple<Ts...>& a, const std::tuple<Ts...>& b) {
+    using Seq = mp11::mp_iota_c<sizeof...(Ts)>;
+    mp11::mp_for_each<Seq>([&](auto I) {
+      pass_through[I] = relaxed_equal{}(std::get<I>(a), std::get<I>(b));
+    });
+  }
+
+  template <class T>
+  static index_type translate(const T& dst, const T& src, index_type i) noexcept {
+    BOOST_ASSERT(axis::traits::is_continuous<T>::value == false); // LCOV_EXCL_LINE: unreachable
+    return dst.index(src.value(i));
   }
 
   template <class... Ts, class It>
   void impl(const std::tuple<Ts...>& a, const std::tuple<Ts...>& b, It i,
             index_type* j) const noexcept {
-    impl(a, b, i, j, mp11::make_index_sequence<sizeof...(Ts)>{});
+    using Seq = mp11::mp_iota_c<sizeof...(Ts)>;
+    mp11::mp_for_each<Seq>([&](auto I) {
+      if (pass_through[I])
+        *(j + I) = *(i + I);
+      else
+        *(j + I) = this->translate(std::get<I>(a), std::get<I>(b), *(i + I));
+    });
   }
 
   template <class T, class It>
   void impl(const T& a, const T& b, It i, index_type* j) const noexcept {
-    for (unsigned k = 0; k < a.size(); ++k, ++i, ++j) {
-      const auto& bk = b[k];
-      axis::visit(
-          [&](const auto& ak) {
-            using U = std::decay_t<decltype(ak)>;
-            *j = this->translate(ak, axis::get<U>(bk), *i);
-          },
-          a[k]);
+    const bool* p = pass_through;
+    for (unsigned k = 0; k < a.size(); ++k, ++i, ++j, ++p) {
+      if (*p)
+        *j = *i;
+      else {
+        const auto& bk = b[k];
+        axis::visit(
+            [&](const auto& ak) {
+              using U = std::decay_t<decltype(ak)>;
+              *j = this->translate(ak, axis::get<U>(bk), *i);
+            },
+            a[k]);
+      }
     }
   }
 

@@ -44,7 +44,7 @@ struct multi_index {
 
   template <class... Is>
   multi_index(const std::tuple<axis::index_type, Is...>& is)
-      : multi_index(is, mp11::make_index_sequence<(sizeof...(Is) + 1)>{}) {}
+      : multi_index(is, mp11::make_index_sequence<(1 + sizeof...(Is))>{}) {}
 
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   multi_index(const Iterable& is) {
@@ -66,9 +66,9 @@ private:
 
   multi_index(priv_tag) {}
 
-  template <class T, std::size_t... Ns>
-  multi_index(const T& is, mp11::index_sequence<Ns...>)
-      : multi_index(static_cast<axis::index_type>(std::get<Ns>(is))...) {}
+  template <class T, std::size_t... Is>
+  multi_index(const T& is, mp11::index_sequence<Is...>)
+      : multi_index(static_cast<axis::index_type>(std::get<Is>(is))...) {}
 
   axis::index_type data_[size()];
 };
@@ -88,7 +88,7 @@ struct multi_index<static_cast<std::size_t>(-1)> {
 
   template <class... Is>
   multi_index(const std::tuple<axis::index_type, Is...>& is)
-      : multi_index(is, mp11::make_index_sequence<(sizeof...(Is) + 1)>{}) {}
+      : multi_index(is, mp11::make_index_sequence<(1 + sizeof...(Is))>{}) {}
 
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   multi_index(const Iterable& is) : size_(detail::size(is)) {

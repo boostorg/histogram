@@ -31,8 +31,8 @@ auto make_axis_vector(const Ts&... ts) {
   return std::vector<Var>({Var(ts)...});
 }
 
-using static_tag = std::false_type;
-using dynamic_tag = std::true_type;
+struct static_tag : std::false_type {};
+struct dynamic_tag : std::true_type {};
 
 template <class... Axes>
 auto make(static_tag, const Axes&... axes) {

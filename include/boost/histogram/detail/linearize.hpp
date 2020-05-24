@@ -80,8 +80,7 @@ std::size_t linearize_growth(Index& out, axis::index_type& shift,
 template <class A>
 std::size_t linearize_index(optional_index& out, const std::size_t stride, const A& ax,
                             const axis::index_type idx) noexcept {
-  // cannot use get_options here, since A may be variant
-  const auto opt = axis::traits::options(ax);
+  const auto opt = axis::traits::get_options<A>();
   const axis::index_type begin = opt & axis::option::underflow ? -1 : 0;
   const axis::index_type end = opt & axis::option::overflow ? ax.size() + 1 : ax.size();
   const axis::index_type extent = end - begin;
@@ -94,7 +93,7 @@ std::size_t linearize_index(optional_index& out, const std::size_t stride, const
 }
 
 template <class A, std::size_t N>
-optional_index linearize_index(const A& axes, const multi_index<N>& indices) noexcept {
+optional_index linearize_indices(const A& axes, const multi_index<N>& indices) noexcept {
   BOOST_ASSERT_MSG(axes_rank(axes) == detail::size(indices),
                    "axes and indices must have equal lengths");
 

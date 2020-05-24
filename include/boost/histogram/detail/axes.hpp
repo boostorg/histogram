@@ -34,6 +34,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -372,12 +373,6 @@ std::size_t offset(const T& axes) {
   });
   return n;
 }
-
-template <class T>
-using buffer_size =
-    std::integral_constant<std::size_t, std::min(relaxed_tuple_size_t<T>::value,
-                                                 static_cast<std::size_t>(
-                                                     BOOST_HISTOGRAM_DETAIL_AXES_LIMIT))>;
 
 // make default-constructed buffer (no initialization for POD types)
 template <class T, class A>

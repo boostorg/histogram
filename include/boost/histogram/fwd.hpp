@@ -14,6 +14,8 @@
 
 #include <boost/config.hpp> // BOOST_ATTRIBUTE_NODISCARD
 #include <boost/core/use_default.hpp>
+#include <tuple>
+#include <type_traits>
 #include <vector>
 
 namespace boost {
@@ -145,8 +147,7 @@ class BOOST_ATTRIBUTE_NODISCARD histogram;
 
 #endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
-} // namespace histogram
-} // namespace boost
+namespace detail {
 
 /* Most of the histogram code is generic and works for any number of axes. Buffers with a
  * fixed maximum capacity are used in some places, which have a size equal to the rank of
@@ -159,5 +160,21 @@ class BOOST_ATTRIBUTE_NODISCARD histogram;
 #ifndef BOOST_HISTOGRAM_DETAIL_AXES_LIMIT
 #define BOOST_HISTOGRAM_DETAIL_AXES_LIMIT 32
 #endif
+
+template <class T>
+struct buffer_size_impl
+    : std::integral_constant<unsigned, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT> {};
+
+template <class... Ts>
+struct buffer_size_impl<std::tuple<Ts...>>
+    : std::integral_constant<unsigned, sizeof...(Ts)> {};
+
+template <class T>
+using buffer_size = typename buffer_size_impl<T>::type;
+
+} // namespace detail
+
+} // namespace histogram
+} // namespace boost
 
 #endif

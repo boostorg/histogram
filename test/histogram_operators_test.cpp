@@ -26,33 +26,53 @@ template <typename Tag>
 void run_tests() {
   // arithmetic operators
   {
-    auto a = make(Tag(), axis::integer<int, use_default, axis::option::none_t>(0, 2));
+    auto a = make(Tag(), axis::integer<>(0, 2));
     auto b = a;
-    a(0);
-    b(1);
+    a.at(-1) = 2;
+    a.at(0) = 1;
+    b.at(-1) = 1;
+    b.at(1) = 1;
+    b.at(2) = 3;
+
     auto c = a + b;
+    BOOST_TEST_EQ(c.at(-1), 3);
     BOOST_TEST_EQ(c.at(0), 1);
     BOOST_TEST_EQ(c.at(1), 1);
+    BOOST_TEST_EQ(c.at(2), 3);
+
     c += b;
+    BOOST_TEST_EQ(c.at(-1), 4);
     BOOST_TEST_EQ(c.at(0), 1);
     BOOST_TEST_EQ(c.at(1), 2);
+    BOOST_TEST_EQ(c.at(2), 6);
+
     auto d = a + b + c;
     BOOST_TEST_TRAIT_SAME(decltype(d), decltype(a));
+    BOOST_TEST_EQ(d.at(-1), 7);
     BOOST_TEST_EQ(d.at(0), 2);
     BOOST_TEST_EQ(d.at(1), 3);
+    BOOST_TEST_EQ(d.at(2), 9);
 
     auto d2 = d - a - b - c;
     BOOST_TEST_TRAIT_SAME(decltype(d2), decltype(a));
+    BOOST_TEST_EQ(d2.at(-1), 0);
     BOOST_TEST_EQ(d2.at(0), 0);
     BOOST_TEST_EQ(d2.at(1), 0);
+    BOOST_TEST_EQ(d2.at(2), 0);
+
     d2 -= a;
+    BOOST_TEST_EQ(d2.at(-1), -2);
     BOOST_TEST_EQ(d2.at(0), -1);
     BOOST_TEST_EQ(d2.at(1), 0);
+    BOOST_TEST_EQ(d2.at(2), 0);
 
     auto d3 = d;
     d3 *= d;
+    BOOST_TEST_EQ(d3.at(-1), 49);
     BOOST_TEST_EQ(d3.at(0), 4);
     BOOST_TEST_EQ(d3.at(1), 9);
+    BOOST_TEST_EQ(d3.at(2), 81);
+
     auto d4 = d3 * (1 * d); // converted return type
     BOOST_TEST_TRAIT_FALSE((boost::core::is_same<decltype(d4), decltype(d3)>));
     BOOST_TEST_EQ(d4.at(0), 8);
@@ -209,14 +229,27 @@ void run_tests() {
     }
 
     {
-      // C2 is not growing
-      using C2 = axis::category<int, use_default, axis::option::none_t>;
+      // C2 is not growing and has overflow
+      using C2 = axis::category<int>;
       auto a = make(Tag(), C{1, 2}, C2{4, 5});
       auto b = make(Tag(), C{1, 2}, C2{5, 6});
+
+      // axis C2 is incompatible
       BOOST_TEST_THROWS(a += b, std::invalid_argument);
 
+      std::fill(a.begin(), a.end(), 1);
       b = a;
-      a += b; // OK
+      b(3, 4);
+      a += b;
+      BOOST_TEST_EQ(a.at(0, 0), 2);
+      BOOST_TEST_EQ(a.at(1, 0), 2);
+      BOOST_TEST_EQ(a.at(2, 0), 1);
+      BOOST_TEST_EQ(a.at(0, 1), 2);
+      BOOST_TEST_EQ(a.at(1, 1), 2);
+      BOOST_TEST_EQ(a.at(2, 1), 0);
+      BOOST_TEST_EQ(a.at(0, 2), 2);
+      BOOST_TEST_EQ(a.at(1, 2), 2);
+      BOOST_TEST_EQ(a.at(2, 2), 0);
 
       // incompatible labels
       b.axis(0).metadata() = "foo";

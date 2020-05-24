@@ -40,7 +40,7 @@ template <class Histogram>
 class BOOST_ATTRIBUTE_NODISCARD indexed_range {
 private:
   using histogram_type = Histogram;
-  static constexpr std::size_t buffer_size =
+  static constexpr unsigned buffer_size =
       detail::buffer_size<typename std::decay_t<histogram_type>::axes_type>::value;
 
 public:
