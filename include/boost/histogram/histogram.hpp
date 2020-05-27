@@ -429,6 +429,11 @@ public:
   /** Add values of another histogram.
 
     This operator is only available if the value_type supports operator+=.
+
+    Both histograms must be compatible to be addable. The histograms are compatible, if
+    the axes are either all identical. If the axes only differ in the states of their
+    discrete growing axis types, then they are also compatible. The discrete growing
+    axes are merged in this case.
   */
   template <class A, class S>
 #ifdef BOOST_HISTOGRAM_DOXYGEN_INVOKED
@@ -457,6 +462,12 @@ public:
 #endif
   operator+=(const histogram<axes_type, S>& rhs) {
     const auto& raxes = unsafe_access::axes(rhs);
+    if (detail::axes_equal(axes_, unsafe_access::axes(rhs))) {
+      auto rit = unsafe_access::storage(rhs).begin();
+      for (auto&& x : storage_) x += *rit++;
+      return *this;
+    }
+
     if (rank() != detail::axes_rank(raxes))
       BOOST_THROW_EXCEPTION(std::invalid_argument("axes have different length"));
     auto h = histogram<axes_type, storage_type>(
@@ -677,24 +688,23 @@ auto operator/(const histogram<A, S>& h, double x) {
 #if __cpp_deduction_guides >= 201606
 
 template <class... Axes, class = detail::requires_axes<std::tuple<std::decay_t<Axes>...>>>
-histogram(Axes...)->histogram<std::tuple<std::decay_t<Axes>...>>;
+histogram(Axes...) -> histogram<std::tuple<std::decay_t<Axes>...>>;
 
 template <class... Axes, class S, class = detail::requires_storage_or_adaptible<S>>
 histogram(std::tuple<Axes...>, S)
-    ->histogram<std::tuple<Axes...>, std::conditional_t<detail::is_adaptible<S>::value,
-                                                        storage_adaptor<S>, S>>;
+    -> histogram<std::tuple<Axes...>, std::conditional_t<detail::is_adaptible<S>::value,
+                                                         storage_adaptor<S>, S>>;
 
 template <class Iterable, class = detail::requires_iterable<Iterable>,
           class = detail::requires_any_axis<typename Iterable::value_type>>
-histogram(Iterable)->histogram<std::vector<typename Iterable::value_type>>;
+histogram(Iterable) -> histogram<std::vector<typename Iterable::value_type>>;
 
 template <class Iterable, class S, class = detail::requires_iterable<Iterable>,
           class = detail::requires_any_axis<typename Iterable::value_type>,
           class = detail::requires_storage_or_adaptible<S>>
-histogram(Iterable, S)
-    ->histogram<
-        std::vector<typename Iterable::value_type>,
-        std::conditional_t<detail::is_adaptible<S>::value, storage_adaptor<S>, S>>;
+histogram(Iterable, S) -> histogram<
+    std::vector<typename Iterable::value_type>,
+    std::conditional_t<detail::is_adaptible<S>::value, storage_adaptor<S>, S>>;
 
 #endif
 
