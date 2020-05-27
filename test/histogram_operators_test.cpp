@@ -229,6 +229,36 @@ void run_tests() {
     }
 
     {
+      using CI = axis::category<int, use_default, axis::option::growth_t>;
+      using CS = axis::category<std::string, use_default, axis::option::growth_t>;
+
+      auto h1 = make(Tag{}, CI{}, CS{});
+      auto h2 = make(Tag{}, CI{}, CS{});
+      auto h3 = make(Tag{}, CI{}, CS{});
+
+      h1(1, "b");
+      h1(2, "a");
+      h1(1, "a");
+      h1(2, "b");
+
+      h2(2, "b");
+      h2(3, "b");
+      h2(4, "c");
+      h2(5, "c");
+
+      h3(1, "b");
+      h3(2, "a");
+      h3(1, "a");
+      h3(2, "b");
+      h3(2, "b");
+      h3(3, "b");
+      h3(4, "c");
+      h3(5, "c");
+
+      BOOST_TEST_EQ(h3, h1 + h2);
+    }
+
+    {
       // C2 is not growing and has overflow
       using C2 = axis::category<int>;
       auto a = make(Tag(), C{1, 2}, C2{4, 5});

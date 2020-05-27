@@ -82,7 +82,8 @@ boost_test(TYPE run SOURCES histogram_fill_test.cpp
   COMPILE_OPTIONS $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 boost_test(TYPE run SOURCES histogram_growing_test.cpp)
 boost_test(TYPE run SOURCES histogram_mixed_test.cpp)
-boost_test(TYPE run SOURCES histogram_operators_test.cpp)
+boost_test(TYPE run SOURCES histogram_operators_test.cpp
+  COMPILE_OPTIONS $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 boost_test(TYPE run SOURCES histogram_ostream_test.cpp)
 boost_test(TYPE run SOURCES histogram_test.cpp)
 boost_test(TYPE run SOURCES indexed_test.cpp)

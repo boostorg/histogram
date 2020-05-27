@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
+
 # Copyright 2019 Hans Dembinski, Henry Schreiner
 #
 # Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt
-# or copy at http://www.boost.org/LICENSE_1_0.txt)
+# See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 """
 This test makes sure that all boost.histogram headers are included in the ODR test carried out in odr_main_test.cpp. See that file for details on why this test needed.
