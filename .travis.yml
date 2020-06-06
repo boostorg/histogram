@@ -38,6 +38,7 @@ matrix:
         - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" throw_exception
         - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" smart_ptr
         - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" move
+        - git submodule update --init --depth 5 libs/function libs/type_index
 
       script:
         mkdir build && cd build &&

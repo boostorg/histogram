@@ -58,7 +58,7 @@ void run_tests() {
         "                +------------------------------------------------------------+\n"
         "END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h).c_str());
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
 
   // regular, narrow
@@ -77,12 +77,12 @@ void run_tests() {
                           "               +-----------------------+\n"
                           "END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h, 40).c_str());
+    BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
 
     // too narrow
-    BOOST_TEST_CSTR_EQ("BEGIN\n"
-                       "histogram(regular(3, -0.5, 1, options=none))END",
-                       str(h, 10).c_str());
+    BOOST_TEST_CSTR_EQ(str(h, 10).c_str(),
+                       "BEGIN\n"
+                       "histogram(regular(3, -0.5, 1, options=none))END");
   }
 
   // regular2
@@ -102,7 +102,7 @@ void run_tests() {
         "               +-------------------------------------------------------------+\n"
         "END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h).c_str());
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
 
   // regular with log
@@ -111,8 +111,8 @@ void run_tests() {
 
     const auto expected =
         "BEGIN\n"
-        "histogram(regular_log(6, 0.001, 1000, metadata=\"foo\", options=underflow | "
-        "overflow))\n"
+        "histogram(regular(transform::log{}, 6, 0.001, 1000, metadata=\"foo\", "
+        "options=underflow | overflow))\n"
         "                 +-----------------------------------------------------------+\n"
         "[    0, 0.001) 0 |                                                           |\n"
         "[0.001,  0.01) 0 |                                                           |\n"
@@ -125,7 +125,7 @@ void run_tests() {
         "                 +-----------------------------------------------------------+\n"
         "END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h).c_str());
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
 
   // integer
@@ -144,7 +144,7 @@ void run_tests() {
         "       +---------------------------------------------------------------------+\n"
         "END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h).c_str());
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
 
   // catorgy<string>
@@ -168,7 +168,7 @@ void run_tests() {
         "                +------------------------------------------------------------+\n"
         "END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h).c_str());
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
 
   // histogram with axis that has no value method
@@ -184,14 +184,16 @@ void run_tests() {
 
     const auto expected =
         "BEGIN\n"
-        "histogram(<unstreamable>)\n"
+        "histogram(" +
+        detail::type_name<minimal_axis>() +
+        ")\n"
         "    +------------------------------------------------------------------------+\n"
         "0 3 |=====================================================                   |\n"
         "1 4 |======================================================================= |\n"
         "    +------------------------------------------------------------------------+\n"
         "END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h).c_str());
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected.c_str());
   }
 
   // fallback for 2D
@@ -212,7 +214,7 @@ void run_tests() {
         "  ( 1  1): 0     (-1  2): nan   ( 0  2): 0     ( 1  2): 0    \n"
         ")END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h).c_str());
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
 
   // fallback for profile
@@ -227,7 +229,7 @@ void run_tests() {
                           "  ( 1): mean(0, 0, -0)     \n"
                           ")END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h).c_str());
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
 }
 
@@ -242,7 +244,7 @@ int main() {
     const auto expected = "BEGIN\n"
                           "histogram()END";
 
-    BOOST_TEST_CSTR_EQ(expected, str(h).c_str());
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
 
   return boost::report_errors();

@@ -6,15 +6,13 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/axis/category.hpp>
-#include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>
-#include <boost/histogram/axis/regular.hpp>
-#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <string>
 #include <type_traits>
 #include <vector>
+#include "std_ostream.hpp"
 #include "throw_exception.hpp"
 #include "utility_allocator.hpp"
 #include "utility_axis.hpp"
@@ -72,7 +70,7 @@ int main() {
     BOOST_TEST_EQ(r1.metadata(), a.metadata());
     BOOST_TEST_EQ(r1.options(), a.options());
     // change original through r1
-    axis::get<A>(r1).metadata() = "bar";
+    r1.metadata() = "bar";
     BOOST_TEST_EQ(a.metadata(), "bar");
     r1 = &b;
     BOOST_TEST_EQ(r1, b);
@@ -84,8 +82,8 @@ int main() {
     BOOST_TEST_EQ(r2.size(), 3);
     BOOST_TEST_EQ(r2.value(0), 1);
     BOOST_TEST_EQ(r2.metadata(), "bar");
-    b.metadata() = "baz";
-    BOOST_TEST_EQ(r2.metadata(), "baz");
+    r2.metadata() = "baz"; // change original through r2
+    BOOST_TEST_EQ(b.metadata(), "baz");
   }
 
   // axis::variant copyable
@@ -128,8 +126,10 @@ int main() {
       BOOST_TEST_CSTR_EQ(str(axis).c_str(), ref);
     };
 
-    test(axis::regular<>(2, -1, 1, "regular1"),
-         "regular(2, -1, 1, metadata=\"regular1\", options=underflow | overflow)");
+    test(axis::regular<>{2, -1, 1, "foo"},
+         "regular(2, -1, 1, metadata=\"foo\", options=underflow | overflow)");
+
+    test(axis::binary<>{"bar"}, "binary(metadata=\"bar\")");
 
     struct user_defined {};
     const auto ref = "integer(-1, 1, metadata=" + detail::type_name<user_defined>() +
@@ -154,26 +154,27 @@ int main() {
     enum { A, B, C };
     using variant =
         axis::variant<axis::regular<>, axis::regular<double, axis::transform::pow>,
-                      axis::category<>, axis::integer<>>;
+                      axis::category<>, axis::integer<>, axis::binary<>>;
     std::vector<variant> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
-    axes.push_back(axis::regular<double, tr::pow>(tr::pow(0.5), 2, 1, 4));
-    axes.push_back(axis::category<>({A, B, C}));
+    axes.push_back(axis::regular<double, tr::pow>{tr::pow{0.5}, 2, 1, 4});
+    axes.push_back(axis::category<>{A, B, C});
     axes.push_back(axis::integer<>{-1, 1});
+    axes.push_back(axis::binary<>{});
     for (const auto& a : axes) {
-      BOOST_TEST(!(a == variant()));
+      BOOST_TEST_NE(a, variant{});
       BOOST_TEST_EQ(a, variant(a));
     }
-    BOOST_TEST_NOT(axes == std::vector<variant>());
+    BOOST_TEST_NE(axes, std::vector<variant>{});
     BOOST_TEST(axes == std::vector<variant>(axes));
   }
 
   // axis::variant with axis that has incompatible bin type
   {
-    auto a = axis::variant<axis::category<std::string>>(
-        axis::category<std::string>({"A", "B", "C"}));
+    auto a = axis::variant<axis::category<std::string>>{
+        axis::category<std::string>{"A", "B", "C"}};
     BOOST_TEST_THROWS(a.bin(0), std::runtime_error);
-    auto b = axis::variant<axis::category<int>>(axis::category<int>({2, 1, 3}));
+    auto b = axis::variant<axis::category<int>>{axis::category<int>{2, 1, 3}};
     BOOST_TEST_EQ(b.bin(0), 2);
     BOOST_TEST_EQ(b.bin(0).lower(),
                   b.bin(0).upper()); // lower == upper for bin without interval
@@ -191,7 +192,7 @@ int main() {
     BOOST_TEST_EQ(axis.index(9), 1);
     BOOST_TEST_EQ(axis.size(), 2);
     BOOST_TEST_EQ(axis.metadata(), axis::null_type{});
-    BOOST_TEST_CSTR_EQ(str(axis).c_str(), "<unstreamable>");
+    BOOST_TEST_EQ(str(axis), detail::type_name<minimal_axis>());
     BOOST_TEST_THROWS(axis.value(0), std::runtime_error);
 
     axis = axis::category<std::string>({"A", "B"}, "category");

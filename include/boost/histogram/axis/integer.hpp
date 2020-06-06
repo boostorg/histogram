@@ -96,25 +96,9 @@ public:
 
   /// Return index for value argument.
   index_type index(value_type x) const noexcept {
-    return detail::static_if<std::is_floating_point<value_type>>(
-        [this](const auto z) -> index_type {
-          // need to handle NaN, cannot simply cast to int and call int-implementation
-          if (options_type::test(option::circular)) {
-            if (std::isfinite(z))
-              return static_cast<index_type>(std::floor(z) -
-                                             std::floor(z / this->size()) * this->size());
-          } else if (z < this->size())
-            return z >= 0 ? static_cast<index_type>(z) : -1;
-          return this->size();
-        },
-        [this](const auto z) -> index_type {
-          if (options_type::test(option::circular))
-            return static_cast<index_type>(z - std::floor(float(z) / this->size()) *
-                                                   this->size());
-          if (z < this->size()) return z >= 0 ? z : -1;
-          return this->size();
-        },
-        x - min_);
+    return index_impl(options_type::test(axis::option::circular),
+                      std::is_floating_point<value_type>{},
+                      static_cast<double>(x - min_));
   }
 
   /// Returns index and shift (if axis has grown) for the passed argument.
@@ -193,6 +177,24 @@ public:
   }
 
 private:
+  // axis not circular
+  template <class B>
+  index_type index_impl(std::false_type, B, double z) const noexcept {
+    if (z < size()) return z >= 0 ? static_cast<index_type>(z) : -1;
+    return size();
+  }
+
+  // value_type is integer, axis circular
+  index_type index_impl(std::true_type, std::false_type, double z) const noexcept {
+    return static_cast<index_type>(z - std::floor(z / size()) * size());
+  }
+
+  // value_type is floating point, must handle +/-infinite or nan, axis circular
+  index_type index_impl(std::true_type, std::true_type, double z) const noexcept {
+    if (std::isfinite(z)) return index_impl(std::true_type{}, std::false_type{}, z);
+    return z < size() ? -1 : size();
+  }
+
   index_type size_{0};
   value_type min_{0};
 

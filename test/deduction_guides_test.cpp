@@ -85,6 +85,12 @@ int main() {
   }
 
   {
+    using axis::binary;
+    BOOST_TEST_TRAIT_SAME(decltype(binary{}), binary<null_type>);
+    BOOST_TEST_TRAIT_SAME(decltype(binary{"foo"}), binary<std::string>);
+  }
+
+  {
     auto h = histogram(axis::regular(3, -1, 1), axis::integer(0, 4));
     BOOST_TEST_TRAIT_SAME(decltype(h),
                           histogram<std::tuple<axis::regular<double, tr::id, null_type>,

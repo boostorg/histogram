@@ -71,6 +71,9 @@ template <class Value = int, class MetaData = use_default, class Options = use_d
           class Allocator = std::allocator<Value>>
 class category;
 
+template <class MetaData = use_default>
+class binary;
+
 template <class... Ts>
 class variant;
 
@@ -163,11 +166,11 @@ namespace detail {
 
 template <class T>
 struct buffer_size_impl
-    : std::integral_constant<unsigned, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT> {};
+    : std::integral_constant<std::size_t, BOOST_HISTOGRAM_DETAIL_AXES_LIMIT> {};
 
 template <class... Ts>
 struct buffer_size_impl<std::tuple<Ts...>>
-    : std::integral_constant<unsigned, sizeof...(Ts)> {};
+    : std::integral_constant<std::size_t, sizeof...(Ts)> {};
 
 template <class T>
 using buffer_size = typename buffer_size_impl<T>::type;

@@ -19,6 +19,7 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
+#include <iostream>
 #include <ostream>
 #include "std_ostream.hpp"
 #include "throw_exception.hpp"
@@ -104,14 +105,25 @@ int main() {
 
   // counting_streambuf
   {
-    dtl::counting_streambuf<char> cbuf;
-    std::ostream os(&cbuf);
+    std::streamsize count = 0;
+    dtl::counting_streambuf<char> csb(count);
+    std::ostream os(&csb);
     os.put('x');
-    BOOST_TEST_EQ(cbuf.count, 1);
+    BOOST_TEST_EQ(count, 1);
     os << 12;
-    BOOST_TEST_EQ(cbuf.count, 3);
+    BOOST_TEST_EQ(count, 3);
     os << "123";
-    BOOST_TEST_EQ(cbuf.count, 6);
+    BOOST_TEST_EQ(count, 6);
+  }
+  {
+    std::streamsize count = 0;
+    auto g = dtl::make_count_guard(std::cout, count);
+    std::cout.put('x');
+    BOOST_TEST_EQ(count, 1);
+    std::cout << 12;
+    BOOST_TEST_EQ(count, 3);
+    std::cout << "123";
+    BOOST_TEST_EQ(count, 6);
   }
 
   // sub_array and span

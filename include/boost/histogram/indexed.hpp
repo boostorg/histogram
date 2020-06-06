@@ -163,7 +163,7 @@ public:
       unsigned d = 0;
       iter_.indices_.hist_->for_each_axis([&](const auto& a) {
         const auto w = axis::traits::width_as<double>(a, this->index(d++));
-        x *= w ? w : 1;
+        x *= w != 0 ? w : 1;
       });
       return get() / x;
     }

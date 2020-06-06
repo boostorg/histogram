@@ -35,15 +35,16 @@ std::basic_ostream<CharT, Traits>& handle_nonzero_width(
     std::basic_ostream<CharT, Traits>& os, const T& x) {
   const auto w = os.width();
   os.width(0);
-  counting_streambuf<CharT, Traits> cb;
-  const auto saved = os.rdbuf(&cb);
-  os << x;
-  os.rdbuf(saved);
+  std::streamsize count = 0;
+  {
+    auto g = make_count_guard(os, count);
+    os << x;
+  }
   if (os.flags() & std::ios::left) {
     os << x;
-    for (auto i = cb.count; i < w; ++i) os << os.fill();
+    for (auto i = count; i < w; ++i) os << os.fill();
   } else {
-    for (auto i = cb.count; i < w; ++i) os << os.fill();
+    for (auto i = count; i < w; ++i) os << os.fill();
     os << x;
   }
   return os;

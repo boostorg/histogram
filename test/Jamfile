@@ -35,6 +35,7 @@ testing.make-test run-pyd : check_build_system.py :
 testing.make-test run-pyd : check_odr_test.py : <dependency>odr_test.cpp ;
 alias odr :
     [ link odr_main_test.cpp odr_test.cpp ]
+    : <warnings>off
     ;
 
 alias cxx14 :
@@ -51,11 +52,11 @@ alias cxx14 :
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
     [ run algorithm_empty_test.cpp ]
+    [ run axis_binary_test.cpp ]
     [ run axis_category_test.cpp ]
     [ run axis_integer_test.cpp ]
     [ run axis_option_test.cpp ]
     [ run axis_regular_test.cpp ]
-    [ run axis_size.cpp ]
     [ run axis_traits_test.cpp ]
     [ run axis_variable_test.cpp ]
     [ run axis_variant_test.cpp ]
@@ -136,6 +137,7 @@ alias serialization :
     [ run histogram_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run storage_adaptor_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run unlimited_storage_serialization_test.cpp libserial : $(THIS_PATH) ]
+    : <warnings>off
     ;
 
 alias libserial :

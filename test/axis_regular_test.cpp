@@ -117,7 +117,9 @@ int main() {
 
     BOOST_TEST_THROWS((axis::regular<double, tr::log>{2, -1, 0}), std::invalid_argument);
 
-    BOOST_TEST_EQ(str(a), "regular_log(2, 1, 100, options=underflow | overflow)");
+    BOOST_TEST_CSTR_EQ(
+        str(a).c_str(),
+        "regular(transform::log{}, 2, 1, 100, options=underflow | overflow)");
   }
 
   // with sqrt transform
@@ -139,7 +141,8 @@ int main() {
     BOOST_TEST_EQ(a.index(100), 2);
     BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
 
-    BOOST_TEST_EQ(str(a), "regular_sqrt(2, 0, 4, options=underflow | overflow)");
+    BOOST_TEST_EQ(str(a),
+                  "regular(transform::sqrt{}, 2, 0, 4, options=underflow | overflow)");
   }
 
   // with pow transform
@@ -162,7 +165,7 @@ int main() {
     BOOST_TEST_EQ(a.index(std::numeric_limits<double>::infinity()), 2);
 
     BOOST_TEST_EQ(str(a),
-                  "regular_pow(2, 0, 4, options=underflow | overflow, power=0.5)");
+                  "regular(transform::pow{0.5}, 2, 0, 4, options=underflow | overflow)");
   }
 
   // with step

@@ -57,10 +57,14 @@ alias threading :
     <threading>multi
     ;
 
-alias libserial : /boost/serialization//boost_serialization : <link>static ;
+alias libserial :
+    /boost/serialization//boost_serialization :
+    <link>static <warnings>off <rtti>on
+    ;
 
 alias serial :
-    [ run guide_histogram_serialization.cpp libserial ]
+    [ run guide_histogram_serialization.cpp libserial ] :
+    <warnings>off
     ;
 
 alias all : cxx14 threading serial ;

@@ -8,13 +8,8 @@
 #ifndef BOOST_HISTOGRAM_UNLIMTED_STORAGE_HPP
 #define BOOST_HISTOGRAM_UNLIMTED_STORAGE_HPP
 
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(disable : 4996) // temporary fix (deprecation) until fixed in Boost Core
-#endif
-
 #include <algorithm>
 #include <boost/assert.hpp>
-#include <boost/config/workaround.hpp>
 #include <boost/config.hpp>
 #include <boost/core/alloc_construct.hpp>
 #include <boost/core/exchange.hpp>
@@ -642,9 +637,5 @@ private:
 
 } // namespace histogram
 } // namespace boost
-
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(default: 4996)
-#endif
 
 #endif

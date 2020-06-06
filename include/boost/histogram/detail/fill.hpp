@@ -325,9 +325,9 @@ auto fill(std::true_type, ArgTraits, const std::size_t offset, S& storage, A& ax
         growing{}, offset, storage, axes,
         pack_args<ArgTraits::start::value, ArgTraits::nargs::value>(
             typename ArgTraits::wpos{}, typename ArgTraits::spos{}, args));
-  return (BOOST_THROW_EXCEPTION(
-              std::invalid_argument("number of arguments != histogram rank")),
-          storage.end());
+  return BOOST_THROW_EXCEPTION(
+             std::invalid_argument("number of arguments != histogram rank")),
+         storage.end();
 }
 
 #if BOOST_WORKAROUND(BOOST_MSVC, >= 0)

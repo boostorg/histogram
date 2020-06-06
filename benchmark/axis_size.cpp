@@ -20,7 +20,9 @@ int main() {
   using variable = axis::variable<>;
   using integer = axis::integer<>;
   using category = axis::category<>;
-  using variant = axis::variant<regular, circular, variable, integer, category>;
+  using binary = axis::binary<>;
+  using binary_no_metadata = axis::binary<axis::null_type>;
+  using variant = axis::variant<regular, circular, variable, integer, category, binary>;
 
   SHOW_SIZE(regular);
   SHOW_SIZE(regular_float);
@@ -30,5 +32,7 @@ int main() {
   SHOW_SIZE(variable);
   SHOW_SIZE(integer);
   SHOW_SIZE(category);
+  SHOW_SIZE(binary);
+  SHOW_SIZE(binary_no_metadata);
   SHOW_SIZE(variant);
 }

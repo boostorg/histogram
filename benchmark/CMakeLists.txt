@@ -31,6 +31,7 @@ function(add_benchmark NAME)
 
 endfunction()
 
+add_benchmark(axis_size)
 add_benchmark(axis_index)
 add_benchmark(histogram_filling)
 add_benchmark(histogram_iteration)

@@ -82,8 +82,9 @@ int main() {
     BOOST_TEST_EQ(a.value(2), C);
     BOOST_TEST_THROWS(a.value(3), std::out_of_range);
 
-    BOOST_TEST_EQ(str(a),
-                  "category(\"A\", \"B\", \"C\", metadata=\"bar\", options=overflow)");
+    BOOST_TEST_CSTR_EQ(
+        str(a).c_str(),
+        "category(\"A\", \"B\", \"C\", metadata=\"bar\", options=overflow)");
   }
 
   // category<int, axis::null_type>: copy, move

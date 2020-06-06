@@ -127,10 +127,15 @@ int main() {
     BOOST_TEST_EQ(a.value(2), 1);
     BOOST_TEST_EQ(a.value(3), 2);
     BOOST_TEST_EQ(a.index(-2), 1);
+    BOOST_TEST_EQ(a.index(-1.9), 1);
+    BOOST_TEST_EQ(a.index(-1.1), 1);
     BOOST_TEST_EQ(a.index(-1), 0);
     BOOST_TEST_EQ(a.index(0), 1);
     BOOST_TEST_EQ(a.index(1), 0);
     BOOST_TEST_EQ(a.index(2), 1);
+    BOOST_TEST_EQ(a.index(2.1), 1);
+    BOOST_TEST_EQ(a.index(2.9), 1);
+
     BOOST_TEST_EQ(a.index(std::numeric_limits<double>::quiet_NaN()), 2);
   }
 
