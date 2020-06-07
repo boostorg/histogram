@@ -11,9 +11,7 @@ add_library(boost_histogram INTERFACE)
 add_library(Boost::histogram ALIAS boost_histogram)
 
 target_include_directories(boost_histogram INTERFACE include)
-
 target_compile_features(boost_histogram INTERFACE cxx_std_14)
-
 target_link_libraries(boost_histogram
   INTERFACE
     Boost::assert
@@ -24,6 +22,7 @@ target_link_libraries(boost_histogram
     Boost::variant2)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  # Standalone build, fetch dependencies
 
   # Fetch support files
 
@@ -31,10 +30,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   file(DOWNLOAD
     "https://raw.githubusercontent.com/boostorg/cmake/develop/include/BoostFetch.cmake"
-    "${CMAKE_BINARY_DIR}/fetch_and_include/BoostFetch.cmake"
+    "${CMAKE_BINARY_DIR}/BoostFetch.cmake"
   )
 
-  include("${CMAKE_BINARY_DIR}/fetch_and_include/BoostFetch.cmake")
+  include("${CMAKE_BINARY_DIR}/BoostFetch.cmake")
 
   boost_fetch(boostorg/cmake TAG develop NO_ADD_SUBDIR)
 
@@ -49,7 +48,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   if(BUILD_TESTING)
 
-    set(BUILD_TESTING OFF) # hide cache variable
+    set(BUILD_TESTING OFF) # do not build tests of dependencies
 
     boost_fetch(boostorg/assert TAG develop EXCLUDE_FROM_ALL)
     boost_fetch(boostorg/config TAG develop EXCLUDE_FROM_ALL)
@@ -63,16 +62,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # boost_fetch(boostorg/serialization TAG develop)
     # boost_fetch(boostorg/units TAG develop)
 
-    unset(BUILD_TESTING)
+    set(BUILD_TESTING ON)
 
   endif()
-
-endif()
-
-if(BOOST_SUPERPROJECT_VERSION)
-
-  include(BoostInstall)
-  boost_install(TARGETS boost_histogram HEADER_DIRECTORY include/)
 
 endif()
 
