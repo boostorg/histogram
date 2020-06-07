@@ -140,14 +140,14 @@ public:
   /// This version is more efficient than the one accepting a run-time number.
   template <unsigned N = 0>
   decltype(auto) axis(std::integral_constant<unsigned, N> = {}) const {
-    BOOST_ASSERT_MSG(N < rank(), "index out of range");
+    assert(N < rank());
     return detail::axis_get<N>(axes_);
   }
 
   /// Get N-th axis with run-time number.
   /// Prefer the version that accepts a compile-time number, if you can use it.
   decltype(auto) axis(unsigned i) const {
-    BOOST_ASSERT_MSG(i < rank(), "index out of range");
+    assert(i < rank());
     return detail::axis_get(axes_, i);
   }
 
@@ -371,7 +371,7 @@ public:
     const auto idx = detail::linearize_indices(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    BOOST_ASSERT(idx < storage_.size());
+    assert(idx < storage_.size());
     return storage_[idx];
   }
 
@@ -383,7 +383,7 @@ public:
     const auto idx = detail::linearize_indices(axes_, is);
     if (!is_valid(idx))
       BOOST_THROW_EXCEPTION(std::out_of_range("at least one index out of bounds"));
-    BOOST_ASSERT(idx < storage_.size());
+    assert(idx < storage_.size());
     return storage_[idx];
   }
 

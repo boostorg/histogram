@@ -444,10 +444,10 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(j11), 1);
     BOOST_TEST_EQ(h[j11], 1);
     int j111[] = {1, 1, 1};
-    boost::ignore_unused(j111);
+    (void)j111;
     BOOST_TEST_THROWS((void)h.at(j111), std::invalid_argument);
     int j13[] = {1, 3};
-    boost::ignore_unused(j13);
+    (void)j13;
     BOOST_TEST_THROWS((void)h.at(j13), std::out_of_range);
 
     // tuple with weight

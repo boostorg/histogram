@@ -14,7 +14,6 @@ target_include_directories(boost_histogram INTERFACE include)
 target_compile_features(boost_histogram INTERFACE cxx_std_14)
 target_link_libraries(boost_histogram
   INTERFACE
-    Boost::assert
     Boost::config
     Boost::core
     Boost::mp11
@@ -50,7 +49,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
     set(BUILD_TESTING OFF) # do not build tests of dependencies
 
-    boost_fetch(boostorg/assert TAG develop EXCLUDE_FROM_ALL)
+    boost_fetch(boostorg/assert TAG develop EXCLUDE_FROM_ALL) # needed by core
     boost_fetch(boostorg/config TAG develop EXCLUDE_FROM_ALL)
     boost_fetch(boostorg/core TAG develop EXCLUDE_FROM_ALL)
     boost_fetch(boostorg/mp11 TAG develop EXCLUDE_FROM_ALL)

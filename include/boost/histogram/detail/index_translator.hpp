@@ -8,8 +8,6 @@
 #define BOOST_HISTOGRAM_DETAIL_INDEX_TRANSLATOR_HPP
 
 #include <algorithm>
-#include <boost/assert.hpp>
-#include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
@@ -18,6 +16,7 @@
 #include <boost/histogram/multi_index.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/integer_sequence.hpp>
+#include <cassert>
 #include <initializer_list>
 #include <tuple>
 #include <vector>
@@ -60,7 +59,7 @@ struct index_translator {
 
   template <class T>
   static index_type translate(const T& dst, const T& src, index_type i) noexcept {
-    BOOST_ASSERT(axis::traits::is_continuous<T>::value == false); // LCOV_EXCL_LINE: unreachable
+    assert(axis::traits::is_continuous<T>::value == false); // LCOV_EXCL_LINE: unreachable
     return dst.index(src.value(i));
   }
 

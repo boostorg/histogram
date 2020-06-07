@@ -5,7 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <array>
-#include <boost/assert.hpp>
+#include <cassert>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/serialization.hpp>
@@ -32,7 +32,7 @@ void test_serialization(const std::string& filename) {
 }
 
 int main(int argc, char** argv) {
-  BOOST_ASSERT(argc == 2);
+  assert(argc == 2);
 
   test_serialization<std::vector<int>>(
       join(argv[1], "storage_adaptor_serialization_test_vector_int.xml"));

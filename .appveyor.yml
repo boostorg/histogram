@@ -54,5 +54,5 @@ test_script:
 
 ## Uncomment the following to stop VM and enable interactive login.
 ## Instructions how to log into the Appveyor VM are automatically printed.
-on_failure:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+# on_failure:
+#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

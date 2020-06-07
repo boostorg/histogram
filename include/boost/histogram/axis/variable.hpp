@@ -8,7 +8,6 @@
 #define BOOST_HISTOGRAM_AXIS_VARIABLE_HPP
 
 #include <algorithm>
-#include <boost/assert.hpp>
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
@@ -21,6 +20,7 @@
 #include <boost/histogram/detail/replace_type.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -121,7 +121,7 @@ public:
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   variable(const variable& src, index_type begin, index_type end, unsigned merge)
       : metadata_base(src), vec_(src.get_allocator()) {
-    BOOST_ASSERT((end - begin) % merge == 0);
+    assert((end - begin) % merge == 0);
     if (options_type::test(option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
     vec_.reserve((end - begin) / merge);

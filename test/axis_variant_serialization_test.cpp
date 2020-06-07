@@ -6,7 +6,7 @@
 
 // This test is inspired by the corresponding boost/beast test of detail_variant.
 
-#include <boost/assert.hpp>
+#include <cassert>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
@@ -20,7 +20,7 @@
 using namespace boost::histogram::axis;
 
 int main(int argc, char** argv) {
-  BOOST_ASSERT(argc == 2);
+  assert(argc == 2);
 
   const auto filename = join(argv[1], "axis_variant_serialization_test.xml");
 

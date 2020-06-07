@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_TRAITS_HPP
 #define BOOST_HISTOGRAM_AXIS_TRAITS_HPP
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/args_type.hpp>
 #include <boost/histogram/detail/detect.hpp>
@@ -254,7 +253,7 @@ struct is_ordered;
 */
 template <class Axis>
 constexpr unsigned options(const Axis& axis) noexcept {
-  boost::ignore_unused(axis);
+  (void)axis;
   return get_options<Axis>::value;
 }
 
@@ -272,7 +271,7 @@ unsigned options(const variant<Ts...>& axis) noexcept {
 */
 template <class Axis>
 constexpr bool inclusive(const Axis& axis) noexcept {
-  boost::ignore_unused(axis);
+  (void)axis;
   return is_inclusive<Axis>::value;
 }
 
@@ -290,7 +289,7 @@ bool inclusive(const variant<Ts...>& axis) noexcept {
 */
 template <class Axis>
 constexpr bool ordered(const Axis& axis) noexcept {
-  boost::ignore_unused(axis);
+  (void)axis;
   return is_ordered<Axis>::value;
 }
 
@@ -308,7 +307,7 @@ bool ordered(const variant<Ts...>& axis) noexcept {
 */
 template <class Axis>
 constexpr bool continuous(const Axis& axis) noexcept {
-  boost::ignore_unused(axis);
+  (void)axis;
   return is_continuous<Axis>::value;
 }
 
@@ -341,7 +340,7 @@ template <class Axis>
 decltype(auto) metadata(Axis&& axis) noexcept {
   return detail::static_if<detail::has_method_metadata<std::decay_t<Axis>>>(
       [](auto&& a) -> decltype(auto) { return a.metadata(); },
-      [](auto &&) -> axis::null_type& { return detail::null_value; },
+      [](auto&&) -> axis::null_type& { return detail::null_value; },
       std::forward<Axis>(axis));
 }
 
@@ -403,7 +402,7 @@ axis::index_type index(const variant<Ts...>& axis, const U& value) {
 */
 template <class Axis>
 constexpr unsigned rank(const Axis& axis) {
-  boost::ignore_unused(axis);
+  (void)axis;
   using T = value_type<Axis>;
   // cannot use mp_eval_or since T could be a fixed-sized sequence
   return mp11::mp_eval_if_not<detail::is_tuple<T>, mp11::mp_size_t<1>, mp11::mp_size,

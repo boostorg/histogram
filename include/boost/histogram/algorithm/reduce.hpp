@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_ALGORITHM_REDUCE_HPP
 #define BOOST_HISTOGRAM_ALGORITHM_REDUCE_HPP
 
-#include <boost/assert.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/make_default.hpp>
@@ -17,6 +16,7 @@
 #include <boost/histogram/indexed.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <boost/throw_exception.hpp>
+#include <cassert>
 #include <cmath>
 #include <initializer_list>
 #include <stdexcept>

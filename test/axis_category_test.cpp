@@ -4,7 +4,6 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis/category.hpp>
@@ -30,7 +29,7 @@ int main() {
   // bad ctor
   {
     int x[2];
-    boost::ignore_unused(x);
+    (void)x;
     BOOST_TEST_THROWS(axis::category<int>(x + 1, x), std::invalid_argument);
   }
 

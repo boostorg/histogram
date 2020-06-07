@@ -9,13 +9,13 @@
 #ifndef BOOST_HISTOGRAM_AXIS_OSTREAM_HPP
 #define BOOST_HISTOGRAM_AXIS_OSTREAM_HPP
 
-#include <boost/assert.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/detail/counting_streambuf.hpp>
 #include <boost/histogram/detail/priority.hpp>
 #include <boost/histogram/detail/type_name.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
+#include <cassert>
 #include <iomanip>
 #include <iosfwd>
 #include <sstream>

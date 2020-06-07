@@ -33,9 +33,7 @@ public:
 
   sub_array() = default;
 
-  explicit sub_array(std::size_t s) noexcept : size_(s) {
-    BOOST_ASSERT_MSG(size_ <= N, "requested size exceeds size of static buffer");
-  }
+  explicit sub_array(std::size_t s) noexcept : size_(s) { assert(size_ <= N); }
 
   sub_array(std::size_t s, const T& value) noexcept(
       std::is_nothrow_assignable<T, const_reference>::value)

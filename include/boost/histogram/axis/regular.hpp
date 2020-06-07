@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_REGULAR_HPP
 #define BOOST_HISTOGRAM_AXIS_REGULAR_HPP
 
-#include <boost/assert.hpp>
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/interval_view.hpp>
 #include <boost/histogram/axis/iterator.hpp>
@@ -19,6 +18,7 @@
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -280,7 +280,7 @@ public:
   regular(const regular& src, index_type begin, index_type end, unsigned merge)
       : regular(src.transform(), (end - begin) / merge, src.value(begin), src.value(end),
                 src.metadata()) {
-    BOOST_ASSERT((end - begin) % merge == 0);
+    assert((end - begin) % merge == 0);
     if (options_type::test(option::circular) && !(begin == 0 && end == src.size()))
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
   }
@@ -310,7 +310,7 @@ public:
 
   /// Returns index and shift (if axis has grown) for the passed argument.
   std::pair<index_type, index_type> update(value_type x) noexcept {
-    BOOST_ASSERT(options_type::test(option::growth));
+    assert(options_type::test(option::growth));
     const auto z = (this->forward(x / unit_type{}) - min_) / delta_;
     if (z < 1) { // don't use i here!
       if (z >= 0) {

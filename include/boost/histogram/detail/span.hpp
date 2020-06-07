@@ -35,8 +35,8 @@ using std::span;
 // to be replaced by boost::span
 
 #include <array>
-#include <boost/assert.hpp>
 #include <boost/histogram/detail/nonmember_container_access.hpp>
+#include <cassert>
 #include <initializer_list>
 #include <iterator>
 #include <type_traits>
@@ -57,10 +57,14 @@ public:
   constexpr std::size_t size() const noexcept { return N; }
 
 protected:
-  constexpr span_base(T* b, std::size_t s) noexcept : begin_(b) { BOOST_ASSERT(N == s); }
+  constexpr span_base(T* b, std::size_t s) noexcept : begin_(b) {
+    (void)s;
+    assert(N == s);
+  }
   constexpr void set(T* b, std::size_t s) noexcept {
+    (void)s;
     begin_ = b;
-    BOOST_ASSERT(N == s);
+    assert(N == s);
   }
 
 private:
@@ -112,8 +116,8 @@ public:
 
   constexpr span(pointer first, pointer last)
       : span(first, static_cast<std::size_t>(last - first)) {
-    BOOST_ASSERT(extent == dynamic_extent ||
-                 static_cast<difference_type>(extent) == (last - first));
+    assert(extent == dynamic_extent ||
+           static_cast<difference_type>(extent) == (last - first));
   }
 
   constexpr span(pointer ptr, index_type count) : base(ptr, count) {}
@@ -185,23 +189,23 @@ public:
 
   template <std::size_t Count>
   constexpr span<element_type, Count> first() const {
-    BOOST_ASSERT(Count <= base::size());
+    assert(Count <= base::size());
     return span<element_type, Count>(base::data(), Count);
   }
 
   constexpr span<element_type, dynamic_extent> first(std::size_t count) const {
-    BOOST_ASSERT(count <= base::size());
+    assert(count <= base::size());
     return span<element_type, dynamic_extent>(base::data(), count);
   }
 
   template <std::size_t Count>
   constexpr span<element_type, Count> last() const {
-    BOOST_ASSERT(Count <= base::size());
+    assert(Count <= base::size());
     return span<element_type, Count>(base::data() + base::size() - Count, Count);
   }
 
   constexpr span<element_type, dynamic_extent> last(std::size_t count) const {
-    BOOST_ASSERT(count <= base::size());
+    assert(count <= base::size());
     return span<element_type, dynamic_extent>(base::data() + base::size() - count, count);
   }
 
@@ -211,21 +215,21 @@ public:
                       ? Count
                       : (extent != dynamic_extent ? extent - Offset : dynamic_extent))>
   subspan() const {
-    BOOST_ASSERT(Offset <= base::size());
+    assert(Offset <= base::size());
     constexpr std::size_t E =
         (Count != dynamic_extent
              ? Count
              : (extent != dynamic_extent ? extent - Offset : dynamic_extent));
-    BOOST_ASSERT(E == dynamic_extent || E <= base::size());
+    assert(E == dynamic_extent || E <= base::size());
     return span<element_type, E>(base::data() + Offset,
                                  Count == dynamic_extent ? base::size() - Offset : Count);
   }
 
   constexpr span<element_type, dynamic_extent> subspan(
       std::size_t offset, std::size_t count = dynamic_extent) const {
-    BOOST_ASSERT(offset <= base::size());
+    assert(offset <= base::size());
     const std::size_t s = count == dynamic_extent ? base::size() - offset : count;
-    BOOST_ASSERT(s <= base::size());
+    assert(s <= base::size());
     return span<element_type, dynamic_extent>(base::data() + offset, s);
   }
 };

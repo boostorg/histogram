@@ -10,10 +10,10 @@
 #include "../test/throw_exception.hpp"
 #include "generator.hpp"
 
-#include <boost/assert.hpp>
+#include <cassert>
 struct assert_check {
   assert_check() {
-    BOOST_ASSERT(false); // don't run with asserts enabled
+    assert(false); // don't run with asserts enabled
   }
 } _;
 

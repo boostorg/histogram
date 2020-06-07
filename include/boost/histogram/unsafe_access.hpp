@@ -48,7 +48,7 @@ struct unsafe_access {
   */
   template <class Histogram, unsigned I = 0>
   static decltype(auto) axis(Histogram& hist, std::integral_constant<unsigned, I> = {}) {
-    BOOST_ASSERT_MSG(I < hist.rank(), "index out of range");
+    assert(I < hist.rank());
     return detail::axis_get<I>(hist.axes_);
   }
 
@@ -59,7 +59,7 @@ struct unsafe_access {
   */
   template <class Histogram>
   static decltype(auto) axis(Histogram& hist, unsigned i) {
-    BOOST_ASSERT_MSG(i < hist.rank(), "index out of range");
+    assert(i < hist.rank());
     return detail::axis_get(hist.axes_, i);
   }
 

@@ -4,18 +4,19 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/assert.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/weight.hpp>
+#include <cassert>
 #include "throw_exception.hpp"
 #include "utility_serialization.hpp"
 
 using namespace boost::histogram;
 
 int main(int argc, char** argv) {
-  BOOST_ASSERT(argc == 2);
+  (void)argc;
+  assert(argc == 2);
 
   // mean v0
   {

@@ -7,10 +7,10 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_MEAN_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_MEAN_HPP
 
-#include <boost/assert.hpp>
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/fwd.hpp> // for weighted_mean<>
 #include <boost/histogram/weight.hpp>
+#include <cassert>
 #include <type_traits>
 
 namespace boost {

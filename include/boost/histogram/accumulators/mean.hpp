@@ -7,10 +7,10 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 
-#include <boost/assert.hpp>
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/fwd.hpp> // for mean<>
 #include <boost/throw_exception.hpp>
+#include <cassert>
 #include <stdexcept>
 #include <type_traits>
 

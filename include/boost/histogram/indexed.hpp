@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_INDEXED_HPP
 
 #include <array>
-#include <boost/config.hpp>
+#include <boost/config.hpp> // BOOST_ATTRIBUTE_NODISCARD
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
@@ -132,7 +132,7 @@ public:
 
     /// Access indices as an iterable range.
     index_view indices() const noexcept {
-      BOOST_ASSERT(iter_.indices_.hist_);
+      assert(iter_.indices_.hist_);
       return {iter_.indices_.begin(), iter_.indices_.end()};
     }
 
@@ -140,7 +140,7 @@ public:
     /// @tparam N axis dimension.
     template <unsigned N = 0>
     decltype(auto) bin(std::integral_constant<unsigned, N> = {}) const {
-      BOOST_ASSERT(iter_.indices_.hist_);
+      assert(iter_.indices_.hist_);
       return iter_.indices_.hist_->axis(std::integral_constant<unsigned, N>())
           .bin(index(N));
     }
@@ -148,7 +148,7 @@ public:
     /// Access current bin.
     /// @param d axis dimension.
     decltype(auto) bin(unsigned d) const {
-      BOOST_ASSERT(iter_.indices_.hist_);
+      assert(iter_.indices_.hist_);
       return iter_.indices_.hist_->axis(d).bin(index(d));
     }
 
@@ -158,7 +158,7 @@ public:
       without bin widths, like axis::category, are treated as having unit bin with.
     */
     double density() const {
-      BOOST_ASSERT(iter_.indices_.hist_);
+      assert(iter_.indices_.hist_);
       double x = 1;
       unsigned d = 0;
       iter_.indices_.hist_->for_each_axis([&](const auto& a) {
@@ -239,7 +239,7 @@ public:
     pointer operator->() noexcept { return pointer_proxy{operator*()}; }
 
     iterator& operator++() {
-      BOOST_ASSERT(iter_ < indices_.hist_->end());
+      assert(iter_ < indices_.hist_->end());
       const auto cbeg = indices_.begin();
       auto c = cbeg;
       ++iter_;

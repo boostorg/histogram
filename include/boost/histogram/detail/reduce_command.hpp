@@ -7,10 +7,10 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_REDUCE_COMMAND_HPP
 #define BOOST_HISTOGRAM_DETAIL_REDUCE_COMMAND_HPP
 
-#include <boost/assert.hpp>
 #include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
+#include <cassert>
 #include <stdexcept>
 #include <string>
 
@@ -46,7 +46,7 @@ inline void normalize_reduce_commands(span<reduce_command> out,
                                       span<const reduce_command> in) {
   unsigned iaxis = 0;
   for (const auto& o_in : in) {
-    BOOST_ASSERT(o_in.merge > 0);
+    assert(o_in.merge > 0);
     if (o_in.iaxis != reduce_command::unset && o_in.iaxis >= out.size())
       BOOST_THROW_EXCEPTION(std::invalid_argument("invalid axis index"));
     auto& o_out = out.begin()[o_in.iaxis == reduce_command::unset ? iaxis : o_in.iaxis];

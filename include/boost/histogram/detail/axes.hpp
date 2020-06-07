@@ -8,9 +8,6 @@
 #define BOOST_HISTOGRAM_DETAIL_AXES_HPP
 
 #include <array>
-#include <boost/assert.hpp>
-#include <boost/config/workaround.hpp>
-#include <boost/core/ignore_unused.hpp>
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/axis/variant.hpp>
@@ -21,6 +18,7 @@
 #include <boost/histogram/detail/relaxed_tuple_size.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/detail/sub_array.hpp>
+#include <boost/histogram/detail/try_cast.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/integer_sequence.hpp>
@@ -28,6 +26,7 @@
 #include <boost/mp11/tuple.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
+#include <cassert>
 #include <initializer_list>
 #include <iterator>
 #include <stdexcept>
@@ -58,24 +57,15 @@ void for_each_axis(T&& t, Unary&& p) {
 
 // merge if a and b are discrete and growing
 struct axis_merger {
-  template <class T>
-  T operator()(const T& a, const T& b) {
+  template <class T, class U>
+  T operator()(const T& a, const U& u) {
+    const T* bp = ptr_cast<T>(&u);
+    if (!bp) BOOST_THROW_EXCEPTION(std::invalid_argument("axes not mergable"));
     using O = axis::traits::get_options<T>;
     constexpr bool discrete_and_growing =
         axis::traits::is_continuous<T>::value == false && O::test(axis::option::growth);
-    return impl(mp11::mp_bool<discrete_and_growing>{}, a, b);
+    return impl(mp11::mp_bool<discrete_and_growing>{}, a, *bp);
   }
-
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(disable : 4702) // fixing warning would reduce code readability a lot
-#endif
-  template <class T, class U>
-  T operator()(const T& a, const U&) {
-    return BOOST_THROW_EXCEPTION(std::invalid_argument("axes not mergable")), a;
-  }
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(default : 4702)
-#endif
 
   template <class T>
   T impl(std::false_type, const T& a, const T& b) {
@@ -238,8 +228,8 @@ template <class T, class U, std::size_t... Is>
 bool axes_equal_impl(const T& t, const U& u, mp11::index_sequence<Is...>) noexcept {
   bool result = true;
   // operator folding emulation
-  ignore_unused(std::initializer_list<bool>{
-      (result &= relaxed_equal{}(std::get<Is>(t), std::get<Is>(u)))...});
+  (void)std::initializer_list<bool>{
+      (result &= relaxed_equal{}(std::get<Is>(t), std::get<Is>(u)))...};
   return result;
 }
 

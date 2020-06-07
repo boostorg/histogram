@@ -12,10 +12,10 @@
 #include "../test/utility_histogram.hpp"
 #include "generator.hpp"
 
-#include <boost/assert.hpp>
+#include <cassert>
 struct assert_check {
   assert_check() {
-    BOOST_ASSERT(false); // don't run with asserts enabled
+    assert(false); // don't run with asserts enabled
   }
 } _;
 

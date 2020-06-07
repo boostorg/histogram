@@ -7,7 +7,7 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_OPTIONAL_INDEX_HPP
 #define BOOST_HISTOGRAM_DETAIL_OPTIONAL_INDEX_HPP
 
-#include <boost/assert.hpp>
+#include <cassert>
 #include <cstdint>
 
 namespace boost {
@@ -26,7 +26,7 @@ struct optional_index {
   }
 
   optional_index& operator+=(std::intptr_t x) noexcept {
-    BOOST_ASSERT(x >= 0 || static_cast<std::size_t>(-x) <= value);
+    assert(x >= 0 || static_cast<std::size_t>(-x) <= value);
     if (value != invalid_index) { value += x; }
     return *this;
   }

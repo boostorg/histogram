@@ -9,8 +9,6 @@
 #define BOOST_HISTOGRAM_UNLIMTED_STORAGE_HPP
 
 #include <algorithm>
-#include <boost/assert.hpp>
-#include <boost/config.hpp>
 #include <boost/core/alloc_construct.hpp>
 #include <boost/core/exchange.hpp>
 #include <boost/core/nvp.hpp>
@@ -23,6 +21,7 @@
 #include <boost/mp11/algorithm.hpp>
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/utility.hpp>
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <functional>
@@ -84,7 +83,7 @@ void* buffer_create(Allocator& a, std::size_t n) {
 
 template <class Allocator, class Iterator>
 auto buffer_create(Allocator& a, std::size_t n, Iterator iter) {
-  BOOST_ASSERT(n > 0u);
+  assert(n > 0u);
   auto ptr = a.allocate(n); // may throw
   static_assert(std::is_trivially_copyable<decltype(ptr)>::value,
                 "ptr must be trivially copyable");
@@ -105,8 +104,8 @@ auto buffer_create(Allocator& a, std::size_t n, Iterator iter) {
 template <class Allocator>
 void buffer_destroy(Allocator& a, typename std::allocator_traits<Allocator>::pointer p,
                     std::size_t n) {
-  BOOST_ASSERT(p);
-  BOOST_ASSERT(n > 0u);
+  assert(p);
+  assert(n > 0u);
   boost::alloc_destroy_n(a, p, n);
   a.deallocate(p, n);
 }
@@ -203,7 +202,7 @@ public:
     ~buffer_type() noexcept { destroy(); }
 
     void destroy() noexcept {
-      BOOST_ASSERT((ptr == nullptr) == (size == 0));
+      assert((ptr == nullptr) == (size == 0));
       if (ptr == nullptr) return;
       visit([this](auto* p) {
         using T = std::decay_t<decltype(*p)>;
@@ -263,7 +262,7 @@ public:
       : detail::partially_ordered<const_reference, const_reference, void> {
   public:
     const_reference(buffer_type& b, std::size_t i) noexcept : bref_(b), idx_(i) {
-      BOOST_ASSERT(idx_ < bref_.size);
+      assert(idx_ < bref_.size);
     }
 
     const_reference(const const_reference&) noexcept = default;
@@ -441,15 +440,11 @@ public:
     auto s_begin = begin(s);
     auto s_end = end(s);
     using V = typename std::iterator_traits<decltype(begin(s))>::value_type;
-    constexpr auto ti = buffer_type::template type_index<V>();
-    constexpr auto nt = mp11::mp_size<typename buffer_type::types>::value;
+    // must be non-const to avoid msvc warning about if constexpr
+    auto ti = buffer_type::template type_index<V>();
+    auto nt = mp11::mp_size<typename buffer_type::types>::value;
     const std::size_t size = static_cast<std::size_t>(std::distance(s_begin, s_end));
-#ifdef BOOST_NO_CXX17_IF_CONSTEXPR
-    if
-#else
-    if constexpr
-#endif
-        (ti < nt)
+    if (ti < nt)
       buffer_.template make<V>(size, s_begin);
     else
       buffer_.template make<double>(size, s_begin);
@@ -513,7 +508,7 @@ public:
       ar& make_nvp("type", tmp.type);
       ar& make_nvp("size", size);
       tmp.visit([this, size](auto* tp) {
-        BOOST_ASSERT(tp == nullptr);
+        assert(tp == nullptr);
         using T = std::decay_t<decltype(*tp)>;
         buffer_.template make<T>(size);
       });
@@ -531,7 +526,7 @@ private:
   struct incrementor {
     template <class T>
     void operator()(T* tp, buffer_type& b, std::size_t i) {
-      BOOST_ASSERT(tp && i < b.size);
+      assert(tp && i < b.size);
       if (!detail::safe_increment(tp[i])) {
         using U = detail::next_type<typename buffer_type::types, T>;
         b.template make<U>(b.size, tp);

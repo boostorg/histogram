@@ -8,7 +8,6 @@
 #ifndef BOOST_HISTOGRAM_OSTREAM_HPP
 #define BOOST_HISTOGRAM_OSTREAM_HPP
 
-#include <boost/config/workaround.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/detail/counting_streambuf.hpp>
@@ -50,15 +49,15 @@ public:
     if (collect_) {
       if (static_cast<unsigned>(iter_ - base_t::begin()) == size_) {
         ++size_;
-        BOOST_ASSERT(size_ <= N);
-        BOOST_ASSERT(iter_ != end());
+        assert(size_ <= N);
+        assert(iter_ != end());
         *iter_ = 0;
       }
       count_ = 0;
       os_ << t;
       *iter_ = std::max(*iter_, static_cast<int>(count_));
     } else {
-      BOOST_ASSERT(iter_ != end());
+      assert(iter_ != end());
       os_ << std::setw(*iter_) << t;
     }
     ++iter_;
@@ -88,7 +87,7 @@ public:
   auto cend() const { return base_t::cbegin() + size_; }
 
   void complete() {
-    BOOST_ASSERT(collect_); // only call this once
+    assert(collect_); // only call this once
     collect_ = false;
     os_.rdbuf(orig_);
   }
@@ -192,9 +191,9 @@ void ostream_head(OStream& os, const Axis& ax, int index, double val) {
       ax);
 }
 
-// cannot display generalized histograms yet
+// cannot display generalized histograms yet; line not reachable by coverage tests
 template <class OStream, class Histogram>
-void ascii_plot(OStream&, const Histogram&, int, std::false_type) {}
+void ascii_plot(OStream&, const Histogram&, int, std::false_type) {} // LCOV_EXCL_LINE
 
 template <class OStream, class Histogram>
 void ascii_plot(OStream& os, const Histogram& h, int w_total, std::true_type) {
@@ -301,13 +300,9 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
 
   using value_type = typename histogram<A, S>::value_type;
 
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(disable : 4127) // warning to use `if constexpr`
-#endif
-  if (std::is_convertible<value_type, double>::value && h.rank() == 1) {
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(default : 4127)
-#endif
+  // must be non-const to avoid a msvc warning about possible use of if constexpr
+  bool show_ascii = std::is_convertible<value_type, double>::value && h.rank() == 1;
+  if (show_ascii) {
     detail::ostream(os, h, false);
     detail::ascii_plot(os, h, w, std::is_convertible<value_type, double>{});
   } else {

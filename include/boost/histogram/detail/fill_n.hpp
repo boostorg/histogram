@@ -8,8 +8,6 @@
 #define BOOST_HISTOGRAM_DETAIL_FILL_N_HPP
 
 #include <algorithm>
-#include <boost/assert.hpp>
-#include <boost/core/ignore_unused.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
@@ -26,6 +24,7 @@
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/variant2/variant.hpp>
+#include <cassert>
 #include <initializer_list>
 #include <stdexcept>
 #include <type_traits>
@@ -157,22 +156,22 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
 template <class S, class Index, class... Ts>
 void fill_n_storage(S& s, const Index idx, Ts&&... p) noexcept {
   if (is_valid(idx)) {
-    BOOST_ASSERT(idx < s.size());
+    assert(idx < s.size());
     fill_storage_element(s[idx], *p.first...);
   }
   // operator folding emulation
-  ignore_unused(std::initializer_list<int>{(p.second ? (++p.first, 0) : 0)...});
+  (void)std::initializer_list<int>{(p.second ? (++p.first, 0) : 0)...};
 }
 
 template <class S, class Index, class T, class... Ts>
 void fill_n_storage(S& s, const Index idx, weight_type<T>&& w, Ts&&... ps) noexcept {
   if (is_valid(idx)) {
-    BOOST_ASSERT(idx < s.size());
+    assert(idx < s.size());
     fill_storage_element(s[idx], weight(*w.value.first), *ps.first...);
   }
   if (w.value.second) ++w.value.first;
   // operator folding emulation
-  ignore_unused(std::initializer_list<int>{(ps.second ? (++ps.first, 0) : 0)...});
+  (void)std::initializer_list<int>{(ps.second ? (++ps.first, 0) : 0)...};
 }
 
 // general Nd treatment
@@ -256,7 +255,7 @@ std::size_t get_total_size(const A& axes, const dtl::span<const T, N>& values) {
   // supported cases (T = value type; CT = containter of T; V<T, CT, ...> = variant):
   // - span<CT, N>: for any histogram, N == rank
   // - span<V<T, CT>, N>: for any histogram, N == rank
-  BOOST_ASSERT(axes_rank(axes) == values.size());
+  assert(axes_rank(axes) == values.size());
   constexpr auto unset = static_cast<std::size_t>(-1);
   std::size_t size = unset;
   for_each_axis(axes, [&size, vit = values.begin()](const auto& ax) mutable {

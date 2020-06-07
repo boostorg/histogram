@@ -6,7 +6,7 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/assert.hpp>
+#include <cassert>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
@@ -43,7 +43,7 @@ void run_test(const std::string& filename) {
 }
 
 int main(int argc, char** argv) {
-  BOOST_ASSERT(argc == 2);
+  assert(argc == 2);
 
   run_test<uint8_t>(join(argv[1], "unlimited_storage_serialization_test_u8.xml"));
   run_test<uint16_t>(join(argv[1], "unlimited_storage_serialization_test_u16.xml"));
