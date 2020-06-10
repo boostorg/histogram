@@ -9,14 +9,13 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
-#include "std_ostream.hpp"
-#include "utility_iterator.hpp"
-
 #include <deque>
 #include <set>
+#include <type_traits>
 #include <vector>
+#include "std_ostream.hpp"
+#include "utility_iterator.hpp"
 
 using namespace boost::histogram;
 using boost::histogram::detail::iterator_adaptor;
@@ -48,7 +47,7 @@ public:
   ptr_iterator() {}
   ptr_iterator(V* d) : super_t(d) {}
 
-  template <class V2, class = detail::requires_convertible<V2*, V*>>
+  template <class V2, class = std::enable_if_t<std::is_convertible<V2*, V*>::value>>
   ptr_iterator(const ptr_iterator<V2>& x) : super_t(x.base()) {}
 
   V& operator*() const { return *(this->base()); }

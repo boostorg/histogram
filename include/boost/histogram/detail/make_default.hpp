@@ -7,17 +7,23 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_MAKE_DEFAULT_HPP
 #define BOOST_HISTOGRAM_DETAIL_MAKE_DEFAULT_HPP
 
-#include <boost/histogram/detail/detect.hpp>
-#include <boost/histogram/detail/static_if.hpp>
-
 namespace boost {
 namespace histogram {
 namespace detail {
 
 template <class T>
-auto make_default(const T& t) {
-  return static_if<has_allocator<T>>([](const auto& t) { return T(t.get_allocator()); },
-                                     [](const auto&) { return T{}; }, t);
+T make_default_impl(const T& t, decltype(t.get_allocator(), 0)) {
+  return T(t.get_allocator());
+}
+
+template <class T>
+T make_default_impl(const T&, float) {
+  return T{};
+}
+
+template <class T>
+T make_default(const T& t) {
+  return make_default_impl(t, 0);
 }
 
 } // namespace detail

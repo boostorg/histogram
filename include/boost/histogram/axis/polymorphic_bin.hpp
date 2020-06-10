@@ -7,9 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_POLYMORPHIC_BIN_HPP
 #define BOOST_HISTOGRAM_AXIS_POLYMORPHIC_BIN_HPP
 
-#include <boost/histogram/detail/detect.hpp>
-#include <type_traits>
-
 namespace boost {
 namespace histogram {
 namespace axis {
@@ -53,7 +50,7 @@ public:
 
   template <class BinType>
   bool operator==(const BinType& rhs) const noexcept {
-    return equal_impl(detail::has_method_lower<BinType>(), rhs);
+    return equal_impl(rhs, 0);
   }
 
   template <class BinType>
@@ -65,17 +62,17 @@ public:
   bool is_discrete() const noexcept { return lower_or_value_ == upper_; }
 
 private:
-  bool equal_impl(std::true_type, const polymorphic_bin& rhs) const noexcept {
+  bool equal_impl(const polymorphic_bin& rhs, int) const noexcept {
     return lower_or_value_ == rhs.lower_or_value_ && upper_ == rhs.upper_;
   }
 
   template <class BinType>
-  bool equal_impl(std::true_type, const BinType& rhs) const noexcept {
+  auto equal_impl(const BinType& rhs, decltype(rhs.lower(), 0)) const noexcept {
     return lower() == rhs.lower() && upper() == rhs.upper();
   }
 
   template <class BinType>
-  bool equal_impl(std::false_type, const BinType& rhs) const noexcept {
+  bool equal_impl(const BinType& rhs, float) const noexcept {
     return is_discrete() && static_cast<value_type>(*this) == rhs;
   }
 

@@ -28,6 +28,8 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+static axis::null_type null_value;
+
 template <class Axis>
 struct value_type_deducer {
   using type =
@@ -73,8 +75,6 @@ double value_method_switch(I&&, D&&, const A&, priority<0>) {
          double{};
 }
 
-static axis::null_type null_value;
-
 struct variant_access {
   template <class T, class Variant>
   static auto get_if(Variant* v) noexcept {
@@ -107,6 +107,16 @@ struct variant_access {
                       std::forward<Variant>(v));
   }
 };
+
+template <class A>
+decltype(auto) metadata_impl(A&& a, decltype(a.metadata(), 0)) {
+  return std::forward<A>(a).metadata();
+}
+
+template <class A>
+axis::null_type& metadata_impl(A&&, float) {
+  return detail::null_value;
+}
 
 } // namespace detail
 
@@ -338,10 +348,7 @@ index_type extent(const Axis& axis) noexcept {
 */
 template <class Axis>
 decltype(auto) metadata(Axis&& axis) noexcept {
-  return detail::static_if<detail::has_method_metadata<std::decay_t<Axis>>>(
-      [](auto&& a) -> decltype(auto) { return a.metadata(); },
-      [](auto&&) -> axis::null_type& { return detail::null_value; },
-      std::forward<Axis>(axis));
+  return detail::metadata_impl(std::forward<Axis>(axis), 0);
 }
 
 /** Returns axis value for index.

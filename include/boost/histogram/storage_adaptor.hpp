@@ -259,7 +259,8 @@ struct map_impl : T {
   struct iterator_t
       : iterator_adaptor<iterator_t<Value, Reference, MapPtr>, std::size_t, Reference> {
     iterator_t() = default;
-    template <class V, class R, class M, class = requires_convertible<M, MapPtr>>
+    template <class V, class R, class M,
+              class = std::enable_if_t<std::is_convertible<M, MapPtr>::value>>
     iterator_t(const iterator_t<V, R, M>& it) noexcept : iterator_t(it.map_, it.base()) {}
     iterator_t(MapPtr m, std::size_t i) noexcept
         : iterator_t::iterator_adaptor_(i), map_(m) {}
