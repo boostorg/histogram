@@ -72,7 +72,7 @@ template <class Value = int, class MetaData = use_default, class Options = use_d
 class category;
 
 template <class MetaData = use_default>
-class binary;
+class boolean;
 
 template <class... Ts>
 class variant;

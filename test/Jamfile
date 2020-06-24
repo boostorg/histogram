@@ -52,7 +52,7 @@ alias cxx14 :
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
     [ run algorithm_empty_test.cpp ]
-    [ run axis_binary_test.cpp ]
+    [ run axis_boolean_test.cpp ]
     [ run axis_category_test.cpp ]
     [ run axis_integer_test.cpp ]
     [ run axis_option_test.cpp ]

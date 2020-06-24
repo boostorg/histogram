@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_AXIS_BINARY_HPP
-#define BOOST_HISTOGRAM_AXIS_BINARY_HPP
+#ifndef BOOST_HISTOGRAM_AXIS_BOOLEAN_HPP
+#define BOOST_HISTOGRAM_AXIS_BOOLEAN_HPP
 
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/iterator.hpp>
@@ -20,13 +20,14 @@ namespace histogram {
 namespace axis {
 
 template <class MetaData>
-class binary : public iterator_mixin<binary<MetaData>>, public metadata_base_t<MetaData> {
+class boolean : public iterator_mixin<boolean<MetaData>>,
+                public metadata_base_t<MetaData> {
   using value_type = bool;
   using metadata_base = metadata_base_t<MetaData>;
   using metadata_type = typename metadata_base::metadata_type;
 
 public:
-  explicit binary(metadata_type meta = {}) : metadata_base(std::move(meta)) {}
+  explicit boolean(metadata_type meta = {}) : metadata_base(std::move(meta)) {}
 
   index_type index(value_type x) const noexcept { return static_cast<index_type>(x); }
 
@@ -39,12 +40,12 @@ public:
   static constexpr bool inclusive() noexcept { return true; }
 
   template <class M>
-  bool operator==(const binary<M>& o) const noexcept {
+  bool operator==(const boolean<M>& o) const noexcept {
     return detail::relaxed_equal{}(this->metadata(), o.metadata());
   }
 
   template <class M>
-  bool operator!=(const binary<M>& o) const noexcept {
+  bool operator!=(const boolean<M>& o) const noexcept {
     return !operator==(o);
   }
 
@@ -55,15 +56,15 @@ public:
 
 private:
   template <class M>
-  friend class binary;
+  friend class boolean;
 };
 
 #if __cpp_deduction_guides >= 201606
 
-binary()->binary<null_type>;
+boolean()->boolean<null_type>;
 
 template <class M>
-binary(M)->binary<detail::replace_type<std::decay_t<M>, const char*, std::string>>;
+boolean(M) -> boolean<detail::replace_type<std::decay_t<M>, const char*, std::string>>;
 
 #endif
 
@@ -71,4 +72,4 @@ binary(M)->binary<detail::replace_type<std::decay_t<M>, const char*, std::string
 } // namespace histogram
 } // namespace boost
 
-#endif // BOOST_HISTOGRAM_AXIS_BINARY_HPP
+#endif // BOOST_HISTOGRAM_AXIS_BOOLEAN_HPP

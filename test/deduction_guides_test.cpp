@@ -85,9 +85,9 @@ int main() {
   }
 
   {
-    using axis::binary;
-    BOOST_TEST_TRAIT_SAME(decltype(binary{}), binary<null_type>);
-    BOOST_TEST_TRAIT_SAME(decltype(binary{"foo"}), binary<std::string>);
+    using axis::boolean;
+    BOOST_TEST_TRAIT_SAME(decltype(boolean{}), boolean<null_type>);
+    BOOST_TEST_TRAIT_SAME(decltype(boolean{"foo"}), boolean<std::string>);
   }
 
   {

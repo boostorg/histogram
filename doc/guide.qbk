@@ -68,6 +68,14 @@ The library provides a number of useful axis types. The builtin axis types can b
   ]
   [
     [
+      [classref boost::histogram::axis::boolean boolean]
+    ]
+    [
+      Axis over the two values [false, true]. It is a common specialization of the [classref boost::histogram::axis::regular regular] axis. Value-to-index conversion is a pass-through operation, so this is the fastest possible axis. The axis has no state other than the metadata (which can be stateless). Does not allocate memory dynamically. Use this when your input consists of binary categories, like signal and background.
+    ]
+  ]
+  [
+    [
       [classref boost::histogram::axis::category category]
     ]
     [
@@ -341,7 +349,7 @@ boost::histogram::histogram<
   , boost::histogram::default_storage
 >
 ```
-* Histogram with variable axis types: 
+* Histogram with variable axis types:
 ```
 boost::histogram::histogram<
   std::vector<
