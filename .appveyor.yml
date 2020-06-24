@@ -42,7 +42,7 @@ install:
   - cd libs/serialization
   - git remote add patch https://github.com/HDembinski/serialization.git
   - git fetch patch
-  - git checkout patch/develop
+  - git checkout patch/boost_histogram
   - cd ../..
 
   # prepare Boost build
