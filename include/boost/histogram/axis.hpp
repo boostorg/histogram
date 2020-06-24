@@ -17,7 +17,7 @@
   [1]: histogram/reference.html#header.boost.histogram.axis.ostream_hpp
 */
 
-#include <boost/histogram/axis/binary.hpp>
+#include <boost/histogram/axis/boolean.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/regular.hpp>

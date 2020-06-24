@@ -123,6 +123,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 
 [heading Models]
 
+* [classref boost::histogram::axis::boolean]
 * [classref boost::histogram::axis::category]
 * [classref boost::histogram::axis::integer]
 * [classref boost::histogram::axis::regular]

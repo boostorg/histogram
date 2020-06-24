@@ -5,7 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/axis/binary.hpp>
+#include <boost/histogram/axis/boolean.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <limits>
 #include <sstream>
@@ -18,12 +18,12 @@
 int main() {
   using namespace boost::histogram;
 
-  BOOST_TEST(std::is_nothrow_move_assignable<axis::binary<>>::value);
-  BOOST_TEST(std::is_nothrow_move_constructible<axis::binary<>>::value);
+  BOOST_TEST(std::is_nothrow_move_assignable<axis::boolean<>>::value);
+  BOOST_TEST(std::is_nothrow_move_constructible<axis::boolean<>>::value);
 
   // axis::integer with double type
   {
-    axis::binary<> a{"foo"};
+    axis::boolean<> a{"foo"};
     BOOST_TEST_EQ(a.metadata(), "foo");
     a.metadata() = "bar";
     const auto& cref = a;
@@ -36,24 +36,24 @@ int main() {
     BOOST_TEST_EQ(a.index(1), 1);
     BOOST_TEST_EQ(a.index(0), 0);
 
-    BOOST_TEST_CSTR_EQ(str(a).c_str(), "binary(metadata=\"foo\")");
+    BOOST_TEST_CSTR_EQ(str(a).c_str(), "boolean(metadata=\"foo\")");
 
-    axis::binary<> b;
-    BOOST_TEST_CSTR_EQ(str(b).c_str(), "binary()");
+    axis::boolean<> b;
+    BOOST_TEST_CSTR_EQ(str(b).c_str(), "boolean()");
 
     BOOST_TEST_NE(a, b);
     b = a;
     BOOST_TEST_EQ(a, b);
-    axis::binary<> c = std::move(b);
+    axis::boolean<> c = std::move(b);
     BOOST_TEST_EQ(c, a);
-    axis::binary<> d;
+    axis::boolean<> d;
     BOOST_TEST_NE(c, d);
     d = std::move(c);
     BOOST_TEST_EQ(d, a);
   }
 
   // iterators
-  test_axis_iterator(axis::binary<>(), 0, 2);
+  test_axis_iterator(axis::boolean<>(), 0, 2);
 
   return boost::report_errors();
 }

@@ -68,6 +68,13 @@ matrix:
         - mv $TRAVIS_BUILD_DIR libs/histogram
         - python3 tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
 
+        # use hdembinski/serialization due to frequent errors in boostorg/serialization
+        - cd libs/serialization
+        - git remote add patch https://github.com/HDembinski/serialization.git
+        - git fetch patch
+        - git checkout patch/boost_histogram
+        - cd ../..
+
         # prepare build
         - ./bootstrap.sh
         - ./b2 headers

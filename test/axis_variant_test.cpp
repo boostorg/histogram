@@ -129,7 +129,7 @@ int main() {
     test(axis::regular<>{2, -1, 1, "foo"},
          "regular(2, -1, 1, metadata=\"foo\", options=underflow | overflow)");
 
-    test(axis::binary<>{"bar"}, "binary(metadata=\"bar\")");
+    test(axis::boolean<>{"bar"}, "boolean(metadata=\"bar\")");
 
     struct user_defined {};
     const auto ref = "integer(-1, 1, metadata=" + detail::type_name<user_defined>() +
@@ -154,13 +154,13 @@ int main() {
     enum { A, B, C };
     using variant =
         axis::variant<axis::regular<>, axis::regular<double, axis::transform::pow>,
-                      axis::category<>, axis::integer<>, axis::binary<>>;
+                      axis::category<>, axis::integer<>, axis::boolean<>>;
     std::vector<variant> axes;
     axes.push_back(axis::regular<>{2, -1, 1});
     axes.push_back(axis::regular<double, tr::pow>{tr::pow{0.5}, 2, 1, 4});
     axes.push_back(axis::category<>{A, B, C});
     axes.push_back(axis::integer<>{-1, 1});
-    axes.push_back(axis::binary<>{});
+    axes.push_back(axis::boolean<>{});
     for (const auto& a : axes) {
       BOOST_TEST_NE(a, variant{});
       BOOST_TEST_EQ(a, variant(a));

@@ -197,8 +197,9 @@ std::basic_ostream<Ts...>& operator<<(std::basic_ostream<Ts...>& os,
 }
 
 template <class... Ts, class M>
-std::basic_ostream<Ts...>& operator<<(std::basic_ostream<Ts...>& os, const binary<M>& a) {
-  os << "binary(";
+std::basic_ostream<Ts...>& operator<<(std::basic_ostream<Ts...>& os,
+                                      const boolean<M>& a) {
+  os << "boolean(";
   detail::ostream_metadata(os, a.metadata(), "");
   return os << ")";
 }

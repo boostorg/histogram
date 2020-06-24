@@ -57,8 +57,8 @@ static void category(benchmark::State& state) {
   for (auto _ : state) benchmark::DoNotOptimize(a.index(gen()));
 }
 
-static void binary(benchmark::State& state) {
-  auto a = axis::binary<>();
+static void boolean(benchmark::State& state) {
+  auto a = axis::boolean<>();
   generator<uniform_int> gen(1);
   for (auto _ : state) benchmark::DoNotOptimize(a.index(static_cast<bool>(gen())));
 }
@@ -74,4 +74,4 @@ BENCHMARK_TEMPLATE(integer, double, normal);
 BENCHMARK_TEMPLATE(variable, uniform)->RangeMultiplier(10)->Range(10, 10000);
 BENCHMARK_TEMPLATE(variable, normal)->RangeMultiplier(10)->Range(10, 10000);
 BENCHMARK(category)->RangeMultiplier(10)->Range(10, 10000);
-BENCHMARK(binary);
+BENCHMARK(boolean);
