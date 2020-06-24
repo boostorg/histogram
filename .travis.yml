@@ -71,7 +71,8 @@ matrix:
         # use hdembinski/serialization due to frequent errors in boostorg/serialization
         - cd libs/serialization
         - git remote add patch https://github.com/HDembinski/serialization.git
-        - git checkout --track patch/develop
+        - git fetch patch
+        - git checkout patch/develop
         - cd ../..
 
         # prepare build
