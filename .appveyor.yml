@@ -38,6 +38,12 @@ install:
   - sh: rm -rf libs/histogram ; mv $APPVEYOR_BUILD_FOLDER libs/histogram
   - sh: python3 tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 2" histogram
 
+  # use hdembinski/serialization due to frequent errors in boostorg/serialization
+  - cd libs/serialization
+  - git remote add patch https://github.com/HDembinski/serialization.git
+  - git checkout --track patch/develop
+  - cd ../..
+
   # prepare Boost build
   - cmd: cmd /c bootstrap & b2 headers & cd libs\histogram
   - sh: ./bootstrap.sh; ./b2 headers; cd libs/histogram
