@@ -9,6 +9,7 @@
 
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/iterator.hpp>
+#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/metadata_base.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/replace_type.hpp>
@@ -38,6 +39,8 @@ public:
   index_type size() const noexcept { return 2; }
 
   static constexpr bool inclusive() noexcept { return true; }
+
+  static constexpr unsigned options() noexcept { return option::none_t::value; }
 
   template <class M>
   bool operator==(const boolean<M>& o) const noexcept {

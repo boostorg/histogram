@@ -36,6 +36,8 @@ int main() {
     BOOST_TEST_EQ(a.index(1), 1);
     BOOST_TEST_EQ(a.index(0), 0);
 
+    BOOST_TEST_EQ(a.options(), axis::option::none_t::value);
+
     BOOST_TEST_CSTR_EQ(str(a).c_str(), "boolean(metadata=\"foo\")");
 
     axis::boolean<> b;
