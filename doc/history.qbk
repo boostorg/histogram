@@ -7,6 +7,25 @@
 
 [section:history Revision history]
 
+[heading Boost 1.74]
+
+* New features
+  * New axis `boolean`, a special kind of integer axis with only two values and no state (except metadata)
+  * Histograms with growing category axes are now addable even if the categories differ; the category axis of the output histogram is the union of the category axes of the input histograms
+  * Added axis::traits::continuous to match axis::traits::is_continuous
+
+* Fixes
+  * `metadata()` method of builtin axis types now return a mutable reference even if the axis is const, as described in the documentation
+
+* Documentation
+  * Sorted headers in reference and sorted items in namespaces
+  * Removed some internal typenames from templates
+  * Added reference for `sample_type`
+
+* Other
+  * Simplified internal metaprogramming
+  * Replaced Boost Assert with plain cassert
+
 [heading Boost 1.73]
 
 * New features
