@@ -9,8 +9,8 @@
 
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/axis/iterator.hpp>
-#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/metadata_base.hpp>
+#include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/replace_type.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -20,6 +20,16 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
+/**
+  Discrete axis for boolean data.
+
+  Binning is a pass-though operation with zero cost, making this the
+  fastest possible axis. The axis has no internal state apart from the
+  optional metadata state. The axis has no under- and overflow bins. It cannot grow and
+  cannot be reduced.
+
+  @tparam MetaData type to store meta data.
+ */
 template <class MetaData>
 class boolean : public iterator_mixin<boolean<MetaData>>,
                 public metadata_base_t<MetaData> {
@@ -28,18 +38,28 @@ class boolean : public iterator_mixin<boolean<MetaData>>,
   using metadata_type = typename metadata_base::metadata_type;
 
 public:
+  /** Construct a boolean axis.
+   *
+   * \param meta     description of the axis.
+   */
   explicit boolean(metadata_type meta = {}) : metadata_base(std::move(meta)) {}
 
+  /// Return index for value argument.
   index_type index(value_type x) const noexcept { return static_cast<index_type>(x); }
 
+  /// Return value for index argument.
   value_type value(index_type i) const noexcept { return static_cast<value_type>(i); }
 
+  /// Return bin for index argument.
   value_type bin(index_type i) const noexcept { return value(i); }
 
+  /// Returns the number of bins, without over- or underflow.
   index_type size() const noexcept { return 2; }
 
+  /// Whether the axis is inclusive (see axis::traits::is_inclusive).
   static constexpr bool inclusive() noexcept { return true; }
 
+  /// Returns the options.
   static constexpr unsigned options() noexcept { return option::none_t::value; }
 
   template <class M>
