@@ -17,7 +17,7 @@ project
     : requirements
     <implicit-dependency>/boost//headers
     <include>$(BOOST_ROOT)
-    <toolset>clang:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing"
+    <toolset>clang:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse"
     <toolset>gcc:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing"
     <toolset>msvc:<cxxflags>"/bigobj"
     <toolset>intel-win:<cxxflags>"/bigobj"
