@@ -24,8 +24,6 @@ namespace tr = axis::transform;
 
 // tests requires a C++17 compatible compiler
 
-#define TEST BOOST_TEST_TRAIT_SAME
-
 int main() {
   using axis::null_type;
 

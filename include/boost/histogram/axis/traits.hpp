@@ -381,7 +381,7 @@ decltype(auto) value(const Axis& axis, real_index_type index) {
 template <class Result, class Axis>
 Result value_as(const Axis& axis, real_index_type index) {
   return detail::try_cast<Result, std::runtime_error>(
-      value(axis, index)); // avoid conversion warning
+    axis::traits::value(axis, index)); // avoid conversion warning
 }
 
 /** Returns axis index for value.
@@ -419,7 +419,8 @@ constexpr unsigned rank(const Axis& axis) {
 // specialization for variant
 template <class... Ts>
 unsigned rank(const axis::variant<Ts...>& axis) {
-  return detail::variant_access::visit([](const auto& a) { return rank(a); }, axis);
+  return detail::variant_access::visit([](const auto& a) {
+    return axis::traits::rank(a); }, axis);
 }
 
 /** Returns pair of axis index and shift for the value argument.
@@ -441,7 +442,7 @@ std::pair<index_type, index_type> update(Axis& axis, const U& value) noexcept(
         return a.update(detail::try_cast<value_type<Axis>, std::invalid_argument>(value));
       },
       [&value](auto& a) -> std::pair<index_type, index_type> {
-        return {index(a, value), 0};
+        return {axis::traits::index(a, value), 0};
       },
       axis);
 }
@@ -482,8 +483,7 @@ Result width_as(const Axis& axis, index_type index) {
   return detail::value_method_switch(
       [](const auto&) { return Result{}; },
       [index](const auto& a) {
-        return detail::try_cast<Result, std::runtime_error>(a.value(index + 1) -
-                                                            a.value(index));
+        return detail::try_cast<Result, std::runtime_error>(a.value(index + 1) - a.value(index));
       },
       axis, detail::priority<1>{});
 }
