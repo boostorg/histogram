@@ -120,3 +120,4 @@ endif()
 #     LINK_LIBRARIES Boost::serialization)
 
 boost_test(TYPE run SOURCES deduction_guides_test.cpp COMPILE_FEATURES cxx_std_17)
+boost_test(TYPE run SOURCES rank_bug_test.cpp COMPILE_FEATURES cxx_std_17)
