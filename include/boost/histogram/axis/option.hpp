@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_AXIS_OPTION_HPP
 #define BOOST_HISTOGRAM_AXIS_OPTION_HPP
 
+#include <boost/config/workaround.hpp>
 #include <type_traits>
 
 /**
@@ -24,10 +25,18 @@ namespace option {
 /// Holder of axis options.
 template <unsigned Bits>
 struct bitset : std::integral_constant<unsigned, Bits> {
+
   /// Returns true if all option flags in the argument are set and false otherwise.
   template <unsigned B>
   static constexpr auto test(bitset<B>) {
+    #if BOOST_WORKAROUND(BOOST_GCC, >= 0)
+    # pragma GCC diagnostic push
+    # pragma GCC diagnostic ignored "-Wtautological-compare"
+    #endif
     return std::integral_constant<bool, static_cast<bool>((Bits & B) == B)>{};
+    #if BOOST_WORKAROUND(BOOST_GCC, >= 0)
+    # pragma GCC diagnostic pop
+    #endif
   }
 };
 
@@ -59,18 +68,19 @@ struct bit : bitset<(1 << Pos)> {};
 
 /// All options off.
 using none_t = bitset<0>;
-constexpr none_t none{}; ///< Instance of `none_t`.
 /// Axis has an underflow bin. Mutually exclusive with `circular`.
 using underflow_t = bit<0>;
-constexpr underflow_t underflow{}; ///< Instance of `underflow_t`.
 /// Axis has overflow bin.
 using overflow_t = bit<1>;
-constexpr overflow_t overflow{}; ///< Instance of `overflow_t`.
 /// Axis is circular. Mutually exclusive with `growth` and `underflow`.
 using circular_t = bit<2>;
-constexpr circular_t circular{}; ///< Instance of `circular_t`.
 /// Axis can grow. Mutually exclusive with `circular`.
 using growth_t = bit<3>;
+
+constexpr none_t none{}; ///< Instance of `none_t`.
+constexpr underflow_t underflow{}; ///< Instance of `underflow_t`.
+constexpr overflow_t overflow{}; ///< Instance of `overflow_t`.
+constexpr circular_t circular{}; ///< Instance of `circular_t`.
 constexpr growth_t growth{}; ///< Instance of `growth_t`.
 
 } // namespace option
