@@ -34,20 +34,15 @@ matrix:
         # ignore optional dependencies not currently supported by the cmake build
         - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram -N accumulators -N range -N serialization -N units
 
-        # WORKAROUND: some external tests have extra dependencies that depinst.py misses
-        - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" throw_exception
-        - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" smart_ptr
-        - python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" move
-        - git submodule update --init --depth 5 libs/function libs/type_index
-
       script:
-        mkdir build && cd build &&
-        cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 .. &&
-        ctest -j2 --output-on-failure -R boost_histogram &&
-        cd .. &&
-        ./bootstrap.sh &&
-        ./b2 headers &&
-        ./b2 -q -j2 warnings-as-errors=on cxxstd=latest libs/histogram/test//minimal
+        - mkdir build && cd build
+
+        # throws errors because of missing dependencies of external tests; ignore!
+        - cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 ..
+        - ctest -j2 --output-on-failure -R boost_histogram && cd .. &&
+          ./bootstrap.sh &&
+          ./b2 headers &&
+          ./b2 -q -j2 warnings-as-errors=on cxxstd=latest libs/histogram/test//minimal
 
     - os: linux
       language: python
