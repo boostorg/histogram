@@ -66,8 +66,8 @@ public:
       s = large_;
     }
     large_ += value;
-    l -= large_;
-    l += s;
+    l = l - large_;
+    l = l + s;
     small_ += l;
     return *this;
   }

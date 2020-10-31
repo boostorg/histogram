@@ -88,7 +88,7 @@ struct storage_grower {
     auto new_storage = make_default(storage);
     new_storage.reset(new_size_);
     const auto dlast = data_ + axes_rank(axes_) - 1;
-    for (const auto& x : storage) {
+    for (auto&& x : storage) {
       auto ns = new_storage.begin();
       auto sit = shifts;
       auto dit = data_;
