@@ -25,3 +25,51 @@ jobs:
         cd build
         cmake ..
         ctest -C Debug --output-on-failure
+
+  superproject_cmake:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: superproject cmake
+      run: |
+        # clone minimal set of Boost libraries
+        cd ..
+        git clone -b $TRAVIS_BRANCH --depth 5 https://github.com/boostorg/boost.git
+        cd boost
+        git submodule update --init --depth 5 tools/boostdep
+
+        # replace library with this version and install dependencies
+        rm -rf libs/histogram
+        mv $TRAVIS_BUILD_DIR libs/histogram
+
+        # ignore optional dependencies not currently supported by the cmake build
+        python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram -N accumulators -N range -N serialization -N units
+
+        mkdir build && cd build
+
+        # throws errors because of missing dependencies of external tests; ignore!
+        cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 ..
+        ctest -j2 --output-on-failure -R boost_histogram
+
+  b2_minimal:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: b2 minimal
+        run: |
+        # clone minimal set of Boost libraries
+        cd ..
+        git clone -b $TRAVIS_BRANCH --depth 5 https://github.com/boostorg/boost.git
+        cd boost
+        git submodule update --init --depth 5 tools/boostdep
+
+        # replace library with this version and install dependencies
+        rm -rf libs/histogram
+        mv $TRAVIS_BUILD_DIR libs/histogram
+
+        # ignore optional dependencies
+        python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram -N accumulators -N range -N serialization -N units
+
+        ./bootstrap.sh &&
+        ./b2 headers &&
+        ./b2 -q -j2 warnings-as-errors=on cxxstd=latest libs/histogram/test//minimal
