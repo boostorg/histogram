@@ -36,6 +36,7 @@ jobs:
         # popd
 
     - name: Prepare b2
+      run: |
         ./bootstrap.sh
         ./b2 headers
 
