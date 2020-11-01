@@ -39,11 +39,11 @@ jobs:
       run: |
         ./bootstrap.sh
         ./b2 headers
-    - name: Test: cxxstd=14 exception-handling=off rtti=off
+    - name: Test cxxstd=14 exception-handling=off rtti=off
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS cxxstd=14 exception-handling=off rtti=off test//minimal
-    - name: Test: cxxstd=17
+    - name: Test cxxstd=17
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS cxxstd=17 test//all
@@ -66,15 +66,15 @@ jobs:
       run: |
         ./bootstrap.sh
         ./b2 headers
-    - name: Test: gcc-7 cxxstd=14
+    - name: Test gcc-7 cxxstd=14
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=gcc-7 cxxstd=14 test//all examples
-    - name: Test: gcc-10 cxxstd=20 -O3 -funsafe-math-optimizations
+    - name: Test gcc-10 cxxstd=20 -O3 -funsafe-math-optimizations
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=gcc-10 cxxstd=20 cxxflags="-O3 -funsafe-math-optimizations" test//all examples
-    - name: Test: clang-6 cxxstd=17 ubsan asan
+    - name: Test clang-6 cxxstd=17 ubsan asan
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=clang-6 cxxstd=17 variant=histogram_ubasan test//all
