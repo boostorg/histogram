@@ -11,7 +11,7 @@ on:
       - 'tools/**'
 
 jobs:
-  default:
+  cmake:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
