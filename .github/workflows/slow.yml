@@ -21,58 +21,59 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
-    - name: cmake from superproject
+    - name: Fetch Boost superproject
       run: |
         cd ..
         git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
         cd boost
-        git submodule update --init --depth 5 --jobs 3
-        rm -rf libs/histogram/*
         mv -f $GITHUB_WORKSPACE/* libs/histogram
-
+        git submodule update --init --depth 5
+        cd $GITHUB_WORKSPACE
+        mv -f ../boost/* .
+    - name: CMake from superproject
+      run: |
         cd ..
         cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 boost
         ctest -j2 --output-on-failure -R boost_histogram
-    - name: prepare b2
+    - name: Prepare b2
       run: |
-        cd ../boost
         ./bootstrap.sh
         ./b2 headers
-    - name: b2 cxxstd=14 exception-handling=off rtti=off
+    - name: Test: cxxstd=14 exception-handling=off rtti=off
       run: |
-        cd ../boost/libs/histogram
+        cd libs/histogram
         ../../b2 $B2_OPTS cxxstd=14 exception-handling=off rtti=off test//minimal
-    - name: b2 cxxstd=17
+    - name: Test: cxxstd=17
       run: |
-        cd ../boost/libs/histogram
+        cd libs/histogram
         ../../b2 $B2_OPTS cxxstd=17 test//all
 
   stress:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: prepare b2
+    - name: Fetch Boost superproject
       run: |
         cd ..
         git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
         cd boost
-        git submodule update --init --depth 5 tools/build tools/boostdep
         mv -f $GITHUB_WORKSPACE/* libs/histogram
-
+        git submodule update --init --depth 5 tools/build tools/boostdep
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
-
-        # prepare build
+        cd $GITHUB_WORKSPACE
+        mv -f ../boost/* .
+    - name: Prepare b2
         ./bootstrap.sh
         ./b2 headers
-    - name: test gcc-7 cxxstd=14
+    - name: Test: gcc-7 cxxstd=14
       run: |
-        cd ../boost/libs/histogram
+        cd libs/histogram
         ../../b2 $B2_OPTS toolset=gcc-7 cxxstd=14 test//all examples
-    - name: test gcc-10 cxxstd=20 -O3 -funsafe-math-optimizations
+    - name: Test: gcc-10 cxxstd=20 -O3 -funsafe-math-optimizations
       run: |
-        cd ../boost/libs/histogram
+        cd libs/histogram
         ../../b2 $B2_OPTS toolset=gcc-10 cxxstd=20 cxxflags="-O3 -funsafe-math-optimizations" test//all examples
-    - name: test clang-6 cxxstd=17 ubsan asan
+    - name: Test: clang-6 cxxstd=17 ubsan asan
       run: |
-        cd ../boost/libs/histogram
+        cd libs/histogram
         ../../b2 $B2_OPTS toolset=clang-6 cxxstd=17 variant=histogram_ubasan test//all
