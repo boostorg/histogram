@@ -12,7 +12,7 @@ on:
 
 env:
   B2_OPTS: -q -j2 warnings-as-errors=on
-  COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   cov:
@@ -54,7 +54,7 @@ jobs:
     - name: process coverage data
       run: |
         cd ../boost/libs/histogram
-        GCOV=gcov-8 tools/cov.sh
+        GCOV=gcov-8 tools/cov.sh $GITHUB_TOKEN
 
     - name: upload to coveralls.io
       uses: coverallsapp/github-action@v1.1.2
