@@ -7,7 +7,6 @@
 #ifndef BOOST_HISTOGRAM_AXIS_OPTION_HPP
 #define BOOST_HISTOGRAM_AXIS_OPTION_HPP
 
-#include <boost/config/workaround.hpp>
 #include <type_traits>
 
 /**
@@ -29,14 +28,8 @@ struct bitset : std::integral_constant<unsigned, Bits> {
   /// Returns true if all option flags in the argument are set and false otherwise.
   template <unsigned B>
   static constexpr auto test(bitset<B>) {
-#if BOOST_WORKAROUND(BOOST_GCC, >= 0)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtautological-compare"
-#endif
-    return std::integral_constant<bool, static_cast<bool>((Bits & B) == B)>{};
-#if BOOST_WORKAROUND(BOOST_GCC, >= 0)
-#pragma GCC diagnostic pop
-#endif
+    // B + 0 needed to avoid false positive -Wtautological-compare in gcc-6
+    return std::integral_constant<bool, static_cast<bool>((Bits & B) == (B + 0))>{};
   }
 };
 

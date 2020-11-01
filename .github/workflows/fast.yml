@@ -11,7 +11,7 @@ on:
       - 'tools/**'
 
 jobs:
-  test:
+  default:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -19,9 +19,26 @@ jobs:
       fail-fast: true
     steps:
     - uses: actions/checkout@v2
-    - name: ctest
+    - name: cmake
       run: |
         mkdir build
         cd build
         cmake ..
+    - name: ctest
+      run: |
+        cd build
+        ctest -C Debug --output-on-failure
+
+  gcc5:
+    runs-on: ubuntu-16.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: cmake
+      run: |
+        mkdir build
+        cd build
+        CXX=g++-5 cmake ..
+    - name: ctest
+      run: |
+        cd build
         ctest -C Debug --output-on-failure

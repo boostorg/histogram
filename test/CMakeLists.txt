@@ -119,5 +119,14 @@ endif()
 # boost_test(TYPE run SOURCES accumulators_serialization_test.cpp
 #     LINK_LIBRARIES Boost::serialization)
 
-boost_test(TYPE run SOURCES deduction_guides_test.cpp COMPILE_FEATURES cxx_std_17)
-boost_test(TYPE run SOURCES issue_290_test.cpp COMPILE_FEATURES cxx_std_17)
+# Workaround for gcc-5
+if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6))
+
+  boost_test(TYPE run SOURCES deduction_guides_test.cpp
+    COMPILE_FEATURES cxx_std_17
+  )
+  boost_test(TYPE run SOURCES issue_290_test.cpp
+    COMPILE_FEATURES cxx_std_17
+  )
+
+endif()
