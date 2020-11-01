@@ -61,4 +61,4 @@ jobs:
     - name: process and send coverage data
       run: |
         cd ../boost/libs/histogram
-        GCOV=gcov-8 tools/cov.sh $COVERALLS_TOKEN
+        GCOV=gcov-8 tools/cov.sh
