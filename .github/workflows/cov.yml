@@ -19,13 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-    - name: install cpp-coveralls
-      run: |
-        python --version
-        pip install cpp-coveralls
     - name: prepare
       run: |
         cd ..
@@ -58,7 +51,14 @@ jobs:
         # don't compile examples in coverage build, coverage must come from tests alone
         ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
 
-    - name: process and send coverage data
+    - name: process coverage data
       run: |
         cd ../boost/libs/histogram
         GCOV=gcov-8 tools/cov.sh
+
+    - name: upload to coveralls.io
+      uses: coverallsapp/github-action@v1.1.2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ../boost/libs/histogram/coverage.info
+        base-path: ../boost
