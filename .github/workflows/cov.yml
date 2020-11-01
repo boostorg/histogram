@@ -44,7 +44,7 @@ jobs:
         rm -rf boost/histogram.pp boost/histogram
         mv -f libs/histogram/include/boost/* boost
 
-    - name: test gcc-8 cxxstd=latest coverage=on test//all
+    - name: test gcc-8 cxxstd=latest coverage=on test//histogram_fill_test
       run: |
         cd ../boost/libs/histogram
 
