@@ -12,20 +12,12 @@ on:
 
 env:
   B2_OPTS: -q -j2 warnings-as-errors=on
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   cov:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-    - name: install cpp-coveralls
-      run: |
-        python --version
-        pip install cpp-coveralls
     - name: prepare
       run: |
         cd ..
@@ -61,11 +53,11 @@ jobs:
     - name: process coverage data
       run: |
         cd ../boost/libs/histogram
-        GCOV=gcov-8 tools/cov.sh $GITHUB_TOKEN || echo bad
+        GCOV=gcov-8 tools/cov.sh
 
     - name: upload to coveralls.io
       uses: coverallsapp/github-action@v1.1.2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: ../boost/libs/histogram/coverage.info
-        base-path: ../boost
+        base-path: $GITHUB_WORKSPACE/../boost/libs/histogram
