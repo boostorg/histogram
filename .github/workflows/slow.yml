@@ -63,6 +63,7 @@ jobs:
         cd $GITHUB_WORKSPACE
         mv -f ../boost/* .
     - name: Prepare b2
+      run: |
         ./bootstrap.sh
         ./b2 headers
     - name: Test: gcc-7 cxxstd=14
