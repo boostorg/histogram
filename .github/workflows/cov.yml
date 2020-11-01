@@ -1,0 +1,62 @@
+name: Coverage
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths-ignore:
+      - 'doc/**'
+      - 'examples/**'
+      - 'tools/**'
+
+env:
+  B2_OPTS: -q -j2 warnings-as-errors=on
+  COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+
+jobs:
+  cov:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: install cpp-coveralls
+      run: |
+        python --version
+        pip install cpp-coveralls
+    - name: prepare
+      run: |
+        cd ..
+        git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
+        cd boost
+        git submodule update --init --depth 5 tools/build tools/boostdep
+        mv -f $GITHUB_WORKSPACE/* libs/histogram
+
+        python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
+
+        # # use hdembinski/serialization due to frequent errors in boostorg/serialization
+        # pushd libs/serialization
+        # git remote add patch https://github.com/HDembinski/serialization.git
+        # git fetch patch
+        # git checkout patch/boost_histogram
+        # popd
+
+        # prepare build
+        ./bootstrap.sh
+        ./b2 headers
+
+        # simulate bundled boost by moving the headers instead of symlinking
+        rm -rf boost/histogram.pp boost/histogram
+        mv -f libs/histogram/include/boost/* boost
+
+    - name: test gcc-8 cxxstd=latest coverage=on test//all
+      run: |
+        cd ../boost/libs/histogram
+
+        # don't compile examples in coverage build, coverage must come from tests alone
+        ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
+
+        # process and send coverage data
+        GCOV=gcov-8 tools/cov.sh $COVERALLS_TOKEN
