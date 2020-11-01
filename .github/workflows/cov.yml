@@ -25,6 +25,8 @@ jobs:
         cd boost
         git submodule update --init --depth 5 tools/build tools/boostdep
         mv -f $GITHUB_WORKSPACE/* libs/histogram
+        cd $GITHUB_WORKSPACE
+        mv -f ../boost/* .
 
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
 
@@ -45,31 +47,18 @@ jobs:
 
     - name: test gcc-8 cxxstd=latest coverage=on
       run: |
-        cd ../boost/libs/histogram
+        cd libs/histogram
 
         # don't compile examples in coverage build, coverage must come from tests alone
-        ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//histogram_fill_test
+        ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
 
     - name: process coverage data
       run: |
-        cd ../boost/libs/histogram
+        cd libs/histogram
         GCOV=gcov-8 tools/cov.sh
 
     - name: upload to coveralls.io
       uses: coverallsapp/github-action@v1.1.2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: ../boost/libs/histogram/coverage.info
-
-    - name: upload to coveralls.io
-      uses: coverallsapp/github-action@v1.1.2
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: $GITHUB_WORKSPACE/../boost/libs/histogram/coverage.info
-        base-path: $GITHUB_WORKSPACE/../boost/libs/histogram
-
-    - name: upload to coveralls.io
-      uses: coverallsapp/github-action@v1.1.2
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: foo
+        path-to-lcov: libs/histogram/coverage.info
