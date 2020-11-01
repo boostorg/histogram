@@ -23,11 +23,13 @@ jobs:
         cd ..
         git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
         cd boost
-        git submodule update --init --depth 5 tools/build tools/boostdep
         mv -f $GITHUB_WORKSPACE/* libs/histogram
+        rm -rf $GITHUB_WORKSPACE
+        cd ..
+        mv boost $GITHUB_WORKSPACE
         cd $GITHUB_WORKSPACE
-        mv -f ../boost/* .
 
+        git submodule update --init --depth 5 tools/build tools/boostdep
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
 
         # # use hdembinski/serialization due to frequent errors in boostorg/serialization
