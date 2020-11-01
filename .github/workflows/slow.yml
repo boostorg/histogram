@@ -9,8 +9,14 @@ on:
       - 'doc/**'
       - 'tools/**'
 
-jobs:
+env:
+  B2_OPTS: -q -j2 warnings-as-errors=on
+  UBSAN_OPTIONS: print_stacktrace=1
+  LSAN_OPTIONS: verbosity=1:log_threads=1
+  ASAN_OPTIONS: detect_leaks=1:detect_stack_use_after_return=1
+  COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
 
+jobs:
   superproject_cmake_and_b2:
     runs-on: macos-latest
     steps:
@@ -27,15 +33,19 @@ jobs:
         cd ..
         cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 boost
         ctest -j2 --output-on-failure -R boost_histogram
-    - name: b2 cxxstd=14,17 exception-handling=on/off rtti=on/off
+    - name: prepare b2
       run: |
-        cd $GITHUB_WORKSPACE/../boost
+        cd ../boost
         ./bootstrap.sh
         ./b2 headers
-        cd libs/histogram
-        B2="../../b2 -q -j2 warnings-as-errors=on"
-        $B2 cxxstd=14,17 test//all examples
-        $B2 cxxstd=14 exception-handling=off rtti=off test//minimal
+    - name: b2 cxxstd=14 exception-handling=off rtti=off
+      run: |
+        cd ../boost/libs/histogram
+        ../../b2 $B2_OPTS cxxstd=14 exception-handling=off rtti=off test//minimal
+    - name: b2 cxxstd=17
+      run: |
+        cd ../boost/libs/histogram
+        ../../b2 $B2_OPTS cxxstd=17 test//all
 
   cov:
     runs-on: ubuntu-latest
@@ -48,9 +58,7 @@ jobs:
       run: |
         python --version
         pip install cpp-coveralls
-    - name: b2 toolset=gcc-8 cxxstd=latest coverage=on test//all
-      env:
-        COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+    - name: prepare
       run: |
         cd ..
         git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
@@ -74,11 +82,43 @@ jobs:
         # simulate bundled boost by moving the headers instead of symlinking
         rm -rf boost/histogram.pp boost/histogram
         mv -f libs/histogram/include/boost/* boost
-        cd libs/histogram
 
-        B2="../../b2 -q -j2 warnings-as-errors=on"
+    - name: test gcc-8 cxxstd=latest coverage=on test//all
+      run: |
+        cd ../boost/libs/histogram
+
         # don't compile examples in coverage build, coverage must come from tests alone
-        $B2 toolset=gcc-8 cxxstd=latest coverage=on test//all
+        ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
 
         # process and send coverage data
         GCOV=gcov-8 tools/cov.sh $COVERALLS_TOKEN
+
+  stress:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: prepare b2
+      run: |
+        cd ..
+        git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
+        cd boost
+        git submodule update --init --depth 5 tools/build tools/boostdep
+        mv -f $GITHUB_WORKSPACE/* libs/histogram
+
+        python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
+
+        # prepare build
+        ./bootstrap.sh
+        ./b2 headers
+    - name: test gcc-7 cxxstd=14
+      run: |
+        cd ../boost/libs/histogram
+        ../../b2 $B2_OPTS toolset=gcc-7 cxxstd=14 test//all examples
+    - name: test gcc-10 cxxstd=20 -O3 -funsafe-math-optimizations
+      run: |
+        cd ../boost/libs/histogram
+        ../../b2 $B2_OPTS toolset=gcc-10 cxxstd=20 cxxflags="-O3 -funsafe-math-optimizations" test//all examples
+    - name: test clang-6 cxxstd=17 ubsan asan
+      run: |
+        cd ../boost/libs/histogram
+        ../../b2 $B2_OPTS toolset=clang-6 cxxstd=17 variant=histogram_ubasan test//all

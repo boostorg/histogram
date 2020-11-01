@@ -4,12 +4,9 @@
 
 shallow_clone: true
 max_jobs: 2
-matrix:
-  fast_finish: true
 
 image:
   - Visual Studio 2017
-  - Ubuntu
 
 branches:
   only:
@@ -20,23 +17,17 @@ build: off
 
 environment:
   B2_OPTS: -j2 -q warnings-as-errors=on
-  UBSAN_OPTIONS: print_stacktrace=1
-  LSAN_OPTIONS: verbosity=1:log_threads=1
-  ASAN_OPTIONS: detect_leaks=1:detect_stack_use_after_return=1
 
 install:
   # clone minimal set of Boost libraries
   - cd ..
-  - cmd: git clone -b %APPVEYOR_REPO_BRANCH% --depth 5 https://github.com/boostorg/boost.git
-  - sh: git clone -b $APPVEYOR_REPO_BRANCH --depth 5 https://github.com/boostorg/boost.git
+  - git clone -b %APPVEYOR_REPO_BRANCH% --depth 5 https://github.com/boostorg/boost.git
   - cd boost
   - git submodule update --init --depth 5 tools/build tools/boostdep
 
   # replace Boost library with this project and install dependencies
-  - cmd: xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram\
-  - cmd: python tools\boostdep\depinst\depinst.py -N units -N range -N accumulators --git_args "--depth 5 --jobs 2" histogram
-  - sh: rm -rf libs/histogram ; mv $APPVEYOR_BUILD_FOLDER libs/histogram
-  - sh: python3 tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 2" histogram
+  - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram\
+  - python tools\boostdep\depinst\depinst.py -N units -N range -N accumulators --git_args "--depth 5 --jobs 2" histogram
 
   # use hdembinski/serialization due to frequent errors in boostorg/serialization
   - cd libs/serialization
@@ -46,18 +37,11 @@ install:
   - cd ../..
 
   # prepare Boost build
-  - cmd: cmd /c bootstrap & b2 headers & cd libs\histogram
-  - sh: ./bootstrap.sh; ./b2 headers; cd libs/histogram
+  - cmd /c bootstrap & b2 headers & cd libs\histogram
 
 test_script:
   # on windows
-  - cmd: ..\..\b2 %B2_OPTS% cxxstd=latest test//minimal test//serialization
-  # on linux
-  - sh:
-      B2="../../b2 ${B2_OPTS}";
-      $B2 toolset=gcc-7 cxxstd=14 exception-handling=off rtti=off test//minimal &&
-      $B2 toolset=gcc-9 cxxstd=latest cxxflags="-O3 -funsafe-math-optimizations" examples test//all &&
-      $B2 toolset=clang-6 cxxstd=latest variant=histogram_ubasan test//all
+  - ..\..\b2 %B2_OPTS% cxxstd=latest test//minimal test//serialization
 
 ## Uncomment the following to stop VM and enable interactive login.
 ## Instructions how to log into the Appveyor VM are automatically printed.

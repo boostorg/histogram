@@ -92,8 +92,9 @@ alias cxx14 :
     ;
 
 alias cxx17 :
-    [ run deduction_guides_test.cpp ] :
-    [ requires cpp_deduction_guides ]
+    [ run deduction_guides_test.cpp ]
+    [ compile issue_290_test.cpp ]
+    : [ requires cpp_deduction_guides ]
     ;
 
 # check that useful error messages are produced when library is used incorrectly

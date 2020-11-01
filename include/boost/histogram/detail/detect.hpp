@@ -91,7 +91,7 @@ BOOST_HISTOGRAM_DETAIL_DETECT(is_streamable, (std::declval<std::ostream&>() << t
 BOOST_HISTOGRAM_DETAIL_DETECT(has_operator_preincrement, ++t);
 
 BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_operator_equal, (std::declval<const T&>() ==
-                                                          std::declval<const U>()));
+                                                          std::declval<const U&>()));
 
 BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_operator_radd,
                                      (std::declval<T&>() += std::declval<U>()));
@@ -106,7 +106,7 @@ BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_operator_rdiv,
                                      (std::declval<T&>() /= std::declval<U>()));
 
 BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(
-    has_method_eq, (std::declval<const T>().operator==(std::declval<const U>())));
+    has_method_eq, (std::declval<const T&>().operator==(std::declval<const U&>())));
 
 BOOST_HISTOGRAM_DETAIL_DETECT(has_threading_support, (T::has_threading_support));
 

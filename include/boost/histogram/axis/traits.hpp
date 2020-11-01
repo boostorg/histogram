@@ -28,8 +28,6 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-static axis::null_type null_value;
-
 template <class Axis>
 struct value_type_deducer {
   using type =
@@ -115,7 +113,8 @@ decltype(auto) metadata_impl(A&& a, decltype(a.metadata(), 0)) {
 
 template <class A>
 axis::null_type& metadata_impl(A&&, float) {
-  return detail::null_value;
+  static axis::null_type null_value;
+  return null_value;
 }
 
 } // namespace detail
@@ -381,7 +380,7 @@ decltype(auto) value(const Axis& axis, real_index_type index) {
 template <class Result, class Axis>
 Result value_as(const Axis& axis, real_index_type index) {
   return detail::try_cast<Result, std::runtime_error>(
-      value(axis, index)); // avoid conversion warning
+      axis::traits::value(axis, index)); // avoid conversion warning
 }
 
 /** Returns axis index for value.
@@ -407,8 +406,9 @@ axis::index_type index(const variant<Ts...>& axis, const U& value) {
 
   @param axis any axis instance
 */
+// gcc workaround: must use unsigned int not unsigned as return type
 template <class Axis>
-constexpr unsigned rank(const Axis& axis) {
+constexpr unsigned int rank(const Axis& axis) {
   (void)axis;
   using T = value_type<Axis>;
   // cannot use mp_eval_or since T could be a fixed-sized sequence
@@ -417,9 +417,11 @@ constexpr unsigned rank(const Axis& axis) {
 }
 
 // specialization for variant
+// gcc workaround: must use unsigned int not unsigned as return type
 template <class... Ts>
-unsigned rank(const axis::variant<Ts...>& axis) {
-  return detail::variant_access::visit([](const auto& a) { return rank(a); }, axis);
+unsigned int rank(const axis::variant<Ts...>& axis) {
+  return detail::variant_access::visit(
+      [](const auto& a) { return axis::traits::rank(a); }, axis);
 }
 
 /** Returns pair of axis index and shift for the value argument.
@@ -441,7 +443,7 @@ std::pair<index_type, index_type> update(Axis& axis, const U& value) noexcept(
         return a.update(detail::try_cast<value_type<Axis>, std::invalid_argument>(value));
       },
       [&value](auto& a) -> std::pair<index_type, index_type> {
-        return {index(a, value), 0};
+        return {axis::traits::index(a, value), 0};
       },
       axis);
 }
