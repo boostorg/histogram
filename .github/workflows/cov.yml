@@ -61,7 +61,7 @@ jobs:
     - name: process coverage data
       run: |
         cd ../boost/libs/histogram
-        GCOV=gcov-8 tools/cov.sh $GITHUB_TOKEN
+        GCOV=gcov-8 tools/cov.sh $GITHUB_TOKEN || echo bad
 
     - name: upload to coveralls.io
       uses: coverallsapp/github-action@v1.1.2
