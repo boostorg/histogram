@@ -43,12 +43,12 @@ jobs:
         rm -rf boost/histogram.pp boost/histogram
         mv -f libs/histogram/include/boost/* boost
 
-    - name: test gcc-8 cxxstd=latest coverage=on test//histogram_fill_test
+    - name: test gcc-8 cxxstd=latest coverage=on
       run: |
         cd ../boost/libs/histogram
 
         # don't compile examples in coverage build, coverage must come from tests alone
-        ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
+        ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//histogram_fill_test
 
     - name: process coverage data
       run: |
@@ -60,4 +60,16 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: ../boost/libs/histogram/coverage.info
-        base-path: $GITHUB_WORKSPACE/../boost/libs/histogram
+
+    - name: upload to coveralls.io
+      uses: coverallsapp/github-action@v1.1.2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ${{ GITHUB_WORKSPACE }}/../boost/libs/histogram/coverage.info
+        base-path: ${{ GITHUB_WORKSPACE }}/../boost/libs/histogram
+
+    - name: upload to coveralls.io
+      uses: coverallsapp/github-action@v1.1.2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: foo
