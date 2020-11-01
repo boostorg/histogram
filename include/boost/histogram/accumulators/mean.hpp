@@ -87,10 +87,16 @@ public:
   /// Return how many samples were accumulated
   const_reference count() const noexcept { return sum_; }
 
-  /// Return mean value of accumulated samples
+  /** Return mean value of accumulated samples.
+
+    The result is undefined, if `count() < 1`.
+  */
   const_reference value() const noexcept { return mean_; }
 
-  /// Return variance of accumulated samples
+  /** Return variance of accumulated samples
+
+    The result is undefined, if `count() < 2`.
+  */
   value_type variance() const noexcept { return sum_of_deltas_squared_ / (sum_ - 1); }
 
   template <class Archive>
