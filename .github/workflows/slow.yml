@@ -26,14 +26,14 @@ jobs:
         cd ..
         git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
         cd boost
-        mv -f $GITHUB_WORKSPACE/* libs/histogram
         git submodule update --init --depth 5
-        cd $GITHUB_WORKSPACE
-        mv -f ../boost/* .
+        rm -rf libs/histogram/*
+        mv -f $GITHUB_WORKSPACE/* libs/histogram
+        mv -f * $GITHUB_WORKSPACE
     - name: CMake from superproject
       run: |
         cd ..
-        cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 boost
+        cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 $GITHUB_WORKSPACE
         ctest -j2 --output-on-failure -R boost_histogram
     - name: Prepare b2
       run: |
@@ -60,8 +60,7 @@ jobs:
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         git submodule update --init --depth 5 tools/build tools/boostdep
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
-        cd $GITHUB_WORKSPACE
-        mv -f ../boost/* .
+        mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
       run: |
         ./bootstrap.sh

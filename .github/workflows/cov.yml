@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: prepare
+    - name: Fetch Boost superproject
       run: |
         cd ..
         git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
@@ -26,8 +26,7 @@ jobs:
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         git submodule update --init --depth 5 tools/build tools/boostdep
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
-        cd $GITHUB_WORKSPACE
-        mv -f ../boost/* .
+        mv -f * $GITHUB_WORKSPACE
 
         # # use hdembinski/serialization due to frequent errors in boostorg/serialization
         # pushd libs/serialization
@@ -36,7 +35,7 @@ jobs:
         # git checkout patch/boost_histogram
         # popd
 
-        # prepare build
+    - name: Prepare b2
         ./bootstrap.sh
         ./b2 headers
 
@@ -44,20 +43,19 @@ jobs:
         rm -rf boost/histogram.pp boost/histogram
         mv -f libs/histogram/include/boost/* boost
 
-    - name: test gcc-8 cxxstd=latest coverage=on
+    - name: Test gcc-8 cxxstd=latest coverage=on
       run: |
         cd libs/histogram
 
         # don't compile examples in coverage build, coverage must come from tests alone
         ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
 
-    - name: process coverage data
+    - name: Process coverage data
       run: |
         cd libs/histogram
         GCOV=gcov-8 tools/cov.sh
 
-    - name: upload to coveralls.io
-      uses: coverallsapp/github-action@v1.1.2
+    - uses: coverallsapp/github-action@v1.1.2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: libs/histogram/coverage.info
