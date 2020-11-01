@@ -58,5 +58,7 @@ jobs:
         # don't compile examples in coverage build, coverage must come from tests alone
         ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
 
-        # process and send coverage data
+    - name: process and send coverage data
+      run: |
+        cd ../boost/libs/histogram
         GCOV=gcov-8 tools/cov.sh $COVERALLS_TOKEN
