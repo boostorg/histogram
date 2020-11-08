@@ -17,7 +17,7 @@ https://github.com/boostorg/histogram/issues?state=open).
 
 Issues can also be used to submit feature requests.
 
-Don't be shy: if you are friendly, we are friendly! And we care, issues are usually answered within a working day.
+Don't be shy: if you are friendly, we are friendly!
 
 ## Submitting Pull Requests
 
@@ -25,16 +25,29 @@ Fork the main repository. Base your changes on the `develop` branch. Make a new 
 
 Please rebase your branch to the original `develop` branch before submitting (which may have diverged from your fork in the meantime).
 
-For general advice on how to set up the Boost project for development, see
-https://github.com/boostorg/boost/wiki/Getting-Started.
+For general advice on how to set up the Boost project for development, see the Getting Started section on
+https://github.com/boostorg/wiki/wiki.
 
 To build the documentation, you need to install a few extra things, see
-https://www.boost.org/doc/libs/1_70_0/doc/html/quickbook/install.html.
+https://www.boost.org/doc/libs/1_74_0/doc/html/quickbook/install.html.
 
 ## Running Tests
 
-To run the tests from the project folder, do `b2 cxxstd=latest warnings-as-errors=on test`. You can also test the examples by executing `b2 cxxstd=latest examples`. To make the tests complete faster, you can use the option `-j4` (or another number) to run builds in parallel.
-More details can be found in [travis](https://github.com/boostorg/histogram/blob/develop/.travis.yml) and [appveyor](https://github.com/boostorg/histogram/blob/develop/.appveyor.yml) config files. 
+### With b2
+
+Boost comes with a build system called `b2`, which is the most efficient way to run the develop-test cycle. It takes a few extra steps and some reading to set up, but the payoff is worth it. If you followed the advice from the previous section, you should be all set up to run the tests from the Boost Histogram project folder with `b2 cxxstd=latest warnings-as-errors=on test`. You can also test the examples by executing `b2 cxxstd=latest examples`. To make the tests complete faster, you can use the option `-j4` (or another number) to run builds in parallel.
+
+### With cmake
+
+Alternatively, you can build and test Boost Histogram with `cmake`. This does not require you to setting up all of Boost, you just a checkout of Boost Histogram. It is convenient because it requires very little setup, but this is not as efficient for development as using `b2`. Anyway, here is how to use `cmake`. In the project folder, you do
+```
+mkdir build
+cd build
+cmake ..
+ctest -C Debug --output-on-failure
+```
+
+### Reporting failures
 
 Please report any tests failures to the issue tracker along with the test
 output and information on your system:
