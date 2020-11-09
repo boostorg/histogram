@@ -72,3 +72,6 @@ Using `clang-format -style=file` is recommended, which should pick up the `.clan
 ### Documentation
 
 Doxygen comments should be added for all user-facing functions and methods. Implementation details are not documented (everything in the `boost::histogram::detail` namespace is an implementation detail that can change at any time).
+auto h = ... // histogram
+auto interp = interpolator(h, interpolator::linear);
+
