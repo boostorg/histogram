@@ -72,3 +72,12 @@ Using `clang-format -style=file` is recommended, which should pick up the `.clan
 ### Documentation
 
 Doxygen comments should be added for all user-facing functions and methods. Implementation details are not documented (everything in the `boost::histogram::detail` namespace is an implementation detail that can change at any time).
+auto h = make_histogram_with(dense_storage<accumulator::efficiency<>>(), axis::regular<>(10, 0, 1));
+
+h(0.1, sample(false)); // didn't pass
+h(0.5, sample(true)); // did pass
+
+h.at(0).value(); // gives the efficiency in that bin
+h.at(0).variance(); // gives variance estimate for that bin
+auto interval = h.at(0).confidence_interval(); // gives the confidence interval
+
