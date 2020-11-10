@@ -12,16 +12,17 @@
 Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org). Licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
 **Supported compiler versions** gcc >= 5.5, clang >= 3.8, msvc >= 14.1
+**Supported C++ versions** 14, 17, 20
 
-Branch  | Linux and OSX | Windows | Coverage
-------- | ------------- |-------- | --------
-develop | [![Build Status Travis](https://travis-ci.org/boostorg/histogram.svg?branch=develop)](https://travis-ci.org/boostorg/histogram/branches) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/p27laa26ti1adyf1/branch/develop?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram-d5g5k/branch/develop) | [![Coveralls](https://coveralls.io/repos/github/boostorg/histogram/badge.svg?branch=develop)](https://coveralls.io/github/boostorg/histogram?branch=develop)
-master  | [![Build Status Travis](https://travis-ci.org/boostorg/histogram.svg?branch=master)](https://travis-ci.org/boostorg/histogram/branches) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/p27laa26ti1adyf1/branch/master?svg=true)](https://ci.appveyor.com/project/HDembinski/histogram-d5g5k/branch/master) | [![Coveralls](https://coveralls.io/repos/github/boostorg/histogram/badge.svg?branch=master)](https://coveralls.io/github/boostorg/histogram?branch=master)
+Branch  | Linux, OSX, Windows    | Coverage
+------- | ---------------------- | --------
+develop | ![Fast](https://github.com/boostorg/histogram/workflows/Fast/badge.svg?branch=develop) | [![Coveralls](https://coveralls.io/repos/github/boostorg/histogram/badge.svg?branch=develop)](https://coveralls.io/github/boostorg/histogram?branch=develop)
+master  | ![Fast](https://github.com/boostorg/histogram/workflows/Fast/badge.svg?branch=master) | [![Coveralls](https://coveralls.io/repos/github/boostorg/histogram/badge.svg?branch=master)](https://coveralls.io/github/boostorg/histogram?branch=master)
 
 Boost.Histogram is a very fast state-of-the-art multi-dimensional generalised [histogram](https://en.wikipedia.org/wiki/Histogram) class for the beginner and expert alike.
 
 * Header-only
-* Easy to use, easy to customize
+* Easy to use, easy to customise
 * Just count or use arbitrary accumulators in each cell to compute means, minimum, maximum, ...
 * Supports multi-threading and restricted environments (no heap allocation, exceptions or RTTI)
 * Has [Python bindings](https://github.com/scikit-hep/boost-histogram)
@@ -76,6 +77,7 @@ int main() {
 * Counters with high dynamic range, cannot overflow or be capped [[1]](#note1)
 * Better performance than other libraries (see benchmarks for details)
 * Efficient use of memory [[1]](#note1)
+* Hand-crafted C++17 deduction guides for axes and histogram types
 * Support for custom axis types: define how input values should map to indices
 * Support for under-/overflow bins (can be disabled individually to reduce memory consumption)
 * Support for axes that grow automatically with input values [[2]](#note2)
