@@ -87,9 +87,9 @@ public:
     vec_.reserve(std::distance(begin, end));
     vec_.emplace_back(*begin++);
     bool strictly_ascending = true;
-    while (begin != end) {
-      if (*begin <= vec_.back()) strictly_ascending = false;
-      vec_.emplace_back(*begin++);
+    for (; begin != end; ++begin) {
+      strictly_ascending &= vec_.back() < *begin;
+      vec_.emplace_back(*begin);
     }
     if (!strictly_ascending)
       BOOST_THROW_EXCEPTION(
@@ -175,7 +175,8 @@ public:
     if (i > size()) return detail::highest<value_type>();
     const auto k = static_cast<index_type>(i); // precond: i >= 0
     const real_index_type z = i - k;
-    return (1.0 - z) * vec_[k] + z * vec_[k + 1];
+    // check z == 0 needed to avoid returning nan when vec_[k + 1] is infinity
+    return (1.0 - z) * vec_[k] + (z == 0 ? 0 : z * vec_[k + 1]);
   }
 
   /// Return bin for index argument.
