@@ -9,6 +9,7 @@ on:
       - 'doc/**'
       - 'examples/**'
       - 'tools/**'
+      - *.md
   push:
     branches:
       - master
@@ -17,6 +18,7 @@ on:
       - 'doc/**'
       - 'examples/**'
       - 'tools/**'
+      - *.md
 
 jobs:
   cmake:
