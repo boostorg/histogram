@@ -35,12 +35,12 @@ https://www.boost.org/doc/libs/1_74_0/doc/html/quickbook/install.html.
 
 ### With b2
 
-Boost comes with a build system called `b2`, which is the most efficient way to run the develop-test cycle. It takes a few extra steps and some reading to set up, but the payoff is worth it. If you followed the advice from the previous section, you should be all set up to run the tests from the Boost Histogram project folder with `b2 cxxstd=latest warnings-as-errors=on test`. You can also test the examples by executing `b2 cxxstd=latest examples`. To make the tests complete faster, you can use the option `-j4` (or another number) to run builds in parallel.
+Boost comes with a build system called `b2`, which is the most efficient way to run the develop-test cycle. It takes a few extra steps and some reading to set up, but the payoff is worth it. If you followed the advice from the previous section, you should be all set up to run the tests from the Boost Histogram project folder with `b2 cxxstd=latest warnings-as-errors=on test`. You can also test the examples by executing `b2 cxxstd=latest examples`. To make the tests complete faster, you can use the option `-j4` (or another number) to build in parallel.
 
 ### With cmake
 
-Alternatively, you can build and test Boost Histogram with `cmake`. This does not require you to setting up all of Boost, you just a checkout of Boost Histogram. It is convenient because it requires very little setup, but this is not as efficient for development as using `b2`. Anyway, here is how to use `cmake`. In the project folder, you do
-```
+Alternatively, you can build and test Boost Histogram with `cmake`. This does not require setting up all of Boost, just a checkout of Boost Histogram. It requires very little setup, but it is not as efficient for development as using `b2`. Anyway, to use `cmake`, you do in the project folder
+```sh
 mkdir build
 cd build
 cmake ..
@@ -49,8 +49,7 @@ ctest -C Debug --output-on-failure
 
 ### Reporting failures
 
-Please report any tests failures to the issue tracker along with the test
-output and information on your system:
+Please report any tests failures to the issue tracker along with the test output and information on your system:
 
 * platform (Linux, Windows, OSX, ...)
 * compiler and version
