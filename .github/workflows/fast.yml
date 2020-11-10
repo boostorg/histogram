@@ -9,6 +9,14 @@ on:
       - 'doc/**'
       - 'examples/**'
       - 'tools/**'
+  push:
+    branches:
+      - master
+      - develop
+    paths-ignore:
+      - 'doc/**'
+      - 'examples/**'
+      - 'tools/**'
 
 jobs:
   cmake:
