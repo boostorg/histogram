@@ -9,7 +9,7 @@ on:
       - 'doc/**'
       - 'examples/**'
       - 'tools/**'
-      - *.md
+      - '*.md'
 
 env:
   B2_OPTS: -q -j2 warnings-as-errors=on
