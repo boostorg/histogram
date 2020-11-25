@@ -7,6 +7,19 @@
 
 [section:history Revision history]
 
+[heading Boost 1.75]
+
+* Fixes
+  * `axis::variable{{0, 1, inf}}.value(1)` now returns 1 instead of NaN
+  * `axis::variable` ctor now throws `std::invalid_argument` if one values is NaN
+  * Implemented a workaround for a gcc bug (will be fixed upstream in gcc-10.x) that occurred when `<boost/type_traits.hpp>` was included before `<boost/histogram/axis/traits.hpp>`
+  * Fixed several new warnings from the latest compiler versions
+  * Fixed warnings that appear when compiling against the C++20 standard
+
+* Documentation
+  * Documented undefined behaviour when value and variance are requested for `accumulator::mean` and `accumulator::weighted_mean` but the accumulator does not have enough entries to compute them
+  * Added explanation to rationale why axis metadata is checked for equality
+
 [heading Boost 1.74]
 
 * New features
