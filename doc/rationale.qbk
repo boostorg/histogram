@@ -180,4 +180,12 @@ There is only one type index and the number of allocated bytes for the array can
 
 [endsect]
 
+[section Axis metadata and equality checks]
+
+The Boost.Histogram library allows one to attach metadata to histogram axes. The intended purpose of metadata is to distinguish between otherwise identical axes, e.g. distinguish `axis::regular(10, 0, 10, "time in seconds")` from `axis::regular(10, 0, 10, "length in meters")`. The library does not assign any meaning to metadata, but it is checked for equality when axes (and histograms) are compared. Histograms with the same cell layout but different axis metadata do not compare equal and cannot be added. The assumption here is that one can only add histograms with identical layout in a meaningful way, not only identical cell layout but also logical layout in terms of what these axes mean.
+
+If this check is not desired, there are two ways to suppress it. If the metadata class is under control of the user, it is enough to simply override `operator==` to always return `true`. Another option is to inherit a custom axis from a builtin axis and override its `operator==` to not check the metadata for equality.
+
+[endsect]
+
 [endsect]
