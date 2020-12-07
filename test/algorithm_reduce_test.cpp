@@ -252,22 +252,22 @@ void run_tests() {
     // keep underflow
     auto hr1 = reduce(h, slice(-1, 2, slice_mode::crop));
     BOOST_TEST_EQ(sum(hr1), 3);
-    BOOST_TEST_EQ(hr1.size(), 4); // flow bins are not physical removed, only zero
+    BOOST_TEST_EQ(hr1.size(), 4); // flow bins are not physically removed, only zeroed
 
     // remove underflow
     auto hr2 = reduce(h, slice(0, 2, slice_mode::crop));
     BOOST_TEST_EQ(sum(hr2), 2);
-    BOOST_TEST_EQ(hr2.size(), 4); // flow bins are not physical removed, only zero
+    BOOST_TEST_EQ(hr2.size(), 4); // flow bins are not physically removed, only zeroed
 
     // keep overflow
     auto hr3 = reduce(h, slice(1, 4, slice_mode::crop));
     BOOST_TEST_EQ(sum(hr3), 3);
-    BOOST_TEST_EQ(hr3.size(), 4); // flow bins are not physical removed, only zero
+    BOOST_TEST_EQ(hr3.size(), 4); // flow bins are not physically removed, only zeroed
 
     // remove overflow
     auto hr4 = reduce(h, slice(1, 3, slice_mode::crop));
     BOOST_TEST_EQ(sum(hr4), 2);
-    BOOST_TEST_EQ(hr4.size(), 4); // flow bins are not physical removed, only zero
+    BOOST_TEST_EQ(hr4.size(), 4); // flow bins are not physically removed, only zeroed
   }
 
   // one-sided crop
@@ -285,22 +285,22 @@ void run_tests() {
     // keep underflow
     auto hr1 = reduce(h, crop(0, 3));
     BOOST_TEST_EQ(sum(hr1), 3);
-    BOOST_TEST_EQ(hr1.size(), 4); // flow bins are not physical removed, only zero
+    BOOST_TEST_EQ(hr1.size(), 4); // flow bins are not physically removed, only zeroed
 
     // remove underflow
     auto hr2 = reduce(h, crop(1, 3));
     BOOST_TEST_EQ(sum(hr2), 2);
-    BOOST_TEST_EQ(hr2.size(), 4); // flow bins are not physical removed, only zero
+    BOOST_TEST_EQ(hr2.size(), 4); // flow bins are not physically removed, only zeroed
 
     // keep overflow
     auto hr3 = reduce(h, crop(2, 5));
     BOOST_TEST_EQ(sum(hr3), 3);
-    BOOST_TEST_EQ(hr3.size(), 4); // flow bins are not physical removed, only zero
+    BOOST_TEST_EQ(hr3.size(), 4); // flow bins are not physically removed, only zeroed
 
     // remove overflow
     auto hr4 = reduce(h, crop(2, 4));
     BOOST_TEST_EQ(sum(hr4), 2);
-    BOOST_TEST_EQ(hr4.size(), 4); // flow bins are not physical removed, only zero
+    BOOST_TEST_EQ(hr4.size(), 4); // flow bins are not physically removed, only zeroed
   }
 
   // mixed axis types
