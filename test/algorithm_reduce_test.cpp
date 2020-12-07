@@ -105,15 +105,16 @@ void run_tests() {
     BOOST_TEST_EQ(reduce(h, crop(0, 1.999)).axis(), ID(0, 2));
   }
 
+  // shrink and rebin
   {
     auto h = make_s(Tag(), std::vector<int>(), R(4, 1, 5, "1"), R(3, -1, 2, "2"));
 
     /*
       matrix layout:
-      x
+      x ->
     y 1 0 1 0
-      1 1 0 0
-      0 2 1 3
+    | 1 1 0 0
+    v 0 2 1 3
     */
     h.at(0, 0) = 1;
     h.at(0, 1) = 1;
@@ -122,11 +123,13 @@ void run_tests() {
     h.at(2, 0) = 1;
     h.at(2, 2) = 1;
     h.at(3, 2) = 3;
+    h.at(-1, -1) = 1; // underflow
+    h.at(4, 3) = 1; // overflow
 
     // should do nothing, index order does not matter
     auto hr = reduce(h, shrink(1, -1, 2), rebin(0, 1));
     BOOST_TEST_EQ(hr.rank(), 2);
-    BOOST_TEST_EQ(sum(hr), 10);
+    BOOST_TEST_EQ(sum(hr), 12);
     BOOST_TEST_EQ(hr.axis(0), R(4, 1, 5, "1"));
     BOOST_TEST_EQ(hr.axis(1), R(3, -1, 2, "2"));
     BOOST_TEST_EQ(hr, h);
@@ -138,7 +141,7 @@ void run_tests() {
     // shrinking along first axis
     hr = reduce(h, shrink(0, 2, 4));
     BOOST_TEST_EQ(hr.rank(), 2);
-    BOOST_TEST_EQ(sum(hr), 10);
+    BOOST_TEST_EQ(sum(hr), 12);
     BOOST_TEST_EQ(hr.axis(0), R(2, 2, 4, "1"));
     BOOST_TEST_EQ(hr.axis(1), R(3, -1, 2, "2"));
     BOOST_TEST_EQ(hr.at(-1, 0), 1); // underflow
@@ -164,7 +167,7 @@ void run_tests() {
 
     hr = reduce(h, shrink_and_rebin(0, 2, 5, 2), rebin(1, 3));
     BOOST_TEST_EQ(hr.rank(), 2);
-    BOOST_TEST_EQ(sum(hr), 10);
+    BOOST_TEST_EQ(sum(hr), 12);
     BOOST_TEST_EQ(hr.axis(0), R(1, 2, 4, "1"));
     BOOST_TEST_EQ(hr.axis(1), R(1, -1, 2, "2"));
     BOOST_TEST_EQ(hr.at(-1, 0), 2); // underflow
@@ -184,16 +187,16 @@ void run_tests() {
     BOOST_TEST_EQ(hr4, hr);
   }
 
-  // crop
+  // crop and rebin
   {
     auto h = make_s(Tag(), std::vector<int>(), R(4, 1, 5), R(3, 1, 4));
 
     /*
       matrix layout:
-      x
+      x ->
     y 1 0 1 0
-      1 1 0 0
-      0 2 1 3
+    | 1 1 0 0
+    v 0 2 1 3
     */
     h.at(0, 0) = 1;
     h.at(0, 1) = 1;
@@ -202,6 +205,9 @@ void run_tests() {
     h.at(2, 0) = 1;
     h.at(2, 2) = 1;
     h.at(3, 2) = 3;
+    h.at(-1, -1) = 1; // underflow
+    h.at(4, 3) = 1; // overflow
+
 
     /*
       crop first and last column in x and y
@@ -229,6 +235,34 @@ void run_tests() {
     auto hr4 = reduce(h, slice_and_rebin(1, 1, 3, 2, slice_mode::crop),
                       slice(0, 1, 3, slice_mode::crop));
     BOOST_TEST_EQ(hr, hr4);
+  }
+
+  // one-sided crop
+  {
+    auto h = make_s(Tag(), std::vector<int>(), ID(1, 4));
+    std::fill(h.begin(), h.end(), 1);
+    // underflow: 1
+    // index 0, x 1: 1
+    // index 1, x 2: 1
+    // index 2, x 3: 1
+    // overflow: 1
+    BOOST_TEST_EQ(sum(h), 5);
+
+    // keep underflow
+    auto hr1 = reduce(h, slice(-1, 2, slice_mode::crop));
+    BOOST_TEST_EQ(sum(hr1), 3);
+
+    // remove underflow
+    auto hr2 = reduce(h, slice(0, 2, slice_mode::crop));
+    BOOST_TEST_EQ(sum(hr2), 2);
+
+    // keep overflow
+    auto hr3 = reduce(h, slice(1, 4, slice_mode::crop));
+    BOOST_TEST_EQ(sum(hr3), 3);
+
+    // remove overflow
+    auto hr4 = reduce(h, slice(1, 3, slice_mode::crop));
+    BOOST_TEST_EQ(sum(hr4), 2);
   }
 
   // mixed axis types
