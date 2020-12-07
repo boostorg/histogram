@@ -115,6 +115,11 @@ inline reduce_command crop(unsigned iaxis, double lower, double upper) {
   range goes beyond the axis range, then the content of the underflow
   or overflow bin which overlaps with the range is kept.
 
+  If the counts in an existing underflow or overflow bin are discared by the crop, the
+  corresponding memory cells are not physically removed. Only their contents are set to
+  zero. This technical limitation may be lifted in the future, then crop may completely
+  remove the cropped memory cells.
+
   @param lower bin which contains lower is first to be kept.
   @param upper bin which contains upper is last to be kept, except if upper is equal to
   the lower edge.
