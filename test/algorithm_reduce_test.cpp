@@ -294,10 +294,12 @@ void run_tests() {
     BOOST_TEST_EQ(sum(hr2), 3);
     BOOST_TEST_EQ(hr2.size(), 3); // flow bins are not physically removed, only zeroed
 
-    // remove underflow
-    auto hr3 = reduce(h, crop_and_rebin(1, 5, 2));
-    BOOST_TEST_EQ(sum(hr3), 4);
+    // remove underflow but keep overflow
+    auto hr3 = reduce(h, crop_and_rebin(1, 6, 2));
+    BOOST_TEST_EQ(sum(hr3), 5);
     BOOST_TEST_EQ(hr3.size(), 4); // flow bins are not physically removed, only zeroed
+
+    // remove underflow and overflow
     auto hr4 = reduce(h, crop_and_rebin(1, 3, 2));
     BOOST_TEST_EQ(sum(hr4), 2);
     BOOST_TEST_EQ(hr4.size(), 3); // flow bins are not physically removed, only zeroed
