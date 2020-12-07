@@ -111,7 +111,9 @@ inline reduce_command crop(unsigned iaxis, double lower, double upper) {
   Command is applied to corresponding axis in order of reduce arguments.
 
   Works like `shrink` (see shrink documentation for details), but counts in removed bins
-  are discarded, whether underflow and overflow bins are present or not.
+  are discarded, whether underflow and overflow bins are present or not. If the cropped
+  range goes beyond the axis range, then the content of the underflow
+  or overflow bin which overlaps with the range is kept.
 
   @param lower bin which contains lower is first to be kept.
   @param upper bin which contains upper is last to be kept, except if upper is equal to
