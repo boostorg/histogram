@@ -10,6 +10,7 @@
 [heading Boost 1.75]
 
 * Fixes
+  * `algorithm::reduce` with `crop` now does not remove the counts in flow bins anymore if the selected range actually overlaps with the flow bins, making the treatment of flow bins consistent with inner bins
   * `axis::variable{{0, 1, inf}}.value(1)` now returns 1 instead of NaN
   * `axis::variable` ctor now throws `std::invalid_argument` if one values is NaN
   * Implemented a workaround for a gcc bug (will be fixed upstream in gcc-10.x) that occurred when `<boost/type_traits.hpp>` was included before `<boost/histogram/axis/traits.hpp>`
