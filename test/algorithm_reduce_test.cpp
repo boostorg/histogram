@@ -124,7 +124,7 @@ void run_tests() {
     h.at(2, 2) = 1;
     h.at(3, 2) = 3;
     h.at(-1, -1) = 1; // underflow
-    h.at(4, 3) = 1; // overflow
+    h.at(4, 3) = 1;   // overflow
 
     // should do nothing, index order does not matter
     auto hr = reduce(h, shrink(1, -1, 2), rebin(0, 1));
@@ -206,8 +206,7 @@ void run_tests() {
     h.at(2, 2) = 1;
     h.at(3, 2) = 3;
     h.at(-1, -1) = 1; // underflow
-    h.at(4, 3) = 1; // overflow
-
+    h.at(4, 3) = 1;   // overflow
 
     /*
       crop first and last column in x and y
@@ -272,6 +271,38 @@ void run_tests() {
     BOOST_TEST_EQ(hr4, reduce(h, slice(1, 3, slice_mode::crop)));
     BOOST_TEST_EQ(sum(hr4), 2);
     BOOST_TEST_EQ(hr4.size(), 4); // flow bins are not physically removed, only zeroed
+  }
+
+  // one-sided crop and rebin with regular axis
+  {
+    auto h = make_s(Tag(), std::vector<int>(), R(4, 1, 5));
+    std::fill(h.begin(), h.end(), 1);
+    // underflow: 1
+    // index 0, x [1, 2): 1
+    // index 1, x [2, 3): 1
+    // index 2, x [3, 4): 1
+    // index 3, x [4, 5): 1
+    // overflow: 1
+    BOOST_TEST_EQ(sum(h), 6);
+    BOOST_TEST_EQ(h.size(), 6);
+
+    // keep underflow
+    auto hr1 = reduce(h, crop_and_rebin(0, 5, 2));
+    BOOST_TEST_EQ(sum(hr1), 5);
+    BOOST_TEST_EQ(hr1.size(), 4); // flow bins are not physically removed, only zeroed
+    auto hr2 = reduce(h, crop_and_rebin(0, 3, 2));
+    BOOST_TEST_EQ(sum(hr2), 3);
+    BOOST_TEST_EQ(hr2.size(), 3); // flow bins are not physically removed, only zeroed
+
+    // remove underflow but keep overflow
+    auto hr3 = reduce(h, crop_and_rebin(1, 6, 2));
+    BOOST_TEST_EQ(sum(hr3), 5);
+    BOOST_TEST_EQ(hr3.size(), 4); // flow bins are not physically removed, only zeroed
+
+    // remove underflow and overflow
+    auto hr4 = reduce(h, crop_and_rebin(1, 3, 2));
+    BOOST_TEST_EQ(sum(hr4), 2);
+    BOOST_TEST_EQ(hr4.size(), 3); // flow bins are not physically removed, only zeroed
   }
 
   // mixed axis types
