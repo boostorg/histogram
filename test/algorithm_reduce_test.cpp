@@ -247,22 +247,27 @@ void run_tests() {
     // index 2, x 3: 1
     // overflow: 1
     BOOST_TEST_EQ(sum(h), 5);
+    BOOST_TEST_EQ(h.size(), 5);
 
     // keep underflow
     auto hr1 = reduce(h, slice(-1, 2, slice_mode::crop));
     BOOST_TEST_EQ(sum(hr1), 3);
+    BOOST_TEST_EQ(hr1.size(), 4); // flow bins are not physical removed, only zero
 
     // remove underflow
     auto hr2 = reduce(h, slice(0, 2, slice_mode::crop));
     BOOST_TEST_EQ(sum(hr2), 2);
+    BOOST_TEST_EQ(hr2.size(), 4); // flow bins are not physical removed, only zero
 
     // keep overflow
     auto hr3 = reduce(h, slice(1, 4, slice_mode::crop));
     BOOST_TEST_EQ(sum(hr3), 3);
+    BOOST_TEST_EQ(hr3.size(), 4); // flow bins are not physical removed, only zero
 
     // remove overflow
     auto hr4 = reduce(h, slice(1, 3, slice_mode::crop));
     BOOST_TEST_EQ(sum(hr4), 2);
+    BOOST_TEST_EQ(hr4.size(), 4); // flow bins are not physical removed, only zero
   }
 
   // mixed axis types
