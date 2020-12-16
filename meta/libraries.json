@@ -12,5 +12,6 @@
     ],
     "maintainers": [
         "Hans Dembinski <hans.dembinski -at- gmail.com>"
-    ]
+    ],
+    "cxxstd": "14"
 }
