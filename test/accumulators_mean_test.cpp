@@ -18,52 +18,97 @@ using namespace std::literals;
 
 int main() {
   using m_t = accumulators::mean<double>;
-  m_t a;
-  BOOST_TEST_EQ(a.count(), 0);
-  BOOST_TEST_EQ(a, m_t{});
 
-  a(4);
-  a(7);
-  a(13);
-  a(16);
+  // basic interface, string conversion
+  {
+    m_t a;
+    BOOST_TEST_EQ(a.count(), 0);
+    BOOST_TEST_EQ(a, m_t{});
 
-  BOOST_TEST_EQ(a.count(), 4);
-  BOOST_TEST_EQ(a.value(), 10);
-  BOOST_TEST_EQ(a.variance(), 30);
+    a(4);
+    a(7);
+    a(13);
+    a(16);
 
-  BOOST_TEST_EQ(str(a), "mean(4, 10, 30)"s);
-  BOOST_TEST_EQ(str(a, 20, false), "     mean(4, 10, 30)"s);
-  BOOST_TEST_EQ(str(a, 20, true), "mean(4, 10, 30)     "s);
+    BOOST_TEST_EQ(a.count(), 4);
+    BOOST_TEST_EQ(a.value(), 10);
+    BOOST_TEST_EQ(a.variance(), 30);
 
-  m_t b;
-  b(1e8 + 4);
-  b(1e8 + 7);
-  b(1e8 + 13);
-  b(1e8 + 16);
+    BOOST_TEST_EQ(str(a), "mean(4, 10, 30)"s);
+    BOOST_TEST_EQ(str(a, 20, false), "     mean(4, 10, 30)"s);
+    BOOST_TEST_EQ(str(a, 20, true), "mean(4, 10, 30)     "s);
+  }
 
-  BOOST_TEST_EQ(b.count(), 4);
-  BOOST_TEST_EQ(b.value(), 1e8 + 10);
-  BOOST_TEST_EQ(b.variance(), 30);
+  // small variation on large number
+  {
+    m_t a;
+    a(1e8 + 4);
+    a(1e8 + 7);
+    a(1e8 + 13);
+    a(1e8 + 16);
 
-  auto c = a;
-  c += a; // same as feeding all samples twice
+    BOOST_TEST_EQ(a.count(), 4);
+    BOOST_TEST_EQ(a.value(), 1e8 + 10);
+    BOOST_TEST_EQ(a.variance(), 30);
+  }
 
-  BOOST_TEST_EQ(c.count(), 8);
-  BOOST_TEST_EQ(c.value(), 10);
-  BOOST_TEST_IS_CLOSE(c.variance(), 25.714, 1e-3);
+  // addition of zero element
+  {
+    BOOST_TEST_EQ(m_t() += m_t(), m_t());
+    BOOST_TEST_EQ(m_t(1, 2, 3) += m_t(), m_t(1, 2, 3));
+    BOOST_TEST_EQ(m_t() += m_t(1, 2, 3), m_t(1, 2, 3));
+  }
 
-  // also same as feeding all samples twice
-  m_t d;
-  d(weight(2), 4);
-  d(weight(2), 7);
-  d(weight(2), 13);
-  d(weight(2), 16);
+  // addition
+  {
+    m_t a, b, c;
 
-  BOOST_TEST_EQ(d, c);
+    a(1);
+    a(2);
+    a(3);
+    BOOST_TEST_EQ(a.count(), 3);
+    BOOST_TEST_EQ(a.value(), 2);
+    BOOST_TEST_EQ(a.variance(), 1);
 
-  BOOST_TEST_EQ(m_t() += m_t(), m_t());
-  BOOST_TEST_EQ(m_t(1, 2, 3) += m_t(), m_t(1, 2, 3));
-  BOOST_TEST_EQ(m_t() += m_t(1, 2, 3), m_t(1, 2, 3));
+    b(4);
+    b(6);
+    BOOST_TEST_EQ(b.count(), 2);
+    BOOST_TEST_EQ(b.value(), 5);
+    BOOST_TEST_EQ(b.variance(), 2);
+
+    c(1);
+    c(2);
+    c(3);
+    c(4);
+    c(6);
+
+    auto d = a;
+    d += b;
+    BOOST_TEST_EQ(c.count(), d.count());
+    BOOST_TEST_EQ(c.value(), d.value());
+    BOOST_TEST_IS_CLOSE(c.variance(), d.variance(), 1e-3);
+  }
+
+  // using weight=2 must be same as adding all samples twice
+  {
+    m_t a, b;
+
+    for (int i = 0; i < 2; ++i) {
+      a(4);
+      a(7);
+      a(13);
+      a(16);
+    }
+
+    b(weight(2), 4);
+    b(weight(2), 7);
+    b(weight(2), 13);
+    b(weight(2), 16);
+
+    BOOST_TEST_EQ(a.count(), b.count());
+    BOOST_TEST_EQ(a.value(), b.value());
+    BOOST_TEST_IS_CLOSE(a.variance(), b.variance(), 1e-3);
+  }
 
   return boost::report_errors();
 }
