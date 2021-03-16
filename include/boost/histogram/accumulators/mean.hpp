@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_MEAN_HPP
 
 #include <boost/core/nvp.hpp>
+#include <boost/histogram/detail/square.hpp>
 #include <boost/histogram/fwd.hpp> // for mean<>
 #include <boost/throw_exception.hpp>
 #include <cassert>
@@ -86,8 +87,8 @@ public:
     sum_ += rhs.sum_;
     mean_ = (n1 * mu1 + n2 * mu2) / sum_;
     sum_of_deltas_squared_ += rhs.sum_of_deltas_squared_;
-    sum_of_deltas_squared_ +=
-        n1 * (mean_ - mu1) * (mean_ - mu1) + n2 * (mean_ - mu2) * (mean_ - mu2);
+    sum_of_deltas_squared_ += n1 * detail::square(mean_ - mu1);
+    sum_of_deltas_squared_ += n2 * detail::square(mean_ - mu2);
 
     return *this;
   }
