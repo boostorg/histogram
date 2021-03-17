@@ -92,10 +92,11 @@ int main() {
   BOOST_TEST(dtl::accumulator_traits<B3>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<B3>::args, std::tuple<>);
 
+  // potentially ambiguous case that mimicks accumulators::weighted_sum
   struct B4 {
     B4(int) {}
     int operator+=(const weight_type<double>&);
-    int operator+=(const B4&);
+    int operator+=(const B4&); // *this += 0 succeeds as *this += B4(0)
   };
 
   BOOST_TEST(dtl::accumulator_traits<B4>::weight_support);
