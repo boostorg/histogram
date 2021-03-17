@@ -79,10 +79,10 @@ public:
         + sum_of_deltas_squared_2 + n2 (mu2 - mu))^2
     */
 
-    const auto mu1 = mean_;
-    const auto mu2 = rhs.mean_;
     const auto n1 = sum_;
+    const auto mu1 = mean_;
     const auto n2 = rhs.sum_;
+    const auto mu2 = rhs.mean_;
 
     sum_ += rhs.sum_;
     mean_ = (n1 * mu1 + n2 * mu2) / sum_;
