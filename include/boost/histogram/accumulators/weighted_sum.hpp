@@ -44,8 +44,7 @@ public:
   }
 
   /// Increment by weight.
-  template <class T>
-  weighted_sum& operator+=(const weight_type<T>& w) {
+  weighted_sum& operator+=(const weight_type<value_type>& w) {
     sum_of_weights_ += w.value;
     sum_of_weights_squared_ += w.value * w.value;
     return *this;
