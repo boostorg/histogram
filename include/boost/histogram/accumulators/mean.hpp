@@ -110,7 +110,12 @@ public:
 
   bool operator!=(const mean& rhs) const noexcept { return !operator==(rhs); }
 
-  /// Return how many samples were accumulated.
+  /** Return how many samples were accumulated.
+
+    count() should be used to check whether value() and variance() are defined,
+    see documentation of value() and variance(). count() can be used to compute
+    the variance of the mean by dividing variance() by count().
+  */
   const_reference count() const noexcept { return sum_; }
 
   /** Return mean value of accumulated samples.
