@@ -232,10 +232,19 @@ int main() {
     a.reset(1);
     a[0](/* sample */ 1);
     a[0](weight(2), /* sample */ 2);
-    a[0] += accumulators::weighted_mean<>(1, 0, 0, 0);
-    BOOST_TEST_EQ(a[0].sum_of_weights(), 4);
-    BOOST_TEST_IS_CLOSE(a[0].value(), 1.25, 1e-3);
-    BOOST_TEST_IS_CLOSE(a[0].variance(), 0.242, 1e-3);
+
+    accumulators::weighted_mean<double> b;
+    b(weight(3), 3);
+    a[0] += b;
+
+    accumulators::weighted_mean<double> c;
+    c(weight(1), 1);
+    c(weight(2), 2);
+    c(weight(3), 3);
+
+    BOOST_TEST_EQ(a[0].sum_of_weights(), c.sum_of_weights());
+    BOOST_TEST_IS_CLOSE(a[0].value(), c.value(), 1e-3);
+    BOOST_TEST_IS_CLOSE(a[0].variance(), c.variance(), 1e-3);
   }
 
   // exceeding array capacity
