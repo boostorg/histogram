@@ -110,6 +110,12 @@ public:
     return sum_of_weights_squared_;
   }
 
+  /// Return effective counts = sum_of_weights_squared / sum_of_weights.
+  value_type count() const noexcept {
+    // see https://en.wikipedia.org/wiki/Effective_sample_size#weighted_samples
+    return detail::square(sum_of_weights_) / sum_of_weights_squared_;
+  }
+
   /** Return mean value of accumulated weighted samples.
 
     The result is undefined, if `sum_of_weights() == 0`.

@@ -34,6 +34,9 @@ int main() {
 
     BOOST_TEST_EQ(a.sum_of_weights(), 1 + 2 * 0.5);
     BOOST_TEST_EQ(a.sum_of_weights_squared(), 1 + 2 * 0.5 * 0.5);
+    // https://en.wikipedia.org/wiki/Effective_sample_size#weighted_samples
+    BOOST_TEST_EQ(a.count(), square(a.sum_of_weights()) / a.sum_of_weights_squared());
+    BOOST_TEST_EQ(a.value(), (0.5 * 1 + 1.0 * 2 + 0.5 * 3) / a.sum_of_weights());
     const auto m = a.value();
     BOOST_TEST_IS_CLOSE(
         a.variance(),
@@ -104,6 +107,7 @@ int main() {
 
     BOOST_TEST_EQ(a.sum_of_weights(), b.sum_of_weights());
     BOOST_TEST_EQ(2 * a.sum_of_weights_squared(), b.sum_of_weights_squared());
+    BOOST_TEST_EQ(a.count(), 2 * b.count());
     BOOST_TEST_EQ(a.value(), b.value());
     BOOST_TEST_LT(a.variance(), b.variance());
   }
