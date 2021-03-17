@@ -11,6 +11,7 @@
 
 * Fixes
   * `algorithm::reduce` with `crop` now does not remove the counts in flow bins anymore if the selected range actually overlaps with the flow bins, making the treatment of flow bins consistent with inner bins
+  * `accumulators::mean` and `accumulators::weighted_mean` computed the wrong variance when `operator+=` was called for example when histograms with accumulators were added, this is now fixed
 
 [heading Boost 1.75]
 
