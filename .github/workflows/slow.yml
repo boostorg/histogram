@@ -32,7 +32,6 @@ jobs:
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         mv -f * $GITHUB_WORKSPACE
     - name: CMake from superproject
-      continue-on-error: true
       run: |
         cd ..
         cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 $GITHUB_WORKSPACE
