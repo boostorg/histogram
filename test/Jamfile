@@ -45,7 +45,6 @@ alias cxx14 :
       # make sure sum accumulator works even with -ffast-math and optimizations
       <toolset>gcc:<cxxflags>"-O3 -ffast-math"
       <toolset>clang:<cxxflags>"-O3 -ffast-math" ]
-    [ run accumulators_thread_safe_test.cpp ]
     [ run accumulators_weighted_mean_test.cpp ]
     [ run accumulators_weighted_sum_test.cpp ]
     [ run algorithm_project_test.cpp ]
@@ -123,6 +122,7 @@ alias failure :
 alias threading :
     [ run histogram_threaded_test.cpp ]
     [ run storage_adaptor_threaded_test.cpp ]
+    [ run accumulators_thread_safe_test.cpp ]
     :
     <threading>multi
     ;
