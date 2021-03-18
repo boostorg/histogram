@@ -15,6 +15,12 @@ namespace dtl = boost::histogram::detail;
 int main() {
   using boost::histogram::weight_type;
 
+  BOOST_TEST(dtl::accumulator_traits<int>::weight_support);
+  BOOST_TEST_TRAIT_SAME(dtl::accumulator_traits<int>::args, std::tuple<>);
+
+  BOOST_TEST(dtl::accumulator_traits<float>::weight_support);
+  BOOST_TEST_TRAIT_SAME(dtl::accumulator_traits<float>::args, std::tuple<>);
+
   struct A1 {
     void operator()();
   };
@@ -68,15 +74,36 @@ int main() {
   BOOST_TEST(dtl::accumulator_traits<A7>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A7>::args, std::tuple<int&&>);
 
-  struct B {
+  struct B1 {
     int operator+=(int);
   };
 
-  BOOST_TEST(dtl::accumulator_traits<B>::weight_support);
-  BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<B>::args, std::tuple<>);
+  BOOST_TEST(dtl::accumulator_traits<B1>::weight_support);
+  BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<B1>::args, std::tuple<>);
 
-  BOOST_TEST(dtl::accumulator_traits<int>::weight_support);
-  BOOST_TEST_TRAIT_SAME(dtl::accumulator_traits<int>::args, std::tuple<>);
+  struct B2 {
+    int operator+=(weight_type<int>);
+  };
+
+  BOOST_TEST(dtl::accumulator_traits<B2>::weight_support);
+  BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<B2>::args, std::tuple<>);
+
+  struct B3 {
+    int operator+=(const weight_type<double>&);
+  };
+
+  BOOST_TEST(dtl::accumulator_traits<B3>::weight_support);
+  BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<B3>::args, std::tuple<>);
+
+  // potentially ambiguous case that mimicks accumulators::weighted_sum
+  struct B4 {
+    B4(int) {}
+    int operator+=(const weight_type<double>&);
+    int operator+=(const B4&); // *this += 0 succeeds as *this += B4(0)
+  };
+
+  BOOST_TEST(dtl::accumulator_traits<B4>::weight_support);
+  BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<B4>::args, std::tuple<>);
 
   return boost::report_errors();
 }
