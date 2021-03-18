@@ -95,7 +95,7 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
 template <class CharT, class Traits, class T>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const thread_safe<T>& x) {
-  os << x.load();
+  os << static_cast<T>(x);
   return os;
 }
 } // namespace accumulators

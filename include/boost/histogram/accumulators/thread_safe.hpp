@@ -19,8 +19,8 @@ namespace accumulators {
 
 /** Thread-safe adaptor for integral and floating point numbers.
 
-  This adaptor uses std::atomic to make concurrent increments and additions safe for the
-  stored value.
+  This adaptor uses atomic operations to make concurrent increments and additions safe for
+  the stored value.
 
   On common computing platforms, the adapted integer has the same size and
   alignment as underlying type. The atomicity is implemented with a special CPU
@@ -35,27 +35,24 @@ namespace accumulators {
   @tparam T type to adapt; must be arithmetic (integer or floating point).
  */
 template <class T>
-class thread_safe : public std::atomic<T> {
+class thread_safe {
 public:
+  static_assert(std::is_arithmetic<T>(), "");
+
   using value_type = T;
-  using super_t = std::atomic<T>;
+  using atomic_value_type = std::atomic<value_type>;
 
-  thread_safe() noexcept : super_t(static_cast<T>(0)) {}
+  thread_safe() noexcept : value_{static_cast<value_type>(0)} {}
   // non-atomic copy and assign is allowed, because storage is locked in this case
-  thread_safe(const thread_safe& o) noexcept : super_t(o.load()) {}
+  thread_safe(const thread_safe& o) noexcept : thread_safe{static_cast<value_type>(o)} {}
   thread_safe& operator=(const thread_safe& o) noexcept {
-    super_t::store(o.load());
+    value_.store(o);
     return *this;
   }
 
-  thread_safe(value_type arg) : super_t(arg) {}
-  thread_safe& operator=(value_type arg) {
-    super_t::store(arg);
-    return *this;
-  }
-
-  thread_safe& operator+=(const thread_safe& arg) {
-    operator+=(arg.load());
+  thread_safe(value_type arg) : value_{arg} {}
+  thread_safe& operator=(value_type arg) noexcept {
+    value_.store(arg);
     return *this;
   }
 
@@ -69,23 +66,25 @@ public:
     return *this;
   }
 
+  operator value_type() const noexcept { return value_.load(); }
+
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
-    auto value = super_t::load();
+    auto value = value_.load();
     ar& make_nvp("value", value);
-    super_t::store(value);
+    value_.store(value);
   }
 
 private:
   template <class U = value_type>
   auto increment_impl(detail::priority<1>) -> decltype(std::declval<std::atomic<U>>()++) {
-    return super_t::operator++();
+    return value_.operator++();
   }
 
   template <class U = value_type>
   auto add_impl(detail::priority<1>, value_type arg)
       -> decltype(std::declval<std::atomic<U>>().fetch_add(arg)) {
-    return super_t::fetch_add(arg);
+    return value_.fetch_add(arg);
   }
 
   // workaround for floating point numbers in C++14, obsolete in C++20
@@ -97,14 +96,16 @@ private:
   // workaround for floating point numbers in C++14, obsolete in C++20
   template <class U = value_type>
   void add_impl(detail::priority<0>, value_type arg) {
-    value_type expected = super_t::load();
+    value_type expected = value_.load();
     value_type desired = expected + arg;
-    while (!super_t::compare_exchange_weak(expected, desired)) {
+    while (!value_.compare_exchange_weak(expected, desired)) {
       // someone else changed value, adapt desired result
-      expected = super_t::load();
+      expected = value_.load();
       desired = expected + arg;
     }
   }
+
+  atomic_value_type value_;
 };
 
 } // namespace accumulators
