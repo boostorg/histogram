@@ -17,7 +17,7 @@ namespace boost {
 namespace histogram {
 namespace accumulators {
 
-/** Thread-safe adaptor for builtin integral and floating point numbers.
+/** Thread-safe adaptor for integral and floating point numbers.
 
   This adaptor uses std::atomic to make concurrent increments and additions safe for the
   stored value.
@@ -27,7 +27,12 @@ namespace accumulators {
   instruction. On exotic platforms the size of the adapted number may be larger and/or the
   type may have different alignment, which means it cannot be tightly packed into arrays.
 
-  @tparam T type to adapt, must be supported by std::atomic.
+  This implementation uses a workaround to support atomic operations on floating point
+  numbers in C++14. Compiling with C++20 may increase performance for
+  operations on floating point numbers. The implementation automatically uses the best
+  implementation that is available.
+
+  @tparam T type to adapt; must be arithmetic (integer or floating point).
  */
 template <class T>
 class thread_safe : public std::atomic<T> {
@@ -83,13 +88,13 @@ private:
     return super_t::fetch_add(arg);
   }
 
-  // support for floating point numbers in C++14
+  // workaround for floating point numbers in C++14, obsolete in C++20
   template <class U = value_type>
   void increment_impl(detail::priority<0>) {
     operator+=(static_cast<value_type>(1));
   }
 
-  // support for floating point numbers in C++14
+  // workaround for floating point numbers in C++14, obsolete in C++20
   template <class U = value_type>
   void add_impl(detail::priority<0>, value_type arg) {
     value_type expected = super_t::load();
