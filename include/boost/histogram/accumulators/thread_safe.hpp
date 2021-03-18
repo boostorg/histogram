@@ -56,17 +56,23 @@ public:
     return *this;
   }
 
+  /// Increment value by one.
   thread_safe& operator++() {
     increment_impl(detail::priority<1>{});
     return *this;
   }
 
+  /// Increment value by argument.
   thread_safe& operator+=(value_type arg) {
     add_impl(detail::priority<1>{}, arg);
     return *this;
   }
 
-  operator value_type() const noexcept { return value_.load(); }
+  /// Return value.
+  const_reference value() const noexcept { return value_.load(); }
+
+  // conversion to value_type should be explicit
+  explicit operator value_type() const noexcept { return value_.load(); }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
