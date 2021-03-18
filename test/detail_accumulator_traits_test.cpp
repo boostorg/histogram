@@ -15,6 +15,12 @@ namespace dtl = boost::histogram::detail;
 int main() {
   using boost::histogram::weight_type;
 
+  BOOST_TEST(dtl::accumulator_traits<int>::weight_support);
+  BOOST_TEST_TRAIT_SAME(dtl::accumulator_traits<int>::args, std::tuple<>);
+
+  BOOST_TEST(dtl::accumulator_traits<float>::weight_support);
+  BOOST_TEST_TRAIT_SAME(dtl::accumulator_traits<float>::args, std::tuple<>);
+
   struct A1 {
     void operator()();
   };
@@ -67,9 +73,6 @@ int main() {
 
   BOOST_TEST(dtl::accumulator_traits<A7>::weight_support);
   BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A7>::args, std::tuple<int&&>);
-
-  BOOST_TEST(dtl::accumulator_traits<int>::weight_support);
-  BOOST_TEST_TRAIT_SAME(dtl::accumulator_traits<int>::args, std::tuple<>);
 
   struct B1 {
     int operator+=(int);

@@ -59,6 +59,7 @@ auto accumulator_traits_impl(T&, priority<2>)
     -> decltype(std::declval<T&>() += std::declval<boost::histogram::weight_type<int>>(),
                 accumulator_traits_holder<true>{});
 
+// fallback for simple arithmetic types that do not implement adding a weight_type
 template <class T>
 auto accumulator_traits_impl(T&, priority<1>)
     -> decltype(std::declval<T&>() += 0, accumulator_traits_holder<true>{});
