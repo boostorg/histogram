@@ -40,7 +40,8 @@ public:
   static_assert(std::is_arithmetic<T>(), "");
 
   using value_type = T;
-  using atomic_value_type = std::atomic<value_type>;
+  using const_reference = const T&;
+  using atomic_value_type = std::atomic<T>;
 
   thread_safe() noexcept : value_{static_cast<value_type>(0)} {}
   // non-atomic copy and assign is allowed, because storage is locked in this case
@@ -69,7 +70,7 @@ public:
   }
 
   /// Return value.
-  const_reference value() const noexcept { return value_.load(); }
+  value_type value() const noexcept { return value_.load(); }
 
   // conversion to value_type should be explicit
   explicit operator value_type() const noexcept { return value_.load(); }
