@@ -9,6 +9,7 @@
 
 #include <atomic>
 #include <boost/core/nvp.hpp>
+#include <boost/histogram/detail/priority.hpp>
 #include <boost/mp11/utility.hpp>
 #include <type_traits>
 
@@ -52,12 +53,14 @@ public:
     operator+=(arg.load());
     return *this;
   }
-  thread_safe& operator+=(value_type arg) {
-    super_t::fetch_add(arg, std::memory_order_relaxed);
+
+  thread_safe& operator++() {
+    increment_impl(detail::priority<1>{});
     return *this;
   }
-  thread_safe& operator++() {
-    operator+=(static_cast<value_type>(1));
+
+  thread_safe& operator+=(value_type arg) {
+    add_impl(detail::priority<1>{}, arg);
     return *this;
   }
 
@@ -66,6 +69,36 @@ public:
     auto value = super_t::load();
     ar& make_nvp("value", value);
     super_t::store(value);
+  }
+
+private:
+  template <class U = value_type>
+  auto increment_impl(detail::priority<1>) -> decltype(std::declval<std::atomic<U>>()++) {
+    return super_t::operator++();
+  }
+
+  template <class U = value_type>
+  auto add_impl(detail::priority<1>, value_type arg)
+      -> decltype(std::declval<std::atomic<U>>().fetch_add(arg)) {
+    return super_t::fetch_add(arg);
+  }
+
+  // support for floating point numbers in C++14
+  template <class U = value_type>
+  void increment_impl(detail::priority<0>) {
+    operator+=(static_cast<value_type>(1));
+  }
+
+  // support for floating point numbers in C++14
+  template <class U = value_type>
+  void add_impl(detail::priority<0>, value_type arg) {
+    value_type expected = super_t::load();
+    value_type desired = expected + arg;
+    while (!super_t::compare_exchange_weak(expected, desired)) {
+      // someone else changed value, adapt desired result
+      expected = super_t::load();
+      desired = expected + arg;
+    }
   }
 };
 
