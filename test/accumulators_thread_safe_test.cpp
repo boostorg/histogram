@@ -35,7 +35,7 @@ void test_on() {
   // default ctor
   {
     ts_t i;
-    BOOST_TEST_EQ(i, 0);
+    BOOST_TEST_EQ(i, static_cast<T>(0));
   }
 
   // ctor from value
