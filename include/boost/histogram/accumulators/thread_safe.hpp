@@ -78,14 +78,14 @@ public:
   }
 
   /// Increment value by argument.
-  thread_safe& operator+=(value_type arg) {
-    add_impl(detail::priority<1>{}, arg);
+  thread_safe& operator+=(const_reference x) {
+    add_impl(detail::priority<1>{}, x);
     return *this;
   }
 
   /// Add another thread_safe.
-  thread_safe& operator+=(const thread_safe& arg) {
-    add_impl(detail::priority<1>{}, static_cast<value_type>(arg));
+  thread_safe& operator+=(const thread_safe& o) {
+    add_impl(detail::priority<1>{}, o.value());
     return *this;
   }
 
@@ -102,14 +102,8 @@ public:
   /// Return value.
   value_type value() const noexcept { return value_.load(); }
 
-  // conversion to value_type should be explicit
+  // conversion to value_type must be explicit
   explicit operator value_type() const noexcept { return value_.load(); }
-
-  // allow implicit conversion to another thread_safe
-  template <class U>
-  operator thread_safe<U>() const noexcept {
-    return static_cast<U>(value_.value());
-  }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
@@ -125,22 +119,26 @@ private:
   }
 
   template <class U = value_type>
-  auto add_impl(detail::priority<1>, value_type arg)
-      -> decltype(std::declval<std::atomic<U>>().fetch_add(arg,
+  auto add_impl(detail::priority<1>, const_reference x)
+      -> decltype(std::declval<std::atomic<U>>().fetch_add(x,
                                                            std::memory_order_relaxed)) {
-    return value_.fetch_add(arg, std::memory_order_relaxed);
+    return value_.fetch_add(x, std::memory_order_relaxed);
   }
 
   // workaround for floating point numbers in C++14, obsolete in C++20
-  void increment_impl(detail::priority<0>) { operator+=(static_cast<value_type>(1)); }
+  template <class U = value_type>
+  void increment_impl(detail::priority<0>) {
+    operator+=(static_cast<value_type>(1));
+  }
 
   // workaround for floating point numbers in C++14, obsolete in C++20
-  void add_impl(detail::priority<0>, value_type arg) {
+  template <class U = value_type>
+  void add_impl(detail::priority<0>, const_reference x) {
     value_type expected = value_.load();
     // if another tread changed expected value, compare_exchange returns false
     // and updates expected; we then loop and try to update again;
     // see https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
-    while (!value_.compare_exchange_weak(expected, expected + arg))
+    while (!value_.compare_exchange_weak(expected, expected + x))
       ;
   }
 
