@@ -45,9 +45,9 @@ public:
 
   thread_safe() noexcept : value_{static_cast<value_type>(0)} {}
   // non-atomic copy and assign is allowed, because storage is locked in this case
-  thread_safe(const thread_safe& o) noexcept : thread_safe{static_cast<value_type>(o)} {}
+  thread_safe(const thread_safe& o) noexcept : thread_safe{o.value()} {}
   thread_safe& operator=(const thread_safe& o) noexcept {
-    value_.store(o);
+    value_.store(o.value());
     return *this;
   }
 
@@ -69,11 +69,33 @@ public:
     return *this;
   }
 
+  /// Add another thread_safe.
+  thread_safe& operator+=(const thread_safe& arg) {
+    add_impl(detail::priority<1>{}, static_cast<value_type>(arg));
+    return *this;
+  }
+
+  /// Scale by value
+  thread_safe& operator*=(const_reference value) noexcept {
+    value_ *= value;
+    return *this;
+  }
+
+  bool operator==(const thread_safe& rhs) const noexcept { return value_ == rhs.value_; }
+
+  bool operator!=(const thread_safe& rhs) const noexcept { return !operator==(rhs); }
+
   /// Return value.
   value_type value() const noexcept { return value_.load(); }
 
   // conversion to value_type should be explicit
   explicit operator value_type() const noexcept { return value_.load(); }
+
+  // allow implicit conversion to other thread_safe
+  template <class U>
+  operator thread_safe<U>() const noexcept {
+    return static_cast<U>(value_.value());
+  }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
@@ -114,6 +136,18 @@ private:
 
   atomic_value_type value_;
 };
+
+template <class T, class U>
+std::enable_if_t<std::is_arithmetic<T>::value, bool> operator==(
+    const T& t, const thread_safe<U>& rhs) noexcept {
+  return rhs == t;
+}
+
+template <class T, class U>
+std::enable_if_t<std::is_arithmetic<T>::value, bool> operator!=(
+    const T& t, const thread_safe<U>& rhs) noexcept {
+  return rhs != t;
+}
 
 } // namespace accumulators
 } // namespace histogram
