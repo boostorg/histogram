@@ -154,13 +154,13 @@ private:
 template <class T, class U>
 std::enable_if_t<std::is_arithmetic<T>::value, bool> operator==(
     const T& t, const thread_safe<U>& rhs) noexcept {
-  return rhs == t;
+  return rhs.operator==(t);
 }
 
 template <class T, class U>
 std::enable_if_t<std::is_arithmetic<T>::value, bool> operator!=(
     const T& t, const thread_safe<U>& rhs) noexcept {
-  return rhs != t;
+  return rhs.operator!=(t);
 }
 
 } // namespace accumulators
