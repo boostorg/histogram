@@ -15,10 +15,12 @@
 using namespace boost::histogram;
 using namespace std::literals;
 
+constexpr int N = 10000;
+
 template <class F>
 void parallel(F f) {
   auto g = [&]() {
-    for (int i = 0; i < 1000; ++i) f();
+    for (int i = 0; i < N; ++i) f();
   };
 
   std::thread a(g), b(g), c(g), d(g);
@@ -55,14 +57,14 @@ void test_on() {
   {
     ts_t t;
     parallel([&]() { ++t; });
-    BOOST_TEST_EQ(t, 4000);
+    BOOST_TEST_EQ(t, 4 * N);
   }
 
   // operator+= with value
   {
     ts_t t;
     parallel([&]() { t += 2; });
-    BOOST_TEST_EQ(t, 8000);
+    BOOST_TEST_EQ(t, 8 * N);
   }
 
   // operator+= with another thread_safe
@@ -70,7 +72,7 @@ void test_on() {
     ts_t t, u;
     u = 2;
     parallel([&]() { t += u; });
-    BOOST_TEST_EQ(t, 8000);
+    BOOST_TEST_EQ(t, 8 * N);
   }
 }
 

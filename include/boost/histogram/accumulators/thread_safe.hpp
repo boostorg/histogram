@@ -106,14 +106,15 @@ public:
 
 private:
   template <class U = value_type>
-  auto increment_impl(detail::priority<1>) -> decltype(std::declval<std::atomic<U>>()++) {
-    return value_.operator++();
+  auto increment_impl(detail::priority<1>) -> decltype(++std::declval<std::atomic<U>>()) {
+    return ++value_;
   }
 
   template <class U = value_type>
   auto add_impl(detail::priority<1>, value_type arg)
-      -> decltype(std::declval<std::atomic<U>>().fetch_add(arg)) {
-    return value_.fetch_add(arg);
+      -> decltype(std::declval<std::atomic<U>>().fetch_add(arg,
+                                                           std::memory_order_relaxed)) {
+    return value_.fetch_add(arg, std::memory_order_relaxed);
   }
 
   // workaround for floating point numbers in C++14, obsolete in C++20
@@ -126,12 +127,11 @@ private:
   template <class U = value_type>
   void add_impl(detail::priority<0>, value_type arg) {
     value_type expected = value_.load();
-    value_type desired = expected + arg;
-    while (!value_.compare_exchange_weak(expected, desired)) {
-      // someone else changed value, adapt desired result
-      expected = value_.load();
-      desired = expected + arg;
-    }
+    // if another tread changed expected value, compare_exchange returns false
+    // and updates expected; we then loop and try to update again
+    // see https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
+    while (!value_.compare_exchange_weak(expected, expected + arg))
+      ;
   }
 
   atomic_value_type value_;
