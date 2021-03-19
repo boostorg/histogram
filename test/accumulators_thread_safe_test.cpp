@@ -43,7 +43,7 @@ void test_on() {
   // ctor from value
   {
     ts_t i{1001};
-    BOOST_TEST_EQ(i, 1001);
+    BOOST_TEST_EQ(i, static_cast<T>(1001));
     BOOST_TEST_EQ(str(i), "1001"s);
   }
 
@@ -57,14 +57,14 @@ void test_on() {
   {
     ts_t t;
     parallel([&]() { ++t; });
-    BOOST_TEST_EQ(t, 4 * N);
+    BOOST_TEST_EQ(t, static_cast<T>(4 * N));
   }
 
   // operator+= with value
   {
     ts_t t;
     parallel([&]() { t += 2; });
-    BOOST_TEST_EQ(t, 8 * N);
+    BOOST_TEST_EQ(t, static_cast<T>(8 * N));
   }
 
   // operator+= with another thread_safe
@@ -72,13 +72,22 @@ void test_on() {
     ts_t t, u;
     u = 2;
     parallel([&]() { t += u; });
-    BOOST_TEST_EQ(t, 8 * N);
+    BOOST_TEST_EQ(t, static_cast<T>(8 * N));
   }
 }
 
 int main() {
   test_on<int>();
   test_on<float>();
+
+  // copy and assignment from other thread_safe
+  {
+    accumulators::thread_safe<char> r{1};
+    accumulators::thread_safe<int> a{r}, b;
+    b = r;
+    BOOST_TEST_EQ(a, 1);
+    BOOST_TEST_EQ(b, 1);
+  }
 
   return boost::report_errors();
 }

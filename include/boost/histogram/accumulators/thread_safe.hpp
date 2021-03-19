@@ -36,14 +36,14 @@ namespace accumulators {
  */
 template <class T>
 class thread_safe {
-public:
   static_assert(std::is_arithmetic<T>(), "");
 
+public:
   using value_type = T;
   using const_reference = const T&;
-  using atomic_value_type = std::atomic<T>;
 
   thread_safe() noexcept : value_{static_cast<value_type>(0)} {}
+
   // non-atomic copy and assign is allowed, because storage is locked in this case
   thread_safe(const thread_safe& o) noexcept : thread_safe{o.value()} {}
   thread_safe& operator=(const thread_safe& o) noexcept {
@@ -51,9 +51,23 @@ public:
     return *this;
   }
 
-  thread_safe(value_type arg) : value_{arg} {}
-  thread_safe& operator=(value_type arg) noexcept {
-    value_.store(arg);
+  /// Allow implicit conversion from value.
+  thread_safe(const_reference value) noexcept : value_{value} {}
+
+  /// Allow assignment from value.
+  thread_safe& operator=(const_reference o) noexcept {
+    value_.store(o);
+    return *this;
+  }
+
+  /// Allow implicit conversion from other thread_safe.
+  template <class U>
+  thread_safe(const thread_safe<U>& o) noexcept : value_{o.value()} {}
+
+  /// Allow assignment from other thread_safe.
+  template <class U>
+  thread_safe& operator=(const thread_safe<U>& o) noexcept {
+    value_.store(o.value());
     return *this;
   }
 
@@ -91,7 +105,7 @@ public:
   // conversion to value_type should be explicit
   explicit operator value_type() const noexcept { return value_.load(); }
 
-  // allow implicit conversion to other thread_safe
+  // allow implicit conversion to another thread_safe
   template <class U>
   operator thread_safe<U>() const noexcept {
     return static_cast<U>(value_.value());
@@ -134,7 +148,7 @@ private:
       ;
   }
 
-  atomic_value_type value_;
+  std::atomic<T> value_;
 };
 
 template <class T, class U>
