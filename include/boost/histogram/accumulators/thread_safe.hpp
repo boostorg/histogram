@@ -132,36 +132,28 @@ private:
   }
 
   // workaround for floating point numbers in C++14, obsolete in C++20
-  template <class U = value_type>
-  void increment_impl(detail::priority<0>) {
-    operator+=(static_cast<value_type>(1));
-  }
+  void increment_impl(detail::priority<0>) { operator+=(static_cast<value_type>(1)); }
 
   // workaround for floating point numbers in C++14, obsolete in C++20
-  template <class U = value_type>
   void add_impl(detail::priority<0>, value_type arg) {
     value_type expected = value_.load();
     // if another tread changed expected value, compare_exchange returns false
-    // and updates expected; we then loop and try to update again
+    // and updates expected; we then loop and try to update again;
     // see https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
     while (!value_.compare_exchange_weak(expected, expected + arg))
       ;
   }
 
+  friend bool operator==(const_reference x, const thread_safe& rhs) noexcept {
+    return rhs.operator==(x);
+  }
+
+  friend bool operator!=(const_reference x, const thread_safe& rhs) noexcept {
+    return rhs.operator!=(x);
+  }
+
   std::atomic<T> value_;
 };
-
-template <class T, class U>
-std::enable_if_t<std::is_arithmetic<T>::value, bool> operator==(
-    const T& t, const thread_safe<U>& rhs) noexcept {
-  return rhs.operator==(t);
-}
-
-template <class T, class U>
-std::enable_if_t<std::is_arithmetic<T>::value, bool> operator!=(
-    const T& t, const thread_safe<U>& rhs) noexcept {
-  return rhs.operator!=(t);
-}
 
 } // namespace accumulators
 } // namespace histogram
