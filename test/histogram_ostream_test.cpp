@@ -6,8 +6,12 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/accumulators/count.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/accumulators/sum.hpp>
+#include <boost/histogram/accumulators/thread_safe.hpp>
+#include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/option.hpp>
@@ -66,14 +70,14 @@ void run_tests() {
     auto h = make(Tag(), R2(3, -0.5, 1.0));
     h.at(0) = 1;
     h.at(1) = 10;
-    h.at(2) = 2;
+    h.at(2) = 5;
 
     const auto expected = "BEGIN\n"
                           "histogram(regular(3, -0.5, 1, options=none))\n"
                           "               +-----------------------+\n"
                           "[-0.5,   0) 1  |==                     |\n"
                           "[   0, 0.5) 10 |====================== |\n"
-                          "[ 0.5,   1) 2  |====                   |\n"
+                          "[ 0.5,   1) 5  |===========            |\n"
                           "               +-----------------------+\n"
                           "END";
 
@@ -83,6 +87,85 @@ void run_tests() {
     BOOST_TEST_CSTR_EQ(str(h, 10).c_str(),
                        "BEGIN\n"
                        "histogram(regular(3, -0.5, 1, options=none))END");
+  }
+
+  // regular with accumulators::count
+  {
+    auto h =
+        make_s(Tag(), dense_storage<accumulators::count<double>>(), R2(3, -0.5, 1.0));
+    h.at(0) = 1;
+    h.at(1) = 10;
+    h.at(2) = 5;
+
+    const auto expected = "BEGIN\n"
+                          "histogram(regular(3, -0.5, 1, options=none))\n"
+                          "               +-----------------------+\n"
+                          "[-0.5,   0) 1  |==                     |\n"
+                          "[   0, 0.5) 10 |====================== |\n"
+                          "[ 0.5,   1) 5  |===========            |\n"
+                          "               +-----------------------+\n"
+                          "END";
+
+    BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
+  }
+
+  // regular with accumulators::thread_safe
+  {
+    auto h = make_s(Tag(), dense_storage<accumulators::thread_safe<double>>(),
+                    R2(3, -0.5, 1.0));
+    h.at(0) = 1;
+    h.at(1) = 10;
+    h.at(2) = 5;
+
+    const auto expected = "BEGIN\n"
+                          "histogram(regular(3, -0.5, 1, options=none))\n"
+                          "               +-----------------------+\n"
+                          "[-0.5,   0) 1  |==                     |\n"
+                          "[   0, 0.5) 10 |====================== |\n"
+                          "[ 0.5,   1) 5  |===========            |\n"
+                          "               +-----------------------+\n"
+                          "END";
+
+    BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
+  }
+
+  // regular with accumulators::sum
+  {
+    auto h = make_s(Tag(), dense_storage<accumulators::sum<double>>(), R2(3, -0.5, 1.0));
+    h.at(0) = 1;
+    h.at(1) = 10;
+    h.at(2) = 5;
+
+    const auto expected = "BEGIN\n"
+                          "histogram(regular(3, -0.5, 1, options=none))\n"
+                          "               +-----------------------+\n"
+                          "[-0.5,   0) 1  |==                     |\n"
+                          "[   0, 0.5) 10 |====================== |\n"
+                          "[ 0.5,   1) 5  |===========            |\n"
+                          "               +-----------------------+\n"
+                          "END";
+
+    BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
+  }
+
+  // regular with accumulators::weighted_sum
+  {
+    auto h = make_s(Tag(), dense_storage<accumulators::weighted_sum<double>>(),
+                    R2(3, -0.5, 1.0));
+    h.at(0) = 1;
+    h.at(1) = 10;
+    h.at(2) = 5;
+
+    const auto expected = "BEGIN\n"
+                          "histogram(regular(3, -0.5, 1, options=none))\n"
+                          "               +-----------------------+\n"
+                          "[-0.5,   0) 1  |==                     |\n"
+                          "[   0, 0.5) 10 |====================== |\n"
+                          "[ 0.5,   1) 5  |===========            |\n"
+                          "               +-----------------------+\n"
+                          "END";
+
+    BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
   }
 
   // regular2
@@ -147,7 +230,7 @@ void run_tests() {
     BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
 
-  // catorgy<string>
+  // category<string>
   {
     auto h = make(Tag(), C({"a", "bb", "ccc", "dddd"}));
     h.at(0) = 1.23;

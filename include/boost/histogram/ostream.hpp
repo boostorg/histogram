@@ -212,9 +212,10 @@ void ascii_plot(OStream& os, const Histogram& h, int w_total, std::true_type) {
   tabular_ostream_wrapper<OStream, 7> tos(os);
   // first pass to get widths
   for (auto&& v : indexed(h, coverage::all)) {
-    ostream_head(tos.row(), ax, v.index(), *v);
-    vmin = std::min(vmin, static_cast<double>(*v));
-    vmax = std::max(vmax, static_cast<double>(*v));
+    auto w = static_cast<double>(*v);
+    ostream_head(tos.row(), ax, v.index(), w);
+    vmin = std::min(vmin, w);
+    vmax = std::max(vmax, w);
   }
   tos.complete();
   if (vmax == 0) vmax = 1;
@@ -231,10 +232,11 @@ void ascii_plot(OStream& os, const Histogram& h, int w_total, std::true_type) {
 
   const int zero_offset = static_cast<int>(std::lround((-vmin) / (vmax - vmin) * w_bar));
   for (auto&& v : indexed(h, coverage::all)) {
-    ostream_head(tos.row(), ax, v.index(), *v);
+    auto w = static_cast<double>(*v);
+    ostream_head(tos.row(), ax, v.index(), w);
     // rest uses os, not tos
     os << " |";
-    const int k = static_cast<int>(std::lround(*v / (vmax - vmin) * w_bar));
+    const int k = static_cast<int>(std::lround(w / (vmax - vmin) * w_bar));
     if (k < 0) {
       os << line(' ', zero_offset + k) << line('=', -k) << line(' ', w_bar - zero_offset);
     } else {
