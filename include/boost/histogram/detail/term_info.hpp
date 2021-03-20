@@ -12,6 +12,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #else
+#include <boost/config/workaround.hpp>
 #include <cstdlib>
 #endif
 #endif
@@ -22,7 +23,7 @@ namespace detail {
 
 struct term_info {
   int width = 78;
-  bool utf8 = false;
+  bool utf8 = true;
 
   term_info() {
 #if defined TIOCGWINSZ
@@ -30,7 +31,14 @@ struct term_info {
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     width = w.ws_col;
 #else
-    if (char* s = std::getenv("COLUMNS")) width = std::atoi(s);
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+    char* buf;
+    std::size_t size;
+    if (std::_dupenv_s(&buf, &size, "COLUMNS") == 0) { width = std::atoi(buf); }
+    std::free(buf);
+#else
+    if (const char* s = std::getenv("COLUMNS")) width = std::atoi(s);
+#endif
 #endif
   }
 };
