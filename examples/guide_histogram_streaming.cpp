@@ -18,6 +18,10 @@ int main() {
 
   std::ostringstream os;
 
+  // width of histogram can be set like this; if it is not set, the library attempts to
+  // determine the terminal width and choses the histogram width accordingly
+  os.width(78);
+
   auto h1 = make_histogram(axis::regular<>(5, -1.0, 1.0, "axis 1"));
   h1.at(0) = 2;
   h1.at(1) = 4;

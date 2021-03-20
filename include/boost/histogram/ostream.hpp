@@ -13,6 +13,7 @@
 #include <boost/histogram/detail/counting_streambuf.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/priority.hpp>
+#include <boost/histogram/detail/term_info.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <cmath>
 #include <iomanip>
@@ -198,7 +199,10 @@ void ascii_plot(OStream&, const Histogram&, int, std::false_type) {} // LCOV_EXC
 
 template <class OStream, class Histogram>
 void ascii_plot(OStream& os, const Histogram& h, int w_total, std::true_type) {
-  if (w_total == 0) w_total = 78; // TODO detect actual width of terminal
+  if (w_total == 0) {
+    detail::term_info ti;
+    w_total = ti.width;
+  }
 
   const auto& ax = h.axis();
 
