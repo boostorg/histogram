@@ -11,6 +11,7 @@
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/detail/counting_streambuf.hpp>
+#include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/priority.hpp>
 #include <boost/histogram/indexed.hpp>
 #include <cmath>
@@ -301,10 +302,11 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   using value_type = typename histogram<A, S>::value_type;
 
   // must be non-const to avoid a msvc warning about possible use of if constexpr
-  bool show_ascii = std::is_convertible<value_type, double>::value && h.rank() == 1;
+  using convertible = detail::is_explicitly_convertible<value_type, double>;
+  bool show_ascii = convertible::value && h.rank() == 1;
   if (show_ascii) {
     detail::ostream(os, h, false);
-    detail::ascii_plot(os, h, w, std::is_convertible<value_type, double>{});
+    detail::ascii_plot(os, h, w, convertible{});
   } else {
     detail::ostream(os, h);
   }
@@ -314,9 +316,9 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   return os;
 }
 
+#endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
+
 } // namespace histogram
 } // namespace boost
-
-#endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
 #endif
