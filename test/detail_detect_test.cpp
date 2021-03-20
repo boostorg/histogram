@@ -220,5 +220,14 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((is_explicitly_convertible<A, E>));
   }
 
+  // is_complete
+  {
+    struct A;
+    struct B {};
+
+    BOOST_TEST_TRAIT_FALSE((is_complete<A>));
+    BOOST_TEST_TRAIT_TRUE((is_complete<B>));
+  }
+
   return boost::report_errors();
 }

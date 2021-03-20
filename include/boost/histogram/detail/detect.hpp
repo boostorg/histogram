@@ -27,6 +27,9 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+template <class...>
+using void_t = void;
+
 struct detect_base {
   template <class T>
   static T&& val();
@@ -108,6 +111,8 @@ BOOST_HISTOGRAM_DETAIL_DETECT(has_threading_support, (T::has_threading_support))
 
 // stronger form of std::is_convertible that works with explicit operator T and ctors
 BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(is_explicitly_convertible, static_cast<U>(t));
+
+BOOST_HISTOGRAM_DETAIL_DETECT(is_complete, sizeof(T));
 
 template <class T>
 using is_storage = mp11::mp_and<is_indexable_container<T>, has_method_reset<T>,
