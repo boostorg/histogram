@@ -201,7 +201,7 @@ template <class OStream, class Histogram>
 void ascii_plot(OStream& os, const Histogram& h, int w_total, std::true_type) {
   if (w_total == 0) {
     detail::term_info ti;
-    w_total = ti.width;
+    w_total = std::min(ti.width, 130);
   }
 
   const auto& ax = h.axis();

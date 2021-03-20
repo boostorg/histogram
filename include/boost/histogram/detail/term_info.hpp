@@ -33,8 +33,8 @@ struct term_info {
 #else
 #if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
     char* buf;
-    std::size_t size;
-    if (std::_dupenv_s(&buf, &size, "COLUMNS") == 0) { width = std::atoi(buf); }
+    size_t size;
+    if (_dupenv_s(&buf, &size, "COLUMNS") == 0) { width = std::atoi(buf); }
     std::free(buf);
 #else
     if (const char* s = std::getenv("COLUMNS")) width = std::atoi(s);
