@@ -204,13 +204,7 @@ void ostream_bar(OStream& os, int zero_offset, double z, int width, bool utf8) {
       os << scale[j];
       os << line(" ", width - zero_offset - k);
     } else if (z < 0) {
-      int j = static_cast<int>(std::lround(2 * (k - z * width)));
-      if (j < 0) {
-        --k;
-        j += 2;
-      }
-      const char* scale[2] = {"█", "▐"};
-      os << line(" ", zero_offset + k) << scale[j] << line("█", -k - 1)
+      os << line(" ", zero_offset + k) << line("█", -k)
          << line(" ", width - zero_offset + 1);
     } else {
       os << line(" ", width + 1);
