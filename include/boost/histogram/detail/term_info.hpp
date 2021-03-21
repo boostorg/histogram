@@ -11,11 +11,11 @@
 #if __has_include(<sys/ioctl.h>) && __has_include(<unistd.h>)
 #include <sys/ioctl.h>
 #include <unistd.h>
-#else
+#endif
+#endif
 #include <boost/config/workaround.hpp>
 #include <cstdlib>
-#endif
-#endif
+#include <cstring>
 
 namespace boost {
 namespace histogram {
@@ -47,7 +47,7 @@ struct env_t {
     return std::strstr(data, s);
   }
 
-  int to_int() { return size ? std::atoi(data) : 0; }
+  operator int() { return size ? std::atoi(data) : 0; }
 };
 
 inline bool utf8() {
@@ -58,15 +58,17 @@ inline bool utf8() {
 } // namespace term_info
 
 inline int width() {
-  int w = 78;
+  int w = 0;
 #if defined TIOCGWINSZ
   struct winsize ws;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
   w = ws.ws_col;
-#else
-  env_t env("COLUMNS");
-  w = env.to_int();
+  if (w < 0) w = 0; // not sure if that ever happens, but who knows
 #endif
+  env_t env("COLUMNS");
+  const int t = std::max(0, static_cast<int>(env));
+  // if both t and w are set, COLUMNS may be used to restrict width
+  if (w == 0 || t < w) w = t;
   return w;
 }
 } // namespace term_info
