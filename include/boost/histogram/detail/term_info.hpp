@@ -21,27 +21,55 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-struct term_info {
-  int width = 78;
-  bool utf8 = true;
+namespace term_info {
+struct env_t {
+  char* data;
+  std::size_t size = 0;
 
-  term_info() {
-#if defined TIOCGWINSZ
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    width = w.ws_col;
-#else
+  env_t(const char* key) {
 #if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-    char* buf;
-    size_t size;
-    if (_dupenv_s(&buf, &size, "COLUMNS") == 0) { width = std::atoi(buf); }
-    std::free(buf);
+    _dupenv_s(&data, &size, key);
 #else
-    if (const char* s = std::getenv("COLUMNS")) width = std::atoi(s);
-#endif
+    data = std::getenv(key);
+    if (data) size = std::strlen(data);
 #endif
   }
+
+  ~env_t() {
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+    std::free(data);
+#endif
+  }
+
+  bool contains(const char* s) {
+    const std::size_t n = std::strlen(s);
+    if (size < n) return false;
+    return std::strstr(data, s);
+  }
+
+  int to_int() { return size ? std::atoi(data) : 0; }
 };
+
+inline bool utf8() {
+  env_t env("LANG");
+  bool b = true;
+  if (env.size) b = env.contains("UTF") || env.contains("utf");
+  return b;
+} // namespace term_info
+
+inline int width() {
+  int w = 78;
+#if defined TIOCGWINSZ
+  struct winsize ws;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+  w = ws.ws_col;
+#else
+  env_t env("COLUMNS");
+  w = env.to_int();
+#endif
+  return w;
+}
+} // namespace term_info
 
 } // namespace detail
 } // namespace histogram
