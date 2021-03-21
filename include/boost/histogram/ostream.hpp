@@ -192,7 +192,7 @@ template <class OStream>
 void ostream_bar(OStream& os, int zero_offset, double z, int width, bool utf8) {
   int k = static_cast<int>(std::lround(z * width));
   if (utf8) {
-    os << " |";
+    os << " │";
     if (z > 0) {
       const char* scale[8] = {" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉"};
       int j = static_cast<int>(std::lround(8 * (z * width - k)));
@@ -209,7 +209,7 @@ void ostream_bar(OStream& os, int zero_offset, double z, int width, bool utf8) {
     } else {
       os << line(" ", width + 1);
     }
-    os << "|\n";
+    os << "│\n";
   } else {
     os << " |";
     if (z >= 0) {
@@ -255,8 +255,8 @@ void plot(OStream& os, const Histogram& h, int w_total, std::true_type) {
 
   // draw upper line
   os << '\n' << line(" ", w_head + 1);
-  if (term_info::utf8())
-    os << '+' << line("-", w_bar + 1) << "+\n";
+  if (utf8)
+    os << "┌" << line("─", w_bar + 1) << "┐\n";
   else
     os << '+' << line("-", w_bar + 1) << "+\n";
 
@@ -269,7 +269,11 @@ void plot(OStream& os, const Histogram& h, int w_total, std::true_type) {
   }
 
   // draw lower line
-  os << line(" ", w_head + 1) << '+' << line("-", w_bar + 1) << "+\n";
+  os << line(" ", w_head + 1);
+  if (utf8)
+    os << "└" << line("─", w_bar + 1) << "┘\n";
+  else
+    os << '+' << line("-", w_bar + 1) << "+\n";
 }
 
 template <class OStream, class Histogram>
