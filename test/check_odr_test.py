@@ -6,7 +6,8 @@
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 """
-This test makes sure that all boost.histogram headers are included in the ODR test carried out in odr_main_test.cpp. See that file for details on why this test needed.
+This test makes sure that all boost.histogram headers are included in the ODR test
+carried out in odr_main_test.cpp. See that file for details on why this test needed.
 """
 
 import os
@@ -34,9 +35,10 @@ for root, dirs, files in os.walk(include_path):
 
 
 def get_headers(filename):
-    with open(filename) as f:
-        for hdr in re.findall('^#include [<"]([^>"]+)[>"]', f.read(), re.MULTILINE):
-            if not hdr.startswith("boost/histogram"):
+    with open(filename, "rb") as f:
+        for hdr in re.findall(b'^#include [<"]([^>"]+)[>"]', f.read(), re.MULTILINE):
+            hdr = hdr.decode()
+            if not hdr.startswith(b"boost/histogram"):
                 continue
             yield hdr.replace("/", os.path.sep)  # adapt the paths for Windows
 
