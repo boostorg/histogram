@@ -38,7 +38,7 @@ def get_headers(filename):
     with open(filename, "rb") as f:
         for hdr in re.findall(b'^#include [<"]([^>"]+)[>"]', f.read(), re.MULTILINE):
             hdr = hdr.decode()
-            if not hdr.startswith(b"boost/histogram"):
+            if not hdr.startswith("boost/histogram"):
                 continue
             yield hdr.replace("/", os.path.sep)  # adapt the paths for Windows
 
