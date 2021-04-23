@@ -16,7 +16,7 @@ env:
 
 jobs:
   cov:
-    runs-on: ubuntu-latest
+    runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
     - name: Fetch Boost superproject
@@ -50,12 +50,12 @@ jobs:
         cd libs/histogram
 
         # don't compile examples in coverage build, coverage must come from tests alone
-        ../../b2 $B2_OPTS toolset=gcc-9 cxxstd=latest coverage=on test//all
+        ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
 
     - name: Process coverage data
       run: |
         cd libs/histogram
-        GCOV=gcov-9 tools/cov.sh
+        GCOV=gcov-8 tools/cov.sh
 
     - uses: coverallsapp/github-action@v1.1.2
       with:
