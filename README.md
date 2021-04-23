@@ -7,7 +7,7 @@
 
 ![](doc/logo/color.svg)
 
-**Fast hackable multi-dimensional generalised histograms with convenient interface**
+**Multi-dimensional generalised histograms with convenient interface**
 
 Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org). Licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
@@ -23,9 +23,10 @@ Boost.Histogram is a very fast state-of-the-art multi-dimensional generalised [h
 
 * Header-only
 * Easy to use, easy to customise
+* Designed for performance
 * Just count or use accumulators to compute means, minimum, maximum, ...
 * Supports multi-threading and restricted environments (no heap allocation, exceptions or RTTI)
-* Open modular design, hacker-friendly
+* Open hacker-friendly modular design
 * Has [official Python bindings](https://github.com/scikit-hep/boost-histogram)
 
 Check out the [full documentation](https://www.boost.org/doc/libs/master/libs/histogram/doc/html/index.html).
