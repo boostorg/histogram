@@ -51,6 +51,26 @@ void run_tests() {
 
     BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
   }
+
+  {
+    auto h = make(Tag(), I(0, 3));
+    h.at(0) = -1;
+    h.at(1) = 3;
+    h.at(2) = 2;
+
+    const auto expected = "BEGIN\n"
+                          "histogram(integer(0, 3, options=underflow | overflow))\n"
+                          "      +------------+\n"
+                          "-1 0  |            |\n"
+                          " 0 -1 |===         |\n"
+                          " 1 3  |   ======== |\n"
+                          " 2 2  |   ======   |\n"
+                          " 3 0  |            |\n"
+                          "      +------------+\n"
+                          "END";
+
+    BOOST_TEST_CSTR_EQ(str(h).c_str(), expected);
+  }
 }
 
 int main() {
