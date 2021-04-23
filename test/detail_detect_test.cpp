@@ -197,5 +197,37 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((has_operator_radd<B&, const B&>));
   }
 
+  // is_explicitly_convertible
+  {
+    struct A {};
+    struct B {
+      operator A() { return A{}; }
+    };
+    struct C {
+      explicit operator A();
+    };
+    struct D {
+      D(A);
+    };
+    struct E {
+      explicit E(A);
+    };
+    BOOST_TEST_TRAIT_TRUE((is_explicitly_convertible<A, A>));
+    BOOST_TEST_TRAIT_FALSE((is_explicitly_convertible<A, B>));
+    BOOST_TEST_TRAIT_TRUE((is_explicitly_convertible<B, A>));
+    BOOST_TEST_TRAIT_TRUE((is_explicitly_convertible<C, A>));
+    BOOST_TEST_TRAIT_TRUE((is_explicitly_convertible<A, D>));
+    BOOST_TEST_TRAIT_TRUE((is_explicitly_convertible<A, E>));
+  }
+
+  // is_complete
+  {
+    struct A;
+    struct B {};
+
+    BOOST_TEST_TRAIT_FALSE((is_complete<A>));
+    BOOST_TEST_TRAIT_TRUE((is_complete<B>));
+  }
+
   return boost::report_errors();
 }
