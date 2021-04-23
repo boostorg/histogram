@@ -22,12 +22,10 @@ namespace histogram {
 namespace detail {
 
 namespace term_info {
-struct env_t {
-  char* data;
-  std::size_t size = 0;
-
+class env_t {
+public:
   env_t(const char* key) {
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0) // msvc complains about using std::getenv
     _dupenv_s(&data, &size, key);
 #else
     data = std::getenv(key);
@@ -47,29 +45,34 @@ struct env_t {
     return std::strstr(data, s);
   }
 
-  operator int() { return size ? std::atoi(data) : 0; }
+  operator bool() { return size > 0; }
+
+  explicit operator int() { return size ? std::atoi(data) : 0; }
+
+private:
+  char* data;
+  std::size_t size = 0;
 };
 
 inline bool utf8() {
+  // return false only if LANG exists and does not contain the string UTF
   env_t env("LANG");
   bool b = true;
-  if (env.size) b = env.contains("UTF") || env.contains("utf");
+  if (env) b = env.contains("UTF") || env.contains("utf");
   return b;
-} // namespace term_info
+}
 
 inline int width() {
   int w = 0;
 #if defined TIOCGWINSZ
   struct winsize ws;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
-  w = ws.ws_col;
-  if (w < 0) w = 0; // not sure if that ever happens, but who knows
+  w = std::max(static_cast<int>(ws.ws_col), 0); // not sure if ws_col can be less than 0
 #endif
   env_t env("COLUMNS");
-  const int t = std::max(0, static_cast<int>(env));
+  const int col = std::max(static_cast<int>(env), 0);
   // if both t and w are set, COLUMNS may be used to restrict width
-  if (w == 0 || t < w) w = t;
-  return w;
+  return w == 0 ? col : std::min(col, w);
 }
 } // namespace term_info
 
