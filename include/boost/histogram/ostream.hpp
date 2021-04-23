@@ -229,7 +229,7 @@ template <class OStream, class Histogram>
 void plot(OStream& os, const Histogram& h, int w_total, std::true_type) {
   if (w_total == 0) {
     w_total = term_info::width();
-    if (w_total == 0 || w_total > 130) w_total = 130;
+    if (w_total == 0 || w_total > 78) w_total = 78;
   }
   bool utf8 = term_info::utf8();
 
