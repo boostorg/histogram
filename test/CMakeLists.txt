@@ -18,7 +18,7 @@ endif()
 
 set(BOOST_TEST_LINK_LIBRARIES Boost::histogram)
 
-# keep in sync with Jamfile, this should be automatized...
+# keep in sync with Jamfile, this should be automated...
 boost_test(TYPE compile-fail SOURCES axis_category_fail0.cpp)
 boost_test(TYPE compile-fail SOURCES axis_category_fail1.cpp)
 boost_test(TYPE compile-fail SOURCES axis_category_fail2.cpp)
@@ -119,6 +119,7 @@ endif()
 #     LINK_LIBRARIES Boost::serialization)
 # boost_test(TYPE run SOURCES accumulators_serialization_test.cpp
 #     LINK_LIBRARIES Boost::serialization)
+# boost_test(TYPE run SOURCES histogram_ostream_ascii_test.cpp)
 
 # Workaround for gcc-5
 if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6))

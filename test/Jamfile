@@ -1,6 +1,6 @@
 # Copyright 2016-2017 Klemens David Morgenstern
 # Copyright 2018 Mateusz Loskot <mateusz@loskot.net>
-# Copyright 2018-2019 Hans Dembinski
+# Copyright 2018-2021 Hans Dembinski
 #
 # Use, modification and distribution is subject to the Boost Software License,
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -82,7 +82,8 @@ alias cxx14 :
     [ run histogram_growing_test.cpp ]
     [ run histogram_mixed_test.cpp ]
     [ run histogram_operators_test.cpp ]
-    [ run histogram_ostream_test.cpp ]
+    [ run histogram_ostream_test.cpp : : : <testing.launcher>"env LANG=UTF" ]
+    [ run histogram_ostream_ascii_test.cpp : : : <testing.launcher>"env LANG=FOO COLUMNS=20" ]
     [ run histogram_test.cpp ]
     [ run indexed_test.cpp ]
     [ run storage_adaptor_test.cpp ]

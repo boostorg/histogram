@@ -63,8 +63,8 @@ jobs:
         cd libs/histogram
         ../../b2 $B2_OPTS cxxstd=17 test//all
 
-  gcc7:
-    runs-on: ubuntu-latest
+  gcc5:
+    runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v2
     - name: Fetch Boost superproject
@@ -80,10 +80,10 @@ jobs:
       run: |
         ./bootstrap.sh
         ./b2 headers
-    - name: Test gcc-7 cxxstd=14
+    - name: Test cxxstd=14
       run: |
         cd libs/histogram
-        ../../b2 $B2_OPTS toolset=gcc-7 cxxstd=14 test//all examples
+        ../../b2 $B2_OPTS toolset=gcc-5 cxxstd=14 test//all examples
 
   gcc10:
     runs-on: ubuntu-latest
@@ -102,7 +102,7 @@ jobs:
       run: |
         ./bootstrap.sh
         ./b2 headers
-    - name: Test gcc-10 cxxstd=20 -O3 -funsafe-math-optimizations
+    - name: Test cxxstd=20 -O3 -funsafe-math-optimizations
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=gcc-10 cxxstd=20 cxxflags="-O3 -funsafe-math-optimizations" test//all examples
@@ -124,7 +124,7 @@ jobs:
       run: |
         ./bootstrap.sh
         ./b2 headers
-    - name: Test clang-6 cxxstd=17 ubsan asan
+    - name: Test cxxstd=17 ubsan asan
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=clang-6 cxxstd=17 variant=histogram_ubasan test//all

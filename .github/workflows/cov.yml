@@ -16,7 +16,7 @@ env:
 
 jobs:
   cov:
-    runs-on: ubuntu-latest
+    runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
     - name: Fetch Boost superproject
@@ -42,10 +42,10 @@ jobs:
         ./b2 headers
 
         # simulate bundled boost by moving the headers instead of symlinking
-        rm -rf boost/histogram.pp boost/histogram
+        rm -rf boost/histogram*
         mv -f libs/histogram/include/boost/* boost
 
-    - name: Test gcc-8 cxxstd=latest coverage=on
+    - name: Test cxxstd=latest coverage=on
       run: |
         cd libs/histogram
 
