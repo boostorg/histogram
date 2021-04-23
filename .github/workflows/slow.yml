@@ -102,7 +102,7 @@ jobs:
       run: |
         ./bootstrap.sh
         ./b2 headers
-    - name: Test gcc-10 cxxstd=20 -O3 -funsafe-math-optimizations
+    - name: Test cxxstd=20 -O3 -funsafe-math-optimizations
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=gcc-10 cxxstd=20 cxxflags="-O3 -funsafe-math-optimizations" test//all examples
@@ -124,7 +124,7 @@ jobs:
       run: |
         ./bootstrap.sh
         ./b2 headers
-    - name: Test clang-6 cxxstd=17 ubsan asan
+    - name: Test cxxstd=17 ubsan asan
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=clang-6 cxxstd=17 variant=histogram_ubasan test//all
