@@ -110,16 +110,28 @@ public:
     return sum_of_weights_squared_;
   }
 
+  /** Return effective counts.
+
+    This corresponds to the equivalent number of unweighted samples that would
+    have the same variance as this sample. count() should be used to check whether
+    value() and variance() are defined, see documentation of value() and variance().
+    count() can be used to compute the variance of the mean by dividing variance()
+    by count().
+  */
+  value_type count() const noexcept {
+    // see https://en.wikipedia.org/wiki/Effective_sample_size#weighted_samples
+    return detail::square(sum_of_weights_) / sum_of_weights_squared_;
+  }
+
   /** Return mean value of accumulated weighted samples.
 
-    The result is undefined, if `sum_of_weights() == 0`.
+    The result is undefined, if count() == 0.
   */
   const_reference value() const noexcept { return weighted_mean_; }
 
   /** Return variance of accumulated weighted samples.
 
-    The result is undefined, if `sum_of_weights() == 0` or
-    `sum_of_weights() == sum_of_weights_squared()`.
+    The result is undefined, if count() == 0 or count() == 1.
   */
   value_type variance() const {
     // see https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Reliability_weights
