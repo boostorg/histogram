@@ -38,7 +38,7 @@ jobs:
 
     - name: Prepare b2
       run: |
-        ./bootstrap.sh
+        ./bootstrap.sh --with-toolset=gcc
         ./b2 headers
 
         # simulate bundled boost by moving the headers instead of symlinking
