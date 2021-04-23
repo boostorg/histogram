@@ -42,7 +42,7 @@ jobs:
         ./b2 headers
 
         # simulate bundled boost by moving the headers instead of symlinking
-        rm -rf boost/histogram.hpp boost/histogram
+        rm -rf boost/histogram*
         mv -f libs/histogram/include/boost/* boost
 
     - name: Test cxxstd=latest coverage=on
