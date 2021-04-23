@@ -7,7 +7,7 @@
 
 ![](doc/logo/color.svg)
 
-**Fast multi-dimensional histogram with convenient interface for C++14**
+**Fast hackable multi-dimensional generalised histograms with convenient interface**
 
 Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org). Licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
 
@@ -23,17 +23,18 @@ Boost.Histogram is a very fast state-of-the-art multi-dimensional generalised [h
 
 * Header-only
 * Easy to use, easy to customise
-* Just count or use arbitrary accumulators in each cell to compute means, minimum, maximum, ...
+* Just count or use accumulators to compute means, minimum, maximum, ...
 * Supports multi-threading and restricted environments (no heap allocation, exceptions or RTTI)
-* Has [Python bindings](https://github.com/scikit-hep/boost-histogram)
+* Open modular design, hacker-friendly
+* Has [official Python bindings](https://github.com/scikit-hep/boost-histogram)
 
-Check out the [full documentation](https://www.boost.org/doc/libs/develop/libs/histogram/doc/html/index.html).
+Check out the [full documentation](https://www.boost.org/doc/libs/master/libs/histogram/doc/html/index.html).
 
-💡 Boost.Histogram is a mature library with 100 % of code lines covered by unit tests, benchmarked for performance, and has extensive documentation. If you still find some issue or find the documentation lacking, tell us about it by [submitting an issue](https://github.com/boostorg/histogram/issues). Chat with us on the [Boost channel on Slack](https://cpplang.slack.com) and [Gitter](https://gitter.im/boostorg/histogram).
+💡 Boost.Histogram is a mature library with 100 % of code lines covered by unit tests, is benchmarked for performance, and has extensive documentation. If you still find some issue or find the documentation lacking, tell us about it by [submitting an issue](https://github.com/boostorg/histogram/issues). Chat with us on the [Boost channel on Slack](https://cpplang.slack.com) and [Gitter](https://gitter.im/boostorg/histogram).
 
 ## Code examples
 
-The following stripped-down example was taken from the [Getting started](https://www.boost.org/doc/libs/develop/libs/histogram/doc/html/histogram/getting_started.html) section in the documentation. Have a look into the docs to see the full version with comments and more examples.
+The following stripped-down example was taken from the [Getting started](https://www.boost.org/doc/libs/master/libs/histogram/doc/html/histogram/getting_started.html) section in the documentation. Have a look into the docs to see the full version with comments and more examples.
 
 Example: Make and fill a 1d-histogram ([try it live on Wandbox](https://wandbox.org/permlink/NSM2ZiDyntUi6RDC)). The core of this example [compiles into 53 lines of assembly code](https://godbolt.org/z/632yzE).
 
