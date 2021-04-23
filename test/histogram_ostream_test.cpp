@@ -27,7 +27,7 @@
 using namespace boost::histogram;
 
 template <class Histogram>
-auto str(const Histogram& h, const unsigned width = 78) {
+auto str(const Histogram& h, const unsigned width = 0) {
   std::ostringstream os;
   // BEGIN and END make nicer error messages
   os << "BEGIN\n" << std::setw(width) << h << "END";
