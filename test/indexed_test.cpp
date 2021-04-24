@@ -156,6 +156,40 @@ void run_stdlib_tests(mp_list<Tag, Coverage>) {
   }
 }
 
+template <class Tag>
+void run_indexed_with_range_tests(Tag) {
+  {
+    auto ax = axis::integer<>(0, 4);
+    auto ay = axis::integer<>(0, 3);
+
+    auto h = make(Tag(), ax, ay);
+    for (auto&& x : indexed(h, coverage::all)) x = x.index(0) + x.index(1);
+    BOOST_TEST_EQ(h.at(0, 0), 0);
+    BOOST_TEST_EQ(h.at(0, 1), 1);
+    BOOST_TEST_EQ(h.at(0, 2), 2);
+    BOOST_TEST_EQ(h.at(1, 0), 1);
+    BOOST_TEST_EQ(h.at(1, 1), 2);
+    BOOST_TEST_EQ(h.at(1, 2), 3);
+    BOOST_TEST_EQ(h.at(2, 0), 2);
+    BOOST_TEST_EQ(h.at(2, 1), 3);
+    BOOST_TEST_EQ(h.at(2, 2), 4);
+    BOOST_TEST_EQ(h.at(3, 0), 3);
+    BOOST_TEST_EQ(h.at(3, 1), 4);
+    BOOST_TEST_EQ(h.at(3, 2), 5);
+
+    /* x->
+    y  0 1 2 3
+    |  1 2 3 4
+    v  2 3 4 5
+    */
+
+    int range[2][2] = {{1, 3}, {0, 2}};
+    auto ir = indexed(h, range);
+    auto sum = std::accumulate(ir.begin(), ir.end(), 0.0);
+    BOOST_TEST_EQ(sum, 1 + 2 + 2 + 3);
+  }
+}
+
 int main() {
   mp_for_each<mp_product<mp_list, mp_list<static_tag, dynamic_tag>,
                          mp_list<std::integral_constant<coverage, coverage::inner>,
@@ -166,5 +200,8 @@ int main() {
         run_density_tests(x);
         run_stdlib_tests(x);
       });
+
+  run_indexed_with_range_tests(static_tag{});
+  run_indexed_with_range_tests(dynamic_tag{});
   return boost::report_errors();
 }
