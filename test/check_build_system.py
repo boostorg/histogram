@@ -25,7 +25,7 @@ for dir in (pj(project_path, "test"), pj(project_path, "examples")):
         filename = os.path.join(dir, build_file)
         if not os.path.exists(filename):
             continue
-        run = set(re.findall("([a-zA-Z0-9_]+\.cpp)", open(filename).read()))
+        run = set(re.findall(r"([a-zA-Z0-9_]+\.cpp)", open(filename).read()))
 
         diff = cpp - run
         diff.discard("check_cmake_version.cpp")  # ignore
