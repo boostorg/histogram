@@ -11,7 +11,6 @@
 #include <boost/config.hpp> // BOOST_ATTRIBUTE_NODISCARD
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
-#include <boost/histogram/detail/debug.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/iterator_adaptor.hpp>
 #include <boost/histogram/detail/operators.hpp>
@@ -29,7 +28,7 @@ using std::get;
 
 template <std::size_t I, class T>
 auto get(T&& t) -> decltype(t[0]) {
-  return t[0];
+  return t[I];
 }
 } // namespace detail
 
@@ -316,9 +315,7 @@ public:
   };
 
   indexed_range(histogram_type& hist, coverage cov)
-      : indexed_range(hist, make_range(hist, cov)) {
-    DEBUG("foo");
-  }
+      : indexed_range(hist, make_range(hist, cov)) {}
 
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   indexed_range(histogram_type& hist, Iterable&& range)
@@ -344,12 +341,7 @@ public:
       begin_.iter_ += ca->begin_skip;
 
       stride *= stop - start;
-      DEBUG(detail::get<0>(*r_begin));
-      DEBUG(ca->begin)
-      DEBUG(ca->begin_skip)
-      DEBUG(ca->end)
-      DEBUG(ca->end_skip)
-      DEBUG(stride)
+
       ++ca;
       ++r_begin;
     });
@@ -401,14 +393,12 @@ private:
  */
 template <class Histogram>
 auto indexed(Histogram&& hist, coverage cov = coverage::inner) {
-  DEBUG("coverage");
   return indexed_range<std::remove_reference_t<Histogram>>{std::forward<Histogram>(hist),
                                                            cov};
 }
 
 template <class Histogram, class Iterable, class = detail::requires_iterable<Iterable>>
 auto indexed(Histogram&& hist, Iterable&& range) {
-  DEBUG("iterable");
   return indexed_range<std::remove_reference_t<Histogram>>{std::forward<Histogram>(hist),
                                                            std::forward<Iterable>(range)};
 }
