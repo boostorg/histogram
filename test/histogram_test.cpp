@@ -216,6 +216,20 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(1), 0);
   }
 
+  // 1D without underflow
+  {
+    using opt = axis::option::overflow_t;
+    auto h = make(Tag(), axis::integer<int, axis::null_type, opt>{1, 3});
+
+    int x[] = {-1, 0, 1, 2, 3, 4, 5};
+    for (auto&& xi : x) h(xi);
+
+    BOOST_TEST_EQ(algorithm::sum(h), 5);
+    BOOST_TEST_EQ(h.at(0), 1);
+    BOOST_TEST_EQ(h.at(1), 1);
+    BOOST_TEST_EQ(h.at(2), 3);
+  }
+
   // 1D category axis
   {
     auto h = make(Tag(), axis::category<>({1, 2}));
