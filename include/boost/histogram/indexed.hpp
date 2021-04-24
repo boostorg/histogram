@@ -43,8 +43,7 @@ enum class coverage {
 
 /** Input iterator range over histogram bins with multi-dimensional index.
 
-  The iterator returned by begin() can only be incremented. begin() may only be called
-  once, calling it a second time returns the end() iterator. If several copies of the
+  The iterator returned by begin() can only be incremented. If several copies of the
   input iterators exist, the other copies become invalid if one of them is incremented.
 */
 template <class Histogram>
@@ -55,10 +54,13 @@ private:
       detail::buffer_size<typename std::decay_t<histogram_type>::axes_type>::value;
 
 public:
+  /// implementation detail
   using value_iterator = std::conditional_t<std::is_const<histogram_type>::value,
                                             typename histogram_type::const_iterator,
                                             typename histogram_type::iterator>;
+  /// implementation detail
   using value_reference = typename std::iterator_traits<value_iterator>::reference;
+  /// implementation detail
   using value_type = typename std::iterator_traits<value_iterator>::value_type;
 
   class iterator;
@@ -334,6 +336,7 @@ public:
 
       ca->begin = std::max(start, detail::get<0>(*r_begin));
       ca->end = std::min(stop, detail::get<1>(*r_begin));
+      assert(ca->begin <= ca->end);
       ca->idx = ca->begin;
 
       ca->begin_skip = static_cast<std::size_t>(ca->begin - start) * stride;
@@ -397,6 +400,28 @@ auto indexed(Histogram&& hist, coverage cov = coverage::inner) {
                                                            cov};
 }
 
+/** Generates and indexed range <a
+  href="https://en.cppreference.com/w/cpp/named_req/ForwardIterator">forward iterators</a>
+  over a rectangular region of histogram cells.
+
+  Use this in a range-based for loop. Example:
+  ```
+  auto hist = make_histogram(axis::integer<>(0, 4), axis::integer<>(2, 6));
+  axis::index_type range[2] = {{1, 3}, {0, 2}};
+  for (auto&& x : indexed(hist, range)) { ... }
+  ```
+  This skips the first and last index of the first axis, and the last two indices of the
+  second.
+
+  @returns indexed_range
+
+  @param hist  Reference to the histogram.
+  @param range Iterable over items with two axis::index_type values, which mark the
+               begin and end index of each axis. The length of the iterable must be
+               equal to the rank of the histogram. The begin index must be smaller than
+               the end index. Index ranges wider than the actual range are reduced to
+               the actual range including underflow and overflow indices.
+*/
 template <class Histogram, class Iterable, class = detail::requires_iterable<Iterable>>
 auto indexed(Histogram&& hist, Iterable&& range) {
   return indexed_range<std::remove_reference_t<Histogram>>{std::forward<Histogram>(hist),
