@@ -19,30 +19,34 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-// initial offset to out must be set
-template <class Index, class Opts>
-std::size_t linearize(Opts, Index& out, const std::size_t stride,
+// initial offset to out must be set;
+// this faster code can be used if all axes are inclusive
+template <class Opts>
+std::size_t linearize(Opts, std::size_t& out, const std::size_t stride,
                       const axis::index_type size, const axis::index_type idx) {
   constexpr bool u = Opts::test(axis::option::underflow);
   constexpr bool o = Opts::test(axis::option::overflow);
+  assert(idx >= (u ? -1 : 0));
+  assert(idx < (o ? size + 1 : size));
+  assert(idx >= 0 || static_cast<std::size_t>(-idx * stride) <= out);
+  out += idx * stride;
+  return size + u + o;
+}
 
-  // must be non-const to avoid if constexpr warning from msvc
-  bool fast_track = std::is_same<Index, std::size_t>::value || (u && o);
-  if (fast_track) {
-    assert(idx >= (u ? -1 : 0));
-    assert(idx < (o ? size + 1 : size));
-    assert(idx >= 0 || static_cast<std::size_t>(-idx * stride) <= out);
+// initial offset to out must be set
+// this slower code must be used if not all axes are inclusive
+template <class Opts>
+std::size_t linearize(Opts, optional_index& out, const std::size_t stride,
+                      const axis::index_type size, const axis::index_type idx) {
+  constexpr bool u = Opts::test(axis::option::underflow);
+  constexpr bool o = Opts::test(axis::option::overflow);
+  assert(idx >= -1);
+  assert(idx < size + 1);
+  const bool is_valid = (u || idx >= 0) && (o || idx < size);
+  if (is_valid)
     out += idx * stride;
-  } else {
-    assert(idx >= -1);
-    assert(idx < size + 1);
-    // must be non-const to avoid if constexpr warning from msvc
-    bool is_valid = (u || idx >= 0) && (o || idx < size);
-    if (is_valid)
-      out += idx * stride;
-    else
-      out = invalid_index;
-  }
+  else
+    out = invalid_index;
   return size + u + o;
 }
 

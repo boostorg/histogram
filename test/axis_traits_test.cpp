@@ -140,18 +140,34 @@ int main() {
         (traits::is_inclusive<integer<int, boost::use_default, option::growth_t>>));
     BOOST_TEST_TRAIT_TRUE(
         (traits::is_inclusive<integer<int, boost::use_default, option::circular_t>>));
+    BOOST_TEST_TRAIT_FALSE(
+        (traits::is_inclusive<integer<int, boost::use_default, option::underflow_t>>));
+    BOOST_TEST_TRAIT_FALSE(
+        (traits::is_inclusive<integer<int, boost::use_default, option::overflow_t>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (traits::is_inclusive<integer<int, boost::use_default,
+                                      decltype(option::underflow | option::overflow)>>));
 
     BOOST_TEST_TRAIT_TRUE((traits::is_inclusive<integer<double>>));
     BOOST_TEST_TRAIT_FALSE(
         (traits::is_inclusive<integer<double, boost::use_default, option::growth_t>>));
     BOOST_TEST_TRAIT_FALSE(
         (traits::is_inclusive<integer<double, boost::use_default, option::circular_t>>));
+    BOOST_TEST_TRAIT_FALSE(
+        (traits::is_inclusive<integer<double, boost::use_default, option::underflow_t>>));
+    BOOST_TEST_TRAIT_FALSE(
+        (traits::is_inclusive<integer<double, boost::use_default, option::overflow_t>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (traits::is_inclusive<integer<double, boost::use_default,
+                                      decltype(option::underflow | option::overflow)>>));
 
     BOOST_TEST_TRAIT_TRUE((traits::is_inclusive<category<int>>));
     BOOST_TEST_TRAIT_TRUE(
         (traits::is_inclusive<category<int, boost::use_default, option::growth_t>>));
     BOOST_TEST_TRAIT_FALSE(
         (traits::is_inclusive<category<int, boost::use_default, option::none_t>>));
+    BOOST_TEST_TRAIT_TRUE(
+        (traits::is_inclusive<category<int, boost::use_default, option::overflow_t>>));
   }
 
   // is_ordered, ordered()
