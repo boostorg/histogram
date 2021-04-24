@@ -185,7 +185,7 @@ void run_indexed_with_range_tests(Tag) {
 
     int range[2][2] = {{1, 3}, {0, 2}};
     auto ir = indexed(h, range);
-    auto sum = std::accumulate(ir.begin(), ir.end(), 0);
+    auto sum = std::accumulate(ir.begin(), ir.end(), 0.0);
     BOOST_TEST_EQ(sum, 1 + 2 + 2 + 3);
   }
 }
