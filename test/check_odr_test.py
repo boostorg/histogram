@@ -31,6 +31,8 @@ for root, dirs, files in os.walk(include_path):
     for fn in files:
         fn = os.path.join(root, fn)
         fn = fn[len(root_include_path) :]
+        if fn == "boost/histogram/detail/debug.hpp":  # is never included
+            continue
         all_headers.add(fn)
 
 

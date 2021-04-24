@@ -191,17 +191,17 @@ void run_indexed_with_range_tests(Tag) {
 }
 
 int main() {
-  // mp_for_each<mp_product<mp_list, mp_list<static_tag, dynamic_tag>,
-  //                        mp_list<std::integral_constant<coverage, coverage::inner>,
-  //                                std::integral_constant<coverage, coverage::all>>>>(
-  //     [](auto&& x) {
-  //       run_1d_tests(x);
-  //       run_3d_tests(x);
-  //       run_density_tests(x);
-  //       run_stdlib_tests(x);
-  //     });
+  mp_for_each<mp_product<mp_list, mp_list<static_tag, dynamic_tag>,
+                         mp_list<std::integral_constant<coverage, coverage::inner>,
+                                 std::integral_constant<coverage, coverage::all>>>>(
+      [](auto&& x) {
+        run_1d_tests(x);
+        run_3d_tests(x);
+        run_density_tests(x);
+        run_stdlib_tests(x);
+      });
 
   run_indexed_with_range_tests(static_tag{});
-  // run_indexed_with_range_tests(dynamic_tag{});
+  run_indexed_with_range_tests(dynamic_tag{});
   return boost::report_errors();
 }
