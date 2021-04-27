@@ -116,8 +116,8 @@ struct unsafe_access {
     @param obj instance of accumulator.
   */
   template <class T>
-  static constexpr auto& accumulators_mean_impl(T&& m) {
-    return m.data_;
+  static constexpr auto& accumulators_mean_impl(T& m) {
+    return reinterpret_cast<typename T::impl_type&>(m);
   }
 };
 

@@ -30,7 +30,7 @@ public:
   using value_type = ValueType;
   using const_reference = const value_type&;
 
-  struct internal_data_type {
+  struct impl_type {
     value_type sum_;
     value_type mean_;
     value_type sum_of_deltas_squared_;
@@ -152,9 +152,9 @@ public:
   }
 
 private:
-  friend struct unsafe_access;
+  impl_type data_{0, 0, 0};
 
-  internal_data_type data_{0, 0, 0};
+  friend struct unsafe_access;
 };
 
 } // namespace accumulators
