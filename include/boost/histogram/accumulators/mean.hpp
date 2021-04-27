@@ -154,7 +154,7 @@ public:
 private:
   impl_type data_{0, 0, 0};
 
-  friend struct unsafe_access;
+  friend struct ::boost::histogram::unsafe_access;
 };
 
 } // namespace accumulators

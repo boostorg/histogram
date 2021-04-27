@@ -117,7 +117,7 @@ struct unsafe_access {
   */
   template <class T>
   static constexpr auto& accumulators_mean_impl(T& m) {
-    return reinterpret_cast<typename T::impl_type&>(m);
+    return m.data_;
   }
 };
 
