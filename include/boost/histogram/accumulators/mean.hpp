@@ -30,36 +30,41 @@ public:
   using value_type = ValueType;
   using const_reference = const value_type&;
 
+  struct internal_data_type {
+    value_type sum_;
+    value_type mean_;
+    value_type sum_of_deltas_squared_;
+  };
+
   mean() = default;
 
   /// Allow implicit conversion from mean<T>.
   template <class T>
-  mean(const mean<T>& o) noexcept
-      : sum_{o.sum_}, mean_{o.mean_}, sum_of_deltas_squared_{o.sum_of_deltas_squared_} {}
+  mean(const mean<T>& o) noexcept : data_{o.data_} {}
 
   /// Initialize to external count, mean, and variance.
   mean(const_reference n, const_reference mean, const_reference variance) noexcept
-      : sum_(n), mean_(mean), sum_of_deltas_squared_(variance * (n - 1)) {}
+      : data_{n, mean, variance * (n - 1)} {}
 
   /// Insert sample x.
   void operator()(const_reference x) noexcept {
-    sum_ += static_cast<value_type>(1);
-    const auto delta = x - mean_;
-    mean_ += delta / sum_;
-    sum_of_deltas_squared_ += delta * (x - mean_);
+    data_.sum_ += static_cast<value_type>(1);
+    const auto delta = x - data_.mean_;
+    data_.mean_ += delta / data_.sum_;
+    data_.sum_of_deltas_squared_ += delta * (x - data_.mean_);
   }
 
   /// Insert sample x with weight w.
   void operator()(const weight_type<value_type>& w, const_reference x) noexcept {
-    sum_ += w.value;
-    const auto delta = x - mean_;
-    mean_ += w.value * delta / sum_;
-    sum_of_deltas_squared_ += w.value * delta * (x - mean_);
+    data_.sum_ += w.value;
+    const auto delta = x - data_.mean_;
+    data_.mean_ += w.value * delta / data_.sum_;
+    data_.sum_of_deltas_squared_ += w.value * delta * (x - data_.mean_);
   }
 
   /// Add another mean accumulator.
   mean& operator+=(const mean& rhs) noexcept {
-    if (rhs.sum_ == 0) return *this;
+    if (rhs.data_.sum_ == 0) return *this;
 
     /*
       sum_of_deltas_squared
@@ -75,20 +80,20 @@ public:
 
       Putting it together:
       sum_of_deltas_squared
-        = sum_of_deltas_squared_1 + n1 (mu1 - mu))^2
-        + sum_of_deltas_squared_2 + n2 (mu2 - mu))^2
+        = sum_of_deltas_squared_1 + n1 (mu - mu1))^2
+        + sum_of_deltas_squared_2 + n2 (mu - mu2))^2
     */
 
-    const auto n1 = sum_;
-    const auto mu1 = mean_;
-    const auto n2 = rhs.sum_;
-    const auto mu2 = rhs.mean_;
+    const auto n1 = data_.sum_;
+    const auto mu1 = data_.mean_;
+    const auto n2 = rhs.data_.sum_;
+    const auto mu2 = rhs.data_.mean_;
 
-    sum_ += rhs.sum_;
-    mean_ = (n1 * mu1 + n2 * mu2) / sum_;
-    sum_of_deltas_squared_ += rhs.sum_of_deltas_squared_;
-    sum_of_deltas_squared_ += n1 * detail::square(mean_ - mu1);
-    sum_of_deltas_squared_ += n2 * detail::square(mean_ - mu2);
+    data_.sum_ += rhs.data_.sum_;
+    data_.mean_ = (n1 * mu1 + n2 * mu2) / data_.sum_;
+    data_.sum_of_deltas_squared_ += rhs.data_.sum_of_deltas_squared_;
+    data_.sum_of_deltas_squared_ += n1 * detail::square(data_.mean_ - mu1);
+    data_.sum_of_deltas_squared_ += n2 * detail::square(data_.mean_ - mu2);
 
     return *this;
   }
@@ -98,14 +103,14 @@ public:
    This acts as if all samples were scaled by the value.
   */
   mean& operator*=(const_reference s) noexcept {
-    mean_ *= s;
-    sum_of_deltas_squared_ *= s * s;
+    data_.mean_ *= s;
+    data_.sum_of_deltas_squared_ *= s * s;
     return *this;
   }
 
   bool operator==(const mean& rhs) const noexcept {
-    return sum_ == rhs.sum_ && mean_ == rhs.mean_ &&
-           sum_of_deltas_squared_ == rhs.sum_of_deltas_squared_;
+    return data_.sum_ == rhs.data_.sum_ && data_.mean_ == rhs.data_.mean_ &&
+           data_.sum_of_deltas_squared_ == rhs.data_.sum_of_deltas_squared_;
   }
 
   bool operator!=(const mean& rhs) const noexcept { return !operator==(rhs); }
@@ -116,19 +121,21 @@ public:
     see documentation of value() and variance(). count() can be used to compute
     the variance of the mean by dividing variance() by count().
   */
-  const_reference count() const noexcept { return sum_; }
+  const_reference count() const noexcept { return data_.sum_; }
 
   /** Return mean value of accumulated samples.
 
     The result is undefined, if `count() < 1`.
   */
-  const_reference value() const noexcept { return mean_; }
+  const_reference value() const noexcept { return data_.mean_; }
 
   /** Return variance of accumulated samples.
 
     The result is undefined, if `count() < 2`.
   */
-  value_type variance() const noexcept { return sum_of_deltas_squared_ / (sum_ - 1); }
+  value_type variance() const noexcept {
+    return data_.sum_of_deltas_squared_ / (data_.sum_ - 1);
+  }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned version) {
@@ -136,18 +143,16 @@ public:
       // read only
       std::size_t sum;
       ar& make_nvp("sum", sum);
-      sum_ = static_cast<value_type>(sum);
+      data_.sum_ = static_cast<value_type>(sum);
     } else {
-      ar& make_nvp("sum", sum_);
+      ar& make_nvp("sum", data_.sum_);
     }
-    ar& make_nvp("mean", mean_);
-    ar& make_nvp("sum_of_deltas_squared", sum_of_deltas_squared_);
+    ar& make_nvp("mean", data_.mean_);
+    ar& make_nvp("sum_of_deltas_squared", data_.sum_of_deltas_squared_);
   }
 
 private:
-  value_type sum_{};
-  value_type mean_{};
-  value_type sum_of_deltas_squared_{};
+  internal_data_type data_{0, 0, 0};
 };
 
 } // namespace accumulators
