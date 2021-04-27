@@ -30,7 +30,7 @@ public:
   using value_type = ValueType;
   using const_reference = const value_type&;
 
-  struct impl_type {
+  struct data_type {
     value_type sum_;
     value_type mean_;
     value_type sum_of_deltas_squared_;
@@ -152,7 +152,7 @@ public:
   }
 
 private:
-  impl_type data_{0, 0, 0};
+  data_type data_{0, 0, 0};
 
   friend struct ::boost::histogram::unsafe_access;
 };

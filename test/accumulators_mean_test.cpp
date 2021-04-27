@@ -118,7 +118,7 @@ int main() {
     a(2);
 
     BOOST_TEST_EQ(a.count(), 2);
-    unsafe_access::accumulators_mean_impl(a).sum_ = 1;
+    unsafe_access::accumulator_data(a).sum_ = 1;
     BOOST_TEST_EQ(a.count(), 1);
   }
 

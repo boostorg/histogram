@@ -97,8 +97,8 @@ struct unsafe_access {
     Get buffer of unlimited_storage.
     @param storage instance of unlimited_storage.
   */
-  template <class Allocator>
-  static constexpr auto& unlimited_storage_buffer(unlimited_storage<Allocator>& storage) {
+  template <class T>
+  static constexpr auto& unlimited_storage_buffer(T& storage) {
     return storage.buffer_;
   }
 
@@ -107,16 +107,16 @@ struct unsafe_access {
     @param storage instance of storage_adaptor.
   */
   template <class T>
-  static constexpr auto& storage_adaptor_impl(storage_adaptor<T>& storage) {
-    return static_cast<typename storage_adaptor<T>::impl_type&>(storage);
+  static constexpr auto& storage_adaptor_impl(T& storage) {
+    return static_cast<typename T::impl_type&>(storage);
   }
 
   /**
-    Get internal data of accumulators::mean.
+    Get internal data of accumulator.
     @param obj instance of accumulator.
   */
   template <class T>
-  static constexpr auto& accumulators_mean_impl(T& m) {
+  static constexpr auto& accumulator_data(T& m) {
     return m.data_;
   }
 };
