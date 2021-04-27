@@ -152,6 +152,8 @@ public:
   }
 
 private:
+  friend struct unsafe_access;
+
   internal_data_type data_{0, 0, 0};
 };
 

@@ -110,6 +110,15 @@ struct unsafe_access {
   static constexpr auto& storage_adaptor_impl(storage_adaptor<T>& storage) {
     return static_cast<typename storage_adaptor<T>::impl_type&>(storage);
   }
+
+  /**
+    Get internal data of accumulators::mean.
+    @param obj instance of accumulator.
+  */
+  template <class T>
+  static constexpr auto& accumulators_mean_impl(T&& m) {
+    return m.data_;
+  }
 };
 
 } // namespace histogram
