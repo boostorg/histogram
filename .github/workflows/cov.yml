@@ -10,54 +10,129 @@ on:
       - 'examples/**'
       - 'tools/**'
       - '*.md'
+  push:
+    branches:
+      - master
+      - develop
+      - feature/**
+      - test*
 
 env:
+  UBSAN_OPTIONS: print_stacktrace=1
   B2_OPTS: -q -j2 warnings-as-errors=on
 
 jobs:
-  cov:
-    runs-on: macos-10.15
+  posix:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - toolset: gcc-5
+            gcov: gcov-5
+            cxxstd: "03,11,14,1z"
+            os: ubuntu-16.04
+          - toolset: gcc-6
+            gcov: gcov-6
+            cxxstd: "03,11,14,1z"
+            os: ubuntu-16.04
+            install: g++-6
+          - toolset: gcc-7
+            gcov: gcov-7
+            cxxstd: "03,11,14,17"
+            os: ubuntu-18.04
+          - toolset: gcc-8
+            gcov: gcov-8
+            cxxstd: "03,11,14,17,2a"
+            os: ubuntu-18.04
+            install: g++-8
+          - toolset: gcc-9
+            gcov: gcov-9
+            cxxstd: "03,11,14,17,2a"
+            os: ubuntu-18.04
+          - toolset: gcc-10
+            gcov: gcov-10
+            cxxstd: "03,11,14,17,2a"
+            os: ubuntu-18.04
+          - toolset: clang
+            compiler: clang++-10
+            gcov: 'gcov_for_clang.sh'
+            llvm_cov_path: '/usr/bin/llvm-cov-10'
+            cxxstd: "03,11,14,17,2a"
+            os: ubuntu-20.04
+          - toolset: clang
+            compiler: clang++-11
+            gcov: 'gcov_for_clang.sh'
+            llvm_cov_path: '/usr/bin/llvm-cov-11'
+            cxxstd: "03,11,14,17,2a"
+            os: ubuntu-20.04
+          - toolset: gcc-8
+            cxxstd: "03,11,14,17,2a"
+            gcov: gcov-8
+            os: macos-10.15
+
+    runs-on: ${{matrix.os}}
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Fetch Boost superproject
-      run: |
-        cd ..
-        git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
-        cd boost
-        mv -f $GITHUB_WORKSPACE/* libs/histogram
-        git submodule update --init --depth 5 tools/build tools/boostdep
-        python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
-        mv -f * $GITHUB_WORKSPACE
+      - uses: actions/checkout@v2
 
-        # # use hdembinski/serialization due to frequent errors in boostorg/serialization
-        # pushd libs/serialization
-        # git remote add patch https://github.com/HDembinski/serialization.git
-        # git fetch patch
-        # git checkout patch/boost_histogram
-        # popd
+      - name: Install packages
+        if: matrix.install
+        run: sudo apt install ${{matrix.install}}
 
-    - name: Prepare b2
-      run: |
-        ./bootstrap.sh
-        ./b2 headers
+      - name: Setup Boost
+        run: |
+          echo GITHUB_REPOSITORY: $GITHUB_REPOSITORY
+          LIBRARY=${GITHUB_REPOSITORY#*/}
+          echo LIBRARY: $LIBRARY
+          echo "LIBRARY=$LIBRARY" >> $GITHUB_ENV
+          echo GITHUB_BASE_REF: $GITHUB_BASE_REF
+          echo GITHUB_REF: $GITHUB_REF
+          REF=${GITHUB_BASE_REF:-$GITHUB_REF}
+          REF=${REF#refs/heads/}
+          echo REF: $REF
+          BOOST_BRANCH=develop && [ "$REF" == "master" ] && BOOST_BRANCH=master || true
+          echo BOOST_BRANCH: $BOOST_BRANCH
+          cd ..
+          git clone -b $BOOST_BRANCH --depth 1 https://github.com/boostorg/boost.git boost-root
+          cd boost-root
+          cp -r $GITHUB_WORKSPACE/* libs/$LIBRARY
+          git submodule update --init tools/boostdep
+          python tools/boostdep/depinst/depinst.py --git_args "--jobs 3" $LIBRARY
+          ./bootstrap.sh
+          ./b2 -d0 headers
 
-        # simulate bundled boost by moving the headers instead of symlinking
-        rm -rf boost/histogram*
-        mv -f libs/histogram/include/boost/* boost
+      - name: Create user-config.jam
+        if: matrix.compiler
+        run: |
+          echo "using ${{matrix.toolset}} : : ${{matrix.compiler}} ;" > ~/user-config.jam
 
-    - name: Test cxxstd=latest coverage=on
-      run: |
-        cd libs/histogram
+# - name: Run tests
+#   run: |
+#     cd ../boost-root
+#     ./b2 -j3 libs/$LIBRARY/test toolset=${{matrix.toolset}} cxxstd=${{matrix.cxxstd}} variant=debug,release
 
-        # don't compile examples in coverage build, coverage must come from tests alone
-        ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
 
-    - name: Process coverage data
-      run: |
-        cd libs/histogram
-        GCOV=gcov-8 tools/cov.sh
+# cd libs/histogram
+# ## don't compile examples in coverage build, coverage must come from tests alone
+# ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
 
-    - uses: coverallsapp/github-action@v1.1.2
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: libs/histogram/coverage.info
+      - name: Test cxxstd=latest coverage=on
+        run: |
+          cd ../boost-root
+          # "merging" histogram's example and core's example:
+          ./b2 -j3 libs/$LIBRARY/test//all toolset=${{matrix.toolset}} cxxstd=latest coverage=on
+  
+      - name: Process coverage data
+        env:
+          GCOV: ${{ matrix.gcov }}
+          LLVM_COV_PATH: ${{ matrix.llvm_cov_path }}
+        run: |
+          # cd libs/histogram
+          cd ../boost-root/libs/histogram
+          # GCOV=gcov-8 tools/cov.sh
+          tools/cov.sh
+
+      - uses: coverallsapp/github-action@v1.1.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ../boost-root/libs/histogram/coverage.info
