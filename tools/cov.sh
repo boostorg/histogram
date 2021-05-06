@@ -6,7 +6,7 @@
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 if [ -z $GCOV ]; then
-  # gcov-10, gcov-9, gcov-7, gcov-6 do not work
+  # gcov-9 and gcov-10 are super slow
   for i in 8 5; do
     if test $(which gcov-$i); then
       GCOV=gcov-$i
@@ -15,7 +15,7 @@ if [ -z $GCOV ]; then
   done
 fi
 
-LCOV_VERSION="1.14"
+LCOV_VERSION="1.15"
 LCOV_DIR="tools/lcov-${LCOV_VERSION}"
 
 if [ ! -e $LCOV_DIR ]; then
