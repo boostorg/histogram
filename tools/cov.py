@@ -32,8 +32,6 @@ if not lcov_dir.exists():
     )
     run(f"curl -L {url} | tar zxf -", shell=True, cwd="tools")
 
-# get all directories with gcda files that match the gcov version
-
 # --rc lcov_branch_coverage=1 doesn't work on travis
 lcov = [
     f"{lcov_dir}/bin/lcov",
@@ -41,7 +39,7 @@ lcov = [
     "--output-file",
     "coverage.info",
 ]
-# collect raw data only from directories with matching gcc version
+# get all directories with gcda files that match the gcov version
 cwd = Path().absolute()
 lcov_collect = lcov + ["--base-directory", cwd, "--capture"]
 for p in Path("../../bin.v2/libs/histogram/test").rglob("**/*.gcda"):
