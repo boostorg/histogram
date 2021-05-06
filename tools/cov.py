@@ -20,7 +20,7 @@ LCOV_VERSION = "1.15"
 
 gcov = os.environ.get("GCOV", "gcov-8")
 
-gcov_version = gcov.split("-")[1] if "-" in gcov == 2 else None
+gcov_version = gcov.split("-")[1] if "-" in gcov else None
 gcc_version = f"gcc-{gcov_version}" if gcov_version else "gcc"
 
 lcov_dir = Path("tools") / f"lcov-{LCOV_VERSION}"
@@ -35,18 +35,20 @@ if not lcov_dir.exists():
 # get all directories with gcda files that match the gcov version
 
 # --rc lcov_branch_coverage=1 doesn't work on travis
-# LCOV="${LCOV_DIR}/bin/lcov --gcov-tool=${GCOV} --rc lcov_branch_coverage=1"
-lcov = [f"{lcov_dir}/bin/lcov", f"--gcov-tool={gcov}", "--output-file", "coverage.info"]
-
-# collect raw data, only use directories with matching gcc version
+lcov = [
+    f"{lcov_dir}/bin/lcov",
+    f"--gcov-tool={gcov}",
+    "--output-file",
+    "coverage.info",
+]
+# collect raw data only from directories with matching gcc version
 cwd = Path().absolute()
-lcov_collect = lcov + ["--base-directory", cwd]
+lcov_collect = lcov + ["--base-directory", cwd, "--capture"]
 for p in Path("../../bin.v2/libs/histogram/test").rglob("**/*.gcda"):
     if gcc_version not in str(p):
         continue
     lcov_collect.append("--directory")
     lcov_collect.append(p.parent)
-lcov_collect.append("--capture")
 run(lcov_collect)
 
 # remove uninteresting entries
