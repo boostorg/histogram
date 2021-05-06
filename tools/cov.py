@@ -20,9 +20,7 @@ LCOV_VERSION = "1.15"
 
 gcov = os.environ.get("GCOV", "gcov-8")
 
-parts = gcov.split("-")
-
-gcov_version = parts[1] if len(parts) == 2 else None
+gcov_version = gcov.split("-")[1] if "-" in gcov == 2 else None
 gcc_version = f"gcc-{gcov_version}" if gcov_version else "gcc"
 
 lcov_dir = Path("tools") / f"lcov-{LCOV_VERSION}"
