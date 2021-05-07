@@ -8,7 +8,6 @@ on:
     paths-ignore:
       - 'doc/**'
       - 'examples/**'
-      - 'tools/**'
       - '*.md'
 
 env:
@@ -55,7 +54,7 @@ jobs:
     - name: Process coverage data
       run: |
         cd libs/histogram
-        GCOV=gcov-8 tools/cov.sh
+        GCOV=gcov-8 tools/cov.py
 
     - uses: coverallsapp/github-action@v1.1.2
       with:
