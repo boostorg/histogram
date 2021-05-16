@@ -5,12 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/accumulators/ostream.hpp>
-#include <boost/histogram/accumulators/sum.hpp>
-#include <boost/histogram/accumulators/thread_safe.hpp>
-#include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <limits>
 #include <sstream>

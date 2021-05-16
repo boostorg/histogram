@@ -5,11 +5,11 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <array>
-#include <cassert>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/accumulators/thread_safe.hpp>
+#include <boost/histogram/accumulators/count.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
+#include <cassert>
 #include <map>
 #include <vector>
 #include "throw_exception.hpp"
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
       join(argv[1], "storage_adaptor_serialization_test_array_unsigned.xml"));
   test_serialization<std::map<std::size_t, double>>(
       join(argv[1], "storage_adaptor_serialization_test_map_double.xml"));
-  test_serialization<std::vector<accumulators::thread_safe<int>>>(
+  test_serialization<std::vector<accumulators::count<int, true>>>(
       join(argv[1], "storage_adaptor_serialization_test_vector_thread_safe_int.xml"));
 
   return boost::report_errors();

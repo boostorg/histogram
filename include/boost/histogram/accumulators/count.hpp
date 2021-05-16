@@ -9,6 +9,7 @@
 
 #include <atomic>
 #include <boost/core/nvp.hpp>
+#include <boost/histogram/detail/priority.hpp>
 #include <boost/histogram/fwd.hpp> // for count<>
 #include <type_traits>             // for std::common_type
 
@@ -21,21 +22,36 @@ struct atomic_float_ext {};
 
 template <class Derived, class T>
 struct atomic_float_ext<Derived, T, true> {
+  // never defined for float
   Derived& operator++() noexcept {
     auto& d = static_cast<Derived&>(*this);
     d += static_cast<T>(1);
     return d;
   }
 
+  // not defined for float before C++20; obsolete in C++20
   Derived& operator+=(const T& x) noexcept {
     auto& d = static_cast<Derived&>(*this);
+    add_impl(d, x, priority<1>{});
+    return d;
+  }
+
+private:
+  // C++20 implementation
+  template <class U = T>
+  auto add_impl(Derived& d, const U& x, priority<1>) noexcept -> decltype(d += x) {
+    return d += x;
+  }
+
+  // pre-C++20 implementation
+  template <class U = T>
+  void add_impl(Derived& d, const U& x, priority<0>) noexcept {
     T expected = d.load();
-    // if another tread changed expected value, compare_exchange returns false
-    // and updates expected; we then loop and try to update again;
+    // if another tread changed `expected` in the meantime, compare_exchange returns
+    // false and updates expected; we then loop and try to update again;
     // see https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
     while (!d.compare_exchange_weak(expected, expected + x))
       ;
-    return d;
   }
 };
 
@@ -63,8 +79,12 @@ namespace accumulators {
   Wraps a C++ builtin arithmetic type which is optionally thread-safe.
 
   This adaptor optionally uses atomic operations to make concurrent increments and
-  additions safe for the stored arithmetic value, which can be an integer or floating
-  point. Warning: Assignment is not thread-safe,so don't assign concurrently.
+  additions thread-safe for the stored arithmetic value, which can be integral or
+  floating point. For small histograms, the performance will still be poor because of
+  False Sharing, see https://en.wikipedia.org/wiki/False_sharing for details.
+
+  Warning: Assignment is not thread-safe, so don't assign concurrently.
+
 
   Furthermore, this wrapper class can be used as a base class by users to add
   arbitrary metadata to each bin of a histogram.
@@ -128,7 +148,9 @@ public:
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
-    ar& make_nvp("value", value_);
+    auto v = value();
+    ar& make_nvp("value", v);
+    value_ = v;
   }
 
   // begin: extra operators to make count behave like a regular number
@@ -162,6 +184,25 @@ public:
   bool operator<=(const count& rhs) const noexcept { return value_ <= rhs.value_; }
 
   bool operator>=(const count& rhs) const noexcept { return value_ >= rhs.value_; }
+
+  friend bool operator==(const_reference x, const count& rhs) noexcept {
+    return rhs == x;
+  }
+
+  friend bool operator!=(const_reference x, const count& rhs) noexcept {
+    return rhs != x;
+  }
+
+  friend bool operator<(const_reference x, const count& rhs) noexcept { return rhs > x; }
+
+  friend bool operator>(const_reference x, const count& rhs) noexcept { return rhs < x; }
+
+  friend bool operator<=(const_reference x, const count& rhs) noexcept {
+    return rhs >= x;
+  }
+  friend bool operator>=(const_reference x, const count& rhs) noexcept {
+    return rhs <= x;
+  }
 
   // end: extra operators
 

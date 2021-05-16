@@ -76,7 +76,6 @@ alias cxx14 :
     [ run detail_safe_comparison_test.cpp ]
     [ run detail_static_if_test.cpp ]
     [ run detail_tuple_slice_test.cpp ]
-    [ run histogram_atomic_test.cpp ]
     [ run histogram_custom_axis_test.cpp ]
     [ run histogram_dynamic_test.cpp ]
     [ run histogram_fill_test.cpp ]
@@ -124,7 +123,8 @@ alias failure :
 alias threading :
     [ run histogram_threaded_test.cpp ]
     [ run storage_adaptor_threaded_test.cpp ]
-    [ run accumulators_thread_safe_test.cpp ]
+    [ run accumulators_count_thread_safe_test.cpp ]
+    [ run accumulators_thread_safe_test.cpp : <warnings>off ]
     :
     <threading>multi
     ;

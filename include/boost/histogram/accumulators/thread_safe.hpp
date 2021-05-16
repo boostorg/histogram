@@ -16,7 +16,7 @@ namespace boost {
 namespace histogram {
 namespace accumulators {
 
-/** Thread-safe adaptor for builtin integral and floating point numbers.
+/** Thread-safe adaptor for builtin integral numbers.
 
   This adaptor uses std::atomic to make concurrent increments and additions safe for the
   stored value.

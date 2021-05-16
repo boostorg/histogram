@@ -10,7 +10,6 @@
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
-#include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
@@ -109,9 +108,9 @@ void run_tests() {
     BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
   }
 
-  // regular with accumulators::thread_safe
+  // regular with thread-safe accumulators::count
   {
-    auto h = make_s(Tag(), dense_storage<accumulators::thread_safe<double>>(),
+    auto h = make_s(Tag(), dense_storage<accumulators::count<double, true>>(),
                     R2(3, -0.5, 1.0));
     h.at(0) = 1;
     h.at(1) = 10;

@@ -75,7 +75,6 @@ boost_test(TYPE run SOURCES detail_replace_type_test.cpp)
 boost_test(TYPE run SOURCES detail_safe_comparison_test.cpp)
 boost_test(TYPE run SOURCES detail_static_if_test.cpp)
 boost_test(TYPE run SOURCES detail_tuple_slice_test.cpp)
-boost_test(TYPE run SOURCES histogram_atomic_test.cpp)
 boost_test(TYPE run SOURCES histogram_custom_axis_test.cpp)
 boost_test(TYPE run SOURCES histogram_dynamic_test.cpp)
 boost_test(TYPE run SOURCES histogram_fill_test.cpp
@@ -97,6 +96,8 @@ if (Threads_FOUND)
   boost_test(TYPE run SOURCES histogram_threaded_test.cpp
     LINK_LIBRARIES Threads::Threads)
   boost_test(TYPE run SOURCES storage_adaptor_threaded_test.cpp
+    LINK_LIBRARIES Threads::Threads)
+  boost_test(TYPE run SOURCES accumulators_count_thread_safe_test.cpp
     LINK_LIBRARIES Threads::Threads)
   boost_test(TYPE run SOURCES accumulators_thread_safe_test.cpp
     LINK_LIBRARIES Threads::Threads)
