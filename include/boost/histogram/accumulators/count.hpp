@@ -28,31 +28,6 @@ struct atomic_float_ext<Derived, T, true> {
     d += static_cast<T>(1);
     return d;
   }
-
-  // not defined for float before C++20; obsolete in C++20
-  Derived& operator+=(const T& x) noexcept {
-    auto& d = static_cast<Derived&>(*this);
-    add_impl(d, x, priority<1>{});
-    return d;
-  }
-
-private:
-  // C++20 implementation
-  template <class U = T>
-  auto add_impl(Derived& d, const U& x, priority<1>) noexcept -> decltype(d += x) {
-    return d += x;
-  }
-
-  // pre-C++20 implementation
-  template <class U = T>
-  void add_impl(Derived& d, const U& x, priority<0>) noexcept {
-    T expected = d.load();
-    // if another tread changed `expected` in the meantime, compare_exchange returns
-    // false and updates expected; we then loop and try to update again;
-    // see https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
-    while (!d.compare_exchange_weak(expected, expected + x))
-      ;
-  }
 };
 
 // copyable arithmetic type with atomic operator++ and operator+=,
@@ -69,6 +44,31 @@ struct atomic : std::atomic<T>,
   atomic& operator=(const atomic& o) noexcept {
     this->store(o.load());
     return *this;
+  }
+
+  // operator is not defined for floating point before C++20
+  atomic& operator+=(const T& x) noexcept {
+    add_impl(*this, x, priority<1>{});
+    return *this;
+  }
+
+private:
+  // always available for integral types, in C++20 also available for float
+  template <class U = T>
+  static auto add_impl(std::atomic<U>& a, const U& x, priority<1>) noexcept
+      -> decltype(a += x) {
+    return a += x;
+  }
+
+  // pre-C++20 fallback implementation
+  template <class U = T>
+  static void add_impl(std::atomic<U>& a, const U& x, priority<0>) noexcept {
+    T expected = a.load();
+    // if another tread changed `expected` in the meantime, compare_exchange returns
+    // false and updates expected; we then loop and try to update again;
+    // see https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
+    while (!a.compare_exchange_weak(expected, expected + x))
+      ;
   }
 };
 } // namespace detail
