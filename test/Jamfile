@@ -124,7 +124,7 @@ alias threading :
     [ run histogram_threaded_test.cpp ]
     [ run storage_adaptor_threaded_test.cpp ]
     [ run accumulators_count_thread_safe_test.cpp ]
-    [ run accumulators_thread_safe_test.cpp : <warnings>off ]
+    [ run accumulators_thread_safe_test.cpp ]
     :
     <threading>multi
     ;

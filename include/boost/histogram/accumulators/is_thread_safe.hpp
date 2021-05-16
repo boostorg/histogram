@@ -34,10 +34,6 @@ struct is_thread_safe
     : std::integral_constant<bool,
                              detail::is_thread_safe_impl<T>(detail::priority<1>{})> {};
 
-// cannot use new mechanism with accumulators::thread_safe
-template <class T>
-struct is_thread_safe<thread_safe<T>> : std::true_type {};
-
 } // namespace accumulators
 } // namespace histogram
 } // namespace boost

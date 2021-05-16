@@ -9,12 +9,16 @@
 
 #include <atomic>
 #include <boost/core/nvp.hpp>
-#include <boost/mp11/utility.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <type_traits>
 
 namespace boost {
 namespace histogram {
 namespace accumulators {
+
+// cannot use new mechanism with accumulators::thread_safe
+template <class T>
+struct is_thread_safe<thread_safe<T>> : std::true_type {};
 
 /** Thread-safe adaptor for builtin integral numbers.
 
@@ -29,7 +33,9 @@ namespace accumulators {
   @tparam T type to adapt, must be supported by std::atomic.
  */
 template <class T>
-class [[deprecated("use count<T, true> instead")]] thread_safe : public std::atomic<T> {
+class [[deprecated(
+    "use count<T, true> instead; thread_safe will be removed in boost-1.79")]] thread_safe
+    : public std::atomic<T> {
 public:
   using value_type = T;
   using super_t = std::atomic<T>;

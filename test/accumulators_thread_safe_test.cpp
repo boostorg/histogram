@@ -15,10 +15,9 @@ using namespace boost::histogram;
 using namespace std::literals;
 
 int main() {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
   using ts_t = accumulators::thread_safe<int>;
-#pragma GCC diagnostic pop
+#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
 
   ts_t i;
   ++i;
