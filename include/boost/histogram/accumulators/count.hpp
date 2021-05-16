@@ -27,13 +27,16 @@ namespace accumulators {
   Warning: Assignment is not thread-safe in this implementation, so don't assign
   concurrently.
 
-  Furthermore, this wrapper class can be used as a base class by users to add
-  arbitrary metadata to each bin of a histogram.
+  This wrapper class can be used as a base class by users to add arbitrary metadata to
+  each bin of a histogram.
 
   When weighted samples are accumulated and high precision is required, use
   `accumulators::sum` instead (at the cost of lower performance). If a local variance
   estimate for the weight distribution should be computed as well (generally needed for a
   detailed statistical analysis), use `accumulators::weighted_sum`.
+
+  @tparam T C++ builtin arithmetic type (integer or floating point).
+  @tparam ThreadSafe Set to true to make increments and adds thread-safe.
 */
 template <class ValueType, bool ThreadSafe>
 class count {
