@@ -7,84 +7,25 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_COUNT_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_COUNT_HPP
 
-#include <atomic>
 #include <boost/core/nvp.hpp>
-#include <boost/histogram/detail/priority.hpp>
+#include <boost/histogram/detail/atomic_number.hpp>
 #include <boost/histogram/fwd.hpp> // for count<>
 #include <type_traits>             // for std::common_type
 
 namespace boost {
 namespace histogram {
-namespace detail {
-
-template <class Derived, class T, bool B>
-struct atomic_float_ext {};
-
-template <class Derived, class T>
-struct atomic_float_ext<Derived, T, true> {
-  // never defined for float
-  Derived& operator++() noexcept {
-    auto& d = static_cast<Derived&>(*this);
-    d += static_cast<T>(1);
-    return d;
-  }
-};
-
-// copyable arithmetic type with atomic operator++ and operator+=,
-// works on floating point numbers already in C++14
-template <class T>
-struct atomic : std::atomic<T>,
-                atomic_float_ext<atomic<T>, T, std::is_floating_point<T>::value> {
-  static_assert(std::is_arithmetic<T>(), "");
-
-  using std::atomic<T>::atomic;
-
-  atomic() noexcept = default;
-  atomic(const atomic& o) noexcept : std::atomic<T>{o.load()} {}
-  atomic& operator=(const atomic& o) noexcept {
-    this->store(o.load());
-    return *this;
-  }
-
-  // operator is not defined for floating point before C++20
-  atomic& operator+=(const T& x) noexcept {
-    add_impl(*this, x, priority<1>{});
-    return *this;
-  }
-
-private:
-  // always available for integral types, in C++20 also available for float
-  template <class U = T>
-  static auto add_impl(std::atomic<U>& a, const U& x, priority<1>) noexcept
-      -> decltype(a += x) {
-    return a += x;
-  }
-
-  // pre-C++20 fallback implementation for floating point
-  template <class U = T>
-  static void add_impl(std::atomic<U>& a, const U& x, priority<0>) noexcept {
-    T expected = a.load();
-    // if another tread changed `expected` in the meantime, compare_exchange returns
-    // false and updates expected; we then loop and try to update again;
-    // see https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
-    while (!a.compare_exchange_weak(expected, expected + x))
-      ;
-  }
-};
-} // namespace detail
-
 namespace accumulators {
 
 /**
-  Wraps a C++ builtin arithmetic type which is optionally thread-safe.
+  Wraps a C++ arithmetic type optionally implement thread-safe increments and adds.
 
   This adaptor optionally uses atomic operations to make concurrent increments and
   additions thread-safe for the stored arithmetic value, which can be integral or
   floating point. For small histograms, the performance will still be poor because of
   False Sharing, see https://en.wikipedia.org/wiki/False_sharing for details.
 
-  Warning: Assignment is not thread-safe, so don't assign concurrently.
-
+  Warning: Assignment is not thread-safe in this implementation, so don't assign
+  concurrently.
 
   Furthermore, this wrapper class can be used as a base class by users to add
   arbitrary metadata to each bin of a histogram.
@@ -97,7 +38,7 @@ namespace accumulators {
 template <class ValueType, bool ThreadSafe>
 class count {
   using internal_type =
-      std::conditional_t<ThreadSafe, detail::atomic<ValueType>, ValueType>;
+      std::conditional_t<ThreadSafe, detail::atomic_number<ValueType>, ValueType>;
 
 public:
   using value_type = ValueType;
