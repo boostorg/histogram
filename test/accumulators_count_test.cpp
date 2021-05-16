@@ -13,8 +13,9 @@
 using namespace boost::histogram;
 using namespace std::literals;
 
-int main() {
-  using c_t = accumulators::count<double>;
+template <class T, bool B>
+void run_tests() {
+  using c_t = accumulators::count<T, B>;
 
   c_t c;
   ++c;
@@ -38,6 +39,13 @@ int main() {
   BOOST_TEST_GE(one, one_copy);
 
   BOOST_TEST_EQ(c_t{} += c_t{}, c_t{});
+}
+
+int main() {
+  run_tests<int, false>();
+  run_tests<int, true>();
+  run_tests<float, false>();
+  run_tests<float, true>();
 
   return boost::report_errors();
 }
