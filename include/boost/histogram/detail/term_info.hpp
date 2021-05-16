@@ -7,6 +7,8 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_TERM_INFO_HPP
 #define BOOST_HISTOGRAM_DETAIL_TERM_INFO_HPP
 
+#include <algorithm>
+
 #if defined __has_include
 #if __has_include(<sys/ioctl.h>) && __has_include(<unistd.h>)
 #include <sys/ioctl.h>
