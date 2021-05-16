@@ -153,6 +153,8 @@ public:
     value_ = v;
   }
 
+  static constexpr bool thread_safe() noexcept { return ThreadSafe; }
+
   // begin: extra operators to make count behave like a regular number
 
   count& operator*=(const count& rhs) noexcept {
