@@ -13,7 +13,7 @@
 #include <unistd.h>
 #endif
 #endif
-#include <boost/config/workaround.hpp>
+#include <boost/config.hpp>
 #include <cstdlib>
 #include <cstring>
 
@@ -25,7 +25,7 @@ namespace term_info {
 class env_t {
 public:
   env_t(const char* key) {
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0) // msvc complains about using std::getenv
+#if defined(BOOST_MSVC) // msvc complains about using std::getenv
     _dupenv_s(&data, &size, key);
 #else
     data = std::getenv(key);
@@ -34,7 +34,7 @@ public:
   }
 
   ~env_t() {
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#if defined(BOOST_MSVC)
     std::free(data);
 #endif
   }
@@ -67,12 +67,12 @@ inline int width() {
 #if defined TIOCGWINSZ
   struct winsize ws;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
-  w = std::max(static_cast<int>(ws.ws_col), 0); // not sure if ws_col can be less than 0
+  w = (std::max)(static_cast<int>(ws.ws_col), 0); // not sure if ws_col can be less than 0
 #endif
   env_t env("COLUMNS");
-  const int col = std::max(static_cast<int>(env), 0);
+  const int col = (std::max)(static_cast<int>(env), 0);
   // if both t and w are set, COLUMNS may be used to restrict width
-  return w == 0 ? col : std::min(col, w);
+  return w == 0 ? col : (std::min)(col, w);
 }
 } // namespace term_info
 
