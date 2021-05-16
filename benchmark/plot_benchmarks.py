@@ -6,9 +6,6 @@
 
 from matplotlib import pyplot as plt, lines
 import shelve
-import json
-import subprocess as subp
-import sys
 from collections import defaultdict
 from run_benchmarks import get_commits, run
 import numpy as np
@@ -18,6 +15,7 @@ thread = None
 current_index = 0
 
 commits, comments = get_commits()
+
 
 def get_benchmarks(results):
     benchmarks = defaultdict(lambda: [])
@@ -30,6 +28,7 @@ def get_benchmarks(results):
                 benchmarks[name].append((commits.index(hash), time))
     return benchmarks
 
+
 with shelve.open("benchmark_results") as results:
     benchmarks = get_benchmarks(results)
 
@@ -38,7 +37,8 @@ plt.subplots_adjust(hspace=0, top=0.98, bottom=0.05, right=0.96)
 
 plt.sca(ax[0])
 for name, xy in benchmarks.items():
-    if "uniform" in name: continue
+    if "uniform" in name:
+        continue
     if "_1d" in name:
         x, y = np.transpose(xy)
         plt.plot(x, y, ".-", label=name)
@@ -46,7 +46,8 @@ plt.legend(fontsize="xx-small")
 
 plt.sca(ax[1])
 for name, xy in benchmarks.items():
-    if "uniform" in name: continue
+    if "uniform" in name:
+        continue
     if "_2d" in name:
         x, y = np.transpose(xy)
         plt.plot(x, y, ".-", label=name)
@@ -54,7 +55,8 @@ plt.legend(fontsize="xx-small")
 
 plt.sca(ax[2])
 for name, xy in benchmarks.items():
-    if "uniform" in name: continue
+    if "uniform" in name:
+        continue
     if "_3d" in name:
         x, y = np.transpose(xy)
         plt.plot(x, y, ".-", label=name)
@@ -62,13 +64,17 @@ plt.legend(fontsize="xx-small")
 
 plt.sca(ax[3])
 for name, xy in benchmarks.items():
-    if "uniform" in name: continue
+    if "uniform" in name:
+        continue
     if "_6d" in name:
         x, y = np.transpose(xy)
         plt.plot(x, y, ".-", label=name)
 plt.legend(fontsize="xx-small")
 
-plt.figtext(0.01, 0.5, "time per loop / ns [smaller is better]", rotation=90, va="center")
+plt.figtext(
+    0.01, 0.5, "time per loop / ns [smaller is better]", rotation=90, va="center"
+)
+
 
 def format_coord(x, y):
     global current_index
@@ -77,14 +83,18 @@ def format_coord(x, y):
     comment = comments[hash]
     return f"{hash} {comment}"
 
+
 for axi in ax.flatten():
     axi.format_coord = format_coord
 
+
 def on_key_press(event):
     global thread
-    if thread and thread.is_alive(): return
+    if thread and thread.is_alive():
+        return
 
-    if event.key != "u": return
+    if event.key != "u":
+        return
 
     hash = commits[current_index]
 
@@ -107,6 +117,7 @@ def on_key_press(event):
     thread = threading.Thread(target=worker, args=(fig, ax, hash))
     thread.start()
 
-fig.canvas.mpl_connect('key_press_event', on_key_press)
+
+fig.canvas.mpl_connect("key_press_event", on_key_press)
 
 plt.show()
