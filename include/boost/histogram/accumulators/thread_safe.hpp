@@ -22,19 +22,19 @@ struct is_thread_safe<thread_safe<T>> : std::true_type {};
 
 /** Thread-safe adaptor for builtin integral numbers.
 
-  This adaptor uses std::atomic to make concurrent increments and additions safe for the
-  stored value.
+  This adaptor uses atomic operations to make concurrent increments and additions safe for
+  the stored value.
 
   On common computing platforms, the adapted integer has the same size and
   alignment as underlying type. The atomicity is implemented with a special CPU
   instruction. On exotic platforms the size of the adapted number may be larger and/or the
   type may have different alignment, which means it cannot be tightly packed into arrays.
 
-  @tparam T type to adapt, must be supported by std::atomic.
+  @tparam T type to adapt, must be an integral type.
  */
 template <class T>
-class [[deprecated(
-    "use count<T, true> instead; thread_safe will be removed in boost-1.79")]] thread_safe
+class [[deprecated("use count<T, true> instead; "
+                   "thread_safe<T> will be removed in boost-1.79")]] thread_safe
     : public std::atomic<T> {
 public:
   using value_type = T;
