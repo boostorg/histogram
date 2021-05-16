@@ -16,24 +16,26 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-template <class Derived, bool B>
+template <class Derived, class T, bool B>
 struct atomic_float_ext {};
 
-template <class Derived>
-struct atomic_float_ext<Derived, true> {
+template <class Derived, class T>
+struct atomic_float_ext<Derived, T, true> {
   Derived& operator++() noexcept {
-    this->operator+=(static_cast<typename Derived::value_type>(1));
-    return static_cast<Derived&>(*this);
+    auto& d = static_cast<Derived&>(*this);
+    d += static_cast<T>(1);
+    return d;
   }
 
-  Derived& operator+=(typename Derived::const_reference x) noexcept {
-    auto expected = this->load();
+  Derived& operator+=(const T& x) noexcept {
+    auto& d = static_cast<Derived&>(*this);
+    T expected = d.load();
     // if another tread changed expected value, compare_exchange returns false
     // and updates expected; we then loop and try to update again;
     // see https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange
-    while (!this->compare_exchange_weak(expected, expected + x))
+    while (!d.compare_exchange_weak(expected, expected + x))
       ;
-    return static_cast<Derived&>(*this);
+    return d;
   }
 };
 
@@ -41,11 +43,8 @@ struct atomic_float_ext<Derived, true> {
 // works on floating point numbers already in C++14
 template <class T>
 struct atomic : std::atomic<T>,
-                atomic_float_ext<atomic<T>, std::is_floating_point<T>::value> {
+                atomic_float_ext<atomic<T>, T, std::is_floating_point<T>::value> {
   static_assert(std::is_arithmetic<T>(), "");
-
-  using value_type = T;
-  using const_reference = const T&;
 
   using std::atomic<T>::atomic;
 
@@ -122,7 +121,7 @@ public:
   bool operator!=(const count& rhs) const noexcept { return !operator==(rhs); }
 
   /// Return count
-  const_reference value() const noexcept { return value_; }
+  value_type value() const noexcept { return value_; }
 
   // conversion to value_type must be explicit
   explicit operator value_type() const noexcept { return value_; }
