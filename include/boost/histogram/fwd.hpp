@@ -91,7 +91,7 @@ struct sample_type;
 
 namespace accumulators {
 
-template <class ValueType = double>
+template <class ValueType = double, bool ThreadSafe = false>
 class count;
 
 template <class ValueType = double>

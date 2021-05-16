@@ -54,9 +54,9 @@ std::basic_ostream<CharT, Traits>& handle_nonzero_width(
 
 namespace accumulators {
 
-template <class CharT, class Traits, class U>
+template <class CharT, class Traits, class U, bool B>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const count<U>& x) {
+                                              const count<U, B>& x) {
   return os << x.value();
 }
 
