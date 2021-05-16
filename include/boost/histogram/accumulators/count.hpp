@@ -60,7 +60,7 @@ private:
     return a += x;
   }
 
-  // pre-C++20 fallback implementation
+  // pre-C++20 fallback implementation for floating point
   template <class U = T>
   static void add_impl(std::atomic<U>& a, const U& x, priority<0>) noexcept {
     T expected = a.load();
