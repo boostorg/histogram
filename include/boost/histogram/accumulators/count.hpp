@@ -17,7 +17,7 @@ namespace histogram {
 namespace accumulators {
 
 /**
-  Wraps a C++ arithmetic type optionally implement thread-safe increments and adds.
+  Wraps a C++ arithmetic type with optionally thread-safe increments and adds.
 
   This adaptor optionally uses atomic operations to make concurrent increments and
   additions thread-safe for the stored arithmetic value, which can be integral or
