@@ -132,22 +132,26 @@ public:
   bool operator>=(const count& rhs) const noexcept { return value_ >= rhs.value_; }
 
   friend bool operator==(const_reference x, const count& rhs) noexcept {
-    return rhs == x;
+    return x == rhs.value_;
   }
 
   friend bool operator!=(const_reference x, const count& rhs) noexcept {
-    return rhs != x;
+    return x != rhs.value_;
   }
 
-  friend bool operator<(const_reference x, const count& rhs) noexcept { return rhs > x; }
+  friend bool operator<(const_reference x, const count& rhs) noexcept {
+    return x < rhs.value_;
+  }
 
-  friend bool operator>(const_reference x, const count& rhs) noexcept { return rhs < x; }
+  friend bool operator>(const_reference x, const count& rhs) noexcept {
+    return x > rhs.value_;
+  }
 
   friend bool operator<=(const_reference x, const count& rhs) noexcept {
-    return rhs >= x;
+    return x <= rhs.value_;
   }
   friend bool operator>=(const_reference x, const count& rhs) noexcept {
-    return rhs <= x;
+    return x >= rhs.value_;
   }
 
   // end: extra operators
