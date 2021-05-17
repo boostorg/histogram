@@ -28,32 +28,34 @@ class env_t {
 public:
   env_t(const char* key) {
 #if defined(BOOST_MSVC) // msvc complains about using std::getenv
-    _dupenv_s(&data, &size, key);
+    _dupenv_s(&data_, &size_, key);
 #else
-    data = std::getenv(key);
-    if (data) size = std::strlen(data);
+    data_ = std::getenv(key);
+    if (data_) size_ = std::strlen(data_);
 #endif
   }
 
   ~env_t() {
 #if defined(BOOST_MSVC)
-    std::free(data);
+    std::free(data_);
 #endif
   }
 
   bool contains(const char* s) {
     const std::size_t n = std::strlen(s);
-    if (size < n) return false;
-    return std::strstr(data, s);
+    if (size_ < n) return false;
+    return std::strstr(data_, s);
   }
 
-  operator bool() { return size > 0; }
+  operator bool() { return size_ > 0; }
 
-  explicit operator int() { return size ? std::atoi(data) : 0; }
+  explicit operator int() { return size_ ? std::atoi(data_) : 0; }
+
+  const char* data() const { return data_; }
 
 private:
-  char* data;
-  std::size_t size = 0;
+  char* data_;
+  std::size_t size_ = 0;
 };
 
 inline bool utf8() {
