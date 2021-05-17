@@ -323,7 +323,7 @@ public:
   indexed_range(histogram_type& hist, Iterable&& range)
       : begin_(hist.begin(), hist), end_(hist.end(), hist) {
     auto r_begin = std::begin(range);
-    assert(std::distance(r_begin, std::end(range)) == hist.rank());
+    assert(std::distance(r_begin, std::end(range)) == static_cast<int>(hist.rank()));
 
     begin_.indices_.hist_->for_each_axis([ca = begin_.indices_.begin(), r_begin,
                                           stride = std::size_t{1},

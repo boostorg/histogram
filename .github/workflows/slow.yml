@@ -80,10 +80,10 @@ jobs:
       run: |
         ./bootstrap.sh
         ./b2 headers
-    - name: Test cxxstd=14
+    - name: Test cxxstd=14 (warnings ignored)
       run: |
         cd libs/histogram
-        ../../b2 $B2_OPTS toolset=gcc-5 cxxstd=14 test//all examples
+        ../../b2 -q -j2 toolset=gcc-5 cxxstd=14 test//all examples
 
   gcc10:
     runs-on: ubuntu-latest

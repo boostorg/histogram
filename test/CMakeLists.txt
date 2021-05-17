@@ -97,6 +97,8 @@ if (Threads_FOUND)
     LINK_LIBRARIES Threads::Threads)
   boost_test(TYPE run SOURCES storage_adaptor_threaded_test.cpp
     LINK_LIBRARIES Threads::Threads)
+  boost_test(TYPE run SOURCES accumulators_count_thread_safe_test.cpp
+    LINK_LIBRARIES Threads::Threads)
   boost_test(TYPE run SOURCES accumulators_thread_safe_test.cpp
     LINK_LIBRARIES Threads::Threads)
 

@@ -7,13 +7,15 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_TERM_INFO_HPP
 #define BOOST_HISTOGRAM_DETAIL_TERM_INFO_HPP
 
+#include <algorithm>
+
 #if defined __has_include
 #if __has_include(<sys/ioctl.h>) && __has_include(<unistd.h>)
 #include <sys/ioctl.h>
 #include <unistd.h>
 #endif
 #endif
-#include <boost/config/workaround.hpp>
+#include <boost/config.hpp>
 #include <cstdlib>
 #include <cstring>
 
@@ -25,33 +27,35 @@ namespace term_info {
 class env_t {
 public:
   env_t(const char* key) {
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0) // msvc complains about using std::getenv
-    _dupenv_s(&data, &size, key);
+#if defined(BOOST_MSVC) // msvc complains about using std::getenv
+    _dupenv_s(&data_, &size_, key);
 #else
-    data = std::getenv(key);
-    if (data) size = std::strlen(data);
+    data_ = std::getenv(key);
+    if (data_) size_ = std::strlen(data_);
 #endif
   }
 
   ~env_t() {
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-    std::free(data);
+#if defined(BOOST_MSVC)
+    std::free(data_);
 #endif
   }
 
   bool contains(const char* s) {
     const std::size_t n = std::strlen(s);
-    if (size < n) return false;
-    return std::strstr(data, s);
+    if (size_ < n) return false;
+    return std::strstr(data_, s);
   }
 
-  operator bool() { return size > 0; }
+  operator bool() { return size_ > 0; }
 
-  explicit operator int() { return size ? std::atoi(data) : 0; }
+  explicit operator int() { return size_ ? std::atoi(data_) : 0; }
+
+  const char* data() const { return data_; }
 
 private:
-  char* data;
-  std::size_t size = 0;
+  char* data_;
+  std::size_t size_ = 0;
 };
 
 inline bool utf8() {
@@ -67,12 +71,12 @@ inline int width() {
 #if defined TIOCGWINSZ
   struct winsize ws;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
-  w = std::max(static_cast<int>(ws.ws_col), 0); // not sure if ws_col can be less than 0
+  w = (std::max)(static_cast<int>(ws.ws_col), 0); // not sure if ws_col can be less than 0
 #endif
   env_t env("COLUMNS");
-  const int col = std::max(static_cast<int>(env), 0);
+  const int col = (std::max)(static_cast<int>(env), 0);
   // if both t and w are set, COLUMNS may be used to restrict width
-  return w == 0 ? col : std::min(col, w);
+  return w == 0 ? col : (std::min)(col, w);
 }
 } // namespace term_info
 

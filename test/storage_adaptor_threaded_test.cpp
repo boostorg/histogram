@@ -5,10 +5,10 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/accumulators/count.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
-#include <boost/histogram/accumulators/thread_safe.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/storage_adaptor.hpp>
+#include "throw_exception.hpp"
 
 #include <array>
 #include <deque>
@@ -48,7 +48,7 @@ void tests() {
 }
 
 int main() {
-  using ts_int = accumulators::thread_safe<int>;
+  using ts_int = accumulators::count<int, true>;
   tests<std::vector<ts_int>>();
   tests<std::array<ts_int, 100>>();
   tests<std::deque<ts_int>>();

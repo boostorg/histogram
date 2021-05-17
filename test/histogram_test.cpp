@@ -6,8 +6,9 @@
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/accumulators.hpp>
+#include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>

@@ -91,7 +91,7 @@ struct sample_type;
 
 namespace accumulators {
 
-template <class ValueType = double>
+template <class ValueType = double, bool ThreadSafe = false>
 class count;
 
 template <class ValueType = double>
@@ -110,9 +110,7 @@ template <class T>
 class thread_safe;
 
 template <class T>
-struct is_thread_safe : std::false_type {};
-template <class T>
-struct is_thread_safe<thread_safe<T>> : std::true_type {};
+struct is_thread_safe;
 
 } // namespace accumulators
 

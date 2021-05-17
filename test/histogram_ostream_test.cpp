@@ -109,9 +109,9 @@ void run_tests() {
     BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
   }
 
-  // regular with accumulators::thread_safe
+  // regular with thread-safe accumulators::count
   {
-    auto h = make_s(Tag(), dense_storage<accumulators::thread_safe<double>>(),
+    auto h = make_s(Tag(), dense_storage<accumulators::count<double, true>>(),
                     R2(3, -0.5, 1.0));
     h.at(0) = 1;
     h.at(1) = 10;
@@ -127,6 +127,28 @@ void run_tests() {
                           "END";
 
     BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
+  }
+
+  // regular with accumulators::thread_safe
+  {
+#include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
+    auto h =
+        make_s(Tag(), dense_storage<accumulators::thread_safe<int>>(), R2(3, -0.5, 1.0));
+    h.at(0) = 1;
+    h.at(1) = 10;
+    h.at(2) = 5;
+
+    const auto expected = "BEGIN\n"
+                          "histogram(regular(3, -0.5, 1, options=none))\n"
+                          "               ┌───────────────────────┐\n"
+                          "[-0.5,   0) 1  │██▎                    │\n"
+                          "[   0, 0.5) 10 │██████████████████████ │\n"
+                          "[ 0.5,   1) 5  │███████████            │\n"
+                          "               └───────────────────────┘\n"
+                          "END";
+
+    BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
+#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
   }
 
   // regular with accumulators::sum
@@ -366,7 +388,7 @@ void run_tests() {
 
 int main() {
   run_tests<static_tag>();
-  // run_tests<dynamic_tag>();
+  run_tests<dynamic_tag>();
 
   {
     // cannot make empty static histogram
