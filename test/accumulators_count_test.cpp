@@ -27,8 +27,8 @@ void run_tests() {
   c += 2;
   BOOST_TEST_EQ(str(c), "3"s);
 
-  BOOST_TEST_EQ(c, 3);
-  BOOST_TEST_NE(c, 2);
+  BOOST_TEST_EQ(c, static_cast<T>(3));
+  BOOST_TEST_NE(c, static_cast<T>(2));
 
   c_t one(1), two(2), one_copy(1);
   BOOST_TEST_LT(one, two);
