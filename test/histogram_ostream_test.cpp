@@ -134,7 +134,6 @@ void run_tests() {
 #include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
     auto h =
         make_s(Tag(), dense_storage<accumulators::thread_safe<int>>(), R2(3, -0.5, 1.0));
-#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
     h.at(0) = 1;
     h.at(1) = 10;
     h.at(2) = 5;
@@ -149,6 +148,7 @@ void run_tests() {
                           "END";
 
     BOOST_TEST_CSTR_EQ(str(h, 40).c_str(), expected);
+#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
   }
 
   // regular with accumulators::sum
