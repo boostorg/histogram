@@ -10,6 +10,7 @@
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
+#include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
@@ -22,12 +23,6 @@
 #include <string>
 #include "throw_exception.hpp"
 #include "utility_histogram.hpp"
-
-#include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
-
-#include <boost/histogram/accumulators/thread_safe.hpp>
-
-#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
 
 using namespace boost::histogram;
 

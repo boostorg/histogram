@@ -4,8 +4,6 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
-
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/accumulators/thread_safe.hpp>
@@ -18,7 +16,9 @@ using namespace std::literals;
 
 int main() {
 
+#include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
   using ts_t = accumulators::thread_safe<int>;
+#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
 
   ts_t i;
   ++i;
@@ -35,5 +35,3 @@ int main() {
 
   return boost::report_errors();
 }
-
-#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
