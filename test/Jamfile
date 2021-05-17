@@ -82,8 +82,6 @@ alias cxx14 :
     [ run histogram_growing_test.cpp ]
     [ run histogram_mixed_test.cpp ]
     [ run histogram_operators_test.cpp ]
-    [ run histogram_ostream_test.cpp : : : <testing.launcher>"LANG=UTF" ]
-    [ run histogram_ostream_ascii_test.cpp : : : <testing.launcher>"LANG=FOO COLUMNS=20" ]
     [ run histogram_test.cpp ]
     [ run indexed_test.cpp ]
     [ run storage_adaptor_test.cpp ]
@@ -129,6 +127,12 @@ alias threading :
     <threading>multi
     ;
 
+# tests do not work on windows, because environment variables cannot be set
+alias not_windows :
+    [ run histogram_ostream_test.cpp : : : <testing.launcher>"LANG=UTF" ]
+    [ run histogram_ostream_ascii_test.cpp : : : <testing.launcher>"LANG=FOO COLUMNS=20" ]
+    ;
+
 # warnings are off for these other boost libraries, which tend to be not warning-free
 alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off ;
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
@@ -153,10 +157,10 @@ alias libserial :
 alias minimal : cxx14 cxx17 failure threading ;
 
 # all tests
-alias all : minimal odr accumulators range units serialization ;
+alias all : minimal not_windows odr accumulators range units serialization ;
 
 # all except "failure", because it is distracting during development
-alias develop : cxx14 cxx17 threading odr accumulators range units serialization ;
+alias develop : cxx14 cxx17 threading not_windows odr accumulators range units serialization ;
 
 explicit minimal ;
 explicit all ;
@@ -165,6 +169,7 @@ explicit cxx14 ;
 explicit cxx17 ;
 explicit failure ;
 explicit threading ;
+explicit not_windows ;
 explicit accumulators ;
 explicit range ;
 explicit units ;

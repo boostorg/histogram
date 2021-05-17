@@ -14,11 +14,10 @@
 using namespace boost::histogram;
 using namespace std::literals;
 
-int main() {
-
 #include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
+
+int main() {
   using ts_t = accumulators::thread_safe<int>;
-#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
 
   ts_t i;
   ++i;
@@ -35,3 +34,5 @@ int main() {
 
   return boost::report_errors();
 }
+
+#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
