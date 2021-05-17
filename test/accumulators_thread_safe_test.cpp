@@ -15,9 +15,10 @@ using namespace boost::histogram;
 using namespace std::literals;
 
 int main() {
+
 #include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
+
   using ts_t = accumulators::thread_safe<int>;
-#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
 
   ts_t i;
   ++i;
@@ -27,6 +28,8 @@ int main() {
   BOOST_TEST_EQ(str(i), "1001"s);
 
   BOOST_TEST_EQ(ts_t{} += ts_t{}, ts_t{});
+
+#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
 
   return boost::report_errors();
 }
