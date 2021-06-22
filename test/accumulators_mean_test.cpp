@@ -7,6 +7,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/unsafe_access.hpp>
 #include <boost/histogram/weight.hpp>
 #include <sstream>
 #include "is_close.hpp"
@@ -108,6 +109,17 @@ int main() {
     BOOST_TEST_EQ(a.count(), b.count());
     BOOST_TEST_EQ(a.value(), b.value());
     BOOST_TEST_IS_CLOSE(a.variance(), b.variance(), 1e-3);
+  }
+
+  // unsafe_access
+  {
+    m_t a;
+    a(1);
+    a(2);
+
+    BOOST_TEST_EQ(a.count(), 2);
+    unsafe_access::accumulator_data(a).sum_ = 1;
+    BOOST_TEST_EQ(a.count(), 1);
   }
 
   return boost::report_errors();
