@@ -18,7 +18,7 @@ import sys
 
 LCOV_VERSION = "1.15"
 
-gcov = os.environ.get("GCOV", "gcov-8")
+gcov = os.environ.get("GCOV", "gcov")
 
 gcov_version = gcov.split("-")[1] if "-" in gcov else None
 gcc_version = f"gcc-{gcov_version}" if gcov_version else "gcc"
