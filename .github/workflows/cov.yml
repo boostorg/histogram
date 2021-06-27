@@ -12,10 +12,11 @@ on:
 
 env:
   B2_OPTS: -q -j2 warnings-as-errors=on
+  GCC_VERSION: 11
 
 jobs:
   cov:
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
     - name: Fetch Boost superproject
@@ -49,12 +50,12 @@ jobs:
         cd libs/histogram
 
         # don't compile examples in coverage build, coverage must come from tests alone
-        ../../b2 $B2_OPTS toolset=gcc-8 cxxstd=latest coverage=on test//all
+        ../../b2 $B2_OPTS toolset=gcc-${GCC_VERSION} cxxstd=latest coverage=on test//all
 
     - name: Process coverage data
       run: |
         cd libs/histogram
-        GCOV=gcov-8 tools/cov.py
+        GCOV=gcov-${GCC_VERSION} tools/cov.py
 
     - uses: coverallsapp/github-action@v1.1.2
       with:
