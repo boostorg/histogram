@@ -349,7 +349,7 @@ void special_tests() {
   // 1D growing (bug?)
   {
     using axis_type_1 =
-        axis::regular<double, use_default, use_default, axis::option::growth_t>;
+        axis::regular<double, use_default, use_default, axis::option::bitset<11u>>;
     using axis_type_2 = axis::regular<double>;
     using axis_type_3 = axis::integer<int>;
     using axis_type_4 = axis::category<int>;
@@ -357,6 +357,30 @@ void special_tests() {
 
     using axis_variant_type =
         axis::variant<axis_type_1, axis_type_2, axis_type_3, axis_type_4, axis_type_5>;
+
+    auto axes = std::vector<axis_variant_type>({axis_type_1(10, 0, 1)});
+    auto h = histogram<decltype(axes), dense_storage<double>>(axes);
+    auto h2 = h;
+
+    std::vector<int> f1({2});
+    std::vector<int> f2({-1});
+
+    h(2);
+    h(-1);
+
+    h2.fill(f1);
+    h2.fill(f2);
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h2), 2);
+  }
+
+  // 1D growing (bug?)
+  {
+    using axis_type_1 =
+        axis::regular<double, use_default, use_default, axis::option::bitset<11u>>;
+
+    using axis_variant_type = axis::variant<axis_type_1>;
 
     auto axes = std::vector<axis_variant_type>({axis_type_1(10, 0, 1)});
     auto h = histogram<decltype(axes), dense_storage<double>>(axes);
