@@ -45,6 +45,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   include(CTest)
   add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>)
+  add_dependencies(check tests) # needed to build the "run" tests
 
   if(BUILD_TESTING)
 
