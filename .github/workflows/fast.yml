@@ -37,4 +37,5 @@ jobs:
     - name: ctest
       run: |
         cd build
+        make tests # temporary workaround (I hope)
         ctest -C Debug --output-on-failure
