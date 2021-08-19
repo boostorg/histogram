@@ -57,7 +57,7 @@ void run_tests() {
     auto two = six / 3;
     BOOST_TEST_EQ(two, static_cast<T>(2));
     two /= 2;
-    BOOST_TEST_EQ(six, static_cast<T>(1));
+    BOOST_TEST_EQ(two, static_cast<T>(1));
   }
 }
 
