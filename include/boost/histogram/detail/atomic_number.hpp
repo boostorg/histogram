@@ -48,6 +48,12 @@ struct atomic_number : std::atomic<T> {
     return *this;
   }
 
+  // not thread-safe
+  atomic_number& operator/=(const T& x) noexcept {
+    this->store(this->load() / x);
+    return *this;
+  }
+
 private:
   // for integral types
   template <class U = T>

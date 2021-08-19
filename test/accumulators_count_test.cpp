@@ -48,6 +48,16 @@ void run_tests() {
     c_t two(2);
     auto six = two * 3;
     BOOST_TEST_EQ(six, static_cast<T>(6));
+    six *= 2;
+    BOOST_TEST_EQ(six, static_cast<T>(12));
+  }
+
+  {
+    c_t six(6);
+    auto two = six / 3;
+    BOOST_TEST_EQ(two, static_cast<T>(2));
+    two /= 2;
+    BOOST_TEST_EQ(two, static_cast<T>(1));
   }
 }
 
