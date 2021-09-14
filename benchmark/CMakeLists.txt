@@ -17,7 +17,7 @@ function(add_benchmark NAME)
     message(AUTHOR_WARNING "add_benchmark: extra arguments ignored: ${__UNPARSED_ARGUMENTS}")
   endif()
 
-  set(SOURCE ${NAME})
+  set(SOURCE ${NAME}.cpp)
   set(NAME benchmark_${NAME})
 
   if(DEFINED BUILD_TESTING AND NOT BUILD_TESTING)
