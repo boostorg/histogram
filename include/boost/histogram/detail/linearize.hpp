@@ -59,7 +59,12 @@ std::size_t linearize(Index& out, const std::size_t stride, const Axis& ax,
   return linearize(opts, out, stride, ax.size(), axis::traits::index(ax, v));
 }
 
-// initial offset of out must be zero
+/**
+  Must be used when axis is potentially growing. Also works for non-growing axis.
+
+  Initial offset of `out` must be zero. We cannot assert on this, because we do not
+  know if this is the first call of `linearize_growth`.
+*/
 template <class Index, class Axis, class Value>
 std::size_t linearize_growth(Index& out, axis::index_type& shift,
                              const std::size_t stride, Axis& a, const Value& v) {

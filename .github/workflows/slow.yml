@@ -64,9 +64,12 @@ jobs:
         ../../b2 $B2_OPTS cxxstd=17 test//all
 
   gcc5:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
+    - uses: egor-tensin/setup-gcc@v1
+      with:
+        version: 5
     - name: Fetch Boost superproject
       run: |
         cd ..

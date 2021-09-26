@@ -14,6 +14,8 @@
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/axis/ostream.hpp>
+#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/variant.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>
@@ -343,6 +345,61 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
   }
 }
 
+void special_tests() {
+  // 1D growing (bug?)
+  {
+    using axis_type_1 =
+        axis::regular<double, use_default, use_default, axis::option::bitset<11u>>;
+    using axis_type_2 = axis::regular<double>;
+    using axis_type_3 = axis::integer<int>;
+    using axis_type_4 = axis::category<int>;
+    using axis_type_5 = axis::category<std::string>;
+
+    using axis_variant_type =
+        axis::variant<axis_type_1, axis_type_2, axis_type_3, axis_type_4, axis_type_5>;
+
+    auto axes = std::vector<axis_variant_type>({axis_type_1(10, 0, 1)});
+    auto h = histogram<decltype(axes), dense_storage<double>>(axes);
+    auto h2 = h;
+
+    std::vector<int> f1({2});
+    std::vector<int> f2({-1});
+
+    h(2);
+    h(-1);
+
+    h2.fill(f1);
+    h2.fill(f2);
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h2), 2);
+  }
+
+  // 1D growing (bug?)
+  {
+    using axis_type_1 =
+        axis::regular<double, use_default, use_default, axis::option::bitset<11u>>;
+
+    using axis_variant_type = axis::variant<axis_type_1>;
+
+    auto axes = std::vector<axis_variant_type>({axis_type_1(10, 0, 1)});
+    auto h = histogram<decltype(axes), dense_storage<double>>(axes);
+    auto h2 = h;
+
+    std::vector<int> f1({2});
+    std::vector<int> f2({-1});
+
+    h(2);
+    h(-1);
+
+    h2.fill(f1);
+    h2.fill(f2);
+
+    BOOST_TEST_EQ(h, h2);
+    BOOST_TEST_EQ(sum(h2), 2);
+  }
+}
+
 int main() {
   std::mt19937 gen(1);
   std::normal_distribution<> id(0, 2);
@@ -356,6 +413,8 @@ int main() {
 
   run_tests<static_tag>(x, y, w);
   run_tests<dynamic_tag>(x, y, w);
+
+  special_tests();
 
   return boost::report_errors();
 }
