@@ -104,11 +104,11 @@ struct index_visitor {
 
     // Optimization: We call call_2 only once and then add the index shift onto the
     // whole array of indices, because it always the same.
-    const auto begin_value = *begin_;
+    const auto before = *begin_;
     call_2(IsGrowing{}, begin_, value);
     if (is_valid(*begin_)) {
       const auto delta =
-          static_cast<std::intptr_t>(*begin_) - static_cast<std::intptr_t>(begin_value);
+          static_cast<std::intptr_t>(*begin_) - static_cast<std::intptr_t>(before);
       for (auto&& i : make_span(begin_ + 1, size_)) i += delta;
     } else
       std::fill(begin_, begin_ + size_, invalid_index);
