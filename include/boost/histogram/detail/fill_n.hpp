@@ -66,7 +66,7 @@ struct index_visitor {
 
   Axis& axis_;
   const std::size_t stride_, start_, size_; // start and size of value collection
-  const pointer begin_;
+  pointer begin_;                           // must be non-const
   axis::index_type* shift_;
 
   index_visitor(Axis& a, std::size_t& str, const std::size_t& sta, const std::size_t& si,
@@ -101,12 +101,15 @@ struct index_visitor {
   template <class T>
   void call_1(std::true_type, const T& value) const {
     // T is compatible value; fill single value N times
-    index_type idx{*begin_};
-    call_2(IsGrowing{}, &idx, value);
-    if (is_valid(idx)) {
+
+    // Optimization: We call call_2 only once and then add the index shift onto the
+    // whole array of indices, because it always the same.
+    const auto begin_value = *begin_;
+    call_2(IsGrowing{}, begin_, value);
+    if (is_valid(*begin_)) {
       const auto delta =
-          static_cast<std::intptr_t>(idx) - static_cast<std::intptr_t>(*begin_);
-      for (auto&& i : make_span(begin_, size_)) i += delta;
+          static_cast<std::intptr_t>(*begin_) - static_cast<std::intptr_t>(begin_value);
+      for (auto&& i : make_span(begin_ + 1, size_)) i += delta;
     } else
       std::fill(begin_, begin_ + size_, invalid_index);
   }
@@ -129,7 +132,9 @@ void fill_n_indices(Index* indices, const std::size_t start, const std::size_t s
     *eit++ = axis::traits::extent(a);
   }); // LCOV_EXCL_LINE: gcc-8 is missing this line for no reason
 
-  // offset must be zero for growing axes
+  // TODO this seems to always take the path for growing axes, even if Axes is vector
+  // of variant and types actually held are not growing axes?
+  // index offset must be zero for growing axes
   using IsGrowing = has_growing_axis<Axes>;
   std::fill(indices, indices + size, IsGrowing::value ? 0 : offset);
   for_each_axis(axes, [&, stride = static_cast<std::size_t>(1),
