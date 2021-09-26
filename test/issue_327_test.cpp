@@ -16,7 +16,7 @@ int main() {
   using axis_variant = bh::axis::variant<axis_type>;
 
   auto axes = std::vector<axis_variant>({axis_type(10, 0, 1)});
-  auto h = bh::make_histogram(axes);
+  auto h = bh::make_histogram_with(std::vector<int>(), axes);
   BOOST_TEST_EQ(h.rank(), 1);
 
   std::vector<arg_t> vargs = {-1};
