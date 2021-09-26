@@ -20,17 +20,10 @@ int main() {
   auto axes_orig = std::vector<axis_variant>({axis_type(10, 0, 1)});
   auto h = bh::histogram<std::vector<axis_variant>>(axes_orig);
 
-  std::vector<int> val = {-1};
-
   std::vector<arg_t> vargs(1);
+  vargs[0] = -1;
 
   BOOST_TEST_EQ(h.rank(), 1);
-
-  h.for_each_axis([args_it = val.begin(), vargs_it = vargs.begin()](const auto&) mutable {
-    const auto& x = *args_it++;
-    auto& v = *vargs_it++;
-    v = x;
-  });
 
   h.fill(vargs); // CRASH, using h.fill(-1) or h.fill(args) does not crash.
 
