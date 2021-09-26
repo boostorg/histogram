@@ -1,9 +1,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
 #include <boost/histogram/ostream.hpp>
-#include <iostream>
 #include <vector>
-#include "std_ostream.hpp"
 #include "throw_exception.hpp"
 
 namespace bh = boost::histogram;
@@ -22,9 +20,7 @@ int main() {
   BOOST_TEST_EQ(h.rank(), 1);
 
   std::vector<arg_t> vargs = {-1};
-
   h.fill(vargs); // CRASH, using h.fill(-1) or h.fill(args) does not crash.
 
-  // std::cout << h << std::endl;
   return boost::report_errors();
 }
