@@ -103,11 +103,13 @@ struct index_visitor {
     // T is compatible value; fill single value N times
 
     // Optimization: We call call_2 only once and then add the index shift onto the
-    // whole array of indices, because it is always the same.
+    // whole array of indices, because it is always the same. This also works if the
+    // axis grows during this operation. There are no shifts to apply if the zero-point
+    // changes.
     const auto before = *begin_;
     call_2(IsGrowing{}, begin_, value);
     if (is_valid(*begin_)) {
-      // since index can be std::size_t or optional_index, do conversion only here
+      // since index can be std::size_t or optional_index, must do conversion here
       const auto delta =
           static_cast<std::intptr_t>(*begin_) - static_cast<std::intptr_t>(before);
       for (auto it = begin_ + 1; it != begin_ + size_; ++it) *it += delta;
