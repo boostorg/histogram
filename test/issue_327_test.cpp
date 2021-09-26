@@ -15,8 +15,8 @@ int main() {
       bh::axis::regular<double, bh::use_default, bh::use_default, uogrowth_t>;
   using axis_variant = bh::axis::variant<axis_type>;
 
-  auto axes_orig = std::vector<axis_variant>({axis_type(10, 0, 1)});
-  auto h = bh::histogram<std::vector<axis_variant>>(axes_orig);
+  auto axes = std::vector<axis_variant>({axis_type(10, 0, 1)});
+  auto h = bh::make_histogram(axes);
   BOOST_TEST_EQ(h.rank(), 1);
 
   std::vector<arg_t> vargs = {-1};
