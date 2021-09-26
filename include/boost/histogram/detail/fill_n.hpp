@@ -241,21 +241,11 @@ void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t v
   bool all_inclusive = true;
   for_each_axis(axes,
                 [&](const auto& ax) { all_inclusive &= axis::traits::inclusive(ax); });
-  if (axes_rank(axes) == 1) {
-    axis::visit(
-        [&](auto& ax) {
-          std::tuple<decltype(ax)> axes{ax};
-          fill_n_1(offset, storage, axes, vsize, values, std::forward<Us>(us)...);
-        },
-        axes[0]);
-  } else {
-    if (all_inclusive)
-      fill_n_nd<std::size_t>(offset, storage, axes, vsize, values,
-                             std::forward<Us>(us)...);
-    else
-      fill_n_nd<optional_index>(offset, storage, axes, vsize, values,
-                                std::forward<Us>(us)...);
-  }
+  if (all_inclusive)
+    fill_n_nd<std::size_t>(offset, storage, axes, vsize, values, std::forward<Us>(us)...);
+  else
+    fill_n_nd<optional_index>(offset, storage, axes, vsize, values,
+                              std::forward<Us>(us)...);
 }
 
 template <class A, class T, std::size_t N>
