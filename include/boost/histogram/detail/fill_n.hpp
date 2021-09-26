@@ -66,7 +66,7 @@ struct index_visitor {
 
   Axis& axis_;
   const std::size_t stride_, start_, size_; // start and size of value collection
-  pointer begin_;                           // must be non-const
+  const pointer begin_;
   axis::index_type* shift_;
 
   index_visitor(Axis& a, std::size_t& str, const std::size_t& sta, const std::size_t& si,
@@ -103,13 +103,14 @@ struct index_visitor {
     // T is compatible value; fill single value N times
 
     // Optimization: We call call_2 only once and then add the index shift onto the
-    // whole array of indices, because it always the same.
+    // whole array of indices, because it is always the same.
     const auto before = *begin_;
     call_2(IsGrowing{}, begin_, value);
     if (is_valid(*begin_)) {
+      // since index can be std::size_t or optional_index, do conversion only here
       const auto delta =
           static_cast<std::intptr_t>(*begin_) - static_cast<std::intptr_t>(before);
-      for (auto&& i : make_span(begin_ + 1, size_)) i += delta;
+      for (auto it = begin_ + 1; it != begin_ + size_; ++it) *it += delta;
     } else
       std::fill(begin_, begin_ + size_, invalid_index);
   }
