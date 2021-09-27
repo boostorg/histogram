@@ -21,6 +21,7 @@
 
 using namespace boost::histogram;
 namespace tr = axis::transform;
+namespace op = axis::option;
 
 // tests requires a C++17 compatible compiler
 
@@ -43,6 +44,13 @@ int main() {
                           regular<float, tr::sqrt, std::string>);
     BOOST_TEST_TRAIT_SAME(decltype(regular(tr::sqrt(), 1, 0, 1, 0)),
                           regular<double, tr::sqrt, int>);
+    BOOST_TEST_TRAIT_SAME(decltype(regular(1, 0, 1, "x", op::underflow)),
+                          regular<double, tr::id, std::string, op::underflow_t>);
+    BOOST_TEST_TRAIT_SAME(
+        decltype(regular(1, 0, 1, "x", op::underflow | op::overflow)),
+        regular<double, tr::id, std::string, decltype(op::underflow | op::overflow)>);
+    BOOST_TEST_TRAIT_SAME(decltype(regular(tr::sqrt(), 1, 0, 1, "x", op::underflow)),
+                          regular<double, tr::sqrt, std::string, op::underflow_t>);
   }
 
   {

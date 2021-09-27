@@ -213,9 +213,10 @@ public:
    * @param start    low edge of first bin.
    * @param stop     high edge of last bin.
    * @param meta     description of the axis (optional).
+   * @param option   see boost::histogram::axis::option (optional, all values allowed).
    */
   regular(transform_type trans, unsigned n, value_type start, value_type stop,
-          metadata_type meta = {})
+          metadata_type meta = {}, options_type = {})
       : transform_type(std::move(trans))
       , metadata_base(std::move(meta))
       , size_(static_cast<index_type>(n))
@@ -235,8 +236,10 @@ public:
    * @param start    low edge of first bin.
    * @param stop     high edge of last bin.
    * @param meta     description of the axis (optional).
+   * @param option   see boost::histogram::axis::option (optional, all values allowed).
    */
-  regular(unsigned n, value_type start, value_type stop, metadata_type meta = {})
+  regular(unsigned n, value_type start, value_type stop, metadata_type meta = {},
+          options_type = {})
       : regular({}, n, start, stop, std::move(meta)) {}
 
   /** Construct bins with the given step size over real transformed range
@@ -247,6 +250,7 @@ public:
    * @param start   low edge of first bin.
    * @param stop    upper limit of high edge of last bin (see below).
    * @param meta    description of the axis (optional).
+   * @param option   see boost::histogram::axis::option (optional, all values allowed).
    *
    * The axis computes the number of bins as n = abs(stop - start) / step,
    * rounded down. This means that stop is an upper limit to the actual value
@@ -254,7 +258,7 @@ public:
    */
   template <class T>
   regular(transform_type trans, step_type<T> step, value_type start, value_type stop,
-          metadata_type meta = {})
+          metadata_type meta = {}, options_type = {})
       : regular(trans, static_cast<index_type>(std::abs(stop - start) / step.value),
                 start,
                 start + static_cast<index_type>(std::abs(stop - start) / step.value) *
@@ -267,13 +271,15 @@ public:
    * @param start   low edge of first bin.
    * @param stop    upper limit of high edge of last bin (see below).
    * @param meta    description of the axis (optional).
+   * @param option   see boost::histogram::axis::option (optional, all values allowed).
    *
    * The axis computes the number of bins as n = abs(stop - start) / step,
    * rounded down. This means that stop is an upper limit to the actual value
    * (start + n * step).
    */
   template <class T>
-  regular(step_type<T> step, value_type start, value_type stop, metadata_type meta = {})
+  regular(step_type<T> step, value_type start, value_type stop, metadata_type meta = {},
+          options_type = {})
       : regular({}, step, start, stop, std::move(meta)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
@@ -397,20 +403,28 @@ private:
 
 template <class T>
 regular(unsigned, T, T)
-    ->regular<detail::convert_integer<T, double>, transform::id, null_type>;
+    -> regular<detail::convert_integer<T, double>, transform::id, null_type>;
 
 template <class T, class M>
-regular(unsigned, T, T, M)
-    ->regular<detail::convert_integer<T, double>, transform::id,
-              detail::replace_cstring<std::decay_t<M>>>;
+regular(unsigned, T, T, M) -> regular<detail::convert_integer<T, double>, transform::id,
+                                      detail::replace_cstring<std::decay_t<M>>>;
+
+template <class T, class M, unsigned B>
+regular(unsigned, T, T, M, const option::bitset<B>&)
+    -> regular<detail::convert_integer<T, double>, transform::id,
+               detail::replace_cstring<std::decay_t<M>>, option::bitset<B>>;
 
 template <class Tr, class T, class = detail::requires_transform<Tr, T>>
-regular(Tr, unsigned, T, T)->regular<detail::convert_integer<T, double>, Tr, null_type>;
+regular(Tr, unsigned, T, T) -> regular<detail::convert_integer<T, double>, Tr, null_type>;
 
 template <class Tr, class T, class M>
-regular(Tr, unsigned, T, T, M)
-    ->regular<detail::convert_integer<T, double>, Tr,
-              detail::replace_cstring<std::decay_t<M>>>;
+regular(Tr, unsigned, T, T, M) -> regular<detail::convert_integer<T, double>, Tr,
+                                          detail::replace_cstring<std::decay_t<M>>>;
+
+template <class Tr, class T, class M, unsigned B>
+regular(Tr, unsigned, T, T, M, const option::bitset<B>&)
+    -> regular<detail::convert_integer<T, double>, Tr,
+               detail::replace_cstring<std::decay_t<M>>, option::bitset<B>>;
 
 #endif
 
