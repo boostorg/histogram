@@ -242,6 +242,7 @@ void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t v
   for_each_axis(axes,
                 [&](const auto& ax) { all_inclusive &= axis::traits::inclusive(ax); });
   if (axes_rank(axes) == 1) {
+    // Optimization: benchmark shows that this makes filling dynamic 1D histogram faster
     axis::visit(
         [&](auto& ax) {
           std::tuple<decltype(ax)> axes{ax};
