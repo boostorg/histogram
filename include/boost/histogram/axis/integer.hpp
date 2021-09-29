@@ -75,7 +75,7 @@ public:
    *
    * @param start    first integer of covered range.
    * @param stop     one past last integer of covered range.
-   * @param meta     description of the axis.
+   * @param meta     description of the axis (optional).
    * @param option   see boost::histogram::axis::option (optional, all values allowed).
    */
   integer(value_type start, value_type stop, metadata_type meta = {}, options_type = {})
