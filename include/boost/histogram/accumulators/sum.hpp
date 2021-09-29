@@ -43,11 +43,11 @@ public:
 
   /// Allow implicit conversion from sum<T>
   template <class T>
-  sum(const sum<T>& s) noexcept : sum(s.large(), s.small()) {}
+  sum(const sum<T>& s) noexcept : sum(s.large_part(), s.small_part()) {}
 
   /// Initialize sum explicitly with large and small parts
-  sum(const_reference large, const_reference small) noexcept
-      : large_(large), small_(small) {}
+  sum(const_reference large_part, const_reference small_part) noexcept
+      : large_part_(large_part), small_part_(small_part) {}
 
   /// Increment sum by one
   sum& operator++() noexcept { return operator+=(1); }
@@ -58,64 +58,64 @@ public:
     // when -ffast-math is enabled
     volatile value_type l;
     value_type s;
-    if (std::abs(large_) >= std::abs(value)) {
-      l = large_;
+    if (std::abs(large_part_) >= std::abs(value)) {
+      l = large_part_;
       s = value;
     } else {
       l = value;
-      s = large_;
+      s = large_part_;
     }
-    large_ += value;
-    l = l - large_;
+    large_part_ += value;
+    l = l - large_part_;
     l = l + s;
-    small_ += l;
+    small_part_ += l;
     return *this;
   }
 
   /// Add another sum
   sum& operator+=(const sum& s) noexcept {
-    operator+=(s.large_);
-    small_ += s.small_;
+    operator+=(s.large_part_);
+    small_part_ += s.small_part_;
     return *this;
   }
 
   /// Scale by value
   sum& operator*=(const_reference value) noexcept {
-    large_ *= value;
-    small_ *= value;
+    large_part_ *= value;
+    small_part_ *= value;
     return *this;
   }
 
   bool operator==(const sum& rhs) const noexcept {
-    return large_ + small_ == rhs.large_ + rhs.small_;
+    return large_part_ + small_part_ == rhs.large_part_ + rhs.small_part_;
   }
 
   bool operator!=(const sum& rhs) const noexcept { return !operator==(rhs); }
 
   /// Return value of the sum.
-  value_type value() const noexcept { return large_ + small_; }
+  value_type value() const noexcept { return large_part_ + small_part_; }
 
   /// Return large part of the sum.
-  const_reference large() const noexcept { return large_; }
+  const_reference large_part() const noexcept { return large_part_; }
 
   /// Return small part of the sum.
-  const_reference small() const noexcept { return small_; }
+  const_reference small_part() const noexcept { return small_part_; }
 
   // lossy conversion to value type must be explicit
   explicit operator value_type() const noexcept { return value(); }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
-    ar& make_nvp("large", large_);
-    ar& make_nvp("small", small_);
+    ar& make_nvp("large_part", large_part_);
+    ar& make_nvp("small_part", small_part_);
   }
 
   // begin: extra operators to make sum behave like a regular number
 
   sum& operator*=(const sum& rhs) noexcept {
     const auto scale = static_cast<value_type>(rhs);
-    large_ *= scale;
-    small_ *= scale;
+    large_part_ *= scale;
+    small_part_ *= scale;
     return *this;
   }
 
@@ -127,8 +127,8 @@ public:
 
   sum& operator/=(const sum& rhs) noexcept {
     const auto scale = 1.0 / static_cast<value_type>(rhs);
-    large_ *= scale;
-    small_ *= scale;
+    large_part_ *= scale;
+    small_part_ *= scale;
     return *this;
   }
 
@@ -157,8 +157,8 @@ public:
   // end: extra operators
 
 private:
-  value_type large_{};
-  value_type small_{};
+  value_type large_part_{};
+  value_type small_part_{};
 };
 
 } // namespace accumulators
