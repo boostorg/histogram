@@ -73,11 +73,12 @@ public:
 
   /** Construct over semi-open integer interval [start, stop).
    *
-   * \param start    first integer of covered range.
-   * \param stop     one past last integer of covered range.
-   * \param meta     description of the axis.
+   * @param start    first integer of covered range.
+   * @param stop     one past last integer of covered range.
+   * @param meta     description of the axis.
+   * @param option   see boost::histogram::axis::option (optional, all values allowed).
    */
-  integer(value_type start, value_type stop, metadata_type meta = {})
+  integer(value_type start, value_type stop, metadata_type meta = {}, options_type = {})
       : metadata_base(std::move(meta))
       , size_(static_cast<index_type>(stop - start))
       , min_(start) {
@@ -216,6 +217,12 @@ template <class T, class M>
 integer(T, T, M)
     -> integer<detail::convert_integer<T, index_type>,
                detail::replace_type<std::decay_t<M>, const char*, std::string>>;
+
+template <class T, class M, unsigned B>
+integer(T, T, M, option::bitset<B>)
+    -> integer<detail::convert_integer<T, index_type>,
+               detail::replace_type<std::decay_t<M>, const char*, std::string>,
+               option::bitset<B>>;
 
 #endif
 
