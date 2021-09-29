@@ -219,7 +219,7 @@ integer(T, T, M)
                detail::replace_type<std::decay_t<M>, const char*, std::string>>;
 
 template <class T, class M, unsigned B>
-integer(T, T, M, option::bitset<B>)
+integer(T, T, M, const option::bitset<B>&)
     -> integer<detail::convert_integer<T, index_type>,
                detail::replace_type<std::decay_t<M>, const char*, std::string>,
                option::bitset<B>>;

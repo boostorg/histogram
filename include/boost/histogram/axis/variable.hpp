@@ -73,13 +73,15 @@ public:
 
   /** Construct from iterator range of bin edges.
    *
-   * \param begin begin of edge sequence.
-   * \param end   end of edge sequence.
-   * \param meta  description of the axis.
-   * \param alloc allocator instance to use.
+   * @param begin   begin of edge sequence.
+   * @param end     end of edge sequence.
+   * @param meta    description of the axis (optional).
+   * @param options see boost::histogram::axis::option (optional, all values allowed).
+   * @param alloc   allocator instance to use (optional).
    */
   template <class It, class = detail::requires_iterator<It>>
-  variable(It begin, It end, metadata_type meta = {}, allocator_type alloc = {})
+  variable(It begin, It end, metadata_type meta = {}, options_type = {},
+           allocator_type alloc = {})
       : metadata_base(std::move(meta)), vec_(std::move(alloc)) {
     if (std::distance(begin, end) < 2)
       BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
@@ -96,27 +98,46 @@ public:
           std::invalid_argument("input sequence must be strictly ascending"));
   }
 
+  // kept for backward compatibility
+  template <class It, class = detail::requires_iterator<It>>
+  variable(It begin, It end, metadata_type meta, allocator_type alloc)
+      : variable(begin, end, std::move(meta), {}, std::move(alloc)) {}
+
   /** Construct variable axis from iterable range of bin edges.
    *
-   * \param iterable iterable range of bin edges.
-   * \param meta     description of the axis.
-   * \param alloc    allocator instance to use.
+   * @param iterable iterable range of bin edges.
+   * @param meta     description of the axis (optional).
+   * @param options  see boost::histogram::axis::option (optional, all values allowed).
+   * @param alloc    allocator instance to use (optional).
    */
   template <class U, class = detail::requires_iterable<U>>
-  variable(const U& iterable, metadata_type meta = {}, allocator_type alloc = {})
-      : variable(std::begin(iterable), std::end(iterable), std::move(meta),
+  variable(const U& iterable, metadata_type meta = {}, options_type options = {},
+           allocator_type alloc = {})
+      : variable(std::begin(iterable), std::end(iterable), std::move(meta), options,
+                 std::move(alloc)) {}
+
+  // kept for backward compatibility
+  template <class U, class = detail::requires_iterable<U>>
+  variable(const U& iterable, metadata_type meta, allocator_type alloc)
+      : variable(std::begin(iterable), std::end(iterable), std::move(meta), {},
                  std::move(alloc)) {}
 
   /** Construct variable axis from initializer list of bin edges.
    *
-   * @param list  `std::initializer_list` of bin edges.
-   * @param meta  description of the axis.
-   * @param alloc allocator instance to use.
+   * @param list    `std::initializer_list` of bin edges.
+   * @param meta    description of the axis (optional).
+   * @param options see boost::histogram::axis::option (optional, all values allowed).
+   * @param alloc   allocator instance to use (optional).
    */
   template <class U>
   variable(std::initializer_list<U> list, metadata_type meta = {},
-           allocator_type alloc = {})
-      : variable(list.begin(), list.end(), std::move(meta), std::move(alloc)) {}
+           options_type options = {}, allocator_type alloc = {})
+      : variable(list.begin(), list.end(), std::move(meta), options, std::move(alloc)) {}
+
+  // kept for backward compatibility
+  template <class U>
+  variable(std::initializer_list<U> list, metadata_type meta, allocator_type alloc)
+      : variable(list.begin(), list.end(), std::move(meta), {}, std::move(alloc)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   variable(const variable& src, index_type begin, index_type end, unsigned merge)
@@ -221,26 +242,36 @@ private:
 
 template <class T>
 variable(std::initializer_list<T>)
-    ->variable<detail::convert_integer<T, double>, null_type>;
+    -> variable<detail::convert_integer<T, double>, null_type>;
 
 template <class T, class M>
 variable(std::initializer_list<T>, M)
-    ->variable<detail::convert_integer<T, double>,
-               detail::replace_type<std::decay_t<M>, const char*, std::string>>;
+    -> variable<detail::convert_integer<T, double>,
+                detail::replace_type<std::decay_t<M>, const char*, std::string>>;
+
+template <class T, class M, unsigned B>
+variable(std::initializer_list<T>, M, const option::bitset<B>&)
+    -> variable<detail::convert_integer<T, double>,
+                detail::replace_type<std::decay_t<M>, const char*, std::string>,
+                option::bitset<B>>;
 
 template <class Iterable, class = detail::requires_iterable<Iterable>>
-variable(Iterable)
-    ->variable<
-        detail::convert_integer<
-            std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>,
-        null_type>;
+variable(Iterable) -> variable<
+    detail::convert_integer<
+        std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>,
+    null_type>;
 
 template <class Iterable, class M>
-variable(Iterable, M)
-    ->variable<
-        detail::convert_integer<
-            std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>,
-        detail::replace_type<std::decay_t<M>, const char*, std::string>>;
+variable(Iterable, M) -> variable<
+    detail::convert_integer<
+        std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>,
+    detail::replace_type<std::decay_t<M>, const char*, std::string>>;
+
+template <class Iterable, class M, unsigned B>
+variable(Iterable, M, const option::bitset<B>&) -> variable<
+    detail::convert_integer<
+        std::decay_t<decltype(*std::begin(std::declval<Iterable&>()))>, double>,
+    detail::replace_type<std::decay_t<M>, const char*, std::string>, option::bitset<B>>;
 
 #endif
 

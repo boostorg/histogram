@@ -70,6 +70,8 @@ int main() {
     BOOST_TEST_TRAIT_SAME(decltype(variable({-1, 0, 1}, "foo")),
                           variable<double, std::string>);
     BOOST_TEST_TRAIT_SAME(decltype(variable({-1, 1}, 0)), variable<double, int>);
+    BOOST_TEST_TRAIT_SAME(decltype(variable({-1, 1}, "foo", op::underflow)),
+                          variable<double, std::string, op::underflow_t>);
 
     BOOST_TEST_TRAIT_SAME(decltype(variable(std::vector<int>{{-1, 1}})),
                           variable<double, null_type>);
@@ -79,6 +81,8 @@ int main() {
                           variable<double, std::string>);
     BOOST_TEST_TRAIT_SAME(decltype(variable(std::vector<int>{{-1, 1}}, 0)),
                           variable<double, int>);
+    BOOST_TEST_TRAIT_SAME(decltype(variable({-1, 1}, "foo", op::underflow)),
+                          variable<double, std::string, op::underflow_t>);
   }
 
   {
