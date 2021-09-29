@@ -13,14 +13,40 @@ using arg_t = boost::variant2::variant<std::vector<int>, int>;
 int main() {
   using axis_type =
       bh::axis::regular<double, bh::use_default, bh::use_default, uogrowth_t>;
-  using axis_variant = bh::axis::variant<axis_type>;
+  using axis_variant_type = bh::axis::variant<axis_type>;
 
-  auto axes = std::vector<axis_variant>({axis_type(10, 0, 1)});
-  auto h = bh::make_histogram_with(std::vector<int>(), axes);
-  BOOST_TEST_EQ(h.rank(), 1);
+  // 1D growing A
+  {
+    auto axes = std::vector<axis_variant_type>({axis_type(10, 0, 1)});
+    auto h = bh::make_histogram_with(bh::dense_storage<double>(), axes);
+    auto h2 = h;
 
-  std::vector<arg_t> vargs = {-1};
-  h.fill(vargs); // CRASH, using h.fill(-1) or h.fill(args) does not crash.
+    h(-1);
+
+    // used to crash, while growing B did not crash
+    std::vector<arg_t> vargs = {-1};
+    h2.fill(vargs);
+
+    BOOST_TEST_EQ(h, h2);
+  }
+
+  // 1D growing B
+  {
+    auto axes = std::vector<axis_variant_type>({axis_type(10, 0, 1)});
+    auto h = bh::make_histogram_with(bh::dense_storage<double>(), axes);
+    auto h2 = h;
+
+    h(2);
+    h(-1);
+
+    std::vector<int> f1({2});
+    std::vector<int> f2({-1});
+
+    h2.fill(f1);
+    h2.fill(f2);
+
+    BOOST_TEST_EQ(h, h2);
+  }
 
   return boost::report_errors();
 }
