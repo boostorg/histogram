@@ -6,8 +6,8 @@
 
 // The header windows.h and possibly others do the following
 #define small char
-// which violates the C++ standard. We make sure here that including our headers works
-// nevertheless. As a workaround, we avoid the name `small`.
+// which violates the C++ standard. We make sure here that including our headers work
+// nevertheless. We avoid the name `small`.
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram.hpp>
