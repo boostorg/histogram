@@ -170,6 +170,14 @@ step_type<T> step(T t) {
 
   The most common binning strategy. Very fast. Binning is a O(1) operation.
 
+  If the axis has an overflow bin (the default), a value on the upper edge of the last
+  bin is put in the overflow bin. The axis range represents a semi-open interval.
+
+  If the overflow bin is deactivated, then a value on the upper edge of the last bin is
+  still counted towards the last bin. The axis range represents a closed interval. This
+  is the desired behavior for random numbers drawn from a bounded interval, which is
+  usually closed.
+
   @tparam Value input value type, must be floating point.
   @tparam Transform builtin or user-defined transform type.
   @tparam MetaData type to store meta data.

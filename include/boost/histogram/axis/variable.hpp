@@ -40,6 +40,14 @@ namespace axis {
   Binning is a O(log(N)) operation. If speed matters and the problem domain
   allows it, prefer a regular axis, possibly with a transform.
 
+  If the axis has an overflow bin (the default), a value on the upper edge of the last
+  bin is put in the overflow bin. The axis range represents a semi-open interval.
+
+  If the overflow bin is deactivated, then a value on the upper edge of the last bin is
+  still counted towards the last bin. The axis range represents a closed interval. This
+  is the desired behavior for random numbers drawn from a bounded interval, which is
+  usually closed.
+
   @tparam Value     input value type, must be floating point.
   @tparam MetaData  type to store meta data.
   @tparam Options   see boost::histogram::axis::option.
