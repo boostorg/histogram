@@ -165,23 +165,22 @@ step_type<T> step(T t) {
   return step_type<T>{t};
 }
 
-/**
-  Axis for equidistant intervals on the real line.
+/** Axis for equidistant intervals on the real line.
 
-  The most common binning strategy. Very fast. Binning is a O(1) operation.
+   The most common binning strategy. Very fast. Binning is a O(1) operation.
 
-  If the axis has an overflow bin (the default), a value on the upper edge of the last
-  bin is put in the overflow bin. The axis range represents a semi-open interval.
+   If the axis has an overflow bin (the default), a value on the upper edge of the last
+   bin is put in the overflow bin. The axis range represents a semi-open interval.
 
-  If the overflow bin is deactivated, then a value on the upper edge of the last bin is
-  still counted towards the last bin. The axis range represents a closed interval. This
-  is the desired behavior for random numbers drawn from a bounded interval, which is
-  usually closed.
+   If the overflow bin is deactivated, then a value on the upper edge of the last bin is
+   still counted towards the last bin. The axis range represents a closed interval. This
+   is the desired behavior for random numbers drawn from a bounded interval, which is
+   usually closed.
 
-  @tparam Value input value type, must be floating point.
-  @tparam Transform builtin or user-defined transform type.
-  @tparam MetaData type to store meta data.
-  @tparam Options see boost::histogram::axis::option.
+   @tparam Value input value type, must be floating point.
+   @tparam Transform builtin or user-defined transform type.
+   @tparam MetaData type to store meta data.
+   @tparam Options see boost::histogram::axis::option.
  */
 template <class Value, class Transform, class MetaData, class Options>
 class regular : public iterator_mixin<regular<Value, Transform, MetaData, Options>>,
@@ -215,13 +214,13 @@ public:
   constexpr regular() = default;
 
   /** Construct n bins over real transformed range [start, stop).
-   *
-   * @param trans    transform instance to use.
-   * @param n        number of bins.
-   * @param start    low edge of first bin.
-   * @param stop     high edge of last bin.
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
+
+     @param trans    transform instance to use.
+     @param n        number of bins.
+     @param start    low edge of first bin.
+     @param stop     high edge of last bin.
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
    */
   regular(transform_type trans, unsigned n, value_type start, value_type stop,
           metadata_type meta = {}, options_type options = {})
@@ -240,30 +239,30 @@ public:
   }
 
   /** Construct n bins over real range [start, stop).
-   *
-   * @param n        number of bins.
-   * @param start    low edge of first bin.
-   * @param stop     high edge of last bin.
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
+
+     @param n        number of bins.
+     @param start    low edge of first bin.
+     @param stop     high edge of last bin.
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
    */
   regular(unsigned n, value_type start, value_type stop, metadata_type meta = {},
           options_type options = {})
       : regular({}, n, start, stop, std::move(meta), options) {}
 
   /** Construct bins with the given step size over real transformed range
-   * [start, stop).
-   *
-   * @param trans    transform instance to use.
-   * @param step     width of a single bin.
-   * @param start    low edge of first bin.
-   * @param stop     upper limit of high edge of last bin (see below).
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
-   *
-   * The axis computes the number of bins as n = abs(stop - start) / step,
-   * rounded down. This means that stop is an upper limit to the actual value
-   * (start + n * step).
+     [start, stop).
+
+     @param trans    transform instance to use.
+     @param step     width of a single bin.
+     @param start    low edge of first bin.
+     @param stop     upper limit of high edge of last bin (see below).
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
+
+     The axis computes the number of bins as n = abs(stop - start) / step,
+     rounded down. This means that stop is an upper limit to the actual value
+     (start + n * step).
    */
   template <class T>
   regular(transform_type trans, step_type<T> step, value_type start, value_type stop,
@@ -275,16 +274,16 @@ public:
                 std::move(meta), options) {}
 
   /** Construct bins with the given step size over real range [start, stop).
-   *
-   * @param step     width of a single bin.
-   * @param start    low edge of first bin.
-   * @param stop     upper limit of high edge of last bin (see below).
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
-   *
-   * The axis computes the number of bins as n = abs(stop - start) / step,
-   * rounded down. This means that stop is an upper limit to the actual value
-   * (start + n * step).
+
+     @param step     width of a single bin.
+     @param start    low edge of first bin.
+     @param stop     upper limit of high edge of last bin (see below).
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
+
+     The axis computes the number of bins as n = abs(stop - start) / step,
+     rounded down. This means that stop is an upper limit to the actual value
+     (start + n * step).
    */
   template <class T>
   regular(step_type<T> step, value_type start, value_type stop, metadata_type meta = {},

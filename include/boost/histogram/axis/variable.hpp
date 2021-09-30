@@ -34,8 +34,7 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
-/**
-  Axis for non-equidistant bins on the real line.
+/** Axis for non-equidistant bins on the real line.
 
   Binning is a O(log(N)) operation. If speed matters and the problem domain
   allows it, prefer a regular axis, possibly with a transform.
@@ -52,7 +51,7 @@ namespace axis {
   @tparam MetaData  type to store meta data.
   @tparam Options   see boost::histogram::axis::option.
   @tparam Allocator allocator to use for dynamic memory management.
- */
+*/
 template <class Value, class MetaData, class Options, class Allocator>
 class variable : public iterator_mixin<variable<Value, MetaData, Options, Allocator>>,
                  public metadata_base_t<MetaData> {
@@ -80,12 +79,12 @@ public:
   explicit variable(allocator_type alloc) : vec_(alloc) {}
 
   /** Construct from iterator range of bin edges.
-   *
-   * @param begin   begin of edge sequence.
-   * @param end     end of edge sequence.
-   * @param meta    description of the axis (optional).
-   * @param options see boost::histogram::axis::option (optional).
-   * @param alloc   allocator instance to use (optional).
+
+     @param begin   begin of edge sequence.
+     @param end     end of edge sequence.
+     @param meta    description of the axis (optional).
+     @param options see boost::histogram::axis::option (optional).
+     @param alloc   allocator instance to use (optional).
    */
   template <class It, class = detail::requires_iterator<It>>
   variable(It begin, It end, metadata_type meta = {}, options_type options = {},
@@ -114,11 +113,11 @@ public:
       : variable(begin, end, std::move(meta), {}, std::move(alloc)) {}
 
   /** Construct variable axis from iterable range of bin edges.
-   *
-   * @param iterable iterable range of bin edges.
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
-   * @param alloc    allocator instance to use (optional).
+
+     @param iterable iterable range of bin edges.
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
+     @param alloc    allocator instance to use (optional).
    */
   template <class U, class = detail::requires_iterable<U>>
   variable(const U& iterable, metadata_type meta = {}, options_type options = {},
@@ -133,11 +132,11 @@ public:
                  std::move(alloc)) {}
 
   /** Construct variable axis from initializer list of bin edges.
-   *
-   * @param list     `std::initializer_list` of bin edges.
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
-   * @param alloc    allocator instance to use (optional).
+
+     @param list     `std::initializer_list` of bin edges.
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
+     @param alloc    allocator instance to use (optional).
    */
   template <class U>
   variable(std::initializer_list<U> list, metadata_type meta = {},

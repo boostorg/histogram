@@ -26,22 +26,21 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
-/**
-  Maps at a set of unique values to bin indices.
+/** Maps at a set of unique values to bin indices.
 
-  The axis maps a set of values to bins, following the order of arguments in the
-  constructor. The optional overflow bin for this axis counts input values that
-  are not part of the set. Binning has O(N) complexity, but with a very small
-  factor. For small N (the typical use case) it beats other kinds of lookup.
+   The axis maps a set of values to bins, following the order of arguments in the
+   constructor. The optional overflow bin for this axis counts input values that
+   are not part of the set. Binning has O(N) complexity, but with a very small
+   factor. For small N (the typical use case) it beats other kinds of lookup.
 
-  @tparam Value input value type, must be equal-comparable.
-  @tparam MetaData type to store meta data.
-  @tparam Options see boost::histogram::axis::option.
-  @tparam Allocator allocator to use for dynamic memory management.
+   @tparam Value input value type, must be equal-comparable.
+   @tparam MetaData type to store meta data.
+   @tparam Options see boost::histogram::axis::option.
+   @tparam Allocator allocator to use for dynamic memory management.
 
-  The options `underflow` and `circular` are not allowed. The options `growth`
-  and `overflow` are mutually exclusive.
-*/
+   The options `underflow` and `circular` are not allowed. The options `growth`
+   and `overflow` are mutually exclusive.
+ */
 template <class Value, class MetaData, class Options, class Allocator>
 class category : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,
                  public metadata_base_t<MetaData> {
@@ -66,12 +65,12 @@ public:
   explicit category(allocator_type alloc) : vec_(alloc) {}
 
   /** Construct from iterator range of unique values.
-   *
-   * @param begin    begin of category range of unique values.
-   * @param end      end of category range of unique values.
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
-   * @param alloc    allocator instance to use (optional).
+
+     @param begin    begin of category range of unique values.
+     @param end      end of category range of unique values.
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
+     @param alloc    allocator instance to use (optional).
    */
   template <class It, class = detail::requires_iterator<It>>
   category(It begin, It end, metadata_type meta = {}, options_type options = {},
@@ -91,11 +90,11 @@ public:
       : category(begin, end, std::move(meta), {}, std::move(alloc)) {}
 
   /** Construct axis from iterable sequence of unique values.
-   *
-   * @param iterable sequence of unique values.
-   * @param meta     description of the axis.
-   * @param options  see boost::histogram::axis::option (optional).
-   * @param alloc    allocator instance to use.
+
+     @param iterable sequence of unique values.
+     @param meta     description of the axis.
+     @param options  see boost::histogram::axis::option (optional).
+     @param alloc    allocator instance to use.
    */
   template <class C, class = detail::requires_iterable<C>>
   category(const C& iterable, metadata_type meta = {}, options_type options = {},
@@ -110,11 +109,11 @@ public:
                  std::move(alloc)) {}
 
   /** Construct axis from an initializer list of unique values.
-   *
-   * @param list     `std::initializer_list` of unique values.
-   * @param meta     description of the axis.
-   * @param options  see boost::histogram::axis::option (optional).
-   * @param alloc    allocator instance to use.
+
+     @param list     `std::initializer_list` of unique values.
+     @param meta     description of the axis.
+     @param options  see boost::histogram::axis::option (optional).
+     @param alloc    allocator instance to use.
    */
   template <class U>
   category(std::initializer_list<U> list, metadata_type meta = {},
