@@ -31,7 +31,33 @@ using DStore = boost::histogram::adaptive_storage<>;
 #endif
 
 using namespace boost::histogram;
+namespace op = boost::histogram::axis::option;
 using reg = axis::regular<>;
+using reg_closed =
+    axis::regular<double, boost::use_default, boost::use_default, op::none_t>;
+
+class reg_closed_unsafe {
+public:
+  reg_closed_unsafe(axis::index_type n, double start, double stop)
+      : min_{start}, delta_{stop - start}, size_{n} {}
+
+  axis::index_type index(double x) const noexcept {
+    // Runs in hot loop, please measure impact of changes
+    auto z = (x - min_) / delta_;
+    // assume that z < 0 and z > 1 never happens, promised by inclusive()
+    if (z == 1) return size() - 1;
+    return static_cast<axis::index_type>(z * size());
+  }
+
+  axis::index_type size() const noexcept { return size_; }
+
+  static constexpr bool inclusive() { return true; }
+
+private:
+  double min_;
+  double delta_;
+  axis::index_type size_;
+};
 
 template <class Distribution, class Tag, class Storage = SStore>
 static void fill_1d(benchmark::State& state) {
@@ -42,8 +68,40 @@ static void fill_1d(benchmark::State& state) {
 }
 
 template <class Distribution, class Tag, class Storage = SStore>
+static void fill_1d_closed(benchmark::State& state) {
+  auto h = make_s(Tag(), Storage(), reg_closed(100, 0, 1));
+  auto gen = generator<Distribution>();
+  for (auto _ : state) benchmark::DoNotOptimize(h(gen()));
+  state.SetItemsProcessed(state.iterations());
+}
+
+template <class Distribution, class Tag, class Storage = SStore>
+static void fill_1d_closed_unsafe(benchmark::State& state) {
+  auto h = make_s(Tag(), Storage(), reg_closed_unsafe(100, 0, 1));
+  auto gen = generator<Distribution>();
+  for (auto _ : state) benchmark::DoNotOptimize(h(gen()));
+  state.SetItemsProcessed(state.iterations());
+}
+
+template <class Distribution, class Tag, class Storage = SStore>
 static void fill_n_1d(benchmark::State& state) {
   auto h = make_s(Tag(), Storage(), reg(100, 0, 1));
+  auto gen = generator<Distribution>();
+  for (auto _ : state) h.fill(gen);
+  state.SetItemsProcessed(state.iterations() * gen.size());
+}
+
+template <class Distribution, class Tag, class Storage = SStore>
+static void fill_n_1d_closed(benchmark::State& state) {
+  auto h = make_s(Tag(), Storage(), reg_closed(100, 0, 1));
+  auto gen = generator<Distribution>();
+  for (auto _ : state) h.fill(gen);
+  state.SetItemsProcessed(state.iterations() * gen.size());
+}
+
+template <class Distribution, class Tag, class Storage = SStore>
+static void fill_n_1d_closed_unsafe(benchmark::State& state) {
+  auto h = make_s(Tag(), Storage(), reg_closed_unsafe(100, 0, 1));
   auto gen = generator<Distribution>();
   for (auto _ : state) h.fill(gen);
   state.SetItemsProcessed(state.iterations() * gen.size());
@@ -111,6 +169,8 @@ BENCHMARK_TEMPLATE(fill_1d, uniform, dynamic_tag);
 // BENCHMARK_TEMPLATE(fill_1d, uniform, dynamic_tag, DStore);
 BENCHMARK_TEMPLATE(fill_1d, normal, dynamic_tag);
 // BENCHMARK_TEMPLATE(fill_1d, normal, dynamic_tag, DStore);
+BENCHMARK_TEMPLATE(fill_1d_closed, uniform, static_tag);
+BENCHMARK_TEMPLATE(fill_1d_closed_unsafe, uniform, static_tag);
 
 BENCHMARK_TEMPLATE(fill_n_1d, uniform, static_tag);
 // BENCHMARK_TEMPLATE(fill_n_1d, uniform, static_tag, DStore);
@@ -120,6 +180,8 @@ BENCHMARK_TEMPLATE(fill_n_1d, uniform, dynamic_tag);
 // BENCHMARK_TEMPLATE(fill_n_1d, uniform, dynamic_tag, DStore);
 BENCHMARK_TEMPLATE(fill_n_1d, normal, dynamic_tag);
 // BENCHMARK_TEMPLATE(fill_n_1d, normal, dynamic_tag, DStore);
+BENCHMARK_TEMPLATE(fill_n_1d_closed, uniform, static_tag);
+BENCHMARK_TEMPLATE(fill_n_1d_closed_unsafe, uniform, static_tag);
 
 BENCHMARK_TEMPLATE(fill_2d, uniform, static_tag);
 // BENCHMARK_TEMPLATE(fill_2d, uniform, static_tag, DStore);

@@ -18,6 +18,7 @@
 #include "utility_str.hpp"
 
 using namespace boost::histogram;
+namespace op = boost::histogram::axis::option;
 
 int main() {
   constexpr auto inf = std::numeric_limits<double>::infinity();
@@ -104,7 +105,7 @@ int main() {
 
   // axis::variable circular
   {
-    axis::variable<double, axis::null_type, axis::option::circular_t> a{-1, 1, 2};
+    axis::variable<double, axis::null_type, op::circular_t> a{-1, 1, 2};
     BOOST_TEST_EQ(a.value(-2), -4);
     BOOST_TEST_EQ(a.value(-1), -2);
     BOOST_TEST_EQ(a.value(0), -1);
@@ -125,7 +126,7 @@ int main() {
   // axis::regular with growth
   {
     using pii_t = std::pair<axis::index_type, axis::index_type>;
-    axis::variable<double, axis::null_type, axis::option::growth_t> a{0, 1};
+    axis::variable<double, axis::null_type, op::growth_t> a{0, 1};
     BOOST_TEST_EQ(a.size(), 1);
     BOOST_TEST_EQ(a.update(0), pii_t(0, 0));
     BOOST_TEST_EQ(a.size(), 1);
@@ -149,11 +150,33 @@ int main() {
     BOOST_TEST_EQ(a.update(nan), pii_t(a.size(), 0));
   }
 
+  // axis with overflow bin represents open interval
+  {
+    axis::variable<double, boost::use_default, op::overflow_t> a{0.0, 0.5, 1.0};
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(0.49), 0);
+    BOOST_TEST_EQ(a.index(0.50), 1);
+    BOOST_TEST_EQ(a.index(0.99), 1);
+    BOOST_TEST_EQ(a.index(1), 2);   // overflow bin
+    BOOST_TEST_EQ(a.index(1.1), 2); // overflow bin
+  }
+
+  // axis without overflow bin represents a closed interval
+  {
+    axis::variable<double, boost::use_default, op::none_t> a{0.0, 0.5, 1.0};
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(0.49), 0);
+    BOOST_TEST_EQ(a.index(0.50), 1);
+    BOOST_TEST_EQ(a.index(0.99), 1);
+    BOOST_TEST_EQ(a.index(1), 1);   // last ordinary bin
+    BOOST_TEST_EQ(a.index(1.1), 2); // out of range
+  }
+
   // iterators
   {
     test_axis_iterator(axis::variable<>{1, 2, 3}, 0, 2);
-    test_axis_iterator(
-        axis::variable<double, axis::null_type, axis::option::circular_t>{1, 2, 3}, 0, 2);
+    test_axis_iterator(axis::variable<double, axis::null_type, op::circular_t>{1, 2, 3},
+                       0, 2);
   }
 
   // shrink and rebin
@@ -176,7 +199,7 @@ int main() {
 
   // shrink and rebin with circular option
   {
-    using A = axis::variable<double, axis::null_type, axis::option::circular_t>;
+    using A = axis::variable<double, axis::null_type, op::circular_t>;
     auto a = A({1, 2, 3, 4, 5});
     BOOST_TEST_THROWS(A(a, 1, 4, 1), std::invalid_argument);
     BOOST_TEST_THROWS(A(a, 0, 3, 1), std::invalid_argument);

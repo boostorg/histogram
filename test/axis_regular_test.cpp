@@ -20,6 +20,7 @@ int main() {
   using namespace boost::histogram;
   using def = use_default;
   namespace tr = axis::transform;
+  namespace op = axis::option;
 
   BOOST_TEST(std::is_nothrow_move_assignable<axis::regular<>>::value);
   BOOST_TEST(std::is_nothrow_move_constructible<axis::regular<>>::value);
@@ -202,7 +203,7 @@ int main() {
   // with growth
   {
     using pii_t = std::pair<axis::index_type, axis::index_type>;
-    axis::regular<double, def, def, axis::option::growth_t> a{1, 0, 1};
+    axis::regular<double, def, def, op::growth_t> a{1, 0, 1};
     BOOST_TEST_EQ(a.size(), 1);
     BOOST_TEST_EQ(a.update(0), pii_t(0, 0));
     BOOST_TEST_EQ(a.size(), 1);
@@ -223,11 +224,32 @@ int main() {
     BOOST_TEST_EQ(a.update(-std::numeric_limits<double>::infinity()), pii_t(-1, 0));
   }
 
+  // axis with overflow bin represents open interval
+  {
+    axis::regular<double, def, def, op::overflow_t> a{2, 0, 1};
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(0.49), 0);
+    BOOST_TEST_EQ(a.index(0.50), 1);
+    BOOST_TEST_EQ(a.index(0.99), 1);
+    BOOST_TEST_EQ(a.index(1), 2);   // overflow bin
+    BOOST_TEST_EQ(a.index(1.1), 2); // overflow bin
+  }
+
+  // axis without overflow bin represents a closed interval
+  {
+    axis::regular<double, def, def, op::none_t> a{2, 0, 1};
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(0.49), 0);
+    BOOST_TEST_EQ(a.index(0.50), 1);
+    BOOST_TEST_EQ(a.index(0.99), 1);
+    BOOST_TEST_EQ(a.index(1), 1);   // last ordinary bin
+    BOOST_TEST_EQ(a.index(1.1), 2); // out of range
+  }
+
   // iterators
   {
     test_axis_iterator(axis::regular<>(5, 0, 1), 0, 5);
-    test_axis_iterator(axis::regular<double, def, def, axis::option::none_t>(5, 0, 1), 0,
-                       5);
+    test_axis_iterator(axis::regular<double, def, def, op::none_t>(5, 0, 1), 0, 5);
     test_axis_iterator(axis::circular<>(5, 0, 1), 0, 5);
   }
 

@@ -29,14 +29,13 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
-/**
-  Axis for an interval of integer values with unit steps.
+/** Axis for an interval of integer values with unit steps.
 
-  Binning is a O(1) operation. This axis bins faster than a regular axis.
+   Binning is a O(1) operation. This axis bins faster than a regular axis.
 
-  @tparam Value     input value type. Must be integer or floating point.
-  @tparam MetaData  type to store meta data.
-  @tparam Options   see boost::histogram::axis::option.
+   @tparam Value     input value type. Must be integer or floating point.
+   @tparam MetaData  type to store meta data.
+   @tparam Options   see boost::histogram::axis::option.
  */
 template <class Value, class MetaData, class Options>
 class integer : public iterator_mixin<integer<Value, MetaData, Options>>,
@@ -72,11 +71,11 @@ public:
   constexpr integer() = default;
 
   /** Construct over semi-open integer interval [start, stop).
-   *
-   * @param start    first integer of covered range.
-   * @param stop     one past last integer of covered range.
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
+
+     @param start    first integer of covered range.
+     @param stop     one past last integer of covered range.
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
    */
   integer(value_type start, value_type stop, metadata_type meta = {},
           options_type options = {})
