@@ -173,7 +173,7 @@ step_type<T> step(T t) {
   @tparam Value input value type, must be floating point.
   @tparam Transform builtin or user-defined transform type.
   @tparam MetaData type to store meta data.
-  @tparam Options see boost::histogram::axis::option (all values allowed).
+  @tparam Options see boost::histogram::axis::option.
  */
 template <class Value, class Transform, class MetaData, class Options>
 class regular : public iterator_mixin<regular<Value, Transform, MetaData, Options>>,
@@ -213,14 +213,16 @@ public:
    * @param start    low edge of first bin.
    * @param stop     high edge of last bin.
    * @param meta     description of the axis (optional).
+   * @param options  see boost::histogram::axis::option (optional).
    */
   regular(transform_type trans, unsigned n, value_type start, value_type stop,
-          metadata_type meta = {})
+          metadata_type meta = {}, options_type options = {})
       : transform_type(std::move(trans))
       , metadata_base(std::move(meta))
       , size_(static_cast<index_type>(n))
       , min_(this->forward(detail::get_scale(start)))
       , delta_(this->forward(detail::get_scale(stop)) - min_) {
+    (void)options;
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
     if (!std::isfinite(min_) || !std::isfinite(delta_))
       BOOST_THROW_EXCEPTION(
@@ -235,18 +237,21 @@ public:
    * @param start    low edge of first bin.
    * @param stop     high edge of last bin.
    * @param meta     description of the axis (optional).
+   * @param options  see boost::histogram::axis::option (optional).
    */
-  regular(unsigned n, value_type start, value_type stop, metadata_type meta = {})
-      : regular({}, n, start, stop, std::move(meta)) {}
+  regular(unsigned n, value_type start, value_type stop, metadata_type meta = {},
+          options_type options = {})
+      : regular({}, n, start, stop, std::move(meta), options) {}
 
   /** Construct bins with the given step size over real transformed range
    * [start, stop).
    *
-   * @param trans   transform instance to use.
-   * @param step    width of a single bin.
-   * @param start   low edge of first bin.
-   * @param stop    upper limit of high edge of last bin (see below).
-   * @param meta    description of the axis (optional).
+   * @param trans    transform instance to use.
+   * @param step     width of a single bin.
+   * @param start    low edge of first bin.
+   * @param stop     upper limit of high edge of last bin (see below).
+   * @param meta     description of the axis (optional).
+   * @param options  see boost::histogram::axis::option (optional).
    *
    * The axis computes the number of bins as n = abs(stop - start) / step,
    * rounded down. This means that stop is an upper limit to the actual value
@@ -254,27 +259,29 @@ public:
    */
   template <class T>
   regular(transform_type trans, step_type<T> step, value_type start, value_type stop,
-          metadata_type meta = {})
+          metadata_type meta = {}, options_type options = {})
       : regular(trans, static_cast<index_type>(std::abs(stop - start) / step.value),
                 start,
                 start + static_cast<index_type>(std::abs(stop - start) / step.value) *
                             step.value,
-                std::move(meta)) {}
+                std::move(meta), options) {}
 
   /** Construct bins with the given step size over real range [start, stop).
    *
-   * @param step    width of a single bin.
-   * @param start   low edge of first bin.
-   * @param stop    upper limit of high edge of last bin (see below).
-   * @param meta    description of the axis (optional).
+   * @param step     width of a single bin.
+   * @param start    low edge of first bin.
+   * @param stop     upper limit of high edge of last bin (see below).
+   * @param meta     description of the axis (optional).
+   * @param options  see boost::histogram::axis::option (optional).
    *
    * The axis computes the number of bins as n = abs(stop - start) / step,
    * rounded down. This means that stop is an upper limit to the actual value
    * (start + n * step).
    */
   template <class T>
-  regular(step_type<T> step, value_type start, value_type stop, metadata_type meta = {})
-      : regular({}, step, start, stop, std::move(meta)) {}
+  regular(step_type<T> step, value_type start, value_type stop, metadata_type meta = {},
+          options_type options = {})
+      : regular({}, step, start, stop, std::move(meta), options) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   regular(const regular& src, index_type begin, index_type end, unsigned merge)
@@ -397,20 +404,28 @@ private:
 
 template <class T>
 regular(unsigned, T, T)
-    ->regular<detail::convert_integer<T, double>, transform::id, null_type>;
+    -> regular<detail::convert_integer<T, double>, transform::id, null_type>;
 
 template <class T, class M>
-regular(unsigned, T, T, M)
-    ->regular<detail::convert_integer<T, double>, transform::id,
-              detail::replace_cstring<std::decay_t<M>>>;
+regular(unsigned, T, T, M) -> regular<detail::convert_integer<T, double>, transform::id,
+                                      detail::replace_cstring<std::decay_t<M>>>;
+
+template <class T, class M, unsigned B>
+regular(unsigned, T, T, M, const option::bitset<B>&)
+    -> regular<detail::convert_integer<T, double>, transform::id,
+               detail::replace_cstring<std::decay_t<M>>, option::bitset<B>>;
 
 template <class Tr, class T, class = detail::requires_transform<Tr, T>>
-regular(Tr, unsigned, T, T)->regular<detail::convert_integer<T, double>, Tr, null_type>;
+regular(Tr, unsigned, T, T) -> regular<detail::convert_integer<T, double>, Tr, null_type>;
 
 template <class Tr, class T, class M>
-regular(Tr, unsigned, T, T, M)
-    ->regular<detail::convert_integer<T, double>, Tr,
-              detail::replace_cstring<std::decay_t<M>>>;
+regular(Tr, unsigned, T, T, M) -> regular<detail::convert_integer<T, double>, Tr,
+                                          detail::replace_cstring<std::decay_t<M>>>;
+
+template <class Tr, class T, class M, unsigned B>
+regular(Tr, unsigned, T, T, M, const option::bitset<B>&)
+    -> regular<detail::convert_integer<T, double>, Tr,
+               detail::replace_cstring<std::decay_t<M>>, option::bitset<B>>;
 
 #endif
 

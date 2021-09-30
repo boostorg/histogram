@@ -21,6 +21,7 @@
 
 using namespace boost::histogram;
 namespace tr = axis::transform;
+namespace op = axis::option;
 
 // tests requires a C++17 compatible compiler
 
@@ -43,6 +44,10 @@ int main() {
                           regular<float, tr::sqrt, std::string>);
     BOOST_TEST_TRAIT_SAME(decltype(regular(tr::sqrt(), 1, 0, 1, 0)),
                           regular<double, tr::sqrt, int>);
+    BOOST_TEST_TRAIT_SAME(decltype(regular(1, 0, 1, "x", op::growth)),
+                          regular<double, tr::id, std::string, op::growth_t>);
+    BOOST_TEST_TRAIT_SAME(decltype(regular(tr::sqrt(), 1, 0, 1, "x", op::growth)),
+                          regular<double, tr::sqrt, std::string, op::growth_t>);
   }
 
   {
@@ -53,6 +58,8 @@ int main() {
     BOOST_TEST_TRAIT_SAME(decltype(integer(1.0f, 2.0f)), integer<float, null_type>);
     BOOST_TEST_TRAIT_SAME(decltype(integer(1, 2, "foo")), integer<int, std::string>);
     BOOST_TEST_TRAIT_SAME(decltype(integer(1, 2, 0)), integer<int, int>);
+    BOOST_TEST_TRAIT_SAME(decltype(integer(1, 2, "foo", op::growth)),
+                          integer<int, std::string, op::growth_t>);
   }
 
   {
@@ -63,6 +70,8 @@ int main() {
     BOOST_TEST_TRAIT_SAME(decltype(variable({-1, 0, 1}, "foo")),
                           variable<double, std::string>);
     BOOST_TEST_TRAIT_SAME(decltype(variable({-1, 1}, 0)), variable<double, int>);
+    BOOST_TEST_TRAIT_SAME(decltype(variable({-1, 1}, "foo", op::underflow)),
+                          variable<double, std::string, op::underflow_t>);
 
     BOOST_TEST_TRAIT_SAME(decltype(variable(std::vector<int>{{-1, 1}})),
                           variable<double, null_type>);
@@ -72,6 +81,8 @@ int main() {
                           variable<double, std::string>);
     BOOST_TEST_TRAIT_SAME(decltype(variable(std::vector<int>{{-1, 1}}, 0)),
                           variable<double, int>);
+    BOOST_TEST_TRAIT_SAME(decltype(variable({-1, 1}, "foo", op::growth)),
+                          variable<double, std::string, op::growth_t>);
   }
 
   {
@@ -80,6 +91,8 @@ int main() {
     BOOST_TEST_TRAIT_SAME(decltype(category{"x", "y"}), category<std::string, null_type>);
     BOOST_TEST_TRAIT_SAME(decltype(category({1, 2}, "foo")), category<int, std::string>);
     BOOST_TEST_TRAIT_SAME(decltype(category({1, 2}, 0)), category<int, int>);
+    BOOST_TEST_TRAIT_SAME(decltype(category({1, 2}, "foo", op::growth)),
+                          category<int, std::string, op::growth_t>);
   }
 
   {
