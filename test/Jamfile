@@ -135,11 +135,6 @@ alias not_windows :
     [ run histogram_ostream_ascii_test.cpp : : : <testing.launcher>"LANG=FOO COLUMNS=20" ]
     ;
 
-# tests of deprecated API need to be run with warnings turned off
-alias deprecated :
-    [ run issue_342_deprecated_api_test.cpp ]
-    : : <warnings>off ;
-
 # warnings are off for these other boost libraries, which tend to be not warning-free
 alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off ;
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
@@ -170,7 +165,7 @@ alias optional_boost : accumulators range units serialization ;
 alias all : minimal not_windows odr optional_boost ;
 
 # all except "failure", because it is distracting during development
-alias develop : odr cxx14 cxx17 threading not_windows deprecated optional_boost ;
+alias develop : odr cxx14 cxx17 threading not_windows optional_boost ;
 
 explicit minimal ;
 explicit all ;
@@ -180,7 +175,6 @@ explicit cxx17 ;
 explicit failure ;
 explicit threading ;
 explicit not_windows ;
-explicit deprecated ;
 explicit accumulators ;
 explicit range ;
 explicit units ;

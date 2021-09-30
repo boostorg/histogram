@@ -160,12 +160,16 @@ public:
 #if !defined(small)
 
   /// Return large part of the sum.
-  [[deprecated("use large_part() instead")]] const_reference large() const noexcept {
+  [[deprecated("use large_part() instead; "
+               "large() will be removed in boost-1.80")]] const_reference
+  large() const noexcept {
     return large_;
   }
 
   /// Return small part of the sum.
-  [[deprecated("use small_part() instead")]] const_reference small() const noexcept {
+  [[deprecated("use small_part() instead; "
+               "small() will be removed in boost-1.80")]] const_reference
+  small() const noexcept {
     return small_;
   }
 
