@@ -34,17 +34,24 @@ namespace boost {
 namespace histogram {
 namespace axis {
 
-/**
-  Axis for non-equidistant bins on the real line.
+/** Axis for non-equidistant bins on the real line.
 
   Binning is a O(log(N)) operation. If speed matters and the problem domain
   allows it, prefer a regular axis, possibly with a transform.
+
+  If the axis has an overflow bin (the default), a value on the upper edge of the last
+  bin is put in the overflow bin. The axis range represents a semi-open interval.
+
+  If the overflow bin is deactivated, then a value on the upper edge of the last bin is
+  still counted towards the last bin. The axis range represents a closed interval. This
+  is the desired behavior for random numbers drawn from a bounded interval, which is
+  usually closed.
 
   @tparam Value     input value type, must be floating point.
   @tparam MetaData  type to store meta data.
   @tparam Options   see boost::histogram::axis::option.
   @tparam Allocator allocator to use for dynamic memory management.
- */
+*/
 template <class Value, class MetaData, class Options, class Allocator>
 class variable : public iterator_mixin<variable<Value, MetaData, Options, Allocator>>,
                  public metadata_base_t<MetaData> {
@@ -72,12 +79,12 @@ public:
   explicit variable(allocator_type alloc) : vec_(alloc) {}
 
   /** Construct from iterator range of bin edges.
-   *
-   * @param begin   begin of edge sequence.
-   * @param end     end of edge sequence.
-   * @param meta    description of the axis (optional).
-   * @param options see boost::histogram::axis::option (optional).
-   * @param alloc   allocator instance to use (optional).
+
+     @param begin   begin of edge sequence.
+     @param end     end of edge sequence.
+     @param meta    description of the axis (optional).
+     @param options see boost::histogram::axis::option (optional).
+     @param alloc   allocator instance to use (optional).
    */
   template <class It, class = detail::requires_iterator<It>>
   variable(It begin, It end, metadata_type meta = {}, options_type options = {},
@@ -106,11 +113,11 @@ public:
       : variable(begin, end, std::move(meta), {}, std::move(alloc)) {}
 
   /** Construct variable axis from iterable range of bin edges.
-   *
-   * @param iterable iterable range of bin edges.
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
-   * @param alloc    allocator instance to use (optional).
+
+     @param iterable iterable range of bin edges.
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
+     @param alloc    allocator instance to use (optional).
    */
   template <class U, class = detail::requires_iterable<U>>
   variable(const U& iterable, metadata_type meta = {}, options_type options = {},
@@ -125,11 +132,11 @@ public:
                  std::move(alloc)) {}
 
   /** Construct variable axis from initializer list of bin edges.
-   *
-   * @param list     `std::initializer_list` of bin edges.
-   * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional).
-   * @param alloc    allocator instance to use (optional).
+
+     @param list     `std::initializer_list` of bin edges.
+     @param meta     description of the axis (optional).
+     @param options  see boost::histogram::axis::option (optional).
+     @param alloc    allocator instance to use (optional).
    */
   template <class U>
   variable(std::initializer_list<U> list, metadata_type meta = {},
@@ -159,6 +166,8 @@ public:
       const auto b = vec_[size()];
       x -= std::floor((x - a) / (b - a)) * (b - a);
     }
+    // upper edge of last bin is inclusive if overflow bin is not present
+    if (!options_type::test(option::overflow) && x == vec_.back()) return size() - 1;
     return static_cast<index_type>(std::upper_bound(vec_.begin(), vec_.end(), x) -
                                    vec_.begin() - 1);
   }
