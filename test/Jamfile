@@ -157,11 +157,14 @@ alias libserial :
 # for builds without optional boost dependencies
 alias minimal : cxx14 cxx17 failure threading ;
 
+# for builds with optional boost dependencies
+alias optional_boost : accumulators range units serialization ;
+
 # all tests
-alias all : minimal not_windows odr accumulators range units serialization ;
+alias all : minimal not_windows odr optional_boost ;
 
 # all except "failure", because it is distracting during development
-alias develop : cxx14 cxx17 threading not_windows odr accumulators range units serialization ;
+alias develop : odr cxx14 cxx17 threading not_windows optional_boost ;
 
 explicit minimal ;
 explicit all ;
@@ -176,3 +179,4 @@ explicit range ;
 explicit units ;
 explicit serialization ;
 explicit libserial ;
+explicit optional_boost ;
