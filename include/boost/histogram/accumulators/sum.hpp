@@ -154,10 +154,9 @@ public:
     return operator value_type() >= rhs.operator value_type();
   }
 
-// end: extra operators
+  // end: extra operators
 
-// windows.h illegially uses `#define small char` which breaks the following definitions
-// which are now deprecated but kept for backward compatibility
+  // windows.h illegially uses `#define small char` which breaks this now deprecated API
 #if !defined(small)
 
   /// Return large part of the sum.
