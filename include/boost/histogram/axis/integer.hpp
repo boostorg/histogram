@@ -34,9 +34,9 @@ namespace axis {
 
   Binning is a O(1) operation. This axis bins faster than a regular axis.
 
-  @tparam Value input value type. Must be integer or floating point.
-  @tparam MetaData type to store meta data.
-  @tparam Options see boost::histogram::axis::option (all values allowed).
+  @tparam Value     input value type. Must be integer or floating point.
+  @tparam MetaData  type to store meta data.
+  @tparam Options   see boost::histogram::axis::option.
  */
 template <class Value, class MetaData, class Options>
 class integer : public iterator_mixin<integer<Value, MetaData, Options>>,
@@ -76,12 +76,14 @@ public:
    * @param start    first integer of covered range.
    * @param stop     one past last integer of covered range.
    * @param meta     description of the axis (optional).
-   * @param option   see boost::histogram::axis::option (optional, all values allowed).
+   * @param options  see boost::histogram::axis::option (optional).
    */
-  integer(value_type start, value_type stop, metadata_type meta = {}, options_type = {})
+  integer(value_type start, value_type stop, metadata_type meta = {},
+          options_type options = {})
       : metadata_base(std::move(meta))
       , size_(static_cast<index_type>(stop - start))
       , min_(start) {
+    (void)options;
     if (!(stop >= start))
       BOOST_THROW_EXCEPTION(std::invalid_argument("stop >= start required"));
   }

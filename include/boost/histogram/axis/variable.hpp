@@ -40,9 +40,9 @@ namespace axis {
   Binning is a O(log(N)) operation. If speed matters and the problem domain
   allows it, prefer a regular axis, possibly with a transform.
 
-  @tparam Value input value type, must be floating point.
-  @tparam MetaData type to store meta data.
-  @tparam Options see boost::histogram::axis::option (all values allowed).
+  @tparam Value     input value type, must be floating point.
+  @tparam MetaData  type to store meta data.
+  @tparam Options   see boost::histogram::axis::option.
   @tparam Allocator allocator to use for dynamic memory management.
  */
 template <class Value, class MetaData, class Options, class Allocator>
@@ -76,13 +76,15 @@ public:
    * @param begin   begin of edge sequence.
    * @param end     end of edge sequence.
    * @param meta    description of the axis (optional).
-   * @param options see boost::histogram::axis::option (optional, all values allowed).
+   * @param options see boost::histogram::axis::option (optional).
    * @param alloc   allocator instance to use (optional).
    */
   template <class It, class = detail::requires_iterator<It>>
-  variable(It begin, It end, metadata_type meta = {}, options_type = {},
+  variable(It begin, It end, metadata_type meta = {}, options_type options = {},
            allocator_type alloc = {})
       : metadata_base(std::move(meta)), vec_(std::move(alloc)) {
+    (void)options;
+
     if (std::distance(begin, end) < 2)
       BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
 
@@ -107,7 +109,7 @@ public:
    *
    * @param iterable iterable range of bin edges.
    * @param meta     description of the axis (optional).
-   * @param options  see boost::histogram::axis::option (optional, all values allowed).
+   * @param options  see boost::histogram::axis::option (optional).
    * @param alloc    allocator instance to use (optional).
    */
   template <class U, class = detail::requires_iterable<U>>
@@ -124,10 +126,10 @@ public:
 
   /** Construct variable axis from initializer list of bin edges.
    *
-   * @param list    `std::initializer_list` of bin edges.
-   * @param meta    description of the axis (optional).
-   * @param options see boost::histogram::axis::option (optional, all values allowed).
-   * @param alloc   allocator instance to use (optional).
+   * @param list     `std::initializer_list` of bin edges.
+   * @param meta     description of the axis (optional).
+   * @param options  see boost::histogram::axis::option (optional).
+   * @param alloc    allocator instance to use (optional).
    */
   template <class U>
   variable(std::initializer_list<U> list, metadata_type meta = {},
