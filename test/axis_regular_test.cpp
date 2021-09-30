@@ -226,18 +226,24 @@ int main() {
 
   // axis with overflow bin represents open interval
   {
-    axis::regular<double, def, def, op::overflow_t> a{1, 0, 1};
-    BOOST_TEST_EQ(a.index(0.9), 0);
-    BOOST_TEST_EQ(a.index(1), 1);   // overflow bin
-    BOOST_TEST_EQ(a.index(1.1), 1); // overflow bin
+    axis::regular<double, def, def, op::overflow_t> a{2, 0, 1};
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(0.49), 0);
+    BOOST_TEST_EQ(a.index(0.50), 1);
+    BOOST_TEST_EQ(a.index(0.99), 1);
+    BOOST_TEST_EQ(a.index(1), 2);   // overflow bin
+    BOOST_TEST_EQ(a.index(1.1), 2); // overflow bin
   }
 
   // axis without overflow bin represents a closed interval
   {
-    axis::regular<double, def, def, op::none_t> a{1, 0, 1};
-    BOOST_TEST_EQ(a.index(0.9), 0);
-    BOOST_TEST_EQ(a.index(1), 0);   // last ordinary bin
-    BOOST_TEST_EQ(a.index(1.1), 1); // out of range
+    axis::regular<double, def, def, op::none_t> a{2, 0, 1};
+    BOOST_TEST_EQ(a.index(0), 0);
+    BOOST_TEST_EQ(a.index(0.49), 0);
+    BOOST_TEST_EQ(a.index(0.50), 1);
+    BOOST_TEST_EQ(a.index(0.99), 1);
+    BOOST_TEST_EQ(a.index(1), 1);   // last ordinary bin
+    BOOST_TEST_EQ(a.index(1.1), 2); // out of range
   }
 
   // iterators
