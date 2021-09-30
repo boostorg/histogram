@@ -90,6 +90,8 @@ boost_test(TYPE run SOURCES storage_adaptor_test.cpp)
 boost_test(TYPE run SOURCES unlimited_storage_test.cpp)
 boost_test(TYPE run SOURCES utility_test.cpp)
 boost_test(TYPE run SOURCES issue_327_test.cpp)
+boost_test(TYPE run SOURCES issue_342_test.cpp)
+boost_test(TYPE run SOURCES issue_342_deprecated_api_test.cpp)
 
 find_package(Threads)
 if (Threads_FOUND)

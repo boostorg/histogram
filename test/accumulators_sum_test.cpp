@@ -26,8 +26,8 @@ int main() {
   ++sum;
   BOOST_TEST_EQ(sum, 1);
   BOOST_TEST_EQ(sum.value(), 1);
-  BOOST_TEST_EQ(sum.large(), 1);
-  BOOST_TEST_EQ(sum.small(), 0);
+  BOOST_TEST_EQ(sum.large_part(), 1);
+  BOOST_TEST_EQ(sum.small_part(), 0);
   BOOST_TEST_EQ(str(sum), "sum(1 + 0)"s);
   BOOST_TEST_EQ(str(sum, 15, false), "     sum(1 + 0)"s);
   BOOST_TEST_EQ(str(sum, 15, true), "sum(1 + 0)     "s);
@@ -40,8 +40,8 @@ int main() {
   BOOST_TEST_EQ(sum, (s_t{0, 2}));
   BOOST_TEST_EQ(sum, 2); // correct answer
   BOOST_TEST_EQ(sum.value(), 2);
-  BOOST_TEST_EQ(sum.large(), 0);
-  BOOST_TEST_EQ(sum.small(), 2);
+  BOOST_TEST_EQ(sum.large_part(), 0);
+  BOOST_TEST_EQ(sum.small_part(), 2);
 
   sum = s_t{1e100, 1};
   sum += s_t{1e100, 1};

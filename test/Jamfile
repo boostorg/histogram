@@ -88,6 +88,7 @@ alias cxx14 :
     [ run unlimited_storage_test.cpp ]
     [ run utility_test.cpp ]
     [ run issue_327_test.cpp ]
+    [ run issue_342_test.cpp ]
     ;
 
 alias cxx17 :
@@ -134,6 +135,11 @@ alias not_windows :
     [ run histogram_ostream_ascii_test.cpp : : : <testing.launcher>"LANG=FOO COLUMNS=20" ]
     ;
 
+# tests of deprecated API need to be run with warnings turned off
+alias deprecated :
+    [ run issue_342_deprecated_api_test.cpp ]
+    : : <warnings>off ;
+
 # warnings are off for these other boost libraries, which tend to be not warning-free
 alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off ;
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
@@ -157,11 +163,14 @@ alias libserial :
 # for builds without optional boost dependencies
 alias minimal : cxx14 cxx17 failure threading ;
 
+# for builds with optional boost dependencies
+alias optional_boost : accumulators range units serialization ;
+
 # all tests
-alias all : minimal not_windows odr accumulators range units serialization ;
+alias all : minimal not_windows odr optional_boost ;
 
 # all except "failure", because it is distracting during development
-alias develop : cxx14 cxx17 threading not_windows odr accumulators range units serialization ;
+alias develop : odr cxx14 cxx17 threading not_windows deprecated optional_boost ;
 
 explicit minimal ;
 explicit all ;
@@ -171,8 +180,10 @@ explicit cxx17 ;
 explicit failure ;
 explicit threading ;
 explicit not_windows ;
+explicit deprecated ;
 explicit accumulators ;
 explicit range ;
 explicit units ;
 explicit serialization ;
 explicit libserial ;
+explicit optional_boost ;
