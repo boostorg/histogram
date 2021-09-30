@@ -95,17 +95,6 @@ public:
   /// Return value of the sum.
   value_type value() const noexcept { return large_ + small_; }
 
-// windows.h illegially uses `#define small char`
-#if !defined(small)
-
-  /// Return large part of the sum.
-  [[deprecated]] const_reference large() const noexcept { return large_; }
-
-  /// Return small part of the sum.
-  [[deprecated]] const_reference small() const noexcept { return small_; }
-
-#endif
-
   /// Return large part of the sum.
   const_reference large_part() const noexcept { return large_; }
 
@@ -165,7 +154,23 @@ public:
     return operator value_type() >= rhs.operator value_type();
   }
 
-  // end: extra operators
+// end: extra operators
+
+// windows.h illegially uses `#define small char` which breaks the following definitions
+// which are now deprecated but kept for backward compatibility
+#if !defined(small)
+
+  /// Return large part of the sum.
+  [[deprecated("use large_part() instead")]] const_reference large() const noexcept {
+    return large_;
+  }
+
+  /// Return small part of the sum.
+  [[deprecated("use small_part() instead")]] const_reference small() const noexcept {
+    return small_;
+  }
+
+#endif
 
 private:
   value_type large_{};
