@@ -311,6 +311,8 @@ public:
         else
           return -1;
       }
+      // upper edge of last bin is inclusive if overflow bin is not present
+      if (!options_type::test(option::overflow) && z == 1) return size() - 1;
     }
     return size(); // also returned if x is NaN
   }

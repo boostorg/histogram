@@ -159,6 +159,8 @@ public:
       const auto b = vec_[size()];
       x -= std::floor((x - a) / (b - a)) * (b - a);
     }
+    // upper edge of last bin is inclusive if overflow bin is not present
+    if (!options_type::test(option::overflow) && x == vec_.back()) return size() - 1;
     return static_cast<index_type>(std::upper_bound(vec_.begin(), vec_.end(), x) -
                                    vec_.begin() - 1);
   }
