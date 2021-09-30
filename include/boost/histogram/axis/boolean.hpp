@@ -40,7 +40,7 @@ class boolean : public iterator_mixin<boolean<MetaData>>,
 public:
   /** Construct a boolean axis.
    *
-   * \param meta     description of the axis.
+   * @param meta description of the axis.
    */
   explicit boolean(metadata_type meta = {}) : metadata_base(std::move(meta)) {}
 
