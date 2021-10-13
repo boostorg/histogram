@@ -38,15 +38,39 @@ using reg_closed =
 
 class reg_closed_unsafe {
 public:
-  reg_closed_unsafe(axis::index_type n, double start, double stop)
+  using value_type = double;
+
+  reg_closed_unsafe(axis::index_type n, value_type start, value_type stop)
       : min_{start}, delta_{stop - start}, size_{n} {}
 
-  axis::index_type index(double x) const noexcept {
-    // Runs in hot loop, please measure impact of changes
-    auto z = (x - min_) / delta_;
+  axis::index_type index(value_type x) const noexcept {
+    const auto a = 1 / delta_;
+    const auto b = -min_ / delta_;
+    auto z = a * x + b;
     // assume that z < 0 and z > 1 never happens, promised by inclusive()
     if (z == 1) return size() - 1;
     return static_cast<axis::index_type>(z * size());
+  }
+
+  template <class T, class I>
+  I* index_transform(T const* begin, T const* end, I* ibegin) const {
+    // constexpr auto n = 128;
+    // value_type buffer[n];
+    // while (begin != end) {
+    //   // write hot computation fused-multiply-add friendly
+    //   const auto a = 1 / delta_;
+    //   const auto b = -min_ / delta_;
+    //   auto vend = buffer;
+    //   // for (; begin != std::min(end, begin + n); ++begin, ++vend) *vend = a * *begin
+    //   +
+    //       // b; for (auto vit = buffer; vit != vend; ++vit, ++ibegin)
+    //       //   *ibegin = std::min(static_cast<axis::index_type>(*vit), size() - 1);
+    //       ++begin;
+    //   *ibegin++ = 0;
+    // }
+    // return ibegin;
+    for (; begin != end; ++begin, ++ibegin) *ibegin = index(*begin);
+    return ibegin;
   }
 
   axis::index_type size() const noexcept { return size_; }

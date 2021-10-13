@@ -106,11 +106,13 @@ struct variant_access {
   }
 };
 
+// only used if Axis method exists with matching signature
 template <class A>
 decltype(auto) metadata_impl(A&& a, decltype(a.metadata(), 0)) {
   return std::forward<A>(a).metadata();
 }
 
+// fallback option
 template <class A>
 axis::null_type& metadata_impl(A&&, float) {
   static axis::null_type null_value;
@@ -497,6 +499,37 @@ Result width_as(const Axis& axis, index_type index) {
 
 } // namespace traits
 } // namespace axis
+
+namespace detail {
+
+// only used if Axis method exists with matching signature
+template <class A, class VP, class IP>
+IP index_transform_impl(const A& a, VP begin, VP end, IP ibegin,
+                        decltype(a.index_transform(begin, end, ibegin), 0)) {
+  return a.index_transform(begin, end, ibegin);
+}
+
+// fallback option
+template <class A, class VP, class IP>
+IP index_transform_impl(const A& a, VP begin, VP end, IP ibegin, float) {
+  for (auto it = begin; it != end; ++it) *ibegin++ = axis::traits::index(a, *it);
+  return ibegin;
+}
+
+} // namespace detail
+
+namespace axis {
+namespace traits {
+
+template <class Axis, class T, class IndexType>
+IndexType* index_transform(const Axis& axis, const T* begin, const T* end,
+                           IndexType* ibegin) noexcept {
+  return detail::index_transform_impl(axis, begin, end, ibegin, 0);
+}
+
+} // namespace traits
+} // namespace axis
+
 } // namespace histogram
 } // namespace boost
 

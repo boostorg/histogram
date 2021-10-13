@@ -91,15 +91,23 @@ struct index_visitor {
     linearize(*it, stride_, axis_, try_cast<value_type, std::invalid_argument>(x));
   }
 
-  template <class T>
-  void call_1(std::false_type, const T& iterable) const {
-    // T is iterable; fill N values
+  template <class T, class IsGrowingOrNot>
+  void call_1(std::false_type, IsGrowingOrNot, const T& iterable) const {
+    // argument is iterable, but value type does not match; fill N values
     const auto* tp = dtl::data(iterable) + start_;
-    for (auto it = begin_; it != begin_ + size_; ++it) call_2(IsGrowing{}, it, *tp++);
+    for (auto it = begin_; it != begin_ + size_; ++it)
+      call_2(IsGrowingOrNot{}, it, *tp++);
   }
 
   template <class T>
-  void call_1(std::true_type, const T& value) const {
+  void call_1(std::false_type, std::false_type, const T& iterable) const {
+    // argument is iterable and axis is not growing; fill N values
+    const auto* tp = dtl::data(iterable) + start_;
+    axis::traits::index_transform(axis_, tp, tp + size_, begin_);
+  }
+
+  template <class T, class IsGrowingOrNot>
+  void call_1(std::true_type, IsGrowingOrNot, const T& value) const {
     // T is compatible value; fill single value N times
 
     // Optimization: We call call_2 only once and then add the index shift onto the
@@ -107,7 +115,7 @@ struct index_visitor {
     // axis grows during this operation. There are no shifts to apply if the zero-point
     // changes.
     const auto before = *begin_;
-    call_2(IsGrowing{}, begin_, value);
+    call_2(IsGrowingOrNot{}, begin_, value);
     if (is_valid(*begin_)) {
       // since index can be std::size_t or optional_index, must do conversion here
       const auto delta =
@@ -121,7 +129,7 @@ struct index_visitor {
   void operator()(const T& iterable_or_value) const {
     call_1(mp11::mp_bool<(std::is_convertible<T, value_type>::value ||
                           !is_iterable<T>::value)>{},
-           iterable_or_value);
+           IsGrowing{}, iterable_or_value);
   }
 };
 

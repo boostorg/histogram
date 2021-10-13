@@ -30,6 +30,21 @@ struct value_type_deducer<ValueTypeOverride> {
 } // namespace histogram
 } // namespace boost
 
+struct RegularWithoutTransform {
+  index_type index(double x) const { return static_cast<index_type>(x); }
+  index_type size() const { return 10; }
+};
+
+struct RegularWithTransform : RegularWithoutTransform {
+  mutable bool transform_was_called = false;
+  index_type* index_transform(double const* begin, double const* end,
+                              index_type* ibegin) const {
+    transform_was_called = true;
+    for (; begin != end; ++begin, ++ibegin) *ibegin = index(*begin);
+    return ibegin;
+  }
+};
+
 int main() {
   // value_type
   {
@@ -240,6 +255,29 @@ int main() {
     };
 
     BOOST_TEST_EQ(traits::index(E{0, 3}, "2"), 2);
+  }
+
+  // index_transform
+  {
+    double v[3] = {1, 2, 3};
+    index_type i[3];
+
+    const auto iend1 = traits::index_transform(RegularWithoutTransform{}, v, v + 3, i);
+
+    BOOST_TEST_EQ(iend1, i + 3);
+    BOOST_TEST_EQ(i[0], 1);
+    BOOST_TEST_EQ(i[1], 2);
+    BOOST_TEST_EQ(i[2], 3);
+
+    std::fill(i, i + 3, 0);
+
+    RegularWithTransform a;
+    const auto iend2 = traits::index_transform(a, v, v + 3, i);
+    BOOST_TEST_EQ(iend2, i + 3);
+    BOOST_TEST_EQ(i[0], 1);
+    BOOST_TEST_EQ(i[1], 2);
+    BOOST_TEST_EQ(i[2], 3);
+    BOOST_TEST(a.transform_was_called);
   }
 
   // update
