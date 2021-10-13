@@ -37,5 +37,5 @@ jobs:
     - name: ctest
       run: |
         cd build
-        cmake --build . -j3 --target tests # temporary workaround (I hope)
+        cmake --build . --target tests -j3 -- -k
         ctest -C Debug --output-on-failure
