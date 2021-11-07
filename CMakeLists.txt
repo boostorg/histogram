@@ -51,6 +51,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
     set(BUILD_TESTING OFF) # do not build tests of dependencies
 
+    boost_fetch(boostorg/static_assert TAG develop EXCLUDE_FROM_ALL)
     boost_fetch(boostorg/assert TAG develop EXCLUDE_FROM_ALL) # needed by core
     boost_fetch(boostorg/config TAG develop EXCLUDE_FROM_ALL)
     boost_fetch(boostorg/core TAG develop EXCLUDE_FROM_ALL)
