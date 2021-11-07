@@ -34,8 +34,8 @@ jobs:
     - name: CMake from superproject
       run: |
         cd ..
-        cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 $GITHUB_WORKSPACE
-        ctest -j2 --output-on-failure -R boost_histogram
+        cmake -DBoost_VERBOSE=1 $GITHUB_WORKSPACE
+        cmake --build . --target all -j3 -- -k
 
   appleclang:
     runs-on: macos-latest
