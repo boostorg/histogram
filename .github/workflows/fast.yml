@@ -29,13 +29,12 @@ jobs:
       fail-fast: true
     steps:
     - uses: actions/checkout@v2
-    - name: cmake
+    - name: prepare build
       run: |
         mkdir build
         cd build
-        cmake ..
-    - name: ctest
+        cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - name: test
       run: |
         cd build
-        cmake --build . --target tests -j3 -- -k
-        ctest -C Debug --output-on-failure
+        cmake --build . --target check -j3 -- -k
