@@ -150,14 +150,14 @@ class BOOST_ATTRIBUTE_NODISCARD histogram;
 
 namespace detail {
 
-/* Most of the histogram code is generic and works for any number of axes. Buffers with a
- * fixed maximum capacity are used in some places, which have a size equal to the rank of
- * a histogram. The buffers are statically allocated to improve performance, which means
- * that they need a preset maximum capacity. 32 seems like a safe upper limit for the rank
- * (you can nevertheless increase it here if necessary): the simplest non-trivial axis has
- * 2 bins; even if counters are used which need only a byte of storage per bin, 32 axes
- * would generate of 4 GB.
- */
+/*
+ Most of the histogram code is generic and works for any number of axes. Buffers with a
+ fixed maximum capacity are used in some places, which have a size equal to the rank of
+ a histogram. The buffers are allocated from the stack to improve performance, which
+ means in C++ that they need a preset maximum capacity. 32 seems like a safe upper limit
+ for the rank. You can nevertheless increase it with the compile-time flag
+ BOOST_HISTOGRAM_DETAIL_AXES_LIMIT, if necessary.
+*/
 #ifndef BOOST_HISTOGRAM_DETAIL_AXES_LIMIT
 #define BOOST_HISTOGRAM_DETAIL_AXES_LIMIT 32
 #endif

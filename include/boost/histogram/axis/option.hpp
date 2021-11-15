@@ -57,7 +57,11 @@ constexpr auto operator-(bitset<B1>, bitset<B2>) {
   @tparam Pos position of the bit in the set.
 */
 template <unsigned Pos>
-struct bit : bitset<(1 << Pos)> {};
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+using bit = bitset<(1 << Pos)>;
+#else
+struct bit;
+#endif
 
 /// All options off.
 using none_t = bitset<0>;
