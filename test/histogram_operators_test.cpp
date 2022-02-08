@@ -160,8 +160,8 @@ void run_tests() {
     auto b = make_s(Tag(), std::vector<accumulators::weighted_sum<>>(), ia);
 
     a(0);
-    BOOST_TEST_EQ(a.at(0).variance(), 1);
     b(weight(3), 1);
+    BOOST_TEST_EQ(a.at(0).variance(), 1);
     BOOST_TEST_EQ(b.at(1).variance(), 9);
     auto c = a;
     c += b;
@@ -185,6 +185,50 @@ void run_tests() {
     BOOST_TEST_EQ(d.at(0).variance(), 3);
     BOOST_TEST_EQ(d.at(1).value(), 5);
     BOOST_TEST_EQ(d.at(1).variance(), 11);
+  }
+
+  // division operators with weighted storage
+  {
+    using w_t = accumulators::weighted_sum<>;
+    auto ia = axis::integer<int, axis::null_type, axis::option::none_t>(0, 2);
+    auto a = make_s(Tag(), std::vector<w_t>(), ia);
+    auto b = make_s(Tag(), std::vector<w_t>(), ia);
+
+    a(0);
+    a(1, weight(2));
+    b(weight(4), 0);
+    b(weight(3), 1);
+
+    w_t av[2] = {w_t{1, 1}, w_t{2, 4}};
+    w_t bv[2] = {w_t{4, 16}, w_t{3, 9}};
+    BOOST_TEST_EQ(a.at(0), av[0]);
+    BOOST_TEST_EQ(a.at(1), av[1]);
+    BOOST_TEST_EQ(b.at(0), bv[0]);
+    BOOST_TEST_EQ(b.at(1), bv[1]);
+
+    auto c = a;
+    c /= b;
+
+    w_t cv[2] = {av[0], av[1]};
+    cv[0] /= bv[0];
+    cv[1] /= bv[1];
+    BOOST_TEST_EQ(c.at(0), cv[0]);
+    BOOST_TEST_EQ(c.at(1), cv[1]);
+
+    // division by unweighted histogram
+    auto e = make_s(Tag(), std::vector<double>(), ia);
+
+    e(0);
+    e(0);
+    e(1);
+
+    auto f = a / e;
+    w_t fv[2] = {av[0], av[1]};
+    fv[0] /= e.at(0);
+    fv[1] /= e.at(1);
+
+    BOOST_TEST_EQ(f.at(0), fv[0]);
+    BOOST_TEST_EQ(f.at(1), fv[1]);
   }
 
   // merging add
