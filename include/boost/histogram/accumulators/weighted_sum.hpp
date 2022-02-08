@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_SUM_HPP
 
 #include <boost/core/nvp.hpp>
+#include <boost/histogram/detail/square.hpp>
 #include <boost/histogram/fwd.hpp> // for weighted_sum<>
 #include <type_traits>
 
@@ -46,7 +47,7 @@ public:
   /// Increment by weight.
   weighted_sum& operator+=(const weight_type<value_type>& w) {
     sum_of_weights_ += w.value;
-    sum_of_weights_squared_ += w.value * w.value;
+    sum_of_weights_squared_ += detail::square(w.value);
     return *this;
   }
 
@@ -66,8 +67,8 @@ public:
     sum_of_weights_ /= rv;
     // error propagation for independent a, b:
     // c = a / b: var(c) = (var(a)/a^2 + var(b)/b^2) c^2
-    sum_of_weights_squared_ =
-        (w / (v * v) + rw / (rv * rv)) * sum_of_weights_ * sum_of_weights_;
+    using detail::square;
+    sum_of_weights_squared_ = (w / square(v) + rw / square(rv)) * square(sum_of_weights_);
     return *this;
   }
 
