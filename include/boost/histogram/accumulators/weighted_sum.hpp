@@ -57,6 +57,20 @@ public:
     return *this;
   }
 
+  /// Divide by another weighted sum.
+  weighted_sum& operator/=(const weighted_sum& rhs) {
+    const auto v = sum_of_weights_;
+    const auto w = sum_of_weights_squared_;
+    const auto rv = rhs.sum_of_weights_;
+    const auto rw = rhs.sum_of_weights_squared_;
+    sum_of_weights_ /= rv;
+    // error propagation for independent a, b:
+    // c = a / b: var(c) = (var(a)/a^2 + var(b)/b^2) c^2
+    sum_of_weights_squared_ =
+        (w / (v * v) + rw / (rv * rv)) * sum_of_weights_ * sum_of_weights_;
+    return *this;
+  }
+
   /// Scale by value.
   weighted_sum& operator*=(const_reference x) {
     sum_of_weights_ *= x;
