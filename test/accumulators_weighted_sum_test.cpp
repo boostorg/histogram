@@ -8,6 +8,7 @@
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
+#include <boost/histogram/detail/square.hpp>
 #include <boost/histogram/weight.hpp>
 #include <sstream>
 #include "throw_exception.hpp"
@@ -16,9 +17,10 @@
 using namespace boost::histogram;
 using namespace std::literals;
 
+using w_t = accumulators::weighted_sum<double>;
+
 int main() {
   {
-    using w_t = accumulators::weighted_sum<double>;
     w_t w;
     BOOST_TEST_EQ(str(w), "weighted_sum(0, 0)"s);
     BOOST_TEST_EQ(str(w, 20, false), "  weighted_sum(0, 0)"s);
@@ -76,6 +78,36 @@ int main() {
     BOOST_TEST_EQ(w.variance(), 2e200);
 
     BOOST_TEST_EQ(s_t() += s_t(), s_t());
+  }
+
+  // division 1
+  {
+    w_t a{1, 2};
+    w_t b{2, 3};
+
+    auto c = a;
+    c /= b;
+
+    BOOST_TEST_EQ(c.value(), 0.5);
+    // error propagation for independent a and b:
+    // var(c)/c^2 = var(a)/a^2 + var(b)/b^2
+    BOOST_TEST_EQ(c.variance() / detail::square(c.value()),
+                  a.variance() / detail::square(a.value()) +
+                      b.variance() / detail::square(b.value()));
+  }
+
+  // division with implicit conversion
+  {
+    w_t a{1, 2};
+    double b = 2;
+
+    auto c = a;
+    c /= b;
+
+    BOOST_TEST_EQ(c.value(), 0.5);
+    // var(b) = b
+    BOOST_TEST_EQ(c.variance() / detail::square(c.value()),
+                  a.variance() / detail::square(a.value()) + 1.0 / b);
   }
 
   return boost::report_errors();
