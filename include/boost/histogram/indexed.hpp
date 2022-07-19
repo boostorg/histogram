@@ -351,8 +351,8 @@ public:
           ++ca;
           ++r_begin;
         });
-    // if any axes has size 0, range is empty; undo begin_skip
-    if (stride == 0) begin_.iter_ = hist.begin();
+    // if any axes has size 0, range is empty
+    if (stride == 0) begin_.iter_ = end_.iter_;
   }
 
   iterator begin() noexcept { return begin_; }
