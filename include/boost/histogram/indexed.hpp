@@ -328,31 +328,32 @@ public:
     auto r_begin = std::begin(range);
     assert(std::distance(r_begin, std::end(range)) == static_cast<int>(hist.rank()));
 
-    std::size_t stride = 1;
-    begin_.indices_.hist_->for_each_axis(
-        [ca = begin_.indices_.begin(), r_begin, &stride, this](const auto& a) mutable {
-          const auto size = a.size();
+    // if histogram is empty, incrementing begin_.iter_ may be undefined behavior
+    if (begin_ == end_) return;
 
-          using opt = axis::traits::get_options<std::decay_t<decltype(a)>>;
-          constexpr axis::index_type start = opt::test(axis::option::underflow) ? -1 : 0;
-          const auto stop = size + (opt::test(axis::option::overflow) ? 1 : 0);
+    begin_.indices_.hist_->for_each_axis([ca = begin_.indices_.begin(), r_begin,
+                                          stride = std::size_t{1},
+                                          this](const auto& a) mutable {
+      const auto size = a.size();
 
-          ca->begin = std::max(start, detail::get<0>(*r_begin));
-          ca->end = std::min(stop, detail::get<1>(*r_begin));
-          assert(ca->begin <= ca->end);
-          ca->idx = ca->begin;
+      using opt = axis::traits::get_options<std::decay_t<decltype(a)>>;
+      constexpr axis::index_type start = opt::test(axis::option::underflow) ? -1 : 0;
+      const auto stop = size + (opt::test(axis::option::overflow) ? 1 : 0);
 
-          ca->begin_skip = static_cast<std::size_t>(ca->begin - start) * stride;
-          ca->end_skip = static_cast<std::size_t>(stop - ca->end) * stride;
-          begin_.iter_ += ca->begin_skip;
+      ca->begin = std::max(start, detail::get<0>(*r_begin));
+      ca->end = std::min(stop, detail::get<1>(*r_begin));
+      assert(ca->begin <= ca->end);
+      ca->idx = ca->begin;
 
-          stride *= stop - start;
+      ca->begin_skip = static_cast<std::size_t>(ca->begin - start) * stride;
+      ca->end_skip = static_cast<std::size_t>(stop - ca->end) * stride;
+      begin_.iter_ += ca->begin_skip;
 
-          ++ca;
-          ++r_begin;
-        });
-    // if any axes has size 0, range is empty
-    if (stride == 0) begin_.iter_ = end_.iter_;
+      stride *= stop - start;
+
+      ++ca;
+      ++r_begin;
+    });
   }
 
   iterator begin() noexcept { return begin_; }
