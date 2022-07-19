@@ -7,7 +7,6 @@
 #include <array>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/count.hpp>
-#include <boost/histogram/accumulators/thread_safe.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <cassert>
@@ -43,10 +42,6 @@ int main(int argc, char** argv) {
       join(argv[1], "storage_adaptor_serialization_test_map_double.xml"));
   test_serialization<std::vector<accumulators::count<int, true>>>(
       join(argv[1], "storage_adaptor_serialization_test_vector_thread_safe_int.xml"));
-#include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
-  test_serialization<std::vector<accumulators::thread_safe<int>>>(
-      join(argv[1], "storage_adaptor_serialization_test_vector_thread_safe_int.xml"));
-#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
 
   return boost::report_errors();
 }
