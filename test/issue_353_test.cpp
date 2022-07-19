@@ -5,18 +5,44 @@
 
 namespace bh = boost::histogram;
 
-struct my_axis {
+struct empty {
   int index(double) { return 0; }
   int size() const { return 0; }
 };
 
 int main() {
-  auto h =
-      bh::make_histogram_with(std::vector<int>(), bh::axis::integer<>(0, 2), my_axis());
+  {
+    auto h =
+        bh::make_histogram_with(std::vector<int>(), bh::axis::integer<>(0, 2), empty());
 
-  auto ind = bh::indexed(h, bh::coverage::inner);
+    auto ind1 = bh::indexed(h, bh::coverage::all);
+    BOOST_TEST_EQ(std::distance(ind1.begin(), ind1.end()), 0);
 
-  BOOST_TEST_EQ(std::distance(ind.begin(), ind.end()), 0);
+    auto ind2 = bh::indexed(h, bh::coverage::inner);
+    BOOST_TEST_EQ(std::distance(ind2.begin(), ind2.end()), 0);
+  }
+
+  {
+    auto h = bh::make_histogram_with(std::vector<int>(), bh::axis::integer<>(0, 2),
+                                     bh::axis::integer<>(0, 1));
+
+    auto ind1 = bh::indexed(h, bh::coverage::all);
+    BOOST_TEST_EQ(std::distance(ind1.begin(), ind1.end()), 12);
+
+    auto ind2 = bh::indexed(h, bh::coverage::inner);
+    BOOST_TEST_EQ(std::distance(ind2.begin(), ind2.end()), 2);
+  }
+
+  {
+    auto h = bh::make_histogram_with(std::vector<int>(), bh::axis::integer<>(0, 2),
+                                     bh::axis::integer<>(0, 0));
+
+    auto ind1 = bh::indexed(h, bh::coverage::all);
+    BOOST_TEST_EQ(std::distance(ind1.begin(), ind1.end()), 8);
+
+    auto ind2 = bh::indexed(h, bh::coverage::inner);
+    BOOST_TEST_EQ(std::distance(ind2.begin(), ind2.end()), 0);
+  }
 
   return boost::report_errors();
 }
