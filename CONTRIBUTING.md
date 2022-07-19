@@ -25,27 +25,45 @@ Fork the main repository. Base your changes on the `develop` branch. Make a new 
 
 Please rebase your branch to the original `develop` branch before submitting (which may have diverged from your fork in the meantime).
 
-For general advice on how to set up the Boost project for development, see the Getting Started section on
-https://github.com/boostorg/wiki/wiki.
-
-To build the documentation, you need to install a few extra things, see
-https://www.boost.org/doc/libs/1_74_0/doc/html/quickbook/install.html.
-
 ## Running Tests
-
-### With b2
-
-Boost comes with a build system called `b2`, which is the most efficient way to run the develop-test cycle. It takes a few extra steps and some reading to set up, but the payoff is worth it. If you followed the advice from the previous section, you should be all set up to run the tests from the Boost Histogram project folder with `b2 cxxstd=latest warnings-as-errors=on test`. You can also test the examples by executing `b2 cxxstd=latest examples`. To make the tests complete faster, you can use the option `-j4` (or another number) to build in parallel.
 
 ### With cmake
 
-Alternatively, you can build and test Boost Histogram with `cmake`. This does not require setting up all of Boost, just a checkout of Boost Histogram. It requires very little setup, but it is not as efficient for development as using `b2`. Anyway, to use `cmake`, you do in the project folder
+You can build and test Boost Histogram with `cmake`, but this is **experimental**. It is very convenient, however, as it does not require setting up the Boost superproject, you just need a checkout of Boost Histogram, but when you need to recompile many times, it is slower than using `b2` (see next section). The following steps compile the tests with `cmake`
 ```sh
 mkdir build
 cd build
-cmake ..
-ctest -C Debug --output-on-failure
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake --build . --target check -j3
 ```
+Increase `-j3` to the number of jobs that you want to run in parallel.
+
+### With b2
+
+For general advice on how to set up the Boost project for development, see the Getting Started section on
+https://github.com/boostorg/wiki/wiki.
+
+Boost comes with a build system called `b2`, which is the most efficient way to run the develop-test cycle. It takes a few extra steps and some reading to set up, but the payoff is worth it in the long run. After following the general advice from the Boost wiki, you should be all set up to run the tests from the Boost Histogram project folder with the command
+```sh
+../../b2 cxxstd=latest warnings-as-errors=on test
+```
+You can also test the examples by executing
+```sh
+../../b2 cxxstd=latest examples
+```
+To make the tests complete faster, you can use the option `-j4` (or another number) to build in parallel.
+
+#### Generate documentation
+
+To build the documentation, you need to install a few extra things, see [Quickbook documentation](https://www.boost.org/doc/libs/1_74_0/doc/html/quickbook/install.html).
+
+#### Using b2filt
+
+The output of b2 is verbose and there is no highlighting, so sometimes it is difficult to spot a problem. You can give `b2filt` are try, which you can install with `pip install b2filt`. Just replace `../../b2` with `b2filt`, for example:
+```sh
+b2filt cxxstd=latest warnings-as-errors=on test
+```
+Note: b2filt is not an official part of Boost and has never been tested extensively on Windows. Please leave an [issue on GitHub](https://github.com/HDembinski/b2filt) if you have trouble with b2filt.
 
 ### Reporting failures
 
