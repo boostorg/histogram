@@ -106,12 +106,6 @@ class mean;
 template <class ValueType = double>
 class weighted_mean;
 
-template <class T>
-class thread_safe;
-
-template <class T>
-struct is_thread_safe;
-
 } // namespace accumulators
 
 struct unsafe_access;

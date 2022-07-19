@@ -64,9 +64,6 @@ public:
   using value_type = typename std::iterator_traits<value_iterator>::value_type;
 
   class iterator;
-  using range_iterator [[deprecated("use iterator instead; "
-                                    "range_iterator will be removed in boost-1.80")]] =
-      iterator; ///< deprecated
 
   /** Lightweight view to access value and index of current cell.
 
@@ -86,9 +83,6 @@ public:
 
     public:
       using const_reference = const axis::index_type&;
-      using reference [[deprecated("use const_reference instead; "
-                                   "reference will be removed in boost-1.80")]] =
-          const_reference; ///< deprecated
 
       /// implementation detail
       class const_iterator
