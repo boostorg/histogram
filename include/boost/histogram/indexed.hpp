@@ -328,29 +328,31 @@ public:
     auto r_begin = std::begin(range);
     assert(std::distance(r_begin, std::end(range)) == static_cast<int>(hist.rank()));
 
-    begin_.indices_.hist_->for_each_axis([ca = begin_.indices_.begin(), r_begin,
-                                          stride = std::size_t{1},
-                                          this](const auto& a) mutable {
-      const auto size = a.size();
+    std::size_t stride = 1;
+    begin_.indices_.hist_->for_each_axis(
+        [ca = begin_.indices_.begin(), r_begin, &stride, this](const auto& a) mutable {
+          const auto size = a.size();
 
-      using opt = axis::traits::get_options<std::decay_t<decltype(a)>>;
-      constexpr axis::index_type start = opt::test(axis::option::underflow) ? -1 : 0;
-      const auto stop = size + (opt::test(axis::option::overflow) ? 1 : 0);
+          using opt = axis::traits::get_options<std::decay_t<decltype(a)>>;
+          constexpr axis::index_type start = opt::test(axis::option::underflow) ? -1 : 0;
+          const auto stop = size + (opt::test(axis::option::overflow) ? 1 : 0);
 
-      ca->begin = std::max(start, detail::get<0>(*r_begin));
-      ca->end = std::min(stop, detail::get<1>(*r_begin));
-      assert(ca->begin <= ca->end);
-      ca->idx = ca->begin;
+          ca->begin = std::max(start, detail::get<0>(*r_begin));
+          ca->end = std::min(stop, detail::get<1>(*r_begin));
+          assert(ca->begin <= ca->end);
+          ca->idx = ca->begin;
 
-      ca->begin_skip = static_cast<std::size_t>(ca->begin - start) * stride;
-      ca->end_skip = static_cast<std::size_t>(stop - ca->end) * stride;
-      begin_.iter_ += ca->begin_skip;
+          ca->begin_skip = static_cast<std::size_t>(ca->begin - start) * stride;
+          ca->end_skip = static_cast<std::size_t>(stop - ca->end) * stride;
+          begin_.iter_ += ca->begin_skip;
 
-      stride *= stop - start;
+          stride *= stop - start;
 
-      ++ca;
-      ++r_begin;
-    });
+          ++ca;
+          ++r_begin;
+        });
+    // if any axes has size 0, range is empty
+    if (stride == 0) begin_ = end_;
   }
 
   iterator begin() noexcept { return begin_; }
@@ -364,8 +366,8 @@ private:
       (*it)[0] = 0;
       (*it)[1] = a.size();
       if (cov == coverage::all) {
-        (*it)[0] -= 1;
-        (*it)[1] += 1;
+        (*it)[0] -= 1; // making this wider than actual range is safe
+        (*it)[1] += 1; // making this wider than actual range is safe
       } else
         assert(cov == coverage::inner);
       ++it;
