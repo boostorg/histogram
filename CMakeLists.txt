@@ -63,6 +63,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     ## skipping serialization, range, accumulators, units;
     ## the tests pull in too many dependencies
     # boost_fetch(boostorg/serialization TAG develop EXCLUDE_FROM_ALL)
+    # boost_fetch(boostorg/units TAG develop EXCLUDE_FROM_ALL)
     # boost_fetch(boostorg/range TAG develop EXCLUDE_FROM_ALL)
     # boost_fetch(boostorg/accumulators TAG develop EXCLUDE_FROM_ALL)
 
