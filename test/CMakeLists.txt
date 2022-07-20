@@ -83,6 +83,9 @@ boost_test(TYPE run SOURCES histogram_mixed_test.cpp)
 boost_test(TYPE run SOURCES histogram_operators_test.cpp
   COMPILE_OPTIONS $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 boost_test(TYPE run SOURCES histogram_ostream_test.cpp)
+boost_test(TYPE run SOURCES histogram_ostream_ascii_test.cpp)
+set_tests_properties(run-boost_histogram-histogram_ostream_ascii_test_cpp
+  PROPERTIES ENVIRONMENT "LANG=FOO;COLUMNS=20")
 boost_test(TYPE run SOURCES histogram_test.cpp)
 boost_test(TYPE run SOURCES indexed_test.cpp)
 boost_test(TYPE run SOURCES storage_adaptor_test.cpp)
@@ -124,10 +127,6 @@ endif()
 #     LINK_LIBRARIES Boost::serialization)
 # boost_test(TYPE run SOURCES accumulators_serialization_test.cpp
 #     LINK_LIBRARIES Boost::serialization)
-
-boost_test(TYPE run SOURCES histogram_ostream_ascii_test.cpp)
-set_tests_properties(run-boost_histogram-histogram_ostream_ascii_test_cpp
-  PROPERTIES ENVIRONMENT "LANG=FOO;COLUMNS=20")
 
 # Workaround for gcc-5
 if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6))
