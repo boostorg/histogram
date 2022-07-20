@@ -150,18 +150,23 @@ alias libserial :
     <link>static <warnings>off <rtti>on
     ;
 
+# helper for minimal and develop aliases
+alias minimal_without_failure : cxx14 cxx17 threading odr ;
+
 # for builds without optional boost dependencies
-alias minimal : cxx14 cxx17 failure threading ;
+alias minimal : minimal_without_failure failure ;
 
 # for builds with optional boost dependencies
 alias optional_boost : accumulators range units serialization ;
 
 # all tests
-alias all : minimal odr optional_boost ;
+alias all : minimal optional_boost ;
 
-# all except "failure", because it is distracting during development
-alias develop : odr cxx14 cxx17 threading optional_boost ;
+# all except "failure", because it is distracting during development;
+# this is called implicitly if no other alias is specified
+alias develop : minimal_without_failure optional_boost ;
 
+explicit minimal_without_failure ;
 explicit minimal ;
 explicit all ;
 explicit odr ;
