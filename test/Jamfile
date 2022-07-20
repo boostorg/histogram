@@ -88,6 +88,7 @@ alias cxx14 :
     [ run unlimited_storage_test.cpp ]
     [ run utility_test.cpp ]
     [ run issue_327_test.cpp ]
+    [ run issue_353_test.cpp ]
     ;
 
 alias cxx17 :

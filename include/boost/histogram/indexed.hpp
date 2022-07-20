@@ -286,7 +286,7 @@ public:
   private:
     iterator(value_iterator i, histogram_type& h) : iter_(i), indices_(&h) {}
 
-    value_iterator iter_;
+    value_iterator iter_; // original histogram iterator
 
     struct index_data {
       axis::index_type idx, begin, end;
@@ -319,6 +319,9 @@ public:
   template <class Iterable, class = detail::requires_iterable<Iterable>>
   indexed_range(histogram_type& hist, Iterable&& range)
       : begin_(hist.begin(), hist), end_(hist.end(), hist) {
+    // if histogram is empty, incrementing begin_.iter_ may be undefined behavior
+    if (begin_ == end_) return;
+
     auto r_begin = std::begin(range);
     assert(std::distance(r_begin, std::end(range)) == static_cast<int>(hist.rank()));
 
@@ -339,12 +342,20 @@ public:
       ca->begin_skip = static_cast<std::size_t>(ca->begin - start) * stride;
       ca->end_skip = static_cast<std::size_t>(stop - ca->end) * stride;
       begin_.iter_ += ca->begin_skip;
+      end_.iter_ -= ca->end_skip;
 
       stride *= stop - start;
 
       ++ca;
       ++r_begin;
     });
+    // check if selected range is empty
+    if (end_.iter_ < begin_.iter_) {
+      begin_ = end_;
+    } else {
+      // reset end_ to hist.end(), since end_skips are done in operator++
+      end_.iter_ = hist.end();
+    }
   }
 
   iterator begin() noexcept { return begin_; }
@@ -358,8 +369,8 @@ private:
       (*it)[0] = 0;
       (*it)[1] = a.size();
       if (cov == coverage::all) {
-        (*it)[0] -= 1;
-        (*it)[1] += 1;
+        (*it)[0] -= 1; // making this wider than actual range is safe
+        (*it)[1] += 1; // making this wider than actual range is safe
       } else
         assert(cov == coverage::inner);
       ++it;
