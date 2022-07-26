@@ -1,4 +1,4 @@
-// Copyright 2019 Hans Dembinski
+// Copyright 2022 Jay Gohil, Hans Dembinski
 //
 // Distributed under the Boost Software License, version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -8,23 +8,22 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_EFFICIENCY_HPP
 
 #include <boost/core/nvp.hpp>
-#include <boost/histogram/detail/atomic_number.hpp>
 #include <boost/histogram/fwd.hpp> // for efficiency<>
-#include <type_traits>
-#include <boost/format.hpp>
-#include <boost/histogram.hpp>
-#include <cmath>
+#include <boost/histogram/detail/probit.hpp>
+#include <boost/histogram/detail/waldInterval.hpp>
+#include <boost/histogram/detail/wilsonInterval.hpp>
+#include <utility>
+#include <limits>
 
-enum interval_type {
-    Wald=0,
-    Wilson=1,
-    Jeffreys=2,
-    ClopperPearson=3,
-    AgrestiCoull=4
+enum class interval_type {
+    wald,
+    wilson,
+    jeffreys,
+    agrestiCoull,
+    clopperPearson
 };
 
 struct efficiency {
-    // return value is ignored, so we use void
     void operator()(bool x) {
         if (x) ++n_success_;
         else ++n_failure_;
@@ -32,24 +31,20 @@ struct efficiency {
 
     double value() const { return n_success_/(n_success_+n_failure_); }
     
-    double variance() const { return n_success_*n_failure_*(n_success_+n_failure_); }
+    double variance() const { return n_success_*n_failure_*(n_success_+n_failure_); } // Source: Variance from Binomial Distribution | Wikipedia
 
-    double confidence_interval(interval_type CI_type = Wald, int conf_level = 95) const {
-        double z;
-        if (conf_level >= 99) {z = 2.576; }
-        else if (conf_level >= 98 && conf_level < 99) {z = 2.326; }
-        else if (conf_level >= 95 && conf_level < 98) {z = 1.96; }
-        else {z = 1.645; }
-        
-        switch(CI_type)
+    std::pair<double, double> confidence_interval(interval_type type = interval_type::wald, double cl = 0.683) const {
+        double z = detail::probit(cl);
+        double p = n_success_/(n_success_+n_failure_);
+        switch(type)
         {
-            case Wald: return (z*pow((n_failure_*n_success_), 0.5)) / pow(n_failure_+n_success_, 1.5);
-            case Wilson: return (z/(n_failure_+n_success_+pow(z, 2)))*pow(((n_failure_*n_success_)/(n_failure_ + n_success_))+(pow(z,2)/4), 0.5);
-            case Jeffreys: return 0; // implement if needed
-            case ClopperPearson: return 0; // implement if needed
-            case AgrestiCoull: return 0; // implement if needed
+            case interval_type::wald: return std::make_pair((p-(detail::waldInterval(n_failure_, n_success_, z))), (p+(detail::waldInterval(n_failure_, n_success_, z))));
+            case interval_type::wilson: return std::make_pair((p-(detail::wilsonInterval(n_failure_, n_success_, z))), (p+(detail::wilsonInterval(n_failure_, n_success_, z))));
+            case interval_type::jeffreys: return std::make_pair(0, 0); // implement if needed
+            case interval_type::clopperPearson: return std::make_pair(0, 0); // implement if needed
+            case interval_type::agrestiCoull: return std::make_pair(0, 0); // implement if needed
         };
-        return 0;
+        return std::make_pair(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()); // code should never arrive here
     }
 
     double n_success_ = 0;
