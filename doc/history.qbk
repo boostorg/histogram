@@ -7,6 +7,39 @@
 
 [section:history Revision history]
 
+[heading Boost 1.80]
+
+* Fixed segfault in `indexed` when trying to iterate over histogram with axes of zero size (physical or logical) under certain conditions
+* Removed previously deprecated API:
+  * class `accumulators::thread_safe`: use `accumulators::count<T, true>`
+  * Methods `accumulators::sum::large` and `accumulators::sum::small`: use `accumulators::sum::large_part` and `accumulators::sum::small_part`
+  * Type alias `algorithm::reduce_option`: use `algorithm::reduce_command`
+  * Template function `axis::traits::static_options`: use `axis::traits::get_options`
+  * Template function `axis::traits::static_is_inclusive`: use `axis::traits::is_inclusive`
+  * Type alias `indexed::range_iterator`: use `indexed::iterator`
+  * Type alias `indexed::accessor::reference`: use `indexed::accessor::const_reference`
+
+[heading Boost 1.79]
+
+* Division support for `accumulators::weighted_sum`
+* `axis::regular` and `axis::variable` now represent closed intervals if overflow bin is absent, this is needed for example to correctly bin a probability in the closed interval [0, 1]
+* cpp17 support: set axis compile-time options via deduction guide
+
+[heading Boost 1.78]
+
+* Deprecate `accumulators::sum::small` and `::large` as workaround for bug in windows.h
+* Fixed broken division operator in `accumulators::count`
+* Fix bug in 1D histogram::fill when axis is growing and argument is single value
+* Improvements to documentation
+
+[heading Boost 1.77]
+
+* `indexed` now allows iteration over user-defined rectangular subrange
+* Deprecate `accumulators::thread_safe`, users should replace with optionally thread-safe `accumulators::count`
+* Fixed broken scaling operator in `accumulators::count`
+* Fixed bug in `axis::integer::inclusive`
+* Improvements to ostreaming: support for more accumulators, drawing unicode bar charts is now the default
+
 [heading Boost 1.76]
 
 * Fixes
