@@ -33,5 +33,5 @@ install:
   - cmd /c bootstrap & cd libs\histogram
 
 test_script:
-  # cxxstd=latest breaks VS 2022 in algorithm_project_test so we don't use it
-  - ..\..\b2 %B2_OPTS% test//minimal test//serialization
+  # cxxstd=latest (aka 20) breaks VS 2022 in algorithm_project_test so we use cxxstd=17
+  - ..\..\b2 %B2_OPTS% cxxstd=17 test//minimal test//serialization
