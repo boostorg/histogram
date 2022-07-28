@@ -98,8 +98,8 @@ int main() {
   // potentially ambiguous case that mimicks accumulators::weighted_sum
   struct B4 {
     B4(int) {}
-    int operator+=(const weight_type<double>&);
-    int operator+=(const B4&); // *this += 0 succeeds as *this += B4(0)
+    int operator+=(const weight_type<double>&) { return 0; }
+    int operator+=(const B4&) { return 0; } // *this += 0 succeeds as *this += B4(0)
   };
 
   BOOST_TEST(dtl::accumulator_traits<B4>::weight_support);
