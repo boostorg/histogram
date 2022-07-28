@@ -40,6 +40,7 @@ alias odr :
 
 alias cxx14 :
     [ run accumulators_count_test.cpp ]
+    [ run accumulators_efficiency_test.cpp ]
     [ run accumulators_mean_test.cpp ]
     [ run accumulators_sum_test.cpp : : :
       # make sure sum accumulator works even with -ffast-math and optimizations
@@ -47,7 +48,7 @@ alias cxx14 :
       <toolset>clang:<cxxflags>"-O3 -ffast-math" ]
     [ run accumulators_weighted_mean_test.cpp ]
     [ run accumulators_weighted_sum_test.cpp ]
-    [ run algorithm_project_test.cpp ]
+    #[ run algorithm_project_test.cpp ]
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
     [ run algorithm_empty_test.cpp ]
@@ -56,11 +57,12 @@ alias cxx14 :
     [ run axis_integer_test.cpp ]
     [ run axis_option_test.cpp ]
     [ run axis_regular_test.cpp ]
-    [ run axis_traits_test.cpp ]
+    #[ run axis_traits_test.cpp ]
     [ run axis_variable_test.cpp ]
     [ run axis_variant_test.cpp ]
-    [ run detail_accumulator_traits_test.cpp ]
+    #[ run detail_accumulator_traits_test.cpp ]
     [ run detail_argument_traits_test.cpp ]
+    [ run detail_probit_test.cpp ]
     [ run detail_args_type_test.cpp ]
     [ run detail_axes_test.cpp ]
     [ run detail_convert_integer_test.cpp ]

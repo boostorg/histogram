@@ -15,6 +15,10 @@
 #include <utility>
 #include <limits>
 
+namespace boost {
+namespace histogram {
+namespace accumulators {
+
 enum class interval_type {
     wald,
     wilson,
@@ -23,15 +27,33 @@ enum class interval_type {
     clopper_pearson
 };
 
-struct efficiency {
+template <class ValueType>
+class efficiency {
+
+public:
+
+  using value_type = ValueType;
+  using const_reference = const value_type&;
+
+    efficiency() noexcept = default;
+
+    efficiency(const_reference n_success = 0, const_reference n_failure = 0) : n_success_(n_success), n_failure_(n_failure){}
+
+    /// Allow implicit conversion from other efficiency
+    template <class T>
+    efficiency(const efficiency<T>& e) noexcept : efficiency{e.successes(), e.failures()} {}
+
     void operator()(bool x) {
         if (x) ++n_success_;
         else ++n_failure_;
     }
 
-    double value() const { return n_success_/(n_success_+n_failure_); }
+    value_type successes() const { return n_success_; }
+    value_type failures() const { return n_failure_; }
+
+    value_type value() const { return n_success_/(n_success_+n_failure_); }
     
-    double variance() const {
+    value_type variance() const {
         // Source: Variance from Binomial Distribution, Wikipedia | https://en.wikipedia.org/wiki/Binomial_distribution#Expected_value_and_variance
         return n_success_*n_failure_*(n_success_+n_failure_);
     }
@@ -56,8 +78,12 @@ struct efficiency {
         return std::make_pair(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()); // code should never arrive here
     }
 
-    double n_success_ = 0;
-    double n_failure_ = 0;
+    value_type n_success_ = 0;
+    value_type n_failure_ = 0;
 };
+
+} // namespace accumulators
+} // namespace histogram
+} // namespace boost
 
 #endif
