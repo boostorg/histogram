@@ -7,6 +7,7 @@ max_jobs: 2
 
 image:
   - Visual Studio 2017
+  # - Visual Studio 2022 has failing test algorithm_project_test
 
 branches:
   only:
@@ -29,12 +30,12 @@ install:
   - xcopy /s /e /q %APPVEYOR_BUILD_FOLDER% libs\histogram\
   - python tools\boostdep\depinst\depinst.py -N units -N range -N accumulators --git_args "--depth 5 --jobs 2" histogram
 
-  # use hdembinski/serialization due to frequent errors in boostorg/serialization
-  - cd libs/serialization
-  - git remote add patch https://github.com/HDembinski/serialization.git
-  - git fetch patch
-  - git checkout patch/boost_histogram
-  - cd ../..
+  ## use hdembinski/serialization due to errors in boostorg/serialization
+  # - cd libs/serialization
+  # - git remote add patch https://github.com/HDembinski/serialization.git
+  # - git fetch patch
+  # - git checkout patch/boost_histogram
+  # - cd ../..
 
   # prepare Boost build
   - cmd /c bootstrap & b2 headers & cd libs\histogram

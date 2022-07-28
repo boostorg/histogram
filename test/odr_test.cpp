@@ -14,3 +14,6 @@
 #include <boost/histogram.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <boost/histogram/serialization.hpp>
+
+#include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
+#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>

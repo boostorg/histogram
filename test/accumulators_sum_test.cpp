@@ -32,13 +32,6 @@ int main() {
   BOOST_TEST_EQ(str(sum, 15, false), "     sum(1 + 0)"s);
   BOOST_TEST_EQ(str(sum, 15, true), "sum(1 + 0)     "s);
 
-#include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
-
-  BOOST_TEST_EQ(sum.large(), 1);
-  BOOST_TEST_EQ(sum.small(), 0);
-
-#include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
-
   sum += 1e100;
   BOOST_TEST_EQ(sum, (s_t{1e100, 1}));
   ++sum;

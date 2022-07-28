@@ -52,17 +52,20 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(BUILD_TESTING OFF) # do not build tests of dependencies
 
     boost_fetch(boostorg/static_assert TAG develop EXCLUDE_FROM_ALL)
-    boost_fetch(boostorg/assert TAG develop EXCLUDE_FROM_ALL) # needed by core
     boost_fetch(boostorg/config TAG develop EXCLUDE_FROM_ALL)
     boost_fetch(boostorg/core TAG develop EXCLUDE_FROM_ALL)
     boost_fetch(boostorg/mp11 TAG develop EXCLUDE_FROM_ALL)
     boost_fetch(boostorg/throw_exception TAG develop EXCLUDE_FROM_ALL)
     boost_fetch(boostorg/variant2 TAG develop EXCLUDE_FROM_ALL)
-    ## No cmake support yet
-    # boost_fetch(boostorg/accumulators TAG develop)
-    # boost_fetch(boostorg/range TAG develop)
-    # boost_fetch(boostorg/serialization TAG develop)
-    # boost_fetch(boostorg/units TAG develop)
+
+    boost_fetch(boostorg/assert TAG develop EXCLUDE_FROM_ALL) # needed by core
+
+    ## skipping serialization, range, accumulators, units;
+    ## the tests pull in too many dependencies
+    # boost_fetch(boostorg/serialization TAG develop EXCLUDE_FROM_ALL)
+    # boost_fetch(boostorg/units TAG develop EXCLUDE_FROM_ALL)
+    # boost_fetch(boostorg/range TAG develop EXCLUDE_FROM_ALL)
+    # boost_fetch(boostorg/accumulators TAG develop EXCLUDE_FROM_ALL)
 
     set(BUILD_TESTING ON)
 

@@ -30,7 +30,7 @@ root_include_path = include_path[: include_path.rindex("boost")]
 for root, dirs, files in os.walk(include_path):
     for fn in files:
         fn = os.path.join(root, fn)
-        fn = fn[len(root_include_path) :]
+        fn = fn[len(root_include_path) :]  # noqa
         if fn.endswith("debug.hpp"):  # is never included
             continue
         all_headers.add(fn)

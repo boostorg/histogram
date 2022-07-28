@@ -12,13 +12,12 @@ if (PYTHONINTERP_FOUND)
 endif()
 
 include(BoostTest OPTIONAL RESULT_VARIABLE HAVE_BOOST_TEST)
-if(NOT HAVE_BOOST_TEST)
-  return()
-endif()
+
+if(HAVE_BOOST_TEST)
 
 set(BOOST_TEST_LINK_LIBRARIES Boost::histogram)
 
-# keep in sync with Jamfile, this should be automated...
+# keep in sync with Jamfile, check_build_system test will complain if you don't
 boost_test(TYPE compile-fail SOURCES axis_category_fail0.cpp)
 boost_test(TYPE compile-fail SOURCES axis_category_fail1.cpp)
 boost_test(TYPE compile-fail SOURCES axis_category_fail2.cpp)
@@ -84,12 +83,16 @@ boost_test(TYPE run SOURCES histogram_mixed_test.cpp)
 boost_test(TYPE run SOURCES histogram_operators_test.cpp
   COMPILE_OPTIONS $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
 boost_test(TYPE run SOURCES histogram_ostream_test.cpp)
+boost_test(TYPE run SOURCES histogram_ostream_ascii_test.cpp)
+set_tests_properties(run-boost_histogram-histogram_ostream_ascii_test
+  PROPERTIES ENVIRONMENT "LANG=FOO;COLUMNS=20")
 boost_test(TYPE run SOURCES histogram_test.cpp)
 boost_test(TYPE run SOURCES indexed_test.cpp)
 boost_test(TYPE run SOURCES storage_adaptor_test.cpp)
 boost_test(TYPE run SOURCES unlimited_storage_test.cpp)
 boost_test(TYPE run SOURCES utility_test.cpp)
 boost_test(TYPE run SOURCES issue_327_test.cpp)
+boost_test(TYPE run SOURCES issue_353_test.cpp)
 
 find_package(Threads)
 if (Threads_FOUND)
@@ -100,29 +103,30 @@ if (Threads_FOUND)
     LINK_LIBRARIES Threads::Threads)
   boost_test(TYPE run SOURCES accumulators_count_thread_safe_test.cpp
     LINK_LIBRARIES Threads::Threads)
-  boost_test(TYPE run SOURCES accumulators_thread_safe_test.cpp
-    LINK_LIBRARIES Threads::Threads)
 
 endif()
 
-## No cmake support yet
-# boost_test(TYPE link SOURCES odr_main_test.cpp odr_test.cpp
-#   LINK_LIBRARIES Boost::serialization)
-# boost_test(TYPE run SOURCES boost_accumulators_support_test.cpp
-#   LINK_LIBRARIES Boost::accumulators)
+## serialization, range, units, accumulators pull in too many dependencies
 # boost_test(TYPE run SOURCES boost_range_support_test.cpp
-#   LINK_LIBRARIES Boost::range)
+#     LINK_LIBRARIES Boost::range)
+# boost_test(TYPE run SOURCES boost_accumulators_support_test.cpp
+#     LINK_LIBRARIES Boost::accumulators)
 # boost_test(TYPE run SOURCES boost_units_support_test.cpp
-#   LINK_LIBRARIES Boost::units)
-# boost_test(TYPE run SOURCES detail_array_wrapper_serialization_test.cpp   LINK_LIBRARIES Boost::serialization)
-# boost_test(TYPE run SOURCES unlimited_storage_serialization_test.cpp  LINK_LIBRARIES Boost::serialization)
-# boost_test(TYPE run SOURCES storage_adaptor_serialization_test.cpp  LINK_LIBRARIES Boost::serialization)
-# boost_test(TYPE run SOURCES histogram_serialization_test.cpp  LINK_LIBRARIES Boost::serialization)
+#     LINK_LIBRARIES Boost::units)
+# boost_test(TYPE link SOURCES odr_main_test.cpp odr_test.cpp
+#     LINK_LIBRARIES Boost::serialization)
+# boost_test(TYPE run SOURCES detail_array_wrapper_serialization_test.cpp
+#     LINK_LIBRARIES Boost::serialization)
+# boost_test(TYPE run SOURCES unlimited_storage_serialization_test.cpp
+#     LINK_LIBRARIES Boost::serialization)
+# boost_test(TYPE run SOURCES storage_adaptor_serialization_test.cpp
+#     LINK_LIBRARIES Boost::serialization)
+# boost_test(TYPE run SOURCES histogram_serialization_test.cpp
+#     LINK_LIBRARIES Boost::serialization)
 # boost_test(TYPE run SOURCES axis_variant_serialization_test.cpp
 #     LINK_LIBRARIES Boost::serialization)
 # boost_test(TYPE run SOURCES accumulators_serialization_test.cpp
 #     LINK_LIBRARIES Boost::serialization)
-# boost_test(TYPE run SOURCES histogram_ostream_ascii_test.cpp)
 
 # Workaround for gcc-5
 if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6))
@@ -133,5 +137,7 @@ if (NOT(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERS
   boost_test(TYPE run SOURCES issue_290_test.cpp
     COMPILE_FEATURES cxx_std_17
   )
+
+endif()
 
 endif()
