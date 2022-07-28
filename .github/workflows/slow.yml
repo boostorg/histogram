@@ -51,9 +51,7 @@ jobs:
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
-      run: |
-        ./bootstrap.sh
-        ./b2 headers
+      run: ./bootstrap.sh
     - name: Test cxxstd=14 exception-handling=off rtti=off
       run: |
         cd libs/histogram
@@ -80,9 +78,7 @@ jobs:
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
-      run: |
-        ./bootstrap.sh
-        ./b2 headers
+      run: ./bootstrap.sh
     - name: Test cxxstd=14 (warnings ignored)
       run: |
         cd libs/histogram
@@ -102,9 +98,7 @@ jobs:
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
-      run: |
-        ./bootstrap.sh
-        ./b2 headers
+      run: ./bootstrap.sh
     - name: Test cxxstd=20 -O3 -funsafe-math-optimizations
       run: |
         cd libs/histogram
@@ -124,9 +118,7 @@ jobs:
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
-      run: |
-        ./bootstrap.sh
-        ./b2 headers
+      run: ./bootstrap.sh
     - name: Test cxxstd=17 ubsan asan
       run: |
         cd libs/histogram
