@@ -177,14 +177,14 @@ int main() {
       index_type index(ordered_1) { return true; }
     };
     struct ordered_2 {
-      index_type index(int);
+      index_type index(int) { return 0; };
     };
     struct not_ordered_1 {
       constexpr static bool ordered() { return false; }
-      index_type index(int);
+      index_type index(int) { return 0; }
     };
     struct not_ordered_2 {
-      index_type index(not_ordered_2);
+      index_type index(not_ordered_2) { return 0; }
     };
 
     BOOST_TEST_TRAIT_TRUE((traits::is_ordered<ordered_1>));
