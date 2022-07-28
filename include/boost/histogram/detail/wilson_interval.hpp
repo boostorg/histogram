@@ -14,8 +14,9 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-T wilsonInterval(T n_failure_, T n_success_, T z) {
-  return (z/(n_failure_+n_success_+(std::pow(z, 2))))*(std::pow(((n_failure_*n_success_)/(n_failure_ + n_success_))+((std::pow(z,2))/4), 0.5)); // Source: Wilson Interval from Confidence Interval | Wikipedia
+T wilson_interval(T n_failure, T n_success, T z) {
+  return (z/(n_failure+n_success+(std::pow(z, T(2)))))*(std::pow(((n_failure*n_success)/(n_failure + n_success))+((std::pow(z,T(2)))*T(0.25)), T(0.5)));
+  // Source: Wilson Interval from Confidence Interval, Wikipedia | https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval
 }
 
 } // namespace detail

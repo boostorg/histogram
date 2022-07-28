@@ -9,29 +9,27 @@
 
 #include <cmath>
 
-# define PI 3.14159265358979323846  /* pi */
-
 namespace boost {
 namespace histogram {
 namespace detail {
 
 template <class T>
-T ErfInv(T x){
+T erf_inv(T x){
    T tt1, tt2, lnx, sgn;
-   sgn = (x < 0) ? -1.0f : 1.0f;
+   sgn = std::copysign(1.0, x);
 
-   x = (1 - x)*(1 + x);        // x = 1 - x*x;
-   lnx = logf(x);
+   x = (T(1) - x)*(T(1) + x);        // x = 1 - x*x;
+   lnx = std::log(x);
 
-   tt1 = 2/(PI*0.15449436008930206298828125) + 0.5f * lnx;
-   tt2 = 1/(0.15449436008930206298828125) * lnx;
+   tt1 = T(4.120666747961526) + 0.5f * lnx;
+   tt2 = T(6.47272819164) * lnx;
 
    return(sgn*sqrtf(-tt1 + sqrtf(tt1*tt1 - tt2)));
 }
 
 template <class T>
 T probit(T x){
-   return (-1)*((std::pow(2,0.5))*ErfInv((2*((1-x)/2))-1)) ;
+   return T(-1)*(std::sqrt(T(2))*erf_inv((T(2)*((T(1)-x)*T(0.5)))+T(-1))) ;
 }
 
 } // namespace detail

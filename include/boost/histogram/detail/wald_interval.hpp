@@ -14,8 +14,9 @@ namespace histogram {
 namespace detail {
 
 template <class T>
-T waldInterval(T n_failure_, T n_success_, T z) {
-  return (z*(std::pow((n_failure_*n_success_), 0.5))) / std::pow(n_failure_+n_success_, 1.5); // Source: Wald Interval from Confidence Interval | Wikipedia
+T wald_interval(T n_failure, T n_success, T z) {
+  return (z*(std::pow((n_failure*n_success), T(0.5)))) / std::pow(n_failure+n_success, T(1.5));
+  // Source: Wald Interval from Confidence Interval, Wikipedia | https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Normal_approximation_interval_or_Wald_interval
 }
 
 } // namespace detail
