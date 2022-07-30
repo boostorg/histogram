@@ -12,6 +12,8 @@
 #include <boost/histogram/detail/wald_interval.hpp>
 #include <boost/histogram/detail/wilson_interval.hpp>
 #include <boost/histogram/fwd.hpp> // for efficiency<>
+#include <boost/throw_exception.hpp>
+#include <cassert>
 #include <limits>
 #include <utility>
 
@@ -24,11 +26,16 @@ class confidence_level;
 
 class deviation {
 public:
-  deviation(double d = 1) noexcept : d_{d} {}
+  /// constructor from scaling factor
+  explicit deviation(double d = 1) noexcept : d_{d} {
+    if (d <= 0)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("scaling factor must be positive"));
+  }
 
-  // need to implement confidence_level before implementing this
-  deviation(confidence_level cl) noexcept;
+  /// implicit conversion from confidence_level
+  deviation(confidence_level cl) noexcept; // need to implement confidence_level first
 
+  /// explicit conversion to scaling factor
   explicit operator double() const noexcept { return d_; }
 
   friend deviation operator*(deviation d, double z) noexcept {
@@ -44,12 +51,18 @@ private:
 
 class confidence_level {
 public:
-  confidence_level(double cl) noexcept : cl_{cl} {}
+  /// constructor from confidence level (a probablity)
+  explicit confidence_level(double cl) noexcept : cl_{cl} {
+    if (cl <= 0 || cl >= 1)
+      BOOST_THROW_EXCEPTION(std::invalid_argument("0 < cl < 1 is required"));
+  }
 
-  // solve normal cdf(z) - cdf(-z) = 2 (cdf(z) - 0.5)
+  /// implicit conversion from deviation
   confidence_level(deviation d) noexcept
+      // solve normal cdf(z) - cdf(-z) = 2 (cdf(z) - 0.5)
       : cl_{std::fma(2.0, detail::normal_cdf(static_cast<double>(d)), -1.0)} {}
 
+  /// explicit conversion to numberical probability
   explicit operator double() const noexcept { return cl_; }
 
   friend bool operator==(confidence_level a, confidence_level b) noexcept {
@@ -102,8 +115,8 @@ public:
     return n_success_ * n_failure_ * (n_success_ + n_failure_);
   }
 
-  std::pair<double, double> confidence_interval(interval_type type = interval_type::wald,
-                                                deviation d = 1.0) const {
+  std::pair<double, double> confidence_interval(
+      interval_type type = interval_type::wilson, deviation d = deviation{1.0}) const {
     const double z = static_cast<double>(d);
     double p = n_success_ / (n_success_ + n_failure_);
     switch (type) {
@@ -121,9 +134,11 @@ public:
       case interval_type::agresti_coull:
         return std::make_pair(0, 0); // implement if needed
     };
-    return std::make_pair(
-        std::numeric_limits<double>::quiet_NaN(),
-        std::numeric_limits<double>::quiet_NaN()); // code should never arrive here
+
+    // code should never arrive here
+    assert(false);
+    return std::make_pair(std::numeric_limits<double>::quiet_NaN(),
+                          std::numeric_limits<double>::quiet_NaN());
   }
 
   value_type n_success_ = 0;
