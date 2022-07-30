@@ -19,6 +19,53 @@ namespace boost {
 namespace histogram {
 namespace accumulators {
 
+class deviation;
+class confidence_level;
+
+class deviation {
+public:
+  deviation(double d = 1) noexcept : d_{d} {}
+
+  // need to implement confidence_level before implementing this
+  deviation(confidence_level cl) noexcept;
+
+  explicit operator double() const noexcept { return d_; }
+
+  friend deviation operator*(deviation d, double z) noexcept {
+    return deviation(d.d_ * z);
+  }
+  friend deviation operator*(double z, deviation d) noexcept { return d * z; }
+  friend bool operator==(deviation a, deviation b) noexcept { return a.d_ == b.d_; }
+  friend bool operator!=(deviation a, deviation b) noexcept { return !(a == b); }
+
+private:
+  double d_;
+};
+
+class confidence_level {
+public:
+  confidence_level(double cl) noexcept : cl_{cl} {}
+
+  // solve normal cdf(z) - cdf(-z) = 2 (cdf(z) - 0.5)
+  confidence_level(deviation d) noexcept
+      : cl_{std::fma(2.0, detail::normal_cdf(static_cast<double>(d)), -1.0)} {}
+
+  explicit operator double() const noexcept { return cl_; }
+
+  friend bool operator==(confidence_level a, confidence_level b) noexcept {
+    return a.cl_ == b.cl_;
+  }
+  friend bool operator!=(confidence_level a, confidence_level b) noexcept {
+    return !(a == b);
+  }
+
+private:
+  double cl_;
+};
+
+inline deviation::deviation(confidence_level cl) noexcept
+    : d_{detail::normal_ppf(std::fma(0.5, static_cast<double>(cl), 0.5))} {}
+
 template <class ValueType>
 class efficiency {
 
@@ -56,10 +103,8 @@ public:
   }
 
   std::pair<double, double> confidence_interval(interval_type type = interval_type::wald,
-                                                double cl = 0.683) const {
-    // solve normal cdf(z) - cdf(-z) = cl; since pdf is symmetric around 0, we have
-    // cdf(z) = cl/2 - 0.5 -> z = ppf(cl / 2 - 0.5)
-    double z = detail::normal_ppf(std::fma(0.5, cl, -0.5));
+                                                deviation d = 1.0) const {
+    const double z = static_cast<double>(d);
     double p = n_success_ / (n_success_ + n_failure_);
     switch (type) {
       case interval_type::wald: {
