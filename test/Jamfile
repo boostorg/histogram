@@ -91,8 +91,10 @@ alias cxx14 :
     [ run utility_test.cpp ]
     [ run issue_327_test.cpp ]
     [ run issue_353_test.cpp ]
-    [ run histogram_ostream_test.cpp : : : <testing.launcher>"set LANG=UTF" ]
-    [ run histogram_ostream_ascii_test.cpp : : : <testing.launcher>"set LANG=FOO COLUMNS=20" ]
+    [ run histogram_ostream_test.cpp : : :
+      <testing.launcher>"set LANG=UTF" ]
+    [ run histogram_ostream_ascii_test.cpp : : :
+      <testing.launcher>"set LANG=FOO COLUMNS=20" ]
     ;
 
 alias cxx17 :
