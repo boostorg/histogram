@@ -15,6 +15,13 @@ using namespace boost::histogram;
 template <class T>
 void run_tests() {
   using e_t = accumulators::efficiency<T>;
+
+  // ctor
+  {
+    e_t e(1, 2);
+    BOOST_TEST_EQ(e.successes(), 1);
+    BOOST_TEST_EQ(e.failures(), 2);
+  }
 }
 
 int main() {

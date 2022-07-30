@@ -17,3 +17,4 @@
 
 #include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
 #include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
+#include <boost/histogram/detail/normal.hpp> // temporary
