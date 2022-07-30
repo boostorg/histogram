@@ -61,6 +61,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
     boost_fetch(boostorg/assert TAG develop EXCLUDE_FROM_ALL) # needed by core
 
+    # this takes forever :(
     boost_fetch(boostorg/math TAG develop EXCLUDE_FROM_ALL) # needed by some tests
 
     ## skipping serialization, range, accumulators, units;

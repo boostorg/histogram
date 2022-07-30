@@ -15,7 +15,7 @@ using namespace boost::histogram::detail;
 namespace bm = boost::math;
 
 int main() {
-  auto x = {-6.0, -5.0, -4.0, -3.0, -2.0, -1.0, 0.0, 6.0};
+  const auto x = {-6.0, -5.0, -4.0, -3.0, -2.0, -1.0, 0.0, 6.0};
 
   const double eps = std::numeric_limits<double>::epsilon();
   bm::normal norm;
@@ -32,8 +32,7 @@ int main() {
   {
     for (auto&& xi : x) {
       const double p = bm::cdf(norm, xi);
-      const double expected = bm::quantile(norm, p);
-      BOOST_TEST_IS_CLOSE(normal_ppf(p), expected, 1e-8);
+      BOOST_TEST_IS_CLOSE(normal_ppf(p), xi, 1e-8);
     }
   }
 

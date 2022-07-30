@@ -13,17 +13,21 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
+// Simple implementation of erf_inv so that we do not depend on boost::math.
+// If you happen to discover this, prefer the boost::math implementation,
+// it is more accurate for x very close to -1 or 1 and faster.
+// The only virtue of this implementation is its simplicity.
 template <int Iterate = 3>
 double erf_inv(double x) noexcept {
   // Strategy: solve f(y) = x - erf(y) = 0 for given x with Newton's method.
   // f'(y) = -erf'(y) = -2/sqrt(pi) e^(-y^2)
   // Has quadratic convergence. Since erf_inv<0> is accurate to 1e-3,
-  // we have an machine precision after three iterations.
-  const double x0 = erf_inv<Iterate - 1>(x);
+  // we should have machine precision after three iterations.
+  const double x0 = erf_inv<Iterate - 1>(x); // recursion
   const double fx0 = x - std::erf(x0);
   const double pi = std::acos(-1);
   double fpx0 = -2.0 / std::sqrt(pi) * std::exp(-x0 * x0);
-  return x0 - fx0 / fpx0;
+  return x0 - fx0 / fpx0; // = x1
 }
 
 template <>

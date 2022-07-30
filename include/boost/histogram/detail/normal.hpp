@@ -18,8 +18,13 @@ inline double normal_cdf(double x) noexcept {
   return std::fma(0.5, std::erf(x / std::sqrt(2)), 0.5);
 }
 
+// Simple implementation of normal_ppf so that we do not depend
+// on boost::math. If you happen to discover this, prefer the
+// boost::math implementation, it is more accurate in the tails.
+// The virtue of this implementation is its simplicity.
+// The accuracy is sufficient for our application.
 inline double normal_ppf(double p) noexcept {
-  return std::sqrt(2) * erf_inv(2 * p - 1.0);
+  return std::sqrt(2) * erf_inv(2 * (p - 0.5));
 }
 
 } // namespace detail

@@ -19,14 +19,14 @@ namespace boost {
 namespace histogram {
 namespace accumulators {
 
-enum class interval_type { wald, wilson, jeffreys, agresti_coull, clopper_pearson };
-
 template <class ValueType>
 class efficiency {
 
 public:
   using value_type = ValueType;
   using const_reference = const value_type&;
+
+  enum class interval_type { wald, wilson, jeffreys, agresti_coull, clopper_pearson };
 
   efficiency() noexcept = default;
 
