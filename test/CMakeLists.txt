@@ -94,10 +94,11 @@ boost_test(TYPE run SOURCES unlimited_storage_test.cpp)
 boost_test(TYPE run SOURCES utility_test.cpp)
 boost_test(TYPE run SOURCES issue_327_test.cpp)
 boost_test(TYPE run SOURCES issue_353_test.cpp)
+boost_test(TYPE run SOURCES accumulators_fraction_test.cpp)
+boost_test(TYPE run SOURCES utility_binomial_proportion_interval_test.cpp)
 
 set(BOOST_TEST_LINK_LIBRARIES Boost::histogram Boost::core Boost::math)
 boost_test(TYPE run SOURCES detail_normal_test.cpp)
-boost_test(TYPE run SOURCES accumulators_efficiency_test.cpp)
 
 find_package(Threads)
 if (Threads_FOUND)

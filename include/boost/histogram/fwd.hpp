@@ -95,7 +95,7 @@ template <class ValueType = double, bool ThreadSafe = false>
 class count;
 
 template <class ValueType = double>
-class efficiency;
+class fraction;
 
 template <class ValueType = double>
 class sum;

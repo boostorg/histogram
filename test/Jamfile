@@ -40,7 +40,7 @@ alias odr :
 
 alias cxx14 :
     [ run accumulators_count_test.cpp ]
-    [ run accumulators_efficiency_test.cpp ]
+    [ run accumulators_fraction_test.cpp ]
     [ run accumulators_mean_test.cpp ]
     [ run accumulators_sum_test.cpp : : :
       # make sure sum accumulator works even with -ffast-math and optimizations
@@ -88,6 +88,7 @@ alias cxx14 :
     [ run indexed_test.cpp ]
     [ run storage_adaptor_test.cpp ]
     [ run unlimited_storage_test.cpp ]
+    [ run utility_binomial_proportion_interval_test.cpp ]
     [ run utility_test.cpp ]
     [ run issue_327_test.cpp ]
     [ run issue_353_test.cpp ]

@@ -95,9 +95,9 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
 
 template <class CharT, class Traits, class U>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
-                                              const efficiency<U>& x) {
+                                              const fraction<U>& x) {
   if (os.width() == 0)
-    return os << "efficiency(" << x.successes() << ", " << x.failures() << ")";
+    return os << "fraction(" << x.successes() << ", " << x.failures() << ")";
   return detail::handle_nonzero_width(os, x);
 }
 
