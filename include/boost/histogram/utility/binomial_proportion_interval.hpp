@@ -10,6 +10,7 @@
 #include <boost/histogram/detail/normal.hpp>
 #include <boost/throw_exception.hpp>
 #include <cmath>
+#include <stdexcept>
 
 namespace boost {
 namespace histogram {
