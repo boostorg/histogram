@@ -35,11 +35,11 @@ public:
       : z_{static_cast<double>(d)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const value_type half{0.5}, quarter{0.25}, zsq = z_ * z_;
+    const double half{0.5}, quarter{0.25}, zsq = z_ * z_;
     const value_type ns = successes, nf = failures;
     const value_type n = ns + nf;
-    const value_type a = (ns + half * zsq) / (n + zsq);
-    const value_type b = z_ / (n + zsq) * std::sqrt(ns * nf / n + quarter * zsq);
+    const double a = (ns + half * zsq) / (n + zsq);
+    const double b = z_ / (n + zsq) * std::sqrt(ns * nf / n + quarter * zsq);
     return std::make_pair(a - b, a + b);
   }
 

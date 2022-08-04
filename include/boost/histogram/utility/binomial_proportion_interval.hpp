@@ -10,6 +10,7 @@
 #include <boost/histogram/detail/normal.hpp>
 #include <boost/throw_exception.hpp>
 #include <cmath>
+#include <type_traits>
 #include <stdexcept>
 
 namespace boost {
@@ -18,6 +19,7 @@ namespace utility {
 
 template <class ValueType>
 class binomial_proportion_interval {
+  static_assert(std::is_floating_point<ValueType>::value, "Value must be a floating point!");
 public:
   using value_type = ValueType;
   using interval_type = std::pair<value_type, value_type>;

@@ -23,32 +23,36 @@ public:
   using value_type = typename base_t::value_type;
   using interval_type = typename base_t::interval_type;
 
-  explicit clopper_pearson_interval(deviation d = deviation{1.0}) noexcept
-      : z_{static_cast<double>(d)} {}
+  explicit clopper_pearson_interval(confidence_level cl = confidence_level{0.683}) noexcept
+      : cl_{static_cast<double>(cl)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const value_type half{0.5}, one{1.0};
+    const double half{0.5}, one{1.0};
     const value_type ns = successes, nf = failures;
     const value_type n = ns + nf;
     // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
-    const value_type alpha1 = (one - d) * half;
-    const value_type alpha2 = one - ((one - d) * half);
+    const double alpha = cl_ * half;
+    // Calculating beta distribution argument 1 for low_interval and high_interval.
+    const double alpha1 = alpha * half;
+    const double alpha2 = one - (alpha * half);
+    // Calculating beta distribution arguments 2 and 3 for low_interval and high_interval.
     // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Clopper%E2%80%93Pearson_interval
     const value_type m1 = ns;
     const value_type n1 = n - ns + one;
     const value_type m2 = ns + 1;
     const value_type n2 = n - ns;
     // Source: https://en.wikipedia.org/wiki/Beta_distribution
-    const value_type beta1 = (tgamma(m1)*tgamma(n1)) / tgamma(m1+n1);
-    const value_type beta2 = (tgamma(m2)*tgamma(n2)) / tgamma(m2+n2);
+    const double beta1 = (tgamma(m1)*tgamma(n1)) / tgamma(m1+n1); // Calculating B(α, β) for f(x;α,β) for low_interval, = α!*β! / (α+β)!
+    const double beta2 = (tgamma(m2)*tgamma(n2)) / tgamma(m2+n2); // Calculating B(α, β) for f(x;α,β) for high_interval, = α!*β! / (α+β)!
+    // Calculating beta distribution values for the low_interval and high_interval | f(x;α,β) = 1/B(α, β) * x^(α-1) * (1-x)^(β-1)
     // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Clopper%E2%80%93Pearson_interval
-    const value_type a = (one / beta1) * std::pow(alpha1, m1 - one) * std::pow(1 - alpha1, n1 - one);
-    const value_type b = (one / beta2) * std::pow(alpha2, m2 - one) * std::pow(1 - alpha2, n2 - one);
+    const double a = (one / beta1) * std::pow(alpha1, m1 - one) * std::pow(1 - alpha1, n1 - one);
+    const double b = (one / beta2) * std::pow(alpha2, m2 - one) * std::pow(1 - alpha2, n2 - one);
     return std::make_pair(a, b);
   }
 
 private:
-  double z_;
+  double cl_;
 };
 
 } // namespace utility

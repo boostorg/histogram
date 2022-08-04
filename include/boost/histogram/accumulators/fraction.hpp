@@ -42,9 +42,9 @@ public:
   value_type successes() const { return succ_; }
   value_type failures() const { return fail_; }
 
-  value_type value() const { return succ_ / (succ_ + fail_); }
+  double value() const { return succ_ / (succ_ + fail_); }
 
-  value_type variance() const {
+  double variance() const {
     // Source: Variance from Binomial Distribution, Wikipedia |
     // https://en.wikipedia.org/wiki/Binomial_distribution#Expected_value_and_variance
     return succ_ * fail_ * (succ_ + fail_);
@@ -57,8 +57,8 @@ public:
   }
 
 private:
-  value_type succ_ = 0;
-  value_type fail_ = 0;
+  double succ_ = 0;
+  double fail_ = 0;
 };
 
 } // namespace accumulators
