@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_UTILITY_JEFFREYS_INTERVAL_HPP
 
 #include <boost/histogram/utility/binomial_proportion_interval.hpp>
+#include <boost/math/special_functions/beta.hpp>
 #include <cmath>
 #include <utility>
 
@@ -27,23 +28,18 @@ public:
       : cl_{static_cast<double>(cl)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const double half{0.5}, one{1.0}, two{2.0};
+    const double half{0.5}, one{1.0};
     const value_type ns = successes, nf = failures;
     const value_type n = ns + nf;
     // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
     const double alpha = cl_ * half;
-    // Calculating beta distribution argument 1 for low_interval and high_interval.
-    const double alpha1 = alpha * half;
-    const double alpha2 = one - (alpha * half);
-    // Calculating beta distribution arguments 2 and 3 for both low_interval and high_interval.
-    // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Clopper%E2%80%93Pearson_interval
+    // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Jeffreys_interval
     const value_type m = ns + half;
     const value_type n = n - ns + half;
     // Source: https://en.wikipedia.org/wiki/Beta_distribution
-    const double beta = (tgamma(m)*tgamma(n)) / tgamma(m+n); // Calculating B(α, β) for f(x;α,β) for both intervals, = α!*β! / (α+β)!
-    // Source: https://repository.upenn.edu/cgi/viewcontent.cgi?article=1440&context=statistics_papers
-    const double a = (one / beta) * std::pow(alpha1, m - one) * std::pow(1 - alpha1, n - one);
-    const double b = (one / beta) * std::pow(alpha2, m - one) * std::pow(1 - alpha2, n - one);
+    // Source: https://www.boost.org/doc/libs/1_79_0/libs/math/doc/html/math_toolkit/dist_ref/dists/beta_dist.html
+    const double a = boost::math::ibeta_inv(m, n, alpha * half);
+    const double b = boost::math::ibeta_inv(m, n, one - (alpha * half));
     return std::make_pair(a, b);
   }
 
