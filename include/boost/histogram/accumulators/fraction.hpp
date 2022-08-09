@@ -57,8 +57,8 @@ public:
   }
 
 private:
-  double succ_ = 0;
-  double fail_ = 0;
+  value_type succ_ = 0;
+  value_type fail_ = 0;
 };
 
 } // namespace accumulators

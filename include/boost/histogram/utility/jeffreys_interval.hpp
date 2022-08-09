@@ -28,23 +28,23 @@ public:
       : cl_{static_cast<double>(cl)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const double half{0.5}, one{1.0};
+    const value_type half{0.5}, one{1.0};
     const value_type ns = successes, nf = failures;
     const value_type n = ns + nf;
     // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
-    const double alpha = cl_ * half;
+    const value_type alpha = cl_ * half;
     // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Jeffreys_interval
     const value_type m = ns + half;
     const value_type n = n - ns + half;
     // Source: https://en.wikipedia.org/wiki/Beta_distribution
     // Source: https://www.boost.org/doc/libs/1_79_0/libs/math/doc/html/math_toolkit/dist_ref/dists/beta_dist.html
-    const double a = boost::math::ibeta_inv(m, n, alpha * half);
-    const double b = boost::math::ibeta_inv(m, n, one - (alpha * half));
+    const value_type a = boost::math::ibeta_inv(m, n, alpha * half);
+    const value_type b = boost::math::ibeta_inv(m, n, one - (alpha * half));
     return std::make_pair(a, b);
   }
 
 private:
-  double cl_;
+  value_type cl_;
 };
 
 } // namespace utility

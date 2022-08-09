@@ -29,8 +29,8 @@ public:
   interval_type operator()(value_type successes, value_type failures) const noexcept {
     const value_type ns = successes, nf = failures;
     const value_type n = ns + nf;
-    const double a = ns / n;
-    const double b = (z_ / n) * std::sqrt(ns * nf / n);
+    const value_type a = ns / n;
+    const value_type b = (z_ / n) * std::sqrt(ns * nf / n);
     return std::make_pair(a - b, a + b);
   }
 

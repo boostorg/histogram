@@ -27,12 +27,12 @@ public:
       : z_{static_cast<double>(d)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const double half{0.5}, one{1.0}, zsq = z_ * z_;
+    const value_type half{0.5}, one{1.0}, zsq = z_ * z_;
     const value_type ns = successes, nf = failures;
     const value_type n = ns + nf;
     const value_type n_ac = n + zsq;
-    const double a = (ns + zsq * half) / n_ac;
-    const double b = z_ * std::sqrt((one - a) * a / n_ac);
+    const value_type a = (ns + zsq * half) / n_ac;
+    const value_type b = z_ * std::sqrt((one - a) * a / n_ac);
     return std::make_pair(a - b, a + b);
   }
 

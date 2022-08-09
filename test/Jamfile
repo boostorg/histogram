@@ -48,7 +48,7 @@ alias cxx14 :
       <toolset>clang:<cxxflags>"-O3 -ffast-math" ]
     [ run accumulators_weighted_mean_test.cpp ]
     [ run accumulators_weighted_sum_test.cpp ]
-    # [ run algorithm_project_test.cpp ]
+    [ run algorithm_project_test.cpp ]
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
     [ run algorithm_empty_test.cpp ]
