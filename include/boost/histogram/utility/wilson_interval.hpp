@@ -32,10 +32,10 @@ public:
   using interval_type = typename base_t::interval_type;
 
   explicit wilson_interval(deviation d = deviation{1.0}) noexcept
-      : z_{static_cast<double>(d)} {}
+      : z_{static_cast<value_type>(d)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const value_type half{0.5}, quarter{0.25}, zsq = z_ * z_;
+    const value_type half{0.5}, quarter{0.25}, zsq{z_ * z_};
     const value_type ns = successes, nf = failures;
     const value_type n = ns + nf;
     const value_type a = (ns + half * zsq) / (n + zsq);
@@ -44,7 +44,7 @@ public:
   }
 
 private:
-  double z_;
+  value_type z_;
 };
 
 } // namespace utility

@@ -10,8 +10,8 @@
 #include <boost/histogram/detail/normal.hpp>
 #include <boost/throw_exception.hpp>
 #include <cmath>
-#include <type_traits>
 #include <stdexcept>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
@@ -19,7 +19,9 @@ namespace utility {
 
 template <class ValueType>
 class binomial_proportion_interval {
-  static_assert(std::is_floating_point<ValueType>::value, "Value must be a floating point!");
+  static_assert(std::is_floating_point<ValueType>::value,
+                "Value must be a floating point!");
+
 public:
   using value_type = ValueType;
   using interval_type = std::pair<value_type, value_type>;
@@ -40,7 +42,12 @@ public:
   deviation(confidence_level cl) noexcept; // need to implement confidence_level first
 
   /// explicit conversion to scaling factor
-  explicit operator double() const noexcept { return d_; }
+  template <class T>
+  explicit operator T() const noexcept {
+    static_assert(std::is_floating_point<T>::value,
+                  "only conversion to floating point allowed");
+    return d_;
+  }
 
   friend deviation operator*(deviation d, double z) noexcept {
     return deviation(d.d_ * z);
@@ -67,7 +74,12 @@ public:
       : cl_{std::fma(2.0, detail::normal_cdf(static_cast<double>(d)), -1.0)} {}
 
   /// explicit conversion to numberical probability
-  explicit operator double() const noexcept { return cl_; }
+  template <class T>
+  explicit operator T() const noexcept {
+    static_assert(std::is_floating_point<T>::value,
+                  "only conversion to floating point allowed");
+    return cl_;
+  }
 
   friend bool operator==(confidence_level a, confidence_level b) noexcept {
     return a.cl_ == b.cl_;
