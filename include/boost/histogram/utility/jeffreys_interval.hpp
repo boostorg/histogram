@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_UTILITY_JEFFREYS_INTERVAL_HPP
 #define BOOST_HISTOGRAM_UTILITY_JEFFREYS_INTERVAL_HPP
 
+#include <boost/histogram/fwd.hpp>
 #include <boost/histogram/utility/binomial_proportion_interval.hpp>
 #include <boost/math/special_functions/beta.hpp>
 #include <cmath>
@@ -24,7 +25,7 @@ public:
   using value_type = typename base_t::value_type;
   using interval_type = typename base_t::interval_type;
 
-  explicit jeffreys_interval(confidence_level cl = confidence_level{0.683}) noexcept
+  explicit jeffreys_interval(confidence_level cl = deviation{1}) noexcept
       : cl_{static_cast<double>(cl)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {

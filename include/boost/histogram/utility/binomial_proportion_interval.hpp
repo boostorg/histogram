@@ -32,22 +32,20 @@ class confidence_level;
 
 class deviation {
 public:
-  /// constructor from scaling factor
-  explicit deviation(double d = 1) noexcept : d_{d} {
+  /// constructor from units of standard deviations
+  explicit deviation(double d) noexcept : d_{d} {
     if (d <= 0)
       BOOST_THROW_EXCEPTION(std::invalid_argument("scaling factor must be positive"));
   }
 
-  /// implicit conversion from confidence_level
-  deviation(confidence_level cl) noexcept; // need to implement confidence_level first
-
-  /// explicit conversion to scaling factor
-  template <class T>
+  /// explicit conversion to units of standard deviations
+  template <class T, class = std::enable_if_t<std::is_floating_point<T>::value>>
   explicit operator T() const noexcept {
-    static_assert(std::is_floating_point<T>::value,
-                  "only conversion to floating point allowed");
     return static_cast<T>(d_);
   }
+
+  /// implicit conversion to confidence level
+  operator confidence_level() const noexcept; // need to implement confidence_level first
 
   friend deviation operator*(deviation d, double z) noexcept {
     return deviation(d.d_ * z);
@@ -62,23 +60,21 @@ private:
 
 class confidence_level {
 public:
-  /// constructor from confidence level (a probablity)
+  /// constructor from confidence level (a probability)
   explicit confidence_level(double cl) noexcept : cl_{cl} {
     if (cl <= 0 || cl >= 1)
       BOOST_THROW_EXCEPTION(std::invalid_argument("0 < cl < 1 is required"));
   }
 
-  /// implicit conversion from deviation
-  confidence_level(deviation d) noexcept
-      // solve normal cdf(z) - cdf(-z) = 2 (cdf(z) - 0.5)
-      : cl_{std::fma(2.0, detail::normal_cdf(static_cast<double>(d)), -1.0)} {}
-
-  /// explicit conversion to numberical probability
-  template <class T>
+  /// explicit conversion to numerical confidence level
+  template <class T, class = std::enable_if_t<std::is_floating_point<T>::value>>
   explicit operator T() const noexcept {
-    static_assert(std::is_floating_point<T>::value,
-                  "only conversion to floating point allowed");
     return static_cast<T>(cl_);
+  }
+
+  /// implicit conversion to units of standard deviation
+  operator deviation() const noexcept {
+    return deviation{detail::normal_ppf(std::fma(0.5, cl_, 0.5))};
   }
 
   friend bool operator==(confidence_level a, confidence_level b) noexcept {
@@ -92,8 +88,10 @@ private:
   double cl_;
 };
 
-inline deviation::deviation(confidence_level cl) noexcept
-    : d_{detail::normal_ppf(std::fma(0.5, static_cast<double>(cl), 0.5))} {}
+inline deviation::operator confidence_level() const noexcept {
+  // solve normal cdf(z) - cdf(-z) = 2 (cdf(z) - 0.5)
+  return confidence_level{std::fma(2.0, detail::normal_cdf(d_), -1.0)};
+}
 
 } // namespace utility
 } // namespace histogram

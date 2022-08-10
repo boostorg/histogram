@@ -7,6 +7,7 @@
 #ifndef BOOST_HISTOGRAM_UTILITY_WILSON_INTERVAL_HPP
 #define BOOST_HISTOGRAM_UTILITY_WILSON_INTERVAL_HPP
 
+#include <boost/histogram/fwd.hpp>
 #include <boost/histogram/utility/binomial_proportion_interval.hpp>
 #include <cmath>
 #include <utility>

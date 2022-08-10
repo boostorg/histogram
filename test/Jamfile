@@ -89,6 +89,9 @@ alias cxx14 :
     [ run storage_adaptor_test.cpp ]
     [ run unlimited_storage_test.cpp ]
     [ run utility_binomial_proportion_interval_test.cpp ]
+    [ run utility_agresti_coull_interval_test.cpp ]
+    [ run utility_wald_interval_test.cpp ]
+    [ run utility_wilson_interval_test.cpp ]
     [ run utility_test.cpp ]
     [ run issue_327_test.cpp ]
     [ run issue_353_test.cpp ]
@@ -137,6 +140,8 @@ alias threading :
 
 alias math :
     [ run detail_normal_test.cpp ]
+    [ run utility_clopper_pearson_interval_test.cpp ]
+    [ run utility_jeffreys_interval_test.cpp ]
     ;
 
 # warnings are off for these other boost libraries, which tend to be not warning-free

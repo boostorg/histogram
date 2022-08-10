@@ -145,6 +145,25 @@ class BOOST_ATTRIBUTE_NODISCARD histogram;
 
 #endif // BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
+namespace utility {
+
+template <class ValueType = double>
+class agresti_coull_interval;
+
+template <class ValueType = double>
+class clopper_pearson_interval;
+
+template <class ValueType = double>
+class jeffreys_interval;
+
+template <class ValueType = double>
+class wald_interval;
+
+template <class ValueType = double>
+class wilson_interval;
+
+} // namespace utility
+
 namespace detail {
 
 /*
