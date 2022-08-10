@@ -6,6 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/utility/clopper_pearson_interval.hpp>
+#include <limits>
 #include "is_close.hpp"
 #include "throw_exception.hpp"
 
