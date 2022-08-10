@@ -46,7 +46,7 @@ public:
   explicit operator T() const noexcept {
     static_assert(std::is_floating_point<T>::value,
                   "only conversion to floating point allowed");
-    return d_;
+    return static_cast<T>(d_);
   }
 
   friend deviation operator*(deviation d, double z) noexcept {
@@ -78,7 +78,7 @@ public:
   explicit operator T() const noexcept {
     static_assert(std::is_floating_point<T>::value,
                   "only conversion to floating point allowed");
-    return cl_;
+    return static_cast<T>(cl_);
   }
 
   friend bool operator==(confidence_level a, confidence_level b) noexcept {
