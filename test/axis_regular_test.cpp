@@ -8,6 +8,7 @@
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <limits>
+#include <random>
 #include <sstream>
 #include <type_traits>
 #include "is_close.hpp"
@@ -299,6 +300,51 @@ int main() {
     BOOST_TEST_EQ(b.size(), 2);
     BOOST_TEST_EQ(b.value(0), 1);
     BOOST_TEST_EQ(b.value(2), 5);
+  }
+
+  // precise_regular
+  {
+    // // this fails badly
+    // auto a_bad = axis::regular<double>(27000, 0, 27000);
+    // for (int i = 0; i < a_bad.size(); ++i) {
+    //   BOOST_TEST_EQ(i, a_bad.index(i));
+    //   BOOST_TEST_EQ(i, a_bad.value(i));
+    // }
+
+    auto a = axis::regular2<double>(27000, 0, 27000);
+    for (int i = 0; i < a.size(); ++i) {
+      BOOST_TEST_EQ(i, a.index(i));
+      BOOST_TEST_EQ(i, a.value(i));
+    }
+  }
+
+  {
+    std::default_random_engine rng;
+
+    auto d_uint = std::uniform_int_distribution(1, 10000);
+    auto d_real = std::uniform_real_distribution(-1e10, 1e10);
+
+    for (int i = 0; i < 1000; ++i) {
+      double a = d_real(rng);
+      double b = d_real(rng);
+      if (a > b) std::swap(a, b);
+      unsigned n = d_uint(rng);
+      auto ax = axis::regular2<double>(n, a, b);
+      BOOST_TEST_EQ(ax.value(n), b);
+
+      auto ax2 = axis::regular2<double>(n, a, a + n);
+      BOOST_TEST(ax2.exact());
+      BOOST_TEST_EQ(ax2.value(n), a + n);
+      const unsigned j = std::uniform_int_distribution(1, static_cast<int>(n))(rng);
+      BOOST_TEST_EQ(j, ax2.index(a + j));
+      BOOST_TEST_EQ(a + j, ax2.value(j));
+
+      auto ax3 = axis::regular2<double>(n, a, a + 2 * n);
+      BOOST_TEST(ax3.exact());
+      BOOST_TEST_EQ(ax3.value(n), a + 2 * n);
+      BOOST_TEST_EQ(ax3.value(j), a + 2 * j);
+      BOOST_TEST_EQ(ax3.index(a + 2 * j), j);
+    }
   }
 
   return boost::report_errors();

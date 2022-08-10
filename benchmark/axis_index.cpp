@@ -27,6 +27,22 @@ static void regular(benchmark::State& state) {
 }
 
 template <class Distribution>
+static void regular2a(benchmark::State& state) {
+  auto a = axis::regular2<>(100, 0.0, 1.0);
+  assert(!a.exact());
+  generator<Distribution> gen;
+  for (auto _ : state) benchmark::DoNotOptimize(a.index(gen()));
+}
+
+template <class Distribution>
+static void regular2b(benchmark::State& state) {
+  auto a = axis::regular2<>(100, 0.0, 100.0);
+  assert(a.exact());
+  generator<Distribution> gen;
+  for (auto _ : state) benchmark::DoNotOptimize(a.index(gen()));
+}
+
+template <class Distribution>
 static void circular(benchmark::State& state) {
   auto a = axis::circular<>(100, 0.0, 1.0);
   generator<Distribution> gen;
@@ -65,6 +81,10 @@ static void boolean(benchmark::State& state) {
 
 BENCHMARK_TEMPLATE(regular, uniform);
 BENCHMARK_TEMPLATE(regular, normal);
+BENCHMARK_TEMPLATE(regular2a, uniform);
+BENCHMARK_TEMPLATE(regular2a, normal);
+BENCHMARK_TEMPLATE(regular2b, uniform);
+BENCHMARK_TEMPLATE(regular2b, normal);
 BENCHMARK_TEMPLATE(circular, uniform);
 BENCHMARK_TEMPLATE(circular, normal);
 BENCHMARK_TEMPLATE(integer, int, uniform);

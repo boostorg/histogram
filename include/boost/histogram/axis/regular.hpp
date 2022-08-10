@@ -165,6 +165,9 @@ step_type<T> step(T t) {
   return step_type<T>{t};
 }
 
+// TODO make regular_base without transform and unit support, then implement the others
+// as derived classes which overload the relevant methods/ctors
+
 /** Axis for equidistant intervals on the real line.
 
    The most common binning strategy. Very fast. Binning is a O(1) operation.
@@ -447,6 +450,107 @@ using circular = regular<Value, transform::id, MetaData,
 #else
 class circular;
 #endif
+
+// experimental
+template <class Value, class MetaData, class Options>
+class regular_base : public iterator_mixin<regular_base<Value, MetaData, Options>>,
+                     public metadata_base<MetaData> {
+  using value_type = Value;
+
+  static_assert(std::is_floating_point<value_type>::value,
+                "regular axis requires floating point type");
+
+  using metadata_base = metadata_base_t<MetaData>;
+  using metadata_type = typename metadata_base::metadata_type;
+
+  using options_type =
+      detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
+
+  static_assert(
+      (!options_type::test(option::circular) && !options_type::test(option::growth)) ||
+          (options_type::test(option::circular) ^ options_type::test(option::growth)),
+      "circular and growth options are mutually exclusive");
+
+public:
+  constexpr regular_base() = default;
+
+  regular_base(unsigned n, value_type start, value_type stop, metadata_type meta = {},
+               options_type options = {})
+      : metadata_base(std::move(meta))
+      , size_{static_cast<index_type>(n)}
+      , min_{start}
+      , max_{stop}
+      , w_{(max_ - min_) / size_}
+      , winv_{size_ / (max_ - min_)}
+      , has_integral_width_{std::fmod(w_, 1.0) == 0} {
+    (void)options;
+    if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
+    if (!std::isfinite(min_) || !std::isfinite(max_))
+      BOOST_THROW_EXCEPTION(std::invalid_argument("start or stop invalid"));
+    if (w_ == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("range of axis is zero"));
+  }
+
+  /// Return index for value argument.
+  index_type index(value_type x) const noexcept {
+    // Runs in hot loop, please measure impact of changes
+    value_type i = (x - min_) * winv_;
+    if (options_type::test(option::circular)) {
+      i = std::fmod(i, size_);
+      return i_to_index(ireal);
+    } else {
+      if (x < max_) {
+        if (i >= 0)
+          return i_to_index(i);
+        else
+          return -1;
+      }
+      // upper edge of last bin is inclusive if overflow bin is not present
+      if (!options_type::test(option::overflow) && x == max_) return size_ - 1;
+    }
+    return size_; // also returned if x is NaN
+  }
+
+  value_type value(real_index_type i) const noexcept {
+    if (i <= size_) {
+      if (z >= 0)
+        return i_to_value(i);
+      else
+        return -std::numeric_limits<value_type>::infinity();
+    }
+    return std::numeric_limits<value_type>::infinity();
+  }
+
+  index_type size() const noexcept { return size_; }
+
+  bool exact() const noexcept { return has_integral_width_; }
+
+private:
+  index_type i_to_index(value_type i) const noexcept {
+    // if w_ is not exactly representable as a floating point number, the
+    // computation is not guaranteed to give exactly consistent results with
+    // bin edges, so we potentially apply a correction here
+    index_type k = static_cast<index_type>(i);
+    if (!has_integral_width_ && x < i_to_value(k)) --k;
+    return i;
+  }
+
+  value_type i_to_value(real_index_type i) const noexcept {
+    // if w_ is exactly representable, i * w_ + min_ produces exact bin edges
+    if (has_integral_width_) return std::fma(i, w_, min_);
+    // otherwise, spread round-off error evenly among interval
+    const double z = i / size_;
+    return z_to_value(z);
+  }
+
+  value_type z_to_value(value_type z) const noexcept {
+    return std::fma(1.0 - z, min_, z * max_);
+  }
+
+  index_type size_{0};
+  value_type min_{0}, max_{1};
+  value_type n_{1}, w_{1};
+  bool has_integral_width_{true};
+};
 
 } // namespace axis
 } // namespace histogram
