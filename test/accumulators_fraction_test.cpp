@@ -7,37 +7,57 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/fraction.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/utility/wilson_interval.hpp>
+#include <limits>
 #include "is_close.hpp"
 #include "throw_exception.hpp"
 #include "utility_str.hpp"
 
+using namespace boost::histogram;
 using namespace boost::histogram::accumulators;
 
 template <class T>
 void run_tests() {
   using f_t = fraction<T>;
 
-  // ctor
+  const double eps = std::numeric_limits<typename f_t::real_type>::epsilon();
+
   {
-    f_t f1(3, 1);
-    f_t f2(3.0, 5.0);
-    f_t f3(1.0, 3.0);
-    BOOST_TEST_EQ(f1.successes(), 3); BOOST_TEST_EQ(f1.failures(), 1);
-    BOOST_TEST_EQ(f2.successes(), 3); BOOST_TEST_EQ(f2.failures(), 5);
-    BOOST_TEST_EQ(f3.successes(), 1); BOOST_TEST_EQ(f3.failures(), 3);
-    BOOST_TEST_EQ(f1.value(), 0.75);
-    BOOST_TEST_EQ(f2.value(), 0.375);
-    BOOST_TEST_EQ(f3.value(), 0.25);
-    BOOST_TEST_IS_CLOSE(f1.variance(), 12);
-    BOOST_TEST_IS_CLOSE(f2.variance(), 120);
-    BOOST_TEST_IS_CLOSE(f3.variance(), 12);
-    // BOOST_TEST_EQ(f1.confidence_interval().first, 0.5); BOOST_TEST_EQ(f1.confidence_interval().second, 0.9);
+    f_t f;
+    BOOST_TEST_EQ(f.successes(), 0);
+    BOOST_TEST_EQ(f.failures(), 0);
+  }
+
+  {
+    f_t f(3, 1);
+    BOOST_TEST_EQ(f.successes(), 3);
+    BOOST_TEST_EQ(f.failures(), 1);
+    BOOST_TEST_EQ(f.value(), 0.75);
+    BOOST_TEST_IS_CLOSE(f.variance(), 0.75 * (1 - 0.75) / 4, eps);
+
+    const auto ci = f.confidence_interval();
+    const auto expected = utility::wilson_interval<double>()(3, 1);
+    BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);
+    BOOST_TEST_IS_CLOSE(ci.second, expected.second, eps);
+  }
+
+  {
+    f_t f(3, 5);
+    BOOST_TEST_EQ(f.successes(), 3);
+    BOOST_TEST_EQ(f.failures(), 5);
+    BOOST_TEST_EQ(f.value(), 0.375);
+    BOOST_TEST_IS_CLOSE(f.variance(), 0.375 * (1 - 0.375) / 8, eps);
+
+    const auto ci = f.confidence_interval();
+    const auto expected = utility::wilson_interval<double>()(3, 5);
+    BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);
+    BOOST_TEST_IS_CLOSE(ci.second, expected.second, eps);
   }
 }
 
 int main() {
 
-  // run_tests<int>(); // confidence_interval() throws error due to static_assert in binomial_proportion_interval()
+  run_tests<int>();
   run_tests<double>();
   run_tests<float>();
 

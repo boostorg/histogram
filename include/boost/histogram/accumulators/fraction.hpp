@@ -22,38 +22,52 @@ class fraction {
 public:
   using value_type = ValueType;
   using const_reference = const value_type&;
+  using real_type = typename std::conditional<std::is_floating_point<value_type>::value,
+                                              value_type, double>::type;
 
   fraction() noexcept = default;
 
-  fraction(const_reference successes = 0, const_reference failures = 0)
+  fraction(const_reference successes, const_reference failures)
       : succ_(successes), fail_(failures) {}
 
   /// Allow implicit conversion from other fraction
   template <class T>
   fraction(const fraction<T>& e) noexcept : fraction{e.successes(), e.failures()} {}
 
-  void operator()(bool x) {
+  void operator()(bool x) noexcept {
     if (x)
       ++succ_;
     else
       ++fail_;
   }
 
-  value_type successes() const { return succ_; }
-  value_type failures() const { return fail_; }
+  value_type successes() const noexcept { return succ_; }
+  value_type failures() const noexcept { return fail_; }
 
-  double value() const { return succ_ / (succ_ + fail_); }
+  value_type count() const noexcept { return succ_ + fail_; }
 
-  double variance() const {
-    // Source: Variance from Binomial Distribution, Wikipedia |
+  real_type value() const noexcept {
+    const real_type s = static_cast<real_type>(succ_);
+    const real_type n = static_cast<real_type>(count());
+    return s / n;
+  }
+
+  real_type variance() const noexcept {
+    // We want to compute Var(p) for p = X / n with Var(X) = n p (1 - p)
+    // For Var(X) see
     // https://en.wikipedia.org/wiki/Binomial_distribution#Expected_value_and_variance
-    return succ_ * fail_ * (succ_ + fail_);
+    // Error propagation: Var(p) = p'(X)^2 Var(X) = p (1 - p) / n
+    const real_type p = value();
+    const value_type n = count();
+    const real_type one{1};
+    return p * (one - p) / n;
   }
 
   /// Return the standard interval (Wilson score interval)
   auto confidence_interval() const noexcept {
     using namespace boost::histogram::utility;
-    return wilson_interval<value_type>(deviation{1.0})(successes(), failures());
+
+    return wilson_interval<real_type>()(successes(), failures());
   }
 
 private:
