@@ -25,13 +25,13 @@ public:
   using interval_type = typename base_t::interval_type;
 
   explicit wald_interval(deviation d = deviation{1.0}) noexcept
-      : z_{static_cast<double>(d)} {}
+      : z_{static_cast<value_type>(d)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const value_type ns = successes, nf = failures;
-    const value_type n = ns + nf;
-    const value_type a = ns / n;
-    const value_type b = (z_ / n) * std::sqrt(ns * nf / n);
+    const value_type s = successes, f = failures;
+    const value_type n = s + f;
+    const value_type a = s / n;
+    const value_type b = (z_ / n) * std::sqrt(s * f / n);
     return std::make_pair(a - b, a + b);
   }
 

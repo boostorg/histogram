@@ -25,15 +25,15 @@ public:
   using interval_type = typename base_t::interval_type;
 
   explicit agresti_coull_interval(deviation d = deviation{1.0}) noexcept
-      : z_{static_cast<double>(d)} {}
+      : z_{static_cast<value_type>(d)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const value_type half{0.5}, zero{0}, one{1}, zsq = z_ * z_;
-    const value_type ns = successes, nf = failures;
-    const value_type n = ns + nf;
-    const value_type n_ac = n + zsq;
-    const value_type a = (ns + zsq * half) / n_ac;
-    const value_type b = z_ * std::sqrt((one - a) * a / n_ac);
+    const value_type half{0.5}, zero{0}, one{1}, zsq{z_ * z_};
+    const value_type s = successes, f = failures;
+    const value_type n = s + f;
+    const value_type m = n + zsq;
+    const value_type a = (s + zsq * half) / m;
+    const value_type b = z_ * std::sqrt((one - a) * a / m);
     return std::make_pair((std::max)(a - b, zero), (std::min)(a + b, one));
   }
 

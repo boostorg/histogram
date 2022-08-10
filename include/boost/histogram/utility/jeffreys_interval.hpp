@@ -26,10 +26,10 @@ public:
   using interval_type = typename base_t::interval_type;
 
   explicit jeffreys_interval(confidence_level cl = deviation{1}) noexcept
-      : cl_{static_cast<double>(cl)} {}
+      : cl_{static_cast<value_type>(cl)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const value_type half{0.5}, one{1.0};
+    const value_type half{0.5}, one{1};
     const value_type ns = successes, nf = failures;
     const value_type n = ns + nf;
     // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval

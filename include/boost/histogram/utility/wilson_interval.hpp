@@ -37,10 +37,10 @@ public:
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
     const value_type half{0.5}, quarter{0.25}, zsq{z_ * z_};
-    const value_type ns = successes, nf = failures;
-    const value_type n = ns + nf;
-    const value_type a = (ns + half * zsq) / (n + zsq);
-    const value_type b = z_ / (n + zsq) * std::sqrt(ns * nf / n + quarter * zsq);
+    const value_type s = successes, f = failures;
+    const value_type n = s + f;
+    const value_type a = (s + half * zsq) / (n + zsq);
+    const value_type b = z_ / (n + zsq) * std::sqrt(s * f / n + quarter * zsq);
     return std::make_pair(a - b, a + b);
   }
 
