@@ -29,6 +29,23 @@ void run_tests() {
   }
 
   {
+    f_t f;
+    f(true); f(true); f(true);
+    f(false); f(false);
+    BOOST_TEST_EQ(f.successes(), 3);
+    BOOST_TEST_EQ(f.failures(), 2);
+  }
+
+  {
+    using f_t1 = fraction<double>;
+    using f_t2 = fraction<int>;
+    f_t1 f1(5,3);
+    f_t2 f(f1.successes(), f1.failures());
+    BOOST_TEST_EQ(f.successes(), 5);
+    BOOST_TEST_EQ(f.failures(), 3);
+  }
+
+  {
     f_t f(3, 1);
     BOOST_TEST_EQ(f.successes(), 3);
     BOOST_TEST_EQ(f.failures(), 1);

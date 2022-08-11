@@ -36,13 +36,13 @@ public:
     const value_type alpha = cl_ * half;
     // Source:
     // https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Jeffreys_interval
-    const value_type m = ns + half;
-    // const value_type n = n - ns + half;
+    const value_type m1 = ns + half;
+    const value_type m2 = n - ns + half;
     // Source: https://en.wikipedia.org/wiki/Beta_distribution
     // Source:
     // https://www.boost.org/doc/libs/1_79_0/libs/math/doc/html/math_toolkit/dist_ref/dists/beta_dist.html
-    const value_type a = boost::math::ibeta_inv(m, n, alpha * half);
-    const value_type b = boost::math::ibeta_inv(m, n, one - (alpha * half));
+    const value_type a = boost::math::ibeta_inv(m1, m2, alpha * half);
+    const value_type b = boost::math::ibeta_inv(m1, m2, one - (alpha * half));
     return std::make_pair(a, b);
   }
 
