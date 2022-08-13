@@ -39,10 +39,10 @@ void run_tests() {
   {
     using f_t1 = fraction<double>;
     using f_t2 = fraction<int>;
-    f_t1 f1(5,3);
-    f_t2 f(f1.successes(), f1.failures());
-    BOOST_TEST_EQ(f.successes(), 5);
-    BOOST_TEST_EQ(f.failures(), 3);
+    f_t1 f1(5, 3);
+    f_t2 f2(f1);
+    BOOST_TEST_EQ(f2.successes(), 5);
+    BOOST_TEST_EQ(f2.failures(), 3);
   }
 
   {

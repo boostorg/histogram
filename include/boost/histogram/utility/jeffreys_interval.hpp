@@ -41,8 +41,11 @@ public:
     // Source: https://en.wikipedia.org/wiki/Beta_distribution
     // Source:
     // https://www.boost.org/doc/libs/1_79_0/libs/math/doc/html/math_toolkit/dist_ref/dists/beta_dist.html
-    const value_type a = boost::math::ibeta_inv(m1, m2, alpha * half);
-    const value_type b = boost::math::ibeta_inv(m1, m2, one - (alpha * half));
+    const value_type beta_dist = beta_distribution(m1, m2);
+    // const value_type a = boost::math::ibeta_inv(m1, m2, alpha * half);
+    // const value_type b = boost::math::ibeta_inv(m1, m2, one - (alpha * half));
+    const value_type a = boost::math::quantile(beta_dist, alpha * half);
+    const value_type b = boost::math::quantile(beta_dist, one - (alpha * half));
     return std::make_pair(a, b);
   }
 
