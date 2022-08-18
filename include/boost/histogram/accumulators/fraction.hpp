@@ -32,7 +32,7 @@ public:
 
   /// Allow implicit conversion from other fraction
   template <class T>
-  fraction(const fraction<T>& e) noexcept : fraction{e.successes(), e.failures()} {}
+  fraction(const fraction<T>& e) noexcept : fraction{static_cast<T>(e.successes()), static_cast<T>(e.failures())} {}
 
   void operator()(bool x) noexcept {
     if (x)
