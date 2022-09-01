@@ -9,7 +9,8 @@
 
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/utility/binomial_proportion_interval.hpp>
-#include <boost/math/special_functions/beta.hpp>
+#include <boost/math/distributions/beta.hpp>
+#include <boost/math/distributions.hpp>
 #include <cmath>
 #include <utility>
 

@@ -13,12 +13,14 @@
 #include <cassert>
 #include <utility>
 
-#pragma warning( disable : 4244 )
-
 namespace boost {
 namespace histogram {
 namespace accumulators {
 
+/** Calculates fraction of sample.
+
+  foo bar baz foo bar baz foo bar baz foo bar baz.
+*/
 template <class ValueType>
 class fraction {
 public:
@@ -34,7 +36,7 @@ public:
 
   /// Allow implicit conversion from other fraction
   template <class T>
-  fraction(const fraction<T>& e) noexcept : fraction{e.successes(), e.failures()} {}
+  fraction(const fraction<T>& e) noexcept : fraction{static_cast<value_type>(e.successes()), static_cast<value_type>(e.failures())} {}
 
   void operator()(bool x) noexcept {
     if (x)

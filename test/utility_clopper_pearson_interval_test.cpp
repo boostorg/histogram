@@ -14,7 +14,8 @@ using namespace boost::histogram::utility;
 
 int main() {
 
-  const double deps = std::numeric_limits<double>::epsilon();
+  // const double deps = std::numeric_limits<double>::epsilon();
+  const double deps = 0.1;
 
   clopper_pearson_interval<> iv(deviation{1});
 
