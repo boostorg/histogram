@@ -19,7 +19,7 @@ namespace accumulators {
 
 /** Calculates fraction of sample.
 
-  foo bar baz foo bar baz foo bar baz foo bar baz.
+  Helps with value, variance and multiple confidence intervals (Agresti Coull, Clopper Pearson, Jeffreys, Wald and Wilson) for given sample.
 */
 template <class ValueType>
 class fraction {
@@ -31,13 +31,15 @@ public:
 
   fraction() noexcept = default;
 
+  /// Initialize to external successes and failures.
   fraction(const_reference successes, const_reference failures)
       : succ_(successes), fail_(failures) {}
 
-  /// Allow implicit conversion from other fraction
+  /// Allow implicit conversion from fraction<T>
   template <class T>
   fraction(const fraction<T>& e) noexcept : fraction{static_cast<value_type>(e.successes()), static_cast<value_type>(e.failures())} {}
 
+  /// Insert boolean sample x.
   void operator()(bool x) noexcept {
     if (x)
       ++succ_;
@@ -45,17 +47,46 @@ public:
       ++fail_;
   }
 
+
+  /** Return successes or true accumulated boolean samples.
+
+    successes() can simply be used to fetch the number of true
+    or positive samples accumulated in the storage, and further be
+    utilized to perform operations outside the given features.
+  */
   value_type successes() const noexcept { return succ_; }
+
+  /** Return failures or false accumulated boolean samples.
+
+    failures() can simply be used to fetch the number of false
+    or negative samples accumulated in the storage, and further be
+    utilized to perform operations outside the given features.
+  */
   value_type failures() const noexcept { return fail_; }
 
+  /** Return total number of accumulated boolean samples.
+
+    count() can be used to fetch all samples accumulated in the storage,
+    and further be utilized to perform operations outside the given features.
+  */
   value_type count() const noexcept { return succ_ + fail_; }
 
+  /** Return success fractional value of the accumulated boolean samples.
+
+    value() provides the hit-ratio/success-ratio/true-fraction for the
+    given samples and is denoted by success samples per total samples.
+  */
   real_type value() const noexcept {
     const real_type s = static_cast<real_type>(succ_);
     const real_type n = static_cast<real_type>(count());
     return s / n;
   }
 
+  /** Return variance of the accumulated boolean samples.
+
+    variance() provides the binomial distribution based variance
+    value with number of successes as target value.
+  */
   real_type variance() const noexcept {
     // We want to compute Var(p) for p = X / n with Var(X) = n p (1 - p)
     // For Var(X) see
