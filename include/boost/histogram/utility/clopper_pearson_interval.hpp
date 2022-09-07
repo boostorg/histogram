@@ -30,7 +30,7 @@ public:
       : cl_{static_cast<value_type>(cl)} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
-    const value_type half{0.5}, one{1}, zero{0};
+    const value_type half{0.5}, one{1};
     const value_type ns = successes, nf = failures;
     const value_type n = ns + nf;
     // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
@@ -41,10 +41,10 @@ public:
     const value_type n1 = n - ns + one;
     const value_type m2 = ns + one;
     const value_type n2 = n - ns;
-    if ((m1 == 0) || (m2 == 0) || (n1 == 0) || (n2 == 0)){
-      throw std::invalid_argument("Beta distribution based arguments' value cannot be zero.");
-      return std::make_pair(zero, zero);
-    }
+    // if ((m1 == 0) || (m2 == 0) || (n1 == 0) || (n2 == 0)){
+    //   throw std::invalid_argument("Beta distribution based arguments' value cannot be zero.");
+    //   return std::make_pair(zero, zero);
+    // }
     // Source: https://en.wikipedia.org/wiki/Beta_distribution
     // Source:
     // https://www.boost.org/doc/libs/1_79_0/libs/math/doc/html/math_toolkit/dist_ref/dists/beta_dist.html
