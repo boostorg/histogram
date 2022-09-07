@@ -19,17 +19,17 @@ int main() {
 
   clopper_pearson_interval<> iv(deviation{1});
 
-  // {
-  //   const auto x = iv(0, 1);
-  //   BOOST_TEST_IS_CLOSE(x.first, 0.0, deps);
-  //   BOOST_TEST_IS_CLOSE(x.second, 0.8413447460685429, deps);
-  // }
+  {
+    const auto x = iv(0, 1);
+    BOOST_TEST_IS_CLOSE(x.first, 0.0, deps);
+    BOOST_TEST_IS_CLOSE(x.second, 0.8413447460685429, deps);
+  }
 
-  // {
-  //   const auto x = iv(1, 0);
-  //   BOOST_TEST_IS_CLOSE(x.first, 0.1586552539314571, deps);
-  //   BOOST_TEST_IS_CLOSE(x.second, 1.0, deps);
-  // }
+  {
+    const auto x = iv(1, 0);
+    BOOST_TEST_IS_CLOSE(x.first, 0.1586552539314571, deps);
+    BOOST_TEST_IS_CLOSE(x.second, 1.0, deps);
+  }
 
   {
     const auto x = iv(5, 5);
