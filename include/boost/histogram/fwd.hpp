@@ -106,6 +106,9 @@ class mean;
 template <class ValueType = double>
 class weighted_mean;
 
+template <class ValueType = double>
+class multi_sum;
+
 } // namespace accumulators
 
 struct unsafe_access;

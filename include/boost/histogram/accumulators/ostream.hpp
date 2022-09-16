@@ -93,6 +93,20 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   return detail::handle_nonzero_width(os, x);
 }
 
+template <class T>
+std::ostream& operator<<(std::ostream& os, const multi_sum<T>& v) {
+  os << "multi_sum(";
+  bool first = true;
+  for (const T& x : v)
+    if (first) {
+      first = false;
+      os << x;
+    } else
+      os << ", " << x;
+  os << ")";
+  return os;
+}
+
 } // namespace accumulators
 } // namespace histogram
 } // namespace boost
