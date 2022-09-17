@@ -190,12 +190,11 @@ int main() {
     C a = {{1, 2, 3, 4}};
 
     struct skip_iterator : iterator_adaptor<skip_iterator, C::iterator> {
-      using base_type = iterator_adaptor<skip_iterator, C::iterator>;
-      using difference_type = typename base_type::difference_type;
-      using base_type::base_type;
+      using difference_type = typename iterator_adaptor_::difference_type;
+      using iterator_adaptor_::iterator_adaptor_;
 
       skip_iterator& operator+=(difference_type n) {
-        base_type::operator+=(n * 2);
+        iterator_adaptor_::operator+=(n * 2);
         return *this;
       }
     };
