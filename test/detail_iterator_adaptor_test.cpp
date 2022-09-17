@@ -201,7 +201,7 @@ int main() {
 
     {
       skip_iterator it(a.begin());
-      // BOOST_TEST_EQ(it.base() - a.begin(), 0);
+      BOOST_TEST_EQ(it.base() - a.begin(), 0);
       BOOST_TEST_EQ(*it++, 1);
       BOOST_TEST_EQ(*it++, 3);
       BOOST_TEST_EQ(a.end() - it.base(), 0);
