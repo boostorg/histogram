@@ -11,3 +11,4 @@ __pycache__
 tools/lcov-*
 tools/codecov
 coverage-report
+.cache
