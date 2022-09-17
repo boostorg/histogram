@@ -45,7 +45,7 @@ struct operator_arrow_dispatch_t<T&> {
 // Base: underlying base type of the iterator; can be iterator, pointer, integer
 // Reference: type returned when pointer is dereferenced
 template <class Derived, class Base, class Reference = std::remove_pointer_t<Base>&,
-          class Value = std::remove_const_t<std::decay_t<Reference>>>
+          class Value = std::decay_t<Reference>>
 class iterator_adaptor {
   using operator_arrow_dispatch = operator_arrow_dispatch_t<Reference>;
 
@@ -55,7 +55,7 @@ public:
   using reference = Reference;
   using value_type = Value;
   using pointer = typename operator_arrow_dispatch::result_type;
-  using difference_type = std::ptrdiff_t;
+  using difference_type = decltype(std::declval<base_type>() - std::declval<base_type>());
   using iterator_category = std::random_access_iterator_tag;
 
   iterator_adaptor() = default;
