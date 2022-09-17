@@ -266,7 +266,7 @@ struct map_impl : T {
     iterator_t(MapPtr m, std::size_t i) noexcept
         : iterator_t::iterator_adaptor_(i), map_(m) {}
     template <class V, class R, class M>
-    bool operator==(const iterator_t<V, R, M>& rhs) const noexcept {
+    bool equal(const iterator_t<V, R, M>& rhs) const noexcept {
       return map_ == rhs.map_ && iterator_t::base() == rhs.base();
     }
     Reference operator*() const { return (*map_)[iterator_t::base()]; }
