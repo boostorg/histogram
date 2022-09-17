@@ -200,16 +200,19 @@ int main() {
       }
     };
 
-    skip_iterator it(a.begin());
-    // BOOST_TEST_EQ(it.base() - a.begin(), 0);
-    BOOST_TEST_EQ(*it++, 1);
-    BOOST_TEST_EQ(*it++, 3);
-    BOOST_TEST_EQ(a.end() - it.base(), 0);
+    {
+      skip_iterator it(a.begin());
+      // BOOST_TEST_EQ(it.base() - a.begin(), 0);
+      BOOST_TEST_EQ(*it++, 1);
+      BOOST_TEST_EQ(*it++, 3);
+      BOOST_TEST_EQ(a.end() - it.base(), 0);
+    }
 
-    int i = 0;
-    for (auto it = skip_iterator(a.begin()); it != skip_iterator(a.end()); ++it) ++i;
-
-    BOOST_TEST_EQ(i, 2);
+    {
+      int i = 0;
+      for (auto it = skip_iterator(a.begin()); it != skip_iterator(a.end()); ++it) ++i;
+      BOOST_TEST_EQ(i, 2);
+    }
   }
 
   return boost::report_errors();
