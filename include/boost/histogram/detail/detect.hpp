@@ -204,6 +204,18 @@ template <class T, class U,
           class = std::enable_if_t<is_transform<std::decay_t<T>, U>::value>>
 struct requires_transform {};
 
+template <class T, class = void>
+struct get_difference_type_impl : std::make_signed<T> {};
+
+template <class T>
+struct get_difference_type_impl<
+    T, void_t<typename std::iterator_traits<T>::difference_type>> {
+  using type = typename std::iterator_traits<T>::difference_type;
+};
+
+template <class T>
+using get_difference_type = typename get_difference_type_impl<T>::type;
+
 } // namespace detail
 } // namespace histogram
 } // namespace boost
