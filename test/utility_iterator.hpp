@@ -17,9 +17,6 @@
 #include <iterator>
 #include <type_traits>
 
-namespace boost {
-namespace histogram {
-
 namespace detail {
 template <class T>
 struct icast_identity {
@@ -53,14 +50,14 @@ void trivial_iterator_test(const Iterator i, const Iterator j, T val) {
   BOOST_TEST(i != j);
   typename std::iterator_traits<Iterator>::value_type v = *i;
   BOOST_TEST(v == val);
-  ignore_unused(v);
+  boost::ignore_unused(v);
   BOOST_TEST(v == i->foo());
   k = i;
   BOOST_TEST(k == k);
   BOOST_TEST(k == i);
   BOOST_TEST(k != j);
   BOOST_TEST(*k == val);
-  ignore_unused(k);
+  boost::ignore_unused(k);
 }
 
 // Preconditions: i != j
@@ -94,7 +91,7 @@ void input_iterator_test(Iterator i, T v1, T v2) {
   // we cannot test for equivalence of (void)++i & (void)i++
   // as i is only guaranteed to be single pass.
   BOOST_TEST(*i++ == v1);
-  ignore_unused(i1);
+  boost::ignore_unused(i1);
 
   i1 = i;
 
@@ -103,7 +100,7 @@ void input_iterator_test(Iterator i, T v1, T v2) {
 
   BOOST_TEST(*i1 == v2);
   BOOST_TEST(*i == v2);
-  ignore_unused(i1);
+  boost::ignore_unused(i1);
 
   // i is dereferencable, so it must be incrementable.
   ++i;
@@ -176,7 +173,7 @@ void random_access_iterator_test(Iterator i, int N, TrueVals vals) {
   int c;
 
   typedef typename std::iterator_traits<Iterator>::value_type value_type;
-  ignore_unused<value_type>();
+  boost::ignore_unused<value_type>();
 
   for (c = 0; c < N - 1; ++c) {
     BOOST_TEST(i == j + c);
@@ -197,7 +194,7 @@ void random_access_iterator_test(Iterator i, int N, TrueVals vals) {
     BOOST_TEST(*i == vals[N - 1 - c]);
     BOOST_TEST(*i == implicit_cast<value_type>(j[N - 1 - c]));
     Iterator q = k - c;
-    ignore_unused(q);
+    boost::ignore_unused(q);
     BOOST_TEST(*i == *q);
     BOOST_TEST(i > j);
     BOOST_TEST(i >= j);
@@ -220,10 +217,7 @@ void const_nonconst_iterator_test(Iterator i, ConstIterator j) {
   k = i;
   BOOST_TEST(k == i);
   BOOST_TEST(i == k);
-  ignore_unused(k);
+  boost::ignore_unused(k);
 }
-
-} // namespace histogram
-} // namespace boost
 
 #endif // BOOST_HISTOGRAM_TEST_ITERATOR_TESTS_HPP
