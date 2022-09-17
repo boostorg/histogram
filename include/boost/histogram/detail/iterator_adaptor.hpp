@@ -28,12 +28,13 @@ namespace detail {
 template <class Reference>
 struct operator_arrow_dispatch_t {
   struct pointer {
-    Reference ref_;
-    Reference* operator->() noexcept { return std::addressof(ref_); }
+    explicit pointer(Reference const& x) noexcept : m_ref(x) {}
+    Reference* operator->() noexcept { return std::addressof(m_ref); }
+    Reference m_ref;
   };
 
   using result_type = pointer;
-  static result_type apply(Reference const& x) noexcept { return {x}; }
+  static result_type apply(Reference const& x) noexcept { return pointer(x); }
 };
 
 // specialization for "real" references
@@ -57,7 +58,7 @@ public:
   using reference = Reference;
   using value_type = Value;
   using pointer = typename operator_arrow_dispatch::result_type;
-  using difference_type = get_difference_type<Base>;
+  using difference_type = std::ptrdiff_t;
   using iterator_category = std::random_access_iterator_tag;
 
   iterator_adaptor() = default;
