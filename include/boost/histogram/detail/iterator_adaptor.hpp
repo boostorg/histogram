@@ -55,7 +55,8 @@ public:
   using reference = Reference;
   using value_type = Value;
   using pointer = typename operator_arrow_dispatch::result_type;
-  using difference_type = decltype(std::declval<base_type>() - std::declval<base_type>());
+  using difference_type =
+      std::make_signed_t<decltype(std::declval<base_type>() - std::declval<base_type>())>;
   using iterator_category = std::random_access_iterator_tag;
 
   iterator_adaptor() = default;
