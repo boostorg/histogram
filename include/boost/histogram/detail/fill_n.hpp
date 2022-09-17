@@ -260,7 +260,7 @@ void fill_n_1(const std::size_t offset, S& storage, A& axes, const std::size_t v
 }
 
 template <class A, class T, std::size_t N>
-std::size_t get_total_size(const A& axes, const dtl::span<const T, N>& values) {
+std::size_t get_total_size(const A& axes, const span<const T, N>& values) {
   // supported cases (T = value type; CT = containter of T; V<T, CT, ...> = variant):
   // - span<CT, N>: for any histogram, N == rank
   // - span<V<T, CT>, N>: for any histogram, N == rank
@@ -311,7 +311,7 @@ void fill_n_check_extra_args(std::size_t size, weight_type<T>&& w, Ts&&... ts) {
 
 template <class S, class A, class T, std::size_t N, class... Us>
 void fill_n(std::true_type, const std::size_t offset, S& storage, A& axes,
-            const dtl::span<const T, N> values, Us&&... us) {
+            const span<const T, N> values, Us&&... us) {
   // supported cases (T = value type; CT = containter of T; V<T, CT, ...> = variant):
   // - span<T, N>: only valid for 1D histogram, N > 1 allowed
   // - span<CT, N>: for any histogram, N == rank

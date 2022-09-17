@@ -126,17 +126,17 @@ int main() {
     BOOST_TEST_EQ(count, 6);
   }
 
-  // sub_array and span
+  // sub_array and make_span
   {
     dtl::sub_array<int, 2> a(2, 1);
     a[1] = 2;
-    auto sp = dtl::span<int>(a);
+    auto sp = dtl::make_span(a);
     BOOST_TEST_EQ(sp.size(), 2);
     BOOST_TEST_EQ(sp.front(), 1);
     BOOST_TEST_EQ(sp.back(), 2);
 
     const auto& ca = a;
-    auto csp = dtl::span<const int>(ca);
+    auto csp = dtl::make_span(ca);
     BOOST_TEST_EQ(csp.size(), 2);
     BOOST_TEST_EQ(csp.front(), 1);
     BOOST_TEST_EQ(csp.back(), 2);
