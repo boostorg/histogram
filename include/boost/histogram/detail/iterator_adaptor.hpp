@@ -10,7 +10,6 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_ITERATOR_ADAPTOR_HPP
 #define BOOST_HISTOGRAM_DETAIL_ITERATOR_ADAPTOR_HPP
 
-#include <boost/histogram/detail/detect.hpp>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -44,6 +43,22 @@ struct operator_arrow_dispatch_t<T&> {
   static result_type apply(T& x) noexcept { return std::addressof(x); }
 };
 
+// it is ok if void_t is already defined in another header
+template <class...>
+using void_t = void;
+
+template <class T, class = void>
+struct get_difference_type_impl : std::make_signed<T> {};
+
+template <class T>
+struct get_difference_type_impl<
+    T, void_t<typename std::iterator_traits<T>::difference_type>> {
+  using type = typename std::iterator_traits<T>::difference_type;
+};
+
+template <class T>
+using get_difference_type = typename get_difference_type_impl<T>::type;
+
 // adaptor supports only random access Base
 // Base: underlying base type of the iterator; can be iterator, pointer, integer
 // Reference: type returned when pointer is dereferenced
@@ -58,7 +73,7 @@ public:
   using reference = Reference;
   using value_type = Value;
   using pointer = typename operator_arrow_dispatch::result_type;
-  using difference_type = std::ptrdiff_t;
+  using difference_type = get_difference_type<base_type>;
   using iterator_category = std::random_access_iterator_tag;
 
   iterator_adaptor() = default;
