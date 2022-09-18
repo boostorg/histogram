@@ -14,39 +14,38 @@ using namespace boost::histogram::utility;
 
 int main() {
 
-  // const double deps = std::numeric_limits<double>::epsilon();
-  const double deps = 0.1;
+  const double atol = 0.001;
 
   clopper_pearson_interval<> iv(deviation{1});
 
   {
-    const auto x = iv(1, 1);
-    BOOST_TEST_IS_CLOSE(x.first, 0.0, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 0.8413447460685429, deps);
+    const auto x = iv(0, 1);
+    BOOST_TEST_IS_CLOSE(x.first, 0.0, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 0.841, atol);
   }
 
   {
-    const auto x = iv(1, 1);
-    BOOST_TEST_IS_CLOSE(x.first, 0.1586552539314571, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 1.0, deps);
+    const auto x = iv(1, 0);
+    BOOST_TEST_IS_CLOSE(x.first, 0.158, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 1.0, atol);
   }
 
   {
     const auto x = iv(5, 5);
-    BOOST_TEST_IS_CLOSE(x.first, 0.3048178830085313, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 0.6951821169914687, deps);
+    BOOST_TEST_IS_CLOSE(x.first, 0.304, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 0.695, atol);
   }
 
   {
     const auto x = iv(1, 9);
-    BOOST_TEST_IS_CLOSE(x.first, 0.017127014136728243, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 0.29413538963846697, deps);
+    BOOST_TEST_IS_CLOSE(x.first, 0.017, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 0.294, atol);
   }
 
   {
     const auto x = iv(9, 1);
-    BOOST_TEST_IS_CLOSE(x.first, 0.705864610361533, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 0.9828729858632718, deps);
+    BOOST_TEST_IS_CLOSE(x.first, 0.705, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 0.982, atol);
   }
 
   return boost::report_errors();

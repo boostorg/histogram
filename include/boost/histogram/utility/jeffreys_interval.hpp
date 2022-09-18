@@ -12,7 +12,6 @@
 #include <boost/math/distributions.hpp>
 #include <boost/math/distributions/beta.hpp>
 #include <cmath>
-#include <utility>
 
 namespace boost {
 namespace histogram {
@@ -40,19 +39,20 @@ public:
   using interval_type = typename base_t::interval_type;
 
   explicit jeffreys_interval(confidence_level cl = deviation{1}) noexcept
-      : alpha_half_{static_cast<value_type>(0.5 * (1 - static_cast<double>(cl)))} {}
+      : alpha_half_{static_cast<value_type>(0.5 - 0.5 * static_cast<double>(cl))} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
     // See L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101–133,
     // doi:10.1214/ss/1009213286, section 4.1.2.
-    const value_type half{0.5}, one{1};
+    const value_type half{0.5}, zero{0}, one{1};
     const value_type total = successes + failures;
-    if (successes == 0) return std::make_pair(0, one - std::pow(alpha_half_, 1 / total));
-    if (failures == 0) return std::make_pair(std::pow(alpha_half_, 1 / total), 1);
+    if (successes == 0) return {zero, one - std::pow(alpha_half_, one / total)};
+    if (failures == 0) return {std::pow(alpha_half_, one / total), one};
+
     math::beta_distribution<value_type> beta(successes + half, failures + half);
-    const value_type a = successes == 1 ? 0 : math::quantile(beta, alpha_half_);
-    const value_type b = failures == 1 ? 1 : math::quantile(beta, one - alpha_half_);
-    return std::make_pair(a, b);
+    const value_type a = successes == 1 ? zero : math::quantile(beta, alpha_half_);
+    const value_type b = failures == 1 ? one : math::quantile(beta, one - alpha_half_);
+    return {a, b};
   }
 
 private:
