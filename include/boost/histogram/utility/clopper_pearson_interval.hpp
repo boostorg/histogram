@@ -19,11 +19,9 @@ namespace utility {
 
 template <class ValueType>
 class clopper_pearson_interval : public binomial_proportion_interval<ValueType> {
-  using base_t = binomial_proportion_interval<ValueType>;
-
 public:
-  using value_type = typename base_t::value_type;
-  using interval_type = typename base_t::interval_type;
+  using value_type = typename clopper_pearson_interval::value_type;
+  using interval_type = typename clopper_pearson_interval::interval_type;
 
   explicit clopper_pearson_interval(confidence_level cl = deviation{1}) noexcept
       : alpha_half_{static_cast<value_type>(0.5 - 0.5 * static_cast<double>(cl))} {}
