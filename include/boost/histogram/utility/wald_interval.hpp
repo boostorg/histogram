@@ -19,11 +19,10 @@ namespace utility {
 /**
   Wald interval or normal approximation interval.
 
-  The Wald interval is an approximation based on the central limit
-  theorem, which is unsuitable when the sample size is small or when
-  the fraction is close to 0 or 1. In fact, the Wald interval has
-  poor statistical properties and should always be replaced by other
-  intervals, in particular the Wilson interval.
+  The Wald interval is a symmetric interval. It is simple to compute,
+  but has poor statistical properties and should always be replaced
+  by another iternal. The Wilson interval is also easy to compute
+  and has far superior statistical properties.
 
   The Wald interval is commonly used by practitioners, since it can
   be derived easily using the plug-in estimate of the variance for
@@ -31,10 +30,11 @@ namespace utility {
   theory, it is not clear that this derivation is flawed and that
   better alternatives exist.
 
-  However, the Wald interval has many deficiencies that are avoided
-  by other intervals. It undercovers on average. Its limits are not
-  naturally bounded by 0 or 1. It produces empty intervals if the
-  number of successes or failures is zero.
+  The Wald interval is an approximation based on the central limit
+  theorem, which is unsuitable when the sample size is small or when
+  the fraction is close to 0 or 1. It undercovers on average. Its
+  limits are not naturally bounded by 0 or 1. It produces empty
+  intervals if the number of successes or failures is zero.
 
   For a critique of the Wald interval, see
   R. D. Cousins, K. E. Hymes, J. Tucker,
@@ -48,6 +48,12 @@ public:
   using value_type = typename base_t::value_type;
   using interval_type = typename base_t::interval_type;
 
+  /** Construct Wald interval computer.
+
+    @param d Number of standard deviations for the interval. The default value 1
+    corresponds to a confidence level of 68 %. Both `deviation` and `confidence_level`
+    objects can be used to initialize the interval.
+  */
   explicit wald_interval(deviation d = deviation{1.0}) noexcept
       : z_{static_cast<value_type>(d)} {}
 

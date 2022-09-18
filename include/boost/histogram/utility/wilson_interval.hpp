@@ -42,6 +42,12 @@ public:
   using value_type = typename base_t::value_type;
   using interval_type = typename base_t::interval_type;
 
+  /** Construct Wilson interval computer.
+
+    @param d Number of standard deviations for the interval. The default value 1
+    corresponds to a confidence level of 68 %. Both `deviation` and `confidence_level`
+    objects can be used to initialize the interval.
+  */
   explicit wilson_interval(deviation d = deviation{1.0}) noexcept
       : z_{static_cast<value_type>(d)} {}
 
