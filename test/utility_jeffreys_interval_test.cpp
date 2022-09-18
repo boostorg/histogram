@@ -7,6 +7,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/utility/jeffreys_interval.hpp>
 #include <limits>
+#include "boost/histogram/utility/binomial_proportion_interval.hpp"
 #include "is_close.hpp"
 #include "throw_exception.hpp"
 
@@ -14,39 +15,59 @@ using namespace boost::histogram::utility;
 
 int main() {
 
-  // const double deps = std::numeric_limits<double>::epsilon();
-  const double deps = 0.1;
+  // reference: table A.1 in
+  // L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101–133,
+  // doi:10.1214/ss/1009213286
 
-  jeffreys_interval<> iv(deviation{1});
+  const double atol = 0.001;
+
+  jeffreys_interval<> iv(confidence_level{0.95});
+
+  struct data_t {
+    int n, s;
+    double a, b;
+  };
 
   {
-    const auto x = iv(0, 1);
-    BOOST_TEST_IS_CLOSE(x.first, 0.015608332029966311, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 0.537560439331611, deps);
+    auto p = iv(0, 1);
+    BOOST_TEST_IS_CLOSE(p.first, 0, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.975, atol);
   }
 
   {
-    const auto x = iv(1, 0);
-    BOOST_TEST_IS_CLOSE(x.first, 0.4624395606683889, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 0.9843916679700336, deps);
+    auto p = iv(1, 0);
+    BOOST_TEST_IS_CLOSE(p.first, 0.025, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 1, atol);
   }
 
   {
-    const auto x = iv(5, 5);
-    BOOST_TEST_IS_CLOSE(x.first, 0.34940656031996686, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 0.6505934396800331, deps);
+    auto p = iv(0, 7 - 0);
+    BOOST_TEST_IS_CLOSE(p.first, 0, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.41, atol);
   }
 
   {
-    const auto x = iv(1, 9);
-    BOOST_TEST_IS_CLOSE(x.first, 0.041888372640752326, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 0.23375944339475085, deps);
+    auto p = iv(1, 7 - 1);
+    BOOST_TEST_IS_CLOSE(p.first, 0, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.501, atol);
   }
 
   {
-    const auto x = iv(9, 1);
-    BOOST_TEST_IS_CLOSE(x.first, 0.7662405566052491, deps);
-    BOOST_TEST_IS_CLOSE(x.second, 0.9581116273592477, deps);
+    auto p = iv(2, 7 - 2);
+    BOOST_TEST_IS_CLOSE(p.first, 0.065, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.648, atol);
+  }
+
+  {
+    auto p = iv(3, 7 - 3);
+    BOOST_TEST_IS_CLOSE(p.first, 0.139, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.766, atol);
+  }
+
+  {
+    auto p = iv(4, 7 - 4);
+    BOOST_TEST_IS_CLOSE(p.first, 0.234, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.861, atol);
   }
 
   return boost::report_errors();

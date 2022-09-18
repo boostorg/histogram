@@ -9,8 +9,8 @@
 
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/utility/binomial_proportion_interval.hpp>
-#include <boost/math/distributions/beta.hpp>
 #include <boost/math/distributions.hpp>
+#include <boost/math/distributions/beta.hpp>
 #include <cmath>
 #include <utility>
 
@@ -18,6 +18,19 @@ namespace boost {
 namespace histogram {
 namespace utility {
 
+/**
+  Jeffreys interval.
+
+  This is the Bayesian credible interval with a Jeffreys prior. Although it has a
+  Bayesian derivation, it has good coverage. The coverage properties are close to the
+  Wilson interval. A special property of this interval is that it is equal-tailed; the
+  probability of the true value to be above or below the interval is approximately equal.
+
+  To avoid coverage probability tending to zero when the fraction approaches 0 or 1,
+  this implementation uses a modification described in section 4.1.2 of the
+  paper by L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101–133,
+  doi:10.1214/ss/1009213286.
+*/
 template <class ValueType>
 class jeffreys_interval : public binomial_proportion_interval<ValueType> {
   using base_t = binomial_proportion_interval<ValueType>;
@@ -27,32 +40,23 @@ public:
   using interval_type = typename base_t::interval_type;
 
   explicit jeffreys_interval(confidence_level cl = deviation{1}) noexcept
-      : cl_{static_cast<value_type>(cl)} {}
+      : alpha_half_{0.5 * (1 - static_cast<double>(cl))} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
+    // See L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101–133,
+    // doi:10.1214/ss/1009213286, section 4.1.2.
     const value_type half{0.5}, one{1};
-    const value_type ns = successes, nf = failures;
-    const value_type n = ns + nf;
-    // Source: https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
-    const value_type alpha = cl_ * half;
-    // Source:
-    // https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Jeffreys_interval
-    const value_type m1 = ns + half;
-    const value_type m2 = n - ns + half;
-    // if ((m1 == 0) || (m2 == 0)){
-    //   throw std::invalid_argument("Beta distribution based arguments' value cannot be zero.");
-    //   return std::make_pair(zero, zero);
-    // }
-    // Source: https://en.wikipedia.org/wiki/Beta_distribution
-    // Source:
-    // https://www.boost.org/doc/libs/1_79_0/libs/math/doc/html/math_toolkit/dist_ref/dists/beta_dist.html
-    const value_type a = boost::math::quantile(boost::math::beta_distribution<>(m1, m2), alpha * half);
-    const value_type b = boost::math::quantile(boost::math::beta_distribution<>(m1, m2), one - (alpha * half));
+    const value_type total = successes + failures;
+    if (successes == 0) return std::make_pair(0, one - std::pow(alpha_half_, 1 / total));
+    if (failures == 0) return std::make_pair(std::pow(alpha_half_, 1 / total), 1);
+    math::beta_distribution<value_type> beta(successes + half, failures + half);
+    const value_type a = successes == 1 ? 0 : math::quantile(beta, alpha_half_);
+    const value_type b = failures == 1 ? 1 : math::quantile(beta, one - alpha_half_);
     return std::make_pair(a, b);
   }
 
 private:
-  value_type cl_;
+  value_type alpha_half_;
 };
 
 } // namespace utility

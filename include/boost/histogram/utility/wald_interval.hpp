@@ -19,26 +19,23 @@ namespace utility {
 /**
   Wald interval or normal approximation interval.
 
-  The Wald interval is a symmetric interval. It is simple to compute,
-  but has poor statistical properties and should always be replaced
-  by another iternal. The Wilson interval is also easy to compute
-  and has far superior statistical properties.
+  The Wald interval is a symmetric interval. It is simple to compute, but has poor
+  statistical properties and is universally rejected by statisticians. It should always be
+  replaced by another iternal, for example, the Wilson interval.
 
-  The Wald interval is commonly used by practitioners, since it can
-  be derived easily using the plug-in estimate of the variance for
-  the binomial distribution. Without further insight into statistical
-  theory, it is not clear that this derivation is flawed and that
-  better alternatives exist.
+  The Wald interval can be derived easily using the plug-in estimate of the variance for
+  the binomial distribution, which is likely a reason for its omnipresence. Without
+  further insight into statistical theory, it is not obvious that this derivation is
+  flawed and that better alternatives exist.
 
-  The Wald interval is an approximation based on the central limit
-  theorem, which is unsuitable when the sample size is small or when
-  the fraction is close to 0 or 1. It undercovers on average. Its
-  limits are not naturally bounded by 0 or 1. It produces empty
-  intervals if the number of successes or failures is zero.
+  The Wald interval undercovers on average. It is unsuitable when the sample size is small
+  or when the fraction is close to 0 or 1. e. Its limits are not naturally bounded by 0
+  or 1. It produces empty intervals if the number of successes or failures is zero.
 
-  For a critique of the Wald interval, see
-  R. D. Cousins, K. E. Hymes, J. Tucker,
-  Nucl. Instrum. Meth. A 612 (2010) 388-398.
+  For a critique of the Wald interval, see (a selection):
+
+  L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101–133.
+  R. D. Cousins, K. E. Hymes, J. Tucker, Nucl. Instrum. Meth. A 612 (2010) 388-398.
 */
 template <class ValueType>
 class wald_interval : public binomial_proportion_interval<ValueType> {
@@ -61,11 +58,9 @@ public:
     // See https://en.wikipedia.org/wiki/
     //   Binomial_proportion_confidence_interval
     //   #Normal_approximation_interval_or_Wald_interval
-    const value_type s = successes, f = failures;
-    const value_type n = s + f;
-    const value_type ninv = 1 / n;
-    const value_type a = s * ninv;
-    const value_type b = (z_ * ninv) * std::sqrt(s * f * ninv);
+    const value_type total_inv = 1 / (successes + failures);
+    const value_type a = successes * total_inv;
+    const value_type b = (z_ * total_inv) * std::sqrt(successes * failures * total_inv);
     return std::make_pair(a - b, a + b);
   }
 
