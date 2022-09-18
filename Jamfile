@@ -17,8 +17,8 @@ project
     : requirements
     <implicit-dependency>/boost//headers
     <include>$(BOOST_ROOT)
-    <toolset>clang:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
-    <toolset>gcc:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wfloat-conversion"
+    <toolset>clang:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion -fvisibility=hidden -fvisibility-inlines-hidden"
+    <toolset>gcc:<cxxflags>"-pedantic -Wextra -Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wfloat-conversion -fvisibility=hidden -fvisibility-inlines-hidden"
     <toolset>msvc:<cxxflags>"/bigobj"
     <toolset>intel-win:<cxxflags>"/bigobj"
     : default-build

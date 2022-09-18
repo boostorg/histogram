@@ -138,13 +138,13 @@ alias threading :
     <threading>multi
     ;
 
+# warnings are off for these other boost libraries, which tend to be not warning-free
 alias math :
     [ run detail_normal_test.cpp ]
     [ run utility_clopper_pearson_interval_test.cpp ]
     [ run utility_jeffreys_interval_test.cpp ]
+    : <warnings>off
     ;
-
-# warnings are off for these other boost libraries, which tend to be not warning-free
 alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off ;
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
 alias units : [ run boost_units_support_test.cpp ] : <warnings>off ;
