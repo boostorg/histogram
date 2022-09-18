@@ -7,7 +7,7 @@ include(BoostFetch)
 # setup for google benchmark
 set(CMAKE_BUILD_TYPE Release) # ok, only set in local scope
 option(BENCHMARK_ENABLE_TESTING "" OFF)
-boost_fetch(google/benchmark)
+boost_fetch(google/benchmark TAG main)
 boost_fetch(boostorg/math TAG develop EXCLUDE_FROM_ALL)
 
 function(add_benchmark NAME)
