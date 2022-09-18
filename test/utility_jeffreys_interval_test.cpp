@@ -70,5 +70,12 @@ int main() {
     BOOST_TEST_IS_CLOSE(p.second, 0.861, atol);
   }
 
+  // extrapolated from table
+  {
+    auto p = iv(5, 7 - 5);
+    BOOST_TEST_IS_CLOSE(p.first, 1 - 0.766, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 1 - 0.139, atol);
+  }
+
   return boost::report_errors();
 }
