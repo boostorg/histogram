@@ -13,53 +13,36 @@
 
 using namespace boost::histogram::utility;
 
-int main() {
-
+template <class T>
+void test() {
   // reference: table A.1 in
   // L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101–133,
   // doi:10.1214/ss/1009213286
 
-  const double atol = 0.001;
+  const T atol = 0.001;
 
-  jeffreys_interval<> iv(confidence_level{0.95});
-
-  struct data_t {
-    int n, s;
-    double a, b;
-  };
+  jeffreys_interval<T> iv(confidence_level{0.95});
 
   {
-    auto p = iv(0, 1);
-    BOOST_TEST_IS_CLOSE(p.first, 0, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 0.975, atol);
-  }
-
-  {
-    auto p = iv(1, 0);
-    BOOST_TEST_IS_CLOSE(p.first, 0.025, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 1, atol);
-  }
-
-  {
-    auto p = iv(0, 7 - 0);
+    auto p = iv(0, 7);
     BOOST_TEST_IS_CLOSE(p.first, 0, atol);
     BOOST_TEST_IS_CLOSE(p.second, 0.41, atol);
   }
 
   {
-    auto p = iv(1, 7 - 1);
+    auto p = iv(1, 6);
     BOOST_TEST_IS_CLOSE(p.first, 0, atol);
     BOOST_TEST_IS_CLOSE(p.second, 0.501, atol);
   }
 
   {
-    auto p = iv(2, 7 - 2);
+    auto p = iv(2, 5);
     BOOST_TEST_IS_CLOSE(p.first, 0.065, atol);
     BOOST_TEST_IS_CLOSE(p.second, 0.648, atol);
   }
 
   {
-    auto p = iv(3, 7 - 3);
+    auto p = iv(3, 4);
     BOOST_TEST_IS_CLOSE(p.first, 0.139, atol);
     BOOST_TEST_IS_CLOSE(p.second, 0.766, atol);
   }
@@ -72,10 +55,44 @@ int main() {
 
   // extrapolated from table
   {
-    auto p = iv(5, 7 - 5);
-    BOOST_TEST_IS_CLOSE(p.first, 1 - 0.766, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 1 - 0.139, atol);
+    auto p = iv(5, 2);
+    BOOST_TEST_IS_CLOSE(p.first, 1 - 0.648, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 1 - 0.065, atol);
   }
+
+  // extrapolated from table
+  {
+    auto p = iv(6, 1);
+    BOOST_TEST_IS_CLOSE(p.first, 1 - 0.501, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 1, atol);
+  }
+
+  // extrapolated from table
+  {
+    auto p = iv(7, 0);
+    BOOST_TEST_IS_CLOSE(p.first, 1 - 0.41, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 1, atol);
+  }
+
+  // not in table
+  {
+    auto p = iv(0, 1);
+    BOOST_TEST_IS_CLOSE(p.first, 0, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.975, atol);
+  }
+
+  // not in table
+  {
+    auto p = iv(1, 0);
+    BOOST_TEST_IS_CLOSE(p.first, 0.025, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 1, atol);
+  }
+}
+
+int main() {
+
+  test<float>();
+  test<double>();
 
   return boost::report_errors();
 }

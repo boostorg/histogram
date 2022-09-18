@@ -40,7 +40,7 @@ public:
   using interval_type = typename base_t::interval_type;
 
   explicit jeffreys_interval(confidence_level cl = deviation{1}) noexcept
-      : alpha_half_{0.5 * (1 - static_cast<double>(cl))} {}
+      : alpha_half_{static_cast<value_type>(0.5 * (1 - static_cast<double>(cl)))} {}
 
   interval_type operator()(value_type successes, value_type failures) const noexcept {
     // See L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101–133,
