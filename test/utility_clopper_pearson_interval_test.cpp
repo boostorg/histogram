@@ -12,11 +12,11 @@
 
 using namespace boost::histogram::utility;
 
-int main() {
+template <class T>
+void test() {
+  const T atol = 0.001;
 
-  const double atol = 0.001;
-
-  clopper_pearson_interval<> iv(deviation{1});
+  clopper_pearson_interval<T> iv(deviation{1});
 
   {
     const auto x = iv(0, 1);
@@ -47,6 +47,10 @@ int main() {
     BOOST_TEST_IS_CLOSE(x.first, 0.705, atol);
     BOOST_TEST_IS_CLOSE(x.second, 0.982, atol);
   }
+}
 
+int main() {
+  test<float>();
+  test<double>();
   return boost::report_errors();
 }
