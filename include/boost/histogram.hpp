@@ -31,7 +31,7 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/make_profile.hpp>
-#include <boost/histogram/multi_sum_storage.hpp>
+#include <boost/histogram/multi_storage.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 
