@@ -8,8 +8,8 @@
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <memory>
+#include "../test/histogram.hpp"
 #include "../test/throw_exception.hpp"
-#include "../test/utility_histogram.hpp"
 #include "generator.hpp"
 
 #include <cassert>

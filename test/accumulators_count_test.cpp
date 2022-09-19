@@ -7,8 +7,8 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/count.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
+#include "str.hpp"
 #include "throw_exception.hpp"
-#include "utility_str.hpp"
 
 using namespace boost::histogram;
 using namespace std::literals;

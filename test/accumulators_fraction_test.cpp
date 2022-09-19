@@ -10,8 +10,8 @@
 #include <boost/histogram/utility/wilson_interval.hpp>
 #include <limits>
 #include "is_close.hpp"
+#include "str.hpp"
 #include "throw_exception.hpp"
-#include "utility_str.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::accumulators;
@@ -30,8 +30,11 @@ void run_tests() {
 
   {
     f_t f;
-    f(true); f(true); f(true);
-    f(false); f(false);
+    f(true);
+    f(true);
+    f(true);
+    f(false);
+    f(false);
     BOOST_TEST_EQ(f.successes(), 3);
     BOOST_TEST_EQ(f.failures(), 2);
   }

@@ -39,11 +39,9 @@ namespace utility {
 */
 template <class ValueType>
 class wald_interval : public binomial_proportion_interval<ValueType> {
-  using base_t = binomial_proportion_interval<ValueType>;
-
 public:
-  using value_type = typename base_t::value_type;
-  using interval_type = typename base_t::interval_type;
+  using value_type = typename wald_interval::value_type;
+  using interval_type = typename wald_interval::interval_type;
 
   /** Construct Wald interval computer.
 
@@ -61,7 +59,7 @@ public:
     const value_type total_inv = 1 / (successes + failures);
     const value_type a = successes * total_inv;
     const value_type b = (z_ * total_inv) * std::sqrt(successes * failures * total_inv);
-    return std::make_pair(a - b, a + b);
+    return {a - b, a + b};
   }
 
 private:

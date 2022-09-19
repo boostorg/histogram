@@ -26,13 +26,15 @@ namespace utility {
   inference". Journal of the American Statistical Association. 22 (158): 209-212.
   doi:10.1080/01621459.1927.10502953. JSTOR 2276774.
 
-  The coverage probability is close to the nominal value. Unlike the Clopper-Pearson
-  interval, it is not conservative. For some values of the fractions, the interval
-  undercovers and overcovers for neighboring values. On "average", the intervals have
-  close to nomimal coverage. The Wilson score intervals and the Clopper-Pearson are
-  recommended for general use (the second if the interval has to be conservative)
-  in a review of the existing literature by R. D. Cousins, K. E. Hymes, J. Tucker,
-  Nucl. Instrum. Meth. A 612 (2010) 388-398.
+  The coverage probability for a random ensemble of fractions is close to the nominal
+  value. Unlike the Clopper-Pearson interval, the Wilson score interval is not
+  conservative. For some values of the fractions, the interval undercovers and overcovers
+  for neighboring values. This is a shared property of all alternatives to the
+  Clopper-Pearson interval.
+
+  The Wilson score intervals is widely recommended for general use in the literature. For
+  a review of the literature, see R. D. Cousins, K. E. Hymes, J. Tucker, Nucl. Instrum.
+  Meth. A 612 (2010) 388-398.
 */
 template <class ValueType>
 class wilson_interval : public binomial_proportion_interval<ValueType> {
@@ -57,15 +59,15 @@ public:
     //   #Wilson_score_interval
 
     // We make sure calculation is done in single precision if value_type is float
-    // by converting all literal constants to value_type. If the literals remain
-    // in the equation, they turn the calculation of intermediate falues to double,
-    // since mixed arithemetic between float and double results in double.
+    // by converting all literals to value_type. Double literals in the equation
+    // would turn intermediate values to double.
     const value_type half{0.5}, quarter{0.25}, zsq{z_ * z_};
-    const value_type s = successes, f = failures;
-    const value_type n = s + f;
-    const value_type a = (s + half * zsq) / (n + zsq);
-    const value_type b = z_ / (n + zsq) * std::sqrt(s * f / n + quarter * zsq);
-    return std::make_pair(a - b, a + b);
+    const value_type total = successes + failures;
+    const value_type minv = 1 / (total + zsq);
+    const value_type t1 = (successes + half * zsq) * minv;
+    const value_type t2 =
+        z_ * minv * std::sqrt(successes * failures / total + quarter * zsq);
+    return {t1 - t2, t1 + t2};
   }
 
 private:

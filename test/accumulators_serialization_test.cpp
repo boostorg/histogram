@@ -9,8 +9,8 @@
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/weight.hpp>
 #include <cassert>
+#include "serialization.hpp"
 #include "throw_exception.hpp"
-#include "utility_serialization.hpp"
 
 using namespace boost::histogram;
 
