@@ -8,17 +8,18 @@
 #include <boost/histogram/accumulators/fraction.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <boost/histogram/utility/wilson_interval.hpp>
+#include <cmath>
 #include <limits>
 #include "is_close.hpp"
 #include "str.hpp"
 #include "throw_exception.hpp"
 
 using namespace boost::histogram;
-using namespace boost::histogram::accumulators;
+using namespace std::literals;
 
 template <class T>
 void run_tests() {
-  using f_t = fraction<T>;
+  using f_t = accumulators::fraction<T>;
 
   const double eps = std::numeric_limits<typename f_t::real_type>::epsilon();
 
@@ -26,26 +27,24 @@ void run_tests() {
     f_t f;
     BOOST_TEST_EQ(f.successes(), 0);
     BOOST_TEST_EQ(f.failures(), 0);
+    BOOST_TEST(std::isnan(f.value()));
+    BOOST_TEST(std::isnan(f.variance()));
+
+    const auto ci = f.confidence_interval();
+    BOOST_TEST(std::isnan(ci.first));
+    BOOST_TEST(std::isnan(ci.second));
   }
 
   {
     f_t f;
     f(true);
-    f(true);
-    f(true);
+    BOOST_TEST_EQ(f.successes(), 1);
+    BOOST_TEST_EQ(f.failures(), 0);
+    BOOST_TEST_EQ(str(f), "fraction(1, 0)"s);
     f(false);
-    f(false);
-    BOOST_TEST_EQ(f.successes(), 3);
-    BOOST_TEST_EQ(f.failures(), 2);
-  }
-
-  {
-    using f_t1 = fraction<double>;
-    using f_t2 = fraction<int>;
-    f_t1 f1(5, 3);
-    f_t2 f2(f1);
-    BOOST_TEST_EQ(f2.successes(), 5);
-    BOOST_TEST_EQ(f2.failures(), 3);
+    BOOST_TEST_EQ(f.successes(), 1);
+    BOOST_TEST_EQ(f.failures(), 1);
+    BOOST_TEST_EQ(str(f), "fraction(1, 1)"s);
   }
 
   {
@@ -62,16 +61,36 @@ void run_tests() {
   }
 
   {
-    f_t f(3, 5);
-    BOOST_TEST_EQ(f.successes(), 3);
-    BOOST_TEST_EQ(f.failures(), 5);
-    BOOST_TEST_EQ(f.value(), 0.375);
-    BOOST_TEST_IS_CLOSE(f.variance(), 0.375 * (1 - 0.375) / 8, eps);
+    f_t f(0, 1);
+    BOOST_TEST_EQ(f.successes(), 0);
+    BOOST_TEST_EQ(f.failures(), 1);
+    BOOST_TEST_EQ(f.value(), 0);
+    BOOST_TEST_EQ(f.variance(), 0);
 
     const auto ci = f.confidence_interval();
-    const auto expected = utility::wilson_interval<double>()(3, 5);
+    const auto expected = utility::wilson_interval<double>()(0, 1);
     BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);
     BOOST_TEST_IS_CLOSE(ci.second, expected.second, eps);
+  }
+
+  {
+    f_t f(1, 0);
+    BOOST_TEST_EQ(f.successes(), 1);
+    BOOST_TEST_EQ(f.failures(), 0);
+    BOOST_TEST_EQ(f.value(), 1);
+    BOOST_TEST_EQ(f.variance(), 0);
+
+    const auto ci = f.confidence_interval();
+    const auto expected = utility::wilson_interval<double>()(1, 0);
+    BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);
+    BOOST_TEST_IS_CLOSE(ci.second, expected.second, eps);
+  }
+
+  {
+    f_t a(1, 0), b(0, 1);
+
+    a += b;
+    BOOST_TEST_EQ(a, f_t(1, 1));
   }
 }
 
@@ -80,6 +99,15 @@ int main() {
   run_tests<int>();
   run_tests<double>();
   run_tests<float>();
+
+  {
+    using f_t1 = accumulators::fraction<double>;
+    using f_t2 = accumulators::fraction<int>;
+    f_t1 f1(5, 3);
+    f_t2 f2(f1);
+    BOOST_TEST_EQ(f2.successes(), 5);
+    BOOST_TEST_EQ(f2.failures(), 3);
+  }
 
   return boost::report_errors();
 }

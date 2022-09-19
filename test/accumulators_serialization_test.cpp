@@ -88,5 +88,19 @@ int main(int argc, char** argv) {
     BOOST_TEST(a == b);
   }
 
+  // fraction
+  {
+    const auto filename = join(argv[1], "accumulators_serialization_test_fraction.xml");
+    accumulators::fraction<> a;
+    a(true);
+    a(false);
+    print_xml(filename, a);
+
+    accumulators::fraction<> b;
+    BOOST_TEST_NOT(a == b);
+    load_xml(filename, b);
+    BOOST_TEST(a == b);
+  }
+
   return boost::report_errors();
 }
