@@ -84,6 +84,7 @@ alias cxx14 :
     [ run histogram_growing_test.cpp ]
     [ run histogram_mixed_test.cpp ]
     [ run histogram_operators_test.cpp ]
+    [ run histogram_fraction_test.cpp ]
     [ run histogram_test.cpp ]
     [ run indexed_test.cpp ]
     [ run storage_adaptor_test.cpp ]

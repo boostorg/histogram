@@ -87,6 +87,7 @@ boost_test(TYPE run SOURCES histogram_ostream_test.cpp)
 boost_test(TYPE run SOURCES histogram_ostream_ascii_test.cpp)
 set_tests_properties(run-boost_histogram-histogram_ostream_ascii_test
   PROPERTIES ENVIRONMENT "LANG=FOO;COLUMNS=20")
+boost_test(TYPE run SOURCES histogram_fraction_test.cpp)
 boost_test(TYPE run SOURCES histogram_test.cpp)
 boost_test(TYPE run SOURCES indexed_test.cpp)
 boost_test(TYPE run SOURCES storage_adaptor_test.cpp)
