@@ -214,8 +214,13 @@ public:
 
     The argument must be an iterable with a size that matches the
     rank of the histogram. The element of an iterable may be 1) a value or 2) an iterable
-    with contiguous storage over values or 3) a variant of 1) and 2). Sub-iterables must
+    over a contiguous sequence of values or 3) a variant of 1) and 2). Sub-iterables must
     have the same length.
+
+    Warning: `std::vector<bool>` is not a contiguous sequence over boolean values because
+    of the infamous vector specialization for booleans. It cannot be used as an
+    argument, but any truely contiguous sequence of boolean values can (`std::array<bool,
+    N>` or `std::valarray<bool>`, for example).
 
     Values are passed to the corresponding histogram axis in order. If a single value is
     passed together with an iterable of values, the single value is treated like an

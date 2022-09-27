@@ -12,6 +12,7 @@
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/histogram/ostream.hpp>
+#include <valarray>
 #include <vector>
 #include "throw_exception.hpp"
 
@@ -41,6 +42,11 @@ int main() {
   h.fill(x, sample(s2));
   BOOST_TEST_EQ(h.at(0), (fraction_t{2, 2}));
   BOOST_TEST_EQ(h.at(1), (fraction_t{2, 1}));
+
+  std::valarray<bool> s3 = {false, true};
+  h.fill(x, sample(s3));
+  BOOST_TEST_EQ(h.at(0), (fraction_t{2, 3}));
+  BOOST_TEST_EQ(h.at(1), (fraction_t{3, 1}));
 
   return boost::report_errors();
 }
