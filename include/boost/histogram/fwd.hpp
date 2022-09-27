@@ -148,9 +148,6 @@ class BOOST_ATTRIBUTE_NODISCARD histogram;
 namespace utility {
 
 template <class ValueType = double>
-class agresti_coull_interval;
-
-template <class ValueType = double>
 class clopper_pearson_interval;
 
 template <class ValueType = double>

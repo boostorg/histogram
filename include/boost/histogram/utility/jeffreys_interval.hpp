@@ -26,7 +26,7 @@ namespace utility {
 
   To avoid coverage probability tending to zero when the fraction approaches 0 or 1,
   this implementation uses a modification described in section 4.1.2 of the
-  paper by L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101–133,
+  paper by L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101-133,
   doi:10.1214/ss/1009213286.
 */
 template <class ValueType>

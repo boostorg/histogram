@@ -34,7 +34,7 @@ namespace utility {
 
   For a critique of the Wald interval, see (a selection):
 
-  L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101–133.
+  L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101-133.
   R. D. Cousins, K. E. Hymes, J. Tucker, Nucl. Instrum. Meth. A 612 (2010) 388-398.
 */
 template <class ValueType>
