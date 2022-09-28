@@ -5,6 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/accumulators/fraction.hpp>
 #include <boost/histogram/utility/wilson_interval.hpp>
 #include <cmath>
 #include <limits>
@@ -12,6 +13,7 @@
 #include "throw_exception.hpp"
 
 using namespace boost::histogram::utility;
+using namespace boost::histogram::accumulators;
 
 template <class T>
 void test() {
@@ -26,21 +28,25 @@ void test() {
   }
 
   {
-    const auto x = iv(9, 1);
-    BOOST_TEST_IS_CLOSE(x.first, 0.7661472245930581, atol);
-    BOOST_TEST_IS_CLOSE(x.second, 0.9611255026796692, atol);
-  }
-
-  {
     const auto x = iv(0, 1);
     BOOST_TEST_IS_CLOSE(x.first, 0.0, atol);
     BOOST_TEST_IS_CLOSE(x.second, 0.5, atol);
+
+    fraction<T> f(0, 1);
+    const auto y = iv(f);
+    BOOST_TEST_IS_CLOSE(y.first, 0.0, atol);
+    BOOST_TEST_IS_CLOSE(y.second, 0.5, atol);
   }
 
   {
     const auto x = iv(1, 0);
     BOOST_TEST_IS_CLOSE(x.first, 0.5, atol);
     BOOST_TEST_IS_CLOSE(x.second, 1.0, atol);
+
+    fraction<T> f(1, 0);
+    const auto y = iv(f);
+    BOOST_TEST_IS_CLOSE(y.first, 0.5, atol);
+    BOOST_TEST_IS_CLOSE(y.second, 1.0, atol);
   }
 
   {

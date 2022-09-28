@@ -52,6 +52,13 @@ public:
   explicit wald_interval(deviation d = deviation{1.0}) noexcept
       : z_{static_cast<value_type>(d)} {}
 
+  using binomial_proportion_interval<ValueType>::operator();
+
+  /** Compute interval for given number of successes and failures.
+
+    @param successes Number of successful trials.
+    @param failures Number of failed trials.
+  */
   interval_type operator()(value_type successes, value_type failures) const noexcept {
     // See https://en.wikipedia.org/wiki/
     //   Binomial_proportion_confidence_interval

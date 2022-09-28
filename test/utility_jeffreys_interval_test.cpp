@@ -5,13 +5,14 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/histogram/accumulators/fraction.hpp>
 #include <boost/histogram/utility/jeffreys_interval.hpp>
 #include <limits>
-#include "boost/histogram/utility/binomial_proportion_interval.hpp"
 #include "is_close.hpp"
 #include "throw_exception.hpp"
 
 using namespace boost::histogram::utility;
+using namespace boost::histogram::accumulators;
 
 template <class T>
 void test() {
@@ -79,6 +80,11 @@ void test() {
     auto p = iv(0, 1);
     BOOST_TEST_IS_CLOSE(p.first, 0, atol);
     BOOST_TEST_IS_CLOSE(p.second, 0.975, atol);
+
+    fraction<T> f(0, 1);
+    const auto y = iv(f);
+    BOOST_TEST_IS_CLOSE(y.first, 0.0, atol);
+    BOOST_TEST_IS_CLOSE(y.second, 0.975, atol);
   }
 
   // not in table
@@ -86,6 +92,11 @@ void test() {
     auto p = iv(1, 0);
     BOOST_TEST_IS_CLOSE(p.first, 0.025, atol);
     BOOST_TEST_IS_CLOSE(p.second, 1, atol);
+
+    fraction<T> f(1, 0);
+    const auto y = iv(f);
+    BOOST_TEST_IS_CLOSE(y.first, 0.025, atol);
+    BOOST_TEST_IS_CLOSE(y.second, 1, atol);
   }
 }
 

@@ -44,6 +44,13 @@ public:
   explicit jeffreys_interval(confidence_level cl = deviation{1}) noexcept
       : alpha_half_{static_cast<value_type>(0.5 - 0.5 * static_cast<double>(cl))} {}
 
+  using binomial_proportion_interval<ValueType>::operator();
+
+  /** Compute interval for given number of successes and failures.
+
+    @param successes Number of successful trials.
+    @param failures Number of failed trials.
+  */
   interval_type operator()(value_type successes, value_type failures) const noexcept {
     // See L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101-133,
     // doi:10.1214/ss/1009213286, section 4.1.2.

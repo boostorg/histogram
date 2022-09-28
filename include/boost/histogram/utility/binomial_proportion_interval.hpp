@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_UTILITY_BINOMIAL_PROPORTION_INTERVAL_HPP
 
 #include <boost/histogram/detail/normal.hpp>
+#include <boost/histogram/fwd.hpp>
 #include <boost/throw_exception.hpp>
 #include <cmath>
 #include <stdexcept>
@@ -17,6 +18,9 @@ namespace boost {
 namespace histogram {
 namespace utility {
 
+/**
+  Common base class for interval calculators.
+*/
 template <class ValueType>
 class binomial_proportion_interval {
   static_assert(std::is_floating_point<ValueType>::value,
@@ -25,11 +29,35 @@ class binomial_proportion_interval {
 public:
   using value_type = ValueType;
   using interval_type = std::pair<value_type, value_type>;
+
+  /** Compute interval for given number of successes and failures.
+
+    @param successes Number of successful trials.
+    @param failures Number of failed trials.
+  */
+  virtual interval_type operator()(value_type successes,
+                                   value_type failures) const noexcept = 0;
+
+  /** Compute interval for a fraction accumulator.
+
+    @param fraction Fraction accumulator.
+  */
+  template <class T>
+  interval_type operator()(const accumulators::fraction<T>& fraction) const noexcept {
+    return operator()(fraction.successes(), fraction.failures());
+  }
 };
 
 class deviation;
 class confidence_level;
 
+/** Confidence level in units of deviations for intervals.
+
+  Intervals become wider as the deviation value increases. The standard deviation
+  corresponds to a value of 1 and corresponds to 68.3 % confidence level. The conversion
+  between confidence level and deviations is based on a two-sided interval on the normal
+  distribution.
+ */
 class deviation {
 public:
   /// constructor from units of standard deviations
@@ -58,6 +86,10 @@ private:
   double d_;
 };
 
+/** Confidence level for intervals.
+
+  Intervals become wider as the deviation value increases.
+ */
 class confidence_level {
 public:
   /// constructor from confidence level (a probability)

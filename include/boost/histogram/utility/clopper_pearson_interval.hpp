@@ -47,6 +47,13 @@ public:
   explicit clopper_pearson_interval(confidence_level cl = deviation{1}) noexcept
       : alpha_half_{static_cast<value_type>(0.5 - 0.5 * static_cast<double>(cl))} {}
 
+  using binomial_proportion_interval<ValueType>::operator();
+
+  /** Compute interval for given number of successes and failures.
+
+    @param successes Number of successful trials.
+    @param failures Number of failed trials.
+  */
   interval_type operator()(value_type successes, value_type failures) const noexcept {
     // analytical solution when successes or failures are zero
     // T. Mans (2014), Electronic Journal of Statistics. 8 (1): 817-840.

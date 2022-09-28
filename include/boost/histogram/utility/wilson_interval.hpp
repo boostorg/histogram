@@ -38,11 +38,9 @@ namespace utility {
 */
 template <class ValueType>
 class wilson_interval : public binomial_proportion_interval<ValueType> {
-  using base_t = binomial_proportion_interval<ValueType>;
-
 public:
-  using value_type = typename base_t::value_type;
-  using interval_type = typename base_t::interval_type;
+  using value_type = typename wilson_interval::value_type;
+  using interval_type = typename wilson_interval::interval_type;
 
   /** Construct Wilson interval computer.
 
@@ -53,6 +51,13 @@ public:
   explicit wilson_interval(deviation d = deviation{1.0}) noexcept
       : z_{static_cast<value_type>(d)} {}
 
+  using binomial_proportion_interval<ValueType>::operator();
+
+  /** Compute interval for given number of successes and failures.
+
+    @param successes Number of successful trials.
+    @param failures Number of failed trials.
+  */
   interval_type operator()(value_type successes, value_type failures) const noexcept {
     // See https://en.wikipedia.org/wiki/
     //   Binomial_proportion_confidence_interval
