@@ -17,9 +17,9 @@
 #include <memory>
 #include <numeric>
 #include <vector>
+#include "allocator.hpp"
 #include "std_ostream.hpp"
 #include "throw_exception.hpp"
-#include "utility_allocator.hpp"
 
 namespace boost {
 namespace histogram {

@@ -16,9 +16,9 @@
 #include <string>
 #include <vector>
 #include "dummy_storage.hpp"
+#include "histogram.hpp"
 #include "std_ostream.hpp"
 #include "throw_exception.hpp"
-#include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 
@@ -361,12 +361,12 @@ void run_tests() {
     c *= 2; // this calls *= on each element
     BOOST_TEST_EQ(c[0], 2);
 
-    using h1_t = decltype(
-        make_s(Tag{}, dummy_storage<unscaleable, false>{}, axis::integer<>(0, 1)));
+    using h1_t = decltype(make_s(Tag{}, dummy_storage<unscaleable, false>{},
+                                 axis::integer<>(0, 1)));
     BOOST_TEST_NOT((detail::has_operator_rmul<h1_t, double>::value));
 
-    using h2_t = decltype(
-        make_s(Tag{}, dummy_storage<unscaleable, true>{}, axis::integer<>(0, 1)));
+    using h2_t = decltype(make_s(Tag{}, dummy_storage<unscaleable, true>{},
+                                 axis::integer<>(0, 1)));
     BOOST_TEST_NOT((detail::has_operator_rmul<h2_t, double>::value));
   }
 }

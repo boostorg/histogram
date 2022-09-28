@@ -21,12 +21,12 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include "allocator.hpp"
+#include "axis.hpp"
+#include "histogram.hpp"
 #include "is_close.hpp"
 #include "std_ostream.hpp"
 #include "throw_exception.hpp"
-#include "utility_allocator.hpp"
-#include "utility_axis.hpp"
-#include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix

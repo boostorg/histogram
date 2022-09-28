@@ -12,8 +12,8 @@
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream.hpp>
 #include <vector>
+#include "histogram.hpp"
 #include "throw_exception.hpp"
-#include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix

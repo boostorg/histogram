@@ -9,8 +9,8 @@
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/weight.hpp>
 #include <cassert>
+#include "serialization.hpp"
 #include "throw_exception.hpp"
-#include "utility_serialization.hpp"
 
 using namespace boost::histogram;
 
@@ -83,6 +83,20 @@ int main(int argc, char** argv) {
     print_xml(filename, a);
 
     accumulators::weighted_sum<> b;
+    BOOST_TEST_NOT(a == b);
+    load_xml(filename, b);
+    BOOST_TEST(a == b);
+  }
+
+  // fraction
+  {
+    const auto filename = join(argv[1], "accumulators_serialization_test_fraction.xml");
+    accumulators::fraction<> a;
+    a(true);
+    a(false);
+    print_xml(filename, a);
+
+    accumulators::fraction<> b;
     BOOST_TEST_NOT(a == b);
     load_xml(filename, b);
     BOOST_TEST(a == b);

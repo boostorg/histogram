@@ -11,8 +11,8 @@
 #include <boost/histogram/detail/square.hpp>
 #include <boost/histogram/weight.hpp>
 #include <sstream>
+#include "str.hpp"
 #include "throw_exception.hpp"
-#include "utility_str.hpp"
 
 using namespace boost::histogram;
 using namespace std::literals;

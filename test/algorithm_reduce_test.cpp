@@ -15,8 +15,8 @@
 #include <boost/histogram/ostream.hpp>
 #include <boost/histogram/unsafe_access.hpp>
 #include <vector>
+#include "histogram.hpp"
 #include "throw_exception.hpp"
-#include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::algorithm;

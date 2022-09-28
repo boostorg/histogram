@@ -6,14 +6,14 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <cassert>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
+#include <cassert>
 #include <memory>
 #include <sstream>
+#include "serialization.hpp"
 #include "throw_exception.hpp"
-#include "utility_serialization.hpp"
 
 using unlimited_storage_type = boost::histogram::unlimited_storage<>;
 

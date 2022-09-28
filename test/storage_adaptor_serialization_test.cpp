@@ -12,8 +12,8 @@
 #include <cassert>
 #include <map>
 #include <vector>
+#include "serialization.hpp"
 #include "throw_exception.hpp"
-#include "utility_serialization.hpp"
 
 using namespace boost::histogram;
 

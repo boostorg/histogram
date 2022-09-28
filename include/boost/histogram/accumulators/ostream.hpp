@@ -93,6 +93,14 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
   return detail::handle_nonzero_width(os, x);
 }
 
+template <class CharT, class Traits, class U>
+std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
+                                              const fraction<U>& x) {
+  if (os.width() == 0)
+    return os << "fraction(" << x.successes() << ", " << x.failures() << ")";
+  return detail::handle_nonzero_width(os, x);
+}
+
 } // namespace accumulators
 } // namespace histogram
 } // namespace boost

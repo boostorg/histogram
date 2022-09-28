@@ -19,6 +19,7 @@ target_link_libraries(boost_histogram
     Boost::mp11
     Boost::throw_exception
     Boost::variant2
+    Boost::math
 )
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -59,6 +60,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     boost_fetch(boostorg/variant2 TAG develop EXCLUDE_FROM_ALL)
 
     boost_fetch(boostorg/assert TAG develop EXCLUDE_FROM_ALL) # needed by core
+
+    # this takes forever :(
+    boost_fetch(boostorg/math TAG develop EXCLUDE_FROM_ALL) # needed by some tests
 
     ## skipping serialization, range, accumulators, units;
     ## the tests pull in too many dependencies

@@ -23,6 +23,7 @@ doxygen reference
   [ glob $(THIS_PATH)/../../../boost/histogram/accumulators/*.hpp ]
   [ glob $(THIS_PATH)/../../../boost/histogram/algorithm/*.hpp ]
   [ glob $(THIS_PATH)/../../../boost/histogram/axis/*.hpp ]
+  [ glob $(THIS_PATH)/../../../boost/histogram/utility/*.hpp ]
 :
   <doxygen:param>QUIET=YES
   <doxygen:param>WARNINGS=YES
@@ -40,7 +41,7 @@ doxygen reference
 
 actions doxygen-postprocessing
 {
-  python3 $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
+  python $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
 }
 
 notfile reference-pp : @doxygen-postprocessing : reference.xml ;
