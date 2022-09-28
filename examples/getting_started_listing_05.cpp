@@ -23,7 +23,7 @@ struct HolderOfStaticHistogram {
   // put axis types here
   using axes_t = std::tuple<
     boost::histogram::axis::regular<>,
-    boost::histogram::axis::integer<>    
+    boost::histogram::axis::integer<>
   >;
   using hist_t = boost::histogram::histogram<axes_t>;
   hist_t hist_;
@@ -34,8 +34,8 @@ struct HolderOfDynamicHistogram {
   // put all axis types here that you are going to use
   using axis_t = boost::histogram::axis::variant<
     boost::histogram::axis::regular<>,
-    boost::histogram::axis::variable<>,    
-    boost::histogram::axis::integer<>    
+    boost::histogram::axis::variable<>,
+    boost::histogram::axis::integer<>
   >;
   using axes_t = std::vector<axis_t>;
   using hist_t = boost::histogram::histogram<axes_t>;

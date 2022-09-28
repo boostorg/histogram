@@ -66,7 +66,7 @@ The library was designed to work well with the C++ standard library. Here is an 
 
 [section Making classes that hold histograms]
 
-The histograms get their great flexibility and performance from being templated, but this can make the types a bit cumbersome to write. Often it is possible to use `auto` to let the compiler deduce the type, but when you want to store histograms in a class, you need to write the type explicitly. The next example shows how this works. 
+The histograms get their great flexibility and performance from being templated, but this can make the types a bit cumbersome to write. Often it is possible to use `auto` to let the compiler deduce the type, but when you want to store histograms in a class, you need to write the type explicitly. The next example shows how this works.
 
 [import ../examples/getting_started_listing_05.cpp]
 [getting_started_listing_05]
