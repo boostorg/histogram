@@ -433,8 +433,9 @@ using has_non_inclusive_axis = mp11::mp_any_of<axis_types<Axes>, is_not_inclusiv
 
 template <class T>
 constexpr std::size_t type_score() {
-  return sizeof(T) *
-         (std::is_integral<T>::value ? 1 : std::is_floating_point<T>::value ? 10 : 100);
+  return sizeof(T) * (std::is_integral<T>::value         ? 1
+                      : std::is_floating_point<T>::value ? 10
+                                                         : 100);
 }
 
 // arbitrary ordering of types

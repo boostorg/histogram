@@ -74,7 +74,7 @@ int main() {
 
   std::ostringstream os;
   for (auto&& x : indexed(h, coverage::all)) {
-    os << boost::format("bin %2i [%4.1f, %4.1f): %i\n") 
+    os << boost::format("bin %2i [%4.1f, %4.1f): %i\n")
           % x.index() % x.bin().lower() % x.bin().upper() % *x;
   }
 
