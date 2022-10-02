@@ -7,31 +7,6 @@
 #ifndef BOOST_HISTOGRAM_DETAIL_SPAN_HPP
 #define BOOST_HISTOGRAM_DETAIL_SPAN_HPP
 
-#ifdef __has_include
-#if __has_include(<version>)
-#include <version>
-#ifdef __cpp_lib_span
-#if __cpp_lib_span >= 201902
-#define BOOST_HISTOGRAM_DETAIL_HAS_STD_SPAN
-#endif
-#endif
-#endif
-#endif
-
-#ifdef BOOST_HISTOGRAM_DETAIL_HAS_STD_SPAN
-
-#include <span>
-
-namespace boost {
-namespace histogram {
-namespace detail {
-using std::span;
-} // namespace detail
-} // namespace histogram
-} // namespace boost
-
-#else // C++17 span not available, so we use our implementation
-
 // to be replaced by boost::span
 
 #include <array>
@@ -237,8 +212,6 @@ public:
 } // namespace detail
 } // namespace histogram
 } // namespace boost
-
-#endif
 
 #include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <utility>

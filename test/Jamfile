@@ -77,6 +77,7 @@ alias cxx14 :
     [ run detail_replace_type_test.cpp ]
     [ run detail_safe_comparison_test.cpp ]
     [ run detail_static_if_test.cpp ]
+    [ run detail_sub_array_and_span_test.cpp ]
     [ run detail_tuple_slice_test.cpp ]
     [ run histogram_custom_axis_test.cpp ]
     [ run histogram_dynamic_test.cpp ]

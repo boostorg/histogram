@@ -28,8 +28,10 @@ function(add_benchmark NAME)
   add_executable(${NAME} ${SOURCE})
   target_include_directories(${NAME} PRIVATE ${__INCLUDE_DIRECTORIES})
   target_link_libraries(${NAME} PRIVATE Boost::histogram Boost::math benchmark_main ${__LINK_LIBRARIES})
-  target_compile_options(${NAME} PRIVATE -DNDEBUG -O3 -march=native -funsafe-math-optimizations ${__COMPILE_OPTIONS})
-
+  target_compile_options(${NAME} PRIVATE -DNDEBUG -O3 -funsafe-math-optimizations ${__COMPILE_OPTIONS})
+  if (NOT DARWIN)
+    target_compile_options(${NAME} PRIVATE -march=native)
+  endif()
 endfunction()
 
 add_benchmark(axis_size)

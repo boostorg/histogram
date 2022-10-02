@@ -35,4 +35,4 @@ install:
 test_script:
   # cxxstd=latest (aka 20) breaks VS 2022 in algorithm_project_test so we use cxxstd=17
   # msvc-14.3 breaks test//serialization, more precisely axis_variant_serialization_test
-  - ..\..\b2 %B2_OPTS% cxxstd=17 test//minimal
+  - ..\..\b2 %B2_OPTS% cxxstd=latest test//minimal

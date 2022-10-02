@@ -50,12 +50,12 @@ static auto hist = make_histogram_with(DSTS(), axis::regular<>());
 
 static void AtomicStorage(benchmark::State& state) {
   init.lock();
-  if (state.thread_index == 0) {
+  if (state.thread_index() == 0) {
     const unsigned nbins = state.range(0);
     hist = make_histogram_with(DSTS(), axis::regular<>(nbins, 0, 1));
   }
   init.unlock();
-  std::default_random_engine gen(state.thread_index);
+  std::default_random_engine gen(state.thread_index());
   std::uniform_real_distribution<> dis(0, 1);
   for (auto _ : state) {
     // simulate some work
