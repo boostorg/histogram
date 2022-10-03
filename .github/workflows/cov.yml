@@ -14,6 +14,10 @@ env:
   B2_OPTS: -q -j2 warnings-as-errors=on
   GCC_VERSION: 11
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   cov:
     runs-on: macos-11
