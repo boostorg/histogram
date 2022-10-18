@@ -12,3 +12,4 @@ tools/lcov-*
 tools/codecov
 coverage-report
 .cache
+venv

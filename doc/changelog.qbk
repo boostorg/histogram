@@ -5,7 +5,14 @@
             https://www.boost.org/LICENSE_1_0.txt)
 ]
 
-[section:history Revision history]
+[section:changelog Changelog]
+
+[heading Boost 1.81]
+
+* Added new `accumulators::fraction` to compute fractions, their variance, and confidence intervals
+* Added interval computers for fractions: `utility::clopper_pearson`, `utility::wilson_interval`, `utility::jeffreys_interval`, `utility::wald_interval` which can compute intervals with arbitrary confidence level
+* Added `utility::confidence_level` and `utility::deviation` types to pass confidence levels as probabilities or in multiples of standard deviation for all interval computers, respectively
+* Fixed internal `sub_array` and `span` in C++20
 
 [heading Boost 1.80]
 
