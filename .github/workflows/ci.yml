@@ -53,8 +53,6 @@ jobs:
           - { compiler: gcc-12,    cxxstd: '14,17,20', os: ubuntu-22.04 }
           - { name: GCC w/ sanitizers, sanitize: yes,
               compiler: gcc-12,    cxxstd: '14,17,20', os: ubuntu-22.04 }
-          - { name: Collect coverage, coverage: yes,
-              compiler: gcc-8,     cxxstd: '03,11',          os: ubuntu-20.04, install: 'g++-8-multilib', address-model: '32,64' }
 
           # Linux, clang
           - { compiler: clang-3.6, cxxstd: '14',       os: ubuntu-20.04, container: 'ubuntu:16.04' }
