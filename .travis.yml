@@ -77,11 +77,6 @@ anchors:
   llvm-toolchain-xenial-10: &llvm-toolchain-xenial-10
     sourceline: 'deb https://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main'
     key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-  clang-33: &clang-33 { apt: { packages: [ "clang-3.3"]                                          } }
-  clang-34: &clang-34 { apt: { packages: [ "clang-3.4"]                                          } }
-  clang-35: &clang-35 { apt: { packages: [ "clang-3.5"], sources: [ *ubuntu-toolchain-r-test ]   } }
-  clang-36: &clang-36 { apt: { packages: [ "clang-3.6"], sources: [ *ubuntu-toolchain-r-test ]   } }
-  clang-37: &clang-37 { apt: { packages: [ "clang-3.7"], sources: [ *ubuntu-toolchain-r-test ]   } }
   clang-38: &clang-38 { apt: { packages: [ "clang-3.8"], sources: [ *ubuntu-toolchain-r-test ]   } }
   clang-39: &clang-39 { apt: { packages: [ "clang-3.9"], sources: [ *ubuntu-toolchain-r-test ]   } }
   clang-4:  &clang-4  { apt: { packages: [ "clang-4.0",
@@ -110,11 +105,6 @@ anchors:
   clang-10: &clang-10 { apt: { packages: [ "clang-10"],        sources: [ *llvm-toolchain-xenial-10,
                                                                           *ubuntu-toolchain-r-test    ] } }
 
-  gcc-44: &gcc-44 { apt: { packages: [ "g++-4.4" ], sources: [ *ubuntu-toolchain-r-test ] } }
-  gcc-46: &gcc-46 { apt: { packages: [ "g++-4.6" ], sources: [ *ubuntu-toolchain-r-test ] } }
-  gcc-47: &gcc-47 { apt: { packages: [ "g++-4.7" ], sources: [ *ubuntu-toolchain-r-test ] } }
-  gcc-48: &gcc-48 { apt: { packages: [ "g++-4.8" ], sources: [ *ubuntu-toolchain-r-test ] } }
-  gcc-49: &gcc-49 { apt: { packages: [ "g++-4.9" ], sources: [ *ubuntu-toolchain-r-test ] } }
   gcc-5:  &gcc-5  { apt: { packages: [ "g++-5"   ], sources: [ *ubuntu-toolchain-r-test ] } }
   gcc-6:  &gcc-6  { apt: { packages: [ "g++-6"   ], sources: [ *ubuntu-toolchain-r-test ] } }
   gcc-7:  &gcc-7  { apt: { packages: [ "g++-7"   ], sources: [ *ubuntu-toolchain-r-test ] } }
@@ -177,10 +167,6 @@ jobs:
         - ci/travis/valgrind.sh
 
     # libstdc++
-    - { dist: "trusty",  # xenial has libstdc++ from gcc 5.4.0 with newer ABI
-        compiler: g++-4.8  , env: [ "B2_CXXSTD=03,11"    ], addons: *gcc-48    }
-    - { dist: "trusty",  # xenial has libstdc++ from gcc 5.4.0 with newer ABI
-        compiler: g++-4.9  , env: [ "B2_CXXSTD=03,11"    ], addons: *gcc-49    }
     - { compiler: g++-5    , env: [ "B2_CXXSTD=03,11"    ], addons: *gcc-5     }
     - { compiler: g++-6    , env: [ "B2_CXXSTD=11,14"    ], addons: *gcc-6     }
     - { compiler: g++-7    , env: [ "B2_CXXSTD=14,17"    ], addons: *gcc-7     }

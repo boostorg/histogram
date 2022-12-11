@@ -31,19 +31,19 @@ int main() {
   BOOST_TEST_EQ(h.at(1), (fraction_t{1, 0}));
 
   // cannot use std::vector<bool> because of vector specialization
-  std::vector<char> s = {true, false};
+  std::vector<char> s = {{true, false}};
   std::vector<int> x = {0, 1};
   h.fill(x, sample(s));
   BOOST_TEST_EQ(h.at(0), (fraction_t{2, 1}));
   BOOST_TEST_EQ(h.at(1), (fraction_t{1, 1}));
 
   // any contiguous container of bool works which is not specialized
-  std::array<bool, 2> s2 = {false, true};
+  std::array<bool, 2> s2 = {{false, true}};
   h.fill(x, sample(s2));
   BOOST_TEST_EQ(h.at(0), (fraction_t{2, 2}));
   BOOST_TEST_EQ(h.at(1), (fraction_t{2, 1}));
 
-  std::valarray<bool> s3 = {false, true};
+  std::valarray<bool> s3 = {{false, true}};
   h.fill(x, sample(s3));
   BOOST_TEST_EQ(h.at(0), (fraction_t{2, 3}));
   BOOST_TEST_EQ(h.at(1), (fraction_t{3, 1}));
