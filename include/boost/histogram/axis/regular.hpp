@@ -194,21 +194,8 @@ class regular : public iterator_mixin<regular<Value, Transform, MetaData, Option
   using options_type =
       detail::replace_default<Options, decltype(option::underflow | option::overflow)>;
 
-  static_assert(std::is_nothrow_move_constructible<transform_type>::value,
-                "transform must be no-throw move constructible");
-  static_assert(std::is_nothrow_move_assignable<transform_type>::value,
-                "transform must be no-throw move assignable");
-
   using unit_type = detail::get_unit_type<value_type>;
   using internal_value_type = detail::get_scale_type<value_type>;
-
-  static_assert(std::is_floating_point<internal_value_type>::value,
-                "regular axis requires floating point type");
-
-  static_assert(
-      (!options_type::test(option::circular) && !options_type::test(option::growth)) ||
-          (options_type::test(option::circular) ^ options_type::test(option::growth)),
-      "circular and growth options are mutually exclusive");
 
 public:
   constexpr regular() = default;
@@ -222,7 +209,7 @@ public:
      @param meta     description of the axis (optional).
      @param options  see boost::histogram::axis::option (optional).
    */
-  regular(transform_type trans, unsigned n, value_type start, value_type stop,
+  explicit regular(transform_type trans, unsigned n, value_type start, value_type stop,
           metadata_type meta = {}, options_type options = {})
       : transform_type(std::move(trans))
       , metadata_base(std::move(meta))
@@ -230,6 +217,17 @@ public:
       , min_(this->forward(detail::get_scale(start)))
       , delta_(this->forward(detail::get_scale(stop)) - min_) {
     (void)options;
+    // static_asserts were moved here from class scope to satisfy deduction in gcc>=11
+    static_assert(std::is_nothrow_move_constructible<transform_type>::value,
+                  "transform must be no-throw move constructible");
+    static_assert(std::is_nothrow_move_assignable<transform_type>::value,
+                  "transform must be no-throw move assignable");
+    static_assert(std::is_floating_point<internal_value_type>::value,
+                  "regular axis requires floating point type");
+    static_assert(
+        (!options_type::test(option::circular) && !options_type::test(option::growth)) ||
+            (options_type::test(option::circular) ^ options_type::test(option::growth)),
+        "circular and growth options are mutually exclusive");
     if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
     if (!std::isfinite(min_) || !std::isfinite(delta_))
       BOOST_THROW_EXCEPTION(
@@ -246,7 +244,7 @@ public:
      @param meta     description of the axis (optional).
      @param options  see boost::histogram::axis::option (optional).
    */
-  regular(unsigned n, value_type start, value_type stop, metadata_type meta = {},
+  explicit regular(unsigned n, value_type start, value_type stop, metadata_type meta = {},
           options_type options = {})
       : regular({}, n, start, stop, std::move(meta), options) {}
 
@@ -265,7 +263,7 @@ public:
      (start + n * step).
    */
   template <class T>
-  regular(transform_type trans, step_type<T> step, value_type start, value_type stop,
+  explicit regular(transform_type trans, step_type<T> step, value_type start, value_type stop,
           metadata_type meta = {}, options_type options = {})
       : regular(trans, static_cast<index_type>(std::abs(stop - start) / step.value),
                 start,
@@ -286,7 +284,7 @@ public:
      (start + n * step).
    */
   template <class T>
-  regular(step_type<T> step, value_type start, value_type stop, metadata_type meta = {},
+  explicit regular(step_type<T> step, value_type start, value_type stop, metadata_type meta = {},
           options_type options = {})
       : regular({}, step, start, stop, std::move(meta), options) {}
 
