@@ -71,10 +71,8 @@ public:
     // static_asserts were moved here from class scope to satisfy deduction in gcc>=11
     static_assert(!options.test(option::underflow),
                   "category axis cannot have underflow");
-    static_assert(!options.test(option::circular),
-                  "category axis cannot be circular");
-    static_assert(!(options.test(option::growth) &&
-                    options.test(option::overflow)),
+    static_assert(!options.test(option::circular), "category axis cannot be circular");
+    static_assert(!(options.test(option::growth) && options.test(option::overflow)),
                   "growing category axis cannot have entries in overflow bin");
     if (std::distance(begin, end) < 0)
       BOOST_THROW_EXCEPTION(
@@ -83,9 +81,11 @@ public:
     while (begin != end) vec_.emplace_back(*begin++);
   }
 
-  // kept for backward compatibility; requires_allocator is a workaround for deduction guides in gcc>=11
-  template <class It, class = detail::requires_iterator<It>, class = detail::requires_allocator<allocator_type>>
-  category(It begin, It end, metadata_type meta, allocator_type alloc)
+  // kept for backward compatibility; requires_allocator is a workaround for deduction
+  // guides in gcc>=11
+  template <class It, class A, class = detail::requires_iterator<It>,
+            class = detail::requires_allocator<A>>
+  category(It begin, It end, metadata_type meta, A alloc)
       : category(begin, end, std::move(meta), {}, std::move(alloc)) {}
 
   /** Construct axis from iterable sequence of unique values.
@@ -101,9 +101,11 @@ public:
       : category(std::begin(iterable), std::end(iterable), std::move(meta), options,
                  std::move(alloc)) {}
 
-  // kept for backward compatibility; requires_allocator is a workaround for deduction guides in gcc>=11
-  template <class C, class = detail::requires_iterable<C>, class = detail::requires_allocator<allocator_type>>
-  category(const C& iterable, metadata_type meta, allocator_type alloc)
+  // kept for backward compatibility; requires_allocator is a workaround for deduction
+  // guides in gcc>=11
+  template <class C, class A, class = detail::requires_iterable<C>,
+            class = detail::requires_allocator<A>>
+  category(const C& iterable, metadata_type meta, A alloc)
       : category(std::begin(iterable), std::end(iterable), std::move(meta), {},
                  std::move(alloc)) {}
 
@@ -119,9 +121,10 @@ public:
            options_type options = {}, allocator_type alloc = {})
       : category(list.begin(), list.end(), std::move(meta), options, std::move(alloc)) {}
 
-  // kept for backward compatibility; requires_allocator is a workaround for deduction guides in gcc>=11
-  template <class U, class = detail::requires_allocator<allocator_type>>
-  category(std::initializer_list<U> list, metadata_type meta, allocator_type alloc)
+  // kept for backward compatibility; requires_allocator is a workaround for deduction
+  // guides in gcc>=11
+  template <class U, class A, class = detail::requires_allocator<A>>
+  category(std::initializer_list<U> list, metadata_type meta, A alloc)
       : category(list.begin(), list.end(), std::move(meta), {}, std::move(alloc)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).

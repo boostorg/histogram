@@ -166,48 +166,49 @@ template <class T>
 using is_sequence_of_any_axis =
     mp11::mp_and<is_iterable<T>, is_any_axis<mp11::mp_first<T>>>;
 
-// poor-mans concept checks
-template <class T>
-using requires_storage = std::enable_if_t<is_storage<std::decay_t<T>>::value>;
+// Poor-mans concept checks.
+// These must be structs not aliases, so their names pop up in compiler errors.
+template <class T, class = std::enable_if_t<is_storage<std::decay_t<T>>::value>>
+struct requires_storage {};
 
-template <class T>
-using requires_storage_or_adaptible = std::enable_if_t<(
-    is_storage<std::decay_t<T>>::value || is_adaptible<std::decay_t<T>>::value)>;
+template <class T, class _ = std::decay_t<T>,
+          class = std::enable_if_t<(is_storage<_>::value || is_adaptible<_>::value)>>
+struct requires_storage_or_adaptible {};
 
-template <class T>
-using requires_iterator = std::enable_if_t<is_iterator<std::decay_t<T>>::value>;
+template <class T, class = std::enable_if_t<is_iterator<std::decay_t<T>>::value>>
+struct requires_iterator {};
 
-template <class T>
-using requires_iterable =
-    std::enable_if_t<is_iterable<std::remove_cv_t<std::remove_reference_t<T>>>::value>;
+template <class T, class = std::enable_if_t<
+                       is_iterable<std::remove_cv_t<std::remove_reference_t<T>>>::value>>
+struct requires_iterable {};
 
-template <class T>
-using requires_axis = std::enable_if_t<is_axis<std::decay_t<T>>::value>;
+template <class T, class = std::enable_if_t<is_axis<std::decay_t<T>>::value>>
+struct requires_axis {};
 
-template <class T>
-using requires_any_axis = std::enable_if_t<is_any_axis<std::decay_t<T>>::value>;
+template <class T, class = std::enable_if_t<is_any_axis<std::decay_t<T>>::value>>
+struct requires_any_axis {};
 
-template <class T>
-using requires_sequence_of_axis =
-    std::enable_if_t<is_sequence_of_axis<std::decay_t<T>>::value>;
+template <class T, class = std::enable_if_t<is_sequence_of_axis<std::decay_t<T>>::value>>
+struct requires_sequence_of_axis {};
 
-template <class T>
-using requires_sequence_of_axis_variant =
-    std::enable_if_t<is_sequence_of_axis_variant<std::decay_t<T>>::value>;
+template <class T,
+          class = std::enable_if_t<is_sequence_of_axis_variant<std::decay_t<T>>::value>>
+struct requires_sequence_of_axis_variant {};
 
-template <class T>
-using requires_sequence_of_any_axis =
-    std::enable_if_t<is_sequence_of_any_axis<std::decay_t<T>>::value>;
+template <class T,
+          class = std::enable_if_t<is_sequence_of_any_axis<std::decay_t<T>>::value>>
+struct requires_sequence_of_any_axis {};
 
-template <class T>
-using requires_axes =
-    std::enable_if_t<is_any_axis<mp11::mp_first<std::decay_t<T>>>::value>;
+template <class T,
+          class = std::enable_if_t<is_any_axis<mp11::mp_first<std::decay_t<T>>>::value>>
+struct requires_axes {};
 
-template <class T, class U>
-using requires_transform = std::enable_if_t<is_transform<std::decay_t<T>, U>::value>;
+template <class T, class U,
+          class = std::enable_if_t<is_transform<std::decay_t<T>, U>::value>>
+struct requires_transform {};
 
-template <class T>
-using requires_allocator = std::enable_if_t<is_allocator<std::decay_t<T>>::value>;
+template <class T, class = std::enable_if_t<is_allocator<std::decay_t<T>>::value>>
+struct requires_allocator {};
 
 } // namespace detail
 } // namespace histogram

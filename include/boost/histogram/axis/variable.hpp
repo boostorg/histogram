@@ -85,10 +85,9 @@ public:
         std::is_floating_point<value_type>::value,
         "current version of variable axis requires floating point type; "
         "if you need a variable axis with an integral type, please submit an issue");
-    static_assert(
-        (!options.test(option::circular) && !options.test(option::growth)) ||
-            (options.test(option::circular) ^ options.test(option::growth)),
-        "circular and growth options are mutually exclusive");
+    static_assert((!options.test(option::circular) && !options.test(option::growth)) ||
+                      (options.test(option::circular) ^ options.test(option::growth)),
+                  "circular and growth options are mutually exclusive");
 
     if (std::distance(begin, end) < 2)
       BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
@@ -105,9 +104,11 @@ public:
           std::invalid_argument("input sequence must be strictly ascending"));
   }
 
-  // kept for backward compatibility; requires_allocator is a workaround for deduction guides in gcc>=11
-  template <class It, class = detail::requires_iterator<It>, class = detail::requires_allocator<allocator_type>>
-  variable(It begin, It end, metadata_type meta, allocator_type alloc)
+  // kept for backward compatibility; requires_allocator is a workaround for deduction
+  // guides in gcc>=11
+  template <class It, class A, class = detail::requires_iterator<It>,
+            class = detail::requires_allocator<A>>
+  variable(It begin, It end, metadata_type meta, A alloc)
       : variable(begin, end, std::move(meta), {}, std::move(alloc)) {}
 
   /** Construct variable axis from iterable range of bin edges.
@@ -123,9 +124,11 @@ public:
       : variable(std::begin(iterable), std::end(iterable), std::move(meta), options,
                  std::move(alloc)) {}
 
-  // kept for backward compatibility; requires_allocator is a workaround for deduction guides in gcc>=11
-  template <class U, class = detail::requires_iterable<U>, class = detail::requires_allocator<allocator_type>>
-  variable(const U& iterable, metadata_type meta, allocator_type alloc)
+  // kept for backward compatibility; requires_allocator is a workaround for deduction
+  // guides in gcc>=11
+  template <class U, class A, class = detail::requires_iterable<U>,
+            class = detail::requires_allocator<A>>
+  variable(const U& iterable, metadata_type meta, A alloc)
       : variable(std::begin(iterable), std::end(iterable), std::move(meta), {},
                  std::move(alloc)) {}
 
@@ -141,9 +144,10 @@ public:
            options_type options = {}, allocator_type alloc = {})
       : variable(list.begin(), list.end(), std::move(meta), options, std::move(alloc)) {}
 
-  // kept for backward compatibility; requires_allocator is a workaround for deduction guides in gcc>=11
-  template <class U, class = detail::requires_allocator<allocator_type>>
-  variable(std::initializer_list<U> list, metadata_type meta, allocator_type alloc)
+  // kept for backward compatibility; requires_allocator is a workaround for deduction
+  // guides in gcc>=11
+  template <class U, class A, class = detail::requires_allocator<A>>
+  variable(std::initializer_list<U> list, metadata_type meta, A alloc)
       : variable(list.begin(), list.end(), std::move(meta), {}, std::move(alloc)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
