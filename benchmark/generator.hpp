@@ -10,6 +10,8 @@
 using uniform = std::uniform_real_distribution<>;
 using uniform_int = std::uniform_int_distribution<>;
 using normal = std::normal_distribution<>;
+using chi2 = std::chi_squared_distribution<>;
+using expon = std::exponential_distribution<>;
 
 template <class Distribution, class... Ts>
 Distribution init(Ts...);
@@ -22,6 +24,16 @@ uniform init<uniform>() {
 template <>
 normal init<normal>() {
   return normal{0.5, 0.3};
+}
+
+template <>
+chi2 init<chi2>() {
+  return chi2{5.0};
+}
+
+template <>
+expon init<expon>() {
+  return expon{1};
 }
 
 template <>
