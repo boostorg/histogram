@@ -52,14 +52,6 @@ class category : public iterator_mixin<category<Value, MetaData, Options, Alloca
   using allocator_type = Allocator;
   using vector_type = std::vector<value_type, allocator_type>;
 
-  static_assert(!options_type::test(option::underflow),
-                "category axis cannot have underflow");
-  static_assert(!options_type::test(option::circular),
-                "category axis cannot be circular");
-  static_assert(!(options_type::test(option::growth) &&
-                  options_type::test(option::overflow)),
-                "growing category axis cannot have entries in overflow bin");
-
 public:
   constexpr category() = default;
   explicit category(allocator_type alloc) : vec_(alloc) {}
@@ -76,7 +68,12 @@ public:
   category(It begin, It end, metadata_type meta = {}, options_type options = {},
            allocator_type alloc = {})
       : metadata_base(std::move(meta)), vec_(alloc) {
-    (void)options;
+    // static_asserts were moved here from class scope to satisfy deduction in gcc>=11
+    static_assert(!options.test(option::underflow),
+                  "category axis cannot have underflow");
+    static_assert(!options.test(option::circular), "category axis cannot be circular");
+    static_assert(!(options.test(option::growth) && options.test(option::overflow)),
+                  "growing category axis cannot have entries in overflow bin");
     if (std::distance(begin, end) < 0)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("end must be reachable by incrementing begin"));
@@ -84,9 +81,11 @@ public:
     while (begin != end) vec_.emplace_back(*begin++);
   }
 
-  // kept for backward compatibility
-  template <class It, class = detail::requires_iterator<It>>
-  category(It begin, It end, metadata_type meta, allocator_type alloc)
+  // kept for backward compatibility; requires_allocator is a workaround for deduction
+  // guides in gcc>=11
+  template <class It, class A, class = detail::requires_iterator<It>,
+            class = detail::requires_allocator<A>>
+  category(It begin, It end, metadata_type meta, A alloc)
       : category(begin, end, std::move(meta), {}, std::move(alloc)) {}
 
   /** Construct axis from iterable sequence of unique values.
@@ -102,9 +101,11 @@ public:
       : category(std::begin(iterable), std::end(iterable), std::move(meta), options,
                  std::move(alloc)) {}
 
-  // kept for backward compatibility
-  template <class C, class = detail::requires_iterable<C>>
-  category(const C& iterable, metadata_type meta, allocator_type alloc)
+  // kept for backward compatibility; requires_allocator is a workaround for deduction
+  // guides in gcc>=11
+  template <class C, class A, class = detail::requires_iterable<C>,
+            class = detail::requires_allocator<A>>
+  category(const C& iterable, metadata_type meta, A alloc)
       : category(std::begin(iterable), std::end(iterable), std::move(meta), {},
                  std::move(alloc)) {}
 
@@ -120,9 +121,10 @@ public:
            options_type options = {}, allocator_type alloc = {})
       : category(list.begin(), list.end(), std::move(meta), options, std::move(alloc)) {}
 
-  // kept for backward compatibility
-  template <class U>
-  category(std::initializer_list<U> list, metadata_type meta, allocator_type alloc)
+  // kept for backward compatibility; requires_allocator is a workaround for deduction
+  // guides in gcc>=11
+  template <class U, class A, class = detail::requires_allocator<A>>
+  category(std::initializer_list<U> list, metadata_type meta, A alloc)
       : category(list.begin(), list.end(), std::move(meta), {}, std::move(alloc)) {}
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
