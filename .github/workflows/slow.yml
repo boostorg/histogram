@@ -89,7 +89,7 @@ jobs:
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=gcc-10 cxxstd=20 cxxflags="-O3 -funsafe-math-optimizations" test//all examples
 
-  clang10:
+  clang14:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -107,4 +107,4 @@ jobs:
     - name: Test cxxstd=17 ubsan asan
       run: |
         cd libs/histogram
-        ../../b2 $B2_OPTS toolset=clang-10 cxxstd=17 variant=histogram_ubasan test//all
+        ../../b2 $B2_OPTS toolset=clang-14 cxxstd=17 variant=histogram_ubasan test//all
