@@ -26,5 +26,13 @@ int main() {
     BOOST_TEST_IS_CLOSE(static_cast<double>(deviation(cl3)), 3, 1e-8);
   }
 
+  // invalid values
+  {
+    BOOST_TEST_THROWS((void)deviation{-0.5}, std::invalid_argument);
+    BOOST_TEST_THROWS((void)confidence_level{-0.1}, std::invalid_argument);
+    BOOST_TEST_THROWS((void)confidence_level{0}, std::invalid_argument);
+    BOOST_TEST_THROWS((void)confidence_level{1.1}, std::invalid_argument);
+  }
+
   return boost::report_errors();
 }

@@ -45,6 +45,7 @@ void run_tests() {
     BOOST_TEST_EQ(f.successes(), 1);
     BOOST_TEST_EQ(f.failures(), 1);
     BOOST_TEST_EQ(str(f), "fraction(1, 1)"s);
+    BOOST_TEST_EQ(str(f, 20), "fraction(1, 1)      "s);
   }
 
   {
