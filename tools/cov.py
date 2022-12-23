@@ -16,7 +16,7 @@ from pathlib import Path
 import os
 import sys
 
-LCOV_VERSION = "1.15"
+LCOV_VERSION = "1.16"
 
 gcov = os.environ.get("GCOV", "gcov")
 
