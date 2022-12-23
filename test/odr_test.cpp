@@ -17,6 +17,7 @@
 
 #include <boost/histogram/detail/ignore_deprecation_warning_begin.hpp>
 #include <boost/histogram/detail/ignore_deprecation_warning_end.hpp>
+#include <boost/histogram/detail/prefetch.hpp>
 #include <boost/histogram/utility/clopper_pearson_interval.hpp>
 #include <boost/histogram/utility/jeffreys_interval.hpp>
 #include <boost/histogram/utility/wald_interval.hpp>
