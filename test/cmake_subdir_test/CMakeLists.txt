@@ -8,6 +8,7 @@ project(cmake_subdir_test LANGUAGES CXX)
 
 add_subdirectory(../.. boostorg/histogram)
 
+add_subdirectory(../../../assert boostorg/assert)
 add_subdirectory(../../../config boostorg/config)
 add_subdirectory(../../../core boostorg/core)
 add_subdirectory(../../../mp11 boostorg/mp11)
