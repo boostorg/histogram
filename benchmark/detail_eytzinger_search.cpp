@@ -77,18 +77,6 @@ struct eytzinger_search {
 };
 
 template <class Distribution>
-static void variable(benchmark::State& state) {
-  std::vector<double> v;
-  for (double x = 0; x <= state.range(0); ++x) { v.push_back(x / state.range(0)); }
-  auto a = axis::variable<>(v);
-  generator<Distribution> gen;
-  std::vector<double> x(10000);
-  std::generate(x.begin(), x.end(), gen);
-  unsigned i = 0;
-  for (auto _ : state) benchmark::DoNotOptimize(a.index(x[i++ % x.size()]));
-}
-
-template <class Distribution>
 static void eytzinger(benchmark::State& state) {
   std::vector<double> v;
   for (double x = 0; x <= state.range(0); ++x) { v.push_back(x / state.range(0)); }
@@ -111,10 +99,16 @@ static void eytzinger(benchmark::State& state) {
     }
   }
 
-  std::vector<double> x(10000);
-  std::generate(x.begin(), x.end(), gen);
-  unsigned i = 0;
-  for (auto _ : state) benchmark::DoNotOptimize(a.index(x[i++ % x.size()]));
+  for (auto _ : state) benchmark::DoNotOptimize(a.index(gen()));
+}
+
+template <class Distribution>
+static void variable(benchmark::State& state) {
+  std::vector<double> v;
+  for (double x = 0; x <= state.range(0); ++x) { v.push_back(x / state.range(0)); }
+  auto a = axis::variable<>(v);
+  generator<Distribution> gen;
+  for (auto _ : state) benchmark::DoNotOptimize(a.index(gen()));
 }
 
 BENCHMARK_TEMPLATE(eytzinger, uniform)->RangeMultiplier(10)->Range(10, 100000);
