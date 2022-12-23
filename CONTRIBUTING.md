@@ -74,9 +74,13 @@ Please report any tests failures to the issue tracker along with the test output
 
 ### Test coverage
 
-Boost.Histogram maintains 100% line coverage. Coverage is automatically checked by CI. To generate a report locally, you need to build the code with gcc-8 and coverage instrumentation enabled, do `b2 toolset=gcc-8 cxxstd=latest coverage=on test`. To generate the coverage report, run `tools/cov.sh` from the project root directory of Boost.Histogram. This will generate a new folder `coverage-report` with a HTML report. Open `coverage-report/index.html` in a browser.
+Boost.Histogram maintains 100% line coverage. Coverage is automatically checked by CI. To generate a report locally, you need to build the code with gcc-8 or gcc-12 (these version are known to work, others might) and coverage instrumentation enabled, do `b2 toolset=gcc-8 cxxstd=latest coverage=on test`.
 
-Notes: Generating coverage data is very fickle. You need to use gcc-5 or gcc-8 and a matching version of gcov, other gcc versions (6, 7, 9) are known to be broken or are not supported by lcov, which is used to process the raw coverage data. Generating coverage data with clang and llvm-cov is not supported by lcov. The best results are obtained with gcc-5. gcc-8 is known to report lines as missed which are impossible to miss.
+To generate the coverage report, run `tools/cov.py` from the project root directory of Boost.Histogram. This script has not been tested on Windows, so probably will not work on Windows. If you have several versions of gcc installed, you may need to specify the gcov version to use, run for example `GCOV=gcov-8 tools/cov.py`.
+
+This will generate a new folder `coverage-report` with a HTML report. Open `coverage-report/index.html` in a browser.
+
+Notes: Generating coverage data is very fickle. You need to use gcc-8 or gcc-12 and a matching version of gcov. Other gcc versions were known to be broken or were not supported by lcov at the time of this writing, which is used to process the raw coverage data. Generating coverage data with clang and llvm-cov is not supported by lcov at the ime of this writing.
 
 ## Coding Style
 
@@ -84,7 +88,9 @@ Follow the [Boost Library Requirements and Guidelines](https://www.boost.org/dev
 
 ### Code formatting
 
-Using `clang-format -style=file` is recommended, which should pick up the `.clang-format` file of the project. All names are written with small letters and `_`. Template parameters are capitalized and in camel-case.
+All names are written with small letters and `_`. Template parameters are capitalized and in camel-case. Do not worry about whitespace, which is automatically formattet with `clang-format`.
+
+To automatically format whitespace in your commits, use `pre-commit`. You can install it with `pip install pre-commit`. Then do `pre-commit install` in the project directory. From now on, `pre-commit` will run clang-format automatically whenever you run `git commit`. If it complains, simply add the changes it made to the files and run `git commit` again.
 
 ### Documentation
 
