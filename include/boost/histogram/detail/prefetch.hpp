@@ -17,7 +17,7 @@
 #include <immintrin.h>
 #elif BOOST_MSVC && !defined(_M_ARM) && !defined(_M_ARM64)
 #define BOOST_HISTOGRAM_DETAIL_HAVE_MM_PREFETCH
-#include <mmintrin.h>
+#include <immintrin.h>
 #endif
 
 namespace boost {
