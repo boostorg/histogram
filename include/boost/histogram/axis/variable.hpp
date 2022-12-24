@@ -15,6 +15,7 @@
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/detect.hpp>
+#include <boost/histogram/detail/eytzinger_search.hpp>
 #include <boost/histogram/detail/limits.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
 #include <boost/histogram/detail/replace_type.hpp>
@@ -79,7 +80,26 @@ public:
   template <class It, class = detail::requires_iterator<It>>
   variable(It begin, It end, metadata_type meta = {}, options_type options = {},
            allocator_type alloc = {})
-      : metadata_base(std::move(meta)), vec_(std::move(alloc)) {
+      : metadata_base(std::move(meta))
+      , vec_([&] {
+        if (std::distance(begin, end) < 2)
+          BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
+
+        vector_type vec(std::move(alloc));
+
+        vec.reserve(std::distance(begin, end));
+        vec.emplace_back(*begin++);
+        bool strictly_ascending = true;
+        for (; begin != end; ++begin) {
+          strictly_ascending &= vec.back() < *begin;
+          vec.emplace_back(*begin);
+        }
+        if (!strictly_ascending)
+          BOOST_THROW_EXCEPTION(
+              std::invalid_argument("input sequence must be strictly ascending"));
+        return vec;
+      }())
+      , eytzinger_layout_and_eytzinger_binary_search_(vec_) {
     // static_asserts were moved here from class scope to satisfy deduction in gcc>=11
     static_assert(
         std::is_floating_point<value_type>::value,
@@ -88,20 +108,6 @@ public:
     static_assert((!options.test(option::circular) && !options.test(option::growth)) ||
                       (options.test(option::circular) ^ options.test(option::growth)),
                   "circular and growth options are mutually exclusive");
-
-    if (std::distance(begin, end) < 2)
-      BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
-
-    vec_.reserve(std::distance(begin, end));
-    vec_.emplace_back(*begin++);
-    bool strictly_ascending = true;
-    for (; begin != end; ++begin) {
-      strictly_ascending &= vec_.back() < *begin;
-      vec_.emplace_back(*begin);
-    }
-    if (!strictly_ascending)
-      BOOST_THROW_EXCEPTION(
-          std::invalid_argument("input sequence must be strictly ascending"));
   }
 
   // kept for backward compatibility; requires_allocator is a workaround for deduction
@@ -152,14 +158,19 @@ public:
 
   /// Constructor used by algorithm::reduce to shrink and rebin (not for users).
   variable(const variable& src, index_type begin, index_type end, unsigned merge)
-      : metadata_base(src), vec_(src.get_allocator()) {
-    assert((end - begin) % merge == 0);
-    if (options_type::test(option::circular) && !(begin == 0 && end == src.size()))
-      BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
-    vec_.reserve((end - begin) / merge);
-    const auto beg = src.vec_.begin();
-    for (index_type i = begin; i <= end; i += merge) vec_.emplace_back(*(beg + i));
-  }
+      : metadata_base(src)
+      , vec_([&] {
+        assert((end - begin) % merge == 0);
+        if (options_type::test(option::circular) && !(begin == 0 && end == src.size()))
+          BOOST_THROW_EXCEPTION(std::invalid_argument("cannot shrink circular axis"));
+
+        vector_type vec(src.get_allocator());
+        vec.reserve((end - begin) / merge);
+        const auto beg = src.vec_.begin();
+        for (index_type i = begin; i <= end; i += merge) vec.emplace_back(*(beg + i));
+        return vec;
+      }())
+      , eytzinger_layout_and_eytzinger_binary_search_(vec_) {}
 
   /// Return index for value argument.
   index_type index(value_type x) const noexcept {
@@ -170,8 +181,7 @@ public:
     }
     // upper edge of last bin is inclusive if overflow bin is not present
     if (!options_type::test(option::overflow) && x == vec_.back()) return size() - 1;
-    return static_cast<index_type>(std::upper_bound(vec_.begin(), vec_.end(), x) -
-                                   vec_.begin() - 1);
+    return eytzinger_layout_and_eytzinger_binary_search_.index(x);
   }
 
   std::pair<index_type, index_type> update(value_type x) noexcept {
@@ -183,11 +193,13 @@ public:
         x = std::nextafter(x, (std::numeric_limits<value_type>::max)());
         x = (std::max)(x, vec_.back() + d);
         vec_.push_back(x);
+        eytzinger_layout_and_eytzinger_binary_search_.assign(vec_);
         return {i, -1};
       }
       const auto d = value(0.5) - value(0);
       x = (std::min)(x, value(0) - d);
       vec_.insert(vec_.begin(), x);
+      eytzinger_layout_and_eytzinger_binary_search_.assign(vec_);
       return {0, -i};
     }
     return {x < 0 ? -1 : size(), 0};
@@ -246,6 +258,8 @@ public:
 
 private:
   vector_type vec_;
+  boost::histogram::detail::eytzinger_layout_and_eytzinger_binary_search_t<Value>
+      eytzinger_layout_and_eytzinger_binary_search_;
 
   template <class V, class M, class O, class A>
   friend class variable;
