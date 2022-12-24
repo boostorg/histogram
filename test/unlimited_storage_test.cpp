@@ -239,11 +239,11 @@ struct adder {
       // If RHS is normal integer, LHS doesn't change.
       a[0] += b;
       // BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
-      //               iRHS < 4 ? iLHS : std::max(iLHS, iRHS));
+      //               iRHS < 4 ? iLHS : (std::max)(iLHS, iRHS));
       BOOST_TEST_EQ(a[0], limits_max<RHS>());
       a[0] += prepare<RHS>(1, b)[0];
       // BOOST_TEST_EQ(unsafe_access::unlimited_storage_buffer(a).type,
-      //               iRHS < 4 ? iLHS + 1 : std::max(iLHS, iRHS));
+      //               iRHS < 4 ? iLHS + 1 : (std::max)(iLHS, iRHS));
       BOOST_TEST_EQ(a[0], 2 * double(limits_max<RHS>()));
     }
   }
