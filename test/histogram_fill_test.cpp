@@ -53,7 +53,7 @@ struct axis2d {
     const auto x = std::get<0>(xy);
     const auto y = std::get<1>(xy);
     const auto r = std::sqrt(x * x + y * y);
-    return std::min(static_cast<axis::index_type>(r), size());
+    return (std::min)(static_cast<axis::index_type>(r), size());
   }
 
   friend std::ostream& operator<<(std::ostream& os, const axis2d&) {

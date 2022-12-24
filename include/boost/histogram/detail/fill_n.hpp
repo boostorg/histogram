@@ -218,7 +218,7 @@ void fill_n_nd(const std::size_t offset, S& storage, A& axes, const std::size_t 
   */
 
   for (std::size_t start = 0; start < vsize; start += buffer_size) {
-    const std::size_t n = std::min(buffer_size, vsize - start);
+    const std::size_t n = (std::min)(buffer_size, vsize - start);
     // fill buffer of indices...
     fill_n_indices(indices, start, n, offset, storage, axes, values);
     // ...and fill corresponding storage cells
