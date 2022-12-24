@@ -28,18 +28,18 @@ struct eytzinger_layout_and_eytzinger_binary_search_t {
 
   template <typename Range>
   eytzinger_layout_and_eytzinger_binary_search_t(const Range& r)
-      : b_(size(r) + 1), idx_(size(r) + 1) {
+      : b_(detail::size(r) + 1), idx_(detail::size(r) + 1) {
     init(r);
-    idx_[0] = static_cast<axis::index_type>(size(r) - 1);
+    idx_[0] = static_cast<axis::index_type>(detail::size(r) - 1);
   }
 
   template <typename Range>
   eytzinger_layout_and_eytzinger_binary_search_t& assign(const Range& r) {
-    b_.resize(size(r) + 1);
-    idx_.resize(size(r) + 1);
+    b_.resize(detail::size(r) + 1);
+    idx_.resize(detail::size(r) + 1);
 
     init(r);
-    idx_[0] = static_cast<axis::index_type>(size(r) - 1);
+    idx_[0] = static_cast<axis::index_type>(detail::size(r) - 1);
     return*this;
   }
 
@@ -57,7 +57,7 @@ struct eytzinger_layout_and_eytzinger_binary_search_t {
 
   template <typename Range>
   size_t init(const Range& r, size_t i = 0, size_t k = 1) {
-    if (k <= size(r)) {
+    if (k <= detail::size(r)) {
       i = init(r, i, 2 * k);
       idx_[k] = static_cast<axis::index_type>(i - 1);
       b_[k] = r[i++];

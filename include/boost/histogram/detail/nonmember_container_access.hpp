@@ -45,12 +45,6 @@ constexpr E* data(std::valarray<E>& v) noexcept {
   return std::begin(v);
 }
 
-#if __cpp_lib_nonmember_container_access >= 201411L
-
-using std::size;
-
-#else
-
 template <class C>
 constexpr auto size(const C& c) -> decltype(c.size()) {
   return c.size();
@@ -60,8 +54,6 @@ template <class T, std::size_t N>
 constexpr std::size_t size(const T (&)[N]) noexcept {
   return N;
 }
-
-#endif
 
 } // namespace detail
 } // namespace histogram
