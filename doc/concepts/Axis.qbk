@@ -51,7 +51,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 * `a` and `b` are values of type `A`
 * `i` and `j` are indices of type [headerref boost/histogram/fwd.hpp `boost::histogram::axis::index_type`]
 * `n` is a value of type `unsigned`
-* `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable] and *nothrow* [@https://en.cppreference.com/w/cpp/named_req/MoveAssignable MoveAssignable].
+* `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/DefaultConstructible DefaultConstructible], [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable]. It it supports moves, it must be *nothrow* [@https://en.cppreference.com/w/cpp/named_req/MoveAssignable MoveAssignable].
 * `ar` is a value of an archive with Boost.Serialization semantics
 
 [table Valid expressions

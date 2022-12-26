@@ -167,20 +167,20 @@ step_type<T> step(T t) {
 
 /** Axis for equidistant intervals on the real line.
 
-   The most common binning strategy. Very fast. Binning is a O(1) operation.
+  The most common binning strategy. Very fast. Binning is a O(1) operation.
 
-   If the axis has an overflow bin (the default), a value on the upper edge of the last
-   bin is put in the overflow bin. The axis range represents a semi-open interval.
+  If the axis has an overflow bin (the default), a value on the upper edge of the last
+  bin is put in the overflow bin. The axis range represents a semi-open interval.
 
-   If the overflow bin is deactivated, then a value on the upper edge of the last bin is
-   still counted towards the last bin. The axis range represents a closed interval. This
-   is the desired behavior for random numbers drawn from a bounded interval, which is
-   usually closed.
+  If the overflow bin is deactivated, then a value on the upper edge of the last bin is
+  still counted towards the last bin. The axis range represents a closed interval.
 
-   @tparam Value input value type, must be floating point.
-   @tparam Transform builtin or user-defined transform type.
-   @tparam MetaData type to store meta data.
-   @tparam Options see boost::histogram::axis::option.
+  The options `growth` and `circular` are mutually exclusive.
+
+  @tparam Value input value type, must be floating point.
+  @tparam Transform builtin or user-defined transform type.
+  @tparam MetaData type to store meta data.
+  @tparam Options see boost::histogram::axis::option.
  */
 template <class Value, class Transform, class MetaData, class Options>
 class regular : public iterator_mixin<regular<Value, Transform, MetaData, Options>>,
@@ -202,12 +202,19 @@ public:
 
   /** Construct n bins over real transformed range [start, stop).
 
-     @param trans    transform instance to use.
-     @param n        number of bins.
-     @param start    low edge of first bin.
-     @param stop     high edge of last bin.
-     @param meta     description of the axis (optional).
-     @param options  see boost::histogram::axis::option (optional).
+    @param trans    transform instance to use.
+    @param n        number of bins.
+    @param start    low edge of first bin.
+    @param stop     high edge of last bin.
+    @param meta     description of the axis (optional).
+    @param options  see boost::histogram::axis::option (optional).
+
+    The constructor throws `std::invalid_argument` if n is zero, or if start and stop
+    produce an invalid range after transformation.
+
+    The arguments meta and alloc are passed by value. If you move either of them into the
+    axis and the constructor throws, their values are lost. Do not move if you cannot
+    guarantee that the bin description is not valid.
    */
   regular(transform_type trans, unsigned n, value_type start, value_type stop,
           metadata_type meta = {}, options_type options = {})
@@ -223,10 +230,9 @@ public:
                   "transform must be no-throw move assignable");
     static_assert(std::is_floating_point<internal_value_type>::value,
                   "regular axis requires floating point type");
-    static_assert((!options.test(option::circular) && !options.test(option::growth)) ||
-                      (options.test(option::circular) ^ options.test(option::growth)),
+    static_assert(!(options.test(option::circular) && options.test(option::growth)),
                   "circular and growth options are mutually exclusive");
-    if (size() == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
+    if (size() <= 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
     if (!std::isfinite(min_) || !std::isfinite(delta_))
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("forward transform of start or stop invalid"));

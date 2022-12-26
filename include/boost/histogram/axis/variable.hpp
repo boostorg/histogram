@@ -68,13 +68,20 @@ public:
   constexpr variable() = default;
   explicit variable(allocator_type alloc) : vec_(alloc) {}
 
-  /** Construct from iterator range of bin edges.
+  /** Construct from forward iterator range of bin edges.
 
-     @param begin   begin of edge sequence.
-     @param end     end of edge sequence.
-     @param meta    description of the axis (optional).
-     @param options see boost::histogram::axis::option (optional).
-     @param alloc   allocator instance to use (optional).
+    @param begin   begin of edge sequence.
+    @param end     end of edge sequence.
+    @param meta    description of the axis (optional).
+    @param options see boost::histogram::axis::option (optional).
+    @param alloc   allocator instance to use (optional).
+
+    The constructor throws `std::invalid_argument` if iterator range is invalid, if less
+    than two edges are provided or if bin edges are not in ascending order.
+
+    The arguments meta and alloc are passed by value. If you move either of them into the
+    axis and the constructor throws, their values are lost. Do not move if you cannot
+    guarantee that the bin description is not valid.
    */
   template <class It, class = detail::requires_iterator<It>>
   variable(It begin, It end, metadata_type meta = {}, options_type options = {},
@@ -89,16 +96,21 @@ public:
                       (options.test(option::circular) ^ options.test(option::growth)),
                   "circular and growth options are mutually exclusive");
 
-    if (std::distance(begin, end) < 2)
-      BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
+    const auto n = std::distance(begin, end);
+    if (n < 0)
+      BOOST_THROW_EXCEPTION(
+          std::invalid_argument("end must be reachable by incrementing begin"));
 
-    vec_.reserve(std::distance(begin, end));
+    if (n < 2) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 1 required"));
+
+    vec_.reserve(n);
     vec_.emplace_back(*begin++);
     bool strictly_ascending = true;
     for (; begin != end; ++begin) {
       strictly_ascending &= vec_.back() < *begin;
       vec_.emplace_back(*begin);
     }
+
     if (!strictly_ascending)
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("input sequence must be strictly ascending"));
