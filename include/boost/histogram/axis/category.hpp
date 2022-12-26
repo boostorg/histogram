@@ -28,18 +28,18 @@ namespace axis {
 
 /** Maps at a set of unique values to bin indices.
 
-   The axis maps a set of values to bins, following the order of arguments in the
-   constructor. The optional overflow bin for this axis counts input values that
-   are not part of the set. Binning has O(N) complexity, but with a very small
-   factor. For small N (the typical use case) it beats other kinds of lookup.
+  The axis maps a set of values to bins, following the order of arguments in the
+  constructor. The optional overflow bin for this axis counts input values that
+  are not part of the set. Binning has O(N) complexity, but with a very small
+  factor. For small N (the typical use case) it beats other kinds of lookup.
 
-   @tparam Value input value type, must be equal-comparable.
-   @tparam MetaData type to store meta data.
-   @tparam Options see boost::histogram::axis::option.
-   @tparam Allocator allocator to use for dynamic memory management.
+  @tparam Value input value type, must be equal-comparable.
+  @tparam MetaData type to store meta data.
+  @tparam Options see boost::histogram::axis::option.
+  @tparam Allocator allocator to use for dynamic memory management.
 
-   The options `underflow` and `circular` are not allowed. The options `growth`
-   and `overflow` are mutually exclusive.
+  The options `underflow` and `circular` are not allowed. The options `growth`
+  and `overflow` are mutually exclusive.
  */
 template <class Value, class MetaData, class Options, class Allocator>
 class category : public iterator_mixin<category<Value, MetaData, Options, Allocator>>,
@@ -56,13 +56,20 @@ public:
   constexpr category() = default;
   explicit category(allocator_type alloc) : vec_(alloc) {}
 
-  /** Construct from iterator range of unique values.
+  /** Construct from forward iterator range of unique values.
 
-     @param begin    begin of category range of unique values.
-     @param end      end of category range of unique values.
-     @param meta     description of the axis (optional).
-     @param options  see boost::histogram::axis::option (optional).
-     @param alloc    allocator instance to use (optional).
+    @param begin    begin of category range of unique values.
+    @param end      end of category range of unique values.
+    @param meta     description of the axis (optional).
+    @param options  see boost::histogram::axis::option (optional).
+    @param alloc    allocator instance to use (optional).
+
+    The constructor throws `std::invalid_argument` if iterator range is invalid. If the
+    range contains duplicated values, the behavior of the axis is undefined.
+
+    The arguments meta and alloc are passed by value. If you move either of them into the
+    axis and the constructor throws, their values are lost. Do not move if you cannot
+    guarantee that the bin description is not valid.
    */
   template <class It, class = detail::requires_iterator<It>>
   category(It begin, It end, metadata_type meta = {}, options_type options = {},
