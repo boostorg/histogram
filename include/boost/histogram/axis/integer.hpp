@@ -33,7 +33,9 @@ namespace axis {
 
   Binning is a O(1) operation. This axis bins even faster than a regular axis.
 
-  The options `growth` and `circular` are mutually exclusive.
+  The options `growth` and `circular` are mutually exclusive. If the axis uses
+  integers and either `growth` or `circular` are set, the axis cannot have
+  the options `underflow` or `overflow` set.
 
   @tparam Value     input value type. Must be integer or floating point.
   @tparam MetaData  type to store meta data.
@@ -161,10 +163,9 @@ public:
   static constexpr bool inclusive() noexcept {
     // If axis has underflow and overflow, it is inclusive.
     // If axis is growing or circular:
-    // - it is inclusive if value_type is int.
-    // - it is not inclusive if value_type is float, because of nan and inf.
-    constexpr bool full_flow =
-        options() & option::underflow && options() & option::overflow;
+    // - it is inclusive if value_type is an integer.
+    // - it is not inclusive if value_type is floating point, because of nan and inf.
+    constexpr bool full_flow = options_type().test(option::underflow | option::overflow);
     return full_flow || (std::is_integral<value_type>::value &&
                          (options() & (option::growth | option::circular)));
   }
