@@ -12,8 +12,8 @@
 #include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/detail/counting_streambuf.hpp>
 #include <boost/histogram/detail/index_translator.hpp>
+#include <boost/histogram/detail/make_span.hpp>
 #include <boost/histogram/detail/nonmember_container_access.hpp>
-#include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/detail/sub_array.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/literals.hpp>

@@ -2,7 +2,6 @@
 #include <boost/core/span.hpp>
 #include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <boost/histogram/detail/reduce_command.hpp>
-#include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/detail/sub_array.hpp>
 #include <initializer_list>
 #include <stdexcept>

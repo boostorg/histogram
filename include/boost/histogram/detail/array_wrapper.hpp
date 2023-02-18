@@ -8,7 +8,7 @@
 #define BOOST_HISTOGRAM_DETAIL_ARRAY_WRAPPER_HPP
 
 #include <boost/core/nvp.hpp>
-#include <boost/histogram/detail/span.hpp>
+#include <boost/histogram/detail/make_span.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/mp11/function.hpp>
 #include <boost/mp11/utility.hpp>

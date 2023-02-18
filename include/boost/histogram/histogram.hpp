@@ -14,9 +14,9 @@
 #include <boost/histogram/detail/fill.hpp>
 #include <boost/histogram/detail/fill_n.hpp>
 #include <boost/histogram/detail/index_translator.hpp>
+#include <boost/histogram/detail/make_span.hpp>
 #include <boost/histogram/detail/mutex_base.hpp>
 #include <boost/histogram/detail/nonmember_container_access.hpp>
-#include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/detail/static_if.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/indexed.hpp>
