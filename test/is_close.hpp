@@ -10,6 +10,11 @@
 #include <boost/core/lightweight_test.hpp>
 #include <cmath>
 
-#define BOOST_TEST_IS_CLOSE(a, b, eps) BOOST_TEST(std::abs(a - b) < eps)
+struct is_close {
+  bool operator()(double a, double b) { return std::abs(a - b) < atol; }
+  double atol;
+};
+
+#define BOOST_TEST_IS_CLOSE(a, b, atol) BOOST_TEST_WITH(a, b, is_close{atol})
 
 #endif

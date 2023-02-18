@@ -17,9 +17,9 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include "allocator.hpp"
 #include "is_close.hpp"
 #include "throw_exception.hpp"
-#include "utility_allocator.hpp"
 
 using namespace boost::histogram;
 using namespace std::literals;

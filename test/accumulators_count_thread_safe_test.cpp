@@ -9,8 +9,8 @@
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <sstream>
 #include <thread>
+#include "str.hpp"
 #include "throw_exception.hpp"
-#include "utility_str.hpp"
 
 using namespace boost::histogram;
 using namespace std::literals;

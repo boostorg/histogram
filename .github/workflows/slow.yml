@@ -10,6 +10,10 @@ on:
       - 'tools/**'
       - '*.md'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
 env:
   B2_OPTS: -q -j2 warnings-as-errors=on
   UBSAN_OPTIONS: print_stacktrace=1
@@ -18,25 +22,6 @@ env:
   COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
 
 jobs:
-  superproject_cmake:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Fetch Boost superproject
-      run: |
-        cd ..
-        git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
-        cd boost
-        git submodule update --init --depth 5
-        rm -rf libs/histogram/*
-        mv -f $GITHUB_WORKSPACE/* libs/histogram
-        mv -f * $GITHUB_WORKSPACE
-    - name: CMake from superproject
-      run: |
-        cd ..
-        cmake -DBoost_VERBOSE=1 $GITHUB_WORKSPACE
-        cmake --build . --target all -j3 -- -k
-
   appleclang:
     runs-on: macos-latest
     steps:
@@ -104,7 +89,7 @@ jobs:
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=gcc-10 cxxstd=20 cxxflags="-O3 -funsafe-math-optimizations" test//all examples
 
-  clang10:
+  clang14:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -122,4 +107,4 @@ jobs:
     - name: Test cxxstd=17 ubsan asan
       run: |
         cd libs/histogram
-        ../../b2 $B2_OPTS toolset=clang-10 cxxstd=17 variant=histogram_ubasan test//all
+        ../../b2 $B2_OPTS toolset=clang-14 cxxstd=17 variant=histogram_ubasan test//all

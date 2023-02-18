@@ -11,11 +11,11 @@
 #include <sstream>
 #include <type_traits>
 #include <vector>
+#include "axis.hpp"
 #include "is_close.hpp"
 #include "std_ostream.hpp"
+#include "str.hpp"
 #include "throw_exception.hpp"
-#include "utility_axis.hpp"
-#include "utility_str.hpp"
 
 using namespace boost::histogram;
 namespace op = boost::histogram::axis::option;

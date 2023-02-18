@@ -18,6 +18,7 @@
 */
 
 #include <boost/histogram/accumulators/count.hpp>
+#include <boost/histogram/accumulators/fraction.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>

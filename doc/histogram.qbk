@@ -82,7 +82,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
   ]
   [
     [
-      [link histogram.history Revision history]
+      [link histogram.changelog Changelog]
     ]
     [
       Log of code changes.
@@ -97,7 +97,7 @@ Boost.Histogram provides an easy-to-use, fast, and extensible multi-dimensional 
 [include concepts.qbk]
 [xinclude reference_pp.xml]
 [include rationale.qbk]
-[include history.qbk]
+[include changelog.qbk]
 
 [*Acknowledgments]
 

@@ -8,7 +8,7 @@ If you like Boost.Histogram, please star the project on Github! We want Boost.Hi
 
 Feel free to ask questions on https://gitter.im/boostorg/histogram.
 
-## Reporting Issues
+## Reporting issues
 
 We value your feedback about issues you encounter. The more information you provide the easier it is for developers to resolve the problem.
 
@@ -19,13 +19,20 @@ Issues can also be used to submit feature requests.
 
 Don't be shy: if you are friendly, we are friendly!
 
+### Reporting failures
+
+Please report any tests failures to the issue tracker along with the test output and information on your system:
+
+* platform (Linux, Windows, OSX, ...)
+* compiler and version
+
 ## Submitting Pull Requests
 
 Fork the main repository. Base your changes on the `develop` branch. Make a new branch for any feature or bug-fix in your fork. Start developing. You can start a pull request when you feel the change is ready for review.
 
 Please rebase your branch to the original `develop` branch before submitting (which may have diverged from your fork in the meantime).
 
-## Running Tests
+## Running tests
 
 ### With cmake
 
@@ -53,11 +60,7 @@ You can also test the examples by executing
 ```
 To make the tests complete faster, you can use the option `-j4` (or another number) to build in parallel.
 
-#### Generate documentation
-
-To build the documentation, you need to install a few extra things, see [Quickbook documentation](https://www.boost.org/doc/libs/1_74_0/doc/html/quickbook/install.html).
-
-#### Using b2filt
+### With b2filt
 
 The output of b2 is verbose and there is no highlighting, so sometimes it is difficult to spot a problem. You can give `b2filt` are try, which you can install with `pip install b2filt`. Just replace `../../b2` with `b2filt`, for example:
 ```sh
@@ -65,18 +68,19 @@ b2filt cxxstd=latest warnings-as-errors=on test
 ```
 Note: b2filt is not an official part of Boost and has never been tested extensively on Windows. Please leave an [issue on GitHub](https://github.com/HDembinski/b2filt) if you have trouble with b2filt.
 
-### Reporting failures
+### Check test coverage
 
-Please report any tests failures to the issue tracker along with the test output and information on your system:
+Boost.Histogram maintains 100% line coverage. Coverage is automatically checked by CI. To generate a report locally, you need to build the code with gcc-8 or gcc-12 (these version are known to work, others might) and coverage instrumentation enabled, do `b2 toolset=gcc-8 cxxstd=latest coverage=on test`.
 
-* platform (Linux, Windows, OSX, ...)
-* compiler and version
+To generate the coverage report, run `tools/cov.py` from the project root directory of Boost.Histogram. This script has not been tested on Windows, so probably will not work on Windows. If you have several versions of gcc installed, you may need to specify the gcov version to use, run for example `GCOV=gcov-8 tools/cov.py`.
 
-### Test coverage
+This will generate a new folder `coverage-report` with a HTML report. Open `coverage-report/index.html` in a browser.
 
-Boost.Histogram maintains 100% line coverage. Coverage is automatically checked by CI. To generate a report locally, you need to build the code with gcc-8 and coverage instrumentation enabled, do `b2 toolset=gcc-8 cxxstd=latest coverage=on test`. To generate the coverage report, run `tools/cov.sh` from the project root directory of Boost.Histogram. This will generate a new folder `coverage-report` with a HTML report. Open `coverage-report/index.html` in a browser.
+Notes: Generating coverage data is very fickle. You need to use gcc-8 or gcc-12 and a matching version of gcov. Other gcc versions were known to be broken or were not supported by lcov at the time of this writing, which is used to process the raw coverage data. Generating coverage data with clang and llvm-cov is not supported by lcov at the ime of this writing.
 
-Notes: Generating coverage data is very fickle. You need to use gcc-5 or gcc-8 and a matching version of gcov, other gcc versions (6, 7, 9) are known to be broken or are not supported by lcov, which is used to process the raw coverage data. Generating coverage data with clang and llvm-cov is not supported by lcov. The best results are obtained with gcc-5. gcc-8 is known to report lines as missed which are impossible to miss.
+## Generate documentation
+
+To build the documentation, you need to install a few extra things, see [Quickbook documentation](https://www.boost.org/doc/libs/1_74_0/doc/html/quickbook/install.html).
 
 ## Coding Style
 
@@ -84,7 +88,9 @@ Follow the [Boost Library Requirements and Guidelines](https://www.boost.org/dev
 
 ### Code formatting
 
-Using `clang-format -style=file` is recommended, which should pick up the `.clang-format` file of the project. All names are written with small letters and `_`. Template parameters are capitalized and in camel-case.
+All names are written with small letters and `_`. Template parameters are capitalized and in camel-case. Do not worry about whitespace, which is automatically formattet with `clang-format`.
+
+To automatically format whitespace in your commits, use `pre-commit`. You can install it with `pip install pre-commit`. Then do `pre-commit install` in the project directory. From now on, `pre-commit` will run clang-format automatically whenever you run `git commit`. If it complains, simply add the changes it made to the files and run `git commit` again.
 
 ### Documentation
 

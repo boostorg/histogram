@@ -4,7 +4,6 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/core/is_same.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis.hpp>
@@ -15,10 +14,11 @@
 #include <boost/throw_exception.hpp>
 #include <string>
 #include <vector>
+#include <type_traits>
 #include "dummy_storage.hpp"
+#include "histogram.hpp"
 #include "std_ostream.hpp"
 #include "throw_exception.hpp"
-#include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 
@@ -74,7 +74,7 @@ void run_tests() {
     BOOST_TEST_EQ(d3.at(2), 81);
 
     auto d4 = d3 * (1 * d); // converted return type
-    BOOST_TEST_TRAIT_FALSE((boost::core::is_same<decltype(d4), decltype(d3)>));
+    BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(d4), decltype(d3)>));
     BOOST_TEST_EQ(d4.at(0), 8);
     BOOST_TEST_EQ(d4.at(1), 27);
     d4 /= d;
@@ -86,8 +86,8 @@ void run_tests() {
 
     auto e = 3 * a; // converted return type
     auto f = b * 2; // converted return type
-    BOOST_TEST_TRAIT_FALSE((boost::core::is_same<decltype(e), decltype(a)>));
-    BOOST_TEST_TRAIT_FALSE((boost::core::is_same<decltype(f), decltype(a)>));
+    BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(e), decltype(a)>));
+    BOOST_TEST_TRAIT_FALSE((std::is_same<decltype(f), decltype(a)>));
     BOOST_TEST_EQ(e.at(0), 3);
     BOOST_TEST_EQ(e.at(1), 0);
     BOOST_TEST_EQ(f.at(0), 0);
@@ -361,12 +361,12 @@ void run_tests() {
     c *= 2; // this calls *= on each element
     BOOST_TEST_EQ(c[0], 2);
 
-    using h1_t = decltype(
-        make_s(Tag{}, dummy_storage<unscaleable, false>{}, axis::integer<>(0, 1)));
+    using h1_t = decltype(make_s(Tag{}, dummy_storage<unscaleable, false>{},
+                                 axis::integer<>(0, 1)));
     BOOST_TEST_NOT((detail::has_operator_rmul<h1_t, double>::value));
 
-    using h2_t = decltype(
-        make_s(Tag{}, dummy_storage<unscaleable, true>{}, axis::integer<>(0, 1)));
+    using h2_t = decltype(make_s(Tag{}, dummy_storage<unscaleable, true>{},
+                                 axis::integer<>(0, 1)));
     BOOST_TEST_NOT((detail::has_operator_rmul<h2_t, double>::value));
   }
 }

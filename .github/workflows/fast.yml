@@ -20,6 +20,10 @@ on:
       - 'tools/**'
       - '*.md'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   cmake:
     runs-on: ${{ matrix.os }}

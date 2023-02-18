@@ -6,11 +6,11 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/axis/integer.hpp>
-#include "throw_exception.hpp"
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/numeric.hpp>
+#include "throw_exception.hpp"
 
 using namespace boost::histogram;
 using namespace boost::adaptors;
