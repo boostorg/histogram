@@ -7,12 +7,12 @@
 #include <algorithm>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
+#include <boost/core/make_span.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/detail/common_type.hpp>
 #include <boost/histogram/detail/counting_streambuf.hpp>
 #include <boost/histogram/detail/index_translator.hpp>
-#include <boost/histogram/detail/make_span.hpp>
 #include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <boost/histogram/detail/sub_array.hpp>
 #include <boost/histogram/fwd.hpp>
@@ -130,13 +130,13 @@ int main() {
   {
     dtl::sub_array<int, 2> a(2, 1);
     a[1] = 2;
-    auto sp = dtl::make_span(a);
+    auto sp = boost::make_span(a);
     BOOST_TEST_EQ(sp.size(), 2);
     BOOST_TEST_EQ(sp.front(), 1);
     BOOST_TEST_EQ(sp.back(), 2);
 
     const auto& ca = a;
-    auto csp = dtl::make_span(ca);
+    auto csp = boost::make_span(ca);
     BOOST_TEST_EQ(csp.size(), 2);
     BOOST_TEST_EQ(csp.front(), 1);
     BOOST_TEST_EQ(csp.back(), 2);

@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_DETAIL_FILL_N_HPP
 
 #include <algorithm>
+#include <boost/core/make_span.hpp>
 #include <boost/core/span.hpp>
 #include <boost/histogram/axis/option.hpp>
 #include <boost/histogram/axis/traits.hpp>
@@ -15,7 +16,6 @@
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/detail/fill.hpp>
 #include <boost/histogram/detail/linearize.hpp>
-#include <boost/histogram/detail/make_span.hpp>
 #include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <boost/histogram/detail/optional_index.hpp>
 #include <boost/histogram/detail/static_if.hpp>
