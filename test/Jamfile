@@ -39,6 +39,7 @@ alias odr :
     ;
 
 alias cxx14 :
+    [ run quick.cpp ]
     [ run accumulators_count_test.cpp ]
     [ run accumulators_fraction_test.cpp ]
     [ run accumulators_mean_test.cpp ]

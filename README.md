@@ -9,7 +9,13 @@
 
 **Multi-dimensional generalised histograms with convenient interface**
 
-Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org). Licensed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).
+Coded with ❤. Powered by the [Boost community](https://www.boost.org) and the [Scikit-HEP Project](http://scikit-hep.org).
+
+## License
+
+Distributed under the [Boost Software License, Version 1.0](http://www.boost.org/LICENSE_1_0.txt).
+
+## Properties
 
 **Supported compiler versions** gcc >= 5.5, clang >= 3.8, msvc >= 14.1
 **Supported C++ versions** 14, 17, 20
@@ -33,7 +39,7 @@ Check out the [full documentation](https://www.boost.org/doc/libs/master/libs/hi
 
 💡 Boost.Histogram is a mature library with 100 % of code lines covered by unit tests, is benchmarked for performance, and has extensive documentation. If you still find some issue or find the documentation lacking, tell us about it by [submitting an issue](https://github.com/boostorg/histogram/issues). Chat with us on the [Boost channel on Slack](https://cpplang.slack.com) and [Gitter](https://gitter.im/boostorg/histogram).
 
-## Code examples
+## Code example
 
 The following stripped-down example was taken from the [Getting started](https://www.boost.org/doc/libs/master/libs/histogram/doc/html/histogram/getting_started.html) section in the documentation. Have a look into the docs to see the full version with comments and more examples.
 
@@ -115,3 +121,10 @@ Details on the benchmark are given in the [documentation](https://www.boost.org/
 **John Buonagurio** | Manager at [**E<sup><i>x</i></sup>ponent<sup>&reg;</sup>**](https://www.exponent.com)
 
 *"I just wanted to say 'thanks' for your awesome Histogram library. I'm working on a software package for processing meteorology data and I'm using it to generate wind roses with the help of Qt and QwtPolar. Looks like you thought of just about everything here &ndash; the circular axis type was practically designed for this application, everything 'just worked'."*
+
+## More information
+
+* [Ask questions](http://stackoverflow.com/questions/ask?tags=c%2B%2B,boost,boost-template)
+* [Report bugs](https://github.com/boostorg/template/issues): Be sure to mention Boost version, platform and compiler you're using. A small compilable code sample to reproduce the problem is always good as well.
+* Submit your patches as pull requests against **develop** branch. Note that by submitting patches you agree to license your modifications under the [Boost Software License, Version 1.0](http://www.boost.org/LICENSE_1_0.txt).
+* Discussions about the library are held on the [Boost developers mailing list](http://www.boost.org/community/groups.html#main). Be sure to read the [discussion policy](http://www.boost.org/community/policy.html) before posting and add the `[template]` tag at the beginning of the subject line.
