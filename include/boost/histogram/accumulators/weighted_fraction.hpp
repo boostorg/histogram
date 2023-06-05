@@ -10,7 +10,9 @@
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/accumulators/fraction.hpp>
 #include <boost/histogram/detail/square.hpp>
+#include <boost/histogram/fwd.hpp> // for weighted_fraction<>
 #include <boost/histogram/weight.hpp>
+#include <type_traits> // for std::common_type
 
 namespace boost {
 namespace histogram {
@@ -64,6 +66,11 @@ public:
 
   // Return sum of weights squared.
   const_reference value() const noexcept { return sum_of_weights_squared_; }
+
+  template <class Archive>
+  void serialize(Archive& ar, unsigned /* version */) {
+    ar& make_nvp("sum_of_weights_squared", sum_of_weights_squared_);
+  }
 
 private:
   ValueType sum_of_weights_squared_{};
@@ -154,6 +161,12 @@ public:
 
   /// Return the sum of weights squared.
   const value_type& sum_w2() const noexcept { return sum_w2_.value(); }
+
+  template <class Archive>
+  void serialize(Archive& ar, unsigned /* version */) {
+    ar& make_nvp("fraction", f_);
+    ar& make_nvp("sum_of_weights_squared", sum_w2_);
+  }
 
 private:
   fraction_type f_;

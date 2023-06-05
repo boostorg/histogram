@@ -102,5 +102,34 @@ int main(int argc, char** argv) {
     BOOST_TEST(a == b);
   }
 
+  // sum_of_weights_squared
+  {
+    const auto filename =
+        join(argv[1], "accumulators_serialization_test_sum_of_weights_squared.xml");
+    accumulators::internal::sum_of_weights_squared<> a;
+    ++a;
+    print_xml(filename, a);
+
+    accumulators::internal::sum_of_weights_squared<> b;
+    BOOST_TEST_NOT(a == b);
+    load_xml(filename, b);
+    BOOST_TEST(a == b);
+  }
+
+  // weighted_fraction
+  {
+    const auto filename =
+        join(argv[1], "accumulators_serialization_test_weighted_fraction.xml");
+    accumulators::weighted_fraction<> a;
+    a(true);
+    a(weight(6), false);
+    print_xml(filename, a);
+
+    accumulators::weighted_fraction<> b;
+    BOOST_TEST_NOT(a == b);
+    load_xml(filename, b);
+    BOOST_TEST(a == b);
+  }
+
   return boost::report_errors();
 }
