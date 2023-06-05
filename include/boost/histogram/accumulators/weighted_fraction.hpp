@@ -33,7 +33,7 @@ public:
       : sum_of_weights_squared(o.sum_of_weights_squared_) {}
 
   // Initialize to external sum of weights squared.
-  sum_of_weights_squared(const_reference wsum2) noexcept : sum_of_weights_squared_(wsum2) {}
+  sum_of_weights_squared(const_reference sum_w2) noexcept : sum_of_weights_squared_(sum_w2) {}
 
   // Increment by one.
   sum_of_weights_squared& operator++() {
@@ -82,14 +82,14 @@ public:
   weighted_fraction() noexcept = default;
 
   /// Initialize to external fraction and sum of weights squared.
-  weighted_fraction(const fraction_type& f, const_reference wsum2) noexcept
-      : f_(f), wsum2_(wsum2) {}
+  weighted_fraction(const fraction_type& f, const_reference sum_w2) noexcept
+      : f_(f), sum_w2_(sum_w2) {}
 
   /// Convert the weighted_fraction class to a different type T.
   template <class T>
   operator weighted_fraction<T>() const noexcept {
     return weighted_fraction<T>(static_cast<fraction<T>>(f_),
-                                static_cast<T>(wsum2_.value()));
+                                static_cast<T>(sum_w2_.value()));
   }
 
   /// Insert boolean sample x with weight 1.
@@ -98,18 +98,18 @@ public:
   /// Insert boolean sample x with weight w.
   void operator()(const weight_type<value_type>& w, bool x) noexcept {
     f_(w, x);
-    wsum2_ += w;
+    sum_w2_ += w;
   }
 
   /// Add another weighted_fraction.
   weighted_fraction& operator+=(const weighted_fraction& rhs) noexcept {
     f_ += rhs.f_;
-    wsum2_ += rhs.wsum2_;
+    sum_w2_ += rhs.sum_w2_;
     return *this;
   }
 
   bool operator==(const weighted_fraction& rhs) const noexcept {
-    return f_ == rhs.f_ && wsum2_ == rhs.wsum2_;
+    return f_ == rhs.f_ && sum_w2_ == rhs.sum_w2_;
   }
 
   bool operator!=(const weighted_fraction& rhs) const noexcept { return !operator==(rhs); }
@@ -122,7 +122,7 @@ public:
 
   /// Return effective number of boolean samples.
   real_type count() const noexcept {
-    return static_cast<real_type>(detail::square(f_.count())) / wsum2_.value();
+    return static_cast<real_type>(detail::square(f_.count())) / sum_w2_.value();
   }
 
   /// Return success weighted_fraction of boolean samples.
@@ -134,7 +134,7 @@ public:
   }
 
   /// Return the sum of weights squared.
-  value_type sum_of_weights_squared() const noexcept { return wsum2_.value(); } 
+  value_type sum_of_weights_squared() const noexcept { return sum_w2_.value(); } 
 
   /// Return standard interval with 68.3 % confidence level (Wilson score interval).
   interval_type confidence_interval() const noexcept {
@@ -151,11 +151,11 @@ public:
   const fraction_type& get_fraction() const noexcept { return f_; }
 
   /// Return the sum of weights squared.
-  const value_type& wsum2() const noexcept { return wsum2_.value(); }
+  const value_type& sum_w2() const noexcept { return sum_w2_.value(); }
 
 private:
   fraction_type f_;
-  internal::sum_of_weights_squared<ValueType> wsum2_;
+  internal::sum_of_weights_squared<ValueType> sum_w2_;
 };
 
 } // namespace accumulators

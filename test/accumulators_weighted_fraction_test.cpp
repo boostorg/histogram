@@ -28,7 +28,7 @@ void run_tests() {
     type_fw_t f;
     BOOST_TEST_EQ(f.successes(), 0);
     BOOST_TEST_EQ(f.failures(), 0);
-    BOOST_TEST_EQ(f.wsum2(), 0);
+    BOOST_TEST_EQ(f.sum_w2(), 0);
     BOOST_TEST(std::isnan(f.value()));
     BOOST_TEST(std::isnan(f.variance()));
 
@@ -52,17 +52,17 @@ void run_tests() {
     type_fw_t f;
     BOOST_TEST_EQ(f.successes(), 0);
     BOOST_TEST_EQ(f.failures(), 0);
-    BOOST_TEST_EQ(f.wsum2(), 0);
+    BOOST_TEST_EQ(f.sum_w2(), 0);
 
     f(true);
     BOOST_TEST_EQ(f.successes(), 1);
     BOOST_TEST_EQ(f.failures(), 0);
-    BOOST_TEST_EQ(f.wsum2(), 1);
+    BOOST_TEST_EQ(f.sum_w2(), 1);
     BOOST_TEST_EQ(str(f), "weighted_fraction(fraction(1, 0), 1)"s);
     f(false);
     BOOST_TEST_EQ(f.successes(), 1);
     BOOST_TEST_EQ(f.failures(), 1);
-    BOOST_TEST_EQ(f.wsum2(), 2);
+    BOOST_TEST_EQ(f.sum_w2(), 2);
     BOOST_TEST_EQ(str(f), "weighted_fraction(fraction(1, 1), 2)"s);
     BOOST_TEST_EQ(str(f, 41, false), "     weighted_fraction(fraction(1, 1), 2)"s);
     BOOST_TEST_EQ(str(f, 41, true), "weighted_fraction(fraction(1, 1), 2)     "s);
@@ -144,7 +144,7 @@ int main() {
 
     BOOST_TEST_EQ(fw_int.successes(), 5);
     BOOST_TEST_EQ(fw_int.failures(), 3);
-    BOOST_TEST_EQ(fw_int.wsum2(), 88);
+    BOOST_TEST_EQ(fw_int.sum_w2(), 88);
   }
 
   return boost::report_errors();

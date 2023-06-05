@@ -105,7 +105,7 @@ template <class CharT, class Traits, class U>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const weighted_fraction<U>& x) {
   if (os.width() == 0)
-    return os << "weighted_fraction(" << x.get_fraction() << ", " << x.wsum2() << ")";
+    return os << "weighted_fraction(" << x.get_fraction() << ", " << x.sum_w2() << ")";
   return detail::handle_nonzero_width(os, x);
 }
 
