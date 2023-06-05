@@ -5,8 +5,8 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/accumulators/weighted_fraction.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/accumulators/weighted_fraction.hpp>
 #include <boost/histogram/utility/wilson_interval.hpp>
 #include <cmath>
 #include <limits>
@@ -44,7 +44,7 @@ void run_tests() {
     BOOST_TEST_EQ(a, type_fw_t(type_f_t(1, 1), 2));
 
     a(weight(2), true);  // adds 2 trues and 2^2 to sum_of_weights_squared
-    a(weight(3), false);  // adds 3 falses and 3^2 to sum_of_weights_squared
+    a(weight(3), false); // adds 3 falses and 3^2 to sum_of_weights_squared
     BOOST_TEST_EQ(a, type_fw_t(type_f_t(3, 4), 15));
   }
 
@@ -81,9 +81,9 @@ void run_tests() {
     // const auto expected = utility::wilson_interval<double>()(3, 1);
     const auto wilson = utility::wilson_interval<double>();
     const auto expected = wilson.wilson_solve({
-      .n_eff = 4,
-      .p_hat = 0.75,
-      .correction = 1.46875  // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=4
+        .n_eff = 4,
+        .p_hat = 0.75,
+        .correction = 1.46875 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=4
     });
 
     BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);
@@ -100,9 +100,9 @@ void run_tests() {
 
     const auto wilson = utility::wilson_interval<double>();
     const auto expected = wilson.wilson_solve({
-      .n_eff = 1,
-      .p_hat = 0,
-      .correction = 10  // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1
+        .n_eff = 1,
+        .p_hat = 0,
+        .correction = 10 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1
     });
 
     BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);
@@ -116,12 +116,12 @@ void run_tests() {
     BOOST_TEST_EQ(f.value(), 1);
     BOOST_TEST_EQ(f.variance(), 0);
     const auto ci = f.confidence_interval();
-    
+
     const auto wilson = utility::wilson_interval<double>();
     const auto expected = wilson.wilson_solve({
-      .n_eff = 1,
-      .p_hat = 1,
-      .correction = 10  // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1
+        .n_eff = 1,
+        .p_hat = 1,
+        .correction = 10 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1
     });
 
     BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);

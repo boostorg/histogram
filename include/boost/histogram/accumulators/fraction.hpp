@@ -9,8 +9,8 @@
 
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/fwd.hpp> // for fraction<>
-#include <boost/histogram/weight.hpp>
 #include <boost/histogram/utility/wilson_interval.hpp>
+#include <boost/histogram/weight.hpp>
 #include <type_traits> // for std::common_type
 
 namespace boost {
@@ -83,11 +83,13 @@ public:
   real_type value() const noexcept { return static_cast<real_type>(succ_) / count(); }
 
   /// Return variance of the success fraction.
-  real_type variance() const noexcept { return variance_for_p_and_n_eff(value(), count()); }
+  real_type variance() const noexcept {
+    return variance_for_p_and_n_eff(value(), count());
+  }
 
   /// Calculate the variance for a given success fraction and effective number of samples.
   template <class T>
-  static real_type variance_for_p_and_n_eff(const real_type& p, const T& n_eff ) noexcept {
+  static real_type variance_for_p_and_n_eff(const real_type& p, const T& n_eff) noexcept {
     // We want to compute Var(p) for p = X / n with Var(X) = n p (1 - p)
     // For Var(X) see
     // https://en.wikipedia.org/wiki/Binomial_distribution#Expected_value_and_variance

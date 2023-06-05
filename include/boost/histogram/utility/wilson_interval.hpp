@@ -25,7 +25,7 @@ struct wilson_interval_problem {
   T correction;
 };
 
-}  // namespace internal
+} // namespace internal
 
 /**
   Wilson interval.
@@ -105,12 +105,16 @@ public:
 
     @param p The problem to solve.
   */
-  interval_type wilson_solve(const internal::wilson_interval_problem<value_type>& p) const noexcept {
+  interval_type wilson_solve(
+      const internal::wilson_interval_problem<value_type>& p) const noexcept {
     // Equation 41 from this paper: https://arxiv.org/abs/2110.00294
     //      (p̂ - p)² = p (1 - p) (z² f(n) / n)
-    //    n (p̂ - p)² = p (1 - p) z² f(n)                 (avoid floating point error when n = 0)
-    //    np² - 2np̂p + np̂² = pz²f(n) - p²z²f(n)          (expand)
-    //    p²(n + z²f(n)) + p(-2np̂ - z²f(n)) + (np̂²) = 0  (collect terms of p)
+    // Multiply by n to avoid floating point error when n = 0.
+    //    n (p̂ - p)² = p (1 - p) z² f(n)
+    // Expand.
+    //    np² - 2np̂p + np̂² = pz²f(n) - p²z²f(n)
+    // Collect terms of p.
+    //    p²(n + z²f(n)) + p(-2np̂ - z²f(n)) + (np̂²) = 0
     //
     // This is a quadratic equation ap² + bp + c = 0 where
     //    a = n + z²f(n)
@@ -130,9 +134,10 @@ public:
 
 private:
   // Finds the roots of the quadratic equation ax² + bx + c = 0.
-  static interval_type quadratic_roots(const value_type& a, const value_type& b, const value_type& c) noexcept {
+  static interval_type quadratic_roots(const value_type& a, const value_type& b,
+                                       const value_type& c) noexcept {
     // https://people.csail.mit.edu/bkph/articles/Quadratics.pdf
-    
+
     const value_type two_a = 2 * a;
     const value_type two_c = 2 * c;
     const value_type sqrt_bb_4ac = std::sqrt(b * b - two_a * two_c);

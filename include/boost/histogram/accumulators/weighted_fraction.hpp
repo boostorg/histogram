@@ -8,9 +8,9 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_FRACTION_HPP
 
 #include <boost/core/nvp.hpp>
+#include <boost/histogram/accumulators/fraction.hpp>
 #include <boost/histogram/detail/square.hpp>
 #include <boost/histogram/weight.hpp>
-#include <boost/histogram/accumulators/fraction.hpp>
 
 namespace boost {
 namespace histogram {
@@ -33,7 +33,8 @@ public:
       : sum_of_weights_squared(o.sum_of_weights_squared_) {}
 
   // Initialize to external sum of weights squared.
-  sum_of_weights_squared(const_reference sum_w2) noexcept : sum_of_weights_squared_(sum_w2) {}
+  sum_of_weights_squared(const_reference sum_w2) noexcept
+      : sum_of_weights_squared_(sum_w2) {}
 
   // Increment by one.
   sum_of_weights_squared& operator++() {
@@ -57,7 +58,9 @@ public:
     return sum_of_weights_squared_ == rhs.sum_of_weights_squared_;
   }
 
-  bool operator!=(const sum_of_weights_squared& rhs) const noexcept { return !operator==(rhs); }
+  bool operator!=(const sum_of_weights_squared& rhs) const noexcept {
+    return !operator==(rhs);
+  }
 
   // Return sum of weights squared.
   const_reference value() const noexcept { return sum_of_weights_squared_; }
@@ -66,7 +69,7 @@ private:
   ValueType sum_of_weights_squared_{};
 };
 
-}  // namespace internal
+} // namespace internal
 
 /// Accumulates weighted boolean samples and computes the fraction of true samples.
 template <class ValueType>
@@ -112,7 +115,9 @@ public:
     return f_ == rhs.f_ && sum_w2_ == rhs.sum_w2_;
   }
 
-  bool operator!=(const weighted_fraction& rhs) const noexcept { return !operator==(rhs); }
+  bool operator!=(const weighted_fraction& rhs) const noexcept {
+    return !operator==(rhs);
+  }
 
   /// Return number of boolean samples that were true.
   const_reference successes() const noexcept { return f_.successes(); }
@@ -134,17 +139,15 @@ public:
   }
 
   /// Return the sum of weights squared.
-  value_type sum_of_weights_squared() const noexcept { return sum_w2_.value(); } 
+  value_type sum_of_weights_squared() const noexcept { return sum_w2_.value(); }
 
   /// Return standard interval with 68.3 % confidence level (Wilson score interval).
   interval_type confidence_interval() const noexcept {
     const real_type n_eff = count();
     const real_type correction = score_type::third_order_correction(n_eff);
 
-    return score_type().wilson_solve({
-      .n_eff=n_eff,
-      .p_hat=value(),
-      .correction=correction});
+    return score_type().wilson_solve(
+        {.n_eff = n_eff, .p_hat = value(), .correction = correction});
   }
 
   /// Return the fraction.
