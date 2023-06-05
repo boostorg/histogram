@@ -16,6 +16,17 @@ namespace boost {
 namespace histogram {
 namespace utility {
 
+namespace internal {
+
+template <class T>
+struct wilson_interval_problem {
+  T n_eff;
+  T p_hat;
+  T correction;
+};
+
+}  // namespace internal
+
 /**
   Wilson interval.
 
@@ -75,7 +86,68 @@ public:
     return {t1 - t2, t1 + t2};
   }
 
+  /// Returns the third order correction for n_eff.
+  static value_type third_order_correction(value_type n_eff) noexcept {
+    // The approximate formula reads:
+    //   f(n) = (n³ + n² + 2n + 6) / n³
+    //
+    // Applying the substitution x = 1 / n gives:
+    //   f(n) = 1 + x + 2x² + 6x³
+    //
+    // Using Horner's method to evaluate this polynomial gives:
+    //   f(n) = 1 + x (1 + x (2 + 6x))
+    if (n_eff == 0) return 1;
+    const value_type x = 1 / n_eff;
+    return 1 + x * (1 + x * (2 + 6 * x));
+  }
+
+  /** Computer the confidence interval for the provided problem.
+
+    @param p The problem to solve.
+  */
+  interval_type wilson_solve(const internal::wilson_interval_problem<value_type>& p) const noexcept {
+    // Equation 41 from this paper: https://arxiv.org/abs/2110.00294
+    //      (p̂ - p)² = p (1 - p) (z² f(n) / n)
+    //    n (p̂ - p)² = p (1 - p) z² f(n)                 (avoid floating point error when n = 0)
+    //    np² - 2np̂p + np̂² = pz²f(n) - p²z²f(n)          (expand)
+    //    p²(n + z²f(n)) + p(-2np̂ - z²f(n)) + (np̂²) = 0  (collect terms of p)
+    //
+    // This is a quadratic equation ap² + bp + c = 0 where
+    //    a = n + z²f(n)
+    //    b = -2np̂ - z²f(n)
+    //    c = np̂²
+
+    const value_type& n = p.n_eff;
+    const value_type& p_hat = p.p_hat;
+    const value_type zz_correction = (z_ * z_) * p.correction;
+
+    const value_type a = n + zz_correction;
+    const value_type b = -2 * n * p_hat - zz_correction;
+    const value_type c = n * (p_hat * p_hat);
+
+    return quadratic_roots(a, b, c);
+  }
+
 private:
+  // Finds the roots of the quadratic equation ax² + bx + c = 0.
+  static interval_type quadratic_roots(const value_type& a, const value_type& b, const value_type& c) noexcept {
+    // https://people.csail.mit.edu/bkph/articles/Quadratics.pdf
+    
+    const value_type two_a = 2 * a;
+    const value_type two_c = 2 * c;
+    const value_type sqrt_bb_4ac = std::sqrt(b * b - two_a * two_c);
+
+    if (b >= 0) {
+      const value_type root1 = (-b - sqrt_bb_4ac) / two_a;
+      const value_type root2 = two_c / (-b - sqrt_bb_4ac);
+      return {root1, root2};
+    } else {
+      const value_type root1 = two_c / (-b + sqrt_bb_4ac);
+      const value_type root2 = (-b + sqrt_bb_4ac) / two_a;
+      return {root1, root2};
+    }
+  }
+
   value_type z_;
 };
 

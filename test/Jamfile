@@ -41,6 +41,7 @@ alias odr :
 alias cxx14 :
     [ run accumulators_count_test.cpp ]
     [ run accumulators_fraction_test.cpp ]
+    [ run accumulators_weighted_fraction_test.cpp ]
     [ run accumulators_mean_test.cpp ]
     [ run accumulators_sum_test.cpp : : :
       # make sure sum accumulator works even with -ffast-math and optimizations

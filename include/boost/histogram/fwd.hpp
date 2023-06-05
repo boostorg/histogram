@@ -98,6 +98,9 @@ template <class ValueType = double>
 class fraction;
 
 template <class ValueType = double>
+class weighted_fraction;
+
+template <class ValueType = double>
 class sum;
 
 template <class ValueType = double>
