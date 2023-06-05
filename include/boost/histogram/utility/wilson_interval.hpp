@@ -16,17 +16,6 @@ namespace boost {
 namespace histogram {
 namespace utility {
 
-namespace internal {
-
-template <class T>
-struct wilson_interval_problem {
-  T n_eff;
-  T p_hat;
-  T correction;
-};
-
-} // namespace internal
-
 /**
   Wilson interval.
 
@@ -105,8 +94,9 @@ public:
 
     @param p The problem to solve.
   */
-  interval_type wilson_solve(
-      const internal::wilson_interval_problem<value_type>& p) const noexcept {
+  interval_type wilson_solve_for_neff_phat_correction(
+      const value_type& n_eff, const value_type& p_hat,
+      const value_type& correction) const noexcept {
     // Equation 41 from this paper: https://arxiv.org/abs/2110.00294
     //      (p̂ - p)² = p (1 - p) (z² f(n) / n)
     // Multiply by n to avoid floating point error when n = 0.
@@ -121,13 +111,11 @@ public:
     //    b = -2np̂ - z²f(n)
     //    c = np̂²
 
-    const value_type& n = p.n_eff;
-    const value_type& p_hat = p.p_hat;
-    const value_type zz_correction = (z_ * z_) * p.correction;
+    const value_type zz_correction = (z_ * z_) * correction;
 
-    const value_type a = n + zz_correction;
-    const value_type b = -2 * n * p_hat - zz_correction;
-    const value_type c = n * (p_hat * p_hat);
+    const value_type a = n_eff + zz_correction;
+    const value_type b = -2 * n_eff * p_hat - zz_correction;
+    const value_type c = n_eff * (p_hat * p_hat);
 
     return quadratic_roots(a, b, c);
   }

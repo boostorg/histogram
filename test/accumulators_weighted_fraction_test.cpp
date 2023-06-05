@@ -80,11 +80,11 @@ void run_tests() {
 
     // const auto expected = utility::wilson_interval<double>()(3, 1);
     const auto wilson = utility::wilson_interval<double>();
-    const auto expected = wilson.wilson_solve({
-        .n_eff = 4,
-        .p_hat = 0.75,
-        .correction = 1.46875 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=4
-    });
+    const auto expected = wilson.wilson_solve_for_neff_phat_correction(
+        4,      // n_eff = 4
+        0.75,   // p_hat = 0.75
+        1.46875 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=4
+    );
 
     BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);
     BOOST_TEST_IS_CLOSE(ci.second, expected.second, eps);
@@ -99,11 +99,11 @@ void run_tests() {
     const auto ci = f.confidence_interval();
 
     const auto wilson = utility::wilson_interval<double>();
-    const auto expected = wilson.wilson_solve({
-        .n_eff = 1,
-        .p_hat = 0,
-        .correction = 10 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1
-    });
+    const auto expected = wilson.wilson_solve_for_neff_phat_correction(
+        1, // n_eff = 1
+        0, // p_hat = 0
+        10 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1
+    );
 
     BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);
     BOOST_TEST_IS_CLOSE(ci.second, expected.second, eps);
@@ -118,11 +118,11 @@ void run_tests() {
     const auto ci = f.confidence_interval();
 
     const auto wilson = utility::wilson_interval<double>();
-    const auto expected = wilson.wilson_solve({
-        .n_eff = 1,
-        .p_hat = 1,
-        .correction = 10 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1
-    });
+    const auto expected = wilson.wilson_solve_for_neff_phat_correction(
+        1, // n_eff = 1
+        1, // p_hat = 1
+        10 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1
+    );
 
     BOOST_TEST_IS_CLOSE(ci.first, expected.first, eps);
     BOOST_TEST_IS_CLOSE(ci.second, expected.second, eps);

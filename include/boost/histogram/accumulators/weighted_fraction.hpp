@@ -144,10 +144,9 @@ public:
   /// Return standard interval with 68.3 % confidence level (Wilson score interval).
   interval_type confidence_interval() const noexcept {
     const real_type n_eff = count();
+    const real_type p_hat = value();
     const real_type correction = score_type::third_order_correction(n_eff);
-
-    return score_type().wilson_solve(
-        {.n_eff = n_eff, .p_hat = value(), .correction = correction});
+    return score_type().wilson_solve_for_neff_phat_correction(n_eff, p_hat, correction);
   }
 
   /// Return the fraction.
