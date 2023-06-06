@@ -86,8 +86,7 @@ public:
   using const_reference = const value_type&;
   using fraction_type = fraction<ValueType>;
   using real_type = typename fraction_type::real_type;
-  using score_type = typename fraction_type::score_type;
-  using interval_type = typename score_type::interval_type;
+  using interval_type = typename fraction_type::interval_type;
 
   weighted_fraction() noexcept = default;
 
@@ -150,10 +149,16 @@ public:
 
   /// Return standard interval with 68.3 % confidence level (Wilson score interval).
   interval_type confidence_interval() const noexcept {
+    return confidence_interval(utility::wilson_interval<real_type>());
+  }
+
+  /// Return the Wilson score interval.
+  interval_type confidence_interval(
+      const utility::wilson_interval<real_type>& w) const noexcept {
     const real_type n_eff = count();
     const real_type p_hat = value();
-    const real_type correction = score_type::third_order_correction(n_eff);
-    return score_type().wilson_solve_for_neff_phat_correction(n_eff, p_hat, correction);
+    const real_type correction = w.third_order_correction(n_eff);
+    return w.solve_for_neff_phat_correction(n_eff, p_hat, correction);
   }
 
   /// Return the fraction.

@@ -80,7 +80,7 @@ void run_tests() {
 
     // const auto expected = utility::wilson_interval<double>()(3, 1);
     const auto wilson = utility::wilson_interval<double>();
-    const auto expected = wilson.wilson_solve_for_neff_phat_correction(
+    const auto expected = wilson.solve_for_neff_phat_correction(
         4,      // n_eff = 4
         0.75,   // p_hat = 0.75
         1.46875 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=4
@@ -99,7 +99,7 @@ void run_tests() {
     const auto ci = f.confidence_interval();
 
     const auto wilson = utility::wilson_interval<double>();
-    const auto expected = wilson.wilson_solve_for_neff_phat_correction(
+    const auto expected = wilson.solve_for_neff_phat_correction(
         1, // n_eff = 1
         0, // p_hat = 0
         10 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1
@@ -118,7 +118,7 @@ void run_tests() {
     const auto ci = f.confidence_interval();
 
     const auto wilson = utility::wilson_interval<double>();
-    const auto expected = wilson.wilson_solve_for_neff_phat_correction(
+    const auto expected = wilson.solve_for_neff_phat_correction(
         1, // n_eff = 1
         1, // p_hat = 1
         10 // f(n) = (n³ + n² + 2n + 6) / n³ evaluated at n=1

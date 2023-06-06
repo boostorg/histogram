@@ -9,6 +9,7 @@
 
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/fwd.hpp> // for fraction<>
+#include <boost/histogram/utility/binomial_proportion_interval.hpp>
 #include <boost/histogram/utility/wilson_interval.hpp>
 #include <boost/histogram/weight.hpp>
 #include <type_traits> // for std::common_type
@@ -37,8 +38,8 @@ public:
   using const_reference = const value_type&;
   using real_type = typename std::conditional<std::is_floating_point<value_type>::value,
                                               value_type, double>::type;
-  using score_type = typename utility::wilson_interval<real_type>;
-  using interval_type = typename score_type::interval_type;
+  using interval_type =
+      typename utility::binomial_proportion_interval<real_type>::interval_type;
 
   fraction() noexcept = default;
 
@@ -99,8 +100,13 @@ public:
 
   /// Return standard interval with 68.3 % confidence level (Wilson score interval).
   interval_type confidence_interval() const noexcept {
-    return score_type()(static_cast<real_type>(successes()),
-                        static_cast<real_type>(failures()));
+    return confidence_interval(utility::wilson_interval<real_type>());
+  }
+
+  /// Return interval for the given binomial proportion interval computer.
+  interval_type confidence_interval(
+      const utility::binomial_proportion_interval<real_type>& b) const noexcept {
+    return b(static_cast<real_type>(successes()), static_cast<real_type>(failures()));
   }
 
   bool operator==(const fraction& rhs) const noexcept {

@@ -94,7 +94,7 @@ public:
 
     @param p The problem to solve.
   */
-  interval_type wilson_solve_for_neff_phat_correction(
+  interval_type solve_for_neff_phat_correction(
       const value_type& n_eff, const value_type& p_hat,
       const value_type& correction) const noexcept {
     // Equation 41 from this paper: https://arxiv.org/abs/2110.00294
