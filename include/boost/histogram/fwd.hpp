@@ -60,6 +60,12 @@ template <class Value = double, class Transform = use_default,
           class MetaData = use_default, class Options = use_default>
 class regular;
 
+template <class Value = double>
+class piece;
+
+template <class Value = double, class MetaData = use_default, class Options = use_default>
+class unit_regular;
+
 template <class Value = int, class MetaData = use_default, class Options = use_default>
 class integer;
 

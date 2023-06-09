@@ -20,6 +20,7 @@
 #include <boost/histogram/axis/boolean.hpp>
 #include <boost/histogram/axis/category.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/piecewise.hpp>
 #include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/variable.hpp>
 #include <boost/histogram/axis/variant.hpp>
