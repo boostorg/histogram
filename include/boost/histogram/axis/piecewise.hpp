@@ -51,7 +51,7 @@ public:
 
   /// The mapping from input space X to bin space Y
   template <class T>
-  T forward(T x) const noexcept {
+  auto forward(T x) const noexcept {
 
     // First piece
     const auto& piece_0 = v_pieces_.front();
