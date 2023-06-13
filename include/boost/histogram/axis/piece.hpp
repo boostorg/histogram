@@ -167,8 +167,10 @@ private:
   std::vector<double> vec_;
 };
 
-/** Abstract variable width piece class
+/** Abstract class for b0 pieces
 
+  Pieces derived from this class have forward and reverse methods with closed form
+  solutions parameterized in terms of an initial bin spacing b0.
 */
 template <class Value, class PieceType>
 class piece_b0 : public piece_base<Value, PieceType> {
@@ -176,7 +178,7 @@ class piece_b0 : public piece_base<Value, PieceType> {
   using internal_value_type = detail::get_scale_type<value_type>;
 
 public:
-  /** Finds the piece whose size is known, but bin spacing is not.
+  /** Finds the piece whose size is known, but initial bin spacing b0 is not.
 
     @param n number of bins
     @param x0 starting point
@@ -289,14 +291,6 @@ private:
      x1 - x0 = r * b0 / (r - 1) - 1 * b0 / (r - 1)
              = (r - 1) * b0 / (r - 1)
              = b0
-
-   Find a formula for N
-     xN - x0  = b0 / (r - 1) * rᴺ - b0 / (r - 1) * 1
-              = b0 / (r - 1) * (rᴺ - 1)
-
-   N in terms of xN
-     N = log2(((xN - x0) / b0) * (r - 1) + 1) / log2(r)
-
 */
 template <class Value>
 class piece_multiply : public piece_b0<Value, piece_multiply<Value>> {
@@ -307,8 +301,11 @@ class piece_multiply : public piece_b0<Value, piece_multiply<Value>> {
 public:
   /** The mapping from bin space Y to input space X.
 
-    Uses the formula:
-       x = x0 + b0 * (rᴺ - 1) / (r - 1)
+    Eliminate ψ:
+       xN - x0 = b0 / (r - 1) * rᴺ - b0 / (r - 1) * 1
+               = b0 / (r - 1) * (rᴺ - 1)
+    Solving for xN gives the formula:
+       xN = x0 + b0 * (rᴺ - 1) / (r - 1)
   */
   internal_value_type inverse(internal_value_type N) const noexcept override {
     return this->x0() + this->b0() * (std::pow(r_, N) - 1) / (r_ - 1);

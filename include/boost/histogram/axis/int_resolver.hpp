@@ -37,7 +37,8 @@ namespace axis {
 
 /** Bin shift integrator
 
-  Accumulates bin shifts to support growable axes.
+  Accumulates bin shifts to support growable axes. The shift_axis method is called
+  by the update method of an int_resolver class.
 */
 template <class Value, class Payload>
 class bin_shift_integrator {
@@ -48,7 +49,7 @@ public:
   /// Constructor for bin_shift_integrator
   explicit bin_shift_integrator(const Payload& payload) : payload_(payload) {}
 
-  /// Shifts the axis
+  /// Shifts the axis -- called by update method of int_resolver
   void shift_axis(index_type n) {
     if (n < 0) {
       bins_under_ += std::abs(n);
@@ -94,8 +95,6 @@ public:
 
   /// The mapping from input space X to integer bin space Y
   index_type index(value_type x) const noexcept {
-    // Runs in hot loop, please measure impact of changes
-
     const value_type y = payload_.forward(x);
 
     if (y < size()) {
@@ -185,16 +184,16 @@ public:
   }
 
   index_type index(value_type x) const noexcept {
-    // Take the mod of the input
+    // Take the mod of the input. Taking the mod of the output likely doesn't do what
+    // one wants for non-linear transformations.
     x -= x_low_plus_delta_x_ * std::floor((x - x_low_) / x_low_plus_delta_x_);
 
+    // x is in undefined part of periodic domain --> nan
     if (x < x_low_ || x_high_ < x) {
       return payload_.size();
     } else {
       const value_type y = payload_.forward(x);
-
       if (std::isfinite(y)) { return static_cast<index_type>(y); }
-
       return payload_.size();
     }
   }
