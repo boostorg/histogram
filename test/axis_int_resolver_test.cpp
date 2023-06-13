@@ -37,11 +37,14 @@ int main() {
     const auto p = type_multiply::create(k_N, k_x0, k_b0, k_r);
     const auto a = axis::int_resolver_circular<double, type_multiply>(p, 2, 22);
 
-    BOOST_TEST_EQ(a.index(3), 0);
-    BOOST_TEST_EQ(a.index(4), 1);
-    BOOST_TEST_EQ(a.index(6), 2);
-    BOOST_TEST_EQ(a.index(10), 3);
-    BOOST_TEST_EQ(a.index(18), 4);
+    // Has a period of 20 based on the given bounds 2 and 22
+    for (int i = -200; i < 200; i += 20) {
+      BOOST_TEST_EQ(a.index(i + 3), 0);
+      BOOST_TEST_EQ(a.index(i + 4), 1);
+      BOOST_TEST_EQ(a.index(i + 6), 2);
+      BOOST_TEST_EQ(a.index(i + 10), 3);
+      BOOST_TEST_EQ(a.index(i + 18), 4);
+    }
   }
 
   // int_resolver_linear
