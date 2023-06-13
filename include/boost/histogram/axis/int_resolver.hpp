@@ -23,7 +23,6 @@
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
-#include <boost/variant2/variant.hpp>
 #include <cassert>
 #include <cmath>
 #include <limits>

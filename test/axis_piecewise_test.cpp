@@ -18,10 +18,7 @@
 #include "throw_exception.hpp"
 
 #include <cmath>
-#include <iostream>
 #include <numeric>
-
-#include <boost/variant2/variant.hpp>
 
 using namespace boost::histogram;
 
@@ -37,8 +34,8 @@ int main() {
     BOOST_TEST_EQ(p.size(), 12);
     BOOST_TEST_EQ(p.x0(), -1.5);
 
-    // The bin spacing of the first piece is 0.5, so the first extrapolated piece is 0.5
-    // * 1.1
+    // The bin spacing of the first piece is 0.5, so the first extrapolated piece is
+    // 0.5 * 1.1
     BOOST_TEST_EQ(p.xN(), 2.5 + 0.5 * (1.1 + std::pow(1.1, 2) + std::pow(1.1, 3) +
                                        std::pow(1.1, 4)));
   }

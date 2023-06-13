@@ -19,7 +19,6 @@
 #include "throw_exception.hpp"
 
 #include <cmath>
-#include <iostream>
 #include <numeric>
 
 using namespace boost::histogram;
@@ -29,7 +28,7 @@ int main() {
   {
     using type_multiply = axis::piece_multiply<double>;
 
-    // Has x0 = 4, x1 = 5, x2 = 7, x3 = 11, x4 = 17
+    // Has x0 = 3, x1 = 4, x2 = 6, x3 = 10, x4 = 18
     const int k_N = 3;
     const double k_x0 = 3.0;
     const double k_b0 = 1.0;
@@ -43,7 +42,6 @@ int main() {
     BOOST_TEST_EQ(a.index(6), 2);
     BOOST_TEST_EQ(a.index(10), 3);
     BOOST_TEST_EQ(a.index(18), 4);
-    // BOOST_TEST_EQ(a.index(5), k_x0 + k_b0);
   }
 
   // int_resolver_linear
@@ -58,10 +56,7 @@ int main() {
     BOOST_TEST_EQ(a.value(2), 0);
     BOOST_TEST_EQ(a.value(3), 1);
     BOOST_TEST_EQ(a.value(4), 2);
-    // BOOST_TEST_EQ(a.bin(-1).lower(), -std::numeric_limits<double>::infinity());
-    // BOOST_TEST_EQ(a.bin(-1).upper(), -2);
-    // BOOST_TEST_EQ(a.bin(a.size()).lower(), 2);
-    // BOOST_TEST_EQ(a.bin(a.size()).upper(), std::numeric_limits<double>::infinity());
+
     BOOST_TEST_EQ(a.index(-10.), -1);
     BOOST_TEST_EQ(a.index(-2.1), -1);
     BOOST_TEST_EQ(a.index(-2.0), 0);

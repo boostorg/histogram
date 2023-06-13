@@ -13,7 +13,7 @@
 #include <boost/histogram/axis/iterator.hpp>
 #include <boost/histogram/axis/metadata_base.hpp>
 #include <boost/histogram/axis/option.hpp>
-#include <boost/histogram/axis/regular.hpp>
+#include <boost/histogram/axis/regular.hpp> // For one_unit, get_scale_type, etc
 #include <boost/histogram/detail/convert_integer.hpp>
 #include <boost/histogram/detail/limits.hpp>
 #include <boost/histogram/detail/relaxed_equal.hpp>
@@ -33,7 +33,6 @@
 namespace boost {
 namespace histogram {
 namespace axis {
-
 /** The abstract piece class that other pieces inherit from
 
   The class has two pure virtual functions:

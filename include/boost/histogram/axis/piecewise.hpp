@@ -22,7 +22,6 @@
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/utility.hpp>
 #include <boost/throw_exception.hpp>
-#include <boost/variant2/variant.hpp>
 #include <cassert>
 #include <cmath>
 #include <limits>
@@ -34,94 +33,6 @@
 namespace boost {
 namespace histogram {
 namespace axis {
-
-/**
-
-Solution overview:
-
-This 1D piecewise axis implementation has two layers. The first layer has to
-do with creating immutable transformations from input space X to bin space Y.
-The second layer modifies the behavior of these transformation in order to make
-them behave like an axis. If axis growth is allowed, this second layer is mutable.
-I explain how this works on a high level.
-
-Layer 1: Transformation
-Transformation pieces:
-
-Suppose we want to divide the input space X into 4 bins of unit spacing starting
-at x=3.
-
-bin   0   1   2   3
-    |---|---|---|---|
-   x=3             x=7
-
-The transformation is described by three pieces of information
-  forward transformation: y = f(x) = x - 3
-  inverse transformation: x = f⁻¹(y) = y + 3
-  number of bins: N = 4
-
-There are five supported transformation types:
-  1. unit      (bin spacing is 1)
-  2. uniform   (bin spacing is constant)
-  3. multiply  (bin spacing is multiplied by a constant)
-  4. add       (bin spacing is added to by a constant)
-  5. arbitrary (bin bounds are user supplied points)
-
-
-Combining transformations:
-
-Suppose we wanted to combine the following two transformations.
-
-  bin   0   1   2   3          bin  0  1  2   3    4
-      |---|---|---|---|            |-|--|---|----|-----|
-     x=3             x=7          x=9                x=15
-         Unit spacing                   Add spacing
-
-Typically one wouldn't want to combine two transformations with a gap between them,
-but this possibility is supported by the implementation. A piecewise transformation
-stores each of these unmodified transformations internally. The external behavior
-is that of transformation with bins 0 to 8 shown below.
-
-  bin   0   1   2   3     nan    4  5  6   7    8
-      |---|---|---|---|         |-|--|---|----|-----|
-     x=3             x=7       x=9                x=15
-
-
-Layer 2: Axis behavior
-Bin shifting:
-
-Suppose we wanted to use the transformation above in a growable axis. This axis starts
-off with 9 bins. Two kinds of bins can be added: underflow and overflow. Underflow bins
-are added below x=3. Overflow bins are added above x=15. Adding bins between x=7 and
-x=9 is not supported. The mutable transformation `x_bin_shift` accumulates:
-  - added underflow bins, and
-  - added overflow bins.
-Using this information, x_bin_shift augments the behavior of the contained piecewise
-transformation as follows. The size (i.e., number of bins) of the transformation is
-increased by the number of underflow and overflow bins. The bin values (i.e., Y axis)
-is shifted by the number of underflow bins in the forward and inverse calculations.
-
-Linear axis:
-
-Wrapping the, possibly shifted, transformation in an `int_resolver_linear` makes the
-transformation behave like an axis. This linear int resolver implemenets an index method.
-
-Circular axis:
-
-Suppose we wanted to make the above described piecewise transformation circular with
-a relevant period x=3 to x=23. This transformaion is copied below for convenience.
-
-  bin   0   1   2   3     nan    4  5  6   7    8
-      |---|---|---|---|         |-|--|---|----|-----|
-     x=3             x=7       x=9                x=15
-
-To do this, we wrap the transformation in an `int_resolver_circular` with the bounds
-x=3 and x=23. This circular transform augments the behavior of the contained
-transformation. The input (i.e., the X axis) is wrapped to the domain x=3 to x=23
-before being given to the contained transformation. This circular int resolver
-implemenets an index method allowing it to act as an axis.
-
-*/
 
 /** Piecewise -- putting pieces together
 

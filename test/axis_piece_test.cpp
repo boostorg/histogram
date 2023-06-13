@@ -17,7 +17,6 @@
 #include "throw_exception.hpp"
 
 #include <cmath>
-#include <iostream>
 #include <numeric>
 
 using namespace boost::histogram;
@@ -52,7 +51,6 @@ public:
       // Check that the bin width is correct
       BOOST_TEST_IS_CLOSE(p.calc_bin_width(i), bin_width, 1.0e-12);
       bin_width = lambda(bin_width);
-      // tester_next_width(p, &bin_width, args...);
     }
 
     // Check xN
@@ -74,6 +72,7 @@ private:
   double b0_;
 };
 
+// Tests that two pieces are equal
 template <class PieceType>
 void test_equal(const PieceType& p1, const PieceType& p2) {
   BOOST_TEST_EQ(p1.size(), p2.size());
@@ -88,9 +87,10 @@ void test_equal(const PieceType& p1, const PieceType& p2) {
 
 template <class PieceType, class... Args>
 void test_solve_b0(const PieceType& p_R, Args... args) {
-  // Construct force from create
+  // Reconstruct piece with xN instead of b0
   const auto p2 = PieceType::solve_b0(p_R.size(), p_R.x0(), p_R.xN(), args...);
 
+  // See if pieces are equal
   test_equal(p_R, p2);
 }
 
@@ -120,7 +120,7 @@ int main() {
     BOOST_TEST_EQ(p.inverse(4), 6);
   }
 
-  // Test arbitrary
+  // Test variable
   {
     using p_type = axis::piece_variable<double>;
     const auto p = p_type::create(std::vector<double>{1.1, 2.6, 3.8, 4.2, 5.9});
