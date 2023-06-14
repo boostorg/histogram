@@ -105,5 +105,49 @@ int main() {
     BOOST_TEST_EQ(a.update(-std::numeric_limits<double>::infinity()), pii_t(-1, 0));
   }
 
+  // Test based on the example https://godbolt.org/z/oaPo6n17h
+  // from @vakokako in #336
+  {
+    auto fn_test_precision = [](int N, double x0, double xN, auto fn_axis) {
+      const auto a = fn_axis(N, x0, xN);
+
+      // // Calculate bin spacing b0
+      const double b0 = (xN - x0) / N;
+
+      // Check to see if the index and value calculations are exact
+      for (int y = 0; y < a.size(); ++y) {
+        const double x = x0 + y * b0;
+        BOOST_TEST_EQ(y, a.index(x));
+        BOOST_TEST_EQ((double)(x), a.value(y));
+      }
+    };
+
+    auto fn_test_piece = [](int N, double x0, double xN) {
+      const auto p_uniform = axis::piece_uniform<double>::solve_b0(N, x0, xN);
+      return axis::int_resolver_linear<double, axis::piece_uniform<double>>(p_uniform);
+    };
+
+#if 0
+    auto fn_test_regular = [](int N, double x0, double xN){
+      return boost::histogram::axis::regular<double>(N, x0, xN);
+    };
+    fn_test_precision(27000, 0, 27000, fn_test_regular); // Fails
+#endif
+    fn_test_precision(27000, 0, 27000, fn_test_piece); // Passes
+
+    // Bin spacings and starting points that take few floating point bits to represent
+    const std::vector<double> v_spacing = {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 3, 7.5};
+    const std::vector<double> v_x0 = {-1000.25, -2.5, -0.5, 0, 0.5, 2.5, 1000.25};
+    const std::vector<int> v_n = {1, 16, 27000, 350017, 1234567}; // Integer spacings
+
+    for (const double spacing : v_spacing) {
+      for (const double x0 : v_x0) {
+        for (const int n : v_n) {
+          fn_test_precision(n, x0, x0 + n * spacing, fn_test_piece);
+        }
+      }
+    }
+  }
+
   return boost::report_errors();
 }
