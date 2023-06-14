@@ -136,13 +136,12 @@ int main() {
     fn_test_precision(27000, 0, 27000, fn_test_piece); // Passes
 
     // Bin spacings and starting points that take few floating point bits to represent
-    const std::vector<double> v_spacing = {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.5, 3, 7.5};
+    const std::vector<double> v_spacing = {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.625, 7.25};
     const std::vector<double> v_x0 = {-1000.25, -2.5, -0.5, 0, 0.5, 2.5, 1000.25};
-    const std::vector<int> v_n = {1, 16, 27000, 350017, 1234567}; // Integer spacings
 
-    for (const double spacing : v_spacing) {
-      for (const double x0 : v_x0) {
-        for (const int n : v_n) {
+    for (const int n : {1, 16, 27000, 350017, 1234567}) {
+      for (const double spacing : v_spacing) {
+        for (const double x0 : v_x0) {
           fn_test_precision(n, x0, x0 + n * spacing, fn_test_piece);
         }
       }
