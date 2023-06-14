@@ -110,6 +110,7 @@ int main() {
   {
     auto fn_test_precision = [](int N, double x0, double xN, auto fn_axis) {
       const auto a = fn_axis(N, x0, xN);
+      BOOST_TEST(a.size() == N);
 
       // // Calculate bin spacing b0
       const double b0 = (xN - x0) / N;
@@ -136,7 +137,7 @@ int main() {
     fn_test_precision(27000, 0, 27000, fn_test_piece); // Passes
 
     // Bin spacings and starting points that take few floating point bits to represent
-    const std::vector<double> v_spacing = {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.625, 7.25};
+    const std::vector<double> v_spacing = {0.125, 0.375, 0.5, 0.75, 1, 1.625, 3, 7.25};
     const std::vector<double> v_x0 = {-1000.25, -2.5, -0.5, 0, 0.5, 2.5, 1000.25};
 
     for (const int n : {1, 16, 27000, 350017, 1234567}) {
