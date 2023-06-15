@@ -301,5 +301,43 @@ int main() {
     BOOST_TEST_EQ(b.value(2), 5);
   }
 
+  // Test based on the example https://godbolt.org/z/oaPo6n17h
+  // from @vakokako in #336
+  {
+    auto fn_test_precision = [](int N, double x0, double xN, auto fn_axis) {
+      const auto a = fn_axis(N, x0, xN);
+      BOOST_TEST(a.size() == N);
+
+      // // Calculate bin spacing b0
+      const double b0 = (xN - x0) / N;
+
+      // Check to see if the index and value calculations are exact
+      for (int y = 0; y < a.size(); ++y) {
+        const double x = x0 + y * b0;
+        BOOST_TEST_EQ(y, a.index(x));
+        BOOST_TEST_EQ((double)(x), a.value(y));
+      }
+    };
+
+    auto fn_test_regular = [](int N, double x0, double xN) {
+      return boost::histogram::axis::regular<double>(N, x0, xN);
+    };
+
+    // The original example
+    fn_test_precision(27000, 0, 27000, fn_test_regular);
+
+    // Bin spacings and starting points that take few floating point bits to represent
+    const std::vector<double> v_spacing = {0.125, 0.375, 0.5, 0.75, 1, 1.625, 3, 7.25};
+    const std::vector<double> v_x0 = {-1000.25, -2.5, -0.5, 0, 0.5, 2.5, 1000.25};
+
+    for (const int n : {1, 16, 27000, 350017, 1234567}) {
+      for (const double spacing : v_spacing) {
+        for (const double x0 : v_x0) {
+          fn_test_precision(n, x0, x0 + n * spacing, fn_test_regular);
+        }
+      }
+    }
+  }
+
   return boost::report_errors();
 }
