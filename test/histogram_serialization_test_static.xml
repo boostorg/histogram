@@ -8,7 +8,7 @@
 
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!DOCTYPE boost_serialization>
-<boost_serialization signature="serialization::archive" version="17">
+<boost_serialization signature="serialization::archive" version="19">
 <item class_id="0" tracking_level="0" version="0">
 	<axes class_id="1" tracking_level="0" version="0">
 		<item class_id="2" tracking_level="0" version="0">
@@ -16,21 +16,24 @@
 			<size>1</size>
 			<meta>reg</meta>
 			<min>-1.00000000000000000e+00</min>
-			<delta>2.00000000000000000e+00</delta>
+			<b0>2.00000000000000000e+00</b0>
+			<b0_inv>5.00000000000000000e-01</b0_inv>
 		</item>
 		<item class_id="4" tracking_level="0" version="0">
 			<transform></transform>
 			<size>1</size>
 			<meta>cir</meta>
 			<min>0.000000000e+00</min>
-			<delta>1.000000000e+00</delta>
+			<b0>1.000000000e+00</b0>
+			<b0_inv>1.000000000e+00</b0_inv>
 		</item>
 		<item class_id="5" tracking_level="0" version="0">
 			<transform class_id="6" tracking_level="0" version="0"></transform>
 			<size>1</size>
 			<meta>reg-log</meta>
 			<min>0.00000000000000000e+00</min>
-			<delta>2.00000000000000000e+00</delta>
+			<b0>2.88539008177792677e+00</b0>
+			<b0_inv>3.46573590279972643e-01</b0_inv>
 		</item>
 		<item class_id="7" tracking_level="0" version="0">
 			<transform class_id="8" tracking_level="0" version="0">
@@ -45,7 +48,8 @@
 				<item>3</item>
 			</meta>
 			<min>1.00000000000000000e+00</min>
-			<delta>9.00000000000000000e+00</delta>
+			<b0>9.00000000000000000e+00</b0>
+			<b0_inv>1.11111111111111105e-01</b0_inv>
 		</item>
 		<item class_id="10" tracking_level="0" version="0">
 			<seq>
@@ -74,7 +78,7 @@
 	<storage class_id="15" tracking_level="0" version="0">
 		<type>0</type>
 		<size>4</size>
-		<buffer>
+		<buffer class_id="16" tracking_level="0" version="0">
 			<item>0</item>
 			<item>0</item>
 			<item>1</item>
