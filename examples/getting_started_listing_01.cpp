@@ -72,14 +72,16 @@ int main() {
     Edges can be accessed with methods `lower()` and `upper()`.
   */
 
-  // IEEE 754 has a positive and a negative zero, which are equal, but have different signs.
-  // This lambda function converts negative zero to positive zero for the purposes of string formatting.
+  // IEEE 754 has a positive and a negative zero, which are equal, but have
+  // different signs. This lambda function converts negative zero to positive
+  // zero for the purposes of string formatting.
   auto fn_negative_zero_to_zero = [](double x) { return (x == 0) ? 0.0 : x; };
 
   std::ostringstream os;
   for (auto&& x : indexed(h, coverage::all)) {
     os << boost::format("bin %2i [%4.1f, %4.1f): %i\n")
-          % x.index() % fn_negative_zero_to_zero(x.bin().lower()) % fn_negative_zero_to_zero(x.bin().upper()) % *x;
+          % x.index() % fn_negative_zero_to_zero(x.bin().lower())
+          % fn_negative_zero_to_zero(x.bin().upper()) % *x;
   }
 
   std::cout << os.str() << std::flush;
