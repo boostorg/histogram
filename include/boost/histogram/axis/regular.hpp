@@ -83,18 +83,19 @@ struct id {
   void serialize(Archive&, unsigned /* version */) {}
 };
 
-/// Log transform for equidistant bins in log-space.
+/// Log transform for equidistant bins in log-space. Note, the base does not matter
+/// because of the change of base formula which says: log_b(x) = log_a(x) / log_a(b).
 struct log {
   /// Returns log(x) of external value x.
   template <class T>
   static T forward(T x) {
-    return std::log(x);
+    return std::log2(x);
   }
 
   /// Returns exp(x) for internal value x.
   template <class T>
   static T inverse(T x) {
-    return std::exp(x);
+    return std::pow(2, x);
   }
 
   template <class Archive>
@@ -221,8 +222,13 @@ public:
       : transform_type(std::move(trans))
       , metadata_base(std::move(meta))
       , size_(static_cast<index_type>(n))
-      , min_(this->forward(detail::get_scale(start)))
-      , delta_(this->forward(detail::get_scale(stop)) - min_) {
+      , min_(this->forward(detail::get_scale(start))) {
+    {
+      const auto delta = this->forward(detail::get_scale(stop)) - min_;
+      b0_ = static_cast<internal_value_type>(delta / size());
+      b0_inv_ = static_cast<internal_value_type>(size() / delta);
+    }
+
     // static_asserts were moved here from class scope to satisfy deduction in gcc>=11
     static_assert(std::is_nothrow_move_constructible<transform_type>::value,
                   "transform must be no-throw move constructible");
@@ -233,11 +239,10 @@ public:
     static_assert(!(options.test(option::circular) && options.test(option::growth)),
                   "circular and growth options are mutually exclusive");
     if (size() <= 0) BOOST_THROW_EXCEPTION(std::invalid_argument("bins > 0 required"));
-    if (!std::isfinite(min_) || !std::isfinite(delta_))
+    if (b0_ == 0) BOOST_THROW_EXCEPTION(std::invalid_argument("range of axis is zero"));
+    if (!std::isfinite(min_) || !std::isfinite(b0_) || !std::isfinite(b0_inv_))
       BOOST_THROW_EXCEPTION(
           std::invalid_argument("forward transform of start or stop invalid"));
-    if (delta_ == 0)
-      BOOST_THROW_EXCEPTION(std::invalid_argument("range of axis is zero"));
   }
 
   /** Construct n bins over real range [start, stop).
@@ -306,52 +311,32 @@ public:
 
   /// Return index for value argument.
   index_type index(value_type x) const noexcept {
-    // Runs in hot loop, please measure impact of changes
-    auto z = (this->forward(x / unit_type{}) - min_) / delta_;
-    if (options_type::test(option::circular)) {
-      if (std::isfinite(z)) {
-        z -= std::floor(z);
-        return static_cast<index_type>(z * size());
-      }
-    } else {
-      if (z < 1) {
-        if (z >= 0)
-          return static_cast<index_type>(z * size());
-        else
-          return -1;
-      }
-      // upper edge of last bin is inclusive if overflow bin is not present
-      if (!options_type::test(option::overflow) && z == 1) return size() - 1;
-    }
-    return size(); // also returned if x is NaN
+    return index_impl(options_type::test(axis::option::circular),
+                      static_cast<double>(x / unit_type{}));
   }
 
   /// Returns index and shift (if axis has grown) for the passed argument.
   std::pair<index_type, index_type> update(value_type x) noexcept {
     assert(options_type::test(option::growth));
-    const auto z = (this->forward(x / unit_type{}) - min_) / delta_;
-    if (z < 1) { // don't use i here!
-      if (z >= 0) {
-        const auto i = static_cast<axis::index_type>(z * size());
+    auto y = (this->forward(x / unit_type{}) - min_) * b0_inv_;
+    if (y < size()) {
+      if (0 <= y) {
+        const auto i = static_cast<axis::index_type>(y);
         return {i, 0};
       }
-      if (z != -std::numeric_limits<internal_value_type>::infinity()) {
-        const auto stop = min_ + delta_;
-        const auto i = static_cast<axis::index_type>(std::floor(z * size()));
-        min_ += i * (delta_ / size());
-        delta_ = stop - min_;
+      if (y != -std::numeric_limits<internal_value_type>::infinity()) {
+        const auto i = static_cast<axis::index_type>(std::floor(y));
+        min_ += i * b0_;
         size_ -= i;
         return {0, -i};
       }
       // z is -infinity
       return {-1, 0};
     }
-    // z either beyond range, infinite, or NaN
-    if (z < std::numeric_limits<internal_value_type>::infinity()) {
-      const auto i = static_cast<axis::index_type>(z * size());
+    // y either beyond range, infinite, or NaN
+    if (y < std::numeric_limits<internal_value_type>::infinity()) {
+      const auto i = static_cast<axis::index_type>(y);
       const auto n = i - size() + 1;
-      delta_ /= size();
-      delta_ *= size() + n;
       size_ += n;
       return {i, -n};
     }
@@ -361,13 +346,13 @@ public:
 
   /// Return value for fractional index argument.
   value_type value(real_index_type i) const noexcept {
-    auto z = i / size();
-    if (!options_type::test(option::circular) && z < 0.0)
-      z = -std::numeric_limits<internal_value_type>::infinity() * delta_;
-    else if (options_type::test(option::circular) || z <= 1.0)
-      z = (1.0 - z) * min_ + z * (min_ + delta_);
+    real_index_type z;
+    if (!options_type::test(option::circular) && i < 0.0)
+      z = -std::numeric_limits<internal_value_type>::infinity() * b0_;
+    else if (options_type::test(option::circular) || i <= size())
+      z = min_ + i * b0_;
     else {
-      z = std::numeric_limits<internal_value_type>::infinity() * delta_;
+      z = std::numeric_limits<internal_value_type>::infinity() * b0_;
     }
     return static_cast<value_type>(this->inverse(z) * unit_type());
   }
@@ -386,7 +371,7 @@ public:
   template <class V, class T, class M, class O>
   bool operator==(const regular<V, T, M, O>& o) const noexcept {
     return detail::relaxed_equal{}(transform(), o.transform()) && size() == o.size() &&
-           min_ == o.min_ && delta_ == o.delta_ &&
+           min_ == o.min_ && b0_ == o.b0_ && b0_inv_ == o.b0_inv_ &&
            detail::relaxed_equal{}(this->metadata(), o.metadata());
   }
   template <class V, class T, class M, class O>
@@ -400,12 +385,49 @@ public:
     ar& make_nvp("size", size_);
     ar& make_nvp("meta", this->metadata());
     ar& make_nvp("min", min_);
-    ar& make_nvp("delta", delta_);
+    ar& make_nvp("b0", b0_);
+    ar& make_nvp("b0_inv", b0_inv_);
   }
 
 private:
+  // axis not circular
+  index_type index_impl(std::false_type, double x) const noexcept {
+    auto y = (this->forward(x) - min_) * b0_inv_;
+    if (y < size()) {
+      if (0 <= y)
+        return static_cast<index_type>(y);
+      else
+        return -1;
+    }
+    // upper edge of last bin is inclusive if overflow bin is not present
+    if (!options_type::test(option::overflow) && y == size()) return size() - 1;
+    return size(); // also returned if x is NaN
+  }
+
+  // value_type is integer, axis circular
+  index_type index_impl(std::true_type, double x) const noexcept {
+    auto lambda_circ = [&](auto x) -> index_type {
+      auto delta = size() * b0_;
+      // Need to wrap in input space x, not output space y in case of a non-identify
+      // transform.
+      x -= std::floor((x - min_) / delta) * delta;
+      x += min_;
+      auto y = (this->forward(x) - min_) * b0_inv_;
+      return static_cast<index_type>(y);
+    };
+
+    return detail::static_if<std::is_floating_point<value_type>>(
+        [&](auto x) {
+          if (std::isfinite(x))
+            return lambda_circ(x);
+          else
+            return size();
+        },
+        lambda_circ, x);
+  }
+
   index_type size_{0};
-  internal_value_type min_{0}, delta_{1};
+  internal_value_type min_{0}, b0_{0}, b0_inv_{0};
 
   template <class V, class T, class M, class O>
   friend class regular;

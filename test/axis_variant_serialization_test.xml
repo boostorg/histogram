@@ -8,7 +8,7 @@
 
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!DOCTYPE boost_serialization>
-<boost_serialization signature="serialization::archive" version="17">
+<boost_serialization signature="serialization::archive" version="19">
 <item class_id="0" tracking_level="0" version="0">
 	<variant class_id="1" tracking_level="0" version="0">
 		<which>1</which>
@@ -17,7 +17,8 @@
 			<size>1</size>
 			<meta></meta>
 			<min>0.00000000000000000e+00</min>
-			<delta>1.00000000000000000e+00</delta>
+			<b0>1.00000000000000000e+00</b0>
+			<b0_inv>1.00000000000000000e+00</b0_inv>
 		</value>
 	</variant>
 </item>

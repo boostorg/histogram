@@ -8,49 +8,52 @@
 
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!DOCTYPE boost_serialization>
-<boost_serialization signature="serialization::archive" version="17">
+<boost_serialization signature="serialization::archive" version="19">
 <item class_id="0" tracking_level="0" version="0">
 	<axes class_id="1" tracking_level="0" version="0">
 		<count>7</count>
 		<item_version>0</item_version>
 		<item class_id="2" tracking_level="0" version="0">
-			<variant class_id="3" tracking_level="1" version="0" object_id="_0">
+			<variant class_id="3" tracking_level="0" version="0">
 				<which>0</which>
 				<value class_id="4" tracking_level="0" version="0">
 					<transform class_id="5" tracking_level="0" version="0"></transform>
 					<size>1</size>
 					<meta>reg</meta>
 					<min>-1.00000000000000000e+00</min>
-					<delta>2.00000000000000000e+00</delta>
+					<b0>2.00000000000000000e+00</b0>
+					<b0_inv>5.00000000000000000e-01</b0_inv>
 				</value>
 			</variant>
 		</item>
 		<item>
-			<variant object_id="_1">
+			<variant>
 				<which>1</which>
 				<value class_id="6" tracking_level="0" version="0">
 					<transform></transform>
 					<size>1</size>
 					<meta>cir</meta>
 					<min>0.000000000e+00</min>
-					<delta>1.000000000e+00</delta>
+					<b0>1.000000000e+00</b0>
+					<b0_inv>1.000000000e+00</b0_inv>
 				</value>
 			</variant>
 		</item>
 		<item>
-			<variant object_id="_2">
+			<variant>
 				<which>2</which>
 				<value class_id="7" tracking_level="0" version="0">
 					<transform class_id="8" tracking_level="0" version="0"></transform>
 					<size>1</size>
 					<meta>reg-log</meta>
 					<min>0.00000000000000000e+00</min>
-					<delta>2.00000000000000000e+00</delta>
+					<b0>2.88539008177792677e+00</b0>
+					<b0_inv>3.46573590279972643e-01</b0_inv>
 				</value>
 			</variant>
 		</item>
 		<item>
-			<variant object_id="_3">
+			<variant>
 				<which>3</which>
 				<value class_id="9" tracking_level="0" version="0">
 					<transform class_id="10" tracking_level="0" version="0">
@@ -65,12 +68,13 @@
 						<item>3</item>
 					</meta>
 					<min>1.00000000000000000e+00</min>
-					<delta>9.00000000000000000e+00</delta>
+					<b0>9.00000000000000000e+00</b0>
+					<b0_inv>1.11111111111111105e-01</b0_inv>
 				</value>
 			</variant>
 		</item>
 		<item>
-			<variant object_id="_4">
+			<variant>
 				<which>4</which>
 				<value class_id="12" tracking_level="0" version="0">
 					<seq>
@@ -84,7 +88,7 @@
 			</variant>
 		</item>
 		<item>
-			<variant object_id="_5">
+			<variant>
 				<which>5</which>
 				<value class_id="14" tracking_level="0" version="0">
 					<seq>
@@ -98,7 +102,7 @@
 			</variant>
 		</item>
 		<item>
-			<variant object_id="_6">
+			<variant>
 				<which>6</which>
 				<value class_id="15" tracking_level="0" version="0">
 					<size>1</size>
@@ -111,7 +115,7 @@
 	<storage class_id="17" tracking_level="0" version="0">
 		<type>0</type>
 		<size>4</size>
-		<buffer>
+		<buffer class_id="18" tracking_level="0" version="0">
 			<item>0</item>
 			<item>0</item>
 			<item>1</item>
@@ -120,3 +124,4 @@
 	</storage>
 </item>
 </boost_serialization>
+
