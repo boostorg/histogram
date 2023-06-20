@@ -88,25 +88,9 @@ public:
     return variance_for_p_and_n_eff(value(), count());
   }
 
-  /// Calculate the variance for a given success fraction and effective number of samples.
-  template <class T>
-  static real_type variance_for_p_and_n_eff(const real_type& p, const T& n_eff) noexcept {
-    // We want to compute Var(p) for p = X / n with Var(X) = n p (1 - p)
-    // For Var(X) see
-    // https://en.wikipedia.org/wiki/Binomial_distribution#Expected_value_and_variance
-    // Error propagation: Var(p) = p'(X)^2 Var(X) = p (1 - p) / n
-    return p * (1 - p) / n_eff;
-  }
-
   /// Return standard interval with 68.3 % confidence level (Wilson score interval).
   interval_type confidence_interval() const noexcept {
     return confidence_interval(utility::wilson_interval<real_type>());
-  }
-
-  /// Return interval for the given binomial proportion interval computer.
-  interval_type confidence_interval(
-      const utility::binomial_proportion_interval<real_type>& b) const noexcept {
-    return b(static_cast<real_type>(successes()), static_cast<real_type>(failures()));
   }
 
   bool operator==(const fraction& rhs) const noexcept {
@@ -122,6 +106,24 @@ public:
   }
 
 private:
+  friend class weighted_fraction<value_type>;
+
+  // Calculate the variance for a given success fraction and effective number of samples.
+  template <class T>
+  static real_type variance_for_p_and_n_eff(const real_type& p, const T& n_eff) noexcept {
+    // We want to compute Var(p) for p = X / n with Var(X) = n p (1 - p)
+    // For Var(X) see
+    // https://en.wikipedia.org/wiki/Binomial_distribution#Expected_value_and_variance
+    // Error propagation: Var(p) = p'(X)^2 Var(X) = p (1 - p) / n
+    return p * (1 - p) / n_eff;
+  }
+
+  // Return interval for the given binomial proportion interval computer.
+  interval_type confidence_interval(
+      const utility::binomial_proportion_interval<real_type>& b) const noexcept {
+    return b(static_cast<real_type>(successes()), static_cast<real_type>(failures()));
+  }
+
   value_type succ_{};
   value_type fail_{};
 };
