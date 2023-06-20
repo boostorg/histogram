@@ -6,7 +6,7 @@
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
-#include <boost/histogram/accumulators/weighted_fraction.hpp>
+#include <boost/histogram/experimental/weighted_fraction.hpp>
 #include <boost/histogram/utility/wilson_interval.hpp>
 #include <cmath>
 #include <limits>
