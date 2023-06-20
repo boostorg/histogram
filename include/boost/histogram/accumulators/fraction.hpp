@@ -9,7 +9,9 @@
 
 #include <boost/core/nvp.hpp>
 #include <boost/histogram/fwd.hpp> // for fraction<>
+#include <boost/histogram/utility/binomial_proportion_interval.hpp>
 #include <boost/histogram/utility/wilson_interval.hpp>
+#include <boost/histogram/weight.hpp>
 #include <type_traits> // for std::common_type
 
 namespace boost {
@@ -36,7 +38,8 @@ public:
   using const_reference = const value_type&;
   using real_type = typename std::conditional<std::is_floating_point<value_type>::value,
                                               value_type, double>::type;
-  using interval_type = typename utility::wilson_interval<real_type>::interval_type;
+  using interval_type =
+      typename utility::binomial_proportion_interval<real_type>::interval_type;
 
   fraction() noexcept = default;
 
@@ -51,11 +54,14 @@ public:
                  static_cast<value_type>(e.failures())} {}
 
   /// Insert boolean sample x.
-  void operator()(bool x) noexcept {
+  void operator()(bool x) noexcept { operator()(weight(1), x); }
+
+  /// Insert boolean sample x with weight w.
+  void operator()(const weight_type<value_type>& w, bool x) noexcept {
     if (x)
-      ++succ_;
+      succ_ += w.value;
     else
-      ++fail_;
+      fail_ += w.value;
   }
 
   /// Add another accumulator.
@@ -79,18 +85,12 @@ public:
 
   /// Return variance of the success fraction.
   real_type variance() const noexcept {
-    // We want to compute Var(p) for p = X / n with Var(X) = n p (1 - p)
-    // For Var(X) see
-    // https://en.wikipedia.org/wiki/Binomial_distribution#Expected_value_and_variance
-    // Error propagation: Var(p) = p'(X)^2 Var(X) = p (1 - p) / n
-    const real_type p = value();
-    return p * (1 - p) / count();
+    return variance_for_p_and_n_eff(value(), count());
   }
 
   /// Return standard interval with 68.3 % confidence level (Wilson score interval).
   interval_type confidence_interval() const noexcept {
-    return utility::wilson_interval<real_type>()(static_cast<real_type>(successes()),
-                                                 static_cast<real_type>(failures()));
+    return confidence_interval(utility::wilson_interval<real_type>());
   }
 
   bool operator==(const fraction& rhs) const noexcept {
@@ -106,6 +106,24 @@ public:
   }
 
 private:
+  friend class weighted_fraction<value_type>;
+
+  // Calculate the variance for a given success fraction and effective number of samples.
+  template <class T>
+  static real_type variance_for_p_and_n_eff(const real_type& p, const T& n_eff) noexcept {
+    // We want to compute Var(p) for p = X / n with Var(X) = n p (1 - p)
+    // For Var(X) see
+    // https://en.wikipedia.org/wiki/Binomial_distribution#Expected_value_and_variance
+    // Error propagation: Var(p) = p'(X)^2 Var(X) = p (1 - p) / n
+    return p * (1 - p) / n_eff;
+  }
+
+  // Return interval for the given binomial proportion interval computer.
+  interval_type confidence_interval(
+      const utility::binomial_proportion_interval<real_type>& b) const noexcept {
+    return b(static_cast<real_type>(successes()), static_cast<real_type>(failures()));
+  }
+
   value_type succ_{};
   value_type fail_{};
 };

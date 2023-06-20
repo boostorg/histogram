@@ -97,6 +97,16 @@ class count;
 template <class ValueType = double>
 class fraction;
 
+namespace internal {
+
+template <class ValueType = double>
+class sum_of_weights_squared;
+
+} // namespace internal
+
+template <class ValueType = double>
+class weighted_fraction;
+
 template <class ValueType = double>
 class sum;
 
