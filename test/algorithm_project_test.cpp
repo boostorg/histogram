@@ -134,7 +134,9 @@ void run_tests() {
     BOOST_TEST_EQ(h_210.at(2, 0, 0), 1);
     BOOST_TEST_EQ(h_210.at(2, 0, 1), 1);
   }
+}
 
+void run_dynamic_tests() {
   {
     auto h = make(dynamic_tag(), axis::integer<>(0, 2), axis::integer<>(0, 3));
     h(0, 0);
@@ -188,6 +190,7 @@ void run_tests() {
 int main() {
   run_tests<static_tag>();
   run_tests<dynamic_tag>();
+  run_dynamic_tests();
 
   return boost::report_errors();
 }
