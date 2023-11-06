@@ -92,5 +92,6 @@ An [*Accumulator] is a functor which consumes the argument to update some intern
 * [classref boost::histogram::accumulators::weighted_sum]
 * [classref boost::histogram::accumulators::mean]
 * [classref boost::histogram::accumulators::weighted_mean]
+* [classref boost::histogram::accumulators::collector]
 
 [endsect]

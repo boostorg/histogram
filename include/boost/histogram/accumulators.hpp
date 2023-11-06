@@ -23,5 +23,6 @@
 #include <boost/histogram/accumulators/sum.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/accumulators/weighted_sum.hpp>
+#include <boost/histogram/accumulators/collector.hpp>
 
 #endif
