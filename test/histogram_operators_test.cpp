@@ -13,8 +13,8 @@
 #include <boost/histogram/ostream.hpp>
 #include <boost/throw_exception.hpp>
 #include <string>
-#include <vector>
 #include <type_traits>
+#include <vector>
 #include "dummy_storage.hpp"
 #include "histogram.hpp"
 #include "std_ostream.hpp"

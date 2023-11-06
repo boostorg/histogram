@@ -3,7 +3,6 @@
 
 #include <vector>
 
-
 namespace boost {
 namespace histogram {
 namespace accumulators {
@@ -21,15 +20,11 @@ public:
   collector(const collector<value_type, data_storage_type>& o) noexcept
       : data_(o.data_) {}
 
-  collector(const std::vector<value_type>& data) noexcept
-      : data_(data) {}
+  collector(const std::vector<value_type>& data) noexcept : data_(data) {}
 
-  collector(std::vector<value_type>&& data) noexcept
-      : data_(std::move(data)) {}
+  collector(std::vector<value_type>&& data) noexcept : data_(std::move(data)) {}
 
-  void operator()(const_reference x) noexcept {
-    data_.push_back(x);
-  }
+  void operator()(const_reference x) noexcept { data_.push_back(x); }
 
   collector& operator+=(const collector& rhs) noexcept {
     data_.reserve(data_.size() + rhs.data_.size());
@@ -37,30 +32,20 @@ public:
     return *this;
   }
 
-  bool operator==(const collector& rhs) const noexcept {
-    return data_ == rhs.data_;
-  }
+  bool operator==(const collector& rhs) const noexcept { return data_ == rhs.data_; }
 
-  bool operator!=(const collector& rhs) const noexcept {
-    return !(*this == rhs);
-  }
+  bool operator!=(const collector& rhs) const noexcept { return !(*this == rhs); }
 
-  size_type count() const noexcept {
-    return data_.size();
-  }
+  size_type count() const noexcept { return data_.size(); }
 
-  const std::vector<value_type>& value() const noexcept {
-    return data_;
-  }
+  const std::vector<value_type>& value() const noexcept { return data_; }
 
 private:
   data_storage_type data_;
 };
 
-
 } // namespace accumulators
 } // namespace histogram
 } // namespace boost
-
 
 #endif
