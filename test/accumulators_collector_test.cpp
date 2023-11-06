@@ -60,8 +60,8 @@ int main() {
   }
 
   // by default template arguments are <double, std::vector<double>>
-  BOOST_TEST_EQ(accumulators::collector{} += accumulators::collector{},
-                accumulators::collector{});
+  BOOST_TEST_EQ(accumulators::collector<>{} += accumulators::collector<>{},
+                accumulators::collector<>{});
 
   {
     accumulators::collector<int, std::vector<int>> acc2;
