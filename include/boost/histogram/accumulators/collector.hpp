@@ -32,6 +32,18 @@ public:
     return *this;
   }
 
+  collector<value_type, data_storage_type>& operator=(
+      const collector<value_type, data_storage_type>& rhs) noexcept {
+    if (this != &rhs) data_ = rhs.data_;
+    return *this;
+  }
+
+  collector<value_type, data_storage_type>& operator=(
+      collector<value_type, data_storage_type>&& rhs) noexcept {
+    if (this != &rhs) data_ = std::move(rhs.data_);
+    return *this;
+  }
+
   bool operator==(const collector& rhs) const noexcept { return data_ == rhs.data_; }
 
   bool operator!=(const collector& rhs) const noexcept { return !(*this == rhs); }
