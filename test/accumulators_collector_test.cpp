@@ -53,7 +53,7 @@ int main() {
 
   {
     accumulators::collector<int, std::vector<int>> acc_from_vector(
-        std::move(std::vector<int>{10, 20, 30}));
+        std::vector<int>{10, 20, 30});
     BOOST_TEST_EQ(acc_from_vector.count(), 3);
     acc_from_vector(40);
     BOOST_TEST_EQ(acc_from_vector.count(), 4);
