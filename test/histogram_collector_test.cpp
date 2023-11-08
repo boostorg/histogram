@@ -4,6 +4,7 @@
 #include <boost/histogram/axis/integer.hpp>
 #include <boost/histogram/histogram.hpp>
 #include <boost/histogram/make_histogram.hpp>
+#include "throw_exception.hpp"
 
 #include <array>
 #include <vector>

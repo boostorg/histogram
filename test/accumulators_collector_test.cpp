@@ -3,6 +3,7 @@
 #include <boost/histogram/accumulators/ostream.hpp>
 #include <string>
 #include "str.hpp"
+#include "throw_exception.hpp"
 
 using namespace boost::histogram;
 
