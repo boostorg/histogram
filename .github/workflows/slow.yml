@@ -47,7 +47,7 @@ jobs:
         ../../b2 $B2_OPTS cxxstd=17 test//all
 
   gcc5:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - uses: egor-tensin/setup-gcc@v1
