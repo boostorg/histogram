@@ -67,7 +67,7 @@ jobs:
     - name: Test cxxstd=14 (warnings ignored)
       run: |
         cd libs/histogram
-        ../../b2 -q -j2 toolset=gcc-5 cxxstd=14 test//all examples
+        ../../b2 -q -j2 toolset=gcc-7 cxxstd=14 test//all examples
 
   gcc10:
     runs-on: ubuntu-latest
