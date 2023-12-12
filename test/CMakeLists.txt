@@ -2,7 +2,7 @@
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-find_package(PythonInterp)
+find_package(Python3)
 if (PYTHONINTERP_FOUND)
   # checks that b2 and cmake are in sync
   add_test(NAME runpy-${PROJECT_NAME}_check_build_system COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
