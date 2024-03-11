@@ -5,8 +5,12 @@
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+require-b2 5.0.1 ;
+
+import-search /boost/config/checks ;
+
 import testing ;
-import ../../config/checks/config : requires ;
+import config : requires ;
 
 project
     : requirements
@@ -14,6 +18,7 @@ project
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
     ]
+    <source>/boost/format//boost_format
     ;
 
 alias cxx14 :

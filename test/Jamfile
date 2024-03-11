@@ -6,11 +6,15 @@
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+require-b2 5.0.1 ;
+
+import-search /boost/config/checks ;
+
 import python ;
 import os ;
 import regex ;
 import testing ;
-import ../../config/checks/config : requires ;
+import config : requires ;
 
 if ! [ python.configured ]
 {
@@ -146,9 +150,9 @@ alias math :
     [ run utility_jeffreys_interval_test.cpp ]
     : <warnings>off
     ;
-alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off ;
+alias accumulators : [ run boost_accumulators_support_test.cpp : : : <source>/boost/accumulators//boost_accumulators ] : <warnings>off ;
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
-alias units : [ run boost_units_support_test.cpp ] : <warnings>off ;
+alias units : [ run boost_units_support_test.cpp : : : <source>/boost/units//boost_units ] : <warnings>off ;
 alias serialization :
     [ run accumulators_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run detail_array_wrapper_serialization_test.cpp libserial ]
