@@ -1,7 +1,7 @@
 #include <boost/core/lightweight_test.hpp>
+#include <boost/core/span.hpp>
 #include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <boost/histogram/detail/reduce_command.hpp>
-#include <boost/histogram/detail/span.hpp>
 #include <boost/histogram/detail/sub_array.hpp>
 #include <initializer_list>
 #include <stdexcept>
@@ -23,6 +23,7 @@ std::ostream& operator<<(std::ostream& os, const reduce_command&) { return os; }
 using namespace boost::histogram::detail;
 
 int main() {
+  using boost::span;
 
   {
     sub_array<int, 3> a = {1, 2};

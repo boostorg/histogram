@@ -13,3 +13,4 @@ tools/codecov
 coverage-report
 .cache
 venv
+.pytest_cache
