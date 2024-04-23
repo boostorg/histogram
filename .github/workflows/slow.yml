@@ -46,13 +46,13 @@ jobs:
         cd libs/histogram
         ../../b2 $B2_OPTS cxxstd=17 test//all
 
-  gcc5:
-    runs-on: ubuntu-18.04
+  gcc7:
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: egor-tensin/setup-gcc@v1
       with:
-        version: 5
+        version: 7
     - name: Fetch Boost superproject
       run: |
         cd ..
@@ -60,6 +60,7 @@ jobs:
         cd boost
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         git submodule update --init --depth 5 tools/build tools/boostdep
+        git submodule update --init --depth 5 lib/format
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
@@ -80,6 +81,7 @@ jobs:
         cd boost
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         git submodule update --init --depth 5 tools/build tools/boostdep
+        git submodule update --init --depth 5 lib/format
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
