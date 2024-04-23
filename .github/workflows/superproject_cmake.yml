@@ -1,7 +1,6 @@
 name: superproject cmake
 
 on:
-  pull_request:
   push:
     branches:
       - master
@@ -15,13 +14,13 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
     - name: Fetch Boost superproject
       run: |
         cd ..
-        git clone -b $GITHUB_BASE_REF --depth=5 https://github.com/boostorg/boost.git
+        git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
         cd boost
-        git submodule update --init --depth=5
+        git submodule update --init --depth 5
         rm -rf libs/histogram/*
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         mv -f * $GITHUB_WORKSPACE
