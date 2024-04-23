@@ -60,7 +60,7 @@ jobs:
         cd boost
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         git submodule update --init --depth 5 tools/build tools/boostdep
-        git submodule update --init --depth 5 lib/format
+        git submodule update --init --depth 5 libs/format
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
@@ -81,7 +81,7 @@ jobs:
         cd boost
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         git submodule update --init --depth 5 tools/build tools/boostdep
-        git submodule update --init --depth 5 lib/format
+        git submodule update --init --depth 5 libs/format
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
