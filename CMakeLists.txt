@@ -2,8 +2,8 @@
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-# We support CMake 3.5, but prefer 3.16 policies and behavior
-cmake_minimum_required(VERSION 3.5...3.16)
+# We support CMake 3.12, but prefer 3.27 policies and behavior
+cmake_minimum_required(VERSION 3.12...3.27)
 
 project(boost_histogram VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
