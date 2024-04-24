@@ -61,7 +61,7 @@ struct chunk_vector {
   const_iterator begin() const { return {vec_.data(), chunk_}; }
   const_iterator end() const { return {vec_.data() + vec_.size(), chunk_}; }
 
-  value_type operator[](unsigned idx) const {
+  value_type operator[](size_type idx) const {
     return {vec_.data() + idx * chunk_, vec_.data() + (idx + 1) * chunk_};
   }
 
