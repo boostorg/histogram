@@ -2,6 +2,7 @@
 #define BOOST_HISTOGRAM_ACCUMULATORS_COLLECTOR_HPP
 
 #include <algorithm> // for std::equal
+#include <boost/core/nvp.hpp>
 #include <boost/histogram/detail/detect.hpp>
 #include <boost/histogram/fwd.hpp> // for collector<>
 #include <initializer_list>
