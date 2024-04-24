@@ -3,12 +3,12 @@
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 find_package(Python3)
-if (PYTHONINTERP_FOUND)
+if (Python3_FOUND)
   # checks that b2 and cmake are in sync
-  add_test(NAME runpy-${PROJECT_NAME}_check_build_system COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
+  add_test(NAME runpy-${PROJECT_NAME}_check_build_system COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
 
   # checks that all headers are included in odr test
-  add_test(NAME runpy-${PROJECT_NAME}_check_odr_test COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
+  add_test(NAME runpy-${PROJECT_NAME}_check_odr_test COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
 endif()
 
 include(BoostTest OPTIONAL RESULT_VARIABLE HAVE_BOOST_TEST)
