@@ -45,7 +45,7 @@ public:
   // better match than the generic forwarding template above
   collector(const collector& other) : container_(other.container_) {}
   collector(collector& other) : container_(other.container_) {}
-  collector(collector&& other) : container_(std::move(other)) {}
+  collector(collector&& other) : container_(std::move(other.container_)) {}
 
   // when copy/move ctors are explicitly implemented, one also has to implement the
   // assignment operators
