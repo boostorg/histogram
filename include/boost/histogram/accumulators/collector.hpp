@@ -41,11 +41,11 @@ public:
   template <typename... Args>
   explicit collector(Args&&... args) : container_(std::forward<Args>(args)...) {}
 
-  // we must explicitly implement the copy constructors so that they are better matches
-  // than the generic forwarding template above
-  collector(const collector& other) = default;
+  // we must explicitly implement the copy/move ctors so that they are a
+  // better match than the generic forwarding template above
+  collector(const collector& other) : container_(other.container_) {}
   collector(collector& other) : container_(other.container_) {}
-  collector(collector&&) = default;
+  collector(collector&& other) : container_(std::move(other)) {}
 
   // when copy/move ctors are explicitly implemented, one also has to implement the
   // assignment operators
