@@ -136,6 +136,8 @@ void run_tests() {
   }
 }
 
+// split out dynamic tests as workaround for compiler bug in
+// Visual Studio 2019 14.29.30133 (19.29.30145.0), see PR 388 by Ed Catmur
 void run_dynamic_tests() {
   {
     auto h = make(dynamic_tag(), axis::integer<>(0, 2), axis::integer<>(0, 3));
