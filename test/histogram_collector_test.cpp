@@ -12,7 +12,7 @@
 using namespace boost::histogram;
 
 int main() {
-  using collector_t = accumulators::collector<double>;
+  using collector_t = accumulators::collector<>;
 
   auto h = make_histogram_with(dense_storage<collector_t>(), axis::integer<>(0, 5));
 
@@ -24,9 +24,9 @@ int main() {
   BOOST_TEST_EQ(h.at(1).count(), 1);
   BOOST_TEST_EQ(h.at(2).count(), 0);
 
-  BOOST_TEST_EQ(h.at(0).value()[0], 1.1);
-  BOOST_TEST_EQ(h.at(0).value()[1], 2.2);
-  BOOST_TEST_EQ(h.at(1).value()[0], 10.10);
+  BOOST_TEST_EQ(h.at(0)[0], 1.1);
+  BOOST_TEST_EQ(h.at(0)[1], 2.2);
+  BOOST_TEST_EQ(h.at(1)[0], 10.10);
   BOOST_TEST_EQ(h.at(0), collector_t({1.1, 2.2}));
 
   std::vector<int> x = {0, 0, 0, 0, 0};

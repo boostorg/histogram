@@ -7,7 +7,7 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/detail/tuple_slice.hpp>
 #include <tuple>
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 
 using namespace boost::histogram::detail;
 

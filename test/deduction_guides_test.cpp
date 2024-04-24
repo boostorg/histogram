@@ -16,7 +16,7 @@
 #include <tuple>
 #include <type_traits>
 #include <vector>
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 #include "throw_exception.hpp"
 
 using namespace boost::histogram;

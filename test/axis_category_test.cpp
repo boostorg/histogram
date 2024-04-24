@@ -14,7 +14,7 @@
 #include <string>
 #include <type_traits>
 #include "axis.hpp"
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 #include "str.hpp"
 #include "throw_exception.hpp"
 

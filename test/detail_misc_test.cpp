@@ -21,7 +21,7 @@
 #include <boost/histogram/unlimited_storage.hpp>
 #include <iostream>
 #include <ostream>
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 #include "throw_exception.hpp"
 
 namespace boost {

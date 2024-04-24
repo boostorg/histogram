@@ -1,59 +1,99 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_COLLECTOR_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_COLLECTOR_HPP
 
-#include <vector>
+#include <algorithm> // for std::equal
+#include <boost/histogram/detail/detect.hpp>
+#include <boost/histogram/fwd.hpp> // for collector<>
+#include <initializer_list>
+#include <type_traits>
 
 namespace boost {
 namespace histogram {
 namespace accumulators {
 
-template <class ValueType, class ContainerType>
+/** Collects samples.
+
+  Input samples are stored in an internal container for later retrival, which stores the
+  values consecutively in memory. The interface is designed to work with std::vector and
+  other containers which implement the same API.
+
+  Warning: The memory of the accumulator is unbounded.
+*/
+template <class ContainerType>
 class collector {
 public:
-  using value_type = ValueType;
-  using data_storage_type = ContainerType;
-  using const_reference = const value_type&;
-  using size_type = typename data_storage_type::size_type;
+  using container_type = ContainerType;
+  using value_type = typename container_type::value_type;
+  using allocator_type = typename container_type::allocator_type;
+  using const_reference = typename container_type::const_reference;
+  using iterator = typename container_type::iterator;
+  using const_iterator = typename container_type::const_iterator;
+  using size_type = typename container_type::size_type;
+  using const_pointer = typename container_type::const_pointer;
 
-  collector() = default;
+  template <typename... Args>
+  collector(Args&&... args) : container_(std::forward<Args>(args)...) {}
 
-  collector(const collector<value_type, data_storage_type>& o) noexcept
-      : data_(o.data_) {}
+  template <class T>
+  collector(std::initializer_list<T> list) : container_(list) {}
 
-  collector(const std::vector<value_type>& data) noexcept : data_(data) {}
+  /// Append sample x.
+  void operator()(const_reference x) { container_.push_back(x); }
 
-  collector(std::vector<value_type>&& data) noexcept : data_(std::move(data)) {}
-
-  void operator()(const_reference x) noexcept { data_.push_back(x); }
-
-  collector& operator+=(const collector& rhs) noexcept {
-    data_.reserve(data_.size() + rhs.data_.size());
-    data_.insert(data_.end(), rhs.data_.begin(), rhs.data_.end());
+  /// Append samples from another collector.
+  template <class C>
+  collector& operator+=(const collector<C>& rhs) {
+    container_.reserve(size() + rhs.size());
+    container_.insert(end(), rhs.begin(), rhs.end());
     return *this;
   }
 
-  collector<value_type, data_storage_type>& operator=(
-      const collector<value_type, data_storage_type>& rhs) noexcept {
-    if (this != &rhs) data_ = rhs.data_;
-    return *this;
+  /// Return true if collections are equal.
+  ///
+  /// Two collections are equal if they have the same number of elements
+  /// and they all compare equal.
+  template <class Iterable, class = detail::is_iterable<Iterable>>
+  bool operator==(const Iterable& rhs) const noexcept {
+    return std::equal(begin(), end(), rhs.begin(), rhs.end());
   }
 
-  collector<value_type, data_storage_type>& operator=(
-      collector<value_type, data_storage_type>&& rhs) noexcept {
-    if (this != &rhs) data_ = std::move(rhs.data_);
-    return *this;
+  /// Return true if collections are not equal.
+  template <class Iterable, class = detail::is_iterable<Iterable>>
+  bool operator!=(const Iterable& rhs) const noexcept {
+    return !operator==(rhs);
   }
 
-  bool operator==(const collector& rhs) const noexcept { return data_ == rhs.data_; }
+  /// Return number of samples.
+  size_type size() const noexcept { return container_.size(); }
 
-  bool operator!=(const collector& rhs) const noexcept { return !(*this == rhs); }
+  /// Return number of samples (alias for size()).
+  size_type count() const noexcept { return container_.size(); }
 
-  size_type count() const noexcept { return data_.size(); }
+  /// Return readonly iterator to start of collection.
+  const const_iterator begin() const noexcept { return container_.begin(); }
 
-  const std::vector<value_type>& value() const noexcept { return data_; }
+  /// Return readonly iterator to end of collection.
+  const const_iterator end() const noexcept { return container_.end(); }
+
+  /// Return const reference to value at index.
+  const_reference operator[](size_type idx) const noexcept { return container_[idx]; }
+
+  /// Return pointer to internal memory.
+  const_pointer data() const noexcept { return container_.data(); }
+
+  allocator_type get_allocator() const { return container_.get_allocator(); }
+
+  // conversion to container_type must be explicit
+  explicit operator container_type() const noexcept { return container_; }
+
+  template <class Archive>
+  void serialize(Archive& ar, unsigned version) {
+    (void)version;
+    ar& make_nvp("container", container_);
+  }
 
 private:
-  data_storage_type data_;
+  container_type container_;
 };
 
 } // namespace accumulators

@@ -109,7 +109,7 @@ class mean;
 template <class ValueType = double>
 class weighted_mean;
 
-template <class ValueType = double, class ContainerType = std::vector<ValueType>>
+template <class ContainerType = std::vector<double>>
 class collector;
 
 } // namespace accumulators

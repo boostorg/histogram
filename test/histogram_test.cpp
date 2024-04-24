@@ -25,7 +25,7 @@
 #include "axis.hpp"
 #include "histogram.hpp"
 #include "is_close.hpp"
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 #include "throw_exception.hpp"
 
 using namespace boost::histogram;

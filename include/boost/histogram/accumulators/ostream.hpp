@@ -104,7 +104,14 @@ std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>&
 template <class CharT, class Traits, class U>
 std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                               const collector<U>& x) {
-  if (os.width() == 0) return os << "collector(" << x.count() << " entries)";
+  if (os.width() == 0) {
+    os << "collector{";
+    auto iter = x.begin();
+    if (iter != x.end()) os << *iter++;
+    for (; iter != x.end(); ++iter) os << ", " << *iter;
+    os << "}";
+    return os;
+  }
   return detail::handle_nonzero_width(os, x);
 }
 
