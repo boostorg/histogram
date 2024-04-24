@@ -1,3 +1,9 @@
+// Copyright 2024 Ruggero Turra, Hans Dembinski
+//
+// Distributed under the Boost Software License, version 1.0.
+// (See accompanying file LICENSE_1_0.txt
+// or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_COLLECTOR_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_COLLECTOR_HPP
 
@@ -35,8 +41,9 @@ public:
   template <typename... Args>
   collector(Args&&... args) : container_(std::forward<Args>(args)...) {}
 
-  template <class T>
-  collector(std::initializer_list<T> list) : container_(list) {}
+  template <class T, typename... Args>
+  collector(std::initializer_list<T> list, Args&&... args)
+      : container_(list, std::forward<Args>(args)...) {}
 
   /// Append sample x.
   void operator()(const_reference x) { container_.push_back(x); }
