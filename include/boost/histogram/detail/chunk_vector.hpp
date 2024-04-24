@@ -21,7 +21,8 @@ namespace detail {
 // custom container type. If time permits, this will be expanded
 // into a proper container type.
 template <class ValueType>
-struct chunk_vector {
+class chunk_vector {
+public:
   using base = std::vector<ValueType>;
   using allocator_type = typename base::allocator_type;
   using pointer = typename base::pointer;
@@ -90,6 +91,7 @@ struct chunk_vector {
 
   size_type size() const noexcept { return vec_.size() / chunk_; }
 
+private:
   size_type chunk_;
   base vec_;
 };
