@@ -39,10 +39,21 @@ public:
   using const_pointer = typename container_type::const_pointer;
 
   template <typename... Args>
-  collector(Args&&... args) : container_(std::forward<Args>(args)...) {}
+  explicit collector(Args&&... args) : container_(std::forward<Args>(args)...) {}
+
+  // we must explicitly implement the copy constructors so that they are better matches
+  // than the generic forwarding template above
+  collector(const collector& other) = default;
+  collector(collector& other) : container_(other.container_) {}
+  collector(collector&&) = default;
+
+  // when copy/move ctors are explicitly implemented, one also has to implement the
+  // assignment operators
+  collector& operator=(const collector&) = default;
+  collector& operator=(collector&&) = default;
 
   template <class T, typename... Args>
-  collector(std::initializer_list<T> list, Args&&... args)
+  explicit collector(std::initializer_list<T> list, Args&&... args)
       : container_(list, std::forward<Args>(args)...) {}
 
   /// Append sample x.
@@ -59,7 +70,7 @@ public:
   /// Return true if collections are equal.
   ///
   /// Two collections are equal if they have the same number of elements
-  /// and they all compare equal.
+  /// which all compare equal.
   template <class Iterable, class = detail::is_iterable<Iterable>>
   bool operator==(const Iterable& rhs) const noexcept {
     return std::equal(begin(), end(), rhs.begin(), rhs.end());
@@ -90,9 +101,6 @@ public:
   const_pointer data() const noexcept { return container_.data(); }
 
   allocator_type get_allocator() const { return container_.get_allocator(); }
-
-  // conversion to container_type must be explicit
-  explicit operator container_type() const noexcept { return container_; }
 
   template <class Archive>
   void serialize(Archive& ar, unsigned version) {
