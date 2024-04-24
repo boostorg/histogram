@@ -5,6 +5,7 @@
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/histogram.hpp>
+#include "throw_exception.hpp"
 
 int main() {
   using namespace boost::histogram;
