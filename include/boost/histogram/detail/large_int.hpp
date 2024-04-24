@@ -83,7 +83,7 @@ struct large_int : totally_ordered<large_int<Allocator>, large_int<Allocator>>,
 
   large_int& operator+=(const large_int& o) {
     if (this == &o) {
-      auto tmp{o};
+      auto tmp = o; // make a copy
       return operator+=(tmp);
     }
     bool carry = false;

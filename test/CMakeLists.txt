@@ -40,6 +40,8 @@ boost_test(TYPE compile-fail SOURCES histogram_fail4.cpp)
 
 set(BOOST_TEST_LINK_LIBRARIES Boost::histogram Boost::core)
 
+boost_test(TYPE run SOURCES quick.cpp)
+
 boost_test(TYPE run SOURCES accumulators_count_test.cpp)
 boost_test(TYPE run SOURCES accumulators_mean_test.cpp)
 boost_test(TYPE run SOURCES accumulators_sum_test.cpp)
