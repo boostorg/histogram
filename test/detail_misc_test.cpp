@@ -14,14 +14,14 @@
 #include <boost/histogram/detail/counting_streambuf.hpp>
 #include <boost/histogram/detail/index_translator.hpp>
 #include <boost/histogram/detail/nonmember_container_access.hpp>
-#include <boost/histogram/detail/sub_array.hpp>
+#include <boost/histogram/detail/static_vector.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/storage_adaptor.hpp>
 #include <boost/histogram/unlimited_storage.hpp>
 #include <iostream>
 #include <ostream>
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 #include "throw_exception.hpp"
 
 namespace boost {
@@ -126,9 +126,9 @@ int main() {
     BOOST_TEST_EQ(count, 6);
   }
 
-  // sub_array and make_span
+  // static_vector and make_span
   {
-    dtl::sub_array<int, 2> a(2, 1);
+    dtl::static_vector<int, 2> a(2, 1);
     a[1] = 2;
     auto sp = boost::make_span(a);
     BOOST_TEST_EQ(sp.size(), 2);

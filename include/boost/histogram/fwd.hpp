@@ -109,6 +109,9 @@ class mean;
 template <class ValueType = double>
 class weighted_mean;
 
+template <class ContainerType = std::vector<double>>
+class collector;
+
 } // namespace accumulators
 
 struct unsafe_access;

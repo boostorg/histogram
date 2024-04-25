@@ -9,7 +9,7 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include "axis.hpp"
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 #include "throw_exception.hpp"
 
 using namespace boost::histogram::axis;

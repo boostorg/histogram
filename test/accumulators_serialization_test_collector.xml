@@ -1,0 +1,20 @@
+<!--
+	Copyright 2024 Hans Dembinski
+
+	Distributed under the Boost Software License, Version 1.0.
+	(See accompanying file LICENSE_1_0.txt
+	or copy at http://www.boost.org/LICENSE_1_0.txt)
+-->
+
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE boost_serialization>
+<boost_serialization signature="serialization::archive" version="20">
+<item class_id="0" tracking_level="0" version="0">
+	<container>
+		<count>2</count>
+		<item_version>0</item_version>
+		<item>1.50000000000000000e+00</item>
+		<item>4.00000000000000000e+00</item>
+	</container>
+</item>
+</boost_serialization>

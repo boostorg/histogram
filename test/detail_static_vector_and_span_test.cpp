@@ -2,7 +2,7 @@
 #include <boost/core/span.hpp>
 #include <boost/histogram/detail/nonmember_container_access.hpp>
 #include <boost/histogram/detail/reduce_command.hpp>
-#include <boost/histogram/detail/sub_array.hpp>
+#include <boost/histogram/detail/static_vector.hpp>
 #include <initializer_list>
 #include <stdexcept>
 #include <utility>
@@ -12,7 +12,7 @@ namespace boost {
 namespace histogram {
 namespace detail {
 template <class T, std::size_t N>
-std::ostream& operator<<(std::ostream& os, const sub_array<T, N>&) {
+std::ostream& operator<<(std::ostream& os, const static_vector<T, N>&) {
   return os;
 }
 std::ostream& operator<<(std::ostream& os, const reduce_command&) { return os; }
@@ -26,20 +26,20 @@ int main() {
   using boost::span;
 
   {
-    sub_array<int, 3> a = {1, 2};
+    static_vector<int, 3> a = {1, 2};
 
     BOOST_TEST_EQ(a.size(), 2);
     BOOST_TEST_EQ(a.max_size(), 3);
     BOOST_TEST_EQ(a.at(0), 1);
     BOOST_TEST_EQ(a.at(1), 2);
 
-    sub_array<int, 3> b = {1, 2};
+    static_vector<int, 3> b = {1, 2};
     BOOST_TEST_EQ(a, b);
 
-    sub_array<int, 3> c = {1, 2, 3};
+    static_vector<int, 3> c = {1, 2, 3};
     BOOST_TEST_NE(a, c);
 
-    sub_array<int, 3> d = {2, 2};
+    static_vector<int, 3> d = {2, 2};
     BOOST_TEST_NE(a, d);
 
     auto sp = span<int>(a);
@@ -55,8 +55,8 @@ int main() {
   }
 
   {
-    sub_array<int, 2> a(2, 1);
-    sub_array<int, 2> b(1, 2);
+    static_vector<int, 2> a(2, 1);
+    static_vector<int, 2> b(1, 2);
     std::swap(a, b);
 
     BOOST_TEST_EQ(a.size(), 1);
@@ -73,7 +73,7 @@ int main() {
   }
 
   {
-    const sub_array<reduce_command, 3> a(2);
+    const static_vector<reduce_command, 3> a(2);
     auto sp = span<const reduce_command>(a);
     BOOST_TEST_EQ(sp.size(), 2);
   }

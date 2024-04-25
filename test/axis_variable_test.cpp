@@ -13,7 +13,7 @@
 #include <vector>
 #include "axis.hpp"
 #include "is_close.hpp"
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 #include "str.hpp"
 #include "throw_exception.hpp"
 

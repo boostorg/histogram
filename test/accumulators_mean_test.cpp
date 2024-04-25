@@ -7,8 +7,11 @@
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/detail/accumulator_traits.hpp>
 #include <boost/histogram/weight.hpp>
 #include <sstream>
+#include <tuple>
+#include <type_traits>
 #include "is_close.hpp"
 #include "str.hpp"
 #include "throw_exception.hpp"
@@ -18,6 +21,10 @@ using namespace std::literals;
 
 int main() {
   using m_t = accumulators::mean<double>;
+
+  using traits = detail::accumulator_traits<m_t>;
+  static_assert(traits::weight_support, "");
+  static_assert(std::is_same<traits::args, std::tuple<const double&>>::value, "");
 
   // basic interface, string conversion
   {

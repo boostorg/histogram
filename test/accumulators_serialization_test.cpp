@@ -102,5 +102,19 @@ int main(int argc, char** argv) {
     BOOST_TEST(a == b);
   }
 
+  // collector
+  {
+    const auto filename = join(argv[1], "accumulators_serialization_test_collector.xml");
+    accumulators::collector<> a;
+    a(1.5);
+    a(4.0);
+    print_xml(filename, a);
+
+    accumulators::collector<> b;
+    BOOST_TEST_NOT(a == b);
+    load_xml(filename, b);
+    BOOST_TEST(a == b);
+  }
+
   return boost::report_errors();
 }
