@@ -38,21 +38,12 @@ public:
   using size_type = typename container_type::size_type;
   using const_pointer = typename container_type::const_pointer;
 
-  template <typename... Args>
+  // make template only match if forwarding args to container is valid
+  template <typename... Args, class = decltype(container_type(std::declval<Args>()...))>
   explicit collector(Args&&... args) : container_(std::forward<Args>(args)...) {}
 
-  // we must explicitly implement the copy/move ctors so that they are a
-  // better match than the generic forwarding template above
-  collector(const collector& other) : container_(other.container_) {}
-  collector(collector& other) : container_(other.container_) {}
-  collector(collector&& other) : container_(std::move(other.container_)) {}
-
-  // when copy/move ctors are explicitly implemented, one also has to implement the
-  // assignment operators
-  collector& operator=(const collector&) = default;
-  collector& operator=(collector&&) = default;
-
-  template <class T, typename... Args>
+  // make template only match if forwarding args to container is valid
+  template <class T, typename... Args, class = decltype(container_type(std::initializer_list<T>(),std::declval<Args>()...))>
   explicit collector(std::initializer_list<T> list, Args&&... args)
       : container_(list, std::forward<Args>(args)...) {}
 
