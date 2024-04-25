@@ -20,7 +20,7 @@ void run_tests() {
   {
     c_t c;
     ++c;
-    BOOST_TEST_EQ(c.value(), 1);
+    BOOST_TEST_EQ(c.value(), static_cast<T>(1));
     BOOST_TEST_EQ(str(c), "1"s);
     BOOST_TEST_EQ(str(c, 2, false), " 1"s);
     BOOST_TEST_EQ(str(c, 2, true), "1 "s);
