@@ -25,7 +25,7 @@ jobs:
   appleclang:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Fetch Boost superproject
       run: |
         cd ..
@@ -46,13 +46,13 @@ jobs:
         cd libs/histogram
         ../../b2 $B2_OPTS cxxstd=17 test//all
 
-  gcc5:
-    runs-on: ubuntu-18.04
+  gcc7:
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: egor-tensin/setup-gcc@v1
       with:
-        version: 5
+        version: 7
     - name: Fetch Boost superproject
       run: |
         cd ..
@@ -60,6 +60,7 @@ jobs:
         cd boost
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         git submodule update --init --depth 5 tools/build tools/boostdep
+        git submodule update --init --depth 5 libs/format
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
@@ -67,12 +68,12 @@ jobs:
     - name: Test cxxstd=14 (warnings ignored)
       run: |
         cd libs/histogram
-        ../../b2 -q -j2 toolset=gcc-5 cxxstd=14 test//all examples
+        ../../b2 -q -j2 toolset=gcc-7 cxxstd=14 test//all examples
 
   gcc10:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Fetch Boost superproject
       run: |
         cd ..
@@ -80,6 +81,7 @@ jobs:
         cd boost
         mv -f $GITHUB_WORKSPACE/* libs/histogram
         git submodule update --init --depth 5 tools/build tools/boostdep
+        git submodule update --init --depth 5 libs/format
         python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
@@ -92,7 +94,7 @@ jobs:
   clang14:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Fetch Boost superproject
       run: |
         cd ..

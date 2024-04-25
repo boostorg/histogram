@@ -2,13 +2,13 @@
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-find_package(PythonInterp)
-if (PYTHONINTERP_FOUND)
+find_package(Python3)
+if (Python3_FOUND)
   # checks that b2 and cmake are in sync
-  add_test(NAME runpy-${PROJECT_NAME}_check_build_system COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
+  add_test(NAME runpy-${PROJECT_NAME}_check_build_system COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
 
   # checks that all headers are included in odr test
-  add_test(NAME runpy-${PROJECT_NAME}_check_odr_test COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
+  add_test(NAME runpy-${PROJECT_NAME}_check_odr_test COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
 endif()
 
 include(BoostTest OPTIONAL RESULT_VARIABLE HAVE_BOOST_TEST)
@@ -39,6 +39,8 @@ boost_test(TYPE compile-fail SOURCES histogram_fail3.cpp)
 boost_test(TYPE compile-fail SOURCES histogram_fail4.cpp)
 
 set(BOOST_TEST_LINK_LIBRARIES Boost::histogram Boost::core)
+
+boost_test(TYPE run SOURCES quick.cpp)
 
 boost_test(TYPE run SOURCES accumulators_count_test.cpp)
 boost_test(TYPE run SOURCES accumulators_mean_test.cpp)
