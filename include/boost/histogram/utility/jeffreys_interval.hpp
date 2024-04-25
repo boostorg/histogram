@@ -51,19 +51,20 @@ public:
     @param successes Number of successful trials.
     @param failures Number of failed trials.
   */
-  interval_type operator()(value_type successes, value_type failures) const noexcept {
+  interval_type operator()(value_type successes,
+                           value_type failures) const noexcept override {
     // See L.D. Brown, T.T. Cai, A. DasGupta, Statistical Science 16 (2001) 101-133,
     // doi:10.1214/ss/1009213286, section 4.1.2.
-    const value_type half{0.5};
+    const value_type half{0.5}, one{1.0}, zero{0.0};
     const value_type total = successes + failures;
 
     // if successes or failures are 0, modified interval is equal to Clopper-Pearson
-    if (successes == 0) return {0, 1 - std::pow(alpha_half_, 1 / total)};
-    if (failures == 0) return {std::pow(alpha_half_, 1 / total), 1};
+    if (successes == 0) return {zero, one - std::pow(alpha_half_, one / total)};
+    if (failures == 0) return {std::pow(alpha_half_, one / total), one};
 
     math::beta_distribution<value_type> beta(successes + half, failures + half);
-    const value_type a = successes == 1 ? 0 : math::quantile(beta, alpha_half_);
-    const value_type b = failures == 1 ? 1 : math::quantile(beta, 1 - alpha_half_);
+    const value_type a = successes == 1 ? zero : math::quantile(beta, alpha_half_);
+    const value_type b = failures == 1 ? one : math::quantile(beta, one - alpha_half_);
     return {a, b};
   }
 

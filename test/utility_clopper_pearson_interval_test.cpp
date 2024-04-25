@@ -18,7 +18,7 @@ template <class T>
 void test() {
   const T atol = 0.001;
 
-  clopper_pearson_interval<T> iv(deviation{1.f});
+  clopper_pearson_interval<T> iv(deviation{1});
 
   {
     const auto x = iv(0.f, 1.f);
