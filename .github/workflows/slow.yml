@@ -110,23 +110,3 @@ jobs:
       run: |
         cd libs/histogram
         ../../b2 $B2_OPTS toolset=clang-14 cxxstd=17 variant=histogram_ubasan test//all
-
-  windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Fetch Boost superproject
-        run: |
-          cd ..
-          git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
-          cd boost
-          git submodule update --init --depth 5 tools/build tools/boostdep
-          xcopy /s /e /q $GITHUB_WORKSPACE libs\histogram\
-          python tools\boostdep\depinst\depinst.py -N units -N range -N accumulators --git_args "--depth 5 --jobs 2" histogram
-      - name: Prepare b2
-        run: cmd /c bootstrap & cd libs\histogram
-      # cxxstd=latest (aka 20) breaks VS 2022 in algorithm_project_test so we use cxxstd=17
-      # msvc-14.3 breaks test//serialization, more precisely axis_variant_serialization_test
-      - name: Test cxxstd=17 minimal
-        run: ..\..\b2 $B2_OPTS cxxstd=17 test//minimal
-

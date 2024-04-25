@@ -112,7 +112,7 @@ public:
   /// Returns index and shift (if axis has grown) for the passed argument.
   auto update(value_type x) noexcept {
     auto impl = [this](long x) -> std::pair<index_type, index_type> {
-      const auto i = x - min_;
+      const auto i = static_cast<value_type>(x) - min_;
       if (i >= 0) {
         const auto k = static_cast<axis::index_type>(i);
         if (k < size()) return {k, 0};
