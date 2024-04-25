@@ -35,8 +35,7 @@ struct safe_equal {
 
   template <class C1, class C2, class T, class U>
   bool impl(C1, C2, const T& t, const U& u) const noexcept {
-    using V = std::common_type<T, U>;
-    return static_cast<V>(t) == static_cast<V>(u);
+    return t == u;
   }
 
   template <class T, class U>
