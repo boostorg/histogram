@@ -1,0 +1,49 @@
+# Copyright René Ferdinand Rivera Morell 2024
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+
+# Special builds for Boost Histogram:
+#
+#   Generate coverage data:            b2 cxxstd=latest coverage=on test//all
+#   Test without exceptions and rtti:  b2 cxxstd=latest exception-handling=off rtti=off test//minimal
+#   Test with sanitizers:              b2 toolset=clang cxxstd=latest histogram_ubasan test
+
+import project ;
+
+project /boost/histogram
+    : common-requirements
+        <library>/boost/config//boost_config
+        <library>/boost/core//boost_core
+        <library>/boost/math//boost_math
+        <library>/boost/mp11//boost_mp11
+        <library>/boost/serialization//boost_serialization
+        <library>/boost/throw_exception//boost_throw_exception
+        <library>/boost/variant2//boost_variant2
+        <include>include
+    : requirements
+        <toolset>clang:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
+        <toolset>darwin:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
+        <toolset>gcc:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wfloat-conversion"
+        <toolset>msvc:<cxxflags>"/bigobj"
+        <toolset>intel-win:<cxxflags>"/bigobj"
+        <local-visibility>hidden
+    : default-build
+        <warnings>extra
+    ;
+
+explicit
+    [ alias boost_histogram ]
+    [ alias all : boost_histogram test examples ]
+    ;
+
+call-if : boost-library histogram
+    ;
+
+path-constant THIS_PATH : . ;
+
+# only works with clang because of -fsanitize-blacklist
+variant histogram_ubasan : debug :
+    <cxxflags>"-fno-omit-frame-pointer -O0 -fno-inline -fsanitize=address,leak,undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(THIS_PATH)/tools/blacklist.supp"
+    <linkflags>"-fsanitize=address,leak,undefined"
+    ;
