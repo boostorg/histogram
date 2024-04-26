@@ -4,8 +4,8 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_HISTOGRAM_DETAIL_SUB_ARRAY_HPP
-#define BOOST_HISTOGRAM_DETAIL_SUB_ARRAY_HPP
+#ifndef BOOST_HISTOGRAM_DETAIL_STATIC_VECTOR_HPP
+#define BOOST_HISTOGRAM_DETAIL_STATIC_VECTOR_HPP
 
 #include <algorithm>
 #include <boost/throw_exception.hpp>
@@ -15,10 +15,11 @@ namespace boost {
 namespace histogram {
 namespace detail {
 
-// Like std::array, but allows to use less than maximum capacity.
-// Cannot inherit from std::array, since this confuses span.
+// A crude implementation of boost::container::static_vector.
+// Like std::vector, but with static allocation up to a maximum capacity.
 template <class T, std::size_t N>
-class sub_array {
+class static_vector {
+  // Cannot inherit from std::array, since this confuses span.
   static constexpr bool swap_element_is_noexcept() noexcept {
     using std::swap;
     return noexcept(swap(std::declval<T&>(), std::declval<T&>()));
@@ -34,19 +35,19 @@ public:
   using iterator = pointer;
   using const_iterator = const_pointer;
 
-  sub_array() = default;
+  static_vector() = default;
 
-  explicit sub_array(std::size_t s) noexcept : size_(s) { assert(size_ <= N); }
+  explicit static_vector(std::size_t s) noexcept : size_(s) { assert(size_ <= N); }
 
-  sub_array(std::size_t s, const T& value) noexcept(
+  static_vector(std::size_t s, const T& value) noexcept(
       std::is_nothrow_assignable<T, const_reference>::value)
-      : sub_array(s) {
+      : static_vector(s) {
     fill(value);
   }
 
-  sub_array(std::initializer_list<T> il) noexcept(
+  static_vector(std::initializer_list<T> il) noexcept(
       std::is_nothrow_assignable<T, const_reference>::value)
-      : sub_array(il.size()) {
+      : static_vector(il.size()) {
     std::copy(il.begin(), il.end(), data_);
   }
 
@@ -90,7 +91,7 @@ public:
     std::fill(begin(), end(), value);
   }
 
-  void swap(sub_array& other) noexcept(swap_element_is_noexcept()) {
+  void swap(static_vector& other) noexcept(swap_element_is_noexcept()) {
     using std::swap;
     const size_type s = (std::max)(size(), other.size());
     for (auto i = begin(), j = other.begin(), end = begin() + s; i != end; ++i, ++j)
@@ -104,12 +105,12 @@ private:
 };
 
 template <class T, std::size_t N>
-bool operator==(const sub_array<T, N>& a, const sub_array<T, N>& b) noexcept {
+bool operator==(const static_vector<T, N>& a, const static_vector<T, N>& b) noexcept {
   return std::equal(a.begin(), a.end(), b.begin(), b.end());
 }
 
 template <class T, std::size_t N>
-bool operator!=(const sub_array<T, N>& a, const sub_array<T, N>& b) noexcept {
+bool operator!=(const static_vector<T, N>& a, const static_vector<T, N>& b) noexcept {
   return !(a == b);
 }
 
@@ -119,8 +120,9 @@ bool operator!=(const sub_array<T, N>& a, const sub_array<T, N>& b) noexcept {
 
 namespace std {
 template <class T, std::size_t N>
-void swap(::boost::histogram::detail::sub_array<T, N>& a,
-          ::boost::histogram::detail::sub_array<T, N>& b) noexcept(noexcept(a.swap(b))) {
+void swap(
+    ::boost::histogram::detail::static_vector<T, N>& a,
+    ::boost::histogram::detail::static_vector<T, N>& b) noexcept(noexcept(a.swap(b))) {
   a.swap(b);
 }
 } // namespace std

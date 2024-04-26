@@ -66,6 +66,8 @@ struct detect_base {
 // reset has overloads, trying to get pmf in this case always fails
 BOOST_HISTOGRAM_DETAIL_DETECT(has_method_reset, t.reset(0));
 
+BOOST_HISTOGRAM_DETAIL_DETECT(has_method_push_back, (&T::push_back));
+
 BOOST_HISTOGRAM_DETAIL_DETECT(is_indexable, t[0]);
 
 BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(is_transform, (t.inverse(t.forward(u))));

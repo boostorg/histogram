@@ -75,39 +75,39 @@ void run_tests() {
   // - lower edge of shrink: pick bin which contains edge, lower <= x < upper
   // - upper edge of shrink: pick bin which contains edge + 1, lower < x <= upper
   {
-    auto h = make(Tag(), ID(0, 3));
+    auto h = make(Tag(), ID(0.0, 3.0));
     const auto& ax = h.axis();
-    BOOST_TEST_EQ(ax.value(0), 0);
-    BOOST_TEST_EQ(ax.value(3), 3);
-    BOOST_TEST_EQ(ax.index(-1), -1);
-    BOOST_TEST_EQ(ax.index(3), 3);
+    BOOST_TEST_EQ(ax.value(0), 0.0);
+    BOOST_TEST_EQ(ax.value(3), 3.0);
+    BOOST_TEST_EQ(ax.index(-1.0), -1);
+    BOOST_TEST_EQ(ax.index(3.0), 3);
 
-    BOOST_TEST_EQ(reduce(h, shrink(-1, 5)).axis(), ID(0, 3));
-    BOOST_TEST_EQ(reduce(h, shrink(0, 3)).axis(), ID(0, 3));
-    BOOST_TEST_EQ(reduce(h, shrink(1, 3)).axis(), ID(1, 3));
-    BOOST_TEST_EQ(reduce(h, shrink(1.001, 3)).axis(), ID(1, 3));
-    BOOST_TEST_EQ(reduce(h, shrink(1.999, 3)).axis(), ID(1, 3));
-    BOOST_TEST_EQ(reduce(h, shrink(2, 3)).axis(), ID(2, 3));
-    BOOST_TEST_EQ(reduce(h, shrink(0, 2.999)).axis(), ID(0, 3));
-    BOOST_TEST_EQ(reduce(h, shrink(0, 2.001)).axis(), ID(0, 3));
-    BOOST_TEST_EQ(reduce(h, shrink(0, 2)).axis(), ID(0, 2));
-    BOOST_TEST_EQ(reduce(h, shrink(0, 1.999)).axis(), ID(0, 2));
+    BOOST_TEST_EQ(reduce(h, shrink(-1, 5)).axis(), ID(0.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, shrink(0, 3)).axis(), ID(0.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, shrink(1, 3)).axis(), ID(1.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, shrink(1.001, 3)).axis(), ID(1.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, shrink(1.999, 3)).axis(), ID(1.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, shrink(2, 3)).axis(), ID(2.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, shrink(0, 2.999)).axis(), ID(0.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, shrink(0, 2.001)).axis(), ID(0.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, shrink(0, 2)).axis(), ID(0.0, 2.0));
+    BOOST_TEST_EQ(reduce(h, shrink(0, 1.999)).axis(), ID(0.0, 2.0));
 
-    BOOST_TEST_EQ(reduce(h, crop(-1, 5)).axis(), ID(0, 3));
-    BOOST_TEST_EQ(reduce(h, crop(0, 3)).axis(), ID(0, 3));
-    BOOST_TEST_EQ(reduce(h, crop(1, 3)).axis(), ID(1, 3));
-    BOOST_TEST_EQ(reduce(h, crop(1.001, 3)).axis(), ID(1, 3));
-    BOOST_TEST_EQ(reduce(h, crop(1.999, 3)).axis(), ID(1, 3));
-    BOOST_TEST_EQ(reduce(h, crop(2, 3)).axis(), ID(2, 3));
-    BOOST_TEST_EQ(reduce(h, crop(0, 2.999)).axis(), ID(0, 3));
-    BOOST_TEST_EQ(reduce(h, crop(0, 2.001)).axis(), ID(0, 3));
-    BOOST_TEST_EQ(reduce(h, crop(0, 2)).axis(), ID(0, 2));
-    BOOST_TEST_EQ(reduce(h, crop(0, 1.999)).axis(), ID(0, 2));
+    BOOST_TEST_EQ(reduce(h, crop(-1, 5)).axis(), ID(0.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, crop(0, 3)).axis(), ID(0.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, crop(1, 3)).axis(), ID(1.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, crop(1.001, 3)).axis(), ID(1.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, crop(1.999, 3)).axis(), ID(1.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, crop(2, 3)).axis(), ID(2.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, crop(0, 2.999)).axis(), ID(0.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, crop(0, 2.001)).axis(), ID(0.0, 3.0));
+    BOOST_TEST_EQ(reduce(h, crop(0, 2)).axis(), ID(0.0, 2.0));
+    BOOST_TEST_EQ(reduce(h, crop(0, 1.999)).axis(), ID(0.0, 2.0));
   }
 
   // shrink and rebin
   {
-    auto h = make_s(Tag(), std::vector<int>(), R(4, 1, 5, "1"), R(3, -1, 2, "2"));
+    auto h = make_s(Tag(), std::vector<int>(), R(4, 1.0, 5.0, "1"), R(3, -1.0, 2.0, "2"));
 
     /*
       matrix layout:

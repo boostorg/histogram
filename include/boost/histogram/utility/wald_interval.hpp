@@ -59,7 +59,8 @@ public:
     @param successes Number of successful trials.
     @param failures Number of failed trials.
   */
-  interval_type operator()(value_type successes, value_type failures) const noexcept {
+  interval_type operator()(value_type successes,
+                           value_type failures) const noexcept override {
     // See https://en.wikipedia.org/wiki/
     //   Binomial_proportion_confidence_interval
     //   #Normal_approximation_interval_or_Wald_interval

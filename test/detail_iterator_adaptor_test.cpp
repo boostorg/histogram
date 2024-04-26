@@ -15,7 +15,7 @@
 #include <type_traits>
 #include <vector>
 #include "iterator.hpp"
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 
 using boost::histogram::detail::iterator_adaptor;
 

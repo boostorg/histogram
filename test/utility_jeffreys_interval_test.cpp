@@ -25,78 +25,78 @@ void test() {
   jeffreys_interval<T> iv(confidence_level{0.95});
 
   {
-    auto p = iv(0, 7);
-    BOOST_TEST_IS_CLOSE(p.first, 0, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 0.41, atol);
+    auto p = iv(0.f, 7.f);
+    BOOST_TEST_IS_CLOSE(p.first, 0.f, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.41f, atol);
   }
 
   {
-    auto p = iv(1, 6);
-    BOOST_TEST_IS_CLOSE(p.first, 0, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 0.501, atol);
+    auto p = iv(1.f, 6.f);
+    BOOST_TEST_IS_CLOSE(p.first, 0.f, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.501f, atol);
   }
 
   {
-    auto p = iv(2, 5);
-    BOOST_TEST_IS_CLOSE(p.first, 0.065, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 0.648, atol);
+    auto p = iv(2.f, 5.f);
+    BOOST_TEST_IS_CLOSE(p.first, 0.065f, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.648f, atol);
   }
 
   {
-    auto p = iv(3, 4);
-    BOOST_TEST_IS_CLOSE(p.first, 0.139, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 0.766, atol);
+    auto p = iv(3.f, 4.f);
+    BOOST_TEST_IS_CLOSE(p.first, 0.139f, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.766f, atol);
   }
 
   {
-    auto p = iv(4, 7 - 4);
-    BOOST_TEST_IS_CLOSE(p.first, 0.234, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 0.861, atol);
-  }
-
-  // extrapolated from table
-  {
-    auto p = iv(5, 2);
-    BOOST_TEST_IS_CLOSE(p.first, 1 - 0.648, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 1 - 0.065, atol);
+    auto p = iv(4.f, 7.f - 4.f);
+    BOOST_TEST_IS_CLOSE(p.first, 0.234f, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.861f, atol);
   }
 
   // extrapolated from table
   {
-    auto p = iv(6, 1);
-    BOOST_TEST_IS_CLOSE(p.first, 1 - 0.501, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 1, atol);
+    auto p = iv(5.f, 2.f);
+    BOOST_TEST_IS_CLOSE(p.first, 1.f - 0.648f, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 1.f - 0.065f, atol);
   }
 
   // extrapolated from table
   {
-    auto p = iv(7, 0);
-    BOOST_TEST_IS_CLOSE(p.first, 1 - 0.41, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 1, atol);
+    auto p = iv(6.f, 1.f);
+    BOOST_TEST_IS_CLOSE(p.first, 1.f - 0.501f, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 1.f, atol);
+  }
+
+  // extrapolated from table
+  {
+    auto p = iv(7.f, 0.f);
+    BOOST_TEST_IS_CLOSE(p.first, 1.f - 0.41f, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 1.f, atol);
   }
 
   // not in table
   {
-    auto p = iv(0, 1);
-    BOOST_TEST_IS_CLOSE(p.first, 0, atol);
-    BOOST_TEST_IS_CLOSE(p.second, 0.975, atol);
+    auto p = iv(0.f, 1.f);
+    BOOST_TEST_IS_CLOSE(p.first, 0.f, atol);
+    BOOST_TEST_IS_CLOSE(p.second, 0.975f, atol);
 
-    fraction<T> f(0, 1);
+    fraction<T> f(0.f, 1.f);
     const auto y = iv(f);
-    BOOST_TEST_IS_CLOSE(y.first, 0.0, atol);
-    BOOST_TEST_IS_CLOSE(y.second, 0.975, atol);
+    BOOST_TEST_IS_CLOSE(y.first, 0.f, atol);
+    BOOST_TEST_IS_CLOSE(y.second, 0.975f, atol);
   }
 
   // not in table
   {
-    auto p = iv(1, 0);
+    auto p = iv(1.f, 0.f);
     BOOST_TEST_IS_CLOSE(p.first, 0.025, atol);
     BOOST_TEST_IS_CLOSE(p.second, 1, atol);
 
-    fraction<T> f(1, 0);
+    fraction<T> f(1.f, 0.f);
     const auto y = iv(f);
-    BOOST_TEST_IS_CLOSE(y.first, 0.025, atol);
-    BOOST_TEST_IS_CLOSE(y.second, 1, atol);
+    BOOST_TEST_IS_CLOSE(y.first, 0.025f, atol);
+    BOOST_TEST_IS_CLOSE(y.second, 1.f, atol);
   }
 }
 

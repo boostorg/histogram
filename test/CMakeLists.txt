@@ -2,13 +2,15 @@
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-find_package(Python3)
+find_package(Python3 COMPONENTS Interpreter)
 if (Python3_FOUND)
   # checks that b2 and cmake are in sync
   add_test(NAME runpy-${PROJECT_NAME}_check_build_system COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
 
   # checks that all headers are included in odr test
   add_test(NAME runpy-${PROJECT_NAME}_check_odr_test COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
+else()
+MESSAGE(WARNING "Python interpreter not found, cannot check for odr violations and build system consistency")
 endif()
 
 include(BoostTest OPTIONAL RESULT_VARIABLE HAVE_BOOST_TEST)
@@ -47,6 +49,7 @@ boost_test(TYPE run SOURCES accumulators_mean_test.cpp)
 boost_test(TYPE run SOURCES accumulators_sum_test.cpp)
 boost_test(TYPE run SOURCES accumulators_weighted_mean_test.cpp)
 boost_test(TYPE run SOURCES accumulators_weighted_sum_test.cpp)
+boost_test(TYPE run SOURCES accumulators_collector_test.cpp)
 boost_test(TYPE run SOURCES algorithm_project_test.cpp)
 boost_test(TYPE run SOURCES algorithm_reduce_test.cpp)
 boost_test(TYPE run SOURCES algorithm_sum_test.cpp)
@@ -75,7 +78,7 @@ boost_test(TYPE run SOURCES detail_operators_test.cpp)
 boost_test(TYPE run SOURCES detail_relaxed_equal_test.cpp)
 boost_test(TYPE run SOURCES detail_replace_type_test.cpp)
 boost_test(TYPE run SOURCES detail_safe_comparison_test.cpp)
-boost_test(TYPE run SOURCES detail_sub_array_and_span_test.cpp)
+boost_test(TYPE run SOURCES detail_static_vector_and_span_test.cpp)
 boost_test(TYPE run SOURCES detail_static_if_test.cpp)
 boost_test(TYPE run SOURCES detail_tuple_slice_test.cpp)
 boost_test(TYPE run SOURCES histogram_custom_axis_test.cpp)
@@ -91,6 +94,7 @@ boost_test(TYPE run SOURCES histogram_ostream_ascii_test.cpp)
 set_tests_properties(run-boost_histogram-histogram_ostream_ascii_test
   PROPERTIES ENVIRONMENT "LANG=FOO;COLUMNS=20")
 boost_test(TYPE run SOURCES histogram_fraction_test.cpp)
+boost_test(TYPE run SOURCES histogram_collector_test.cpp)
 boost_test(TYPE run SOURCES histogram_test.cpp)
 boost_test(TYPE run SOURCES indexed_test.cpp)
 boost_test(TYPE run SOURCES storage_adaptor_test.cpp)

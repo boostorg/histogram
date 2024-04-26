@@ -25,8 +25,8 @@ void run_tests() {
 
   {
     f_t f;
-    BOOST_TEST_EQ(f.successes(), 0);
-    BOOST_TEST_EQ(f.failures(), 0);
+    BOOST_TEST_EQ(f.successes(), static_cast<T>(0));
+    BOOST_TEST_EQ(f.failures(), static_cast<T>(0));
     BOOST_TEST(std::isnan(f.value()));
     BOOST_TEST(std::isnan(f.variance()));
 
@@ -38,22 +38,22 @@ void run_tests() {
   {
     f_t f;
     f(true);
-    BOOST_TEST_EQ(f.successes(), 1);
-    BOOST_TEST_EQ(f.failures(), 0);
+    BOOST_TEST_EQ(f.successes(), static_cast<T>(1));
+    BOOST_TEST_EQ(f.failures(), static_cast<T>(0));
     BOOST_TEST_EQ(str(f), "fraction(1, 0)"s);
     f(false);
-    BOOST_TEST_EQ(f.successes(), 1);
-    BOOST_TEST_EQ(f.failures(), 1);
+    BOOST_TEST_EQ(f.successes(), static_cast<T>(1));
+    BOOST_TEST_EQ(f.failures(), static_cast<T>(1));
     BOOST_TEST_EQ(str(f), "fraction(1, 1)"s);
     BOOST_TEST_EQ(str(f, 20), "fraction(1, 1)      "s);
   }
 
   {
     f_t f(3, 1);
-    BOOST_TEST_EQ(f.successes(), 3);
-    BOOST_TEST_EQ(f.failures(), 1);
-    BOOST_TEST_EQ(f.value(), 0.75);
-    BOOST_TEST_IS_CLOSE(f.variance(), 0.75 * (1 - 0.75) / 4, eps);
+    BOOST_TEST_EQ(f.successes(), static_cast<T>(3));
+    BOOST_TEST_EQ(f.failures(), static_cast<T>(1));
+    BOOST_TEST_EQ(f.value(), 0.75f);
+    BOOST_TEST_IS_CLOSE(f.variance(), 0.75f * (1.0f - 0.75f) / 4.f, eps);
 
     const auto ci = f.confidence_interval();
     const auto expected = utility::wilson_interval<double>()(3, 1);
@@ -63,10 +63,10 @@ void run_tests() {
 
   {
     f_t f(0, 1);
-    BOOST_TEST_EQ(f.successes(), 0);
-    BOOST_TEST_EQ(f.failures(), 1);
-    BOOST_TEST_EQ(f.value(), 0);
-    BOOST_TEST_EQ(f.variance(), 0);
+    BOOST_TEST_EQ(f.successes(), static_cast<T>(0));
+    BOOST_TEST_EQ(f.failures(), static_cast<T>(1));
+    BOOST_TEST_EQ(f.value(), 0.f);
+    BOOST_TEST_EQ(f.variance(), 0.f);
 
     const auto ci = f.confidence_interval();
     const auto expected = utility::wilson_interval<double>()(0, 1);
@@ -76,10 +76,10 @@ void run_tests() {
 
   {
     f_t f(1, 0);
-    BOOST_TEST_EQ(f.successes(), 1);
-    BOOST_TEST_EQ(f.failures(), 0);
-    BOOST_TEST_EQ(f.value(), 1);
-    BOOST_TEST_EQ(f.variance(), 0);
+    BOOST_TEST_EQ(f.successes(), static_cast<T>(1));
+    BOOST_TEST_EQ(f.failures(), static_cast<T>(0));
+    BOOST_TEST_EQ(f.value(), 1.f);
+    BOOST_TEST_EQ(f.variance(), 0.f);
 
     const auto ci = f.confidence_interval();
     const auto expected = utility::wilson_interval<double>()(1, 0);

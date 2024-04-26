@@ -21,43 +21,43 @@ void test() {
   clopper_pearson_interval<T> iv(deviation{1});
 
   {
-    const auto x = iv(0, 1);
-    BOOST_TEST_IS_CLOSE(x.first, 0.0, atol);
-    BOOST_TEST_IS_CLOSE(x.second, 0.841, atol);
+    const auto x = iv(0.f, 1.f);
+    BOOST_TEST_IS_CLOSE(x.first, 0.f, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 0.841f, atol);
 
-    fraction<T> f(0, 1);
+    fraction<T> f(0.f, 1.f);
     const auto y = iv(f);
-    BOOST_TEST_IS_CLOSE(y.first, 0.0, atol);
-    BOOST_TEST_IS_CLOSE(y.second, 0.841, atol);
+    BOOST_TEST_IS_CLOSE(y.first, 0.f, atol);
+    BOOST_TEST_IS_CLOSE(y.second, 0.841f, atol);
   }
 
   {
-    const auto x = iv(1, 0);
-    BOOST_TEST_IS_CLOSE(x.first, 0.158, atol);
-    BOOST_TEST_IS_CLOSE(x.second, 1.0, atol);
+    const auto x = iv(1.f, 0.f);
+    BOOST_TEST_IS_CLOSE(x.first, 0.158f, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 1.f, atol);
 
-    fraction<T> f(1, 0);
+    fraction<T> f(1.f, 0.f);
     const auto y = iv(f);
-    BOOST_TEST_IS_CLOSE(y.first, 0.158, atol);
-    BOOST_TEST_IS_CLOSE(y.second, 1.0, atol);
+    BOOST_TEST_IS_CLOSE(y.first, 0.158f, atol);
+    BOOST_TEST_IS_CLOSE(y.second, 1.f, atol);
   }
 
   {
-    const auto x = iv(5, 5);
-    BOOST_TEST_IS_CLOSE(x.first, 0.304, atol);
-    BOOST_TEST_IS_CLOSE(x.second, 0.695, atol);
+    const auto x = iv(5.f, 5.f);
+    BOOST_TEST_IS_CLOSE(x.first, 0.304f, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 0.695f, atol);
   }
 
   {
-    const auto x = iv(1, 9);
-    BOOST_TEST_IS_CLOSE(x.first, 0.017, atol);
-    BOOST_TEST_IS_CLOSE(x.second, 0.294, atol);
+    const auto x = iv(1.f, 9.f);
+    BOOST_TEST_IS_CLOSE(x.first, 0.017f, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 0.294f, atol);
   }
 
   {
-    const auto x = iv(9, 1);
-    BOOST_TEST_IS_CLOSE(x.first, 0.705, atol);
-    BOOST_TEST_IS_CLOSE(x.second, 0.982, atol);
+    const auto x = iv(9.f, 1.f);
+    BOOST_TEST_IS_CLOSE(x.first, 0.705f, atol);
+    BOOST_TEST_IS_CLOSE(x.second, 0.982f, atol);
   }
 }
 

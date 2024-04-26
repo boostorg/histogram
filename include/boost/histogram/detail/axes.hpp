@@ -17,7 +17,7 @@
 #include <boost/histogram/detail/priority.hpp>
 #include <boost/histogram/detail/relaxed_tuple_size.hpp>
 #include <boost/histogram/detail/static_if.hpp>
-#include <boost/histogram/detail/sub_array.hpp>
+#include <boost/histogram/detail/static_vector.hpp>
 #include <boost/histogram/detail/try_cast.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
@@ -381,13 +381,13 @@ std::size_t offset(const T& axes) {
 // make default-constructed buffer (no initialization for POD types)
 template <class T, class A>
 auto make_stack_buffer(const A& a) {
-  return sub_array<T, buffer_size<A>::value>(axes_rank(a));
+  return static_vector<T, buffer_size<A>::value>(axes_rank(a));
 }
 
 // make buffer with elements initialized to v
 template <class T, class A>
 auto make_stack_buffer(const A& a, const T& t) {
-  return sub_array<T, buffer_size<A>::value>(axes_rank(a), t);
+  return static_vector<T, buffer_size<A>::value>(axes_rank(a), t);
 }
 
 template <class T>

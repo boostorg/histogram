@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 #include "allocator.hpp"
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 #include "throw_exception.hpp"
 
 using namespace boost::histogram;
