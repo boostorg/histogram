@@ -153,9 +153,9 @@ alias math :
     [ run utility_jeffreys_interval_test.cpp ]
     : <warnings>off
     ;
-alias accumulators : [ run boost_accumulators_support_test.cpp : : : <source>/boost/accumulators//boost_accumulators ] : <warnings>off ;
+alias accumulators : [ run boost_accumulators_support_test.cpp : : : <library>/boost/accumulators//boost_accumulators ] : <warnings>off ;
 alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
-alias units : [ run boost_units_support_test.cpp : : : <source>/boost/units//boost_units ] : <warnings>off ;
+alias units : [ run boost_units_support_test.cpp : : : <library>/boost/units//boost_units ] : <warnings>off ;
 alias serialization :
     [ run accumulators_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run detail_array_wrapper_serialization_test.cpp libserial ]

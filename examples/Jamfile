@@ -18,7 +18,7 @@ project
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
     ]
-    <source>/boost/format//boost_format
+    <library>/boost/format//boost_format
     ;
 
 alias cxx14 :
