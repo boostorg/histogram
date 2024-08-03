@@ -25,6 +25,7 @@ path-constant THIS_PATH : . ;
 
 project
     : requirements
+    <library>/boost/histogram//boost_histogram
     [ requires
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
