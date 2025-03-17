@@ -23,7 +23,7 @@ constexpr unsigned parse_number(unsigned n, char f, Rest... rest) {
 namespace literals {
 /// Suffix operator to generate literal compile-time numbers, 0_c, 12_c, etc.
 template <char... digits>
-auto operator"" _c() {
+auto operator ""_c() {
   return std::integral_constant<unsigned, detail::parse_number(0, digits...)>();
 }
 } // namespace literals
