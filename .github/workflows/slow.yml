@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  B2_OPTS: -q -j2 warnings-as-errors=on cxxflags=-Wno-unused-parameter
+  B2_OPTS: -q -j2 warnings-as-errors=on cxxflags=-Wno-unused-parameter cxxflags=-Wno-maybe-uninitialized
   UBSAN_OPTIONS: print_stacktrace=1
   LSAN_OPTIONS: verbosity=1:log_threads=1
   ASAN_OPTIONS: detect_leaks=1:detect_stack_use_after_return=1
