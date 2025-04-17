@@ -21,8 +21,6 @@ constant boost_dependencies :
     /boost/variant2//boost_variant2 ;
 
 project /boost/histogram
-    : common-requirements
-        <include>include
     : requirements
         <toolset>clang:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
         <toolset>darwin:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
@@ -35,7 +33,8 @@ project /boost/histogram
     ;
 
 explicit
-    [ alias boost_histogram : : : : <library>$(boost_dependencies) ]
+    [ alias boost_histogram : : :
+        : <include>include <library>$(boost_dependencies) ]
     [ alias all : boost_histogram test examples ]
     ;
 
