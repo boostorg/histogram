@@ -14,7 +14,7 @@ require-b2 5.2 ;
 constant boost_dependencies :
     /boost/config//boost_config
     /boost/core//boost_core
-    /boost/math//boost_math_tr1
+    /boost/math//boost_math
     /boost/mp11//boost_mp11
     /boost/serialization//boost_serialization
     /boost/throw_exception//boost_throw_exception
