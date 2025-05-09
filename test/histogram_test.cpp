@@ -146,11 +146,9 @@ void run_tests() {
     unsafe_access::axis(c, 0).metadata() = "foo";
     BOOST_TEST_EQ(c.axis().metadata(), "foo");
     // need to cast here for this to work with Tag == dynamic_tag, too
-    const auto ca_ = c.axis();
-    const auto& ca = axis::get<axis::category<>>(ca_);
+    const auto& ca = axis::get<axis::category<>>(c.axis());
     BOOST_TEST_EQ(ca.bin(0), 1);
-    const auto ca2_ = c.axis(0);
-    const auto& ca2 = axis::get<axis::category<>>(ca2_);
+    const auto& ca2 = axis::get<axis::category<>>(c.axis(0));
     BOOST_TEST_EQ(&ca2, &ca);
   }
 
