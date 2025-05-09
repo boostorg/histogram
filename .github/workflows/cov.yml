@@ -12,7 +12,7 @@ on:
 
 env:
   B2_OPTS: -q -j2 warnings-as-errors=on
-  GCC_VERSION: 11
+  GCC_VERSION: 15
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
