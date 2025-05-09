@@ -62,10 +62,10 @@ jobs:
         mv -f * $GITHUB_WORKSPACE
     - name: Prepare b2
       run: ./bootstrap.sh
-    - name: Test cxxstd=20 -O3 -funsafe-math-optimizations
+    - name: Test cxxstd=20 optimization=speed -funsafe-math-optimizations
       run: |
         cd libs/histogram
-        ../../b2 $B2_OPTS toolset=gcc cxxstd=20 cxxflags="-O3 -funsafe-math-optimizations" test//all examples
+        ../../b2 $B2_OPTS toolset=gcc cxxstd=20 optimization=speed cxxflags="-funsafe-math-optimizations" test//all examples
 
   clang:
     runs-on: ubuntu-latest
