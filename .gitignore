@@ -15,3 +15,13 @@ coverage-report
 venv
 .pytest_cache
 !*.jam
+*.vcxproj
+*.vcxproj.filters
+*.sln
+BoostFetch.cmake
+cmake_install.cmake
+CMakeCache.txt
+CMakeFiles
+*.cmake
+DartConfiguration.tcl
+_deps
