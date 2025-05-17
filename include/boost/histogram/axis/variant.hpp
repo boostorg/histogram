@@ -253,7 +253,7 @@ template <class T, class... Us>
 decltype(auto) get(variant<Us...>&& v) {
   auto tp = get_if<T>(&v);
   if (!tp) BOOST_THROW_EXCEPTION(std::runtime_error("T is not the held type"));
-  return std::move(*tp);
+  return *tp;
 }
 
 /// Return const reference to T, throws unspecified exception if type does not match.
