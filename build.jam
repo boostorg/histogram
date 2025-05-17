@@ -11,12 +11,12 @@ require-b2 5.2 ;
 #   Test without exceptions and rtti:  b2 cxxstd=latest exception-handling=off rtti=off test//minimal
 #   Test with sanitizers:              b2 toolset=clang cxxstd=latest histogram_ubasan test
 
+# boost/serialization must not be included here, because it is an optional dependency
 constant boost_dependencies :
     /boost/config//boost_config
     /boost/core//boost_core
     /boost/math//boost_math
     /boost/mp11//boost_mp11
-    /boost/serialization//boost_serialization
     /boost/throw_exception//boost_throw_exception
     /boost/variant2//boost_variant2 ;
 

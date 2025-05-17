@@ -16,10 +16,10 @@ target_link_libraries(boost_histogram
   INTERFACE
     Boost::config
     Boost::core
+    Boost::math
     Boost::mp11
     Boost::throw_exception
     Boost::variant2
-    Boost::math
 )
 
 target_compile_features(boost_histogram INTERFACE cxx_std_14)
