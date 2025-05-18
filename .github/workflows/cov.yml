@@ -11,7 +11,7 @@ on:
       - '*.md'
 
 env:
-  B2_OPTS: -q -j2 warnings-as-errors=on
+  B2_OPTS: -q -a warnings-as-errors=on
   GCC_VERSION: 15
 
 concurrency:
