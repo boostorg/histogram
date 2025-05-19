@@ -16,7 +16,6 @@ target_link_libraries(boost_histogram
   INTERFACE
     Boost::config
     Boost::core
-    Boost::math
     Boost::mp11
     Boost::throw_exception
     Boost::variant2
