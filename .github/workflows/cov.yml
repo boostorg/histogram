@@ -48,7 +48,7 @@ jobs:
 
         # don't compile examples in coverage build, coverage must come from tests alone
         ../../b2 $B2_OPTS toolset=gcc-${GCC_VERSION} cxxstd=latest coverage=on test//all
-        ../../b2 $B2_OPTS -d+12 -d+13 toolset=gcc-${GCC_VERSION} cxxstd=latest coverage=on test//quick
+        ../../b2 $B2_OPTS -d+3 -d+12 -d+13 -n toolset=gcc-${GCC_VERSION} cxxstd=latest coverage=on test//quick
 
     - name: Process coverage data
       run: |
