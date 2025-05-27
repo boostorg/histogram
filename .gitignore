@@ -25,3 +25,12 @@ CMakeFiles
 *.cmake
 DartConfiguration.tcl
 _deps
+*.obj
+*.recipe
+*.ilk
+*.pdb
+*.lastbuildstate
+*.tlog
+*.exe
+CTestCostData.txt
+LastTest.log
