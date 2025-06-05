@@ -21,8 +21,7 @@ constant boost_dependencies :
 
 project /boost/histogram
     : requirements
-        <toolset>clang-darwin:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
-        <toolset>clang:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion -Wdeprecated-literal-operator"
+        <toolset>clang:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
         <toolset>gcc:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wfloat-conversion"
         <toolset>msvc:<cxxflags>"/bigobj"
         <toolset>intel-win:<cxxflags>"/bigobj"
