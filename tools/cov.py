@@ -6,8 +6,8 @@
 
 # script must be executed in project root folder
 
-# NOTE: compute coverage with b2 toolset=gcc-8 cxxstd=latest coverage=on test//all
-# - computing coverage only works properly with gcc-8 right now
+# NOTE: computing coverage only works properly with some gcc versions
+# - gcc-13 works ok
 # - gcc-9 and gcc-10 are extremely slow
 # - clang-10 works and is fast but misses a lot of unmissable lines
 
@@ -17,6 +17,9 @@ import os
 import sys
 
 LCOV_VERSION = "1.16"
+# lcov-2.x requires installing extra perl packages on Ubuntu-22
+#   apt install libcapture-tiny-perl libdatetime-perl libdatetime-format-dateparse-perl
+# LCOV_VERSION = "2.3.1"
 
 gcov = os.environ.get("GCOV", "gcov")
 
