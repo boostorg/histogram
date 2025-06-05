@@ -398,6 +398,19 @@ The library supports non-orthogonal grids by allowing axis types to accept a `st
 
 [endsect]
 
+[section:axis_multiple_value_types Axis which accepts multiple value types]
+
+Can you make an axis that accepts more than one type of value? Sort of, with a workaround. What is the issue here?
+
+The library generally expects that `Axis::index` accepts only a single value type, and thus the library was designed so that `Axis::index` cannot be overloaded and cannot be templated. Usually that makes sense: data for a given axis of the histogram may have type `double` or type `std::string`, but not a mix of the two. Value types which are implicitly convertible also work, for example, `double` and `int`.
+
+But what if you really need to accept more than one value type, and those types are not implicitly convertible? Then you can make it work with a special converter type, like in the following example.
+
+[import ../examples/guide_custom_axis_multiple_value_types.cpp]
+[guide_custom_axis_multiple_value_types]
+
+[endsect]
+
 [section User-defined storage class]
 
 Histograms which use a different storage class can easily created with the factory function [headerref boost/histogram/make_histogram.hpp make_histogram_with]. For convenience, this factory function accepts many standard containers as storage backends: vectors, arrays, and maps. These are automatically wrapped with a [classref boost::histogram::storage_adaptor] to provide the storage interface needed by the library. Users may also place custom accumulators in the vector, as described in the next section.

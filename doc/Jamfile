@@ -41,7 +41,7 @@ doxygen reference
 
 actions doxygen-postprocessing
 {
-  python $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
+  $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
 }
 
 notfile reference-pp : @doxygen-postprocessing : reference.xml ;

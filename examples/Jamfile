@@ -42,6 +42,7 @@ alias cxx14 :
     [ run guide_custom_accumulators_ouroboros.cpp ]
     [ run guide_custom_minimal_axis.cpp ]
     [ run guide_custom_modified_axis.cpp ]
+    [ run guide_custom_axis_multiple_value_types.cpp ]
     [ run guide_custom_storage.cpp ]
     [ run guide_fill_histogram.cpp ]
     [ run guide_fill_profile.cpp ]
