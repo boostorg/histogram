@@ -12,7 +12,7 @@ on:
 
 env:
   B2_OPTS: -q -j2 warnings-as-errors=on
-  GCC_VERSION: 11
+  GCC_VERSION: 13
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   cov:
-    runs-on: macos-11
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
     - name: Fetch Boost superproject
@@ -34,13 +34,7 @@ jobs:
         mv -f * $GITHUB_WORKSPACE
 
     - name: Prepare b2
-      run: |
-        ./bootstrap.sh
-        ./b2 headers
-
-        # simulate bundled boost by moving the headers instead of symlinking
-        rm -rf boost/histogram*
-        mv -f libs/histogram/include/boost/* boost
+      run: ./bootstrap.sh
 
     - name: Test cxxstd=latest coverage=on
       run: |
@@ -54,7 +48,7 @@ jobs:
         cd libs/histogram
         GCOV=gcov-${GCC_VERSION} tools/cov.py
 
-    - uses: coverallsapp/github-action@v1.1.2
+    - uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: libs/histogram/coverage.info
