@@ -12,7 +12,7 @@ on:
 
 env:
   B2_OPTS: -q -a warnings-as-errors=on
-  GCC_VERSION: 15
+  GCC_VERSION: 13
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   cov:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: Fetch Boost superproject
@@ -35,6 +35,7 @@ jobs:
 
     - name: Prepare b2
       run: ./bootstrap.sh
+
     - name: Test cxxstd=latest coverage=on
       run: |
         cd libs/histogram
