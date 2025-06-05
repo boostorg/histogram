@@ -34,21 +34,13 @@ jobs:
         mv -f * $GITHUB_WORKSPACE
 
     - name: Prepare b2
-      run: |
-        ./bootstrap.sh
-        ./b2 headers
-
-        # simulate bundled boost by moving the headers instead of symlinking
-        rm -rf boost/histogram*
-        mv -f libs/histogram/include/boost/* boost
-
+      run: ./bootstrap.sh
     - name: Test cxxstd=latest coverage=on
       run: |
         cd libs/histogram
 
         # don't compile examples in coverage build, coverage must come from tests alone
         ../../b2 $B2_OPTS toolset=gcc-${GCC_VERSION} cxxstd=latest coverage=on test//all
-        ../../b2 $B2_OPTS -d+3 -d+12 -d+13 -n toolset=gcc-${GCC_VERSION} cxxstd=latest coverage=on test//quick
 
     - name: Process coverage data
       run: |
