@@ -85,4 +85,7 @@ jobs:
     - name: Test cxxstd=17 ubsan asan
       run: |
         cd libs/histogram
-        ../../b2 $B2_OPTS toolset=clang cxxstd=17 variant=histogram_ubasan test//all
+
+        # workaround: -Wdeprecated-literal-operator only works with clang and not with appleclang
+        # Apparently, build.jam cannot make the distinction, so we have to specify it here
+        ../../b2 $B2_OPTS toolset=clang cxxstd=17 cxxflags="-Wdeprecated-literal-operator" variant=histogram_ubasan test//all
