@@ -48,7 +48,7 @@ jobs:
         cd libs/histogram
         GCOV=gcov-${GCC_VERSION} tools/cov.py
 
-    - uses: coverallsapp/github-action@v1.1.2
+    - uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: libs/histogram/coverage.info
