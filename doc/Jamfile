@@ -41,7 +41,14 @@ doxygen reference
 
 actions doxygen-postprocessing
 {
-  $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
+  if [ os.name ] = NT
+  {
+    python $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
+  }
+  else 
+  {
+    python3 $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
+  }
 }
 
 notfile reference-pp : @doxygen-postprocessing : reference.xml ;
