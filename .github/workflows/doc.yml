@@ -6,6 +6,9 @@ on:
       - master
       - develop
     paths-ignore:
+      - '.github/workflows/cov.yml'
+      - '.github/workflows/fast.yml'
+      - '.github/workflows/slow.yml'
       - 'tools/**'
       - '*.md'
 
