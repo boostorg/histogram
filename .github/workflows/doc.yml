@@ -1,0 +1,62 @@
+name: Slow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths-ignore:
+      - 'tools/**'
+      - '*.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  gcc:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12' 
+
+    - name: Install docbook dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docbook-xsl docbook-xml xsltproc
+
+    - name: Create user-config.jam
+      run: |
+        echo "using xsltproc ;" > user-config.jam
+        echo "using boostbook : /usr/share/xml/docbook/stylesheet/nwalsh : /usr/share/xml/docbook/schema/dtd/4.2 ;" >> user-config.jam
+        echo "using doxygen : /usr/bin/doxygen ;" >> user-config.jam
+        echo "using python : 3.12 : /usr/bin/python3 ; " >> user-config.jam
+
+    - uses: actions/checkout@v4
+
+    - name: Fetch Boost superproject
+      run: |
+        cd ..
+        git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
+        cd boost
+        mv -f $GITHUB_WORKSPACE/* libs/histogram
+        git submodule update --init --depth 5 tools/build tools/boostdep
+        git submodule update --init --depth 5 libs/format
+        python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
+        mv -f * $GITHUB_WORKSPACE
+
+    - name: Prepare b2
+      run: ./bootstrap.sh
+
+    - name: Build documentation
+      run: |
+        cd libs/histogram
+        ../../b2 docs
+
+    - name: Upload documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: histogram-docs
+        path: libs/histogram/doc/html
+        if-no-files-found: error
