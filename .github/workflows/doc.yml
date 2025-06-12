@@ -55,7 +55,7 @@ jobs:
     - name: Build documentation
       run: |
         cd libs/histogram
-        ../../b2 docs
+        ../../b2 doc
 
     - name: Upload documentation
       uses: actions/upload-artifact@v4
