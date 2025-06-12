@@ -7,6 +7,7 @@ on:
       - develop
     paths-ignore:
       - 'doc/**'
+      - '.github/workflows/doc.yml'
       - 'examples/**'
       - '*.md'
 
