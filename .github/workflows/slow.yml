@@ -1,4 +1,4 @@
-name: Slow
+name: Slow tests (b2)
 
 on:
   pull_request:
@@ -6,6 +6,9 @@ on:
       - master
       - develop
     paths-ignore:
+      - '.github/workflows/cov.yml'
+      - '.github/workflows/doc.yml'
+      - '.github/workflows/fast.yml'
       - 'doc/**'
       - 'tools/**'
       - '*.md'
@@ -19,7 +22,6 @@ env:
   UBSAN_OPTIONS: print_stacktrace=1
   LSAN_OPTIONS: verbosity=1:log_threads=1
   ASAN_OPTIONS: detect_leaks=1:detect_stack_use_after_return=1
-  COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
 
 jobs:
   appleclang:

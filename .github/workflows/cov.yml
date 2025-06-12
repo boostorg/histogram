@@ -6,6 +6,9 @@ on:
       - master
       - develop
     paths-ignore:
+      - '.github/workflows/doc.yml'
+      - '.github/workflows/fast.yml'
+      - '.github/workflows/slow.yml'
       - 'doc/**'
       - 'examples/**'
       - '*.md'
