@@ -1,4 +1,4 @@
-name: Fast
+name: Fast tests (cmake)
 
 on:
   pull_request:

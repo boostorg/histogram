@@ -1,4 +1,4 @@
-name: Slow
+name: Documentation
 
 on:
   pull_request:

@@ -1,4 +1,4 @@
-name: Slow
+name: Slow tests (b2)
 
 on:
   pull_request:
