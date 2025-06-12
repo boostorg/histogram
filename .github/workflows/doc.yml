@@ -41,11 +41,9 @@ jobs:
     - name: Fetch Boost superproject
       run: |
         cd ..
-        git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
+        git clone -b $GITHUB_BASE_REF --recursive --depth 5 https://github.com/boostorg/boost.git
         cd boost
         mv -f $GITHUB_WORKSPACE/* libs/histogram
-        git submodule update --init --depth 5 tools/build tools/boostdep tools/quickbook
-        python tools/boostdep/depinst/depinst.py --git_args "--depth 5 --jobs 3" histogram
         mv -f * $GITHUB_WORKSPACE
 
     - name: Prepare b2
