@@ -39,10 +39,20 @@ doxygen reference
                              \"BOOST_ATTRIBUTE_NODISCARD\""
 ;
 
-actions doxygen-postprocessing
-{
-  python3 $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
-}
+if [ os.name ] = NT
+  {
+    actions doxygen-postprocessing
+    {
+      python $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
+    }
+  }
+  else
+  {
+    actions doxygen-postprocessing
+    {
+      python3 $(THIS_PATH)/doxygen_postprocessing.py "$(>)"
+    }
+  }
 
 notfile reference-pp : @doxygen-postprocessing : reference.xml ;
 
