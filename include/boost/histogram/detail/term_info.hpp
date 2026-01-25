@@ -69,9 +69,9 @@ inline bool utf8() {
 inline int width() {
   int w = 0;
 #if defined TIOCGWINSZ
-  struct winsize ws;
-  ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
-  w = (std::max)(static_cast<int>(ws.ws_col), 0); // not sure if ws_col can be less than 0
+  struct winsize ws{};
+  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0)
+    w = (std::max)(static_cast<int>(ws.ws_col), 0); // not sure if ws_col can be less than 0
 #endif
   env_t env("COLUMNS");
   const int col = (std::max)(static_cast<int>(env), 0);

@@ -1,4 +1,4 @@
-name: Fast
+name: Fast tests (cmake)
 
 on:
   pull_request:
@@ -6,6 +6,9 @@ on:
       - master
       - develop
     paths-ignore:
+      - '.github/workflows/cov.yml'
+      - '.github/workflows/doc.yml'
+      - '.github/workflows/slow.yml'
       - 'doc/**'
       - 'examples/**'
       - 'tools/**'

@@ -148,7 +148,17 @@ void run_tests() {
     // need to cast here for this to work with Tag == dynamic_tag, too
     const auto& ca = axis::get<axis::category<>>(c.axis());
     BOOST_TEST_EQ(ca.bin(0), 1);
+    // gcc-13 warns here, that a reference to a temporary is created, but the
+    // return object has the same lifetime as the histogram, and the pointer address
+    // is also correct (proving no copies are made), so we can ignore this warning
+#if BOOST_WORKAROUND(BOOST_GCC, >= 13)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
     const auto& ca2 = axis::get<axis::category<>>(c.axis(0));
+#if BOOST_WORKAROUND(BOOST_GCC, >= 13)
+#pragma GCC diagnostic pop
+#endif
     BOOST_TEST_EQ(&ca2, &ca);
   }
 

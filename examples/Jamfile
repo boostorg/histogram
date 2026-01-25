@@ -5,15 +5,21 @@
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+require-b2 5.0.1 ;
+
+import-search /boost/config/checks ;
+
 import testing ;
-import ../../config/checks/config : requires ;
+import config : requires ;
 
 project
     : requirements
+    <library>/boost/histogram//boost_histogram
     [ requires
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
     ]
+    <library>/boost/format//boost_format
     ;
 
 alias cxx14 :
@@ -36,6 +42,7 @@ alias cxx14 :
     [ run guide_custom_accumulators_ouroboros.cpp ]
     [ run guide_custom_minimal_axis.cpp ]
     [ run guide_custom_modified_axis.cpp ]
+    [ run guide_custom_axis_multiple_value_types.cpp ]
     [ run guide_custom_storage.cpp ]
     [ run guide_fill_histogram.cpp ]
     [ run guide_fill_profile.cpp ]

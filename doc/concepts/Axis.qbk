@@ -9,6 +9,8 @@
 
 An [*Axis] maps input values to indices. It holds state specific to that axis, like the number of bins and any metadata. Must be [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible], [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable], and *nothrow* [@https://en.cppreference.com/w/cpp/named_req/MoveAssignable MoveAssignable].
 
+[note `Axis::index` cannot be templated or overloaded. This is by design, but also a limitation of the internal code used to detect generic user-defined axes. A workaround for making an axis that accepts multiple value types is described in the [link histogram.guide.expert.axis_multiple_value_types [*Guide]].]
+
 [heading Associated Types]
 
 * [link histogram.concepts.DiscreteAxis [*DiscreteAxis]]
