@@ -298,12 +298,12 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
 
     for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(w[i]));
     for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(w[i]), weight(w[i]));
-    for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(2), weight(w[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(2.0), weight(w[i]));
     for (unsigned i = 0; i < ndata; ++i) h(x[i], sample(w[i]), weight(2));
 
     h2.fill(x, sample(w));
     h2.fill(x, sample(w), weight(w));
-    h2.fill(x, sample(2), weight(w));
+    h2.fill(x, sample(2.0), weight(w));
     h2.fill(x, sample(w), weight(2));
 
     BOOST_TEST_EQ(h, h2);
@@ -315,7 +315,7 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     auto h2 = h;
 
     for (unsigned i = 0; i < ndata; ++i) h(x[i], 3, sample(w[i]), weight(w[i]));
-    for (unsigned i = 0; i < ndata; ++i) h(x[i], 3, sample(2), weight(w[i]));
+    for (unsigned i = 0; i < ndata; ++i) h(x[i], 3, sample(2.0), weight(w[i]));
     for (unsigned i = 0; i < ndata; ++i) h(x[i], 3, sample(w[i]), weight(2));
 
     using V = variant<int, std::vector<int>>;
@@ -323,7 +323,7 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     xy[0] = x;
     xy[1] = 3;
     h2.fill(xy, sample(w), weight(w));
-    h2.fill(xy, sample(2), weight(w));
+    h2.fill(xy, sample(2.0), weight(w));
     h2.fill(xy, sample(w), weight(2));
 
     BOOST_TEST_EQ(h, h2);

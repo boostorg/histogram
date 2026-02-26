@@ -284,12 +284,12 @@ void run_tests() {
   {
     auto h = make_s(Tag(), profile_storage(), axis::integer<>(0, 2));
 
-    h(0, sample(1));
-    h(0, sample(2));
-    h(0, sample(3));
-    h(sample(4), 1);
-    h(sample(5), 1);
-    h(sample(6), 1);
+    h(0, sample(1.0));
+    h(0, sample(2.0));
+    h(0, sample(3.0));
+    h(sample(4.0), 1);
+    h(sample(5.0), 1);
+    h(sample(6.0), 1);
 
     BOOST_TEST_EQ(h[0].count(), 3);
     BOOST_TEST_EQ(h[0].value(), 2);
@@ -303,17 +303,17 @@ void run_tests() {
   {
     auto h = make_s(Tag(), weighted_profile_storage(), axis::integer<>(0, 2));
 
-    h(0, sample(1));
-    h(sample(1), 0);
+    h(0, sample(1.0));
+    h(sample(1.0), 0);
 
-    h(0, weight(2), sample(3));
-    h(0, sample(5), weight(2));
+    h(0, weight(2), sample(3.0));
+    h(0, sample(5.0), weight(2));
 
-    h(weight(2), 1, sample(1));
-    h(sample(2), 1, weight(2));
+    h(weight(2), 1, sample(1.0));
+    h(sample(2.0), 1, weight(2));
 
-    h(weight(2), sample(3), 1);
-    h(sample(4), weight(2), 1);
+    h(weight(2), sample(3.0), 1);
+    h(sample(4.0), weight(2), 1);
 
     BOOST_TEST_EQ(h[0].sum_of_weights(), 6);
     BOOST_TEST_EQ(h[0].value(), 3);

@@ -43,15 +43,15 @@ void run_tests() {
     BOOST_TEST(empty(h, coverage::all));
     BOOST_TEST(empty(h, coverage::inner));
     h.reset();
-    h(weight(2), -2, -4, sample(3));
+    h(weight(2), -2, -4, sample(3.0));
     BOOST_TEST(!empty(h, coverage::all));
     BOOST_TEST(empty(h, coverage::inner));
     h.reset();
-    h(weight(1), -4, 2, sample(2));
+    h(weight(1), -4, 2, sample(2.0));
     BOOST_TEST(!empty(h, coverage::all));
     BOOST_TEST(empty(h, coverage::inner));
     h.reset();
-    h(weight(3), 3, 5, sample(1));
+    h(weight(3), 3, 5, sample(1.0));
     BOOST_TEST(!empty(h, coverage::all));
     BOOST_TEST(!empty(h, coverage::inner));
   }

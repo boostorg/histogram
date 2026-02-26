@@ -85,12 +85,12 @@ void run_tests() {
     BOOST_TEST_EQ(h.at(1), 7);
 
     auto h2 = make_s(Tag(), profile_storage(), axis2d());
-    h2(1, 2, sample(2));
+    h2(1, 2, sample(2.0));
     BOOST_TEST_EQ(h2[1].count(), 1);
     BOOST_TEST_EQ(h2[1].value(), 2);
 
     auto h3 = make_s(Tag(), weighted_profile_storage(), axis2d());
-    h3(1, 2, weight(3), sample(2));
+    h3(1, 2, weight(3), sample(2.0));
     BOOST_TEST_EQ(h3[1].sum_of_weights(), 3);
     BOOST_TEST_EQ(h3[1].value(), 2);
   }
