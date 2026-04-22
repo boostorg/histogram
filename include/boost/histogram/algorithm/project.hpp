@@ -33,15 +33,10 @@ namespace algorithm {
   Arguments are the source histogram and compile-time numbers, the remaining indices of
   the axes. Returns a new histogram which only contains the subset of axes. The source
   histogram is summed over the removed axes.
-
-  @param h source histogram.
-  @param cov whether to include underflow/overflow bins in the sum.
-  @param n remaining axis index.
-  @param ns remaining axis indices.
 */
 template <class A, class S, unsigned N, typename... Ns>
-auto project(const histogram<A, S>& h, coverage cov, std::integral_constant<unsigned, N> n,
-             Ns... ns) {
+auto project(const histogram<A, S>& h, coverage cov, std::integral_constant<unsigned, N>,
+             Ns...) {
   using LN = mp11::mp_list<std::integral_constant<unsigned, N>, Ns...>;
   static_assert(mp11::mp_is_set<LN>::value, "indices must be unique");
 
@@ -82,10 +77,6 @@ auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N> n, Ns
 
   This version accepts a source histogram and an iterable range containing the remaining
   indices.
-
-  @param h source histogram.
-  @param cov whether to include underflow/overflow bins in the sum.
-  @param c iterable of remaining axis indices.
 */
 template <class A, class S, class Iterable, class = detail::requires_iterable<Iterable>>
 auto project(const histogram<A, S>& h, coverage cov, const Iterable& c) {
