@@ -72,7 +72,7 @@ int main() {
   };
 
   BOOST_TEST(dtl::accumulator_traits<A7>::weight_support);
-  BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A7>::args, std::tuple<int&&>);
+  BOOST_TEST_TRAIT_SAME(typename dtl::accumulator_traits<A7>::args, std::tuple<int>);
 
   struct B1 {
     int operator+=(int);

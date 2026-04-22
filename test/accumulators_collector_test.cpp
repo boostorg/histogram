@@ -30,7 +30,7 @@ bool operator==(const span<T1>& a, const std::vector<T2>& b) {
 int main() {
   using traits = detail::accumulator_traits<accumulators::collector<>>;
   static_assert(!traits::weight_support, "");
-  static_assert(std::is_same<traits::args, std::tuple<const double&>>::value, "");
+  static_assert(std::is_same<traits::args, std::tuple<double>>::value, "");
 
   {
     accumulators::collector<std::vector<int>> acc;

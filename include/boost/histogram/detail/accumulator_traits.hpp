@@ -31,24 +31,29 @@ struct accumulator_traits_holder {
 
 // member function pointer with weight_type as first argument is better match
 template <class R, class T, class U, class... Ts>
-accumulator_traits_holder<true, Ts...> accumulator_traits_impl_call_op(
+accumulator_traits_holder<true, std::remove_cv_t<std::remove_reference_t<Ts>>...>
+accumulator_traits_impl_call_op(
     R (T::*)(boost::histogram::weight_type<U>, Ts...));
 
 template <class R, class T, class U, class... Ts>
-accumulator_traits_holder<true, Ts...> accumulator_traits_impl_call_op(
+accumulator_traits_holder<true, std::remove_cv_t<std::remove_reference_t<Ts>>...>
+accumulator_traits_impl_call_op(
     R (T::*)(boost::histogram::weight_type<U>&, Ts...));
 
 template <class R, class T, class U, class... Ts>
-accumulator_traits_holder<true, Ts...> accumulator_traits_impl_call_op(
+accumulator_traits_holder<true, std::remove_cv_t<std::remove_reference_t<Ts>>...>
+accumulator_traits_impl_call_op(
     R (T::*)(boost::histogram::weight_type<U>&&, Ts...));
 
 template <class R, class T, class U, class... Ts>
-accumulator_traits_holder<true, Ts...> accumulator_traits_impl_call_op(
+accumulator_traits_holder<true, std::remove_cv_t<std::remove_reference_t<Ts>>...>
+accumulator_traits_impl_call_op(
     R (T::*)(const boost::histogram::weight_type<U>&, Ts...));
 
 // member function pointer only considered if all specializations above fail
 template <class R, class T, class... Ts>
-accumulator_traits_holder<false, Ts...> accumulator_traits_impl_call_op(R (T::*)(Ts...));
+accumulator_traits_holder<false, std::remove_cv_t<std::remove_reference_t<Ts>>...>
+accumulator_traits_impl_call_op(R (T::*)(Ts...));
 
 template <class T>
 auto accumulator_traits_impl(T&, priority<2>)
