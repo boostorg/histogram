@@ -223,6 +223,29 @@ void run_tests(const std::vector<int>& x, const std::vector<int>& y,
     }
   }
 
+  // 2D mixed array/scalar fill with leading out-of-range entry on a non-inclusive
+  // axis processed before the scalar axis; see GitHub issue #426. The broadcast scalar
+  // path must not let an entry invalidated by a previous axis invalidate the whole
+  // buffer.
+  {
+    auto h = make(Tag(), in0{1, 3}, in0{6, 8});
+
+    using V = variant<int, std::vector<int>>;
+    V xy[2];
+
+    // array on the non-inclusive first axis, leading element 0 is out of range
+    const std::vector<int> xs = {0, 1, 2};
+    xy[0] = xs;
+    xy[1] = 7; // scalar on the second axis
+
+    auto h1 = h;
+    auto h2 = h;
+    for (auto&& xi : xs) h1(xi, 7);
+    h2.fill(xy);
+    BOOST_TEST_EQ(sum(h1), sum(h2));
+    BOOST_TEST_EQ(h1, h2);
+  }
+
   // 1D growing
   {
     auto h = make(Tag(), ing());

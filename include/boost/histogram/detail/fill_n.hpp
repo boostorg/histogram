@@ -99,21 +99,45 @@ struct index_visitor {
     for (auto it = begin_; it != begin_ + size_; ++it) call_2(IsGrowing{}, it, *tp++);
   }
 
+  // Compute the index contribution of a scalar value into a temporary that is
+  // independent of the existing index buffer. Mirrors call_2, but writes into `out`
+  // (initially a valid zero) instead of an index buffer entry, so there is no earlier
+  // index to shift; the growth shift, if any, is still recorded for the grower.
+  template <class T>
+  void scalar_index(std::true_type, index_type& out, const T& x) const {
+    axis::index_type shift;
+    linearize_growth(out, shift, stride_, axis_,
+                     try_cast<value_type, std::invalid_argument>(x));
+    if (shift > 0) *shift_ += shift;
+  }
+
+  template <class T>
+  void scalar_index(std::false_type, index_type& out, const T& x) const {
+    linearize(out, stride_, axis_, try_cast<value_type, std::invalid_argument>(x));
+  }
+
   template <class T>
   void call_1(std::true_type, const T& value) const {
     // T is compatible value; fill single value N times
 
-    // Optimization: We call call_2 only once and then add the index shift onto the
-    // whole array of indices, because it is always the same. This also works if the
-    // axis grows during this operation. There are no shifts to apply if the zero-point
-    // changes.
-    const auto before = *begin_;
-    call_2(IsGrowing{}, begin_, value);
-    if (is_valid(*begin_)) {
+    // Optimization: the value is a scalar, so its index contribution to this axis is
+    // the same for every entry. We compute that contribution once and add it to the
+    // whole array of indices. This also works if the axis grows during this operation.
+    //
+    // The contribution is computed on a fresh, valid temporary index rather than read
+    // back from *begin_: a previous axis may already have invalidated *begin_, and
+    // deriving the contribution from an invalid index would incorrectly invalidate the
+    // entire buffer (see https://github.com/scikit-hep/boost-histogram/issues/960).
+    // Adding the contribution with operator+= leaves entries already invalidated by
+    // previous axes untouched, while a scalar that is itself out of range for this axis
+    // correctly invalidates every entry.
+    index_type tmp{};
+    tmp = 0;
+    scalar_index(IsGrowing{}, tmp, value);
+    if (is_valid(tmp)) {
       // since index can be std::size_t or optional_index, must do conversion here
-      const auto delta =
-          static_cast<std::intptr_t>(*begin_) - static_cast<std::intptr_t>(before);
-      for (auto it = begin_ + 1; it != begin_ + size_; ++it) *it += delta;
+      const auto delta = static_cast<std::intptr_t>(tmp);
+      for (auto it = begin_; it != begin_ + size_; ++it) *it += delta;
     } else
       std::fill(begin_, begin_ + size_, invalid_index);
   }
