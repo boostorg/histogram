@@ -8,6 +8,7 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/traits.hpp>
+#include <vector>
 #include "axis.hpp"
 #include "ostream.hpp"
 #include "throw_exception.hpp"
@@ -67,6 +68,23 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((traits::is_reducible<circular<>>));
     BOOST_TEST_TRAIT_TRUE((traits::is_reducible<integer<>>));
     BOOST_TEST_TRAIT_TRUE((traits::is_reducible<category<>>));
+  }
+
+  // is_pickable
+  {
+    struct not_pickable {};
+    struct pickable {
+      pickable(const pickable&, const std::vector<index_type>&);
+    };
+
+    BOOST_TEST_TRAIT_TRUE((traits::is_pickable<pickable>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<not_pickable>));
+
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<regular<>>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<variable<>>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<circular<>>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<integer<>>));
+    BOOST_TEST_TRAIT_TRUE((traits::is_pickable<category<>>));
   }
 
   // get_options, options()

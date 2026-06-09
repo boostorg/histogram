@@ -293,9 +293,9 @@ The library provides the [funcref boost::histogram::algorithm::project] function
 
 [section Reduction]
 
-A projection removes an axis completely. A less drastic way to obtain a smaller histogram is the [funcref boost::histogram::algorithm::reduce reduce] function, which allows one to /slice/, /shrink/ or /rebin/ individual axes.
+A projection removes an axis completely. A less drastic way to obtain a smaller histogram is the [funcref boost::histogram::algorithm::reduce reduce] function, which allows one to /slice/, /shrink/, /pick/ or /rebin/ individual axes.
 
-Shrinking means that the value range of an axis is reduced and the number of bins along that axis. Slicing does the same, but is based on axis indices while shrinking is based on the axis values. To /rebin/ means that adjacent bins are merged into larger bins, the histogram is made coarser. For N adjacent bins, a new bin is formed which covers the common interval of the merged bins and has their added content. These two operations can be combined and applied to several axes at once. Doing it in one step is much more efficient than doing it in several steps.
+Shrinking means that the value range of an axis is reduced and the number of bins along that axis. Slicing does the same, but is based on axis indices while shrinking is based on the axis values. To /rebin/ means that adjacent bins are merged into larger bins, the histogram is made coarser. For N adjacent bins, a new bin is formed which covers the common interval of the merged bins and has their added content. These two operations can be combined and applied to several axes at once. Doing it in one step is much more efficient than doing it in several steps. Picking selects an arbitrary subset of bins by index from an axis which is not ordered, like the category axis. Unlike a slice, the picked bins do not have to be adjacent.
 
 The [funcref boost::histogram::algorithm::reduce reduce] function does not change the total count if all modified axes in the histogram have underflow and overflow bins. Counts in removed bins are added to the corresponding under- and overflow bins. As in case of the [funcref boost::histogram::algorithm::project project] function, such a histogram is guaranteed to be identical to one obtained from filling the original data.
 
