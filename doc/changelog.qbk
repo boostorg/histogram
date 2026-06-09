@@ -7,6 +7,11 @@
 
 [section:changelog Changelog]
 
+[heading Next release]
+
+* Added `pick` command for `algorithm::reduce`, which selects an arbitrary subset of bins from a category axis; unlike `slice`, the bins do not have to be adjacent
+  * New trait `axis::traits::is_pickable` detects whether an axis supports picking; user-defined axes can opt-in by adding a special constructor, see the Axis concept
+
 [heading Boost 1.89]
 
 * Update CMake minimum version and Python detection in CMake
