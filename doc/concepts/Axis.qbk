@@ -53,6 +53,7 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
 * `a` and `b` are values of type `A`
 * `i` and `j` are indices of type [headerref boost/histogram/fwd.hpp `boost::histogram::axis::index_type`]
 * `n` is a value of type `unsigned`
+* `v` is a value of type `std::vector<boost::histogram::axis::index_type>`
 * `M` is a metadata type that is [@https://en.cppreference.com/w/cpp/named_req/DefaultConstructible DefaultConstructible], [@https://en.cppreference.com/w/cpp/named_req/CopyConstructible CopyConstructible] and [@https://en.cppreference.com/w/cpp/named_req/CopyAssignable CopyAssignable]. It it supports moves, it must be *nothrow* [@https://en.cppreference.com/w/cpp/named_req/MoveAssignable MoveAssignable].
 * `ar` is a value of an archive with Boost.Serialization semantics
 
@@ -70,6 +71,13 @@ An [*Axis] maps input values to indices. It holds state specific to that axis, l
   []
   [
     Special constructor used by the reduce algorithm. `a` is the original axis instance, `i` and `j` are the index range to keep in the reduced axis. If `n` is larger than 1, `n` adjacent bins are merged into one larger cell. If this constructor is not implemented, [funcref boost::histogram::algorithm::reduce] throws an exception on an attempt to reduce this axis.
+  ]
+]
+[
+  [`A(a, v)`]
+  []
+  [
+    Special constructor used by the reduce algorithm to handle the pick command. `a` is the original axis instance, `v` is a `std::vector` of [headerref boost/histogram/fwd.hpp `boost::histogram::axis::index_type`] with the indices of the bins to keep, in the order in which they should appear in the new axis. Should only be implemented for axes which are not ordered, like the category axis. If this constructor is not implemented, [funcref boost::histogram::algorithm::reduce] throws an exception on an attempt to pick bins from this axis.
   ]
 ]
 [

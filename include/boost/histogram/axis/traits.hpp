@@ -23,6 +23,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -176,6 +177,29 @@ using is_reducible = std::is_constructible<Axis, const Axis&, axis::index_type,
                                            axis::index_type, unsigned>;
 #else
 struct is_reducible;
+#endif
+
+/** Meta-function to detect whether bins of an axis can be picked.
+
+  Doxygen does not render this well. This is a meta-function (template alias), it accepts
+  an axis type and represents compile-time boolean which is true or false, depending on
+  whether an arbitrary subset of bins can be selected from the axis with
+  boost::histogram::algorithm::reduce(), using the pick command.
+
+  An axis can be made pickable by adding a special constructor, which accepts the
+  original axis and a vector of bin indices to keep, see Axis concept for details. This
+  usually only makes sense for axes which are not ordered, like the category axis, since
+  picking an arbitrary subset of bins from an ordered axis would create gaps in the axis
+  range.
+
+  @tparam Axis axis type.
+ */
+template <class Axis>
+#ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
+using is_pickable =
+    std::is_constructible<Axis, const Axis&, const std::vector<axis::index_type>&>;
+#else
+struct is_pickable;
 #endif
 
 /** Get axis options for axis type.
