@@ -8,6 +8,7 @@
 #define BOOST_HISTOGRAM_ALGORITHM_REDUCE_HPP
 
 #include <algorithm>
+#include <boost/config/workaround.hpp>
 #include <boost/histogram/axis/traits.hpp>
 #include <boost/histogram/detail/axes.hpp>
 #include <boost/histogram/detail/make_default.hpp>
@@ -390,6 +391,11 @@ inline reduce_command pick(std::vector<axis::index_type> indices) {
   `pick`, `shrink_and_rebin`, or `slice_and_rebin`. The element type of the iterable
   should be `reduce_command`.
 */
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#pragma warning(push)
+#pragma warning(disable : 4702) // unreachable code in the non-pickable static_if branch
+#endif
+
 template <class Histogram, class Iterable, class = detail::requires_iterable<Iterable>>
 Histogram reduce(const Histogram& hist, const Iterable& options) {
   using axis::index_type;
@@ -521,6 +527,10 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
 
   return result;
 }
+
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#pragma warning(pop)
+#endif
 
 /** Shrink, crop, slice, pick, and/or rebin axes of a histogram.
 
