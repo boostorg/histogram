@@ -103,19 +103,37 @@ struct index_visitor {
   void call_1(std::true_type, const T& value) const {
     // T is compatible value; fill single value N times
 
-    // Optimization: We call call_2 only once and then add the index shift onto the
-    // whole array of indices, because it is always the same. This also works if the
-    // axis grows during this operation. There are no shifts to apply if the zero-point
-    // changes.
-    const auto before = *begin_;
-    call_2(IsGrowing{}, begin_, value);
-    if (is_valid(*begin_)) {
-      // since index can be std::size_t or optional_index, must do conversion here
-      const auto delta =
-          static_cast<std::intptr_t>(*begin_) - static_cast<std::intptr_t>(before);
-      for (auto it = begin_ + 1; it != begin_ + size_; ++it) *it += delta;
-    } else
+    // Compute the contribution of this axis to the linear index once on a
+    // fresh index and add it to the whole array of indices. The contribution
+    // must not be derived from the change of *begin_, because a previous axis
+    // may have already invalidated some entries, including the first one
+    // (scikit-hep/boost-histogram#960). Entries that are already invalid stay
+    // invalid, all other entries receive the same contribution.
+    //
+    // The fresh index is biased by stride_, because the contribution of an
+    // underflow bin is -stride_ and the index type is unsigned. The bias is
+    // subtracted again when the delta is computed.
+    index_type idx{stride_};
+    if (IsGrowing::value) {
+      // IsGrowing::value is a compile-time constant, the dead branch is
+      // eliminated; linearize_growth also handles non-growing axes.
+      axis::index_type shift;
+      linearize_growth(idx, shift, stride_, axis_,
+                       try_cast<value_type, std::invalid_argument>(value));
+      // No index shifts to apply if the zero-point changes, since all entries
+      // receive the same contribution which is computed after the growth, but
+      // the shift must be recorded so that the storage is resized correctly.
+      if (shift > 0) *shift_ += shift;
+    } else {
+      linearize(idx, stride_, axis_, try_cast<value_type, std::invalid_argument>(value));
+    }
+    if (is_valid(idx)) {
+      const auto delta = static_cast<std::intptr_t>(static_cast<std::size_t>(idx)) -
+                         static_cast<std::intptr_t>(stride_);
+      for (auto it = begin_; it != begin_ + size_; ++it) *it += delta;
+    } else {
       std::fill(begin_, begin_ + size_, invalid_index);
+    }
   }
 
   template <class T>
