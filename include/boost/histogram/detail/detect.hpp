@@ -111,6 +111,16 @@ BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_operator_rdiv, (t /= u));
 
 BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_method_eq, (cref<T>().operator==(u)));
 
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_method_ne, (cref<T>().operator!=(u)));
+
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_method_lt, (cref<T>().operator<(u)));
+
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_method_gt, (cref<T>().operator>(u)));
+
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_method_le, (cref<T>().operator<=(u)));
+
+BOOST_HISTOGRAM_DETAIL_DETECT_BINARY(has_method_ge, (cref<T>().operator>=(u)));
+
 BOOST_HISTOGRAM_DETAIL_DETECT(has_threading_support, (T::has_threading_support));
 
 // stronger form of std::is_convertible that works with explicit operator T and ctors

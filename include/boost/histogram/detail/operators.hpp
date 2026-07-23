@@ -20,10 +20,11 @@ namespace detail {
 template <class T, class U>
 using if_not_same = std::enable_if_t<(!std::is_same<T, U>::value), bool>;
 
-// template <class T, class U>
-// using if_not_same_and_has_eq =
-//     std::enable_if_t<(!std::is_same<T, U>::value && !has_method_eq<T, U>::value),
-//     bool>;
+// A generic template operator must yield to U's own member operator when U has one that
+// accepts T, otherwise the two catch-all templates are ambiguous (issue #403).
+template <class T, class U, class HasMethod>
+using if_not_same_and_no_method =
+    std::enable_if_t<(!std::is_same<T, U>::value && !HasMethod::value), bool>;
 
 // totally_ordered is for types with a <= b == !(a > b) [floats with NaN violate this]
 // Derived must implement <,== for symmetric form and <,>,== for non-symmetric.
@@ -44,11 +45,13 @@ struct mirrored {
 template <class T>
 struct mirrored<T, void> {
   template <class U>
-  friend if_not_same<T, U> operator<(const U& a, const T& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_lt<U, T>> operator<(
+      const U& a, const T& b) noexcept {
     return b > a;
   }
   template <class U>
-  friend if_not_same<T, U> operator>(const U& a, const T& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_gt<U, T>> operator>(
+      const U& a, const T& b) noexcept {
     return b < a;
   }
   template <class U>
@@ -57,15 +60,18 @@ struct mirrored<T, void> {
     return b.operator==(a);
   }
   template <class U>
-  friend if_not_same<T, U> operator<=(const U& a, const T& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_le<U, T>> operator<=(
+      const U& a, const T& b) noexcept {
     return b >= a;
   }
   template <class U>
-  friend if_not_same<T, U> operator>=(const U& a, const T& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_ge<U, T>> operator>=(
+      const U& a, const T& b) noexcept {
     return b <= a;
   }
   template <class U>
-  friend if_not_same<T, U> operator!=(const U& a, const T& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_ne<U, T>> operator!=(
+      const U& a, const T& b) noexcept {
     return b != a;
   }
 };
@@ -83,7 +89,8 @@ struct equality {
 template <class T>
 struct equality<T, void> {
   template <class U>
-  friend if_not_same<T, U> operator!=(const T& a, const U& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_ne<U, T>> operator!=(
+      const T& a, const U& b) noexcept {
     return !(a == b);
   }
 };
@@ -97,18 +104,20 @@ struct totally_ordered_impl : equality<T, U>, mirrored<T, U> {
 template <class T>
 struct totally_ordered_impl<T, void> : equality<T, void>, mirrored<T, void> {
   template <class U>
-  friend if_not_same<T, U> operator<=(const T& a, const U& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_le<U, T>> operator<=(
+      const T& a, const U& b) noexcept {
     return !(a > b);
   }
   template <class U>
-  friend if_not_same<T, U> operator>=(const T& a, const U& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_ge<U, T>> operator>=(
+      const T& a, const U& b) noexcept {
     return !(a < b);
   }
 };
 
 template <class T, class... Ts>
 using totally_ordered = mp11::mp_rename<
-    mp11::mp_product<totally_ordered_impl, mp11::mp_list<T>, mp11::mp_list<Ts...> >,
+    mp11::mp_product<totally_ordered_impl, mp11::mp_list<T>, mp11::mp_list<Ts...>>,
     mp11::mp_inherit>;
 
 template <class T, class U>
@@ -120,18 +129,20 @@ struct partially_ordered_impl : equality<T, U>, mirrored<T, U> {
 template <class T>
 struct partially_ordered_impl<T, void> : equality<T, void>, mirrored<T, void> {
   template <class U>
-  friend if_not_same<T, U> operator<=(const T& a, const U& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_le<U, T>> operator<=(
+      const T& a, const U& b) noexcept {
     return a < b || a == b;
   }
   template <class U>
-  friend if_not_same<T, U> operator>=(const T& a, const U& b) noexcept {
+  friend if_not_same_and_no_method<T, U, has_method_ge<U, T>> operator>=(
+      const T& a, const U& b) noexcept {
     return a > b || a == b;
   }
 };
 
 template <class T, class... Ts>
 using partially_ordered = mp11::mp_rename<
-    mp11::mp_product<partially_ordered_impl, mp11::mp_list<T>, mp11::mp_list<Ts...> >,
+    mp11::mp_product<partially_ordered_impl, mp11::mp_list<T>, mp11::mp_list<Ts...>>,
     mp11::mp_inherit>;
 
 } // namespace detail

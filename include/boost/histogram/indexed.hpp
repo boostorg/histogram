@@ -179,12 +179,12 @@ public:
     }
 
     // forward all comparison operators to the value
-    bool operator<(const accessor& o) noexcept { return get() < o.get(); }
-    bool operator>(const accessor& o) noexcept { return get() > o.get(); }
-    bool operator==(const accessor& o) noexcept { return get() == o.get(); }
-    bool operator!=(const accessor& o) noexcept { return get() != o.get(); }
-    bool operator<=(const accessor& o) noexcept { return get() <= o.get(); }
-    bool operator>=(const accessor& o) noexcept { return get() >= o.get(); }
+    bool operator<(const accessor& o) const noexcept { return get() < o.get(); }
+    bool operator>(const accessor& o) const noexcept { return get() > o.get(); }
+    bool operator==(const accessor& o) const noexcept { return get() == o.get(); }
+    bool operator!=(const accessor& o) const noexcept { return get() != o.get(); }
+    bool operator<=(const accessor& o) const noexcept { return get() <= o.get(); }
+    bool operator>=(const accessor& o) const noexcept { return get() >= o.get(); }
 
     template <class U>
     bool operator<(const U& o) const noexcept {
