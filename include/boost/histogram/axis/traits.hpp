@@ -23,7 +23,6 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -187,17 +186,18 @@ struct is_reducible;
   boost::histogram::algorithm::reduce(), using the pick command.
 
   An axis can be made pickable by adding a special constructor, which accepts the
-  original axis, an axis::pick_tag, and a vector of bin indices to keep, see Axis
-  concept for details. This usually only makes sense for axes which are not ordered,
-  like the category axis, since picking an arbitrary subset of bins from an ordered
-  axis would create gaps in the axis range.
+  original axis, an axis::pick_tag, and a pointer range of bin indices to keep, see
+  Axis concept for details. This usually only makes sense for axes which are not
+  ordered, like the category axis, since picking an arbitrary subset of bins from an
+  ordered axis would create gaps in the axis range.
 
   @tparam Axis axis type.
  */
 template <class Axis>
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
-using is_pickable = std::is_constructible<Axis, const Axis&, axis::pick_tag,
-                                          const std::vector<axis::index_type>&>;
+using is_pickable =
+    std::is_constructible<Axis, const Axis&, axis::pick_tag, const axis::index_type*,
+                          const axis::index_type*>;
 #else
 struct is_pickable;
 #endif
