@@ -33,6 +33,7 @@ struct reduce_command {
   unsigned merge = 0; // default value indicates unset option
   bool crop = false;
   // for internal use by the reduce algorithm
+  axis::index_type reduced_end = 0; // (end - begin) / merge
   bool is_ordered = true;
   bool use_underflow_bin = true;
   bool use_overflow_bin = true;

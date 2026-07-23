@@ -405,6 +405,9 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
   auto result =
       Histogram(std::move(axes), detail::make_default(unsafe_access::storage(hist)));
 
+  for (auto& o : opts)
+    o.reduced_end = (o.end.index - o.begin.index) / static_cast<index_type>(o.merge);
+
   auto idx = detail::make_stack_buffer<index_type>(unsafe_access::axes(result));
   for (auto&& x : indexed(hist, coverage::all)) {
     auto i = idx.begin();
@@ -417,14 +420,12 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
         *i = -1;
         if (!o->use_underflow_bin) skip = true;
       } else {
-        if (*i >= 0)
+        if (*i < 0)
+          *i = o->reduced_end;
+        else if (o->merge > 1)
           *i /= static_cast<index_type>(o->merge);
-        else
-          *i = o->end.index;
-        const auto reduced_axis_end =
-            (o->end.index - o->begin.index) / static_cast<index_type>(o->merge);
-        if (*i >= reduced_axis_end) {
-          *i = reduced_axis_end;
+        if (*i >= o->reduced_end) {
+          *i = o->reduced_end;
           if (!o->use_overflow_bin) skip = true;
         }
       }
