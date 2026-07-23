@@ -35,7 +35,8 @@ namespace algorithm {
   histogram is summed over the removed axes.
 */
 template <class A, class S, unsigned N, typename... Ns>
-auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N>, Ns...) {
+auto project(const histogram<A, S>& h, coverage cov, std::integral_constant<unsigned, N>,
+             Ns...) {
   using LN = mp11::mp_list<std::integral_constant<unsigned, N>, Ns...>;
   static_assert(mp11::mp_is_set<LN>::value, "indices must be unique");
 
@@ -53,7 +54,7 @@ auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N>, Ns..
   using A2 = decltype(axes);
   auto result = histogram<A2, S>(std::move(axes), detail::make_default(old_storage));
   auto idx = detail::make_stack_buffer<int>(unsafe_access::axes(result));
-  for (auto&& x : indexed(h, coverage::all)) {
+  for (auto&& x : indexed(h, cov)) {
     auto i = idx.begin();
     mp11::mp_for_each<LN>([&i, &x](auto J) { *i++ = x.index(J); });
     result.at(idx) += *x;
@@ -64,11 +65,21 @@ auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N>, Ns..
 /**
   Returns a lower-dimensional histogram, summing over removed axes.
 
+  This overload uses coverage::all by default.
+*/
+template <class A, class S, unsigned N, typename... Ns>
+auto project(const histogram<A, S>& h, std::integral_constant<unsigned, N> n, Ns... ns) {
+  return project(h, coverage::all, n, ns...);
+}
+
+/**
+  Returns a lower-dimensional histogram, summing over removed axes.
+
   This version accepts a source histogram and an iterable range containing the remaining
   indices.
 */
 template <class A, class S, class Iterable, class = detail::requires_iterable<Iterable>>
-auto project(const histogram<A, S>& h, const Iterable& c) {
+auto project(const histogram<A, S>& h, coverage cov, const Iterable& c) {
   using namespace boost::mp11;
   const auto& old_axes = unsafe_access::axes(h);
 
@@ -88,13 +99,23 @@ auto project(const histogram<A, S>& h, const Iterable& c) {
   auto result =
       histogram<decltype(axes), S>(std::move(axes), detail::make_default(old_storage));
   auto idx = detail::make_stack_buffer<int>(unsafe_access::axes(result));
-  for (auto&& x : indexed(h, coverage::all)) {
+  for (auto&& x : indexed(h, cov)) {
     auto i = idx.begin();
     for (auto d : c) *i++ = x.index(d);
     result.at(idx) += *x;
   }
 
   return result;
+}
+
+/**
+  Returns a lower-dimensional histogram, summing over removed axes.
+
+  This overload uses coverage::all by default.
+*/
+template <class A, class S, class Iterable, class = detail::requires_iterable<Iterable>>
+auto project(const histogram<A, S>& h, const Iterable& c) {
+  return project(h, coverage::all, c);
 }
 
 } // namespace algorithm

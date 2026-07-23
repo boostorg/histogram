@@ -8,6 +8,7 @@
 #include <boost/histogram/algorithm/project.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis/integer.hpp>
+#include <boost/histogram/axis/regular.hpp>
 #include <boost/histogram/axis/ostream.hpp>
 #include <boost/histogram/literals.hpp>
 #include <boost/histogram/ostream.hpp>
@@ -65,6 +66,17 @@ void run_tests() {
     BOOST_TEST_EQ(hyx.at(0, 1), 1);
     BOOST_TEST_EQ(hyx.at(1, 1), 1);
     BOOST_TEST_EQ(hyx.at(2, 1), 2);
+
+    // explicit coverage::all should match default behavior
+    auto hx_all = project(h, coverage::all, 0_c);
+    BOOST_TEST_EQ(sum(hx_all), sum(hx));
+
+    // coverage::inner excludes underflow/overflow; for integer axes with default
+    // options there are no underflow/overflow bins, so inner gives same result
+    auto hx_inner = project(h, coverage::inner, 0_c);
+    BOOST_TEST_EQ(sum(hx_inner), 6);
+    BOOST_TEST_EQ(hx_inner.at(0), 2);
+    BOOST_TEST_EQ(hx_inner.at(1), 4);
   }
 
   {
@@ -134,6 +146,35 @@ void run_tests() {
     BOOST_TEST_EQ(h_210.at(2, 0, 0), 1);
     BOOST_TEST_EQ(h_210.at(2, 0, 1), 1);
   }
+
+  {
+    // regular axes have underflow/overflow by default
+    auto h = make(Tag(), axis::regular<>(2, 0.0, 2.0), axis::regular<>(3, 0.0, 3.0));
+    h(-1, -1); // underflow,underflow
+    h(0.5, 0.5);
+    h(0.5, 1.5);
+    h(1.5, 0.5);
+    h(1.5, 1.5);
+    h(1.5, 2.5); // overflow on second axis
+    h(2.5, 0.5); // overflow on first axis
+
+    auto hx_all = project(h, coverage::all, 0_c);
+    BOOST_TEST_EQ(hx_all.rank(), 1);
+    // all bins summed: 7 entries total
+    BOOST_TEST_EQ(sum(hx_all), 7);
+    // hx has underflow + 2 bins + overflow
+    BOOST_TEST_EQ(hx_all.at(-1), 1);
+    BOOST_TEST_EQ(hx_all.at(0), 2);
+    BOOST_TEST_EQ(hx_all.at(1), 3);
+    BOOST_TEST_EQ(hx_all.at(2), 1);
+
+    auto hx_inner = project(h, coverage::inner, 0_c);
+    BOOST_TEST_EQ(hx_inner.rank(), 1);
+    // only inner bins of original histogram are summed
+    BOOST_TEST_EQ(sum(hx_inner), 5);
+    BOOST_TEST_EQ(hx_inner.at(0), 2);
+    BOOST_TEST_EQ(hx_inner.at(1), 3);
+  }
 }
 
 // split out dynamic tests as workaround for compiler bug in
@@ -178,6 +219,19 @@ void run_dynamic_tests() {
     BOOST_TEST_EQ(hyx.at(0, 1), 1);
     BOOST_TEST_EQ(hyx.at(1, 1), 1);
     BOOST_TEST_EQ(hyx.at(2, 1), 2);
+
+    // explicit coverage::all should match default behavior
+    x = {0};
+    auto hx_all = project(h, coverage::all, x);
+    BOOST_TEST_EQ(sum(hx_all), sum(hx));
+
+    // coverage::inner excludes underflow/overflow; for integer axes with default
+    // options there are no underflow/overflow bins, so inner gives same result
+    x = {0};
+    auto hx_inner = project(h, coverage::inner, x);
+    BOOST_TEST_EQ(sum(hx_inner), 6);
+    BOOST_TEST_EQ(hx_inner.at(0), 2);
+    BOOST_TEST_EQ(hx_inner.at(1), 4);
 
     // indices must be unique
     x = {0, 0};
