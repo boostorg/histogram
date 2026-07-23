@@ -20,6 +20,13 @@ project
       # list could go on...
     ]
     <library>/boost/format//boost_format
+    <toolset>clang:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
+    <toolset>gcc:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wfloat-conversion"
+    <toolset>msvc:<cxxflags>"/bigobj"
+    <toolset>intel-win:<cxxflags>"/bigobj"
+    <local-visibility>hidden
+    : default-build
+    <warnings>extra
     ;
 
 alias cxx14 :

@@ -19,16 +19,7 @@ constant boost_dependencies :
     /boost/throw_exception//boost_throw_exception
     /boost/variant2//boost_variant2 ;
 
-project /boost/histogram
-    : requirements
-        <toolset>clang:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
-        <toolset>gcc:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wfloat-conversion"
-        <toolset>msvc:<cxxflags>"/bigobj"
-        <toolset>intel-win:<cxxflags>"/bigobj"
-        <local-visibility>hidden
-    : default-build
-        <warnings>extra
-    ;
+project /boost/histogram ;
 
 explicit
     [ alias boost_histogram : : :
