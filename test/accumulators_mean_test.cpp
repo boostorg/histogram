@@ -24,7 +24,7 @@ int main() {
 
   using traits = detail::accumulator_traits<m_t>;
   static_assert(traits::weight_support, "");
-  static_assert(std::is_same<traits::args, std::tuple<const double&>>::value, "");
+  static_assert(std::is_same<traits::args, std::tuple<double>>::value, "");
 
   // basic interface, string conversion
   {
