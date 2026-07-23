@@ -210,6 +210,29 @@ void run_comparison_tests(Tag) {
   BOOST_TEST(1 >= a);
 }
 
+// regression test for https://github.com/boostorg/histogram/issues/430
+void run_0d_tests(coverage cov) {
+  auto h = make(dynamic_tag());
+  BOOST_TEST_EQ(h.rank(), 0u);
+  BOOST_TEST_EQ(h.size(), 1u);
+  std::fill(h.begin(), h.end(), 2);
+
+  auto ind = indexed(h, cov);
+  auto it = ind.begin();
+  BOOST_TEST(it != ind.end());
+  BOOST_TEST_EQ(it->indices().size(), 0u);
+  BOOST_TEST_EQ(**it, 2);
+  ++it;
+  BOOST_TEST(it == ind.end());
+
+  int count = 0;
+  for (auto&& x : indexed(h, cov)) {
+    BOOST_TEST_EQ(*x, 2);
+    ++count;
+  }
+  BOOST_TEST_EQ(count, 1);
+}
+
 template <class Tag>
 void run_indexed_with_range_tests(Tag) {
   {
@@ -257,6 +280,9 @@ int main() {
 
   run_comparison_tests(static_tag{});
   run_comparison_tests(dynamic_tag{});
+
+  run_0d_tests(coverage::inner);
+  run_0d_tests(coverage::all);
 
   run_indexed_with_range_tests(static_tag{});
   run_indexed_with_range_tests(dynamic_tag{});

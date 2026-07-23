@@ -4,6 +4,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <algorithm>
 #include <array>
 #include <boost/core/lightweight_test.hpp>
 #include <boost/histogram/accumulators/weighted_mean.hpp>
@@ -60,6 +61,16 @@ void run_tests() {
 int main() {
   run_tests<static_tag>();
   run_tests<dynamic_tag>();
+
+  {
+    // regression test for https://github.com/boostorg/histogram/issues/430
+    auto h = make(dynamic_tag());
+    BOOST_TEST(empty(h, coverage::all));
+    BOOST_TEST(empty(h, coverage::inner));
+    std::fill(h.begin(), h.end(), 1);
+    BOOST_TEST(!empty(h, coverage::all));
+    BOOST_TEST(!empty(h, coverage::inner));
+  }
 
   return boost::report_errors();
 }
