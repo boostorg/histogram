@@ -156,6 +156,60 @@ void run_stdlib_tests(mp_list<Tag, Coverage>) {
   }
 }
 
+// regression test for https://github.com/boostorg/histogram/issues/403; with the
+// default storage, comparisons of accessors and cell references were ambiguous
+template <class Tag>
+void run_comparison_tests(Tag) {
+  auto h = make(Tag(), axis::integer<>(0, 2), axis::integer<>(0, 2));
+  h(0, 0);
+  h(1, 1);
+  h(1, 1);
+
+  auto ind = indexed(h);
+
+  // libc++ passes accessors as const references to the comparator
+  auto imin = std::min_element(ind.begin(), ind.end());
+  BOOST_TEST_EQ(**imin, 0);
+  auto imax = std::max_element(ind.begin(), ind.end());
+  BOOST_TEST_EQ(**imax, 2);
+
+  auto it = ind.begin(); // points to cell (0, 0) with value 1
+  auto&& a = *it;
+  const auto& ca = a;
+  auto&& r = h.at(1, 1); // value 2
+
+  BOOST_TEST(a < r);
+  BOOST_TEST(a <= r);
+  BOOST_TEST(a != r);
+  BOOST_TEST(!(a > r));
+  BOOST_TEST(!(a >= r));
+  BOOST_TEST(!(a == r));
+
+  BOOST_TEST(r > a);
+  BOOST_TEST(r >= a);
+  BOOST_TEST(r != a);
+  BOOST_TEST(!(r < a));
+  BOOST_TEST(!(r <= a));
+  BOOST_TEST(!(r == a));
+
+  BOOST_TEST(ca == ca);
+  BOOST_TEST(ca <= ca);
+  BOOST_TEST(ca >= ca);
+  BOOST_TEST(!(ca != ca));
+  BOOST_TEST(!(ca < ca));
+  BOOST_TEST(!(ca > ca));
+  BOOST_TEST(ca < r);
+
+  BOOST_TEST(a == 1);
+  BOOST_TEST(1 == a);
+  BOOST_TEST(a != 2);
+  BOOST_TEST(2 != a);
+  BOOST_TEST(a < 2);
+  BOOST_TEST(2 > a);
+  BOOST_TEST(a <= 1);
+  BOOST_TEST(1 >= a);
+}
+
 template <class Tag>
 void run_indexed_with_range_tests(Tag) {
   {
@@ -200,6 +254,9 @@ int main() {
         run_density_tests(x);
         run_stdlib_tests(x);
       });
+
+  run_comparison_tests(static_tag{});
+  run_comparison_tests(dynamic_tag{});
 
   run_indexed_with_range_tests(static_tag{});
   run_indexed_with_range_tests(dynamic_tag{});
