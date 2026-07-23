@@ -427,8 +427,9 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
             if (o.crop) o.use_overflow_bin = false;
             return detail::static_if_c<axis::traits::is_pickable<A>::value>(
                 [&o](const auto& a_in) {
-                  auto a_out =
-                      std::decay_t<decltype(a_in)>(a_in, axis::pick_tag{}, o.indices);
+                  auto a_out = std::decay_t<decltype(a_in)>(
+                      a_in, axis::pick_tag{}, o.indices.data(),
+                      o.indices.data() + o.indices.size());
                   // replace pick list with a lookup table from old to new index;
                   // unpicked bins and the old overflow bin map to o.end.index,
                   // the overflow bin of the new axis

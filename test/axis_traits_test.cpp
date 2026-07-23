@@ -8,7 +8,6 @@
 #include <boost/core/lightweight_test_trait.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/traits.hpp>
-#include <vector>
 #include "axis.hpp"
 #include "ostream.hpp"
 #include "throw_exception.hpp"
@@ -74,7 +73,7 @@ int main() {
   {
     struct not_pickable {};
     struct pickable {
-      pickable(const pickable&, pick_tag, const std::vector<index_type>&);
+      pickable(const pickable&, pick_tag, const index_type*, const index_type*);
     };
 
     BOOST_TEST_TRAIT_TRUE((traits::is_pickable<pickable>));
