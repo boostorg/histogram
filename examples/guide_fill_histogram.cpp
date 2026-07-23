@@ -6,8 +6,8 @@
 
 //[ guide_fill_histogram
 
-#include <boost/histogram.hpp>
 #include <boost/core/span.hpp>
+#include <boost/histogram.hpp>
 #include <cassert>
 #include <functional>
 #include <numeric>

@@ -43,7 +43,9 @@ public:
   explicit collector(Args&&... args) : container_(std::forward<Args>(args)...) {}
 
   // make template only match if forwarding args to container is valid
-  template <class T, typename... Args, class = decltype(container_type(std::initializer_list<T>(),std::declval<Args>()...))>
+  template <class T, typename... Args,
+            class = decltype(container_type(std::initializer_list<T>(),
+                                            std::declval<Args>()...))>
   explicit collector(std::initializer_list<T> list, Args&&... args)
       : container_(list, std::forward<Args>(args)...) {}
 

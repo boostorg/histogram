@@ -54,7 +54,8 @@ public:
     @param successes Number of successful trials.
     @param failures Number of failed trials.
   */
-  interval_type operator()(value_type successes, value_type failures) const noexcept override {
+  interval_type operator()(value_type successes,
+                           value_type failures) const noexcept override {
     // analytical solution when successes or failures are zero
     // T. Mans (2014), Electronic Journal of Statistics. 8 (1): 817-840.
     // arXiv:1303.1288. doi:10.1214/14-EJS909.

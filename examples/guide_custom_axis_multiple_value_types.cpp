@@ -31,9 +31,7 @@ struct my_axis : axis::regular<double> {
     converter_type(double x) : val_{x} {}
   };
 
-  axis::index_type index(converter_type x) const {
-    return base_type::index(x.val_);
-  }
+  axis::index_type index(converter_type x) const { return base_type::index(x.val_); }
 };
 
 int main() {
