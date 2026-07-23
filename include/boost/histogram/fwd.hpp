@@ -41,6 +41,9 @@ struct null_type {
 /// Another alias for an empty metadata type
 using empty_type = null_type;
 
+/// Tag type for the axis constructor that picks bins (see algorithm::reduce)
+struct pick_tag {};
+
 // some forward declarations must be hidden from doxygen to fix the reference docu :(
 #ifndef BOOST_HISTOGRAM_DOXYGEN_INVOKED
 
