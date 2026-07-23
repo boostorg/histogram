@@ -2,15 +2,20 @@
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-find_package(Python3 COMPONENTS Interpreter)
-if (Python3_FOUND)
-  # checks that b2 and cmake are in sync
-  add_test(NAME runpy-${PROJECT_NAME}_check_build_system COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
-
-  # checks that all headers are included in odr test
-  add_test(NAME runpy-${PROJECT_NAME}_check_odr_test COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
+# FindPython3 requires CMake 3.12
+if (CMAKE_VERSION VERSION_LESS 3.12)
+  message(STATUS "CMake 3.12+ required to check for odr violations and build system consistency")
 else()
-MESSAGE(WARNING "Python interpreter not found, cannot check for odr violations and build system consistency")
+  find_package(Python3 COMPONENTS Interpreter)
+  if (Python3_FOUND)
+    # checks that b2 and cmake are in sync
+    add_test(NAME runpy-${PROJECT_NAME}_check_build_system COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_build_system.py)
+
+    # checks that all headers are included in odr test
+    add_test(NAME runpy-${PROJECT_NAME}_check_odr_test COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_odr_test.py)
+  else()
+    message(WARNING "Python interpreter not found, cannot check for odr violations and build system consistency")
+  endif()
 endif()
 
 include(BoostTest OPTIONAL RESULT_VARIABLE HAVE_BOOST_TEST)

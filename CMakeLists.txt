@@ -2,8 +2,8 @@
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-# We support CMake 3.12, but prefer 3.27 policies and behavior
-cmake_minimum_required(VERSION 3.12...3.27)
+# We support CMake 3.10, but prefer 4.4 policies and behavior
+cmake_minimum_required(VERSION 3.10...4.4)
 
 project(boost_histogram VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
@@ -27,6 +27,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   # Standalone build, fetch dependencies
 
   # Fetch support files
+
+  # BoostFetch.cmake still uses FetchContent_Populate, an error under CMP0169 NEW
+  if(POLICY CMP0169)
+    cmake_policy(SET CMP0169 OLD)
+  endif()
 
   message(STATUS "Fetching BoostFetch.cmake")
 
@@ -84,7 +89,12 @@ if (BUILD_TESTING)
   # do not pollute the superproject with the benchmarks
   if(NOT BOOST_SUPERPROJECT_VERSION)
 
-    add_subdirectory(benchmark)
+    # google/benchmark requires CMake 3.13
+    if(CMAKE_VERSION VERSION_LESS 3.13)
+      message(STATUS "CMake 3.13+ required by google/benchmark; skipping benchmarks")
+    else()
+      add_subdirectory(benchmark)
+    endif()
 
   endif()
 
