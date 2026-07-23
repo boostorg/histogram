@@ -372,6 +372,11 @@ inline reduce_command pick(std::vector<axis::index_type> indices) {
   return pick(reduce_command::unset, std::move(indices));
 }
 
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
+#pragma warning(push)
+#pragma warning(disable : 4702) // unreachable code in the non-pickable static_if branch
+#endif
+
 /** Shrink, crop, slice, pick, and/or rebin axes of a histogram.
 
   Returns a new reduced histogram and leaves the original histogram untouched.
@@ -391,11 +396,6 @@ inline reduce_command pick(std::vector<axis::index_type> indices) {
   `pick`, `shrink_and_rebin`, or `slice_and_rebin`. The element type of the iterable
   should be `reduce_command`.
 */
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
-#pragma warning(push)
-#pragma warning(disable : 4702) // unreachable code in the non-pickable static_if branch
-#endif
-
 template <class Histogram, class Iterable, class = detail::requires_iterable<Iterable>>
 Histogram reduce(const Histogram& hist, const Iterable& options) {
   using axis::index_type;
@@ -419,7 +419,16 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                 BOOST_THROW_EXCEPTION(std::invalid_argument("index out of range"));
             return detail::static_if_c<axis::traits::is_pickable<A>::value>(
                 [&o](const auto& a_in) {
-                  return std::decay_t<decltype(a_in)>(a_in, axis::pick_tag{}, o.indices);
+                  auto a_out =
+                      std::decay_t<decltype(a_in)>(a_in, axis::pick_tag{}, o.indices);
+                  // replace pick list with a lookup table from old to new index;
+                  // unpicked bins and the old overflow bin map to o.end.index,
+                  // the overflow bin of the new axis
+                  o.end.index = static_cast<index_type>(o.indices.size());
+                  std::vector<index_type> lut(a_in.size() + 1, o.end.index);
+                  for (index_type k = 0; k < o.end.index; ++k) lut[o.indices[k]] = k;
+                  o.indices = std::move(lut);
+                  return a_out;
                 },
                 [iaxis](const auto& a_in) {
                   return BOOST_THROW_EXCEPTION(std::invalid_argument(
@@ -490,11 +499,10 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
 
     for (auto j : x.indices()) {
       if (o->range == reduce_command::range_t::indices_list) {
-        // pick: map index to its position in the list of picked indices;
-        // unpicked indices land one past the end, which is the overflow bin
-        const auto it = std::find(o->indices.begin(), o->indices.end(), j);
-        *i = static_cast<index_type>(std::distance(o->indices.begin(), it));
-        if (it == o->indices.end() && !o->use_overflow_bin) skip = true;
+        // pick: o->indices is a lookup table from old to new index; unpicked bins
+        // and flow bins map to o->end.index, the overflow bin of the new axis
+        *i = j < 0 ? o->end.index : o->indices[j];
+        if (*i == o->end.index && !o->use_overflow_bin) skip = true;
       } else {
         *i = (j - o->begin.index);
         if (o->is_ordered && *i <= -1) {
