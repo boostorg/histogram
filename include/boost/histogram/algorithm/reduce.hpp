@@ -413,14 +413,13 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
         if (o.merge > 0) { // option is set?
           o.use_underflow_bin = AO::test(axis::option::underflow);
           o.use_overflow_bin = AO::test(axis::option::overflow);
-          if (o.range == reduce_command::range_t::indices_list)
+          if (o.range == reduce_command::range_t::indices_list) {
+            for (const auto idx : o.indices)
+              if (idx < 0 || idx >= a_in.size())
+                BOOST_THROW_EXCEPTION(std::invalid_argument("index out of range"));
             return detail::static_if_c<axis::traits::is_pickable<A>::value>(
                 [&o](const auto& a_in) {
-                  using A = std::decay_t<decltype(a_in)>;
-                  for (const auto idx : o.indices)
-                    if (idx < 0 || idx >= a_in.size())
-                      BOOST_THROW_EXCEPTION(std::invalid_argument("index out of range"));
-                  return A(a_in, o.indices);
+                  return std::decay_t<decltype(a_in)>(a_in, axis::pick_tag{}, o.indices);
                 },
                 [iaxis](const auto& a_in) {
                   return BOOST_THROW_EXCEPTION(std::invalid_argument(
@@ -428,6 +427,7 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
                          a_in;
                 },
                 a_in);
+          }
           return detail::static_if_c<axis::traits::is_reducible<A>::value>(
               [&o](const auto& a_in) {
                 if (o.range == reduce_command::range_t::none) {
@@ -490,15 +490,11 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
 
     for (auto j : x.indices()) {
       if (o->range == reduce_command::range_t::indices_list) {
-        // pick: map index to position in the list of picked indices;
-        // indices that are not picked are mapped to the overflow bin
+        // pick: map index to its position in the list of picked indices;
+        // unpicked indices land one past the end, which is the overflow bin
         const auto it = std::find(o->indices.begin(), o->indices.end(), j);
-        if (it != o->indices.end())
-          *i = static_cast<index_type>(std::distance(o->indices.begin(), it));
-        else {
-          *i = static_cast<index_type>(o->indices.size());
-          if (!o->use_overflow_bin) skip = true;
-        }
+        *i = static_cast<index_type>(std::distance(o->indices.begin(), it));
+        if (it == o->indices.end() && !o->use_overflow_bin) skip = true;
       } else {
         *i = (j - o->begin.index);
         if (o->is_ordered && *i <= -1) {

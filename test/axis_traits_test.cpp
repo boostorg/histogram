@@ -74,7 +74,7 @@ int main() {
   {
     struct not_pickable {};
     struct pickable {
-      pickable(const pickable&, const std::vector<index_type>&);
+      pickable(const pickable&, pick_tag, const std::vector<index_type>&);
     };
 
     BOOST_TEST_TRAIT_TRUE((traits::is_pickable<pickable>));
