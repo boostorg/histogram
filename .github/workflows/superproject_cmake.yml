@@ -18,7 +18,7 @@ jobs:
     - name: Fetch Boost superproject
       run: |
         cd ..
-        git clone -b $GITHUB_BASE_REF --depth 5 https://github.com/boostorg/boost.git
+        git clone -b "${GITHUB_BASE_REF:-$GITHUB_REF_NAME}" --depth 5 https://github.com/boostorg/boost.git
         cd boost
         git submodule update --init --depth 5
         rm -rf libs/histogram/*
