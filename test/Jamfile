@@ -30,6 +30,13 @@ project
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
     ]
+    <toolset>clang:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wvexing-parse -Wfloat-conversion"
+    <toolset>gcc:<cxxflags>"-Wsign-compare -Wstrict-aliasing -fstrict-aliasing -Wfloat-conversion"
+    <toolset>msvc:<cxxflags>"/bigobj"
+    <toolset>intel-win:<cxxflags>"/bigobj"
+    <local-visibility>hidden
+    : default-build
+    <warnings>extra
     ;
 
 # Check consistency of build systems
