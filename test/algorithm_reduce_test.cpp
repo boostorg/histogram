@@ -464,6 +464,14 @@ void run_tests() {
     std::vector<reduce_command> opts{{pick(0, {0, 2})}};
     auto hr3 = reduce(h, opts);
     BOOST_TEST_EQ(hr3, hr);
+
+    // crop mode discards counts in unpicked bins and in the original overflow bin
+    auto hr4 = reduce(h, pick({0, 2}, slice_mode::crop));
+    BOOST_TEST_EQ(hr4.axis(), (CI{{1, 3}}));
+    BOOST_TEST_EQ(hr4[0], 1);
+    BOOST_TEST_EQ(hr4[1], 1);
+    BOOST_TEST_EQ(hr4[2], 0);
+    BOOST_TEST_EQ(sum(hr4), 2);
   }
 
   // pick on category axis without overflow bin: bins which are not picked are discarded

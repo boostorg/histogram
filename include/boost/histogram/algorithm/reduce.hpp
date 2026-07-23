@@ -332,12 +332,15 @@ inline reduce_command slice_and_rebin(axis::index_type begin, axis::index_type e
   Picking only works on axes that are not ordered, like the category axis, since
   removing an arbitrary subset of bins from an ordered axis would create gaps in the
   axis range. The counts in bins that were not picked are added to the overflow bin,
-  if it is present. If it is not present, the counts are discarded.
+  if it is present. If it is not present, the counts are discarded. In crop mode, the
+  counts in unpicked bins and in the original overflow bin are always discarded.
 
   @param iaxis which axis to operate on.
   @param indices indices of the bins to keep, must be unique.
+  @param mode whether to behave like `shrink` or `crop` regarding removed bins.
 */
-inline reduce_command pick(unsigned iaxis, std::vector<axis::index_type> indices) {
+inline reduce_command pick(unsigned iaxis, std::vector<axis::index_type> indices,
+                           slice_mode mode = slice_mode::shrink) {
   if (indices.empty())
     BOOST_THROW_EXCEPTION(std::invalid_argument("at least one index required"));
   for (auto it = indices.begin(); it != indices.end(); ++it)
@@ -348,7 +351,7 @@ inline reduce_command pick(unsigned iaxis, std::vector<axis::index_type> indices
   r.range = reduce_command::range_t::indices_list;
   r.indices = std::move(indices);
   r.merge = 1;
-  r.crop = false;
+  r.crop = mode == slice_mode::crop;
   return r;
 }
 
@@ -364,12 +367,15 @@ inline reduce_command pick(unsigned iaxis, std::vector<axis::index_type> indices
   Picking only works on axes that are not ordered, like the category axis, since
   removing an arbitrary subset of bins from an ordered axis would create gaps in the
   axis range. The counts in bins that were not picked are added to the overflow bin,
-  if it is present. If it is not present, the counts are discarded.
+  if it is present. If it is not present, the counts are discarded. In crop mode, the
+  counts in unpicked bins and in the original overflow bin are always discarded.
 
   @param indices indices of the bins to keep, must be unique.
+  @param mode whether to behave like `shrink` or `crop` regarding removed bins.
 */
-inline reduce_command pick(std::vector<axis::index_type> indices) {
-  return pick(reduce_command::unset, std::move(indices));
+inline reduce_command pick(std::vector<axis::index_type> indices,
+                           slice_mode mode = slice_mode::shrink) {
+  return pick(reduce_command::unset, std::move(indices), mode);
 }
 
 #if BOOST_WORKAROUND(BOOST_MSVC, >= 0)
@@ -417,6 +423,8 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
             for (const auto idx : o.indices)
               if (idx < 0 || idx >= a_in.size())
                 BOOST_THROW_EXCEPTION(std::invalid_argument("index out of range"));
+            // crop discards counts of unpicked bins instead of moving them to overflow
+            if (o.crop) o.use_overflow_bin = false;
             return detail::static_if_c<axis::traits::is_pickable<A>::value>(
                 [&o](const auto& a_in) {
                   auto a_out =
