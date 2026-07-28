@@ -330,7 +330,7 @@ int main() {
     using map_t = std::map<std::size_t, ws_t, std::less<std::size_t>,
                            tracing_allocator<std::pair<const std::size_t, ws_t>>>;
     auto a = storage_adaptor<map_t>(alloc);
-    const auto baseline = db.second;
+    const auto baseline = db.first;
     a.reset(10);
     a[1] += ws_t();
     BOOST_TEST_EQ(db.first, baseline);

@@ -612,8 +612,10 @@ private:
   void add_storage(const OtherStorage& rs) {
     detail::static_if<detail::has_node_access<OtherStorage>>(
         [this](const auto& s) {
-          // sparse rhs: visit only non-empty cells, absent cells add zero
-          for (auto&& kv : s.node_access()) storage_[kv.first] += kv.second;
+          // sparse rhs: visit only the stored cells, absent cells add zero;
+          // the bounds check guards against stray keys from a corrupt archive
+          for (auto&& kv : s.node_access())
+            if (kv.first < storage_.size()) storage_[kv.first] += kv.second;
         },
         [this](const auto& s) {
           auto rit = s.begin();
@@ -626,7 +628,8 @@ private:
   void sub_storage(const OtherStorage& rs) {
     detail::static_if<detail::has_node_access<OtherStorage>>(
         [this](const auto& s) {
-          for (auto&& kv : s.node_access()) storage_[kv.first] -= kv.second;
+          for (auto&& kv : s.node_access())
+            if (kv.first < storage_.size()) storage_[kv.first] -= kv.second;
         },
         [this](const auto& s) {
           auto rit = s.begin();
