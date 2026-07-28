@@ -211,6 +211,23 @@ int main() {
     BOOST_TEST(std::isnan(static_cast<double>(a[1])));
   }
 
+  // adding or subtracting zero must not create cells in map-based storage_adaptor
+  {
+    using map_t = std::map<std::size_t, double>;
+    auto a = storage_adaptor<map_t>();
+    a.reset(4);
+    a[0] += 0;
+    a[1] -= 0;
+    BOOST_TEST_EQ(static_cast<const map_t&>(a).size(), 0);
+    BOOST_TEST_EQ(a[0], 0);
+    BOOST_TEST_EQ(a[1], 0);
+    a[2] += 1;
+    a[3] -= 1;
+    BOOST_TEST_EQ(static_cast<const map_t&>(a).size(), 2);
+    BOOST_TEST_EQ(a[2], 1);
+    BOOST_TEST_EQ(a[3], -1);
+  }
+
   // with accumulators::weighted_sum
   {
     auto a = storage_adaptor<std::vector<accumulators::weighted_sum<double>>>();
