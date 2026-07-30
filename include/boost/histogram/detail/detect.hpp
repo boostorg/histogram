@@ -85,6 +85,10 @@ BOOST_HISTOGRAM_DETAIL_DETECT(is_map_like, ((typename T::key_type*)nullptr,
                                             (typename T::mapped_type*)nullptr,
                                             std::begin(t), std::end(t)));
 
+// storage exposes the container of non-empty cells (sparse storage)
+BOOST_HISTOGRAM_DETAIL_DETECT(has_node_access,
+                              (std::begin(t.node_access()), std::end(t.node_access())));
+
 // ok: is_axis is false for axis::variant, because T::index is templated
 BOOST_HISTOGRAM_DETAIL_DETECT(is_axis, (t.size(), &T::index));
 

@@ -305,6 +305,14 @@ int main() {
     BOOST_TEST_EQ(db.first, baseline + 3 * node);
     a[4] = 0; // causes one deallocation
     BOOST_TEST_EQ(db.first, baseline + 2 * node);
+    a[6] += 0.0; // no allocation, result is indistinguishable from empty cell
+    a[6] -= 0.0; // no allocation
+    BOOST_TEST_EQ(db.first, baseline + 2 * node);
+    BOOST_TEST_EQ(a[6], 0);
+    a[6] += 1.0; // causes one allocation
+    a[6] -= 1.0; // node stays, in-place zeroing does not erase
+    BOOST_TEST_EQ(db.first, baseline + 3 * node);
+    BOOST_TEST_EQ(a[6], 0);
 
     auto b = storage_adaptor<std::vector<int>>();
     b.reset(5);
@@ -312,6 +320,24 @@ int main() {
     a = b;
     // only one new allocation for non-zero value
     BOOST_TEST_EQ(db.first, baseline + node);
+  }
+
+  // adding a zero accumulator to an empty cell does not allocate
+  {
+    using ws_t = accumulators::weighted_sum<double>;
+    tracing_allocator_db db;
+    tracing_allocator<char> alloc(db);
+    using map_t = std::map<std::size_t, ws_t, std::less<std::size_t>,
+                           tracing_allocator<std::pair<const std::size_t, ws_t>>>;
+    auto a = storage_adaptor<map_t>(alloc);
+    const auto baseline = db.second;
+    a.reset(10);
+    a[1] += ws_t();
+    BOOST_TEST_EQ(db.first, baseline);
+    BOOST_TEST(a[1] == ws_t());
+    a[1] += ws_t(1, 1); // causes one allocation
+    BOOST_TEST_GT(db.first, baseline);
+    BOOST_TEST(a[1] == ws_t(1, 1));
   }
 
   return boost::report_errors();

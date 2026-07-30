@@ -332,6 +332,10 @@ struct map_impl : T {
 
   std::size_t size() const noexcept { return size_; }
 
+  // access to the underlying map with only the non-empty cells,
+  // allows histogram operations to skip empty cells
+  const T& node_access() const noexcept { return *this; }
+
   template <class Archive>
   void serialize(Archive& ar, unsigned /* version */) {
     ar& make_nvp("size", size_);
