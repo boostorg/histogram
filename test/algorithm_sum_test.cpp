@@ -75,5 +75,13 @@ int main() {
   run_tests<static_tag>();
   run_tests<dynamic_tag>();
 
+  {
+    // regression test for https://github.com/boostorg/histogram/issues/430
+    auto h = make(dynamic_tag());
+    std::fill(h.begin(), h.end(), 3);
+    BOOST_TEST_EQ(sum(h), 3);
+    BOOST_TEST_EQ(sum(h, coverage::inner), 3);
+  }
+
   return boost::report_errors();
 }

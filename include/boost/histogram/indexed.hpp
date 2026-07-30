@@ -253,6 +253,8 @@ public:
       const auto cbeg = indices_.begin();
       auto c = cbeg;
       ++iter_;
+      // rank-0 histogram has a single cell and no indices to update
+      if (c == indices_.end()) return *this;
       ++c->idx;
       if (c->idx < c->end) return *this;
       while (c->idx == c->end) {
