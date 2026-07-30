@@ -210,8 +210,9 @@ public:
     if (options_type::test(option::circular)) {
       auto shift = std::floor(i / size());
       i -= shift * size();
-      double z;
-      const auto k = static_cast<index_type>(std::modf(i, &z));
+      double whole;
+      const double z = std::modf(i, &whole);
+      const auto k = static_cast<index_type>(whole);
       const auto a = vec_[0];
       const auto b = vec_[size()];
       return (1.0 - z) * vec_[k] + z * vec_[k + 1] + shift * (b - a);

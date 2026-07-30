@@ -123,6 +123,21 @@ int main() {
     BOOST_TEST_EQ(a.index(4), 1); // 4 - 3 = 1
   }
 
+  // axis::variable circular with size > 2 and non-equidistant bins;
+  // the error in value() cancels for size == 2 and integer arguments
+  {
+    axis::variable<double, axis::null_type, op::circular_t> a{0, 1, 3, 4};
+    BOOST_TEST_EQ(a.value(-1), -1); // vec_[2] - period
+    BOOST_TEST_EQ(a.value(0), 0);
+    BOOST_TEST_EQ(a.value(1), 1);
+    BOOST_TEST_EQ(a.value(2), 3);
+    BOOST_TEST_EQ(a.value(3), 4);
+    BOOST_TEST_EQ(a.value(4), 5);
+    BOOST_TEST_EQ(a.value(0.5), 0.5);
+    BOOST_TEST_EQ(a.value(1.5), 2);
+    BOOST_TEST_EQ(a.value(2.5), 3.5);
+  }
+
   // axis::regular with growth
   {
     using pii_t = std::pair<axis::index_type, axis::index_type>;
