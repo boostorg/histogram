@@ -171,8 +171,9 @@ struct map_impl : T {
       if (it != static_cast<T*>(map)->end()) {
         it->second += u;
       } else {
-        auto pair = map->emplace(idx, value_type{});
-        pair.first->second += u;
+        value_type tmp{};
+        tmp += u;
+        if (!(tmp == value_type{})) map->emplace(idx, tmp);
       }
       return *this;
     }
@@ -184,8 +185,9 @@ struct map_impl : T {
       if (it != static_cast<T*>(map)->end()) {
         it->second -= u;
       } else {
-        auto pair = map->emplace(idx, value_type{});
-        pair.first->second -= u;
+        value_type tmp{};
+        tmp -= u;
+        if (!(tmp == value_type{})) map->emplace(idx, tmp);
       }
       return *this;
     }
