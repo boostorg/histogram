@@ -359,16 +359,8 @@ inline reduce_command pick(unsigned iaxis, std::vector<axis::index_type> indices
 
   Command is applied to corresponding axis in order of reduce arguments.
 
-  Picking selects an arbitrary subset of bins by index. The new axis consists of the
-  picked bins in the order in which the indices are given, which may differ from their
-  order in the original axis. In contrast to `slice`, the picked bins do not have to be
-  adjacent. Each index must be valid and may only appear once.
-
-  Picking only works on axes that are not ordered, like the category axis, since
-  removing an arbitrary subset of bins from an ordered axis would create gaps in the
-  axis range. The counts in bins that were not picked are added to the overflow bin,
-  if it is present. If it is not present, the counts are discarded. In crop mode, the
-  counts in unpicked bins and in the original overflow bin are always discarded.
+  Picking selects an arbitrary subset of bins by index, see
+  pick(unsigned, std::vector<axis::index_type>, slice_mode) for details.
 
   @param indices indices of the bins to keep, must be unique.
   @param mode whether to behave like `shrink` or `crop` regarding removed bins.
@@ -427,17 +419,14 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
             if (o.crop) o.use_overflow_bin = false;
             return detail::static_if_c<axis::traits::is_pickable<A>::value>(
                 [&o](const auto& a_in) {
-                  auto a_out = std::decay_t<decltype(a_in)>(
-                      a_in, axis::pick_tag{}, o.indices.data(),
-                      o.indices.data() + o.indices.size());
-                  // replace pick list with a lookup table from old to new index;
                   // unpicked bins and the old overflow bin map to o.end.index,
                   // the overflow bin of the new axis
                   o.end.index = static_cast<index_type>(o.indices.size());
-                  std::vector<index_type> lut(a_in.size() + 1, o.end.index);
-                  for (index_type k = 0; k < o.end.index; ++k) lut[o.indices[k]] = k;
-                  o.indices = std::move(lut);
-                  return a_out;
+                  o.lut.assign(a_in.size() + 1, o.end.index);
+                  for (index_type k = 0; k < o.end.index; ++k) o.lut[o.indices[k]] = k;
+                  return std::decay_t<decltype(a_in)>(
+                      a_in, axis::pick_tag{}, o.indices.data(),
+                      o.indices.data() + o.indices.size());
                 },
                 [iaxis](const auto& a_in) {
                   return BOOST_THROW_EXCEPTION(std::invalid_argument(
@@ -508,9 +497,9 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
 
     for (auto j : x.indices()) {
       if (o->range == reduce_command::range_t::indices_list) {
-        // pick: o->indices is a lookup table from old to new index; unpicked bins
-        // and flow bins map to o->end.index, the overflow bin of the new axis
-        *i = j < 0 ? o->end.index : o->indices[j];
+        // pick: unpicked bins and flow bins map to o->end.index, the overflow
+        // bin of the new axis
+        *i = j < 0 ? o->end.index : o->lut[j];
         if (*i == o->end.index && !o->use_overflow_bin) skip = true;
       } else {
         *i = (j - o->begin.index);

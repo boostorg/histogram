@@ -63,8 +63,7 @@ alias cxx14 :
     [ run accumulators_weighted_sum_test.cpp ]
     [ run accumulators_collector_test.cpp ]
     [ run algorithm_project_test.cpp ]
-    [ run algorithm_reduce_test.cpp : : :
-      <toolset>msvc:<cxxflags>/bigobj ]
+    [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
     [ run algorithm_empty_test.cpp ]
     [ run axis_boolean_test.cpp ]
