@@ -35,7 +35,7 @@ namespace accumulators {
   estimate for the weight distribution should be computed as well (generally needed for a
   detailed statistical analysis), use `accumulators::weighted_sum`.
 
-  @tparam T C++ builtin arithmetic type (integer or floating point).
+  @tparam ValueType C++ builtin arithmetic type (integer or floating point).
   @tparam ThreadSafe Set to true to make increments and adds thread-safe.
 */
 template <class ValueType, bool ThreadSafe>
