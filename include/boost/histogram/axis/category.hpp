@@ -145,6 +145,13 @@ public:
       BOOST_THROW_EXCEPTION(std::invalid_argument("cannot merge bins for category axis"));
   }
 
+  /// Constructor used by algorithm::reduce to pick arbitrary bins (not for users).
+  category(const category& src, pick_tag, const index_type* begin, const index_type* end)
+      : metadata_base(src), vec_(src.get_allocator()) {
+    vec_.reserve(static_cast<std::size_t>(end - begin));
+    for (; begin != end; ++begin) vec_.emplace_back(src.vec_[*begin]);
+  }
+
   /// Return index for value argument.
   index_type index(const value_type& x) const noexcept {
     const auto beg = vec_.begin();

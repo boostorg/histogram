@@ -69,6 +69,17 @@ void run_tests() {
     // not allowed: reducing unreducible axis
     BOOST_TEST_THROWS((void)reduce(make(Tag(), unreducible{}), slice(0, 1)),
                       std::invalid_argument);
+    // not allowed: pick with empty index list
+    BOOST_TEST_THROWS((void)pick(0, {}), std::invalid_argument);
+    // not allowed: pick with duplicated indices
+    BOOST_TEST_THROWS((void)pick(0, {1, 1}), std::invalid_argument);
+    // not allowed: pick on axis which is not pickable
+    BOOST_TEST_THROWS((void)reduce(h, pick(0, {1})), std::invalid_argument);
+    // not allowed: pick combined with any other command for the same axis
+    BOOST_TEST_THROWS((void)reduce(h, pick(0, {1}), rebin(0, 2)), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, slice(0, 0, 2), pick(0, {1})),
+                      std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, pick(0, {1}), pick(0, {2})), std::invalid_argument);
   }
 
   // shrink and crop behavior when value on edge and not on edge is inclusive:
@@ -319,6 +330,12 @@ void run_tests() {
     BOOST_TEST_EQ(hr.axis(2), (CI{{2, 3}}));
     BOOST_TEST_EQ(hr.axis(3), u);
     BOOST_TEST_THROWS((void)algorithm::reduce(h, rebin(2, 2)), std::invalid_argument);
+
+    auto hr2 = algorithm::reduce(h, shrink(0, 2, 4), pick(2, {2, 0}));
+    BOOST_TEST_EQ(hr2.axis(0), (R{2, 2, 4}));
+    BOOST_TEST_EQ(hr2.axis(1), (V{{1., 2., 3.}}));
+    BOOST_TEST_EQ(hr2.axis(2), (CI{{3, 1}}));
+    BOOST_TEST_EQ(hr2.axis(3), u);
   }
 
   // reduce on integer axis, rebin must fail
@@ -416,6 +433,90 @@ void run_tests() {
     // reduced: [2: 1, overflow: 3]
     BOOST_TEST_EQ(hr[0], 1);
     BOOST_TEST_EQ(hr[1], 3);
+  }
+
+  // pick on category axis: bins which are not picked are added to overflow bin
+  {
+    auto h = make(Tag(), CI{{1, 2, 3}});
+    std::fill(h.begin(), h.end(), 1);
+    // original: [1: 1, 2: 1, 3: 1, overflow: 1]
+
+    // not allowed: pick index out of range
+    BOOST_TEST_THROWS((void)reduce(h, pick({3})), std::invalid_argument);
+    BOOST_TEST_THROWS((void)reduce(h, pick({-1})), std::invalid_argument);
+
+    auto hr = reduce(h, pick({0, 2}));
+    // reduced: [1: 1, 3: 1, overflow: 2]
+    BOOST_TEST_EQ(hr.axis(), (CI{{1, 3}}));
+    BOOST_TEST_EQ(hr[0], 1);
+    BOOST_TEST_EQ(hr[1], 1);
+    BOOST_TEST_EQ(hr[2], 2);
+    BOOST_TEST_EQ(sum(hr), 4);
+
+    // picked bins are returned in the order in which the indices are given
+    auto hr2 = reduce(h, pick({2, 0}));
+    BOOST_TEST_EQ(hr2.axis(), (CI{{3, 1}}));
+    BOOST_TEST_EQ(hr2[0], 1);
+    BOOST_TEST_EQ(hr2[1], 1);
+    BOOST_TEST_EQ(hr2[2], 2);
+
+    // test overload that accepts iterable
+    std::vector<reduce_command> opts{{pick(0, {0, 2})}};
+    auto hr3 = reduce(h, opts);
+    BOOST_TEST_EQ(hr3, hr);
+
+    // crop mode discards counts in unpicked bins and in the original overflow bin
+    auto hr4 = reduce(h, pick({0, 2}, slice_mode::crop));
+    BOOST_TEST_EQ(hr4.axis(), (CI{{1, 3}}));
+    BOOST_TEST_EQ(hr4[0], 1);
+    BOOST_TEST_EQ(hr4[1], 1);
+    BOOST_TEST_EQ(hr4[2], 0);
+    BOOST_TEST_EQ(sum(hr4), 2);
+  }
+
+  // pick on category axis without overflow bin: bins which are not picked are discarded
+  {
+    using CIN = axis::category<int, axis::empty_type, axis::option::none_t>;
+    auto h = make(Tag(), CIN{{1, 2, 3}});
+    std::fill(h.begin(), h.end(), 1);
+    // original: [1: 1, 2: 1, 3: 1]
+    auto hr = reduce(h, pick({1}));
+    // reduced: [2: 1]
+    BOOST_TEST_EQ(hr.axis(), (CIN{{2}}));
+    BOOST_TEST_EQ(hr.size(), 1);
+    BOOST_TEST_EQ(hr[0], 1);
+    BOOST_TEST_EQ(sum(hr), 1);
+  }
+
+  // pick on category axis of 2d histogram: other axes are not affected
+  {
+    auto h = make_s(Tag(), std::vector<int>(), CI{{1, 2, 3}}, ID(0, 2));
+
+    /*
+      matrix layout:
+            x (category) ->
+    y       1  2  3  of
+    |    0  1  2  3  6
+    v    1  4  0  5  0
+    */
+    h.at(0, 0) = 1;
+    h.at(1, 0) = 2;
+    h.at(2, 0) = 3;
+    h.at(3, 0) = 6; // overflow of category axis
+    h.at(0, 1) = 4;
+    h.at(2, 1) = 5;
+
+    auto hr = reduce(h, pick(0, {2, 0}));
+    BOOST_TEST_EQ(hr.rank(), 2);
+    BOOST_TEST_EQ(sum(hr), 21);
+    BOOST_TEST_EQ(hr.axis(0), (CI{{3, 1}}));
+    BOOST_TEST_EQ(hr.axis(1), ID(0, 2));
+    BOOST_TEST_EQ(hr.at(0, 0), 3);
+    BOOST_TEST_EQ(hr.at(1, 0), 1);
+    BOOST_TEST_EQ(hr.at(2, 0), 8); // not picked + original overflow
+    BOOST_TEST_EQ(hr.at(0, 1), 5);
+    BOOST_TEST_EQ(hr.at(1, 1), 4);
+    BOOST_TEST_EQ(hr.at(2, 1), 0);
   }
 }
 

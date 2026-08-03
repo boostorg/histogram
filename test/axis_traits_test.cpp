@@ -69,6 +69,23 @@ int main() {
     BOOST_TEST_TRAIT_TRUE((traits::is_reducible<category<>>));
   }
 
+  // is_pickable
+  {
+    struct not_pickable {};
+    struct pickable {
+      pickable(const pickable&, pick_tag, const index_type*, const index_type*);
+    };
+
+    BOOST_TEST_TRAIT_TRUE((traits::is_pickable<pickable>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<not_pickable>));
+
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<regular<>>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<variable<>>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<circular<>>));
+    BOOST_TEST_TRAIT_FALSE((traits::is_pickable<integer<>>));
+    BOOST_TEST_TRAIT_TRUE((traits::is_pickable<category<>>));
+  }
+
   // get_options, options()
   {
     using A = integer<>;

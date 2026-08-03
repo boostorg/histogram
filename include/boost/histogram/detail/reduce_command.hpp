@@ -13,6 +13,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace boost {
 namespace histogram {
@@ -25,14 +26,17 @@ struct reduce_command {
     none,
     indices,
     values,
+    indices_list,
   } range = range_t::none;
   union {
     axis::index_type index;
     double value;
   } begin{0}, end{0};
-  unsigned merge = 0; // default value indicates unset option
+  std::vector<axis::index_type> indices; // set by the pick command
+  unsigned merge = 0;                    // default value indicates unset option
   bool crop = false;
   // for internal use by the reduce algorithm
+  std::vector<axis::index_type> lut; // pick: maps old bin index to new bin index
   bool is_ordered = true;
   bool use_underflow_bin = true;
   bool use_overflow_bin = true;
@@ -54,9 +58,12 @@ inline void normalize_reduce_commands(span<reduce_command> out,
       o_out = o_in;
     } else {
       // Some command was already set for this axis, try to fuse commands.
+      // A pick command cannot be fused with any other command.
       if (!((o_in.range == reduce_command::range_t::none) ^
             (o_out.range == reduce_command::range_t::none)) ||
-          (o_out.merge > 1 && o_in.merge > 1))
+          (o_out.merge > 1 && o_in.merge > 1) ||
+          o_in.range == reduce_command::range_t::indices_list ||
+          o_out.range == reduce_command::range_t::indices_list)
         BOOST_THROW_EXCEPTION(std::invalid_argument(
             "multiple conflicting reduce commands for axis " +
             std::to_string(o_in.iaxis == reduce_command::unset ? iaxis : o_in.iaxis)));
