@@ -420,10 +420,10 @@ Histogram reduce(const Histogram& hist, const Iterable& options) {
         *i = -1;
         if (!o->use_underflow_bin) skip = true;
       } else {
-        if (*i < 0)
-          *i = o->reduced_end;
-        else if (o->merge > 1)
+        if (*i >= 0)
           *i /= static_cast<index_type>(o->merge);
+        else
+          *i = o->reduced_end;
         if (*i >= o->reduced_end) {
           *i = o->reduced_end;
           if (!o->use_overflow_bin) skip = true;
